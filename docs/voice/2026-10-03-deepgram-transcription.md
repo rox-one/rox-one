@@ -1,8 +1,8 @@
 # Deepgram transcription
 
-The cloud transcription default is Deepgram's latest released general prerecorded Nova family (currently Nova-3). Requests use `version=latest`, `diarize_model=latest`, `paragraphs=true`, `utterances=true`, punctuation and smart formatting. Automatic language detection remains the default; an explicit recognition language is forwarded when selected.
+The cloud transcription default is Deepgram's Nova-3 general prerecorded family, resolved deterministically without a catalog round-trip. Requests use `version=latest`, `diarize_model=latest`, `paragraphs=true`, `utterances=true`, punctuation and smart formatting. Automatic language detection remains the default; an explicit recognition language is forwarded when selected.
 
-The official model catalog is consulted for newer released general batch Nova families. Streaming-only Flux, retired models and medical-specific models are excluded. If catalog lookup is unavailable, transcription uses the current Nova-3 family with its latest revision. The actual ASR architecture/revision and diarizer architecture are retained as provenance.
+Requested model selection: `DEEPGRAM_MODEL` pins any explicit model; otherwise the pinned default is `nova-3`. The live model catalog is consulted only when `DEEPGRAM_ALLOW_MODEL_UPGRADE` is set to a truthy value (`1`/`true`/`yes`/`on`), in which case the newest released general batch Nova family is requested (streaming-only Flux, retired and medical-specific models are excluded). An upgrade is never implicit; if the catalog is unavailable the request falls back to `nova-3`. The actual ASR architecture/revision and diarizer architecture are retained as provenance in the transcript (`model`, `modelRevision`, `diarizationModel`).
 
 Official documentation read on 2026-10-03:
 

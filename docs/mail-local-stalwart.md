@@ -64,7 +64,10 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8480/healthz/live
   Server URL: `ROX_MAIL_SERVER_URL`, or the form in the Почта status panel
   (stored in `~/.rox/mail/config.json` under the app config dir). Plain http is
   accepted only for loopback. `ROX_MAIL_HANDLE` overrides the handle (tests).
-* Mailbox handle: rox.one account email/name → profile email/display name → `mark`.
+* Mailbox handle: automatically derived from the displayed name (transliterated
+  to `[a-z0-9._-]`, reserved names and 3–32 char limits respected), then the
+  rox.one account name/email, then the profile email, then `mark` as a last
+  resort. `ROX_MAIL_HANDLE` overrides the whole chain (tests/ops).
   Stalwart account description `rox:<uuid>` marks the owner; a mailbox owned by someone
   else is never adopted (next free `handle2`, `handle3`, …).
 

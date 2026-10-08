@@ -259,3 +259,53 @@ bun test \
 - **A13 («Устройство») — живая проверка:** chip `Открыть диагностику устройства` (x=1205, y=20, 32×28) → поповер «Диагностика устройства · Это устройство · только чтение» с секциями Обзор/Сеть/Процессы/Серверы/Автозапуск/Журналы и живыми метриками (CPU 100 %, RAM 63,8 ГиБ из 64, Rox 245 МиБ, аптайм 6 мин, автообновление 5 с) — OCR conf 1.00, снимок `live/rox-live-device-popover.png`.
 - **Пост-merge гейты и финал:** на `e205e5b89` (47 файлов): **221 pass / 1 skip / 4 fail** — предсуществующие `chrome-leftover-post-960` ×1, `zen-shell-splitter` ×1, `workspace-history-switch` ×1 + флейк `daytona-provider` ×1 (изолированно зелёный). Финальный `origin/main` — **`78cc32c26`** (merge PR #1600 «fix/rox-post-rebuild-red-suite»: правит `AppShell.tsx` + 5 тестовых файлов; логику рейлов/инспектора не трогает); на нём: контроль всех ранее красных файлов (5 шт.) → **28 pass / 1 skip / 0 fail** (`/tmp/e01-gate-final.log`), документированный 10-файловый гейт → **75 pass / 1 skip / 0 fail** (`/tmp/e01-gate-doc10-final.log`), `bun scripts/sort-locales.ts --check` → EXIT=0, `check-i18n-parity` → `11 locales, 9330 keys each`. Полный 47-файловый набор собирался инлайн и его состав в артефактах не сохранился — строка «47 файлов» относится к `e205e5b89`; все известные красные на `78cc32c26` позеленели.
 - **Готчи повторных прогонов**: (1) первый boot после пересборки ~3 мин уходит в uv-сборку `pydantic-core`/`mcp-server-qdrant` (maturin; виден в `app.log`, не фатально); (2) `rox-wait7.ts` жёстко писал ws в `/tmp/rox-ws.txt` и не получал порт — пофикшено (`rox-wait7.ts` пишет в `wsOut`; `live-g02.sh` передаёт `"$PORT" "$WSFILE"` и ждёт 300 с); (3) модалка «Научите агента своим правилам» блокирует hit-тесты — первым шагом `rox-dismiss.ts`; (4) инстанс может молча завершиться после прогона (креш-репорта нет; приёмка снимается до этого); (5) на загруженной машине shell маунтится позже 300 с (сегодня: renderer-таргет ~60 с, ссылки — спустя ~1 мин после таймаута wait7; повторный probe безвреден).
+
+---
+
+## Волна 2026-10-08 10:40 — второй запрос пользователя (UI-полировка, бренд, транскрибация)
+
+**Источник:** запрос пользователя 2026-10-08 10:40:36 (правки UI) + 10:44:21 (запись/транскрибация); 5 скриншотов 13:20–13:28; 2 бренд-ассета (полный логотип ink-white; глаз-1024 как «что не нравится»).
+**Ветка:** `feat/ui-polish-20261008` от `origin/main 51abb24782e4709dc40809e25b592f2d35720d1e` (worktree `~/Projects/archive/rox-reconcile-20261008`).
+**Политика та же:** ни force-push, ни rebase; коммиты только по своим путям; мердж — merge-коммитом в `main` после CI.
+
+### Решения по бренду (пиксельная экспертиза без vision — Pillow/ASCII)
+
+- `logo-ink-white.png` (3558×3799) == `rox-avatar-ink-white.png` (959×1024) — один и тот же арт («девушка»); ink-white = **белые** штрихи (mean RGB 255) для тёмных поверхностей.
+- `rox-avatar-ink-black.png` (959×1024, mean 0,0,0) — тот же арт чёрным, для светлых поверхностей. Оба файла в `apps/electron/src/renderer/assets/` (были untracked — легализуются в этом батче).
+- `rox-logo.png` (512×512, mean 140) == `eye-1024-rounded.png` — это и есть «глаз»; `rox-logo.svg` встраивает ту же картинку base64 (256×256). Оба выводятся из обращения.
+- `rox-mark-portrait-{18,36,54}.png` (mean ~121) — старые тилевые марки ModeBar; заменяются тем же ink-артом.
+- `assets/provider-icons/rox.svg` (32×32, плитка `#0A377B` + белая «R» + розовая точка) — это «буковка r» в подключениях; заменяется на логотип.
+- **Интерфейс батча (заморожено):** `CraftAgentsSymbol` становится theme-aware сам (пара ink-black/ink-white, потребители снимают `dark:invert`); новые ключи i18n — только через манифесты `work/i18n/<Worker>.json` (`{"key": {"en","ru"}}`), 12 локалей мержит лид; новый проп TopBar — `onOpenBrowserTab: () => void`; новый компонент — `components/app-shell/InspectorInfoMenu.tsx` (`export function InspectorInfoMenu({ className })`).
+
+### Требования и владельцы (файлы не пересекаются)
+
+| # | Требование | Владелец (воркер) | Файлы | Верификация |
+|---|---|---|---|---|
+| W-01 | Топбар: порядок слева `back → forward → toggle sidebar → AccountMenu → DeviceStatusChip`; убрать «Карта»/«Новое окно браузера»/«Терминал»; «Новая вкладка» — самая правая (t(), prop `onOpenBrowserTab`); Help вынесен в `InspectorInfoMenu` | TopbarRework | `TopBar.tsx`, new `InspectorInfoMenu.tsx` | живой OCR топбара; `browser-surface-v2.test.ts` переписан лидом |
+| W-02 | Справка/инфо — в правом рейле НАД «Скрыть инспектор» | RailInfoButton | `platform/InspectorHost.tsx` | живой прогон (порядок нижней группы) |
+| W-03 | «Новая вкладка» = фокус инспектора + свежая вкладка через `createEmbedded` (не `browserPane.create`); i18n `New Tab` в main+tollbar; мёртвый compact-бренч | BrowserTabFlow | `AppShell.tsx`, `BrowserTabStrip.tsx`, `browser-toolbar.tsx`, `main/browser-pane-manager.ts` | живой прогон + статический запрет `create({show:true})` |
+| W-04 | Левый рейл: иконки как справа; шестерёнка ниже стрелки; pin темнее; обводка тоньше | LeftSidebarChrome | `SidebarChrome.tsx`, `LeftSidebar.tsx` | живой прогон (rail-toggle/rail-pin, hover-разворот) |
+| W-05 | Круглая аватарка + имя внизу слева; баланс без «—»; юзер-поповер в нативном стиле (ЛК) | AccountSurfaces | `ProfileStrip.tsx`, `AccountMenu.tsx` (+новый поповер) | живой прогон (поповер, баланс) |
+| W-06 | Аватары/бренд: `CraftAgentsSymbol` theme-aware; `RoxTileMark`; About/splash/onboarding/playground; XP-блок «Недавние начисления» не столбиком; уровень виден | BrandAssets | `icons/CraftAgentsSymbol.tsx`, `icons/RoxTileMark.tsx`, `SplashScreen.tsx`, onboarding×4, `PlaygroundApp.tsx`, `registry/icons.tsx`, `AccountSettingsPage.tsx` | живой OCR; `titlebar-mode-pill.test.ts` ассерт обновлён |
+| W-07 | Пустой стейт/панель новой сессии: RU-текст (taglines, QuickStart, CloneFromUrl), новый марк, без `dark:invert` | ChatEntryPolish | `EmptyChatWelcome.tsx`, `ProjectHub.tsx`, `QuickStartDialog.tsx`, `CloneFromUrlDialog.tsx`, `hub-taglines.ts`, поверхность новой сессии | живой OCR пустого чата |
+| W-08 | Кнопка облака над чатом: поднять и закрепить | CloudChip | `InputContainer.tsx`, `CloudRunsChip.tsx`, `ChatInputZone.tsx` | живой прогон (позиция/sticky) |
+| W-09 | Sessions: браузер не открывается сам; причина — навигация/дефолты инспектора | SessionsDefaultBrowser | `NavigationContext.tsx` + nav-тест | живой прогон: вход в Sessions инспектор закрыт |
+| W-10 | Подключения: человекочитаемые названия; логотип вместо «R» | ConnectionsSurface | `connections-overview.tsx`, `AccountsSettingsPage.tsx`, `lib/provider-icons.ts`, `provider-icons/rox.svg` | живой OCR карточек подключений |
+| W-11 | Разрешения: обрезка кнопки (settings-row/stacking) + скачки шрифтов (Suspense/font-display) | PermissionsPolish | `PermissionsSettingsPage.tsx`, `MainContentPanel.tsx`, `ThemeContext.tsx`, (`packages/ui/src/styles/index.css` при нужде) | живой прогон узкой панели |
+| W-12 | Удаление мёртвых модулей | DeadModules | `platform/SurfaceNavigationRail.tsx`, `platform/WorkspaceIconRail.tsx` (+только их тесты) | grep 0 ссылок |
+| W-13 | Раскладка панелей в заметках/задачах/календаре | (лид после LayoutPanelsRecon) | TBD по разведке | живой прогон переключателя |
+| W-14 | Раскладка i18n: мерж манифестов, `sort-locales`, parity | лид | `packages/shared/src/i18n/locales/*` | `sort-locales --check` + `check-i18n-parity` EXIT=0 |
+| W-15 | Тесты-контракты: переписать `browser-surface-v2.test.ts` под новый топбар; удалить/переписать stale (`compact-session-list-filter.test.ts:16`, решить `right-session-shell.test.ts`) | лид | тест-файлы | прогон затронутых |
+
+### Фаза 2 — запись и транскрибация (запрос 10:44:21), отдельный DoD
+
+Требования пользователя: автозапись и транскрибация встреч; транскрибация любых аудиосообщений; live-волна громкости в диалоге + мини-оверлей при сворачивании; транскрипт → в чат/в драфт новой сессии по хоткею; папка «Мои транскрипты» в заметках; Deepgram Nova 3, авто-язык, абзацы/пунктуация.
+
+- Разведка: `TranscribeRecon` (read-only) — карта meetings/voice/audio/notes/hotkeys/secrets + варианты архитектуры.
+- DoD (черновик, уточняется по разведке): (1) запись встречи стартует из UI, аудио сохраняется детерминированно; (2) STT-сервис Deepgram Nova 3 с авто-языком и абзацами/пунктуацией (ключ — из per-user секретов); (3) транскрипт доступен в UI встречи и как заметка в «Мои транскрипты»; (4) аудиосообщение в чате транскрибируется; (5) live-уровень громкости в диалоге записи и мини-оверлей при сворачивании; (6) хоткей вставляет транскрипт в чат/драфт новой сессии; (7) негативные сценарии (нет ключа/нет сети/отмена) не роняют приложение.
+
+### Верификация волны (план)
+
+1. `bun test` по затронутым путям → `bun run typecheck:all` → `validate:ci` (эталон i18n parity после мержа манифестов).
+2. `bun run electron:dist:mac` → живой инстанс (свой порт + `--user-data-dir`) → OCR целевых экранов (топбар, рейл, сессии, подключения, разрешения, XP, пустой чат) → скриншоты.
+3. PR `feat/ui-polish-20261008` → CI → merge-коммит в `main` (без `--admin`) → post-merge проверка и отчёт (RU).
