@@ -61,6 +61,9 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'diff':
     case 'terminal':
       return navState.details !== null
+    case 'entity':
+      // Entity routes always address a detail surface.
+      return true
     default: {
       const _exhaustive: never = navState
       return false

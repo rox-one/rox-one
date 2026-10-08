@@ -26,6 +26,8 @@ import type {
 } from './types'
 import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registry'
 import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
+import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
+import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
 
 // =============================================================================
 // Route Types
@@ -49,6 +51,8 @@ export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'searc
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
   | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
+  // Kind-first entity routes (W1-01) that legacy branches do not own.
+  | 'entity'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -65,6 +69,8 @@ export interface ParsedCompoundRoute {
   screen?: ExtraScreenId
   /** Sessions presentation mode (only for sessions navigator). 'board' = Kanban; 'table' = dense collection. */
   viewMode?: 'list' | 'board' | 'table' | 'heatmap'
+  /** Parsed entity reference (only for the `entity` navigator). */
+  entityRef?: EntityRef
   /**
    * Details page info (null for empty state).
    * W1 surface navigators reuse this shape: `id` is the entity id (runId /
@@ -86,6 +92,9 @@ export interface ParsedCompoundRoute {
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
   'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
+  // Kind-first entity surfaces (W1-01). Shared with the deep-link handler so
+  // `rox://docs/wiki/{id}` etc. reach the renderer parser.
+  'docs', 'messenger', 'calendar', 'goals', 'contacts', 'workflows', 'base', 'forms', 'comments',
   ...EXTRA_SCREEN_IDS,
 ]
 
@@ -126,6 +135,19 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   if (!segments) return null
 
   const first = segments[0]
+
+  // Kind-first entity routes (W1-01). Tried before the legacy branches so the
+  // new shapes win for shared prefixes (tasks/list, projects/milestone, …); a
+  // non-match falls through and legacy parsing keeps owning its own routes.
+  const entity = parseEntityRoute(route)
+  if (entity) {
+    return {
+      navigator: 'entity',
+      details: { type: 'entity', id: formatEntityRef(entity.ref) },
+      entityRef: entity.ref,
+    }
+  }
+
   if (first === 'search') {
     if (segments.length !== 1) return null
     return {
@@ -549,6 +571,10 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
  * Build a compound route string from parsed state
  */
 export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
+  if (parsed.navigator === 'entity') {
+    return parsed.entityRef ? entityRoute(parsed.entityRef) : parsed.details?.id ?? 'home'
+  }
+
   if (parsed.navigator === 'search') {
     const query = parsed.query
     return query ? `search?${new URLSearchParams({ q: query }).toString()}` : 'search'
@@ -771,7 +797,7 @@ export function parseRoute(route: string): ParsedRoute | null {
  * Convert a parsed compound route to ParsedRoute format (type: 'view')
  */
 function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute {
-  if (['knowledge', 'cloud-run', 'extension', 'diff', 'terminal'].includes(compound.navigator)) {
+  if (['knowledge', 'cloud-run', 'extension', 'diff', 'terminal', 'entity'].includes(compound.navigator)) {
     return {
       type: 'view',
       name: compound.navigator,
@@ -1003,7 +1029,7 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
   const rightSidebar = parseRightSidebarParam(sidebarParam)
   if (rightSidebar) unavailable.rightSidebar = rightSidebar
   try {
-    if (route.includes('#') || /[\u0000-\u001f\u007f]/.test(route)) return unavailable
+    if ((route.includes('#') && !isEntityCompoundRoute(route)) || /[\u0000-\u001f\u007f]/.test(route)) return unavailable
     // Some legacy routes retain encoded slugs, but malformed encoding is never
     // a valid entity address, even when that parser branch does not decode it.
     const path = route.split('?')[0]
@@ -1056,6 +1082,10 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
  * Convert a ParsedCompoundRoute to NavigationState
  */
 function convertCompoundToNavigationState(compound: ParsedCompoundRoute): NavigationState {
+  if (compound.navigator === 'entity' && compound.entityRef) {
+    return { navigator: 'entity', route: entityRoute(compound.entityRef), ref: compound.entityRef, details: null }
+  }
+
   if (compound.navigator === 'search') {
     return { navigator: 'search', query: compound.query ?? '' }
   }
@@ -1302,6 +1332,12 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
   }
 
   switch (parsed.name) {
+    case 'entity': {
+      if (!parsed.id) return null
+      const result = parseEntityRef(parsed.id)
+      if (!result.ok) return null
+      return { navigator: 'entity', route: entityRoute(result.value), ref: result.value, details: null }
+    }
     case 'settings':
       return { navigator: 'settings', subpage: null }
     case 'workspace':
@@ -1512,6 +1548,14 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
  * Convert NavigationState to ParsedCompoundRoute
  */
 function navigationStateToCompoundRoute(state: Exclude<NavigationState, UnavailableNavigationState>): ParsedCompoundRoute {
+  if (state.navigator === 'entity') {
+    return {
+      navigator: 'entity',
+      entityRef: state.ref,
+      details: { type: 'entity', id: formatEntityRef(state.ref) },
+    }
+  }
+
   if (state.navigator === 'search') {
     return { navigator: 'search', query: state.query, details: null }
   }
@@ -1719,6 +1763,9 @@ export function degradeSurfaceNavigationState(state: NavigationState): Navigatio
       return { navigator: 'sessions', filter: { kind: 'allSessions' }, details: null }
     case 'extension':
       return { navigator: 'settings', subpage: null }
+    // Kind-first entity routes have no pre-W1 antecedent; preserve identity.
+    case 'entity':
+      return state
     default:
       return state
   }

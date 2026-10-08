@@ -19,6 +19,7 @@ import type { SettingsSubpage } from './settings-registry'
 import type { PermissionMode } from '@rox/shared/agent/mode-types'
 import type { KnowledgeRefKind } from './types'
 import { buildExtraScreenRoute, type ExtraScreenId } from './extra-screens'
+import { entityRoute } from '@rox/core/entities'
 
 // Helper to build query strings from params
 function toQueryString(params?: Record<string, string | undefined>): string {
@@ -295,6 +296,108 @@ export const routes = {
     /** Local terminal surface — `terminal/{terminalId}` */
     terminal: (terminalId: string) =>
       `terminal/${encodeURIComponent(terminalId)}` as const,
+
+    // ----------------------------------------------------------------
+    // Kind-first entity routes (W1-01). Built through the shared
+    // `@rox/core/entities` `entityRoute` so the parser round-trips exactly.
+    // ----------------------------------------------------------------
+
+    /** Docs file surface — `docs/file/{id}` */
+    entityFile: (id: string) => entityRoute({ kind: 'file', id }),
+    /** Docs folder — `docs/folder/{id}` */
+    entityFolder: (id: string) => entityRoute({ kind: 'folder', id }),
+    /** Docs file link — `docs/link/{id}` (drive-link) */
+    entityDriveLink: (id: string) => entityRoute({ kind: 'drive-link', id }),
+    /** Wiki space — `docs/wiki/{id}[/{fragment}]` */
+    entityWikiSpace: (id: string, fragment?: string) =>
+      entityRoute({ kind: 'wiki-space', id, ...(fragment ? { fragment } : {}) }),
+
+    /** Messenger channel — `messenger/{id}` */
+    entityChannel: (id: string) => entityRoute({ kind: 'channel', id }),
+    /** Messenger channel message — `messenger/{id}?seq={seq}` */
+    entityChannelMessage: (channelId: string, seq: string) =>
+      entityRoute({ kind: 'channel-message', id: channelId, fragment: seq }),
+
+    /** Calendar event — `calendar/event/{id}` */
+    entityCalendarEvent: (id: string) => entityRoute({ kind: 'calendar-event', id }),
+    /** Calendar reminder — `calendar/reminder/{id}` */
+    entityReminder: (id: string) => entityRoute({ kind: 'reminder', id }),
+    /** Calendar — `calendar/cal/{id}` */
+    entityCalendar: (id: string) => entityRoute({ kind: 'calendar', id }),
+    /** Meeting room — `calendar/room/{id}` */
+    entityRoom: (id: string) => entityRoute({ kind: 'room', id }),
+
+    /** Goal — `goals/goal/{id}` */
+    entityGoal: (id: string) => entityRoute({ kind: 'goal', id }),
+    /** Goal key result — `goals/goal/{id}#t-{fragment}` */
+    entityGoalTarget: (goalId: string, target: string) =>
+      entityRoute({ kind: 'goal-target', id: goalId, fragment: target }),
+    /** Goal check — `goals/goal/{id}#k-{fragment}` */
+    entityGoalCheck: (goalId: string, check: string) =>
+      entityRoute({ kind: 'goal-check', id: goalId, fragment: check }),
+    /** Goal check-in — `goals/check-in/{id}` */
+    entityCheckIn: (id: string) => entityRoute({ kind: 'check-in', id }),
+    /** Goal review — `goals/review/{id}` */
+    entityReview: (id: string) => entityRoute({ kind: 'review', id }),
+    /** OKR cycle — `goals/okrs?cycle={id}` */
+    entityOkrCycle: (id: string) => entityRoute({ kind: 'okr-cycle', id }),
+    /** Goal space — `goals/space/{id}` */
+    entitySpace: (id: string) => entityRoute({ kind: 'space', id }),
+    /** KPI inside a space — `goals/space/{id}/kpis[/{fragment}]` */
+    entityKpi: (spaceId: string, fragment?: string) =>
+      entityRoute({ kind: 'kpi', id: spaceId, ...(fragment ? { fragment } : {}) }),
+    /** KPI entry — `goals/kpis/{id}` */
+    entityKpiEntry: (id: string) => entityRoute({ kind: 'kpi-entry', id }),
+    /** Project template — `goals/templates/{id}` */
+    entityProjectTemplate: (id: string) => entityRoute({ kind: 'project-template', id }),
+
+    /** CRM company — `contacts/company/{id}` */
+    entityCompany: (id: string) => entityRoute({ kind: 'crm-company', id }),
+    /** Person — `contacts/person/{id}` */
+    entityPerson: (id: string) => entityRoute({ kind: 'person', id }),
+    /** Department — `contacts/department/{id}` */
+    entityDepartment: (id: string) => entityRoute({ kind: 'department', id }),
+    /** Invitation — `contacts/invitations/{id}` */
+    entityInvitation: (id: string) => entityRoute({ kind: 'invitation', id }),
+
+    /** Workflow — `workflows/{id}` */
+    entityWorkflow: (id: string) => entityRoute({ kind: 'workflow', id }),
+    /** Workflow run — `workflows/run/{id}` */
+    entityWorkflowRun: (id: string) => entityRoute({ kind: 'workflow-run', id }),
+
+    /** Base — `base/{id}` */
+    entityBase: (id: string) => entityRoute({ kind: 'base', id }),
+    /** Base table — `base/{id}/{table}` */
+    entityBaseTable: (id: string, table: string) =>
+      entityRoute({ kind: 'base-table', id, fragment: table }),
+    /** Base view — `base/{id}/{table}/{view}` */
+    entityBaseView: (id: string, table: string, view: string) =>
+      entityRoute({ kind: 'base-view', id, fragment: `${table}/${view}` }),
+    /** Base record — `base/{id}/{table}/{view}?record={record}` */
+    entityBaseRecord: (id: string, table: string, view: string, record: string) =>
+      entityRoute({ kind: 'base-record', id, fragment: `${table}/${view}/${record}` }),
+
+    /** Form — `forms/{id}` */
+    entityForm: (id: string) => entityRoute({ kind: 'form', id }),
+    /** Comment — `comments/{id}` */
+    entityComment: (id: string) => entityRoute({ kind: 'comment', id }),
+
+    /** Task list — `tasks/list/{id}` */
+    entityTaskList: (id: string) => entityRoute({ kind: 'task-list', id }),
+    /** Task list section — `tasks/list/{id}?section={fragment}` */
+    entityTaskSection: (listId: string, section: string) =>
+      entityRoute({ kind: 'task-section', id: listId, fragment: section }),
+    /** Task list group — `tasks/group/{id}` */
+    entityTaskListGroup: (id: string) => entityRoute({ kind: 'task-list-group', id }),
+
+    /** Project milestone — `projects/milestone/{id}` */
+    entityMilestone: (id: string) => entityRoute({ kind: 'milestone', id }),
+
+    /** License component — `settings/licences/{id}` */
+    entityLicenseComponent: (id: string) => entityRoute({ kind: 'license-component', id }),
+
+    /** Installed app — `home/apps/{id}` */
+    entityApp: (id: string) => entityRoute({ kind: 'app', id }),
   },
 } as const
 
