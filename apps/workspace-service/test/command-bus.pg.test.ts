@@ -26,7 +26,7 @@ import type { CommandReceipt } from '../../../packages/core/src/commands/index.t
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../src/server.ts'
 import { migrationFromSource } from '../src/database/migrations.ts'
 import { loadProtectedWorkspaceDatabaseUrl } from '../src/auth/postgres-identity.ts'
-import { commandLockKeys } from '../src/modules/commands/store.ts'
+import { PostgresCommandStore, commandLockKeys, isPostgresDataError, isTransientPostgresError } from '../src/modules/commands/store.ts'
 import { someErrorInChain } from '../../../packages/server-core/src/commands/store.ts'
 
 const configPath = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
@@ -54,6 +54,14 @@ function registry() {
     // The database drops this connection mid-transaction (57P01 / connection closed).
     if (flaky.terminateNext > 0) { flaky.terminateNext -= 1; await sql.unsafe('SELECT pg_terminate_backend(pg_backend_pid())') }
     return { revision: flaky.calls, events: [{ type: 'task.task_status_change' }] }
+  })
+  r.define({ type: 'test.timeout', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.bind('test.timeout', async ctx => {
+    // A real statement_timeout cancel (SQLSTATE 57014) inside the command transaction.
+    const { sql } = ctx.transaction as { sql: SQL }
+    await sql.unsafe(`SET LOCAL statement_timeout = '50ms'`)
+    await sql.unsafe('SELECT pg_sleep(2)')
+    return { revision: 1, events: [{ type: 'task.task_status_change' }] }
   })
   r.define({ type: 'test.flagged', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, flag: 'test.module.v1' })
   r.bind('test.flagged', async () => ({ revision: 1, result: { ok: true } }))
@@ -335,6 +343,20 @@ describe.skipIf(!hasDatabase)('W1-03 review 1 regressions on PostgreSQL', () => 
     // Direct view of the HTTP answer for the same failure.
     flaky.terminateNext = 1
     expect(await f.http(f.commandsPath, token, { ...f.ping(), type: 'test.flaky' })).toEqual({ status: 503, body: { error: { code: 'SERVICE_UNAVAILABLE' } } })
+  }, 30_000)
+
+  test('a real statement_timeout (57014) → 503, nothing committed; a real data error in a lookup is classified as data', async () => {
+    const f = await fixture()
+    const token = await f.token(f.owner.login)
+    expect(await f.http(f.commandsPath, token, { ...f.ping(), type: 'test.timeout' })).toEqual({ status: 503, body: { error: { code: 'SERVICE_UNAVAILABLE' } } })
+    expect(await f.counts()).toEqual({ receipts: 0, events: 0 })
+    const store = new PostgresCommandStore(f.database, f.schema)
+    const lookup = await store.findReceipt('not-a-uuid', 'k', 'c').catch(error => error)
+    // workspace_id is a uuid column: 22P02 (invalid text representation) is deterministic.
+    expect(lookup).toBeInstanceOf(Error)
+    expect(isPostgresDataError(lookup)).toBe(true)
+    expect(store.isDataError(lookup)).toBe(true)
+    expect(isTransientPostgresError(lookup)).toBe(false)
   }, 30_000)
 
   test('lost ack, then the module flag flips off → the retry is a duplicate', async () => {

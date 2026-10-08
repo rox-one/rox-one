@@ -72,20 +72,61 @@ export function commandLockKeys(schema: string, workspaceId: string, idempotency
   return [...new Set([idempotencyKey, commandId])].sort().map(value => JSON.stringify(['command-key', schema, workspaceId, value]))
 }
 
-const TRANSIENT_SQLSTATE = /^(08|40|53|57P0[1-3]|55P03|58)/
-const TRANSIENT_DRIVER = /^(ERR_POSTGRES_(CONNECTION_CLOSED|CONNECTION_TIMEOUT|IDLE_TIMEOUT|LIFETIME_TIMEOUT|TLS_.*)|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|EHOSTUNREACH|ENETUNREACH|ConnectionClosed)$/
+/**
+ * SQLSTATEs worth retrying: connection exceptions (08), transaction rollback
+ * (40000), serialization failure / deadlock / statement completion unknown
+ * (40001 / 40P01 / 40003; not 40002, a deferred constraint violation),
+ * insufficient resources (53), query cancelled by statement_timeout /
+ * lock_timeout (57014), admin / crash shutdown (57P01-03), lock not available
+ * (55P03), system / I/O errors (58000 / 58030) and authentication failures
+ * during credential rotation (28000 / 28P01).
+ */
+const TRANSIENT_SQLSTATE = /^(08...|4000[013]|40P01|53...|57014|57P0[1-3]|55P03|58000|58030|28000|28P01)$/
+/**
+ * Bun 1.4.x `PostgresError.code`s for connection-class failures, taken from the
+ * driver itself (bun.exe string table + bun-types docs/runtime/sql.mdx):
+ * CONNECTION_REFUSED / _FAILED / _CLOSED / _TIMEOUT, IDLE_ / LIFETIME_TIMEOUT,
+ * TLS_NOT_AVAILABLE / TLS_UPGRADE_FAILED, QUERY_CANCELLED and the SCRAM
+ * password failure (AUTHENTICATION_FAILED_PBKDF2, the driver-side 28P01).
+ * Plus Node-style socket errnos for other drivers.
+ */
+export const TRANSIENT_POSTGRES_DRIVER_CODES = Object.freeze([
+  'ERR_POSTGRES_CONNECTION_REFUSED',
+  'ERR_POSTGRES_CONNECTION_FAILED',
+  'ERR_POSTGRES_CONNECTION_CLOSED',
+  'ERR_POSTGRES_CONNECTION_TIMEOUT',
+  'ERR_POSTGRES_IDLE_TIMEOUT',
+  'ERR_POSTGRES_LIFETIME_TIMEOUT',
+  'ERR_POSTGRES_TLS_NOT_AVAILABLE',
+  'ERR_POSTGRES_TLS_UPGRADE_FAILED',
+  'ERR_POSTGRES_QUERY_CANCELLED',
+  'ERR_POSTGRES_AUTHENTICATION_FAILED_PBKDF2',
+] as const)
+const TRANSIENT_DRIVER = /^(ERR_POSTGRES_(CONNECTION_[A-Z_]+|IDLE_TIMEOUT|LIFETIME_TIMEOUT|TLS_[A-Z_]+|QUERY_CANCELLED|AUTHENTICATION_FAILED_PBKDF2)|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|EHOSTUNREACH|ENETUNREACH|ENOTFOUND|EAI_AGAIN|ConnectionClosed)$/
+/** Deterministic data errors: SQLSTATE class 22 and the driver's encoding / binding errors. */
+const DATA_DRIVER = /^ERR_POSTGRES_(INVALID_BYTE_SEQUENCE(_FOR_ENCODING)?|INVALID_CHARACTER|INVALID_BINARY_DATA|OVERFLOW|UNSUPPORTED_[A-Z_]+_FORMAT|UNSUPPORTED_INTEGER_SIZE|INVALID_QUERY_BINDING|TOO_MANY_PARAMETERS|MULTIDIMENSIONAL_ARRAY_NOT_SUPPORTED_YET|NULLS_IN_ARRAY_NOT_SUPPORTED_YET)$/
 
 /**
- * Transient Postgres failures (nothing committed, safe to retry): connection
- * exceptions (08), transaction rollbacks incl. serialization failure and
- * deadlock (40001 / 40P01), insufficient resources (53), admin shutdown
- * (57P01-03), lock timeout (55P03), system errors (58), and driver-level
- * connection loss / timeouts — on the error or anywhere in its `cause` chain.
+ * Transient Postgres failures (nothing committed, safe to retry): the
+ * SQLSTATEs in `TRANSIENT_SQLSTATE` and the Bun driver connection-class codes
+ * in `TRANSIENT_POSTGRES_DRIVER_CODES` (refused / failed / closed / timed-out
+ * connections, TLS, cancelled queries) — on the error or anywhere in its
+ * `cause` chain.
  * Everything else (22xxx data errors, 23xxx constraints, 25P02, 42xxx) is
  * deterministic and becomes a terminal INTERNAL receipt.
  */
 export function isTransientPostgresError(error: unknown): boolean {
   return someErrorInChain(error, isTransientPostgresErrorOnly)
+}
+
+/** Postgres data error (class 22 / driver encoding, overflow, binding) on the error or its causes. */
+export function isPostgresDataError(error: unknown): boolean {
+  return someErrorInChain(error, candidate => {
+    const record = candidate as { errno?: unknown; code?: unknown; sqlState?: unknown } | null
+    if (!record || typeof record !== 'object') return false
+    return [record.errno, record.sqlState, record.code].some(value =>
+      typeof value === 'string' && ((/^[0-9A-Z]{5}$/.test(value) && value.startsWith('22')) || DATA_DRIVER.test(value)))
+  })
 }
 
 function isTransientPostgresErrorOnly(error: unknown): boolean {
@@ -163,6 +204,10 @@ export class PostgresCommandStore implements CommandStore {
 
   isTransientError(error: unknown): boolean {
     return isTransientPostgresError(error)
+  }
+
+  isDataError(error: unknown): boolean {
+    return isPostgresDataError(error)
   }
 
   async latestSequences(): Promise<Map<string, number>> {

@@ -62,13 +62,20 @@ export interface RealtimeClientContext {
   isCurrent?: () => boolean
 }
 
+/** Last delivered position per topic; `epoch` is the log epoch that `lastSeq` belongs to. */
+interface TopicState {
+  lastSeq: number
+  epoch: string
+  aclCheckedAt?: number
+}
+
 interface Subscription {
   workspaceId: string
   principalId: string
   deviceKey: string | undefined
   /** The client asked for server-side resume (`resume: true`): only then are cursors persisted. */
   resume: boolean
-  topics: Map<string, { lastSeq: number; aclCheckedAt?: number }>
+  topics: Map<string, TopicState>
   /** Per-client delivery chain: frames leave in seq order. */
   chain: Promise<void>
 }
@@ -86,6 +93,12 @@ export interface RealtimeGatewayOptions {
   revalidationCacheMs?: number
   now?: () => number
   onError?: (error: unknown) => void
+  /**
+   * Whether an authorizer failure is a transient infrastructure error (the
+   * store's classifier). Such a subscribe answers `unavailable` (retry), not
+   * `forbidden`. Without it every authorizer throw is a denial.
+   */
+  isTransientError?: (error: unknown) => boolean
 }
 
 export class RealtimeGateway {
@@ -119,12 +132,21 @@ export class RealtimeGateway {
     const principal = { principalId: ctx.principalId, workspaceId: ctx.workspaceId }
     const results: RealtimeSubscribeTopicResult[] = []
     for (const item of request.topics) {
-      const epoch = this.options.bus.epoch
+      const epoch = this.options.bus.epochOf(ctx.workspaceId)
       const parsed = parseTopic(item.topic)
       if (!parsed) { results.push({ topic: item.topic, status: 'invalid', seq: 0, epoch }); continue }
       const topic = item.topic
       let allowed = false
-      try { allowed = (await this.options.authorizer.canReadTopic(principal, topicAclTarget(parsed))) === true } catch { allowed = false }
+      try {
+        allowed = (await this.options.authorizer.canReadTopic(principal, topicAclTarget(parsed))) === true
+      } catch (error) {
+        if (this.isTransient(error)) {
+          this.options.onError?.(error)
+          results.push({ topic, status: 'unavailable', seq: 0, epoch })
+          continue
+        }
+        allowed = false
+      }
       if (!allowed) { results.push({ topic, status: 'forbidden', seq: 0, epoch }); continue }
 
       let since = item.sinceSeq
@@ -145,12 +167,13 @@ export class RealtimeGateway {
       }
       if (since === undefined) {
         const seq = this.options.bus.latest(ctx.workspaceId, topic)
-        sub.topics.set(topic, { lastSeq: seq })
-        results.push({ topic, status: 'subscribed', seq, epoch })
+        const current = this.options.bus.epochOf(ctx.workspaceId)
+        sub.topics.set(topic, { lastSeq: seq, epoch: current })
+        results.push({ topic, status: 'subscribed', seq, epoch: current })
         continue
       }
       const replay = this.options.bus.replay(ctx.workspaceId, topic, since, sinceEpoch)
-      sub.topics.set(topic, { lastSeq: replay.latestSeq })
+      sub.topics.set(topic, { lastSeq: replay.latestSeq, epoch: replay.epoch })
       if (replay.kind === 'snapshot_required') {
         results.push({ topic, status: 'snapshot_required', seq: replay.latestSeq, epoch: replay.epoch })
       } else if (replay.kind === 'events') {
@@ -173,7 +196,7 @@ export class RealtimeGateway {
       if (!state) continue
       sub.topics.delete(topic)
       removed.push(topic)
-      await this.saveCursor(sub, topic, state.lastSeq)
+      await this.saveCursor(sub, topic, state)
     }
     if (sub.topics.size === 0) this.clients.delete(ctx.clientId)
     return { topics: removed }
@@ -206,7 +229,11 @@ export class RealtimeGateway {
           else delete state.aclCheckedAt
           return allowed
         }, this.cacheMs > 0 ? { reuseVerifiedSessionMs: this.cacheMs } : undefined)
-        if (sent) state.lastSeq = Math.max(state.lastSeq, frame.seq)
+        if (sent) {
+          // A recreated workspace log (idle drop) starts a new epoch: its seqs restart.
+          if (state.epoch !== frame.epoch) { state.epoch = frame.epoch; state.lastSeq = frame.seq }
+          else state.lastSeq = Math.max(state.lastSeq, frame.seq)
+        }
         else delete state.aclCheckedAt
       }).catch(error => { this.options.onError?.(error) })
     }
@@ -225,8 +252,7 @@ export class RealtimeGateway {
     const owner = cursorOwner(sub)
     const cursors = this.options.cursors
     if (!sub.resume || !cursors || !owner || sub.topics.size === 0) return
-    const epoch = this.options.bus.epoch
-    const entries = [...sub.topics].map(([topic, state]) => ({ topic, position: { epoch, seq: state.lastSeq } }))
+    const entries = [...sub.topics].map(([topic, state]) => ({ topic, position: { epoch: state.epoch, seq: state.lastSeq } }))
     try {
       if (cursors.saveMany) await cursors.saveMany(owner, entries, this.options.policyEpoch ?? 1)
       else for (const entry of entries) await cursors.save(owner, entry.topic, entry.position, this.options.policyEpoch ?? 1)
@@ -239,11 +265,15 @@ export class RealtimeGateway {
     return this.options.now?.() ?? Date.now()
   }
 
-  private async saveCursor(sub: Subscription, topic: string, seq: number): Promise<void> {
+  private isTransient(error: unknown): boolean {
+    try { return this.options.isTransientError?.(error) === true } catch { return false }
+  }
+
+  private async saveCursor(sub: Subscription, topic: string, state: TopicState): Promise<void> {
     const owner = cursorOwner(sub)
     if (!sub.resume || !this.options.cursors || !owner) return
     try {
-      await this.options.cursors.save(owner, topic, { epoch: this.options.bus.epoch, seq }, this.options.policyEpoch ?? 1)
+      await this.options.cursors.save(owner, topic, { epoch: state.epoch, seq: state.lastSeq }, this.options.policyEpoch ?? 1)
     } catch (error) {
       this.options.onError?.(error)
     }

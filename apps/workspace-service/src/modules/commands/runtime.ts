@@ -57,7 +57,7 @@ export interface WorkspaceCommandBus {
 export function createWorkspaceCommandBus(database: SQL, schema: string, configuration: WorkspaceCommandBusConfiguration): WorkspaceCommandBus {
   const store = configuration.store ?? new PostgresCommandStore(database, schema)
   const authorizer = configuration.authorizer ?? createWorkspaceAuthorizer()
-  const bus = new InProcessEventBus({ ...(configuration.onError ? { onListenerError: configuration.onError } : {}) })
+  const bus = new InProcessEventBus({ ...(configuration.onError ? { onListenerError: configuration.onError, onProjectorError: configuration.onError } : {}) })
   const sinks: DomainEventSink[] = [events => { bus.publish(events) }]
   if (configuration.valkey) sinks.push(valkeyEventSink(configuration.valkey))
   const relay = new DomainEventRelay({ store, sinks, ...(configuration.relayRetryBaseMs ? { retryBaseMs: configuration.relayRetryBaseMs } : {}), ...(configuration.onError ? { onError: configuration.onError } : {}) })
@@ -101,6 +101,7 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
         authorizer,
         ...(cursors ? { cursors } : {}),
         ...(configuration.revalidationCacheMs !== undefined ? { revalidationCacheMs: configuration.revalidationCacheMs } : {}),
+        ...(store.isTransientError ? { isTransientError: (error: unknown) => store.isTransientError!(error) } : {}),
         ...(configuration.onError ? { onError: configuration.onError } : {}),
       })
       registerRealtimeHandlers(server, gateway)

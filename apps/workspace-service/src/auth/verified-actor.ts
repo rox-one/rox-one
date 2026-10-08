@@ -1,4 +1,4 @@
-import { createLocalJWKSet, createRemoteJWKSet, jwtVerify, type JSONWebKeySet } from 'jose';
+import { createLocalJWKSet, createRemoteJWKSet, errors as joseErrors, jwtVerify, type JSONWebKeySet, type JWTVerifyGetKey } from 'jose';
 
 /** Configuration belongs to the server composition root, never to a handshake. */
 export type VerifiedActorConfig = {
@@ -70,6 +70,18 @@ async function io<T>(operation: () => Promise<T>): Promise<T> {
   }
 }
 
+/**
+ * JWKS fetch failures (timeout, network error, non-200, malformed key set)
+ * versus token problems (no / ambiguous matching key, unsupported or
+ * disallowed algorithm, malformed JWS), which stay 401.
+ */
+function isJwksOutage(error: unknown): boolean {
+  if (error instanceof joseErrors.JWKSNoMatchingKey || error instanceof joseErrors.JWKSMultipleMatchingKeys ||
+      error instanceof joseErrors.JOSENotSupported || error instanceof joseErrors.JOSEAlgNotAllowed ||
+      error instanceof joseErrors.JWSInvalid || error instanceof joseErrors.JWTInvalid) return false;
+  return true;
+}
+
 const rethrow = (error: unknown): never => {
   throw error instanceof AuthenticationUnavailableError ? error : new AuthenticationError();
 };
@@ -106,7 +118,14 @@ export function createVerifiedActorResolver<TActor extends object>(
       throw new Error('Configured JWKS endpoint must use HTTPS or explicit loopback HTTP');
     }
     // jose never takes the URL from token jku/x5u headers.
-    getKey = createRemoteJWKSet(url, { timeoutDuration: 5000, cooldownDuration: 30000, cacheMaxAge: 60000 });
+    const remote = createRemoteJWKSet(url, { timeoutDuration: 5000, cooldownDuration: 30000, cacheMaxAge: 60000 });
+    // W1-03 (#1500): an IdP / JWKS outage is not a credential problem.
+    const remoteKey: JWTVerifyGetKey = async (header, token) => {
+      try { return await remote(header, token); } catch (error) {
+        throw isJwksOutage(error) ? new AuthenticationUnavailableError(error) : error;
+      }
+    };
+    getKey = remoteKey;
   }
   const issued = new WeakMap<object, VerifiedSessionIdentity>();
 

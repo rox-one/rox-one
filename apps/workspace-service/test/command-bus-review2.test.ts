@@ -66,7 +66,7 @@ describe('command responses do not wait on fan-out', () => {
 describe('a poison projector', () => {
   test('is reported and skipped: later events are delivered, the watermark advances, nothing is re-sequenced', async () => {
     const store = new InMemoryCommandStore()
-    const projections = new EventProjectionRegistry()
+    const projections = new EventProjectionRegistry({ builtIns: false })
     projections.register('system.pinged', event => {
       if ((event.payload as { poison?: boolean }).poison) throw new Error('projector bug')
       return [{ topic: `user:${event.actorId}`, type: 'system.pinged', payload: {} }]

@@ -8,13 +8,13 @@ import type { AuthenticatedActor } from '../../../../../packages/shared/src/work
 import type { Authorizer, CommandReceipt, CommandRegistry } from '../../../../../packages/core/src/commands/index.ts'
 import type { DomainEvent } from '../../../../../packages/core/src/events/index.ts'
 import { CommandExecutor } from '../../../../../packages/server-core/src/commands/executor.ts'
-import { createCommandRegistry } from '../../../../../packages/server-core/src/commands/registry.ts'
+import { createWiredCommandRegistry } from '../../../../../packages/server-core/src/commands/registry.ts'
 import type { CommandStore } from '../../../../../packages/server-core/src/commands/store.ts'
 import type { WorkspaceCommandHttpAuthority } from './routes.ts'
 
 export interface WorkspaceCommandServiceOptions {
   store: CommandStore
-  /** Defaults to the full catalogue + `system.ping`; module flags off. */
+  /** Defaults to `createWiredCommandRegistry()` (catalogue + every COMMAND_MODULES binding); module flags off. */
   registry?: CommandRegistry
   authorizer?: Authorizer
   /** Post-commit publication (the events relay). */
@@ -27,7 +27,7 @@ export class WorkspaceCommandService implements WorkspaceCommandHttpAuthority {
   readonly registry: CommandRegistry
 
   constructor(options: WorkspaceCommandServiceOptions) {
-    this.registry = options.registry ?? createCommandRegistry()
+    this.registry = options.registry ?? createWiredCommandRegistry()
     this.executor = new CommandExecutor({
       registry: this.registry,
       store: options.store,
