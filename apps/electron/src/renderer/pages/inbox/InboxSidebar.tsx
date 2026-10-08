@@ -145,6 +145,7 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
       <InboxNavGroup id="mail" label={t('inbox.mail.section')} icon={Mail} tone="info" count={counts.byKind.mail} active={inMail}>
         {status?.state === 'ready' && status.address ? (
           <div className="flex min-w-0 items-center gap-1 px-2 pb-1 text-[11px]" data-testid="mail-address">
+            <span className="shrink-0 font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
             <span className="min-w-0 flex-1 select-text truncate text-text-secondary" title={status.address}>{status.address}</span>
             <button type="button" onClick={() => void copyAddress()} className="shrink-0 rounded-md px-1.5 py-1 text-text-muted outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-copy">{t(copied ? 'inbox.mail.copied' : 'inbox.mail.copy')}</button>
           </div>

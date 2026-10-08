@@ -19,7 +19,9 @@ describe('optional local mail setup', () => {
         const status = await service.status()
         expect(status.state).toBe('unreachable')
         expect(status.configured).toBe(setup !== 'default')
-        expect(isOptionalMailSetup(status)).toBe(setup === 'default')
+        // The default server is now the public Rox host (non-loopback), so an
+        // unreachable default is a real failure — never the hidden local pilot.
+        expect(isOptionalMailSetup(status)).toBe(false)
       } finally { rmSync(directory, { recursive: true, force: true }) }
     })
   }
