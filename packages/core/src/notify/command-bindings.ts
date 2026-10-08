@@ -15,7 +15,7 @@
 
 import type { CommandHandlerContext, CommandRegistry, SchemaLike } from '../commands/registry.ts'
 import { CommandRejection } from '../commands/errors.ts'
-import type { NotificationChannel, NotificationKind, NotificationPrefRow } from './types.ts'
+import { isNotificationChannel, isNotificationKind, type NotificationKind, type NotificationPrefRow } from './types.ts'
 import type { NotificationPrefUpdate } from './prefs.ts'
 
 export const NOTIFY_COMMAND_TYPES = [
@@ -86,8 +86,9 @@ export const NOTIFICATIONS_MARK_ALL_READ_SCHEMA: SchemaLike<NotificationsMarkAll
     const keys = Object.keys(value)
     if (keys.some(key => key !== 'kind')) return { success: false, error: new Error('Unknown notifications.mark_all_read field') }
     const kind = value.kind
-    if (kind !== undefined && typeof kind !== 'string') return { success: false, error: new Error('kind must be a notification kind') }
-    return { success: true, data: kind === undefined ? {} : { kind: kind as NotificationKind } }
+    if (kind === undefined) return { success: true, data: {} }
+    if (!isNotificationKind(kind)) return { success: false, error: new Error('kind must be a notification kind') }
+    return { success: true, data: { kind } }
   },
 }
 
@@ -105,19 +106,19 @@ export const NOTIFICATIONS_UPDATE_PREFS_SCHEMA: SchemaLike<NotificationsUpdatePr
       if (Object.keys(row).some(key => !['kind', 'enabled', 'channels', 'batchMinutes'].includes(key))) {
         return { success: false, error: new Error('Unknown notification pref field') }
       }
-      if (typeof row.kind !== 'string' || row.kind.length === 0) return { success: false, error: new Error('pref.kind is required') }
+      if (!isNotificationKind(row.kind)) return { success: false, error: new Error('pref.kind must be a notification kind') }
       if (row.enabled !== undefined && typeof row.enabled !== 'boolean') return { success: false, error: new Error('pref.enabled must be a boolean') }
       if (row.channels !== undefined) {
-        if (!Array.isArray(row.channels) || row.channels.some(channel => typeof channel !== 'string')) {
-          return { success: false, error: new Error('pref.channels must be a list of channel names') }
+        if (!Array.isArray(row.channels) || row.channels.some(channel => !isNotificationChannel(channel))) {
+          return { success: false, error: new Error('pref.channels must be a list of known channel names') }
         }
       }
       if (row.batchMinutes !== undefined && (typeof row.batchMinutes !== 'number' || !Number.isInteger(row.batchMinutes) || row.batchMinutes < 0 || row.batchMinutes > 1440)) {
         return { success: false, error: new Error('pref.batchMinutes must be an integer 0…1440') }
       }
-      const update: NotificationPrefUpdate = { kind: row.kind as NotificationKind }
+      const update: NotificationPrefUpdate = { kind: row.kind }
       if (row.enabled !== undefined) update.enabled = row.enabled
-      if (row.channels !== undefined) update.channels = row.channels as readonly NotificationChannel[]
+      if (row.channels !== undefined) update.channels = row.channels
       if (row.batchMinutes !== undefined) update.batchMinutes = row.batchMinutes
       prefs.push(update)
     }

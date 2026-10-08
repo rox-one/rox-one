@@ -38,7 +38,7 @@ const CONTEXT: AudienceContext = {
 
 const EXPECTED: ReadonlyArray<readonly [NotificationKind, readonly string[]]> = [
   ['mention', ['principal-mentioned']],
-  ['assignment', ['principal-assignee']],
+  ['assignment', ['principal-assignee', 'principal-champion', 'principal-reviewer']],
   ['comment', ['principal-subscriber']],
   ['check_in_due', ['principal-champion']],
   ['check_in_submitted', ['principal-reviewer', 'principal-everyone']],

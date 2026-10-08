@@ -151,7 +151,9 @@ export const NOTIFICATION_KIND_TABLE: readonly NotificationKindDescriptor[] = [
     kind: 'assignment',
     specVersion: 'v1',
     trigger: 'task assignee added; champion/reviewer set; contributor added',
-    audience: ['assignees'],
+    // "assignee / person": whoever the relation points at. An event carries only
+    // the role that changed, so listing all three is exact (not a broadcast).
+    audience: ['assignees', 'champion', 'reviewer'],
     channels: ['inbox', 'os', 'email_digest'],
   },
   {

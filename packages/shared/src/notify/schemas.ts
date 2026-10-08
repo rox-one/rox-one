@@ -111,6 +111,29 @@ export const notificationsUpdatePrefsPayloadSchema = z.strictObject({
   prefs: z.array(notificationPrefUpdateSchema).min(1).max(MAX_PREF_UPDATES),
 })
 
+/** `GET /notifications` response. */
+export const notificationListResultSchema = z.strictObject({
+  notifications: z.array(notificationSchema),
+  nextCursor: idSchema.optional(),
+  unread: z.number().int().nonnegative(),
+})
+
+/** `POST /notifications/read` response. */
+export const notificationReadResultSchema = z.strictObject({
+  updated: z.number().int().nonnegative(),
+  readAt: z.string().min(1).max(64),
+  unread: z.number().int().nonnegative(),
+})
+
+/** `POST /notifications/read` body for a mark-all-read (the command takes only `kind`). */
+export const notificationsMarkAllReadRequestSchema = z.strictObject({
+  all: z.literal(true),
+  kind: notificationKindSchema.optional(),
+})
+
+/** `POST /notifications/read` body: named ids, or `all: true` (with an optional kind filter). */
+export const notificationReadRequestSchema = z.union([notificationsMarkReadPayloadSchema, notificationsMarkAllReadRequestSchema])
+
 /** `GET /notifications` query (`limit` 1…100, opaque uuid cursor — the routing rules). */
 export const notificationListQuerySchema = z.strictObject({
   limit: z.number().int().min(1).max(100).optional(),
@@ -140,6 +163,9 @@ export type NotificationsMarkAllReadPayloadInput = z.infer<typeof notificationsM
 export type NotificationsUpdatePrefsPayloadInput = z.infer<typeof notificationsUpdatePrefsPayloadSchema>
 export type NotificationCreatedPush = z.infer<typeof notificationCreatedPushSchema>
 export type NotificationReadPush = z.infer<typeof notificationReadPushSchema>
+export type NotificationReadRequest = z.infer<typeof notificationReadRequestSchema>
+export type NotificationListResultPayload = z.infer<typeof notificationListResultSchema>
+export type NotificationReadResultPayload = z.infer<typeof notificationReadResultSchema>
 
 /** The schema version a freshly parsed row must carry. */
 export const EXPECTED_NOTIFICATION_SCHEMA_VERSION = NOTIFICATION_SCHEMA_VERSION
