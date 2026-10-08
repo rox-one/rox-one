@@ -997,4 +997,10 @@ export const CHANNEL_MAP = {
   refreshMarketplaceCatalog: invoke(RPC_CHANNELS.marketplace.REFRESH),
   onMarketplaceProgress: listener(RPC_CHANNELS.marketplace.PROGRESS),
   onMarketplaceChanged: listener(RPC_CHANNELS.marketplace.CHANGED),
+
+  // W1-08 (#1505) — renderer bridge for the W1-02 entity links/preview RPCs
+  // (handlers: packages/server-core/src/handlers/rpc/entities.ts).
+  entitiesLinks: invoke(RPC_CHANNELS.entities.LINKS),
+  entitiesResolve: invoke(RPC_CHANNELS.entities.RESOLVE),
+  onEntitiesLinksChanged: listener(RPC_CHANNELS.entities.LINKS_CHANGED),
 } satisfies ChannelMap

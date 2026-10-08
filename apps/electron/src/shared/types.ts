@@ -30,6 +30,9 @@ import type {
   ServerHealth,
 } from '@rox/core/types';
 import type { EntityRef } from '@rox/core/entities'
+// W1-08 (#1505): entity links/preview bridge types.
+import type { EntityLink, EntityPreview } from '@rox/core/entities'
+import type { EntityLinksRequest } from '@rox/shared/entities'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -2484,7 +2487,21 @@ export interface ElectronAPI {
   refreshMarketplaceCatalog(): Promise<MarketplaceCatalogResult>
   onMarketplaceProgress(callback: (payload: MarketplaceProgressPayload) => void): () => void
   onMarketplaceChanged(callback: (payload: MarketplaceChangedPayload) => void): () => void
+
+  // W1-08 (#1505) — entity links / previews (W1-02 RPCs). Inert unless the
+  // server has `entities.links.v1` on (handlers return empty/unavailable).
+  entitiesLinks(workspaceId: string, input: EntityLinksRequest): Promise<EntitiesLinksResultDto>
+  entitiesResolve(workspaceId: string, input: { refs: EntityRef[] }): Promise<EntityPreview[]>
+  onEntitiesLinksChanged(callback: (workspaceId: string) => void): () => void
 }
+
+/** W1-08 (#1505): mirror of server-core `EntitiesLinksResult` (W1-02). */
+export type EntitiesLinksResultDto =
+  | { ok: true; op: 'add'; link: EntityLink }
+  | { ok: true; op: 'remove'; removed: boolean }
+  | { ok: true; op: 'outgoing'; links: EntityLink[] }
+  | { ok: true; op: 'backlinks'; links: EntityLink[]; nextCursor?: string }
+  | { ok: false; reason: 'disabled' }
 
 export interface MessagingPlatformRuntimeInfo {
   platform: string
