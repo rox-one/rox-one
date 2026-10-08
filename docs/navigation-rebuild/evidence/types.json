@@ -1,0 +1,26 @@
+[
+  {
+    "project": "packages/shared",
+    "exit": 0,
+    "started": "2026-10-03T22:34:46.764341+00:00",
+    "ended": "2026-10-03T22:35:37.373923+00:00",
+    "log": "/tmp/rox-navigation-final-types-packages-shared.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "project": "packages/server-core",
+    "exit": 0,
+    "started": "2026-10-03T22:35:37.382713+00:00",
+    "ended": "2026-10-03T22:36:40.213281+00:00",
+    "log": "/tmp/rox-navigation-final-types-packages-server-core.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "project": "apps/electron",
+    "exit": 0,
+    "started": "2026-10-03T22:36:40.214463+00:00",
+    "ended": "2026-10-03T22:38:21.008775+00:00",
+    "log": "/tmp/rox-navigation-final-types-apps-electron.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

@@ -1,0 +1,26 @@
+Executable=/private/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app/Contents/MacOS/Rox
+Identifier=one.rox.app
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20500 size=428 flags=0x10002(adhoc,runtime) hashes=3+7 location=embedded
+VersionPlatform=1
+VersionMin=786432
+VersionSDK=1703936
+Hash type=sha256 size=32
+CandidateCDHash sha256=ac8e0320e68f4f761433e61f4b5f88fe1b39c7e7
+CandidateCDHashFull sha256=ac8e0320e68f4f761433e61f4b5f88fe1b39c7e753fc2eb5ba825983a9330007
+Hash choices=sha256
+CMSDigest=ac8e0320e68f4f761433e61f4b5f88fe1b39c7e753fc2eb5ba825983a9330007
+CMSDigestType=2
+Executable Segment base=0
+Executable Segment limit=16384
+Executable Segment flags=0x1
+Page size=16384
+CDHash=ac8e0320e68f4f761433e61f4b5f88fe1b39c7e7
+Signature=adhoc
+Info.plist entries=34
+TeamIdentifier=not set
+Runtime Version=26.0.0
+Sealed Resources version=2 rules=13 files=6602
+Internal requirements count=0 size=12
+Total signatures=1
+Chosen signature=1

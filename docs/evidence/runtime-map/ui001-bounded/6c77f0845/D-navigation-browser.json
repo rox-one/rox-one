@@ -1,0 +1,22 @@
+{
+  "label": "D-navigation-browser",
+  "command": [
+    "/workspace/scratch/d0a9c1c6c094/tooling/node_modules/@oven/bun-linux-x64/bin/bun",
+    "test",
+    "--timeout",
+    "60000",
+    "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts"
+  ],
+  "cwd": "/workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification",
+  "startedUtc": "2026-10-03T22:41:15.783771+00:00",
+  "elapsedSeconds": 15.559,
+  "exitCode": 0,
+  "timedOut": false,
+  "timeoutSeconds": 240,
+  "environment": {
+    "ROX_UI001_CHROMIUM_EXECUTABLE": "/root/.cache/ms-playwright/chromium_headless_shell-1148/chrome-linux/headless_shell",
+    "ROX_UI001_NAV_FIXTURE_BUNDLE": "/workspace/scratch/d0a9c1c6c094/ui001-bounded-6c77f0845/navigation-fixture.js",
+    "ROX_UI001_BROWSER_TEST": "1"
+  },
+  "log": "D-navigation-browser.log"
+}

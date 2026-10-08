@@ -33,7 +33,8 @@ import { getSessionTitle } from '@/utils/session'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
 import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
 import { EXTRA_SCREENS } from '@/pages/extra-screens/registry'
-import { getModeRegistry } from './mode-registry-bootstrap'
+import { useShellModes } from './useModes'
+import { buildRouteTitleKeys } from './surface-shell'
 import { CHROME_DENSITY } from './chrome-density'
 import { createKnowledgeTabTitleLoader } from './knowledge-tab-titles'
 import { surfaceTabRovingId, surfaceTabKeyboardTarget, surfaceTabCloseTarget } from './surface-tab-navigation'
@@ -179,18 +180,13 @@ export function SurfaceTabs() {
 
   // Route root → screen title, from the same registries the rail, the mode
   // pill and the «Ещё» group read (one name per screen everywhere).
-  const routeTitleKeys = useMemo(() => {
-    const map = new Map<string, string>()
-    const root = (route: string) => route.split('?')[0].split('/')[0]
-    for (const dest of APP_NAV_DESTINATIONS) {
-      if (dest.route) map.set(root(dest.route()), dest.labelKey)
-    }
-    for (const mode of getModeRegistry().list()) {
-      if (mode.rootRoute) map.set(root(mode.rootRoute), mode.titleKey)
-    }
-    for (const screen of EXTRA_SCREENS) map.set(screen.id, screen.labelKey)
-    return map
-  }, [])
+  // W1-07 (#1504): reactive — follows flags (unified modes, Docs relabel)
+  // and late mode registrations, using the same resolved list as the pill.
+  const { titleModes: shellModes } = useShellModes()
+  const routeTitleKeys = useMemo(
+    () => buildRouteTitleKeys({ destinations: APP_NAV_DESTINATIONS, modes: shellModes, extraScreens: EXTRA_SCREENS }),
+    [shellModes],
+  )
   const resolveRouteTitle = useCallback(
     (route: string) => {
       if (resolveViewRoute(route).navigator === 'unavailable') return t('common.unavailable')

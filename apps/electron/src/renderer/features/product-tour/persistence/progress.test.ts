@@ -10,8 +10,8 @@ const tour: TourDefinition = { id: 'OBT-01', version: 1, slug: 'test-only', titl
     handoff: false, optional: false, requires: [], onUnavailable: 'block', missingTarget: 'block-and-offer-retry-or-pause', notes: '', testId: 'DATA' })) } as TourDefinition
 
 describe('real IndexedDB learning transactions', () => {
-  beforeAll(startLearningBrowserTests)
-  afterAll(stopLearningBrowserTests)
+  beforeAll(startLearningBrowserTests, 40_000)
+  afterAll(stopLearningBrowserTests, 40_000)
 
   test('DATA-01 concurrent windows preserve both milestones and deduplicate replay', async () => {
     const result = await inLearningWindows(async (first, second) => {

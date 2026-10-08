@@ -1,0 +1,3 @@
+packages/shared/src/agent/__tests__/omp-worker-policy.test.ts:23:        const taskCall = handlers.get('tool_call')!({ toolName: 'task', input: restrictions });
+packages/shared/src/agent/__tests__/omp-worker-policy.test.ts:27:        const batch = handlers.get('tool_call')!({ toolName: 'task', input: { context: 'shared', tasks: [restrictions] } });
+Legacy task tool-name checks found. Use isParentTaskTool(toolName) or PARENT_TASK_TOOLS instead.

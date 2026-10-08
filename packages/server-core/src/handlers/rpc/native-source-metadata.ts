@@ -1,7 +1,7 @@
 import { lstatSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { CodedError } from '@rox/shared/protocol'
-import { applyBuiltinSourceAvailability, getBuiltinSources, type FolderSourceConfig, type LoadedSource } from '@rox/shared/sources'
+import { applyBuiltinSourceAvailability, getBuiltinSources, getLocalSourceFolderState, type FolderSourceConfig, type LoadedSource } from '@rox/shared/sources'
 import { isEmoji } from '@rox/shared/utils/icon-constants'
 import { readNativeConfigurationFile } from './native-workspace-registry'
 
@@ -36,7 +36,13 @@ export function readNativeSourceMetadata(workspaceId: string, rootPath: string):
       const currentFolder = lstatSync(folder)
       if (currentFolder.isSymbolicLink() || currentFolder.dev !== identity.dev || currentFolder.ino !== identity.ino) denied()
       const config = applyBuiltinSourceAvailability(raw as unknown as FolderSourceConfig)
-      sources.push(project(config, workspaceId))
+      // Match the actual local consumer without loading guides or running seeders.
+      const localFolderAvailable = config.type === 'local'
+        ? typeof config.local?.path === 'string' && getLocalSourceFolderState({
+          config, workspaceId, workspaceRootPath: rootPath, folderPath: folder, guide: null,
+        }).available
+        : undefined
+      sources.push(project(config, workspaceId, localFolderAvailable))
     }
     const current = lstatSync(directory)
     if (current.isSymbolicLink() || current.dev !== directoryIdentity.dev || current.ino !== directoryIdentity.ino) denied()
@@ -50,9 +56,11 @@ export function readNativeSourceMetadata(workspaceId: string, rootPath: string):
   return sources
 }
 
-function project(config: FolderSourceConfig, workspaceId: string): LoadedSource {
+function project(config: FolderSourceConfig, workspaceId: string, localFolderAvailable?: boolean): LoadedSource {
+  const transport = config.type === 'mcp' ? config.mcp?.transport : undefined
   return {
     workspaceId, workspaceRootPath: '', folderPath: '', guide: null,
+    ...(config.type === 'local' && typeof localFolderAvailable === 'boolean' ? { localFolderAvailable } : {}),
     config: {
       id: text(config.id, 128), slug: text(config.slug, 128), name: text(config.name, 200),
       type: config.type, provider: text(config.provider, 128), enabled: config.enabled === true,
@@ -61,6 +69,8 @@ function project(config: FolderSourceConfig, workspaceId: string): LoadedSource 
       isAuthenticated: typeof config.isAuthenticated === 'boolean' ? config.isAuthenticated : undefined,
       connectionStatus: ['connected', 'needs_auth', 'failed', 'untested', 'local_disabled'].includes(config.connectionStatus ?? '') ? config.connectionStatus : undefined,
       lastTestedAt: typeof config.lastTestedAt === 'number' && Number.isFinite(config.lastTestedAt) ? config.lastTestedAt : undefined,
+      // Readiness needs the local/remote discriminator, never connection details.
+      mcp: transport === 'stdio' || transport === 'http' || transport === 'sse' ? { transport } : undefined,
     },
   }
 }

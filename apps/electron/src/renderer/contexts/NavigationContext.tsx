@@ -38,6 +38,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
+import { encodeToolContexts, decodeToolContexts } from '@/components/app-shell/auxiliary-persistence'
 import { toast } from 'sonner'
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '@/atoms/runtime-trace'
@@ -56,7 +57,7 @@ import {
 } from '../../shared/route-parser'
 import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
-import { NAVIGATE_EVENT, type NavigateOptions } from '../lib/navigate'
+import { subscribeNavigateEvents, type NavigateOptions } from '../lib/navigate'
 import { normalizePanelRouteForReconcile, preserveRouteQuery } from './navigation-reconcile'
 import { encodePanelEntries, decodePanelEntries } from '@/lib/panel-url'
 import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
@@ -80,6 +81,7 @@ import {
   isPagesNavigation,
   isBrowserNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
@@ -94,12 +96,18 @@ import {
   DEFAULT_NAVIGATION_STATE,
 } from '../../shared/types'
 import { sessionMetaMapAtom, updateSessionMetaAtom, type SessionMeta } from '@/atoms/sessions'
+import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
 import {
   panelStackAtom,
   pushPanelAtom,
   reconcilePanelStackAtom,
   focusedPanelIdAtom,
   focusedPanelRouteAtom,
+  primaryPanelRouteAtom,
+  primaryPanelIdAtom,
+  updatePrimaryPanelRouteAtom,
+  type AuxiliaryTool,
+  type ToolContextReference,
   focusedPanelIndexAtom,
   updateFocusedPanelRouteAtom,
   parseSessionIdFromRoute,
@@ -111,7 +119,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
 
 // =============================================================================
 // Context
@@ -164,6 +172,8 @@ interface NavigationProviderProps {
   onInputChange?: (sessionId: string, value: string) => void
   /** Get draft input text for a session (reads from ref, no re-render) */
   getDraft?: (sessionId: string) => string
+  /** Whether a session still holds draft attachments beyond its draft text */
+  hasDraftAttachments?: (sessionId: string) => boolean
   /** Auto-delete an empty session (no confirmation needed) */
   onAutoDeleteEmptySession?: (sessionId: string) => void
   /** Whether the app is ready to navigate */
@@ -182,6 +192,7 @@ export function NavigationProvider({
   onCreateSession,
   onInputChange,
   getDraft,
+  hasDraftAttachments,
   onAutoDeleteEmptySession,
   isReady = true,
   isSessionsReady = true,
@@ -220,7 +231,7 @@ export function NavigationProvider({
   // DERIVED NAVIGATION STATE (from focused panel + right sidebar)
   // =========================================================================
 
-  const focusedRoute = useAtomValue(focusedPanelRouteAtom)
+  const focusedRoute = useAtomValue(primaryPanelRouteAtom)
   const [navigationRevision, setNavigationRevision] = useState(0)
   const [requestedWorkspaceSlug, setRequestedWorkspaceSlug] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get('ws'),
@@ -232,6 +243,10 @@ export function NavigationProvider({
   // Right sidebar is independent of panels (not per-panel state)
   const [rightSidebar, setRightSidebar] = useState<RightSidebarPanel | undefined>()
   const rightSidebarRef = useRef<RightSidebarPanel | undefined>(rightSidebar)
+
+  // entities.links.v1 gates kind-first entity routes inside the route
+  // parser; re-resolve the focused route whenever the effective state flips.
+  const entitiesLinksEnabled = useEntitiesLinksEffectiveState().enabled
 
   // NavigationState derived from the focused panel's route
   const navigationState: NavigationState = useMemo(() => {
@@ -251,7 +266,7 @@ export function NavigationProvider({
       }
     }
     return rightSidebar ? { ...state, rightSidebar } : state
-  }, [focusedRoute, rightSidebar, unavailableWorkspaceSlug, sessionMetaMap, workspaceId, remoteWorkspaceId])
+  }, [focusedRoute, rightSidebar, unavailableWorkspaceSlug, sessionMetaMap, workspaceId, remoteWorkspaceId, entitiesLinksEnabled])
 
   // =========================================================================
   // BROWSER HISTORY TRACKING
@@ -401,7 +416,14 @@ export function NavigationProvider({
     }
 
     // ?route= is the focused panel's route
-    url.searchParams.set('route', focusedPanel.route)
+    url.searchParams.set('route', store.get(primaryPanelRouteAtom) ?? focusedPanel.route)
+    const tools = panels.flatMap((panel, index) => panel.tool ? [`${index}:${panel.tool}`] : [])
+    if (tools.length) url.searchParams.set('tools', tools.join(','))
+    else url.searchParams.delete('tools')
+    if (tools.length) url.searchParams.set('toolContexts', encodeToolContexts(panels))
+    else url.searchParams.delete('toolContexts')
+    const primaryIndex = panels.findIndex(panel => panel.id === store.get(primaryPanelIdAtom))
+    if (primaryIndex >= 0) url.searchParams.set('pi', String(primaryIndex))
 
     // ?panels= encodes ALL panels in stack order
     if (panels.length > 1) {
@@ -552,7 +574,6 @@ export function NavigationProvider({
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
-      if (initialRoute) requestRuntimeSelection(initialRoute)
 
       // Restore right sidebar
       if (sidebarParam) {
@@ -565,7 +586,7 @@ export function NavigationProvider({
       }
 
       // Parse panel entries from URL
-      let entries: { route: ViewRoute; proportion: number }[] = []
+      let entries: { route: ViewRoute; proportion: number; tool?: AuxiliaryTool; toolContext?: ToolContextReference }[] = []
       let focusedIndex = 0
 
       const parsedPanels = panelsParam ? decodePanelEntries(panelsParam) : []
@@ -595,10 +616,34 @@ export function NavigationProvider({
       }
 
       if (entries.length > 0) {
+        // Restore read-only map references for every actual panel, including
+        // unfocused panels and layouts published without a separate ?route=.
+        for (const entry of entries) requestRuntimeSelection(entry.route)
+        const validTools: AuxiliaryTool[] = ['agent', 'tasks', 'automations', 'memory']
+        const assignedTools = new Set<AuxiliaryTool>()
+        const contexts = workspaceId ? decodeToolContexts(params.get('toolContexts'), workspaceId) : []
+        for (const encoded of (params.get('tools') ?? '').split(',')) {
+          const [indexText, toolText] = encoded.split(':')
+          const index = Number(indexText)
+          const tool = toolText as AuxiliaryTool
+          if (Number.isInteger(index) && entries[index] && validTools.includes(tool) && !assignedTools.has(tool)) {
+            entries[index].tool = tool
+            entries[index].toolContext = contexts[index] ?? (workspaceId ? { workspaceId, route: (initialRoute ?? 'inbox') as ViewRoute } : undefined)
+            assignedTools.add(tool)
+          }
+        }
+        // A malformed link must retain at least one primary working surface.
+        if (entries.every(entry => entry.tool)) entries[0].tool = undefined
+
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
+        const restored = store.get(panelStackAtom)
+        const primaryIndex = Number(params.get('pi') ?? '0')
+        const primary = restored[primaryIndex] && !restored[primaryIndex].tool
+          ? restored[primaryIndex] : restored.find(entry => !entry.tool)
+        store.set(primaryPanelIdAtom, primary?.id ?? null)
       }
     },
-    [store, requestRuntimeSelection]
+    [store, requestRuntimeSelection, workspaceId]
   )
 
   // Keep ref fresh for use in event handlers / effects that capture stale closures
@@ -630,7 +675,7 @@ export function NavigationProvider({
           const belongsToWorkspace = meta && workspaceId && (meta.workspaceId === workspaceId || meta.workspaceId === remoteWorkspaceId)
           const isEmpty = isSessionsReady && belongsToWorkspace && !meta.lastFinalMessageId && !meta.name && !meta.isProcessing
           const hasDraft = getDraft?.(prevId)?.trim()
-          if (isEmpty && !hasDraft) {
+          if (isEmpty && !hasDraft && !hasDraftAttachments?.(prevId)) {
             onAutoDeleteEmptySession(prevId)
           }
         }
@@ -638,7 +683,7 @@ export function NavigationProvider({
     }
 
     prevVisibleSessionIdsRef.current = currentIds
-  }, [panelStack, onAutoDeleteEmptySession, store, getDraft, workspaceId, remoteWorkspaceId, isSessionsReady])
+  }, [panelStack, onAutoDeleteEmptySession, store, getDraft, hasDraftAttachments, workspaceId, remoteWorkspaceId, isSessionsReady])
 
   // =========================================================================
   // SESSION SELECTION SYNC
@@ -985,6 +1030,19 @@ export function NavigationProvider({
           }
           break
 
+        case 'open-design': {
+          try {
+            const status = await window.electronAPI.openDesign.open()
+            if (status.state === 'disabled' || status.state === 'error') {
+              toast.error(status.message ?? t('toast.failedToCreateBrowser'))
+            }
+          } catch (error) {
+            console.error('[Navigation] Failed to open Open Design runtime:', error)
+            toast.error(t('toast.failedToCreateBrowser'))
+          }
+          break
+        }
+
         default:
           console.warn('[Navigation] Unknown action:', parsed.name)
       }
@@ -1089,7 +1147,7 @@ export function NavigationProvider({
 
         // Update the focused panel's route (atom update is synchronous)
         // The panelStack atom subscription detects the route change and calls syncUrl(true)
-        store.set(updateFocusedPanelRouteAtom, finalRoute)
+        store.set(options?.primary ? updatePrimaryPanelRouteAtom : updateFocusedPanelRouteAtom, finalRoute)
         setNavigationRevision(revision => revision + 1)
       }
     },
@@ -1215,12 +1273,12 @@ export function NavigationProvider({
         // Replace all params with the saved workspace's URL
         url.search = savedSearch
       } else {
-        // No saved state — default to allSessions
+        // Inbox is the initial working surface; existing saved routes restore above.
         for (const key of [...url.searchParams.keys()]) {
           url.searchParams.delete(key)
         }
         url.searchParams.set('ws', workspaceSlug)
-        url.searchParams.set('route', 'allSessions')
+        url.searchParams.set('route', 'inbox')
       }
 
       // Stored history cannot change the workspace selected by the caller.
@@ -1275,7 +1333,7 @@ export function NavigationProvider({
 
     // If nothing was in the URL, navigate to default
     if (!params.get('route') && !params.has('panels') && (!requested || requested === workspaceSlug)) {
-      navigate(routes.view.allSessions())
+      navigate(routes.view.inbox())
     }
 
     // Initialize history with seq=0 (replaceState so we don't create an extra entry)
@@ -1356,18 +1414,7 @@ export function NavigationProvider({
   // =========================================================================
 
   useEffect(() => {
-    const handleNavigateEvent = (event: Event) => {
-      const customEvent = event as CustomEvent<{ route: Route; newPanel?: boolean; targetLaneId?: 'main' }>
-      if (customEvent.detail?.route) {
-        const { route: r, newPanel, targetLaneId } = customEvent.detail
-        navigate(r, newPanel ? { newPanel, targetLaneId } : undefined)
-      }
-    }
-
-    window.addEventListener(NAVIGATE_EVENT, handleNavigateEvent)
-    return () => {
-      window.removeEventListener(NAVIGATE_EVENT, handleNavigateEvent)
-    }
+    return subscribeNavigateEvents(navigate)
   }, [navigate])
 
   // =========================================================================

@@ -5,7 +5,8 @@
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --target bun --outdir dist --metafile=dist/build-metafile.json",
     "typecheck": "tsc --noEmit",
-    "test": "bun test ../../tests/macro-integration/wp-01-runtime.test.ts"
+    "test": "bun test ../../tests/macro-integration/wp-01-runtime.test.ts ./test/migrations.unified.test.ts",
+    "test:migrations": "bun test ./test/migrations.unified.test.ts"
   },
   "dependencies": {
     "@rox/shared": "workspace:*", "@rox/server-core": "workspace:*",

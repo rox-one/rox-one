@@ -344,6 +344,8 @@ export const transition: TransitionFunction = (state, input) => {
         ? { state: setPhase(state, 'handed-off'), effects: [{ type: 'HIDE' }, { type: 'CANCEL_TIMEOUT' }] } : inert(state)
     case 'HANDOFF_CLOSED': {
       if (state.phase !== 'handed-off') return inert(state)
+      // Native prompt completion does not imply that the app regained focus.
+      if (state.snapshot?.foreground === false) return stop(state, 'paused', 'focus-lost')
       const evidence = state.attemptEvidence[step.id]
       if (satisfiesCompletionPolicy(step.completion, evidence)) return advance(state, evidence?.at ?? state.stepActivatedAt ?? state.attempt.startedAt)
       return { state: setPhase(state, 'locating'), effects: [{ type: 'LOCATE', targetId: step.target, binding: state.attempt.binding },

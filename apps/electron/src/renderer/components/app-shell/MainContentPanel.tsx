@@ -5,7 +5,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
+import { MessageSquarePlus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
+import { navigate, routes } from '@/lib/navigate'
 import { MemoryScreen } from '../memory/MemoryScreen'
+import { LearningScreen } from '../learning/LearningScreen'
 import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
@@ -16,6 +21,7 @@ import { useSession } from '@/hooks/useSession'
 import { loadRuntimeTrace, type RuntimeTraceAPI } from '@/event-processor/runtime-trace-ingress'
 import { runtimeCatalogCapabilities, runtimeCatalogScope } from '@/lib/runtime-catalog-capabilities'
 import { StoplightProvider } from '@/context/StoplightContext'
+import { panelRouteKey } from './panel-route-key'
 import {
   useNavigationState,
   useNavigation,
@@ -24,6 +30,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
@@ -42,7 +49,7 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
@@ -77,8 +84,11 @@ const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
 const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
 const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
 const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
-const TasksPage = lazyRoutePage(() => import('@/pages/TasksPage'))
-const MeetingsPage = lazyRoutePage(() => import('@/pages/MeetingsPage'))
+// W1-07 (#1504): unified mode roots; reachable only while their mode flag is on.
+const SurfaceHost = lazyRoutePage(() => import('@/platform/SurfaceHost'))
+const TasksPage = lazyRoutePage(() => import('@/pages/workspace-work/WorkspaceTasksPage'))
+const MeetingsPage = lazyRoutePage(() => import('@/pages/workspace-work/PlanWorkspacePage'))
+const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
 const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
 const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
 const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
@@ -233,19 +243,8 @@ export function MainContentPanel({
     : requestedNavState
 
   // Detail state belongs to its workspace and entity, including project-level skills.
-  const routeKey = JSON.stringify([
-    activeWorkspaceId,
-    unavailableWorkspaceSlug,
-    navState.navigator,
-    isSessionsNavigation(navState) ? navState.viewMode : null,
-    'details' in navState ? navState.details : null,
-    isSettingsNavigation(navState) ? navState.subpage : null,
-    isScreenNavigation(navState) ? navState.screen : null,
-    navState.navigator === 'search' ? navState.query : null,
-    navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
-    unavailableWorkspaceSlug,
-    isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
-  ])
+  // W1-07 (#1504): the surface id joins the key (unified mode roots).
+  const routeKey = panelRouteKey(navState, { activeWorkspaceId, unavailableWorkspaceSlug, activeSessionWorkingDirectory })
   const [sessionSelection] = useSession()
   const store = useStore()
   const catalogSessionId = sessionSelection.selected
@@ -504,6 +503,14 @@ export function MainContentPanel({
     )
   }
 
+  if (isLearningNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <LearningScreen workspaceId={activeWorkspaceId ?? undefined} />
+      </Panel>
+    )
+  }
+
   if (isAutomationsNavigation(navState)) {
     if (isAutomationMultiSelectActive) {
       return wrapWithStoplight(
@@ -665,7 +672,9 @@ export function MainContentPanel({
   if (isTasksNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <TasksPage selectedId={navState.details?.taskId ?? null} />
+        <TasksPage
+          selectedId={navState.details?.taskId ?? null}
+        />
       </Panel>
     )
   }
@@ -673,7 +682,9 @@ export function MainContentPanel({
   if (isMeetingsNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <MeetingsPage selectedId={navState.details?.meetingId ?? null} />
+        <MeetingsPage
+          selectedId={navState.details?.meetingId ?? null}
+        />
       </Panel>
     )
   }
@@ -693,6 +704,16 @@ export function MainContentPanel({
       </Panel>
     )
   }
+
+  if (isSurfaceNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <SurfaceHost surface={navState.surface} />
+      </Panel>
+    )
+  }
+
+  if (isScreenNavigation(navState) && navState.screen === 'agents') return wrapWithStoplight(<Panel variant="grow" className={className}><AgentsWorkspacePage /></Panel>)
 
   if (isScreenNavigation(navState)) {
     return wrapWithStoplight(
@@ -783,11 +804,16 @@ export function MainContentPanel({
         </Panel>
       )
     }
+    // Focus mode or an explicitly added empty tile still offers a useful action.
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t("session.noSessionSelected")}</p>
-        </div>
+        <EntityListEmptyScreen icon={<MessageSquarePlus />} title={t('session.noSessionSelected')} description={t('session.selectConversation')} className="h-full">
+          <Button type="button" variant="secondary" size="sm" onClick={() => {
+            const params = navState.filter.kind === 'state' ? { status: navState.filter.stateId }
+              : navState.filter.kind === 'label' ? { label: navState.filter.labelId } : undefined
+            navigate(routes.action.newSession(params))
+          }}>{t('session.newSession')}</Button>
+        </EntityListEmptyScreen>
         {sessionsBulkBar}
       </Panel>
     )

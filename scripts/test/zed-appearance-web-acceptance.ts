@@ -32,8 +32,32 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 1050
 let page = await context.newPage()
 const pageErrors: string[] = []
 const report: any = { kind: 'production-authenticated-web', baseUrl, screenshots: [], matrix: [], persistence: {}, workspacePriority: {}, material: {}, responsive: [], pageErrors,
-  responsiveControls: [], screenshotReadbacks: [], themeSettling: [], limitations: [], buildIndexSha256: createHash('sha256').update(await readFile(resolve('apps/webui/dist/index.html'))).digest('hex') }
+  responsiveControls: [], screenshotReadbacks: [], themeSettling: [], startupReadiness: [], limitations: [], buildIndexSha256: createHash('sha256').update(await readFile(resolve('apps/webui/dist/index.html'))).digest('hex') }
 page.on('pageerror', error => pageErrors.push(error.message))
+async function waitUsable(p: Page, phase: string) {
+  const started = performance.now()
+  // Mounted chrome/theme attributes do not prove the startup overlay has
+  // finished. Wait for the real overlay to leave; never suppress or bypass it.
+  try {
+    await p.waitForFunction(() => Boolean((window as any).electronAPI)
+      && Boolean(document.querySelector('.chrome-topbar')) && !document.querySelector('.fixed.inset-0.z-splash'),
+      undefined, { timeout: 25_000 })
+  } catch (error) {
+    report.startupBlocked = { phase, elapsedMs: performance.now() - started, ...await p.evaluate(() => ({
+      visibility: document.visibilityState, api: Boolean((window as any).electronAPI),
+      chrome: Boolean(document.querySelector('.chrome-topbar')),
+      route: new URLSearchParams(location.search).get('route'),
+      splashes: [...document.querySelectorAll<HTMLElement>('.z-splash')].map(element => {
+        const style = getComputedStyle(element), rect = element.getBoundingClientRect()
+        return { classes: element.className, position: style.position, opacity: style.opacity,
+          pointerEvents: style.pointerEvents, width: rect.width, height: rect.height,
+          animations: element.getAnimations().map(animation => ({ playState: animation.playState, currentTime: animation.currentTime })) }
+      }),
+    })).catch(() => ({ diagnosticUnavailable: true })) }
+    throw error
+  }
+  report.startupReadiness.push({ phase, elapsedMs: performance.now() - started, splashAbsent: true })
+}
 async function authenticate(p: Page) {
   await p.goto(baseUrl)
   if (await p.locator('#password').count()) {
@@ -41,11 +65,13 @@ async function authenticate(p: Page) {
     await p.locator('#submit-btn').click()
   }
   await p.waitForFunction(() => Boolean((window as any).electronAPI) && Boolean(document.querySelector('.chrome-topbar')), undefined, { timeout: 25_000 })
+  await waitUsable(p, 'authenticate')
   await p.waitForTimeout(500)
   const skip = p.getByRole('button', { name: 'Пропустить', exact: true })
   if (await skip.isVisible()) await skip.click()
 }
 async function appearance(p: Page) {
+  await waitUsable(p, 'appearance-interaction')
   await p.getByRole('button', { name: 'Настройки', exact: true }).first().click()
   await p.getByRole('button', { name: 'Внешний вид', exact: true }).last().click()
   await p.getByText('Цветовая тема', { exact: true }).waitFor()
@@ -78,6 +104,7 @@ async function selectMenu(row: Locator, label: string) {
   await popover.getByRole('option', { name: label, exact: true }).click()
 }
 async function snapshot(p: Page) {
+  await waitUsable(page, 'snapshot')
   return p.evaluate(() => {
     const root = document.documentElement
     const style = getComputedStyle(root)
@@ -232,6 +259,7 @@ function assertSurface(snapshot_: any, testCase: typeof cases[number], glass = t
   }
 }
 async function screenshot(name: string) {
+  await waitUsable(page, 'screenshot')
   const path = resolve(artifactDir, `${name}.png`)
   const viewportBefore = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, dpr: devicePixelRatio }))
   // This application is fixed to its viewport. A full-page capture can reset
@@ -271,6 +299,19 @@ try {
   const initial = await snapshot(page)
   report.initial = { theme: initial.theme, visual: initial.visual,
     fontSans: initial.roles['--font-sans'], fontMono: initial.roles['--font-mono'] }
+  // A previous failed run can leave the disposable workspace override set.
+  // Clear it through the actual UI before testing each app-level palette.
+  const boundWorkspace = await page.evaluate(async () => (await (window as any).electronAPI.getWorkspaces())[0])
+  const existingOverride = await page.evaluate(id => (window as any).electronAPI.getWorkspaceColorTheme(id), boundWorkspace.id)
+  if (existingOverride) {
+    await appearance(page)
+    const row = page.locator('[data-layout="settings-row"]').filter({ has: page.getByText(boundWorkspace.name, { exact: true }) })
+    await row.getByRole('button').last().click()
+    await page.locator('[data-slot="popover-content"]').getByRole('option', { name: /^Использовать по умолчанию/ }).click()
+    await page.waitForFunction(async id => await (window as any).electronAPI.getWorkspaceColorTheme(id) === null, boundWorkspace.id)
+  }
+  report.preconditions = { workspaceOverrideBefore: existingOverride, workspaceOverrideAfter: null,
+    resetThroughProductionUi: Boolean(existingOverride), profile: 'disposable isolated appearance-test' }
   for (const testCase of cases) {
     await selectTheme(testCase)
     const saved = await page.evaluate(() => (window as any).electronAPI.getColorTheme())
@@ -403,6 +444,37 @@ try {
   report.result = 'fail'
   report.failure = error instanceof Error ? error.message : String(error)
   await page.screenshot({ path: resolve(artifactDir, 'failure.png'), fullPage: true }).catch(() => {})
+  // Keep the failing page alive long enough to distinguish a persistent
+  // startup block from delayed animation completion. This opt-in callback
+  // only reads the same browser/context; it never reloads or bypasses UI.
+  if (process.env.ROX_APPEARANCE_FAILURE_READBACK === '1') {
+    report.failureReadback = []
+    const started = performance.now()
+    for (const delayMs of [0, 500, 1000, 3000, 6000]) {
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+      const state = await page.evaluate(async () => {
+        const api = (window as any).electronAPI
+        const durable = await Promise.race([
+          (async () => {
+            const workspaces = await api.getWorkspaces()
+            const id = workspaces[0]?.id
+            return { appTheme: await api.getColorTheme(), workspaceTheme: id ? await api.getWorkspaceColorTheme(id) : null }
+          })().catch(error => ({ error: String(error) })),
+          new Promise(resolve => setTimeout(() => resolve({ timeout: true }), 3000)),
+        ])
+        return { visibility: document.visibilityState, api: Boolean(api), chrome: Boolean(document.querySelector('.chrome-topbar')),
+          theme: document.documentElement.dataset.theme, visual: document.documentElement.className,
+          material: document.documentElement.dataset.shellCssMaterial, route: new URLSearchParams(location.search).get('route'), durable,
+          splashes: [...document.querySelectorAll<HTMLElement>('.z-splash')].map(element => {
+            const style = getComputedStyle(element), rect = element.getBoundingClientRect()
+            return { classes: element.className, position: style.position, opacity: style.opacity, pointerEvents: style.pointerEvents,
+              width: rect.width, height: rect.height, animations: element.getAnimations().map(animation => ({ playState: animation.playState, currentTime: animation.currentTime })) }
+          }) }
+      }).catch(() => ({ diagnosticUnavailable: true }))
+      report.failureReadback.push({ elapsedMs: performance.now() - started, ...state })
+    }
+    await writeFile(resolve(artifactDir, 'failure-live-readback.json'), JSON.stringify(report.failureReadback, null, 2))
+  }
   console.error(JSON.stringify({ result: 'fail', error: report.failure, artifactDir, completedCases: report.matrix.length }, null, 2))
   process.exitCode = 1
 } finally {

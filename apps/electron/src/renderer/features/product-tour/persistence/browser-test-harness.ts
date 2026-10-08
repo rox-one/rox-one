@@ -2,6 +2,7 @@ import { chromium } from '@playwright/test'
 import type { Browser, Page } from '@playwright/test'
 import type * as persistence from './index'
 import type * as analytics from '../analytics'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 
 declare global { interface Window { learningTest: typeof persistence & typeof analytics } }
 let browser: Browser | undefined
@@ -15,8 +16,7 @@ export async function startLearningBrowserTests() {
       ? new Response(script, { headers: { 'Content-Type': 'text/javascript' } })
       : new Response('<!doctype html><script type="module" src="/module.js"></script>', { headers: { 'Content-Type': 'text/html' } })
   } })
-  const executablePath = process.env.LEARNING_CHROMIUM_PATH ??
-    (await Bun.file('/usr/bin/chromium').exists() ? '/usr/bin/chromium' : chromium.executablePath())
+  const executablePath = await resolveChromiumExecutable()
   browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
 }
 export async function stopLearningBrowserTests() { await browser?.close(); server?.stop(true) }

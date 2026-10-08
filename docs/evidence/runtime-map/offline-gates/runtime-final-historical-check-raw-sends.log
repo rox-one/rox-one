@@ -1,0 +1,6 @@
+Raw renderer IPC sends found. Route new IPC through the typed transport/event sink.
+apps/electron/src/main/index.ts:1261:          if (!window.isDestroyed() && window.webContents.id !== initiatingSenderId) window.webContents.send('__project-authority:configuration-changed')
+apps/electron/src/main/browser-pane-manager.ts:2491:      host.webContents.send('window:panel-focus-direction', direction)
+apps/electron/src/main/mail/local-ipc.ts:21:    if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(C.CHANGED, { at: Date.now(), status })
+apps/electron/src/main/voice/overlay-owner.ts:38:    child.webContents.send(VOICE_OVERLAY_STATE, latest!.state)
+apps/electron/src/main/meetings/local-ipc.ts:21:    if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(C.CHANGED, { id })

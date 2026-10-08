@@ -1,10 +1,9 @@
-import { describe, expect, it, beforeEach, afterEach, mock } from 'bun:test'
+import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
+import { stubMainLogger } from './stub-main-logger'
 
 // Stub the main logger (electron-log → electron binary, not installed in
 // this clone) so the pure deep-link parse logic stays testable here.
-mock.module(new URL('../logger.ts', import.meta.url).pathname, () => ({
-  mainLog: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
-}))
+stubMainLogger()
 const { parseDeepLink } = await import('../deep-link')
 import {
   COMPOUND_ROUTE_PREFIXES,
@@ -19,9 +18,17 @@ import {
  * not just the historical allSessions/flagged/state/sources/settings/skills.
  */
 describe('parseDeepLink view routes', () => {
-  beforeEach(() => setEntityRoutesEnabled(true))
+beforeEach(() => setEntityRoutesEnabled(true))
   afterEach(() => resetEntityRoutesEnabled())
 
+  it('routes copied runtime references to a workspace-scoped session view', () => {
+    const target = parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=tool-1')
+    expect(target?.workspaceId).toBe('ws1')
+    expect(target?.view).toBe('allSessions/session/s1?runtimeRun=r1&runtimeEvent=tool-1')
+    expect(target?.action).toBeUndefined()
+    expect(parseRouteToNavigationState(target!.view!)).not.toBeNull()
+    expect(parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=e&send=true')).toBeNull()
+  })
   const NAVIGATOR_ROUTES = [
     'home',
     'tasks',

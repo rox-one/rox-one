@@ -67,8 +67,8 @@ export function parseWikilinkTarget(inner: string): EntityRef | null {
   }
   const rawKind = head.slice(0, colonIndex)
   const rawId = head.slice(colonIndex + 1)
-  if (rawId.length > 0 && /^\s/.test(rawId)) return { kind: 'note', id: inner }
-  if (!isEntityKind(normalizeKindAlias(rawKind))) return { kind: 'note', id: inner }
+  if (rawId.length > 0 && /^\s/.test(rawId)) return { kind: 'note', id: head.trim() }
+  if (!isEntityKind(normalizeKindAlias(rawKind))) return { kind: 'note', id: head.trim() }
   const direct = parseEntityRef(inner)
   if (direct.ok) return direct.value
   if (direct.error.code === 'unexpected-fragment') {

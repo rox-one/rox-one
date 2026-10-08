@@ -4,7 +4,10 @@
  * Tests the centralized source state management used by both
  * ClaudeAgent and PiAgent.
  */
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { SourceManager } from '../source-manager.ts';
 import type { LoadedSource } from '../../../sources/types.ts';
 
@@ -69,10 +72,118 @@ describe('SourceManager', () => {
     });
 
     it('should log debug messages about source state', () => {
+      sourceManager.setAllSources([createMockSource('github'), createMockSource('failing-source')]);
       sourceManager.updateActiveState(['github'], [], ['github', 'failing-source']);
 
       expect(debugMessages.some(m => m.includes('Active sources'))).toBe(true);
       expect(debugMessages.some(m => m.includes('failed builds'))).toBe(true);
+    });
+  });
+
+  describe('Local folder sources', () => {
+    let workspace: string;
+    beforeEach(() => { workspace = mkdtempSync(join(tmpdir(), 'source-manager-')); });
+    afterEach(() => { rmSync(workspace, { recursive: true, force: true }); });
+
+    function local(slug: string, path: string, enabled = true): LoadedSource {
+      return { ...createMockSource(slug, {
+        type: 'local', enabled, local: { path }, connectionStatus: 'failed',
+        connectionError: 'stale server error',
+      }), workspaceRootPath: workspace, folderPath: join(workspace, 'sources', slug), guide: { raw: '# Local guide' } };
+    }
+
+    for (const order of ['sources-first', 'servers-first']) {
+      it(`counts selected readable folders without failed builds (${order})`, () => {
+        const sources = [local('notes', workspace), local('missing', join(workspace, 'absent')),
+          local('disabled', workspace, false), local('unselected', workspace), createMockSource('broken-mcp')];
+        const selected = ['notes', 'missing', 'disabled', 'broken-mcp'];
+        const before = JSON.stringify(sources);
+        if (order === 'sources-first') sourceManager.setAllSources(sources);
+        sourceManager.updateActiveState([], [], selected);
+        if (order === 'servers-first') sourceManager.setAllSources(sources);
+
+        expect([...sourceManager.getActiveSlugs()]).toEqual(['notes']);
+        expect(sourceManager.isSourceActive('notes')).toBe(true);
+        expect(sourceManager.isSourceActive('missing')).toBe(false);
+        expect(sourceManager.isSourceActive('disabled')).toBe(false);
+        expect(sourceManager.isSourceActive('unselected')).toBe(false);
+        const failed = debugMessages.filter(m => m.includes('failed builds'));
+        expect(failed).toEqual(['Sources with failed builds: broken-mcp']);
+        const context = sourceManager.formatSourceState();
+        expect(context).toContain('notes (local files)');
+        expect(context).toContain('missing (folder unavailable)');
+        expect(context).toContain('disabled (disabled)');
+        expect(context).toContain('broken-mcp (no tools)');
+        expect(context).toContain(`Local folder notes: ${workspace}`);
+        expect(context).not.toContain('notes (no tools)');
+        expect(context).not.toContain('stale server error');
+        expect(context).not.toContain('server is unreachable');
+        expect(context).not.toContain('calls are blocked');
+        expect(context).not.toContain('WILL BE REJECTED');
+        expect(context).toContain('filesystem tools');
+        // Paths and filesystem instructions must persist after introductions.
+        expect(sourceManager.formatSourceState()).toContain(`Local folder notes: ${workspace}`);
+        expect(JSON.stringify(sources)).toBe(before);
+      });
+    }
+
+    it('refreshes folder evidence and source replacement without another server update', () => {
+      const folder = join(workspace, 'notes');
+      sourceManager.updateActiveState([], [], ['notes']);
+      sourceManager.setAllSources([local('notes', folder)]);
+      expect(sourceManager.isSourceActive('notes')).toBe(false);
+      mkdirSync(folder);
+      expect(sourceManager.isSourceActive('notes')).toBe(true);
+      expect(sourceManager.formatSourceState()).not.toContain('<source_issue');
+      rmSync(folder, { recursive: true });
+      writeFileSync(folder, 'not a directory');
+      expect(sourceManager.getActiveSlugs().has('notes')).toBe(false);
+      expect(sourceManager.formatSourceState()).toContain('folder unavailable');
+      sourceManager.setAllSources([local('notes', workspace)]);
+      expect(sourceManager.isSourceActive('notes')).toBe(true);
+      sourceManager.setAllSources([]);
+      expect(sourceManager.isSourceActive('notes')).toBe(false);
+    });
+
+    it('resolves folder paths against the workspace and source folder, not cwd', () => {
+      const data = join(workspace, 'sources', 'notes', 'data');
+      mkdirSync(data, { recursive: true });
+      for (const path of ['sources/notes/data', '${WORKSPACE}/sources/notes/data', '${SOURCE_DIR}/data']) {
+        sourceManager.setAllSources([local('notes', path)]);
+        sourceManager.updateActiveState([], [], ['notes']);
+        expect(sourceManager.isSourceActive('notes')).toBe(true);
+        expect(sourceManager.formatSourceState()).toContain(`Local folder notes: ${data}`);
+      }
+    });
+
+    it('handles omitted selection and explicit deselection in either setter order', () => {
+      sourceManager.updateActiveState(['mcp'], []);
+      sourceManager.setAllSources([local('notes', workspace), local('disabled', workspace, false)]);
+      expect(sourceManager.getIntendedSlugs().has('notes')).toBe(true);
+      expect(sourceManager.getActiveSlugs().has('notes')).toBe(true);
+      expect(sourceManager.getIntendedSlugs().has('disabled')).toBe(false);
+      sourceManager.updateActiveState([], [], []);
+      expect(sourceManager.getActiveSlugs().size).toBe(0);
+    });
+
+    it('never auto-activates fictional MCP tools for local folders, including missing folders', () => {
+      sourceManager.setAllSources([local('notes', workspace), local('missing', join(workspace, 'missing'))]);
+      sourceManager.updateActiveState([], [], []);
+      for (const slug of ['notes', 'missing']) {
+        expect(sourceManager.detectInactiveSourceToolError(`mcp__${slug}__read`, 'No such tool available')).toBeNull();
+      }
+    });
+
+    it('classifies an all-local selection by filesystem evidence, including missing configuration', () => {
+      const unconfigured = local('unconfigured', '');
+      sourceManager.setAllSources([local('notes', workspace), unconfigured]);
+      sourceManager.updateActiveState([], [], ['notes', 'unconfigured']);
+      expect(debugMessages.some(m => m.includes('failed builds'))).toBe(false);
+      const context = sourceManager.formatSourceState();
+      expect(context).toContain('notes (local files)');
+      expect(context).toContain('Local folder path is not configured');
+      expect(context).not.toContain('(no tools)');
+      expect(context).not.toContain('server is unreachable');
     });
   });
 

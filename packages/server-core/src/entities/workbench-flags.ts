@@ -23,15 +23,33 @@ export function setEntitiesWorkbenchFlagsSource(next: (() => ReadonlySet<string>
 export function setEntitiesWorkbenchFlags(ids: Iterable<string>): void {
   current = new Set(ids)
   source = null
+  emitFlagsChanged()
 }
 
 /** Reset to the default empty set (tests). */
 export function resetEntitiesWorkbenchFlags(): void {
   current = new Set()
   source = null
+  emitFlagsChanged()
 }
 
 /** Live read of the enabled workbench flag set. */
 export function getEntitiesWorkbenchFlags(): ReadonlySet<string> {
   return source?.() ?? current
+}
+
+type FlagsListener = (flags: ReadonlySet<string>) => void
+const listeners = new Set<FlagsListener>()
+
+/** Observe published flag sets (`setEntitiesWorkbenchFlags` / reset). */
+export function onEntitiesWorkbenchFlagsChanged(listener: FlagsListener): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+function emitFlagsChanged(): void {
+  const flags = getEntitiesWorkbenchFlags()
+  for (const listener of [...listeners]) {
+    try { listener(flags) } catch { /* observers never break publishing */ }
+  }
 }

@@ -1,0 +1,115 @@
+{
+  "classification": "W8 independent native SDK artifact readback; actual SDK probe PASS while overall workflow job failed on a separate obsolete managed-environment sidecar test fixture",
+  "workflowRun": 37155111140,
+  "remoteProductSource": "3c02f078ca47e84a23c1981b4706b9f72b3ff460",
+  "workflowJobStatus": "failure",
+  "sdkLoopAssertionsPassed": true,
+  "zipSha256": "fffad0b3177609019b0a3d11bb654d5cf3440fa498eb2b12b189049cb9ff391c",
+  "rawJsonSha256": "7e8d76b09358f5c4cb337384faa2fd9cc4174e678e17fa18961fc969bf8cbda8",
+  "ompVersion": "18.4.12",
+  "observations": 63,
+  "rawHooks": 121,
+  "providerCalls": 10,
+  "networkAttempts": 0,
+  "paidProviderRequests": 0,
+  "contextComparisons": [
+    {
+      "agentId": "root",
+      "snapshotId": "01a103b0-a70b-7000-a47b-41b0069597a5:context:2",
+      "providerCall": 1,
+      "effectivePromptSha256": "9da3cb011b6b014cdb7378e24376a5716d703888d711e43dd743070212bceefd",
+      "effectivePromptByteLength": 52,
+      "systemPromptSha256": "cd05a4df2e5858ab0c4f4ac75415f4fefe5ccdac7be84eb653a4159f3bc1a434",
+      "systemPromptByteLength": 351,
+      "actualProviderContextSha256": "6855c12c453179ce59baa7e0ef08f6705e87a9f00b66dee7a0f2903ee00fab56",
+      "actualProviderContextByteLength": 210590,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "originalRootPromptDistinct": true,
+      "originalRootPromptIncluded": true,
+      "w8RecomputedShaAndBytes": true,
+      "confirmedModel": "fixture/worker",
+      "confirmedContextWindow": 200000
+    },
+    {
+      "agentId": "ReliableCougar",
+      "snapshotId": "01a103b0-a852-7000-83b9-6b90d32c6646:context:2",
+      "providerCall": 3,
+      "effectivePromptSha256": "4c5c4a62fd3eebb9e49a97d64acb4849fd6f4d1b849f75eadad5b913442cc81a",
+      "effectivePromptByteLength": 118,
+      "systemPromptSha256": "dcd94a3f4b89bdad0a7b6539aaed0c77ee37c6d8db8f347f7a6c4bd7500a8748",
+      "systemPromptByteLength": 8470,
+      "actualProviderContextSha256": "b3176a3a1890dc3a814e9030339190f18c00f73cf88d487c0c880d58fb0f1de9",
+      "actualProviderContextByteLength": 173707,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "w8RecomputedShaAndBytes": true,
+      "confirmedModel": "fixture/worker",
+      "confirmedContextWindow": 200000
+    },
+    {
+      "agentId": "ReliableCougar.AsleepClam",
+      "snapshotId": "01a103b0-a8c0-7000-97b4-3fd1ebc03e44:context:2",
+      "providerCall": 5,
+      "effectivePromptSha256": "51e1d1816eec5c508613d7cfd6282beb757f6e5d259e83fd10eba56a0051be07",
+      "effectivePromptByteLength": 123,
+      "systemPromptSha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+      "systemPromptByteLength": 7625,
+      "actualProviderContextSha256": "a6912d83f10d1f4e36f4b1804e556e8acdb9fee0de359556b457fa56440e2a01",
+      "actualProviderContextByteLength": 72258,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "w8RecomputedShaAndBytes": true,
+      "confirmedModel": "fixture/restricted",
+      "confirmedContextWindow": 32768
+    },
+    {
+      "agentId": "eval-worker-fixture",
+      "snapshotId": "01a103b0-a9e7-7000-8f76-5e2de6721c45:context:2",
+      "providerCall": 9,
+      "effectivePromptSha256": "048bc7ccbb9c6b06d95518719fa08c76954bc1f46a8fe4c749a9fd4eabbb286d",
+      "effectivePromptByteLength": 83,
+      "systemPromptSha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+      "systemPromptByteLength": 7625,
+      "actualProviderContextSha256": "ca0e55547dd63eb72cb6960e80b0f1936d1e6cf65cddbee22f8d7535fde15ceb",
+      "actualProviderContextByteLength": 71829,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "w8RecomputedShaAndBytes": true,
+      "confirmedModel": "fixture/restricted",
+      "confirmedContextWindow": 32768
+    }
+  ],
+  "taskCompleted": true,
+  "evalCompleted": true,
+  "boundary": {
+    "available": "Actual native fixture provider Context after native transforms",
+    "unavailable": [
+      "HTTP serialized request payload",
+      "exact provider tokenization"
+    ]
+  },
+  "method": "Python hashlib over UTF-8 effective prompt and compact JSON ordered included system parts from actual context.changed snapshots; cross-check actual provider Context receipt and model identity",
+  "exitCode": 0,
+  "limitations": [
+    "Overall workflow job was not green; later test-only managed-environment correction requires a new hosted workflow result.",
+    "Actual custom-provider Context is compared; HTTP serialization and exact provider tokenization remain unavailable.",
+    "No installed desktop or paid-provider claim."
+  ]
+}

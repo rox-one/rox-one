@@ -1,0 +1,72 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/lark-suite-extension/legacy-markdown-migration-fence.test.ts:
+25 |   const inventory = await inspectLegacyMarkdownMigration(root)
+26 |   expect(inventory.nativeActivationAllowed).toBe(false)
+27 |   expect(inventory.recoveryClear).toBe(true)
+28 |   expect(inventory.historical.map(item => item.phase).sort()).toEqual(['aborted', 'committed'])
+29 |   expect(inventory.historical.every(item => !('receipt' in item))).toBe(true)
+30 |   expect(await readdir(directory)).toEqual(files)
+                                        ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json",
+    "native-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.json",
++   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json",
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/tests/lark-suite-extension/legacy-markdown-migration-fence.test.ts:30:36)
+      at async fixture (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/tests/lark-suite-extension/legacy-markdown-migration-fence.test.ts:17:15)
+(fail) completed history stays byte-identical and cannot authorize native activation [29.20ms]
+(pass) partially applied prepared WAL blocks mixed history without recovery writes [8.02ms]
+(pass) malformed, unreadable and symlink records fail closed and preserve targets [8.27ms]
+(pass) absent history and linked state directory never grant adoption [1.79ms]
+(pass) replacement at open seam cannot consume an unrelated symlink target [9.09ms]
+(pass) replacement regular record is rejected before read [3.38ms]
+(pass) replaced parent directory cannot contribute historical metadata [3.57ms]
+
+tests/rox-suite/focus-native-ack.test.ts:
+57 |     // This is an actual server validation rejection, not a throwing transport.
+58 |     const invalid = { ...new PersonalTaskStore().create({ title: 'Запрещённый ID' }), id: '../unsafe' }
+59 |     const failure = await creationFailure(putPersonalTaskConfirmed(api, invalid))
+60 |     expect(failure.task.id).toBe('../unsafe')
+61 |     expect(store.list()).toEqual([])
+62 |     expect(await pushPersonalTaskDiff(api, { put: [invalid], remove: [], meta: null })).toBe(false)
+                                                                                             ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: {
+  accepted: [],
+  removed: [],
+  conflicts: [],
+  rejected: [],
+  ok: false,
+}
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/tests/rox-suite/focus-native-ack.test.ts:62:89)
+(fail) RS-FOCUS-01 canonical native acknowledgement > a resolved native rejection fails creation and background diff sync [4.14ms]
+(pass) RS-FOCUS-01 canonical native acknowledgement > a zero-write receipt cannot be treated as success [0.44ms]
+ 95 |         return ack.promise
+ 96 |       }
+ 97 |       let resolved = false
+ 98 |       const first = createPersonalTaskConfirmed({ title: '  Дождаться записи  ', list: 'inbox' }).then(task => { resolved = true; return task })
+ 99 |       const attempted = await started.promise
+100 |       expect(attempted.title).toBe('Дождаться записи')
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: "Дождаться записи"
+Received: undefined
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/tests/rox-suite/focus-native-ack.test.ts:100:31)
+(fail) RS-FOCUS-01 canonical native acknowledgement > the shared bridge waits, preserves failure draft identity, retries unknown ACK without duplicates, and reloads native persistence [11.92ms]
+
+ 7 pass
+ 3 fail
+ 44 expect() calls
+Ran 10 tests across 2 files. [391.00ms]

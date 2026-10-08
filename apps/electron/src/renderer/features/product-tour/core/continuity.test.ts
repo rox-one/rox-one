@@ -57,12 +57,47 @@ test('production voice review rejects stale clocks, missing correlation, foreign
   expect(transition(replay, { type: 'SIGNAL', signal: insertion }).state).toBe(replay)
 })
 
-test('the voice semantic amendment invalidates only old review evidence and retains the start acknowledgement', () => {
-  const historical: TourProgress = { schemaVersion: 1, scopeKey: JSON.stringify(['profile', 'workspace']), tourId: voice.id, tourVersion: 1, revision: 1, status: 'completed-learning', steps: { 'voice.start': { stepId: 'voice.start', stepVersion: 1, acknowledgedAt: 20 }, 'voice.review': { stepId: 'voice.review', stepVersion: 1, observedAt: 30 } } }
-  const reconciled = reconcileProgressVersion(historical, voice)
-  expect(voice.version).toBe(2)
-  expect(reconciled.steps['voice.start']?.acknowledgedAt).toBe(20)
-  expect(reconciled.steps['voice.review']).toEqual({ stepId: 'voice.review', stepVersion: 2 })
+test('native handoff close refuses background presentation and preserves authoritative focus return', () => {
+  const visible = show(start(voice))
+  const handedOff = transition(visible, { type: 'HANDOFF_OPEN', runToken: binding.runToken, stepId: 'voice.start' }).state
+  const background = transition(handedOff, { type: 'SNAPSHOT', snapshot: { ...handedOff.snapshot!, foreground: false } }).state
+  expect(background.phase).toBe('handed-off')
+  const closed = transition(background, { type: 'HANDOFF_CLOSED', runToken: binding.runToken, stepId: 'voice.start' })
+  expect(closed.state.phase).toBe('paused')
+  expect(closed.state.attempt?.reason).toBe('focus-lost')
+  expect(closed.effects.some(effect => effect.type === 'PRESENT' || effect.type === 'LOCATE')).toBe(false)
+  expect(show(closed.state).phase).toBe('paused')
+  expect(transition(closed.state, { type: 'SNAPSHOT', snapshot: handedOff.snapshot! }).state.phase).toBe('paused')
+  expect(transition(background, { type: 'HANDOFF_CLOSED', runToken: 'old-run', stepId: 'voice.start' }).state).toBe(background)
+  const focused = transition(background, { type: 'SNAPSHOT', snapshot: handedOff.snapshot! }).state
+  expect(show(transition(focused, { type: 'HANDOFF_CLOSED', runToken: binding.runToken, stepId: 'voice.start' }).state).phase).toBe('presenting')
+})
+
+test('the voice permission-handoff amendment invalidates v1/v2 review evidence and retains the start acknowledgement', () => {
+  expect(voice.version).toBe(3)
+  expect(voice.steps.find(step => step.id === 'voice.review')?.handoff).toBe(true)
+  for (const version of [1, 2]) {
+    const historical: TourProgress = { schemaVersion: 1, scopeKey: JSON.stringify(['profile', 'workspace']), tourId: voice.id, tourVersion: version, revision: 1, status: 'completed-learning', steps: { 'voice.start': { stepId: 'voice.start', stepVersion: 1, acknowledgedAt: 20 }, 'voice.review': { stepId: 'voice.review', stepVersion: version, observedAt: 30 } } }
+    const reconciled = reconcileProgressVersion(historical, voice)
+    expect(reconciled.steps['voice.start']?.acknowledgedAt).toBe(20)
+    expect(reconciled.steps['voice.review']).toEqual({ stepId: 'voice.review', stepVersion: 3 })
+    expect(reconciled.status).not.toBe('completed-learning')
+  }
+})
+
+test('the collection menu amendment invalidates old view evidence while retaining committed status and label milestones', () => {
+  const workflow = productTourCatalogue.find(tour => tour.id === 'OBT-13')!
+  expect(workflow.version).toBe(2)
+  expect(workflow.steps.find(step => step.id === 'workflow.board')?.handoff).toBe(true)
+  const historical: TourProgress = { schemaVersion: 1, scopeKey: JSON.stringify(['profile', 'workspace']), tourId: workflow.id, tourVersion: 1, revision: 1, status: 'completed-learning', steps: {
+    'workflow.status': { stepId: 'workflow.status', stepVersion: 1, observedAt: 20 },
+    'workflow.label': { stepId: 'workflow.label', stepVersion: 1, observedAt: 25 },
+    'workflow.board': { stepId: 'workflow.board', stepVersion: 1, observedAt: 30, acknowledgedAt: 35 },
+  } }
+  const reconciled = reconcileProgressVersion(historical, workflow)
+  expect(reconciled.steps['workflow.status']?.observedAt).toBe(20)
+  expect(reconciled.steps['workflow.label']?.observedAt).toBe(25)
+  expect(reconciled.steps['workflow.board']).toEqual({ stepId: 'workflow.board', stepVersion: 2 })
   expect(reconciled.status).not.toBe('completed-learning')
 })
 

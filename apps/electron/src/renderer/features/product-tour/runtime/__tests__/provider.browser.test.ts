@@ -4,6 +4,7 @@ import { build } from 'esbuild'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../../adapters/work/meetings-automations/native-browser-process'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 let browser: Browser
 let server: ReturnType<typeof Bun.serve>
@@ -41,7 +42,7 @@ beforeAll(async () => {
       : new Response('<!doctype html><div id="root"></div><script src="/script.js"></script>', { headers: { 'Content-Type': 'text/html' } })
   } })
   stage('provider:browser:launch')
-  browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
   stage('provider:browser:ready')
 }, 30_000)
 afterAll(async () => {

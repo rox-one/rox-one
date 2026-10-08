@@ -57,14 +57,21 @@ describe('actual combined sidebar preference and rail geometry', () => {
     const storage = { KEYS: { sidebarVisible: 'sidebar-visible' }, get: (key: string, fallback: unknown) => key in data ? data[key] : fallback, set: (key: string, value: unknown) => { data[key] = value } }
     const load = () => evaluate(shell, callback(declaration(shell, 'storedSidebarVisible')), { storage, defaultCollapsed: false })()
     let visible = load()
-    const visibility = () => evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible, navState: { navigator: route }, earlyNavState: { navigator: route } })
+    const visibility = () => evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible, sidebarPeek: false, navState: { navigator: route }, earlyNavState: { navigator: route } })
     expect(visibility()).toBe(true)
+    // A hover peek expands the rail without touching the persisted preference.
+    expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: false, sidebarPeek: true })).toBe(true)
+    // The persisted preference must never absorb the transient peek.
+    expect(persist!.getText(shell)).not.toContain('sidebarPeek')
+    const peekClears: boolean[] = []
     const toggle = evaluate(shell, callback(declaration(shell, 'handleToggleSidebar')), {
       isSidebarAndNavigatorHidden: false,
       setIsSidebarAndNavigatorHidden: () => { throw new Error('ordinary toggle must preserve focus choice') },
       setIsSidebarVisible: (update: (value: boolean) => boolean) => { visible = update(visible) },
+      setSidebarPeek: (value: boolean) => { peekClears.push(value) },
     })
     toggle()
+    expect(peekClears).toEqual([false])
     expect(visibility()).toBe(false)
     evaluate(shell, persist!, { storage, storedSidebarVisible: visible })()
     visible = load()
@@ -81,11 +88,12 @@ describe('actual combined sidebar preference and rail geometry', () => {
       isSidebarAndNavigatorHidden: focused,
       setIsSidebarAndNavigatorHidden: (value: boolean) => { focused = value },
       setIsSidebarVisible: (update: (value: boolean) => boolean) => { visible = update(visible) },
+      setSidebarPeek: () => {},
     })()
     expect(focused).toBe(false)
     expect(visible).toBe(true)
     expect(evaluate(shell, declaration(shell, 'effectiveSidebarAndNavigatorHidden'), { isSidebarAndNavigatorHidden: false, isAutoCompact: true })).toBe(true)
-    expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible })).toBe(true)
+    expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible, sidebarPeek: false })).toBe(true)
   })
 
   it('the primary sidebar suppresses duplicate rail geometry for every flag and collapse state', () => {
@@ -94,7 +102,7 @@ describe('actual combined sidebar preference and rail geometry', () => {
       const granularChrome = evaluate(host, declaration(host, 'granularChrome'), { unifiedShell: unifiedShellEnabled, workbenchEnabled })
       const chrome = evaluate(host, declaration(host, 'chrome'), {
         resolveWorkbenchChrome, granularChrome, unifiedShell: unifiedShellEnabled, topChrome: topChromeEnabled,
-        tabGroups: false, browserSurface: false, harnessInspector: false,
+        tabGroups: false, browserSurface: false, harnessInspectorEnabled: false,
       })
       const activityRailRendered = evaluate(host, railRenderCondition!, { chrome, ownsPrimaryNavigation })
       const offset = evaluate(shell, declaration(shell, 'unifiedRailOffset'), { activityRailCollapsed })

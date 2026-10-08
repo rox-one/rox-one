@@ -56,6 +56,7 @@ import { useAtomValue } from 'jotai'
 import { featureWorkbenchHarnessExtCenterV1Atom } from '@/atoms/unified-shell'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -499,7 +500,7 @@ export default function ExtensionsSettingsPage() {
       })
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -538,7 +539,7 @@ export default function ExtensionsSettingsPage() {
         window.setTimeout(() => setActionMsg(null), 2500)
         await load()
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(toErrorMessage(err))
       } finally {
         setBusy((b) => {
           const next = { ...b }
@@ -638,7 +639,7 @@ export default function ExtensionsSettingsPage() {
       setAllowlistPrefixes(prefixesFrom(result) ?? [])
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     }
   }, [allowlistExtId])
 

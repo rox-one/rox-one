@@ -1,5 +1,5 @@
 import { _electron, type ElectronApplication, type Page } from '@playwright/test'
-import { mkdtemp, mkdir, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
@@ -9,7 +9,7 @@ import { observeFirstNativeWindow } from './native-startup'
 const repository = resolve(import.meta.dirname, '../../..')
 
 /** Reuses the existing meeting harness isolation boundaries; real product entrypoint only. */
-export async function bootNativeProduct(): Promise<{ app: ElectronApplication; page: Page; dispose(): Promise<void> }> {
+export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiagnostics) => Promise<void>): Promise<{ app: ElectronApplication; page: Page; dispose(): Promise<void> }> {
   if (process.platform !== 'darwin' && process.platform !== 'win32') throw new Error('Native acceptance requires macOS or Windows; Linux is NOT_RUN.')
   const main = resolve(repository, 'apps/electron/dist/main.cjs')
   if (!existsSync(main)) throw new Error('Build the product Electron entrypoint first.')

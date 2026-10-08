@@ -1,0 +1,105 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/refresh-connection-runtime.test.ts:
+[session] refreshConnectionRuntime failed for matching: ROX sessions require a configured OMP connection. Configure ROX runtime before starting an agent.
+127 |     injectSession(sm, 'matching', tmpRoot, 'slug-A', matchingAgent)
+128 |     injectSession(sm, 'other', tmpRoot, 'slug-B', otherAgent)
+129 |
+130 |     await sm.refreshConnectionRuntime('slug-A')
+131 |
+132 |     expect(matchingAgent.updateRuntimeConfig).toHaveBeenCalledTimes(1)
+                                                    ^
+error: expect(received).toHaveBeenCalledTimes(expected)
+
+Expected number of calls: 1
+Received number of calls: 0
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/server-core/src/sessions/refresh-connection-runtime.test.ts:132:47)
+(fail) refreshConnectionRuntime > pushes updateRuntimeConfig to sessions on the matching connection slug [25.52ms]
+[session] refreshConnectionRuntime failed for busy: ROX sessions require a configured OMP connection. Configure ROX runtime before starting an agent.
+(pass) refreshConnectionRuntime > skips sessions whose agent is mid-stream (defers, does not yank) [4.13ms]
+[session] refreshConnectionRuntime failed for sending: ROX sessions require a configured OMP connection. Configure ROX runtime before starting an agent.
+152 |     const idleAgent = createAgentStub({ isProcessing: false })
+153 |     injectSession(sm, 'sending', tmpRoot, 'slug-A', idleAgent, { isProcessing: true })
+154 |
+155 |     await sm.refreshConnectionRuntime('slug-A')
+156 |
+157 |     expect(idleAgent.updateRuntimeConfig).toHaveBeenCalledTimes(1)
+                                                ^
+error: expect(received).toHaveBeenCalledTimes(expected)
+
+Expected number of calls: 1
+Received number of calls: 0
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/server-core/src/sessions/refresh-connection-runtime.test.ts:157:43)
+(fail) refreshConnectionRuntime > does not defer just because managed.isProcessing is true (Fix 1 regression) [24.81ms]
+(pass) refreshConnectionRuntime > is a no-op when there is no agent yet (cold session) [3.06ms]
+[session] refreshConnectionRuntime failed for failing: ROX sessions require a configured OMP connection. Configure ROX runtime before starting an agent.
+167 |     const failingAgent = createAgentStub({ refreshSucceeds: false })
+168 |     const managed = injectSession(sm, 'failing', tmpRoot, 'slug-A', failingAgent)
+169 |
+170 |     await sm.refreshConnectionRuntime('slug-A')
+171 |
+172 |     expect(failingAgent.updateRuntimeConfig).toHaveBeenCalledTimes(1)
+                                                   ^
+error: expect(received).toHaveBeenCalledTimes(expected)
+
+Expected number of calls: 1
+Received number of calls: 0
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/server-core/src/sessions/refresh-connection-runtime.test.ts:172:46)
+(fail) refreshConnectionRuntime > disposes the runtime when in-place refresh fails so the next send rebuilds it [3.68ms]
+[session] refreshConnectionRuntime failed for auth-changed: ROX sessions require a configured OMP connection. Configure ROX runtime before starting an agent.
+184 |     })
+185 |
+186 |     await sm.refreshConnectionRuntime('slug-A')
+187 |
+188 |     expect(agent.updateRuntimeConfig).not.toHaveBeenCalled()
+189 |     expect(managed.agent).toBeNull()
+                                ^
+error: expect(received).toBeNull()
+
+Received: {
+  isProcessing: [Function: isProcessing],
+  updateRuntimeConfig: [class mockConstructor],
+  dispose: [Function: dispose],
+}
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/server-core/src/sessions/refresh-connection-runtime.test.ts:189:27)
+(fail) refreshConnectionRuntime > skips in-place refresh and forces recreation when a restart-required field changed [3.15ms]
+[session] refreshConnectionRuntime failed for concurrent: ROX sessions require a configured OMP connection. Configure ROX runtime before starting an agent.
+[session] refreshConnectionRuntime failed for concurrent: ROX sessions require a configured OMP connection. Configure ROX runtime before starting an agent.
+208 |
+209 |     expect(first).toBeUndefined()
+210 |     expect(second).toBeUndefined()
+211 |     // Only one updateRuntimeConfig — the second call awaited the first via
+212 |     // the mutex, then saw matching signatures and bailed.
+213 |     expect(agent.updateRuntimeConfig).toHaveBeenCalledTimes(1)
+                                            ^
+error: expect(received).toHaveBeenCalledTimes(expected)
+
+Expected number of calls: 1
+Received number of calls: 0
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/server-core/src/sessions/refresh-connection-runtime.test.ts:213:39)
+(fail) refreshConnectionRuntime > serializes concurrent refresh requests via the per-session mutex [4.50ms]
+[session] refreshConnectionRuntime failed for shape-check: ROX sessions require a configured OMP connection. Configure ROX runtime before starting an agent.
+221 |     const agent = createAgentStub()
+222 |     injectSession(sm, 'shape-check', tmpRoot, 'slug-A', agent)
+223 |
+224 |     await sm.refreshConnectionRuntime('slug-A')
+225 |
+226 |     expect(agent.updateRuntimeConfig).toHaveBeenCalledTimes(1)
+                                            ^
+error: expect(received).toHaveBeenCalledTimes(expected)
+
+Expected number of calls: 1
+Received number of calls: 0
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/server-core/src/sessions/refresh-connection-runtime.test.ts:226:39)
+(fail) refreshConnectionRuntime > records customModels with the per-model supportsImages flag in the IPC payload [3.54ms]
+
+ 2 pass
+ 6 fail
+ 11 expect() calls
+Ran 8 tests across 1 file. [1.87s]
