@@ -11,7 +11,7 @@
  * With nothing stored, every flag here is OFF and the shell is identical to
  * the baseline.
  */
-import { atom, type WritableAtom } from 'jotai'
+import { atom, type Atom, type WritableAtom } from 'jotai'
 import { atomWithStorage, RESET } from 'jotai/utils'
 import {
   WORKBENCH_FEATURE_FLAGS,
@@ -21,6 +21,7 @@ import {
 } from '@rox/core/platform'
 import { KEYS, getKeyString } from '@/lib/local-storage'
 import { MODE_SCREEN_FLAG_IDS, modeScreenFlagsAtom, type ModeScreenId } from '@/atoms/mode-flags'
+import { featureWorkbenchHarnessAgentTeamsAtom } from '@/atoms/unified-shell'
 import {
   UNIFIED_SURFACE_FLAGS,
   UNIFIED_SURFACE_IDS,
@@ -40,10 +41,21 @@ export const W1_07_FLAG_IDS = [
 ] as const
 
 /**
- * Default-OFF flags that already own a dedicated renderer atom / key (or whose
- * owner package wires one), so the generic store must not shadow them.
+ * Flags with a dedicated renderer atom (their own Settings toggle and storage
+ * key) whose REAL value the shell reports in `enabledShellFlagsAtom` and the
+ * Omnibox context keys. Never served by the generic store.
+ */
+export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, Atom<boolean>> = new Map<string, Atom<boolean>>([
+  // Appearance → Agent Teams (storage default true).
+  [WORKBENCH_FLAG.harnessAgentTeams, featureWorkbenchHarnessAgentTeamsAtom],
+])
+
+/**
+ * Flags that already own a dedicated renderer atom / key (or whose owner
+ * package wires one), so the generic store must not shadow them.
  */
 const DEDICATED_ATOM_FLAG_IDS: ReadonlySet<string> = new Set([
+  ...DEDICATED_FLAG_ATOMS.keys(),
   WORKBENCH_FLAG.conationShell,
   WORKBENCH_FLAG.conationInspector,
   WORKBENCH_FLAG.conationSurfacesSkill,
@@ -105,9 +117,10 @@ export function resolveShellFlags(
 
 /** Every enabled workbench flag the shell gates on (mode `when`, slot `flag`). */
 export const enabledShellFlagsAtom = atom<ReadonlySet<string>>((get) => {
-  const generic: Record<string, boolean> = {}
-  for (const id of genericFlagIds()) generic[id] = get(workbenchFlagAtom(id))
-  return resolveShellFlags(generic, get(modeScreenFlagsAtom))
+  const values: Record<string, boolean> = {}
+  for (const id of genericFlagIds()) values[id] = get(workbenchFlagAtom(id))
+  for (const [id, dedicated] of DEDICATED_FLAG_ATOMS) values[id] = get(dedicated)
+  return resolveShellFlags(values, get(modeScreenFlagsAtom))
 })
 
 /** Surfaces whose mode flag is on, in rail order. */
@@ -123,12 +136,13 @@ export function flagContextKeys(flags: ReadonlySet<string>): Record<string, bool
 }
 
 /**
- * Omnibox context keys for the generic flags only (`<flag id>` → boolean), so
- * `when: <flag>` commands hide while the flag is off. Dedicated flags keep
- * their own providers (e.g. conation) and are never overridden here.
+ * Omnibox context keys for the generic flags and DEDICATED_FLAG_ATOMS
+ * (`<flag id>` → real boolean), so `when: <flag>` commands hide while the flag
+ * is off. Other dedicated flags keep their own providers (e.g. conation) and
+ * are never overridden here.
  */
 export function createShellFlagContextKeyProvider(fixedStore?: ShellStore): ContextKeyProvider {
-  const ids = genericFlagIds()
+  const ids = [...genericFlagIds(), ...DEDICATED_FLAG_ATOMS.keys()]
   return {
     keys: [...ids, 'messengerActive'],
     pull() {
