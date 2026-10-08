@@ -149,6 +149,8 @@ describe('WorkspaceCommandHttpClient', () => {
     expect(await client(async () => Response.json({ commandId: 'h1', status: 'rejected', error: { code: 'FORBIDDEN', message: 'no' } }, { status: 403 })).send('w', env))
       .toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
     expect(await client(async () => new Response('', { status: 404 })).send('w', env)).toMatchObject({ error: { code: 'SERVER_REQUIRED' } })
+    expect(await client(async () => Response.json({ error: { code: 'BODY_TOO_LARGE' } }, { status: 413 })).send('w', env)).toMatchObject({ error: { code: 'PAYLOAD_TOO_LARGE' } })
+    expect(await client(async () => Response.json({ error: { code: 'INVALID_PAYLOAD' } }, { status: 400 })).send('w', env)).toMatchObject({ error: { code: 'VALIDATION' } })
     for (const status of [500, 503, 429, 401, 408]) {
       await expect(client(async () => new Response('x', { status })).send('w', env)).rejects.toBeInstanceOf(WorkspaceTransportError)
     }

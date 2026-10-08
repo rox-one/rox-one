@@ -74,10 +74,15 @@ export class WorkspaceCommandHttpClient implements WorkspaceCommandTransport {
     const receipt = body && typeof body === 'object' && 'receipt' in body ? (body as { receipt: unknown }).receipt : body
     const decoded = decodeCommandReceipt(receipt)
     if (decoded.ok && decoded.value.commandId === envelope.commandId) return decoded.value
+    // Terminal HTTP-level refusals: retrying the same bytes can never succeed.
     if (response.status === 404) {
       return rejectedReceipt(envelope.commandId, 'SERVER_REQUIRED', 'Workspace service has no command endpoint')
     }
     if (response.status === 403) return rejectedReceipt(envelope.commandId, 'FORBIDDEN', 'Workspace denied the command')
+    if (response.status === 413) return rejectedReceipt(envelope.commandId, 'PAYLOAD_TOO_LARGE', 'Workspace refused the request size')
+    if (response.status >= 400 && response.status < 500) {
+      return rejectedReceipt(envelope.commandId, 'VALIDATION', `Workspace refused the request (${response.status})`)
+    }
     throw new WorkspaceTransportError(`Workspace answered ${response.status} without a receipt`, response.status)
   }
 }
