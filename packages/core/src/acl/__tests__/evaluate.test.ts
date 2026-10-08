@@ -467,9 +467,9 @@ describe('role cache TTL and batching', () => {
     const decisions = await acl.evaluateMany(alice, 'view', refs)
     expect(counting.epochReads).toBe(1)
     expect(decisions.map(d => d.allowed)).toEqual(refs.map(r => r.kind === 'project'))
-    // project, space and goal read once each (the goal only by the secrecy walk: the edge
-    // carries no role); the 10 distinct missing tasks once each.
-    expect(counting.resourceReads).toBe(13)
+    // project and space read once each (goal → project carries neither role nor secrecy,
+    // so the goal is never read); the 10 distinct missing tasks once each.
+    expect(counting.resourceReads).toBe(12)
   })
 })
 
@@ -660,9 +660,11 @@ describe('secrecy is decoupled from role flow (review 3)', () => {
     // (3) A chat in a secret space, and a chat-owned folder.
     f.setResource({ ref: secretSpace, workspaceId: WS, privacy: 'invited' })
     f.setResource({ ref: spaceChat, workspaceId: WS, parents: [secretSpace] })
-    f.grant(WS, spaceChat, { subjectType: 'principal', subjectId: 'bob', role: 'commenter', via: 'chat' })
+    // Bob holds an explicit grant (a self-joined `via: 'chat'` membership would not count here).
+    f.grant(WS, spaceChat, { subjectType: 'principal', subjectId: 'bob', role: 'commenter' })
+    f.grant(WS, spaceChat, { subjectType: 'principal', subjectId: 'carl', role: 'commenter', via: 'chat' })
     f.setResource({ ref: chatFolder, workspaceId: WS, parents: [spaceChat] })
-    // (4) A company goal under a personal goal (goal → child goal: secrecy-only ancestor).
+    // (4) A company goal under a personal goal (goal → child goal carries no secrecy: own privacy).
     f.setResource({ ref: childGoal, workspaceId: WS, ancestors: [personal] })
     f.grant(WS, childGoal, { subjectType: 'workspace', subjectId: WS, role: 'viewer' })
     return f
@@ -686,10 +688,33 @@ describe('secrecy is decoupled from role flow (review 3)', () => {
     })
   }
 
-  it('a company goal below a personal goal keeps its own audience but loses the owner bypass', async () => {
+  it('a company goal below a personal goal is governed by its own privacy (company-viewable, owner bypass)', async () => {
     const acl = createAcl(facts())
-    expect(await acl.evaluate(alice, 'view', childGoal)).toMatchObject({ allowed: true, role: 'viewer', secret: true })
-    expect(await acl.evaluate(owner, 'manage_access', childGoal)).toMatchObject({ allowed: false, role: 'viewer' })
+    expect(await acl.evaluate(alice, 'view', childGoal)).toMatchObject({ allowed: true, role: 'viewer', secret: false })
+    expect(await acl.evaluate(owner, 'manage_access', childGoal)).toMatchObject({ allowed: true, role: 'manager', source: 'workspace-admin' })
+    // A project under the personal goal likewise carries its own privacy.
+    const f = facts()
+    const project3: EntityRef = { kind: 'project', id: 'p-under-personal' }
+    f.setResource({ ref: project3, workspaceId: WS, parents: [personal] })
+    expect(await createAcl(f).evaluate(owner, 'edit', project3)).toMatchObject({ allowed: true, secret: false })
+  })
+
+  it('a goal-owned folder under a secret (invited) goal is still secret', async () => {
+    const f = facts()
+    const invitedGoal: EntityRef = { kind: 'goal', id: 'g-invited-3' }
+    const folder: EntityRef = { kind: 'folder', id: 'f-invited-goal' }
+    f.setResource({ ref: invitedGoal, workspaceId: WS, privacy: 'invited' })
+    f.setResource({ ref: folder, workspaceId: WS, ancestors: [invitedGoal] })
+    const decision = await createAcl(f).evaluate(owner, 'view', folder)
+    expect(decision).toMatchObject({ allowed: false, secret: true })
+    expect(listingVisibility(decision)).toBe('hide')
+  })
+
+  it("a self-joined member of a secret space's public chat gets nothing from it", async () => {
+    const carl: AclPrincipal = { id: 'carl', workspaceId: WS }
+    const f = facts().setMember(WS, 'carl', { role: 'member' })
+    const acl = createAcl(f)
+    for (const ref of [spaceChat, chatFolder]) expect(await acl.evaluate(carl, 'view_title', ref), ref.id).toMatchObject({ allowed: false, role: null })
   })
 })
 
@@ -786,5 +811,42 @@ describe('space membership through a public space chat (owner decision, review 3
     const acl = createAcl(f)
     expect(await acl.evaluate(alice, 'view_title', inSpace)).toMatchObject({ allowed: false, role: null })
     expect(await acl.evaluate(alice, 'view_title', loose)).toMatchObject({ allowed: true, role: 'minimal' })
+  })
+})
+
+describe('space node role via chat membership (review 4)', () => {
+  const chatSpace: EntityRef = { kind: 'space', id: 'sp-r4' }
+  const carl: AclPrincipal = { id: 'carl', workspaceId: WS }
+
+  function spaceWith(node: Partial<import('../evaluate.ts').AclResourceNode>, role: 'editor' | 'manager' = 'editor'): MemoryAclFacts {
+    const f = tree().setMember(WS, 'carl', { role: 'member' })
+    f.setResource({ ref: chatSpace, workspaceId: WS, chatId: 'ch-r4', ...node })
+    f.setGroups(WS, 'carl', { departmentIds: [], channelIds: ['ch-r4'] })
+    f.grant(WS, chatSpace, { subjectType: 'principal', subjectId: 'carl', role, via: 'chat' })
+    return f
+  }
+
+  it('a self-joiner of the public chat of a members-only space gets no role on the space', async () => {
+    const decision = await createAcl(spaceWith({ chatPublic: true, companyWide: false })).evaluate(carl, 'view', chatSpace)
+    expect(decision.role === null || decision.role === 'minimal').toBe(true)
+    expect(decision.allowed).toBe(false)
+  })
+
+  it('the same joiner of a secret space gets no role on the space', async () => {
+    const decision = await createAcl(spaceWith({ chatPublic: true, companyWide: true, privacy: 'invited' })).evaluate(carl, 'view', chatSpace)
+    expect(decision.role === null || decision.role === 'minimal').toBe(true)
+    expect(decision).toMatchObject({ allowed: false, secret: true })
+  })
+
+  it('members of a private space chat or a company-space chat keep editor / manager', async () => {
+    expect(await createAcl(spaceWith({ chatPublic: false })).evaluate(carl, 'edit', chatSpace)).toMatchObject({ allowed: true, role: 'editor' })
+    expect(await createAcl(spaceWith({ chatPublic: true, companyWide: true }, 'manager')).evaluate(carl, 'manage_access', chatSpace)).toMatchObject({ allowed: true, role: 'manager' })
+    expect(await createAcl(spaceWith({ chatPublic: false, privacy: 'invited' }, 'manager')).evaluate(carl, 'manage_access', chatSpace)).toMatchObject({ allowed: true, role: 'manager' })
+  })
+
+  it('an explicit (non-chat) grant on a members-only space still counts', async () => {
+    const f = spaceWith({ chatPublic: true, companyWide: false })
+    f.grant(WS, chatSpace, { subjectType: 'principal', subjectId: 'carl', role: 'commenter' })
+    expect(await createAcl(f).evaluate(carl, 'comment', chatSpace)).toMatchObject({ allowed: true, role: 'commenter' })
   })
 })

@@ -350,6 +350,25 @@ export function chatInheritanceCap(policy: AclPolicyFact | null): AclRole {
   return policy?.defaultRole ?? 'viewer'
 }
 
+/**
+ * Chat-derived membership of a space (space-chat members) counts only when
+ * joining that chat was allowed: the chat is private (invite-only), or public
+ * in a company-wide, non-secret space. Shared by `isSpaceMember` and the
+ * space node's own role.
+ */
+export function spaceChatMembershipCounts(space: AclResourceNode): boolean {
+  return !space.chatPublic || (space.companyWide === true && space.privacy !== 'invited')
+}
+
+/**
+ * Edges that carry secrecy: every structural parent / ancestor except
+ * goal → child goal and goal → project (goals and projects carry their own
+ * privacy, owner decision review 4).
+ */
+export function carriesSecrecy(parentKind: EntityKind, childKind: EntityKind): boolean {
+  return !(parentKind === 'goal' && (childKind === 'goal' || childKind === 'project'))
+}
+
 /** Grants that confer space membership: a lattice role ≥ viewer (not minimal / follower / free_busy / guest). */
 function grantsSpaceMembership(role: AclStoredRole): boolean {
   return isAclRole(role) && roleAtLeast(role, 'viewer')
@@ -580,7 +599,7 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
           if (!space) return false
           // Chat-derived membership counts only if joining the space chat was allowed:
           // a public chat may be self-joined only for a company-wide, non-secret space.
-          const chatCounts = !space.chatPublic || (space.companyWide === true && space.privacy !== 'invited')
+          const chatCounts = spaceChatMembershipCounts(space)
           if (chatCounts && space.chatId && groups.channelIds.includes(space.chatId)) return true
           for (const entry of await entriesOf(space)) {
             if (!grantsSpaceMembership(entry.role)) continue
@@ -601,8 +620,11 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
     // `minimal` workspace access, presets, links or inheritance.
     const chatMemberRole = async (chat: AclResourceNode): Promise<AclRole | null> => {
       let role: AclRole | null = null
+      // Same join rule as on the chat itself (a self-join of a closed public chat grants nothing).
+      const chatEntriesCount = chat.privacy === 'invited' || await chatOpenToWorkspace(chat)
       for (const entry of await entriesOf(chat)) {
         const granted = effectiveRole(entry.role)
+        if (entry.via === 'chat' && !chatEntriesCount) continue
         if (entry.subjectType === 'principal' && entry.subjectId === principal.id) role = maxRole(role, granted)
         else if (!guest && entry.subjectType === 'department' && groups.departmentIds.includes(entry.subjectId)) role = maxRole(role, granted)
         else if (!guest && entry.subjectType === 'channel' && groups.channelIds.includes(entry.subjectId)) role = maxRole(role, granted)
@@ -630,6 +652,7 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
         const refs: EntityRef[] = []
         for (const node of frontier) {
           for (const next of [...(node.parents ?? []), ...(node.ancestors ?? [])]) {
+            if (!carriesSecrecy(next.kind, node.ref.kind)) continue
             const key = aclRefKey(next)
             if (seen.has(key)) continue
             seen.add(key)
@@ -665,6 +688,12 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
       const policy = await policyOf(node)
       const secret = node.privacy === 'invited'
       const workspaceOpen = node.ref.kind !== 'channel' || await chatOpenToWorkspace(node)
+      // Chat-member entries (`via: 'chat'`) count only where joining was allowed:
+      // on a space, per `spaceChatMembershipCounts`; on a public chat, only if the
+      // chat is open to the workspace (no space, or a company-wide non-secret one).
+      const chatEntriesCount = node.ref.kind === 'space'
+        ? spaceChatMembershipCounts(node)
+        : node.ref.kind === 'channel' ? (secret || workspaceOpen) : true
       const linkOk = LINK_SHAREABLE_KINDS.includes(node.ref.kind)
         && !!principal.linkToken && !linkExpired(policy, nowMs)
 
@@ -673,6 +702,7 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
         const role = effectiveRole(entry.role)
         switch (entry.subjectType) {
           case 'principal':
+            if (entry.via === 'chat' && !chatEntriesCount) break
             if (entry.subjectId === principal.id) raise(acc, role, 'explicit')
             break
           case 'department':
