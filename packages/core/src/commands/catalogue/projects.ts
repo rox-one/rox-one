@@ -1,0 +1,38 @@
+// W1-03 (#1500) — Projects `projects.*`, `milestones.*`, project check-ins, `reviews.*` (TECH-SPEC §4.8, §4.9).
+import { CATALOGUE_FLAGS as F, moduleCatalogue } from './entry.ts'
+
+export const PROJECTS_COMMANDS = moduleCatalogue('projects', F.goalsMode, [
+  ['projects.create', 'by-target'],
+  ['projects.update_name', 'by-target'],
+  ['projects.update_description', 'by-target'],
+  ['projects.update_parent_goal', 'by-target'],
+  ['projects.update_champion', 'by-target'],
+  ['projects.update_reviewer', 'by-target'],
+  ['projects.add_contributor', 'by-target', 'share'],
+  ['projects.update_contributor', 'by-target', 'share'],
+  ['projects.remove_contributor', 'by-target', 'share'],
+  ['projects.update_dates', 'by-target'],
+  ['projects.pause', 'by-target'],
+  ['projects.resume', 'by-target'],
+  ['projects.close', 'by-target'],
+  ['projects.move', 'by-target'],
+  ['projects.delete', 'by-target', 'destroy'],
+  ['projects.share', 'by-target', 'share'],
+  ['projects.add_resource', 'by-target'],
+  ['projects.remove_resource', 'by-target'],
+  ['projects.update_task_statuses', 'by-target'],
+  ['milestones.create', 'by-target'],
+  ['milestones.update', 'by-target'],
+  ['milestones.complete', 'by-target'],
+  ['milestones.reopen', 'by-target'],
+  ['milestones.delete', 'by-target', 'destroy'],
+  ['milestones.reorder', 'by-target'],
+  // §4.9 check-ins and reviews (package CHK)
+  ['projects.create_check_in', 'by-target', 'write', F.goalsCheckins],
+  ['projects.update_check_in', 'by-target', 'write', F.goalsCheckins],
+  ['projects.delete_check_in', 'by-target', 'destroy', F.goalsCheckins],
+  ['projects.acknowledge_check_in', 'by-target', 'write', F.goalsCheckins],
+  ['reviews.create', 'by-target', 'write', F.goalsCheckins],
+  ['reviews.acknowledge', 'by-target', 'write', F.goalsCheckins],
+  ['reviews.create_cycle_review', 'by-target', 'write', F.goalsCheckins],
+])
