@@ -110,6 +110,39 @@ describe('token foundation v2: structure', () => {
     }
   })
 
+  it('coarse-pointer hit-target floors win over data-density', () => {
+    // Specificity [ids, classes/attrs/pseudo-classes, types] of a simple selector.
+    const specificity = (sel: string): [number, number, number] => {
+      const s = sel.replace(/\[[^\]]*\]/g, () => ' .a ')
+      return [
+        (s.match(/#/g) ?? []).length,
+        (s.match(/\.[\w-]+|:(?!:)[\w-]+/g) ?? []).length,
+        (s.replace(/\.[\w-]+|:[\w-]+/g, ' ').match(/(^|\s)[a-z][\w-]*/g) ?? []).length,
+      ]
+    }
+    const beats = (a: number[], b: number[]) => a[0]! !== b[0]! ? a[0]! > b[0]! : a[1]! !== b[1]! ? a[1]! > b[1]! : a[2]! > b[2]!
+    const css = stripComments(token('chrome.css'))
+    const media = css.slice(css.indexOf('@media (pointer: coarse)'))
+    const block = media.match(/\{\s*([^{}]+)\{([^{}]*)\}/)!
+    const selectors = block[1]!.split(',').map((x) => x.trim())
+    const floors = Object.keys(merge(blocks(`x{${block[2]}}`, 'x')))
+    // Every unconditional density block that touches a floor must lose to a coarse selector.
+    let checked = 0
+    for (const m of withoutMedia(token('chrome.css') + indexCss).matchAll(/([^{};]*\[data-density[^{]*)\{([^{}]*)\}/g)) {
+      const densitySel = m[1]!.trim()
+      const overridden = floors.filter((f) => m[2]!.includes(`${f}:`))
+      if (overridden.length === 0) continue
+      checked++
+      const wins = selectors.some((sel) => beats(specificity(sel), specificity(densitySel)))
+      expect(wins, `${densitySel} overrides ${overridden.join(', ')}`).toBe(true)
+    }
+    expect(checked).toBeGreaterThan(0)
+    expect(selectors).toContain(':root[data-density]')
+    for (const f of ['--control-hit-min', '--chrome-control', '--chrome-topbar-height', '--chrome-panel-header-height']) {
+      expect(floors).toContain(f)
+    }
+  })
+
   it('motion collapses to 0 under reduced motion and while resizing', () => {
     const motion = stripComments(token('motion.css'))
     for (const sel of ['html[data-resizing]', '@media (prefers-reduced-motion: reduce)']) {

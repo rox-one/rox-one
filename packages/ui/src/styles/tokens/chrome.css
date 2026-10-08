@@ -58,9 +58,12 @@ html[data-density="comfortable"] {
   --chrome-rail-width: 52px;
 }
 
-/* Coarse pointers get explicit hit-target floors. */
+/* Coarse pointers get explicit hit-target floors. The floors win over
+   data-density: `:root[data-density]` (0,2,0) outranks
+   `html[data-density="comfortable"]` (0,1,1). */
 @media (pointer: coarse) {
-  :root {
+  :root,
+  :root[data-density] {
     --control-hit-min: 44px;
     --chrome-control: 44px;
     --chrome-control-lg: 44px;
