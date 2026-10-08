@@ -92,7 +92,8 @@ CREATE TABLE task_list (
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz
 );
-CREATE INDEX task_list_owner ON task_list (owner_type, owner_id) WHERE deleted_at IS NULL;
+-- owner_id may be a project id, which is unique only per workspace (project PK).
+CREATE INDEX task_list_owner ON task_list (workspace_id, owner_type, owner_id) WHERE deleted_at IS NULL;
 -- One backlog / inbox per user PER WORKSPACE (a principal can belong to several).
 CREATE UNIQUE INDEX task_list_system_role_uniq ON task_list (workspace_id, owner_id, system_role)
   WHERE system_role IS NOT NULL AND owner_type = 'user' AND deleted_at IS NULL;

@@ -58,4 +58,4 @@ CREATE TABLE milestone (
   deleted_at timestamptz,
   CONSTRAINT milestone_project_fk FOREIGN KEY (workspace_id, project_id) REFERENCES project(workspace_id, project_id)
 );
-CREATE INDEX milestone_project ON milestone (project_id) WHERE deleted_at IS NULL;
+CREATE INDEX milestone_project ON milestone (workspace_id, project_id) WHERE deleted_at IS NULL;

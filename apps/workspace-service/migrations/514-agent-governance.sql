@@ -23,7 +23,7 @@ CREATE TABLE audit_log (
   created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
 CREATE INDEX audit_by_actor ON audit_log (workspace_id, actor_principal_id, created_at DESC);
-CREATE INDEX audit_by_target ON audit_log (target_ref) WHERE target_ref IS NOT NULL;
+CREATE INDEX audit_by_target ON audit_log (workspace_id, target_ref) WHERE target_ref IS NOT NULL;
 CREATE INDEX audit_by_workspace ON audit_log (workspace_id, seq DESC);
 
 CREATE TABLE agent_grant (

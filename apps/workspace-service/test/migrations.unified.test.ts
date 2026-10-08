@@ -483,7 +483,7 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
     }
   }, 120000)
 
-  itDb('tenant-scoped keys: ACL, system lists, daily docs, upload/ledger idempotency; project children FK to their project', async () => {
+  itDb('tenant-scoped keys: ACL, social, personal refs, system lists, daily docs, upload/ledger idempotency; project children FK to their project', async () => {
     const db = new SQL(testDb!.url)
     const schema = `w105_tenant_${randomBytes(4).toString('hex')}`
     await db.unsafe(`CREATE SCHEMA "${schema}"`)
@@ -514,6 +514,53 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
       await expect(run(policy(wsA))).rejects.toThrow(/resource_policy_resource/)
       const aclIndex = await db.unsafe<{ def: string }[]>(`SELECT pg_get_indexdef('${schema}.acl_by_resource'::regclass) AS def`)
       expect(aclIndex[0]!.def).toContain('(workspace_id, resource_type, resource_id)')
+
+      // Social (508): the same free-text resource / entity id in two workspaces never
+      // collides, and an upsert in B never rewrites A's row.
+      const react = (ws: string) => `INSERT INTO ${s}.reaction (workspace_id, resource_kind, resource_id, principal_id, emoji)
+        VALUES ('${ws}', 'message', 'shared-id', '${user}', '+1')`
+      await db.unsafe(react(wsA))
+      await db.unsafe(react(wsB))
+      await expect(run(react(wsA))).rejects.toThrow(/reaction_identity/)
+      const follow = (ws: string, canceled: boolean) => `INSERT INTO ${s}.subscription (workspace_id, resource_kind, resource_id, principal_id, kind, canceled)
+        VALUES ('${ws}', 'goal', 'shared-id', '${user}', 'follower', ${canceled})`
+      await db.unsafe(follow(wsA, false))
+      await db.unsafe(follow(wsB, false))
+      await expect(run(follow(wsA, false))).rejects.toThrow(/subscription_identity/)
+      await db.unsafe(`${follow(wsB, true)} ON CONFLICT (workspace_id, resource_kind, resource_id, principal_id) DO UPDATE SET canceled = EXCLUDED.canceled`)
+      const subs = await db.unsafe<{ workspace_id: string; canceled: boolean }[]>(`SELECT workspace_id, canceled FROM ${s}.subscription ORDER BY canceled`)
+      expect(subs).toEqual([{ workspace_id: wsA, canceled: false }, { workspace_id: wsB, canceled: true }])
+      const link = (ws: string) => `INSERT INTO ${s}.entity_link (link_id, workspace_id, from_kind, from_id, to_kind, to_id, relation, created_by)
+        VALUES (gen_random_uuid(), '${ws}', 'note', 'n-1', 'goal', 'g-1', 'mentions', '${user}')`
+      await db.unsafe(link(wsA))
+      await db.unsafe(link(wsB))
+      await expect(run(link(wsA))).rejects.toThrow(/entity_link_uniq/)
+
+      // Personal free-text refs (stars, Omnibox usage, Drive recents / favourites) are per workspace.
+      const personal: Array<[string, (ws: string) => string]> = [
+        ['contact_star_identity', ws => `INSERT INTO ${s}.contact_star (workspace_id, owner_principal_id, starred_ref) VALUES ('${ws}', '${user}', 'person:shared-id')`],
+        ['search_usage_identity', ws => `INSERT INTO ${s}.search_usage (workspace_id, principal_id, kind, ref) VALUES ('${ws}', '${user}', 'doc', 'shared-id')`],
+        ['drive_recent_identity', ws => `INSERT INTO ${s}.drive_recent (workspace_id, principal_id, item_ref) VALUES ('${ws}', '${user}', 'file:shared-id')`],
+        ['drive_favorite_identity', ws => `INSERT INTO ${s}.drive_favorite (workspace_id, principal_id, item_ref) VALUES ('${ws}', '${user}', 'file:shared-id')`],
+      ]
+      for (const [constraint, insert] of personal) {
+        await db.unsafe(insert(wsA))
+        await db.unsafe(insert(wsB))
+        await expect(run(insert(wsA)), constraint).rejects.toThrow(new RegExp(constraint))
+      }
+
+      // Every key / lookup index over a free-text or per-workspace id leads with workspace_id.
+      const tenantIndexes = [
+        'entity_link_uniq', 'entity_link_to', 'entity_link_from', 'comment_by_resource', 'comment_open_threads',
+        'reaction_identity', 'reaction_covering', 'subscription_identity', 'domain_event_subject', 'audit_by_target',
+        'file_object_source', 'contact_star_identity', 'search_usage_identity', 'search_usage_rank',
+        'drive_recent_identity', 'drive_favorite_identity', 'task_list_owner', 'milestone_project',
+        'check_in_subject', 'review_subject',
+      ]
+      const indexDefs = await db.unsafe<{ indexname: string; indexdef: string }[]>(
+        `SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = '${schema}' AND indexname IN (${tenantIndexes.map(n => `'${n}'`).join(', ')})`)
+      expect(indexDefs.map(d => d.indexname).sort()).toEqual([...tenantIndexes].sort())
+      for (const d of indexDefs) expect(d.indexdef, d.indexname).toMatch(/USING btree \(workspace_id, /)
 
       // One backlog and one daily doc per user per workspace (a principal can be in several).
       const backlog = (ws: string) => `INSERT INTO ${s}.task_list (task_list_id, workspace_id, owner_type, owner_id, name, system_role)
@@ -711,8 +758,8 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
             ['goal_space', `SELECT goal_id FROM "${schema}".goal WHERE workspace_id = '${NIL}' AND space_id = '${NIL}' AND deleted_at IS NULL`],
             // Chat feed is served by the UNIQUE (chat_id, seq) btree scanned backward.
             ['message_chat_seq', `SELECT message_id FROM "${schema}".message WHERE chat_id = '${NIL}' AND deleted_at IS NULL ORDER BY seq DESC LIMIT 50`],
-            ['entity_link_to', `SELECT link_id FROM "${schema}".entity_link WHERE to_kind = 'goal' AND to_id = '${probeTo}' AND deleted_at IS NULL`],
-            ['check_in_subject', `SELECT check_in_id FROM "${schema}".check_in WHERE subject_type = 'goal' AND subject_id = '${NIL}' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 20`],
+            ['entity_link_to', `SELECT link_id FROM "${schema}".entity_link WHERE workspace_id = '${wsId}' AND to_kind = 'goal' AND to_id = '${probeTo}' AND deleted_at IS NULL`],
+            ['check_in_subject', `SELECT check_in_id FROM "${schema}".check_in WHERE workspace_id = '${wsId}' AND subject_type = 'goal' AND subject_id = '${NIL}' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 20`],
           ]
           for (const [label, q] of queries) {
             const rows = await tx.unsafe<{ plan: string }[]>(`EXPLAIN ${q}`)

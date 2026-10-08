@@ -98,12 +98,15 @@ CREATE TABLE department_member (
 );
 CREATE INDEX department_member_principal ON department_member (principal_id);
 
+-- Stars are per workspace: starred_ref is free text and a principal can belong to several
+-- workspaces, so the key leads with workspace_id (migrations/README.md "Tenant scoping").
 CREATE TABLE contact_star (
+  workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),
   owner_principal_id uuid NOT NULL REFERENCES principal(principal_id),
   starred_ref text NOT NULL CHECK (length(starred_ref) > 0),
   sort_key text NOT NULL DEFAULT 'm',
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  CONSTRAINT contact_star_identity PRIMARY KEY (owner_principal_id, starred_ref)
+  CONSTRAINT contact_star_identity PRIMARY KEY (workspace_id, owner_principal_id, starred_ref)
 );
 
 CREATE TABLE external_contact (

@@ -68,16 +68,20 @@ CREATE TABLE wiki_node (
   CONSTRAINT wiki_node_identity PRIMARY KEY (wiki_space_id, node_ref)
 );
 
+-- Recents / favourites are per workspace: item_ref is free text and a principal can
+-- belong to several workspaces, so the keys lead with workspace_id (README "Tenant scoping").
 CREATE TABLE drive_recent (
+  workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),
   principal_id uuid NOT NULL REFERENCES principal(principal_id),
   item_ref text NOT NULL CHECK (length(item_ref) > 0),
   opened_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  CONSTRAINT drive_recent_identity PRIMARY KEY (principal_id, item_ref)
+  CONSTRAINT drive_recent_identity PRIMARY KEY (workspace_id, principal_id, item_ref)
 );
 
 CREATE TABLE drive_favorite (
+  workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),
   principal_id uuid NOT NULL REFERENCES principal(principal_id),
   item_ref text NOT NULL CHECK (length(item_ref) > 0),
   sort_key text NOT NULL DEFAULT 'm',
-  CONSTRAINT drive_favorite_identity PRIMARY KEY (principal_id, item_ref)
+  CONSTRAINT drive_favorite_identity PRIMARY KEY (workspace_id, principal_id, item_ref)
 );

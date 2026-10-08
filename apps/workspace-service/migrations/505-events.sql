@@ -17,7 +17,7 @@ CREATE TABLE domain_event (
   created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
 CREATE INDEX domain_event_replay ON domain_event (workspace_id, sequence);
-CREATE INDEX domain_event_subject ON domain_event (subject_kind, subject_id);
+CREATE INDEX domain_event_subject ON domain_event (workspace_id, subject_kind, subject_id);
 CREATE INDEX domain_event_type ON domain_event (workspace_id, type, sequence);
 
 CREATE TABLE command_receipt (

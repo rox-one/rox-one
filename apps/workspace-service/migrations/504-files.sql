@@ -27,5 +27,5 @@ CREATE TABLE file_object (
 );
 CREATE INDEX file_object_workspace ON file_object (workspace_id) WHERE deleted_at IS NULL;
 CREATE INDEX file_object_owner_drive ON file_object (owner_drive_id) WHERE deleted_at IS NULL;
-CREATE INDEX file_object_source ON file_object (source_ref) WHERE source_ref IS NOT NULL AND deleted_at IS NULL;
+CREATE INDEX file_object_source ON file_object (workspace_id, source_ref) WHERE source_ref IS NOT NULL AND deleted_at IS NULL;
 CREATE INDEX file_object_trash ON file_object (purge_after) WHERE trashed_at IS NOT NULL;

@@ -149,7 +149,8 @@ may use `public.unaccent`.
   `milestone_project`, `work_item_space`, `task_in_list_cover`.
 - Chat feed: the `UNIQUE (chat_id, seq)` btree (`message_chat_seq`), scanned
   backward for newest-first pages. No separate feed index.
-- Quick panels / backlinks: `entity_link_to`, `entity_link_from`,
+- Quick panels / backlinks (every lookup filters `workspace_id` first, see
+  "Tenant scoping of keys"): `entity_link_to`, `entity_link_from`,
   `comment_by_resource`, `notification_unread` (`(principal_id, created_at DESC)
   WHERE read_at IS NULL`: unread newest-first without a sort).
 - Review: `check_in_subject`, `check_in_pending_ack` (`(workspace_id,
@@ -173,6 +174,36 @@ keys over free-text or client-supplied values are scoped:
   and stays global.
 - `project_member` and `milestone` reference `project (workspace_id,
   project_id)`; `project_member`'s key includes `workspace_id`.
+- Social (`508`): `entity_link_uniq (workspace_id, from_kind, from_id,
+  relation, to_kind, to_id, COALESCE(role, ''))`, `entity_link_to
+  (workspace_id, to_kind, to_id)`, `entity_link_from (workspace_id, from_kind,
+  from_id)`, `comment_by_resource (workspace_id, resource_kind, resource_id,
+  created_at)`, `comment_open_threads (workspace_id, resource_kind,
+  resource_id)`, `reaction` `PRIMARY KEY (workspace_id, resource_kind,
+  resource_id, principal_id, emoji)` and `reaction_covering (workspace_id,
+  resource_kind, resource_id, principal_id)`, `subscription` `PRIMARY KEY
+  (workspace_id, resource_kind, resource_id, principal_id)`. A principal in two
+  workspaces can react to / follow the same resource id in both, and an
+  `ON CONFLICT` upsert in one never rewrites the other's row.
+- Personal free-text refs are per workspace: `contact_star` `PRIMARY KEY
+  (workspace_id, owner_principal_id, starred_ref)`, `search_usage` `PRIMARY KEY
+  (workspace_id, principal_id, kind, ref)` and `search_usage_rank
+  (workspace_id, principal_id, score DESC)`, `drive_recent` / `drive_favorite`
+  `PRIMARY KEY (workspace_id, principal_id, item_ref)`. These four tables carry
+  a `workspace_id` column that the DATA-MODEL DDL does not list yet (spec follow-up).
+- Lookup indexes over free-text refs or ids that are unique only per workspace
+  (project ids: `project`'s key is `(workspace_id, project_id)`):
+  `domain_event_subject (workspace_id, subject_kind, subject_id)`,
+  `audit_by_target (workspace_id, target_ref)`, `file_object_source
+  (workspace_id, source_ref)`, `task_list_owner (workspace_id, owner_type,
+  owner_id)`, `milestone_project (workspace_id, project_id)`,
+  `check_in_subject (workspace_id, subject_type, subject_id, created_at DESC)`,
+  `review_subject (workspace_id, subject_type, subject_id)`.
+- Deliberately global: `principal_email_uniq` and `user_profile.username`
+  (identity across workspaces), `doc.public_token` (random), `event_id` /
+  `audit_id` (uuids), `rule_execution.idempotency_key` (server-derived). Keys
+  led by a globally unique uuid (`chat_id`, `doc_id`, `folder_id`,
+  `calendar_id`, `drive_id`, …) are already tenant-scoped through that row.
 
 ## Rollback
 

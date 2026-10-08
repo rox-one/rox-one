@@ -2,6 +2,9 @@
 -- DATA-MODEL §5.8, §5.17 (v2 comment columns folded into this v1 file per §12),
 -- §6.1 (relation vocabulary), §12. Owner module: social.
 -- Server entity_link mirrors TECH-SPEC §3.2 (either endpoint workspace-authority).
+-- Tenant scoping: resource / entity ids here are free text and unique only within a
+-- workspace, so every key and lookup index leads with workspace_id (migrations/README.md
+-- "Tenant scoping of keys").
 CREATE TABLE entity_link (
   link_id uuid PRIMARY KEY,
   workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),
@@ -20,10 +23,10 @@ CREATE TABLE entity_link (
   deleted_at timestamptz
 );
 CREATE UNIQUE INDEX entity_link_uniq ON entity_link
-  (from_kind, from_id, relation, to_kind, to_id, COALESCE(role, '')) WHERE deleted_at IS NULL;
+  (workspace_id, from_kind, from_id, relation, to_kind, to_id, COALESCE(role, '')) WHERE deleted_at IS NULL;
 -- Backlinks panel + quick panels: to-side lookup.
-CREATE INDEX entity_link_to ON entity_link (to_kind, to_id) WHERE deleted_at IS NULL;
-CREATE INDEX entity_link_from ON entity_link (from_kind, from_id) WHERE deleted_at IS NULL;
+CREATE INDEX entity_link_to ON entity_link (workspace_id, to_kind, to_id) WHERE deleted_at IS NULL;
+CREATE INDEX entity_link_from ON entity_link (workspace_id, from_kind, from_id) WHERE deleted_at IS NULL;
 
 CREATE TABLE comment (
   comment_id uuid PRIMARY KEY,
@@ -45,8 +48,8 @@ CREATE TABLE comment (
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz
 );
-CREATE INDEX comment_by_resource ON comment (resource_kind, resource_id, created_at) WHERE deleted_at IS NULL;
-CREATE INDEX comment_open_threads ON comment (resource_kind, resource_id) WHERE thread_status = 'open' AND deleted_at IS NULL;
+CREATE INDEX comment_by_resource ON comment (workspace_id, resource_kind, resource_id, created_at) WHERE deleted_at IS NULL;
+CREATE INDEX comment_open_threads ON comment (workspace_id, resource_kind, resource_id) WHERE thread_status = 'open' AND deleted_at IS NULL;
 
 CREATE TABLE reaction (
   workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),
@@ -55,10 +58,10 @@ CREATE TABLE reaction (
   principal_id uuid NOT NULL REFERENCES principal(principal_id),
   emoji text NOT NULL CHECK (length(emoji) > 0),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  CONSTRAINT reaction_identity PRIMARY KEY (resource_kind, resource_id, principal_id, emoji)
+  CONSTRAINT reaction_identity PRIMARY KEY (workspace_id, resource_kind, resource_id, principal_id, emoji)
 );
 -- Replaces message_reaction; covering index for IM performance (DATA-MODEL §5.3).
-CREATE INDEX reaction_covering ON reaction (resource_kind, resource_id, principal_id);
+CREATE INDEX reaction_covering ON reaction (workspace_id, resource_kind, resource_id, principal_id);
 
 CREATE TABLE subscription (
   workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),
@@ -68,6 +71,6 @@ CREATE TABLE subscription (
   kind text NOT NULL CHECK (kind IN ('invited', 'joined', 'mentioned', 'follower', 'auto')),
   canceled boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  CONSTRAINT subscription_identity PRIMARY KEY (resource_kind, resource_id, principal_id)
+  CONSTRAINT subscription_identity PRIMARY KEY (workspace_id, resource_kind, resource_id, principal_id)
 );
 CREATE INDEX subscription_principal ON subscription (principal_id) WHERE canceled = false;

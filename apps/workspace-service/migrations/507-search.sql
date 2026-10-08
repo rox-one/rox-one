@@ -35,13 +35,15 @@ $$;
 CREATE TRIGGER search_document_tsv_trigger BEFORE INSERT OR UPDATE OF title, body ON search_document
   FOR EACH ROW EXECUTE FUNCTION search_document_refresh_tsv();
 
--- "Frequently used" ranking for the Omnibox (DATA-MODEL §11, usage).
+-- "Frequently used" ranking for the Omnibox (DATA-MODEL §11, usage). Per workspace: ref is
+-- free text and a principal can belong to several workspaces (README "Tenant scoping").
 CREATE TABLE search_usage (
+  workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),
   principal_id uuid NOT NULL REFERENCES principal(principal_id),
   kind text NOT NULL CHECK (length(kind) > 0),
   ref text NOT NULL CHECK (length(ref) > 0),
   score double precision NOT NULL DEFAULT 0,
   last_used_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  CONSTRAINT search_usage_identity PRIMARY KEY (principal_id, kind, ref)
+  CONSTRAINT search_usage_identity PRIMARY KEY (workspace_id, principal_id, kind, ref)
 );
-CREATE INDEX search_usage_rank ON search_usage (principal_id, score DESC);
+CREATE INDEX search_usage_rank ON search_usage (workspace_id, principal_id, score DESC);
