@@ -1,6 +1,4 @@
 import type { SQL } from 'bun'
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { WsRpcServer } from '../../../packages/server-core/src/transport/server.ts'
 import type { RequestContext, WsRpcServerOptions } from '../../../packages/server-core/src/transport/index.ts'
 import {
@@ -12,7 +10,7 @@ import {
 import { createLocalIssuer, type LocalIssuerConfig } from './auth/local-issuer.ts'
 import { PostgresIdentityAuth } from './auth/postgres-identity.ts'
 import { AuthenticationError, createVerifiedActorResolver, type VerifiedActorConfig, type VerifiedActorInput } from './auth/verified-actor.ts'
-import { applyWorkspaceMigrations, migrationFromSource, type WorkspaceMigration } from './database/migrations.ts'
+import { applyWorkspaceMigrations, compareMigrationNames, readWorkspaceMigrations, type WorkspaceMigration } from './database/migrations.ts'
 import { createWorkspaceHttpHandler } from './http.ts'
 import { IdentityCommands, requireActor, requireUuid } from './modules/identity/commands.ts'
 import { IdentityObservability } from './modules/identity/observability.ts'
@@ -25,7 +23,6 @@ import type { TrustedLicenseRegistry } from './modules/licenses/registry.ts'
 import type { WorkspaceBroInvitationAuthority } from './modules/collaboration/invitations.ts'
 import { createDurableWorkspaceCollaboration } from './modules/collaboration/runtime.ts'
 
-const BOOTSTRAP_MIGRATIONS = ['01-domain-contract.sql', '01-local-auth-bootstrap.sql'] as const
 const DEFAULT_SCHEMA = 'public'
 const DEFAULT_HOST = '127.0.0.1'
 
@@ -54,10 +51,18 @@ export interface WorkspaceServerConfiguration {
   readonly serverId: string
 }
 
-export async function loadWorkspaceBootstrapMigrations(directory: string, licenseAudit = false): Promise<readonly WorkspaceMigration[]> {
-  const names = licenseAudit ? [...BOOTSTRAP_MIGRATIONS, '48-license-audit.sql'] : BOOTSTRAP_MIGRATIONS
-  return Promise.all(names.map(async name =>
-    migrationFromSource(name, await readFile(join(directory, name), 'utf8'))))
+/**
+ * Startup loads the full sorted migration set from `directory`: both `01-*` files,
+ * `48-license-audit.sql` (always; only the licence-registry feature is conditional,
+ * not its DDL), then every `5NN-*.sql`. The migrator requires the applied history
+ * to be an exact sorted prefix, so loading a subset that later grows in the middle
+ * (e.g. 48 only once a registry is configured) would fail with
+ * MIGRATION_ORDER_CONFLICT. The unified tables are additive and unused while their
+ * feature flags are off.
+ */
+export async function loadWorkspaceBootstrapMigrations(directory: string): Promise<readonly WorkspaceMigration[]> {
+  const migrations = await readWorkspaceMigrations(directory)
+  return [...migrations].sort((a, b) => compareMigrationNames(a.name, b.name))
 }
 
 function canonicalActor(input: VerifiedActorInput): AuthenticatedActor {

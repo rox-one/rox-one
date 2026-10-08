@@ -11,7 +11,10 @@ import { RuntimeReplayControls } from './RuntimeReplayControls'
 import { RuntimeInspector } from './inspector/RuntimeInspector'
 import type { ReadRuntimePayload } from './inspector/ContentViewer'
 import { layoutRuntimeGraph, nodeMatches, windowRuntimeNodes, type TimelineMode } from './layout/stable-layout'
-import { nodeTitle, nodeSubtitle } from './nodes/node-content'
+import { kindLabel, nodeTitle, nodeSubtitle } from './nodes/node-content'
+import { learningOverlay, visibleLearningNodes } from './learning-overlay'
+import { useLearningOverlay } from './useLearningOverlay'
+import { LEARNING_NODE_REGISTRY, type LearningMapInput } from './learning-nodes'
 import { safeDisplayText } from './measurements'
 import { serializeRuntimeMetadata } from './public-metadata'
 import './runtime-map.css'
@@ -32,10 +35,13 @@ export function RuntimeMapDock({ workspaceId, sessionId, panelId, legacyMessages
   React.useEffect(() => { setRootRunId(props.requestedRootRunId); setReplayCursor(undefined) }, [workspaceId, sessionId, props.requestedRootRunId, props.eventRequestId])
   const graph = React.useMemo(() => replayCursor === undefined ? trace.graph : buildRuntimeGraph(projectRuntimeEvents(trace.events, { ...trace.state.scope, upToSeq: replayCursor })), [trace.graph, trace.events, trace.state.scope, replayCursor])
   const focusToolUseId = props.focusToolUseId || legacyMessages?.find(message => message.id === props.focusMessageId || message.backendMessageId === props.focusMessageId)?.toolUseId
+  // PRD §30: the learning chains come from the read-only `learning:*` surface, not the trace.
+  const learningInput = useLearningOverlay(workspaceId)
   return <RuntimeMapView key={`${workspaceId}:${sessionId}:${panelId || 'primary'}`} {...props}
     graph={graph} runs={trace.runs} coverage={trace.coverage} loading={trace.loading} error={trace.error ? String(trace.error) : undefined} onReload={trace.refresh}
     scopeKey={`${workspaceId}:${sessionId}:${panelId || 'primary'}`} selectedRootRunId={rootRunId || trace.events[0]?.rootRunId} onRunChange={id => { setRootRunId(id); setReplayCursor(undefined) }}
     readPayload={trace.readPayload} focusToolUseId={focusToolUseId} replayCursor={replayCursor} replayMinimum={trace.events[0]?.seq ?? 0} replayMaximum={trace.events.at(-1)?.seq ?? -1} onReplayCursorChange={setReplayCursor}
+    learningInput={learningInput}
   />
 }
 
@@ -44,10 +50,12 @@ export interface RuntimeMapViewProps extends Omit<RuntimeMapDockProps, 'workspac
   loading?: boolean; error?: string; onReload?: () => void; readPayload?: ReadRuntimePayload
   selectedRootRunId?: string; onRunChange?: (id: string) => void
   replayCursor?: number; replayMinimum?: number; replayMaximum?: number; onReplayCursorChange?: (cursor: number | undefined) => void
+  /** PRD §30 learning DTOs; `undefined` (host without the learning API) adds nothing to the map. */
+  learningInput?: LearningMapInput
 }
 
 /** Render-only surface is also used by the isolated renderer verification harness. */
-export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error, onReload, readPayload, onOpenMessage, onClose, editor, selectedEventId, eventRequestId, focusMessageId, focusToolUseId, focusRequestId, modeRequestId, initialMode = 'execution', onOpenCapability, selectedRootRunId, onRunChange, replayCursor, replayMinimum = 0, replayMaximum = -1, onReplayCursorChange }: RuntimeMapViewProps) {
+export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error, onReload, readPayload, onOpenMessage, onClose, editor, selectedEventId, eventRequestId, focusMessageId, focusToolUseId, focusRequestId, modeRequestId, initialMode = 'execution', onOpenCapability, selectedRootRunId, onRunChange, replayCursor, replayMinimum = 0, replayMaximum = -1, onReplayCursorChange, learningInput }: RuntimeMapViewProps) {
   const { t } = useTranslation()
   const [mode, setMode] = React.useState<RuntimeMapMode>(initialMode)
   const [query, setQuery] = React.useState('')
@@ -75,6 +83,13 @@ export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error
   const pageCount = Math.max(1, Math.ceil(matched.length / 200))
   const actualPage = page < 0 ? pageCount - 1 : Math.min(page, pageCount - 1)
   const visible = React.useMemo(() => page < 0 ? matched.slice(-200) : windowRuntimeNodes(matched, actualPage), [matched, actualPage, page])
+  // PRD §30: the map's effective node set is the trace nodes plus the learning
+  // chains. `mergeLearningOverlay` owns that union (and its id de-duplication);
+  // context mode keeps its kind allowlist and the empty-trace state stays a trace
+  // state, so both drop the overlay.
+  const learning = React.useMemo(() => learningOverlay(learningInput), [learningInput])
+  const learningNodes = React.useMemo(() => visibleLearningNodes(graph, learning, { query, filter, context: mode === 'context' }), [graph, learning, query, filter, mode])
+  const learningEdges = React.useMemo(() => learningNodes.length ? learning.edges : [], [learningNodes.length, learning])
   const selected = graph.nodes.find(node => node.id === selectedId)
   const toggleLane = React.useCallback((agentId: string) => setCollapsed(previous => { const next = new Set(previous); if (next.has(agentId)) next.delete(agentId); else next.add(agentId); return next }), [])
   const selectNode = React.useCallback((node: RuntimeNode) => { setSelectedId(node.id); setFollowing(false); if ((node.messageId || node.toolUseId) && onOpenMessage) onOpenMessage(node.messageId ?? '', node.toolUseId) }, [onOpenMessage])
@@ -112,8 +127,10 @@ export function RuntimeMapView({ graph, runs, coverage, scopeKey, loading, error
     {error && <div className="runtime-warning runtime-transport-error" role="alert"><AlertCircle size={14} /><span>{t('runtimeMap.connectionError')}</span>{onReload && <button type="button" onClick={onReload}><RotateCcw size={13} />{t('runtimeMap.retry')}</button>}</div>}
     <div className="runtime-map-body">
       {mode === 'editor' ? <div className="runtime-editor-slot">{editor}</div> : loading && !graph.nodes.length ? <div className="runtime-empty"><LoaderCircle size={22} /><p>{t('runtimeMap.loading')}</p></div> : !graph.nodes.length ? <div className="runtime-empty"><Waypoints size={32} /><h3>{t('runtimeMap.emptyTitle')}</h3><p>{t('runtimeMap.emptyDescription')}</p>{coverage.state !== 'complete' && <p className="runtime-muted">{t('runtimeMap.coveragePartial')}</p>}</div> : <>
-        <div className="runtime-canvas-column">{mode === 'context' ? <RuntimeContextCanvas key={`${scopeKey}:${selectedRootRunId ?? layoutRootRunId}`} graph={graph} scopeKey={`${scopeKey}:context`} selectedId={selectedId} query={query} onSelect={selectNode} onAgentChange={() => setSelectedId(undefined)} apiRef={canvas} /> : mode === 'list' ? <div className="runtime-event-list" role="list" aria-label={t('runtimeMap.mode.list')}>{visible.map(node => <button key={node.id} role="listitem" type="button" data-selected={node.id === selectedId} onClick={() => selectNode(node)}><span>#{node.seq}</span><strong>{nodeTitle(node, t)}</strong><p>{nodeSubtitle(node, t)}</p><small>{safeDisplayText(node.agentId, 80)} · {node.status ? t(`runtimeMap.status.${node.status}`) : t('runtimeMap.unknown')}</small></button>)}</div> : <RuntimeCanvas graph={graph} nodes={visible} layout={layout} scopeKey={scopeKey} selectedId={selectedId} onSelect={selectNode} following={following && replayCursor === undefined} onInspect={() => setFollowing(false)} collapsed={collapsed} onToggleLane={toggleLane} apiRef={canvas} timelineMode={timelineMode} />}
-          {mode !== 'context' && !visible.length && <div className="runtime-no-matches">{t('runtimeMap.noMatches')}</div>}
+        <div className="runtime-canvas-column">{mode === 'context' ? <RuntimeContextCanvas key={`${scopeKey}:${selectedRootRunId ?? layoutRootRunId}`} graph={graph} scopeKey={`${scopeKey}:context`} selectedId={selectedId} query={query} onSelect={selectNode} onAgentChange={() => setSelectedId(undefined)} apiRef={canvas} /> : mode === 'list' ? <div className="runtime-event-list" role="list" aria-label={t('runtimeMap.mode.list')}>{visible.map(node => <button key={node.id} role="listitem" type="button" data-selected={node.id === selectedId} onClick={() => selectNode(node)}><span>#{node.seq}</span><strong>{nodeTitle(node, t)}</strong><p>{nodeSubtitle(node, t)}</p><small>{safeDisplayText(node.agentId, 80)} · {node.status ? t(`runtimeMap.status.${node.status}`) : t('runtimeMap.unknown')}</small></button>)}
+          {learningNodes.map(node => <div key={node.id} role="listitem" className="runtime-learning-row" data-learning-node={node.id} data-learning-kind={node.kind}><span>{kindLabel(node.kind, t)}</span><strong>{node.label}</strong><p>{node.subtitle || LEARNING_NODE_REGISTRY[node.kind].description}</p><small>{node.role}</small></div>)}
+        </div> : <RuntimeCanvas graph={graph} nodes={visible} layout={layout} scopeKey={scopeKey} selectedId={selectedId} onSelect={selectNode} following={following && replayCursor === undefined} onInspect={() => setFollowing(false)} collapsed={collapsed} onToggleLane={toggleLane} apiRef={canvas} timelineMode={timelineMode} learningNodes={learningNodes} learningEdges={learningEdges} />}
+          {mode !== 'context' && !visible.length && !learningNodes.length && <div className="runtime-no-matches">{t('runtimeMap.noMatches')}</div>}
           {mode !== 'context' && pageCount > 1 && <div className="runtime-window-nav"><button type="button" disabled={actualPage === 0} onClick={() => { setPage(actualPage - 1); setFollowing(false) }}>{t('runtimeMap.previousWindow')}</button><span>{page < 0 ? t('runtimeMap.latestWindow', { count: visible.length }) : t('runtimeMap.window', { page: actualPage + 1, count: pageCount })}</span><button type="button" disabled={actualPage >= pageCount - 1} onClick={() => { setPage(actualPage + 1); setFollowing(false) }}>{t('runtimeMap.nextWindow')}</button></div>}
         </div>
         {selected && <RuntimeInspector node={selected} readPayload={readPayload} onClose={() => setSelectedId(undefined)} onOpenMessage={onOpenMessage} onOpenCapability={onOpenCapability} onSelectEvent={selectEvent} />}

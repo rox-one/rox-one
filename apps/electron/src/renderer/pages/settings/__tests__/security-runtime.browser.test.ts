@@ -2,11 +2,12 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as playwrightExpect, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 
 const repository = resolve(import.meta.dirname, '../../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/security-runtime')
 const url = 'http://127.0.0.1:5194'
-const chromiumPath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium'
+const chromiumPath = await resolveChromiumExecutable()
 const proofDirectory = process.env.SECURITY_RUNTIME_PROOF_DIR
 const expectDOM = playwrightExpect.configure({ timeout: 3_000 })
 
@@ -77,7 +78,7 @@ describe.skipIf(!existsSync(chromiumPath))('Security runtime production renderer
 
   it('Rox failures retry independently and optional runtime controls still execute confirmed real API calls', async () => {
     await load('rox=failed&openclaw=running&audit=ready')
-    await expectDOM(page.getByTestId('security-rox-status')).toHaveText('Could not load the Rox runtime status.')
+    await expectDOM(page.getByTestId('security-rox-status')).toHaveText('Could not load the Rox runtime status')
     await page.getByRole('button', { name: 'Stop', exact: true }).click()
     await expectDOM(page.getByRole('dialog')).toBeVisible()
     await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click()

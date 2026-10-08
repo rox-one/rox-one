@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { parseAnsi } from '@rox/ui'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * Inspector command surface. Uses /bin/zsh -lc via IPC when available;
@@ -33,7 +34,7 @@ export function InspectorTerminal({ cwd, autoFocus = false }: { cwd?: string; au
       const out = [result.stdout, result.stderr].filter(Boolean).join('\n').trim()
       setLog((prev) => [...prev, out || (result.ok ? '' : t('inspector.terminalFailed'))])
     } catch (err) {
-      setLog((prev) => [...prev, err instanceof Error ? err.message : String(err)])
+      setLog((prev) => [...prev, toErrorMessage(err)])
     } finally {
       setBusy(false)
     }

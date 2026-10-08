@@ -779,7 +779,7 @@ export function classifyOmpStartupExit(input: {
       code: 'OMP_NO_MODELS',
       message: `OMP exited before startup: no models are configured.${evidence}`,
       stderr: tail,
-      hint: 'Create ~/.omp/agent/models.yml with at least one model, or set an API key environment variable, then retry.',
+      hint: 'Configure the Rox gateway: set the ROX_API_KEY environment variable or create ~/.omp/agent/config.yml and models.yml, then retry.',
     });
   }
   if (OMP_AUTH_PATTERN.test(tail)) {
@@ -787,7 +787,7 @@ export function classifyOmpStartupExit(input: {
       code: 'OMP_AUTH_REQUIRED',
       message: `OMP exited before startup: authentication is required.${evidence}`,
       stderr: tail,
-      hint: 'Run `omp /login` (or configure credentials under ~/.omp/agent) and retry.',
+      hint: 'Run `omp /login` or set ROX_API_KEY (Rox gateway credentials live under ~/.omp/agent), then retry.',
     });
   }
   if (signal) {

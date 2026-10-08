@@ -50,6 +50,7 @@ export interface MarketplaceProgressPayload {
 }
 
 export interface BroadcastEventMap {
+  [RPC_CHANNELS.workspaceWork.CHANGED]: [workspaceId: string, revision: number]
   // Session events (workspace-scoped via broadcastToWorkspace)
   [RPC_CHANNELS.sessions.EVENT]: [event: SessionEvent]
   [RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED]: [summary: UnreadSummary]

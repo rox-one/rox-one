@@ -10,7 +10,7 @@ export default defineConfig({ root, plugins: [react(), tailwindcss()], resolve: 
     { find: '@/components/app-shell/PanelHeader', replacement: resolve(root, 'chrome.tsx') },
     { find: '@/components/ui/HeaderMenu', replacement: resolve(root, 'chrome.tsx') },
     { find: '@/components/settings', replacement: resolve(root, 'settings.ts') },
-    { find: /^@craft-agent\/ui$/, replacement: resolve(repository, 'packages/ui/src/components/ui/PremiumMenuSelect.tsx') },
+    { find: /^@rox\/ui$/, replacement: resolve(repository, 'packages/ui/src/components/ui/PremiumMenuSelect.tsx') },
     { find: '@', replacement: resolve(repository, 'apps/electron/src/renderer') },
     { find: 'react', replacement: resolve(repository, 'node_modules/react') },
     { find: 'react-dom', replacement: resolve(repository, 'node_modules/react-dom') },

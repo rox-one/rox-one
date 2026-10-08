@@ -20,6 +20,11 @@ export class WorkspaceMigrationError extends Error {
   }
 }
 
+/** The one ordering rule shared by the loader, the migrator and the tests. */
+export function compareMigrationNames(a: string, b: string): number {
+  return a.localeCompare(b, 'en', { numeric: true })
+}
+
 export function migrationFromSource(name: string, sql: string): WorkspaceMigration {
   if (!MIGRATION_NAME.test(name) || !sql.trim()) throw new WorkspaceMigrationError('INVALID_MIGRATION')
   return { name, sql, sha256: createHash('sha256').update(sql, 'utf8').digest('hex') }
@@ -49,7 +54,7 @@ export async function applyWorkspaceMigrations(
     const parsed = migrationFromSource(item.name, item.sql)
     if (parsed.sha256 !== item.sha256) throw new WorkspaceMigrationError('INVALID_MIGRATION')
     return parsed
-  }).sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }))
+  }).sort((a, b) => compareMigrationNames(a.name, b.name))
   if (new Set(verified.map(item => item.name)).size !== verified.length) throw new WorkspaceMigrationError('INVALID_MIGRATION')
 
   return database.begin(async transaction => {

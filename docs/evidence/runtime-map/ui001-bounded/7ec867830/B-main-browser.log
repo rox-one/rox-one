@@ -1,0 +1,32 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:
+(pass) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address [477.54ms]
+210 | 
+211 |   browserTest('deletion and foreign-workspace session metadata cannot mount another chat', async () => {
+212 |     await page.evaluate(()=>{(window as any).ui001.sessions([{id:'a',workspaceId:'ws-a'},{id:'foreign',workspaceId:'ws-b'}]);(window as any).ui001.navigate('allSessions/session/a')})
+213 |     await page.locator('[data-fixture-chat="a"]').waitFor()
+214 |     await page.evaluate(()=>(window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}]))
+215 |     await page.locator('[data-testid="route-session-unavailable"][data-session-id="a"]').waitFor()
+                                                                                               ^
+TimeoutError: for: Timeout 2000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-testid="route-session-unavailable"][data-session-id="a"]') to be visible[22m
+
+      at /workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:215:90
+      at processTicksAndRejections (/workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification/native:7:39)
+(fail) UI-001 real Chromium component and persistence fixtures > deletion and foreign-workspace session metadata cannot mount another chat [2236.35ms]
+(pass) UI-001 real Chromium component and persistence fixtures > malformed and unsupported terminal addresses show specific unavailable surfaces [322.69ms]
+(pass) UI-001 real Chromium component and persistence fixtures > cloud-run lookup failure retries and deletion refreshes the selected address [320.79ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler [287.02ms]
+(pass) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address [261.62ms]
+(pass) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending [363.91ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route [283.60ms]
+(pass) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error [272.24ms]
+(pass) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry [841.40ms]
+(pass) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows [633.07ms]
+
+ 10 pass
+ 1 fail
+ 21 expect() calls
+Ran 11 tests across 1 file. [6.97s]

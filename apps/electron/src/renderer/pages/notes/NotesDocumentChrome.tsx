@@ -3,6 +3,7 @@ import { notesRailKeyWidth } from './notes-layout'
 import { ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import {
   NOTES_RAIL_STORAGE_KEY,
   groupNoteCommands,
@@ -18,7 +19,10 @@ import {
 
 export function useNotesRailLayout(): [NotesRailLayout, (patch: Partial<NotesRailLayout>) => void] {
   const [layout, setLayout] = React.useState<NotesRailLayout>(() =>
-    parseNotesRailLayout(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_RAIL_STORAGE_KEY)),
+    {
+      try { return parseNotesRailLayout(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_RAIL_STORAGE_KEY)) }
+      catch { return parseNotesRailLayout(null) }
+    },
   )
 
   const update = React.useCallback((patch: Partial<NotesRailLayout>) => {
@@ -46,13 +50,14 @@ export function NotesBreadcrumbs({
   onOpenFolder?: (folder?: string) => void
 }) {
   const { t } = useTranslation()
+  const vaultTitleKey = useNotesTitleKey('notes.breadcrumb.vault')
   const crumbs = noteBreadcrumbs(noteId, title)
   return (
     <nav className="flex min-w-0 items-center gap-1 text-[12px] text-muted-foreground" aria-label={t('notes.breadcrumb.label')}>
       {crumbs.map((crumb, index) => (
         <React.Fragment key={crumb.id}>
           {index > 0 ? <ChevronRight className="h-3 w-3 shrink-0 opacity-50" /> : null}
-          <button
+          {index === crumbs.length - 1 ? <span aria-current="page" className="min-w-0 truncate px-1 font-medium text-foreground" title={crumb.label}>{crumb.label}</span> : <button
             type="button"
             className={cn(
               'max-w-[9rem] truncate rounded-[var(--radius-control)] px-1 py-0.5 hover:bg-foreground/[0.06] hover:text-foreground',
@@ -63,8 +68,8 @@ export function NotesBreadcrumbs({
               else if (crumb.folder) onOpenFolder?.(crumb.folder)
             }}
           >
-            {crumb.id === 'vault' ? t('notes.breadcrumb.vault') : crumb.label}
-          </button>
+            {crumb.id === 'vault' ? t(vaultTitleKey) : crumb.label}
+          </button>}
         </React.Fragment>
       ))}
     </nav>

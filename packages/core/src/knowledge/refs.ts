@@ -45,6 +45,12 @@ export const KNOWLEDGE_KINDS: readonly KnowledgeKind[] = ['notebook', 'document'
 /** Default provider for compact mentions `[knowledge:block/<id>]` — spec open-question decision (MVP). */
 export const DEFAULT_KNOWLEDGE_PROVIDER = 'siyuan';
 
+/**
+ * Provider id of the workspace-local Markdown notes backend (`local-markdown://` connections):
+ * refs keep `scheme: 'siyuan'` and carry this id in `provider` (native Notes projection too).
+ */
+export const LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER = 'local-markdown';
+
 const PROVIDER_SEGMENT_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 /** Token grammar for `[knowledge:<provider?/]<kind>/<id>]` mentions in message markdown. Verbatim §3.1. */

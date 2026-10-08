@@ -1,0 +1,114 @@
+{
+  "checkedLocales": 12,
+  "keys": 293,
+  "rows": [
+    {
+      "lang": "ar",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "de",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "en",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "es",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "fr",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "hu",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "ja",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "ko",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "pl",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "ru",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": true,
+      "englishFallback": false
+    },
+    {
+      "lang": "zh-Hans",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    },
+    {
+      "lang": "zh-Hant",
+      "manifestKeys": 293,
+      "present": true,
+      "matchesManifest": true,
+      "runtimeSampleKeys": 3,
+      "translatedRussian": false,
+      "englishFallback": true
+    }
+  ]
+}

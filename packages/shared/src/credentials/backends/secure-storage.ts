@@ -564,6 +564,31 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
     }
   }
 
+  /**
+   * Trial-decrypt a candidate store buffer without mutating the backend state.
+   * Mirrors the v3/v2/v1 read order of loadStoreSync, so a .bak is only accepted
+   * when the live key material can actually read it. The key/salt cache is
+   * snapshotted and restored so a rejected trial cannot poison later reads.
+   */
+  private isStoreDecryptable(fileData: Buffer): boolean {
+    if (fileData.length < HEADER_SIZE + IV_SIZE + AUTH_TAG_SIZE) return false;
+    if (!fileData.subarray(0, MAGIC_SIZE).equals(MAGIC_BYTES)) return false;
+    const salt = fileData.subarray(MAGIC_SIZE + FLAGS_SIZE, MAGIC_SIZE + FLAGS_SIZE + SALT_SIZE);
+    const encryptedData = fileData.subarray(HEADER_SIZE);
+    const previousKey = this.encryptionKey;
+    const previousSalt = this.salt;
+    try {
+      return (
+        this.tryDecrypt(encryptedData, this.getEncryptionKey(salt, 'v3')) !== null ||
+        this.tryDecrypt(encryptedData, this.getEncryptionKey(salt, 'v2')) !== null ||
+        this.tryDecrypt(encryptedData, this.getLegacyEncryptionKey(salt)) !== null
+      );
+    } finally {
+      this.encryptionKey = previousKey;
+      this.salt = previousSalt;
+    }
+  }
+
   private async saveStore(store: CredentialStore): Promise<void> {
     this.saveStoreSync(store);
   }
@@ -653,11 +678,18 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
     return pbkdf2Sync(legacyMachineId, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
   }
 
-  async restoreFromBackup(): Promise<boolean> {
+  async restoreFromBackup(): Promise<boolean | 'unavailable'> {
     if (!existsSync(this.backupFile)) {
       throw new CredentialStoreError('BACKUP_MISSING');
     }
     const backup = readFileSync(this.backupFile);
+    // Fail closed before any mutation: a .bak that the current key material cannot
+    // read must not be copied over the live store. Doing so quarantined the same
+    // undecryptable bytes on every call (the wrong-key restore loop). Leave both
+    // .bak and .enc untouched and report the store as unavailable.
+    if (!this.isStoreDecryptable(backup)) {
+      return 'unavailable';
+    }
     const tmp = `${this.file}.tmp`;
     writeFileSync(tmp, backup, { mode: 0o600 });
     renameSync(tmp, this.file);

@@ -33,3 +33,38 @@ jobs:
         # Uses local protocol fixtures and injected installers, without cloud keys or upstream downloads.
         # The script isolates RPC module mocks from the real transport and transcript suites.
         run: bun run test:mcp-onboarding
+  workspace-migrations:
+    # Unified workspace-service DDL (W1-05, #1502): static checks plus migrate-up,
+    # upgrade-path, startup and EXPLAIN runs against a throwaway Postgres container.
+    # No secrets: the service password only exists inside this job's container.
+    name: Workspace-service migrations (Postgres)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rox_migrations
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rox_migrations"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      ROX_TEST_PG_URL: postgres://postgres:postgres@127.0.0.1:5432/rox_migrations
+      # Fail instead of silently skipping the database runs.
+      ROX_TEST_PG_REQUIRED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.3.14' }
+      - run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: bun run workspace-service:test:migrations

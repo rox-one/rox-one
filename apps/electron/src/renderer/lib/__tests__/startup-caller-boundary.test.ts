@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ts from 'typescript'
+import { toErrorMessage } from '../errors'
 import { decideStartupAppState, isStartupAuthorityDenial, probeWithRetry } from '../startup-setup-needs'
 import { ensureRoxRuntimeDefault } from '../../components/onboarding/rox-runtime-default'
 
@@ -45,7 +46,7 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     markHostSessionsUnavailable: () => { calls.push('host-unavailable') },
     probeWithRetry: (read: () => Promise<unknown>, options?: object) => probeWithRetry(read, { delaysMs: [0], deadlineMs: 3000, ...options }),
     waitForTransportConnected: async () => { calls.push('transport-wait'); return { status: 'connected' } },
-    decideStartupAppState, isStartupAuthorityDenial, ensureRoxRuntimeDefault,
+    decideStartupAppState, isStartupAuthorityDenial, ensureRoxRuntimeDefault, toErrorMessage,
     setPersonalTaskScope: (value: unknown) => taskScopes.push(value),
     setCallerAuthority: (value: unknown) => authorities.push(value),
     setWindowWorkspaceId: (value: unknown) => workspaces.push(value),

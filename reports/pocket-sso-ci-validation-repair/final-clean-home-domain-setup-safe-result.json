@@ -1,0 +1,21 @@
+{
+  "exitCode": 0,
+  "ownedRoot": "/tmp/rox-pocket-ci-final-domain-7tyg_jm2",
+  "home": "/tmp/rox-pocket-ci-final-domain-7tyg_jm2/home",
+  "command": [
+    "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+    "test",
+    "--timeout",
+    "180000",
+    "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts"
+  ],
+  "keychainSeam": {
+    "command": "security",
+    "exitCode": 1,
+    "sha256": "84526eedf87c3c67e22a959f06f21fb23bc746ecdb7d25d49bd7b7678d4aae09",
+    "actualEncryptedFileBackend": true
+  },
+  "ambientHomeModelsPresentAfter": false,
+  "startedAt": "2026-10-03T23:15:09.979705+00:00",
+  "completedAt": "2026-10-03T23:15:14.173265+00:00"
+}

@@ -1,0 +1,137 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/e2e/runtime-map/journal-harness.test.ts:
+(pass) persistent real collector and shell restore without repeating actions [76.35ms]
+(pass) large payloads use confined references and bounded reads with redaction [29.99ms]
+
+packages/shared/src/capabilities/packs.test.ts:
+(pass) capability packs > groups the requested tools into the six packs [0.54ms]
+(pass) capability packs > does not auto-enable high-risk tools [0.07ms]
+(pass) install/uninstall idempotency > installs once and reports already-installed on repeat [4.43ms]
+(pass) install/uninstall idempotency > skips high-risk tools unless allowHighRisk is set [6.64ms]
+(pass) install/uninstall idempotency > uninstall is idempotent [2.44ms]
+(pass) provenance and selection fixtures > builds a provenance manifest with pins and enabled flags [0.65ms]
+(pass) provenance and selection fixtures > selects the smallest installed code-intelligence tool for a repository task [0.25ms]
+(pass) provenance and selection fixtures > does not select high-risk research tools for a URL task [0.11ms]
+(pass) AGENTS.md heuristics and offline report > writes when-to-activate, expected output, permission, and unusual-use [0.36ms]
+(pass) AGENTS.md heuristics and offline report > emits an offline capability report with checksums [0.22ms]
+(pass) provider-aware tokenizer > matches the shared heuristic for Rox/OpenAI and reconciles actual usage [0.31ms]
+
+packages/core/src/runtime-trace/projector.test.ts:
+(pass) runtime projection > validates canonical typed fixture; rejects malformed nested payload and schema [1.13ms]
+(pass) runtime projection > batch, incremental, reversed delivery and duplicate delivery match [15.87ms]
+(pass) runtime projection > workspace/root identities are scoped; source duplicate uses stable emitter identity [1.65ms]
+(pass) runtime projection > only explicit causal/data/parent edges; no temporal arrows [1.78ms]
+(pass) runtime projection > terminal cancellation sticks after late output; retry keeps previous attempt [0.95ms]
+(pass) runtime projection > missing parent and delivery gap explicit; gaps repair on catch-up [0.53ms]
+(pass) runtime projection > delta updates retain topology and authoritative complete replaces reasoning [0.38ms]
+(pass) runtime projection > different clock domains and negative elapsed are never exact duration [0.27ms]
+(pass) runtime projection > immutable previous state retains normalized entities and event pages [0.13ms]
+(pass) usage > dedup final replaces interim; aggregate is separate; unknown optional caches stay unknown [0.67ms]
+(pass) usage > unknown values remain unknown; missing usage does not become zero [0.15ms]
+(pass) legacy reconstruction > persisted transcript exposes only messages/tools and incomplete coverage [3.76ms]
+(pass) terminal stdout and stderr chunks accumulate independently; exact chunk tokens are not aggregate tokens [0.31ms]
+(pass) provider reasoning and a summary never become one fabricated chain [0.18ms]
+(pass) evidence references to old streamed output resolve to its correlated operation node [0.36ms]
+(pass) parentage and causal edges survive correlated lifecycle completion [1.41ms]
+(pass) out-of-order earlier phase invalidates geometry token without text delta relayout [0.40ms]
+(pass) explicit cumulative output snapshots replace prior text without duplication [0.46ms]
+(pass) attempt lifecycle uses explicit attempt identity; retries retain failed attempt [0.38ms]
+
+apps/electron/src/renderer/lib/capability-catalog.test.ts:
+(pass) capability catalog identity, status and filters > keeps same-name sources and skill scopes separate; missing usage stays unknown [0.70ms]
+(pass) capability catalog identity, status and filters > never turns saved/anonymous credentials into a tested connection [0.08ms]
+(pass) capability catalog identity, status and filters > intersects semantic category, transport and status without losing unknown resources [0.21ms]
+(pass) capability catalog identity, status and filters > uses verified bundled membership for skill aliases without categorizing display-name lookalikes [0.08ms]
+(pass) capability catalog identity, status and filters > retains recorded prompt hits without inventing assigned agents or runtime usage [0.03ms]
+(pass) capability catalog identity, status and filters > expired model credentials and disabled native tools do not appear connected [0.05ms]
+(pass) capability catalog identity, status and filters > model credentials remain distinct from MCP transport and source identities [0.14ms]
+(pass) catalog store mutations with actual readback > enables a real bundled pack and reads the installed files back [5.31ms]
+(pass) catalog store mutations with actual readback > reports partial install and mismatched readback without claiming success [0.38ms]
+(pass) catalog store mutations with actual readback > source config write/readback preserves failed/revoked state and workspace identity [7.18ms]
+
+apps/electron/src/renderer/lib/starter-prompts.test.ts:
+(pass) starter prompts are local draft preparation > offers general prompts and only available, enabled skill/source dependencies [0.87ms]
+(pass) starter prompts are local draft preparation > preserves every draft character and only appends a prompt once [0.05ms]
+(pass) starter prompts are local draft preparation > suppresses starter advice during streaming, permissions, loading and old conversations [0.06ms]
+(pass) starter prompts are local draft preparation > uses shared dismissal history scoped by workspace/session and skips shadowed skills [0.44ms]
+
+packages/server-core/src/sessions/runtime-trace/journal.test.ts:
+(pass) portable runtime trace journal > orders concurrent delivery, reloads, and resumes a bounded cursor without duplicating rows [45.28ms]
+(pass) portable runtime trace journal > keeps producer event identity idempotent across durable replay and resumed append [2.82ms]
+(pass) portable runtime trace journal > marks torn/corrupt history partial and recovers before appending [6.72ms]
+(pass) portable runtime trace journal > caps blobs, uses opaque hashes and rejects traversal or tampering [11.89ms]
+(pass) portable runtime trace journal > enforces aggregate run blob quota atomically and restores it after restart [9.56ms]
+(pass) portable runtime trace journal > never writes a journal or reads a blob through a symlink [5.70ms]
+(pass) runtime trace privacy > scrubs registered credentials and nested/inline credentials before storage while retaining measurements [0.83ms]
+
+packages/server-core/src/sessions/runtime-trace/service.test.ts:
+(pass) runtime session collector > records real tool inputs/results and usage, restores cursor and preserves parent child identity [35.23ms]
+(pass) runtime session collector > keeps late tool output in its originating run after a new prompt starts [14.11ms]
+(pass) runtime session collector > deduplicates native child observations and maps nested native identities [7.75ms]
+(pass) runtime session collector > stores redacted large content and authorizes references by actual session/run ownership [9.95ms]
+(pass) runtime session collector > rejects malformed payloads before writing and prevents metadata from replacing collector scope [5.37ms]
+(pass) runtime session collector > reports failed disk recording through passive health, snapshots and recovered source gaps [8.23ms]
+(pass) runtime session collector > keeps a structured host request as a tool until real executor evidence arrives [7.49ms]
+(pass) runtime session collector > keeps precise executor exit status after the ordinary tool result arrives [12.21ms]
+(pass) runtime session collector > evicts idle journal caches without deleting history or creating competing sequence collectors [46.21ms]
+(pass) runtime session collector > uses a fresh native generation for repeated child ids and preserves executor retry attempts [5.99ms]
+
+packages/server-core/src/sessions/runtime-trace/conductor.test.ts:
+[task] "actual-task" permission mode: allow-all
+(pass) canonical Conductor observations > publishes actual DAG dependencies and durable verification verdict, separately from node completion [64.51ms]
+
+apps/electron/src/renderer/lib/__tests__/runtime-trace-navigation.test.ts:
+(pass) runtime/chat navigation preserves mounted optimistic identity [0.24ms]
+(pass) tool identity resolves without message text heuristics [0.03ms]
+
+apps/electron/src/renderer/event-processor/__tests__/runtime-trace-ingress.test.ts:
+(pass) canonical trace ingress > snapshot response merges events received while snapshot was in flight [3.49ms]
+(pass) canonical trace ingress > single live source runs with map closed, duplicate dedup and gap catch-up [2.24ms]
+(pass) canonical trace ingress > wrong workspace or malformed event never reaches another session [0.09ms]
+(pass) canonical trace ingress > deletion invalidates outstanding snapshot generation [0.64ms]
+(pass) canonical trace ingress > concurrent readers share RPC and do not attach live subscriptions [1.25ms]
+(pass) canonical trace ingress > untrusted RPC response fails closed and retains explicit partial coverage [0.79ms]
+(pass) authorized child alias merges live root race and receives future rooted events [1.11ms]
+(pass) deleted identity can reload without waiting for stale reader, no active run resurrection [1.16ms]
+(pass) passive recorder health marks coverage without synthetic events or journal sequence [0.71ms]
+(pass) health boundary rejects malformed coverage and wrong workspace [0.16ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/flow-reconciliation.test.ts:
+(pass) controlled canvas local updates > retains every unchanged flow object while replacing only the changed operation [1.30ms]
+(pass) controlled canvas local updates > does not retain removed nodes after switching runs or filtered windows [0.66ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/terminal-inspector.test.tsx:
+(pass) keeps actual stderr output separate when stdout was not recorded [19.53ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/lazy-retry.browser.test.ts:
+(skip) mounted map lazy-load recovery > (unnamed)
+(skip) mounted map lazy-load recovery > a failed chunk can retry without remounting chat or losing its draft
+(skip) mounted map lazy-load recovery > (unnamed)
+
+apps/electron/src/renderer/components/runtime-map/__tests__/stable-layout.test.ts:
+(pass) runtime canvas real-observation layout > places actual workers below parent and gives each assignment a lane [2.36ms]
+(pass) runtime canvas real-observation layout > token deltas update one correlated node without changing topology or old positions [10.97ms]
+(pass) runtime canvas real-observation layout > true time uses source timestamps only within a single known clock domain [2.58ms]
+(pass) runtime canvas real-observation layout > bounds rendered cards while retaining navigation to every page [5.61ms]
+(pass) runtime canvas real-observation layout > filters observations without turning terminal output into actions [1.64ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/runtime-ui-model.test.ts:
+(pass) honest runtime measurements and inert content > never turns a missing token/time measurement into zero [0.07ms]
+(pass) honest runtime measurements and inert content > shows the observed executor duration when event clocks cannot be compared [0.06ms]
+(pass) honest runtime measurements and inert content > context occupancy uses the particular input and model window [0.12ms]
+(pass) honest runtime measurements and inert content > removes active terminal controls and obvious credentials from every viewer/copy [0.07ms]
+(pass) honest runtime measurements and inert content > also redacts quoted JSON credential keys and authorization scheme values [0.03ms]
+(pass) map attention and independent split scope > manual inspection stops follow until explicit resume [0.09ms]
+(pass) map attention and independent split scope > keeps both 360px sides and never transfers widths between panels [0.13ms]
+
+3 tests skipped:
+(skip) mounted map lazy-load recovery > (unnamed)
+(skip) mounted map lazy-load recovery > a failed chunk can retry without remounting chat or losing its draft
+(skip) mounted map lazy-load recovery > (unnamed)
+
+ 91 pass
+ 3 skip
+ 0 fail
+ 349 expect() calls
+Ran 94 tests across 15 files. [2.79s]

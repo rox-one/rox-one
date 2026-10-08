@@ -8,6 +8,16 @@
 
 import type { NavigationState } from '../../shared/types'
 
+/** A single session catalog is the workspace until an actual session is opened. */
+export function sessionCatalogOwnsWorkspace(
+  nav: NavigationState | null,
+  options: { panelCount: number; isCompact: boolean; navigatorHidden: boolean },
+): boolean {
+  return !options.isCompact && !options.navigatorHidden && options.panelCount <= 1
+    && nav?.navigator === 'sessions' && !nav.details
+    && (!nav.viewMode || nav.viewMode === 'list')
+}
+
 /**
  * Returns true when the focused panel's nav state is in "detail" mode —
  * i.e. the user has drilled past the navigator into a specific item.
@@ -42,6 +52,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       // A failed address owns a content surface, including compact mode.
       return true
     case 'memory':
+    case 'learning':
     case 'connections':
     case 'search':
       return false
@@ -51,6 +62,9 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'meetings':
       return navState.details !== null
     case 'home':
+      return true
+    case 'surface':
+      // Unified mode roots (W1-07) own the content panel like Home.
       return true
     case 'screen':
       // Extra screens render their own list + detail in the content panel
