@@ -5,8 +5,10 @@
  * Mounts the real `useWorkspaceWork` hook (Tasks / Plan / Agents surfaces)
  * against an electronAPI whose read takes `--latency` ms, and reports per
  * visit: time until a snapshot is painted and how many reads were issued.
- * Visit 1 is cold; later visits are revisits. A last case mounts two views
- * at once (e.g. Tasks + the auxiliary panel).
+ * Visit 1 is cold; later visits are revisits within the stale-while-
+ * revalidate window (no read). One case ages the entry past the window: it
+ * still paints from cache and issues one background read. A last case mounts
+ * two views at once (e.g. Tasks + the auxiliary panel).
  *
  *   bun scripts/bench/surface-revisit-bench.tsx [--latency 60] [--visits 3]
  *
@@ -19,6 +21,8 @@ import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 import { emptyWorkspaceWorkState } from '@rox/shared/workspace-work'
 import { useWorkspaceWork } from '../../apps/electron/src/renderer/lib/useWorkspaceWork'
+import { ROX_REVALIDATE_AFTER_MS, roxQueryClient } from '../../apps/electron/src/renderer/lib/query/client'
+import { roxKeys } from '../../apps/electron/src/renderer/lib/query/keys'
 
 installDom()
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = false
@@ -66,6 +70,9 @@ await visit(1, "warmup")
 reads = 0
 const results: Array<{ visit: string; paintMs: number; reads: number }> = []
 for (let i = 1; i <= visits; i++) results.push({ visit: i === 1 ? 'cold' : `revisit ${i - 1}`, ...await visit(1) })
+const key = roxKeys.workspaceWork('ws')
+roxQueryClient().setQueryData(key, roxQueryClient().getQueryData(key), { updatedAt: Date.now() - ROX_REVALIDATE_AFTER_MS - 1 })
+results.push({ visit: 'revisit after the 10 s window (paint from cache + background read)', ...await visit(1) })
 results.push({ visit: 'two views at once (revisit)', ...await visit(2) })
 results.push({ visit: 'two views at once (cold, other workspace)', ...await visit(2, 'ws-2') })
 console.log(JSON.stringify({ latencyMs: latency, results }, null, 2))

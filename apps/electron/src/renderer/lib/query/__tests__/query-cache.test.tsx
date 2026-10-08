@@ -150,7 +150,7 @@ describe('persistence', () => {
   }
 
   it('stores one workspace and only metadata domains', () => {
-    const record = buildPersistedRoxQueryCache(seed(), 'ws-a', 1_000)!
+    const record = buildPersistedRoxQueryCache(seed(), 'ws-a', 'local', Date.now())!
     expect(record.workspaceId).toBe('ws-a')
     expect(record.buster).toBe(ROX_QUERY_CACHE_BUSTER)
     const keys = record.state.queries.map(query => query.queryKey)
@@ -161,25 +161,27 @@ describe('persistence', () => {
   })
 
   it('rejects stale, foreign-buster or smuggled records', () => {
-    const record = buildPersistedRoxQueryCache(seed(), 'ws-a', 1_000)!
-    expect(isRestorableRoxQueryCache(record, 2_000)).toBe(true)
-    expect(isRestorableRoxQueryCache({ ...record, buster: 'old' }, 2_000)).toBe(false)
-    expect(isRestorableRoxQueryCache(record, 1_000 + ROX_QUERY_CACHE_MAX_AGE_MS + 1)).toBe(false)
+    const t0 = Date.now()
+    const record = buildPersistedRoxQueryCache(seed(), 'ws-a', 'local', t0)!
+    expect(isRestorableRoxQueryCache(record, t0 + 1_000)).toBe(true)
+    expect(isRestorableRoxQueryCache({ ...record, buster: 'old' }, t0 + 1_000)).toBe(false)
+    expect(isRestorableRoxQueryCache({ ...record, principal: '' }, t0 + 1_000)).toBe(false)
+    expect(isRestorableRoxQueryCache(record, t0 + ROX_QUERY_CACHE_MAX_AGE_MS + 60_000)).toBe(false)
     const smuggled: PersistedRoxQueryCache = {
       ...record,
       state: { ...record.state, queries: [...record.state.queries, { ...record.state.queries[0]!, queryKey: roxKeys.notesList('ws-b') }] },
     }
-    expect(isRestorableRoxQueryCache(smuggled, 2_000)).toBe(false)
+    expect(isRestorableRoxQueryCache(smuggled, t0 + 1_000)).toBe(false)
     const inbox: PersistedRoxQueryCache = {
       ...record,
       state: { ...record.state, queries: [{ ...record.state.queries[0]!, queryKey: roxKeys.inbox('ws-a', 'actor', 'memory') }] },
     }
-    expect(isRestorableRoxQueryCache(inbox, 2_000)).toBe(false)
+    expect(isRestorableRoxQueryCache(inbox, t0 + 1_000)).toBe(false)
     expect(isRestorableRoxQueryCache(null)).toBe(false)
   })
 
   it('restored entries paint and are revalidated on first read', () => {
-    const record = buildPersistedRoxQueryCache(seed(), 'ws-a', Date.now())!
+    const record = buildPersistedRoxQueryCache(seed(), 'ws-a', 'local', Date.now())!
     const fresh = createRoxQueryClient()
     restoreRoxQueryCache(fresh, record)
     expect(fresh.getQueryData<unknown>(roxKeys.notesList('ws-a'))).toEqual([{ id: 'n1', title: 'Note' }])
@@ -209,7 +211,7 @@ describe('persistence', () => {
   })
 
   it('clear() (identity change) wins over an in-flight restore', async () => {
-    const record = buildPersistedRoxQueryCache(seed(), 'ws-a', Date.now())!
+    const record = buildPersistedRoxQueryCache(seed(), 'ws-a', 'local', Date.now())!
     const storage = memoryStorage(record)
     const next = createRoxQueryClient()
     const persistence = startRoxQueryPersistence(next, storage, { debounceMs: 0 })
@@ -296,7 +298,7 @@ describe('useWorkspaceWork on the shared cache', () => {
     return () => act(async () => { root.unmount() })
   }
 
-  it('two views share one read; a revisit paints at once with zero reads', async () => {
+  it('two views share one read; a revisit within the SWR window paints at once with zero reads', async () => {
     const revision = { value: 3 }
     const api = installApi(revision)
     const firstSeen: Array<number | null> = []
@@ -400,7 +402,7 @@ describe('surface wiring (source guards)', () => {
   const read = (file: string) => readFileSync(join(renderer, file), 'utf8')
   it('notes, home, agents, inbox and feed read through the shared cache', () => {
     expect(read('pages/NotesPage.tsx')).toContain('fetchNotesList(activeWorkspaceId')
-    expect(read('pages/NotesPage.tsx')).toContain('notesTaskCache<NoteTask>(activeWorkspaceId)')
+    expect(read('pages/NotesPage.tsx')).toContain('useState(() => notesTaskCache<NoteTask>(activeWorkspaceId))')
     expect(read('platform/home/widgets.tsx')).toContain('fetchNotesList(workspaceId')
     expect(read('pages/workspace-work/AgentProfilesView.tsx')).toContain('roxKeys.agentsCatalog(workspaceId)')
     expect(read('hooks/useInboxItems.ts')).toContain('roxKeys.inbox(workspaceId, captured.actorKey!, key)')
