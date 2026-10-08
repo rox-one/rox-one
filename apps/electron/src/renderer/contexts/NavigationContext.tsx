@@ -566,7 +566,6 @@ export function NavigationProvider({
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
-      if (initialRoute) requestRuntimeSelection(initialRoute)
 
       // Restore right sidebar
       if (sidebarParam) {
@@ -624,6 +623,9 @@ export function NavigationProvider({
         }
         // A malformed link must retain at least one primary working surface.
         if (entries.every(entry => entry.tool)) entries[0].tool = undefined
+        // Restore read-only map references for every actual panel, including
+        // unfocused panels and layouts published without a separate ?route=.
+        for (const entry of entries) requestRuntimeSelection(entry.route)
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
         const restored = store.get(panelStackAtom)
         const primaryIndex = Number(params.get('pi') ?? '0')

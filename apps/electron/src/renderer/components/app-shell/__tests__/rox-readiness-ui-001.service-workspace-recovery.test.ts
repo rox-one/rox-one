@@ -4,10 +4,11 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import {
   panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom, focusedPanelIndexAtom,
-  reconcilePanelStackAtom, updateFocusedPanelRouteAtom,
+  reconcilePanelStackAtom, updateFocusedPanelRouteAtom, primaryPanelIdAtom, primaryPanelRouteAtom,
 } from '../../../atoms/panel-stack'
 import { focusServicePanelAtom } from '../service-navigation'
 import { APP_NAV_DESTINATIONS_BY_ID } from '../nav-destinations'
+import { decodeToolContexts, encodeToolContexts } from '../auxiliary-persistence'
 import {
   parseRoute, parseRouteToNavigationState, resolveRouteNavigationState,
   buildRouteFromNavigationState, buildRightSidebarParam,
@@ -17,7 +18,7 @@ import { sessionMetaMapAtom } from '../../../atoms/sessions'
 import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../../../contexts/navigation-reconcile'
 
 import { decodePanelEntries, encodePanelEntries } from '../../../lib/panel-url'
-import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '../../../atoms/runtime-trace'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from '../../../atoms/runtime-trace'
 import { parseRuntimeMapViewRequest } from '../../../../shared/runtime-map-link'
 
 const navURL = new URL('../../../contexts/NavigationContext.tsx', import.meta.url)
@@ -53,6 +54,7 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   const reconcile = productionClosure(navURL, 'reconcileFromUrlParams', {
     store, requestRuntimeSelection, reconcilePanelStackAtom, parseRouteToNavigationState, normalizePanelRouteForReconcile, decodePanelEntries,
     resolveAutoSelectionRef: { current: (state: unknown) => state }, rightSidebarRef, setRightSidebar: () => {},
+    workspaceId: 'a', decodeToolContexts, panelStackAtom, primaryPanelIdAtom,
   })
   const params = new URLSearchParams({ ws: 'deleted-workspace', route: 'notes/note/retained' })
   if (multiple) { params.set('panels', 'home:0.5,notes/note/retained:0.5'); params.set('fi', '0') }
@@ -94,6 +96,7 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   const click = renderClick()
   const syncUrl = productionClosure(navURL, 'syncUrl', {
     requestedWorkspaceSlugRef, workspaceSlug: 'a', store, panelStackAtom, focusedPanelIndexAtom, encodePanelEntries,
+    primaryPanelRouteAtom, primaryPanelIdAtom, encodeToolContexts,
     isReady: true, isSessionsReady: true, pendingUrlRestoreRef: { current: null }, previousWorkspaceSlugRef: { current: null },
     historyMountedRef: { current: true }, isPopstateSwitchRef: { current: false },
     window: { location: { href: 'https://fixture.invalid/?ws=deleted-workspace&route=notes%2Fnote%2Fretained' } },
@@ -106,10 +109,27 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
     requestedWorkspaceSlugRef.current = slug
     requestedWorkspaceSlug = slug
   }
-  return { store, click, renderClick, requestWorkspace, navigate, readNavigation, requestedWorkspaceSlugRef, writes, historyWrites, syncUrl }
+  return { store, click, renderClick, requestWorkspace, requestRuntimeSelection, navigate, readNavigation, requestedWorkspaceSlugRef, writes, historyWrites, syncUrl }
 }
 
 describe('UI-001 service selection over unavailable workspace — actual composed callbacks', () => {
+  test('a valid map address selects the existing scope without changing runtime evidence or panel history', () => {
+    const f = fixture(false, 'a')
+    const key = runtimeTraceScopeKey({ workspaceId: 'a', sessionId: 'retained' })
+    const trace = runtimeTraceSessionAtomFamily(key)
+    const beforeTrace = f.store.get(trace), beforePanels = f.store.get(panelStackAtom)
+    const selection = runtimeMapOpenRequestAtomFamily(key)
+    f.requestRuntimeSelection('allSessions/session/retained?runtimeRun=run-1&runtimeEvent=event-1')
+    const request = f.store.get(selection)
+    expect(request).toEqual({ rootRunId: 'run-1', eventId: 'event-1', requestId: 1 })
+    f.requestRuntimeSelection('allSessions/session/retained?runtimeRun=&runtimeEvent=event-1')
+    expect(f.store.get(selection)).toBe(request)
+    expect(f.store.get(trace)).toBe(beforeTrace)
+    expect(f.store.get(panelStackAtom)).toBe(beforePanels)
+    expect(f.historyWrites).toEqual([])
+    expect(f.writes).toEqual([])
+    expect(f.store.get(runtimeMapOpenRequestAtomFamily(runtimeTraceScopeKey({ workspaceId: 'b', sessionId: 'retained' })))).toBeUndefined()
+  })
   for (const multiple of [false, true]) {
     test(`explicit Notes service recovers an unavailable workspace (${multiple ? 'focus another retained panel' : 'already focused retained panel'})`, async () => {
       const f = fixture(multiple)

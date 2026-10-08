@@ -7,6 +7,7 @@ import * as navigationGuards from '../../../../shared/types'
 import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 import { createStore } from 'jotai/vanilla'
 import { bottomTerminalOpenAtom } from '../../../atoms/unified-shell'
+import { runtimeTraceScopeKey } from '../../../atoms/runtime-trace'
 import { navigationEntity } from '../../../features/product-tour/runtime/routes'
 
 const mainContentSource = readFileSync(join(__dirname, '../MainContentPanel.tsx'), 'utf8')
@@ -59,13 +60,13 @@ function dispatch(route: string): React.ReactElement {
     useCallback: (callback: unknown) => callback, useEffect() {}, useMemo: (callback: () => unknown) => callback(),
     useState: (initial: unknown) => [initial, () => {}], useTranslation: () => ({ t: (key: string) => key }),
     useNavigationState: () => state, useNavigation: () => ({ isSessionsReady: true }),
-    useAppShellContext: () => ({ activeWorkspaceId: 'workspace-owner', workspaces: [], sessionStatuses: [], projects: [], loadedProjects: [], labels: [] }),
+    useAppShellContext: () => ({ activeWorkspaceId: 'workspace-owner', workspaces: [], sessionStatuses: [], projects: [], loadedProjects: [], labels: [], skills: [] }),
     sessionMetaMapAtom, automationsAtom: Symbol(),
     useAtomValue: (atom: symbol) => atom === sessionMetaMapAtom ? new Map() : [],
     useSetAtom: () => () => {},
     useStore: () => ({ get: () => undefined, set: () => {}, sub: () => () => {} }),
     useSession: () => [{ selected: null }],
-    runtimeTraceSessionAtomFamily: () => Symbol('trace'),
+    runtimeTraceScopeKey, runtimeTraceSessionAtomFamily: () => Symbol('trace'),
     loadRuntimeTrace: () => Promise.resolve(),
     runtimeCatalogScope: () => undefined,
     runtimeCatalogCapabilities: () => ({

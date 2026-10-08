@@ -1012,7 +1012,7 @@ interface ManagedSession {
     options?: SendMessageOptions
     messageId?: string  // Pre-generated ID for matching with UI
     optimisticMessageId?: string  // Frontend's ID for reliable event matching
-    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext }
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; roxExecutionContext?: RoxExecutionContext; runtimeLaunch?: RuntimeLaunch }
     roxExecutionContext?: RoxExecutionContext // Captured host owner, retained through deferred replay.
     roxOwnerResource?: string // Sealed exact-generation owner for crash/restart recovery.
   }>

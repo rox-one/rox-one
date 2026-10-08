@@ -1,0 +1,547 @@
+{
+  "class": "actual-native-sdk-fixture-provider",
+  "assertionsPassed": false,
+  "nativeVersion": "18.4.12",
+  "headSha": "28d1d7433a00743194d3a138dd2d0573c4872595",
+  "checkoutMergeSha": "cd5b13b15bbd360a85feb7811a3c71bbec77ede1",
+  "workflowRun": 37142991716,
+  "workflowJob": 111261098931,
+  "artifactId": 11280569969,
+  "workflowUrl": "https://github.com/rox-one/rox-one/actions/runs/37142991716",
+  "artifactUrl": "https://github.com/rox-one/rox-one/actions/runs/37142991716/artifacts/11280569969",
+  "artifactZipSha256": "0a88affccb4d19c7c97fb8689cc3dc60a27d7e6ae49d91124d1cd464577589a4",
+  "artifactJsonSha256": "13acb95995c61bdc54608f959cad1b4db552865e14fd03bc8ac13a7a0e197c78",
+  "actualEnvironment": {
+    "os": "Ubuntu 24.04.5",
+    "bun": "1.3.14",
+    "node": "24.21.0"
+  },
+  "steps": {
+    "frozenInstall": "passed",
+    "verifiedNativePackageAndLockedGraph": "passed",
+    "nativeLoop": "failed",
+    "boundaryTests": "skipped",
+    "evidenceUpload": "passed"
+  },
+  "error": "Missing actual native two-level worker assignment observations",
+  "networkAttempts": 0,
+  "paidProviderRequests": 0,
+  "transportErrors": [],
+  "actualProviderRequests": [
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "task-label",
+      "tools": []
+    },
+    {
+      "kind": "child",
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "child",
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "restricted-eval-child",
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    }
+  ],
+  "actualWorkerObservations": [
+    {
+      "sourceEventId": "dad90e5e-3d11-4efa-9438-ac3edecc9e17:agent.assigned:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9cad-7000-bc5b-dc10fd571bb9:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "sourceSeq": 1,
+      "agentId": "LabourCuckoo",
+      "parentAgentId": "root",
+      "providerTurnId": "01a102f4-9cad-7000-bc5b-dc10fd571bb9:turn:0",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050947820,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 30.848862000000054,
+      "clockDomain": "omp-native:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "origin": "observed",
+      "kind": "agent.assigned",
+      "payload": {
+        "assignment": {
+          "agentId": "LabourCuckoo",
+          "parentAgentId": "root",
+          "name": "fixture-worker",
+          "task": {
+            "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+            "byteLength": 84,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "prompt": {
+            "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+            "byteLength": 84,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "model": {
+            "confirmed": {
+              "state": "known",
+              "value": "fixture/worker",
+              "source": "OMP ExtensionContext.model",
+              "origin": "observed"
+            },
+            "provider": "fixture",
+            "contextWindow": {
+              "state": "known",
+              "value": 200000,
+              "source": "OMP model catalog",
+              "origin": "observed"
+            }
+          },
+          "contextSnapshotId": "01a102f4-9cad-7000-bc5b-dc10fd571bb9:context:1",
+          "tools": [
+            "task",
+            "read",
+            "wait",
+            "yield"
+          ],
+          "nativeKind": "unknown"
+        }
+      }
+    },
+    {
+      "sourceEventId": "f3792050-dc93-4b0f-a4fa-fb22fd9cc365:agent.started:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9cad-7000-bc5b-dc10fd571bb9:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "sourceSeq": 4,
+      "agentId": "LabourCuckoo",
+      "parentAgentId": "root",
+      "providerTurnId": "01a102f4-9cad-7000-bc5b-dc10fd571bb9:turn:0",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050947822,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 32.62196400000016,
+      "clockDomain": "omp-native:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "origin": "observed",
+      "kind": "agent.started",
+      "payload": {
+        "name": "fixture-worker",
+        "status": "running"
+      }
+    },
+    {
+      "sourceEventId": "84288dd7-a814-4f90-803a-5eb0392237de:tool.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9cad-7000-bc5b-dc10fd571bb9:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "sourceSeq": 8,
+      "agentId": "LabourCuckoo",
+      "parentAgentId": "root",
+      "spanId": "native:01a102f4-9cad-7000-bc5b-dc10fd571bb9:tool:actual-child-task",
+      "providerTurnId": "01a102f4-9cad-7000-bc5b-dc10fd571bb9:turn:1",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050947858,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 69.20154000000002,
+      "clockDomain": "omp-native:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "origin": "observed",
+      "kind": "tool.completed",
+      "payload": {
+        "name": "task",
+        "result": {
+          "text": "Task execution failed: Cannot spawn 'fixture-restricted'. Allowed: none (spawns disabled for this agent)",
+          "byteLength": 104,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        },
+        "status": "succeeded"
+      },
+      "toolUseId": "actual-child-task"
+    },
+    {
+      "sourceEventId": "37ca395f-15bd-48f2-920e-a5a3c935f10e:tool.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9cad-7000-bc5b-dc10fd571bb9:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "sourceSeq": 12,
+      "agentId": "LabourCuckoo",
+      "parentAgentId": "root",
+      "spanId": "native:01a102f4-9cad-7000-bc5b-dc10fd571bb9:tool:actual-child-yield",
+      "providerTurnId": "01a102f4-9cad-7000-bc5b-dc10fd571bb9:turn:2",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050947872,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 83.36383000000001,
+      "clockDomain": "omp-native:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "origin": "observed",
+      "kind": "tool.completed",
+      "payload": {
+        "name": "yield",
+        "result": {
+          "text": "Result submitted.",
+          "byteLength": 17,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        },
+        "status": "succeeded"
+      },
+      "toolUseId": "actual-child-yield"
+    },
+    {
+      "sourceEventId": "b80f120e-f6b8-411f-b022-94c514218bba:agent.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9cad-7000-bc5b-dc10fd571bb9:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "sourceSeq": 13,
+      "agentId": "LabourCuckoo",
+      "parentAgentId": "root",
+      "providerTurnId": "01a102f4-9cad-7000-bc5b-dc10fd571bb9:turn:2",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050947877,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 87.57435400000008,
+      "clockDomain": "omp-native:49f424a8-1cf8-4773-9550-8227b13b91c6",
+      "origin": "observed",
+      "kind": "agent.completed",
+      "payload": {
+        "status": "succeeded",
+        "result": {
+          "text": "{\"text\":\"CHILD_OK\"}",
+          "byteLength": 19,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        }
+      }
+    },
+    {
+      "sourceEventId": "1d0f342a-3de5-4db1-a3cd-478600ed0f8b:agent.assigned:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9dcb-7000-9122-3f0289dea063:7fe80c1f-163f-41be-8346-928beb021a76",
+      "sourceSeq": 1,
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "providerTurnId": "01a102f4-9dcb-7000-9122-3f0289dea063:turn:0",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050948074,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 14.669764000000214,
+      "clockDomain": "omp-native:7fe80c1f-163f-41be-8346-928beb021a76",
+      "origin": "observed",
+      "kind": "agent.assigned",
+      "payload": {
+        "assignment": {
+          "agentId": "eval-worker-fixture",
+          "parentAgentId": "root",
+          "name": "fixture-restricted",
+          "task": {
+            "text": "Complete assignment thoroughly:\n\nNATIVE_EVAL_TASK",
+            "byteLength": 49,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "prompt": {
+            "text": "Complete assignment thoroughly:\n\nNATIVE_EVAL_TASK",
+            "byteLength": 49,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "model": {
+            "confirmed": {
+              "state": "known",
+              "value": "fixture/worker",
+              "source": "OMP ExtensionContext.model",
+              "origin": "observed"
+            },
+            "provider": "fixture",
+            "contextWindow": {
+              "state": "known",
+              "value": 200000,
+              "source": "OMP model catalog",
+              "origin": "observed"
+            }
+          },
+          "contextSnapshotId": "01a102f4-9dcb-7000-9122-3f0289dea063:context:1",
+          "tools": [
+            "read",
+            "yield"
+          ],
+          "nativeKind": "eval"
+        }
+      }
+    },
+    {
+      "sourceEventId": "4b91c7a0-97af-4e34-b2c1-c3b81822e3c7:agent.started:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9dcb-7000-9122-3f0289dea063:7fe80c1f-163f-41be-8346-928beb021a76",
+      "sourceSeq": 4,
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "providerTurnId": "01a102f4-9dcb-7000-9122-3f0289dea063:turn:0",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050948075,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 15.823452000000088,
+      "clockDomain": "omp-native:7fe80c1f-163f-41be-8346-928beb021a76",
+      "origin": "observed",
+      "kind": "agent.started",
+      "payload": {
+        "name": "fixture-restricted",
+        "status": "running"
+      }
+    },
+    {
+      "sourceEventId": "bdeb8c5c-bd41-455f-9d24-e6d01e1b0fbc:tool.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9dcb-7000-9122-3f0289dea063:7fe80c1f-163f-41be-8346-928beb021a76",
+      "sourceSeq": 8,
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "spanId": "native:01a102f4-9dcb-7000-9122-3f0289dea063:tool:actual-eval-child-yield",
+      "providerTurnId": "01a102f4-9dcb-7000-9122-3f0289dea063:turn:1",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050948103,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 43.930702999999994,
+      "clockDomain": "omp-native:7fe80c1f-163f-41be-8346-928beb021a76",
+      "origin": "observed",
+      "kind": "tool.completed",
+      "payload": {
+        "name": "yield",
+        "result": {
+          "text": "Result submitted.",
+          "byteLength": 17,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        },
+        "status": "succeeded"
+      },
+      "toolUseId": "actual-eval-child-yield"
+    },
+    {
+      "sourceEventId": "efb709da-ac44-4072-b3d6-4680aaedfd88:agent.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a102f4-9dcb-7000-9122-3f0289dea063:7fe80c1f-163f-41be-8346-928beb021a76",
+      "sourceSeq": 9,
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "providerTurnId": "01a102f4-9dcb-7000-9122-3f0289dea063:turn:1",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791050948105,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 45.210161000000426,
+      "clockDomain": "omp-native:7fe80c1f-163f-41be-8346-928beb021a76",
+      "origin": "observed",
+      "kind": "agent.completed",
+      "payload": {
+        "status": "succeeded",
+        "result": {
+          "text": "{\"text\":\"EVAL_OK\"}",
+          "byteLength": 18,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        }
+      }
+    }
+  ],
+  "taskResult": {
+    "content": [
+      {
+        "type": "text",
+        "text": "<task-result id=\"LabourCuckoo\" agent=\"fixture-worker\" status=\"completed\" duration=\"165ms\">\n<meta lines=\"3\" size=\"24B\" />\n<output>\n{\n  \"text\": \"CHILD_OK\"\n}\n</output>\n</task-result>"
+      }
+    ],
+    "details": {
+      "projectAgentsDir": null,
+      "results": [
+        {
+          "index": 0,
+          "id": "LabourCuckoo",
+          "agent": "fixture-worker",
+          "agentSource": "user",
+          "task": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+          "assignment": "orchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+          "description": "runtime-map-fixture",
+          "exitCode": 0,
+          "output": "{\n  \"text\": \"CHILD_OK\"\n}",
+          "stderr": "",
+          "truncated": false,
+          "durationMs": 155,
+          "tokens": 0,
+          "requests": 2,
+          "contextWindow": 200000,
+          "modelOverride": [
+            "fixture/worker:medium"
+          ],
+          "resolvedModel": "fixture/worker:high",
+          "resolvedModelIdentity": "fixture/worker",
+          "resolvedThinkingLevel": "high",
+          "resolvedModelIsFallback": false,
+          "aborted": false,
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "reasoningTokens": 0,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "outputPath": "/tmp/omp-task-15980a7b239fbebd/LabourCuckoo.md",
+          "extractedToolData": {
+            "task": [
+              {
+                "projectAgentsDir": null,
+                "results": [],
+                "totalDurationMs": 0
+              }
+            ],
+            "yield": [
+              {
+                "data": {
+                  "text": "CHILD_OK"
+                },
+                "status": "success"
+              }
+            ]
+          },
+          "outputMeta": {
+            "lineCount": 3,
+            "charCount": 24
+          }
+        }
+      ],
+      "totalDurationMs": 165,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "reasoningTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "outputPaths": [
+        "/tmp/omp-task-15980a7b239fbebd/LabourCuckoo.md"
+      ]
+    }
+  },
+  "diagnosis": {
+    "fixture": "Grandchild rejected by native default spawn policy: fixture-worker lacks explicit spawns allowlist. Native task result records Allowed: none. Existing integrity, permission and locks remained enabled.",
+    "observer": "Synchronous task spawnKey is parentToolCallId:index before registry id allocation; mapping it directly to actor id left nativeKind unknown. Real native lifecycle bus supplies id/parentToolCallId/index before delivered child prompt."
+  },
+  "limits": [
+    "Actual SDK workers used an in-memory fixture provider; no live or paid provider acceptance.",
+    "Task and eval workers actually ran, but two-level restricted grandchild did not start; R11/R12 acceptance is not established.",
+    "Installed macOS/Windows/Electron, native RPC subprocess delivery and real OAuth accounts are outside this probe."
+  ]
+}

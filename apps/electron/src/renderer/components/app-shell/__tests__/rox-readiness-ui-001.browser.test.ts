@@ -99,7 +99,7 @@ async function fixtureBundle() {
     const SkillInfoPage = () => null, MemoryScreen = () => null, ProjectsHomeInMain = () => null,
       MultiSelectPanel = () => null, CollectionBulkBar = () => null, HomeFrontPage = () => null,
       SettingsOverviewPage = () => null, PageView = () => null, SessionHeatmapHost = () => null, SearchPage = () => null,
-      NotesPage = () => null, ConnectionsPage = () => null, SkillsCatalogPage = () => null, IntegrationsCatalogPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
+      NotesPage = () => null, ConnectionsPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
       MeetingsPage = () => null, InboxPage = () => null, FeedPage = () => null, KnowledgeEntityPage = () => null,
       ProjectInfoPage = () => null, BrowserPanelPage = () => null,
       PagesHome = () => null, KanbanBoardContainer = () => null,

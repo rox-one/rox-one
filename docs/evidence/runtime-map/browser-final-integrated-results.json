@@ -1,0 +1,891 @@
+{
+  "config": {
+    "configFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/playwright.config.ts",
+    "rootDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 15000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "",
+        "name": "",
+        "testDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+        "testIgnore": [],
+        "testMatch": [
+          "*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "version": "1.49.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "catalog.spec.ts",
+      "file": "catalog.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "production catalogs light 1280: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2789,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:26.956Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-production-catalog-edd6c-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-1848f20929e5d4fcf3c2",
+          "file": "catalog.spec.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "production catalogs light 1440: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2657,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:29.938Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-production-catalog-1d9df-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-031e164bb76c025363d3",
+          "file": "catalog.spec.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "production catalogs light 1920: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2175,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:32.601Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-production-catalog-c5396-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-949fae91886441d04360",
+          "file": "catalog.spec.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1280: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2311,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:34.780Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-production-catalog-68b35-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-d945e6207441fded7c8e",
+          "file": "catalog.spec.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1440: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2715,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:37.097Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-production-catalog-752d8-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-e88d5840593139ed14df",
+          "file": "catalog.spec.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1920: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2648,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:39.819Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-production-catalog-e397c-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-cbd508fb4e405245880a",
+          "file": "catalog.spec.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "skills: keyboard search/category/scope, dependencies, navigation and real selection atoms",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2110,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:42.477Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-skills-keyboard-se-7f10e-on-and-real-selection-atoms/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-a8118ecaf09dee0e8ffb",
+          "file": "catalog.spec.ts",
+          "line": 63,
+          "column": 1
+        },
+        {
+          "title": "integrations: intersected category/type/search filters preserve unknown providers and recorded states",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "failed",
+                  "duration": 11496,
+                  "error": {
+                    "message": "Error: \u001b[31mTimed out 10000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('[data-source-id=\"custom-source\"]')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - expect.toBeVisible with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-source-id=\"custom-source\"]')\u001b[22m\n",
+                    "stack": "Error: \u001b[31mTimed out 10000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('[data-source-id=\"custom-source\"]')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - expect.toBeVisible with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-source-id=\"custom-source\"]')\u001b[22m\n\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/catalog.spec.ts:115:66",
+                    "matcherResult": {
+                      "message": "\u001b[31mTimed out 10000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('[data-source-id=\"custom-source\"]')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - expect.toBeVisible with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-source-id=\"custom-source\"]')\u001b[22m\n",
+                      "pass": false,
+                      "actual": "hidden",
+                      "name": "toBeVisible",
+                      "expected": "visible",
+                      "log": [
+                        "  - expect.toBeVisible with timeout 10000ms",
+                        "  - waiting for locator('[data-source-id=\"custom-source\"]')"
+                      ],
+                      "timeout": 10000
+                    },
+                    "location": {
+                      "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/catalog.spec.ts",
+                      "column": 66,
+                      "line": 115
+                    },
+                    "snippet": "  113 |   const search = page.getByRole('searchbox', { name: copy('capabilityCatalog.searchIntegrations') })\n  114 |   await search.focus(); await search.pressSequentially('custom-warehouse')\n> 115 |   await expect(page.locator('[data-source-id=\"custom-source\"]')).toBeVisible()\n      |                                                                  ^\n  116 |   await page.locator('[data-source-id=\"custom-source\"]').getByRole('button', { name: copy('capabilityCatalog.details'), exact: true }).press('Enter')\n  117 |   await expect(page.getByTestId('catalog-navigation-route')).toHaveText(routes.view.sources({ sourceSlug: 'custom-source' }))\n  118 |   await search.fill(''); await type.selectOption('all')"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/catalog.spec.ts",
+                        "column": 66,
+                        "line": 115
+                      },
+                      "message": "Error: \u001b[31mTimed out 10000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('[data-source-id=\"custom-source\"]')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - expect.toBeVisible with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-source-id=\"custom-source\"]')\u001b[22m\n\n\n  113 |   const search = page.getByRole('searchbox', { name: copy('capabilityCatalog.searchIntegrations') })\n  114 |   await search.focus(); await search.pressSequentially('custom-warehouse')\n> 115 |   await expect(page.locator('[data-source-id=\"custom-source\"]')).toBeVisible()\n      |                                                                  ^\n  116 |   await page.locator('[data-source-id=\"custom-source\"]').getByRole('button', { name: copy('capabilityCatalog.details'), exact: true }).press('Enter')\n  117 |   await expect(page.getByTestId('catalog-navigation-route')).toHaveText(routes.view.sources({ sourceSlug: 'custom-source' }))\n  118 |   await search.fill(''); await type.selectOption('all')\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/catalog.spec.ts:115:66"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:44.594Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-integrations-inter-210d3-oviders-and-recorded-states/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-integrations-inter-210d3-oviders-and-recorded-states/video.webm"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-integrations-inter-210d3-oviders-and-recorded-states/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/catalog.spec.ts",
+                    "column": 66,
+                    "line": 115
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-f7ebcd6a483cae180b9b",
+          "file": "catalog.spec.ts",
+          "line": 102,
+          "column": 1
+        },
+        {
+          "title": "source navigator: existing modifier selection, Escape and arrow navigation remain functional",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 2161,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:57.087Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-source-navigator-e-1ad04-avigation-remain-functional/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-5cb332f67c5327e83ca3",
+          "file": "catalog.spec.ts",
+          "line": 133,
+          "column": 1
+        },
+        {
+          "title": "pack toggle persists through the real installer and readback, retaining the other pack",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 1987,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:06:59.326Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/catalog-pack-toggle-persis-cd280-ck-retaining-the-other-pack/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-80c802c61ab44cc8cbd4",
+          "file": "catalog.spec.ts",
+          "line": 152,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "continuity.spec.ts",
+      "file": "continuity.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "historical scroll and an actual map-to-chat message anchor retain the dock",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 4329,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:01.325Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/continuity-historical-scro-4b667-sage-anchor-retain-the-dock/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-30c4e5f8978c8782dd4b",
+          "file": "continuity.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "pending credential input and existing draft survive map toggles without a response",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 1956,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:05.659Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/continuity-pending-credent-ba481--toggles-without-a-response/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-fc368c5901d81d55eb5d",
+          "file": "continuity.spec.ts",
+          "line": 30,
+          "column": 1
+        },
+        {
+          "title": "the retained production editor restores pins, branch ports and saved versions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 3138,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:07.620Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/continuity-the-retained-pr-90cae-ch-ports-and-saved-versions/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-9e68473ca2e03e01dad0",
+          "file": "continuity.spec.ts",
+          "line": 44,
+          "column": 1
+        },
+        {
+          "title": "ROX welcome and the lower composer work at 1920 in dark reduced-motion mode",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 1645,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:10.763Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/continuity-ROX-welcome-and-be596-in-dark-reduced-motion-mode/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-10a700e9f30337b3fa64",
+          "file": "continuity.spec.ts",
+          "line": 77,
+          "column": 1
+        },
+        {
+          "title": "a historical event requested before snapshot load resolves read-only in its original run",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 1860,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:12.413Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/continuity-a-historical-ev-c1f83-ad-only-in-its-original-run/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-66f4f3a3862be9a1d88e",
+          "file": "continuity.spec.ts",
+          "line": 87,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "performance.spec.ts",
+      "file": "performance.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "production ingress and canvas measure 10000-event 20-agent load",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "status": "failed",
+                  "duration": 11271,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m180\u001b[39m\nReceived:    \u001b[31m2\u001b[39m\n\nCall Log:\n- Timeout 10000ms exceeded while waiting on the predicate",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m180\u001b[39m\nReceived:    \u001b[31m2\u001b[39m\n\nCall Log:\n- Timeout 10000ms exceeded while waiting on the predicate\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts:28:3",
+                    "location": {
+                      "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts",
+                      "column": 3,
+                      "line": 28
+                    },
+                    "snippet": "  26 |   for (let index = 0; index < 20; index++) deltas.push(await page.evaluate(async () => (window as unknown as { runtimePerformance: { measureVisibleUpdate(): Promise<number> } }).runtimePerformance.measureVisibleUpdate()))\n  27 |   await page.getByRole('button', { name: 'Показать видимые события целиком', exact: true }).click()\n> 28 |   await expect.poll(() => page.getByTestId('runtime-node').count()).toBeGreaterThanOrEqual(180)\n     |   ^\n  29 |   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('rox.runtime-map.camera:fixture-workspace:fixture-session:test-panel') ?? '{}').zoom ?? 1)).toBeLessThan(.05)\n  30 |   const denseMountedCards = await page.getByTestId('runtime-node').count()\n  31 |   const denseVisibleCards = await page.getByTestId('runtime-node').evaluateAll(cards => cards.filter(card => {"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts",
+                        "column": 3,
+                        "line": 28
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m180\u001b[39m\nReceived:    \u001b[31m2\u001b[39m\n\nCall Log:\n- Timeout 10000ms exceeded while waiting on the predicate\n\n  26 |   for (let index = 0; index < 20; index++) deltas.push(await page.evaluate(async () => (window as unknown as { runtimePerformance: { measureVisibleUpdate(): Promise<number> } }).runtimePerformance.measureVisibleUpdate()))\n  27 |   await page.getByRole('button', { name: 'Показать видимые события целиком', exact: true }).click()\n> 28 |   await expect.poll(() => page.getByTestId('runtime-node').count()).toBeGreaterThanOrEqual(180)\n     |   ^\n  29 |   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('rox.runtime-map.camera:fixture-workspace:fixture-session:test-panel') ?? '{}').zoom ?? 1)).toBeLessThan(.05)\n  30 |   const denseMountedCards = await page.getByTestId('runtime-node').count()\n  31 |   const denseVisibleCards = await page.getByTestId('runtime-node').evaluateAll(cards => cards.filter(card => {\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts:28:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:24.619Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/performance-production-ing-75cf7-e-10000-event-20-agent-load/test-failed-1.png"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts",
+                    "column": 3,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b15d6361b2fc38288977-2d3a507db4417240233b",
+          "file": "performance.spec.ts",
+          "line": 9,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "stream.spec.ts",
+      "file": "stream.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real ChatDisplay stays mounted while the journal streams into the right dock",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 4788,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:14.285Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/stream-real-ChatDisplay-st-ead37-streams-into-the-right-dock/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "31223a20abfa66f4a7a7-782e8af2bca0743deaae",
+          "file": "stream.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "pending permission and draft survive toggles in dark and narrow layouts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 2764,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:19.078Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/stream-pending-permission--69bb0--in-dark-and-narrow-layouts/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "31223a20abfa66f4a7a7-3eda6c93f39638598a7d",
+          "file": "stream.spec.ts",
+          "line": 53,
+          "column": 1
+        },
+        {
+          "title": "empty production chat keeps ROX welcome and suggestions above the lower composer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 1845,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T19:07:21.848Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-integrated/stream-empty-production-ch-56ac8-ns-above-the-lower-composer/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "31223a20abfa66f4a7a7-e1a5bea64fb96385f2aa",
+          "file": "stream.spec.ts",
+          "line": 82,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T19:06:24.257Z",
+    "duration": 71756.547,
+    "expected": 17,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

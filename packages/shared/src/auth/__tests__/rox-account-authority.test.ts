@@ -212,4 +212,76 @@ describe('Pocket host account authority', () => {
   expect((await f.authority.bound('session:w:s'))?.authGeneration).toBe(next.authGeneration)
  })
 
+ it('serializes concurrent task-run owner claims without letting a foreign caller replace the first owner', async () => {
+  const f = createPocketFixture(); await connect(f); await connect(f, native)
+  const local = await f.authority.capture(LOCAL_ROX_CALLER)
+  const remote = await f.authority.capture(native)
+  const resource = 'task-run:w:task-a:actual-run'
+  const firstWrite = Promise.withResolvers<void>(), releaseWrite = Promise.withResolvers<void>()
+  const write = f.store.writeBinding
+  let writes = 0
+  f.store.writeBinding = async (key, binding) => {
+   if (++writes === 1) { firstWrite.resolve(); await releaseWrite.promise }
+   await write(key, binding)
+  }
+  const localClaim = f.authority.bind(resource, local)
+  await firstWrite.promise
+  const foreignClaim = f.authority.bind(resource, remote)
+  releaseWrite.resolve()
+  const claims = await Promise.allSettled([localClaim, foreignClaim])
+  expect(claims[0].status).toBe('fulfilled')
+  expect(claims[1].status).toBe('rejected')
+  expect((claims[1] as PromiseRejectedResult).reason.message).toBe('ROX_SESSION_OWNER_CONFLICT')
+  expect(writes).toBe(1)
+  expect(await f.store.readBinding(resource)).toEqual({ caller: LOCAL_ROX_CALLER, accountId: local.cloudAccountId, authGeneration: local.authGeneration })
+  const restarted = new RoxAccountAuthority(f.store, f.client)
+  expect(await restarted.bound(resource, true)).toEqual(local)
+  await expect(restarted.bind(resource, await restarted.capture(native))).rejects.toThrow('ROX_SESSION_OWNER_CONFLICT')
+  expect(await restarted.bound(resource, true)).toEqual(local)
+  await f.authority.bind(resource, local)
+  expect(await f.authority.bound(resource, true)).toEqual(local)
+ })
+
+ it('keeps a sealed task-run owner immutable when the same caller reauthenticates or changes account', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const old = await f.authority.capture(LOCAL_ROX_CALLER)
+  const resource = 'task-run:w:task-a:old-run'
+  await f.authority.bind(resource, old)
+  await f.authority.bind('session:w:parent', old)
+  const sealed = structuredClone(await f.store.readBinding(resource))
+  const restored = new RoxAccountAuthority(f.store, f.client)
+  expect(await restored.bound(resource, true)).toEqual(old)
+
+  await f.authority.logout(LOCAL_ROX_CALLER); await connect(f)
+  const next = await f.authority.capture(LOCAL_ROX_CALLER)
+  expect(next.cloudAccountId).toBe(old.cloudAccountId)
+  expect(next.authGeneration).not.toBe(old.authGeneration)
+  await f.authority.bind('session:w:parent', next)
+  expect(await f.authority.bound('session:w:parent')).toEqual(next)
+  await expect(f.authority.bound(resource, true)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  await expect(f.authority.bind(resource, next)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  const restarted = new RoxAccountAuthority(f.store, f.client)
+  await expect(restarted.bound(resource, true)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  expect(await f.store.readBinding(resource)).toEqual(sealed)
+
+  await f.authority.logout(LOCAL_ROX_CALLER)
+  f.setSnapshot(pocketSnapshot('account-b')); await connect(f)
+  const switched = await f.authority.capture(LOCAL_ROX_CALLER)
+  await f.authority.bind('session:w:parent', switched)
+  expect(await f.authority.bound('session:w:parent')).toEqual(switched)
+  await expect(f.authority.bind(resource, switched)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  await expect(f.authority.bound(resource, true)).rejects.toThrow('ROX_ACCOUNT_CHANGED')
+  expect(await f.store.readBinding(resource)).toEqual(sealed)
+  await f.authority.bind('task-run:w:task-a:new-run', switched)
+  expect(await f.authority.bound('task-run:w:task-a:new-run', true)).toEqual(switched)
+ })
+
+ it('does not claim sealed task-run custody when the existing store cannot read its owner binding', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const unreadable = new RoxAccountAuthority({ ...f.store, readBinding: undefined }, f.client)
+  const context = await unreadable.capture(LOCAL_ROX_CALLER)
+  await expect(unreadable.bind('task-run:w:task-a:unreadable', context)).rejects.toThrow('ROX_SECURE_BINDING_UNAVAILABLE')
+  expect(f.bindings.size).toBe(0)
+ })
+
 })
