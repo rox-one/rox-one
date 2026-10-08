@@ -78,10 +78,13 @@ export function commandLockKeys(schema: string, workspaceId: string, idempotency
  * (40001 / 40P01 / 40003; not 40002, a deferred constraint violation),
  * insufficient resources (53), query cancelled by statement_timeout /
  * lock_timeout (57014), admin / crash shutdown (57P01-03), lock not available
- * (55P03), system / I/O errors (58000 / 58030) and authentication failures
- * during credential rotation (28000 / 28P01).
+ * (55P03), system / I/O errors (58000 / 58030), authentication failures
+ * during credential rotation (28000 / 28P01) and the session-termination
+ * timeouts: idle_session_timeout (57P05), idle_in_transaction_session_timeout
+ * (25P03) and transaction_timeout (25P04, PG17). Not 25P02 (a statement in an
+ * already-failed transaction: a logic error).
  */
-const TRANSIENT_SQLSTATE = /^(08...|4000[013]|40P01|53...|57014|57P0[1-3]|55P03|58000|58030|28000|28P01)$/
+const TRANSIENT_SQLSTATE = /^(08...|4000[013]|40P01|53...|57014|57P0[1-35]|25P0[34]|55P03|58000|58030|28000|28P01)$/
 /**
  * Bun 1.4.x `PostgresError.code`s for connection-class failures, taken from the
  * driver itself (bun.exe string table + bun-types docs/runtime/sql.mdx):

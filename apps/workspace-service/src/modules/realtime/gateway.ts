@@ -111,6 +111,9 @@ export class RealtimeGateway {
     this.cacheMs = Math.max(0, options.revalidationCacheMs ?? DEFAULT_REVALIDATION_CACHE_MS)
     this.maxTopics = Math.max(1, options.maxTopicsPerClient ?? MAX_TOPICS_PER_CLIENT)
     this.disposers.push(options.bus.subscribe((workspaceId, frame) => this.fanOut(workspaceId, frame)))
+    // Live subscriptions retain their workspace's log through idle sweeps (no
+    // morning-reconnect refetch for a quiet but connected workspace).
+    this.disposers.push(options.bus.retain(workspaceId => this.hasSubscribers(workspaceId)))
     this.disposers.push(options.transport.onClientDisconnect(clientId => { void this.drop(clientId) }))
   }
 
@@ -123,6 +126,12 @@ export class RealtimeGateway {
     let count = 0
     for (const sub of this.clients.values()) if (!topic || sub.topics.has(topic)) count += 1
     return count
+  }
+
+  /** Whether any live client holds at least one topic in `workspaceId`. */
+  hasSubscribers(workspaceId: string): boolean {
+    for (const sub of this.clients.values()) if (sub.workspaceId === workspaceId && sub.topics.size > 0) return true
+    return false
   }
 
   async subscribe(ctx: RealtimeClientContext, input: unknown): Promise<RealtimeSubscribeResult> {

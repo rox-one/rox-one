@@ -192,10 +192,12 @@ describe('JWKS outage', () => {
   })
 })
 
-describe('gateway after an idle log drop', () => {
+describe('gateway after a log rotation', () => {
+  // Review 4: live subscriptions now retain an idle log, so a live subscriber
+  // only sees a new epoch after a seq-cap rotation (cap 1, two topics).
   test('live subscribers get the new epoch\'s frames (seq restarts)', async () => {
     let now = 0
-    const bus = new InProcessEventBus({ epoch: 'e1', windowIdleTtlMs: 1_000, now: () => new Date(now) })
+    const bus = new InProcessEventBus({ epoch: 'e1', windowIdleTtlMs: 1_000, maxSeqCountersPerWorkspace: 1, now: () => new Date(now) })
     const pushed: Array<[string, number]> = []
     const transport: RealtimePushTransport = {
       async pushToWorkspaceClient(_c, _w, _ch, args, verify) {
@@ -212,6 +214,7 @@ describe('gateway after an idle log drop', () => {
     const ping = (): DomainEvent => ({ eventId: randomUUID(), workspaceId: ws, type: 'system.pinged', actorId: 'alice', aggregateRevision: 0, payload: {}, createdAt: 'now' })
     expect((await gateway.subscribe({ clientId: 'c1', workspaceId: ws, principalId: 'alice', deviceKey: 'd1' }, { topics: [{ topic: 'user:alice' }] })).topics[0]).toMatchObject({ status: 'subscribed', epoch: 'e1' })
     bus.publish([ping()])
+    bus.publish([{ ...ping(), actorId: 'bob' }]) // second seq counter (user:bob)
     await gateway.flush()
     now = 5_000
     expect(bus.evictIdle()).toBeGreaterThanOrEqual(0)
