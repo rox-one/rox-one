@@ -61,6 +61,7 @@ async function fixtureBundle() {
     import CloudRunSurfacePage from './apps/electron/src/renderer/pages/CloudRunSurfacePage';
     import TerminalSurfacePage from './apps/electron/src/renderer/pages/TerminalSurfacePage';
     const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation,
+      isLearningNavigation,
       isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isNotesNavigation,
       isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isKnowledgeNavigation,
       isDiffNavigation, isExtensionNavigation, isConnectionsNavigation, isHomeNavigation, isCloudRunNavigation,
