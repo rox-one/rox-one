@@ -15,16 +15,10 @@ export function resolveDisplayName(
   defaultName: string,
 ): string {
   return account?.user.name || account?.user.handle || localName || defaultName
-
-/** Central identity/money stay unknown on outage; local XP cannot stand in. */
-export function accountProfileStrip(local: ProfileStripData, account: RoxAccountSnapshot | null, spentUsd: number | null, defaultName: string): ProfileStripData {
-  return { ...local, displayName: resolveDisplayName(account, local.displayName, defaultName),
-    balance: account ? Number(account.balance.availableRox) : null, spentUsd }
-}
 }
 
 /** Cloud money stays unknown on outage; the display name merges cloud → local → default. */
 export function accountProfileStrip(local: ProfileStripData, account: RoxAccountSnapshot | null, spentUsd: number | null, defaultName: string): ProfileStripData {
   return { ...local, displayName: resolveDisplayName(account, local.displayName, defaultName),
-    balance: account ? Number(account.balance.balanceRox) : null, spentUsd }
+    balance: account ? Number(account.balance.availableRox) : null, spentUsd }
 }
