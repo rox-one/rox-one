@@ -24,8 +24,8 @@
  */
 import { closeSync, copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync, writeSync } from 'fs'
 import { basename, join } from 'path'
-import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker, PersonalTaskWorkMeta, PersonalTaskWrite, TaskStatusDefinition, WorkItem, WorkItemExtension } from '@rox/core/tasks/personal'
-import { LOCAL_PRINCIPAL_ID, PERSONAL_TASK_SCHEMA_VERSION_V3, deriveWorkItemExtension, deriveWorkMeta, fromWorkItem, toWorkItem } from '@rox/core/tasks/personal'
+import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker, PersonalTaskWorkMeta, PersonalTaskWrite, TaskProject, TaskStatusDefinition, WorkItem, WorkItemExtension } from '@rox/core/tasks/personal'
+import { LOCAL_PRINCIPAL_ID, PERSONAL_TASK_SCHEMA_VERSION_V3, deriveWorkItemExtension, deriveWorkMeta, fromWorkItem, isoToEpoch, taskProjectToList, toWorkItem } from '@rox/core/tasks/personal'
 
 const TASK_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
 
@@ -58,6 +58,42 @@ export interface PersistedWorkItem {
 export type WorkItemWriteResult =
   | { status: 'accepted'; record: PersistedWorkItem }
   | { status: 'conflict'; current: PersistedWorkItem | null }
+
+/** A v2 project read as a v3 task list (W1-06 `task_lists.*` on the local authority). */
+export interface PersistedTaskList {
+  id: string
+  revision: number
+  data: Record<string, unknown>
+}
+
+export type TaskListWriteResult =
+  | { status: 'accepted'; revision: number }
+  | { status: 'conflict'; current: PersistedTaskList | null }
+
+/**
+ * Bus-side state of one local task list, kept in `meta.work.listState`: the
+ * CAS revision, a fingerprint of the project it last wrote (a later UI edit
+ * bumps the revision it reads at) and the v3 fields without a v2 slot.
+ */
+interface TaskListBusState {
+  revision: number
+  fingerprint: string
+  extra: Record<string, unknown>
+}
+
+/** Serializes meta.json writers (UI `writeMeta` and the bus list writes). `~` never appears in a task id. */
+const META_LOCK_ID = 'meta~lock'
+/** Task-list fields stored on the v2 project itself (the rest go to `listState.extra`). */
+const LIST_PROJECT_FIELDS = new Set(['id', 'revision', 'name', 'notes', 'deadlineAt', 'groupId', 'archivedAt', 'deletedAt', 'createdAt'])
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`
+  if (value && typeof value === 'object') return `{${Object.keys(value).sort().filter(key => (value as Record<string, unknown>)[key] !== undefined).map(key => `${JSON.stringify(key)}:${stableJson((value as Record<string, unknown>)[key])}`).join(',')}}`
+  return JSON.stringify(value)
+}
+
+const optionalString = (value: unknown): string | undefined => (typeof value === 'string' && value.length > 0 ? value : undefined)
+const optionalEpoch = (value: unknown): number | undefined => (typeof value === 'string' ? isoToEpoch(value) : undefined)
 
 export interface PersonalTaskPersistStoreOptions {
   /** Owner written into v3 records created from v2 data (default: the local principal). */
@@ -135,6 +171,8 @@ export interface PersonalTaskV3MigrationReport {
   upgraded: number
   alreadyCurrent: number
   failed: string[]
+  /** Unreadable / corrupt files: left on disk untouched and not retried (the list read skips them too). */
+  skipped: string[]
 }
 
 export class PersonalTaskPersistStore {
@@ -252,10 +290,105 @@ export class PersonalTaskPersistStore {
   }
 
   writeMeta(meta: PersonalTaskMeta): void {
+    this.withRecordLock(META_LOCK_ID, () => this.writeMetaUnlocked(meta))
+  }
+
+  // ── W1-06: v2 projects as v3 task lists (local `task_lists.*`) ─────────
+
+  /** The v2 project `id` as a task-list record (the Tasks UI and the bus share one list). */
+  getTaskList(id: string): PersistedTaskList | null {
+    const project = this.readMeta()?.projects.find(entry => entry?.id === id)
+    return project ? this.projectAsList(project, this.readListState()[id]) : null
+  }
+
+  /** CAS write of a task list onto its v2 project (created at the end of the sidebar when new). */
+  putTaskList(id: string, data: Record<string, unknown>, expectedRevision: number | null): TaskListWriteResult {
+    this.assertSafeId(id)
+    const name = optionalString(data.name)?.trim()
+    if (!name) throw new TypeError('Task list name is required')
+    return this.withRecordLock(META_LOCK_ID, () => {
+      const meta = this.readMeta() ?? { projects: [], areas: [], headings: [], audit: [] }
+      const states = this.readListState()
+      const index = meta.projects.findIndex(entry => entry?.id === id)
+      const previous = index >= 0 ? meta.projects[index]! : null
+      const current = previous ? this.projectAsList(previous, states[id]) : null
+      if ((current?.revision ?? null) !== expectedRevision) return { status: 'conflict', current }
+      const project = {
+        ...(previous ?? {}),
+        id,
+        name,
+        notes: optionalString(data.notes),
+        deadlineAt: optionalEpoch(data.deadlineAt),
+        areaId: optionalString(data.groupId),
+        completedAt: optionalEpoch(data.archivedAt),
+        trashedAt: optionalEpoch(data.deletedAt),
+        // A UI project without `createdAt` stays without one.
+        createdAt: previous ? previous.createdAt : optionalEpoch(data.createdAt) ?? Date.now(),
+        order: previous?.order ?? meta.projects.reduce((max, entry) => Math.max(max, Number(entry?.order) || 0), 0) + 1,
+      } as TaskProject
+      for (const key of Object.keys(project) as (keyof TaskProject)[]) if (project[key] === undefined) delete project[key]
+      const extra = Object.fromEntries(Object.entries(data).filter(([key, value]) => !LIST_PROJECT_FIELDS.has(key) && value !== undefined))
+      const revision = (current?.revision ?? 0) + 1
+      const projects = [...meta.projects]
+      if (index >= 0) projects[index] = project
+      else projects.push(project)
+      this.writeMetaUnlocked({ ...meta, projects }, { ...states, [id]: { revision, fingerprint: stableJson(project), extra } })
+      return { status: 'accepted', revision }
+    })
+  }
+
+  /** Hard delete of a list (its v2 project); tasks keep their `projectId` like a UI delete. */
+  removeTaskList(id: string): boolean {
+    return this.withRecordLock(META_LOCK_ID, () => {
+      const meta = this.readMeta()
+      if (!meta || !meta.projects.some(entry => entry?.id === id)) return false
+      const states = this.readListState()
+      delete states[id]
+      this.writeMetaUnlocked({ ...meta, projects: meta.projects.filter(entry => entry?.id !== id) }, states)
+      return true
+    })
+  }
+
+  private readListState(): Record<string, TaskListBusState> {
+    const parsed = this.readJson(this.metaPath)
+    const raw = isPlainRecord(parsed) && isPlainRecord(parsed.work) && isPlainRecord(parsed.work.listState) ? parsed.work.listState : {}
+    const out: Record<string, TaskListBusState> = {}
+    for (const [id, state] of Object.entries(raw)) {
+      if (isPlainRecord(state) && Number.isInteger(state.revision) && typeof state.fingerprint === 'string') {
+        out[id] = { revision: state.revision as number, fingerprint: state.fingerprint, extra: isPlainRecord(state.extra) ? state.extra : {} }
+      }
+    }
+    return out
+  }
+
+  private projectAsList(project: TaskProject, state: TaskListBusState | undefined): PersistedTaskList {
+    const list = taskProjectToList(project, this.ownerPrincipalId)
+    const extra = state?.extra ?? {}
+    // A UI edit since the last bus write moves the revision on, so stale CAS writes conflict.
+    const revision = state ? state.revision + (state.fingerprint === stableJson(project) ? 0 : 1) : 1
+    const data: Record<string, unknown> = {
+      ...extra,
+      name: list.name,
+      ownerType: extra.ownerType ?? list.ownerType,
+      ownerId: extra.ownerId ?? list.ownerId,
+      sortKey: extra.sortKey ?? list.sortKey,
+      statusSetEnabled: extra.statusSetEnabled ?? list.statusSetEnabled,
+    }
+    if (list.notes !== undefined) data.notes = list.notes
+    if (list.deadlineAt !== undefined) data.deadlineAt = list.deadlineAt
+    if (list.groupId !== undefined) data.groupId = list.groupId
+    if (list.createdAt !== undefined) data.createdAt = list.createdAt
+    if (list.completedAt !== undefined) data.archivedAt = list.completedAt
+    if (list.trashedAt !== undefined) data.deletedAt = list.trashedAt
+    return { id: project.id, revision, data }
+  }
+
+  private writeMetaUnlocked(meta: PersonalTaskMeta, listState?: Record<string, TaskListBusState>): void {
     const previous = this.readJson(this.metaPath)
     const statusSets = isPlainRecord(previous) && isPlainRecord(previous.work) && isPlainRecord(previous.work.statusSets)
       ? previous.work.statusSets as Record<string, TaskStatusDefinition[]>
       : undefined
+    const states = listState ?? (isPlainRecord(previous) && isPlainRecord(previous.work) && isPlainRecord(previous.work.listState) ? previous.work.listState : undefined)
     this.writeJsonAtomic(this.metaPath, {
       projects: meta.projects ?? [],
       areas: meta.areas ?? [],
@@ -263,7 +396,7 @@ export class PersonalTaskPersistStore {
       // Audit is append-only history; keep it bounded on disk.
       audit: (meta.audit ?? []).slice(-2000),
       // MIG-02: v3 lists / sections / groups, derived from the v2 arrays (same ids).
-      work: deriveWorkMeta(meta, this.ownerPrincipalId, statusSets),
+      work: { ...deriveWorkMeta(meta, this.ownerPrincipalId, statusSets), ...(states && Object.keys(states).length > 0 ? { listState: states } : {}) },
     })
   }
 
@@ -285,7 +418,7 @@ export class PersonalTaskPersistStore {
   migrateToV3(options: { dryRun?: boolean; now?: number } = {}): PersonalTaskV3MigrationReport[] {
     const now = options.now ?? Date.now()
     const dryRun = options.dryRun === true
-    const tasks: PersonalTaskV3MigrationReport = { id: 'MIG-01', dryRun, at: now, scanned: 0, upgraded: 0, alreadyCurrent: 0, failed: [] }
+    const tasks: PersonalTaskV3MigrationReport = { id: 'MIG-01', dryRun, at: now, scanned: 0, upgraded: 0, alreadyCurrent: 0, failed: [], skipped: [] }
     let names: string[] = []
     try { names = readdirSync(this.dir).filter((name) => name.endsWith('.json')).sort() } catch { names = [] }
     for (const name of names) {
@@ -294,7 +427,8 @@ export class PersonalTaskPersistStore {
       tasks.scanned += 1
       try {
         const upgraded = this.withRecordLock(id, () => {
-          const record = this.readRecord(id)
+          let record: PersistFile | null
+          try { record = this.readRecord(id) } catch { record = null }
           if (!record) return null
           if (record.schemaVersion === PERSONAL_TASK_SCHEMA_VERSION_V3 && record.work) return false
           if (!dryRun) {
@@ -302,14 +436,15 @@ export class PersonalTaskPersistStore {
           }
           return true
         })
-        if (upgraded === null) tasks.failed.push(id)
+        // Unreadable: skipped (not failed), so `isMigratedToV3` settles instead of rescanning forever.
+        if (upgraded === null) tasks.skipped.push(id)
         else if (upgraded) tasks.upgraded += 1
         else tasks.alreadyCurrent += 1
       } catch {
         tasks.failed.push(id)
       }
     }
-    const meta: PersonalTaskV3MigrationReport = { id: 'MIG-02', dryRun, at: now, scanned: 0, upgraded: 0, alreadyCurrent: 0, failed: [] }
+    const meta: PersonalTaskV3MigrationReport = { id: 'MIG-02', dryRun, at: now, scanned: 0, upgraded: 0, alreadyCurrent: 0, failed: [], skipped: [] }
     const rawMeta = this.readJson(this.metaPath)
     if (isPlainRecord(rawMeta)) {
       meta.scanned = 1

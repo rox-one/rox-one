@@ -3,8 +3,8 @@
 import { statusLifecycle } from '@rox/core/tasks/personal'
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
-import type { ReferenceTx } from '../engine'
-import { addLink, assoc, create, omit, payloadFields, refString, softDelete, transition, unassoc, update, type Mapper } from '../ops'
+import type { ReferenceOp, ReferenceTx } from '../engine'
+import { addLink, assoc, create, omit, payloadFields, refString, softDelete, transition, unassoc, update, validateLink, type Mapper } from '../ops'
 import type { RecordData } from '../types'
 import type { ReferenceSpecMap } from './types'
 
@@ -33,6 +33,9 @@ function createTaskFrom(origin: (tx: ReferenceTx) => EntityRef, map: Mapper, rel
   const base = create('task', map, { defaults: taskDefaults })
   return async (tx: ReferenceTx) => {
     const ref = origin(tx)
+    // Everything that can fail is checked before the first (non-transactional on local) write.
+    validateLink({ kind: 'task', id: tx.createId() }, ref, relation)
+    await tx.assertAbsent('task', tx.createId())
     const result = await base(tx)
     await addLink(tx, { kind: 'task', id: result.id }, ref, relation, { role: 'origin' })
     return result
@@ -50,6 +53,18 @@ const originFields = (title: (tx: ReferenceTx) => string, origin: (tx: Reference
 const selectionOrigin = (tx: ReferenceTx): EntityRef => ({ ...tx.payload.docRef, fragment: tx.payload.docRef.fragment ?? `block-${tx.payload.blockId}` })
 const messageOrigin = (tx: ReferenceTx): EntityRef => ({ kind: 'channel-message', id: `${tx.payload.chatId}:${tx.payload.seq}` })
 const mailOrigin = (tx: ReferenceTx): EntityRef => ({ kind: 'mail-thread', id: tx.payload.threadId })
+
+/**
+ * Task sections and list groups have no local store until TSK-1: on the local
+ * authority they answer UNAVAILABLE (lists themselves are the PersonalTask
+ * projects, see `task_lists.*`).
+ */
+function workspaceOnly(specs: Record<string, ReferenceOp>): Record<string, ReferenceOp> {
+  return Object.fromEntries(Object.entries(specs).map(([type, op]) => [type, async (tx: ReferenceTx) => {
+    if (tx.ctx.authority === 'local') throw new CommandRejection('UNAVAILABLE', `${type} is not available on the local authority yet (TSK-1)`)
+    return op(tx)
+  }]))
+}
 
 export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
   'tasks.create': { op: create('task', payloadFields(), { defaults: taskDefaults, container: { kind: 'task-list', field: 'listId' } }), event: 'task.task_adding' },
@@ -75,7 +90,11 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     event: 'task.task_adding',
     op: async tx => {
       const source = await tx.requireTarget('task')
-      const copy = omit(source.data, ['createdAt', 'updatedAt', 'createdBy', 'lastCommandId', 'completedAt', 'cancelledAt', 'reopenedAt', 'archivedAt', 'trashedAt', 'deletedAt', 'repeatNextId'])
+      // A copy is a new local item: no provider identity, no place in a repeat chain, no delivered reminder.
+      const copy = omit(source.data, [
+        'createdAt', 'updatedAt', 'createdBy', 'lastCommandId', 'completedAt', 'cancelledAt', 'reopenedAt', 'archivedAt', 'trashedAt', 'deletedAt',
+        'nativeId', 'sourceStoreId', 'repeatOf', 'repeatOccurrenceAt', 'repeatNextId', 'reminderDeliveredFor', 'reminderRetryAt', 'reminderError',
+      ])
       const record = await tx.insert('task', tx.createId(), { ...copy, title: tx.payload.title ?? source.data.title, statusKey: 'pending', ownerPrincipalId: tx.actor })
       await addLink(tx, { kind: 'task', id: record.id }, { kind: 'task', id: source.id }, 'derived-from', { role: 'duplicate' })
       return { collection: 'task', id: record.id, revision: record.revision, changes: ['title'], result: { sourceId: source.id } }
@@ -101,12 +120,23 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     op: async tx => {
       const task = await tx.requireTarget('task')
       await tx.require('task-list', tx.payload.listId)
+      if (tx.ctx.authority === 'local') {
+        // Local: a task sits in one PersonalTask project (= list); no association rows.
+        const record = await tx.update('task', task, { listId: tx.payload.listId, ...(tx.payload.sectionId ? { sectionId: tx.payload.sectionId } : task.data.listId === tx.payload.listId ? {} : { sectionId: null }) })
+        return { collection: 'task', id: record.id, revision: record.revision, changes: ['listId'] }
+      }
       const entry = await tx.upsert('task-list-entry', `${task.id}:${tx.payload.listId}`, payloadFields()(tx) as RecordData, { taskId: task.id })
       if (!task.data.listId) await tx.update('task', task, { listId: tx.payload.listId, ...(tx.payload.sectionId ? { sectionId: tx.payload.sectionId } : {}) })
       return { collection: 'task-list-entry', id: entry.id, revision: entry.revision, ref: tx.rawTarget ?? null, changes: ['listId'] }
     },
   },
   'tasks.remove_from_list': async tx => {
+    if (tx.ctx.authority === 'local') {
+      const task = await tx.requireTarget('task')
+      if (task.data.listId !== tx.payload.listId) throw new CommandRejection('NOT_FOUND', 'the task is not in this list')
+      const record = await tx.update('task', task, { listId: null, sectionId: null })
+      return { collection: 'task', id: record.id, revision: record.revision, changes: ['listId'] }
+    }
     const result = await unassoc('task-list-entry', 'task', t => t.payload.listId)(tx)
     const task = await tx.require('task', tx.target('task'))
     if (task.data.listId === tx.payload.listId) await tx.update('task', task, { listId: null, sectionId: null })
@@ -123,23 +153,30 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     return { collection: 'entity-link', id: link.id, revision: link.revision, ref: tx.rawTarget ?? null, changes: ['blocks'] }
   },
   'tasks.update_reminders': update('task'),
-  'task_lists.create': create('task-list', payloadFields(), { defaults: tx => ({ ownerType: 'user', ownerId: tx.actor, sortKey: 'a0', statusSetEnabled: false }) }),
+  'task_lists.create': async tx => {
+    if (tx.ctx.authority === 'local' && tx.payload.ownerType !== undefined && tx.payload.ownerType !== 'user') {
+      throw new CommandRejection('VALIDATION', 'local task lists are personal (ownerType user)')
+    }
+    return create('task-list', payloadFields(), { defaults: tx => ({ ownerType: 'user', ownerId: tx.actor, sortKey: 'a0', statusSetEnabled: false }) })(tx)
+  },
   'task_lists.update': update('task-list'),
   'task_lists.archive': transition('task-list', tx => ({ archivedAt: tx.payload.archived === false ? null : tx.now })),
   'task_lists.delete': softDelete('task-list'),
-  'task_sections.create': async tx => {
-    await tx.require('task-list', tx.payload.taskListId)
-    return create('task-section', payloadFields(), { defaults: () => ({ sortKey: 'a0' }) })(tx)
-  },
-  'task_sections.update': update('task-section'),
-  'task_sections.move': async tx => {
-    if (tx.payload.taskListId) await tx.require('task-list', tx.payload.taskListId)
-    return update('task-section')(tx)
-  },
-  'task_sections.delete': softDelete('task-section'),
-  'task_list_groups.create': create('task-list-group', payloadFields(), { defaults: tx => ({ principalId: tx.actor, sortKey: 'a0', collapsed: false }) }),
-  'task_list_groups.update': update('task-list-group'),
-  'task_list_groups.delete': softDelete('task-list-group'),
+  ...workspaceOnly({
+    'task_sections.create': async tx => {
+      await tx.require('task-list', tx.payload.taskListId)
+      return create('task-section', payloadFields(), { defaults: () => ({ sortKey: 'a0' }) })(tx)
+    },
+    'task_sections.update': update('task-section'),
+    'task_sections.move': async tx => {
+      if (tx.payload.taskListId) await tx.require('task-list', tx.payload.taskListId)
+      return update('task-section')(tx)
+    },
+    'task_sections.delete': softDelete('task-section'),
+    'task_list_groups.create': create('task-list-group', payloadFields(), { defaults: tx => ({ principalId: tx.actor, sortKey: 'a0', collapsed: false }) }),
+    'task_list_groups.update': update('task-list-group'),
+    'task_list_groups.delete': softDelete('task-list-group'),
+  }),
   /** Status set per owner (target list / project / space, or the workspace default). */
   'task_statuses.update_set': async tx => {
     const target = tx.rawTarget
@@ -151,10 +188,14 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
   'tasks.create_many_from_checklist': {
     event: 'task.task_adding',
     op: async tx => {
+      const items = (tx.payload.items as Array<{ blockId: string; text: string }>).map((item, index) => ({
+        item, id: tx.newId(`item-${index}`), origin: { ...tx.payload.docRef, fragment: `block-${item.blockId}` } as EntityRef,
+      }))
+      // Validate every item before the first write.
+      for (const { id, origin } of items) validateLink({ kind: 'task', id }, origin, 'derived-from')
+      await tx.assertAbsent('task', ...items.map(entry => entry.id))
       const ids: string[] = []
-      for (const [index, item] of (tx.payload.items as Array<{ blockId: string; text: string }>).entries()) {
-        const id = tx.newId(`item-${index}`)
-        const origin: EntityRef = { ...tx.payload.docRef, fragment: `block-${item.blockId}` }
+      for (const { item, id, origin } of items) {
         await tx.insert('task', id, { ...(await taskDefaults(tx)), title: item.text, ...(tx.payload.listId ? { listId: tx.payload.listId } : {}), origin: { kind: origin.kind, id: origin.id, fragment: origin.fragment } })
         await addLink(tx, { kind: 'task', id }, origin, 'derived-from', { role: 'origin' })
         ids.push(id)

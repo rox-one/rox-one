@@ -2,7 +2,7 @@
 
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
-import { deterministicId, isDeleted, type ReferenceOutcome, type ReferenceTx } from '../engine'
+import { deterministicId, isDeleted, LAST_COMMAND_FIELD, type ReferenceOutcome, type ReferenceTx } from '../engine'
 import { assoc, childCreate, childDelete, childUpdate, omit, payloadFields, refString, requireChild, softDelete, unassoc, update } from '../ops'
 import type { RecordData, StoredRecord } from '../types'
 import type { ReferenceSpecMap } from './types'
@@ -32,10 +32,14 @@ function memberRole(member: StoredRecord | null): string | undefined {
 export async function appendMessage(tx: ReferenceTx, chat: StoredRecord, content: unknown, extra: RecordData = {}, salt = 'message'): Promise<StoredRecord> {
   const role = memberRole(await tx.get('channel-member', `${chat.id}:${tx.actor}`))
   if (chat.data.postingPolicy === 'admins' && !ADMIN_ROLES.has(role ?? '')) throw new CommandRejection('FORBIDDEN', 'only admins can post in this chat')
+  const id = salt === 'message' ? tx.createId() : tx.newId(salt)
+  // Retry with a lost receipt: the message is already there — don't burn another `seq`.
+  const existing = await tx.get('channel-message', id)
+  if (existing && existing.data[LAST_COMMAND_FIELD] === tx.ctx.envelope.commandId) return existing
+  await tx.assertAbsent('channel-message', id)
   const sequence = await tx.get('channel-sequence', chat.id)
   const seq = Number(sequence?.data.lastSeq ?? 0) + 1
   await tx.upsert('channel-sequence', chat.id, { lastSeq: seq }, { chatId: chat.id })
-  const id = salt === 'message' ? tx.createId() : tx.newId(salt)
   return tx.insert('channel-message', id, { chatId: chat.id, seq, senderId: tx.actor, content, ...extra })
 }
 

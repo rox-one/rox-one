@@ -122,10 +122,17 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
     expect(referenceMemoryRecords(WORKSPACE_ID, 'task').find(r => r.id === 't-cas')!.data.title).toBe('v2')
   })
 
-  test('creating an existing id is a conflict', async () => {
+  test('creating an existing id is a conflict that carries only the revision, never the record', async () => {
     const harness = memoryHarness()
-    await harness.run({ type: 'goals.create', payload: { id: 'g-dup', name: 'A' } })
-    expect(await harness.run({ type: 'goals.create', payload: { id: 'g-dup', name: 'B' } })).toMatchObject({ status: 'conflict' })
+    await harness.run({ type: 'goals.create', payload: { id: 'g-dup', name: 'Secret plan' } })
+    const receipt = await harness.run({ type: 'goals.create', payload: { id: 'g-dup', name: 'B' } })
+    expect(receipt).toMatchObject({ status: 'conflict', conflict: { currentRevision: 1 } })
+    expect(receipt.conflict!.current).toEqual({ error: 'id already exists' })
+    expect(JSON.stringify(receipt)).not.toContain('Secret plan')
+    await harness.run({ type: 'tasks.create', payload: { id: 't-dup', title: 'Private title' } })
+    const task = await harness.run({ type: 'tasks.create', payload: { id: 't-dup', title: 'x' } })
+    expect(task).toMatchObject({ status: 'conflict', conflict: { currentRevision: 1, current: { error: 'id already exists' } } })
+    expect(JSON.stringify(task)).not.toContain('Private title')
   })
 
   test('handler-level permissions: foreign message edit, private join, admin-only posting, own access request', async () => {
@@ -139,7 +146,7 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
     expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: U('chat') }, payload: { content: { doc: 'z' } }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     await harness.run({ type: 'docs.create_document', payload: { id: U('d2'), title: 'D' } })
     await harness.run({ type: 'acl.request_access', target: { kind: 'note', id: U('d2') }, payload: { id: U('r2') } })
-    expect(await harness.run({ type: 'acl.decide_request', payload: { requestId: U('r2'), decision: 'approve' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await harness.run({ type: 'acl.decide_request', target: { kind: 'note', id: U('d2') }, payload: { requestId: U('r2'), decision: 'approve' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
   })
 
   test('expiry: an upload session and an access request past their TTL are rejected', async () => {
@@ -149,7 +156,7 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
     await harness.run({ type: 'acl.request_access', target: { kind: 'note', id: U('d-exp') }, payload: { id: U('r-exp') } })
     configureReferenceRuntime({ now: () => new Date(NOW.getTime() + 30 * 24 * 3600 * 1000) })
     expect(await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('u-exp'), sha256: 'a'.repeat(64) } })).toMatchObject({ error: { code: 'VALIDATION', message: 'upload session expired' } })
-    expect(await harness.run({ type: 'acl.decide_request', payload: { requestId: U('r-exp'), decision: 'approve' }, actor: BOB })).toMatchObject({ error: { code: 'VALIDATION', message: 'request expired' } })
+    expect(await harness.run({ type: 'acl.decide_request', target: { kind: 'note', id: U('d-exp') }, payload: { requestId: U('r-exp'), decision: 'approve' }, actor: BOB })).toMatchObject({ error: { code: 'VALIDATION', message: 'request expired' } })
   })
 
   test('domain rules: self-parenting, space delete confirmation, paused agent', async () => {
@@ -166,5 +173,138 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
 
   test('the allow-all authorizer is only a test double', () => {
     expect(ALLOW_ALL).not.toBe(DENY_ALL)
+  })
+})
+
+/** Records `can()` calls; allows only what `allow` accepts. */
+function recordingAuthorizer(allow: (verb: string, ref: { kind: string; id: string } | null) => boolean) {
+  const calls: Array<{ verb: string; ref: { kind: string; id: string } | null }> = []
+  return { calls, authorizer: { can: async (_p: unknown, verb: string, ref: { kind: string; id: string } | null) => { calls.push({ verb, ref }); return allow(verb, ref) } } }
+}
+
+describe('reference handlers: the payload never widens the authorized target', () => {
+  const docA = { kind: 'note' as const, id: U('acl-a') }
+  const docB = { kind: 'note' as const, id: U('acl-b') }
+
+  test('acl.*: a payload subject other than the target is FORBIDDEN, a missing target is VALIDATION', async () => {
+    const harness = memoryHarness()
+    const principal = { kind: 'user', id: BOB }
+    expect(await harness.run({ type: 'acl.grant', target: docA, payload: { subject: docB, principal, role: 'editor' } })).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(await harness.run({ type: 'acl.grant', payload: { subject: docB, principal, role: 'editor' } })).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
+    expect(await harness.run({ type: 'acl.revoke', payload: { subject: docB, principal } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(await harness.run({ type: 'acl.set_link', payload: { subject: docB, scope: 'workspace' } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(await harness.run({ type: 'acl.set_link', target: docA, payload: { subject: docB, scope: 'workspace' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await harness.run({ type: 'acl.transfer_ownership', payload: { subject: docB, toPrincipalId: BOB } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(await harness.run({ type: 'acl.transfer_ownership', target: docA, payload: { subject: docB, toPrincipalId: BOB } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await harness.run({ type: 'acl.request_access', target: docA, payload: { subject: docB, role: 'viewer' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'acl-entry')).toEqual([])
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'acl-link')).toEqual([])
+    // A subject that repeats the target is fine.
+    expect(await harness.run({ type: 'acl.grant', target: docA, payload: { subject: docA, principal, role: 'editor' } })).toMatchObject({ status: 'applied' })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'acl-entry')[0]!.data).toMatchObject({ resourceType: 'note', resourceId: docA.id, subjectId: BOB })
+  })
+
+  test('acl.grant authorized on doc A cannot grant on doc B', async () => {
+    const { authorizer, calls } = recordingAuthorizer((verb, ref) => verb !== 'share' || ref?.id === docA.id)
+    const harness = memoryHarness({ authorizer })
+    expect(await harness.run({ type: 'acl.grant', target: docA, payload: { subject: docB, principal: { kind: 'user', id: BOB }, role: 'full_access' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await harness.run({ type: 'acl.grant', target: docB, payload: { principal: { kind: 'user', id: BOB }, role: 'full_access' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(calls.map(call => call.ref?.id)).toEqual([docA.id, docB.id])
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'acl-entry')).toEqual([])
+  })
+
+  test('acl.decide_request needs the requested resource as its target', async () => {
+    const harness = memoryHarness()
+    await harness.run({ type: 'acl.request_access', target: docA, payload: { id: U('acl-req'), role: 'viewer' }, actor: BOB })
+    expect(await harness.run({ type: 'acl.decide_request', payload: { requestId: U('acl-req'), decision: 'approve' } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(await harness.run({ type: 'acl.decide_request', target: docB, payload: { requestId: U('acl-req'), decision: 'approve' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'acl-entry')).toEqual([])
+    expect(await harness.run({ type: 'acl.decide_request', target: docA, payload: { requestId: U('acl-req'), decision: 'approve' } })).toMatchObject({ status: 'applied' })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'acl-entry')[0]!.data).toMatchObject({ resourceId: docA.id, subjectId: BOB, role: 'viewer' })
+  })
+
+  test('mail.share_to_chat is authorized on the destination chat', async () => {
+    const harness = memoryHarness()
+    await harness.run({ type: 'im.create_chat', payload: { id: U('dest'), name: 'Dest', visibility: 'private' } })
+    await harness.run({ type: 'im.create_chat', payload: { id: U('other'), name: 'Other', visibility: 'private' } })
+    const before = referenceMemoryRecords(WORKSPACE_ID, 'channel-message').length
+    expect(await harness.run({ type: 'mail.share_to_chat', payload: { threadId: 'th-1', chatId: U('dest') } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(await harness.run({ type: 'mail.share_to_chat', target: { kind: 'channel', id: U('dest') }, payload: { threadId: 'th-1', chatId: U('other') } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'channel-message')).toHaveLength(before)
+    const { authorizer, calls } = recordingAuthorizer((_verb, ref) => ref?.id !== U('other'))
+    const guarded = memoryHarness({ authorizer })
+    expect(await guarded.run({ type: 'mail.share_to_chat', target: { kind: 'channel', id: U('other') }, payload: { threadId: 'th-1' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(calls.at(-1)).toMatchObject({ verb: 'write', ref: { kind: 'channel', id: U('other') } })
+    expect(await guarded.run({ type: 'mail.share_to_chat', target: { kind: 'channel', id: U('dest') }, payload: { threadId: 'th-1' } })).toMatchObject({ status: 'applied' })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'channel-message').filter(m => m.data.chatId === U('dest'))).toHaveLength(1)
+  })
+
+  test('links.*: from must be the target', async () => {
+    const harness = memoryHarness()
+    const to = { kind: 'goal' as const, id: U('lg') }
+    expect(await harness.run({ type: 'links.add', target: { kind: 'task', id: U('lt') }, payload: { from: { kind: 'task', id: U('other-task') }, to, relation: 'aligned-to' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await harness.run({ type: 'links.add', payload: { from: { kind: 'task', id: U('other-task') }, to, relation: 'aligned-to' } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(await harness.run({ type: 'links.remove', payload: { from: { kind: 'task', id: U('other-task') }, to, relation: 'aligned-to' } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'entity-link')).toEqual([])
+  })
+})
+
+describe('reference handlers: retry after a lost receipt (same commandId, fresh receipt store)', () => {
+  /** Same memory records, new command store: the first receipt is gone, the effect is not. */
+  const retryHarness = () => memoryHarness()
+
+  test('a retried create returns the record it made', async () => {
+    const first = await retryHarness().run({ type: 'tasks.create', payload: { title: 'Once' } }, { commandId: 'retry-create' })
+    const again = await retryHarness().run({ type: 'tasks.create', payload: { title: 'Once' } }, { commandId: 'retry-create' })
+    expect(first).toMatchObject({ status: 'applied', revision: 1 })
+    expect(again).toMatchObject({ status: 'applied', revision: 1, ref: first.ref })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'task').filter(r => r.data.title === 'Once')).toHaveLength(1)
+  })
+
+  test('a retried update applies once and passes its own expectedRevision', async () => {
+    await retryHarness().run({ type: 'tasks.create', payload: { id: 't-retry', title: 'v1', tags: [] } })
+    const step = { type: 'tasks.update', target: { kind: 'task' as const, id: 't-retry' }, payload: { title: 'v2' } }
+    expect(await retryHarness().run(step, { commandId: 'retry-update', expectedRevision: 1 })).toMatchObject({ status: 'applied', revision: 2 })
+    expect(await retryHarness().run(step, { commandId: 'retry-update', expectedRevision: 1 })).toMatchObject({ status: 'applied', revision: 2 })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'task').find(r => r.id === 't-retry')).toMatchObject({ revision: 2, data: { title: 'v2', lastCommandId: 'retry-update' } })
+    // A different command with the stale revision still conflicts.
+    expect(await retryHarness().run(step, { commandId: 'other-update', expectedRevision: 1 })).toMatchObject({ status: 'conflict' })
+    // Assignee add is not applied twice either.
+    const add = { type: 'tasks.update_assignees', target: { kind: 'task' as const, id: 't-retry' }, payload: { add: [BOB] } }
+    await retryHarness().run(add, { commandId: 'retry-assign' })
+    await retryHarness().run(add, { commandId: 'retry-assign' })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'task').find(r => r.id === 't-retry')).toMatchObject({ revision: 3, data: { assigneeIds: [BOB] } })
+  })
+
+  test('a retried message append keeps one message and one seq', async () => {
+    await retryHarness().run({ type: 'im.create_chat', payload: { id: U('retry-chat'), name: 'R' } })
+    const send = { type: 'im.send_message', target: { kind: 'channel' as const, id: U('retry-chat') }, payload: { content: { doc: 'hi' } } }
+    const first = await retryHarness().run(send, { commandId: 'retry-send' })
+    const again = await retryHarness().run(send, { commandId: 'retry-send' })
+    expect(first.status).toBe('applied')
+    expect(again).toMatchObject({ status: 'applied', result: first.result })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'channel-message').filter(m => m.data.chatId === U('retry-chat'))).toHaveLength(1)
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'channel-sequence').find(r => r.id === U('retry-chat'))!.data.lastSeq).toBe(1)
+    expect(await retryHarness().run(send, { commandId: 'next-send' })).toMatchObject({ status: 'applied', result: { seq: 2 } })
+  })
+
+  test('a retried soft delete finds its own tombstone', async () => {
+    await retryHarness().run({ type: 'goals.create', payload: { id: 'g-del', name: 'G' } })
+    const del = { type: 'goals.delete', target: { kind: 'goal' as const, id: 'g-del' }, payload: {} }
+    expect(await retryHarness().run(del, { commandId: 'retry-delete' })).toMatchObject({ status: 'applied' })
+    expect(await retryHarness().run(del, { commandId: 'retry-delete' })).toMatchObject({ status: 'applied' })
+    expect(await retryHarness().run(del, { commandId: 'other-delete' })).toMatchObject({ error: { code: 'NOT_FOUND' } })
+  })
+
+  test('multi-record creates validate every id before the first write', async () => {
+    const harness = retryHarness()
+    await harness.run({ type: 'goals.create', payload: { id: 'g-a', name: 'A', targets: [{ id: 'tg-taken', name: 'T', fromValue: 0, toValue: 1 }] } })
+    const receipt = await harness.run({ type: 'goals.create', payload: { id: 'g-b', name: 'B', targets: [{ id: 'tg-taken', name: 'T2', fromValue: 0, toValue: 1 }] } })
+    expect(receipt).toMatchObject({ status: 'conflict', conflict: { current: { error: 'id already exists' } } })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'goal').map(r => r.id)).toEqual(['g-a'])
+    await harness.run({ type: 'tasks.create', payload: { id: U('from-taken'), title: 'x' } })
+    const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('from-taken'), chatId: U('c'), seq: 1 } })
+    expect(fromMessage).toMatchObject({ status: 'conflict' })
+    expect(referenceMemoryRecords(WORKSPACE_ID, 'entity-link')).toEqual([])
   })
 })

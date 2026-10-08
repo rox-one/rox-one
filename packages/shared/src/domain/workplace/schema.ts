@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { cmd, createIdShape, idSchema, nameSchema, principalListSchema, refSchema, type CommandSchemaMap } from '../common'
 
 export const WORKPLACE_COMMAND_SCHEMAS: CommandSchemaMap = {
-  'mail.share_to_chat': cmd({ threadId: idSchema, chatId: idSchema, comment: z.string().max(5000).optional() }),
+  'mail.share_to_chat': cmd({ threadId: idSchema, chatId: idSchema.optional(), comment: z.string().max(5000).optional() }),
   'mail.create_task_from_thread': cmd({ ...createIdShape, threadId: idSchema, title: z.string().trim().min(1).max(500).optional(), listId: idSchema.optional(), assigneeIds: principalListSchema.optional() }),
   'project_templates.create_from_project': cmd({ ...createIdShape, name: nameSchema, includeTasks: z.boolean().default(true), includeMilestones: z.boolean().default(true) }),
   'project_templates.create_project': cmd({ ...createIdShape, name: nameSchema, spaceId: idSchema.optional(), startOn: z.iso.date().optional() }),

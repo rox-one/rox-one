@@ -7,8 +7,11 @@
  * cached per schema), `workspace_id` / actor / `sort_key` NOT NULL columns
  * are filled, uuid and bytea values are validated (VALIDATION, not a 22P02
  * INTERNAL), `revision` columns give compare-and-set, and `deletedAt` maps to
- * `deleted_at` (hard delete when the table has none). Fields without a column
- * are not stored — the table is the record.
+ * `deleted_at` (hard delete when the table has none). `refFields` (e.g. a
+ * task's `origin`) go to their `*_ref` text column as `kind:id#fragment`.
+ * Fields without a column are never dropped: they are written to a companion
+ * `reference.record_written` snapshot (`companion: true`) for that record in
+ * the same transaction, and row reads merge the latest companion back in.
  *
  * Every other collection (association rows, settings, records whose module
  * table lands with its wave-2 package) is stored as `reference.record_written`
@@ -20,6 +23,7 @@ import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import type { DomainEventDraft, DomainEventType } from '@rox/core/events'
 import { collectionSpec, refKind } from '../collections'
+import { LAST_COMMAND_FIELD } from '../engine'
 import type { RecordBackend, RecordData, RecordWrite, StoredRecord } from '../types'
 
 /** Structural slice of a postgres.js transaction (`TransactionSQL.unsafe`). */
@@ -33,6 +37,26 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const HEX_RE = /^(?:[0-9a-f]{2})*$/i
 const ACTOR_COLUMNS = new Set(['owner_principal_id', 'owner_id', 'creator_id', 'author_id', 'recorded_by', 'created_by', 'granted_by', 'principal_id', 'invited_by', 'uploaded_by', 'sender_id', 'added_by'])
 const SYSTEM_FIELDS = new Set(['id', 'revision', 'workspaceId'])
+/** Not kept in companions: the receipt (same transaction) already makes workspace retries exact. */
+const NO_COMPANION_FIELDS = new Set([...SYSTEM_FIELDS, LAST_COMMAND_FIELD, 'deletedAt'])
+
+type SnapshotPayload = { revision?: number; deleted?: boolean; companion?: boolean; record?: RecordData }
+
+function refToText(value: unknown, field: string): string {
+  const ref = value as Partial<EntityRef> | null
+  if (typeof value === 'string') return value
+  if (!ref || typeof ref !== 'object' || typeof ref.kind !== 'string' || typeof ref.id !== 'string') throw new CommandRejection('VALIDATION', `${field} must be an entity ref`)
+  return ref.fragment ? `${ref.kind}:${ref.id}#${ref.fragment}` : `${ref.kind}:${ref.id}`
+}
+
+function textToRef(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  const colon = value.indexOf(':')
+  if (colon <= 0) return value
+  const rest = value.slice(colon + 1)
+  const hash = rest.indexOf('#')
+  return hash >= 0 ? { kind: value.slice(0, colon), id: rest.slice(0, hash), fragment: rest.slice(hash + 1) } : { kind: value.slice(0, colon), id: rest }
+}
 
 interface Column { name: string; dataType: string; udt: string; nullable: boolean; hasDefault: boolean }
 interface TableMeta { name: string; pk: Column; columns: Map<string, Column> }
@@ -234,16 +258,29 @@ export class PostgresRecordBackend implements RecordBackend {
   }
 
   async remove(collection: string, id: string): Promise<boolean> {
-    const table = await this.table(collection)
-    if (table) {
-      if (table.pk.udt === 'uuid' && !UUID_RE.test(id)) return false
-      const scope = table.columns.has('workspace_id') ? ' AND workspace_id = $2' : ''
-      const rows = await this.options.sql.unsafe<unknown[]>(`DELETE FROM ${this.qualified(table)} WHERE ${quote(table.pk.name)} = $1${scope} RETURNING 1`, scope ? [id, this.options.workspaceId] : [id])
-      return rows.length > 0
+    try {
+      const table = await this.table(collection)
+      if (table) return await this.removeRow(table, collection, id)
+      const current = await this.getSnapshot(collection, id)
+      if (!current) return false
+      this.snapshot(collection, id, current.revision + 1, current.data, true)
+      return true
+    } catch (error) {
+      // Deleting a row others still reference is 23503 too: say so instead of "missing reference".
+      if (sqlState(error) === '23503') throw new CommandRejection('VALIDATION', `${refKind(collection)} ${id} is still referenced`)
+      throw mapDataError(error, collection)
     }
-    const current = await this.getSnapshot(collection, id)
-    if (!current) return false
-    this.snapshot(collection, id, current.revision + 1, current.data, true)
+  }
+
+  private async removeRow(table: TableMeta, collection: string, id: string): Promise<boolean> {
+    if (table.pk.udt === 'uuid' && !UUID_RE.test(id)) return false
+    const scope = table.columns.has('workspace_id') ? ' AND workspace_id = $2' : ''
+    const rows = await this.options.sql.unsafe<Array<{ revision?: string | number }>>(
+      `DELETE FROM ${this.qualified(table)} WHERE ${quote(table.pk.name)} = $1${scope} RETURNING ${table.columns.has('revision') ? 'revision' : '1 AS revision'}`, scope ? [id, this.options.workspaceId] : [id])
+    if (rows.length === 0) return false
+    // A recreated id must not inherit the old record's companion fields.
+    const companion = await this.getSnapshot(collection, id, { lock: false })
+    if (companion) this.snapshot(collection, id, Number(rows[0]!.revision ?? 1) + 1, {}, true, true)
     return true
   }
 
@@ -259,15 +296,31 @@ export class PostgresRecordBackend implements RecordBackend {
     const rows = await this.options.sql.unsafe<Array<Record<string, unknown>>>(`SELECT * FROM ${this.qualified(table)} WHERE ${quote(table.pk.name)} = $1${scope}`, scope ? [id, this.options.workspaceId] : [id])
     const row = rows[0]
     if (!row) return null
-    const overrides = Object.fromEntries(Object.entries(collectionSpec(collection).columns ?? {}).map(([field, column]) => [column, field]))
-    const data: RecordData = {}
+    const spec = collectionSpec(collection)
+    const overrides = Object.fromEntries(Object.entries(spec.columns ?? {}).map(([field, column]) => [column, field]))
+    // Companion fields first: a column always wins over a stale companion value.
+    const data: RecordData = { ...((await this.getSnapshot(collection, id, { lock: false }))?.data ?? {}) }
     for (const [name, value] of Object.entries(row)) {
       if (name === table.pk.name || name === 'workspace_id' || name === 'revision') continue
       const column = table.columns.get(name)
-      const converted = column ? fromColumnValue(column, value) : value
-      if (converted !== undefined) data[overrides[name] ?? camel(name)] = converted
+      const field = overrides[name] ?? camel(name)
+      let converted = column ? fromColumnValue(column, value) : value
+      if (spec.refFields?.includes(field)) converted = textToRef(converted)
+      if (converted !== undefined) data[field] = converted
+      else if (field in data && column) delete data[field]
     }
     return { id, revision: table.columns.has('revision') ? Number(row.revision ?? 1) : 1, data }
+  }
+
+  /** Fields of a row write that have no column (written to the companion snapshot). */
+  private companionFields(table: TableMeta, write: RecordWrite): RecordData {
+    const extras: RecordData = {}
+    for (const [field, value] of Object.entries(write.data)) {
+      if (NO_COMPANION_FIELDS.has(field) || value === undefined || value === null) continue
+      if (this.column(table, write.collection, field)) continue
+      extras[field] = value
+    }
+    return extras
   }
 
   private rowValues(table: TableMeta, write: RecordWrite): Map<string, unknown> {
@@ -276,7 +329,8 @@ export class PostgresRecordBackend implements RecordBackend {
       if (SYSTEM_FIELDS.has(field)) continue
       const column = this.column(table, write.collection, field)
       if (!column || column.name === table.pk.name || column.name === 'workspace_id' || column.name === 'revision') continue
-      values.set(column.name, toColumnValue(column, value, field))
+      const refField = collectionSpec(write.collection).refFields?.includes(field) && value !== null && value !== undefined
+      values.set(column.name, toColumnValue(column, refField ? refToText(value, field) : value, field))
     }
     return values
   }
@@ -284,6 +338,7 @@ export class PostgresRecordBackend implements RecordBackend {
   private async putRow(table: TableMeta, write: RecordWrite) {
     if (table.pk.udt === 'uuid' && !UUID_RE.test(write.id)) throw new CommandRejection('VALIDATION', `${refKind(write.collection)} id must be a uuid`)
     const values = this.rowValues(table, write)
+    const extras = this.companionFields(table, write)
     const hasRevision = table.columns.has('revision')
     const scoped = table.columns.has('workspace_id')
     const deleting = Boolean(write.data.deletedAt) && !table.columns.has('deleted_at')
@@ -300,7 +355,12 @@ export class PostgresRecordBackend implements RecordBackend {
       const params = [write.id, ...values.values()]
       const inserted = await this.options.sql.unsafe<unknown[]>(
         `INSERT INTO ${this.qualified(table)} (${names.map(quote).join(', ')}) VALUES (${params.map((_v, i) => `$${i + 1}`).join(', ')}) ON CONFLICT DO NOTHING RETURNING 1`, params)
-      if (inserted.length === 0) return { status: 'conflict' as const, current: await this.getRow(table, write.collection, write.id) }
+      if (inserted.length === 0) {
+        // Create conflict: the revision only, never the existing record.
+        const existing = await this.getRow(table, write.collection, write.id)
+        return { status: 'conflict' as const, current: existing ? { id: write.id, revision: existing.revision, data: {} } : null }
+      }
+      if (Object.keys(extras).length > 0) this.snapshot(write.collection, write.id, 1, extras, false, true)
       return { status: 'accepted' as const, revision: 1 }
     }
 
@@ -319,7 +379,14 @@ export class PostgresRecordBackend implements RecordBackend {
     const sets = [...values.keys()].map((name, i) => `${quote(name)} = $${i + 1}`)
     const params: unknown[] = [...values.values()]
     if (hasRevision) sets.push('revision = revision + 1')
-    if (sets.length === 0) return { status: 'accepted' as const, revision: current.revision }
+    const hadCompanion = Object.keys(current.data).some(field => !NO_COMPANION_FIELDS.has(field) && !this.column(table, write.collection, field))
+    const writeCompanion = (revision: number) => {
+      if (Object.keys(extras).length > 0 || hadCompanion) this.snapshot(write.collection, write.id, revision, extras, false, true)
+    }
+    if (sets.length === 0) {
+      writeCompanion(current.revision)
+      return { status: 'accepted' as const, revision: current.revision }
+    }
     params.push(write.id)
     let where = `${quote(table.pk.name)} = $${params.length}`
     if (scoped) { params.push(this.options.workspaceId); where += ` AND workspace_id = $${params.length}` }
@@ -327,7 +394,9 @@ export class PostgresRecordBackend implements RecordBackend {
     const rows = await this.options.sql.unsafe<Array<{ revision?: string | number }>>(
       `UPDATE ${this.qualified(table)} SET ${sets.join(', ')} WHERE ${where} RETURNING ${hasRevision ? 'revision' : '1 AS revision'}`, params)
     if (rows.length === 0) return { status: 'conflict' as const, current: await this.getRow(table, write.collection, write.id) }
-    return { status: 'accepted' as const, revision: Number(rows[0]!.revision ?? 1) }
+    const revision = Number(rows[0]!.revision ?? 1)
+    writeCompanion(revision)
+    return { status: 'accepted' as const, revision }
   }
 
   // ── event snapshots ──────────────────────────────────────────────────
@@ -338,18 +407,22 @@ export class PostgresRecordBackend implements RecordBackend {
     this.locked = true
   }
 
-  private async getSnapshot(collection: string, id: string): Promise<StoredRecord | null> {
+  /**
+   * Latest snapshot of a record. Companion reads (`lock: false`) skip the
+   * advisory lock: the row's own lock and revision already serialize them.
+   */
+  private async getSnapshot(collection: string, id: string, options: { lock?: boolean } = {}): Promise<StoredRecord | null> {
     const key = `${collection}\u0000${id}`
     const pending = this.pending.get(key)
     if (pending) return pending.deleted ? null : { id, revision: pending.revision, data: pending.data }
-    await this.lock()
-    const rows = await this.options.sql.unsafe<Array<{ payload: { revision?: number; deleted?: boolean; record?: RecordData } | string }>>(
+    if (options.lock !== false) await this.lock()
+    const rows = await this.options.sql.unsafe<Array<{ payload: SnapshotPayload | string }>>(
       `SELECT payload FROM ${this.options.prefix}domain_event
         WHERE workspace_id = $1 AND subject_kind = $2 AND subject_id = $3 AND type = $4 AND payload->>'collection' = $5
         ORDER BY sequence DESC LIMIT 1`,
       [this.options.workspaceId, refKind(collection), id, REFERENCE_SNAPSHOT_EVENT, collection])
     const raw = rows[0]?.payload
-    const payload = typeof raw === 'string' ? JSON.parse(raw) as { revision?: number; deleted?: boolean; record?: RecordData } : raw
+    const payload = typeof raw === 'string' ? JSON.parse(raw) as SnapshotPayload : raw
     if (!payload || payload.deleted) return null
     return { id, revision: Number(payload.revision ?? 1), data: payload.record ?? {} }
   }
@@ -362,9 +435,9 @@ export class PostgresRecordBackend implements RecordBackend {
     return { status: 'accepted' as const, revision }
   }
 
-  private snapshot(collection: string, id: string, revision: number, data: RecordData, deleted: boolean): void {
+  private snapshot(collection: string, id: string, revision: number, data: RecordData, deleted: boolean, companion = false): void {
     this.pending.set(`${collection}\u0000${id}`, { id, revision, data, ...(deleted ? { deleted } : {}) })
     const subject = { kind: refKind(collection), id } as EntityRef
-    this.events.push({ type: REFERENCE_SNAPSHOT_EVENT as DomainEventType, subject, payload: { collection, id, revision, ...(deleted ? { deleted: true } : {}), record: data } })
+    this.events.push({ type: REFERENCE_SNAPSHOT_EVENT as DomainEventType, subject, payload: { collection, id, revision, ...(deleted ? { deleted: true } : {}), ...(companion ? { companion: true } : {}), record: data } })
   }
 }

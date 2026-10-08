@@ -3,6 +3,9 @@
  *
  * - `task` → the PersonalTask v3 store (`putWorkItem`, CAS on the file
  *   revision), so tasks created through the bus show up in the Tasks UI;
+ *   every field the bus writes is passed through (none is dropped);
+ * - `task-list` → the PersonalTask meta projects (the lists the Tasks UI
+ *   shows): `listId` == v2 `projectId`, no separate list store;
  * - `entity-link` → `{workspaceRoot}/work/links/` plus the W1-02 link index
  *   (`.rox/entity-links.sqlite`) so backlinks resolve;
  * - everything else → `LocalWorkStore` (`{workspaceRoot}/work/<dir>/`).
@@ -26,14 +29,6 @@ export interface LocalLinkIndex {
   remove(input: { from: EntityRef; to: EntityRef; relation: EntityRelation }): boolean
 }
 
-const WORK_ITEM_KEYS = new Set<keyof WorkItem>([
-  'authority', 'workspaceId', 'ownerPrincipalId', 'nativeId', 'sourceStoreId', 'title', 'notes', 'notesDoc', 'list', 'startAt', 'evening', 'order',
-  'listId', 'sectionId', 'listGroupId', 'parentId', 'projectId', 'milestoneId', 'spaceId', 'statusKey', 'priority', 'size', 'dueAt', 'duePrecision',
-  'assigneeIds', 'createdAt', 'updatedAt', 'completedAt', 'cancelledAt', 'reopenedAt', 'trashedAt', 'archivedAt', 'reminderAt', 'reminderTimeZone',
-  'reminderOffsets', 'reminderOnDates', 'remindDueDay', 'remindOverdue', 'recurrence', 'repeatOf', 'checklist', 'tags', 'customFields',
-  'estimateMinutes', 'origin',
-])
-
 function itemToData(item: WorkItem): RecordData {
   const data: RecordData = {}
   for (const [key, value] of Object.entries(item)) if (key !== 'id' && key !== 'revision' && value !== undefined) data[key] = value
@@ -42,8 +37,10 @@ function itemToData(item: WorkItem): RecordData {
 }
 
 function dataToItem(id: string, data: RecordData, revision: number): WorkItem {
+  // Full passthrough: every field the bus wrote reaches `fromWorkItem`, which
+  // keeps the v2 task fields (reminder delivery, repeat chain…) and the work half.
   const item: Record<string, unknown> = { id, revision }
-  for (const [key, value] of Object.entries(data)) if (WORK_ITEM_KEYS.has(key as keyof WorkItem)) item[key] = value
+  for (const [key, value] of Object.entries(data)) if (key !== 'id' && key !== 'revision' && key !== 'deletedAt' && value !== undefined && value !== null) item[key] = value
   if (typeof data.deletedAt === 'string' && !item.trashedAt) item.trashedAt = data.deletedAt
   if (!data.deletedAt && !data.trashedAt) delete item.trashedAt
   return item as unknown as WorkItem
@@ -70,6 +67,11 @@ export class LocalRecordBackend implements RecordBackend {
       try { persisted = this.options.tasks.getWorkItem(id) } catch { return null }
       return persisted ? { id, revision: persisted.revision, data: itemToData(persisted.item) } : null
     }
+    if (collection === 'task-list' && this.options.tasks) {
+      let list
+      try { list = this.options.tasks.getTaskList(id) } catch { return null }
+      return list ? { id, revision: list.revision, data: list.data } : null
+    }
     let file
     try { file = this.options.work.get(this.dir(collection), id) } catch { return null }
     return file ? { id, revision: file.revision, data: file.record } : null
@@ -85,9 +87,20 @@ export class LocalRecordBackend implements RecordBackend {
         throw error
       }
       if (result.status === 'conflict') {
-        return { status: 'conflict' as const, current: result.current ? { id: write.id, revision: result.current.revision, data: itemToData(result.current.item) } : null }
+        return { status: 'conflict' as const, current: result.current ? { id: write.id, revision: result.current.revision, data: write.expectedRevision === null ? {} : itemToData(result.current.item) } : null }
       }
       return { status: 'accepted' as const, revision: result.record.revision }
+    }
+    if (write.collection === 'task-list' && this.options.tasks) {
+      let result
+      try {
+        result = this.options.tasks.putTaskList(write.id, write.data, write.expectedRevision)
+      } catch (error) {
+        if (error instanceof TypeError) throw new CommandRejection('VALIDATION', error.message)
+        throw error
+      }
+      if (result.status === 'conflict') return { status: 'conflict' as const, current: result.current ? { id: write.id, revision: result.current.revision, data: write.expectedRevision === null ? {} : result.current.data } : null }
+      return { status: 'accepted' as const, revision: result.revision }
     }
     let result
     try {
@@ -96,13 +109,15 @@ export class LocalRecordBackend implements RecordBackend {
       if (error instanceof TypeError) throw new CommandRejection('VALIDATION', error.message)
       throw error
     }
-    if (result.status === 'conflict') return { status: 'conflict' as const, current: result.current ? { id: write.id, revision: result.current.revision, data: result.current.record } : null }
+    // A create conflict carries the revision only (the existing record may be outside the caller's ACL).
+    if (result.status === 'conflict') return { status: 'conflict' as const, current: result.current ? { id: write.id, revision: result.current.revision, data: write.expectedRevision === null ? {} : result.current.record } : null }
     if (write.collection === 'entity-link') this.mirrorLink(write.data)
     return { status: 'accepted' as const, revision: result.file.revision }
   }
 
   async remove(collection: string, id: string): Promise<boolean> {
     if (collection === 'task' && this.options.tasks) return this.options.tasks.delete(id)
+    if (collection === 'task-list' && this.options.tasks) return this.options.tasks.removeTaskList(id)
     const current = await this.get(collection, id)
     const removed = this.options.work.remove(this.dir(collection), id)
     if (removed && collection === 'entity-link' && current) this.mirrorLink({ ...current.data, deletedAt: 'removed' })

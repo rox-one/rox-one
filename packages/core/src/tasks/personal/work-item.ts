@@ -86,6 +86,14 @@ export interface WorkItemExtension {
   customFields?: Record<string, unknown>
   estimateMinutes?: number
   origin?: WorkItemOriginRef
+  /** Principal that created the item through the command bus. */
+  createdBy?: string
+  /** Command that last wrote the item: a retried command finds its own effect (W1-06 idempotency). */
+  lastCommandId?: string
+  /** Workspace the item was shared to (`tasks.share`). */
+  sharedWorkspaceId?: string
+  /** Per-user "hidden" flag (`tasks.set_user_state` on the local authority). */
+  hidden?: boolean
 }
 
 /** The v3 entity (DATA-MODEL §5.1). Dates are ISO-8601 strings. */
@@ -142,6 +150,10 @@ export interface WorkItem {
   customFields?: Record<string, unknown>
   estimateMinutes?: number
   origin?: WorkItemOriginRef
+  createdBy?: string
+  lastCommandId?: string
+  sharedWorkspaceId?: string
+  hidden?: boolean
   /** v2 `links[]`, read-only for one release (MIG-03 moves them to `entity_link`). */
   legacyLinks?: TaskLink[]
 }
@@ -292,6 +304,10 @@ export function toWorkItem(task: PersonalTask, revision: number, extension?: Wor
     customFields: work.customFields,
     estimateMinutes: work.estimateMinutes,
     origin: work.origin ?? (task.source ? taskLinkToOriginRef(task.id, task.source) : undefined),
+    createdBy: work.createdBy,
+    lastCommandId: work.lastCommandId,
+    sharedWorkspaceId: work.sharedWorkspaceId,
+    hidden: work.hidden,
     legacyLinks: task.links.length > 0 ? task.links : undefined,
   }
   return clean(item)
@@ -362,6 +378,10 @@ export function fromWorkItem(item: WorkItem, previousTask?: PersonalTask | null)
     customFields: item.customFields,
     estimateMinutes: item.estimateMinutes,
     origin: item.origin,
+    createdBy: item.createdBy,
+    lastCommandId: item.lastCommandId,
+    sharedWorkspaceId: item.sharedWorkspaceId,
+    hidden: item.hidden,
   } as WorkItemExtension)
   return { task, work }
 }

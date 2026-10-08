@@ -13,7 +13,11 @@
  *
  * Gated: nothing runs while `goals.v1` is off. Idempotent: ids are
  * deterministic and an existing record is never overwritten (a re-run, or a
- * record already edited through the bus, is reported as `unchanged`). The
+ * record already edited through the bus, is reported as `unchanged`). A
+ * milestone keeps its roadmap id, so the same id in two projects is a
+ * collision: the second is reported as an error and its tasks stay unplaced.
+ * The report (which stops later runs) is written only when no project had
+ * an error, so a failed or partial run is retried on the next start. The
  * source files are only read; they stay on disk as the backup (the export
  * that regenerates them lands with the goals module).
  */
@@ -171,7 +175,16 @@ export interface GoalsMigrationProjectReport {
 
 export type GoalsMigrationReport =
   | { status: 'skipped'; reason: 'flag_off' }
-  | { status: 'migrated'; migration: typeof GOALS_MIGRATION_ID; ranAt: string; created: number; unchanged: number; projects: GoalsMigrationProjectReport[] }
+  | {
+    status: 'migrated'
+    migration: typeof GOALS_MIGRATION_ID
+    ranAt: string
+    created: number
+    unchanged: number
+    projects: GoalsMigrationProjectReport[]
+    /** False when a project had errors: no report file is written, so the next start retries. */
+    complete: boolean
+  }
 
 export interface GoalsMigrationOptions {
   workspaceRoot: string
@@ -189,11 +202,23 @@ function projectSlugs(workspaceRoot: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name).sort()
 }
 
-function writeIfAbsent(work: LocalWorkStore, item: MigratedRecord): boolean {
+type WriteOutcome = 'created' | 'unchanged' | { collision: string }
+
+function originProject(record: RecordData): string | undefined {
+  const origin = record.origin as { projectId?: unknown } | undefined
+  return typeof origin?.projectId === 'string' ? origin.projectId : undefined
+}
+
+function writeIfAbsent(work: LocalWorkStore, item: MigratedRecord): WriteOutcome {
   const dir = collectionSpec(item.collection).localDir ?? item.collection
-  if (work.get(dir, item.id)) return false
+  const existing = work.get(dir, item.id)
+  if (existing) {
+    // Same id from another project (or a record not made by this migration): never merge them.
+    const owner = originProject(existing.record)
+    return owner === originProject(item.record) ? 'unchanged' : { collision: owner ?? 'another record' }
+  }
   work.write({ id: item.id, collection: dir, revision: 1, schemaVersion: LOCAL_WORK_SCHEMA_VERSION, record: { ...item.record, lastCommandId: GOALS_MIGRATION_ID } })
-  return true
+  return 'created'
 }
 
 function linkTask(tasks: PersonalTaskPersistStore, link: MilestoneTaskLink): 'linked' | 'unchanged' | 'missing' {
@@ -241,11 +266,19 @@ export function runGoalsMigration(options: GoalsMigrationOptions): GoalsMigratio
         taskLinks = mapped.taskLinks
       }
     } catch (error) { report.errors.push(`roadmap: ${(error as Error).message}`) }
+    const collided = new Set<string>()
     for (const item of records) {
-      if (writeIfAbsent(work, item)) report.created[item.collection] = (report.created[item.collection] ?? 0) + 1
-      else report.unchanged += 1
+      const outcome = writeIfAbsent(work, item)
+      if (outcome === 'created') report.created[item.collection] = (report.created[item.collection] ?? 0) + 1
+      else if (outcome === 'unchanged') report.unchanged += 1
+      else {
+        report.errors.push(`${item.collection} ${item.id}: id already used by ${outcome.collision}; not imported`)
+        if (item.collection === 'milestone') collided.add(item.id)
+      }
     }
     for (const link of taskLinks) {
+      // Never place a task into another project's milestone.
+      if (collided.has(link.milestoneId)) continue
       const outcome = options.tasks ? linkTask(options.tasks, link) : 'missing'
       if (outcome === 'linked') report.tasksLinked += 1
       else if (outcome === 'missing') report.tasksMissing.push(link.taskId)
@@ -253,7 +286,10 @@ export function runGoalsMigration(options: GoalsMigrationOptions): GoalsMigratio
     projects.push(report)
   }
   const created = projects.reduce((sum, project) => sum + Object.values(project.created).reduce((a, b) => a + b, 0), 0)
-  const result: GoalsMigrationReport = { status: 'migrated', migration: GOALS_MIGRATION_ID, ranAt: ctx.now, created, unchanged: projects.reduce((sum, p) => sum + p.unchanged, 0), projects }
+  const complete = projects.every(project => project.errors.length === 0)
+  const result: GoalsMigrationReport = { status: 'migrated', migration: GOALS_MIGRATION_ID, ranAt: ctx.now, created, unchanged: projects.reduce((sum, p) => sum + p.unchanged, 0), projects, complete }
+  // Per-project errors: no report, so `ensureGoalsMigrated` retries on the next start (re-runs are idempotent).
+  if (!complete) return result
   const path = goalsMigrationReportPath(options.workspaceRoot)
   mkdirSync(join(path, '..'), { recursive: true, mode: 0o700 })
   const tmp = `${path}.${process.pid}.tmp`

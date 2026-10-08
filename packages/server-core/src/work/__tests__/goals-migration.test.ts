@@ -120,7 +120,9 @@ describe('MIG-04 / MIG-05 (goals.v1)', () => {
   })
 
   test('ensureGoalsMigrated runs once per workspace and skips when a report exists', () => {
+    rmSync(join(workspaceRoot, 'projects', 'gamma', 'roadmap.json'))
     const first = ensureGoalsMigrated(options())
+    expect(first).toMatchObject({ status: 'migrated', complete: true })
     expect(first?.status).toBe('migrated')
     expect(ensureGoalsMigrated(options())).toBeNull()
     resetGoalsMigrationMemo()
@@ -128,6 +130,7 @@ describe('MIG-04 / MIG-05 (goals.v1)', () => {
   })
 
   test('the first local command with goals.v1 on migrates, then goal commands edit the migrated records', async () => {
+    rmSync(join(workspaceRoot, 'projects', 'gamma', 'roadmap.json'))
     const store = new SqliteCommandStore({ workspaceRoot })
     configureReferenceRuntime({ now: () => NOW, workspaceRoot: () => workspaceRoot, personalTaskStore: () => tasks, isFlagEnabled: () => true })
     try {
@@ -141,4 +144,38 @@ describe('MIG-04 / MIG-05 (goals.v1)', () => {
       store.close()
     }
   })
+
+  test('a run with project errors writes no report, so the next start retries', () => {
+    const first = ensureGoalsMigrated(options())
+    expect(first).toMatchObject({ status: 'migrated', complete: false })
+    expect(existsSync(goalsMigrationReportPath(workspaceRoot))).toBe(false)
+    // Next process start: the corrupt roadmap was fixed.
+    writeFileSync(join(workspaceRoot, 'projects', 'gamma', 'roadmap.json'), JSON.stringify(roadmap([{ id: 'ms-gamma', title: 'Gamma', status: 'planned', stages: [], taskIds: [] }])))
+    resetGoalsMigrationMemo()
+    const retried = ensureGoalsMigrated(options())
+    expect(retried).toMatchObject({ status: 'migrated', complete: true })
+    if (retried?.status !== 'migrated') throw new Error('expected a run')
+    expect(retried.projects.find(p => p.slug === 'gamma')!.created).toEqual({ milestone: 1 })
+    expect(retried.projects.find(p => p.slug === 'alpha')!.created).toEqual({})
+    expect(existsSync(goalsMigrationReportPath(workspaceRoot))).toBe(true)
+  })
+
+  test('MIG-05: the same milestone id in two projects is reported, never merged', () => {
+    tasks.put({ id: 'task-g', title: 'Gamma task', notes: '', list: 'inbox', tags: [], priority: 'none', evening: false, links: [], order: 1, createdAt: 1 })
+    writeFileSync(join(workspaceRoot, 'projects', 'gamma', 'roadmap.json'), JSON.stringify(roadmap([{ id: 'ms-beta', title: 'Gamma beta', status: 'active', stages: [], taskIds: ['task-g'] }])))
+    const report = runGoalsMigration(options())
+    if (report.status !== 'migrated') throw new Error('expected a run')
+    const gamma = report.projects.find(p => p.slug === 'gamma')!
+    expect(gamma.errors).toEqual(['milestone ms-beta: id already used by proj-alpha; not imported'])
+    expect(gamma.tasksLinked).toBe(0)
+    expect(report.complete).toBe(false)
+    expect(existsSync(goalsMigrationReportPath(workspaceRoot))).toBe(false)
+    expect(new LocalWorkStore({ workspaceRoot }).get('milestones', 'ms-beta')!.record).toMatchObject({ projectId: 'proj-alpha', title: 'Public beta' })
+    expect(tasks.getWorkItem('task-g')!.item.milestoneId).toBeUndefined()
+    expect(tasks.getWorkItem('task-g')!.item.projectId).toBeUndefined()
+  })
 })
+
+function roadmap(milestones: unknown[]): Record<string, unknown> {
+  return { schemaVersion: 1, goal: 'Gamma', expectedResult: '', doneCriteria: [], inputs: [], requirements: [], risks: [], openQuestions: [], updatedAt: 1_790_000_000_000, milestones }
+}

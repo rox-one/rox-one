@@ -56,7 +56,8 @@
           "roadmap: corrupt roadmap.json skipped"
         ]
       }
-    ]
+    ],
+    "complete": false
   },
   "work": {
     "cycles/52bedaba-c44c-52ac-9859-b1910ace66c5.json": {

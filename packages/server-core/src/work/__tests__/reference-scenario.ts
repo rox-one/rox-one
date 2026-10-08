@@ -271,7 +271,7 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('acl.set_link', doc, { scope: 'workspace', role: 'viewer' }),
   s('acl.revoke', doc, { principal: { kind: 'user', id: BOB } }),
   s('acl.request_access', doc, { id: U('req'), role: 'viewer' }),
-  s('acl.decide_request', undefined, { requestId: U('req'), decision: 'approve' }, BOB),
+  s('acl.decide_request', doc, { requestId: U('req'), decision: 'approve' }, BOB),
   s('acl.transfer_ownership', doc, { toPrincipalId: BOB }),
   // entities
   s('links.add', t('task', 'task'), { to: t('goal', 'goal'), relation: 'aligned-to' }),
@@ -291,7 +291,7 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('agents.decide_approval', undefined, { approvalId: U('approval'), decision: 'approve' }),
   s('agents.pause', undefined, { agentId: U('agent') }),
   // workplace
-  s('mail.share_to_chat', undefined, { threadId: 'thread-1', chatId: U('chat') }),
+  s('mail.share_to_chat', t('channel', 'chat'), { threadId: 'thread-1' }),
   s('mail.create_task_from_thread', { kind: 'mail-thread', id: 'thread-1' }, { id: U('reply-task'), threadId: 'thread-1', title: 'Reply' }),
   s('commands.batch', undefined, { commands: [{ type: 'tasks.complete', target: t('task', 'task'), payload: {} }] }),
   s('forms.configure_on_submit', undefined, { formRef: t('form', 'form'), actions: [{ type: 'tasks.create' }] }),

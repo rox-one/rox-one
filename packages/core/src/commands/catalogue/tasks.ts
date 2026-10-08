@@ -19,10 +19,12 @@ export const TASKS_COMMANDS = moduleCatalogue('tasks', F.tasksLark, [
   ['tasks.share', 'by-target', 'share', F.tasksShared],
   ['tasks.add_dependency', 'by-target'],
   ['tasks.update_reminders', 'by-target'],
+  // Local authority: lists are the PersonalTask meta projects (listId == v2 projectId).
   ['task_lists.create', 'by-target'],
   ['task_lists.update', 'by-target'],
   ['task_lists.archive', 'by-target'],
   ['task_lists.delete', 'by-target', 'destroy'],
+  // Sections and list groups: UNAVAILABLE on the local authority until TSK-1.
   ['task_sections.create', 'by-target'],
   ['task_sections.update', 'by-target'],
   ['task_sections.move', 'by-target'],

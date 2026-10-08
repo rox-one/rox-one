@@ -58,6 +58,8 @@ export class ReferenceTx {
   readonly payload: Record<string, any>
   readonly now: string
   readonly events: DomainEventDraft[] = []
+  /** Records this execution wrote (`collection\u0000id`), to tell them from an earlier attempt's. */
+  private readonly written = new Set<string>()
 
   constructor(readonly ctx: CommandHandlerContext<unknown>, readonly backend: RecordBackend, now: Date) {
     this.payload = (ctx.payload ?? {}) as Record<string, any>
@@ -110,7 +112,8 @@ export class ReferenceTx {
 
   async require(collection: string, id: string, options: { allowDeleted?: boolean } = {}): Promise<StoredRecord> {
     const record = await this.get(collection, id)
-    if (!record || (!options.allowDeleted && isDeleted(record))) {
+    // A retried soft delete finds its own tombstone.
+    if (!record || (!options.allowDeleted && isDeleted(record) && !this.isPriorAttempt(record, collection))) {
       throw new CommandRejection('NOT_FOUND', `${refKind(collection)} ${id} not found`)
     }
     return record
@@ -119,13 +122,37 @@ export class ReferenceTx {
   /** Load the target record and apply the envelope's `expectedRevision`. */
   async requireTarget(collection: string, options: { allowDeleted?: boolean } = {}): Promise<StoredRecord> {
     const record = await this.require(collection, this.target(collection), options)
-    this.checkExpected(record)
+    this.checkExpected(collection, record)
     return record
   }
 
-  checkExpected(record: StoredRecord): void {
+  checkExpected(collection: string, record: StoredRecord): void {
     const expected = this.ctx.envelope.expectedRevision
-    if (expected !== undefined && expected !== record.revision) this.ctx.conflict(record.revision, { id: record.id, ...record.data })
+    if (expected === undefined || expected === record.revision) return
+    // A retried command whose receipt was lost finds its own write one revision on.
+    if (this.isPriorAttempt(record, collection)) return
+    this.ctx.conflict(record.revision, { id: record.id, ...record.data })
+  }
+
+  /** True when `record` was last written by an earlier attempt of this very command. */
+  private isPriorAttempt(record: StoredRecord, collection: string): boolean {
+    return record.data[LAST_COMMAND_FIELD] === this.ctx.envelope.commandId && !this.written.has(writtenKey(collection, record.id))
+  }
+
+  /**
+   * Fail before the first write of a multi-record op when any id is taken by
+   * another command (a retry of this command finds its own records and passes).
+   */
+  async assertAbsent(collection: string, ...ids: string[]): Promise<void> {
+    for (const id of ids) {
+      const existing = await this.get(collection, id)
+      if (existing && existing.data[LAST_COMMAND_FIELD] !== this.ctx.envelope.commandId) this.createConflict(existing.revision)
+    }
+  }
+
+  /** A create hit an existing id: report only its revision, never the record (it may be outside the caller's ACL). */
+  private createConflict(revision: number): never {
+    return this.ctx.conflict(revision, { error: 'id already exists' })
   }
 
   /** Insert a new record. Re-running the same command finds its own record and returns it. */
@@ -133,16 +160,19 @@ export class ReferenceTx {
     const existing = await this.get(collection, id)
     if (existing) {
       if (existing.data[LAST_COMMAND_FIELD] === this.ctx.envelope.commandId) return existing
-      this.ctx.conflict(existing.revision, { id, ...existing.data })
+      this.createConflict(existing.revision)
     }
     const record = clean({ ...data, createdAt: this.now, updatedAt: this.now, createdBy: this.actor, [LAST_COMMAND_FIELD]: this.ctx.envelope.commandId })
     const written = await this.backend.put({ collection, id, expectedRevision: null, data: record })
-    if (written.status === 'conflict') this.ctx.conflict(written.current?.revision ?? 0, written.current?.data)
+    if (written.status === 'conflict') this.createConflict(written.current?.revision ?? 0)
+    this.written.add(writtenKey(collection, id))
     return { id, revision: written.revision, data: record }
   }
 
   /** Merge `changes` into a record (`null` clears a field); CAS on its revision. */
   async update(collection: string, record: StoredRecord, changes: RecordData): Promise<StoredRecord> {
+    // Retry of a command whose receipt was lost: its write already landed — return it, don't apply twice.
+    if (this.isPriorAttempt(record, collection)) return record
     const data: RecordData = { ...record.data }
     for (const [key, value] of Object.entries(changes)) {
       if (value === undefined) continue
@@ -152,7 +182,12 @@ export class ReferenceTx {
     data.updatedAt = this.now
     data[LAST_COMMAND_FIELD] = this.ctx.envelope.commandId
     const written = await this.backend.put({ collection, id: record.id, expectedRevision: record.revision, data })
-    if (written.status === 'conflict') this.ctx.conflict(written.current?.revision ?? record.revision, written.current?.data)
+    if (written.status === 'conflict') {
+      // The current record goes back only for the authorized target (the caller may rebase on it).
+      const isTarget = this.rawTarget?.id === record.id
+      this.ctx.conflict(written.current?.revision ?? record.revision, isTarget && written.current ? { id: record.id, ...written.current.data } : undefined)
+    }
+    this.written.add(writtenKey(collection, record.id))
     return { id: record.id, revision: written.revision, data }
   }
 
@@ -175,6 +210,8 @@ export class ReferenceTx {
     this.events.push({ type: type as DomainEventType, payload, ...(subject ? { subject } : {}) })
   }
 }
+
+const writtenKey = (collection: string, id: string) => `${collection}\u0000${id}`
 
 /** Build one catalogue command's handler from its op. */
 export function referenceHandler(type: string, op: ReferenceOp, options: ReferenceEngineOptions & { eventType?: string }): CommandHandler<unknown, unknown> {

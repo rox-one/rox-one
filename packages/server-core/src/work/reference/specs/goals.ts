@@ -54,13 +54,16 @@ function createGoal(tx: ReferenceTx): Promise<ReferenceOutcome> {
     if (p.parentGoalId) await tx.require('goal', p.parentGoalId)
     if (p.okrCycleId) await tx.require('okr-cycle', p.okrCycleId)
     const data = omit(p, ['id', 'targets', 'checks'])
+    const targets = ((p.targets ?? []) as RecordData[]).map((target, index) => ({ id: (target.id as string | undefined) ?? tx.newId(`target-${index}`), target, index }))
+    const checks = ((p.checks ?? []) as RecordData[]).map((check, index) => ({ id: (check.id as string | undefined) ?? tx.newId(`check-${index}`), check, index }))
+    // Validate every id before the first write (local writes are not transactional).
+    await tx.assertAbsent('goal', id)
+    await tx.assertAbsent('goal-target', ...targets.map(t => t.id))
+    await tx.assertAbsent('goal-check', ...checks.map(c => c.id))
+    if (new Set(targets.map(t => t.id)).size !== targets.length || new Set(checks.map(c => c.id)).size !== checks.length) throw new CommandRejection('VALIDATION', 'duplicate target / check id')
     const record = await tx.insert('goal', id, { scope: p.spaceId ? 'space' : 'company', goalKind: p.okrCycleId ? 'objective' : 'goal', publishState: 'published', creatorId: tx.actor, ...data })
-    for (const [index, target] of ((p.targets ?? []) as RecordData[]).entries()) {
-      await tx.insert('goal-target', (target.id as string | undefined) ?? tx.newId(`target-${index}`), { ...omit(target, ['id']), goalId: id, sortKey: `a${index}` })
-    }
-    for (const [index, check] of ((p.checks ?? []) as RecordData[]).entries()) {
-      await tx.insert('goal-check', (check.id as string | undefined) ?? tx.newId(`check-${index}`), { ...omit(check, ['id']), goalId: id, done: false, sortKey: `a${index}` })
-    }
+    for (const { id: targetId, target, index } of targets) await tx.insert('goal-target', targetId, { ...omit(target, ['id']), goalId: id, sortKey: `a${index}` })
+    for (const { id: checkId, check, index } of checks) await tx.insert('goal-check', checkId, { ...omit(check, ['id']), goalId: id, done: false, sortKey: `a${index}` })
     return { collection: 'goal', id, revision: record.revision, changes: Object.keys(data).sort() }
   })()
 }
@@ -246,6 +249,9 @@ async function createSpace(tx: ReferenceTx): Promise<ReferenceOutcome> {
   const id = tx.createId()
   const chatId = tx.newId('chat')
   const folderId = tx.newId('folder')
+  await tx.assertAbsent('space', id)
+  await tx.assertAbsent('channel', chatId)
+  await tx.assertAbsent('folder', folderId)
   await tx.insert('channel', chatId, { kind: 'space', visibility: 'private', name: p.name, spaceId: id })
   await tx.insert('folder', folderId, { ownerType: 'space', ownerId: id, name: p.name })
   const record = await tx.insert('space', id, {

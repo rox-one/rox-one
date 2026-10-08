@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 import { applyWorkspaceMigrations, compareMigrationNames, migrationFromSource } from '../src/database/migrations.ts'
 import { PostgresCommandStore } from '../src/modules/commands/store.ts'
 import { InMemoryCommandStore } from '../../../packages/server-core/src/commands/store.ts'
-import { configureReferenceRuntime, resetPostgresReferenceMeta, resetReferenceMemory, resetReferenceRuntime } from '../../../packages/server-core/src/work/reference/index.ts'
+import { PostgresRecordBackend, configureReferenceRuntime, resetPostgresReferenceMeta, resetReferenceMemory, resetReferenceRuntime } from '../../../packages/server-core/src/work/reference/index.ts'
 import { createHarness } from '../../../packages/server-core/src/work/__tests__/reference-harness.ts'
 import { ACTOR_ID, BOB, REFERENCE_SCENARIO, U, WORKSPACE_ID } from '../../../packages/server-core/src/work/__tests__/reference-scenario.ts'
 
@@ -128,5 +128,63 @@ describe('W1-06 reference handlers over PostgreSQL (skips without a database)', 
     expect(await harness.run({ type: 'kpis.create', payload: { name: 'K', spaceId: U('missing-space'), cadence: 'weekly', unit: 'n' } })).toMatchObject({ status: 'rejected', error: { code: 'NOT_FOUND' } })
     const [row] = await db.unsafe<{ title: string }[]>(`SELECT title FROM "${schema}".work_item WHERE work_item_id = $1`, [U('pg-t')])
     expect(row!.title).toBe('v2')
+  }, 120000)
+
+  /** Reads through the workspace backend (row + latest companion snapshot). */
+  async function readTask(id: string) {
+    return db.begin(async tx => new PostgresRecordBackend({ sql: tx, prefix: `"${schema}".`, workspaceId: WORKSPACE_ID, actorId: ACTOR_ID }).get('task', id))
+  }
+
+  itDb('fields without a work_item column round-trip through the companion snapshot', async () => {
+    const harness = pgHarness()
+    const id = U('pg-companion')
+    const target = { kind: 'task' as const, id }
+    expect(await harness.run({ type: 'task_lists.create', payload: { id: U('pg-list'), name: 'Sprint' } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'tasks.create', payload: { id, title: 'Companion', evening: true, list: 'today' } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'tasks.update_assignees', target, payload: { add: [BOB] } })).toMatchObject({ status: 'applied' })
+    // A second add reads the first back (merge, not overwrite).
+    expect(await harness.run({ type: 'tasks.update_assignees', target, payload: { add: [ACTOR_ID] } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'tasks.update_reminders', target, payload: { reminderAt: '2026-10-09T09:00:00.000Z', reminderTimeZone: 'Europe/Moscow', reminderOffsets: [15, 60] } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'tasks.share', target, payload: { workspaceId: U('pg-shared') } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'tasks.add_to_list', target, payload: { listId: U('pg-list') } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'tasks.move', target, payload: { sectionId: U('pg-section') } })).toMatchObject({ status: 'applied' })
+    const task = await readTask(id)
+    expect(task!.data).toMatchObject({
+      title: 'Companion', evening: true, list: 'today', assigneeIds: [BOB, ACTOR_ID], reminderAt: '2026-10-09T09:00:00.000Z', reminderTimeZone: 'Europe/Moscow',
+      reminderOffsets: [15, 60], sharedWorkspaceId: U('pg-shared'), listId: U('pg-list'), sectionId: U('pg-section'), createdBy: ACTOR_ID,
+    })
+    expect(task!.data.lastCommandId).toBeUndefined()
+    // Clearing a companion field sticks.
+    expect(await harness.run({ type: 'tasks.move', target, payload: { sectionId: null } })).toMatchObject({ status: 'applied' })
+    expect((await readTask(id))!.data.sectionId).toBeUndefined()
+    const [companion] = await db.unsafe<{ payload: { companion?: boolean; revision: number; record: Record<string, unknown> } }[]>(
+      `SELECT payload FROM "${schema}".domain_event WHERE subject_kind = 'task' AND subject_id = $1 AND type = 'reference.record_written' ORDER BY sequence DESC LIMIT 1`, [id])
+    expect(companion!.payload).toMatchObject({ companion: true, revision: (await readTask(id))!.revision })
+    expect(companion!.payload.record.title).toBeUndefined()
+  }, 120000)
+
+  itDb('create_from_* keeps origin in origin_ref and the rest in the companion', async () => {
+    const harness = pgHarness()
+    const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('pg-from-msg'), chatId: U('pg-chat'), seq: 3, assigneeIds: [BOB] } })
+    expect(fromMessage).toMatchObject({ status: 'applied' })
+    const fromSelection = await harness.run({ type: 'tasks.create_from_selection', payload: { id: U('pg-from-sel'), docRef: { kind: 'note', id: U('pg-doc') }, blockId: 'b1', text: 'Do it' } })
+    expect(fromSelection).toMatchObject({ status: 'applied' })
+    const rows = await db.unsafe<{ work_item_id: string; origin_ref: string }[]>(`SELECT work_item_id, origin_ref FROM "${schema}".work_item WHERE work_item_id IN ($1, $2) ORDER BY origin_ref`, [U('pg-from-msg'), U('pg-from-sel')])
+    expect(rows.map(r => r.origin_ref)).toEqual([`channel-message:${U('pg-chat')}:3`, `note:${U('pg-doc')}#block-b1`])
+    expect((await readTask(U('pg-from-msg')))!.data).toMatchObject({ origin: { kind: 'channel-message', id: `${U('pg-chat')}:3` }, assigneeIds: [BOB] })
+    expect((await readTask(U('pg-from-sel')))!.data).toMatchObject({ origin: { kind: 'note', id: U('pg-doc'), fragment: 'block-b1' }, title: 'Do it' })
+  }, 120000)
+
+  itDb('a create conflict returns only the revision; deleting a referenced row is VALIDATION, not INTERNAL', async () => {
+    const harness = pgHarness()
+    expect(await harness.run({ type: 'tasks.create', payload: { id: U('pg-dup'), title: 'Private title' } })).toMatchObject({ status: 'applied' })
+    const dup = await harness.run({ type: 'tasks.create', payload: { id: U('pg-dup'), title: 'x' } })
+    expect(dup).toMatchObject({ status: 'conflict', conflict: { currentRevision: 1, current: { error: 'id already exists' } } })
+    expect(JSON.stringify(dup)).not.toContain('Private title')
+    expect(await harness.run({ type: 'tasks.create', payload: { id: U('pg-child'), title: 'Child', parentId: U('pg-dup') } })).toMatchObject({ status: 'applied' })
+    const hard = await harness.run({ type: 'tasks.delete', target: { kind: 'task', id: U('pg-dup') }, payload: { hard: true } })
+    expect(hard).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION', message: expect.stringContaining('still referenced') } })
+    const [row] = await db.unsafe<{ title: string }[]>(`SELECT title FROM "${schema}".work_item WHERE work_item_id = $1`, [U('pg-dup')])
+    expect(row!.title).toBe('Private title')
   }, 120000)
 })

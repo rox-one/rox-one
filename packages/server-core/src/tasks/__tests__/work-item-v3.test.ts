@@ -97,6 +97,15 @@ describe('MIG-01 / MIG-02 (v2 files → v3 in place)', () => {
     expect(rawFile('t-open').schemaVersion).toBe(3)
   })
 
+  it('an unreadable task file is skipped (not failed), so the migration settles', () => {
+    writeFileSync(join(root, 'personal-tasks', 't-broken.json'), '{ "id": "t-broken", ')
+    const store = new PersonalTaskPersistStore(root)
+    const [tasks] = store.migrateToV3({ now: 1 })
+    expect(tasks).toMatchObject({ scanned: 4, upgraded: 3, failed: [], skipped: ['t-broken'] })
+    expect(store.isMigratedToV3()).toBe(true)
+    expect(readFileSync(join(root, 'personal-tasks', 't-broken.json'), 'utf8')).toBe('{ "id": "t-broken", ')
+  })
+
   it('a corrupt work half is re-derived, never drops the task', () => {
     const file = rawFile('t-open')
     writeFileSync(join(root, 'personal-tasks', 't-open.json'), JSON.stringify({ ...file, schemaVersion: 3, work: { statusKey: 7 } }))

@@ -6,7 +6,7 @@
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { deterministicId, isDeleted, type ReferenceOutcome, type ReferenceTx } from '../engine'
-import { addLink, create, omit, patchMany, payloadFields, refString, removeLink, setting, softDelete, storedAclRole, subjectTypeOf, targetRef, transition, update } from '../ops'
+import { addLink, boundRef, create, omit, patchMany, payloadFields, refString, removeLink, setting, softDelete, storedAclRole, subjectTypeOf, targetRef, transition, update, validateLink } from '../ops'
 import type { RecordData, StoredRecord } from '../types'
 import { appendMessage } from './messenger'
 import { taskDefaults } from './tasks'
@@ -255,13 +255,17 @@ export const NOTIFY_REFERENCE_SPECS: ReferenceSpecMap = {
     if (tx.payload.quietHours !== undefined) last = await tx.upsert('notification-pref', `${tx.actor}:quiet-hours`, { quietHours: tx.payload.quietHours }, { principalId: tx.actor })
     return out('notification-pref', last!, ['prefs'], { ref: null })
   },
-  'reminders.create': create('reminder', tx => ({ remindAt: tx.payload.remindAt, ...(tx.payload.note ? { note: tx.payload.note } : {}), subjectRef: refString((tx.payload.subject as EntityRef | undefined) ?? targetRef(tx)) }), { defaults: tx => ({ state: 'scheduled', ownerId: tx.actor }) }),
+  'reminders.create': create('reminder', tx => ({ remindAt: tx.payload.remindAt, ...(tx.payload.note ? { note: tx.payload.note } : {}), subjectRef: refString(boundRef(tx, tx.payload.subject as EntityRef | undefined)) }), { defaults: tx => ({ state: 'scheduled', ownerId: tx.actor }) }),
   'reminders.cancel': transition('reminder', () => ({ state: 'cancelled' })),
 }
 
 // ── ACL ──────────────────────────────────────────────────────────────────
 
-const aclSubject = (tx: ReferenceTx): EntityRef => (tx.payload.subject as EntityRef | undefined) ?? targetRef(tx)
+/** ACL commands act on the authorized target; `payload.subject` may only repeat it. */
+const aclSubject = (tx: ReferenceTx, requireTarget = true): EntityRef => {
+  const subject = boundRef(tx, tx.payload.subject as EntityRef | undefined, { requireTarget })
+  return { kind: subject.kind, id: subject.id } as EntityRef
+}
 const aclId = (tx: ReferenceTx, subject: EntityRef, kind: string, id: string) => deterministicId(tx.ctx.workspaceId, 'acl', refString(subject), kind, id)
 
 
@@ -281,13 +285,17 @@ export const ACL_REFERENCE_SPECS: ReferenceSpecMap = {
   },
   'acl.set_link': async tx => { const subject = aclSubject(tx); return out('acl-link', await tx.upsert('acl-link', refString(subject), { scope: tx.payload.scope, role: tx.payload.role ?? null }, { resourceType: subject.kind, resourceId: subject.id }), ['scope'], { ref: subject }) },
   'acl.request_access': async tx => {
-    const subject = aclSubject(tx)
+    // A requester may lack access to the resource, so a bare `subject` is allowed here (it only files a request).
+    const subject = aclSubject(tx, false)
     const id = tx.createId()
     const record = await tx.insert('access-request', id, { resourceType: subject.kind, resourceId: subject.id, requesterId: tx.actor, role: tx.payload.role, status: 'pending', expiresAt: later(tx, 7), ...(tx.payload.message ? { message: tx.payload.message } : {}) })
     return out('access-request', record, ['status'], { ref: subject })
   },
   'acl.decide_request': async tx => {
+    const target = targetRef(tx)
     const request = await tx.require('access-request', tx.payload.requestId)
+    // The executor authorized `share` on the target: it must be the requested resource.
+    if (request.data.resourceType !== target.kind || request.data.resourceId !== target.id) throw new CommandRejection('FORBIDDEN', 'the request is for another resource')
     if (request.data.requesterId === tx.actor) throw new CommandRejection('FORBIDDEN', 'cannot decide your own request')
     if (request.data.status !== 'pending') throw new CommandRejection('VALIDATION', `request is ${String(request.data.status)}`)
     if (typeof request.data.expiresAt === 'string' && Date.parse(request.data.expiresAt) <= Date.parse(tx.now)) throw new CommandRejection('VALIDATION', 'request expired')
@@ -313,14 +321,15 @@ export const ENTITIES_REFERENCE_SPECS: ReferenceSpecMap = {
   'links.add': {
     event: 'entities.link_added',
     op: async tx => {
-      const link = await addLink(tx, (tx.payload.from as EntityRef | undefined) ?? targetRef(tx), tx.payload.to, tx.payload.relation, { ...(tx.payload.role ? { role: tx.payload.role } : {}), ...(tx.payload.anchor ? { anchor: tx.payload.anchor } : {}) })
-      return out('entity-link', link, ['relation'], { ref: (tx.payload.from as EntityRef | undefined) ?? targetRef(tx) })
+      const from = boundRef(tx, tx.payload.from as EntityRef | undefined, { requireTarget: true })
+      const link = await addLink(tx, from, tx.payload.to, tx.payload.relation, { ...(tx.payload.role ? { role: tx.payload.role } : {}), ...(tx.payload.anchor ? { anchor: tx.payload.anchor } : {}) })
+      return out('entity-link', link, ['relation'], { ref: from })
     },
   },
   'links.remove': {
     event: 'entities.link_removed',
     op: async tx => {
-      const from = (tx.payload.from as EntityRef | undefined) ?? targetRef(tx)
+      const from = boundRef(tx, tx.payload.from as EntityRef | undefined, { requireTarget: true })
       const link = await removeLink(tx, from, tx.payload.to, tx.payload.relation)
       if (!link) throw new CommandRejection('NOT_FOUND', 'link not found')
       return out('entity-link', link, ['relation'], { ref: from })
@@ -408,8 +417,11 @@ export const AGENTS_REFERENCE_SPECS: ReferenceSpecMap = {
 // ── workplace ────────────────────────────────────────────────────────────
 
 export const WORKPLACE_REFERENCE_SPECS: ReferenceSpecMap = {
+  /** The destination chat is the envelope target, so the executor authorizes posting there. */
   'mail.share_to_chat': async tx => {
-    const chat = await tx.require('channel', tx.payload.chatId)
+    const chatId = tx.target('channel')
+    if (tx.payload.chatId !== undefined && tx.payload.chatId !== chatId) throw new CommandRejection('FORBIDDEN', 'chatId must match the target chat')
+    const chat = await tx.require('channel', chatId)
     const message = await appendMessage(tx, chat, { doc: tx.payload.comment ?? '', unfurls: [{ ref: { kind: 'mail-thread', id: tx.payload.threadId } }] })
     return out('channel-message', message, ['content'], { result: { seq: message.data.seq } })
   },
@@ -418,6 +430,8 @@ export const WORKPLACE_REFERENCE_SPECS: ReferenceSpecMap = {
     op: async tx => {
       const origin: EntityRef = { kind: 'mail-thread', id: tx.payload.threadId }
       const id = tx.createId()
+      validateLink({ kind: 'task', id }, origin, 'derived-from')
+      await tx.assertAbsent('task', id)
       const record = await tx.insert('task', id, { ...(await taskDefaults(tx)), title: tx.payload.title ?? refString(origin), ...(tx.payload.listId ? { listId: tx.payload.listId } : {}), ...(tx.payload.assigneeIds ? { assigneeIds: tx.payload.assigneeIds } : {}), origin: { kind: origin.kind, id: origin.id } })
       await addLink(tx, { kind: 'task', id }, origin, 'derived-from', { role: 'origin' })
       return out('task', record, ['title'])

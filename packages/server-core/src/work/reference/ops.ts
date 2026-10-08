@@ -5,7 +5,7 @@
 
 import { normalizeRoleAlias } from '@rox/core/acl'
 import { CommandRejection } from '@rox/core/commands'
-import type { EntityRef } from '@rox/core/entities'
+import { isEntityKind, isEntityRelation, type EntityRef } from '@rox/core/entities'
 import { deterministicId, isDeleted, type ReferenceOp, type ReferenceOutcome, type ReferenceTx } from './engine'
 import type { RecordData, StoredRecord } from './types'
 
@@ -158,6 +158,27 @@ export async function removeLink(tx: ReferenceTx, from: EntityRef, to: EntityRef
   const row = await tx.get('entity-link', id)
   if (!row || isDeleted(row)) return null
   return tx.softDelete('entity-link', row)
+}
+
+/** Reject a link the local link index would refuse — call before the first write of a create-and-link op. */
+export function validateLink(from: EntityRef, to: EntityRef, relation: string): void {
+  if (!isEntityKind(from.kind) || !isEntityKind(to.kind)) throw new CommandRejection('VALIDATION', `unknown entity kind in link ${from.kind} → ${to.kind}`)
+  if (!isEntityRelation(relation)) throw new CommandRejection('VALIDATION', `unknown relation ${relation}`)
+}
+
+/**
+ * The resource a command acts on. The executor authorizes only the envelope
+ * target, so a payload ref (`subject`, `from`) naming another resource is
+ * FORBIDDEN; with `requireTarget` the target is mandatory (VALIDATION).
+ * A matching payload ref wins (it may carry a fragment).
+ */
+export function boundRef(tx: ReferenceTx, payloadRef: EntityRef | undefined, options: { requireTarget?: boolean } = {}): EntityRef {
+  const target = tx.rawTarget
+  if (target && payloadRef && (target.kind !== payloadRef.kind || target.id !== payloadRef.id)) {
+    throw new CommandRejection('FORBIDDEN', `${tx.commandType} acts on ${payloadRef.kind}:${payloadRef.id} but is authorized for ${target.kind}:${target.id}`)
+  }
+  if (!target && (options.requireTarget || !payloadRef)) throw new CommandRejection('VALIDATION', `${tx.commandType} needs a target`)
+  return payloadRef ?? target!
 }
 
 export function targetRef(tx: ReferenceTx): EntityRef {

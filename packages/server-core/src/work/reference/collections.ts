@@ -15,13 +15,15 @@ export interface CollectionSpec {
   readonly table?: string
   /** Field → column overrides (default: camelCase → snake_case). */
   readonly columns?: Readonly<Record<string, string>>
+  /** Fields holding an `EntityRef`, stored in a text `*_ref` column as `kind:id#fragment`. */
+  readonly refFields?: readonly string[]
   /** Local backend: directory under `{workspaceRoot}/work/` (default: the collection name). */
   readonly localDir?: string
 }
 
 export const REFERENCE_COLLECTIONS = {
   // Tasks (WorkItem v3)
-  task: { kind: 'task', table: 'work_item', columns: { notes: 'notes_md' } },
+  task: { kind: 'task', table: 'work_item', columns: { notes: 'notes_md', origin: 'origin_ref' }, refFields: ['origin'] },
   'task-list': { kind: 'task-list', table: 'task_list', localDir: 'task-lists' },
   'task-section': { kind: 'task-section', table: 'task_section', localDir: 'task-sections' },
   'task-list-group': { kind: 'task-list-group', table: 'task_list_group', localDir: 'task-list-groups' },
