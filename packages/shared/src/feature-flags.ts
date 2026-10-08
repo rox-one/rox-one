@@ -241,6 +241,29 @@ export function isStorageVisibleRootEnabled(
   return enabledWorkbenchFlags?.has(STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG) === true;
 }
 
+// W1-12 (#1509)
+/**
+ * Workbench flag id for the domain rules R1–R5. Mirrors
+ * `WORKBENCH_FLAG.automationRulesV1` in
+ * `packages/core/src/platform/workbench/flags.ts`.
+ */
+export const AUTOMATION_RULES_WORKBENCH_FLAG = 'automation.rules.v1';
+
+/**
+ * Runtime-evaluated check for the domain rule engine (TECH-SPEC §14).
+ *
+ * Server-evaluated with the same shape as `isEntitiesLinksEnabled`: the
+ * workbench flag `automation.rules.v1` is authoritative, and
+ * `CRAFT_FEATURE_AUTOMATION_RULES=1|0` stays as an explicit test override.
+ * While it is off the consumers do not even subscribe to events.
+ */
+export function isAutomationRulesEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_AUTOMATION_RULES'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(AUTOMATION_RULES_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
 /**
  * Runtime-evaluated check for Pages sharing (Cloudflare publication).
  *

@@ -169,7 +169,9 @@
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",
     "./commands/schemas": "./src/commands/schemas.ts",
-    "./domain": "./src/domain/index.ts"
+    "./domain": "./src/domain/index.ts",
+    "./automation": "./src/automation/index.ts",
+    "./automation/schemas": "./src/automation/schemas.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

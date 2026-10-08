@@ -48,8 +48,14 @@ export const DOCS_COMMAND_SCHEMAS: CommandSchemaMap = {
   'docs.sync_suggestions': cmd({ suggestionIds: z.array(idSchema).max(500) }),
   'docs.record_view': emptyPayload,
   'docs.apply_patch': cmd({ noteId: idSchema, patch: z.string().min(1).max(200_000), baseRevision: z.string().max(128).optional() }),
-  'docs.ensure_daily_note': cmd({ date: isoDateSchema }),
-  'docs.append_daily_link': cmd({ date: isoDateSchema, link: refSchema, label: z.string().max(500).optional() }),
+  'docs.ensure_daily_note': cmd({ date: isoDateSchema, id: idSchema.optional() }),
+  // W1-12 (#1509): `blockId` + `time` make the daily link idempotent — the
+  // rule engine writes `uuidv5(key + ':daily-link')` and re-runs update that
+  // block in place instead of appending a second one (TECH-SPEC §14.3).
+  'docs.append_daily_link': cmd({
+    date: isoDateSchema, link: refSchema, label: z.string().max(500).optional(),
+    id: idSchema.optional(), blockId: idSchema.optional(), time: isoDateTimeSchema.optional(),
+  }),
   'docs.create_meeting_notes': cmd({ ...createIdShape, eventRef: refSchema, title: titleSchema.optional() }),
   'docs.insert_task_block': cmd({ ...blockShape, taskRef: refSchema }),
   'docs.insert_event_block': cmd({ ...blockShape, eventRef: refSchema }),
