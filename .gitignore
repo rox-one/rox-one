@@ -93,3 +93,7 @@ bench-results/
 
 # Serial test runner manifests and retained suite output
 work/test-all/
+
+# Local scratch space and Playwright/browser-test output
+.scratch/
+test-results/

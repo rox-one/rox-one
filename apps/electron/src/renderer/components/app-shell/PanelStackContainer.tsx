@@ -15,6 +15,7 @@ import { bottomTerminalOpenAtom } from '@/atoms/unified-shell'
 import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, resolvePanelGridTracks } from '@/lib/panel-workspace-layout'
+import { useAction } from '@/actions/useAction'
 import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
 import { isPanelResizeActive } from './resize-activity'
 import { PanelSlot } from './PanelSlot'
@@ -33,6 +34,7 @@ import {
 const SPATIAL_DIRECTION_BY_KEY: Record<string, PanelSpatialDirection> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }
 
 const PANEL_TRANSITION = { type: 'tween' as const, duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as [number, number, number, number] }
+/** Compact and desktop panes share the same continuous chrome boundary. */
 const COMPACT_PANEL_TOP_GAP = 0
 
 interface PanelStackContainerProps {
@@ -138,6 +140,16 @@ export function PanelStackContainer({
     nextPanel.focus({ preventScroll: true })
     return true
   }, [focusedId, setFocusedPanelId, singlePanel, panelIds, shape, hasTools, visibleIds])
+
+  // Shortcut bindings mirror the spatial key handler for callers that dispatch
+  // actions instead of raw key events.
+  const canFocus = (direction: PanelSpatialDirection) => !singlePanel && !isPanelResizeActive()
+    && panelGridFocusTarget(panelIds, focusedId, shape, direction) !== null
+
+  useAction('panel.focusLeft', () => { focusPanelInDirection('left') }, { enabled: () => canFocus('left') })
+  useAction('panel.focusRight', () => { focusPanelInDirection('right') }, { enabled: () => canFocus('right') })
+  useAction('panel.focusUp', () => { focusPanelInDirection('up') }, { enabled: () => canFocus('up') })
+  useAction('panel.focusDown', () => { focusPanelInDirection('down') }, { enabled: () => canFocus('down') })
 
   const handleSpatialPanelKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const direction = SPATIAL_DIRECTION_BY_KEY[event.key]

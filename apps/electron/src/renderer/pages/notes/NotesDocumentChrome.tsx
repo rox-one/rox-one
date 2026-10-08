@@ -18,7 +18,10 @@ import {
 
 export function useNotesRailLayout(): [NotesRailLayout, (patch: Partial<NotesRailLayout>) => void] {
   const [layout, setLayout] = React.useState<NotesRailLayout>(() =>
-    parseNotesRailLayout(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_RAIL_STORAGE_KEY)),
+    {
+      try { return parseNotesRailLayout(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_RAIL_STORAGE_KEY)) }
+      catch { return parseNotesRailLayout(null) }
+    },
   )
 
   const update = React.useCallback((patch: Partial<NotesRailLayout>) => {
@@ -52,7 +55,7 @@ export function NotesBreadcrumbs({
       {crumbs.map((crumb, index) => (
         <React.Fragment key={crumb.id}>
           {index > 0 ? <ChevronRight className="h-3 w-3 shrink-0 opacity-50" /> : null}
-          <button
+          {index === crumbs.length - 1 ? <span aria-current="page" className="min-w-0 truncate px-1 font-medium text-foreground" title={crumb.label}>{crumb.label}</span> : <button
             type="button"
             className={cn(
               'max-w-[9rem] truncate rounded-[var(--radius-control)] px-1 py-0.5 hover:bg-foreground/[0.06] hover:text-foreground',
@@ -64,7 +67,7 @@ export function NotesBreadcrumbs({
             }}
           >
             {crumb.id === 'vault' ? t('notes.breadcrumb.vault') : crumb.label}
-          </button>
+          </button>}
         </React.Fragment>
       ))}
     </nav>

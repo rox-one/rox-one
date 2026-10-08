@@ -120,7 +120,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
                 key={destination.id}
                 data-service-id={destination.id}
                 aria-current={destination.id === activeService ? 'page' : undefined}
-                disabled={destination.route === null}
+                disabled={!destination.route && !destination.action}
                 onSelect={() => activate({ kind: 'service', serviceId: destination.id })}
                 className="min-h-9 [@media(pointer:coarse)]:min-h-11"
               >

@@ -22,7 +22,7 @@ test('surface navigation through the real event receiver retains a focused agent
 
 test('new-panel and auto-selection options survive the same receiver', () => {
   const events = new EventTarget(), seen: unknown[] = []
-  const stop = subscribeNavigateEvents((route, options) => { seen.push({ route, ...options }) }, events)
+  const stop = subscribeNavigateEvents((route, options) => { seen.push({ ...options, route }) }, events)
   const detail = { route: routes.view.inbox(), newPanel: true, targetLaneId: 'main', skipAutoSelect: true }
   events.dispatchEvent(new CustomEvent(NAVIGATE_EVENT, { detail }))
   expect(seen).toEqual([detail])

@@ -8,6 +8,7 @@ import { CLIENT_BROWSER_INVOKE } from '@rox/server-core/transport'
 import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput, LearningRpcService } from '@rox/server-core/handlers'
 import { resolveWorkspaceAutomationContext } from '../automations/context-resolver'
 import { automationContextFailure } from '@rox/shared/automations/context'
+import type { AutomationContextReference } from '@rox/shared/automations/types'
 import { RemoteBrowserPaneManager } from './RemoteBrowserPaneManager'
 import {
   applyShareRevoked,
@@ -38,6 +39,7 @@ import {
   createOmpSessionBackendFromResolvedContext as createBackendFromResolvedContext,
   cleanupSourceRuntimeArtifacts,
   providerTypeToAgentProvider,
+  getDefaultProviderType,
   type AgentBackend,
   type BackendHostRuntimeContext,
   type PostInitResult,
@@ -129,7 +131,7 @@ import { isParentTaskTool } from '@rox/shared/utils/toolNames'
 import { restoreFiles } from '@rox/shared/utils/bundle-files'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { CraftMcpClient, McpClientPool, McpPoolServer } from '@rox/shared/mcp'
-import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, RPC_CHANNELS, generateMessageId } from '@rox/shared/protocol'
+import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, RPC_CHANNELS, generateMessageId } from '@rox/shared/protocol'
 import type {
   BulkUpdateSessionsInput,
   BulkUpdateSessionsPatch,
@@ -1076,7 +1078,7 @@ interface ManagedSession {
   // Token refresh manager for OAuth token refresh with rate limiting
   tokenRefreshManager: TokenRefreshManager
   // Metadata for sessions created by automations
-  triggeredBy?: { automationName?: string; event?: string; timestamp?: number; context?: import('@rox/shared/automations/types').AutomationContextReference }
+  triggeredBy?: { automationName?: string; event?: string; timestamp?: number; context?: AutomationContextReference }
   // Promise that resolves when the agent instance is ready (for title gen to await)
   agentReady?: Promise<void>
   agentReadyResolve?: () => void
@@ -1242,6 +1244,7 @@ const DEFAULT_TOKEN_USAGE = {
 export function managedToSession(m: ManagedSession, overrides?: Partial<Session>): Session {
   const picked = pickSessionFields(m)
   stripSharedOwnerKey(picked)
+  const permissionModeState = resolveManagedPermissionModeState(m)
   return {
     ...picked,
     // Pre-computed fields from header (not in SESSION_PERSISTENT_FIELDS)
@@ -1260,11 +1263,51 @@ export function managedToSession(m: ManagedSession, overrides?: Partial<Session>
     isProcessing: m.isProcessing,
     sessionFolderPath: getSessionStoragePath(m.workspace.rootPath, m.id),
     supportsBranching: resolveSupportsBranching(m),
+    permissionMode: permissionModeState.permissionMode,
+    permissionModeVersion: permissionModeState.modeVersion,
     // Collection fields: coerce defaults on read (FR-14)
     priority: m.priority ?? 'none',
     dueDate: m.dueDate ?? null,
     ...overrides,
   } as Session
+}
+
+function resolveManagedPermissionModeState(managed: ManagedSession): PermissionModeState {
+  let diagnostics = getPermissionModeDiagnostics(managed.id)
+
+  // Hydrate persisted transition context when mode-manager has been reset (e.g. app restart).
+  if (managed.previousPermissionMode && !diagnostics.previousPermissionMode) {
+    hydratePreviousPermissionMode(managed.id, managed.previousPermissionMode)
+    diagnostics = getPermissionModeDiagnostics(managed.id)
+  }
+
+  // Heal restore races where mode-manager still has default state while
+  // session metadata already has a persisted non-default mode.
+  if (managed.permissionMode && diagnostics.permissionMode !== managed.permissionMode) {
+    sessionLog.warn('Permission mode diagnostics mismatch, reconciling to managed session mode', {
+      sessionId: managed.id,
+      managedMode: managed.permissionMode,
+      diagnosticsMode: diagnostics.permissionMode,
+      modeVersion: diagnostics.modeVersion,
+      changedBy: diagnostics.lastChangedBy,
+    })
+    setPermissionMode(managed.id, managed.permissionMode, { changedBy: 'restore' })
+    if (managed.previousPermissionMode) {
+      hydratePreviousPermissionMode(managed.id, managed.previousPermissionMode)
+    }
+    diagnostics = getPermissionModeDiagnostics(managed.id)
+  }
+
+  managed.previousPermissionMode = diagnostics.previousPermissionMode
+
+  return {
+    permissionMode: diagnostics.permissionMode,
+    previousPermissionMode: diagnostics.previousPermissionMode,
+    transitionDisplay: diagnostics.transitionDisplay,
+    modeVersion: diagnostics.modeVersion,
+    changedAt: diagnostics.lastChangedAt,
+    changedBy: diagnostics.lastChangedBy,
+  }
 }
 
 // Performance: Batch IPC delta events to reduce renderer load
@@ -3882,16 +3925,16 @@ export class SessionManager implements ISessionManager {
         branchFromSessionPath,
         branchFromSdkCwd,
         branchFromSdkTurnId,
-        sourceProvider: sourceBackendContext.provider,
+        sourceProvider: getDefaultProviderType(sourceBackendContext.provider),
       }
 
       sessionLog.info('Branch validation succeeded', {
         workspaceId,
-        branchFromSessionId: validatedBranch.sourceSessionId,
-        branchFromMessageId: validatedBranch.sourceMessageId,
-        branchContextStrategy: validatedBranch.branchContextStrategy,
-        branchFromSdkSessionId: !!validatedBranch.branchFromSdkSessionId,
-        copiedMessageCount: validatedBranch.branchIdx + 1,
+        branchFromSessionId: validatedBranch!.sourceSessionId,
+        branchFromMessageId: validatedBranch!.sourceMessageId,
+        branchContextStrategy: validatedBranch!.branchContextStrategy,
+        branchFromSdkSessionId: !!validatedBranch!.branchFromSdkSessionId,
+        copiedMessageCount: validatedBranch!.branchIdx + 1,
       })
     }
 
@@ -4426,7 +4469,7 @@ export class SessionManager implements ISessionManager {
         projectId: request.projectId ?? managed.projectId,
         // Spawned sessions become subtasks of the spawning session.
         parentSessionId: managed.id,
-      })
+      }, { agentProfileSnapshot: managed.agentProfileSnapshot ?? null })
 
       // Build FileAttachment[] from paths (if any)
       let fileAttachments: FileAttachment[] | undefined
@@ -9033,41 +9076,7 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (!managed) return null
 
-    let diagnostics = getPermissionModeDiagnostics(sessionId)
-
-    // Hydrate persisted transition context when mode-manager has been reset (e.g. app restart).
-    if (managed.previousPermissionMode && !diagnostics.previousPermissionMode) {
-      hydratePreviousPermissionMode(sessionId, managed.previousPermissionMode)
-      diagnostics = getPermissionModeDiagnostics(sessionId)
-    }
-
-    // Heal restore races where mode-manager still has default state while
-    // session metadata already has a persisted non-default mode.
-    if (managed.permissionMode && diagnostics.permissionMode !== managed.permissionMode) {
-      sessionLog.warn('Permission mode diagnostics mismatch, reconciling to managed session mode', {
-        sessionId,
-        managedMode: managed.permissionMode,
-        diagnosticsMode: diagnostics.permissionMode,
-        modeVersion: diagnostics.modeVersion,
-        changedBy: diagnostics.lastChangedBy,
-      })
-      setPermissionMode(sessionId, managed.permissionMode, { changedBy: 'restore' })
-      if (managed.previousPermissionMode) {
-        hydratePreviousPermissionMode(sessionId, managed.previousPermissionMode)
-      }
-      diagnostics = getPermissionModeDiagnostics(sessionId)
-    }
-
-    managed.previousPermissionMode = diagnostics.previousPermissionMode
-
-    return {
-      permissionMode: diagnostics.permissionMode,
-      previousPermissionMode: diagnostics.previousPermissionMode,
-      transitionDisplay: diagnostics.transitionDisplay,
-      modeVersion: diagnostics.modeVersion,
-      changedAt: diagnostics.lastChangedAt,
-      changedBy: diagnostics.lastChangedBy,
-    }
+    return resolveManagedPermissionModeState(managed)
   }
 
   /**
@@ -10865,6 +10874,13 @@ export class SessionManager implements ISessionManager {
       automationContext,
       runtimeLaunch,
     } = input
+
+    if (automationContext) {
+      const resolved = resolveWorkspaceAutomationContext(workspaceRootPath, workspaceId, automationContext)
+      if (resolved.status !== 'available' || automationContextFailure(automationContext, workspaceId, resolved)) {
+        throw new Error('Automation target is unavailable or outside its workspace/project')
+      }
+    }
 
     // Older automation callers omit provenance, but this is still a generated dispatch.
     const observedLaunch = runtimeLaunch ?? { kind: 'unknown' as const }

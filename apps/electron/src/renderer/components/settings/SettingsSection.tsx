@@ -6,6 +6,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { settingsUI } from './SettingsUIConstants'
 
 // ============================================
 // SettingsSection
@@ -46,19 +47,19 @@ export function SettingsSection({
   'data-testid': testId,
 }: SettingsSectionProps) {
   return (
-    <section className={cn('space-y-3', className)} data-testid={testId}>
-      <div className="flex items-start justify-between gap-4 pl-1">
-        <div className="space-y-0.5">
+    <section className={cn(settingsUI.section, className)} data-layout="settings-section" data-testid={testId}>
+      <div className={settingsUI.sectionHeader}>
+        <div className="min-w-0 space-y-0.5">
           <h3
             className={cn(
-              'text-base font-semibold',
+              settingsUI.sectionTitle,
               variant === 'danger' && 'text-destructive'
             )}
           >
             {title}
           </h3>
           {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className={settingsUI.description}>{description}</p>
           )}
         </div>
         {action && <div className="shrink-0">{action}</div>}
@@ -73,7 +74,7 @@ export function SettingsSection({
 // ============================================
 
 export interface SettingsGroupProps {
-  /** Group title (displayed uppercase) */
+  /** Group title */
   title: string
   /** Content - usually multiple SettingsSection components */
   children: React.ReactNode
@@ -92,11 +93,11 @@ export interface SettingsGroupProps {
  */
 export function SettingsGroup({ title, children, className }: SettingsGroupProps) {
   return (
-    <div className={cn('space-y-6', className)}>
-      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pb-2 border-b border-border">
+    <div className={cn('space-y-4', className)}>
+      <h2 className="text-[12px] font-semibold text-text-secondary pb-2 border-b border-border-subtle">
         {title}
       </h2>
-      <div className="space-y-8">{children}</div>
+      <div className="space-y-[var(--page-section-gap)]">{children}</div>
     </div>
   )
 }

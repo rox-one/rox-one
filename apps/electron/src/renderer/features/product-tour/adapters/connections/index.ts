@@ -25,14 +25,21 @@ export function resolvePublishedToolSource(toolName: string, enabledSourceSlugs:
 
 export function sourceReadiness(source: LoadedSource, localMcpEnabled: boolean | null = null): TourCapability {
   const { config } = source
-  if (!config.enabled || (config.mcp?.transport === 'stdio' && localMcpEnabled === false)) return { state: 'unavailable', reason: 'not-connected' }
+  if (!config.enabled) return { state: 'unavailable', reason: 'not-connected' }
+  if (config.type === 'local') {
+    if (source.localFolderAvailable === true) return { state: 'ready' }
+    return source.localFolderAvailable === false
+      ? { state: 'unavailable', reason: 'not-connected' }
+      : { state: 'pending', reason: 'api-unavailable' }
+  }
+  if (config.mcp?.transport === 'stdio' && localMcpEnabled === false) return { state: 'unavailable', reason: 'not-connected' }
   if (config.connectionStatus === 'needs_auth') return { state: 'denied', reason: 'not-authorized' }
   if (config.connectionStatus === 'failed') return { state: 'unavailable', reason: 'not-connected' }
   if (config.connectionStatus === 'local_disabled') return { state: 'unavailable', reason: 'not-connected' }
   const auth = config.mcp?.authType ?? config.api?.authType
   if (auth && auth !== 'none' && config.isAuthenticated !== true) return { state: 'denied', reason: 'not-authorized' }
   if (config.mcp?.transport === 'stdio' && localMcpEnabled === null) return { state: 'pending', reason: 'api-unavailable' }
-  if (config.connectionStatus === 'connected' || config.type === 'local') return { state: 'ready' }
+  if (config.connectionStatus === 'connected') return { state: 'ready' }
   return { state: 'pending', reason: source.isBuiltin ? 'installing' : 'not-connected' }
 }
 

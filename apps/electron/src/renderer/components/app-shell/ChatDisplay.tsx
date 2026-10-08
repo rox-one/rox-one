@@ -26,7 +26,7 @@ import {
   Info,
   X,
 } from "lucide-react"
-import { motion, AnimatePresence } from "motion/react"
+import { motion, AnimatePresence, useReducedMotion } from "motion/react"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 
@@ -462,7 +462,7 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
 }
 
 /**
- * Scrolls to target element on mount, before browser paint.
+ * Scrolls the chat viewport on mount, leaving the workspace position intact.
  * Uses useLayoutEffect to ensure scroll happens before content is visible.
  */
 function ScrollOnMount({
@@ -607,6 +607,9 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   const appShellContext = useAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
+  const prefersReducedMotion = useReducedMotion()
+  const reducedMotionRef = React.useRef(!!prefersReducedMotion)
+  reducedMotionRef.current = !!prefersReducedMotion
 
   const handleOpenWorkflow = useCallback(() => {
     if (!session?.id) return
@@ -1809,7 +1812,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       if (!turnContainer) return false
 
       interruptOutputFollow()
-      turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      turnContainer.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
       return true
     }
 
@@ -1868,13 +1871,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         const byId = document.getElementById(messageId)
         if (byId) {
           interruptOutputFollow()
-          byId.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          byId.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
           return true
         }
         return false
       }
       interruptOutputFollow()
-      turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      turnContainer.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
       return true
     }
 
@@ -2183,7 +2186,15 @@ const handleFollowUpChipClick = useCallback((item: {
                     return (
                       <div
                         key={turnKey}
-                        ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey); if (isNativeFinal) finalTarget(el); if (hasNativeSourceResult) toolResultTarget(el) }}
+                        ref={el => {
+                          if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey)
+                          // A completed answer may be much taller than the chat viewport.
+                          // Bind its real content surface, never the turn's thinking or unrelated chrome.
+                          const responses = el?.querySelectorAll<HTMLElement>('[data-search-root="response"]')
+                          const response = responses?.item(responses.length - 1) ?? null
+                          if (isNativeFinal) finalTarget(response)
+                          if (hasNativeSourceResult) toolResultTarget(response ?? el?.querySelector<HTMLElement>('[data-search-exclude="true"]') ?? null)
+                        }}
                         className={cn(
                           "pt-2",
                           "rounded-lg transition-all duration-200",

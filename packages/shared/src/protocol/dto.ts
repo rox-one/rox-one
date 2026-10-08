@@ -26,6 +26,7 @@ import type {
   CredentialInputMode as SharedCredentialInputMode,
   CredentialAuthRequest as SharedCredentialAuthRequest,
 } from '../agent/index'
+import type { AgentProfileSnapshot } from '../workspace-work/types'
 
 // Re-export generateMessageId for handler convenience
 export { generateMessageId } from '@rox/core/types'
@@ -77,7 +78,7 @@ export type SessionPriority = 'none' | 'urgent' | 'high' | 'medium' | 'low'
  */
 export interface Session {
   id: string
-  agentProfileSnapshot?: import('../workspace-work/types.ts').AgentProfileSnapshot
+  agentProfileSnapshot?: AgentProfileSnapshot
   workspaceId: string
   workspaceName: string
   name?: string
@@ -89,6 +90,8 @@ export interface Session {
   isFlagged?: boolean
   /** Permission mode for this session ('safe', 'ask', 'allow-all') */
   permissionMode?: PermissionMode
+  /** Monotonic backend version for permissionMode; absent means legacy payload requiring reconcile. */
+  permissionModeVersion?: number
   /** Self-learning memory mode for this session (default 'persistent' when absent) */
   memoryMode?: SessionMemoryMode
   sessionStatus?: SessionStatus
@@ -696,6 +699,36 @@ export interface NoteBacklink {
   line: number
   preview: string
 }
+export type NoteCommentAnchor = {
+  selectors: AnnotationV1['target']['selectors']
+  selectedText: string
+}
+
+export interface NoteCommentThread {
+  id: string
+  noteId: string
+  author: string
+  body: string
+  anchor: NoteCommentAnchor
+  createdAt: number
+  updatedAt: number
+  resolvedAt?: number
+}
+
+export interface CreateNoteCommentInput {
+  noteId: string
+  author?: string
+  body: string
+  anchor: NoteCommentAnchor
+}
+
+export interface UpdateNoteCommentInput {
+  noteId: string
+  commentId: string
+  body?: string
+  resolved?: boolean
+}
+
 
 export interface NoteAsset {
   name: string
@@ -725,6 +758,8 @@ export interface NoteDocument extends NoteSummary {
   nativeId?: string
   content: string
   backlinks: NoteBacklink[]
+  /** Ids of notes created to satisfy new wikilinks during this save (local provider). */
+  autoCreatedNoteIds?: string[]
   /** Present for journal-backed native notes; distinct from the legacy content hash. */
   nativeRevision?: number | null
   /** Native content revision. Optional for older remote peers and stored fixtures. */
@@ -826,7 +861,7 @@ export interface NoteChangedPayload {
   workspaceId: string
   /** Stable identity of a durable native invalidation; replay may deliver it again. */
   eventId?: string
-  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'descriptor'
+  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'comments' | 'descriptor'
   noteId?: string
 }
 

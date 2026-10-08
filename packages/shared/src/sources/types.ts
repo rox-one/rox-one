@@ -577,6 +577,9 @@ export interface LoadedSource {
 
   /** Whether this source is managed by the built-in source catalog. */
   isBuiltin?: boolean;
+
+  /** Read-only local folder availability at the native read; omits the resolved path. */
+  readonly localFolderAvailable?: boolean;
 }
 
 /**

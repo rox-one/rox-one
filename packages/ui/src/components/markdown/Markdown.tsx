@@ -270,23 +270,24 @@ function createComponents(
       const sanitized = trimmedHref ? defaultUrlTransform(trimmedHref) : ''
       const safeHref = sanitized ? sanitized : undefined
 
+      // Some raw HTML anchors omit href but contain a file path as their label.
+      const fallbackText = React.Children.toArray(children)
+        .map((child) => (typeof child === 'string' ? child : ''))
+        .join('')
+        .trim()
+      const target = trimmedHref || fallbackText
+      const resolvedTarget = target ? resolveMarkdownLinkTarget(target) : undefined
+      const routedFileWithoutHref = !safeHref && resolvedTarget?.kind === 'file' && !!onFileClick
+
       const handleClick = (e: React.MouseEvent) => {
-        e.preventDefault()
-
-        // Some AI outputs include raw HTML anchors with empty href but path text content.
-        // Fallback to the anchor text when href is missing/empty.
-        const fallbackText = React.Children.toArray(children)
-          .map((child) => (typeof child === 'string' ? child : ''))
-          .join('')
-          .trim()
-
-        const target = trimmedHref || fallbackText
-        if (!target) return
-
-        const resolvedTarget = resolveMarkdownLinkTarget(target)
+        if (!resolvedTarget) return
         if (resolvedTarget.kind === 'file' && onFileClick) {
+          e.preventDefault()
           onFileClick(resolvedTarget.path)
-        } else if (resolvedTarget.kind === 'url' && onUrlClick) {
+        } else if (resolvedTarget.kind === 'url' && safeHref && onUrlClick) {
+          // Retain native modified-click behavior for real, safe web links.
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+          e.preventDefault()
           onUrlClick(resolvedTarget.url)
         }
       }
@@ -299,9 +300,17 @@ function createComponents(
         <a
           href={safeHref}
           onClick={handleClick}
-          className={citation ? 'text-accent cursor-pointer' : 'text-accent hover:underline cursor-pointer'}
+          role={routedFileWithoutHref ? 'link' : undefined}
+          tabIndex={routedFileWithoutHref ? 0 : undefined}
+          onKeyDown={routedFileWithoutHref ? (event) => {
+            if (event.key === 'Enter' && resolvedTarget?.kind === 'file') {
+              event.preventDefault()
+              onFileClick?.(resolvedTarget.path)
+            }
+          } : undefined}
+          className="text-accent-text underline underline-offset-[3px] cursor-pointer"
         >
-          {citation ? <SourcedStatement source={citation}>{children}</SourcedStatement> : children}
+          {citation ? <SourcedStatement source={citation} withinLink>{children}</SourcedStatement> : children}
         </a>
       )
     },
@@ -453,16 +462,16 @@ function createComponents(
       },
       // Clean tables
       table: ({ children }) => (
-        <div className="my-3 overflow-x-auto">
+        <div className="my-3 overflow-x-auto rounded-md border border-border-subtle">
           <table className="min-w-full text-sm">{children}</table>
         </div>
       ),
-      thead: ({ children }) => <thead className="border-b">{children}</thead>,
+      thead: ({ children }) => <thead className="border-b border-border-subtle bg-surface-input">{children}</thead>,
       th: ({ children }) => (
-        <th className="text-left py-2 px-3 font-semibold text-muted-foreground">{children}</th>
+        <th className="text-left py-2 px-3 font-semibold text-text-secondary">{children}</th>
       ),
       td: ({ children }) => (
-        <td className="py-2 px-3 border-b border-border/50">{children}</td>
+        <td className="py-2 px-3 border-b border-border-subtle">{children}</td>
       ),
       // Headings - H1/H2 same size, differentiated by weight
       h1: ({ children }) => <h1 className="font-sans text-[16px] font-bold mt-5 mb-3">{children}</h1>,
@@ -470,7 +479,7 @@ function createComponents(
       h3: ({ children }) => <h3 className="font-sans text-[15px] font-semibold mt-4 mb-2">{children}</h3>,
       // Blockquotes
       blockquote: ({ children }) => (
-        <blockquote className="border-l-2 border-muted-foreground/30 pl-3 my-2 text-muted-foreground italic">
+        <blockquote className="border-l-2 border-border-strong pl-3 my-2 text-text-secondary">
           {children}
         </blockquote>
       ),
@@ -603,7 +612,7 @@ function createComponents(
     ),
     // Styled blockquotes
     blockquote: ({ children }) => (
-      <blockquote className="border-l-4 border-foreground/30 bg-muted/30 pl-4 pr-3 py-2 my-3 rounded-r-md">
+      <blockquote className="border-l-2 border-border-strong bg-surface-input pl-4 pr-3 py-2 my-3 rounded-r-md text-text-secondary">
         {children}
       </blockquote>
     ),

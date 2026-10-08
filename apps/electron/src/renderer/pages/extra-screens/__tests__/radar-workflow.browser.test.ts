@@ -2,11 +2,12 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } fr
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 
 const repository = resolve(import.meta.dir, '../../../../../../..')
 const fixture = resolve(import.meta.dir, 'fixtures/radar')
 const url = 'http://127.0.0.1:5204'
-const executablePath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium'
+const executablePath = await resolveChromiumExecutable()
 const proof = process.env.RADAR_PROOF_DIR
 type FixtureControls = { calls: { method: string; value: unknown }[]; mode(value: string): void; ageSweep(): void; switchWorkspace(value: string): void; resolveCreate(): void }
 

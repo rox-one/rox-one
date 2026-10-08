@@ -77,9 +77,10 @@ describe('buildCustomEndpointModelDef', () => {
   })
 
   it('marks openai-responses custom endpoint models as reasoning-capable', () => {
-    const model = buildCustomEndpointModelDef('gpt-5.5', { reasoning: true })
+    const model = buildCustomEndpointModelDef('gpt-5.5', { reasoning: true }, undefined, 'openai-responses')
     expect(model.reasoning).toBe(true)
     expect(model.thinkingLevelMap).toEqual({ off: null, xhigh: 'xhigh' })
+    expect(model.compat).toBeUndefined()
   })
 
   // Regression: craft-agents-oss#1022 — strict OpenAI-compatible gateways 400 on the

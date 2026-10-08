@@ -13,6 +13,7 @@ import type { PermissionMode } from '../agent/mode-manager.ts';
 import type { ThinkingLevel } from '../agent/thinking-levels.ts';
 import type { StoredAttachment, MessageRole, ToolStatus, AuthRequestType, AuthStatus, CredentialInputMode, StoredMessage, SessionMemoryMode } from '@rox/core/types';
 import type { SessionPriority } from '../protocol/dto.ts';
+import type { AgentProfileSnapshot } from '../workspace-work/types.ts';
 
 export type { SessionPriority };
 
@@ -116,7 +117,7 @@ export type { StoredMessage } from '@rox/core/types';
  * Session configuration (persisted metadata)
  */
 export interface SessionConfig {
-  agentProfileSnapshot?: import('../workspace-work/types.ts').AgentProfileSnapshot;
+  agentProfileSnapshot?: AgentProfileSnapshot;
   id: string;
   /** SDK session ID (captured after first message) */
   sdkSessionId?: string;
@@ -270,7 +271,7 @@ export interface StoredSession extends SessionConfig {
  * This enables fast session listing without parsing message content.
  */
 export interface SessionHeader {
-  agentProfileSnapshot?: import('../workspace-work/types.ts').AgentProfileSnapshot;
+  agentProfileSnapshot?: AgentProfileSnapshot;
   id: string;
   /** SDK session ID (captured after first message) */
   sdkSessionId?: string;
@@ -399,7 +400,7 @@ export interface SessionHeader {
  * Session metadata (lightweight, for lists)
  */
 export interface SessionMetadata {
-  agentProfileSnapshot?: import('../workspace-work/types.ts').AgentProfileSnapshot;
+  agentProfileSnapshot?: AgentProfileSnapshot;
   id: string;
   workspaceRootPath: string;
   name?: string;

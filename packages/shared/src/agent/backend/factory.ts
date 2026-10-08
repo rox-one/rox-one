@@ -69,6 +69,7 @@ const DRIVER_REGISTRY: Record<AgentProvider, ProviderDriver> = {
   anthropic: anthropicDriver,
   pi: piDriver,
   omp: ompDriver,
+  rox: ompDriver,
 };
 
 function getProviderDriver(provider: AgentProvider): ProviderDriver {
@@ -651,6 +652,7 @@ export const BACKEND_CAPABILITIES: Record<AgentProvider, {
   anthropic: { needsHttpPoolServer: false },
   pi: { needsHttpPoolServer: false },
   omp: { needsHttpPoolServer: false },
+  rox: { needsHttpPoolServer: false },
 };
 
 // ============================================================

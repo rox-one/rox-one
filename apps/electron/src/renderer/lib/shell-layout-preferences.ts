@@ -22,6 +22,7 @@ export const SIDEBAR_WIDTH_DEFAULT = SIDE_PANEL_DEFAULT_WIDTH
 export const NAVIGATOR_WIDTH_MIN = 240
 export const NAVIGATOR_WIDTH_MAX = 480
 export const NAVIGATOR_WIDTH_DEFAULT = 300
+export const DEFAULT_COLLAPSED_SIDEBAR_SECTIONS = ['nav:labels', 'nav:allSessions', 'nav:views'] as const
 
 export interface ShellLayoutPreferencesV1 {
   schemaVersion: 1
@@ -99,7 +100,8 @@ export function loadShellLayout(
   const navigatorWidth = clampNavigatorWidth(store.get(storage.KEYS.sessionListWidth, NAVIGATOR_WIDTH_DEFAULT))
   const collapsedSectionIds = sanitizeCollapsed(
     store.get<string[] | null>(storage.KEYS.collapsedSidebarItems, null, id)
-    ?? store.get<string[] | null>(storage.KEYS.collapsedSidebarItems, null),
+    ?? store.get<string[] | null>(storage.KEYS.collapsedSidebarItems, null)
+    ?? [...DEFAULT_COLLAPSED_SIDEBAR_SECTIONS],
   )
   return {
     schemaVersion: 1,

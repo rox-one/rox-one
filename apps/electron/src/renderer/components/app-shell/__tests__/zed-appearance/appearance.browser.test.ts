@@ -5,17 +5,15 @@ import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 import { chromium, expect as playwrightExpect, type Browser, type BrowserContext, type BrowserServer, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 const fixture = import.meta.dirname
 const repository = resolve(fixture, '../../../../../../../..')
 const proofDirectory = process.env.ROX_APPEARANCE_PROOF_DIR ?? resolve(homedir(), 'Pictures/Shots/Agents/rox-zed-appearance/fixtures')
 const expectDOM = playwrightExpect.configure({ timeout: 30_000 })
 
-function browserExecutable(): string | undefined {
-  if (process.env.CHROMIUM_EXECUTABLE) return process.env.CHROMIUM_EXECUTABLE
-  const bundled = chromium.executablePath()
-  if (existsSync(bundled)) return bundled
-  if (existsSync('/usr/bin/chromium')) return '/usr/bin/chromium'
+async function browserExecutable(): Promise<string | undefined> {
+  try { return await resolveChromiumExecutable() } catch { /* Fall back to the Playwright browser cache below. */ }
   const cache = resolve(homedir(), 'Library/Caches/ms-playwright')
   if (!existsSync(cache)) return undefined
   for (const version of readdirSync(cache).filter(name => /^chromium_headless_shell-\d+$/.test(name)).sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]))) {
@@ -42,7 +40,7 @@ async function availablePort(): Promise<number> {
   return address.port
 }
 
-const executablePath = browserExecutable()
+const executablePath = await browserExecutable()
 
 // This proves production renderer behavior under browser CSS and synthetic
 // transport. Native vibrancy/GPU/compositor paint and real config-server

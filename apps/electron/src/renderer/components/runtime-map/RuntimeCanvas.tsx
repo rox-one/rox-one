@@ -99,6 +99,8 @@ function RuntimeCanvasInner({ graph, nodes, layout, scopeKey, selectedId, onSele
     if (!pendingFit || !overview) return
     const instance = flow.current, element = container.current
     if (!instance || !element) return
+    // Fit public node geometry: overview positions cover every visible node,
+    // including unmeasured offscreen ones that fitView would exclude.
     const bounds = getNodesBounds(flowNodes)
     const minimum = overviewMinimumZoom(bounds, { width: element.clientWidth, height: element.clientHeight })
     setMinimumZoom(minimum)

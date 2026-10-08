@@ -3,10 +3,11 @@ import { build } from 'esbuild'
 import { chromium, type Browser } from '@playwright/test'
 import { resolve } from 'node:path'
 import { existsSync } from 'node:fs'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 let browser: Browser, server: ReturnType<typeof Bun.serve>
 const repository = resolve(import.meta.dir, '../../../../../../../..')
-const executablePath = process.env.CHROMIUM_EXECUTABLE ?? (existsSync(chromium.executablePath()) ? chromium.executablePath() : '/usr/bin/chromium')
+const executablePath = await resolveChromiumExecutable()
 
 describe.skipIf(!existsSync(executablePath))('production learning input registrations and native handoff', () => {
 beforeAll(async () => {

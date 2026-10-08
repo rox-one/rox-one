@@ -10,6 +10,7 @@ export * from '@rox/shared/protocol'
 // Core types
 import type { MeetingsLocalApi } from './meetings-local'
 import type { MailLocalApi } from './mail-local'
+import type { OpenDesignApi } from './open-design'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import type {
   Message as CoreMessage,
@@ -503,6 +504,8 @@ import type {
   NoteAssetImportResult,
   NoteAssetRenameResult,
   NoteBacklink,
+  CreateNoteCommentInput,
+  NoteCommentThread,
   NoteDocument,
   NoteCreateOptions,
   NoteMutationOptions,
@@ -518,6 +521,7 @@ import type {
   NoteRenameImpact,
   NoteRenameResult,
   NoteSummary,
+  UpdateNoteCommentInput,
   RemoteSessionTransferPayload,
   ImportRemoteSessionTransferResult,
   KnowledgeChangedPayload,
@@ -549,11 +553,15 @@ export interface WorkGraphConnectionRecord {
   readonly updatedAt: number
 }
 
+import type { AgentProfileSnapshot, WorkspaceWorkDelete, WorkspaceWorkResult, WorkspaceWorkSnapshot, WorkspaceWorkWrite } from '@rox/shared/workspace-work'
+
 export interface ElectronAPI {
-  workspaceWorkRead(workspaceId: string): Promise<import('@rox/shared/workspace-work').WorkspaceWorkSnapshot>
-  workspaceWorkWrite(workspaceId: string, input: import('@rox/shared/workspace-work').WorkspaceWorkWrite): Promise<import('@rox/shared/workspace-work').WorkspaceWorkResult>
-  workspaceWorkDelete(workspaceId: string, input: import('@rox/shared/workspace-work').WorkspaceWorkDelete): Promise<import('@rox/shared/workspace-work').WorkspaceWorkResult>
-  workspaceWorkSnapshotProfile(workspaceId: string, profileId?: string): Promise<import('@rox/shared/workspace-work').AgentProfileSnapshot | null>
+  openDesign: OpenDesignApi
+
+  workspaceWorkRead(workspaceId: string): Promise<WorkspaceWorkSnapshot>
+  workspaceWorkWrite(workspaceId: string, input: WorkspaceWorkWrite): Promise<WorkspaceWorkResult>
+  workspaceWorkDelete(workspaceId: string, input: WorkspaceWorkDelete): Promise<WorkspaceWorkResult>
+  workspaceWorkSnapshotProfile(workspaceId: string, profileId?: string): Promise<AgentProfileSnapshot | null>
   onWorkspaceWorkChanged(callback: (workspaceId: string, revision: number) => void): () => void
   getRuntimeTraceSnapshot(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
   readRuntimeTraceEvents(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
@@ -1018,6 +1026,10 @@ export interface ElectronAPI {
   deleteFolderNote(workspaceId: string, folder: string): Promise<{ deletedNotes: string[] }>
   searchNotes(workspaceId: string, query: string): Promise<NoteSummary[]>
   getNoteBacklinks(workspaceId: string, noteId: string): Promise<NoteBacklink[]>
+  listNoteComments(workspaceId: string, noteId: string): Promise<NoteCommentThread[]>
+  createNoteComment(workspaceId: string, input: CreateNoteCommentInput): Promise<NoteCommentThread>
+  updateNoteComment(workspaceId: string, input: UpdateNoteCommentInput): Promise<NoteCommentThread>
+  deleteNoteComment(workspaceId: string, noteId: string, commentId: string): Promise<boolean>
   getNoteInsights(workspaceId: string, noteId: string): Promise<NoteInsights>
   getNoteIndexHealth(workspaceId: string): Promise<NoteIndexHealth>
   rebuildNoteIndex(workspaceId: string): Promise<NoteIndexHealth>
