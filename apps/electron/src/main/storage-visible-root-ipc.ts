@@ -12,6 +12,7 @@ import { homedir } from 'node:os'
 import { isVisibleRoxHomeActive } from '@rox/shared/config'
 import {
   clearStorageMigrationState,
+  hasIncompleteVisibleHomeMerge,
   readPersistedVisibleRootFlag,
   readStorageMigrationState,
   visibleRootEnvOverride,
@@ -70,8 +71,10 @@ export function createStorageVisibleRootHandlers(options: {
     if (typeof input !== 'boolean') throw new Error('STORAGE_VISIBLE_ROOT_INVALID')
     if (locked) throw new Error('STORAGE_VISIBLE_ROOT_LOCKED')
     writePersistedVisibleRootFlag(input, homeDir)
-    // Flag OFF: an earlier deferral note no longer applies.
-    if (!input) clearStorageMigrationState(homeDir)
+    // Flag OFF: an earlier deferral note no longer applies — unless a merge
+    // is still incomplete (`~/rox` stays the home either way; the note keeps
+    // explaining the pending import for when the flag goes back ON).
+    if (!input && !hasIncompleteVisibleHomeMerge(homeDir)) clearStorageMigrationState(homeDir)
     return get()
   }
   return { get, set }

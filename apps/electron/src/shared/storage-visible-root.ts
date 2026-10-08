@@ -43,10 +43,16 @@ export interface StorageMigrationStatus {
 const IN_USE_CODES = new Set(['EPERM', 'EACCES', 'EBUSY'])
 /** `~/.rox` cannot leave its volume: a mount point / separate volume. */
 const UNMOVABLE_CODES = new Set(['EXDEV', 'mount-point', 'volume-root', 'cross-device', 'reparse-point'])
+/**
+ * Mirrors `ROX_MERGE_TRANSIENT_RETRIES` (`@rox/shared/identity`, not
+ * importable here): after this many consecutive failures of a merge the next
+ * launch holds it for 24 hours.
+ */
+export const STORAGE_MERGE_TRANSIENT_RETRIES = 3
 
-function renameCode(status: StorageMigrationStatus): string | undefined {
-  const entry = status.diagnostics?.find((d) => d.startsWith('rename:'))
-  return entry?.slice('rename:'.length)
+function diagnosticValue(status: StorageMigrationStatus, prefix: string): string | undefined {
+  const entry = status.diagnostics?.find((d) => d.startsWith(prefix))
+  return entry?.slice(prefix.length)
 }
 
 /** i18n key of the explanatory line under the toggle, when one applies. */
@@ -62,14 +68,27 @@ export function storageMigrationStatusMessageKey(state: StorageVisibleRootState)
     case 'deferred-retry':
       return 'storage.settings.migrationRetryLater'
     case 'deferred-unmovable': {
-      const code = renameCode(last)
+      const code = diagnosticValue(last, 'rename:')
+      const attempts = Number(diagnosticValue(last, 'attempts:'))
+      const merge = last.diagnostics?.includes('storage.migration.mergeRenameFailed') === true
+      // The failure that starts the 24 h hold (see `_mergeRetryBlocked`).
+      if (merge && Number.isFinite(attempts) && attempts >= STORAGE_MERGE_TRANSIENT_RETRIES) {
+        return 'storage.settings.migrationRetryLater'
+      }
       if (code && IN_USE_CODES.has(code)) return 'storage.settings.migrationDeferredInUse'
+      // Any other failed merge rename is held for 24 hours right away.
+      if (merge) return 'storage.settings.migrationRetryLater'
       // Older state files carry no details: they were volume/mount deferrals.
       if (!code || UNMOVABLE_CODES.has(code)) return 'storage.settings.migrationDeferredUnmovable'
       return 'storage.settings.migrationFailed'
     }
-    case 'deferred-link':
     case 'symlink-elsewhere':
+      // `~/.rox` links elsewhere: Rox uses `~/rox` when it holds user data
+      // (`uses:visible`), otherwise the linked legacy dir.
+      return last.diagnostics?.includes('uses:visible') === true
+        ? 'storage.settings.migrationSymlinkElsewhere'
+        : 'storage.settings.migrationFailed'
+    case 'deferred-link':
     case 'failed':
       return 'storage.settings.migrationFailed'
     default:

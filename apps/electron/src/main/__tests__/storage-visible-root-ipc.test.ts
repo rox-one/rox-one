@@ -4,7 +4,16 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isVisibleRoxHomeActive, resolveConfigDir, resetConfigDirCachesForTests, runVisibleHomeAutoMigration } from '../../../../../packages/shared/src/config/env.ts'
 import { createStorageVisibleRootHandlers, registerStorageVisibleRootIpc } from '../storage-visible-root-ipc'
-import { STORAGE_VISIBLE_ROOT_CHANNELS, storageMigrationStatusMessageKey, type StorageMigrationStatus } from '../../shared/storage-visible-root'
+import {
+  STORAGE_MERGE_TRANSIENT_RETRIES,
+  STORAGE_VISIBLE_ROOT_CHANNELS,
+  storageMigrationStatusMessageKey,
+  type StorageMigrationStatus,
+} from '../../shared/storage-visible-root'
+import {
+  ROX_MERGE_TRANSIENT_RETRIES,
+  mergeIncompleteMarkerPath,
+} from '../../../../../packages/shared/src/identity/config-migration.ts'
 
 // Temp HOME only — never the real dot-configs.
 let home: string
@@ -93,6 +102,33 @@ describe('W1-13 Settings toggle (storage.visible-root.v1)', () => {
   })
 })
 
+describe('W1-13 review 7: toggle OFF while a merge is incomplete', () => {
+  it('keeps the deferral note while the marker exists, clears it once the merge is gone', () => {
+    mkdirSync(join(home, '.rox', 'workspaces', 'h'), { recursive: true })
+    mkdirSync(join(home, 'rox', 'workspaces', 'v'), { recursive: true })
+    const marker = mergeIncompleteMarkerPath(join(home, 'rox'))
+    mkdirSync(join(marker, '..'), { recursive: true })
+    writeFileSync(marker, JSON.stringify({ startedAt: 1, hiddenHasData: true, visibleHasData: true, choice: 'visible' }))
+    const stateFile = join(home, 'rox', 'storage-migration-state.json')
+    writeFileSync(join(home, 'rox', 'workbench-flags.json'), JSON.stringify({ enabled: ['storage.visible-root.v1'] }))
+    writeFileSync(stateFile, JSON.stringify({
+      kind: 'deferred-unmovable', diagnostic: 'storage.migration.mergeRenameFailed',
+      diagnostics: ['storage.migration.mergeRenameFailed', 'rename:EBUSY', 'attempts:1'], at: '2026-10-08T07:00:00.000Z',
+    }))
+    const handlers = createStorageVisibleRootHandlers({ env: {}, homeDir: home, activeAtLaunch: true })
+    const off = handlers.set(false)
+    expect(off.enabled).toBe(false)
+    expect(off.lastMigration?.kind).toBe('deferred-unmovable')
+    expect(existsSync(stateFile)).toBe(true)
+    // ~/rox is the home with the flag OFF too (main's order), so nobody switches trees.
+    resetConfigDirCachesForTests()
+    expect(resolveConfigDir({}, home)).toBe(join(home, 'rox'))
+    rmSync(marker)
+    handlers.set(false)
+    expect(existsSync(stateFile)).toBe(false)
+  })
+})
+
 describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => {
   const stateFile = () => join(home, '.rox', 'storage-migration-state.json')
   const plantState = (kind: string) => {
@@ -157,6 +193,24 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
     expect(key('relaunch-required')).toBeUndefined()
   })
 
+  it('review 7: the 24 h text once a merge is held; symlink-elsewhere names the dir Rox really uses', () => {
+    const base = { enabled: true, activeAtLaunch: true, locked: false, restartRequired: false }
+    const at = '2026-10-08T07:00:00.000Z'
+    const key = (kind: StorageMigrationStatus['kind'], diagnostics: string[] = []) =>
+      storageMigrationStatusMessageKey({ ...base, lastMigration: { kind, diagnostics, at } })
+    const merge = (code: string, attempts: number) =>
+      key('deferred-unmovable', ['storage.migration.mergeRenameFailed', `rename:${code}`, `attempts:${attempts}`])
+    expect(STORAGE_MERGE_TRANSIENT_RETRIES).toBe(ROX_MERGE_TRANSIENT_RETRIES)
+    for (let n = 1; n < ROX_MERGE_TRANSIENT_RETRIES; n++) expect(merge('EBUSY', n)).toBe('storage.settings.migrationDeferredInUse')
+    expect(merge('EBUSY', ROX_MERGE_TRANSIENT_RETRIES)).toBe('storage.settings.migrationRetryLater')
+    // Any other code is held for 24 hours after the first failure.
+    expect(merge('ENOTEMPTY', 1)).toBe('storage.settings.migrationRetryLater')
+    // The hidden-only rename has no counter: next launch.
+    expect(key('deferred-unmovable', ['storage.migration.legacyNotRenamable', 'rename:EBUSY', 'attempts:9'])).toBe('storage.settings.migrationDeferredInUse')
+    expect(key('symlink-elsewhere', ['storage.migration.symlinkElsewhere', 'uses:visible'])).toBe('storage.settings.migrationSymlinkElsewhere')
+    expect(key('symlink-elsewhere', ['storage.migration.symlinkElsewhere', 'uses:hidden'])).toBe('storage.settings.migrationFailed')
+  })
+
   it('every message exists in all 12 locales, with the Russian text as specified', () => {
     const locales = ['ar', 'de', 'en', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-Hans', 'zh-Hant']
     const keys = [
@@ -166,6 +220,7 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
       'storage.settings.migrationDeferredForeign',
       'storage.settings.migrationRetryLater',
       'storage.settings.migrationFailed',
+      'storage.settings.migrationSymlinkElsewhere',
     ]
     const dir = join(import.meta.dir, '../../../../../packages/shared/src/i18n/locales')
     for (const locale of locales) {
