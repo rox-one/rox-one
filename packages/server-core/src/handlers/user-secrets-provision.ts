@@ -25,6 +25,7 @@ const DEFAULT_KEY_IDS = [
   'BRAVE_API_KEY',
   'LANGFUSE_PUBLIC_KEY',
   'LANGFUSE_SECRET_KEY',
+  'PINECONE_API_KEY',
 ] as const
 
 /** TODO(PocketID): call from post-auth registration hook on server. */

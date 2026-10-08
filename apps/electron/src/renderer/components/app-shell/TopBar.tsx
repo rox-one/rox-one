@@ -100,6 +100,8 @@ interface TopBarProps {
   showWorkspaceSelector?: boolean
   /** The left surface rail replaces the title-bar mode picker. */
   surfaceNavigationActive?: boolean
+  /** Explicit mode-picker visibility; Главная keeps the picker (2026-10-08). */
+  modeBarActive?: boolean
   /** Left offset for a full-height rail rendered outside the top bar. */
   leftInset?: number
 }
@@ -136,6 +138,7 @@ export function TopBar({
   isCompact,
   showWorkspaceSelector = true,
   surfaceNavigationActive = false,
+  modeBarActive,
   leftInset = 0,
 }: TopBarProps) {
   const { t } = useTranslation()
@@ -187,7 +190,9 @@ export function TopBar({
   })
 
   // Primary application surfaces remain available independently of experimental Workbench chrome.
-  const showModePill = !isCompact && !surfaceNavigationActive
+  // Пилюли режимов живут только на Главной (решение пользователя 2026-10-08); на остальных
+  // поверхностях их заменяет левый рейл.
+  const showModePill = !isCompact && (modeBarActive ?? !surfaceNavigationActive)
   const topbarRef = useRef<HTMLDivElement | null>(null)
   const leftFixedRef = useRef<HTMLDivElement | null>(null)
   const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)
