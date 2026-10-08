@@ -31,6 +31,11 @@ export const COMMAND_ERROR_CODES = [
   'LOCAL_ONLY',
   /** The handler failed unexpectedly; no effect was committed. */
   'INTERNAL',
+  // W1-14 (#1511)
+  /** A per-field patch conflicts with a newer field revision (TECH-SPEC §11.6). */
+  'CONFLICT',
+  /** Drive admission rejected the upload: `used + reserved + size > quota` (TECH-SPEC §16.3). */
+  'QUOTA_EXCEEDED',
 ] as const
 
 export type CommandErrorCode = (typeof COMMAND_ERROR_CODES)[number]

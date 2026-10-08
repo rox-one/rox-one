@@ -41,7 +41,10 @@
     "./commands": "./src/commands/index.ts",
     "./events": "./src/events/index.ts",
     "./acl": "./src/acl/index.ts",
-    "./entities/permissions": "./src/entities/permissions.ts"
+    "./entities/permissions": "./src/entities/permissions.ts",
+    "./collab": "./src/collab/index.ts",
+    "./drive": "./src/drive/index.ts",
+    "./xsc": "./src/xsc/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
