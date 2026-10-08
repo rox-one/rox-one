@@ -122,6 +122,71 @@ export function isNativeIndexWatchEnabled(): boolean {
 }
 
 /**
+ * Workbench flag id for the entity links subsystem.
+ * Mirrors `WORKBENCH_FLAG.entitiesLinksV1` in
+ * `packages/core/src/platform/workbench/flags.ts` (kept as a literal here
+ * so `@rox/shared` stays free of the platform import graph).
+ */
+export const ENTITIES_LINKS_WORKBENCH_FLAG = 'entities.links.v1';
+
+/** Env key for the explicit `entities.links.v1` override. */
+export const ENTITIES_LINKS_ENV_KEY = 'CRAFT_FEATURE_ENTITIES_LINKS';
+
+/**
+ * Explicit env override for `entities.links.v1`, if set to a known boolean.
+ * Returns undefined in the context-isolated renderer (no `process`): the
+ * renderer learns the effective state from main instead (see
+ * `EntitiesLinksEffectiveState`).
+ */
+export function parseEntitiesLinksEnvOverride(env?: Record<string, string | undefined>): boolean | undefined {
+  return parseBooleanEnv(env ? env[ENTITIES_LINKS_ENV_KEY] : getEnv(ENTITIES_LINKS_ENV_KEY));
+}
+
+export interface EntitiesLinksEffectiveState {
+  /** Value all three hosts (main, renderer, server) must agree on. */
+  enabled: boolean;
+  /** Persisted user toggle (workbench flag), before the env override. */
+  persisted: boolean;
+  /** Explicit env override when `CRAFT_FEATURE_ENTITIES_LINKS` parses. */
+  envOverride: boolean | undefined;
+}
+
+/**
+ * Single effective-state computation shared by main (which publishes it over
+ * IPC), the renderer (which consumes it for the route gate + Settings UI)
+ * and tests. Precedence: explicit env override > persisted workbench flag.
+ * Default OFF. Agrees with `isEntitiesLinksEnabled` by construction.
+ */
+export function resolveEntitiesLinksEffectiveState(
+  persisted: boolean,
+  envOverride: boolean | undefined = parseEntitiesLinksEnvOverride(),
+): EntitiesLinksEffectiveState {
+  if (envOverride !== undefined) return { enabled: envOverride, persisted, envOverride };
+  return { enabled: persisted, persisted, envOverride: undefined };
+}
+
+/**
+ * Runtime-evaluated check for the entity links subsystem (W1-02: link store,
+ * resolver, `rox://` deep-link targets).
+ *
+ * Server-evaluated — same shape as `isPagesSharingEnabled`: the renderer gates
+ * its UI on the `entities.links.v1` workbench flag and learns the server-side
+ * state from the RPC responses. The user-toggleable workbench flag controls
+ * the default; `CRAFT_FEATURE_ENTITIES_LINKS=1|0` remains as an explicit
+ * env override. Defaults to DISABLED.
+ *
+ * Pass the enabled workbench flag set when the caller tracks it (server
+ * handlers receive it via runtime; the renderer passes its atom state).
+ * Without a set, only the env override applies (still default OFF).
+ */
+export function isEntitiesLinksEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseEntitiesLinksEnvOverride();
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(ENTITIES_LINKS_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
+/**
  * Runtime-evaluated check for Pages sharing (Cloudflare publication).
  *
  * Server-evaluated: the renderer learns it via `pages:getShareCapabilities`,

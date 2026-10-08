@@ -16,6 +16,7 @@
     "./conation/soup": "./src/conation/soup/index.ts",
     "./docs": "./src/docs/index.ts",
     "./docs/*": "./src/docs/*",
+    "./entities": "./src/entities/index.ts",
     "./env": "./src/env/blocked-subprocess-env.ts",
     "./knowledge": "./src/knowledge/index.ts",
     "./knowledge/*": "./src/knowledge/*",

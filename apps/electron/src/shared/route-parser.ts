@@ -26,6 +26,52 @@ import type {
 } from './types'
 import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registry'
 import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
+import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
+import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
+import { ENTITIES_LINKS_WORKBENCH_FLAG, isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
+
+/**
+ * Entity-route gate (W1-02, product decision).
+ *
+ * The kind-first entity routes are inert unless `entities.links.v1` is on.
+ * The renderer sets the override from its workbench flag atom; tests use the
+ * setter. The override feeds the workbench flag set into
+ * `isEntitiesLinksEnabled`, so the env `CRAFT_FEATURE_ENTITIES_LINKS`
+ * keeps overriding in both directions (default OFF). With the flag off,
+ * `rox://goals/goal/x`, `rox://docs/file/x` etc. are rejected exactly as on
+ * main.
+ */
+let entityRoutesOverride: boolean | undefined
+
+export function setEntityRoutesEnabled(enabled: boolean): void {
+  entityRoutesOverride = enabled
+}
+
+export function resetEntityRoutesEnabled(): void {
+  entityRoutesOverride = undefined
+}
+
+export function isEntityRoutesEnabled(): boolean {
+  const flags = entityRoutesOverride === undefined
+    ? undefined
+    : entityRoutesOverride
+      ? new Set([ENTITIES_LINKS_WORKBENCH_FLAG])
+      : new Set<string>()
+  return isEntitiesLinksEnabled(flags)
+}
+
+/** Prefixes that only exist for the kind-first entity routes (no legacy owner). */
+export const ENTITY_ONLY_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
+  'docs',
+  'messenger',
+  'calendar',
+  'goals',
+  'contacts',
+  'workflows',
+  'base',
+  'forms',
+  'comments',
+])
 
 // =============================================================================
 // Route Types
@@ -49,6 +95,8 @@ export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'searc
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
   | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
+  // Kind-first entity routes (W1-01) that legacy branches do not own.
+  | 'entity'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -65,6 +113,8 @@ export interface ParsedCompoundRoute {
   screen?: ExtraScreenId
   /** Sessions presentation mode (only for sessions navigator). 'board' = Kanban; 'table' = dense collection. */
   viewMode?: 'list' | 'board' | 'table' | 'heatmap'
+  /** Parsed entity reference (only for the `entity` navigator). */
+  entityRef?: EntityRef
   /**
    * Details page info (null for empty state).
    * W1 surface navigators reuse this shape: `id` is the entity id (runId /
@@ -86,12 +136,22 @@ export interface ParsedCompoundRoute {
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
   'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
+  // Kind-first entity surfaces (W1-01). Shared with the deep-link handler so
+  // `rox://docs/wiki/{id}` etc. reach the renderer parser.
+  'docs', 'messenger', 'calendar', 'goals', 'contacts', 'workflows', 'base', 'forms', 'comments',
   ...EXTRA_SCREEN_IDS,
 ]
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
+  if (ENTITY_ONLY_ROUTE_PREFIXES.has(firstSegment)) return isEntityRoutesEnabled()
   return COMPOUND_ROUTE_PREFIXES.includes(firstSegment)
+}
+
+/** Flag-aware prefix check for deep-link acceptance (`rox://<prefix>/...`). */
+export function isCompoundRoutePrefix(prefix: string): boolean {
+  if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) return isEntityRoutesEnabled()
+  return (COMPOUND_ROUTE_PREFIXES as readonly string[]).includes(prefix)
 }
 
 function splitRouteQuery(route: string): [string, string | undefined] {
@@ -126,6 +186,21 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   if (!segments) return null
 
   const first = segments[0]
+
+  // Kind-first entity routes (W1-01). Gated behind `entities.links.v1`: with
+  // the flag off the legacy branches below keep owning their own routes and
+  // the new shapes are rejected exactly as on main.
+  if (isEntityRoutesEnabled()) {
+    const entity = parseEntityRoute(route)
+    if (entity) {
+      return {
+        navigator: 'entity',
+        details: { type: 'entity', id: formatEntityRef(entity.ref) },
+        entityRef: entity.ref,
+      }
+    }
+  }
+
   if (first === 'search') {
     if (segments.length !== 1) return null
     return {
@@ -555,6 +630,10 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
  * Build a compound route string from parsed state
  */
 export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
+  if (parsed.navigator === 'entity') {
+    return parsed.entityRef ? entityRoute(parsed.entityRef) : parsed.details?.id ?? 'home'
+  }
+
   if (parsed.navigator === 'search') {
     const query = parsed.query
     return query ? `search?${new URLSearchParams({ q: query }).toString()}` : 'search'
@@ -781,7 +860,7 @@ export function parseRoute(route: string): ParsedRoute | null {
  * Convert a parsed compound route to ParsedRoute format (type: 'view')
  */
 function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute {
-  if (['knowledge', 'cloud-run', 'extension', 'diff', 'terminal'].includes(compound.navigator)) {
+  if (['knowledge', 'cloud-run', 'extension', 'diff', 'terminal', 'entity'].includes(compound.navigator)) {
     return {
       type: 'view',
       name: compound.navigator,
@@ -1018,7 +1097,7 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
   const rightSidebar = parseRightSidebarParam(sidebarParam)
   if (rightSidebar) unavailable.rightSidebar = rightSidebar
   try {
-    if (route.includes('#') || /[\u0000-\u001f\u007f]/.test(route)) return unavailable
+    if ((route.includes('#') && !(isEntityRoutesEnabled() && isEntityCompoundRoute(route))) || /[\u0000-\u001f\u007f]/.test(route)) return unavailable
     // Some legacy routes retain encoded slugs, but malformed encoding is never
     // a valid entity address, even when that parser branch does not decode it.
     const path = route.split('?')[0]
@@ -1071,6 +1150,10 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
  * Convert a ParsedCompoundRoute to NavigationState
  */
 function convertCompoundToNavigationState(compound: ParsedCompoundRoute): NavigationState {
+  if (compound.navigator === 'entity' && compound.entityRef) {
+    return { navigator: 'entity', route: entityRoute(compound.entityRef), ref: compound.entityRef, details: null }
+  }
+
   if (compound.navigator === 'search') {
     return { navigator: 'search', query: compound.query ?? '' }
   }
@@ -1322,6 +1405,15 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
   }
 
   switch (parsed.name) {
+    case 'entity': {
+      // Persisted `entity/...` tab/history keys restore nothing while the
+      // flag is off — same unavailable outcome as the main-process parser.
+      if (!isEntityRoutesEnabled()) return null
+      if (!parsed.id) return null
+      const result = parseEntityRef(parsed.id)
+      if (!result.ok) return null
+      return { navigator: 'entity', route: entityRoute(result.value), ref: result.value, details: null }
+    }
     case 'settings':
       return { navigator: 'settings', subpage: null }
     case 'workspace':
@@ -1534,6 +1626,14 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
  * Convert NavigationState to ParsedCompoundRoute
  */
 function navigationStateToCompoundRoute(state: Exclude<NavigationState, UnavailableNavigationState>): ParsedCompoundRoute {
+  if (state.navigator === 'entity') {
+    return {
+      navigator: 'entity',
+      entityRef: state.ref,
+      details: { type: 'entity', id: formatEntityRef(state.ref) },
+    }
+  }
+
   if (state.navigator === 'search') {
     return { navigator: 'search', query: state.query, details: null }
   }
@@ -1748,6 +1848,9 @@ export function degradeSurfaceNavigationState(state: NavigationState): Navigatio
       return { navigator: 'sessions', filter: { kind: 'allSessions' }, details: null }
     case 'extension':
       return { navigator: 'settings', subpage: null }
+    // Kind-first entity routes have no pre-W1 antecedent; preserve identity.
+    case 'entity':
+      return state
     default:
       return state
   }

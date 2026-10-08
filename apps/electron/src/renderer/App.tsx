@@ -82,6 +82,8 @@ import {
 } from '@/atoms/background-finished'
 import { visibleSessionIdsAtom } from '@/atoms/panel-stack'
 import { featureUnifiedShellAtom, featureWorkbenchAtom } from '@/atoms/unified-shell'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { useEntitiesLinksFlagSync } from '@/lib/entities-links-sync'
 import { getSessionTitle } from '@/utils/session'
 import { extractBadges } from '@/lib/mentions'
 import { getDefaultStore } from 'jotai'
@@ -360,6 +362,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   )
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
   const workbenchEnabled = useAtomValue(featureWorkbenchAtom)
+  const entitiesLinksEnabled = useAtomValue(featureEntitiesLinksV1Atom)
+  // Push entities.links.v1 into the route parser + main (deep links, RPC).
+  useEntitiesLinksFlagSync(entitiesLinksEnabled)
   const unifiedShellChrome = unifiedShell || workbenchEnabled
 
   useEffect(() => {
