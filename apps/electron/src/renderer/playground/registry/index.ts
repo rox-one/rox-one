@@ -32,6 +32,7 @@ import { premiumMenuComponents } from './premium-menu'
 import { collectionComponents } from './collection'
 import { notesComponents } from './notes'
 import { settingsComponents } from './settings'
+import { normalizeDiscoveredPlaygroundStories, normalizePlaygroundStories } from './story-loader'
 
 export * from './types'
 export {
@@ -41,7 +42,13 @@ export {
   resolvePlaygroundAppearance,
 } from './story-loader'
 
-export const componentRegistry: ComponentEntry[] = [
+// Vite resolves stories at build time. Stories may live beside their production
+// components anywhere under the renderer, so they do not need registry imports.
+const discoveredStoryModules = import.meta.glob('../../**/*.playground.tsx', {
+  eager: true,
+})
+
+export const componentRegistry: ComponentEntry[] = normalizePlaygroundStories([
   ...mobileWebUIComponents,
   ...apiKeyInputComponents,
   ...onboardingComponents,
@@ -76,10 +83,11 @@ export const componentRegistry: ComponentEntry[] = [
   ...collectionComponents,
   ...notesComponents,
   ...settingsComponents,
-]
+  ...normalizeDiscoveredPlaygroundStories(discoveredStoryModules),
+])
 
 export function getCategories(): CategoryGroup[] {
-  const categoryOrder: Category[] = ['Mobile WebUI', 'Automations', 'Onboarding', 'Agent Setup', 'Chat', 'Island', 'Browser', 'Planner', 'Custom Shadows', 'Session List', 'Collection', 'Notes', 'Kanban', 'Entity Lists', 'Edit Popover', 'Turn Cards', 'TurnCard Modes', 'Fullscreen', 'Chat Messages', 'Chat Inputs', 'Toast Messages', 'Markdown', 'Icons', 'OAuth', 'Messaging', 'Settings', 'Unified Shell', 'Premium Menu']
+  const categoryOrder: Category[] = ['Sources', 'Mobile WebUI', 'Automations', 'Onboarding', 'Agent Setup', 'Chat', 'Island', 'Browser', 'Planner', 'Custom Shadows', 'Session List', 'Collection', 'Notes', 'Kanban', 'Entity Lists', 'Edit Popover', 'Turn Cards', 'TurnCard Modes', 'Fullscreen', 'Chat Messages', 'Chat Inputs', 'Toast Messages', 'Markdown', 'Icons', 'OAuth', 'Messaging', 'Feedback', 'Settings', 'Unified Shell', 'Premium Menu']
   const categoryMap = new Map<Category, ComponentEntry[]>()
 
   for (const entry of componentRegistry) {
