@@ -146,7 +146,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
     // W1-07 (#1504): a bare mode root (rox://messenger) follows its own mode
     // flag, pushed from the renderer over IPC (main/surface-routes-ipc.ts).
     if (isClosedUnifiedSurfaceRoot(`${host}${parsed.pathname}`)) return null
-    if (isCompoundRoutePrefix(host)) {
+    if (isCompoundRoutePrefix(host, `${host}${parsed.pathname}`)) {
       // Reconstruct the full compound route from host + pathname
       const viewRoute = withViewQuery(`${host}${parsed.pathname}`, parsed)
       return {
@@ -173,7 +173,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
       // e.g., /workspace/ws123/allSessions/session/abc123
       // W1-07 (#1504): same mode-flag gate for /workspace/{id}/messenger.
       if (routeType && isClosedUnifiedSurfaceRoot(pathParts.slice(1).join('/'))) return null
-      if (routeType && isCompoundRoutePrefix(routeType)) {
+      if (routeType && isCompoundRoutePrefix(routeType, pathParts.slice(1).join('/'))) {
         const viewRoute = withViewQuery(pathParts.slice(1).join('/'), parsed)
         result.view = viewRoute
         return result

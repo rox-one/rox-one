@@ -78,6 +78,17 @@ export function isClosedUnifiedSurfaceRoot(route: string): boolean {
   return segments.length === 1 && isUnifiedSurfaceId(segments[0]) && !enabledSurfaces.has(segments[0])
 }
 
+/**
+ * True for a bare mode-root route whose surface gate is open. Only the root
+ * short-circuits the route parser; sub-routes (`messenger/<id>`) keep
+ * following `entities.links.v1`.
+ */
+export function isOpenUnifiedSurfaceRoot(route: string): boolean {
+  const path = route.split('#')[0]!.split('?')[0]!
+  const segments = path.split('/').filter(Boolean)
+  return segments.length === 1 && isUnifiedSurfaceRouteEnabled(segments[0]!)
+}
+
 /** Bare mode-root route for a surface (`messenger`, `calendar`, …). */
 export function unifiedSurfaceRoute<S extends UnifiedSurfaceId>(surface: S): S {
   return surface

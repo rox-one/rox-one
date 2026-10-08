@@ -29,7 +29,7 @@ import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScr
 import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
 import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
 import { isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
-import { isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
+import { isOpenUnifiedSurfaceRoot, isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
 
 /**
  * Entity-route gate (W1-02, product decision).
@@ -143,15 +143,20 @@ export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
-  // W1-07: a unified mode root only exists while its mode flag is on.
-  if (isUnifiedSurfaceRouteEnabled(firstSegment)) return true
+  // W1-07: a bare unified mode root only exists while its mode flag is on;
+  // sub-routes fall through to the entities.links.v1 gate below.
+  if (isOpenUnifiedSurfaceRoot(route)) return true
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(firstSegment)) return isEntityRoutesEnabled()
   return COMPOUND_ROUTE_PREFIXES.includes(firstSegment)
 }
 
-/** Flag-aware prefix check for deep-link acceptance (`rox://<prefix>/...`). */
-export function isCompoundRoutePrefix(prefix: string): boolean {
-  if (isUnifiedSurfaceRouteEnabled(prefix)) return true
+/**
+ * Flag-aware prefix check for deep-link acceptance (`rox://<prefix>/...`).
+ * `route` is the full route under the prefix (defaults to the bare prefix):
+ * an open mode flag admits only the bare root, never its sub-routes.
+ */
+export function isCompoundRoutePrefix(prefix: string, route: string = prefix): boolean {
+  if (route.split(/[/?#]/)[0] === prefix && isOpenUnifiedSurfaceRoot(route)) return true
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) return isEntityRoutesEnabled()
   return (COMPOUND_ROUTE_PREFIXES as readonly string[]).includes(prefix)
 }
