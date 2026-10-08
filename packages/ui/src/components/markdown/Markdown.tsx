@@ -25,7 +25,7 @@ import remarkCollapsibleSections from './remarkCollapsibleSections'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useCollapsibleMarkdown } from './CollapsibleMarkdownContext'
 import { wrapWithSafeProxy } from './safe-components'
-import { MARKDOWN_MATH_OPTIONS } from './math-options'
+import { MARKDOWN_MATH_OPTIONS, markdownMayContainMath } from './math-options'
 import { markdownUrlTransform } from './url-transform'
 import { usePlatform } from '../../context/PlatformContext'
 import { SourcedStatement } from './SourcedStatement'
@@ -676,9 +676,7 @@ function loadRehypeKatex(): Promise<void> {
 }
 
 /** True when remark-math could produce math nodes for this markdown. */
-export function markdownMayContainMath(content: string): boolean {
-  return content.includes('$$')
-}
+export { markdownMayContainMath }
 
 function isPendingInlineMath(className: string | undefined): boolean {
   return !!className && className.includes('math-inline') && !rehypeKatexPlugin
