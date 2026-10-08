@@ -17,6 +17,15 @@ export const ENTITY_OMNIBOX_PROVIDER_ID = 'entities'
 /** Results per group before «Show all in Advanced search ⌘⇧F». */
 export const OMNIBOX_ENTITY_GROUP_LIMIT = 5
 
+/**
+ * Per-source limit: the requested value clamped to 1…OMNIBOX_ENTITY_GROUP_LIMIT.
+ * Missing, non-finite or non-positive requests get the full group limit.
+ */
+export function clampEntityGroupLimit(requested: number | undefined): number {
+  if (requested === undefined || !Number.isFinite(requested) || requested < 1) return OMNIBOX_ENTITY_GROUP_LIMIT
+  return Math.min(Math.floor(requested), OMNIBOX_ENTITY_GROUP_LIMIT)
+}
+
 export interface EntitySearchHit {
   ref: EntityRef
   title: string
@@ -147,7 +156,9 @@ export function createEntityOmniboxProvider(options: EntityOmniboxProviderOption
       if (!query) return []
       const flags = options.getFlags()
       const kinds = options.getKinds?.() ?? null
-      const limit = ctx.limit ?? OMNIBOX_ENTITY_GROUP_LIMIT
+      // Per-source cap before «Show all»: the host may ask for less, never more
+      // (the Omnibox passes RESOURCES_LIMIT = 30 for the whole list).
+      const limit = clampEntityGroupLimit(ctx.limit)
       const sources = registry
         .list()
         .filter((source) => sourceEnabled(source, flags))

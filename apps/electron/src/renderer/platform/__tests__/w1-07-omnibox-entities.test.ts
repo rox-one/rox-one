@@ -9,6 +9,7 @@ import {
   OMNIBOX_ENTITY_CHIPS,
   OMNIBOX_ENTITY_GROUP_LIMIT,
   __resetEntitySourcesForTests,
+  clampEntityGroupLimit,
   createEntityOmniboxProvider,
   createEntitySourceRegistry,
   getEntitySourceRegistry,
@@ -57,6 +58,39 @@ describe('entity omnibox provider', () => {
       data: { ref: 'goal:g0', entityKind: 'goal', source: 'goals.search', statusKey: undefined },
       score: 10,
     })
+  })
+
+  it('per-source limit is clamped to OMNIBOX_ENTITY_GROUP_LIMIT whatever the host asks (review5 info #2)', async () => {
+    const registry = createEntitySourceRegistry()
+    const asked: number[] = []
+    registry.register({ ...goalsSource, async search(query) { asked.push(query.limit); return goalsSource.search(query) } })
+    registry.register({
+      id: 'tasks.search', kinds: ['task'], flag: 'fake.goals.v1',
+      async search({ query, limit }) {
+        asked.push(limit)
+        return Array.from({ length: 40 }, (_, index) => ({ ref: { kind: 'task' as const, id: `t${index}` }, title: `${query} t${index}`, score: 1 }))
+      },
+    })
+    const provider = createEntityOmniboxProvider({ registry, getFlags: () => new Set(['fake.goals.v1']) })
+    // The Omnibox passes RESOURCES_LIMIT (30): each source still gets at most 5.
+    const items = await provider.search(ctx('plan', 30))
+    expect(asked).toEqual([OMNIBOX_ENTITY_GROUP_LIMIT, OMNIBOX_ENTITY_GROUP_LIMIT])
+    for (const source of ['goals.search', 'tasks.search']) {
+      expect(items.filter((item) => item.data?.source === source)).toHaveLength(OMNIBOX_ENTITY_GROUP_LIMIT)
+    }
+    // A smaller request is honoured.
+    asked.length = 0
+    const few = await provider.search(ctx('plan', 2))
+    expect(asked).toEqual([2, 2])
+    expect(few).toHaveLength(4)
+    expect(clampEntityGroupLimit(undefined)).toBe(5)
+    expect(clampEntityGroupLimit(30)).toBe(5)
+    expect(clampEntityGroupLimit(5)).toBe(5)
+    expect(clampEntityGroupLimit(3.7)).toBe(3)
+    expect(clampEntityGroupLimit(0)).toBe(5)
+    expect(clampEntityGroupLimit(-1)).toBe(5)
+    expect(clampEntityGroupLimit(Number.NaN)).toBe(5)
+    expect(clampEntityGroupLimit(Number.POSITIVE_INFINITY)).toBe(5)
   })
 
   it('chip filter narrows kinds and skips non-matching sources', async () => {
