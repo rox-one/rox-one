@@ -1,0 +1,922 @@
+{
+  "modes": [
+    {
+      "id": "home",
+      "order": 10,
+      "titleKey": "workbench.mode.home",
+      "icon": "Home",
+      "rootRoute": "home",
+      "defaultPinned": true
+    },
+    {
+      "id": "chat",
+      "order": 20,
+      "titleKey": "workbench.mode.chat",
+      "icon": "MessageSquare",
+      "rootRoute": "allSessions",
+      "defaultPinned": true
+    },
+    {
+      "id": "meetings",
+      "order": 30,
+      "titleKey": "workbench.mode.meetings",
+      "icon": "Calendar",
+      "rootRoute": "meetings",
+      "defaultPinned": true
+    },
+    {
+      "id": "tasks",
+      "order": 40,
+      "titleKey": "workbench.mode.tasks",
+      "icon": "ListTodo",
+      "rootRoute": "tasks",
+      "defaultPinned": true
+    },
+    {
+      "id": "notes",
+      "order": 50,
+      "titleKey": "workbench.mode.notes",
+      "icon": "NotebookPen",
+      "rootRoute": "notes",
+      "defaultPinned": true
+    },
+    {
+      "id": "feed",
+      "order": 60,
+      "titleKey": "workbench.mode.feed",
+      "icon": "Rss",
+      "rootRoute": "feed",
+      "defaultPinned": true
+    },
+    {
+      "id": "inbox",
+      "order": 70,
+      "titleKey": "workbench.mode.inbox",
+      "icon": "Inbox",
+      "rootRoute": "inbox",
+      "defaultPinned": true
+    }
+  ],
+  "slots": [
+    "home",
+    "chat",
+    "meetings",
+    "tasks",
+    "notes",
+    "feed",
+    "inbox",
+    null
+  ],
+  "routes": [
+    {
+      "route": "home",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "home",
+        "params": {}
+      },
+      "state": {
+        "navigator": "home",
+        "details": null
+      },
+      "rebuilt": "home"
+    },
+    {
+      "route": "allSessions",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "allSessions",
+        "params": {}
+      },
+      "state": {
+        "navigator": "sessions",
+        "filter": {
+          "kind": "allSessions"
+        },
+        "details": null
+      },
+      "rebuilt": "allSessions"
+    },
+    {
+      "route": "tasks",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "tasks",
+        "params": {}
+      },
+      "state": {
+        "navigator": "tasks",
+        "details": null
+      },
+      "rebuilt": "tasks"
+    },
+    {
+      "route": "notes",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "notes",
+        "params": {}
+      },
+      "state": {
+        "navigator": "notes",
+        "details": null
+      },
+      "rebuilt": "notes"
+    },
+    {
+      "route": "meetings",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "meetings",
+        "params": {}
+      },
+      "state": {
+        "navigator": "meetings",
+        "details": null
+      },
+      "rebuilt": "meetings"
+    },
+    {
+      "route": "inbox",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "inbox",
+        "params": {}
+      },
+      "state": {
+        "navigator": "inbox",
+        "details": null
+      },
+      "rebuilt": "inbox"
+    },
+    {
+      "route": "feed",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "feed",
+        "params": {}
+      },
+      "state": {
+        "navigator": "feed",
+        "details": null
+      },
+      "rebuilt": "feed"
+    },
+    {
+      "route": "search",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "search",
+        "params": {}
+      },
+      "state": {
+        "navigator": "search",
+        "query": ""
+      },
+      "rebuilt": "search"
+    },
+    {
+      "route": "messenger",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "messenger",
+        "details": null
+      },
+      "rebuilt": "messenger"
+    },
+    {
+      "route": "calendar",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "calendar",
+        "details": null
+      },
+      "rebuilt": "calendar"
+    },
+    {
+      "route": "goals",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "goals",
+        "details": null
+      },
+      "rebuilt": "goals"
+    },
+    {
+      "route": "contacts",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "contacts",
+        "details": null
+      },
+      "rebuilt": "contacts"
+    },
+    {
+      "route": "messenger/c1",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "messenger/c1",
+        "details": null
+      },
+      "rebuilt": "messenger/c1"
+    },
+    {
+      "route": "calendar/e1",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "calendar/e1",
+        "details": null
+      },
+      "rebuilt": "calendar/e1"
+    },
+    {
+      "route": "goals/g1",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "goals/g1",
+        "details": null
+      },
+      "rebuilt": "goals/g1"
+    },
+    {
+      "route": "contacts/p1",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "contacts/p1",
+        "details": null
+      },
+      "rebuilt": "contacts/p1"
+    },
+    {
+      "route": "surface/messenger",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "surface/messenger",
+        "details": null
+      },
+      "rebuilt": "surface/messenger"
+    },
+    {
+      "route": "nope",
+      "compound": false,
+      "parsed": null,
+      "state": {
+        "navigator": "unavailable",
+        "route": "nope",
+        "details": null
+      },
+      "rebuilt": "nope"
+    },
+    {
+      "route": "settings",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "settings",
+        "params": {}
+      },
+      "state": {
+        "navigator": "settings",
+        "subpage": null
+      },
+      "rebuilt": "settings"
+    },
+    {
+      "route": "skills",
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "skills",
+        "params": {}
+      },
+      "state": {
+        "navigator": "skills",
+        "details": null
+      },
+      "rebuilt": "skills"
+    }
+  ],
+  "actions": [
+    {
+      "id": "app.newChat",
+      "hotkey": "mod+n",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "app.newChatInPanel",
+      "hotkey": "mod+t",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "app.settings",
+      "hotkey": "mod+,",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "app.toggleTheme",
+      "hotkey": "mod+shift+a",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "app.search",
+      "hotkey": "mod+f",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "app.omnibox",
+      "hotkey": "mod+k",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "app.keyboardShortcuts",
+      "hotkey": "mod+/",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "app.newWindow",
+      "hotkey": "mod+shift+n",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "app.quit",
+      "hotkey": "mod+q",
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "nav.focusSidebar",
+      "hotkey": "mod+alt+1",
+      "category": "Navigation",
+      "when": null
+    },
+    {
+      "id": "nav.focusNavigator",
+      "hotkey": "mod+alt+2",
+      "category": "Navigation",
+      "when": null
+    },
+    {
+      "id": "nav.focusChat",
+      "hotkey": "mod+alt+3",
+      "category": "Navigation",
+      "when": null
+    },
+    {
+      "id": "nav.nextZone",
+      "hotkey": "tab",
+      "category": "Navigation",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "nav.goBack",
+      "hotkey": "mod+[",
+      "category": "Navigation",
+      "when": null
+    },
+    {
+      "id": "nav.goForward",
+      "hotkey": "mod+]",
+      "category": "Navigation",
+      "when": null
+    },
+    {
+      "id": "nav.goBackAlt",
+      "hotkey": "mod+left",
+      "category": "Navigation",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "nav.goForwardAlt",
+      "hotkey": "mod+right",
+      "category": "Navigation",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "mode.slot1",
+      "hotkey": "mod+1",
+      "category": "Navigation",
+      "when": "!menuOpen"
+    },
+    {
+      "id": "mode.slot2",
+      "hotkey": "mod+2",
+      "category": "Navigation",
+      "when": "!menuOpen"
+    },
+    {
+      "id": "mode.slot3",
+      "hotkey": "mod+3",
+      "category": "Navigation",
+      "when": "!menuOpen"
+    },
+    {
+      "id": "mode.slot4",
+      "hotkey": "mod+4",
+      "category": "Navigation",
+      "when": "!menuOpen"
+    },
+    {
+      "id": "mode.slot5",
+      "hotkey": "mod+5",
+      "category": "Navigation",
+      "when": "!menuOpen"
+    },
+    {
+      "id": "mode.slot6",
+      "hotkey": "mod+6",
+      "category": "Navigation",
+      "when": "!menuOpen"
+    },
+    {
+      "id": "mode.slot7",
+      "hotkey": "mod+7",
+      "category": "Navigation",
+      "when": "!menuOpen"
+    },
+    {
+      "id": "view.toggleSidebar",
+      "hotkey": "mod+b",
+      "category": "View",
+      "when": null
+    },
+    {
+      "id": "view.toggleFocusMode",
+      "hotkey": "mod+.",
+      "category": "View",
+      "when": null
+    },
+    {
+      "id": "view.toggleInspector",
+      "hotkey": "mod+shift+i",
+      "category": "View",
+      "when": null
+    },
+    {
+      "id": "view.toggleChatPictureInPicture",
+      "hotkey": "mod+shift+p",
+      "category": "View",
+      "when": null
+    },
+    {
+      "id": "collection.viewNext",
+      "hotkey": "alt+v",
+      "category": "View",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "collection.viewPrev",
+      "hotkey": "alt+shift+v",
+      "category": "View",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "collection.viewList",
+      "hotkey": "mod+shift+1",
+      "category": "View",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "collection.viewBoard",
+      "hotkey": "mod+shift+2",
+      "category": "View",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "collection.viewTable",
+      "hotkey": "mod+shift+3",
+      "category": "View",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "collection.viewHeatmap",
+      "hotkey": "mod+shift+4",
+      "category": "View",
+      "when": "!inputFocus"
+    },
+    {
+      "id": "navigator.selectAll",
+      "hotkey": "mod+a",
+      "category": "Navigator",
+      "when": "navigatorFocus"
+    },
+    {
+      "id": "navigator.clearSelection",
+      "hotkey": "escape",
+      "category": "Navigator",
+      "when": "navigatorFocus"
+    },
+    {
+      "id": "panel.focusNext",
+      "hotkey": "mod+shift+]",
+      "category": "Navigation",
+      "when": null
+    },
+    {
+      "id": "panel.focusPrev",
+      "hotkey": "mod+shift+[",
+      "category": "Navigation",
+      "when": null
+    },
+    {
+      "id": "chat.stopProcessing",
+      "hotkey": "escape",
+      "category": "Chat",
+      "when": "!hasSelection"
+    },
+    {
+      "id": "chat.cyclePermissionMode",
+      "hotkey": "shift+tab",
+      "category": "Chat",
+      "when": null
+    },
+    {
+      "id": "chat.nextSearchMatch",
+      "hotkey": "mod+g",
+      "category": "Chat",
+      "when": null
+    },
+    {
+      "id": "chat.prevSearchMatch",
+      "hotkey": "mod+shift+g",
+      "category": "Chat",
+      "when": null
+    },
+    {
+      "id": "workspace.openInEditor",
+      "hotkey": null,
+      "category": "View",
+      "when": null
+    },
+    {
+      "id": "sessions.import",
+      "hotkey": null,
+      "category": "General",
+      "when": null
+    },
+    {
+      "id": "session.advisor",
+      "hotkey": null,
+      "category": "Chat",
+      "when": null
+    },
+    {
+      "id": "session.simplify",
+      "hotkey": null,
+      "category": "Chat",
+      "when": null
+    },
+    {
+      "id": "session.workflow",
+      "hotkey": null,
+      "category": "Chat",
+      "when": null
+    },
+    {
+      "id": "session.agentTeams",
+      "hotkey": null,
+      "category": "Chat",
+      "when": null
+    }
+  ],
+  "categories": {
+    "General": [
+      "app.newChat",
+      "app.newChatInPanel",
+      "app.settings",
+      "app.toggleTheme",
+      "app.search",
+      "app.omnibox",
+      "app.keyboardShortcuts",
+      "app.newWindow",
+      "app.quit",
+      "sessions.import"
+    ],
+    "Navigation": [
+      "nav.focusSidebar",
+      "nav.focusNavigator",
+      "nav.focusChat",
+      "nav.nextZone",
+      "nav.goBack",
+      "nav.goForward",
+      "nav.goBackAlt",
+      "nav.goForwardAlt",
+      "mode.slot1",
+      "mode.slot2",
+      "mode.slot3",
+      "mode.slot4",
+      "mode.slot5",
+      "mode.slot6",
+      "mode.slot7",
+      "panel.focusNext",
+      "panel.focusPrev"
+    ],
+    "View": [
+      "view.toggleSidebar",
+      "view.toggleFocusMode",
+      "view.toggleInspector",
+      "view.toggleChatPictureInPicture",
+      "collection.viewNext",
+      "collection.viewPrev",
+      "collection.viewList",
+      "collection.viewBoard",
+      "collection.viewTable",
+      "collection.viewHeatmap",
+      "workspace.openInEditor"
+    ],
+    "Navigator": [
+      "navigator.selectAll",
+      "navigator.clearSelection"
+    ],
+    "Chat": [
+      "chat.stopProcessing",
+      "chat.cyclePermissionMode",
+      "chat.nextSearchMatch",
+      "chat.prevSearchMatch",
+      "session.advisor",
+      "session.simplify",
+      "session.workflow",
+      "session.agentTeams"
+    ]
+  },
+  "commands": [
+    {
+      "id": "app.newChat",
+      "when": null,
+      "hotkey": "mod+n"
+    },
+    {
+      "id": "app.newChatInPanel",
+      "when": null,
+      "hotkey": "mod+t"
+    },
+    {
+      "id": "app.settings",
+      "when": null,
+      "hotkey": "mod+,"
+    },
+    {
+      "id": "app.toggleTheme",
+      "when": null,
+      "hotkey": "mod+shift+a"
+    },
+    {
+      "id": "app.search",
+      "when": null,
+      "hotkey": "mod+f"
+    },
+    {
+      "id": "app.omnibox",
+      "when": null,
+      "hotkey": "mod+k"
+    },
+    {
+      "id": "app.keyboardShortcuts",
+      "when": null,
+      "hotkey": "mod+/"
+    },
+    {
+      "id": "app.newWindow",
+      "when": null,
+      "hotkey": "mod+shift+n"
+    },
+    {
+      "id": "app.quit",
+      "when": null,
+      "hotkey": "mod+q"
+    },
+    {
+      "id": "nav.focusSidebar",
+      "when": null,
+      "hotkey": "mod+alt+1"
+    },
+    {
+      "id": "nav.focusNavigator",
+      "when": null,
+      "hotkey": "mod+alt+2"
+    },
+    {
+      "id": "nav.focusChat",
+      "when": null,
+      "hotkey": "mod+alt+3"
+    },
+    {
+      "id": "nav.nextZone",
+      "when": "!inputFocus",
+      "hotkey": "tab"
+    },
+    {
+      "id": "nav.goBack",
+      "when": null,
+      "hotkey": "mod+["
+    },
+    {
+      "id": "nav.goForward",
+      "when": null,
+      "hotkey": "mod+]"
+    },
+    {
+      "id": "nav.goBackAlt",
+      "when": "!inputFocus",
+      "hotkey": "mod+left"
+    },
+    {
+      "id": "nav.goForwardAlt",
+      "when": "!inputFocus",
+      "hotkey": "mod+right"
+    },
+    {
+      "id": "mode.slot1",
+      "when": "!menuOpen",
+      "hotkey": "mod+1"
+    },
+    {
+      "id": "mode.slot2",
+      "when": "!menuOpen",
+      "hotkey": "mod+2"
+    },
+    {
+      "id": "mode.slot3",
+      "when": "!menuOpen",
+      "hotkey": "mod+3"
+    },
+    {
+      "id": "mode.slot4",
+      "when": "!menuOpen",
+      "hotkey": "mod+4"
+    },
+    {
+      "id": "mode.slot5",
+      "when": "!menuOpen",
+      "hotkey": "mod+5"
+    },
+    {
+      "id": "mode.slot6",
+      "when": "!menuOpen",
+      "hotkey": "mod+6"
+    },
+    {
+      "id": "mode.slot7",
+      "when": "!menuOpen",
+      "hotkey": "mod+7"
+    },
+    {
+      "id": "view.toggleSidebar",
+      "when": null,
+      "hotkey": "mod+b"
+    },
+    {
+      "id": "view.toggleFocusMode",
+      "when": null,
+      "hotkey": "mod+."
+    },
+    {
+      "id": "view.toggleInspector",
+      "when": null,
+      "hotkey": "mod+shift+i"
+    },
+    {
+      "id": "view.toggleChatPictureInPicture",
+      "when": null,
+      "hotkey": "mod+shift+p"
+    },
+    {
+      "id": "collection.viewNext",
+      "when": "!inputFocus",
+      "hotkey": "alt+v"
+    },
+    {
+      "id": "collection.viewPrev",
+      "when": "!inputFocus",
+      "hotkey": "alt+shift+v"
+    },
+    {
+      "id": "collection.viewList",
+      "when": "!inputFocus",
+      "hotkey": "mod+shift+1"
+    },
+    {
+      "id": "collection.viewBoard",
+      "when": "!inputFocus",
+      "hotkey": "mod+shift+2"
+    },
+    {
+      "id": "collection.viewTable",
+      "when": "!inputFocus",
+      "hotkey": "mod+shift+3"
+    },
+    {
+      "id": "collection.viewHeatmap",
+      "when": "!inputFocus",
+      "hotkey": "mod+shift+4"
+    },
+    {
+      "id": "panel.focusNext",
+      "when": null,
+      "hotkey": "mod+shift+]"
+    },
+    {
+      "id": "panel.focusPrev",
+      "when": null,
+      "hotkey": "mod+shift+["
+    },
+    {
+      "id": "chat.cyclePermissionMode",
+      "when": null,
+      "hotkey": "shift+tab"
+    },
+    {
+      "id": "chat.nextSearchMatch",
+      "when": null,
+      "hotkey": "mod+g"
+    },
+    {
+      "id": "chat.prevSearchMatch",
+      "when": null,
+      "hotkey": "mod+shift+g"
+    },
+    {
+      "id": "workspace.openInEditor",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "sessions.import",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "session.advisor",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "session.simplify",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "session.workflow",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "session.agentTeams",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "knowledge.openHome",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "knowledge.search",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "knowledge.openCompat",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "siyuan.openCompat",
+      "when": null,
+      "hotkey": null
+    }
+  ]
+}
