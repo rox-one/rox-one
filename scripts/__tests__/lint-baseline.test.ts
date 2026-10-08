@@ -346,6 +346,44 @@ describe('lint-baseline: renames need a rebaseline before merge (review2 error)'
   }, 180_000)
 })
 
+describe('lint-baseline: rename limit and stylelint config errors (review3 infos)', () => {
+  it('detects inexact renames regardless of diff.renameLimit (-l0)', () => {
+    const repo = tempRepo()
+    git(repo, 'config', 'diff.renameLimit', '1')
+    mkdirSync(join(repo, 'old'))
+    const body = (name: string) => Array.from({ length: 30 }, (_, i) => `export const ${name}${i} = 'row ${i} of ${name}'`).join('\n')
+    for (const name of ['A', 'B', 'C']) writeFileSync(join(repo, `old/${name}.tsx`), `${body(name)}\n`)
+    git(repo, 'add', '.')
+    git(repo, 'commit', '-qm', 'base')
+    mkdirSync(join(repo, 'new'))
+    for (const name of ['A', 'B', 'C']) {
+      // New basenames (git's basename pass ignores the limit) and changed content: inexact renames.
+      git(repo, 'mv', `old/${name}.tsx`, `new/${name}Moved.tsx`)
+      writeFileSync(join(repo, `new/${name}Moved.tsx`), `${body(name)}\nexport const extra${name} = 1\n`)
+    }
+    git(repo, 'add', '.')
+    // Plain -M with this config skips the inexact pass; -l0 finds all three.
+    expect(parseRenames(git(repo, 'diff', '-M', '--name-status', '-z', 'HEAD', '--'))).toEqual([])
+    expect(gitRenames(repo, 'HEAD').map((rename) => rename.to).sort()).toEqual(['new/AMoved.tsx', 'new/BMoved.tsx', 'new/CMoved.tsx'])
+  })
+
+  it('throws on invalid stylelint rule options instead of silently skipping the rule', async () => {
+    const repo = ratchetRepo()
+    mkdirSync(join(repo, 'apps/electron/src'), { recursive: true })
+    writeFileSync(join(repo, 'apps/electron/src/a.css'), '.a { color: #fff; }\n')
+    expect((await collectLint(repo, { eslintTargets: [] })).counts['apps/electron/src/a.css']?.['stylelint/color-no-hex']).toBe(1)
+    const stylelintrc = join(repo, '.stylelintrc.cjs')
+    const source = readFileSync(stylelintrc, 'utf8')
+    expect(source).toContain("'color-no-hex': true,")
+    // A fresh root: .stylelintrc.cjs is require()d (cached per path) for the severity table.
+    const broken = ratchetRepo()
+    writeFileSync(join(broken, '.stylelintrc.cjs'), source.replace("'color-no-hex': true,", "'color-no-hex': [true, { bogus: 1 }],"))
+    mkdirSync(join(broken, 'apps/electron/src'), { recursive: true })
+    writeFileSync(join(broken, 'apps/electron/src/a.css'), '.a { color: #fff; }\n')
+    await expect(collectLint(broken, { eslintTargets: [] })).rejects.toThrow('Invalid option name "bogus" for rule "color-no-hex"')
+  }, 60_000)
+})
+
 describe('lint-baseline: base-branch baseline (review1 W1)', () => {
   const severities = { 'rox/a': 'warn', 'rox/b': 'error' } as const
   const base: Baseline = buildBaseline({ 'x.tsx': { 'rox/a': 2 }, 'old.tsx': { 'rox/a': 1 } }, severities)

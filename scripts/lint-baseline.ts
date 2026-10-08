@@ -22,7 +22,7 @@
  * Options:
  *   --baseline <file>            baseline path (default eslint-baselines/ui-tokens.json)
  *   --root <dir>                 repository root (default: this script's parent)
- *   --base <ref>                 base branch ref: rename map (`git diff -M --name-status <ref>`) and
+ *   --base <ref>                 base branch ref: rename map (`git diff -M -l0 --name-status <ref>`) and
  *                                the base baseline (`git show <ref>:eslint-baselines/ui-tokens.json`).
  *                                Repeated options: the last one wins.
  *   --override                   (or UI_BASELINE_OVERRIDE=1) report base-baseline growth without
@@ -278,6 +278,16 @@ export async function collectLint(
       // Same as noInlineConfig: disable comments are counted, justified ones exempted below.
       ignoreDisables: true,
     })
+    // An invalid rule option makes stylelint skip that rule silently: its counts would drop to 0
+    // (a "decrease") and its gate would be gone. Fail instead, like ESLint does.
+    const invalidOptions = new Set(results.flatMap((result) => (result.invalidOptionWarnings ?? []).map((warning) => warning.text)))
+    if (invalidOptions.size) {
+      throw new Error(`stylelint config has invalid rule options (.stylelintrc.cjs):\n  ${[...invalidOptions].join('\n  ')}`)
+    }
+    const deprecations = new Set(
+      results.flatMap((result) => (result.deprecations ?? []).map((entry) => (entry.reference ? `${entry.text} (${entry.reference})` : entry.text))),
+    )
+    for (const text of deprecations) console.warn(`lint-baseline: stylelint deprecation: ${text}`)
     for (const result of results) {
       const source = result.source ?? ''
       const file = toKey(source)
@@ -360,10 +370,12 @@ export function parseRenames(nameStatusZ: string): Rename[] {
   return renames
 }
 
-/** Renames between `base` and the working tree, via `git diff -M --name-status <base>`. */
+/** Renames between `base` and the working tree, via `git diff -M -l0 --name-status <base>`. */
 export function gitRenames(root: string, base: string): Rename[] {
-  const result = spawnSync('git', ['diff', '-M', '--name-status', '-z', base, '--'], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
-  if (result.status !== 0) throw new Error(`git diff -M --name-status ${base} failed: ${result.stderr}`)
+  // -l0: no rename limit, so a large move is detected the same way locally and in CI
+  // (diff.renameLimit would otherwise skip the inexact pass with only a warning).
+  const result = spawnSync('git', ['diff', '-M', '-l0', '--name-status', '-z', base, '--'], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+  if (result.status !== 0) throw new Error(`git diff -M -l0 --name-status ${base} failed: ${result.stderr}`)
   return parseRenames(result.stdout)
 }
 

@@ -44,7 +44,7 @@ Dialog primitives exist.
 
 ## Renames and the base branch
 
-`--base <ref>` reads `git diff -M --name-status <ref>` for renames.
+`--base <ref>` reads `git diff -M -l0 --name-status <ref>` (no rename limit) for renames.
 
 - **A PR that moves a file must rebaseline.** `--check --base` fails while the committed baseline
   still lists a renamed file under its old path: the PR itself would pass, but after the merge the
