@@ -3336,7 +3336,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={SIDEBAR_WIDTH_MIN}
           valueMax={SIDEBAR_WIDTH_MAX}
           dragging={sidebarResize.dragging || isResizing === 'sidebar'}
-          className="absolute z-chrome"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
@@ -3394,7 +3394,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={NAVIGATOR_WIDTH_MIN}
           valueMax={NAVIGATOR_WIDTH_MAX}
           dragging={navigatorResize.dragging || isResizing === 'session-list'}
-          className="absolute z-chrome"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,

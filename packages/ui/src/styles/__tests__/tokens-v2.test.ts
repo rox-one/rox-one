@@ -183,6 +183,29 @@ describe('token foundation v2: z layers', () => {
     expect(z('overlay')).toBe(z('fullscreen'))
   })
 
+  it('inline var(--z-*, n) fallbacks match the token value (no stale fallbacks)', () => {
+    const root = rootOf(token('z.css'))
+    const stale: string[] = []
+    const glob = new Bun.Glob('{apps/electron/src,packages/ui/src,packages/ui/eslint-rules,apps/electron/eslint-rules}/**/*.{ts,tsx,css,cjs}')
+    for (const file of glob.scanSync({ cwd: repoRoot })) {
+      if (file.includes('__tests__') || file.includes('.test.')) continue
+      const text = readFileSync(join(repoRoot, file), 'utf8')
+      for (const m of text.matchAll(/var\((--z-[\w-]+),\s*(-?\d+)\)/g)) {
+        if (!(m[1]! in root)) continue
+        if (Number(resolve(`var(${m[1]})`, root)) !== Number(m[2])) stale.push(`${file}: ${m[0]}`)
+      }
+    }
+    expect(stale).toEqual([])
+  })
+
+  it('fullscreen overlays and their in-overlay menus use the right layers', () => {
+    const src = (f: string) => readFileSync(join(repoRoot, f), 'utf8')
+    expect(src('packages/ui/src/components/overlay/FullscreenOverlayBase.tsx')).toContain("const Z_FULLSCREEN = 'var(--z-fullscreen, 120)'")
+    const header = src('packages/ui/src/components/overlay/FullscreenOverlayBaseHeader.tsx')
+    expect(header).toMatch(/contextMenuContentClasses = cn\(\s*'popover-styled z-island /)
+    expect(src('packages/ui/src/components/ui/InlineMenuSurface.ts')).toContain("options.zIndex ?? 'var(--z-popover, 100)'")
+  })
+
   it('no source uses a retired z utility class', () => {
     const retired = /(?<![-\w])z-(local|titlebar|panel|dropdown|overlay|floating-backdrop|floating-menu|island-overlay)(?![-\w])/
     const offenders: string[] = []

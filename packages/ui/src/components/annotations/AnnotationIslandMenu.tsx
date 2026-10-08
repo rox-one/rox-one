@@ -71,7 +71,7 @@ export function AnnotationIslandMenu({
   const resolvedOverlayZIndex = React.useMemo<React.CSSProperties['zIndex']>(() => {
     if (overlayZIndex != null) return overlayZIndex
     if (typeof zIndex === 'number') return zIndex - 1
-    return 'var(--z-island-overlay, 390)'
+    return 'var(--z-island-overlay, 300)'
   }, [overlayZIndex, zIndex])
 
   const anchorX = React.useMemo(() => {

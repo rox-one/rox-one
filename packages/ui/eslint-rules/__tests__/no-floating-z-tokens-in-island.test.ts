@@ -42,7 +42,7 @@ describe('no-floating-z-tokens-in-island (ui)', () => {
 
   it('allows island tokens in island contexts', () => {
     const messages = runRule(
-      "const zIndex = 'var(--z-island, 400)'; const overlay = 'var(--z-island-overlay, 390)'",
+      "const zIndex = 'var(--z-island, 400)'; const overlay = 'var(--z-island-overlay, 300)'",
       '/repo/packages/ui/src/components/overlay/AnnotatableMarkdownDocument.tsx',
     )
 

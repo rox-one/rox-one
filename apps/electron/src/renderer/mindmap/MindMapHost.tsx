@@ -916,7 +916,7 @@ export function MindMapHost({
 
   if (zen) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      <div className="fixed inset-0 z-fullscreen flex flex-col bg-background">
         <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 shrink-0">
           <span className="text-[11px] font-medium text-muted-foreground">{t('mindmap.zen')}</span>
           <div className="ml-auto">

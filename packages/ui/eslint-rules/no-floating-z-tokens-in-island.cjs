@@ -2,13 +2,13 @@
  * ESLint Rule: no-floating-z-tokens-in-island
  *
  * Enforces semantic island z-index tokens in island-related components.
- * In island contexts, disallow:
- * - var(--z-floating-menu, 400)
- * - var(--z-floating-backdrop, 390)
+ * In island contexts, disallow the deprecated floating aliases:
+ * - var(--z-floating-menu)
+ * - var(--z-floating-backdrop)
  *
- * and require:
- * - var(--z-island, 400)
- * - var(--z-island-overlay, 390)
+ * and require the island layers (styles/tokens/z.css):
+ * - var(--z-island)          (400)
+ * - var(--z-island-overlay)  (300, the toast step below the island)
  */
 
 /** @type {import('eslint').Rule.RuleModule} */
@@ -23,7 +23,7 @@ module.exports = {
     schema: [],
     messages: {
       useIslandToken:
-        'Use island z-index tokens in island components: var(--z-island, 400) / var(--z-island-overlay, 390) instead of floating tokens.',
+        'Use island z-index tokens in island components: var(--z-island) / var(--z-island-overlay) instead of floating tokens.',
     },
   },
 

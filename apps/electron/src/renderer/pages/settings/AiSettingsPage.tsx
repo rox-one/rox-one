@@ -1381,7 +1381,7 @@ export default function AiSettingsPage() {
               <FullscreenOverlayBase
                 isOpen={showApiSetup}
                 onClose={handleCloseApiSetup}
-                className="z-splash flex flex-col bg-foreground-2"
+                className="flex flex-col bg-foreground-2"
               >
                 <OnboardingWizard
                   state={apiSetupOnboarding.state}
@@ -1402,8 +1402,7 @@ export default function AiSettingsPage() {
                   className="h-full"
                 />
                 <div
-                  className="fixed top-0 right-0 h-[50px] flex items-center pr-5 [-webkit-app-region:no-drag]"
-                  style={{ zIndex: 'var(--z-fullscreen, 350)' }}
+                  className="fixed top-0 right-0 z-fullscreen h-[50px] flex items-center pr-5 [-webkit-app-region:no-drag]"
                 >
                   <button
                     onClick={handleCloseApiSetup}

@@ -38,9 +38,12 @@ import { getDismissibleLayerBridge } from '../../lib/dismissible-layer-bridge'
 import { FullscreenOverlayBaseHeader, type OverlayTypeBadge } from './FullscreenOverlayBaseHeader'
 import { OverlayErrorBanner, type OverlayErrorBannerProps } from './OverlayErrorBanner'
 
-// Z-index for fullscreen overlays - must be above app chrome (z-overlay: 300)
-// Uses CSS variable when available, falls back to hardcoded value
-const Z_FULLSCREEN = 'var(--z-fullscreen, 350)'
+// Z-index for fullscreen overlays (tokens/z.css --z-fullscreen: 120): above app
+// chrome and regular popovers, but below tooltips and the dialog scrim/modal,
+// so a dialog opened from the overlay dims it and sits on top. Menus and
+// context menus opened inside the overlay must use the island layer
+// (z-island / var(--z-island)) to render above it.
+const Z_FULLSCREEN = 'var(--z-fullscreen, 120)'
 
 // HEADER_HEIGHT must match PreviewHeader's height prop (48px).
 // FADE_SIZE is the transition zone where content fades in/out at edges.

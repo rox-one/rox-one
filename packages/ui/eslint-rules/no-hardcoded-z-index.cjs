@@ -17,7 +17,7 @@ module.exports = {
     schema: [],
     messages: {
       noHardcodedZIndex:
-        'Avoid hardcoded zIndex values. Use z-index tokens (for example var(--z-floating-menu, 400)), Tailwind z-* utilities, or a named constant.',
+        'Avoid hardcoded zIndex values. Use a z layer token (for example var(--z-popover) or var(--z-island)), a Tailwind z-<layer> utility, or a named constant.',
     },
   },
 
