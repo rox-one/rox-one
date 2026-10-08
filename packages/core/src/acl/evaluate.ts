@@ -31,13 +31,30 @@
  *      UNDONE: admin recovery of secret resources is a later, audited feature.
  * Then the §8.3 rule for the action is applied (`../entities/permissions.ts`).
  *
- * Secret propagation: a result is secret when the resource is secret or any
- * ancestor reached during the walk is (a private project's tasks, a personal
- * goal's targets, a private chat's folders); without a view role such a ref is
- * hidden from listings rather than shown as a restricted row.
+ * Secrecy is decoupled from role flow: a separate ancestry walk visits every
+ * structural parent — role-carrying `parents` AND secrecy-only `ancestors`
+ * (cut edges: goal → child goal / project, a goal-owned folder, a members-mode
+ * task list's project / space, …), recursively, including a chat parent's own
+ * space. The result is secret when the resource or ANY ancestor is secret,
+ * and also when the ancestry is incomplete (`maxDepth` hit, or a parent that
+ * cannot be loaded): fail closed. Under a secret / incomplete ancestry there
+ * is no workspace-owner bypass and listings hide the ref instead of showing a
+ * restricted row. Role inheritance still follows `inheritanceEdge()` only.
+ *
+ * Contextual tags on a space goal (owner / champion / reviewer) count only
+ * while the principal is a member of that space: a champion removed from the
+ * space keeps nothing beyond what the edges give.
+ *
+ * Space membership through the space chat counts only when joining that chat
+ * was allowed: a chat-derived membership (`groups.channelIds`, or entries
+ * marked `via: 'chat'`) is ignored for a space whose chat is public while the
+ * space is not company-wide or is secret — a self-join there must never grant
+ * the space. Likewise a chat in a non-company or secret space is never open
+ * to the workspace: workspace-subject grants / presets on it are ignored.
  *
  * Space membership (`isSpaceMember`) = active membership of the space chat
- * (`AclResourceNode.chatId` ∈ the principal's channels) OR an explicit
+ * (`AclResourceNode.chatId` ∈ the principal's channels, subject to the join
+ * rule above) OR an explicit
  * principal / department / channel grant on the space with a lattice role ≥
  * viewer. `minimal`, `free_busy`, `follower` (and `guest`) grants do not make
  * anyone a space member.
@@ -122,14 +139,24 @@ export interface AclMembership {
 export interface AclResourceNode {
   ref: EntityRef
   workspaceId: string
-  /** Parents for inheritance (e.g. task → project, project → goal, goal → space). */
+  /** Parents for role inheritance (e.g. task → project, goal → space); edge rules in `inheritanceEdge`. */
   parents?: readonly EntityRef[]
+  /**
+   * Secrecy-only structural ancestors: parents whose edge carries no role
+   * (goal → child goal / project, goal-owned folder, a members-mode task
+   * list's project / space). Checked for privacy, never inherited from.
+   */
+  ancestors?: readonly EntityRef[]
   /** `invited` = secret: "Only invited people" — no inheritance, no policy defaults. */
   privacy?: 'inherit' | 'invited'
   /** Owning space, for `space` subjects / presets. */
   spaceId?: string | null
   /** Space nodes only: the space chat; its active members are space members (§5.7). */
   chatId?: string | null
+  /** Space nodes only: the space chat is public (self-joinable). */
+  chatPublic?: boolean
+  /** Space nodes only: company-wide space (`is_company_space` or `default_access <> 'members'`). */
+  companyWide?: boolean
   /**
    * Synthetic entries derived from the row itself (table-level visibility
    * that predates `acl_entry`, e.g. legacy `project.visibility = 'members'`
@@ -153,6 +180,8 @@ export interface AclEntryFact {
   subjectType: AclSubjectType
   subjectId: string
   role: AclStoredRole
+  /** Synthesised from chat membership (`chat_member`), not a stored grant. */
+  via?: 'chat'
 }
 
 export interface AclPolicyFact {
@@ -229,8 +258,10 @@ export interface AclDecision {
   source: AclRoleSource | null
   /** Preview level the actor may see (§8.3 "Read entity / preview"). */
   preview: 'full' | 'minimal' | 'none'
-  /** Resource is secret; unviewable secret refs are omitted from listings. */
+  /** Resource is secret (itself, an ancestor, or incomplete ancestry); unviewable secret refs are omitted from listings. */
   secret: boolean
+  /** The ancestry walk could not be completed (depth limit / unloadable parent); counted as secret. */
+  ancestryIncomplete?: boolean
   reason?: AclDenyReason
 }
 
@@ -239,6 +270,7 @@ export interface AclRoleResult {
   role: AclRole | null
   source: AclRoleSource | null
   secret: boolean
+  ancestryIncomplete?: boolean
   tags: readonly ContextualTag[]
   championAbsent: boolean
   hasChildren: boolean
@@ -359,9 +391,13 @@ function previewFor(role: AclRole | null): AclDecision['preview'] {
 }
 
 /** Build a decision from a role result. Shared with the local shim. */
+function incompleteFlag(result: AclRoleResult): { ancestryIncomplete?: true } {
+  return result.ancestryIncomplete ? { ancestryIncomplete: true } : {}
+}
+
 export function decide(action: AclAction, result: AclRoleResult): AclDecision {
   if (result.denied) {
-    return { allowed: false, action, role: null, source: null, preview: PREVIEW_FOR_DENIED, secret: result.secret, reason: result.denied }
+    return { allowed: false, action, role: null, source: null, preview: PREVIEW_FOR_DENIED, secret: result.secret, ...incompleteFlag(result), reason: result.denied }
   }
   const outcome = applyPermissionRule(action, {
     role: result.role,
@@ -372,7 +408,7 @@ export function decide(action: AclAction, result: AclRoleResult): AclDecision {
   })
   const preview = previewFor(result.role)
   if (outcome.allowed) {
-    return { allowed: true, action, role: result.role, source: result.source, preview, secret: result.secret }
+    return { allowed: true, action, role: result.role, source: result.source, preview, secret: result.secret, ...incompleteFlag(result) }
   }
   return {
     allowed: false,
@@ -381,6 +417,7 @@ export function decide(action: AclAction, result: AclRoleResult): AclDecision {
     source: result.source,
     preview,
     secret: result.secret,
+    ...incompleteFlag(result),
     reason: result.role ? outcome.reason : 'no_access',
   }
 }
@@ -518,8 +555,6 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
     const guest = principal.kind === 'guest'
     const groups = guest ? { departmentIds: [], channelIds: [] } : await source.groups(workspaceId, principal.id)
     const nowMs = now()
-    /** Set when any ancestor reached during the walk is secret. */
-    let secretAncestor = false
 
     // Rows come from the per-batch memo (`memoizeFacts`); this only filters.
     const loadNode = async (target: EntityRef): Promise<AclResourceNode | null> => {
@@ -543,9 +578,13 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
         hit = (async () => {
           const space = await loadNode({ kind: 'space', id: spaceId })
           if (!space) return false
-          if (space.chatId && groups.channelIds.includes(space.chatId)) return true
+          // Chat-derived membership counts only if joining the space chat was allowed:
+          // a public chat may be self-joined only for a company-wide, non-secret space.
+          const chatCounts = !space.chatPublic || (space.companyWide === true && space.privacy !== 'invited')
+          if (chatCounts && space.chatId && groups.channelIds.includes(space.chatId)) return true
           for (const entry of await entriesOf(space)) {
             if (!grantsSpaceMembership(entry.role)) continue
+            if (entry.via === 'chat' && !chatCounts) continue
             if (entry.subjectType === 'principal' && entry.subjectId === principal.id) return true
             if (entry.subjectType === 'department' && groups.departmentIds.includes(entry.subjectId)) return true
             if (entry.subjectType === 'channel' && groups.channelIds.includes(entry.subjectId)) return true
@@ -571,10 +610,61 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
       return role
     }
 
+    // Contextual tags; on a space goal they count only while the principal is a space member.
+    const effectiveTags = async (node: AclResourceNode): Promise<ContextualTag[]> => {
+      const tags = tagsFor(node, principal.id)
+      if (!tags.length || node.ref.kind !== 'goal' || !node.spaceId) return tags
+      const inSpace = (node.parents ?? []).some(p => p.kind === 'space' && p.id === node.spaceId)
+      if (!inSpace) return tags
+      return (await isSpaceMember(node.spaceId)) ? tags : []
+    }
+
+    // Secrecy walk, independent of role flow: every parent and secrecy-only
+    // ancestor, recursively. Incomplete ancestry (depth limit or an
+    // unloadable parent) fails closed.
+    const ancestry = async (start: AclResourceNode): Promise<{ secret: boolean; incomplete: boolean }> => {
+      const seen = new Set<string>([aclRefKey(start.ref)])
+      let frontier: AclResourceNode[] = [start]
+      let incomplete = false
+      for (let depth = 0; frontier.length; depth++) {
+        const refs: EntityRef[] = []
+        for (const node of frontier) {
+          for (const next of [...(node.parents ?? []), ...(node.ancestors ?? [])]) {
+            const key = aclRefKey(next)
+            if (seen.has(key)) continue
+            seen.add(key)
+            refs.push(next)
+          }
+        }
+        if (!refs.length) break
+        if (depth >= maxDepth) return { secret: false, incomplete: true }
+        const loaded = await Promise.all(refs.map(loadNode))
+        frontier = []
+        for (const node of loaded) {
+          if (!node) { incomplete = true; continue }
+          if (node.privacy === 'invited') return { secret: true, incomplete }
+          frontier.push(node)
+        }
+      }
+      return { secret: false, incomplete }
+    }
+
+    // A chat may be open to the workspace (public: see / join) only when it has
+    // no space, or its space is company-wide and not secret (owner decision).
+    const chatOpenToWorkspace = async (chat: AclResourceNode): Promise<boolean> => {
+      for (const parentRef of chat.parents ?? []) {
+        if (parentRef.kind !== 'space') continue
+        const space = await loadNode(parentRef)
+        if (!space || space.privacy === 'invited' || space.companyWide !== true) return false
+      }
+      return true
+    }
+
     const roleOn = async (node: AclResourceNode, depth: number, visiting: Set<string>): Promise<RoleAccumulator> => {
       const acc: RoleAccumulator = { role: null, source: null }
       const policy = await policyOf(node)
       const secret = node.privacy === 'invited'
+      const workspaceOpen = node.ref.kind !== 'channel' || await chatOpenToWorkspace(node)
       const linkOk = LINK_SHAREABLE_KINDS.includes(node.ref.kind)
         && !!principal.linkToken && !linkExpired(policy, nowMs)
 
@@ -595,7 +685,7 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
             if (!guest && !secret && await isSpaceMember(entry.subjectId)) raise(acc, role, 'explicit')
             break
           case 'workspace':
-            if (!guest && !secret && entry.subjectId === workspaceId) raise(acc, role, 'explicit')
+            if (!guest && !secret && workspaceOpen && entry.subjectId === workspaceId) raise(acc, role, 'explicit')
             break
           case 'link':
             if (linkOk && entry.subjectId === principal.linkToken) raise(acc, role, 'link')
@@ -604,7 +694,7 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
       }
 
       // 2. Contextual role tags.
-      const tags = tagsFor(node, principal.id)
+      const tags = await effectiveTags(node)
       if (tags.length) raise(acc, roleWithTags(null, tags), 'contextual')
 
       // 3. Inheritance (never into secret resources), per edge kind.
@@ -616,7 +706,6 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
           if (edge === 'none') continue
           const parent = await loadNode(parentRef)
           if (!parent) continue
-          if (parent.privacy === 'invited') secretAncestor = true
           if (edge === 'space') {
             // §8.2.3: space-member access only into space-wide children, capped at their preset role.
             const cap = parent.privacy === 'invited' ? null : spaceInheritanceCap(node.ref.kind, policy)
@@ -637,7 +726,7 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
 
       // 4. Privacy presets / resource policy defaults.
       if (policy?.defaultRole && !secret) {
-        if (policy.defaultSubject === 'workspace' && !guest) raise(acc, policy.defaultRole, 'policy')
+        if (policy.defaultSubject === 'workspace' && !guest && workspaceOpen) raise(acc, policy.defaultRole, 'policy')
         else if (policy.defaultSubject === 'space' && !guest && node.spaceId && await isSpaceMember(node.spaceId)) {
           raise(acc, policy.defaultRole, 'policy')
         } else if (policy.defaultSubject === 'link' && linkOk && policy.linkToken && policy.linkToken === principal.linkToken) {
@@ -648,7 +737,9 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
     }
 
     const acc = await roleOn(root, 0, new Set([aclRefKey(ref)]))
-    const secret = root.privacy === 'invited' || secretAncestor
+    const lineage = root.privacy === 'invited' ? { secret: true, incomplete: false } : await ancestry(root)
+    // Incomplete ancestry counts as secret (owner bypass and listing).
+    const secret = lineage.secret || lineage.incomplete
     if (guest) acc.role = minRole(acc.role, GUEST_ROLE_CAP)
     // 5. Workspace owners: manager on non-secret resources only (no admin bypass of "Only invited people").
     else if (membership.role === 'owner' && !secret) raise(acc, 'manager', 'workspace-admin')
@@ -657,7 +748,8 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
       role: acc.role,
       source: acc.role ? acc.source : null,
       secret,
-      tags: tagsFor(root, principal.id),
+      ...(lineage.incomplete ? { ancestryIncomplete: true } : {}),
+      tags: await effectiveTags(root),
       championAbsent: !root.championId,
       hasChildren: root.hasChildren === true,
       kind: root.ref.kind,
