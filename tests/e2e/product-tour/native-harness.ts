@@ -77,8 +77,13 @@ export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiag
     } finally {
       clearTimeout(bound)
       // Provisioning may still be writing into the profile; retry and never fail the test for cleanup.
-      await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 })
-        .catch(error => { console.error('native harness: profile cleanup skipped:', error) })
+      // CI sets ROX_PRODUCT_TOUR_NATIVE_KEEP_PROFILE=1 so a red lane ships the app log in its artifact.
+      if (process.env.ROX_PRODUCT_TOUR_NATIVE_KEEP_PROFILE === '1') {
+        console.error(`native harness: keeping profile for diagnostics: ${profile}`)
+      } else {
+        await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 })
+          .catch(error => { console.error('native harness: profile cleanup skipped:', error) })
+      }
     }
   } }
 }
