@@ -162,15 +162,13 @@ export function isStorageVisibleRootEnabled(
   enabledWorkbenchFlags?: ReadonlySet<string>,
   env?: NodeJS.ProcessEnv | Record<string, string | undefined>,
 ): boolean {
-  const raw =
-    env?.ROX_STORAGE_VISIBLE_ROOT?.trim() ??
-    env?.CRAFT_FEATURE_STORAGE_VISIBLE_ROOT?.trim() ??
-    getEnv('ROX_STORAGE_VISIBLE_ROOT') ??
-    getEnv('CRAFT_FEATURE_STORAGE_VISIBLE_ROOT');
-  const override = parseBooleanEnv(raw);
+  // Renderer-safe: no node imports; `env` defaults to process.env when present.
+  const read = (key: string): string | undefined => (env ? env[key]?.trim() || undefined : getEnv(key)?.trim() || undefined);
+  const override =
+    parseBooleanEnv(read('ROX_STORAGE_VISIBLE_ROOT')) ??
+    parseBooleanEnv(read('CRAFT_FEATURE_STORAGE_VISIBLE_ROOT'));
   if (override !== undefined) return override;
-  if (enabledWorkbenchFlags?.has(STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG)) return true;
-  return false;
+  return enabledWorkbenchFlags?.has(STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG) === true;
 }
 
 /**
