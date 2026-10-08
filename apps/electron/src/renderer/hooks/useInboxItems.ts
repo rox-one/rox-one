@@ -29,7 +29,9 @@ import {
   type PendingSkillLike,
   type SessionLike,
 } from '@/pages/inbox/inbox-model'
-import { enabledShellFlagsAtom } from '@/platform/unified-flags'
+import { WORKBENCH_FLAG } from '@rox/core/platform/workbench'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { featureNotifyInboxV1Atom } from '@/atoms/notify-inbox'
 import type { TeamInboxItem } from '@rox/shared/team'
 import { useInboxActorContext } from './useInboxActorContext'
 import { toErrorMessage } from '@/lib/errors'
@@ -50,8 +52,19 @@ export function useInboxItems(options: {
   notifications?: readonly InboxNotificationLike[]
 } = {}) {
   const withRemote = options.withRemote ?? false
-  const shellFlags = useAtomValue(enabledShellFlagsAtom)
-  const enabledKinds: ReadonlySet<InboxActivityKind> = useMemo(() => enabledInboxKinds(shellFlags), [shellFlags])
+  // Dedicated flag atoms only: the Inbox hook is loaded by the browser test
+  // fixture, and the shell's flag set reaches `node:fs`. `goals.checkins.v1`
+  // and `tasks.shared.v1` join here when their owners ship an atom — until
+  // then their surfaces stay off by definition.
+  const entitiesLinks = useAtomValue(featureEntitiesLinksV1Atom)
+  const notifyInbox = useAtomValue(featureNotifyInboxV1Atom)
+  const enabledFlags = useMemo(() => {
+    const flags = new Set<string>()
+    if (entitiesLinks) flags.add(WORKBENCH_FLAG.entitiesLinksV1)
+    if (notifyInbox) flags.add(WORKBENCH_FLAG.notifyInboxV1)
+    return flags
+  }, [entitiesLinks, notifyInbox])
+  const enabledKinds: ReadonlySet<InboxActivityKind> = useMemo(() => enabledInboxKinds(enabledFlags), [enabledFlags])
   const shell = useOptionalAppShellContext()
   const workspaceId = shell?.activeWorkspaceId ?? null
   const { context, contextRef, identityError, refreshIdentity } = useInboxActorContext(workspaceId, withRemote)
