@@ -66,6 +66,8 @@
     "./docs": "./src/docs/index.ts",
     "./design-manifest": "./src/design-manifest/index.ts",
     "./docs/doc-links": "./src/docs/doc-links.ts",
+    "./entities": "./src/entities/index.ts",
+    "./entities/schemas": "./src/entities/schemas.ts",
     "./extensions": "./src/extensions/index.ts",
     "./extensions/browser": "./src/extensions/browser.ts",
     "./feature-flags": "./src/feature-flags.ts",

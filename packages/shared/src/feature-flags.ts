@@ -108,6 +108,21 @@ export function isNativeIndexWatchEnabled(): boolean {
 }
 
 /**
+ * Runtime-evaluated check for the entity links subsystem (W1-02: link store,
+ * resolver, `rox://` deep-link targets).
+ *
+ * Server-evaluated — same shape as `isPagesSharingEnabled`: the renderer gates
+ * its UI on the `entities.links.v1` workbench flag and learns the server-side
+ * state from the RPC responses. Defaults to DISABLED; override with
+ * CRAFT_FEATURE_ENTITIES_LINKS=1|0.
+ */
+export function isEntitiesLinksEnabled(): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_ENTITIES_LINKS'));
+  if (override !== undefined) return override;
+  return false;
+}
+
+/**
  * Runtime-evaluated check for Pages sharing (Cloudflare publication).
  *
  * Server-evaluated: the renderer learns it via `pages:getShareCapabilities`,

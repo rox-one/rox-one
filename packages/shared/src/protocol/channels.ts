@@ -1067,6 +1067,14 @@ export const RPC_CHANNELS = {
     ADD_MANUAL_NOTE: 'meetings:addManualNote',
     CORRECT_SEGMENT: 'meetings:correctSegment',
   },
+  entities: {
+    /** Query/command dispatcher for the local entity-link store. */
+    LINKS: 'entities:links',
+    /** Batch entity preview resolution (local + workspace). */
+    RESOLVE: 'entities:resolve',
+    /** Push: local link store changed for a workspace. */
+    LINKS_CHANGED: 'entities:linksChanged',
+  },
 } as const
 
 // IPC_CHANNELS compat alias removed — all consumers now use RPC_CHANNELS
