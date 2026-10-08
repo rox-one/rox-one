@@ -550,6 +550,35 @@ export class WsRpcServer implements RpcServer {
     })
   }
 
+  // W1-03 (#1500)
+  /**
+   * Authorized single-client push for a shared workspace authority, where the
+   * generic `push()` stays unavailable. Revalidates the client's live session
+   * first and runs `guard` with the refreshed actor; an expired, revoked,
+   * re-scoped or disconnected client receives nothing. Returns whether the
+   * event was sent. Always `false` outside workspace-authority mode.
+   */
+  async pushToWorkspaceClient(
+    clientId: string,
+    workspaceId: string,
+    channel: string,
+    args: readonly unknown[],
+    guard?: (actor: WorkspaceAuthoritySession['actor']) => boolean | Promise<boolean>,
+  ): Promise<boolean> {
+    if (!this.workspaceAuthority) return false
+    const client = this.clients.get(clientId)
+    if (!client || client.workspaceId !== workspaceId || !client.workspaceSession || client.principal || client.localBinding) return false
+    const ws = client.ws
+    let session: WorkspaceAuthoritySession
+    try { session = await this.refreshWorkspaceClient(client) } catch { return false }
+    if (guard) {
+      try { if ((await guard(session.actor)) !== true) return false } catch { return false }
+    }
+    if (this.clients.get(clientId) !== client || client.ws !== ws || client.workspaceId !== workspaceId) return false
+    this.bufferAndMaybeSendEvent(client, channel, [...args], Date.now(), true)
+    return true
+  }
+
   // -------------------------------------------------------------------------
   // Lifecycle
   // -------------------------------------------------------------------------

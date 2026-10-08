@@ -180,8 +180,8 @@ export interface RealtimeSubscribeTopicResult {
   /** Current seq of the topic (0 when nothing was published yet). */
   seq: number
   epoch: string
-  /** Events replayed (pushed right after the result) to close the client's gap. */
-  replayed?: number
+  /** Missed frames after `sinceSeq`, in seq order (replay closes the client's gap). */
+  frames?: RealtimeEventFrame[]
 }
 
 export interface RealtimeSubscribeResult {
@@ -190,3 +190,14 @@ export interface RealtimeSubscribeResult {
 
 /** Upper bound for topics in one subscribe call. */
 export const MAX_SUBSCRIBE_TOPICS = 100
+
+/** WS-RPC channels of the workspace realtime gateway (workspace-service). */
+export const REALTIME_RPC = {
+  /** `(workspaceId, RealtimeSubscribeRequest) → RealtimeSubscribeResult` */
+  SUBSCRIBE: 'realtime:subscribe',
+  /** `(workspaceId, { topics }) → { topics }` */
+  UNSUBSCRIBE: 'realtime:unsubscribe',
+  /** Push: `(workspaceId, RealtimeFrame)` */
+  EVENT: 'realtime:event',
+} as const
+

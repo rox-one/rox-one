@@ -71,6 +71,8 @@ import { registerBrowserPaneHandlers } from './browser-pane'
 import { registerBrowserProfileImportHandlers } from './browser-profile-import'
 import { registerEntitiesHandlers, type EntitiesHandlerRuntime } from './entities.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
+// W1-03 (#1500)
+import { registerCommandsHandlers, type CommandsHandlerRuntime } from './commands.ts'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -88,6 +90,9 @@ export interface CoreRpcRegistrationOptions {
    * as the env override.
    */
   entities?: EntitiesHandlerRuntime
+  // W1-03 (#1500)
+  /** Runtime for the command bus handlers (live `commands.bus.v1`, default OFF). */
+  commands?: CommandsHandlerRuntime
 }
 
 export function registerCoreRpcHandlers(
@@ -154,5 +159,7 @@ export function registerCoreRpcHandlers(
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)
   registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
+  // W1-03 (#1500)
+  registerCommandsHandlers(server, deps, options?.commands)
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }
