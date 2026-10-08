@@ -28,6 +28,7 @@ import {
   ruleSeverities,
   rulesToFlip,
   staleRenamedPaths,
+  ungatedDrift,
   type Baseline,
   type Counts,
 } from '../lint-baseline'
@@ -61,8 +62,13 @@ function stage(variant: 'base' | 'new-z') {
   cpSync(join(ROOT, FIXTURES, variant), join(ROOT, WORK), { recursive: true })
 }
 
-function runCli(args: string[]) {
-  const result = Bun.spawnSync(['bun', 'scripts/lint-baseline.ts', ...args], { cwd: ROOT, stdout: 'pipe', stderr: 'pipe' })
+function runCli(args: string[], env: Record<string, string> = {}) {
+  const result = Bun.spawnSync(['bun', 'scripts/lint-baseline.ts', ...args], {
+    cwd: ROOT,
+    stdout: 'pipe',
+    stderr: 'pipe',
+    env: { ...process.env, UI_BASELINE_OVERRIDE: '0', ...env },
+  })
   return { code: result.exitCode, out: `${result.stdout.toString()}${result.stderr.toString()}` }
 }
 
@@ -356,9 +362,9 @@ describe('lint-baseline: base-branch baseline (review1 W1)', () => {
       'x.tsx:rox/a:2->3',
       'z.tsx:rox/b:0->1',
     ])
-    expect(weakened).toEqual([{ rule: 'rox/b', from: 'error', to: 'warn' }])
+    expect(weakened).toEqual([{ kind: 'severity', rule: 'rox/b', from: 'error', to: 'warn' }])
     const dropped = compareWithBase(base, buildBaseline({}, { 'rox/a': 'warn' }))
-    expect(dropped.weakened).toEqual([{ rule: 'rox/b', from: 'error', to: 'removed' }])
+    expect(dropped.weakened).toEqual([{ kind: 'severity', rule: 'rox/b', from: 'error', to: 'removed' }])
   })
 
   it('reads the base baseline with git show, null when the base has none, throws on a missing ref', () => {
@@ -374,6 +380,75 @@ describe('lint-baseline: base-branch baseline (review1 W1)', () => {
     expect(readBaseBaseline(repo, 'HEAD')?.files).toEqual(base.files)
     expect(() => readBaseBaseline(repo, 'origin/does-not-exist')).toThrow('not available')
   })
+})
+
+describe('lint-baseline: ungating is a weakening (review3 W2)', () => {
+  const severities = { 'rox/p': 'warn', 'rox/q': 'warn' } as const
+  const ungated = (entries: Record<string, string[] | null>) =>
+    Object.fromEntries(Object.entries(entries).map(([rule, messageIds]) => [rule, { until: '#1', messageIds, total: 0 }]))
+  const base: Baseline = buildBaseline({ 'x.tsx': { 'rox/p': 1 } }, severities, ungated({ 'rox/p': ['rawCheckbox'], 'rox/e': null }))
+
+  it('flags a messageId added to UNGATED, a list widened to the whole rule, and a gated rule ungated', () => {
+    const added = buildBaseline({}, severities, ungated({ 'rox/p': ['nativeSelect', 'rawCheckbox'], 'rox/e': null }))
+    expect(compareWithBase(base, added).weakened).toEqual([{ kind: 'ungated', rule: 'rox/p', messageId: 'nativeSelect' }])
+    const widened = buildBaseline({}, { 'rox/q': 'warn' }, ungated({ 'rox/p': null, 'rox/e': null }))
+    // Reported once as the ungating, not also as 'removed'.
+    expect(compareWithBase(base, widened).weakened).toEqual([{ kind: 'ungated', rule: 'rox/p', messageId: null }])
+    const newlyUngated = buildBaseline({}, severities, ungated({ 'rox/p': ['rawCheckbox'], 'rox/e': null, 'rox/q': ['tab'] }))
+    expect(compareWithBase(base, newlyUngated).weakened).toEqual([{ kind: 'ungated', rule: 'rox/q', messageId: 'tab' }])
+  })
+
+  it('does not flag narrowing, an unchanged set, or a rule the base never had', () => {
+    const narrowed = buildBaseline({}, { ...severities, 'rox/e': 'warn' }, ungated({ 'rox/p': [] }))
+    expect(compareWithBase(base, narrowed).weakened).toEqual([])
+    expect(compareWithBase(base, base).weakened).toEqual([])
+    const brandNew = buildBaseline({}, severities, ungated({ 'rox/p': ['rawCheckbox'], 'rox/e': null, 'rox/new': null }))
+    expect(compareWithBase(base, brandNew).weakened).toEqual([])
+  })
+
+  it('detects UNGATED drift against the baseline (rule set and messageIds, order-insensitive)', () => {
+    const recorded = ungated({ 'rox/p': ['a', 'b'], 'rox/e': null })
+    expect(ungatedDrift({ 'rox/p': { messageIds: ['b', 'a'] }, 'rox/e': { messageIds: null } }, recorded)).toEqual([])
+    expect(ungatedDrift({ 'rox/p': { messageIds: ['a', 'b', 'c'] }, 'rox/e': { messageIds: null } }, recorded)).toEqual(['rox/p'])
+    expect(ungatedDrift({ 'rox/p': { messageIds: null }, 'rox/e': { messageIds: null } }, recorded)).toEqual(['rox/p'])
+    expect(ungatedDrift({ 'rox/e': { messageIds: null } }, recorded)).toEqual(['rox/p'])
+    expect(ungatedDrift({ 'rox/p': { messageIds: ['a', 'b'] }, 'rox/e': { messageIds: null }, 'rox/z': { messageIds: [] } }, recorded)).toEqual(['rox/z'])
+    expect(ungatedDrift({}, undefined)).toEqual([])
+  })
+
+  it('end to end: ungating a messageId fails --check until --update, then needs the override vs the base', () => {
+    const repo = ratchetRepo()
+    const cli = (args: string[], env: Record<string, string> = {}) => runCli(['--root', repo, ...args], env)
+    mkdirSync(join(repo, 'apps/electron/src'), { recursive: true })
+    writeFileSync(join(repo, 'apps/electron/src/Form.tsx'), 'export const F = () => <select className="z-50"><option /></select>\n')
+    expect(cli(['--update']).code).toBe(0)
+    const clean = cli([])
+    expect(clean.code, clean.out).toBe(0)
+    git(repo, 'add', '.')
+    git(repo, 'commit', '-qm', 'base')
+    git(repo, 'branch', 'base')
+
+    // The PR ungates <select> (prefer-primitives nativeSelect) without rebaselining: drift.
+    const uiTokens = join(repo, 'apps/electron/eslint-rules/ui-tokens.cjs')
+    const source = readFileSync(uiTokens, 'utf8')
+    expect(source).toContain("messageIds: ['rawCheckbox']")
+    writeFileSync(uiTokens, source.replace("messageIds: ['rawCheckbox']", "messageIds: ['rawCheckbox', 'nativeSelect']"))
+    const drift = cli([])
+    expect(drift.code, drift.out).toBe(1)
+    expect(drift.out).toContain("differs from the baseline's ungated section (rox/prefer-primitives)")
+
+    // After --update the gated count only dropped, so the tree passes; vs the base it is a weakening.
+    const update = cli(['--update', '--base', 'base'])
+    expect(update.code, update.out).toBe(0)
+    git(repo, 'commit', '-qam', 'ungate nativeSelect')
+    expect(cli([]).code).toBe(0)
+    const pr = cli(['--base', 'base'])
+    expect(pr.code, pr.out).toBe(1)
+    expect(pr.out).toContain('rox/prefer-primitives: messageId nativeSelect gated -> ungated')
+    expect(pr.out).toContain('needs the ui-baseline-override label')
+    const overridden = cli(['--base', 'base'], { UI_BASELINE_OVERRIDE: '1' })
+    expect(overridden.code, overridden.out).toBe(0)
+  }, 180_000)
 })
 
 describe('lint-baseline: --targets / --allow-increase guards (review1 infos 1, 2)', () => {

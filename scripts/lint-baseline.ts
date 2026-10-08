@@ -389,18 +389,85 @@ export function rulesToFlip(baselineCounts: Counts, severities: Record<string, S
 }
 
 /**
+ * A weakened rule. `kind: 'severity'`: error -> warn, or the rule dropped from the gate.
+ * `kind: 'ungated'`: a rule or messageId moved out of the growth gate (UNGATED); `messageId` is
+ * null when the whole rule is ungated.
+ */
+export type Weakening =
+  | { kind: 'severity'; rule: string; from: Severity; to: Severity | 'removed' }
+  | { kind: 'ungated'; rule: string; messageId: string | null }
+
+export type Ungated = NonNullable<Baseline['ungated']>
+
+/**
+ * Rules / messageIds ungated in `head` that `base` gated: every messageId added to a rule's
+ * UNGATED list, or a list widened to the whole rule (null). Ungating moves violations out of
+ * `files`, so gated counts only drop; it is a weakening like error -> warn. A rule the base did
+ * not know at all (not in base.rules nor base.ungated) is new, not weakened.
+ */
+export function ungatedWeakenings(base: Baseline, head: Baseline): Weakening[] {
+  const before: Ungated = base.ungated ?? {}
+  const after: Ungated = head.ungated ?? {}
+  const weakened: Weakening[] = []
+  for (const rule of Object.keys(after).sort()) {
+    const now = after[rule]!.messageIds
+    const known = rule in before || rule in (base.rules ?? {})
+    if (!known) continue
+    const was = rule in before ? before[rule]!.messageIds : []
+    if (was === null) continue // already wholly ungated
+    if (now === null) {
+      weakened.push({ kind: 'ungated', rule, messageId: null })
+      continue
+    }
+    for (const messageId of [...now].sort()) {
+      if (!was.includes(messageId)) weakened.push({ kind: 'ungated', rule, messageId })
+    }
+  }
+  return weakened
+}
+
+/**
  * The committed baseline versus the base branch's baseline: a PR may not raise any
- * (file, rule) count (renames carry their counts) or weaken a rule (error -> warn, or drop it).
+ * (file, rule) count (renames carry their counts) or weaken a rule (error -> warn, drop it, or
+ * ungate it or one of its messageIds).
  */
 export function compareWithBase(base: Baseline, head: Baseline, renames: Rename[] = []) {
   const { increases } = compareCounts(applyRenames(base.files, renames), head.files)
-  const weakened: Array<{ rule: string; from: Severity; to: Severity | 'removed' }> = []
+  const weakened: Weakening[] = []
+  const ungated = ungatedWeakenings(base, head)
   for (const [rule, entry] of Object.entries(base.rules ?? {})) {
     const now = head.rules?.[rule]?.severity
-    if (!now) weakened.push({ rule, from: entry.severity, to: 'removed' })
-    else if (entry.severity === 'error' && now === 'warn') weakened.push({ rule, from: 'error', to: 'warn' })
+    if (!now) {
+      // Wholly ungated rules leave `rules`; report that once, as the ungating.
+      if (ungated.some((change) => change.kind === 'ungated' && change.rule === rule && change.messageId === null)) continue
+      weakened.push({ kind: 'severity', rule, from: entry.severity, to: 'removed' })
+    } else if (entry.severity === 'error' && now === 'warn') {
+      weakened.push({ kind: 'severity', rule, from: 'error', to: 'warn' })
+    }
   }
+  weakened.push(...ungated)
   return { increases, weakened }
+}
+
+export function formatWeakening(change: Weakening): string {
+  if (change.kind === 'severity') return `  ${change.rule}: severity ${change.from} -> ${change.to}`
+  return `  ${change.rule}: ${change.messageId === null ? 'whole rule' : `messageId ${change.messageId}`} gated -> ungated`
+}
+
+/**
+ * UNGATED (ui-tokens.cjs) versus the baseline's `ungated` section: rule set and messageIds
+ * (order-insensitive). The `until` text and totals are informational and not compared.
+ * Returns the rules that differ.
+ */
+export function ungatedDrift(
+  config: Record<string, { messageIds: string[] | null }>,
+  recorded: Baseline['ungated'],
+): string[] {
+  const key = (ids: string[] | null | undefined) => (ids === null ? 'null' : JSON.stringify([...(ids ?? [])].sort()))
+  const saved = recorded ?? {}
+  return [...new Set([...Object.keys(config), ...Object.keys(saved)])]
+    .sort()
+    .filter((rule) => !(rule in config) || !(rule in saved) || key(config[rule]!.messageIds) !== key(saved[rule]!.messageIds))
 }
 
 export function buildBaseline(
@@ -641,6 +708,13 @@ export async function main(argv: string[], env: Record<string, string | undefine
       failed = true
       console.error(`lint-baseline: rule set or severities differ from the baseline (${[...drifted, ...dropped].join(', ')}); run --update.`)
     }
+    const ungatedDrifted = ungatedDrift(loadUiTokens(root).UNGATED, baseline.ungated)
+    if (ungatedDrifted.length) {
+      failed = true
+      console.error(
+        `lint-baseline: UNGATED (apps/electron/eslint-rules/ui-tokens.cjs) differs from the baseline's ungated section (${ungatedDrifted.join(', ')}); run --update.`,
+      )
+    }
   }
   if (baseRef && isDefaultBaseline) {
     const base = readBaseBaseline(root, baseRef)
@@ -655,7 +729,7 @@ export async function main(argv: string[], env: Record<string, string | undefine
         ;(override ? console.log : console.error)(header)
         const lines = [
           ...formatChanges(increases),
-          ...weakened.map(({ rule, from, to }) => `  ${rule}: severity ${from} -> ${to}`),
+          ...weakened.map(formatWeakening),
         ]
         ;(override ? console.log : console.error)(lines.join('\n'))
         if (!override) failed = true
