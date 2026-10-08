@@ -136,7 +136,13 @@ Local-only: needs no server URL. The manual forms work regardless of the
 (Windows: junction) to `~/rox`. `--revert` is refused while
 `~/rox/.migration/conflicts` is non-empty, while the flag is still on
 (env or persisted — the next launch would migrate again) and while a live
-Rox process holds `~/rox/.server.lock`.
+Rox process holds a lock (`.server.lock`, or the desktop app's `.app.lock`).
+
+The migration itself also defers while the desktop app or a server is running,
+and when `~/rox` already holds files that are not a Rox home (nothing is moved,
+merged or re-permissioned). Only `migrate-config` and the desktop app (once,
+at launch, with the flag on) ever move files; other commands just read the
+current location.
 
 `--auto` never prompts and does nothing (exit 0) unless the flag is active;
 with the flag on it exits 1 when the migration is deferred (live locks),
