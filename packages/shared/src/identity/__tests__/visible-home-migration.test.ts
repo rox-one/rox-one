@@ -83,6 +83,7 @@ describe('migrateHiddenRoxHome start states', () => {
     withHome((home) => {
       mkdirSync(join(home, 'rox'), { recursive: true })
       writeFileSync(join(home, 'rox', 'keep.txt'), 'keep')
+      writeFileSync(join(home, 'rox', 'config.json'), '{}') // a Rox home (marker)
       const result = migrateHiddenRoxHome(baseOptions(home))
       expect(result.outcome).toBe('already-visible')
       expect(readFileSync(join(home, 'rox', 'keep.txt'), 'utf8')).toBe('keep')
@@ -121,7 +122,7 @@ describe('migrateHiddenRoxHome start states', () => {
 
   it('both real dirs → merged: newer mtime wins, loser kept under .migration/conflicts', () =>
     withHome((home) => {
-      mkdirSync(join(home, 'rox'), { recursive: true })
+      mkdirSync(join(home, 'rox', 'workspaces'), { recursive: true }) // a Rox home (marker)
       writeFileSync(join(home, 'rox', 'only-visible.txt'), 'visible')
       writeFileSync(join(home, 'rox', 'conflict.txt'), 'old-visible')
       writeHiddenFile(home, 'only-hidden.txt', 'hidden')

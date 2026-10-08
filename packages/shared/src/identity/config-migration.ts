@@ -240,7 +240,9 @@ import {
   writeSync as _writeMigrationFd,
 } from 'node:fs'
 import { uptime as _osUptime } from 'node:os'
-import { dirname as _dirnameMigration, relative as _relativeMigration, sep as _pathSep } from 'node:path'
+import { dirname as _dirnameMigration, relative as _relativeMigration, sep as _pathSep, posix as _posixPath, win32 as _win32Path } from 'node:path'
+import { createHash as _createLockHash } from 'node:crypto'
+import { realpathSync as _realpathMigration } from 'node:fs'
 
 /** Name of the visible Rox home inside a home directory. */
 export const ROX_VISIBLE_HOME_DIR_NAME = ROX_HOME_DIR_NAME
@@ -360,6 +362,7 @@ export type VisibleHomeOutcome =
   | 'merged'
   | 'symlink-elsewhere'
   | 'deferred-locked'
+  | 'deferred-foreign'
   | 'reverted'
   | 'revert-refused'
   | 'skipped-env-override'
@@ -445,6 +448,8 @@ export interface MigrateHiddenRoxHomeOptions {
   now?: () => number
   /** Revert only: whether the visible-root flag is active (default: env + persisted file). */
   flagActive?: boolean
+  /** Runtime desktop-lock path for a config dir (tests; default `desktopAppRuntimeLockPath`). */
+  desktopRuntimeLockPath?: (configDir: string) => string
 }
 
 export interface VisibleHomePaths {
@@ -550,23 +555,85 @@ export function isLockFileLive(path: string, options: LockLivenessOptions): bool
   } catch {
     bootTime = 0
   }
-  if (identity.startedAt > 0 && identity.startedAt < bootTime) return false
+  // Written before the current boot (startedAt, else the file mtime — legacy
+  // plain-PID locks carry no timestamp): the PID was reused, not ours.
+  if (bootTime > 0 && writtenAt < bootTime) return false
   if (options.ttlMs !== undefined && options.now - writtenAt > options.ttlMs) return false
   return true
 }
 
+/**
+ * Lifetime lock of a running desktop app (Electron main) inside the config
+ * dir it uses: `{ pid, startedAt }`, held from right after the single-instance
+ * lock until quit. Written only while `storage.visible-root.v1` is active
+ * (flag OFF leaves the config dir exactly as main); the runtime lock below is
+ * held in both modes.
+ */
+export const ROX_DESKTOP_APP_LOCK_NAME = '.app.lock'
+
 /** Lock files inside a Rox home whose live holders must defer a move. */
-export const ROX_HOME_WRITER_LOCK_NAMES = ['config.json.lock', '.server.lock'] as const
+export const ROX_HOME_WRITER_LOCK_NAMES = ['config.json.lock', '.server.lock', ROX_DESKTOP_APP_LOCK_NAME] as const
+
+/**
+ * Per-user runtime twin of the desktop app lock, outside the home (tmpdir),
+ * keyed by the config dir path the app runs on. Lets an explicit
+ * `migrate-config` defer while a flag-OFF app runs without adding a file to
+ * the config dir.
+ */
+export function desktopAppRuntimeLockPath(configDir: string): string {
+  let uid = 'default'
+  try {
+    uid = String(process.getuid?.() ?? 'default')
+  } catch {
+    // non-POSIX
+  }
+  const key = _createLockHash('sha256').update(configDir).digest('hex').slice(0, 16)
+  return join(tmpdir(), `rox-desktop-${uid}-${key}.lock`)
+}
+
+/**
+ * Electron main: hold the desktop app lock(s) for the process lifetime.
+ * Returns the release function (call on quit). Best effort: a failed write
+ * never blocks startup.
+ */
+export function holdDesktopAppLock(configDir: string, options: { inConfigDir: boolean; now?: number }): () => void {
+  const content = JSON.stringify({ pid: process.pid, startedAt: options.now ?? Date.now(), kind: 'desktop-app' })
+  const paths = [desktopAppRuntimeLockPath(configDir)]
+  if (options.inConfigDir) paths.push(join(configDir, ROX_DESKTOP_APP_LOCK_NAME))
+  const held: string[] = []
+  for (const path of paths) {
+    try {
+      const temp = `${path}.tmp-${process.pid}`
+      _writeMigrationFile(temp, content, { encoding: 'utf8', mode: 0o600 })
+      _renameMigration(temp, path)
+      held.push(path)
+    } catch {
+      // best effort
+    }
+  }
+  return () => {
+    for (const path of held) {
+      try {
+        const identity = parseMigrationLockContent(_readMigrationFile(path, 'utf8'))
+        if (identity?.pid === process.pid) _unlinkMigration(path)
+      } catch {
+        // already gone
+      }
+    }
+  }
+}
 
 function _liveHomeLockHolders(dir: string, options?: MigrateHiddenRoxHomeOptions): string[] {
   const now = options?.now?.() ?? Date.now()
   const isPidAlive = options?.isPidAlive ?? defaultIsPidAlive
   const holders: string[] = []
-  for (const name of ROX_HOME_WRITER_LOCK_NAMES) {
+  const probes: Array<[string, string]> = ROX_HOME_WRITER_LOCK_NAMES.map((name) => [name, join(dir, name)])
+  probes.push(['desktop-app', options?.desktopRuntimeLockPath?.(dir) ?? desktopAppRuntimeLockPath(dir)])
+  for (const [name, path] of probes) {
     try {
-      // `.server.lock` is a long-lived PID file (a server may run for days):
-      // liveness + boot time decide, no TTL.
-      if (isLockFileLive(join(dir, name), { now, isPidAlive, pidlessTtlMs: ROX_PIDLESS_LOCK_TTL_MS })) {
+      // `.server.lock` / `.app.lock` are long-lived PID files (a server or the
+      // app may run for days): liveness + boot time decide, no TTL.
+      if (isLockFileLive(path, { now, isPidAlive, pidlessTtlMs: ROX_PIDLESS_LOCK_TTL_MS })) {
         holders.push(name)
       }
     } catch {
@@ -719,11 +786,19 @@ function _copyTreeWithModes(source: string, destination: string, isRoot = true):
     return
   }
   if (st.isDirectory()) {
-    mkdirSync(destination, { recursive: true, mode: st.mode & 0o777 })
+    mkdirSync(destination, { recursive: true, mode: 0o700 })
     for (const name of _readdirMigration(source)) {
       // The in-flight manifest is migration scaffolding, not user data.
       if (isRoot && name === ROX_HOME_MIGRATION_MANIFEST_NAME) continue
       _copyTreeWithModes(join(source, name), join(destination, name), false)
+    }
+    // Source mode after the children are in (restrictive dirs stay copyable).
+    if (!isRoot) {
+      try {
+        _chmodMigration(destination, st.mode & 0o777)
+      } catch {
+        // best effort
+      }
     }
     return
   }
@@ -760,11 +835,46 @@ function _verifyCopyAgainstSource(
   return mismatches
 }
 
-function _isSymlinkTo(path: string, target: string): boolean {
+/**
+ * Whether a link stored at `linkPath` with raw `readlink` value `linkValue`
+ * points at `target`. Windows junctions store absolute targets, often with
+ * a trailing separator, a `\\?\` prefix, or different casing; both sides are
+ * resolved and normalised (trailing separators stripped, case-folded on
+ * win32) before comparing.
+ */
+export function symlinkTargetMatches(
+  linkPath: string,
+  linkValue: string,
+  target: string,
+  platform: NodeJS.Platform = process.platform,
+): boolean {
+  const mod = platform === 'win32' ? _win32Path : _posixPath
+  const normalise = (value: string): string => {
+    let out = value
+    if (platform === 'win32') out = out.replace(/^\\\\\?\\(UNC\\)?/i, (_m, unc: string | undefined) => (unc ? '\\\\' : ''))
+    out = mod.resolve(out)
+    const root = mod.parse(out).root
+    while (out.length > root.length && (out.endsWith('/') || (platform === 'win32' && out.endsWith('\\')))) {
+      out = out.slice(0, -1)
+    }
+    return platform === 'win32' ? out.toLowerCase() : out
+  }
+  const resolvedLink = mod.isAbsolute(linkValue) || (platform === 'win32' && /^\\\\\?\\/.test(linkValue))
+    ? linkValue
+    : mod.join(mod.dirname(linkPath), linkValue)
+  return normalise(resolvedLink) === normalise(target)
+}
+
+function _isSymlinkTo(path: string, target: string, platform: NodeJS.Platform = process.platform): boolean {
   try {
     if (!_lstatMigration(path).isSymbolicLink()) return false
-    const link = _readlinkMigration(path)
-    return link === target || join(_dirnameMigration(path), link) === target
+    if (symlinkTargetMatches(path, _readlinkMigration(path), target, platform)) return true
+    // Same directory through any link form (real FS): compare real paths.
+    try {
+      return _realpathMigration(path) === _realpathMigration(target)
+    } catch {
+      return false
+    }
   } catch {
     return false
   }
@@ -892,10 +1002,146 @@ export function roxHomeHasUserData(root: string): boolean {
   return false
 }
 
+/** Entries that mark a directory as a Rox home. */
+export const ROX_HOME_MARKER_NAMES: readonly string[] = [
+  'config.json',
+  'workspaces',
+  ROX_HOME_MIGRATION_DIR_NAME,
+  ROX_WORKBENCH_FLAGS_FILE_NAME,
+]
+/** OS litter that does not make an otherwise empty directory "foreign". */
+const _IGNORABLE_DIR_ENTRIES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini', '.localized'])
+
+/**
+ * A `~/rox` that is not a Rox home: not a directory, or a non-empty
+ * directory without any Rox marker (config.json, workspaces, .migration,
+ * workbench-flags.json) — e.g. a project checkout named `rox`. The visible
+ * home is never merged into, chmodded, or used while foreign; the migration
+ * defers (same rule as the remote bootstrap's FOREIGN layout).
+ */
+export function isForeignVisibleHome(dir: string): boolean {
+  let st: import('node:fs').Stats
+  try {
+    st = _statMigration(dir)
+  } catch {
+    try {
+      _lstatMigration(dir)
+      return true // dangling symlink or unreadable entry: not usable as a home
+    } catch {
+      return false // absent
+    }
+  }
+  if (!st.isDirectory()) return true
+  let names: string[]
+  try {
+    names = _readdirMigration(dir).filter((name) => !_IGNORABLE_DIR_ENTRIES.has(name))
+  } catch {
+    return true
+  }
+  if (names.length === 0) return false
+  return !names.some((name) => ROX_HOME_MARKER_NAMES.includes(name))
+}
+
+/** Written under `~/rox/.migration/` before a merge, removed once it completed. */
+export const ROX_MERGE_INCOMPLETE_MARKER_NAME = 'merge-incomplete.json'
+
+export interface MergeIncompleteMarker {
+  startedAt: number
+  /** Pre-merge snapshot: whether each tree held user data. */
+  hiddenHasData: boolean
+  visibleHasData: boolean
+  /** The dir processes keep using until the merge completes. */
+  choice: 'hidden' | 'visible'
+}
+
+export function mergeIncompleteMarkerPath(visibleDir: string): string {
+  return join(visibleDir, ROX_HOME_MIGRATION_DIR_NAME, ROX_MERGE_INCOMPLETE_MARKER_NAME)
+}
+
+export function readMergeIncompleteMarker(visibleDir: string): MergeIncompleteMarker | undefined {
+  try {
+    const parsed = JSON.parse(_readMigrationFile(mergeIncompleteMarkerPath(visibleDir), 'utf8')) as Partial<MergeIncompleteMarker>
+    return {
+      startedAt: typeof parsed.startedAt === 'number' ? parsed.startedAt : 0,
+      hiddenHasData: parsed.hiddenHasData === true,
+      visibleHasData: parsed.visibleHasData === true,
+      choice: parsed.choice === 'visible' ? 'visible' : 'hidden',
+    }
+  } catch {
+    try {
+      // Present but unreadable/garbled: still an incomplete merge.
+      _lstatMigration(mergeIncompleteMarkerPath(visibleDir))
+      return { startedAt: 0, hiddenHasData: true, visibleHasData: false, choice: 'hidden' }
+    } catch {
+      return undefined
+    }
+  }
+}
+
+type VisibleHomeState =
+  | 'symlinked'
+  | 'symlink-elsewhere'
+  | 'foreign'
+  | 'clean'
+  | 'visible-only'
+  | 'hidden-only'
+  | 'both'
+
+function _classifyVisibleHome(paths: VisibleHomePaths, platform: NodeJS.Platform): VisibleHomeState {
+  let hiddenStat: import('node:fs').Stats | undefined
+  try {
+    hiddenStat = _lstatMigration(paths.hiddenDir)
+  } catch {
+    hiddenStat = undefined
+  }
+  if (hiddenStat?.isSymbolicLink() === true) {
+    return _isSymlinkTo(paths.hiddenDir, paths.visibleDir, platform) ? 'symlinked' : 'symlink-elsewhere'
+  }
+  if (isForeignVisibleHome(paths.visibleDir)) return 'foreign'
+  const visibleExists = existsSync(paths.visibleDir)
+  if (!hiddenStat) return visibleExists ? 'visible-only' : 'clean'
+  return visibleExists ? 'both' : 'hidden-only'
+}
+
+/**
+ * Read-only flag-ON resolution for every process that must not migrate
+ * (CLI, headless server, scripts, a second app instance, and the desktop app
+ * before its single-instance lock). Never writes. `~/rox` only when it
+ * already is the home (symlinked / visible-only / a fresh machine); a legacy
+ * home awaiting migration, a foreign `~/rox`, or an incomplete merge whose
+ * pre-merge snapshot chose the legacy dir keep `~/.rox`.
+ */
+export function resolveVisibleHomeWithoutMigration(
+  homeDir: string = homedir(),
+  platform: NodeJS.Platform = process.platform,
+): string {
+  const paths = defaultVisibleHomePaths(homeDir)
+  switch (_classifyVisibleHome(paths, platform)) {
+    case 'symlinked':
+    case 'clean':
+    case 'visible-only':
+      return paths.visibleDir
+    case 'foreign':
+    case 'hidden-only':
+      return paths.hiddenDir
+    case 'symlink-elsewhere':
+      return existsSync(paths.visibleDir) && roxHomeHasUserData(paths.visibleDir) ? paths.visibleDir : paths.hiddenDir
+    case 'both': {
+      const marker = readMergeIncompleteMarker(paths.visibleDir)
+      if (marker) return marker.choice === 'visible' ? paths.visibleDir : paths.hiddenDir
+      return roxHomeHasUserData(paths.visibleDir) ? paths.visibleDir : paths.hiddenDir
+    }
+  }
+}
+
 /**
  * Move `~/.rox` → `~/rox` (MIG-13). Never deletes user data; leaves `~/.rox`
  * as a symlink (Windows: directory junction) to `~/rox`. Throws on I/O
  * failures mid-move (the caller keeps the legacy dir in that case).
+ *
+ * Only two callers may run it: Electron main right after its single-instance
+ * lock (`runVisibleHomeAutoMigration`) and an explicit `migrate-config`.
+ * Every other process resolves read-only (`resolveVisibleHomeWithoutMigration`).
  */
 export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): VisibleHomeMigrationResult {
   const env = options?.env ?? process.env
@@ -932,56 +1178,53 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     })
   }
 
-  let hiddenStat: ReturnType<typeof _lstatMigration> | undefined
-  try {
-    hiddenStat = _lstatMigration(paths.hiddenDir)
-  } catch {
-    hiddenStat = undefined
-  }
-  const hiddenExists = hiddenStat !== undefined
-  const hiddenIsSymlink = hiddenStat?.isSymbolicLink() === true
-  const visibleExists = existsSync(paths.visibleDir)
-
-  if (hiddenIsSymlink) {
-    if (_isSymlinkTo(paths.hiddenDir, paths.visibleDir)) {
-      if (!dryRun && visibleExists) _ensurePrivateDir(paths.visibleDir)
-      return done('already-symlinked')
+  // States that need no move. Re-evaluated after the process lock: another
+  // process may have migrated meanwhile.
+  const settled = (state: VisibleHomeState): VisibleHomeMigrationResult | undefined => {
+    switch (state) {
+      case 'symlinked':
+        if (!dryRun && existsSync(paths.visibleDir)) _ensurePrivateDir(paths.visibleDir)
+        return done('already-symlinked')
+      case 'symlink-elsewhere':
+        return done('symlink-elsewhere', { diagnostics: ['storage.migration.symlinkElsewhere'] })
+      case 'foreign':
+        return done('deferred-foreign', { diagnostics: ['storage.migration.deferredForeign'] })
+      case 'clean':
+        if (!dryRun) _ensurePrivateDir(paths.visibleDir)
+        return done('clean-install')
+      case 'visible-only':
+        if (!dryRun) _ensurePrivateDir(paths.visibleDir)
+        return done('already-visible')
+      default:
+        return undefined
     }
-    return done('symlink-elsewhere', {
-      diagnostics: ['storage.migration.symlinkElsewhere'],
-    })
   }
-
-  if (!hiddenExists && !visibleExists) {
-    if (!dryRun) _ensurePrivateDir(paths.visibleDir)
-    return done('clean-install')
-  }
-
-  if (!hiddenExists && visibleExists) {
-    if (!dryRun) _ensurePrivateDir(paths.visibleDir)
-    return done('already-visible')
-  }
-
-  // Only `~/.rox` (real dir), or both real dirs: check live writers first.
-  const holders = options?.isLocked
-    ? options.isLocked(paths.hiddenDir)
-    : [
-        ..._liveHomeLockHolders(paths.hiddenDir, options),
-        ...(visibleExists ? _liveHomeLockHolders(paths.visibleDir, options).map((h) => `rox/${h}`) : []),
-      ]
-  if (holders.length > 0) {
-    return done('deferred-locked', {
+  const lockHolders = (bothExist: boolean): string[] =>
+    options?.isLocked
+      ? options.isLocked(paths.hiddenDir)
+      : [
+          ..._liveHomeLockHolders(paths.hiddenDir, options),
+          ...(bothExist ? _liveHomeLockHolders(paths.visibleDir, options).map((h) => `rox/${h}`) : []),
+        ]
+  const deferredByHolders = (holders: string[]): VisibleHomeMigrationResult =>
+    done('deferred-locked', {
       diagnostics: ['storage.migration.deferredLocked', ...holders.map((h) => `locked:${h}`)],
     })
-  }
+
+  let state = _classifyVisibleHome(paths, platform)
+  const early = settled(state)
+  if (early) return early
+
+  // Only `~/.rox` (real dir), or both real dirs: check live writers first.
+  let holders = lockHolders(state === 'both')
+  if (holders.length > 0) return deferredByHolders(holders)
 
   // size / mode / mtime only — no content hashing on the atomic path.
-  const manifest = buildVisibleHomeManifest(paths.hiddenDir, { hash: false })
+  let manifest = buildVisibleHomeManifest(paths.hiddenDir, { hash: false })
   base.manifest = manifest
-  const summary = summarizeVisibleHomeManifest(manifest)
 
   if (dryRun) {
-    return visibleExists ? done('merged', { announceToast: true }) : done('migrated', { announceToast: true })
+    return state === 'both' ? done('merged', { announceToast: true }) : done('migrated', { announceToast: true })
   }
 
   const release = options?.skipProcessLock === true ? () => {} : _acquireProcessLock(options)
@@ -991,7 +1234,17 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     })
   }
   try {
-    if (!visibleExists) {
+    // Fresh state under the lock (another process may have finished first).
+    state = _classifyVisibleHome(paths, platform)
+    const settledNow = settled(state)
+    if (settledNow) return settledNow
+    holders = lockHolders(state === 'both')
+    if (holders.length > 0) return deferredByHolders(holders)
+    manifest = buildVisibleHomeManifest(paths.hiddenDir, { hash: false })
+    base.manifest = manifest
+    const summary = summarizeVisibleHomeManifest(manifest)
+
+    if (state === 'hidden-only') {
       // Crash evidence while the move is in flight; removed once verified.
       const manifestPath = join(paths.hiddenDir, ROX_HOME_MIGRATION_MANIFEST_NAME)
       try {
@@ -1057,10 +1310,26 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     // Both real dirs: per-file merge into `~/rox`. Identical files are
     // skipped; for differing files a tree without user data (fresh defaults)
     // always loses; otherwise the newer mtime wins. The loser is kept under
-    // `.migration/conflicts/`.
+    // `.migration/conflicts/`. The user-data snapshot is taken once, before
+    // the first attempt, and recorded in an incomplete-merge marker: a merge
+    // that failed halfway never lets its partial copy (or later writes to it)
+    // win a retry, and read-only resolution keeps the pre-merge choice.
     _ensurePrivateDir(paths.visibleDir)
-    const hiddenHasData = roxHomeHasUserData(paths.hiddenDir)
-    const visibleHasData = roxHomeHasUserData(paths.visibleDir)
+    const previous = readMergeIncompleteMarker(paths.visibleDir)
+    const hiddenHasData = previous?.hiddenHasData ?? roxHomeHasUserData(paths.hiddenDir)
+    const visibleHasData = previous?.visibleHasData ?? roxHomeHasUserData(paths.visibleDir)
+    if (!previous) {
+      const marker: MergeIncompleteMarker = {
+        startedAt: options?.now?.() ?? Date.now(),
+        hiddenHasData,
+        visibleHasData,
+        choice: visibleHasData ? 'visible' : 'hidden',
+      }
+      const markerPath = mergeIncompleteMarkerPath(paths.visibleDir)
+      mkdirSync(_dirnameMigration(markerPath), { recursive: true, mode: 0o700 })
+      // Strict: without the marker a partial merge could later win.
+      _writeMigrationFile(markerPath, `${JSON.stringify(marker)}\n`, { encoding: 'utf8', mode: 0o600 })
+    }
     const preferHidden = hiddenHasData && !visibleHasData
     const preferVisible = visibleHasData && !hiddenHasData
     const conflicts: string[] = []
@@ -1069,6 +1338,29 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       const target = join(conflictsRoot, rel)
       _copyFilePreservingMeta(source, target, _lstatMigration(source))
       conflicts.push(rel)
+    }
+    // A legacy directory where `~/rox` has a file: keep the whole subtree.
+    const stashTree = (source: string, rel: string): void => {
+      const st = _lstatMigration(source)
+      const target = join(conflictsRoot, rel)
+      if (st.isSymbolicLink()) {
+        mkdirSync(_dirnameMigration(target), { recursive: true })
+        try {
+          _symlinkMigration(_readlinkMigration(source), target)
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException | null)?.code !== 'EEXIST') throw error
+        }
+        conflicts.push(rel)
+        return
+      }
+      if (st.isDirectory()) {
+        mkdirSync(target, { recursive: true })
+        const names = _readdirMigration(source)
+        if (names.length === 0) conflicts.push(`${rel}/`)
+        for (const name of names) stashTree(join(source, name), `${rel}/${name}`)
+        return
+      }
+      if (st.isFile()) stash(source, rel)
     }
     const mergeEntry = (rel: string): void => {
       const from = join(paths.hiddenDir, rel)
@@ -1089,23 +1381,28 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         return
       }
       if (fromStat.isDirectory()) {
-        let toStat: ReturnType<typeof _lstatMigration> | undefined
+        let toStat: import('node:fs').Stats | undefined
         try {
           toStat = _lstatMigration(to)
         } catch {
           toStat = undefined
         }
         if (toStat && !toStat.isDirectory()) {
-          // A file sits where the legacy tree has a directory: keep both.
-          for (const name of _readdirMigration(from)) {
-            const childRel = `${rel}/${name}`
-            const child = join(paths.hiddenDir, childRel)
-            if (_lstatMigration(child).isFile()) stash(child, childRel)
-          }
+          stashTree(from, rel)
           return
         }
-        if (!toStat) mkdirSync(to, { recursive: true, mode: fromStat.mode & 0o777 })
+        // New dirs stay owner-writable until their subtree is merged, then get
+        // the source mode (a failed attempt never leaves an unwritable dir
+        // that would block the retry).
+        if (!toStat) mkdirSync(to, { recursive: true, mode: 0o700 })
         for (const name of _readdirMigration(from)) mergeEntry(rel ? `${rel}/${name}` : name)
+        if (!toStat) {
+          try {
+            _chmodMigration(to, fromStat.mode & 0o777)
+          } catch {
+            // best effort
+          }
+        }
         return
       }
       if (!fromStat.isFile()) return
@@ -1133,12 +1430,17 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     }
     rename(paths.hiddenDir, `${paths.hiddenDir}.migrated-${timestamp}`)
     linkDir(paths.visibleDir, paths.hiddenDir, linkType)
+    try {
+      _unlinkMigration(mergeIncompleteMarkerPath(paths.visibleDir))
+    } catch {
+      // already gone
+    }
     const result = done('merged', {
       conflicts: conflicts.sort(),
       diagnostics: conflicts.length > 0 ? ['storage.migration.conflictsKept'] : [],
       announceToast: true,
     })
-    result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summary)
+    result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summarizeVisibleHomeManifest(manifest))
     return result
   } finally {
     release()
@@ -1174,7 +1476,7 @@ export function revertVisibleRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
   } catch {
     hiddenStat = undefined
   }
-  if (hiddenStat?.isSymbolicLink() !== true || !_isSymlinkTo(paths.hiddenDir, paths.visibleDir)) {
+  if (hiddenStat?.isSymbolicLink() !== true || !_isSymlinkTo(paths.hiddenDir, paths.visibleDir, options?.platform ?? process.platform)) {
     return { ...base, outcome: 'noop', diagnostics: ['storage.migration.revertNoSymlink'] }
   }
   const flagActive =
