@@ -80,6 +80,7 @@ export interface ClaudeContextOptions {
   workspaceId: string;
   onPlanSubmitted: (planPath: string) => void;
   onAuthRequest: (request: unknown) => void;
+  getHostBashEnv?: SessionToolContext['getHostBashEnv'];
 }
 
 /**
@@ -290,6 +291,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
     plansFolderPath: getSessionPlansPath(workspacePath, sessionId),
     sessionPath: getSessionPath(workspacePath, sessionId),
     dataPath: getSessionDataPath(workspacePath, sessionId),
+    getHostBashEnv: options.getHostBashEnv ?? createHostBashEnv,
     callbacks,
     fs,
     validators,
