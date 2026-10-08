@@ -50,6 +50,8 @@ import {
 } from '../chrome.ts'
 import { WORKBENCH_FEATURE_FLAGS, WORKBENCH_FLAG } from '../workbench/index.ts'
 import { REALTIME_EVENT_TYPES, isRealtimeEventType } from '../../events/topics.ts'
+import { ENTITY_KINDS, NEW_ENTITY_KINDS, ROX2_ENTITY_KINDS } from '../../entities/kinds.ts'
+import { ENTITY_RELATIONS, NEW_ENTITY_RELATIONS, ROX2_RELATIONS } from '../../entities/links.ts'
 
 const W1_15_FLAGS = [
   WORKBENCH_FLAG.agentPanelV1,
@@ -262,6 +264,24 @@ describe('W1-15 counters (§19, §26.1)', () => {
     expect(formatCounter(COUNTER_DISPLAY_CAP + 1)).toBe('99+')
     expect(formatCounter(1234)).toBe('99+')
     expect(formatCounter(Number.NaN)).toBe('')
+  })
+})
+
+describe('W1-15 adds no kinds, relations or tables (DATA-MODEL §5.18)', () => {
+  it('keeps the 54-kind registry and the frozen 21 ROX2 kinds', () => {
+    expect(ENTITY_KINDS.length).toBe(54)
+    expect(ROX2_ENTITY_KINDS.length).toBe(21)
+    expect(NEW_ENTITY_KINDS.length).toBe(33)
+  })
+
+  it('keeps the 12-relation vocabulary', () => {
+    expect(ENTITY_RELATIONS.length).toBe(12)
+    expect(ROX2_RELATIONS.length).toBe(8)
+    expect(NEW_ENTITY_RELATIONS.length).toBe(4)
+    // The only relation W1-15 uses is an existing one (pins are `relates-to`).
+    expect(ENTITY_RELATIONS).toContain('relates-to')
+    expect(ENTITY_RELATIONS).toContain('in-calendar')
+    expect(ENTITY_RELATIONS).toContain('derived-from')
   })
 })
 
