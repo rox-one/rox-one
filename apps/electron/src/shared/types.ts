@@ -1864,6 +1864,8 @@ export interface ElectronAPI {
   cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
   grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>
   sendVoiceChunk(payload: { audioBase64: string }): Promise<{ ok: true }>
+  /** Transient microphone RMS (0..1) for the live capture wave; ignored outside `recording`. */
+  sendVoiceLevel(payload: { level: number }): Promise<{ ok: true }>
   editVoiceTranscript(payload: { id: string; expectedRevisionId: string; text: string }): Promise<{ ok: true; revisionId: string }>
   selectVoiceTranscript(payload: { id: string; expectedRevisionId: string; revisionId: string }): Promise<{ ok: true; revisionId: string }>
   readVoiceRecordingAudio(payload: { id: string; offset: number; token?: string }): Promise<{ audioBase64: string; offset: number; totalBytes: number; token: string; hash: string; mimeType: string }>

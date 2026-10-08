@@ -4,7 +4,10 @@ import { DEEPGRAM_TRANSCRIPTION_MODEL, DEEPGRAM_TRANSCRIPTION_NAME } from '../co
 
 export { DEEPGRAM_TRANSCRIPTION_MODEL, DEEPGRAM_TRANSCRIPTION_NAME }
 
-/** Only released general batch models qualify, never Flux/medical/streaming-only models. */
+/**
+ * Only released general batch models qualify, never Flux/medical/streaming-only models.
+ * Used solely when the operator explicitly opts into catalog-driven upgrades.
+ */
 export function latestNovaModel(raw: unknown): string {
   const models = asObject(raw).stt
   if (!Array.isArray(models)) return DEEPGRAM_TRANSCRIPTION_MODEL
@@ -106,15 +109,19 @@ export function normalizeDeepgramTranscript(raw: unknown, requestedModelId = DEE
 
 /** Backend/main process only: the shared key never enters a renderer or source configuration. */
 export class DeepgramTranscriptionAdapter {
-  constructor(private readonly options: { apiKey: string; model?: string; http?: TranscriptionHttp; timeoutMs?: number }) {}
+  constructor(private readonly options: { apiKey: string; model?: string; http?: TranscriptionHttp; timeoutMs?: number
+    /** Opt-in only: consult the live catalog and upgrade above the pinned Nova-3 default. */
+    allowModelUpgrade?: boolean }) {}
 
   async transcribe(input: TranscriptionRequest): Promise<NormalizedTranscript> {
     if (!this.options.apiKey.trim()) throw new RoxTranscriptionError('unauthorized', 'Deepgram is not configured')
     if (input.signal?.aborted) throw new RoxTranscriptionError('cancelled', 'Transcription cancelled')
     const mime = validateAudioLimits(input.audio, { maxBytes: 200 * 1024 * 1024, allowedMime: ['audio/wav', 'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/flac', 'audio/x-m4a', 'audio/aac'] }, input.mimeType?.split(';')[0])
     const request = this.options.http?.fetch ?? fetch
-    let model = this.options.model?.trim()
-    if (!model) {
+    // The pinned default is Nova-3. A newer released family is requested only
+    // when the caller explicitly opts in; otherwise the catalog is never hit.
+    let model = this.options.model?.trim() || DEEPGRAM_TRANSCRIPTION_MODEL
+    if (!this.options.model?.trim() && this.options.allowModelUpgrade === true) {
       try {
         const catalog = await request('https://api.deepgram.com/v1/models', {
           headers: { Authorization: `Token ${this.options.apiKey}` },

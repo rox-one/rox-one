@@ -18,6 +18,59 @@ declare global {
   } }
 }
 
+/** Number of bars in the overlay wave; short enough to read as a level meter. */
+const WAVE_BAR_COUNT = 16
+const WAVE_BAR_INDEXES = Array.from({ length: WAVE_BAR_COUNT }, (_, index) => index)
+
+/**
+ * Live microphone level wave for the owned overlay.
+ *
+ * `renderer/components/voice/VoiceLevelWave.tsx` (the in-app meter) is
+ * deliberately not imported here: this surface is its own Vite entry
+ * (`voice-overlay.html`) with a separate browser fixture that resolves no `@`
+ * alias, and the tiny always-on-top pill must stay free of app-only modules.
+ * The renderer below is the minimal equivalent, driven by the same normalized
+ * RMS (0..1) that the voice host publishes for the real capture.
+ */
+function OverlayLevelWave({ level, active, label }: { level: number; active: boolean; label: string }) {
+  const bars = useRef<Array<HTMLSpanElement | null>>([])
+  const levelRef = useRef(level)
+  const activeRef = useRef(active)
+  levelRef.current = level
+  activeRef.current = active
+
+  useEffect(() => {
+    const history = new Array<number>(WAVE_BAR_COUNT).fill(0)
+    let smoothed = 0
+    let frame = requestAnimationFrame(function tick() {
+      const target = activeRef.current ? Math.min(1, Math.max(0, levelRef.current)) : 0
+      smoothed = target > smoothed ? target : smoothed * 0.72 + target * 0.28
+      history.shift()
+      history.push(smoothed)
+      bars.current.forEach((bar, index) => {
+        if (!bar) return
+        const value = history[index] ?? 0
+        bar.style.height = `${Math.max(12, Math.round(value * 100))}%`
+        bar.style.opacity = String(0.35 + value * 0.65)
+      })
+      frame = requestAnimationFrame(tick)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  return (
+    <span role="img" aria-label={label} style={{ display: 'flex', alignItems: 'center', gap: 2, width: 64, height: 18 }}>
+      {WAVE_BAR_INDEXES.map(index => (
+        <span
+          key={index}
+          ref={node => { bars.current[index] = node }}
+          style={{ flex: '1 1 0', minWidth: 1, height: '12%', borderRadius: 1, background: '#f4f4f5', transition: 'height 90ms linear, opacity 90ms linear' }}
+        />
+      ))}
+    </span>
+  )
+}
+
 export function OverlayApp() {
   if (VOICE_OVERLAY_REQUIRES_CONATION_FLAG) {
     throw new Error('Voice overlay is native and must not require Conation')
@@ -83,9 +136,7 @@ export function OverlayApp() {
         background: state.phase === 'recording' ? '#ef4444' : '#a1a1aa',
       }} />
       <span style={{ fontSize: 12, minWidth: 64 }}>{phaseKey[state.phase] ? t(phaseKey[state.phase]) : ''}</span>
-      <span style={{ width: 48, height: 8, background: '#27272a', borderRadius: 4, overflow: 'hidden' }}>
-        <span style={{ display: 'block', height: '100%', width: `${Math.min(100, state.rms * 400)}%`, background: '#f4f4f5', transition: 'width 150ms linear' }} />
-      </span>
+      <OverlayLevelWave level={state.rms} active={state.phase === 'recording'} label={t('voice.overlay.level')} />
       <span style={{ fontSize: 11 }}>{`${Math.floor(state.elapsedMs / 60000)}:${String(Math.floor(state.elapsedMs / 1000) % 60).padStart(2, '0')}`}</span>
       {commandError ? <span role="alert">{t('voice.overlay.error')}</span> : null}
       {state.streaming && state.partialTranscript ? <span style={{ fontSize: 11 }}>{state.partialTranscript}</span> : null}

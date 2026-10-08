@@ -9,7 +9,7 @@ import { cpus, homedir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import type { LocalAsrEngine } from '../../shared/meetings-local'
 import { modelLabel, parseWhisperProgress, pickWhisperModel } from './local-model'
-import { DEEPGRAM_TRANSCRIPTION_MODEL } from '@rox/shared/voice'
+import { resolveDeepgramModel } from '@rox/shared/voice'
 import { loadVoicePrefs } from '@rox/shared/voice'
 
 const BIN_DIRS = ['/opt/homebrew/bin', '/usr/local/bin', '/opt/local/bin', '/usr/bin']
@@ -39,7 +39,7 @@ export function detectEngine(configDir: string): LocalAsrEngine {
   if (prefs.sttEngine === 'cloud-rox') {
     const configured = Boolean(getServerServiceKey('DEEPGRAM_API_KEY'))
     const missing = [!configured && 'deepgram-not-configured', (!prefs.cloudAsrConsent || prefs.privacyMigrationPending) && 'cloud-consent'].filter((value): value is string => Boolean(value))
-    return { ready: missing.length === 0, engine: 'deepgram', model: process.env.DEEPGRAM_MODEL?.trim() || DEEPGRAM_TRANSCRIPTION_MODEL,
+    return { ready: missing.length === 0, engine: 'deepgram', model: resolveDeepgramModel(process.env),
       binary: null, modelPath: null, ffmpeg: findBinary(['ffmpeg']), missing, cloudAvailable: configured }
   }
   const binary = findBinary(['whisper-cli', 'whisper-cpp'])
