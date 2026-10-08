@@ -1,20 +1,23 @@
 // W1-05 (issue #1502) · unified server DDL migration tests.
 // Static inventory / ordering / FK-target / enum checks always run.
-// Migrate-up runs need Postgres: ROX_TEST_PG_URL, else the compound-workspace
-// environment file, else a temp initdb cluster, else the DB block is skipped.
+// Migrate-up runs need Postgres: ROX_TEST_PG_URL, else a temp initdb cluster
+// (initdb/pg_ctl on PATH), else the DB block is skipped. Tests never read real
+// dot-configs. Set ROX_TEST_PG_REQUIRED=1 (CI) to fail instead of skipping.
 import { describe, expect, test, afterAll } from 'bun:test'
 import { SQL } from 'bun'
 import { spawnSync } from 'node:child_process'
-import { mkdtemp, readdir, readFile } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { applyWorkspaceMigrations, migrationFromSource } from '../src/database/migrations'
+import { applyWorkspaceMigrations, compareMigrationNames, migrationFromSource } from '../src/database/migrations'
+import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../src/server'
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations/', import.meta.url))
 
-// Spec number -> on-disk name (migrations/README.md). 40-tables is reserved (#1295).
+// Spec number -> on-disk name (migrations/README.md). Spec 40-tables (#1295) has no
+// slot here: it must land as 553+ (see LOCKED_MIGRATIONS below).
 const EXPECTED_FILES = [
   '502-directory.sql', '503-acl.sql', '504-files.sql', '505-events.sql', '506-notify.sql',
   '507-search.sql', '508-social.sql', '509-spaces.sql', '510-docs.sql', '511-drive-wiki.sql',
@@ -23,6 +26,21 @@ const EXPECTED_FILES = [
   '523-projects.sql', '524-check-ins-reviews.sql', '525-kpi.sql', '526-templates.sql', '530-vc.sql',
   '551-workplace.sql', '552-mail.sql',
 ]
+
+// Every migration that exists today, in sorted order. Databases apply them as an exact
+// sorted prefix, so a new file must sort after the last entry here (553+), never in
+// the middle (a 540-* or 40-* file would break every DB that already applied 551/552).
+// When adding a migration, append its name here in the same change.
+const LOCKED_MIGRATIONS = [
+  '01-domain-contract.sql', '01-local-auth-bootstrap.sql', '48-license-audit.sql', ...EXPECTED_FILES,
+] as const
+
+/** Names that are not locked yet but sort before the last locked one (order-conflict traps). */
+function migrationsSortingIntoLockedHistory(names: readonly string[]): string[] {
+  const locked = new Set<string>(LOCKED_MIGRATIONS)
+  const last = [...LOCKED_MIGRATIONS].sort(compareMigrationNames).at(-1)!
+  return names.filter(name => !locked.has(name) && compareMigrationNames(name, last) <= 0)
+}
 
 // Tables that already exist from 01-domain-contract / 01-local-auth-bootstrap / 48-license-audit.
 const BASE_TABLES = new Set([
@@ -49,7 +67,7 @@ async function loadSources(): Promise<Map<string, string>> {
 }
 
 function sortedNames(sources: Map<string, string>): string[] {
-  return [...sources.keys()].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+  return [...sources.keys()].sort(compareMigrationNames)
 }
 
 function stripComments(sql: string): string {
@@ -89,12 +107,33 @@ function containsCompact(haystack: string, needle: string): boolean {
 }
 
 describe('W1-05 unified DDL static checks (no DB required)', () => {
-  test('all 26 files exist; 40-tables slot stays reserved; nothing in the 02..47 range', async () => {
+  test('all 26 files exist and sort after 48-license-audit.sql', async () => {
     const sources = await loadSources()
-    for (const name of EXPECTED_FILES) expect(sources.has(name)).toBe(true)
-    expect(sources.has('540-tables.sql')).toBe(false)
-    const known = new Set(['01-domain-contract.sql', '01-local-auth-bootstrap.sql', '48-license-audit.sql', ...EXPECTED_FILES])
-    expect([...sources.keys()].filter(n => !known.has(n))).toEqual([])
+    const sorted = sortedNames(sources)
+    const pivot = sorted.indexOf('48-license-audit.sql')
+    expect(pivot).toBeGreaterThan(-1)
+    for (const name of EXPECTED_FILES) {
+      expect(sources.has(name), name).toBe(true)
+      expect(sorted.indexOf(name), name).toBeGreaterThan(pivot)
+    }
+  })
+
+  test('locked migrations are an exact sorted prefix; any new file sorts after the last one (553+)', async () => {
+    const sorted = sortedNames(await loadSources())
+    expect(sorted.slice(0, LOCKED_MIGRATIONS.length)).toEqual([...LOCKED_MIGRATIONS].sort(compareMigrationNames))
+    expect(migrationsSortingIntoLockedHistory(sorted)).toEqual([])
+  })
+
+  test('the 553+ guard rejects mid-sequence names (#1295/#1314 tables)', () => {
+    expect(migrationsSortingIntoLockedHistory(['540-tables.sql', '40-tables.sql', '02-directory.sql', '552-a-late.sql']))
+      .toEqual(['540-tables.sql', '40-tables.sql', '02-directory.sql', '552-a-late.sql'])
+    expect(migrationsSortingIntoLockedHistory(['553-tables.sql', '554-sheets.sql', '1000-later.sql'])).toEqual([])
+  })
+
+  test('the packaged service ships every migration the runtime loads', async () => {
+    const pkg = JSON.parse(await readFile(fileURLToPath(new URL('../../../package.json', import.meta.url)), 'utf8')) as { scripts: Record<string, string> }
+    const script = pkg.scripts['workspace-service:package'] ?? ''
+    for (const name of sortedNames(await loadSources())) expect(script, name).toContain(`migrations/${name}`)
   })
 
   test('every file parses as a migration (name + non-empty SQL)', async () => {
@@ -113,7 +152,7 @@ describe('W1-05 unified DDL static checks (no DB required)', () => {
     for (const name of EXPECTED_FILES) expect(sorted.indexOf(name)).toBeGreaterThan(pivot)
   })
 
-  test('94 new tables across the 26 files (103 with the reserved 40-tables nine)', async () => {
+  test('94 new tables across the 26 files (103 with #1295 tables file, 553+)', async () => {
     const sources = await loadSources()
     const tables = EXPECTED_FILES.flatMap(n => createdTables(sources.get(n)!))
     expect(new Set(tables).size).toBe(tables.length)
@@ -224,31 +263,45 @@ async function startTempPostgres(): Promise<TestDatabase | null> {
   const initdb = whichBinary('initdb')
   const pgctl = whichBinary('pg_ctl')
   if (!initdb || !pgctl) return null
+  let dir: string
   try {
-    const dir = await mkdtemp(join(tmpdir(), 'w105-pg-'))
-    const data = join(dir, 'data')
-    let run = spawnSync(initdb, ['-D', data, '-U', 'postgres', '--auth=trust'], { encoding: 'utf8' })
-    if (run.status !== 0) return null
+    dir = await mkdtemp(join(tmpdir(), 'w105-pg-'))
+  } catch {
+    return null
+  }
+  const data = join(dir, 'data')
+  // Stop whatever this data dir may be running, then remove the temp dir.
+  const teardown = async () => {
+    spawnSync(pgctl, ['-D', data, 'stop', '-m', 'fast'], { encoding: 'utf8' })
+    await rm(dir, { recursive: true, force: true })
+  }
+  try {
+    const init = spawnSync(initdb, ['-D', data, '-U', 'postgres', '--auth=trust'], { encoding: 'utf8' })
+    if (init.status !== 0) {
+      await teardown()
+      return null
+    }
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const port = 45200 + (process.pid % 2000) + attempt
-      run = spawnSync(pgctl, ['-D', data, '-o', `-k ${dir} -p ${port} -c listen_addresses='127.0.0.1'`, '-l', join(dir, 'log'), 'start'], { encoding: 'utf8' })
-      if (run.status !== 0) continue
+      const run = spawnSync(pgctl, ['-D', data, '-w', '-o', `-k ${dir} -p ${port} -c listen_addresses='127.0.0.1'`, '-l', join(dir, 'log'), 'start'], { encoding: 'utf8' })
+      if (run.status !== 0) {
+        // A failed start may still leave a postmaster behind; stop it before the next port.
+        spawnSync(pgctl, ['-D', data, 'stop', '-m', 'fast'], { encoding: 'utf8' })
+        continue
+      }
       const url = `postgres://postgres@127.0.0.1:${port}/postgres`
       const probe = await tryConnect(url)
       if (probe) {
         await probe.close()
-        return {
-          url, label: `temp initdb cluster (port ${port})`,
-          cleanup: async () => {
-            spawnSync(pgctl, ['-D', data, 'stop', '-m', 'fast'])
-            const { rm } = await import('node:fs/promises')
-            await rm(dir, { recursive: true, force: true })
-          },
-        }
+        return { url, label: `temp initdb cluster (port ${port})`, cleanup: teardown }
       }
+      // Started but unreachable: stop it, or it keeps the data dir locked and leaks.
+      spawnSync(pgctl, ['-D', data, 'stop', '-m', 'fast'], { encoding: 'utf8' })
     }
+    await teardown()
     return null
   } catch {
+    await teardown().catch(() => {})
     return null
   }
 }
@@ -260,28 +313,16 @@ async function resolveTestDatabase(): Promise<TestDatabase | null> {
       await probe.close()
       return { url: process.env.ROX_TEST_PG_URL, label: 'ROX_TEST_PG_URL', cleanup: async () => {} }
     }
+    console.warn('[w1-05] ROX_TEST_PG_URL is set but did not answer SELECT 1; trying a temp initdb cluster')
   }
-  try {
-    const { homedir } = await import('node:os')
-    const envFile = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
-    const raw = await readFile(envFile, 'utf8')
-    const parsed: unknown = JSON.parse(raw)
-    if (parsed && typeof parsed === 'object' && 'ROX_WORKSPACE_DATABASE_URL' in parsed &&
-        typeof parsed.ROX_WORKSPACE_DATABASE_URL === 'string') {
-      const probe = await tryConnect(parsed.ROX_WORKSPACE_DATABASE_URL)
-      if (probe) {
-        await probe.close()
-        return { url: parsed.ROX_WORKSPACE_DATABASE_URL, label: 'compound-workspace postgres', cleanup: async () => {} }
-      }
-    }
-  } catch { /* fall through to temp cluster */ }
   return startTempPostgres()
 }
 
 // Top-level await: static tests above always run; the DB block below is gated.
 const testDb = await resolveTestDatabase()
 if (testDb) console.log(`[w1-05] migrate-up tests use ${testDb.label}`)
-else console.log('[w1-05] no Postgres available: migrate-up tests skip (static checks still ran)')
+else if (process.env.ROX_TEST_PG_REQUIRED === '1') throw new Error('ROX_TEST_PG_REQUIRED=1 but no Postgres is available (set ROX_TEST_PG_URL or put initdb/pg_ctl on PATH)')
+else console.log('[w1-05] no Postgres available (set ROX_TEST_PG_URL or put initdb/pg_ctl on PATH): migrate-up tests skip (static checks still ran)')
 const itDb = testDb ? test : test.skip
 
 afterAll(async () => {
@@ -289,8 +330,7 @@ afterAll(async () => {
 })
 
 async function loadMigrations() {
-  const names = (await readdir(MIGRATIONS_DIR)).filter(n => n.endsWith('.sql'))
-    .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+  const names = (await readdir(MIGRATIONS_DIR)).filter(n => n.endsWith('.sql')).sort(compareMigrationNames)
   return Promise.all(names.map(async name => migrationFromSource(name, await readFile(join(MIGRATIONS_DIR, name), 'utf8'))))
 }
 
@@ -354,6 +394,74 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
       }
     } finally {
       await db.close()
+    }
+  }, 120000)
+
+  itDb('startup loader: full sorted set; DBs bootstrapped by the old loader (01 only, or 01 + 48) upgrade without MIGRATION_ORDER_CONFLICT', async () => {
+    const db = new SQL(testDb!.url)
+    const loaded = await loadWorkspaceBootstrapMigrations(MIGRATIONS_DIR)
+    const names = loaded.map(m => m.name)
+    // Always: both 01-*, then 48 (unconditional), then every 5NN-* in sorted order.
+    expect(names).toEqual([...LOCKED_MIGRATIONS].sort(compareMigrationNames))
+    const newFiles = [...EXPECTED_FILES].sort(compareMigrationNames)
+    const created: string[] = []
+    try {
+      for (const [label, history, expected] of [
+        // Old loader without licenseRegistry recorded only the two 01-* files.
+        ['no_registry', ['01-domain-contract.sql', '01-local-auth-bootstrap.sql'], ['48-license-audit.sql', ...newFiles]],
+        // Old loader with licenseRegistry recorded 01 + 48.
+        ['registry', ['01-domain-contract.sql', '01-local-auth-bootstrap.sql', '48-license-audit.sql'], newFiles],
+      ] as const) {
+        const schema = `w105_upgrade_${label}_${randomBytes(4).toString('hex')}`
+        await db.unsafe(`CREATE SCHEMA "${schema}"`)
+        created.push(schema)
+        await applyWorkspaceMigrations(db, loaded.filter(m => (history as readonly string[]).includes(m.name)), schema)
+        const upgraded = await applyWorkspaceMigrations(db, loaded, schema)
+        expect(upgraded.retained).toEqual([...history])
+        expect(upgraded.applied).toEqual([...expected])
+        // Every later restart (licence registry on or off loads the same set) is a no-op.
+        const restarted = await applyWorkspaceMigrations(db, await loadWorkspaceBootstrapMigrations(MIGRATIONS_DIR), schema)
+        expect(restarted).toEqual({ applied: [], retained: names })
+      }
+    } finally {
+      for (const schema of created) await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
+      await db.close()
+    }
+  }, 120000)
+
+  itDb('createWorkspaceServer applies 48 and 502..552 at startup; restart is a no-op', async () => {
+    const db = new SQL(testDb!.url, { max: 4 })
+    const schema = `w105_startup_${randomBytes(4).toString('hex')}`
+    const stateRoot = await mkdtemp(join(tmpdir(), 'w105-auth-'))
+    await db.unsafe(`CREATE SCHEMA "${schema}"`)
+    try {
+      const migrations = await loadWorkspaceBootstrapMigrations(MIGRATIONS_DIR)
+      const start = () => createWorkspaceServer({
+        database: db, schema, migrations, host: '127.0.0.1', port: 0, serverId: `w105-${schema}`,
+        authentication: { mode: 'local-bootstrap', configuration: {
+          mode: 'local-bootstrap', issuer: `urn:rox:w105:${schema}`, audience: 'w105-test',
+          stateDirectory: join(stateRoot, 'auth'), checkoutDirectory: process.cwd(), tokenLifetimeSeconds: 300,
+        } },
+      })
+      const first = await start()
+      try {
+        expect(first.migrations.retained).toEqual([])
+        expect(first.migrations.applied).toEqual(migrations.map(m => m.name))
+        expect(first.migrations.applied).toContain('48-license-audit.sql')
+        for (const name of EXPECTED_FILES) expect(first.migrations.applied, name).toContain(name)
+      } finally {
+        await first.server.close()
+      }
+      const second = await start()
+      try {
+        expect(second.migrations).toEqual({ applied: [], retained: migrations.map(m => m.name) })
+      } finally {
+        await second.server.close()
+      }
+    } finally {
+      await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
+      await db.close()
+      await rm(stateRoot, { recursive: true, force: true })
     }
   }, 120000)
 
