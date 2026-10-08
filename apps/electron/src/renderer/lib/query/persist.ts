@@ -7,7 +7,7 @@ import { cacheWriteEpoch } from './shared-read'
  * PERF-09 (#1576): persist a small, safe slice of the query cache so the
  * first visit after a restart paints from disk while the surface revalidates.
  *
- * Only the last-used workspace is stored, and only domains that hold
+ * Only the last-used workspace (one record per principal) is stored, and only domains that hold
  * metadata: no chat or message bodies, no source/automation configs (they
  * can carry tokens or headers), no inbox data (memory proposals quote
  * sessions), and no workspace-work snapshot (that client promises no
@@ -36,15 +36,34 @@ export interface PersistedRoxQueryCache {
   state: DehydratedState
 }
 
-/** Principal key for the persisted record. `local` when no org identity is available. */
-export async function readPersistencePrincipal(api: { getOrgIdentity?: () => Promise<{ userId?: string; authority?: string; issuer?: string } | null> } | undefined): Promise<string> {
+/**
+ * Principal key for the persisted record and the cache's identity checks.
+ *
+ * Fails closed: `null` (nothing is restored or written, and the cache treats
+ * the principal as unknown) when the identity read fails, returns nothing, or
+ * a native principal has no userId. GET_IDENTITY throws for real reasons
+ * (org identity gate off, native principal without a workspace), and a shared
+ * fallback key would let one account's record restore for another whose read
+ * also fails. `local` is only returned when main positively reports local
+ * mode (authority `local`, no native principal) without a local user id.
+ */
+export async function readPersistencePrincipal(api: { getOrgIdentity?: () => Promise<{ userId?: string; authority?: string; issuer?: string } | null> } | undefined): Promise<string | null> {
+  if (typeof api?.getOrgIdentity !== 'function') return null
+  let identity: { userId?: string; authority?: string; issuer?: string } | null | undefined
   try {
-    const identity = await api?.getOrgIdentity?.()
-    if (identity?.userId && (identity.authority === 'native' || identity.authority === 'local')) {
-      return JSON.stringify([identity.authority, identity.issuer ?? '', identity.userId])
-    }
-  } catch { /* fall through: local */ }
-  return 'local'
+    identity = await api.getOrgIdentity()
+  } catch {
+    return null
+  }
+  if (!identity || typeof identity !== 'object') return null
+  const userId = typeof identity.userId === 'string' && identity.userId ? identity.userId : null
+  if (identity.authority === 'native') {
+    return userId ? JSON.stringify(['native', identity.issuer ?? '', userId]) : null
+  }
+  if (identity.authority === 'local') {
+    return userId ? JSON.stringify(['local', '', userId]) : 'local'
+  }
+  return null
 }
 
 const NOTE_SUMMARY_FIELDS = ['id', 'title', 'path', 'relativePath', 'tags', 'properties', 'links', 'assetRefs', 'updatedAt', 'createdAt', 'size'] as const
@@ -64,11 +83,20 @@ export function projectPersistedQueryData(key: readonly unknown[], data: unknown
   })
 }
 
+/**
+ * One record per principal, so windows (or accounts) with different
+ * principals never delete each other's warm start. `prune` drops other
+ * principals' records past the max age and beyond ROX_QUERY_CACHE_MAX_RECORDS.
+ */
 export interface RoxQueryStorage {
-  read(): Promise<unknown>
+  read(principal: string): Promise<unknown>
   write(value: PersistedRoxQueryCache): Promise<void>
-  remove(): Promise<void>
+  remove(principal: string): Promise<void>
+  prune?(keepPrincipal: string, now: number): Promise<void>
 }
+
+/** Records kept for principals other than the current one (newest first). */
+export const ROX_QUERY_CACHE_MAX_RECORDS = 3
 
 function isPersistedKey(key: readonly unknown[], workspaceId: string): boolean {
   const domain = queryKeyDomain(key)
@@ -133,8 +161,17 @@ export function restoreRoxQueryCache(client: QueryClient, record: PersistedRoxQu
 export interface RoxQueryPersistence {
   /** Settles once the stored record was read (and restored when valid). */
   readonly ready: Promise<void>
-  /** Drop the stored record and any pending write (identity change, logout). */
-  clear(): Promise<void>
+  /**
+   * The principal changed (or became unknown): drop the previous principal's
+   * stored record and any pending write, and open a new identity epoch for
+   * `principal` (read now when omitted).
+   */
+  clear(principal?: Promise<string | null>): Promise<void>
+  /**
+   * The identity was re-checked after a fence and the principal is unchanged:
+   * open a new epoch for the same principal without touching the stored record.
+   */
+  reopen(principal?: Promise<string | null>): void
   stop(): void
 }
 
@@ -159,13 +196,17 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
    * opens (start, and clear() on the identity event) and labels every record
    * written in that epoch; at write time it is only re-read to check that
    * main has not switched accounts ahead of the renderer's identity event.
+   * `null` (unknown) disables restore and writes for that epoch.
    */
-  principal?: () => Promise<string>
+  principal?: () => Promise<string | null>
+  /** The first epoch's principal, when the caller already started that read (shared with the event bridge). */
+  initialPrincipal?: Promise<string | null>
 } = {}): RoxQueryPersistence {
   const idle = options.idle ?? defaultIdle
   const debounceMs = options.debounceMs ?? ROX_QUERY_PERSIST_DEBOUNCE_MS
   const now = options.now ?? Date.now
-  const principal = options.principal ?? (() => Promise.resolve('local'))
+  const principal = options.principal ?? (() => Promise.resolve<string | null>('local'))
+  const readPrincipal = () => principal().then(value => value || null, () => null)
   let stopped = false
   let restored = false
   /** True once a new read succeeded after restore, so an untouched restore is never re-saved. */
@@ -183,10 +224,10 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
    * time, is what the record is bound to.
    */
   interface IdentityEpoch { generation: number; writeEpoch: number; principal: Promise<string | null> }
-  const openEpoch = (): IdentityEpoch => ({
-    generation, writeEpoch: cacheWriteEpoch(), principal: principal().then(value => value || null, () => null),
+  const openEpoch = (known?: Promise<string | null>): IdentityEpoch => ({
+    generation, writeEpoch: cacheWriteEpoch(), principal: known ? known.then(value => value || null, () => null) : readPrincipal(),
   })
-  let epoch = openEpoch()
+  let epoch = openEpoch(options.initialPrincipal)
   const epochIsCurrent = (opened: IdentityEpoch) => opened === epoch && opened.generation === generation && opened.writeEpoch === cacheWriteEpoch()
 
   const cancelPending = () => {
@@ -203,7 +244,7 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
     if (!epochIsCurrent(opened)) return
     const writeGeneration = generation
     const workspaceId = lastWorkspace
-    void Promise.all([opened.principal, principal().then(value => value || null, () => null)]).then(([owner, current]) => {
+    void Promise.all([opened.principal, readPrincipal()]).then(([owner, current]) => {
       // The identity epoch changed (identity event, clear()) or stop() meanwhile.
       if (stopped || writeGeneration !== generation || !epochIsCurrent(opened)) return
       // Main switched accounts but the renderer's identity event has not
@@ -213,11 +254,11 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
       const record = buildPersistedRoxQueryCache(client, workspaceId, owner, now())
       if (!record) {
         // Over the size cap (or nothing left): the older record must not stay on disk.
-        return storage.remove().catch(() => {})
+        return storage.remove(owner).catch(() => {})
       }
       return storage.write(record).catch(() => { /* best effort: the cache is an optimisation */ }).then(() => {
         // A clear() that raced this write wins.
-        if (writeGeneration !== generation) void storage.remove().catch(() => {})
+        if (writeGeneration !== generation) void storage.remove(owner).catch(() => {})
       })
     }, () => {})
   }
@@ -245,18 +286,22 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
 
   const readGeneration = generation
   const startEpoch = epoch
-  const ready = Promise.all([storage.read(), startEpoch.principal]).then(([value, owner]) => {
+  const ready = startEpoch.principal.then(async owner => {
+    // Unknown principal: nothing is read, restored or pruned.
+    if (!owner) return
+    const value = await storage.read(owner)
     // stop() or clear() (identity change) before the read finished: never restore.
     if (stopped || readGeneration !== generation || !epochIsCurrent(startEpoch)) return
     const record = value as Partial<PersistedRoxQueryCache> | null | undefined
-    if (owner && isRestorableRoxQueryCache(value, now()) && record?.principal === owner) {
+    if (isRestorableRoxQueryCache(value, now()) && record?.principal === owner) {
       restoreRoxQueryCache(client, value, now())
       lastWorkspace ??= value.workspaceId
     } else if (value !== undefined && value !== null) {
       // Unreadable, expired, or bound to a different principal.
-      void storage.remove().catch(() => {})
+      void storage.remove(owner).catch(() => {})
     }
-  }, () => { /* unreadable store: start empty */ }).finally(() => {
+    void storage.prune?.(owner, now()).catch(() => {})
+  }).catch(() => { /* unreadable store: start empty */ }).finally(() => {
     restored = true
     // Only a read that succeeded after start is worth a write; an untouched
     // restore is never re-saved.
@@ -265,14 +310,21 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
 
   return {
     ready,
-    async clear() {
+    async clear(next) {
+      const previous = epoch.principal
       generation++
       cancelPending()
       lastWorkspace = null
       dirty = false
-      // The identity event opens a new epoch; its principal is captured now.
-      epoch = openEpoch()
-      await storage.remove().catch(() => {})
+      // The new epoch's principal is captured now (or handed in by the bridge).
+      epoch = openEpoch(next)
+      const owner = await previous
+      if (owner) await storage.remove(owner).catch(() => {})
+    },
+    reopen(next) {
+      // Same principal, new write epoch: pending changes are written under it.
+      epoch = openEpoch(next)
+      if (dirty && lastWorkspace) schedule()
     },
     stop() {
       stopped = true
@@ -282,13 +334,42 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
   }
 }
 
-/** IndexedDB storage via idb-keyval (loaded lazily, off the startup path). */
+const RECORD_PREFIX = 'principal:'
+/** The single shared key used before records were per principal. */
+const LEGACY_KEY = 'last-workspace'
+
+/**
+ * Keys of other principals' records to delete: expired ones, then all but the
+ * newest ROX_QUERY_CACHE_MAX_RECORDS. The current principal's record and
+ * unrelated keys are never touched (the legacy shared key always goes).
+ */
+export function staleRoxQueryRecordKeys(entries: ReadonlyArray<readonly [unknown, unknown]>, keepPrincipal: string, now = Date.now()): string[] {
+  const keep = RECORD_PREFIX + keepPrincipal
+  const drop: string[] = []
+  const others: Array<{ key: string; savedAt: number }> = []
+  for (const [key, value] of entries) {
+    if (key === LEGACY_KEY) { drop.push(key); continue }
+    if (typeof key !== 'string' || !key.startsWith(RECORD_PREFIX) || key === keep) continue
+    const savedAt = value && typeof value === 'object' ? (value as { savedAt?: unknown }).savedAt : undefined
+    if (typeof savedAt !== 'number' || now - savedAt > ROX_QUERY_CACHE_MAX_AGE_MS) drop.push(key)
+    else others.push({ key, savedAt })
+  }
+  others.sort((a, b) => b.savedAt - a.savedAt)
+  for (const stale of others.slice(ROX_QUERY_CACHE_MAX_RECORDS)) drop.push(stale.key)
+  return drop
+}
+
+/** IndexedDB storage via idb-keyval (loaded lazily, off the startup path), one record per principal. */
 export function idbRoxQueryStorage(): RoxQueryStorage {
-  const KEY = 'last-workspace'
   const store = import('idb-keyval').then(idb => ({ idb, store: idb.createStore('rox-query-cache', 'entries') }))
   return {
-    read: async () => { const { idb, store: s } = await store; return idb.get(KEY, s) },
-    write: async value => { const { idb, store: s } = await store; await idb.set(KEY, value, s) },
-    remove: async () => { const { idb, store: s } = await store; await idb.del(KEY, s) },
+    read: async principal => { const { idb, store: s } = await store; return idb.get(RECORD_PREFIX + principal, s) },
+    write: async value => { const { idb, store: s } = await store; await idb.set(RECORD_PREFIX + value.principal, value, s) },
+    remove: async principal => { const { idb, store: s } = await store; await idb.del(RECORD_PREFIX + principal, s) },
+    prune: async (keepPrincipal, now) => {
+      const { idb, store: s } = await store
+      const stale = staleRoxQueryRecordKeys(await idb.entries(s), keepPrincipal, now)
+      if (stale.length > 0) await idb.delMany(stale, s)
+    },
   }
 }
