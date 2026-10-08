@@ -184,8 +184,8 @@
   --ink: oklch(0.22 0.014 255);
   --graphite: oklch(0.46 0.012 255);
   --rox-mint: oklch(0.72 0.08 165);
-  --rox-radius-sm: 6px;
-  --rox-radius-md: 8px;
+  --rox-radius-sm: var(--radius-sm);
+  --rox-radius-md: var(--radius-md);
   /* Shell panels (sidebar, navigator, content, inspector, rails). */
   --rox-radius-panel: 0px;
   --rox-gutter: 8px;
