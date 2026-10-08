@@ -240,6 +240,8 @@ describe('token foundation v2: z layers', () => {
     expect(src('packages/ui/src/components/overlay/FullscreenOverlayBase.tsx')).toContain("const Z_FULLSCREEN = 'var(--z-fullscreen, 350)'")
     const header = src('packages/ui/src/components/overlay/FullscreenOverlayBaseHeader.tsx')
     expect(header).toMatch(/contextMenuContentClasses = cn\(\s*'popover-styled z-island /)
+    // The path dropdown takes StyledDropdownMenuContent's z-island default; no deprecated alias inline.
+    expect(header).not.toMatch(/--z-floating-menu|zIndex:/)
     expect(src('packages/ui/src/components/ui/InlineMenuSurface.ts')).toContain("options.zIndex ?? 'var(--z-popover, 100)'")
   })
 
