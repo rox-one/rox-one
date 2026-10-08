@@ -38,7 +38,7 @@ function EntryLabel({ entry, label }: { entry: GlobalCreateMenuEntry; label: str
 }
 
 export interface GlobalCreateMenuProps extends GlobalCreateRunDeps {
-  /** Baseline control rendered while no flagged entry is visible. */
+  /** Baseline control rendered while no flagged or custom entry is visible. */
   fallback: ReactNode
   /** Trigger content (icon) for the menu. */
   trigger: (props: { label: string }) => ReactNode
@@ -53,7 +53,7 @@ export function GlobalCreateMenu({ fallback, trigger, label, navigate, host }: G
   // `keys` so entries with a `when` clause see the flag context keys too.
   const model = useMemo(() => buildGlobalCreateMenu({ flags, keys: flagContextKeys(flags) }), [flags, contributions])
 
-  if (!model.hasFlaggedItems) return <>{fallback}</>
+  if (!model.showMenu) return <>{fallback}</>
 
   const run = (entry: GlobalCreateMenuEntry) => {
     if (entry.intent) runGlobalCreateIntent(entry.intent, { navigate, host })

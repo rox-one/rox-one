@@ -8,8 +8,10 @@
  * (slot dedupe = last wins) or add new ones — no shell edit.
  *
  * The menu only replaces the rail's plain «+» (new session) while at least one
- * flagged entry is visible (`hasFlaggedItems`), so with every flag OFF the
- * rail is byte-identical to the baseline.
+ * visible entry is flagged or is not a W1-07 baseline seed (`showMenu`: a
+ * wave-2 / plugin entry, or a seed id overridden by another source), so with
+ * every flag OFF and no extra registrations the rail is byte-identical to the
+ * baseline.
  */
 import type { Disposable } from '@rox/core/platform'
 import { UNIFIED_SURFACE_FLAGS, isUnifiedSurfaceId } from '../../shared/surface-routes'
@@ -186,14 +188,22 @@ export interface GlobalCreateMenuEntry {
   intent?: GlobalCreateIntent
   /** True when this entry (or a visible child) is gated by a flag. */
   flagged: boolean
+  /** True when this entry is not an untouched W1-07 baseline seed (id + source). */
+  custom: boolean
   children: GlobalCreateMenuEntry[]
 }
 
 export interface GlobalCreateMenuModel {
   create: GlobalCreateMenuEntry[]
   tools: GlobalCreateMenuEntry[]
-  /** Any visible entry is flag-gated → the rail swaps «+» for the menu. */
+  /** Any visible entry is flag-gated. */
   hasFlaggedItems: boolean
+  /**
+   * The rail swaps its plain «+» for the menu: any visible entry is flagged
+   * OR custom (not a W1-07 seed by id + source). False with every flag off
+   * and only the seeds registered — baseline parity.
+   */
+  showMenu: boolean
 }
 
 /**
@@ -211,6 +221,13 @@ export function intentRouteFlags(intent: GlobalCreateIntent | undefined): string
 
 function routeGateOpen(intent: GlobalCreateIntent | undefined, ctx: SlotListContext): boolean {
   return intentRouteFlags(intent).every((flag) => ctx.flags.has(flag))
+}
+
+const CORE_GLOBAL_CREATE_IDS: ReadonlySet<string> = new Set(CORE_GLOBAL_CREATE_ITEMS.map((item) => item.id))
+
+/** A W1-07 baseline seed: one of its ids, still registered by W1-07 itself. */
+export function isBaselineGlobalCreateSeed(item: Pick<SlotContribution, 'id' | 'source'>): boolean {
+  return item.source === W107 && CORE_GLOBAL_CREATE_IDS.has(item.id)
 }
 
 function hasFlag(flag: SlotContribution['flag']): boolean {
@@ -231,7 +248,7 @@ export function buildGlobalCreateMenu(
       const probe: SlotContribution = { id: child.id, slot: GLOBAL_CREATE_SLOT, source: item.source, flag: child.flag }
       if (!isSlotContributionVisible(probe, ctx)) continue
       if (!routeGateOpen(child.intent, ctx)) continue
-      children.push({ id: `${item.id}/${child.id}`, titleKey: child.titleKey, icon: child.icon, intent: child.intent, flagged: hasFlag(child.flag) || intentRouteFlags(child.intent).length > 0, children: [] })
+      children.push({ id: `${item.id}/${child.id}`, titleKey: child.titleKey, icon: child.icon, intent: child.intent, flagged: hasFlag(child.flag) || intentRouteFlags(child.intent).length > 0, custom: !isBaselineGlobalCreateSeed(item), children: [] })
     }
     // An own intent whose target mode is off is dropped (children may remain).
     const ownIntent = item.payload?.intent
@@ -243,12 +260,15 @@ export function buildGlobalCreateMenu(
       icon: item.icon,
       intent,
       flagged: hasFlag(item.flag) || intentRouteFlags(intent).length > 0 || children.some((child) => child.flagged),
+      custom: !isBaselineGlobalCreateSeed(item),
       // A submenu with only the parent's own action collapses to a plain item.
       children: children.length > 1 || (children.length === 1 && !intent) ? children : [],
     }
     ;(item.payload?.group === 'tools' ? tools : create).push(entry)
   }
-  return { create, tools, hasFlaggedItems: [...create, ...tools].some((entry) => entry.flagged) }
+  const visible = [...create, ...tools]
+  const hasFlaggedItems = visible.some((entry) => entry.flagged)
+  return { create, tools, hasFlaggedItems, showMenu: hasFlaggedItems || visible.some((entry) => entry.custom) }
 }
 
 // --- intent execution -------------------------------------------------------

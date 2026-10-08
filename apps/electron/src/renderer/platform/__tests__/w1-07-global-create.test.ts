@@ -29,8 +29,47 @@ describe('global create menu', () => {
     expect(model.create.map((entry) => entry.id)).toEqual(['core.new-session', 'tasks.new-task', 'docs.new-doc', 'calendar.new-event'])
     expect(model.tools.map((entry) => entry.id)).toEqual(['core.browser', 'core.terminal'])
     expect(model.hasFlaggedItems).toBe(false)
+    expect(model.showMenu).toBe(false)
+    expect([...model.create, ...model.tools].every((entry) => !entry.custom)).toBe(true)
     // «Новый документ» collapses to a plain item (only the unflagged Note child).
     expect(model.create.find((entry) => entry.id === 'docs.new-doc')?.children).toEqual([])
+  })
+
+  it('flags OFF: an unflagged wave-2/plugin entry still shows the menu', () => {
+    const registry = seeded()
+    registry.register({
+      id: 'wiki.new-page', slot: GLOBAL_CREATE_SLOT, order: 45, source: 'wave2.wiki', titleKey: 'wiki.create.page',
+      payload: { intent: { type: 'route', route: 'notes' } },
+    })
+    const model = buildGlobalCreateMenu({ flags: new Set() }, registry)
+    expect(model.hasFlaggedItems).toBe(false)
+    expect(model.showMenu).toBe(true)
+    expect(model.create.find((entry) => entry.id === 'wiki.new-page')?.custom).toBe(true)
+    expect(model.create.find((entry) => entry.id === 'core.new-session')?.custom).toBe(false)
+  })
+
+  it('flags OFF: a seed id overridden by another source counts as custom; disposing restores parity', () => {
+    const registry = seeded()
+    const seed = CORE_GLOBAL_CREATE_ITEMS.find((item) => item.id === 'core.terminal')!
+    const override = registry.register({ ...seed, source: 'wave2.terminal' })
+    expect(buildGlobalCreateMenu({ flags: new Set() }, registry).showMenu).toBe(true)
+    override.dispose()
+    expect(buildGlobalCreateMenu({ flags: new Set() }, registry).showMenu).toBe(false)
+  })
+
+  it('flags OFF: a hidden (flag-gated) custom entry does not show the menu', () => {
+    const registry = seeded()
+    registry.register({
+      id: 'wiki.new-page', slot: GLOBAL_CREATE_SLOT, source: 'wave2.wiki', titleKey: 'wiki.create.page', flag: 'wiki.v1',
+      payload: { intent: { type: 'route', route: 'notes' } },
+    })
+    expect(buildGlobalCreateMenu({ flags: new Set() }, registry).showMenu).toBe(false)
+    expect(buildGlobalCreateMenu({ flags: new Set(['wiki.v1']) }, registry).showMenu).toBe(true)
+  })
+
+  it('GlobalCreateMenu swaps the baseline «+» on showMenu', () => {
+    const src = require('node:fs').readFileSync(require('node:path').join(import.meta.dir, '../GlobalCreateMenu.tsx'), 'utf8') as string
+    expect(src).toContain('if (!model.showMenu) return <>{fallback}</>')
   })
 
   it('all flags ON: §3.2 order with submenus', () => {
@@ -45,6 +84,7 @@ describe('global create menu', () => {
     ])
     expect(model.tools.map((entry) => entry.id)).toEqual(['contacts.invite', 'core.browser', 'core.terminal'])
     expect(model.hasFlaggedItems).toBe(true)
+    expect(model.showMenu).toBe(true)
     const doc = model.create.find((entry) => entry.id === 'docs.new-doc')
     expect(doc?.children.map((child) => child.id)).toEqual([
       'docs.new-doc/doc', 'docs.new-doc/note', 'docs.new-doc/base', 'docs.new-doc/form', 'docs.new-doc/mind-map', 'docs.new-doc/folder',
