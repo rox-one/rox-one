@@ -329,6 +329,8 @@ describe('reference handlers: retry after a lost receipt (same commandId, fresh 
     const receipt = await harness.run({ type: 'goals.create', payload: { id: 'g-b', name: 'B', targets: [{ id: 'tg-taken', name: 'T2', fromValue: 0, toValue: 1 }] } })
     expect(receipt).toMatchObject({ status: 'conflict', conflict: { current: { error: 'id already exists' } } })
     expect(referenceMemoryRecords(WORKSPACE_ID, 'goal').map(r => r.id)).toEqual(['g-a'])
+    // W1-14: the origin chat must exist — the card is posted back into it.
+    await harness.run({ type: 'im.create_chat', payload: { id: U('c'), kind: 'group', name: 'c', visibility: 'public', members: [] } })
     await harness.run({ type: 'tasks.create', payload: { id: U('from-taken'), title: 'x' } })
     const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('from-taken'), origin: { kind: 'message', chatRef: `channel:${U('c')}`, seq: 1 }, title: 'From message' } })
     expect(fromMessage).toMatchObject({ status: 'conflict' })
