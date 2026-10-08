@@ -17,7 +17,7 @@ export async function startLearningBrowserTests() {
       : new Response('<!doctype html><script type="module" src="/module.js"></script>', { headers: { 'Content-Type': 'text/html' } })
   } })
   const executablePath = await resolveChromiumExecutable()
-  browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] })
 }
 export async function stopLearningBrowserTests() { await browser?.close(); server?.stop(true) }
 export async function inLearningBrowser<T>(run: (page: Page) => Promise<T>): Promise<T> {
