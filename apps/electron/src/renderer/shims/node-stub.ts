@@ -149,6 +149,7 @@ export const inherits = fn
 export const inspect = fn
 export const isAbsolute = fn
 export const join = pathLike
+export const linkSync = (..._args: unknown[]): never => { throw new Error('Skill filesystem access requires the host API') }
 export const lookup = fn
 export const lstat = fn
 export const lstatSync = binaryOrEmpty
@@ -195,6 +196,7 @@ export const request = (..._args: unknown[]) => obj()
 export const resolve = pathLike
 export const rm = fn
 export const rmSync = binaryOrEmpty
+export const rmdirSync = binaryOrEmpty
 export const scryptSync = binaryOrEmpty
 export const sep = '/'
 export const sign = binaryOrEmpty
@@ -212,6 +214,7 @@ export const symlinkSync = (..._args: unknown[]): never => { throw new Error('Sk
 export const timingSafeEqual = binaryOrEmpty
 export const unlink = fn
 export const unlinkSync = binaryOrEmpty
+export const utimesSync = binaryOrEmpty
 export const watch = fn
 export const uptime = fn
 export const userInfo = () => ({ username: 'renderer', uid: 0, gid: 0, shell: '', homedir: '/' })

@@ -52,7 +52,7 @@ describe("#1505 entity UI plural keys cover every CLDR category", () => {
       lng: "ar",
       fallbackLng: ["ru", "en"],
       resources: Object.fromEntries(Object.entries(locales).map(([code, messages]) => [code, { translation: messages }])),
-      initImmediate: false,
+      initAsync: false,
       interpolation: { escapeValue: false },
     });
     const ar = locales["ar"]!;

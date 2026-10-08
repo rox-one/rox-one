@@ -4,9 +4,16 @@ import config from '../../vite.config'
 
 type Handler = (html: string, ctx: Record<string, unknown>) => Array<{ tag: string; attrs: Record<string, unknown> }> | undefined
 
-const plugin = (config.plugins ?? []).flat().find(
-  (p): p is { name: string; transformIndexHtml: { order: string; handler: Handler } } =>
-    !!p && typeof p === 'object' && 'name' in p && p.name === 'rox-modulepreload-main-chunk',
+/** The subset of a Vite plugin this test drives. */
+type LoaderPlugin = {
+  name: string
+  transformIndexHtml: { order?: 'pre' | 'post' | null; handler: Handler }
+}
+
+const PLUGIN_NAME = 'rox-modulepreload-main-chunk'
+const flatPlugins: readonly unknown[] = (config.plugins ?? []).flat()
+const plugin = flatPlugins.find(
+  (p): p is LoaderPlugin => !!p && typeof p === 'object' && 'name' in p && p.name === PLUGIN_NAME,
 )
 const renderer = join(import.meta.dir, '..', 'renderer')
 const chunk = (fileName: string, extra: Record<string, unknown> = {}) => ({
