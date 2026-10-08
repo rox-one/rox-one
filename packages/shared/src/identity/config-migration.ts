@@ -229,6 +229,7 @@ import {
   lstatSync as _lstatMigration,
   openSync as _openMigrationLock,
   closeSync as _closeMigrationLock,
+  linkSync as _linkMigration,
   readdirSync as _readdirMigration,
   readFileSync as _readMigrationFile,
   readlinkSync as _readlinkMigration,
@@ -243,7 +244,7 @@ import {
 } from 'node:fs'
 import { uptime as _osUptime } from 'node:os'
 import { basename as _basenameMigration, dirname as _dirnameMigration, relative as _relativeMigration, sep as _pathSep, posix as _posixPath, win32 as _win32Path } from 'node:path'
-import { createHash as _createLockHash } from 'node:crypto'
+import { createHash as _createLockHash, randomBytes as _randomLockBytes } from 'node:crypto'
 import { constants as _fsConstants, realpathSync as _realpathMigration } from 'node:fs'
 
 /** Name of the visible Rox home inside a home directory. */
@@ -469,6 +470,12 @@ export interface MigrateHiddenRoxHomeOptions {
   processLockPath?: string
   /** Older lock locations still honoured when live (tests; default the tmpdir lock). */
   legacyProcessLockPaths?: string[]
+  /** Current uid for lock owner checks (tests; default `process.getuid()`). */
+  getuid?: () => number | undefined
+  /** Injectable lstat for lock owner checks (tests fake a foreign owner). */
+  lockLstat?: (path: string) => import('node:fs').Stats
+  /** Test-only hook into the process-lock takeover (simulates a racing migrator). */
+  lockTakeoverHook?: (phase: 'stale-judged' | 'created') => void
   /** Injectable PID liveness probe (tests). */
   isPidAlive?: (pid: number) => boolean
   /** Injectable clock (tests). */
@@ -545,7 +552,15 @@ export function defaultIsPidAlive(pid: number): boolean {
   }
 }
 
-interface LockLivenessOptions {
+/** Owner checks for lock files and lock dirs (injectable in tests). */
+export interface LockOwnershipOptions {
+  /** Current uid; `undefined` (Windows) skips the owner check. Default `process.getuid()`. */
+  getuid?: () => number | undefined
+  /** Injectable lstat (tests fake a foreign owner). */
+  lstat?: (path: string) => import('node:fs').Stats
+}
+
+interface LockLivenessOptions extends LockOwnershipOptions {
   now: number
   isPidAlive: (pid: number) => boolean
   /** Locks older than this are stale even with a live PID (PID reuse). */
@@ -554,22 +569,98 @@ interface LockLivenessOptions {
   pidlessTtlMs: number
 }
 
-/**
- * Whether a lock file still has a live holder. Stale: own PID (previous
- * container lifecycle), dead PID, written before the current boot, older
- * than `ttlMs`, or PID-less and older than `pidlessTtlMs`.
- */
-export function isLockFileLive(path: string, options: LockLivenessOptions): boolean {
-  let st: ReturnType<typeof _lstatMigration>
+function _currentUid(): number | undefined {
   try {
-    st = _lstatMigration(path)
+    return process.getuid?.()
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * A lock entry we may trust: a regular file or a directory (proper-lockfile
+ * style), never a link, owned by the current user. Anything else (a link
+ * planted in a shared dir, a file another user created) is ignored.
+ */
+function _ownLockStat(path: string, options?: LockOwnershipOptions): import('node:fs').Stats | undefined {
+  let st: import('node:fs').Stats
+  try {
+    st = (options?.lstat ?? _lstatMigration)(path)
+  } catch {
+    return undefined
+  }
+  if (st.isSymbolicLink() || (!st.isFile() && !st.isDirectory())) return undefined
+  const uid = (options?.getuid ?? _currentUid)()
+  if (uid !== undefined && st.uid !== uid) return undefined
+  return st
+}
+
+const _O_NOFOLLOW = _fsConstants.O_NOFOLLOW ?? 0
+
+/** Read a lock file without following a link at its path. */
+function _readLockNoFollow(path: string): string {
+  const fd = _openMigrationLock(path, _fsConstants.O_RDONLY | _O_NOFOLLOW)
+  try {
+    return _readMigrationFile(fd, 'utf8')
+  } finally {
+    _closeMigrationLock(fd)
+  }
+}
+
+/**
+ * Write a lock file atomically without ever writing through a link: a fresh
+ * temp with a random suffix is created with O_EXCL|O_NOFOLLOW (0600), then
+ * renamed over the lock path (a rename replaces a planted link, it never
+ * follows it).
+ */
+function _writeLockFileExclusive(path: string, content: string): void {
+  const temp = `${path}.tmp-${process.pid}-${_randomLockBytes(8).toString('hex')}`
+  const fd = _openMigrationLock(
+    temp,
+    _fsConstants.O_WRONLY | _fsConstants.O_CREAT | _fsConstants.O_EXCL | _O_NOFOLLOW,
+    0o600,
+  )
+  try {
+    try {
+      _writeMigrationFd(fd, content)
+    } finally {
+      _closeMigrationLock(fd)
+    }
+    _renameMigration(temp, path)
+  } catch (error) {
+    try {
+      _unlinkMigration(temp)
+    } catch {
+      // already gone
+    }
+    throw error
+  }
+}
+
+/** Whether `path` is a lock file we wrote with exactly `content`. */
+function _isOwnLockWithContent(path: string, content: string, options?: LockOwnershipOptions): boolean {
+  const st = _ownLockStat(path, options)
+  if (!st?.isFile()) return false
+  try {
+    return _readLockNoFollow(path) === content
   } catch {
     return false
   }
+}
+
+/**
+ * Whether a lock file still has a live holder. Stale: own PID (previous
+ * container lifecycle), dead PID, written before the current boot, older
+ * than `ttlMs`, or PID-less and older than `pidlessTtlMs`. Links and locks
+ * owned by another user are ignored (never live).
+ */
+export function isLockFileLive(path: string, options: LockLivenessOptions): boolean {
+  const st = _ownLockStat(path, options)
+  if (!st) return false
   let identity: MigrationLockIdentity | null = null
   if (st.isFile()) {
     try {
-      identity = parseMigrationLockContent(_readMigrationFile(path, 'utf8'))
+      identity = parseMigrationLockContent(_readLockNoFollow(path))
     } catch {
       identity = null
     }
@@ -607,52 +698,117 @@ export const ROX_DESKTOP_APP_LOCK_NAME = '.app.lock'
 /** Lock files inside a Rox home whose live holders must defer a move. */
 export const ROX_HOME_WRITER_LOCK_NAMES = ['config.json.lock', '.server.lock', ROX_DESKTOP_APP_LOCK_NAME] as const
 
-function _lockUid(): string {
-  try {
-    return String(process.getuid?.() ?? 'default')
-  } catch {
-    return 'default' // non-POSIX
-  }
+function _lockUid(options?: LockOwnershipOptions): string {
+  return String((options?.getuid ?? _currentUid)() ?? 'default')
+}
+
+export interface RuntimeLockLocationOptions extends LockOwnershipOptions {
+  env?: NodeJS.ProcessEnv | Record<string, string | undefined>
+  /** Process tmpdir (default `os.tmpdir()`). */
+  tmp?: string
+  /** Shared POSIX tmp (default `/tmp`; `null` skips it, tests). */
+  sharedTmp?: string | null
+  platform?: NodeJS.Platform
+  /** Create the per-user subdir in shared bases (the app); probes never create. */
+  create?: boolean
 }
 
 /**
- * Per-user runtime twin of the desktop app lock, outside the home (tmpdir),
- * keyed by the config dir path the app runs on. Lets an explicit
- * `migrate-config` defer while a flag-OFF app runs without adding a file to
- * the config dir. This is the original (compat) location; see
- * `desktopAppRuntimeLockPaths` for every location written and probed.
+ * A base dir is private when it is a real directory (not a link) owned by
+ * the current user and not group/other-writable (macOS per-user TMPDIR,
+ * `$XDG_RUNTIME_DIR`). Mode bits are not checked on Windows.
+ */
+function _isPrivateLockDir(path: string, options?: RuntimeLockLocationOptions): boolean {
+  const st = _ownLockStat(path, options)
+  if (!st?.isDirectory()) return false
+  if ((options?.platform ?? process.platform) !== 'win32' && (st.mode & 0o022) !== 0) return false
+  return true
+}
+
+/**
+ * Lock dir inside `base`: the base itself when private, else a per-user
+ * `rox-<uid>/` subdir (created 0700 by the app, then verified with lstat:
+ * own, real dir, not group/other-writable). A failed check skips the
+ * location silently.
+ */
+function _runtimeLockDir(base: string, options?: RuntimeLockLocationOptions): string | undefined {
+  if (_isPrivateLockDir(base, options)) return base
+  const dir = join(base, `rox-${_lockUid(options)}`)
+  if (options?.create) {
+    try {
+      mkdirSync(dir, { mode: 0o700 })
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException | null)?.code !== 'EEXIST') return undefined
+    }
+  }
+  return _isPrivateLockDir(dir, options) ? dir : undefined
+}
+
+function _runtimeLockName(configDir: string, options?: LockOwnershipOptions): string {
+  const key = _createLockHash('sha256').update(configDir).digest('hex').slice(0, 16)
+  return `rox-desktop-${_lockUid(options)}-${key}.lock`
+}
+
+/**
+ * Per-user runtime twin of the desktop app lock, outside the home, keyed by
+ * the config dir path the app runs on (original location: directly in
+ * tmpdir). Lets an explicit `migrate-config` defer while a flag-OFF app runs
+ * without adding a file to the config dir. See `desktopAppRuntimeLockPaths`
+ * for the locations actually written.
  */
 export function desktopAppRuntimeLockPath(configDir: string, tmp: string = tmpdir()): string {
-  const key = _createLockHash('sha256').update(configDir).digest('hex').slice(0, 16)
-  return join(tmp, `rox-desktop-${_lockUid()}-${key}.lock`)
+  return join(tmp, _runtimeLockName(configDir))
+}
+
+function _runtimeLockBases(options?: RuntimeLockLocationOptions): string[] {
+  const env = options?.env ?? process.env
+  const bases = [options?.tmp ?? tmpdir()]
+  const runtimeDir = env.XDG_RUNTIME_DIR?.trim()
+  if (runtimeDir && _posixPath.isAbsolute(runtimeDir)) bases.push(runtimeDir)
+  const shared = options?.sharedTmp === undefined ? '/tmp' : options.sharedTmp
+  if ((options?.platform ?? process.platform) !== 'win32' && shared) bases.push(shared)
+  return [...new Set(bases)]
 }
 
 /**
- * Every runtime desktop-lock location, written by the app and probed by a
- * migration: the process tmpdir (compat), `$XDG_RUNTIME_DIR` when set, and
- * `/tmp` on POSIX. A CLI and an app with different `TMPDIR`s still meet in
- * one of them. Never under `$HOME`: a flag-OFF app adds nothing to the home.
+ * Every usable runtime desktop-lock location: the process tmpdir,
+ * `$XDG_RUNTIME_DIR` when set, and `/tmp` on POSIX, each used directly when
+ * private or through a verified per-user `rox-<uid>/` subdir when shared.
+ * A CLI and an app with different `TMPDIR`s still meet in one of them.
+ * Never under `$HOME`: a flag-OFF app adds nothing to the home.
  * Limitation: processes in different mount namespaces (snap/flatpak private
  * `/tmp` without a shared runtime dir) or under another uid cannot see each
  * other's runtime lock; the in-config-dir `.app.lock` (flag ON) still does.
  */
-export function desktopAppRuntimeLockPaths(
-  configDir: string,
-  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
-  tmp: string = tmpdir(),
-  platform: NodeJS.Platform = process.platform,
-): string[] {
-  const dirs = [tmp]
-  const runtimeDir = env.XDG_RUNTIME_DIR?.trim()
-  if (runtimeDir && _posixPath.isAbsolute(runtimeDir)) dirs.push(runtimeDir)
-  if (platform !== 'win32') dirs.push('/tmp')
-  return [...new Set(dirs.map((dir) => desktopAppRuntimeLockPath(configDir, dir)))]
+export function desktopAppRuntimeLockPaths(configDir: string, options?: RuntimeLockLocationOptions): string[] {
+  const name = _runtimeLockName(configDir, options)
+  const out: string[] = []
+  for (const base of _runtimeLockBases(options)) {
+    const dir = _runtimeLockDir(base, options)
+    if (dir) out.push(join(dir, name))
+  }
+  return [...new Set(out)]
+}
+
+/**
+ * Probe set: every current location plus the direct-in-base paths earlier
+ * builds wrote (read with the same owner/link checks, never written).
+ */
+function _desktopRuntimeLockProbePaths(configDir: string, options?: RuntimeLockLocationOptions): string[] {
+  const name = _runtimeLockName(configDir, options)
+  return [
+    ...new Set([
+      ...desktopAppRuntimeLockPaths(configDir, { ...options, create: false }),
+      ..._runtimeLockBases(options).map((base) => join(base, name)),
+    ]),
+  ]
 }
 
 /**
  * Electron main: hold the desktop app lock(s) for the process lifetime.
  * Returns the release function (call on quit). Best effort: a failed write
- * never blocks startup.
+ * never blocks startup. Every lock is written with `_writeLockFileExclusive`
+ * (random-suffix O_EXCL|O_NOFOLLOW temp, then rename).
  */
 export function holdDesktopAppLock(
   configDir: string,
@@ -664,15 +820,20 @@ export function holdDesktopAppLock(
     runtimeLockPaths?: string[]
   },
 ): () => void {
-  const content = JSON.stringify({ pid: process.pid, startedAt: options.now ?? Date.now(), kind: 'desktop-app' })
-  const paths = [...(options.runtimeLockPaths ?? desktopAppRuntimeLockPaths(configDir, options.env ?? process.env))]
+  const content = JSON.stringify({
+    pid: process.pid,
+    startedAt: options.now ?? Date.now(),
+    kind: 'desktop-app',
+    nonce: _randomLockBytes(8).toString('hex'),
+  })
+  const paths = [
+    ...(options.runtimeLockPaths ?? desktopAppRuntimeLockPaths(configDir, { env: options.env ?? process.env, create: true })),
+  ]
   if (options.inConfigDir) paths.push(join(configDir, ROX_DESKTOP_APP_LOCK_NAME))
   const held: string[] = []
   for (const path of paths) {
     try {
-      const temp = `${path}.tmp-${process.pid}`
-      _writeMigrationFile(temp, content, { encoding: 'utf8', mode: 0o600 })
-      _renameMigration(temp, path)
+      _writeLockFileExclusive(path, content)
       held.push(path)
     } catch {
       // best effort
@@ -681,8 +842,7 @@ export function holdDesktopAppLock(
   return () => {
     for (const path of held) {
       try {
-        const identity = parseMigrationLockContent(_readMigrationFile(path, 'utf8'))
-        if (identity?.pid === process.pid) _unlinkMigration(path)
+        if (_isOwnLockWithContent(path, content)) _unlinkMigration(path)
       } catch {
         // already gone
       }
@@ -695,9 +855,10 @@ function _liveHomeLockHolders(dir: string, options?: MigrateHiddenRoxHomeOptions
   const isPidAlive = options?.isPidAlive ?? defaultIsPidAlive
   const holders: string[] = []
   const probes: Array<[string, string]> = ROX_HOME_WRITER_LOCK_NAMES.map((name) => [name, join(dir, name)])
+  const own: LockOwnershipOptions = { getuid: options?.getuid, lstat: options?.lockLstat }
   const runtimeLocks = options?.desktopRuntimeLockPath
     ? [options.desktopRuntimeLockPath(dir)]
-    : desktopAppRuntimeLockPaths(dir, options?.env ?? process.env)
+    : _desktopRuntimeLockProbePaths(dir, { env: options?.env ?? process.env, ...own })
   for (const path of runtimeLocks) probes.push(['desktop-app', path])
   let desktopLive = false
   for (const [name, path] of probes) {
@@ -705,7 +866,7 @@ function _liveHomeLockHolders(dir: string, options?: MigrateHiddenRoxHomeOptions
     try {
       // `.server.lock` / `.app.lock` are long-lived PID files (a server or the
       // app may run for days): liveness + boot time decide, no TTL.
-      if (isLockFileLive(path, { now, isPidAlive, pidlessTtlMs: ROX_PIDLESS_LOCK_TTL_MS })) {
+      if (isLockFileLive(path, { now, isPidAlive, pidlessTtlMs: ROX_PIDLESS_LOCK_TTL_MS, ...own })) {
         holders.push(name)
         if (name === 'desktop-app') desktopLive = true
       }
@@ -994,60 +1155,117 @@ function _legacyProcessLockPaths(options?: MigrateHiddenRoxHomeOptions): string[
 }
 
 /**
- * O_EXCL process lock carrying `{ pid, startedAt }`. A lock left by a dead
- * PID, a previous boot, or older than `ROX_MIGRATION_LOCK_TTL_MS` is stale
- * and taken over once; a live lock defers.
+ * O_EXCL|O_NOFOLLOW process lock carrying `{ pid, startedAt, nonce }`. A
+ * lock left by a dead PID, a previous boot, older than
+ * `ROX_MIGRATION_LOCK_TTL_MS`, owned by another user or a link is stale; a
+ * live lock defers. Takeover never removes a lock another process just
+ * created: the stale entry is renamed aside and checked (same inode and
+ * content as judged) before it is dropped, and after creating our own lock
+ * we re-read it and proceed only if it still carries our token.
  */
 function _acquireProcessLock(options?: MigrateHiddenRoxHomeOptions): (() => void) | { deferred: string } {
   const lockPath = options?.processLockPath ?? _defaultProcessLockPath(options)
   const now = options?.now?.() ?? Date.now()
-  // A live lock at the old tmpdir location (a still-running older build) defers too.
-  for (const legacy of _legacyProcessLockPaths(options)) {
-    if (legacy === lockPath) continue
-    const legacyLive = isLockFileLive(legacy, {
-      now,
-      isPidAlive: options?.isPidAlive ?? defaultIsPidAlive,
-      ttlMs: ROX_MIGRATION_LOCK_TTL_MS,
-      pidlessTtlMs: 60_000,
-    })
-    if (legacyLive) return { deferred: legacy }
-  }
-  const tryCreate = (): (() => void) | null => {
-    try {
-      const fd = _openMigrationLock(lockPath, 'wx', 0o600)
-      try {
-        _writeMigrationFd(fd, JSON.stringify({ pid: process.pid, startedAt: now }))
-      } finally {
-        _closeMigrationLock(fd)
-      }
-      return () => {
-        try {
-          _unlinkMigration(lockPath)
-        } catch {
-          // best effort
-        }
-      }
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException | null)?.code === 'EEXIST') return null
-      throw error
-    }
-  }
-  const first = tryCreate()
-  if (first) return first
-  const live = isLockFileLive(lockPath, {
+  const own: LockOwnershipOptions = { getuid: options?.getuid, lstat: options?.lockLstat }
+  const liveness: LockLivenessOptions = {
     now,
     isPidAlive: options?.isPidAlive ?? defaultIsPidAlive,
     ttlMs: ROX_MIGRATION_LOCK_TTL_MS,
     // A lock being written right now has no PID for a moment.
     pidlessTtlMs: 60_000,
-  })
-  if (live) return { deferred: lockPath }
-  try {
-    _unlinkMigration(lockPath)
-  } catch {
-    // raced with another process — fall through to one retry
+    ...own,
   }
-  return tryCreate() ?? { deferred: lockPath }
+  // A live lock at the old tmpdir location (a still-running older build) defers too.
+  for (const legacy of _legacyProcessLockPaths(options)) {
+    if (legacy === lockPath) continue
+    if (isLockFileLive(legacy, liveness)) return { deferred: legacy }
+  }
+  const token = JSON.stringify({ pid: process.pid, startedAt: now, nonce: _randomLockBytes(8).toString('hex') })
+  const deferred = { deferred: lockPath }
+  const tryCreate = (): boolean => {
+    try {
+      const fd = _openMigrationLock(
+        lockPath,
+        _fsConstants.O_WRONLY | _fsConstants.O_CREAT | _fsConstants.O_EXCL | _O_NOFOLLOW,
+        0o600,
+      )
+      try {
+        _writeMigrationFd(fd, token)
+      } finally {
+        _closeMigrationLock(fd)
+      }
+      return true
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException | null)?.code === 'EEXIST') return false
+      throw error
+    }
+  }
+  const confirmed = (): (() => void) | { deferred: string } => {
+    options?.lockTakeoverHook?.('created')
+    // Someone replaced our fresh lock (a concurrent takeover): back off and
+    // leave theirs alone.
+    if (!_isOwnLockWithContent(lockPath, token, own)) return deferred
+    return () => {
+      try {
+        if (_isOwnLockWithContent(lockPath, token, own)) _unlinkMigration(lockPath)
+      } catch {
+        // best effort
+      }
+    }
+  }
+  if (tryCreate()) return confirmed()
+  if (isLockFileLive(lockPath, liveness)) return deferred
+  // Stale: fingerprint what was judged, move it aside, verify, drop it.
+  const fingerprint = (path: string): string | undefined => {
+    try {
+      const st = (own.lstat ?? _lstatMigration)(path)
+      let content = ''
+      if (st.isFile()) {
+        try {
+          content = _readLockNoFollow(path)
+        } catch {
+          content = ''
+        }
+      }
+      return `${st.dev}:${st.ino}:${st.mtimeMs}:${content}`
+    } catch {
+      return undefined
+    }
+  }
+  const judged = fingerprint(lockPath)
+  options?.lockTakeoverHook?.('stale-judged')
+  if (judged !== undefined) {
+    const aside = `${lockPath}.stale-${process.pid}-${_randomLockBytes(8).toString('hex')}`
+    try {
+      _renameMigration(lockPath, aside)
+    } catch (error) {
+      // Already gone (another process took it over): just race for O_EXCL.
+      if ((error as NodeJS.ErrnoException | null)?.code !== 'ENOENT') return deferred
+    }
+    if (_pathPresent(aside)) {
+      if (fingerprint(aside) !== judged) {
+        // We moved a lock someone created after our judgement: put it back
+        // (link never overwrites) and back off.
+        try {
+          _linkMigration(aside, lockPath)
+        } catch {
+          // a third process holds the path now
+        }
+        try {
+          _unlinkMigration(aside)
+        } catch {
+          // best effort
+        }
+        return deferred
+      }
+      try {
+        _unlinkMigration(aside)
+      } catch {
+        // best effort
+      }
+    }
+  }
+  return tryCreate() ? confirmed() : deferred
 }
 
 /**

@@ -27,7 +27,7 @@ import {
   ROX_DESKTOP_APP_LOCK_NAME,
   ROX_PIDLESS_LOCK_TTL_MS,
   holdDesktopAppLock,
-  desktopAppRuntimeLockPath,
+  desktopAppRuntimeLockPaths,
   isForeignVisibleHome,
   isLockFileLive,
   mergeIncompleteMarkerPath,
@@ -102,10 +102,12 @@ describe('desktop app lock (finding 1b)', () => {
       const inDir = JSON.parse(readFileSync(join(configDir, ROX_DESKTOP_APP_LOCK_NAME), 'utf8'))
       expect(inDir.pid).toBe(process.pid)
       expect(typeof inDir.startedAt).toBe('number')
-      expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(true)
+      const runtime = desktopAppRuntimeLockPaths(configDir)
+      expect(runtime.length).toBeGreaterThan(0)
+      expect(runtime.every((p) => existsSync(p))).toBe(true)
       release()
       expect(existsSync(join(configDir, ROX_DESKTOP_APP_LOCK_NAME))).toBe(false)
-      expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(false)
+      expect(runtime.some((p) => existsSync(p))).toBe(false)
     }))
 
   it('flag OFF (inConfigDir: false) adds nothing to the config dir', () =>
@@ -114,9 +116,11 @@ describe('desktop app lock (finding 1b)', () => {
       mkdirSync(configDir)
       const release = holdDesktopAppLock(configDir, { inConfigDir: false })
       expect(readdirSync(configDir)).toEqual([])
-      expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(true)
+      expect(readdirSync(home)).toEqual(['.rox'])
+      const runtime = desktopAppRuntimeLockPaths(configDir)
+      expect(runtime.every((p) => existsSync(p) && !p.startsWith(home))).toBe(true)
       release()
-      expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(false)
+      expect(runtime.some((p) => existsSync(p))).toBe(false)
     }))
 
   it('--revert is refused while an app launched on the compat-link path runs', () =>

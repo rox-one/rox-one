@@ -156,7 +156,9 @@ kept there too. If `~/.rox` cannot be renamed in place (for example it is a
 mount point), the migration defers (`deferred-unmovable`) without copying
 anything. While it runs, the migration holds `~/.rox-migrate.lock` (removed
 afterwards). It also honours the desktop app's runtime lock in the temp
-directory, `$XDG_RUNTIME_DIR` and `/tmp`. Apps in a separate sandbox (a
+directory, `$XDG_RUNTIME_DIR` and `/tmp`. Shared directories hold it in a
+private per-user `rox-<uid>/` folder. Lock files that are links or belong to
+another user are ignored. Apps in a separate sandbox (a
 private `/tmp`) can only be seen through the `.app.lock` that the app keeps in
 the config dir while the flag is on.
 

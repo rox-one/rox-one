@@ -80,6 +80,8 @@ export {
   desktopAppRuntimeLockPath,
   desktopAppRuntimeLockPaths,
   ROX_MIGRATION_LOCK_FILE_NAME,
+  type LockOwnershipOptions,
+  type RuntimeLockLocationOptions,
   holdDesktopAppLock,
   isForeignVisibleHome,
   isLockFileLive,

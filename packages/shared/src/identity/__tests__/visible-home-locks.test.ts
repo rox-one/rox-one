@@ -7,7 +7,7 @@
  * SAFETY: temp HOME (`mkdtemp`) + explicit `homeDir`/`env` only.
  */
 import { beforeEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -50,17 +50,32 @@ const opts = (home: string, extra?: Partial<MigrateHiddenRoxHomeOptions>): Migra
 })
 
 describe('runtime desktop lock locations', () => {
-  it('tmpdir (compat) first, then $XDG_RUNTIME_DIR and /tmp; deduplicated; never under $HOME', () => {
-    const dir = '/home/u/.rox'
-    const paths = desktopAppRuntimeLockPaths(dir, { XDG_RUNTIME_DIR: '/run/user/1000' }, '/var/folders/x/T', 'darwin')
-    expect(paths[0]).toBe(desktopAppRuntimeLockPath(dir, '/var/folders/x/T'))
-    expect(paths.map((p) => join(p, '..'))).toEqual(['/var/folders/x/T', '/run/user/1000', '/tmp'])
-    expect(desktopAppRuntimeLockPaths(dir, {}, '/tmp', 'linux')).toEqual([desktopAppRuntimeLockPath(dir, '/tmp')])
-    expect(desktopAppRuntimeLockPaths(dir, { XDG_RUNTIME_DIR: 'relative' }, 'C:\\T', 'win32')).toEqual([
-      desktopAppRuntimeLockPath(dir, 'C:\\T'),
-    ])
-    expect(desktopAppRuntimeLockPaths(dir, {})[0]).toBe(desktopAppRuntimeLockPath(dir))
-  })
+  it('private bases are used directly, shared ones through a per-user subdir; deduplicated; never under $HOME', () =>
+    withHome((home) => {
+      const dir = join(home, '.rox')
+      const privateTmp = join(home, 'T')
+      const xdg = join(home, 'xdg')
+      const shared = join(home, 'shared-tmp')
+      for (const d of [privateTmp, xdg, shared]) mkdirSync(d, { mode: 0o700 })
+      chmodSync(shared, 0o1777)
+      const uid = process.getuid?.()
+      const paths = desktopAppRuntimeLockPaths(dir, {
+        env: { XDG_RUNTIME_DIR: xdg },
+        tmp: privateTmp,
+        sharedTmp: shared,
+        create: true,
+      })
+      expect(paths[0]).toBe(desktopAppRuntimeLockPath(dir, privateTmp))
+      expect(paths.map((p) => join(p, '..'))).toEqual([privateTmp, xdg, join(shared, `rox-${uid}`)])
+      expect(statSync(join(shared, `rox-${uid}`)).mode & 0o777).toBe(0o700)
+      expect(desktopAppRuntimeLockPaths(dir, { env: {}, tmp: privateTmp, sharedTmp: privateTmp })).toEqual([
+        desktopAppRuntimeLockPath(dir, privateTmp),
+      ])
+      expect(desktopAppRuntimeLockPaths(dir, { env: { XDG_RUNTIME_DIR: 'relative' }, tmp: privateTmp, sharedTmp: null })).toEqual([
+        desktopAppRuntimeLockPath(dir, privateTmp),
+      ])
+      expect(desktopAppRuntimeLockPaths(dir).some((p) => p.startsWith(home))).toBe(false)
+    }))
 
   it('the app holds every location and releases them all; nothing in the config dir when inConfigDir is false', () =>
     withHome((home) => {
@@ -80,8 +95,11 @@ describe('runtime desktop lock locations', () => {
       plantHidden(home)
       const env = { XDG_RUNTIME_DIR: join(home, 'xdg') }
       // Only the XDG location holds the lock (the app ran with another TMPDIR).
-      const xdgLock = desktopAppRuntimeLockPaths(join(home, '.rox'), env)[1] ?? ''
-      expect(xdgLock.startsWith(join(home, 'xdg'))).toBe(true)
+      mkdirSync(env.XDG_RUNTIME_DIR, { mode: 0o700 })
+      const xdgLock = desktopAppRuntimeLockPaths(join(home, '.rox'), { env, sharedTmp: null }).find((p) =>
+        p.startsWith(env.XDG_RUNTIME_DIR),
+      ) ?? ''
+      expect(xdgLock).not.toBe('')
       liveLock(xdgLock)
       const result = migrateHiddenRoxHome(opts(home, { env, skipProcessLock: true }))
       expect(result.outcome).toBe('deferred-locked')
