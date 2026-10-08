@@ -38,11 +38,15 @@ CREATE TABLE work_item (
   revision bigint NOT NULL DEFAULT 1 CHECK (revision >= 0),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  -- project's PK is (workspace_id, project_id) (01-domain-contract), so the FK carries the
+  -- workspace: no task on another workspace's project or on a missing one. milestone sorts
+  -- later; its FK (work_item_milestone_fk) is added in 523-projects.sql.
+  CONSTRAINT work_item_project_fk FOREIGN KEY (workspace_id, project_id) REFERENCES project(workspace_id, project_id)
 );
 -- Work map + task boards: scope filters.
 CREATE INDEX work_item_space ON work_item (workspace_id, space_id) WHERE deleted_at IS NULL;
-CREATE INDEX work_item_project ON work_item (project_id) WHERE project_id IS NOT NULL AND deleted_at IS NULL;
+CREATE INDEX work_item_project ON work_item (workspace_id, project_id) WHERE project_id IS NOT NULL AND deleted_at IS NULL;
 CREATE INDEX work_item_milestone ON work_item (milestone_id) WHERE milestone_id IS NOT NULL AND deleted_at IS NULL;
 CREATE INDEX work_item_status ON work_item (workspace_id, status_key) WHERE deleted_at IS NULL;
 CREATE INDEX work_item_owner ON work_item (owner_principal_id) WHERE deleted_at IS NULL;

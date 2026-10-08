@@ -57,6 +57,7 @@ const DEFERRED_FKS: Array<{ from: string; to: string; addedIn: string }> = [
   { from: 'space', to: 'wiki_space', addedIn: '512-im.sql' },
   { from: 'file_object', to: 'drive', addedIn: '516-drive-quota.sql' },
   { from: 'calendar_member', to: 'calendar', addedIn: '521-calendar.sql' },
+  { from: 'work_item', to: 'milestone', addedIn: '523-projects.sql' },
 ]
 
 async function loadSources(): Promise<Map<string, string>> {
@@ -599,6 +600,20 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
       await db.unsafe(milestone(wsA, project))
       await expect(run(milestone(wsB, project))).rejects.toThrow(/milestone_project_fk/)
       await expect(run(milestone(wsA, randomUUID()))).rejects.toThrow(/milestone_project_fk/)
+
+      // work_item: project and milestone must exist in the task's own workspace.
+      const milestoneA = randomUUID()
+      await db.unsafe(`INSERT INTO ${s}.milestone (milestone_id, workspace_id, project_id, title, sort_key) VALUES ('${milestoneA}', '${wsA}', '${project}', 'm2', 'n')`)
+      const task = (ws: string, cols: string, vals: string) => `INSERT INTO ${s}.work_item (work_item_id, workspace_id, owner_principal_id, title${cols})
+        VALUES (gen_random_uuid(), '${ws}', '${user}', 't'${vals})`
+      await db.unsafe(task(wsA, ', project_id, milestone_id', `, '${project}', '${milestoneA}'`))
+      await db.unsafe(task(wsB, '', ''))
+      await expect(run(task(wsB, ', project_id', `, '${project}'`))).rejects.toThrow(/work_item_project_fk/)
+      await expect(run(task(wsA, ', project_id', `, '${randomUUID()}'`))).rejects.toThrow(/work_item_project_fk/)
+      await expect(run(task(wsB, ', milestone_id', `, '${milestoneA}'`))).rejects.toThrow(/work_item_milestone_fk/)
+      await expect(run(task(wsA, ', milestone_id', `, '${randomUUID()}'`))).rejects.toThrow(/work_item_milestone_fk/)
+      const [projectIndex] = await db.unsafe<{ def: string }[]>(`SELECT pg_get_indexdef('${schema}.work_item_project'::regclass) AS def`)
+      expect(projectIndex!.def).toContain('(workspace_id, project_id)')
     } finally {
       await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
       await db.close()

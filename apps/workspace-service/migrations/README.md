@@ -172,8 +172,11 @@ keys over free-text or client-supplied values are scoped:
 - `upload_session` and `storage_ledger`: `UNIQUE (drive_id, idempotency_key)`
   (a drive belongs to one workspace). `rule_execution`'s key is server-derived
   and stays global.
-- `project_member` and `milestone` reference `project (workspace_id,
-  project_id)`; `project_member`'s key includes `workspace_id`.
+- `project_member`, `milestone` and `work_item` reference `project
+  (workspace_id, project_id)`; `project_member`'s key includes `workspace_id`.
+  `work_item_milestone_fk (workspace_id, milestone_id)` → `milestone`'s
+  `UNIQUE (workspace_id, milestone_id)` is added in `523` (milestone sorts
+  after `520`); `work_item_project` is `(workspace_id, project_id)`.
 - Social (`508`): `entity_link_uniq (workspace_id, from_kind, from_id,
   relation, to_kind, to_id, COALESCE(role, ''))`, `entity_link_to
   (workspace_id, to_kind, to_id)`, `entity_link_from (workspace_id, from_kind,

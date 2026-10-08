@@ -56,6 +56,13 @@ CREATE TABLE milestone (
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz,
-  CONSTRAINT milestone_project_fk FOREIGN KEY (workspace_id, project_id) REFERENCES project(workspace_id, project_id)
+  CONSTRAINT milestone_project_fk FOREIGN KEY (workspace_id, project_id) REFERENCES project(workspace_id, project_id),
+  -- Target of work_item_milestone_fk below (keeps the task and its milestone in one workspace).
+  CONSTRAINT milestone_workspace_key UNIQUE (workspace_id, milestone_id)
 );
 CREATE INDEX milestone_project ON milestone (workspace_id, project_id) WHERE deleted_at IS NULL;
+
+-- Deferred from 520-work-item.sql (milestone sorts later): a task's milestone must exist
+-- and belong to the task's workspace.
+ALTER TABLE work_item ADD CONSTRAINT work_item_milestone_fk
+  FOREIGN KEY (workspace_id, milestone_id) REFERENCES milestone(workspace_id, milestone_id);
