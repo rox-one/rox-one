@@ -17,6 +17,7 @@ import './chat-chrome-clarity.css'
 import './components/app-shell/titlebar-mode-pill.css'
 import { installRendererPerfHarness } from './perf/install'
 import { syncMainProcessLanguage } from './lib/main-language-sync'
+import { seedEntitiesLinksGate } from './lib/entities-links-sync'
 
 const rendererPerfHarness = installRendererPerfHarness()
 
@@ -127,6 +128,11 @@ function Root() {
     </ThemeProvider>
   )
 }
+
+// entities.links.v1: seed the route gate from main's effective state
+// (env override > persisted toggle) BEFORE the first render, so restored
+// entity tabs / persisted `entity/…` keys resolve on the first pass.
+seedEntitiesLinksGate()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
