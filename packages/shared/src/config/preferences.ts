@@ -7,7 +7,8 @@ import {
   DEFAULT_LANGUAGE_CODE,
   isSupportedLanguageCode,
 } from '../i18n/languages.ts';
-import { LOCALE_REGISTRY, type LanguageCode } from '../i18n/registry.ts';
+// Native names only: avoid registry.ts, which statically imports every locale bundle.
+import { LOCALE_META, type LanguageCode } from '../i18n/locale-meta.ts';
 import { resolveConfigDir } from "./paths.ts"
 import {
   persistAgentIdentity,
@@ -213,7 +214,7 @@ export function setPersistedUiLanguage(code: LanguageCode): void {
  * invalid configurations consistently use the Russian default.
  */
 export function resolveTitleLanguageName(): string {
-  return LOCALE_REGISTRY[getPersistedUiLanguage()].nativeName;
+  return LOCALE_META[getPersistedUiLanguage()].nativeName;
 }
 
 /**
@@ -224,7 +225,7 @@ export function formatPreferencesForPrompt(): string {
 
   // Derive language from the persisted Appearance → Language choice.
   const langCode = getPersistedUiLanguage();
-  const langName = LOCALE_REGISTRY[langCode].nativeName;
+  const langName = LOCALE_META[langCode].nativeName;
 
   if (Object.keys(prefs).length === 0 ||
       (!prefs.name && !prefs.timezone && !prefs.location && !prefs.notes && langCode === 'en')) {
@@ -294,7 +295,7 @@ export function formatPreferencesDisplay(): string {
     }
 
     const displayLangCode = getPersistedUiLanguage();
-    const displayLangName = LOCALE_REGISTRY[displayLangCode].nativeName;
+    const displayLangName = LOCALE_META[displayLangCode].nativeName;
     lines.push(`- Language: ${displayLangName} (via Appearance settings)`);
 
     if (hasNotes) {

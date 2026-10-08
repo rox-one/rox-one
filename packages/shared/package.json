@@ -76,6 +76,7 @@
     "./git/exec": "./src/git/exec.ts",
     "./git/status": "./src/git/status.ts",
     "./i18n": "./src/i18n/index.ts",
+    "./i18n/lazy": "./src/i18n/lazy.ts",
     "./icons": "./src/icons/index.ts",
     "./identity": "./src/identity/index.ts",
     "./interceptor": "./src/interceptor-common.ts",

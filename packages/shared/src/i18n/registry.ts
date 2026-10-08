@@ -1,16 +1,24 @@
 /**
- * Canonical locale registry — single source of truth for all supported locales.
+ * Canonical locale registry — every locale with its messages, eagerly loaded.
  *
  * To add a new locale:
  * 1. Create the locale JSON file in ./locales/
- * 2. Import the messages and date-fns locale below
- * 3. Add one entry to LOCALE_REGISTRY
+ * 2. Add its code + native name to LOCALE_META (./locale-meta.ts)
+ * 3. Add its date-fns locale to DATE_LOCALES (./date-locales.ts)
+ * 4. Import the messages below and add one entry to LOCALE_REGISTRY
+ * 5. Add its loader to LOCALE_MESSAGE_LOADERS (./locale-loaders.ts)
  *
- * Everything else (SUPPORTED_LANGUAGE_CODES, LANGUAGES, i18n resources,
- * date locale lookup) is derived automatically. No other file needs to change.
+ * The type checks below fail if any of those maps is missing a code.
+ *
+ * Bundle note: this module statically imports all ~7 MB of locale JSON. The
+ * main process and tests use it through `setupI18n()`. Renderer entries must
+ * use `@rox/shared/i18n/lazy` instead, which loads only the active language
+ * and its fallbacks.
  */
 
 import type { Locale } from "date-fns";
+import { DATE_LOCALES } from "./date-locales";
+import { LOCALE_META, type LanguageCode } from "./locale-meta";
 
 // ─── Translation resources ───────────────────────────────────────────────────
 import arMessages from "./locales/ar.json";
@@ -26,20 +34,6 @@ import ruMessages from "./locales/ru.json";
 import zhHansMessages from "./locales/zh-Hans.json";
 import zhHantMessages from "./locales/zh-Hant.json";
 
-// ─── date-fns locales ────────────────────────────────────────────────────────
-import { ar as arDateLocale } from "date-fns/locale/ar";
-import { de as deDateLocale } from "date-fns/locale/de";
-import { enUS } from "date-fns/locale/en-US";
-import { es as esDateLocale } from "date-fns/locale/es";
-import { fr as frDateLocale } from "date-fns/locale/fr";
-import { hu as huDateLocale } from "date-fns/locale/hu";
-import { ja as jaDateLocale } from "date-fns/locale/ja";
-import { ko as koDateLocale } from "date-fns/locale/ko";
-import { pl as plDateLocale } from "date-fns/locale/pl";
-import { ru as ruDateLocale } from "date-fns/locale/ru";
-import { zhCN } from "date-fns/locale/zh-CN";
-import { zhTW } from "date-fns/locale/zh-TW";
-
 // ─── Registry ────────────────────────────────────────────────────────────────
 
 interface LocaleEntry {
@@ -48,31 +42,25 @@ interface LocaleEntry {
   dateLocale: Locale;
 }
 
-export const LOCALE_REGISTRY = {
-  en: { nativeName: "English", messages: enMessages, dateLocale: enUS },
-  ru: { nativeName: "Русский", messages: ruMessages, dateLocale: ruDateLocale },
-  es: { nativeName: "Español", messages: esMessages, dateLocale: esDateLocale },
-  "zh-Hans": {
-    nativeName: "简体中文",
-    messages: zhHansMessages,
-    dateLocale: zhCN,
-  },
-  "zh-Hant": {
-    nativeName: "繁體中文",
-    messages: zhHantMessages,
-    dateLocale: zhTW,
-  },
-  ja: { nativeName: "日本語", messages: jaMessages, dateLocale: jaDateLocale },
-  de: {
-    nativeName: "Deutsch",
-    messages: deMessages,
-    dateLocale: deDateLocale,
-  },
-  hu: { nativeName: "Magyar", messages: huMessages, dateLocale: huDateLocale },
-  pl: { nativeName: "Polski", messages: plMessages, dateLocale: plDateLocale },
-  fr: { nativeName: "Français", messages: frMessages, dateLocale: frDateLocale },
-  ko: { nativeName: "한국어", messages: koMessages, dateLocale: koDateLocale },
-  ar: { nativeName: "العربية", messages: arMessages, dateLocale: arDateLocale },
-} satisfies Record<string, LocaleEntry>;
+const entry = <M extends Record<string, string>>(code: LanguageCode, messages: M) => ({
+  nativeName: LOCALE_META[code].nativeName,
+  messages,
+  dateLocale: DATE_LOCALES[code],
+});
 
-export type LanguageCode = keyof typeof LOCALE_REGISTRY;
+export const LOCALE_REGISTRY = {
+  en: entry("en", enMessages),
+  ru: entry("ru", ruMessages),
+  es: entry("es", esMessages),
+  "zh-Hans": entry("zh-Hans", zhHansMessages),
+  "zh-Hant": entry("zh-Hant", zhHantMessages),
+  ja: entry("ja", jaMessages),
+  de: entry("de", deMessages),
+  hu: entry("hu", huMessages),
+  pl: entry("pl", plMessages),
+  fr: entry("fr", frMessages),
+  ko: entry("ko", koMessages),
+  ar: entry("ar", arMessages),
+} satisfies Record<LanguageCode, LocaleEntry>;
+
+export type { LanguageCode } from "./locale-meta";

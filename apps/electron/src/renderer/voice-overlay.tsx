@@ -2,13 +2,14 @@ import { createRoot } from 'react-dom/client'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
-import { setupI18n } from '@rox/shared/i18n'
+import { initRendererI18n } from '@rox/shared/i18n/lazy'
 import type { OverlayState } from '@rox/shared/voice'
 import { VOICE_OVERLAY_REQUIRES_CONATION_FLAG } from './voice-overlay-rox2-surface'
 
 export { VOICE_OVERLAY_REQUIRES_CONATION_FLAG, VOICE_OVERLAY_SURFACE_ID, voiceOverlaySurfaceResult } from './voice-overlay-rox2-surface'
 
-setupI18n([LanguageDetector, initReactI18next])
+// Only the active locale (+ fallbacks) is loaded; rendering waits for it below.
+const i18nReady = initRendererI18n([LanguageDetector, initReactI18next])
 
 declare global {
   interface Window { voiceOverlay?: {
@@ -96,4 +97,4 @@ export function OverlayApp() {
 }
 
 const root = document.getElementById('root')
-if (root) createRoot(root).render(<OverlayApp />)
+if (root) void i18nReady.then(() => createRoot(root).render(<OverlayApp />))

@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import ReactDOM from 'react-dom/client'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
-import { setupI18n } from '@rox/shared/i18n'
+import { initRendererI18n } from '@rox/shared/i18n/lazy'
 import { EyeOff, X, XCircle, Bug, Download, History, User } from 'lucide-react'
 import { BrowserControls } from '@rox/ui'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
@@ -25,7 +25,8 @@ import './index.css'
 
 // This is a standalone entry (browser-toolbar.html) — i18n must be initialized
 // here or BrowserControls and the menu below render raw translation keys.
-setupI18n([LanguageDetector, initReactI18next])
+// Only the active locale (+ fallbacks) is loaded; rendering waits for it below.
+const i18nReady = initRendererI18n([LanguageDetector, initReactI18next])
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -295,8 +296,8 @@ function BrowserToolbarApp() {
 /*  Mount                                                              */
 /* ------------------------------------------------------------------ */
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+void i18nReady.then(() => ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserToolbarApp />
   </React.StrictMode>,
-)
+))

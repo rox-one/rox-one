@@ -1,14 +1,15 @@
 import React, { useCallback } from 'react'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import ReactDOM from 'react-dom/client'
-import { setupI18n } from '@rox/shared/i18n'
+import { initRendererI18n } from '@rox/shared/i18n/lazy'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { BrowserEmptyStateCard } from '@rox/ui'
 import { routes } from '../shared/routes'
 import { EMPTY_STATE_PROMPT_SAMPLES } from './components/browser/empty-state-prompts'
 import './index.css'
 
-setupI18n([LanguageDetector, initReactI18next])
+// Only the active locale (+ fallbacks) is loaded; rendering waits for it below.
+const i18nReady = initRendererI18n([LanguageDetector, initReactI18next])
 
 function BrowserEmptyStateApp() {
   const { t } = useTranslation()
@@ -45,8 +46,8 @@ function BrowserEmptyStateApp() {
   )
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+void i18nReady.then(() => ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserEmptyStateApp />
   </React.StrictMode>,
-)
+))

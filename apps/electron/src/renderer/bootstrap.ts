@@ -2,6 +2,7 @@ import { Buffer } from 'buffer'
 import process from 'process'
 import { migrateConationFlagsDefaultOff } from './lib/migrate-conation-flags-default-off'
 import { migrateSidePanelDefaults } from './lib/shell-layout-preferences'
+import { preloadRendererLocales } from '@rox/shared/i18n/lazy'
 
 const rendererGlobals = globalThis as typeof globalThis & {
   Buffer?: typeof Buffer
@@ -27,7 +28,9 @@ try {
 }
 
 if (typeof window !== 'undefined' && window.electronAPI) {
-  void import('./main')
+  // PERF-04: only the active locale and its fallbacks are fetched (never
+  // rejects), so main.tsx can initialize i18n synchronously before rendering.
+  void preloadRendererLocales().then(() => { void import('./main') })
 } else {
   void import('./browser-preview/BrowserPreview').then(({ renderBrowserPreview }) => {
     renderBrowserPreview()
