@@ -1115,7 +1115,7 @@ export const RPC_CHANNELS = {
     /** Push: local link store changed for a workspace. */
     LINKS_CHANGED: 'entities:linksChanged',
   },
-  // W1-03 (#1500)
+// W1-03 (#1500)
   commands: {
     /** Execute a CommandEnvelope through the command bus; returns a CommandReceipt. */
     EXECUTE: 'commands:execute',
@@ -1123,6 +1123,11 @@ export const RPC_CHANNELS = {
     LIST: 'commands:list',
     /** Push: realtime event frame or command-bus status for a workspace. */
     EVENT: 'commands:event',
+  },
+  // W1-04 (#1501)
+  directory: {
+    /** MIG-06: one-shot export of the renderer Dossier payload into local contact cards. */
+    EXPORT_DOSSIER: 'directory:exportDossier',
   },
 } as const
 
