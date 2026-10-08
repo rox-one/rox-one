@@ -236,6 +236,28 @@ describe('token foundation v2: radius', () => {
     }
   })
 
+  it('menus and popovers use the md radius, not the overlay role', () => {
+    const menus = [
+      'apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx',
+      'packages/ui/src/components/ui/FilterableSelectPopover.tsx',
+      'packages/ui/src/components/ui/SimpleDropdown.tsx',
+      'packages/ui/src/components/ui/premium-menu-model.ts',
+      'packages/ui/src/components/markdown/tiptap-editor.css',
+      'apps/electron/src/renderer/components/ui/session-status-menu.tsx',
+      'apps/electron/src/renderer/components/ui/skill-mention-menu.tsx',
+      'apps/electron/src/renderer/components/ui/slash-command-menu.tsx',
+      'apps/electron/src/renderer/components/ui/mention-menu.tsx',
+      'apps/electron/src/renderer/components/ui/label-menu.tsx',
+      'apps/electron/src/renderer/components/ui/EditPopover.tsx',
+      'apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx',
+      'apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx',
+      'apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx',
+      'apps/electron/src/renderer/components/app-shell/WorkspaceIconRail.tsx',
+      'apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx',
+    ]
+    for (const f of menus) expect(readFileSync(join(repoRoot, f), 'utf8'), f).not.toContain('--radius-overlay')
+  })
+
   it('UI profiles scale radius only within the scale', () => {
     const root = rootOf(allTokens)
     const profile = merge(blocks(indexCss, 'html[data-ui-profile="super-engineering"]'))

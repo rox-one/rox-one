@@ -815,7 +815,7 @@ export function ApiKeyInput({
                     onClick={() => { setOpenTier(null); setTierFilter('') }}
                   />
                   <div
-                    className="fixed z-island min-w-[200px] overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small"
+                    className="fixed z-island min-w-[200px] overflow-hidden rounded-md bg-background text-foreground shadow-modal-small"
                     style={{
                       top: tierDropdownPosition.top,
                       left: tierDropdownPosition.left,

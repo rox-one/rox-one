@@ -159,7 +159,7 @@ export function FilterableSelectPopover<T>({
       />
 
       <div
-        className="fixed z-island overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small"
+        className="fixed z-island overflow-hidden rounded-md bg-background text-foreground shadow-modal-small"
         style={{
           top: position.top - 8,
           left: position.left,

@@ -488,7 +488,7 @@ export function WorkspaceIconRail({
 								align="start"
 								sideOffset={8}
 								aria-labelledby={addLinkTitleId}
-								className="w-80 max-w-[min(calc(100vw-40px),var(--radix-popover-content-available-width))] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-[var(--radius-overlay)] p-3"
+								className="w-80 max-w-[min(calc(100vw-40px),var(--radix-popover-content-available-width))] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-md p-3"
 								onOpenAutoFocus={(event) => {
 									event.preventDefault();
 									draftLabelRef.current?.focus();

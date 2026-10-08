@@ -323,7 +323,7 @@
   align-items: center;
   gap: 2px;
   padding: 4px;
-  border-radius: var(--radius-overlay, 6px);
+  border-radius: var(--radius-md, 8px);
   background: var(--background);
   border: none;
   box-shadow: var(--shadow-modal-small);
@@ -336,7 +336,7 @@
   min-width: 320px;
   max-width: 480px;
   padding: 6px;
-  border-radius: var(--radius-overlay, 6px);
+  border-radius: var(--radius-md, 8px);
 }
 
 .tiptap-bubble-btn {

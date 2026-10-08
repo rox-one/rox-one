@@ -54,7 +54,7 @@ export interface InlineMentionMenuProps {
 // Shared Styles
 // ============================================================================
 
-const MENU_CONTAINER_STYLE = 'overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small'
+const MENU_CONTAINER_STYLE = 'overflow-hidden rounded-md bg-background text-foreground shadow-modal-small'
 const MENU_LIST_STYLE = 'max-h-[240px] overflow-y-auto py-1'
 const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] mx-1 px-2 py-1.5 text-[13px]'
 const MENU_ITEM_SELECTED = 'bg-foreground/5'

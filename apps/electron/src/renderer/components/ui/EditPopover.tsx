@@ -1062,7 +1062,7 @@ export function EditPopover({
               className="relative bg-foreground-2 overflow-hidden w-full h-full shadow-modal-small"
               style={{
                 transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
-                borderRadius: 'var(--radius-overlay)',
+                borderRadius: 'var(--radius-md)',
               }}
             >
               {/* Drag handle - floating overlay */}
