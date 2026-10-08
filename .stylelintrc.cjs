@@ -10,6 +10,7 @@
  * - px only on borders, outlines, shadows and custom properties (hairlines); sizes and spacing
  *   use rem or token vars.
  * - rox-css/no-theme-self-reference: no `--x: var(--x)` inside @theme (P2-22).
+ * - rox-css/no-apply-numeric-z: no `@apply z-50` / `@apply z-[60]` (numeric z outside declarations).
  */
 
 const KEYWORDS = [
@@ -22,6 +23,7 @@ module.exports = {
   plugins: [
     'stylelint-declaration-strict-value',
     './scripts/stylelint/no-theme-self-reference.mjs',
+    './scripts/stylelint/no-apply-numeric-z.mjs',
   ],
   ignoreFiles: ['**/node_modules/**', '**/dist/**', '**/release/**', 'apps/electron/resources/**'],
   rules: {
@@ -40,6 +42,8 @@ module.exports = {
       '/^(?!border|outline|box-shadow|--).+/': ['px'],
     },
     'rox-css/no-theme-self-reference': true,
+    // At 0 from the start, so an error (the ratchet's flip-at-0 rule).
+    'rox-css/no-apply-numeric-z': [true, { severity: 'error' }],
   },
   overrides: [
     {

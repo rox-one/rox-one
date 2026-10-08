@@ -32,11 +32,14 @@ function rootBlock(css) {
   return ''
 }
 
-let cachedZ = null
+/** file -> { mtimeMs, size, tokens }. A long-running editor ESLint server picks up z.css edits. */
+const zCache = new Map()
 
 /** { layers: Map<name, number>, aliases: Map<name, targetLayer> } parsed from z.css :root. */
 function readZTokens(file = Z_TOKEN_FILE) {
-  if (cachedZ && file === Z_TOKEN_FILE) return cachedZ
+  const stat = fs.statSync(file)
+  const cached = zCache.get(file)
+  if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) return cached.tokens
   const css = stripComments(fs.readFileSync(file, 'utf8'))
   const root = rootBlock(css)
   const layers = new Map()
@@ -54,9 +57,9 @@ function readZTokens(file = Z_TOKEN_FILE) {
   if (layers.size === 0) {
     throw new Error(`rox lint rules: no z layers found in ${file}`)
   }
-  const result = { layers, aliases }
-  if (file === Z_TOKEN_FILE) cachedZ = result
-  return result
+  const tokens = { layers, aliases }
+  zCache.set(file, { mtimeMs: stat.mtimeMs, size: stat.size, tokens })
+  return tokens
 }
 
 const RADIUS_NAMES = ['none', 'xs', 'sm', 'md', 'lg', 'full']

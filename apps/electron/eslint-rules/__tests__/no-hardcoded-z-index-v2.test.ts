@@ -37,8 +37,10 @@ describe('rox/no-hardcoded-z-index v2: class strings', () => {
     expect(messages).toHaveLength(0)
   })
 
-  it('skips dynamic template pieces and non-class strings', () => {
-    const messages = run('const a = <div className={`z-${layer}`} />; const label = "z-50"; const el = <i title="z-10" />')
+  it('skips dynamic template pieces and strings that only look z-ish', () => {
+    const messages = run(
+      'const a = <div className={`z-${layer} z-1${n}`} />; const b = "z-index"; const c = "z-axis z-a"; const d = <i title="zoom-50" />; const e = "mz-10 z-"',
+    )
     expect(messages).toHaveLength(0)
   })
 
@@ -48,6 +50,42 @@ describe('rox/no-hardcoded-z-index v2: class strings', () => {
       const el = <Drawer overlayClassName="z-[200]" />
     `)
     expect(ids(messages)).toEqual(['numericClass', 'arbitraryClass'])
+  })
+})
+
+describe('rox/no-hardcoded-z-index v2: broad detection outside class contexts', () => {
+  it('flags numeric/arbitrary z tokens in any string literal or template piece', () => {
+    const messages = run(`
+      const LAYER = 'absolute z-50'
+      const styles = { panel: 'inset-0 md:z-[60]', chip: \`!-z-10 \${tone}\` }
+      const el = <div className={LAYER} data-layer="z-20!" />
+    `)
+    expect(ids(messages)).toEqual(['numericClass', 'arbitraryClass', 'numericClass', 'numericClass'])
+  })
+
+  it('covers .ts constant modules', () => {
+    const messages = runRoxRule('no-hardcoded-z-index', "export const OVERLAY = 'fixed inset-0 z-[9999]'", { filename: 'layers.ts' })
+    expect(ids(messages)).toEqual(['arbitraryClass'])
+  })
+
+  it('still allows layer-based arbitrary values and layer names outside class contexts', () => {
+    const messages = run(`const a = 'relative z-[calc(var(--z-chrome)+1)]'; const b = 'z-popover'; const c = 'z-overlay'`)
+    expect(messages).toHaveLength(0)
+  })
+
+  it('counts a literal reached both as a class string and a plain string once', () => {
+    const messages = run(`const a = <div className={cn('z-50')} />`)
+    expect(ids(messages)).toEqual(['numericClass'])
+  })
+
+  it('reports a deprecated alias in a non-class string that also contains z-[', () => {
+    const messages = run(`const note = 'see z-[calc(var(--z-island)+1)] and var(--z-floating-menu)'`)
+    expect(ids(messages)).toEqual(['deprecatedAlias'])
+  })
+
+  it('reports an alias inside a broad-matched arbitrary token once', () => {
+    const messages = run(`const a = 'absolute z-[var(--z-overlay)]'`)
+    expect(ids(messages)).toEqual(['deprecatedAlias'])
   })
 })
 

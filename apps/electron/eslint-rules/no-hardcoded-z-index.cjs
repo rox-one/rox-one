@@ -15,6 +15,10 @@
  *   'z-[var(--z-island)]'                   -> allowed (references a layer)
  *   'z-[calc(var(--z-chrome)+1)]'           -> allowed (local offset on a layer)
  *
+ * v2 broad check (part of `checkClasses`): any other string literal or template piece in
+ * .ts/.tsx whose whitespace token is a numeric/arbitrary z utility (`const L = 'absolute z-50'`,
+ * `{ panel: 'z-[60]' }`); layer-based arbitrary values stay allowed.
+ *
  * v2 deprecated alias check, option `checkDeprecatedAliases`:
  *   any string with var(--z-floating-menu) / --z-overlay / --z-local ... -> use the layer
  *
@@ -23,8 +27,15 @@
  *   className="z-popover", "z-auto"
  */
 
-const { createClassStringListeners, mergeListeners } = require('./lib/class-token-visitor.cjs')
+const { createClassStringListeners, mergeListeners, tokensFromString } = require('./lib/class-token-visitor.cjs')
 const { readZTokens } = require('./lib/ui-tokens.cjs')
+
+/**
+ * A whitespace token that is unmistakably a numeric or arbitrary z utility, wherever the
+ * string lives: `z-50`, `md:z-[60]`, `!-z-10`. Used outside recognised class contexts
+ * (`const LAYER = 'absolute z-50'`, `styles = { panel: 'z-[60]' }`, .ts constant modules).
+ */
+const BROAD_Z_TOKEN = /^(?:[\w-]+:)*!?-?z-(?:\d+|\[[^\]]+\])!?$/
 
 const CSS_KEYWORDS = new Set(['auto', 'inherit', 'initial', 'unset', 'revert', 'revert-layer'])
 
@@ -182,35 +193,63 @@ module.exports = {
       context.report({ node, messageId: 'unknownLayerClass', data: { token: token.raw, layers: layerList } })
     }
 
+    // Class strings are only marked during traversal; every string is checked once at
+    // Program:exit, so a literal reached as a class string and as a plain string is not
+    // double counted.
+    const classNodes = new WeakSet()
     const classListeners = checkClasses
-      ? createClassStringListeners(({ node, tokens }) => {
-          for (const token of tokens) checkZToken(token, node)
+      ? createClassStringListeners(({ node }) => {
+          classNodes.add(node)
         })
       : {}
 
-    // ---- v2: deprecated alias vars anywhere --------------------------------
-    // Class-string literals carrying z-[var(--z-alias)] are reported by the
-    // class check; skip them here so a token is counted once.
-    function reportAliases(node, value) {
-      if (typeof value !== 'string' || !value.includes('--z-')) return
-      if (checkClasses && /(^|[\s:!])-?z-[[(]/.test(value)) return
-      aliasPattern.lastIndex = 0
-      for (const match of value.matchAll(aliasPattern)) {
-        context.report({ node, messageId: 'deprecatedAlias', data: { alias: match[1], target: aliases.get(match[1]) } })
+    const strings = []
+    const stringListeners = {
+      Literal(node) {
+        if (typeof node.value === 'string') strings.push(node)
+      },
+      TemplateElement(node) {
+        if (node.parent && node.parent.type === 'TemplateLiteral') strings.push(node)
+      },
+      'Program:exit'() {
+        for (const node of strings) checkString(node)
+      },
+    }
+
+    function tokensOf(node) {
+      if (node.type === 'Literal') return { value: node.value, tokens: tokensFromString(node.value) }
+      const quasis = node.parent.quasis
+      const index = quasis.indexOf(node)
+      const value = node.value.cooked ?? node.value.raw ?? ''
+      return {
+        value,
+        tokens: tokensFromString(value, { partialStart: index > 0, partialEnd: index < quasis.length - 1 }),
       }
     }
 
-    const aliasListeners = checkDeprecatedAliases
-      ? {
-          Literal(node) {
-            reportAliases(node, node.value)
-          },
-          TemplateElement(node) {
-            reportAliases(node, node.value.cooked ?? node.value.raw)
-          },
+    function checkString(node) {
+      const { value, tokens } = tokensOf(node)
+      const isClassString = classNodes.has(node)
+      const handled = new Set()
+      if (checkClasses) {
+        for (const token of tokens) {
+          if (token.partial) continue
+          // In class strings every z-* utility is checked. Anywhere else (constants, style
+          // maps, .ts modules) only tokens that are unmistakably numeric/arbitrary z classes.
+          if (isClassString ? !token.utility.startsWith('z-') : !BROAD_Z_TOKEN.test(token.raw)) continue
+          checkZToken(token, node)
+          if (/^z-[[(]/.test(token.utility)) handled.add(token)
         }
-      : {}
+      }
+      if (checkDeprecatedAliases && value.includes('--z-')) {
+        // Aliases inside a z-[...] token were reported by checkZToken already.
+        const rest = handled.size ? tokens.filter((token) => !handled.has(token)).map((token) => token.raw).join(' ') : value
+        for (const match of rest.matchAll(aliasPattern)) {
+          context.report({ node, messageId: 'deprecatedAlias', data: { alias: match[1], target: aliases.get(match[1]) } })
+        }
+      }
+    }
 
-    return mergeListeners(styleListeners, classListeners, aliasListeners)
+    return mergeListeners(styleListeners, classListeners, stringListeners)
   },
 }
