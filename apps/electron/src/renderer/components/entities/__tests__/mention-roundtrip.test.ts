@@ -287,4 +287,94 @@ describe('input and paste rules without Markdown (rule-only path)', () => {
       { type: 'entityEmbed', ref: 'goal:q4', label: 'Q4', source: '![[goal:q4|Q4]]' },
     ])
   })
+
+  it('pasting into a fenced code block keeps the text verbatim (negative)', () => {
+    const editor = plainEditor()
+    editor.commands.setContent('<pre><code>const x = 1</code></pre>')
+    editor.commands.setTextSelection(editor.state.doc.firstChild!.nodeSize - 1)
+    expect(editor.state.selection.$from.parent.type.name).toBe('codeBlock')
+    editor.view.pasteText('[[task:1]] and ![[goal:q4]]')
+    const nodes = entityNodes(editor)
+    const json = editor.getJSON()
+    editor.destroy()
+    expect(nodes).toEqual([])
+    expect(json.content?.[0]?.type).toBe('codeBlock')
+    expect(json.content?.[0]?.content).toEqual([{ type: 'text', text: 'const x = 1[[task:1]] and ![[goal:q4]]' }])
+  })
+
+  it('pasting inline code keeps the code span (negative)', () => {
+    const editor = plainEditor()
+    editor.commands.focus('end')
+    editor.view.pasteHTML('<p>a <code>[[task:1]]</code> b</p><p><code>![[goal:q4]]</code></p>')
+    const nodes = entityNodes(editor)
+    const json = JSON.stringify(editor.getJSON())
+    editor.destroy()
+    expect(nodes).toEqual([])
+    expect(json).toContain('{"type":"text","marks":[{"type":"code"}],"text":"[[task:1]]"}')
+    expect(json).toContain('{"type":"text","marks":[{"type":"code"}],"text":"![[goal:q4]]"}')
+  })
+
+  it('plain-text paste of `[[task:1]]` becomes inline code, not a mention (negative)', () => {
+    const editor = plainEditor()
+    editor.commands.focus('end')
+    editor.view.pasteText('See `[[task:1]]` and [[task:2]]')
+    const nodes = entityNodes(editor)
+    const json = JSON.stringify(editor.getJSON())
+    editor.destroy()
+    expect(nodes.map((n) => n.ref)).toEqual(['task:2'])
+    expect(json).toContain('{"type":"text","marks":[{"type":"code"}],"text":"[[task:1]]"}')
+  })
+})
+
+describe('code is never converted (Markdown paste, legacy engine as in Notes)', () => {
+  function notesLegacyEditor(): Editor {
+    const element = document.createElement('div')
+    document.body.appendChild(element)
+    return new Editor({
+      element,
+      extensions: [StarterKit, EntityMention, EntityEmbed, LegacyMarkdown.configure({ html: false, transformPastedText: true, transformCopiedText: true })],
+    })
+  }
+
+  /** What tiptap-markdown's clipboardTextParser does for a normal (non-shift) text paste. */
+  function pasteMarkdown(editor: Editor, markdown: string): void {
+    const parser = (editor.storage as unknown as { markdown: { parser: { parse(text: string, options: { inline: boolean }): string } } }).markdown.parser
+    editor.view.pasteHTML(parser.parse(markdown, { inline: true }))
+  }
+
+  it('pasted `[[task:1]]` inline code and a fenced block save unchanged', () => {
+    const markdown = 'See `[[task:1]]` here\n\n```\n[[task:2]]\n![[goal:q4]]\n```'
+    const editor = notesLegacyEditor()
+    editor.commands.focus('end')
+    pasteMarkdown(editor, markdown)
+    const nodes = entityNodes(editor)
+    const json = JSON.stringify(editor.getJSON())
+    const out = toMarkdown(editor, 'legacy')
+    editor.destroy()
+    expect(nodes).toEqual([])
+    expect(json).toContain('"codeBlock"')
+    expect(out).toBe(markdown)
+  })
+
+  it('a Markdown paste outside code still converts explicit syntax (positive control)', () => {
+    const editor = notesLegacyEditor()
+    editor.commands.focus('end')
+    pasteMarkdown(editor, 'See [[task:1|One]] and `[[task:2]]`')
+    const nodes = entityNodes(editor)
+    const out = toMarkdown(editor, 'legacy')
+    editor.destroy()
+    expect(nodes.map((n) => n.ref)).toEqual(['task:1'])
+    expect(out).toBe('See [[task:1|One]] and `[[task:2]]`')
+  })
+
+  it('typing ]] inside a code block creates nothing (negative)', () => {
+    const editor = notesLegacyEditor()
+    editor.commands.setContent('```\nx\n```')
+    editor.commands.setTextSelection(editor.state.doc.firstChild!.nodeSize - 1)
+    expect(editor.state.selection.$from.parent.type.name).toBe('codeBlock')
+    typeText(editor, '[[task:1]]')
+    const nodes = entityNodes(editor)
+    editor.destroy()
+    expect(nodes).toEqual([])
+  })
 })

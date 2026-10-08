@@ -14,6 +14,13 @@
  * Markdown is byte-identical to what the user typed. Plain `[[title]]`
  * (including `[[Встреча: итоги]]`) stays a WikiLink.
  *
+ * Nothing converts inside code: a code block (`spec.code` node), text with
+ * a code mark, or a `` `…` `` span that the Code mark's own paste rule is
+ * about to turn into inline code keeps `[[kind:id]]` verbatim. TipTap's
+ * input-rule runner checks code itself; its paste-rule runner does not (it
+ * visits the text children of a code block, ignores code marks, and runs the
+ * entity rules before the Code mark's rule), so every handler here checks.
+ *
  * TODO(UI-SPEC MentionMenu): the `[[` / `@` suggestion menu from UI-SPEC is a
  * later package; these rules only cover fully typed explicit syntax.
  */
@@ -29,6 +36,50 @@ const EMBED_INPUT = /^!\[\[[^\]\n|]+?(?:\|[^\]\n]*)?\]\]$/
 const MENTION_PASTE = /(?<!!)\[\[[^\]\n|]+?(?:\|[^\]\n]*)?\]\]/g
 const EMBED_PASTE = /^\s*!\[\[[^\]\n|]+?(?:\|[^\]\n]*)?\]\]\s*$/g
 
+/**
+ * True when `from..to` is code: inside a `spec.code` textblock (code block),
+ * or covering text that carries a `spec.code` mark (inline code).
+ */
+export function isInCode(state: EditorState, from: number, to: number): boolean {
+  const { doc } = state
+  const size = doc.content.size
+  const start = Math.max(0, Math.min(from, size))
+  const end = Math.max(start, Math.min(to, size))
+  const $from = doc.resolve(start)
+  if ($from.parent.type.spec.code) return true
+  if (doc.resolve(end).parent.type.spec.code) return true
+  const hasCodeMark = (node: { marks: readonly { type: { spec: { code?: boolean } } }[] } | null | undefined) =>
+    !!node?.marks.some((mark) => mark.type.spec.code)
+  if (start === end) return hasCodeMark($from.nodeBefore) || hasCodeMark($from.nodeAfter)
+  let code = false
+  doc.nodesBetween(start, end, (node) => {
+    if (code) return false
+    if (node.type.spec.code || (node.isText && hasCodeMark(node))) code = true
+    return !code
+  })
+  return code
+}
+
+/** Same span shape as `@tiptap/extension-code`'s paste rule. */
+const BACKTICK_SPAN = /(^|[^`])`([^`]+)`(?!`)/g
+
+/** True when `from..to` lies inside a `` `…` `` span of its textblock's text. */
+export function isInBacktickSpan(state: EditorState, from: number, to: number): boolean {
+  const $from = state.doc.resolve(from)
+  const block = $from.parent
+  if (!block.isTextblock || to > $from.end()) return false
+  const text = block.textBetween(0, block.content.size, undefined, '\ufffc')
+  const start = from - $from.start()
+  const end = to - $from.start()
+  BACKTICK_SPAN.lastIndex = 0
+  for (let m = BACKTICK_SPAN.exec(text); m; m = BACKTICK_SPAN.exec(text)) {
+    const inner = m.index + (m[1]?.length ?? 0) + 1
+    if (inner <= start && end <= inner + (m[2]?.length ?? 0)) return true
+    if (inner > end) break
+  }
+  return false
+}
+
 function mentionAttrs(match: EntityMentionMatch) {
   return { ref: match.ref, label: match.label ?? '', source: match.raw }
 }
@@ -37,6 +88,7 @@ export function entityMentionInputRule(type: NodeType): InputRule {
   return new InputRule({
     find: MENTION_INPUT,
     handler: ({ state, range, match }) => {
+      if (isInCode(state, range.from, range.to)) return null
       const parsed = matchEntityMention(match[0])
       if (!parsed || parsed.raw !== match[0]) return null
       state.tr.replaceWith(range.from, range.to, type.create(mentionAttrs(parsed)))
@@ -51,6 +103,7 @@ export function entityMentionPasteRule(type: NodeType): PasteRule {
       // TipTap visits both the textblock and its text nodes; act only when
       // the mapped range still holds exactly the matched text.
       if (state.doc.textBetween(range.from, range.to) !== match[0]) return
+      if (isInCode(state, range.from, range.to) || isInBacktickSpan(state, range.from, range.to)) return
       if (range.from > 0 && state.doc.textBetween(range.from - 1, range.from) === '!') return
       const parsed = matchEntityMention(match[0])
       if (!parsed || parsed.raw !== match[0]) return
@@ -94,6 +147,7 @@ export function entityEmbedInputRule(type: NodeType): InputRule {
   return new InputRule({
     find: EMBED_INPUT,
     handler: ({ state, range, match }) => {
+      if (isInCode(state, range.from, range.to)) return null
       const parsed = matchEntityEmbedLine(match[0])
       if (!parsed) return null
       const $from = state.doc.resolve(range.from)
@@ -111,6 +165,7 @@ export function entityEmbedPasteRule(type: NodeType): PasteRule {
     find: EMBED_PASTE,
     handler: ({ state, range, match }) => {
       if (state.doc.textBetween(range.from, range.to) !== match[0]) return
+      if (isInCode(state, range.from, range.to)) return
       const $from = state.doc.resolve(range.from)
       const paragraph = $from.parent
       if (!paragraph.isTextblock || paragraph.textContent !== match[0]) return
