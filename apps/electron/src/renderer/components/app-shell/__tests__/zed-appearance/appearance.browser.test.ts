@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
-import { chromium, expect as playwrightExpect, type Browser, type BrowserContext, type BrowserServer, type Page } from 'playwright/test'
+import { chromium, expect as playwrightExpect, type Browser, type BrowserContext, type Page } from 'playwright/test'
 import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 const fixture = import.meta.dirname
@@ -59,7 +59,6 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   let server: ReturnType<typeof Bun.spawn> | undefined
   let compiling: ReturnType<typeof Bun.spawn> | undefined
   let browser: Browser
-  let browserServer: BrowserServer | undefined
   let context: BrowserContext
   let page: Page
   let fixtureUrl: string
@@ -87,25 +86,18 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   const stopResources = async () => {
     const ownedServer = server
     const ownedBuild = compiling
-    const ownedBrowserServer = browserServer
     server = undefined
     compiling = undefined
-    browserServer = undefined
     const stopChild = async (child: typeof ownedServer) => {
       if (!child) return
       if (child.exitCode === null) child.kill()
       const deadline = setTimeout(() => { if (child.exitCode === null) child.kill('SIGKILL') }, 2_000)
       try { await child.exited } finally { clearTimeout(deadline) }
     }
-    const stopBrowser = async () => {
-      if (!ownedBrowserServer) return
-      const deadline = setTimeout(() => { void ownedBrowserServer.kill() }, 5_000)
-      try { await ownedBrowserServer.close() } finally { clearTimeout(deadline) }
-    }
     // All handles refer to processes started by this fixture. Close in parallel
     // so a preview-server shutdown cannot wait on a browser still holding HTTP
     // sockets; bounded termination never targets another task's process.
-    await Promise.all([stopChild(ownedServer), stopChild(ownedBuild), stopBrowser(), browser?.close().catch(() => {})])
+    await Promise.all([stopChild(ownedServer), stopChild(ownedBuild), browser?.close().catch(() => {})])
   }
 
   beforeAll(async () => {
@@ -134,8 +126,10 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
         if (server.exitCode !== null || Date.now() > deadline) throw new Error(`Appearance fixture server did not start${server.exitCode !== null ? `: ${await serverLog}` : ''}`)
         await Bun.sleep(100)
       }
-      browserServer = await chromium.launchServer({ executablePath, headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
-      browser = await chromium.connect(browserServer.wsEndpoint())
+      // Launch the owned browser directly: `launchServer` + `connect` never
+      // completes its websocket under the CI Bun (1.3.14), while `launch` is the
+      // path every other browser fixture here uses.
+      browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
       mkdirSync(proofDirectory, { recursive: true })
       const compiledAssets = resolve(repository, 'node_modules/.vite-zed-appearance/compiled-fixture/assets')
       const compiledCssSha256 = Object.fromEntries(readdirSync(compiledAssets).filter(name => name.endsWith('.css')).map(name => [name, createHash('sha256').update(readFileSync(resolve(compiledAssets, name))).digest('hex')]))
@@ -281,7 +275,9 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(styles.attrs.mismatch).toBeUndefined()
     for (const key of ['root', 'body', 'app', 'work', 'second', 'code', 'dock', 'terminal']) expect(styles[key].rgba).toEqual([...canvas])
     for (const key of ['work', 'second', 'sidebar', 'navigator', 'inspector', 'topbar', 'dock']) expect(styles[key].radius).toBe('0px')
-    for (const key of ['control', 'card', 'composer', 'code']) expect(styles[key].radius).toBe('4px')
+    // The adopted radius scale maps controls, cards, the composer and code
+    // blocks to --radius-md (8px); only shell panes stay flush.
+    for (const key of ['control', 'card', 'composer', 'code']) expect(styles[key].radius).toBe('8px')
     for (const key of ['topbar', 'sidebar', 'navigator', 'inspector', 'strip']) {
       expect(styles[key].rgba[3]).toBeGreaterThan(0)
       expect(styles[key].rgba[3]).toBeLessThan(255)
@@ -310,14 +306,16 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect((await transportCalls()).filter((call: any) => call.method === 'runShellCommand')).toEqual([{ method: 'runShellCommand', value: { command: 'fixture ANSI only' } }])
     await page.getByTestId('open-popover').click()
     await expectDOM(page.getByTestId('popover')).toBeVisible()
-    expect(await page.getByTestId('popover').evaluate(element => getComputedStyle(element).borderRadius)).toBe('6px')
+    // Popovers and dialogs resolve their radius through --radius-md on the
+    // adopted scale.
+    expect(await page.getByTestId('popover').evaluate(element => getComputedStyle(element).borderRadius)).toBe('8px')
     // Use real overlay controls for these appearance snapshots. Global overlay
     // Escape routing belongs to the complete application acceptance surface.
     await page.getByTestId('open-popover').click()
     await expectDOM(page.getByTestId('popover')).toBeHidden()
     await page.getByTestId('open-dialog').click()
     await expectDOM(page.getByTestId('dialog')).toBeVisible()
-    expect(await page.getByTestId('dialog').evaluate(element => getComputedStyle(element).borderRadius)).toBe('6px')
+    expect(await page.getByTestId('dialog').evaluate(element => getComputedStyle(element).borderRadius)).toBe('8px')
     await page.getByTestId('dialog').getByRole('button', { name: 'Close', exact: true }).click()
     await expectDOM(page.getByTestId('dialog')).toBeHidden()
     await proof(`palette-${id}-${os}-os`)
