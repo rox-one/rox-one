@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import type { SQL } from 'bun'
 import { PostgresAclRepository, resourceFromRow, type ResourceRow } from '../repository.ts'
 import { RESOURCE_LOADERS, aclStoredResourceTypes } from '../queries.ts'
+import type { AclEntryFact } from '../../../../../../packages/core/src/acl/index.ts'
 
 const WS = '11111111-1111-4111-8111-111111111111'
 const P = '22222222-2222-4222-8222-222222222222'
@@ -30,31 +31,66 @@ function row(overrides: Partial<ResourceRow> = {}): ResourceRow {
   }
 }
 
+const workspaceViewer = (role: AclEntryFact['role'] = 'viewer'): AclEntryFact[] => [{ subjectType: 'workspace', subjectId: WS, role }]
+
 describe('resourceFromRow', () => {
-  test('maps parents, tags and privacy (a secret row drops its implicit workspace role)', () => {
-    const loaded = resourceFromRow({ kind: 'goal', id: G }, row({
+  test('maps parents, tags and privacy (a secret row drops its implicit workspace entry)', () => {
+    const node = resourceFromRow({ kind: 'goal', id: G }, row({
       parent_refs: [`goal:${C}`, 'bogus', 'nokind:1', `space:${WS}`], champion_id: P, contributor_ids: null,
       secret: true, implicit_workspace_role: 'viewer', has_children: true,
     }))
-    expect(loaded.node.parents).toEqual([{ kind: 'goal', id: C }, { kind: 'space', id: WS }])
-    expect(loaded.node.privacy).toBe('invited')
-    expect(loaded.node.championId).toBe(P)
-    expect(loaded.node.contributorIds).toEqual([])
-    expect(loaded.node.hasChildren).toBe(true)
-    expect(loaded.implicitWorkspaceRole).toBeNull()
-    expect(resourceFromRow({ kind: 'goal', id: G }, row({ implicit_workspace_role: 'viewer' })).implicitWorkspaceRole).toBe('viewer')
+    expect(node.parents).toEqual([{ kind: 'goal', id: C }, { kind: 'space', id: WS }])
+    expect(node.privacy).toBe('invited')
+    expect(node.championId).toBe(P)
+    expect(node.contributorIds).toEqual([])
+    expect(node.hasChildren).toBe(true)
+    expect(node.implicitEntries).toEqual([])
+    expect(resourceFromRow({ kind: 'goal', id: G }, row({ implicit_workspace_role: 'viewer' })).implicitEntries).toEqual(workspaceViewer())
   })
 
-  test('a secret row never carries the synthetic workspace grant', () => {
-    expect(resourceFromRow({ kind: 'goal', id: G }, row({ secret: true, implicit_workspace_role: 'viewer' })).implicitWorkspaceRole).toBeNull()
+  test('a secret row never carries the synthetic workspace entry', () => {
+    expect(resourceFromRow({ kind: 'goal', id: G }, row({ secret: true, implicit_workspace_role: 'viewer' })).implicitEntries).toEqual([])
+  })
+
+  test('a public chat carries a minimal workspace entry (see and join only)', () => {
+    expect(resourceFromRow({ kind: 'channel', id: C }, row({ implicit_workspace_role: 'minimal' })).implicitEntries).toEqual(workspaceViewer('minimal'))
   })
 
   test('maps the space chat id', () => {
-    expect(resourceFromRow({ kind: 'space', id: G }, row({ chat_id: C })).node.chatId).toBe(C)
+    expect(resourceFromRow({ kind: 'space', id: G }, row({ chat_id: C })).chatId).toBe(C)
   })
 
   test('unknown implicit roles are dropped (fail closed)', () => {
-    expect(resourceFromRow({ kind: 'goal', id: G }, row({ implicit_workspace_role: 'owner' })).implicitWorkspaceRole).toBeNull()
+    expect(resourceFromRow({ kind: 'goal', id: G }, row({ implicit_workspace_role: 'owner' })).implicitEntries).toEqual([])
+  })
+
+  test('a doc public_token becomes the row-derived default link policy', () => {
+    expect(resourceFromRow({ kind: 'note', id: G }, row({ link_token: 'pub' })).defaultPolicy).toEqual({
+      defaultSubject: 'link', defaultRole: 'viewer', linkToken: 'pub', linkExpiresAt: null,
+    })
+    expect(resourceFromRow({ kind: 'note', id: G }, row()).defaultPolicy).toBeNull()
+  })
+})
+
+describe('loader SQL (review 2 owner decisions)', () => {
+  const sql = (kind: keyof typeof RESOURCE_LOADERS) => RESOURCE_LOADERS[kind]!('"public".')
+
+  test('goals and projects never list their parent goal (no goal → goal / project inheritance)', () => {
+    expect(sql('goal')).not.toContain("'goal:' || g.parent_goal_id")
+    expect(sql('project')).not.toContain("'goal:' || pj.parent_goal_id")
+  })
+
+  test('a members project is workspace-visible only when legacy (no space) and without a policy row', () => {
+    expect(sql('project')).toContain("pj.visibility = 'members' AND pj.space_id IS NULL AND NOT EXISTS")
+  })
+
+  test('chats carry no owner and public chats only minimal', () => {
+    expect(sql('channel')).not.toContain('created_by')
+    expect(sql('channel')).toContain("WHEN c.visibility = 'public' THEN 'minimal'")
+  })
+
+  test('a members-only task list does not list its space / project owner as a parent', () => {
+    expect(sql('task-list')).toContain("l.owner_type IN ('project', 'space') AND l.share_mode IN ('space', 'workspace')")
   })
 })
 
@@ -92,19 +128,13 @@ describe('PostgresAclRepository', () => {
     expect(calls[0]!.params).toEqual([G, WS])
   })
 
-  test('scoped() loads each resource row once per batch; the base repository does not memoise', async () => {
-    const responder = (sql: string) => sql.includes('FROM "public".doc d') ? [row({ link_token: 'pub' })] : []
-    const scoped = fakeDb(responder)
-    const view = new PostgresAclRepository(scoped.db).scoped()
-    await view.resource(WS, { kind: 'note', id: G })
-    await view.entries(WS, { kind: 'note', id: G })
-    await view.policy(WS, { kind: 'note', id: G })
-    expect(scoped.calls.filter(c => c.sql.includes('FROM "public".doc d'))).toHaveLength(1)
-    const plain = fakeDb(responder)
-    const base = new PostgresAclRepository(plain.db)
-    await base.resource(WS, { kind: 'note', id: G })
-    await base.resource(WS, { kind: 'note', id: G })
-    expect(plain.calls.filter(c => c.sql.includes('FROM "public".doc d'))).toHaveLength(2)
+  test('no repository-level memo: entries / policy never reload the resource row', async () => {
+    const { db, calls } = fakeDb(sql => sql.includes('FROM "public".doc d') ? [row({ link_token: 'pub' })] : [])
+    const repo = new PostgresAclRepository(db)
+    expect('scoped' in repo).toBe(false)
+    await repo.entries(WS, { kind: 'note', id: G })
+    await repo.policy(WS, { kind: 'note', id: G })
+    expect(calls.filter(c => c.sql.includes('FROM "public".doc d'))).toHaveLength(0)
   })
 
   test('membership and principal default v2 status columns', async () => {
@@ -114,7 +144,7 @@ describe('PostgresAclRepository', () => {
     expect(await repo.principal(P)).toEqual({ kind: 'guest', status: 'active' })
   })
 
-  test('entries: stored rows (invalid ones dropped) + synthetic workspace grant from table visibility', async () => {
+  test('entries: stored rows only (invalid ones dropped); table visibility rides on the node', async () => {
     const { db, calls } = fakeDb(sql => {
       if (sql.includes('FROM "public".acl_entry')) return [
         { subject_type: 'principal', subject_id: P, role: 'editor' },
@@ -127,14 +157,9 @@ describe('PostgresAclRepository', () => {
     const repo = new PostgresAclRepository(db)
     expect(await repo.entries(WS, { kind: 'goal', id: G })).toEqual([
       { subjectType: 'principal', subjectId: P, role: 'editor' },
-      { subjectType: 'workspace', subjectId: WS, role: 'viewer' },
     ])
+    expect((await repo.resource(WS, { kind: 'goal', id: G }))!.implicitEntries).toEqual(workspaceViewer())
     expect(calls[0]!.params).toEqual([WS, 'goal', G])
-  })
-
-  test('entries: no synthetic workspace grant for a secret row, even if SQL returned one', async () => {
-    const { db } = fakeDb(sql => sql.includes('FROM "public".goal g') ? [row({ secret: true, implicit_workspace_role: 'viewer' })] : [])
-    expect(await new PostgresAclRepository(db).entries(WS, { kind: 'goal', id: G })).toEqual([])
   })
 
   test('entries: notes query both the note and legacy doc resource types', async () => {
@@ -173,12 +198,6 @@ describe('PostgresAclRepository', () => {
     ])
   })
 
-  test('entries: a resource from another workspace never yields a workspace grant', async () => {
-    const other = '55555555-5555-4555-8555-555555555555'
-    const { db } = fakeDb(sql => sql.includes('FROM "public".goal g') ? [row({ workspace_id: other, implicit_workspace_role: 'editor' })] : [])
-    expect(await new PostgresAclRepository(db).entries(WS, { kind: 'goal', id: G })).toEqual([])
-  })
-
   test('policy: resource_policy row, with link token/expiry from policy jsonb', async () => {
     const { db } = fakeDb(sql => sql.includes('resource_policy') ? [{
       default_subject: 'link', default_role: 'commenter', policy: { link_token: 'tok', link_expires_at: '2030-01-01T00:00:00Z' },
@@ -188,11 +207,9 @@ describe('PostgresAclRepository', () => {
     })
   })
 
-  test('policy: a doc public_token is a view link when no explicit policy exists', async () => {
+  test('policy: no row → null (the doc public_token is the node defaultPolicy)', async () => {
     const { db } = fakeDb(sql => sql.includes('FROM "public".doc d') ? [row({ link_token: 'pub' })] : [])
-    expect(await new PostgresAclRepository(db).policy(WS, { kind: 'note', id: G })).toEqual({
-      defaultSubject: 'link', defaultRole: 'viewer', linkToken: 'pub', linkExpiresAt: null,
-    })
+    expect(await new PostgresAclRepository(db).policy(WS, { kind: 'note', id: G })).toBeNull()
   })
 
   test('policy: invalid preset values are dropped', async () => {

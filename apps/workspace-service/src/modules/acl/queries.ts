@@ -14,11 +14,27 @@
  *   assignee_ids (text[]), has_children, secret, implicit_workspace_role,
  *   link_token, chat_id (space chat, spaces only)
  * `implicit_workspace_role` encodes table-level visibility that predates
- * `acl_entry` (project.visibility = 'members', public chats, company spaces,
- * company goals, workspace-shared task lists) as a synthetic
+ * `acl_entry` (legacy space-less `project.visibility = 'members'` without a
+ * resource_policy row, public chats as `minimal` — see and join only —,
+ * company spaces, company goals, workspace-shared task lists) as a synthetic
  * `workspace` subject entry; `secret` encodes "only invited" visibility
  * (private projects / chats / task lists, personal goals, or
  * `resource_policy.policy->>'privacy' = 'invited'`).
+ *
+ * Parent edges (owner decisions, review 2):
+ *   - goals / projects never list their parent goal: goal → child goal and
+ *     goal → project carry no inheritance (each has its own privacy);
+ *   - a space project with visibility 'members' is space-wide (space parent,
+ *     capped like other space children), not workspace-visible;
+ *   - task lists list their project / space owner only for
+ *     share_mode IN ('space', 'workspace'); 'members' lists are reachable only
+ *     through their own grants. Chat-owned lists keep the chat parent (capped
+ *     chat edge, owner decision 3) — 'private' lists are secret anyway;
+ *   - chats emit no owner (ownership = active chat_member role only).
+ *
+ * UNDONE (tracked): no loaders yet for wiki-space, base, form, file,
+ * drive-link and project-template — those refs resolve to `not_found`
+ * (fail closed) until their wave-2 modules add loaders here.
  */
 
 import type { EntityKind } from '../../../../../packages/core/src/entities/kinds.ts'
@@ -102,10 +118,7 @@ const INNER_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
     FROM ${p}space s WHERE s.space_id = $1::uuid AND s.workspace_id = $2::uuid`,
   goal: p => `
     SELECT g.goal_id::text AS id, g.workspace_id::text AS workspace_id, (g.deleted_at IS NOT NULL) AS deleted,
-      array_remove(ARRAY[
-        CASE WHEN g.parent_goal_id IS NOT NULL THEN 'goal:' || g.parent_goal_id::text END,
-        CASE WHEN g.scope = 'space' AND g.space_id IS NOT NULL THEN 'space:' || g.space_id::text END
-      ], NULL) AS parent_refs,
+      CASE WHEN g.scope = 'space' AND g.space_id IS NOT NULL THEN ARRAY['space:' || g.space_id::text] ELSE ${EMPTY} END AS parent_refs,
       g.space_id::text AS space_id, g.creator_id::text AS owner_id, g.champion_id::text AS champion_id, g.reviewer_id::text AS reviewer_id,
       ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids,
       (EXISTS (SELECT 1 FROM ${p}goal c WHERE c.parent_goal_id = g.goal_id AND c.deleted_at IS NULL)
@@ -128,10 +141,7 @@ const INNER_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
     FROM ${p}goal_check k JOIN ${p}goal g ON g.goal_id = k.goal_id WHERE k.goal_check_id = $1::uuid AND g.workspace_id = $2::uuid`,
   project: p => `
     SELECT pj.project_id::text AS id, pj.workspace_id::text AS workspace_id, (pj.deleted_at IS NOT NULL) AS deleted,
-      array_remove(ARRAY[
-        CASE WHEN pj.parent_goal_id IS NOT NULL THEN 'goal:' || pj.parent_goal_id::text END,
-        CASE WHEN pj.space_id IS NOT NULL THEN 'space:' || pj.space_id::text END
-      ], NULL) AS parent_refs,
+      CASE WHEN pj.space_id IS NOT NULL THEN ARRAY['space:' || pj.space_id::text] ELSE ${EMPTY} END AS parent_refs,
       pj.space_id::text AS space_id, pj.owner_principal_id::text AS owner_id,
       COALESCE(pj.champion_id::text, (SELECT pm.principal_id::text FROM ${p}project_member pm
         WHERE pm.project_id = pj.project_id AND pm.workspace_id = pj.workspace_id AND pm.role = 'champion' ORDER BY 1 LIMIT 1)) AS champion_id,
@@ -141,7 +151,9 @@ const INNER_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
         WHERE pm.project_id = pj.project_id AND pm.workspace_id = pj.workspace_id AND pm.role = 'contributor'), ${EMPTY}) AS contributor_ids,
       ${EMPTY} AS assignee_ids, false AS has_children,
       (pj.visibility = 'private' OR ${policySecret(p, 'project', 'pj.project_id')}) AS secret,
-      CASE WHEN pj.visibility = 'members' THEN 'viewer' ELSE NULL END AS implicit_raw,
+      CASE WHEN pj.visibility = 'members' AND pj.space_id IS NULL AND NOT EXISTS (SELECT 1 FROM ${p}resource_policy rp
+        WHERE rp.workspace_id = $2::uuid AND rp.resource_type = 'project' AND rp.resource_id = pj.project_id::text)
+        THEN 'viewer' ELSE NULL END AS implicit_raw,
       ${NONE} AS link_token, ${NONE} AS chat_id
     FROM ${p}project pj WHERE pj.project_id = $1::uuid AND pj.workspace_id = $2::uuid`,
   milestone: p => `
@@ -168,7 +180,7 @@ const INNER_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
     FROM ${p}work_item w WHERE w.work_item_id = $1::uuid AND w.workspace_id = $2::uuid`,
   'task-list': p => `
     SELECT l.task_list_id::text AS id, l.workspace_id::text AS workspace_id, (l.deleted_at IS NOT NULL) AS deleted,
-      CASE WHEN l.owner_type IN ('project', 'space') THEN ARRAY[l.owner_type || ':' || l.owner_id::text]
+      CASE WHEN l.owner_type IN ('project', 'space') AND l.share_mode IN ('space', 'workspace') THEN ARRAY[l.owner_type || ':' || l.owner_id::text]
            WHEN l.owner_type = 'chat' THEN ARRAY['channel:' || l.owner_id::text] ELSE ${EMPTY} END AS parent_refs,
       CASE WHEN l.owner_type = 'space' THEN l.owner_id::text END AS space_id,
       CASE WHEN l.owner_type = 'user' THEN l.owner_id::text END AS owner_id,
@@ -204,10 +216,10 @@ const INNER_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
   channel: p => `
     SELECT c.chat_id::text AS id, c.workspace_id::text AS workspace_id, (c.deleted_at IS NOT NULL) AS deleted,
       CASE WHEN c.space_id IS NOT NULL THEN ARRAY['space:' || c.space_id::text] ELSE ${EMPTY} END AS parent_refs,
-      c.space_id::text AS space_id, c.created_by::text AS owner_id, ${NONE} AS champion_id, ${NONE} AS reviewer_id,
+      c.space_id::text AS space_id, ${NONE} AS owner_id, ${NONE} AS champion_id, ${NONE} AS reviewer_id,
       ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
       (c.visibility = 'private' OR ${policySecret(p, 'channel', 'c.chat_id')}) AS secret,
-      CASE WHEN c.visibility = 'public' THEN 'viewer' ELSE NULL END AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+      CASE WHEN c.visibility = 'public' THEN 'minimal' ELSE NULL END AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
     FROM ${p}chat c WHERE c.chat_id = $1::uuid AND c.workspace_id = $2::uuid`,
   calendar: p => `
     SELECT k.calendar_id::text AS id, k.workspace_id::text AS workspace_id, (k.deleted_at IS NOT NULL) AS deleted,

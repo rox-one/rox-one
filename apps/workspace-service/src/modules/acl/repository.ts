@@ -16,8 +16,11 @@
  * in `queries.ts` must bump `workspace.policy_epoch`. Cached roles also expire
  * after 45 s (`DEFAULT_ACL_CACHE_TTL_MS`).
  *
- * Every read is scoped to the evaluating workspace. `scoped()` returns a
- * per-batch view that loads each resource row at most once.
+ * Every read is scoped to the evaluating workspace. Row-derived facts (the
+ * synthetic workspace entry for table-level visibility, a doc's
+ * `public_token` link policy) travel on the node (`implicitEntries` /
+ * `defaultPolicy`), so the repository never re-loads a row; the engine's
+ * per-batch `memoizeFacts` is the only memo.
  */
 
 import type { SQL, TransactionSQL } from 'bun'
@@ -57,6 +60,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const SUBJECT_TYPES: ReadonlySet<string> = new Set(['principal', 'department', 'channel', 'space', 'workspace', 'link'])
 const POLICY_SUBJECTS: ReadonlySet<string> = new Set(['space', 'workspace', 'link'])
 const POLICY_ROLES: ReadonlySet<string> = new Set(['viewer', 'commenter', 'editor'])
+/** Roles a loader may emit as the implicit workspace entry (`minimal` = public chat: see and join only). */
+const IMPLICIT_ROLES: ReadonlySet<string> = new Set(['minimal', 'viewer', 'commenter', 'editor'])
 const CHAT_ROLE: Readonly<Record<string, AclRole>> = { owner: 'manager', admin: 'editor', member: 'commenter' }
 /** Space chat role → space role (Operately space members default to edit access). */
 const SPACE_ROLE: Readonly<Record<string, AclRole>> = { owner: 'manager', admin: 'manager', member: 'editor' }
@@ -80,11 +85,6 @@ export interface ResourceRow {
   chat_id?: string | null
 }
 
-export interface LoadedResource {
-  node: AclResourceNode
-  implicitWorkspaceRole: 'viewer' | 'commenter' | 'editor' | null
-  linkToken: string | null
-}
 
 function parseRefList(values: readonly string[] | null): EntityRef[] {
   const out: EntityRef[] = []
@@ -99,44 +99,38 @@ function parseRefList(values: readonly string[] | null): EntityRef[] {
 }
 
 /** Map a loader row to an ACL node (pure; exported for tests). */
-export function resourceFromRow(ref: EntityRef, row: ResourceRow): LoadedResource {
+export function resourceFromRow(ref: EntityRef, row: ResourceRow): AclResourceNode {
   const implicit = row.implicit_workspace_role
+  // Defence in depth next to the SQL: a secret row never carries a workspace grant.
+  const implicitEntries: AclEntryFact[] = !row.secret && implicit && IMPLICIT_ROLES.has(implicit)
+    ? [{ subjectType: 'workspace', subjectId: row.workspace_id, role: implicit as AclRole }]
+    : []
   return {
-    node: {
-      ref: { kind: ref.kind, id: ref.id },
-      workspaceId: row.workspace_id,
-      parents: parseRefList(row.parent_refs),
-      privacy: row.secret ? 'invited' : 'inherit',
-      spaceId: row.space_id,
-      ownerId: row.owner_id,
-      championId: row.champion_id,
-      reviewerId: row.reviewer_id,
-      contributorIds: row.contributor_ids ?? [],
-      assigneeIds: row.assignee_ids ?? [],
-      hasChildren: row.has_children === true,
-      deleted: row.deleted === true,
-      chatId: row.chat_id ?? null,
-    },
-    // Defence in depth next to the SQL: a secret row never carries a workspace grant.
-    implicitWorkspaceRole: !row.secret && (implicit === 'viewer' || implicit === 'commenter' || implicit === 'editor') ? implicit : null,
-    linkToken: row.link_token,
+    ref: { kind: ref.kind, id: ref.id },
+    workspaceId: row.workspace_id,
+    parents: parseRefList(row.parent_refs),
+    privacy: row.secret ? 'invited' : 'inherit',
+    spaceId: row.space_id,
+    ownerId: row.owner_id,
+    championId: row.champion_id,
+    reviewerId: row.reviewer_id,
+    contributorIds: row.contributor_ids ?? [],
+    assigneeIds: row.assignee_ids ?? [],
+    hasChildren: row.has_children === true,
+    deleted: row.deleted === true,
+    chatId: row.chat_id ?? null,
+    implicitEntries,
+    // A doc's public_token is a view link unless a resource_policy row says otherwise.
+    defaultPolicy: row.link_token ? { defaultSubject: 'link', defaultRole: 'viewer', linkToken: row.link_token, linkExpiresAt: null } : null,
   }
 }
 
 export class PostgresAclRepository implements AclFactSource {
   private readonly prefix: string
-  /** Request-local row cache; only set on `scoped()` views (one per evaluation batch). */
-  private readonly loads?: Map<string, Promise<LoadedResource | null>>
 
-  constructor(private readonly database: Database, private readonly schema = 'public', memo = false) {
+  constructor(private readonly database: Database, schema = 'public') {
     if (!/^[a-z][a-z0-9_]*$/.test(schema)) throw new Error('Invalid ACL database schema')
     this.prefix = `"${schema}".`
-    if (memo) this.loads = new Map()
-  }
-
-  /** Per-evaluation view: each resource row is loaded at most once per batch. */
-  scoped(): PostgresAclRepository {
-    return new PostgresAclRepository(this.database, this.schema, true)
   }
 
   private async query<T>(sql: string, params: unknown[]): Promise<T[]> {
@@ -163,25 +157,12 @@ export class PostgresAclRepository implements AclFactSource {
     return row ? { kind: row.kind, status: row.status ?? 'active' } : null
   }
 
-  /** Workspace-scoped row load (memoised on `scoped()` views). */
-  load(workspaceId: string, ref: EntityRef): Promise<LoadedResource | null> {
-    const key = `${workspaceId}\0${ref.kind}:${ref.id}`
-    const hit = this.loads?.get(key)
-    if (hit) return hit
-    const pending = this.loadUncached(workspaceId, ref)
-    this.loads?.set(key, pending)
-    return pending
-  }
-
-  private async loadUncached(workspaceId: string, ref: EntityRef): Promise<LoadedResource | null> {
+  /** Workspace-scoped row load; unknown kinds / non-UUID ids → null (fail closed). */
+  async resource(workspaceId: string, ref: EntityRef): Promise<AclResourceNode | null> {
     const loader = RESOURCE_LOADERS[ref.kind]
     if (!loader || !UUID.test(ref.id) || !UUID.test(workspaceId)) return null
     const [row] = await this.query<ResourceRow>(loader(this.prefix), [ref.id, workspaceId])
     return row ? resourceFromRow(ref, row) : null
-  }
-
-  async resource(workspaceId: string, ref: EntityRef): Promise<AclResourceNode | null> {
-    return (await this.load(workspaceId, ref))?.node ?? null
   }
 
   async entries(workspaceId: string, ref: EntityRef): Promise<readonly AclEntryFact[]> {
@@ -196,11 +177,9 @@ export class PostgresAclRepository implements AclFactSource {
         }
       }
     }
-    // Table-level visibility that predates acl_entry, as synthetic entries.
-    const loaded = await this.load(workspaceId, ref)
-    if (loaded?.implicitWorkspaceRole && loaded.node.privacy !== 'invited' && loaded.node.workspaceId === workspaceId) {
-      out.push({ subjectType: 'workspace', subjectId: workspaceId, role: loaded.implicitWorkspaceRole })
-    }
+    // Table-level visibility rides on the node (`implicitEntries`); chat / space
+    // membership is the only thing synthesised here. A chat's ownership comes
+    // only from the active chat_member role (never chat.created_by).
     if (ref.kind === 'channel' && UUID.test(ref.id)) {
       const members = await this.query<{ principal_id: string; role: string }>(sqlChatMembers(this.prefix), [ref.id, workspaceId])
       for (const member of members) {
@@ -222,6 +201,7 @@ export class PostgresAclRepository implements AclFactSource {
     if (!UUID.test(workspaceId)) return null
     const type = aclResourceTypeForKind(ref.kind)
     let fact: AclPolicyFact | null = null
+    // A doc's public_token is the node's `defaultPolicy`, used when no row exists.
     if (type) {
       const [row] = await this.query<{ default_subject: string | null; default_role: string | null; policy: Record<string, unknown> | null }>(
         sqlPolicy(this.prefix), [workspaceId, aclStoredResourceTypes(type).join(','), ref.id])
@@ -234,11 +214,6 @@ export class PostgresAclRepository implements AclFactSource {
           linkExpiresAt: typeof policy.link_expires_at === 'string' ? policy.link_expires_at : null,
         }
       }
-    }
-    // A doc's public_token is a view link unless an explicit policy says otherwise.
-    if (!fact && ref.kind === 'note') {
-      const loaded = await this.load(workspaceId, ref)
-      if (loaded?.linkToken) fact = { defaultSubject: 'link', defaultRole: 'viewer', linkToken: loaded.linkToken, linkExpiresAt: null }
     }
     return fact
   }

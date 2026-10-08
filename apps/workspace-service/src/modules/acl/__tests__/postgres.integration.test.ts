@@ -43,9 +43,8 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
         await q('INSERT INTO workspace_member (workspace_id, principal_id, role, status) VALUES ($1, $2, $3, $4)', [ws, p, role, status])
       }
       const [company, personal, child, project, privProject, chat, doc, secretDoc] = [id(), id(), id(), id(), id(), id(), id(), id()]
-      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id) VALUES ($1, $2, 'company', 'Company', $3)`, [company, ws, owner])
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, champion_id) VALUES ($1, $2, 'company', 'Company', $3, $4)`, [company, ws, owner, alice])
       await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, champion_id) VALUES ($1, $2, 'personal', 'Secret', $3, $4)`, [personal, ws, alice, bob])
-      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, parent_goal_id) VALUES ($1, $2, 'company', 'Child', $3, $4)`, [child, ws, owner, company])
       await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility) VALUES ($1, $2, $3, 'Open', 'members')`, [project, ws, owner])
       await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility) VALUES ($1, $2, $3, 'Closed', 'private')`, [privProject, ws, owner])
       await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility) VALUES ($1, $2, 'group', 'private')`, [chat, ws])
@@ -61,6 +60,28 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       await q(`INSERT INTO space (space_id, workspace_id, name, chat_id, root_folder_id) VALUES ($1, $2, 'Team', $3, $4)`, [space, ws, spaceChat, rootFolder])
       await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [spaceChat, bob])
       await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Space goal', $3, $4)`, [spaceGoal, ws, owner, space])
+      // Company goal → space child goal (no goal → goal inheritance: own privacy).
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id, parent_goal_id) VALUES ($1, $2, 'space', 'Child', $3, $4, $5)`, [child, ws, owner, space, company])
+      // Space project with visibility 'members' = everyone in the space (not workspace-visible); a legacy one with a policy row follows the row.
+      const [spaceProject, policedProject, goalProject] = [id(), id(), id()]
+      await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility, space_id) VALUES ($1, $2, $3, 'Space open', 'members', $4)`, [spaceProject, ws, owner, space])
+      await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility) VALUES ($1, $2, $3, 'Policed', 'members')`, [policedProject, ws, owner])
+      await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id) VALUES ($1, $2, 'project', $3)`, [id(), ws, policedProject])
+      await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility, space_id, parent_goal_id) VALUES ($1, $2, $3, 'Under company goal', 'members', $4, $5)`, [goalProject, ws, owner, space, company])
+      // Task lists in the space: 'members' is not space-visible, 'space' is.
+      const [membersList, spaceList] = [id(), id()]
+      await q(`INSERT INTO task_list (task_list_id, workspace_id, owner_type, owner_id, name, share_mode) VALUES ($1, $2, 'space', $3, 'Members', 'members')`, [membersList, ws, space])
+      await q(`INSERT INTO task_list (task_list_id, workspace_id, owner_type, owner_id, name, share_mode) VALUES ($1, $2, 'space', $3, 'Space', 'space')`, [spaceList, ws, space])
+      // A task in the private project (secret ancestor).
+      const privTask = id()
+      await q(`INSERT INTO work_item (work_item_id, workspace_id, owner_principal_id, title, project_id) VALUES ($1, $2, $3, 'Hidden', $4)`, [privTask, ws, owner, privProject])
+      // Private chat created by bob, who was later removed; a public chat (alice admin) with a chat-owned folder.
+      const [bobChat, publicChat, chatFolder] = [id(), id(), id()]
+      await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility, created_by) VALUES ($1, $2, 'group', 'private', $3)`, [bobChat, ws, bob])
+      await q(`INSERT INTO chat_member (chat_id, principal_id, role, state) VALUES ($1, $2, 'owner', 'removed')`, [bobChat, bob])
+      await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility, created_by) VALUES ($1, $2, 'group', 'public', $3)`, [publicChat, ws, alice])
+      await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'admin')`, [publicChat, alice])
+      await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'chat', $3, 'Chat files')`, [chatFolder, ws, publicChat])
       const presetGoal = id()
       await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Space edit goal', $3, $4)`, [presetGoal, ws, owner, space])
       await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, default_subject, default_role) VALUES ($1, $2, 'goal', $3, 'space', 'editor')`, [id(), ws, presetGoal])
@@ -89,10 +110,16 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       const can = async (p: string, action: Parameters<typeof acl.can>[1], kind: Parameters<typeof acl.can>[2]['kind'], rid: string, link?: string) =>
         await acl.can(await who(p, link), action, { kind, id: rid })
 
-      // Company goal: workspace viewers; child inherits; secret personal goal: creator owner, champion manager, others nothing.
-      expect(await can(alice, 'view', 'goal', company)).toBe(true)
-      expect(await can(alice, 'edit', 'goal', company)).toBe(false)
-      expect(await can(alice, 'view', 'goal', child)).toBe(true)
+      // Company goal: workspace viewers (alice champions it); the space child goal / project
+      // under it is NOT visible to non-members of the space; secret personal goal: creator owner,
+      // champion manager, others nothing.
+      expect(await can(bob, 'view', 'goal', company)).toBe(true)
+      expect(await can(bob, 'edit', 'goal', company)).toBe(false)
+      expect(await can(alice, 'manage_access', 'goal', company)).toBe(true)
+      expect(await can(alice, 'view', 'goal', child)).toBe(false)
+      expect(await can(alice, 'view', 'project', goalProject)).toBe(false)
+      expect(await can(bob, 'view', 'goal', child)).toBe(true) // space member
+      expect(await can(bob, 'edit', 'goal', child)).toBe(false)
       expect(await can(owner, 'delete', 'goal', company)).toBe(false) // has_children
       expect((await acl.evaluate(await who(owner), 'delete', { kind: 'goal', id: company })).reason).toBe('has_children')
       expect(await can(alice, 'transfer', 'goal', personal)).toBe(true)
@@ -101,10 +128,31 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       const hidden = await acl.evaluate(await who(guest), 'view', { kind: 'goal', id: personal })
       expect(hidden.secret).toBe(true)
       expect(hidden.preview).toBe('none')
-      // Projects: members visibility → workspace viewer; private → department grant only.
+      // The workspace owner: manager on non-secret resources, never on another person's personal goal.
+      expect(await can(owner, 'manage_access', 'project', project)).toBe(true)
+      expect(await can(owner, 'view', 'goal', personal)).toBe(false)
+      expect(await acl.evaluate(await who(owner), 'view', { kind: 'goal', id: personal })).toMatchObject({ secret: true, preview: 'none' })
+      expect(await can(owner, 'view', 'task', privTask)).toBe(true) // owner_principal_id of the task (contextual owner)
+      // Projects: legacy members visibility → workspace viewer; private → department grant only;
+      // a space 'members' project → space members; a policy row overrides the legacy viewer.
       expect(await can(alice, 'view', 'project', project)).toBe(true)
       expect(await can(alice, 'view', 'project', privProject)).toBe(false)
       expect(await can(bob, 'edit', 'project', privProject)).toBe(true)
+      expect(await can(alice, 'view', 'project', spaceProject)).toBe(false)
+      expect(await can(bob, 'view', 'project', spaceProject)).toBe(true)
+      expect(await can(alice, 'view', 'project', policedProject)).toBe(false)
+      // Secret ancestor: the private project's task is hidden from alice; the department editor inherits.
+      expect(await acl.evaluate(await who(alice), 'view', { kind: 'task', id: privTask })).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+      expect(await can(bob, 'edit', 'task', privTask)).toBe(true)
+      // Task lists: a members-only space list is not space-visible; a space list is.
+      expect(await can(bob, 'view', 'task-list', membersList)).toBe(false)
+      expect(await can(bob, 'view', 'task-list', spaceList)).toBe(true)
+      // Chats: a removed private-chat creator loses access (ownership = active chat_member role only);
+      // a public chat is minimal for non-members, and that does not reach its folder.
+      expect(await can(bob, 'view', 'channel', bobChat)).toBe(false)
+      expect(await acl.evaluate(await who(bob), 'view', { kind: 'channel', id: publicChat })).toMatchObject({ allowed: false, role: 'minimal', preview: 'minimal' })
+      expect(await can(bob, 'view_title', 'folder', chatFolder)).toBe(false)
+      expect(await acl.evaluate(await who(alice), 'view', { kind: 'folder', id: chatFolder })).toMatchObject({ allowed: true, role: 'viewer' })
       // Private chat: admin member → editor; others none.
       expect(await can(alice, 'edit', 'channel', chat)).toBe(true)
       expect(await can(bob, 'view', 'channel', chat)).toBe(false)
