@@ -22,6 +22,8 @@ import { LicenseRepository } from './modules/licenses/repository.ts'
 import type { TrustedLicenseRegistry } from './modules/licenses/registry.ts'
 import type { WorkspaceBroInvitationAuthority } from './modules/collaboration/invitations.ts'
 import { createDurableWorkspaceCollaboration } from './modules/collaboration/runtime.ts'
+// W1-03 (#1500)
+import { createWorkspaceCommandBus, type WorkspaceCommandBusConfiguration } from './modules/commands/runtime.ts'
 
 const DEFAULT_SCHEMA = 'public'
 const DEFAULT_HOST = '127.0.0.1'
@@ -49,6 +51,9 @@ export interface WorkspaceServerConfiguration {
   readonly port?: number
   readonly tls?: WsRpcServerOptions['tls']
   readonly serverId: string
+  // W1-03 (#1500)
+  /** Opt-in command bus + realtime gateway; absent → nothing registered (unchanged behaviour). */
+  readonly commandBus?: WorkspaceCommandBusConfiguration
 }
 
 /**
@@ -158,6 +163,9 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
     collaborationClosing = true
     if (collaborationRequests === 0) ownedCollaboration?.close()
   }
+  // W1-03 (#1500)
+  const commandBus = configuration.commandBus ? createWorkspaceCommandBus(configuration.database, schema, configuration.commandBus) : undefined
+  await commandBus?.ready
   const httpHandler = createWorkspaceHttpHandler({
     authority,
     collaborationAuthority,
@@ -165,6 +173,7 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
     ...(licenseAuthority ? { licenseResponseGuard: licenseAuthority.assertReadableResponse.bind(licenseAuthority) } : {}),
     actorResolver,
     ...(localIssuer ? { localIssuer, publicJwks: localIssuer.jwks() } : {}),
+    ...(commandBus ? { commandBus: commandBus.service } : {}),
   })
   async function authenticationPhase<T>(operation: () => Promise<T>): Promise<T> {
     if (lifecycle && !lifecycle.begin()) throw new AuthenticationError()
@@ -198,7 +207,9 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
   server.onShutdown(disposeCollaboration)
   registerSharedProjectHandlers(server, authority, lifecycle)
   if (licenseAuthority) registerLicenseHandlers(server, licenseAuthority, lifecycle)
-  return { server, authority, repository, collaborationAuthority, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
+  // W1-03 (#1500)
+  const realtimeGateway = commandBus?.attach(server)
+  return { server, authority, commandBus, realtimeGateway, repository, collaborationAuthority, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
 }
 
 function requireLocalIssuer(value: Awaited<ReturnType<typeof createLocalIssuer>> | undefined) {
