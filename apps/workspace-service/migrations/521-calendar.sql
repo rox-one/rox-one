@@ -55,10 +55,13 @@ CREATE TABLE event_attendee (
   email public.citext,
   status text NOT NULL DEFAULT 'needs_action'
     CHECK (status IN ('needs_action', 'accepted', 'declined', 'tentative')),
-  created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  -- An attendee is a principal or an email; an all-NULL row would also escape the dedupe index.
+  CONSTRAINT event_attendee_identity CHECK (principal_id IS NOT NULL OR email IS NOT NULL)
 );
 -- One row per (event, person-or-email); expressions are index-only (no expression PK).
-CREATE UNIQUE INDEX event_attendee_uniq ON event_attendee (event_id, COALESCE(principal_id::text, email::text));
+-- lower() keeps the citext semantics: a plain ::text cast would let A@x and a@x both in.
+CREATE UNIQUE INDEX event_attendee_uniq ON event_attendee (event_id, COALESCE(principal_id::text, lower(email::text)));
 
 CREATE TABLE room (
   room_id uuid PRIMARY KEY,

@@ -1,17 +1,38 @@
 # Workspace-service migrations (unified DDL, W1-05)
 
 Issue #1502 · unified spec **v2** (DATA-MODEL §12). 26 files land here; the 27th
-(`40-tables.sql`, 9 tables) is owned by Unified Tables (#1295) and is **reserved,
-not authored** in this package.
+(spec `40-tables.sql`, 9 tables) is owned by Unified Tables (#1295) and is **not
+authored** in this package. It has no reserved slot: see "Adding a migration".
+
+## Startup loading (always the full sorted set)
+
+`loadWorkspaceBootstrapMigrations` (`src/server.ts`) reads **every** `*.sql` file in
+this directory and sorts it with `compareMigrationNames` (numeric locale compare,
+the same rule the migrator uses). Every start therefore applies, in order:
+
+1. both `01-*` files,
+2. `48-license-audit.sql`, **always**. Its DDL no longer depends on
+   `licenseRegistryPath`; only the licence-registry *feature* stays conditional,
+3. every `5NN-*.sql`.
+
+Loading 48 only when a licence registry was configured was a trap: a database first
+started without a registry would record `01, 01, 502…`, and enabling the registry
+later would insert 48 into the middle of the history (`MIGRATION_ORDER_CONFLICT`).
+Databases bootstrapped by the old loader upgrade cleanly: `01, 01` → `48, 502…552`
+are appended, `01, 01, 48` → `502…552` are appended. The unified tables are
+additive and stay empty while their feature flags are off.
+
+`workspace-service:package` (root `package.json`) must list every file here; a test
+enforces it.
 
 ## File numbering: spec number → 5NN on disk
 
 `applyWorkspaceMigrations` (`src/database/migrations.ts`) sorts by name with a
 numeric locale compare and requires the applied history to be an exact prefix of
-the sorted list. Deployed databases already have `01-domain-contract.sql`,
-`01-local-auth-bootstrap.sql` and `48-license-audit.sql` applied, so a literal
-`02-…`…`47-…` name would sort **before** `48-license-audit.sql` and break every
-existing database (`MIGRATION_ORDER_CONFLICT`).
+the sorted list. Deployed databases have `01-domain-contract.sql` and
+`01-local-auth-bootstrap.sql` applied (and `48-license-audit.sql` where a licence
+registry was configured), so a literal `02-…`…`47-…` name would sort **before**
+`48-license-audit.sql` and break every existing database (`MIGRATION_ORDER_CONFLICT`).
 
 Every new file therefore keeps the spec's logical number as `5NN`:
 
@@ -41,12 +62,26 @@ Every new file therefore keeps the spec's logical number as `5NN`:
 | `25-kpi.sql` | `525-kpi.sql` | kpi, kpi_entry, kpi_entry_edit, kpi_annotation |
 | `26-templates.sql` | `526-templates.sql` | project_template |
 | `30-vc.sql` | `530-vc.sql` | meeting_room, recording |
-| `40-tables.sql` | `540-tables.sql` **RESERVED** | owned by #1295 — do not author here |
+| `40-tables.sql` | — (no slot; lands as `553+`, see below) | owned by #1295 — do not author here |
 | `51-workplace.sql` | `551-workplace.sql` | workplace_app, workplace_favorite |
 | `52-mail.sql` | `552-mail.sql` | mail_account |
 
-94 new tables here + 9 in `40-tables.sql` = **103** (DATA-MODEL §12 totals).
+94 new tables here + 9 from #1295's tables file = **103** (DATA-MODEL §12 totals).
 4 extended tables: `principal`, `project`, `workspace`, `workspace_member`.
+
+## Adding a migration (#1295, #1314 and everything later)
+
+A new file must sort **after the last file in this directory** (today
+`552-mail.sql`, so `553-…` or higher), never in the middle. Because the applied
+history must be an exact sorted prefix, a mid-sequence name breaks every database
+that already applied a later file: `540-tables.sql` would fail once 551/552 are
+applied, and `40-tables.sql` sorts before 48 and fails everywhere. #1295's tables
+(spec `40-tables.sql`) and #1314's tables therefore land as the next free number
+(`553-tables.sql`, then `554-…`), in whichever order they merge.
+
+Append the new name to `LOCKED_MIGRATIONS` in `../test/migrations.unified.test.ts`
+and to `workspace-service:package` in the same change. The static test fails if a
+file sorts into the locked history or is missing from the package.
 
 ## Ordering inside the new set
 
@@ -89,7 +124,8 @@ may use `public.unaccent`.
 
 - Work map: `goal_space`, `goal_parent`, `goal_cycle`, `project_space`,
   `milestone_project`, `work_item_space`, `task_in_list_cover`.
-- Chat feed: `message_feed (chat_id, seq DESC)`.
+- Chat feed: the `UNIQUE (chat_id, seq)` btree (`message_chat_id_seq_key`), scanned
+  backward for newest-first pages. No separate feed index.
 - Quick panels / backlinks: `entity_link_to`, `entity_link_from`,
   `comment_by_resource`, `notification_unread`.
 - Review: `check_in_subject`, `check_in_pending_ack`, `goal_check_in_due`,
@@ -112,12 +148,19 @@ spaces → `509` · docs → `510` · wiki → `511` · messenger → `512` ·
 identity → `513` · agents → `513(agent_binding), 514` · automation → `515` ·
 tasks → `520` · calendar → `521, 517(calendar_member)` · goals → `522, 524` ·
 projects → `523, 526` · kpis → `525` · meetings → `530` · workplace → `551` ·
-mail → `552` · collab → `517` · tables → `540` (#1295).
+mail → `552` · collab → `517` · tables → `553+` (#1295).
 
 ## Tests
 
-`../test/migrations.unified.test.ts` (static inventory/order/FK-target checks run
-without a DB; migrate-up runs against `ROX_TEST_PG_URL`, else a temp `initdb`
-cluster, else skip). Required runs: (a) empty DB, (b) `01 + 48` then the new
-files, (c) re-run no-op, (d) tampered checksum → `MIGRATION_CHANGED`, plus
-`EXPLAIN` index-use assertions on the key queries above.
+`../test/migrations.unified.test.ts` (static inventory/order/FK-target/553+
+checks run without a DB; migrate-up runs against `ROX_TEST_PG_URL`, else a temp
+`initdb` cluster from `initdb`/`pg_ctl` on `PATH`, else skip; real dot-configs are
+never read). `ROX_TEST_PG_REQUIRED=1` turns the skip into a failure. Runs: (a)
+empty DB, (b) `01 + 48` then the new files, (c) re-run no-op, (d) tampered
+checksum → `MIGRATION_CHANGED`, old-loader upgrade paths (`01` only, `01 + 48`),
+real `createWorkspaceServer` startup + restart, plus `EXPLAIN` index-use
+assertions on the key queries above.
+
+Run with `bun run workspace-service:test` (or `bun test apps/workspace-service/test`).
+CI runs them in the `workspace-migrations` job of `.github/workflows/ci.yml`
+against a `postgres:16` service container.

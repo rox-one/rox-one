@@ -465,6 +465,32 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
     }
   }, 120000)
 
+  itDb('event_attendee requires a principal or an email', async () => {
+    const db = new SQL(testDb!.url)
+    const schema = `w105_attendee_${randomBytes(4).toString('hex')}`
+    await db.unsafe(`CREATE SCHEMA "${schema}"`)
+    try {
+      await applyWorkspaceMigrations(db, await loadMigrations(), schema)
+      const { randomUUID } = await import('node:crypto')
+      const [wsId, calId, eventId] = [randomUUID(), randomUUID(), randomUUID()]
+      await db.unsafe(`INSERT INTO "${schema}".workspace (workspace_id, owner_principal_id, name) VALUES ('${wsId}', '${BOT}', 'w105')`)
+      await db.unsafe(`INSERT INTO "${schema}".calendar (calendar_id, workspace_id, name) VALUES ('${calId}', '${wsId}', 'w105')`)
+      await db.unsafe(`INSERT INTO "${schema}".calendar_event (event_id, workspace_id, calendar_id, title, starts_at, ends_at)
+        VALUES ('${eventId}', '${wsId}', '${calId}', 'w105', now(), now() + interval '1 hour')`)
+      // Bun SQL queries are lazy thenables; run them inside an async fn so `rejects` sees a real Promise.
+      const run = async (sql: string) => { await db.unsafe(sql) }
+      await expect(run(`INSERT INTO "${schema}".event_attendee (event_id) VALUES ('${eventId}')`))
+        .rejects.toThrow(/event_attendee_identity/)
+      await db.unsafe(`INSERT INTO "${schema}".event_attendee (event_id, email) VALUES ('${eventId}', 'a@example.invalid')`)
+      await db.unsafe(`INSERT INTO "${schema}".event_attendee (event_id, principal_id) VALUES ('${eventId}', '${BOT}')`)
+      await expect(run(`INSERT INTO "${schema}".event_attendee (event_id, email) VALUES ('${eventId}', 'A@example.invalid')`))
+        .rejects.toThrow(/event_attendee_uniq/)
+    } finally {
+      await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
+      await db.close()
+    }
+  }, 120000)
+
   itDb('checksum change fails closed with MIGRATION_CHANGED (run d)', async () => {
     const db = new SQL(testDb!.url)
     try {
