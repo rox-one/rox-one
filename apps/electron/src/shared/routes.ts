@@ -20,6 +20,7 @@ import type { PermissionMode } from '@rox/shared/agent/mode-types'
 import type { KnowledgeRefKind } from './types'
 import { buildExtraScreenRoute, type ExtraScreenId } from './extra-screens'
 import { entityRoute } from '@rox/core/entities'
+import { unifiedSurfaceRoute, type UnifiedSurfaceId } from './surface-routes'
 
 // Helper to build query strings from params
 function toQueryString(params?: Record<string, string | undefined>): string {
@@ -404,6 +405,10 @@ export const routes = {
 
     /** Installed app — `home/apps/{id}` */
     entityApp: (id: string) => entityRoute({ kind: 'app', id }),
+
+    // W1-07 (#1504): unified mode roots (`messenger`, `calendar`, `goals`,
+    // `contacts`). Parse back only while the mode flag is on.
+    surface: <S extends UnifiedSurfaceId>(surface: S) => unifiedSurfaceRoute(surface),
   },
 } as const
 

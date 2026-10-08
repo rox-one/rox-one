@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import {
   SettingsSection,
   SettingsCard,
@@ -143,6 +144,7 @@ async function persistFormState(state: PreferencesFormState): Promise<string | n
  */
 export function PreferencesForm() {
   const { t } = useTranslation()
+  const notesSectionKey = useNotesTitleKey('settings.preferences.notes')
   const [formState, setFormState] = useState<PreferencesFormState>(emptyFormState)
   const [isLoading, setIsLoading] = useState(true)
   const [preferencesPath, setPreferencesPath] = useState<string | null>(null)
@@ -344,7 +346,7 @@ export function PreferencesForm() {
       </SettingsSection>
 
       <SettingsSection
-        title={t('settings.preferences.notes')}
+        title={t(notesSectionKey)}
         description={t('settings.preferences.notesDesc')}
         action={
           preferencesPath ? (

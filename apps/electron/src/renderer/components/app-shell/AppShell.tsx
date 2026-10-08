@@ -213,7 +213,10 @@ import { dispatchFocusInputEvent } from "./input/focus-input-events"
 import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
-import { isScreenNavigation } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation } from '../../../shared/types'
+// W1-07 (#1504): unified mode roots + Docs relabel.
+import { enabledShellFlagsAtom } from '@/platform/unified-flags'
+import { notesTitleKey, surfaceTitleKey } from '@/platform/surface-shell'
 import { MiniSessionSurface } from "./MiniSessionSurface"
 
 /**
@@ -564,6 +567,7 @@ function AppShellContent({
   liveWorkspace.current = activeWorkspaceId
   const [openingAgent, setOpeningAgent] = useState(false)
   const toolIntentGeneration = React.useRef(0)
+  const shellFlags = useAtomValue(enabledShellFlagsAtom)
   const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
   const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const pendingSidebarRevealId = React.useRef<string | null>(null)
@@ -660,7 +664,9 @@ function AppShellContent({
   // Mode screens (Входящие, Лента) render their own three panels too.
   // «Ещё» screens (Досье, Радар, Решения, Центр агентов, Фокус) do the same —
   // without this the navigator column stayed mounted and empty beside them.
+  // W1-07 (#1504): unified mode roots render their own page (or empty state).
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
+    || isSurfaceNavigation(navState)
   // Unavailable addresses have no collection navigator or resize boundary.
   const hideModuleMiddleNav =
     navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
@@ -2462,6 +2468,11 @@ function AppShellContent({
       return t("workbench.home.title")
     }
 
+    // W1-07 (#1504): unified mode roots use their mode title.
+    if (isSurfaceNavigation(navState)) {
+      return t(surfaceTitleKey(navState.surface))
+    }
+
     if (isConnectionsNavigation(navState)) {
       return t("sidebar.connections")
     }
@@ -2478,7 +2489,8 @@ function AppShellContent({
 
     // Notes navigator
     if (isNotesNavigation(navState)) {
-      return t("sidebar.notes")
+      // W1-07 (#1504): «Документы» under docs.shared.v1.
+      return t(notesTitleKey(shellFlags, "sidebar.notes"))
     }
 
     // Automations navigator
@@ -2515,7 +2527,7 @@ function AppShellContent({
       default:
         return t("sidebar.allSessions")
     }
-  }, [navState, t, sessionFilter, automationFilter, labelConfigs, viewConfigs, effectiveSessionStatuses])
+  }, [navState, t, sessionFilter, automationFilter, labelConfigs, viewConfigs, effectiveSessionStatuses, shellFlags])
 
   // Build recursive sidebar items from the shared display-sorted label tree.
   // Each node renders with condensed height (compact: true) since many labels expected.
@@ -2820,7 +2832,7 @@ function AppShellContent({
     },
     {
       id: "nav:notes",
-      title: t('workbench.mode.notes'),
+      title: t(notesTitleKey(shellFlags, APP_NAV_DESTINATIONS_BY_ID.notes.labelKey)),
       icon: APP_NAV_DESTINATIONS_BY_ID.notes.icon,
       variant: isNotesNavigation(navState) ? "default" : "ghost",
       onClick: handleNotesClick,

@@ -1,6 +1,9 @@
-import { actionsByCategory, useActionLabel, type ActionId } from '@/actions'
+import { useActionLabel, type ActionId } from '@/actions'
+// W1-07 (#1504): flag-gated actions show (and rebind) once their flag is on.
+import { useActionsByCategory } from '@/actions/useVisibleActions'
 
 export function KeyboardShortcuts() {
+  const actionsByCategory = useActionsByCategory()
   return (
     <div className="space-y-6">
       {Object.entries(actionsByCategory).map(([category, actions]) => (

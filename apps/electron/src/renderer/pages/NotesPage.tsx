@@ -12,9 +12,9 @@ import { hasNativeNotesTransport } from '@/lib/notes-capability'
 import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useStore } from 'jotai'
-import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
+import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
-
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
@@ -452,6 +452,7 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const shellSidebarTarget = useShellSidebarTarget()
   const { t } = useTranslation()
+  const notesHeaderTitleKey = useNotesTitleKey('notes.header.title')
   const navigationRevision = React.useContext(NavigationContext)?.navigationRevision
   const {
     activeWorkspaceId,
@@ -2391,7 +2392,7 @@ h1,h2,h3{margin-top:1.5em}
         data-testid="notes-vault-rail"
         data-focus-zone="sidebar"
         onKeyDown={handleSidebarTreeKeyDown}
-        aria-label={t('notes.header.title')}
+        aria-label={t(notesHeaderTitleKey)}
       >
         <div className="shrink-0 px-3 py-2">
           <div className="flex items-center gap-2">
@@ -2493,7 +2494,7 @@ h1,h2,h3{margin-top:1.5em}
             {activeNote ? (
               <NotesBreadcrumbs noteId={activeNote.id} title={activeNote.title} onOpenFolder={(folder) => setQuery(folder ?? '')} />
             ) : (
-              <div className="truncate text-sm font-medium">{t('notes.header.title')}</div>
+              <div className="truncate text-sm font-medium">{t(notesHeaderTitleKey)}</div>
             )}
             {activeNote && <div className="min-w-0 truncate text-[11px] text-muted-foreground/60">{activeNoteStats}</div>}
             {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-foreground/[0.04] px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.08]" title={t('notes.content.authorityHint')}>

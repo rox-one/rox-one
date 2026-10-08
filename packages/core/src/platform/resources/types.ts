@@ -18,7 +18,9 @@ export type ResourceKind =
   | 'cloud-run'
   | 'label'
   | 'file'
-  | 'command-hint';
+  | 'command-hint'
+  // W1-07 (#1504): unified entity rows (`data.ref` = `kind:id`).
+  | 'entity';
 
 export interface ResourceItem {
   id: string;
