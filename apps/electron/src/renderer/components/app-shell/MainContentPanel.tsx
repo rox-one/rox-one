@@ -21,6 +21,7 @@ import { useSession } from '@/hooks/useSession'
 import { loadRuntimeTrace, type RuntimeTraceAPI } from '@/event-processor/runtime-trace-ingress'
 import { runtimeCatalogCapabilities, runtimeCatalogScope } from '@/lib/runtime-catalog-capabilities'
 import { StoplightProvider } from '@/context/StoplightContext'
+import { panelRouteKey } from './panel-route-key'
 import {
   useNavigationState,
   useNavigation,
@@ -48,7 +49,7 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
@@ -83,6 +84,8 @@ const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
 const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
 const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
 const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
+// W1-07 (#1504): unified mode roots; reachable only while their mode flag is on.
+const SurfaceHost = lazyRoutePage(() => import('@/platform/SurfaceHost'))
 const TasksPage = lazyRoutePage(() => import('@/pages/workspace-work/WorkspaceTasksPage'))
 const MeetingsPage = lazyRoutePage(() => import('@/pages/workspace-work/PlanWorkspacePage'))
 const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
@@ -240,19 +243,8 @@ export function MainContentPanel({
     : requestedNavState
 
   // Detail state belongs to its workspace and entity, including project-level skills.
-  const routeKey = JSON.stringify([
-    activeWorkspaceId,
-    unavailableWorkspaceSlug,
-    navState.navigator,
-    isSessionsNavigation(navState) ? navState.viewMode : null,
-    'details' in navState ? navState.details : null,
-    isSettingsNavigation(navState) ? navState.subpage : null,
-    isScreenNavigation(navState) ? navState.screen : null,
-    navState.navigator === 'search' ? navState.query : null,
-    navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
-    unavailableWorkspaceSlug,
-    isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
-  ])
+  // W1-07 (#1504): the surface id joins the key (unified mode roots).
+  const routeKey = panelRouteKey(navState, { activeWorkspaceId, unavailableWorkspaceSlug, activeSessionWorkingDirectory })
   const [sessionSelection] = useSession()
   const store = useStore()
   const catalogSessionId = sessionSelection.selected
@@ -709,6 +701,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <FeedPage selectedId={navState.details?.itemId ?? null} />
+      </Panel>
+    )
+  }
+
+  if (isSurfaceNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <SurfaceHost surface={navState.surface} />
       </Panel>
     )
   }

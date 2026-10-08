@@ -7,7 +7,9 @@ import {
 } from "@/components/ui/dialog"
 import { useRegisterModal } from "@/context/ModalContext"
 import { isMac } from "@/lib/platform"
-import { actionsByCategory, useActionLabel, type ActionId } from "@/actions"
+import { useActionLabel, type ActionId } from "@/actions"
+// W1-07 (#1504): flag-gated actions show (and rebind) once their flag is on.
+import { useActionsByCategory } from "@/actions/useVisibleActions"
 
 interface KeyboardShortcutsDialogProps {
   open: boolean
@@ -144,6 +146,7 @@ function StaticSection({ section }: { section: ShortcutSection }) {
 }
 
 export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcutsDialogProps) {
+  const actionsByCategory = useActionsByCategory()
   const { t } = useTranslation()
   const componentSpecificSections = useComponentSpecificSections()
 

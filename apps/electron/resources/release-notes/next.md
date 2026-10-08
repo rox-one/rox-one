@@ -7,14 +7,13 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 - **Rox R1 Max default** — New sessions show Rox R1 Max (`rox/r1-max`) as the single built-in model; connected custom providers and locked session models remain available. The Standard mode is now named Chat. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 - **Workspace navigation and appearance** — Rounded glass panels, a single expandable contextual sidebar, a persistent user profile and seven primary navigation pills with Cmd/Ctrl+1–7 shortcuts. Widgets now resize vertically and offer saved color, saturation and contrast presets. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 - **Transcription and meeting follow-up** — Deepgram transcription selects the latest prerecorded model and diarizer, with speaker-separated paragraphs and timestamps. Meeting tasks and decisions are extracted automatically and remain editable. Shared services become available when their server credentials are configured. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
+- **Public ROX model endpoints** — The default OMP connection lists the public ROX endpoints (`rox/r1-max`, `rox/explore`, `rox/standard`, `rox/max`, `rox/vision`, `rox/fast`); child sessions spawned without an explicit model use `rox/fast`.
 
 ## Improvements
 
 - **Readable workspace tools** — Clearer memory cards and incoming items, calmer empty states, distinct quest cards and durable XP, and source-aware radar setup and results. Message actions expose Listen and Branch beside Like, Copy and Quote. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 
 - **Zed-inspired appearance** — Added Nordfox - opaque, Min Dark (Blurred), and Siri Light palettes for the interface, code, and terminal. New installations start with Nordfox; existing theme choices remain intact.
-
-
 
 
 - **Joined workspace panels** — Workspace panes now meet at one-pixel separators, with square panel corners, four-pixel controls and cards, and six-pixel menus and dialogs. Glass is limited to title bars, navigation, and inspector chrome; reading and editing surfaces remain opaque.

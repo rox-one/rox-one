@@ -20,9 +20,11 @@ import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
 import { bottomTerminalOpenAtom, inspectorUserOpenedAtom, inspectorVisibleAtom } from '@/atoms/unified-shell'
 import { requestCompose } from './inspector-compose-events'
 import { useNavigation } from '@/contexts/NavigationContext'
-import { routes, type ViewRoute } from '../../shared/routes'
+import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { cn } from '@/lib/utils'
 import { CHROME_DENSITY } from './chrome-density'
+// W1-07 (#1504): «+» becomes the §3.2 create menu once a flagged entry is visible.
+import { GlobalCreateMenu } from './GlobalCreateMenu'
 
 const INSPECTOR_RAIL_WIDTH = CHROME_DENSITY.railWidth
 
@@ -147,9 +149,26 @@ export function InspectorActionRail({
       style={{ width: INSPECTOR_RAIL_WIDTH }}
       data-inspector-action-rail
     >
-      <ActionButton label={t('inspector.action.newSession')} onClick={onNewSession}>
-        <Plus className="h-4 w-4" />
-      </ActionButton>
+      <GlobalCreateMenu
+        label={t('surfaces.create.menu')}
+        navigate={(route) => void navigate(route as Route)}
+        host={{ newSession: onNewSession, newTask: onNewTask, newEvent: onNewEvent, newNote: onNewNote, browser: onBrowser, terminal: onTerminal }}
+        trigger={({ label }) => (
+          <button
+            type="button"
+            aria-label={label}
+            data-global-create-trigger
+            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-foreground/45 transition-colors hover:bg-foreground/5 hover:text-foreground"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        )}
+        fallback={
+          <ActionButton label={t('inspector.action.newSession')} onClick={onNewSession}>
+            <Plus className="h-4 w-4" />
+          </ActionButton>
+        }
+      />
       <ActionButton label={t('inspector.action.newTask')} onClick={onNewTask}>
         <SquareCheck className="h-4 w-4" />
       </ActionButton>

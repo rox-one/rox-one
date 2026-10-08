@@ -788,6 +788,12 @@ app.whenReady().then(async () => {
       await rebuildMenu()
     })
 
+    // W1-07 (#1504): unified surface route gate (renderer flags → main deep
+    // links). Registered in every mode, thin client included: deep links are
+    // parsed in main either way and the gate is default-closed until pushed.
+    const { registerSurfaceRoutesIpc } = await import('./surface-routes-ipc')
+    registerSurfaceRoutesIpc(ipcMain)
+
     // Transport diagnostics bridge — preload reports remote WS connection state changes
     // so failures are visible in terminal/main.log (not only renderer console).
     ipcMain.on('__transport:status', (_event, payload: unknown) => {
