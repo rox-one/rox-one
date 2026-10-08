@@ -1,0 +1,28 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/webui/src/adapter/web-api.test.ts:
+(pass) web session window links > uses the canonical sessionId parameter consumed by the renderer [0.54ms]
+(pass) web adapter notification stubs > resolves notification:getEnabled without opening an RPC connection [4.14ms]
+(pass) web adapter notification stubs > resolves notification:setEnabled without opening an RPC connection [1.36ms]
+(pass) web UI PWA manifest > is reachable without a session cookie, or is not requested [18.16ms]
+
+packages/ui/src/__tests__/pdfjs-url-import.test.ts:
+ 7 | import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+ 8 |
+ 9 | describe('pdfjs Vite ?url import under bun test', () => {
+10 |   it('resolves pdfjs-dist/build/pdf.worker.min.mjs?url to a string', () => {
+11 |     expect(typeof workerUrl).toBe('string')
+12 |     expect(workerUrl.length).toBeGreaterThan(0)
+                                  ^
+error: expect(received).toBeGreaterThan(expected)
+
+Expected: > 0
+Received: 0
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/ui/src/__tests__/pdfjs-url-import.test.ts:12:30)
+(fail) pdfjs Vite ?url import under bun test > resolves pdfjs-dist/build/pdf.worker.min.mjs?url to a string [0.21ms]
+
+ 4 pass
+ 1 fail
+ 12 expect() calls
+Ran 5 tests across 2 files. [1.86s]

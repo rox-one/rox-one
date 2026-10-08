@@ -1,0 +1,156 @@
+[2m[WebServer] [22m[0m[33mWarning[0m[2m:[0m [1mThe 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mwarnOnDeactivatedColors[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m33[0m[2m:[33m24[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mgetColorDepth[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m42[0m[2m:[33m39[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mshouldColorize[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m14[0m[2m:[33m109[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mrefresh[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m18[0m[2m:[33m31[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:util/colors[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m24[0m[2m:[33m16[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:assert/assertion_error[0m[2m ([0m[0m[36minternal:assert/assertion_error[0m[2m:[0m[33m2[0m[2m:[33m187[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mloadAssertionError[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m28[0m[2m:[33m96[0m[2m)[0m
+[2m[WebServer] [22m
+[2m[WebServer] [22m[esbuild css minify]
+[2m[WebServer] [22m▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+[2m[WebServer] [22m
+[2m[WebServer] [22m    <stdin>:2250:168231:
+[2m[WebServer] [22m      2250 │ ...gion:no-drag}.\[file\:path\]{file:path}.\[file\:src\/a\.ts\]{...
+[2m[WebServer] [22m           │                                 ~~~~
+[2m[WebServer] [22m           ╵                                 flex
+[2m[WebServer] [22m
+[2m[WebServer] [22m  Did you mean "flex" instead?
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+[2m[WebServer] [22m
+[2m[WebServer] [22m    <stdin>:2250:168263:
+[2m[WebServer] [22m      2250 │ ...e:path}.\[file\:src\/a\.ts\]{file:src/a.ts}.\[file\:src\/inde...
+[2m[WebServer] [22m           │                                 ~~~~
+[2m[WebServer] [22m           ╵                                 flex
+[2m[WebServer] [22m
+[2m[WebServer] [22m  Did you mean "flex" instead?
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+[2m[WebServer] [22m
+[2m[WebServer] [22m    <stdin>:2250:168303:
+[2m[WebServer] [22m      2250 │ ...ts}.\[file\:src\/index\.ts\]{file:src/index.ts}.\[folder\:doc...
+[2m[WebServer] [22m           │                                 ~~~~
+[2m[WebServer] [22m           ╵                                 flex
+[2m[WebServer] [22m
+[2m[WebServer] [22m  Did you mean "flex" instead?
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m(!) Some chunks are larger than 500 kB after minification. Consider:
+[2m[WebServer] [22m- Using dynamic import() to code-split the application
+[2m[WebServer] [22m- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[2m[WebServer] [22m- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[2m[WebServer] [22m[0m[33mWarning[0m[2m:[0m [1mThe 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mwarnOnDeactivatedColors[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m33[0m[2m:[33m24[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mgetColorDepth[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m42[0m[2m:[33m39[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mshouldColorize[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m14[0m[2m:[33m109[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mrefresh[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m18[0m[2m:[33m31[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:util/colors[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m24[0m[2m:[33m16[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:assert/assertion_error[0m[2m ([0m[0m[36minternal:assert/assertion_error[0m[2m:[0m[33m2[0m[2m:[33m187[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mloadAssertionError[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m28[0m[2m:[33m96[0m[2m)[0m
+[2m[WebServer] [22m
+
+Running 3 tests using 1 worker
+
+(node:168) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:168) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light (13.3s)
+(node:262) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:262) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark (13.7s)
+(node:349) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:349) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  3 overview.spec.ts:6:1 › actual Fit overview shows the 200-card runtime window before panning (4.2s)
+
+
+  1) context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light 
+
+    Error: [31mTimed out 10000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m
+
+    Locator: getByTestId('runtime-context-canvas').locator('[data-testid="runtime-context-group"][data-context-group="context"]').getByTestId('runtime-context-row').filter({ hasText: 'Root source 1' }).first()
+    Expected string: [32m"root"[39m
+    Received string: [31m"session:fixture-session"[39m
+    Call log:
+    [2m  - expect.toHaveAttribute with timeout 10000ms[22m
+    [2m  - waiting for getByTestId('runtime-context-canvas').locator('[data-testid="runtime-context-group"][data-context-group="context"]').getByTestId('runtime-context-row').filter({ hasText: 'Root source 1' }).first()[22m
+    [2m    13 × locator resolved to <button type="button" data-selected="false" data-testid="runtime-context-row" class="runtime-context-group-row nodrag nopan" data-source-agent-id="session:fixture-session" data-context-snapshot-id="fixture-root-context-v1" data-source-event-id="27eb8403-78b0-4106-a607-b36866a805c5" data-source-node-id="["fixture-workspace","fixture-session","run-24c88bf8-8730-4838-ae06-79bf662e2274","run-24c88bf8-8730-4838-ae06-79bf662e2274","session:fixture-session","context","27eb8403-78b0-4106-a607-b36866a805c5","5…>…</button>[22m
+    [2m       - unexpected value "session:fixture-session"[22m
+
+
+      38 |   const context = canvas.locator('[data-testid="runtime-context-group"][data-context-group="context"]')
+      39 |   const rootSource = context.getByTestId('runtime-context-row').filter({ hasText: 'Root source 1' }).first()
+    > 40 |   await expect(rootSource).toHaveAttribute('data-source-agent-id', 'root')
+         |                            ^
+      41 |   await expect(rootSource).toHaveAttribute('data-context-snapshot-id', fixture.rootSnapshotId)
+      42 |   expect(await rootSource.getAttribute('data-source-node-id')).toBeTruthy()
+      43 |   await rootSource.click()
+        at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts:40:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/overview-context-51/context-grouped-context-is-22a30-t-child-provenance-in-light/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/overview-context-51/context-grouped-context-is-22a30-t-child-provenance-in-light/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/overview-context-51/context-grouped-context-is-22a30-t-child-provenance-in-light/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/overview-context-51/context-grouped-context-is-22a30-t-child-provenance-in-light/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark 
+
+    Error: [31mTimed out 10000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m
+
+    Locator: getByTestId('runtime-context-canvas').locator('[data-testid="runtime-context-group"][data-context-group="context"]').getByTestId('runtime-context-row').filter({ hasText: 'Root source 1' }).first()
+    Expected string: [32m"root"[39m
+    Received string: [31m"session:fixture-session"[39m
+    Call log:
+    [2m  - expect.toHaveAttribute with timeout 10000ms[22m
+    [2m  - waiting for getByTestId('runtime-context-canvas').locator('[data-testid="runtime-context-group"][data-context-group="context"]').getByTestId('runtime-context-row').filter({ hasText: 'Root source 1' }).first()[22m
+    [2m    13 × locator resolved to <button type="button" data-selected="false" data-testid="runtime-context-row" class="runtime-context-group-row nodrag nopan" data-source-agent-id="session:fixture-session" data-context-snapshot-id="fixture-root-context-v1" data-source-event-id="8fc2c0a7-45b3-4f47-838f-b4f857ba6f80" data-source-node-id="["fixture-workspace","fixture-session","run-95450f1f-6f0d-4209-a739-785d0296970c","run-95450f1f-6f0d-4209-a739-785d0296970c","session:fixture-session","context","8fc2c0a7-45b3-4f47-838f-b4f857ba6f80","2…>…</button>[22m
+    [2m       - unexpected value "session:fixture-session"[22m
+
+
+      38 |   const context = canvas.locator('[data-testid="runtime-context-group"][data-context-group="context"]')
+      39 |   const rootSource = context.getByTestId('runtime-context-row').filter({ hasText: 'Root source 1' }).first()
+    > 40 |   await expect(rootSource).toHaveAttribute('data-source-agent-id', 'root')
+         |                            ^
+      41 |   await expect(rootSource).toHaveAttribute('data-context-snapshot-id', fixture.rootSnapshotId)
+      42 |   expect(await rootSource.getAttribute('data-source-node-id')).toBeTruthy()
+      43 |   await rootSource.click()
+        at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts:40:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/overview-context-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/overview-context-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/overview-context-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/overview-context-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light 
+    context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark 
+  1 passed (1.4m)

@@ -1,0 +1,82 @@
+{
+  "platform": "darwin",
+  "sourceCommit": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "originalProbeSha256": "844cf5f7a3d76dd77dac0807e4b4a120049207384cf11e2c015648ffec3e0794",
+  "adaptedProbeSha256": "b5832c9aaaae0691f65f6b7ad54d8d95ebed444db0a91cdca161d95c5552c652",
+  "guardSha256": "3667797f8c74d68144ac81c5196a62957a58228785b6ab4a8082b307395ffe5d",
+  "harnessDelta": [
+    "Mac activation policy prohibited before readiness",
+    "process-local Keychain interaction disabled; status and activation assertions required",
+    "unique probe app name and isolated profile",
+    "hardware acceleration disabled",
+    "absolute imports to unchanged product store and diagnostics"
+  ],
+  "receipts": [
+    {
+      "phase": "write",
+      "platform": "darwin",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "profileIsolated": true,
+      "backend": "Keychain",
+      "stage": "complete",
+      "passed": true,
+      "code": null,
+      "fsync": [
+        {
+          "access": "readonly",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        },
+        {
+          "access": "writable",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        }
+      ]
+    },
+    {
+      "phase": "read",
+      "platform": "darwin",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "profileIsolated": true,
+      "backend": "Keychain",
+      "stage": "complete",
+      "passed": true,
+      "code": null,
+      "fsync": [
+        {
+          "access": "readonly",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        },
+        {
+          "access": "writable",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        }
+      ]
+    }
+  ],
+  "policyReceipts": [
+    {
+      "phase": "write",
+      "activationPolicy": 2,
+      "keychainInteractionDisableStatus": 0
+    },
+    {
+      "phase": "read",
+      "activationPolicy": 2,
+      "keychainInteractionDisableStatus": 0
+    }
+  ],
+  "ownedSyntheticFixtureOnly": true,
+  "nativeStoreRestartPassed": true,
+  "scope": "Actual OS encryption and store restart; no OAuth, provider, GUI or packaged app first-launch acceptance.",
+  "ownedProbeDirectoryRemoved": true
+}

@@ -1,0 +1,23 @@
+bun test v1.3.14 (0d9b296a)
+
+ops/fleet-infra/control-plane.test.ts:
+131 |       const result = spawnSync("ansible-playbook", ["--syntax-check", playbook], {
+132 |         cwd: ROOT,
+133 |         encoding: "utf8",
+134 |         env: { ...process.env, ANSIBLE_GATHERING: "explicit", ANSIBLE_RETRY_FILES_ENABLED: "False" },
+135 |       });
+136 |       expect(result.status, `${playbook}: ${result.stderr || result.stdout}`).toBe(0);
+                                                                                    ^
+error: playbooks/site.yml: null
+
+Expected: 0
+Received: undefined
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/ops/fleet-infra/control-plane.test.ts:136:79)
+(fail) ROX fleet control plane > ansible-playbook syntax-check is clean for control-plane playbooks [1.34ms]
+
+ 0 pass
+ 5 filtered out
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [250.00ms]

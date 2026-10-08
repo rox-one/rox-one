@@ -66,11 +66,21 @@
 .runtime-node[data-status=succeeded] .runtime-status-icon { color: var(--success, #498166); }
 .runtime-node[data-status=failed] .runtime-status-icon, .runtime-node[data-status=interrupted] .runtime-status-icon { color: var(--destructive, #ba5b5b); }
 .runtime-node[data-status=waiting-approval] .runtime-status-icon, .runtime-node[data-status=blocked] .runtime-status-icon { color: var(--warning, #ab741e); }
+/* PRD §30 learning kinds (registry in ./learning-nodes.ts): icon + header accent only. */
+.runtime-node-memory .runtime-node-icon, .runtime-node-skill .runtime-node-icon { color: var(--runtime-focus); }
+.runtime-node-policy .runtime-node-icon { color: var(--warning, #ab741e); }
+.runtime-node-outcome .runtime-node-icon { color: var(--success, #498166); }
+.runtime-node-evidence header, .runtime-node-policy header, .runtime-node-outcome header {
+  background: color-mix(in srgb, var(--runtime-focus) 5%, var(--runtime-header));
+  box-shadow: inset 3px 0 var(--runtime-muted);
+}
+.runtime-node-policy header { box-shadow: inset 3px 0 var(--warning, #ab741e); }
+.runtime-node-outcome header { box-shadow: inset 3px 0 var(--success, #498166); }
 .runtime-node-detail { padding: 9px 11px; min-height: 54px; }
 .runtime-node-detail p { margin: 0; font-size: 12px; line-height: 17px; color: var(--runtime-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
 .runtime-node footer { padding: 7px 10px; border-top: 1px solid var(--runtime-border); display: flex; align-items: center; gap: 9px; color: var(--runtime-muted); font-size: 11px; line-height: 15px; }
 .runtime-node footer > span:first-child { flex: 1; }
-.runtime-agent-lane { color: var(--runtime-muted); border-top: 1px solid var(--runtime-border); padding-top: 7px; width: 250px; }
+.runtime-agent-lane { color: var(--runtime-muted); border-top: 1px solid var(--runtime-border); padding-top: 7px; width: 250px; pointer-events: auto; }
 .runtime-agent-lane > button { width: 100%; display: flex; justify-content: flex-start; gap: 7px; padding: 4px 0; }
 .runtime-agent-lane strong { min-width: 0; flex: 1; font-size: 13px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .runtime-agent-lane > p { font-size: 11px; line-height: 16px; padding-left: 22px; margin: 4px 0; max-height: 48px; overflow: hidden; }
@@ -78,6 +88,12 @@
 .runtime-canvas[data-semantic-compact=true] .runtime-node-detail, .runtime-canvas[data-semantic-compact=true] .runtime-node footer { display: none; }
 .runtime-canvas[data-semantic-compact=true] .runtime-node header { min-height: 48px; border-bottom: 0; }
 .runtime-canvas[data-semantic-compact=true] .runtime-node header strong { font-size: 16px; }
+/* Explicit overview keeps the observed state painted at thumbnail scale. */
+.runtime-canvas[data-runtime-presentation=overview] .runtime-node header { border-left: 16px solid var(--runtime-muted); }
+.runtime-canvas[data-runtime-presentation=overview] .runtime-node[data-status=running] header { border-left-color: var(--runtime-focus); }
+.runtime-canvas[data-runtime-presentation=overview] .runtime-node[data-status=succeeded] header { border-left-color: var(--success, #498166); }
+.runtime-canvas[data-runtime-presentation=overview] .runtime-node[data-status=failed] header, .runtime-canvas[data-runtime-presentation=overview] .runtime-node[data-status=interrupted] header { border-left-color: var(--destructive, #ba5b5b); }
+.runtime-canvas[data-runtime-presentation=overview] .runtime-node[data-status=waiting-approval] header, .runtime-canvas[data-runtime-presentation=overview] .runtime-node[data-status=blocked] header { border-left-color: var(--warning, #ab741e); }
 .runtime-timeline-caption { position: absolute; left: 8px; bottom: 8px; padding: 3px 6px; border-radius: 4px; background: var(--runtime-background); color: var(--runtime-muted); border: 1px solid var(--runtime-border); font-size: 10px; pointer-events: none; max-width: calc(100% - 16px); }
 .runtime-inspector { width: 360px; max-width: 54%; flex-shrink: 0; border-left: 1px solid var(--runtime-border); background: var(--runtime-background); display: flex; flex-direction: column; min-height: 0; }
 .runtime-inspector-header { min-height: 39px; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--runtime-border); padding: 0 9px; }
@@ -133,6 +149,10 @@
 .runtime-event-list strong { font-size: 12px; font-weight: 550; overflow-wrap: anywhere; }
 .runtime-event-list p { margin: 3px 0; font-size: 11px; color: var(--runtime-muted); overflow-wrap: anywhere; }
 .runtime-event-list small { font-size: 10px; color: var(--runtime-muted); }
+/* PRD §30 learning chain rows: same box as event rows, marked as non-trace data. */
+.runtime-event-list > .runtime-learning-row { display: grid; grid-template-columns: 32px 1fr; width: 100%; border: 1px solid var(--runtime-border); border-left: 3px solid var(--runtime-focus); margin-bottom: 7px; padding: 9px; border-radius: 8px; }
+.runtime-event-list > .runtime-learning-row > span { grid-row: span 3; color: var(--runtime-muted); font-size: 10px; align-self: start; }
+.runtime-learning-kind { font-size: 10px; color: var(--runtime-muted); align-self: center; }
 .runtime-no-matches { position: absolute; left: 20px; right: 20px; top: 40%; text-align: center; color: var(--runtime-muted); pointer-events: none; }
 .runtime-context-canvas { display: flex; flex-direction: column; }
 .runtime-context-canvas > .react-flow { flex: 1; min-height: 0; }
@@ -140,7 +160,8 @@
 .runtime-context-agent-picker label { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--runtime-muted); }
 .runtime-context-agent-picker select { border: 1px solid var(--runtime-border); background: var(--runtime-background); color: var(--runtime-foreground); border-radius: 5px; padding: 4px; min-width: 80px; max-width: 210px; font: inherit; }
 .runtime-context-agent-picker > span { color: var(--runtime-muted); font-size: 11px; }
-.runtime-context-group { width: 256px; border: 1px solid var(--runtime-border); border-radius: 12px; background: var(--runtime-background); overflow: hidden; }
+/* Nonselectable React Flow wrappers disable hit testing; these real controls remain interactive. */
+.runtime-context-group { width: 256px; border: 1px solid var(--runtime-border); border-radius: 12px; background: var(--runtime-background); overflow: hidden; pointer-events: auto; }
 .runtime-context-group > header { background: var(--runtime-header); }
 .runtime-context-group > header > button { width: 100%; min-height: 36px; display: flex; align-items: center; gap: 7px; padding: 8px 10px; text-align: left; }
 .runtime-context-group > header strong { flex: 1; font-size: 13px; font-weight: 550; line-height: 18px; }

@@ -22,8 +22,10 @@ import type { CreateSessionOptions } from '@rox/shared/protocol';
 import type { SessionCompletionEvent } from '../sessions/SessionManager';
 import type { TaskRuntimeObservation } from '../sessions/runtime-trace/conductor';
 import type { ISessionManager } from '../handlers/session-manager-interface';
+import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionContext } from '@rox/shared/auth';
 import {
   type TaskSpec,
+  assertSafePathSegment,
   type TaskNode,
   type NodeOutput,
   type RunLogEntry,
@@ -78,6 +80,8 @@ export interface TaskRunnerDeps {
 }
 
 export interface RunOptions {
+  /** Trusted host-captured owner; producer telemetry never supplies account authority. */
+  roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext;
   /** The task's persistent parent/orchestrator session (author + final verifier). */
   orchestratorSessionId?: string;
   /** Resolved task param values (merged over the spec's declared defaults). */
@@ -173,6 +177,8 @@ class ActiveRun {
   private settled = false;
   private observationQueue: Promise<void> = Promise.resolve();
   private settleResolvers: ((s: RunSnapshot) => void)[] = [];
+  private executionPromise?: Promise<RoxExecutionContext | undefined>;
+  private readonly capturedExecution?: RoxExecutionContext;
 
   constructor(
     private readonly spec: TaskSpec,
@@ -180,7 +186,10 @@ class ActiveRun {
     private readonly runId: string,
     private readonly opts: Required<Pick<RunOptions, 'verifyOnComplete'>> & RunOptions,
     private readonly deps: TaskRunnerDeps,
+    private readonly rehydrated = false,
   ) {
+    const execution = opts.roxExecutionContext;
+    if (execution) this.capturedExecution = Object.freeze({ ...execution, caller: Object.freeze({ ...execution.caller }) });
     this.edges = materializeDeps(spec);
     this.maxParallel = spec.max_parallel ?? deps.defaultMaxParallel ?? DEFAULT_MAX_PARALLEL;
     // Runner-side clamp (belt-and-suspenders: the schema already caps `max_iterations` at the same
@@ -349,8 +358,44 @@ class ActiveRun {
     this.log({ kind: 'node-scheduled', nodeId: node.id });
   }
 
+  /** Account custody uses the existing sealed ledger, independently of task scheduling and trace metadata. */
+  private async taskExecution(): Promise<RoxExecutionContext | undefined> {
+    this.executionPromise ??= this.resolveTaskExecution();
+    const execution = await this.executionPromise;
+    if (execution) getRoxAccountAuthority().assertCurrent(execution);
+    return execution;
+  }
+
+  private async resolveTaskExecution(): Promise<RoxExecutionContext | undefined> {
+    const authority = peekRoxAccountAuthority();
+    if (!authority) {
+      if (this.capturedExecution) throw new Error('ROX_TRUSTED_ACCOUNT_REQUIRED');
+      return undefined;
+    }
+    assertSafePathSegment(this.deps.workspaceId);
+    assertSafePathSegment(this.slug);
+    assertSafePathSegment(this.runId);
+    const resource = `task-run:${this.deps.workspaceId}:${this.slug}:${this.runId}`;
+    if (this.rehydrated) {
+      const sealed = await authority.bound(resource, true);
+      if (!sealed) throw new Error('ROX_TASK_RUN_OWNER_UNKNOWN');
+      const captured = this.capturedExecution;
+      if (captured && (captured.caller.issuer !== sealed.caller.issuer || captured.caller.subject !== sealed.caller.subject
+        || captured.cloudAccountId !== sealed.cloudAccountId || captured.authGeneration !== sealed.authGeneration)) throw new Error('ROX_SESSION_OWNER_CONFLICT');
+      return sealed;
+    }
+    const execution = this.capturedExecution ?? (this.opts.orchestratorSessionId
+      ? await authority.bound(`session:${this.deps.workspaceId}:${this.opts.orchestratorSessionId}`, true) : undefined);
+    if (!execution) throw new Error('ROX_TRUSTED_ACCOUNT_REQUIRED');
+    authority.assertCurrent(execution);
+    await authority.bind(resource, execution);
+    authority.assertCurrent(execution);
+    return execution;
+  }
+
   private async dispatch(node: TaskNode): Promise<void> {
     try {
+      const execution = await this.taskExecution();
       // Task-level skills ride as [skill:slug] mentions on every child prompt — the agent
       // pipeline resolves each SKILL.md and blocks tools until it is read (skills-as-context).
       const prompt = skillsPreamble(this.spec.skills) + (await this.buildPrompt(node));
@@ -387,7 +432,9 @@ class ActiveRun {
       };
       // createSession announces the child to the renderer by default, so it nests under the task
       // tile with its real title instead of a fabricated "New Chat" (or never appearing).
+      if (execution) getRoxAccountAuthority().assertCurrent(execution);
       const child = await this.deps.host.createSession(this.deps.workspaceId, options);
+      if (execution) getRoxAccountAuthority().assertCurrent(execution);
       const st = this.state.get(node.id)!;
       st.sessionId = child.id;
       this.sessionToNode.set(child.id, node.id);
@@ -397,8 +444,9 @@ class ActiveRun {
       if (this.opts.orchestratorSessionId) {
         try { await this.deps.host.assignTaskRuntimeChild?.(this.opts.orchestratorSessionId, child.id, prompt, node, this.runId); } catch { /* A passive observer never changes task dispatch. */ }
       }
+      if (execution) getRoxAccountAuthority().assertCurrent(execution);
       await this.deps.host.sendMessage(child.id, prompt, undefined, undefined, undefined, undefined, undefined, undefined,
-        { runtimeLaunch: { kind: 'delegated', triggerId: `task:${this.spec.id}:${this.runId}:node:${node.id}` } });
+        { roxExecutionContext: execution, runtimeLaunch: { kind: 'delegated', triggerId: `task:${this.spec.id}:${this.runId}:node:${node.id}` } });
     } catch (err) {
       this.failNode(node.id, `dispatch failed: ${(err as Error).message}`);
     }
@@ -618,8 +666,9 @@ class ActiveRun {
   /** Send to the orchestrator, failing the run (rather than hanging in `verifying`) if the send rejects. */
   private async sendToOrchestrator(orchestrator: string, message: string): Promise<void> {
     try {
+      const execution = await this.taskExecution();
       await this.deps.host.sendMessage(orchestrator, message, undefined, undefined, undefined, undefined, undefined, undefined,
-        { runtimeLaunch: { kind: 'unknown', triggerId: `task:${this.spec.id}:${this.runId}:verification` } });
+        { roxExecutionContext: execution, runtimeLaunch: { kind: 'unknown', triggerId: `task:${this.spec.id}:${this.runId}:verification` } });
     } catch {
       // The verdict will never arrive — detach the listener and settle as failed instead of hanging.
       this.verdictOff?.();
@@ -864,6 +913,8 @@ export class TaskRunner {
 
   /** Load + validate a task's yaml and start a run. Throws if the task is missing or invalid. */
   run(slug: string, opts: RunOptions = {}): RunSnapshot {
+    assertSafePathSegment(slug);
+    if (opts.runId !== undefined) assertSafePathSegment(opts.runId);
     const loaded = loadTaskSpec(this.deps.workspaceRoot, slug);
     if (!loaded?.spec) throw new Error(`Task "${slug}" not found or has no valid task.yaml`);
     if (!loaded.valid) {
@@ -908,18 +959,20 @@ export class TaskRunner {
     this.runs.get(this.key(slug, runId))?.pause();
   }
 
-  resume(slug: string, runId: string): void {
+  resume(slug: string, runId: string, roxExecutionContext?: RoxExecutionContext): void {
+    assertSafePathSegment(slug);
+    assertSafePathSegment(runId);
     const existing = this.runs.get(this.key(slug, runId));
     if (existing) {
       existing.resume();
       return;
     }
     // Not in memory (e.g. after an app restart): reconstruct from the persisted run-log.
-    this.rehydrate(slug, runId);
+    this.rehydrate(slug, runId, roxExecutionContext);
   }
 
   /** Reconstruct an in-memory run from its persisted run-log + node outputs, then resume it. */
-  private rehydrate(slug: string, runId: string): RunSnapshot {
+  private rehydrate(slug: string, runId: string, roxExecutionContext?: RoxExecutionContext): RunSnapshot {
     const loaded = loadTaskSpec(this.deps.workspaceRoot, slug);
     if (!loaded?.spec || !loaded.valid) {
       throw new Error(`Cannot resume "${slug}:${runId}": task.yaml is missing or invalid`);
@@ -932,8 +985,9 @@ export class TaskRunner {
       loaded.spec,
       slug,
       runId,
-      { orchestratorSessionId, params: resolveParams(loaded.spec), verifyOnComplete: true },
+      { orchestratorSessionId, params: resolveParams(loaded.spec), verifyOnComplete: true, roxExecutionContext },
       this.deps,
+      true,
     );
     run.hydrate(log, (nodeId) => readNodeOutput(this.deps.workspaceRoot, slug, runId, nodeId));
     this.runs.set(this.key(slug, runId), run);

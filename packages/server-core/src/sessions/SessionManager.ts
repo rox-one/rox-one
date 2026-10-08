@@ -2,9 +2,10 @@ import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionConte
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
 import { RuntimeTraceService, type RuntimeTraceRun } from './runtime-trace/service'
+import { NOOP_SESSION_EVENT_BUS, SessionEventBus, summarizeToolArgs, type SessionCreatedReason, type SessionLifecycleEvent, type SessionLifecycleEventMap, type SessionLifecycleEventType } from './SessionEventBus'
 import { known, unknown, type RuntimeContextBlock, type RuntimeTraceQuery, type RuntimeEventsQuery, type RuntimePayloadQuery, type RuntimeLaunch } from '@rox/core/runtime-trace'
 import { CLIENT_BROWSER_INVOKE } from '@rox/server-core/transport'
-import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@rox/server-core/handlers'
+import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput, LearningRpcService } from '@rox/server-core/handlers'
 import { RemoteBrowserPaneManager } from './RemoteBrowserPaneManager'
 import {
   applyShareRevoked,
@@ -44,6 +45,7 @@ import type { MidStreamBehavior, LlmProviderType } from '@rox/shared/config'
 import { PrivilegedExecutionBroker } from '@rox/server-core/services'
 import { isValidWorkingDirectory } from '../utils/path-validation'
 import { MemoryService, type NativeMemoryContext } from '../memory/MemoryService'
+import { LearningHost } from '../memory/learning/LearningHost'
 import { ensureFirstSessionWelcome } from './first-session-welcome'
 import { readProvenance, writeProvenance, type SessionProvenance } from '../memory/provenance'
 import { appendSkillUsage, extractSkillMentions } from '../memory/skill-usage'
@@ -1007,7 +1009,7 @@ interface ManagedSession {
     options?: SendMessageOptions
     messageId?: string  // Pre-generated ID for matching with UI
     optimisticMessageId?: string  // Frontend's ID for reliable event matching
-    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext }
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; roxExecutionContext?: RoxExecutionContext; runtimeLaunch?: RuntimeLaunch }
     roxExecutionContext?: RoxExecutionContext // Captured host owner, retained through deferred replay.
     roxOwnerResource?: string // Sealed exact-generation owner for crash/restart recovery.
   }>
@@ -1567,8 +1569,65 @@ export class SessionManager implements ISessionManager {
   private browserHostByCanvas = new Map<string, string>()
   private eventSink: EventSink | null = null
 
+  /** Lifecycle event bus (PRD §8/§32) — see {@link setSessionEventBus}. */
+  private sessionEventBus: SessionEventBus = NOOP_SESSION_EVENT_BUS
+
   setEventSink(sink: EventSink): void {
     this.eventSink = sink
+  }
+
+  /**
+   * Lifecycle event bus (PRD §8/§32). Defaults to an inert shared bus, so
+   * publishing costs one Map lookup until a consumer (learning service,
+   * outcome store, analytics) wires a real one.
+   */
+  setSessionEventBus(bus: SessionEventBus | null): void {
+    this.sessionEventBus = bus ?? NOOP_SESSION_EVENT_BUS
+  }
+
+  /**
+   * Composition root for the continual-learning layer (WP-117). Built lazily on
+   * first use so `new SessionManager()` in tests stays inert, and fail-soft: a
+   * broken host never breaks session start/complete.
+   */
+  private learningHost: LearningHost | null = null
+  private detachLearningBus: (() => void) | null = null
+
+  /** Lazily create the learning host and subscribe it to this manager's lifecycle bus. */
+  private ensureLearningHost(): LearningHost | null {
+    if (this.learningHost) return this.learningHost
+    try {
+      const host = new LearningHost({
+        resolveWorkspace: (workspaceId) => {
+          const workspace = getWorkspaceByNameOrId(workspaceId)
+          return workspace ? { id: workspace.id, rootPath: workspace.rootPath } : null
+        },
+        distill: async (workspaceId, prompt, sessionId) => {
+          const workspace = getWorkspaceByNameOrId(workspaceId)
+          if (!workspace) throw new Error(`learning distill: unknown workspace '${workspaceId}'`)
+          return this.runMemoryDistillOneShot(
+            { id: workspace.id, rootPath: workspace.rootPath },
+            prompt,
+            sessionId ? await peekRoxAccountAuthority()?.bound(`session:${workspace.id}:${sessionId}`) : undefined,
+          )
+        },
+        logger: { warn: (message, error) => sessionLog.warn(`learning: ${message}`, error) },
+      })
+      // Reuse a host-supplied bus when one is wired; otherwise install a real one
+      // so the learning consumers actually receive this manager's publishes.
+      if (this.sessionEventBus === NOOP_SESSION_EVENT_BUS) this.sessionEventBus = new SessionEventBus()
+      this.detachLearningBus = host.attachBus(this.sessionEventBus)
+      this.learningHost = host
+      return host
+    } catch (error) {
+      sessionLog.error('LearningHost init failed:', error)
+      return null
+    }
+  }
+
+  /** `learning:*` RPC surface (PRD §15); `null` when the host cannot be composed. */
+  getLearningRpcService(): LearningRpcService | null {
+    return this.ensureLearningHost()
   }
 
   setBrowserPaneManager(bpm: IBrowserPaneManager): void {
@@ -2473,6 +2532,7 @@ export class SessionManager implements ISessionManager {
       // fall through to the global default
     }
     try {
+      const learningService = this.ensureLearningHost()
       svc = new MemoryService({
         workspaceRoot: workspace.rootPath,
         workspaceId: workspace.id,
@@ -2490,6 +2550,8 @@ export class SessionManager implements ISessionManager {
         // L1: session provenance (F4) for the feedback loop — which lessons the
         // session saw, so a bad ending can attribute conflicts per scope.
         readSessionProvenance: (sessionId) => readProvenance(workspace.rootPath, sessionId)?.lessons ?? [],
+        // WP-117: route memory distillation through the learning layer when composed.
+        ...(learningService ? { learningService } : {}),
       })
       svc.attachSessionCompletion((cb) => this.onSessionComplete((evt) => { if (evt.workspaceId === workspace.id) cb(evt) }))
       svc.setDistiller(async (prompt, sessionId) => this.runMemoryDistillOneShot(workspace, prompt, sessionId ? await peekRoxAccountAuthority()?.bound(`session:${workspace.id}:${sessionId}`) : undefined))
@@ -4001,6 +4063,22 @@ export class SessionManager implements ISessionManager {
       }
     }
 
+    // Learning bus (PRD §8 `user.correction` / `session.branched`): a successful
+    // branch is the user's strongest correction signal, attributed to the
+    // session they branched FROM. Emitted only after branch preflight passed —
+    // the rollback path above throws, so a rolled-back branch never lands here.
+    if (validatedBranch) {
+      const branch = validatedBranch
+      this.emitSessionLifecycle('user.correction', branch.sourceSessionId, workspaceId, (envelope) => ({
+        ...envelope,
+        kind: 'branch',
+      }))
+      this.emitSessionLifecycle('session.branched', branch.sourceSessionId, workspaceId, (envelope) => ({
+        ...envelope,
+        fromMessageId: branch.sourceMessageId,
+        newSessionId: storedSession.id,
+      }))
+    }
 
     // Initialize session metadata in AutomationSystem for diffing
     const automationSystem = this.automationSystems.get(workspaceRootPath)
@@ -4053,7 +4131,7 @@ export class SessionManager implements ISessionManager {
     // instead of fabricating a titleless "New Chat" from the first streamed event. Emitted at
     // the very end so a thrown branch-preflight failure above never announces an orphan.
     if (internal?.emitCreatedEvent !== false) {
-      this.notifySessionCreated(workspaceId, storedSession.id)
+      this.notifySessionCreated(workspaceId, storedSession.id, isBranch ? 'branch' : 'create')
     }
 
     return managedToSession(managed, isBranch || internal?.initialAssistantMessage ? { messages: managed.messages } : undefined)
@@ -4067,8 +4145,11 @@ export class SessionManager implements ISessionManager {
    * directly only for sessions built outside `createSession` (e.g. the SessionBundle import
    * path, which assembles a ManagedSession by hand). The renderer handler is idempotent.
    */
-  notifySessionCreated(workspaceId: string, sessionId: string): void {
+  notifySessionCreated(workspaceId: string, sessionId: string, reason: SessionCreatedReason = 'create'): void {
     this.sendEvent({ type: 'session_created', sessionId }, workspaceId)
+    // Learning bus (PRD §8 `session.created`): this is the "session is live"
+    // seam — reached by createSession (new + branch) and by the import paths.
+    this.emitSessionLifecycle('session.created', sessionId, workspaceId, (envelope) => ({ ...envelope, reason }))
   }
 
   /** Resolved working directory of a live session (used by the Tasks Conductor so child
@@ -4286,9 +4367,10 @@ export class SessionManager implements ISessionManager {
   }
 
   private createSpawnSessionHandler(managed: ManagedSession, execution?: RoxExecutionContext): NonNullable<AgentInstance['onSpawnSession']> {
-    const assertOwner = () => this.assertRoxSessionExecution(managed.id, execution)
     return async (request) => {
+      const assertOwner = () => this.assertRoxSessionExecution(managed.id, execution)
       assertOwner()
+      // The guarded host invocation owns this launch; child creation may outlive its chat turn.
       const parentRun = this.runtimeTrace.getActive(managed.id)
       const launchOrigin = parentRun ? { ...parentRun } : undefined
       sessionLog.info(`Spawn session request from session ${managed.id}:`, request.name || '(unnamed)')
@@ -4627,6 +4709,7 @@ export class SessionManager implements ISessionManager {
       let memoryBlocks = managed.memoryMode === 'temporary'
         ? undefined
         : await this.memoryServiceFor(managed.workspace)?.buildMemoryBlocks({ query: memoryQuery,
+          sessionId: managed.id,
           nativeContext: this.nativeMemoryContextFor(managed.id, managed.workspace.id) })
       // P2.7: FTS-retrieve local source docs into the same memoryBlocks payload
       // (sourcesBlock). Same memoryQuery as lessons; fail-soft on missing index.
@@ -4658,6 +4741,17 @@ export class SessionManager implements ISessionManager {
           sessionLog.warn(`Failed to write memory provenance for ${managed.id}:`, err)
         }
       }
+
+      // Learning bus (PRD §8 `session.prompt.assembled`): exactly the context
+      // that reached the backend config. `lessons`/`skillSlugs` mirror the
+      // provenance record written above; the array is copied so a subscriber
+      // cannot mutate the backend's memoryBlocks snapshot.
+      this.emitSessionLifecycle('prompt.assembled', managed.id, managed.workspace.id, (envelope) => ({
+        ...envelope,
+        model: managed.model,
+        lessons: memoryBlocks?.used?.map((lesson) => ({ rule: lesson.rule, scope: lesson.scope })),
+        skillSlugs: skillMentions.length > 0 ? skillMentions : undefined,
+      }))
 
       const traceRun = this.runtimeTrace.getActive(managed.id)
       const runtimeMemoryBlocks: RuntimeContextBlock[] = []
@@ -5255,6 +5349,16 @@ export class SessionManager implements ISessionManager {
             submitPlanMsg.toolStatus = 'completed'
             submitPlanMsg.content = 'Plan submitted for review'
             submitPlanMsg.toolResult = 'Plan submitted for review'
+            // Learning bus (PRD §8 `tool.result`): this call is force-aborted, so
+            // its result never reaches processEvent's tool_result case — close the
+            // outcome here instead of leaving the announced call dangling.
+            this.emitSessionLifecycle('tool.result', managed.id, managed.workspace.id, (envelope) => ({
+              ...envelope,
+              tool: submitPlanMsg.toolName ?? 'unknown',
+              callId: submitPlanMsg.toolUseId ?? 'unknown',
+              ok: true,
+              latencyMs: Math.max(0, this.monotonic() - submitPlanMsg.timestamp),
+            }))
           }
 
           // Create a plan message
@@ -8235,6 +8339,21 @@ export class SessionManager implements ISessionManager {
     try {
       if (evt.reason === 'complete' && (!this.legacyCompletionXpPolicy || this.legacyCompletionXpPolicy(evt))) awardXpSafe('session_completed')
     } catch { /* Failed authority checks cannot credit the host or block completion delivery. */ }
+    // Learning bus (PRD §8): mirror the terminal event. Emitted before the
+    // in-process completion listeners' early return below, so the bus sees
+    // completions even when no Conductor listener is attached.
+    this.emitSessionLifecycle('session.completed', evt.sessionId, evt.workspaceId, (envelope) => ({
+      ...envelope,
+      reason: evt.reason,
+      finalMessageId: evt.finalMessageId,
+      tokenUsage: evt.tokenUsage,
+    }))
+    if (evt.reason === 'error' || evt.reason === 'timeout') {
+      this.emitSessionLifecycle('session.failed', evt.sessionId, evt.workspaceId, (envelope) => ({
+        ...envelope,
+        error: this.lastSessionErrorMessage(evt.sessionId),
+      }))
+    }
     if (this.sessionCompletionListeners.size === 0) return
     for (const listener of this.sessionCompletionListeners) {
       try {
@@ -8243,6 +8362,41 @@ export class SessionManager implements ISessionManager {
         sessionLog.error(`onSessionComplete listener threw for session ${evt.sessionId}:`, err)
       }
     }
+  }
+
+  /**
+   * Publish one lifecycle event on the session event bus (PRD §8/§32).
+   *
+   * Listener-gated by design: the envelope and payload are built only when a
+   * consumer is actually subscribed, so hot call sites (tool.call/tool.result)
+   * cost one Map lookup otherwise. Fail-soft: a bus or payload failure is
+   * logged and swallowed — publishing must never break the session pipeline.
+   */
+  private emitSessionLifecycle<K extends SessionLifecycleEventType>(
+    type: K,
+    sessionId: string,
+    workspaceId: string,
+    buildEvent: (envelope: SessionLifecycleEvent) => SessionLifecycleEventMap[K],
+  ): void {
+    try {
+      if (this.sessionEventBus.listenerCount(type) === 0) return
+      this.sessionEventBus.emit(type, buildEvent({ sessionId, workspaceId, ts: new Date().toISOString() }))
+    } catch (err) {
+      sessionLog.warn(`session lifecycle publish failed (${type}):`, err)
+    }
+  }
+
+  /** Last persisted error message of a session — failure evidence for `session.failed`. */
+  private lastSessionErrorMessage(sessionId: string): string | undefined {
+    const messages = this.sessions.get(sessionId)?.messages
+    if (!messages) return undefined
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i]!
+      if (message.role !== 'error' || typeof message.content !== 'string') continue
+      const text = message.content.trim()
+      if (text) return text.slice(0, 500)
+    }
+    return undefined
   }
 
   /**
@@ -9827,6 +9981,19 @@ export class SessionManager implements ISessionManager {
         const existingStartMsg = managed.messages.find(m => m.toolUseId === event.toolUseId)
         const isDuplicateEvent = !!existingStartMsg
 
+        // Learning bus (PRD §8 `tool.call`): announce each call exactly once.
+        // SDK backends emit two tool_start events per call (stream_event with
+        // empty input first, assistant message with the full input second), so
+        // only the first opens the call and argsSummary may stay empty there.
+        if (!isDuplicateEvent) {
+          this.emitSessionLifecycle('tool.call', sessionId, workspaceId, (envelope) => ({
+            ...envelope,
+            tool: event.toolName,
+            callId: event.toolUseId,
+            argsSummary: summarizeToolArgs(formattedToolInput),
+          }))
+        }
+
         // Use parentToolUseId directly from the event — CraftAgent resolves this
         // from SDK's parent_tool_use_id (authoritative, handles parallel Tasks correctly).
         // No stack or map needed; the event carries the correct parent from the start.
@@ -9985,6 +10152,21 @@ export class SessionManager implements ISessionManager {
             isError: inferredError,
           }
           managed.messages.push(toolMessage)
+        }
+
+        // Learning bus (PRD §8 `tool.result`): one outcome per call, at the first
+        // completion (the renderer branch below only re-sends changed content).
+        // Sub-agent child results without a prior tool_start are reported here
+        // too — they simply carry no latency.
+        if (!wasAlreadyComplete) {
+          this.emitSessionLifecycle('tool.result', sessionId, workspaceId, (envelope) => ({
+            ...envelope,
+            tool: toolName,
+            callId: event.toolUseId,
+            ok: !inferredError,
+            latencyMs: existingToolMsg ? Math.max(0, this.monotonic() - existingToolMsg.timestamp) : undefined,
+            error: inferredError ? formattedResult.slice(0, 500) : undefined,
+          }))
         }
 
         // Send event to renderer if: (a) first completion, or (b) result content changed
@@ -11110,7 +11292,7 @@ export class SessionManager implements ISessionManager {
     }
 
     // Built by hand (not via createSession), so announce it explicitly.
-    this.notifySessionCreated(workspaceId, sessionId)
+    this.notifySessionCreated(workspaceId, sessionId, 'import')
 
     sessionLog.info(`[import] Complete: sessionId=${sessionId}, transferredSummary=${managed.transferredSessionSummary ? `${managed.transferredSessionSummary.length} chars` : 'none'}, applied=${managed.transferredSessionSummaryApplied}, warnings=${warnings.length > 0 ? warnings.join('; ') : 'none'}`)
     return { sessionId, warnings: warnings.length > 0 ? warnings : undefined }
@@ -11178,6 +11360,17 @@ export class SessionManager implements ISessionManager {
     for (const sessionId of this.sessions.keys()) {
       unregisterSessionScopedToolCallbacks(sessionId)
     }
+
+    // Tear down the learning layer: stop per-workspace workers and detach the
+    // lifecycle listeners it owns.
+    try {
+      this.detachLearningBus?.()
+    } catch (error) {
+      sessionLog.warn('Learning bus detach failed:', error)
+    }
+    this.detachLearningBus = null
+    this.learningHost?.stop()
+    this.learningHost = null
 
     sessionLog.info('Cleanup complete')
   }

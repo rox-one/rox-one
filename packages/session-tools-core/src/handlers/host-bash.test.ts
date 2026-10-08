@@ -160,6 +160,20 @@ describe('host-tool bash', () => {
     expect(text).toContain('timedOut: true');
   });
 
+  it('kills the actual timed-out process tree and never reports its late stdout as completed work', async () => {
+    const observations: HostBashObservation[] = [];
+    const result = await handleHostBash(ctx({ hostBashObserver: observation => observations.push(observation) }), {
+      command: "printf 'before-timeout'; sleep 2; printf 'late-after-kill'", timeoutMs: 100,
+    });
+    expect(result.isError).toBe(true);
+    const completed = observations.filter(observation => observation.phase === 'completed');
+    expect(completed).toHaveLength(1);
+    expect(completed[0]!.result).toMatchObject({ timedOut: true, stdout: 'before-timeout' });
+    expect(observations.filter(observation => observation.phase === 'output').map(observation => observation.stdout ?? '').join('')).toBe('before-timeout');
+    expect(JSON.stringify(observations)).not.toContain('stdout":"late-after-kill');
+    expect(completed[0]!.result!.durationMs).toBeLessThan(1500);
+  });
+
   it('truncates oversized stdout', async () => {
     const result = await handleHostBash(ctx(), {
       command: "node -e \"process.stdout.write('x'.repeat(25000))\"",

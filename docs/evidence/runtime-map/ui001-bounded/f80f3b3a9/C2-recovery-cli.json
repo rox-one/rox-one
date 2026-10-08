@@ -1,0 +1,18 @@
+{
+  "label": "C2-recovery-cli",
+  "command": [
+    "/workspace/scratch/d0a9c1c6c094/tooling/node_modules/@oven/bun-linux-x64/bin/bun",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
+  ],
+  "cwd": "/workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification",
+  "startedUtc": "2026-10-03T22:43:32.370139+00:00",
+  "elapsedSeconds": 1.738,
+  "exitCode": 1,
+  "timedOut": false,
+  "timeoutSeconds": 180,
+  "environment": {
+    "ROX_UI001_COMPONENT_MANIFEST": "/workspace/scratch/d0a9c1c6c094/ui001-c2-f80-inputs.json",
+    "ROX_UI001_BROWSER_EXECUTABLE": "/root/.cache/ms-playwright/chromium_headless_shell-1148/chrome-linux/headless_shell"
+  },
+  "log": "C2-recovery-cli.log"
+}

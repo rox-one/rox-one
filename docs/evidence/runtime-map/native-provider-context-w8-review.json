@@ -1,0 +1,102 @@
+{
+  "classification": "W8 independent artifact verification of actual native SDK fixture-provider run; no installed-app or HTTP wire payload claim",
+  "workflowRun": 37151837237,
+  "artifactId": 11284197591,
+  "zipSha256": "3dceddb8f51ecd1e997e58f5b9a3ae65609ed63b92bdd6236469896fcc6f69f5",
+  "rawJsonSha256": "c5c191c340b03cfd666fe776a224a19156e02ddb31a4bf35384c649aec2543c9",
+  "ompVersion": "18.4.12",
+  "observations": 63,
+  "rawHooks": 121,
+  "providerCalls": 10,
+  "networkAttempts": 0,
+  "paidProviderRequests": 0,
+  "contextComparisons": [
+    {
+      "agentId": "root",
+      "snapshotId": "01a1037d-69f1-7000-bb25-7c4f6cceffc1:context:2",
+      "providerCall": 1,
+      "effectivePromptSha256": "9da3cb011b6b014cdb7378e24376a5716d703888d711e43dd743070212bceefd",
+      "effectivePromptByteLength": 52,
+      "systemPromptSha256": "cd05a4df2e5858ab0c4f4ac75415f4fefe5ccdac7be84eb653a4159f3bc1a434",
+      "systemPromptByteLength": 351,
+      "actualProviderContextSha256": "93fbb82b4ae35eb9dcf4058e065494980dcec7ed209d72cc37f935db0ba2ba47",
+      "actualProviderContextByteLength": 210590,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "originalRootPromptDistinct": true,
+      "originalRootPromptIncluded": true,
+      "w8RecomputedShaAndBytes": true,
+      "model": "fixture/worker"
+    },
+    {
+      "agentId": "NearbyWarbler",
+      "snapshotId": "01a1037d-6b23-7000-bb67-5e08a9b8a082:context:2",
+      "providerCall": 3,
+      "effectivePromptSha256": "4c5c4a62fd3eebb9e49a97d64acb4849fd6f4d1b849f75eadad5b913442cc81a",
+      "effectivePromptByteLength": 118,
+      "systemPromptSha256": "dcd94a3f4b89bdad0a7b6539aaed0c77ee37c6d8db8f347f7a6c4bd7500a8748",
+      "systemPromptByteLength": 8470,
+      "actualProviderContextSha256": "c4733f7ae3aee885dffde762ef35cbdb100bd8e11de30113bba64cc832ad962c",
+      "actualProviderContextByteLength": 173703,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "w8RecomputedShaAndBytes": true,
+      "model": "fixture/worker"
+    },
+    {
+      "agentId": "NearbyWarbler.SkilledSquid",
+      "snapshotId": "01a1037d-6b8e-7000-9976-5f7347a8d33f:context:2",
+      "providerCall": 5,
+      "effectivePromptSha256": "51e1d1816eec5c508613d7cfd6282beb757f6e5d259e83fd10eba56a0051be07",
+      "effectivePromptByteLength": 123,
+      "systemPromptSha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+      "systemPromptByteLength": 7625,
+      "actualProviderContextSha256": "6418b95fb67a369ce8a54149c0c6343bb558c11d07cd4a23ddc8b6720236e8e5",
+      "actualProviderContextByteLength": 72258,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "w8RecomputedShaAndBytes": true,
+      "model": "fixture/restricted"
+    },
+    {
+      "agentId": "eval-worker-fixture",
+      "snapshotId": "01a1037d-6cb0-7000-a1a6-6f9d5d7282c8:context:2",
+      "providerCall": 9,
+      "effectivePromptSha256": "048bc7ccbb9c6b06d95518719fa08c76954bc1f46a8fe4c749a9fd4eabbb286d",
+      "effectivePromptByteLength": 83,
+      "systemPromptSha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+      "systemPromptByteLength": 7625,
+      "actualProviderContextSha256": "f2ccae5825e9041d8bf3ddb893c994885f696c4dfeee969aeb3703b0ad00ca7f",
+      "actualProviderContextByteLength": 71829,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "w8RecomputedShaAndBytes": true,
+      "model": "fixture/restricted"
+    }
+  ],
+  "boundary": {
+    "available": "Actual native fixture provider Context after native transforms",
+    "unavailable": [
+      "HTTP serialized request payload",
+      "exact provider tokenization"
+    ]
+  },
+  "exitCode": 0,
+  "method": "Python hashlib over actual UTF-8 effective prompt and compact JSON ordered system parts; cross-check published Context provider call hashes/bytes and confirmed model"
+}

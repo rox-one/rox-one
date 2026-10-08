@@ -1043,6 +1043,7 @@ app.whenReady().then(async () => {
                 : join(process.cwd(), 'packages', 'messaging-discord-worker', 'dist', 'worker.cjs'),
             },
           })
+          const learning = sm.getLearningRpcService()
           return {
             sessionManager: sm,
             platform: p,
@@ -1054,6 +1055,8 @@ app.whenReady().then(async () => {
             ...(voiceOverlay ? { voiceOverlay } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
+            // WP-117: `learning:*` RPC surface (UNSUPPORTED_OPERATION when absent).
+            ...(learning ? { learning } : {}),
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)

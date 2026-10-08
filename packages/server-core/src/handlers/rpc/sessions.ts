@@ -349,12 +349,12 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
     // Capture the caller's clientId for error routing
     const callerClientId = ctx.clientId
-    const cloudCaller = ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
-    const roxExecutionContext = await peekRoxAccountAuthority()?.capture(cloudCaller)
     // Native options were stripped above. Invalid producer telemetry cannot turn
     // a generated dispatch into the exception for the user's original input.
     const runtimeLaunch = options?.runtimeLaunch === undefined ? undefined
       : isRuntimeLaunch(options.runtimeLaunch) ? options.runtimeLaunch : { kind: 'unknown' as const }
+    const cloudCaller = ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
+    const roxExecutionContext = await peekRoxAccountAuthority()?.capture(cloudCaller)
 
     return await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
       let acked = false

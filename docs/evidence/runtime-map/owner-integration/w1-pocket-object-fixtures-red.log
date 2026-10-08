@@ -1,0 +1,184 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/runtime-trace/delegation-compat.test.ts:
+ 7 |   test(`production trace ${scenario} fixture uses isolated canonical storage`, async () => {
+ 8 |     const root = mkdtempSync(join(tmpdir(), 'rox-trace-contract-'))
+ 9 |     try {
+10 |       const child = Bun.spawn([process.execPath, join(import.meta.dir, 'delegation-compat.fixture.ts'), scenario], { cwd: join(import.meta.dir, '../../../../..'), env: { ...process.env, ROX_CONFIG_DIR: root, CRAFT_CONFIG_DIR: root }, stdout: 'pipe', stderr: 'pipe' })
+11 |       const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+12 |       expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
+                                    ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exit": 0,
+-   "stderr": "",
++   "exit": 1,
++   "stderr": 
++ "175 |     const request = fake.readRpcLog().find(event => event.type === 'host_tool_result' && event.id === 'htc-spawn')
++ 176 |     assert.ok(request, 'Real host RPC dispatcher must return the spawn result')
++ 177 |     const assignment = emitted.find(event => event.kind === 'agent.assigned')
++ 178 |     const childId = createdChildren[0]!
++ 179 |     const accepted = emitted.find(event => event.kind === 'run.accepted' && event.sessionId === childId)
++ 180 |     if (accepted?.kind !== 'run.accepted') throw new Error('Missing actual child run')
++                                                            ^
++ error: Missing actual child run
++       at /workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.fixture.ts:180:54
++ 
++ Bun v1.3.14 (Linux x64)
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 15
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.test.ts:12:32)
+(fail) production trace spawn fixture uses isolated canonical storage [1360.14ms]
+ 7 |   test(`production trace ${scenario} fixture uses isolated canonical storage`, async () => {
+ 8 |     const root = mkdtempSync(join(tmpdir(), 'rox-trace-contract-'))
+ 9 |     try {
+10 |       const child = Bun.spawn([process.execPath, join(import.meta.dir, 'delegation-compat.fixture.ts'), scenario], { cwd: join(import.meta.dir, '../../../../..'), env: { ...process.env, ROX_CONFIG_DIR: root, CRAFT_CONFIG_DIR: root }, stdout: 'pipe', stderr: 'pipe' })
+11 |       const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+12 |       expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
+                                    ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exit": 0,
+-   "stderr": "",
++   "exit": 1,
++   "stderr": 
++ "175 |     const request = fake.readRpcLog().find(event => event.type === 'host_tool_result' && event.id === 'htc-spawn')
++ 176 |     assert.ok(request, 'Real host RPC dispatcher must return the spawn result')
++ 177 |     const assignment = emitted.find(event => event.kind === 'agent.assigned')
++ 178 |     const childId = createdChildren[0]!
++ 179 |     const accepted = emitted.find(event => event.kind === 'run.accepted' && event.sessionId === childId)
++ 180 |     if (accepted?.kind !== 'run.accepted') throw new Error('Missing actual child run')
++                                                            ^
++ error: Missing actual child run
++       at /workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.fixture.ts:180:54
++ 
++ Bun v1.3.14 (Linux x64)
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 15
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.test.ts:12:32)
+(fail) production trace spawn-race fixture uses isolated canonical storage [1140.25ms]
+ 7 |   test(`production trace ${scenario} fixture uses isolated canonical storage`, async () => {
+ 8 |     const root = mkdtempSync(join(tmpdir(), 'rox-trace-contract-'))
+ 9 |     try {
+10 |       const child = Bun.spawn([process.execPath, join(import.meta.dir, 'delegation-compat.fixture.ts'), scenario], { cwd: join(import.meta.dir, '../../../../..'), env: { ...process.env, ROX_CONFIG_DIR: root, CRAFT_CONFIG_DIR: root }, stdout: 'pipe', stderr: 'pipe' })
+11 |       const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+12 |       expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
+                                    ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exit": 0,
+-   "stderr": "",
++   "exit": 1,
++   "stderr": 
++ "175 |     const request = fake.readRpcLog().find(event => event.type === 'host_tool_result' && event.id === 'htc-spawn')
++ 176 |     assert.ok(request, 'Real host RPC dispatcher must return the spawn result')
++ 177 |     const assignment = emitted.find(event => event.kind === 'agent.assigned')
++ 178 |     const childId = createdChildren[0]!
++ 179 |     const accepted = emitted.find(event => event.kind === 'run.accepted' && event.sessionId === childId)
++ 180 |     if (accepted?.kind !== 'run.accepted') throw new Error('Missing actual child run')
++                                                            ^
++ error: Missing actual child run
++       at /workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.fixture.ts:180:54
++ 
++ Bun v1.3.14 (Linux x64)
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 15
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.test.ts:12:32)
+(fail) production trace spawn-untraced-parent fixture uses isolated canonical storage [1171.85ms]
+ 7 |   test(`production trace ${scenario} fixture uses isolated canonical storage`, async () => {
+ 8 |     const root = mkdtempSync(join(tmpdir(), 'rox-trace-contract-'))
+ 9 |     try {
+10 |       const child = Bun.spawn([process.execPath, join(import.meta.dir, 'delegation-compat.fixture.ts'), scenario], { cwd: join(import.meta.dir, '../../../../..'), env: { ...process.env, ROX_CONFIG_DIR: root, CRAFT_CONFIG_DIR: root }, stdout: 'pipe', stderr: 'pipe' })
+11 |       const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+12 |       expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
+                                    ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exit": 0,
+-   "stderr": "",
++   "exit": 1,
++   "stderr": 
++ "9643 |   }
++ 9644 | 
++ 9645 |   private async processEvent(managed: ManagedSession, event: AgentEvent, originRun?: RuntimeTraceRun | null, suppliedExecution?: RoxExecutionContext): Promise<void> {
++ 9646 |     const sessionId = managed.id
++ 9647 |     const workspaceId = managed.workspace.id
++ 9648 |     const execution = suppliedExecution ?? this.roxExecutions.get(sessionId)
++                                                        ^
++ TypeError: undefined is not an object (evaluating 'this.roxExecutions.get')
++       at processEvent (/workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/SessionManager.ts:9648:49)
++       at /workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.fixture.ts:110:99
++ 
++ Bun v1.3.14 (Linux x64)
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 16
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.test.ts:12:32)
+(fail) production trace background-nudge fixture uses isolated canonical storage [1230.47ms]
+ 7 |   test(`production trace ${scenario} fixture uses isolated canonical storage`, async () => {
+ 8 |     const root = mkdtempSync(join(tmpdir(), 'rox-trace-contract-'))
+ 9 |     try {
+10 |       const child = Bun.spawn([process.execPath, join(import.meta.dir, 'delegation-compat.fixture.ts'), scenario], { cwd: join(import.meta.dir, '../../../../..'), env: { ...process.env, ROX_CONFIG_DIR: root, CRAFT_CONFIG_DIR: root }, stdout: 'pipe', stderr: 'pipe' })
+11 |       const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+12 |       expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
+                                    ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exit": 0,
+-   "stderr": "",
++   "exit": 1,
++   "stderr": 
++ "9643 |   }
++ 9644 | 
++ 9645 |   private async processEvent(managed: ManagedSession, event: AgentEvent, originRun?: RuntimeTraceRun | null, suppliedExecution?: RoxExecutionContext): Promise<void> {
++ 9646 |     const sessionId = managed.id
++ 9647 |     const workspaceId = managed.workspace.id
++ 9648 |     const execution = suppliedExecution ?? this.roxExecutions.get(sessionId)
++                                                        ^
++ TypeError: undefined is not an object (evaluating 'this.roxExecutions.get')
++       at processEvent (/workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/SessionManager.ts:9648:49)
++       at /workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.fixture.ts:74:99
++ 
++ Bun v1.3.14 (Linux x64)
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 16
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/sessions/runtime-trace/delegation-compat.test.ts:12:32)
+(fail) production trace system-dispatch fixture uses isolated canonical storage [1189.86ms]
+(pass) production trace legacy fixture uses isolated canonical storage [477.74ms]
+
+packages/server-core/src/handlers/rpc/__tests__/runtime-launch-producers.test.ts:
+(pass) actual generated task, automation test and scheduler launch provenance remain private and measured [1047.17ms]
+
+ 2 pass
+ 5 fail
+ 9 expect() calls
+Ran 7 tests across 2 files. [7.86s]

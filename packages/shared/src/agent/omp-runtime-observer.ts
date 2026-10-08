@@ -111,6 +111,47 @@ function sanitized(value, state, depth = 0, key = '') {
   }
   return undefined;
 }
+// ToolInfo.parameters may be a callable ArkType. Serialize its documented
+// schema API explicitly; generic functions and accessors remain uncaptured.
+function dataProperty(value, name, inherited = false) {
+  try {
+    for (let depth = 0; value && depth < (inherited ? 8 : 1); depth++) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, name);
+      if (descriptor) return 'value' in descriptor ? descriptor.value : undefined;
+      value = Object.getPrototypeOf(value);
+    }
+  } catch { /* An unsupported descriptor cannot stop the native invocation. */ }
+  return undefined;
+}
+function toolDefinitions(pi, activeTools) {
+  let available;
+  try { available = pi.getAllTools(); } catch { available = []; }
+  return activeTools.map(name => {
+    const tool = Array.isArray(available) ? available.find(tool => dataProperty(tool, 'name') === name) : undefined;
+    const definition = { name, description: dataProperty(tool, 'description'), sourceInfo: dataProperty(tool, 'sourceInfo'),
+      parametersAvailability: 'unknown', parametersSource: 'OMP ExtensionAPI.getAllTools' };
+    const parameters = dataProperty(tool, 'parameters');
+    try {
+      // Match the public native isArkSchema surface; other callable values
+      // are not a supported schema API and must never be invoked here.
+      const toJsonSchema = typeof parameters === 'function' && typeof dataProperty(parameters, 'assert', true) === 'function'
+        ? dataProperty(parameters, 'toJsonSchema', true) : undefined;
+      if (typeof toJsonSchema === 'function') {
+        definition.parameters = Reflect.apply(toJsonSchema, parameters, [{ target: 'draft-2020-12', fallback: context => context.base }]);
+        definition.parametersConversion = 'ArkType.toJsonSchema';
+      } else if ((parameters && typeof parameters === 'object' && !Array.isArray(parameters)) || typeof parameters === 'boolean') {
+        definition.parameters = parameters;
+        definition.parametersConversion = 'JSON Schema';
+      } else return definition;
+      if ((definition.parameters && typeof definition.parameters === 'object' && !Array.isArray(definition.parameters)) || typeof definition.parameters === 'boolean') {
+        definition.parametersAvailability = 'available';
+      } else delete definition.parameters;
+    } catch {
+      definition.parametersUnavailableReason = 'native-schema-conversion-failed';
+    }
+    return definition;
+  });
+}
 export default function roxRuntimeObserver(pi) {
   if (!path || !controlPath) return;
   if (++emitterCount > 128) { process.stderr.write('ROX_RUNTIME_OBSERVER_ERROR emitter quota exceeded\n'); return; }
@@ -169,10 +210,13 @@ export default function roxRuntimeObserver(pi) {
     const activeTools = pi.getActiveTools();
     write('before_agent_start', { prompt: event.prompt, systemPrompt: event.systemPrompt,
       images: event.images?.map(image => ({ type: image.type, mimeType: image.mimeType })),
-      tools: activeTools, toolDefinitions: pi.getAllTools().filter(tool => activeTools.includes(tool.name)),
+      tools: activeTools, toolDefinitions: toolDefinitions(pi, activeTools),
       contextUsage: ctx.getContextUsage() }, ctx);
   });
-  pi.on('context', (event, ctx) => write('context', { messages: event.messages, contextUsage: ctx.getContextUsage() }, ctx));
+  pi.on('context', (event, ctx) => {
+    const activeTools = pi.getActiveTools();
+    write('context', { messages: event.messages, tools: activeTools, toolDefinitions: toolDefinitions(pi, activeTools), contextUsage: ctx.getContextUsage() }, ctx);
+  });
   pi.on('before_provider_request', (event, ctx) => write('before_provider_request', { providerPayload: event.payload }, ctx));
   pi.on('before_subagent_spawn', (event, ctx) => {
     if (runId && typeof event.spawnKey === 'string') {

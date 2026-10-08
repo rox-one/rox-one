@@ -80,6 +80,7 @@ import {
   isPagesNavigation,
   isBrowserNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
@@ -111,7 +112,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
 
 // =============================================================================
 // Context
@@ -552,7 +553,6 @@ export function NavigationProvider({
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
-      if (initialRoute) requestRuntimeSelection(initialRoute)
 
       // Restore right sidebar
       if (sidebarParam) {
@@ -595,6 +595,9 @@ export function NavigationProvider({
       }
 
       if (entries.length > 0) {
+        // Restore read-only map references for every actual panel, including
+        // unfocused panels and layouts published without a separate ?route=.
+        for (const entry of entries) requestRuntimeSelection(entry.route)
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
       }
     },

@@ -1,0 +1,161 @@
+{
+  "config": {
+    "configFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/playwright.config.ts",
+    "rootDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 15000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "",
+        "name": "",
+        "testDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+        "testIgnore": [],
+        "testMatch": [
+          "*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "version": "1.49.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "context.spec.ts",
+      "file": "context.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "grouped context is read-only and preserves root/child provenance in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 4784,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:21:37.307Z",
+                  "attachments": [
+                    {
+                      "name": "context-provenance.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJ0aGVtZSI6ICJsaWdodCIsCiAgImZpeHR1cmUiOiB7CiAgICAicm9vdFNuYXBzaG90SWQiOiAiZml4dHVyZS1yb290LWNvbnRleHQtdjEiLAogICAgImNoaWxkU25hcHNob3RJZCI6ICJmaXh0dXJlLWNoaWxkLWNvbnRleHQtdjEiLAogICAgImFnZW50cyI6IHsKICAgICAgInJvb3QiOiAic2Vzc2lvbjpmaXh0dXJlLXNlc3Npb24iLAogICAgICAiY2hpbGQiOiAic2Vzc2lvbjpmaXh0dXJlLXNlc3Npb246bmF0aXZlOmNvbnRleHQtY2hpbGQiLAogICAgICAibWlzc2luZyI6ICJzZXNzaW9uOmZpeHR1cmUtc2Vzc2lvbjpuYXRpdmU6Y29udGV4dC1uby1zbmFwc2hvdCIKICAgIH0KICB9LAogICJzb3VyY2VJZHMiOiBbCiAgICAiZDNmNmQ5ZTQtNWIwOC00N2NkLWE2MDYtODFhMjUzOWY3ZDUxIiwKICAgICJkM2Y2ZDllNC01YjA4LTQ3Y2QtYTYwNi04MWEyNTM5ZjdkNTEiLAogICAgImQzZjZkOWU0LTViMDgtNDdjZC1hNjA2LTgxYTI1MzlmN2Q1MSIsCiAgICAiZDNmNmQ5ZTQtNWIwOC00N2NkLWE2MDYtODFhMjUzOWY3ZDUxIiwKICAgICJkM2Y2ZDllNC01YjA4LTQ3Y2QtYTYwNi04MWEyNTM5ZjdkNTEiLAogICAgImQzZjZkOWU0LTViMDgtNDdjZC1hNjA2LTgxYTI1MzlmN2Q1MSIKICBdLAogICJiZWZvcmUiOiB7CiAgICAicnVudGltZVN0YXJ0cyI6IDEsCiAgICAidGVybWluYWxFeGVjdXRpb25zIjogMCwKICAgICJwcm92aWRlclJlcXVlc3RzIjogMCwKICAgICJldmVudENvdW50IjogNiwKICAgICJzdGVwIjogMiwKICAgICJzdGVwcyI6IDE2LAogICAgInNvdXJjZUNvbm5lY3Rpb25zIjogMSwKICAgICJyb290UnVuSWQiOiAicnVuLWYzN2UzNWVhLWNkY2UtNGNjOS1hYmYwLWIzY2NiZmYwNDc3YyIKICB9LAogICJhZnRlciI6IHsKICAgICJydW50aW1lU3RhcnRzIjogMSwKICAgICJ0ZXJtaW5hbEV4ZWN1dGlvbnMiOiAwLAogICAgInByb3ZpZGVyUmVxdWVzdHMiOiAwLAogICAgImV2ZW50Q291bnQiOiA2LAogICAgInN0ZXAiOiAyLAogICAgInN0ZXBzIjogMTYsCiAgICAic291cmNlQ29ubmVjdGlvbnMiOiAxLAogICAgInJvb3RSdW5JZCI6ICJydW4tZjM3ZTM1ZWEtY2RjZS00Y2M5LWFiZjAtYjNjY2JmZjA0NzdjIgogIH0sCiAgImVycm9ycyI6IFtdCn0="
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-22a30-t-child-provenance-in-light/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "124b10fb0a2fec141b6d-189d89b73869a8761583",
+          "file": "context.spec.ts",
+          "line": 5,
+          "column": 49
+        },
+        {
+          "title": "grouped context is read-only and preserves root/child provenance in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 3722,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T22:21:42.218Z",
+                  "attachments": [
+                    {
+                      "name": "context-provenance.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJ0aGVtZSI6ICJkYXJrIiwKICAiZml4dHVyZSI6IHsKICAgICJyb290U25hcHNob3RJZCI6ICJmaXh0dXJlLXJvb3QtY29udGV4dC12MSIsCiAgICAiY2hpbGRTbmFwc2hvdElkIjogImZpeHR1cmUtY2hpbGQtY29udGV4dC12MSIsCiAgICAiYWdlbnRzIjogewogICAgICAicm9vdCI6ICJzZXNzaW9uOmZpeHR1cmUtc2Vzc2lvbiIsCiAgICAgICJjaGlsZCI6ICJzZXNzaW9uOmZpeHR1cmUtc2Vzc2lvbjpuYXRpdmU6Y29udGV4dC1jaGlsZCIsCiAgICAgICJtaXNzaW5nIjogInNlc3Npb246Zml4dHVyZS1zZXNzaW9uOm5hdGl2ZTpjb250ZXh0LW5vLXNuYXBzaG90IgogICAgfQogIH0sCiAgInNvdXJjZUlkcyI6IFsKICAgICIzZmZhODNhNi02NDBiLTRmMzktYTk3Zi1hNzhjZjM3MzMzNzUiLAogICAgIjNmZmE4M2E2LTY0MGItNGYzOS1hOTdmLWE3OGNmMzczMzM3NSIsCiAgICAiM2ZmYTgzYTYtNjQwYi00ZjM5LWE5N2YtYTc4Y2YzNzMzMzc1IiwKICAgICIzZmZhODNhNi02NDBiLTRmMzktYTk3Zi1hNzhjZjM3MzMzNzUiLAogICAgIjNmZmE4M2E2LTY0MGItNGYzOS1hOTdmLWE3OGNmMzczMzM3NSIsCiAgICAiM2ZmYTgzYTYtNjQwYi00ZjM5LWE5N2YtYTc4Y2YzNzMzMzc1IgogIF0sCiAgImJlZm9yZSI6IHsKICAgICJydW50aW1lU3RhcnRzIjogMSwKICAgICJ0ZXJtaW5hbEV4ZWN1dGlvbnMiOiAwLAogICAgInByb3ZpZGVyUmVxdWVzdHMiOiAwLAogICAgImV2ZW50Q291bnQiOiA2LAogICAgInN0ZXAiOiAyLAogICAgInN0ZXBzIjogMTYsCiAgICAic291cmNlQ29ubmVjdGlvbnMiOiAxLAogICAgInJvb3RSdW5JZCI6ICJydW4tMzBiYjI4ZmItMDFkMy00YWMzLTgyYzgtNjIxYjVjYzgyZDJiIgogIH0sCiAgImFmdGVyIjogewogICAgInJ1bnRpbWVTdGFydHMiOiAxLAogICAgInRlcm1pbmFsRXhlY3V0aW9ucyI6IDAsCiAgICAicHJvdmlkZXJSZXF1ZXN0cyI6IDAsCiAgICAiZXZlbnRDb3VudCI6IDYsCiAgICAic3RlcCI6IDIsCiAgICAic3RlcHMiOiAxNiwKICAgICJzb3VyY2VDb25uZWN0aW9ucyI6IDEsCiAgICAicm9vdFJ1bklkIjogInJ1bi0zMGJiMjhmYi0wMWQzLTRhYzMtODJjOC02MjFiNWNjODJkMmIiCiAgfSwKICAiZXJyb3JzIjogW10KfQ=="
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "124b10fb0a2fec141b6d-23fbda9f3c32c6bc8c1c",
+          "file": "context.spec.ts",
+          "line": 5,
+          "column": 49
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T22:21:34.807Z",
+    "duration": 11211.831,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
