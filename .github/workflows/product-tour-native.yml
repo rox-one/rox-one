@@ -150,6 +150,11 @@ jobs:
       - name: Exercise fresh native setup and absence of automatic tour
         # This launches dist/main.cjs with an isolated profile, not a browser fixture.
         # The runner leaves full NATIVE-01/02/03 acceptance NOT_RUN in its report.
+        env:
+          # The Playwright CLI echoes the launched Electron child's own stdout/stderr
+          # (`pw:browser [pid][out]`). It is the only trace of how far a fresh-profile
+          # product boot reached before the first window, and this lane has no other.
+          DEBUG: pw:browser
         run: bun scripts/product-tour/run-native.ts
         env:
           # Keep the isolated profile on disk so a red lane ships userData logs in the artifact.

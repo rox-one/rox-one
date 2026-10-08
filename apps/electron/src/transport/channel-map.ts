@@ -257,6 +257,8 @@ export const CHANNEL_MAP = {
   fabricRevokeConnection: invoke(RPC_CHANNELS.fabric.REVOKE_CONNECTION),
   fabricGithubStatus: invoke(RPC_CHANNELS.fabric.GITHUB_STATUS),
   fabricInfisicalHealth: invoke(RPC_CHANNELS.fabric.INFISICAL_HEALTH),
+  fabricInfisicalPreviewAccount: invoke(RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT),
+  fabricInfisicalCommitImport: invoke(RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT),
 
   // Extension Center (S-05)
   extensionsListCatalog: invoke(RPC_CHANNELS.extensions.LIST_CATALOG),

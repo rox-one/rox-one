@@ -433,6 +433,8 @@ export const RPC_CHANNELS = {
     REVOKE_CONNECTION: 'fabric:revokeConnection',
     GITHUB_STATUS: 'fabric:githubStatus',
     INFISICAL_HEALTH: 'fabric:infisicalHealth',
+    INFISICAL_PREVIEW_ACCOUNT: 'fabric:infisicalPreviewAccount',
+    INFISICAL_COMMIT_IMPORT: 'fabric:infisicalCommitImport',
   },
   extensions: {
     LIST_CATALOG: 'extensions:listCatalog',

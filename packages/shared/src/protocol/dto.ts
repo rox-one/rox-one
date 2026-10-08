@@ -12,6 +12,7 @@ import type {
   ContentBadge,
   ToolDisplayMeta,
   AnnotationV1,
+  AttachmentTranscript,
   SessionMemoryMode,
   PermissionRequest as BasePermissionRequest,
 } from '@rox/core/types'
@@ -665,6 +666,14 @@ export interface FileAttachment {
   text?: string
   size: number
   thumbnailBase64?: string
+  /** Set by the Electron app once the file is written to the session attachments folder. */
+  storedPath?: string
+  /** Converted markdown for Office files (agent reads this instead of the binary). */
+  markdownPath?: string
+  /** Speech-to-text result for audio attachments, started when the file is attached. */
+  transcript?: AttachmentTranscript
+  /** Renderer-local identity for an in-flight attachment (never persisted by the store). */
+  localId?: string
 }
 
 export interface SessionFile {

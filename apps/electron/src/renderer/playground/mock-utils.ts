@@ -485,7 +485,7 @@ export const mockElectronAPI = {
       { id: 'first_task' as const, status: 'available' as const },
     ],
     ratings: [],
-    analyticsConsent: false,
+    analyticsConsent: true,
   }),
   applyGamificationQuest: async (payload: unknown) => {
     console.log('[Playground] applyGamificationQuest', payload)
@@ -773,6 +773,23 @@ export const mockElectronAPI = {
   },
   sessionTopicCloudRun: async () => ({ topic: '' }),
   fabricInfisicalHealth: async () => ({ available: false }),
+  fabricInfisicalPreviewAccount: async (input: Record<string, string>) => ({
+    label: 'Infisical',
+    siteUrl: input.siteUrl,
+    clientId: input.clientId,
+    projectId: input.projectId,
+    environment: input.environment,
+    secretPath: input.secretPath,
+    secretKey: input.secretKey,
+    locator: {
+      type: 'infisical' as const,
+      projectId: input.projectId,
+      environment: input.environment,
+      secretPath: input.secretPath,
+      secretKey: input.secretKey,
+    },
+  }),
+  fabricInfisicalCommitImport: async () => ({ id: 'conn_playground' }),
   openclawRuntime: {
     getStatus: async ({ workspaceId }: { workspaceId: string }) => ({
       runtimeId: 'playground-runtime',

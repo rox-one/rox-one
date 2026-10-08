@@ -27,6 +27,7 @@ import type {
 } from '../../shared/types'
 import type { SessionStatus as SessionStatusConfig } from '@/config/session-status-config'
 import type { SessionModelCatalog, StartupRuntimeSummary } from '@rox/shared/protocol'
+import type { RoxAccountSnapshot } from '@rox/shared/auth'
 import type { SessionOptions, SessionOptionUpdates } from '../hooks/useSessionOptions'
 import { defaultSessionOptions } from '../hooks/useSessionOptions'
 import { sessionAtomFamily } from '../atoms/sessions'
@@ -57,6 +58,8 @@ export interface AppShellContextType {
   activeWorkspaceId: string | null
   /** Workspace slug for SDK skill qualification (derived from workspace path) */
   activeWorkspaceSlug: string | null
+  /** Signed-in Rox cloud account; identity surfaces merge it into the shown name. */
+  roxAccount?: RoxAccountSnapshot | null
   /** All LLM connections with authentication status */
   llmConnections: LlmConnectionWithStatus[]
   /** Native workspace model metadata, without account or credential status. */

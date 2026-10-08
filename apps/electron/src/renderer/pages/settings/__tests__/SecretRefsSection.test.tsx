@@ -1,6 +1,7 @@
 /**
  * SecretRefsSection — settings vertical slice for runtime.secretRefs.
- * Mock i18n as `t: (key) => key`. No secret values in markup.
+ * Mock i18n as `t: (key) => key`. No secret values and no raw provider error
+ * codes in visible markup.
  */
 import { describe, expect, it, mock } from 'bun:test'
 import { readFileSync } from 'node:fs'
@@ -12,14 +13,25 @@ mock.module('react-i18next', () => ({
 }))
 
 import {
-  InfisicalUnavailableRow,
+  SecretProviderStatusRow,
+  secretProviderStatus,
+  secretProviderStatusKey,
   secretRefRowShowsUnavailable,
 } from '../secret-refs-ui'
 
 const pagesDir = join(import.meta.dir, '..')
 
+describe('secretProviderStatus', () => {
+  it('maps vault availability to a human status', () => {
+    expect(secretProviderStatus(true)).toBe('connected')
+    expect(secretProviderStatus(false)).toBe('disconnected')
+    expect(secretProviderStatusKey('connected')).toBe('settings.runtime.secretProviderConnected')
+    expect(secretProviderStatusKey('disconnected')).toBe('settings.runtime.secretProviderNotConnected')
+  })
+})
+
 describe('secretRefRowShowsUnavailable', () => {
-  it('is true only for infisical-pinned rows when Infisical is down', () => {
+  it('is true only for vault-pinned rows when the vault is down', () => {
     expect(secretRefRowShowsUnavailable({ provider: 'infisical' }, false)).toBe(true)
     expect(secretRefRowShowsUnavailable({ provider: 'infisical' }, true)).toBe(false)
     expect(secretRefRowShowsUnavailable({ provider: 'environment' }, false)).toBe(false)
@@ -27,20 +39,19 @@ describe('secretRefRowShowsUnavailable', () => {
   })
 })
 
-describe('InfisicalUnavailableRow', () => {
-  it('renders a typed INFISICAL_UNAVAILABLE state and never a placeholder Infisical page', () => {
-    const html = renderToStaticMarkup(
-      <InfisicalUnavailableRow available={false} errorCode="INFISICAL_UNAVAILABLE" />,
-    )
-    expect(html).toContain('data-error-code="INFISICAL_UNAVAILABLE"')
-    expect(html).toContain('settings.runtime.secretInfisicalUnavailable')
-    expect(html).not.toContain('placeholder')
-    expect(html.toLowerCase()).not.toContain('infisical settings')
+describe('SecretProviderStatusRow', () => {
+  it('renders a localized status and never a raw provider error code', () => {
+    const html = renderToStaticMarkup(<SecretProviderStatusRow available={false} />)
+    expect(html).toContain('data-provider-status="disconnected"')
+    expect(html).toContain('settings.runtime.secretProviderNotConnected')
+    expect(html).not.toContain('INFISICAL_UNAVAILABLE')
+    expect(html).not.toContain('Infisical is unavailable')
   })
 
-  it('renders nothing when Infisical is available', () => {
-    const html = renderToStaticMarkup(<InfisicalUnavailableRow available={true} />)
-    expect(html).toBe('')
+  it('renders the connected state when the vault is reachable', () => {
+    const html = renderToStaticMarkup(<SecretProviderStatusRow available={true} />)
+    expect(html).toContain('data-provider-status="connected"')
+    expect(html).toContain('settings.runtime.secretProviderConnected')
   })
 })
 
@@ -55,7 +66,9 @@ describe('RuntimeSettingsPage mounts SecretRefsSection', () => {
     expect(section).toContain('setSecretRefs')
     expect(section).not.toContain("<select")
     expect(section).toContain('PremiumMenuSelect')
-    expect(section).toContain('INFISICAL_UNAVAILABLE')
+    // Human states only — the raw provider error code is gone from visible text.
+    expect(section).not.toContain('INFISICAL_UNAVAILABLE')
+    expect(section).toContain('SecretProviderStatusRow')
     expect(section).not.toContain("@rox/shared/agent")
     expect(page).toContain('getToolchainDisabled?.()')
     expect(page).toContain('getDefaultThinkingLevel?.()')

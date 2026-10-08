@@ -76,6 +76,15 @@ async function senderName(): Promise<string | null> {
   }
 }
 
+/** Rox account access token for the remote mail provisioning service. */
+async function roxAccessToken(): Promise<string | null> {
+  try {
+    return await getRoxAccountAuthority().accessToken(LOCAL_ROX_CALLER)
+  } catch {
+    return null
+  }
+}
+
 function uniquePath(dir: string, name: string): string {
   const safe = safeFileName(name)
   const ext = extname(safe)
@@ -100,6 +109,7 @@ export function registerMailIpc(log?: (message: string, error?: unknown) => void
     secrets: credentialManagerSecrets(),
     identity: identityHints,
     senderName,
+    roxAccessToken,
     emit: broadcast,
     log,
     deviceLabel: `rox-desktop:${process.platform}:${app.getName()}`,

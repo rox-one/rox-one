@@ -71,7 +71,11 @@ export function normalizeDeepgramTranscript(raw: unknown, requestedModelId = DEE
       return normalized ? [normalized] : []
     }) : []
     if (!sentences.length) return []
-    validateTimeline(sentences, durationMs)
+    for (let index = 1; index < sentences.length; index++) {
+      // The duration bound is enforced once, after the authoritative media length is known
+      // (Deepgram may overshoot its own metadata.duration); ordering is enforced here.
+      if (sentences[index]!.startMs < sentences[index - 1]!.startMs) throw new AudioValidationError('damaged', 'Invalid Deepgram timeline')
+    }
     return [{ startMs: sentences[0]!.startMs, endMs: sentences.at(-1)!.endMs,
       text: sentences.map((sentence) => sentence.text).join(' '), speakerId: speakerLabel(paragraph.speaker) }]
   }) : []
@@ -91,14 +95,23 @@ export function normalizeDeepgramTranscript(raw: unknown, requestedModelId = DEE
     segment.speakerId ??= words?.find((word) => word.startMs >= segment.startMs && word.startMs < segment.endMs)?.speakerId
   }
   if (!segments.length && alternative.transcript.trim()) segments = [{ startMs: 0, endMs: durationMs, text: alternative.transcript.trim() }]
-  validateTimeline(segments, durationMs)
-  if (words) validateTimeline(words, durationMs)
+  // Deepgram's word/sentence timestamps can overshoot its own `metadata.duration`
+  // (observed with webm/opus recordings: last word 16.1s vs duration 13.9s), so the
+  // authoritative media length is the furthest timestamp the provider reported.
+  // A gross mismatch still means the payload is damaged.
+  const reportedEndMs = Math.max(0, ...segments.map((item) => item.endMs), ...(words ?? []).map((item) => item.endMs))
+  if (reportedEndMs > durationMs + Math.max(5_000, Math.round(durationMs * 0.5))) {
+    throw new AudioValidationError('damaged', 'Invalid Deepgram timeline')
+  }
+  const mediaDurationMs = Math.max(durationMs, reportedEndMs)
+  validateTimeline(segments, mediaDurationMs)
+  if (words) validateTimeline(words, mediaDurationMs)
   const modelInfo = asObject(Object.values(asObject(metadata.model_info))[0])
   const diarization = asObject(metadata.diarize_info)
   return {
     text: segments.map((segment) => segment.text).join('\n\n'), segments, words: words?.length ? words : undefined,
     detectedLanguage: typeof channel.detected_language === 'string' ? channel.detected_language : undefined,
-    durationMs, requestedModelId,
+    durationMs: mediaDurationMs, requestedModelId,
     resolvedModelId: typeof modelInfo.arch === 'string' ? modelInfo.arch : typeof modelInfo.name === 'string' ? modelInfo.name : requestedModelId,
     modelRevision: typeof modelInfo.version === 'string' ? modelInfo.version : undefined,
     diarizationModel: typeof diarization.arch === 'string' ? diarization.arch : undefined,

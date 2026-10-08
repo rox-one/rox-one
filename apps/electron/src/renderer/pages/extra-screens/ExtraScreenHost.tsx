@@ -19,6 +19,7 @@ const PAGES: Record<ExtraScreenId, React.ComponentType<{ itemId: string | null }
   decisions: lazyRoutePage(() => import('./decisions/DecisionsPage')),
   agents: lazyRoutePage(() => import('./agents/AgentCenterPage')),
   focus: lazyRoutePage(() => import('./focus/FocusPage')),
+  secrets: lazyRoutePage(() => import('./secrets/SecretsPage')),
 }
 
 export interface ExtraScreenHostProps {

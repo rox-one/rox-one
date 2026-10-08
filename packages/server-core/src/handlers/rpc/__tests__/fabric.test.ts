@@ -101,6 +101,8 @@ describe('fabric RPC handlers', () => {
       RPC_CHANNELS.fabric.REVOKE_CONNECTION,
       RPC_CHANNELS.fabric.GITHUB_STATUS,
       RPC_CHANNELS.fabric.INFISICAL_HEALTH,
+      RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
+      RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
     ])
     for (const ch of HANDLED_CHANNELS) {
       expect(server.handlers.has(ch)).toBe(true)

@@ -42,5 +42,7 @@ export { refreshRuntimeSecretEnv, type RefreshRuntimeSecretEnvOptions } from './
 export {
   diagnoseInfisicalAvailability,
   type InfisicalAvailability,
+  type InfisicalAccountPreviewInput,
+  type InfisicalAccountPreview,
   type SecretRefsSettingsPayload,
 } from './availability.ts';
