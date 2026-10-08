@@ -1,5 +1,6 @@
 import * as React from 'react'
 import katex from 'katex'
+import 'katex/dist/katex.min.css'
 import { cn } from '../../lib/utils'
 
 interface MarkdownLatexBlockProps {

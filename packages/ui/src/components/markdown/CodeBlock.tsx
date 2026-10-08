@@ -1,9 +1,8 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
+import type { BundledLanguage } from 'shiki'
 import { cn } from '../../lib/utils'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
-import { resolveShikiTheme } from '../code-viewer/zedShikiThemes'
 
 export interface CodeBlockProps {
   code: string
@@ -52,9 +51,15 @@ function getCacheKey(code: string, lang: string, theme: string): string {
   return `${theme}:${lang}:${code}`
 }
 
-function isValidLanguage(lang: string): lang is BundledLanguage {
-  const normalized = LANGUAGE_ALIASES[lang] || lang
-  return normalized in bundledLanguages
+// Shiki (runtime + grammars) loads on the first highlight; until then the
+// block renders as plain <pre>, exactly like its existing loading state.
+let shikiModule: Promise<typeof import('./shiki-highlight')> | null = null
+function loadShiki() {
+  shikiModule ??= import('./shiki-highlight').catch((error: unknown) => {
+    shikiModule = null
+    throw error
+  })
+  return shikiModule
 }
 
 /**
@@ -106,13 +111,10 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
       }
 
       try {
-        // Use valid language or fallback to plaintext
-        const lang = isValidLanguage(resolvedLang) ? resolvedLang : 'text'
-
-        const html = await codeToHtml(code, {
-          lang,
-          theme: resolveShikiTheme(theme),
-        })
+        // Use valid language or fallback to plaintext (alias-normalized check)
+        const { highlightCode } = await loadShiki()
+        if (cancelled) return
+        const html = await highlightCode(code, resolvedLang, LANGUAGE_ALIASES[resolvedLang] || resolvedLang, theme)
 
         // Cache the result
         if (highlightCache.size >= CACHE_MAX_SIZE) {
