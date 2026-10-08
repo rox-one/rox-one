@@ -326,7 +326,11 @@ export function getSshTunnelManager(): SshTunnelManager {
 
 /** Explicit paths override discovery and are shell quoted before reading. */
 export function remoteTokenCandidatePaths(tokenPath?: string): string[] {
+  // W1-13 (manifest row 15): the canonical `~/rox` paths come first; the
+  // bootstrap probe result (whichever home exists) decides which one reads.
+  // Legacy homes stay as fallbacks and are never written.
   return tokenPath ? [tokenPath] : [
+    '~/rox/remote-server/.token', '~/rox/server-token', '~/rox/.env',
     '~/.rox/remote-server/.token', '~/.rox/server-token', '~/.rox/.env',
     '~/.craft-agent/remote-server/.token', '~/.craft-agent/server-token', '~/.craft-agent/.env',
   ]

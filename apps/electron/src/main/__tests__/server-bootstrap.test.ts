@@ -308,3 +308,21 @@ describe('legacy managed remote compatibility', () => {
     expect(rec.uploads).toHaveLength(0)
   })
 })
+
+describe('W1-13 legacy ~/.rox remote install', () => {
+  it('runs the remote move + symlink before restarting from ~/rox', async () => {
+    const { REMOTE_HOME_MOVE_COMMAND } = await import('../ssh-tunnel/server-bootstrap.ts')
+    const commands: string[] = []
+    const { deps, rec } = makeDeps({
+      initialToken: 'saved-token', probeResults: [false, true],
+      runRemote: async (_host, command) => {
+        commands.push(command)
+        return command === CHECK_INSTALLED_COMMAND ? 'LEGACY_ROX_INSTALLED\n' : ''
+      },
+    })
+    await bootstrapRemoteServer(HOST, deps)
+    expect(commands).toContain(REMOTE_HOME_MOVE_COMMAND)
+    expect(commands.indexOf(REMOTE_HOME_MOVE_COMMAND)).toBeLessThan(commands.indexOf(buildWriteTokenCommand()))
+    expect(rec.uploads).toHaveLength(0)
+  })
+})

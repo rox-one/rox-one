@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test'
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, symlinkSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, symlinkSync, lstatSync, readlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { resolveNumberedUserDataDir } from '../numbered-user-data'
-import { IMPORT_LEGACY_INSTALL_COMMAND, buildRestartCommand, REMOTE_INSTALL_DIR } from '../ssh-tunnel/server-bootstrap'
+import { IMPORT_LEGACY_INSTALL_COMMAND, buildRestartCommand, REMOTE_INSTALL_DIR, REMOTE_HOME_MOVE_COMMAND, REMOTE_INSTALL_PROBE_COMMAND, LEGACY_ROX_REMOTE_INSTALL_DIR } from '../ssh-tunnel/server-bootstrap'
 import { remoteTokenCandidatePaths, remoteReadTokenCommand, extractToken } from '../ssh-tunnel/ssh-tunnel-manager'
 
 function temporary(run: (root: string) => void) {
@@ -15,7 +15,7 @@ function temporary(run: (root: string) => void) {
 describe('ROX path migration', () => {
   it('copies a legacy remote installation without overwriting or deleting files', () => temporary(root => {
     const legacy = join(root, '.craft-agent/remote-server')
-    const canonical = join(root, '.rox/remote-server')
+    const canonical = join(root, 'rox/remote-server')
     mkdirSync(legacy, { recursive: true }); mkdirSync(canonical, { recursive: true })
     writeFileSync(join(legacy, 'start.sh'), '#!/bin/sh\n', { mode: 0o755 })
     mkdirSync(join(legacy, 'config')); writeFileSync(join(legacy, 'config/settings'), 'settings')
@@ -32,19 +32,20 @@ describe('ROX path migration', () => {
     const result = spawnSync('/bin/sh', ['-c', IMPORT_LEGACY_INSTALL_COMMAND], { env: { ...process.env, HOME: root } })
     expect(result.status).not.toBe(0)
     expect(result.stderr.toString()).toContain('reinstall the managed ROX server')
-    expect(existsSync(join(root, '.rox'))).toBe(false)
+    expect(existsSync(join(root, 'rox'))).toBe(false)
   }))
   it('uses ROX only for new launchers and shared canonical state for imported ones', () => {
-    expect(REMOTE_INSTALL_DIR).toBe('~/.rox/remote-server')
+    expect(REMOTE_INSTALL_DIR).toBe('~/rox/remote-server')
     expect(buildRestartCommand(9200)).not.toContain('CRAFT_')
     const imported = buildRestartCommand(9200, true)
-    expect(imported).toContain('ROX_CONFIG_DIR=~/.rox/remote-server/config')
-    expect(imported).toContain('CRAFT_CONFIG_DIR=~/.rox/remote-server/config')
+    expect(imported).toContain('ROX_CONFIG_DIR=~/rox/remote-server/config')
+    expect(imported).toContain('CRAFT_CONFIG_DIR=~/rox/remote-server/config')
   })
   it('reads canonical tokens first with explicit legacy fallback and safely quoted overrides', () => {
     const candidates = remoteTokenCandidatePaths()
-    expect(candidates[0]).toBe('~/.rox/remote-server/.token')
-    expect(candidates[3]).toBe('~/.craft-agent/remote-server/.token')
+    expect(candidates[0]).toBe('~/rox/remote-server/.token')
+    expect(candidates[3]).toBe('~/.rox/remote-server/.token')
+    expect(candidates[6]).toBe('~/.craft-agent/remote-server/.token')
     expect(remoteTokenCandidatePaths('/custom/token')).toEqual(['/custom/token'])
     expect(remoteReadTokenCommand('~/token; echo bad')).toBe('cat "$HOME"/\'token; echo bad\' 2>/dev/null || true')
     expect(extractToken('ROX_SERVER_TOKEN=canonical_token_1234')).toBe('canonical_token_1234')
@@ -68,5 +69,39 @@ describe('ROX path migration', () => {
     symlinkSync(`localhost-${process.pid}`, join(legacy, 'SingletonLock'))
     expect(() => resolveNumberedUserDataDir(root, '3')).toThrow('Close legacy numbered')
     expect(existsSync(join(root, 'rox-3'))).toBe(false)
+  }))
+})
+
+describe('W1-13 remote visible-home bootstrap', () => {
+  it('probes canonical first, then legacy ~/.rox', () => {
+    expect(REMOTE_INSTALL_PROBE_COMMAND).toContain('~/rox/remote-server')
+    expect(REMOTE_INSTALL_PROBE_COMMAND).toContain(LEGACY_ROX_REMOTE_INSTALL_DIR)
+    expect(LEGACY_ROX_REMOTE_INSTALL_DIR).toBe('~/.rox/remote-server')
+  })
+  it('moves a legacy ~/.rox home to ~/rox with a symlink (upgrade path)', () => temporary(root => {
+    mkdirSync(join(root, '.rox', 'remote-server'), { recursive: true })
+    writeFileSync(join(root, '.rox', 'remote-server', 'start.sh'), '#!/bin/sh\n')
+    const result = spawnSync('/bin/sh', ['-c', REMOTE_HOME_MOVE_COMMAND], { env: { ...process.env, HOME: root } })
+    expect(result.status).toBe(0)
+    expect(existsSync(join(root, 'rox', 'remote-server', 'start.sh'))).toBe(true)
+    expect(lstatSync(join(root, '.rox')).isSymbolicLink()).toBe(true)
+    expect(readlinkSync(join(root, '.rox'))).toBe(join(root, 'rox'))
+  }))
+  it('merges only remote-server when ~/rox already exists', () => temporary(root => {
+    mkdirSync(join(root, 'rox'), { recursive: true })
+    writeFileSync(join(root, 'rox', 'keep.txt'), 'keep')
+    mkdirSync(join(root, '.rox', 'remote-server'), { recursive: true })
+    writeFileSync(join(root, '.rox', 'remote-server', 'start.sh'), '#!/bin/sh\n')
+    const result = spawnSync('/bin/sh', ['-c', REMOTE_HOME_MOVE_COMMAND], { env: { ...process.env, HOME: root } })
+    expect(result.status).toBe(0)
+    expect(readFileSync(join(root, 'rox', 'keep.txt'), 'utf8')).toBe('keep')
+    expect(existsSync(join(root, 'rox', 'remote-server', 'start.sh'))).toBe(true)
+    expect(lstatSync(join(root, '.rox', 'remote-server')).isSymbolicLink()).toBe(true)
+  }))
+  it('is a no-op without a legacy home', () => temporary(root => {
+    const result = spawnSync('/bin/sh', ['-c', REMOTE_HOME_MOVE_COMMAND], { env: { ...process.env, HOME: root } })
+    expect(result.status).toBe(0)
+    expect(existsSync(join(root, 'rox'))).toBe(false)
+    expect(existsSync(join(root, '.rox'))).toBe(false)
   }))
 })

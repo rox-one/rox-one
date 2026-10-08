@@ -26,10 +26,32 @@ export interface BootstrapResult {
 }
 
 /** Directory on the remote host where the managed server is installed. */
-export const REMOTE_INSTALL_DIR = '~/.rox/remote-server'
-export const REMOTE_LOG_PATH = '~/.rox/remote-server/server.log'
+export const REMOTE_INSTALL_DIR = '~/rox/remote-server'
+export const REMOTE_LOG_PATH = '~/rox/remote-server/server.log'
 /** Token file on the remote (0600). The token travels over ssh stdin, never argv. */
-export const REMOTE_TOKEN_PATH = '~/.rox/remote-server/.token'
+export const REMOTE_TOKEN_PATH = '~/rox/remote-server/.token'
+
+/**
+ * Legacy managed install (W1-13, §10.4). New installs use `~/rox` directly;
+ * an existing `~/.rox/remote-server` is detected and reused until upgrade,
+ * then moved with a compatibility symlink.
+ */
+export const LEGACY_ROX_REMOTE_INSTALL_DIR = '~/.rox/remote-server'
+/** Probe: reuse whichever remote home already exists. */
+export const REMOTE_INSTALL_PROBE_COMMAND =
+  `if test -d ${REMOTE_INSTALL_DIR}; then echo CANONICAL; ` +
+  `elif test -d ${LEGACY_ROX_REMOTE_INSTALL_DIR}; then echo LEGACY_ROX; fi`
+/**
+ * Remote move + symlink for the next upgrade (§10.4). Only when `~/rox` is
+ * absent (`mv ~/.rox ~/rox && ln -s ~/rox ~/.rox`); otherwise the legacy
+ * remote-server dir alone is moved into `~/rox/remote-server` with a
+ * symlink left behind. Never deletes.
+ */
+export const REMOTE_HOME_MOVE_COMMAND =
+  `if test -d ~/.rox && ! test -e ~/rox; then mv ~/.rox ~/rox && ln -s ~/rox ~/.rox; ` +
+  `elif test -d ${LEGACY_ROX_REMOTE_INSTALL_DIR} && ! test -e ${REMOTE_INSTALL_DIR}; then ` +
+  `mkdir -p ~/rox && mv ${LEGACY_ROX_REMOTE_INSTALL_DIR} ${REMOTE_INSTALL_DIR} && ` +
+  `ln -s ${REMOTE_INSTALL_DIR} ${LEGACY_ROX_REMOTE_INSTALL_DIR}; fi`
 
 export interface RunRemoteOptions {
   /** Timeout for the remote command, ms. */
@@ -132,7 +154,8 @@ const LEGACY_MARKER = `${REMOTE_INSTALL_DIR}/.legacy-env-compat`
 export const CHECK_INSTALLED_COMMAND =
   `if test -x ${REMOTE_INSTALL_DIR}/start.sh; then ` +
   `if test -f ${LEGACY_MARKER}; then echo INSTALLED_LEGACY; else echo INSTALLED; fi; ` +
-  `elif test -x ${LEGACY_REMOTE_INSTALL_DIR}/start.sh; then echo LEGACY_INSTALLED; fi`
+  `elif test -x ${LEGACY_REMOTE_INSTALL_DIR}/start.sh; then echo LEGACY_INSTALLED; ` +
+  `elif test -x ${LEGACY_ROX_REMOTE_INSTALL_DIR}/start.sh; then echo LEGACY_ROX_INSTALLED; fi`
 
 /** Copy missing legacy files, preserving canonical conflicts and the source. */
 export const IMPORT_LEGACY_INSTALL_COMMAND =
@@ -147,14 +170,19 @@ export const IMPORT_LEGACY_INSTALL_COMMAND =
   `touch ${LEGACY_MARKER} && test -x ${REMOTE_INSTALL_DIR}/start.sh`
 
 export const KILL_MANAGED_SERVER_COMMAND =
-  `pkill -f '[.](rox|craft-agent)/remote-server' 2>/dev/null || true`
+  `pkill -f '[.](rox|craft-agent)/remote-server|/rox/remote-server' 2>/dev/null || true`
 
 async function prepareRestart(host: SshHostConfig, deps: ServerBootstrapDeps): Promise<{ installed: boolean; legacy: boolean }> {
   const status = (await deps.runRemote(host, CHECK_INSTALLED_COMMAND)).trim()
   if (status === 'LEGACY_INSTALLED') {
     await deps.runRemote(host, IMPORT_LEGACY_INSTALL_COMMAND)
   }
-  return { installed: ['INSTALLED', 'INSTALLED_LEGACY', 'LEGACY_INSTALLED'].includes(status), legacy: status.includes('LEGACY') }
+  if (status === 'LEGACY_ROX_INSTALLED') {
+    // W1-13 (§10.4): legacy `~/.rox` managed install → move + symlink, then
+    // restart from the canonical `~/rox` path.
+    await deps.runRemote(host, REMOTE_HOME_MOVE_COMMAND)
+  }
+  return { installed: ['INSTALLED', 'INSTALLED_LEGACY', 'LEGACY_INSTALLED', 'LEGACY_ROX_INSTALLED'].includes(status), legacy: status.includes('LEGACY') }
 }
 
 /** Run the full bootstrap. Assumes the SSH tunnel is already established and the
@@ -240,10 +268,10 @@ export async function bootstrapRemoteServer(
   onProgress({ phase: 'building-server', detail: `${target.platform}-${target.arch}` })
   const artifact = await deps.resolveArtifact(target)
 
-  // 5. Upload + extract.
-  const remoteArchive = `~/.rox/${artifact.archiveName}`
+  // 5. Upload + extract (new installs use `~/rox` directly, §10.4).
+  const remoteArchive = `~/rox/${artifact.archiveName}`
   onProgress({ phase: 'uploading-server' })
-  await deps.runRemote(host, 'mkdir -p ~/.rox')
+  await deps.runRemote(host, 'mkdir -p ~/rox')
   await deps.uploadFile(host, artifact.archivePath, remoteArchive)
 
   // 6. Generate + store token, transfer it via stdin (never argv), then

@@ -5,7 +5,7 @@ import { getServerServiceKey } from '@rox/shared/config/server-services'
  */
 import { spawn } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
-import { cpus, homedir } from 'node:os'
+import { cpus } from 'node:os'
 import { delimiter, join } from 'node:path'
 import type { LocalAsrEngine } from '../../shared/meetings-local'
 import { modelLabel, parseWhisperProgress, pickWhisperModel } from './local-model'
@@ -30,8 +30,9 @@ export function findBinary(names: readonly string[], env: NodeJS.ProcessEnv = pr
 }
 
 export function modelDirs(configDir: string): string[] {
-  const dirs = [join(configDir, 'models'), join(homedir(), '.rox', 'models')]
-  return [...new Set(dirs)]
+  // W1-13: legacy `~/.rox/models` stays readable through the `~/rox` compat
+  // symlink, so only the resolved config dir is listed.
+  return [join(configDir, 'models')]
 }
 
 export function detectEngine(configDir: string): LocalAsrEngine {
