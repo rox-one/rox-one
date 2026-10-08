@@ -8,7 +8,8 @@
  * - IPC registered unconditionally, incl. thin-client mode (fix5 A);
  * - cold-start entity deep links held until the state is known (fix5 C).
  */
-import { describe, expect, it, beforeEach, afterEach, mock } from 'bun:test'
+import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
+import { stubMainLogger } from './stub-main-logger'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -30,9 +31,7 @@ import {
 // deep-link.ts pulls the main logger (electron-log → electron binary), which
 // this clone does not have installed. Stub the logger by absolute path so the
 // pure parse logic stays testable here.
-mock.module(new URL('../logger.ts', import.meta.url).pathname, () => ({
-  mainLog: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
-}))
+stubMainLogger()
 const { parseDeepLink, resolveDeepLinkTarget, isEntityOnlyDeepLink } = await import('../deep-link')
 
 const quiet = { warn: () => {}, error: () => {} }
