@@ -20,6 +20,13 @@ Applies from the unified DDL (W1-05, #1502) on. Migration details:
      CREATE EXTENSION IF NOT EXISTS pg_trgm  WITH SCHEMA public;
      CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
      ```
+   **Provider allow-lists apply first.** Some managed services refuse
+   `CREATE EXTENSION`, even for the admin role, until the extension is
+   allow-listed. On Azure Database for PostgreSQL (Flexible Server), add
+   `citext`, `pg_trgm` and `unaccent` to the `azure.extensions` server
+   parameter; other providers have similar settings. Without that, the
+   preflight fails with the generic privilege hint above.
+
    If an extension is already installed in another schema (common on managed
    Postgres, for example `extensions`), a DBA must move it:
    `ALTER EXTENSION citext SET SCHEMA public` (likewise for `pg_trgm` and

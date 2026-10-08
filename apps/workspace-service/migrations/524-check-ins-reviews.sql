@@ -33,6 +33,9 @@ CREATE INDEX check_in_subject ON check_in (workspace_id, subject_type, subject_i
 --   WHERE workspace_id = $ws AND subject_type = $t AND subject_id = ANY($reviewed_ids)
 --     AND acknowledged_at IS NULL AND state = 'published' AND deleted_at IS NULL
 --   ORDER BY created_at DESC
+-- The index returns created_at order without a Sort only for ONE subject_id
+-- (subject_id = $id). With subject_id = ANY($reviewed_ids) over several subjects the
+-- planner may still sort (or merge per subject); fine for the small unacknowledged set.
 CREATE INDEX check_in_pending_ack ON check_in (workspace_id, subject_type, subject_id, created_at DESC)
   WHERE acknowledged_at IS NULL AND state = 'published' AND deleted_at IS NULL;
 

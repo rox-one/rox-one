@@ -121,6 +121,10 @@ then finds the extensions installed. A `unique_violation` (23505) from a
 concurrent `CREATE EXTENSION` outside the service is passed through unwrapped,
 not reported as a missing privilege.
 
+**Provider allow-lists** come first where the provider has one (for example
+Azure's `azure.extensions` server parameter must list `citext`, `pg_trgm` and
+`unaccent`); see `../DEPLOYMENT.md`.
+
 **Required privilege:** the service role needs `CREATE` on the database (all
 three are *trusted* extensions on PostgreSQL 13+, so no superuser is needed),
 **or** a DBA pre-installs them before the first start:
@@ -163,7 +167,9 @@ may use `public.unaccent`.
   WHERE read_at IS NULL`: unread newest-first without a sort).
 - Review: `check_in_subject`, `check_in_pending_ack` (`(workspace_id,
   subject_type, subject_id, created_at DESC)` over unacknowledged published
-  check-ins: the "needs your review" query for the subjects a reviewer owns),
+  check-ins: the "needs your review" query for the subjects a reviewer owns;
+  the no-`Sort` guarantee holds for a single `subject_id` only, with
+  `subject_id = ANY(…)` over several subjects the planner may still sort),
   `goal_check_in_due`, `approval_request_pending`.
 
 ## Tenant scoping of keys
