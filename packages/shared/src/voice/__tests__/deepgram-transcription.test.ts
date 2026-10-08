@@ -89,6 +89,23 @@ describe('Deepgram current prerecorded transcription', () => {
     expect(result.diarizationModel).toBe('v2')
   })
 
+  it('keeps the fixed ASR parameters and exactly one of language/detect_language', async () => {
+    const urls: string[] = []
+    const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', model: 'nova-3', http: { async fetch(url) {
+      urls.push(String(url))
+      return new Response(JSON.stringify(response()))
+    } } })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav' })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav', language: 'auto' })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav', language: 'en' })
+    expect(urls).toHaveLength(3)
+    const fixed = { model: 'nova-3', version: 'latest', smart_format: 'true', punctuate: 'true', diarize_model: 'latest', paragraphs: 'true', utterances: 'true' }
+    expect(Object.fromEntries(new URL(urls[0]!).searchParams)).toEqual({ ...fixed, detect_language: 'true' })
+    expect(Object.fromEntries(new URL(urls[1]!).searchParams)).toEqual({ ...fixed, detect_language: 'true' })
+    expect(Object.fromEntries(new URL(urls[2]!).searchParams)).toEqual({ ...fixed, language: 'en' })
+    expect(urls.every((url) => !new URL(url!).searchParams.has('diarize'))).toBe(true)
+  })
+
   it('catalog failure uses current Nova with auto language without falling back to another provider', async () => {
     const urls: string[] = []
     const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', allowModelUpgrade: true, http: { async fetch(url) {

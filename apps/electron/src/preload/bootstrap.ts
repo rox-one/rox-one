@@ -688,6 +688,12 @@ client.onConnectionStateChanged((state) => {
   filters?: Array<{ name: string; extensions: string[] }>
 }) => ipcRenderer.invoke('file:saveText', opts)
 
+// Voice overlay level meter: the owner window publishes mic RMS over a dedicated
+// channel; the main-process overlay host only accepts it from the verified owner
+// and forwards it to the non-focus-stealing mini-window as render state.
+;(api as ElectronAPI).publishVoiceLevel = (level: number) =>
+  ipcRenderer.send('rox:owned-voice-overlay:level', level)
+
 // Local meeting recordings — direct IPC: microphone audio, files and the
 // whisper.cpp transcriber are device-local (see main/meetings/local-ipc.ts).
 {
