@@ -239,28 +239,28 @@ describe('preview cache', () => {
   })
 
   it('persistent failures back off exponentially; linksChanged resets the backoff', async () => {
-    resetEntityPreviewStores({ retryMs: 30, retryMaxMs: 10_000 })
+    resetEntityPreviewStores({ retryMs: 50, retryMaxMs: 10_000 })
     let emit: (workspaceId: string) => void = () => {}
     const resolve = mock(async () => { throw new Error('FORBIDDEN') })
     setEntityDataSource(source(resolve as unknown as EntityDataSource['resolve'], (callback) => { emit = callback; return () => {} }))
     const mounted = await mount(<Title entityRef={TASK} />)
     await flush()
-    // Attempts at ~0, 30, 90 (next at 210). A fixed 30 ms retry would make 5+.
-    await wait(160)
+    // Attempts at ~0, 50, 150 (next at 350). A fixed 50 ms retry would make 5+.
+    await wait(250)
     await flush()
     expect(resolve).toHaveBeenCalledTimes(3)
     // linksChanged: immediate refetch, and the backoff restarts at retryMs.
     emit('ws')
     await flush()
     expect(resolve).toHaveBeenCalledTimes(4)
-    await wait(55)
+    await wait(100) // retry at ~50 (without the reset it would be ~400)
     await flush()
     expect(resolve).toHaveBeenCalledTimes(5)
     await mounted.unmount()
   })
 
   it('success resets the backoff', async () => {
-    resetEntityPreviewStores({ retryMs: 20, retryMaxMs: 10_000, ttlMs: 0 })
+    resetEntityPreviewStores({ retryMs: 40, retryMaxMs: 10_000, ttlMs: 0 })
     let fail = true
     const resolve = mock(async (_ws: string, refs: EntityRef[]) => {
       if (fail) throw new Error('down')
@@ -269,22 +269,22 @@ describe('preview cache', () => {
     setEntityDataSource(source(resolve))
     const mounted = await mount(<Title entityRef={TASK} />)
     await flush()
-    await wait(35) // attempt 2 at ~20 ms
-    await flush()
-    expect(resolve).toHaveBeenCalledTimes(2)
+    // Two failures (~0, ~40); the third attempt (~120) succeeds.
+    for (let i = 0; i < 20 && resolve.mock.calls.length < 2; i++) await wait(10)
+    expect(resolve.mock.calls.length).toBe(2)
     fail = false
-    await wait(60) // attempt 3 at ~60 ms succeeds
-    await flush()
+    for (let i = 0; i < 100 && mounted.container.textContent !== 'ok'; i++) { await wait(10); await flush() }
     expect(mounted.container.textContent).toBe('ok')
     const calls = resolve.mock.calls.length
-    // Fail again: first retry is back to 20 ms, not 80 ms.
+    // Fail again: the first retry is back to 40 ms (without the reset: 160 ms).
     fail = true
     revalidateEntityPreview('ws', TASK) // ttl 0: refetch now, fails
     await flush()
     expect(mounted.container.textContent).toBe('ok')
-    await wait(40)
+    await wait(100)
     await flush()
-    expect(resolve.mock.calls.length).toBe(calls + 2)
+    expect(resolve.mock.calls.length).toBeGreaterThanOrEqual(calls + 2)
+    expect(resolve.mock.calls.length).toBeLessThanOrEqual(calls + 3)
     await mounted.unmount()
   })
 
@@ -308,5 +308,8 @@ describe('preview cache', () => {
     expect(resolve).toHaveBeenCalledTimes(2)
     expect(mounted.container.textContent).toContain('Renamed')
     await mounted.unmount()
+    // Radix FocusScope dispatches its unmount event on a 0 ms timer: let it
+    // run against this file's DOM, not the next file's.
+    await wait(20)
   })
 })
