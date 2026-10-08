@@ -24,7 +24,8 @@ bun run lint:ui-tokens:update --base origin/<stack-base>   # stacked PR: a later
   ```
 
   File-wide, block, bare (no rule) and reason-less disables still count.
-- Files: every `.ts/.tsx/.mts/.cts/.js/.jsx/.mjs/.cjs` and `.css` file under the UI trees, except
+- Files: every `.ts/.tsx/.mts/.cts/.js/.jsx/.mjs/.cjs` and `.css` file under the UI trees (dot
+  paths included), except
   tests (`__tests__`, `*.test.*`, `*.spec.*`), `.d.*` and `dist`. Only the owned configs decide
   what is skipped: the script's ESLint `ignores` (no `eslint.config.*`, no `.eslintignore`) and
   `.stylelintrc.cjs` `ignoreFiles` (stylelint runs with `ignorePath: /dev/null`, so a root
@@ -62,6 +63,10 @@ Dialog primitives exist.
   defaults to `origin/main`) and commit the baseline. `--update --base` moves the renamed file's
   counts to its new path, so a move is not growth; `--update` without `--base` cannot tell a move
   from a new file and refuses it.
+- **Moving counted files out of the lint set is a weakening.** A rename into `__tests__/`, to
+  `*.test.*` / `*.d.ts`, under `dist/` or outside the UI trees would drop its counts as a decrease.
+  `--update` refuses it unless an owner names the new path with `--allow-increase`, and the PR then
+  needs the `ui-baseline-override` label. A plain delete stays a decrease.
 - On pull requests CI compares with the merge commit's own base (`--base HEAD^1`, the commit the
   merge was built on, not the moving branch tip). It reads that commit's baseline
   (`git show HEAD^1:eslint-baselines/ui-tokens.json`) and fails if any (file, rule) count grew or a
