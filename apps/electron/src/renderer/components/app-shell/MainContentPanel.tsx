@@ -16,6 +16,7 @@ import { useSession } from '@/hooks/useSession'
 import { loadRuntimeTrace, type RuntimeTraceAPI } from '@/event-processor/runtime-trace-ingress'
 import { runtimeCatalogCapabilities, runtimeCatalogScope } from '@/lib/runtime-catalog-capabilities'
 import { StoplightProvider } from '@/context/StoplightContext'
+import { panelRouteKey } from './panel-route-key'
 import {
   useNavigationState,
   useNavigation,
@@ -235,19 +236,8 @@ export function MainContentPanel({
     : requestedNavState
 
   // Detail state belongs to its workspace and entity, including project-level skills.
-  const routeKey = JSON.stringify([
-    activeWorkspaceId,
-    unavailableWorkspaceSlug,
-    navState.navigator,
-    isSessionsNavigation(navState) ? navState.viewMode : null,
-    'details' in navState ? navState.details : null,
-    isSettingsNavigation(navState) ? navState.subpage : null,
-    isScreenNavigation(navState) ? navState.screen : null,
-    navState.navigator === 'search' ? navState.query : null,
-    navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
-    unavailableWorkspaceSlug,
-    isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
-  ])
+  // W1-07 (#1504): the surface id joins the key (unified mode roots).
+  const routeKey = panelRouteKey(navState, { activeWorkspaceId, unavailableWorkspaceSlug, activeSessionWorkingDirectory })
   const [sessionSelection] = useSession()
   const store = useStore()
   const catalogSessionId = sessionSelection.selected
