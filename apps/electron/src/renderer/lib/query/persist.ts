@@ -1,6 +1,7 @@
 import { dehydrate, hydrate, type DehydratedState, type QueryClient } from '@tanstack/react-query'
 import type { NoteSummary } from '../../../shared/types'
 import { queryKeyDomain, queryKeyWorkspace, type RoxQueryDomain } from './keys'
+import { cacheWriteEpoch } from './shared-read'
 
 /**
  * PERF-09 (#1576): persist a small, safe slice of the query cache so the
@@ -153,7 +154,12 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
   idle?: IdleScheduler
   debounceMs?: number
   now?: () => number
-  /** Current principal; a record bound to another principal is removed, not restored. */
+  /**
+   * Reads the current principal. It is captured once when an identity epoch
+   * opens (start, and clear() on the identity event) and labels every record
+   * written in that epoch; at write time it is only re-read to check that
+   * main has not switched accounts ahead of the renderer's identity event.
+   */
   principal?: () => Promise<string>
 } = {}): RoxQueryPersistence {
   const idle = options.idle ?? defaultIdle
@@ -169,6 +175,20 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
   let cancelIdle: (() => void) | null = null
   let generation = 0
 
+  /**
+   * The identity epoch this persistence instance writes for: the shared
+   * cache's write epoch and the principal captured when it opened. Data in
+   * the cache was read in this epoch (identity changes clear the cache and
+   * reopen the epoch), so this principal, never one read fresh at write
+   * time, is what the record is bound to.
+   */
+  interface IdentityEpoch { generation: number; writeEpoch: number; principal: Promise<string | null> }
+  const openEpoch = (): IdentityEpoch => ({
+    generation, writeEpoch: cacheWriteEpoch(), principal: principal().then(value => value || null, () => null),
+  })
+  let epoch = openEpoch()
+  const epochIsCurrent = (opened: IdentityEpoch) => opened === epoch && opened.generation === generation && opened.writeEpoch === cacheWriteEpoch()
+
   const cancelPending = () => {
     if (debounce) clearTimeout(debounce)
     debounce = null
@@ -179,12 +199,18 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
   const write = () => {
     cancelIdle = null
     if (stopped || !lastWorkspace || !dirty) return
+    const opened = epoch
+    if (!epochIsCurrent(opened)) return
     const writeGeneration = generation
     const workspaceId = lastWorkspace
-    void principal().then(current => {
-      // clear() (identity change) or stop() while the principal was read.
-      if (stopped || writeGeneration !== generation) return
-      const record = buildPersistedRoxQueryCache(client, workspaceId, current, now())
+    void Promise.all([opened.principal, principal().then(value => value || null, () => null)]).then(([owner, current]) => {
+      // The identity epoch changed (identity event, clear()) or stop() meanwhile.
+      if (stopped || writeGeneration !== generation || !epochIsCurrent(opened)) return
+      // Main switched accounts but the renderer's identity event has not
+      // arrived yet: the cache may hold either principal's data. Drop the write;
+      // the event clears the cache and opens a new epoch.
+      if (!owner || current !== owner) return
+      const record = buildPersistedRoxQueryCache(client, workspaceId, owner, now())
       if (!record) {
         // Over the size cap (or nothing left): the older record must not stay on disk.
         return storage.remove().catch(() => {})
@@ -210,17 +236,20 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
     if (event.type !== 'updated' || event.action.type !== 'success') return
     const workspaceId = queryKeyWorkspace(event.query.queryKey)
     if (!workspaceId || !isPersistedKey(event.query.queryKey, workspaceId)) return
+    // A success outside the open epoch (identity reset not yet followed by clear()) is never persisted.
+    if (!epochIsCurrent(epoch)) return
     dirty = true
     lastWorkspace = workspaceId
     schedule()
   })
 
   const readGeneration = generation
-  const ready = Promise.all([storage.read(), principal()]).then(([value, current]) => {
+  const startEpoch = epoch
+  const ready = Promise.all([storage.read(), startEpoch.principal]).then(([value, owner]) => {
     // stop() or clear() (identity change) before the read finished: never restore.
-    if (stopped || readGeneration !== generation) return
+    if (stopped || readGeneration !== generation || !epochIsCurrent(startEpoch)) return
     const record = value as Partial<PersistedRoxQueryCache> | null | undefined
-    if (isRestorableRoxQueryCache(value, now()) && record?.principal === current) {
+    if (owner && isRestorableRoxQueryCache(value, now()) && record?.principal === owner) {
       restoreRoxQueryCache(client, value, now())
       lastWorkspace ??= value.workspaceId
     } else if (value !== undefined && value !== null) {
@@ -241,6 +270,8 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
       cancelPending()
       lastWorkspace = null
       dirty = false
+      // The identity event opens a new epoch; its principal is captured now.
+      epoch = openEpoch()
       await storage.remove().catch(() => {})
     },
     stop() {

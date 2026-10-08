@@ -223,18 +223,79 @@ describe('warning: the persisted record is bound to the principal', () => {
     match.stop()
   })
 
-  it('a write records the principal current at write time', async () => {
+  it('records are labelled with the principal the identity epoch opened with', async () => {
     const storage = memoryStorage()
     let who = 'alice'
-    const persistence = startRoxQueryPersistence(roxQueryClient(), storage, { debounceMs: 0, idle: run => { run(); return () => {} }, principal: async () => who })
+    const client = roxQueryClient()
+    const persistence = startRoxQueryPersistence(client, storage, { debounceMs: 0, idle: run => { run(); return () => {} }, principal: async () => who })
     await persistence.ready
     await fetchNotesList('ws', async () => [{ id: 'a' }] as never[])
     await new Promise(resolve => setTimeout(resolve, 5))
     expect((storage.value() as PersistedRoxQueryCache).principal).toBe('alice')
+    // The identity event (bridge order: fence, clear, persistence.clear) opens bob's epoch.
     who = 'bob'
+    resetSharedReads(client)
+    client.clear()
+    await persistence.clear()
     await fetchNotesList('ws', async () => [{ id: 'b' }] as never[])
     await new Promise(resolve => setTimeout(resolve, 5))
-    expect((storage.value() as PersistedRoxQueryCache).principal).toBe('bob')
+    const record = storage.value() as PersistedRoxQueryCache
+    expect(record.principal).toBe('bob')
+    expect(record.state.queries[0]!.state.data).toEqual([{ id: 'b' }])
+    persistence.stop()
+  })
+
+  it('an account switch in main before the renderer identity event never labels old data with the new principal', async () => {
+    const storage = memoryStorage()
+    let who = 'alice'
+    const principalReads: string[] = []
+    const idles: Array<() => void> = []
+    const client = roxQueryClient()
+    const persistence = startRoxQueryPersistence(client, storage, {
+      debounceMs: 0, idle: run => { idles.push(run); return () => {} }, principal: async () => { principalReads.push(who); return who },
+    })
+    await persistence.ready
+    // Alice's list is read in alice's epoch; the write is still queued.
+    await fetchNotesList('ws', async () => [{ id: 'alice-private' }] as never[])
+    await new Promise(resolve => setTimeout(resolve, 5))
+    // Main switches to bob; the renderer has not received onIdentityChanged yet.
+    who = 'bob'
+    for (const run of idles.splice(0)) run()
+    await new Promise(resolve => setTimeout(resolve, 5))
+    expect(storage.value()).toBeUndefined()
+    // A read that lands in the old epoch (it may already be bob's data) is not written either.
+    await fetchNotesList('ws', async () => [{ id: 'read-after-switch' }] as never[])
+    await new Promise(resolve => setTimeout(resolve, 5))
+    for (const run of idles.splice(0)) run()
+    await new Promise(resolve => setTimeout(resolve, 5))
+    expect(storage.value()).toBeUndefined()
+    expect(storage.log).not.toContain('write')
+
+    // The identity event arrives: fence + clear + persistence.clear open bob's epoch.
+    resetSharedReads(client)
+    client.clear()
+    await persistence.clear()
+    await fetchNotesList('ws', async () => [{ id: 'bob-note' }] as never[])
+    await new Promise(resolve => setTimeout(resolve, 5))
+    for (const run of idles.splice(0)) run()
+    await new Promise(resolve => setTimeout(resolve, 5))
+    const record = storage.value() as PersistedRoxQueryCache
+    expect(record.principal).toBe('bob')
+    expect(JSON.stringify(record)).not.toContain('alice-private')
+    expect(JSON.stringify(record)).not.toContain('read-after-switch')
+    expect(record.state.queries[0]!.state.data).toEqual([{ id: 'bob-note' }])
+    persistence.stop()
+  })
+
+  it('a success between the identity fence and clear() is never persisted', async () => {
+    const storage = memoryStorage()
+    const client = roxQueryClient()
+    const persistence = startRoxQueryPersistence(client, storage, { debounceMs: 0, idle: run => { run(); return () => {} }, principal: async () => 'alice' })
+    await persistence.ready
+    resetSharedReads(client)
+    client.setQueryData(roxKeys.notesList('ws'), [{ id: 'unfenced' }])
+    await new Promise(resolve => setTimeout(resolve, 5))
+    expect(storage.log).not.toContain('write')
     persistence.stop()
   })
 })
