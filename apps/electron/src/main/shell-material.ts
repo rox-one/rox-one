@@ -71,9 +71,15 @@ function queryHighContrast(): boolean {
   return nativeTheme.shouldUseHighContrastColors === true
 }
 
-/** Accessibility applies to the legacy material path as well as Zen. */
+/**
+ * Accessibility applies to the legacy material path as well as Zen, and so
+ * does the PERF-07 low-power profile: WindowManager's legacy constructor
+ * (Windows Mica) and reveal (macOS vibrancy) paths both consult this, so a
+ * low-power window never gets native glass on either path. The name is kept
+ * for the existing WindowManager import.
+ */
 export function nativeAccessibilityPrefersSolid(): boolean {
-  return queryHighContrast() || queryReduceTransparency()
+  return queryHighContrast() || queryReduceTransparency() || peekRenderProfile(currentPlatform()).profile === 'performance'
 }
 
 export function peekZenShellSnapshot(opts?: {

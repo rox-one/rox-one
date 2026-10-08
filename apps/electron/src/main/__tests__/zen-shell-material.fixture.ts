@@ -7,6 +7,9 @@ const electronApp = new EventEmitter()
 let zenEnabled = true
 let macReduceTransparency = false
 let build = '10.0.22621'
+// Native material scenarios run on the standard profile; PERF-07 low-power
+// clearing is covered by render-profile.fixture.ts.
+const renderProfilePreference = 'standard'
 const windows = new Set<FakeWindow>()
 
 class FakeWindow extends EventEmitter {
@@ -40,7 +43,7 @@ mock.module('electron', () => ({
   systemPreferences: { getUserDefault: () => macReduceTransparency },
 }))
 mock.module('os', () => ({ release: () => build }))
-mock.module('@rox/shared/config', () => ({ isZenShellEnabled: () => zenEnabled, getZenShellMaterialPreference: () => 'system', getRenderProfilePreference: () => 'auto' }))
+mock.module('@rox/shared/config', () => ({ isZenShellEnabled: () => zenEnabled, getZenShellMaterialPreference: () => 'system', getRenderProfilePreference: () => renderProfilePreference }))
 mock.module('../logger', () => ({ windowLog: { warn() {} } }))
 
 const policy = await import('../shell-material')

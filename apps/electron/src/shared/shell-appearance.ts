@@ -32,6 +32,7 @@ export type ShellMaterialFallbackReason =
   | 'window-destroyed'
   | 'gpu-failure'
   | 'material-unavailable'
+  | 'low-power'
   | 'zen-disabled'
 
 export interface ResolveShellMaterialInput {
@@ -44,6 +45,8 @@ export interface ResolveShellMaterialInput {
   paintHealthy: boolean
   windowDestroyed: boolean
   gpuFailed?: boolean
+  /** PERF-07: the low-power profile clears native vibrancy/Mica. */
+  renderProfile?: RenderProfile
 }
 
 export interface ResolvedShellAppearance {
@@ -148,6 +151,9 @@ export function resolveShellMaterial(input: ResolveShellMaterialInput): Resolved
   if (input.preference === 'opaque') {
     return { material: 'solid', fallbackReason: 'user-opaque' }
   }
+  if (input.renderProfile === 'performance') {
+    return { material: 'solid', fallbackReason: 'low-power' }
+  }
 
   const wantsGlass = input.preference === 'glass' || input.preference === 'system'
   if (!wantsGlass) {
@@ -171,7 +177,8 @@ export function snapshotZenShell(
   input: ResolveShellMaterialInput,
   renderProfile?: ZenShellRenderProfileState,
 ): ZenShellSnapshot {
-  const resolved = resolveShellMaterial(input)
+  // The low-power profile feeds material resolution (no native glass).
+  const resolved = resolveShellMaterial({ ...input, renderProfile: input.renderProfile ?? renderProfile?.profile })
   const snapshot: ZenShellSnapshot = {
     flag: ZEN_SHELL_FLAG,
     enabled: input.zenEnabled,

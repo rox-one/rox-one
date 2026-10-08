@@ -2,12 +2,15 @@ import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { mock } from 'bun:test'
 
-// PERF-07 (#1566): main resolves the low-power profile from the GPU status
-// and the persisted preference, and ships it in the shell snapshot.
+// PERF-07 (#1566): main resolves the low-power profile from the GPU status,
+// the hardware and the persisted preference, ships it in the shell snapshot,
+// and a low-power window gets no native vibrancy/Mica.
 let gpuCompositing: string | undefined = 'enabled'
 let ready = true
 let preference: string = 'auto'
 let throwStatus = false
+let totalmem: number | undefined = 16 * 1024 ** 3
+let cpuCount: number | undefined = 8
 
 const electronApp = Object.assign(new EventEmitter(), {
   isReady: () => ready,
@@ -17,11 +20,21 @@ const electronApp = Object.assign(new EventEmitter(), {
   },
 })
 
+const windows = new Set<FakeWindow>()
 class FakeWindow extends EventEmitter {
   webContents = new EventEmitter()
-  static getAllWindows() { return [] }
+  visible = false
+  vibrancy: string | null = null
+  backgroundMaterial = 'none'
+  backgroundColor = '#f4f4f5'
+  static getAllWindows() { return [...windows] }
+  constructor() { super(); windows.add(this) }
   isDestroyed() { return false }
-  isVisible() { return false }
+  isVisible() { return this.visible }
+  show() { this.visible = true }
+  setVibrancy(value: string | null) { this.vibrancy = value }
+  setBackgroundMaterial(value: string) { this.backgroundMaterial = value }
+  setBackgroundColor(value: string) { this.backgroundColor = value }
 }
 
 mock.module('electron', () => ({
@@ -30,7 +43,14 @@ mock.module('electron', () => ({
   nativeTheme: { shouldUseHighContrastColors: false, shouldUseDarkColors: false, prefersReducedTransparency: false },
   systemPreferences: { getUserDefault: () => false },
 }))
-mock.module('os', () => ({ release: () => '10.0.22621' }))
+mock.module('os', () => ({
+  release: () => '10.0.22621',
+  totalmem: () => {
+    if (totalmem === undefined) throw new Error('unavailable')
+    return totalmem
+  },
+  cpus: () => (cpuCount === undefined ? undefined : Array.from({ length: cpuCount }, () => ({}))),
+}))
 mock.module('@rox/shared/config', () => ({
   isZenShellEnabled: () => true,
   getZenShellMaterialPreference: () => 'system',
@@ -38,12 +58,14 @@ mock.module('@rox/shared/config', () => ({
 }))
 mock.module('../logger', () => ({ windowLog: { warn() {} } }))
 
-const { peekRenderProfile, queryGpuSoftwareCompositing } = await import('../render-profile')
+const { peekRenderProfile, queryGpuSoftwareCompositing, queryHardwareInfo } = await import('../render-profile')
 const material = await import('../shell-material')
+type Window = Parameters<typeof material.attachZenWindowPolicy>[0]
+const asWindow = (window: FakeWindow) => window as unknown as Window
 const platform = (value: string) => Object.defineProperty(process, 'platform', { configurable: true, value })
 let scenarios = 0
 
-// 1. Windows defaults on; macOS defaults off with a healthy GPU.
+// 1. Windows defaults on; macOS defaults off with a healthy GPU and hardware.
 assert.deepEqual(peekRenderProfile('win32'), { profile: 'performance', preference: 'auto', reason: 'windows' })
 assert.deepEqual(peekRenderProfile('darwin'), { profile: 'standard', preference: 'auto', reason: 'default' })
 scenarios++
@@ -54,17 +76,40 @@ assert.equal(queryGpuSoftwareCompositing(), true)
 assert.deepEqual(peekRenderProfile('darwin'), { profile: 'performance', preference: 'auto', reason: 'software-compositing' })
 gpuCompositing = 'unavailable_off'
 assert.equal(peekRenderProfile('linux').profile, 'performance')
+gpuCompositing = 'enabled'
 scenarios++
 
-// 3. Explicit preference wins over platform and GPU.
+// 3. Weak hardware (< 8 GiB RAM or <= 4 logical cores) turns it on on auto;
+//    unknown values are not weak.
+totalmem = 8 * 1024 ** 3 - 1
+assert.deepEqual(peekRenderProfile('darwin'), { profile: 'performance', preference: 'auto', reason: 'weak-hardware' })
+totalmem = 8 * 1024 ** 3
+assert.equal(peekRenderProfile('darwin').profile, 'standard')
+cpuCount = 4
+assert.equal(peekRenderProfile('darwin').reason, 'weak-hardware')
+cpuCount = 5
+assert.equal(peekRenderProfile('darwin').profile, 'standard')
+totalmem = undefined
+cpuCount = undefined
+assert.deepEqual(queryHardwareInfo(), {})
+assert.equal(peekRenderProfile('darwin').profile, 'standard')
+totalmem = 16 * 1024 ** 3
+cpuCount = 8
+assert.deepEqual(queryHardwareInfo(), { totalMemoryBytes: 16 * 1024 ** 3, logicalCpuCount: 8 })
+scenarios++
+
+// 4. Explicit preference wins over platform, GPU and hardware.
 preference = 'standard'
+gpuCompositing = 'disabled_software'
+cpuCount = 2
 assert.deepEqual(peekRenderProfile('win32'), { profile: 'standard', preference: 'standard', reason: 'user-standard' })
 preference = 'performance'
 gpuCompositing = 'enabled'
+cpuCount = 8
 assert.deepEqual(peekRenderProfile('darwin'), { profile: 'performance', preference: 'performance', reason: 'user-performance' })
 scenarios++
 
-// 4. Unknown GPU status (not ready, missing field, throwing API) is not weak;
+// 5. Unknown GPU status (not ready, missing field, throwing API) is not weak;
 //    a garbage persisted value falls back to auto.
 preference = 'turbo'
 ready = false
@@ -79,20 +124,65 @@ assert.equal(queryGpuSoftwareCompositing(), false)
 throwStatus = false
 scenarios++
 
-// 5. The shell snapshot (the existing shell-material path) carries the profile.
+// 6. The shell snapshot carries the profile and the profile feeds material
+//    resolution: low-power resolves to solid; standard keeps native glass.
 preference = 'auto'
 gpuCompositing = 'enabled'
 platform('win32')
 let snapshot = material.peekZenShellSnapshot()
 assert.equal(snapshot.renderProfile, 'performance')
 assert.equal(snapshot.renderProfileReason, 'windows')
+assert.equal(snapshot.material, 'solid')
+assert.equal(snapshot.fallbackReason, 'low-power')
+preference = 'standard'
+snapshot = material.peekZenShellSnapshot()
+assert.equal(snapshot.renderProfile, 'standard')
 assert.equal(snapshot.material, 'mica')
+preference = 'auto'
 platform('darwin')
 snapshot = material.peekZenShellSnapshot()
 assert.equal(snapshot.renderProfile, 'standard')
 assert.equal(snapshot.material, 'vibrancy')
+assert.equal(snapshot.fallbackReason, undefined)
 gpuCompositing = 'disabled_software'
+assert.equal(material.peekZenShellSnapshot().material, 'solid')
 assert.equal(material.peekZenShellSnapshotForWindow(null).renderProfile, 'performance')
+gpuCompositing = 'enabled'
+scenarios++
+
+// 7. Zen window: Windows auto (low-power) never gets Mica and keeps the opaque
+//    fill; switching the toggle off applies Mica, switching it on clears it.
+platform('win32')
+const win = new FakeWindow()
+material.attachZenWindowPolicy(asWindow(win))
+win.emit('ready-to-show')
+assert.equal(win.visible, true)
+assert.equal(win.backgroundMaterial, 'none')
+assert.equal(win.backgroundColor, '#f4f4f5')
+assert.equal(material.peekZenShellSnapshotForWindow(asWindow(win)).material, 'solid')
+preference = 'standard'
+material.reapplyZenShellOnWindow(asWindow(win))
+assert.equal(win.backgroundMaterial, 'mica')
+assert.equal(win.backgroundColor, '#00000000')
+preference = 'performance'
+material.reapplyZenShellOnWindow(asWindow(win))
+assert.equal(win.backgroundMaterial, 'none')
+assert.equal(win.backgroundColor, '#f4f4f5')
+scenarios++
+
+// 8. Legacy (Zen off) path: low-power also means no vibrancy/Mica.
+platform('darwin')
+preference = 'performance'
+assert.equal(material.nativeAccessibilityPrefersSolid(), true)
+const legacy = new FakeWindow()
+legacy.vibrancy = 'under-window'
+material.applyLegacyMaterial(asWindow(legacy))
+assert.equal(legacy.vibrancy, null)
+assert.equal(legacy.backgroundColor, '#f4f4f5')
+preference = 'auto'
+assert.equal(material.nativeAccessibilityPrefersSolid(), false)
+material.applyLegacyMaterial(asWindow(legacy))
+assert.equal(legacy.vibrancy, 'under-window')
 scenarios++
 
 process.stdout.write(JSON.stringify({ passed: true, scenarios }))

@@ -10,5 +10,5 @@ test('PERF-07: main resolves the low-power profile and ships it in the shell sna
   expect(result.error).toBeUndefined()
   expect(result.stderr).toBe('')
   expect(result.status).toBe(0)
-  expect(JSON.parse(result.stdout)).toEqual({ passed: true, scenarios: 5 })
+  expect(JSON.parse(result.stdout)).toEqual({ passed: true, scenarios: 8 })
 })

@@ -8,8 +8,11 @@
  */
 
 import { app } from 'electron'
+// Namespace import: tolerate partial `os` mocks and missing APIs.
+import * as os from 'os'
 import { getRenderProfilePreference } from '@rox/shared/config'
 import {
+  type HardwareInfo,
   isSoftwareCompositing,
   parseRenderProfilePreference,
   resolveRenderProfile,
@@ -29,6 +32,25 @@ export function queryGpuSoftwareCompositing(): boolean {
   }
 }
 
+/** Total RAM and logical core count; anything unreadable stays unknown. */
+export function queryHardwareInfo(): HardwareInfo {
+  const info: HardwareInfo = {}
+  try {
+    if (typeof os.totalmem === 'function') info.totalMemoryBytes = os.totalmem()
+  } catch {
+    // unknown
+  }
+  try {
+    if (typeof os.cpus === 'function') {
+      const cpus = os.cpus()
+      if (Array.isArray(cpus)) info.logicalCpuCount = cpus.length
+    }
+  } catch {
+    // unknown
+  }
+  return info
+}
+
 function readPreference() {
   try {
     return parseRenderProfilePreference(getRenderProfilePreference())
@@ -39,8 +61,10 @@ function readPreference() {
 
 export function peekRenderProfile(platform: ShellPlatform): ZenShellRenderProfileState {
   const preference = readPreference()
-  // Explicit choices win; skip the GPU probe for them.
-  const softwareCompositing = preference === 'auto' ? queryGpuSoftwareCompositing() : false
-  const resolved = resolveRenderProfile({ preference, platform, softwareCompositing })
+  // Explicit choices win; skip the GPU and hardware probes for them.
+  const auto = preference === 'auto'
+  const softwareCompositing = auto ? queryGpuSoftwareCompositing() : false
+  const hardware = auto ? queryHardwareInfo() : undefined
+  const resolved = resolveRenderProfile({ preference, platform, softwareCompositing, hardware })
   return { profile: resolved.profile, preference, reason: resolved.reason }
 }
