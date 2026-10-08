@@ -15,6 +15,14 @@
 --   * missing                       -> CREATE EXTENSION ... WITH SCHEMA public, which needs
 --     CREATE on the database (all three are trusted extensions on PostgreSQL 13+) or a
 --     superuser; if that fails -> error naming the privilege / DBA pre-install path.
+-- Extensions are per DATABASE while the migrator's advisory lock is per schema, so two
+-- first starts on different schemas of one database (parallel test schemas, multi-schema
+-- deployments) could race on CREATE EXTENSION. The block therefore first takes a
+-- database-wide transaction lock with a constant key, pg_advisory_xact_lock(1502, 502)
+-- (two-int key space: cannot collide with the migrator's single-bigint schema lock); the
+-- second start waits for the first to commit, then finds the extensions installed. A
+-- unique_violation (23505, e.g. a concurrent CREATE EXTENSION from outside) is passed
+-- through unwrapped instead of being reported as a missing privilege.
 -- See migrations/README.md "Extensions" and ../DEPLOYMENT.md.
 DO $rox_extension_preflight$
 DECLARE
@@ -23,6 +31,7 @@ DECLARE
   failed_state text;
   failed_message text;
 BEGIN
+  PERFORM pg_catalog.pg_advisory_xact_lock(1502, 502);
   FOREACH ext IN ARRAY ARRAY['citext', 'pg_trgm', 'unaccent'] LOOP
     SELECT n.nspname INTO ext_schema
       FROM pg_catalog.pg_extension e
@@ -38,7 +47,9 @@ BEGIN
     ELSE
       BEGIN
         EXECUTE format('CREATE EXTENSION IF NOT EXISTS %I WITH SCHEMA public', ext);
-      EXCEPTION WHEN OTHERS THEN
+      EXCEPTION WHEN unique_violation THEN
+        RAISE;
+      WHEN OTHERS THEN
         GET STACKED DIAGNOSTICS failed_state = RETURNED_SQLSTATE, failed_message = MESSAGE_TEXT;
         RAISE EXCEPTION USING
           ERRCODE = failed_state,

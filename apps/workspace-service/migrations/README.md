@@ -113,6 +113,14 @@ preflight `DO` block that checks `pg_extension` / `extnamespace` per extension:
 | installed in another schema (e.g. `extensions`) | startup fails: *needs PostgreSQL extension "citext" in schema "public", but it is installed in schema "extensions"*. Hint: `ALTER EXTENSION … SET SCHEMA public` |
 | missing | `CREATE EXTENSION … WITH SCHEMA public`; if the role cannot, startup fails: *…not installed and the service role could not create it: permission denied…*, with the privilege hint |
 
+The block first takes a **database-wide** transaction lock,
+`pg_advisory_xact_lock(1502, 502)` (constant key; the migrator's own lock is per
+schema). Two first starts on different schemas of one database therefore run
+the preflight one after the other: the second waits for the first to commit and
+then finds the extensions installed. A `unique_violation` (23505) from a
+concurrent `CREATE EXTENSION` outside the service is passed through unwrapped,
+not reported as a missing privilege.
+
 **Required privilege:** the service role needs `CREATE` on the database (all
 three are *trusted* extensions on PostgreSQL 13+, so no superuser is needed),
 **or** a DBA pre-installs them before the first start:

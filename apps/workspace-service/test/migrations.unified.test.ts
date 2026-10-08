@@ -690,6 +690,36 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
     }
   }, 180000)
 
+  itDb('502 preflight serialises first starts across schemas with a database-wide advisory lock (1502, 502)', async () => {
+    const holder = new SQL(testDb!.url, { max: 1 })
+    const migrator = new SQL(testDb!.url, { max: 1 })
+    const observer = new SQL(testDb!.url, { max: 1 })
+    const schema = `w105_extlock_${randomBytes(4).toString('hex')}`
+    await observer.unsafe(`CREATE SCHEMA "${schema}"`)
+    try {
+      const migrations = await loadMigrations()
+      let migration: Promise<unknown> | undefined
+      let waited = false
+      await holder.begin(async tx => {
+        await tx`SELECT pg_advisory_xact_lock(1502, 502)`
+        migration = applyWorkspaceMigrations(migrator, migrations, schema)
+        // The migration must queue on the same database-wide key while we hold it.
+        for (let i = 0; i < 200 && !waited; i += 1) {
+          const rows = await observer.unsafe<{ n: number }[]>(`SELECT count(*)::int AS n FROM pg_locks
+            WHERE locktype = 'advisory' AND classid = 1502 AND objid = 502 AND objsubid = 2 AND NOT granted`)
+          waited = (rows[0]?.n ?? 0) > 0
+          if (!waited) await Bun.sleep(50)
+        }
+      })
+      expect(waited).toBe(true)
+      const result = await migration as { applied: string[] }
+      expect(result.applied.length).toBe(migrations.length)
+    } finally {
+      await observer.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
+      for (const conn of [holder, migrator, observer]) await conn.close()
+    }
+  }, 120000)
+
   itDb('checksum change fails closed with MIGRATION_CHANGED (run d)', async () => {
     const db = new SQL(testDb!.url)
     try {
