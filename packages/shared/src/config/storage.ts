@@ -849,14 +849,17 @@ export function backupConfigFile(): void {
 export function ensureConfigDir(): void {
   if (configDirInitialized) return;
 
-  if (!existsSync(resolveConfigDir())) {
-    mkdirSync(resolveConfigDir(), { recursive: true });
+  // With `storage.visible-root.v1` ON, `resolveConfigDir()` runs
+  // `migrateHiddenRoxHome()` before any store opens (W1-13, MIG-13).
+  const dir = resolveConfigDir();
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
   }
 
   // Snapshot an existing config.json (dated, keep last 3) before anything can
   // mutate or — in a failure path — overwrite the workspace registry.
   backupConfigFile();
-  // Initialize bundled docs (creates ~/.craft-agent/docs/ with sources.md, agents.md, permissions.md)
+  // Initialize bundled docs (creates {configDir}/docs/ with sources.md, agents.md, permissions.md)
   initializeDocs();
 
   // Initialize config defaults
@@ -4326,7 +4329,7 @@ import { copyFileSync } from 'fs';
 const TOOL_ICONS_DIR_NAME = 'tool-icons';
 
 /**
- * Returns the path to the tool-icons directory: {configDir}/tool-icons/ (default ~/.rox or ~/rox).
+ * Returns the path to the tool-icons directory: {configDir}/tool-icons/ (default ~/rox).
  */
 export function getToolIconsDir(): string {
   return join(resolveConfigDir(), TOOL_ICONS_DIR_NAME);

@@ -22,7 +22,24 @@ export const ROX_LEGACY_BUNDLE_ID = 'com.lukilabs.craft-agent'
 export const ROX_DEEPLINK_SCHEME = 'rox'
 export const ROX_LEGACY_DEEPLINK_SCHEME = 'craftagents'
 
+/**
+ * Legacy hidden config dir name (`.rox`).
+ * @deprecated Kept as an alias for one release (W1-13, TECH-SPEC §10.1 rule 2).
+ * New code uses `ROX_HOME_DIR_NAME` (`rox`) and `ROX_COMPAT_SYMLINK_NAME`
+ * (`.rox`, symlink-only meaning).
+ */
 export const ROX_CONFIG_DIR_NAME = '.rox'
+/**
+ * Visible Rox home directory name (W1-13, ADR-U13): `~/rox`.
+ * All Rox files live here; `~/.rox` remains only as a compatibility symlink.
+ */
+export const ROX_HOME_DIR_NAME = 'rox'
+/**
+ * Compatibility symlink name (W1-13, ADR-U13): `.rox`.
+ * Read-only meaning — `~/.rox` may be a symlink to `~/rox`, never a real dir
+ * for new installs. Never delete it (PRD D-v2-1).
+ */
+export const ROX_COMPAT_SYMLINK_NAME = '.rox'
 /** Visible product home (no leading dot). Used when present or after migration. */
 export const ROX_VISIBLE_CONFIG_DIR_NAME = 'rox'
 export const ROX_LEGACY_CONFIG_DIR_NAME = '.craft-agent'
