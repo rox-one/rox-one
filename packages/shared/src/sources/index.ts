@@ -55,6 +55,7 @@ export {
   loadAllSources,
   getEnabledSources,
   isSourceUsable,
+  getLocalSourceFolderState,
   getSourcesBySlugs,
   // Create/Delete operations
   generateSourceSlug,

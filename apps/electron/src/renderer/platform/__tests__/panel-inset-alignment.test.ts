@@ -45,9 +45,11 @@ describe('panel inset alignment', () => {
     expect(desktop).not.toContain('marginBottom: -PANEL_STACK_BOTTOM_INSET')
     expect(desktop).not.toContain('marginBottom: -PANEL_STACK_TOP_INSET')
 
-    expect(host).toContain('<BottomTerminalDock />')
+    expect(host).not.toContain('<BottomTerminalDock')
     expect(host).toContain('<RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>')
     expect(host).toContain('<InspectorHost />')
-    expect(host.indexOf('<BottomTerminalDock />')).toBeLessThan(host.indexOf('<InspectorHost />'))
+    // The terminal is a panel-cell surface, not a full-width bottom dock.
+    expect(stack).toContain('belowContent={ownsTerminal ? (')
+    expect(stack).toContain('<TerminalPanel autoFocus=')
   })
 })

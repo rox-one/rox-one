@@ -6,6 +6,12 @@
 export const INTERNAL_BROWSER_OPEN_EVENT = 'craft:open-internal-browser'
 export const ROX_BROWSER_PROFILE_LABEL = 'Rox'
 export const ROX_BROWSER_PARTITION = 'persist:browser-pane'
+/**
+ * Cookie-isolated partition used when the user opts into imported cookies.
+ * Isolation is fixed at creation time, so a retained pane created without this
+ * partition can never gain it by navigation — it must be recreated.
+ */
+export const ROX_BROWSER_COOKIE_IMPORT_PARTITION = 'persist:browser-cookie-import'
 
 export function pickRetainedEmbeddedId(
   instances: Array<{ id: string; embedded?: boolean }>,

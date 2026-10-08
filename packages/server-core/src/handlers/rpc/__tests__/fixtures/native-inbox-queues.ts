@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { NativeAuthority } from '../../../../authority/native-authority'
 import { WsRpcServer } from '../../../../transport/server'
@@ -17,7 +17,7 @@ import { LessonStore } from '../../../../memory/LessonStore'
 import { extractProposalsFromTranscript } from '@rox/shared/memory/proposals'
 import type { MessagingBindingInfo, MessagingPendingSenderInfo } from '../../../messaging-registry-interface'
 
-const directory = process.env.ROX_CONFIG_DIR!
+const directory = realpathSync(process.env.ROX_CONFIG_DIR!)
 const roots = ['a', 'b'].map(id => { const rootPath = join(directory, id); mkdirSync(rootPath); writeFileSync(join(rootPath, 'config.json'), JSON.stringify({ id, name: id })); return { id, name: id, rootPath, createdAt: 1 } })
 writeFileSync(join(directory, 'config.json'), JSON.stringify({ workspaces: roots, activeWorkspaceId: 'a', llmConnections: [] }))
 const authority = new NativeAuthority({ stateDir: join(directory, 'authority') })

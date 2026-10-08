@@ -183,6 +183,8 @@ export async function createSession(
     workingDirectory?: string;
     permissionMode?: SessionConfig['permissionMode'];
     enabledSourceSlugs?: string[];
+    agentProfileSnapshot?: SessionConfig['agentProfileSnapshot'];
+    memoryMode?: SessionConfig['memoryMode'];
     model?: string;
     llmConnection?: string;
     hidden?: boolean;
@@ -221,6 +223,8 @@ export async function createSession(
     sdkCwd,
     permissionMode: options?.permissionMode,
     enabledSourceSlugs: options?.enabledSourceSlugs,
+    agentProfileSnapshot: options?.agentProfileSnapshot,
+    memoryMode: options?.memoryMode,
     model: options?.model,
     llmConnection: options?.llmConnection,
     hidden: options?.hidden,

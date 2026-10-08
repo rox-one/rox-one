@@ -1,15 +1,20 @@
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import { pathToFileURL } from 'node:url'
+import { toErrorMessage } from '../../../lib/errors'
 
 const compiledEffects = new Map<string, string>()
 
 /** Compile the production effect closure; no copy of its logic or module-wide mocks. */
 export function rendererEffect(path: URL, needle: string, bindings: Record<string, unknown>) {
   const source = readFileSync(path, 'utf8')
+  // The renderer error normaliser is a shared production import; effect
+  // closures extracted from real sources may call it without the test
+  // declaring it as a binding.
+  const scope = { toErrorMessage, ...bindings }
   const cacheKey = `${source}\n${needle}`
   const cached = compiledEffects.get(cacheKey)
-  if (cached) return Function(...Object.keys(bindings), cached)(...Object.values(bindings)) as undefined | (() => void)
+  if (cached) return Function(...Object.keys(scope), cached)(...Object.values(scope)) as undefined | (() => void)
   const file = ts.createSourceFile('AppShell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const effects: ts.Expression[] = []
   function visit(node: ts.Node) {
@@ -25,7 +30,7 @@ export function rendererEffect(path: URL, needle: string, bindings: Record<strin
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText
   compiledEffects.set(cacheKey, javascript)
-  return Function(...Object.keys(bindings), javascript)(...Object.values(bindings)) as undefined | (() => void)
+  return Function(...Object.keys(scope), javascript)(...Object.values(scope)) as undefined | (() => void)
 }
 
 export function appShellEffect(needle: string, bindings: Record<string, unknown>) {

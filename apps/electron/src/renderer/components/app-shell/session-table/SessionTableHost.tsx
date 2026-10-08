@@ -56,6 +56,7 @@ import {
 } from './table-empty-groups'
 import { isStaleRankNeighborsError, retryStaleRankReorder } from '@/lib/collection-reorder'
 import { collectionTableRowHeight } from './table-density'
+import { toErrorMessage } from '@/lib/errors'
 
 const PRIORITIES: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
 
@@ -229,7 +230,7 @@ export function SessionTableHost() {
   const persistCollapsed = React.useCallback((next: Set<string>) => {
     void persistCollapsedGroups(next).catch((error) => {
       console.error('[SessionTable] Failed to save collapsed groups:', error)
-      toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+      toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
     })
   }, [t])
 
@@ -505,7 +506,7 @@ export function SessionTableHost() {
         } catch (error) {
           console.error('[SessionTable] Failed to move session between groups:', error)
           updateMeta(dragId, previousMetadataPatch)
-          toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+          toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
           return
         }
       }
@@ -575,7 +576,7 @@ export function SessionTableHost() {
         }
         console.error('[SessionTable] Failed to reorder rank:', error)
         updateMeta(dragId, { rank: previousRank })
-        toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+        toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
       }
     },
     [display, filters, labelById, loadedSessionIds, metaMap, projectNameById, refreshMetadata, showGrip, statusById, t, updateMeta],
@@ -616,7 +617,7 @@ export function SessionTableHost() {
     } catch (error) {
       console.error('[SessionTable] Failed to move session into empty group:', error)
       updateMeta(dragId, previousMetadataPatch)
-      toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+      toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
     }
   }, [display.groupBy, metaMap, showGrip, t, updateMeta])
 
@@ -796,7 +797,7 @@ export function SessionTableHost() {
                           } catch (error) {
                             console.error('[SessionTable] Failed to update row:', error)
                             updateMeta(meta.id, meta)
-                            toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+                            toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
                           }
                         }
                         if (partial.priority !== undefined) void send({ type: 'setPriority', priority: partial.priority })

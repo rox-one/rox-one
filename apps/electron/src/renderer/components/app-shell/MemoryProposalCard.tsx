@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import type { MemoryProposal, MemoryProposalScope } from '@rox/shared/memory/proposals'
 import { consumeLearnFromSessionRequest, LEARN_FROM_SESSION_EVENT } from '@/lib/session-learn-request'
+import { workspaceProjectOptions } from '@/lib/workspace-work-client'
+import { canUsePersonalMemory, hasDurableMemoryApproval } from '@/lib/memory-approval-receipt'
 
 export interface MemoryProposalCardProps {
   proposal: MemoryProposal
@@ -15,24 +17,72 @@ export function MemoryProposalCard({ proposal, workspaceId, onChanged }: MemoryP
   const { t } = useTranslation()
   const [editing, setEditing] = React.useState(false)
   const [draft, setDraft] = React.useState(proposal.text)
+  const [scope, setScope] = React.useState<MemoryProposalScope>(proposal.approval?.scope ?? 'workspace')
+  const [projectId, setProjectId] = React.useState(proposal.approval?.projectId ?? proposal.projectId ?? '')
+  const [projects, setProjects] = React.useState<{ id: string; name: string }[]>([])
+  const [identity, setIdentity] = React.useState<Awaited<ReturnType<Window['electronAPI']['getOrgIdentity']>> | null>(null)
+  const [busy, setBusy] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [receipt, setReceipt] = React.useState(proposal.approval?.writtenAt ? proposal.approval : null)
+  const pending = React.useRef(false)
+  const cardScope = `${workspaceId}\0${proposal.id}`
+  const currentCardScope = React.useRef(cardScope)
+  currentCardScope.current = cardScope
+  const personalAvailable = canUsePersonalMemory(identity, proposal)
+  const approvalStarted = Boolean(proposal.approval)
+  React.useEffect(() => {
+    if (!proposal.approval) return
+    setScope(proposal.approval.scope); setProjectId(proposal.approval.projectId ?? ''); setDraft(proposal.text); setEditing(false)
+    if (proposal.approval.writtenAt) setReceipt(proposal.approval)
+  }, [proposal.approval?.consentEventId, proposal.approval?.writtenAt, proposal.text])
+  React.useEffect(() => {
+    let active = true
+    pending.current = false; setBusy(false)
+    setIdentity(null); setProjects([]); setError(null); setReceipt(proposal.approval?.writtenAt ? proposal.approval : null)
+    setScope(proposal.approval?.scope ?? 'workspace'); setProjectId(proposal.approval?.projectId ?? proposal.projectId ?? '')
+    Promise.allSettled([
+      Promise.resolve().then(() => window.electronAPI.getProjects(workspaceId)),
+      Promise.resolve().then(() => window.electronAPI.getOrgIdentity()),
+    ]).then(([projectResult, identityResult]) => {
+      if (!active) return
+      if (projectResult.status === 'fulfilled') {
+        try { setProjects(workspaceProjectOptions(projectResult.value, workspaceId)) } catch { setError(t('memory.proposal.projectsUnavailable')) }
+      } else setError(t('memory.proposal.projectsUnavailable'))
+      if (identityResult.status === 'fulfilled') setIdentity(identityResult.value)
+    })
+    return () => { active = false }
+  }, [workspaceId, proposal.id, t])
 
   const act = async (fn: () => Promise<unknown>) => {
+    if (pending.current) return
+    pending.current = true; setBusy(true); setError(null)
     try {
       await fn()
+      if (currentCardScope.current !== cardScope) return
       onChanged?.()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('memory.proposal.actionFailed'))
+      if (currentCardScope.current !== cardScope) return
+      setError(t('memory.proposal.actionFailed'))
+      toast.error(t('memory.proposal.actionFailed'), { description: error instanceof Error ? error.message : undefined })
+      onChanged?.()
+    } finally {
+      if (currentCardScope.current === cardScope) { pending.current = false; setBusy(false) }
     }
   }
 
-  const approve = (scope: MemoryProposalScope) =>
-    act(() => window.electronAPI.approveMemoryProposal(
+  const approve = () => act(async () => {
+    const result = await window.electronAPI.approveMemoryProposal(
       workspaceId,
       proposal.id,
       scope,
-      editing ? draft : undefined,
-      proposal.projectId,
-    ))
+      approvalStarted ? undefined : editing ? draft : undefined,
+      scope === 'project' ? projectId : undefined,
+    )
+    if (currentCardScope.current !== cardScope) return
+    if (!hasDurableMemoryApproval(result, scope)) throw new Error(t('memory.proposal.writeUnconfirmed'))
+    setReceipt(result.approval!)
+    toast.success(t('memory.proposal.savedToTarget', { target: t(`memory.proposal.target.${scope}`) }))
+  })
 
   return (
     <article
@@ -43,6 +93,7 @@ export function MemoryProposalCard({ proposal, workspaceId, onChanged }: MemoryP
       {editing && (
         <textarea
           value={draft}
+          disabled={busy || approvalStarted}
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
           className="mb-2 w-full rounded-md border border-info/30 bg-background px-2 py-1 text-[13px]"
@@ -58,23 +109,36 @@ export function MemoryProposalCard({ proposal, workspaceId, onChanged }: MemoryP
           <span className="text-warning">{t('memory.proposal.conflict')}</span>
         )}
       </div>
+      {receipt?.writtenAt && <p role="status" className="mt-2 text-xs text-success">{t('memory.proposal.savedToTarget', { target: t(`memory.proposal.target.${receipt.scope}`) })} · {new Date(receipt.writtenAt).toLocaleString()}</p>}
+      {error && <p role="alert" className="mt-2 text-xs text-destructive">{error}</p>}
       {proposal.status === 'pending' && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          <button type="button" className="h-6 rounded-md bg-accent/20 px-2 text-[11px] font-medium text-accent" onClick={() => void approve('global')}>
-            {t('memory.proposal.approveGlobal')}
+        <div className="mt-2 space-y-2">
+          <label className="flex flex-col gap-1 text-xs">{t('memory.proposal.targetLabel')}
+            <select aria-label={t('memory.proposal.targetLabel')} value={scope} disabled={busy || approvalStarted} onChange={event => setScope(event.target.value as MemoryProposalScope)} className="rounded-md border border-foreground/15 bg-background px-2 py-1">
+              {(['workspace', 'project', 'personal', 'global'] as MemoryProposalScope[]).map(target => <option key={target} value={target} disabled={target === 'personal' && !personalAvailable}>{t(`memory.proposal.target.${target}`)}</option>)}
+            </select>
+          </label>
+          {scope === 'project' && <select aria-label={t('memory.proposal.projectLabel')} value={projectId} disabled={busy || approvalStarted} onChange={event => setProjectId(event.target.value)} className="w-full rounded-md border border-foreground/15 bg-background px-2 py-1 text-xs">
+            <option value="">{t('memory.proposal.chooseProject')}</option>
+            {projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
+            {projectId && !projects.some(project => project.id === projectId) && <option value={projectId} disabled>{t('memory.proposal.projectUnavailable')}</option>}
+          </select>}
+          {!personalAvailable && <p className="text-[11px] text-muted-foreground">{t('memory.proposal.personalUnavailable')}</p>}
+          {approvalStarted && <p role="status" className="text-[11px] text-muted-foreground">{t('memory.proposal.retryPendingWrite')}</p>}
+          <div className="flex flex-wrap gap-1">
+          <button type="button" disabled={busy || (scope === 'personal' && !personalAvailable) || (scope === 'project' && (!projectId || (!approvalStarted && !projects.some(project => project.id === projectId))))} className="h-6 rounded-md bg-accent/20 px-2 text-[11px] font-medium text-accent disabled:opacity-40" onClick={() => void approve()}>
+            {t(busy ? 'memory.proposal.saving' : approvalStarted ? 'memory.proposal.retryApproval' : 'memory.proposal.approveTarget')}
           </button>
-          <button type="button" className="h-6 rounded-md bg-info/20 px-2 text-[11px] font-medium text-info" onClick={() => void approve('project')}>
-            {t('memory.proposal.approveProject')}
-          </button>
-          <button type="button" className="h-6 rounded-md px-2 text-[11px] text-muted-foreground hover:bg-foreground/10" onClick={() => { setEditing((v) => !v); setDraft(proposal.text) }}>
+          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-[11px] text-muted-foreground hover:bg-foreground/10 disabled:opacity-40" onClick={() => { setEditing((v) => !v); setDraft(proposal.text) }}>
             {t('memory.proposal.edit')}
           </button>
-          <button type="button" className="h-6 rounded-md px-2 text-[11px] text-muted-foreground hover:bg-foreground/10" onClick={() => void act(() => window.electronAPI.rejectMemoryProposal(workspaceId, proposal.id))}>
+          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-[11px] text-muted-foreground hover:bg-foreground/10 disabled:opacity-40" onClick={() => void act(() => window.electronAPI.rejectMemoryProposal(workspaceId, proposal.id))}>
             {t('memory.proposal.reject')}
           </button>
-          <button type="button" className="h-6 rounded-md px-2 text-[11px] text-destructive hover:bg-destructive/10" onClick={() => void act(() => window.electronAPI.deleteMemoryProposal(workspaceId, proposal.id))}>
+          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-[11px] text-destructive hover:bg-destructive/10 disabled:opacity-40" onClick={() => void act(() => window.electronAPI.deleteMemoryProposal(workspaceId, proposal.id))}>
             {t('memory.proposal.delete')}
           </button>
+          </div>
         </div>
       )}
     </article>
@@ -94,17 +158,29 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
   const [disabled, setDisabled] = React.useState(false)
   const [preview, setPreview] = React.useState<string[]>([])
   const [learning, setLearning] = React.useState(false)
+  const [reloadError, setReloadError] = React.useState(false)
+  const scopeKey = `${workspaceId ?? ''}\0${sessionId}`
+  const activeScope = React.useRef(scopeKey)
+  activeScope.current = scopeKey
+  const readGeneration = React.useRef(0)
   /** Result of the last explicit «learn» click; null until the user clicks. */
   const [lastRun, setLastRun] = React.useState<{ found: number; scanned: number } | null>(null)
 
   const reload = React.useCallback(() => {
     if (!workspaceId) return
+    const key = `${workspaceId}\0${sessionId}`
+    const generation = ++readGeneration.current
     window.electronAPI.listMemoryProposals(workspaceId, sessionId)
-      .then((items) => setProposals(items.filter((p) => p.status === 'pending')))
-      .catch(() => setProposals([]))
+      .then((items) => {
+        if (activeScope.current !== key || readGeneration.current !== generation) return
+        setProposals(items.filter((p) => p.workspaceId === workspaceId && p.sessionId === sessionId && p.status === 'pending'))
+        setReloadError(false)
+      })
+      .catch(() => { if (activeScope.current === key && readGeneration.current === generation) setReloadError(true) })
   }, [workspaceId, sessionId])
 
   React.useEffect(() => {
+    setProposals([]); setReloadError(false); setLastRun(null); setPreview([]); setDisabled(false); setLearning(false)
     reload()
     if (!workspaceId) return
     return window.electronAPI.onMemoryChanged(() => reload())
@@ -137,6 +213,7 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
         trigger: 'brain',
         messages,
       })
+      if (activeScope.current !== scopeKey) return
       setDisabled(result.disabled)
       setPreview(result.preview)
       setProposals(result.proposals)
@@ -150,11 +227,12 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
         toast.error(t('memory.proposal.llmFailed'), { description: result.warning })
       }
     } catch (error) {
+      if (activeScope.current !== scopeKey) return
       toast.error(t('memory.proposal.actionFailed'), {
         description: error instanceof Error ? error.message : undefined,
       })
     } finally {
-      setLearning(false)
+      if (activeScope.current === scopeKey) setLearning(false)
     }
   }
 
@@ -162,7 +240,7 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
 
   if (!workspaceId) return null
   // Nothing to show until the user asks (session menu) or proposals exist.
-  if (!learning && !disabled && !lastRun && proposals.length === 0) return null
+  if (!learning && !disabled && !lastRun && !reloadError && proposals.length === 0) return null
 
   return (
     <div className="mt-3 flex flex-col gap-2 px-1" data-memory-proposal-lane={sessionId}>
@@ -178,6 +256,10 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
         </p>
       )}
       {disabled && <p className="text-xs text-muted-foreground">{t('memory.proposal.disabled')}</p>}
+      {reloadError && <div role="alert" className="flex items-center gap-2 text-xs text-destructive">
+        <span>{t('memory.proposal.reloadFailed')}</span>
+        <button type="button" className="rounded-md border border-foreground/15 px-2 py-1 text-foreground" onClick={reload}>{t('memory.proposal.retryLoad')}</button>
+      </div>}
       {proposals.map((proposal) => (
         <MemoryProposalCard key={proposal.id} proposal={proposal} workspaceId={workspaceId} onChanged={reload} />
       ))}

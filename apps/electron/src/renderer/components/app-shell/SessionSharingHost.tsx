@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toErrorMessage } from '@/lib/errors'
 import { routes } from '@/lib/navigate'
 import {
   JOIN_SESSION_EVENT, SESSION_LINK_EVENT, SessionLinkError, joinAndOpenSession,
@@ -112,7 +113,7 @@ export function SessionSharingHost({ activeWorkspaceId, onSwitchWorkspace }: {
           await navigate(routes.view.allSessions(openTarget.id))
           pending?.resolve()
         } catch (failure) {
-          pending?.reject(failure instanceof Error ? failure : new Error(String(failure)))
+          pending?.reject(failure instanceof Error ? failure : new Error(toErrorMessage(failure)))
         } finally {
           if (pendingOpenRef.current === pending) {
             pendingOpenRef.current = null

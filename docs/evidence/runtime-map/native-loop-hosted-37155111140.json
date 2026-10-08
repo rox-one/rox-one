@@ -1,0 +1,794 @@
+{
+  "class": "actual-native-sdk-fixture-provider",
+  "workflowConclusion": "failure",
+  "nativeLoopConclusion": "success",
+  "scope": "Actual native SDK workers and delivered fixture-provider Context; boundary job failed only the inherited legacy-sidecar test expectation after managed-env main integration. This receipt does not claim complete CI success.",
+  "headSha": "3c02f078ca47e84a23c1981b4706b9f72b3ff460",
+  "baseSha": "63dd527439cd422d0c392cd8fce1461db333168b",
+  "checkoutMergeSha": "5ee71b5b3bc9f65d2eddbe73c0ed918d71e5d783",
+  "workflowRun": 37155111140,
+  "workflowJob": 111296796630,
+  "artifactId": 11285269727,
+  "workflowUrl": "https://github.com/rox-one/rox-one/actions/runs/37155111140",
+  "artifactUrl": "https://github.com/rox-one/rox-one/actions/runs/37155111140/artifacts/11285269727",
+  "artifactZipSha256": "fffad0b3177609019b0a3d11bb654d5cf3440fa498eb2b12b189049cb9ff391c",
+  "artifactRawJsonSha256": "7e8d76b09358f5c4cb337384faa2fd9cc4174e678e17fa18961fc969bf8cbda8",
+  "nativeVersion": "18.4.12",
+  "assertionsPassed": true,
+  "networkAttempts": 0,
+  "paidProviderRequests": 0,
+  "observations": 63,
+  "nativeHooks": 121,
+  "providerCalls": 10,
+  "steps": {
+    "frozenInstall": "passed",
+    "verifiedNativePackageAndLockedGraph": "passed",
+    "nativeLoop": "passed",
+    "boundaryTests": "failed",
+    "evidenceUpload": "passed"
+  },
+  "commands": [
+    {
+      "command": "bun install --frozen-lockfile",
+      "exitCode": 0
+    },
+    {
+      "command": "bun scripts/probes/prepare-runtime-map-omp.ts \"$RUNNER_TEMP/runtime-map-omp\"",
+      "exitCode": 0
+    },
+    {
+      "command": "ROX_OMP_PACKAGE_DIR=\"$RUNNER_TEMP/runtime-map-omp/package\" bun scripts/probes/runtime-map-native-loop.ts \"$RUNNER_TEMP/runtime-map-native-loop.json\"",
+      "exitCode": 0
+    },
+    {
+      "command": "bun test packages/core/src/runtime-trace packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts packages/server-core/src/sessions/runtime-trace packages/server-core/src/handlers/rpc/__tests__/runtime-trace.test.ts",
+      "exitCode": 1,
+      "testsPassed": 92,
+      "testsFailed": 1,
+      "assertions": 487,
+      "files": 10
+    }
+  ],
+  "boundaryFailure": {
+    "test": "OMP typed native runtime bridge > creates a new attempt only for an actually started sidecar-to-local fallback",
+    "expectedActualSidecarCalls": 1,
+    "actualSidecarCalls": 0,
+    "cause": "Managed getHostBashEnv provider correctly bypasses the env-less legacy port; old fixture expected legacy fallback while providing managed env.",
+    "localTestOnlyFix": "f02c3d2a0",
+    "regressionReceipt": "managed-host-bash-observer-fixture.json",
+    "freshGreenWorkflowRequired": true
+  },
+  "actualAssignments": [
+    {
+      "sourceId": "omp-native:native-fixture-turn:01a103b0-a852-7000-83b9-6b90d32c6646:9efcaf35-0972-4583-8a02-44009f7cc735",
+      "agentId": "ReliableCougar",
+      "parentAgentId": "root",
+      "parentSpanId": "tool:actual-parent-task",
+      "nativeKind": "task",
+      "model": {
+        "confirmed": {
+          "state": "known",
+          "value": "fixture/worker",
+          "source": "OMP ExtensionContext.model",
+          "origin": "observed"
+        },
+        "provider": "fixture",
+        "contextWindow": {
+          "state": "known",
+          "value": 200000,
+          "source": "OMP model catalog",
+          "origin": "observed"
+        }
+      },
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ]
+    },
+    {
+      "sourceId": "omp-native:native-fixture-turn:01a103b0-a8c0-7000-97b4-3fd1ebc03e44:ffa2d970-a163-406c-8d2d-57f944f01066",
+      "agentId": "ReliableCougar.AsleepClam",
+      "parentAgentId": "ReliableCougar",
+      "parentSpanId": "native:01a103b0-a852-7000-83b9-6b90d32c6646:tool:actual-child-task",
+      "nativeKind": "task",
+      "model": {
+        "confirmed": {
+          "state": "known",
+          "value": "fixture/restricted",
+          "source": "OMP ExtensionContext.model",
+          "origin": "observed"
+        },
+        "provider": "fixture",
+        "contextWindow": {
+          "state": "known",
+          "value": 32768,
+          "source": "OMP model catalog",
+          "origin": "observed"
+        }
+      },
+      "tools": [
+        "read",
+        "yield"
+      ]
+    },
+    {
+      "sourceId": "omp-native:native-fixture-turn:01a103b0-a9e7-7000-8f76-5e2de6721c45:da03291e-c3db-4bbb-808c-65bf4e8797ae",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "nativeKind": "eval",
+      "model": {
+        "confirmed": {
+          "state": "known",
+          "value": "fixture/restricted",
+          "source": "OMP ExtensionContext.model",
+          "origin": "observed"
+        },
+        "provider": "fixture",
+        "contextWindow": {
+          "state": "known",
+          "value": 32768,
+          "source": "OMP model catalog",
+          "origin": "observed"
+        }
+      },
+      "tools": [
+        "read",
+        "yield"
+      ]
+    }
+  ],
+  "actualCompletions": [
+    {
+      "agentId": "ReliableCougar.AsleepClam",
+      "parentAgentId": "ReliableCougar",
+      "status": "succeeded",
+      "result": {
+        "text": "{\"text\":\"GRANDCHILD_OK\"}",
+        "byteLength": 24,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      }
+    },
+    {
+      "agentId": "ReliableCougar",
+      "parentAgentId": "root",
+      "status": "succeeded",
+      "result": {
+        "text": "{\"text\":\"CHILD_OK\"}",
+        "byteLength": 19,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      }
+    },
+    {
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "status": "succeeded",
+      "result": {
+        "text": "{\"text\":\"EVAL_OK\"}",
+        "byteLength": 18,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      }
+    }
+  ],
+  "actualProviderContexts": [
+    {
+      "call": 1,
+      "model": {
+        "id": "worker",
+        "provider": "fixture"
+      },
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "6855c12c453179ce59baa7e0ef08f6705e87a9f00b66dee7a0f2903ee00fab56",
+        "byteLength": 210590
+      },
+      "systemPrompt": {
+        "sha256": "cd05a4df2e5858ab0c4f4ac75415f4fefe5ccdac7be84eb653a4159f3bc1a434",
+        "byteLength": 351,
+        "parts": 2
+      },
+      "messages": {
+        "sha256": "80270f3df8607b81258a28141b2b0106e931fe663290d20136ac9fd4792bb034",
+        "byteLength": 11606,
+        "count": 4
+      },
+      "toolSchemas": {
+        "sha256": "c096ecf68314cdfe29f4578c5a479abb8c1cee8982b26b56e1744bc1565ec0f8",
+        "byteLength": 198595,
+        "count": 3
+      },
+      "userTextParts": [
+        {
+          "sha256": "036df0025f25cdcbe827b1e5078b75f99ec1765a7c8420d14d9fa018e48a5d88",
+          "byteLength": 166,
+          "containsOriginalRootPrompt": false
+        },
+        {
+          "sha256": "9da3cb011b6b014cdb7378e24376a5716d703888d711e43dd743070212bceefd",
+          "byteLength": 52,
+          "containsOriginalRootPrompt": true
+        }
+      ]
+    },
+    {
+      "call": 2,
+      "model": {
+        "id": "worker",
+        "provider": "fixture"
+      },
+      "tools": [],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "f14e8bd2b72ae2cb8cdc72784cc30b0aba70d72f9ec9fb686ec0aa01d3126f23",
+        "byteLength": 1082
+      },
+      "systemPrompt": {
+        "sha256": "56c92eeb9d8349352a860171a8331e197bb66dba61c981408c21a5859a9a61a5",
+        "byteLength": 927,
+        "parts": 2
+      },
+      "messages": {
+        "sha256": "f4b4fb79708e8c69f40313bafaa2234b9d110afd677d8ebc639aca5124705ef0",
+        "byteLength": 126,
+        "count": 1
+      },
+      "toolSchemas": {
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "byteLength": 2,
+        "count": 0
+      },
+      "userTextParts": [
+        {
+          "sha256": "5d52463a6d31a0a5c751facc827ca368c33dfb2d2de7a3042d34103f0425b61c",
+          "byteLength": 66,
+          "containsOriginalRootPrompt": false
+        }
+      ]
+    },
+    {
+      "call": 3,
+      "model": {
+        "id": "worker",
+        "provider": "fixture"
+      },
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "b3176a3a1890dc3a814e9030339190f18c00f73cf88d487c0c880d58fb0f1de9",
+        "byteLength": 173707
+      },
+      "systemPrompt": {
+        "sha256": "dcd94a3f4b89bdad0a7b6539aaed0c77ee37c6d8db8f347f7a6c4bd7500a8748",
+        "byteLength": 8470,
+        "parts": 4
+      },
+      "messages": {
+        "sha256": "c7189cdff94ff6edabd2969db7a3821a463766eae359d92be706e8482b7bd47f",
+        "byteLength": 4509,
+        "count": 3
+      },
+      "toolSchemas": {
+        "sha256": "583302832c37766e3f9128748cd6e5b906e7b6578ab806234ea062d5c76043df",
+        "byteLength": 160690,
+        "count": 4
+      },
+      "userTextParts": [
+        {
+          "sha256": "036df0025f25cdcbe827b1e5078b75f99ec1765a7c8420d14d9fa018e48a5d88",
+          "byteLength": 166,
+          "containsOriginalRootPrompt": false
+        },
+        {
+          "sha256": "4c5c4a62fd3eebb9e49a97d64acb4849fd6f4d1b849f75eadad5b913442cc81a",
+          "byteLength": 118,
+          "containsOriginalRootPrompt": false
+        }
+      ]
+    },
+    {
+      "call": 4,
+      "model": {
+        "id": "worker",
+        "provider": "fixture"
+      },
+      "tools": [],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "56b47466e8db97efaf99210111964d760b2765e2e3fd1759b951677869fa8840",
+        "byteLength": 1087
+      },
+      "systemPrompt": {
+        "sha256": "56c92eeb9d8349352a860171a8331e197bb66dba61c981408c21a5859a9a61a5",
+        "byteLength": 927,
+        "parts": 2
+      },
+      "messages": {
+        "sha256": "ecd6b98c8767004ad7e5a3a88e76596b774b21acdabeb4245f2dda095dec0dfa",
+        "byteLength": 131,
+        "count": 1
+      },
+      "toolSchemas": {
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "byteLength": 2,
+        "count": 0
+      },
+      "userTextParts": [
+        {
+          "sha256": "8b095014e74fd82a333df9f3b8285ca052f0bbe049c84c44ec829af9c42cca41",
+          "byteLength": 71,
+          "containsOriginalRootPrompt": false
+        }
+      ]
+    },
+    {
+      "call": 5,
+      "model": {
+        "id": "restricted",
+        "provider": "fixture"
+      },
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "a6912d83f10d1f4e36f4b1804e556e8acdb9fee0de359556b457fa56440e2a01",
+        "byteLength": 72258
+      },
+      "systemPrompt": {
+        "sha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+        "byteLength": 7625,
+        "parts": 4
+      },
+      "messages": {
+        "sha256": "640d4c9a96e5f799a1192f9b5b280212b3b8b6da21da31ca483de3193b2dd59a",
+        "byteLength": 643,
+        "count": 2
+      },
+      "toolSchemas": {
+        "sha256": "17dcb6cbaa7265980fd68cb39dca7f90eb36e21044f18017140847e0e18c527c",
+        "byteLength": 63952,
+        "count": 2
+      },
+      "userTextParts": [
+        {
+          "sha256": "036df0025f25cdcbe827b1e5078b75f99ec1765a7c8420d14d9fa018e48a5d88",
+          "byteLength": 166,
+          "containsOriginalRootPrompt": false
+        },
+        {
+          "sha256": "51e1d1816eec5c508613d7cfd6282beb757f6e5d259e83fd10eba56a0051be07",
+          "byteLength": 123,
+          "containsOriginalRootPrompt": false
+        }
+      ]
+    },
+    {
+      "call": 6,
+      "model": {
+        "id": "restricted",
+        "provider": "fixture"
+      },
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "102eb5e0b2a0c294a0e4df5134822e2c33772dc4a80d23b95598e549a668f6dc",
+        "byteLength": 76753
+      },
+      "systemPrompt": {
+        "sha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+        "byteLength": 7625,
+        "parts": 4
+      },
+      "messages": {
+        "sha256": "80b636d0339250e6efbcbcfb7199b0d4851e67058ee2e3d5545b2e5e7ad92ff0",
+        "byteLength": 1574,
+        "count": 4
+      },
+      "toolSchemas": {
+        "sha256": "960b3d593fbef7437573dfd580462f8f1aa8602532412c56963cf48d76ce824e",
+        "byteLength": 67516,
+        "count": 2
+      },
+      "userTextParts": [
+        {
+          "sha256": "036df0025f25cdcbe827b1e5078b75f99ec1765a7c8420d14d9fa018e48a5d88",
+          "byteLength": 166,
+          "containsOriginalRootPrompt": false
+        },
+        {
+          "sha256": "51e1d1816eec5c508613d7cfd6282beb757f6e5d259e83fd10eba56a0051be07",
+          "byteLength": 123,
+          "containsOriginalRootPrompt": false
+        }
+      ]
+    },
+    {
+      "call": 7,
+      "model": {
+        "id": "worker",
+        "provider": "fixture"
+      },
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "bc93a94415b6cccfa6f261cbae8425a8f665941dae3769d204ddc8dc134873d8",
+        "byteLength": 189213
+      },
+      "systemPrompt": {
+        "sha256": "dcd94a3f4b89bdad0a7b6539aaed0c77ee37c6d8db8f347f7a6c4bd7500a8748",
+        "byteLength": 8470,
+        "parts": 4
+      },
+      "messages": {
+        "sha256": "44cf05361645bec3150e93152e2279b130ea615a9ce4d5f0c198cac7a1eab451",
+        "byteLength": 6785,
+        "count": 5
+      },
+      "toolSchemas": {
+        "sha256": "24268afc9a9a7222c2ff79c8bc650c6b1993ba2cb10595bfb6f367a54f9cd6a0",
+        "byteLength": 173920,
+        "count": 4
+      },
+      "userTextParts": [
+        {
+          "sha256": "036df0025f25cdcbe827b1e5078b75f99ec1765a7c8420d14d9fa018e48a5d88",
+          "byteLength": 166,
+          "containsOriginalRootPrompt": false
+        },
+        {
+          "sha256": "4c5c4a62fd3eebb9e49a97d64acb4849fd6f4d1b849f75eadad5b913442cc81a",
+          "byteLength": 118,
+          "containsOriginalRootPrompt": false
+        }
+      ]
+    },
+    {
+      "call": 8,
+      "model": {
+        "id": "worker",
+        "provider": "fixture"
+      },
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "39cf2ea016bc221d40425eaaee7b99cca6cde094b61c2d287380ee79b9050d66",
+        "byteLength": 225959
+      },
+      "systemPrompt": {
+        "sha256": "cd05a4df2e5858ab0c4f4ac75415f4fefe5ccdac7be84eb653a4159f3bc1a434",
+        "byteLength": 351,
+        "parts": 2
+      },
+      "messages": {
+        "sha256": "7ade33331fcf38cfeafce73d8cfef750fb5f4679bc85d66c2ff63857914789d0",
+        "byteLength": 15140,
+        "count": 6
+      },
+      "toolSchemas": {
+        "sha256": "6b0d4e5ce6a6d7923c8490c1822c49610e8d322055063067628f07572184cdbf",
+        "byteLength": 210430,
+        "count": 3
+      },
+      "userTextParts": [
+        {
+          "sha256": "036df0025f25cdcbe827b1e5078b75f99ec1765a7c8420d14d9fa018e48a5d88",
+          "byteLength": 166,
+          "containsOriginalRootPrompt": false
+        },
+        {
+          "sha256": "9da3cb011b6b014cdb7378e24376a5716d703888d711e43dd743070212bceefd",
+          "byteLength": 52,
+          "containsOriginalRootPrompt": true
+        }
+      ]
+    },
+    {
+      "call": 9,
+      "model": {
+        "id": "restricted",
+        "provider": "fixture"
+      },
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "ca0e55547dd63eb72cb6960e80b0f1936d1e6cf65cddbee22f8d7535fde15ceb",
+        "byteLength": 71829
+      },
+      "systemPrompt": {
+        "sha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+        "byteLength": 7625,
+        "parts": 4
+      },
+      "messages": {
+        "sha256": "25209d9cfebad332624da331c7bb9b5d9c51ee22de657565f59e24e51d9af38e",
+        "byteLength": 384,
+        "count": 1
+      },
+      "toolSchemas": {
+        "sha256": "55700888f5cdb5e146b938062ceaf29b0d6670912e6ebcd2a59d15850cfb6aa1",
+        "byteLength": 63782,
+        "count": 2
+      },
+      "userTextParts": [
+        {
+          "sha256": "036df0025f25cdcbe827b1e5078b75f99ec1765a7c8420d14d9fa018e48a5d88",
+          "byteLength": 166,
+          "containsOriginalRootPrompt": false
+        },
+        {
+          "sha256": "048bc7ccbb9c6b06d95518719fa08c76954bc1f46a8fe4c749a9fd4eabbb286d",
+          "byteLength": 83,
+          "containsOriginalRootPrompt": false
+        }
+      ]
+    },
+    {
+      "call": 10,
+      "model": {
+        "id": "worker",
+        "provider": "fixture"
+      },
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "boundary": "native fixture provider Context",
+      "context": {
+        "sha256": "5c2e32abea0ced25f93937a723898c3bbe7616c5a1983a0b95976001649e590d",
+        "byteLength": 229673
+      },
+      "systemPrompt": {
+        "sha256": "cd05a4df2e5858ab0c4f4ac75415f4fefe5ccdac7be84eb653a4159f3bc1a434",
+        "byteLength": 351,
+        "parts": 2
+      },
+      "messages": {
+        "sha256": "37b3e09b16a88f324f54b8053a433dc0526e648ea1dc69682cf120bd279eb3fe",
+        "byteLength": 17837,
+        "count": 8
+      },
+      "toolSchemas": {
+        "sha256": "ec24594756520c9878eb9bf1e206d622c79b0d68f1063a50752a67f924b4c6e8",
+        "byteLength": 211447,
+        "count": 3
+      },
+      "userTextParts": [
+        {
+          "sha256": "036df0025f25cdcbe827b1e5078b75f99ec1765a7c8420d14d9fa018e48a5d88",
+          "byteLength": 166,
+          "containsOriginalRootPrompt": false
+        },
+        {
+          "sha256": "9da3cb011b6b014cdb7378e24376a5716d703888d711e43dd743070212bceefd",
+          "byteLength": 52,
+          "containsOriginalRootPrompt": true
+        }
+      ]
+    }
+  ],
+  "actualContextComparisons": [
+    {
+      "agentId": "root",
+      "snapshotId": "01a103b0-a70b-7000-a47b-41b0069597a5:context:2",
+      "providerCall": 1,
+      "effectivePromptSha256": "9da3cb011b6b014cdb7378e24376a5716d703888d711e43dd743070212bceefd",
+      "effectivePromptByteLength": 52,
+      "systemPromptSha256": "cd05a4df2e5858ab0c4f4ac75415f4fefe5ccdac7be84eb653a4159f3bc1a434",
+      "systemPromptByteLength": 351,
+      "actualProviderContextSha256": "6855c12c453179ce59baa7e0ef08f6705e87a9f00b66dee7a0f2903ee00fab56",
+      "actualProviderContextByteLength": 210590,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true,
+      "originalRootPromptDistinct": true,
+      "originalRootPromptIncluded": true
+    },
+    {
+      "agentId": "ReliableCougar",
+      "snapshotId": "01a103b0-a852-7000-83b9-6b90d32c6646:context:2",
+      "providerCall": 3,
+      "effectivePromptSha256": "4c5c4a62fd3eebb9e49a97d64acb4849fd6f4d1b849f75eadad5b913442cc81a",
+      "effectivePromptByteLength": 118,
+      "systemPromptSha256": "dcd94a3f4b89bdad0a7b6539aaed0c77ee37c6d8db8f347f7a6c4bd7500a8748",
+      "systemPromptByteLength": 8470,
+      "actualProviderContextSha256": "b3176a3a1890dc3a814e9030339190f18c00f73cf88d487c0c880d58fb0f1de9",
+      "actualProviderContextByteLength": 173707,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true
+    },
+    {
+      "agentId": "ReliableCougar.AsleepClam",
+      "snapshotId": "01a103b0-a8c0-7000-97b4-3fd1ebc03e44:context:2",
+      "providerCall": 5,
+      "effectivePromptSha256": "51e1d1816eec5c508613d7cfd6282beb757f6e5d259e83fd10eba56a0051be07",
+      "effectivePromptByteLength": 123,
+      "systemPromptSha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+      "systemPromptByteLength": 7625,
+      "actualProviderContextSha256": "a6912d83f10d1f4e36f4b1804e556e8acdb9fee0de359556b457fa56440e2a01",
+      "actualProviderContextByteLength": 72258,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true
+    },
+    {
+      "agentId": "eval-worker-fixture",
+      "snapshotId": "01a103b0-a9e7-7000-8f76-5e2de6721c45:context:2",
+      "providerCall": 9,
+      "effectivePromptSha256": "048bc7ccbb9c6b06d95518719fa08c76954bc1f46a8fe4c749a9fd4eabbb286d",
+      "effectivePromptByteLength": 83,
+      "systemPromptSha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+      "systemPromptByteLength": 7625,
+      "actualProviderContextSha256": "ca0e55547dd63eb72cb6960e80b0f1936d1e6cf65cddbee22f8d7535fde15ceb",
+      "actualProviderContextByteLength": 71829,
+      "matchedFields": [
+        "effectivePrompt:user-text-part",
+        "systemPrompt:ordered-parts"
+      ],
+      "matchesEffectivePromptPart": true,
+      "matchesSystemPromptParts": true
+    }
+  ],
+  "contextComparisonBoundary": {
+    "available": "Actual native fixture provider Context after native transforms",
+    "unavailable": [
+      "HTTP serialized request payload",
+      "exact provider tokenization"
+    ]
+  },
+  "localIndependentRecalculation": {
+    "passed": true,
+    "boundary": "Recomputed raw UTF-8 effectivePrompt and compact-JSON ordered system parts from actual context.changed observations; compared against delivered fixture-provider Context fingerprints. Full Context digest is checked against the callback fingerprint, not reconstructed from incomplete observations.",
+    "comparisons": [
+      {
+        "agentId": "root",
+        "snapshotId": "01a103b0-a70b-7000-a47b-41b0069597a5:context:2",
+        "providerCall": 1,
+        "effectivePrompt": {
+          "sha256": "9da3cb011b6b014cdb7378e24376a5716d703888d711e43dd743070212bceefd",
+          "byteLength": 52
+        },
+        "orderedSystemParts": {
+          "sha256": "cd05a4df2e5858ab0c4f4ac75415f4fefe5ccdac7be84eb653a4159f3bc1a434",
+          "byteLength": 351
+        },
+        "actualProviderContext": {
+          "sha256": "6855c12c453179ce59baa7e0ef08f6705e87a9f00b66dee7a0f2903ee00fab56",
+          "byteLength": 210590
+        },
+        "model": {
+          "id": "worker",
+          "provider": "fixture"
+        },
+        "matched": true
+      },
+      {
+        "agentId": "ReliableCougar",
+        "snapshotId": "01a103b0-a852-7000-83b9-6b90d32c6646:context:2",
+        "providerCall": 3,
+        "effectivePrompt": {
+          "sha256": "4c5c4a62fd3eebb9e49a97d64acb4849fd6f4d1b849f75eadad5b913442cc81a",
+          "byteLength": 118
+        },
+        "orderedSystemParts": {
+          "sha256": "dcd94a3f4b89bdad0a7b6539aaed0c77ee37c6d8db8f347f7a6c4bd7500a8748",
+          "byteLength": 8470
+        },
+        "actualProviderContext": {
+          "sha256": "b3176a3a1890dc3a814e9030339190f18c00f73cf88d487c0c880d58fb0f1de9",
+          "byteLength": 173707
+        },
+        "model": {
+          "id": "worker",
+          "provider": "fixture"
+        },
+        "matched": true
+      },
+      {
+        "agentId": "ReliableCougar.AsleepClam",
+        "snapshotId": "01a103b0-a8c0-7000-97b4-3fd1ebc03e44:context:2",
+        "providerCall": 5,
+        "effectivePrompt": {
+          "sha256": "51e1d1816eec5c508613d7cfd6282beb757f6e5d259e83fd10eba56a0051be07",
+          "byteLength": 123
+        },
+        "orderedSystemParts": {
+          "sha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+          "byteLength": 7625
+        },
+        "actualProviderContext": {
+          "sha256": "a6912d83f10d1f4e36f4b1804e556e8acdb9fee0de359556b457fa56440e2a01",
+          "byteLength": 72258
+        },
+        "model": {
+          "id": "restricted",
+          "provider": "fixture"
+        },
+        "matched": true
+      },
+      {
+        "agentId": "eval-worker-fixture",
+        "snapshotId": "01a103b0-a9e7-7000-8f76-5e2de6721c45:context:2",
+        "providerCall": 9,
+        "effectivePrompt": {
+          "sha256": "048bc7ccbb9c6b06d95518719fa08c76954bc1f46a8fe4c749a9fd4eabbb286d",
+          "byteLength": 83
+        },
+        "orderedSystemParts": {
+          "sha256": "fa2a345a0b1793421efec8e2b9911106cd3896a8700872c5174a4aa45f871cb2",
+          "byteLength": 7625
+        },
+        "actualProviderContext": {
+          "sha256": "ca0e55547dd63eb72cb6960e80b0f1936d1e6cf65cddbee22f8d7535fde15ceb",
+          "byteLength": 71829
+        },
+        "model": {
+          "id": "restricted",
+          "provider": "fixture"
+        },
+        "matched": true
+      }
+    ]
+  },
+  "limits": [
+    "Fixture provider with zero network/paid-provider requests; no remote-provider or installed-app smoke claim.",
+    "HTTP serialized request payload and exact provider tokenization are not exposed.",
+    "Eval native lifecycle has exact parent identity but does not emit parentToolCallId; parentSpan is omitted.",
+    "Native process cancellation remains unknown; timeout cleanup does not prove RPC cancellation termination."
+  ]
+}

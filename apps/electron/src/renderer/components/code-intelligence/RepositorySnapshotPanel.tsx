@@ -5,6 +5,7 @@ import { Check, FileCode2, FolderGit2, Loader2, RefreshCw, X } from 'lucide-reac
 import type { FileSpan, RepositoryFreshness, RepositoryConnectionInspection, RepositoryPreviewInput, RepositoryPreview, RepositoryProjectInput, RepositorySnapshotSummary } from '@rox/shared/code-intelligence'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface RepositorySnapshotPanelProps {
   workspaceId: string
@@ -20,7 +21,7 @@ const SELECT_CLASS = 'w-full rounded-md border border-foreground/10 bg-backgroun
 
 /** Convert transport errors to localized categories without exposing raw host paths or error text. */
 export function repositoryErrorKey(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error)
+  const message = toErrorMessage(error)
   if (/AUTH_FAILED|accessDenied|scope-denied/.test(message)) return 'codeIntelligence.repository.accessDenied'
   if (/project-directory-missing/.test(message)) return 'codeIntelligence.repository.directoryRequired'
   if (/git-unavailable-or-invalid-repository|not-a-git-repository|invalid-git-identity/.test(message)) return 'codeIntelligence.repository.gitRequired'

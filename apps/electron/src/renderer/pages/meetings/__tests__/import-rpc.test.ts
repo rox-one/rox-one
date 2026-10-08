@@ -33,6 +33,15 @@ function imported(spec: ImportMediaSpec): Meeting {
 }
 
 describe('meetings import RPC client', () => {
+  it('hashes only the selected byte range', async () => {
+    const bytes = new Uint8Array([0, 97, 98, 99, 0]).subarray(1, 4)
+    expect(await specFromBytes(bytes, 'audio/wav')).toEqual({
+      contentHash: 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+      byteLength: 3,
+      mimeType: 'audio/wav',
+    })
+  })
+
   it('hashes only the supplied shared-buffer byte view', async () => {
     const backing = new SharedArrayBuffer(6)
     new Uint8Array(backing).set([99, 1, 2, 3, 4, 88])

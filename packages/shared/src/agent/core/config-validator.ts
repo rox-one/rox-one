@@ -32,22 +32,22 @@ const CONFIG_FILE_PATTERNS: { pattern: RegExp; type: ConfigFileType }[] = [
  */
 const ROX_CONFIG_PATTERNS = [
   // Main config
-  /\.(?:rox|craft-agents?)\/config\.json$/,
+  /[./](?:rox|craft-agents?)\/config\.json$/,
   // Preferences
-  /\.(?:rox|craft-agents?)\/preferences\.json$/,
+  /[./](?:rox|craft-agents?)\/preferences\.json$/,
   // Source configs
-  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/sources\/[^/]+\/config\.json$/,
+  /[./](?:rox|craft-agents?)\/workspaces\/[^/]+\/sources\/[^/]+\/config\.json$/,
   // Permissions
-  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/permissions\.json$/,
-  /\.(?:rox|craft-agents?)\/permissions\/[^/]+\.json$/,
+  /[./](?:rox|craft-agents?)\/workspaces\/[^/]+\/permissions\.json$/,
+  /[./](?:rox|craft-agents?)\/permissions\/[^/]+\.json$/,
   // Theme
-  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/theme\.json$/,
+  /[./](?:rox|craft-agents?)\/workspaces\/[^/]+\/theme\.json$/,
   // Statuses
-  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/statuses\/config\.json$/,
+  /[./](?:rox|craft-agents?)\/workspaces\/[^/]+\/statuses\/config\.json$/,
   // Labels
-  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/labels\.json$/,
+  /[./](?:rox|craft-agents?)\/workspaces\/[^/]+\/labels\.json$/,
   // Tool icons
-  /\.(?:rox|craft-agents?)\/tool-icons\/tool-icons\.json$/,
+  /[./](?:rox|craft-agents?)\/tool-icons\/tool-icons\.json$/,
 ];
 
 /**

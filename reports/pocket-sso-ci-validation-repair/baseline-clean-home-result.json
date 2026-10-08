@@ -1,0 +1,12 @@
+{
+  "exitCode": 1,
+  "home": "/tmp/rox-pocket-ci-clean-home-nhtimsr9",
+  "homeModelsPresent": false,
+  "command": [
+    "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+    "test",
+    "--timeout",
+    "180000",
+    "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts"
+  ]
+}

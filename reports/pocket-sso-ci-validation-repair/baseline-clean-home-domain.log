@@ -1,0 +1,33 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:
+39 | }
+40 | 
+41 | test('actual OmpAgent respawns in both credential/catalog directions and preserves each domain key', async () => {
+42 |   const f = await fixture()
+43 |   try {
+44 |     expect((await chatEvents(f.agent, 'private first', 30_000)).some(e => e.type === 'text_complete')).toBe(true)
+                                                                                                            ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:44:104)
+(fail) actual OmpAgent respawns in both credential/catalog directions and preserves each domain key [273.98ms]
+59 |   const f = await fixture(true)
+60 |   try {
+61 |     const first = chatEvents(f.agent, 'old delayed private turn', 30_000)
+62 |     const deadline = Date.now() + 20_000
+63 |     while (!f.fake.readRpcLog().some(frame => frame.type === 'prompt')) {
+64 |       if (Date.now() > deadline) throw Error('old prompt did not dispatch')
+                                            ^
+error: old prompt did not dispatch
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:64:40)
+(fail) actual in-flight credential-domain switch retires old child and ignores its delayed stream [20007.52ms]
+(pass) credential-domain switch during asynchronous native preparation never spawns its obsolete profile [210.49ms]
+
+ 1 pass
+ 2 fail
+ 7 expect() calls
+Ran 3 tests across 1 file. [21.20s]

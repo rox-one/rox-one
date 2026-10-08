@@ -2,8 +2,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../test-utils/chromium-executable'
 const repository = resolve(import.meta.dirname, '../../../../../..'), fixture = resolve(import.meta.dirname, 'fixtures/task-conversion')
-const executablePath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium', url = 'http://127.0.0.1:5327'
+const executablePath = await resolveChromiumExecutable(), url = 'http://127.0.0.1:5327'
 describe.skipIf(!existsSync(executablePath))('four actual conversion components with production confirmed bridge and task persistence', () => {
   let server: ReturnType<typeof Bun.spawn>, browser: Browser, page: Page
   const errors: string[] = []

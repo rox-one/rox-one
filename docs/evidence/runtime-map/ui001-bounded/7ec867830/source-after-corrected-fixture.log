@@ -1,0 +1,12 @@
+{
+  "sourcesStable": true,
+  "fixturesStable": false,
+  "bundleInputsStable": false,
+  "historicalManifestUnchanged": true,
+  "revisionStable": false
+}
+Traceback (most recent call last):
+  File "/workspace/scratch/d0a9c1c6c094/ui001-source.py", line 64, in <module>
+    assert all(results.values())
+           ^^^^^^^^^^^^^^^^^^^^^
+AssertionError

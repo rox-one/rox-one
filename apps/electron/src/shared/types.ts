@@ -10,8 +10,10 @@ export * from '@rox/shared/protocol'
 // Core types
 import type { MeetingsLocalApi } from './meetings-local'
 import type { MailLocalApi } from './mail-local'
+import type { OpenDesignApi } from './open-design'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { parseEntityRoute } from './entity-routes'
+import { isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
 import { isEntityRoutesEnabled } from './route-parser'
 import type { EntitiesLinksEffectiveState } from '@rox/shared/feature-flags'
 import type {
@@ -53,6 +55,17 @@ import type {
   PersonalTaskDeleteResult,
   PersonalTasksSnapshot,
 } from '@rox/core/tasks/personal'
+import type {
+  LearningCandidate,
+  LearningCandidateStatus,
+  LearningEvidence,
+  LearningExperiment,
+  LearningPolicy,
+  LearningStatsDto,
+  LearningTimelineEntryDto,
+  TaskOutcome,
+} from '@rox/shared/memory/learning'
+import type { EffectivenessReport, PromotionResult, RollbackResult } from '@rox/server-core/memory/learning/learning-types'
 
 /** Automatic browser cookie import (in-app browser). Values never cross RPC. */
 export interface BrowserCookieAutoStatus {
@@ -356,6 +369,15 @@ export interface ToolIconMapping {
   commands: string[]
 }
 
+/** Tool icon config location plus resolved mappings (main owns the real config dir). */
+export interface ToolIconsConfig {
+  /** Absolute directory holding tool-icons.json and the icon files. */
+  dir: string
+  /** Absolute path to tool-icons.json. */
+  configPath: string
+  mappings: ToolIconMapping[]
+}
+
 /**
  * Browser pane creation options
  */
@@ -487,6 +509,8 @@ import type {
   NoteAssetImportResult,
   NoteAssetRenameResult,
   NoteBacklink,
+  CreateNoteCommentInput,
+  NoteCommentThread,
   NoteDocument,
   NoteCreateOptions,
   NoteMutationOptions,
@@ -502,6 +526,7 @@ import type {
   NoteRenameImpact,
   NoteRenameResult,
   NoteSummary,
+  UpdateNoteCommentInput,
   RemoteSessionTransferPayload,
   ImportRemoteSessionTransferResult,
   KnowledgeChangedPayload,
@@ -533,7 +558,16 @@ export interface WorkGraphConnectionRecord {
   readonly updatedAt: number
 }
 
+import type { AgentProfileSnapshot, WorkspaceWorkDelete, WorkspaceWorkResult, WorkspaceWorkSnapshot, WorkspaceWorkWrite } from '@rox/shared/workspace-work'
+
 export interface ElectronAPI {
+  openDesign: OpenDesignApi
+
+  workspaceWorkRead(workspaceId: string): Promise<WorkspaceWorkSnapshot>
+  workspaceWorkWrite(workspaceId: string, input: WorkspaceWorkWrite): Promise<WorkspaceWorkResult>
+  workspaceWorkDelete(workspaceId: string, input: WorkspaceWorkDelete): Promise<WorkspaceWorkResult>
+  workspaceWorkSnapshotProfile(workspaceId: string, profileId?: string): Promise<AgentProfileSnapshot | null>
+  onWorkspaceWorkChanged(callback: (workspaceId: string, revision: number) => void): () => void
   getRuntimeTraceSnapshot(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
   readRuntimeTraceEvents(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
   readRuntimeTracePayload(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>
@@ -997,6 +1031,10 @@ export interface ElectronAPI {
   deleteFolderNote(workspaceId: string, folder: string): Promise<{ deletedNotes: string[] }>
   searchNotes(workspaceId: string, query: string): Promise<NoteSummary[]>
   getNoteBacklinks(workspaceId: string, noteId: string): Promise<NoteBacklink[]>
+  listNoteComments(workspaceId: string, noteId: string): Promise<NoteCommentThread[]>
+  createNoteComment(workspaceId: string, input: CreateNoteCommentInput): Promise<NoteCommentThread>
+  updateNoteComment(workspaceId: string, input: UpdateNoteCommentInput): Promise<NoteCommentThread>
+  deleteNoteComment(workspaceId: string, noteId: string, commentId: string): Promise<boolean>
   getNoteInsights(workspaceId: string, noteId: string): Promise<NoteInsights>
   getNoteIndexHealth(workspaceId: string): Promise<NoteIndexHealth>
   rebuildNoteIndex(workspaceId: string): Promise<NoteIndexHealth>
@@ -1364,6 +1402,8 @@ export interface ElectronAPI {
   /** Returns the renderer host environment without going through RPC. */
   getRuntimeEnvironment(): 'electron' | 'web'
   getHomeDir(): Promise<string>
+  /** Absolute config directory that owns workspaces/, tool-icons/ and friends. */
+  getConfigDir(): Promise<string>
   isDebugMode(): Promise<boolean>
 
   // Transport connection status (preload-local, not RPC channels)
@@ -2005,6 +2045,26 @@ export interface ElectronAPI {
   rejectMemoryProposal(workspaceId: string, proposalId: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   editMemoryProposal(workspaceId: string, proposalId: string, text: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   deleteMemoryProposal(workspaceId: string, proposalId: string): Promise<boolean>
+  // Learning (continual learning, PRD §15) — candidates/evidence/outcomes/policies.
+  // `observe`/`recordOutcome`/`recordCorrection` are agent/native channels and are
+  // deliberately absent here.
+  listLearningCandidates(workspaceId: string, filter?: { status?: LearningCandidateStatus }): Promise<LearningCandidate[]>
+  getLearningCandidate(workspaceId: string, id: string): Promise<LearningCandidate | null>
+  listLearningEvidence(workspaceId: string, candidateId?: string): Promise<LearningEvidence[]>
+  getLearningOutcome(workspaceId: string, id: string): Promise<TaskOutcome | null>
+  getLearningExperiment(workspaceId: string, id: string): Promise<LearningExperiment | null>
+  getLearningStats(workspaceId: string): Promise<LearningStatsDto>
+  getLearningSkillEffectiveness(workspaceId: string, targetId: string): Promise<EffectivenessReport | null>
+  getLearningPolicy(workspaceId: string, id?: string): Promise<LearningPolicy[]>
+  getLearningTimeline(workspaceId: string, limit?: number): Promise<LearningTimelineEntryDto[]>
+  approveLearningCandidate(workspaceId: string, id: string): Promise<PromotionResult>
+  rejectLearningCandidate(workspaceId: string, id: string, reason?: string): Promise<LearningCandidate | null>
+  rollbackLearningCandidate(workspaceId: string, id: string): Promise<RollbackResult>
+  revalidateLearningCandidate(workspaceId: string, id: string): Promise<LearningCandidate | null>
+  forceLearningReflect(workspaceId: string, sessionId: string): Promise<{ candidates: LearningCandidate[] }>
+  runLearningConsolidation(workspaceId: string): Promise<{ candidates: LearningCandidate[] }>
+  curateLearningSkills(workspaceId: string): Promise<{ items: Array<{ slug: string; action: 'keep' | 'improve' | 'archive' }> }>
+  runPolicyLearning(workspaceId: string): Promise<{ policies: LearningPolicy[] }>
   enrichMindMap(input: {
     workspaceId: string
     entity: import('@rox/core/mindmap').MindMapEntityRef
@@ -2073,7 +2133,7 @@ export interface ElectronAPI {
   writeWorkspaceImage(workspaceId: string, relativePath: string, base64: string, mimeType: string): Promise<void>
 
   // Tool icon mappings
-  getToolIconMappings(): Promise<ToolIconMapping[]>
+  getToolIconMappings(): Promise<ToolIconsConfig>
 
   // Theme (app-level default)
   getAppTheme(): Promise<import('@rox/shared/config').ThemeOverrides | null>
@@ -2405,6 +2465,8 @@ export interface ElectronAPI {
 
   // Language
   changeLanguage(lang: string): Promise<void>
+  /** W1-07 (#1504): unified surfaces whose mode flag is on → main's deep-link gate. */
+  setUnifiedSurfaceRoutesEnabled?(ids: string[]): Promise<{ ok: true }>
 
   // Entity links (entities.links.v1): the renderer reports its persisted
   // toggle; main returns the EFFECTIVE state (env override > toggle) that
@@ -2720,6 +2782,15 @@ export interface MemoryNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/**
+ * Learning navigator state (self-learning dashboard — PRD §25-30)
+ */
+export interface LearningNavigationState {
+  navigator: 'learning'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface TasksNavigationState {
   navigator: 'tasks'
   details: { type: 'task'; taskId: string } | null
@@ -2840,6 +2911,18 @@ export interface EntityNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/**
+ * Unified mode root (W1-07): `messenger`, `calendar`, `goals`, `contacts`.
+ * Exists only while the mode's `workbench.mode.<id>.v1` flag is on; the page
+ * comes from the surface-page registry (empty state until wave 2 registers).
+ */
+export interface SurfaceNavigationState {
+  navigator: 'surface'
+  surface: UnifiedSurfaceId
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
 /** A view address that cannot be resolved; retain it for recovery and history. */
 export interface UnavailableNavigationState {
   navigator: 'unavailable'
@@ -2864,6 +2947,7 @@ export type NavigationState =
   | PagesNavigationState
   | BrowserNavigationState
   | MemoryNavigationState
+  | LearningNavigationState
   | TasksNavigationState
   | MeetingsNavigationState
   | FeedNavigationState
@@ -2877,6 +2961,7 @@ export type NavigationState =
   | ConnectionsNavigationState
   | HomeNavigationState
   | ScreenNavigationState
+  | SurfaceNavigationState
   | UnavailableNavigationState
 
 export const isUnavailableNavigation = (
@@ -2926,6 +3011,10 @@ export const isMemoryNavigation = (
   state: NavigationState
 ): state is MemoryNavigationState => state.navigator === 'memory'
 
+export const isLearningNavigation = (
+  state: NavigationState
+): state is LearningNavigationState => state.navigator === 'learning'
+
 export const isTasksNavigation = (
   state: NavigationState
 ): state is TasksNavigationState => state.navigator === 'tasks'
@@ -2953,6 +3042,10 @@ export const isScreenNavigation = (
 export const isHomeNavigation = (
   state: NavigationState
 ): state is HomeNavigationState => state.navigator === 'home'
+
+export const isSurfaceNavigation = (
+  state: NavigationState
+): state is SurfaceNavigationState => state.navigator === 'surface'
 
 export const isKnowledgeNavigation = (
   state: NavigationState
@@ -3041,6 +3134,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   if (state.navigator === 'memory') {
     return 'memory'
   }
+  if (state.navigator === 'learning') {
+    return 'learning'
+  }
   if (state.navigator === 'tasks') {
     return state.details?.type === 'task' ? `tasks/task/${encodeURIComponent(state.details.taskId)}` : 'tasks'
   }
@@ -3058,6 +3154,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'home') {
     return 'home'
+  }
+  if (state.navigator === 'surface') {
+    return state.surface
   }
   if (state.navigator === 'screen') {
     return buildExtraScreenRoute(state.screen, state.details?.itemId)
@@ -3289,6 +3388,8 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+  // W1-07: unified mode roots, only while their mode flag is on.
+  if (isUnifiedSurfaceRouteEnabled(key)) return { navigator: 'surface', surface: key, details: null }
 
   // Kind-first entity keys mirror the route format: `entity/{route}`.
   // Gated behind `entities.links.v1` exactly like the main-process

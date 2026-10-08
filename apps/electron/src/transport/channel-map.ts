@@ -17,6 +17,11 @@ function listener(channel: string) {
 }
 
 export const CHANNEL_MAP = {
+  workspaceWorkRead: invoke(RPC_CHANNELS.workspaceWork.READ),
+  workspaceWorkWrite: invoke(RPC_CHANNELS.workspaceWork.WRITE),
+  workspaceWorkDelete: invoke(RPC_CHANNELS.workspaceWork.DELETE),
+  workspaceWorkSnapshotProfile: invoke(RPC_CHANNELS.workspaceWork.SNAPSHOT_PROFILE),
+  onWorkspaceWorkChanged: listener(RPC_CHANNELS.workspaceWork.CHANGED),
   getRuntimeTraceSnapshot: invoke(RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT),
   readRuntimeTraceEvents: invoke(RPC_CHANNELS.runtimeTrace.READ_EVENTS),
   readRuntimeTracePayload: invoke(RPC_CHANNELS.runtimeTrace.READ_PAYLOAD),
@@ -157,6 +162,7 @@ export const CHANNEL_MAP = {
   // System
   getVersions: invoke(RPC_CHANNELS.system.VERSIONS),
   getHomeDir: invoke(RPC_CHANNELS.system.HOME_DIR),
+  getConfigDir: invoke(RPC_CHANNELS.system.CONFIG_DIR),
   isDebugMode: invoke(RPC_CHANNELS.system.IS_DEBUG_MODE),
 
   // Auto-update
@@ -379,6 +385,10 @@ export const CHANNEL_MAP = {
   deleteFolderNote: invoke(RPC_CHANNELS.notes.DELETE_FOLDER),
   searchNotes: invoke(RPC_CHANNELS.notes.SEARCH),
   getNoteBacklinks: invoke(RPC_CHANNELS.notes.GET_BACKLINKS),
+  listNoteComments: invoke(RPC_CHANNELS.notes.LIST_COMMENTS),
+  createNoteComment: invoke(RPC_CHANNELS.notes.CREATE_COMMENT),
+  updateNoteComment: invoke(RPC_CHANNELS.notes.UPDATE_COMMENT),
+  deleteNoteComment: invoke(RPC_CHANNELS.notes.DELETE_COMMENT),
   getNoteInsights: invoke(RPC_CHANNELS.notes.GET_INSIGHTS),
   getNoteIndexHealth: invoke(RPC_CHANNELS.notes.GET_INDEX_HEALTH),
   rebuildNoteIndex: invoke(RPC_CHANNELS.notes.REBUILD_INDEX),
@@ -650,6 +660,26 @@ export const CHANNEL_MAP = {
   editMemoryProposal: invoke(RPC_CHANNELS.memory.EDIT_PROPOSAL),
   deleteMemoryProposal: invoke(RPC_CHANNELS.memory.DELETE_PROPOSAL),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
+
+  // Learning (continual learning, PRD §15) — agent/native actions
+  // (`learning:observe|recordOutcome|recordCorrection`) are intentionally absent.
+  listLearningCandidates: invoke(RPC_CHANNELS.learning.LIST_CANDIDATES),
+  getLearningCandidate: invoke(RPC_CHANNELS.learning.GET_CANDIDATE),
+  listLearningEvidence: invoke(RPC_CHANNELS.learning.LIST_EVIDENCE),
+  getLearningOutcome: invoke(RPC_CHANNELS.learning.GET_OUTCOME),
+  getLearningExperiment: invoke(RPC_CHANNELS.learning.GET_EXPERIMENT),
+  getLearningStats: invoke(RPC_CHANNELS.learning.GET_STATS),
+  getLearningSkillEffectiveness: invoke(RPC_CHANNELS.learning.GET_SKILL_EFFECTIVENESS),
+  getLearningPolicy: invoke(RPC_CHANNELS.learning.GET_POLICY),
+  getLearningTimeline: invoke(RPC_CHANNELS.learning.GET_TIMELINE),
+  approveLearningCandidate: invoke(RPC_CHANNELS.learning.APPROVE),
+  rejectLearningCandidate: invoke(RPC_CHANNELS.learning.REJECT),
+  rollbackLearningCandidate: invoke(RPC_CHANNELS.learning.ROLLBACK),
+  revalidateLearningCandidate: invoke(RPC_CHANNELS.learning.REVALIDATE),
+  forceLearningReflect: invoke(RPC_CHANNELS.learning.FORCE_REFLECT),
+  runLearningConsolidation: invoke(RPC_CHANNELS.learning.CONSOLIDATE),
+  curateLearningSkills: invoke(RPC_CHANNELS.learning.CURATE_SKILLS),
+  runPolicyLearning: invoke(RPC_CHANNELS.learning.RUN_POLICY_LEARNING),
 
   // Statuses
   listStatuses: invoke(RPC_CHANNELS.statuses.LIST),

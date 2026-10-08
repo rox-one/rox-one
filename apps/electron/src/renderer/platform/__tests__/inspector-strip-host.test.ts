@@ -29,8 +29,10 @@ describe('ship-rox-inspector-strip-host', () => {
     expect(collapsed).not.toMatch(/mt-1 mb-1/)
   })
 
-  it('docks BottomTerminalDock outside InspectorHost so terminal stays reachable when R is collapsed', () => {
-    expect(host.indexOf('<BottomTerminalDock />')).toBeLessThan(host.indexOf('<InspectorHost />'))
+  it('renders the terminal inside the panel stack so it stays reachable when R is collapsed', () => {
+    const stack = readFileSync(join(platformDir, '..', 'components', 'app-shell', 'PanelStackContainer.tsx'), 'utf8')
+    expect(host).not.toContain('BottomTerminalDock')
+    expect(stack).toContain('<TerminalPanel autoFocus=')
     expect(inspector).not.toContain('data-testid="bottom-terminal-toggle"')
   })
 })

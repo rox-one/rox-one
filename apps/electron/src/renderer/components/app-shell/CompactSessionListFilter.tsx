@@ -298,8 +298,9 @@ export function CompactSessionListFilter({
           )}
 
           {/* Leftover compact groupingMode cycle (date/status/unread) is hidden.
-              CollectionGroupByMenu in CollectionViewChrome owns grouping, including
-              the groupBy === 'none' fallback that still reads viewFiltersMap. */}
+              CollectionGroupByMenu in CollectionViewChrome owns grouping:
+              CollectionDisplay.groupBy is the single driver, `none` means
+              date groups (legacy view-filters groupingMode is not read). */}
 
           {!isSearching && (
             <div className="px-2 pt-2">

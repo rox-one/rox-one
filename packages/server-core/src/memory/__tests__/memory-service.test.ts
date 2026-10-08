@@ -118,6 +118,49 @@ describe('MemoryService', () => {
     expect(h.prompts).toHaveLength(1)
   })
 
+  for (const mode of ['temporary', 'incognito'] as const) {
+    it(`a queued job skips distillation after the session becomes ${mode}`, async () => {
+      const modes: Record<string, SessionMemoryMode> = { s1: 'persistent' }
+      const h = makeService({ modes })
+      tmpRoots.push(h.root)
+      h.complete()
+      modes.s1 = mode
+      await drain(h.svc)
+      expect(h.prompts).toHaveLength(0)
+      expect(h.wsLessons.list()).toHaveLength(0)
+      expect(h.wsFiles.readContext()).toBe('')
+      expect(h.wsFiles.listHistoryDates()).toHaveLength(0)
+    })
+  }
+
+  for (const change of ['temporary', 'incognito', 'disabled', 'stopped'] as const) {
+    it(`an awaited result writes nothing after memory becomes ${change}`, async () => {
+      const started = Promise.withResolvers<void>()
+      const response = Promise.withResolvers<string>()
+      const modes: Record<string, SessionMemoryMode> = { s1: 'persistent' }
+      const h = makeService({ modes, distiller: async () => {
+        started.resolve()
+        return response.promise
+      } })
+      tmpRoots.push(h.root)
+      h.setAutoCreate(true)
+      h.complete()
+      await started.promise
+      if (change === 'disabled') h.config.enabled = false
+      else if (change === 'stopped') h.svc.stop()
+      else modes.s1 = change
+      response.resolve(JSON.stringify(OK))
+      await drain(h.svc)
+      // Reload the targets so a quiet event stream alone cannot pass this check.
+      expect(new LessonStore(h.wsFiles.lessonsPath, 'workspace').list()).toHaveLength(0)
+      const reloaded = new MemoryFileStore('workspace', h.root)
+      expect(reloaded.readContext()).toBe('')
+      expect(reloaded.listHistoryDates()).toHaveLength(0)
+      expect(h.enqueued).toHaveLength(0)
+      expect(h.emitted).toHaveLength(0)
+    })
+  }
+
   it('interrupted → trigger interrupted', async () => {
     const h = makeService()
     tmpRoots.push(h.root)
@@ -815,4 +858,3 @@ describe('negative-first distillation (L5)', () => {
     expect(h.prompts[0]).not.toContain(NEG_INSTRUCTION)
   })
 })
-

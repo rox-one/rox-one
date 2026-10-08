@@ -11,6 +11,7 @@ import type { AutomationEvent, AutomationMatcher, PromptReferences, AgentEvent, 
 import { matchesCron } from './cron-matcher.ts';
 import { sanitizeForShell } from './security.ts';
 import { evaluateConditions } from './conditions.ts';
+import { automationMatchesEventContext } from './context.ts';
 
 // ============================================================================
 // String Utilities
@@ -175,6 +176,7 @@ export function matcherMatchesWithContext(
   event: AutomationEvent,
   context: MatcherContext,
 ): boolean {
+  if (!automationMatchesEventContext(matcher, event, context.payload)) return false;
   if (!matchesBasePredicate(matcher, event, context.matchValue, context.payload)) return false;
 
   if (matcher.conditions?.length) {

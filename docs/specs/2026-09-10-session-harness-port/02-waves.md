@@ -154,13 +154,13 @@ P1/P2 форматы импорта — follow-up PR после зелёного
 
 ## H6 — closeout (`RX-TSK-0806`)
 
-Skip-list заморожен в этом файле и в Appearance → «не устанавливаем». В плане нет отложенного session-buddy. Прогнать `bun run rx:validate`, i18n parity, typecheck затронутых пакетов.
+Skip-list заморожен в этом файле и в Appearance → «не устанавливаем» (убрано 2026-10-08, волна E-01). В плане нет отложенного session-buddy. Прогнать `bun run rx:validate`, i18n parity, typecheck затронутых пакетов.
 
-**Freeze (не устанавливаем):** session-buddy, mnemon, plugin hot-reload, agent-teams runtime, vision CLI plugin, search CLI plugin, extra automation runtime, remote-control compat. Канон: `HARNESS_SKIP_LIST`. Appearance показывает тот же список без тумблеров. Отложенного session-buddy в плане нет.
+**Freeze (не устанавливаем):** session-buddy, mnemon, plugin hot-reload, agent-teams runtime, vision CLI plugin, search CLI plugin, extra automation runtime, remote-control compat. Канон: `HARNESS_SKIP_LIST` (удалён 2026-10-08, волна E-01). Appearance показывал тот же список без тумблеров. Отложенного session-buddy в плане нет.
 
 **Post-H6 (2026-09-11):** Cordis `agent-teams runtime` остаётся в freeze. First-party skill `rox-harness/agent-teams` + Appearance-тумблер `workbench.harness.agentTeams` (default false) — отдельный opt-in поверх `spawn_session` / `send_agent_message`, без Cordis host.
 
-Реализовано: Appearance → Workbench → «не устанавливаем»; анти-цели H-03 §9.
+Реализовано: Appearance → Workbench → «не устанавливаем» (убрано 2026-10-08, волна E-01); анти-цели H-03 §9.
 
 ## Порядок веток и merge
 
