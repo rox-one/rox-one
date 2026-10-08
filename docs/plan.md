@@ -110,6 +110,30 @@ Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserv
 
 # September program implementation plan
 
+## Zed appearance implementation — 2026-10-03
+
+### Visual correction after user review — 2026-10-04
+
+The user rejected the displayed result. The `81e13ce4` technical receipts remain historical checks, not visual acceptance. Root owns a bounded follow-up: map the inspector to the panel background at 88% rather than toolbar fill, flatten the raised titlebar mode track, remove the experimental-sidebar inset sheet, and compact only the fixed-content summary/action widgets. Preserve font metrics, saved widget IDs/order/size/width, list-widget height/item limits, keyboard navigation and the 0/4/6px contract. A read-only surface scout confirmed the concrete causes; only root writes implementation. Rebuild the clients and inspect fresh screenshots before declaring the follow-up ready.
+
+The first correction (`52ce96323`) still reserved excessive empty height in the actual native Home screenshot. Replace its two-row cap with measured intrinsic frame heights for Summary and Quick Actions. Use pixel grid tracks with the existing 12px inter-widget spacing; other widgets retain exact S/M/L heights (232/354/476px), item limits and saved width/order. Measure actual localized content and edit headers instead of assuming a fixed height. Keep the first correction's screenshot and failed Web readiness receipt as history. The Web harness must wait for theme ID, effective mode, palette and material together: the prior ID-only workspace-clear wait sampled the asynchronous transition prematurely; a distinct readback settled naturally without another write/reload.
+
+The `7379efcda` narrow geometry check found a real fractional-zoom defect: the browser used 0.989583px for authored 1px grid tracks, accumulating a 6.927px gap after an L widget. Calibrate row spans from the grid's computed used track pitch, including the Add cell, while preserving exact widget heights and saved layout data. Independent negative-control and mixed-grid probes reproduce the defect and confirm the remedy at 90/100/120/150% CSS zoom. Actual production geometry on rebuilt `99477241d` passes seven variants, including narrow layouts and CSS zoom, with no overlaps and minimum gap12.14844px at fractional pitch. Its full Web matrix passes28 theme/routes,42 responsive cases and153 real splash readiness samples. Previous timeout receipts remain failed history; no production SplashScreen change or established startup root-cause claim. See [current correction evidence](themes/appearance-visual-correction.md). Final994 native PNG remain pending because the supported surface reports a locked Mac; real7379 seven-route/three-theme captures remain source-labeled history.
+
+User confirmed the design tree and requested implementation. Base: 29e86bcc515e24039a15a781d5885b272cbad1df; isolated branch `codex/rox-zed-appearance-20261003`. The release checkout has an unrelated unfinished merge and is not modified by this work. Integrate only after its owner completes that merge, then repeat affected checks on the combined revision.
+
+| Task | Owner | Dependencies | Owned output | Verification |
+| --- | --- | --- | --- | --- |
+| GEO | /root/rox_surface_scout | Agreed 0/4/6px roles | Renderer/shared component geometry and resize tests | Zero-flow sash, pointer/keyboard behavior, radius audit |
+| THEMES | /root/theme_contract_scout | Local source JSON/manifests | Shared theme/schema/default factory; bundled palettes/provenance | Contrast, merge/schema, fresh/existing/corrupt profile tests |
+| SYNTAX | /root/zed_theme_scout | THEMES token contract | Static syntax registry, code/diff/notes and ANSI consumers | Shiki/Pierre resolution, source mapping, intensity/reset rendering |
+| MATERIAL | /root | Agreed role names | Shared CSS, native/browser chrome policy, ThemeProvider | Effective mode, persistence, preview and fallback behavior |
+| ACCEPT | /root | GEO + THEMES + SYNTAX + MATERIAL | Integrated tests/builds, browser/native evidence, Git receipt | Real routes, reload/relaunch, dark/light backdrop, narrow layout |
+
+Common CSS and ThemeProvider have a single writer (/root). Workers edit only their assigned area and return exact paths and test evidence. No dependency update or terminal backend replacement is required. Preserve existing spec/plan sections; maintain glossary in CONTEXT.md. Verification outcomes, first failures, revision and remaining platform/integration requirements are appended to `docs/themes/appearance-verification.md`.
+
+Implementation checkpoint: production revision `81e13ce4dade3ee965bf3c42f49deaeac0e21dc2` implements GEO/THEMES/SYNTAX/MATERIAL; both client builds and the five scoped typechecks pass. ACCEPT has production fixture 29/0, real WebUI 28 theme-route cases plus 42 responsive cases, config readback/reload/second-tab and workspace-priority proof. Electron was relaunched from the final build; a read-only native receipt confirms vibrancy and computed surfaces. Native visual acceptance needs manual Mac unlock; native Mica needs Windows; full shared typecheck retains ten byte-identical baseline test errors. No production integration into the owner's conflicted release checkout has occurred. See [verification and exact limitations](themes/appearance-verification.md) and [artifact hashes](themes/appearance-evidence.json). Prepare a draft PR against `release/desktop-runtime-20261003`, keep it unmerged until that branch's merge is finished and the combined revision is checked.
+
 ## Desktop runtime 0.11.8 delivery — 2026-10-03
 
 The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.

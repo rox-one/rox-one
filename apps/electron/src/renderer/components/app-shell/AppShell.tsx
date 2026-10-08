@@ -833,7 +833,11 @@ function AppShellContent({
   const [searchQuery, setSearchQuery] = React.useState('')
 
   // CollectionDisplay is the workspace-persisted grouping owner. A legacy
-  // per-view grouping preference must not override the current groupBy.
+  // per-view grouping preference must not override the current groupBy
+  // (MOD-COLLECTIONS-01 unification): `groupBy === 'none'` means date groups.
+  // Group labels are preserved in session-list/list-grouping (historic key
+  // shapes kept); the legacy `view-filters` `groupingMode` is neither read
+  // nor written anymore.
   const isStateSubView = sessionFilter?.kind === 'state'
 
   const chatGroupingMode: ChatGroupingMode = isStateSubView

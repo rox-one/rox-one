@@ -55,7 +55,7 @@ Desktop DSH у оператора стоит `danger-full-access`. Rox уже `a
 
 ## ✗ 9. H6 freeze — не устанавливаем
 
-Эти runtime **MUST NOT** появиться в Rox. Список заморожен: нет «потом возьмём». Appearance → Workbench показывает ту же таблицу как «не устанавливаем».
+Эти runtime **MUST NOT** появиться в Rox. Список заморожен: нет «потом возьмём». Appearance → Workbench показывал ту же таблицу как «не устанавливаем» (убрано 2026-10-08: секция, список и локали удалены волной E-01).
 
 | id | Пакет-референс | Почему skip | Что уже есть в Rox |
 |---|---|---|---|
@@ -71,6 +71,6 @@ Desktop DSH у оператора стоит `danger-full-access`. Rox уже `a
 
 **Исключение (не runtime):** first-party skill `rox-harness/agent-teams` + флаг `workbench.harness.agentTeams` — это не установка Cordis-пакета и не второй оркестратор. Skip-list по-прежнему запрещает `@nanmicoder/dsh-agent-teams` как host runtime.
 
-Канон в коде: `packages/core/src/platform/workbench/harness-skip-list.ts`.
+Канон в коде: `packages/core/src/platform/workbench/harness-skip-list.ts` *(файл удалён 2026-10-08 в волне E-01 вместе с UI; сам freeze остаётся анти-целью H-03)*.
 
 **Post-H6 durable store (2026-09-11):** workspace `.agent-teams/` via `AgentTeamsStore` (`@craft-agent/core/platform/agent-teams`). Flag remains default false. Cordis `agentTeamsRuntime` stays skipped. No Timeline / inspector DAG in this follow-up.

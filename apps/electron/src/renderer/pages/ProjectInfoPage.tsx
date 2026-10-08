@@ -75,14 +75,22 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const projectMountedRef = useRef(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const projectSummaryRef = useRef<HTMLDivElement | null>(null)
+const projectSummaryRef = useRef<HTMLDivElement | null>(null)
   const projectReadsMountedRef = projectMountedRef
   const projectReadRevisionRef = projectRequestRef
   // The selected detail may load while the already-ready Projects API remains
   // usable. A missing reader or an actual failed read still blocks honestly.
-  useEffect(() => typeof window.electronAPI?.getProject !== 'function' || error
-    ? tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
-    : undefined, [tour, error])
+  useEffect(() => {
+    if (typeof window.electronAPI?.getProject !== 'function') {
+      tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
+    } else if (loading) {
+      tour.capability('projects.available', { state: 'pending', reason: 'installing' })
+    } else if (error) {
+      tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
+    } else {
+      tour.capability('projects.available', project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' })
+    }
+  }, [tour, loading, error, project])
   useEffect(() => {
     const element = projectSummaryRef.current
     if (loading || error || !project || project.workspaceId !== workspaceId || project.config.slug !== projectSlug || !element) return
