@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import {
   COMPACT_VIEWPORT_WIDTH,
-  WORKSPACE_ICON_RAIL_WIDTH,
   WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT,
-  getTopBarLeftInset,
   shouldShowWorkspaceIconRail,
 } from '../workspace-rail'
 
@@ -27,13 +25,6 @@ describe('shouldShowWorkspaceIconRail', () => {
 
   it('is hidden when unified shell chrome is active', () => {
     expect(shouldShowWorkspaceIconRail(true, 1200, true)).toBe(false)
-  })
-})
-
-describe('getTopBarLeftInset', () => {
-  it('insets the top bar by the rail width only when the rail is visible', () => {
-    expect(getTopBarLeftInset(false)).toBe(0)
-    expect(getTopBarLeftInset(true)).toBe(WORKSPACE_ICON_RAIL_WIDTH)
   })
 })
 

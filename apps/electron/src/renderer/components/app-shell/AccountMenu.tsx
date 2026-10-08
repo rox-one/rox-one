@@ -23,7 +23,6 @@ import {
   FolderPlus,
   Shield,
   Trash2,
-  User,
 } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useSetAtom } from 'jotai'
@@ -53,7 +52,35 @@ import { waitForTransportConnected } from '@/lib/transport-wait'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { isSshBackedWorkspace } from '../../../shared/ssh'
+import blackInkAvatar from '@/assets/rox-avatar-ink-black.png'
+import whiteInkAvatar from '@/assets/rox-avatar-ink-white.png'
 import type { CredentialHealthStatus, IdentityState, Workspace } from '../../../shared/types'
+
+/**
+ * Round identity avatar for the Identity Center profile header: the user's own
+ * image when present, otherwise the Rox ink mark (black on light surfaces,
+ * white on dark ones — a theme-aware pair, never `dark:invert`).
+ */
+function ProfileAvatar({ src, className }: { src?: string; className?: string }) {
+  return (
+    <span className={cn('relative block shrink-0 overflow-hidden rounded-full bg-foreground/5', className)}>
+      {src ? (
+        <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
+      ) : (
+        <>
+          <img src={blackInkAvatar} alt="" draggable={false} className="h-full w-full object-cover dark:hidden" />
+          <img
+            src={whiteInkAvatar}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="hidden h-full w-full object-cover dark:block"
+          />
+        </>
+      )}
+    </span>
+  )
+}
 
 export interface AccountMenuProps {
   /**
@@ -410,9 +437,7 @@ export function AccountMenu({
             <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-6 flex flex-col gap-0.5">
               {drawerSectionLabel(t('accountMenu.section.profile'))}
               <div className="flex items-center gap-3 px-3 py-3">
-                <div className="h-7 w-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
-                  <User className="h-4 w-4 text-foreground/60" />
-                </div>
+                <ProfileAvatar src={profile?.avatar} className="h-7 w-7 ring-1 ring-foreground/10" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium">
                     {profile?.displayName || t('profile.defaultName')}
@@ -582,11 +607,14 @@ export function AccountMenu({
 
         <StyledDropdownMenuContent align="start" sideOffset={6} minWidth="min-w-72">
           {sectionLabel(t('accountMenu.section.profile'))}
-          <div className="px-2 py-1.5">
-            <div className="truncate text-sm font-medium">
-              {profile?.displayName || t('profile.defaultName')}
+          <div className="flex items-center gap-3 px-2 py-1.5">
+            <ProfileAvatar src={profile?.avatar} className="h-8 w-8 ring-1 ring-foreground/10" />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">
+                {profile?.displayName || t('profile.defaultName')}
+              </div>
+              <div className="text-[11px] text-muted-foreground">{profileModeLabel}</div>
             </div>
-            <div className="text-[11px] text-muted-foreground">{profileModeLabel}</div>
           </div>
           <StyledDropdownMenuItem onClick={openAccountPage} className="font-sans">
             {t('accountMenu.editProfile')}

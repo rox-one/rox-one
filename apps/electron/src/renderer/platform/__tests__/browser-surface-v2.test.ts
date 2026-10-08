@@ -242,9 +242,14 @@ describe('browser surface v2 source wiring', () => {
     expect(appShellSource).toContain(
       'onAddBrowserPanel={() => { void handleNewBrowserWindow() }}',
     )
+    expect(appShellSource).toContain('onOpenBrowserTab={openBrowserTab}')
     expect(topBarSource).toContain('onClick={onAddSessionPanel}')
-    expect(topBarSource).toContain('onClick={onAddBrowserPanel}')
-    expect(topBarSource).toContain('t("browser.newWindow")')
+    // «Новая вкладка» (Plus) — самая правая кнопка топбара; компактное меню
+    // продолжает открывать embedded-инспектор.
+    expect(topBarSource).toContain('onClick={onOpenBrowserTab}')
+    expect(topBarSource).toContain('t("browser.newTab")')
+    expect(topBarSource).not.toContain('t("browser.newWindow")')
+    expect(topBarSource).toContain('onOpenBrowser={onAddBrowserPanel}')
     expect(topBarSource).not.toContain('<StyledDropdownMenuItem onClick={onAddBrowserPanel}>')
   })
 })

@@ -575,21 +575,33 @@ export function NavigationProvider({
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
 
-      // Restore right sidebar
-      if (sidebarParam) {
-        const parsed = parseRouteToNavigationState('allSessions', sidebarParam)
-        rightSidebarRef.current = parsed?.rightSidebar
-        setRightSidebar(parsed?.rightSidebar)
-      } else {
-        rightSidebarRef.current = undefined
-        setRightSidebar(undefined)
-      }
+      // Restore right sidebar. The session inspector sidebar is owned by the
+      // surface that opened it: a `sidebar=` address is a leftover of an
+      // explicit open, so it must never inject the inspector into Sessions.
+      // Entering Sessions always starts with the inspector closed; the browser
+      // (and the other session sections) only open from an explicit affordance
+      // on that surface (a rail section icon, the TopBar toggle, the browser
+      // command) — InspectorHost clears the persisted preference on entry.
+      const restoredPanels = panelsParam ? decodePanelEntries(panelsParam) : []
+      const restoredFocusIndex = focusedIndexParam != null ? (parseInt(focusedIndexParam, 10) || 0) : 0
+      const restoredFocusedRoute = restoredPanels.length > 0
+        ? (restoredPanels[restoredFocusIndex] ?? restoredPanels[0]).route
+        : initialRoute
+      const onSessionsSurface = restoredFocusedRoute !== null
+        && parseRouteToNavigationState(restoredFocusedRoute)?.navigator === 'sessions'
+      // The `sidebar=` param is decoded through the route parser (the public
+      // codec for the panel); only its right-sidebar part is used here.
+      const restoredSidebar = sidebarParam && !onSessionsSurface
+        ? parseRouteToNavigationState('allSessions', sidebarParam)?.rightSidebar
+        : undefined
+      rightSidebarRef.current = restoredSidebar
+      setRightSidebar(restoredSidebar)
 
       // Parse panel entries from URL
       let entries: { route: ViewRoute; proportion: number; tool?: AuxiliaryTool; toolContext?: ToolContextReference }[] = []
       let focusedIndex = 0
 
-      const parsedPanels = panelsParam ? decodePanelEntries(panelsParam) : []
+      const parsedPanels = restoredPanels
       if (parsedPanels.length > 0) {
         entries = parsedPanels.map(({ route, proportion }) => ({
           route: normalizePanelRouteForReconcile(route as ViewRoute, state => resolveAutoSelectionRef.current(state)),

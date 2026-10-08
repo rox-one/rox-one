@@ -86,6 +86,14 @@ function Fixture() {
   useEffect(() => {
     ;(window as any).__inspectorFixture = fixtureApi
   }, [])
+  // InspectorHost now closes the panel on entering the Sessions surface and waits
+  // for an explicit open. Parent effects run after child effects, so this explicit
+  // open always lands after the host's mount-time reset and keeps the resize
+  // lifecycle under test. Covers the initial mount, remount via `mount(true)` and
+  // full reloads; the atom write is what the TopBar toggle does too.
+  useEffect(() => {
+    if (mounted) store.set(inspectorVisibleAtom, true)
+  }, [mounted])
   return <main className="flex h-[500px] w-full bg-background text-foreground" data-inspector-fixture-ready="true"><div data-panel-role="content" className="min-w-0 flex-1"><input aria-label="Editor" defaultValue="Unsent draft" /><output data-testid="persisted-width">{width}</output></div>{mounted && <InspectorHost />}</main>
 }
 if (typeof document !== 'undefined') {

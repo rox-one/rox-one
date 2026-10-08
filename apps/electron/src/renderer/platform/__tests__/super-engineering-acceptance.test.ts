@@ -82,7 +82,7 @@ describe('super.engineering wave-3 acceptance', () => {
 
   it('loads full welcome phrase list for hub taglines', () => {
     const taglines = readFileSync(join(srcRoot, 'renderer/constants/hub-taglines.ts'), 'utf8')
-    expect(taglines).toContain('room-temperature superconductor')
+    expect(taglines).toContain("'se.tagline.")
     expect(taglines.match(/^\s+'/gm)?.length ?? 0).toBeGreaterThanOrEqual(30)
   })
 })

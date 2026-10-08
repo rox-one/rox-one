@@ -1,8 +1,8 @@
 /**
  * TerminalSurfacePage — MainContentPanel host for `terminal/{terminalId}`.
  *
- * Dedicated UEW PTY/xterm contribution stays unwired (flags default off;
- * terminal-contribution.render returns null). This surface never silent-
+ * Dedicated UEW PTY/xterm surface stays unwired (flags default off).
+ * This surface never silent-
  * falls through to the sessions empty prompt: it mounts the existing
  * empty/unavailable state with a path to the existing bottom terminal dock.
  */

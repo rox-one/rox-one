@@ -21,9 +21,9 @@ import type {
   CredentialHealthStatus,
   IdentityState,
   ServiceConnection,
-  ServiceProvider,
 } from '../../../shared/types'
 import { navigate, routes } from '@/lib/navigate'
+import { connectionAccountSubtitle, connectionProviderLabel } from '@/lib/connection-labels'
 import { CredentialMigrationCard } from './CredentialMigrationCard'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
@@ -42,13 +42,6 @@ const STATUS_TONE: Record<ServiceConnection['status'], string> = {
   error: 'text-destructive',
   disconnected: 'text-muted-foreground',
 }
-
-function providerLabel(provider: ServiceProvider | string, t: (k: string) => string): string {
-  const key = `settings.accounts.provider.${provider}`
-  const translated = t(key)
-  return translated === key ? String(provider) : translated
-}
-
 
 export default function AccountsSettingsPage() {
   const { t } = useTranslation()
@@ -237,6 +230,15 @@ export default function AccountsSettingsPage() {
 
   const statusText = (status: ServiceConnection['status']) => t(`settings.accounts.status.${status}`)
 
+  /**
+   * Identity shown as the caption of the Rox-account connection (Notes cloud
+   * sync): its account label is an account identifier (see the
+   * `settings.accounts.accountLabelPlaceholder` hint), so when the stored
+   * value is missing or technical we fall back to the profile identity.
+   */
+  const accountIdentityCaption =
+    state?.profile.email?.trim() || state?.profile.displayName || t('connections.account.connected')
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PanelHeader
@@ -297,8 +299,8 @@ export default function AccountsSettingsPage() {
             {owned.map((conn) => (
               <SettingsRow
                 key={conn.id}
-                label={providerLabel(conn.provider, t)}
-                description={conn.accountLabel || undefined}
+                label={connectionProviderLabel(conn.provider, t)}
+                description={connectionAccountSubtitle(conn.accountLabel, t('connections.account.connected'))}
               >
                 <span className={`text-xs ${STATUS_TONE[conn.status]}`}>{statusText(conn.status)}</span>
                 {conn.status !== 'disconnected' && (
@@ -313,22 +315,25 @@ export default function AccountsSettingsPage() {
                 )}
               </SettingsRow>
             ))}
-            {reflections.map((conn) => (
-              <SettingsRow
-                key={conn.id}
-                label={providerLabel(conn.provider, t)}
-                description={
-                  conn.accountLabel
-                    ? `${conn.accountLabel} · ${t('settings.accounts.managedInAi')}`
-                    : t('settings.accounts.managedInAi')
-                }
-              >
-                <span className={`text-xs ${STATUS_TONE[conn.status]}`}>{statusText(conn.status)}</span>
-                <Button size="sm" variant="ghost" onClick={() => navigate(routes.view.settings('ai'))}>
-                  {t('settings.accounts.openAiSettings')}
-                </Button>
-              </SettingsRow>
-            ))}
+            {reflections.map((conn) => {
+              const accountLabel = connectionAccountSubtitle(conn.accountLabel, '')
+              return (
+                <SettingsRow
+                  key={conn.id}
+                  label={connectionProviderLabel(conn.provider, t)}
+                  description={
+                    accountLabel
+                      ? `${accountLabel} · ${t('settings.accounts.managedInAi')}`
+                      : t('settings.accounts.managedInAi')
+                  }
+                >
+                  <span className={`text-xs ${STATUS_TONE[conn.status]}`}>{statusText(conn.status)}</span>
+                  <Button size="sm" variant="ghost" onClick={() => navigate(routes.view.settings('ai'))}>
+                    {t('settings.accounts.openAiSettings')}
+                  </Button>
+                </SettingsRow>
+              )
+            })}
           </SettingsCard>
         </SettingsSection>
 
@@ -341,7 +346,7 @@ export default function AccountsSettingsPage() {
                 description={
                   notesLocal.readOnly
                     ? t('settings.accounts.managedInKnowledge')
-                    : notesLocal.accountLabel || undefined
+                    : connectionAccountSubtitle(notesLocal.accountLabel, t('connections.account.connected'))
                 }
               >
                 <span className={`text-xs ${STATUS_TONE[notesLocal.status]}`}>{statusText(notesLocal.status)}</span>
@@ -366,7 +371,10 @@ export default function AccountsSettingsPage() {
               label={t('settings.accounts.provider.siyuan-cloud')}
               description={
                 notesCloudActive
-                  ? notesCloud?.accountLabel || t('settings.accounts.notesCloudConnectedHint')
+                  ? connectionAccountSubtitle(
+                      notesCloud?.accountLabel,
+                      accountIdentityCaption,
+                    )
                   : t('settings.accounts.notesCloudHint')
               }
               wrapDescription
@@ -382,7 +390,7 @@ export default function AccountsSettingsPage() {
                   variant={notesCloudActive ? 'ghost' : 'secondary'}
                   disabled={connecting || !workspaceId}
                   onClick={() => {
-                    setCloudLabel(notesCloud?.accountLabel || '')
+                    setCloudLabel(connectionAccountSubtitle(notesCloud?.accountLabel, ''))
                     setCloudToken('')
                     setCloudFormOpen(true)
                   }}

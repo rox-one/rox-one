@@ -21,8 +21,7 @@ import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/ru
 import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
 import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
-import { WorkspaceIconRail } from '@/components/app-shell/WorkspaceIconRail'
-import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
+import { WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
 import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
 import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/components/onboarding'
@@ -111,6 +110,7 @@ import { getFileManagerName } from '@/lib/platform'
 import { rendererLog } from '@/lib/logger'
 import { ActionRegistryProvider } from '@/actions'
 import { OmniboxHost } from '@/platform/OmniboxHost'
+import { HotkeyDictationHost } from '@/voice/hotkey-dictation-host'
 import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
@@ -2264,8 +2264,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  const showWorkspaceIconRail = false // Space selection is in the top logo; AppShell owns surface navigation.
-
   const handleReconnectTransport = useCallback(() => {
     void window.electronAPI.reconnectTransport().catch((error) => {
       const message = error instanceof Error ? error.message : t('toast.unknownError')
@@ -2657,6 +2655,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}
           <OmniboxHost />
+          <HotkeyDictationHost />
           <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspaceForUI} />
 
           {/* Splash screen overlay - fades out when fully ready */}
@@ -2669,14 +2668,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
           {/* Main UI - always rendered, splash fades away to reveal it */}
           <div className="flex h-full text-foreground" data-viewport={viewportBand(viewportWidth)}>
-            {showWorkspaceIconRail && !sessionLoadError && (
-              <WorkspaceIconRail
-                workspaces={workspaces}
-                activeWorkspaceId={windowWorkspaceId}
-                onSelect={handleSelectWorkspaceForUI}
-                onWorkspaceCreated={handleRefreshWorkspaces}
-              />
-            )}
             <div
               className="flex min-w-0 flex-1 flex-col"
               style={{ paddingTop: 'var(--topbar-height)' }}

@@ -72,7 +72,7 @@ function BrowserToolbarApp() {
   const { t } = useTranslation()
   const [state, setState] = useState<ToolbarState>({
     url: 'about:blank',
-    title: 'New Tab',
+    title: t('browser.newTab'),
     isLoading: false,
     canGoBack: false,
     canGoForward: false,
