@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { TourScopeContext, useTourTarget } from '@/features/product-tour/runtime/hooks'
-import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, useReducedMotion, animate } from 'motion/react'
+import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, animate } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { cn } from '@/lib/utils'
 import { FreeFormInput, type FreeFormInputProps } from './FreeFormInput'
 import { StructuredInput } from './StructuredInput'
@@ -66,7 +67,7 @@ export function InputContainer({
   const adminRequestTarget = useTourTarget('permission.request', { sessionId: freeFormProps.sessionId, variant: compactMode ? 'compact' : 'regular' })
   const adminActionsTarget = useTourTarget('permission.actions', { sessionId: freeFormProps.sessionId, variant: compactMode ? 'compact' : 'regular' })
   const appShellContext = useOptionalAppShellContext()
-  const prefersReducedMotion = useReducedMotion()
+  const prefersReducedMotion = usePrefersReducedMotion()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const mode: InputMode = structuredInput ? 'structured' : 'freeform'
   const measureRef = React.useRef<HTMLDivElement>(null)

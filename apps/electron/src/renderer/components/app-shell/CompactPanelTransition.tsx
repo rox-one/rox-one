@@ -18,7 +18,8 @@
  */
 
 import * as React from 'react'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 
 const SNAPPY_SPRING = { type: 'spring' as const, stiffness: 400, damping: 36, mass: 0.8 }
 const NO_MOTION = { duration: 0 }
@@ -44,7 +45,7 @@ export function CompactPanelTransition({
   isDetailActive,
   children,
 }: CompactPanelTransitionProps) {
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   const transition = reduceMotion ? NO_MOTION : SNAPPY_SPRING
 
   const isOffscreen = role === 'navigator' ? isDetailActive : !isDetailActive

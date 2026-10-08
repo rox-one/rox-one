@@ -2351,7 +2351,7 @@ h1,h2,h3{margin-top:1.5em}
 
   const wikiMenu = showWikiMenu ? (
     <div
-      className="absolute z-20 w-80 rounded-[var(--radius-overlay)] border border-border/70 bg-popover p-1 shadow-strong"
+      className="absolute z-20 w-80 rounded-md border border-border/70 bg-popover p-1 shadow-strong"
       data-testid="notes-wiki-menu"
       style={wikiAnchor
         ? { left: Math.max(4, wikiAnchor.x), top: wikiAnchor.y }

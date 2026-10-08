@@ -309,7 +309,7 @@ export function TopBar({
   return (
     <div
       ref={topbarRef}
-      className="chrome-topbar fixed top-0 right-0 z-panel titlebar-drag-region"
+      className="chrome-topbar fixed top-0 right-0 z-chrome titlebar-drag-region"
       data-shell-role="chrome"
       style={{ left: leftInset, height: 'var(--topbar-height)' }}
     >

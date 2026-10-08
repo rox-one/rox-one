@@ -2191,6 +2191,8 @@ export interface ElectronAPI {
   setZenShell(patch: {
     enabled?: boolean
     materialPreference?: 'system' | 'glass' | 'opaque'
+    /** PERF-07 low-power rendering choice. */
+    renderProfile?: 'auto' | 'performance' | 'standard'
   }): Promise<ZenShellSnapshot>
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
 

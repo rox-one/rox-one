@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { cn } from '@/lib/utils'
 import {
   SUPER_ENGINEERING_HUB_TAGLINE_KEYS,
@@ -33,8 +34,8 @@ export function ScrambleTagline({
   className,
   cycleMs = 3200,
 }: ScrambleTaglineProps) {
-  const { t } = useTranslation()
-  const reduceMotion = useReducedMotion()
+const { t } = useTranslation()
+  const reduceMotion = usePrefersReducedMotion()
   const phrases = React.useMemo(() => phraseKeys.map((key) => t(key)), [phraseKeys, t])
   const [index, setIndex] = React.useState(0)
   const [display, setDisplay] = React.useState(phrases[0] ?? '')

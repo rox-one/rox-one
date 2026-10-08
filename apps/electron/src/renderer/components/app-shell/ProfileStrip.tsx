@@ -110,13 +110,13 @@ export function ProfileStrip({
   }, [onClick])
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+<Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
           className={cn(
             'min-w-0 w-full flex items-center overflow-hidden rounded-[var(--radius-control)] border border-foreground/5',
-            'bg-background/35 text-left shadow-minimal backdrop-blur-xl',
+            'bg-background/35 text-left shadow-minimal',
             'hover:bg-background/65 hover:border-foreground/10 transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
             compact ? 'flex-col justify-center gap-1 px-1 py-1' : 'gap-2.5 p-2.5',
             'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',

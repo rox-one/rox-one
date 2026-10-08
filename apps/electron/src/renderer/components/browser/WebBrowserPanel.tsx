@@ -157,7 +157,7 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
   return (
     <section className={embedded
       ? 'flex h-full min-h-0 w-full flex-col bg-background'
-      : 'fixed inset-x-0 bottom-0 top-[var(--topbar-height)] z-40 flex flex-col bg-[#f4f5f7] shadow-strong'
+      : 'fixed inset-x-0 bottom-0 top-[var(--topbar-height)] z-sticky flex flex-col bg-[#f4f5f7] shadow-strong'
     }>
       <header className="flex h-[42px] min-h-0 shrink-0 items-center gap-1 border-b border-border/40 bg-background px-2 sm:px-3">
         <Button

@@ -75,6 +75,12 @@ export interface SessionFilesSectionProps {
   sessionFolderPath?: string
   /** Hide section header when embedded inside compact containers (e.g. popovers) */
   hideHeader?: boolean
+  /**
+   * Called after a file is opened for in-app preview (not for directories,
+   * which open in the file manager), so a hosting popover/drawer can close
+   * instead of floating over the fullscreen preview.
+   */
+  onFileOpen?: (file: SessionFile) => void
 }
 
 /**
@@ -420,7 +426,7 @@ function FileTreeItem({
 /**
  * Section displaying session files as a tree
  */
-export function SessionFilesSection({ sessionId, className, sessionFolderPath, hideHeader = false }: SessionFilesSectionProps) {
+export function SessionFilesSection({ sessionId, className, sessionFolderPath, hideHeader = false, onFileOpen }: SessionFilesSectionProps) {
   const { t } = useTranslation()
   const scopeRef = useRef({ sessionId })
   if (scopeRef.current.sessionId !== sessionId) scopeRef.current = { sessionId }
@@ -551,8 +557,9 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
       window.electronAPI.openFile(file.path)
     } else {
       onOpenFile(file.path)
+      onFileOpen?.(file)
     }
-  }, [onOpenFile])
+  }, [onOpenFile, onFileOpen])
 
   // Handle double-click — same as single click (interceptor decides preview vs external)
   const handleFileDoubleClick = useCallback((file: SessionFile) => {
@@ -561,8 +568,9 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
       window.electronAPI.openFile(file.path)
     } else {
       onOpenFile(file.path)
+      onFileOpen?.(file)
     }
-  }, [onOpenFile])
+  }, [onOpenFile, onFileOpen])
 
   // Toggle folder expanded state
   const handleToggleExpand = useCallback((path: string) => {

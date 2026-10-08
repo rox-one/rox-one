@@ -70,7 +70,7 @@ function displayPath(filePath: string): string {
 // ============================================================================
 
 const contextMenuContentClasses = cn(
-  'popover-styled z-dropdown min-w-40 overflow-hidden p-1',
+  'popover-styled z-island min-w-40 overflow-hidden p-1',
   'w-fit font-sans whitespace-nowrap text-xs flex flex-col gap-0.5',
   'animate-in fade-in-0 zoom-in-95'
 )
@@ -174,7 +174,7 @@ function FilePathBadge({ filePath }: FilePathBadgeProps) {
               <span className="truncate group-hover:underline">{display}</span>
             </button>
           </DropdownMenuTrigger>
-          <StyledDropdownMenuContent sideOffset={6} align="center" style={{ zIndex: 'var(--z-floating-menu, 400)' }}>
+          <StyledDropdownMenuContent sideOffset={6} align="center">
             {dropdownItems}
           </StyledDropdownMenuContent>
         </DropdownMenu>

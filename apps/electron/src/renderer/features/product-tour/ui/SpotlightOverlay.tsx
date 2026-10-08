@@ -97,7 +97,7 @@ export function SpotlightOverlay({ target, step, binding, open = true, onPause, 
     <Popover.Root open modal={false}>
       <Popover.Portal>
         <div data-product-tour-portal="" className="contents">
-        <div className="fixed inset-0 z-dropdown pointer-events-none" aria-hidden="true" data-product-tour-overlay="">
+        <div className="fixed inset-0 z-popover pointer-events-none" aria-hidden="true" data-product-tour-overlay="">
           <svg className="h-full w-full" data-product-tour-mask="" aria-hidden="true">
             <path fill="black" fillOpacity="0.4" fillRule="evenodd" d={`M0 0H${geometry.viewport.width}V${geometry.viewport.height}H0Z M${hole.left} ${hole.top}H${hole.right}V${hole.bottom}H${hole.left}Z`} />
             <rect x={hole.left} y={hole.top} width={hole.width} height={hole.height} rx={8} fill="none" stroke="currentColor" strokeOpacity={0.35} strokeWidth={1} />

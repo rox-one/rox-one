@@ -3133,7 +3133,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
-              className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
+              className="h-full flex flex-col min-w-0 relative z-chrome chrome-strip"
               data-shell-role="chrome"
             >
             <PanelHeader
@@ -3343,7 +3343,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={SIDEBAR_WIDTH_MIN}
           valueMax={SIDEBAR_WIDTH_MAX}
           dragging={sidebarResize.dragging || isResizing === 'sidebar'}
-          className="absolute z-panel"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
@@ -3401,7 +3401,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={NAVIGATOR_WIDTH_MIN}
           valueMax={NAVIGATOR_WIDTH_MAX}
           dragging={navigatorResize.dragging || isResizing === 'session-list'}
-          className="absolute z-panel"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
