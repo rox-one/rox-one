@@ -77,9 +77,18 @@ function isUngated(ruleId, messageId) {
   return entry.messageIds === null || entry.messageIds.includes(messageId)
 }
 
-/** Tests and fixtures assert on banned strings on purpose; they are outside the ratchet. */
-const TEST_FILES = ['**/__tests__/**', '**/*.{test,spec}.{ts,tsx,mts,cts,js,jsx,mjs,cjs}']
+/**
+ * Test-file globs for the given extensions. A package config must pass only the extensions it
+ * already lints: in flat config a non-universal `files` glob adds matching files to the lint set,
+ * so `*.test.mts` here would make `eslint src/` parse .mts without a TS parser.
+ */
+function testFilesFor(extensions) {
+  return ['**/__tests__/**', `**/*.{test,spec}.{${extensions.join(',')}}`]
+}
+
+/** Tests and fixtures assert on banned strings on purpose; they are outside the ratchet (every JS/TS flavour). */
+const TEST_FILES = testFilesFor(['ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs'])
 
 const off = Object.fromEntries(Object.keys(rules).map((rule) => [rule, 'off']))
 
-module.exports = { plugin, rules, off, Z_INDEX_V1, TEST_FILES, UNGATED, isUngated }
+module.exports = { plugin, rules, off, Z_INDEX_V1, TEST_FILES, testFilesFor, UNGATED, isUngated }

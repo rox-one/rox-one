@@ -110,6 +110,8 @@ export interface LintCollection {
   ungated: Counts
   /** Violations exempted by a justified next-line/line directive, per file and rule. */
   exempt: Counts
+  /** Every file a linter processed (root-relative), with or without violations. */
+  linted: Set<string>
 }
 
 interface UiTokensModule {
@@ -160,7 +162,7 @@ export function ruleSeverities(root: string): Record<string, Severity> {
   return severities
 }
 
-function eslintConfig(root: string): Linter.Config[] {
+export function eslintConfig(root: string): Linter.Config[] {
   const uiTokens = loadUiTokens(root)
   const zIndexRule = require(resolve(root, 'apps/electron/eslint-rules/no-hardcoded-z-index.cjs'))
   return [
@@ -185,7 +187,9 @@ function eslintConfig(root: string): Linter.Config[] {
     {
       // CommonJS sources (main-process shims) are scripts, not modules.
       files: ['**/*.{cjs,cts}'],
-      languageOptions: { sourceType: 'commonjs' },
+      // languageOptions.sourceType alone does not reach a non-espree parser: the inherited
+      // parserOptions.sourceType 'module' would win. globalReturn allows a top-level `return`.
+      languageOptions: { sourceType: 'commonjs', parserOptions: { sourceType: 'script', ecmaFeatures: { jsx: false, globalReturn: true } } },
     },
   ]
 }
@@ -293,6 +297,7 @@ export async function collectLint(
     return found
   }
 
+  const linted = new Set<string>()
   const existingEslint = eslintTargets.filter((target) => existsSync(resolve(root, target)))
   if (existingEslint.length) {
     const eslint = new ESLint({
@@ -309,6 +314,7 @@ export async function collectLint(
     )
     for (const result of results) {
       const file = toKey(result.filePath)
+      linted.add(file)
       for (const message of result.messages) {
         if (message.fatal) throw new Error(`ESLint could not parse ${file}: ${message.message}`)
         const rule = message.ruleId
@@ -342,6 +348,8 @@ export async function collectLint(
       ignoreDisables: true,
       // Never a root .stylelintignore: only the owned config's ignoreFiles may exclude CSS.
       ignorePath: STYLELINT_IGNORE_PATH,
+      // CSS under a dot directory (or a dotfile) is imported like any other; count it.
+      globbyOptions: { dot: true },
     })
     // Files dropped before linting (an ignore file) never get a result; files the config ignores
     // get `ignored: true`. Both must be accounted for by the owned ignoreFiles.
@@ -354,7 +362,7 @@ export async function collectLint(
     }
     assertLinted(
       'stylelint',
-      expectedFiles(root, existingCss, '**/*.css', ignoreFiles, false),
+      expectedFiles(root, existingCss, '**/*.css', ignoreFiles, true),
       new Set(results.filter((result) => !result.ignored).map((result) => toKey(result.source ?? ''))),
     )
     // An invalid rule option makes stylelint skip that rule silently: its counts would drop to 0
@@ -370,6 +378,7 @@ export async function collectLint(
     for (const result of results) {
       const source = result.source ?? ''
       const file = toKey(source)
+      if (!result.ignored) linted.add(file)
       for (const parseError of result.parseErrors ?? []) {
         throw new Error(`stylelint could not parse ${file}: ${JSON.stringify(parseError)}`)
       }
@@ -387,7 +396,7 @@ export async function collectLint(
       }
     }
   }
-  return { counts: sortCounts(counts), ungated: sortCounts(ungated), exempt: sortCounts(exempt) }
+  return { counts: sortCounts(counts), ungated: sortCounts(ungated), exempt: sortCounts(exempt), linted }
 }
 
 /** Gated counts only (see collectLint). */
@@ -508,6 +517,7 @@ export function deferredFlips(
 export type Weakening =
   | { kind: 'severity'; rule: string; from: Severity; to: Severity | 'removed' }
   | { kind: 'ungated'; rule: string; messageId: string | null }
+  | { kind: 'moved-out'; from: string; to: string; violations: number }
 
 export type Ungated = NonNullable<Baseline['ungated']>
 
@@ -539,11 +549,27 @@ export function ungatedWeakenings(base: Baseline, head: Baseline): Weakening[] {
 }
 
 /**
+ * Renames that carry counted violations out of the counted set: `from` has counts in `files`,
+ * but the current run did not lint `to` (moved outside the UI trees, into __tests__/, to
+ * *.test.* / *.d.ts, under dist/ ...). The counts would vanish as a "decrease"; it is a
+ * weakening. A plain delete is not a rename and stays a decrease.
+ */
+export function renamesOutOfCounted(files: Counts, renames: Rename[], linted: Set<string>): Weakening[] {
+  const moved: Weakening[] = []
+  for (const { from, to } of renames) {
+    const violations = Object.values(files[from] ?? {}).reduce((sum, count) => sum + count, 0)
+    if (violations > 0 && !linted.has(to)) moved.push({ kind: 'moved-out', from, to, violations })
+  }
+  return moved
+}
+
+/**
  * The committed baseline versus the base branch's baseline: a PR may not raise any
  * (file, rule) count (renames carry their counts) or weaken a rule (error -> warn, drop it, or
- * ungate it or one of its messageIds).
+ * ungate it or one of its messageIds), or move counted files out of the counted set (`linted`:
+ * the files the current full run linted; omit it to skip that check, e.g. on partial runs).
  */
-export function compareWithBase(base: Baseline, head: Baseline, renames: Rename[] = []) {
+export function compareWithBase(base: Baseline, head: Baseline, renames: Rename[] = [], linted?: Set<string>) {
   const { increases } = compareCounts(applyRenames(base.files, renames), head.files)
   const weakened: Weakening[] = []
   const ungated = ungatedWeakenings(base, head)
@@ -558,11 +584,15 @@ export function compareWithBase(base: Baseline, head: Baseline, renames: Rename[
     }
   }
   weakened.push(...ungated)
+  if (linted) weakened.push(...renamesOutOfCounted(base.files, renames, linted))
   return { increases, weakened }
 }
 
 export function formatWeakening(change: Weakening): string {
   if (change.kind === 'severity') return `  ${change.rule}: severity ${change.from} -> ${change.to}`
+  if (change.kind === 'moved-out') {
+    return `  ${change.from} -> ${change.to}: ${change.violations} counted violation(s) moved out of the linted files`
+  }
   return `  ${change.rule}: ${change.messageId === null ? 'whole rule' : `messageId ${change.messageId}`} gated -> ungated`
 }
 
@@ -775,6 +805,19 @@ export async function main(argv: string[], env: Record<string, string | undefine
       }
       return 1
     }
+    // A move out of the counted set drops its counts as a "decrease": owner approval only.
+    const movedOut = partial || initial ? [] : renamesOutOfCounted(baseline.files, renames, lint.linted)
+    const movedRefused = movedOut.filter(
+      (change) => change.kind === 'moved-out' && !allowed.has(change.to) && !allowed.has(change.from),
+    )
+    if (movedRefused.length) {
+      console.error(
+        'lint-baseline: refusing to drop the counts of files moved out of the linted set ' +
+          '(owner-approved: --allow-increase <new path>; the PR then needs the ui-baseline-override label):',
+      )
+      console.error(movedRefused.map(formatWeakening).join('\n'))
+      return 1
+    }
     const ungated = partial ? baseline.ungated : ungatedSummary(root, lint.ungated)
     writeJson(baselinePath, buildBaseline(next, severities, ungated))
     const flips = partial ? [] : rulesToFlip(next, severities, ungatedTotals)
@@ -839,7 +882,7 @@ export async function main(argv: string[], env: Record<string, string | undefine
     if (!base) {
       console.log(`lint-baseline: ${baseRef} has no ${DEFAULT_BASELINE} yet; skipping the base-baseline comparison.`)
     } else {
-      const { increases, weakened } = compareWithBase(base, baseline, renames)
+      const { increases, weakened } = compareWithBase(base, baseline, renames, partial ? undefined : lint.linted)
       if (increases.length || weakened.length) {
         const header = override
           ? 'lint-baseline: override (ui-baseline-override): the baseline grows versus the base branch:'

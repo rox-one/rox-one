@@ -155,7 +155,8 @@ export default [
 
   // Tests assert on banned class strings on purpose; keep them outside the token ratchet.
   {
-    files: uiTokens.TEST_FILES.map((glob) => `src/${glob}`),
+    // Only the extensions this package lints (src/**/*.{ts,tsx}): a wider glob would add files.
+    files: uiTokens.testFilesFor(['ts', 'tsx']).map((glob) => `src/${glob}`),
     rules: uiTokens.off,
   },
 

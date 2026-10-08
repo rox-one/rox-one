@@ -6,6 +6,7 @@
  * fail.
  */
 import { afterAll, describe, expect, it } from 'bun:test'
+import { ESLint } from 'eslint'
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -14,7 +15,9 @@ import {
   assertLinted,
   buildBaseline,
   deferredFlips,
+  eslintConfig,
   expectedFiles,
+  renamesOutOfCounted,
   ignoredOutsideConfig,
   collectCounts,
   collectLint,
@@ -414,16 +417,47 @@ describe('lint-baseline: nothing outside the owned config can drop files (review
     writeFileSync(join(src, 'shims/legacy.cjs'), "if (!module.exports.L) return\nmodule.exports = { L: 'absolute z-50' }\n")
     writeFileSync(join(src, 'Panel.test.jsx'), Z_TSX)
     writeFileSync(join(src, 'types.d.mts'), "export declare const L: 'z-50'\n")
+    mkdirSync(join(src, 'renderer/.styles'), { recursive: true })
+    writeFileSync(join(src, 'renderer/.styles/panel.css'), '.p { color: #000; }\n')
     writeFileSync(join(repo, '.stylelintignore'), '**/*.css\n')
     writeFileSync(join(repo, '.eslintignore'), '**/*\n')
     const { counts } = await collectLint(repo)
     expect(counts['apps/electron/src/a.css']?.['stylelint/color-no-hex']).toBe(1)
+    // CSS under a dot directory is counted too (review5 W1).
+    expect(counts['apps/electron/src/renderer/.styles/panel.css']?.['stylelint/color-no-hex']).toBe(1)
     for (const file of ['Panel.tsx', 'Moved.jsx', 'layers.mjs', 'layers.mts', 'shims/legacy.cjs']) {
       expect(counts[`apps/electron/src/${file}`]?.['rox/no-hardcoded-z-index'], file).toBe(1)
     }
     expect(counts['apps/electron/src/Panel.test.jsx']).toBeUndefined()
     expect(counts['apps/electron/src/types.d.mts']).toBeUndefined()
   }, 60_000)
+
+  it('parses .cjs/.cts as scripts (top-level return), everything else as modules (review5 info)', async () => {
+    const eslint = new ESLint({ cwd: ROOT, overrideConfigFile: true, overrideConfig: eslintConfig(ROOT) })
+    const cjs = await eslint.calculateConfigForFile('apps/electron/src/main/shims/x.cjs')
+    expect(cjs.languageOptions.parserOptions.sourceType).toBe('script')
+    expect(cjs.languageOptions.parserOptions.ecmaFeatures.globalReturn).toBe(true)
+    const cts = await eslint.calculateConfigForFile('apps/electron/src/x.cts')
+    expect(cts.languageOptions.parserOptions.sourceType).toBe('script')
+    const tsx = await eslint.calculateConfigForFile('apps/electron/src/x.tsx')
+    expect(tsx.languageOptions.parserOptions.sourceType).toBe('module')
+    const [result] = await eslint.lintText("if (!module.exports.L) return\nmodule.exports = { L: 'absolute z-50' }\n", {
+      filePath: join(ROOT, 'apps/electron/src/main/shims/x.cjs'),
+    })
+    expect(result!.messages.filter((message) => message.fatal)).toEqual([])
+    expect(result!.messages.map((message) => message.ruleId)).toContain('rox/no-hardcoded-z-index')
+  }, 60_000)
+
+  it("package configs only add test files with the extensions they lint (review5 info)", async () => {
+    for (const pkg of ['apps/electron', 'packages/ui']) {
+      const eslint = new ESLint({ cwd: join(ROOT, pkg) })
+      expect(await eslint.calculateConfigForFile('src/a/x.test.ts'), `${pkg} .test.ts`).toBeDefined()
+      // .js/.mjs/.cjs are in ESLint's default lint set anyway; .mts/.cts/.jsx must not be added.
+      for (const file of ['src/a/x.test.mts', 'src/a/x.test.jsx', 'src/a/x.spec.cts']) {
+        expect(await eslint.calculateConfigForFile(file), `${pkg} ${file}`).toBeUndefined()
+      }
+    }
+  }, 120_000)
 
   it('lists the files a linter must see and fails when one was skipped', () => {
     const repo = tempRepo()
@@ -442,6 +476,83 @@ describe('lint-baseline: nothing outside the owned config can drop files (review
     expect(ignoredOutsideConfig(['apps/electron/src/c.css', 'apps/ui/dist/a.css'], ignoreFiles)).toEqual(['apps/electron/src/c.css'])
     expect(ignoredOutsideConfig(['packages/ui/src/d.css'], [])).toEqual(['packages/ui/src/d.css'])
   })
+})
+
+describe('lint-baseline: renames out of the counted files (review5 W2)', () => {
+  it('flags a rename whose counts land on a file the run did not lint; deletes and linted targets are fine', () => {
+    const files: Counts = { 'src/A.tsx': { r: 2 }, 'src/B.tsx': { r: 1 }, 'src/Zero.tsx': {} }
+    const renames = [
+      { from: 'src/A.tsx', to: 'src/__tests__/A.tsx' },
+      { from: 'src/B.tsx', to: 'src/b/B.tsx' },
+      { from: 'src/Zero.tsx', to: 'tools/Zero.tsx' },
+    ]
+    expect(renamesOutOfCounted(files, renames, new Set(['src/b/B.tsx']))).toEqual([
+      { kind: 'moved-out', from: 'src/A.tsx', to: 'src/__tests__/A.tsx', violations: 2 },
+    ])
+    const severities = { r: 'warn' } as const
+    const base = buildBaseline(files, severities)
+    const head = buildBaseline({ 'src/b/B.tsx': { r: 1 } }, severities)
+    expect(compareWithBase(base, head, renames, new Set(['src/b/B.tsx'])).weakened).toEqual([
+      { kind: 'moved-out', from: 'src/A.tsx', to: 'src/__tests__/A.tsx', violations: 2 },
+    ])
+    // Without the linted set (partial runs) the check is skipped.
+    expect(compareWithBase(base, head, renames).weakened).toEqual([])
+  })
+
+  it('git mv into __tests__/ or outside the UI trees: --update refuses, then the PR needs the override; git rm stays a decrease', () => {
+    const panel = [
+      'export function Panel() {',
+      ...Array.from({ length: 12 }, (_, i) => `  const row${i} = 'flex items-center gap-2 px-3 row-${i}'`),
+      '  return <div className="absolute z-50" />',
+      '}',
+      '',
+    ].join('\n')
+    for (const target of ['apps/electron/src/__tests__/Panel.tsx', 'tools/legacy/Panel.tsx']) {
+      const repo = ratchetRepo()
+      const cli = (args: string[], env: Record<string, string> = {}) => runCli(['--root', repo, ...args], env)
+      const from = 'apps/electron/src/Panel.tsx'
+      mkdirSync(join(repo, 'apps/electron/src'), { recursive: true })
+      writeFileSync(join(repo, from), panel)
+      writeFileSync(join(repo, 'apps/electron/src/Other.tsx'), 'export const O = () => <div className="z-50" />\n')
+      expect(cli(['--update']).code).toBe(0)
+      git(repo, 'add', '.')
+      git(repo, 'commit', '-qm', 'base')
+      git(repo, 'branch', 'base')
+
+      mkdirSync(join(repo, target, '..'), { recursive: true })
+      git(repo, 'mv', from, target)
+      git(repo, 'commit', '-qm', 'move Panel out of the counted files')
+      const stale = cli(['--base', 'base'])
+      expect(stale.code, stale.out).toBe(1)
+      expect(stale.out).toContain('moved out of the linted files')
+
+      const refused = cli(['--update', '--base', 'base'])
+      expect(refused.code, refused.out).toBe(1)
+      expect(refused.out).toContain(`refusing to drop the counts of files moved out of the linted set`)
+      expect(refused.out).toContain(`${from} -> ${target}: 1 counted violation(s)`)
+
+      const approved = cli(['--update', '--base', 'base', '--allow-increase', target])
+      expect(approved.code, approved.out).toBe(0)
+      git(repo, 'commit', '-qam', 'rebaseline (owner-approved)')
+      const pr = cli(['--base', 'base'])
+      expect(pr.code, pr.out).toBe(1)
+      expect(pr.out).toContain('needs the ui-baseline-override label')
+      expect(pr.out).toContain(`${from} -> ${target}: 1 counted violation(s) moved out of the linted files`)
+      expect(cli(['--base', 'base'], { UI_BASELINE_OVERRIDE: '1' }).code).toBe(0)
+      expect(cli([]).code).toBe(0)
+
+      if (target.startsWith('tools/')) {
+        // A plain delete is not a weakening: the counts go down as a decrease.
+        git(repo, 'rm', '-q', 'apps/electron/src/Other.tsx')
+        git(repo, 'commit', '-qm', 'delete Other')
+        const removed = cli(['--update', '--base', 'base', '--allow-increase', target])
+        expect(removed.code, removed.out).toBe(0)
+        git(repo, 'commit', '-qam', 'rebaseline after delete')
+        const afterDelete = cli(['--base', 'base'])
+        expect(afterDelete.out).not.toContain('Other.tsx')
+      }
+    }
+  }, 300_000)
 })
 
 describe('lint-baseline: base-branch baseline (review1 W1)', () => {
