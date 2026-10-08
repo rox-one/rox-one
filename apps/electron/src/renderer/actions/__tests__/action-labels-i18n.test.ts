@@ -39,7 +39,9 @@ const EXISTING_LABEL_KEYS = [
   'shortcuts.action.selectAll',
   'shortcuts.action.settings',
   'shortcuts.action.stopProcessing',
+  'shortcuts.action.toggleChatPictureInPicture',
   'shortcuts.action.toggleFocusMode',
+  'shortcuts.action.toggleInspector',
   'shortcuts.action.toggleSidebar',
   'shortcuts.action.toggleTheme',
   'workspace.openInEditor',
@@ -56,6 +58,14 @@ const NEW_LABEL_KEYS = [
   'shortcuts.action.advisorReview',
   'shortcuts.action.sessionWorkflow',
   'shortcuts.action.simplifyDiff',
+  // W1-07 (#1504): flag-gated shell actions.
+  'shortcuts.action.agentAskAboutSelection',
+  'shortcuts.action.agentTogglePanel',
+  'shortcuts.action.findInDoc',
+  'shortcuts.action.quickPanelCalendar',
+  'shortcuts.action.quickPanelContacts',
+  'shortcuts.action.quickPanelDocs',
+  'shortcuts.action.quickPanelTasks',
 ] as const
 
 const ENGLISH_LEFTOVER_LABELS = [
