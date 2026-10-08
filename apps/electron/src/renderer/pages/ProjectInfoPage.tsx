@@ -79,7 +79,10 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
   const projectReadsMountedRef = projectMountedRef
   const projectReadRevisionRef = projectRequestRef
   // The selected detail may load while the already-ready Projects API remains
-  // usable. A missing reader or an actual failed read still blocks honestly.
+  // usable, so a read in flight publishes nothing at all: only an actual failure
+  // or a resolved absence may downgrade the capability. Every contribution is
+  // released on unmount and before each re-evaluation, otherwise the failed read
+  // of a left detail page would outlive its own page and keep the tour blocked.
   useEffect(() => {
     // Loading publishes nothing: the already-ready Projects API must stay
     // usable while this detail resolves. Every published contribution returns
