@@ -1,7 +1,10 @@
 import type { EvidenceOrigin, Measurement, RuntimeGraph, RuntimeGraphEdge, RuntimeStatus, TraceCoverage } from '@rox/core/runtime-trace'
 import { runtimeNodeDuration } from './measurements'
+import { LEARNING_NODE_KINDS } from './learning-nodes'
 
-const nodeKinds = ['run', 'context', 'model', 'plan', 'task', 'acceptance', 'agent', 'skill', 'tool', 'terminal', 'reasoning', 'decision', 'result', 'usage', 'memory', 'artifact', 'trace', 'operation', 'attempt', 'approval'] as const
+const runtimeNodeKinds = ['run', 'context', 'model', 'plan', 'task', 'acceptance', 'agent', 'skill', 'tool', 'terminal', 'reasoning', 'decision', 'result', 'usage', 'memory', 'artifact', 'trace', 'operation', 'attempt', 'approval'] as const
+/** Runtime event kinds plus the PRD §30 learning kinds registered in `learning-nodes.ts`. */
+const nodeKinds = [...runtimeNodeKinds, ...LEARNING_NODE_KINDS] as const
 const statuses: readonly RuntimeStatus[] = ['queued', 'running', 'blocked', 'waiting-approval', 'succeeded', 'failed', 'cancelled', 'interrupted']
 const origins: readonly EvidenceOrigin[] = ['observed', 'derived', 'estimated']
 const edgeKinds: readonly RuntimeGraphEdge['kind'][] = ['parent-child', 'causal', 'data-dependency', 'span-parent']

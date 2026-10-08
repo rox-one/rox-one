@@ -21,6 +21,7 @@ import {
   Cable,
   DatabaseZap,
   FolderKanban,
+  GraduationCap,
   ListTodo,
   MessageSquare,
   NotebookPen,
@@ -38,6 +39,7 @@ import {
   isKnowledgeNavigation,
   isNotesNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isPagesNavigation,
@@ -55,6 +57,7 @@ export type AppNavDestinationId =
   | 'sources'
   | 'skills'
   | 'memory'
+  | 'learning'
   | 'tasks'
   | 'meetings'
   | 'projects'
@@ -129,6 +132,14 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     labelKey: 'sidebar.memory',
     route: () => routes.view.memory(),
     isActive: isMemoryNavigation,
+  },
+  {
+    id: 'learning',
+    linkId: 'nav:learning',
+    icon: GraduationCap,
+    labelKey: 'sidebar.learning',
+    route: () => routes.view.learning(),
+    isActive: isLearningNavigation,
   },
   {
     id: 'meetings',

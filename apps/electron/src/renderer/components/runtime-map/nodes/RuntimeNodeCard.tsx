@@ -1,14 +1,14 @@
 import * as React from 'react'
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
 import { useTranslation } from 'react-i18next'
-import { Bot, Terminal, Wrench, Sparkles, Brain, ListChecks, Database, FileText, CheckCircle2, Circle, Clock3, XCircle, ShieldCheck, GitBranch, Cpu, type LucideIcon } from 'lucide-react'
+import { Bot, Terminal, Wrench, Sparkles, Brain, ListChecks, Database, FileText, CheckCircle2, Circle, Clock3, XCircle, ShieldCheck, GitBranch, Cpu, Scale, FileSearch, Trophy, type LucideIcon } from 'lucide-react'
 import type { RuntimeNode } from '@rox/core/runtime-trace'
 import { durationText, measurementText, runtimeNodeDuration } from '../measurements'
 import { nodeTitle, nodeSubtitle } from './node-content'
 
 export interface RuntimeNodeData extends Record<string, unknown> { runtime: RuntimeNode }
 export type RuntimeFlowNode = Node<RuntimeNodeData, 'runtime'>
-const icons: Record<string, LucideIcon> = { run: GitBranch, context: FileText, model: Cpu, plan: ListChecks, task: ListChecks, agent: Bot, skill: Sparkles, tool: Wrench, terminal: Terminal, reasoning: Brain, decision: GitBranch, acceptance: ShieldCheck, memory: Database, artifact: FileText, result: CheckCircle2 }
+const icons: Record<string, LucideIcon> = { run: GitBranch, context: FileText, model: Cpu, plan: ListChecks, task: ListChecks, agent: Bot, skill: Sparkles, tool: Wrench, terminal: Terminal, reasoning: Brain, decision: GitBranch, acceptance: ShieldCheck, memory: Database, artifact: FileText, result: CheckCircle2, policy: Scale, evidence: FileSearch, outcome: Trophy }
 
 export const RuntimeNodeCard = React.memo(function RuntimeNodeCard({ data, selected }: NodeProps<RuntimeFlowNode>) {
   const { t } = useTranslation()

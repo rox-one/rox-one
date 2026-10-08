@@ -160,6 +160,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
@@ -593,6 +594,7 @@ function AppShellContent({
   const isTasksView = isTasksNavigation(navState)
   const isMeetingsView = isMeetingsNavigation(navState)
   const isMemoryView = isMemoryNavigation(navState)
+  const isLearningView = isLearningNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
   // Mode screens (Входящие, Лента) render their own three panels too.
   // «Ещё» screens (Досье, Радар, Решения, Центр агентов, Фокус) do the same —
@@ -600,7 +602,7 @@ function AppShellContent({
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
   // Unavailable addresses have no collection navigator or resize boundary.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -1923,6 +1925,11 @@ function AppShellContent({
     handleServiceClick('memory')
   }, [handleServiceClick])
 
+  // Handler for learning view
+  const handleLearningClick = useCallback(() => {
+    handleServiceClick('learning')
+  }, [handleServiceClick])
+
   const handleTasksClick = useCallback(() => {
     handleServiceClick('tasks')
   }, [handleServiceClick])
@@ -2327,6 +2334,11 @@ function AppShellContent({
       return t("sidebar.memory")
     }
 
+    // Learning navigator
+    if (isLearningNavigation(navState)) {
+      return t("sidebar.learning")
+    }
+
     if (isTasksNavigation(navState)) {
       return t("sidebar.tasks")
     }
@@ -2610,6 +2622,13 @@ function AppShellContent({
       icon: APP_NAV_DESTINATIONS_BY_ID.memory.icon,
       variant: isMemoryNavigation(navState) ? "default" : "ghost",
       onClick: handleMemoryClick,
+    },
+    {
+      id: "nav:learning",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.learning.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.learning.icon,
+      variant: isLearningNavigation(navState) ? "default" : "ghost",
+      onClick: handleLearningClick,
     },
     {
       id: "nav:meetings",

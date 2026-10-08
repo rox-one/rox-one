@@ -61,6 +61,7 @@ async function fixtureBundle() {
     import CloudRunSurfacePage from './apps/electron/src/renderer/pages/CloudRunSurfacePage';
     import TerminalSurfacePage from './apps/electron/src/renderer/pages/TerminalSurfacePage';
     const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation,
+      isLearningNavigation,
       isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isNotesNavigation,
       isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isKnowledgeNavigation,
       isDiffNavigation, isExtensionNavigation, isConnectionsNavigation, isHomeNavigation, isCloudRunNavigation,
@@ -96,7 +97,7 @@ async function fixtureBundle() {
     const Pass = props => React.createElement('section', null, props.children);
     const Panel = Pass, StoplightProvider = Pass, SendResourceToWorkspaceDialog = () => null;
     const SourceInfoPage = props => React.createElement('div', {'data-fixture-source':props.sourceSlug}, 'Address '+props.sourceSlug);
-    const SkillInfoPage = () => null, MemoryScreen = () => null, ProjectsHomeInMain = () => null,
+    const SkillInfoPage = () => null, MemoryScreen = () => null, LearningScreen = () => null, ProjectsHomeInMain = () => null,
       MultiSelectPanel = () => null, CollectionBulkBar = () => null, HomeFrontPage = () => null,
       SettingsOverviewPage = () => null, PageView = () => null, SessionHeatmapHost = () => null, SearchPage = () => null,
       NotesPage = () => null, ConnectionsPage = () => null, SkillsCatalogPage = () => null, IntegrationsCatalogPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,

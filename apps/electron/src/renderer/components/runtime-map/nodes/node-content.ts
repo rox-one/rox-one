@@ -1,9 +1,23 @@
 import type { RuntimeNode, RuntimeEvent, RuntimeContent } from '@rox/core/runtime-trace'
 import type { TFunction } from 'i18next'
 import { safePreview } from '../measurements'
+import { isLearningNodeKind, learningNodeLabel } from '../learning-nodes'
 
 export function firstEvent<K extends RuntimeEvent['kind']>(node: RuntimeNode, kind: K): Extract<RuntimeEvent, { kind: K }> | undefined {
   return node.events.find(event => event.kind === kind) as Extract<RuntimeEvent, { kind: K }> | undefined
+}
+
+/**
+ * PRD §30 learning kinds have no `runtimeMap.kind.*` locale entry, so the
+ * registry label is the fallback; every other kind keeps its translated label.
+ */
+export function kindLabel(kind: string, t: TFunction): string {
+  return t(`runtimeMap.kind.${kind}`, { defaultValue: isLearningNodeKind(kind) ? learningNodeLabel(kind) : kind })
+}
+
+/** Canvas aria label for a rendered node, learning kinds included. */
+export function nodeAriaLabel(node: { kind: string; seq: number }, t: TFunction): string {
+  return t('runtimeMap.eventAria', { type: kindLabel(node.kind, t), sequence: node.seq })
 }
 
 export function nodeContent(node: RuntimeNode): RuntimeContent | undefined {
@@ -41,7 +55,7 @@ export function nodeTitle(node: RuntimeNode, t: TFunction): string {
     case 'acceptance.started': case 'acceptance.completed': return safePreview(event.payload.acceptance.criterion, 80)
     case 'artifact.created': return safePreview(event.payload.artifact.label, 80)
     case 'model.confirmed': case 'model.changed': return event.payload.model.confirmed.state === 'known' ? safePreview(event.payload.model.confirmed.value, 80) : t('runtimeMap.kind.model')
-    default: return t(`runtimeMap.kind.${node.kind}`, { defaultValue: event.kind })
+    default: return t(`runtimeMap.kind.${node.kind}`, { defaultValue: isLearningNodeKind(node.kind) ? learningNodeLabel(node.kind) : event.kind })
   }
 }
 

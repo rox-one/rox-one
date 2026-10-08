@@ -49,6 +49,17 @@ import type {
   PersonalTaskDeleteResult,
   PersonalTasksSnapshot,
 } from '@rox/core/tasks/personal'
+import type {
+  LearningCandidate,
+  LearningCandidateStatus,
+  LearningEvidence,
+  LearningExperiment,
+  LearningPolicy,
+  LearningStatsDto,
+  LearningTimelineEntryDto,
+  TaskOutcome,
+} from '@rox/shared/memory/learning'
+import type { EffectivenessReport, PromotionResult, RollbackResult } from '@rox/server-core/memory/learning/learning-types'
 
 /** Automatic browser cookie import (in-app browser). Values never cross RPC. */
 export interface BrowserCookieAutoStatus {
@@ -2001,6 +2012,26 @@ export interface ElectronAPI {
   rejectMemoryProposal(workspaceId: string, proposalId: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   editMemoryProposal(workspaceId: string, proposalId: string, text: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   deleteMemoryProposal(workspaceId: string, proposalId: string): Promise<boolean>
+  // Learning (continual learning, PRD §15) — candidates/evidence/outcomes/policies.
+  // `observe`/`recordOutcome`/`recordCorrection` are agent/native channels and are
+  // deliberately absent here.
+  listLearningCandidates(workspaceId: string, filter?: { status?: LearningCandidateStatus }): Promise<LearningCandidate[]>
+  getLearningCandidate(workspaceId: string, id: string): Promise<LearningCandidate | null>
+  listLearningEvidence(workspaceId: string, candidateId?: string): Promise<LearningEvidence[]>
+  getLearningOutcome(workspaceId: string, id: string): Promise<TaskOutcome | null>
+  getLearningExperiment(workspaceId: string, id: string): Promise<LearningExperiment | null>
+  getLearningStats(workspaceId: string): Promise<LearningStatsDto>
+  getLearningSkillEffectiveness(workspaceId: string, targetId: string): Promise<EffectivenessReport | null>
+  getLearningPolicy(workspaceId: string, id?: string): Promise<LearningPolicy[]>
+  getLearningTimeline(workspaceId: string, limit?: number): Promise<LearningTimelineEntryDto[]>
+  approveLearningCandidate(workspaceId: string, id: string): Promise<PromotionResult>
+  rejectLearningCandidate(workspaceId: string, id: string, reason?: string): Promise<LearningCandidate | null>
+  rollbackLearningCandidate(workspaceId: string, id: string): Promise<RollbackResult>
+  revalidateLearningCandidate(workspaceId: string, id: string): Promise<LearningCandidate | null>
+  forceLearningReflect(workspaceId: string, sessionId: string): Promise<{ candidates: LearningCandidate[] }>
+  runLearningConsolidation(workspaceId: string): Promise<{ candidates: LearningCandidate[] }>
+  curateLearningSkills(workspaceId: string): Promise<{ items: Array<{ slug: string; action: 'keep' | 'improve' | 'archive' }> }>
+  runPolicyLearning(workspaceId: string): Promise<{ policies: LearningPolicy[] }>
   enrichMindMap(input: {
     workspaceId: string
     entity: import('@rox/core/mindmap').MindMapEntityRef
@@ -2707,6 +2738,15 @@ export interface MemoryNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/**
+ * Learning navigator state (self-learning dashboard — PRD §25-30)
+ */
+export interface LearningNavigationState {
+  navigator: 'learning'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface TasksNavigationState {
   navigator: 'tasks'
   details: { type: 'task'; taskId: string } | null
@@ -2839,6 +2879,7 @@ export type NavigationState =
   | PagesNavigationState
   | BrowserNavigationState
   | MemoryNavigationState
+  | LearningNavigationState
   | TasksNavigationState
   | MeetingsNavigationState
   | FeedNavigationState
@@ -2899,6 +2940,10 @@ export const isBrowserNavigation = (
 export const isMemoryNavigation = (
   state: NavigationState
 ): state is MemoryNavigationState => state.navigator === 'memory'
+
+export const isLearningNavigation = (
+  state: NavigationState
+): state is LearningNavigationState => state.navigator === 'learning'
 
 export const isTasksNavigation = (
   state: NavigationState
@@ -3010,6 +3055,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'memory') {
     return 'memory'
+  }
+  if (state.navigator === 'learning') {
+    return 'learning'
   }
   if (state.navigator === 'tasks') {
     return state.details?.type === 'task' ? `tasks/task/${encodeURIComponent(state.details.taskId)}` : 'tasks'
