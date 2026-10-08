@@ -40,10 +40,10 @@ Managed acpx CLI is pinned to **0.19.4**, with verified package integrity and pr
 
 ## Configuration and context
 
-The canonical configuration directory is `~/rox`. Set `ROX_CONFIG_DIR` to use an isolated profile.
+The configuration directory is the legacy hidden home `~/.rox` by default. With the `storage.visible-root.v1` flag on it is the visible `~/rox`, and `~/.rox` stays behind as a compatibility symlink (manual path: `craft-cli migrate-config`). Set `ROX_CONFIG_DIR` to use an isolated profile.
 
 ```text
-~/rox/
+<config dir>/
   config.json
   credentials.enc
   preferences.json
