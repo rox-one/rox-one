@@ -11,6 +11,7 @@
  *
  * v2 checks on class strings (className / cn / clsx / cva / tv ...), option `checkClasses`:
  *   'z-50', 'md:z-[60]', '-z-10', '!z-0'    -> numeric or arbitrary z class
+ *   'data-[state=open]:z-50', '[&>*]:z-10'   -> same (variants are split bracket-aware)
  *   'z-overlay', 'z-floating-menu'          -> not a layer utility (retired names)
  *   'z-[var(--z-island)]'                   -> allowed (references a layer)
  *   'z-[calc(var(--z-chrome)+1)]'           -> allowed (local offset on a layer)
@@ -27,15 +28,13 @@
  *   className="z-popover", "z-auto"
  */
 
-const { createClassStringListeners, mergeListeners, tokensFromString } = require('./lib/class-token-visitor.cjs')
+const { createClassStringListeners, isNumericZToken, mergeListeners, tokensFromString } = require('./lib/class-token-visitor.cjs')
 const { readZTokens } = require('./lib/ui-tokens.cjs')
 
-/**
- * A whitespace token that is unmistakably a numeric or arbitrary z utility, wherever the
- * string lives: `z-50`, `md:z-[60]`, `!-z-10`. Used outside recognised class contexts
- * (`const LAYER = 'absolute z-50'`, `styles = { panel: 'z-[60]' }`, .ts constant modules).
- */
-const BROAD_Z_TOKEN = /^(?:[\w-]+:)*!?-?z-(?:\d+|\[[^\]]+\])!?$/
+// Outside recognised class contexts (`const LAYER = 'absolute z-50'`, `styles = { panel: 'z-[60]' }`,
+// .ts constant modules) only tokens that are unmistakably numeric/arbitrary z utilities count:
+// isNumericZToken splits variants bracket-aware (`data-[state=open]:z-50`, `[&>*]:z-10`,
+// `group-hover/name:z-10`) and tests only the utility against ^z-(\d+|\[...\])$.
 
 const CSS_KEYWORDS = new Set(['auto', 'inherit', 'initial', 'unset', 'revert', 'revert-layer'])
 
@@ -236,7 +235,7 @@ module.exports = {
           if (token.partial) continue
           // In class strings every z-* utility is checked. Anywhere else (constants, style
           // maps, .ts modules) only tokens that are unmistakably numeric/arbitrary z classes.
-          if (isClassString ? !token.utility.startsWith('z-') : !BROAD_Z_TOKEN.test(token.raw)) continue
+          if (isClassString ? !token.utility.startsWith('z-') : !isNumericZToken(token)) continue
           checkZToken(token, node)
           if (/^z-[[(]/.test(token.utility)) handled.add(token)
         }

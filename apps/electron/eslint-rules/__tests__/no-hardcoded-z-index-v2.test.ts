@@ -63,6 +63,24 @@ describe('rox/no-hardcoded-z-index v2: broad detection outside class contexts', 
     expect(ids(messages)).toEqual(['numericClass', 'arbitraryClass', 'numericClass', 'numericClass'])
   })
 
+  it('splits variants bracket-aware: data-[...], [&>*], group-hover/name (review2 info)', () => {
+    const messages = run(`
+      const OPEN = 'data-[state=open]:z-50'
+      const KIDS = 'flex [&>*]:z-10'
+      const PEER = \`group-hover/name:z-[60] \${tone}\`
+      const DEEP = 'supports-[display:grid]:md:!-z-20'
+    `)
+    expect(ids(messages)).toEqual(['numericClass', 'numericClass', 'arbitraryClass', 'numericClass'])
+  })
+
+  it('tests only the utility: layer-based arbitrary values, layer names and non-tokens pass', () => {
+    const messages = run(`
+      const a = 'data-[state=open]:z-[calc(var(--z-popover)+1)] [&>*]:z-popover group-hover/x:z-auto'
+      const b = ':z-10 a::z-10 z-10px data-[z-10]:flex [z-50]:block'
+    `)
+    expect(messages).toHaveLength(0)
+  })
+
   it('covers .ts constant modules', () => {
     const messages = runRoxRule('no-hardcoded-z-index', "export const OVERLAY = 'fixed inset-0 z-[9999]'", { filename: 'layers.ts' })
     expect(ids(messages)).toEqual(['arbitraryClass'])

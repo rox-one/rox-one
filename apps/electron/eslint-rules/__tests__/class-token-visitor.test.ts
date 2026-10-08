@@ -40,6 +40,16 @@ describe('class-token-visitor', () => {
     expect(visitor.parseClassToken('[&:hover]:z-10')).toMatchObject({ variants: ['[&:hover]'], utility: 'z-10' })
   })
 
+  it('isNumericZToken tests only the utility, with bracket-aware variants', () => {
+    for (const raw of ['z-50', 'md:z-[60]', '!-z-10', 'z-20!', 'data-[state=open]:z-50', '[&>*]:z-10', 'group-hover/name:z-10', 'z-[calc(var(--z-a)+1)]']) {
+      expect(visitor.isNumericZToken(raw), raw).toBe(true)
+    }
+    for (const raw of ['z-popover', 'z-auto', 'z-(--z-a)', 'z-10px', ':z-10', 'a::z-10', 'data-[z-10]:flex', 'mz-10', 'z-', 'z-index']) {
+      expect(visitor.isNumericZToken(raw), raw).toBe(false)
+    }
+    expect(visitor.isNumericZToken(visitor.parseClassToken('[&>*]:z-10'))).toBe(true)
+  })
+
   it('reads className strings, expressions and cn/clsx/cva/tv calls once each', () => {
     const found = collect(`
       const a = <div className="z-10 flex" />

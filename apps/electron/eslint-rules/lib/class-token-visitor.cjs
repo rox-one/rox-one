@@ -91,6 +91,22 @@ function parseClassToken(raw) {
   return { raw, variants: parts, utility, important, negative }
 }
 
+/** The utility part of a numeric or arbitrary z class: `z-50`, `z-[60]`, `z-[calc(var(--z-a)+1)]`. */
+const NUMERIC_Z_UTILITY = /^z-(?:\d+|\[[^\]]+\])$/
+
+/**
+ * A whitespace token that is unmistakably a numeric or arbitrary z utility, with any variants,
+ * split bracket-aware (`md:z-50`, `!-z-10`, `data-[state=open]:z-50`, `[&>*]:z-10`,
+ * `group-hover/name:z-[60]`). Only the utility is tested; every variant must be non-empty
+ * (`:z-10`, `a::z-10` are not class tokens). Accepts a raw token or a parseClassToken result.
+ * Whether an arbitrary value is layer-based is left to the caller.
+ */
+function isNumericZToken(tokenOrRaw) {
+  const token = typeof tokenOrRaw === 'string' ? parseClassToken(tokenOrRaw) : tokenOrRaw
+  if (!token || !NUMERIC_Z_UTILITY.test(token.utility)) return false
+  return token.variants.every((variant) => variant.length > 0)
+}
+
 /** Whitespace split that keeps bracketed arbitrary values (`grid-cols-[1fr_auto]`) intact. */
 function splitClassString(value) {
   return String(value)
@@ -263,7 +279,9 @@ module.exports = {
   CLASS_FUNCTIONS,
   createClassStringListeners,
   isClassFunctionCall,
+  isNumericZToken,
   jsxElementName,
+  NUMERIC_Z_UTILITY,
   mergeListeners,
   parseClassToken,
   splitClassString,
