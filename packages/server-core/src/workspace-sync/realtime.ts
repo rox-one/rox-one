@@ -1,0 +1,371 @@
+/**
+ * W1-03 (#1500) — Client realtime subscriber with `seq` gap recovery.
+ *
+ * Tracks the last applied seq per topic. A frame that skips ahead (gap) is
+ * dropped and the topic is resubscribed with `sinceSeq`, so the gateway
+ * replays exactly the missing frames; `snapshot_required` (window exceeded,
+ * epoch changed) resets the position and asks the host to refetch through
+ * the query API. Duplicates are ignored. `resume()` resubscribes everything
+ * after a reconnect.
+ *
+ * While a subscribe request is in flight its topics are *pending*: live frames
+ * that overtake the RPC result are buffered and run through the tracker once
+ * the result has set the position, so a first event is never dropped.
+ *
+ * Intent generations: `subscribe()` gives each newly wanted topic an intent
+ * token and `unsubscribe()` revokes it (a later re-subscribe gets a new one).
+ * Every request and retry timer remembers the token it was made for; a result
+ * or timer whose token is no longer current is stale and ignored — it never
+ * re-adds the topic or schedules a retry, and a stale `subscribed` /
+ * `snapshot_required` for a topic nobody wants any more is unsubscribed so the
+ * server keeps no subscription the caller dropped.
+ *
+ * Unsubscribe-before-subscribe ordering: the WS-RPC server handles one
+ * socket's messages concurrently (each awaits session revalidation first), so
+ * a later subscribe can overtake an earlier unsubscribe of the same topic at
+ * the gateway and be deleted by it — the client would believe it is
+ * subscribed while the server holds nothing. Every unsubscribe (explicit or
+ * the cleanup of a stale reply) is therefore tracked per topic until its RPC
+ * settles, and a subscribe request for such a topic is only sent after it
+ * settled (success or failure — a failed unsubscribe leaves the server
+ * subscription, which the new subscribe simply re-sets). The wait is bounded
+ * by the transport's request timeout; a request still waiting when the
+ * subscriber closes is abandoned (rejects) instead of hanging.
+ */
+
+import {
+  REALTIME_RPC,
+  TopicSeqTracker,
+  type RealtimeEventFrame,
+  type RealtimeFrame,
+  type RealtimeSubscribeRequest,
+  type RealtimeSubscribeResult,
+  type RealtimeSubscribeTopicResult,
+} from '@rox/core/events'
+
+export interface RealtimeConnection {
+  subscribe(request: RealtimeSubscribeRequest): Promise<RealtimeSubscribeResult>
+  unsubscribe(topics: string[]): Promise<void>
+  onFrame(listener: (frame: RealtimeFrame) => void): () => void
+}
+
+/** Minimal WS-RPC client surface (`WsRpcClient` satisfies it). */
+export interface RealtimeRpcClient {
+  invoke(channel: string, ...args: unknown[]): Promise<unknown>
+  on(channel: string, callback: (...args: any[]) => void): () => void
+}
+
+/** Adapter: the workspace gateway's `realtime:*` channels over a WS-RPC client. */
+export function wsRpcRealtimeConnection(client: RealtimeRpcClient, workspaceId: string): RealtimeConnection {
+  return {
+    subscribe: request => client.invoke(REALTIME_RPC.SUBSCRIBE, workspaceId, request) as Promise<RealtimeSubscribeResult>,
+    unsubscribe: async topics => { await client.invoke(REALTIME_RPC.UNSUBSCRIBE, workspaceId, { topics }) },
+    onFrame: listener => client.on(REALTIME_RPC.EVENT, (ws: unknown, frame: RealtimeFrame) => {
+      if (ws === workspaceId) listener(frame)
+    }),
+  }
+}
+
+export interface RealtimeSubscriberOptions {
+  connection: RealtimeConnection
+  onEvent: (frame: RealtimeEventFrame) => void
+  /** The topic's history can't be replayed: refetch its state, then continue live. */
+  onSnapshotRequired?: (topic: string, latestSeq: number) => void
+  onForbidden?: (topic: string) => void
+  /** The gateway refused the topic because of its per-client topic limit. */
+  onLimitExceeded?: (topic: string) => void
+  /** The gateway could not check the topic ACL (transient); the subscribe is retried with backoff. */
+  onUnavailable?: (topic: string) => void
+  /** First retry delay after `unavailable` (doubles per attempt, capped at 30 s; default 1 s). */
+  unavailableRetryMs?: number
+  onError?: (error: unknown) => void
+}
+
+export class RealtimeSubscriber {
+  private readonly tracker = new TopicSeqTracker()
+  private readonly topics = new Set<string>()
+  private readonly recovering = new Map<string, Promise<void>>()
+  private readonly highWater = new Map<string, number>()
+  /** Topics with an in-flight subscribe → frames that arrived before its result. */
+  private readonly pending = new Map<string, { requests: number; frames: RealtimeFrame[] }>()
+  private readonly unlisten: () => void
+  /** Topics answered `unavailable` → retry attempt + timer. */
+  private readonly unavailableRetries = new Map<string, { attempts: number; timer: ReturnType<typeof setTimeout> | null }>()
+  /** Topics the caller wants → current intent token (revoked by `unsubscribe`). */
+  private readonly wanted = new Map<string, number>()
+  private intentSeq = 0
+  /** Topics with an in-flight unsubscribe RPC → resolves (never rejects) once all of them settled. */
+  private readonly unsubscribing = new Map<string, Promise<void>>()
+  /** Requests waiting for an unsubscribe → release (called by `close()` so none hangs). */
+  private readonly unsubscribeWaiters = new Set<() => void>()
+  private closed = false
+  private readonly options: RealtimeSubscriberOptions
+
+  constructor(options: RealtimeSubscriberOptions) {
+    this.options = options
+    this.unlisten = options.connection.onFrame(frame => this.onFrame(frame))
+  }
+
+  position(topic: string): { epoch: string; seq: number } | undefined {
+    return this.tracker.position(topic)
+  }
+
+  subscribed(): string[] {
+    return [...this.topics]
+  }
+
+  async subscribe(topics: string[]): Promise<RealtimeSubscribeTopicResult[]> {
+    for (const topic of new Set(topics)) if (!this.wanted.has(topic)) this.wanted.set(topic, ++this.intentSeq)
+    return this.request(topics)
+  }
+
+  /** Whether `token` is still the caller's current intent for `topic`. */
+  private isCurrent(topic: string, token: number | undefined): boolean {
+    return token !== undefined && this.wanted.get(topic) === token
+  }
+
+  /** Sends one subscribe request for wanted topics (public subscribe, retries, recovery, resume). */
+  private async request(topics: string[]): Promise<RealtimeSubscribeTopicResult[]> {
+    // Each requested topic holds exactly one pending slot for this request and
+    // releases it exactly once (duplicates in `topics` or in the result can't
+    // unbalance the counter of a concurrent request).
+    const requested = [...new Set(topics)]
+    for (const topic of requested) {
+      const entry = this.pending.get(topic) ?? { requests: 0, frames: [] }
+      entry.requests += 1
+      this.pending.set(topic, entry)
+    }
+    const tokens = new Map<string, number | undefined>(requested.map(topic => [topic, this.wanted.get(topic)] as const))
+    const unsettled = new Set(requested)
+    const settle = (topic: string): RealtimeFrame[] => (unsettled.delete(topic) ? this.settlePending(topic) : [])
+    let result: RealtimeSubscribeResult
+    try {
+      // An unsubscribe of one of these topics still in flight must reach the
+      // gateway first, or it could delete the subscription this request makes.
+      const blockers = new Set<Promise<void>>()
+      for (const topic of requested) {
+        const blocker = this.unsubscribing.get(topic)
+        if (blocker) blockers.add(blocker)
+      }
+      if (blockers.size > 0) {
+        await this.waitForUnsubscribes(blockers)
+        if (this.closed) throw new Error('RealtimeSubscriber closed')
+      }
+      // Positions are read when the request is actually sent.
+      const request: RealtimeSubscribeRequest = {
+        topics: requested.map(topic => {
+          const position = this.tracker.position(topic)
+          return position ? { topic, sinceSeq: position.seq, epoch: position.epoch } : { topic }
+        }),
+      }
+      result = await this.options.connection.subscribe(request)
+    } catch (error) {
+      for (const topic of requested) settle(topic)
+      throw error
+    }
+    const leaked: string[] = []
+    for (const item of result.topics) {
+      if (this.isCurrent(item.topic, tokens.get(item.topic))) {
+        this.applyResult(item)
+      } else if ((item.status === 'subscribed' || item.status === 'snapshot_required') && !this.wanted.has(item.topic)) {
+        // Unsubscribed while this request was in flight: the server may have
+        // attached after our unsubscribe — drop it again (once per topic).
+        if (!leaked.includes(item.topic)) leaked.push(item.topic)
+      }
+      // Frames that overtook the result: replayed ones are now duplicates
+      // (and frames of a topic no longer subscribed are dropped by onFrame).
+      for (const frame of settle(item.topic)) this.onFrame(frame)
+    }
+    if (leaked.length > 0 && !this.closed) {
+      this.sendUnsubscribe(leaked).catch(error => { this.options.onError?.(error) })
+    }
+    for (const topic of requested) for (const frame of settle(topic)) this.onFrame(frame)
+    return result.topics
+  }
+
+  /** Resolves once every blocker settled, or as soon as the subscriber closes. */
+  private waitForUnsubscribes(blockers: Iterable<Promise<void>>): Promise<void> {
+    if (this.closed) return Promise.resolve()
+    return new Promise<void>(resolve => {
+      const release = () => { this.unsubscribeWaiters.delete(release); resolve() }
+      this.unsubscribeWaiters.add(release)
+      void Promise.all(blockers).then(release)
+    })
+  }
+
+  /** Ends one in-flight request for `topic`; returns buffered frames when it was the last. */
+  private settlePending(topic: string): RealtimeFrame[] {
+    const entry = this.pending.get(topic)
+    if (!entry) return []
+    entry.requests -= 1
+    if (entry.requests > 0) return []
+    this.pending.delete(topic)
+    return entry.frames
+  }
+
+  async unsubscribe(topics: string[]): Promise<void> {
+    for (const topic of topics) {
+      this.wanted.delete(topic)
+      this.topics.delete(topic)
+      this.tracker.forget(topic)
+      const retry = this.unavailableRetries.get(topic)
+      if (retry?.timer) clearTimeout(retry.timer)
+      this.unavailableRetries.delete(topic)
+    }
+    await this.sendUnsubscribe(topics)
+  }
+
+  /**
+   * Sends one unsubscribe RPC and marks its topics as unsubscribing until it
+   * settles (registered synchronously, so a subscribe issued right after sees
+   * it). The returned promise rejects with the RPC error; the tracking never does.
+   */
+  private sendUnsubscribe(topics: string[]): Promise<void> {
+    let sent: Promise<void>
+    try {
+      sent = Promise.resolve(this.options.connection.unsubscribe(topics))
+    } catch (error) {
+      sent = Promise.reject(error)
+    }
+    const done = sent.then(() => {}, () => {})
+    for (const topic of new Set(topics)) {
+      const previous = this.unsubscribing.get(topic)
+      const entry: Promise<void> = previous ? Promise.all([previous, done]).then(() => {}) : done
+      this.unsubscribing.set(topic, entry)
+      void entry.then(() => { if (this.unsubscribing.get(topic) === entry) this.unsubscribing.delete(topic) })
+    }
+    return sent
+  }
+
+  /** Resubscribe all topics from their last positions (after a reconnect). */
+  async resume(): Promise<void> {
+    if (this.topics.size > 0) await this.request([...this.topics])
+  }
+
+  close(): void {
+    this.closed = true
+    for (const release of [...this.unsubscribeWaiters]) release()
+    this.unlisten()
+    for (const retry of this.unavailableRetries.values()) if (retry.timer) clearTimeout(retry.timer)
+    this.unavailableRetries.clear()
+  }
+
+  /** Resolves once in-flight gap recoveries finished (tests). */
+  async settled(): Promise<void> {
+    while (this.recovering.size > 0) await Promise.all([...this.recovering.values()])
+  }
+
+  private applyResult(item: RealtimeSubscribeTopicResult): void {
+    this.applyStatus(item)
+    if (item.status !== 'subscribed' || !item.frames) return
+    for (const frame of item.frames) this.deliver(frame, true)
+  }
+
+  private applyStatus(item: RealtimeSubscribeTopicResult): void {
+    // Never (re-)add a topic the caller no longer wants (callers also drop stale results).
+    if (!this.wanted.has(item.topic)) return
+    if (item.status === 'unavailable') {
+      // Not a denial: keep the topic (and its position) and retry later.
+      this.topics.add(item.topic)
+      this.options.onUnavailable?.(item.topic)
+      this.scheduleUnavailableRetry(item.topic)
+      return
+    }
+    const retry = this.unavailableRetries.get(item.topic)
+    if (retry) {
+      if (retry.timer) clearTimeout(retry.timer)
+      this.unavailableRetries.delete(item.topic)
+    }
+    if (item.status === 'forbidden' || item.status === 'invalid' || item.status === 'limit_exceeded') {
+      // The server ended the caller's intent: a later subscribe starts a new one.
+      this.wanted.delete(item.topic)
+      this.topics.delete(item.topic)
+      this.tracker.forget(item.topic)
+      if (item.status === 'forbidden') this.options.onForbidden?.(item.topic)
+      if (item.status === 'limit_exceeded') this.options.onLimitExceeded?.(item.topic)
+      return
+    }
+    this.topics.add(item.topic)
+    if (item.status === 'snapshot_required') {
+      this.tracker.reset(item.topic, item.epoch, item.seq)
+      this.options.onSnapshotRequired?.(item.topic, item.seq)
+      return
+    }
+    const position = this.tracker.position(item.topic)
+    // Fresh subscription: start from the current seq. With a replay, the
+    // result's frames advance the position themselves.
+    if (!position || position.epoch !== item.epoch) this.tracker.reset(item.topic, item.epoch, item.seq)
+  }
+
+  /**
+   * Retry an `unavailable` topic with bounded backoff (doubling, capped at
+   * 30 s). Also used when the retry's own request throws (RPC timeout while the
+   * gateway's ACL read hangs), so the retry loop never dies silently.
+   */
+  private scheduleUnavailableRetry(topic: string): void {
+    const token = this.wanted.get(topic)
+    if (this.closed || token === undefined) return
+    const retry = this.unavailableRetries.get(topic) ?? { attempts: 0, timer: null }
+    if (retry.timer) return
+    retry.attempts += 1
+    const delay = Math.min((this.options.unavailableRetryMs ?? 1_000) * 2 ** (retry.attempts - 1), 30_000)
+    retry.timer = setTimeout(() => {
+      retry.timer = null
+      if (this.closed || !this.isCurrent(topic, token) || this.unavailableRetries.get(topic) !== retry) return
+      this.request([topic]).catch(error => {
+        this.options.onError?.(error)
+        if (!this.closed && this.isCurrent(topic, token) && this.unavailableRetries.get(topic) === retry) {
+          this.scheduleUnavailableRetry(topic)
+        }
+      })
+    }, delay)
+    ;(retry.timer as { unref?: () => void }).unref?.()
+    this.unavailableRetries.set(topic, retry)
+  }
+
+  private onFrame(frame: RealtimeFrame): void {
+    const pending = this.pending.get(frame.topic)
+    if (pending) {
+      pending.frames.push(frame)
+      return
+    }
+    if (!this.topics.has(frame.topic)) return
+    if (frame.frame === 'snapshot_required') {
+      this.tracker.reset(frame.topic, frame.epoch, frame.latestSeq)
+      this.options.onSnapshotRequired?.(frame.topic, frame.latestSeq)
+      return
+    }
+    this.deliver(frame, false)
+  }
+
+  private deliver(frame: RealtimeEventFrame, fromReplay: boolean): void {
+    const verdict = this.tracker.accept(frame)
+    if (verdict === 'apply') {
+      try { this.options.onEvent(frame) } catch (error) { this.options.onError?.(error) }
+      return
+    }
+    if (verdict !== 'gap' || fromReplay) return
+    // Remember the newest seq seen; if the replay does not reach it, recover again.
+    this.highWater.set(frame.topic, Math.max(this.highWater.get(frame.topic) ?? 0, frame.seq))
+    if (!this.recovering.has(frame.topic)) this.recover(frame.topic, 0)
+  }
+
+  private recover(topic: string, attempt: number): void {
+    const run = this.request([topic])
+      .then(() => {
+        const position = this.tracker.position(topic)
+        const high = this.highWater.get(topic) ?? 0
+        this.recovering.delete(topic)
+        if (this.topics.has(topic) && position && position.seq < high && attempt < 3) {
+          this.recover(topic, attempt + 1)
+        } else {
+          this.highWater.delete(topic)
+        }
+      })
+      .catch(error => {
+        this.recovering.delete(topic)
+        this.options.onError?.(error)
+      })
+    this.recovering.set(topic, run)
+  }
+}

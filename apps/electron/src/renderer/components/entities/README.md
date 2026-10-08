@@ -1,0 +1,83 @@
+# Entity UI (W1-08, #1505)
+
+Entity-aware components built on the `#1499` contracts (`@rox/core/entities`:
+`EntityRef`, `parseEntityRef`, `formatEntityRef`, `kindDescriptor`,
+`applyPreviewRedaction`, `entityRoute`, …). This is not a second
+orchestrator, rail, palette or editor: navigation uses the existing
+`navigate()` event, and mentions plug into the existing `TiptapMarkdownEditor`.
+
+## Gating
+
+`entities.previews.v1` is registered in `@rox/core/platform` with default OFF
+and depends on `entities.links.v1`. `flags.ts` resolves both through
+`isWorkbenchFlagEnabled`. Links is #1499's EFFECTIVE state
+(`useEntitiesLinksEffectiveState`: the env `CRAFT_FEATURE_ENTITIES_LINKS`
+override, else the saved `craft-feature-entities-links-v1` toggle), not the
+saved toggle; previews is `craft-feature-entities-previews-v1`. So when the
+env forces links off, previews and chips behave exactly as with links off
+(no entity calls, no «unavailable» chips), and when it forces links on, the
+previews toggle alone decides.
+
+Settings → Appearance → Workbench has a toggle for each, previews right under
+links (`EntitiesPreviewsSettingsToggle`, same `atomWithStorage` persistence).
+While links is effectively off the previews switch is disabled and shown off;
+its description repeats the env-forced explanation when the env forces links
+off, and otherwise says to turn links on first. The saved previews value is
+kept either way.
+
+`openEntity` (chip click, hover card, context menu, embed card) navigates
+nowhere for the kind-first entity routes (`docs/…`, `goals/…`, …) while
+#1499's route gate is off, the same gate that rejects those routes and
+`rox://` deep links.
+
+When the flag is off:
+- no preview or backlink request is made;
+- no hover card can open;
+- Notes loads no entity nodes, so `[[kind:id|label]]` stays plain text;
+- the Tasks Links tab shows nothing new.
+
+## Components
+
+| Component | Notes |
+|---|---|
+| `EntityChip` | Inline ref with icon + title. A restricted ref shows a lock and «Нет доступа» (never the title or the stored label); a tombstone shows «Удалено» struck through; an unavailable ref shows a warning icon. The hover card opens after 300 ms (flag on only). The chip is a drag source and has the common row context menu. |
+| `EntityHoverCard` | 360 px preview: kind, title, badges, up to 4 fields, progress, people, updated, plus Open / Copy link. |
+| `EntityCard` | Preview-driven block card; also the node view for `![[kind:id]]` embeds. |
+| `EntityPicker` / `EntityPickerPanel` | «Связать элемент Rox…», 560 px: search, kind filter chips, Recent / Results groups, ↑↓ / Enter / Esc. A typed `kind:id` is offered as a literal row unless its literal cannot be written inside `[[…]]` (`\|`, `]`, `[[`, line breaks). `accept(ref)` lets the caller hide refs it cannot link (Notes does). |
+| `BacklinksPanel` / `BacklinksList` | «Упоминается в»: backlinks grouped Tasks / Docs / Projects / Goals / Meetings / Chats / Other, one row per source, relation labels, "show all", retry on error. |
+| `EntityRowContextMenu` | Open, Open in new tab, Copy link, then `getEntityRowActions(ref)`. |
+| `useNoteEntityMentions` | Notes integration: `entityNodes` + picker (Mod-Shift-K inserts a mention). |
+| `TaskEntityBacklinks` | Tasks integration: the backlinks panel in the TaskDetail Links tab. |
+
+## Contracts for later waves
+
+- **Row actions:** `getEntityRowActions(ref)` returns `{ id, labelKey, run, disabled }[]`. The defaults `ask-rox` («Спросить @rox»), `pin` («Закрепить») and `remind` («Напомнить…») stay disabled and inert until `registerEntityRowActionHandler(id, { run, isAvailable? })` is called. Custom ids need a `labelKey`.
+- **Drag (X-13):** `application/x-rox-entity-ref` carries JSON `{ ref: formatEntityRef(ref), label }`. Use `setEntityDragData` / `readEntityDragData` (the latter returns null for anything invalid). Wave 1 registers no drop targets.
+- **Per-kind renderers:** `registerPreview(kind, { ChipLabel?, HoverCardBody?, CardBody? })`. Restricted previews never reach custom renderers.
+- **Data:** every read goes through `entity-data-source.ts`. The default implementation calls the `entities:resolve` / `entities:links` bridge methods (`window.electronAPI.entitiesResolve` / `entitiesLinks`). Search is `STUB(#1504)` and returns `[]` until W1-07 calls `setEntityDataSource(...)`.
+- **Markdown:** mention ⇄ `[[kind:id|label]]`, embed ⇄ `![[kind:id]]` (see `@rox/ui` `EntityMention` / `EntityEmbed`). Both round-trip through `server-core/src/entities/extract.ts`.
+  - An embed is a top-level `![[kind:id]]` line with a blank line (or the start/end of the note) both before and after it. Anything else (mid-line, touching paragraph text, inside a list item / blockquote / callout / column) stays text, both when loading and when typing or pasting.
+  - A mention written right after a literal `!` (`Done!` + chip) is saved as `Done\![[kind:id]]`, so it reloads as a mention instead of embed syntax. This is the only case where the escape is written.
+
+## Preview freshness
+
+`use-entity-preview.ts` keeps one cache per workspace:
+- requests made in one tick are batched into one `entities:resolve` call;
+- a ready preview older than 60 s (`ENTITY_PREVIEW_TTL_MS`) is refetched in the background on the next mount (`retain`) or hover-card open, and the old value stays visible until the new one arrives (stale-while-revalidate). A deleted entity then shows its tombstone;
+- `entities:linksChanged` refetches every mounted preview;
+- the existing `notes:changed` (note id) and `personalTasks:changed` broadcasts refetch the mounted note / task previews they concern (`EntityDataSource.onEntitiesChanged`);
+- a failed resolve shows the `unavailable` placeholder and retries after 15 s, doubling per consecutive failure up to 5 min. Success or `linksChanged` resets the backoff.
+
+## Stubs
+
+- `entity-data-source.ts`, `STUB(#1504)`: no search provider yet.
+
+## Known limitations (UNDONE)
+
+- **Tasks «Упоминается в» only shows indexed links.** Note mentions reach the link store through #1499's save-time note-links indexer (`server-core/src/entities/note-links-indexer.ts`, behind `entities.links.v1`): notes saved while links was off are indexed on their next save. Until then the panel shows its empty state («Пока нигде не упоминается») from the real `entities:links` call; it never shows fixture or invented rows.
+- **`!` before `[[…]]`: editor vs #1499 indexer (follow-up).** The indexer (#1499 @ c13241e1) records `embeds` for an unescaped whole-line `![[…]]` (≤ 3 leading spaces) and `mentions` for inline `a ![[…]] b` and `\![[…]]`. The editor additionally needs a blank line (or the start/end of the note) above and below an embed, at the top level. So an inline `![[task:1]]` stays plain text in the editor (no chip) while the index records a mention, and a whole-line `![[task:1]]` that touches paragraph text stays text while the index records an embed (until a legacy-engine save escapes it as `!\[\[…\]\]`, as on main). Aligning the editor means changing the `\!` escape rule in both Markdown engines and their round-trip tests, so it is left for a follow-up.
+- The server resolver host keeps its own LRU; a renderer revalidation can return that cached preview until the owning module invalidates it on the server.
+- `[[` / `@` suggestion menu (UI-SPEC MentionMenu) is a later package; typed or pasted explicit syntax converts, and Mod-Shift-K opens the picker.
+- An `![[kind:id]]` line inside a list item, blockquote, callout or column, or touching paragraph text, stays text, not an embed card. The legacy (tiptap-markdown) editor escapes it on save as `!\[\[…\]\]`, exactly as with the flag off (same as main).
+- The `\!` escape before a mention is written by the legacy engine only (the Notes default). The official `@tiptap/markdown` engine cannot see the preceding output from a node renderer, so there `Done!` + chip saves `Done![[kind:id]]`, which reloads as text, and a lone `!` + chip line reloads as an embed. That engine also drops `\` escapes on load (same as main).
+- Official `@tiptap/markdown` engine only: bold, italic, strike and underline around a mention are dropped on save. For example `**bold [[task:1]]**` saves as `**bold** [[task:1]]`, `**[[task:1]]**` as `[[task:1]]`, and `*a [[task:1]] b*` as `*a* [[task:1]] *b*`. This comes from upstream (`MarkdownManager.applyMarkToContent` applies marks only to text nodes). Inline math behaves the same on main (`**bold $x$**` saves as `**bold** $x$`), so it is not worked around here. The legacy engine (the Notes default) keeps bold, italic and strike around mentions (`**bold [[task:1]]**` round-trips unchanged), and links too (`[x [[task:1]] y](http://z)`).

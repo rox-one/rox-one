@@ -2,7 +2,7 @@ import { spawn, execFile } from 'child_process'
 import { connect as netConnect } from 'net'
 import { EventEmitter } from 'events'
 import type { SshHostConfig } from '@rox/shared/config'
-import { getSshHost, loadManagedToken, storeManagedToken } from '@rox/shared/config'
+import { getSshHost, isVisibleRoxHomeActive, loadManagedToken, storeManagedToken } from '@rox/shared/config'
 import { generateServerToken } from '@rox/server-core/bootstrap'
 import { findFreePort } from './port-allocator.ts'
 import {
@@ -143,7 +143,7 @@ export class SshTunnelManager extends EventEmitter {
 
   /** Read canonical token locations first, then explicit legacy compatibility. */
   async fetchRemoteToken(host: SshHostConfig, tokenPath?: string): Promise<string | undefined> {
-    const candidates = remoteTokenCandidatePaths(tokenPath)
+    const candidates = remoteTokenCandidatePaths(tokenPath, isVisibleRoxHomeActive())
     for (const path of candidates) {
       const out = await this.runRemote(host, remoteReadTokenCommand(path))
       const token = extractToken(out)
@@ -250,6 +250,8 @@ export class SshTunnelManager extends EventEmitter {
       generateToken: () => generateServerToken(),
       storeToken: (hostId, token) => storeManagedToken(hostId, token),
       loadStoredToken: (hostId) => loadManagedToken(hostId),
+      // W1-13: flag OFF keeps main's remote layout; ON probes the visible remote home.
+      visibleRoot: isVisibleRoxHomeActive(),
     }
     return bootstrapRemoteServer(host, deps, onProgress)
   }
@@ -325,11 +327,17 @@ export function getSshTunnelManager(): SshTunnelManager {
 }
 
 /** Explicit paths override discovery and are shell quoted before reading. */
-export function remoteTokenCandidatePaths(tokenPath?: string): string[] {
-  return tokenPath ? [tokenPath] : [
+export function remoteTokenCandidatePaths(tokenPath?: string, visibleRoot = false): string[] {
+  if (tokenPath) return [tokenPath]
+  const candidates = [
     '~/.rox/remote-server/.token', '~/.rox/server-token', '~/.rox/.env',
     '~/.craft-agent/remote-server/.token', '~/.craft-agent/server-token', '~/.craft-agent/.env',
   ]
+  // W1-13: flag ON reads the visible remote home first; legacy homes stay as
+  // read-only fallbacks. Flag OFF = main's list.
+  return visibleRoot
+    ? ['~/rox/remote-server/.token', '~/rox/server-token', '~/rox/.env', ...candidates]
+    : candidates
 }
 
 export function remoteReadTokenCommand(path: string): string {

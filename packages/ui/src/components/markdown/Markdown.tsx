@@ -1,21 +1,23 @@
 import * as React from 'react'
-import ReactMarkdown, { defaultUrlTransform, type Components } from 'react-markdown'
-import rehypeKatex from 'rehype-katex'
+import ReactMarkdown, { defaultUrlTransform, type Components, type Options as ReactMarkdownOptions } from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
-import 'katex/dist/katex.min.css'
 import { cn } from '../../lib/utils'
 import { CodeBlock, InlineCode } from './CodeBlock'
-import { MarkdownDiffBlock } from './MarkdownDiffBlock'
-import { MarkdownJsonBlock } from './MarkdownJsonBlock'
-import { MarkdownMermaidBlock } from './MarkdownMermaidBlock'
-import { MarkdownDatatableBlock } from './MarkdownDatatableBlock'
-import { MarkdownSpreadsheetBlock } from './MarkdownSpreadsheetBlock'
+// Heavy renderers (mermaid/elkjs, pdf.js, KaTeX, diffs/Shiki, JSON view,
+// grids) load on first use; see lazy-blocks.tsx. Aliased so the render code stays unchanged.
+import {
+  LazyMarkdownJsonBlock as MarkdownJsonBlock,
+  LazyMarkdownMermaidBlock as MarkdownMermaidBlock,
+  LazyMarkdownDatatableBlock as MarkdownDatatableBlock,
+  LazyMarkdownSpreadsheetBlock as MarkdownSpreadsheetBlock,
+  LazyMarkdownLatexBlock as MarkdownLatexBlock,
+  LazyMarkdownPdfBlock as MarkdownPdfBlock,
+  LazyMarkdownDiffBlock as MarkdownDiffBlock,
+} from './lazy-blocks'
 import { MarkdownHtmlBlock } from './MarkdownHtmlBlock'
 import { MarkdownImageBlock } from './MarkdownImageBlock'
-import { MarkdownLatexBlock } from './MarkdownLatexBlock'
-import { MarkdownPdfBlock } from './MarkdownPdfBlock'
 import { MarkdownDocBlock } from './MarkdownDocBlock'
 import { preprocessLinks } from './linkify'
 import { resolveMarkdownLinkTarget } from './link-target'
@@ -23,7 +25,7 @@ import remarkCollapsibleSections from './remarkCollapsibleSections'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useCollapsibleMarkdown } from './CollapsibleMarkdownContext'
 import { wrapWithSafeProxy } from './safe-components'
-import { MARKDOWN_MATH_OPTIONS } from './math-options'
+import { MARKDOWN_MATH_OPTIONS, markdownMayContainMath } from './math-options'
 import { markdownUrlTransform } from './url-transform'
 import { usePlatform } from '../../context/PlatformContext'
 import { SourcedStatement } from './SourcedStatement'
@@ -357,6 +359,9 @@ function createComponents(
       ...baseComponents,
       // Inline code
       code: ({ className, children, ...props }) => {
+        // Inline `$$math$$` reaches here only while the KaTeX chunk is still
+        // loading (rehype-katex replaces it once loaded): keep it inline.
+        if (isPendingInlineMath(className)) return <InlineCode>{children}</InlineCode>
         const match = /language-([\w-]+)/.exec(className || '')
         const isBlock = 'node' in props && props.node?.position?.start.line !== props.node?.position?.end.line
 
@@ -496,6 +501,8 @@ function createComponents(
     ...baseComponents,
     // Full code blocks with copy button
     code: ({ className, children, ...props }) => {
+      // See minimal mode: pending inline math stays inline until KaTeX loads.
+      if (isPendingInlineMath(className)) return <InlineCode>{children}</InlineCode>
       const match = /language-([\w-]+)/.exec(className || '')
       const isBlock = 'node' in props && props.node?.position?.start.line !== props.node?.position?.end.line
 
@@ -642,6 +649,54 @@ function createComponents(
   } as Partial<Components>
 }
 
+// ── Lazy KaTeX (PERF-04) ────────────────────────────────────────────────────
+// rehype-katex + KaTeX (~0.5 MB) load only once some message contains math.
+// remark-math runs with single-dollar math disabled, so math nodes can only
+// come from `$$`. Until the plugin arrives, display math renders through the
+// (lazy) latex block and inline math as inline code.
+type RehypePluginList = NonNullable<ReactMarkdownOptions['rehypePlugins']>
+
+let rehypeKatexPlugin: RehypePluginList[number] | null = null
+let rehypeKatexLoad: Promise<void> | null = null
+let rehypePluginsWithKatex: RehypePluginList | null = null
+const REHYPE_PLUGINS_WITHOUT_KATEX: RehypePluginList = [rehypeRaw]
+
+function loadRehypeKatex(): Promise<void> {
+  rehypeKatexLoad ??= import('./rehype-katex-plugin').then(
+    (module) => {
+      rehypeKatexPlugin = module.default
+      rehypePluginsWithKatex = [rehypeKatexPlugin, rehypeRaw]
+    },
+    () => {
+      // Allow a later render to retry a failed chunk load.
+      rehypeKatexLoad = null
+    },
+  )
+  return rehypeKatexLoad
+}
+
+/** True when remark-math could produce math nodes for this markdown. */
+export { markdownMayContainMath }
+
+function isPendingInlineMath(className: string | undefined): boolean {
+  return !!className && className.includes('math-inline') && !rehypeKatexPlugin
+}
+
+/** Rehype plugins for a render: KaTeX once loaded (same order as before). */
+function useRehypePlugins(content: string): RehypePluginList {
+  const needsMath = markdownMayContainMath(content)
+  const [, setKatexReady] = React.useState(rehypeKatexPlugin !== null)
+  React.useEffect(() => {
+    if (!needsMath || rehypeKatexPlugin) return
+    let alive = true
+    void loadRehypeKatex().then(() => {
+      if (alive && rehypeKatexPlugin) setKatexReady(true)
+    })
+    return () => { alive = false }
+  }, [needsMath])
+  return rehypePluginsWithKatex ?? REHYPE_PLUGINS_WITHOUT_KATEX
+}
+
 /**
  * Markdown - Customizable markdown renderer with multiple render modes
  *
@@ -696,6 +751,8 @@ export function Markdown({
     [children]
   )
 
+  const rehypePlugins = useRehypePlugins(children)
+
   // Conditionally include the collapsible sections plugin.
   // IMPORTANT: Disable single-dollar inline math so currency like $2M–$4M
   // stays plain text. Math should use $$...$$ delimiters.
@@ -716,7 +773,7 @@ export function Markdown({
     <div className={cn('markdown-content', className)}>
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
-        rehypePlugins={[rehypeKatex, rehypeRaw]}
+        rehypePlugins={rehypePlugins}
         components={components}
         urlTransform={markdownUrlTransform}
       >

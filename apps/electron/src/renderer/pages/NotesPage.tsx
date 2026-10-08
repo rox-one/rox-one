@@ -29,6 +29,9 @@ import { parseNoteBlockAddress, resolveNoteBlockId } from '@rox/core/mindmap/der
 import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { NavigationContext } from '@/contexts/NavigationContext'
+import { RightSessionShell } from '@/components/session-workbench/RightSessionShell'
+// W1-08 (#1505): entity mentions in the rich editor (inert unless entities.previews.v1).
+import { useNoteEntityMentions } from '@/components/entities/NoteEntityMentions'
 import {
   bindRightSessionContext,
   describeRightSessionOpen,
@@ -811,6 +814,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeNote, content, noteView, visibleBlockTree])
   const activeNoteIdRef = React.useRef<string | null>(null)
   const richEditorRef = React.useRef<TiptapEditorHandle | null>(null)
+  // W1-08 (#1505): returns { entityNodes: undefined, picker: null } while the flag is off.
+  const noteEntityMentions = useNoteEntityMentions({ workspaceId: activeWorkspaceId, editorRef: richEditorRef })
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   React.useEffect(() => { dirtyRef.current = dirty }, [dirty])
@@ -2950,8 +2955,10 @@ h1,h2,h3{margin-top:1.5em}
                 placeholder={t('notes.editor.placeholder')}
                 foldingStorageKey={`rox:notes:folding:${activeWorkspaceId}:${activeNote.id}`}
                 markdownEngine="legacy"
+                entityNodes={noteEntityMentions.entityNodes}
                 className="notes-editor-prose mx-auto w-full max-w-[70ch] min-h-full"
               />
+              {noteEntityMentions.picker}
               <NotesCommentHighlights
                 comments={markdownComments}
                 hidden={!commentsShown}
