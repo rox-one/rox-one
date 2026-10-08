@@ -54,6 +54,13 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       await q(`INSERT INTO doc (doc_id, workspace_id, owner_id) VALUES ($1, $2, $3)`, [secretDoc, ws, owner])
       await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, policy) VALUES ($1, $2, 'note', $3, '{"privacy":"invited"}')`, [id(), ws, secretDoc])
       await q(`INSERT INTO acl_entry (acl_id, workspace_id, resource_type, resource_id, subject_type, subject_id, role) VALUES ($1, $2, 'doc', $3, 'principal', $4, 'commenter')`, [id(), ws, secretDoc, guest])
+      // Space: members are the active members of the space chat; a space goal inherits.
+      const [spaceChat, rootFolder, space, spaceGoal] = [id(), id(), id(), id()]
+      await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility) VALUES ($1, $2, 'space', 'private')`, [spaceChat, ws])
+      await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'space', $3, 'Root')`, [rootFolder, ws, space])
+      await q(`INSERT INTO space (space_id, workspace_id, name, chat_id, root_folder_id) VALUES ($1, $2, 'Team', $3, $4)`, [space, ws, spaceChat, rootFolder])
+      await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [spaceChat, bob])
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Space goal', $3, $4)`, [spaceGoal, ws, owner, space])
       const dept = id()
       await q(`INSERT INTO department (department_id, workspace_id, name) VALUES ($1, $2, 'Eng')`, [dept, ws])
       await q(`INSERT INTO department_member (department_id, principal_id, role) VALUES ($1, $2, 'head')`, [dept, bob])
@@ -93,6 +100,9 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       expect(await can(bob, 'comment', 'note', doc, 'pub-token')).toBe(false)
       expect(await can(guest, 'comment', 'note', secretDoc)).toBe(true)
       expect(await can(alice, 'view', 'note', secretDoc)).toBe(false)
+      expect(await can(bob, 'edit', 'goal', spaceGoal)).toBe(true)
+      expect(await can(alice, 'view', 'goal', spaceGoal)).toBe(false)
+      expect(await can(alice, 'view', 'space', space)).toBe(false)
       // Hard denials.
       expect((await acl.evaluate(await who(gone), 'view', { kind: 'goal', id: company })).reason).toBe('not_member')
       expect((await acl.evaluate(await who(ph), 'view', { kind: 'goal', id: company })).reason).toBe('placeholder')

@@ -35,6 +35,7 @@ import {
   sqlPolicy,
   sqlPolicyEpoch,
   sqlPrincipal,
+  sqlSpaceMembers,
 } from './queries.ts'
 
 type Database = SQL | TransactionSQL
@@ -44,6 +45,8 @@ const SUBJECT_TYPES: ReadonlySet<string> = new Set(['principal', 'department', '
 const POLICY_SUBJECTS: ReadonlySet<string> = new Set(['space', 'workspace', 'link'])
 const POLICY_ROLES: ReadonlySet<string> = new Set(['viewer', 'commenter', 'editor'])
 const CHAT_ROLE: Readonly<Record<string, AclRole>> = { owner: 'manager', admin: 'editor', member: 'commenter' }
+/** Space chat role → space role (Operately space members default to edit access). */
+const SPACE_ROLE: Readonly<Record<string, AclRole>> = { owner: 'manager', admin: 'manager', member: 'editor' }
 
 /** Normalised loader row (see `queries.ts`). */
 export interface ResourceRow {
@@ -168,6 +171,13 @@ export class PostgresAclRepository implements AclFactSource {
       const members = await this.query<{ principal_id: string; role: string }>(sqlChatMembers(this.prefix), [ref.id])
       for (const member of members) {
         const role = CHAT_ROLE[member.role]
+        if (role) out.push({ subjectType: 'principal', subjectId: member.principal_id, role })
+      }
+    }
+    if (ref.kind === 'space' && UUID.test(ref.id)) {
+      const members = await this.query<{ principal_id: string; role: string }>(sqlSpaceMembers(this.prefix), [ref.id])
+      for (const member of members) {
+        const role = SPACE_ROLE[member.role]
         if (role) out.push({ subjectType: 'principal', subjectId: member.principal_id, role })
       }
     }

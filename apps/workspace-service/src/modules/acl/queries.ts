@@ -70,6 +70,17 @@ export const sqlChatMembers = (p: string) => `
   WHERE cm.chat_id = $1::uuid AND cm.state = 'active'
   ORDER BY 1`
 
+/**
+ * Space members = active members of the space's chat (DATA-MODEL §5.7,
+ * `space.chat_id`, ADR-U07). Mapped to principal entries on the space so
+ * `isSpaceMember` and inheritance see them.
+ */
+export const sqlSpaceMembers = (p: string) => `
+  SELECT cm.principal_id::text AS principal_id, cm.role FROM ${p}chat_member cm
+  JOIN ${p}space s ON s.chat_id = cm.chat_id
+  WHERE s.space_id = $1::uuid AND cm.state = 'active'
+  ORDER BY 1`
+
 const policySecret = (p: string, type: string, idExpr: string) =>
   `EXISTS (SELECT 1 FROM ${p}resource_policy rp WHERE rp.resource_type IN (${aclStoredResourceTypes(type).map(t => `'${t}'`).join(', ')}) AND rp.resource_id = ${idExpr}::text AND rp.policy->>'privacy' = 'invited')`
 

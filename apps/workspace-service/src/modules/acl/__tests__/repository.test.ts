@@ -121,6 +121,19 @@ describe('PostgresAclRepository', () => {
     ])
   })
 
+  test('entries: space chat members become space member grants', async () => {
+    const { db } = fakeDb(sql => {
+      if (sql.includes('JOIN "public".space s ON s.chat_id')) return [
+        { principal_id: P, role: 'admin' }, { principal_id: G, role: 'member' },
+      ]
+      return []
+    })
+    expect(await new PostgresAclRepository(db).entries(WS, { kind: 'space', id: C })).toEqual([
+      { subjectType: 'principal', subjectId: P, role: 'manager' },
+      { subjectType: 'principal', subjectId: G, role: 'editor' },
+    ])
+  })
+
   test('entries: a resource from another workspace never yields a workspace grant', async () => {
     const other = '55555555-5555-4555-8555-555555555555'
     const { db } = fakeDb(sql => sql.includes('FROM "public".goal g') ? [row({ workspace_id: other, implicit_workspace_role: 'editor' })] : [])
