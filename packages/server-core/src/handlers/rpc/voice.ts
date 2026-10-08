@@ -276,13 +276,23 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     state.host = host
     return host
   }
-  const transcribe = async (context: RequestContext, audio: Uint8Array, mimeType: string, language?: string) => {
+  // A user-attached chat file is an explicit one-shot transcription request.
+  // When the deployment has a Deepgram key configured (server service config /
+  // DEEPGRAM_API_KEY, never hardcoded), that explicit attach is the
+  // authorization for the upload, so the dictation consent dialog is skipped
+  // for this request only — the persisted preferences are left untouched.
+  const attachedFilePrefs = (prefs: VoicePrefs, attachedFile: boolean): VoicePrefs =>
+    attachedFile && prefs.sttEngine === 'cloud-rox'
+      && (getServerServiceKey('DEEPGRAM_API_KEY') || options.cloudTranscriber)
+      ? { ...prefs, cloudAsrConsent: true, privacyMigrationPending: false }
+      : prefs
+  const transcribe = async (context: RequestContext, audio: Uint8Array, mimeType: string, language?: string, attachedFile = false) => {
     const state = getState(context)
     const controller = new AbortController()
     const assertOperation = voiceRequestFence(server, authority, context, 'write')
     const timeout = setTimeout(() => controller.abort(new Error('Voice transcription timed out')), 240_000)
     state.transcriptions.add(controller)
-    const prefs = readPrefs(context)
+    const prefs = attachedFilePrefs(readPrefs(context), attachedFile)
     try {
       const result = await transcribeWithPolicy(prefs, { audio, mimeType, language: language ??
         (prefs.recognitionLanguage === 'auto' ? undefined : prefs.recognitionLanguage), signal: controller.signal }, {
@@ -353,7 +363,13 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
   }, readOptions)
   handle(RPC_CHANNELS.voice.TRANSCRIBE, async (context, payload: unknown) => {
     const body = bodyOf(payload)
-    return transcribe(context, decodeAudio(body.audioBase64), audioMime(body.mimeType), typeof body.language === 'string' ? body.language : undefined)
+    return transcribe(
+      context,
+      decodeAudio(body.audioBase64),
+      audioMime(body.mimeType),
+      typeof body.language === 'string' ? body.language : undefined,
+      body.attachedFile === true,
+    )
   }, transcriptionOptions)
 
   handle(RPC_CHANNELS.voice.SPEAK, async (context, payload: unknown) => {

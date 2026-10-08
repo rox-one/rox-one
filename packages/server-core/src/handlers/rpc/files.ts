@@ -423,6 +423,17 @@ export function registerFilesHandlers(server: RpcServer, deps: HandlerDeps): voi
         }
       }
 
+      // 4. Persist the speech-to-text transcript for audio attachments next to
+      // the stored audio. Keeps the recognized text durable across reloads and
+      // readable by the agent as a plain text file.
+      let transcriptPath: string | undefined
+      if (attachment.type === 'audio' && attachment.transcript?.status === 'done' && attachment.transcript.text.trim()) {
+        const transcriptFileName = `${id}_${safeName}.transcript.txt`
+        transcriptPath = join(attachmentsDir, transcriptFileName)
+        await writeFile(transcriptPath, attachment.transcript.text, 'utf-8')
+        filesToCleanup.push(transcriptPath)
+      }
+
       // Return StoredAttachment metadata
       // Include wasResized flag so UI can show notification
       // Include resizedBase64 so renderer uses resized image for Claude API
@@ -439,6 +450,8 @@ export function registerFilesHandlers(server: RpcServer, deps: HandlerDeps): voi
         markdownPath,
         wasResized,
         resizedBase64, // Only set when wasResized=true, used for Claude API
+        transcript: attachment.transcript,
+        transcriptPath,
       }
     } catch (error) {
       // Clean up any files we've written before the error

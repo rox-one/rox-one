@@ -12,13 +12,15 @@ import { useMessageReactionActor } from './message-reaction-actor'
  * - Pending/queued states (Electron only)
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Clock, GitBranch, Volume2, Network } from 'lucide-react'
+import { useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { ChevronDown, ChevronUp, Clock, GitBranch, Mic, RotateCw, Volume2, Network } from 'lucide-react'
 import type { AnnotationV1, StoredAttachment, ContentBadge } from '@rox/core'
 import { normalizePath } from '@rox/core/utils'
 import { cn } from '../../lib/utils'
 import { Markdown } from '../markdown'
+import { Spinner } from '../ui'
 import { FileTypeIcon, getFileTypeLabel } from './attachment-helpers'
+import { AudioTranscriptActionsContext } from './audio-transcript-actions'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../tooltip'
 import { useTranslation } from 'react-i18next'
 import { MessageHoverDock } from './MessageHoverDock'
@@ -313,6 +315,131 @@ function renderContentWithBadges(
   return <p className="text-sm">{elements}</p>
 }
 
+/**
+ * Compact file tile for an audio attachment — used standalone (no transcript)
+ * and when the user expands "Show audio" under a transcript.
+ */
+function AudioAttachmentTile({ attachment, onFileClick }: { attachment: StoredAttachment; onFileClick?: (path: string) => void }) {
+  const { t } = useTranslation()
+  const hasThumbnail = !!attachment.thumbnailBase64
+  return (
+    <div
+      className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+      onClick={() => attachment.storedPath && onFileClick?.(attachment.storedPath)}
+      title={t('chat.clickToOpen', { name: attachment.name })}
+    >
+      <div className="flex items-center gap-2.5 rounded-[var(--radius-control)] bg-user-message-bubble pl-1.5 pr-3 py-1.5">
+        <div className="h-11 w-8 rounded-[var(--radius-control)] overflow-hidden bg-background shadow-minimal flex items-center justify-center shrink-0">
+          {hasThumbnail ? (
+            <img
+              src={`data:image/png;base64,${attachment.thumbnailBase64}`}
+              alt={attachment.name}
+              className="h-full w-full object-cover object-top"
+            />
+          ) : (
+            <FileTypeIcon type={attachment.type} mimeType={attachment.mimeType} className="h-5 w-5" />
+          )}
+        </div>
+        <div className="flex flex-col min-w-0 max-w-[120px]">
+          <span className="text-xs font-medium line-clamp-2 break-all" title={attachment.name}>
+            {attachment.name}
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            {getFileTypeLabel(attachment.type, attachment.mimeType, attachment.name)}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Audio attachment rendered as its transcript instead of the raw tile.
+ * Live states: spinner while ASR runs, error + "Retry" when it failed. The
+ * original audio tile stays reachable behind "Show audio".
+ */
+function AudioTranscriptBlock({
+  attachment,
+  sessionId,
+  messageId,
+  onFileClick,
+}: {
+  attachment: StoredAttachment
+  sessionId?: string
+  messageId?: string
+  onFileClick?: (path: string) => void
+}) {
+  const { t } = useTranslation()
+  const { retry } = useContext(AudioTranscriptActionsContext)
+  const transcript = attachment.transcript!
+  const [expanded, setExpanded] = useState(false)
+  const [retrying, setRetrying] = useState(false)
+
+  const handleRetry = async () => {
+    if (!retry || retrying) return
+    setRetrying(true)
+    try {
+      await retry(attachment, { sessionId, messageId })
+    } finally {
+      setRetrying(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1.5 w-full max-w-[80%]">
+      {transcript.status === 'pending' && (
+        <div
+          className="flex items-center gap-2 rounded-[var(--radius-control)] bg-user-message-bubble px-3 py-2 text-xs text-muted-foreground"
+          role="status"
+          aria-live="polite"
+        >
+          <Spinner className="h-3.5 w-3.5" />
+          <span>{t('chat.audioTranscribing')}</span>
+        </div>
+      )}
+
+      {transcript.status === 'error' && (
+        <div className="flex items-center gap-2 rounded-[var(--radius-control)] bg-user-message-bubble px-3 py-2 text-xs text-muted-foreground">
+          <span>{t('chat.audioTranscriptFailed')}</span>
+          {retry && (
+            <button
+              type="button"
+              onClick={handleRetry}
+              disabled={retrying}
+              data-touch-reveal="true"
+              className="flex items-center gap-1 text-destructive hover:underline disabled:no-underline disabled:opacity-60"
+            >
+              <RotateCw className={cn('h-3 w-3', retrying && 'animate-spin')} />
+              {t('chat.audioTranscriptRetry')}
+            </button>
+          )}
+        </div>
+      )}
+
+      {transcript.status === 'done' && (
+        <div className="rounded-[var(--radius-card)] bg-user-message-bubble px-5 py-3.5 text-sm break-words min-w-0 select-text w-full">
+          <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            <Mic className="h-3 w-3" aria-hidden="true" />
+            {t('chat.audioTranscript')}
+          </div>
+          <p className="m-0 whitespace-pre-wrap">{transcript.text}</p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setExpanded(value => !value)}
+        data-touch-reveal="true"
+        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+      >
+        {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        {t(expanded ? 'chat.audioHide' : 'chat.audioShow')}
+      </button>
+      {expanded && <AudioAttachmentTile attachment={attachment} onFileClick={onFileClick} />}
+    </div>
+  )
+}
+
 export interface UserMessageBubbleProps {
   /** Message content (markdown supported) */
   content: string
@@ -377,6 +504,9 @@ export function UserMessageBubble({
   const { t } = useTranslation()
   const reactionActor = useMessageReactionActor()
   const hasAttachments = attachments && attachments.length > 0
+  // Audio attachments with a transcript render as text instead of the tile.
+  const transcriptAttachments = attachments?.filter(a => a.type === 'audio' && !!a.transcript) ?? []
+  const tileAttachments = attachments?.filter(a => !(a.type === 'audio' && !!a.transcript)) ?? []
   const reactionCounts = useMemo(
     () => aggregateReactions(annotations, reactionActor?.id),
     [annotations, reactionActor],
@@ -472,61 +602,74 @@ export function UserMessageBubble({
     <div className={cn("flex flex-col items-end gap-3 w-full group", className)} tabIndex={-1}>
       {/* Attachment preview row - stored attachments with thumbnails */}
       {hasAttachments && (
-        <div className="flex gap-2 justify-end max-w-[80%] flex-wrap">
-          {attachments!.map((att, i) => {
-            const isImage = att.type === 'image'
-            const hasThumbnail = !!att.thumbnailBase64
+        <>
+          {transcriptAttachments.map((att, i) => (
+            <AudioTranscriptBlock
+              key={att.id || `audio-transcript-${i}`}
+              attachment={att}
+              sessionId={sessionId}
+              messageId={messageId}
+              onFileClick={onFileClick}
+            />
+          ))}
+          {tileAttachments.length > 0 && (
+            <div className="flex gap-2 justify-end max-w-[80%] flex-wrap">
+              {tileAttachments.map((att, i) => {
+                const isImage = att.type === 'image'
+                const hasThumbnail = !!att.thumbnailBase64
 
-            return (
-              <div
-                key={att.id || i}
-                className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => att.storedPath && onFileClick?.(att.storedPath)}
-                title={t('chat.clickToOpen', { name: att.name })}
-              >
-                {isImage ? (
-                  /* IMAGE: Square thumbnail only */
-                  <div className="h-14 w-14 rounded-[var(--radius-card)] overflow-hidden bg-background shadow-minimal">
-                    {hasThumbnail ? (
-                      <img
-                        src={`data:image/png;base64,${att.thumbnailBase64}`}
-                        alt={att.name}
-                        className="h-full w-full object-cover"
-                      />
+                return (
+                  <div
+                    key={att.id || i}
+                    className="shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => att.storedPath && onFileClick?.(att.storedPath)}
+                    title={t('chat.clickToOpen', { name: att.name })}
+                  >
+                    {isImage ? (
+                      /* IMAGE: Square thumbnail only */
+                      <div className="h-14 w-14 rounded-[var(--radius-card)] overflow-hidden bg-background shadow-minimal">
+                        {hasThumbnail ? (
+                          <img
+                            src={`data:image/png;base64,${att.thumbnailBase64}`}
+                            alt={att.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center">
+                            <FileTypeIcon type={att.type} mimeType={att.mimeType} className="h-5 w-5" />
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center">
-                        <FileTypeIcon type={att.type} mimeType={att.mimeType} className="h-5 w-5" />
+                      /* DOCUMENT: Bubble with thumbnail/icon + 2-line text */
+                      <div className="flex items-center gap-2.5 rounded-[var(--radius-control)] bg-user-message-bubble pl-1.5 pr-3 py-1.5">
+                        <div className="h-11 w-8 rounded-[var(--radius-control)] overflow-hidden bg-background shadow-minimal flex items-center justify-center shrink-0">
+                          {hasThumbnail ? (
+                            <img
+                              src={`data:image/png;base64,${att.thumbnailBase64}`}
+                              alt={att.name}
+                              className="h-full w-full object-cover object-top"
+                            />
+                          ) : (
+                            <FileTypeIcon type={att.type} mimeType={att.mimeType} className="h-5 w-5" />
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0 max-w-[120px]">
+                          <span className="text-xs font-medium line-clamp-2 break-all" title={att.name}>
+                            {att.name}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {getFileTypeLabel(att.type, att.mimeType, att.name)}
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>
-                ) : (
-                  /* DOCUMENT: Bubble with thumbnail/icon + 2-line text */
-                  <div className="flex items-center gap-2.5 rounded-[var(--radius-control)] bg-user-message-bubble pl-1.5 pr-3 py-1.5">
-                    <div className="h-11 w-8 rounded-[var(--radius-control)] overflow-hidden bg-background shadow-minimal flex items-center justify-center shrink-0">
-                      {hasThumbnail ? (
-                        <img
-                          src={`data:image/png;base64,${att.thumbnailBase64}`}
-                          alt={att.name}
-                          className="h-full w-full object-cover object-top"
-                        />
-                      ) : (
-                        <FileTypeIcon type={att.type} mimeType={att.mimeType} className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div className="flex flex-col min-w-0 max-w-[120px]">
-                      <span className="text-xs font-medium line-clamp-2 break-all" title={att.name}>
-                        {att.name}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {getFileTypeLabel(att.type, att.mimeType, att.name)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* Badges row - edit request badges above text bubble */}
