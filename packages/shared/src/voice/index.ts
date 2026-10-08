@@ -71,6 +71,7 @@ export {
   DEEPGRAM_MODEL_UPGRADE_ENV,
   resolveDeepgramModel,
   deepgramModelUpgradeEnabled,
+  deepgramTranscriptionOptions,
 } from './contracts.ts'
 
 export {

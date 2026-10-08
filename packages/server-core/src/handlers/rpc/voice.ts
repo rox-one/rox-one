@@ -20,7 +20,7 @@ import {
   ROCKS_T1_MODEL_ID,
   DeepgramTranscriptionAdapter,
   DEEPGRAM_TRANSCRIPTION_NAME,
-  deepgramModelUpgradeEnabled,
+  deepgramTranscriptionOptions,
   resolveDeepgramModel,
   VoiceHost,
   assertEditableTranscript,
@@ -141,7 +141,7 @@ function voiceHttp() {
 function cloudAdapter(): TranscribeAdapter {
   const adapter = new DeepgramTranscriptionAdapter({
     apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '',
-    model: resolveDeepgramModel(process.env), allowModelUpgrade: deepgramModelUpgradeEnabled(process.env),
+    ...deepgramTranscriptionOptions(process.env),
   })
   return {
     engine: 'cloud-rox',

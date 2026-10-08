@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { DeepgramTranscriptionAdapter, latestNovaModel, normalizeDeepgramTranscript } from '../adapters/deepgram-transcription.ts'
-import { deepgramModelUpgradeEnabled, resolveDeepgramModel } from '../contracts.ts'
+import { deepgramModelUpgradeEnabled, deepgramTranscriptionOptions, resolveDeepgramModel } from '../contracts.ts'
 import { normalizeVoicePrefs } from '../storage.ts'
 
 function response() {
@@ -130,6 +130,25 @@ describe('Deepgram current prerecorded transcription', () => {
     expect(deepgramModelUpgradeEnabled({})).toBe(false)
     expect(deepgramModelUpgradeEnabled({ DEEPGRAM_ALLOW_MODEL_UPGRADE: 'true' })).toBe(true)
     expect(deepgramModelUpgradeEnabled({ DEEPGRAM_ALLOW_MODEL_UPGRADE: '0' })).toBe(false)
+    expect(deepgramTranscriptionOptions({})).toEqual({ model: undefined, allowModelUpgrade: false })
+    expect(deepgramTranscriptionOptions({ DEEPGRAM_ALLOW_MODEL_UPGRADE: '1' })).toEqual({ model: undefined, allowModelUpgrade: true })
+    expect(deepgramTranscriptionOptions({ DEEPGRAM_MODEL: '  nova-4  ', DEEPGRAM_ALLOW_MODEL_UPGRADE: 'true' }))
+      .toEqual({ model: 'nova-4', allowModelUpgrade: true })
+  })
+
+  it('keeps the opt-in catalog reachable through the production adapter options', async () => {
+    const urls: string[] = []
+    const adapter = new DeepgramTranscriptionAdapter({
+      apiKey: 'synthetic-key',
+      ...deepgramTranscriptionOptions({ DEEPGRAM_ALLOW_MODEL_UPGRADE: '1' }),
+      http: { async fetch(url) {
+        urls.push(String(url))
+        return new Response(JSON.stringify(String(url).endsWith('/models') ? { stt: [{ canonical_name: 'nova-4-general', batch: true }] } : response()))
+      } },
+    })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav' })
+    expect(urls).toHaveLength(2)
+    expect(new URL(urls[1]!).searchParams.get('model')).toBe('nova-4')
   })
 
   it.each([[401, 'unauthorized'], [403, 'forbidden'], [413, 'too-large'], [429, 'rate-limited'], [503, 'upstream']])('sanitizes provider errors %s', async (status, code) => {

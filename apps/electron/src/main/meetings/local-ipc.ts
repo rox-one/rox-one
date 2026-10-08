@@ -6,7 +6,7 @@ import { app, BrowserWindow, dialog, ipcMain, session, shell, systemPreferences,
 import { join } from 'node:path'
 import { CONFIG_DIR, getWorkspaceByNameOrId } from '@rox/shared/config'
 import { getServerServiceKey } from '@rox/shared/config/server-services'
-import { DeepgramTranscriptionAdapter, deepgramModelUpgradeEnabled, resolveDeepgramModel } from '@rox/shared/voice'
+import { DeepgramTranscriptionAdapter, deepgramTranscriptionOptions } from '@rox/shared/voice'
 import { MEETINGS_LOCAL_IPC as C, type LocalMeetingPatch, type LocalTranscriptSegmentUpdate } from '../../shared/meetings-local'
 import { detectEngine } from './local-asr'
 import { IMPORTABLE_AUDIO_EXTENSIONS, isMeetingId } from './local-model'
@@ -85,7 +85,7 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
     localEngine: () => detectEngine(CONFIG_DIR),
     localTranscribe: (input) => new DeepgramTranscriptionAdapter({
       apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '',
-      model: resolveDeepgramModel(process.env), allowModelUpgrade: deepgramModelUpgradeEnabled(process.env),
+      ...deepgramTranscriptionOptions(process.env),
     }).transcribe(input),
     isContextCurrent,
     async connect(remote) {
