@@ -53,7 +53,8 @@ export function registerSettingsGuiHandlers(server: RpcServer, deps: HandlerDeps
 
   server.handle(RPC_CHANNELS.appearance.SET_ZEN_SHELL, async (ctx, raw: unknown) => {
     const { renderProfile, ...shellPatch } = parseZenShellPatch(raw)
-    setZenShellPreference(shellPatch)
+    // A low-power-only patch must not pin Zen defaults or write twice.
+    if (Object.keys(shellPatch).length > 0) setZenShellPreference(shellPatch)
     // PERF-07: the low-power toggle persists here and ships in the same snapshot.
     if (renderProfile !== undefined) setRenderProfilePreference(renderProfile)
     reapplyZenShellOnAllWindows()

@@ -8,6 +8,7 @@ import {
   SettingsToggle,
 } from '@/components/settings'
 import type { ShellMaterialPreference, ZenShellPatch, ZenShellSnapshot } from '../../../shared/shell-appearance'
+import { isRenderProfilePreference, type RenderProfilePreference } from '../../../shared/render-profile'
 import { saveDesktopAppearance } from '@/lib/desktop-appearance'
 import { subscribeDesktopShellAppearance } from '@/lib/shell-appearance-subscription'
 import { readWebChromePreference, saveWebChromePreference, subscribeWebChromePreference } from '@/lib/web-chrome-preference'
@@ -80,7 +81,8 @@ export function ZenShellSettings() {
   const enabled = isWeb ? webPreference.enabled : snapshot.enabled
   const preference = isWeb ? webPreference.preference : snapshot.preference
   const available = isWeb || nativeAvailable
-  const lowPower = snapshot.renderProfile === 'performance'
+  // PERF-07: three-state so the user can return to the automatic default.
+  const lowPowerPreference: RenderProfilePreference = snapshot.renderProfilePreference ?? 'auto'
 
   return (
     <SettingsSection
@@ -113,13 +115,23 @@ export function ZenShellSettings() {
           />
         </SettingsRow>
         {!isWeb && (
-          <SettingsToggle
+          <SettingsRow
             label={t('settings.appearance.lowPowerMode')}
             description={t('settings.appearance.lowPowerModeDesc')}
-            checked={lowPower}
-            onCheckedChange={(checked) => { void persist({ renderProfile: checked ? 'performance' : 'standard' }) }}
-            disabled={!available || saving}
-          />
+          >
+            <SettingsMenuSelect
+              value={lowPowerPreference}
+              onValueChange={(value) => {
+                if (isRenderProfilePreference(value)) void persist({ renderProfile: value })
+              }}
+              disabled={!available || saving}
+              options={[
+                { value: 'auto', label: t('settings.appearance.lowPowerModeAuto') },
+                { value: 'performance', label: t('settings.appearance.lowPowerModeOn') },
+                { value: 'standard', label: t('settings.appearance.lowPowerModeOff') },
+              ]}
+            />
+          </SettingsRow>
         )}
         {saveFailed && <p role="alert" className="px-4 py-3 text-sm text-destructive">{t('toast.failedToSaveSetting', { setting: t('settings.appearance.zenShellMaterial') })}</p>}
       </SettingsCard>

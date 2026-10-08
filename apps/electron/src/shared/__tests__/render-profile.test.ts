@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 import {
   isSoftwareCompositing,
+  isWeakHardware,
   parseRenderProfilePreference,
   resolveRenderProfile,
 } from '../render-profile'
-import { parseZenShellPatch, snapshotZenShell, type ResolveShellMaterialInput } from '../shell-appearance'
+import { parseZenShellPatch, resolveShellMaterial, snapshotZenShell, type ResolveShellMaterialInput } from '../shell-appearance'
 
 const base: ResolveShellMaterialInput = {
   zenEnabled: true,
@@ -43,6 +44,33 @@ describe('PERF-07 resolveRenderProfile', () => {
   })
 })
 
+describe('PERF-07 weak hardware on auto', () => {
+  const GiB = 1024 ** 3
+  it('counts < 8 GiB RAM or <= 4 logical cores as weak', () => {
+    expect(isWeakHardware({ totalMemoryBytes: 8 * GiB - 1, logicalCpuCount: 16 })).toBe(true)
+    expect(isWeakHardware({ totalMemoryBytes: 32 * GiB, logicalCpuCount: 4 })).toBe(true)
+    expect(isWeakHardware({ totalMemoryBytes: 8 * GiB, logicalCpuCount: 5 })).toBe(false)
+  })
+
+  it('treats unknown values as not weak', () => {
+    expect(isWeakHardware(undefined)).toBe(false)
+    expect(isWeakHardware({})).toBe(false)
+    expect(isWeakHardware({ totalMemoryBytes: 0, logicalCpuCount: 0 })).toBe(false)
+    expect(isWeakHardware({ totalMemoryBytes: Number.NaN, logicalCpuCount: Number.NaN })).toBe(false)
+    expect(isWeakHardware({ totalMemoryBytes: 2 * GiB })).toBe(true)
+  })
+
+  it('feeds the resolver on auto only', () => {
+    const weak = { totalMemoryBytes: 4 * GiB, logicalCpuCount: 2 }
+    expect(resolveRenderProfile({ preference: 'auto', platform: 'darwin', softwareCompositing: false, hardware: weak }))
+      .toEqual({ profile: 'performance', reason: 'weak-hardware' })
+    expect(resolveRenderProfile({ preference: 'standard', platform: 'darwin', softwareCompositing: false, hardware: weak }).profile)
+      .toBe('standard')
+    expect(resolveRenderProfile({ preference: 'auto', platform: 'darwin', softwareCompositing: false, hardware: { totalMemoryBytes: 16 * GiB, logicalCpuCount: 8 } }).profile)
+      .toBe('standard')
+  })
+})
+
 describe('PERF-07 isSoftwareCompositing', () => {
   it('reads gpu_compositing from app.getGPUFeatureStatus()', () => {
     for (const enabled of ['enabled', 'enabled_on', 'enabled_force', 'enabled_force_on', 'enabled_readback']) {
@@ -78,9 +106,21 @@ describe('PERF-07 preference parsing and snapshot transport', () => {
     expect(() => parseZenShellPatch({ lowPower: true })).toThrow(/Unexpected zen shell field/)
   })
 
-  it('ships the profile inside the shell snapshot without changing the material', () => {
+  it('low-power resolves the native material to solid; standard keeps glass', () => {
+    expect(resolveShellMaterial({ ...base, renderProfile: 'performance' })).toEqual({ material: 'solid', fallbackReason: 'low-power' })
+    expect(resolveShellMaterial({ ...base, platform: 'win32', windowsBuild: 22621, renderProfile: 'performance' }).material).toBe('solid')
+    expect(resolveShellMaterial({ ...base, renderProfile: 'standard' })).toEqual({ material: 'vibrancy' })
+    expect(resolveShellMaterial({ ...base, platform: 'win32', windowsBuild: 22621, renderProfile: 'standard' })).toEqual({ material: 'mica' })
+    // Accessibility and explicit opaque keep their own, earlier reasons.
+    expect(resolveShellMaterial({ ...base, highContrast: true, renderProfile: 'performance' }).fallbackReason).toBe('high-contrast')
+    expect(resolveShellMaterial({ ...base, preference: 'opaque', renderProfile: 'performance' }).fallbackReason).toBe('user-opaque')
+    expect(snapshotZenShell(base, { profile: 'standard', preference: 'auto', reason: 'default' }).material).toBe('vibrancy')
+  })
+
+  it('ships the profile inside the shell snapshot and lets it feed the material', () => {
     const withProfile = snapshotZenShell(base, { profile: 'performance', preference: 'auto', reason: 'software-compositing' })
-    expect(withProfile.material).toBe('vibrancy')
+    expect(withProfile.material).toBe('solid')
+    expect(withProfile.fallbackReason).toBe('low-power')
     expect(withProfile.renderProfile).toBe('performance')
     expect(withProfile.renderProfilePreference).toBe('auto')
     expect(withProfile.renderProfileReason).toBe('software-compositing')

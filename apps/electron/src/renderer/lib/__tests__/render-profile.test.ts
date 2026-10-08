@@ -8,6 +8,7 @@ import { describe, expect, it } from 'bun:test'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { applyRenderProfile } from '../render-profile-dom'
+import { readRenderProfile, reducedMotionFor } from '../render-profile-motion'
 
 const renderer = join(import.meta.dir, '../..')
 const repo = join(renderer, '../../../..')
@@ -53,6 +54,26 @@ describe('applyRenderProfile', () => {
   })
 })
 
+describe('motion/react follows the profile', () => {
+  it('reads the profile from <html> and maps it to MotionConfig.reducedMotion', () => {
+    expect(readRenderProfile({ getAttribute: () => 'performance' })).toBe('performance')
+    expect(readRenderProfile({ getAttribute: () => null })).toBe('standard')
+    expect(readRenderProfile({ getAttribute: () => 'standard' })).toBe('standard')
+    expect(readRenderProfile(null)).toBe('standard')
+    expect(reducedMotionFor('performance')).toBe('always')
+    expect(reducedMotionFor('standard')).toBe('user')
+  })
+
+  it('wraps the renderer root and re-renders on attribute changes', () => {
+    const main = readFileSync(join(renderer, 'main.tsx'), 'utf8')
+    expect(main).toMatch(/<RenderProfileMotionConfig>[\s\S]*\{app\}[\s\S]*<\/RenderProfileMotionConfig>/)
+    const motion = readFileSync(join(renderer, 'lib/render-profile-motion.tsx'), 'utf8')
+    expect(motion).toContain("from 'motion/react'")
+    expect(motion).toContain("attributeFilter: [ATTRIBUTE]")
+    expect(motion).toContain('useSyncExternalStore(subscribe, snapshot')
+  })
+})
+
 describe('CSS: glass only on chrome, never over native material', () => {
   it('does not layer a CSS backdrop blur over vibrancy or Mica', () => {
     const blurRules = [...cssRules.matchAll(/([^{}]+)\{([^{}]*backdrop-filter:\s*blur[^{}]*)\}/g)]
@@ -90,6 +111,15 @@ describe('CSS: low-power profile', () => {
     for (const token of ['--motion-fast: 0ms', '--motion-normal: 0ms', '--motion-slow: 0ms']) expect(all).toContain(token)
     expect(all).toContain('transition-duration: 0.01ms !important')
     expect(all).toContain('animation-iteration-count: 1 !important')
+  })
+
+  it('stops every infinite shimmer', () => {
+    const shimmer = rulesFor('[data-render-profile="performance"]').find(rule => rule.includes('.animate-shimmer::after'))
+    expect(shimmer).toBeDefined()
+    for (const selector of ['.animate-shimmer-loading', '.animate-shimmer-text', '.animate-shimmer::after']) expect(shimmer).toContain(selector)
+    expect(shimmer).toContain('animation: none !important')
+    const tiptap = readFileSync(join(repo, 'packages/ui/src/components/markdown/tiptap-editor.css'), 'utf8')
+    expect(tiptap).toMatch(/html\[data-render-profile="performance"\] \.tiptap-editor \.tiptap-prose img\[data-loading='true'\] \{\s*animation: none;/)
   })
 })
 
@@ -150,7 +180,8 @@ describe('overlay call sites (rox/no-backdrop-on-overlay baseline)', () => {
     const read = (path: string) => readFileSync(join(repo, path), 'utf8')
     expect(read('apps/electron/src/renderer/components/app-shell/ProfileStrip.tsx')).not.toContain('backdrop-blur')
     const kanban = read('apps/electron/src/renderer/components/app-shell/kanban/KanbanColumn.tsx')
-    expect(kanban).not.toMatch(/PopoverContent[\s\S]{0,200}className="dark /)
+    // Only the blur goes; the column-settings popover stays forced-dark.
+    expect(kanban).toMatch(/PopoverContent[\s\S]{0,200}className="dark w-64 /)
     expect(kanban).not.toContain('backdrop-blur')
     expect(read('packages/ui/src/components/annotations/AnnotationIslandMenu.tsx')).not.toContain('backdrop-blur')
     expect(read('apps/electron/src/renderer/components/workspace/WorktreeHoverCard.tsx')).not.toContain('backdrop-blur')
@@ -158,17 +189,25 @@ describe('overlay call sites (rox/no-backdrop-on-overlay baseline)', () => {
 })
 
 describe('Settings → Appearance → Low-power mode', () => {
-  it('persists the toggle through SET_ZEN_SHELL as renderProfile', () => {
+  it('is a three-state Automatic / On / Off choice persisted as renderProfile', () => {
     const page = readFileSync(join(renderer, 'pages/settings/ZenShellSettings.tsx'), 'utf8')
     expect(page).toContain("t('settings.appearance.lowPowerMode')")
-    expect(page).toContain("snapshot.renderProfile === 'performance'")
-    expect(page).toContain("persist({ renderProfile: checked ? 'performance' : 'standard' })")
-    const handler = readFileSync(join(renderer, '../main/handlers/settings.ts'), 'utf8')
-    expect(handler).toContain('setRenderProfilePreference(renderProfile)')
+    expect(page).toContain("snapshot.renderProfilePreference ?? 'auto'")
+    expect(page).toContain("{ value: 'auto', label: t('settings.appearance.lowPowerModeAuto') }")
+    expect(page).toContain("{ value: 'performance', label: t('settings.appearance.lowPowerModeOn') }")
+    expect(page).toContain("{ value: 'standard', label: t('settings.appearance.lowPowerModeOff') }")
+    expect(page).toContain('if (isRenderProfilePreference(value)) void persist({ renderProfile: value })')
     for (const locale of readdirSync(join(repo, 'packages/shared/src/i18n/locales'))) {
       const strings = JSON.parse(readFileSync(join(repo, 'packages/shared/src/i18n/locales', locale), 'utf8'))
-      expect(typeof strings['settings.appearance.lowPowerMode']).toBe('string')
-      expect(typeof strings['settings.appearance.lowPowerModeDesc']).toBe('string')
+      for (const key of ['lowPowerMode', 'lowPowerModeDesc', 'lowPowerModeAuto', 'lowPowerModeOn', 'lowPowerModeOff']) {
+        expect(typeof strings[`settings.appearance.${key}`]).toBe('string')
+      }
     }
+  })
+
+  it('a profile-only patch does not pin Zen defaults or write twice', () => {
+    const handler = readFileSync(join(renderer, '../main/handlers/settings.ts'), 'utf8')
+    expect(handler).toContain('if (Object.keys(shellPatch).length > 0) setZenShellPreference(shellPatch)')
+    expect(handler).toContain('if (renderProfile !== undefined) setRenderProfilePreference(renderProfile)')
   })
 })

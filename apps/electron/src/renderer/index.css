@@ -1127,6 +1127,7 @@ html[data-render-profile="performance"] :is(.animate-in, .animate-out, [data-ove
   animation-iteration-count: 1 !important;
   animation-delay: 0s !important;
 }
+html[data-render-profile="performance"] :is(.animate-shimmer-loading, .animate-shimmer-text),
 html[data-render-profile="performance"] .animate-shimmer::after {
   animation: none !important;
 }
