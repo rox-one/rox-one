@@ -65,7 +65,17 @@ describe('entities:links handler', () => {
     expect(await f.links({ op: 'remove', from: note, to: task, relation: 'mentions' })).toEqual({ ok: false, reason: 'disabled' })
     expect(await f.links({ op: 'outgoing', ref: note })).toEqual({ ok: true, op: 'outgoing', links: [] })
     expect(await f.links({ op: 'backlinks', ref: task })).toEqual({ ok: true, op: 'backlinks', links: [] })
-    expect(await f.resolve({ refs: [note] })).toEqual([])
+    expect(await f.resolve({ refs: [note] })).toEqual([
+      {
+        ref: note,
+        status: 'unavailable',
+        title: '',
+        kindLabel: 'entities.kind.note',
+        icon: 'link',
+        authority: 'local',
+        etag: '',
+      },
+    ])
     expect(f.pushes).toHaveLength(0)
   })
 

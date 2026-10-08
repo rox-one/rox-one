@@ -3,12 +3,12 @@
  *
  * `entities:links` is a single dispatcher over the local link store
  * (`op: add | remove | outgoing | backlinks`); `entities:resolve` resolves a
- * batch of refs into previews through the resolver host.
+ * batch of refs into previews through a per-workspace resolver host.
  *
  * Inert when off: gated by `isEntitiesLinksEnabled()` (default OFF). While the
  * flag is off no store is opened, nothing is written, `add`/`remove` report
  * `ok: false, reason: 'disabled'`, reads come back empty and resolution
- * returns no previews.
+ * returns per-ref `unavailable` placeholders to keep the response shape.
  */
 
 import { RPC_CHANNELS } from '@rox/shared/protocol'
@@ -20,7 +20,7 @@ import {
   type EntityLinksRequest,
 } from '@rox/shared/entities'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
-import type { Actor, EntityLink, EntityPreview, Resolver } from '@rox/core/entities'
+import type { Actor, EntityLink, EntityPreview, EntityRef, Resolver } from '@rox/core/entities'
 import type { RequestContext } from '../../transport/types.ts'
 import type { HandlerDeps } from '../handler-deps'
 import { getEntityLinkStore } from '../../entities/link-store.ts'
@@ -37,18 +37,64 @@ export type EntitiesLinksResult =
   | { ok: false; reason: 'disabled' }
 
 /**
- * One resolver host per process. Modules register their local resolvers via
- * `registerEntityResolver`; kinds without a resolver resolve to `unavailable`.
+ * Resolver registrations replayed into every workspace host. Hosts are
+ * scoped per workspace so cached previews never cross workspace boundaries;
+ * the underlying LRU is additionally keyed per actor (see resolver-host).
  */
-const resolverHost = new DefaultResolverHost()
+const resolverRegistrations: Resolver[] = []
+const hostsByWorkspace = new Map<string, DefaultResolverHost>()
+
+function hostForWorkspace(workspaceId: string): DefaultResolverHost {
+  let host = hostsByWorkspace.get(workspaceId)
+  if (!host) {
+    host = new DefaultResolverHost()
+    for (const resolver of resolverRegistrations) host.register(resolver)
+    hostsByWorkspace.set(workspaceId, host)
+  }
+  return host
+}
 
 /** DI seam for owner modules (tasks, notes, goals, …) to serve local previews. */
 export function registerEntityResolver(resolver: Resolver): void {
-  resolverHost.register(resolver)
+  resolverRegistrations.push(resolver)
+  for (const host of hostsByWorkspace.values()) host.register(resolver)
 }
 
 export function resetEntityResolvers(): void {
-  resolverHost.clear()
+  resolverRegistrations.length = 0
+  hostsByWorkspace.clear()
+}
+
+function unavailablePreview(ref: EntityRef): EntityPreview {
+  return {
+    ref,
+    status: 'unavailable',
+    title: '',
+    kindLabel: `entities.kind.${ref.kind}`,
+    icon: 'link',
+    authority: 'local',
+    etag: '',
+  }
+}
+
+/**
+ * Strip entity data from previews the actor must not see. Mirrors
+ * `applyPreviewRedaction` but keeps the `EntityPreview` wire shape: only
+ * the ref survives, everything else is cleared.
+ */
+function redactPreviewForWire(preview: EntityPreview): EntityPreview {
+  if (preview.status === 'no_access' || preview.status === 'unavailable' || preview.status === 'tombstone') {
+    return {
+      ref: preview.ref,
+      status: preview.status,
+      title: '',
+      kindLabel: preview.kindLabel,
+      icon: preview.icon,
+      authority: preview.authority,
+      etag: '',
+    }
+  }
+  return preview
 }
 
 export interface EntitiesHandlerRuntime {
@@ -115,9 +161,10 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
     }
   })
 
-  server.handle(RPC_CHANNELS.entities.RESOLVE, async (ctx, _workspaceId: string, input: unknown): Promise<EntityPreview[]> => {
+  server.handle(RPC_CHANNELS.entities.RESOLVE, async (ctx, workspaceId: string, input: unknown): Promise<EntityPreview[]> => {
     const request = entityResolveRequestSchema.parse(input)
-    if (!isEntitiesLinksEnabled()) return []
-    return resolverHost.resolve(request.refs, actorFor(ctx))
+    if (!isEntitiesLinksEnabled()) return request.refs.map(ref => unavailablePreview(ref))
+    const previews = await hostForWorkspace(workspaceId).resolve(request.refs, actorFor(ctx))
+    return previews.map(redactPreviewForWire)
   }, { nativeAction: 'read' })
 }
