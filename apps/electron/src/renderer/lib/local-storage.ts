@@ -147,6 +147,9 @@ export const KEYS = {
   // v3 also narrows per-workspace shell-layout snapshots (v2 missed them, so a
   // later commit re-wrote the old width into the legacy key).
   sidePanelDefaults: 'side-panel-defaults-v3',
+  // W1-07 (#1504): generic per-id workbench flag store for flags without a
+  // dedicated key (`craft-workbench-flag:<flag id>`, e.g. workbench.mode.messenger.v1).
+  workbenchFlag: 'workbench-flag',
 } as const
 
 export const EVENTS = {

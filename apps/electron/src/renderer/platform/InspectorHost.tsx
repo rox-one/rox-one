@@ -59,6 +59,8 @@ import {
 } from './inspector-model'
 import { InspectorResizeSash } from './InspectorResizeSash'
 import { inspectorResizeLimit } from './inspector-resize'
+import { navDestinationLabelKey } from './surface-shell'
+import { enabledShellFlagsAtom } from './unified-flags'
 import { CHROME_DENSITY } from './chrome-density'
 import { countSessionFiles, resolveInspectorLayout } from './inspector-layout'
 
@@ -101,6 +103,7 @@ function InfoSection() {
   const panelId = useAtomValue(focusedPanelIdAtom)
   const navState = useNavigationState()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const shellFlags = useAtomValue(enabledShellFlagsAtom)
 
   if (isConnectionsNavigation(navState)) {
     return <ConnectionInfoSection />
@@ -119,7 +122,7 @@ function InfoSection() {
     : navState.navigator === 'home'
       ? t('workbench.mode.home')
       : destination
-        ? t(destination.labelKey)
+        ? t(navDestinationLabelKey(destination, shellFlags))
         : null
   const title = sessionMeta ? getSessionTitle(sessionMeta) : (sectionLabel ?? t('surfaceTabs.untitled'))
   const created = formatDate(sessionMeta?.createdAt)

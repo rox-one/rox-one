@@ -10,6 +10,8 @@
 
 import type { FocusZoneId } from '@/context/FocusContext'
 import { hasOpenOverlay } from '@/lib/overlay-detection'
+// W1-07 (#1504): Messenger-only shortcuts (⌃1…4 quick panels).
+import { isSurfaceActive } from '@/platform/surface-activity'
 
 /**
  * Context keys available in when-clause expressions.
@@ -28,6 +30,8 @@ export interface KeybindingContext {
   sidebarFocus: boolean
   /** A modal dialog or dropdown/popover is open */
   menuOpen: boolean
+  /** W1-07 (#1504): the focused panel shows the Messenger surface */
+  messengerActive?: boolean
 }
 
 // ─────────────────────────────────────────────
@@ -62,6 +66,24 @@ if (typeof document !== 'undefined') {
 // ─────────────────────────────────────────────
 
 /**
+ * W1-07 (#1504): `messengerActive` is a lazy, memoised getter. It parses the
+ * focused panel route (Provider store), so it is only computed when a matched
+ * action's `when` actually reads it (⌃1–4 quick panels, flag-gated). With
+ * every flag off no binding references it and the keydown path costs exactly
+ * what it did on main.
+ */
+export function withLazyMessengerActive(
+  base: Omit<KeybindingContext, 'messengerActive'>,
+): KeybindingContext {
+  let cached: boolean | undefined
+  return Object.defineProperty(base as KeybindingContext, 'messengerActive', {
+    enumerable: true,
+    configurable: true,
+    get: () => (cached ??= isSurfaceActive('messenger')),
+  })
+}
+
+/**
  * Build a context snapshot from DOM state at event time.
  * Called synchronously in the keyboard handler's capture phase.
  */
@@ -93,14 +115,14 @@ export function getKeybindingContext(e: KeyboardEvent): KeybindingContext {
     return false
   })()
 
-  return {
+  return withLazyMessengerActive({
     inputFocus: isInput,
     hasSelection,
     chatFocus: _currentZone === 'chat',
     navigatorFocus: _currentZone === 'navigator',
     sidebarFocus: _currentZone === 'sidebar',
     menuOpen: hasOpenOverlay(),
-  }
+  })
 }
 
 /**
@@ -139,14 +161,14 @@ export function snapshotKeybindingContext(): KeybindingContext {
     return false
   })()
 
-  return {
+  return withLazyMessengerActive({
     inputFocus: isInput,
     hasSelection,
     chatFocus: _currentZone === 'chat',
     navigatorFocus: _currentZone === 'navigator',
     sidebarFocus: _currentZone === 'sidebar',
     menuOpen: typeof document !== 'undefined' ? hasOpenOverlay() : false,
-  }
+  })
 }
 
 

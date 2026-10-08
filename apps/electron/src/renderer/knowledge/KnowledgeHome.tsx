@@ -36,6 +36,7 @@ import { KnowledgeProposals } from './KnowledgeProposals'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
 import { getKernelAvailability, observeKernelAvailability } from './kernel-availability'
 import { toErrorMessage } from '@/lib/errors'
+import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 
 /**
  * Which body KnowledgeHome renders. Module-level atom so other column hosts
@@ -313,6 +314,7 @@ export function KnowledgeHome() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  const notesTitleKey = useNotesTitleKey('sidebar.notes')
   const appShell = useOptionalAppShellContext()
   const activeWorkspaceRoot =
     appShell?.workspaces.find((w) => w.id === (appShell.activeWorkspaceId ?? workspaceId))?.rootPath
@@ -830,7 +832,7 @@ export function KnowledgeHome() {
             className="underline underline-offset-2 hover:text-foreground"
             onClick={() => navigate(routes.view.notes())}
           >
-            {t('sidebar.notes')}
+            {t(notesTitleKey)}
           </button>
         </div>
       </div>
