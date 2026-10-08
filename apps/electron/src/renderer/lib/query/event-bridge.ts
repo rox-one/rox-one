@@ -2,7 +2,7 @@ import { dehydrate, hydrate, type DehydratedState, type QueryClient } from '@tan
 import type { ElectronAPI } from '../../../shared/types'
 import type { WorkspaceWorkSnapshot } from '@rox/shared/workspace-work'
 import { queryKeyDomain, queryKeyWorkspace, roxKeys, type InboxQuerySource, type RoxQueryDomain } from './keys'
-import { resetSharedReads } from './shared-read'
+import { invalidateRoxQueries, resetSharedReads } from './shared-read'
 import { announceWorkspaceWorkRevision, resetAnnouncedWorkspaceWorkRevisions } from './workspace-work-revision'
 
 export type RoxQueryEventAPI = Partial<Pick<ElectronAPI,
@@ -19,7 +19,7 @@ export type RoxQueryEventAPI = Partial<Pick<ElectronAPI,
 >>
 
 function invalidateDomain(client: QueryClient, domain: RoxQueryDomain, workspaceId: string | null, extra?: (key: readonly unknown[]) => boolean): void {
-  void client.invalidateQueries({
+  void invalidateRoxQueries(client, {
     predicate: query => queryKeyDomain(query.queryKey) === domain
       && (workspaceId === null || queryKeyWorkspace(query.queryKey) === workspaceId)
       && (extra ? extra(query.queryKey) : true),
@@ -72,8 +72,17 @@ export function startRoxQueryEventBridge(client: QueryClient, api: RoxQueryEvent
   const readPrincipal = options.principal
     ? () => options.principal!().then(value => value || null, () => null)
     : null
-  let known: Promise<string | null> | null = readPrincipal ? (options.initialPrincipal ?? readPrincipal()) : null
+  /**
+   * The epoch's principal: only a resolved chain of matching checks keeps it,
+   * and only a clear for a new principal replaces it. Every check compares
+   * its own fresh read against this, never against another pending read.
+   */
+  let confirmed: Promise<string | null> | null = readPrincipal ? (options.initialPrincipal ?? readPrincipal()) : null
   let check = 0
+  /** Checks resolve in order; the newest one decides for the whole chain. */
+  let chain: Promise<unknown> = Promise.resolve()
+  /** Some check in the pending chain saw a different or unreadable principal. */
+  let chainDiffers = false
   let parked: DehydratedState['queries'] = []
   let reconnectPending = false
   let stopped = false
@@ -85,41 +94,51 @@ export function startRoxQueryEventBridge(client: QueryClient, api: RoxQueryEvent
     options.onIdentityChanged?.(principal)
   }
 
+  /**
+   * Take workspace-only entries out of view. Unobserved ones are removed;
+   * observed ones (a mounted useQuery) are reset in place, so the observer
+   * stays bound to its query and refetches over the new connection instead
+   * of holding a destroyed one.
+   */
   const park = () => {
     const state = dehydrate(client, { shouldDehydrateQuery: query => query.state.status === 'success' && isWorkspaceOnlyKey(query.queryKey) })
     parked = [...parked, ...state.queries]
-    client.removeQueries({ predicate: query => isWorkspaceOnlyKey(query.queryKey) })
+    client.removeQueries({ predicate: query => isWorkspaceOnlyKey(query.queryKey) && query.getObserversCount() === 0 })
+    void client.resetQueries({ predicate: query => isWorkspaceOnlyKey(query.queryKey) && query.getObserversCount() > 0 }).catch(() => {})
   }
 
   const recheck = (reason: 'identity' | 'reconnect') => {
     // Fence first: nothing read before this point writes into the cache.
     resetSharedReads(client)
-    if (!readPrincipal || !known) {
+    if (!readPrincipal || !confirmed) {
       parked = []
       clearForNewPrincipal()
       return
     }
     if (reason === 'reconnect') { reconnectPending = true; park() }
     const token = ++check
-    const before = known
     const after = readPrincipal()
-    known = after
-    void Promise.all([before, after]).then(([previous, current]) => {
-      // A newer event re-checks (and owns the parked entries).
+    const compared = Promise.all([confirmed, after]).then(([previous, current]) => {
+      // Recorded even if a newer check supersedes this one: A→B→A still clears.
+      if (!(previous && current && previous === current)) chainDiffers = true
+    })
+    chain = chain.then(() => compared).then(() => {
+      // A newer event re-checks (and owns the parked entries and the outcome).
       if (stopped || token !== check) return
+      const differs = chainDiffers
       const restore = parked
       const reconnected = reconnectPending
+      chainDiffers = false
       parked = []
       reconnectPending = false
-      if (previous && current && previous === current) {
-        // Hydrate keeps anything newer read since; restored entries revalidate.
-        if (restore.length > 0) {
-          hydrate(client, { mutations: [], queries: restore })
-          for (const query of restore) void client.invalidateQueries({ queryKey: query.queryKey, exact: true, refetchType: 'none' })
-        }
-        if (reconnected) void client.invalidateQueries()
+      if (!differs) {
+        // Hydrate keeps anything newer read since; the reconnect invalidation
+        // below marks the restored entries for revalidation.
+        if (restore.length > 0) hydrate(client, { mutations: [], queries: restore })
+        if (reconnected) void invalidateRoxQueries(client)
         options.onIdentityConfirmed?.(after)
       } else {
+        confirmed = after
         clearForNewPrincipal(after)
       }
     })
@@ -137,7 +156,7 @@ export function startRoxQueryEventBridge(client: QueryClient, api: RoxQueryEvent
     announceWorkspaceWorkRevision(workspaceId, revision)
     const key = roxKeys.workspaceWork(workspaceId)
     const cached = client.getQueryData<WorkspaceWorkSnapshot>(key)
-    if (!cached || !(cached.revision >= revision)) void client.invalidateQueries({ queryKey: key, exact: true })
+    if (!cached || !(cached.revision >= revision)) void invalidateRoxQueries(client, { queryKey: key, exact: true })
   })
   on(api.onNotesChanged, (payload: unknown) => {
     const workspaceId = typeof payload === 'string' ? payload
@@ -154,7 +173,7 @@ export function startRoxQueryEventBridge(client: QueryClient, api: RoxQueryEvent
   on(api.onMessagingPendingChanged, () => invalidateDomain(client, 'inbox', null, inboxSource('senders')))
   on(api.onReconnected, () => {
     if (readPrincipal) recheck('reconnect')
-    else void client.invalidateQueries()
+    else void invalidateRoxQueries(client)
   })
   on(api.onIdentityChanged, () => recheck('identity'))
 
