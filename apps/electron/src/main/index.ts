@@ -125,7 +125,7 @@ import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
 import { resolveWorkspaceMachineName } from '@rox/shared/os/user-display-name'
 import { ensureDemoPage } from '@rox/shared/pages'
 import { initializeDocs } from '@rox/shared/docs'
-import { ensureBundledSkills } from '@rox/shared/skills'
+import { ensureBundledSkillsInBackground } from '@rox/shared/skills'
 import { initializeReleaseNotes } from '@rox/shared/release-notes'
 import { ensureDefaultPermissions } from '@rox/shared/agent/permissions-config'
 import { ensureToolIcons, ensurePresetThemes } from '@rox/shared/config'
@@ -609,15 +609,17 @@ app.whenReady().then(async () => {
   // Initialize bundled docs
   initializeDocs()
 
-  // Sync bundled skill packs into ~/.agents/skills/ (never throws; hash-merge).
-  // Defer off the critical path so the first window can open without waiting
-  // for hundreds of skill files to copy on every cold start.
-  setImmediate(() => {
-    try {
-      ensureBundledSkills()
-    } catch (err) {
-      mainLog.warn('[bundled-skills] deferred sync failed:', err)
-    }
+  // Sync bundled skill packs into <config>/skills (never throws; hash-merge).
+  // PERF-02: claimed now (so the server bootstrap does not run it again), but
+  // the work starts only after the renderer's first paint: an O(1) stamp check,
+  // and only when the bundle/config changed a full merge in a worker thread.
+  void ensureBundledSkillsInBackground({
+    workerScript: join(__dirname, 'bundled-skills-worker.cjs'),
+    after: whenStartupMark(STARTUP_MARKS.rendererFirstPaint).then(() => markStartup(STARTUP_MARKS.skillsSyncStart)),
+    log: (level, message, data) => mainLog[level](message, data),
+  }).then((outcome) => {
+    markStartupOnce(STARTUP_MARKS.skillsSyncEnd)
+    if (outcome.status === 'failed') mainLog.warn('[bundled-skills] background sync failed:', outcome.error)
   })
 
   // Initialize bundled release notes

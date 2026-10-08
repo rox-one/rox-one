@@ -2,6 +2,7 @@
 import { existsSync, lstatSync, readdirSync, rmSync } from "node:fs";
 import { join, relative } from "node:path";
 import { copyElectronResourceTree, SKILL_DEVELOPMENT_DIRECTORIES } from './build/staged-servers';
+import { writeBundledSkillsFingerprint } from '../packages/shared/src/skills/bundled-fingerprint.ts';
 
 /** Vendored skills must be ordinary files so checkout/copy works on Windows
  * without symlink privileges and cannot reference a developer's local paths. */
@@ -30,6 +31,13 @@ if (import.meta.main) {
     // Rebuild generated output so removed resources cannot survive packaging.
     rmSync(destDir, { recursive: true, force: true });
     copyElectronResourceTree(srcDir, destDir);
+    // PERF-02: content fingerprint of the shipped skills, so app startup can
+    // skip the bundled-skills hash-merge entirely when nothing changed.
+    const skillsDest = join(destDir, "skills");
+    if (existsSync(skillsDest)) {
+      const fingerprint = writeBundledSkillsFingerprint(skillsDest);
+      console.log(`🧩 Bundled skills fingerprint ${fingerprint.slice(0, 12)}`);
+    }
     console.log("📦 Copied resources to dist");
   } else {
     console.log("⚠️ No resources directory found");

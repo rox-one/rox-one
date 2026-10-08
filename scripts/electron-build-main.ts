@@ -32,6 +32,10 @@ const EXTENSION_HOST_WORKER_OUTPUT = join(
   DIST_DIR,
   "extension-host-worker.cjs",
 );
+// PERF-02: bundled-skills hash-merge runs in a worker_thread after first paint.
+// Main falls back to a deferred inline sync when this file is missing.
+const BUNDLED_SKILLS_WORKER_SOURCE = "packages/shared/src/skills/bundled-sync.worker.ts";
+const BUNDLED_SKILLS_WORKER_OUTPUT = join(DIST_DIR, "bundled-skills-worker.cjs");
 
 // Load .env file if it exists
 function loadEnvFile(): void {
@@ -352,6 +356,35 @@ async function buildExtensionHostWorker(): Promise<void> {
   console.log("✅ extension-host worker built");
 }
 
+async function buildBundledSkillsWorker(): Promise<void> {
+  console.log("🔨 Building bundled-skills worker...");
+  const proc = spawn({
+    cmd: [
+      "bun", "run", "esbuild",
+      BUNDLED_SKILLS_WORKER_SOURCE,
+      "--bundle",
+      "--platform=node",
+      "--format=cjs",
+      `--outfile=${BUNDLED_SKILLS_WORKER_OUTPUT}`,
+      "--external:electron",
+    ],
+    cwd: ROOT_DIR,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  const exitCode = await proc.exited;
+  if (exitCode !== 0) {
+    console.error("❌ bundled-skills worker build failed with exit code", exitCode);
+    process.exit(exitCode);
+  }
+  const verification = await verifyJsFile(BUNDLED_SKILLS_WORKER_OUTPUT);
+  if (!verification.valid) {
+    console.error("❌ bundled-skills worker verification failed:", verification.error);
+    process.exit(1);
+  }
+  console.log("✅ bundled-skills worker built");
+}
+
 async function main(): Promise<void> {
   if (!process.argv.includes('--no-env')) loadEnvFile();
   if (process.env.ROX_WINDOWS_DEV_WITHOUT_OEM === '1') process.env.CRAFT_DEV_RUNTIME = '1';
@@ -380,6 +413,8 @@ async function main(): Promise<void> {
     // Build Extension Host craft-sandbox worker (utilityProcess entry)
     await buildExtensionHostWorker();
   }
+
+  await buildBundledSkillsWorker();
 
   const buildDefines = getBuildDefines();
 

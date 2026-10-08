@@ -30,84 +30,37 @@
  * The whole sync degrades gracefully: any failure is logged and reported in
  * the returned status, never thrown — app startup must not crash on skills.
  */
-import {
-  copyFileSync,
-  cpSync,
-  existsSync,
-  mkdirSync,
-  renameSync,
-  rmSync,
-  readdirSync,
-  readFileSync,
-  readlinkSync,
-  lstatSync,
-  statSync,
-  symlinkSync,
-  writeFileSync,
-} from 'fs';
-import { createHash } from 'crypto';
-import { dirname, join, relative } from 'path';
-import { APP_MANAGED_SKILLS_DIR, GLOBAL_AGENT_SKILLS_DIR } from './storage.ts';
+import { existsSync, mkdirSync, readdirSync, rmSync, symlinkSync } from 'fs';
+import { join } from 'path';
+import { APP_MANAGED_SKILLS_DIR, GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache } from './storage.ts';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
-import { safeJsonParse } from '../utils/files.ts';
 import { loadStoredConfig } from '../config/storage.ts';
-import { chooseManagedSkillName, isSafeSkillName, isSkillLinkTo, linkManagedSkill, pathEntryExists, unlinkManagedSkill } from './managed.ts';
-import { invalidateSkillsCache } from './storage.ts';
+import { isSafeSkillName } from './managed.ts';
 import { invalidateOmpSkillsCache } from './omp-discovery.ts';
+import {
+  disabledPackSet,
+  listPackSkillDirs,
+  readPackState,
+  readSkillsLock,
+  sha256OfFile,
+  syncBundledSkillPacks,
+  type BundledSkillPackStatus,
+  type ResolvedBundledSkillsTarget,
+  type SkillsLockPack,
+} from './bundled-core.ts';
+
+export {
+  isBundledSkillsSyncCurrent,
+  runBundledSkillsSyncJob,
+  type BundledSkillPackStatus,
+  type BundledSkillsJobResult,
+  type ResolvedBundledSkillsTarget,
+} from './bundled-core.ts';
 
 // ============================================================
-// Types
+// Options
 // ============================================================
-
-const SKILLS_LOCK_FILE = 'SKILLS.lock';
-const STATE_DIR_NAME = '.bundled';
-
-interface SkillsLockPack {
-  slug: string;
-  origin?: string;
-  commit?: string;
-  license?: string;
-  upstream?: { origin?: string; path?: string; commit?: string; note?: string };
-  skills?: string[];
-}
-
-interface SkillsLockFile {
-  version?: number;
-  packs?: SkillsLockPack[];
-}
-
-/** Per-pack sync state, persisted at `<skills-root>/.bundled/<pack-slug>.json`. */
-interface BundledPackState {
-  version: number;
-  pack: string;
-  commit: string | null;
-  syncedAt: string;
-  /** `<skill-slug>/<relative-path>` → sha256 of file content as shipped by the bundle. */
-  files: Record<string, string>;
-  /** Original bundle directory → installed directory. Retained across upgrades. */
-  aliases?: Record<string, string>;
-}
-
-export interface BundledSkillPackStatus {
-  /** Pack slug = bundle directory name (also the `bundledSkills.disabled` key). */
-  slug: string;
-  origin: string | null;
-  /** Pinned upstream commit this pack was vendored from (SKILLS.lock). */
-  commit: string | null;
-  /** Pack is listed in config `bundledSkills.disabled` — sync skipped it entirely. */
-  disabled: boolean;
-  /** True when at least one user-modified or foreign-owned file was preserved instead of overwritten. */
-  localModified: boolean;
-  /** Skill slugs shipped by the bundle. */
-  skills: string[];
-  /** Skill slugs present on disk after the sync. */
-  installed: string[];
-  /** Legacy status field; duplicate names receive aliases rather than being skipped. */
-  conflicts: string[];
-  /** Set when this pack failed to sync (status information only — not fatal). */
-  error?: string;
-}
 
 export interface EnsureBundledSkillsOptions {
   /** Bundle root (default: getBundledAssetsDir('skills')). */
@@ -118,12 +71,20 @@ export interface EnsureBundledSkillsOptions {
   linksRoot?: string | null;
   /** Disabled pack slugs (default: config `bundledSkills.disabled`). */
   disabled?: string[];
+  /**
+   * Skip all work when the sync stamp proves the install already matches this
+   * bundle (PERF-02). Defaults to true for the ambient startup call and false
+   * for explicit option injection (tests/tools always run the full merge).
+   */
+  skipIfCurrent?: boolean;
 }
 
 export interface EnsureBundledSkillsResult {
   packs: BundledSkillPackStatus[];
   bundleRoot: string | null;
   targetRoot: string;
+  /** True when the sync stamp matched and no file was read, hashed or written. */
+  upToDate?: boolean;
 }
 
 // ============================================================
@@ -137,63 +98,15 @@ export function resetBundledSkillsInitialized(): void {
   bundledSkillsInitialized = false;
 }
 
-// ============================================================
-// Internals
-// ============================================================
-
-function sha256OfFile(path: string): string {
-  return createHash('sha256').update(lstatSync(path).isSymbolicLink() ? `symlink:${readlinkSync(path)}` : readFileSync(path)).digest('hex');
-}
-
-/** Recursively list files of `dir` as relative paths. Dot entries are internal state, never content. */
-function listFilesRecursive(dir: string, rejectLinks = false): string[] {
-  const out: string[] = [];
-  const walk = (current: string, depth: number): void => {
-    if (depth > 32) throw new Error('Skill tree exceeds maximum depth');
-    for (const entry of readdirSync(current, { withFileTypes: true })) {
-      if (out.length >= 10_000) throw new Error('Skill tree exceeds maximum file count');
-      const full = join(current, entry.name);
-      if (entry.isSymbolicLink() && rejectLinks) throw new Error('Bundled skill contains a symbolic link');
-      // User links count as local content without following targets or recursive cycles.
-      if (entry.isDirectory()) walk(full, depth + 1);
-      else out.push(relative(dir, full));
-    }
-  };
-  walk(dir, 0);
-  return out;
-}
-
-/** Direct child dirs of `packDir` that contain a SKILL.md (= installable skills). */
-function listPackSkillDirs(packDir: string): string[] {
-  const skills: string[] = [];
-  for (const entry of readdirSync(packDir, { withFileTypes: true })) {
-    if (!entry.isDirectory() || !isSafeSkillName(entry.name)) continue;
-    if (existsSync(join(packDir, entry.name, 'SKILL.md'))) {
-      skills.push(entry.name);
-    }
-  }
-  return skills.sort();
-}
-
-/** Preserve legacy disabled preferences after the first-party pack rename. */
-function disabledPackSet(slugs: string[]): Set<string> {
-  return new Set(slugs.map(slug => slug === 'craft-knowledge' ? 'rox-knowledge' : slug));
-}
-
-function readSkillsLock(bundleRoot: string): Map<string, SkillsLockPack> {
-  const map = new Map<string, SkillsLockPack>();
-  const lockPath = join(bundleRoot, SKILLS_LOCK_FILE);
-  if (!existsSync(lockPath)) return map;
-  try {
-    // Lock is a repo-maintained JSON file we control — a typed cast is enough here.
-    const parsed = safeJsonParse(readFileSync(lockPath, 'utf-8')) as SkillsLockFile | null;
-    for (const pack of parsed?.packs ?? []) {
-      if (pack && typeof pack.slug === 'string') map.set(pack.slug, pack);
-    }
-  } catch {
-    // Corrupt lock — fall back to directory scan with null metadata.
-  }
-  return map;
+/**
+ * Claim the once-per-process ambient sync without running it (the background
+ * scheduler runs it later). Returns false when an ambient sync already ran or
+ * was claimed, so a second host (e.g. server bootstrap inside Electron) skips.
+ */
+export function claimAmbientBundledSkillsSync(): boolean {
+  if (bundledSkillsInitialized) return false;
+  bundledSkillsInitialized = true;
+  return true;
 }
 
 /**
@@ -237,49 +150,20 @@ export function linkBundledSkillsForOmp(options: EnsureBundledSkillsOptions & { 
   return [...linked];
 }
 
-function readPackState(targetRoot: string, packSlug: string): BundledPackState | null {
-  if (!isSafeSkillName(packSlug)) return null;
-  const path = join(targetRoot, STATE_DIR_NAME, `${packSlug}.json`);
-  if (!existsSync(path)) return null;
-  try {
-    // State file is written by us below — validate shape minimally and bail on mismatch.
-    const parsed = safeJsonParse(readFileSync(path, 'utf-8')) as BundledPackState | null;
-    if (!parsed || parsed.pack !== packSlug || typeof parsed.files !== 'object' || parsed.files === null) {
-      return null;
-    }
-    if (Object.keys(parsed.files).some(key => !isSafeSkillName(key.split('/')[0]!) || key.split('/').some(part => part === '..') || key.includes('\\'))) return null;
-    return parsed;
-  } catch {
-    return null; // corrupt state → unknown ownership → conservative sync
-  }
-}
-
-function writePackState(targetRoot: string, state: BundledPackState): void {
-  const dir = join(targetRoot, STATE_DIR_NAME);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  const path = join(dir, `${state.pack}.json`);
-  const tmp = `${path}.tmp-${process.pid}`;
-  writeFileSync(tmp, JSON.stringify(state, null, 2), 'utf-8');
-  renameSync(tmp, path);
-}
-
-/**
- * Build a manifest for a directory tree: `<skill>/<rel>` → { abs path, sha256 }.
- * Works for both the bundle pack dir and the skills target root (missing skill
- * dirs contribute nothing, which naturally models first-install and removals).
- */
-function buildManifest(rootDir: string, skillSlugs: string[], rejectLinks = false): Map<string, { abs: string; sha: string }> {
-  const manifest = new Map<string, { abs: string; sha: string }>();
-  for (const skill of skillSlugs) {
-    const skillDir = join(rootDir, skill);
-    if (!existsSync(skillDir)) continue; // disk variant: skill absent → empty manifest
-    if (lstatSync(skillDir).isSymbolicLink()) continue;
-    for (const rel of listFilesRecursive(skillDir, rejectLinks)) {
-      const abs = join(skillDir, rel);
-      manifest.set(`${skill}/${rel}`, { abs, sha: sha256OfFile(abs) });
+/** Resolve the ambient (startup) sync inputs exactly as `ensureBundledSkills()` would. */
+export function resolveBundledSkillsTarget(options?: EnsureBundledSkillsOptions): ResolvedBundledSkillsTarget {
+  const targetRoot = options?.targetRoot ?? APP_MANAGED_SKILLS_DIR;
+  const linksRoot = options?.linksRoot === undefined ? (options?.targetRoot ? null : GLOBAL_AGENT_SKILLS_DIR) : options.linksRoot;
+  const bundleRoot = options?.bundleRoot ?? getBundledAssetsDir('skills') ?? null;
+  let disabled = options?.disabled;
+  if (!disabled) {
+    try {
+      disabled = loadStoredConfig()?.bundledSkills?.disabled ?? [];
+    } catch {
+      disabled = [];
     }
   }
-  return manifest;
+  return { bundleRoot: bundleRoot && existsSync(bundleRoot) ? bundleRoot : null, targetRoot, linksRoot, disabled: [...disabled] };
 }
 
 // ============================================================
@@ -320,83 +204,19 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
         disabled = []; // config unreadable — treat as "nothing disabled"
       }
     }
-    const disabledSet = disabledPackSet(disabled);
-    const lock = readSkillsLock(bundleRoot);
-    const packSlugs = readdirSync(bundleRoot, { withFileTypes: true })
-      .filter(e => e.isDirectory() && isSafeSkillName(e.name))
-      .map(e => e.name)
-      .sort();
 
-    if (!existsSync(targetRoot)) {
-      mkdirSync(targetRoot, { recursive: true });
-    }
-
-    // Ownership map: skill dir → owning pack, from previously written states.
-    // Prevents one pack from clobbering another pack's same-named skill dir.
-    const ownerOf = new Map<string, string>();
-    const stateDir = join(targetRoot, STATE_DIR_NAME);
-    if (existsSync(stateDir)) {
-      for (const file of readdirSync(stateDir)) {
-        if (!file.endsWith('.json')) continue;
-        const state = readPackState(targetRoot, file.slice(0, -'.json'.length));
-        if (!state) continue;
-        for (const key of Object.keys(state.files)) {
-          const slash = key.indexOf('/');
-          if (slash > 0) ownerOf.set(key.slice(0, slash), state.pack === 'craft-knowledge' ? 'rox-knowledge' : state.pack);
-        }
-      }
-    }
-
-    for (const slug of packSlugs) {
-      const meta = lock.get(slug);
-      const status: BundledSkillPackStatus = {
-        slug,
-        origin: meta?.origin ?? null,
-        commit: meta?.commit ?? meta?.upstream?.commit ?? null,
-        disabled: disabledSet.has(slug),
-        localModified: false,
-        skills: [],
-        installed: [],
-        conflicts: [],
-      };
-      result.packs.push(status);
-
-      if (status.disabled) {
-        if (linksRoot) {
-          for (const key of Object.keys(readPackState(targetRoot, slug)?.files ?? {})) {
-            unlinkManagedSkill(join(targetRoot, key.split('/')[0]!), linksRoot);
-          }
-        }
-        debug(`[bundled-skills] Pack "${slug}" disabled via config — skipped`);
-        continue;
-      }
-
-      try {
-        const previousFiles = readPackState(targetRoot, slug)?.files ?? {};
-        const aliases: Record<string, string> = {};
-        const bundleManifest = syncPack(bundleRoot, targetRoot, slug, status, ownerOf, aliases, linksRoot);
-        writePackState(targetRoot, {
-          version: 1,
-          pack: slug,
-          commit: status.commit,
-          syncedAt: new Date().toISOString(),
-          files: Object.fromEntries([...bundleManifest].map(([key, { sha }]) => [key, sha])),
-          aliases,
-        });
-        for (const skill of status.installed) ownerOf.set(skill, slug);
-        if (linksRoot) {
-          for (const oldSkill of new Set(Object.keys(previousFiles).map(key => key.split('/')[0]!))) {
-            if (!status.installed.includes(oldSkill)) unlinkManagedSkill(join(targetRoot, oldSkill), linksRoot);
-          }
-          for (const skill of status.installed) {
-            linkManagedSkill(join(targetRoot, skill), linksRoot, skill);
-          }
-        }
-        debug(`[bundled-skills] Synced pack "${slug}": ${status.installed.length} skills${status.localModified ? ' (local modifications preserved)' : ''}`);
-      } catch (error) {
-        status.error = error instanceof Error ? error.message : String(error);
-        debug(`[bundled-skills] Pack "${slug}" sync failed:`, status.error);
-      }
+    const synced = syncBundledSkillPacks({
+      bundleRoot,
+      targetRoot,
+      linksRoot,
+      disabled,
+      skipIfCurrent: options?.skipIfCurrent ?? !options,
+    });
+    result.packs = synced.packs;
+    if (synced.upToDate) {
+      // Nothing on disk changed, so the skills caches stay valid.
+      result.upToDate = true;
+      return result;
     }
   } catch (error) {
     // Startup must never crash on skills sync — degrade to a debug log line.
@@ -406,167 +226,6 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
   invalidateSkillsCache();
   invalidateOmpSkillsCache();
   return result;
-}
-
-/**
- * Merge one pack into the target root. Returns the bundle manifest (used by the
- * caller to persist the pack state). Throws on hard IO errors — the caller
- * catches per-pack and reports via status.error.
- */
-function syncPack(
-  bundleRoot: string,
-  targetRoot: string,
-  slug: string,
-  status: BundledSkillPackStatus,
-  ownerOf: ReadonlyMap<string, string>,
-  aliasesOut: Record<string, string>,
-  linksRoot: string | null,
-): Map<string, { abs: string; sha: string }> {
-  const packDir = join(bundleRoot, slug);
-  const originals = listPackSkillDirs(packDir);
-  const previousState = readPackState(targetRoot, slug);
-  const reserved = new Set<string>();
-  const aliases = new Map(originals.map((skill) => {
-    const legacyAlias = ownerOf.get(`${slug}--${skill}`) === slug ? `${slug}--${skill}` : ownerOf.get(skill) === slug ? skill : undefined;
-    const previous = previousState?.aliases?.[skill] ?? legacyAlias;
-    const installed = chooseManagedSkillName(slug, skill, (candidate) => {
-      if (reserved.has(candidate)) return false;
-      const target = join(targetRoot, candidate);
-      if (ownerOf.has(candidate) && ownerOf.get(candidate) !== slug) return false;
-      if (pathEntryExists(target) && (ownerOf.get(candidate) !== slug || lstatSync(target).isSymbolicLink())) return false;
-      // An established application identity stays stable if a user later adds a global skill.
-      // Discovery gives that application skill an explicit alias without rewriting local edits.
-      const link = linksRoot ? join(linksRoot, candidate) : null;
-      return previous === candidate || !link || !pathEntryExists(link) || isSkillLinkTo(link, target);
-    }, previous);
-    reserved.add(installed);
-    aliasesOut[skill] = installed;
-    return [skill, installed] as const;
-  }));
-  const skills = [...aliases.values()];
-  status.skills = skills;
-  const bundleManifest = new Map([...buildManifest(packDir, originals, true)].map(([key, value]) => {
-    const slash = key.indexOf('/');
-    return [`${aliases.get(key.slice(0, slash))}${key.slice(slash)}`, value] as const;
-  }));
-  const stateFiles = previousState?.files ?? {};
-
-  const tmpRoot = join(targetRoot, `.bundled-tmp-${slug}-${process.pid}`);
-  rmSync(tmpRoot, { recursive: true, force: true });
-  mkdirSync(tmpRoot, { recursive: true });
-
-  try {
-    for (const skill of skills) {
-      const disk = buildManifest(targetRoot, [skill]);
-      const writes: { rel: string; from: string }[] = [];
-      const deletes: string[] = [];
-
-      // 1. Bundle files: decide per file whether the bundle version may land.
-      for (const [key, { abs, sha }] of bundleManifest) {
-        if (!key.startsWith(`${skill}/`)) continue;
-        const rel = key.slice(skill.length + 1);
-        const diskSha = disk.get(key)?.sha;
-
-        if (diskSha === undefined) {
-          writes.push({ rel, from: abs }); // new file
-        } else if (diskSha === sha) {
-          continue; // identical already
-        } else if (stateFiles[key] !== undefined && diskSha === stateFiles[key]) {
-          writes.push({ rel, from: abs }); // managed by us and unmodified → upgrade
-        } else {
-          status.localModified = true; // user-modified or foreign — preserve
-        }
-      }
-
-      // 2. Bundle removals: file tracked by state but gone from the bundle.
-      for (const key of Object.keys(stateFiles)) {
-        if (!key.startsWith(`${skill}/`) || bundleManifest.has(key)) continue;
-        const rel = key.slice(skill.length + 1);
-        const diskSha = disk.get(key)?.sha;
-        if (diskSha === undefined) continue; // user already deleted it
-        if (diskSha === stateFiles[key]) {
-          deletes.push(rel); // unmodified → safe to drop
-        } else {
-          status.localModified = true; // user edited a file the pack dropped — keep
-        }
-      }
-
-      if (writes.length === 0 && deletes.length === 0) {
-        if (disk.size > 0) status.installed.push(skill); // already in sync / preserved
-        continue;
-      }
-
-      // Stage: start from the current target so user-added files survive, then
-      // apply bundle ops and swap atomically via rename (dot-prefixed backup).
-      const targetDir = join(targetRoot, skill);
-      const stagedDir = join(tmpRoot, skill);
-      const hadTarget = existsSync(targetDir);
-      if (hadTarget) {
-        cpSync(targetDir, stagedDir, { recursive: true });
-      } else {
-        mkdirSync(stagedDir, { recursive: true });
-      }
-      for (const { rel, from } of writes) {
-        const dest = join(stagedDir, rel);
-        mkdirSync(dirname(dest), { recursive: true });
-        copyFileSync(from, dest);
-      }
-      for (const rel of deletes) {
-        rmSync(join(stagedDir, rel), { force: true });
-      }
-
-      const backupDir = join(targetRoot, `.rox-bak-${skill}-${process.pid}`);
-      if (hadTarget) {
-        renameSync(targetDir, backupDir);
-      }
-      try {
-        renameSync(stagedDir, targetDir);
-      } catch (error) {
-        // Roll back: restore the previous dir so the user never loses content.
-        if (hadTarget && existsSync(backupDir) && !existsSync(targetDir)) {
-          try {
-            renameSync(backupDir, targetDir);
-          } catch {
-            // leave backup on disk for manual recovery
-          }
-        }
-        throw error;
-      }
-      if (hadTarget) {
-        rmSync(backupDir, { recursive: true, force: true });
-      }
-      status.installed.push(skill);
-    }
-
-    // 3. Whole-skill removals: skill tracked by state but no longer in the bundle.
-    const previouslyOwned = new Set<string>();
-    for (const key of Object.keys(stateFiles)) {
-      const slash = key.indexOf('/');
-      if (slash > 0) previouslyOwned.add(key.slice(0, slash));
-    }
-    for (const skill of previouslyOwned) {
-      if (skills.includes(skill)) continue;
-      const targetDir = join(targetRoot, skill);
-      if (!existsSync(targetDir)) continue;
-      const disk = buildManifest(targetRoot, [skill]);
-      const managedKeys = Object.keys(stateFiles).filter(key => key.startsWith(`${skill}/`));
-      const allMatch = managedKeys.every(key => disk.get(key)?.sha === stateFiles[key]);
-      const noExtras = [...disk.keys()].every(key => managedKeys.includes(key));
-      if (allMatch && noExtras) {
-        rmSync(targetDir, { recursive: true, force: true }); // entirely ours → remove
-        debug(`[bundled-skills] Removed skill "${skill}" (dropped from pack "${slug}")`);
-      } else {
-        status.installed.push(skill);
-        status.localModified = true; // user touched it — keep
-        // Preserve ownership so a later disable/update still recognizes retained user content.
-        for (const key of managedKeys) bundleManifest.set(key, { abs: join(targetRoot, key), sha: stateFiles[key]! });
-      }
-    }
-  } finally {
-    rmSync(tmpRoot, { recursive: true, force: true });
-  }
-
-  return bundleManifest;
 }
 
 /**

@@ -8,9 +8,9 @@ import { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
 import { OAuthFlowStore } from '@rox/shared/auth'
-import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig, getConfigPath, createInitialStoredConfig } from '@rox/shared/config'
+import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig, getConfigPath, createInitialStoredConfig, getBundledSkillsDisabled, getWorkspaces } from '@rox/shared/config'
 import { ensureContextDocs } from '@rox/shared/context-docs'
-import { ensureBundledSkills } from '@rox/shared/skills'
+import { ensureBundledSkillsInBackground, loadAllSkills } from '@rox/shared/skills'
 import { setBundledAssetsRoot } from '@rox/shared/utils'
 import {
   WsRpcServer,
@@ -375,13 +375,8 @@ function bootstrapConfigArtifacts(platform: PlatformServices): void {
     platform.logger.warn(`[bootstrap] Context documents seeding failed: ${error instanceof Error ? error.message : error}`)
   }
 
-  // Preset skill packs (superpowers/vercel/mattpocock/…): same as electron main.
-  // Hash-merge keeps user-local edits; disabled packs skipped via config.
-  try {
-    ensureBundledSkills()
-  } catch (error) {
-    platform.logger.warn(`[bootstrap] Bundled skills seeding failed: ${error instanceof Error ? error.message : error}`)
-  }
+  // Preset skill packs (superpowers/vercel/mattpocock/…) are synced off the
+  // boot path once the server is listening (PERF-02); see scheduleBundledSkillsSync.
 
   // Toolchain: fire-and-forget background install/update of missing/outdated
   // tools (omp et al.). ensureAll returns a status snapshot immediately and
@@ -392,6 +387,29 @@ function bootstrapConfigArtifacts(platform: PlatformServices): void {
     .catch((err) => {
       platform.logger.warn(`[bootstrap] Toolchain ensureAll failed: ${err instanceof Error ? err.message : err}`)
     })
+}
+
+/**
+ * PERF-02: bundled skill packs sync after the server is listening instead of
+ * before it. Hash-merge keeps user-local edits; disabled packs are skipped via
+ * config. Inside Electron the main process has already claimed the sync (gated
+ * on first paint, run in a worker), so this joins that job and only announces
+ * its result. When files changed, clients reload skills via CHANGED events.
+ */
+function scheduleBundledSkillsSync(platform: PlatformServices, wsServer: WsRpcServer): void {
+  void ensureBundledSkillsInBackground({
+    log: (level, message, data) => platform.logger[level](message, data),
+  }).then((outcome) => {
+    if (outcome.status !== 'synced') return
+    try {
+      wsServer.push(RPC_CHANNELS.bundledSkills.CHANGED, { to: 'all' }, { disabled: getBundledSkillsDisabled() })
+      for (const workspace of getWorkspaces()) {
+        wsServer.push(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId: workspace.id }, workspace.id, loadAllSkills(workspace.rootPath))
+      }
+    } catch (error) {
+      platform.logger.warn(`[bootstrap] Bundled skills change broadcast failed: ${error instanceof Error ? error.message : error}`)
+    }
+  })
 }
 
 function ensureGlobalConfigExists(platform: PlatformServices): void {
@@ -558,6 +576,8 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
   modelRefreshService.startAll()
 
   platform.logger.info(`Rox server listening on ${wsServer.protocol}://${rpcHost}:${wsServer.port}`)
+
+  scheduleBundledSkillsSync(platform, wsServer)
 
   let stopped = false
   const stop = async (): Promise<void> => {
