@@ -1,6 +1,6 @@
 import * as React from 'react'
 import i18n from 'i18next'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, type ReactNodeViewProps } from '@tiptap/react'
 import { Extension } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -21,6 +21,8 @@ import { looksLikeMermaidSource } from './mermaid-source'
 import { LatexBlock } from './extensions/LatexBlock'
 import { RichBlockInteractions } from './extensions/RichBlockInteractions'
 import { WikiLink } from './extensions/WikiLink'
+import { EntityMention } from './extensions/EntityMention'
+import { EntityEmbed } from './extensions/EntityEmbed'
 import { HashTag } from './extensions/HashTag'
 import { MarkdownComment } from './extensions/MarkdownComment'
 import { DocumentFolding, type DocumentFoldingJSON } from './extensions/DocumentFolding'
@@ -34,6 +36,19 @@ import './tiptap-editor.css'
 import './extensions/animated-task-item.css'
 
 export type MarkdownEngine = 'legacy' | 'official'
+
+/**
+ * W1-08 (#1505): opt-in entity mention / embed nodes. Omit to keep the
+ * editor exactly as before (the renderer passes it only while
+ * `entities.previews.v1` is on).
+ */
+export interface EntityNodesOptions {
+  onEntityClick?: (ref: string, event: MouseEvent) => void
+  /** Mod-Shift-K: host opens its EntityPicker and inserts the result. */
+  onRequestInsert?: () => void
+  mentionView?: React.ComponentType<ReactNodeViewProps>
+  embedView?: React.ComponentType<ReactNodeViewProps>
+}
 export type TiptapEditorHandle = NonNullable<ReturnType<typeof useEditor>>
 
 export function readFoldingPreference(key?: string): DocumentFoldingJSON | null {
@@ -243,6 +258,8 @@ export interface TiptapMarkdownEditorProps {
    * - `official`: @tiptap/markdown + mathematics extension
    */
   markdownEngine?: MarkdownEngine
+  /** Entity mention/embed nodes (W1-08). Omitted = feature fully inert. */
+  entityNodes?: EntityNodesOptions
 }
 
 export function TiptapMarkdownEditor({
@@ -256,6 +273,7 @@ export function TiptapMarkdownEditor({
   onTagClick,
   foldingStorageKey,
   markdownEngine = 'legacy',
+  entityNodes,
 }: TiptapMarkdownEditorProps) {
   const shikiTheme = useShikiTheme()
   const shikiModes = React.useRef(tiptapShikiThemeModes(shikiTheme))
@@ -268,6 +286,12 @@ export function TiptapMarkdownEditor({
 
   const onTagClickRef = React.useRef(onTagClick)
   onTagClickRef.current = onTagClick
+
+  const entityNodesRef = React.useRef(entityNodes)
+  entityNodesRef.current = entityNodes
+  const entityNodesEnabled = !!entityNodes
+  const entityMentionView = entityNodes?.mentionView
+  const entityEmbedView = entityNodes?.embedView
 
   // Ref for the editor instance — used by the Mathematics onClick callback
   // which is created at extension-configure time (before useEditor returns).
@@ -338,6 +362,14 @@ export function TiptapMarkdownEditor({
         },
       }),
       ...(editable ? [TiptapSlashMenu] : []),
+      ...(entityNodesEnabled ? [
+        EntityMention.configure({
+          onEntityClick: (ref, event) => entityNodesRef.current?.onEntityClick?.(ref, event),
+          onRequestInsert: () => { if (editorRef.current?.isEditable) entityNodesRef.current?.onRequestInsert?.() },
+          view: entityMentionView,
+        }),
+        EntityEmbed.configure({ view: entityEmbedView }),
+      ] : []),
     ]
 
     if (useOfficialMarkdown) {
@@ -376,7 +408,7 @@ export function TiptapMarkdownEditor({
         transformCopiedText: true,
       }),
     ]
-  }, [placeholder, useOfficialMarkdown, foldingStorageKey])
+  }, [placeholder, useOfficialMarkdown, foldingStorageKey, entityNodesEnabled, entityMentionView, entityEmbedView])
 
   const initialContent = useOfficialMarkdown
     ? preprocessMarkdownForOfficial(content)

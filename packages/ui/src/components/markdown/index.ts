@@ -20,3 +20,20 @@ export {
 } from './markdown-preview-helpers'
 export { ImageCardStack, type ImageCardStackProps, type ImageCardStackItem } from './ImageCardStack'
 export { TiptapMarkdownEditor, type TiptapEditorHandle, type TiptapMarkdownEditorProps, type MarkdownEngine } from './TiptapMarkdownEditor'
+// W1-08 (#1505): entity mention / embed nodes + Markdown serialisation.
+export { type EntityNodesOptions } from './TiptapMarkdownEditor'
+export { EntityMention, type EntityMentionOptions } from './extensions/EntityMention'
+export { EntityEmbed, type EntityEmbedOptions } from './extensions/EntityEmbed'
+export {
+  ENTITY_EMBED_NODE,
+  ENTITY_MENTION_NODE,
+  canonicalEntityTarget,
+  entityRefFromTarget,
+  installEntityMarkdownRules,
+  matchEntityEmbed,
+  matchEntityMention,
+  sanitizeMentionLabel,
+  serializeEntityEmbed,
+  serializeEntityMention,
+  type EntityMentionMatch,
+} from './entity-markdown'
