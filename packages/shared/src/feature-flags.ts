@@ -186,6 +186,61 @@ export function isEntitiesLinksEnabled(enabledWorkbenchFlags?: ReadonlySet<strin
   return false;
 }
 
+// W1-03 (#1500)
+/**
+ * Workbench flag id for the command bus. Mirrors `WORKBENCH_FLAG.commandsBusV1`
+ * in `packages/core/src/platform/workbench/flags.ts`.
+ */
+export const COMMAND_BUS_WORKBENCH_FLAG = 'commands.bus.v1';
+
+/**
+ * Runtime-evaluated check for the command bus (W1-03: `commands:*` RPC,
+ * local executor, workspace outbox + realtime client). Same shape as
+ * `isEntitiesLinksEnabled`; `CRAFT_FEATURE_COMMAND_BUS=1|0` is the explicit
+ * env override. Defaults to DISABLED.
+ */
+export function isCommandBusEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_COMMAND_BUS'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(COMMAND_BUS_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
+/**
+ * Workbench flag id for the visible Rox home (`~/rox` resolution + MIG-13
+ * auto-migration, W1-13 #1510).
+ * Mirrors `WORKBENCH_FLAG.storageVisibleRootV1` in
+ * `packages/core/src/platform/workbench/flags.ts` (kept as a literal here
+ * so `@rox/shared` stays free of the platform import graph).
+ */
+export const STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG = 'storage.visible-root.v1';
+
+/**
+ * Runtime-evaluated check for the visible Rox home (W1-13: `~/rox`
+ * resolution + MIG-13 auto-migration).
+ *
+ * Server-evaluated — same shape as `isEntitiesLinksEnabled`: the workbench
+ * flag is authoritative, and an env override is allowed for tests only.
+ * `ROX_STORAGE_VISIBLE_ROOT=1|0` wins; the deprecated
+ * `CRAFT_FEATURE_STORAGE_VISIBLE_ROOT=1|0` alias still works. Defaults to
+ * DISABLED (PRD D-v2-12: ON by default only after the W3-02 rehearsal).
+ *
+ * Pass the enabled workbench flag set when the caller tracks it. Without a
+ * set, only the env override applies (still default OFF).
+ */
+export function isStorageVisibleRootEnabled(
+  enabledWorkbenchFlags?: ReadonlySet<string>,
+  env?: NodeJS.ProcessEnv | Record<string, string | undefined>,
+): boolean {
+  // Renderer-safe: no node imports; `env` defaults to process.env when present.
+  const read = (key: string): string | undefined => (env ? env[key]?.trim() || undefined : getEnv(key)?.trim() || undefined);
+  const override =
+    parseBooleanEnv(read('ROX_STORAGE_VISIBLE_ROOT')) ??
+    parseBooleanEnv(read('CRAFT_FEATURE_STORAGE_VISIBLE_ROOT'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG) === true;
+}
+
 /**
  * Runtime-evaluated check for Pages sharing (Cloudflare publication).
  *
@@ -286,3 +341,23 @@ export const FEATURE_FLAGS = {
     return isPagesSharingEnabled();
   },
 } as const;
+
+// W1-04 (#1501) — MIG-06 Dossier export into the local contact store.
+/**
+ * Workbench flag id for the Dossier → contact-card export
+ * (`directory:exportDossier`). Mirrors `WORKBENCH_FLAG.contactsDossierExportV1`
+ * in `packages/core/src/platform/workbench/flags.ts`.
+ */
+export const DOSSIER_EXPORT_WORKBENCH_FLAG = 'contacts.dossier-export.v1';
+
+/**
+ * Server-evaluated check for the Dossier export IPC (same shape as
+ * `isEntitiesLinksEnabled`). The workbench flag is authoritative;
+ * `CRAFT_FEATURE_DOSSIER_EXPORT=1|0` is an explicit override for tests.
+ * Defaults to DISABLED: while off, the handler writes nothing.
+ */
+export function isDossierExportEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_DOSSIER_EXPORT'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(DOSSIER_EXPORT_WORKBENCH_FLAG) === true;
+}

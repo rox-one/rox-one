@@ -5,8 +5,9 @@ import {
   SUPPORTED_LANGUAGE_CODES,
 } from "./languages";
 
-// Build i18next resources from the locale registry.
-const resources = Object.fromEntries(
+// Build i18next resources from the locale registry. Computed inside
+// setupI18n() so importing this module has no top-level work.
+const buildResources = () => Object.fromEntries(
   Object.entries(LOCALE_REGISTRY).map(([code, entry]) => [
     code,
     { translation: entry.messages },
@@ -18,7 +19,11 @@ const resources = Object.fromEntries(
 let initialized = false;
 
 /**
- * Initialize i18next with bundled translations.
+ * Initialize i18next with every bundled translation, synchronously.
+ *
+ * Used by the main process and tests. Renderer entries should use
+ * `setupRendererI18n()` from `@rox/shared/i18n/lazy`, which keeps the other
+ * eleven locales out of the startup bundle.
  * Call once at app startup. Pass `plugins` to add framework integrations
  * (e.g. initReactI18next for React apps, LanguageDetector for browser apps).
  */
@@ -34,7 +39,7 @@ export function setupI18n(
   }
 
   instance.init({
-    resources,
+    resources: buildResources(),
     // Russian is the default UI language; English remains the key-missing
     // fallback after it.
     fallbackLng: [DEFAULT_LANGUAGE_CODE, "en"],

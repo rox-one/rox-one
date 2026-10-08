@@ -20,10 +20,10 @@ export const ROX_RUNTIME_BASE_SLUG = 'omp'
 
 type ConnectionSummary = { slug: string; providerType?: string; isDefault?: boolean }
 
-export type RoxRuntimeDefaultApi = {
+export type RoxRuntimeDefaultApi<C extends ConnectionSummary = ConnectionSummary> = {
   getOrgIdentity?(): Promise<{ authority: 'native' | 'local' }>
   getStartupRuntimeSummary?(): Promise<StartupRuntimeSummary | null>
-  listLlmConnectionsWithStatus(): Promise<ReadonlyArray<ConnectionSummary>>
+  listLlmConnectionsWithStatus(options?: { refresh?: boolean }): Promise<ReadonlyArray<C>>
   setupLlmConnection(setup: LlmConnectionSetup): Promise<{ success: boolean; error?: string }>
   setDefaultLlmConnection(slug: string): Promise<{ success: boolean; error?: string }>
 }
@@ -47,10 +47,25 @@ function uniqueSlug(base: string, taken: ReadonlySet<string>): string {
  * Ensure new profiles have a Rox runtime without replacing an existing
  * user's selected provider.
  */
-export async function ensureRoxRuntimeDefault(api: RoxRuntimeDefaultApi): Promise<RoxRuntimeDefaultResult> {
+export type RoxRuntimeDefaultOptions<C extends ConnectionSummary = ConnectionSummary> = {
+  /** Caller identity the caller just read; skips a duplicate getOrgIdentity(). */
+  identity?: { authority: 'native' | 'local' }
+  /** Passed to listLlmConnectionsWithStatus (startup uses `{ refresh: false }`). */
+  listOptions?: { refresh?: boolean }
+  /**
+   * Receives the connection list when it was read and left unchanged
+   * (already-default / preserved-default), so the caller can reuse it.
+   */
+  onConnectionsRead?: (connections: ReadonlyArray<C>) => void
+}
+
+export async function ensureRoxRuntimeDefault<C extends ConnectionSummary = ConnectionSummary>(
+  api: RoxRuntimeDefaultApi<C>,
+  options: RoxRuntimeDefaultOptions<C> = {},
+): Promise<RoxRuntimeDefaultResult> {
   try {
-    const identity = api.getOrgIdentity ? await api.getOrgIdentity() : null
-    if (api.getOrgIdentity && (!identity || identity.authority !== 'native' && identity.authority !== 'local')) {
+    const identity = options.identity ?? (api.getOrgIdentity ? await api.getOrgIdentity() : null)
+    if ((options.identity || api.getOrgIdentity) && (!identity || identity.authority !== 'native' && identity.authority !== 'local')) {
       return { status: 'failed', error: 'runtime-identity-unavailable' }
     }
     if (identity?.authority === 'native') {
@@ -64,12 +79,16 @@ export async function ensureRoxRuntimeDefault(api: RoxRuntimeDefaultApi): Promis
       // accounts, refreshing credentials, or changing the host's default.
       return { status: summary.providerType === ROX_RUNTIME_PROVIDER ? 'already-default' : 'preserved-default', slug: summary.slug, runtimeSummary: summary }
     }
-    const connections = await api.listLlmConnectionsWithStatus()
+    const connections = options.listOptions
+      ? await api.listLlmConnectionsWithStatus(options.listOptions)
+      : await api.listLlmConnectionsWithStatus()
     const current = connections.find((c) => c.isDefault)
     if (current?.providerType === ROX_RUNTIME_PROVIDER) {
+      options.onConnectionsRead?.(connections)
       return { status: 'already-default', slug: current.slug }
     }
     if (current) {
+      options.onConnectionsRead?.(connections)
       return { status: 'preserved-default', slug: current.slug }
     }
 

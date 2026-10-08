@@ -5,8 +5,8 @@
  * Users can create permissions.json files to extend the default rules.
  *
  * File locations:
- * - Workspace: ~/.rox/workspaces/{slug}/permissions.json
- * - Per-source: ~/.rox/workspaces/{slug}/sources/{sourceSlug}/permissions.json
+ * - Workspace: ~/rox/workspaces/{slug}/permissions.json
+ * - Per-source: ~/rox/workspaces/{slug}/sources/{sourceSlug}/permissions.json
  *
  * Rules are additive - custom configs extend the defaults (more permissive).
  */
@@ -43,7 +43,7 @@ let permissionsInitialized = false;
 
 /**
  * Get the app-level permissions directory.
- * Default permissions are stored at ~/.rox/permissions/
+ * Default permissions are stored at ~/rox/permissions/
  * Reads env var dynamically so tests can override via ROX_CONFIG_DIR.
  */
 export function getAppPermissionsDir(): string {
@@ -206,7 +206,7 @@ function migratePermissions(
 }
 
 /**
- * Load default permissions from ~/.rox/permissions/default.json
+ * Load default permissions from ~/rox/permissions/default.json
  * Returns null if file doesn't exist or is invalid.
  */
 export function loadDefaultPermissions(): PermissionsCustomConfig | null {
@@ -631,12 +631,12 @@ class PermissionsConfigCache {
   private sourceConfigs: Map<string, PermissionsCustomConfig | null> = new Map();
   private mergedConfigs: Map<string, MergedPermissionsConfig> = new Map();
 
-  // App-level default permissions (loaded from ~/.rox/permissions/default.json)
+  // App-level default permissions (loaded from ~/rox/permissions/default.json)
   private defaultConfig: PermissionsCustomConfig | null | undefined = undefined; // undefined = not loaded yet
 
   /**
    * Get or load app-level default permissions
-   * These come from ~/.rox/permissions/default.json
+   * These come from ~/rox/permissions/default.json
    */
   private getDefaultConfig(): PermissionsCustomConfig | null {
     if (this.defaultConfig === undefined) {

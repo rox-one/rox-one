@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkMath from 'remark-math'
-import { MARKDOWN_MATH_OPTIONS } from '../math-options'
+import { MARKDOWN_MATH_OPTIONS, markdownMayContainMath } from '../math-options'
 
 type MdNode = {
   type: string
@@ -38,5 +38,23 @@ describe('MARKDOWN_MATH_OPTIONS', () => {
   it('still supports explicit $$ math delimiters', () => {
     const tree = parseMarkdown('The formula is $$E=mc^2$$.')
     expect(collectInlineMathValues(tree)).toEqual(['E=mc^2'])
+  })
+})
+
+describe('markdownMayContainMath', () => {
+  it('detects $$ display math', () => {
+    expect(markdownMayContainMath('Energy: $$E = mc^2$$')).toBe(true)
+  })
+
+  it('detects ```math and ~~~math fences without $$', () => {
+    expect(markdownMayContainMath('Intro\n\n```math\nx^2\n```\n')).toBe(true)
+    expect(markdownMayContainMath('```  math\nx^2\n```')).toBe(true)
+    expect(markdownMayContainMath('~~~math\nx^2\n~~~')).toBe(true)
+  })
+
+  it('ignores currency, other fences and lookalike languages', () => {
+    expect(markdownMayContainMath('It costs $100 to $200.')).toBe(false)
+    expect(markdownMayContainMath('```ts\nconst math = 1\n```')).toBe(false)
+    expect(markdownMayContainMath('```mathematica\nx\n```')).toBe(false)
   })
 })

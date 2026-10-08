@@ -17,6 +17,7 @@ import {
   invalidateSkillsCache,
   listBundledSkillPacks,
   resetBundledSkillsInitialized,
+  whenBundledSkillsSettled,
 } from '@rox/shared/skills'
 
 export const HANDLED_CHANNELS = [
@@ -43,6 +44,9 @@ export function registerBundledSkillsHandlers(server: RpcServer, _deps: HandlerD
     if (!isClaimableLive(act)) return getBundledSkillsDisabled()
     const list = Array.isArray(slugs) ? slugs.filter((s): s is string => typeof s === 'string') : []
     setBundledSkillsDisabled(list)
+    // Never run two hash-merges concurrently: let the startup background sync
+    // (PERF-02, possibly in a worker thread) finish before re-syncing.
+    await whenBundledSkillsSettled()
     // Re-run sync so newly enabled packs install immediately; disabled packs
     // stay on disk (PRD §7.4) but are filtered out of discovery.
     resetBundledSkillsInitialized()

@@ -39,7 +39,7 @@ import {
 } from '../annotations/island-motion'
 import { Tooltip, TooltipTrigger, TooltipContent } from '../tooltip'
 import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
-import { getDiffStats, getUnifiedDiffStats } from '../code-viewer'
+import { getDiffStats, getUnifiedDiffStats } from '../code-viewer/diff-stats'
 import { TurnCardActionsMenu } from './TurnCardActionsMenu'
 import { MessageHoverDock, type MessageDockExtraAction } from './MessageHoverDock'
 import type { SideThreadAction } from '@rox/shared/side-threads'

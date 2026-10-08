@@ -157,8 +157,16 @@ export interface SessionToolContext {
   /** Unique session identifier */
   sessionId: string;
 
-  /** Absolute path to workspace folder (~/.rox/workspaces/{id}) */
+  /** Absolute path to workspace folder (~/rox/workspaces/{id}) */
   workspacePath: string;
+
+  /**
+   * How user-facing hints refer to the Rox home (W1-13): the legacy hidden
+   * home text with `storage.visible-root.v1` OFF, the resolved config dir
+   * (`~/rox`) when it is ON. Optional so older backends keep compiling;
+   * handlers fall back to the legacy text.
+   */
+  roxHomeDisplay?: string;
 
   /** Path to sources folder within workspace */
   get sourcesPath(): string;
@@ -307,7 +315,7 @@ export interface SessionToolContext {
 
   /**
    * Submit developer feedback. Injected by each backend:
-   * - Claude: writes JSON files to ~/.rox/feedback/
+   * - Claude: writes JSON files to {configDir}/feedback/ (~/rox/feedback/)
    * - Codex/Pi: could send over IPC or write directly
    */
   submitFeedback?(feedback: import('./types.ts').DeveloperFeedback): void;

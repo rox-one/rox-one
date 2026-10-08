@@ -89,6 +89,7 @@ Screenshot snapshots should be created once with Playwright's
 the repository's complete native dependency tree; a partial worktree
 `node_modules` is not valid visual-test evidence.
 
-The workflow installs Playwright Chromium before visual checks. Local runs use
-the installed Chrome channel for faster macOS review; CI uses the pinned
-Playwright browser so baselines stay reproducible.
+Local runs use the installed Chrome channel for faster macOS review. The
+baselines are darwin-only and the matrix is not wired into the current hosted
+`ci.yml` matrix; reinstating the earlier self-hosted step (`bunx playwright
+install chromium` + `bun run test:visual`) is required before CI relies on it.

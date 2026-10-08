@@ -22,7 +22,7 @@ import { CodeBlock } from './CodeBlock'
 import { ensureUnifiedDiffFormat } from './diff-normalize'
 import { registerCraftShikiThemes } from '../code-viewer/registerShikiThemes'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
-import { getShikiThemeType } from '../code-viewer/zedShikiThemes'
+import { getShikiThemeType } from '../code-viewer/zedShikiThemeData'
 
 // ── Custom element + theme registration (same as ShikiDiffViewer) ──────────
 // Idempotent: safe to run even if ShikiDiffViewer already registered these.

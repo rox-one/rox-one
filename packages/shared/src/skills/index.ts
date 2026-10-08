@@ -12,6 +12,8 @@ export {
   loadSkill,
   loadAllSkills,
   loadSkillDetails,
+  toSkillSummary,
+  toSkillSummaries,
   invalidateSkillsCache,
   getDisabledBundledSkillSlugsFromDisk,
   loadSkillBySlug,
@@ -35,9 +37,27 @@ export {
 } from './omp-discovery.ts';
 export {
   ensureBundledSkills,
+  isBundledSkillsSyncCurrent,
   listBundledSkillPacks,
   resetBundledSkillsInitialized,
+  resolveBundledSkillsTarget,
+  runBundledSkillsSyncJob,
+  type BundledSkillsJobResult,
+  type ResolvedBundledSkillsTarget,
   type BundledSkillPackStatus,
   type EnsureBundledSkillsOptions,
   type EnsureBundledSkillsResult,
 } from './bundled.ts';
+export {
+  BUNDLE_FINGERPRINT_FILE,
+  computeBundledSkillsContentFingerprint,
+  readBundledSkillsFingerprint,
+  writeBundledSkillsFingerprint,
+} from './bundled-fingerprint.ts';
+export {
+  ensureBundledSkillsInBackground,
+  whenBundledSkillsSettled,
+  whenBundledSkillsReadyForAgents,
+  type BundledSkillsBackgroundOptions,
+  type BundledSkillsBackgroundOutcome,
+} from './bundled-background.ts';

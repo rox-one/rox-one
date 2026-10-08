@@ -1,5 +1,6 @@
 /** Node-safe, read-only bridge to the non-secret native installer receipt. */
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { promises as fs, constants } from 'node:fs';
 import * as path from 'node:path';
 import { MANIFEST_DATA } from './manifest-data';
@@ -20,19 +21,34 @@ export function bootstrapToolName(name: string): WindowsBootstrapTool | null {
   return WINDOWS_BOOTSTRAP_TOOLS.find((tool) => tool === bare) ?? null;
 }
 
+/**
+ * Acceptance rules for `--version` output. Single source of truth: hashed into
+ * the persistent probe-cache key, so raising a minimum invalidates cached
+ * "usable" verdicts immediately (not after the 7-day TTL).
+ */
+export const WINDOWS_DEPENDENCY_REQUIREMENTS = {
+  gh: /^gh version ([2-9]|[1-9]\d+)\./,
+  git: /^git version ([2-9]|[1-9]\d+)\./,
+  jq: /^jq-[1-9]\d*\./,
+  yq: /version v?([4-9]|[1-9]\d+)\./,
+  node: { major: 22, minor: 23 },
+  gitBash: /^GNU bash, version [4-9]\./,
+} as const;
+
+export const WINDOWS_PROBE_REQUIREMENTS_HASH = createHash('sha256')
+  .update(JSON.stringify(Object.entries(WINDOWS_DEPENDENCY_REQUIREMENTS)
+    .map(([tool, rule]) => [tool, rule instanceof RegExp ? `${rule.source}/${rule.flags}` : rule])))
+  .digest('hex').slice(0, 16);
+
 export function dependencyVersionUsable(name: WindowsBootstrapTool, text: string): boolean {
-  switch (name) {
-    case 'gh': return /^gh version ([2-9]|[1-9]\d+)\./.test(text);
-    case 'git': return /^git version ([2-9]|[1-9]\d+)\./.test(text);
-    case 'jq': return /^jq-[1-9]\d*\./.test(text);
-    case 'yq': return /version v?([4-9]|[1-9]\d+)\./.test(text);
-    case 'node': {
-      const match = /^v(\d+)\.(\d+)\.(\d+)/.exec(text);
-      if (!match) return false;
-      const [major, minor] = match.slice(1).map(Number);
-      return major! > 22 || (major === 22 && minor! >= 23);
-    }
+  if (name === 'node') {
+    const match = /^v(\d+)\.(\d+)\.(\d+)/.exec(text);
+    if (!match) return false;
+    const [major, minor] = match.slice(1).map(Number);
+    const min = WINDOWS_DEPENDENCY_REQUIREMENTS.node;
+    return major! > min.major || (major === min.major && minor! >= min.minor);
   }
+  return WINDOWS_DEPENDENCY_REQUIREMENTS[name].test(text);
 }
 
 /** Fixed argv, bounded output/time, no shell, credential reads or receipt-supplied arguments. */
@@ -42,6 +58,72 @@ export async function probeWindowsDependency(file: string, name: WindowsBootstra
       (error, stdout, stderr) => resolve(!error && dependencyVersionUsable(name, stdout + stderr)));
   });
 }
+
+/**
+ * PERF-03: persistent memo of *successful* `--version` probes, keyed by the
+ * executable's identity (path + size + mtime + ctime + inode). A replaced or
+ * touched binary misses the cache and is probed again; failures are never
+ * cached, so a slow/flaky probe cannot hide a tool.
+ */
+export interface WindowsProbeCache {
+  has(key: string): boolean;
+  add(key: string): void;
+}
+
+export const WINDOWS_PROBE_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const PROBE_CACHE_VERSION = 1;
+
+export function windowsProbeCacheKey(kind: string, file: string, stat: { size: number; mtimeMs: number; ctimeMs: number; ino: number | bigint }): string {
+  return [kind, path.normalize(file).toLowerCase(), stat.size, stat.mtimeMs, stat.ctimeMs, String(stat.ino)].join('|');
+}
+
+/** Namespace folded into every probe-cache key: app build + acceptance rules. */
+export function windowsProbeCacheSalt(appVersion?: string | null): string {
+  return `app=${appVersion || 'unknown'}|req=${WINDOWS_PROBE_REQUIREMENTS_HASH}`;
+}
+
+/**
+ * JSON-file backed probe cache. `load()` is a single small read; `flush()`
+ * writes only when entries were added or pruned. Every key is prefixed with
+ * {@link windowsProbeCacheSalt} (app version + requirements hash), so an app
+ * update or a raised minimum never reuses an older "usable" verdict; entries
+ * from other salts are pruned on load. Never throws.
+ */
+export function createFileProbeCache(file: string, options: { now?: () => number; ttlMs?: number; appVersion?: string | null } = {}) {
+  const now = options.now ?? Date.now;
+  const ttlMs = options.ttlMs ?? WINDOWS_PROBE_CACHE_TTL_MS;
+  const salt = windowsProbeCacheSalt(options.appVersion);
+  const salted = (key: string) => `${salt}|${key}`;
+  let entries = new Map<string, number>();
+  let dirty = false;
+  return {
+    salt,
+    async load(): Promise<void> {
+      try {
+        const parsed = JSON.parse(await fs.readFile(file, 'utf8'));
+        if (parsed?.version !== PROBE_CACHE_VERSION || typeof parsed.entries !== 'object' || !parsed.entries) return;
+        const t = now();
+        const all = Object.entries(parsed.entries as Record<string, unknown>);
+        entries = new Map(all.filter((pair): pair is [string, number] =>
+          pair[0].startsWith(`${salt}|`) && typeof pair[1] === 'number' && t - pair[1] <= ttlMs && pair[1] <= t));
+        if (entries.size !== all.length) dirty = true; // prune stale salts/expired entries on next flush
+      } catch { entries = new Map(); }
+    },
+    has(key: string): boolean { return entries.has(salted(key)); },
+    add(key: string): void { const k = salted(key); if (!entries.has(k)) { entries.set(k, now()); dirty = true; } },
+    async flush(): Promise<void> {
+      if (!dirty) return;
+      try {
+        await fs.mkdir(path.dirname(file), { recursive: true });
+        const tmp = `${file}.${process.pid}.tmp`;
+        await fs.writeFile(tmp, JSON.stringify({ version: PROBE_CACHE_VERSION, entries: Object.fromEntries(entries) }), 'utf8');
+        await fs.rename(tmp, file);
+        dirty = false;
+      } catch { /* cache is best effort */ }
+    },
+  };
+}
+export type FileProbeCache = ReturnType<typeof createFileProbeCache>;
 
 function contained(root: string, file: string): boolean {
   const relative = path.relative(root, file);
@@ -69,6 +151,8 @@ export interface WindowsBootstrapOptions {
   /** Packaged and managed roots cannot masquerade as system dependencies. */
   excludedRoots?: string[];
   probe?: typeof probeWindowsDependency;
+  /** Optional persistent memo of successful probes (see WindowsProbeCache). */
+  probeCache?: WindowsProbeCache;
 }
 
 export async function readWindowsBootstrap(options: WindowsBootstrapOptions = {}): Promise<WindowsBootstrapRuntime | null> {
@@ -113,15 +197,22 @@ export async function readWindowsBootstrap(options: WindowsBootstrapOptions = {}
   const mode = options.preference ?? receipt.mode;
   const probe = options.probe ?? probeWindowsDependency;
   const excludedRoots = [root, ...(options.excludedRoots ?? [])].filter(path.isAbsolute);
+  // Excluded roots are fixed for this runtime; resolve their realpaths once
+  // instead of once per PATH entry × tool × call.
+  let excludedRealRoots: Promise<string[]> | null = null;
+  const realExcludedRoots = () => excludedRealRoots ??= Promise.all(
+    excludedRoots.map((excluded) => fs.realpath(excluded).catch(() => excluded)));
   async function isExcludedPath(directory: string): Promise<boolean> {
     const absolute = path.resolve(directory);
-    const real = await fs.realpath(absolute).catch(() => absolute);
-    for (const excluded of excludedRoots) {
-      const realRoot = await fs.realpath(excluded).catch(() => excluded);
+    const [real, realRoots] = await Promise.all([fs.realpath(absolute).catch(() => absolute), realExcludedRoots()]);
+    for (let i = 0; i < excludedRoots.length; i++) {
+      const excluded = excludedRoots[i]!;
+      const realRoot = realRoots[i]!;
       if (absolute === excluded || contained(excluded, absolute) || real === realRoot || contained(realRoot, real)) return true;
     }
     return false;
   }
+  const probeCache = options.probeCache;
   const searchPath = options.pathEnv ?? process.env[pathEnvKey(process.env, true)] ?? '';
   const selected = new Map<WindowsBootstrapTool, string>();
   const bundled = new Set<WindowsBootstrapTool>();
@@ -134,11 +225,23 @@ export async function readWindowsBootstrap(options: WindowsBootstrapOptions = {}
     } catch { return false; }
   }
   async function usable(file: string, name: WindowsBootstrapTool): Promise<boolean> {
-    try { return (await fs.stat(file)).isFile() && await probe(file, name); } catch { return false; }
+    try {
+      const stat = await fs.stat(file);
+      if (!stat.isFile()) return false;
+      if (!probeCache) return await probe(file, name);
+      const key = windowsProbeCacheKey(name, file, stat);
+      if (probeCache.has(key)) return true;
+      const ok = await probe(file, name);
+      if (ok) probeCache.add(key);
+      return ok;
+    } catch { return false; }
   }
-  const missingTools: WindowsBootstrapTool[] = [];
-  for (const name of WINDOWS_BOOTSTRAP_TOOLS) {
+  // PERF-03: tools resolve concurrently (each keeps its own PATH precedence);
+  // results are applied in WINDOWS_BOOTSTRAP_TOOLS order so missingTools and
+  // pathEntries stay deterministic.
+  async function resolveTool(name: WindowsBootstrapTool): Promise<{ executable: string | null; isBundled: boolean }> {
     let executable: string | null = null;
+    let isBundled = false;
     if (mode !== 'bundled') {
       for (const raw of searchPath.split(';')) {
         const directory = raw.trim().replace(/^"(.*)"$/, '$1');
@@ -159,14 +262,22 @@ export async function readWindowsBootstrap(options: WindowsBootstrapOptions = {}
         try {
           if (await validPrivateFile(expected) && await usable(expected, name)) {
             executable = expected;
-            bundled.add(name);
+            isBundled = true;
           }
         } catch { /* Removed/corrupt cache is not a usable dependency. */ }
       }
     }
-    if (executable) selected.set(name, executable);
-    else missingTools.push(name);
+    return { executable, isBundled };
   }
+  const resolved = await Promise.all(WINDOWS_BOOTSTRAP_TOOLS.map(resolveTool));
+  const missingTools: WindowsBootstrapTool[] = [];
+  WINDOWS_BOOTSTRAP_TOOLS.forEach((name, index) => {
+    const { executable, isBundled } = resolved[index]!;
+    if (executable) {
+      selected.set(name, executable);
+      if (isBundled) bundled.add(name);
+    } else missingTools.push(name);
+  });
   async function findExecutable(name: string): Promise<string | null> {
     const tool = bootstrapToolName(name);
     if (!tool) return null;
@@ -194,10 +305,21 @@ export async function readWindowsBootstrap(options: WindowsBootstrapOptions = {}
     for (const bin of pin.binPaths) {
       if (!await validPrivateFile(path.join(root, 'dependencies', pin.name, pin.version, bin))) return null;
     }
+    let bashKey: string | null = null;
+    if (probeCache) {
+      try {
+        bashKey = windowsProbeCacheKey('git-bash', expected, await fs.stat(expected));
+        if (probeCache.has(bashKey)) return expected;
+      } catch { return null; }
+    }
     return new Promise<string | null>((resolve) => {
       execFile(expected, ['--noprofile', '--norc', '--version'],
         { timeout: 5_000, maxBuffer: 64 * 1024, windowsHide: true },
-        (error, stdout) => resolve(!error && /^GNU bash, version [4-9]\./.test(stdout) ? expected : null));
+        (error, stdout) => {
+          const ok = !error && WINDOWS_DEPENDENCY_REQUIREMENTS.gitBash.test(stdout);
+          if (ok && bashKey) probeCache?.add(bashKey);
+          resolve(ok ? expected : null);
+        });
     });
   }
   return {
@@ -231,11 +353,8 @@ export async function readWindowsBootstrap(options: WindowsBootstrapOptions = {}
     },
     async pathEntries() {
       const dirs = new Set<string>();
-      for (const tool of WINDOWS_BOOTSTRAP_TOOLS) {
-        const file = await findExecutable(tool);
-        if (file) dirs.add(path.dirname(file));
-      }
-      const bash = await gitBashPath();
+      const [files, bash] = await Promise.all([Promise.all(WINDOWS_BOOTSTRAP_TOOLS.map((tool) => findExecutable(tool))), gitBashPath()]);
+      for (const file of files) if (file) dirs.add(path.dirname(file));
       if (bash) dirs.add(path.dirname(bash));
       return [...dirs];
     },
