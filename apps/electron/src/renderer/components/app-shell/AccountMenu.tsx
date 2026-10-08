@@ -70,6 +70,98 @@ export interface AccountMenuProps {
   onWorkspaceCreated?: (workspace: Workspace) => void
   onWorkspaceRemoved?: () => void
   workspaceUnreadMap?: Record<string, boolean>
+  /**
+   * Creation flow owned by a host that outlives this menu. The compact
+   * craft-menu Drawer (PanelHeader) hosts it so it can close itself when the
+   * creation screen opens without unmounting the screen with the drawer.
+   */
+  creationFlow?: WorkspaceCreationFlow
+  /** Called whenever the creation/reconnect screen opens (e.g. to close a host Drawer). */
+  onOpenCreationScreen?: () => void
+}
+
+export interface WorkspaceCreationFlow {
+  /** Opens the creation screen, or the reconnect screen for `reconnectWorkspace`. */
+  open: (reconnectWorkspace?: Workspace) => void
+  /** The fullscreen creation screen; render it outside any surface that may close. */
+  screen: React.ReactNode
+}
+
+/**
+ * Workspace creation / reconnect flow (fullscreen overlay at --z-fullscreen).
+ * Lives in a hook so a host that outlives AccountMenu can own it.
+ */
+export function useWorkspaceCreationFlow({
+  activeWorkspaceId,
+  onSelectWorkspace,
+  onWorkspaceCreated,
+}: Pick<AccountMenuProps, 'activeWorkspaceId' | 'onSelectWorkspace' | 'onWorkspaceCreated'>): WorkspaceCreationFlow {
+  const { t } = useTranslation()
+  const [showCreationScreen, setShowCreationScreen] = React.useState(false)
+  const [reconnectTarget, setReconnectTarget] = React.useState<Workspace | null>(null)
+  const setFullscreenOverlayOpen = useSetAtom(fullscreenOverlayOpenAtom)
+  const showingRef = React.useRef(false)
+  showingRef.current = showCreationScreen
+
+  const open = React.useCallback((reconnectWorkspace?: Workspace) => {
+    setReconnectTarget(reconnectWorkspace ?? null)
+    setShowCreationScreen(true)
+    setFullscreenOverlayOpen(true)
+  }, [setFullscreenOverlayOpen])
+
+  const handleWorkspaceCreated = ({ workspace, activation }: WorkspaceCreationSuccess) => {
+    setShowCreationScreen(false)
+    setFullscreenOverlayOpen(false)
+    toast.success(t('toast.createdWorkspace', { name: workspace.name }))
+    onWorkspaceCreated?.(workspace)
+    void onSelectWorkspace(activation?.activeWorkspaceId ?? workspace.id)
+  }
+
+  const handleCloseCreationScreen = React.useCallback(() => {
+    setShowCreationScreen(false)
+    setReconnectTarget(null)
+    setFullscreenOverlayOpen(false)
+  }, [setFullscreenOverlayOpen])
+
+  const handleReconnectWorkspace = React.useCallback(
+    async (
+      workspaceId: string,
+      remoteServer: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string; tlsTrust?: import('../../../shared/types').RemoteTlsTrust },
+    ) => {
+      await window.electronAPI.updateWorkspaceRemoteServer(workspaceId, remoteServer)
+      if (workspaceId === activeWorkspaceId) {
+        await window.electronAPI.reconnectTransport()
+        await waitForTransportConnected(window.electronAPI)
+      } else {
+        await Promise.resolve(onSelectWorkspace(workspaceId))
+        await waitForTransportConnected(window.electronAPI)
+      }
+      handleCloseCreationScreen()
+      toast.success(t('toast.workspaceReconnected'))
+    },
+    [activeWorkspaceId, handleCloseCreationScreen, onSelectWorkspace, t],
+  )
+
+  // Unmounting the owner while the screen is open must not leave the
+  // fullscreen-overlay flag stuck on.
+  React.useEffect(() => () => {
+    if (showingRef.current) setFullscreenOverlayOpen(false)
+  }, [setFullscreenOverlayOpen])
+
+  const screen = (
+    <AnimatePresence>
+      {showCreationScreen && (
+        <WorkspaceCreationScreen
+          onWorkspaceCreated={handleWorkspaceCreated}
+          onClose={handleCloseCreationScreen}
+          reconnectWorkspace={reconnectTarget ?? undefined}
+          onReconnectWorkspace={handleReconnectWorkspace}
+        />
+      )}
+    </AnimatePresence>
+  )
+
+  return { open, screen }
 }
 
 function sectionLabel(text: string) {
@@ -100,13 +192,14 @@ export function AccountMenu({
   onWorkspaceCreated,
   onWorkspaceRemoved,
   workspaceUnreadMap,
+  creationFlow: hostedCreationFlow,
+  onOpenCreationScreen,
 }: AccountMenuProps) {
   const { t } = useTranslation()
   const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', workspaceId: activeWorkspaceId ?? undefined, variant: compact ? 'compact' : 'regular' })
   const [open, setOpen] = React.useState(false)
-  const [showCreationScreen, setShowCreationScreen] = React.useState(false)
-  const [reconnectTarget, setReconnectTarget] = React.useState<Workspace | null>(null)
-  const setFullscreenOverlayOpen = useSetAtom(fullscreenOverlayOpenAtom)
+  const ownCreationFlow = useWorkspaceCreationFlow({ activeWorkspaceId, onSelectWorkspace, onWorkspaceCreated })
+  const creationFlow = hostedCreationFlow ?? ownCreationFlow
   const selectedWorkspace = workspaces.find((w) => w.id === activeWorkspaceId)
   const workspaceIconMap = useWorkspaceIcons(workspaces)
   const connectionState = useTransportConnectionState()
@@ -268,18 +361,15 @@ export function AccountMenu({
       : t('accountMenu.healthIssues', { count: credentialHealth.issues?.length ?? 0 })
     : t('accountMenu.healthUnknown')
 
-  const handleNewWorkspace = () => {
-    setShowCreationScreen(true)
-    setFullscreenOverlayOpen(true)
-    closeMenu()
+  /** Opens creation (or reconnect) and lets a host surface (craft-menu Drawer) close. */
+  const openCreationScreen = (reconnectWorkspace?: Workspace) => {
+    creationFlow.open(reconnectWorkspace)
+    onOpenCreationScreen?.()
   }
 
-  const handleWorkspaceCreated = ({ workspace, activation }: WorkspaceCreationSuccess) => {
-    setShowCreationScreen(false)
-    setFullscreenOverlayOpen(false)
-    toast.success(t('toast.createdWorkspace', { name: workspace.name }))
-    onWorkspaceCreated?.(workspace)
-    void onSelectWorkspace(activation?.activeWorkspaceId ?? workspace.id)
+  const handleNewWorkspace = () => {
+    openCreationScreen()
+    closeMenu()
   }
 
   const handleRemoveWorkspace = React.useCallback(
@@ -299,38 +389,10 @@ export function AccountMenu({
     [activeWorkspaceId, onWorkspaceRemoved, t],
   )
 
-  const handleCloseCreationScreen = React.useCallback(() => {
-    setShowCreationScreen(false)
-    setReconnectTarget(null)
-    setFullscreenOverlayOpen(false)
-  }, [setFullscreenOverlayOpen])
-
-  const handleReconnectWorkspace = React.useCallback(
-    async (
-      workspaceId: string,
-      remoteServer: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string; tlsTrust?: import('../../../shared/types').RemoteTlsTrust },
-    ) => {
-      await window.electronAPI.updateWorkspaceRemoteServer(workspaceId, remoteServer)
-      if (workspaceId === activeWorkspaceId) {
-        await window.electronAPI.reconnectTransport()
-        await waitForTransportConnected(window.electronAPI)
-      } else {
-        await Promise.resolve(onSelectWorkspace(workspaceId))
-        await waitForTransportConnected(window.electronAPI)
-      }
-      handleCloseCreationScreen()
-      toast.success(t('toast.workspaceReconnected'))
-    },
-    [activeWorkspaceId, handleCloseCreationScreen, onSelectWorkspace, t],
-  )
-
-
   const selectWorkspace = (workspace: Workspace, openInNewWindow?: boolean) => {
     const disconnected = isRemoteDisconnected(workspace.id)
     if (disconnected && workspace.remoteServer) {
-      setReconnectTarget(workspace)
-      setShowCreationScreen(true)
-      setFullscreenOverlayOpen(true)
+      openCreationScreen(workspace)
       closeMenu()
       return
     }
@@ -378,18 +440,8 @@ export function AccountMenu({
     </button>
   )
 
-  const creationScreen = (
-    <AnimatePresence>
-      {showCreationScreen && (
-        <WorkspaceCreationScreen
-          onWorkspaceCreated={handleWorkspaceCreated}
-          onClose={handleCloseCreationScreen}
-          reconnectWorkspace={reconnectTarget ?? undefined}
-          onReconnectWorkspace={handleReconnectWorkspace}
-        />
-      )}
-    </AnimatePresence>
-  )
+  // A hosted flow renders its screen in the host; only the own flow renders here.
+  const creationScreen = hostedCreationFlow ? null : ownCreationFlow.screen
 
   // ---------------------------------------------------------------------------
   // Compact: Drawer surface (nested under craft-menu Drawer when applicable)
@@ -600,9 +652,7 @@ export function AccountMenu({
                 key={workspace.id}
                 onClick={(e) => {
                   if (disconnected && workspace.remoteServer) {
-                    setReconnectTarget(workspace)
-                    setShowCreationScreen(true)
-                    setFullscreenOverlayOpen(true)
+                    openCreationScreen(workspace)
                     return
                   }
                   if (disconnected) return
