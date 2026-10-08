@@ -1,11 +1,12 @@
 /**
  * W1-10 self-test fixture: a COMPLETE permission matrix module in #1501's
  * frozen row shape `{ action, role, tags, championAbsent, hasChildren, kind,
- * effectiveRole, allowed, reason? }`, with #1501's optional
- * `PERMISSION_MATRIX_TAG_SCENARIOS` export. The rules below are written out
- * by hand from DATA-MODEL §8 (independently of the gate's transcription):
- * kinds goal + project × 12 actions × 6 roles + no access × 7 tag scenarios
- * × hasChildren = 2352 rows.
+ * effectiveRole, allowed, reason? }`, with #1501's
+ * `PERMISSION_MATRIX_TAG_SCENARIOS` export (required since #1507 review 4).
+ * The rules below are written out by hand from DATA-MODEL §8 (independently
+ * of the gate's transcription): kinds goal + project + task + note × 12
+ * actions × 6 roles + no access × 7 tag scenarios × hasChildren = 4704 rows
+ * (the same grid #1501 emits).
  */
 const ROLES = ['minimal', 'viewer', 'commenter', 'editor', 'manager', 'owner'] as const
 type Role = (typeof ROLES)[number]
@@ -30,7 +31,7 @@ const rank = (r: Role | null) => (r === null ? -1 : ROLES.indexOf(r))
 
 export function generatePermissionMatrix() {
   const rows: Array<Record<string, unknown>> = []
-  for (const kind of ['goal', 'project']) {
+  for (const kind of ['goal', 'project', 'task', 'note']) {
     for (const action of Object.keys(MIN)) {
       for (const role of [...ROLES, null]) {
         for (const { tags, championAbsent } of PERMISSION_MATRIX_TAG_SCENARIOS) {

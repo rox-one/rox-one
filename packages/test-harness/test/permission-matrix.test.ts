@@ -28,8 +28,8 @@ describe('permission-matrix gate', () => {
     const res = await runPermissionMatrixGate({ fixtureModulePath: join(dir, 'matrix-good.ts') })
     expect(res.violations).toBeUndefined()
     expect(res.status).toBe('pass')
-    expect(res.summary).toContain('2352 matrix row(s) match DATA-MODEL §8')
-    expect(res.summary).toContain('cover 2 kind(s) × 12 actions × 7 roles × 7 tag scenario(s)')
+    expect(res.summary).toContain('4704 matrix row(s) match DATA-MODEL §8')
+    expect(res.summary).toContain('cover 4 kind(s) × 12 actions × 7 roles × 7 tag scenario(s) × 2 hasChildren')
   })
   test('fails on a well-formed but wrong matrix, naming each broken invariant', async () => {
     const res = await runPermissionMatrixGate({ fixtureModulePath: join(dir, 'matrix-bad.ts') })
@@ -93,7 +93,7 @@ export function generatePermissionMatrix() { return all().filter((r) => ${filter
     expect(onlyNull.violations?.join('\n')).toContain('goal|view_title|minimal|-|ca=false')
     // a dropped action for one kind.
     const noProjectTransfer = await runPermissionMatrixGate({ fixtureModulePath: filtered("!(r.kind === 'project' && r.action === 'transfer')") })
-    expect(noProjectTransfer.violations).toEqual([expect.stringContaining("matrix incomplete for kind 'project': 49 of 588")])
+    expect(noProjectTransfer.violations).toEqual([expect.stringContaining("matrix incomplete for kind 'project' (pinned kind): 98 of 1176")])
     // a dropped role.
     const noCommenter = await runPermissionMatrixGate({ fixtureModulePath: filtered("r.role !== 'commenter'") })
     expect(noCommenter.violations?.join('\n')).toContain('|commenter|-|ca=false')
@@ -101,22 +101,59 @@ export function generatePermissionMatrix() { return all().filter((r) => ${filter
     const noAbsentReviewer = await runPermissionMatrixGate({ fixtureModulePath: filtered('!(r.tags.includes("reviewer") && r.championAbsent)') })
     expect(noAbsentReviewer.status).toBe('fail')
     expect(noAbsentReviewer.violations?.join('\n')).toContain('|reviewer|ca=true')
-    // without the scenarios export only the no-tag scenario is required.
-    const noExport = await runPermissionMatrixGate({ fixtureModulePath: filtered('!(r.tags.includes("reviewer") && r.championAbsent)', '') })
-    expect(noExport.status).toBe('pass')
-    expect(noExport.summary).toContain('× 1 tag scenario(s)')
+  })
+  test('completeness is pinned, not read back from #1501 alone (#1507 review 4)', async () => {
+    // dropping a whole kind: the remaining kinds are complete, but 'note' is pinned.
+    const noNote = await runPermissionMatrixGate({ fixtureModulePath: filtered("r.kind !== 'note'") })
+    expect(noNote.status).toBe('fail')
+    expect(noNote.violations).toEqual([expect.stringContaining("matrix incomplete for kind 'note' (pinned kind): 1176 of 1176")])
+    // dropping the reviewer + championAbsent scenario from the generator AND the export.
+    const scenariosWithout = `const PERMISSION_MATRIX_TAG_SCENARIOS_ALL = PERMISSION_MATRIX_TAG_SCENARIOS
+export const PERMISSION_MATRIX_TAG_SCENARIOS_OUT = PERMISSION_MATRIX_TAG_SCENARIOS_ALL.filter((s) => !(s.tags.includes('reviewer') && s.championAbsent))
+export { PERMISSION_MATRIX_TAG_SCENARIOS_OUT as PERMISSION_MATRIX_TAG_SCENARIOS }`
+    const noAbsentReviewer = await runPermissionMatrixGate({ fixtureModulePath: filtered('!(r.tags.includes("reviewer") && r.championAbsent)', scenariosWithout) })
+    expect(noAbsentReviewer.status).toBe('fail')
+    expect(noAbsentReviewer.violations?.join(' ')).toContain('lacks the pinned scenario(s) DATA-MODEL §8.3 depends on: reviewer|ca=true')
+    // the same generator with an export that still lists it fails on the missing rows.
+    const rowsOnly = await runPermissionMatrixGate({ fixtureModulePath: filtered('!(r.tags.includes("reviewer") && r.championAbsent)') })
+    expect(rowsOnly.violations?.join('\n')).toContain('|reviewer|ca=true|ch=')
+    // and the gate's own required set catches it even if the export were not consulted.
+    const { generatePermissionMatrix } = await import(join(dir, 'matrix-good.ts'))
+    const withoutRows = (generatePermissionMatrix() as PermissionMatrixRow[]).filter((r) => !(r.tags.includes('reviewer') && r.championAbsent))
+    expect(checkPermissionMatrixCompleteness(withoutRows, [])).toHaveLength(4)
+    // only hasChildren=false rows: the goal-delete blocker is never exercised.
+    const noChildren = await runPermissionMatrixGate({ fixtureModulePath: filtered('r.hasChildren === false') })
+    expect(noChildren.status).toBe('fail')
+    expect(noChildren.violations).toHaveLength(4)
+    expect(noChildren.violations?.join('\n')).toContain("matrix incomplete for kind 'goal' (pinned kind): 588 of 1176")
+    expect(noChildren.violations?.join('\n')).toContain('goal|view_title|minimal|-|ca=false|ch=true')
+    const noGoalDeleteChildren = await runPermissionMatrixGate({ fixtureModulePath: filtered("!(r.kind === 'goal' && r.action === 'delete' && r.hasChildren)") })
+    expect(noGoalDeleteChildren.violations).toEqual([expect.stringContaining("kind 'goal' (pinned kind): 49 of 1176")])
+    expect(noGoalDeleteChildren.violations?.[0]).toContain('goal|delete|minimal|-|ca=false|ch=true')
+  })
+  test('PERMISSION_MATRIX_TAG_SCENARIOS is required once permissions.ts exists: missing or renamed fails closed', async () => {
+    const missing = await runPermissionMatrixGate({ fixtureModulePath: filtered('true', '') })
+    expect(missing.status).toBe('fail')
+    expect(missing.violations?.join(' ')).toContain('must export PERMISSION_MATRIX_TAG_SCENARIOS')
+    const renamed = await runPermissionMatrixGate({ fixtureModulePath: filtered('true', 'export const PERMISSION_MATRIX_SCENARIOS = PERMISSION_MATRIX_TAG_SCENARIOS') })
+    expect(renamed.status).toBe('fail')
+    expect(renamed.violations?.join(' ')).toContain('a missing or renamed export fails')
   })
   test('completeness: malformed PERMISSION_MATRIX_TAG_SCENARIOS fails closed', async () => {
     const bad = await runPermissionMatrixGate({ fixtureModulePath: filtered('true', "export const PERMISSION_MATRIX_TAG_SCENARIOS = [{ tags: ['watcher'], championAbsent: false }]") })
     expect(bad.status).toBe('fail')
     expect(bad.violations?.join(' ')).toContain('PERMISSION_MATRIX_TAG_SCENARIOS entry')
   })
-  test('checkPermissionMatrixCompleteness reports one violation per incomplete kind', () => {
-    const rows = [row({ kind: 'goal' }), row({ kind: 'task', action: 'edit', role: 'editor', effectiveRole: 'editor' })]
+  test('checkPermissionMatrixCompleteness reports one violation per incomplete kind, pinned kinds and extra kinds alike', () => {
+    const rows = [row({ kind: 'goal' }), row({ kind: 'space', action: 'edit', role: 'editor', effectiveRole: 'editor' })]
+    // champion is pinned anyway: no-tag + champion + reviewer ca=false/true = 4 scenarios × 12 × 7 × 2 = 672 per kind.
     const v = checkPermissionMatrixCompleteness(rows, [{ tags: ['champion'], championAbsent: false }])
-    expect(v).toHaveLength(2)
-    expect(v[0]).toContain("kind 'goal': 167 of 168")
-    expect(v[1]).toContain("kind 'task': 167 of 168")
+    expect(v).toHaveLength(5)
+    expect(v[0]).toContain("kind 'goal' (pinned kind): 671 of 672")
+    expect(v[1]).toContain("kind 'note' (pinned kind): 672 of 672")
+    expect(v[2]).toContain("kind 'project' (pinned kind): 672 of 672")
+    expect(v[3]).toContain("kind 'space': 671 of 672")
+    expect(v[4]).toContain("kind 'task' (pinned kind): 672 of 672")
   })
   test('present but not evaluable fails closed', async () => {
     expect((await runPermissionMatrixGate({ fixtureModulePath: moduleFile(`export const x = 1`) })).status).toBe('fail')

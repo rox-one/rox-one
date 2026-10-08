@@ -27,13 +27,21 @@
  *    champion is absent, goal deletion blocked while children exist). An
  *    action this transcription does not know fails, so a new #1501 action
  *    needs a matching rule here;
- * 6. completeness (#1507 review 3): for every `kind` that appears, every
- *    §8.3 action (SPEC_MIN_ROLE) × every role (SPEC_ROLES plus `null`) ×
- *    the no-tag scenario (`tags: []`, `championAbsent: false`) has a row,
- *    and so does every tag scenario #1501 exports as
- *    `PERMISSION_MATRIX_TAG_SCENARIOS` (`{ tags, championAbsent }[]`, when
- *    exported; malformed = fail). A generator that drops kinds' actions,
- *    roles or scenarios no longer passes on the subset it still emits.
+ * 6. completeness (#1507 reviews 3 and 4), pinned by the harness rather
+ *    than read back from #1501 alone:
+ *    - kinds: every kind that appears PLUS the pinned REQUIRED_KINDS
+ *      (goal, project, task, note);
+ *    - scenarios: the no-tag scenario, the pinned REQUIRED_TAG_SCENARIOS
+ *      that specAllowed() depends on (champion; reviewer with
+ *      championAbsent false and true), and every scenario #1501 exports as
+ *      `PERMISSION_MATRIX_TAG_SCENARIOS`. The export is REQUIRED once
+ *      permissions.ts exists (missing / renamed / malformed = fail), and it
+ *      must list the pinned scenarios;
+ *    - hasChildren: both `false` and `true` (the goal-delete blocker);
+ *    every kind × §8.3 action × role (SPEC_ROLES plus `null`) × scenario ×
+ *    hasChildren needs a row. A generator that drops a kind, an action, a
+ *    role, a scenario or the hasChildren=true rows fails, even when it also
+ *    drops the matching scenario from its own export.
  */
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -54,8 +62,8 @@ export interface PermissionMatrixRow {
 
 export interface PermissionMatrixModule {
   generatePermissionMatrix: () => PermissionMatrixRow[]
-  /** Optional #1501 export: the tag scenarios the generator enumerates. */
-  PERMISSION_MATRIX_TAG_SCENARIOS?: unknown
+  /** Required #1501 export (#1507 review 4): the tag scenarios the generator enumerates. */
+  PERMISSION_MATRIX_TAG_SCENARIOS: unknown
 }
 
 export interface TagScenario {
@@ -65,6 +73,17 @@ export interface TagScenario {
 
 /** Always required, whether or not #1501 exports its scenarios. */
 export const NO_TAG_SCENARIO: TagScenario = { tags: [], championAbsent: false }
+/** Pinned (#1507 review 4): the scenarios specAllowed() branches on; required in rows AND in #1501's export. */
+export const REQUIRED_TAG_SCENARIOS: readonly TagScenario[] = [
+  { tags: ['champion'], championAbsent: false },
+  { tags: ['reviewer'], championAbsent: false },
+  { tags: ['reviewer'], championAbsent: true },
+]
+/** Pinned (#1507 review 4): the kinds the matrix must always cover (DATA-MODEL §8, #1501 frozen contract). */
+export const REQUIRED_KINDS = ['goal', 'project', 'task', 'note'] as const
+/** Both values are required for every combination (goal deletion is blocked only while children exist). */
+export const REQUIRED_HAS_CHILDREN = [false, true] as const
+export const TAG_SCENARIOS_EXPORT = 'PERMISSION_MATRIX_TAG_SCENARIOS'
 
 export const PERMISSIONS_PATH = join('packages', 'core', 'src', 'entities', 'permissions.ts')
 
@@ -131,8 +150,9 @@ function scenarioKey(s: TagScenario): string {
   return `${[...s.tags].sort().join('+') || '-'}|ca=${s.championAbsent}`
 }
 
-/** Validates #1501's optional PERMISSION_MATRIX_TAG_SCENARIOS export; returns a problem string or the scenarios. */
+/** Validates #1501's required PERMISSION_MATRIX_TAG_SCENARIOS export; returns a problem string or the scenarios. */
 export function parseTagScenarios(value: unknown): TagScenario[] | string {
+  if (value === undefined) return `must export ${TAG_SCENARIOS_EXPORT} ({ tags, championAbsent }[]), the tag scenarios generatePermissionMatrix() enumerates (required, #1507 review 4; a missing or renamed export fails)`
   if (!Array.isArray(value)) return 'PERMISSION_MATRIX_TAG_SCENARIOS must be an array of { tags, championAbsent }'
   for (const s of value) {
     if (s === null || typeof s !== 'object' || !Array.isArray((s as TagScenario).tags) ||
@@ -141,43 +161,56 @@ export function parseTagScenarios(value: unknown): TagScenario[] | string {
       return `PERMISSION_MATRIX_TAG_SCENARIOS entry ${JSON.stringify(s)?.slice(0, 120)} is not { tags: known tag[], championAbsent: boolean }`
     }
   }
+  const exported = new Set((value as TagScenario[]).map(scenarioKey))
+  const missing = REQUIRED_TAG_SCENARIOS.filter((s) => !exported.has(scenarioKey(s)))
+  if (missing.length > 0) {
+    return `PERMISSION_MATRIX_TAG_SCENARIOS lacks the pinned scenario(s) DATA-MODEL §8.3 depends on: ${missing.map(scenarioKey).join(', ')}`
+  }
   return value as TagScenario[]
 }
 
 /**
- * Completeness (invariant 6): per kind seen, every SPEC_MIN_ROLE action ×
- * SPEC_ROLES + null × (no-tag scenario + `tagScenarios`) needs at least one
- * row (any hasChildren). One violation per kind, with up to 5 examples.
+ * Completeness (invariant 6): per kind (seen ∪ REQUIRED_KINDS), every
+ * SPEC_MIN_ROLE action × SPEC_ROLES + null × (no-tag + REQUIRED_TAG_SCENARIOS
+ * + `tagScenarios`) × hasChildren false/true needs a row. One violation per
+ * kind, with up to 5 examples.
  */
 export function checkPermissionMatrixCompleteness(rows: unknown[], tagScenarios: readonly TagScenario[] = []): string[] {
   const present = new Set<string>()
-  const kinds = new Set<string>()
+  const kinds = new Set<string>(REQUIRED_KINDS)
   for (const raw of rows) {
     const row = raw as PermissionMatrixRow
-    if (row === null || typeof row !== 'object' || typeof row.kind !== 'string' || typeof row.action !== 'string' || !Array.isArray(row.tags)) continue
+    if (row === null || typeof row !== 'object' || typeof row.kind !== 'string' || typeof row.action !== 'string' || !Array.isArray(row.tags) || typeof row.hasChildren !== 'boolean') continue
     kinds.add(row.kind)
-    present.add(`${row.kind}|${row.action}|${row.role ?? 'none'}|${scenarioKey({ tags: row.tags, championAbsent: row.championAbsent === true })}`)
+    present.add(`${row.kind}|${row.action}|${row.role ?? 'none'}|${scenarioKey({ tags: row.tags, championAbsent: row.championAbsent === true })}|ch=${row.hasChildren}`)
   }
-  const scenarios = new Map<string, TagScenario>([[scenarioKey(NO_TAG_SCENARIO), NO_TAG_SCENARIO]])
-  for (const s of tagScenarios) scenarios.set(scenarioKey(s), s)
+  const scenarios = requiredScenarioKeys(tagScenarios)
   const roles: Array<string | null> = [...SPEC_ROLES, null]
   const violations: string[] = []
   for (const kind of [...kinds].sort()) {
     const missing: string[] = []
     for (const action of Object.keys(SPEC_MIN_ROLE)) {
       for (const role of roles) {
-        for (const key of scenarios.keys()) {
-          const k = `${kind}|${action}|${role ?? 'none'}|${key}`
-          if (!present.has(k)) missing.push(k)
+        for (const key of scenarios) {
+          for (const hasChildren of REQUIRED_HAS_CHILDREN) {
+            const k = `${kind}|${action}|${role ?? 'none'}|${key}|ch=${hasChildren}`
+            if (!present.has(k)) missing.push(k)
+          }
         }
       }
     }
     if (missing.length > 0) {
-      const total = Object.keys(SPEC_MIN_ROLE).length * roles.length * scenarios.size
-      violations.push(`matrix incomplete for kind '${kind}': ${missing.length} of ${total} action × role (incl. none) × tag-scenario combinations have no row, e.g. ${missing.slice(0, 5).join(', ')}`)
+      const total = Object.keys(SPEC_MIN_ROLE).length * roles.length * scenarios.length * REQUIRED_HAS_CHILDREN.length
+      const kindNote = (REQUIRED_KINDS as readonly string[]).includes(kind) ? ' (pinned kind)' : ''
+      violations.push(`matrix incomplete for kind '${kind}'${kindNote}: ${missing.length} of ${total} action × role (incl. none) × tag-scenario × hasChildren combinations have no row, e.g. ${missing.slice(0, 5).join(', ')}`)
     }
   }
   return violations
+}
+
+/** No-tag + pinned + exported scenarios, de-duplicated, as completeness keys. */
+function requiredScenarioKeys(tagScenarios: readonly TagScenario[]): string[] {
+  return [...new Set([NO_TAG_SCENARIO, ...REQUIRED_TAG_SCENARIOS, ...tagScenarios].map(scenarioKey))]
 }
 
 /** Pure per-row check over a matrix (exported for self-tests; completeness is checkPermissionMatrixCompleteness). */
@@ -250,14 +283,11 @@ export async function runPermissionMatrixGate(opts: {
     return inputBroken(gate, PERMISSIONS_PATH, `generatePermissionMatrix() threw: ${errorMessage(error)}`)
   }
   if (!Array.isArray(rows)) return inputBroken(gate, PERMISSIONS_PATH, 'generatePermissionMatrix() must return an array')
-  let scenarios: TagScenario[] = []
-  if (mod.PERMISSION_MATRIX_TAG_SCENARIOS !== undefined) {
-    const parsed = parseTagScenarios(mod.PERMISSION_MATRIX_TAG_SCENARIOS)
-    if (typeof parsed === 'string') return inputBroken(gate, PERMISSIONS_PATH, parsed)
-    scenarios = parsed
-  }
+  const parsed = parseTagScenarios(mod.PERMISSION_MATRIX_TAG_SCENARIOS)
+  if (typeof parsed === 'string') return inputBroken(gate, PERMISSIONS_PATH, parsed)
+  const scenarios = parsed
   const violations = [...checkPermissionMatrixRows(rows), ...(rows.length > 0 ? checkPermissionMatrixCompleteness(rows, scenarios) : [])]
-  const kinds = new Set(rows.map((r) => (r as PermissionMatrixRow)?.kind)).size
-  const scenarioCount = new Set([NO_TAG_SCENARIO, ...scenarios].map(scenarioKey)).size
-  return gateFromViolations(gate, violations, `${rows.length} matrix row(s) match DATA-MODEL §8 (shape, tag roles, invariants, §8.3 rules) and cover ${kinds} kind(s) × ${Object.keys(SPEC_MIN_ROLE).length} actions × ${SPEC_ROLES.length + 1} roles × ${scenarioCount} tag scenario(s)`)
+  const kinds = new Set([...REQUIRED_KINDS, ...rows.map((r) => (r as PermissionMatrixRow)?.kind)]).size
+  const scenarioCount = requiredScenarioKeys(scenarios).length
+  return gateFromViolations(gate, violations, `${rows.length} matrix row(s) match DATA-MODEL §8 (shape, tag roles, invariants, §8.3 rules) and cover ${kinds} kind(s) × ${Object.keys(SPEC_MIN_ROLE).length} actions × ${SPEC_ROLES.length + 1} roles × ${scenarioCount} tag scenario(s) × ${REQUIRED_HAS_CHILDREN.length} hasChildren`)
 }

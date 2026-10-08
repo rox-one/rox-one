@@ -4,6 +4,14 @@
  */
 const base = { championAbsent: false, hasChildren: false, kind: 'goal' }
 
+/** Required export (#1507 review 4); the rows below are what is wrong. */
+export const PERMISSION_MATRIX_TAG_SCENARIOS = [
+  { tags: [], championAbsent: false },
+  { tags: ['champion'], championAbsent: false },
+  { tags: ['reviewer'], championAbsent: false },
+  { tags: ['reviewer'], championAbsent: true },
+]
+
 export function generatePermissionMatrix() {
   return [
     // viewer edits (invariant: viewer / minimal never edit)
