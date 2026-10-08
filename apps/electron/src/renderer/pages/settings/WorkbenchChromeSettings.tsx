@@ -20,6 +20,7 @@ import {
 } from '@/atoms/unified-shell'
 import { HARNESS_SKIP_LIST } from '@rox/core/platform'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ExtraScreensSettings } from './ExtraScreensSettings'
 
@@ -49,6 +50,7 @@ export function WorkbenchChromeSettings() {
   const [harnessAgentIntel, setHarnessAgentIntel] = useAtom(featureWorkbenchHarnessAgentIntelV1Atom)
   const [harnessExtCenter, setHarnessExtCenter] = useAtom(featureWorkbenchHarnessExtCenterV1Atom)
   const [harnessAgentTeams, setHarnessAgentTeams] = useAtom(featureWorkbenchHarnessAgentTeamsAtom)
+  const [entitiesLinks, setEntitiesLinks] = useAtom(featureEntitiesLinksV1Atom)
 
   return (
     <>
@@ -128,6 +130,12 @@ export function WorkbenchChromeSettings() {
           description={t('settings.appearance.workbenchHarnessAgentTeamsDesc')}
           checked={harnessAgentTeams}
           onCheckedChange={setHarnessAgentTeams}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.entitiesLinks')}
+          description={t('settings.appearance.entitiesLinksDesc')}
+          checked={entitiesLinks}
+          onCheckedChange={setEntitiesLinks}
         />
       </SettingsCard>
     </SettingsSection>

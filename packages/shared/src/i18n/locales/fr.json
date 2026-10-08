@@ -6058,6 +6058,8 @@
   "settings.appearance.defaultZoomLevelDesc": "Set the permanent app zoom level for all windows",
   "settings.appearance.description": "Thème, police, icônes d'outils",
   "settings.appearance.editFile": "Modifier le fichier",
+  "settings.appearance.entitiesLinks": "Liens d’entités (expérimental)",
+  "settings.appearance.entitiesLinksDesc": "Liez les entités des notes, tâches et documents via [[kind:id]], liens profonds rox:// et backlinks. Désactivé par défaut.",
   "settings.appearance.font": "Police",
   "settings.appearance.fontArialNarrow": "Arial Narrow",
   "settings.appearance.fontChat": "Chat de l'agent",

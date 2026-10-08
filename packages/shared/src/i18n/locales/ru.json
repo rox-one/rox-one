@@ -6078,6 +6078,8 @@
   "settings.appearance.defaultZoomLevelDesc": "Задаёт постоянный масштаб приложения для всех окон",
   "settings.appearance.description": "Тема, шрифт, значки инструментов",
   "settings.appearance.editFile": "Редактировать файл",
+  "settings.appearance.entitiesLinks": "Связи сущностей (экспериментально)",
+  "settings.appearance.entitiesLinksDesc": "Связывайте сущности в заметках, задачах и документах через [[kind:id]], rox://-ссылки и обратные ссылки. По умолчанию выключено.",
   "settings.appearance.font": "Шрифт",
   "settings.appearance.fontArialNarrow": "Arial Narrow",
   "settings.appearance.fontChat": "Чат агента",

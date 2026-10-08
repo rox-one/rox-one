@@ -12,6 +12,7 @@ import type { MeetingsLocalApi } from './meetings-local'
 import type { MailLocalApi } from './mail-local'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { parseEntityRoute } from './entity-routes'
+import { isEntityRoutesEnabled } from './route-parser'
 import type {
   Message as CoreMessage,
   MessageRole as CoreMessageRole,
@@ -2404,6 +2405,10 @@ export interface ElectronAPI {
   // Language
   changeLanguage(lang: string): Promise<void>
 
+  // Entity links (entities.links.v1): renderer notifies main so the
+  // deep-link parser and entity RPC handlers agree with the renderer
+  setEntitiesLinksEnabled(enabled: boolean): Promise<{ ok: boolean }>
+
   // Resources (cross-workspace export/import)
   exportResources(workspaceId: string, options: ExportResourcesOptions): Promise<ExportResult>
   importResources(workspaceId: string, bundle: ResourceBundle, mode: ResourceImportMode): Promise<ResourceImportResult>
@@ -3280,7 +3285,10 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
   if (key === 'home') return { navigator: 'home', details: null }
 
   // Kind-first entity keys mirror the route format: `entity/{route}`.
+  // Gated behind `entities.links.v1` exactly like the main-process
+  // deep-link parser: persisted tabs/history restore nothing when off.
   if (key.startsWith('entity/')) {
+    if (!isEntityRoutesEnabled()) return null
     const parsed = parseEntityRoute(key.slice('entity/'.length))
     if (!parsed) return null
     return { navigator: 'entity', route: parsed.canonicalRoute, ref: parsed.ref, details: null }
