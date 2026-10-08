@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import * as Icons from "lucide-react"
+import { getMenuIcon } from './menu-icons'
 import { isMac } from "@/lib/platform"
 import { useActionLabel } from "@/actions"
 import {
@@ -52,9 +53,10 @@ const roleHandlers: Record<string, () => void> = {
   zoom: () => window.electronAPI.menuMaximize(),
 }
 
+// Schema icon names resolve through an explicit map (see menu-icons.ts) so the
+// startup bundle does not keep every lucide icon.
 function getIcon(name: string): React.ComponentType<{ className?: string }> | null {
-  const IconComponent = Icons[name as keyof typeof Icons] as React.ComponentType<{ className?: string }> | undefined
-  return IconComponent ?? null
+  return getMenuIcon(name)
 }
 
 function renderSubmenuItem(
