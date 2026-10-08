@@ -30,7 +30,7 @@
     { "path": "scripts/verify-server-container-context.ts", "mode": "text", "rules": [{ "from": "'.craft-agent/credentials.json', '.rox/private.json'", "to": "'.craft-agent/credentials.json', 'rox/private.json', '.rox/private.json'" }] },
     { "path": "scripts/probes/omp-worker-loop.ts", "mode": "manual", "markers": ["resolveConfigDir()", "toolchain"] },
     { "path": "scripts/probes/runtime-map-native-loop.ts", "mode": "manual", "markers": ["resolveConfigDir()", "toolchain"] },
-    { "path": "tests/final-readiness/rox-readiness-ui-001.seed.ts", "mode": "manual", "markers": ["resolveConfigDir()", "ROX_SEED_LEGACY_DOT_ROX"] },
+    { "path": "tests/final-readiness/rox-readiness-ui-001.seed.ts", "mode": "manual", "markers": ["seedSourceToolchainRoot"] },
     { "path": ".cursor/install.sh", "mode": "text", "rules": [{ "from": "$HOME/.rox-cloud/bun", "to": "$HOME/rox-cloud/bun" }] },
     { "path": ".cursor/start-server.sh", "mode": "text", "rules": [{ "from": "$HOME/.rox-cloud/bun", "to": "$HOME/rox-cloud/bun" }, { "from": "$HOME/.rox-cloud/context", "to": "$HOME/rox-cloud/context" }] },
     { "path": ".cursor/environment.json", "mode": "text", "rules": [{ "from": "~/.rox-cloud/context", "to": "~/rox-cloud/context" }] },
