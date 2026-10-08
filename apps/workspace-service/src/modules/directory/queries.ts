@@ -52,8 +52,10 @@ export const sqlDepartmentMembers = (p: string) => `
 
 /**
  * Manager chain via a recursive CTE: bounded depth and a visited-path cycle
- * guard, so a cyclic `manager_id` graph terminates. `$1` workspace,
- * `$2` principal, `$3` max depth. Excludes the principal itself.
+ * guard, so a cyclic `manager_id` graph terminates. Only active members are
+ * walked through and returned (an invited / left / removed manager ends the
+ * chain). `$1` workspace, `$2` principal, `$3` max depth. Excludes the
+ * principal itself.
  */
 export const sqlManagerChain = (p: string) => `
   WITH RECURSIVE chain(principal_id, depth, path) AS (
@@ -63,12 +65,16 @@ export const sqlManagerChain = (p: string) => `
       AND (up.workspace_id IS NULL OR up.workspace_id = $1::uuid)
     UNION ALL
     SELECT up.manager_id, c.depth + 1, c.path || up.manager_id
-    FROM chain c JOIN ${p}user_profile up ON up.principal_id = c.principal_id AND up.deleted_at IS NULL
+    FROM chain c
+    JOIN ${p}workspace_member cm ON cm.workspace_id = $1::uuid AND cm.principal_id = c.principal_id
+      AND cm.deleted_at IS NULL AND cm.status = 'active'
+    JOIN ${p}user_profile up ON up.principal_id = c.principal_id AND up.deleted_at IS NULL
       AND (up.workspace_id IS NULL OR up.workspace_id = $1::uuid)
     WHERE up.manager_id IS NOT NULL AND NOT (up.manager_id = ANY(c.path)) AND c.depth < $3
   )
   SELECT c.principal_id::text AS principal_id, c.depth FROM chain c
-  JOIN ${p}workspace_member m ON m.workspace_id = $1::uuid AND m.principal_id = c.principal_id AND m.deleted_at IS NULL
+  JOIN ${p}workspace_member m ON m.workspace_id = $1::uuid AND m.principal_id = c.principal_id
+    AND m.deleted_at IS NULL AND m.status = 'active'
   ORDER BY c.depth`
 
 /** `$1` workspace, `$2` manager. Active members only. */

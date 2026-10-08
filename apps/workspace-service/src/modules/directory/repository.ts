@@ -209,10 +209,13 @@ export class MemoryDirectoryRepository implements DirectoryReadPort {
     const chain: string[] = []
     const seen = new Set([principalId])
     let current = ws?.get(principalId)?.managerId ?? null
+    // Same semantics as the SQL: only active members are walked and returned.
     while (current && !seen.has(current) && chain.length < MAX_MANAGER_CHAIN) {
       seen.add(current)
-      if (ws?.has(current)) chain.push(current)
-      current = ws?.get(current)?.managerId ?? null
+      const manager = ws?.get(current)
+      if (!manager || manager.memberStatus !== 'active') break
+      chain.push(current)
+      current = manager.managerId
     }
     return chain
   }

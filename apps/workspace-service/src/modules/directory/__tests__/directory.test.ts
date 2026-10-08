@@ -98,6 +98,15 @@ describe('DirectoryService', () => {
     expect(await service.directReports(actor(DEV), WS, VP)).toEqual([DEV])
   })
 
+  test('manager chain walks and returns only active members', async () => {
+    const { repo, service } = setup()
+    repo.setEntry(WS, entry(GONE, { memberStatus: 'removed', managerId: CEO }))
+    repo.setEntry(WS, entry(DEV, { managerId: GONE }))
+    expect(await service.managerChain(actor(DEV), WS, DEV)).toEqual([])
+    repo.setEntry(WS, entry(VP, { managerId: INVITED }))
+    expect(await service.managerChain(actor(VP), WS, VP)).toEqual([])
+  })
+
   test('manager chain is cycle-safe and bounded', async () => {
     const { repo, service } = setup()
     repo.setEntry(WS, entry(CEO, { managerId: DEV }))
@@ -174,6 +183,8 @@ describe('PostgresDirectoryRepository', () => {
     expect(sql).toContain('WITH RECURSIVE')
     expect(sql).toContain('NOT (up.manager_id = ANY(c.path))')
     expect(sql).toContain('c.depth < $3')
+    expect(sql).toContain("cm.status = 'active'")
+    expect(sql).toContain("m.status = 'active'")
     const { db, calls } = fakeDb(() => [{ principal_id: VP, depth: 1 }])
     expect(await new PostgresDirectoryRepository(db).managerChain(WS, DEV)).toEqual([VP])
     expect(calls[0]!.params).toEqual([WS, DEV, MAX_MANAGER_CHAIN])
