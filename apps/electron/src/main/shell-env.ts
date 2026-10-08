@@ -26,15 +26,17 @@
  *    it resolves immediately; otherwise it resolves when the capture finishes
  *    or after a bounded wait — which latches, so only the first spawn can pay it.
  *
- * Secret-shaped variables (token/key/password/PAT/DSN/webhook names, URLs with
- * userinfo) are never written to the cache; they arrive with the background
- * capture, and readiness waits for it whenever the cache had to omit any.
- * Known non-secrets (SSH_AUTH_SOCK, TERM_SESSION_ID, …) are exempt so they do
- * not mark the cache incomplete.
+ * Secret-shaped variables (token/key/password/PAT/DSN/webhook/JWT/bearer/creds
+ * names, URLs with userinfo, well-known token values such as ghp_/sk-/AKIA…)
+ * are never written to the cache; they arrive with the background capture,
+ * and readiness waits for it whenever the cache had to omit any. Known
+ * non-secrets (SSH_AUTH_SOCK, TERM_SESSION_ID, GIT_AUTHOR_*, STARSHIP_*,
+ * ATUIN_*, PASSWORD_STORE_DIR, …) are exempt so they do not mark the cache
+ * incomplete. The pre-v2 cache file (Caches/Rox/shell-env.json) is removed.
  */
 
 import { execFile } from 'child_process'
-import { chmodSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'fs'
+import { chmodSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import { dirname, join } from 'path'
 import { mainLog } from './logger'
@@ -47,27 +49,43 @@ const shouldSkipEnvVar = (key: string): boolean => {
 
 /**
  * Never persisted to the on-disk cache (they still reach process.env live).
- * Deliberately broad: anything token/key/password/DSN/webhook-shaped.
+ * Deliberately broad: anything token/key/password/DSN/webhook/JWT-shaped.
  */
-const SECRET_ENV_KEY = /(TOKEN|SECRET|PASS|API_?KEY|ACCESS_?KEY|PRIVATE|CREDENTIAL|COOKIE|SESSION|AUTH|DSN|WEBHOOK)|(KEY|_PAT|PWD)$/i
+const SECRET_ENV_KEY = /(TOKEN|SECRET|PASS|API_?KEY|ACCESS_?KEY|PRIVATE|CREDENTIAL|COOKIE|SESSION|AUTH|DSN|WEBHOOK|JWT|BEARER)|(KEY|_PAT|PWD|_CREDS)$/i
 /**
- * URL with userinfo (`postgres://user:pass@host`) — a secret whatever the key
- * is called. Superset of `://[^/@\s]+:[^/@\s]+@`: also password-only userinfo
- * (`redis://:pass@host`).
+ * URL with userinfo — `postgres://user:pass@host`, `redis://:pass@host` and
+ * token-only `https://ghp_xxx@github.com/` — a secret whatever the key is called.
  */
-const URL_USERINFO_VALUE = /:\/\/[^/@\s]*:[^/@\s]+@/
+const URL_USERINFO_VALUE = /:\/\/[^/@\s]+@/
+/**
+ * Well-known credential formats, matched on the value under any name:
+ * GitHub (ghp_/gho_/ghu_/ghs_/ghr_/github_pat_), OpenAI/Anthropic-style sk-,
+ * Slack xox[abprs]-, GitLab glpat-, AWS access key ids (AKIA/ASIA), npm_ + 36.
+ */
+const SECRET_VALUE_PREFIX = /^(?:gh[pousr]_[A-Za-z0-9]|github_pat_|sk-[A-Za-z0-9_-]|xox[abprs]-|glpat-|(?:AKIA|ASIA)[A-Z0-9]{12,}|npm_[A-Za-z0-9]{36})/
 /** Known non-secret variables that the key pattern would otherwise catch. */
 const NON_SECRET_ENV_KEYS = new Set([
   'PWD', 'OLDPWD', 'SSH_AUTH_SOCK', 'XAUTHORITY', 'TERM_SESSION_ID', 'ITERM_SESSION_ID',
   'SECURITYSESSIONID', 'DBUS_SESSION_BUS_ADDRESS', 'XDG_SESSION_ID', 'XDG_SESSION_TYPE',
   'XDG_SESSION_CLASS', 'XDG_SESSION_DESKTOP', 'SHELL_SESSION_ID', 'SHELL_SESSION_DID_INIT',
-  'SHELL_SESSION_HISTORY', 'SSH_AGENT_PID', 'GPG_AGENT_INFO',
+  'SHELL_SESSION_HISTORY', 'SSH_AGENT_PID', 'GPG_AGENT_INFO', 'MCFLY_SESSION_ID',
+  // pass(1) configuration: paths, GPG key *ids*, options — never the store contents.
+  'PASSWORD_STORE_DIR', 'PASSWORD_STORE_KEY', 'PASSWORD_STORE_CLIP_TIME', 'PASSWORD_STORE_GENERATED_LENGTH',
+  'PASSWORD_STORE_ENABLE_EXTENSIONS', 'PASSWORD_STORE_EXTENSIONS_DIR', 'PASSWORD_STORE_UMASK',
+  'PASSWORD_STORE_CHARACTER_SET', 'PASSWORD_STORE_X_SELECTION', 'PASSWORD_STORE_SIGNING_KEY',
 ])
+/**
+ * Prefixes of tool-exported variables that are never secrets: git identity
+ * (GIT_AUTHOR_NAME/EMAIL/DATE, GIT_COMMITTER_*), prompt/history tools
+ * (STARSHIP_SESSION_KEY, ATUIN_SESSION, ...), Powerlevel10k/zsh-autosuggest.
+ */
+const NON_SECRET_ENV_PREFIXES = ['GIT_AUTHOR_', 'GIT_COMMITTER_', 'STARSHIP_', 'ATUIN_', 'POWERLEVEL9K_', 'P9K_', 'ZSH_AUTOSUGGEST_']
 
 /** True when a variable must not be written to the cache. */
 export function isSecretEnvVar(key: string, value: string): boolean {
-  if (URL_USERINFO_VALUE.test(value)) return true
-  if (NON_SECRET_ENV_KEYS.has(key.toUpperCase())) return false
+  if (URL_USERINFO_VALUE.test(value) || SECRET_VALUE_PREFIX.test(value)) return true
+  const upper = key.toUpperCase()
+  if (NON_SECRET_ENV_KEYS.has(upper) || NON_SECRET_ENV_PREFIXES.some(prefix => upper.startsWith(prefix))) return false
   return SECRET_ENV_KEY.test(key)
 }
 
@@ -165,6 +183,14 @@ export function shellEnvCacheKey(shell: string, home: string, stat: (path: strin
     }
   }
   return parts.join('|')
+}
+
+/**
+ * Pre-v2 cache location written by earlier builds of this branch with a
+ * narrower secret filter (may hold credentials in plaintext). Removed on start.
+ */
+export function legacyShellEnvCachePath(home = homedir()): string {
+  return join(home, 'Library', 'Caches', 'Rox', 'shell-env.json')
 }
 
 /** Private 0700 directory holding only the 0600 cache file. */
@@ -295,6 +321,8 @@ export function startShellEnvLoad(options: ShellEnvLoadOptions = {}): void {
   const home = options.home ?? env.HOME ?? homedir()
   const cachePath = options.cachePath ?? defaultShellEnvCachePath(home)
   const now = options.now ?? Date.now
+  // Best effort: drop the legacy v1 cache (narrower filter). ENOENT is the norm.
+  try { unlinkSync(legacyShellEnvCachePath(home)) } catch { /* absent or not removable */ }
   let key: string | null = null
   try { key = shellEnvCacheKey(shell, home) } catch { key = null }
 

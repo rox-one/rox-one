@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
-import { chmodSync, mkdtempSync, rmSync, readFileSync, statSync, writeFileSync, existsSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, readFileSync, statSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -9,7 +9,7 @@ mock.module('../logger', () => {
 })
 
 const {
-  SHELL_ENV_CACHE_TTL_MS, captureLoginShellEnv, defaultShellEnvCachePath, filterCacheableEnv, isSecretEnvVar, isShellEnvReady,
+  SHELL_ENV_CACHE_TTL_MS, captureLoginShellEnv, defaultShellEnvCachePath, filterCacheableEnv, isSecretEnvVar, isShellEnvReady, legacyShellEnvCachePath,
   isShellEnvSettled, parseShellEnvOutput, readShellEnvCache, readShellEnvCacheEntry, resetShellEnvForTests, shellEnvCacheKey,
   shellEnvSpawnGate, startShellEnvLoad, whenShellEnvReady, writeShellEnvCache,
 } = await import('../shell-env')
@@ -19,7 +19,7 @@ let cachePath: string
 beforeEach(() => {
   resetShellEnvForTests()
   home = mkdtempSync(join(tmpdir(), 'rox-shell-env-'))
-  cachePath = join(home, 'Library', 'Caches', 'Rox', 'shell-env.json')
+  cachePath = join(home, 'Library', 'Caches', 'Rox', 'shell-env', 'env.json')
   writeFileSync(join(home, '.zshrc'), 'export PATH=/opt/homebrew/bin:$PATH\n')
 })
 afterEach(() => { resetShellEnvForTests(); rmSync(home, { recursive: true, force: true }) })
@@ -133,6 +133,65 @@ describe('shell-env (PERF-03)', () => {
     const filtered = filterCacheableEnv({ PATH: '/p', PWD: '/w', SSH_AUTH_SOCK: '/tmp/s', GH_PAT: 'x', REDIS: 'redis://:pw@h:6379' })
     expect(filtered.env).toEqual({ PATH: '/p', PWD: '/w', SSH_AUTH_SOCK: '/tmp/s' })
     expect(filtered.omitted).toBe(2)
+  })
+
+  it('review2: exempts well-known non-secrets so they never make the cache incomplete', () => {
+    for (const key of ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_AUTHOR_DATE', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL',
+      'STARSHIP_SESSION_KEY', 'STARSHIP_SHELL', 'ATUIN_SESSION', 'ATUIN_HISTORY_ID', 'PASSWORD_STORE_DIR', 'PASSWORD_STORE_KEY',
+      'MCFLY_SESSION_ID', 'POWERLEVEL9K_INSTANT_PROMPT']) {
+      expect(isSecretEnvVar(key, 'value-1')).toBe(false)
+    }
+    const typical = { PATH: '/p', GIT_AUTHOR_NAME: 'Me', GIT_COMMITTER_EMAIL: 'me@example.com', STARSHIP_SESSION_KEY: '4825031547983215',
+      ATUIN_SESSION: '0190f7a0c1e27b3b8a1c', PASSWORD_STORE_DIR: '/Users/me/.password-store' }
+    expect(filterCacheableEnv(typical)).toEqual({ env: typical, omitted: 0 })
+    // An exempt name still cannot smuggle a credential-shaped value.
+    expect(isSecretEnvVar('GIT_AUTHOR_NAME', 'ghp_abcdefghijklmnopqrstuvwxyz0123456789')).toBe(true)
+  })
+
+  it('review2: catches token-only URL userinfo, *_CREDS/JWT/BEARER names and well-known token values', () => {
+    expect(isSecretEnvVar('REPO', 'https://ghp_abc123@github.com/me/repo.git')).toBe(true)
+    expect(isSecretEnvVar('MIRROR', 'https://user@example.com/x')).toBe(true)
+    for (const key of ['DOCKER_CREDS', 'REGISTRY_CREDS', 'JWT', 'AUTH0_JWT_KEY', 'MY_JWT_SIGNING', 'BEARER', 'API_BEARER_VALUE']) {
+      expect(isSecretEnvVar(key, 'x')).toBe(true)
+    }
+    const npm36 = 'npm_' + 'a'.repeat(36)
+    for (const value of ['ghp_abcdefghijklmnopqrstuvwxyz012345', 'gho_abc', 'ghu_abc', 'ghs_abc', 'ghr_abc', 'github_pat_11ABC',
+      'sk-proj-abc123', 'sk-ant-api03-xyz', 'xoxb-1234-5678', 'xoxa-1', 'xoxp-1', 'xoxr-1', 'xoxs-1', 'glpat-abcdefghij',
+      'AKIAIOSFODNN7EXAMPLE', 'ASIAIOSFODNN7EXAMPLE', npm36]) {
+      expect(isSecretEnvVar('INNOCENT_NAME', value)).toBe(true)
+    }
+    // Not over-broad: ordinary values that merely start similarly stay cacheable.
+    for (const value of ['/opt/homebrew/bin', 'skeleton', 'sk', 'npm_config_prefix', 'npm_' + 'a'.repeat(10), 'AKIA', 'ghost', 'https://example.com/a@b', 'mailto:me@example.com']) {
+      expect(isSecretEnvVar('INNOCENT_NAME', value)).toBe(false)
+    }
+    const filtered = filterCacheableEnv({ PATH: '/p', A: 'sk-live-1', B: 'https://t0k3n@host/x', DOCKER_CREDS: 'x', OK: '1' })
+    expect(filtered).toEqual({ env: { PATH: '/p', OK: '1' }, omitted: 3 })
+  })
+
+  it('review2: value-filtered keys still mark the cache incomplete, so spawns wait for the live capture', async () => {
+    const env = baseEnv(); const capture = deferred<string>()
+    startShellEnvLoad({ platform: 'darwin', env, home, cachePath, capture: () => capture.promise })
+    capture.resolve(output({ PATH: '/p', GH_REMOTE: 'https://ghp_secret@github.com/x' }))
+    await whenShellEnvReady()
+    expect(env.GH_REMOTE).toBe('https://ghp_secret@github.com/x')
+    const raw = readFileSync(cachePath, 'utf8')
+    expect(raw).not.toContain('ghp_secret'); expect(JSON.parse(raw).omittedKeys).toBe(1)
+    resetShellEnvForTests()
+    const next = baseEnv()
+    startShellEnvLoad({ platform: 'darwin', env: next, home, cachePath, capture: () => new Promise(() => {}) })
+    expect(next.PATH).toBe('/p'); expect(isShellEnvReady()).toBe(false)
+  })
+
+  it('review2: removes the legacy v1 cache file on start (best effort)', () => {
+    const legacy = legacyShellEnvCachePath(home)
+    expect(legacy).toBe(join(home, 'Library', 'Caches', 'Rox', 'shell-env.json'))
+    mkdirSync(join(home, 'Library', 'Caches', 'Rox'), { recursive: true })
+    writeFileSync(legacy, JSON.stringify({ version: 1, env: { STRIPE_KEY: 'sk_live_x' } }))
+    startShellEnvLoad({ platform: 'darwin', env: baseEnv(), home, cachePath, capture: async () => output({ PATH: '/p' }) })
+    expect(existsSync(legacy)).toBe(false)
+    // Absent legacy file is not an error.
+    resetShellEnvForTests()
+    expect(() => startShellEnvLoad({ platform: 'darwin', env: baseEnv(), home, cachePath, capture: async () => output({ PATH: '/p' }) })).not.toThrow()
   })
 
   it('keeps the cache in a private 0700 directory (file 0600), tightening an existing directory', () => {
