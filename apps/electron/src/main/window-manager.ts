@@ -11,6 +11,8 @@ import { getExtensionHostManager } from './extension-host-manager'
 import type { SavedWindow } from './window-state'
 import { attachZenWindowPolicy, reapplyZenShellOnWindow, peekZenShellSnapshotForWindow, nativeAccessibilityPrefersSolid, setZenShellSnapshotListener } from './shell-material'
 import { WINDOWS_MICA_BUILD } from '../shared/shell-appearance'
+import { STARTUP_MARKS } from '../shared/startup-perf'
+import { markStartupOnce } from './startup-marks'
 
 // Vite dev server URL for hot reload
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
@@ -272,6 +274,7 @@ export class WindowManager {
         webviewTag: false // Browser integration uses WebContentsView, not <webview>
       }
     })
+    markStartupOnce(STARTUP_MARKS.windowCreated)
 
     import('@rox/shared/config/storage')
       .then(({ getDefaultZoomLevel }) => {

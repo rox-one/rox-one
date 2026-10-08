@@ -97,6 +97,7 @@ import {
 } from '../../shared/types'
 import { sessionMetaMapAtom, updateSessionMetaAtom, type SessionMeta } from '@/atoms/sessions'
 import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
+import { startRouteSwitch } from '@/lib/startup-perf'
 import {
   panelStackAtom,
   pushPanelAtom,
@@ -1516,6 +1517,16 @@ export function NavigationProvider({
     store,
   ])
 
+  // PERF-01: consumer-initiated navigations start a route-switch mark; the
+  // matching end mark fires when MainContentPanel commits the new route.
+  const navigateWithPerfMark = useCallback(
+    (route: Route, options?: NavigateOptions) => {
+      startRouteSwitch(route)
+      return navigate(route, options)
+    },
+    [navigate],
+  )
+
   // =========================================================================
   // CONTEXT VALUE
   // =========================================================================
@@ -1523,7 +1534,7 @@ export function NavigationProvider({
   return (
     <NavigationContext.Provider
       value={{
-        navigate,
+        navigate: navigateWithPerfMark,
         isReady,
         isSessionsReady,
         unavailableWorkspaceSlug,

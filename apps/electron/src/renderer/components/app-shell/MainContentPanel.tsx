@@ -65,6 +65,7 @@ import {
 } from '../../knowledge/KnowledgeHome'
 
 import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
+import { endRouteSwitch } from '@/lib/startup-perf'
 export { lazyRoutePage } from '@/lib/route-recovery'
 
 function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
@@ -253,6 +254,10 @@ export function MainContentPanel({
     unavailableWorkspaceSlug,
     isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
   ])
+  // PERF-01: route switch painted (pairs with startRouteSwitch in navigate()).
+  useEffect(() => {
+    endRouteSwitch(navState.navigator)
+  }, [routeKey])
   const [sessionSelection] = useSession()
   const store = useStore()
   const catalogSessionId = sessionSelection.selected

@@ -1,3 +1,6 @@
+// PERF-01: must stay the first import so `main:entry` precedes heavy module evaluation.
+import { markStartup, markStartupOnce, recordRendererMark, reportStartupTimelineWhenSettled, whenStartupMark } from './startup-marks'
+import { STARTUP_MARKS, STARTUP_PERF_MARK_CHANNEL, isValidRendererMarkName } from '../shared/startup-perf'
 import { createPocketAccountStore } from './pocket-account-store'
 import { RoxAccountAuthority, setRoxAccountAuthority } from '@rox/shared/auth'
 import { validateConfigurationCliEntries } from './configuration-cli-compat'
@@ -6,6 +9,7 @@ import { resolveNumberedUserDataDir } from './numbered-user-data'
 // This ensures tools like Homebrew, nvm, etc. are available to the agent
 import { loadShellEnv } from './shell-env'
 loadShellEnv()
+markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
@@ -545,6 +549,16 @@ app.whenReady().then(async () => {
     },
   })
 
+  markStartup(STARTUP_MARKS.appReady)
+  // PERF-01: one compact `[perf] startup …` line (and ROX_PERF_OUT JSON) with ROX_PERF=1.
+  reportStartupTimelineWhenSettled((line) => mainLog.info(line))
+  // Renderer startup/navigation marks (fire-and-forget, Rox windows only).
+  ipcMain.on(STARTUP_PERF_MARK_CHANNEL, (event, name: unknown, epochMs: unknown) => {
+    if (!isValidRendererMarkName(name) || typeof epochMs !== 'number') return
+    if (!isRegisteredRoxRendererWebContents(event.sender)) return
+    recordRendererMark(name, epochMs)
+  })
+
   // Export packaged state as env var so logger.ts (and headless Bun) don't need 'electron'
   process.env.CRAFT_IS_PACKAGED = app.isPackaged ? 'true' : 'false'
 
@@ -553,6 +567,7 @@ app.whenReady().then(async () => {
   setBundledAssetsRoot(__dirname)
 
   if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
+    markStartup(STARTUP_MARKS.winBootstrapStart)
     const { initializeWindowsBootstrap } = await import('./windows-bootstrap')
     const { getToolchainDependencyMode, getGitBashPath } = await import('@rox/shared/config')
     const result = await initializeWindowsBootstrap({
@@ -562,6 +577,7 @@ app.whenReady().then(async () => {
       preference: getToolchainDependencyMode(),
       gitBashPreference: getGitBashPath(),
     })
+    markStartup(STARTUP_MARKS.winBootstrapEnd)
     // Structured non-secret diagnostics; never log receipt errors or process output.
     if (result?.missingTools.length || result?.recoveryCode) mainLog.warn('[windows-bootstrap]', result)
     else if (result) mainLog.info('[windows-bootstrap]', result)
@@ -1189,6 +1205,7 @@ app.whenReady().then(async () => {
         },
       })
 
+      markStartup(STARTUP_MARKS.serverReady)
       // Capture module-level references for before-quit cleanup and deep-link handlers
       sessionManager = instance.sessionManager
       oauthFlowStore = instance.oauthFlowStore
@@ -1391,6 +1408,7 @@ app.whenReady().then(async () => {
       })
 
       ipcMain.on('__get-ws-port', (e) => {
+        markStartupOnce(STARTUP_MARKS.wsPortHanded)
         e.returnValue = instance.port
       })
       ipcMain.handle('__resolve-local-ws-token', async (event, expectedWorkspaceId: unknown) => {

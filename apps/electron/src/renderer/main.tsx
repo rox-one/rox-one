@@ -1,3 +1,5 @@
+// PERF-01: first import so `renderer:script-start` precedes React/i18n evaluation.
+import { markFirstPaintAfterCommit } from './lib/startup-perf'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { init as sentryInit } from '@sentry/electron/renderer'
@@ -143,3 +145,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </Sentry.ErrorBoundary>
   </React.StrictMode>
 )
+markFirstPaintAfterCommit()

@@ -18,6 +18,7 @@
 
 import '@sentry/electron/preload'
 import { contextBridge, ipcRenderer, shell, webUtils } from 'electron'
+import { STARTUP_PERF_MARK_CHANNEL, isStartupPerfEnabled, isValidRendererMarkName } from '../shared/startup-perf'
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
 import { RoutedClient } from '../transport/routed-client'
 import { ProjectAuthorityConnection } from '../transport/project-authority-connection'
@@ -774,4 +775,14 @@ if (process.isMainFrame) {
 }
 if (openClawHostControl) {
   contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
+}
+// PERF-01: renderer startup/navigation marks → main startup timeline.
+// Fire-and-forget; names are validated in main against a strict pattern.
+if (process.isMainFrame) {
+  contextBridge.exposeInMainWorld('roxStartupPerf', {
+    enabled: isStartupPerfEnabled(),
+    mark: (name: unknown, epochMs: unknown) => {
+      if (isValidRendererMarkName(name) && typeof epochMs === 'number') ipcRenderer.send(STARTUP_PERF_MARK_CHANNEL, name, epochMs)
+    },
+  })
 }
