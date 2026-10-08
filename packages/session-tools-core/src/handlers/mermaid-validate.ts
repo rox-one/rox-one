@@ -25,10 +25,13 @@ export interface MermaidValidateArgs {
  * error message.
  */
 export async function handleMermaidValidate(
-  _ctx: SessionToolContext,
+  ctx: SessionToolContext,
   args: MermaidValidateArgs
 ): Promise<ToolResult> {
   const { code } = args;
+  // W1-13: point at the resolved config dir; the visible home is the default
+  // when the backend predates the `configDir` context field.
+  const mermaidDoc = `${ctx.configDir ?? '~/rox'}/docs/mermaid.md`;
 
   try {
     // renderMermaidSVG throws if syntax/layout is invalid. Use the renderer path
@@ -53,7 +56,7 @@ export async function handleMermaidValidate(
         text: JSON.stringify({
           valid: false,
           error: errorMessage,
-          suggestion: 'Check the syntax against ~/.rox/docs/mermaid.md',
+          suggestion: `Check the syntax against ${mermaidDoc}`,
         }, null, 2),
       }],
       isError: true,

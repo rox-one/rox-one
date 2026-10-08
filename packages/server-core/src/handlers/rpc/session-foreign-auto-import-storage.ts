@@ -9,6 +9,7 @@ interface AutoImportFile {
 }
 
 function autoImportPath(workspaceRoot: string): string {
+  // W1-13 (D-v2-11): workspace-local `.rox` state stays inside the visible tree.
   return join(workspaceRoot, '.rox', 'foreign-auto-import.json')
 }
 

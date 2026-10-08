@@ -1,6 +1,7 @@
 /**
  * Idempotency index: sourcePath → Rox sessionId.
- * Lives in the workspace (.rox), never a DSH store.
+ * Lives in the workspace-local `.rox` dir (D-v2-11: workspace metadata
+ * folders stay inside `~/rox/workspaces/{id}/`), never a DSH store.
  */
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'

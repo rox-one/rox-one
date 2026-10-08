@@ -285,6 +285,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
   const context: SessionToolContext = {
     sessionId,
     workspacePath,
+    configDir: resolveConfigDir(),
     getHostBashEnv: () => createHostBashEnv(),
     get sourcesPath() { return join(workspacePath, 'sources'); },
     get skillsPath() { return join(workspacePath, 'skills'); },
