@@ -6943,8 +6943,6 @@
   "settings.appearance.workbenchUnifiedShellDesc": "面板堆疊周圍的 W1 unified shell 版面",
   "settings.appearance.workspaceAvatarColor": "Workspace 頭像顏色",
   "settings.appearance.workspaceAvatarReset": "重置為自動顏色",
-  "settings.appearance.workspaceIconRail": "工作區圖示欄",
-  "settings.appearance.workspaceIconRailDesc": "在左側欄顯示工作區圖示,而非頂欄下拉選單",
   "settings.appearance.workspaceThemes": "Workspace 主題",
   "settings.appearance.workspaceThemesDesc": "按 Workspace 覆蓋主題設定",
   "settings.appearance.zenShell": "Zen Shell",

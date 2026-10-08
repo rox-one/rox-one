@@ -21,7 +21,6 @@ import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/ru
 import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
 import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
-import { WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
 import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
 import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/components/onboarding'
@@ -358,31 +357,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [updateSessionDirect])
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
-  const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
-    storage.get(storage.KEYS.workspaceSelectorRail, false)
-  )
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
   const workbenchEnabled = useAtomValue(featureWorkbenchAtom)
   const entitiesLinksEnabled = useAtomValue(featureEntitiesLinksV1Atom)
   // Push entities.links.v1 into the route parser + main (deep links, RPC).
   useEntitiesLinksFlagSync(entitiesLinksEnabled)
   const unifiedShellChrome = unifiedShell || workbenchEnabled
-
-  useEffect(() => {
-    const handleWorkspaceSelectorRailChanged = (event: Event) => {
-      const customEvent = event as CustomEvent<boolean>
-      setWorkspaceSelectorRail(
-        typeof customEvent.detail === 'boolean'
-          ? customEvent.detail
-          : storage.get(storage.KEYS.workspaceSelectorRail, false)
-      )
-    }
-
-    window.addEventListener(WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT, handleWorkspaceSelectorRailChanged)
-    return () => {
-      window.removeEventListener(WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT, handleWorkspaceSelectorRailChanged)
-    }
-  }, [])
 
   // Window's workspace ID — shared atom so Root/ThemeProvider stays in sync on switch
   const [windowWorkspaceId, setWindowWorkspaceId] = useAtom(windowWorkspaceIdAtom)

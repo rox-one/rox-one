@@ -6943,8 +6943,6 @@
   "settings.appearance.workbenchUnifiedShellDesc": "W1 unified shell layout around the panel stack",
   "settings.appearance.workspaceAvatarColor": "워크스페이스 아바타 색상",
   "settings.appearance.workspaceAvatarReset": "자동 색상으로 재설정",
-  "settings.appearance.workspaceIconRail": "워크스페이스 아이콘 레일",
-  "settings.appearance.workspaceIconRailDesc": "상단 표시줄 드롭다운 대신 왼쪽 레일에 워크스페이스 아이콘 표시",
   "settings.appearance.workspaceThemes": "워크스페이스 테마",
   "settings.appearance.workspaceThemesDesc": "워크스페이스별로 테마 설정 재정의",
   "settings.appearance.zenShell": "Zen Shell",

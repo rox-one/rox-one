@@ -6969,8 +6969,6 @@
   "settings.appearance.workbenchUnifiedShellDesc": "Макет единой оболочки с вкладками вокруг стека панелей",
   "settings.appearance.workspaceAvatarColor": "Цвет аватара рабочего пространства",
   "settings.appearance.workspaceAvatarReset": "Сбросить на автоматический цвет",
-  "settings.appearance.workspaceIconRail": "Панель иконок рабочих пространств",
-  "settings.appearance.workspaceIconRailDesc": "Показывать иконки рабочих пространств в панели слева вместо выпадающего списка в верхней панели",
   "settings.appearance.workspaceThemes": "Темы рабочих пространств",
   "settings.appearance.workspaceThemesDesc": "Переопределяйте настройки темы для каждого рабочего пространства",
   "settings.appearance.zenShell": "Дзен-оболочка",

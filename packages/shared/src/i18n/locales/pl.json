@@ -6955,8 +6955,6 @@
   "settings.appearance.workbenchUnifiedShellDesc": "Układ unified shell W1 wokół stosu paneli",
   "settings.appearance.workspaceAvatarColor": "Kolor awatara Workspace",
   "settings.appearance.workspaceAvatarReset": "Przywróć automatyczny kolor",
-  "settings.appearance.workspaceIconRail": "Pasek ikon obszarów roboczych",
-  "settings.appearance.workspaceIconRailDesc": "Pokazuj ikony obszarów roboczych na lewym pasku zamiast w menu rozwijanym na górnym pasku",
   "settings.appearance.workspaceThemes": "Motywy Workspace",
   "settings.appearance.workspaceThemesDesc": "Nadpisz ustawienia motywu dla każdego Workspace",
   "settings.appearance.zenShell": "Zen Shell",

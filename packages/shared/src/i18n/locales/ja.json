@@ -6943,8 +6943,6 @@
   "settings.appearance.workbenchUnifiedShellDesc": "パネルスタック周囲の W1 unified shell レイアウト",
   "settings.appearance.workspaceAvatarColor": "Workspaceアバターの色",
   "settings.appearance.workspaceAvatarReset": "自動色にリセット",
-  "settings.appearance.workspaceIconRail": "ワークスペースのアイコンレール",
-  "settings.appearance.workspaceIconRailDesc": "上部バーのドロップダウンの代わりに、左側のレールにワークスペースのアイコンを表示します",
   "settings.appearance.workspaceThemes": "Workspaceテーマ",
   "settings.appearance.workspaceThemesDesc": "Workspaceごとにテーマ設定を上書きします",
   "settings.appearance.zenShell": "Zen Shell",

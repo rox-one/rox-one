@@ -6946,8 +6946,6 @@
   "settings.appearance.workbenchUnifiedShellDesc": "Disposition unified shell W1 autour de la pile de panneaux",
   "settings.appearance.workspaceAvatarColor": "Workspace avatar color",
   "settings.appearance.workspaceAvatarReset": "Reset to auto color",
-  "settings.appearance.workspaceIconRail": "Workspace icon rail",
-  "settings.appearance.workspaceIconRailDesc": "Show workspace icons in a left-side rail instead of the top-bar dropdown",
   "settings.appearance.workspaceThemes": "Thèmes de l'espace de travail",
   "settings.appearance.workspaceThemesDesc": "Remplacer les paramètres de thème par espace de travail",
   "settings.appearance.zenShell": "Zen Shell",

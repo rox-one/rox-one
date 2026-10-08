@@ -6943,8 +6943,6 @@
   "settings.appearance.workbenchUnifiedShellDesc": "W1-Unified-Shell-Layout um den Panel-Stack",
   "settings.appearance.workspaceAvatarColor": "Workspace-Avatar-Farbe",
   "settings.appearance.workspaceAvatarReset": "Auf Auto-Farbe zurücksetzen",
-  "settings.appearance.workspaceIconRail": "Arbeitsbereich-Symbolleiste",
-  "settings.appearance.workspaceIconRailDesc": "Arbeitsbereichsymbole in einer linken Leiste statt im Dropdown-Menü der oberen Leiste anzeigen",
   "settings.appearance.workspaceThemes": "Workspace-Designs",
   "settings.appearance.workspaceThemesDesc": "Designeinstellungen pro Workspace überschreiben",
   "settings.appearance.zenShell": "Zen Shell",

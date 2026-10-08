@@ -58,7 +58,6 @@ export const KEYS = {
   // Appearance
   showConnectionIcons: 'show-connection-icons',
   projectColorTreatment: 'project-color-treatment', // 'stripe' | 'stripe-tint'
-  workspaceSelectorRail: 'workspace-selector-rail',
   /** SE profile (opt-in via theme) */
   seLeftSidebarLayout: 'se-left-sidebar-layout',
   seAutoHideSidebars: 'se-auto-hide-sidebars',

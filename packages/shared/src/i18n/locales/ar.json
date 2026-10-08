@@ -6959,8 +6959,6 @@
   "settings.appearance.workbenchUnifiedShellDesc": "W1 unified shell layout around the panel stack",
   "settings.appearance.workspaceAvatarColor": "لون الصورة الرمزية لمساحة العمل",
   "settings.appearance.workspaceAvatarReset": "إعادة التعيين إلى اللون التلقائي",
-  "settings.appearance.workspaceIconRail": "شريط أيقونات مساحة العمل",
-  "settings.appearance.workspaceIconRailDesc": "اعرض أيقونات مساحة العمل في شريط جانبي أيسر بدلًا من القائمة المنسدلة في الشريط العلوي.",
   "settings.appearance.workspaceThemes": "سمات مساحة العمل",
   "settings.appearance.workspaceThemesDesc": "تجاوز إعدادات السمة لكل مساحة عمل",
   "settings.appearance.zenShell": "Zen Shell",
