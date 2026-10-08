@@ -165,14 +165,21 @@ describe('W1-06 reference handlers over PostgreSQL (skips without a database)', 
 
   itDb('create_from_* keeps origin in origin_ref and the rest in the companion', async () => {
     const harness = pgHarness()
+    // W1-14: the origin chat must exist — the command posts its card there.
+    expect(await harness.run({ type: 'im.create_chat', payload: { id: U('pg-chat'), kind: 'group', name: 'pg', visibility: 'public', members: [] } })).toMatchObject({ status: 'applied' })
     const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('pg-from-msg'), origin: { kind: 'message', chatRef: `channel:${U('pg-chat')}`, seq: 3 }, title: 'From message', assignee: BOB } })
     expect(fromMessage).toMatchObject({ status: 'applied' })
     const fromSelection = await harness.run({ type: 'tasks.create_from_selection', payload: { id: U('pg-from-sel'), origin: { kind: 'doc-block', docRef: `note:${U('pg-doc')}`, blockId: 'b1' }, title: 'Do it' } })
     expect(fromSelection).toMatchObject({ status: 'applied' })
     const rows = await db.unsafe<{ work_item_id: string; origin_ref: string }[]>(`SELECT work_item_id, origin_ref FROM "${schema}".work_item WHERE work_item_id IN ($1, $2) ORDER BY origin_ref`, [U('pg-from-msg'), U('pg-from-sel')])
-    expect(rows.map(r => r.origin_ref)).toEqual([`channel-message:${U('pg-chat')}:3`, `note:${U('pg-doc')}#block-b1`])
+    // W1-14 (§12 rule 1): a doc-block origin is the doc; the block id lives in
+    // the `derived-from` link anchor, because a doc block is not an entity kind.
+    expect(rows.map(r => r.origin_ref)).toEqual([`channel-message:${U('pg-chat')}:3`, `note:${U('pg-doc')}`])
     expect((await readTask(U('pg-from-msg')))!.data).toMatchObject({ origin: { kind: 'channel-message', id: `${U('pg-chat')}:3` }, assigneeIds: [BOB] })
-    expect((await readTask(U('pg-from-sel')))!.data).toMatchObject({ origin: { kind: 'note', id: U('pg-doc'), fragment: 'block-b1' }, title: 'Do it' })
+    expect((await readTask(U('pg-from-sel')))!.data).toMatchObject({ origin: { kind: 'note', id: U('pg-doc') }, title: 'Do it' })
+    const [link] = await db.unsafe<{ anchor: { blockId?: string }; relation: string; role: string }[]>(
+      `SELECT anchor, relation, role FROM "${schema}".entity_link WHERE to_kind = 'note' AND to_id = $1 ORDER BY relation LIMIT 1`, [U('pg-doc')])
+    expect(link).toMatchObject({ relation: 'derived-from', role: 'origin', anchor: { blockId: 'b1' } })
   }, 120000)
 
   itDb('a create conflict returns only the revision; deleting a referenced row is VALIDATION, not INTERNAL', async () => {
