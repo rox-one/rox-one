@@ -71,7 +71,30 @@ expected_size="${fields[3]}"
 printf 'Release: %s\nAsset: %s\nSHA256: %s\nBytes: %s\n' "$version" "$installer_url" "$expected_sha256" "$expected_size"
 if [ "$metadata_only" = true ]; then exit 0; fi
 
-config_dir="${ROX_CONFIG_DIR:-$HOME/rox}"
+# W1-13: storage.visible-root.v1 (default OFF). Mirrors resolveConfigDir's
+# flag sources: env override first, then the persisted workbench-flags.json
+# in the flag-OFF config dir (~/rox if it exists, else the legacy ~/.rox).
+legacy_home="$HOME/.rox" # legacy hidden home (the flag-OFF default)
+visible_root_flag_on() {
+  case "$(printf '%s' "${ROX_STORAGE_VISIBLE_ROOT:-${CRAFT_FEATURE_STORAGE_VISIBLE_ROOT:-}}" | tr '[:upper:]' '[:lower:]')" in
+    1|true|yes|on) return 0 ;;
+    0|false|no|off) return 1 ;;
+  esac
+  local flags_file="$legacy_home/workbench-flags.json"
+  [ -d "$HOME/rox" ] && flags_file="$HOME/rox/workbench-flags.json"
+  [ -f "$flags_file" ] && grep -q '"storage\.visible-root\.v1"' "$flags_file"
+}
+visible_root=false
+if [ -z "${ROX_CONFIG_DIR:-}" ] && visible_root_flag_on; then visible_root=true; fi
+if [ -n "${ROX_CONFIG_DIR:-}" ]; then
+  config_dir="$ROX_CONFIG_DIR"
+elif [ "$visible_root" = true ] && { [ -d "$HOME/rox" ] || [ ! -e "$legacy_home" ]; }; then
+  # Flag ON: the visible home, but never created next to an unmigrated
+  # legacy tree (the app migrates ~/.rox itself on launch).
+  config_dir="$HOME/rox"
+else
+  config_dir="$legacy_home" # flag OFF: exactly as before W1-13
+fi
 download_dir="$config_dir/downloads"
 mkdir -p "$download_dir"
 archive="$download_dir/Rox-${version#v}-arm64.zip"
@@ -127,11 +150,11 @@ fi
 staged_app=''
 printf 'Installed %s at %s.\nUser data and credentials were preserved.\n' "$version" "$destination"
 [ -z "$backup" ] || printf 'Previous application backup: %s\n' "$backup"
-# W1-13: migrate a legacy ~/.rox home to ~/rox (never deletes; no-op when
-# already migrated). Best effort — a failed migration never fails install.
-if command -v rox >/dev/null 2>&1; then
-  rox migrate-config --auto || true
-elif command -v craft-cli >/dev/null 2>&1; then
-  craft-cli migrate-config --auto || true
+# W1-13: only with storage.visible-root.v1 ON, migrate a legacy ~/.rox to
+# ~/rox while the app is closed (never deletes; `--auto` is itself flag-gated
+# and non-interactive). Best effort: the app also migrates on launch, so a
+# missing CLI or a deferred migration never fails the install.
+if [ "$visible_root" = true ] && command -v craft-cli >/dev/null 2>&1; then
+  craft-cli migrate-config --auto || printf 'Visible Rox home migration deferred; the app retries on launch.\n'
 fi
 open "$destination"
