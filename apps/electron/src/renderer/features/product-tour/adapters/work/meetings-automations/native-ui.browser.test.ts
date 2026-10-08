@@ -100,7 +100,7 @@ beforeAll(async () => {
   browser = await chromium.launch({ headless: true, executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
 }, 30_000)
 
-afterAll(async () => { await browser?.close(); server?.close() })
+afterAll(async () => { await browser?.close(); server?.close() }, 30_000)
 
 async function fixture(surface: 'meetings' | 'automation', mode = 'empty') {
   const page = await browser.newPage()

@@ -289,6 +289,12 @@ let pendingDeepLink: string | null = null
 // Set app name early (before app.whenReady) to ensure correct macOS menu bar title
 // Supports multi-instance dev: CRAFT_APP_NAME env var (e.g., "Rox [1]")
 app.setName(process.env.ROX_APP_NAME || process.env.CRAFT_APP_NAME || 'Rox')
+app.setAboutPanelOptions({
+  applicationName: 'Rox',
+  applicationVersion: app.getVersion(),
+  copyright: '© 2026 Rox',
+  credits: 'Rox',
+})
 
 // Isolate Chromium profile so a second dev instance does not share cookies/locks.
 const numberedInstance = (process.env.ROX_INSTANCE_NUMBER || process.env.CRAFT_INSTANCE_NUMBER)?.trim()
@@ -1089,6 +1095,7 @@ app.whenReady().then(async () => {
                 : join(process.cwd(), 'packages', 'messaging-discord-worker', 'dist', 'worker.cjs'),
             },
           })
+          const learning = sm.getLearningRpcService()
           return {
             sessionManager: sm,
             platform: p,
@@ -1109,6 +1116,8 @@ app.whenReady().then(async () => {
             ...(voiceOverlay ? { voiceOverlay } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
+            // WP-117: `learning:*` RPC surface (UNSUPPORTED_OPERATION when absent).
+            ...(learning ? { learning } : {}),
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)
@@ -1380,8 +1389,13 @@ app.whenReady().then(async () => {
           })
         } catch (err) {
           // Never propagate storage/provider exceptions or enrolled secrets through IPC errors.
-          mainLog.warn('[native-transport] resolve-local-ws-token failed:', err)
-          throw new Error('Local transport credential unavailable or denied')
+          // Surface only the coarse store code so WRITE_BLOCKED and PROVIDER_UNAVAILABLE stay distinguishable.
+          let code = 'UNAVAILABLE'
+          if (err && typeof err === 'object' && 'code' in err && typeof err.code === 'string') {
+            code = err.code
+          }
+          mainLog.warn('[native-transport] resolve-local-ws-token failed:', { code, err })
+          throw new Error(`Local transport credential unavailable or denied (${code})`)
         }
       })
       const projectAuthorityRequests = new Map<number, number>()

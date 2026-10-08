@@ -29,6 +29,7 @@ import {
   mapReduceVisibleSessions,
 } from './collection-map-reduce'
 import { isClaimableLive } from '@rox/core/rox2'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface CollectionBulkBarProps {
   workspaceId: string | null | undefined
@@ -203,7 +204,7 @@ export function CollectionBulkBar({
         await refreshUnknownOperation(operation).catch(() => undefined)
         toast.error(
           t('collection.bulk.failed', {
-            message: error instanceof Error ? error.message : String(error),
+            message: toErrorMessage(error),
           }),
         )
       } finally {
@@ -263,7 +264,7 @@ export function CollectionBulkBar({
     } catch (error) {
       toast.error(
         t('collection.bulk.mapFailed', {
-          message: error instanceof Error ? error.message : String(error),
+          message: toErrorMessage(error),
         }),
       )
     } finally {

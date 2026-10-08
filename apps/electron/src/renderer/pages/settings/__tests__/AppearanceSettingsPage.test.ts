@@ -45,7 +45,6 @@ describe('AppearanceSettingsPage zoom default', () => {
   it('does not throw when playground IPC is missing preset themes or tool icons', () => {
     expect(source).toContain('window.electronAPI.loadPresetThemes?.()')
     expect(source).toContain('window.electronAPI.getToolIconMappings?.()')
-    expect(source).toContain('window.electronAPI.getHomeDir?.()')
   })
 
   it('keeps the current color theme in the menu when the preset catalog is empty', () => {

@@ -40,8 +40,8 @@ test('metrics count milestones separately and deduplicate replay snapshots', () 
 })
 
 describe('real IndexedDB private diagnostics', () => {
-  beforeAll(startLearningBrowserTests)
-  afterAll(stopLearningBrowserTests)
+  beforeAll(startLearningBrowserTests, Math.min(120_000, Math.max(20_000, Number(process.env.ROX_LEARNING_BROWSER_TIMEOUT_MS) || 20_000)))
+  afterAll(stopLearningBrowserTests, Math.min(120_000, Math.max(20_000, Number(process.env.ROX_LEARNING_BROWSER_TIMEOUT_MS) || 20_000)))
 
   test('DATA-08 disabled diagnostics store no events, opt-in enables safe log and disabling clears only log', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async () => {

@@ -63,6 +63,7 @@ import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
 import { registerSkillsPendingHandlers } from './skills-pending'
+import { registerLearningHandlers } from './learning'
 export function cleanupCoreClientResources(clientId: string): void {
   cleanupSessionFileWatchForClient(clientId)
   cleanupNotesWatchForClient(clientId)
@@ -140,6 +141,7 @@ export function registerCoreRpcHandlers(
   registerMemoryIoHandlers(server, deps)
   registerMemoryInsightsHandlers(server, deps)
   registerSkillsPendingHandlers(server, deps)
+  registerLearningHandlers(server, deps)
   registerNotesHandlers(server, deps)
   if (deps.nativeData) registerNativeDataHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)

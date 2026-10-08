@@ -6,16 +6,54 @@
  * overrides (ROX_CONFIG_DIR / CRAFT_CONFIG_DIR) skip auto-migration.
  */
 
-import { existsSync, mkdirSync, cpSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, cpSync, rmSync, writeFileSync, readFileSync, readdirSync, lstatSync, copyFileSync, constants } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import {
   ROX_BRAND_MIGRATION_VERSION,
   ROX_CONFIG_DIR_NAME,
   ROX_LEGACY_CONFIG_DIR_NAME,
+  ROX_VISIBLE_CONFIG_DIR_NAME,
 } from './manifest.ts'
 
 export const ROX_MIGRATION_STAMP_NAME = '.rox-brand-migration.json'
+
+/** Stamp recorded in the visible `~/rox` base after the copy-only import (C3). */
+export const ROX_VISIBLE_MIGRATION_STAMP_NAME = '.rox-visible-base-migration.json'
+
+export type VisibleMigrationOutcome =
+  | 'skipped-env-override'
+  | 'already-migrated'
+  | 'noop'
+  | 'migrated'
+  | 'failed'
+
+export interface VisibleMigrationStamp {
+  version: number
+  source: string
+  destination: string
+  migratedAt: string
+  originalPreserved: true
+  /** `config.json` rootPath references rewritten from the hidden base. */
+  registryRewrites?: number
+  /** Backup of `config.json` taken before rewriting, when rewrites occurred. */
+  registryBackup?: string
+}
+
+export interface VisibleMigrationResult {
+  outcome: VisibleMigrationOutcome
+  sourceDir: string
+  destinationDir: string
+  /** Files copied because they were absent from the destination. */
+  copied: number
+  /** Registry rootPath references rewritten to the visible base. */
+  registryRewrites: number
+  diagnostics: string[]
+}
+
+export function visibleStampPath(visibleDir: string): string {
+  return join(visibleDir, ROX_VISIBLE_MIGRATION_STAMP_NAME)
+}
 
 export type BrandMigrationOutcome =
   | 'clean-install'
@@ -156,6 +194,150 @@ export function runBrandConfigMigration(options?: {
 
   diagnostics.push('branding.migration.craftConfigDeprecated')
   return { outcome: 'legacy-only', configDir: paths.legacyDir, diagnostics }
+}
+
+/**
+ * Copy missing entries from `source` into `destination`, never overwriting an
+ * existing file and never deleting anything. Returns the number copied.
+ */
+function copyMissingTree(source: string, destination: string): number {
+  let copied = 0
+  if (!existsSync(destination)) mkdirSync(destination, { recursive: true })
+  for (const name of readdirSync(source)) {
+    const src = join(source, name)
+    const dst = join(destination, name)
+    const stat = lstatSync(src)
+    if (stat.isDirectory() && !stat.isSymbolicLink()) {
+      copied += copyMissingTree(src, dst)
+    } else if (!existsSync(dst)) {
+      if (stat.isSymbolicLink()) cpSync(src, dst, { dereference: false, errorOnExist: true, force: false })
+      else copyFileSync(src, dst, constants.COPYFILE_EXCL)
+      copied++
+    }
+  }
+  return copied
+}
+
+/**
+ * Rewrite unambiguous `~/.rox/workspaces/<slug>` registry references to the
+ * visible `~/rox/workspaces/<slug>` counterpart, but only when that counterpart
+ * exists. Backs the registry up first. Best-effort: never throws.
+ */
+function reconcileVisibleWorkspaceRegistry(
+  destinationDir: string,
+  homeDir: string,
+  now: string,
+): { rewrites: number; backup?: string } {
+  const configPath = join(destinationDir, 'config.json')
+  if (!existsSync(configPath)) return { rewrites: 0 }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(readFileSync(configPath, 'utf8'))
+  } catch {
+    return { rewrites: 0 }
+  }
+  if (typeof parsed !== 'object' || parsed === null) return { rewrites: 0 }
+  if (!('workspaces' in parsed)) return { rewrites: 0 }
+  const workspaces = parsed.workspaces
+  if (!Array.isArray(workspaces)) return { rewrites: 0 }
+
+  const homeNormalized = homeDir.replace(/\\/g, '/').replace(/\/$/, '')
+  const hiddenPrefixes = [
+    `~/${ROX_CONFIG_DIR_NAME}/workspaces/`,
+    `${homeNormalized}/${ROX_CONFIG_DIR_NAME}/workspaces/`,
+  ]
+  const visiblePrefixes = [
+    `~/${ROX_VISIBLE_CONFIG_DIR_NAME}/workspaces/`,
+    `${homeNormalized}/${ROX_VISIBLE_CONFIG_DIR_NAME}/workspaces/`,
+  ]
+
+  let rewrites = 0
+  for (const workspace of workspaces) {
+    if (typeof workspace !== 'object' || workspace === null) continue
+    if (!('rootPath' in workspace)) continue
+    const rootPath = workspace.rootPath
+    if (typeof rootPath !== 'string') continue
+    const normalized = rootPath.replace(/\\/g, '/')
+    for (let i = 0; i < hiddenPrefixes.length; i++) {
+      const prefix = hiddenPrefixes[i]!
+      if (!normalized.startsWith(prefix)) continue
+      const suffix = normalized.slice(prefix.length)
+      if (!existsSync(join(homeDir, ROX_VISIBLE_CONFIG_DIR_NAME, 'workspaces', suffix))) break
+      workspace.rootPath = visiblePrefixes[i]! + suffix
+      rewrites++
+      break
+    }
+  }
+
+  if (rewrites === 0) return { rewrites: 0 }
+  const backup = `${configPath}.bak-${now.replace(/[:.]/g, '-')}`
+  copyFileSync(configPath, backup, constants.COPYFILE_EXCL)
+  writeFileSync(configPath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8')
+  return { rewrites, backup }
+}
+
+/**
+ * Copy ~/.rox → ~/rox once so the visible product base exists (C3).
+ *
+ * Copy-only: files already present under ~/rox are never overwritten and the
+ * ~/.rox source tree is left untouched. A stamp is written inside ~/rox after
+ * the first pass, making repeated calls no-ops. Skipped entirely when
+ * ROX_CONFIG_DIR / CRAFT_CONFIG_DIR selects an explicit root. Best-effort:
+ * filesystem errors never throw.
+ */
+export function runVisibleConfigMigration(options?: {
+  homeDir?: string
+  env?: NodeJS.ProcessEnv | Record<string, string | undefined>
+  now?: string
+}): VisibleMigrationResult {
+  const env = options?.env ?? process.env
+  const homeDir = options?.homeDir ?? homedir()
+  const sourceDir = join(homeDir, ROX_CONFIG_DIR_NAME)
+  const destinationDir = join(homeDir, ROX_VISIBLE_CONFIG_DIR_NAME)
+  const diagnostics: string[] = []
+
+  if (hasEnvOverride(env)) {
+    diagnostics.push('visible.migration.skipped')
+    return { outcome: 'skipped-env-override', sourceDir, destinationDir, copied: 0, registryRewrites: 0, diagnostics }
+  }
+
+  try {
+    if (!existsSync(sourceDir)) {
+      return { outcome: 'noop', sourceDir, destinationDir, copied: 0, registryRewrites: 0, diagnostics }
+    }
+    if (existsSync(visibleStampPath(destinationDir))) {
+      return { outcome: 'already-migrated', sourceDir, destinationDir, copied: 0, registryRewrites: 0, diagnostics }
+    }
+    // Only reconcile a registry this pass created; a pre-existing destination
+    // config.json belongs to the user and is never rewritten here.
+    const destinationHadConfig = existsSync(join(destinationDir, 'config.json'))
+    const copied = copyMissingTree(sourceDir, destinationDir)
+    const now = options?.now ?? new Date().toISOString()
+    const stamp: VisibleMigrationStamp = {
+      version: ROX_BRAND_MIGRATION_VERSION,
+      source: sourceDir,
+      destination: destinationDir,
+      migratedAt: now,
+      originalPreserved: true,
+    }
+    let registryRewrites = 0
+    if (!destinationHadConfig) {
+      const reconciled = reconcileVisibleWorkspaceRegistry(destinationDir, homeDir, now)
+      registryRewrites = reconciled.rewrites
+      if (reconciled.rewrites > 0) {
+        stamp.registryRewrites = reconciled.rewrites
+        if (reconciled.backup) stamp.registryBackup = reconciled.backup
+        diagnostics.push('visible.migration.registryRewritten')
+      }
+    }
+    mkdirSync(destinationDir, { recursive: true })
+    writeFileSync(visibleStampPath(destinationDir), `${JSON.stringify(stamp, null, 2)}\n`, 'utf8')
+    diagnostics.push('visible.migration.completed')
+    return { outcome: 'migrated', sourceDir, destinationDir, copied, registryRewrites, diagnostics }
+  } catch {
+    diagnostics.push('visible.migration.failed')
+    return { outcome: 'failed', sourceDir, destinationDir, copied: 0, registryRewrites: 0, diagnostics }
+  }
 }
 
 /**

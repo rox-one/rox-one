@@ -12,11 +12,14 @@ import { getServerServiceKey } from '@rox/shared/config/server-services'
 import {
   appendFileSync,
   copyFileSync,
+  closeSync,
   createReadStream,
   createWriteStream,
   existsSync,
+  fsyncSync,
   lstatSync,
   mkdirSync,
+  openSync,
   readFileSync,
   readdirSync,
   renameSync,
@@ -175,8 +178,13 @@ export class LocalMeetingStore {
     mkdirSync(dir, { recursive: true })
     const target = join(dir, 'meeting.json')
     const tmp = `${target}.tmp-${process.pid}`
-    writeFileSync(tmp, `${JSON.stringify(meeting, null, 2)}\n`)
+    const bytes = `${JSON.stringify(meeting, null, 2)}\n`
+    const fd = openSync(tmp, 'w', 0o600)
+    try { writeFileSync(fd, bytes); fsyncSync(fd) } finally { closeSync(fd) }
     renameSync(tmp, target)
+    const directoryFd = openSync(dir, 'r')
+    try { fsyncSync(directoryFd) } finally { closeSync(directoryFd) }
+    if (readFileSync(target, 'utf8') !== bytes) throw new Error('meeting-write-readback-failed')
     this.deps.emit(meeting.id)
     return meeting
   }

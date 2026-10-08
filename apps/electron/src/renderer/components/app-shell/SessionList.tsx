@@ -95,6 +95,7 @@ function hydrateFamilyRows(units: FamilyUnit<SessionMeta>[]): SessionListRow[] {
 /** Grouping mode for chat list (legacy per-view modes; see session-list/list-grouping) */
 export type { ChatGroupingMode } from "./session-list/list-grouping"
 import type { ChatGroupingMode } from "./session-list/list-grouping"
+import { toErrorMessage } from "@/lib/errors"
 
 interface SessionListProps {
   items: SessionMeta[]
@@ -913,7 +914,7 @@ export function SessionList({
         } catch (error) {
           console.error('[SessionList] Failed to move session between groups:', error)
           updateMeta(dragId, previousMetadataPatch)
-          toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+          toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
           return
         }
       }
@@ -968,7 +969,7 @@ export function SessionList({
         }
         console.error('[SessionList] Failed to reorder rank:', error)
         updateMeta(dragId, { rank: previousRank })
-        toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+        toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
       }
     },
     [rankDragEnabled, itemById, groupKeyOf, effectiveGroupingMode, flatRows, items, updateMeta, refreshMetadata, loadedSessionIds, bucketRepresentatives, t],
@@ -1009,7 +1010,7 @@ export function SessionList({
     } catch (error) {
       console.error('[SessionList] Failed to move session into empty group:', error)
       updateMeta(dragId, previousMetadataPatch)
-      toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+      toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
     }
   }, [rankDragEnabled, itemById, effectiveGroupingMode, updateMeta, t])
 

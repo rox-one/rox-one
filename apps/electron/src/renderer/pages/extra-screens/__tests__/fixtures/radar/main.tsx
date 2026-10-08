@@ -67,8 +67,8 @@ function Fixture() {
       if (route.startsWith('radar')) setItemId(route.includes('/item/') ? decodeURIComponent(route.split('/item/')[1]!) : null)
     }
     const change = (event: Event) => { setWorkspace((event as CustomEvent<string>).detail); setItemId(null) }
-    window.addEventListener('craft-agent-navigate', navigate); window.addEventListener('fixture-workspace', change)
-    return () => { window.removeEventListener('craft-agent-navigate', navigate); window.removeEventListener('fixture-workspace', change) }
+    window.addEventListener('rox-navigate', navigate); window.addEventListener('fixture-workspace', change)
+    return () => { window.removeEventListener('rox-navigate', navigate); window.removeEventListener('fixture-workspace', change) }
   }, [])
   const shell = { activeWorkspaceId, workspaces: ['workspace-A', 'workspace-B'].map(id => ({ id, slug: id, name: id, rootPath: '/synthetic/' + id, createdAt: 1 })),
     llmConnections: [], pendingPermissions: new Map(), pendingCredentials: new Map() } as unknown as AppShellContextType

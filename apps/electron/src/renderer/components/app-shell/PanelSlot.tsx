@@ -44,6 +44,8 @@ interface PanelSlotProps {
   proportion: number
   /** Optional sash element rendered before this panel */
   sash?: React.ReactNode
+  /** Optional flush surface stacked under the panel content (terminal panel). */
+  belowContent?: React.ReactNode
   /** Compact (mobile) mode — shows back button in panel header */
   isCompact?: boolean
   /** Layout mode changes keep hidden siblings mounted and inert. */
@@ -59,6 +61,7 @@ export function PanelSlot({
   isSidebarAndNavigatorHidden,
   proportion,
   sash,
+  belowContent,
   isCompact,
   isHidden = false,
   layoutStyle,
@@ -117,8 +120,8 @@ export function PanelSlot({
     leadingAction: backButton,
     isFocusedPanel,
   }), [parentContext, closeButton, backButton, isFocusedPanel, entry.id])
-
   const panelNavigation = navigation && navState ? { ...navigation, navigationState: navState } : navigation
+
 
   const handlePointerDown = useCallback(() => {
     if (!isHidden && !isFocusedPanel) {
@@ -177,23 +180,21 @@ export function PanelSlot({
         }}
       >
         <div className="h-full flex flex-col">
-          <AppShellProvider value={contextOverride}>
-            <NavigationContext.Provider value={panelNavigation}>
-              <ShellSidebarContext.Provider value={entry.tool || (primaryId && primaryId !== entry.id) ? null : sidebarTarget}>
-                <WorkspaceToolContext.Provider value={entry.toolContext ?? null}>
-                  {entry.tool ? (
-                    <AuxiliaryToolPanel entry={entry} onClose={handleClose} />
-                  ) : (
-                    <MainContentPanel
-                      navStateOverride={navState}
-                      isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
-                      panelId={entry.id}
-                    />
-                  )}
-                </WorkspaceToolContext.Provider>
-              </ShellSidebarContext.Provider>
-            </NavigationContext.Provider>
-          </AppShellProvider>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <AppShellProvider value={contextOverride}>
+              <NavigationContext.Provider value={panelNavigation}>
+                <ShellSidebarContext.Provider value={entry.tool || (primaryId && primaryId !== entry.id) ? null : sidebarTarget}>
+                  <WorkspaceToolContext.Provider value={entry.toolContext ?? null}>
+                    {entry.tool ? <AuxiliaryToolPanel entry={entry} onClose={handleClose} /> : (
+                      <MainContentPanel navStateOverride={navState}
+                        isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} panelId={entry.id} />
+                    )}
+                  </WorkspaceToolContext.Provider>
+                </ShellSidebarContext.Provider>
+              </NavigationContext.Provider>
+            </AppShellProvider>
+          </div>
+          {belowContent}
         </div>
       </div>
     </>

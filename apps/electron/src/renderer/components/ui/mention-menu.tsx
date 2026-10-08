@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
+import { toErrorMessage } from '@/lib/errors'
 import { cn } from '@/lib/utils'
 import { FadingText } from '@/components/ui/fading-text'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
@@ -665,7 +666,7 @@ export function useInlineMention({
               setFileResults(filtered)
               setCommittedFilter(filterText)
             } catch (err) {
-              window.electronAPI.debugLog('[mention] IPC searchFiles error:', String(err))
+              window.electronAPI.debugLog('[mention] IPC searchFiles error:', toErrorMessage(err))
             }
           }, 150)
         }

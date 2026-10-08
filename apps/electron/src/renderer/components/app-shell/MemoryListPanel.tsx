@@ -10,6 +10,7 @@ import { MemoryProposalCard } from './MemoryProposalCard'
 import { useNavigation, routes } from '@/contexts/NavigationContext'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { dedupeSimilarLessons } from '@/lib/lesson-dedupe'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface MemoryListPanelProps {
   workspaceId?: string
@@ -219,7 +220,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       }
     } catch (err) {
       toast.error(t('memory.lessonAddFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }
@@ -236,7 +237,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       .then(() => loadLessons())
       .catch((err) => {
         toast.error(t('memory.lessonDeleteFailed'), {
-          description: err instanceof Error ? err.message : String(err),
+          description: toErrorMessage(err),
         })
       })
   }
@@ -253,7 +254,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       loadPromotionCandidates()
     } catch (err) {
       toast.error(t('memory.lessonUpdateFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }
@@ -283,7 +284,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       setEditingRule(null)
     } catch (err) {
       toast.error(t('memory.lessonUpdateFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }
@@ -298,7 +299,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       setConfirmDeleteRule(null)
     } catch (err) {
       toast.error(t('memory.lessonDeleteFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }
@@ -313,7 +314,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       toast.success(t('memory.contextSaved'))
     } catch (err) {
       toast.error(t('memory.contextSaveFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }

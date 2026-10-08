@@ -16,6 +16,7 @@ import type {
   MutationProposal,
   MutationProposalStatus,
 } from '@rox/shared/protocol'
+import { toErrorMessage } from '@/lib/errors'
 
 /** i18next `t` — structurally narrowed to what the toasts consume. */
 export type TranslateFn = (key: string, options?: Record<string, unknown>) => string
@@ -55,7 +56,7 @@ async function runAction<T>(t: TranslateFn, fn: () => Promise<T>): Promise<T | n
     return await fn()
   } catch (error) {
     toast.error(t('knowledge.surface.error'), {
-      description: error instanceof Error ? error.message : String(error),
+      description: toErrorMessage(error),
     })
     return null
   }

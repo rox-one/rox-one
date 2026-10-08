@@ -12,6 +12,7 @@
  */
 import type { LlmConnectionSetup } from '../../../shared/types'
 import type { StartupRuntimeSummary } from '@rox/shared/protocol'
+import { toErrorMessage } from '@/lib/errors'
 
 export const ROX_RUNTIME_PROVIDER = 'omp' as const
 export const ROX_RUNTIME_CONNECTION_NAME = 'Rox'
@@ -93,6 +94,6 @@ export async function ensureRoxRuntimeDefault(api: RoxRuntimeDefaultApi): Promis
       ? { status: 'created', slug }
       : { status: 'failed', error: res.error ?? 'set-default-failed' }
   } catch (error) {
-    return { status: 'failed', error: error instanceof Error ? error.message : String(error) }
+    return { status: 'failed', error: toErrorMessage(error) }
   }
 }

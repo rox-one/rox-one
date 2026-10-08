@@ -57,7 +57,7 @@ import {
 } from '../../shared/route-parser'
 import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
-import { subscribeNavigateEvents, type NavigateEventDetail, type NavigateOptions } from '../lib/navigate'
+import { subscribeNavigateEvents, type NavigateOptions } from '../lib/navigate'
 import { normalizePanelRouteForReconcile, preserveRouteQuery } from './navigation-reconcile'
 import { encodePanelEntries, decodePanelEntries } from '@/lib/panel-url'
 import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
@@ -81,6 +81,7 @@ import {
   isPagesNavigation,
   isBrowserNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
@@ -117,7 +118,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
 
 // =============================================================================
 // Context
@@ -568,7 +569,6 @@ export function NavigationProvider({
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
-      if (initialRoute) requestRuntimeSelection(initialRoute)
 
       // Restore right sidebar
       if (sidebarParam) {
@@ -591,10 +591,6 @@ export function NavigationProvider({
           proportion,
         }))
 
-        // Read-only runtime references must open their map before the stack is
-        // reconciled, including unfocused panels restored on reload.
-        for (const entry of entries) requestRuntimeSelection(entry.route)
-
         const hasUsableProportions = entries.every(e => e.proportion > 0)
         if (!hasUsableProportions) {
           const equal = 1 / entries.length
@@ -615,6 +611,9 @@ export function NavigationProvider({
       }
 
       if (entries.length > 0) {
+        // Restore read-only map references for every actual panel, including
+        // unfocused panels and layouts published without a separate ?route=.
+        for (const entry of entries) requestRuntimeSelection(entry.route)
         const validTools: AuxiliaryTool[] = ['agent', 'tasks', 'automations', 'memory']
         const assignedTools = new Set<AuxiliaryTool>()
         const contexts = workspaceId ? decodeToolContexts(params.get('toolContexts'), workspaceId) : []
@@ -638,7 +637,7 @@ export function NavigationProvider({
         store.set(primaryPanelIdAtom, primary?.id ?? null)
       }
     },
-    [store, requestRuntimeSelection]
+    [store, requestRuntimeSelection, workspaceId]
   )
 
   // Keep ref fresh for use in event handlers / effects that capture stale closures
@@ -1409,13 +1408,7 @@ export function NavigationProvider({
   // =========================================================================
 
   useEffect(() => {
-    const handleNavigateEvent = (route: Route, options: NavigateEventDetail) => {
-      if (options?.route) {
-        navigate(route, options.newPanel ? { newPanel: options.newPanel, targetLaneId: options.targetLaneId } : undefined)
-      }
-    }
-
-    return subscribeNavigateEvents(handleNavigateEvent)
+    return subscribeNavigateEvents(navigate)
   }, [navigate])
 
   // =========================================================================

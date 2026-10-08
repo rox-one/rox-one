@@ -977,7 +977,7 @@ export function LocalMeetingDetail(props: {
               }}>{t('meetings.local.toTask')}</Button>
             )}
             <Button variant="ghost" aria-label={t('meetings.local.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => void saveAction(a.id, undefined, true)}>×</Button>
-            {taskChoice?.actionId === a.id && <form className="basis-full space-y-2 rounded-[var(--radius-control)] border border-border/60 p-3" data-testid="meeting-task-choice" onSubmit={event => { event.preventDefault(); void confirmActionTask() }}>
+            {taskChoice?.actionId === a.id && <form className="basis-full space-y-2 rounded-[6px] border border-border/60 p-3" data-testid="meeting-task-choice" onSubmit={event => { event.preventDefault(); void confirmActionTask() }}>
               <p className="text-[12px] text-text-muted">{t('navigation.meetingTask.hint')}</p>
               <label className="flex flex-col gap-1 text-[12px]">{t('navigation.meetingTask.scope')}<select className={input} value={taskChoice.scope} disabled={taskChoice.pending || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, scope: event.target.value as 'personal' | 'workspace', error: undefined })}>
                 <option value="personal">{t('navigation.taskScopes.personal')}</option><option value="workspace" disabled={!workspaceId || m.workspaceId !== workspaceId}>{t('navigation.taskScopes.workspace')}</option>

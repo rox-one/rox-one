@@ -7,8 +7,7 @@
 import { saveTaskSpec, type TaskSpec } from '@rox/shared/tasks'
 import { createLogger } from '@rox/shared/utils'
 import type { ISessionManager } from '../handlers/session-manager-interface'
-import { assertProfileSources, assertProfileSkills } from '@rox/shared/workspace-work'
-import type { AgentProfileSnapshot } from '@rox/shared/workspace-work'
+import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
 
 const log = createLogger('tasks-create')
 

@@ -19,6 +19,7 @@ import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import { assertNativeSession, assertNativeWorkspace, nativeAnnotation, nativeSession } from './native-session-scope'
 import { awardNativeXpAndBroadcast } from './gamification'
 import { workspaceWorkContext } from './workspace-work'
+
 import type { RequestContext } from '../../transport/types'
 import type { NativeMemoryContext } from '../../memory/MemoryService'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
@@ -322,7 +323,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // The renderer adds the session synchronously from this return value (App.tsx handleCreateSession),
     // so suppress the broadcast to avoid a redundant hydrate round-trip.
     const session = await sessionManager.createSession(workspaceId, options, { emitCreatedEvent: false,
-      nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId), agentProfileSnapshot: capturedProfile })
+      agentProfileSnapshot: capturedProfile,
+      nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId) })
     end()
     return ctx.principal ? nativeSession(session) : session
   }, { nativeAction: 'write' })
@@ -362,12 +364,12 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
     // Capture the caller's clientId for error routing
     const callerClientId = ctx.clientId
-    const cloudCaller = ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
-    const roxExecutionContext = await peekRoxAccountAuthority()?.capture(cloudCaller)
     // Native options were stripped above. Invalid producer telemetry cannot turn
     // a generated dispatch into the exception for the user's original input.
     const runtimeLaunch = options?.runtimeLaunch === undefined ? undefined
       : isRuntimeLaunch(options.runtimeLaunch) ? options.runtimeLaunch : { kind: 'unknown' as const }
+    const cloudCaller = ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
+    const roxExecutionContext = await peekRoxAccountAuthority()?.capture(cloudCaller)
 
     return await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
       let acked = false
@@ -963,9 +965,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   // Import a summarized remote-transfer payload into a target workspace.
-  server.handle(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER, async (_ctx, targetWorkspaceId: string, payload: import('@rox/shared/protocol').RemoteSessionTransferPayload) => {
+  server.handle(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER, async (ctx, targetWorkspaceId: string, payload: import('@rox/shared/protocol').RemoteSessionTransferPayload) => {
     await sessionManager.waitForInit()
     if (!targetWorkspaceId || typeof targetWorkspaceId !== 'string') throw new Error('targetWorkspaceId is required')
+    assertNativeWorkspace(ctx, deps, targetWorkspaceId)
+    if (ctx.principal) {
+      const { service, actor } = workspaceWorkContext(ctx, targetWorkspaceId, deps, server)
+      actor.assertCurrent('write')
+      service.snapshotProfile(actor)
+    }
     return sessionManager.importRemoteSessionTransfer(targetWorkspaceId, payload)
   })
 }

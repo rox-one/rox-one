@@ -29,6 +29,7 @@ import {
   serializeNotesAiPrompts,
 } from '../notes/note-ai'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -58,7 +59,7 @@ const ENGINE_MODE_LABEL_KEYS: Record<string, string> = {
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
+  return toErrorMessage(error)
 }
 
 export default function KnowledgeSettingsPage() {

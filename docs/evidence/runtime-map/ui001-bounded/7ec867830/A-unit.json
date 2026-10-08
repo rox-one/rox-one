@@ -1,0 +1,20 @@
+{
+  "label": "A-unit",
+  "command": [
+    "/workspace/scratch/d0a9c1c6c094/tooling/node_modules/@oven/bun-linux-x64/bin/bun",
+    "test",
+    "--timeout",
+    "30000",
+    "./apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+    "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
+    "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts"
+  ],
+  "cwd": "/workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification",
+  "startedUtc": "2026-10-03T22:37:33.753225+00:00",
+  "elapsedSeconds": 1.926,
+  "exitCode": 0,
+  "timedOut": false,
+  "timeoutSeconds": 90,
+  "environment": {},
+  "log": "A-unit.log"
+}

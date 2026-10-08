@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { navigate, routes } from '@/lib/navigate'
 import { MemoryScreen } from '../memory/MemoryScreen'
+import { LearningScreen } from '../learning/LearningScreen'
 import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
@@ -28,6 +29,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
@@ -505,6 +507,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <MemoryScreen workspaceId={activeWorkspaceId ?? undefined} />
+      </Panel>
+    )
+  }
+
+  if (isLearningNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <LearningScreen workspaceId={activeWorkspaceId ?? undefined} />
       </Panel>
     )
   }

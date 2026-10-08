@@ -669,11 +669,14 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
 /**
  * Helper to render icon - either component (function/forwardRef) or React element.
  * Colors are always applied via inline style (resolved CSS color strings from EntityColor).
+ *
+ * A1: the seven primary mode links (nav:home/allSessions/meetings/tasks/notes/feed/inbox)
+ * are intentionally absent here — they render in the single default gray via `defaultColor`.
  */
 const SIDEBAR_ICON_COLORS: Record<string, string> = {
-  'nav:allSessions': '#818cf8', 'nav:projects': '#eab308', 'nav:pages': '#38bdf8',
-  'nav:tasks': '#34d399', 'nav:memory': '#a78bfa', 'nav:meetings': '#fb7185',
-  'nav:sources': '#22d3ee', 'nav:skills': '#fbbf24', 'nav:notes': '#c084fc',
+  'nav:projects': '#eab308', 'nav:pages': '#38bdf8',
+  'nav:memory': '#a78bfa',
+  'nav:sources': '#22d3ee', 'nav:skills': '#fbbf24',
   'nav:automations': '#f97316', 'nav:connections': '#2dd4bf', 'nav:labels': '#f472b6',
   'nav:flagged': '#fbbf24', 'nav:archived': '#94a3b8',
 }

@@ -26,7 +26,7 @@ describe('ROX2-041..043 native settings pages', () => {
   test('account, privacy, and runtime stay in SETTINGS_PAGES without Conation flags', () => {
     expect(SETTINGS_HUB_REQUIRES_CONATION_FLAG).toBe(false)
     const ids = SETTINGS_PAGES.map((page) => page.id)
-    expect(ids.slice(0, 3)).toEqual([...ROX2_SETTINGS_PAGE_IDS])
+    expect(ids.slice(1, 4)).toEqual([...ROX2_SETTINGS_PAGE_IDS])
     expect(bindSettingsHubContext('ws-1', 'account').surfaceId).toBe('settings:account')
     expect(bindSettingsHubContext('ws-1', 'privacy', 'ask').permissionMode).toBe('ask')
   })

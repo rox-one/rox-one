@@ -1,0 +1,41 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts:
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > wires isTerminalNavigation / isCloudRunNavigation to dedicated surface pages [4.48ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > dispatches selected and empty terminal/cloud-run addresses to their own hosts [302.69ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > leaves browser/extension hosts intact [0.28ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > preserves a selected terminal as unavailable and opens the existing dock only on the explicit action [10.15ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > terminal preserves unsupported IDs on unavailable surface with an explicit dock path [0.07ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > cloud-run host loads run status or honest unavailable + settings path [0.05ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > English and Russian locales keep distinct surface copy [16.84ms]
+(pass) MainContentPanel terminal + cloud-run hosts (#571) > all 12 locales define the wired surface keys [72.70ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches allSessions/session/session-one with its own selected entity [15.35ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches sources/source/source-one with its own selected entity [5.30ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches skills/skill/skill-one with its own selected entity [1.05ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches projects/project/project-one with its own selected entity [1.72ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches notes/note/note-one with its own selected entity [1.14ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches pages/page/page-one with its own selected entity [1.00ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches knowledge/document/knowledge-one with its own selected entity [1.27ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches extension/extension-one/view-one with its own selected entity [1.02ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches terminal/terminal-one with its own selected entity [1.09ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches cloud-run/run-one with its own selected entity [1.23ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches dossier/item/item-one with its own selected entity [1.04ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches radar/item/item-one with its own selected entity [3.54ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches decisions/item/item-one with its own selected entity [0.92ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches agents/item/item-one with its own selected entity [0.57ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches focus/item/item-one with its own selected entity [0.46ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > renders an explicit unavailable state for an unsupported navigation state [0.76ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts:
+(pass) UI-001 service selection over unavailable workspace — actual composed callbacks > a valid map address selects the existing scope without changing runtime evidence or panel history [144.88ms]
+(pass) UI-001 service selection over unavailable workspace — actual composed callbacks > explicit Notes service recovers an unavailable workspace (already focused retained panel) [136.63ms]
+(pass) UI-001 service selection over unavailable workspace — actual composed callbacks > explicit Notes service recovers an unavailable workspace (focus another retained panel) [119.41ms]
+(pass) UI-001 service selection over unavailable workspace — actual composed callbacks > negative control: direct production navigate performs workspace recovery and actual syncUrl persists it [86.38ms]
+(pass) UI-001 service selection over unavailable workspace — actual composed callbacks > the actual service hook refreshes its callback when a valid workspace becomes unavailable [174.13ms]
+
+ 29 pass
+ 0 fail
+ 232 expect() calls
+Ran 29 tests across 3 files. [1.73s]

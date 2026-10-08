@@ -7,7 +7,7 @@ const appShell = readFileSync(join(import.meta.dir, '../AppShell.tsx'), 'utf8')
 const panelStack = readFileSync(join(import.meta.dir, '../PanelStackContainer.tsx'), 'utf8')
 
 describe('sash terminal clearance', () => {
-  it('stops resize sashes from drawing through the top bar gap and bottom terminal', () => {
+  it('keeps resize sashes flush with the flat stack instead of clearing a bottom dock', () => {
     // Flat shell: stack and resize sashes share the same zero top inset.
     expect(PANEL_STACK_TOP_INSET).toBe(PANEL_GAP)
     expect(PANEL_STACK_TOP_INSET).toBe(0)
@@ -15,11 +15,11 @@ describe('sash terminal clearance', () => {
     expect(PANEL_STACK_VERTICAL_OVERFLOW).toBe(0)
 
 
-    expect(appShell).toContain('bottomTerminalOpenAtom')
-    expect(appShell).toContain('bottomDockHeightAtom')
-    expect(appShell).toContain(
-      'const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4',
-    )
+    // The terminal is a panel-cell surface, so the absolute rail sashes keep
+    // the flat zero-inset seam and no longer shorten for a bottom dock.
+    expect(appShell).not.toContain('bottomDockHeightAtom')
+    expect(appShell).not.toContain('bottomTerminalOpen')
+    expect(appShell).toContain('const terminalClearance = PANEL_EDGE_INSET + 4')
     expect(appShell).toContain('top: PANEL_STACK_TOP_INSET')
     expect(appShell).toContain('bottom: terminalClearance')
     expect(appShell).not.toMatch(/bottom:\s*PANEL_STACK_VERTICAL_OVERFLOW/)

@@ -1,0 +1,17 @@
+{
+  "label": "bundle-main",
+  "command": [
+    "/workspace/scratch/d0a9c1c6c094/tooling/node_modules/@oven/bun-linux-x64/bin/bun",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.bundle-fixture.ts",
+    "main",
+    "/workspace/scratch/d0a9c1c6c094/ui001-bounded-f6dda1fd1/main-fixture.js"
+  ],
+  "cwd": "/workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification",
+  "startedUtc": "2026-10-03T22:45:29.239707+00:00",
+  "elapsedSeconds": 0.933,
+  "exitCode": 0,
+  "timedOut": false,
+  "timeoutSeconds": 90,
+  "environment": {},
+  "log": "bundle-main.log"
+}

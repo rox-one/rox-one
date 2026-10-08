@@ -2,11 +2,12 @@ import * as React from 'react'
 import { Globe } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import BrowserPanelPage from '@/pages/BrowserPanelPage'
-import { INTERNAL_BROWSER_OPEN_EVENT, planRetainedBrowserOpen } from '@rox/shared/browser/retained-pane'
+import { INTERNAL_BROWSER_OPEN_EVENT, planRetainedBrowserOpen, ROX_BROWSER_COOKIE_IMPORT_PARTITION } from '@rox/shared/browser/retained-pane'
 import { takePendingInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 import type { BrowserCookieAutoStatus } from '../../../shared/types'
 import { createNativeSurfaceLifetime } from '@/lib/native-surface-owners'
 import { releaseNativeSurface } from '@/lib/native-surface-dom'
+import { toErrorMessage } from '@/lib/errors'
 
 /** Embedded BrowserView hosted in the inspector column. */
 export function InspectorBrowserPane() {
@@ -47,6 +48,26 @@ export function InspectorBrowserPane() {
       const generation = ++requestGeneration
       try {
         if (useImportedCookies && cookieStatus?.consent) {
+          // Cookie isolation is fixed when an instance is created, so a pane made
+          // without the import partition can never gain it by navigation. A
+          // retained pane that already carries the partition is reused as-is;
+          // any other retained pane is dropped and recreated with imported cookies.
+          const previous = createdImportedRef.current
+          createdImportedRef.current = null
+          if (previous) await window.electronAPI.browserPane.destroy(previous).catch(() => undefined)
+          const existing = await window.electronAPI.browserPane.list()
+          if (cancelled || generation !== requestGeneration) return
+          const plan = planRetainedBrowserOpen(existing, url)
+          if (plan.action === 'navigate' && existing.find((item) => item.id === plan.id)?.partition === ROX_BROWSER_COOKIE_IMPORT_PARTITION) {
+            if (!claim(plan.id, generation)) return
+            setInstanceId(plan.id)
+            setError(null)
+            if (plan.url) await window.electronAPI.browserPane.navigate(plan.id, plan.url)
+            return
+          }
+          if (plan.action === 'navigate') {
+            await window.electronAPI.browserPane.destroy(plan.id).catch(() => undefined)
+          }
           const id = await window.electronAPI.browserPane.createEmbedded({ url, useImportedCookies: true })
           if (!claim(id, generation)) {
             // This cookie-isolated instance was created only for the superseded request.
@@ -73,7 +94,7 @@ export function InspectorBrowserPane() {
         setError(null)
         if (plan.action === 'navigate' && plan.url) await window.electronAPI.browserPane.navigate(id, plan.url)
       } catch (err) {
-        if (!cancelled && generation === requestGeneration) setError(err instanceof Error ? err.message : String(err))
+        if (!cancelled && generation === requestGeneration) setError(toErrorMessage(err))
       }
     }
     void attach(takePendingInternalBrowserUrl())

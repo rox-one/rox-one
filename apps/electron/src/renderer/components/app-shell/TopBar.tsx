@@ -60,7 +60,6 @@ import { WORKBENCH_FLAG } from "@rox/core/platform"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
 const RIGHT_SLOT_TWO_BADGES_THRESHOLD = 300
-
 const bundledRoxLogo = new URL('../../assets/rox-logo.svg', import.meta.url).href
 
 interface TopBarProps {

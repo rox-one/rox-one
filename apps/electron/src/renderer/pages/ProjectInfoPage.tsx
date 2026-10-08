@@ -47,6 +47,7 @@ import { useTourSignals } from '@/features/product-tour/runtime/hooks'
 import { measureTargetGeometry } from '@/features/product-tour/ui/geometry'
 import { observeTargetGeometry } from '@/features/product-tour/ui/geometry-observer'
 import { deriveProjectSignals } from '@/features/product-tour/adapters/work/tasks-projects'
+import { toErrorMessage } from '@/lib/errors'
 
 interface ProjectInfoPageProps {
   projectSlug: string
@@ -158,7 +159,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
         : document.cycles[0]?.id ?? '')
     } catch (err) {
       console.error('[ProjectInfoPage] Failed to load project OKRs:', err)
-      setOkrError(err instanceof Error ? err.message : String(err))
+      setOkrError(toErrorMessage(err))
     } finally {
       setOkrLoading(false)
     }

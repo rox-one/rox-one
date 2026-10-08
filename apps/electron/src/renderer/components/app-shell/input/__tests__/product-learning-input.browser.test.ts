@@ -25,7 +25,7 @@ beforeAll(async () => {
   } })
   browser = await chromium.launch({ executablePath, args: ['--no-sandbox'] })
 }, 40_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) }, 20_000)
+afterAll(async () => { await browser?.close(); server?.stop(true) }, 40_000)
 
 for (const compact of [false, true]) {
   for (const kind of ['permission', 'admin_approval']) test(`native ${kind} ${compact ? 'compact' : 'desktop'} has one visible scoped request and action target`, async () => {

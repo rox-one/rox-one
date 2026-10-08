@@ -9,10 +9,8 @@ import {
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
   inspectorChromeCollapsedAtom,
-  inspectorSectionAtom,
   inspectorVisibleAtom,
 } from '@/atoms/unified-shell'
-import { BottomTerminalDock } from '@/components/session-inspector/BottomTerminalDock'
 import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
 import { useInspectorSuppressed } from './inspector-suppression'
@@ -21,10 +19,7 @@ import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchAvailability } from './workbench-rollout'
 import { resolveWorkbenchChrome } from './workbench-chrome'
 import { RetainedSurface } from './RetainedSurface'
-import { resolveWorkspaceSurfaceLayout } from './workspace-surface-layout'
 import { useEdgeRevealPanel } from '@/hooks/useEdgeRevealPanel'
-import { panelStackAtom } from '@/atoms/panel-stack'
-import { isWebUI } from '@/lib/platform'
 
 export interface WorkspaceSurfaceHostProps {
   children: ReactNode
@@ -33,12 +28,6 @@ export interface WorkspaceSurfaceHostProps {
   userPreference?: unknown
   /** AppShell supplies the single primary sidebar with contextual navigation. */
   ownsPrimaryNavigation?: boolean
-  /** AppShell collapsed to the compact layout, so the rail yields to the sidebar. */
-  isCompact?: boolean
-  /** The session catalog alone owns the workspace column, so generic tabs stay hidden. */
-  catalogOnly?: boolean
-  /** Explicit rail action for the browser surface when AppShell owns the window opener. */
-  onOpenBrowser?: () => void
 }
 
 export function WorkspaceSurfaceHost({
@@ -46,16 +35,13 @@ export function WorkspaceSurfaceHost({
   operatorCapability,
   userPreference,
   ownsPrimaryNavigation = false,
-  isCompact = false,
-  catalogOnly = false,
-  onOpenBrowser,
 }: WorkspaceSurfaceHostProps) {
   const persistedPreference = useAtomValue(featureWorkbenchAtom)
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
   const topChrome = useAtomValue(featureWorkbenchTopChromeV2Atom)
   const tabGroups = useAtomValue(featureWorkbenchTabGroupsV2Atom)
   const browserSurface = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
-  const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
+  const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const chromeCollapsed = useAtomValue(inspectorChromeCollapsedAtom)
   const inspectorSuppressed = useInspectorSuppressed()
@@ -74,33 +60,18 @@ export function WorkspaceSurfaceHost({
     tabGroups: granularChrome && tabGroups,
     browserSurface: granularChrome && browserSurface,
     statusBar: false,
-    harnessInspector: granularChrome && harnessInspector,
+    // The harness inspector dock is its own flag (default ON): the right rail,
+    // the closed-by-default panel and edge hover-reveal must work without the
+    // Workbench preference (TZ: «панель-вкладки-инспектор» включена по дефолту).
+    harnessInspector: harnessInspectorEnabled,
   })
-  const panels = useAtomValue(panelStackAtom)
-  const inspectorSection = useAtomValue(inspectorSectionAtom)
-  // Layout availability (compact / catalog-only) stays separate from stored flags:
-  // the resolver decides which surfaces exist, the chrome flags decide rollout, and
-  // AppShell ownership decides whether the primary rail would be duplicated.
-  const layout = resolveWorkspaceSurfaceLayout({
-    isCompact,
-    panelCount: panels.length,
-    catalogOnly,
-    chrome,
-    browser: {
-      isWebUI,
-      visible: inspectorVisible,
-      chromeCollapsed,
-      section: inspectorSection,
-    },
-  })
-  const inspectorSurfaceVisible =
-    !inspectorSuppressed && (layout.showInspector || inspectorVisible || chromeCollapsed)
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 items-stretch">
-      {layout.showServiceRail && chrome.showRail && !ownsPrimaryNavigation && (
+      {/* Edge zones must sit above the panel stack (--z-panel: 50) so hover-reveal hits on every route; below --z-dropdown: 100. */}
+      {chrome.showRail && !ownsPrimaryNavigation && (
         <div
-          className="absolute left-0 top-0 bottom-0 z-50"
+          className="absolute left-0 top-0 bottom-0 z-[60]"
           style={{ width: edgeReveal.edgeZonePx }}
           onPointerEnter={() => setActivityRailCollapsed(false)}
           data-testid="activity-rail-edge-zone"
@@ -108,31 +79,23 @@ export function WorkspaceSurfaceHost({
         />
       )}
       <div
-        className="absolute right-0 top-0 bottom-0 z-50"
+        className="absolute right-0 top-0 bottom-0 z-[60]"
         style={{ width: edgeReveal.edgeZonePx }}
         onPointerEnter={edgeReveal.onEdgePointerEnter}
         onPointerLeave={edgeReveal.onEdgePointerLeave}
         data-testid="inspector-edge-zone"
         aria-hidden
       />
-      {layout.showServiceRail && chrome.showRail && !ownsPrimaryNavigation && (
-        <ActivityRail onOpenBrowser={onOpenBrowser} />
-      )}
+      {chrome.showRail && !ownsPrimaryNavigation && <ActivityRail />}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        {layout.showTabs && <SurfaceTabs />}
-        {/* min-h-0 + flex-1 so chat yields height when the bottom terminal docks. */}
+        {chrome.showSurfaceTabs && <SurfaceTabs />}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
-        <RetainedSurface visible={layout.showAuxiliaryPanels}>
-          <BottomTerminalDock />
-          <PanelHost slot="bottom" className="border-t border-foreground/5" />
-        </RetainedSurface>
+        <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
-      <RetainedSurface visible={inspectorSurfaceVisible}>
+      <RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>
         <InspectorHost />
       </RetainedSurface>
-      <RetainedSurface visible={layout.showAuxiliaryPanels}>
-        <PanelHost slot="inspector" />
-      </RetainedSurface>
+      <PanelHost slot="inspector" />
     </div>
   )
 }

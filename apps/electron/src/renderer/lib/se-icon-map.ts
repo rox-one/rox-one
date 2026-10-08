@@ -27,6 +27,7 @@ export const SE_MONOCHROME_NAV_IDS: Record<AppNavDestinationId, true> = {
   home: true,
   knowledge: true,
   settings: true,
+  learning: true,
 }
 
 export function seRailIconProps(icon: LucideIcon): { icon: LucideIcon; iconColorable: false } {

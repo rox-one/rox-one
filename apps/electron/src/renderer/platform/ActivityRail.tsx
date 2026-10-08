@@ -2,13 +2,13 @@
  * ActivityRail (W1 unified shell, spec S-03 §3.1/§3.2) — vertical navigation
  * rail for top-level destinations (design-compact density).
  *
- * The destinations list mirrors AppShell's `links[]` via the shared
- * `APP_NAV_DESTINATIONS` config (no divergent copy); navigation goes through
- * NavigationContext's `navigate()` (the URL stays the source of truth).
- * Wave-gated destinations (`route: null`) render disabled-with-tooltip unless
- * they carry an `action` (the browser reuses the existing native/WebUI opener
- * instead of inventing a route); Knowledge navigates since W2 (flag-off state
- * lives in the surface).
+ * The rail is the seven core modes (A1/TZ) — the same set AppShell's sidebar
+ * renders: Дом, Сессии, Встречи, Задачи, Заметки, Лента, Входящие. The list and
+ * the active-state predicates come from `CORE_MODES` + `resolveSeededModes`
+ * (the seed the titlebar ModeBar consumes), so there is no divergent copy;
+ * navigation goes through NavigationContext's `navigate()` (the URL stays the
+ * source of truth). Mode-screen-flag-gated modes (`rootRoute: null`) render
+ * disabled-with-tooltip. Extra screens continue the list below the modes.
  *
  * Two states, persisted via `activityRailCollapsedAtom`
  * (KEYS.activityRailCollapsed):
@@ -19,21 +19,20 @@
  * the two-key Workbench rollout is enabled, so there is no flag check here.
  */
 import { useSyncExternalStore, type ReactNode } from 'react'
-import { useAtom, useSetAtom } from 'jotai'
-import { ChevronsLeft, ChevronsRight, Settings } from 'lucide-react'
+import { useAtom, useAtomValue } from 'jotai'
+import { ChevronsLeft, ChevronsRight, Inbox, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { isModeNavigable, type ModeContribution } from '@rox/core/platform'
 import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom } from '@/atoms/unified-shell'
+import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
-import {
-  APP_NAV_DESTINATIONS,
-  type AppNavDestination,
-} from '../components/app-shell/nav-destinations'
-import { focusServicePanelAtom } from '../components/app-shell/service-navigation'
 import { CHROME_DENSITY } from './chrome-density'
+import { MODE_ICONS } from './ModeBar'
+import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
-import { routes } from '../../shared/routes'
+import { routes, type Route } from '../../shared/routes'
 
 export { RailRow } from './RailRow'
 
@@ -91,47 +90,29 @@ export function useEffectiveRailCollapsed(): {
   return { collapsed, toggle }
 }
 
-export interface ActivityRailProps {
-  /** Reuses the existing native inspector or WebUI browser workflow. */
-  onOpenBrowser?: () => void
-}
+const seedById: Record<string, SeededMode> = Object.fromEntries(
+  CORE_MODES.map((mode) => [mode.contribution.id, mode]),
+)
 
-function RailItem({
-  dest,
-  collapsed,
-  onOpenBrowser,
-}: {
-  dest: AppNavDestination
-  collapsed: boolean
-  onOpenBrowser?: () => void
-}) {
+function RailModeItem({ mode, active, collapsed }: { mode: ModeContribution; active: boolean; collapsed: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const navState = useNavigationState()
-  const focusServicePanel = useSetAtom(focusServicePanelAtom)
-  const label = t(dest.labelKey)
-  // `route: null` disables a destination only when it has no action to run.
-  const disabled = dest.route === null && !dest.action
+  const Icon = MODE_ICONS[mode.icon] ?? Inbox
+  const label = t(mode.titleKey)
+  const disabled = !isModeNavigable(mode)
   return (
     <RailRow
-      icon={dest.icon}
+      icon={Icon}
       label={label}
-      tooltip={disabled && dest.disabledTooltipKey ? t(dest.disabledTooltipKey) : label}
+      tooltip={disabled ? `${label} · ${t('workbench.mode.unavailable')}` : label}
       collapsed={collapsed}
       disabled={disabled}
-      active={!disabled && dest.isActive(navState)}
+      active={!disabled && active}
       onClick={() => {
-        // Focus an already-open service panel before opening a second copy.
-        if (focusServicePanel(dest.id)) return
-        if (dest.action === 'open-browser') {
-          if (onOpenBrowser) onOpenBrowser()
-          else window.dispatchEvent(new CustomEvent('craft:open-vps-browser'))
-          return
-        }
-        if (dest.route) void navigate(dest.route())
+        if (mode.rootRoute) void navigate(mode.rootRoute as Route)
       }}
       muted
-      testId={`rail-item-${dest.id}`}
+      testId={`rail-item-${mode.id}`}
     />
   )
 }
@@ -142,11 +123,18 @@ function RailSection({ collapsed, children }: { collapsed: boolean; children: Re
   )
 }
 
-export function ActivityRail({ onOpenBrowser }: ActivityRailProps = {}) {
+export function ActivityRail() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { collapsed, toggle } = useEffectiveRailCollapsed()
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
+  const navState = useNavigationState()
+  const modeFlags = useAtomValue(modeScreenFlagsAtom)
+  const modes = resolveSeededModes(
+    CORE_MODES.map((mode) => mode.contribution),
+    modeFlags,
+  )
+  const activeId = modes.find((mode) => seedById[mode.id]?.isActive(navState))?.id ?? null
 
   return (
     <nav
@@ -160,8 +148,8 @@ export function ActivityRail({ onOpenBrowser }: ActivityRailProps = {}) {
       data-rail-state={collapsed ? 'collapsed' : 'expanded'}
     >
       <RailSection collapsed={collapsed}>
-        {APP_NAV_DESTINATIONS.map((dest) => (
-          <RailItem key={dest.id} dest={dest} collapsed={collapsed} onOpenBrowser={onOpenBrowser} />
+        {modes.map((mode) => (
+          <RailModeItem key={mode.id} mode={mode} active={mode.id === activeId} collapsed={collapsed} />
         ))}
       </RailSection>
       <ExtraScreensRailGroup collapsed={collapsed} />

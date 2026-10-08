@@ -144,7 +144,7 @@ export class CredentialManager {
     if (repair.status === 'ok') return 'ok';
     try {
       const restored = await backend.restoreFromBackup();
-      return restored ? 'restored' : 'unavailable';
+      return restored === true ? 'restored' : 'unavailable';
     } catch {
       return 'unavailable';
     }

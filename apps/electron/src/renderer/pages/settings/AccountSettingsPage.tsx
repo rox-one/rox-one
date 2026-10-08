@@ -38,6 +38,7 @@ import {
   type Profile,
   type ProfilePlan,
 } from '../../../shared/types'
+import roxLogo from '@/assets/rox-logo.png'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
 /**
@@ -46,16 +47,15 @@ import { settingsPageActionResult } from './settings-rox2-surface'
  */
 const SHOW_PLAN_PICKER = false
 import type { XpEventType } from '@rox/shared/gamification'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
   slug: 'account',
 }
 
-const bundledDefaultAvatar = new URL(
-  '../../../../resources/default-avatar.svg',
-  import.meta.url,
-).href
+// Brand fallback: the Rox mark (same source as the app symbol).
+const bundledDefaultAvatar = roxLogo
 
 const XP_EVENT_KEYS: Record<XpEventType, string> = {
   session_completed: 'settings.account.event.sessionCompleted',
@@ -83,7 +83,7 @@ type GamificationSnapshot = {
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
+  return toErrorMessage(error)
 }
 
 function formatBalance(balance: number | null, t: (key: string, opts?: Record<string, unknown>) => string): string {

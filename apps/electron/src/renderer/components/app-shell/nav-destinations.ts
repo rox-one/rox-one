@@ -25,6 +25,7 @@ import {
   DatabaseZap,
   FolderKanban,
   Globe,
+  GraduationCap,
   House,
   ListTodo,
   MessageSquare,
@@ -45,6 +46,7 @@ import {
   isKnowledgeNavigation,
   isNotesNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isPagesNavigation,
@@ -62,6 +64,7 @@ export type AppNavDestinationId =
   | 'sources'
   | 'skills'
   | 'memory'
+  | 'learning'
   | 'browser'
   | 'tasks'
   | 'meetings'
@@ -186,6 +189,16 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     contextLinkIds: ['nav:tasks'],
     route: () => routes.view.tasks(),
     isActive: isTasksNavigation,
+  },
+  {
+    id: 'learning',
+    linkId: 'nav:learning',
+    icon: GraduationCap,
+    labelKey: 'sidebar.learning',
+    railGroup: 'more',
+    contextLinkIds: ['nav:learning'],
+    route: () => routes.view.learning(),
+    isActive: isLearningNavigation,
   },
   {
     id: 'meetings',

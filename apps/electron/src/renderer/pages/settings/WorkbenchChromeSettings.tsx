@@ -3,6 +3,7 @@
  * via jotai. Granular experimental flags default ON (P35-08); the unified-shell
  * master stays off. Conation flags stay off.
  */
+import { useState } from 'react'
 import { useAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import {
@@ -18,9 +19,12 @@ import {
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
 } from '@/atoms/unified-shell'
-import { HARNESS_SKIP_LIST } from '@rox/core/platform'
+import { HARNESS_SKIP_LIST, type HarnessSkipId } from '@rox/core/platform'
+import { navigate, routes } from '@/lib/navigate'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { ExtraScreensSettings } from './ExtraScreensSettings'
 
 function ModeScreenToggle({ id }: { id: ModeScreenId }) {
@@ -33,6 +37,76 @@ function ModeScreenToggle({ id }: { id: ModeScreenId }) {
       checked={enabled}
       onCheckedChange={setEnabled}
     />
+  )
+}
+
+/**
+ * Where the first-party replacement for a skipped runtime lives, when it is a
+ * concrete surface. Rows with a target get an "open" button in the dialog.
+ */
+const HARNESS_SKIP_TARGETS: Partial<Record<HarnessSkipId, () => void>> = {
+  sessionBuddy: () => navigate(routes.view.settings('app')),
+  agentTeamsRuntime: () => navigate(routes.view.settings('appearance')),
+  visionCliPlugin: () => navigate(routes.view.settings('ai')),
+  searchCliPlugin: () => navigate(routes.view.settings('workspace')),
+  extraAutomationRuntime: () => navigate(routes.view.automations()),
+}
+
+/**
+ * Frozen skip-list row: label + a "Why?" button explaining why the runtime is
+ * out and what Rox offers instead. No install control — the list is frozen
+ * (docs/specs/.../03-anti-goals.md §9).
+ */
+function HarnessSkipRow({ id }: { id: HarnessSkipId }) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const target = HARNESS_SKIP_TARGETS[id]
+  const base = `settings.appearance.harnessSkip.${id}`
+  return (
+    <>
+      <SettingsRow
+        label={t(base)}
+        description={t(`${base}Desc`)}
+        action={
+          <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
+            {t('settings.appearance.harnessSkipWhy')}
+          </Button>
+        }
+      >
+        <span className="text-xs opacity-60">{t('settings.appearance.harnessSkipNotInstalled')}</span>
+      </SettingsRow>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t(base)}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="font-medium">{t('settings.appearance.harnessSkipWhyLabel')}</p>
+              <p className="text-muted-foreground">{t(`${base}Why`)}</p>
+            </div>
+            <div>
+              <p className="font-medium">{t('settings.appearance.harnessSkipInsteadLabel')}</p>
+              <p className="text-muted-foreground">{t(`${base}Instead`)}</p>
+            </div>
+          </div>
+          {target ? (
+            <DialogFooter>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setOpen(false)
+                  target()
+                }}
+              >
+                {t('settings.appearance.harnessSkipGo')}
+              </Button>
+            </DialogFooter>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -147,13 +221,7 @@ export function WorkbenchChromeSettings() {
       <div data-testid="harness-skip-list">
         <SettingsCard>
           {HARNESS_SKIP_LIST.map((item) => (
-            <SettingsRow
-              key={item.id}
-              label={t(`settings.appearance.harnessSkip.${item.id}`)}
-              description={t(`settings.appearance.harnessSkip.${item.id}Desc`)}
-            >
-              <span className="text-xs opacity-60">{t('settings.appearance.harnessSkipNotInstalled')}</span>
-            </SettingsRow>
+            <HarnessSkipRow key={item.id} id={item.id} />
           ))}
         </SettingsCard>
       </div>

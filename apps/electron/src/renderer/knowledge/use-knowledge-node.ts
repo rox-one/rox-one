@@ -6,6 +6,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import type { ContextPayload, KnowledgeNode, KnowledgeRef } from '../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface KnowledgeNodeState {
   node: KnowledgeNode | null
@@ -56,7 +57,7 @@ export function useKnowledgeNode(knowledgeRef: KnowledgeRef | null): KnowledgeNo
             node: null,
             backlinks: [],
             loading: false,
-            error: error instanceof Error ? error.message : String(error),
+            error: toErrorMessage(error),
           })
         }
       }

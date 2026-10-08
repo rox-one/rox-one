@@ -452,8 +452,8 @@ export class OmpAgent extends BaseAgent {
           mimeType: a.mimeType,
           sizeBytes: a.sizeBytes,
         })),
-        memoryPath: getProjectMemoryPath(root, slug),
-        memoryContent: loadProjectMemory(root, slug) ?? undefined,
+        memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(root, slug),
+        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(root, slug) ?? undefined,
         roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {
@@ -473,7 +473,7 @@ export class OmpAgent extends BaseAgent {
     const projectContext = this.resolveProjectContext();
     return composeOmpAppendSystemPrompt({
       workingDirectory: this.resolvedCwd(),
-      preferences: formatPreferencesForPrompt(),
+      preferences: this.config.agentProfileSnapshot ? '' : formatPreferencesForPrompt(),
       projectContextBlock: projectContext ? formatProjectContextForPrompt(projectContext) : null,
       memoryBlocks: this.config.memoryBlocks,
     });

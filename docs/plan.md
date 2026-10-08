@@ -1,3 +1,7 @@
+## Active plan (2026-10-08) — пользовательский батч (оболочка, настройки, бренд, облако, секреты)
+
+Источник: ТЗ пользователя + 16 скриншотов 2026-10-08. Исполняемый план, требования и таблица верификации: [docs/plans/2026-10-08-rox-user-batch.md](plans/2026-10-08-rox-user-batch.md). Дополняет (не заменяет) план 2026-10-07 ниже.
+
 ## Active plan (2026-10-07) — ROX shell, cloud runs, secrets
 
 Executable task graph: [docs/plans/2026-10-07-rox-shell-cloud-platform.md](plans/2026-10-07-rox-shell-cloud-platform.md)
@@ -755,6 +759,9 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
 3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
+# Текущая пересборка навигации
+
+Владельцы, зависимости и проверки: [navigation-rebuild/plan.md](navigation-rebuild/plan.md). Последующие исторические записи сохранены.
 
 
 ## UI-001 source repair and main integration — 2026-10-03

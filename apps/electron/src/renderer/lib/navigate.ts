@@ -22,6 +22,8 @@ export type { Route }
 export const NAVIGATE_EVENT = 'rox-navigate'
 
 export interface NavigateOptions {
+  /** Explicit surface controls keep navigation out of auxiliary tools. */
+  primary?: boolean
   /** Open the target in a new panel instead of navigating the current one */
   newPanel?: boolean
   /**
@@ -33,8 +35,6 @@ export interface NavigateOptions {
   targetLaneId?: 'main'
   /** Skip auto-selecting first item when navigating to a list view (used when closing panels) */
   skipAutoSelect?: boolean
-  /** Navigate the primary panel instead of the currently focused panel */
-  primary?: boolean
 }
 
 /** Payload carried on the {@link NAVIGATE_EVENT} custom event. */

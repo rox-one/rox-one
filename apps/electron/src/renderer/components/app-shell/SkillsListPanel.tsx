@@ -22,6 +22,7 @@ import type { PendingSkill, PendingSkillDiff, SkillUsageMap } from '@rox/shared/
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { projectsAtom } from '@/atoms/projects'
 import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -165,7 +166,7 @@ export function SkillsListPanel({
       const refreshed = await window.electronAPI.listBundledSkillPacks()
       setBundledPacks(refreshed)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      toast.error(toErrorMessage(err))
     } finally {
       setPacksBusy(false)
     }
@@ -200,7 +201,7 @@ export function SkillsListPanel({
       setExpandedPendingSlug((current) => (current === slug ? null : current))
     } catch (err) {
       toast.error(action === 'approve' ? t('pendingSkills.approveFailed') : t('pendingSkills.dismissFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }
@@ -219,7 +220,7 @@ export function SkillsListPanel({
       toast.success(t('skillsList.ompExported', { name: skill.metadata.name, slug: result.slug }))
     } catch (err) {
       toast.error(t('skillsList.ompExportFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     } finally {
       setExportingSlug(null)
@@ -245,7 +246,7 @@ export function SkillsListPanel({
       toast.success(t('skills.pruned', { count: result.archived.length }))
     } catch (err) {
       toast.error(t('toast.failedToPruneSkills'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     } finally {
       setPruneBusy(false)
@@ -260,7 +261,7 @@ export function SkillsListPanel({
       toast.success(t('skills.exported', { slug: result.slug }))
     } catch (err) {
       toast.error(t('toast.failedToExportSkill'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }
@@ -405,7 +406,7 @@ export function SkillsListPanel({
               try {
                 await window.electronAPI.showInFolder(skill.path)
               } catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
+                const message = toErrorMessage(err)
                 toast.error(t('toast.failedToReveal', { fileManager: getFileManagerName() }), {
                   description: message,
                 })

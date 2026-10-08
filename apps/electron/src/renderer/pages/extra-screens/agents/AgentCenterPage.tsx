@@ -24,6 +24,7 @@ import {
 } from './agent-center-model'
 import { useWorkspaceSessions, sessionTitle } from '@/lib/extra-screens/use-rox-sources'
 import { getSessionTitle } from '@/utils/session'
+import { toErrorMessage } from '@/lib/errors'
 
 const NS = 'agent-center'
 
@@ -129,7 +130,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
         setBudgetDraft(snapshot.limitUsd == null ? '' : String(snapshot.limitUsd))
       }
     }).catch((e) => {
-      if (!cancelled) setError(e instanceof Error ? e.message : String(e))
+      if (!cancelled) setError(toErrorMessage(e))
     }).finally(() => {
       if (!cancelled) setBudgetLoading(false)
     })
@@ -168,7 +169,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
     try {
       await fn()
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(toErrorMessage(e))
     } finally {
       setBusy((prev) => { const next = new Set(prev); next.delete(key); return next })
     }

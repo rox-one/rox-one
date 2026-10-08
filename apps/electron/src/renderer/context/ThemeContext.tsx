@@ -27,6 +27,7 @@ import {
   type TerminalFontFamily,
   type UiFontFamily,
 } from './font-preferences'
+import { toErrorMessage } from '@/lib/errors'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type FontFamily = UiFontFamily
@@ -301,7 +302,7 @@ export function ThemeProvider({
 
       applyFallback(`Preset theme was not returned by IPC for "${effectiveColorTheme}".`)
     }).catch((error) => {
-      applyFallback(`Failed to load preset theme via IPC for "${effectiveColorTheme}": ${error instanceof Error ? error.message : String(error)}.`)
+      applyFallback(`Failed to load preset theme via IPC for "${effectiveColorTheme}": ${toErrorMessage(error)}.`)
     })
 
     return () => {
@@ -348,7 +349,9 @@ export function ThemeProvider({
   useLayoutEffect(() => {
     const root = document.documentElement
 
-    // Apply font roles. Rox and system share the SF-first stack; Inter is explicit.
+    // Apply font roles. The default ("rox") and "inter" presets both render
+    // the locally bundled Inter for UI/chat; system uses the OS stack. Mono
+    // (code/terminal/command input) stays Rox via --font-mono.
     root.dataset.font = font
     root.dataset.chatFont = chatFont
     root.dataset.terminalFont = terminalFont

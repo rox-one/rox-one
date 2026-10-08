@@ -27,7 +27,7 @@ describe('ROX2-059..061 native settings pages', () => {
   test('messaging, server, and cloudRuns stay in SETTINGS_PAGES without Conation flags', () => {
     expect(SETTINGS_HUB_REQUIRES_CONATION_FLAG).toBe(false)
     const ids = SETTINGS_PAGES.map((page) => page.id)
-    expect(ids.slice(18, 21)).toEqual([...ROX2_SETTINGS_WAVE7_PAGE_IDS])
+    expect(ids.slice(19, 22)).toEqual([...ROX2_SETTINGS_WAVE7_PAGE_IDS])
     expect(bindSettingsHubContext('ws-1', 'messaging').surfaceId).toBe('settings:messaging')
     expect(bindSettingsHubContext('ws-1', 'server', 'ask').permissionMode).toBe('ask')
   })

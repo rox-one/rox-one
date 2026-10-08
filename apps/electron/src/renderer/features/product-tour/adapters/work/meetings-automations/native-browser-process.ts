@@ -1,3 +1,4 @@
+import { toErrorMessage } from '../../../../../lib/errors'
 import { spawn } from 'node:child_process'
 import { Readable } from 'node:stream'
 import type { ReadableStream } from 'node:stream/web'
@@ -14,7 +15,7 @@ function capturePipe(stream: ReadableStream<Uint8Array>) {
         output = (output + decoder.decode(chunk.value, { stream: true })).slice(-65_536)
       }
       output += decoder.decode()
-    } catch (error) { output += `\nOutput stream closed: ${String(error)}` }
+    } catch (error) { output += `\nOutput stream closed: ${toErrorMessage(error)}` }
   })()
   return { done, text: () => output, stop: () => { void reader.cancel().catch(() => {}) } }
 }

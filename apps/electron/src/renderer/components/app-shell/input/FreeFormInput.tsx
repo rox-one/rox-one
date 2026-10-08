@@ -115,6 +115,7 @@ import {
 } from './model-picker-helpers'
 import { VoiceDictationControl } from './VoiceDictationControl'
 import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@rox/shared/config/rox-public-models'
+import { toErrorMessage } from '@/lib/errors'
 
 function dedupModelsById<T extends string | ModelDefinition>(models: T[]): T[] {
   const seen = new Set<string>()
@@ -936,7 +937,7 @@ export function FreeFormInput({
     let hasExecuted = false
 
     const isExpectedReconnectError = (error: unknown): boolean => {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       return message.includes('Connection closed')
         || message.includes('Client disconnected')
         || message.includes('transport')

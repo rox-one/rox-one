@@ -18,7 +18,7 @@ export type PanelLaneId = 'main'
 export type OpenIntent = 'implicit' | 'explicit'
 
 /** Retained utility panels opened beside the primary surface, never replacing it. */
-export type AuxiliaryTool = 'agent' | 'memory' | 'tasks' | 'automations'
+export type AuxiliaryTool = 'agent' | 'tasks' | 'automations' | 'memory'
 
 /** Display context a retained tool panel restores with. Hosts still re-check every write. */
 export interface ToolContextReference {
@@ -57,7 +57,63 @@ export interface PanelStackEntry {
 }
 
 export const panelStackAtom = atom<PanelStackEntry[]>([])
-export const focusedPanelIdAtom = atom<string | null>(null)
+const focusedPanelIdValueAtom = atom<string | null>(null)
+export const primaryPanelIdAtom = atom<string | null>(null)
+export const lastAuxiliaryToolAtom = atom<AuxiliaryTool | null>(null)
+export const focusedPanelIdAtom = atom(
+  get => get(focusedPanelIdValueAtom),
+  (get, set, id: string | null) => {
+    set(focusedPanelIdValueAtom, id)
+    const entry = get(panelStackAtom).find(panel => panel.id === id)
+    if (entry && !entry.tool) set(primaryPanelIdAtom, id)
+    if (entry?.tool && entry.tool !== 'agent') set(lastAuxiliaryToolAtom, entry.tool)
+  },
+)
+
+export const primaryPanelRouteAtom = atom(get => {
+  const stack = get(panelStackAtom)
+  return (stack.find(entry => entry.id === get(primaryPanelIdAtom) && !entry.tool)
+    ?? stack.find(entry => !entry.tool))?.route ?? null
+})
+
+export const openAuxiliaryPanelAtom = atom(null, (get, set, input: {
+  tool: AuxiliaryTool; route: ViewRoute; context?: ToolContextReference
+}) => {
+  const stack = get(panelStackAtom)
+  const existing = stack.find(entry => entry.tool === input.tool)
+  if (existing) {
+    set(focusedPanelIdAtom, existing.id)
+    return
+  }
+  const entry = { ...createEntry(input.route, 1), tool: input.tool, toolContext: input.context }
+  set(panelStackAtom, normalizeProportions([...stack, entry]))
+  set(focusedPanelIdAtom, entry.id)
+})
+
+/** Surface navigation always targets the retained primary panel. */
+export const updatePrimaryPanelRouteAtom = atom(null, (get, set, route: ViewRoute) => {
+  const stack = get(panelStackAtom)
+  const primary = stack.find(entry => entry.id === get(primaryPanelIdAtom) && !entry.tool)
+    ?? stack.find(entry => !entry.tool)
+  if (!primary) {
+    const entry = createEntry(route, 1)
+    set(panelStackAtom, normalizeProportions([entry, ...stack]))
+    set(focusedPanelIdAtom, entry.id)
+  } else {
+    set(panelStackAtom, stack.map(entry => entry.id === primary.id
+      ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry))
+    set(focusedPanelIdAtom, primary.id)
+  }
+})
+
+/** Late asynchronous results address their owning panel, never current focus. */
+export const updatePanelRouteByIdAtom = atom(null, (get, set, input: { id: string; route: ViewRoute }) => {
+  const stack = get(panelStackAtom)
+  if (!stack.some(entry => entry.id === input.id)) return false
+  set(panelStackAtom, stack.map(entry => entry.id === input.id
+    ? { ...entry, route: input.route, panelType: getPanelTypeFromRoute(input.route) } : entry))
+  return true
+})
 
 export const panelCountAtom = atom((get) => get(panelStackAtom).length)
 
@@ -249,20 +305,20 @@ export const closePanelAtom = atom(
     const stack = get(panelStackAtom)
     const idx = stack.findIndex(p => p.id === id)
     if (idx === -1) return
-    const closed = stack[idx]
+    // The main surface remains available while a tool is open. Closing it
+    // returns to the default inbox rather than leaving an orphan tool stack.
+    if (!stack[idx].tool && stack.some(panel => panel.tool) && stack.filter(panel => !panel.tool).length === 1) {
+      set(panelStackAtom, stack.map(panel => panel.id === id ? { ...panel, route: 'inbox' as ViewRoute, panelType: 'other' } : panel))
+      set(focusedPanelIdAtom, id)
+      return
+    }
     const remaining = [...stack.slice(0, idx), ...stack.slice(idx + 1)]
 
-    // Closing the last primary surface while retained tools stay open keeps an
-    // inbox primary, so a tool panel never becomes the root of the workspace.
-    const restored = !closed.tool && remaining.length > 0 && !remaining.some(p => !p.tool)
-      ? [createEntry('inbox', 1), ...remaining]
-      : remaining
-
-    set(panelStackAtom, normalizeProportions(restored))
+    set(panelStackAtom, normalizeProportions(remaining))
 
     if (get(focusedPanelIdAtom) === id) {
-      const newIdx = Math.min(idx, restored.length - 1)
-      set(focusedPanelIdAtom, restored[newIdx]?.id ?? null)
+      const newIdx = Math.min(idx, remaining.length - 1)
+      set(focusedPanelIdAtom, remaining[newIdx]?.id ?? null)
     }
   }
 )
@@ -415,96 +471,6 @@ export const focusPrevPanelAtom = atom(
 function averageShare(stack: readonly PanelStackEntry[]): number {
   return stack.length > 0 ? stack.reduce((sum, panel) => sum + panel.proportion, 0) / stack.length : 1
 }
-
-/** Optional explicit primary override; ignored once the entry disappears. */
-const primaryPanelOverrideAtom = atom<string | null>(null)
-
-/**
- * The primary surface is the first tool-less entry. Retained tool panels are
- * always auxiliary, so a late tool update can never be mistaken for the main.
- */
-export const primaryPanelIdAtom = atom(
-  (get) => {
-    const stack = get(panelStackAtom)
-    const override = get(primaryPanelOverrideAtom)
-    if (override && stack.some(entry => entry.id === override && !entry.tool)) return override
-    return stack.find(entry => !entry.tool)?.id ?? null
-  },
-  (_get, set, id: string | null) => {
-    set(primaryPanelOverrideAtom, id)
-  }
-)
-
-export const primaryPanelRouteAtom = atom((get) => {
-  const stack = get(panelStackAtom)
-  return stack.find(entry => !entry.tool)?.route ?? null
-})
-
-/**
- * Primary navigation retargets the main surface and focuses it, so retained
- * tool panels keep their own routes and context untouched.
- */
-export const updatePrimaryPanelRouteAtom = atom(
-  null,
-  (get, set, route: ViewRoute) => {
-    const stack = get(panelStackAtom)
-    const primaryIndex = stack.findIndex(entry => !entry.tool)
-
-    if (primaryIndex === -1) {
-      const primary = createEntry(route, averageShare(stack))
-      set(panelStackAtom, normalizeProportions([primary, ...stack]))
-      set(focusedPanelIdAtom, primary.id)
-      return
-    }
-
-    const target = stack[primaryIndex]
-    set(panelStackAtom, stack.map((entry, index) => index === primaryIndex
-      ? { ...createEntry(route, entry.proportion, entry.id), proportion: entry.proportion }
-      : entry))
-    set(focusedPanelIdAtom, target.id)
-  }
-)
-
-/** Retarget one panel by identity. Returns false when the panel is gone. */
-export const updatePanelRouteByIdAtom = atom(
-  null,
-  (get, set, { id, route }: { id: string; route: ViewRoute }): boolean => {
-    const stack = get(panelStackAtom)
-    const index = stack.findIndex(entry => entry.id === id)
-    if (index === -1) return false
-    set(panelStackAtom, stack.map((entry, i) =>
-      i === index ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry))
-    return true
-  }
-)
-
-export interface OpenAuxiliaryPanelArgs {
-  tool: AuxiliaryTool
-  route: ViewRoute
-  context?: ToolContextReference
-}
-
-/**
- * Tools are singletons beside exactly one primary surface: reopening one focuses
- * it, and a missing primary is seeded as inbox so tools never become the root.
- */
-export const openAuxiliaryPanelAtom = atom(
-  null,
-  (get, set, { tool, route, context }: OpenAuxiliaryPanelArgs) => {
-    const stack = get(panelStackAtom)
-
-    const existing = stack.find(entry => entry.tool === tool)
-    if (existing) {
-      set(focusedPanelIdAtom, existing.id)
-      return
-    }
-
-    const toolEntry = createEntry(route, averageShare(stack), undefined, { tool, toolContext: context })
-    const seeded = stack.some(entry => !entry.tool) ? [] : [createEntry('inbox', averageShare(stack))]
-    set(panelStackAtom, normalizeProportions([...seeded, ...stack, toolEntry]))
-    set(focusedPanelIdAtom, toolEntry.id)
-  }
-)
 
 export interface OpenOrFocusPanelRouteInput {
   route: ViewRoute

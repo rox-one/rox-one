@@ -22,7 +22,7 @@ describe('ROX2-062 native shortcuts settings page', () => {
   test('shortcuts stays in SETTINGS_PAGES without Conation flags', () => {
     expect(SETTINGS_HUB_REQUIRES_CONATION_FLAG).toBe(false)
     const ids = SETTINGS_PAGES.map((page) => page.id)
-    expect(ids.slice(21, 22)).toEqual([...ROX2_SETTINGS_WAVE8_PAGE_IDS])
+    expect(ids.slice(22, 23)).toEqual([...ROX2_SETTINGS_WAVE8_PAGE_IDS])
     expect(bindSettingsHubContext('ws-1', 'shortcuts').surfaceId).toBe('settings:shortcuts')
     expect(bindSettingsHubContext('ws-1', 'shortcuts', 'ask').permissionMode).toBe('ask')
   })
