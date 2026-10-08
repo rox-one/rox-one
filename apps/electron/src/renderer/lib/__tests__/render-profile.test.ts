@@ -7,8 +7,10 @@
 import { describe, expect, it } from 'bun:test'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { applyRenderProfile } from '../render-profile-dom'
-import { readRenderProfile, reducedMotionFor } from '../render-profile-motion'
+import { applyRenderProfile, seedRenderProfile, startRenderProfileSync } from '../render-profile-dom'
+import { prefersReducedMotionNow, readRenderProfile, reducedMotionFor } from '../render-profile-motion'
+import { lowPowerStatusKey } from '../render-profile-status'
+import type { ZenShellSnapshot } from '../../../shared/shell-appearance'
 
 const renderer = join(import.meta.dir, '../..')
 const repo = join(renderer, '../../../..')
@@ -21,6 +23,8 @@ function fakeRoot() {
     attrs,
     setAttribute: (name: string, value: string) => { attrs.set(name, value) },
     removeAttribute: (name: string) => { attrs.delete(name) },
+    hasAttribute: (name: string) => attrs.has(name),
+    getAttribute: (name: string) => attrs.get(name) ?? null,
   } as unknown as HTMLElement & { attrs: Map<string, string> }
 }
 
@@ -209,5 +213,155 @@ describe('Settings → Appearance → Low-power mode', () => {
     const handler = readFileSync(join(renderer, '../main/handlers/settings.ts'), 'utf8')
     expect(handler).toContain('if (Object.keys(shellPatch).length > 0) setZenShellPreference(shellPatch)')
     expect(handler).toContain('if (renderProfile !== undefined) setRenderProfilePreference(renderProfile)')
+  })
+})
+
+function rendererSources(dir = renderer): string[] {
+  const out: string[] = []
+  for (const name of readdirSync(dir)) {
+    if (name === 'node_modules' || name === '__tests__') continue
+    const path = join(dir, name)
+    if (statSync(path).isDirectory()) out.push(...rendererSources(path))
+    else if (/\.(tsx?)$/.test(name) && !/\.test\.tsx?$/.test(name)) out.push(path)
+  }
+  return out
+}
+
+describe('reduced motion everywhere follows the profile', () => {
+  it('prefersReducedMotionNow() is true for the low-power profile or the OS setting', () => {
+    const g = globalThis as Record<string, unknown>
+    const saved = { document: g.document, window: g.window }
+    let profile: string | null = null
+    let osReduce = false
+    g.document = { documentElement: { getAttribute: () => profile } }
+    g.window = { matchMedia: () => ({ matches: osReduce }) }
+    try {
+      expect(prefersReducedMotionNow()).toBe(false)
+      profile = 'performance'
+      expect(prefersReducedMotionNow()).toBe(true)
+      profile = null
+      osReduce = true
+      expect(prefersReducedMotionNow()).toBe(true)
+    } finally {
+      g.document = saved.document
+      g.window = saved.window
+    }
+  })
+
+  it('no renderer code reads motion/react useReducedMotion or the raw media query directly', () => {
+    const offenders: string[] = []
+    for (const file of rendererSources()) {
+      if (file.endsWith('render-profile-motion.tsx')) continue
+      const src = readFileSync(file, 'utf8')
+      if (/\buseReducedMotion\s*\(/.test(src) || /matchMedia\([^)]*prefers-reduced-motion/.test(src)) {
+        offenders.push(relative(repo, file))
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
+  it('inline reduced-motion style blocks also honour the low-power profile', () => {
+    for (const file of ['pages/TasksPage.tsx', 'pages/meetings/MeetingsSidebar.tsx', 'pages/notes/NotesNavigationSidebar.tsx']) {
+      expect(readFileSync(join(renderer, file), 'utf8')).toContain('html[data-render-profile="performance"]')
+    }
+  })
+})
+
+describe('CSS: low-power pulses', () => {
+  it('stops skeleton and motion-safe pulses but not spinners or live indicators', () => {
+    const rule = rulesFor('.animate-pulse').find(r => r.includes('data-render-profile="performance"'))
+    expect(rule).toBeDefined()
+    expect(rule).toContain('motion-safe\\:animate-pulse')
+    expect(rule).toContain(':not([data-live-indicator])')
+    expect(rule).toContain('animation: none !important')
+    expect(rulesFor('animate-spin').filter(r => r.includes('data-render-profile'))).toEqual([])
+  })
+
+  it('recording and running indicators opt out explicitly', () => {
+    for (const file of [
+      'components/meetings/MeetingRecordingIndicator.tsx',
+      'pages/MeetingsPage.tsx',
+      'pages/meetings/LocalMeetingDetail.tsx',
+      'components/session-workbench/SceneNode.tsx',
+      'components/app-shell/kanban/SubtaskProgress.tsx',
+    ]) {
+      expect(readFileSync(join(renderer, file), 'utf8')).toContain('data-live-indicator')
+    }
+  })
+})
+
+describe('root-level profile sync', () => {
+  const electron = { getRuntimeEnvironment: () => 'electron' as const }
+
+  it('seeds Windows desktop windows low-power before the first snapshot', () => {
+    const win = fakeRoot()
+    seedRenderProfile(win, electron, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Electron/39')
+    expect(win.attrs.get('data-render-profile')).toBe('performance')
+    const mac = fakeRoot()
+    seedRenderProfile(mac, electron, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Electron/39')
+    expect(mac.attrs.has('data-render-profile')).toBe(false)
+    const web = fakeRoot()
+    seedRenderProfile(web, { getRuntimeEnvironment: () => 'web' as const }, 'Mozilla/5.0 (Windows NT 10.0)')
+    expect(web.attrs.has('data-render-profile')).toBe(false)
+  })
+
+  it('applies every snapshot and keeps a single subscription across restarts', async () => {
+    const listeners = new Set<(s: ZenShellSnapshot) => void>()
+    const api = {
+      ...electron,
+      getShellSnapshot: async () => ({ renderProfile: 'performance' }) as ZenShellSnapshot,
+      onShellChanged: (cb: (s: ZenShellSnapshot) => void) => { listeners.add(cb); return () => { listeners.delete(cb) } },
+    }
+    const root = fakeRoot()
+    startRenderProfileSync(api, root)
+    const stop = startRenderProfileSync(api, root)
+    expect(listeners.size).toBe(1)
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(root.attrs.get('data-render-profile')).toBe('performance')
+    for (const cb of listeners) cb({ renderProfile: 'standard' } as ZenShellSnapshot)
+    expect(root.attrs.has('data-render-profile')).toBe(false)
+    stop()
+    expect(listeners.size).toBe(0)
+  })
+
+  it('is started in main.tsx before the first React render, outside AppShell', () => {
+    const main = readFileSync(join(renderer, 'main.tsx'), 'utf8')
+    const start = main.indexOf('startRenderProfileSync(window.electronAPI')
+    expect(start).toBeGreaterThan(-1)
+    expect(main.indexOf('seedRenderProfile(document.documentElement')).toBeLessThan(start)
+    expect(start).toBeLessThan(main.indexOf('ReactDOM.createRoot('))
+  })
+})
+
+describe('Settings: Automatic shows the current state', () => {
+  it('maps the snapshot reason to a status line only for Automatic', () => {
+    expect(lowPowerStatusKey({ renderProfilePreference: 'auto', renderProfile: 'performance', renderProfileReason: 'windows' }))
+      .toBe('settings.appearance.lowPowerModeAutoOnWindows')
+    expect(lowPowerStatusKey({ renderProfilePreference: 'auto', renderProfile: 'performance', renderProfileReason: 'weak-hardware' }))
+      .toBe('settings.appearance.lowPowerModeAutoOnWeakHardware')
+    expect(lowPowerStatusKey({ renderProfilePreference: 'auto', renderProfile: 'performance', renderProfileReason: 'software-compositing' }))
+      .toBe('settings.appearance.lowPowerModeAutoOnNoGpu')
+    expect(lowPowerStatusKey({ renderProfilePreference: 'auto', renderProfile: 'standard', renderProfileReason: 'default' }))
+      .toBe('settings.appearance.lowPowerModeAutoOff')
+    expect(lowPowerStatusKey({ renderProfile: 'standard' })).toBe('settings.appearance.lowPowerModeAutoOff')
+    expect(lowPowerStatusKey({ renderProfilePreference: 'performance', renderProfile: 'performance', renderProfileReason: 'user-performance' })).toBeNull()
+    expect(lowPowerStatusKey({ renderProfilePreference: 'standard', renderProfile: 'standard', renderProfileReason: 'user-standard' })).toBeNull()
+    expect(lowPowerStatusKey({ renderProfilePreference: 'auto' })).toBeNull()
+    expect(lowPowerStatusKey(null)).toBeNull()
+  })
+
+  it('is appended to the row description and translated in every locale', () => {
+    const settings = readFileSync(join(renderer, 'pages/settings/ZenShellSettings.tsx'), 'utf8')
+    expect(settings).toContain('lowPowerStatusKey(snapshot)')
+    expect(settings).toContain('description={lowPowerDescription}')
+    const localesDir = join(repo, 'packages/shared/src/i18n/locales')
+    const locales = readdirSync(localesDir).filter(name => name.endsWith('.json'))
+    expect(locales.length).toBe(12)
+    for (const name of locales) {
+      const strings = JSON.parse(readFileSync(join(localesDir, name), 'utf8')) as Record<string, string>
+      for (const key of ['lowPowerModeAutoOff', 'lowPowerModeAutoOnNoGpu', 'lowPowerModeAutoOnWeakHardware', 'lowPowerModeAutoOnWindows']) {
+        expect(strings[`settings.appearance.${key}`]?.length ?? 0).toBeGreaterThan(0)
+      }
+    }
   })
 })
