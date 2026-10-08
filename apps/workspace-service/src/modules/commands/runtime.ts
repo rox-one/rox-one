@@ -32,6 +32,10 @@ export interface WorkspaceCommandBusConfiguration {
   readonly valkey?: ValkeyPublishClient
   /** Default: Postgres `realtime_cursor`; `null` disables resume cursors. */
   readonly cursors?: RealtimeCursorStore | null
+  /** Fan-out revalidation cache (default 5 s, `0` re-checks every delivery). */
+  readonly revalidationCacheMs?: number
+  /** Relay retry backoff after a sink failure. */
+  readonly relayRetryBaseMs?: number
   readonly onError?: (error: unknown) => void
 }
 
@@ -40,6 +44,8 @@ export interface WorkspaceCommandBus {
   readonly bus: InProcessEventBus
   readonly relay: DomainEventRelay
   readonly store: CommandStore
+  /** Relay watermarks initialised from the store (await before serving). */
+  readonly ready: Promise<void>
   /** Attach the realtime gateway to the WS transport (after the server exists). */
   attach(server: WsRpcServer & RealtimePushTransport): RealtimeGateway
 }
@@ -50,7 +56,10 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
   const bus = new InProcessEventBus({ ...(configuration.onError ? { onListenerError: configuration.onError } : {}) })
   const sinks: DomainEventSink[] = [events => { bus.publish(events) }]
   if (configuration.valkey) sinks.push(valkeyEventSink(configuration.valkey))
-  const relay = new DomainEventRelay({ store, sinks, ...(configuration.onError ? { onError: configuration.onError } : {}) })
+  const relay = new DomainEventRelay({ store, sinks, ...(configuration.relayRetryBaseMs ? { retryBaseMs: configuration.relayRetryBaseMs } : {}), ...(configuration.onError ? { onError: configuration.onError } : {}) })
+  // Watermarks start at the committed maximum (migrations already ran); the
+  // server awaits `ready` before it can accept a command.
+  const ready = relay.start()
   const service = new WorkspaceCommandService({
     store,
     authorizer,
@@ -64,16 +73,18 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
     bus,
     relay,
     store,
+    ready,
     attach(server) {
       const gateway = new RealtimeGateway({
         bus,
         transport: server,
         authorizer,
         ...(cursors ? { cursors } : {}),
+        ...(configuration.revalidationCacheMs !== undefined ? { revalidationCacheMs: configuration.revalidationCacheMs } : {}),
         ...(configuration.onError ? { onError: configuration.onError } : {}),
       })
       registerRealtimeHandlers(server, gateway)
-      server.onShutdown(() => gateway.close())
+      server.onShutdown(() => { gateway.close(); relay.close() })
       return gateway
     },
   }

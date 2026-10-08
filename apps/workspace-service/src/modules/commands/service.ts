@@ -34,7 +34,7 @@ export class WorkspaceCommandService implements WorkspaceCommandHttpAuthority {
       authority: 'workspace',
       ...(options.authorizer ? { authorizer: options.authorizer } : {}),
       ...(options.publish ? { publish: options.publish } : {}),
-      ...(options.onError ? { onPublishError: options.onError, onHandlerError: options.onError } : {}),
+      ...(options.onError ? { onPublishError: options.onError, onHandlerError: options.onError, onStoreError: options.onError } : {}),
     })
   }
 

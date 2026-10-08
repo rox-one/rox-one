@@ -160,6 +160,7 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
   }
   // W1-03 (#1500)
   const commandBus = configuration.commandBus ? createWorkspaceCommandBus(configuration.database, schema, configuration.commandBus) : undefined
+  await commandBus?.ready
   const httpHandler = createWorkspaceHttpHandler({
     authority,
     collaborationAuthority,

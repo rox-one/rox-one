@@ -4,6 +4,10 @@
  * the events and the receipt. Per-key advisory locks serialise retries of one
  * command; a per-workspace append lock keeps `domain_event.sequence` order
  * equal to commit order so the relay never skips a late-committing event.
+ *
+ * Lock order is canonical: the distinct (idempotencyKey, commandId) locks are
+ * taken sorted, then the workspace append lock. Crossed envelopes
+ * ({key:A,id:B} vs {key:B,id:A}) therefore queue instead of deadlocking.
  */
 
 import type { SQL, TransactionSQL } from 'bun'
@@ -62,6 +66,32 @@ function isUniqueViolation(error: unknown): boolean {
   return record?.errno === '23505' || record?.code === '23505' || /duplicate key value/i.test(String(record?.message ?? ''))
 }
 
+/** Advisory lock names for one command, in the canonical (sorted, distinct) order. */
+export function commandLockKeys(schema: string, workspaceId: string, idempotencyKey: string, commandId: string): string[] {
+  return [...new Set([idempotencyKey, commandId])].sort().map(value => JSON.stringify(['command-key', schema, workspaceId, value]))
+}
+
+const TRANSIENT_SQLSTATE = /^(08|40|53|57P0[1-3]|55P03|58)/
+const TRANSIENT_DRIVER = /^(ERR_POSTGRES_(CONNECTION_CLOSED|CONNECTION_TIMEOUT|IDLE_TIMEOUT|LIFETIME_TIMEOUT|TLS_.*)|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|EHOSTUNREACH|ENETUNREACH|ConnectionClosed)$/
+
+/**
+ * Transient Postgres failures (nothing committed, safe to retry): connection
+ * exceptions (08), transaction rollbacks incl. serialization failure and
+ * deadlock (40001 / 40P01), insufficient resources (53), admin shutdown
+ * (57P01-03), lock timeout (55P03), system errors (58), and driver-level
+ * connection loss / timeouts.
+ */
+export function isTransientPostgresError(error: unknown): boolean {
+  const record = error as { errno?: unknown; code?: unknown; sqlState?: unknown } | null
+  if (!record || typeof record !== 'object') return false
+  for (const value of [record.errno, record.sqlState, record.code]) {
+    if (typeof value !== 'string') continue
+    if (/^[0-9A-Z]{5}$/.test(value) && TRANSIENT_SQLSTATE.test(value)) return true
+    if (TRANSIENT_DRIVER.test(value)) return true
+  }
+  return false
+}
+
 export class PostgresCommandStore implements CommandStore {
   private readonly prefix: string
 
@@ -81,9 +111,8 @@ export class PostgresCommandStore implements CommandStore {
       const tx: CommandStoreTransaction = {
         handle,
         findReceipt: async (ws, key, commandId) => {
-          await this.query(sql, 'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [JSON.stringify(['command-key', this.schema, ws, key])])
-          if (commandId !== key) {
-            await this.query(sql, 'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [JSON.stringify(['command-key', this.schema, ws, commandId])])
+          for (const lock of commandLockKeys(this.schema, ws, key, commandId)) {
+            await this.query(sql, 'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [lock])
           }
           return this.find(sql, ws, key, commandId)
         },
@@ -123,6 +152,16 @@ export class PostgresCommandStore implements CommandStore {
 
   async findReceipt(workspaceId: string, idempotencyKey: string, commandId: string): Promise<StoredCommandReceipt | null> {
     return this.find(this.database, workspaceId, idempotencyKey, commandId)
+  }
+
+  isTransientError(error: unknown): boolean {
+    return isTransientPostgresError(error)
+  }
+
+  async latestSequences(): Promise<Map<string, number>> {
+    const rows = await this.query<{ workspace_id: string; latest: string }>(this.database,
+      `SELECT workspace_id::text, max(sequence)::text AS latest FROM ${this.prefix}domain_event GROUP BY workspace_id`)
+    return new Map(rows.map(row => [row.workspace_id, Number(row.latest)]))
   }
 
   async listEvents(workspaceId: string, options: ListEventsOptions = {}): Promise<DomainEvent[]> {

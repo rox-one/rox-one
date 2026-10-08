@@ -20,9 +20,13 @@ import { PLACEHOLDER_PAYLOAD_SCHEMA } from '../../../packages/core/src/commands/
 import { REALTIME_RPC, type RealtimeEventFrame, type RealtimeSubscribeResult } from '../../../packages/core/src/events/index.ts'
 import { createCommandRegistry } from '../../../packages/server-core/src/commands/registry.ts'
 import { RealtimeSubscriber, wsRpcRealtimeConnection } from '../../../packages/server-core/src/workspace-sync/realtime.ts'
+import { WorkspaceCommandHttpClient, WorkspaceCommandSync } from '../../../packages/server-core/src/workspace-sync/client.ts'
+import { InMemoryCommandOutbox } from '../../../packages/server-core/src/workspace-sync/outbox.ts'
+import type { CommandReceipt } from '../../../packages/core/src/commands/index.ts'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../src/server.ts'
 import { migrationFromSource } from '../src/database/migrations.ts'
 import { loadProtectedWorkspaceDatabaseUrl } from '../src/auth/postgres-identity.ts'
+import { commandLockKeys } from '../src/modules/commands/store.ts'
 
 const configPath = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
 const hasDatabase = existsSync(configPath)
@@ -30,8 +34,27 @@ const hasDatabase = existsSync(configPath)
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
 
+const flags = new Set<string>()
+const flaky = { terminateNext: 0, calls: 0 }
+
 function registry() {
-  const r = createCommandRegistry()
+  const r = createCommandRegistry({ isFlagEnabled: flag => flags.has(flag) })
+  r.define({ type: 'test.slow', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.bind('test.slow', async ctx => {
+    const { sql } = ctx.transaction as { sql: SQL }
+    await sql.unsafe('SELECT pg_sleep(0.3)')
+    return { revision: 1 }
+  })
+  r.define({ type: 'test.flaky', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.bind('test.flaky', async ctx => {
+    const { sql } = ctx.transaction as { sql: SQL }
+    flaky.calls += 1
+    // The database drops this connection mid-transaction (57P01 / connection closed).
+    if (flaky.terminateNext > 0) { flaky.terminateNext -= 1; await sql.unsafe('SELECT pg_terminate_backend(pg_backend_pid())') }
+    return { revision: flaky.calls, events: [{ type: 'task.task_status_change' }] }
+  })
+  r.define({ type: 'test.flagged', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, flag: 'test.module.v1' })
+  r.bind('test.flagged', async () => ({ revision: 1, result: { ok: true } }))
   r.define({ type: 'test.unbound', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
   r.define({ type: 'test.bump', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
   r.bind('test.bump', async ctx => {
@@ -45,7 +68,7 @@ function registry() {
   return r
 }
 
-async function fixture() {
+async function fixture(busOptions: Record<string, unknown> = {}) {
   const url = await loadProtectedWorkspaceDatabaseUrl(configPath)
   const database = new SQL(url, { max: 12 })
   const schema = 'w103_bus_' + randomBytes(6).toString('hex')
@@ -62,7 +85,7 @@ async function fixture() {
     database, schema, migrations: [...bootstrap, eventsFixture], host: '127.0.0.1', port: 0, serverId: 'w103-' + schema,
     authentication: { mode: 'local-bootstrap', configuration: { mode: 'local-bootstrap', issuer, audience: 'rox-w103-test',
       stateDirectory: directory, checkoutDirectory: process.cwd(), tokenLifetimeSeconds: 300 } },
-    commandBus: { registry: registry(), onError: error => errors.push(error) },
+    commandBus: { registry: registry(), onError: error => errors.push(error), ...busOptions },
   })
   await service.server.listen()
   cleanups.push(async () => {
@@ -125,7 +148,7 @@ async function fixture() {
       await Bun.sleep(10)
     }
   }
-  return { service, database, schema, workspaceId, owner, member, outsider, http, token, ws, commandsPath, ping, counts, until, errors }
+  return { service, database, schema, workspaceId, owner, member, outsider, base, http, token, ws, commandsPath, ping, counts, until, errors }
 }
 
 describe.skipIf(!hasDatabase)('W1-03 command bus on the composed workspace service (PostgreSQL)', () => {
@@ -234,5 +257,124 @@ describe.skipIf(!hasDatabase)('W1-03 command bus on the composed workspace servi
     await f.until(() => live.frames.length === 1)
     await Bun.sleep(150)
     expect(revoked.frames).toEqual([])
+  }, 30_000)
+})
+
+describe.skipIf(!hasDatabase)('W1-03 review 1 regressions on PostgreSQL', () => {
+  test('crossed idempotency keys ({key:A,id:B} vs {key:B,id:A}) do not deadlock', async () => {
+    const f = await fixture()
+    const token = await f.token(f.owner.login)
+    const [a, b] = [randomUUID(), randomUUID()].sort() as [string, string]
+    // Force the dangerous interleaving: hold A elsewhere, queue {key:A,id:B} on it,
+    // then let {key:B,id:A} start. With envelope-order locking the second one takes B
+    // and waits on A, the first gets A and waits on B → 40P01 deadlock.
+    let release!: () => void
+    const gate = new Promise<void>(resolve => { release = resolve })
+    let held!: () => void
+    const holding = new Promise<void>(resolve => { held = resolve })
+    const holder = f.database.begin(async sql => {
+      await sql.unsafe('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [commandLockKeys(f.schema, f.workspaceId, a, a)[0]!])
+      held()
+      await gate
+    })
+    await holding
+    const waiting = async (n: number) => {
+      const deadline = Date.now() + 5_000
+      for (;;) {
+        const [row] = await f.database.unsafe<{ n: number }[]>(`SELECT count(*)::integer AS n FROM pg_locks WHERE locktype = 'advisory' AND NOT granted`)
+        if (row!.n >= n) return
+        if (Date.now() > deadline) throw new Error('lock waiters did not appear')
+        await Bun.sleep(10)
+      }
+    }
+    const one = f.http(f.commandsPath, token, { ...f.ping(), type: 'test.slow', idempotencyKey: a, commandId: b })
+    await waiting(1)
+    const two = f.http(f.commandsPath, token, { ...f.ping(), type: 'test.slow', idempotencyKey: b, commandId: a })
+    await waiting(2)
+    release()
+    await holder
+    const results = await Promise.all([one, two])
+    expect(results.map(r => r.status)).toEqual([200, 200])
+    expect(results.map(r => r.body.status).sort()).toEqual(['applied', 'applied'])
+    expect(f.errors).toEqual([])
+  }, 30_000)
+
+  test('a dropped database connection → 503, the outbox keeps the command and the retry applies it once', async () => {
+    const f = await fixture()
+    const token = await f.token(f.owner.login)
+    flaky.terminateNext = 1
+    flaky.calls = 0
+    const outbox = new InMemoryCommandOutbox()
+    const receipts: CommandReceipt[] = []
+    const sync = new WorkspaceCommandSync({
+      outbox, autoDrain: false, backoffBaseMs: 1,
+      transport: new WorkspaceCommandHttpClient({ baseUrl: f.base, token: () => token }),
+      onReceipt: (_w, receipt) => receipts.push(receipt),
+    })
+    const envelope = { ...f.ping(), type: 'test.flaky' }
+    await sync.enqueue(f.workspaceId, envelope as never)
+    expect(await sync.drain(f.workspaceId, { force: true })).toMatchObject({ sent: 0, failed: 1, remaining: 1 })
+    expect(await outbox.count(f.workspaceId)).toBe(1)
+    expect(await f.counts()).toEqual({ receipts: 0, events: 0 })
+    expect(await sync.drain(f.workspaceId, { force: true })).toMatchObject({ sent: 1, failed: 0, remaining: 0 })
+    expect(receipts).toEqual([expect.objectContaining({ commandId: envelope.commandId, status: 'applied' })])
+    expect(await f.counts()).toEqual({ receipts: 1, events: 1 })
+    // Direct view of the HTTP answer for the same failure.
+    flaky.terminateNext = 1
+    expect(await f.http(f.commandsPath, token, { ...f.ping(), type: 'test.flaky' })).toEqual({ status: 503, body: { error: { code: 'SERVICE_UNAVAILABLE' } } })
+  }, 30_000)
+
+  test('lost ack, then the module flag flips off → the retry is a duplicate', async () => {
+    const f = await fixture()
+    const token = await f.token(f.owner.login)
+    flags.add('test.module.v1')
+    const envelope = { ...f.ping(), type: 'test.flagged' }
+    try {
+      const first = await f.http(f.commandsPath, token, envelope)
+      expect(first.body).toMatchObject({ status: 'applied' })
+      flags.delete('test.module.v1')
+      expect((await f.http(f.commandsPath, token, { ...f.ping(), type: 'test.flagged' })).body).toMatchObject({ status: 'rejected', error: { code: 'UNAVAILABLE' } })
+      expect((await f.http(f.commandsPath, token, envelope)).body).toMatchObject({ status: 'duplicate', original: { commandId: envelope.commandId, status: 'applied' } })
+    } finally {
+      flags.delete('test.module.v1')
+    }
+  }, 30_000)
+
+  test('a failing Valkey sink is retried on its own; WS clients never get duplicate frames', async () => {
+    let failures = 2
+    const valkey: string[] = []
+    const f = await fixture({
+      relayRetryBaseMs: 10,
+      valkey: { publish: (_channel: string, message: string) => { if (failures > 0) { failures -= 1; throw new Error('valkey down') } valkey.push(JSON.parse(message).eventId) } },
+    })
+    const token = await f.token(f.owner.login)
+    const client = await f.ws(token)
+    await client.client.invoke(REALTIME_RPC.SUBSCRIBE, f.workspaceId, { topics: [{ topic: `user:${f.owner.principalId}` }] })
+    const first = await f.http(f.commandsPath, token, f.ping('1'))
+    const second = await f.http(f.commandsPath, token, f.ping('2'))
+    await f.until(() => valkey.length === 2, 5_000)
+    await Bun.sleep(100)
+    expect(client.frames.map(frame => frame.seq)).toEqual([1, 2])
+    expect(client.frames.map(frame => frame.eventId)).toEqual([first.body.eventIds[0], second.body.eventIds[0]])
+    expect(valkey).toEqual([first.body.eventIds[0], second.body.eventIds[0]])
+    f.errors.length = 0
+  }, 30_000)
+
+  test('fan-out revalidation cache: a revoked session stops receiving once the cache window passed', async () => {
+    const f = await fixture({ revalidationCacheMs: 300 })
+    const revokedToken = await f.token(f.owner.login)
+    const liveToken = await f.token(f.owner.login)
+    const topic = `user:${f.owner.principalId}`
+    const revoked = await f.ws(revokedToken)
+    const live = await f.ws(liveToken)
+    for (const c of [revoked, live]) await c.client.invoke(REALTIME_RPC.SUBSCRIBE, f.workspaceId, { topics: [{ topic }] })
+    await f.http(f.commandsPath, liveToken, f.ping('warm'))
+    await f.until(() => revoked.frames.length === 1 && live.frames.length === 1)
+    expect(await f.service.identity.revokeSession(String(decodeJwt(revokedToken).sid))).toBe(true)
+    await Bun.sleep(350)
+    await f.http(f.commandsPath, liveToken, f.ping('after-window'))
+    await f.until(() => live.frames.length === 2)
+    await Bun.sleep(150)
+    expect(revoked.frames).toHaveLength(1)
   }, 30_000)
 })

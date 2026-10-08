@@ -11,9 +11,19 @@
  * `domain_event` rows), carry a per-topic `seq` + epoch, and are delivered in
  * order per client. Resubscribing with `sinceSeq` replays the gap from the
  * bus window or answers `snapshot_required`.
+ *
+ * Subscriptions belong to a live connection: a subscribe whose client went
+ * away while its ACL / cursor reads were pending inserts nothing, and one
+ * client holds at most `maxTopicsPerClient` topics (`limit_exceeded`).
+ *
+ * Revalidation cache: per client the transport's session revalidation and
+ * per (client, topic) the ACL check are reused for `revalidationCacheMs`
+ * (default 5 s) on hot topics. A revoked session or lost permission therefore
+ * stops the stream within that window; `0` re-checks on every delivery.
  */
 
 import {
+  MAX_TOPICS_PER_CLIENT,
   REALTIME_RPC,
   parseTopic,
   topicAclTarget,
@@ -25,7 +35,9 @@ import { decodeRealtimeSubscribeRequest, decodeRealtimeUnsubscribeRequest } from
 import type { InProcessEventBus } from '../../../../../packages/server-core/src/commands/event-bus.ts'
 import { IdentityDomainError } from '../../../../../packages/shared/src/workspace-domain/identity/contracts.ts'
 import type { TopicAuthorizer } from '../commands/authorizer.ts'
-import type { RealtimeCursorStore } from './cursor-store.ts'
+import type { RealtimeCursorOwner, RealtimeCursorStore } from './cursor-store.ts'
+
+export const DEFAULT_REVALIDATION_CACHE_MS = 5_000
 
 /** Transport surface the gateway needs (`WsRpcServer` satisfies it). */
 export interface RealtimePushTransport {
@@ -35,6 +47,7 @@ export interface RealtimePushTransport {
     channel: string,
     args: readonly unknown[],
     guard?: (actor: { principalId: string }) => boolean | Promise<boolean>,
+    options?: { reuseVerifiedSessionMs?: number },
   ): Promise<boolean>
   onClientDisconnect(listener: (clientId: string) => void): () => void
 }
@@ -43,12 +56,17 @@ export interface RealtimeClientContext {
   clientId: string
   workspaceId: string
   principalId: string
+  /** Device (else session) of the connection; keys the resume cursor. */
+  deviceKey?: string
+  /** Whether the request's connection is still the live one (transport check). */
+  isCurrent?: () => boolean
 }
 
 interface Subscription {
   workspaceId: string
   principalId: string
-  topics: Map<string, { lastSeq: number }>
+  deviceKey: string | undefined
+  topics: Map<string, { lastSeq: number; aclCheckedAt?: number }>
   /** Per-client delivery chain: frames leave in seq order. */
   chain: Promise<void>
 }
@@ -60,14 +78,23 @@ export interface RealtimeGatewayOptions {
   cursors?: RealtimeCursorStore
   /** Current policy epoch for cursors (DATA-MODEL `policy_epoch`). */
   policyEpoch?: number
+  /** Topics one client may hold across subscribe calls (default MAX_TOPICS_PER_CLIENT). */
+  maxTopicsPerClient?: number
+  /** Reuse session revalidation / topic ACL results this long during fan-out (default 5 s; 0 = never). */
+  revalidationCacheMs?: number
+  now?: () => number
   onError?: (error: unknown) => void
 }
 
 export class RealtimeGateway {
   private readonly clients = new Map<string, Subscription>()
   private readonly disposers: Array<() => void> = []
+  private readonly cacheMs: number
+  private readonly maxTopics: number
 
   constructor(private readonly options: RealtimeGatewayOptions) {
+    this.cacheMs = Math.max(0, options.revalidationCacheMs ?? DEFAULT_REVALIDATION_CACHE_MS)
+    this.maxTopics = Math.max(1, options.maxTopicsPerClient ?? MAX_TOPICS_PER_CLIENT)
     this.disposers.push(options.bus.subscribe((workspaceId, frame) => this.fanOut(workspaceId, frame)))
     this.disposers.push(options.transport.onClientDisconnect(clientId => { void this.drop(clientId) }))
   }
@@ -100,11 +127,19 @@ export class RealtimeGateway {
 
       let since = item.sinceSeq
       let sinceEpoch = item.epoch
-      if (since === undefined && request.resume && this.options.cursors) {
-        const cursor = await this.options.cursors.load(ctx.workspaceId, ctx.principalId, topic, this.options.policyEpoch ?? 1)
+      const owner = cursorOwner(ctx)
+      if (since === undefined && request.resume && this.options.cursors && owner) {
+        const cursor = await this.options.cursors.load(owner, topic, this.options.policyEpoch ?? 1)
         if (cursor) { since = cursor.seq; sinceEpoch = cursor.epoch }
       }
+      // Never attach to a connection that closed while the reads above were pending
+      // (its disconnect hook already ran); no await between this check and the insert.
+      if (ctx.isCurrent && !ctx.isCurrent()) throw new IdentityDomainError('UNAUTHENTICATED')
       const sub = this.subscriptionFor(ctx)
+      if (!sub.topics.has(topic) && sub.topics.size >= this.maxTopics) {
+        results.push({ topic, status: 'limit_exceeded', seq: 0, epoch })
+        continue
+      }
       if (since === undefined) {
         const seq = this.options.bus.latest(ctx.workspaceId, topic)
         sub.topics.set(topic, { lastSeq: seq })
@@ -144,7 +179,7 @@ export class RealtimeGateway {
   private subscriptionFor(ctx: RealtimeClientContext): Subscription {
     let sub = this.clients.get(ctx.clientId)
     if (!sub || sub.workspaceId !== ctx.workspaceId || sub.principalId !== ctx.principalId) {
-      sub = { workspaceId: ctx.workspaceId, principalId: ctx.principalId, topics: new Map(), chain: Promise.resolve() }
+      sub = { workspaceId: ctx.workspaceId, principalId: ctx.principalId, deviceKey: ctx.deviceKey, topics: new Map(), chain: Promise.resolve() }
       this.clients.set(ctx.clientId, sub)
     }
     return sub
@@ -159,11 +194,17 @@ export class RealtimeGateway {
       sub.chain = sub.chain.then(async () => {
         const state = sub.topics.get(frame.topic)
         if (!state || this.clients.get(clientId) !== sub) return
+        const now = this.now()
         const sent = await this.options.transport.pushToWorkspaceClient(clientId, workspaceId, REALTIME_RPC.EVENT, [workspaceId, frame], async actor => {
           if (actor.principalId !== sub.principalId) return false
-          return (await this.options.authorizer.canReadTopic({ principalId: sub.principalId, workspaceId }, target)) === true
-        })
+          if (this.cacheMs > 0 && state.aclCheckedAt !== undefined && now - state.aclCheckedAt < this.cacheMs) return true
+          const allowed = (await this.options.authorizer.canReadTopic({ principalId: sub.principalId, workspaceId }, target)) === true
+          if (allowed) state.aclCheckedAt = now
+          else delete state.aclCheckedAt
+          return allowed
+        }, this.cacheMs > 0 ? { reuseVerifiedSessionMs: this.cacheMs } : undefined)
         if (sent) state.lastSeq = Math.max(state.lastSeq, frame.seq)
+        else delete state.aclCheckedAt
       }).catch(error => { this.options.onError?.(error) })
     }
   }
@@ -181,12 +222,22 @@ export class RealtimeGateway {
     for (const [topic, state] of sub.topics) await this.saveCursor(sub, topic, state.lastSeq)
   }
 
+  private now(): number {
+    return this.options.now?.() ?? Date.now()
+  }
+
   private async saveCursor(sub: Subscription, topic: string, seq: number): Promise<void> {
-    if (!this.options.cursors) return
+    const owner = cursorOwner(sub)
+    if (!this.options.cursors || !owner) return
     try {
-      await this.options.cursors.save(sub.workspaceId, sub.principalId, topic, { epoch: this.options.bus.epoch, seq }, this.options.policyEpoch ?? 1)
+      await this.options.cursors.save(owner, topic, { epoch: this.options.bus.epoch, seq }, this.options.policyEpoch ?? 1)
     } catch (error) {
       this.options.onError?.(error)
     }
   }
+}
+
+/** Cursors need a device / session key; without one there is no resume (→ snapshot). */
+function cursorOwner(source: { workspaceId: string; principalId: string; deviceKey?: string | undefined }): RealtimeCursorOwner | null {
+  return source.deviceKey ? { workspaceId: source.workspaceId, principalId: source.principalId, deviceKey: source.deviceKey } : null
 }

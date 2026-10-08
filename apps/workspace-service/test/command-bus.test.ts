@@ -138,8 +138,10 @@ function fakeTransport() {
   const sessions = new Map<string, { principalId: string; workspaceId: string; live: boolean }>()
   const delivered: Array<{ clientId: string; frame: RealtimeEventFrame }> = []
   const disconnect = new Set<(id: string) => void>()
+  const pushOptions: Array<{ reuseVerifiedSessionMs?: number } | undefined> = []
   const transport: RealtimePushTransport = {
-    async pushToWorkspaceClient(clientId, workspaceId, channel, args, guard) {
+    async pushToWorkspaceClient(clientId, workspaceId, channel, args, guard, options) {
+      pushOptions.push(options)
       const session = sessions.get(clientId)
       if (!session || !session.live || session.workspaceId !== workspaceId || channel !== 'realtime:event') return false
       if (guard && !(await guard({ principalId: session.principalId }))) return false
@@ -148,19 +150,20 @@ function fakeTransport() {
     },
     onClientDisconnect(listener) { disconnect.add(listener); return () => disconnect.delete(listener) },
   }
-  return { transport, sessions, delivered, disconnect: (id: string) => { for (const l of disconnect) l(id) } }
+  return { transport, sessions, delivered, pushOptions, disconnect: (id: string) => { for (const l of disconnect) l(id) } }
 }
 
 describe('RealtimeGateway', () => {
-  function gatewaySetup(authorizer: WorkspaceAuthorizer = WORKSPACE_MEMBER_AUTHORIZER, capacity = 100) {
+  function gatewaySetup(authorizer: WorkspaceAuthorizer = WORKSPACE_MEMBER_AUTHORIZER, capacity = 100, extra: Partial<ConstructorParameters<typeof RealtimeGateway>[0]> = {}) {
     const ws = randomUUID()
     const bus = new InProcessEventBus({ epoch: 'e1', capacity })
     const t = fakeTransport()
     const cursors = new InMemoryRealtimeCursorStore()
-    const gateway = new RealtimeGateway({ bus, transport: t.transport, authorizer, cursors })
+    // Cache off by default: these tests assert a re-check on every delivery.
+    const gateway = new RealtimeGateway({ bus, transport: t.transport, authorizer, cursors, revalidationCacheMs: 0, ...extra })
     closers.push(() => gateway.close())
-    const alice = { clientId: 'c-alice', workspaceId: ws, principalId: 'alice' }
-    const bob = { clientId: 'c-bob', workspaceId: ws, principalId: 'bob' }
+    const alice = { clientId: 'c-alice', workspaceId: ws, principalId: 'alice', deviceKey: 'd-alice-laptop' }
+    const bob = { clientId: 'c-bob', workspaceId: ws, principalId: 'bob', deviceKey: 'd-bob' }
     t.sessions.set('c-alice', { principalId: 'alice', workspaceId: ws, live: true })
     t.sessions.set('c-bob', { principalId: 'bob', workspaceId: ws, live: true })
     const pinged = (principal: string, n: number) => bus.publish([{ eventId: randomUUID(), workspaceId: ws, type: 'system.pinged', actorId: principal, causationId: `cmd-${n}`, aggregateRevision: 0, payload: {}, createdAt: 'now' }])
