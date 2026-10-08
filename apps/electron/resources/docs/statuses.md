@@ -4,8 +4,8 @@ Session statuses represent workflow states. Each workspace has its own status co
 
 ## Storage Locations
 
-- Config: `~/rox/workspaces/{id}/statuses/config.json`
-- Icons: `~/rox/workspaces/{id}/statuses/icons/`
+- Config: `{{ROX_HOME}}/workspaces/{id}/statuses/config.json`
+- Icons: `{{ROX_HOME}}/workspaces/{id}/statuses/icons/`
 
 ## Default Statuses
 

@@ -8,11 +8,13 @@
  * Source content lives in apps/electron/resources/docs/*.md for easier editing.
  */
 
-import { join } from 'path';
+import { join, sep } from 'path';
+import { homedir } from 'os';
 import { existsSync, mkdirSync, writeFileSync, readdirSync, readFileSync } from 'fs';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
 import { CONFIG_DIR } from '../config/paths.ts';
+import { isVisibleRoxHomeActive } from '../config/env.ts';
 
 const DOCS_DIR = join(CONFIG_DIR, 'docs');
 
@@ -140,6 +142,41 @@ export function listDocs(): string[] {
 }
 
 /**
+ * Placeholder in bundled docs (apps/electron/resources/docs/*.md) for the Rox
+ * home as shown to agents and users (W1-13). Rendered when the docs are
+ * written to {configDir}/docs, so the text always matches the real tree.
+ */
+export const ROX_HOME_DOC_PLACEHOLDER = '{{ROX_HOME}}';
+
+/** Flag-OFF display text — the legacy hidden home, exactly as before W1-13. */
+const LEGACY_ROX_HOME_DISPLAY = '~/.rox';
+
+/**
+ * How docs refer to the Rox home. With `storage.visible-root.v1` OFF this is
+ * always the legacy `~/.rox` text (unchanged docs). With the flag ON it is
+ * the resolved config dir, `~`-abbreviated under the home dir — `~/rox`
+ * after migration, or the legacy dir while the migration is deferred.
+ */
+export function roxHomeDocDisplay(
+  configDir: string = CONFIG_DIR,
+  options?: { homeDir?: string; visibleRootActive?: boolean },
+): string {
+  const visibleRootActive = options?.visibleRootActive ?? isVisibleRoxHomeActive();
+  if (!visibleRootActive) return LEGACY_ROX_HOME_DISPLAY;
+  const home = options?.homeDir ?? homedir();
+  if (configDir === home) return '~';
+  if (configDir.startsWith(home + sep)) {
+    return `~/${configDir.slice(home.length + 1).split(sep).join('/')}`;
+  }
+  return configDir;
+}
+
+/** Replace every `{{ROX_HOME}}` in a bundled doc with the display path. */
+export function renderBundledDoc(content: string, roxHome: string = roxHomeDocDisplay()): string {
+  return content.split(ROX_HOME_DOC_PLACEHOLDER).join(roxHome);
+}
+
+/**
  * Initialize docs directory with bundled documentation.
  * Always writes all docs on launch to ensure consistency across debug and release modes.
  */
@@ -156,13 +193,14 @@ export function initializeDocs(): void {
 
   // Load bundled docs lazily (after setBundledAssetsRoot has been called)
   const bundledDocs = getBundledDocs();
+  const roxHome = roxHomeDocDisplay();
 
   // Always write bundled docs to disk on launch.
   // This ensures consistent behavior between debug and release modes —
   // docs are always up-to-date with the running version.
   for (const [filename, content] of Object.entries(bundledDocs)) {
     const docPath = join(DOCS_DIR, filename);
-    writeFileSync(docPath, content, 'utf-8');
+    writeFileSync(docPath, renderBundledDoc(content, roxHome), 'utf-8');
   }
 
   debug(`[docs] Synced ${Object.keys(bundledDocs).length} docs`);

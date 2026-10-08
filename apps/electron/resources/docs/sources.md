@@ -236,7 +236,7 @@ Would you like me to show you what issues are currently open?
 ## Overview
 
 Sources are stored as folders under:
-- `~/rox/workspaces/{workspaceId}/sources/{sourceSlug}/`
+- `{{ROX_HOME}}/workspaces/{workspaceId}/sources/{sourceSlug}/`
 
 Each source folder contains:
 - `config.json` - Source configuration (required)
@@ -312,7 +312,7 @@ They make configs portable without changing existing behavior.
 |----------|-------------|--------|
 | `~` / `~/` | Home directory | `~/Development/my-mcp` |
 | `${HOME}` | Home directory | `${HOME}/.crawl4ai/venv/bin/python` |
-| `${CRAFT_CONFIG_DIR}` | ROX config directory (default: `~/rox`) | `${CRAFT_CONFIG_DIR}/sources/my-mcp` |
+| `${CRAFT_CONFIG_DIR}` | ROX config directory (default: `{{ROX_HOME}}`) | `${CRAFT_CONFIG_DIR}/sources/my-mcp` |
 | `${WORKSPACE}` | Current workspace root | `${WORKSPACE}/mcp-servers/my-server` |
 | `${SOURCE_DIR}` | This source's own folder | `${SOURCE_DIR}/server/index.js` |
 
@@ -952,7 +952,7 @@ The `config.icon` field controls the source icon. Resolution follows this priori
 ## Provider Domain Cache
 
 For favicon resolution, a cache maps provider names to their canonical domains at:
-`~/rox/provider-domains.json`
+`{{ROX_HOME}}/provider-domains.json`
 
 **Format:**
 ```json
@@ -1021,7 +1021,7 @@ Technical steps:
 
 1. Create the source folder:
    ```bash
-   mkdir -p ~/rox/workspaces/{ws}/sources/my-source
+   mkdir -p {{ROX_HOME}}/workspaces/{ws}/sources/my-source
    ```
 
 2. Write `config.json` with appropriate settings (see schemas above)

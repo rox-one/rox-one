@@ -15,7 +15,7 @@ Use the application interfaces and the actual tools advertised by the current ag
 
 ## Agent instructions
 
-1. Resolve the selected workspace's actual root; do not assume that it is inside the default `~/rox/workspaces` directory.
+1. Resolve the selected workspace's actual root; do not assume that it is inside the default `{{ROX_HOME}}/workspaces` directory.
 2. Read the relevant guide before changing configuration. Preserve user data and unrelated fields.
 3. Use the exact tool names present in the current session. OMP exposes session tools through names such as `mcp__session__config_validate`; other transports may present a different prefix.
 4. If a needed tool is unavailable, report that limitation and use the application interface. Do not invent a CLI executable or unavailable tool.
