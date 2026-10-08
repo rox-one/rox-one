@@ -57,7 +57,7 @@ import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboar
 import { NotesNavigationSidebar } from './notes/NotesNavigationSidebar'
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
-import { cachedNotesList, fetchNotesList, notesTaskCache } from '@/lib/query/notes-cache'
+import { cachedNotesList, fetchNotesList, notesTaskCache, subscribeCachedNotesList } from '@/lib/query/notes-cache'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
@@ -614,8 +614,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const taskRequestRef = React.useRef(0)
   const taskCacheWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
   // PERF-09: per-workspace task cache shared across visits (only changed notes are re-read).
-  const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(notesTaskCache<NoteTask>(activeWorkspaceId).tasks)
-  const taskCacheUpdatedAtRef = React.useRef<Map<string, number>>(notesTaskCache<NoteTask>(activeWorkspaceId).updatedAt)
+  // Computed once per mount (not on every render): the lookup can create the entry.
+  const [initialTaskCache] = React.useState(() => notesTaskCache<NoteTask>(activeWorkspaceId))
+  const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(initialTaskCache.tasks)
+  const taskCacheUpdatedAtRef = React.useRef<Map<string, number>>(initialTaskCache.updatedAt)
   const nativeRevisionByNoteRef = React.useRef<Map<string, number | null>>(new Map())
   const expectedRevisionByNoteRef = React.useRef<Map<string, string>>(new Map())
   const mutationOptions = React.useCallback((workspaceId: string, noteId: string, expectedRevision?: number | null): NoteMutationOptions => ({
@@ -811,11 +813,25 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       isCurrent: () => readsMountedRef.current && request === notesListRequestRef.current
         && readWorkspaceRef.current === activeWorkspaceId,
       onAvailable: next => {
+        notesFreshWorkspaceRef.current = activeWorkspaceId
         setNotesReadError(null)
         setNotes(next)
         setSidebarOrder(next.map(n => n.id))
       },
       onUnavailable: error => setNotesReadError({ workspaceId: activeWorkspaceId, code: capabilityErrorCode(error) }),
+    })
+  }, [activeWorkspaceId])
+
+  // PERF-09: the disk restore is async and usually lands after mount; adopt
+  // the hydrated list until this workspace's first fresh read arrives.
+  const notesFreshWorkspaceRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (!activeWorkspaceId) return
+    notesFreshWorkspaceRef.current = null
+    return subscribeCachedNotesList(activeWorkspaceId, next => {
+      if (notesFreshWorkspaceRef.current === activeWorkspaceId || readWorkspaceRef.current !== activeWorkspaceId) return
+      setNotes(next)
+      setSidebarOrder(next.map(n => n.id))
     })
   }, [activeWorkspaceId])
 

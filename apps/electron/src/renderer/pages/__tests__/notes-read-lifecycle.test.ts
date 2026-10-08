@@ -39,7 +39,9 @@ function fixture() {
   resetRoxQueryClientForTests(createRoxQueryClient())
   const refs = { notesListRequestRef: { current: 0 }, assetsRequestRef: { current: 0 },
     readWorkspaceGenerationRef: { current: 0 },
-    readWorkspaceRef: { current: undefined as string | undefined }, readsMountedRef: { current: false } }
+    readWorkspaceRef: { current: undefined as string | undefined }, readsMountedRef: { current: false },
+    // PERF-09 review1: refreshNotes marks the first fresh list (hydration adoption stops there).
+    notesFreshWorkspaceRef: { current: null as string | null } }
   const events: Array<[string, unknown]> = []
   let commit!: () => () => void
   const render = (activeWorkspaceId: string | undefined, api: Record<string, unknown>) => {

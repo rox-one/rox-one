@@ -87,7 +87,7 @@ import {
 import { Dot, SectionLabel, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
 import { QuickTaskInput } from './QuickTaskInput'
 import { toErrorMessage } from '@/lib/errors'
-import { cachedNotesList, fetchNotesList } from '@/lib/query/notes-cache'
+import { cachedNotesList, fetchNotesList, subscribeCachedNotesList } from '@/lib/query/notes-cache'
 
 export interface WidgetProps {
   edit: WidgetEditProps | null
@@ -1064,13 +1064,18 @@ function useNotes(workspaceId: string | null): { available: boolean; loaded: boo
       return
     }
     let cancelled = false
+    let fresh = false
+    // The disk restore is async: paint the hydrated list until the first fresh read.
+    const offHydration = subscribeCachedNotesList(workspaceId, (notes) => {
+      if (!cancelled && !fresh) setState({ available: true, loaded: true, notes })
+    })
     const load = () => fetchNotesList(workspaceId, () => api.listNotes(workspaceId)).then(
-      (notes) => { if (!cancelled) setState({ available: true, loaded: true, notes: Array.isArray(notes) ? notes : [] }) },
+      (notes) => { fresh = true; if (!cancelled) setState({ available: true, loaded: true, notes: Array.isArray(notes) ? notes : [] }) },
       () => { if (!cancelled) setState({ available: false, loaded: true, notes: [] }) },
     )
     void load()
     const off = typeof api.onNotesChanged === 'function' ? api.onNotesChanged(() => { void load() }) : undefined
-    return () => { cancelled = true; off?.() }
+    return () => { cancelled = true; offHydration(); off?.() }
   }, [workspaceId])
   return state
 }

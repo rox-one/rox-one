@@ -1,3 +1,4 @@
+import { hashKey } from '@tanstack/react-query'
 import type { NoteSummary } from '../../../shared/types'
 import { roxQueryClient } from './client'
 import { roxKeys } from './keys'
@@ -20,6 +21,25 @@ export interface NotesTaskCache<T> {
 export function cachedNotesList(workspaceId: string | null | undefined): NoteSummary[] | null {
   if (!workspaceId) return null
   return roxQueryClient().getQueryData<NoteSummary[]>(roxKeys.notesList(workspaceId)) ?? null
+}
+
+/**
+ * Calls `adopt` whenever the workspace's cached list gains or changes data
+ * from outside the caller (the disk restore hydrating after mount, or another
+ * surface's read). Restore is async, so Notes and the Home widget, which seed
+ * from the cache in their initial state, usually mount before it lands; they
+ * subscribe until their own first fresh read arrives.
+ */
+export function subscribeCachedNotesList(workspaceId: string, adopt: (notes: NoteSummary[]) => void): () => void {
+  const hash = hashKey(roxKeys.notesList(workspaceId))
+  let last: unknown = roxQueryClient().getQueryData(roxKeys.notesList(workspaceId))
+  return roxQueryClient().getQueryCache().subscribe(event => {
+    if ((event.type !== 'added' && event.type !== 'updated') || event.query.queryHash !== hash) return
+    const data = event.query.state.data
+    if (!Array.isArray(data) || data === last) return
+    last = data
+    adopt(data as NoteSummary[])
+  })
 }
 
 /**
