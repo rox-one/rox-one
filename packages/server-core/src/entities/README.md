@@ -6,7 +6,7 @@ Server side of the entity registry + links package (#1499).
 | --- | --- |
 | `link-store.ts` | One SQLite DB per workspace at `<workspaceRoot>/.rox/entity-links.sqlite` (dir mode 0700, WAL). Links dedupe on `(from, relation, to)`; `add` bumps `revision` atomically in one upsert; `replaceOutgoing` reconciles a source's *owned* links in one IMMEDIATE transaction. |
 | `extract.ts` | Explicit-syntax-only extraction: `[[kind:id\|label]]`, `![[…]]`, `[[plain title]]`, `rox://…`, mention nodes. Bare `kind:id` never links. A plain wikilink whose prefix is not a known kind, or with whitespace after `:`, is a note title (the `#Heading` part is dropped). |
-| `note-links-indexer.ts` | Note-mention indexer: on every persisted note change the Notes handlers reconcile the note's outgoing links (`mentions`; `![[…]]` → `embeds`) and push `entities:linksChanged`. Deleted notes lose their outgoing links. Frontmatter, fenced and inline code are skipped; the note text is never rewritten. See "Indexer rules" below. |
+| `note-links-indexer.ts` | Note-mention indexer: on every persisted note change the Notes handlers reconcile the note's outgoing links (`mentions`; a whole-line, unescaped `![[…]]` → `embeds`) and push `entities:linksChanged`. Deleted notes lose their outgoing links. Frontmatter, fenced and inline code are skipped; the note text is never rewritten. See "Indexer rules" below. |
 | `resolver-host.ts` | Per-workspace, per-actor preview cache behind `entities:resolve`. |
 | `workbench-flags.ts` | Live workbench-flag source read on every call. |
 
@@ -16,21 +16,36 @@ Server side of the entity registry + links package (#1499).
   (`created_by = system:notes-indexer`, relation `mentions`/`embeds`).
   Manual links on a note (`relates-to`, a role, a block anchor, or a same-key
   link someone else authored) survive every save, rename and delete of that
-  note; the indexer never overwrites their role or anchor.
+  note; the indexer never overwrites their role or anchor. A manual
+  `entities:links` add that sets a role or anchor on a row the indexer wrote
+  takes ownership of it (`created_by` becomes the caller), so the indexer
+  stops touching it.
+- **Embeds.** `![[…]]` is an `embeds` link only when the `!` is unescaped and
+  the trimmed line is exactly the embed (same rule as the renderer's
+  `matchEntityEmbedLine`); `\![[…]]`, inline `a ![[…]] b` and indented code
+  lines are `mentions`.
 - **Change = link set.** Only added/removed links bump revisions and push
   `entities:linksChanged`. Line anchors are refreshed in place silently, so
   typing above the links causes no revision bump and no push.
 - **Ordering.** Filesystem-vault notes are indexed inside the vault lease
   (changed delivery). Native (journal) notes are indexed through a per
   `(workspace, note)` promise chain that skips a read older than the journal
-  revision already applied (`createNoteLinksSerializer`).
+  revision already applied (`createNoteLinksSerializer`). Rename/move
+  tombstone the old id at the post-op revision; delete tombstones without
+  bound until a create of that id resets it.
 - **Bounded work.** Lines over 20 000 chars are skipped and scanning stops
-  after 2 MB of a note (both logged); the wikilink and inline-code scanners
-  are linear per line.
+  after 2 MB of a note (both logged); the wikilink (`indexOf` scan, no regex)
+  and inline-code scanners are linear per line.
 - **Phantom sources.** Ops while the flag is off never touch the store. When
   the store is first used after the flag turns on (and after every later
   off → on transition) indexer rows of notes that no longer exist are pruned;
-  backlinks additionally hide any source note that cannot be found.
+  backlinks additionally hide any source note that cannot be found. The
+  notes root is resolved once per prune run / backlinks call (the probe is a
+  per-workspace factory); after that each source is one `existsSync`. If the
+  root is not an existing readable directory (unmounted custom `notesPath`,
+  unresolved native workspace) nothing is pruned, that generation stays
+  unpruned (retried on next use, logged once) and backlinks treat every
+  source as present. A run where every source reads as missing is skipped.
 
 ## Flag
 
@@ -51,7 +66,10 @@ the listener is registered first thing in `whenReady`, before any await), and
 `true`, or updating an existing copy) — a user who never enabled the flag gets
 no file. Without a copy, a cold-start entity deep link waits for the first
 renderer report (≤ 10 s, then dropped with a warning); a held link that a
-later deep link supersedes is dropped so the most recent link wins.
+later external deep link supersedes is dropped so the most recent link wins.
+Internal navigations (new window with an initial link, open session in new
+window) neither supersede nor get superseded. A cold-start link whose
+handling fails is logged and dropped — there is no retry.
 
 ## Known limitations (W1, by decision — no behaviour change planned here)
 

@@ -25,7 +25,7 @@ import type { RequestContext } from '../../transport/types.ts'
 import type { HandlerDeps } from '../handler-deps'
 import { closeEntityLinkStores, getEntityLinkStore } from '../../entities/link-store.ts'
 import { DefaultResolverHost } from '../../entities/resolver-host.ts'
-import { ensureNoteLinksPruned, noteLinkSourceExists, observeEntitiesLinksEnabled } from '../../entities/note-links-indexer.ts'
+import { ensureNoteLinksPruned, noteLinkSourceProbeFor, observeEntitiesLinksEnabled } from '../../entities/note-links-indexer.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.entities.LINKS, RPC_CHANNELS.entities.RESOLVE] as const
@@ -200,7 +200,8 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
           relations: request.relations,
           cursor: request.cursor,
           limit: request.limit,
-        }, { sourceExists: ref => noteLinkSourceExists(workspace, ref) })
+        // One notes-root resolution per call, then existsSync per source id.
+        }, { sourceExists: noteLinkSourceProbeFor(workspace) })
         return page.nextCursor
           ? { ok: true, op: 'backlinks', links: page.links, nextCursor: page.nextCursor }
           : { ok: true, op: 'backlinks', links: page.links }
