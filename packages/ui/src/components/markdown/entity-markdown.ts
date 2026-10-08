@@ -123,6 +123,25 @@ export function serializeEntityEmbed(ref: string, label?: string | null, source?
   return clean ? `![[${canonical}|${clean}]]` : `![[${canonical}]]`
 }
 
+/**
+ * True when `text` ends with a `!` that is not backslash-escaped (an even
+ * number of `\\` before it). Such a `!` directly before `[[…]]` would read
+ * back as an embed/text instead of a mention.
+ */
+export function endsWithUnescapedBang(text: string): boolean {
+  const m = /(\\*)!$/.exec(text)
+  return m !== null && m[1]!.length % 2 === 0
+}
+
+/**
+ * Legacy serializer helper: escape a trailing unescaped `!` to `\!` so a
+ * mention written right after it (`Done!` + chip) reloads as a mention.
+ * Returns `text` unchanged in every other case.
+ */
+export function escapeTrailingBang(text: string): string {
+  return endsWithUnescapedBang(text) ? `${text.slice(0, -1)}\\!` : text
+}
+
 /** True when the line after the one ending at `lineEnd` (index of its `\n`, or -1 for EOF) is blank or absent. */
 function nextLineIsBlank(src: string, lineEnd: number): boolean {
   if (lineEnd === -1) return true
@@ -132,9 +151,17 @@ function nextLineIsBlank(src: string, lineEnd: number): boolean {
 
 /**
  * Official-engine block `start`: the first `![[` that begins a line with a
- * blank line (or the start) before it and a blank line (or the end) after
- * it. Never a mid-line index, never a line touching paragraph text, so an
- * embed is not pulled out of the paragraph it belongs to.
+ * blank line before it and a blank line (or the end) after it. Never a
+ * mid-line index, never a line touching paragraph text, so an embed is not
+ * pulled out of the paragraph it belongs to.
+ *
+ * marked only calls block `start` to cut a top-level paragraph, and passes
+ * the paragraph source minus its first character (`src.slice(1)`). So the
+ * first line of `src` is the truncated tail of a paragraph line: an `![[` on
+ * it is always mid-line (`a![[…]]`, `!![[…]]`), and it is never the blank
+ * line an embed needs above it. Embeds that start the document or follow a
+ * blank line are still tokenized: marked tries block tokenizers at every
+ * block start regardless of `start`.
  */
 export function entityEmbedBlockStart(src: string): number {
   let from = 0
@@ -143,11 +170,11 @@ export function entityEmbedBlockStart(src: string): number {
     if (idx === -1) return -1
     const before = src.slice(0, idx)
     const lineStart = before.lastIndexOf('\n') + 1
-    if (/^[ ]{0,3}$/.test(before.slice(lineStart)) && nextLineIsBlank(src, src.indexOf('\n', idx))) {
+    if (lineStart > 0 && /^[ ]{0,3}$/.test(before.slice(lineStart)) && nextLineIsBlank(src, src.indexOf('\n', idx))) {
       const prevEnd = lineStart - 1
-      if (prevEnd < 0) return idx
-      const prevStart = src.lastIndexOf('\n', prevEnd - 1) + 1
-      if (src.slice(prevStart, prevEnd).trim() === '') return idx
+      const prevNewline = prevEnd > 0 ? src.lastIndexOf('\n', prevEnd - 1) : -1
+      // prevNewline === -1: the line above is the truncated first line (paragraph text).
+      if (prevNewline !== -1 && src.slice(prevNewline + 1, prevEnd).trim() === '') return idx
     }
     from = idx + 3
   }
@@ -231,8 +258,9 @@ export function installEntityMarkdownRules(md: MarkdownItLike): void {
 
   md.inline.ruler.before('link', 'rox_entity_mention', (state, silent) => {
     if (state.src.charCodeAt(state.pos) !== 0x5b /* [ */) return false
-    // A preceding `!` belongs to an embed; leave it as text inline.
-    if (state.pos > 0 && state.src.charCodeAt(state.pos - 1) === 0x21 /* ! */) return false
+    // A preceding unescaped `!` belongs to an embed; leave it as text inline.
+    // `\![[…]]` (written by the serializer after a literal `!`) is a mention.
+    if (endsWithUnescapedBang(state.src.slice(0, state.pos))) return false
     const match = matchEntityMention(state.src.slice(state.pos, state.posMax))
     if (!match) return false
     if (!silent) {

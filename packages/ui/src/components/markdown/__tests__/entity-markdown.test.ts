@@ -6,7 +6,9 @@ import MarkdownIt from 'markdown-it'
 import { Lexer } from 'marked'
 import {
   canonicalEntityTarget,
+  endsWithUnescapedBang,
   entityEmbedBlockStart,
+  escapeTrailingBang,
   installEntityMarkdownRules,
   isMarkedRootTokenList,
   isWikilinkSafeRefLiteral,
@@ -113,7 +115,8 @@ describe('review fixes (#1505 fix1)', () => {
   })
 
   it('official-engine block start returns line-start positions only', () => {
-    expect(entityEmbedBlockStart('![[task:1]]')).toBe(0)
+    // marked passes `src.slice(1)`: index 0 always follows a lost paragraph character.
+    expect(entityEmbedBlockStart('![[task:1]]')).toBe(-1)
     expect(entityEmbedBlockStart('See ![[task:1]]')).toBe(-1)
     expect(entityEmbedBlockStart('Para\n![[task:1]]')).toBe(-1)
     expect(entityEmbedBlockStart('Para\n\n![[task:1]]')).toBe(6)
@@ -183,8 +186,41 @@ describe('review fixes (#1505 fix3)', () => {
     expect(entityEmbedBlockStart('A\n\n![[task:1]]\nPara')).toBe(-1)
     expect(entityEmbedBlockStart('A\n\n![[task:1]]\n\nB')).toBe(3)
     expect(entityEmbedBlockStart('A\n\n![[task:1]]')).toBe(3)
+    // First line of `src` is a truncated paragraph line: never blank, never a line start.
+    expect(entityEmbedBlockStart('\n![[task:1]]')).toBe(-1) // paragraph `x\n![[task:1]]`
+    expect(entityEmbedBlockStart('\n\n![[task:1]]')).toBe(2) // paragraph `x` + blank line
     expect(matchEntityEmbedBlock('![[task:1]]\nPara')).toBeNull()
     expect(matchEntityEmbedBlock('![[task:1]]\n\nPara')).toEqual({ match: { raw: '![[task:1]]', ref: 'task:1', label: null }, raw: '![[task:1]]\n' })
     expect(matchEntityEmbedBlock('![[task:1]]')?.raw).toBe('![[task:1]]')
+  })
+
+  it('a trailing `!` is escaped only when it is unescaped', () => {
+    expect(endsWithUnescapedBang('Done!')).toBe(true)
+    expect(endsWithUnescapedBang('!')).toBe(true)
+    expect(endsWithUnescapedBang('a\\\\!')).toBe(true) // `a\\!`: escaped backslash, real `!`
+    expect(endsWithUnescapedBang('a\\!')).toBe(false)
+    expect(endsWithUnescapedBang('Done! ')).toBe(false)
+    expect(endsWithUnescapedBang('')).toBe(false)
+    expect(escapeTrailingBang('Done!')).toBe('Done\\!')
+    expect(escapeTrailingBang('Done\\!')).toBe('Done\\!')
+    expect(escapeTrailingBang('Done. ')).toBe('Done. ')
+  })
+
+  it('markdown-it: `\\![[…]]` is a literal `!` + mention; `![[…]]` mid-line stays text', () => {
+    const md = new MarkdownIt()
+    installEntityMarkdownRules(md)
+    const escaped = md.render('Done\\![[task:1]]\n')
+    expect(escaped).toContain('Done!<span data-entity-mention="task:1"')
+    expect(md.render('\\![[task:1]]\n')).toContain('<p>!<span data-entity-mention="task:1"')
+    expect(md.render('\\![[task:1]]\n')).not.toContain('data-entity-embed')
+    expect(md.render('Done![[task:1]]\n')).not.toContain('data-entity-mention')
+    expect(md.render('a\\\\![[task:1]]\n')).not.toContain('data-entity-mention')
+  })
+
+  it('marked: the escape token before `[[` does not block the mention start', () => {
+    const tokens = new Lexer().lex('Done\\![[task:1]]')
+    const inline = (tokens[0] as { tokens?: Array<{ type: string; raw: string }> }).tokens ?? []
+    expect(inline.map((t) => t.type)).toContain('escape')
+    expect(endsWithUnescapedBang(inline.find((t) => t.type === 'escape')!.raw)).toBe(false)
   })
 })

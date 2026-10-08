@@ -44,6 +44,8 @@ When the flag is off:
 - **Per-kind renderers:** `registerPreview(kind, { ChipLabel?, HoverCardBody?, CardBody? })`. Restricted previews never reach custom renderers.
 - **Data:** every read goes through `entity-data-source.ts`. The default implementation calls the `entities:resolve` / `entities:links` bridge methods (`window.electronAPI.entitiesResolve` / `entitiesLinks`). Search is `STUB(#1504)` and returns `[]` until W1-07 calls `setEntityDataSource(...)`.
 - **Markdown:** mention ⇄ `[[kind:id|label]]`, embed ⇄ `![[kind:id]]` (see `@rox/ui` `EntityMention` / `EntityEmbed`). Both round-trip through `server-core/src/entities/extract.ts`.
+  - An embed is a top-level `![[kind:id]]` line with a blank line (or the start/end of the note) both before and after it. Anything else (mid-line, touching paragraph text, inside a list item / blockquote / callout / column) stays text, both when loading and when typing or pasting.
+  - A mention written right after a literal `!` (`Done!` + chip) is saved as `Done\![[kind:id]]`, so it reloads as a mention instead of embed syntax. This is the only case where the escape is written.
 
 ## Preview freshness
 
@@ -63,4 +65,5 @@ When the flag is off:
 - **Tasks «Упоминается в» stays empty for now.** Nothing indexes note mentions yet: the save-time indexer (Markdown → `extract.ts` → link store, behind `entities.links.v1`) belongs to the #1499 package, not this one. Until it lands, the panel shows its empty state («Пока нигде не упоминается») from the real `entities:links` call; it never shows fixture or invented rows. Backlinks appear as soon as links are written (today only through the explicit `entities:links add` RPC). QA should not file the empty panel as a bug.
 - The server resolver host keeps its own LRU; a renderer revalidation can return that cached preview until the owning module invalidates it on the server.
 - `[[` / `@` suggestion menu (UI-SPEC MentionMenu) is a later package; typed or pasted explicit syntax converts, and Mod-Shift-K opens the picker.
-- An `![[kind:id]]` line inside a list item or blockquote stays text, not an embed card. The legacy (tiptap-markdown) editor escapes it on save as `!\[\[…\]\]`, exactly as with the flag off (same as main).
+- An `![[kind:id]]` line inside a list item, blockquote, callout or column, or touching paragraph text, stays text, not an embed card. The legacy (tiptap-markdown) editor escapes it on save as `!\[\[…\]\]`, exactly as with the flag off (same as main).
+- The `\!` escape before a mention is written by the legacy engine only (the Notes default). The official `@tiptap/markdown` engine cannot see the preceding output from a node renderer, so there `Done!` + chip saves `Done![[kind:id]]`, which reloads as text, and a lone `!` + chip line reloads as an embed. That engine also drops `\` escapes on load (same as main).

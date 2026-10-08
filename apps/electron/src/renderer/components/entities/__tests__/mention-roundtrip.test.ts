@@ -177,7 +177,7 @@ for (const engine of ['legacy', 'official'] as const) {
     })
 
     it('mid-line embeds and embeds right under a paragraph stay in their paragraph', () => {
-      for (const markdown of ['See ![[task:1]]', 'Para\n![[task:1]]', '![[task:1]]\nPara', 'A\n\n![[task:1|L]]\nPara\n\nB']) {
+      for (const markdown of ['See ![[task:1]]', 'Para\n![[task:1]]', '![[task:1]]\nPara', 'A\n\n![[task:1|L]]\nPara\n\nB', 'a![[task:1]]', 'x\n![[task:1]]', 'x\n![[task:1]]\n\nB', '!![[task:1]]']) {
         const flagOn = roundTrip(engine, markdown)
         const flagOff = roundTrip(engine, markdown, { entityNodes: false })
         expect(flagOn.nodes.filter((n) => n.type === 'entityEmbed')).toEqual([])
@@ -477,4 +477,83 @@ describe('code is never converted (Markdown paste, legacy engine as in Notes)', 
     editor.destroy()
     expect(nodes).toEqual([])
   })
+})
+
+describe('a mention right after a literal `!` (#1505 fix3)', () => {
+  const chip = (ref = 'task:1'): JSONContent => ({ type: 'mention', attrs: { ref, label: '', source: '' } })
+  const text = (value: string, marks?: JSONContent['marks']): JSONContent => ({ type: 'text', text: value, ...(marks ? { marks } : {}) })
+  const para = (...content: JSONContent[]): JSONContent => ({ type: 'paragraph', content })
+  const doc = (...content: JSONContent[]): JSONContent => ({ type: 'doc', content })
+  const shape = (editor: Editor) => (editor.getJSON().content ?? []).map((node) => [node.type, (node.content ?? []).map((c) => c.type === 'text' ? c.text : c.type)])
+
+  it('legacy (Notes): `Done!` + picker chip saves `Done\\![[task:1]]` and reloads as text + mention', () => {
+    const editor = makeEditor('legacy', 'Done!')
+    editor.commands.focus('end')
+    editor.commands.insertEntityMention({ ref: 'task:1' })
+    const out = toMarkdown(editor, 'legacy')
+    editor.destroy()
+    expect(out).toBe('Done\\![[task:1]]')
+    const reloaded = makeEditor('legacy', out)
+    expect(shape(reloaded)).toEqual([['paragraph', ['Done!', 'mention']]])
+    expect(toMarkdown(reloaded, 'legacy')).toBe(out) // byte-identical on the next save
+    reloaded.destroy()
+  })
+
+  it('legacy (Notes): a lone `!` + chip line saves `\\![[task:1]]` and stays a mention, never an embed', () => {
+    const editor = makeEditor('legacy', doc(para(text('Intro')), para(text('!'), chip())))
+    const out = toMarkdown(editor, 'legacy')
+    editor.destroy()
+    expect(out).toBe('Intro\n\n\\![[task:1]]')
+    const reloaded = makeEditor('legacy', out)
+    expect(shape(reloaded)).toEqual([['paragraph', ['Intro']], ['paragraph', ['!', 'mention']]])
+    expect(entityNodes(reloaded).map((n) => n.type)).toEqual(['mention'])
+    expect(toMarkdown(reloaded, 'legacy')).toBe(out)
+    reloaded.destroy()
+  })
+
+  it('legacy (Notes): the escape is written only for a `!` directly before a mention; no other text changes', () => {
+    const cases: Array<[JSONContent, string]> = [
+      [doc(para(text('Done!'))), 'Done!'],
+      [doc(para(text('Wow! '), chip())), 'Wow! [[task:1]]'],
+      [doc(para(text('x'), chip(), text('!'))), 'x[[task:1]]!'],
+      [doc(para(text('Done!', [{ type: 'bold' }]), chip())), '**Done!**[[task:1]]'],
+      [doc(para(text('Hi!')), para(chip())), 'Hi!\n\n[[task:1]]'],
+      [doc(para(text('a!'), { type: 'hardBreak' }, chip())), 'a!\\\n[[task:1]]'],
+      [doc({ type: 'blockquote', content: [para(text('!'), chip())] }), '> \\![[task:1]]'],
+      [doc(para(text('x\\!'), chip())), 'x\\\\\\![[task:1]]'], // literal `x\!`: `\\` + escaped `!`
+    ]
+    for (const [json, expected] of cases) {
+      const flagOn = makeEditor('legacy', json)
+      const out = toMarkdown(flagOn, 'legacy')
+      const reloaded = makeEditor('legacy', out)
+      const again = toMarkdown(reloaded, 'legacy')
+      const mentions = entityNodes(reloaded).filter((n) => n.type === 'mention').length
+      flagOn.destroy()
+      reloaded.destroy()
+      expect({ expected, out, again }).toEqual({ expected, out: expected, again: expected })
+      expect({ expected, mentions }).toEqual({ expected, mentions: JSON.stringify(json).includes('"mention"') ? 1 : 0 })
+    }
+  })
+
+  for (const engine of ['legacy', 'official'] as const) {
+    it(`${engine}: \`\\![[…]]\` parses as a literal \`!\` + mention; unescaped \`![[…]]\` mid-line stays text`, () => {
+      // @tiptap/markdown drops marked's escape tokens (main does the same with
+      // the flag off: `Done\\!` loads as `Done`), so there the `!` is lost but
+      // the mention is still a mention, never an embed.
+      const bang = engine === 'legacy' ? '!' : null
+      const escaped = makeEditor(engine, 'Done\\![[task:1]]')
+      expect(shape(escaped)).toEqual([['paragraph', [bang ? 'Done!' : 'Done', 'mention']]])
+      escaped.destroy()
+      const lone = makeEditor(engine, '\\![[task:1]]')
+      expect(shape(lone)).toEqual([['paragraph', bang ? [bang, 'mention'] : ['mention']]])
+      expect(entityNodes(lone).map((n) => n.type)).toEqual(['mention'])
+      lone.destroy()
+      const unescaped = makeEditor(engine, 'Done![[task:1]]')
+      expect(entityNodes(unescaped)).toEqual([])
+      unescaped.destroy()
+      const doubled = makeEditor(engine, 'a!![[task:1]]')
+      expect(entityNodes(doubled)).toEqual([])
+      doubled.destroy()
+    })
+  }
 })

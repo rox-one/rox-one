@@ -25,6 +25,8 @@ import type { ComponentType } from 'react'
 import {
   ENTITY_MENTION_NODE,
   canonicalEntityTarget,
+  endsWithUnescapedBang,
+  escapeTrailingBang,
   installEntityMarkdownRules,
   matchEntityMention,
   serializeEntityMention,
@@ -152,7 +154,13 @@ export const EntityMention = Node.create<EntityMentionOptions>({
   addStorage() {
     return {
       markdown: {
-        serialize(state: { write: (text: string) => void }, node: { attrs: { ref?: string; label?: string; source?: string } }) {
+        serialize(state: { write: (text: string) => void; out: string }, node: { attrs: { ref?: string; label?: string; source?: string } }) {
+          // Flush any pending block close / delimiter first, then: a literal
+          // `!` written right before the mention (`Done!` + chip) becomes
+          // `\!`, or `![[…]]` would reload as an embed / text. Only in this
+          // case; all other output is left exactly as the serializer wrote it.
+          state.write('')
+          state.out = escapeTrailingBang(state.out)
           state.write(serializeEntityMention(node.attrs.ref ?? '', node.attrs.label, node.attrs.source))
         },
         parse: {
@@ -173,15 +181,16 @@ export const EntityMention = Node.create<EntityMentionOptions>({
       for (;;) {
         const idx = src.indexOf('[[', from)
         if (idx === -1) return -1
-        if (idx === 0 || src[idx - 1] !== '!') return idx
+        if (!endsWithUnescapedBang(src.slice(0, idx))) return idx
         from = idx + 2
       }
     },
     tokenize: (src: string, tokens) => {
       // `![[…]]` mid-line: the `!` was lexed as text just before; leave the
-      // whole thing as text so it round-trips unchanged.
+      // whole thing as text so it round-trips unchanged. An escaped `\!`
+      // (marked's escape token, raw `\!`) is a literal `!` before a mention.
       const previous = tokens[tokens.length - 1] as { raw?: string } | undefined
-      if (previous?.raw?.endsWith('!')) return undefined
+      if (previous?.raw && endsWithUnescapedBang(previous.raw)) return undefined
       const match = matchEntityMention(src)
       if (!match) return undefined
       return { type: ENTITY_MENTION_NODE, raw: match.raw, ref: match.ref, label: match.label ?? '', source: match.raw }
