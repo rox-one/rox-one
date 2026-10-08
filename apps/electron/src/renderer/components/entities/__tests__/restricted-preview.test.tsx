@@ -1,7 +1,7 @@
 /**
  * W1-08 (#1505) — restricted entities never leak their title.
  */
-import { flush, mount, renderMarkup, resetDom } from './test-env'
+import { flush, mount, renderMarkup, resetDom, setupEntityTestEnv } from './test-env'
 import { afterEach, describe, expect, it } from 'bun:test'
 import type { EntityPreview } from '@rox/core/entities'
 import { EntityChip } from '../EntityChip'
@@ -11,6 +11,8 @@ import { setEntityDataSource, type EntityDataSource } from '../entity-data-sourc
 import { resetEntityPreviewStores } from '../use-entity-preview'
 import { EntityWorkspaceContext } from '../entity-context'
 import { FIXTURE_RESTRICTED, FIXTURE_SECRET_REF, FIXTURE_SECRET_TITLE, FIXTURE_TOMBSTONE } from '../fixtures'
+
+setupEntityTestEnv()
 
 afterEach(() => {
   setEntityDataSource(null)

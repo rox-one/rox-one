@@ -2,19 +2,35 @@
  * W1-08 (#1505) test environment: happy-dom globals, real i18n (RU/EN),
  * markup rendering for snapshots and DOM mounting for axe.
  *
- * Import this module FIRST in a test file so globals exist before React DOM.
+ * Import this module FIRST in a test file so globals exist before React DOM,
+ * then call `setupEntityTestEnv()` at the top level of the file: it
+ * (re)installs the DOM and registers an `afterAll` that restores the original
+ * globals and `console.error`, so later suites in the same `bun test`
+ * process are unaffected. The repo runner runs one process per file anyway.
  * Nothing here touches ~/.rox or the real config dir.
  */
-import { installDom, resetDom } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
+import { afterAll } from 'bun:test'
+import { installDom, resetDom, uninstallDom } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
 
 export const testWindow = installDom()
 
 // Radix primitives warn about useLayoutEffect during static rendering; the
 // markup is still correct, so keep test output readable.
 const originalConsoleError = console.error
-console.error = (...args: unknown[]) => {
+const quietConsoleError = (...args: unknown[]) => {
   if (typeof args[0] === 'string' && args[0].includes('useLayoutEffect does nothing on the server')) return
   originalConsoleError(...args)
+}
+console.error = quietConsoleError
+
+/** Per-file setup; see the module comment. */
+export function setupEntityTestEnv(): void {
+  installDom()
+  console.error = quietConsoleError
+  afterAll(() => {
+    if (console.error === quietConsoleError) console.error = originalConsoleError
+    uninstallDom()
+  })
 }
 
 import * as React from 'react'
@@ -23,9 +39,15 @@ import { mock } from 'bun:test'
 // Radix picks `useLayoutEffect` once, at module load: a no-op when no
 // `document` exists. When a DOM-less test file in the same `bun test` process
 // imported Radix first, portals (popover, context menu, dialog) would never
-// mount here. Re-bind it to React's hook now that the DOM is installed (Bun
-// patches already-loaded modules in place).
-mock.module('@radix-ui/react-use-layout-effect', () => ({ useLayoutEffect: React.useLayoutEffect }))
+// mount here. Re-bind it (Bun patches already-loaded modules in place), but
+// decide per call like Radix does at load: React's hook while a DOM is
+// installed, a no-op otherwise. Later DOM-less suites therefore see Radix's
+// original behaviour once `uninstallDom()` has run.
+const noopLayoutEffect = () => {}
+mock.module('@radix-ui/react-use-layout-effect', () => ({
+  useLayoutEffect: (...args: Parameters<typeof React.useLayoutEffect>) =>
+    (globalThis.document ? React.useLayoutEffect : noopLayoutEffect)(...args),
+}))
 
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot, type Root } from 'react-dom/client'

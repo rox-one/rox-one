@@ -3,10 +3,12 @@
  * light/dark × RU/EN. Markup snapshots stand in for pixel screenshots (no
  * GUI on CI boxes); theme is applied through the `.dark` token scope.
  */
-import { renderMarkup } from './test-env'
+import { renderMarkup, setupEntityTestEnv } from './test-env'
 import { describe, expect, it } from 'bun:test'
 import * as React from 'react'
 import { entityPrimitiveComponents } from '@/playground/registry/entity-primitives'
+
+setupEntityTestEnv()
 
 const THEMES = ['light', 'dark'] as const
 const LANGS = ['ru', 'en'] as const

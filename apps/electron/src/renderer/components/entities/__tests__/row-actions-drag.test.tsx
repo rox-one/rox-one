@@ -1,7 +1,7 @@
 /**
  * W1-08 (#1505) — common row actions hook + X-13 drag source.
  */
-import { mount, resetDom, testWindow } from './test-env'
+import { mount, resetDom, testWindow, setupEntityTestEnv } from './test-env'
 import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act } from 'react'
 import type { EntityRef } from '@rox/core/entities'
@@ -13,6 +13,8 @@ import {
 } from '../row-actions'
 import { ENTITY_REF_MIME, readEntityDragData, setEntityDragData } from '../drag'
 import { EntityChip } from '../EntityChip'
+
+setupEntityTestEnv()
 
 const TASK: EntityRef = { kind: 'task', id: '42' }
 

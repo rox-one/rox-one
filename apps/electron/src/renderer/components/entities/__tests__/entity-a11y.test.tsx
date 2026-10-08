@@ -2,11 +2,13 @@
  * W1-08 (#1505) — axe-core checks for every story (mounted in happy-dom).
  * Colour contrast is excluded (needs real CSS); everything else must pass.
  */
-import { axeViolations, describeViolations, mount, resetDom } from './test-env'
+import { axeViolations, describeViolations, mount, resetDom, setupEntityTestEnv } from './test-env'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { ContextualDatePicker, PersonField, SubscribersPicker } from '@rox/ui/primitives'
 import { entityPrimitiveComponents, FIXTURE_PEOPLE, FIXTURE_TODAY } from '@/playground/registry/entity-primitives'
 import { EntityPicker } from '../EntityPicker'
+
+setupEntityTestEnv()
 
 afterEach(() => { resetDom() })
 
