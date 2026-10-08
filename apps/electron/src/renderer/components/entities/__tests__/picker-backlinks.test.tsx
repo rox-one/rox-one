@@ -9,6 +9,7 @@ import { buildEntityPickerItems, EntityPickerPanel } from '../EntityPicker'
 import { isNoteLinkableRef } from '../NoteEntityMentions'
 import { backlinkGroupOf, groupBacklinks } from '../backlink-groups'
 import { BacklinksList } from '../BacklinksPanel'
+import { TaskEntityBacklinks } from '../TaskEntityBacklinks'
 import {
   clearRecentEntities,
   rememberRecentEntity,
@@ -156,6 +157,21 @@ describe('backlinks grouping', () => {
   it('error state offers retry; empty state explains (negative paths)', async () => {
     expect(await renderMarkup(<BacklinksList state={{ status: 'error', links: [] }} />)).toContain('Не удалось загрузить. Повторить')
     expect(await renderMarkup(<BacklinksList state={{ status: 'ready', links: [] }} />)).toContain('Пока нигде не упоминается')
+  })
+})
+
+describe('Tasks backlinks with no indexed links (UNDONE: #1499 save-time indexer)', () => {
+  it('shows the honest empty state from the real data path, never fixture rows', async () => {
+    const backlinks = mock(async () => ({ links: [] }))
+    setEntityDataSource({ async resolve() { return [] }, backlinks, async search() { return [] }, onLinksChanged() { return () => {} } })
+    const mounted = await mount(<TaskEntityBacklinks taskId="42" workspaceId="ws" enabled />)
+    await flush()
+    const html = mounted.container.innerHTML
+    await mounted.unmount()
+    expect(backlinks).toHaveBeenCalledTimes(1)
+    expect(html).toContain('Пока нигде не упоминается')
+    expect(html).not.toContain('data-entity-chip')
+    for (const link of FIXTURE_BACKLINKS) expect(html).not.toContain(link.from.id)
   })
 })
 
