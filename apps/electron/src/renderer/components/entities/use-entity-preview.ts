@@ -15,6 +15,11 @@ import {
   type RestrictedPreview,
 } from '@rox/core/entities'
 import { getEntityDataSource, unavailableEntityPreview, type EntityChangeEvent } from './entity-data-source'
+import {
+  entitiesLinksSettled,
+  getEntitiesLinksEffectiveState,
+  subscribeEntitiesLinksEffectiveState,
+} from '../../lib/entities-links-sync'
 
 export type EntityPreviewView = PreviewModel | RestrictedPreview
 
@@ -32,12 +37,16 @@ export const ENTITY_PREVIEW_RETRY_MS = 15_000
 export const ENTITY_PREVIEW_RETRY_MAX_MS = 5 * 60_000
 /** A ready preview older than this is revalidated on the next retain()/hover-open. */
 export const ENTITY_PREVIEW_TTL_MS = 60_000
+/** Ready previews no component retains are kept in an LRU of at most this many keys per workspace. */
+export const ENTITY_PREVIEW_MAX_UNRETAINED = 500
 
 export interface EntityPreviewStoreOptions {
   retryMs?: number
   retryMaxMs?: number
   ttlMs?: number
   now?: () => number
+  /** Cap for the unretained-preview LRU (default `ENTITY_PREVIEW_MAX_UNRETAINED`). */
+  maxUnretained?: number
 }
 
 /** Backoff delay for the `failures`-th consecutive failure (1-based). */
@@ -62,6 +71,12 @@ export function entityPreviewRetryDelay(failures: number, retryMs = ENTITY_PREVI
  *   the key is requested again after an exponential backoff (`retryMs`,
  *   doubling, capped at `retryMaxMs`), or dropped if unused. Success or
  *   `linksChanged` resets the backoff.
+ * - When the last component releases a key, its preview moves into an LRU of
+ *   unretained keys; beyond `maxUnretained` the oldest ready entries are
+ *   evicted (in-flight and failing keys are left to their request/timer).
+ * - `invalidate()` starts a new epoch: a resolve that was in flight across it
+ *   (e.g. answered `unavailable` while links was off) is discarded, never
+ *   cached; the retained keys were already re-queued by `invalidate()`.
  */
 class EntityPreviewStore {
   private readonly states = new Map<string, EntityPreviewState>()
@@ -73,6 +88,10 @@ class EntityPreviewStore {
   private readonly fetchedAt = new Map<string, number>()
   /** Keys queued or in flight (TTL revalidation never doubles a request). */
   private readonly pending = new Set<string>()
+  /** Unretained keys, oldest release first (Map insertion order = LRU). */
+  private readonly unretained = new Map<string, true>()
+  /** Bumped by `invalidate()`; results of resolves started in an older epoch are dropped. */
+  private epoch = 0
   private queue = new Map<string, EntityRef>()
   private scheduled = false
   private unlisteners: Array<() => void> = []
@@ -80,12 +99,14 @@ class EntityPreviewStore {
   private readonly retryMaxMs: number
   private readonly ttlMs: number
   private readonly now: () => number
+  private readonly maxUnretained: number
 
   constructor(private readonly workspaceId: string, options: EntityPreviewStoreOptions = {}) {
     this.retryMs = options.retryMs ?? ENTITY_PREVIEW_RETRY_MS
     this.retryMaxMs = options.retryMaxMs ?? ENTITY_PREVIEW_RETRY_MAX_MS
     this.ttlMs = options.ttlMs ?? ENTITY_PREVIEW_TTL_MS
     this.now = options.now ?? Date.now
+    this.maxUnretained = Math.max(0, options.maxUnretained ?? ENTITY_PREVIEW_MAX_UNRETAINED)
   }
 
   get(ref: EntityRef): EntityPreviewState {
@@ -107,6 +128,7 @@ class EntityPreviewStore {
     const entry = this.retained.get(key)
     if (entry) entry.count += 1
     else this.retained.set(key, { ref, count: 1 })
+    this.unretained.delete(key)
     this.request(ref)
     this.revalidate(ref)
     let released = false
@@ -116,7 +138,12 @@ class EntityPreviewStore {
       const current = this.retained.get(key)
       if (!current) return
       current.count -= 1
-      if (current.count <= 0) this.retained.delete(key)
+      if (current.count <= 0) {
+        this.retained.delete(key)
+        this.unretained.delete(key)
+        this.unretained.set(key, true)
+        this.trimUnretained()
+      }
     }
   }
 
@@ -149,10 +176,11 @@ class EntityPreviewStore {
     for (const timer of this.retryTimers.values()) clearTimeout(timer)
     this.retryTimers.clear()
     this.failureCounts.clear()
+    this.epoch += 1
     for (const key of [...this.states.keys()]) {
       const kept = this.retained.get(key)
       if (kept) this.enqueue(key, kept.ref)
-      else { this.states.delete(key); this.fetchedAt.delete(key); this.failed.delete(key) }
+      else this.forget(key)
     }
     for (const [key, { ref }] of this.retained) {
       if (!this.states.has(key)) { this.states.set(key, LOADING); this.enqueue(key, ref) }
@@ -170,7 +198,7 @@ class EntityPreviewStore {
       if (!ref || ref.kind !== event.kind || (ids && !ids.has(ref.id))) continue
       if (!kept) {
         // Not shown anywhere: forget it; the next use fetches it fresh.
-        if (state.status === 'ready') { this.states.delete(key); this.fetchedAt.delete(key) }
+        if (state.status === 'ready') this.forget(key)
         continue
       }
       if (this.failed.has(key) || this.pending.has(key)) continue
@@ -220,15 +248,19 @@ class EntityPreviewStore {
     for (const ref of batch) this.queue.delete(entityRefKey(ref))
     if (this.queue.size > 0) { this.scheduled = true; queueMicrotask(() => { void this.flush() }) }
     if (batch.length === 0) return
+    const epoch = this.epoch
     let previews: Awaited<ReturnType<ReturnType<typeof getEntityDataSource>['resolve']>>
     try {
       previews = await getEntityDataSource().resolve(this.workspaceId, batch)
     } catch {
       this.settle(batch)
-      this.markFailed(batch)
+      if (epoch === this.epoch) this.markFailed(batch)
       return
     }
     this.settle(batch)
+    // Invalidated while in flight (links toggled/changed): the answer may
+    // predate the new state; invalidate() already re-queued retained keys.
+    if (epoch !== this.epoch) return
     const byKey = new Map(previews.map((preview) => [entityRefKey(preview.ref), preview]))
     const at = this.now()
     for (const ref of batch) {
@@ -238,7 +270,38 @@ class EntityPreviewStore {
       this.states.set(key, { status: 'ready', preview: applyPreviewRedaction(preview) })
       this.fetchedAt.set(key, at)
     }
+    this.trimUnretained()
     this.emit()
+  }
+
+  /** Forget everything cached for `key` (not its retain count). */
+  private forget(key: string): void {
+    this.states.delete(key)
+    this.fetchedAt.delete(key)
+    this.failed.delete(key)
+    this.unretained.delete(key)
+  }
+
+  /**
+   * Evict the oldest unretained ready previews beyond `maxUnretained`.
+   * Keys still in flight or failing stay (their flush/timer settles them);
+   * keys whose state is already gone just leave the LRU.
+   */
+  private trimUnretained(): void {
+    if (this.unretained.size <= this.maxUnretained) return
+    let excess = this.unretained.size - this.maxUnretained
+    for (const key of [...this.unretained.keys()]) {
+      if (excess <= 0) break
+      if (this.retained.has(key) || !this.states.has(key)) { this.unretained.delete(key); excess -= 1; continue }
+      if (this.pending.has(key) || this.failed.has(key) || this.states.get(key)?.status !== 'ready') continue
+      this.forget(key)
+      excess -= 1
+    }
+  }
+
+  /** Test helper: cached state and LRU sizes. */
+  stats(): { cached: number; unretained: number; retained: number } {
+    return { cached: this.states.size, unretained: this.unretained.size, retained: this.retained.size }
   }
 
   /** The batch's requests are done unless a newer request for the key was queued meanwhile. */
@@ -268,10 +331,8 @@ class EntityPreviewStore {
         const kept = this.retained.get(key)
         if (kept) this.enqueue(key, kept.ref)
         else {
-          this.failed.delete(key)
           this.failureCounts.delete(key)
-          this.states.delete(key)
-          this.fetchedAt.delete(key)
+          this.forget(key)
           this.emit()
         }
       }, entityPreviewRetryDelay(failures, this.retryMs, this.retryMaxMs)))
@@ -295,6 +356,7 @@ const stores = new Map<string, EntityPreviewStore>()
 let storeOptions: EntityPreviewStoreOptions = {}
 
 export function entityPreviewStore(workspaceId: string): EntityPreviewStore {
+  installEntityPreviewLinksInvalidation()
   let store = stores.get(workspaceId)
   if (!store) { store = new EntityPreviewStore(workspaceId, storeOptions); stores.set(workspaceId, store) }
   return store
@@ -312,11 +374,48 @@ export function invalidateEntityPreviews(workspaceId?: string): void {
   else for (const store of stores.values()) store.invalidate()
 }
 
+let linksUnsubscribe: (() => void) | null = null
+let linksEnabledSeen: boolean | null = null
+
+/**
+ * Review 8: one renderer-wide subscription to the EFFECTIVE links state.
+ * While links is off the server answers `entities:resolve` with
+ * `unavailable` placeholders, which the stores cache as ready previews; when
+ * `enabled` flips, every store is invalidated (retained keys refetch with
+ * stale-while-revalidate, the rest are dropped, in-flight answers from the
+ * old state are discarded). `setEntitiesLinksEnabled` (ipcMain) and
+ * `entities:resolve` (RPC) are not ordered, so the stores are invalidated
+ * again once main has acknowledged the toggle. Idempotent; installed lazily
+ * by the first `entityPreviewStore()`.
+ */
+export function installEntityPreviewLinksInvalidation(): void {
+  if (linksUnsubscribe) return
+  linksEnabledSeen = getEntitiesLinksEffectiveState().enabled
+  linksUnsubscribe = subscribeEntitiesLinksEffectiveState(() => {
+    const enabled = getEntitiesLinksEffectiveState().enabled
+    if (enabled === linksEnabledSeen) return
+    linksEnabledSeen = enabled
+    invalidateEntityPreviews()
+    // A toggle applies its optimistic state before starting the push, so
+    // look for the in-flight push after the current task.
+    queueMicrotask(() => {
+      const settled = entitiesLinksSettled()
+      if (!settled) return
+      void settled.then(() => {
+        if (linksEnabledSeen === enabled && getEntitiesLinksEffectiveState().enabled === enabled) invalidateEntityPreviews()
+      })
+    })
+  })
+}
+
 /** Test helper; options override retry/backoff/TTL timing (and the clock) for new stores. */
 export function resetEntityPreviewStores(options: EntityPreviewStoreOptions = {}): void {
   for (const store of stores.values()) store.dispose()
   stores.clear()
   storeOptions = { ...options }
+  linksUnsubscribe?.()
+  linksUnsubscribe = null
+  linksEnabledSeen = null
 }
 
 const noopSubscribe = () => () => {}
