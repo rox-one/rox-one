@@ -181,7 +181,7 @@ export const EntityMention = Node.create<EntityMentionOptions>({
       for (;;) {
         const idx = src.indexOf('[[', from)
         if (idx === -1) return -1
-        if (!endsWithUnescapedBang(src.slice(0, idx))) return idx
+        if (!endsWithUnescapedBang(src, idx)) return idx
         from = idx + 2
       }
     },

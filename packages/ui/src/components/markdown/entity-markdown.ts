@@ -124,13 +124,17 @@ export function serializeEntityEmbed(ref: string, label?: string | null, source?
 }
 
 /**
- * True when `text` ends with a `!` that is not backslash-escaped (an even
- * number of `\\` before it). Such a `!` directly before `[[…]]` would read
- * back as an embed/text instead of a mention.
+ * True when `src[end - 1]` is a `!` that is not backslash-escaped (an even
+ * number of `\\` directly before it). Such a `!` directly before `[[…]]`
+ * would read back as an embed/text instead of a mention. `end` defaults to
+ * the whole string; parsers pass their position instead of slicing, so the
+ * check only looks at the `!` and the backslash run before it.
  */
-export function endsWithUnescapedBang(text: string): boolean {
-  const m = /(\\*)!$/.exec(text)
-  return m !== null && m[1]!.length % 2 === 0
+export function endsWithUnescapedBang(src: string, end: number = src.length): boolean {
+  if (end < 1 || src.charCodeAt(end - 1) !== 0x21 /* ! */) return false
+  let i = end - 2
+  while (i >= 0 && src.charCodeAt(i) === 0x5c /* \\ */) i--
+  return (end - 2 - i) % 2 === 0
 }
 
 /**
@@ -260,7 +264,7 @@ export function installEntityMarkdownRules(md: MarkdownItLike): void {
     if (state.src.charCodeAt(state.pos) !== 0x5b /* [ */) return false
     // A preceding unescaped `!` belongs to an embed; leave it as text inline.
     // `\![[…]]` (written by the serializer after a literal `!`) is a mention.
-    if (endsWithUnescapedBang(state.src.slice(0, state.pos))) return false
+    if (endsWithUnescapedBang(state.src, state.pos)) return false
     const match = matchEntityMention(state.src.slice(state.pos, state.posMax))
     if (!match) return false
     if (!silent) {
