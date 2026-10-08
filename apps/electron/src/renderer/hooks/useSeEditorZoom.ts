@@ -3,7 +3,7 @@ import { useAtomValue } from 'jotai'
 import { seEditorZoomPercentAtom } from '@/atoms/workbench-layout'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 
-/** Applies editor font scale for super.engineering profile (UI zoom stays on Electron zoom). */
+/** Applies editor font scale for the SE profile (UI zoom stays on Electron zoom). */
 export function useSeEditorZoom(): void {
   const se = useSuperEngineeringProfile()
   const percent = useAtomValue(seEditorZoomPercentAtom)

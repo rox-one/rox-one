@@ -107,7 +107,7 @@ export function WelcomeStep({
     <StepFormLayout
       iconElement={
         <div className="flex size-16 items-center justify-center">
-          <CraftAgentsSymbol className="size-10 text-accent" />
+          <CraftAgentsSymbol className="size-14" />
         </div>
       }
       title={isExistingUser ? t("onboarding.welcome.updateTitle") : t("onboarding.welcome.title")}
@@ -131,7 +131,6 @@ export function WelcomeStep({
       {!isExistingUser && (
         <div className="space-y-2 text-left">
           <Label htmlFor="onboarding-username">{t("onboarding.welcome.username")}</Label>
-          <p className="text-sm text-muted-foreground">{t("onboarding.welcome.usernameHint")}</p>
           <Input
             id="onboarding-username"
             value={username}
@@ -141,6 +140,7 @@ export function WelcomeStep({
             autoFocus
             maxLength={ONBOARDING_USERNAME_MAX}
             aria-required
+            className="h-10 rounded-full border-foreground/[0.08] bg-background/40 px-4 shadow-none focus-visible:border-foreground/20 focus-visible:ring-0"
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault()

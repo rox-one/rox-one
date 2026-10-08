@@ -19,7 +19,7 @@ export interface QuickStartDialogProps {
 export function QuickStartDialog({ open, onOpenChange }: QuickStartDialogProps) {
   const { t } = useTranslation()
   const [name, setName] = React.useState('my-project')
-  const [location, setLocation] = React.useState('~/super.engineering/projects')
+  const [location, setLocation] = React.useState('~/Rox/projects')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

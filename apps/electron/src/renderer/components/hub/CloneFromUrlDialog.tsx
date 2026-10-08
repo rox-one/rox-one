@@ -19,7 +19,7 @@ export interface CloneFromUrlDialogProps {
 export function CloneFromUrlDialog({ open, onOpenChange }: CloneFromUrlDialogProps) {
   const { t } = useTranslation()
   const [url, setUrl] = React.useState('https://github.com/org/repo.git')
-  const [location, setLocation] = React.useState('~/super.engineering/projects')
+  const [location, setLocation] = React.useState('~/Rox/projects')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -175,7 +175,7 @@ describe('OnboardingWizard', () => {
     )
 
     expect(html).toContain('onboarding.welcome.username')
-    expect(html).toContain('onboarding.welcome.usernameHint')
+    expect(html).not.toContain('onboarding.welcome.usernameHint')
     expect(html).toContain('onboarding-username')
   })
 

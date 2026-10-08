@@ -138,6 +138,7 @@ import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
 import { registerPiModelResolver } from '@rox/shared/config'
 import { getPiModelsForAuthProvider, getAllPiModels } from '@rox/shared/config'
 import { initNotificationService, initBadgeIcon, initInstanceBadge, updateBadgeCount } from './notifications'
+import { resolveAppIconPngPath } from './app-icon-paths'
 import { checkForUpdatesOnLaunch, setAutoUpdateEventSink, isUpdating, setBeforeUpdateQuitHook, setBeforeUpdateInstallHook, setInstallQuitFailedHook } from './auto-update'
 import type { EventSink } from '@rox/server-core/transport'
 import { validateGitBashPath, checkVCRedistInstalled } from '@rox/server-core/services'
@@ -556,20 +557,19 @@ app.whenReady().then(async () => {
 
   // Application menu is created after windowManager initialization (see below)
 
-  // Set dock icon on macOS (required for dev mode, bundled apps use Info.plist)
+  // Set dock icon on macOS — force full-color PNG (Tahoe / Assets.car can look dimmed in Dock).
   if (process.platform === 'darwin' && app.dock) {
-    // In packaged app, resources are at dist/resources/ (same level as __dirname)
-    // In dev, resources are at ../resources/ (sibling of dist/)
-    const dockIconPath = [
-      join(__dirname, 'resources/icon.png'),
-      join(__dirname, '../resources/icon.png'),
-    ].find(p => existsSync(p))
+    const dockIconPath = resolveAppIconPngPath()
 
     if (dockIconPath) {
-      if (!app.isPackaged) {
-        app.dock.setIcon(dockIconPath)
+      try {
+        const dockIcon = nativeImage.createFromPath(dockIconPath)
+        if (!dockIcon.isEmpty()) {
+          app.dock.setIcon(dockIcon)
+        }
+      } catch (err) {
+        mainLog.warn('Failed to set dock icon', err)
       }
-      // Initialize badge icon for canvas-based badge overlay
       initBadgeIcon(dockIconPath)
     }
 

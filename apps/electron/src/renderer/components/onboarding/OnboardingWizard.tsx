@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
-import { SuperEngineeringOnboarding } from './SuperEngineeringOnboarding'
+import { OnboardingWelcomeProgress } from './OnboardingWelcomeProgress'
 import type { ApiSetupMethod } from "./APISetupStep"
 import { ProviderSelectStep, type ProviderChoice } from "./ProviderSelectStep"
 import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
@@ -155,9 +155,9 @@ export function OnboardingWizard({
   const renderStep = () => {
     switch (state.step) {
       case 'welcome':
-        return seProfile ? (
-          <div className="mx-auto max-w-lg px-6 py-8">
-            <SuperEngineeringOnboarding step="welcome" className="mb-6" />
+        return (
+          <div className={seProfile ? 'mx-auto max-w-lg px-6 py-8' : undefined}>
+            {seProfile ? <OnboardingWelcomeProgress className="mb-6" /> : null}
             <WelcomeStep
               isExistingUser={state.isExistingUser}
               onContinue={onContinue}
@@ -165,13 +165,6 @@ export function OnboardingWizard({
               isFinishing={state.isFinishing}
             />
           </div>
-        ) : (
-          <WelcomeStep
-            isExistingUser={state.isExistingUser}
-            onContinue={onContinue}
-            isLoading={state.isCheckingGitBash}
-            isFinishing={state.isFinishing}
-          />
         )
 
       case 'rox-connect':

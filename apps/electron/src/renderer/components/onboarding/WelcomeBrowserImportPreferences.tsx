@@ -75,8 +75,8 @@ export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingCh
   if (!available) return null
 
   return (
-    <details className="group mt-5 rounded-[var(--radius-card)] border border-border/60 bg-background/40 text-left" data-testid="welcome-browser-import-preferences">
-      <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-[var(--radius-control)] px-4 py-3 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+    <details className="group mt-5 rounded-full border border-border/60 bg-background/40 text-left open:rounded-2xl" data-testid="welcome-browser-import-preferences">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-full px-4 py-3 text-sm font-medium outline-none focus-visible:ring-1 focus-visible:ring-foreground/20 [&::-webkit-details-marker]:hidden">
         <Globe2 className="size-4 text-sky-500" aria-hidden="true" />
         {t('onboarding.environment.browserImport')}
         <ChevronDown className="ml-auto size-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />

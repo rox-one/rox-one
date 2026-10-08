@@ -1,4 +1,4 @@
-/** Hub taglines from super.engineering `welcome-phrase-*` strings (binary v6). */
+/** Hub taglines from the SE reference `welcome-phrase-*` strings (binary v6). */
 export const SUPER_ENGINEERING_HUB_TAGLINES: readonly string[] = [
   'Frictionless agentic engineering',
   'Welcome to the future',
