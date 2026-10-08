@@ -275,7 +275,7 @@ function hasAssignedOther(payload: { assignee?: EntityRef }, actorId: string): b
  * Risk classes for the X-13…X-26 commands, keyed by command name. Bind them
  * with `bindXfnContracts`; they are also exported for the matrix tests.
  */
-export const XFN_RISK_CLASSES: Readonly<Record<string, (payload: never, ctx: XfnRiskContext) => RiskClass>> = {
+export const XFN_RISK_CLASSES: Readonly<Record<string, ((payload: never, ctx: XfnRiskContext) => RiskClass) | undefined>> = {
   // X-13 resolves to one owner command; the dispatcher re-dispatches, so the
   // resolved command's own class is what the policy middleware sees then.
   'entities.drop': () => 'routine',

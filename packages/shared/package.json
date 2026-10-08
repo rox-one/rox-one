@@ -168,7 +168,8 @@
     "./commands": "./src/commands/index.ts",
     "./commands/schemas": "./src/commands/schemas.ts",
     "./notify/schemas": "./src/notify/schemas.ts",
-    "./xfn/schemas": "./src/xfn/schemas.ts"
+    "./xfn/schemas": "./src/xfn/schemas.ts",
+    "./xfn": "./src/xfn/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

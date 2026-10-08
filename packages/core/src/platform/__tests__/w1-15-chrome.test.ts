@@ -29,6 +29,7 @@ import {
   SIDEBAR_DEFAULT_WIDTHS,
   TOPBAR_RIGHT_ZONE_ORDER,
   USER_COUNTERS_COALESCE_MS,
+  USER_COUNTERS_EVENT_TYPE,
   USER_COUNTERS_TOPIC,
   CHROME_SURFACES_WORKBENCH_FLAG,
   agentContextSlotId,
@@ -48,6 +49,7 @@ import {
   type TopBarSchema,
 } from '../chrome.ts'
 import { WORKBENCH_FEATURE_FLAGS, WORKBENCH_FLAG } from '../workbench/index.ts'
+import { REALTIME_EVENT_TYPES, isRealtimeEventType } from '../../events/topics.ts'
 
 const W1_15_FLAGS = [
   WORKBENCH_FLAG.agentPanelV1,
@@ -236,6 +238,10 @@ describe('W1-15 common row context menu (§26.1)', () => {
 describe('W1-15 counters (§19, §26.1)', () => {
   it('names the topic, the coalescing window and the counter queries', () => {
     expect(USER_COUNTERS_TOPIC).toBe('user.counters')
+    expect(USER_COUNTERS_EVENT_TYPE).toBe('counters.changed')
+    // The push rides W1-03's `user:<id>` topic, whose event catalogue carries it.
+    expect(REALTIME_EVENT_TYPES.user).toContain(USER_COUNTERS_EVENT_TYPE)
+    expect(isRealtimeEventType('user', USER_COUNTERS_EVENT_TYPE)).toBe(true)
     expect(USER_COUNTERS_COALESCE_MS).toBe(1000)
     expect(counterQueryName('tasks.today')).toBe('counter.tasks.today')
     expect(isCounterQueryName('counter.tasks.today')).toBe(true)

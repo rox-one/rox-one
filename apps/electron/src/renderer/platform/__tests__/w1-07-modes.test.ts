@@ -52,9 +52,14 @@ describe('W1-07 flags', () => {
   })
 
   it('negative: unregistered flag ids never resolve as enabled', () => {
-    const flags = resolveShellFlags({ 'agent.panel.v1': true, 'nope.v1': true })
-    expect(flags.has('agent.panel.v1')).toBe(false)
+    // `agent.panel.v1` was the example here until W1-15 (#1512) registered it;
+    // use ids no package declares so the probe stays about *unknown* flags.
+    const flags = resolveShellFlags({ 'nope.v1': true, 'not.registered.v1': true })
     expect(flags.has('nope.v1')).toBe(false)
+    expect(flags.has('not.registered.v1')).toBe(false)
+    // A registered default-OFF flag still resolves when it is requested.
+    const requested = resolveShellFlags({ [WORKBENCH_FLAG.agentPanelV1]: true })
+    expect(requested.has(WORKBENCH_FLAG.agentPanelV1)).toBe(true)
   })
 
   it('the route bridge follows the flag atoms', () => {

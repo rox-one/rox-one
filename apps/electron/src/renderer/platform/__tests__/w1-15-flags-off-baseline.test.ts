@@ -28,7 +28,7 @@ import {
 import { __resetModeRegistryForTests, getModeRegistry } from '../mode-registry-bootstrap'
 import { modeForSlot, resolveSeededModes } from '../modes-seed'
 import { enabledShellFlagsAtom, flagContextKeys } from '../unified-flags'
-import { __resetSlotRegistryForTests, getSlotRegistry, reservedSlotOwner } from '../slots'
+import { __resetSlotRegistryForTests, getSlotRegistry, reservedSlotOwner, type SlotId } from '../slots'
 import {
   buildRouteFromNavigationState,
   isCompoundRoute,
@@ -98,9 +98,11 @@ describe('W1-15 flags OFF = baseline', () => {
 
   it('leaves all three flags out of the enabled set and the context keys', () => {
     const shellFlags = createStore().get(enabledShellFlagsAtom)
+    const keys = flagContextKeys(shellFlags)
     for (const flag of W1_15_FLAGS) {
       expect({ flag, enabled: shellFlags.has(flag) }).toEqual({ flag, enabled: false })
-      expect({ flag, key: flagContextKeys(shellFlags)[flag] }).toEqual({ flag, key: undefined })
+      // `flagContextKeys` only carries enabled flags, so an OFF flag has no key.
+      expect({ flag, hasKey: Object.hasOwn(keys, flag) }).toEqual({ flag, hasKey: false })
     }
     expect(isAgentPanelEnabled(shellFlags)).toBe(false)
     expect(isChromeSurfacesEnabled(shellFlags)).toBe(false)
@@ -111,7 +113,7 @@ describe('W1-15 flags OFF = baseline', () => {
   it('renders no chrome contribution: the reserved slot ids stay empty', () => {
     const registry = getSlotRegistry()
     const shellFlags = createStore().get(enabledShellFlagsAtom)
-    const reserved = ['messenger.chrome', 'docs.sidebar.drive', 'agent.context.tasks', 'settings.chrome', 'search.chrome']
+    const reserved: SlotId[] = ['messenger.chrome', 'docs.sidebar.drive', 'agent.context.tasks', 'settings.chrome', 'search.chrome']
     for (const slot of reserved) {
       expect({ slot, owner: reservedSlotOwner(slot) }).toEqual({ slot, owner: '#1512' })
       expect({ slot, contributions: registry.all(slot) }).toEqual({ slot, contributions: [] })
