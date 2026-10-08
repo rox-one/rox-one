@@ -21,8 +21,6 @@ import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/ru
 import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
 import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
-import { WorkspaceIconRail } from '@/components/app-shell/WorkspaceIconRail'
-import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
 import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
 import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/components/onboarding'
@@ -41,7 +39,7 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { useSession } from '@/hooks/useSession'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { NavigationProvider } from '@/contexts/NavigationContext'
-import * as storage from '@/lib/local-storage'
+
 import { markStatusUnseen } from '@/lib/sidebar-unseen-status'
 import { navigate, routes } from './lib/navigate'
 import { attachmentFromContentRef, toDraftRef } from './lib/drafts'
@@ -111,10 +109,12 @@ import { getFileManagerName } from '@/lib/platform'
 import { rendererLog } from '@/lib/logger'
 import { ActionRegistryProvider } from '@/actions'
 import { OmniboxHost } from '@/platform/OmniboxHost'
+import { HotkeyDictationHost } from '@/voice/hotkey-dictation-host'
 import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
 import { toErrorMessage } from '@/lib/errors'
+import { markFirstMeaningfulPaint, markRendererOnce } from '@/lib/startup-perf'
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -357,31 +357,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [updateSessionDirect])
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
-  const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
-    storage.get(storage.KEYS.workspaceSelectorRail, false)
-  )
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
   const workbenchEnabled = useAtomValue(featureWorkbenchAtom)
   const entitiesLinksEnabled = useAtomValue(featureEntitiesLinksV1Atom)
   // Push entities.links.v1 into the route parser + main (deep links, RPC).
   useEntitiesLinksFlagSync(entitiesLinksEnabled)
   const unifiedShellChrome = unifiedShell || workbenchEnabled
-
-  useEffect(() => {
-    const handleWorkspaceSelectorRailChanged = (event: Event) => {
-      const customEvent = event as CustomEvent<boolean>
-      setWorkspaceSelectorRail(
-        typeof customEvent.detail === 'boolean'
-          ? customEvent.detail
-          : storage.get(storage.KEYS.workspaceSelectorRail, false)
-      )
-    }
-
-    window.addEventListener(WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT, handleWorkspaceSelectorRailChanged)
-    return () => {
-      window.removeEventListener(WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT, handleWorkspaceSelectorRailChanged)
-    }
-  }, [])
 
   // Window's workspace ID — shared atom so Root/ThemeProvider stays in sync on switch
   const [windowWorkspaceId, setWindowWorkspaceId] = useAtom(windowWorkspaceIdAtom)
@@ -489,6 +470,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       setSplashExiting(true)
     }
   }, [isFullyReady, splashExiting])
+
+  // PERF-01: first meaningful paint = session list ready and main UI committed.
+  useEffect(() => {
+    if (isFullyReady) markFirstMeaningfulPaint()
+  }, [isFullyReady])
+  // First settled screen of any kind (onboarding/picker/reauth on fresh profiles).
+  useEffect(() => {
+    if (appState !== 'loading') markRendererOnce(`renderer:interactive:${appState}`)
+  }, [appState])
 
   // Handler for when splash exit animation completes
   const handleSplashExitComplete = useCallback(() => {
@@ -921,6 +911,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     setShowResetDialog(true)
   }, [])
 
+  // Set when startup published the LLM connection list for a ready local app.
+  const startupLlmConnectionsPublishedRef = useRef(false)
+
   // Check auth state and get window's workspace ID on mount
   useEffect(() => {
     let cancelled = false
@@ -941,10 +934,41 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         }
         // A failed read is unavailable, never evidence of an absent workspace
         // or a completed Welcome. Only fresh caller identity can authorize entry.
-        let workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+        // Independent reads run together; results are still judged in order.
+        const initialProbes = await Promise.all([
+          probeWithRetry(() => window.electronAPI.getWindowWorkspace()),
+          probeWithRetry(() => window.electronAPI.getOrgIdentity()),
+          probeWithRetry(() => window.electronAPI.getRoxCloudState()),
+        ])
         if (cancelled) return
-        const identityProbe = await probeWithRetry(() => window.electronAPI.getOrgIdentity())
-        if (cancelled) return
+        let workspaceProbe = initialProbes[0]
+        let identityProbe = initialProbes[1]
+        let cloudProbe = initialProbes[2]
+        if (!identityProbe.ok && isStartupAuthorityDenial(identityProbe.error)) throw identityProbe.error
+        // A transport that is still coming up (slow cold start) fails these
+        // reads with a non-authority error: wait for it once, then re-read
+        // whatever failed (identity and workspace each get a fresh budget).
+        if (!identityProbe.ok || !workspaceProbe.ok) {
+          if (!workspaceProbe.ok && isStartupAuthorityDenial(workspaceProbe.error)) throw workspaceProbe.error
+          const transportProbe = await probeWithRetry(
+            () => waitForTransportConnected(window.electronAPI, { timeoutMs: 12_000 }),
+            { delaysMs: [] },
+          )
+          if (cancelled) return
+          if (!transportProbe.ok) throw transportProbe.error
+          if (!identityProbe.ok) {
+            identityProbe = await probeWithRetry(() => window.electronAPI.getOrgIdentity())
+            if (cancelled) return
+          }
+          if (!workspaceProbe.ok) {
+            workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+            if (cancelled) return
+          }
+          if (identityProbe.ok && workspaceProbe.ok) {
+            cloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
+            if (cancelled) return
+          }
+        }
         if (!identityProbe.ok) throw identityProbe.error
         const identity = identityProbe.value
         if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
@@ -957,20 +981,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           if (!setupProbe.ok) throw setupProbe.error
           startupSetupNeeds = setupProbe.value
         }
-        if (!workspaceProbe.ok) {
-          if (isStartupAuthorityDenial(workspaceProbe.error)) throw workspaceProbe.error
-          const transportProbe = await probeWithRetry(
-            () => waitForTransportConnected(window.electronAPI, { timeoutMs: 12_000 }),
-            { delaysMs: [] },
-          )
-          if (cancelled) return
-          if (!transportProbe.ok) throw transportProbe.error
-          workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
-          if (cancelled) return
-        }
         if (!workspaceProbe.ok) throw workspaceProbe.error
-        const cloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
-        if (cancelled) return
         if (!cloudProbe.ok) throw cloudProbe.error
         if (cloudProbe.value.required && !cloudProbe.value.connected) {
           startupSetupNeeds = { ...(startupSetupNeeds ?? { needsBillingConfig: false, needsCredentials: false, isFullyConfigured: false }), needsRoxCloud: true, shouldShowOnboardingOnLaunch: true, isFullyConfigured: false }
@@ -981,8 +992,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         let startupRuntimeSummary: StartupRuntimeSummary | null = null
         let startupDefaultSlug: string | undefined
         if (startupState !== 'onboarding') {
+          // Reuse the identity read above and the runtime check's own connection
+          // list (when it changed nothing); skip the OAuth network refresh at boot.
+          const runtimeRead: { connections: readonly LlmConnectionWithStatus[] | null } = { connections: null }
           const runtimeProbe = await probeWithRetry(
-            () => ensureRoxRuntimeDefault(window.electronAPI), { delaysMs: [] },
+            () => ensureRoxRuntimeDefault(window.electronAPI, {
+              identity,
+              listOptions: { refresh: false },
+              onConnectionsRead: connections => { runtimeRead.connections = connections },
+            }), { delaysMs: [] },
           )
           if (cancelled) return
           if (!runtimeProbe.ok) throw runtimeProbe.error
@@ -994,7 +1012,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             startupDefaultSlug = runtimeProbe.value.slug
             startupRuntimeSummary = runtimeProbe.value.runtimeSummary ?? null
           } else {
-            const connectionsProbe = await probeWithRetry(() => window.electronAPI.listLlmConnectionsWithStatus())
+            const connectionsProbe = runtimeRead.connections
+              ? { ok: true as const, value: [...runtimeRead.connections] }
+              : await probeWithRetry(() => window.electronAPI.listLlmConnectionsWithStatus({ refresh: false }))
             if (cancelled) return
             if (!connectionsProbe.ok) throw connectionsProbe.error
             startupConnections = connectionsProbe.value
@@ -1003,7 +1023,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         }
         // Runtime setup and transport recovery can outlive the original actor
         // or window binding. Publish only after current readback matches both.
-        const finalIdentityProbe = await probeWithRetry(() => window.electronAPI.getOrgIdentity())
+        const [finalIdentityProbe, finalWorkspaceProbe, finalCloudProbe] = await Promise.all([
+          probeWithRetry(() => window.electronAPI.getOrgIdentity()),
+          probeWithRetry(() => window.electronAPI.getWindowWorkspace()),
+          probeWithRetry(() => window.electronAPI.getRoxCloudState()),
+        ])
         if (cancelled) return
         if (!finalIdentityProbe.ok) throw finalIdentityProbe.error
         const currentIdentity = finalIdentityProbe.value
@@ -1012,12 +1036,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           || identity.authority === 'native' && currentIdentity.issuer !== identity.issuer) {
           throw new Error('runtime-identity-changed')
         }
-        const finalWorkspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
-        if (cancelled) return
         if (!finalWorkspaceProbe.ok) throw finalWorkspaceProbe.error
         if (finalWorkspaceProbe.value !== workspaceProbe.value) throw new Error('runtime-workspace-changed')
-        const finalCloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
-        if (cancelled) return
         if (!finalCloudProbe.ok) throw finalCloudProbe.error
         if (cloudProbe.value.account?.user.id !== finalCloudProbe.value.account?.user.id) throw new Error('ROX_ACCOUNT_CHANGED')
         const finalStartupState = decideStartupAppState({ identityProbe: finalIdentityProbe, workspaceProbe: finalWorkspaceProbe, cloudProbe: finalCloudProbe })
@@ -1034,6 +1054,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           setRuntimeSummary(startupRuntimeSummary)
           setDefaultLlmConnectionSlug(startupDefaultSlug)
           if (startupRuntimeSummary) setWorkspaceDefaultLlmConnection(startupRuntimeSummary.slug)
+          // The ready effect below would list the same connections again.
+          if (identity.authority === 'local' && finalStartupState === 'ready') startupLlmConnectionsPublishedRef.current = true
         }
         setAppState(finalStartupState)
       } catch (error) {
@@ -1111,11 +1133,16 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       }
     }).catch(() => { /* non-fatal startup check */ })
     void loadSessionsFromServer()
-    // Load LLM connections with authentication status
-    window.electronAPI.listLlmConnectionsWithStatus().then((connections) => {
-      setLlmConnections(connections)
-      setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
-    })
+    // Load LLM connections with authentication status, unless startup just
+    // published them (llmConnections.CHANGED keeps them current afterwards).
+    if (startupLlmConnectionsPublishedRef.current) {
+      startupLlmConnectionsPublishedRef.current = false
+    } else {
+      window.electronAPI.listLlmConnectionsWithStatus().then((connections) => {
+        setLlmConnections(connections)
+        setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
+      })
+    }
     // Load persisted input drafts into ref (no re-render needed).
     // Attachment files are not read here — hydration happens lazily when the session
     // is opened so app startup isn't delayed by reading potentially large files.
@@ -2264,8 +2291,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  const showWorkspaceIconRail = false // Space selection is in the top logo; AppShell owns surface navigation.
-
   const handleReconnectTransport = useCallback(() => {
     void window.electronAPI.reconnectTransport().catch((error) => {
       const message = error instanceof Error ? error.message : t('toast.unknownError')
@@ -2657,6 +2682,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}
           <OmniboxHost />
+          <HotkeyDictationHost />
           <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspaceForUI} />
 
           {/* Splash screen overlay - fades out when fully ready */}
@@ -2669,14 +2695,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
           {/* Main UI - always rendered, splash fades away to reveal it */}
           <div className="flex h-full text-foreground" data-viewport={viewportBand(viewportWidth)}>
-            {showWorkspaceIconRail && !sessionLoadError && (
-              <WorkspaceIconRail
-                workspaces={workspaces}
-                activeWorkspaceId={windowWorkspaceId}
-                onSelect={handleSelectWorkspaceForUI}
-                onWorkspaceCreated={handleRefreshWorkspaces}
-              />
-            )}
             <div
               className="flex min-w-0 flex-1 flex-col"
               style={{ paddingTop: 'var(--topbar-height)' }}

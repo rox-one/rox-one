@@ -3,6 +3,7 @@ import { constants } from 'node:fs'
 import { join, relative, isAbsolute, dirname } from 'node:path'
 import { homedir } from 'node:os'
 import { createHash } from 'node:crypto'
+import { seedSourceToolchainRoot } from './rox-readiness-ui-001.source-toolchain.ts'
 
 const profile = process.env.ROX_CONFIG_DIR
 if (!profile || !profile.includes('rox-readiness-ui-001-')) throw new Error('Explicit disposable UI-001 profile required')
@@ -13,7 +14,8 @@ async function cloneRuntime() {
   if (process.platform !== 'darwin') throw new Error('This native execution lane currently requires macOS')
   const { TOOLCHAIN_MANIFEST, currentPlatform, toolchainPaths } = await import('../../packages/shared/src/toolchain/manifest')
   const { TOOLCHAIN_INSTALL_COMPLETE_MARKER } = await import('@rox/shared/toolchain/types')
-  const originalRoot = join(homedir(), '.rox', 'toolchain')
+  // W1-13: the host toolchain (read-only source), never the disposable profile.
+  const originalRoot = seedSourceToolchainRoot(process.env, homedir())
   const originalBytes = await readFile(join(originalRoot, 'state.json'))
   const original = JSON.parse(originalBytes.toString())
   const paths = toolchainPaths(profile!)

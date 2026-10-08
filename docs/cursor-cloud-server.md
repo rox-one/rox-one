@@ -11,12 +11,12 @@ These files do not configure Cursor Self-Hosted Machines.
 
 Run the preparation manually with `bash .cursor/install.sh`. It uses Bun 1.3.14,
 matching `.github/workflows/validate-server.yml`, and installs that version into
-`~/.rox-cloud/bun` when necessary. `ROX_CLOUD_BUN_INSTALL` overrides that directory.
+`~/rox-cloud/bun` when necessary. `ROX_CLOUD_BUN_INSTALL` overrides that directory.
 It preserves `bun.lock` with a frozen install and skips the Electron binary.
 A failed dependency install stops before starting any server.
 
 Run `bash .cursor/start-server.sh` to start the RPC server on
-`ws://127.0.0.1:9100`. Development state defaults to `~/.rox-cloud/context`; an
+`ws://127.0.0.1:9100`. Development state defaults to `~/rox-cloud/context`; an
 explicit `ROX_CONFIG_DIR` is respected and also sets the compatibility variable
 `CRAFT_CONFIG_DIR`. The server's compatibility environment names are retained.
 Each startup generates a new bearer token, saved in `cursor-dev-token` inside the
@@ -26,7 +26,7 @@ terminal. A client must reload the file after a restart:
 ```bash
 bun run apps/cli/src/index.ts \
   --url ws://127.0.0.1:9100 \
-  --token "$(cat "${ROX_CONFIG_DIR:-$HOME/.rox-cloud/context}/cursor-dev-token")" ping
+  --token "$(cat "${ROX_CONFIG_DIR:-$HOME/rox-cloud/context}/cursor-dev-token")" ping
 ```
 
 This environment supplies the headless server and RPC helper builds. Provider

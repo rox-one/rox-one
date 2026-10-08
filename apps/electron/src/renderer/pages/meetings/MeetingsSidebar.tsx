@@ -88,6 +88,7 @@ export function MeetingsSidebar({ bucket, counts, engine, onBucketSelect, onConn
         @media (prefers-reduced-motion: reduce) {
           [data-meetings-sidebar] details::details-content { transition: none; }
         }
+        html[data-render-profile="performance"] [data-meetings-sidebar] details::details-content { transition: none; }
       `}</style>
       <NavTitle>{t('meetings.title')}</NavTitle>
       {bucketButton('all', Inbox, 'violet')}

@@ -37,7 +37,7 @@ import type {
   SessionStatus,
 } from './types.ts';
 import type { Plan } from '../agent/plan-types.ts';
-import { validateSessionStatus } from '../statuses/validation.ts';
+import { createSessionStatusValidator, validateSessionStatus } from '../statuses/validation.ts';
 import { debug } from '../utils/debug.ts';
 import { getStatusCategory } from '../statuses/storage.ts';
 import { readSessionHeader, readSessionJsonl } from './jsonl.ts';
@@ -371,6 +371,8 @@ export function listSessions(workspaceRootPath: string): SessionMetadata[] {
   const entries = readdirSync(sessionsDir, { withFileTypes: true });
   span.mark('readdir');
   const sessions: SessionMetadata[] = [];
+  // One status-config read per scan, not one per session (PERF-06).
+  const validateStatus = createSessionStatusValidator(workspaceRootPath);
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
@@ -382,7 +384,7 @@ export function listSessions(workspaceRootPath: string): SessionMetadata[] {
       if (existsSync(jsonlFile)) {
         const header = readSessionHeader(jsonlFile);
         if (header) {
-          const metadata = headerToMetadata(header, workspaceRootPath);
+          const metadata = headerToMetadata(header, workspaceRootPath, validateStatus);
           if (metadata) {
             try {
               metadata.transcriptBytes = statSync(jsonlFile).size
@@ -408,12 +410,16 @@ export function listSessions(workspaceRootPath: string): SessionMetadata[] {
  * Convert SessionHeader to SessionMetadata
  * Used for fast session list loading from JSONL format.
  */
-function headerToMetadata(header: SessionHeader, workspaceRootPath: string): SessionMetadata | null {
+function headerToMetadata(
+  header: SessionHeader,
+  workspaceRootPath: string,
+  validateStatus: (status: string | undefined) => string = status => validateSessionStatus(workspaceRootPath, status),
+): SessionMetadata | null {
   try {
     // Migration: accept old 'todoState' field from pre-rename session files
     const rawStatus = header.sessionStatus ?? (header as unknown as { todoState?: string }).todoState;
     // Validate sessionStatus against workspace status config
-    const validatedStatus = validateSessionStatus(workspaceRootPath, rawStatus);
+    const validatedStatus = validateStatus(rawStatus);
 
     // Count plan files for this session
     const planCount = listPlanFiles(workspaceRootPath, header.id).length;

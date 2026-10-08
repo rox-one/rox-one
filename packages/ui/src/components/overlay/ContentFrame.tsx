@@ -89,7 +89,7 @@ export function ContentFrame({
         )}
 
         {/* Main card — grows to fit content, no internal scrolling */}
-        <div className="flex flex-col rounded-[var(--radius-overlay)] overflow-hidden backdrop-blur-sm shadow-strong bg-background min-h-[320px]">
+        <div className="flex flex-col rounded-[var(--radius-overlay)] overflow-hidden shadow-strong bg-background min-h-[320px]">
           {/* Title bar */}
           <div className="flex justify-center items-center px-4 py-3 border-b border-foreground/7 select-none shrink-0">
             <div className="text-xs font-semibold tracking-wider text-foreground/30">

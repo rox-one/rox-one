@@ -10,7 +10,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import ReactDOM from 'react-dom/client'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
-import { setupI18n } from '@rox/shared/i18n'
+import { initRendererI18n } from '@rox/shared/i18n/lazy'
+import { createLatestStateBuffer } from './lib/latest-state-buffer'
 import { EyeOff, X, XCircle, Bug, Download, History, User } from 'lucide-react'
 import { BrowserControls } from '@rox/ui'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
@@ -25,7 +26,8 @@ import './index.css'
 
 // This is a standalone entry (browser-toolbar.html) — i18n must be initialized
 // here or BrowserControls and the menu below render raw translation keys.
-setupI18n([LanguageDetector, initReactI18next])
+// Only the active locale (+ fallbacks) is loaded; rendering waits for it below.
+const i18nReady = initRendererI18n([LanguageDetector, initReactI18next])
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -64,6 +66,15 @@ declare global {
   }
 }
 
+// Subscribe before the locale load: the main process pushes the full toolbar
+// state once on did-finish-load, which can land before the first render.
+const toolbarStateUpdates = createLatestStateBuffer<ToolbarState>(
+  window.browserToolbar ? callback => window.browserToolbar.onStateUpdate(callback) : undefined,
+)
+const toolbarThemeColors = createLatestStateBuffer<string | null>(
+  window.browserToolbar ? callback => window.browserToolbar.onThemeColor(callback) : undefined,
+)
+
 /* ------------------------------------------------------------------ */
 /*  App                                                                */
 /* ------------------------------------------------------------------ */
@@ -72,7 +83,7 @@ function BrowserToolbarApp() {
   const { t } = useTranslation()
   const [state, setState] = useState<ToolbarState>({
     url: 'about:blank',
-    title: 'New Tab',
+    title: t('browser.newTab'),
     isLoading: false,
     canGoBack: false,
     canGoForward: false,
@@ -87,7 +98,7 @@ function BrowserToolbarApp() {
 
   useEffect(() => {
     if (!api) return
-    return api.onStateUpdate((s) => {
+    return toolbarStateUpdates.subscribe((s) => {
       setState(s)
       // Sync theme color from full state push (initial load / reconnection)
       if ('themeColor' in s) {
@@ -98,7 +109,7 @@ function BrowserToolbarApp() {
 
   useEffect(() => {
     if (!api) return
-    return api.onThemeColor(setThemeColor)
+    return toolbarThemeColors.subscribe(setThemeColor)
   }, [api])
 
   useEffect(() => {
@@ -295,8 +306,8 @@ function BrowserToolbarApp() {
 /*  Mount                                                              */
 /* ------------------------------------------------------------------ */
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+void i18nReady.then(() => ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserToolbarApp />
   </React.StrictMode>,
-)
+))

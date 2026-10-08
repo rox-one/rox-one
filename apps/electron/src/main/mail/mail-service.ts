@@ -301,6 +301,9 @@ export class MailService {
         }
         const who = await this.activateMailbox(await this.deps.identity())
         const ownerUuid = who.ownerUuid
+        // Candidates come from the user's displayed name (identity hints);
+        // ROX_MAIL_HANDLE only overrides them for tests/ops. No env var is
+        // required to get a deterministic <handle>@<domain> address.
         const handleOverride = this.env.ROX_MAIL_HANDLE?.trim()
         const record = await provisionMailbox({
           baseUrl: serverUrl,

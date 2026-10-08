@@ -1633,7 +1633,7 @@ function EditorInner({
               role="menu"
               aria-label={t('entityView.mapAddNode')}
               data-testid="map-node-picker"
-              className="absolute z-20 w-52 max-w-[calc(100%-1rem)] max-h-[calc(100%-1rem)] overflow-y-auto rounded-[var(--radius-overlay)] border border-border/40 bg-popover/95 p-1 text-popover-foreground shadow-strong backdrop-blur-xl"
+              className="absolute z-20 w-52 max-w-[calc(100%-1rem)] max-h-[calc(100%-1rem)] overflow-y-auto rounded-md border border-border/40 bg-popover/95 p-1 text-popover-foreground shadow-strong backdrop-blur-xl"
               style={{ left: picker.left, top: picker.top }}
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {

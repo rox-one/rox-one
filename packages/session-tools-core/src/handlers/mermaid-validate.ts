@@ -7,13 +7,15 @@
 
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult } from '../types.ts';
-import { renderMermaidSVG } from 'beautiful-mermaid';
 import { normalizeMermaidSource } from '../validation.ts';
 
 export interface MermaidValidateArgs {
   code: string;
   render?: boolean;
 }
+
+/** Legacy hidden Rox home as shown in hints (flag OFF default). */
+const LEGACY_ROX_HOME_DISPLAY = '~/.rox';
 
 /**
  * Handle the mermaid_validate tool call.
@@ -25,12 +27,18 @@ export interface MermaidValidateArgs {
  * error message.
  */
 export async function handleMermaidValidate(
-  _ctx: SessionToolContext,
+  ctx: SessionToolContext,
   args: MermaidValidateArgs
 ): Promise<ToolResult> {
   const { code } = args;
+  // W1-13: the docs live in the Rox home the backend reports; without it,
+  // the legacy text (unchanged flag-OFF behaviour).
+  const mermaidDoc = `${ctx.roxHomeDisplay ?? LEGACY_ROX_HOME_DISPLAY}/docs/mermaid.md`;
 
   try {
+    // Loaded on first use: beautiful-mermaid pulls in elkjs (~3 MB), and this
+    // module is reachable from the package barrel that UI code imports.
+    const { renderMermaidSVG } = await import('beautiful-mermaid');
     // renderMermaidSVG throws if syntax/layout is invalid. Use the renderer path
     // rather than parseMermaid(), which only understands flowchart/state syntax.
     renderMermaidSVG(normalizeMermaidSource(code));
@@ -53,7 +61,7 @@ export async function handleMermaidValidate(
         text: JSON.stringify({
           valid: false,
           error: errorMessage,
-          suggestion: 'Check the syntax against ~/.rox/docs/mermaid.md',
+          suggestion: `Check the syntax against ${mermaidDoc}`,
         }, null, 2),
       }],
       isError: true,

@@ -68,6 +68,10 @@ export {
   COMPOUND_FALLBACK_MODEL,
   VOICE_ENDPOINTS,
   voiceUrl,
+  DEEPGRAM_MODEL_UPGRADE_ENV,
+  resolveDeepgramModel,
+  deepgramModelUpgradeEnabled,
+  deepgramTranscriptionOptions,
 } from './contracts.ts'
 
 export {

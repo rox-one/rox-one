@@ -68,7 +68,7 @@ export function WorkspaceSurfaceHost({
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 items-stretch">
-      {/* Edge zones must sit above the panel stack (--z-panel: 50) so hover-reveal hits on every route; below --z-dropdown: 100. */}
+      {/* Edge zones must sit above the panel stack (--z-chrome: 20) so hover-reveal hits on every route; below --z-popover: 100. */}
       {chrome.showRail && !ownsPrimaryNavigation && (
         <div
           className="absolute left-0 top-0 bottom-0 z-[60]"

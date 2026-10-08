@@ -29,7 +29,6 @@ const notesWorkspaceChromeSource = readRendererSource('pages/notes/NotesWorkspac
 const knowledgeEntityPageSource = readRendererSource('pages/KnowledgeEntityPage.tsx')
 const chatPageSource = readRendererSource('pages/ChatPage.tsx')
 const appShellSource = readRendererSource('components/app-shell/AppShell.tsx')
-const topBarSource = readRendererSource('components/app-shell/TopBar.tsx')
 const panelHostSource = readRendererSource('platform/PanelHost.tsx')
 const omniboxBootstrapSource = readRendererSource('platform/omnibox-bootstrap.ts')
 const omniboxHostSource = readRendererSource('platform/OmniboxHost.tsx')
@@ -87,20 +86,12 @@ describe('ship-rox Notes, Canvas, and Map wiring', () => {
     }
   })
 
-  it('opens the focused session Map from a dedicated TopBar affordance', () => {
-    expect(topBarSource).toContain('onClick={onOpenMap}')
-    expect(topBarSource).toContain('disabled={!mapAvailable}')
-    expect(topBarSource).toContain('aria-label={t("entityView.map")}')
-    expect(appShellSource).toContain('const handleOpenMap = useCallback')
+  it('opens the focused session Map from the AppShell action bridge', () => {
+    expect(appShellSource).toContain("useAction('session.workflow'")
     expect(appShellSource).toContain("new CustomEvent('craft:session-view'")
-    expect(appShellSource).toContain("detail: { sessionId: effectiveSessionId, view: 'map' }")
+    expect(appShellSource).toContain("detail: { sessionId: id, view: 'map' }")
     expect(chatPageSource).toContain("window.addEventListener('craft:session-view', handler)")
     expect(chatPageSource).toContain("if (targetId === sessionId && (view === 'map'")
-  })
-
-  it('keeps Map disabled when no session is focused', () => {
-    expect(appShellSource).toContain('mapAvailable={Boolean(effectiveSessionId)}')
-    expect(topBarSource).toContain('disabled={!mapAvailable}')
   })
 
   it('registers Fund Canvas in the real registry while keeping Board separate', () => {

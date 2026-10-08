@@ -245,6 +245,8 @@ export function NotesNavigationSidebar({ notes, emptyMessage, ...props }: NotesN
           [data-notes-disclosure]::details-content,
           [data-notes-disclosure][open]::details-content { transition: none; }
         }
+        html[data-render-profile="performance"] [data-notes-disclosure]::details-content { transition: none; }
+        html[data-render-profile="performance"] [data-notes-disclosure][open]::details-content { transition: none; }
       `}</style>
       {notes.length ? (
         <>

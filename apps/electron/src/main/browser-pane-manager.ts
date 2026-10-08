@@ -500,7 +500,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       nativeOverlayView,
       cdp,
       currentUrl: 'about:blank',
-      title: 'New Tab',
+      title: i18n.t('browser.newTab'),
       favicon: null,
       isLoading: false,
       canGoBack: false,
@@ -2328,7 +2328,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       nativeOverlayView,
       cdp,
       currentUrl: 'about:blank',
-      title: 'New Tab',
+      title: i18n.t('browser.newTab'),
       favicon: null,
       isLoading: false,
       canGoBack: false,
@@ -2739,7 +2739,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   private normalizePageState(url: string, title: string): { url: string; title: string } {
     if (this.isBrowserEmptyStateUrl(url)) {
-      return { url: 'about:blank', title: 'New Tab' }
+      return { url: 'about:blank', title: i18n.t('browser.newTab') }
     }
     return { url, title }
   }

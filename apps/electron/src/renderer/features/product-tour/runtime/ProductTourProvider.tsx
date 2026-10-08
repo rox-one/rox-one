@@ -132,6 +132,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
       const contributions = record.projects ? [...record.projects.values()] : null
       values[id] = contributions
         ? contributions.find(value => value.state === 'denied' || value.state === 'unavailable')
+          ?? contributions.find(value => value.state === 'ready')
           ?? contributions.find(value => value.state === 'pending') ?? contributions[0] ?? record.value
         : record.value
     }
