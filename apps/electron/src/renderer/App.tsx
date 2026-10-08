@@ -93,6 +93,8 @@ import {
   CodePreviewOverlay,
   DocumentFormattedMarkdownOverlay,
   JSONPreviewOverlay,
+  AudioTranscriptActionsProvider,
+  type AudioTranscriptRetry,
 } from '@rox/ui'
 import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
 import { queueInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
@@ -1930,6 +1932,43 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId, t])
 
   /**
+   * Re-run speech-to-text for an already-sent audio attachment ("Retry" in the
+   * transcript block). Reads the stored audio back, re-uses the voice ASR
+   * channel, and patches the transcript into the local session so the bubble
+   * re-renders without a reload.
+   */
+  const retryAudioTranscript = useCallback<AudioTranscriptRetry>(async (attachment, context) => {
+    const { sessionId, messageId } = context
+    if (!sessionId || !attachment.storedPath) return null
+    try {
+      const dataUrl = await window.electronAPI.readFileDataUrl(attachment.storedPath)
+      const separator = dataUrl.indexOf(',')
+      if (separator < 0) throw new Error('Attachment content is unavailable')
+      const result = await window.electronAPI.transcribeVoice({
+        audioBase64: dataUrl.slice(separator + 1),
+        mimeType: attachment.mimeType,
+        attachedFile: true,
+      })
+      const text = result.text?.trim() ?? ''
+      const transcript: NonNullable<StoredAttachment['transcript']> = result.noSpeech || !text
+        ? { status: 'error', text: '', error: 'no-speech', durationMs: result.durationMs, engine: result.engine }
+        : { status: 'done', text, language: result.detectedLanguage, durationMs: result.durationMs, engine: result.engine }
+      if (messageId) {
+        updateSessionById(sessionId, (session) => ({
+          messages: session.messages.map(message => (message.id === messageId || message.backendMessageId === messageId)
+            ? { ...message, attachments: message.attachments?.map(item => item.id === attachment.id ? { ...item, transcript } : item) }
+            : message),
+        }))
+      }
+      return transcript
+    } catch (error) {
+      return { status: 'error', text: '', error: error instanceof Error ? error.message : 'transcription-failed' }
+    }
+  }, [updateSessionById])
+
+  const audioTranscriptActions = useMemo(() => ({ retry: retryAudioTranscript }), [retryAudioTranscript])
+
+  /**
    * Unified handler for all session option changes.
    * Handles persistence and backend sync for each option type.
    */
@@ -2654,6 +2693,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // Ready state - main app with splash overlay during data loading
   return (
+    <AudioTranscriptActionsProvider actions={audioTranscriptActions}>
     <PlatformProvider actions={platformActions}>
     <ShikiThemeProvider shikiTheme={shikiTheme}>
       <ActionRegistryProvider>
@@ -2768,6 +2808,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       </ActionRegistryProvider>
     </ShikiThemeProvider>
     </PlatformProvider>
+    </AudioTranscriptActionsProvider>
   )
 }
 

@@ -1,5 +1,6 @@
 import * as React from "react"
-import { X, Image as ImageIcon } from "lucide-react"
+import { X, Image as ImageIcon, RotateCw } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Spinner, FileTypeIcon, getFileTypeLabel } from "@rox/ui"
 import { cn } from "@/lib/utils"
 import type { FileAttachment } from "../../../shared/types"
@@ -10,6 +11,8 @@ export { FileTypeIcon, getFileTypeLabel }
 interface AttachmentPreviewProps {
   attachments: FileAttachment[]
   onRemove: (index: number) => void
+  /** Re-run speech-to-text for an audio attachment whose transcription failed. */
+  onRetryTranscription?: (index: number) => void
   disabled?: boolean
   loadingCount?: number
 }
@@ -23,8 +26,9 @@ interface AttachmentPreviewProps {
  * - X button on hover to remove
  * - Horizontally scrollable when many files
  * - Loading placeholders while files are being read
+ * - Audio files surface live transcription state (spinner / error + retry)
  */
-export function AttachmentPreview({ attachments, onRemove, disabled, loadingCount = 0 }: AttachmentPreviewProps) {
+export function AttachmentPreview({ attachments, onRemove, onRetryTranscription, disabled, loadingCount = 0 }: AttachmentPreviewProps) {
   if (attachments.length === 0 && loadingCount === 0) return null
 
   return (
@@ -34,6 +38,7 @@ export function AttachmentPreview({ attachments, onRemove, disabled, loadingCoun
           key={`${attachment.path}-${index}`}
           attachment={attachment}
           onRemove={() => onRemove(index)}
+          onRetry={onRetryTranscription ? () => onRetryTranscription(index) : undefined}
           disabled={disabled}
         />
       ))}
@@ -56,13 +61,21 @@ function LoadingBubble() {
 interface AttachmentBubbleProps {
   attachment: FileAttachment
   onRemove: () => void
+  onRetry?: () => void
   disabled?: boolean
 }
 
-function AttachmentBubble({ attachment, onRemove, disabled }: AttachmentBubbleProps) {
+function AttachmentBubble({ attachment, onRemove, onRetry, disabled }: AttachmentBubbleProps) {
+  const { t } = useTranslation()
   const isImage = attachment.type === 'image'
   const hasThumbnail = !!attachment.thumbnailBase64
   const hasImageBase64 = isImage && attachment.base64
+
+  // Audio attachments show live transcription progress instead of the plain
+  // type label: spinner while ASR runs, error + retry when it failed.
+  const transcript = attachment.type === 'audio' ? attachment.transcript : undefined
+  const isTranscribing = transcript?.status === 'pending'
+  const transcriptFailed = transcript?.status === 'error'
 
   // For images, use full base64; for docs, use Quick Look thumbnail
   const imageSrc = hasImageBase64
@@ -78,6 +91,7 @@ function AttachmentBubble({ attachment, onRemove, disabled }: AttachmentBubblePr
         <button
           onClick={onRemove}
           data-touch-reveal="true"
+          aria-label={t('common.remove')}
           className={cn(
             "absolute -top-1.5 -right-1.5 z-10",
             "h-5 w-5 rounded-full",
@@ -106,7 +120,7 @@ function AttachmentBubble({ attachment, onRemove, disabled }: AttachmentBubblePr
         /* DOCUMENT: Bubble with thumbnail/icon + 2-line text */
         <div className="h-16 flex items-center gap-2.5 rounded-[var(--radius-control)] bg-foreground/5 pl-1.5 pr-3">
           {/* A4-like preview */}
-          <div className="h-12 w-9 rounded-[var(--radius-control)] overflow-hidden bg-background shadow-minimal flex items-center justify-center shrink-0">
+          <div className="relative h-12 w-9 rounded-[var(--radius-control)] overflow-hidden bg-background shadow-minimal flex items-center justify-center shrink-0">
             {hasThumbnail ? (
               <img
                 src={`data:image/png;base64,${attachment.thumbnailBase64}`}
@@ -116,15 +130,34 @@ function AttachmentBubble({ attachment, onRemove, disabled }: AttachmentBubblePr
             ) : (
               <FileTypeIcon type={attachment.type} mimeType={attachment.mimeType} className="h-5 w-5" />
             )}
+            {isTranscribing && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+                <Spinner className="h-4 w-4 text-muted-foreground" />
+              </div>
+            )}
           </div>
           {/* 2-line filename + type */}
           <div className="flex flex-col min-w-0 max-w-[120px]">
             <span className="text-xs font-medium line-clamp-2 break-all" title={attachment.name}>
               {attachment.name}
             </span>
-            <span className="text-[10px] text-muted-foreground">
-              {getFileTypeLabel(attachment.type, attachment.mimeType, attachment.name)}
-            </span>
+            {isTranscribing ? (
+              <span className="text-[10px] text-muted-foreground">{t('chat.audioTranscribing')}</span>
+            ) : transcriptFailed ? (
+              <button
+                type="button"
+                onClick={onRetry}
+                disabled={!onRetry}
+                className="flex items-center gap-1 text-[10px] text-destructive hover:underline disabled:no-underline disabled:opacity-70"
+              >
+                <RotateCw className="h-2.5 w-2.5" />
+                {t('chat.audioTranscriptRetry')}
+              </button>
+            ) : (
+              <span className="text-[10px] text-muted-foreground">
+                {getFileTypeLabel(attachment.type, attachment.mimeType, attachment.name)}
+              </span>
+            )}
           </div>
         </div>
       )}

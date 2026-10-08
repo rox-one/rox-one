@@ -1835,6 +1835,12 @@ export interface ElectronAPI {
     audioBase64: string
     mimeType?: string
     language?: string
+    /**
+     * True when transcribing a file the user explicitly attached to a chat
+     * message. With a server-configured Deepgram key this authorizes the
+     * one-shot upload without the dictation consent dialog.
+     */
+    attachedFile?: boolean
   }): Promise<{
     text: string
     engine: string

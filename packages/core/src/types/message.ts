@@ -228,6 +228,32 @@ export interface AnnotationV1 {
 }
 
 /**
+ * Lifecycle of an attachment's speech-to-text transcription.
+ * `pending` while the ASR engine runs, `done` once text is available,
+ * `error` when it failed (or produced no speech) and can be retried.
+ */
+export type AttachmentTranscriptStatus = 'pending' | 'done' | 'error';
+
+/**
+ * Transcript produced from an audio attachment (chat drop/paste/picker).
+ * The audio file itself stays stored; the transcript is what the user message
+ * renders instead of the audio tile, and what the agent receives in the prompt.
+ */
+export interface AttachmentTranscript {
+  status: AttachmentTranscriptStatus;
+  /** Recognized text, paragraph breaks preserved. Empty until `done`. */
+  text: string;
+  /** Language detected by the ASR engine (BCP-47-ish code). */
+  language?: string;
+  /** Audio duration in milliseconds. */
+  durationMs?: number;
+  /** ASR engine that produced the transcript (e.g. `cloud-rox`). */
+  engine?: string;
+  /** Engine/UI error code or message when status is `error`. */
+  error?: string;
+}
+
+/**
  * Stored attachment metadata (persisted to disk, no base64)
  * Created when user sends a message with attachments
  */
@@ -244,6 +270,10 @@ export interface StoredAttachment {
   markdownPath?: string;         // For Office files: converted markdown for Claude
   wasResized?: boolean;          // True if image was auto-resized for Claude API limits
   resizedBase64?: string;        // Base64 of resized image (only when wasResized=true, for Claude API)
+  /** Speech-to-text result for audio attachments (rendered instead of the audio tile). */
+  transcript?: AttachmentTranscript;
+  /** Path to the transcript sidecar file written next to the stored audio. */
+  transcriptPath?: string;
 }
 
 /**
