@@ -15,7 +15,7 @@
  * Mounted by `WorkspaceSurfaceHost` / `UnifiedShellLayout` when the
  * workbench rollout or harness inspector flag is enabled.
  */
-import { useCallback, useEffect, useId, useLayoutEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { getAppLocale } from '@rox/shared/i18n'
 import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
+import { InspectorInfoMenu } from '@/components/app-shell/InspectorInfoMenu'
 import { CENTER_MIN_WIDTH, PANEL_MIN_WIDTH } from '@/components/app-shell/panel-constants'
 import { ConnectionInfoSection } from './ConnectionInfoSection'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
@@ -236,6 +237,24 @@ export function InspectorHost() {
       unsubscribe?.()
     }
   }, [sessionMode, sessionId, sessionActivityKey])
+
+  // Entering a session surface (Sessions screen) closes the inspector and puts
+  // it back on that surface's own default section (`files`). A persisted
+  // `inspectorVisible`/`inspectorSection` preference — and a leftover
+  // `sidebar=` address — belongs to the surface that set it and must never
+  // reopen the panel here on its own; the panel opens only through an explicit
+  // affordance (a rail section icon, the TopBar toggle, the browser command)
+  // for the rest of the visit.
+  const onSessionSurfaceRef = useRef(false)
+  useEffect(() => {
+    const entered = sessionMode && !onSessionSurfaceRef.current
+    onSessionSurfaceRef.current = sessionMode
+    if (!entered) return
+    setVisible(false)
+    setSection(sectionIds[0]!)
+    setUserOpened(false)
+    if (navigationState.rightSidebar) updateRightSidebar(undefined)
+  }, [sessionMode, sectionIds, navigationState.rightSidebar, setVisible, setSection, setUserOpened, updateRightSidebar])
 
   // An explicit open applies to the session it was made in.
   useEffect(() => {
@@ -495,6 +514,7 @@ export function InspectorHost() {
           )
         })}
         <div className="mt-auto flex flex-col items-center gap-0.5">
+          <InspectorInfoMenu className="text-muted-foreground" />
           <Tooltip>
             <TooltipTrigger asChild>
               <button

@@ -1,9 +1,10 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { cn } from '@/lib/utils'
 import {
-  SUPER_ENGINEERING_HUB_TAGLINES,
+  SUPER_ENGINEERING_HUB_TAGLINE_KEYS,
   SUPER_ENGINEERING_SCRAMBLE_CHARSET,
 } from '@/constants/hub-taglines'
 import { SE_SPRING_TAGLINE } from '@/lib/motion/super-engineering-springs'
@@ -22,17 +23,20 @@ function randomScramble(text: string, charset: string): string {
 }
 
 export interface ScrambleTaglineProps {
-  phrases?: readonly string[]
+  /** i18n keys resolved through `t()` for the active locale. */
+  phraseKeys?: readonly string[]
   className?: string
   cycleMs?: number
 }
 
 export function ScrambleTagline({
-  phrases = SUPER_ENGINEERING_HUB_TAGLINES,
+  phraseKeys = SUPER_ENGINEERING_HUB_TAGLINE_KEYS,
   className,
   cycleMs = 3200,
 }: ScrambleTaglineProps) {
+const { t } = useTranslation()
   const reduceMotion = usePrefersReducedMotion()
+  const phrases = React.useMemo(() => phraseKeys.map((key) => t(key)), [phraseKeys, t])
   const [index, setIndex] = React.useState(0)
   const [display, setDisplay] = React.useState(phrases[0] ?? '')
   const phrase = phrases[index % phrases.length] ?? ''

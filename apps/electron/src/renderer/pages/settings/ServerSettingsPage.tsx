@@ -217,13 +217,21 @@ export default function ServerSettingsPage() {
               ) : (
                 <SettingsSection title={t("settings.server.remoteAccess")}>
                   <SettingsCard className="px-4 py-3.5">
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {t("settings.server.loadConfigDesc")}
-                      </p>
-                      <Button size="sm" onClick={() => setGranted(true)}>
-                        {t("settings.server.loadConfig")}
-                      </Button>
+                    {/* data-layout="settings-row" opts this row into the narrow-panel
+                        stacking rule in renderer/index.css (@container panel <= 448px):
+                        the description wraps and the button drops onto its own line
+                        instead of being clipped by the card's overflow-hidden. */}
+                    <div data-layout="settings-row" className="flex items-center justify-between gap-4">
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {t("settings.server.loadConfigDesc")}
+                        </p>
+                      </div>
+                      <div data-layout="settings-control" className="flex shrink-0 items-center gap-2">
+                        <Button size="sm" onClick={() => setGranted(true)}>
+                          {t("settings.server.loadConfig")}
+                        </Button>
+                      </div>
                     </div>
                   </SettingsCard>
                 </SettingsSection>

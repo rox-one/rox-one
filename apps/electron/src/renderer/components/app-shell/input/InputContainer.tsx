@@ -281,6 +281,20 @@ export function InputContainer({
         </div>
       )}
 
+      {/* Cloud runs entry point — pinned in the free space directly above the
+       * composer, right-aligned. It is a normal-flow row anchored to the input
+       * container (not the viewport), so it follows the composer as the layout
+       * reflows, never overlaps the input text, and does not jump while the
+       * input height animates. Hidden in compactMode (EditPopover) even if
+       * showCloudRunsChip is true. */}
+      {showCloudRunsChip && !compactMode && mode === 'freeform' && freeFormProps.sessionId && (
+        <div className="relative z-20 mb-1.5 flex justify-end">
+          <div className="flex items-center gap-1 rounded-md bg-background p-0.5">
+            <CloudRunsChip sessionId={freeFormProps.sessionId} />
+          </div>
+        </div>
+      )}
+
       {/* Visible animated container */}
       <motion.div
         ref={structuredInput?.type === 'admin_approval' ? node => { adminRequestTarget(node); adminActionsTarget(node) } : undefined}
@@ -316,14 +330,6 @@ export function InputContainer({
        * so the chip's soft shadow isn't clipped. */}
       {mode === 'freeform' && freeFormProps.sessionId && (
         <BackgroundFinishedChip sessionId={freeFormProps.sessionId} />
-      )}
-      {/* Cloud runs entry point — same float position pattern;
-       * self-contained, renders nothing when the feature is disabled.
-       * Hidden in compactMode (EditPopover) even if showCloudRunsChip is true. */}
-      {showCloudRunsChip && !compactMode && mode === 'freeform' && freeFormProps.sessionId && (
-        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 rounded-md bg-background p-0.5">
-          <CloudRunsChip sessionId={freeFormProps.sessionId} />
-        </div>
       )}
     </div>
   )

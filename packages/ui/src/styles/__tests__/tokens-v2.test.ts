@@ -409,7 +409,6 @@ describe('token foundation v2: radius', () => {
       'apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx',
       'apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx',
       'apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx',
-      'apps/electron/src/renderer/components/app-shell/WorkspaceIconRail.tsx',
       'apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx',
     ]
     for (const f of menus) expect(readFileSync(join(repoRoot, f), 'utf8'), f).not.toContain('--radius-overlay')

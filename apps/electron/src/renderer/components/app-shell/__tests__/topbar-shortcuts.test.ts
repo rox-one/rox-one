@@ -3,11 +3,13 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const appShellPath = join(__dirname, '../AppShell.tsx')
+const chatDisplayPath = join(__dirname, '../ChatDisplay.tsx')
 const profileStripPath = join(__dirname, '../ProfileStrip.tsx')
 const topBarPath = join(__dirname, '../TopBar.tsx')
 
 describe('TopBar navigation cutover', () => {
   const appShellSource = readFileSync(appShellPath, 'utf8')
+  const chatDisplaySource = readFileSync(chatDisplayPath, 'utf8')
   const profileStripSource = readFileSync(profileStripPath, 'utf8')
   const source = readFileSync(topBarPath, 'utf8')
 
@@ -26,13 +28,6 @@ describe('TopBar navigation cutover', () => {
     expect(source).toContain('aria-label={t("menu.toggleSidebar")}')
   })
 
-  it('exposes bottom-terminal toggle in TopBar whenever the inspector toggle is shown', () => {
-    expect(source).toContain('bottomTerminalOpenAtom')
-    expect(source).toContain('handleTopBarTerminalToggle')
-    expect(source).toContain('data-testid="bottom-terminal-toggle"')
-    expect(source).toContain('resolveBottomTerminalToggle')
-  })
-
   it('toggles the right inspector and restores fully collapsed chrome', () => {
     expect(source).toContain('useAtom(inspectorVisibleAtom)')
     expect(source).toContain('useAtom(inspectorChromeCollapsedAtom)')
@@ -43,15 +38,14 @@ describe('TopBar navigation cutover', () => {
     expect(source).toContain('setInspectorVisible(false)')
     expect(source).toContain("t(inspectorOpen ? 'inspector.hide' : 'inspector.expand')")
     expect(source).toContain('aria-pressed={inspectorOpen}')
-    expect(source).toContain('{showInspectorToggle && <Tooltip>')
+    expect(source).toContain('{showInspectorToggle && (')
   })
 
-  it('exposes a dedicated Map affordance for the focused session', () => {
-    expect(source).toContain('onClick={onOpenMap}')
-    expect(source).toContain('disabled={!mapAvailable}')
-    expect(source).toContain('aria-label={t("entityView.map")}')
+  it('keeps the focused-session Map bridge in AppShell and ChatDisplay', () => {
     expect(appShellSource).toContain("new CustomEvent('craft:session-view'")
-    expect(appShellSource).toContain("detail: { sessionId: effectiveSessionId, view: 'map' }")
+    expect(appShellSource).toContain("detail: { sessionId: id, view: 'map' }")
+    expect(chatDisplaySource).toContain("new CustomEvent('craft:session-view'")
+    expect(chatDisplaySource).toContain("view: 'map'")
   })
 
   it('does not retain the legacy TopBar What’s New action', () => {
@@ -68,10 +62,9 @@ describe('TopBar navigation cutover', () => {
 
   it('uses dedicated session and browser actions instead of a generic plus menu', () => {
     expect(source).not.toContain('menu.addPanelMenu')
-    expect(source).not.toContain('<Icons.Plus')
     expect(source).toContain('onClick={onAddSessionPanel}')
     expect(source).toContain('aria-label={t("session.newSessionInPanel")}')
-    expect(source).toContain('onClick={onAddBrowserPanel}')
-    expect(source).toContain('aria-label={t("browser.newWindow")}')
+    expect(source).toContain('onClick={onOpenBrowserTab}')
+    expect(source).toContain('aria-label={t("browser.newTab")}')
   })
 })

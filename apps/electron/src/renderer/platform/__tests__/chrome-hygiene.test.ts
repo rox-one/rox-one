@@ -20,14 +20,13 @@ describe('ship-rox-chrome-hygiene', () => {
     expect(osBrowserTabsSource).toContain('export function osBrowserSurfaceTabs')
   })
 
-  it('renders a collapsed restore strip and mounts terminal toggle on TopBar', () => {
+  it('renders a collapsed restore strip in InspectorHost', () => {
     expect(inspectorHostSource).toContain('if (chromeCollapsed) {')
     expect(inspectorHostSource).not.toContain('return null')
     expect(inspectorHostSource).toContain('data-inspector="collapsed"')
-    // One terminal entry point: the TopBar button (no rail duplicate).
+    // One terminal entry point: the rail/panel chrome (no duplicate TopBar button).
     expect(inspectorHostSource).not.toContain('{terminalControl}')
-    expect(topBarSource).toContain('handleTopBarTerminalToggle')
-    expect(topBarSource).toContain('data-testid="bottom-terminal-toggle"')
-    expect(topBarSource).toContain('resolveBottomTerminalToggle')
+    expect(topBarSource).not.toContain('data-testid="bottom-terminal-toggle"')
+    expect(topBarSource).not.toContain('resolveBottomTerminalToggle')
   })
 })

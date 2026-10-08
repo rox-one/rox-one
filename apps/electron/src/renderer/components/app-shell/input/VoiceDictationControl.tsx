@@ -11,6 +11,9 @@ import { isMac } from '@/lib/platform'
 import { VoiceCommandController } from '../../../voice/command-controller'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
 import { createDictationRequestGuard } from './voice-dictation-state'
+import { VoiceLevelWave } from '@/components/voice/VoiceLevelWave'
+import { useMicrophoneLevel } from '@/components/voice/use-microphone-level'
+import { saveTranscriptToNotebook } from '@/lib/transcripts-notebook'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import type { VoicePrefs } from '@rox/shared/voice'
@@ -48,6 +51,35 @@ async function cancelHostCapture(): Promise<void> {
   }
 }
 
+type Translate = (key: string) => string
+
+/** Map `getUserMedia`/stream failures to a localized, user-readable message. */
+function describeMicError(error: unknown, t: Translate): string {
+  const name = error instanceof Error ? error.name : ''
+  switch (name) {
+    case 'NotAllowedError':
+    case 'PermissionDeniedError':
+      return t('voice.errors.permissionDenied')
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return t('voice.errors.noDevice')
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return t('voice.errors.busy')
+    case 'OverconstrainedError':
+      return t('voice.errors.constraint')
+    default:
+      return error instanceof Error && error.message ? error.message : t('voice.errors.generic')
+  }
+}
+
+/** Notebook title: first few dictated words, else the localized fallback. */
+function buildTranscriptTitle(text: string, fallback: string): string {
+  const firstLine = text.split('\n')[0]?.trim() ?? ''
+  const words = firstLine.split(/\s+/).slice(0, 6).join(' ')
+  return words.slice(0, 60).trim() || fallback
+}
+
 export function VoiceDictationControl({
   disabled,
   compactMode,
@@ -77,6 +109,8 @@ export function VoiceDictationControl({
       : !prefs ? { state: 'pending', reason: 'installing' } : { state: 'ready' })
   }, [tourSignals, prefs])
   const [recording, setRecording] = useState(false)
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null)
+  const level = useMicrophoneLevel(audioStream, recording)
   const [starting, setStarting] = useState(false)
   const startingRef = useRef(false)
   const [transcribing, setTranscribing] = useState(false)
@@ -152,6 +186,7 @@ export function VoiceDictationControl({
   const stopTracks = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
+    setAudioStream(null)
   }, [])
 
   const isCurrentCapture = useCallback((captureId: number) => (
@@ -214,15 +249,26 @@ export function VoiceDictationControl({
         if (prefs?.delivery === 'clipboard') {
           await window.electronAPI.copyVoiceText({ text: deliveredText })
           if (!isCurrentCapture(captureId)) return
-        } else if (latest.onInputChange) {
+        } else if (latest.onInputChange && !latest.inputValue.includes(text)) {
+          // No auto-send: the transcript lands in the draft. Skip a repeated
+          // delivery so a re-stop cannot duplicate the same text.
           latest.onInputChange(latest.inputValue ? `${latest.inputValue}${/\s$/.test(latest.inputValue) ? '' : ' '}${deliveredText}` : deliveredText)
           tourSignals.emit(dictationObservation, 'dictation.inserted', 'observed', 'native-event')
+        }
+        try {
+          void saveTranscriptToNotebook({
+            title: buildTranscriptTitle(text, t('voice.transcriptTitle')),
+            text,
+            source: 'dictation',
+          }).catch(() => { /* Notebook persistence is best-effort. */ })
+        } catch {
+          // An unavailable notebook module must never break dictation.
         }
       }
       else if (result.noSpeech) toast.error(t('settings.input.voiceNoSpeech'))
     } catch (error) {
       if (isCurrentCapture(captureId)) {
-        toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+        toast.error(describeMicError(error, t))
       }
     } finally {
       if (isCurrentCapture(captureId)) {
@@ -315,6 +361,7 @@ export function VoiceDictationControl({
       // Keep acquired tracks reachable while START and permission are pending,
       // so releasing push-to-talk closes the microphone immediately.
       streamRef.current = stream
+      setAudioStream(stream)
       pendingStream = null
       const recorder = new MediaRecorder(stream)
       const started = await window.electronAPI.startVoiceCapture?.({ mimeType: recorder.mimeType || 'audio/webm' })
@@ -366,7 +413,7 @@ export function VoiceDictationControl({
         const hostStarted = hostStartedRef.current
         hostStartedRef.current = false
         if (hostStarted) await cancelHostCapture()
-        toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+        toast.error(describeMicError(error, t))
       }
     } finally {
       startingRef.current = false
@@ -453,13 +500,30 @@ export function VoiceDictationControl({
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [owner])
 
+  useEffect(() => {
+    // A revoked grant or an unplugged device ends the track. Surface it and
+    // drop local state instead of leaving a dead recorder running. The recorder
+    // ref is cleared before every intentional stop, so this never races our own
+    // teardown.
+    if (!recording || !audioStream) return
+    const tracks = audioStream.getAudioTracks?.() ?? []
+    const onEnded = () => {
+      if (activeDictationOwner !== owner) return
+      if (recorderRef.current?.state !== 'recording') return
+      toast.error(t('voice.errors.disconnected'))
+      cancelRecordingRef.current()
+    }
+    tracks.forEach((track) => track.addEventListener('ended', onEnded))
+    return () => tracks.forEach((track) => track.removeEventListener('ended', onEnded))
+  }, [recording, audioStream, owner, t])
+
   const busy = starting || transcribing
   const label = starting ? t('common.loading')
     : transcribing ? t('voice.overlay.transcribing')
       : recording ? t('chat.dictateStop') : t('chat.dictate')
 
   return (
-    <div ref={attachDictationHost} className={cn('flex min-w-0 items-center', compactMode && 'shrink-0')}>
+    <div ref={attachDictationHost} data-voice-dictation-host="" className={cn('flex min-w-0 items-center', compactMode && 'shrink-0')}>
       <FreeFormInputContextBadge
         icon={busy ? <Spinner className="h-4 w-4" /> : recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         label={label}
@@ -472,6 +536,13 @@ export function VoiceDictationControl({
         disabled={!prefs || busy || (disabled && !recording)}
         className={recording ? 'bg-destructive/10 text-destructive' : undefined}
       />
+      {recording && (
+        <VoiceLevelWave
+          level={level}
+          active={recording}
+          className="ml-1 h-5 w-14 shrink-0 text-destructive"
+        />
+      )}
       <Dialog open={consentOpen} onOpenChange={(open) => { if (!savingConsent) setConsentOpen(open) }}>
         <DialogContent showCloseButton={!savingConsent}>
           <DialogHeader>

@@ -222,11 +222,13 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
       {s.state === 'no-mailbox' || s.state === 'error' ? (
         <EmptyState
           title={s.state === 'error' ? t('inbox.mail.status.error', { error: s.error ?? '' }) : t('inbox.mail.status.noMailbox')}
-          body={t('inbox.mail.noMailboxBody', { domain: s.domain })}
+          body={s.state === 'no-mailbox'
+            ? t('inbox.mail.autoProvisionBody', { domain: s.domain })
+            : t('inbox.mail.noMailboxBody', { domain: s.domain })}
           action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t('inbox.mail.getAddress')}</Button>}
         />
       ) : s.state === 'provisioning' ? (
-        <EmptyState title={t('inbox.mail.status.provisioning')} />
+        <EmptyState title={t('inbox.mail.status.provisioning')} body={t('inbox.mail.provisioningBody', { domain: s.domain })} />
       ) : s.state === 'unreachable' ? (
         <EmptyState title={s.configured === false && !s.address ? t('inbox.mail.status.noMailbox') : t('inbox.mail.status.unreachable', { url: s.serverUrl })} body={t('inbox.mail.unreachableBody', { url: s.serverUrl })} action={serverForm} />
       ) : (

@@ -51,6 +51,8 @@ describe('calendar task links keep the canonical task context', () => {
     const render = component('PlanWorkspacePage.tsx', 'PlanWorkspacePage', {
       React, Suspense: 'Suspense', Meetings: 'Meetings', WorkspacePlanView: 'WorkspacePlanView', ShellSidebarPortal: 'Sidebar',
       useState: () => ['calendar', () => {}], useEffect: () => {},
+      useLayoutEffect: () => {}, useRef: () => ({ current: null }),
+      usePanelWorkspaceLayout: () => ({ mode: 'auto' }),
       useTranslation: () => ({ t: (key: string) => key }), useNavigation: () => ({ navigate: () => {} }),
       useAppShellContext: () => ({ activeWorkspaceId: 'workspace' }), useStore: () => store,
       useAtomValue: () => store.get(workspaceProjectContextsAtom), workspaceProjectContextsAtom,

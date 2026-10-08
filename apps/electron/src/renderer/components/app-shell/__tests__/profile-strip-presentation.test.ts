@@ -9,14 +9,15 @@ describe('ProfileStrip presentation', () => {
 
   it('renders a compact identity trigger instead of persistent XP chrome', () => {
     expect(src).toContain('defaultAvatarFallback?: React.ReactNode')
-    expect(src).toContain('rox-logo.png')
+    expect(src).toContain('rox-avatar-ink-black.png')
+    expect(src).toContain('rox-avatar-ink-white.png')
     expect(src).toContain('data-tutorial="profile-strip"')
     expect(src).toContain("t(`settings.account.plan.${plan}`)")
     expect(src).toContain("t('profile.balanceLabel')")
     expect(src).toContain("t('profile.balanceEmpty')")
+    expect(src).toContain("t('profile.balanceUnknown')")
     expect(src).not.toContain('initialsFromName')
     expect(src).not.toContain('role="progressbar"')
-    expect(src).not.toContain("t('profile.level'")
     expect(src).not.toContain("t('profile.xp")
   })
 
@@ -31,6 +32,6 @@ describe('ProfileStrip presentation', () => {
     expect(src).not.toContain('identityGetState')
     expect(src).not.toContain('credentialValue')
     expect(src).not.toContain('menu.keyboardShortcuts')
-    expect(src).toContain('onClick={onClick}')
+    expect(src).toContain('onClick()')
   })
 })

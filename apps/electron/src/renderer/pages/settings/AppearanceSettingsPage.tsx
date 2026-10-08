@@ -31,7 +31,6 @@ import {
 } from '@/components/settings'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import * as storage from '@/lib/local-storage'
-import { WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
 import { WorkspaceAvatar } from '@/components/ui/workspace-avatar'
 import { ColorPicker } from '@/components/ui/color-picker'
@@ -371,16 +370,6 @@ export default function AppearanceSettingsPage() {
     },
     [persistKanbanConfig, sessionMetaMap, updateSessionMeta],
   )
-  // Workspace selector placement toggle
-  const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
-    storage.get(storage.KEYS.workspaceSelectorRail, false)
-  )
-  const handleWorkspaceSelectorRailChange = useCallback((checked: boolean) => {
-    if (!appearancePrefLive()) return
-    setWorkspaceSelectorRail(checked)
-    storage.set(storage.KEYS.workspaceSelectorRail, checked)
-    window.dispatchEvent(new CustomEvent(WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT, { detail: checked }))
-  }, [])
   // Turn activity cards: default expansion state (persisted in localStorage)
   const [turnActivitiesExpandedByDefault, setTurnActivitiesExpandedByDefault] = useState(() =>
     storage.get(storage.KEYS.turnActivitiesExpandedByDefault, false)
@@ -762,12 +751,6 @@ export default function AppearanceSettingsPage() {
                     description={t("settings.appearance.connectionIconsDesc")}
                     checked={showConnectionIcons}
                     onCheckedChange={handleConnectionIconsChange}
-                  />
-                  <SettingsToggle
-                    label={t("settings.appearance.workspaceIconRail")}
-                    description={t("settings.appearance.workspaceIconRailDesc")}
-                    checked={workspaceSelectorRail}
-                    onCheckedChange={handleWorkspaceSelectorRailChange}
                   />
                   <SettingsToggle
                     label={t("settings.appearance.richToolDescriptions")}
