@@ -17,6 +17,9 @@ describe('startup bench metrics', () => {
     expect(metrics.marks['nav:session:start']).toBeUndefined()
     const withFmp = metricsFromTimeline({ ...timeline, marks: [...timeline.marks, { name: 'renderer:fmp', atMs: 1300, source: 'renderer' as const }] })
     expect(withFmp.fmpMs).toBe(1300); expect(withFmp.fmpSource).toBe('renderer:fmp')
+    expect(metrics.skillsInlineMs).toBeUndefined()
+    const inline = metricsFromTimeline({ ...timeline, marks: [...timeline.marks, { name: 'main:skills-sync:inline', atMs: 2400.2, source: 'main' as const }] })
+    expect(inline.skillsInlineMs).toBe(2400)
   })
   it('computes medians', () => {
     expect(median([])).toBeUndefined()

@@ -396,6 +396,14 @@ function bootstrapConfigArtifacts(platform: PlatformServices): void {
  * on first paint, run in a worker), so this joins that job and only announces
  * its result. When files changed, clients reload skills via CHANGED events.
  */
+/**
+ * Workspaces whose skills are re-read after a bundled sync. Remote workspaces
+ * are skipped: their rootPath lives on another host, which owns its own skills.
+ */
+export function localWorkspacesForSkillsBroadcast<T extends { rootPath: string; remoteServer?: unknown }>(workspaces: readonly T[]): T[] {
+  return workspaces.filter((workspace) => !workspace.remoteServer)
+}
+
 function scheduleBundledSkillsSync(platform: PlatformServices, wsServer: WsRpcServer): void {
   void ensureBundledSkillsInBackground({
     log: (level, message, data) => platform.logger[level](message, data),
@@ -403,7 +411,7 @@ function scheduleBundledSkillsSync(platform: PlatformServices, wsServer: WsRpcSe
     if (outcome.status !== 'synced') return
     try {
       wsServer.push(RPC_CHANNELS.bundledSkills.CHANGED, { to: 'all' }, { disabled: getBundledSkillsDisabled() })
-      for (const workspace of getWorkspaces()) {
+      for (const workspace of localWorkspacesForSkillsBroadcast(getWorkspaces())) {
         wsServer.push(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId: workspace.id }, workspace.id, loadAllSkills(workspace.rootPath))
       }
     } catch (error) {

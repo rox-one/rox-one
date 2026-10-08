@@ -55,6 +55,8 @@ export interface RunMetrics {
   /** FMP (`renderer:fmp`), or the first settled screen on profiles that never reach the session list. */
   fmpMs?: number
   fmpSource?: string
+  /** ms of `main:skills-sync:inline` when the merge fell back to the main thread. */
+  skillsInlineMs?: number
 }
 
 export function metricsFromTimeline(timeline: StartupTimeline): Omit<RunMetrics, 'run' | 'kind' | 'ok'> {
@@ -68,6 +70,7 @@ export function metricsFromTimeline(timeline: StartupTimeline): Omit<RunMetrics,
     firstPaintMs: marks[STARTUP_MARKS.rendererFirstPaint],
     fmpMs: fmpSource ? marks[fmpSource] : undefined,
     fmpSource,
+    skillsInlineMs: marks[STARTUP_MARKS.skillsSyncInline],
   }
 }
 
@@ -165,9 +168,9 @@ function report(args: Args, runs: RunMetrics[]) {
     '|---|---:|---:|---|',
     ...checks.map(c => `| ${c.metric} | ${c.median ?? 'n/a'} | ${c.budget} | ${c.pass ? 'PASS' : c.median === undefined ? 'NO DATA' : 'OVER'} |`),
     '',
-    '| run | kind | launch wall | window-created | first-paint | fmp | fmp source | error |',
-    '|---:|---|---:|---:|---:|---:|---|---|',
-    ...runs.map(r => `| ${r.run} | ${r.kind} | ${r.launchWallMs ?? ''} | ${r.windowCreatedMs ?? ''} | ${r.firstPaintMs ?? ''} | ${r.fmpMs ?? ''} | ${r.fmpSource ?? ''} | ${r.error ?? ''} |`),
+    '| run | kind | launch wall | window-created | first-paint | fmp | fmp source | skills inline | error |',
+    '|---:|---|---:|---:|---:|---:|---|---:|---|',
+    ...runs.map(r => `| ${r.run} | ${r.kind} | ${r.launchWallMs ?? ''} | ${r.windowCreatedMs ?? ''} | ${r.firstPaintMs ?? ''} | ${r.fmpMs ?? ''} | ${r.fmpSource ?? ''} | ${r.skillsInlineMs ?? ''} | ${r.error ?? ''} |`),
   ]
   return { checks, markdown: lines.join('\n') }
 }

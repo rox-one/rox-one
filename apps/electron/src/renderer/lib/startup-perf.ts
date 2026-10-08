@@ -11,6 +11,11 @@
  * so the main timeline is complete; per-navigation marks are forwarded only
  * with ROX_PERF=1. `window.__roxPerf.dump()` exposes everything for the bench
  * and DevTools. Route names are reduced to the navigator kind — never ids.
+ *
+ * User Timing entries (`performance.mark/measure`) are created only when perf
+ * is enabled (ROX_PERF=1): the browser's performance buffer is unbounded, so
+ * recording one entry per navigation in a long-lived window would grow it
+ * forever. The internal rings above are bounded (200) and always on.
  */
 import { STARTUP_MARKS, isValidRendererMarkName } from '../../shared/startup-perf'
 
@@ -60,10 +65,16 @@ export function isRendererStartupPerfEnabled(): boolean {
   return bridge()?.enabled === true
 }
 
+/** Run a User Timing call only when perf is enabled (keeps the browser buffer empty otherwise). */
+function userTiming(fn: () => void): void {
+  if (!isRendererStartupPerfEnabled() || typeof performance === 'undefined') return
+  try { fn() } catch { /* User Timing optional */ }
+}
+
 /** Record a renderer mark and (optionally) forward it to the main timeline. */
 export function markRenderer(name: string, forward = true): void {
   if (!isValidRendererMarkName(name)) return
-  try { performance.mark(name) } catch { /* User Timing optional */ }
+  userTiming(() => performance.mark(name))
   push(marks, { name, atMs: now() })
   if (forward) {
     try { bridge()?.mark?.(name, epochNow()) } catch { /* bridge optional (tests, web) */ }
@@ -95,7 +106,7 @@ function surfaceName(value: string): string {
 export function startRouteSwitch(route: string): void {
   const target = surfaceName(route)
   pendingRoute = { target, startedAt: now(), token: ++routeToken }
-  try { performance.mark(`nav:start:${target}`) } catch { /* optional */ }
+  userTiming(() => performance.mark(`nav:start:${target}`))
 }
 
 /** The new route committed (call from the main content panel effect). */
@@ -107,10 +118,10 @@ export function endRouteSwitch(navigator: string): void {
   afterNextPaint(() => {
     const durationMs = now() - pending.startedAt
     push(routeSwitches, { surface, durationMs, atMs: now() })
-    try {
+    userTiming(() => {
       performance.mark(`nav:painted:${surface}`)
       performance.measure(`nav:${surface}`, { start: pending.startedAt, duration: durationMs })
-    } catch { /* optional */ }
+    })
     if (isRendererStartupPerfEnabled()) markRenderer(`nav:${surface}:painted`)
   })
 }
