@@ -22,6 +22,7 @@ import {
 import { KEYS, getKeyString } from '@/lib/local-storage'
 import { MODE_SCREEN_FLAG_IDS, modeScreenFlagsAtom, type ModeScreenId } from '@/atoms/mode-flags'
 import { featureWorkbenchHarnessAgentTeamsAtom } from '@/atoms/unified-shell'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
 import {
   UNIFIED_SURFACE_FLAGS,
   UNIFIED_SURFACE_IDS,
@@ -48,6 +49,8 @@ export const W1_07_FLAG_IDS = [
 export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, Atom<boolean>> = new Map<string, Atom<boolean>>([
   // Appearance → Agent Teams (storage default true).
   [WORKBENCH_FLAG.harnessAgentTeams, featureWorkbenchHarnessAgentTeamsAtom],
+  // W1-02 (#1499) owns entities.links.v1: its Settings toggle / storage key.
+  [WORKBENCH_FLAG.entitiesLinksV1, featureEntitiesLinksV1Atom],
 ])
 
 /**
@@ -68,8 +71,6 @@ const DEDICATED_ATOM_FLAG_IDS: ReadonlySet<string> = new Set([
   WORKBENCH_FLAG.conationCal,
   WORKBENCH_FLAG.conationDssClient,
   WORKBENCH_FLAG.conationSessionApply,
-  // Owned by W1-02 (#1499), which wires its own Settings toggle.
-  WORKBENCH_FLAG.entitiesLinksV1,
 ])
 
 /** Flag ids served by the generic store (default-OFF, no dedicated atom). */

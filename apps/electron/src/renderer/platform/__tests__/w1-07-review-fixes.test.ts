@@ -34,6 +34,7 @@ import {
 import { getShellStore, setShellStore } from '../shell-store'
 import { isActionFlagEnabled } from '@/actions/hotkeys'
 import { featureWorkbenchHarnessAgentTeamsAtom } from '@/atoms/unified-shell'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
 import { panelRouteKey } from '@/components/app-shell/panel-route-key'
 import type { NavigationState } from '../../../shared/types'
 import { createSlotRegistry } from '../slots'
@@ -427,6 +428,22 @@ describe('dedicated flag atoms report their real value', () => {
     store.set(featureWorkbenchHarnessAgentTeamsAtom, false)
     expect(store.get(enabledShellFlagsAtom).has(id)).toBe(false)
     expect(omnibox.pull()[id]).toBe(false)
+  })
+})
+
+describe('entities.links.v1 reuses the #1499 renderer atom', () => {
+  it('maps to featureEntitiesLinksV1Atom and reports its real value', () => {
+    const id = WORKBENCH_FLAG.entitiesLinksV1
+    expect(DEDICATED_FLAG_ATOMS.get(id)).toBe(featureEntitiesLinksV1Atom)
+    expect(genericFlagIds()).not.toContain(id)
+    expect(read('platform/unified-flags.ts')).not.toContain('workbenchFlagAtom(WORKBENCH_FLAG.entitiesLinksV1)')
+    const store = createStore()
+    const omnibox = createShellFlagContextKeyProvider(store)
+    expect(store.get(enabledShellFlagsAtom).has(id)).toBe(false)
+    expect(omnibox.pull()[id]).toBe(false)
+    store.set(featureEntitiesLinksV1Atom, true)
+    expect(store.get(enabledShellFlagsAtom).has(id)).toBe(true)
+    expect(omnibox.pull()[id]).toBe(true)
   })
 })
 
