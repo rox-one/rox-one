@@ -1,0 +1,4 @@
+# UI-A2 (#1568): the UI lint ratchet baseline and the rules it counts need owner review.
+/eslint-baselines/ @agisota
+/apps/electron/eslint-rules/ @agisota
+/packages/ui/eslint-rules/ @agisota
