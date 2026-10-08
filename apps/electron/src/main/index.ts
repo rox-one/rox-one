@@ -134,6 +134,7 @@ import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
 import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
+import { registerStorageVisibleRootIpc } from './storage-visible-root-ipc'
 import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
 import { registerPiModelResolver } from '@rox/shared/config'
 import { getPiModelsForAuthProvider, getAllPiModels } from '@rox/shared/config'
@@ -654,6 +655,12 @@ app.whenReady().then(async () => {
       isDebugMode,
       getLogFilePath,
       captureError: (err) => Sentry.captureException(err),
+    })
+
+    // W1-13: Settings toggle for storage.visible-root.v1 (applies on next launch).
+    registerStorageVisibleRootIpc({
+      ipcMain,
+      isTrustedSender: (event) => Boolean(windowManager?.getWindowByWebContentsId(event.sender.id)),
     })
 
     registerDeviceDiagnosticsIpc({

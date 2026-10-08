@@ -785,6 +785,9 @@ export interface ElectronAPI {
 
   // App lifecycle
   relaunchApp(): Promise<void>
+  /** W1-13: Settings → visible Rox home toggle (direct IPC; applies on next launch). */
+  getStorageVisibleRoot(): Promise<import('./storage-visible-root').StorageVisibleRootState>
+  setStorageVisibleRoot(enabled: boolean): Promise<import('./storage-visible-root').StorageVisibleRootState>
   removeWorkspace(workspaceId: string): Promise<boolean>
   invokeOnServer(url: string, token: string, channel: string, ...args: any[]): Promise<any>
 

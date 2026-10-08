@@ -758,6 +758,10 @@ export const mockElectronAPI = {
   relaunchApp: async () => {
     throw new Error('Playground fixture. Not live.')
   },
+  getStorageVisibleRoot: async () => ({ enabled: false, activeAtLaunch: false, locked: false, restartRequired: false }),
+  setStorageVisibleRoot: async () => {
+    throw new Error('Playground fixture. Not live.')
+  },
   listCloudRuns: async () => [],
   listCloudRunSchedules: async () => [],
   submitCloudRun: async (payload: unknown) => {
