@@ -95,13 +95,36 @@ deferrals (child sorts before parent, so the constraint is added later):
 
 Never edit `01-*.sql` / `48-*.sql`; their checksums are locked.
 
-## Extensions
+## Extensions (required database privilege)
 
-`citext`, `pg_trgm` and `unaccent` are installed once per database into the
-shared `public` schema (`502-directory.sql`). References are schema-qualified
-(`public.citext`, `public.gin_trgm_ops`) because the migrator locks
-`search_path` to the migration schema: a plain `CREATE EXTENSION IF NOT EXISTS`
-would install into the first-migrated schema and stay invisible to later ones.
+`citext`, `pg_trgm` and `unaccent` must exist **once per database in the shared
+`public` schema**. References are schema-qualified (`public.citext`,
+`public.gin_trgm_ops`, `public.unaccent`) because the migrator locks `search_path`
+to the migration schema: a plain `CREATE EXTENSION IF NOT EXISTS` would install
+into the first-migrated schema and stay invisible to later ones.
+
+Since the loader always applies the full set, `502-directory.sql` runs on the
+first start of this binary against **every** deployment. It opens with a
+preflight `DO` block that checks `pg_extension` / `extnamespace` per extension:
+
+| State | Result |
+|---|---|
+| installed in `public` | nothing to do; no privilege needed |
+| installed in another schema (e.g. `extensions`) | startup fails: *needs PostgreSQL extension "citext" in schema "public", but it is installed in schema "extensions"*. Hint: `ALTER EXTENSION … SET SCHEMA public` |
+| missing | `CREATE EXTENSION … WITH SCHEMA public`; if the role cannot, startup fails: *…not installed and the service role could not create it: permission denied…*, with the privilege hint |
+
+**Required privilege:** the service role needs `CREATE` on the database (all
+three are *trusted* extensions on PostgreSQL 13+, so no superuser is needed),
+**or** a DBA pre-installs them before the first start:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS citext   WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS pg_trgm  WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
+```
+
+The startup transaction rolls back on a preflight failure, so nothing is
+recorded and the next start retries cleanly. See also `../DEPLOYMENT.md`.
 
 ## FTS configs
 

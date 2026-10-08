@@ -491,6 +491,76 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
     }
   }, 120000)
 
+  itDb('502 extension preflight: clear errors (no CREATE on the DB, extension outside public); DBA pre-install path works', async () => {
+    const admin = new SQL(testDb!.url)
+    const suffix = randomBytes(4).toString('hex')
+    const plainDb = `w105_ext_${suffix}`
+    const movedDb = `w105_extschema_${suffix}`
+    const role = `w105_limited_${suffix}`
+    const password = randomBytes(12).toString('hex')
+    const urlFor = (database: string, user?: { name: string; password: string }) => {
+      const url = new URL(testDb!.url)
+      url.pathname = `/${database}`
+      if (user) {
+        url.username = user.name
+        url.password = user.password
+      }
+      return url.toString()
+    }
+    const opened: SQL[] = []
+    const open = (url: string) => {
+      const conn = new SQL(url, { max: 2 })
+      opened.push(conn)
+      return conn
+    }
+    let created = false
+    try {
+      const [me] = await admin.unsafe<{ rolsuper: boolean }[]>(`SELECT rolsuper FROM pg_roles WHERE rolname = current_user`)
+      if (!me?.rolsuper) {
+        console.log('[w1-05] extension preflight test needs a superuser test connection (CREATE DATABASE/ROLE); skipped')
+        return
+      }
+      created = true
+      await admin.unsafe(`CREATE ROLE "${role}" LOGIN PASSWORD '${password}'`)
+      await admin.unsafe(`CREATE DATABASE "${plainDb}"`)
+      await admin.unsafe(`CREATE DATABASE "${movedDb}"`)
+      const migrations = await loadMigrations()
+
+      // (1) Service role without CREATE on the database, extensions not installed.
+      const dba = open(urlFor(plainDb))
+      const limited = open(urlFor(plainDb, { name: role, password }))
+      await dba.unsafe(`CREATE SCHEMA app AUTHORIZATION "${role}"`)
+      const denied = await applyWorkspaceMigrations(limited, migrations, 'app').then(() => null, (error: unknown) => error as Error)
+      expect(denied?.message).toMatch(/extension "citext" in schema "public"; it is not installed and the service role could not create it: permission denied/)
+      // One transaction: nothing was recorded, so the next start retries cleanly.
+      const [history] = await dba.unsafe<{ t: string | null }[]>(`SELECT to_regclass('app.rox_schema_migration')::text AS t`)
+      expect(history?.t).toBeNull()
+
+      // (2) A DBA pre-installs the extensions in public: the same role now migrates.
+      await dba.unsafe('CREATE EXTENSION citext WITH SCHEMA public')
+      await dba.unsafe('CREATE EXTENSION pg_trgm WITH SCHEMA public')
+      await dba.unsafe('CREATE EXTENSION unaccent WITH SCHEMA public')
+      const ok = await applyWorkspaceMigrations(limited, migrations, 'app')
+      expect(ok.applied.length).toBe(migrations.length)
+
+      // (3) An extension already installed outside public fails with the schema named.
+      const moved = open(urlFor(movedDb))
+      await moved.unsafe('CREATE SCHEMA extensions')
+      await moved.unsafe('CREATE EXTENSION citext WITH SCHEMA extensions')
+      await moved.unsafe('CREATE SCHEMA app')
+      const misplaced = await applyWorkspaceMigrations(moved, migrations, 'app').then(() => null, (error: unknown) => error as Error)
+      expect(misplaced?.message).toMatch(/extension "citext" in schema "public", but it is installed in schema "extensions"/)
+    } finally {
+      for (const conn of opened) await conn.close().catch(() => {})
+      if (created) {
+        await admin.unsafe(`DROP DATABASE IF EXISTS "${plainDb}" WITH (FORCE)`).catch(() => {})
+        await admin.unsafe(`DROP DATABASE IF EXISTS "${movedDb}" WITH (FORCE)`).catch(() => {})
+        await admin.unsafe(`DROP ROLE IF EXISTS "${role}"`).catch(() => {})
+      }
+      await admin.close()
+    }
+  }, 180000)
+
   itDb('checksum change fails closed with MIGRATION_CHANGED (run d)', async () => {
     const db = new SQL(testDb!.url)
     try {

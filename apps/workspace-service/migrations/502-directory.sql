@@ -1,14 +1,54 @@
 -- W1-05 (issue #1502) · 02-directory · file 502-directory.sql
 -- DATA-MODEL §5.9, §12. Owner module: directory (contacts).
 -- Sorts as 502-* so it applies after 48-license-audit.sql (see migrations/README.md).
--- Extensions used by the unified schema. They are installed ONCE per database into the
--- shared `public` schema (not the migration schema: the migrator locks search_path to the
+-- Extensions used by the unified schema. They live ONCE per database in the shared
+-- `public` schema (not the migration schema: the migrator locks search_path to the
 -- migration schema, and CREATE EXTENSION ... IF NOT EXISTS would otherwise short-circuit
 -- on later schemas while the types stay invisible there). All references below are
--- schema-qualified (public.citext, public.gin_trgm_ops) for the same reason.
-CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
-CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
-CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
+-- schema-qualified (public.citext, public.gin_trgm_ops, public.unaccent) for the same reason.
+--
+-- Preflight: this file runs on every first start of a new binary, so a database that
+-- cannot satisfy the requirement must fail with an actionable message, not a raw
+-- 'type "public.citext" does not exist' halfway through the startup transaction.
+--   * installed in public           -> nothing to do (no privilege needed);
+--   * installed in another schema   -> error: a DBA must move it to public;
+--   * missing                       -> CREATE EXTENSION ... WITH SCHEMA public, which needs
+--     CREATE on the database (all three are trusted extensions on PostgreSQL 13+) or a
+--     superuser; if that fails -> error naming the privilege / DBA pre-install path.
+-- See migrations/README.md "Extensions" and ../DEPLOYMENT.md.
+DO $rox_extension_preflight$
+DECLARE
+  ext text;
+  ext_schema name;
+  failed_state text;
+  failed_message text;
+BEGIN
+  FOREACH ext IN ARRAY ARRAY['citext', 'pg_trgm', 'unaccent'] LOOP
+    SELECT n.nspname INTO ext_schema
+      FROM pg_catalog.pg_extension e
+      JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+     WHERE e.extname = ext;
+    IF FOUND THEN
+      IF ext_schema <> 'public' THEN
+        RAISE EXCEPTION USING
+          ERRCODE = 'object_not_in_prerequisite_state',
+          MESSAGE = format('workspace migrations need PostgreSQL extension "%s" in schema "public", but it is installed in schema "%s"', ext, ext_schema),
+          HINT = format('Ask a DBA to run ALTER EXTENSION %s SET SCHEMA public (the unified schema references public.* objects), then restart. See apps/workspace-service/DEPLOYMENT.md.', ext);
+      END IF;
+    ELSE
+      BEGIN
+        EXECUTE format('CREATE EXTENSION IF NOT EXISTS %I WITH SCHEMA public', ext);
+      EXCEPTION WHEN OTHERS THEN
+        GET STACKED DIAGNOSTICS failed_state = RETURNED_SQLSTATE, failed_message = MESSAGE_TEXT;
+        RAISE EXCEPTION USING
+          ERRCODE = failed_state,
+          MESSAGE = format('workspace migrations need PostgreSQL extension "%s" in schema "public"; it is not installed and the service role could not create it: %s', ext, failed_message),
+          HINT = 'Grant the service role CREATE on the database (citext, pg_trgm and unaccent are trusted extensions on PostgreSQL 13+), or have a DBA run CREATE EXTENSION citext, pg_trgm, unaccent WITH SCHEMA public before the first start. See apps/workspace-service/DEPLOYMENT.md.';
+      END;
+    END IF;
+  END LOOP;
+END
+$rox_extension_preflight$;
 
 -- principal.kind (extended table #1 of 4). v2 status/primary_email land in 513.
 -- Existing rows stay valid via DEFAULT 'human'.
