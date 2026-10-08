@@ -11,9 +11,10 @@ import StarterKit from '@tiptap/starter-kit'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import { Markdown as LegacyMarkdown } from 'tiptap-markdown'
-import { Markdown as OfficialMarkdown } from '@tiptap/markdown'
 import { formatEntityRef, type EntityRef } from '@rox/core/entities'
-import { EntityEmbed, EntityMention } from '@rox/ui/markdown'
+// Private marked instance per editor, as TiptapMarkdownEditor does: flag-off
+// editors here never see the entity tokenizers registered by flag-on ones.
+import { EntityEmbed, EntityMention, PerEditorMarkdown as OfficialMarkdown } from '@rox/ui/markdown'
 import { extractLinksFromTiptapDoc, wikilinkTargetsToRefs } from '@rox/server-core/entities/extract'
 
 useDomForFile()

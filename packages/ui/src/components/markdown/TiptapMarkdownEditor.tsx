@@ -9,7 +9,7 @@ import TaskItem from './extensions/AnimatedTaskItem'
 import { Mathematics } from '@tiptap/extension-mathematics'
 import Image from '@tiptap/extension-image'
 import FileHandler from '@tiptap/extension-file-handler'
-import { Markdown as OfficialMarkdown } from '@tiptap/markdown'
+import { PerEditorMarkdown as OfficialMarkdown } from './official-markdown'
 import { Markdown as LegacyMarkdown } from 'tiptap-markdown'
 import { LegacyMixedTaskLists } from './legacy-mixed-task-lists'
 import { RetainedTrailingNode } from './retained-trailing-node'
@@ -390,6 +390,8 @@ export function TiptapMarkdownEditor({
             strict: false,
           },
         }),
+        // Private `marked` instance per editor (see official-markdown.ts):
+        // tokenizers never land on the global `marked` or leak across editors.
         OfficialMarkdown.configure({
           markedOptions: {
             gfm: true,
