@@ -140,6 +140,21 @@ reference handler (XFN #1534, AGP #1532).
 - **X-16 reminders** — the local `reminder` record gains `subjectRef:
   EntityRef`; at fire time it emits the W1-09 kind `reminder_due` (Inbox + OS).
 
+## The W1-10 (#1507) harness gates
+
+`scripts/run-unified-gates.ts` (packages/test-harness) runs three gates whose
+input files this package owns; each fails closed once the file exists, so the
+names below are part of the delivered contract:
+
+| Gate | Reads | Contract |
+|---|---|---|
+| `chrome-schema-lint` | `packages/core/src/platform/chrome.ts` | `CHROME_SCHEMAS` — the rendered right zone per surface (`@rox` last) and the center-control count — plus optional `CHROME_SURFACES` |
+| `dock-layout` | `apps/electron/src/renderer/platform/right-dock.ts` | `computeDockMode(width, preCollapseSidebar, inspector, agent)` → `sideBySide \| sharedDock \| overlay`, auto-collapse tried first |
+| `agent-panel-privacy` | `packages/core/src/agent-panel/context.ts` | `decideAutoAttach(candidate, actor)` → `{ attach, redacted }` over the §18.3 fixtures |
+
+Result on this branch: **7 pass / 0 fail / 5 pending** (the pending inputs belong
+to #1503, #1510 and the wave-2 browser driver).
+
 ## Sibling wiring (unchanged by this package)
 
 - W1-07 reserves the slot patterns `^[a-z][a-z0-9-]*\.chrome$`,
