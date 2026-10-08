@@ -123,21 +123,27 @@ export function serializeEntityEmbed(ref: string, label?: string | null, source?
   return clean ? `![[${canonical}|${clean}]]` : `![[${canonical}]]`
 }
 
+/** True when the line after the one ending at `lineEnd` (index of its `\n`, or -1 for EOF) is blank or absent. */
+function nextLineIsBlank(src: string, lineEnd: number): boolean {
+  if (lineEnd === -1) return true
+  const nextEnd = src.indexOf('\n', lineEnd + 1)
+  return src.slice(lineEnd + 1, nextEnd === -1 ? src.length : nextEnd).trim() === ''
+}
+
 /**
- * Official-engine block `start`: the first `![[` that begins a line after a
- * blank line (or at the very start). Never a mid-line index, and never the
- * line right after paragraph text, so an embed is not pulled out of the
- * paragraph it belongs to.
+ * Official-engine block `start`: the first `![[` that begins a line with a
+ * blank line (or the start) before it and a blank line (or the end) after
+ * it. Never a mid-line index, never a line touching paragraph text, so an
+ * embed is not pulled out of the paragraph it belongs to.
  */
 export function entityEmbedBlockStart(src: string): number {
   let from = 0
   for (;;) {
     const idx = src.indexOf('![[', from)
     if (idx === -1) return -1
-    if (idx === 0) return 0
     const before = src.slice(0, idx)
     const lineStart = before.lastIndexOf('\n') + 1
-    if (/^[ ]{0,3}$/.test(before.slice(lineStart))) {
+    if (/^[ ]{0,3}$/.test(before.slice(lineStart)) && nextLineIsBlank(src, src.indexOf('\n', idx))) {
       const prevEnd = lineStart - 1
       if (prevEnd < 0) return idx
       const prevStart = src.lastIndexOf('\n', prevEnd - 1) + 1
@@ -145,6 +151,19 @@ export function entityEmbedBlockStart(src: string): number {
     }
     from = idx + 3
   }
+}
+
+/**
+ * Official-engine block tokenizer core: the embed on the first line of
+ * `src`, only when the line after it is blank or the end of the input (the
+ * line before is guaranteed by marked: block tokenizers run at block starts).
+ */
+export function matchEntityEmbedBlock(src: string): { match: EntityMentionMatch; raw: string } | null {
+  const lineEnd = src.indexOf('\n')
+  const line = lineEnd === -1 ? src : src.slice(0, lineEnd)
+  const match = matchEntityEmbedLine(line)
+  if (!match || !nextLineIsBlank(src, lineEnd)) return null
+  return { match, raw: lineEnd === -1 ? line : `${line}\n` }
 }
 
 /**
@@ -232,9 +251,13 @@ export function installEntityMarkdownRules(md: MarkdownItLike): void {
   // would rewrite the list. There the line stays paragraph text.
   // (`state.level`, not `state.parentType`: markdown-it's lheading rule
   // leaves parentType set to 'paragraph' when it does not match.)
-  md.block.ruler.before('paragraph', 'rox_entity_embed', (state, startLine, _endLine, silent) => {
+  // The next line must be blank or the end too: `![[…]]\nPara` is one
+  // paragraph with a soft break (as with the flag off), not embed + paragraph.
+  md.block.ruler.before('paragraph', 'rox_entity_embed', (state, startLine, endLine, silent) => {
     if ((state.level ?? 0) > 0) return false
     if (state.sCount[startLine]! - state.blkIndent >= 4) return false
+    const next = startLine + 1
+    if (next < endLine && state.bMarks[next]! + state.tShift[next]! < state.eMarks[next]!) return false
     const match = matchEntityEmbedLine(state.src.slice(state.bMarks[startLine]! + state.tShift[startLine]!, state.eMarks[startLine]!))
     if (!match) return false
     if (silent) return true

@@ -14,7 +14,7 @@ import {
   entityEmbedBlockStart,
   installEntityMarkdownRules,
   isMarkedRootTokenList,
-  matchEntityEmbedLine,
+  matchEntityEmbedBlock,
   serializeEntityEmbed,
   type MarkdownItLike,
 } from '../entity-markdown'
@@ -124,13 +124,13 @@ export const EntityEmbed = Node.create<EntityEmbedOptions>({
     // paragraph mid-line or pull an embed out of the paragraph above it.
     start: (src: string) => entityEmbedBlockStart(src),
     // Top level only (not inside list items / blockquotes), like the
-    // markdown-it rule: a nested line stays paragraph text.
+    // markdown-it rule: a nested line stays paragraph text. The line after
+    // must be blank or the end, so `![[…]]\nPara` stays one paragraph.
     tokenize: (src: string, tokens: unknown) => {
       if (!isMarkedRootTokenList(tokens)) return undefined
-      const line = src.split('\n', 1)[0] ?? ''
-      const match = matchEntityEmbedLine(line)
-      if (!match) return undefined
-      const raw = src.startsWith(`${line}\n`) ? `${line}\n` : line
+      const block = matchEntityEmbedBlock(src)
+      if (!block) return undefined
+      const { match, raw } = block
       return { type: ENTITY_EMBED_NODE, raw, ref: match.ref, label: match.label ?? '', source: match.raw }
     },
   },

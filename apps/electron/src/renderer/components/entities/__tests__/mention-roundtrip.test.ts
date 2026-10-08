@@ -177,7 +177,7 @@ for (const engine of ['legacy', 'official'] as const) {
     })
 
     it('mid-line embeds and embeds right under a paragraph stay in their paragraph', () => {
-      for (const markdown of ['See ![[task:1]]', 'Para\n![[task:1]]']) {
+      for (const markdown of ['See ![[task:1]]', 'Para\n![[task:1]]', '![[task:1]]\nPara', 'A\n\n![[task:1|L]]\nPara\n\nB']) {
         const flagOn = roundTrip(engine, markdown)
         const flagOff = roundTrip(engine, markdown, { entityNodes: false })
         expect(flagOn.nodes.filter((n) => n.type === 'entityEmbed')).toEqual([])
@@ -185,6 +185,11 @@ for (const engine of ['legacy', 'official'] as const) {
         expect(flagOn.out).toBe(flagOff.out)
         if (engine === 'official') expect(flagOn.out).toBe(markdown)
       }
+      // A list right under the line: no embed either; output matches main
+      // (main's official engine itself inserts the blank line before a list).
+      const listAfter = roundTrip(engine, '![[task:1]]\n- item')
+      expect(listAfter.nodes).toEqual([])
+      expect(listAfter.out).toBe(roundTrip(engine, '![[task:1]]\n- item', { entityNodes: false }).out)
     })
 
     it('embed lines inside list items / blockquotes stay text; the list is not rewritten', () => {

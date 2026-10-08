@@ -10,6 +10,7 @@ import {
   installEntityMarkdownRules,
   isMarkedRootTokenList,
   isWikilinkSafeRefLiteral,
+  matchEntityEmbedBlock,
   matchEntityEmbedLine,
   matchEntityEmbed,
   matchEntityMention,
@@ -163,5 +164,27 @@ describe('review fixes (#1505 fix2)', () => {
     expect(isMarkedRootTokenList((lexer as unknown as { tokens: unknown }).tokens)).toBe(true)
     expect(isMarkedRootTokenList([])).toBe(false)
     expect(isMarkedRootTokenList(undefined)).toBe(false)
+  })
+})
+
+describe('review fixes (#1505 fix3)', () => {
+  it('a block embed needs a blank line (or the end) after it too', () => {
+    const md = new MarkdownIt()
+    installEntityMarkdownRules(md)
+    expect(md.render('![[task:1]]\nPara\n')).not.toContain('data-entity-embed')
+    expect(md.render('A\n\n![[task:1]]\nPara\n')).not.toContain('data-entity-embed')
+    expect(md.render('![[task:1]]\n\nPara\n')).toContain('data-entity-embed')
+    expect(md.render('![[task:1]]\n   \nPara\n')).toContain('data-entity-embed')
+    expect(md.render('![[task:1]]')).toContain('data-entity-embed')
+  })
+
+  it('official-engine start/tokenize mirror the next-line check', () => {
+    expect(entityEmbedBlockStart('![[task:1]]\nPara')).toBe(-1)
+    expect(entityEmbedBlockStart('A\n\n![[task:1]]\nPara')).toBe(-1)
+    expect(entityEmbedBlockStart('A\n\n![[task:1]]\n\nB')).toBe(3)
+    expect(entityEmbedBlockStart('A\n\n![[task:1]]')).toBe(3)
+    expect(matchEntityEmbedBlock('![[task:1]]\nPara')).toBeNull()
+    expect(matchEntityEmbedBlock('![[task:1]]\n\nPara')).toEqual({ match: { raw: '![[task:1]]', ref: 'task:1', label: null }, raw: '![[task:1]]\n' })
+    expect(matchEntityEmbedBlock('![[task:1]]')?.raw).toBe('![[task:1]]')
   })
 })

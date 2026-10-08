@@ -42,6 +42,7 @@ export {
   isMarkedRootTokenList,
   isWikilinkSafeRefLiteral,
   matchEntityEmbed,
+  matchEntityEmbedBlock,
   matchEntityEmbedLine,
   matchEntityMention,
   sanitizeMentionLabel,
