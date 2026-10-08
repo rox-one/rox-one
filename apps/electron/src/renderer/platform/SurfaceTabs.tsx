@@ -114,8 +114,8 @@ function SurfaceTabItem({ tab, isTabStop, onNavigate, onClose }: {
         aria-label={`${t('surfaceTabs.closeTab')}: ${tab.title}`}
         onClick={() => onClose(tab.panelId)}
         className={cn(
-          'mr-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[var(--radius-control)] outline-none transition-all hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring',
-          tab.focused ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60 group-focus-within:opacity-60',
+'mr-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-text-secondary outline-none transition-all hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] focus-visible:ring-2 focus-visible:ring-ring',
+          tab.focused ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
         )}
       >
         <X className="h-3 w-3" aria-hidden />
@@ -255,9 +255,9 @@ export function SurfaceTabs() {
       ref={tabListRef}
       role="tablist"
       aria-label={t('surfaceTabs.label')}
-      className={topBarSlot
+      className={cn('bg-[var(--surface-tab-bar,transparent)]', topBarSlot
         ? 'flex min-w-0 items-center gap-0.5 overflow-x-auto scrollbar-hide'
-        : 'flex shrink-0 items-center gap-1'}
+        : 'flex shrink-0 items-center gap-1')}
       data-surface-tabs={topBarSlot ? 'topbar' : 'strip'}
     >
       {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} isTabStop={tab.panelId === rovingTabId} onNavigate={navigateTab} onClose={closeTab} />)}
@@ -269,11 +269,11 @@ export function SurfaceTabs() {
 
   return (
     <div
-      className="chrome-strip flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-foreground/5 px-2"
+      className="chrome-strip flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-border-subtle px-2"
       style={{ height: TAB_STRIP_HEIGHT }}
     >
       {panelTabs.length === 0 ? (
-        <span className="chrome-label px-1 text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
+        <span className="chrome-label px-1 text-text-secondary">{t('surfaceTabs.empty')}</span>
       ) : (
         tabList
       )}

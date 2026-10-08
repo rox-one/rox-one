@@ -2824,12 +2824,6 @@ function AppShellContent({
           return false
         })}
       />
-{experimentalLinks.length > 0 && (
-        <section className="mx-1 mt-5 py-2" aria-label={t('sidebar.experimentalFeatures')}>
-          {!isSidebarCollapsed && <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
-          <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
-        </section>
-      )}
     </>
   )
   return (

@@ -617,7 +617,8 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
               : SE_RAIL_INACTIVE_BUTTON_CLASS
             : link.variant === "default"
               ? "bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]"
-              : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[state=open]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[edit-active=true]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
+              // Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
+              : "hover:bg[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[state=open]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[edit-active=true]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
           extraClassName,
         )}
       >

@@ -127,6 +127,7 @@ class WidgetBoundary extends React.Component<{ fallback: React.ReactNode; childr
 function SortableWidget({
   placement,
   span,
+  trackPitch,
   width,
   editing,
   onChange,
@@ -134,6 +135,7 @@ function SortableWidget({
 }: {
   placement: HomeWidgetPlacement
   span: number
+  trackPitch: number
   width: number
   editing: boolean
   layout: HomeDashboardLayout
@@ -197,7 +199,7 @@ function SortableWidget({
       data-home-cell={placement.id}
       data-home-size={placement.size}
       className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `span ${span} / span ${span}`, gridRow: `span ${Math.ceil(height + HOME_GRID_GAP)}`, height: contentSized ? 'fit-content' : height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
+style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `span ${span} / span ${span}`, gridRow: `span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height: contentSized ? 'fit-content' : height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={
@@ -333,6 +335,23 @@ export function HomeFrontPage() {
   const editing = draft !== null
   editingRef.current = editing
   const layout = stored.workspaceId === workspaceId ? (draft ?? stored.snapshot.layout) : readLayout(workspaceId).layout
+  const packedGridRef = useRef<HTMLDivElement>(null)
+  const [trackPitch, setTrackPitch] = useState(1)
+  const hasWidgets = layout.widgets.length > 0
+  useLayoutEffect(() => {
+    const grid = packedGridRef.current
+    if (!grid) return
+    // Fractional CSS zoom quantizes each track. Read the browser's used track
+    // size so hundreds of tracks do not accumulate a smaller inter-card gap.
+    const measure = () => {
+      const pitch = parseFloat(getComputedStyle(grid).gridTemplateRows)
+      if (Number.isFinite(pitch) && pitch > 0) setTrackPitch(pitch)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(grid)
+    return () => observer.disconnect()
+  }, [hasWidgets])
 
   useEffect(() => {
     const initial = readLayout(workspaceId)
@@ -535,6 +554,7 @@ export function HomeFrontPage() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
               <SortableContext items={ids} strategy={rectSortingStrategy}>
                 <div
+                  ref={packedGridRef}
                   className="grid"
                   style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', columnGap: HOME_GRID_GAP }}
                   data-home-grid=""
@@ -544,6 +564,7 @@ export function HomeFrontPage() {
                       key={placement.id}
                       placement={placement}
                       span={widgetSpan(placement.size, width)}
+                      trackPitch={trackPitch}
                       width={widgetWidth(widgetSpan(placement.size, width), width)}
                       editing={editing}
                       layout={layout}
@@ -555,7 +576,7 @@ export function HomeFrontPage() {
                       type="button"
                       onClick={() => setPickerOpen(true)}
                       className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-[13px] font-bold text-muted-foreground hover:text-foreground"
-                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
+style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${Math.ceil(widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) / trackPitch)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
                     >
                       <Plus className="h-5 w-5" />
                       {t('workbench.home.edit.addWidget')}

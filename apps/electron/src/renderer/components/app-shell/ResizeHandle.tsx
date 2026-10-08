@@ -134,6 +134,8 @@ export function ResizeHandle({
         dragging && 'shell-sash-active',
         className,
       )}
+      // A touch on the sash belongs to the resize controller; browser panning
+      // would otherwise cancel its captured pointer after the first movement.
       style={{ ...(vertical ? { width: hit } : { height: hit, width: '100%' }), touchAction: 'none', ...style }}
       onPointerDown={(event) => {
         if (disabled || event.button !== 0) return

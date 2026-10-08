@@ -1259,7 +1259,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const onCompose = () => openCreateNoteDialog()
     window.addEventListener(ROX_NOTES_COMPOSE_EVENT, onCompose)
     return () => window.removeEventListener(ROX_NOTES_COMPOSE_EVENT, onCompose)
-  }, [activeProjectSlug])
+  }, [noteScope])
 
   const handleCreateFolder = async () => {
     if (!activeWorkspaceId || !createFolderName.trim()) return
