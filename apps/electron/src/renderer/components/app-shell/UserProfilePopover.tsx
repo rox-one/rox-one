@@ -23,7 +23,7 @@ const rowClass = cn(
   'relative flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left',
   'text-[length:var(--menu-font-size)] leading-5 outline-hidden select-none',
   '[&_svg]:pointer-events-none',
-  'text-text-primary transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover focus:bg-foreground/[0.1]',
+  'text-text-primary transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover focus:bg-surface-pressed',
   'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 )
 
@@ -81,12 +81,12 @@ export function UserProfilePopoverContent({
       <div className="flex items-center gap-2.5 rounded-[var(--radius-control)] p-2">
         {avatar}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[13px] font-medium text-text-primary">{displayName}</div>
-          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
-            <span className="truncate rounded-md bg-foreground/5 px-1.5 font-medium text-foreground/70">
+          <div className="truncate text-body font-medium text-text-primary">{displayName}</div>
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground">
+            <span className="truncate rounded-md bg-surface-hover px-1.5 font-medium text-text-secondary">
               {planLabel}
             </span>
-            <span className="shrink-0 tabular-nums text-foreground/70">
+            <span className="shrink-0 tabular-nums text-text-secondary">
               {t('profile.level', { level: data.level })}
             </span>
           </div>
@@ -95,12 +95,12 @@ export function UserProfilePopoverContent({
 
       <div className="mx-1 my-0.5 h-px bg-border-subtle" />
 
-      <dl className="space-y-2 px-3 pt-1 pb-2 text-[11px]">
+      <dl className="space-y-2 px-3 pt-1 pb-2 text-caption">
         <div className="flex items-center justify-between gap-3">
           <dt className="text-muted-foreground">{t('profile.balanceLabel')}</dt>
           <dd
             data-testid="profile-popover-balance"
-            className={cn('tabular-nums', balanceKnown ? 'text-foreground/85' : 'text-muted-foreground')}
+            className={cn('tabular-nums', balanceKnown ? 'text-text-primary' : 'text-muted-foreground')}
           >
             {balanceLabel}
           </dd>
@@ -108,13 +108,13 @@ export function UserProfilePopoverContent({
         {spentLabel ? (
           <div className="flex items-center justify-between gap-3" title={t('profile.spentTooltip')}>
             <dt className="text-muted-foreground">{t('profile.spent', { amount: '' }).trim()}</dt>
-            <dd className="tabular-nums text-foreground/70">{spentLabel}</dd>
+            <dd className="tabular-nums text-text-secondary">{spentLabel}</dd>
           </div>
         ) : null}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-3" title={t('settings.account.xpHint')}>
             <dt className="text-muted-foreground">{t('settings.account.xp')}</dt>
-            <dd className="tabular-nums text-foreground/85">{xpLabel}</dd>
+            <dd className="tabular-nums text-text-primary">{xpLabel}</dd>
           </div>
           <div
             role="progressbar"
@@ -122,7 +122,7 @@ export function UserProfilePopoverContent({
             aria-valuemax={100}
             aria-valuenow={progressPct}
             aria-label={t('settings.account.progressSection')}
-            className="h-1 overflow-hidden rounded-full bg-foreground/10"
+            className="h-1 overflow-hidden rounded-full bg-surface-pressed"
           >
             <div className="h-full rounded-full bg-accent" style={{ width: `${progressPct}%` }} />
           </div>
@@ -132,7 +132,7 @@ export function UserProfilePopoverContent({
       <div className="mx-1 my-0.5 h-px bg-border-subtle" />
 
       <button type="button" className={rowClass} onClick={onOpenAccountSettings}>
-        <Settings className="h-4 w-4 shrink-0 text-foreground/60" strokeWidth={1.5} aria-hidden />
+        <Settings className="icon-toolbar shrink-0 text-muted-foreground" aria-hidden />
         <span className="font-medium">{t('profile.accountSettings')}</span>
       </button>
       <button
@@ -140,7 +140,7 @@ export function UserProfilePopoverContent({
         className={destructiveRowClass}
         onClick={() => void handleSignOut()}
       >
-        <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
+        <LogOut className="icon-toolbar shrink-0" aria-hidden />
         <span className="font-medium">{t('settings.accounts.signOut')}</span>
       </button>
     </div>

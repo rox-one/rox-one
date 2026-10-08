@@ -426,21 +426,21 @@ export function HotkeyDictationHost() {
     <>
       {visible && (
         <div
-          className="pointer-events-none fixed inset-x-0 bottom-6 z-[80] flex justify-center"
+          className="pointer-events-none fixed inset-x-0 bottom-6 z-toast flex justify-center"
           role="status"
           aria-live="polite"
         >
-          <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border bg-background/95 py-1.5 pl-3 pr-2 shadow-lg backdrop-blur">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-border bg-background/95 py-1.5 pl-3 pr-2 shadow-strong backdrop-blur">
             {transcribing || starting
               ? <Spinner className="h-4 w-4" />
-              : <Mic className="h-4 w-4 text-destructive" strokeWidth={1.5} />}
+              : <Mic className="icon-toolbar text-destructive" />}
             <span className="text-xs font-medium">
               {transcribing ? t('voice.overlay.transcribing') : t('voice.hotkey.globalRecording')}
             </span>
             {recording && <VoiceLevelWave level={level} active={recording} className="h-4 w-16 shrink-0 text-destructive" />}
             {recording && (
               <>
-                <span className="text-[10px] text-muted-foreground">{t('voice.hotkey.globalCancelHint')}</span>
+                <span className="text-caption text-muted-foreground">{t('voice.hotkey.globalCancelHint')}</span>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -448,7 +448,7 @@ export function HotkeyDictationHost() {
                   aria-label={t('chat.dictateStop')}
                   onClick={() => cancelRecordingRef.current()}
                 >
-                  <Square className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  <Square className="icon-caption" />
                 </Button>
               </>
             )}

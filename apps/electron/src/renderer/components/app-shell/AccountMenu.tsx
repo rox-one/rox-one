@@ -63,7 +63,7 @@ import type { CredentialHealthStatus, IdentityState, Workspace } from '../../../
  */
 function ProfileAvatar({ src, className }: { src?: string; className?: string }) {
   return (
-    <span className={cn('relative block shrink-0 overflow-hidden rounded-full bg-foreground/5', className)}>
+    <span className={cn('relative block shrink-0 overflow-hidden rounded-full bg-surface-pressed', className)}>
       {src ? (
         <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
       ) : (
@@ -489,7 +489,7 @@ export function AccountMenu({
             <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-6 flex flex-col gap-0.5">
               {drawerSectionLabel(t('accountMenu.section.profile'))}
               <div className="flex items-center gap-3 px-3 py-3">
-                <ProfileAvatar src={profile?.avatar} className="h-7 w-7 ring-1 ring-foreground/10" />
+                <ProfileAvatar src={profile?.avatar} className="h-7 w-7 shadow-minimal" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium">
                     {profile?.displayName || t('profile.defaultName')}
@@ -660,7 +660,7 @@ export function AccountMenu({
         <StyledDropdownMenuContent align="start" sideOffset={6} minWidth="min-w-72">
           {sectionLabel(t('accountMenu.section.profile'))}
           <div className="flex items-center gap-3 px-2 py-1.5">
-            <ProfileAvatar src={profile?.avatar} className="h-8 w-8 ring-1 ring-foreground/10" />
+            <ProfileAvatar src={profile?.avatar} className="h-8 w-8 shadow-minimal" />
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">
                 {profile?.displayName || t('profile.defaultName')}

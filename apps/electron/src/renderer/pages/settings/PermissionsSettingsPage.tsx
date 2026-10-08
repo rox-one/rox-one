@@ -245,7 +245,7 @@ export default function PermissionsSettingsPage() {
                         <p className="text-sm text-muted-foreground leading-relaxed">
                           {t("settings.permissions.loadConfigDesc")}
                         </p>
-                        <p className="text-xs leading-relaxed text-foreground/40">
+                        <p className="text-xs leading-relaxed text-text-muted">
                           {t("settings.permissions.loadConfigHint")}
                         </p>
                       </div>

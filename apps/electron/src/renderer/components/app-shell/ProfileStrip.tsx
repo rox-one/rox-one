@@ -93,11 +93,11 @@ export function ProfileStrip({
     spentLabel ? t('profile.spent', { amount: spentLabel }) : null,
   ].filter(Boolean).join(' · ')
   const avatar = (
-    <Avatar className={cn('shrink-0 rounded-full ring-1 ring-foreground/10', compact ? 'size-8' : 'size-9')}>
+    <Avatar className={cn('shrink-0 rounded-full shadow-minimal', compact ? 'size-8' : 'size-9')}>
       {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
       <AvatarFallback
         delayMs={0}
-        className="bg-foreground/10 text-foreground/80"
+        className="bg-surface-pressed text-text-primary"
       >
         {defaultAvatarFallback ?? <RoxInkAvatarArt />}
       </AvatarFallback>
@@ -115,9 +115,9 @@ export function ProfileStrip({
         <button
           type="button"
           className={cn(
-            'min-w-0 w-full flex items-center overflow-hidden rounded-[var(--radius-control)] border border-foreground/5',
+            'min-w-0 w-full flex items-center overflow-hidden rounded-[var(--radius-control)] border border-border-subtle',
             'bg-background/35 text-left shadow-minimal',
-            'hover:bg-background/65 hover:border-foreground/10 transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
+            'hover:bg-background/65 hover:border-border-strong transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
             compact ? 'flex-col justify-center gap-1 px-1 py-1' : 'gap-2.5 p-2.5',
             'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             className,
@@ -134,16 +134,16 @@ export function ProfileStrip({
             <span
               className={cn(
                 'block truncate font-medium',
-                compact ? 'text-[10px] text-foreground/70' : 'text-[13px] text-foreground/90',
+                compact ? 'text-caption text-text-secondary' : 'text-body text-text-primary',
               )}
             >
               {displayName}
             </span>
-            {!compact ? <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[10px] leading-4">
-              <span className="truncate rounded-md border border-foreground/5 bg-foreground/5 px-1.5 font-medium text-foreground/70">
+            {!compact ? <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption leading-4">
+              <span className="truncate rounded-md border border-border-subtle bg-surface-hover px-1.5 font-medium text-text-secondary">
                 {planLabel}
               </span>
-              <span className="truncate text-foreground/60 tabular-nums">
+              <span className="truncate text-text-secondary tabular-nums">
                 {t('profile.level', { level: data.level })}
               </span>
               <span
@@ -154,7 +154,7 @@ export function ProfileStrip({
                 {t('profile.balanceLabel')} {balanceLabel}
               </span>
             </span> : null}
-            {!compact && spentLabel ? <span className="mt-0.5 block truncate text-[10px] text-muted-foreground/70" title={t('profile.spentTooltip')}>{t('profile.spent', { amount: spentLabel })}</span> : null}
+            {!compact && spentLabel ? <span className="mt-0.5 block truncate text-caption text-muted-foreground/70" title={t('profile.spentTooltip')}>{t('profile.spent', { amount: spentLabel })}</span> : null}
           </span>
         </button>
       </PopoverTrigger>
