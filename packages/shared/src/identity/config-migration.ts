@@ -288,13 +288,6 @@ export function visibleRootFlagFilePath(homeDir: string = homedir()): string {
   const visibleIsHome = _isRoxHomeDir(visibleDir)
   if (visibleIsHome && existsSync(visibleFile)) return visibleFile
   if (existsSync(legacyFile)) return legacyFile
-  // A legacy home stranded by a failed rename probe (`~/.rox` absent): its
-  // flag still decides, so the next migration-capable start recovers it.
-  if (!_pathPresent(join(homeDir, ROX_HIDDEN_HOME_LINK_NAME))) {
-    const probe = _strandedProbeDirs(homeDir)[0]
-    const probeFile = probe ? join(probe, ROX_WORKBENCH_FLAGS_FILE_NAME) : undefined
-    if (probeFile && existsSync(probeFile)) return probeFile
-  }
   return visibleIsHome ? visibleFile : legacyFile
 }
 
@@ -577,8 +570,6 @@ export interface MigrateHiddenRoxHomeOptions {
   getuid?: () => number | undefined
   /** Injectable lstat for lock owner checks (tests fake a foreign owner). */
   lockLstat?: (path: string) => import('node:fs').Stats
-  /** Synchronous sleep between probe move-back retries (tests; default Atomics.wait). */
-  sleep?: (ms: number) => void
   /** Test-only hook into the process-lock takeover (simulates a racing migrator). */
   lockTakeoverHook?: (phase: 'stale-judged' | 'created') => void
   /** Injectable PID liveness probe (tests). */
@@ -1560,7 +1551,6 @@ export function readMergeIncompleteMarker(visibleDir: string): MergeIncompleteMa
 }
 
 type VisibleHomeState =
-  | 'stranded-probe'
   | 'symlinked'
   | 'symlink-elsewhere'
   | 'visible-links-hidden'
@@ -1597,70 +1587,7 @@ function _visibleRelationToHidden(
   return undefined
 }
 
-/** Backoff between move-back attempts of the rename probe (~1 s in total). */
-const _PROBE_MOVE_BACK_BACKOFF_MS = [25, 50, 100, 175, 250, 400] as const
-
-function _sleepSync(ms: number): void {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
-}
-
-/** Suffix of the rename-probe sibling (`~/.rox.migrated-<ts>-probe`). */
-const _PROBE_SUFFIX = '-probe'
-
-/**
- * Real directories `~/.rox.migrated-*-probe` next to the homes (newest
- * first): a legacy home whose rename probe could not move back.
- */
-function _strandedProbeDirs(homeDir: string): string[] {
-  let names: string[]
-  try {
-    names = _readdirMigration(homeDir)
-  } catch {
-    return []
-  }
-  const prefix = `${ROX_HIDDEN_HOME_LINK_NAME}.migrated-`
-  const found: Array<{ path: string; mtimeMs: number }> = []
-  for (const name of names) {
-    if (!name.startsWith(prefix) || !name.endsWith(_PROBE_SUFFIX)) continue
-    const path = join(homeDir, name)
-    try {
-      const st = _lstatMigration(path)
-      if (st.isDirectory()) found.push({ path, mtimeMs: st.mtimeMs })
-    } catch {
-      // vanished
-    }
-  }
-  return found.sort((a, b) => b.mtimeMs - a.mtimeMs).map((entry) => entry.path)
-}
-
-interface _StrandedProbe {
-  probe: string
-  /** `~/.rox` is absent, a link to the probe, or a dir recreated meanwhile. */
-  hidden: 'absent' | 'link' | 'dir'
-}
-
-function _findStrandedProbe(paths: VisibleHomePaths, platform: NodeJS.Platform): _StrandedProbe | undefined {
-  const probes = _strandedProbeDirs(paths.homeDir)
-  if (probes.length === 0) return undefined
-  let hiddenStat: import('node:fs').Stats | undefined
-  try {
-    hiddenStat = _lstatMigration(paths.hiddenDir)
-  } catch {
-    hiddenStat = undefined
-  }
-  if (!hiddenStat) return { probe: probes[0]!, hidden: 'absent' }
-  if (hiddenStat.isSymbolicLink()) {
-    const probe = probes.find((candidate) => _isSymlinkTo(paths.hiddenDir, candidate, platform))
-    return probe ? { probe, hidden: 'link' } : undefined
-  }
-  return hiddenStat.isDirectory() ? { probe: probes[0]!, hidden: 'dir' } : undefined
-}
-
 function _classifyVisibleHome(paths: VisibleHomePaths, platform: NodeJS.Platform): VisibleHomeState {
-  // A legacy home left at its probe name: nothing else is decided until it
-  // is back (a half-merged ~/rox must never win meanwhile).
-  const stranded = _findStrandedProbe(paths, platform)
-  if (stranded && stranded.hidden !== 'dir') return 'stranded-probe'
   let hiddenStat: import('node:fs').Stats | undefined
   try {
     hiddenStat = _lstatMigration(paths.hiddenDir)
@@ -1698,12 +1625,6 @@ export function resolveVisibleHomeWithoutMigration(
 ): string {
   const paths = defaultVisibleHomePaths(homeDir)
   switch (_classifyVisibleHome(paths, platform)) {
-    case 'stranded-probe': {
-      // The intact legacy tree: through the compat link, else at its probe
-      // name until the next migration-capable start renames it back.
-      const stranded = _findStrandedProbe(paths, platform)
-      return stranded?.hidden === 'absent' ? stranded.probe : paths.hiddenDir
-    }
     case 'symlinked':
     case 'clean':
     case 'visible-only':
@@ -1741,7 +1662,6 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
   const timestamp = _migrationTimestamp(options)
   const rename = options?.rename ?? _renameMigration
   const copyFile = options?.copyFile ?? _defaultCopyFile
-  const sleep = options?.sleep ?? _sleepSync
   const linkDir =
     options?.linkDir ??
     ((target: string, path: string, type: 'dir' | 'junction') => {
@@ -1801,91 +1721,32 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     } catch {
       // fall through to the rename probe
     }
-    const probe = `${paths.hiddenDir}.migrated-${timestamp}${_PROBE_SUFFIX}`
+    const probe = `${paths.hiddenDir}.migrated-${timestamp}-probe`
     if (_pathPresent(probe)) return 'probe-path-busy'
     try {
       rename(paths.hiddenDir, probe)
     } catch (error) {
       return (error as NodeJS.ErrnoException | null)?.code ?? 'rename-failed'
     }
-    // Move back, retrying transient failures (AV/indexer EPERM/EACCES on
-    // Windows, a racing mkdir) with a short backoff (~1 s in total).
-    let lastError: unknown
-    for (const delay of [0, ..._PROBE_MOVE_BACK_BACKOFF_MS]) {
-      if (delay > 0) sleep(delay)
+    try {
+      rename(probe, paths.hiddenDir)
+    } catch {
       try {
         rename(probe, paths.hiddenDir)
-        return undefined
       } catch (error) {
-        lastError = error
-      }
-    }
-    // Keep the legacy path resolving (never strand on a vanished dir); the
-    // next start renames the probe dir back (`_recoverStrandedProbe`).
-    try {
-      linkDir(probe, paths.hiddenDir, linkType)
-    } catch {
-      // reported below
-    }
-    throw new Error(
-      `Legacy home rename probe could not move back (data intact at ${probe}): ${(lastError as Error | undefined)?.message ?? 'unknown error'}`,
-    )
-  }
-  /**
-   * Put a stranded legacy home back at `~/.rox` before anything else: remove
-   * only a compat link pointing at it; a `~/.rox` recreated meanwhile without
-   * user data is kept aside as `~/.rox.recreated-<ts>` (never deleted). A
-   * recreated `~/.rox` with user data is ambiguous: left alone, deferred.
-   */
-  const recoverStrandedProbe = (stranded: _StrandedProbe): boolean => {
-    if (stranded.hidden === 'link') {
-      try {
-        _removeDirLink(paths.hiddenDir)
-      } catch {
-        return false
-      }
-      try {
-        rename(stranded.probe, paths.hiddenDir)
-        return true
-      } catch {
+        // Keep the legacy path resolving (never strand on a vanished dir).
         try {
-          linkDir(stranded.probe, paths.hiddenDir, linkType)
+          linkDir(probe, paths.hiddenDir, linkType)
         } catch {
-          // read-only resolution still finds the probe dir
+          // reported below
         }
-        return false
+        throw new Error(
+          `Legacy home rename probe could not move back (data intact at ${probe}): ${(error as Error).message}`,
+        )
       }
     }
-    if (stranded.hidden === 'absent') {
-      try {
-        rename(stranded.probe, paths.hiddenDir)
-        return true
-      } catch {
-        return false
-      }
-    }
-    if (roxHomeHasUserData(paths.hiddenDir)) return false
-    const aside = `${paths.hiddenDir}.recreated-${timestamp}`
-    if (_pathPresent(aside)) return false
-    try {
-      rename(paths.hiddenDir, aside)
-    } catch {
-      return false
-    }
-    try {
-      rename(stranded.probe, paths.hiddenDir)
-      return true
-    } catch {
-      try {
-        rename(aside, paths.hiddenDir)
-      } catch {
-        // both dirs are kept; reported via the diagnostic
-      }
-      return false
-    }
+    return undefined
   }
-  const deferredStranded = (stranded: _StrandedProbe): VisibleHomeMigrationResult =>
-    done('deferred-unmovable', { diagnostics: ['storage.migration.strandedProbe', `probe:${stranded.probe}`] })
   const deferredUnmovable = (blocker: string): VisibleHomeMigrationResult =>
     done('deferred-unmovable', { diagnostics: ['storage.migration.legacyNotRenamable', `rename:${blocker}`] })
   const lockHolders = (bothExist: boolean): string[] =>
@@ -1903,10 +1764,6 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
   let state = _classifyVisibleHome(paths, platform)
   const early = settled(state)
   if (early) return early
-  if (state === 'stranded-probe' && dryRun) {
-    // A real run first renames the stranded legacy home back.
-    return done('noop', { diagnostics: ['storage.migration.strandedProbe'] })
-  }
 
   // Only `~/.rox` (real dir), or both real dirs: check live writers first.
   // (`visible-links-hidden` is a single tree reached twice.)
@@ -1914,7 +1771,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
   if (holders.length > 0) return deferredByHolders(holders)
 
   // size / mode / mtime only — no content hashing on the atomic path.
-  let manifest = state === 'stranded-probe' ? [] : buildVisibleHomeManifest(paths.hiddenDir, { hash: false })
+  let manifest = buildVisibleHomeManifest(paths.hiddenDir, { hash: false })
   base.manifest = manifest
 
   if (dryRun) {
@@ -1928,10 +1785,6 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     })
   }
   try {
-    // Before anything else: a legacy home stranded by an earlier probe goes
-    // back to `~/.rox` (under the lock: never racing a live probe).
-    const stranded = _findStrandedProbe(paths, platform)
-    if (stranded && !recoverStrandedProbe(stranded)) return deferredStranded(stranded)
     // Fresh state under the lock (another process may have finished first).
     state = _classifyVisibleHome(paths, platform)
     const settledNow = settled(state)

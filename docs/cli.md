@@ -154,8 +154,7 @@ example to a dotfiles repo) is never written through: the legacy version is
 kept under `conflicts/` instead. A legacy link that differs from `~/rox` is
 kept there too. If `~/.rox` cannot be renamed in place (for example it is a
 mount point), the migration defers (`deferred-unmovable`) without copying
-anything. If the check renames `~/.rox` away but cannot rename it back, the
-next start renames it back before doing anything else. While it runs, the migration holds `~/.rox-migrate.lock` (removed
+anything. While it runs, the migration holds `~/.rox-migrate.lock` (removed
 afterwards). It also honours the desktop app's runtime lock in the temp
 directory, `$XDG_RUNTIME_DIR` and `/tmp`. Shared directories hold it in a
 private per-user `rox-<uid>/` folder. Lock files that are links or belong to

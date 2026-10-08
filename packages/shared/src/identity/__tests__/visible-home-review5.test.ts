@@ -27,8 +27,6 @@ import { tmpdir } from 'node:os'
 import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import {
-  readPersistedVisibleRootFlag,
-  resolveVisibleHomeWithoutMigration,
   desktopAppRuntimeLockPaths,
   holdDesktopAppLock,
   isLockFileLive,
@@ -255,106 +253,6 @@ describe('stale-lock takeover never runs two migrators (finding 5)', () => {
       expect(readlinkSync(join(home, '.rox'))).toBe(join(home, 'rox'))
     }))
 })
-
-describe('rename-probe move-back and stranded-probe recovery (finding 2)', () => {
-  const plantBoth = (home: string): void => {
-    plantHidden(home)
-    write(join(home, 'rox', 'workspaces', 'v', 'notes.md'), 'visible')
-  }
-  const isProbe = (path: string): boolean => path.endsWith('-probe')
-  /** Move-back (probe → ~/.rox) fails `times` times with EPERM. */
-  const flakyMoveBack = (home: string, times: number) => {
-    let failures = 0
-    return (source: string, destination: string): void => {
-      if (isProbe(source) && destination === join(home, '.rox') && failures < times) {
-        failures++
-        throw Object.assign(new Error('EPERM'), { code: 'EPERM' })
-      }
-      renameSync(source, destination)
-    }
-  }
-  const probeDirs = (home: string): string[] => readdirSync(home).filter((n) => n.endsWith('-probe'))
-
-  it('transient move-back failures are retried with a short backoff (~1 s total)', () =>
-    withHome((home) => {
-      plantBoth(home)
-      const slept: number[] = []
-      const result = migrateHiddenRoxHome(opts(home, { rename: flakyMoveBack(home, 3), sleep: (ms) => slept.push(ms) }))
-      expect(result.outcome).toBe('merged')
-      expect(slept.length).toBe(3)
-      expect(probeDirs(home)).toEqual([])
-    }))
-
-  it('a move-back that keeps failing throws after ~1 s; the link keeps the legacy home in use; the next start recovers it', () =>
-    withHome((home) => {
-      plantBoth(home)
-      const slept: number[] = []
-      expect(() =>
-        migrateHiddenRoxHome(opts(home, { rename: flakyMoveBack(home, 100), sleep: (ms) => slept.push(ms) })),
-      ).toThrow('could not move back')
-      const total = slept.reduce((a, b) => a + b, 0)
-      expect(total).toBeGreaterThanOrEqual(900)
-      expect(total).toBeLessThanOrEqual(1100)
-      const [probe] = probeDirs(home)
-      expect(probe).toBeDefined()
-      expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
-      expect(readlinkSync(join(home, '.rox'))).toBe(join(home, probe!))
-      // ~/rox has user data, but the intact legacy home still wins.
-      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
-
-      const result = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-r5b' }))
-      expect(result.outcome).toBe('merged')
-      expect(probeDirs(home)).toEqual([])
-      expect(readFileSync(join(home, 'rox', 'workspaces', 'real', 'notes.md'), 'utf8')).toBe('mine')
-      expect(readdirSync(home).filter((n) => n.startsWith('.rox.migrated-'))).toEqual(['.rox.migrated-ts-r5b'])
-    }))
-
-  it('killed between the renames (~/.rox absent): flag and resolution follow the probe dir; the next start renames it back', () =>
-    withHome((home) => {
-      plantBoth(home)
-      write(join(home, '.rox', 'workbench-flags.json'), JSON.stringify({ enabled: ['storage.visible-root.v1'] }))
-      const probe = join(home, '.rox.migrated-ts-old-probe')
-      renameSync(join(home, '.rox'), probe)
-      expect(readPersistedVisibleRootFlag(home)).toBe(true)
-      expect(resolveVisibleHomeWithoutMigration(home)).toBe(probe)
-      // A dry run reports it and changes nothing.
-      expect(migrateHiddenRoxHome(opts(home, { dryRun: true })).diagnostics).toContain('storage.migration.strandedProbe')
-      expect(existsSync(probe)).toBe(true)
-
-      const result = migrateHiddenRoxHome(opts(home))
-      expect(result.outcome).toBe('merged')
-      expect(existsSync(probe)).toBe(false)
-      expect(readlinkSync(join(home, '.rox'))).toBe(join(home, 'rox'))
-      expect(readFileSync(join(home, 'rox', 'workspaces', 'real', 'notes.md'), 'utf8')).toBe('mine')
-    }))
-
-  it('a ~/.rox recreated meanwhile without user data is kept aside, the probe dir goes back', () =>
-    withHome((home) => {
-      plantHidden(home)
-      const probe = join(home, '.rox.migrated-ts-old-probe')
-      renameSync(join(home, '.rox'), probe)
-      write(join(home, '.rox', 'config.json'), '{}') // a lockless process recreated it
-      const result = migrateHiddenRoxHome(opts(home))
-      expect(result.outcome).toBe('migrated')
-      expect(existsSync(probe)).toBe(false)
-      expect(readFileSync(join(home, '.rox.recreated-ts-r5', 'config.json'), 'utf8')).toBe('{}')
-      expect(readFileSync(join(home, 'rox', 'workspaces', 'real', 'notes.md'), 'utf8')).toBe('mine')
-    }))
-
-  it('a recreated ~/.rox with user data is ambiguous: deferred, nothing moved', () =>
-    withHome((home) => {
-      plantHidden(home)
-      const probe = join(home, '.rox.migrated-ts-old-probe')
-      renameSync(join(home, '.rox'), probe)
-      write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"new"}]}')
-      const result = migrateHiddenRoxHome(opts(home))
-      expect(result.outcome).toBe('deferred-unmovable')
-      expect(result.diagnostics).toEqual(['storage.migration.strandedProbe', `probe:${probe}`])
-      expect(existsSync(probe)).toBe(true)
-      expect(existsSync(join(home, 'rox'))).toBe(false)
-    }))
-})
-
 describe('last migration outcome for Settings (finding 4)', () => {
   const flagOn = (home: string): void =>
     write(join(home, '.rox', 'workbench-flags.json'), JSON.stringify({ enabled: ['storage.visible-root.v1'] }))
