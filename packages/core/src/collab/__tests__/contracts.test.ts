@@ -18,7 +18,8 @@ import {
   readChangedVisible, recordDocView, redactCalendarFrame, redactEventFields, redactForFreeBusy, staleSuggestionIds, statusForHeartbeat,
   suggestionStatusAfterSync, suggestionSummary,
 } from '../index'
-import type { CalendarEventTiming, DocSuggestion, RealtimeEventFrame } from '../index'
+import type { RealtimeEventFrame } from '../../events/topics'
+import type { CalendarEventTiming, DocSuggestion } from '../index'
 
 const NOW = Date.parse('2026-10-08T12:00:00.000Z')
 const doc = { kind: 'note' as const, id: 'doc-1' }
