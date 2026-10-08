@@ -160,11 +160,8 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
         return false
       }
     })()
-    if (!usable || isSensitiveAgentCwd(dirPath)) {
-      // git children need the login-shell PATH / repaired prerequisites (bounded wait).
-      if (!isSpawnEnvReady()) await whenSpawnEnvReady()
-      return readGitWorkspaceSnapshot(dirPath)
-    }
+    // Forbidden (unusable/sensitive) dir: empty snapshot, no git, no wait — same as server-core.
+    if (!usable || isSensitiveAgentCwd(dirPath)) return readGitWorkspaceSnapshot('')
     // git children need the login-shell PATH / repaired prerequisites (bounded wait).
     if (!isSpawnEnvReady()) await whenSpawnEnvReady()
     return readGitWorkspaceSnapshot(dirPath)

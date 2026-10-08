@@ -21,6 +21,17 @@ describe('git RPC handlers', () => {
         expect(at).toBeGreaterThan(0)
         expect(src.slice(Math.max(0, at - 200), at)).toContain('await whenSpawnEnvReady()')
       }
+      // review2: snapshot handler — forbidden dirs get the empty snapshot without
+      // waiting or running git; the real read waits exactly once.
+      const start = src.indexOf('server.handle(RPC_CHANNELS.git.GET_WORKSPACE_SNAPSHOT')
+      const body = src.slice(start, src.indexOf('server.handle(', start + 10))
+      expect(body.split('await whenSpawnEnvReady()').length - 1).toBe(1)
+      expect(body.split('readGitWorkspaceSnapshot(dirPath)').length - 1).toBe(1)
+      const sensitive = body.indexOf('isSensitiveAgentCwd(dirPath)')
+      const wait = body.indexOf('await whenSpawnEnvReady()')
+      expect(sensitive).toBeGreaterThan(0)
+      expect(body.slice(sensitive, wait)).toContain("readGitWorkspaceSnapshot('')")
+      expect(wait).toBeLessThan(body.indexOf('readGitWorkspaceSnapshot(dirPath)'))
     }
   })
 })

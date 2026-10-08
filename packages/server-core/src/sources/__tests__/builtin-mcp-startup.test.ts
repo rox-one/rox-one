@@ -85,6 +85,23 @@ describe('built-in MCP startup', () => {
     } finally { resetSpawnEnvGatesForTests() }
   })
 
+  it('does not seed or spawn when stop() aborted while waiting for the spawn-env gate', async () => {
+    const h = harness()
+    let ready = false; let open!: () => void
+    const gate = new Promise<void>(resolve => { open = () => { ready = true; resolve() } })
+    registerSpawnEnvGate('test', { isReady: () => ready, wait: () => gate })
+    try {
+      const service = h.create()
+      const run = service.ensureWorkspace('/workspace/test')
+      await new Promise(resolve => setTimeout(resolve, 10))
+      await service.stop()
+      open()
+      await run
+      expect(h.counts).toMatchObject({ seeds: 0, installs: 0, builds: 0, lists: 0 })
+      expect(h.writes).toEqual([])
+    } finally { resetSpawnEnvGatesForTests() }
+  })
+
   it('seeds and checks each launch, closes the probe, and does not invoke normal tools', async () => {
     const h = harness()
     const first = h.create()

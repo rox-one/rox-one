@@ -296,7 +296,10 @@ export class BuiltinMcpStartup {
     // npx/uvx/qmd children need the full login PATH (macOS) and repaired
     // prerequisites (Windows): bounded wait on the host's spawn-env gates.
     const task = Promise.resolve()
-      .then(() => isSpawnEnvReady() ? this.checkWorkspace(root) : whenSpawnEnvReady().then(() => this.checkWorkspace(root)))
+      // stop() ends the wait (it awaits running passes) ...
+      .then(() => isSpawnEnvReady() ? undefined : Promise.race([whenSpawnEnvReady(), this.aborted()]))
+      // ... and nothing is seeded or spawned once shutdown began.
+      .then(() => this.controller.signal.aborted ? undefined : this.checkWorkspace(root))
       .catch(error => {
         if (!this.controller.signal.aborted) this.log(`Built-in MCP startup deferred: ${safeError(error)}`)
       })
@@ -307,6 +310,16 @@ export class BuiltinMcpStartup {
       })
     this.running.set(root, task)
     return task
+  }
+
+  private abortedPromise?: Promise<void>
+  /** Resolves when stop() aborts the controller. */
+  private aborted(): Promise<void> {
+    this.abortedPromise ??= new Promise<void>(resolve => {
+      if (this.controller.signal.aborted) resolve()
+      else this.controller.signal.addEventListener('abort', () => resolve(), { once: true })
+    })
+    return this.abortedPromise
   }
 
   start(roots: readonly string[]): void {
