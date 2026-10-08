@@ -8,13 +8,12 @@
  * deprecated CRAFT_CONFIG_DIR), else `~/rox` if it exists, else `~/.rox`.
  * No migration runs.
  *
- * Flag ON: `~/rox` (0700), with `migrateHiddenRoxHome()` running before any
- * store opens (and before the legacy `~/.craft-agent` import). `~/rox` is
- * returned only when the migration outcome says it holds the user's data
- * (clean-install / already-* / migrated / merged). Deferred (live locks),
- * symlink-elsewhere and failed migrations fall back to the flag-OFF choice,
- * never to an empty `~/rox` (see `fallbackConfigDir`).
- * `rox migrate-config` works regardless of the flag; it is the manual path.
+ * Flag ON: resolution is read-only (`resolveVisibleHomeWithoutMigration`):
+ * `~/rox` once it is the home (migrated / visible-only / fresh machine),
+ * else the legacy dir — never an empty, foreign or half-merged `~/rox`.
+ * The move itself runs only in Electron main right after its single-instance
+ * lock (`runVisibleHomeAutoMigration`) or via an explicit
+ * `rox migrate-config`; never as an import-time side effect.
  *
  * The flag must be readable before the config dir is resolved, so it comes
  * from (in priority order):
@@ -29,7 +28,7 @@
  *     per process, so the flag-OFF hot path does a single fs read.
  */
 import { importLegacyConfig } from './legacy-config-migration.ts';
-import { existsSync, lstatSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -41,8 +40,9 @@ import {
   VISIBLE_HOME_USABLE_OUTCOMES,
   migrateHiddenRoxHome,
   readPersistedVisibleRootFlag,
-  roxHomeHasUserData,
+  resolveVisibleHomeWithoutMigration,
   visibleRootEnvOverride,
+  type VisibleHomeMigrationResult,
 } from '../identity/config-migration.ts';
 
 const warnedCraftNames = new Set<string>();
@@ -112,58 +112,55 @@ function visibleRootRequested(
   return persistedVisibleRootFlag(homeDir);
 }
 
-function pathPresent(path: string): boolean {
-  try {
-    lstatSync(path);
-    return true;
-  } catch {
-    return false;
-  }
+function resolveVisibleConfigDir(homeDir: string): string {
+  const cached = visibleResolutionCache.get(homeDir);
+  if (cached) return cached;
+  // Read-only: no process migrates as a side effect of resolving (or of
+  // importing `CONFIG_DIR`). Only Electron main, after its single-instance
+  // lock, runs `runVisibleHomeAutoMigration()`; this process then keeps the
+  // dir resolved here for its lifetime (a just-migrated `~/.rox` is the
+  // compat link into `~/rox`), and the next launch resolves `~/rox`.
+  const dir = resolveVisibleHomeWithoutMigration(homeDir);
+  visibleResolutionCache.set(homeDir, dir);
+  return dir;
+}
+
+export interface VisibleHomeAutoMigration {
+  /** Migration result, when it ran (and did not throw). */
+  result?: VisibleHomeMigrationResult;
+  /** Error message when the migration threw (the legacy tree is kept). */
+  error?: string;
 }
 
 /**
- * Flag ON but `~/rox` is not (yet) safe to use: keep the flag-OFF choice
- * (`~/rox` if it exists, else `~/.rox`, i.e. exactly main), except that an
- * existing `~/rox` without user data never wins over a legacy home that
- * still holds it — nobody is stranded on an empty `~/rox`.
+ * Electron main only, right after `app.requestSingleInstanceLock()`
+ * succeeded: run the visible-home migration when `storage.visible-root.v1`
+ * is requested (no-op otherwise, and with ROX_CONFIG_DIR). Live writers
+ * (including other desktop app locks) defer it; a foreign `~/rox` defers it.
+ * Never throws.
  */
-function fallbackConfigDir(hiddenDir: string, visibleDir: string): string {
-  const hidden = pathPresent(hiddenDir);
-  const visible = existsSync(visibleDir);
-  if (!hidden) return visible ? visibleDir : hiddenDir;
-  if (!visible) return hiddenDir;
-  return roxHomeHasUserData(visibleDir) ? visibleDir : hiddenDir;
-}
-
-function resolveVisibleConfigDir(
-  env: NodeJS.ProcessEnv | Record<string, string | undefined>,
-  homeDir: string,
-  hiddenDir: string,
-  visibleDir: string,
-): string {
-  const cached = visibleResolutionCache.get(homeDir);
-  if (cached) return cached;
-  let dir: string;
+export function runVisibleHomeAutoMigration(options?: {
+  env?: NodeJS.ProcessEnv | Record<string, string | undefined>;
+  homeDir?: string;
+  migrate?: typeof migrateHiddenRoxHome;
+}): VisibleHomeAutoMigration | undefined {
+  const env = options?.env ?? process.env;
+  const homeDir = options?.homeDir ?? homedir();
+  if (!isVisibleRoxHomeActive(env, homeDir)) return undefined;
   try {
-    const result = migrateHiddenRoxHome({ homeDir, env });
-    if (VISIBLE_HOME_USABLE_OUTCOMES.has(result.outcome)) {
-      dir = visibleDir;
-    } else {
-      dir = fallbackConfigDir(hiddenDir, visibleDir);
+    const result = (options?.migrate ?? migrateHiddenRoxHome)({ homeDir, env });
+    if (!VISIBLE_HOME_USABLE_OUTCOMES.has(result.outcome)) {
       console.warn(
-        `[rox] Visible-home migration ${result.outcome}; using ${dir} for this run.`,
+        `[rox] Visible-home migration ${result.outcome}; keeping the current Rox home.`,
         result.diagnostics.join('; '),
       );
     }
+    return { result };
   } catch (error) {
-    dir = fallbackConfigDir(hiddenDir, visibleDir);
-    console.warn(
-      `[rox] Visible-home migration failed; using ${dir} for this run:`,
-      error instanceof Error ? error.message : error,
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn('[rox] Visible-home migration failed; keeping the current Rox home:', message);
+    return { error: message };
   }
-  visibleResolutionCache.set(homeDir, dir);
-  return dir;
 }
 
 /**
@@ -173,9 +170,8 @@ function resolveVisibleConfigDir(
  * else `~/.rox`. Before using the default, missing legacy data is imported
  * once, preserving conflicts.
  *
- * With the flag ON: `~/rox` (created 0700 on first use) once the hidden home
- * has been migrated (never deleted, left as a symlink); otherwise the
- * fallback above.
+ * With the flag ON: `~/rox` once it is the Rox home (see
+ * `resolveVisibleHomeWithoutMigration`); this never migrates.
  */
 export function resolveConfigDir(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
@@ -187,7 +183,7 @@ export function resolveConfigDir(
   const visibleDir = join(homeDir, ROX_VISIBLE_CONFIG_DIR_NAME);
   const hiddenDir = join(homeDir, ROX_CONFIG_DIR_NAME);
   if (visibleRootRequested(env, homeDir, options?.enabledWorkbenchFlags)) {
-    const dir = resolveVisibleConfigDir(env, homeDir, hiddenDir, visibleDir);
+    const dir = resolveVisibleConfigDir(homeDir);
     importLegacyConfig(homeDir, dir);
     return dir;
   }
