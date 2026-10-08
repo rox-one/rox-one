@@ -79,7 +79,7 @@ export function ProfileStrip({
       onClick={onClick}
       className={cn(
         'group min-w-0 w-full flex items-center overflow-hidden rounded-[var(--radius-control)] border border-foreground/5',
-        'bg-background/35 text-left shadow-minimal backdrop-blur-xl',
+        'bg-background/35 text-left shadow-minimal',
         'hover:bg-background/65 hover:border-foreground/10 transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
         compact ? 'justify-center p-0.5' : 'gap-2.5 p-2.5',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',

@@ -6,7 +6,8 @@
  */
 
 import * as React from 'react'
-import { motion, AnimatePresence, useIsPresent, useReducedMotion } from 'motion/react'
+import { motion, AnimatePresence, useIsPresent } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
 import { useSettingsFieldDescription } from './SettingsFieldContext'
@@ -231,7 +232,7 @@ export function SettingsRadioCard({
 
 function ExpandedRadioContent({ children }: { children: React.ReactNode }) {
   const isPresent = useIsPresent()
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   return (
     <motion.div
       initial={{ height: 0, opacity: 0 }}

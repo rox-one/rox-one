@@ -260,6 +260,11 @@
   background: transparent;
 }
 
+/* PERF-07 low-power profile: keep the static placeholder, stop the loop. */
+html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-loading='true'] {
+  animation: none;
+}
+
 @keyframes tiptap-image-shimmer {
   0% {
     background-position: 200% 0;

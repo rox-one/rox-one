@@ -894,11 +894,15 @@ export const mockElectronAPI = {
   }),
   onPrivacyChanged: () => () => {},
   getShellSnapshot: async () => playgroundZenSnapshot(),
-  setZenShell: async (patch: { enabled?: boolean; materialPreference?: 'system' | 'glass' | 'opaque' }) => {
+  setZenShell: async (patch: { enabled?: boolean; materialPreference?: 'system' | 'glass' | 'opaque'; renderProfile?: 'auto' | 'performance' | 'standard' }) => {
     playgroundZenState = {
       ...playgroundZenState,
       enabled: patch.enabled !== undefined ? patch.enabled === true : playgroundZenState.enabled,
       preference: patch.materialPreference ?? playgroundZenState.preference,
+      ...(patch.renderProfile !== undefined && {
+        renderProfilePreference: patch.renderProfile,
+        renderProfile: patch.renderProfile === 'performance' ? 'performance' as const : 'standard' as const,
+      }),
     }
     const next = playgroundZenSnapshot()
     for (const listener of playgroundZenListeners) listener(next)

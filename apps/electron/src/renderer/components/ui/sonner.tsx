@@ -23,7 +23,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         loading: <NoIcon />,
       }}
       toastOptions={{
-        className: "!rounded-[var(--radius-card)] !backdrop-blur-xl group",
+        className: "!rounded-[var(--radius-card)] group",
       }}
       style={
         {

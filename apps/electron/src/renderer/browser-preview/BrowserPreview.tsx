@@ -329,7 +329,7 @@ function BrowserCanvasPreview() {
         {menu ? (
           <div
             ref={menuRef}
-            className="absolute z-20 w-[244px] rounded-lg border border-foreground/10 bg-background/92 p-1.5 shadow-modal-small backdrop-blur-xl"
+            className="absolute z-20 w-[244px] rounded-lg border border-foreground/10 bg-[rgb(from_var(--paper)_r_g_b_/_1)] p-1.5 shadow-modal-small"
             style={{ left: menu.x, top: menu.y }}
             role="menu"
             aria-label="Sample node types"

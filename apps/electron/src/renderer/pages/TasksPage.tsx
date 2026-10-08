@@ -1413,6 +1413,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         @keyframes task-check-draw { from { stroke-dashoffset: 14 } to { stroke-dashoffset: 0 } }
         .task-check-draw { stroke-dasharray: 14; animation: task-check-draw 220ms ease-out both }
         @media (prefers-reduced-motion: reduce) { .task-check-draw { animation: none } }
+        html[data-render-profile="performance"] .task-check-draw { animation: none }
       `}</style>
       {personalTasksLoadStatus() === 'quarantine' ? (
         <div className="bg-destructive/10 px-3 py-1.5 text-[12px] text-destructive" role="alert" data-testid="tasks-quarantine">

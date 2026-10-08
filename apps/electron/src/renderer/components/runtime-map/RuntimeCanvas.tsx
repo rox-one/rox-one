@@ -10,6 +10,7 @@ import { AgentLane, type AgentLaneNode } from './AgentLane'
 import { CARD_WIDTH, layoutRuntimeOverview, type RuntimeLayout, type TimelineMode } from './layout/stable-layout'
 import { reconcileFlowNodes } from './layout/reconcile-flow-nodes'
 import { learningFlowNode, learningRowY } from './layout/learning-flow'
+import { prefersReducedMotionNow } from '@/lib/render-profile-motion'
 import { initialRuntimeCardGeometry, initialRuntimeLaneGeometry } from './layout/initial-geometry'
 import { overviewMinimumZoom } from './layout/viewport-policy'
 import type { LearningMapEdge, LearningMapNode } from './learning-nodes'
@@ -82,7 +83,7 @@ function RuntimeCanvasInner({ graph, nodes, layout, scopeKey, selectedId, onSele
   ], [graph.edges, visibleIds, learningEdges, learningIds])
   const latest = nodes.at(-1)
   const cameraInitialized = React.useRef(false)
-  const animationDuration = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 120
+  const animationDuration = () => prefersReducedMotionNow() ? 0 : 120
   function applyFocus(id: string) { const position = layout.positions.get(id); if (position) void flow.current?.setCenter(position.x + CARD_WIDTH / 2, position.y + 86, { zoom: Math.max(1, flow.current.getZoom()), duration: animationDuration() }) }
   function focusNode(id: string) {
     if (overview) { setOverview(false); setPendingFit(false); setPendingFocus(id) }
