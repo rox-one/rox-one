@@ -160,10 +160,16 @@ export class RuleEngine {
       duplicate: true,
       steps: record.steps,
     }
-    if (resumeStepIndex(names, record.steps, optionalOf(record.steps)) >= names.length) return idle
-    if (!options.force && !this.retryDue(record)) return idle
+    // A redelivery that finds nothing to do is still an outcome: report it, so
+    // hosts can count prevented duplicates.
+    const report = (outcome: RuleRunOutcome): RuleRunOutcome => {
+      this.host.onExecution?.(outcome, record)
+      return outcome
+    }
+    if (resumeStepIndex(names, record.steps, optionalOf(record.steps)) >= names.length) return report(idle)
+    if (!options.force && !this.retryDue(record)) return report(idle)
     const attempt = record.attempts + 1
-    if (attempt > MAX_RULE_ATTEMPTS && !options.force) return idle
+    if (attempt > MAX_RULE_ATTEMPTS && !options.force) return report(idle)
     const outcome = await this.attempt(record, attempt)
     this.host.onExecution?.(outcome, record)
     return outcome

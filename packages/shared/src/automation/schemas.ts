@@ -66,6 +66,8 @@ export const ruleExecutionViewSchema = z.object({
   steps: z.array(ruleStepRecordSchema).max(200),
   attempts: z.number().int().positive(),
   lastError: z.string().max(4000).optional(),
+  /** Why a matched rule did not run (`skipped` rows; `SkipReason`). */
+  skippedReason: z.string().max(64).optional(),
   createdAt: isoDateTimeSchema,
   finishedAt: isoDateTimeSchema.optional(),
 })
