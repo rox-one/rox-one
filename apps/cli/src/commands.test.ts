@@ -450,3 +450,16 @@ describe('formatCliSessionError', () => {
     expect(formatCliSessionError({ type: 'error', error: 'boom' })).toBe('boom')
   })
 })
+
+describe('migrate-config args (W1-13)', () => {
+  it('parses migrate-config with --dry-run/--revert/--auto/--home', () => {
+    const args = parseArgs(['bun', 'index.ts', 'migrate-config', '--dry-run', '--home', '/tmp/fake-home'])
+    expect(args.command).toBe('migrate-config')
+    expect(args.dryRun).toBe(true)
+    expect(args.revert).toBe(false)
+    expect(args.homeDirOverride).toBe('/tmp/fake-home')
+    const revert = parseArgs(['bun', 'index.ts', 'migrate-config', '--revert', '--auto'])
+    expect(revert.revert).toBe(true)
+    expect(revert.auto).toBe(true)
+  })
+})

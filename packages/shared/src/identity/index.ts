@@ -62,3 +62,23 @@ export {
   type BrandMigrationStamp,
 } from './config-migration.ts'
 export { UI_BRAND_MANIFEST, UI_BRAND_ALLOWLIST } from './ui-brand.ts'
+
+// W1-13 (#1510): visible Rox home migration (MIG-13, `~/.rox` → `~/rox`).
+export {
+  ROX_HIDDEN_HOME_LINK_NAME,
+  ROX_HOME_MIGRATION_DIR_NAME,
+  ROX_HOME_MIGRATION_MANIFEST_NAME,
+  ROX_VISIBLE_HOME_DIR_NAME,
+  ROX_WORKBENCH_FLAGS_FILE_NAME,
+  buildVisibleHomeManifest,
+  defaultVisibleHomePaths,
+  migrateHiddenRoxHome,
+  readPersistedVisibleRootFlag,
+  revertVisibleRoxHome,
+  visibleHomeManifestsEqual,
+  type MigrateHiddenRoxHomeOptions,
+  type VisibleHomeManifestEntry,
+  type VisibleHomeMigrationResult,
+  type VisibleHomeOutcome,
+  type VisibleHomePaths,
+} from './config-migration.ts'

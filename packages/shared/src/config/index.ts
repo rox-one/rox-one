@@ -1,5 +1,5 @@
 export * from './types.ts';
-export { getEnv, resolveConfigDir } from './env.ts';
+export { getEnv, isVisibleRoxHomeActive, resolveConfigDir } from './env.ts';
 export * from './rox-public-models.ts';
 export * from './llm-connections.ts';
 export * from './llm-validation.ts';

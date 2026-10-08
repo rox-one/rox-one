@@ -50,6 +50,11 @@ export interface CliArgs {
   model: string
   apiKey: string
   baseUrl: string
+  // migrate-config flags (W1-13: local-only, works regardless of the flag)
+  dryRun: boolean
+  revert: boolean
+  auto: boolean
+  homeDirOverride?: string
 }
 
 export function parseArgs(argv: string[]): CliArgs {
@@ -75,6 +80,10 @@ export function parseArgs(argv: string[]): CliArgs {
   let model = ''
   let apiKey = ''
   let baseUrl = ''
+  let dryRun = false
+  let revert = false
+  let auto = false
+  let homeDirOverride: string | undefined
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
@@ -138,6 +147,18 @@ export function parseArgs(argv: string[]): CliArgs {
       case '--base-url':
         baseUrl = args[++i] ?? ''
         break
+      case '--dry-run':
+        dryRun = true
+        break
+      case '--revert':
+        revert = true
+        break
+      case '--auto':
+        auto = true
+        break
+      case '--home':
+        homeDirOverride = args[++i]
+        break
       case '--help':
       case '-h':
         command = 'help'
@@ -166,7 +187,7 @@ export function parseArgs(argv: string[]): CliArgs {
   if (!apiKey) apiKey = process.env.LLM_API_KEY ?? ''
   if (!baseUrl) baseUrl = process.env.LLM_BASE_URL ?? ''
 
-  return { url, token, workspace, timeout, json, tlsCa, sendTimeout, command, rest, sources, mode, outputFormat, noCleanup, noSpinner, verbose, serverEntry, workspaceDir, provider, model, apiKey, baseUrl }
+  return { url, token, workspace, timeout, json, tlsCa, sendTimeout, command, rest, sources, mode, outputFormat, noCleanup, noSpinner, verbose, serverEntry, workspaceDir, provider, model, apiKey, baseUrl, dryRun, revert, auto, homeDirOverride }
 }
 
 // ---------------------------------------------------------------------------
@@ -830,6 +851,52 @@ async function cmdListen(client: CliRpcClient, args: CliArgs): Promise<void> {
   await new Promise(() => {
     // Never resolves — Ctrl+C exits
   })
+}
+
+// ---------------------------------------------------------------------------
+// migrate-config (W1-13: `~/.rox` → `~/rox`, MIG-13)
+//
+// Local-only: needs no server URL and works regardless of the
+// `storage.visible-root.v1` flag. Never deletes; `~/.rox` is left as a
+// symlink (Windows: junction) to `~/rox`.
+// ---------------------------------------------------------------------------
+
+async function cmdMigrateConfig(args: CliArgs): Promise<void> {
+  const { homedir } = await import('node:os')
+  const { isVisibleRoxHomeActive } = await import('@rox/shared/config')
+  const { migrateHiddenRoxHome, revertVisibleRoxHome } = await import('@rox/shared/identity')
+  const homeDir = args.homeDirOverride ?? homedir()
+  if (args.revert) {
+    const result = revertVisibleRoxHome({ homeDir, dryRun: args.dryRun })
+    out(
+      args.json
+        ? result
+        : result.outcome === 'reverted'
+          ? `Reverted: ~/rox moved back to ~/.rox${args.dryRun ? ' (dry run)' : ''}`
+          : `Revert ${args.dryRun ? '(dry run) ' : ''}${result.outcome}: ${result.diagnostics.join('; ') || 'nothing to do'}`,
+      args.json,
+    )
+    if (result.outcome !== 'reverted' && result.outcome !== 'noop') process.exit(1)
+    return
+  }
+  const result = migrateHiddenRoxHome({ homeDir, dryRun: args.dryRun })
+  if (args.json) {
+    out(result, true)
+  } else {
+    const lines = [
+      `Config home: ${result.visibleDir}`,
+      `Outcome: ${result.outcome}${args.dryRun ? ' (dry run)' : ''}`,
+      `Visible-root flag active: ${isVisibleRoxHomeActive(process.env, homeDir) || args.auto ? 'yes' : 'no'}`,
+    ]
+    if (result.conflicts.length > 0) {
+      lines.push(`Conflicts kept under .migration/conflicts: ${result.conflicts.join(', ')}`)
+    }
+    if (result.reportPath) lines.push(`Report: ${result.reportPath}`)
+    if (result.announceToast && !args.dryRun) lines.push('Rox files are now in the ~/rox folder')
+    if (result.diagnostics.length > 0) lines.push(`Notes: ${result.diagnostics.join('; ')}`)
+    out(lines.join('\n'), false)
+  }
+  if (result.outcome === 'deferred-locked') process.exit(1)
 }
 
 // ---------------------------------------------------------------------------
@@ -1977,6 +2044,12 @@ Commands:
   cancel <id>            Cancel in-progress processing
   invoke <channel> [...] Raw RPC call with JSON args
   listen <channel>       Subscribe to push events (Ctrl+C to stop)
+  migrate-config         Move ~/.rox to ~/rox (MIG-13, never deletes)
+                         --dry-run       Preview only, write nothing
+                         --revert        Move ~/rox back to ~/.rox (refused
+                                         with conflicts)
+                         --auto          Non-interactive (for install scripts)
+                         --home <path>   Test override for the home directory
   --validate-server      Multi-step server integration test
                          --verbose, -v       Show server stderr output
 
@@ -2031,6 +2104,13 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   // validate can spawn its own server or use --url
   if (args.command === 'validate') {
     await cmdValidate(args)
+    return
+  }
+
+  // migrate-config is local-only (W1-13): no server URL needed, works
+  // regardless of the storage.visible-root.v1 flag.
+  if (args.command === 'migrate-config') {
+    await cmdMigrateConfig(args)
     return
   }
 
