@@ -11,11 +11,11 @@
     "Existing test expectations that pin flag-OFF legacy behavior are kept as regression coverage."
   ],
   "files": [
-    { "path": "packages/shared/src/config/env.ts", "mode": "manual", "markers": ["migrateHiddenRoxHome", "VISIBLE_HOME_USABLE_OUTCOMES", "fallbackConfigDir"] },
+    { "path": "packages/shared/src/config/env.ts", "mode": "manual", "markers": ["migrateHiddenRoxHome", "VISIBLE_HOME_USABLE_OUTCOMES", "resolveVisibleHomeWithoutMigration", "runVisibleHomeAutoMigration"] },
     { "path": "packages/shared/src/config/paths.ts", "mode": "ast", "rules": [{ "from": "Default (clean install): ~/.rox/", "to": "Default: `~/rox` (visible home)" }, { "from": "Legacy configuration is imported once into ~/.rox without removing its source.", "to": "Legacy configuration is imported once without removing its source." }] },
     { "path": "packages/shared/src/config/storage.ts", "mode": "ast", "rules": [{ "from": "{configDir}/tool-icons/ (default ~/.rox or ~/rox)", "to": "{configDir}/tool-icons/ (default ~/rox)" }, { "from": "creates ~/.craft-agent/docs/", "to": "creates {configDir}/docs/" }] },
     { "path": "packages/shared/src/identity/manifest.ts", "mode": "manual", "markers": ["ROX_HOME_DIR_NAME", "ROX_COMPAT_SYMLINK_NAME"] },
-    { "path": "packages/shared/src/identity/config-migration.ts", "mode": "manual", "markers": ["migrateHiddenRoxHome", "ROX_HOME_MIGRATION_MANIFEST_NAME"] },
+    { "path": "packages/shared/src/identity/config-migration.ts", "mode": "manual", "markers": ["migrateHiddenRoxHome", "ROX_HOME_MIGRATION_MANIFEST_NAME", "ROX_DESKTOP_APP_LOCK_NAME", "ROX_MERGE_INCOMPLETE_MARKER_NAME"] },
     { "path": "packages/shared/src/agent/permissions-config.ts", "mode": "ast", "rules": [{ "from": "~/.rox", "to": "~/rox" }] },
     { "path": "packages/shared/src/sessions/import-registry.ts", "mode": "manual", "markers": ["D-v2-11"] },
     { "path": "packages/server-core/src/handlers/rpc/browser-data-auto-import.ts", "mode": "manual", "markers": ["D-v2-11"] },
