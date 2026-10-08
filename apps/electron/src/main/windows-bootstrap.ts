@@ -8,16 +8,20 @@
  * prerequisites it returns `repairNeeded`; the host then schedules
  * {@link scheduleWindowsBootstrapRepair} after first paint (at most once per
  * launch, recorded backoff) and registers the repair promise as a spawn-env
- * gate (`@rox/shared/toolchain/spawn-readiness`). Agent creation, builtin MCP
- * startup, MCP validation, git and siyuan spawns await that gate with a
- * bounded (~6 s), latching wait; a successful repair re-applies PATH for every
- * child spawned afterwards.
+ * gate (`@rox/shared/toolchain/spawn-readiness`, see
+ * {@link createWindowsRepairSpawnGate}). Agent creation, builtin MCP startup,
+ * MCP validation, git and siyuan spawns await that gate: the first waiter
+ * releases the first-paint gate so the repair starts at once, the repair
+ * budget (6 s) is counted from the moment bootstrap.ps1 starts, and an overall
+ * bound (12 s) caps every wait; the first timeout latches. A successful repair
+ * re-applies PATH for every child spawned afterwards.
  */
 import { execFile } from 'node:child_process';
 import { existsSync, promises as fs } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createFileProbeCache, pathEnvKey, prependPath, readWindowsBootstrap, setWindowsBootstrapRuntime } from '@rox/shared/toolchain';
 import type { WindowsBootstrapRuntime, WindowsDependencyMode } from '@rox/shared/toolchain';
+import type { SpawnEnvGate } from '@rox/shared/toolchain/spawn-readiness';
 
 export async function runNativeBootstrap(script: string, mode: WindowsDependencyMode, env: NodeJS.ProcessEnv): Promise<number> {
   const windows = env.SystemRoot ?? env.SYSTEMROOT;
@@ -156,8 +160,91 @@ export type WindowsRepairOutcome =
 let repairScheduled = false;
 export function resetWindowsBootstrapRepairForTests(): void { repairScheduled = false; }
 
-/** Bounded wait for spawns while a background repair is pending (mirrors the macOS shell env). */
+/**
+ * Spawn-gate budget for the repair itself, counted from the moment
+ * bootstrap.ps1 starts (mirrors the macOS shell-env bound). The offline
+ * installer typically finishes well within it; a slower run keeps going in
+ * the background and re-applies PATH when done.
+ */
 export const WINDOWS_REPAIR_SPAWN_WAIT_MS = 6_000;
+/**
+ * Hard cap on any single wait on the repair gate, from the moment the waiter
+ * started waiting: covers the pre-start phase (state read, backoff check;
+ * normally milliseconds once a waiter released the first-paint gate) plus the
+ * repair budget, so nothing can hang on a repair that never starts.
+ */
+export const WINDOWS_REPAIR_SPAWN_MAX_WAIT_MS = 12_000;
+
+/** Signals between the repair scheduler and its spawn gate. */
+export interface WindowsRepairSignals {
+  /** Resolves when a spawner needs the prerequisites now: skip the first-paint wait. */
+  expedite: Promise<void>;
+  /** Called right before bootstrap.ps1 is launched. */
+  onStarted(): void;
+}
+
+/**
+ * Spawn-env gate for a background Windows repair.
+ *
+ * - `wait()` releases the scheduler's first-paint gate (`signals.expedite`).
+ * - The repair budget (`repairBudgetMs`) runs from `signals.onStarted()`,
+ *   i.e. when bootstrap.ps1 actually begins — not from the first wait.
+ * - Every wait is also capped at `maxWaitMs` from its own start.
+ * - `settle()` (repair finished, skipped, backed off or failed) releases all
+ *   waiters; the first timeout latches the gate so later spawns never wait.
+ */
+export function createWindowsRepairSpawnGate(options: { repairBudgetMs?: number; maxWaitMs?: number; now?: () => number } = {}) {
+  const repairBudgetMs = options.repairBudgetMs ?? WINDOWS_REPAIR_SPAWN_WAIT_MS;
+  const maxWaitMs = options.maxWaitMs ?? WINDOWS_REPAIR_SPAWN_MAX_WAIT_MS;
+  const now = options.now ?? Date.now;
+  let settled = false;
+  let latched = false;
+  let startedAt: number | null = null;
+  let expedite!: () => void;
+  const expedited = new Promise<void>((resolve) => { expedite = resolve; });
+  let markStarted!: () => void;
+  const started = new Promise<void>((resolve) => { markStarted = resolve; });
+  let markSettled!: () => void;
+  const settledPromise = new Promise<void>((resolve) => { markSettled = resolve; });
+  const unref = (timer: ReturnType<typeof setTimeout>) => { (timer as { unref?: () => void }).unref?.(); return timer; };
+
+  const gate: SpawnEnvGate & { readonly latched: boolean; readonly settled: boolean } = {
+    get latched() { return latched; },
+    get settled() { return settled; },
+    isReady: () => settled || latched,
+    wait(): Promise<void> {
+      if (settled || latched) return Promise.resolve();
+      expedite();
+      return new Promise<void>((resolve) => {
+        let done = false;
+        let budgetTimer: ReturnType<typeof setTimeout> | undefined;
+        const finish = (timedOut: boolean) => {
+          if (done) return;
+          done = true;
+          clearTimeout(overall);
+          if (budgetTimer) clearTimeout(budgetTimer);
+          if (timedOut && !settled) latched = true;
+          resolve();
+        };
+        const overall = unref(setTimeout(() => finish(true), maxWaitMs));
+        void settledPromise.then(() => finish(false));
+        void started.then(() => {
+          if (done) return;
+          const remaining = Math.max(0, repairBudgetMs - (now() - (startedAt ?? now())));
+          budgetTimer = unref(setTimeout(() => finish(true), remaining));
+        });
+      });
+    },
+  };
+  return {
+    gate,
+    signals: {
+      expedite: expedited,
+      onStarted() { if (startedAt === null) { startedAt = now(); markStarted(); } },
+    } satisfies WindowsRepairSignals,
+    settle(): void { if (!settled) { settled = true; markSettled(); } },
+  };
+}
 
 /**
  * Run the offline bootstrap.ps1 repair in the background, at most once per
@@ -172,6 +259,8 @@ export async function scheduleWindowsBootstrapRepair(options: WindowsBootstrapIn
   /** Gate (e.g. renderer first paint). Waited for at most `maxGateWaitMs`. */
   after?: Promise<unknown>;
   maxGateWaitMs?: number;
+  /** Spawn-gate signals: `expedite` skips the `after` wait, `onStarted` marks bootstrap.ps1 start. */
+  signals?: WindowsRepairSignals;
   now?: () => number;
   run?: typeof runNativeBootstrap;
 }): Promise<WindowsRepairOutcome> {
@@ -196,12 +285,15 @@ export async function scheduleWindowsBootstrapRepair(options: WindowsBootstrapIn
     let timer: ReturnType<typeof setTimeout> | undefined;
     await Promise.race([
       options.after.catch(() => undefined),
+      // A spawner that needs the prerequisites does not wait for first paint.
+      ...(options.signals ? [options.signals.expedite] : []),
       new Promise<void>((resolve) => { timer = setTimeout(resolve, options.maxGateWaitMs ?? 15_000); }),
     ]);
     if (timer) clearTimeout(timer);
   }
 
   const mode = options.mode ?? options.preference ?? 'auto';
+  options.signals?.onStarted();
   // Only native offline provisioning. WSL consent is installer-only.
   const recoveryCode = await (options.run ?? runNativeBootstrap)(script, mode, env);
   const probeCache = options.probeCache === false ? undefined : createFileProbeCache(probeCachePath(options.managedRoot), { appVersion: options.appVersion });
