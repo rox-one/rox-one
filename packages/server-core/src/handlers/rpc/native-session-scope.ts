@@ -56,7 +56,7 @@ const sessionFields = ['id', 'workspaceId', 'workspaceName', 'name', 'preview', 
   'lastReadMessageId', 'hasUnread', 'enabledSourceSlugs', 'model', 'llmConnection', 'thinkingLevel',
   'lastMessageRole', 'lastFinalMessageId', 'createdAt', 'messageCount', 'tokenUsage', 'hidden',
   'isArchived', 'archivedAt', 'supportsBranching', 'branchFromMessageId', 'branchFromSessionId',
-  'parentSessionId', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
+  'parentSessionId', 'agentProfileSnapshot', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
 
 /** Public metadata IDs are never host paths or project-context capabilities. */
 function nativeProjectMembership(membership: { projectId?: unknown; projectIds?: unknown }): { projectId?: string; projectIds: string[] } {
@@ -76,6 +76,7 @@ export function nativeSources(sources: readonly LoadedSource[]): LoadedSource[] 
   return sources.map(source => ({
     workspaceId: source.workspaceId, folderPath: '', workspaceRootPath: '', guide: null,
     isBuiltin: source.isBuiltin,
+    ...(source.config.type === 'local' && typeof source.localFolderAvailable === 'boolean' ? { localFolderAvailable: source.localFolderAvailable } : {}),
     config: {
       id: source.config.id, slug: source.config.slug, name: source.config.name,
       type: source.config.type, provider: source.config.provider, enabled: source.config.enabled,

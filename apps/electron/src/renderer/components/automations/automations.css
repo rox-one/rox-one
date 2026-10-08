@@ -1,7 +1,7 @@
 /* =============================================================================
    AUTOMATIONS — list (navigator column) + single-automation editor.
    Flat and borderless: surfaces separate by faint foreground tints and spacing,
-   never by 1px lines. Type is the UI face (Arial Narrow via --font-sans).
+   never by 1px lines. Type is the UI face (locally bundled Inter via --font-sans).
    High contrast strengthens fills/text and relies on focus outlines, still
    without hairline separators.
    ============================================================================= */

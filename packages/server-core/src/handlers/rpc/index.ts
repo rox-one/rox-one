@@ -45,6 +45,7 @@ import { registerCodeIntelligenceHandlers } from './code-intelligence'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
+import { registerWorkspaceWorkHandlers } from './workspace-work'
 import { registerFeedHandlers } from './feed'
 import { registerCollectionHandlers } from './collection'
 
@@ -62,6 +63,7 @@ import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
 import { registerSkillsPendingHandlers } from './skills-pending'
+import { registerLearningHandlers } from './learning'
 export function cleanupCoreClientResources(clientId: string): void {
   cleanupSessionFileWatchForClient(clientId)
   cleanupNotesWatchForClient(clientId)
@@ -71,6 +73,8 @@ import { registerBrowserPaneHandlers } from './browser-pane'
 import { registerBrowserProfileImportHandlers } from './browser-profile-import'
 import { registerEntitiesHandlers, type EntitiesHandlerRuntime } from './entities.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
+// W1-03 (#1500)
+import { registerCommandsHandlers, type CommandsHandlerRuntime } from './commands.ts'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -88,6 +92,9 @@ export interface CoreRpcRegistrationOptions {
    * as the env override.
    */
   entities?: EntitiesHandlerRuntime
+  // W1-03 (#1500)
+  /** Runtime for the command bus handlers (live `commands.bus.v1`, default OFF). */
+  commands?: CommandsHandlerRuntime
 }
 
 export function registerCoreRpcHandlers(
@@ -131,6 +138,7 @@ export function registerCoreRpcHandlers(
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
+  registerWorkspaceWorkHandlers(server, deps)
   registerFeedHandlers(server, deps)
   registerCollectionHandlers(server, deps)
 
@@ -148,11 +156,14 @@ export function registerCoreRpcHandlers(
   registerMemoryIoHandlers(server, deps)
   registerMemoryInsightsHandlers(server, deps)
   registerSkillsPendingHandlers(server, deps)
+  registerLearningHandlers(server, deps)
   registerNotesHandlers(server, deps)
   if (deps.nativeData) registerNativeDataHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)
   registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
+  // W1-03 (#1500)
+  registerCommandsHandlers(server, deps, options?.commands)
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }

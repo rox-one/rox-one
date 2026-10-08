@@ -18,11 +18,10 @@ import {
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
 } from '@/atoms/unified-shell'
-import { HARNESS_SKIP_LIST } from '@rox/core/platform'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
 import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
-import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
+import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ExtraScreensSettings } from './ExtraScreensSettings'
 
 function ModeScreenToggle({ id }: { id: ModeScreenId }) {
@@ -155,24 +154,6 @@ export function WorkbenchChromeSettings() {
       <SettingsCard>
         {BUILT_MODE_SCREENS.map((id) => <ModeScreenToggle key={id} id={id} />)}
       </SettingsCard>
-    </SettingsSection>
-    <SettingsSection
-      title={t('settings.appearance.harnessSkipTitle')}
-      description={t('settings.appearance.harnessSkipDesc')}
-    >
-      <div data-testid="harness-skip-list">
-        <SettingsCard>
-          {HARNESS_SKIP_LIST.map((item) => (
-            <SettingsRow
-              key={item.id}
-              label={t(`settings.appearance.harnessSkip.${item.id}`)}
-              description={t(`settings.appearance.harnessSkip.${item.id}Desc`)}
-            >
-              <span className="text-xs opacity-60">{t('settings.appearance.harnessSkipNotInstalled')}</span>
-            </SettingsRow>
-          ))}
-        </SettingsCard>
-      </div>
     </SettingsSection>
     </>
   )

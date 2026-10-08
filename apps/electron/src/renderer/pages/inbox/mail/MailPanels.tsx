@@ -25,6 +25,7 @@ import type { MailAttachment, MailFolder, MailFolderRole, MailMessage, MailPicke
 import { mailSrcdoc, sanitizeMailHtml } from './mail-sanitize'
 import { addressLabel, addressLine, buildDraft, draftFromMessage, draftHasContent, formatBytes, fromLabel, meetingNoteLine, statusKey, type ComposeDraft, type ComposeMode } from './mail-view'
 import type { MailController } from './useMail'
+import { toErrorMessage } from '@/lib/errors'
 
 const FOLDER_KEYS: Record<MailFolderRole, string> = {
   inbox: 'inbox.mail.folder.inbox',
@@ -327,7 +328,7 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
     void mail.getThread(message.threadId).then((messages) => {
       if (active) setThreadMessages(messages.length ? messages : [message])
     }).catch((e) => {
-      if (active) setNotice({ text: e instanceof Error ? e.message : String(e) })
+      if (active) setNotice({ text: toErrorMessage(e) })
     })
     return () => { active = false }
   }, [message, mail.getThread])
@@ -341,7 +342,7 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
       await fn()
       after?.()
     } catch (e) {
-      setNotice({ text: e instanceof Error ? e.message : String(e) })
+      setNotice({ text: toErrorMessage(e) })
     } finally {
       setBusy(false)
     }
@@ -491,7 +492,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
         dirty.current = false
         setSavedAt(Date.now())
       } catch (e) {
-        if (!quiet) setError(e instanceof Error ? e.message : String(e))
+        if (!quiet) setError(toErrorMessage(e))
       } finally {
         if (!quiet) setBusy(null)
       }
@@ -521,7 +522,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
       void mail.refresh()
       onClose(true)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(toErrorMessage(e))
     } finally {
       sending.current = false
       setBusy(null)
@@ -535,7 +536,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
       if (draftId.current) await mail.act((api) => api.remove([draftId.current!]))
       onClose(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(toErrorMessage(e))
     } finally {
       setBusy(null)
     }

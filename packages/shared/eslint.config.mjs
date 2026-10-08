@@ -48,4 +48,14 @@ export default [
       'craft-shared/no-inline-source-auth-check': 'error',
     },
   },
+
+  // Tests legitimately set up and assert persisted auth state directly
+  // (`expect(source.config.isAuthenticated).toBe(false)`); the inline-check ban
+  // targets runtime filtering logic that misses authType: 'none' sources.
+  {
+    files: ['src/**/__tests__/**/*.ts'],
+    rules: {
+      'craft-shared/no-inline-source-auth-check': 'off',
+    },
+  },
 ]

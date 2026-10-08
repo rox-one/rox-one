@@ -1,3 +1,4 @@
+import { createCipheriv, randomBytes } from 'node:crypto';
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,6 +10,19 @@ const SECRET = { value: 'sk-test-secret-value-do-not-log' };
 
 function tempDir(): string {
   return mkdtempSync(join(tmpdir(), 'cf2-vault-'));
+}
+
+/** Build a well-formed store byte image encrypted under a key no backend can derive. */
+function foreignEncryptedStore(payload: object): Buffer {
+  const magic = Buffer.from('CRAFT01\0');
+  const salt = randomBytes(32);
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', randomBytes(32), iv);
+  const ciphertext = Buffer.concat([cipher.update(Buffer.from(JSON.stringify(payload), 'utf8')), cipher.final()]);
+  const header = Buffer.alloc(64);
+  magic.copy(header, 0);
+  salt.copy(header, 12);
+  return Buffer.concat([header, iv, cipher.getAuthTag(), ciphertext]);
 }
 
 describe('SecureStorageBackend CF-2 recovery', () => {
@@ -73,6 +87,33 @@ describe('SecureStorageBackend CF-2 recovery', () => {
     expect(backend.getRepairState().status).toBe('ok');
     expect((await backend.get(ID))?.value).toBe('sk-second');
     expect(first.length).toBeGreaterThan(0);
+  });
+
+  it('reports unavailable and mutates nothing when the backup key does not match', async () => {
+    const directory = tempDir();
+    const backend = new SecureStorageBackend({ directory });
+    await backend.set(ID, SECRET);
+
+    const encPath = join(directory, 'credentials.enc');
+    const bakPath = join(directory, 'credentials.enc.bak');
+    const goodEnc = readFileSync(encPath);
+    const foreignBak = foreignEncryptedStore({ version: 1, credentials: {}, metadata: {} });
+    writeFileSync(bakPath, foreignBak);
+    backend.clearCache();
+    const filesBefore = readdirSync(directory).sort();
+
+    expect(await backend.restoreFromBackup()).toBe('unavailable');
+
+    // Fail closed: no copy over .enc, no quarantine, live store still readable.
+    expect(readFileSync(encPath).equals(goodEnc)).toBe(true);
+    expect(readFileSync(bakPath).equals(foreignBak)).toBe(true);
+    expect(readdirSync(directory).sort()).toEqual(filesBefore);
+    expect(backend.getRepairState().status).toBe('ok');
+    expect((await backend.get(ID))?.value).toBe(SECRET.value);
+
+    // Repeating the call must not accumulate quarantine files (wrong-key loop gone).
+    expect(await backend.restoreFromBackup()).toBe('unavailable');
+    expect(readdirSync(directory).sort()).toEqual(filesBefore);
   });
 
   it('does not rewrite the file when a legacy-key store is only read', async () => {

@@ -88,7 +88,8 @@ describe('right session shell', () => {
   test('Notes keeps the left surface and opens the reusable right shell', () => {
     const notes = read('pages/NotesPage.tsx')
     const shell = read('components/session-workbench/RightSessionShell.tsx')
-    expect(notes).toContain('RightSessionShell')
+    expect(notes).toContain('openWorkspaceTool')
+    expect(notes).toContain('routes.view.allSessions')
     expect(notes).toContain('bindRightSessionContext')
     expect(notes).toContain('describeRightSessionOpen')
     expect(notes).toContain('revisionByEntityId')

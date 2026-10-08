@@ -1,0 +1,104 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:
+(pass) actual SessionManager rejects foreign concurrent and title owners, freezes queue and fences restored bindings [1348.79ms]
+
+packages/server-core/src/sessions/pocket-helper-owner.test.ts:
+(pass) actual draft helper selects the RPC caller before backend creation and rejects stale callers before query [766.77ms]
+
+packages/server-core/src/tasks/TaskRunner.test.ts:
+[task] "demo" permission mode: allow-all
+(pass) TaskRunner (Conductor) > runs a dependency chain, feeding each output into the next [43.42ms]
+[task] "conn" permission mode: allow-all
+(pass) TaskRunner (Conductor) > passes llmConnection (node value, else the task default) to createSession [6.34ms]
+[task] "perm" permission mode: ask
+(pass) TaskRunner (Conductor) > resolves permissionMode: node override → task default → child (never the workspace default) [7.38ms]
+[task] "perm2" permission mode: allow-all (implicit fallback — set defaults.permissionMode in task.yaml)
+(pass) TaskRunner (Conductor) > defaults an omitted permission mode to allow-all (unattended-safe), not undefined/ask [2.58ms]
+[task] "link" permission mode: allow-all
+(pass) TaskRunner (Conductor) > stamps task/run/node linkage on each dispatched child session [3.25ms]
+[task] "announce" permission mode: allow-all
+(pass) TaskRunner (Conductor) > creates a child session per node (createSession announces each to the renderer by default) [6.81ms]
+[task] "cwd" permission mode: allow-all
+[task] "cwd" permission mode: allow-all
+(pass) TaskRunner (Conductor) > children inherit the orchestrator's working directory (falling back to spec.cwd) [6.37ms]
+[task] "col" permission mode: allow-all
+(pass) TaskRunner (Conductor) > moves the orchestrator tile to in-progress on start and done on completion [4.83ms]
+[task] "fan" permission mode: allow-all
+(pass) TaskRunner (Conductor) > runs a fan-out and joins at the synthesizer [12.65ms]
+[task] "fail" permission mode: allow-all
+(pass) TaskRunner (Conductor) > marks a node failed, leaves dependents pending, and settles the run as failed [5.45ms]
+[task] "par" permission mode: allow-all
+(pass) TaskRunner (Conductor) > honors max_parallel [9.52ms]
+[task] "pz" permission mode: allow-all
+(pass) TaskRunner (Conductor) > pauses scheduling and resumes [7.89ms]
+[task] "st" permission mode: allow-all
+(pass) TaskRunner (Conductor) > stops a run and cancels in-flight children [8.07ms]
+[task] "res" permission mode: allow-all
+(pass) TaskRunner (Conductor) > resumes a run from the persisted run-log after a restart, reusing finished node outputs [13.61ms]
+[task] "rt" permission mode: allow-all
+(pass) TaskRunner (Conductor) > retries a failed node up to retry.limit, then fails [6.63ms]
+[task] "rt0" permission mode: allow-all
+(pass) TaskRunner (Conductor) > does not retry when retry.limit is 0 [4.24ms]
+[task] "rtok" permission mode: allow-all
+(pass) TaskRunner (Conductor) > feeds the prior failure into the retried prompt and can then succeed [8.52ms]
+[task] "rtw" permission mode: allow-all
+(pass) TaskRunner (Conductor) > does not retry on error when retry.when targets a different failure class [4.41ms]
+[task] "nov" permission mode: allow-all
+(pass) TaskRunner (Conductor) > completes without verifying when there is no orchestrator [4.70ms]
+[task] "vp" permission mode: allow-all
+(pass) TaskRunner (Conductor) > gates the run on the orchestrator verdict and includes acceptance_criteria in the prompt [9.30ms]
+[task] "vf" permission mode: allow-all
+(pass) TaskRunner (Conductor) > re-runs the terminal node once on a FAIL verdict, then completes on PASS [12.91ms]
+[task] "vff" permission mode: allow-all
+(pass) TaskRunner (Conductor) > fails the run when FAIL verdicts exhaust the repair budget (max_iterations) [8.91ms]
+[task] "unp" permission mode: allow-all
+(pass) TaskRunner (Conductor) > re-asks on an unparsable verdict and fails only after the re-ask budget is exhausted [12.07ms]
+[task] "scope" permission mode: allow-all
+(pass) TaskRunner (Conductor) > scopes a repair to the named nodes and their transitive dependents [12.64ms]
+[task] "unb" permission mode: allow-all
+(pass) TaskRunner (Conductor) > an unparsed re-ask does not consume the repair budget [7.25ms]
+[task] "snd" permission mode: allow-all
+(pass) TaskRunner (Conductor) > does not hang in verifying when the verification send rejects [8.20ms]
+[task] "late" permission mode: allow-all
+(pass) TaskRunner (Conductor) > ignores a verdict that arrives after the run was stopped [5.96ms]
+[task] "hyd" permission mode: allow-all
+(pass) TaskRunner (Conductor) > reconstructs the repair counter from the run-log on a cross-restart resume [11.80ms]
+[task] "empty" permission mode: allow-all
+(pass) TaskRunner (Conductor) > fails a node that completes with no text despite declaring outputs (instead of marking it done) [5.17ms]
+[task] "lenient" permission mode: allow-all
+(pass) TaskRunner (Conductor) > still marks a node done on empty text when it declares no outputs (lenient default) [4.14ms]
+[task] "count" permission mode: allow-all
+(pass) TaskRunner (Conductor) > publishes the total node count to the orchestrator at run start (stable board denominator) [7.29ms]
+
+packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+(pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [3.03ms]
+(pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [0.99ms]
+(pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [1.56ms]
+(pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [0.38ms]
+(pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [0.74ms]
+(pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [0.71ms]
+(pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [4.67ms]
+(pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [2.84ms]
+(pass) Pocket host account authority > fences a running executor when account key generation changes [0.41ms]
+(pass) Pocket host account authority > invalidates the running executor when the active key is revoked [0.52ms]
+(pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [0.66ms]
+(pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [0.37ms]
+(pass) Pocket host account authority > fences crash-window active records and drains logout on ordinary restart state reads [0.47ms]
+(pass) Pocket host account authority > keeps a pending logout fail-closed across clear failure and broker outage restarts [0.66ms]
+(pass) Pocket host account authority > serializes first session owner claims and preserves caller binding across restart [0.91ms]
+(pass) Pocket host account authority > restores sealed queued-message owners only for their exact execution generation [0.86ms]
+(pass) Pocket host account authority > serializes concurrent task-run owner claims without letting a foreign caller replace the first owner [0.80ms]
+(pass) Pocket host account authority > keeps a sealed task-run owner immutable when the same caller reauthenticates or changes account [1.77ms]
+(pass) Pocket host account authority > does not claim sealed task-run custody when the existing store cannot read its owner binding [0.43ms]
+
+packages/server-core/src/handlers/rpc/__tests__/pocket-task-owner.test.ts:
+(pass) task RPC and deferred runner dispatch retain the existing sealed Pocket owner [1385.16ms]
+
+packages/server-core/src/handlers/rpc/__tests__/runtime-launch-producers.test.ts:
+(pass) actual generated task, automation test and scheduler launch provenance remain private and measured [1138.18ms]
+
+ 54 pass
+ 0 fail
+ 251 expect() calls
+Ran 54 tests across 6 files. [5.43s]

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { chromium, type Browser, type Page } from '@playwright/test'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 let browser: Browser
 let productionScript: string
@@ -7,7 +8,7 @@ beforeAll(async () => {
   const build = await Bun.build({ entrypoints: [import.meta.dir + '/fixtures/geometry-observer.browser.ts'], target: 'browser' })
   expect(build.success).toBe(true)
   productionScript = await build.outputs[0]!.text()
-  browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium', args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
 }, 20_000)
 afterAll(async () => { await browser?.close() })
 

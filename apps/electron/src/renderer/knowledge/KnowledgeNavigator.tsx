@@ -22,7 +22,6 @@ import { cn } from '@/lib/utils'
 import { knowledgeHomeViewAtom } from './KnowledgeHome'
 import { KnowledgeNotebookTree } from './KnowledgeNotebookTree'
 import { shouldUseKnowledgeMobileChrome } from './knowledge-mobile'
-import { SIYUAN_FULL_SURFACE_ID } from './siyuan-url'
 
 export function shouldShowFullKnowledgeInterface(
   env: { DEV?: boolean; CRAFT_DEBUG_KNOWLEDGE_FULL_UI?: string } = import.meta.env,

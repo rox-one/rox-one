@@ -591,30 +591,33 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   // ============================================================
 
   // Tool icon mappings — loads tool-icons.json and resolves each entry's icon to a data URL
-  // for display in the Appearance settings page
+  // for display in the Appearance settings page. Also returns the real config location so
+  // the renderer never has to guess the config dir.
   server.handle(RPC_CHANNELS.toolIcons.GET_MAPPINGS, async () => {
     const { getToolIconsDir } = await import('@rox/shared/config/storage')
     const { loadToolIconConfig } = await import('@rox/shared/utils/cli-icon-resolver')
     const { encodeIconToDataUrl } = await import('@rox/shared/utils/icon-encoder')
-    const { join } = await import('path')
 
-    const toolIconsDir = getToolIconsDir()
-    const config = loadToolIconConfig(toolIconsDir)
-    if (!config) return []
+    const dir = getToolIconsDir()
+    const configPath = join(dir, 'tool-icons.json')
+    const config = loadToolIconConfig(dir)
+    const mappings = !config
+      ? []
+      : config.tools
+          .map(tool => {
+            const iconPath = join(dir, tool.icon)
+            const iconDataUrl = encodeIconToDataUrl(iconPath)
+            if (!iconDataUrl) return null
+            return {
+              id: tool.id,
+              displayName: tool.displayName,
+              iconDataUrl,
+              commands: tool.commands,
+            }
+          })
+          .filter(Boolean)
 
-    return config.tools
-      .map(tool => {
-        const iconPath = join(toolIconsDir, tool.icon)
-        const iconDataUrl = encodeIconToDataUrl(iconPath)
-        if (!iconDataUrl) return null
-        return {
-          id: tool.id,
-          displayName: tool.displayName,
-          iconDataUrl,
-          commands: tool.commands,
-        }
-      })
-      .filter(Boolean)
+    return { dir, configPath, mappings }
   })
 
   // Logo URL resolution (uses Node.js filesystem cache for provider domains)

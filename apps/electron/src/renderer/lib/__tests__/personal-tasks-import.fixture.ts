@@ -117,6 +117,26 @@ test('lost panel ownership during an in-flight commit prevents a following readb
   await settle(); owner = false; const count = calls.length; held!()
   expect(await result).toBe('rejected'); expect(calls).toHaveLength(count)
 })
+test('lost panel ownership after native PUT prevents the following DELETE in a mixed import', async () => {
+  let owner = true; hold = true; holdNextList = true
+  const result = importPersonalTasksConfirmed(incoming(task('imported')), () => owner).then(() => 'accepted', () => 'rejected')
+  await settle(); expect(heldList).not.toBeNull()
+  // This explicit edit joins the import diff while its fresh snapshot is held.
+  // The already-dispatched PUT may commit, but ownership must fence its DELETE.
+  const current = loadPersonalTaskStore().snapshot()
+  persistPersonalTaskStore(new PersonalTaskStore({ ...current, tasks: current.tasks.filter(row => row.id !== 'original') }))
+  expect(native.get('original')?.task).toEqual(task('original'))
+  heldList!(); await settle(); expect(held).not.toBeNull()
+  expect(native.get('imported')?.task).toEqual(task('imported'))
+  owner = false
+  const count = calls.length
+  held!()
+  const outcome = await result
+  const reopened = new PersonalTaskPersistStore(directory)
+  expect({ outcome, callsAfterOwnershipLoss: calls.slice(count), original: reopened.get('original')?.task ?? null,
+    imported: reopened.get('imported')?.task }).toEqual({ outcome: 'rejected', callsAfterOwnershipLoss: [],
+    original: task('original'), imported: task('imported') })
+})
 test('one active import refuses a second writer before it opens a transport', async () => {
   hold = true
   const first = importPersonalTasksConfirmed(incoming(task('first')), capturePersonalTaskScope())

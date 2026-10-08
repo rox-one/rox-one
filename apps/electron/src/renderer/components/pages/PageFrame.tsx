@@ -30,6 +30,7 @@ import {
   type PageGrantSummary,
 } from '../../../shared/page-bridge'
 import { PageGrantRequestDialog } from './PageGrantRequestDialog'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * The dedicated sandboxed Page renderer + trusted bridge host.
@@ -246,7 +247,7 @@ export function PageFrame({ workspaceId, page, lease, content, snapshot, onHostL
       } catch (err) {
         failed = true
         toast.error(t('toast.pageGrantFailed'), {
-          description: err instanceof Error ? err.message : String(err),
+          description: toErrorMessage(err),
         })
         break
       }

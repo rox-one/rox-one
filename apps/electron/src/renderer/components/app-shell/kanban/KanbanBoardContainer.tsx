@@ -29,7 +29,7 @@ import { getDefaultModelsForConnection, type LlmConnectionWithStatus } from '@co
 import type { SessionStatus } from '@/config/session-status-config'
 import { KanbanBoard, type KanbanMoveTarget } from './KanbanBoard'
 import { parsePriorityGroupId } from './priority-groups'
-import { KANBAN_COLUMNS, statusToColumn } from './status-column'
+import { resolveBoardColumns, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import { CollectionViewChrome } from '../collection/CollectionViewChrome'
 import { collectionViewRoute } from '../collection/collection-view-cycle'
@@ -44,11 +44,13 @@ import type {
   BuiltInKanbanColumnId,
   KanbanColumnId,
   KanbanColumnMeta,
+  KanbanModelConnection,
   KanbanModelProviderGroup,
   KanbanProject,
   KanbanTask,
   SubtaskRunState,
 } from './types'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * Subtask run-state from the child session. A closed status wins (done), then an
@@ -99,6 +101,21 @@ function buildModelCatalog(connections: LlmConnectionWithStatus[]): {
   return { groups, modelToConnection }
 }
 
+/**
+ * Reduce a live connection to the non-secret fields a task badge needs. The badge
+ * draws the provider that actually serves the session, so an inherited model on a
+ * Pi/Rox route no longer borrows the Anthropic mark from the legacy default model.
+ */
+function toKanbanModelConnection(connection: LlmConnectionWithStatus | undefined): KanbanModelConnection | undefined {
+  if (!connection) return undefined
+  return {
+    name: connection.name,
+    providerType: connection.providerType,
+    baseUrl: connection.baseUrl,
+    piAuthProvider: connection.piAuthProvider,
+  }
+}
+
 function groupCollapseStorageKey(workspaceId: string): string {
   return `craft-kanban-group-collapsed:${workspaceId}`
 }
@@ -121,43 +138,6 @@ function writeCollapsedGroups(workspaceId: string, keys: Set<string>): void {
   } catch {
     // sessionStorage full / unavailable — collapse state is best-effort.
   }
-}
-
-/**
- * Merge workspace board config onto the built-in column defs.
- * Config wins for label/color/collapsed/prompt/dropStatus; built-ins keep labelKey
- * as fallback when no override label is set.
- */
-function mergeBoardColumns(config: KanbanBoardConfig | null): KanbanColumnMeta[] {
-  const builtinById = new Map(KANBAN_COLUMNS.map(c => [c.id, c]))
-  const colorDefaults = DEFAULT_KANBAN_COLUMN_COLORS
-
-  if (!config?.columns?.length) {
-    return KANBAN_COLUMNS.map(c => ({
-      ...c,
-      color: colorDefaults[c.id as BuiltInKanbanColumnId],
-      collapsed: c.defaultCollapsed ?? false,
-    }))
-  }
-
-  return config.columns.map(col => {
-    const builtin = builtinById.get(col.id as BuiltInKanbanColumnId)
-    const isBuiltIn = col.isBuiltIn ?? !!builtin
-    return {
-      id: col.id,
-      labelKey: builtin?.labelKey,
-      name: col.label,
-      color:
-        col.color ??
-        (builtin ? colorDefaults[builtin.id] : undefined),
-      dropStatusId: col.dropStatusId ?? builtin?.dropStatusId ?? (isBuiltIn ? col.id : undefined),
-      defaultCollapsed: builtin?.defaultCollapsed,
-      collapsed: col.collapsed ?? builtin?.defaultCollapsed ?? false,
-      promptEnabled: col.promptEnabled,
-      prompt: col.prompt,
-      isBuiltIn,
-    } satisfies KanbanColumnMeta
-  })
 }
 
 /**
@@ -363,7 +343,7 @@ function KanbanBoardContainerInner() {
         saved => setBoardConfig(saved),
         (err: unknown) => {
           toast.error(t('kanban.toastConfigSaveFailed'), {
-            description: err instanceof Error ? err.message : String(err),
+            description: toErrorMessage(err),
           })
         },
       )
@@ -443,8 +423,15 @@ function KanbanBoardContainerInner() {
     [llmConnections],
   )
 
+  // Session meta stores only the connection slug; the badge needs the connection's
+  // provider/base URL, so resolve slugs back to the live connection objects.
+  const connectionsBySlug = React.useMemo(
+    () => new Map(llmConnections.map(connection => [connection.slug, connection])),
+    [llmConnections],
+  )
+
   const activeColumns = React.useMemo(
-    () => mergeBoardColumns(boardConfig),
+    () => resolveBoardColumns(boardConfig),
     [boardConfig],
   )
 
@@ -477,11 +464,26 @@ function KanbanBoardContainerInner() {
       slugs.map(async (slug): Promise<readonly [string, SpecNodeSummary[]]> => {
         try {
           const res = await window.electronAPI.getTask(activeWorkspaceId, slug)
-          const spec = res.spec as { defaults?: { model?: string }; nodes?: SpecNode[] } | undefined
+          const spec = res.spec as {
+            defaults?: { model?: string; llmConnection?: string }
+            nodes?: SpecNode[]
+          } | undefined
           const defaultModel = spec?.defaults?.model
+          const defaultConnection = toKanbanModelConnection(
+            spec?.defaults?.llmConnection ? connectionsBySlug.get(spec.defaults.llmConnection) : undefined,
+          )
           return [
             slug,
-            (spec?.nodes ?? []).map(n => ({ id: n.id, title: n.title || n.id, model: n.model ?? defaultModel })),
+            (spec?.nodes ?? []).map(n => ({
+              id: n.id,
+              title: n.title || n.id,
+              model: n.model ?? defaultModel,
+              // A node without its own connection inherits the task default, exactly
+              // like its model: the row must draw whatever will really run it.
+              modelConnection: n.llmConnection
+                ? toKanbanModelConnection(connectionsBySlug.get(n.llmConnection))
+                : defaultConnection,
+            })),
           ]
         } catch {
           return [slug, []]
@@ -493,7 +495,7 @@ function KanbanBoardContainerInner() {
     return () => {
       cancelled = true
     }
-  }, [activeWorkspaceId, specSlugsKey, editorOpen])
+  }, [activeWorkspaceId, specSlugsKey, editorOpen, connectionsBySlug])
 
   const tasks = React.useMemo(() => {
     const childrenByParent = new Map<string, SessionMeta[]>()
@@ -517,18 +519,26 @@ function KanbanBoardContainerInner() {
         id: child.id,
         title: getSessionTitle(child),
         runState: deriveRunState(child, statusesById),
-        model: child.model ?? DEFAULT_MODEL,
+        // `child.model` is omitted when the child inherits the orchestrator's route:
+        // the row then shows the connection it really runs on instead of a guessed model.
+        model: child.model,
+        modelConnection: toKanbanModelConnection(
+          child.llmConnection ? connectionsBySlug.get(child.llmConnection) : undefined,
+        ),
         taskNodeId: child.taskNodeId,
         createdAt: child.createdAt,
       }))
       const specNodes = meta.taskSlug ? specNodesBySlug.get(meta.taskSlug) : undefined
-      const subtasks = mergeSubtaskRows(specNodes, children, DEFAULT_MODEL)
+      const subtasks = mergeSubtaskRows(specNodes, children)
       result.push({
         id: meta.id,
         title: getSessionTitle(meta),
         column,
         statusId,
-        model: meta.model ?? DEFAULT_MODEL,
+        model: meta.model,
+        modelConnection: toKanbanModelConnection(
+          meta.llmConnection ? connectionsBySlug.get(meta.llmConnection) : undefined,
+        ),
         llmConnection: meta.llmConnection,
         projectId: meta.projectId,
         priority: meta.priority ?? 'none',
@@ -544,7 +554,7 @@ function KanbanBoardContainerInner() {
       })
     }
     return result
-  }, [metaMap, statusesById, specNodesBySlug, collectionFilters, collectionDisplay])
+  }, [metaMap, statusesById, specNodesBySlug, collectionFilters, collectionDisplay, connectionsBySlug])
 
   const visibleTasks = React.useMemo(() => {
     if (projectFilter.length === 0) return tasks
@@ -605,7 +615,7 @@ function KanbanBoardContainerInner() {
           .runTask(activeWorkspaceId, { slug: meta.taskSlug, orchestratorSessionId: taskId })
           .catch((err: unknown) => {
             toast.error(t('tasks.toastRunFailed'), {
-              description: err instanceof Error ? err.message : String(err),
+              description: toErrorMessage(err),
             })
           })
         return
@@ -678,10 +688,12 @@ function KanbanBoardContainerInner() {
         }
 
         // Optionally fold the status to the column's configured target (optimistic).
+        // Applied verbatim: a custom status typed in Appearance settings must not be
+        // silently dropped just because it is not in the workspace status catalog.
         const autoStatus =
           activeColumns.find(c => c.id === toColumn)?.dropStatusId ?? columnStatus[toColumn]
         let appliedAutoStatus: string | undefined
-        if (autoStatus && statusesById.has(autoStatus)) {
+        if (autoStatus) {
           appliedAutoStatus = autoStatus
           updateSessionMeta(taskId, { sessionStatus: autoStatus })
         }
@@ -739,7 +751,7 @@ function KanbanBoardContainerInner() {
         } catch (error) {
           restorePrior()
           toast.error(t('kanban.toastMoveFailed'), {
-            description: error instanceof Error ? error.message : String(error),
+            description: toErrorMessage(error),
           })
           return
         }
@@ -778,7 +790,7 @@ function KanbanBoardContainerInner() {
                 processingRef.current.delete(job.sessionId)
                 updateSessionMeta(job.sessionId, { isProcessing: false })
                 toast.error(t('kanban.toastAutoRunFailed'), {
-                  description: err instanceof Error ? err.message : String(err),
+                  description: toErrorMessage(err),
                 })
               },
             },
@@ -842,7 +854,7 @@ function KanbanBoardContainerInner() {
       const current = boardConfigRef.current
       const baseColumns = current?.columns?.length
         ? current.columns.map(c => ({ ...c }))
-        : mergeBoardColumns(null).map(c => ({
+        : resolveBoardColumns(null).map(c => ({
             id: c.id,
             label: c.name,
             color: c.color,
@@ -888,7 +900,7 @@ function KanbanBoardContainerInner() {
       const current = boardConfigRef.current
       const baseColumns = current?.columns?.length
         ? current.columns.map(c => ({ ...c }))
-        : mergeBoardColumns(null).map(c => ({
+        : resolveBoardColumns(null).map(c => ({
             id: c.id,
             label: c.name,
             color: c.color,
@@ -922,7 +934,7 @@ function KanbanBoardContainerInner() {
       const current = boardConfigRef.current
       const baseColumns = current?.columns?.length
         ? current.columns.map(c => ({ ...c }))
-        : mergeBoardColumns(null).map(c => ({
+        : resolveBoardColumns(null).map(c => ({
             id: c.id,
             label: c.name,
             color: c.color,
@@ -975,7 +987,7 @@ function KanbanBoardContainerInner() {
       const current = boardConfigRef.current
       const columns = current?.columns?.length
         ? current.columns
-        : mergeBoardColumns(null).map(c => ({
+        : resolveBoardColumns(null).map(c => ({
             id: c.id,
             label: c.name,
             color: c.color,

@@ -26,7 +26,7 @@ describe('ROX2-056..058 native settings pages', () => {
   test('security, labels, and organizations stay in SETTINGS_PAGES without Conation flags', () => {
     expect(SETTINGS_HUB_REQUIRES_CONATION_FLAG).toBe(false)
     const ids = SETTINGS_PAGES.map((page) => page.id)
-    expect(ids.slice(15, 18)).toEqual([...ROX2_SETTINGS_WAVE6_PAGE_IDS])
+    expect(ids.slice(16, 19)).toEqual([...ROX2_SETTINGS_WAVE6_PAGE_IDS])
     expect(bindSettingsHubContext('ws-1', 'security').surfaceId).toBe('settings:security')
     expect(bindSettingsHubContext('ws-1', 'labels', 'ask').permissionMode).toBe('ask')
   })
@@ -163,6 +163,7 @@ describe('ROX2-056..058 native settings pages', () => {
       source: 'native',
       granted: true,
     })
+    if (!isClaimableLive(verified)) throw new Error('expected a verified native action result')
     expect(normalizeRox2Result(verified).executionMode).toBe('live')
     expect(normalizeRox2Result(verified).lifecycle).toBe('succeeded')
     expect(normalizeRox2Result(verified).verification).toBe('receipt_verified')

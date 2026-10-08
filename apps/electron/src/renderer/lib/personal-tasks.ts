@@ -22,7 +22,7 @@ import {
 import type { PersonalTaskConflict } from '@rox/core/tasks/personal'
 import type { VersionedPersonalTask } from '@rox/core/tasks/personal'
 import { samePersonalTask } from '../features/product-tour/adapters/work/tasks-projects'
-import { commitPersonalTaskLink } from '../features/product-tour/adapters/work/tasks-projects/native-commit'
+import { commitPersonalTaskLink, PersonalTaskLinkError } from '../features/product-tour/adapters/work/tasks-projects/native-commit'
 import {
   bundleFromSnapshot,
   diffPersonalTaskBundles,
@@ -360,7 +360,7 @@ export async function importPersonalTasksConfirmed(incoming: PersonalTaskBundle,
     if (!current()) throw new Error('Personal task caller changed')
     await hydratePersonalTasks()
     if (!current() || !synced) throw new Error('Personal task caller changed')
-    const transport = scopedApi(remote, generation)
+    const transport = scopedApi(remote, generation, current)
     const oldBase = synced
     const snapshot = await transport.personalTasksList()
     if (!current()) throw new Error('Personal task caller changed')
@@ -464,12 +464,12 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
 export async function persistPersonalTaskSessionLink(taskId: string, sessionId: string): Promise<VersionedPersonalTask> {
   const generation = scopeGeneration
   const remote = api()
-  if (!remote || !callerScope) throw new Error('Native personal task storage unavailable')
+  if (!remote || !callerScope) throw new PersonalTaskLinkError('write-unconfirmed')
   await hydratePersonalTasks()
   if (generation !== scopeGeneration) throw new Error('Personal task caller changed')
   const latest = loadPersonalTaskStore().snapshot()
   const task = latest.tasks.find(entry => entry.id === taskId)
-  if (!task) throw new Error('Personal task no longer exists')
+  if (!task) throw new PersonalTaskLinkError('write-unconfirmed')
   try {
     const accepted = await commitPersonalTaskLink(scopedApi(remote, generation), task, sessionId, revisions[taskId] ?? null)
     if (generation !== scopeGeneration) throw new Error('Personal task caller changed')

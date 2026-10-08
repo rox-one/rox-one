@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface InboxActorContext {
   workspaceId: string | null
@@ -43,7 +44,7 @@ export function useInboxActorContext(workspaceId: string | null, active: boolean
       if (contextRef.current === captured) {
         contextRef.current = { workspaceId, actorKey: null, epoch: captured.epoch + 1 }
         setSnapshot(contextRef.current)
-        setIdentityFailure({ context: contextRef.current, message: error instanceof Error ? error.message : String(error) })
+        setIdentityFailure({ context: contextRef.current, message: toErrorMessage(error) })
       }
       return null
     }

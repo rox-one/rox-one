@@ -8,8 +8,8 @@ import { EscapeInterruptProvider } from '@/context/EscapeInterruptContext'
 import { AppShellProvider, type AppShellContextType } from '@/context/AppShellContext'
 import { useShellAppearance } from '@/hooks/useShellAppearance'
 import { panelStackAtom } from '@/atoms/panel-stack'
-import { bottomDockHeightAtom, bottomTerminalOpenAtom } from '@/atoms/unified-shell'
-import { BottomTerminalDock } from '@/components/session-inspector/BottomTerminalDock'
+import { bottomTerminalOpenAtom } from '@/atoms/unified-shell'
+import { TerminalPanel } from '../../TerminalPanel'
 import { PanelResizeSash } from '../../PanelResizeSash'
 import { PANEL_GAP, PANEL_EDGE_INSET, PANEL_STACK_TOP_INSET, PANEL_STACK_BOTTOM_INSET } from '../../panel-constants'
 import { InputContainer } from '../../input/InputContainer'
@@ -105,7 +105,6 @@ store.set(panelStackAtom, [
   { id: 'fixture-left', route: 'allSessions', proportion: 0.5, panelType: 'session', laneId: 'main' },
   { id: 'fixture-right', route: 'settings', proportion: 0.5, panelType: 'settings', laneId: 'main' },
 ])
-store.set(bottomDockHeightAtom, 104)
 store.set(bottomTerminalOpenAtom, true)
 
 function AppearanceFixture() {
@@ -114,6 +113,7 @@ function AppearanceFixture() {
   fixture.selectTheme = theme.setColorTheme
   fixture.selectWorkspaceTheme = theme.setWorkspaceColorTheme
   const panels = useAtomValue(panelStackAtom)
+  const terminalOpen = useAtomValue(bottomTerminalOpenAtom)
   const [compactNavigator, setCompactNavigator] = React.useState(false)
   fixture.theme = {
     colorTheme: theme.colorTheme, effectiveColorTheme: theme.effectiveColorTheme,
@@ -148,12 +148,18 @@ function AppearanceFixture() {
         {/* These labelled layout wrappers use the production panel tokens and
             state. Actual AppShell route orchestration is verified separately. */}
         <div data-testid="panel-row" style={{ display: 'flex', flex: 1, minWidth: 0, gap: PANEL_GAP, padding: `${PANEL_STACK_TOP_INSET}px ${PANEL_EDGE_INSET}px ${PANEL_STACK_BOTTOM_INSET}px` }}>
-          <section id="fixture-left" className="rox-shell-pane" data-panel-role="content" data-testid="work-panel" style={{ flex: `${panels[0]?.proportion} 1 0px`, minWidth: 440 }}><div style={{ padding: 16 }}>
-            <h1>Document surface</h1>
-            <div data-testid="card"><SettingsCard><SettingsCardContent>Module card in the selected palette</SettingsCardContent></SettingsCard></div>
-            <div data-testid="code" style={{ marginTop: 16 }}><CodeBlock code={'// Theme regression\nconst surface = { solid: true, radius: 4 };\nconsole.log(surface);'} language="typescript" /></div>
-            <div data-testid="composer" style={{ marginTop: 24 }}><InputContainer currentModel="rox/standard" onModelChange={() => {}} onSubmit={() => {}} compactMode showCloudRunsChip={false} placeholder="Fixture composer" /></div>
-          </div></section>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: `${panels[0]?.proportion} 1 0px`, minWidth: 440, minHeight: 0 }}>
+            <section id="fixture-left" className="rox-shell-pane" data-panel-role="content" data-testid="work-panel" style={{ flex: 1, minHeight: 0 }}><div style={{ padding: 16 }}>
+              <h1>Document surface</h1>
+              <div data-testid="card"><SettingsCard><SettingsCardContent>Module card in the selected palette</SettingsCardContent></SettingsCard></div>
+              <div data-testid="code" style={{ marginTop: 16 }}><CodeBlock code={'// Theme regression\nconst surface = { solid: true, radius: 4 };\nconsole.log(surface);'} language="typescript" /></div>
+              <div data-testid="composer" style={{ marginTop: 24 }}><InputContainer currentModel="rox/standard" onModelChange={() => {}} onSubmit={() => {}} compactMode showCloudRunsChip={false} placeholder="Fixture composer" /></div>
+            </div></section>
+            {/* Match PanelStackContainer: the first panel of the first column
+                owns the terminal cell at half of the column height, and the
+                TopBar button remains the only entry point. */}
+            {terminalOpen && <div data-terminal-cell="true" style={{ display: 'flex', minHeight: 0, flexShrink: 0, flexBasis: '50%', flexDirection: 'column' }}><TerminalPanel /></div>}
+          </div>
           <PanelResizeSash leftIndex={0} rightIndex={1} />
           <section id="fixture-right" className="rox-shell-pane rox-shell-divider-l" data-panel-role="content" data-testid="second-panel" style={{ flex: `${panels[1]?.proportion} 1 0px`, minWidth: 440 }}><div style={{ padding: 16 }}>
             <h2>Reading surface</h2><p>The work area stays solid while chrome uses a separate material policy.</p>
@@ -164,7 +170,6 @@ function AppearanceFixture() {
         </div>
         <aside className="rox-shell-pane rox-shell-divider-l" data-inspector-panel data-testid="inspector" style={{ width: 160, flexShrink: 0, padding: 12 }}>Fixture inspector</aside>
       </div>
-      <BottomTerminalDock />
       <footer className="chrome-strip rox-shell-divider-t" data-testid="strip" style={{ padding: 12 }}>Selected: <output data-testid="theme-state">{theme.effectiveColorTheme} · {theme.resolvedMode} · {theme.themeResolvedFrom}</output></footer>
     </main>
   </TooltipProvider></ShikiThemeProvider>

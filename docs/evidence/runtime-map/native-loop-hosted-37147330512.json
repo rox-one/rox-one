@@ -1,0 +1,1626 @@
+{
+  "class": "actual-native-sdk-fixture-provider",
+  "assertionsPassed": true,
+  "nativeVersion": "18.4.12",
+  "scope": "Actual native SDK two-level task worker and eval-agent loops, fixture provider, private observer transport. No installed-app or remote provider claim.",
+  "headSha": "d2109ec638028de4dd21ef036ec40b40b8afa249",
+  "baseSha": "5211746270f5005d551ddc103970714520b25b67",
+  "checkoutMergeSha": "3579af7a94f35113d0494ad54d1216e5d22891d0",
+  "workflowRun": 37147330512,
+  "workflowJob": 111273869337,
+  "artifactId": 11282338678,
+  "workflowUrl": "https://github.com/rox-one/rox-one/actions/runs/37147330512",
+  "artifactUrl": "https://github.com/rox-one/rox-one/actions/runs/37147330512/artifacts/11282338678",
+  "artifactZipSha256": "2649e70a4df74df735ce1b7967d466e33a7c92c492397f15285c0cd67abf99d2",
+  "artifactRawJsonSha256": "2932b42f41036a66181adb38dbcb6e5e81a3f67ac605e82ff366de7a05556a2b",
+  "actualEnvironment": {
+    "os": "Ubuntu 24.04.5",
+    "bun": "1.3.14",
+    "node": "24.21.0"
+  },
+  "steps": {
+    "frozenInstall": "passed",
+    "verifiedNativePackageAndLockedGraph": "passed",
+    "nativeLoop": "passed",
+    "boundaryTests": "passed",
+    "evidenceUpload": "passed"
+  },
+  "commands": [
+    {
+      "command": "bun install --frozen-lockfile",
+      "exitCode": 0
+    },
+    {
+      "command": "bun scripts/probes/prepare-runtime-map-omp.ts \"$RUNNER_TEMP/runtime-map-omp\"",
+      "exitCode": 0
+    },
+    {
+      "command": "ROX_OMP_PACKAGE_DIR=\"$RUNNER_TEMP/runtime-map-omp/package\" bun scripts/probes/runtime-map-native-loop.ts \"$RUNNER_TEMP/runtime-map-native-loop.json\"",
+      "exitCode": 0
+    },
+    {
+      "command": "bun test packages/core/src/runtime-trace packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts packages/server-core/src/sessions/runtime-trace packages/server-core/src/handlers/rpc/__tests__/runtime-trace.test.ts",
+      "exitCode": 0,
+      "testsPassed": 72,
+      "testsFailed": 0,
+      "assertions": 352,
+      "files": 8
+    }
+  ],
+  "networkAttempts": 0,
+  "paidProviderRequests": 0,
+  "observations": 63,
+  "nativeHooks": 121,
+  "providerCalls": 10,
+  "supportedMaximum": "high",
+  "actualProviderRequests": [
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "task-label",
+      "tools": []
+    },
+    {
+      "kind": "child",
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "task-label",
+      "tools": []
+    },
+    {
+      "kind": "restricted-grandchild",
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "restricted-grandchild",
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "child",
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "restricted-eval-child",
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    }
+  ],
+  "actualProviderModelRoutes": [
+    {
+      "model": {
+        "id": "worker",
+        "provider": "fixture",
+        "contextWindow": 200000
+      },
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ]
+    },
+    {
+      "model": {
+        "id": "worker",
+        "provider": "fixture",
+        "contextWindow": 200000
+      },
+      "tools": []
+    },
+    {
+      "model": {
+        "id": "worker",
+        "provider": "fixture",
+        "contextWindow": 200000
+      },
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ]
+    },
+    {
+      "model": {
+        "id": "worker",
+        "provider": "fixture",
+        "contextWindow": 200000
+      },
+      "tools": []
+    },
+    {
+      "model": {
+        "id": "restricted",
+        "provider": "fixture",
+        "contextWindow": 32768
+      },
+      "tools": [
+        "read",
+        "yield"
+      ]
+    },
+    {
+      "model": {
+        "id": "restricted",
+        "provider": "fixture",
+        "contextWindow": 32768
+      },
+      "tools": [
+        "read",
+        "yield"
+      ]
+    },
+    {
+      "model": {
+        "id": "worker",
+        "provider": "fixture",
+        "contextWindow": 200000
+      },
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ]
+    },
+    {
+      "model": {
+        "id": "worker",
+        "provider": "fixture",
+        "contextWindow": 200000
+      },
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ]
+    },
+    {
+      "model": {
+        "id": "restricted",
+        "provider": "fixture",
+        "contextWindow": 32768
+      },
+      "tools": [
+        "read",
+        "yield"
+      ]
+    },
+    {
+      "model": {
+        "id": "worker",
+        "provider": "fixture",
+        "contextWindow": 200000
+      },
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ]
+    }
+  ],
+  "actualDispatchHooks": [
+    {
+      "hook": "before_subagent_spawn",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a1033a-b816-7000-9a18-01c519915623",
+      "sourceSeq": 12,
+      "dispatch": {
+        "type": "before_subagent_spawn",
+        "agent": "fixture-worker",
+        "invocationKind": "task",
+        "patterns": [
+          "fixture/worker:medium"
+        ],
+        "spawnKey": "actual-parent-task:0"
+      }
+    },
+    {
+      "hook": "subagent_identity",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a1033a-b816-7000-9a18-01c519915623",
+      "sourceSeq": 14,
+      "dispatch": {
+        "id": "AnnoyedBlackbird",
+        "invocationKind": "task",
+        "spawnKey": "actual-parent-task:0",
+        "parentToolCallId": "actual-parent-task",
+        "index": 0
+      }
+    },
+    {
+      "hook": "before_subagent_spawn",
+      "agent": {
+        "kind": "sub",
+        "id": "AnnoyedBlackbird",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a1033a-b977-7000-8d19-4a9a37e2a3a8",
+      "sourceSeq": 11,
+      "dispatch": {
+        "type": "before_subagent_spawn",
+        "agent": "fixture-restricted",
+        "invocationKind": "task",
+        "patterns": [
+          "fixture/restricted:medium"
+        ],
+        "spawnKey": "actual-child-task:0"
+      }
+    },
+    {
+      "hook": "subagent_identity",
+      "agent": {
+        "kind": "sub",
+        "id": "AnnoyedBlackbird",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a1033a-b977-7000-8d19-4a9a37e2a3a8",
+      "sourceSeq": 13,
+      "dispatch": {
+        "id": "AnnoyedBlackbird.SportingWren",
+        "invocationKind": "task",
+        "spawnKey": "actual-child-task:0",
+        "parentToolCallId": "actual-child-task",
+        "index": 0
+      }
+    },
+    {
+      "hook": "before_subagent_spawn",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a1033a-b816-7000-9a18-01c519915623",
+      "sourceSeq": 41,
+      "dispatch": {
+        "type": "before_subagent_spawn",
+        "agent": "fixture-restricted",
+        "invocationKind": "eval",
+        "patterns": [
+          "fixture/restricted:medium"
+        ],
+        "spawnKey": "eval-worker-fixture"
+      }
+    },
+    {
+      "hook": "subagent_identity",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a1033a-b816-7000-9a18-01c519915623",
+      "sourceSeq": 42,
+      "dispatch": {
+        "id": "eval-worker-fixture",
+        "invocationKind": "eval",
+        "spawnKey": "eval-worker-fixture",
+        "index": 0
+      }
+    }
+  ],
+  "actualAssignments": [
+    {
+      "sourceEventId": "66b3db44-42aa-4d29-aa34-34713c9d4612:agent.assigned:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-b977-7000-8d19-4a9a37e2a3a8:83746690-bac3-4424-abd3-ee849f7f39d6",
+      "sourceSeq": 1,
+      "agentId": "AnnoyedBlackbird",
+      "parentAgentId": "root",
+      "parentSpanId": "tool:actual-parent-task",
+      "providerTurnId": "01a1033a-b977-7000-8d19-4a9a37e2a3a8:turn:0",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055542711,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 31.123906000000034,
+      "clockDomain": "omp-native:83746690-bac3-4424-abd3-ee849f7f39d6",
+      "origin": "observed",
+      "kind": "agent.assigned",
+      "payload": {
+        "assignment": {
+          "agentId": "AnnoyedBlackbird",
+          "parentAgentId": "root",
+          "name": "fixture-worker",
+          "task": {
+            "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+            "byteLength": 84,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "prompt": {
+            "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+            "byteLength": 84,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "model": {
+            "confirmed": {
+              "state": "known",
+              "value": "fixture/worker",
+              "source": "OMP ExtensionContext.model",
+              "origin": "observed"
+            },
+            "provider": "fixture",
+            "contextWindow": {
+              "state": "known",
+              "value": 200000,
+              "source": "OMP model catalog",
+              "origin": "observed"
+            }
+          },
+          "contextSnapshotId": "01a1033a-b977-7000-8d19-4a9a37e2a3a8:context:1",
+          "tools": [
+            "task",
+            "read",
+            "wait",
+            "yield"
+          ],
+          "nativeKind": "task"
+        }
+      }
+    },
+    {
+      "sourceEventId": "f9f79c16-9b3b-4abd-9092-3ae386fd1f10:agent.assigned:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-b9e2-7000-9392-387ee2f06569:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "sourceSeq": 1,
+      "agentId": "AnnoyedBlackbird.SportingWren",
+      "parentAgentId": "AnnoyedBlackbird",
+      "parentSpanId": "native:01a1033a-b977-7000-8d19-4a9a37e2a3a8:tool:actual-child-task",
+      "providerTurnId": "01a1033a-b9e2-7000-9392-387ee2f06569:turn:0",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055542787,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 10.046345000000201,
+      "clockDomain": "omp-native:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "origin": "observed",
+      "kind": "agent.assigned",
+      "payload": {
+        "assignment": {
+          "agentId": "AnnoyedBlackbird.SportingWren",
+          "parentAgentId": "AnnoyedBlackbird",
+          "name": "fixture-restricted",
+          "task": {
+            "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_GRANDCHILD_TASK",
+            "byteLength": 89,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "prompt": {
+            "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_GRANDCHILD_TASK",
+            "byteLength": 89,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "model": {
+            "confirmed": {
+              "state": "known",
+              "value": "fixture/restricted",
+              "source": "OMP ExtensionContext.model",
+              "origin": "observed"
+            },
+            "provider": "fixture",
+            "contextWindow": {
+              "state": "known",
+              "value": 32768,
+              "source": "OMP model catalog",
+              "origin": "observed"
+            }
+          },
+          "contextSnapshotId": "01a1033a-b9e2-7000-9392-387ee2f06569:context:1",
+          "tools": [
+            "read",
+            "yield"
+          ],
+          "nativeKind": "task"
+        }
+      }
+    },
+    {
+      "sourceEventId": "8632656a-3844-4f4c-8de4-b0df7fba5eda:agent.assigned:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-bb00-7000-9f58-c7a83a4bf60e:f166a387-c92d-4595-a4d5-7e31d039b2aa",
+      "sourceSeq": 1,
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "providerTurnId": "01a1033a-bb00-7000-9f58-c7a83a4bf60e:turn:0",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055543068,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 9.889553999999862,
+      "clockDomain": "omp-native:f166a387-c92d-4595-a4d5-7e31d039b2aa",
+      "origin": "observed",
+      "kind": "agent.assigned",
+      "payload": {
+        "assignment": {
+          "agentId": "eval-worker-fixture",
+          "parentAgentId": "root",
+          "name": "fixture-restricted",
+          "task": {
+            "text": "Complete assignment thoroughly:\n\nNATIVE_EVAL_TASK",
+            "byteLength": 49,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "prompt": {
+            "text": "Complete assignment thoroughly:\n\nNATIVE_EVAL_TASK",
+            "byteLength": 49,
+            "truncated": false,
+            "availability": "available",
+            "tokens": {
+              "state": "unknown",
+              "reason": "not-emitted"
+            },
+            "isDelta": false
+          },
+          "model": {
+            "confirmed": {
+              "state": "known",
+              "value": "fixture/restricted",
+              "source": "OMP ExtensionContext.model",
+              "origin": "observed"
+            },
+            "provider": "fixture",
+            "contextWindow": {
+              "state": "known",
+              "value": 32768,
+              "source": "OMP model catalog",
+              "origin": "observed"
+            }
+          },
+          "contextSnapshotId": "01a1033a-bb00-7000-9f58-c7a83a4bf60e:context:1",
+          "tools": [
+            "read",
+            "yield"
+          ],
+          "nativeKind": "eval"
+        }
+      }
+    }
+  ],
+  "actualCompletions": [
+    {
+      "sourceEventId": "7f7dca31-72f9-4b85-aa2e-687656842da8:agent.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-b9e2-7000-9392-387ee2f06569:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "sourceSeq": 15,
+      "agentId": "AnnoyedBlackbird.SportingWren",
+      "parentAgentId": "AnnoyedBlackbird",
+      "parentSpanId": "native:01a1033a-b977-7000-8d19-4a9a37e2a3a8:tool:actual-child-task",
+      "providerTurnId": "01a1033a-b9e2-7000-9392-387ee2f06569:turn:2",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055542851,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 74.13683300000002,
+      "clockDomain": "omp-native:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "origin": "observed",
+      "kind": "agent.completed",
+      "payload": {
+        "status": "succeeded",
+        "result": {
+          "text": "{\"text\":\"GRANDCHILD_OK\"}",
+          "byteLength": 24,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        }
+      }
+    },
+    {
+      "sourceEventId": "4220fdb3-fcc7-43c5-b05b-d41f1a375ff5:agent.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-b977-7000-8d19-4a9a37e2a3a8:83746690-bac3-4424-abd3-ee849f7f39d6",
+      "sourceSeq": 22,
+      "agentId": "AnnoyedBlackbird",
+      "parentAgentId": "root",
+      "parentSpanId": "tool:actual-parent-task",
+      "providerTurnId": "01a1033a-b977-7000-8d19-4a9a37e2a3a8:turn:2",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055542896,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 216.09287500000005,
+      "clockDomain": "omp-native:83746690-bac3-4424-abd3-ee849f7f39d6",
+      "origin": "observed",
+      "kind": "agent.completed",
+      "payload": {
+        "status": "succeeded",
+        "result": {
+          "text": "{\"text\":\"CHILD_OK\"}",
+          "byteLength": 19,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        }
+      }
+    },
+    {
+      "sourceEventId": "3a3bbf0a-79d7-4d2f-bb70-fe6726f59097:agent.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-bb00-7000-9f58-c7a83a4bf60e:f166a387-c92d-4595-a4d5-7e31d039b2aa",
+      "sourceSeq": 9,
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "providerTurnId": "01a1033a-bb00-7000-9f58-c7a83a4bf60e:turn:1",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055543098,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 39.67853700000023,
+      "clockDomain": "omp-native:f166a387-c92d-4595-a4d5-7e31d039b2aa",
+      "origin": "observed",
+      "kind": "agent.completed",
+      "payload": {
+        "status": "succeeded",
+        "result": {
+          "text": "{\"text\":\"EVAL_OK\"}",
+          "byteLength": 18,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        }
+      }
+    }
+  ],
+  "actualContextSnapshots": [
+    {
+      "agentId": "root",
+      "snapshotId": "01a1033a-b816-7000-9a18-01c519915623:context:1",
+      "version": 1,
+      "capturedAt": {
+        "state": "known",
+        "value": 1791055542537,
+        "source": "OMP before_agent_start",
+        "origin": "observed"
+      },
+      "originalPrompt": {
+        "text": "NATIVE_PARENT_TASK",
+        "byteLength": 18,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      },
+      "effectivePrompt": {
+        "text": "orchestrate workflowz ultrathink\n\nNATIVE_PARENT_TASK",
+        "byteLength": 52,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      },
+      "model": {
+        "confirmed": {
+          "state": "known",
+          "value": "fixture/worker",
+          "source": "OMP ExtensionContext.model",
+          "origin": "observed"
+        },
+        "provider": "fixture",
+        "contextWindow": {
+          "state": "known",
+          "value": 200000,
+          "source": "OMP model catalog",
+          "origin": "observed"
+        }
+      },
+      "inputTokens": {
+        "state": "known",
+        "value": 1483,
+        "source": "OMP estimated ContextUsage",
+        "origin": "estimated"
+      },
+      "coverage": {
+        "state": "partial",
+        "source": "runtime",
+        "missing": [
+          "provider-serialized-payload",
+          "exact-input-tokenization"
+        ],
+        "reason": "Observed native hook projection; provider serialization can add or transform fields"
+      },
+      "blocks": [
+        {
+          "id": "e4696629-5a8e-492b-9ce8-0e97438bb3ba:block:0",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 1",
+          "order": 0,
+          "included": true,
+          "contentByteLength": 66,
+          "contentTruncated": false
+        },
+        {
+          "id": "e4696629-5a8e-492b-9ce8-0e97438bb3ba:block:1",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 2",
+          "order": 1,
+          "included": true,
+          "contentByteLength": 277,
+          "contentTruncated": false
+        },
+        {
+          "id": "e4696629-5a8e-492b-9ce8-0e97438bb3ba:block:2",
+          "kind": "tool-schema",
+          "source": "OMP ExtensionAPI.getAllTools",
+          "label": "Available native tools",
+          "order": 2,
+          "included": true,
+          "contentByteLength": 5190,
+          "contentTruncated": false
+        },
+        {
+          "id": "e4696629-5a8e-492b-9ce8-0e97438bb3ba:block:3",
+          "kind": "user",
+          "source": "OMP before_agent_start",
+          "label": "Delivered prompt",
+          "order": 3,
+          "included": true,
+          "contentByteLength": 52,
+          "contentTruncated": false
+        }
+      ]
+    },
+    {
+      "agentId": "AnnoyedBlackbird",
+      "snapshotId": "01a1033a-b977-7000-8d19-4a9a37e2a3a8:context:1",
+      "version": 1,
+      "capturedAt": {
+        "state": "known",
+        "value": 1791055542711,
+        "source": "OMP before_agent_start",
+        "origin": "observed"
+      },
+      "originalPrompt": {
+        "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+        "byteLength": 84,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      },
+      "effectivePrompt": {
+        "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+        "byteLength": 84,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      },
+      "model": {
+        "confirmed": {
+          "state": "known",
+          "value": "fixture/worker",
+          "source": "OMP ExtensionContext.model",
+          "origin": "observed"
+        },
+        "provider": "fixture",
+        "contextWindow": {
+          "state": "known",
+          "value": 200000,
+          "source": "OMP model catalog",
+          "origin": "observed"
+        }
+      },
+      "inputTokens": {
+        "state": "known",
+        "value": 3183,
+        "source": "OMP estimated ContextUsage",
+        "origin": "estimated"
+      },
+      "coverage": {
+        "state": "partial",
+        "source": "runtime",
+        "missing": [
+          "provider-serialized-payload",
+          "exact-input-tokenization"
+        ],
+        "reason": "Observed native hook projection; provider serialization can add or transform fields"
+      },
+      "blocks": [
+        {
+          "id": "66b3db44-42aa-4d29-aa34-34713c9d4612:block:0",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 1",
+          "order": 0,
+          "included": true,
+          "contentByteLength": 6370,
+          "contentTruncated": false
+        },
+        {
+          "id": "66b3db44-42aa-4d29-aa34-34713c9d4612:block:1",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 2",
+          "order": 1,
+          "included": true,
+          "contentByteLength": 466,
+          "contentTruncated": false
+        },
+        {
+          "id": "66b3db44-42aa-4d29-aa34-34713c9d4612:block:2",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 3",
+          "order": 2,
+          "included": true,
+          "contentByteLength": 1205,
+          "contentTruncated": false
+        },
+        {
+          "id": "66b3db44-42aa-4d29-aa34-34713c9d4612:block:3",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 4",
+          "order": 3,
+          "included": true,
+          "contentByteLength": 277,
+          "contentTruncated": false
+        },
+        {
+          "id": "66b3db44-42aa-4d29-aa34-34713c9d4612:block:4",
+          "kind": "tool-schema",
+          "source": "OMP ExtensionAPI.getAllTools",
+          "label": "Available native tools",
+          "order": 4,
+          "included": true,
+          "contentByteLength": 4507,
+          "contentTruncated": false
+        },
+        {
+          "id": "66b3db44-42aa-4d29-aa34-34713c9d4612:block:5",
+          "kind": "user",
+          "source": "OMP before_agent_start",
+          "label": "Delivered prompt",
+          "order": 5,
+          "included": true,
+          "contentByteLength": 84,
+          "contentTruncated": false
+        }
+      ]
+    },
+    {
+      "agentId": "AnnoyedBlackbird.SportingWren",
+      "snapshotId": "01a1033a-b9e2-7000-9392-387ee2f06569:context:1",
+      "version": 1,
+      "capturedAt": {
+        "state": "known",
+        "value": 1791055542787,
+        "source": "OMP before_agent_start",
+        "origin": "observed"
+      },
+      "originalPrompt": {
+        "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_GRANDCHILD_TASK",
+        "byteLength": 89,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      },
+      "effectivePrompt": {
+        "text": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_GRANDCHILD_TASK",
+        "byteLength": 89,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      },
+      "model": {
+        "confirmed": {
+          "state": "known",
+          "value": "fixture/restricted",
+          "source": "OMP ExtensionContext.model",
+          "origin": "observed"
+        },
+        "provider": "fixture",
+        "contextWindow": {
+          "state": "known",
+          "value": 32768,
+          "source": "OMP model catalog",
+          "origin": "observed"
+        }
+      },
+      "inputTokens": {
+        "state": "known",
+        "value": 2359,
+        "source": "OMP estimated ContextUsage",
+        "origin": "estimated"
+      },
+      "coverage": {
+        "state": "partial",
+        "source": "runtime",
+        "missing": [
+          "provider-serialized-payload",
+          "exact-input-tokenization"
+        ],
+        "reason": "Observed native hook projection; provider serialization can add or transform fields"
+      },
+      "blocks": [
+        {
+          "id": "f9f79c16-9b3b-4abd-9092-3ae386fd1f10:block:0",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 1",
+          "order": 0,
+          "included": true,
+          "contentByteLength": 5526,
+          "contentTruncated": false
+        },
+        {
+          "id": "f9f79c16-9b3b-4abd-9092-3ae386fd1f10:block:1",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 2",
+          "order": 1,
+          "included": true,
+          "contentByteLength": 470,
+          "contentTruncated": false
+        },
+        {
+          "id": "f9f79c16-9b3b-4abd-9092-3ae386fd1f10:block:2",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 3",
+          "order": 2,
+          "included": true,
+          "contentByteLength": 1213,
+          "contentTruncated": false
+        },
+        {
+          "id": "f9f79c16-9b3b-4abd-9092-3ae386fd1f10:block:3",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 4",
+          "order": 3,
+          "included": true,
+          "contentByteLength": 277,
+          "contentTruncated": false
+        },
+        {
+          "id": "f9f79c16-9b3b-4abd-9092-3ae386fd1f10:block:4",
+          "kind": "tool-schema",
+          "source": "OMP ExtensionAPI.getAllTools",
+          "label": "Available native tools",
+          "order": 4,
+          "included": true,
+          "contentByteLength": 2326,
+          "contentTruncated": false
+        },
+        {
+          "id": "f9f79c16-9b3b-4abd-9092-3ae386fd1f10:block:5",
+          "kind": "user",
+          "source": "OMP before_agent_start",
+          "label": "Delivered prompt",
+          "order": 5,
+          "included": true,
+          "contentByteLength": 89,
+          "contentTruncated": false
+        }
+      ]
+    },
+    {
+      "agentId": "eval-worker-fixture",
+      "snapshotId": "01a1033a-bb00-7000-9f58-c7a83a4bf60e:context:1",
+      "version": 1,
+      "capturedAt": {
+        "state": "known",
+        "value": 1791055543068,
+        "source": "OMP before_agent_start",
+        "origin": "observed"
+      },
+      "originalPrompt": {
+        "text": "Complete assignment thoroughly:\n\nNATIVE_EVAL_TASK",
+        "byteLength": 49,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      },
+      "effectivePrompt": {
+        "text": "Complete assignment thoroughly:\n\nNATIVE_EVAL_TASK",
+        "byteLength": 49,
+        "truncated": false,
+        "availability": "available",
+        "tokens": {
+          "state": "unknown",
+          "reason": "not-emitted"
+        },
+        "isDelta": false
+      },
+      "model": {
+        "confirmed": {
+          "state": "known",
+          "value": "fixture/restricted",
+          "source": "OMP ExtensionContext.model",
+          "origin": "observed"
+        },
+        "provider": "fixture",
+        "contextWindow": {
+          "state": "known",
+          "value": 32768,
+          "source": "OMP model catalog",
+          "origin": "observed"
+        }
+      },
+      "inputTokens": {
+        "state": "known",
+        "value": 2359,
+        "source": "OMP estimated ContextUsage",
+        "origin": "estimated"
+      },
+      "coverage": {
+        "state": "partial",
+        "source": "runtime",
+        "missing": [
+          "provider-serialized-payload",
+          "exact-input-tokenization"
+        ],
+        "reason": "Observed native hook projection; provider serialization can add or transform fields"
+      },
+      "blocks": [
+        {
+          "id": "8632656a-3844-4f4c-8de4-b0df7fba5eda:block:0",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 1",
+          "order": 0,
+          "included": true,
+          "contentByteLength": 5526,
+          "contentTruncated": false
+        },
+        {
+          "id": "8632656a-3844-4f4c-8de4-b0df7fba5eda:block:1",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 2",
+          "order": 1,
+          "included": true,
+          "contentByteLength": 470,
+          "contentTruncated": false
+        },
+        {
+          "id": "8632656a-3844-4f4c-8de4-b0df7fba5eda:block:2",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 3",
+          "order": 2,
+          "included": true,
+          "contentByteLength": 1213,
+          "contentTruncated": false
+        },
+        {
+          "id": "8632656a-3844-4f4c-8de4-b0df7fba5eda:block:3",
+          "kind": "system",
+          "source": "OMP before_agent_start",
+          "label": "Native system 4",
+          "order": 3,
+          "included": true,
+          "contentByteLength": 277,
+          "contentTruncated": false
+        },
+        {
+          "id": "8632656a-3844-4f4c-8de4-b0df7fba5eda:block:4",
+          "kind": "tool-schema",
+          "source": "OMP ExtensionAPI.getAllTools",
+          "label": "Available native tools",
+          "order": 4,
+          "included": true,
+          "contentByteLength": 2326,
+          "contentTruncated": false
+        },
+        {
+          "id": "8632656a-3844-4f4c-8de4-b0df7fba5eda:block:5",
+          "kind": "user",
+          "source": "OMP before_agent_start",
+          "label": "Delivered prompt",
+          "order": 5,
+          "included": true,
+          "contentByteLength": 49,
+          "contentTruncated": false
+        }
+      ]
+    }
+  ],
+  "actualRead": [
+    {
+      "sourceEventId": "40e1366d-519e-4737-9e92-76e9b4f3a3fa:tool.started:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-b9e2-7000-9392-387ee2f06569:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "sourceSeq": 9,
+      "agentId": "AnnoyedBlackbird.SportingWren",
+      "parentAgentId": "AnnoyedBlackbird",
+      "spanId": "native:01a1033a-b9e2-7000-9392-387ee2f06569:tool:actual-grandchild-read",
+      "parentSpanId": "native:01a1033a-b977-7000-8d19-4a9a37e2a3a8:tool:actual-child-task",
+      "providerTurnId": "01a1033a-b9e2-7000-9392-387ee2f06569:turn:1",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055542823,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 46.09244600000011,
+      "clockDomain": "omp-native:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "origin": "observed",
+      "kind": "tool.started",
+      "payload": {
+        "name": "read",
+        "input": {
+          "text": "{\"path\":\"/tmp/rox-native-runtime-map-oea0Sq/fixture.txt\"}",
+          "byteLength": 57,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        },
+        "status": "running"
+      },
+      "toolUseId": "actual-grandchild-read"
+    },
+    {
+      "sourceEventId": "e3c0bab7-1057-4067-b208-4ca4befcc4b5:tool.completed:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-b9e2-7000-9392-387ee2f06569:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "sourceSeq": 10,
+      "agentId": "AnnoyedBlackbird.SportingWren",
+      "parentAgentId": "AnnoyedBlackbird",
+      "spanId": "native:01a1033a-b9e2-7000-9392-387ee2f06569:tool:actual-grandchild-read",
+      "parentSpanId": "native:01a1033a-b977-7000-8d19-4a9a37e2a3a8:tool:actual-child-task",
+      "providerTurnId": "01a1033a-b9e2-7000-9392-387ee2f06569:turn:1",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055542833,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 56.341629999999896,
+      "clockDomain": "omp-native:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "origin": "observed",
+      "kind": "tool.completed",
+      "payload": {
+        "name": "read",
+        "result": {
+          "text": "NATIVE_READ_OK",
+          "byteLength": 14,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        },
+        "status": "succeeded"
+      },
+      "toolUseId": "actual-grandchild-read"
+    }
+  ],
+  "actualProvidedReasoning": [
+    {
+      "sourceEventId": "665660c1-a9d3-493b-9cbd-7398696e848a:reasoning.output:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-b9e2-7000-9392-387ee2f06569:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "sourceSeq": 6,
+      "agentId": "AnnoyedBlackbird.SportingWren",
+      "parentAgentId": "AnnoyedBlackbird",
+      "spanId": "01a1033a-b9e2-7000-9392-387ee2f06569:reasoning:1:0",
+      "parentSpanId": "native:01a1033a-b977-7000-8d19-4a9a37e2a3a8:tool:actual-child-task",
+      "providerTurnId": "01a1033a-b9e2-7000-9392-387ee2f06569:turn:1",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055542814,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 37.379057999999986,
+      "clockDomain": "omp-native:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "origin": "observed",
+      "kind": "reasoning.output",
+      "payload": {
+        "content": {
+          "text": "Public fixture reasoning from native mock provider.",
+          "byteLength": 51,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        },
+        "provenance": "provider",
+        "complete": false
+      }
+    },
+    {
+      "sourceEventId": "604eaea0-5a49-42a9-95ba-c5954d46c3e4:reasoning.output:0",
+      "sourceId": "omp-native:native-fixture-turn:01a1033a-b9e2-7000-9392-387ee2f06569:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "sourceSeq": 7,
+      "agentId": "AnnoyedBlackbird.SportingWren",
+      "parentAgentId": "AnnoyedBlackbird",
+      "spanId": "01a1033a-b9e2-7000-9392-387ee2f06569:reasoning:1:0",
+      "parentSpanId": "native:01a1033a-b977-7000-8d19-4a9a37e2a3a8:tool:actual-child-task",
+      "providerTurnId": "01a1033a-b9e2-7000-9392-387ee2f06569:turn:1",
+      "occurredAt": {
+        "state": "known",
+        "value": 1791055542815,
+        "source": "OMP native extension hook",
+        "origin": "observed"
+      },
+      "elapsedMs": 37.6509759999999,
+      "clockDomain": "omp-native:1aee26ce-c16c-4e5a-abfa-3eab7eac3712",
+      "origin": "observed",
+      "kind": "reasoning.output",
+      "payload": {
+        "content": {
+          "text": "Public fixture reasoning from native mock provider.",
+          "byteLength": 51,
+          "truncated": false,
+          "availability": "available",
+          "tokens": {
+            "state": "unknown",
+            "reason": "not-emitted"
+          },
+          "isDelta": false
+        },
+        "provenance": "provider",
+        "complete": true
+      }
+    }
+  ],
+  "actualTaskResult": {
+    "content": [
+      {
+        "type": "text",
+        "text": "<task-result id=\"AnnoyedBlackbird\" agent=\"fixture-worker\" status=\"completed\" duration=\"286ms\">\n<meta lines=\"3\" size=\"24B\" />\n<output>\n{\n  \"text\": \"CHILD_OK\"\n}\n</output>\n</task-result>"
+      }
+    ],
+    "details": {
+      "projectAgentsDir": null,
+      "results": [
+        {
+          "index": 0,
+          "id": "AnnoyedBlackbird",
+          "agent": "fixture-worker",
+          "agentSource": "user",
+          "task": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+          "assignment": "orchestrate workflowz ultrathink\n\nNATIVE_CHILD_TASK",
+          "description": "runtime-map-fixture",
+          "exitCode": 0,
+          "output": "{\n  \"text\": \"CHILD_OK\"\n}",
+          "stderr": "",
+          "truncated": false,
+          "durationMs": 278,
+          "tokens": 0,
+          "requests": 2,
+          "contextWindow": 200000,
+          "modelOverride": [
+            "fixture/worker:medium"
+          ],
+          "resolvedModel": "fixture/worker:high",
+          "resolvedModelIdentity": "fixture/worker",
+          "resolvedThinkingLevel": "high",
+          "resolvedModelIsFallback": false,
+          "aborted": false,
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "reasoningTokens": 0,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "outputPath": "/tmp/omp-task-15981c0256a38ad0/AnnoyedBlackbird.md",
+          "extractedToolData": {
+            "task": [
+              {
+                "projectAgentsDir": null,
+                "results": [
+                  {
+                    "index": 0,
+                    "id": "AnnoyedBlackbird.SportingWren",
+                    "agent": "fixture-restricted",
+                    "agentSource": "user",
+                    "task": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nNATIVE_GRANDCHILD_TASK",
+                    "assignment": "orchestrate workflowz ultrathink\n\nNATIVE_GRANDCHILD_TASK",
+                    "description": "runtime-map-fixture",
+                    "exitCode": 0,
+                    "output": "{\n  \"text\": \"GRANDCHILD_OK\"\n}",
+                    "stderr": "",
+                    "truncated": false,
+                    "durationMs": 109,
+                    "tokens": 0,
+                    "requests": 2,
+                    "contextWindow": 32768,
+                    "modelOverride": [
+                      "fixture/restricted:medium"
+                    ],
+                    "resolvedModel": "fixture/restricted:high",
+                    "resolvedModelIdentity": "fixture/restricted",
+                    "resolvedThinkingLevel": "high",
+                    "resolvedModelIsFallback": false,
+                    "aborted": false,
+                    "usage": {
+                      "input": 0,
+                      "output": 0,
+                      "cacheRead": 0,
+                      "cacheWrite": 0,
+                      "totalTokens": 0,
+                      "reasoningTokens": 0,
+                      "cost": {
+                        "input": 0,
+                        "output": 0,
+                        "cacheRead": 0,
+                        "cacheWrite": 0,
+                        "total": 0
+                      }
+                    },
+                    "outputPath": "/tmp/omp-task-15981c0256a38ad0/AnnoyedBlackbird/AnnoyedBlackbird.SportingWren.md",
+                    "extractedToolData": {
+                      "yield": [
+                        {
+                          "data": {
+                            "text": "GRANDCHILD_OK"
+                          },
+                          "status": "success"
+                        }
+                      ]
+                    },
+                    "outputMeta": {
+                      "lineCount": 3,
+                      "charCount": 29
+                    }
+                  }
+                ],
+                "totalDurationMs": 115,
+                "usage": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "totalTokens": 0,
+                  "reasoningTokens": 0,
+                  "cost": {
+                    "input": 0,
+                    "output": 0,
+                    "cacheRead": 0,
+                    "cacheWrite": 0,
+                    "total": 0
+                  }
+                },
+                "outputPaths": [
+                  "/tmp/omp-task-15981c0256a38ad0/AnnoyedBlackbird/AnnoyedBlackbird.SportingWren.md"
+                ]
+              }
+            ],
+            "yield": [
+              {
+                "data": {
+                  "text": "CHILD_OK"
+                },
+                "status": "success"
+              }
+            ]
+          },
+          "outputMeta": {
+            "lineCount": 3,
+            "charCount": 24
+          }
+        }
+      ],
+      "totalDurationMs": 286,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "reasoningTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "outputPaths": [
+        "/tmp/omp-task-15981c0256a38ad0/AnnoyedBlackbird.md"
+      ]
+    }
+  },
+  "actualEvalResult": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"text\": \"EVAL_OK\"\n}"
+      }
+    ],
+    "details": {
+      "language": "js",
+      "languages": [
+        "js"
+      ],
+      "cells": [
+        {
+          "index": 0,
+          "code": "const runtimeEvalWorker = await agent(\"NATIVE_EVAL_TASK\", { agent: \"fixture-restricted\", label: \"eval-worker-fixture\" }); print(await runtimeEvalWorker.wait());",
+          "language": "js",
+          "output": "{\n  \"text\": \"EVAL_OK\"\n}",
+          "status": "complete",
+          "statusEvents": [
+            {
+              "index": 0,
+              "id": "eval-worker-fixture",
+              "agent": "fixture-restricted",
+              "agentSource": "user",
+              "status": "completed",
+              "task": "Complete assignment thoroughly:\n\nNATIVE_EVAL_TASK",
+              "assignment": "NATIVE_EVAL_TASK",
+              "description": "eval-worker-fixture",
+              "recentTools": [
+                {
+                  "tool": "yield",
+                  "args": "",
+                  "isError": false,
+                  "endMs": 1791055543096
+                }
+              ],
+              "recentOutput": [],
+              "toolCount": 1,
+              "requests": 1,
+              "tokens": 0,
+              "cost": 0,
+              "durationMs": 63,
+              "modelOverride": [
+                "fixture/restricted:medium"
+              ],
+              "contextWindow": 32768,
+              "resolvedModelIdentity": "fixture/restricted",
+              "resolvedThinkingLevel": "high",
+              "resolvedModel": "fixture/restricted:high",
+              "resolvedModelIsFallback": false,
+              "extractedToolData": {
+                "yield": [
+                  {
+                    "data": {
+                      "text": "EVAL_OK"
+                    },
+                    "status": "success"
+                  }
+                ]
+              },
+              "op": "agent",
+              "taskPreview": "NATIVE_EVAL_TASK"
+            }
+          ],
+          "exitCode": 0,
+          "durationMs": 190
+        }
+      ],
+      "statusEvents": [
+        {
+          "index": 0,
+          "id": "eval-worker-fixture",
+          "agent": "fixture-restricted",
+          "agentSource": "user",
+          "status": "completed",
+          "task": "Complete assignment thoroughly:\n\nNATIVE_EVAL_TASK",
+          "assignment": "NATIVE_EVAL_TASK",
+          "description": "eval-worker-fixture",
+          "recentTools": [
+            {
+              "tool": "yield",
+              "args": "",
+              "isError": false,
+              "endMs": 1791055543096
+            }
+          ],
+          "recentOutput": [],
+          "toolCount": 1,
+          "requests": 1,
+          "tokens": 0,
+          "cost": 0,
+          "durationMs": 63,
+          "modelOverride": [
+            "fixture/restricted:medium"
+          ],
+          "contextWindow": 32768,
+          "resolvedModelIdentity": "fixture/restricted",
+          "resolvedThinkingLevel": "high",
+          "resolvedModel": "fixture/restricted:high",
+          "resolvedModelIsFallback": false,
+          "extractedToolData": {
+            "yield": [
+              {
+                "data": {
+                  "text": "EVAL_OK"
+                },
+                "status": "success"
+              }
+            ]
+          },
+          "op": "agent",
+          "taskPreview": "NATIVE_EVAL_TASK"
+        }
+      ]
+    }
+  },
+  "verifiedAssertions": [
+    "Real pinned OMP task, eval-agent and restricted worker delivery, with native locks and package integrity enabled.",
+    "Actual parent-child task registry IDs preserve two-level ancestry and exact emitted parent tool-call spans.",
+    "Native eval worker has exact registry/parent identity, delivered prompt, restricted tools and returned successful yield.",
+    "Grandchild and eval have only read/yield tools; parent and task child retain task tools.",
+    "Actual restricted model/context readback is fixture/restricted with 32768 context window; parent/task child is fixture/worker with 200000 context window.",
+    "Actual native provider routing receives those distinct catalog model IDs and tool sets.",
+    "Actual grandchild reads the fixture and yields GRANDCHILD_OK; task child returns CHILD_OK to parent; eval worker returns EVAL_OK to native eval caller.",
+    "Root original prompt remains separate from the native effective prompt with policy directives.",
+    "Native observer does not duplicate standard root tool, reasoning or usage events.",
+    "Native supplied public reasoning is recorded with provider provenance; exact input tokenization remains unknown and ContextUsage explicitly estimated.",
+    "Observation transport reports no failure; global fetch is forbidden and records zero network attempts."
+  ],
+  "independentReview": {
+    "reviewer": "W3 projection owner",
+    "result": "passed",
+    "checked": [
+      "Raw ZIP and embedded JSON SHA256 exact match",
+      "63 typed observations, 121 genuine native hooks and 10 native fixture provider calls",
+      "Task/eval assignment kind, two-level identity and actual completion/yield",
+      "Distinct real model routes and read-only tool boundaries",
+      "Task parent tool spans and honest missing eval parent span"
+    ]
+  },
+  "limits": [
+    "Provider responses come from the native SDK fixture provider. This is not a paid/live-provider or remote HTTP serialization smoke.",
+    "Native fixture does not emit before_provider_request; snapshots explicitly report partial coverage for provider serialized payload and exact input tokenization.",
+    "Native eval lifecycle does not emit parentToolCallId in this path; eval parentSpan is omitted, while actual parent agent identity is known.",
+    "Native content capture bounds remain visible as trace.coverage when reached.",
+    "This Linux hosted SDK probe is separate from renderer tests and does not confirm installed macOS/Windows applications.",
+    "Local workspace AF_UNIX native FileLock creation remains EPERM; no lock, permission, model readback or integrity bypass was used."
+  ],
+  "priorFailedRuns": [
+    "native-loop-hosted-37142991716.json",
+    "native-loop-hosted-37146591566.json"
+  ]
+}

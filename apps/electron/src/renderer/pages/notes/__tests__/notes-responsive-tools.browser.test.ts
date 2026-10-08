@@ -53,6 +53,9 @@ test('real sash keyboard/IME bounds use persisted140–480 and pointer cancel/un
   await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointermove', { pointerId: 7, clientX: 200 }))); expect(await page.getByTestId('width').textContent()).toBe('260')
   await page.keyboard.press('Escape'); expect(await page.getByTestId('width').textContent()).toBe('140'); expect(await page.evaluate(() => (window as any).notesTools.listeners())).toBe(baseline)
   await sash.dispatchEvent('pointerdown', { button: 0, pointerId: 9, clientX: 80 }); await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointercancel', { pointerId: 9 }))); expect(await page.evaluate(() => (window as any).notesTools.listeners())).toBe(baseline)
-  await sash.dispatchEvent('pointerdown', { button: 0, pointerId: 10, clientX: 80 }); await page.evaluate(() => (window as any).notesTools.unmount()); expect(await page.evaluate(() => (window as any).notesTools.listeners())).toBe(baseline)
+  await sash.dispatchEvent('pointerdown', { button: 0, pointerId: 10, clientX: 80 }); await page.evaluate(() => (window as any).notesTools.unmount())
+  await page.waitForFunction(() => !document.querySelector('.sash-box'))
+  await page.waitForFunction(expected => (window as any).notesTools.listeners() === expected, baseline)
+  expect(await page.evaluate(() => (window as any).notesTools.listeners())).toBe(baseline)
  } finally { await page.close() }
 }, 30_000)

@@ -37,7 +37,9 @@
     "./runtime-trace/*": "./src/runtime-trace/*.ts",
     "./tasks/personal": "./src/tasks/personal/index.ts",
     "./types": "./src/types/index.ts",
-    "./utils": "./src/utils/index.ts"
+    "./utils": "./src/utils/index.ts",
+    "./commands": "./src/commands/index.ts",
+    "./events": "./src/events/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

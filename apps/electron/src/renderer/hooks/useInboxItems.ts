@@ -22,6 +22,7 @@ import {
 } from '@/pages/inbox/inbox-model'
 import type { TeamInboxItem } from '@rox/shared/team'
 import { useInboxActorContext } from './useInboxActorContext'
+import { toErrorMessage } from '@/lib/errors'
 
 const EMPTY_MAP = new Map<string, never[]>()
 
@@ -86,7 +87,7 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
         setErrors((e) => ({ ...e, [key]: undefined }))
       } catch (error) {
         if (!current()) return
-        setErrors((e) => ({ ...e, [key]: error instanceof Error ? error.message : String(error) }))
+        setErrors((e) => ({ ...e, [key]: toErrorMessage(error) }))
       } finally {
         if (current()) {
           setLoaded((l) => (l[key] ? l : { ...l, [key]: true }))
