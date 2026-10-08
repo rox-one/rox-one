@@ -570,7 +570,10 @@ export const mockElectronAPI = {
   },
   onContextDocsChanged: () => () => {},
   listMemoryLessons: async () => [],
+  listMemoryProposals: async () => [],
+  listPromotionCandidates: async () => [],
   onMemoryChanged: () => () => {},
+  onSkillsPendingChanged: () => () => {},
   readFile: async (path: string) => {
     throw new Error(`Playground has no file: ${path}`)
   },

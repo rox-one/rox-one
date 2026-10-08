@@ -25,7 +25,9 @@ setupI18n([initReactI18next])
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <JotaiProvider>
-      <ThemeProvider>
+      {/* The dev playground follows the OS/emulated color scheme (the app's own
+          "dark" default would pin light/dark visual baselines to dark forever). */}
+      <ThemeProvider defaultMode="system">
         <EscapeInterruptProvider>
           <PlaygroundAppShellProvider>
             <PlaygroundApp />
