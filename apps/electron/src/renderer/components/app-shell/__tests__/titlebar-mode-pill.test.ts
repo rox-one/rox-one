@@ -71,8 +71,10 @@ describe('titlebar mode pill source contract', () => {
     expect(tileMark).toContain('rox-mark-portrait-18.png')
     expect(tileMark).not.toContain('rox-mark-tile-')
   })
-  it('exposes the seven primary surfaces without requiring experimental Workbench chrome', () => {
-    expect(topBar).toContain('const showModePill = !isCompact')
+  it('exposes the mode pill on Главная without requiring experimental Workbench chrome', () => {
+    const appShell = read('components/app-shell/AppShell.tsx')
+    expect(topBar).toContain('const showModePill = !isCompact && (modeBarActive ?? !surfaceNavigationActive)')
+    expect(appShell).toContain('modeBarActive={isHomeNavigation(navState)}')
     expect(topBar).not.toContain('const showModePill = chrome.showModeBar')
   })
 
