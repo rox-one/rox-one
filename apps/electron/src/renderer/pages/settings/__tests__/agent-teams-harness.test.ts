@@ -12,10 +12,6 @@ const flags = readFileSync(
   join(repoRoot, 'packages/core/src/platform/workbench/flags.ts'),
   'utf8',
 )
-const skip = readFileSync(
-  join(repoRoot, 'packages/core/src/platform/workbench/harness-skip-list.ts'),
-  'utf8',
-)
 const shell = readFileSync(
   join(repoRoot, 'apps/electron/src/renderer/components/app-shell/AppShell.tsx'),
   'utf8',
@@ -23,11 +19,6 @@ const shell = readFileSync(
 const pkg = readFileSync(join(repoRoot, 'package.json'), 'utf8')
 
 describe('Agent Teams first-party wiring', () => {
-  it('keeps Cordis agent-teams on the H6 skip-list', () => {
-    expect(skip).toContain("id: 'agentTeamsRuntime'")
-    expect(skip).toContain('@nanmicoder/dsh-agent-teams')
-  })
-
   it('adds first-party flag workbench.harness.agentTeams default on', () => {
     expect(flags).toContain("harnessAgentTeams: 'workbench.harness.agentTeams'")
     expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: true/)

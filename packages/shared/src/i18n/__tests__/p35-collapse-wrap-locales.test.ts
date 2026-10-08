@@ -290,17 +290,6 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.appearance.conationNotesBridge": "Мост Заметки",
   "settings.appearance.conationNotesBridgeDesc": "Мост Conation Заметки только для чтения (workbench.conation.notesBridge). По умолчанию выкл.",
   "settings.appearance.conationSessionApply": "Заглушка SessionApply (Conation)",
-  "settings.appearance.harnessSkip.agentTeamsRuntime": "Runtime команд агентов",
-  "settings.appearance.harnessSkip.agentTeamsRuntimeDesc": "Cordis-плагин не ставим. Встроенный навык — Внешний вид → Команды агентов (workbench.harness.agentTeams).",
-  "settings.appearance.harnessSkip.extraAutomationRuntime": "Отдельный рантайм автоматизаций",
-  "settings.appearance.harnessSkip.extraAutomationRuntimeDesc": "Автоматизации уже встроены.",
-  "settings.appearance.harnessSkip.mnemon": "Отдельный рантайм памяти",
-  "settings.appearance.harnessSkip.mnemonDesc": "Память уже в Rox. Второй хост памяти не ставим.",
-  "settings.appearance.harnessSkip.pluginHotReloadDesc": "Горячий путь — флаги и RPC. Отдельный рантайм горячей перезагрузки не ставим.",
-  "settings.appearance.harnessSkip.remoteControlCompat": "Совместимость удалённого управления",
-  "settings.appearance.harnessSkip.searchCliPluginDesc": "Используй источники MCP/API. Ключи поиска не вшиваем.",
-  "settings.appearance.harnessSkip.visionCliPluginDesc": "Модели зрения и инструмент браузера уже покрывают это.",
-  "settings.appearance.harnessSkipDesc": "Эти рантаймы в Rox не входят. Список заморожен.",
   "settings.appearance.kanbanBoard": "Доска",
   "settings.appearance.workbenchBrowserSurfaceDesc": "Показывать окна браузера в полоске вкладок, а не значками в верхней панели",
   "settings.appearance.workbenchDesc": "Предпросмотр новой оболочки. Экспериментальные функции включены по умолчанию.",
@@ -430,7 +419,7 @@ describe('P35 leftover wrap collapse', () => {
   })
   it('applies every unique leftover wrap on current Russian catalog keys', () => {
     const keys = Object.keys(WRAPPED_RU)
-    expect(keys).toHaveLength(404)
+    expect(keys).toHaveLength(393)
     expect(keys).toEqual([...keys].sort())
 
     for (const key of keys) {
