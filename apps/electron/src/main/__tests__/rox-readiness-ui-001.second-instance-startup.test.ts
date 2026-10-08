@@ -85,7 +85,10 @@ describe('UI-001 actual second-instance startup deep-link ingress', () => {
   test('failed startup replay retains its URL until a successful retry', async () => {
     const f = fixture(), failure = new Error('not ready')
     f.secondUrl('rox://retry'); f.ready({}); f.reject(failure)
-    await expect(f.replay()).rejects.toThrow('not ready')
+    // #1499 review 4 #9: the init path no longer awaits the replay (a held
+    // entity link must not delay init); a failure is logged, the URL kept.
+    await f.replay(); await Promise.resolve(); await Promise.resolve()
+    expect(f.errors).toEqual([['Failed to handle pending deep link:', failure]])
     expect(f.pending()).toBe('rox://retry')
     f.reject(); await f.replay()
     expect(f.pending()).toBeNull()

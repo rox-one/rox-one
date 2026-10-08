@@ -279,7 +279,7 @@ describe('main entities-links flag owner', () => {
     it('the cold-start pending link is not awaited in the init path (review 4 #9)', () => {
       const source = readFileSync(new URL('../index.ts', import.meta.url), 'utf8')
       expect(source).not.toContain('await handleDeepLink(pendingDeepLink')
-      expect(source).toContain('handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(')
+      expect(source).toContain('handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).then(')
     })
   })
 })

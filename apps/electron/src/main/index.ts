@@ -1650,12 +1650,14 @@ app.whenReady().then(async () => {
     // Process pending deep link from cold start
     // Not awaited: an entity link may be held for up to 10 s until the
     // entities.links.v1 state is known, which must not delay the rest of
-    // init (the 'activate' handler below, the "initialized" log).
+    // init (the 'activate' handler below, the "initialized" log). The URL
+    // stays pending until it was handled successfully (kept for a retry).
     if (pendingDeepLink) {
       const coldStartLink = pendingDeepLink
-      pendingDeepLink = null
       mainLog.info('Processing pending deep link:', coldStartLink)
-      handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
+      handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).then(() => {
+        if (pendingDeepLink === coldStartLink) pendingDeepLink = null
+      }, err => {
         mainLog.error('Failed to handle pending deep link:', err)
       })
     }
