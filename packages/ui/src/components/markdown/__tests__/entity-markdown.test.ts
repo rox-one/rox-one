@@ -3,10 +3,13 @@
  */
 import { describe, expect, it } from 'bun:test'
 import MarkdownIt from 'markdown-it'
+import { Lexer } from 'marked'
 import {
   canonicalEntityTarget,
   entityEmbedBlockStart,
   installEntityMarkdownRules,
+  isMarkedRootTokenList,
+  isWikilinkSafeRefLiteral,
   matchEntityEmbedLine,
   matchEntityEmbed,
   matchEntityMention,
@@ -128,5 +131,37 @@ describe('review fixes (#1505 fix1)', () => {
     expect(md.render('Para\n![[task:1]]\n')).not.toContain('data-entity-embed')
     expect(md.render('Para\n\n![[task:1]]\n')).toContain('data-entity-embed')
     expect(md.render('[[doc:2]]')).toContain('data-source="[[doc:2]]"')
+  })
+})
+
+describe('review fixes (#1505 fix2)', () => {
+  it('refs whose literal cannot be written inside [[…]] have no canonical target', () => {
+    for (const target of ['project:a|b', 'file:x]y', 'file:a[[b', 'task:a\nb', 'task:a\rb']) {
+      expect(canonicalEntityTarget(target)).toBeNull()
+    }
+    expect(isWikilinkSafeRefLiteral('project:a|b')).toBe(false)
+    expect(isWikilinkSafeRefLiteral('')).toBe(false)
+    expect(isWikilinkSafeRefLiteral('file:x[y')).toBe(true)
+    expect(canonicalEntityTarget('file:x[y')).toBe('file:x[y')
+    // `[[` inside a target is not a mention either (stays text).
+    expect(matchEntityMention('[[task:a[[b]]')).toBeNull()
+  })
+
+  it('markdown-it: embed lines inside list items and blockquotes are not block embeds', () => {
+    const md = new MarkdownIt()
+    installEntityMarkdownRules(md)
+    for (const src of ['- ![[goal:q4]]\n', '- [ ] ![[goal:q4]]\n', '1. ![[goal:q4]]\n', '> ![[goal:q4]]\n', '- a\n\n  ![[goal:q4]]\n']) {
+      expect(md.render(src)).not.toContain('data-entity-embed')
+    }
+    // Top level still works, including right after a list or a setext-like line.
+    expect(md.render('- a\n\n![[goal:q4]]\n')).toContain('data-entity-embed')
+    expect(md.render('A\n\n![[goal:q4]]\n\n- b\n')).toContain('data-entity-embed')
+  })
+
+  it('marked: only the root token list counts as top level', () => {
+    const lexer = new Lexer()
+    expect(isMarkedRootTokenList((lexer as unknown as { tokens: unknown }).tokens)).toBe(true)
+    expect(isMarkedRootTokenList([])).toBe(false)
+    expect(isMarkedRootTokenList(undefined)).toBe(false)
   })
 })

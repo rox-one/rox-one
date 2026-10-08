@@ -31,10 +31,28 @@ export function entityRefFromTarget(target: string): EntityRef | null {
   return explicitEntityRefFromWikilinkTarget(target.trim())
 }
 
-/** Canonical ref literal for a target, or null when it is not an explicit entity ref. */
+/**
+ * Characters a ref literal cannot carry inside `[[…]]` / `![[…]]`: `|`
+ * starts the label, `]` closes the link, `[[` opens another one and line
+ * breaks end it. `formatEntityRef` only escapes `%` and `#`, so such a ref
+ * would re-parse as a different entity (or none) after saving.
+ */
+const UNSAFE_REF_LITERAL = /[|\]\n\r]|\[\[/
+
+/** True when `literal` survives `[[literal]]` → parse unchanged. */
+export function isWikilinkSafeRefLiteral(literal: string): boolean {
+  return literal.length > 0 && !UNSAFE_REF_LITERAL.test(literal)
+}
+
+/**
+ * Canonical ref literal for a target, or null when it is not an explicit
+ * entity ref or its canonical literal cannot be written inside `[[…]]`.
+ */
 export function canonicalEntityTarget(target: string): string | null {
   const ref = entityRefFromTarget(target)
-  return ref ? formatEntityRef(ref) : null
+  if (!ref) return null
+  const literal = formatEntityRef(ref)
+  return isWikilinkSafeRefLiteral(literal) ? literal : null
 }
 
 /** Labels cannot contain `]` or newlines inside `[[…|label]]`. */
@@ -130,6 +148,17 @@ export function entityEmbedBlockStart(src: string): number {
 }
 
 /**
+ * Official engine (marked): true when a block tokenizer runs at the top
+ * level. marked's root `blockTokens` call receives the lexer's own token list,
+ * which carries the `links` map; list items and blockquotes are tokenized into
+ * fresh arrays without it. (Pinned by the round-trip tests: an upgrade that
+ * changes this fails them instead of silently embedding inside lists.)
+ */
+export function isMarkedRootTokenList(tokens: unknown): boolean {
+  return Array.isArray(tokens) && typeof (tokens as { links?: unknown }).links === 'object' && (tokens as { links?: unknown }).links !== null
+}
+
+/**
  * Whole-line embed: `line` must be exactly `![[…]]` (up to 3 leading spaces,
  * trailing whitespace ignored; 4+ spaces is indented code).
  */
@@ -152,6 +181,8 @@ interface InlineState {
 }
 
 interface BlockState {
+  /** markdown-it token nesting level: 0 at the top level, > 0 inside lists / blockquotes. */
+  level?: number
   src: string
   bMarks: number[]
   tShift: number[]
@@ -195,7 +226,14 @@ export function installEntityMarkdownRules(md: MarkdownItLike): void {
 
   // No `alt: ['paragraph']`: an embed line cannot interrupt the paragraph
   // directly above it (that text keeps its `![[…]]` verbatim).
+  // Top level only: markdown-it runs this rule inside list items and
+  // blockquotes too, where an embed block would be hoisted out of the item by
+  // ProseMirror (listItem content is `paragraph block*`) and the next save
+  // would rewrite the list. There the line stays paragraph text.
+  // (`state.level`, not `state.parentType`: markdown-it's lheading rule
+  // leaves parentType set to 'paragraph' when it does not match.)
   md.block.ruler.before('paragraph', 'rox_entity_embed', (state, startLine, _endLine, silent) => {
+    if ((state.level ?? 0) > 0) return false
     if (state.sCount[startLine]! - state.blkIndent >= 4) return false
     const match = matchEntityEmbedLine(state.src.slice(state.bMarks[startLine]! + state.tShift[startLine]!, state.eMarks[startLine]!))
     if (!match) return false

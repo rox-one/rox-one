@@ -98,6 +98,7 @@ export {
   EntityEmbed,
   serializeEntityMention,
   serializeEntityEmbed,
+  isWikilinkSafeRefLiteral,
   type EntityNodesOptions,
 } from './components/markdown'
 

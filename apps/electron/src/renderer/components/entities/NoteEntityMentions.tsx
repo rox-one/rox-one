@@ -7,11 +7,14 @@
  * extra nodes and `[[kind:id|label]]` stays plain text exactly as before.
  */
 import * as React from 'react'
-import type { EntityNodesOptions, TiptapEditorHandle } from '@rox/ui'
-import { formatEntityRef } from '@rox/core/entities'
+import { isWikilinkSafeRefLiteral, type EntityNodesOptions, type TiptapEditorHandle } from '@rox/ui'
+import { formatEntityRef, type EntityRef } from '@rox/core/entities'
 import { EntityPicker } from './EntityPicker'
 import { createEntityNodeViews } from './entity-node-views'
 import { useEntityPreviewsEnabled } from './flags'
+
+/** Notes can only link refs whose literal is writable as `[[kind:id]]`. */
+export const isNoteLinkableRef = (ref: EntityRef): boolean => isWikilinkSafeRefLiteral(formatEntityRef(ref))
 
 export interface UseNoteEntityMentionsInput {
   workspaceId: string | null | undefined
@@ -44,6 +47,7 @@ export function useNoteEntityMentions({ workspaceId, editorRef, enabled: overrid
       open={pickerOpen}
       onOpenChange={setPickerOpen}
       workspaceId={scope}
+      accept={isNoteLinkableRef}
       onSelect={(hit) => {
         const editor = editorRef.current
         if (!editor || editor.isDestroyed) return

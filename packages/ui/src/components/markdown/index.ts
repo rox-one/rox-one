@@ -29,6 +29,8 @@ export {
   entityEmbedPasteRule,
   entityMentionInputRule,
   entityMentionPasteRule,
+  isInBacktickSpan,
+  isInCode,
 } from './extensions/entity-input-rules'
 export {
   ENTITY_EMBED_NODE,
@@ -37,6 +39,8 @@ export {
   entityEmbedBlockStart,
   entityRefFromTarget,
   installEntityMarkdownRules,
+  isMarkedRootTokenList,
+  isWikilinkSafeRefLiteral,
   matchEntityEmbed,
   matchEntityEmbedLine,
   matchEntityMention,

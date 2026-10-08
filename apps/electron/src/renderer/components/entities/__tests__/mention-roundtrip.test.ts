@@ -8,6 +8,8 @@ import { useDomForFile } from '../../../../../../../packages/ui/src/components/p
 import { describe, expect, it } from 'bun:test'
 import { Editor, type JSONContent } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
 import { Markdown as LegacyMarkdown } from 'tiptap-markdown'
 import { Markdown as OfficialMarkdown } from '@tiptap/markdown'
 import { formatEntityRef, type EntityRef } from '@rox/core/entities'
@@ -18,13 +20,14 @@ useDomForFile()
 
 type Engine = 'legacy' | 'official'
 
-function makeEditor(engine: Engine, content?: string | JSONContent, options: { entityNodes?: boolean } = {}): Editor {
+function makeEditor(engine: Engine, content?: string | JSONContent, options: { entityNodes?: boolean; taskLists?: boolean } = {}): Editor {
   const element = document.createElement('div')
   document.body.appendChild(element)
   return new Editor({
     element,
     extensions: [
       StarterKit,
+      ...(options.taskLists ? [TaskList, TaskItem.configure({ nested: true })] : []),
       ...(options.entityNodes === false ? [] : [EntityMention, EntityEmbed]),
       engine === 'legacy' ? LegacyMarkdown.configure({ html: false }) : OfficialMarkdown,
     ],
@@ -131,9 +134,10 @@ for (const engine of ['legacy', 'official'] as const) {
 }
 
 /** Load → save once, returning the Markdown and the entity nodes seen. */
-function roundTrip(engine: Engine, markdown: string, options: { entityNodes?: boolean } = {}) {
+function roundTrip(engine: Engine, markdown: string, options: { entityNodes?: boolean; taskLists?: boolean } = {}) {
   const editor = makeEditor(engine, markdown, options)
   const out = toMarkdown(editor, engine)
+  const topLevel = (editor.getJSON().content ?? []).map((node) => node.type)
   const nodes: Array<{ type: string; ref: string; label: string; source: string }> = []
   editor.state.doc.descendants((node) => {
     if (node.type.name === 'mention' || node.type.name === 'entityEmbed') {
@@ -141,7 +145,7 @@ function roundTrip(engine: Engine, markdown: string, options: { entityNodes?: bo
     }
   })
   editor.destroy()
-  return { out, nodes }
+  return { out, nodes, topLevel }
 }
 
 const BYTE_IDENTICAL = [
@@ -181,6 +185,54 @@ for (const engine of ['legacy', 'official'] as const) {
         expect(flagOn.out).toBe(flagOff.out)
         if (engine === 'official') expect(flagOn.out).toBe(markdown)
       }
+    })
+
+    it('embed lines inside list items / blockquotes stay text; the list is not rewritten', () => {
+      const cases: Array<[string, string]> = [
+        ['- ![[goal:q4]]', 'bulletList'],
+        ['- [ ] ![[goal:q4]]', 'taskList'],
+        ['1. ![[goal:q4]]', 'orderedList'],
+        ['- a\n- ![[goal:q4|Q4]]\n- b', 'bulletList'],
+        ['> ![[goal:q4]]', 'blockquote'],
+      ]
+      for (const [markdown, container] of cases) {
+        const flagOn = roundTrip(engine, markdown, { taskLists: true })
+        const flagOff = roundTrip(engine, markdown, { taskLists: true, entityNodes: false })
+        expect(flagOn.nodes.filter((n) => n.type === 'entityEmbed')).toEqual([])
+        // One container, nothing hoisted out of it, no empty item left behind.
+        expect(flagOn.topLevel).toEqual([container])
+        // Identical to main (flag off); the official engine keeps the bytes.
+        expect(flagOn.out).toBe(flagOff.out)
+        if (engine === 'official') expect(flagOn.out).toBe(markdown)
+        // Reloading the saved text is stable.
+        expect(roundTrip(engine, flagOn.out, { taskLists: true }).out).toBe(flagOn.out)
+      }
+    })
+
+    it('top-level embed lines next to a list still become embeds (positive control)', () => {
+      const { nodes, out, topLevel } = roundTrip(engine, 'A\n\n![[goal:q4]]\n\n- b', { taskLists: true })
+      expect(nodes.map((n) => n.type)).toEqual(['entityEmbed'])
+      expect(topLevel).toEqual(['paragraph', 'entityEmbed', 'bulletList'])
+      expect(out).toBe('A\n\n![[goal:q4]]\n\n- b')
+    })
+
+    it('refs whose literal cannot be written inside [[…]] are refused (no-op, nothing written)', () => {
+      for (const ref of ['project:a|b', 'file:x]y', 'file:a[[b', 'task:a\nb', 'task:a\rb']) {
+        const editor = makeEditor(engine, 'Text')
+        editor.commands.focus('end')
+        const before = toMarkdown(editor, engine)
+        expect(editor.commands.insertEntityMention({ ref, label: 'L' })).toBe(false)
+        expect(editor.commands.insertEntityEmbed({ ref })).toBe(false)
+        expect(entityNodes(editor)).toEqual([])
+        expect(toMarkdown(editor, engine)).toBe(before)
+        editor.destroy()
+      }
+      // Safe refs with `[`/`%`/`#` still insert and survive the round trip.
+      const editor = makeEditor(engine, '')
+      expect(editor.commands.insertEntityMention({ ref: 'file:x[y' })).toBe(true)
+      const out = toMarkdown(editor, engine)
+      editor.destroy()
+      expect(roundTrip(engine, out).nodes.map((n) => n.ref)).toEqual(['file:x[y'])
     })
 
     it('note titles with a colon stay plain wikilinks', () => {

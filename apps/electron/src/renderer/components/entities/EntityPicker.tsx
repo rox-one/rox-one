@@ -4,8 +4,10 @@
  * 560 px dialog: search input, kind filter chips, then Recent / Results
  * groups. ↑↓ move, Enter links, Esc closes. Search comes from the entity
  * data source (STUB(#1504) until W1-07 registers a provider); typing a full
- * `kind:id` ref always offers it as a literal row. Nothing is created here:
- * the caller decides what "link" means (Notes inserts a mention node).
+ * `kind:id` ref offers it as a literal row (unless its literal cannot be
+ * written inside `[[…]]`, e.g. an id with `|` or `]`). Nothing is created
+ * here: the caller decides what "link" means (Notes inserts a mention node)
+ * and can hide refs it cannot link with `accept`.
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,6 +19,7 @@ import {
   type EntityRef,
 } from '@rox/core/entities'
 import { FOCUS_RING, MOTION_FAST, SELECTED_TINT } from '@rox/ui/primitives'
+import { isWikilinkSafeRefLiteral } from '@rox/ui'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { EntityKindIcon } from './kind-icons'
@@ -37,6 +40,8 @@ export function buildEntityPickerItems(input: {
   kind: EntityKind | null
   recents: readonly EntitySearchHit[]
   results: readonly EntitySearchHit[]
+  /** Hide refs the caller cannot link (e.g. Notes: not writable as `[[…]]`). */
+  accept?: (ref: EntityRef) => boolean
 }): EntityPickerItem[] {
   const query = input.query.trim()
   const lower = query.toLowerCase()
@@ -44,6 +49,7 @@ export function buildEntityPickerItems(input: {
   const seen = new Set<string>()
   const push = (hit: EntitySearchHit, section: EntityPickerItem['section']) => {
     if (input.kind && hit.ref.kind !== input.kind) return
+    if (input.accept && !input.accept(hit.ref)) return
     const key = formatEntityRef(hit.ref)
     if (seen.has(key)) return
     seen.add(key)
@@ -51,7 +57,9 @@ export function buildEntityPickerItems(input: {
   }
   if (query) {
     const literal = parseEntityRef(query)
-    if (literal.ok) push({ ref: literal.value, title: formatEntityRef(literal.value) }, 'literal')
+    if (literal.ok && isWikilinkSafeRefLiteral(formatEntityRef(literal.value))) {
+      push({ ref: literal.value, title: formatEntityRef(literal.value) }, 'literal')
+    }
   }
   for (const hit of input.recents) {
     if (!lower || hit.title.toLowerCase().includes(lower) || formatEntityRef(hit.ref).includes(lower)) push(hit, 'recent')
@@ -67,9 +75,11 @@ export interface EntityPickerPanelProps {
   initialQuery?: string
   autoFocus?: boolean
   className?: string
+  /** Hide refs the caller cannot link. */
+  accept?: (ref: EntityRef) => boolean
 }
 
-export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuery = '', autoFocus, className }: EntityPickerPanelProps) {
+export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuery = '', autoFocus, className, accept }: EntityPickerPanelProps) {
   const { t } = useTranslation()
   const [query, setQuery] = React.useState(initialQuery)
   const [kind, setKind] = React.useState<EntityKind | null>(null)
@@ -90,7 +100,10 @@ export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuer
     return () => { cancelled = true; clearTimeout(timer) }
   }, [workspaceId, query, kind])
 
-  const items = React.useMemo(() => buildEntityPickerItems({ query, kind, recents, results }), [query, kind, recents, results])
+  const items = React.useMemo(
+    () => buildEntityPickerItems({ query, kind, recents, results, ...(accept ? { accept } : {}) }),
+    [query, kind, recents, results, accept],
+  )
   React.useEffect(() => { setActive(0) }, [query, kind])
 
   const choose = (item: EntityPickerItem | undefined) => {

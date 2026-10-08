@@ -13,6 +13,7 @@ import {
   canonicalEntityTarget,
   entityEmbedBlockStart,
   installEntityMarkdownRules,
+  isMarkedRootTokenList,
   matchEntityEmbedLine,
   serializeEntityEmbed,
   type MarkdownItLike,
@@ -63,7 +64,8 @@ export const EntityEmbed = Node.create<EntityEmbedOptions>({
   },
 
   parseHTML() {
-    return [{ tag: 'div[data-entity-embed]' }]
+    // Pasted HTML with a ref that is not a writable explicit ref is not an embed.
+    return [{ tag: 'div[data-entity-embed]', getAttrs: (el: HTMLElement) => (canonicalEntityTarget(el.getAttribute('data-entity-embed') ?? '') ? null : false) }]
   },
 
   renderHTML({ node, HTMLAttributes }) {
@@ -81,6 +83,8 @@ export const EntityEmbed = Node.create<EntityEmbedOptions>({
 
   addCommands() {
     return {
+      // Refs that cannot be written inside `![[…]]` (`|`, `]`, `[[`, line
+      // breaks) are refused: no-op, returns false, nothing is written.
       insertEntityEmbed: (attrs) => ({ commands }) => {
         const ref = canonicalEntityTarget(attrs.ref)
         if (!ref) return false
@@ -119,7 +123,10 @@ export const EntityEmbed = Node.create<EntityEmbedOptions>({
     // Line-start positions only (after a blank line or at 0): never cut a
     // paragraph mid-line or pull an embed out of the paragraph above it.
     start: (src: string) => entityEmbedBlockStart(src),
-    tokenize: (src: string) => {
+    // Top level only (not inside list items / blockquotes), like the
+    // markdown-it rule: a nested line stays paragraph text.
+    tokenize: (src: string, tokens: unknown) => {
+      if (!isMarkedRootTokenList(tokens)) return undefined
       const line = src.split('\n', 1)[0] ?? ''
       const match = matchEntityEmbedLine(line)
       if (!match) return undefined

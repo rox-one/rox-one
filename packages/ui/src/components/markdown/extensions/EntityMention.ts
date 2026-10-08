@@ -82,7 +82,8 @@ export const EntityMention = Node.create<EntityMentionOptions>({
   },
 
   parseHTML() {
-    return [{ tag: 'span[data-entity-mention]' }]
+    // Pasted HTML with a ref that is not a writable explicit ref is not a mention.
+    return [{ tag: 'span[data-entity-mention]', getAttrs: (el: HTMLElement) => (canonicalEntityTarget(el.getAttribute('data-entity-mention') ?? '') ? null : false) }]
   },
 
   renderHTML({ node, HTMLAttributes }) {
@@ -100,6 +101,8 @@ export const EntityMention = Node.create<EntityMentionOptions>({
 
   addCommands() {
     return {
+      // Refs that cannot be written inside `[[…]]` (`|`, `]`, `[[`, line
+      // breaks) are refused: no-op, returns false, nothing is written.
       insertEntityMention: (attrs) => ({ commands }) => {
         const ref = canonicalEntityTarget(attrs.ref)
         if (!ref) return false

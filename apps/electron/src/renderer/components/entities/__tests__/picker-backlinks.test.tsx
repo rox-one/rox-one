@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act } from 'react'
 import type { EntityRef } from '@rox/core/entities'
 import { buildEntityPickerItems, EntityPickerPanel } from '../EntityPicker'
+import { isNoteLinkableRef } from '../NoteEntityMentions'
 import { backlinkGroupOf, groupBacklinks } from '../backlink-groups'
 import { BacklinksList } from '../BacklinksPanel'
 import {
@@ -102,6 +103,24 @@ describe('buildEntityPickerItems', () => {
     expect(html).toContain('Ничего не найдено')
     rememberRecentEntity('ws', { ref: { kind: 'task', id: '1' }, title: 'Recent task' })
     expect(await renderMarkup(<EntityPickerPanel workspaceId="ws" onSelect={() => {}} />)).toContain('Недавние')
+  })
+})
+
+describe('picker refs that cannot be written as [[…]] (#1505 fix2)', () => {
+  it('no literal row for ids with |, ], [[ or line breaks', () => {
+    for (const query of ['project:a|b', 'file:x]y', 'file:a[[b']) {
+      expect(buildEntityPickerItems({ query, kind: null, recents: [], results: [] }).filter((i) => i.section === 'literal')).toEqual([])
+    }
+    expect(buildEntityPickerItems({ query: 'file:x[y', kind: null, recents: [], results: [] })[0]?.section).toBe('literal')
+  })
+
+  it('Notes hides unlinkable search hits and recents via accept', () => {
+    const bad = { ref: { kind: 'file', id: 'a]b' } as EntityRef, title: 'Bad' }
+    const good = { ref: { kind: 'task', id: '1' } as EntityRef, title: 'Good' }
+    const items = buildEntityPickerItems({ query: '', kind: null, recents: [bad], results: [bad, good], accept: isNoteLinkableRef })
+    expect(items.map((i) => i.title)).toEqual(['Good'])
+    expect(isNoteLinkableRef({ kind: 'project', id: 'a|b' } as EntityRef)).toBe(false)
+    expect(isNoteLinkableRef({ kind: 'task', id: '42' } as EntityRef)).toBe(true)
   })
 })
 
