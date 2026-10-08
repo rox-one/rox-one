@@ -14,6 +14,7 @@ export {
 
 export {
   MAX_SUBSCRIBE_TOPICS,
+  MAX_TOPICS_PER_CLIENT,
   REALTIME_RPC,
   MAX_TOPIC_ID_LENGTH,
   REALTIME_EVENT_TYPES,
@@ -40,7 +41,9 @@ export {
 } from './topics.ts'
 
 export {
+  DEFAULT_MAX_TOPIC_WINDOWS,
   DEFAULT_TOPIC_REPLAY_CAPACITY,
+  DEFAULT_TOPIC_WINDOW_IDLE_MS,
   TopicLog,
   TopicSeqTracker,
   type SeqAcceptResult,

@@ -40,6 +40,8 @@ export interface CommandOutbox {
   /** Transport failure: keep the entry, record the error and the next attempt time. */
   fail(workspaceId: string, commandId: string, error: string, nextAttemptAt: number): Promise<void>
   count(workspaceId?: string): Promise<number>
+  /** Workspaces with at least one pending entry (oldest first), e.g. after a restart. */
+  workspaceIds(): Promise<string[]>
   close?(): void
 }
 
@@ -74,6 +76,10 @@ export class InMemoryCommandOutbox implements CommandOutbox {
 
   async count(workspaceId?: string): Promise<number> {
     return workspaceId ? this.entries.filter(entry => entry.workspaceId === workspaceId).length : this.entries.length
+  }
+
+  async workspaceIds(): Promise<string[]> {
+    return [...new Set(this.entries.map(entry => entry.workspaceId))]
   }
 }
 
@@ -171,6 +177,12 @@ export class SqliteCommandOutbox implements CommandOutbox {
       ? this.db.prepare('SELECT COUNT(*) AS n FROM command_outbox WHERE workspace_id = ?').get(workspaceId)
       : this.db.prepare('SELECT COUNT(*) AS n FROM command_outbox').get()
     return Number((row as { n?: number } | undefined)?.n ?? 0)
+  }
+
+  async workspaceIds(): Promise<string[]> {
+    this.assertOpen()
+    const rows = this.db.prepare('SELECT workspace_id, MIN(seq) AS first FROM command_outbox GROUP BY workspace_id ORDER BY first').all()
+    return (rows as Array<{ workspace_id: string }>).map(row => row.workspace_id)
   }
 
   close(): void {

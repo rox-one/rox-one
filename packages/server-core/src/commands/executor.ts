@@ -9,12 +9,25 @@
  *   schema (VALIDATION) → authorize (FORBIDDEN) → middleware (`use`, W1-11
  *   hook) → transactional execute.
  *
- * Execute runs in one store transaction: idempotency lookup (same key/command
- * id + same request hash → `duplicate` with the original receipt; different
- * request → IDEMPOTENCY_KEY_REUSED) → handler (CommandConflict → `conflict`)
- * → domain events + receipt. Publication happens after commit only; a failed
- * publish never changes the receipt (projections are re-derivable from the
- * stored events).
+ * Idempotent replay comes first: right after decoding, a read-only receipt
+ * lookup answers a retry of an already-applied command with `duplicate` (or
+ * IDEMPOTENCY_KEY_REUSED for a different request / actor) before any policy
+ * stage runs, so a lost-ack retry still gets `duplicate` after a flag flip,
+ * an unbind, a stricter schema or an ACL change.
+ *
+ * Execute runs in one store transaction: locked idempotency lookup (same key/
+ * command id + same request hash → `duplicate` with the original receipt;
+ * different request → IDEMPOTENCY_KEY_REUSED) → handler (CommandConflict →
+ * `conflict`) → domain events + receipt. Publication happens after commit
+ * only; a failed publish never changes the receipt (projections are
+ * re-derivable from the stored events).
+ *
+ * Failures: a deterministic handler bug is a terminal `rejected/INTERNAL`
+ * receipt. A store / connection failure (and a handler error the store
+ * classifies as transient: lost connection, deadlock, serialization failure,
+ * pool timeout) commits nothing and is thrown as `CommandStoreUnavailable`,
+ * so the host answers with a retryable error (HTTP 503) and the client's
+ * outbox keeps the command.
  *
  * Used by server-core (authority `local`, SQLite store) and by
  * workspace-service (authority `workspace`, Postgres store).
@@ -48,7 +61,7 @@ import {
 import type { DomainEvent } from '@rox/core/events'
 import { isDomainEventType } from '@rox/core/events'
 import { decodeCommandEnvelope } from '@rox/shared/commands/schemas'
-import { CommandStoreUniqueViolation, type CommandStore, type StoredCommandReceipt } from './store'
+import { CommandStoreUnavailable, CommandStoreUniqueViolation, type CommandStore, type StoredCommandReceipt } from './store'
 
 export interface CommandExecutionInput {
   workspaceId: string
@@ -70,6 +83,8 @@ export interface CommandExecutorOptions {
   onPublishError?: (error: unknown) => void
   /** Unexpected handler errors (logged by the host; the receipt says INTERNAL). */
   onHandlerError?: (error: unknown, envelope: CommandEnvelope) => void
+  /** Store / connection failures (the call throws `CommandStoreUnavailable`). */
+  onStoreError?: (error: unknown, envelope: CommandEnvelope) => void
   /** Default payload budget when the definition sets none. */
   maxPayloadBytes?: number
   now?: () => Date
@@ -83,6 +98,14 @@ export function hashCommandRequest(envelope: CommandEnvelope): string {
 function rawCommandId(raw: unknown): string {
   const id = raw && typeof raw === 'object' ? (raw as { commandId?: unknown }).commandId : undefined
   return typeof id === 'string' && id.length > 0 && id.length <= 256 ? id : ''
+}
+
+/** A deterministic error thrown by the handler itself (→ INTERNAL receipt). */
+class HandlerFailure extends Error {
+  constructor(readonly original: unknown) {
+    super('handler failed')
+    this.name = 'HandlerFailure'
+  }
 }
 
 type TransactionOutcome =
@@ -131,6 +154,17 @@ export class CommandExecutor {
     if (!decoded.ok) return rejectedReceipt(fallbackId, 'VALIDATION', decoded.message, { issues: decoded.issues })
     const envelope = decoded.value
 
+    // Read-only idempotent replay before every policy stage (the locked lookup
+    // inside the transaction still decides races).
+    const requestHash = hashCommandRequest(envelope)
+    let previous: StoredCommandReceipt | null
+    try {
+      previous = await this.store.findReceipt(input.workspaceId, envelope.idempotencyKey, envelope.commandId)
+    } catch (error) {
+      throw this.unavailable(envelope, error)
+    }
+    if (previous) return this.replay(previous, envelope, input.actor, requestHash)
+
     const definition = this.registry.get(envelope.type)
     if (!definition) return rejectedReceipt(envelope.commandId, 'UNKNOWN_COMMAND', `Unknown command: ${envelope.type}`)
     if (this.authority === 'workspace' && definition.authority === 'local') {
@@ -177,8 +211,15 @@ export class CommandExecutor {
     try {
       return await run(ctx)
     } catch (error) {
+      if (error instanceof CommandStoreUnavailable) throw error
       return this.errorReceipt(envelope, error)
     }
+  }
+
+  private unavailable(envelope: CommandEnvelope, error: unknown): CommandStoreUnavailable {
+    if (error instanceof CommandStoreUnavailable) return error
+    this.options.onStoreError?.(error, envelope)
+    return new CommandStoreUnavailable(error)
   }
 
   private async executeInTransaction(ctx: CommandPipelineContext): Promise<CommandReceipt> {
@@ -194,17 +235,25 @@ export class CommandExecutor {
         const existing = await tx.findReceipt(workspaceId, envelope.idempotencyKey, envelope.commandId)
         if (existing) return { kind: 'existing', stored: existing }
 
-        const result = (await handler({
-          envelope,
-          payload: ctx.payload,
-          workspaceId,
-          actor,
-          authority: this.authority,
-          transaction: tx.handle,
-          conflict(currentRevision: number, current?: unknown): never {
-            throw new CommandConflict(currentRevision, current)
-          },
-        })) ?? {}
+        let result
+        try {
+          result = (await handler({
+            envelope,
+            payload: ctx.payload,
+            workspaceId,
+            actor,
+            authority: this.authority,
+            transaction: tx.handle,
+            conflict(currentRevision: number, current?: unknown): never {
+              throw new CommandConflict(currentRevision, current)
+            },
+          })) ?? {}
+        } catch (error) {
+          if (error instanceof CommandConflict || error instanceof CommandRejection) throw error
+          // A transient store error surfacing through the handler's queries stays retryable.
+          if (this.isTransient(error)) throw error
+          throw new HandlerFailure(error)
+        }
 
         const createdAt = now()
         const drafts = result.events ?? []
@@ -248,10 +297,16 @@ export class CommandExecutor {
     } catch (error) {
       if (error instanceof CommandStoreUniqueViolation) {
         // A concurrent writer won; its transaction is the one effect.
-        const stored = await this.store.findReceipt(workspaceId, envelope.idempotencyKey, envelope.commandId)
+        let stored: StoredCommandReceipt | null
+        try { stored = await this.store.findReceipt(workspaceId, envelope.idempotencyKey, envelope.commandId) }
+        catch (findError) { throw this.unavailable(envelope, findError) }
         if (stored) return this.replay(stored, envelope, actor, requestHash)
+        throw this.unavailable(envelope, error)
       }
-      return this.errorReceipt(envelope, error)
+      if (error instanceof HandlerFailure) return this.errorReceipt(envelope, error.original)
+      if (error instanceof CommandConflict || error instanceof CommandRejection) return this.errorReceipt(envelope, error)
+      // Anything else came from the store (BEGIN, locks, inserts, COMMIT) or is transient.
+      throw this.unavailable(envelope, error)
     }
 
     if (outcome.kind === 'existing') return this.replay(outcome.stored, envelope, actor, requestHash)
@@ -264,6 +319,10 @@ export class CommandExecutor {
       }
     }
     return outcome.receipt
+  }
+
+  private isTransient(error: unknown): boolean {
+    try { return this.store.isTransientError?.(error) === true } catch { return false }
   }
 
   private replay(stored: StoredCommandReceipt, envelope: CommandEnvelope, actor: CommandActor, requestHash: string): CommandReceipt {

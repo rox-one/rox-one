@@ -33,7 +33,7 @@ import { CommandExecutor } from '../../commands/executor.ts'
 import { CommandRouter, type WorkspaceCommandSink } from '../../commands/router.ts'
 import { InProcessEventBus } from '../../commands/event-bus.ts'
 import { SqliteCommandStore } from '../../commands/local-store.ts'
-import type { CommandStore } from '../../commands/store.ts'
+import { CommandStoreUnavailable, type CommandStore } from '../../commands/store.ts'
 import { createCommandRegistry } from '../../commands/registry.ts'
 import { getCommandBusFlags } from '../../commands/flags.ts'
 
@@ -140,7 +140,13 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
       return rejectedReceipt(typeof id === 'string' && id.length <= 256 ? id : '', 'UNAVAILABLE', 'Command bus is disabled')
     }
     const workspace = requireWorkspace(ctx, workspaceId)
-    return routerFor(workspace).route({ workspaceId: workspace.id, actor: actorFor(ctx), envelope })
+    try {
+      return await routerFor(workspace).route({ workspaceId: workspace.id, actor: actorFor(ctx), envelope })
+    } catch (error) {
+      // Nothing was committed: a retryable RPC error, never a terminal receipt.
+      if (error instanceof CommandStoreUnavailable) throw new CodedError('HANDLER_ERROR', 'Command store unavailable; nothing was committed, retry')
+      throw error
+    }
   }, { nativeAction: 'write' })
 
   server.handle(RPC_CHANNELS.commands.LIST, async (ctx, workspaceId: unknown): Promise<CommandsListResult> => {

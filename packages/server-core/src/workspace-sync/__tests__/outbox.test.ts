@@ -6,7 +6,7 @@ import { createCommandEnvelope, type CommandEnvelope, type CommandReceipt } from
 import { CommandExecutor } from '../../commands/executor'
 import { InMemoryCommandStore } from '../../commands/store'
 import { ACTOR, testRegistry } from '../../commands/__tests__/helpers'
-import { WorkspaceCommandHttpClient, WorkspaceCommandSync, WorkspaceTransportError, type WorkspaceCommandTransport } from '../client'
+import { WorkspaceCommandHttpClient, WorkspaceCommandSync, WorkspaceTransportError, type WorkspaceCommandTransport, type WorkspaceSyncStatus } from '../client'
 import { InMemoryCommandOutbox, SqliteCommandOutbox, type CommandOutbox } from '../outbox'
 
 const roots: string[] = []
@@ -91,7 +91,7 @@ describe('outbox drain after offline', () => {
     let now = 1_000
     const outbox = new InMemoryCommandOutbox()
     const ws = fakeWorkspace()
-    const statuses: Array<{ pending: number; lastError?: string }> = []
+    const statuses: WorkspaceSyncStatus[] = []
     const sync = new WorkspaceCommandSync({ outbox, transport: ws.transport, autoDrain: false, now: () => now, backoffBaseMs: 100, backoffMaxMs: 250, onStatus: (_w, s) => statuses.push(s) })
     await sync.enqueue(WS, remote(1))
     await sync.enqueue(WS, remote(2))
@@ -110,7 +110,7 @@ describe('outbox drain after offline', () => {
     ws.net.online = true
     now = 2_000
     expect(await sync.drain(WS)).toEqual({ sent: 2, failed: 0, remaining: 0 })
-    expect(statuses.at(-1)).toEqual({ pending: 0 })
+    expect(statuses.at(-1)).toEqual({ pending: 0, state: 'idle' })
   })
 
   test('sqlite outbox survives a restart with private files', async () => {

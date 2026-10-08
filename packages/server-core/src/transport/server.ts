@@ -234,6 +234,8 @@ export class WsRpcServer implements RpcServer {
   private readonly disposeAuthorityListener: (() => void) | null
   private readonly shutdownHooks = new Set<() => void>()
   private readonly disconnectHooks = new Set<(clientId: string) => void>()
+  // W1-03 (#1500): last push-time session revalidation per connection (fan-out cache).
+  private readonly pushSessionVerifiedAt = new WeakMap<ClientConnection, number>()
   private readonly requestContexts = new WeakMap<RequestContext, {
     socket: WebSocket
     registration: RegisteredHandler
@@ -557,6 +559,9 @@ export class WsRpcServer implements RpcServer {
    * first and runs `guard` with the refreshed actor; an expired, revoked,
    * re-scoped or disconnected client receives nothing. Returns whether the
    * event was sent. Always `false` outside workspace-authority mode.
+   * `reuseVerifiedSessionMs`: skip the revalidation round trip when this
+   * client's session was revalidated by a push within that window (the
+   * in-memory session is still checked for expiry and workspace scope).
    */
   async pushToWorkspaceClient(
     clientId: string,
@@ -564,13 +569,22 @@ export class WsRpcServer implements RpcServer {
     channel: string,
     args: readonly unknown[],
     guard?: (actor: WorkspaceAuthoritySession['actor']) => boolean | Promise<boolean>,
+    options?: { reuseVerifiedSessionMs?: number },
   ): Promise<boolean> {
     if (!this.workspaceAuthority) return false
     const client = this.clients.get(clientId)
     if (!client || client.workspaceId !== workspaceId || !client.workspaceSession || client.principal || client.localBinding) return false
     const ws = client.ws
     let session: WorkspaceAuthoritySession
-    try { session = await this.refreshWorkspaceClient(client) } catch { return false }
+    const verifiedAt = this.pushSessionVerifiedAt.get(client)
+    const reuse = options?.reuseVerifiedSessionMs ?? 0
+    if (reuse > 0 && verifiedAt !== undefined && Date.now() - verifiedAt < reuse) {
+      session = client.workspaceSession
+      try { this.assertWorkspaceSession(session, workspaceId) } catch { return false }
+    } else {
+      try { session = await this.refreshWorkspaceClient(client) } catch { this.pushSessionVerifiedAt.delete(client); return false }
+      this.pushSessionVerifiedAt.set(client, Date.now())
+    }
     if (guard) {
       try { if ((await guard(session.actor)) !== true) return false } catch { return false }
     }

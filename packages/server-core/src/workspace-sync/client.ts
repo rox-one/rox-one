@@ -10,8 +10,13 @@
  * `WorkspaceCommandSync` implements the router's `WorkspaceCommandSink`:
  * enqueue → `queued` receipt → drain (FIFO, single-flight, exponential
  * backoff on transport errors, stops at the first failure to keep order).
+ * A 401 does not back off on a timer: the workspace pauses in the
+ * `auth_required` state until the transport's credential changes (or the
+ * host calls `credentialsChanged`). `start()` also drains workspaces that
+ * only exist in the persisted outbox (`outbox.workspaceIds()`).
  */
 
+import { createHash } from 'node:crypto'
 import { queuedReceipt, rejectedReceipt, type CommandEnvelope, type CommandReceipt } from '@rox/core/commands'
 import { decodeCommandReceipt } from '@rox/shared/commands/schemas'
 import type { WorkspaceCommandSink } from '../commands/router'
@@ -29,6 +34,11 @@ export class WorkspaceTransportError extends Error {
 export interface WorkspaceCommandTransport {
   /** Terminal receipt, or throws `WorkspaceTransportError` (retryable). */
   send(workspaceId: string, envelope: CommandEnvelope): Promise<CommandReceipt>
+  /**
+   * Opaque fingerprint of the credential `send` would use now (never the
+   * secret itself). After a 401 the sync stays paused until it changes.
+   */
+  credentialFingerprint?(workspaceId: string): Promise<string | null> | string | null
 }
 
 export interface WorkspaceCommandHttpClientOptions {
@@ -48,6 +58,15 @@ export class WorkspaceCommandHttpClient implements WorkspaceCommandTransport {
       throw new Error('Workspace command transport requires https for non-loopback hosts')
     }
     this.options = options
+  }
+
+  async credentialFingerprint(): Promise<string | null> {
+    try {
+      const token = await this.options.token()
+      return token ? createHash('sha256').update(token).digest('hex').slice(0, 32) : null
+    } catch {
+      return null
+    }
   }
 
   async send(workspaceId: string, envelope: CommandEnvelope): Promise<CommandReceipt> {
@@ -92,7 +111,7 @@ export interface WorkspaceCommandSyncOptions {
   transport: WorkspaceCommandTransport
   /** Terminal receipts of queued commands (pushed to the renderer). */
   onReceipt?: (workspaceId: string, receipt: CommandReceipt) => void
-  onStatus?: (workspaceId: string, status: { pending: number; lastError?: string }) => void
+  onStatus?: (workspaceId: string, status: WorkspaceSyncStatus) => void
   /** Backoff: base * 2^(attempts-1), capped. */
   backoffBaseMs?: number
   backoffMaxMs?: number
@@ -102,10 +121,19 @@ export interface WorkspaceCommandSyncOptions {
   now?: () => number
 }
 
+export interface WorkspaceSyncStatus {
+  pending: number
+  /** `auth_required`: paused after a 401 until the credential changes. */
+  state: 'idle' | 'retrying' | 'auth_required'
+  lastError?: string
+}
+
 export interface DrainResult {
   sent: number
   failed: number
   remaining: number
+  /** The drain did not send because the workspace waits for new credentials. */
+  authRequired?: boolean
 }
 
 export class WorkspaceCommandSync implements WorkspaceCommandSink {
@@ -114,6 +142,8 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
   private readonly again = new Set<string>()
   private timer: ReturnType<typeof setInterval> | null = null
   private readonly known = new Set<string>()
+  /** Workspaces paused after a 401 → fingerprint of the rejected credential. */
+  private readonly authPaused = new Map<string, string | null>()
 
   constructor(options: WorkspaceCommandSyncOptions) {
     this.options = options
@@ -149,7 +179,8 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
         total.sent += pass.sent
         total.failed += pass.failed
         total.remaining = pass.remaining
-        if (pass.failed > 0) break
+        if (pass.authRequired) total.authRequired = true
+        if (pass.failed > 0 || pass.authRequired) break
       } while (this.again.has(workspaceId))
       return total
     })().finally(() => this.draining.delete(workspaceId))
@@ -157,10 +188,38 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
     return run
   }
 
+  /** Workspace waiting for a new credential after a 401. */
+  isAuthRequired(workspaceId: string): boolean {
+    return this.authPaused.has(workspaceId)
+  }
+
+  /** The host refreshed the session: resume paused workspaces (all, or one). */
+  credentialsChanged(workspaceId?: string): void {
+    const ids = workspaceId ? [workspaceId] : [...this.authPaused.keys()]
+    for (const id of ids) {
+      if (!this.authPaused.delete(id)) continue
+      void this.drain(id).catch(() => {})
+    }
+  }
+
+  private async fingerprint(workspaceId: string): Promise<string | null> {
+    try { return (await this.options.transport.credentialFingerprint?.(workspaceId)) ?? null } catch { return null }
+  }
+
   private async drainPass(workspaceId: string, force: boolean): Promise<DrainResult> {
     const { outbox, transport } = this.options
     const batchSize = this.options.batchSize ?? 100
     let sent = 0
+    if (this.authPaused.has(workspaceId)) {
+      const rejected = this.authPaused.get(workspaceId) ?? null
+      const current = await this.fingerprint(workspaceId)
+      if (current === null || current === rejected) {
+        const remaining = await outbox.count(workspaceId)
+        this.options.onStatus?.(workspaceId, { pending: remaining, state: 'auth_required', lastError: 'Workspace answered 401' })
+        return { sent: 0, failed: 0, remaining, authRequired: true }
+      }
+      this.authPaused.delete(workspaceId)
+    }
     for (;;) {
       const batch = await outbox.pending(workspaceId, batchSize)
       if (batch.length === 0) break
@@ -173,11 +232,20 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
           receipt = await transport.send(workspaceId, entry.envelope)
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error)
+          if (error instanceof WorkspaceTransportError && error.status === 401) {
+            // Credential problem, not an outage: no timer, wait for a new token.
+            const rejected = await this.fingerprint(workspaceId)
+            this.authPaused.set(workspaceId, rejected)
+            await outbox.fail(workspaceId, entry.commandId, message, this.now())
+            const remaining = await outbox.count(workspaceId)
+            this.options.onStatus?.(workspaceId, { pending: remaining, state: 'auth_required', lastError: message })
+            return { sent, failed: 1, remaining, authRequired: true }
+          }
           const attempts = entry.attempts + 1
           const delay = Math.min((this.options.backoffBaseMs ?? 1_000) * 2 ** (attempts - 1), this.options.backoffMaxMs ?? 60_000)
           await outbox.fail(workspaceId, entry.commandId, message, this.now() + delay)
           const remaining = await outbox.count(workspaceId)
-          this.options.onStatus?.(workspaceId, { pending: remaining, lastError: message })
+          this.options.onStatus?.(workspaceId, { pending: remaining, state: 'retrying', lastError: message })
           return { sent, failed: 1, remaining }
         }
         await outbox.complete(workspaceId, entry.commandId, receipt)
@@ -186,18 +254,33 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
       }
     }
     const remaining = await outbox.count(workspaceId)
-    this.options.onStatus?.(workspaceId, { pending: remaining })
+    this.options.onStatus?.(workspaceId, { pending: remaining, state: 'idle' })
     return { sent, failed: 0, remaining }
   }
 
-  /** Periodic retry of every workspace seen by this instance (plus `workspaceIds`). */
-  start(intervalMs = 5_000, workspaceIds: readonly string[] = []): void {
+  /**
+   * Periodic retry of every workspace with pending commands: seen by this
+   * instance, passed in `workspaceIds`, or persisted in the outbox by an
+   * earlier process (`outbox.workspaceIds()`, drained right away).
+   * Resolves once the persisted workspaces are known.
+   */
+  start(intervalMs = 5_000, workspaceIds: readonly string[] = []): Promise<void> {
     for (const id of workspaceIds) this.known.add(id)
-    if (this.timer) return
+    const seeded = this.options.outbox.workspaceIds()
+      .then(ids => {
+        for (const id of ids) {
+          if (this.known.has(id)) continue
+          this.known.add(id)
+          void this.drain(id).catch(() => {})
+        }
+      })
+      .catch(() => { /* the periodic pass still covers known workspaces */ })
+    if (this.timer) return seeded
     this.timer = setInterval(() => {
       for (const id of this.known) void this.drain(id).catch(() => {})
     }, intervalMs)
     ;(this.timer as { unref?: () => void }).unref?.()
+    return seeded
   }
 
   stop(): void {

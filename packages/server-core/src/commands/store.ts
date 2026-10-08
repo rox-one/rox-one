@@ -44,7 +44,31 @@ export interface CommandStore {
   findReceipt(workspaceId: string, idempotencyKey: string, commandId: string): Promise<StoredCommandReceipt | null>
   /** Stored events in sequence order (projections are re-derivable from these). */
   listEvents(workspaceId: string, options?: ListEventsOptions): Promise<DomainEvent[]>
+  /**
+   * Highest committed event sequence per workspace. The relay reads it once at
+   * startup, so its first watermark never depends on which commit publishes first.
+   */
+  latestSequences?(): Promise<Map<string, number>>
+  /**
+   * Whether an error thrown inside a handler is a transient infrastructure
+   * failure (lost connection, deadlock, serialization failure, pool timeout).
+   * Those are retried by the client instead of becoming an INTERNAL receipt.
+   */
+  isTransientError?(error: unknown): boolean
   close?(): void | Promise<void>
+}
+
+/**
+ * The store (or its connection) failed while executing a command: nothing was
+ * committed and the request may be retried with the same envelope. Hosts map it
+ * to a retryable transport answer (HTTP 503); it never becomes a receipt.
+ */
+export class CommandStoreUnavailable extends Error {
+  readonly retryable = true
+  constructor(readonly cause: unknown, message = 'Command store unavailable; nothing was committed') {
+    super(message)
+    this.name = 'CommandStoreUnavailable'
+  }
 }
 
 /** A concurrent writer committed the same idempotency key / command id first. */
@@ -83,18 +107,20 @@ function clone<T>(value: T): T {
 export class InMemoryCommandStore implements CommandStore {
   private readonly receipts: StoredCommandReceipt[] = []
   private readonly events: DomainEvent[] = []
-  private sequence = 0
+  /** Per-workspace counters: transactions of different workspaces run concurrently. */
+  private readonly sequences = new Map<string, number>()
   private readonly mutex = new KeyedMutex()
 
   async transaction<T>(workspaceId: string, fn: (tx: CommandStoreTransaction) => Promise<T>): Promise<T> {
     return this.mutex.run(workspaceId, async () => {
       const stagedReceipts: StoredCommandReceipt[] = []
       const stagedEvents: DomainEvent[] = []
-      let nextSequence = this.sequence
+      let nextSequence = this.sequences.get(workspaceId) ?? 0
       const tx: CommandStoreTransaction = {
         handle: { kind: 'memory', workspaceId },
         findReceipt: async (ws, key, commandId) => this.find([...this.receipts, ...stagedReceipts], ws, key, commandId),
         appendEvents: async events => {
+          if (events.some(event => event.workspaceId !== workspaceId)) throw new Error('Events must belong to the transaction workspace')
           const stored = events.map(event => ({ ...clone(event), sequence: ++nextSequence }))
           stagedEvents.push(...stored)
           return stored.map(clone)
@@ -109,7 +135,7 @@ export class InMemoryCommandStore implements CommandStore {
       const result = await fn(tx)
       this.receipts.push(...stagedReceipts)
       this.events.push(...stagedEvents)
-      this.sequence = nextSequence
+      this.sequences.set(workspaceId, nextSequence)
       return result
     })
   }
@@ -122,6 +148,10 @@ export class InMemoryCommandStore implements CommandStore {
     const after = options.afterSequence ?? 0
     const matching = this.events.filter(event => event.workspaceId === workspaceId && (event.sequence ?? 0) > after)
     return matching.slice(0, options.limit ?? matching.length).map(clone)
+  }
+
+  async latestSequences(): Promise<Map<string, number>> {
+    return new Map(this.sequences)
   }
 
   /** Test helper: number of committed receipts / events. */

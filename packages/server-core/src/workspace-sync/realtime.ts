@@ -7,6 +7,10 @@
  * epoch changed) resets the position and asks the host to refetch through
  * the query API. Duplicates are ignored. `resume()` resubscribes everything
  * after a reconnect.
+ *
+ * While a subscribe request is in flight its topics are *pending*: live frames
+ * that overtake the RPC result are buffered and run through the tracker once
+ * the result has set the position, so a first event is never dropped.
  */
 
 import {
@@ -48,6 +52,8 @@ export interface RealtimeSubscriberOptions {
   /** The topic's history can't be replayed: refetch its state, then continue live. */
   onSnapshotRequired?: (topic: string, latestSeq: number) => void
   onForbidden?: (topic: string) => void
+  /** The gateway refused the topic because of its per-client topic limit. */
+  onLimitExceeded?: (topic: string) => void
   onError?: (error: unknown) => void
 }
 
@@ -56,6 +62,8 @@ export class RealtimeSubscriber {
   private readonly topics = new Set<string>()
   private readonly recovering = new Map<string, Promise<void>>()
   private readonly highWater = new Map<string, number>()
+  /** Topics with an in-flight subscribe → frames that arrived before its result. */
+  private readonly pending = new Map<string, { requests: number; frames: RealtimeFrame[] }>()
   private readonly unlisten: () => void
   private readonly options: RealtimeSubscriberOptions
 
@@ -79,9 +87,35 @@ export class RealtimeSubscriber {
         return position ? { topic, sinceSeq: position.seq, epoch: position.epoch } : { topic }
       }),
     }
-    const result = await this.options.connection.subscribe(request)
-    for (const item of result.topics) this.applyResult(item)
+    for (const topic of topics) {
+      const entry = this.pending.get(topic) ?? { requests: 0, frames: [] }
+      entry.requests += 1
+      this.pending.set(topic, entry)
+    }
+    let result: RealtimeSubscribeResult
+    try {
+      result = await this.options.connection.subscribe(request)
+    } catch (error) {
+      for (const topic of topics) this.settlePending(topic)
+      throw error
+    }
+    for (const item of result.topics) {
+      this.applyResult(item)
+      // Frames that overtook the result: replayed ones are now duplicates.
+      for (const frame of this.settlePending(item.topic)) this.onFrame(frame)
+    }
+    for (const topic of topics) for (const frame of this.settlePending(topic)) this.onFrame(frame)
     return result.topics
+  }
+
+  /** Ends one in-flight request for `topic`; returns buffered frames when it was the last. */
+  private settlePending(topic: string): RealtimeFrame[] {
+    const entry = this.pending.get(topic)
+    if (!entry) return []
+    entry.requests -= 1
+    if (entry.requests > 0) return []
+    this.pending.delete(topic)
+    return entry.frames
   }
 
   async unsubscribe(topics: string[]): Promise<void> {
@@ -113,10 +147,11 @@ export class RealtimeSubscriber {
   }
 
   private applyStatus(item: RealtimeSubscribeTopicResult): void {
-    if (item.status === 'forbidden' || item.status === 'invalid') {
+    if (item.status === 'forbidden' || item.status === 'invalid' || item.status === 'limit_exceeded') {
       this.topics.delete(item.topic)
       this.tracker.forget(item.topic)
       if (item.status === 'forbidden') this.options.onForbidden?.(item.topic)
+      if (item.status === 'limit_exceeded') this.options.onLimitExceeded?.(item.topic)
       return
     }
     this.topics.add(item.topic)
@@ -132,6 +167,11 @@ export class RealtimeSubscriber {
   }
 
   private onFrame(frame: RealtimeFrame): void {
+    const pending = this.pending.get(frame.topic)
+    if (pending) {
+      pending.frames.push(frame)
+      return
+    }
     if (!this.topics.has(frame.topic)) return
     if (frame.frame === 'snapshot_required') {
       this.tracker.reset(frame.topic, frame.epoch, frame.latestSeq)

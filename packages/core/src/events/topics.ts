@@ -172,7 +172,7 @@ export interface RealtimeSubscribeRequest {
   resume?: boolean
 }
 
-export type RealtimeSubscribeStatus = 'subscribed' | 'forbidden' | 'invalid' | 'snapshot_required'
+export type RealtimeSubscribeStatus = 'subscribed' | 'forbidden' | 'invalid' | 'snapshot_required' | 'limit_exceeded'
 
 export interface RealtimeSubscribeTopicResult {
   topic: Topic
@@ -190,6 +190,9 @@ export interface RealtimeSubscribeResult {
 
 /** Upper bound for topics in one subscribe call. */
 export const MAX_SUBSCRIBE_TOPICS = 100
+
+/** Upper bound for topics one client may hold across all subscribe calls (`limit_exceeded`). */
+export const MAX_TOPICS_PER_CLIENT = 500
 
 /** WS-RPC channels of the workspace realtime gateway (workspace-service). */
 export const REALTIME_RPC = {

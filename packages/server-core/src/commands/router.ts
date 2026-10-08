@@ -9,7 +9,8 @@
  * else `authorityHint`, else local.
  *
  * Client-side checks before queueing (the server re-checks everything):
- * envelope shape, unknown command, payload size and bound schemas.
+ * envelope shape, unknown command, payload size, serialized envelope size
+ * (the service's HTTP body limit minus headroom) and bound schemas.
  */
 
 import {
@@ -40,7 +41,18 @@ export interface CommandRouterOptions {
   /** Which authority owns a target ref (`undefined` → hint / local). */
   resolveTargetAuthority?: (workspaceId: string, ref: EntityRef) => ExecutionAuthority | undefined
   isEnabled?: () => boolean
+  /**
+   * The workspace service's HTTP body limit (`maxBodyBytes`, default 64 KiB).
+   * A queued envelope must fit it with `ENVELOPE_HEADROOM_BYTES` to spare,
+   * otherwise it would only fail later as a terminal 413.
+   */
+  maxEnvelopeBytes?: number
 }
+
+/** Default workspace-service HTTP body limit. */
+export const DEFAULT_MAX_ENVELOPE_BYTES = 64 * 1024
+/** Reserved for transport framing / later envelope fields. */
+export const ENVELOPE_HEADROOM_BYTES = 1024
 
 export class CommandRouter {
   constructor(private readonly options: CommandRouterOptions) {}
@@ -74,6 +86,11 @@ export class CommandRouter {
     const limit = Math.min(definition.maxPayloadBytes ?? DEFAULT_MAX_COMMAND_PAYLOAD_BYTES, MAX_COMMAND_PAYLOAD_BYTES)
     if (payloadByteLength(envelope.payload) > limit) {
       return rejectedReceipt(envelope.commandId, 'PAYLOAD_TOO_LARGE', `Payload exceeds ${limit} bytes`, { limit })
+    }
+    const envelopeLimit = (this.options.maxEnvelopeBytes ?? DEFAULT_MAX_ENVELOPE_BYTES) - ENVELOPE_HEADROOM_BYTES
+    const envelopeSize = payloadByteLength(envelope)
+    if (envelopeSize > envelopeLimit) {
+      return rejectedReceipt(envelope.commandId, 'PAYLOAD_TOO_LARGE', `Command envelope exceeds ${envelopeLimit} bytes`, { limit: envelopeLimit, size: Number.isFinite(envelopeSize) ? envelopeSize : null })
     }
     if (definition.schemaBound && !definition.schema.safeParse(envelope.payload).success) {
       return rejectedReceipt(envelope.commandId, 'VALIDATION', 'Invalid payload')

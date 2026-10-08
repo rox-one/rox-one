@@ -173,6 +173,22 @@ export class SqliteCommandStore implements CommandStore {
     return rows.map(toEvent)
   }
 
+  async latestSequences(): Promise<Map<string, number>> {
+    this.assertOpen()
+    const rows = this.db.prepare('SELECT workspace_id, MAX(sequence) AS latest FROM domain_event GROUP BY workspace_id')
+      .all() as unknown as Array<{ workspace_id: string; latest: number }>
+    return new Map(rows.map(row => [row.workspace_id, Number(row.latest)]))
+  }
+
+  /** SQLITE_BUSY / LOCKED / IOERR / FULL / CANTOPEN: nothing committed, retry later. */
+  isTransientError(error: unknown): boolean {
+    const record = error as { code?: unknown; errcode?: unknown; errstr?: unknown; message?: unknown } | null
+    const text = `${String(record?.code ?? '')} ${String(record?.errstr ?? '')} ${String(record?.message ?? '')}`
+    if (/SQLITE_(BUSY|LOCKED|IOERR|FULL|CANTOPEN|PROTOCOL)|database is locked|disk I\/O error|database or disk is full/i.test(text)) return true
+    const code = typeof record?.errcode === 'number' ? record.errcode & 0xff : -1
+    return [5, 6, 10, 13, 14, 15].includes(code)
+  }
+
   close(): void {
     if (this.closed) return
     this.closed = true
