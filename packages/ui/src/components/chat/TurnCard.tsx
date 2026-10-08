@@ -1511,7 +1511,7 @@ function clearAnnotationMarks(root: HTMLElement): void {
   annotatedInlineCodeNodes.forEach((codeNode) => {
     codeNode.removeAttribute('data-ca-annotation-inline-code')
     codeNode.style.backgroundColor = ''
-    codeNode.style.boxShadow = ''
+    codeNode.style.boxShadow = 'none'
   })
 
   const marks = root.querySelectorAll('span[data-ca-annotation-id]')

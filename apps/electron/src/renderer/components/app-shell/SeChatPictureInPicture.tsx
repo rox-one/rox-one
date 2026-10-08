@@ -32,7 +32,7 @@ export function SeChatPictureInPicture() {
           transition={SE_SPRING_PANEL}
           className={cn(
             'pointer-events-auto fixed bottom-6 right-6 z-[9999] w-[min(360px,calc(100vw-2rem))]',
-            'rounded-xl border border-white/10 bg-[color-mix(in_oklch,var(--paper)_94%,transparent)] shadow-2xl backdrop-blur-xl',
+            'rounded-xl border border-white/10 bg-[color-mix(in_oklch,var(--paper)_94%,transparent)] shadow-strong backdrop-blur-xl',
           )}
         >
           <header className="flex items-center gap-2 border-b border-white/8 px-3 py-2">

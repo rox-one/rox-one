@@ -52,6 +52,7 @@
   --surface-rail: var(--navigator);
   --surface-input: var(--input-surface);
   --surface-popover: var(--popover-solid);
+  --surface-document: oklch(from var(--background) l c h);
 
   /* Resolver overrides these with solid RGB. They also provide a safe first
      frame when a browser cannot normalize source alpha via relative colors. */
@@ -71,6 +72,12 @@
   --text-primary: var(--foreground);
   --text-secondary: color-mix(in oklch, var(--foreground) 68%, var(--canvas));
   --text-muted: color-mix(in oklch, var(--foreground) 48%, var(--canvas));
+  --accent-text: color-mix(in oklch, var(--accent) 88%, var(--foreground));
+  --accent-foreground: var(--canvas);
+  --surface-hover: color-mix(in oklch, var(--foreground) 5%, var(--surface-elevated));
+  --surface-pressed: color-mix(in oklch, var(--foreground) 8%, var(--surface-elevated));
+  --surface-selected: color-mix(in oklch, var(--accent) 11%, var(--surface-elevated));
+  --selection: color-mix(in oklch, var(--accent) 22%, var(--canvas));
   --focus: var(--accent);
   --focus-ring: var(--focus);
   --status-neutral: var(--text-secondary);
@@ -102,12 +109,15 @@
   --user-message-bubble: color-mix(in oklch, var(--foreground) 3%, var(--canvas));
   --user-message-bubble-dimmed: color-mix(in oklch, var(--foreground) 2%, var(--canvas));
 
-  /* Compact console elevation: borders, not diffuse shadows */
+  /* Borders anchor content; finite shadows lift transient controls. */
   --shadow-border-opacity: 0.24;
   --shadow-blur-opacity: 0;
   --shadow-minimal: inset 0 0 0 1px var(--border-subtle);
   --shadow-minimal-flat: var(--shadow-minimal);
-  --shadow-modal-small: var(--shadow-minimal);
+  --shadow-control: inset 0 0 0 1px var(--border-subtle), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-panel: inset 0 0 0 1px var(--border-subtle), 0 1px 3px rgb(0 0 0 / 0.025);
+  --shadow-popover: inset 0 0 0 1px var(--border-subtle), 0 4px 12px rgb(0 0 0 / 0.08), 0 16px 36px rgb(0 0 0 / 0.06);
+  --shadow-modal-small: var(--shadow-popover);
   /* Raised surfaces (panels, floating toolbars): soft lift, no hard 1px ring,
      so nested containers read as surfaces instead of stacked wireframes. */
   --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px -6px rgb(0 0 0 / 0.10);
@@ -125,7 +135,7 @@
   --input: var(--border-subtle);
   --ring: var(--focus-ring);
   --ring-width: 2px;
-  --ring-offset: 4px;
+  --ring-offset: 2px;
   --md-bullets: var(--text-muted);
   --md-counters: var(--text-muted);
 
@@ -157,6 +167,27 @@
   --radius-2xl: var(--radius-control);
   --spacing: 0.25rem;
   --tracking-normal: 0em;
+
+  /* Mouse density is compact; coarse pointers get explicit hit-target floors. */
+  --control-hit-min: 28px;
+  --control-height: 32px;
+  --motion-fast: 120ms;
+  --motion-normal: 180ms;
+  --motion-slow: 220ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --text-body-leading: 1.65;
+  --text-heading-tracking: -0.015em;
+  --text-code-size: 13px;
+  --settings-row-x: 14px;
+  --settings-row-y: 10px;
+  --settings-section-gap: 8px;
+  --page-content-x: 20px;
+  --page-content-y: 20px;
+  --page-content-max: 960px;
+  --page-section-gap: 20px;
+  --menu-font-size: 13px;
+  --dialog-padding: 20px;
+  --dialog-backdrop: rgb(0 0 0 / 0.32);
 
   /* Workbench chrome density (design-compact) */
   --chrome-topbar-height: 40px;
@@ -238,6 +269,10 @@
   --popover-solid: color-mix(in oklch, var(--foreground) 7%, var(--background));
   --ink: oklch(0.92 0.012 255);
   --graphite: oklch(0.62 0.01 255);
+  --shadow-control: inset 0 0 0 1px var(--border-subtle), 0 1px 2px rgb(0 0 0 / 0.12);
+  --shadow-panel: inset 0 0 0 1px var(--border-subtle), 0 1px 3px rgb(0 0 0 / 0.08);
+  --shadow-popover: inset 0 0 0 1px var(--border-strong), 0 4px 12px rgb(0 0 0 / 0.18), 0 16px 36px rgb(0 0 0 / 0.16);
+  --dialog-backdrop: rgb(0 0 0 / 0.48);
   --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.20), 0 6px 20px -8px rgb(0 0 0 / 0.45);
 }
 
@@ -362,6 +397,9 @@ html[data-contrast="high"] {
   --rox-elev-panel: none;
   --rox-shell-divider: color-mix(in oklch, var(--foreground) 10%, transparent);
   --shadow-minimal: inset 0 0 0 1px var(--border-subtle);
+  --shadow-control: var(--shadow-minimal);
+  --shadow-panel: var(--shadow-minimal);
+  --shadow-popover: var(--shadow-minimal);
 }
 
 html[data-contrast="high"][data-scenic]::before {
@@ -420,11 +458,17 @@ html[data-ui-profile="super-engineering"] .input-container {
   --color-surface-rail: var(--surface-rail);
   --color-surface-input: var(--surface-input);
   --color-surface-popover: var(--surface-popover);
+  --color-surface-document: var(--surface-document);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-pressed: var(--surface-pressed);
+  --color-surface-selected: var(--surface-selected);
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-accent-text: var(--accent-text);
+  --color-accent-foreground: var(--accent-foreground);
   --color-focus: var(--focus);
   --color-focus-ring: var(--focus-ring);
   --color-status-neutral: var(--status-neutral);
@@ -501,6 +545,11 @@ html[data-ui-profile="super-engineering"] .input-container {
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: var(--selection);
+    color: var(--text-primary);
   }
 
   /* Scrollbar styling */
@@ -654,10 +703,153 @@ html[data-ui-profile="super-engineering"] .input-container {
   .popover-styled {
     background: var(--surface-popover);
     color: var(--text-primary);
-    border-radius: var(--radius-overlay);
+    border-radius: var(--popover-radius, var(--radius-overlay));
     border: none;
-    box-shadow: var(--shadow-minimal);
+    box-shadow: var(--shadow-popover);
   }
+}
+
+/* Shared controls opt into a hit-target floor without changing text density. */
+[data-slot="button"],
+[data-slot="dialog-close"],
+[data-slot="switch"],
+[data-slot="input"],
+[data-slot="select-trigger"],
+[data-slot="select-item"],
+[data-slot="dropdown-menu-item"],
+[data-slot="dropdown-menu-sub-trigger"],
+[data-slot="dropdown-menu-checkbox-item"],
+[data-slot="dropdown-menu-radio-item"],
+[data-slot="context-menu-item"],
+[data-slot="context-menu-sub-trigger"],
+[data-slot="context-menu-checkbox-item"],
+[data-slot="context-menu-radio-item"],
+.rox-control,
+.tiptap-hover-action-btn,
+.tiptap-bubble-btn,
+.tiptap-slash-item {
+  min-height: var(--control-hit-min);
+  min-width: var(--control-hit-min);
+}
+
+.rox-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), opacity var(--motion-fast) var(--ease-out);
+}
+
+.rox-control:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.rox-control:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.rox-control:active:not(:disabled) {
+  background: var(--surface-pressed);
+}
+
+/* Radix owns positioning and focus; this finite motion only reveals content. */
+@keyframes rox-overlay-in {
+  from { opacity: 0; transform: translateY(2px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes rox-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes rox-opacity-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+[data-overlay-motion="true"][data-state="open"] {
+  animation: rox-overlay-in var(--motion-fast) var(--ease-out) both;
+}
+
+[data-overlay-motion="true"][data-state="closed"] {
+  animation: rox-overlay-out var(--motion-fast) ease both;
+}
+
+[data-slot="dialog-overlay"][data-state="open"] {
+  animation-name: rox-opacity-in;
+}
+
+[data-slot="popover-content"][data-state="open"],
+[data-slot="tooltip-content"][data-state="delayed-open"],
+[data-slot="tooltip-content"][data-state="instant-open"] {
+  animation: rox-overlay-in var(--motion-fast) var(--ease-out) both;
+}
+
+[data-slot="popover-content"][data-state="closed"],
+[data-slot="tooltip-content"][data-state="closed"] {
+  animation: rox-overlay-out var(--motion-fast) ease both;
+}
+
+/* Text semantics stay consistent across rendered answers and documents. */
+.markdown-content {
+  color: var(--text-primary);
+  line-height: var(--text-body-leading);
+  overflow-wrap: anywhere;
+}
+
+.markdown-content > :first-child,
+.markdown-content [data-section-id] > :first-child {
+  margin-top: 0;
+}
+
+.markdown-content > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.35;
+  letter-spacing: var(--text-heading-tracking);
+  text-wrap: pretty;
+}
+
+.markdown-content a,
+.tiptap-editor .tiptap-prose a {
+  color: var(--accent-text);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-skip-ink: auto;
+}
+
+.markdown-content a:hover,
+.tiptap-editor .tiptap-prose a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.markdown-content mark,
+.tiptap-editor .tiptap-prose mark {
+  background: var(--selection);
+  color: var(--text-primary);
+  border-radius: 2px;
+  padding-inline: 0.12em;
+}
+
+.markdown-content :is(ul, ol) > li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-content li::marker {
+  color: var(--text-muted);
+}
+
+.markdown-content :is(th, td) {
+  vertical-align: top;
+}
+
+.markdown-content input[type="checkbox"] {
+  accent-color: var(--accent);
 }
 
 /* =============================================================================
@@ -774,14 +966,15 @@ html[data-ui-profile="super-engineering"] .input-container {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-overlay);
   background: var(--surface-popover);
-  box-shadow: var(--shadow-minimal);
+  box-shadow: var(--shadow-popover);
   color: var(--text-primary);
   white-space: normal;
   pointer-events: none;
 }
 
 .rox-sourced:hover .rox-sourced-card,
-.rox-sourced:focus-within .rox-sourced-card {
+.rox-sourced:focus-within .rox-sourced-card,
+.markdown-content a:focus-visible .rox-sourced-card {
   display: block;
 }
 
@@ -794,7 +987,7 @@ html[data-ui-profile="super-engineering"] .input-container {
 html[data-shell-style="zen"] {
   --shell-backdrop-tint: color-mix(in oklch, var(--foreground) 6%, transparent);
   --shell-border: color-mix(in oklch, var(--foreground) 6%, transparent);
-  --shell-content: oklch(0.985 0.004 255);
+  --shell-content: var(--surface-document);
   --shell-hover: var(--element-hover, color-mix(in oklch, var(--foreground) 7%, transparent));
   --shell-selected: var(--element-selected, color-mix(in oklch, var(--accent) 18%, transparent));
   --shell-focus: var(--focus);
@@ -805,7 +998,6 @@ html[data-shell-style="zen"] {
 
 html[data-shell-style="zen"].dark {
   --shell-backdrop-tint: color-mix(in oklch, var(--foreground) 8%, transparent);
-  --shell-content: oklch(0.17 0.012 255);
   --shell-hover: var(--element-hover, color-mix(in oklch, var(--foreground) 10%, transparent));
   --shell-selected: var(--element-selected, color-mix(in oklch, var(--accent) 22%, transparent));
   --shell-sash: color-mix(in oklch, var(--foreground) 10%, transparent);
@@ -844,4 +1036,72 @@ html[data-shell-style="zen"] [data-shell-role="content"] :focus-visible {
 
 html[data-shell-style="zen"] [data-shell-role="sash"] {
   background: var(--shell-sash);
+}
+
+/* Accessibility preferences apply to shared surfaces in every host app. */
+@media (pointer: coarse) {
+  :root {
+    --control-hit-min: 44px;
+    --chrome-control: 44px;
+    --chrome-control-lg: 44px;
+    --chrome-topbar-height: 56px;
+    --chrome-panel-header-height: 48px;
+  }
+
+  .rox-hover-action,
+  .tiptap-editor .tiptap-hover-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  [data-slot="input"] {
+    font-size: 16px;
+  }
+}
+
+html[data-shell-material="solid"] {
+  --chrome-glass-bg: var(--surface-elevated);
+  --chrome-glass-blur: 0px;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  html[data-shell-style="zen"] {
+    --chrome-glass-bg: var(--surface-elevated);
+    --chrome-glass-blur: 0px;
+    --shell-backdrop-tint: var(--surface-elevated);
+  }
+
+  .chrome-surface {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-normal: 0ms;
+    --motion-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .spinner-cube,
+  .animate-shimmer::after {
+    animation: none !important;
+  }
+}
+
+/* Block annotation marker ring (set imperatively by
+   components/annotations/block-markers.ts via data-ca-block-annotated). */
+[data-ca-block-annotated="true"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--info) 22%, transparent);
 }
