@@ -35,7 +35,8 @@ CREATE INDEX doc_workspace ON doc (workspace_id) WHERE deleted_at IS NULL;
 CREATE INDEX doc_folder ON doc (folder_id) WHERE deleted_at IS NULL;
 CREATE INDEX doc_wiki ON doc (wiki_space_id) WHERE deleted_at IS NULL;
 CREATE INDEX doc_space ON doc (space_id) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX doc_daily_uniq ON doc (owner_id, daily_date)
+-- One daily doc per user per date PER WORKSPACE (a principal can belong to several).
+CREATE UNIQUE INDEX doc_daily_uniq ON doc (workspace_id, owner_id, daily_date)
   WHERE subtype = 'daily' AND daily_date IS NOT NULL AND deleted_at IS NULL;
 
 CREATE TABLE doc_yjs_update (

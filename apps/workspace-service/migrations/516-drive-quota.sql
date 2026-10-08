@@ -27,8 +27,11 @@ CREATE TABLE storage_ledger (
     'restore', 'purge', 'transfer_in', 'transfer_out', 'adjust')),
   file_id uuid REFERENCES file_object(file_id),
   version_no integer,
-  idempotency_key text NOT NULL UNIQUE CHECK (length(idempotency_key) > 0),
-  created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+  idempotency_key text NOT NULL CHECK (length(idempotency_key) > 0),
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  -- Idempotency keys are scoped to the drive (hence the workspace): a key reused by
+  -- another tenant can neither block nor resolve to this drive's entry.
+  CONSTRAINT storage_ledger_idempotency UNIQUE (drive_id, idempotency_key)
 );
 CREATE INDEX storage_ledger_drive ON storage_ledger (drive_id, created_at);
 
@@ -65,9 +68,11 @@ CREATE TABLE upload_session (
   parts jsonb NOT NULL DEFAULT '[]',
   reserved_bytes bigint NOT NULL DEFAULT 0 CHECK (reserved_bytes >= 0),
   status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'completed', 'aborted', 'expired')),
-  idempotency_key text NOT NULL UNIQUE CHECK (length(idempotency_key) > 0),
+  idempotency_key text NOT NULL CHECK (length(idempotency_key) > 0),
   expires_at timestamptz NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  -- Resumable-upload keys are client-supplied: scope them to the drive (see storage_ledger).
+  CONSTRAINT upload_session_idempotency UNIQUE (drive_id, idempotency_key)
 );
 CREATE INDEX upload_session_expiry ON upload_session (expires_at) WHERE status = 'open';
 

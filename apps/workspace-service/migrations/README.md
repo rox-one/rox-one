@@ -150,9 +150,29 @@ may use `public.unaccent`.
 - Chat feed: the `UNIQUE (chat_id, seq)` btree (`message_chat_seq`), scanned
   backward for newest-first pages. No separate feed index.
 - Quick panels / backlinks: `entity_link_to`, `entity_link_from`,
-  `comment_by_resource`, `notification_unread`.
-- Review: `check_in_subject`, `check_in_pending_ack`, `goal_check_in_due`,
-  `approval_request_pending`.
+  `comment_by_resource`, `notification_unread` (`(principal_id, created_at DESC)
+  WHERE read_at IS NULL`: unread newest-first without a sort).
+- Review: `check_in_subject`, `check_in_pending_ack` (`(workspace_id,
+  subject_type, subject_id, created_at DESC)` over unacknowledged published
+  check-ins: the "needs your review" query for the subjects a reviewer owns),
+  `goal_check_in_due`, `approval_request_pending`.
+
+## Tenant scoping of keys
+
+One database holds many workspaces, and a principal can belong to several, so
+keys over free-text or client-supplied values are scoped:
+
+- `acl_entry` `UNIQUE (workspace_id, resource_type, resource_id, subject_type,
+  subject_id)`, `resource_policy` `UNIQUE (workspace_id, resource_type,
+  resource_id)`, `acl_by_resource (workspace_id, resource_type, resource_id)`.
+- `task_list_system_role_uniq (workspace_id, owner_id, system_role)` and
+  `doc_daily_uniq (workspace_id, owner_id, daily_date)`: one backlog/inbox and
+  one daily doc per user **per workspace**.
+- `upload_session` and `storage_ledger`: `UNIQUE (drive_id, idempotency_key)`
+  (a drive belongs to one workspace). `rule_execution`'s key is server-derived
+  and stays global.
+- `project_member` and `milestone` reference `project (workspace_id,
+  project_id)`; `project_member`'s key includes `workspace_id`.
 
 ## Rollback
 

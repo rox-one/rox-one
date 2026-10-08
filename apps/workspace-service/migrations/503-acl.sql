@@ -17,9 +17,11 @@ CREATE TABLE acl_entry (
   revision bigint NOT NULL DEFAULT 1 CHECK (revision >= 0),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  UNIQUE (resource_type, resource_id, subject_type, subject_id)
+  -- resource_id is free text and one DB holds many workspaces: every key leads with
+  -- workspace_id so equal ids in two workspaces never collide (no cross-tenant upsert).
+  CONSTRAINT acl_entry_grant UNIQUE (workspace_id, resource_type, resource_id, subject_type, subject_id)
 );
-CREATE INDEX acl_by_resource ON acl_entry (resource_type, resource_id);
+CREATE INDEX acl_by_resource ON acl_entry (workspace_id, resource_type, resource_id);
 CREATE INDEX acl_by_subject ON acl_entry (workspace_id, subject_type, subject_id);
 
 -- resource_policy holds privacy presets and list-wide defaults (DATA-MODEL §8.2.4).
@@ -36,6 +38,6 @@ CREATE TABLE resource_policy (
   revision bigint NOT NULL DEFAULT 1 CHECK (revision >= 0),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  UNIQUE (resource_type, resource_id)
+  CONSTRAINT resource_policy_resource UNIQUE (workspace_id, resource_type, resource_id)
 );
 CREATE INDEX resource_policy_workspace ON resource_policy (workspace_id, resource_type);

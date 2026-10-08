@@ -30,7 +30,10 @@ CREATE TABLE project_member (
   role text NOT NULL CHECK (role IN ('champion', 'reviewer', 'contributor')),
   responsibility text,
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  CONSTRAINT project_member_identity PRIMARY KEY (project_id, principal_id, role)
+  -- project's PK is (workspace_id, project_id), so the member key and the FK carry the
+  -- workspace too: no orphans, no workspace mismatch, no cross-workspace key collision.
+  CONSTRAINT project_member_identity PRIMARY KEY (workspace_id, project_id, principal_id, role),
+  CONSTRAINT project_member_project_fk FOREIGN KEY (workspace_id, project_id) REFERENCES project(workspace_id, project_id)
 );
 CREATE INDEX project_member_principal ON project_member (principal_id);
 
@@ -52,6 +55,7 @@ CREATE TABLE milestone (
   revision bigint NOT NULL DEFAULT 1 CHECK (revision >= 0),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  CONSTRAINT milestone_project_fk FOREIGN KEY (workspace_id, project_id) REFERENCES project(workspace_id, project_id)
 );
 CREATE INDEX milestone_project ON milestone (project_id) WHERE deleted_at IS NULL;

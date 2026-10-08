@@ -491,6 +491,81 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
     }
   }, 120000)
 
+  itDb('tenant-scoped keys: ACL, system lists, daily docs, upload/ledger idempotency; project children FK to their project', async () => {
+    const db = new SQL(testDb!.url)
+    const schema = `w105_tenant_${randomBytes(4).toString('hex')}`
+    await db.unsafe(`CREATE SCHEMA "${schema}"`)
+    try {
+      await applyWorkspaceMigrations(db, await loadMigrations(), schema)
+      const { randomUUID } = await import('node:crypto')
+      const s = `"${schema}"`
+      const [wsA, wsB, user, folderA, folderB, driveA, driveB, project] = Array.from({ length: 8 }, () => randomUUID())
+      const run = async (sql: string) => { await db.unsafe(sql) }
+      await db.unsafe(`INSERT INTO ${s}.principal (principal_id) VALUES ('${user}')`)
+      await db.unsafe(`INSERT INTO ${s}.workspace (workspace_id, owner_principal_id, name) VALUES ('${wsA}', '${BOT}', 'a'), ('${wsB}', '${BOT}', 'b')`)
+      await db.unsafe(`INSERT INTO ${s}.workspace_member (workspace_id, principal_id, role) VALUES
+        ('${wsA}', '${BOT}', 'owner'), ('${wsA}', '${user}', 'member'), ('${wsB}', '${user}', 'member')`)
+
+      // ACL: the same free-text resource id in two workspaces never collides, and an
+      // upsert in B cannot rewrite A's grant.
+      const grant = (ws: string, role: string) => `INSERT INTO ${s}.acl_entry (acl_id, workspace_id, resource_type, resource_id, subject_type, subject_id, role)
+        VALUES (gen_random_uuid(), '${ws}', 'doc', 'shared-id', 'principal', '${user}', '${role}')`
+      await db.unsafe(grant(wsA, 'viewer'))
+      await db.unsafe(grant(wsB, 'viewer'))
+      await expect(run(grant(wsA, 'editor'))).rejects.toThrow(/acl_entry_grant/)
+      await db.unsafe(`${grant(wsB, 'editor')} ON CONFLICT (workspace_id, resource_type, resource_id, subject_type, subject_id) DO UPDATE SET role = EXCLUDED.role`)
+      const roles = await db.unsafe<{ workspace_id: string; role: string }[]>(`SELECT workspace_id, role FROM ${s}.acl_entry ORDER BY role`)
+      expect(roles).toEqual([{ workspace_id: wsB, role: 'editor' }, { workspace_id: wsA, role: 'viewer' }])
+      const policy = (ws: string) => `INSERT INTO ${s}.resource_policy (policy_id, workspace_id, resource_type, resource_id) VALUES (gen_random_uuid(), '${ws}', 'doc', 'shared-id')`
+      await db.unsafe(policy(wsA))
+      await db.unsafe(policy(wsB))
+      await expect(run(policy(wsA))).rejects.toThrow(/resource_policy_resource/)
+      const aclIndex = await db.unsafe<{ def: string }[]>(`SELECT pg_get_indexdef('${schema}.acl_by_resource'::regclass) AS def`)
+      expect(aclIndex[0]!.def).toContain('(workspace_id, resource_type, resource_id)')
+
+      // One backlog and one daily doc per user per workspace (a principal can be in several).
+      const backlog = (ws: string) => `INSERT INTO ${s}.task_list (task_list_id, workspace_id, owner_type, owner_id, name, system_role)
+        VALUES (gen_random_uuid(), '${ws}', 'user', '${user}', 'Backlog', 'backlog')`
+      await db.unsafe(backlog(wsA))
+      await db.unsafe(backlog(wsB))
+      await expect(run(backlog(wsA))).rejects.toThrow(/task_list_system_role_uniq/)
+      const daily = (ws: string) => `INSERT INTO ${s}.doc (doc_id, workspace_id, owner_id, subtype, daily_date)
+        VALUES (gen_random_uuid(), '${ws}', '${user}', 'daily', DATE '2026-10-08')`
+      await db.unsafe(daily(wsA))
+      await db.unsafe(daily(wsB))
+      await expect(run(daily(wsA))).rejects.toThrow(/doc_daily_uniq/)
+
+      // Client-supplied idempotency keys are scoped to the drive.
+      await db.unsafe(`INSERT INTO ${s}.folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES
+        ('${folderA}', '${wsA}', 'user', '${user}', 'My Drive'), ('${folderB}', '${wsB}', 'user', '${user}', 'My Drive')`)
+      await db.unsafe(`INSERT INTO ${s}.drive (drive_id, workspace_id, owner_principal_id, root_folder_id) VALUES
+        ('${driveA}', '${wsA}', '${user}', '${folderA}'), ('${driveB}', '${wsB}', '${user}', '${folderB}')`)
+      const ledger = (drive: string) => `INSERT INTO ${s}.storage_ledger (drive_id, delta_bytes, reason, idempotency_key) VALUES ('${drive}', 10, 'upload', 'client-key-1')`
+      await db.unsafe(ledger(driveA))
+      await db.unsafe(ledger(driveB))
+      await expect(run(ledger(driveA))).rejects.toThrow(/storage_ledger_idempotency/)
+      const upload = (drive: string) => `INSERT INTO ${s}.upload_session (upload_session_id, drive_id, file_name, size_expected, idempotency_key, expires_at)
+        VALUES (gen_random_uuid(), '${drive}', 'a.bin', 10, 'client-key-1', now() + interval '1 day')`
+      await db.unsafe(upload(driveA))
+      await db.unsafe(upload(driveB))
+      await expect(run(upload(driveA))).rejects.toThrow(/upload_session_idempotency/)
+
+      // project_member / milestone reference (workspace_id, project_id): no orphans, no mismatch.
+      await db.unsafe(`INSERT INTO ${s}.project (workspace_id, project_id, owner_principal_id, name, visibility) VALUES ('${wsA}', '${project}', '${BOT}', 'p', 'members')`)
+      const member = (ws: string, pid: string) => `INSERT INTO ${s}.project_member (project_id, workspace_id, principal_id, role) VALUES ('${pid}', '${ws}', '${user}', 'contributor')`
+      await db.unsafe(member(wsA, project))
+      await expect(run(member(wsB, project))).rejects.toThrow(/project_member_project_fk/)
+      await expect(run(member(wsA, randomUUID()))).rejects.toThrow(/project_member_project_fk/)
+      const milestone = (ws: string, pid: string) => `INSERT INTO ${s}.milestone (milestone_id, workspace_id, project_id, title, sort_key) VALUES (gen_random_uuid(), '${ws}', '${pid}', 'm', 'm')`
+      await db.unsafe(milestone(wsA, project))
+      await expect(run(milestone(wsB, project))).rejects.toThrow(/milestone_project_fk/)
+      await expect(run(milestone(wsA, randomUUID()))).rejects.toThrow(/milestone_project_fk/)
+    } finally {
+      await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
+      await db.close()
+    }
+  }, 120000)
+
   itDb('502 extension preflight: clear errors (no CREATE on the DB, extension outside public); DBA pre-install path works', async () => {
     const admin = new SQL(testDb!.url)
     const suffix = randomBytes(4).toString('hex')
