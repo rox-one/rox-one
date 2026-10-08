@@ -6,12 +6,22 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { handleDeepLink, isClosedSurfaceRootDeepLink, parseDeepLink, resolveDeepLinkTarget } from '../deep-link'
+import {
+  __resetDeepLinkSequenceForTests,
+  handleDeepLink,
+  isClosedSurfaceRootDeepLink,
+  isEntityOnlyDeepLink,
+  parseDeepLink,
+  resolveDeepLinkTarget,
+  resolveDeepLinkTargetDetailed,
+} from '../deep-link'
 import {
   SURFACE_ROUTES_IPC_CHANNEL,
   __resetSurfaceGateForTests,
   applyUnifiedSurfaceRoutes,
+  isSurfaceGateLatched,
   isSurfaceGateReceived,
+  isSurfaceGateSettled,
   registerSurfaceRoutesIpc,
   whenSurfaceGateReady,
 } from '../surface-routes-ipc'
@@ -32,6 +42,7 @@ import {
 
 afterEach(() => {
   __resetSurfaceGateForTests()
+  __resetDeepLinkSequenceForTests()
   resetUnifiedSurfaceRoutes()
   resetEntityRoutesEnabled()
 })
@@ -152,6 +163,16 @@ describe('cold start: a mode-root link waits for the first gate push (review4 #1
     expect(isClosedSurfaceRootDeepLink('rox://messenger')).toBe(false)
   })
 
+  it('merge with #1499: bare mode roots skip the entity hold; entity sub-routes keep it', () => {
+    expect(isEntityOnlyDeepLink('rox://messenger')).toBe(false)
+    expect(isEntityOnlyDeepLink('rox://messenger/?x=1')).toBe(false)
+    expect(isEntityOnlyDeepLink('rox://workspace/ws1/goals')).toBe(false)
+    expect(isEntityOnlyDeepLink('rox://messenger/chat-1')).toBe(true)
+    expect(isEntityOnlyDeepLink('rox://workspace/ws1/goals/goal/g-1')).toBe(true)
+    // Not a unified surface: the bare root still follows entities.links.v1.
+    expect(isEntityOnlyDeepLink('rox://docs')).toBe(true)
+  })
+
   it('a late push with the mode on opens the held link (bare and workspace form)', async () => {
     const bare = resolveDeepLinkTarget('rox://messenger', { timeoutMs: 1000 })
     const scoped = resolveDeepLinkTarget('rox://workspace/ws1/messenger', { timeoutMs: 1000 })
@@ -214,10 +235,97 @@ describe('cold start: a mode-root link waits for the first gate push (review4 #1
     expect((sent[0] as { nav: { view: string } }).nav.view).toBe('messenger')
   })
 
-  it('wiring: handleDeepLink and the initial-window path use resolveDeepLinkTarget', () => {
+  it('wiring: handleDeepLink (external) and the initial-window path (internal) share both holds', () => {
     const src = (file: string) => readFileSync(join(import.meta.dir, '..', file), 'utf8')
-    expect(src('deep-link.ts')).toContain('const target = await resolveDeepLinkTarget(url)')
+    const deepLink = src('deep-link.ts')
+    expect(deepLink).toContain('await resolveDeepLinkTargetDetailed(url, { external: true })')
+    // #1499 entity hold first, then the #1504 surface hold.
+    expect(deepLink.indexOf('whenEntitiesLinksFlagKnown(options.timeoutMs')).toBeGreaterThan(0)
+    expect(deepLink.indexOf('whenEntitiesLinksFlagKnown(options.timeoutMs')).toBeLessThan(deepLink.indexOf('whenSurfaceGateReady(options.timeoutMs'))
     expect(src('window-manager.ts')).toContain('await resolveDeepLinkTarget(initialDeepLink)')
-    expect(src('index.ts')).toContain('await handleDeepLink(pendingDeepLink')
+    expect(src('window-manager.ts')).not.toContain('external: true')
+    // #1499: the cold-start link is consumed once; a failure is dropped, no retry.
+    expect(src('index.ts')).toContain('(dropped, no retry)')
+    expect(src('index.ts')).not.toContain('await handleDeepLink(pendingDeepLink')
+  })
+
+  it('a held external mode-root link is superseded by a later external link', async () => {
+    const held = resolveDeepLinkTargetDetailed('rox://messenger', { timeoutMs: 1000, external: true })
+    await tick()
+    expect((await resolveDeepLinkTargetDetailed('rox://allSessions', { external: true })).target?.view).toBe('allSessions')
+    applyUnifiedSurfaceRoutes(['messenger'])
+    expect(await held).toEqual({ target: null, dropped: 'superseded' })
+  })
+
+  it('internal resolution (initialDeepLink) neither supersedes nor is superseded', async () => {
+    const held = resolveDeepLinkTargetDetailed('rox://messenger', { timeoutMs: 1000, external: true })
+    await tick()
+    expect((await resolveDeepLinkTarget('rox://allSessions'))?.view).toBe('allSessions')
+    applyUnifiedSurfaceRoutes(['messenger'])
+    expect((await held).target?.view).toBe('messenger')
+  })
+})
+
+describe('gate latch after timeout (review5 info #1)', () => {
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 5))
+
+  it('the first timeout latches: later mode-root links fail fast instead of waiting', async () => {
+    expect(isSurfaceGateSettled()).toBe(false)
+    expect(await resolveDeepLinkTargetDetailed('rox://messenger', { timeoutMs: 5, external: true })).toEqual({ target: null, dropped: 'timeout' })
+    expect(isSurfaceGateLatched()).toBe(true)
+    expect(isSurfaceGateReceived()).toBe(false)
+    expect(isSurfaceGateSettled()).toBe(true)
+    const start = Date.now()
+    expect(await resolveDeepLinkTarget('rox://calendar', { timeoutMs: 5_000 })).toBeNull()
+    expect(await resolveDeepLinkTarget('rox://workspace/ws1/goals', { timeoutMs: 5_000 })).toBeNull()
+    expect(await whenSurfaceGateReady(5_000)).toBe(false)
+    expect(Date.now() - start).toBeLessThan(1_000)
+  })
+
+  it('a timeout releases every other pending waiter at once', async () => {
+    const start = Date.now()
+    const long = whenSurfaceGateReady(5_000)
+    const longLink = resolveDeepLinkTarget('rox://messenger', { timeoutMs: 5_000 })
+    expect(await whenSurfaceGateReady(5)).toBe(false)
+    expect(await long).toBe(false)
+    expect(await longLink).toBeNull()
+    expect(Date.now() - start).toBeLessThan(1_000)
+  })
+
+  it('a late push applies the flags but never re-closes the latch or re-queues dropped links', async () => {
+    const sent: unknown[] = []
+    const window = {
+      isDestroyed: () => false,
+      isMinimized: () => false,
+      focus: () => {},
+      restore: () => {},
+      webContents: { id: 7, isLoading: () => false },
+    }
+    const windowManager = {
+      focusOrCreateWindow: () => window,
+      getFocusedWindow: () => window,
+      getLastActiveWindow: () => window,
+      getWorkspaceForWindow: () => 'ws1',
+    } as never
+    const sink = ((channel: string, target: unknown, nav: unknown) => void sent.push({ channel, target, nav })) as never
+    expect(await resolveDeepLinkTarget('rox://messenger', { timeoutMs: 5 })).toBeNull()
+    expect(isSurfaceGateLatched()).toBe(true)
+
+    // Late push: flags apply (an open root parses at once), latch stays.
+    applyUnifiedSurfaceRoutes(['messenger'])
+    await tick()
+    expect(sent).toEqual([])
+    expect(isSurfaceGateLatched()).toBe(true)
+    expect(isSurfaceGateReceived()).toBe(true)
+    expect((await resolveDeepLinkTarget('rox://messenger'))?.view).toBe('messenger')
+
+    // Turning the flag off again rejects at once — nothing waits, nothing re-queues.
+    applyUnifiedSurfaceRoutes([])
+    const start = Date.now()
+    const result = await handleDeepLink('rox://messenger', windowManager, sink)
+    expect(Date.now() - start).toBeLessThan(1_000)
+    expect(result.success).toBe(false)
+    expect(sent).toEqual([])
+    expect(isSurfaceGateLatched()).toBe(true)
   })
 })

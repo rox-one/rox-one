@@ -46,8 +46,8 @@ import type { EventSink } from '@rox/server-core/transport'
 import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
 import { ENTITY_ONLY_ROUTE_PREFIXES, isCompoundRoutePrefix } from '../shared/route-parser'
 // W1-07 (#1504)
-import { isClosedUnifiedSurfaceRoot } from '../shared/surface-routes'
-import { isSurfaceGateReceived, whenSurfaceGateReady } from './surface-routes-ipc'
+import { isClosedUnifiedSurfaceRoot, isUnifiedSurfaceRoot } from '../shared/surface-routes'
+import { isSurfaceGateSettled, whenSurfaceGateReady } from './surface-routes-ipc'
 // W1-02 (#1499): cold-start entity deep links wait for the entities.links.v1 state.
 import { ENTITIES_FLAG_WAIT_MS, isEntitiesLinksFlagKnown, whenEntitiesLinksFlagKnown } from './entities-flags'
 import { parseRuntimeMapLinkUrl } from '../shared/runtime-map-link'
@@ -289,6 +289,9 @@ export function isClosedSurfaceRootDeepLink(url: string): boolean {
  * W1-02 (#1499): true for `rox://<entity-only prefix>/…` and
  * `rox://workspace/{id}/<entity-only prefix>/…` (docs, goals, base, …) —
  * the links whose acceptance depends on `entities.links.v1`.
+ * W1-07 (#1504): a bare unified mode root (`rox://messenger`,
+ * `rox://workspace/{id}/goals`) is excluded — it follows its mode flag (the
+ * surface hold), not `entities.links.v1`.
  */
 export function isEntityOnlyDeepLink(url: string): boolean {
   try {
@@ -296,15 +299,19 @@ export function isEntityOnlyDeepLink(url: string): boolean {
     if (!isRoxDeeplinkProtocol(parsed.protocol)) return false
     if (parsed.hostname === 'workspace') {
       const parts = parsed.pathname.split('/').slice(1)
-      return Boolean(parts[0]) && ENTITY_ONLY_ROUTE_PREFIXES.has(parts[1] ?? '')
+      return Boolean(parts[0]) && ENTITY_ONLY_ROUTE_PREFIXES.has(parts[1] ?? '') && !isUnifiedSurfaceRoot(parts.slice(1).join('/'))
     }
-    return ENTITY_ONLY_ROUTE_PREFIXES.has(parsed.hostname)
+    return ENTITY_ONLY_ROUTE_PREFIXES.has(parsed.hostname) && !isUnifiedSurfaceRoot(`${parsed.hostname}${parsed.pathname}`)
   } catch {
     return false
   }
 }
 
-/** How long a cold-start mode-root link waits for the renderer's first gate push. */
+/**
+ * How long a cold-start mode-root link waits for the renderer's first gate
+ * push. The first timeout latches the gate (see surface-routes-ipc): later
+ * links never wait again in this process.
+ */
 export const SURFACE_GATE_WAIT_MS = 10_000
 
 /**
@@ -328,8 +335,8 @@ export type DeepLinkDropReason = 'timeout' | 'superseded'
  *  1. W1-02 (#1499) entity hold — an entity-only link that arrives before
  *     main knows the `entities.links.v1` state waits for that state.
  *  2. W1-07 (#1504) surface hold — a mode-root link that hits a still-closed
- *     gate before the renderer's first push waits for that push (or for the
- *     gate to latch open-as-is after a timeout) and is re-parsed.
+ *     gate before the renderer's first push waits for that push and is
+ *     re-parsed. The first timeout latches the gate: no later link waits.
  * Either hold drops the link on timeout (logged) or when a later external
  * link superseded it. Once both states are known nothing waits, so
  * flags-off behaviour is main's.
@@ -357,7 +364,7 @@ export async function resolveDeepLinkTargetDetailed(
 
   // 2. Surface hold (#1504).
   const target = parseDeepLink(url)
-  if (target || isSurfaceGateReceived() || !isClosedSurfaceRootDeepLink(url)) return { target }
+  if (target || isSurfaceGateSettled() || !isClosedSurfaceRootDeepLink(url)) return { target }
   mainLog.info('[DeepLink] Holding mode-root link until the renderer pushes the surface gate:', url)
   const ready = await whenSurfaceGateReady(options.timeoutMs ?? SURFACE_GATE_WAIT_MS)
   if (superseded()) {

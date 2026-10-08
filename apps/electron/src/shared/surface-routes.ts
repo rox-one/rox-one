@@ -68,6 +68,16 @@ export function isUnifiedSurfaceRouteEnabled(id: string): id is UnifiedSurfaceId
 }
 
 /**
+ * True for a bare mode-root route (`messenger`, `messenger?x=1`) whatever its
+ * gate state: its acceptance follows the mode flag, never `entities.links.v1`.
+ */
+export function isUnifiedSurfaceRoot(route: string): boolean {
+  const path = route.split('#')[0]!.split('?')[0]!
+  const segments = path.split('/').filter(Boolean)
+  return segments.length === 1 && isUnifiedSurfaceId(segments[0])
+}
+
+/**
  * True for a bare mode-root route (`messenger`, `messenger?x=1`) whose
  * surface gate is closed. Entity routes under the same prefix
  * (`messenger/<id>`) are #1499's and keep following `entities.links.v1`.

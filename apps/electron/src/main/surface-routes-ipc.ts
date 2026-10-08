@@ -11,6 +11,13 @@
  * the renderer's first push. `whenSurfaceGateReady()` lets the deep-link
  * handler hold such a link until that first push (or a timeout, after which it
  * is dropped and logged) — the same outcome as main once the gate is known.
+ *
+ * Latch: the first wait that times out latches the gate for the rest of the
+ * process. From then on nothing waits — every pending waiter resolves `false`
+ * at once and later mode-root links are parsed against the current gate
+ * immediately (fail fast instead of 10 s each). A late renderer push still
+ * applies the flags, but never re-closes the latch, re-arms the hold or
+ * re-queues links that were already dropped.
  */
 import type { IpcMain } from 'electron'
 import { isUnifiedSurfaceId, setUnifiedSurfaceRoutesEnabled, type UnifiedSurfaceId } from '../shared/surface-routes'
@@ -18,28 +25,51 @@ import { isUnifiedSurfaceId, setUnifiedSurfaceRoutesEnabled, type UnifiedSurface
 export const SURFACE_ROUTES_IPC_CHANNEL = 'shell:setSurfaceRoutesEnabled'
 
 let gateReceived = false
-const gateWaiters = new Set<() => void>()
+/** Set by the first timed-out wait; sticky for the rest of the process. */
+let gateLatched = false
+const gateWaiters = new Set<(value: boolean) => void>()
 
 /** True once the renderer has pushed the gate at least once. */
 export function isSurfaceGateReceived(): boolean {
   return gateReceived
 }
 
+/** True once a wait for the first push timed out (sticky, see the latch note above). */
+export function isSurfaceGateLatched(): boolean {
+  return gateLatched
+}
+
+/** True when nothing should wait any more: the gate was pushed or the wait latched. */
+export function isSurfaceGateSettled(): boolean {
+  return gateReceived || gateLatched
+}
+
+function latchGate(): void {
+  if (gateLatched) return
+  gateLatched = true
+  for (const settle of [...gateWaiters]) settle(false)
+}
+
 /**
  * Resolves `true` at the renderer's first gate push (immediately when it has
- * already happened), or `false` after `timeoutMs`.
+ * already happened), or `false` after `timeoutMs`. A timeout latches the gate:
+ * every other pending waiter resolves `false` too, and later calls resolve
+ * `false` at once unless the push had already arrived.
  */
 export function whenSurfaceGateReady(timeoutMs: number): Promise<boolean> {
   if (gateReceived) return Promise.resolve(true)
+  if (gateLatched) return Promise.resolve(false)
   return new Promise((resolve) => {
-    const done = (value: boolean) => {
+    const settle = (value: boolean) => {
       clearTimeout(timer)
-      gateWaiters.delete(onReady)
+      gateWaiters.delete(settle)
       resolve(value)
     }
-    const onReady = () => done(true)
-    const timer = setTimeout(() => done(false), Math.max(0, timeoutMs))
-    gateWaiters.add(onReady)
+    const timer = setTimeout(() => {
+      settle(false)
+      latchGate()
+    }, Math.max(0, timeoutMs))
+    gateWaiters.add(settle)
   })
 }
 
@@ -50,14 +80,18 @@ export function applyUnifiedSurfaceRoutes(ids: unknown): UnifiedSurfaceId[] {
   setUnifiedSurfaceRoutesEnabled(unique)
   if (!gateReceived) {
     gateReceived = true
-    for (const notify of [...gateWaiters]) notify()
+    // After a latch there are no waiters left (all resolved false), so a
+    // late push re-queues nothing.
+    for (const settle of [...gateWaiters]) settle(true)
   }
   return unique
 }
 
-/** Test seam: back to the cold-start state (no push received, no waiters). */
+/** Test seam: back to the cold-start state (no push received, no latch, no waiters). */
 export function __resetSurfaceGateForTests(): void {
   gateReceived = false
+  gateLatched = false
+  for (const settle of [...gateWaiters]) settle(false)
   gateWaiters.clear()
   setUnifiedSurfaceRoutesEnabled([])
 }
