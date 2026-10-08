@@ -5,6 +5,7 @@
  * module lock + a per-day claim in localStorage.
  */
 import { useAutomaticMeetingExtraction } from '@/lib/meetings/auto-extraction'
+import { useCalendarMeetingAutostart } from '@/lib/meetings/calendar-autostart'
 import { useEffect, useRef } from 'react'
 import { useAtomValue } from 'jotai'
 import i18n from 'i18next'
@@ -84,6 +85,7 @@ export function useExtraScreensBackground(workspaceId: string | null): void {
   const radarContext = useRef({ workspaceId, generation: 0 })
   if (radarContext.current.workspaceId !== workspaceId) radarContext.current = { workspaceId, generation: radarContext.current.generation + 1 }
   useAutomaticMeetingExtraction(workspaceId)
+  useCalendarMeetingAutostart()
   const radarOn = useAtomValue(extraScreenFlagAtoms.radar)
   const focusOn = useAtomValue(extraScreenFlagAtoms.focus)
   useEffect(() => {

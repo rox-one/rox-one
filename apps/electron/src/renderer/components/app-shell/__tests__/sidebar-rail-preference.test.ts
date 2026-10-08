@@ -57,15 +57,19 @@ describe('actual combined sidebar preference and rail geometry', () => {
     const storage = { KEYS: { sidebarVisible: 'sidebar-visible' }, get: (key: string, fallback: unknown) => key in data ? data[key] : fallback, set: (key: string, value: unknown) => { data[key] = value } }
     const load = () => evaluate(shell, callback(declaration(shell, 'storedSidebarVisible')), { storage, defaultCollapsed: false })()
     let visible = load()
-    const visibility = () => evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible, sidebarPeek: false, navState: { navigator: route }, earlyNavState: { navigator: route } })
+    const visibility = () => evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible, sidebarPeek: false, sidebarPinned: false, navState: { navigator: route }, earlyNavState: { navigator: route } })
     expect(visibility()).toBe(true)
     // A hover peek expands the rail without touching the persisted preference.
-    expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: false, sidebarPeek: true })).toBe(true)
+    expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: false, sidebarPeek: true, sidebarPinned: false })).toBe(true)
+    // A pinned rail stays expanded even with no stored visibility and no peek.
+    expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: false, sidebarPeek: false, sidebarPinned: true })).toBe(true)
     // The persisted preference must never absorb the transient peek.
     expect(persist!.getText(shell)).not.toContain('sidebarPeek')
     const peekClears: boolean[] = []
     const toggle = evaluate(shell, callback(declaration(shell, 'handleToggleSidebar')), {
       isSidebarAndNavigatorHidden: false,
+      sidebarPinned: false,
+      setSidebarPinned: (value: boolean) => { throw new Error('an unpinned toggle must not write the pin') },
       setIsSidebarAndNavigatorHidden: () => { throw new Error('ordinary toggle must preserve focus choice') },
       setIsSidebarVisible: (update: (value: boolean) => boolean) => { visible = update(visible) },
       setSidebarPeek: (value: boolean) => { peekClears.push(value) },
@@ -86,6 +90,8 @@ describe('actual combined sidebar preference and rail geometry', () => {
     let visible = true
     evaluate(shell, callback(declaration(shell, 'handleToggleSidebar')), {
       isSidebarAndNavigatorHidden: focused,
+      sidebarPinned: false,
+      setSidebarPinned: () => {},
       setIsSidebarAndNavigatorHidden: (value: boolean) => { focused = value },
       setIsSidebarVisible: (update: (value: boolean) => boolean) => { visible = update(visible) },
       setSidebarPeek: () => {},
@@ -93,7 +99,37 @@ describe('actual combined sidebar preference and rail geometry', () => {
     expect(focused).toBe(false)
     expect(visible).toBe(true)
     expect(evaluate(shell, declaration(shell, 'effectiveSidebarAndNavigatorHidden'), { isSidebarAndNavigatorHidden: false, isAutoCompact: true })).toBe(true)
-    expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible, sidebarPeek: false })).toBe(true)
+    expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible, sidebarPeek: false, sidebarPinned: false })).toBe(true)
+  })
+
+  it('pins the sidebar persistently and clears the pin on an explicit collapse', () => {
+    // The pin has its own persistence effect, separate from the transient peek.
+    let pinPersist: ts.Expression | undefined
+    function findPinPersistence(node: ts.Node) {
+      if (ts.isCallExpression(node) && node.expression.getText(shell) === 'React.useEffect' && node.arguments[0]?.getText(shell).includes('storage.set(storage.KEYS.sidebarPinned, sidebarPinned)')) pinPersist = node.arguments[0]
+      ts.forEachChild(node, findPinPersistence)
+    }
+    findPinPersistence(shell)
+    if (!pinPersist) throw new Error('Actual sidebar pin persistence absent')
+    const data: Record<string, unknown> = {}
+    const storage = { KEYS: { sidebarPinned: 'sidebar-pinned' }, get: (key: string, fallback: unknown) => key in data ? data[key] : fallback, set: (key: string, value: unknown) => { data[key] = value } }
+    const loadPin = () => evaluate(shell, callback(declaration(shell, 'sidebarPinned')), { storage })()
+    expect(loadPin()).toBe(false)
+    evaluate(shell, pinPersist, { storage, sidebarPinned: true })()
+    expect(loadPin()).toBe(true)
+    // Collapsing from a pinned rail releases the pin and hides the rail.
+    let visible = true
+    let pinned = true
+    evaluate(shell, callback(declaration(shell, 'handleToggleSidebar')), {
+      isSidebarAndNavigatorHidden: false,
+      sidebarPinned: pinned,
+      setSidebarPinned: (value: boolean) => { pinned = value },
+      setIsSidebarAndNavigatorHidden: () => {},
+      setIsSidebarVisible: (value: boolean) => { visible = value },
+      setSidebarPeek: () => {},
+    })()
+    expect(pinned).toBe(false)
+    expect(visible).toBe(false)
   })
 
   it('the primary sidebar suppresses duplicate rail geometry for every flag and collapse state', () => {

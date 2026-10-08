@@ -26,6 +26,21 @@ export const FOREIGN_SESSION_KINDS = [
 
 export type ForeignSessionKind = (typeof FOREIGN_SESSION_KINDS)[number]
 
+/**
+ * Kinds listed in the source picker but without a working on-disk scanner and
+ * converter. opencode keeps chats in per-project stores without a stable,
+ * documented file layout we can read safely, so it is reported honestly as
+ * "not supported" in the UI rather than silently contributing nothing to a
+ * scan (the previous `*.db`/`*.sqlite` stub walked the roots and emitted only
+ * empty rows).
+ */
+export const UNSUPPORTED_FOREIGN_SESSION_KINDS = ['opencode'] as const
+
+/** True when the kind has a working scanner + converter and can be imported. */
+export function isForeignSessionKindSupported(kind: ForeignSessionKind): boolean {
+  return !(UNSUPPORTED_FOREIGN_SESSION_KINDS as readonly string[]).includes(kind)
+}
+
 export type ForeignImportMode = 'skip' | 'append' | 'force'
 
 export interface ForeignIndexEntry {
@@ -81,6 +96,12 @@ export interface ForeignDiscoverResult {
   cachePath: string
   truncated?: boolean
   aborted?: boolean
+  /**
+   * Set when the scan could not run at all on this surface (e.g. the local
+   * scan consent gate is not live). Distinguishes "nothing found" from
+   * "could not look" so the UI never shows a silent empty list.
+   */
+  unavailable?: 'not-live'
 }
 
 /** Background (automatic) foreign chat import status. */

@@ -92,11 +92,11 @@ export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.f
   /** --panel-stack-bottom-inset */
   panelStackBottomInset: 0,
   /** --panel-sash-hit-width */
-  panelSashHitWidth: 12,
+  panelSashHitWidth: 8,
   /** --panel-sash-hit-width-coarse */
   panelSashHitWidthCoarse: 24,
   /** --panel-sash-line-width */
-  panelSashLineWidth: 2,
+  panelSashLineWidth: 1,
 })
 
 /** `html[data-density="comfortable"]` values (compact merged with overrides). */
@@ -154,9 +154,9 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   /** --panel-stack-bottom-inset */
   panelStackBottomInset: 0,
   /** --panel-sash-hit-width */
-  panelSashHitWidth: 12,
+  panelSashHitWidth: 8,
   /** --panel-sash-hit-width-coarse */
   panelSashHitWidthCoarse: 24,
   /** --panel-sash-line-width */
-  panelSashLineWidth: 2,
+  panelSashLineWidth: 1,
 })

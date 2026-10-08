@@ -42,7 +42,7 @@ function normalizeTranscriptProvenance(v: unknown): LocalTranscriptProvenance | 
   if (!v || typeof v !== 'object') return undefined
   const o = v as Record<string, unknown>
   const sourceKind = o.sourceKind
-  if (sourceKind !== 'microphone' && sourceKind !== 'import' && sourceKind !== 'none') return undefined
+  if (sourceKind !== 'microphone' && sourceKind !== 'import' && sourceKind !== 'calendar' && sourceKind !== 'none') return undefined
   return {
     sourceKind,
     sourceHash: str(o.sourceHash) || undefined,
@@ -202,7 +202,8 @@ export function normalizeMeeting(raw: unknown, id: string): LocalMeeting | null 
     endedAt: num(o.endedAt),
     durationMs: Math.max(0, num(o.durationMs) ?? 0),
     status,
-    source: o.source === 'microphone' || o.source === 'import' ? o.source : 'none',
+    source: o.source === 'microphone' || o.source === 'import' || o.source === 'calendar' ? o.source : 'none',
+    calendarEventId: str(o.calendarEventId) || undefined,
     participants: Array.isArray(o.participants) ? o.participants.map((p) => str(p).trim()).filter(Boolean) : [],
     notes: str(o.notes),
     recipeId: recipeById(str(o.recipeId))?.id,

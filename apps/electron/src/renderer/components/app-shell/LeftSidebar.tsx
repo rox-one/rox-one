@@ -244,7 +244,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
                 aria-current={link.variant === 'default' ? 'page' : undefined}
                 data-sidebar-link-id={link.id}
                 onClick={() => { if (onExpand) onExpand(link); else link.onClick?.() }}
-                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]' : 'hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]')}>
+                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'rox-nav-shimmer bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]' : 'hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]')}>
                 <span className="flex h-4 w-4 items-center justify-center">{renderIcon(link)}</span>
               </button>
             )
@@ -626,7 +626,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
               ? SE_RAIL_ACTIVE_BUTTON_CLASS
               : SE_RAIL_INACTIVE_BUTTON_CLASS
             : link.variant === "default"
-              ? "bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]"
+              ? "rox-nav-shimmer bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
 // Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
               : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[state=open]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[edit-active=true]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
           extraClassName,
@@ -681,9 +681,11 @@ function renderIcon(link: LinkItem) {
   const isComponent = typeof link.icon === 'function' ||
     (typeof link.icon === 'object' && link.icon !== null && 'render' in link.icon)
   const seRail = typeof document !== 'undefined' && document.documentElement.dataset.uiProfile === 'super-engineering'
-  // Muted idle tone, foreground on row hover, accent while the row is active.
+  // Muted idle tone, foreground on row hover and while the row is active — the
+  // active state is carried by the thin animated accent sweep, not a filled
+  // accent icon.
   const colorClass = link.variant === 'default'
-    ? 'text-accent'
+    ? 'text-foreground'
     : 'text-muted-foreground group-hover:text-foreground'
   // Only an explicit per-item colour overrides the shared class.
   const colorStyle = link.iconColorable !== false && link.iconColor ? { color: link.iconColor } : undefined

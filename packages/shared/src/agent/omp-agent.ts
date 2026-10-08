@@ -2352,11 +2352,16 @@ export class OmpAgent extends BaseAgent {
     // the wire contract for them is not part of the verified notes — keep to text).
     let effectiveMessage = withOmpRequiredModes(message);
     if (attachments && attachments.length > 0) {
-      const parts = attachments.map((a) =>
-        a.text
+      const parts = attachments.map((a) => {
+        // Audio attached to the chat is transcribed on attach: prefer the
+        // recognized text over the raw file reference.
+        if (a.transcript?.status === 'done' && a.transcript.text.trim()) {
+          return `[Attached file: ${a.name}]\n[Transcript${a.transcript.language ? ` (${a.transcript.language})` : ''}]\n${a.transcript.text.trim()}`;
+        }
+        return a.text
           ? `[Attached file: ${a.name}]\n${a.text}`
-          : `[Attached file: ${a.name} at ${a.path}]`,
-      );
+          : `[Attached file: ${a.name} at ${a.path}]`;
+      });
       effectiveMessage = `${effectiveMessage}\n\n${parts.join('\n\n')}`;
     }
 
