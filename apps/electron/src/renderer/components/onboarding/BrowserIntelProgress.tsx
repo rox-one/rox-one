@@ -86,7 +86,7 @@ export function BrowserIntelProgress({ className }: { className?: string } = {})
       </div>
       {percent !== null ? (
         <div
-          className="h-1 w-full overflow-hidden rounded-full bg-foreground/10"
+          className="h-1 w-full overflow-hidden rounded-full bg-surface-pressed"
           role="progressbar"
           aria-label={t('onboarding.browserIntel.indexing')}
           aria-valuenow={current}
