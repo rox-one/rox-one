@@ -355,8 +355,13 @@ export function VoiceDictationControl({
       }
     } catch (error) {
       pendingStream?.getTracks().forEach((track) => track.stop())
+      // Decide ownership before dropping the dictation owner: the attempt that
+      // failed must still return the control to its enabled state.
+      const owned = isCurrentCapture(captureId)
       if (activeDictationOwner === owner) activeDictationOwner = null
-      if (isCurrentCapture(captureId)) {
+      if (owned) {
+        // Clear the pending-start UI before invalidating the capture id; the
+        // failure path must return the control to its enabled state.
         setStarting(false)
         stopTracks()
         nativeRecordingIdRef.current = null
@@ -382,11 +387,18 @@ export function VoiceDictationControl({
       if (captureId !== captureIdRef.current) return
       setPrefs(next)
       setConsentOpen(false)
+      // The close commits after this call returns, and the dialog's modal layer
+      // keeps the control aria-hidden until it unmounts — canStart() refuses such
+      // a control. Wait out that commit so the user's grant starts dictation in
+      // one step instead of silently doing nothing.
+      for (let attempt = 0; attempt < 20 && !canStart(); attempt++) {
+        await new Promise(resolve => window.setTimeout(resolve, 16))
+      }
       await startRecording(next)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('common.errorLoadingContent'))
     } finally { if (captureId === captureIdRef.current) setSavingConsent(false) }
-  }, [startRecording, t])
+  }, [canStart, startRecording, t])
 
   const startRecordingRef = useRef(startRecording)
   startRecordingRef.current = startRecording

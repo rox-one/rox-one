@@ -5,6 +5,7 @@ import { build, type PluginBuild } from 'esbuild'
 import ts from 'typescript'
 import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { launchOwnedFixtureBrowser } from './rox-readiness-ui-001.browser-owner'
+import { rendererNodeBoundaryPlugin } from './rox-readiness-ui-001.component-harness'
 
 // Actual NavigationProvider, URL/history, panel/selection atoms and MainContentPanel
 // callbacks in Chromium. Leaf pages and electronAPI are explicit fixture boundaries.
@@ -184,12 +185,7 @@ async function bundle() {
     bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic',
     // This fixture exercises menu behavior; product font/layout acceptance is separate.
     loader: { '.css': 'empty' },
-    plugins: [{
-      name: 'production-renderer-node-boundary',
-      setup(builder: PluginBuild) {
-        builder.onResolve({ filter: /^node:/ }, () => ({ path: join(root, 'apps/electron/src/renderer/shims/node-stub.ts') }))
-      },
-    }, {
+    plugins: [rendererNodeBoundaryPlugin(), {
       name: 'ui001-inert-asset-urls',
       setup(builder: PluginBuild) {
         builder.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'ui001-asset' }))
