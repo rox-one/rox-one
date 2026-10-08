@@ -75,6 +75,8 @@ import { registerEntitiesHandlers, type EntitiesHandlerRuntime } from './entitie
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 // W1-03 (#1500)
 import { registerCommandsHandlers, type CommandsHandlerRuntime } from './commands.ts'
+// W1-04 (#1501)
+import { registerDirectoryHandlers } from './directory.ts'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -165,5 +167,7 @@ export function registerCoreRpcHandlers(
   registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
   // W1-03 (#1500)
   registerCommandsHandlers(server, deps, options?.commands)
+  // W1-04 (#1501): Dossier export IPC (flag contacts.dossier-export.v1, default OFF).
+  registerDirectoryHandlers(server, deps, { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }

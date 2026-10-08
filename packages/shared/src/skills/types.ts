@@ -48,8 +48,13 @@ export interface LoadedSkill {
   slug: string;
   /** Parsed metadata from YAML frontmatter */
   metadata: SkillMetadata;
-  /** Full SKILL.md content (without frontmatter) */
+  /**
+   * Full SKILL.md content (without frontmatter). Empty in list summaries
+   * (skills.GET / skills.CHANGED); load the body with skills.GET_DETAILS.
+   */
   content: string;
+  /** Length of the omitted body, set on list summaries only. */
+  contentLength?: number;
   /** Absolute path to icon file if exists */
   iconPath?: string;
   /** Absolute path to skill directory */

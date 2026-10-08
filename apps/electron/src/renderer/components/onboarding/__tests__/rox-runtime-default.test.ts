@@ -135,3 +135,34 @@ describe('ensureRoxRuntimeDefault native configuration-only boundary', () => {
     expect(calls.setDefault).toEqual(['omp'])
   })
 })
+
+describe('ensureRoxRuntimeDefault startup options (PERF-06)', () => {
+  it('uses the caller identity, forwards list options and hands back an unchanged list', async () => {
+    const connections = [{ slug: 'rox-kimi', providerType: 'omp', isDefault: true }]
+    const listed: unknown[] = []
+    let identityReads = 0
+    const read: Array<ReadonlyArray<Conn>> = []
+    const api: RoxRuntimeDefaultApi = {
+      async getOrgIdentity() { identityReads++; return { authority: 'local' } },
+      async listLlmConnectionsWithStatus(options) { listed.push(options); return connections },
+      async setupLlmConnection() { return { success: true } },
+      async setDefaultLlmConnection() { return { success: true } },
+    }
+    const result = await ensureRoxRuntimeDefault(api, {
+      identity: { authority: 'local' },
+      listOptions: { refresh: false },
+      onConnectionsRead: list => { read.push(list) },
+    })
+    expect(result).toEqual({ status: 'already-default', slug: 'rox-kimi' })
+    expect(identityReads).toBe(0)
+    expect(listed).toEqual([{ refresh: false }])
+    expect(read).toEqual([connections])
+  })
+
+  it('does not hand back a list it changed', async () => {
+    const { api } = fakeApi([{ slug: 'omp', providerType: 'pi' }])
+    const read: unknown[] = []
+    expect((await ensureRoxRuntimeDefault(api, { onConnectionsRead: list => { read.push(list) } })).status).toBe('created')
+    expect(read).toEqual([])
+  })
+})

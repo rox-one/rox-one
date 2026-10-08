@@ -76,6 +76,7 @@
     "./git/exec": "./src/git/exec.ts",
     "./git/status": "./src/git/status.ts",
     "./i18n": "./src/i18n/index.ts",
+    "./i18n/lazy": "./src/i18n/lazy.ts",
     "./icons": "./src/icons/index.ts",
     "./identity": "./src/identity/index.ts",
     "./interceptor": "./src/interceptor-common.ts",
@@ -131,6 +132,7 @@
     "./feed": "./src/feed/index.ts",
     "./toolchain": "./src/toolchain/index.ts",
     "./toolchain-runtime": "./src/toolchain-runtime.ts",
+    "./toolchain/spawn-readiness": "./src/toolchain/spawn-readiness.ts",
     "./toolchain/types": "./src/toolchain/types.ts",
     "./tools": "./src/tools/index.ts",
     "./utils": "./src/utils/index.ts",
@@ -166,7 +168,8 @@
     "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts",
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",
-    "./commands/schemas": "./src/commands/schemas.ts"
+    "./commands/schemas": "./src/commands/schemas.ts",
+    "./domain": "./src/domain/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

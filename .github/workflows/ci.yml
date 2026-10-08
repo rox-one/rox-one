@@ -68,3 +68,60 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: bun run workspace-service:test:migrations
+  # W1-10 (#1507): unified gates run on every PR. Pending (sibling input not
+  # landed) never fails; real violations do. The postgres:16 service backs
+  # the live-DB paths (packages/test-harness postgres fixture, pgOrSkip in
+  # apps/workspace-service/test) through ROX_TEST_PG_URL, so they run here
+  # instead of skipping. Strict perf budgets run in bench-strict.yml.
+  unified-gates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ROX_TEST_PG_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: check-provenance diffs against the merge-base with
+          # origin/$GITHUB_BASE_REF and fails closed when it cannot resolve it;
+          # the shrink-only allowlists compare against the same base.
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.3.14' }
+      - run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: bun test packages/test-harness
+      - run: bun test apps/workspace-service/test e2e/unified
+      # On push (main) the default base, origin/main, IS HEAD: provenance would
+      # scan 0 files and the shrink-only allowlists would compare with
+      # themselves (#1507 review 3). Diff the pushed range instead: the
+      # pre-push tip github.event.before, or HEAD~1 when it is the all-zero
+      # SHA (new branch). A before SHA missing from the clone (force push)
+      # makes the checks fail closed. PRs keep origin/$GITHUB_BASE_REF.
+      - name: Provenance and allowlist base for push events
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="$(git rev-parse HEAD~1)"
+          else
+            BASE="$BEFORE"
+          fi
+          echo "ROX_PROVENANCE_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "provenance / allowlist base: $BASE"
+      - run: bun run scripts/check-provenance.ts
+      - run: bun run scripts/run-unified-gates.ts

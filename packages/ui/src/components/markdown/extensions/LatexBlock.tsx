@@ -1,7 +1,8 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import * as React from 'react'
-import { MarkdownLatexBlock } from '../MarkdownLatexBlock'
+// KaTeX loads on first use (PERF-04).
+import { LazyMarkdownLatexBlock as MarkdownLatexBlock } from '../lazy-blocks'
 import { RichBlockShell } from '../RichBlockShell'
 import { RICH_BLOCK_EDIT_EVENT } from '../rich-block-events'
 

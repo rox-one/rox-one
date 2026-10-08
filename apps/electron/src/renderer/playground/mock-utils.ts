@@ -570,7 +570,10 @@ export const mockElectronAPI = {
   },
   onContextDocsChanged: () => () => {},
   listMemoryLessons: async () => [],
+  listMemoryProposals: async () => [],
+  listPromotionCandidates: async () => [],
   onMemoryChanged: () => () => {},
+  onSkillsPendingChanged: () => () => {},
   readFile: async (path: string) => {
     throw new Error(`Playground has no file: ${path}`)
   },
@@ -758,6 +761,11 @@ export const mockElectronAPI = {
   relaunchApp: async () => {
     throw new Error('Playground fixture. Not live.')
   },
+  getStorageVisibleRoot: async () => ({ enabled: false, activeAtLaunch: false, locked: false, restartRequired: false }),
+  setStorageVisibleRoot: async () => {
+    throw new Error('Playground fixture. Not live.')
+  },
+  takeStorageMigrationNotice: async () => null,
   listCloudRuns: async () => [],
   listCloudRunSchedules: async () => [],
   submitCloudRun: async (payload: unknown) => {
