@@ -511,11 +511,3 @@ describe('info: persistence age comes from the entries, and an untouched restore
     persistence.stop()
   })
 })
-
-describe('info: NotesPage reads the task cache once per mount', () => {
-  it('uses a lazy initializer', () => {
-    const notes = read('pages/NotesPage.tsx')
-    expect(notes).toContain('const [initialTaskCache] = React.useState(() => notesTaskCache<NoteTask>(activeWorkspaceId))')
-    expect(notes).not.toContain('React.useRef<Map<string, NoteTask[]>>(notesTaskCache')
-  })
-})

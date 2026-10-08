@@ -41,7 +41,11 @@ function fixture() {
     readWorkspaceGenerationRef: { current: 0 },
     readWorkspaceRef: { current: undefined as string | undefined }, readsMountedRef: { current: false },
     // PERF-09 review1: refreshNotes marks the first fresh list (hydration adoption stops there).
-    notesFreshWorkspaceRef: { current: null as string | null } }
+    notesFreshWorkspaceRef: { current: null as string | null },
+    // PERF-09 round4: refreshNotes hands the raw listing to the task pass itself.
+    notesListingPendingRef: { current: false },
+    notesHandoffWorkspaceRef: { current: null as string | null },
+    refreshTasksRef: { current: null as null | ((sourceNotes?: unknown[]) => Promise<void>) } }
   const events: Array<[string, unknown]> = []
   let commit!: () => () => void
   const render = (activeWorkspaceId: string | undefined, api: Record<string, unknown>) => {

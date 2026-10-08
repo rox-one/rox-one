@@ -402,7 +402,6 @@ describe('surface wiring (source guards)', () => {
   const read = (file: string) => readFileSync(join(renderer, file), 'utf8')
   it('notes, home, agents, inbox and feed read through the shared cache', () => {
     expect(read('pages/NotesPage.tsx')).toContain('fetchNotesList(activeWorkspaceId')
-    expect(read('pages/NotesPage.tsx')).toContain('useState(() => notesTaskCache<NoteTask>(activeWorkspaceId))')
     expect(read('platform/home/widgets.tsx')).toContain('fetchNotesList(workspaceId')
     expect(read('pages/workspace-work/AgentProfilesView.tsx')).toContain('roxKeys.agentsCatalog(workspaceId)')
     expect(read('hooks/useInboxItems.ts')).toContain('roxKeys.inbox(workspaceId, captured.actorKey!, key)')
