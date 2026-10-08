@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'bun:test'
 import type { EntityRef } from '../../entities/refs.ts'
-import { createAcl, listingVisibility, type AclPrincipal } from '../evaluate.ts'
+import { createAcl, listingVisibility, type AclPrincipal, type AclResourceNode } from '../evaluate.ts'
 import { MemoryAclFacts } from '../memory-facts.ts'
 
 const WS = 'ws-a'
@@ -23,14 +23,15 @@ const bob: AclPrincipal = { id: 'bob', workspaceId: WS }
 const guest: AclPrincipal = { id: 'gina', workspaceId: WS, kind: 'guest' }
 const owner: AclPrincipal = { id: 'olga', workspaceId: WS }
 
-/** space → goal → project → task, plus a secret goal in the same space. */
+/** space → goal, space → project (goal edge ignored) → task, plus a secret goal in the same space. */
 function tree(): MemoryAclFacts {
   const facts = new MemoryAclFacts()
   for (const id of ['alice', 'bob', 'gina']) facts.setMember(WS, id, { role: 'member' })
   facts.setMember(WS, 'olga', { role: 'owner' })
   facts.setResource({ ref: space, workspaceId: WS })
   facts.setResource({ ref: goal, workspaceId: WS, parents: [space], spaceId: 'sp1', championId: 'bob' })
-  facts.setResource({ ref: project, workspaceId: WS, parents: [goal], spaceId: 'sp1' })
+  // project → goal is a non-inheriting edge (own privacy); project → space is space-wide.
+  facts.setResource({ ref: project, workspaceId: WS, parents: [goal, space], spaceId: 'sp1' })
   facts.setResource({ ref: task, workspaceId: WS, parents: [project], spaceId: 'sp1' })
   facts.setResource({ ref: secretGoal, workspaceId: WS, parents: [space], spaceId: 'sp1', privacy: 'invited', championId: 'bob' })
   facts.setResource({ ref: doc, workspaceId: WS })
@@ -51,7 +52,7 @@ describe('inheritance space → goal → project → task', () => {
 
   it('a contextual tag lower in the chain raises only its subtree', async () => {
     const facts = tree()
-    facts.setResource({ ref: project, workspaceId: WS, parents: [goal], spaceId: 'sp1', championId: 'alice' })
+    facts.setResource({ ref: project, workspaceId: WS, parents: [goal, space], spaceId: 'sp1', championId: 'alice' })
     const acl = createAcl(facts)
     expect(await acl.can(alice, 'close', project)).toBe(true)
     expect(await acl.can(alice, 'edit', task)).toBe(true)
@@ -109,9 +110,10 @@ describe('secret goals', () => {
 
   it('a non-secret unviewable ref is a redacted row, not hidden', async () => {
     const acl = createAcl(tree())
-    // Bob champions the goal, so he inherits manager on project/task …
-    expect(await acl.can(bob, 'close', task)).toBe(true)
-    // … but he has no role on the (non-secret) doc.
+    // Bob champions the goal, but goal → project carries no inheritance …
+    expect(await acl.can(bob, 'close', goal)).toBe(true)
+    expect(await acl.can(bob, 'view', task)).toBe(false)
+    // … and he has no role on the (non-secret) doc.
     const denied = await acl.evaluate(bob, 'view', doc)
     expect(denied).toMatchObject({ allowed: false, secret: false })
     expect(listingVisibility(denied)).toBe('restricted')
@@ -253,11 +255,34 @@ describe('negatives (PLAN §1.4)', () => {
   })
 })
 
-describe('workspace owner', () => {
-  it('is manager everywhere, including secret goals, but cannot transfer', async () => {
+describe('workspace owner (owner decision: non-secret resources only)', () => {
+  it('is manager on non-secret resources but cannot transfer', async () => {
     const acl = createAcl(tree())
-    expect(await acl.evaluate(owner, 'manage_access', secretGoal)).toMatchObject({ allowed: true, source: 'workspace-admin' })
+    expect(await acl.evaluate(owner, 'manage_access', task)).toMatchObject({ allowed: true, source: 'workspace-admin' })
     expect(await acl.can(owner, 'transfer', task)).toBe(false)
+  })
+
+  it("cannot see another person's personal (secret) goal, nor what hangs below it", async () => {
+    const personal: EntityRef = { kind: 'goal', id: 'g-personal' }
+    const target: EntityRef = { kind: 'goal-target', id: 'gt-personal' }
+    const facts = tree()
+    facts.setResource({ ref: personal, workspaceId: WS, privacy: 'invited', ownerId: 'alice' })
+    facts.setResource({ ref: target, workspaceId: WS, parents: [personal] })
+    const acl = createAcl(facts)
+    for (const ref of [personal, target, secretGoal]) {
+      const decision = await acl.evaluate(owner, 'view', ref)
+      expect(decision, ref.id).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+      expect(listingVisibility(decision)).toBe('hide')
+    }
+    expect(await acl.can(alice, 'transfer', personal)).toBe(true)
+    expect(await acl.can(alice, 'edit', target)).toBe(true)
+  })
+
+  it('keeps a secret resource the owner holds a grant on, at that grant', async () => {
+    const facts = tree().grant(WS, secretGoal, { subjectType: 'principal', subjectId: 'olga', role: 'viewer' })
+    const acl = createAcl(facts)
+    expect(await acl.evaluate(owner, 'view', secretGoal)).toMatchObject({ allowed: true, role: 'viewer', source: 'explicit' })
+    expect(await acl.can(owner, 'manage_access', secretGoal)).toBe(false)
   })
 })
 
@@ -389,10 +414,9 @@ describe('space membership (owner decision)', () => {
         .grant(WS, space, { subjectType: 'department', subjectId: 'dep-1', role })
         .grant(WS, doc, { subjectType: 'space', subjectId: 'sp1', role: 'editor' })
         .setPolicy(WS, project, { defaultSubject: 'space', defaultRole: 'editor' })
-      facts.setResource({ ref: project, workspaceId: WS, parents: [goal], spaceId: 'sp1' })
       const acl = createAcl(facts)
       expect(await acl.can(bob, 'view', doc)).toBe(false)
-      expect(await acl.can(bob, 'edit', project)).toBe(true) // champion of the parent goal → manager, unrelated to space
+      expect(await acl.can(bob, 'edit', project)).toBe(false) // not a space member; the parent goal's champion gets nothing
       expect((await acl.evaluate(bob, 'view', { kind: 'kpi', id: 'none' })).reason).toBe('not_found')
       expect(await acl.can(alice, 'view', doc)).toBe(true) // alice's commenter grant does count
     })
@@ -436,14 +460,175 @@ describe('role cache TTL and batching', () => {
     for (const id of ['alice', 'bob']) counting.setMember(WS, id, { role: 'member' })
     counting.setResource({ ref: space, workspaceId: WS })
     counting.setResource({ ref: goal, workspaceId: WS, parents: [space], spaceId: 'sp1' })
-    counting.setResource({ ref: project, workspaceId: WS, parents: [goal], spaceId: 'sp1' })
+    counting.setResource({ ref: project, workspaceId: WS, parents: [goal, space], spaceId: 'sp1' })
     counting.grant(WS, space, { subjectType: 'principal', subjectId: 'alice', role: 'viewer' })
     const refs: EntityRef[] = Array.from({ length: 20 }, (_, i) => (i % 2 ? project : { kind: 'task', id: `missing-${i}` }))
     const acl = createAcl(counting, { concurrency: 4 })
     const decisions = await acl.evaluateMany(alice, 'view', refs)
     expect(counting.epochReads).toBe(1)
     expect(decisions.map(d => d.allowed)).toEqual(refs.map(r => r.kind === 'project'))
-    // project, goal, space each read once; the 10 distinct missing tasks once each.
-    expect(counting.resourceReads).toBe(13)
+    // project and space read once each (the goal edge carries nothing, so the goal is never read);
+    // the 10 distinct missing tasks once each.
+    expect(counting.resourceReads).toBe(12)
+  })
+})
+
+describe('goal edges (owner decision: goal → child goal / project carry no inheritance)', () => {
+  const companyGoal: EntityRef = { kind: 'goal', id: 'g-co' }
+  const childGoal: EntityRef = { kind: 'goal', id: 'g-child' }
+  const childProject: EntityRef = { kind: 'project', id: 'p-child' }
+  const childTask: EntityRef = { kind: 'task', id: 't-child' }
+  const target: EntityRef = { kind: 'goal-target', id: 'gt-1' }
+  const check: EntityRef = { kind: 'goal-check', id: 'gc-1' }
+  const checkIn: EntityRef = { kind: 'check-in', id: 'ci-1' }
+  const otherSpace: EntityRef = { kind: 'space', id: 'sp2' }
+  const carl: AclPrincipal = { id: 'carl', workspaceId: WS }
+
+  function goals(): MemoryAclFacts {
+    const facts = tree().setMember(WS, 'carl', { role: 'member' })
+    facts.setResource({ ref: otherSpace, workspaceId: WS })
+    // Company goal (company scope → workspace viewer), championed by carl.
+    facts.setResource({ ref: companyGoal, workspaceId: WS, championId: 'carl' })
+    facts.grant(WS, companyGoal, { subjectType: 'workspace', subjectId: WS, role: 'viewer' })
+    // Child goal and project live in members-only space sp2 (no policy).
+    facts.setResource({ ref: childGoal, workspaceId: WS, parents: [companyGoal, otherSpace], spaceId: 'sp2' })
+    facts.setResource({ ref: childProject, workspaceId: WS, parents: [childGoal, otherSpace], spaceId: 'sp2' })
+    facts.setResource({ ref: childTask, workspaceId: WS, parents: [childProject], spaceId: 'sp2' })
+    for (const ref of [target, check, checkIn]) facts.setResource({ ref, workspaceId: WS, parents: [companyGoal] })
+    return facts
+  }
+
+  it('company goal → space child goal is not visible to non-members of that space', async () => {
+    const acl = createAcl(goals())
+    expect(await acl.can(alice, 'view', companyGoal)).toBe(true)
+    for (const ref of [childGoal, childProject, childTask]) expect(await acl.can(alice, 'view', ref), ref.id).toBe(false)
+    // Members of sp1 (alice) do not see sp2 goals hanging under a goal either.
+  })
+
+  it("the parent goal's champion is not manager of descendant goals / projects", async () => {
+    const acl = createAcl(goals())
+    expect(await acl.can(carl, 'manage_access', companyGoal)).toBe(true)
+    for (const ref of [childGoal, childProject, childTask]) expect(await acl.can(carl, 'view', ref), ref.id).toBe(false)
+  })
+
+  it('targets, checks and check-ins still inherit from their goal', async () => {
+    const acl = createAcl(goals())
+    for (const ref of [target, check, checkIn]) {
+      expect(await acl.evaluate(carl, 'edit', ref), ref.kind).toMatchObject({ allowed: true, role: 'manager', source: 'inherited' })
+      expect(await acl.evaluate(alice, 'view', ref), ref.kind).toMatchObject({ allowed: true, role: 'viewer' })
+    }
+  })
+})
+
+describe('secret propagation', () => {
+  it('a secret ancestor hides the child from listings when there is no view role', async () => {
+    const privateProject: EntityRef = { kind: 'project', id: 'p-private' }
+    const privateTask: EntityRef = { kind: 'task', id: 't-private' }
+    const facts = tree()
+    facts.setResource({ ref: privateProject, workspaceId: WS, privacy: 'invited', parents: [space], spaceId: 'sp1' })
+    facts.setResource({ ref: privateTask, workspaceId: WS, parents: [privateProject], spaceId: 'sp1' })
+    facts.grant(WS, privateProject, { subjectType: 'principal', subjectId: 'bob', role: 'editor' })
+    const acl = createAcl(facts)
+    const hidden = await acl.evaluate(alice, 'view', privateTask)
+    expect(hidden).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+    expect(listingVisibility(hidden)).toBe('hide')
+    expect(await acl.evaluate(bob, 'edit', privateTask)).toMatchObject({ allowed: true, role: 'editor', source: 'inherited' })
+  })
+})
+
+describe('chat → child edges (owner decision)', () => {
+  const chat: EntityRef = { kind: 'channel', id: 'ch-1' }
+  const privateChat: EntityRef = { kind: 'channel', id: 'ch-private' }
+  const chatFolder: EntityRef = { kind: 'folder', id: 'f-chat' }
+  const chatList: EntityRef = { kind: 'task-list', id: 'l-chat' }
+  const chatDoc: EntityRef = { kind: 'note', id: 'd-chat' }
+  const privateFolder: EntityRef = { kind: 'folder', id: 'f-private' }
+
+  function chats(): MemoryAclFacts {
+    const facts = tree()
+    // Public chat: non-joined workspace members get minimal; bob is a member (commenter), alice an admin (editor).
+    facts.setResource({ ref: chat, workspaceId: WS })
+    facts.grant(WS, chat, { subjectType: 'workspace', subjectId: WS, role: 'minimal' })
+    facts.grant(WS, chat, { subjectType: 'principal', subjectId: 'bob', role: 'commenter' })
+    facts.grant(WS, chat, { subjectType: 'principal', subjectId: 'alice', role: 'manager' })
+    facts.setResource({ ref: chatFolder, workspaceId: WS, parents: [chat] })
+    facts.setResource({ ref: chatList, workspaceId: WS, parents: [chat] })
+    facts.setPolicy(WS, chatList, { defaultSubject: null, defaultRole: 'editor' })
+    facts.setResource({ ref: chatDoc, workspaceId: WS, parents: [chatFolder] })
+    facts.setResource({ ref: privateChat, workspaceId: WS, privacy: 'invited' })
+    facts.grant(WS, privateChat, { subjectType: 'principal', subjectId: 'bob', role: 'editor' })
+    facts.setResource({ ref: privateFolder, workspaceId: WS, parents: [privateChat] })
+    return facts.setMember(WS, 'carl', { role: 'member' })
+  }
+
+  it('non-joined members see a public chat only as minimal, and nothing of its children', async () => {
+    const acl = createAcl(chats())
+    const carl: AclPrincipal = { id: 'carl', workspaceId: WS }
+    const onChat = await acl.evaluate(carl, 'view', chat)
+    expect(onChat).toMatchObject({ allowed: false, role: 'minimal', preview: 'minimal' })
+    expect(listingVisibility(onChat)).toBe('title-only')
+    for (const ref of [chatFolder, chatList, chatDoc]) expect(await acl.evaluate(carl, 'view_title', ref), ref.id).toMatchObject({ allowed: false, role: null })
+  })
+
+  it('children inherit min(chat role, child preset role), viewer by default', async () => {
+    const acl = createAcl(chats())
+    expect(await acl.evaluate(alice, 'view', chatFolder)).toMatchObject({ allowed: true, role: 'viewer' }) // min(manager, viewer)
+    expect(await acl.evaluate(alice, 'edit', chatList)).toMatchObject({ allowed: true, role: 'editor' }) // min(manager, editor)
+    expect(await acl.evaluate(bob, 'view', chatList)).toMatchObject({ role: 'commenter' }) // min(commenter, editor)
+    expect(await acl.evaluate(bob, 'view', chatDoc)).toMatchObject({ allowed: true, role: 'viewer' }) // folder → item
+  })
+
+  it('a private chat hides its children from non-members; members inherit capped', async () => {
+    const acl = createAcl(chats())
+    const hidden = await acl.evaluate(alice, 'view', privateFolder)
+    expect(hidden).toMatchObject({ allowed: false, secret: true })
+    expect(listingVisibility(hidden)).toBe('hide')
+    expect(await acl.evaluate(bob, 'view', privateFolder)).toMatchObject({ allowed: true, role: 'viewer' })
+  })
+
+  it('a removed chat member (no chat grant left) loses the chat and its children', async () => {
+    const facts = chats().revoke(WS, privateChat, 'principal', 'bob')
+    const acl = createAcl(facts)
+    expect(await acl.can(bob, 'view', privateChat)).toBe(false)
+    expect(await acl.can(bob, 'view', privateFolder)).toBe(false)
+  })
+})
+
+describe('batch failure and row-derived facts', () => {
+  it('the first failing ref stops the other batch workers (shared failed flag)', async () => {
+    const memory = new MemoryAclFacts().setMember(WS, 'alice', { role: 'member' })
+    const facts = {
+      reads: 0,
+      policyEpoch: (ws: string) => memory.policyEpoch(ws),
+      membership: (ws: string, p: string) => memory.membership(ws, p),
+      entries: (ws: string, ref: EntityRef) => memory.entries(ws, ref),
+      policy: (ws: string, ref: EntityRef) => memory.policy(ws, ref),
+      groups: (ws: string, p: string) => memory.groups(ws, p),
+      resource(ws: string, ref: EntityRef): Promise<AclResourceNode | null> {
+        facts.reads += 1
+        if (ref.id === 'boom') return Promise.reject(new Error('db down'))
+        return new Promise(resolve => setTimeout(() => resolve(memory.resource(ws, ref)), 5))
+      },
+    }
+    const acl = createAcl(facts, { concurrency: 2 })
+    const refs: EntityRef[] = [{ kind: 'task', id: 'boom' }, ...Array.from({ length: 20 }, (_, i) => ({ kind: 'task' as const, id: `t${i}` }))]
+    await expect(acl.evaluateMany(alice, 'view', refs)).rejects.toThrow('db down')
+    await new Promise(resolve => setTimeout(resolve, 30))
+    // boom + the one ref already in flight on the second worker; nothing after the failure.
+    expect(facts.reads).toBeLessThanOrEqual(2)
+  })
+
+  it('honours row-derived implicit entries and default policy carried on the node', async () => {
+    const legacy: EntityRef = { kind: 'project', id: 'p-legacy' }
+    const publicDoc: EntityRef = { kind: 'note', id: 'd-public' }
+    const facts = tree()
+    facts.setResource({ ref: legacy, workspaceId: WS, implicitEntries: [{ subjectType: 'workspace', subjectId: WS, role: 'viewer' }] })
+    facts.setResource({ ref: publicDoc, workspaceId: WS, defaultPolicy: { defaultSubject: 'link', defaultRole: 'viewer', linkToken: 'tok' } })
+    const acl = createAcl(facts)
+    expect(await acl.evaluate(bob, 'view', legacy)).toMatchObject({ allowed: true, role: 'viewer', source: 'explicit' })
+    expect(await acl.evaluate({ ...bob, linkToken: 'tok' }, 'view', publicDoc)).toMatchObject({ allowed: true, source: 'link' })
+    // A stored resource_policy row wins over the row-derived default.
+    facts.setPolicy(WS, publicDoc, { defaultSubject: null, defaultRole: null })
+    expect(await createAcl(facts).can({ ...bob, linkToken: 'tok' }, 'view', publicDoc)).toBe(false)
   })
 })
