@@ -3,22 +3,29 @@
  * for late registrations, flag-aware shortcut catalogue, Messenger-only quick
  * panels, Docs relabel everywhere, flag-gated create fallbacks.
  */
-import { afterEach, describe, expect, it } from 'bun:test'
+import { afterEach, describe, expect, it, spyOn } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createStore } from 'jotai'
+import { createStore, getDefaultStore } from 'jotai'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { actions, actionsByCategory } from '@/actions/definitions'
 import { actionsByCategoryFor, resolveActionHotkey } from '@/actions/hotkeys'
-import { evaluateWhen, type KeybindingContext } from '@/actions/keybinding-context'
+import { evaluateWhen, snapshotKeybindingContext, type KeybindingContext } from '@/actions/keybinding-context'
+import { focusedPanelIdAtom, panelStackAtom, type PanelStackEntry } from '@/atoms/panel-stack'
 import type { ActionDefinition } from '@/actions/types'
 import { DOCS_RELABEL_TITLE_KEY } from '../modes-seed'
 import { __resetModeRegistryForTests, getModeRegistry, registerSeededMode, seededModeProblem } from '../mode-registry-bootstrap'
-import { buildRouteTitleKeys, listShellModes, notesTitleKey, surfaceTitleKey } from '../surface-shell'
+import { buildRouteTitleKeys, listShellModes, navDestinationLabelKey, notesTitleKey, surfaceTitleKey } from '../surface-shell'
 import { modeRegistryStore } from '../useModes'
 import { resolveLucideIcon } from '../lucide-icon'
-import { __resetSurfaceActivityForTests, isSurfaceMounted, markSurfaceMounted } from '../surface-activity'
-import { createShellFlagContextKeyProvider, pushSurfaceRoutesToMain, workbenchFlagAtom } from '../unified-flags'
+import { isSurfaceActive } from '../surface-activity'
+import {
+  createShellFlagContextKeyProvider,
+  enabledShellFlagsAtom,
+  installShellFlagBridges,
+  pushSurfaceRoutesToMain,
+  workbenchFlagAtom,
+} from '../unified-flags'
 import { createSlotRegistry } from '../slots'
 import {
   GLOBAL_CREATE_OWNER_FLAGS,
@@ -27,7 +34,14 @@ import {
   registerCoreGlobalCreateItems,
   type GlobalCreateMenuEntry,
 } from '../global-create'
-import { UNIFIED_SURFACE_FLAGS, isUnifiedSurfaceId } from '../../../shared/surface-routes'
+import {
+  UNIFIED_SURFACE_FLAGS,
+  isUnifiedSurfaceId,
+  isUnifiedSurfaceRouteEnabled,
+  resetUnifiedSurfaceRoutes,
+  setUnifiedSurfaceRoutesEnabled,
+} from '../../../shared/surface-routes'
+import { APP_NAV_DESTINATIONS, APP_NAV_DESTINATIONS_BY_ID } from '@/components/app-shell/nav-destinations'
 
 const rendererDir = join(import.meta.dir, '..', '..')
 const read = (rel: string) => readFileSync(join(rendererDir, rel), 'utf8')
@@ -37,8 +51,20 @@ const ctx = (extra: Partial<KeybindingContext> = {}): KeybindingContext =>
 
 afterEach(() => {
   __resetModeRegistryForTests()
-  __resetSurfaceActivityForTests()
+  resetUnifiedSurfaceRoutes()
+  const store = getDefaultStore()
+  store.set(panelStackAtom, [])
+  store.set(focusedPanelIdAtom, null)
 })
+
+const panel = (id: string, route: string): PanelStackEntry =>
+  ({ id, route, proportion: 1, panelType: 'other', laneId: 'main' }) as PanelStackEntry
+
+/** Two panels (Messenger + Notes); `focused` picks the focused one. */
+function seedPanels(store: Pick<ReturnType<typeof createStore>, 'set'>, focused: 'm' | 'n' | null) {
+  store.set(panelStackAtom, [panel('m', 'messenger'), panel('n', 'notes')])
+  store.set(focusedPanelIdAtom, focused)
+}
 
 const fakeMode = (overrides: Record<string, unknown> = {}) => ({
   contribution: {
@@ -162,22 +188,48 @@ describe('quick panels are Messenger-only (UI-SPEC §15)', () => {
     for (const id of QUICK) expect((actions[id] as ActionDefinition).when).toBe('messengerActive')
   })
 
-  it('messengerActive follows the mounted Messenger surface', () => {
-    expect(evaluateWhen('messengerActive', ctx({ messengerActive: isSurfaceMounted('messenger') }))).toBe(false)
-    const unmark = markSurfaceMounted('messenger')
-    expect(evaluateWhen('messengerActive', ctx({ messengerActive: isSurfaceMounted('messenger') }))).toBe(true)
-    unmark()
-    unmark()
-    expect(isSurfaceMounted('messenger')).toBe(false)
+  it('messengerActive follows the focused panel, not a mounted (hidden) one', () => {
+    setUnifiedSurfaceRoutesEnabled(['messenger'])
+    const store = createStore()
+    expect(isSurfaceActive('messenger', store)).toBe(false)
+    seedPanels(store, 'm')
+    expect(isSurfaceActive('messenger', store)).toBe(true)
+    expect(isSurfaceActive('calendar', store)).toBe(false)
+    // Messenger stays mounted (hidden) after focus moves to Notes.
+    seedPanels(store, 'n')
+    expect(isSurfaceActive('messenger', store)).toBe(false)
   })
 
-  it('the omnibox context provider exposes messengerActive', () => {
-    const provider = createShellFlagContextKeyProvider(createStore())
+  it('negative: a closed mode gate never counts as Messenger', () => {
+    const store = createStore()
+    seedPanels(store, 'm')
+    expect(isSurfaceActive('messenger', store)).toBe(false)
+  })
+
+  it('the keymap context reads the focused panel from the shared store', () => {
+    setUnifiedSurfaceRoutesEnabled(['messenger'])
+    const store = getDefaultStore()
+    seedPanels(store, 'm')
+    expect(evaluateWhen('messengerActive', snapshotKeybindingContext())).toBe(true)
+    seedPanels(store, 'n')
+    expect(evaluateWhen('messengerActive', snapshotKeybindingContext())).toBe(false)
+  })
+
+  it('the omnibox context provider exposes messengerActive for its store', () => {
+    setUnifiedSurfaceRoutesEnabled(['messenger'])
+    const store = createStore()
+    const provider = createShellFlagContextKeyProvider(store)
     expect(provider.keys).toContain('messengerActive')
     expect(provider.pull().messengerActive).toBe(false)
-    const unmark = markSurfaceMounted('messenger')
+    seedPanels(store, 'm')
     expect(provider.pull().messengerActive).toBe(true)
-    unmark()
+    seedPanels(store, 'n')
+    expect(provider.pull().messengerActive).toBe(false)
+  })
+
+  it('SurfaceHost no longer marks itself (mount ≠ active)', () => {
+    expect(read('platform/SurfaceHost.tsx')).not.toContain('markSurfaceMounted')
+    expect(read('actions/keybinding-context.ts')).toContain("isSurfaceActive('messenger')")
   })
 })
 
@@ -234,11 +286,99 @@ describe('surface gate → main', () => {
     expect(() => pushSurfaceRoutesToMain(['messenger'])).not.toThrow()
   })
 
+  it('a failed push is logged, not swallowed', async () => {
+    const g = globalThis as { window?: unknown }
+    const hadWindow = 'window' in g
+    const prevWindow = g.window
+    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      g.window = { electronAPI: { setUnifiedSurfaceRoutesEnabled: () => Promise.reject(new Error('No handler registered')) } }
+      pushSurfaceRoutesToMain(['messenger'])
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(String(warn.mock.calls[0]?.[0])).toContain('surface route gate push to main failed')
+      warn.mockClear()
+      g.window = { electronAPI: { setUnifiedSurfaceRoutesEnabled: () => { throw new Error('boom') } } }
+      expect(() => pushSurfaceRoutesToMain([])).not.toThrow()
+      expect(warn).toHaveBeenCalledTimes(1)
+    } finally {
+      warn.mockRestore()
+      if (hadWindow) g.window = prevWindow
+      else delete g.window
+    }
+  })
+
   it('the bridge pushes the enabled surfaces when flags change', () => {
     const src = read('platform/unified-flags.ts')
     expect(src).toContain('pushSurfaceRoutesToMain(ids)')
     expect(src).toContain('setUnifiedSurfaceRoutesEnabled?.(')
     // the atom used by the bridge exists for every unified flag
     for (const flag of Object.values(UNIFIED_SURFACE_FLAGS)) expect(workbenchFlagAtom(flag)).toBeDefined()
+  })
+})
+
+describe('one jotai store for React and module-level readers', () => {
+  it('main.tsx hands the default store to the Provider', () => {
+    const main = read('main.tsx')
+    expect(main).toContain('<JotaiProvider store={getDefaultStore()}>')
+    expect(main).not.toContain('<JotaiProvider>')
+  })
+
+  it('the module-level readers use getDefaultStore() (= the Provider store)', () => {
+    expect(read('actions/registry.tsx')).toContain('getDefaultStore().get(enabledShellFlagsAtom)')
+    expect(read('actions/shell-shortcuts.ts')).toContain('getDefaultStore().get(enabledShellFlagsAtom)')
+    expect(read('platform/unified-flags.ts')).toContain('installShellFlagBridges(store: ReturnType<typeof getDefaultStore> = getDefaultStore())')
+  })
+
+  it('a runtime flag flip in the shared store reaches the route gate', () => {
+    const store = createStore()
+    installShellFlagBridges(store)
+    expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(false)
+    store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), true)
+    expect(store.get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeMessengerV1)).toBe(true)
+    expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(true)
+    store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+    expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(false)
+  })
+})
+
+describe('«Документы» relabel reaches every Notes label', () => {
+  const docsOn = new Set<string>([WORKBENCH_FLAG.docsSharedV1])
+
+  it('nav destinations: only Notes is relabelled, only with docs.shared.v1', () => {
+    expect(navDestinationLabelKey(APP_NAV_DESTINATIONS_BY_ID.notes, new Set())).toBe('sidebar.notes')
+    expect(navDestinationLabelKey(APP_NAV_DESTINATIONS_BY_ID.notes, docsOn)).toBe(DOCS_RELABEL_TITLE_KEY)
+    for (const dest of APP_NAV_DESTINATIONS) {
+      if (dest.id === 'notes') continue
+      expect(navDestinationLabelKey(dest, docsOn)).toBe(dest.labelKey)
+      expect(navDestinationLabelKey(dest, new Set())).toBe(dest.labelKey)
+    }
+  })
+
+  it('rail, inspector, compact menu and sidebar link use the flag-aware key', () => {
+    expect(read('platform/ActivityRail.tsx')).toContain('t(navDestinationLabelKey(dest, shellFlags))')
+    expect(read('platform/InspectorHost.tsx')).toContain('t(navDestinationLabelKey(destination, shellFlags))')
+    const compact = read('components/app-shell/CompactWorkspaceMenu.tsx')
+    expect(compact).toContain('t(navDestinationLabelKey(service, shellFlags))')
+    expect(compact).toContain('t(navDestinationLabelKey(destination, shellFlags))')
+    expect(read('components/app-shell/AppShell.tsx')).toContain('t(notesTitleKey(shellFlags, APP_NAV_DESTINATIONS_BY_ID.notes.labelKey))')
+  })
+
+  it('pages naming Notes go through useNotesTitleKey', () => {
+    const cases: Array<[string, string]> = [
+      ['knowledge/KnowledgeHome.tsx', "useNotesTitleKey('sidebar.notes')"],
+      ['pages/settings/AccountsSettingsPage.tsx', "useNotesTitleKey('sidebar.notes')"],
+      ['pages/NotesPage.tsx', "useNotesTitleKey('notes.header.title')"],
+      ['pages/notes/NotesDocumentChrome.tsx', "useNotesTitleKey('notes.breadcrumb.vault')"],
+      ['platform/home/widgets.tsx', "useNotesTitleKey('workbench.home.w.notes')"],
+      ['pages/SearchPage.tsx', "useNotesTitleKey('searchPage.notes')"],
+      ['pages/settings/PreferencesPage.tsx', "useNotesTitleKey('settings.preferences.notes')"],
+    ]
+    for (const [file, hook] of cases) {
+      const src = read(file)
+      expect(src).toContain(hook)
+      const key = hook.slice(hook.indexOf("'") + 1, hook.lastIndexOf("'"))
+      expect(src).not.toContain(`t('${key}')`)
+    }
   })
 })
