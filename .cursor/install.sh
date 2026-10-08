@@ -5,7 +5,7 @@ cd "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Match the server-validation workflow without upgrading the user's global Bun.
 BUN_VERSION="1.3.14"
-export BUN_INSTALL="${ROX_CLOUD_BUN_INSTALL:-$HOME/.rox-cloud/bun}"
+export BUN_INSTALL="${ROX_CLOUD_BUN_INSTALL:-$HOME/rox-cloud/bun}"
 export PATH="$BUN_INSTALL/bin:$PATH"
 if ! command -v bun >/dev/null 2>&1 || [ "$(bun --version)" != "$BUN_VERSION" ]; then
   curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"

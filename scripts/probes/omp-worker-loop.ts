@@ -1,9 +1,10 @@
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, renameSync, openSync, closeSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { tmpdir, homedir } from 'node:os';
+import { tmpdir } from 'node:os';
 import { OMP_WORKER_POLICY_SOURCE } from '../../packages/shared/src/agent/omp-worker-policy.ts';
 import { prepareOmpNativePolicy } from '../../packages/shared/src/agent/omp-native-policy.ts';
+import { resolveConfigDir } from '../../packages/shared/src/config/paths.ts';
 // Pinned Bun 1.3.14; optional ROX_OMP_PACKAGE_DIR points to a pinned 18.4.12 package.
 // All provider responses are native in-memory fixtures; every fetch is forbidden.
 export function writeWorkerEvidence(outputPath: string, evidence: unknown): void {
@@ -27,7 +28,7 @@ process.env.PI_CODING_AGENT_DIR=join(root,'profile');
 process.env.OMP_PROFILE='default';
 let networkAttempts=0;
 globalThis.fetch=async()=>{networkAttempts++;throw new Error('Fixture forbids all network');};
-const originalBase=process.env.ROX_OMP_PACKAGE_DIR ?? join(homedir(), '.rox', 'toolchain', 'omp', '18.4.12', 'package');
+const originalBase=process.env.ROX_OMP_PACKAGE_DIR ?? join(resolveConfigDir(), 'toolchain', 'omp', '18.4.12', 'package');
 const nativePolicy=process.env.ROX_OMP_NATIVE_POLICY==='1'?prepareOmpNativePolicy(originalBase,root):null;
 const base=nativePolicy?.packageDir ?? originalBase;
 const packageVersion=JSON.parse(readFileSync(join(base,'package.json'),'utf8')).version;

@@ -37,7 +37,7 @@ for (const path of expected) put(path, readFileSync(join(root, path)))
 put('.dockerignore', readFileSync(join(root, '.dockerignore')))
 put('Dockerfile', 'FROM scratch\nWORKDIR /cached\n' + cachedCopies.join('\n') + '\nCOPY . /context/\n')
 for (const path of ['.env', '.env.local', 'apps/webui/.env.production', '.codegraph/private.json',
-  '.craft-agent/credentials.json', '.rox/private.json', '.omp/auth.json', 'node_modules/private.txt',
+  '.craft-agent/credentials.json', 'rox/private.json', '.rox/private.json', '.omp/auth.json', 'node_modules/private.txt',
   'apps/webui/node_modules/private.txt', 'packages/pi-agent-server/dist/stale.js', 'dist/stale.js']) put(path, 'synthetic-private-marker')
 put('apps/electron/resources/config-defaults.json', '{"fixture":true}')
 const results: any[] = []
@@ -71,7 +71,7 @@ try {
     if (!copied.equals(readFileSync(join(root, path)))) throw new Error('Cache manifest differs: ' + path)
   }
   for (const path of ['.env', '.env.local', 'apps/webui/.env.production', '.codegraph/private.json',
-    '.craft-agent/credentials.json', '.rox/private.json', '.omp/auth.json', 'node_modules/private.txt',
+    '.craft-agent/credentials.json', 'rox/private.json', '.rox/private.json', '.omp/auth.json', 'node_modules/private.txt',
     'apps/webui/node_modules/private.txt', 'packages/pi-agent-server/dist/stale.js', 'dist/stale.js']) {
     if (existsSync(join(destination, 'context', path))) throw new Error('Private/stale input entered context: ' + path)
   }

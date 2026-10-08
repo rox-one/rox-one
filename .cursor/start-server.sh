@@ -2,11 +2,11 @@
 # Launch only the headless server; keep local user context and credentials separate.
 set -euo pipefail
 cd "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-export PATH="${ROX_CLOUD_BUN_INSTALL:-$HOME/.rox-cloud/bun}/bin:$PATH"
+export PATH="${ROX_CLOUD_BUN_INSTALL:-$HOME/rox-cloud/bun}/bin:$PATH"
 export CRAFT_BUNDLED_ASSETS_ROOT="$PWD/apps/electron"
 export CRAFT_RPC_HOST=127.0.0.1
 export CRAFT_RPC_PORT=9100
-export ROX_CONFIG_DIR="${ROX_CONFIG_DIR:-$HOME/.rox-cloud/context}"
+export ROX_CONFIG_DIR="${ROX_CONFIG_DIR:-$HOME/rox-cloud/context}"
 export CRAFT_CONFIG_DIR="$ROX_CONFIG_DIR"
 export CRAFT_PRINT_TOKEN=0
 

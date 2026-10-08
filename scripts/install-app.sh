@@ -71,7 +71,7 @@ expected_size="${fields[3]}"
 printf 'Release: %s\nAsset: %s\nSHA256: %s\nBytes: %s\n' "$version" "$installer_url" "$expected_sha256" "$expected_size"
 if [ "$metadata_only" = true ]; then exit 0; fi
 
-config_dir="${ROX_CONFIG_DIR:-$HOME/.rox}"
+config_dir="${ROX_CONFIG_DIR:-$HOME/rox}"
 download_dir="$config_dir/downloads"
 mkdir -p "$download_dir"
 archive="$download_dir/Rox-${version#v}-arm64.zip"
@@ -127,4 +127,11 @@ fi
 staged_app=''
 printf 'Installed %s at %s.\nUser data and credentials were preserved.\n' "$version" "$destination"
 [ -z "$backup" ] || printf 'Previous application backup: %s\n' "$backup"
+# W1-13: migrate a legacy ~/.rox home to ~/rox (never deletes; no-op when
+# already migrated). Best effort — a failed migration never fails install.
+if command -v rox >/dev/null 2>&1; then
+  rox migrate-config --auto || true
+elif command -v craft-cli >/dev/null 2>&1; then
+  craft-cli migrate-config --auto || true
+fi
 open "$destination"
