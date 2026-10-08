@@ -173,21 +173,21 @@ export class EntityLinkStore {
     return Number(result.changes) > 0
   }
 
-  /** Links originating at `ref`. */
+  /** Links originating at `ref`. Fragment is matched NULL-safe so siblings don't leak. */
   outgoing(ref: EntityRef): EntityLink[] {
     const rows = this.db
-      .prepare('SELECT * FROM entity_links WHERE from_kind=? AND from_id=? ORDER BY created_at ASC')
-      .all(ref.kind, ref.id) as unknown as LinkRow[]
+      .prepare('SELECT * FROM entity_links WHERE from_kind=? AND from_id=? AND from_fragment IS ? ORDER BY created_at ASC')
+      .all(ref.kind, ref.id, ref.fragment ?? null) as unknown as LinkRow[]
     return rows.map(rowToLink)
   }
 
-  /** Links pointing at `ref`, filtered and paginated by link id. */
+  /** Links pointing at `ref`, filtered and paginated by link id. Fragment is matched NULL-safe. */
   backlinks(ref: EntityRef, query: BacklinkQuery = {}): BacklinkPage {
     const limit = Math.min(query.limit ?? DEFAULT_BACKLINK_LIMIT, MAX_BACKLINK_LIMIT)
-    const clauses = ['to_kind=?', 'to_id=?']
-    const params: Array<string | number> = [ref.kind, ref.id]
+    const clauses = ['to_kind=?', 'to_id=?', 'to_fragment IS ?']
+    const params: Array<string | number | null> = [ref.kind, ref.id, ref.fragment ?? null]
     if (query.kinds && query.kinds.length > 0) {
-      clauses.push(`to_kind IN (${query.kinds.map(() => '?').join(',')})`)
+      clauses.push(`from_kind IN (${query.kinds.map(() => '?').join(',')})`)
       params.push(...query.kinds)
     }
     if (query.relations && query.relations.length > 0) {

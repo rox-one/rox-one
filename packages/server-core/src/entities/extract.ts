@@ -54,9 +54,30 @@ export function extractEntityRefsFromText(text: string): ExtractedLink[] {
   return out
 }
 
-/** Wikilink targets as `note` refs. */
+/** Wikilink targets as refs: entity literals first, plain targets fall back to `note`. */
 export function wikilinkTargetsToRefs(text: string): ExtractedLink[] {
-  return extractWikilinkTargets(text).map(target => ({ to: { kind: 'note' as const, id: target } }))
+  const out: ExtractedLink[] = []
+  const seen = new Set<string>()
+  const FULL_RE = /\[\[([^\]\n|]+?)(?:\|[^\]\n]*)?\]\]/g
+  for (const match of text.matchAll(FULL_RE)) {
+    const inner = (match[1] ?? '').trim()
+    if (!inner) continue
+    const parsed = parseEntityRef(inner)
+    let ref: EntityRef
+    if (parsed.ok) {
+      ref = parsed.value
+    } else {
+      const hashIndex = inner.indexOf('#')
+      const target = (hashIndex === -1 ? inner : inner.slice(0, hashIndex)).trim()
+      if (!target || target.includes(':')) continue
+      ref = { kind: 'note' as const, id: target }
+    }
+    const key = `${ref.kind}:${ref.id}#${ref.fragment ?? ''}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push({ to: ref })
+  }
+  return out
 }
 
 interface TiptapNode {
@@ -91,8 +112,18 @@ export function extractLinksFromTiptapDoc(doc: TiptapNode): ExtractedLink[] {
     const currentBlock = nodeBlockId(node) ?? blockId
     for (const mark of node.marks ?? []) {
       if (mark.type === 'wikilink' && typeof mark.attrs?.target === 'string') {
-        const target = mark.attrs.target
-        if (target.length > 0) push({ to: { kind: 'note', id: target }, blockId: currentBlock })
+        const target = (mark.attrs.target as string).trim()
+        if (target.length === 0) continue
+        const parsed = parseEntityRef(target)
+        if (parsed.ok) {
+          const link: ExtractedLink = { to: parsed.value }
+          if (currentBlock) link.blockId = currentBlock
+          push(link)
+        } else if (!target.includes(':')) {
+          const hashIndex = target.indexOf('#')
+          const plain = (hashIndex === -1 ? target : target.slice(0, hashIndex)).trim()
+          if (plain.length > 0) push({ to: { kind: 'note', id: plain }, blockId: currentBlock })
+        }
       }
     }
     if (node.type === 'wikilink' || node.type === 'entityRef') {
