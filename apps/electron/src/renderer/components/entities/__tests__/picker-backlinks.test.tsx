@@ -160,7 +160,7 @@ describe('backlinks grouping', () => {
   })
 })
 
-describe('Tasks backlinks with no indexed links (UNDONE: #1499 save-time indexer)', () => {
+describe('Tasks backlinks with no indexed links (nothing indexed yet)', () => {
   it('shows the honest empty state from the real data path, never fixture rows', async () => {
     const backlinks = mock(async () => ({ links: [] }))
     setEntityDataSource({ async resolve() { return [] }, backlinks, async search() { return [] }, onLinksChanged() { return () => {} } })

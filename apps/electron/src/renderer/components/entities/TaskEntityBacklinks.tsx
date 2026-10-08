@@ -2,9 +2,9 @@
  * W1-08 (#1505) — Tasks integration: «Упоминается в» in the task detail
  * Links tab. Renders nothing while `entities.previews.v1` is off.
  *
- * UNDONE(#1499): nothing indexes note mentions into the link store yet (the
- * save-time indexer lands with #1499), so until then this shows the empty
- * state from the real `entities:links` call — never fixture rows.
+ * Backlinks come from #1499's save-time note-links indexer; with nothing
+ * indexed yet this shows the empty state from the real `entities:links`
+ * call — never fixture rows.
  */
 import * as React from 'react'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'

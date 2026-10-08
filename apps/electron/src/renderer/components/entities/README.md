@@ -10,13 +10,25 @@ orchestrator, rail, palette or editor: navigation uses the existing
 
 `entities.previews.v1` is registered in `@rox/core/platform` with default OFF
 and depends on `entities.links.v1`. `flags.ts` resolves both through
-`isWorkbenchFlagEnabled`, using #1499's renderer atom for links
-(`craft-feature-entities-links-v1`) and `craft-feature-entities-previews-v1`.
+`isWorkbenchFlagEnabled`. Links is #1499's EFFECTIVE state
+(`useEntitiesLinksEffectiveState`: the env `CRAFT_FEATURE_ENTITIES_LINKS`
+override, else the saved `craft-feature-entities-links-v1` toggle), not the
+saved toggle; previews is `craft-feature-entities-previews-v1`. So when the
+env forces links off, previews and chips behave exactly as with links off
+(no entity calls, no «unavailable» chips), and when it forces links on, the
+previews toggle alone decides.
 
 Settings → Appearance → Workbench has a toggle for each, previews right under
 links (`EntitiesPreviewsSettingsToggle`, same `atomWithStorage` persistence).
-While links is off the previews switch is disabled, shown off, and its
-description says to turn links on first.
+While links is effectively off the previews switch is disabled and shown off;
+its description repeats the env-forced explanation when the env forces links
+off, and otherwise says to turn links on first. The saved previews value is
+kept either way.
+
+`openEntity` (chip click, hover card, context menu, embed card) navigates
+nowhere for the kind-first entity routes (`docs/…`, `goals/…`, …) while
+#1499's route gate is off, the same gate that rejects those routes and
+`rox://` deep links.
 
 When the flag is off:
 - no preview or backlink request is made;
@@ -62,7 +74,8 @@ When the flag is off:
 
 ## Known limitations (UNDONE)
 
-- **Tasks «Упоминается в» stays empty for now.** Nothing indexes note mentions yet: the save-time indexer (Markdown → `extract.ts` → link store, behind `entities.links.v1`) belongs to the #1499 package, not this one. Until it lands, the panel shows its empty state («Пока нигде не упоминается») from the real `entities:links` call; it never shows fixture or invented rows. Backlinks appear as soon as links are written (today only through the explicit `entities:links add` RPC). QA should not file the empty panel as a bug.
+- **Tasks «Упоминается в» only shows indexed links.** Note mentions reach the link store through #1499's save-time note-links indexer (`server-core/src/entities/note-links-indexer.ts`, behind `entities.links.v1`): notes saved while links was off are indexed on their next save. Until then the panel shows its empty state («Пока нигде не упоминается») from the real `entities:links` call; it never shows fixture or invented rows.
+- **`!` before `[[…]]`: editor vs #1499 indexer (follow-up).** The indexer (#1499 @ c13241e1) records `embeds` for an unescaped whole-line `![[…]]` (≤ 3 leading spaces) and `mentions` for inline `a ![[…]] b` and `\![[…]]`. The editor additionally needs a blank line (or the start/end of the note) above and below an embed, at the top level. So an inline `![[task:1]]` stays plain text in the editor (no chip) while the index records a mention, and a whole-line `![[task:1]]` that touches paragraph text stays text while the index records an embed (until a legacy-engine save escapes it as `!\[\[…\]\]`, as on main). Aligning the editor means changing the `\!` escape rule in both Markdown engines and their round-trip tests, so it is left for a follow-up.
 - The server resolver host keeps its own LRU; a renderer revalidation can return that cached preview until the owning module invalidates it on the server.
 - `[[` / `@` suggestion menu (UI-SPEC MentionMenu) is a later package; typed or pasted explicit syntax converts, and Mod-Shift-K opens the picker.
 - An `![[kind:id]]` line inside a list item, blockquote, callout or column, or touching paragraph text, stays text, not an embed card. The legacy (tiptap-markdown) editor escapes it on save as `!\[\[…\]\]`, exactly as with the flag off (same as main).

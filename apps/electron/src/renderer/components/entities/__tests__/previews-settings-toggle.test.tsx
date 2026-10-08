@@ -10,17 +10,20 @@ import { join } from 'path'
 import { act } from 'react'
 import { createStore, Provider } from 'jotai'
 import { EntitiesPreviewsSettingsToggle } from '../EntitiesPreviewsSettingsToggle'
-import { ENTITIES_PREVIEWS_STORAGE_KEY, entitiesLinksRequestedAtom, entitiesPreviewsRequestedAtom, entityUiFlagsAtom } from '../flags'
+import { ENTITIES_PREVIEWS_STORAGE_KEY, entitiesLinksRequestedAtom, entitiesPreviewsRequestedAtom, getEntityUiFlags } from '../flags'
+import { __resetEntitiesLinksSyncForTests, applyEntitiesLinksEffectiveState } from '../../../lib/entities-links-sync'
 
 setupEntityTestEnv()
 
 beforeEach(() => { testWindow.localStorage.clear() })
-afterEach(() => { resetDom() })
+afterEach(() => { __resetEntitiesLinksSyncForTests(); resetDom() })
 
-async function render(links: boolean) {
+/** `links` = saved toggle; `envOverride` = main's answer under CRAFT_FEATURE_ENTITIES_LINKS. */
+async function render(links: boolean, envOverride?: boolean) {
   await useLang('ru')
   const store = createStore()
   store.set(entitiesLinksRequestedAtom, links)
+  applyEntitiesLinksEffectiveState({ enabled: envOverride ?? links, persisted: links, envOverride })
   const mounted = await mount(<Provider store={store}><EntitiesPreviewsSettingsToggle /></Provider>)
   const toggle = mounted.container.querySelector('[role="switch"]') as HTMLButtonElement
   return { store, mounted, toggle }
@@ -36,7 +39,7 @@ describe('entities.previews.v1 Settings toggle', () => {
     expect(mounted.container.textContent).toContain('Превью сущностей (экспериментально)')
     expect(mounted.container.textContent).toContain('Сначала включите связи сущностей.')
     await act(async () => { toggle.click() })
-    expect(store.get(entityUiFlagsAtom).previews).toBe(false)
+    expect(getEntityUiFlags(store.get(entitiesPreviewsRequestedAtom)).previews).toBe(false)
     await mounted.unmount()
   })
 
@@ -48,9 +51,39 @@ describe('entities.previews.v1 Settings toggle', () => {
     await act(async () => { toggle.click() })
     await flush()
     expect(store.get(entitiesPreviewsRequestedAtom)).toBe(true)
-    expect(store.get(entityUiFlagsAtom)).toEqual({ links: true, previews: true })
+    expect(getEntityUiFlags(store.get(entitiesPreviewsRequestedAtom))).toEqual({ links: true, previews: true })
     expect(testWindow.localStorage.getItem(ENTITIES_PREVIEWS_STORAGE_KEY)).toBe('true')
     expect(toggle.getAttribute('aria-checked')).toBe('true')
+    await mounted.unmount()
+  })
+
+  it('follows the effective links state: env forcing links off disables it with the env explanation (fix8)', async () => {
+    const { store, mounted, toggle } = await render(true, false)
+    store.set(entitiesPreviewsRequestedAtom, true)
+    await flush()
+    expect(toggle.disabled).toBe(true)
+    expect(toggle.getAttribute('aria-checked')).toBe('false')
+    expect(mounted.container.textContent).toContain('CRAFT_FEATURE_ENTITIES_LINKS=0')
+    expect(mounted.container.textContent).not.toContain('Сначала включите связи сущностей.')
+    await act(async () => { toggle.click() })
+    expect(store.get(entitiesPreviewsRequestedAtom)).toBe(true)
+    expect(getEntityUiFlags(true).previews).toBe(false)
+    // The override goes away (main broadcasts the new state): the saved toggles apply again.
+    await act(async () => { applyEntitiesLinksEffectiveState({ enabled: true, persisted: true, envOverride: undefined }) })
+    await flush()
+    expect(toggle.disabled).toBe(false)
+    expect(toggle.getAttribute('aria-checked')).toBe('true')
+    await mounted.unmount()
+  })
+
+  it('env forcing links on enables it although the saved links toggle is off', async () => {
+    const { mounted, toggle } = await render(false, true)
+    expect(toggle.disabled).toBe(false)
+    expect(mounted.container.textContent).not.toContain('Сначала включите связи сущностей.')
+    await act(async () => { toggle.click() })
+    await flush()
+    expect(toggle.getAttribute('aria-checked')).toBe('true')
+    expect(getEntityUiFlags(true)).toEqual({ links: true, previews: true })
     await mounted.unmount()
   })
 

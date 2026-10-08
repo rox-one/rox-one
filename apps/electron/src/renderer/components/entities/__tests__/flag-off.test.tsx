@@ -22,13 +22,16 @@ import {
   ENTITIES_PREVIEWS_STORAGE_KEY,
   entitiesLinksRequestedAtom,
   entitiesPreviewsRequestedAtom,
-  entityUiFlagsAtom,
+  getEntityUiFlags,
   resolveEntityUiFlags,
 } from '../flags'
+import { __resetEntitiesLinksSyncForTests, applyEntitiesLinksEffectiveState, seedEntitiesLinksGate } from '../../../lib/entities-links-sync'
 import { setEntityDataSource, type EntityDataSource } from '../entity-data-source'
 import { resetEntityPreviewStores } from '../use-entity-preview'
 import { EntityWorkspaceContext } from '../entity-context'
 import { featureEntitiesLinksV1Atom } from '../../../atoms/entities-links'
+import { openEntity } from '../open-entity'
+import { NAVIGATE_EVENT } from '../../../lib/navigate'
 
 setupEntityTestEnv()
 
@@ -47,6 +50,7 @@ beforeEach(() => {
   setEntityDataSource(spySource)
 })
 afterEach(() => {
+  __resetEntitiesLinksSyncForTests()
   setEntityDataSource(null)
   resetEntityPreviewStores()
   resetDom()
@@ -59,10 +63,15 @@ async function hover(element: Element) {
   await act(async () => { element.dispatchEvent(new testWindow.PointerEvent('pointerover', { bubbles: true }) as unknown as Event) })
 }
 
-function withFlags(node: React.ReactNode, flags: { links: boolean; previews: boolean }) {
+/**
+ * `links` is the saved toggle; `envOverride` simulates main's answer under
+ * `CRAFT_FEATURE_ENTITIES_LINKS` (the renderer gates on the effective state).
+ */
+function withFlags(node: React.ReactNode, flags: { links: boolean; previews: boolean; envOverride?: boolean }) {
   const store = createStore()
   store.set(entitiesLinksRequestedAtom, flags.links)
   store.set(entitiesPreviewsRequestedAtom, flags.previews)
+  applyEntitiesLinksEffectiveState({ enabled: flags.envOverride ?? flags.links, persisted: flags.links, envOverride: flags.envOverride })
   return <Provider store={store}>{node}</Provider>
 }
 
@@ -79,14 +88,50 @@ describe('flag resolution', () => {
     expect(ENTITIES_LINKS_STORAGE_KEY).toBe('craft-feature-entities-links-v1')
     // #1499's renderer atom, not a second copy (one source of truth per session).
     expect(entitiesLinksRequestedAtom).toBe(featureEntitiesLinksV1Atom)
-    const store = createStore()
-    expect(store.get(entityUiFlagsAtom)).toEqual({ links: false, previews: false })
+    expect(getEntityUiFlags(false)).toEqual({ links: false, previews: false })
+    expect(getEntityUiFlags(true)).toEqual({ links: false, previews: false })
+  })
+
+  it('previews follow the EFFECTIVE links state, not the saved toggle (owner decision, fix8)', () => {
+    // Saved links toggle on, env forces links off → previews off.
+    applyEntitiesLinksEffectiveState({ enabled: false, persisted: true, envOverride: false })
+    expect(getEntityUiFlags(true)).toEqual({ links: false, previews: false })
+    // Saved links toggle off, env forces links on → the previews toggle decides.
+    applyEntitiesLinksEffectiveState({ enabled: true, persisted: false, envOverride: true })
+    expect(getEntityUiFlags(true)).toEqual({ links: true, previews: true })
+    expect(getEntityUiFlags(false)).toEqual({ links: true, previews: false })
+    // No override: the saved toggle is the effective state.
+    applyEntitiesLinksEffectiveState({ enabled: true, persisted: true, envOverride: undefined })
+    expect(getEntityUiFlags(true)).toEqual({ links: true, previews: true })
+    applyEntitiesLinksEffectiveState({ enabled: false, persisted: false, envOverride: undefined })
+    expect(getEntityUiFlags(true)).toEqual({ links: false, previews: false })
+  })
+
+  it('main forcing links off at seed time disables previews although both saved toggles are on', () => {
+    testWindow.localStorage.setItem(ENTITIES_LINKS_STORAGE_KEY, 'true')
+    const api = (testWindow as unknown as { electronAPI?: unknown }).electronAPI
+    ;(testWindow as unknown as { electronAPI?: unknown }).electronAPI = {
+      syncEntitiesLinksState: (persisted: boolean) => ({ enabled: false, persisted, envOverride: false }),
+    }
+    try {
+      expect(seedEntitiesLinksGate()).toEqual({ enabled: false, persisted: true, envOverride: false })
+      expect(getEntityUiFlags(true)).toEqual({ links: false, previews: false })
+    } finally {
+      ;(testWindow as unknown as { electronAPI?: unknown }).electronAPI = api
+    }
   })
 })
 
 describe('inert when off', () => {
-  for (const flags of [{ links: false, previews: false }, { links: false, previews: true }, { links: true, previews: false }]) {
-    const name = `links=${flags.links} previews=${flags.previews}`
+  const offCases: Array<{ links: boolean; previews: boolean; envOverride?: boolean }> = [
+    { links: false, previews: false },
+    { links: false, previews: true },
+    { links: true, previews: false },
+    // Env forces links off while both saved toggles are on (owner decision, fix8).
+    { links: true, previews: true, envOverride: false },
+  ]
+  for (const flags of offCases) {
+    const name = `links=${flags.links} previews=${flags.previews}${flags.envOverride === undefined ? '' : ` env=${flags.envOverride}`}`
 
     it(`EntityChip makes no resolve call and has no hover card (${name})`, async () => {
       const mounted = await mount(withFlags(
@@ -102,6 +147,8 @@ describe('inert when off', () => {
       await mounted.unmount()
       expect(calls.resolve).toBe(0)
       expect(html).not.toContain('data-entity-hover-card')
+      expect(html).not.toContain('data-entity-status="unavailable"')
+      expect(html).toContain('data-entity-status="idle"')
       expect(html).toContain('Release')
     })
 
@@ -140,8 +187,8 @@ describe('inert when off', () => {
 })
 
 describe('active when both flags are on (positive control)', () => {
-  it('chip resolves, hover card opens after 300 ms, Tasks shows the panel', async () => {
-    const flags = { links: true, previews: true }
+  for (const flags of [{ links: true, previews: true }, { links: false, previews: true, envOverride: true }]) {
+  it(`chip resolves, hover card opens after 300 ms, Tasks shows the panel (links=${flags.links}${flags.envOverride ? ' env=true' : ''})`, async () => {
     const mounted = await mount(withFlags(
       <EntityWorkspaceContext.Provider value="ws">
         <EntityChip entityRef={TASK} label="Release" />
@@ -162,5 +209,24 @@ describe('active when both flags are on (positive control)', () => {
     expect(calls.backlinks).toBe(1)
     expect(html).toContain('data-entity-hover-card')
     expect(html).toContain('Упоминается в')
+  })
+  }
+})
+
+describe('openEntity follows the entities.links.v1 route gate', () => {
+  it('kind-first entity routes navigate only while links is effectively on; legacy routes always', () => {
+    const routes: string[] = []
+    const listener = (event: Event) => { routes.push((event as CustomEvent<{ route: string }>).detail.route) }
+    testWindow.addEventListener(NAVIGATE_EVENT, listener as never)
+    try {
+      applyEntitiesLinksEffectiveState({ enabled: false, persisted: true, envOverride: false })
+      expect(openEntity({ kind: 'goal', id: 'g-1' })).toBe(false)
+      expect(openEntity(TASK)).toBe(true)
+      applyEntitiesLinksEffectiveState({ enabled: true, persisted: true, envOverride: undefined })
+      expect(openEntity({ kind: 'goal', id: 'g-1' })).toBe(true)
+    } finally {
+      testWindow.removeEventListener(NAVIGATE_EVENT, listener as never)
+    }
+    expect(routes).toEqual(['tasks/task/42', 'goals/goal/g-1'])
   })
 })

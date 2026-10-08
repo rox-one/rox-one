@@ -28,9 +28,10 @@ export { useEntityBacklinks } from './use-entity-backlinks'
 export {
   ENTITIES_PREVIEWS_STORAGE_KEY,
   entitiesPreviewsRequestedAtom,
-  entityUiFlagsAtom,
+  getEntityUiFlags,
   resolveEntityUiFlags,
   useEntityPreviewsEnabled,
+  useEntityUiFlags,
 } from './flags'
 export { EntityWorkspaceContext } from './entity-context'
 export { EntityKindIcon, ENTITY_KIND_ICONS } from './kind-icons'
