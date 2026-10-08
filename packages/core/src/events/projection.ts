@@ -43,6 +43,18 @@ export const systemPingedProjection: EventProjector = (event) => {
   }]
 }
 
+/** A registered projector threw for `event` (tagged so hosts don't log it as a listener failure). */
+export class ProjectorError extends Error {
+  readonly eventId: string
+  readonly domainType: string
+  constructor(event: Pick<DomainEvent, 'eventId' | 'type'>, readonly reason: unknown) {
+    super(`Projector failed for ${event.type} (${event.eventId}): ${reason instanceof Error ? reason.message : String(reason)}`)
+    this.name = 'ProjectorError'
+    this.eventId = event.eventId
+    this.domainType = event.type
+  }
+}
+
 export class EventProjectionRegistry {
   private readonly projectors = new Map<string, EventProjector[]>()
 
@@ -56,10 +68,37 @@ export class EventProjectionRegistry {
     this.projectors.set(domainType, list)
   }
 
-  /** Valid publications only: unknown topics or types for the topic kind are dropped. */
-  project(event: DomainEvent): RealtimePublication[] {
+  /**
+   * Valid publications only: unknown topics or types for the topic kind are
+   * dropped. Each projector is isolated: one that throws is reported through
+   * `onError` (`ProjectorError`) without discarding the others' publications,
+   * and the ids-only `defaultEventProjection` is added so subscribers of the
+   * subject still learn that something changed and refetch. Without `onError`
+   * a projector error propagates (callers decide).
+   */
+  project(event: DomainEvent, onError?: (error: ProjectorError) => void): RealtimePublication[] {
     const projectors = this.projectors.get(event.type)
-    const raw = projectors ? projectors.flatMap(projector => projector(event)) : defaultEventProjection(event)
+    let raw: RealtimePublication[]
+    if (!projectors) raw = defaultEventProjection(event)
+    else {
+      raw = []
+      let failed = false
+      for (const projector of projectors) {
+        try {
+          raw.push(...projector(event))
+        } catch (error) {
+          const tagged = new ProjectorError(event, error)
+          if (!onError) throw tagged
+          failed = true
+          onError(tagged)
+        }
+      }
+      if (failed) {
+        for (const fallback of defaultEventProjection(event)) {
+          if (!raw.some(p => p.topic === fallback.topic && p.type === fallback.type)) raw.push(fallback)
+        }
+      }
+    }
     const out: RealtimePublication[] = []
     for (const publication of raw) {
       const parsed = parseTopic(publication.topic)

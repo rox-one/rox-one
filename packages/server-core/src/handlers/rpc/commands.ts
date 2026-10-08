@@ -34,7 +34,7 @@ import { CommandRouter, type WorkspaceCommandSink } from '../../commands/router.
 import { InProcessEventBus } from '../../commands/event-bus.ts'
 import { SqliteCommandStore } from '../../commands/local-store.ts'
 import { CommandStoreUnavailable, type CommandStore } from '../../commands/store.ts'
-import { createCommandRegistry } from '../../commands/registry.ts'
+import { createWiredCommandRegistry } from '../../commands/registry.ts'
 import { getCommandBusFlags } from '../../commands/flags.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.commands.EXECUTE, RPC_CHANNELS.commands.LIST] as const
@@ -61,9 +61,9 @@ export interface CommandsHandlerRuntime {
 let sharedRegistry: CommandRegistry | null = null
 let sharedBus: InProcessEventBus | null = null
 
-/** Process-wide local registry: module packages bind their handlers here. */
+/** Process-wide local registry (`createWiredCommandRegistry`; modules bind via COMMAND_MODULES). */
 export function getLocalCommandRegistry(): CommandRegistry {
-  sharedRegistry ??= createCommandRegistry({ isFlagEnabled: flag => getCommandBusFlags().has(flag) })
+  sharedRegistry ??= createWiredCommandRegistry({ isFlagEnabled: flag => getCommandBusFlags().has(flag) })
   return sharedRegistry
 }
 

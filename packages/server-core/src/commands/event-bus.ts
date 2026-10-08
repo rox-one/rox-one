@@ -9,6 +9,7 @@
 
 import {
   EventProjectionRegistry,
+  ProjectorError,
   TopicLog,
   type DomainEvent,
   type RealtimeEventFrame,
@@ -29,6 +30,12 @@ export interface InProcessEventBusOptions {
   maxWindowsPerWorkspace?: number
   now?: () => Date
   onListenerError?: (error: unknown) => void
+  /**
+   * A projector threw (tagged `ProjectorError`). The event is still published
+   * through the ids-only default projection (subject topic → refetch).
+   * Defaults to `onListenerError`.
+   */
+  onProjectorError?: (error: ProjectorError, event: DomainEvent) => void
 }
 
 export class InProcessEventBus {
@@ -36,7 +43,10 @@ export class InProcessEventBus {
   private readonly logs = new Map<string, TopicLog>()
   private readonly listeners = new Set<EventBusListener>()
   private readonly options: InProcessEventBusOptions
+  /** Base sequencer epoch; a workspace log recreated after an idle drop gets `${epoch}~${n}`. */
   readonly epoch: string
+  /** Bumped whenever idle logs are dropped, so a recreated log never reuses an epoch. */
+  private generation = 0
 
   constructor(options: InProcessEventBusOptions = {}) {
     this.options = options
@@ -49,7 +59,7 @@ export class InProcessEventBus {
     if (!log) {
       const { capacity, windowIdleTtlMs, maxWindowsPerWorkspace, now } = this.options
       log = new TopicLog({
-        epoch: this.epoch,
+        epoch: this.generation === 0 ? this.epoch : `${this.epoch}~${this.generation}`,
         ...(capacity ? { capacity } : {}),
         ...(windowIdleTtlMs ? { idleTtlMs: windowIdleTtlMs } : {}),
         ...(maxWindowsPerWorkspace ? { maxWindows: maxWindowsPerWorkspace } : {}),
@@ -64,26 +74,28 @@ export class InProcessEventBus {
   publish(events: readonly DomainEvent[]): RealtimeEventFrame[] {
     const frames: RealtimeEventFrame[] = []
     for (const event of events) {
-      // A projector that throws must not stall the stream: report it and skip
-      // this event, so the relay watermark still advances past it and the
-      // events after it are delivered (and nothing is re-sequenced).
+      const log = this.log(event.workspaceId)
+      // Event-level dedupe: a redelivered event (already sequenced in this log)
+      // is skipped as a whole, so none of its frames gets a second seq.
+      if (event.eventId && !log.claimEvent(event.eventId)) continue
+      // Each projector is isolated inside project(); a throwing one is reported
+      // and replaced by the ids-only default projection (clients refetch). The
+      // outer guard only protects the stream against a broken registry.
       let publications: Array<ReturnType<EventProjectionRegistry['project']>[number]>
       try {
-        publications = [...this.projections.project(event)]
+        publications = this.projections.project(event, error => this.reportProjectorError(error, event))
       } catch (error) {
-        this.options.onListenerError?.(error)
+        this.reportProjectorError(error instanceof ProjectorError ? error : new ProjectorError(event, error), event)
         continue
       }
       for (const publication of publications) {
-        const { frame, fresh } = this.log(event.workspaceId).appendOnce(publication.topic, {
+        const frame = log.append(publication.topic, {
           type: publication.type,
           payload: publication.payload ?? {},
           eventId: event.eventId,
           domainType: event.type,
           at: (this.options.now?.() ?? new Date()).toISOString(),
         })
-        // Already sequenced (redelivery): never notify twice under a new seq.
-        if (!fresh) continue
         frames.push(frame)
         for (const listener of this.listeners) {
           try { listener(event.workspaceId, frame, event) } catch (error) { this.options.onListenerError?.(error) }
@@ -91,6 +103,18 @@ export class InProcessEventBus {
       }
     }
     return frames
+  }
+
+  private reportProjectorError(error: ProjectorError, event: DomainEvent): void {
+    try {
+      if (this.options.onProjectorError) this.options.onProjectorError(error, event)
+      else this.options.onListenerError?.(error)
+    } catch { /* reporting must not break publishing */ }
+  }
+
+  /** Sequencer epoch of a workspace's current log (frames, replays and cursors use it). */
+  epochOf(workspaceId: string): string {
+    return this.log(workspaceId).epoch
   }
 
   subscribe(listener: EventBusListener): () => void {
@@ -102,11 +126,34 @@ export class InProcessEventBus {
     return this.logs.get(workspaceId)?.latest(topic) ?? 0
   }
 
-  /** Evict idle replay windows in every workspace log (hosts may call this on a timer). */
+  /**
+   * Evict idle replay windows and remembered event ids in every workspace log,
+   * then drop logs with nothing left (hosts call this on a timer). A dropped
+   * workspace starts a new log with a new epoch on its next event, so held
+   * positions resolve to `snapshot_required` rather than silent duplicates.
+   */
   evictIdle(): number {
     let evicted = 0
-    for (const log of this.logs.values()) evicted += log.evictIdle()
+    let dropped = false
+    for (const [workspaceId, log] of this.logs) {
+      evicted += log.evictIdle()
+      if (log.isIdle()) {
+        this.logs.delete(workspaceId)
+        dropped = true
+      }
+    }
+    if (dropped) this.generation += 1
     return evicted
+  }
+
+  /** Workspace logs currently held (diagnostics, tests). */
+  logCount(): number {
+    return this.logs.size
+  }
+
+  /** Remembered event ids of one workspace (diagnostics, tests). */
+  claimedEventCount(workspaceId: string): number {
+    return this.logs.get(workspaceId)?.claimedCount() ?? 0
   }
 
   /** Retained replay windows of one workspace (diagnostics, tests). */

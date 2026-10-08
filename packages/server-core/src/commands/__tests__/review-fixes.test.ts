@@ -43,6 +43,8 @@ class FlakyStore implements CommandStore {
   }
   listEvents(...args: Parameters<CommandStore['listEvents']>) { return this.inner.listEvents(...args) }
   isTransientError(error: unknown) { return this.transient(error) }
+  /** Postgres-like data errors (SQLSTATE class 22). */
+  isDataError(error: unknown) { return someErrorInChain(error, c => String((c as { errno?: string }).errno ?? '').startsWith('22')) }
 }
 
 function setup(options: { authorizer?: Authorizer; flags?: Set<string>; store?: CommandStore } = {}) {
@@ -223,5 +225,44 @@ describe('review 2: only transient store errors are retryable; the rest are term
     let deep: unknown = leaf
     for (let i = 0; i < 20; i += 1) deep = new Error(`w${i}`, { cause: deep })
     expect(someErrorInChain(deep, hit)).toBe(false)
+  })
+})
+
+describe('review 3: read-only lookups retry everything except data errors; transient authorizer failures retry', () => {
+  test('an unclassified lookup failure (real driver code the classifier may not know) is retryable', async () => {
+    const f = setup()
+    const store = f.store as FlakyStore
+    store.findError = Object.assign(new Error('Failed to connect'), { code: 'ERR_POSTGRES_SOMETHING_NEW' })
+    await expect(f.run(envelope('test.increment', {}, { commandId: 'c-unknown' }))).rejects.toBeInstanceOf(CommandStoreUnavailable)
+    store.findError = new TypeError('socket hang up')
+    await expect(f.run(envelope('test.increment', {}, { commandId: 'c-type' }))).rejects.toBeInstanceOf(CommandStoreUnavailable)
+    expect(store.inner.counts()).toEqual({ receipts: 0, events: 0 })
+  })
+
+  test('a store without isDataError retries every lookup failure', async () => {
+    const f = setup()
+    const store = f.store as FlakyStore & { isDataError?: unknown }
+    Object.defineProperty(store, 'isDataError', { value: undefined })
+    store.findError = Object.assign(new Error('invalid byte sequence'), { errno: '22021' })
+    await expect(f.run(envelope('test.increment', {}, { commandId: 'c-nodata' }))).rejects.toBeInstanceOf(CommandStoreUnavailable)
+  })
+
+  test('authorizer: transient throw → CommandStoreUnavailable, other throw → FORBIDDEN, nothing runs', async () => {
+    let mode: 'transient' | 'bug' | 'ok' = 'transient'
+    const authorizer: Authorizer = {
+      can: async () => {
+        if (mode === 'transient') throw new Error('acl lookup failed', { cause: Object.assign(new Error('deadlock detected'), { errno: '40P01' }) })
+        if (mode === 'bug') throw new TypeError('acl bug')
+        return true
+      },
+    }
+    const f = setup({ authorizer })
+    const env = envelope('test.increment', {}, { commandId: 'c-acl-blip' })
+    await expect(f.run(env)).rejects.toBeInstanceOf(CommandStoreUnavailable)
+    mode = 'bug'
+    expect(await f.run(envelope('test.increment', {}, { commandId: 'c-acl-bug' }))).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(f.state.calls).toBe(0)
+    mode = 'ok'
+    expect(await f.run(env)).toMatchObject({ status: 'applied' })
   })
 })

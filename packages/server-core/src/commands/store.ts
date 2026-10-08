@@ -55,6 +55,12 @@ export interface CommandStore {
    * Those are retried by the client instead of becoming an INTERNAL receipt.
    */
   isTransientError?(error: unknown): boolean
+  /**
+   * Whether an error is a known deterministic *data* error (Postgres class 22,
+   * SQLite TOOBIG / MISMATCH / RANGE). The read-only receipt lookups retry
+   * every failure except these: they run before anything can commit.
+   */
+  isDataError?(error: unknown): boolean
   close?(): void | Promise<void>
 }
 

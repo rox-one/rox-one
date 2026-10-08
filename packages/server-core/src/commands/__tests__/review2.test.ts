@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { DomainEvent } from '@rox/core/events'
-import { EventProjectionRegistry } from '@rox/core/events'
+import { EventProjectionRegistry, ProjectorError } from '@rox/core/events'
 import { InProcessEventBus } from '../event-bus'
 import { SqliteCommandStore, isTransientSqliteError } from '../local-store'
 
@@ -34,17 +34,17 @@ const event = (n: number, type = 'system.pinged'): DomainEvent => ({
 })
 
 describe('InProcessEventBus: poison projectors and redelivery', () => {
-  test('a throwing projector skips only its event; later events are sequenced in order', () => {
-    const projections = new EventProjectionRegistry()
+  test('a throwing projector is isolated: the other projectors still publish, later events follow in order', () => {
+    const projections = new EventProjectionRegistry() // built-in system.pinged projector + a poison one
     projections.register('system.pinged', e => { if (e.eventId === 'ev-2') throw new Error('poison'); return [] })
     const errors: unknown[] = []
     const bus = new InProcessEventBus({ projections, epoch: 'e1', onListenerError: error => errors.push(error) })
     const seen: number[] = []
     bus.subscribe((_ws, frame) => seen.push(frame.seq))
     const frames = bus.publish([event(1), event(2), event(3)])
-    expect(errors).toHaveLength(1)
-    expect(frames.map(frame => [frame.seq, frame.eventId])).toEqual([[1, 'ev-1'], [2, 'ev-3']])
-    expect(seen).toEqual([1, 2])
+    expect(errors).toEqual([expect.any(ProjectorError)]) // tagged, falls back to onListenerError
+    expect(frames.map(frame => [frame.seq, frame.eventId])).toEqual([[1, 'ev-1'], [2, 'ev-2'], [3, 'ev-3']])
+    expect(seen).toEqual([1, 2, 3])
   })
 
   test('redelivering already-published events neither re-sequences nor re-notifies', () => {

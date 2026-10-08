@@ -20,7 +20,7 @@ export const DEFAULT_TOPIC_REPLAY_CAPACITY = 1000
 export const DEFAULT_TOPIC_WINDOW_IDLE_MS = 10 * 60 * 1000
 /** Upper bound of retained replay windows per log (least recently used are evicted first). */
 export const DEFAULT_MAX_TOPIC_WINDOWS = 5000
-/** Recently sequenced (topic, eventId, type) keys remembered for `appendOnce` dedupe. */
+/** Recently sequenced domain-event ids remembered per log (`claimEvent`); ids only, never frames. */
 export const DEFAULT_TOPIC_DEDUPE_CAPACITY = 10_000
 
 export type TopicReplay =
@@ -42,7 +42,7 @@ export interface TopicLogOptions {
   idleTtlMs?: number
   /** Keep at most this many replay windows (LRU eviction). */
   maxWindows?: number
-  /** Remember this many recent (topic, eventId, type) keys for `appendOnce`. */
+  /** Remember this many recently sequenced event ids (oldest dropped first; entries also expire after `idleTtlMs`). */
   dedupeCapacity?: number
   now?: () => number
 }
@@ -57,10 +57,12 @@ export class TopicLog {
   private readonly seqs = new Map<Topic, number>()
   /** Replay windows in least-recently-used order (Map insertion order). */
   private readonly windows = new Map<Topic, { frames: RealtimeEventFrame[]; touchedAt: number }>()
-  /** Bounded FIFO of recently sequenced publications → their frame. */
-  private readonly sequenced = new Map<string, RealtimeEventFrame>()
+  /** Recently sequenced domain-event ids → when (insertion order = age). Ids only. */
+  private readonly sequenced = new Map<string, number>()
   private readonly dedupeCapacity: number
   private lastSweep = 0
+  /** Last append / replay / claim (idle detection for dropping the whole log). */
+  private lastActivity: number
 
   constructor(options: TopicLogOptions = {}) {
     this.capacity = Math.max(1, Math.floor(options.capacity ?? DEFAULT_TOPIC_REPLAY_CAPACITY))
@@ -69,6 +71,23 @@ export class TopicLog {
     this.now = options.now ?? Date.now
     this.dedupeCapacity = Math.max(0, Math.floor(options.dedupeCapacity ?? DEFAULT_TOPIC_DEDUPE_CAPACITY))
     this.epoch = options.epoch ?? randomEpoch()
+    this.lastActivity = this.now()
+  }
+
+  /** Remembered event ids (diagnostics, tests). */
+  claimedCount(): number {
+    return this.sequenced.size
+  }
+
+  /**
+   * Nothing retained (no replay window, no remembered event id) and no
+   * activity for the idle TTL: the owner may drop the whole log. A new log for
+   * the same scope must use a new epoch, so clients holding positions from
+   * this one resubscribe and get `snapshot_required` instead of mistaking the
+   * restarted seqs for duplicates.
+   */
+  isIdle(now = this.now()): boolean {
+    return this.windows.size === 0 && this.sequenced.size === 0 && now - this.lastActivity >= this.idleTtlMs
   }
 
   /** Number of retained replay windows (diagnostics, tests). */
@@ -86,6 +105,7 @@ export class TopicLog {
     this.seqs.set(topic, seq)
     const full: RealtimeEventFrame<P> = { frame: 'event', topic, seq, epoch: this.epoch, ...frame }
     const now = this.now()
+    this.lastActivity = now
     const window = this.touch(topic, now) ?? { frames: [], touchedAt: now }
     this.windows.set(topic, window)
     window.frames.push(full as RealtimeEventFrame)
@@ -96,26 +116,32 @@ export class TopicLog {
   }
 
   /**
-   * `append`, deduplicated by (topic, eventId, type): a domain event that is
-   * delivered again (relay retry after a partial failure) gets its original
-   * frame back with `fresh: false` instead of a new seq. Frames without an
-   * `eventId` always append.
+   * Event-level dedupe: `true` the first time `eventId` is claimed (sequence
+   * its publications), `false` when it was already sequenced in this log (a
+   * redelivery — skip the whole event, so no frame gets a second seq). Keyed
+   * by event, so several same-type publications of one event (fan-out,
+   * several projectors) are never collapsed. Remembers ids only, bounded by
+   * `dedupeCapacity` (oldest first) and expiring with the idle TTL in `evictIdle`
+   * (a redelivery later than that TTL would be sequenced again; relay retries are
+   * seconds apart).
    */
-  appendOnce<P>(topic: Topic, frame: Omit<RealtimeEventFrame<P>, 'seq' | 'epoch' | 'frame' | 'topic'>): { frame: RealtimeEventFrame<P>; fresh: boolean } {
-    const eventId = (frame as { eventId?: unknown }).eventId
-    if (typeof eventId !== 'string' || this.dedupeCapacity === 0) return { frame: this.append(topic, frame), fresh: true }
-    const key = `${topic}\u0000${eventId}\u0000${String((frame as { type?: unknown }).type ?? '')}`
-    const existing = this.sequenced.get(key)
-    if (existing) return { frame: existing as RealtimeEventFrame<P>, fresh: false }
-    const full = this.append(topic, frame)
-    this.sequenced.set(key, full as RealtimeEventFrame)
+  claimEvent(eventId: string): boolean {
+    const now = this.now()
+    this.lastActivity = now
+    if (this.dedupeCapacity === 0) return true
+    if (this.sequenced.has(eventId)) return false
+    this.sequenced.set(eventId, now)
     while (this.sequenced.size > this.dedupeCapacity) this.sequenced.delete(this.sequenced.keys().next().value as string)
-    return { frame: full, fresh: true }
+    return true
   }
 
-  /** Drop replay windows idle for longer than the TTL (seq counters stay). */
+  /** Drop replay windows and remembered event ids idle for longer than the TTL (seq counters stay). */
   evictIdle(now = this.now()): number {
     this.lastSweep = now
+    for (const [eventId, at] of this.sequenced) {
+      if (now - at < this.idleTtlMs) break
+      this.sequenced.delete(eventId)
+    }
     let evicted = 0
     for (const [topic, window] of this.windows) {
       // LRU order: the first window that is still fresh ends the sweep.
@@ -141,6 +167,7 @@ export class TopicLog {
 
   /** Frames after `sinceSeq` (exclusive), or `snapshot_required` when the window can't close the gap. */
   replay(topic: Topic, sinceSeq: number, epoch?: string): TopicReplay {
+    this.lastActivity = this.now()
     const latestSeq = this.latest(topic)
     const base = { latestSeq, epoch: this.epoch }
     if (!Number.isSafeInteger(sinceSeq) || sinceSeq < 0) return { kind: 'snapshot_required', ...base }

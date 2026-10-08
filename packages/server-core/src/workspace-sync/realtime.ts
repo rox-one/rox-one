@@ -54,6 +54,10 @@ export interface RealtimeSubscriberOptions {
   onForbidden?: (topic: string) => void
   /** The gateway refused the topic because of its per-client topic limit. */
   onLimitExceeded?: (topic: string) => void
+  /** The gateway could not check the topic ACL (transient); the subscribe is retried with backoff. */
+  onUnavailable?: (topic: string) => void
+  /** First retry delay after `unavailable` (doubles per attempt, capped at 30 s; default 1 s). */
+  unavailableRetryMs?: number
   onError?: (error: unknown) => void
 }
 
@@ -65,6 +69,9 @@ export class RealtimeSubscriber {
   /** Topics with an in-flight subscribe → frames that arrived before its result. */
   private readonly pending = new Map<string, { requests: number; frames: RealtimeFrame[] }>()
   private readonly unlisten: () => void
+  /** Topics answered `unavailable` → retry attempt + timer. */
+  private readonly unavailableRetries = new Map<string, { attempts: number; timer: ReturnType<typeof setTimeout> | null }>()
+  private closed = false
   private readonly options: RealtimeSubscriberOptions
 
   constructor(options: RealtimeSubscriberOptions) {
@@ -128,6 +135,9 @@ export class RealtimeSubscriber {
     for (const topic of topics) {
       this.topics.delete(topic)
       this.tracker.forget(topic)
+      const retry = this.unavailableRetries.get(topic)
+      if (retry?.timer) clearTimeout(retry.timer)
+      this.unavailableRetries.delete(topic)
     }
     await this.options.connection.unsubscribe(topics)
   }
@@ -138,7 +148,10 @@ export class RealtimeSubscriber {
   }
 
   close(): void {
+    this.closed = true
     this.unlisten()
+    for (const retry of this.unavailableRetries.values()) if (retry.timer) clearTimeout(retry.timer)
+    this.unavailableRetries.clear()
   }
 
   /** Resolves once in-flight gap recoveries finished (tests). */
@@ -153,6 +166,18 @@ export class RealtimeSubscriber {
   }
 
   private applyStatus(item: RealtimeSubscribeTopicResult): void {
+    if (item.status === 'unavailable') {
+      // Not a denial: keep the topic (and its position) and retry later.
+      this.topics.add(item.topic)
+      this.options.onUnavailable?.(item.topic)
+      this.scheduleUnavailableRetry(item.topic)
+      return
+    }
+    const retry = this.unavailableRetries.get(item.topic)
+    if (retry) {
+      if (retry.timer) clearTimeout(retry.timer)
+      this.unavailableRetries.delete(item.topic)
+    }
     if (item.status === 'forbidden' || item.status === 'invalid' || item.status === 'limit_exceeded') {
       this.topics.delete(item.topic)
       this.tracker.forget(item.topic)
@@ -170,6 +195,21 @@ export class RealtimeSubscriber {
     // Fresh subscription: start from the current seq. With a replay, the
     // result's frames advance the position themselves.
     if (!position || position.epoch !== item.epoch) this.tracker.reset(item.topic, item.epoch, item.seq)
+  }
+
+  private scheduleUnavailableRetry(topic: string): void {
+    if (this.closed) return
+    const retry = this.unavailableRetries.get(topic) ?? { attempts: 0, timer: null }
+    if (retry.timer) return
+    retry.attempts += 1
+    const delay = Math.min((this.options.unavailableRetryMs ?? 1_000) * 2 ** (retry.attempts - 1), 30_000)
+    retry.timer = setTimeout(() => {
+      retry.timer = null
+      if (this.closed || !this.topics.has(topic)) return
+      this.subscribe([topic]).catch(error => this.options.onError?.(error))
+    }, delay)
+    ;(retry.timer as { unref?: () => void }).unref?.()
+    this.unavailableRetries.set(topic, retry)
   }
 
   private onFrame(frame: RealtimeFrame): void {

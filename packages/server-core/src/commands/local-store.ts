@@ -196,6 +196,16 @@ export class SqliteCommandStore implements CommandStore {
     return someErrorInChain(error, isTransientSqliteError)
   }
 
+  /** SQLITE_TOOBIG / MISMATCH / RANGE: deterministic for the same input. */
+  isDataError(error: unknown): boolean {
+    return someErrorInChain(error, candidate => {
+      const record = candidate as { code?: unknown; errcode?: unknown } | null
+      if (!record || typeof record !== 'object') return false
+      if (/SQLITE_(TOOBIG|MISMATCH|RANGE)/.test(String(record.code ?? ''))) return true
+      return typeof record.errcode === 'number' && [18, 20, 25].includes(record.errcode & 0xff)
+    })
+  }
+
   close(): void {
     if (this.closed) return
     this.closed = true

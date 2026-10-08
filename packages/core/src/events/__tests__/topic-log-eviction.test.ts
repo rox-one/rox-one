@@ -45,25 +45,37 @@ describe('TopicLog eviction', () => {
   })
 })
 
-describe('TopicLog.appendOnce (review 2)', () => {
-  test('the same (topic, eventId, type) is sequenced once; redelivery returns the original frame', () => {
+describe('TopicLog.claimEvent (review 3: event-level dedupe, ids only)', () => {
+  test('an event id is claimed once; a redelivery is refused', () => {
     const log = new TopicLog({ epoch: 'e1' })
-    const first = log.appendOnce('user:a', { ...frame, eventId: 'ev-1' })
-    const again = log.appendOnce('user:a', { ...frame, eventId: 'ev-1' })
-    expect(first.fresh).toBe(true)
-    expect(again).toEqual({ frame: first.frame, fresh: false })
-    expect(log.appendOnce('user:b', { ...frame, eventId: 'ev-1' }).frame.seq).toBe(1) // other topic
-    expect(log.appendOnce('user:a', { ...frame, eventId: 'ev-1', type: 'system.other' }).frame.seq).toBe(2) // other publication
-    expect(log.appendOnce('user:a', { ...frame, eventId: 'ev-2' }).frame.seq).toBe(3)
-    expect(log.latest('user:a')).toBe(3)
+    expect(log.claimEvent('ev-1')).toBe(true)
+    expect(log.claimEvent('ev-1')).toBe(false)
+    expect(log.claimEvent('ev-2')).toBe(true)
+    expect(log.claimedCount()).toBe(2)
   })
 
-  test('the dedupe memory is bounded', () => {
+  test('bounded LRU of ids', () => {
     const log = new TopicLog({ epoch: 'e1', dedupeCapacity: 2 })
-    log.appendOnce('user:a', { ...frame, eventId: '1' })
-    log.appendOnce('user:a', { ...frame, eventId: '2' })
-    log.appendOnce('user:a', { ...frame, eventId: '3' })
-    expect(log.appendOnce('user:a', { ...frame, eventId: '3' }).fresh).toBe(false)
-    expect(log.appendOnce('user:a', { ...frame, eventId: '1' }).fresh).toBe(true) // forgotten
+    for (const id of ['1', '2', '3']) log.claimEvent(id)
+    expect(log.claimedCount()).toBe(2)
+    expect(log.claimEvent('3')).toBe(false)
+    expect(log.claimEvent('1')).toBe(true) // forgotten
+  })
+
+  test('evictIdle releases ids and windows; the log then reports idle', () => {
+    let now = 0
+    const log = new TopicLog({ epoch: 'e1', idleTtlMs: 1000, now: () => now })
+    log.claimEvent('ev-1')
+    log.append('user:a', { ...frame, eventId: 'ev-1' })
+    expect(log.isIdle()).toBe(false)
+    now = 500
+    log.evictIdle()
+    expect(log.claimedCount()).toBe(1)
+    now = 1500
+    log.evictIdle()
+    expect([log.claimedCount(), log.windowCount()]).toEqual([0, 0])
+    expect(log.isIdle()).toBe(true)
+    log.replay('user:a', 0) // activity
+    expect(log.isIdle()).toBe(false)
   })
 })

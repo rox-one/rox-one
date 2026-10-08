@@ -22,7 +22,10 @@
  * only; a failed publish never changes the receipt (projections are
  * re-derivable from the stored events).
  *
- * Failures: only *transient* infrastructure failures are retryable — an
+ * Failures: the read-only receipt lookups retry every failure except a known
+ * data error (`isDataError`); an authorizer throw that is transient is
+ * retryable, any other authorizer throw denies (FORBIDDEN). Inside the
+ * transaction only *transient* infrastructure failures are retryable — an
  * error the store classifies as transient (`isTransientError`: lost
  * connection, deadlock, serialization failure, pool timeout; `cause` chains
  * are walked) or a failure to open the transaction at all (connection /
@@ -44,7 +47,6 @@ import {
   CommandRejection,
   DEFAULT_MAX_COMMAND_PAYLOAD_BYTES,
   MAX_COMMAND_PAYLOAD_BYTES,
-  authorize,
   canonicalCommandRequest,
   composeCommandMiddleware,
   conflictReceipt,
@@ -165,7 +167,7 @@ export class CommandExecutor {
     try {
       previous = await this.store.findReceipt(input.workspaceId, envelope.idempotencyKey, envelope.commandId)
     } catch (error) {
-      return this.storeFailure(envelope, error)
+      return this.lookupFailure(envelope, error)
     }
     if (previous) return this.replay(previous, envelope, input.actor, requestHash)
 
@@ -198,9 +200,17 @@ export class CommandExecutor {
     }
 
     const principal = { ...input.actor, ...(envelope.onBehalfOf ? { onBehalfOf: envelope.onBehalfOf } : {}), workspaceId: input.workspaceId }
-    if (!(await authorize(this.authorizer, principal, definition.verb, envelope.target ?? null))) {
-      return rejectedReceipt(envelope.commandId, 'FORBIDDEN', 'Not allowed')
+    // Fail closed (FORBIDDEN) — except when the authorizer's failure is a transient
+    // infrastructure error (its ACL read lost the connection, deadlocked, timed out):
+    // that is retryable, never a terminal denial the outbox would drop.
+    let allowed: boolean
+    try {
+      allowed = (await this.authorizer.can(principal, definition.verb, envelope.target ?? null)) === true
+    } catch (error) {
+      if (this.isTransient(error)) throw this.unavailable(envelope, error)
+      allowed = false
     }
+    if (!allowed) return rejectedReceipt(envelope.commandId, 'FORBIDDEN', 'Not allowed')
 
     const ctx: CommandPipelineContext = {
       envelope,
@@ -234,6 +244,19 @@ export class CommandExecutor {
   private storeFailure(envelope: CommandEnvelope, error: unknown, notOpened = false): CommandReceipt {
     if (error instanceof CommandStoreUnavailable) throw error
     if (notOpened || this.isTransient(error)) throw this.unavailable(envelope, error)
+    this.options.onStoreError?.(error, envelope)
+    return rejectedReceipt(envelope.commandId, 'INTERNAL', 'Command failed; no effect was committed')
+  }
+
+  /**
+   * A read-only receipt lookup failed. It runs before anything can commit, so
+   * every failure is retryable except a known deterministic data error.
+   */
+  private lookupFailure(envelope: CommandEnvelope, error: unknown): CommandReceipt {
+    if (error instanceof CommandStoreUnavailable) throw error
+    let data = false
+    try { data = this.store.isDataError?.(error) === true } catch { data = false }
+    if (!data) throw this.unavailable(envelope, error)
     this.options.onStoreError?.(error, envelope)
     return rejectedReceipt(envelope.commandId, 'INTERNAL', 'Command failed; no effect was committed')
   }
@@ -317,7 +340,7 @@ export class CommandExecutor {
         // A concurrent writer won; its transaction is the one effect.
         let stored: StoredCommandReceipt | null
         try { stored = await this.store.findReceipt(workspaceId, envelope.idempotencyKey, envelope.commandId) }
-        catch (findError) { return this.storeFailure(envelope, findError) }
+        catch (findError) { return this.lookupFailure(envelope, findError) }
         if (stored) return this.replay(stored, envelope, actor, requestHash)
         // The winner is not visible yet: a race, retry later.
         throw this.unavailable(envelope, error)

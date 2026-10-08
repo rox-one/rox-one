@@ -53,6 +53,7 @@ export {
 
 export {
   EventProjectionRegistry,
+  ProjectorError,
   defaultEventProjection,
   systemPingedProjection,
   type EventProjector,

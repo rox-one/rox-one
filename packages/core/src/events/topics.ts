@@ -172,7 +172,11 @@ export interface RealtimeSubscribeRequest {
   resume?: boolean
 }
 
-export type RealtimeSubscribeStatus = 'subscribed' | 'forbidden' | 'invalid' | 'snapshot_required' | 'limit_exceeded'
+/**
+ * `unavailable`: the topic ACL could not be checked because of a transient
+ * infrastructure failure (not a denial) — retry the subscribe later.
+ */
+export type RealtimeSubscribeStatus = 'subscribed' | 'forbidden' | 'invalid' | 'snapshot_required' | 'limit_exceeded' | 'unavailable'
 
 export interface RealtimeSubscribeTopicResult {
   topic: Topic
