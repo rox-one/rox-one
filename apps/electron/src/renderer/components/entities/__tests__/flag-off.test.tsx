@@ -5,7 +5,7 @@
  * `entities.links.v1` — nothing fetches, no hover card can open, Tasks shows
  * no backlinks panel and Notes loads no entity nodes.
  */
-import { flush, mount, renderMarkup, resetDom, testWindow, wait } from './test-env'
+import { flush, mount, renderMarkup, resetDom, testWindow, wait, setupEntityTestEnv } from './test-env'
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import * as React from 'react'
 import { act } from 'react'
@@ -28,6 +28,9 @@ import {
 import { setEntityDataSource, type EntityDataSource } from '../entity-data-source'
 import { resetEntityPreviewStores } from '../use-entity-preview'
 import { EntityWorkspaceContext } from '../entity-context'
+import { featureEntitiesLinksV1Atom } from '../../../atoms/entities-links'
+
+setupEntityTestEnv()
 
 const calls = { resolve: 0, backlinks: 0 }
 const spySource: EntityDataSource = {
@@ -74,6 +77,8 @@ describe('flag resolution', () => {
   it('reads craft-feature-* localStorage keys, default false', () => {
     expect(ENTITIES_PREVIEWS_STORAGE_KEY).toBe('craft-feature-entities-previews-v1')
     expect(ENTITIES_LINKS_STORAGE_KEY).toBe('craft-feature-entities-links-v1')
+    // #1499's renderer atom, not a second copy (one source of truth per session).
+    expect(entitiesLinksRequestedAtom).toBe(featureEntitiesLinksV1Atom)
     const store = createStore()
     expect(store.get(entityUiFlagsAtom)).toEqual({ links: false, previews: false })
   })

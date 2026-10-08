@@ -6,28 +6,26 @@
  * `entities.links.v1` is on as well, using the shared dependency resolver
  * from `@rox/core/platform` (no second flag system).
  *
- * Both requested values live in localStorage under the usual `craft-` prefix
- * and default to false, so every entity surface is inert out of the box.
+ * `entities.links.v1` is #1499's renderer atom; `entities.previews.v1` lives
+ * next to it in localStorage (`craft-` prefix). Both default to false, so
+ * every entity surface is inert out of the box.
  */
 import { atom, useAtomValue } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { WORKBENCH_FLAG, isWorkbenchFlagEnabled } from '@rox/core/platform'
+import { KEYS, getKeyString } from '../../lib/local-storage'
+import { featureEntitiesLinksV1Atom } from '../../atoms/entities-links'
+
+/** localStorage key of #1499's `entities.links.v1` atom (`craft-feature-entities-links-v1`). */
+export const ENTITIES_LINKS_STORAGE_KEY = getKeyString(KEYS.featureEntitiesLinksV1)
+export const ENTITIES_PREVIEWS_STORAGE_KEY = getKeyString(KEYS.featureEntitiesPreviewsV1)
 
 /**
- * STUB(#1499): W1-01/02 owns the renderer atom for `entities.links.v1` and is
- * still adding it. Until it lands we read the same `craft-feature-*` key
- * convention here; swap this for #1499's exported atom once available.
+ * Requested state of `entities.links.v1`: #1499's renderer atom (the one the
+ * Settings toggle writes and `useEntitiesLinksFlagSync` pushes to main), so
+ * entity UI and the links subsystem can never disagree within a session.
  */
-export const ENTITIES_LINKS_STORAGE_KEY = 'craft-feature-entities-links-v1'
-export const ENTITIES_PREVIEWS_STORAGE_KEY = 'craft-feature-entities-previews-v1'
-
-/** STUB(#1499): requested state of `entities.links.v1` (see above). */
-export const entitiesLinksRequestedAtom = atomWithStorage<boolean>(
-  ENTITIES_LINKS_STORAGE_KEY,
-  false,
-  undefined,
-  { getOnInit: true },
-)
+export const entitiesLinksRequestedAtom = featureEntitiesLinksV1Atom
 
 /** Requested state of `entities.previews.v1`. Default OFF. */
 export const entitiesPreviewsRequestedAtom = atomWithStorage<boolean>(
