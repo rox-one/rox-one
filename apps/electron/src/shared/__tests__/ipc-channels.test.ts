@@ -167,6 +167,9 @@ const EXPECTED_CHANNELS: string[] = [
   'drafts:get',
   'drafts:getAll',
   'drafts:set',
+  'entities:links',
+  'entities:linksChanged',
+  'entities:resolve',
   'environment:changed',
   'environment:get',
   'environment:save',
@@ -877,6 +880,12 @@ describe('BroadcastEventMap payload shapes', () => {
   it('contextDocs:CHANGED carries no payload', () => {
     type Payload = BroadcastEventMap[typeof RPC_CHANNELS.contextDocs.CHANGED]
     const _check: AssertTuple<Payload, 0> = true
+    expect(_check).toBe(true)
+  })
+
+  it('entities:linksChanged carries (workspaceId)', () => {
+    type Payload = BroadcastEventMap[typeof RPC_CHANNELS.entities.LINKS_CHANGED]
+    const _check: AssertTuple<Payload, 1> = true
     expect(_check).toBe(true)
   })
 })
