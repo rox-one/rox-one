@@ -105,6 +105,22 @@ describe('actual native overlay owner composition', () => {
     expect(child.destroyed).toBe(true)
     port.dispose()
   })
+  it('drives mini-window visibility by the recording phase alone while the owner stays unfocused', () => {
+    const owner = new FakeWindow()
+    const port = createNativeVoiceOverlayHost({ resolveOwner: c => c === context ? owner as never : null, sendCommand: () => true })
+    port.publish({ context, state, position: 'top', assertCurrent() {} })
+    const child = children.at(-1)!
+    owner.focused = false; owner.emit('blur')
+    for (const phase of ['permission', 'recording', 'saving', 'transcribing', 'enhancing', 'ready'] as const) {
+      port.publish({ context, state: { ...state, phase }, position: 'top', assertCurrent() {} })
+      expect(child.hidden).toBe(0)
+      expect(child.isVisible()).toBe(true)
+      expect(child.messages.at(-1)).toEqual([VOICE_OVERLAY_STATE, { ...state, phase, rms: 0 }])
+    }
+    port.publish({ context, state: { ...state, phase: 'hidden' }, position: 'top', assertCurrent() {} })
+    expect(child.destroyed).toBe(true)
+    port.dispose()
+  })
   it('forwards the owner level to the child, ignores foreign senders and clears it when the phase becomes hidden', () => {
     const owner = new FakeWindow()
     const port = createNativeVoiceOverlayHost({ resolveOwner: c => c === context ? owner as never : null, sendCommand: () => true })
