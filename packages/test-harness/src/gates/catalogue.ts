@@ -19,6 +19,13 @@
  *   (`registry.get(type)`). `createCommandRegistry()` alone is not enough:
  *   it binds only what its own body binds, while modules bind in callers.
  *
+ * Universe (#1507 review 4): the gates check the UNION of COMMAND_CATALOGUE
+ * and `registry.list()`. `CommandRegistry.define()` is public, so a
+ * COMMAND_MODULES `bind()` could define and bind a type the catalogue does
+ * not list; such a type is still read (bound / schemaBound / riskClass from
+ * the registry) and gated, AND it is a problem of its own: every registry
+ * type must be in COMMAND_CATALOGUE (fail closed).
+ *
  * Scope (owner decision, #1507 review 2): only commands with a bound
  * handler, or with `schemaBound: true`, are GATED. Every other catalogue
  * entry is a placeholder until its module package lands and is reported as
@@ -66,6 +73,8 @@ export interface CatalogueReadout {
 export interface RegistryLike {
   get(type: string): unknown
   handler(type: string): unknown
+  /** Every defined command (catalogue + anything a module defined); #1507 review 4. */
+  list(): unknown
 }
 
 export interface CatalogueInputs {
@@ -122,8 +131,8 @@ export async function loadCatalogue(opts: CatalogueInputs = {}): Promise<Catalog
       try {
         const made = await (exported as () => unknown)()
         if (made === null || typeof made !== 'object') problems.push(`${factory} returned ${made === null ? 'null' : typeof made}`)
-        else if (typeof (made as RegistryLike).handler !== 'function' || typeof (made as RegistryLike).get !== 'function') {
-          problems.push(`${factory}: the registry must expose get(type) and handler(type)`)
+        else if (typeof (made as RegistryLike).handler !== 'function' || typeof (made as RegistryLike).get !== 'function' || typeof (made as RegistryLike).list !== 'function') {
+          problems.push(`${factory}: the registry must expose get(type), handler(type) and list()`)
         } else registry = made as RegistryLike
       } catch (error) {
         problems.push(`${factory} failed: ${errorMessage(error)}`)
@@ -166,6 +175,47 @@ export async function loadCatalogue(opts: CatalogueInputs = {}): Promise<Catalog
     })
   })
   if (list.length === 0) problems.push(`${CATALOGUE_MODULE_PATH}: COMMAND_CATALOGUE is empty`)
+
+  // Union with registry.list() (#1507 review 4): a type a module defined outside the catalogue is gated too, and fails.
+  if (registry) {
+    let defined: unknown
+    try {
+      defined = registry.list()
+    } catch (error) {
+      problems.push(`${factory}.list() failed: ${errorMessage(error)}`)
+    }
+    if (defined !== undefined && !Array.isArray(defined)) problems.push(`${factory}.list() must return an array of CommandDefinition`)
+    else if (Array.isArray(defined)) {
+      const listed = new Set<string>()
+      defined.forEach((def, index) => {
+        if (!isRecord(def) || typeof def.type !== 'string' || !COMMAND_ID_RE.test(def.type)) {
+          problems.push(`${factory}.list()[${index}]: expected a definition with a dotted type, got ${JSON.stringify(def)?.slice(0, 120)}`)
+          return
+        }
+        const type = def.type
+        if (listed.has(type)) problems.push(`${factory}.list(): duplicate type '${type}'`)
+        listed.add(type)
+        if (seen.has(type)) return
+        problems.push(`${type}: defined in ${WIRED_REGISTRY_EXPORT}() (registry.list()) but missing from COMMAND_CATALOGUE; every command type must be declared in ${CATALOGUE_MODULE_PATH}`)
+        seen.add(type)
+        let bound = false
+        try {
+          bound = typeof registry!.handler(type) === 'function'
+        } catch (error) {
+          problems.push(`${type}: registry lookup failed: ${errorMessage(error)}`)
+        }
+        const schemaBound = def.schemaBound === true
+        commands.push({
+          type,
+          module: typeof def.module === 'string' ? def.module : '',
+          schemaBound,
+          bound,
+          hasRiskClass: typeof def.riskClass === 'function',
+          gated: bound || schemaBound,
+        })
+      })
+    }
+  }
   return { present: true, commands, problems, bindingSource: registry ? 'registry' : 'catalogue-only' }
 }
 

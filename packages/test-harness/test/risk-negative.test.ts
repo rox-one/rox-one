@@ -156,6 +156,57 @@ describe('runtime catalogue reader', () => {
     expect(text).toContain('COMMAND_MODULES')
     expect(text).toContain('createCommandRegistry() alone does not see bindings made by callers')
   })
+  test('a COMMAND_MODULES bind() that defines a type missing from COMMAND_CATALOGUE fails; the type is still gated (#1507 review 4)', async () => {
+    // #1500 shape: CommandRegistry.define() is public, so a module's bind() can define + bind an uncatalogued type.
+    const src = `
+import { COMMAND_CATALOGUE } from '../../../core/src/commands/catalogue/index.ts'
+class Registry {
+  defs = new Map(); handlers = new Map()
+  define(d) { if (this.defs.has(d.type)) throw new Error('dup'); this.defs.set(d.type, { ...d }) }
+  bind(type, fn) { if (!this.defs.has(type)) throw new Error('unknown ' + type); this.handlers.set(type, fn) }
+  get(type) { return this.defs.get(type) }
+  handler(type) { return this.handlers.get(type) }
+  list() { return [...this.defs.values()] }
+}
+const ROGUE_MODULE = { name: 'zz_rogue', bind(registry) {
+  registry.define({ type: 'zz_fixture.rogue', module: 'zz_rogue', schema: {}, schemaBound: false })
+  registry.bind('zz_fixture.rogue', async () => ({ ok: true }))
+} }
+export const COMMAND_MODULES = [ROGUE_MODULE]
+export function createWiredCommandRegistry() {
+  const registry = new Registry()
+  for (const d of COMMAND_CATALOGUE) registry.define(d)
+  for (const m of COMMAND_MODULES) m.bind(registry)
+  return registry
+}
+`
+    const root = repo({ registry: src })
+    const readout = await loadCatalogue({ repoRoot: root })
+    expect(readout.problems).toEqual([
+      "zz_fixture.rogue: defined in createWiredCommandRegistry() (registry.list()) but missing from COMMAND_CATALOGUE; every command type must be declared in packages/core/src/commands/catalogue/index.ts",
+    ])
+    expect(readout.commands.find((c) => c.type === 'zz_fixture.rogue')).toMatchObject({ module: 'zz_rogue', bound: true, gated: true, hasRiskClass: false })
+    const risk = await checkRiskClassPresence({ repoRoot: root, allowlist: NO_ALLOWLIST })
+    expect(risk.status).toBe('fail')
+    expect(risk.violations).toContain("command 'zz_fixture.rogue' (zz_rogue) is gated (handler bound) but has no riskClass")
+    expect(risk.violations?.join(' ')).toContain('missing from COMMAND_CATALOGUE')
+    // a negative test for it does not rescue the missing catalogue entry.
+    const neg = await checkNegativeTestPresence({
+      repoRoot: repo({ registry: src, tests: { 'e2e/zz.test.ts': `test('zz_fixture.rogue is denied for a viewer', () => {})` } }),
+      allowlist: NO_ALLOWLIST,
+    })
+    expect(neg.status).toBe('fail')
+    expect(neg.violations).toEqual([expect.stringContaining("zz_fixture.rogue: defined in createWiredCommandRegistry() (registry.list()) but missing from COMMAND_CATALOGUE")])
+  })
+  test('a registry without list() or with a malformed list() fails closed', async () => {
+    const noList = registrySource([]).replace('    list: () => [...defs.values()],\n', '')
+    expect(noList).not.toContain('list:')
+    expect((await loadCatalogue({ repoRoot: repo({ registry: noList }) })).problems.join(' ')).toContain('must expose get(type), handler(type) and list()')
+    const badList = registrySource([]).replace('list: () => [...defs.values()]', 'list: () => ({})')
+    expect((await loadCatalogue({ repoRoot: repo({ registry: badList }) })).problems.join(' ')).toContain('list() must return an array')
+    const throwingList = registrySource([]).replace('list: () => [...defs.values()]', "list: () => { throw new Error('list boom') }")
+    expect((await loadCatalogue({ repoRoot: repo({ registry: throwingList }) })).problems.join(' ')).toContain('list boom')
+  })
   test('an async createWiredCommandRegistry() is awaited', async () => {
     const src = registrySource([['zz_fixture.create', { handler: true, riskClass: true }]]).replace('export function createWiredCommandRegistry()', 'function wired()')
       + `\nexport async function createWiredCommandRegistry() { return wired() }\n`
