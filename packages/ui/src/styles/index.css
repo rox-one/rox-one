@@ -78,8 +78,9 @@
   --accent-text: color-mix(in oklch, var(--accent) 88%, var(--foreground));
   --accent-foreground: var(--canvas);
   --surface-hover: color-mix(in oklch, var(--foreground) 5%, var(--surface-elevated));
-  --surface-pressed: color-mix(in oklch, var(--foreground) 8%, var(--surface-elevated));
-  --surface-selected: color-mix(in oklch, var(--accent) 11%, var(--surface-elevated));
+  /* Same percentages as the --state-* overlays (tokens/state.css). */
+  --surface-pressed: color-mix(in oklch, var(--foreground) 9%, var(--surface-elevated));
+  --surface-selected: color-mix(in oklch, var(--accent) 14%, var(--surface-elevated));
   --selection: color-mix(in oklch, var(--accent) 22%, var(--canvas));
   --focus: var(--accent);
   --focus-ring: var(--focus);
@@ -119,7 +120,7 @@
   --shadow-minimal-flat: var(--shadow-minimal);
   --shadow-control: inset 0 0 0 1px var(--border-subtle), 0 1px 2px rgb(0 0 0 / 0.04);
   --shadow-panel: inset 0 0 0 1px var(--border-subtle), 0 1px 3px rgb(0 0 0 / 0.025);
-  --shadow-popover: inset 0 0 0 1px var(--border-subtle), 0 4px 12px rgb(0 0 0 / 0.08), 0 16px 36px rgb(0 0 0 / 0.06);
+  /* --shadow-popover / --shadow-overlay: tokens/elevation.css */
   --shadow-modal-small: var(--shadow-popover);
   /* Raised surfaces (panels, floating toolbars): soft lift, no hard 1px ring,
      so nested containers read as surfaces instead of stacked wireframes. */
@@ -183,8 +184,8 @@
   --ink: oklch(0.22 0.014 255);
   --graphite: oklch(0.46 0.012 255);
   --rox-mint: oklch(0.72 0.08 165);
-  --rox-radius-sm: var(--radius-card);
-  --rox-radius-md: var(--radius-card);
+  --rox-radius-sm: 6px;
+  --rox-radius-md: 8px;
   /* Shell panels (sidebar, navigator, content, inspector, rails). */
   --rox-radius-panel: 0px;
   --rox-gutter: 8px;
@@ -229,7 +230,6 @@
   --graphite: oklch(0.62 0.01 255);
   --shadow-control: inset 0 0 0 1px var(--border-subtle), 0 1px 2px rgb(0 0 0 / 0.12);
   --shadow-panel: inset 0 0 0 1px var(--border-subtle), 0 1px 3px rgb(0 0 0 / 0.08);
-  --shadow-popover: inset 0 0 0 1px var(--border-strong), 0 4px 12px rgb(0 0 0 / 0.18), 0 16px 36px rgb(0 0 0 / 0.16);
   --dialog-backdrop: rgb(0 0 0 / 0.48);
   --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.20), 0 6px 20px -8px rgb(0 0 0 / 0.45);
 }
@@ -360,6 +360,7 @@ html[data-contrast="high"] {
   --shadow-control: var(--shadow-minimal);
   --shadow-panel: var(--shadow-minimal);
   --shadow-popover: var(--shadow-minimal);
+  --shadow-overlay: var(--shadow-minimal);
 }
 
 html[data-contrast="high"][data-scenic]::before {
@@ -378,8 +379,8 @@ html[data-contrast="high"] :focus-visible {
 html[data-ui-profile="super-engineering"] {
   --chrome-glass-blur: 20px;
   /* Profiles scale radius within the token scale only (UI-A1). */
-  --rox-radius-panel: 8px;
-  --rox-radius-composer: 12px;
+  --rox-radius-panel: var(--radius-md);
+  --rox-radius-composer: var(--radius-lg);
   --font-size-base: 13px;
   --shell-motion-disclosure: 320ms;
   --se-editor-font-scale: 1;
@@ -476,14 +477,7 @@ html[data-ui-profile="super-engineering"] .input-container {
   --font-serif: var(--font-serif);
   --font-chat: var(--font-chat);
 
-  --shadow-2xs: var(--shadow-2xs);
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow: var(--shadow);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
-  --shadow-2xl: var(--shadow-2xl);
+  /* shadow-* utilities: tokens/elevation.css */
 }
 
 /* =============================================================================
@@ -496,11 +490,14 @@ html[data-ui-profile="super-engineering"] .input-container {
     border-color: var(--border);
   }
 
+  /* Fixed 16px root (tokens/grid.css); body text uses the body step. */
   html {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-root);
   }
 
   body {
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
     font-family: var(--font-default);
     background: var(--surface-canvas);
     color: var(--text-primary);
@@ -565,7 +562,7 @@ html[data-ui-profile="super-engineering"] .input-container {
   }
   .scrollbar-hover::-webkit-scrollbar-thumb {
     background: transparent;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
   }
   .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
     background: var(--border);
@@ -664,7 +661,7 @@ html[data-ui-profile="super-engineering"] .input-container {
   .popover-styled {
     background: var(--surface-popover);
     color: var(--text-primary);
-    border-radius: var(--popover-radius, var(--radius-overlay));
+    border-radius: var(--popover-radius, var(--radius-md));
     border: none;
     box-shadow: var(--shadow-popover);
   }
@@ -793,7 +790,7 @@ html[data-ui-profile="super-engineering"] .input-container {
 .tiptap-editor .tiptap-prose mark {
   background: var(--selection);
   color: var(--text-primary);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   padding-inline: 0.12em;
 }
 
@@ -925,7 +922,7 @@ html[data-ui-profile="super-engineering"] .input-container {
   max-width: 18rem;
   padding: 8px 10px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-overlay);
+  border-radius: var(--radius-md);
   background: var(--surface-popover);
   box-shadow: var(--shadow-popover);
   color: var(--text-primary);

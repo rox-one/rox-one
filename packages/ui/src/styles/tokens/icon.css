@@ -13,6 +13,14 @@
   --icon-stroke-empty: 1.5;
 }
 
+/* One stroke for every lucide icon; CSS beats the SVG attribute, so no
+   per-icon strokeWidth is needed. Utilities (icon-status, stroke-*) win. */
+@layer base {
+  svg.lucide {
+    stroke-width: var(--icon-stroke, 1.75);
+  }
+}
+
 @utility icon-rail {
   width: var(--icon-rail);
   height: var(--icon-rail);

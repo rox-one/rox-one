@@ -1,11 +1,12 @@
 /* Interaction state overlays (UI-AUDIT §3.8). Hover is neutral; accent means
-   selection, focus and the primary action. Step 1 aliases the shipped
-   surface-hover/pressed/selected mixes. */
+   selection, focus and the primary action. Translucent, so they read the
+   same on any surface; the opaque --surface-hover/pressed/selected mixes in
+   ../index.css use the same percentages. */
 :root {
-  --state-hover: var(--surface-hover);
-  --state-pressed: var(--surface-pressed);
-  --state-selected: var(--surface-selected);
-  --state-selected-strong: var(--selection);
+  --state-hover: color-mix(in oklch, var(--foreground) 5%, transparent);
+  --state-pressed: color-mix(in oklch, var(--foreground) 9%, transparent);
+  --state-selected: color-mix(in oklch, var(--accent) 14%, transparent);
+  --state-selected-strong: color-mix(in oklch, var(--accent) 22%, transparent);
   --text-disabled: color-mix(in oklch, var(--foreground) 38%, var(--canvas));
 }
 

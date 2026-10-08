@@ -5,9 +5,8 @@
    and chrome numbers. Colour palettes stay in ../index.css. Spec:
    UI-AUDIT §3 / PERF-UI-PLAN §3.1 (owner decision D3).
 
-   Step 1 (aliases): every new name resolves to the value the app already
-   renders, so the switch is a pure rename. Step 2 (values) flips the values
-   in these files only. `chrome.css` is the source of
+   Step 1 (aliases) introduced the names at the shipped values; step 2 (this
+   state) switched the values to the adopted scale. `chrome.css` is the source of
    apps/electron/src/renderer/platform/chrome-tokens.ts
    (regenerate with `bun run scripts/generate-chrome-tokens.ts`).
 ============================================================================= */

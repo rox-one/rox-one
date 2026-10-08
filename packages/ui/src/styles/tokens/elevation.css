@@ -1,9 +1,29 @@
 /* Elevation (UI-AUDIT §3.6): tone first, shadow only when detached.
    none: panes, cards, rows · popover: menus, popovers, hover cards, tooltips
    overlay: dialogs, sheets, islands, toasts · ring-focus: keyboard focus only.
-   Theme-specific `--shadow-popover` values live in ../index.css (step 1). */
+   High contrast flattens popover/overlay to a hairline (../index.css). */
 :root {
   --shadow-none: none;
-  --shadow-overlay: var(--shadow-popover);
+  --shadow-popover: 0 0 0 1px var(--border-subtle), 0 8px 24px -8px rgb(0 0 0 / 0.16);
+  --shadow-overlay: 0 0 0 1px var(--border-subtle), 0 24px 48px -12px rgb(0 0 0 / 0.22);
   --ring-focus: 0 0 0 var(--ring-width) var(--focus);
+}
+
+.dark {
+  --shadow-popover: 0 0 0 1px var(--border-strong), 0 8px 24px -8px rgb(0 0 0 / 0.45);
+  --shadow-overlay: 0 0 0 1px var(--border-strong), 0 24px 48px -12px rgb(0 0 0 / 0.55);
+}
+
+/* Tailwind shadow-* utilities resolve to the elevation tokens (previously they
+   referenced themselves and rendered nothing). "None" is a transparent shadow
+   so the composed box-shadow list stays valid. */
+@theme inline {
+  --shadow-2xs: 0 0 #0000;
+  --shadow-xs: 0 0 #0000;
+  --shadow-sm: var(--shadow-popover);
+  --shadow: var(--shadow-popover);
+  --shadow-md: var(--shadow-popover);
+  --shadow-lg: var(--shadow-overlay);
+  --shadow-xl: var(--shadow-overlay);
+  --shadow-2xl: var(--shadow-overlay);
 }

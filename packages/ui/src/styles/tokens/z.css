@@ -1,34 +1,37 @@
 /* Z-index layers (UI-AUDIT §3.5). The only stacking names; Tailwind `z-*`
    utilities are generated for these layers only.
 
-   Step 1 values keep today's stacking for every renamed call site:
-   chrome/sash = old panel (50), scrim = old modal (200). */
+   Numeric `z-10…z-50` / `z-[n]` are retired by the lint ratchet (UI-A2) and
+   the codemod sweep (UI-C2). */
 :root {
   --z-base: 0;
   --z-raised: 1;
   --z-sticky: 10;
-  --z-chrome: 50;
-  --z-sash: 50;
+  --z-chrome: 20;
+  --z-sash: 30;
   --z-popover: 100;
   --z-tooltip: 150;
   --z-scrim: 200;
-  --z-modal: 200;
+  --z-modal: 210;
   --z-toast: 300;
   --z-island: 400;
   --z-island-popover: 410;
   --z-splash: 600;
 
   /* Deprecated CSS-variable names, kept for inline `style={{ zIndex: 'var(--z-…)' }}`
-     call sites. They have no Tailwind utility; do not add new uses. */
-  --z-local: 10;
-  --z-titlebar: 40;
-  --z-panel: 50;
-  --z-dropdown: 100;
-  --z-overlay: 300;
-  --z-fullscreen: 350;
-  --z-floating-backdrop: 390;
-  --z-floating-menu: 400;
-  --z-island-overlay: 390;
+     call sites. They have no Tailwind utility; do not add new uses.
+     Floating menus stay above modals and fullscreen overlays (they open from
+     inside them), so they share the island layer; their click-catching
+     backdrops sit between modal and island. */
+  --z-local: var(--z-sticky);
+  --z-titlebar: var(--z-chrome);
+  --z-panel: var(--z-chrome);
+  --z-dropdown: var(--z-popover);
+  --z-overlay: var(--z-modal);
+  --z-fullscreen: var(--z-modal);
+  --z-floating-backdrop: var(--z-toast);
+  --z-floating-menu: var(--z-island);
+  --z-island-overlay: var(--z-toast);
 }
 
 @theme inline {

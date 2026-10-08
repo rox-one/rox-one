@@ -35,8 +35,10 @@ function blocks(css: string, selector: string): Record<string, string>[] {
   return out
 }
 
+const withoutMedia = (css: string) => stripComments(css).replace(/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '')
+/** Unconditional `:root` declarations (blocks inside @media are ignored). */
 const merge = (bs: Record<string, string>[]): Record<string, string> => Object.assign({}, ...bs)
-const rootOf = (css: string) => merge(blocks(css, ':root'))
+const rootOf = (css: string) => merge(blocks(withoutMedia(css), ':root'))
 
 /** Resolves `var(--x)` chains against `scope` to a final literal. */
 function resolve(value: string, scope: Record<string, string>, depth = 0): string {
@@ -125,14 +127,44 @@ describe('token foundation v2: z layers', () => {
     expect(names.sort()).toEqual([...LAYERS].sort())
   })
 
-  it('layers are strictly ordered as specified', () => {
+  it('layers have the adopted values, strictly ordered', () => {
     const root = rootOf(token('z.css'))
-    const values = LAYERS.map((l) => Number(resolve(root[`--z-${l}`]!, root)))
-    for (let i = 1; i < values.length; i++) {
-      if (LAYERS[i] === 'modal') expect(values[i]).toBeGreaterThanOrEqual(values[i - 1]!)
-      else if (LAYERS[i] === 'sash') expect(values[i]).toBeGreaterThanOrEqual(values[i - 1]!)
-      else expect(values[i], LAYERS[i]).toBeGreaterThan(values[i - 1]!)
+    const values = Object.fromEntries(LAYERS.map((l) => [l, Number(resolve(root[`--z-${l}`]!, root))]))
+    expect(values).toEqual({
+      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, tooltip: 150,
+      scrim: 200, modal: 210, toast: 300, island: 400, 'island-popover': 410, splash: 600,
+    })
+    const ordered = LAYERS.map((l) => values[l]!)
+    for (let i = 1; i < ordered.length; i++) expect(ordered[i], LAYERS[i]).toBeGreaterThan(ordered[i - 1]!)
+  })
+
+  it('every shell z-index value (incl. deprecated aliases) is in the layer set', () => {
+    const root = rootOf(allTokens)
+    const layerValues = new Set(LAYERS.map((l) => Number(resolve(root[`--z-${l}`]!, root))))
+    const zVars = Object.keys(root).filter((n) => n.startsWith('--z-'))
+    expect(zVars.length).toBeGreaterThan(LAYERS.length)
+    for (const name of zVars) {
+      expect(layerValues.has(Number(resolve(root[name]!, root))), `${name} = ${root[name]}`).toBe(true)
     }
+    // Literal z-index declarations in the shared and renderer CSS use the layer set.
+    for (const css of [indexCss, rendererCss]) {
+      for (const m of stripComments(css).matchAll(/z-index:\s*([^;]+);/g)) {
+        const value = m[1]!.trim()
+        if (/^-\d+$/.test(value)) continue // behind-content pseudo layers (scenic wallpaper)
+        expect(layerValues.has(Number(resolve(value, root))), `z-index: ${value}`).toBe(true)
+      }
+    }
+  })
+
+  it('keeps floating menus above modals and their backdrops between the two', () => {
+    const root = rootOf(token('z.css'))
+    const z = (n: string) => Number(resolve(`var(--z-${n})`, root))
+    expect(z('floating-menu')).toBeGreaterThan(z('modal'))
+    expect(z('floating-menu')).toBeGreaterThan(z('fullscreen'))
+    expect(z('floating-backdrop')).toBeGreaterThan(z('fullscreen'))
+    expect(z('floating-backdrop')).toBeLessThan(z('floating-menu'))
+    expect(z('island-overlay')).toBeLessThan(z('island'))
+    expect(z('scrim')).toBeLessThan(z('modal'))
   })
 
   it('no source uses a retired z utility class', () => {
@@ -171,6 +203,91 @@ describe('token foundation v2: radius', () => {
     for (const [name, value] of Object.entries(profile)) {
       if (!/radius/.test(name)) continue
       expect(SCALE.has(px(resolve(value, root))), `${name} = ${value}`).toBe(true)
+    }
+  })
+})
+
+describe('token foundation v2: values (step 2)', () => {
+  const root = rootOf(allTokens)
+  const v = (name: string) => resolve(root[name]!, root)
+
+  it('uses a fixed 16px root and a 4px spacing grid', () => {
+    expect(v('--font-size-root')).toBe('16px')
+    expect(v('--spacing')).toBe('4px')
+    expect(stripComments(indexCss)).toMatch(/html\s*\{\s*font-size:\s*var\(--font-size-root\);/)
+    const profile = blocks(indexCss, 'html[data-ui-profile="super-engineering"]')[0]!
+    expect(profile['--font-size-root']).toBeUndefined()
+  })
+
+  it('maps radius roles and legacy Tailwind steps onto the scale', () => {
+    expect([v('--radius-none'), v('--radius-xs'), v('--radius-sm'), v('--radius-md'), v('--radius-lg'), v('--radius-full')])
+      .toEqual(['0px', '4px', '6px', '8px', '12px', '9999px'])
+    expect(root['--radius-control']).toBe('var(--radius-sm)')
+    expect(root['--radius-card']).toBe('var(--radius-md)')
+    expect(root['--radius-overlay']).toBe('var(--radius-lg)')
+    // rounded-xl (and 2xl/3xl/4xl) resolve to --radius-lg.
+    for (const step of ['xl', '2xl', '3xl', '4xl']) expect(root[`--radius-${step}`]).toBe('var(--radius-lg)')
+  })
+
+  it('remaps text-xs…xl onto caption/small/body/reading/title', () => {
+    const theme = merge(blocks(token('type.css'), '@theme'))
+    const pairs: Record<string, [string, string]> = {
+      caption: ['11px', '14px'], small: ['12px', '16px'], body: ['13px', '20px'], reading: ['15px', '24px'],
+      'title-sm': ['15px', '20px'], title: ['18px', '24px'], display: ['24px', '32px'],
+    }
+    for (const [step, [size, lh]] of Object.entries(pairs)) {
+      expect(theme[`--text-${step}`], step).toBe(size)
+      expect(theme[`--text-${step}--line-height`], step).toBe(lh)
+    }
+    const remap = { xs: 'caption', sm: 'small', base: 'body', lg: 'reading', xl: 'title' }
+    for (const [tw, step] of Object.entries(remap)) {
+      expect(theme[`--text-${tw}`], tw).toBe(theme[`--text-${step}`])
+      expect(theme[`--text-${tw}--line-height`], tw).toBe(theme[`--text-${step}--line-height`])
+    }
+    for (const size of Object.values(theme).filter((x) => /px$/.test(x))) expect(px(size)).toBeGreaterThanOrEqual(11)
+  })
+
+  it('sets the lucide stroke in CSS and sizes icons 20-in-36 / 16-in-28', () => {
+    expect(stripComments(token('icon.css'))).toMatch(/svg\.lucide\s*\{\s*stroke-width:\s*var\(--icon-stroke,\s*1\.75\);/)
+    expect(v('--icon-stroke')).toBe('1.75')
+    expect(v('--icon-rail')).toBe('20px')
+    expect(v('--rail-button')).toBe('36px')
+    expect(v('--icon-toolbar')).toBe('16px')
+    expect(v('--control-md')).toBe('28px')
+    expect(v('--chrome-rail-width')).toBe('48px')
+    expect(v('--chrome-panel-header-height')).toBe('36px')
+    expect(v('--chrome-tab-strip-height')).toBe('32px')
+  })
+
+  it('shadow-sm|md|lg resolve to real elevation values (no self-reference)', () => {
+    const theme = merge(blocks(token('elevation.css'), '@theme inline'))
+    expect(theme['--shadow-sm']).toBe('var(--shadow-popover)')
+    expect(theme['--shadow-md']).toBe('var(--shadow-popover)')
+    expect(theme['--shadow-lg']).toBe('var(--shadow-overlay)')
+    for (const [name, value] of Object.entries(theme)) expect(value, name).not.toContain(`var(${name})`)
+    expect(stripComments(indexCss)).not.toMatch(/--shadow-(2xs|xs|sm|md|lg|xl|2xl)?:\s*var\(--shadow(-2xs|-xs|-sm|-md|-lg|-xl|-2xl)?\)/)
+    for (const name of ['--shadow-popover', '--shadow-overlay']) {
+      expect(root[name]).toMatch(/^0 0 0 1px var\(--border-subtle\), 0 \d+px \d+px -\d+px rgb\(0 0 0 \/ 0\.\d+\)$/)
+    }
+    const dark = merge(blocks(token('elevation.css'), '.dark'))
+    expect(dark['--shadow-popover']).toContain('0.45')
+    expect(dark['--shadow-overlay']).toContain('0.55')
+  })
+
+  it('uses the adopted motion and state values', () => {
+    expect([v('--motion-instant'), v('--motion-fast'), v('--motion-base'), v('--motion-slow')]).toEqual(['0ms', '120ms', '180ms', '240ms'])
+    expect(v('--ease-standard')).toBe('cubic-bezier(0.2, 0.8, 0.2, 1)')
+    expect(root['--state-hover']).toContain('var(--foreground) 5%')
+    expect(root['--state-pressed']).toContain('var(--foreground) 9%')
+    expect(root['--state-selected']).toContain('var(--accent) 14%')
+    // Hover is neutral: no accent in the hover state.
+    expect(root['--state-hover']).not.toContain('--accent')
+  })
+
+  it('keeps literal radii in the shared CSS on the scale', () => {
+    const SCALE = new Set([0, 4, 6, 8, 12, 9999])
+    for (const m of stripComments(indexCss + rendererCss).matchAll(/border-radius:\s*(-?\d+(?:\.\d+)?)px\s*;/g)) {
+      expect(SCALE.has(Number(m[1])), `border-radius: ${m[1]}px`).toBe(true)
     }
   })
 })

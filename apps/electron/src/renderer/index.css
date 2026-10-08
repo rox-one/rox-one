@@ -164,7 +164,7 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
    @rox/ui/styles. */
 @layer utilities {
   /* Bare `rounded` compiles to a literal .25rem (3.75px at the 15px root);
-     pin it to the xs token so it sits on the 4/6/8/10/12 radius scale. */
+     pin it to the xs token so it sits on the 0/4/6/8/12 radius scale. */
   .rounded {
     border-radius: var(--radius-xs);
   }

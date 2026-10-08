@@ -4,7 +4,7 @@
   --motion-instant: 0ms;
   --motion-fast: 120ms;
   --motion-base: 180ms;
-  --motion-slow: 220ms;
+  --motion-slow: 240ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Legacy names. */

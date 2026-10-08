@@ -58,19 +58,19 @@ export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.f
   /** --chrome-topbar-height */
   chromeTopbarHeight: 40,
   /** --chrome-rail-width */
-  chromeRailWidth: 44,
+  chromeRailWidth: 48,
   /** --chrome-rail-expanded-width */
   chromeRailExpandedWidth: 188,
   /** --chrome-control */
   chromeControl: 24,
   /** --chrome-control-lg */
-  chromeControlLg: 26,
+  chromeControlLg: 28,
   /** --chrome-tab-strip-height */
-  chromeTabStripHeight: 34,
+  chromeTabStripHeight: 32,
   /** --chrome-status-height */
   chromeStatusHeight: 24,
   /** --chrome-panel-header-height */
-  chromePanelHeaderHeight: 32,
+  chromePanelHeaderHeight: 36,
   /** --chrome-gap */
   chromeGap: 4,
   /** --panel-gap */
@@ -126,7 +126,7 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   /** --chrome-control */
   chromeControl: 24,
   /** --chrome-control-lg */
-  chromeControlLg: 26,
+  chromeControlLg: 28,
   /** --chrome-tab-strip-height */
   chromeTabStripHeight: 36,
   /** --chrome-status-height */

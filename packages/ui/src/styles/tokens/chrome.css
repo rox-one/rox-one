@@ -19,13 +19,13 @@
 
   /* Workbench chrome. */
   --chrome-topbar-height: 40px;
-  --chrome-rail-width: 44px;
+  --chrome-rail-width: 48px;
   --chrome-rail-expanded-width: 188px;
-  --chrome-control: 24px;
-  --chrome-control-lg: 26px;
-  --chrome-tab-strip-height: 34px;
+  --chrome-control: var(--control-sm);
+  --chrome-control-lg: var(--control-md);
+  --chrome-tab-strip-height: 32px;
   --chrome-status-height: 24px;
-  --chrome-panel-header-height: 32px;
+  --chrome-panel-header-height: 36px;
   --chrome-gap: 4px;
 
   /* Panes: flush one-surface shell; sashes overlap the seam. */
