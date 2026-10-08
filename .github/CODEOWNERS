@@ -7,3 +7,4 @@
 /scripts/stylelint/ @agisota
 /.stylelintrc.cjs @agisota
 /.github/workflows/ui-lint-ratchet.yml @agisota
+/.github/CODEOWNERS @agisota
