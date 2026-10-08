@@ -83,9 +83,13 @@ describe('W1-01 kind registry', () => {
 describe('W1-01 reference grammar', () => {
   test('parses canonical refs', () => {
     expect(parseEntityRef('task:42')).toEqual({ ok: true, value: { kind: 'task', id: '42' } })
-    expect(parseEntityRef('goal:7#t-3')).toEqual({
+    expect(parseEntityRef('goal-target:g1#3')).toEqual({
       ok: true,
-      value: { kind: 'goal', id: '7', fragment: 't-3' },
+      value: { kind: 'goal-target', id: 'g1', fragment: '3' },
+    })
+    expect(parseEntityRef('channel-message:c1#128')).toEqual({
+      ok: true,
+      value: { kind: 'channel-message', id: 'c1', fragment: '128' },
     })
   })
 

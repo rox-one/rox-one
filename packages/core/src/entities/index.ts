@@ -31,10 +31,12 @@ export { KIND_ALIASES, normalizeKindAlias } from './aliases.ts'
 
 // Reference grammar.
 export {
+  ENTITY_FRAGMENT_KINDS,
   EntityRefFormatError,
   entityRefEquals,
   entityRefKey,
   formatEntityRef,
+  kindTakesFragment,
   parseEntityRef,
   type EntityRef,
   type RefError,

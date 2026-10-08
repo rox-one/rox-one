@@ -92,6 +92,13 @@ export class EntityResolutionCache {
     this.map.delete(key)
   }
 
+  /** Delete every entry whose key ends with `suffix` (actor-scoped invalidation). */
+  deleteBySuffix(suffix: string): void {
+    for (const key of [...this.map.keys()]) {
+      if (key.endsWith(suffix)) this.map.delete(key)
+    }
+  }
+
   clear(): void {
     this.map.clear()
   }
