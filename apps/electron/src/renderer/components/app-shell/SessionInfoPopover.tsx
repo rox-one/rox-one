@@ -43,6 +43,14 @@ export function SessionInfoPopover({
 }: SessionInfoPopoverProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
+  // Opening a session file shows a fullscreen preview; close this surface so
+  // it doesn't float over the preview (the popover is on the island layer) or
+  // stay open under it (drawer). No focus hand-back: the preview owns focus.
+  const closingForFileRef = React.useRef(false)
+  const handleFileOpen = React.useCallback(() => {
+    closingForFileRef.current = true
+    setOpen(false)
+  }, [])
 
   const handleOpenChange = React.useCallback((nextOpen: boolean) => {
     setOpen(nextOpen)
@@ -67,12 +75,17 @@ export function SessionInfoPopover({
           onOpenAutoFocus={(e) => {
             e.preventDefault()
           }}
+          onCloseAutoFocus={(e) => {
+            if (!closingForFileRef.current) return
+            closingForFileRef.current = false
+            e.preventDefault()
+          }}
         >
           <DrawerHeader className="border-b border-border/50 px-4 py-3 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
             <DrawerTitle className="text-sm font-medium">{t('chat.sessionInfo')}</DrawerTitle>
           </DrawerHeader>
           <div className="flex-1 min-h-0 overflow-hidden">
-            <SessionInfoPopoverContent sessionId={sessionId} sessionFolderPath={sessionFolderPath} />
+            <SessionInfoPopoverContent sessionId={sessionId} sessionFolderPath={sessionFolderPath} onFileOpen={handleFileOpen} />
           </div>
         </DrawerContent>
       </Drawer>
@@ -93,16 +106,17 @@ export function SessionInfoPopover({
           e.preventDefault()
         }}
         onCloseAutoFocus={(e) => {
+          closingForFileRef.current = false
           e.preventDefault()
         }}
       >
-        <SessionInfoPopoverContent sessionId={sessionId} sessionFolderPath={sessionFolderPath} />
+        <SessionInfoPopoverContent sessionId={sessionId} sessionFolderPath={sessionFolderPath} onFileOpen={handleFileOpen} />
       </PopoverContent>
     </Popover>
   )
 }
 
-function SessionInfoPopoverContent({ sessionId, sessionFolderPath }: { sessionId: string; sessionFolderPath?: string }) {
+function SessionInfoPopoverContent({ sessionId, sessionFolderPath, onFileOpen }: { sessionId: string; sessionFolderPath?: string; onFileOpen: () => void }) {
   const { t } = useTranslation()
   const session = useSession(sessionId)
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
@@ -166,6 +180,7 @@ function SessionInfoPopoverContent({ sessionId, sessionFolderPath }: { sessionId
           sessionFolderPath={sessionFolderPath}
           hideHeader={false}
           className="h-full min-h-0"
+          onFileOpen={onFileOpen}
         />
       </div>
     </div>
