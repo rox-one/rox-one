@@ -336,7 +336,7 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
         headerActions={<TableExportDropdown columns={parsed.columns} rows={parsed.rows} filename={parsed.filename || parsed.sheetName || t('spreadsheet.defaultTitle')} />}
       >
         <div className="px-6">
-          <div className="bg-background shadow-minimal rounded-[var(--radius-overlay)] overflow-hidden">
+          <div className="bg-background shadow-minimal rounded-md overflow-hidden">
             {tableContent(false)}
           </div>
         </div>

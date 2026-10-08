@@ -5,8 +5,8 @@
  * literal values in JS/TS style objects and style assignments.
  *
  * Allowed examples:
- *   style={{ zIndex: 'var(--z-floating-menu, 400)' }}
- *   style={{ zIndex: 'calc(var(--z-floating-menu, 400) + 1)' }}
+ *   style={{ zIndex: 'var(--z-island)' }}
+ *   style={{ zIndex: 'calc(var(--z-island) + 1)' }}
  *   style={{ zIndex: Z_FULLSCREEN }}
  *   style={{ zIndex: index + 1 }}
  *
@@ -28,7 +28,7 @@ module.exports = {
     schema: [],
     messages: {
       noHardcodedZIndex:
-        'Avoid hardcoded zIndex values. Use z-index tokens (for example var(--z-floating-menu, 400)), Tailwind z-* utilities, or a named constant.',
+        'Avoid hardcoded zIndex values. Use a z layer token (for example var(--z-popover) or var(--z-island)), a Tailwind z-<layer> utility, or a named constant.',
     },
   },
 

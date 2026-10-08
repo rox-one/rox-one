@@ -177,7 +177,7 @@ export function NotesCommandPalette({
   let offset = 0
   return (
     <div
-      className="notes-authoring-palette absolute z-30 w-80 rounded-[var(--radius-overlay)] border border-foreground/[0.08] bg-popover p-1 shadow-strong"
+      className="notes-authoring-palette absolute z-30 w-80 rounded-md border border-foreground/[0.08] bg-popover p-1 shadow-strong"
       role="listbox"
       aria-label={t('notes.palette.title')}
       data-testid="notes-command-palette"

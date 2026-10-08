@@ -242,7 +242,7 @@ export function PanelStackContainer({
       data-mobile-menu-root="true"
       data-shell-density={isCompact ? 'compact' : 'regular'}
       data-panel-layout={isCompact ? 'compact' : mode}
-      className="flex-1 min-h-0 min-w-0 flex flex-col relative z-panel panel-scroll @container/shell"
+      className="flex-1 min-h-0 min-w-0 flex flex-col relative z-chrome panel-scroll @container/shell"
       style={{
         overflowX: isCompact ? 'hidden' : 'auto',
         overflowY: isCompact ? 'hidden' : 'auto',

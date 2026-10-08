@@ -138,24 +138,10 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
   --color-foreground-1\.5: var(--foreground-1\.5);
   --color-sidebar-hover: color-mix(in oklch, var(--text-primary) 4%, var(--surface-rail));
 
-  /* Electron-specific stacking and container query utilities. */
-  --z-index-base: var(--z-base);
-  --z-index-local: var(--z-local);
-  --z-index-sticky: var(--z-sticky);
-  --z-index-titlebar: var(--z-titlebar);
-  --z-index-panel: var(--z-panel);
-  --z-index-dropdown: var(--z-dropdown);
-  --z-index-tooltip: var(--z-tooltip);
-  --z-index-modal: var(--z-modal);
-  --z-index-overlay: var(--z-overlay);
-  --z-index-fullscreen: var(--z-fullscreen);
-  --z-index-floating-backdrop: var(--z-floating-backdrop);
-  --z-index-floating-menu: var(--z-floating-menu);
-  --z-index-island-overlay: var(--z-island-overlay);
-  --z-index-island: var(--z-island);
-  --z-index-island-popover: var(--z-island-popover);
-  --z-index-splash: var(--z-splash);
+  /* Stacking utilities (`z-chrome`, `z-popover`, …) come from the shared
+     layer set in @rox/ui/styles tokens/z.css; no renderer-only z names. */
 
+  /* Electron-specific container query utilities. */
   --container-3xs: 16rem;
   --container-panel-compact: 28rem;
   --container-panel-medium: 40rem;
@@ -178,7 +164,7 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
    @rox/ui/styles. */
 @layer utilities {
   /* Bare `rounded` compiles to a literal .25rem (3.75px at the 15px root);
-     pin it to the xs token so it sits on the 4/6/8/10/12 radius scale. */
+     pin it to the xs token so it sits on the 0/4/6/8/12 radius scale. */
   .rounded {
     border-radius: var(--radius-xs);
   }
@@ -272,7 +258,7 @@ html[data-contrast="high"] .map-toolbar-btn[aria-pressed="true"] {
    policy applies to scenic and ordinary palettes. Reading surfaces stay solid. */
 html[data-scenic] .rox-shell-pane {
   position: relative;
-  z-index: var(--z-panel);
+  z-index: var(--z-chrome);
 }
 html .input-container {
   background: rgb(from var(--input-surface, var(--paper)) r g b / 1);

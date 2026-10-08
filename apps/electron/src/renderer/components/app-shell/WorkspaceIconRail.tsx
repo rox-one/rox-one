@@ -13,18 +13,13 @@ import {
 	Trash2,
 	X,
 } from "lucide-react";
-import { AnimatePresence } from "motion/react";
-import { useSetAtom } from "jotai";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { fullscreenOverlayOpenAtom } from "@/atoms/overlay";
 import { CrossfadeAvatar } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@rox/ui";
-import { WorkspaceCreationScreen, type WorkspaceCreationSuccess } from "@/components/workspace";
-import { waitForTransportConnected } from "@/lib/transport-wait";
 import { useTransportConnectionState } from "@/hooks/useTransportConnectionState";
 import { useWorkspaceIcons } from "@/hooks/useWorkspaceIcon";
 import {
@@ -40,6 +35,7 @@ import {
 } from "@/lib/rail-links";
 import { navigate, routes } from "@/lib/navigate";
 import type { Workspace } from "../../../shared/types";
+import { useWorkspaceCreationFlow } from "./AccountMenu";
 
 const bundledRoxLogo = new URL("../../assets/rox-logo.svg", import.meta.url).href;
 
@@ -73,10 +69,13 @@ export function WorkspaceIconRail({
 }: WorkspaceIconRailProps) {
 	const { t } = useTranslation();
 	const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', variant: 'rail' });
-	const [showCreationScreen, setShowCreationScreen] = React.useState(false);
-	const [reconnectTarget, setReconnectTarget] =
-		React.useState<Workspace | null>(null);
-	const setFullscreenOverlayOpen = useSetAtom(fullscreenOverlayOpenAtom);
+	// Shared creation / reconnect flow (screen state, fullscreen-overlay flag
+	// and its unmount cleanup) — same hook as AccountMenu.
+	const { open: openCreationFlow, screen: creationScreen } = useWorkspaceCreationFlow({
+		activeWorkspaceId,
+		onSelectWorkspace: onSelect,
+		onWorkspaceCreated,
+	});
 	const workspaceIconMap = useWorkspaceIcons(workspaces);
 	const connectionState = useTransportConnectionState();
 	const isRemote = connectionState?.mode === "remote";
@@ -185,50 +184,8 @@ export function WorkspaceIconRail({
 	);
 
 	const handleNewWorkspace = React.useCallback(() => {
-		setShowCreationScreen(true);
-		setFullscreenOverlayOpen(true);
-	}, [setFullscreenOverlayOpen]);
-
-	const handleWorkspaceCreated = React.useCallback(
-		({ workspace, activation }: WorkspaceCreationSuccess) => {
-			setShowCreationScreen(false);
-			setFullscreenOverlayOpen(false);
-			toast.success(t("toast.createdWorkspace", { name: workspace.name }));
-			onWorkspaceCreated?.(workspace);
-			void onSelect(activation?.activeWorkspaceId ?? workspace.id);
-		},
-		[onSelect, onWorkspaceCreated, setFullscreenOverlayOpen, t],
-	);
-
-	const handleCloseCreationScreen = React.useCallback(() => {
-		setShowCreationScreen(false);
-		setReconnectTarget(null);
-		setFullscreenOverlayOpen(false);
-	}, [setFullscreenOverlayOpen]);
-
-	const handleReconnectWorkspace = React.useCallback(
-		async (
-			workspaceId: string,
-			remoteServer: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string; tlsTrust?: import('../../../shared/types').RemoteTlsTrust },
-		) => {
-			await window.electronAPI.updateWorkspaceRemoteServer(
-				workspaceId,
-				remoteServer,
-			);
-
-			if (workspaceId === activeWorkspaceId) {
-				await window.electronAPI.reconnectTransport();
-				await waitForTransportConnected(window.electronAPI);
-			} else {
-				await Promise.resolve(onSelect(workspaceId));
-				await waitForTransportConnected(window.electronAPI);
-			}
-
-			handleCloseCreationScreen();
-			toast.success(t("toast.workspaceReconnected"));
-		},
-		[activeWorkspaceId, handleCloseCreationScreen, onSelect, t],
-	);
+		openCreationFlow();
+	}, [openCreationFlow]);
 
 	const handleWorkspaceClick = React.useCallback(
 		(workspace: Workspace, event: React.MouseEvent<HTMLButtonElement>) => {
@@ -237,9 +194,7 @@ export function WorkspaceIconRail({
 			const disconnected = isRemoteDisconnected(workspace.id);
 
 			if (disconnected && workspace.remoteServer) {
-				setReconnectTarget(workspace);
-				setShowCreationScreen(true);
-				setFullscreenOverlayOpen(true);
+				openCreationFlow(workspace);
 				return;
 			}
 
@@ -251,8 +206,8 @@ export function WorkspaceIconRail({
 		[
 			activeWorkspaceId,
 			isRemoteDisconnected,
+			openCreationFlow,
 			onSelect,
-			setFullscreenOverlayOpen,
 		],
 	);
 
@@ -323,16 +278,7 @@ export function WorkspaceIconRail({
 
 	return (
 		<>
-			<AnimatePresence>
-				{showCreationScreen && (
-					<WorkspaceCreationScreen
-						onWorkspaceCreated={handleWorkspaceCreated}
-						onClose={handleCloseCreationScreen}
-						reconnectWorkspace={reconnectTarget ?? undefined}
-						onReconnectWorkspace={handleReconnectWorkspace}
-					/>
-				)}
-			</AnimatePresence>
+			{creationScreen}
 
 			<aside
 				ref={tourWorkspaceTarget}
@@ -488,7 +434,7 @@ export function WorkspaceIconRail({
 								align="start"
 								sideOffset={8}
 								aria-labelledby={addLinkTitleId}
-								className="w-80 max-w-[min(calc(100vw-40px),var(--radix-popover-content-available-width))] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-[var(--radius-overlay)] p-3"
+								className="w-80 max-w-[min(calc(100vw-40px),var(--radix-popover-content-available-width))] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-md p-3"
 								onOpenAutoFocus={(event) => {
 									event.preventDefault();
 									draftLabelRef.current?.focus();

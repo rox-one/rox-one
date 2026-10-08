@@ -160,7 +160,7 @@ export function CollectionDisplayPopover({
               onClick={() => patch({ orderBy: value })}
             />
           ))}
-          <div className="mx-2 mt-1 flex rounded-[var(--radius-overlay)] bg-foreground/[0.04] p-0.5">
+          <div className="mx-2 mt-1 flex rounded-sm bg-foreground/[0.04] p-0.5">
             {(['asc', 'desc'] as CollectionOrderDir[]).map((dir) => {
               const active = display.orderDir === dir
               return (

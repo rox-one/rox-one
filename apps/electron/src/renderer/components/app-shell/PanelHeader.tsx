@@ -48,7 +48,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
-import { AccountMenu } from './AccountMenu'
+import { AccountMenu, useWorkspaceCreationFlow } from './AccountMenu'
 
 // Padding to compensate for macOS traffic lights (stoplight buttons)
 // Traffic lights positioned at x:18, ~52px wide = 70px + 14px gap
@@ -88,9 +88,18 @@ function CompactChatHeader({ leadingAction, titleNode, viewSwitch, centerButton,
     onRefreshWorkspaces,
   } = useAppShellContext()
   const [menuOpen, setMenuOpen] = useState(false)
+  // The creation/reconnect screen (fullscreen layer) replaces this Drawer
+  // rather than stacking over an open one. The header owns the flow, so the
+  // screen outlives the Drawer, and the Drawer closes when the screen opens.
+  const creationFlow = useWorkspaceCreationFlow({
+    activeWorkspaceId,
+    onSelectWorkspace,
+    onWorkspaceCreated: onRefreshWorkspaces,
+  })
 
   return (
     <div className="relative flex h-full min-w-0 flex-1 items-center justify-between">
+      {creationFlow.screen}
       <div className="titlebar-no-drag shrink-0">
         {leadingAction}
       </div>
@@ -118,6 +127,8 @@ function CompactChatHeader({ leadingAction, titleNode, viewSwitch, centerButton,
               onSelectWorkspace={onSelectWorkspace}
               onWorkspaceCreated={onRefreshWorkspaces}
               onWorkspaceRemoved={onRefreshWorkspaces}
+              creationFlow={creationFlow}
+              onOpenCreationScreen={() => setMenuOpen(false)}
             />
             {viewSwitch && <div className="flex items-center justify-start">{viewSwitch}</div>}
             {(centerButton || actions) && (
@@ -467,7 +478,7 @@ export function PanelHeader({
   const basePadding = leadingAction ? 8 : 16
 
   const baseClassName = cn(
-    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-panel h-[var(--chrome-panel-header-height)] bg-surface-elevated border-b border-border-subtle',
+    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-chrome h-[var(--chrome-panel-header-height)] bg-surface-elevated border-b border-border-subtle',
     // Only use static paddingLeft class when not animating
     !shouldCompensate && (paddingLeft || (leadingAction ? 'pl-2' : 'pl-4')),
     className
