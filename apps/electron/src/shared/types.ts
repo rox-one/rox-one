@@ -788,6 +788,8 @@ export interface ElectronAPI {
   /** W1-13: Settings → visible Rox home toggle (direct IPC; applies on next launch). */
   getStorageVisibleRoot(): Promise<import('./storage-visible-root').StorageVisibleRootState>
   setStorageVisibleRoot(enabled: boolean): Promise<import('./storage-visible-root').StorageVisibleRootState>
+  /** W1-13: this launch's home-migration notice, returned once (then null). */
+  takeStorageMigrationNotice(): Promise<import('./storage-visible-root').StorageMigrationNotice | null>
   removeWorkspace(workspaceId: string): Promise<boolean>
   invokeOnServer(url: string, token: string, channel: string, ...args: any[]): Promise<any>
 

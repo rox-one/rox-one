@@ -579,6 +579,7 @@ client.onConnectionStateChanged((state) => {
 ;(api as ElectronAPI).relaunchApp = () => ipcRenderer.invoke('app:relaunch')
 ;(api as ElectronAPI).getStorageVisibleRoot = () => ipcRenderer.invoke('storage:visibleRoot:get')
 ;(api as ElectronAPI).setStorageVisibleRoot = (enabled: boolean) => ipcRenderer.invoke('storage:visibleRoot:set', enabled)
+;(api as ElectronAPI).takeStorageMigrationNotice = () => ipcRenderer.invoke('storage:migrationNotice:take')
 ;(api as ElectronAPI).removeWorkspace = (workspaceId: string) => ipcRenderer.invoke('workspace:remove', workspaceId)
 ;(api as ElectronAPI).invokeOnServer = (url: string, token: string, channel: string, ...args: any[]) =>
   ipcRenderer.invoke('server:invokeOnServer', url, token, channel, ...args)

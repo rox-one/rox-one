@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { isVisibleRoxHomeActive, resolveConfigDir, resetConfigDirCachesForTests } from '../../../../../packages/shared/src/config/env.ts'
+import { isVisibleRoxHomeActive, resolveConfigDir, resetConfigDirCachesForTests, runVisibleHomeAutoMigration } from '../../../../../packages/shared/src/config/env.ts'
 import { createStorageVisibleRootHandlers, registerStorageVisibleRootIpc } from '../storage-visible-root-ipc'
 import { STORAGE_VISIBLE_ROOT_CHANNELS } from '../../shared/storage-visible-root'
 
@@ -47,9 +47,16 @@ describe('W1-13 Settings toggle (storage.visible-root.v1)', () => {
     expect(isVisibleRoxHomeActive({}, home)).toBe(false)
     resetConfigDirCachesForTests() // simulate the next launch
     expect(isVisibleRoxHomeActive({}, home)).toBe(true)
-    expect(resolveConfigDir({}, home)).toBe(join(home, 'rox'))
+    // Resolution alone never migrates (review 2): the legacy home stays put
+    // until Electron main runs the migration after its single-instance lock.
+    expect(resolveConfigDir({}, home)).toBe(join(home, '.rox'))
+    expect(existsSync(join(home, 'rox'))).toBe(false)
+    const boot = runVisibleHomeAutoMigration({ env: {}, homeDir: home })
+    expect(boot?.result?.outcome).toBe('migrated')
     expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
     expect(JSON.parse(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).workspaces[0].id).toBe('w1')
+    resetConfigDirCachesForTests() // the launch after that resolves ~/rox
+    expect(resolveConfigDir({}, home)).toBe(join(home, 'rox'))
   })
 
   it('a malformed flag file reads as OFF', () => {

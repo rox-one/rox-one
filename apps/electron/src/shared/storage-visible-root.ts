@@ -14,3 +14,15 @@ export interface StorageVisibleRootState {
   /** The persisted value differs from the running one: relaunch to apply. */
   restartRequired: boolean
 }
+
+/** W1-13 review 2: one-shot notice about this launch's home migration. */
+export const STORAGE_MIGRATION_NOTICE_CHANNELS = {
+  TAKE: 'storage:migrationNotice:take',
+} as const
+
+export interface StorageMigrationNotice {
+  /** migrated/merged: files moved to the visible home; deferred-foreign: left alone. */
+  kind: 'migrated' | 'merged' | 'deferred-foreign'
+  /** Relative paths kept under `.migration/conflicts/` (merges only). */
+  conflicts: string[]
+}
