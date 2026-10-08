@@ -145,6 +145,24 @@ describe('actual App startup caller boundary', () => {
     expect(reads).toBe(4)
   })
 
+  it('an identity read that fails while transport comes up is re-read after recovery', async () => {
+    let reads = 0
+    const h = harness({ getOrgIdentity: async () => { if (++reads <= 2) throw new Error('offline'); return nativeIdentity } })
+    await h.run()
+    expect(h.states).toEqual(['ready'])
+    expect(h.calls).toContain('transport-wait')
+    expect(h.authorities).toEqual(['native'])
+    expect(h.workspaces).toEqual(['ws-a'])
+  })
+
+  it('an identity read still failing after transport recovery stays unavailable', async () => {
+    const h = harness({ getOrgIdentity: async () => { throw new Error('offline') } })
+    await h.run()
+    expect(h.states).toEqual(['transport-unavailable'])
+    expect(h.calls).toContain('transport-wait')
+    expect(h.workspaces).toEqual([])
+  })
+
   it('workspace authorization denial never becomes a picker or successful ready state', async () => {
     const h = harness({ getWindowWorkspace: async () => { throw Object.assign(new Error('denied'), { code: 'FORBIDDEN' }) } })
     await h.run()

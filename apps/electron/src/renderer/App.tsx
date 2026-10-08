@@ -952,7 +952,33 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         ])
         if (cancelled) return
         let workspaceProbe = initialProbes[0]
-        const identityProbe = initialProbes[1]
+        let identityProbe = initialProbes[1]
+        let cloudProbe = initialProbes[2]
+        if (!identityProbe.ok && isStartupAuthorityDenial(identityProbe.error)) throw identityProbe.error
+        // A transport that is still coming up (slow cold start) fails these
+        // reads with a non-authority error: wait for it once, then re-read
+        // whatever failed (identity and workspace each get a fresh budget).
+        if (!identityProbe.ok || !workspaceProbe.ok) {
+          if (!workspaceProbe.ok && isStartupAuthorityDenial(workspaceProbe.error)) throw workspaceProbe.error
+          const transportProbe = await probeWithRetry(
+            () => waitForTransportConnected(window.electronAPI, { timeoutMs: 12_000 }),
+            { delaysMs: [] },
+          )
+          if (cancelled) return
+          if (!transportProbe.ok) throw transportProbe.error
+          if (!identityProbe.ok) {
+            identityProbe = await probeWithRetry(() => window.electronAPI.getOrgIdentity())
+            if (cancelled) return
+          }
+          if (!workspaceProbe.ok) {
+            workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+            if (cancelled) return
+          }
+          if (identityProbe.ok && workspaceProbe.ok) {
+            cloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
+            if (cancelled) return
+          }
+        }
         if (!identityProbe.ok) throw identityProbe.error
         const identity = identityProbe.value
         if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
@@ -964,23 +990,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           if (cancelled) return
           if (!setupProbe.ok) throw setupProbe.error
           startupSetupNeeds = setupProbe.value
-        }
-        // The cloud read is reused unless transport recovery runs below.
-        let cloudProbe = initialProbes[2]
-        if (!workspaceProbe.ok) {
-          if (isStartupAuthorityDenial(workspaceProbe.error)) throw workspaceProbe.error
-          const transportProbe = await probeWithRetry(
-            () => waitForTransportConnected(window.electronAPI, { timeoutMs: 12_000 }),
-            { delaysMs: [] },
-          )
-          if (cancelled) return
-          if (!transportProbe.ok) throw transportProbe.error
-          workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
-          if (cancelled) return
-          if (workspaceProbe.ok) {
-            cloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
-            if (cancelled) return
-          }
         }
         if (!workspaceProbe.ok) throw workspaceProbe.error
         if (!cloudProbe.ok) throw cloudProbe.error
