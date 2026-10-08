@@ -110,14 +110,14 @@ export class NotifyService {
   async markRead(workspaceId: string, principalId: string, ids: readonly string[], readAt = this.now().toISOString()): Promise<NotificationReadResult> {
     const changed = await this.store.markRead(workspaceId, principalId, ids, readAt)
     const unread = await this.store.unreadCount(workspaceId, principalId)
-    if (changed.length > 0) this.publish(principalId, { ids: changed, readAt, unread })
+    if (changed.length > 0) this.publish(workspaceId, principalId, { ids: changed, readAt, unread })
     return { updated: changed.length, readAt, unread }
   }
 
   async markAllRead(workspaceId: string, principalId: string, kind: NotificationKind | undefined, readAt = this.now().toISOString()): Promise<NotificationReadResult> {
     const changed = await this.store.markAllRead(workspaceId, principalId, kind, readAt)
     const unread = await this.store.unreadCount(workspaceId, principalId)
-    if (changed.length > 0) this.publish(principalId, { all: true, ...(kind ? { kind } : {}), readAt, unread })
+    if (changed.length > 0) this.publish(workspaceId, principalId, { all: true, ...(kind ? { kind } : {}), readAt, unread })
     return { updated: changed.length, readAt, unread }
   }
 
@@ -136,8 +136,13 @@ export class NotifyService {
     return { updated: saved.length, prefs: saved }
   }
 
-  private publish(principalId: string, payload: NotificationReadPush): void {
-    this.push?.(principalId, [{ topic: `user:${principalId}`, type: 'notification.read', payload }])
+  /**
+   * `notification.read` on `user:{id}`. The first argument is the workspace whose
+   * realtime log carries the frame — the same log `notification.created` uses —
+   * never the recipient id.
+   */
+  private publish(workspaceId: string, principalId: string, payload: NotificationReadPush): void {
+    this.push?.(workspaceId, [{ topic: `user:${principalId}`, type: 'notification.read', payload }])
   }
 }
 

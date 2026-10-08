@@ -26,9 +26,13 @@ import { spawnSync } from 'node:child_process'
 import { z } from 'zod'
 import { PLACEHOLDER_PAYLOAD_SCHEMA } from '../../../packages/core/src/commands/index.ts'
 import { REALTIME_RPC, type RealtimeEventFrame, type RealtimeSubscribeResult } from '../../../packages/core/src/events/index.ts'
-import { WORKBENCH_FLAG } from '../../../packages/core/src/platform/workbench/index.ts'
 import { createWiredCommandRegistry } from '../../../packages/server-core/src/commands/registry.ts'
 import type { CommandReceipt } from '../../../packages/core/src/commands/index.ts'
+import { commandReceiptSchema } from '../../../packages/shared/src/commands/schemas.ts'
+import {
+  notificationListResultSchema,
+  notificationReadResultSchema,
+} from '../../../packages/shared/src/notify/schemas.ts'
 import { WsRpcClient } from '../../../packages/server-core/src/transport/client.ts'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../src/server.ts'
 import type { DomainEventRelay } from '../src/modules/events/relay.ts'
@@ -139,8 +143,10 @@ const checkInPayload = z.object({
 
 /** Minimal goal reference handlers — W1-06 (#1503) binds the real ones. */
 function referenceRegistry() {
+  // `goals.checkins.v1` is the CHK module's flag (W1-06 registers it); the reference
+  // handlers need it on, exactly as the real ones will.
   const registry = createWiredCommandRegistry({
-    isFlagEnabled: flag => flag === WORKBENCH_FLAG.goalsCheckinsV1 || flag === 'goals.v1',
+    isFlagEnabled: flag => flag === 'goals.checkins.v1' || flag === 'goals.v1',
   })
   let revision = 0
   registry.bind('goals.update_champion', ctx => {
@@ -177,7 +183,9 @@ function referenceRegistry() {
 }
 
 interface ProvisionedAccount { login: string; principalId: string }
-interface HttpResult { status: number; body: Record<string, any> }
+interface HttpResult { status: number; body: unknown }
+/** `/v1/auth/local/token` (the composed server's local-bootstrap route). */
+const tokenResponse = z.object({ token: z.string().min(1) })
 
 interface NotifyFixture {
   database: SQL
@@ -246,12 +254,12 @@ async function fixture(options: { notify?: boolean } = {}): Promise<NotifyFixtur
       signal: AbortSignal.timeout(10_000),
     })
     const text = await response.text()
-    return { status: response.status, body: (text ? JSON.parse(text) : {}) as Record<string, any> }
+    return { status: response.status, body: text ? JSON.parse(text) : {} }
   }
   async function token(login: string): Promise<string> {
     const response = await http('/v1/auth/local/token', undefined, { login, password })
     expect(response.status).toBe(200)
-    return response.body.token as string
+    return tokenResponse.parse(response.body).token
   }
   async function ws(tokenValue: string) {
     const client = new WsRpcClient(`ws://127.0.0.1:${service.server.port}`, { token: tokenValue, workspaceId, mode: 'remote', autoReconnect: false, connectTimeout: 2000, requestTimeout: 5000 })
@@ -274,7 +282,7 @@ async function fixture(options: { notify?: boolean } = {}): Promise<NotifyFixtur
     token,
     post: async (path, tokenValue, body) => {
       const response = await http(path, tokenValue, body)
-      return { status: response.status, body: response.body as CommandReceipt }
+      return { status: response.status, body: commandReceiptSchema.parse(response.body) }
     },
     ws,
   }
@@ -284,6 +292,8 @@ const envelope = (type: string, payload: unknown) =>
   ({ commandId: randomUUID(), type, payload, issuedAt: new Date().toISOString() })
 
 describe.skipIf(!testDb)('W1-09 notify on the composed workspace service (PostgreSQL)', () => {
+  // The fixture creates a schema, applies every migration and boots the composed
+  // server, so the per-test budget is larger than bun's 5 s default.
   test('a reference goal update notifies the champion, the reviewer and the subscribers — and nobody else', async () => {
     const f = await fixture()
     const commandsPath = `/v1/workspaces/${f.workspaceId}/commands`
@@ -343,25 +353,26 @@ describe.skipIf(!testDb)('W1-09 notify on the composed workspace service (Postgr
     // The Inbox route is reachable only because the composition root configured notify.
     const listed = await f.http(listPath, reviewerToken)
     expect(listed.status).toBe(200)
-    expect(listed.body).toMatchObject({ unread: 1 })
-    expect(listed.body.notifications).toHaveLength(1)
-    expect(listed.body.notifications[0]).toMatchObject({ notificationId: reviewerRow.notificationId, principalId: f.reviewer.principalId })
+    const page = notificationListResultSchema.parse(listed.body)
+    expect(page).toMatchObject({ unread: 1 })
+    expect(page.notifications).toHaveLength(1)
+    expect(page.notifications[0]).toMatchObject({ notificationId: reviewerRow.notificationId, principalId: f.reviewer.principalId })
     expect(await f.http(listPath)).toMatchObject({ status: 401 })
     // Another principal sees their own (empty) list, never the reviewer's.
-    expect((await f.http(listPath, outsiderToken)).body).toMatchObject({ unread: 0, notifications: [] })
+    expect(notificationListResultSchema.parse((await f.http(listPath, outsiderToken)).body)).toMatchObject({ unread: 0, notifications: [] })
 
     // Mark-read over the route; the same state travels back on `user:{id}`.
     const readFrame = waitForFrame(reviewer.client, 'notification.read')
     const read = await f.http(`${listPath}/read`, reviewerToken, { all: true })
     expect(read.status).toBe(200)
-    expect(read.body).toMatchObject({ updated: 1, unread: 0 })
+    expect(notificationReadResultSchema.parse(read.body)).toMatchObject({ updated: 1, unread: 0 })
     expect(f.notifications.all(f.workspaceId, f.reviewer.principalId)[0]?.readAt).toBeString()
     expect(await readFrame).toMatchObject({
       topic: `user:${f.reviewer.principalId}`,
       payload: { all: true, unread: 0 },
     })
-    expect((await f.http(listPath, reviewerToken)).body).toMatchObject({ unread: 0 })
-  })
+    expect(notificationListResultSchema.parse((await f.http(listPath, reviewerToken)).body)).toMatchObject({ unread: 0 })
+  }, 30_000)
 
   test('without the notify module the two paths answer 404 and nothing is fanned out', async () => {
     const f = await fixture({ notify: false })
@@ -376,5 +387,5 @@ describe.skipIf(!testDb)('W1-09 notify on the composed workspace service (Postgr
     expect(f.notifications.all(f.workspaceId)).toEqual([])
     expect(await f.http(`/v1/workspaces/${f.workspaceId}/notifications`, editorToken)).toMatchObject({ status: 404, body: { error: { code: 'NOT_FOUND' } } })
     expect(await f.http(`/v1/workspaces/${f.workspaceId}/notifications/read`, editorToken, { all: true })).toMatchObject({ status: 404 })
-  })
+  }, 30_000)
 })

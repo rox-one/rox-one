@@ -312,6 +312,10 @@ describe('mark-read', () => {
     const read = f.frames.filter(frame => frame.type === 'notification.read')
     expect(read.map(frame => frame.topic)).toEqual([`user:${REVIEWER}`])
     expect(read[0]?.payload).toMatchObject({ ids: [reviewerRow.notificationId], unread: 0 })
+    // The frame must be sequenced in the *workspace's* realtime log — the one the
+    // gateway replays and pushes from — never in a log keyed by the recipient.
+    const logged = f.bus.replay(f.workspaceId, `user:${REVIEWER}`, 0)
+    expect(logged.kind === 'events' ? logged.frames.map(frame => frame.type) : []).toEqual(['notification.created', 'notification.read'])
     const listed = notificationListResultSchema.parse((await f.get('')).body)
     expect(listed).toMatchObject({ unread: 0 })
     expect(listed.notifications[0]).toMatchObject({ notificationId: reviewerRow.notificationId, readAt: expect.any(String) })
