@@ -204,14 +204,14 @@ export const actions = {
   'view.toggleInspector': {
     id: 'view.toggleInspector',
     labelKey: 'shortcuts.action.toggleInspector',
-    description: 'Toggle right inspector panel (super.engineering profile)',
+    description: 'Toggle right inspector panel',
     defaultHotkey: 'mod+shift+i',
     category: 'View',
   },
   'view.toggleChatPictureInPicture': {
     id: 'view.toggleChatPictureInPicture',
     labelKey: 'shortcuts.action.toggleChatPictureInPicture',
-    description: 'Toggle floating chat (super.engineering PiP)',
+    description: 'Toggle floating chat window',
     defaultHotkey: 'mod+shift+p',
     category: 'View',
   },

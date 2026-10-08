@@ -1,6 +1,6 @@
 {
-  "name": "super.engineering",
-  "description": "Dark glass agent IDE profile inspired by super.engineering (opt-in; does not change Rox default).",
+  "name": "Rox Engineering",
+  "description": "Dark glass agent IDE profile (opt-in; does not change Rox default).",
   "author": "Rox One",
   "license": "MIT",
   "mode": "blurred",
