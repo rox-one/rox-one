@@ -118,6 +118,17 @@ describe('desktop app lock (finding 1b)', () => {
       release()
       expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(false)
     }))
+
+  it('--revert is refused while an app launched on the compat-link path runs', () =>
+    withHome((home) => {
+      write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"a"}]}')
+      expect(migrateHiddenRoxHome(opts(home)).outcome).toBe('migrated')
+      writeFileSync(join(home, 'runtime-hidden.lock'), livePeerLock()) // keyed by ~/.rox
+      const result = revertVisibleRoxHome(opts(home, { env: { ROX_STORAGE_VISIBLE_ROOT: '0' } }))
+      expect(result.outcome).toBe('revert-refused')
+      expect(result.diagnostics).toContain('locked:desktop-app')
+      expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
+    }))
 })
 
 describe('foreign ~/rox (finding 4)', () => {

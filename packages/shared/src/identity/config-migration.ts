@@ -1498,7 +1498,11 @@ export function revertVisibleRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       diagnostics: ['storage.migration.revertRefusedConflicts'],
     }
   }
-  const holders = options?.isLocked ? options.isLocked(paths.visibleDir) : _liveHomeLockHolders(paths.visibleDir, options)
+  // An app launched before the move runs on the compat-link path: its
+  // runtime lock is keyed by that path, so probe both spellings.
+  const holders = options?.isLocked
+    ? options.isLocked(paths.visibleDir)
+    : [...new Set([..._liveHomeLockHolders(paths.visibleDir, options), ..._liveHomeLockHolders(paths.hiddenDir, options)])]
   if (holders.length > 0) {
     return {
       ...base,
