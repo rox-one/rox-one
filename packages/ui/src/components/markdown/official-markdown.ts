@@ -18,14 +18,14 @@ import { Markdown } from '@tiptap/markdown'
 import { Marked, type marked } from 'marked'
 
 export const PerEditorMarkdown = Markdown.extend({
-  onBeforeCreate() {
+  onBeforeCreate(event) {
     const configured = this.options.marked
     // Markdown's own onBeforeCreate builds the editor's MarkdownManager from
     // `this.options.marked`; hand it a fresh instance for this editor only.
     // (`Marked` has the `Lexer` / `use` / `setOptions` surface the manager uses.)
     this.options.marked = (configured ?? new Marked()) as typeof marked
     try {
-      this.parent?.()
+      this.parent?.(event)
     } finally {
       this.options.marked = configured
     }
