@@ -14,13 +14,13 @@ import { checkVisualGate, checkAxeGate } from '../src/gates/visual-axe.ts'
 const emptyRoot = mkdtempSync(join(tmpdir(), 'w1-10-empty-'))
 
 describe('gates with missing sibling inputs', () => {
-  test('risk-class gate is pending without a catalogue', () => {
-    const res = checkRiskClassPresence({ repoRoot: emptyRoot })
+  test('risk-class gate is pending without a catalogue', async () => {
+    const res = await checkRiskClassPresence({ repoRoot: emptyRoot })
     expect(res.status).toBe('pending')
     expect(res.summary).toContain('#1500')
   })
-  test('negative-tests gate is pending without a catalogue', () => {
-    const res = checkNegativeTestPresence({ repoRoot: emptyRoot })
+  test('negative-tests gate is pending without a catalogue', async () => {
+    const res = await checkNegativeTestPresence({ repoRoot: emptyRoot })
     expect(res.status).toBe('pending')
   })
   test('permission-matrix gate is pending without permissions.ts', async () => {

@@ -1,0 +1,5 @@
+{
+  "$comment": "W1-10 (#1507) shrink-only allowlists for the risk-class and negative-tests gates: GATED commands (bound handler or schemaBound: true) that are temporarily exempt. Empty today: system.ping, the only gated command on #1500, declares riskClass and has FORBIDDEN negative tests. Remove an entry in the change that fixes it; adding entries fails the gate. See packages/test-harness/README.md.",
+  "riskClass": [],
+  "negativeTests": []
+}
