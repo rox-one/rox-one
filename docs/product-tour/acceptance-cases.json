@@ -1,0 +1,1411 @@
+{
+  "status": "specification-not-executed",
+  "cases": [
+    {
+      "id": "CORE-01",
+      "level": "unit",
+      "precondition": "Шаг ack",
+      "action": "Нажать Next",
+      "expected": "Есть acknowledged, но нет verified",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-02",
+      "level": "unit",
+      "precondition": "Шаг требует commit",
+      "action": "Послать ui-observation того же имени",
+      "expected": "Шаг не становится verified",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-03",
+      "level": "unit",
+      "precondition": "Другой panel/workspace",
+      "action": "Послать подходящий signal из чужого scope",
+      "expected": "Состояние не меняется",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-04",
+      "level": "unit",
+      "precondition": "Старая попытка/старый popup",
+      "action": "Послать late event и двойной ACK с прежним stepId",
+      "expected": "Следующий шаг не завершается",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-05",
+      "level": "unit",
+      "precondition": "Policy same-attempt",
+      "action": "Final приходит во время предыдущего шага",
+      "expected": "Сигнал учитывается, но итоговое пояснение ждёт ack",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-06",
+      "level": "unit",
+      "precondition": "Policy after-activation",
+      "action": "Дать старую историю/сигнал прошлой попытки",
+      "expected": "Не считается новым результатом",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-07",
+      "level": "unit",
+      "precondition": "Handoff в Drawer",
+      "action": "Получить signal до закрытия Drawer",
+      "expected": "Evidence фиксируется без перехода на другой экран",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-08",
+      "level": "unit",
+      "precondition": "Optional capability отсутствует",
+      "action": "Оценить not-applicable",
+      "expected": "Причина видна, verified не увеличивается; required так не обходится",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-09",
+      "level": "unit",
+      "precondition": "Replay завершённого тура",
+      "action": "Начать новую попытку",
+      "expected": "История сохраняется, новая подсказка не закрывается старым ack",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "CORE-10",
+      "level": "unit",
+      "precondition": "Блокировка/timeout",
+      "action": "Дождаться UI timeout",
+      "expected": "blocked с reason, не auto complete",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-01",
+      "level": "component",
+      "precondition": "Две панели с composer",
+      "action": "Стартовать tour в первой",
+      "expected": "Spotlight только первой панели",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-02",
+      "level": "component",
+      "precondition": "Regular/compact controls",
+      "action": "Менять viewport и shell variant",
+      "expected": "Выбирается видимый объявленный target без дубликата",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-03",
+      "level": "component",
+      "precondition": "Target unmounted/remounted в StrictMode",
+      "action": "Cleanup старого ref после нового register",
+      "expected": "Новая регистрация остаётся",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-04",
+      "level": "component",
+      "precondition": "Скрытый/clipped target",
+      "action": "Попросить показать шаг",
+      "expected": "Нет tooltip на случайном месте; подготовка/blocked",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-05",
+      "level": "application",
+      "precondition": "Zoom 90/100/125%, scroll/resize",
+      "action": "Изменить геометрию",
+      "expected": "После стабилизации offset ≤2 CSS px; focus не украден",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-06",
+      "level": "application",
+      "precondition": "Keyboard-only",
+      "action": "Tab к target, Enter на подсказке, Esc",
+      "expected": "Target доступен; Enter не отправляет draft; Esc единственный",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-07",
+      "level": "application",
+      "precondition": "Открытый popover/Drawer",
+      "action": "Esc/Cmd+W",
+      "expected": "Сначала закрывается верхний нативный слой; tour не нарушает его",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-08",
+      "level": "component",
+      "precondition": "Тур открыт",
+      "action": "Кликнуть другую разрешённую кнопку приложения",
+      "expected": "Обычный click проходит, обучение паузится",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-09",
+      "level": "application",
+      "precondition": "Reduced motion и длинный перевод",
+      "action": "Показать все виды tooltip",
+      "expected": "Нет анимации при reduced motion и выхода за viewport",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-10",
+      "level": "component",
+      "precondition": "PageFrame/native browser host",
+      "action": "Попытаться разрешить target в содержимом iframe",
+      "expected": "Только host target, без чтения недоверенного DOM",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "UI-11",
+      "level": "application",
+      "precondition": "Тур закрыт/flag off",
+      "action": "Осмотреть observers/listeners/timers",
+      "expected": "Нет активных observers, lease освобождён",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DATA-01",
+      "level": "storage",
+      "precondition": "Два окна одной partition",
+      "action": "Одновременно записать разные milestones",
+      "expected": "Ни одна запись не потеряна",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DATA-02",
+      "level": "storage",
+      "precondition": "Окно A владело lease, TTL истёк",
+      "action": "Окно B получает новый fence; A оживает",
+      "expected": "A не продолжает старый tour",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DATA-03",
+      "level": "storage",
+      "precondition": "IndexedDB denied/quota/readonly",
+      "action": "Сохранить progress",
+      "expected": "memory-only/failed; UI не говорит saved",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DATA-04",
+      "level": "storage",
+      "precondition": "Схема новее поддерживаемой",
+      "action": "Открыть Learning",
+      "expected": "Данные не удаляются; безопасная недоступность",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DATA-05",
+      "level": "storage",
+      "precondition": "Есть Notes/Memory/setup markers и tour records",
+      "action": "Reset обучения",
+      "expected": "Меняется только tour namespace/scope",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DATA-06",
+      "level": "storage",
+      "precondition": "Изменён только copy / отдельно stepVersion",
+      "action": "Загрузить progress",
+      "expected": "Copy не сбрасывает; semantic change пересматривает только нужный шаг",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DATA-07",
+      "level": "privacy",
+      "precondition": "Signals с запрещёнными полями",
+      "action": "Пропустить через logger/exporter",
+      "expected": "Нет text/path/url/keys/raw IDs в diagnostics",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DATA-08",
+      "level": "privacy",
+      "precondition": "Диагностика выключена",
+      "action": "Использовать все сценарии",
+      "expected": "Нет новых сетевых analytics requests и local event log",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-01",
+      "level": "application",
+      "precondition": "Новая установка",
+      "action": "Получить существующий welcome и начать тур",
+      "expected": "Одна welcome session; она не засчитана final response",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-02",
+      "level": "application",
+      "precondition": "Личный черновик и attachments",
+      "action": "Start/Back/Pause/Resume",
+      "expected": "Текст и вложения не заменены/не отправлены",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-03",
+      "level": "application",
+      "precondition": "Запрос в обработке",
+      "action": "Дать intermediate/complete(error)/interrupted/timeout",
+      "expected": "Ни один не отмечает first delivered response",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-04",
+      "level": "application",
+      "precondition": "Очень быстрый ответ",
+      "action": "Завершить до шага execution",
+      "expected": "Нет ожидания несуществующего spinner; показан финальный ход",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-05",
+      "level": "application",
+      "precondition": "Permission request",
+      "action": "Явно Deny",
+      "expected": "Считается корректным решением пользователя; новые права не выданы",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-06",
+      "level": "application",
+      "precondition": "Source выбран, но installing/auth-required",
+      "action": "Открыть first-result и source-use",
+      "expected": "Первый работает; source-use показывает readiness",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-07",
+      "level": "application",
+      "precondition": "Выбран Source A",
+      "action": "Получить tool result Source B / isError / правильный A",
+      "expected": "Только правильный неошибочный вызов даёт source.tool-succeeded",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-08",
+      "level": "application",
+      "precondition": "Source-use после выбора",
+      "action": "Перейти к вопросу",
+      "expected": "Есть sources.ask; результат не ожидается до отправки пользователем",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-09",
+      "level": "application",
+      "precondition": "Connection Fabric unavailable",
+      "action": "Открыть Connections tour",
+      "expected": "Не выдаётся за AI settings или успешное пустое подключение",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-10",
+      "level": "application",
+      "precondition": "PersonalTask create optimistic then server failure",
+      "action": "Создать задачу",
+      "expected": "Нет persisted milestone; ошибка доступна",
+      "owner": "A5",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-11",
+      "level": "application",
+      "precondition": "Задача пользователя",
+      "action": "Явно Delegate",
+      "expected": "Создана native session и сохранена обратная связь",
+      "owner": "A5",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-12",
+      "level": "application",
+      "precondition": "Изолированный native Notes store",
+      "action": "Создать, сохранить, перезагрузить и найти",
+      "expected": "Подтверждена запись и повторное открытие",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-13",
+      "level": "application",
+      "precondition": "Memory dialog подавлен governor",
+      "action": "Открыть первый tour",
+      "expected": "Memory marker не проставлен",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-14",
+      "level": "application",
+      "precondition": "Memory dialog реально закрыт или запись упала",
+      "action": "Проверить progress",
+      "expected": "Нет memory.persisted без настоящей записи",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-15",
+      "level": "application",
+      "precondition": "Query/workspace сменился пока search pending",
+      "action": "Вернуть старый hit и нажать его",
+      "expected": "Старый hit не открывается и не завершает шаг",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-16",
+      "level": "application",
+      "precondition": "Inbox permission item",
+      "action": "Нажать Done/Snooze",
+      "expected": "Нет permission approved/resolved evidence",
+      "owner": "A10",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-17",
+      "level": "application",
+      "precondition": "Пустой/недоступный Feed",
+      "action": "Начать маршрут",
+      "expected": "Нет fake article, нет автоподписки",
+      "owner": "A10",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-18",
+      "level": "application",
+      "precondition": "Meetings без записи",
+      "action": "Start/Next всех доступных шагов",
+      "expected": "Микрофон и meeting bot не включаются",
+      "owner": "A11",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DOMAIN-19",
+      "level": "application",
+      "precondition": "Существующая automation",
+      "action": "Просмотреть trigger/action/control",
+      "expected": "Не вызваны toggle/run/save без пользователя",
+      "owner": "A11",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "APP-01",
+      "level": "application",
+      "precondition": "Существующий пользователь; tour key отсутствует",
+      "action": "Обновить приложение",
+      "expected": "Не появляется принудительная onboarding серия",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "APP-02",
+      "level": "application",
+      "precondition": "Setup/reauth/permission flow открыт",
+      "action": "Сработал trigger предложения",
+      "expected": "Обучение не перекрывает более важный flow",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "APP-03",
+      "level": "application",
+      "precondition": "Начат tour, pending navigation",
+      "action": "Сменить workspace/panel",
+      "expected": "Старая continuation no-op; нет записи в чужой scope",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "APP-04",
+      "level": "application",
+      "precondition": "Изменён layout и есть draft",
+      "action": "Повторить и сбросить tour",
+      "expected": "Настройки и материалы не сбрасываются",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "APP-05",
+      "level": "application",
+      "precondition": "Authenticated web без host authority",
+      "action": "Пройти доступные маршруты",
+      "expected": "Нет host session inventory/local FS/OAuth auto calls",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "APP-06",
+      "level": "application",
+      "precondition": "Feature flag выключен",
+      "action": "Загрузить любую страницу",
+      "expected": "Старое поведение; нет active host/обучения",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "APP-07",
+      "level": "application",
+      "precondition": "Gamification Quest Done",
+      "action": "Завершить Quest вручную",
+      "expected": "Tour verified metrics не изменяются",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "NATIVE-01",
+      "level": "native-macos",
+      "precondition": "Изолированный профиль macOS",
+      "action": "Start/Pause/Resume, меню и file picker",
+      "expected": "Нет нарушения native focus/дублирования окна/автоотправки",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "NATIVE-02",
+      "level": "native-windows",
+      "precondition": "Изолированный профиль Windows",
+      "action": "Start/Pause/Resume, Git Bash prereq, menu/drawer",
+      "expected": "Platform-only шаги корректны; setup не дублируется",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "NATIVE-03",
+      "level": "native-manual",
+      "precondition": "Микрофон никогда не разрешён",
+      "action": "Запустить тур диктовки, затем отказать",
+      "expected": "Никакой записи без явного действия; отказ не блокирует ввод",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "BUILD-01",
+      "level": "build",
+      "precondition": "Baseline и candidate builds",
+      "action": "Сравнить bundle, флаг и fixtures",
+      "expected": "Новые fixture данные не попали в production; reported actual delta",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DELTA-01",
+      "level": "integration",
+      "precondition": "Новый SessionSharingHost открыт",
+      "action": "Запросить обучение и закрыть popup клавишей Esc",
+      "expected": "Sharing владеет focus; обучение отложено; публикация не вызвана",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DELTA-02",
+      "level": "integration",
+      "precondition": "OMP мигрировал старое модельное подключение",
+      "action": "Открыть тур моделей и выполнить обычную смену модели",
+      "expected": "Показана эффективная модель; отсутствует обещание независимого provider runtime",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "status": "planned"
+    },
+    {
+      "id": "DELTA-03",
+      "level": "static-contract",
+      "precondition": "Checkout 0.11.8 @rox/*",
+      "action": "Проверить imports, aliases и актуальные локали",
+      "expected": "Новый код компилируется с @rox; legacy storage/protocol identifiers не переименованы; все локали проходят parity",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "status": "planned"
+    }
+  ],
+  "stepCases": [
+    {
+      "testId": "T-FIRST-SESSION",
+      "stepId": "first.session",
+      "tourId": "OBT-01",
+      "policy": {
+        "kind": "signal",
+        "signal": "session.ready",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-FIRST-PERMISSIONS",
+      "stepId": "first.permissions",
+      "tourId": "OBT-01",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-FIRST-COMPOSE",
+      "stepId": "first.compose",
+      "tourId": "OBT-01",
+      "policy": {
+        "kind": "signal",
+        "signal": "draft.nonempty",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-FIRST-SEND",
+      "stepId": "first.send",
+      "tourId": "OBT-01",
+      "policy": {
+        "kind": "signal",
+        "signal": "user-turn.accepted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-FIRST-EXECUTION",
+      "stepId": "first.execution",
+      "tourId": "OBT-01",
+      "policy": {
+        "kind": "signal",
+        "signal": "execution.state-visible",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-FIRST-RESULT",
+      "stepId": "first.result",
+      "tourId": "OBT-01",
+      "policy": {
+        "kind": "signal",
+        "signal": "user-turn.final-delivered",
+        "evidence": "verified",
+        "priorState": "same-attempt",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-WORKSPACE-SCOPE",
+      "stepId": "workspace.scope",
+      "tourId": "OBT-02",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A0",
+      "status": "planned"
+    },
+    {
+      "testId": "T-MODELS-PICKER",
+      "stepId": "models.picker",
+      "tourId": "OBT-03",
+      "policy": {
+        "kind": "signal",
+        "signal": "model-picker.opened",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-MODELS-SETTINGS",
+      "stepId": "models.settings",
+      "tourId": "OBT-03",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A7",
+      "status": "planned"
+    },
+    {
+      "testId": "T-CWD-INSPECT",
+      "stepId": "cwd.inspect",
+      "tourId": "OBT-04",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-ATTACHMENTS-ADD",
+      "stepId": "attachments.add",
+      "tourId": "OBT-05",
+      "policy": {
+        "kind": "signal",
+        "signal": "attachment.ready",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-ATTACHMENTS-REVIEW",
+      "stepId": "attachments.review",
+      "tourId": "OBT-05",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-VOICE-START",
+      "stepId": "voice.start",
+      "tourId": "OBT-06",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-VOICE-REVIEW",
+      "stepId": "voice.review",
+      "tourId": "OBT-06",
+      "policy": {
+        "kind": "signal",
+        "signal": "dictation.inserted",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SOURCES-STATUS",
+      "stepId": "sources.status",
+      "tourId": "OBT-07",
+      "policy": {
+        "kind": "signal",
+        "signal": "source.details-visible",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A7",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SOURCES-DETAILS",
+      "stepId": "sources.details",
+      "tourId": "OBT-07",
+      "policy": {
+        "kind": "signal",
+        "signal": "source.details-visible",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "targetOwner": "A7",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SOURCES-SELECT",
+      "stepId": "sources.select",
+      "tourId": "OBT-08",
+      "policy": {
+        "kind": "signal",
+        "signal": "session.sources-committed",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A7",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SOURCES-ASK",
+      "stepId": "sources.ask",
+      "tourId": "OBT-08",
+      "policy": {
+        "kind": "signal",
+        "signal": "user-turn.accepted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SOURCES-RESULT",
+      "stepId": "sources.result",
+      "tourId": "OBT-08",
+      "policy": {
+        "kind": "signal",
+        "signal": "source.tool-succeeded",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SKILLS-EXPLAIN",
+      "stepId": "skills.explain",
+      "tourId": "OBT-09",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A7",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SKILLS-SELECT",
+      "stepId": "skills.select",
+      "tourId": "OBT-09",
+      "policy": {
+        "kind": "signal",
+        "signal": "skill.selected",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A7",
+      "status": "planned"
+    },
+    {
+      "testId": "T-APPROVAL-INSPECT",
+      "stepId": "approval.inspect",
+      "tourId": "OBT-10",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-APPROVAL-RESOLVE",
+      "stepId": "approval.resolve",
+      "tourId": "OBT-10",
+      "policy": {
+        "kind": "signal",
+        "signal": "permission.resolved-by-user",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-PARALLEL-NEW",
+      "stepId": "parallel.new",
+      "tourId": "OBT-11",
+      "policy": {
+        "kind": "signal",
+        "signal": "session.created",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-PARALLEL-RETURN",
+      "stepId": "parallel.return",
+      "tourId": "OBT-11",
+      "policy": {
+        "kind": "signal",
+        "signal": "session.reopened",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-AGENTS-OVERVIEW",
+      "stepId": "agents.overview",
+      "tourId": "OBT-12",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-AGENTS-BUDGET",
+      "stepId": "agents.budget",
+      "tourId": "OBT-12",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-WORKFLOW-STATUS",
+      "stepId": "workflow.status",
+      "tourId": "OBT-13",
+      "policy": {
+        "kind": "signal",
+        "signal": "session.status-committed",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-WORKFLOW-LABEL",
+      "stepId": "workflow.label",
+      "tourId": "OBT-13",
+      "policy": {
+        "kind": "signal",
+        "signal": "session.labels-committed",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-WORKFLOW-BOARD",
+      "stepId": "workflow.board",
+      "tourId": "OBT-13",
+      "policy": {
+        "kind": "signal",
+        "signal": "sessions.view-visible",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-PROJECT-OPEN",
+      "stepId": "project.open",
+      "tourId": "OBT-14",
+      "policy": {
+        "kind": "signal",
+        "signal": "project.visible",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "targetOwner": "A5",
+      "status": "planned"
+    },
+    {
+      "testId": "T-PROJECT-LINK",
+      "stepId": "project.link",
+      "tourId": "OBT-14",
+      "policy": {
+        "kind": "signal",
+        "signal": "session.project-committed",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A4",
+      "status": "planned"
+    },
+    {
+      "testId": "T-TASKS-CREATE",
+      "stepId": "tasks.create",
+      "tourId": "OBT-15",
+      "policy": {
+        "kind": "signal",
+        "signal": "personal-task.persisted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A5",
+      "status": "planned"
+    },
+    {
+      "testId": "T-TASKS-DELEGATE",
+      "stepId": "tasks.delegate",
+      "tourId": "OBT-15",
+      "policy": {
+        "kind": "signal",
+        "signal": "personal-task.delegated",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A5",
+      "status": "planned"
+    },
+    {
+      "testId": "T-PAGES-OPEN",
+      "stepId": "pages.open",
+      "tourId": "OBT-16",
+      "policy": {
+        "kind": "signal",
+        "signal": "page.rendered",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-PAGES-STATE",
+      "stepId": "pages.state",
+      "tourId": "OBT-16",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-NOTES-CREATE",
+      "stepId": "notes.create",
+      "tourId": "OBT-17",
+      "policy": {
+        "kind": "signal",
+        "signal": "note.created",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-NOTES-SAVE",
+      "stepId": "notes.save",
+      "tourId": "OBT-17",
+      "policy": {
+        "kind": "signal",
+        "signal": "note.persisted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-MEMORY-INSPECT",
+      "stepId": "memory.inspect",
+      "tourId": "OBT-18",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-MEMORY-SCOPE",
+      "stepId": "memory.scope",
+      "tourId": "OBT-18",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-MEMORY-SAVE",
+      "stepId": "memory.save",
+      "tourId": "OBT-18",
+      "policy": {
+        "kind": "signal",
+        "signal": "memory.persisted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SEARCH-QUERY",
+      "stepId": "search.query",
+      "tourId": "OBT-19",
+      "policy": {
+        "kind": "signal",
+        "signal": "search.finished",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-SEARCH-OPEN",
+      "stepId": "search.open",
+      "tourId": "OBT-19",
+      "policy": {
+        "kind": "signal",
+        "signal": "search.result-opened",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A6",
+      "status": "planned"
+    },
+    {
+      "testId": "T-INBOX-QUEUE",
+      "stepId": "inbox.queue",
+      "tourId": "OBT-20",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A10",
+      "status": "planned"
+    },
+    {
+      "testId": "T-INBOX-TRIAGE",
+      "stepId": "inbox.triage",
+      "tourId": "OBT-20",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A10",
+      "status": "planned"
+    },
+    {
+      "testId": "T-FEED-SOURCES",
+      "stepId": "feed.sources",
+      "tourId": "OBT-21",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A10",
+      "status": "planned"
+    },
+    {
+      "testId": "T-FEED-READ",
+      "stepId": "feed.read",
+      "tourId": "OBT-21",
+      "policy": {
+        "kind": "signal",
+        "signal": "feed.item-opened",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A10",
+      "status": "planned"
+    },
+    {
+      "testId": "T-MEETINGS-LIST",
+      "stepId": "meetings.list",
+      "tourId": "OBT-22",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A11",
+      "status": "planned"
+    },
+    {
+      "testId": "T-MEETINGS-RESULT",
+      "stepId": "meetings.result",
+      "tourId": "OBT-22",
+      "policy": {
+        "kind": "signal",
+        "signal": "meeting.artifact-opened",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A11",
+      "status": "planned"
+    },
+    {
+      "testId": "T-AUTOMATION-TRIGGER",
+      "stepId": "automation.trigger",
+      "tourId": "OBT-23",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A11",
+      "status": "planned"
+    },
+    {
+      "testId": "T-AUTOMATION-ACTION",
+      "stepId": "automation.action",
+      "tourId": "OBT-23",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A11",
+      "status": "planned"
+    },
+    {
+      "testId": "T-AUTOMATION-CONTROL",
+      "stepId": "automation.control",
+      "tourId": "OBT-23",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A11",
+      "status": "planned"
+    },
+    {
+      "testId": "T-CONNECTIONS-SERVICES",
+      "stepId": "connections.services",
+      "tourId": "OBT-24",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A7",
+      "status": "planned"
+    },
+    {
+      "testId": "T-CONNECTIONS-AUDIT",
+      "stepId": "connections.audit",
+      "tourId": "OBT-24",
+      "policy": {
+        "kind": "signal",
+        "signal": "connections.audit-visible",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A7",
+      "status": "planned"
+    },
+    {
+      "testId": "T-LEARNING-LIBRARY",
+      "stepId": "learning.library",
+      "tourId": "OBT-25",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A0",
+      "status": "planned"
+    },
+    {
+      "testId": "T-LEARNING-CONTROLS",
+      "stepId": "learning.controls",
+      "tourId": "OBT-25",
+      "policy": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "targetOwner": "A0",
+      "status": "planned"
+    }
+  ]
+}

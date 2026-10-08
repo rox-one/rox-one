@@ -40,10 +40,10 @@ import {
   type LocalGroup,
 } from './meetings/local-meetings-model'
 import { getAppLocale } from '@rox/shared/i18n'
-import { MeetingRequestTracker } from './meetings/request-state'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
 import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
+import { MeetingRequestTracker } from './meetings/request-state'
 import { ROX_MEETINGS_COMPOSE_EVENT } from '@/platform/inspector-compose-events'
 
 const ERROR_KEYS: Record<string, string> = {
@@ -117,6 +117,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     catalogUpdatesRef.current = null
     setMeetings([])
     setLoadState(api ? 'loading' : 'error')
+    setLoadedWorkspaceId(undefined)
     setTranscriptText({})
     setLocalSelectedId(null)
     setBanner(null)

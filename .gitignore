@@ -93,3 +93,6 @@ bench-results/
 
 # Serial test runner manifests and retained suite output
 work/test-all/
+# Product Learning local verification artifacts
+/test-results/
+/playwright-report/

@@ -43,8 +43,8 @@ export function TaskCheckbox({
       }}
       style={{ width: size, height: size }}
       className={cn(
-        'mt-[1px] inline-flex shrink-0 items-center justify-center rounded-[var(--radius-control)] outline-none transition-[background-color,transform] duration-200 focus-visible:ring-2 focus-visible:ring-accent',
-        on ? 'bg-accent text-[var(--accent-foreground,white)]' : 'shadow-[inset_0_0_0_1.5px_var(--text-muted,currentColor)] hover:shadow-[inset_0_0_0_1.5px_var(--accent)]',
+        'mt-[1px] inline-flex shrink-0 items-center justify-center rounded-[var(--radius-control)] border-[1.5px] outline-none transition-[background-color,transform] duration-200 focus-visible:ring-2 focus-visible:ring-accent',
+        on ? 'border-transparent bg-accent text-[var(--accent-foreground,white)]' : 'border-[color:var(--text-muted,currentColor)] hover:border-accent',
         pending && 'scale-110',
       )}
     >
@@ -123,7 +123,7 @@ export function Overlay({
         aria-label={label}
         data-testid={testId}
         style={{ width, maxWidth: '100%' }}
-        className="flex max-h-[76vh] flex-col overflow-hidden rounded-[var(--radius-card)] bg-background font-sans text-[13px] text-foreground shadow-[0_12px_40px_rgba(0,0,0,0.28),0_0_0_1px_color-mix(in_oklch,var(--foreground)_14%,transparent)]"
+        className="flex max-h-[76vh] flex-col overflow-hidden rounded-[var(--radius-card)] bg-background font-sans text-[13px] text-foreground shadow-strong"
       >
         {children}
       </div>
