@@ -6,7 +6,7 @@
  * fail.
  */
 import { afterAll, describe, expect, it } from 'bun:test'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import {
@@ -27,6 +27,7 @@ import {
   readBaseline,
   ruleSeverities,
   rulesToFlip,
+  staleRenamedPaths,
   type Baseline,
   type Counts,
 } from '../lint-baseline'
@@ -63,6 +64,25 @@ function stage(variant: 'base' | 'new-z') {
 function runCli(args: string[]) {
   const result = Bun.spawnSync(['bun', 'scripts/lint-baseline.ts', ...args], { cwd: ROOT, stdout: 'pipe', stderr: 'pipe' })
   return { code: result.exitCode, out: `${result.stdout.toString()}${result.stderr.toString()}` }
+}
+
+/**
+ * A throwaway repository with the real rules, stylelint config and z tokens (node_modules linked
+ * from this checkout, git-ignored), so the CLI can run whole-repo checks with --root.
+ */
+function ratchetRepo() {
+  const repo = tempRepo()
+  for (const path of ['apps/electron/eslint-rules', 'scripts/stylelint', 'packages/ui/src/styles/tokens/z.css', '.stylelintrc.cjs']) {
+    cpSync(join(ROOT, path), join(repo, path), { recursive: true })
+  }
+  // Every rule at error: this tiny tree has 0 of most rules, and a warning at 0 must flip.
+  const uiTokens = join(repo, 'apps/electron/eslint-rules/ui-tokens.cjs')
+  writeFileSync(uiTokens, readFileSync(uiTokens, 'utf8').replace(/(: \[?)'warn'/g, "$1'error'"))
+  const stylelintrc = join(repo, '.stylelintrc.cjs')
+  writeFileSync(stylelintrc, readFileSync(stylelintrc, 'utf8').replace("defaultSeverity: 'warning'", "defaultSeverity: 'error'"))
+  symlinkSync(join(ROOT, 'node_modules'), join(repo, 'node_modules'))
+  writeFileSync(join(repo, '.gitignore'), 'node_modules\n')
+  return repo
 }
 
 describe('lint-baseline: ratchet maths', () => {
@@ -252,6 +272,72 @@ describe('lint-baseline: renames (review1 info 1)', () => {
     git(repo, 'mv', 'old/Panel.tsx', 'new/Panel.tsx')
     expect(gitRenames(repo, 'HEAD')).toEqual([{ from: 'old/Panel.tsx', to: 'new/Panel.tsx' }])
   })
+})
+
+describe('lint-baseline: renames need a rebaseline before merge (review2 error)', () => {
+  it('lists only renames whose old path is still a baseline key', () => {
+    const files: Counts = { 'old/a.tsx': { r: 1 }, 'new/b.tsx': { r: 2 } }
+    expect(staleRenamedPaths(files, [{ from: 'old/a.tsx', to: 'new/a.tsx' }, { from: 'old/b.tsx', to: 'new/b.tsx' }, { from: 'x.tsx', to: 'y.tsx' }])).toEqual([
+      { from: 'old/a.tsx', to: 'new/a.tsx' },
+    ])
+  })
+
+  it('git mv without a rebaseline fails with --base; after --update --base it passes with and without --base', () => {
+    const repo = ratchetRepo()
+    const cli = (...args: string[]) => runCli(['--root', repo, ...args])
+    const panel = [
+      'export function Panel() {',
+      ...Array.from({ length: 12 }, (_, i) => `  const row${i} = 'flex items-center gap-2 px-3 row-${i}'`),
+      '  return <div className="absolute z-50" />',
+      '}',
+      '',
+    ].join('\n')
+    mkdirSync(join(repo, 'apps/electron/src/old'), { recursive: true })
+    writeFileSync(join(repo, 'apps/electron/src/old/Panel.tsx'), panel)
+    const initial = cli('--update')
+    expect(initial.code, initial.out).toBe(0)
+    const baselined = cli()
+    expect(baselined.code, baselined.out).toBe(0)
+    git(repo, 'add', '.')
+    git(repo, 'commit', '-qm', 'base: baselined Panel')
+    git(repo, 'branch', 'base')
+    const oldKey = 'apps/electron/src/old/Panel.tsx'
+    const newKey = 'apps/electron/src/new/Panel.tsx'
+    expect(readBaseline(join(repo, DEFAULT_BASELINE)).files[oldKey]).toEqual({ 'rox/no-hardcoded-z-index': 1 })
+
+    // The PR: a pure move, committed baseline untouched.
+    mkdirSync(join(repo, 'apps/electron/src/new'), { recursive: true })
+    git(repo, 'mv', oldKey, newKey)
+    git(repo, 'commit', '-qm', 'move Panel')
+    const pr = cli('--base', 'base')
+    expect(pr.code, pr.out).toBe(1)
+    expect(pr.out).toContain(`${oldKey} -> ${newKey}`)
+    expect(pr.out).toContain('bun run lint:ui-tokens:update --base <ref>')
+    // What main would see after merging it as is.
+    const mainRun = cli()
+    expect(mainRun.code, mainRun.out).toBe(1)
+    expect(mainRun.out).toContain(`${newKey}: rox/no-hardcoded-z-index 0 -> 1`)
+    // --update without --base cannot tell a move from growth: refused, with a hint.
+    const blind = cli('--update')
+    expect(blind.code, blind.out).toBe(1)
+    expect(blind.out).toContain('Pass --base <ref>')
+
+    // The documented fix (a later --base wins over the script's default origin/main).
+    const update = cli('--update', '--base', 'origin/main', '--base', 'base')
+    expect(update.code, update.out).toBe(0)
+    const rewritten = readBaseline(join(repo, DEFAULT_BASELINE)).files
+    expect(rewritten[oldKey]).toBeUndefined()
+    expect(rewritten[newKey]).toEqual({ 'rox/no-hardcoded-z-index': 1 })
+    git(repo, 'commit', '-qam', 'rebaseline after move')
+
+    const prFixed = cli('--base', 'base')
+    expect(prFixed.code, prFixed.out).toBe(0)
+    // The push-to-main run after the merge (no --base) and the next PR (base contains the move).
+    const mainFixed = cli()
+    expect(mainFixed.code, mainFixed.out).toBe(0)
+    const nextPr = cli('--base', 'HEAD')
+    expect(nextPr.code, nextPr.out).toBe(0)
+  }, 180_000)
 })
 
 describe('lint-baseline: base-branch baseline (review1 W1)', () => {

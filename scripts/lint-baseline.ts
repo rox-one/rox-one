@@ -8,17 +8,23 @@
  *
  *   bun scripts/lint-baseline.ts                    # --check: fail if any (file, rule) count grew,
  *                                                   #   or a rule at 0 is still a warning
- *   bun scripts/lint-baseline.ts --base origin/main # also: renames carry their counts, and the
- *                                                   #   committed baseline may not grow vs the base
- *                                                   #   branch's baseline (CI on pull_request)
- *   bun scripts/lint-baseline.ts --update           # rewrite the baseline; refuses to record growth
+ *   bun scripts/lint-baseline.ts --base origin/main # also: the committed baseline may not grow vs
+ *                                                   #   the base branch's baseline, and must already
+ *                                                   #   use the new path of every renamed file
+ *                                                   #   (CI on pull_request: --base HEAD^1)
+ *   bun scripts/lint-baseline.ts --update --base origin/main
+ *                                                   # rewrite the baseline (renamed files move to
+ *                                                   #   their new path); refuses to record growth.
+ *                                                   #   `bun run lint:ui-tokens:update` passes
+ *                                                   #   --base origin/main; a later --base wins.
  *   bun scripts/lint-baseline.ts --print <out.json> # write current counts, compare nothing
  *
  * Options:
  *   --baseline <file>            baseline path (default eslint-baselines/ui-tokens.json)
  *   --root <dir>                 repository root (default: this script's parent)
  *   --base <ref>                 base branch ref: rename map (`git diff -M --name-status <ref>`) and
- *                                the base baseline (`git show <ref>:eslint-baselines/ui-tokens.json`)
+ *                                the base baseline (`git show <ref>:eslint-baselines/ui-tokens.json`).
+ *                                Repeated options: the last one wins.
  *   --override                   (or UI_BASELINE_OVERRIDE=1) report base-baseline growth without
  *                                failing; CI sets it for PRs labelled `ui-baseline-override`
  *   --allow-increase <file>...   with --update: record growth for exactly these files (owner-approved)
@@ -483,9 +489,19 @@ export function formatChanges(changes: Change[]): string[] {
   return changes.map(({ file, rule, baseline, current }) => `  ${file}: ${rule} ${baseline} -> ${current} (+${current - baseline})`)
 }
 
+/** The value after the last `name` (so `bun run lint:ui-tokens:update --base <ref>` overrides the script's default). */
 function argValue(args: string[], name: string): string | undefined {
-  const index = args.indexOf(name)
+  const index = args.lastIndexOf(name)
   return index >= 0 ? args[index + 1] : undefined
+}
+
+/**
+ * Renames whose old path is still a key in the committed baseline. With --check --base this fails:
+ * the PR would pass (counts follow the rename) but after the merge the push-to-main run (no --base)
+ * and every later PR would see the new path without a baseline entry.
+ */
+export function staleRenamedPaths(baselineFiles: Counts, renames: Rename[]): Rename[] {
+  return renames.filter(({ from }) => Object.prototype.hasOwnProperty.call(baselineFiles, from))
 }
 
 /** Values after `name` up to the next `--flag`. */
@@ -557,8 +573,9 @@ export async function main(argv: string[], env: Record<string, string | undefine
 
   const renames = baseRef ? gitRenames(root, baseRef) : []
   const baseline = readBaseline(baselinePath)
-  // A PR that moves a file without rebaselining keeps the old path in the committed baseline:
-  // carry those counts to the new path (a no-op once the baseline uses the new path).
+  // --update --base: renamed files' counts move to the new path, so the rewritten baseline uses it.
+  // --check --base: a baseline still keyed by an old path fails below (staleRenamedPaths); the
+  // move is still applied so the rest of the report compares like with like.
   const baselineFiles = applyRenames(baseline.files, renames)
 
   if (update) {
@@ -574,6 +591,9 @@ export async function main(argv: string[], env: Record<string, string | undefine
     if (refused.length && !initial) {
       console.error('lint-baseline: refusing to record growth (name owner-approved files with --allow-increase <file>...):')
       console.error(formatChanges(refused).join('\n'))
+      if (!baseRef) {
+        console.error('  Moved files? Pass --base <ref> (the base branch, e.g. origin/main) so their counts follow the rename.')
+      }
       return 1
     }
     const ungated = partial ? baseline.ungated : ungatedSummary(root, lint.ungated)
@@ -588,6 +608,16 @@ export async function main(argv: string[], env: Record<string, string | undefine
 
   // --check
   let failed = false
+  const stale = staleRenamedPaths(baseline.files, renames)
+  if (stale.length) {
+    failed = true
+    console.error(`lint-baseline: ${relative(root, baselinePath)} still lists renamed files under their old path (renames vs ${baseRef}):`)
+    console.error(stale.map(({ from, to }) => `  ${from} -> ${to}`).join('\n'))
+    console.error(
+      '  After the merge the push-to-main run and later PRs would see the new path with no baseline entry. ' +
+        'Run `bun run lint:ui-tokens:update --base <ref>` (the base branch, e.g. origin/main) and commit the baseline.',
+    )
+  }
   const comparison = compareCounts(baselineFiles, current)
   if (comparison.increases.length) {
     failed = true
@@ -605,11 +635,11 @@ export async function main(argv: string[], env: Record<string, string | undefine
       console.error(`lint-baseline: these rules are at 0 and must be flipped to 'error': ${flips.join(', ')}`)
       console.error('  ESLint: apps/electron/eslint-rules/ui-tokens.cjs; stylelint: .stylelintrc.cjs (severity: "error").')
     }
-    const stale = Object.keys(severities).filter((rule) => baseline.rules[rule]?.severity !== severities[rule])
+    const drifted = Object.keys(severities).filter((rule) => baseline.rules[rule]?.severity !== severities[rule])
     const dropped = Object.keys(baseline.rules).filter((rule) => !(rule in severities))
-    if (stale.length || dropped.length) {
+    if (drifted.length || dropped.length) {
       failed = true
-      console.error(`lint-baseline: rule set or severities differ from the baseline (${[...stale, ...dropped].join(', ')}); run --update.`)
+      console.error(`lint-baseline: rule set or severities differ from the baseline (${[...drifted, ...dropped].join(', ')}); run --update.`)
     }
   }
   if (baseRef && isDefaultBaseline) {
@@ -632,7 +662,7 @@ export async function main(argv: string[], env: Record<string, string | undefine
       }
     }
   }
-  if (renames.length) console.log(`lint-baseline: ${renames.length} renames vs ${baseRef} carry their counts.`)
+  if (renames.length && !stale.length) console.log(`lint-baseline: ${renames.length} renames vs ${baseRef}; the baseline already uses the new paths.`)
   if (exemptTotal) console.log(`lint-baseline: ${exemptTotal} violations exempted by justified next-line directives.`)
   for (const [rule, total] of Object.entries(ungatedTotals).sort()) {
     const until = loadUiTokens(root).UNGATED[rule]?.until ?? ''
@@ -640,7 +670,7 @@ export async function main(argv: string[], env: Record<string, string | undefine
   }
   if (comparison.decreases.length) {
     const saved = comparison.decreases.reduce((sum, entry) => sum + entry.baseline - entry.current, 0)
-    console.log(`lint-baseline: ${saved} fewer violations than the baseline; lock them in with \`--update\` (merging in-flight UI trees: eslint-baselines/README.md).`)
+    console.log(`lint-baseline: ${saved} fewer violations than the baseline; lock them in with \`bun run lint:ui-tokens:update\` (merging in-flight UI trees: eslint-baselines/README.md).`)
   }
   if (!failed) {
     const total = Object.values(totals(current)).reduce((sum, count) => sum + count, 0)

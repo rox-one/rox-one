@@ -68,7 +68,7 @@
     "lint:shared": "cd packages/shared && npx eslint .",
     "lint:ui": "cd packages/ui && npx eslint .",
     "lint:ui-tokens": "bun run scripts/lint-baseline.ts --check",
-    "lint:ui-tokens:update": "bun run scripts/lint-baseline.ts --update",
+    "lint:ui-tokens:update": "bun run scripts/lint-baseline.ts --update --base origin/main",
     "lint:css": "stylelint \"apps/electron/src/**/*.css\" \"packages/ui/src/**/*.css\" \"apps/viewer/src/**/*.css\" \"apps/webui/src/**/*.css\"",
     "lint:i18n:staged": "bash scripts/lint-i18n-staged.sh",
     "lint:i18n:strings": "bash scripts/lint-i18n-strings.sh",

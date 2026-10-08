@@ -6,7 +6,9 @@ with this baseline. CI runs it on every PR (`.github/workflows/ui-lint-ratchet.y
 
 ```bash
 bun run lint:ui-tokens            # --check: counts may only go down
-bun run lint:ui-tokens:update     # rewrite the baseline (refuses to record growth)
+bun run lint:ui-tokens:update     # rewrite the baseline (refuses to record growth); runs with
+                                  #   --base origin/main so renamed files move to their new path
+bun run lint:ui-tokens:update --base origin/<stack-base>   # stacked PR: a later --base wins
 ```
 
 ## What counts
@@ -42,16 +44,27 @@ Dialog primitives exist.
 
 ## Renames and the base branch
 
-`--base <ref>` reads `git diff -M --name-status <ref>` and carries a renamed file's counts to its
-new path, so a move is not growth. On pull requests CI also reads the **base branch's** baseline
-(`git show <ref>:eslint-baselines/ui-tokens.json`) and fails if any (file, rule) count grew or a
-rule's severity was weakened versus that copy — editing this file in the same PR cannot raise the
-ceiling. Owners approve genuine growth with the **`ui-baseline-override`** label (re-runs the
-check). `/eslint-baselines/` and both `eslint-rules/` directories are owned by @agisota
-(`.github/CODEOWNERS`).
+`--base <ref>` reads `git diff -M --name-status <ref>` for renames.
+
+- **A PR that moves a file must rebaseline.** `--check --base` fails while the committed baseline
+  still lists a renamed file under its old path: the PR itself would pass, but after the merge the
+  push-to-main run (no `--base`) and every later PR would see the new path with no baseline entry.
+  Fix it with `bun run lint:ui-tokens:update --base <ref>` (the PR's base branch; the script
+  defaults to `origin/main`) and commit the baseline. `--update --base` moves the renamed file's
+  counts to its new path, so a move is not growth; `--update` without `--base` cannot tell a move
+  from a new file and refuses it.
+- On pull requests CI compares with the merge commit's own base (`--base HEAD^1`, the commit the
+  merge was built on, not the moving branch tip). It reads that commit's baseline
+  (`git show HEAD^1:eslint-baselines/ui-tokens.json`) and fails if any (file, rule) count grew or a
+  rule's severity was weakened versus that copy — editing this file in the same PR cannot raise the
+  ceiling. Owners approve genuine growth with the **`ui-baseline-override`** label (re-runs the
+  check).
+- `/eslint-baselines/`, both `eslint-rules/` directories, `scripts/lint-baseline.ts`,
+  `scripts/stylelint/`, `.stylelintrc.cjs` and the workflow are owned by @agisota
+  (`.github/CODEOWNERS`; binds when branch protection requires code-owner review).
 
 ```bash
-bun scripts/lint-baseline.ts --update --allow-increase apps/electron/src/Foo.tsx   # exactly these files
+bun scripts/lint-baseline.ts --update --base origin/main --allow-increase apps/electron/src/Foo.tsx   # exactly these files
 ```
 
 ## Partial runs
@@ -74,7 +87,7 @@ git -C /tmp/ui-merge merge --no-commit --no-ff <other-ui-pr> <this-branch>
 ln -s "$PWD/node_modules" /tmp/ui-merge/node_modules   # remove it before any bun install there
 bun scripts/lint-baseline.ts --root /tmp/ui-merge --print /tmp/merged.json
 # 3. record the max
-bun scripts/lint-baseline.ts --update --merge /tmp/branch.json --merge /tmp/merged.json
+bun scripts/lint-baseline.ts --update --base origin/main --merge /tmp/branch.json --merge /tmp/merged.json
 ```
 
 Growth the new detection introduces is a one-time rebaseline: name every grown file with
