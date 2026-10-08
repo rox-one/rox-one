@@ -11,7 +11,8 @@ import { createHash } from 'node:crypto'
 import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
 import { lstat, mkdir, mkdtemp, open, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
-import { tmpdir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
+import { chromium } from '@playwright/test'
 import ts from 'typescript'
 
 export type TestRunner = 'bun' | 'playwright' | 'vitest'
@@ -484,6 +485,12 @@ export async function runSuites(options: {
   }
   const checkpoint = () => writeFile(report.reportPath, JSON.stringify(report, null, 2) + '\n')
   await checkpoint()
+  // Browser suites resolve Chromium from the caller's environment or from the
+  // Playwright cache under the real HOME; every suite here runs with an
+  // isolated HOME, so resolve one host browser up front and export it to the
+  // suites through the same variables the CI workflows bind.
+  const browserExecutable = resolveBrowserExecutable(environment)
+  const browserCacheRoot = [environment.PLAYWRIGHT_BROWSERS_PATH, join(homedir(), 'Library', 'Caches', 'ms-playwright'), join(homedir(), '.cache', 'ms-playwright')].find((candidate): candidate is string => Boolean(candidate && existsSync(candidate)))
   for (const suite of options.manifest.suites) {
     const directory = join(artifactDirectory, `${String(report.results.length + 1).padStart(5, '0')}-${hash(suite.path).slice(0, 12)}`)
     await mkdir(directory)
@@ -515,6 +522,19 @@ export async function runSuites(options: {
       // that evidence boundary, while respecting a product opt-in from the caller.
       if (suite.runner === 'playwright' && suite.config === 'tests/e2e/meeting-agents/playwright.config.ts'
         && childEnv.ROX_MEETING_USE_PACKAGED_APP !== '1') childEnv.ROX_MEETING_E2E_FIXTURE ??= '1'
+      // Browser harnesses still need a real executable while HOME is isolated
+      // for this suite; repair missing or dangling browser bindings with the
+      // host-resolved Chromium and Playwright cache root.
+      if (browserExecutable) {
+        for (const name of ['ROX_BROWSER_PATH', 'CHROMIUM_EXECUTABLE', 'LEARNING_CHROMIUM_PATH'] as const) {
+          const current = childEnv[name]
+          if (!current || !existsSync(current)) childEnv[name] = browserExecutable
+        }
+      }
+      if (browserCacheRoot) {
+        const current = childEnv.PLAYWRIGHT_BROWSERS_PATH
+        if (!current || !existsSync(current)) childEnv.PLAYWRIGHT_BROWSERS_PATH = browserCacheRoot
+      }
       const cwd = suite.runner === 'vitest' ? resolve(root, suite.packageRoot ?? '.') : root
       const child = await captureTestCommand(result.command, { cwd, environment: childEnv, log, timeoutMs: wholeSuiteTimeoutMs })
       result.exitCode = child.exitCode
@@ -548,6 +568,25 @@ export async function runSuites(options: {
   report.finishedAt = new Date().toISOString()
   await checkpoint()
   return report
+}
+
+// Browser suites in this repository resolve an executable from
+// ROX_BROWSER_PATH/CHROMIUM_EXECUTABLE/LEARNING_CHROMIUM_PATH, or from a
+// Playwright-managed download under the real HOME. The per-suite environment
+// replaces HOME, so the runner resolves one host browser and hands the
+// absolute path to every suite; a suite keeps its own explicit failure when
+// no browser resolves at all.
+function resolveBrowserExecutable(environment: NodeJS.ProcessEnv): string | null {
+  const candidates: Array<string | undefined> = [
+    environment.ROX_BROWSER_PATH, environment.CHROMIUM_EXECUTABLE, environment.LEARNING_CHROMIUM_PATH,
+    '/Applications/Chromium.app/Contents/MacOS/Chromium', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/usr/bin/chromium', '/usr/bin/chromium-browser',
+  ]
+  for (const candidate of candidates) {
+    if (candidate && existsSync(candidate)) return candidate
+  }
+  const executable = chromium.executablePath()
+  return existsSync(executable) ? executable : null
 }
 
 async function main() {

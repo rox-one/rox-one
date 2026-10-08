@@ -7,6 +7,8 @@
  */
 
 import { CraftMcpClient, formatMcpUrlForLog, isManagedLocalQdrantConfig } from './client.js';
+import { existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { isBlockedEnvVar } from '@rox/core/env';
 import { debug } from '../utils/debug.ts';
 import { normalizeMcpUrl } from '../sources/server-builder.ts';
@@ -243,6 +245,32 @@ export async function validateMcpConnection(
   }
 }
 
+/**
+ * Locale-independent pre-flight for stdio commands.
+ *
+ * On Windows a missing command does NOT surface as ENOENT: cross-spawn wraps
+ * non-.exe commands in `cmd.exe /c`, the wrapper spawns fine, and the child
+ * then dies with a *localized* "cannot find" message on stderr (e.g. Russian
+ * on RU-locale machines) followed by a generic "Connection closed". Matching
+ * that text per-locale is hopeless, so resolve the executable up front
+ * instead: absolute/relative paths via existsSync, bare names via the OS
+ * resolver (`where` honors PATHEXT on win32, `which` elsewhere) — the same
+ * lookup the spawn itself performs under `shell: false`.
+ */
+function commandResolves(command: string): boolean {
+  try {
+    if (command.includes('/') || command.includes('\\')) {
+      return existsSync(command);
+    }
+    execFileSync(process.platform === 'win32' ? 'where' : 'which', [command], {
+      stdio: 'ignore',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface StdioValidationConfig {
   /** Command to spawn (e.g., 'npx', 'node') */
   command: string;
@@ -355,6 +383,16 @@ export async function validateStdioMcpConnection(
     return validateSharedLocalQdrantConnection(localConfig, timeout, redact);
   }
 
+  // Pre-flight so a typo'd command yields the same clean "Command not
+  // found" diagnostic on every OS/locale (see commandResolves).
+  if (!commandResolves(command)) {
+    return {
+      success: false,
+      error: `Command not found: "${command}". Install the required dependency and try again.`,
+      errorType: 'failed',
+    };
+  }
+
   // Two-watchdog connect phase. Most "MCP doesn't work" failures never
   // complete the `initialize` handshake, so we want fast diagnostics — but
   // legitimate cold-cache installs (`uv tool run`, `npx`, `pipx`) can take
@@ -400,6 +438,8 @@ export async function validateStdioMcpConnection(
   };
 
   // Filter out undefined entries from process.env before merging.
+  // Blocklisted credential vars are dropped so a validation probe never
+  // leaks host secrets into the spawned server (parity with client.ts).
   const processEnv: Record<string, string> = {};
   for (const [key, value] of Object.entries(process.env)) {
     if (value !== undefined && !isBlockedEnvVar(key)) {

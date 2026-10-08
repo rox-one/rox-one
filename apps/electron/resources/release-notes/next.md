@@ -18,6 +18,7 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 
 - **Joined workspace panels** — Workspace panes now meet at one-pixel separators, with square panel corners, four-pixel controls and cards, and six-pixel menus and dialogs. Glass is limited to title bars, navigation, and inspector chrome; reading and editing surfaces remain opaque.
+- **Windows runtime prerequisites** — The installer can provision verified private GitHub CLI, Git, Node, jq and yq dependencies, with optional native Git Bash and WSL 2 setup. Runtime subprocesses now use the selected dependency environment consistently.
 - **GitHub Copilot GPT-5.6 models** — GitHub Copilot connections now show GPT-5.6 Luna, Terra, and Sol when those models are available to the account.
 - **Native iOS workspace redesign** — Refined server onboarding, added searchable and filterable session rows, introduced document-style assistant responses and richer tool activity cards, surfaced model and permission controls in the composer, improved approval safety, and made the iPad session sidebar visible by default.
 
@@ -25,6 +26,7 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 - **Reliable native saves and startup** — Task conversions wait for accepted storage before linking, note creation recovers exact receipts, and denied optional file watchers and notifications no longer produce uncaught startup errors. [#1435](https://github.com/rox-one/rox-one/pull/1435) · `d45cfc2`
 - **Native user workflows** — Corrected profile ownership, own-message reactions, SDK-backed branching, private task and note persistence, scoped incoming events, session invitations and optional startup errors. Map editing preserves the camera and supports colored translucent stickers, tools, conditions and frames; same-name skills use app-owned storage and stable aliases. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
+- **Reliable Windows agent and MCP startup** — Fixed OMP batch-launch failures, portable session paths, native folder-source defaults, managed Python/uv resolution and Bash process cleanup. MCP connections retain their source working directory, time out cleanly during startup, and reconcile exited server processes without replaying failed tool calls.
 - **OpenAI-compatible streams preserve chunks with empty tool-call arrays** — Custom endpoints that include `tool_calls: []` on ordinary content and terminal chunks no longer lose those chunks in the network interceptor, preventing valid responses from failing with `Stream ended without finish_reason`. Fixes [#995](https://github.com/craft-ai-agents/craft-agents-oss/issues/995).
 - **Reliable iOS session loading** — Long conversations now load without hitting Foundation's 1 MB WebSocket limit, session requests wait for active reconnects, transient failures retry automatically, and manual reconnects replace stale session clients without losing unsent drafts.
 

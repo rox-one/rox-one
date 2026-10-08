@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, mkdirSync, rmSync, realpathSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
 import type { SessionToolContext } from '../context.ts';
 import { handleHostBash } from './host-bash.ts';
 import { type HostBashObservation, setHostBashPort } from '../runtime/host-bash-port.ts';
@@ -11,8 +12,10 @@ describe('host-tool bash', () => {
   let workspaceDir: string;
   let sessionDir: string;
   let dataDir: string;
+  let originalEnv: NodeJS.ProcessEnv;
 
   beforeEach(() => {
+    originalEnv = { ...process.env };
     rootDir = mkdtempSync(join(tmpdir(), 'host-bash-'));
     workspaceDir = join(rootDir, 'workspace');
     sessionDir = join(rootDir, 'session');
@@ -22,6 +25,10 @@ describe('host-tool bash', () => {
   });
 
   afterEach(() => {
+    for (const key of Object.keys(process.env)) {
+      if (!(key in originalEnv)) delete process.env[key];
+    }
+    Object.assign(process.env, originalEnv);
     setHostBashPort(null);
     rmSync(rootDir, { recursive: true, force: true });
   });
@@ -66,7 +73,7 @@ describe('host-tool bash', () => {
     const inner = join(workspaceDir, 'src');
     mkdirSync(inner);
     const result = await handleHostBash(ctx({ workingDirectory: inner }), { command: 'node -p "process.cwd()"' });
-    expect(result.isError).toBe(false);
+    expect(result.isError, result.content[0]?.text).toBe(false);
     expect(result.content[0]?.text).toContain(inner);
   });
 
@@ -78,7 +85,7 @@ describe('host-tool bash', () => {
 
   it('runs in the workspace cwd and captures stdout', async () => {
     const result = await handleHostBash(ctx(), { command: 'node -p "process.cwd()" && echo host-bash-ok' });
-    expect(result.isError).toBe(false);
+    expect(result.isError, result.content[0]?.text).toBe(false);
     const text = result.content[0]?.text ?? '';
     expect(text).toContain('exitCode: 0');
     expect(text).toContain(workspaceDir);
@@ -145,6 +152,7 @@ describe('host-tool bash', () => {
       const result = await handleHostBash(ctx(), {
         command: 'printenv AWS_SECRET_ACCESS_KEY || true',
       });
+      expect(result.isError).toBe(false);
       const text = result.content[0]?.text ?? '';
       expect(text).not.toContain('secret-should-not-leak');
     } finally {
@@ -154,7 +162,9 @@ describe('host-tool bash', () => {
   });
 
   it('times out a hung command and reports timedOut', async () => {
+    const startedAt = Date.now();
     const result = await handleHostBash(ctx(), { command: 'sleep 8', timeoutMs: 250 });
+    expect(Date.now() - startedAt).toBeLessThan(4000);
     expect(result.isError).toBe(true);
     const text = result.content[0]?.text ?? '';
     expect(text).toContain('timedOut: true');
@@ -174,6 +184,108 @@ describe('host-tool bash', () => {
     expect(completed[0]!.result!.durationMs).toBeLessThan(1500);
   });
 
+  it('uses a fresh host environment provider and sanitizes its values before spawning', async () => {
+    let value = 'first-host-env';
+    const provider = async () => ({
+      ...process.env,
+      HOST_BASH_ENV_FIXTURE: value,
+      AWS_SECRET_ACCESS_KEY: 'provider-secret-must-not-leak',
+      ROX_SECRET_FIXTURE: 'provider-secret-must-not-leak',
+      ...(process.platform === 'win32' ? { aws_session_token: 'provider-secret-must-not-leak' } : {}),
+    });
+    const context = ctx({ getHostBashEnv: provider });
+    for (const expected of ['first-host-env', 'second-host-env']) {
+      value = expected;
+      const result = await handleHostBash(context, {
+        command: 'node -p "JSON.stringify([process.env.HOST_BASH_ENV_FIXTURE, process.env.AWS_SECRET_ACCESS_KEY, process.env.ROX_SECRET_FIXTURE, process.env.aws_session_token])"',
+      });
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      expect(result.content[0]?.text).toContain(expected);
+      expect(result.content[0]?.text).not.toContain('provider-secret-must-not-leak');
+    }
+    expect(process.env.HOST_BASH_ENV_FIXTURE).toBeUndefined();
+  });
+
+  it('keeps injected environments on local execution when the native port cannot accept env', async () => {
+    let portCalled = false;
+    setHostBashPort(async () => {
+      portCalled = true;
+      throw new Error('legacy native exec has no env contract');
+    });
+    const result = await handleHostBash(ctx({ getHostBashEnv: async () => ({ ...process.env }) }), {
+      command: 'echo injected-local-execution',
+    });
+    expect(result.isError).toBe(false);
+    expect(result.content[0]?.text).toContain('injected-local-execution');
+    expect(portCalled).toBe(false);
+  });
+
+  // Use a real Git Bash, native child process, and .cmd fixture on Windows.
+  // No npm install, Python download, or user-config writes are involved.
+  const gitBash = process.env.CLAUDE_CODE_GIT_BASH_PATH || 'C:\\Program Files\\Git\\bin\\bash.exe';
+  const windowsIt = process.platform === 'win32' && existsSync(gitBash) ? it : it.skip;
+
+  windowsIt('honors the configured Git Bash even when bash is not on PATH', async () => {
+    process.env.CLAUDE_CODE_GIT_BASH_PATH = gitBash;
+    process.env.PATH = `${dirname(process.execPath)};${process.env.SystemRoot}\\System32`;
+    const result = await handleHostBash(ctx(), { command: 'echo configured-bash' });
+    expect(result.isError).toBe(false);
+    expect(result.content[0]?.text).toContain('configured-bash');
+  });
+
+  windowsIt('runs a .cmd shim from the inherited PATH with arguments containing spaces', async () => {
+    const binDir = join(workspaceDir, 'bin');
+    mkdirSync(binDir);
+    writeFileSync(join(binDir, 'host-bash-fixture.cmd'), '@echo off\r\necho shim:%~1\r\n');
+    process.env.CLAUDE_CODE_GIT_BASH_PATH = gitBash;
+    process.env.PATH = `${binDir}${delimiter}${process.env.PATH}`;
+    const result = await handleHostBash(ctx(), { command: 'host-bash-fixture.cmd "argument with spaces"' });
+    expect(result.isError, result.content[0]?.text).toBe(false);
+    expect(result.content[0]?.text).toContain('shim:argument with spaces');
+  });
+
+  async function expectNativeTreeTerminated(command: string): Promise<void> {
+    // Let the old resolver find Bash so this regression isolates tree termination.
+    process.env.PATH = `${dirname(gitBash)}${delimiter}${process.env.PATH}`;
+    const pidFile = join(workspaceDir, 'child.pid');
+    const script = join(workspaceDir, 'tree.cjs');
+    writeFileSync(script, `const { spawn } = require('node:child_process');
+const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'inherit' });
+require('node:fs').writeFileSync('child.pid', JSON.stringify({ parent: process.pid, child: child.pid }));
+setInterval(() => {}, 1000);
+`);
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const result = await Promise.race([
+        handleHostBash(ctx(), { command, timeoutMs: 2500 }),
+        new Promise<never>((_, reject) => {
+          watchdog = setTimeout(() => reject(new Error('descendant kept host-bash pipes open after timeout')), 6000);
+        }),
+      ]);
+      expect(existsSync(pidFile), result.content[0]?.text).toBe(true);
+      const { parent, child } = JSON.parse(readFileSync(pidFile, 'utf8'));
+      expect(result.content[0]?.text).toContain('timedOut: true');
+      expect(() => process.kill(parent, 0)).toThrow();
+      expect(() => process.kill(child, 0)).toThrow();
+    } finally {
+      clearTimeout(watchdog);
+      if (existsSync(pidFile)) {
+        const { parent, child } = JSON.parse(readFileSync(pidFile, 'utf8'));
+        for (const pid of [parent, child]) {
+          spawnSync('taskkill.exe', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
+        }
+      }
+    }
+  }
+
+  windowsIt('kills native descendants on timeout rather than leaving them holding stdout open', async () => {
+    await expectNativeTreeTerminated('node tree.cjs');
+  }, 10000);
+
+  windowsIt('kills pipe-holding descendants even after the shell has exited', async () => {
+    process.env.CLAUDE_CODE_GIT_BASH_PATH = gitBash;
+    await expectNativeTreeTerminated('node tree.cjs &');
+  }, 10000);
   it('truncates oversized stdout', async () => {
     const result = await handleHostBash(ctx(), {
       command: "node -e \"process.stdout.write('x'.repeat(25000))\"",

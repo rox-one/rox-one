@@ -562,6 +562,7 @@ app.whenReady().then(async () => {
       preference: getToolchainDependencyMode(),
       gitBashPreference: getGitBashPath(),
     })
+    // Structured non-secret diagnostics; never log receipt errors or process output.
     if (result?.missingTools.length || result?.recoveryCode) mainLog.warn('[windows-bootstrap]', result)
     else if (result) mainLog.info('[windows-bootstrap]', result)
   }
@@ -576,7 +577,6 @@ app.whenReady().then(async () => {
   } catch (err) {
     mainLog.error('[credentials] Vault auto-restore failed:', err)
   }
-
   // Initialize backend runtime bootstrapping (Codex vendor root, Claude SDK runtime paths).
   initializeBackendHostRuntime({
     hostRuntime: {

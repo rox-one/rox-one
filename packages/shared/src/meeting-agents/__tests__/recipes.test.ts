@@ -46,7 +46,8 @@ describe('meeting recipes (#375)', () => {
     const recipe = recipeById('standup')!
     const clone = cloneRecipe(recipe, 'standup-mine')
     expect(clone.allowedActions).toEqual(recipe.allowedActions)
-    const denied = escalateClone(recipe, ['crm.update'])
+const denied = escalateClone(recipe, ['crm.update'])
+    expect(denied).toEqual({ ok: false, reason: 'clone-privilege-escalation' })
     expect('reason' in denied).toBe(true)
     if (!('reason' in denied)) throw new Error('Clone escalation unexpectedly succeeded')
     expect(denied).toEqual({ ok: false, reason: 'clone-privilege-escalation' })

@@ -656,6 +656,7 @@ function AppShellContent({
   const isMemoryView = isMemoryNavigation(navState)
   const isLearningView = isLearningNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
+  const selectedProjectSlug = isProjectsView ? navState.details?.projectSlug ?? null : null
   // Mode screens (Входящие, Лента) render their own three panels too.
   // «Ещё» screens (Досье, Радар, Решения, Центр агентов, Фокус) do the same —
   // without this the navigator column stayed mounted and empty beside them.
@@ -1081,7 +1082,12 @@ function AppShellContent({
   }, [activeWorkspaceId])
 
   // Reset UI state when workspace changes
-  // This prevents stale search queries, focused items, and filter state from persisting
+  // This prevents stale search queries and focused items from persisting.
+  // CollectionDisplay / CollectionFilters are workspace-persisted
+  // (collection/display.json + collection/filters.json via RPC): reload them
+  // for the new workspace so chips survive restart/switch (FR-11) instead of
+  // resetting to defaults (which would also persist the reset over the saved
+  // filters on the next write).
   const previousWorkspaceRef = React.useRef<string | null>(null)
   const [workspaceUiStateId, setWorkspaceUiStateId] = React.useState<string | null>(null)
   // Cancel gestures synchronously before a queued timer can use new handlers.
@@ -1092,6 +1098,7 @@ function AppShellContent({
 
     // Clear transient UI state only on workspace SWITCH (not initial mount)
     if (previousWorkspaceId !== null && previousWorkspaceId !== activeWorkspaceId) {
+
       // Clear search state
       setSearchActive(false)
       setSearchQuery('')
@@ -3205,6 +3212,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                 selectedSkillSlug={isSkillsNavigation(navState) && navState.details?.type === 'skill' ? navState.details.skillSlug : null}
               />
             )}
+
             {isAutomationsNavigation(navState) && (
               /* Automations List - filtered by type if automationFilter is active */
               <AutomationsListPanel
