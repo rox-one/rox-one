@@ -3308,9 +3308,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
           isCompact={isAutoCompact}
           isResizing={!!isResizing}
-        />
-        </WorkspaceSurfaceHost>
-
+          resizeHandles={<>
         {/* A collapsed sidebar has no resize boundary; its sash would intercept main-panel controls. */}
         {isSidebarVisible && !isSidebarCollapsed && !effectiveSidebarAndNavigatorHidden && (
         <ResizeHandle
@@ -3325,7 +3323,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
             height: 'auto',
-            left: unifiedRailOffset + sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2,
+            left: sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2,
           }}
           onPointerDown={(event) => {
             setIsResizing('sidebar')
@@ -3384,7 +3382,6 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
             bottom: terminalClearance,
             height: 'auto',
             left:
-              unifiedRailOffset +
               (isPrimarySidebarRendered ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
               sessionListWidth +
               (PANEL_GAP / 2) -
@@ -3439,6 +3436,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           }}
         />
         )}
+          </>}
+        />
+        </WorkspaceSurfaceHost>
 
       </div>
       {showStatusBar && <StatusBarHost />}
