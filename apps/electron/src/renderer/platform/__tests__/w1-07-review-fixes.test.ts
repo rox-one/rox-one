@@ -54,8 +54,15 @@ describe('AppShell: surface navigator (source contract)', () => {
   it('a surface route is a mode screen: no module middle nav, no navigator', () => {
     const modeScreen = shell.slice(shell.indexOf('const isModeScreenView'), shell.indexOf('const hideModuleMiddleNav'))
     expect(modeScreen).toContain('isSurfaceNavigation(navState)')
-    expect(shell).toMatch(/navigatorSlot=\{\([^?]*isSurfaceNavigation\(navState\)/)
-    expect(shell).toMatch(/navigatorWidth=\{[^?]*isSurfaceNavigation\(navState\)/)
+    // isModeScreenView → hideModuleMiddleNav covers the navigator slot and width;
+    // no redundant isSurfaceNavigation checks there.
+    const hide = shell.slice(shell.indexOf('const hideModuleMiddleNav'), shell.indexOf('// Derive source filter'))
+    expect(hide).toContain('isModeScreenView')
+    expect(hide).not.toContain('isSurfaceNavigation')
+    expect(shell).toMatch(/navigatorSlot=\{\([^?]*hideModuleMiddleNav\)/)
+    expect(shell).toMatch(/navigatorWidth=\{[^?]*hideModuleMiddleNav/)
+    expect(shell).not.toMatch(/navigatorSlot=\{\([^?]*isSurfaceNavigation/)
+    expect(shell).not.toMatch(/navigatorWidth=\{[^?]*isSurfaceNavigation/)
   })
 
   it('header title: workbench.mode.<surface>, Notes relabelled under docs.shared.v1', () => {
