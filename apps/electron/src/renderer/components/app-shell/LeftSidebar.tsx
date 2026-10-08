@@ -24,6 +24,8 @@ import { SidebarMenu, type SidebarMenuType } from './SidebarMenu'
 import { SortableList, type SortableItemData } from '@/components/ui/sortable-list'
 import type { AppNavDestinationId } from './nav-destinations'
 import { getServiceContextLinks } from './service-navigation'
+import { preloadRoute } from './route-pages'
+import type { RoutePageName } from './route-pages'
 
 /** Context menu configuration for sidebar items */
 export interface SidebarContextMenuConfig {
@@ -564,6 +566,48 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, tra
 // SidebarButton - Extracted button component for reuse in sortable contexts
 // ============================================================
 
+/**
+ * PERF-10 (#1577) — hover/focus prefetch table: sidebar link id → the lazy
+ * route chunk that link's `onClick` opens. AppShell builds the rows and
+ * navigates `routes.*`; the dispatcher (`MainContentPanel`'s
+ * `SurfaceRoutePanel`) mounts exactly these registry pages.
+ *
+ * Links whose landing page is eager have no entry — the sessions list
+ * (`nav:allSessions`, flag/archive/state/label/view filters), home, memory,
+ * learning, projects home, settings, the automations picker, page details
+ * (`PageView`) and project details. Nested session rows are covered by
+ * `SessionItem`'s transcript prefetch instead.
+ */
+const SIDEBAR_ROUTE_PRELOADS: Record<string, RoutePageName> = {
+  'nav:notes': 'notes', // routes.view.notes() → NotesPage
+  'nav:tasks': 'tasks', // routes.view.tasks() → TasksPage
+  'nav:meetings': 'planWorkspace', // routes.view.meetings() → MeetingsPage (planWorkspace chunk)
+  'nav:feed': 'feed', // routes.view.feed() → FeedPage
+  'nav:inbox': 'inbox', // routes.view.inbox() → InboxPage
+  'nav:pages': 'pagesHome', // routes.view.pages() → PagesHome
+  'nav:sources': 'integrationsCatalog', // routes.view.sources() → IntegrationsCatalogPage
+  'nav:sources:api': 'integrationsCatalog', // routes.view.sourcesApi() → IntegrationsCatalogPage
+  'nav:sources:mcp': 'integrationsCatalog', // routes.view.sourcesMcp() → IntegrationsCatalogPage
+  'nav:sources:local': 'integrationsCatalog', // routes.view.sourcesLocal() → IntegrationsCatalogPage
+  'nav:skills': 'skillsCatalog', // routes.view.skills() → SkillsCatalogPage
+  'nav:connections': 'connections', // routes.view.connections() → ConnectionsPage
+  'nav:screen:agents': 'agentsWorkspace', // routes.view.screen('agents') → AgentsWorkspacePage
+}
+
+/** Dynamic link ids: `nav:screen:<other>` opens ExtraScreenHost (`routes.view.screen`). */
+const SIDEBAR_ROUTE_PRELOAD_PREFIXES: readonly (readonly [string, RoutePageName])[] = [
+  ['nav:screen:', 'extraScreens'],
+]
+
+function sidebarRoutePreload(id: string): RoutePageName | null {
+  const exact = SIDEBAR_ROUTE_PRELOADS[id]
+  if (exact) return exact
+  for (const [prefix, page] of SIDEBAR_ROUTE_PRELOAD_PREFIXES) {
+    if (id.startsWith(prefix)) return page
+  }
+  return null
+}
+
 interface SidebarButtonProps {
   link: LinkItem
   itemProps?: {
@@ -588,6 +632,17 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
     // Empty buckets remain navigable, without repeating a column of zeroes.
     const badge = link.label === '0' ? undefined : link.label
     const seRail = useSuperEngineeringProfile()
+    // PERF-10 (#1577): a row whose click navigates preloads the destination
+    // chunk on hover/focus. Group disclosures toggle instead of navigating and
+    // DragOverlay clones never activate; the preloader memoizes, so repeat
+    // events are free and a failed chunk stays retryable (the route error
+    // boundary owns the user-visible failure).
+    const prefetchOnIntent = !isOverlay && !groupDisclosure && link.onClick
+      ? () => {
+          const page = sidebarRoutePreload(link.id)
+          if (page) void preloadRoute(page).catch(() => {})
+        }
+      : undefined
     return (
       <button
         {...(isOverlay ? {} : (() => {
@@ -606,6 +661,8 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           if (!isOverlay && itemProps?.ref) itemProps.ref(el)
         }}
         onClick={isOverlay ? undefined : (groupDisclosure ? onGroupToggle : link.onClick)}
+        onPointerEnter={prefetchOnIntent}
+        onFocus={prefetchOnIntent}
         type="button"
         title={link.tooltip}
         aria-current={link.variant === 'default' && !groupDisclosure ? 'page' : undefined}

@@ -2620,6 +2620,7 @@ h1,h2,h3{margin-top:1.5em}
             onCopyNoteLink={copyNoteLink}
             onCopyNotePath={copyNotePath}
             onRevealNote={revealNote}
+            workspaceId={activeWorkspaceId}
             emptyMessage={noteScope.kind === 'unavailable' ? t('navigation.notes.scopeUnavailable') : query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
           />
         </div>

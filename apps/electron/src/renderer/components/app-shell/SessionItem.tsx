@@ -1,6 +1,7 @@
 import { formatDistanceToNowStrict } from "date-fns"
 import type { Locale } from "date-fns"
 import { Archive, ArchiveRestore, Check, Flag, Mail, ShieldAlert } from "lucide-react"
+import { useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { useActionLabel } from "@/actions"
 import { cn } from "@/lib/utils"
@@ -123,6 +124,20 @@ export function SessionItem({
   const projectColor = boundProject?.color
   const projectName = boundProject?.name
 
+  // PERF-10 (#1577): one transcript read per row on hover/focus — the same
+  // `getSessionMessages` payload ChatPage's message-loading atom reads when the
+  // session opens (`atoms/sessions.ts` `loadSessionMessages`), so opening finds
+  // it warm. Deduped per session id; a failed read re-arms the next attempt.
+  const prefetchedTranscriptIds = useRef<Set<string>>(new Set())
+  const prefetchTranscript = () => {
+    if (prefetchedTranscriptIds.current.has(item.id)) return
+    if (typeof window.electronAPI?.getSessionMessages !== 'function') return
+    prefetchedTranscriptIds.current.add(item.id)
+    void window.electronAPI.getSessionMessages(item.id).catch(() => {
+      prefetchedTranscriptIds.current.delete(item.id)
+    })
+  }
+
   const handleClick = (e: React.MouseEvent) => {
     ctx.onFocusZone()
     if (e.button === 2) {
@@ -166,6 +181,8 @@ export function SessionItem({
       onMouseDown={handleClick}
       buttonProps={{
         ...itemProps,
+        onPointerEnter: prefetchTranscript,
+        onFocus: prefetchTranscript,
         className: cn(
           !isComfortable && "py-1.5",
           isSelected || isInMultiSelect
