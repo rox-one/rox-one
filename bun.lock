@@ -433,6 +433,16 @@
         "zod": ">=4.0.0",
       },
     },
+    "packages/test-harness": {
+      "name": "@rox/test-harness",
+      "version": "0.11.8",
+      "dependencies": {
+        "@rox/core": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.2",
+      },
+    },
     "packages/ui": {
       "name": "@rox/ui",
       "version": "0.11.8",
@@ -1329,6 +1339,8 @@
     "@rox/session-tools-core": ["@rox/session-tools-core@workspace:packages/session-tools-core"],
 
     "@rox/shared": ["@rox/shared@workspace:packages/shared"],
+
+    "@rox/test-harness": ["@rox/test-harness@workspace:packages/test-harness"],
 
     "@rox/ui": ["@rox/ui@workspace:packages/ui"],
 
