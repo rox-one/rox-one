@@ -33,7 +33,7 @@ function PopoverContent({
         sideOffset={sideOffset}
         collisionPadding={collisionPadding}
         className={cn(
-          "popover-styled z-popover w-72 max-w-[calc(100vw-24px)] origin-(--radix-popover-content-transform-origin) p-4 outline-hidden",
+          "popover-styled z-island w-72 max-w-[calc(100vw-24px)] origin-(--radix-popover-content-transform-origin) p-4 outline-hidden",
           className
         )}
         {...props}

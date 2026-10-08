@@ -2668,7 +2668,7 @@ export function FreeFormInput({
                                               )} />
                                             </span>
                                           </TooltipTrigger>
-                                          <TooltipContent>
+                                          <TooltipContent className="z-island-popover">
                                             {visionOn
                                               ? t('chat.modelPicker.supportsImagesOn')
                                               : t('chat.modelPicker.supportsImagesOff')}

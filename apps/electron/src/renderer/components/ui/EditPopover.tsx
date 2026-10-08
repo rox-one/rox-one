@@ -1024,7 +1024,7 @@ export function EditPopover({
 
   return (
     <>
-      {/* Full-screen backdrop - rendered BEHIND the popover during processing */}
+      {/* Full-screen backdrop - rendered BEHIND the popover during processing; z-sticky keeps it below app chrome. */}
       <AnimatePresence>
         {open && isProcessing && (
           <motion.div
@@ -1032,7 +1032,7 @@ export function EditPopover({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="fixed inset-0 bg-black/5 z-popover"
+            className="fixed inset-0 bg-black/5 z-sticky"
           />
         )}
       </AnimatePresence>

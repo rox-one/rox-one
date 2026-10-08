@@ -4,15 +4,26 @@
    Numeric `z-10…z-50` / `z-[n]` are retired by the lint ratchet (UI-A2) and
    the codemod sweep (UI-C2).
 
-   Order (low → high): page content < chrome < sashes < popovers <
-   fullscreen overlays < tooltips < dialog scrim < modal < toasts <
-   islands / in-overlay menus < splash.
+   Order (low → high): page content < chrome < sashes < chrome-only menus
+   (popover) < fullscreen overlays < dialog scrim < modal < tooltips <
+   toasts / click-catching backdrops < menus (island) < in-menu popovers <
+   splash.
    - Fullscreen overlays (FullscreenOverlayBase, zen views) sit BELOW the
      dialog scrim and modal, so a dialog opened from one dims it and sits on
-     top, and BELOW tooltips, so tooltips stay visible inside them.
-   - Menus, popovers and context menus that open inside a fullscreen overlay
-     use `z-island` (or `var(--z-island)`); plain `z-popover` is for menus in
-     the regular app chrome. */
+     top.
+   - Tooltips sit above the modal so they show inside dialogs, drawers and
+     fullscreen overlays. A tooltip whose trigger lives INSIDE a menu passes
+     `z-island-popover` so the menu does not cover it.
+   - Menus are on the island layer: the shared primitives (Select,
+     DropdownMenu, Popover, ContextMenu, StyledDropdown, StyledContextMenu)
+     default to `z-island`, so a menu opened from a dialog, drawer or
+     fullscreen overlay paints above it (and above toasts).
+   - `z-popover` is ONLY for explicit chrome-only menus that must stay under
+     dialogs and fullscreen overlays (composer mention/slash/label menus, the
+     inline editor menu surface, the product tour). Do not use it as a
+     default for a shared primitive.
+   - Click-catching backdrops for menus use `z-toast` (the step below
+     island), so the menu and any island trigger stay clickable above them. */
 :root {
   --z-base: 0;
   --z-raised: 1;
@@ -21,9 +32,9 @@
   --z-sash: 30;
   --z-popover: 100;
   --z-fullscreen: 120;
-  --z-tooltip: 150;
   --z-scrim: 200;
   --z-modal: 210;
+  --z-tooltip: 250;
   --z-toast: 300;
   --z-island: 400;
   --z-island-popover: 410;
@@ -33,7 +44,7 @@
      call sites. They have no Tailwind utility; do not add new uses.
      Floating menus stay above modals and fullscreen overlays (they open from
      inside them), so they share the island layer; their click-catching
-     backdrops sit between modal and island (toast layer). `--z-overlay` was
+     backdrops sit on the toast step, between modal and island. `--z-overlay` was
      the old name for the fullscreen layer. */
   --z-local: var(--z-sticky);
   --z-titlebar: var(--z-chrome);

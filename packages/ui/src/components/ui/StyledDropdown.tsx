@@ -126,7 +126,7 @@ export const StyledDropdownMenuContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         // shadcn base layer
-        'popover-styled overflow-x-hidden overflow-y-auto p-1 z-popover max-w-[calc(100vw-24px)]',
+        'popover-styled overflow-x-hidden overflow-y-auto p-1 z-island max-w-[calc(100vw-24px)]',
         'max-h-(--radix-dropdown-menu-content-available-height)',
         'origin-(--radix-dropdown-menu-content-transform-origin)',
         // styled additions
@@ -229,7 +229,7 @@ export const StyledDropdownMenuSubContent = React.forwardRef<
       data-overlay-motion="true"
       sideOffset={sideOffset}
       className={cn(
-        'popover-styled w-fit max-w-[calc(100vw-24px)] font-sans whitespace-nowrap text-[length:var(--menu-font-size)] flex flex-col gap-0.5 z-popover overflow-x-hidden overflow-y-auto p-1',
+        'popover-styled w-fit max-w-[calc(100vw-24px)] font-sans whitespace-nowrap text-[length:var(--menu-font-size)] flex flex-col gap-0.5 z-island overflow-x-hidden overflow-y-auto p-1',
         'max-h-(--radix-dropdown-menu-content-available-height)',
         minWidth,
         className,

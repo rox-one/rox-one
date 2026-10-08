@@ -8,8 +8,8 @@ import { useTourTarget } from '@/features/product-tour/runtime/hooks'
  * Presentation:
  * - Desktop (`compact` false): Radix DropdownMenu.
  * - Compact (`compact` true): vaul Drawer (nested when opened from craft-menu)
- *   so the menu is not trapped under the craft-menu Drawer overlay
- *   (z-popover 100 < z-modal 210).
+ *   so it stacks inside the craft-menu Drawer instead of floating over it
+ *   (shared menus are on z-island, above the drawer scrim/modal).
  */
 
 import * as React from 'react'

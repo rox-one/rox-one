@@ -811,7 +811,7 @@ export function ApiKeyInput({
               {activeTierConfig && tierDropdownPosition && (
                 <>
                   <div
-                    className="fixed inset-0 z-island"
+                    className="fixed inset-0 z-toast"
                     onClick={() => { setOpenTier(null); setTierFilter('') }}
                   />
                   <div

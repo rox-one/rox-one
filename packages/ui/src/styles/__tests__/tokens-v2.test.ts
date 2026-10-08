@@ -57,8 +57,8 @@ const px = (v: string) => {
 }
 
 const LAYERS = [
-  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'fullscreen', 'tooltip',
-  'scrim', 'modal', 'toast', 'island', 'island-popover', 'splash',
+  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'fullscreen',
+  'scrim', 'modal', 'tooltip', 'toast', 'island', 'island-popover', 'splash',
 ] as const
 
 describe('token foundation v2: structure', () => {
@@ -164,8 +164,8 @@ describe('token foundation v2: z layers', () => {
     const root = rootOf(token('z.css'))
     const values = Object.fromEntries(LAYERS.map((l) => [l, Number(resolve(root[`--z-${l}`]!, root))]))
     expect(values).toEqual({
-      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, fullscreen: 120, tooltip: 150,
-      scrim: 200, modal: 210, toast: 300, island: 400, 'island-popover': 410, splash: 600,
+      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, fullscreen: 120,
+      scrim: 200, modal: 210, tooltip: 250, toast: 300, island: 400, 'island-popover': 410, splash: 600,
     })
     const ordered = LAYERS.map((l) => values[l]!)
     for (let i = 1; i < ordered.length; i++) expect(ordered[i], LAYERS[i]).toBeGreaterThan(ordered[i - 1]!)
@@ -239,6 +239,58 @@ describe('token foundation v2: z layers', () => {
     expect(src('packages/ui/src/components/ui/InlineMenuSurface.ts')).toContain("options.zIndex ?? 'var(--z-popover, 100)'")
   })
 
+  it('tooltips show inside dialogs; menus sit above dialogs, tooltips and toasts', () => {
+    const root = rootOf(token('z.css'))
+    const z = (n: string) => Number(resolve(`var(--z-${n})`, root))
+    expect(z('tooltip')).toBeGreaterThan(z('modal'))
+    expect(z('tooltip')).toBeLessThan(z('toast'))
+    expect(z('island')).toBeGreaterThan(z('toast'))
+    expect(z('island-popover')).toBeGreaterThan(z('island'))
+    // Click-catching backdrops: on the toast step, below the menu layer.
+    expect(z('floating-backdrop')).toBe(z('toast'))
+    expect(z('floating-backdrop')).toBeLessThan(z('island'))
+  })
+
+  it('shared Radix menu primitives default to z-island, never z-popover', () => {
+    const files: Record<string, number> = {
+      'apps/electron/src/renderer/components/ui/select.tsx': 1,
+      'apps/electron/src/renderer/components/ui/dropdown-menu.tsx': 2,
+      'apps/electron/src/renderer/components/ui/popover.tsx': 1,
+      'apps/electron/src/renderer/components/ui/context-menu.tsx': 2,
+      'apps/electron/src/renderer/components/ui/styled-context-menu.tsx': 1,
+      'packages/ui/src/components/ui/StyledDropdown.tsx': 2,
+    }
+    for (const [f, n] of Object.entries(files)) {
+      const text = readFileSync(join(repoRoot, f), 'utf8')
+      expect(text, f).not.toMatch(/(?<![-\w])z-popover(?![-\w])/)
+      expect((text.match(/(?<![-\w])z-island(?![-\w])/g) ?? []).length, f).toBe(n)
+    }
+  })
+
+  it('menu click-catching backdrops use the toast step, not the menu layer', () => {
+    for (const f of [
+      'apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx',
+      'packages/ui/src/components/ui/FilterableSelectPopover.tsx',
+      'packages/ui/src/components/ui/PremiumMenu.tsx',
+    ]) {
+      const text = readFileSync(join(repoRoot, f), 'utf8')
+      expect(text, f).toMatch(/fixed inset-0 z-toast/)
+      expect(text, f).not.toMatch(/fixed inset-0 z-island/)
+    }
+  })
+
+  it('FullscreenOverlayBase callers pass no z class (the inline layer always wins)', () => {
+    for (const f of [
+      'apps/electron/src/renderer/components/workspace/WorkspaceCreationScreen.tsx',
+      'apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx',
+    ]) {
+      const text = readFileSync(join(repoRoot, f), 'utf8')
+      const at = text.indexOf('<FullscreenOverlayBase')
+      expect(at, f).toBeGreaterThanOrEqual(0)
+      expect(text.slice(at, text.indexOf('>', at)), f).not.toMatch(/(?<![-\w])z-[a-z]/)
+    }
+  })
+
   it('no source uses a retired z utility class', () => {
     const retired = /(?<![-\w])z-(local|titlebar|panel|dropdown|overlay|floating-backdrop|floating-menu|island-overlay)(?![-\w])/
     const offenders: string[] = []
@@ -269,8 +321,13 @@ describe('token foundation v2: radius', () => {
     }
   })
 
-  it('menus and popovers use the md radius, not the overlay role', () => {
+  it('menus, popovers, controls and inner cards do not use the overlay radius role', () => {
     const menus = [
+      'apps/electron/src/renderer/pages/tasks/MoveDialog.tsx',
+      'apps/electron/src/renderer/components/app-shell/collection/CollectionDisplayPopover.tsx',
+      'apps/electron/src/renderer/pages/notes/NotesDialogs.tsx',
+      'packages/ui/src/components/markdown/MarkdownSpreadsheetBlock.tsx',
+      'packages/ui/src/components/markdown/MarkdownDatatableBlock.tsx',
       'apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx',
       'packages/ui/src/components/ui/FilterableSelectPopover.tsx',
       'packages/ui/src/components/ui/SimpleDropdown.tsx',
@@ -289,6 +346,12 @@ describe('token foundation v2: radius', () => {
       'apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx',
     ]
     for (const f of menus) expect(readFileSync(join(repoRoot, f), 'utf8'), f).not.toContain('--radius-overlay')
+  })
+
+  it('legacy --rox-radius-* alias the radius tokens (single source)', () => {
+    const root = rootOf(indexCss)
+    expect(root['--rox-radius-sm']).toBe('var(--radius-sm)')
+    expect(root['--rox-radius-md']).toBe('var(--radius-md)')
   })
 
   it('UI profiles scale radius only within the scale', () => {
