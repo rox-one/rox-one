@@ -12,16 +12,14 @@
  * Every `titleKey` here exists in all 12 locales (asserted by the client test),
  * so the fixture cannot hide a typo behind "test-only" keys.
  */
-import type { EntityKind } from '../../../entities/kinds.ts'
-import {
-  buildRowContextMenu,
-  type MenuItemSpec,
-  type SidebarSchema,
-  type SidebarSection,
-  type SurfaceChromeContribution,
-  type TopBarLeftZoneItem,
-  type TopBarSchema,
-} from '../../chrome.ts'
+import type { EntityKind } from '../entities/kinds.ts'
+import type {
+  SidebarSchema,
+  SidebarSection,
+  SurfaceChromeContribution,
+  TopBarLeftZoneItem,
+  TopBarSchema,
+} from './chrome.ts'
 
 /** Rail-surface titles reuse the mode registry's keys. */
 const MODE = {
@@ -68,9 +66,6 @@ const topBar = (
   right: TopBarSchema['right'],
 ): TopBarSchema => ({ surface, left, center, right })
 
-const rowMenu = (...extra: MenuItemSpec[]): { extra: MenuItemSpec[] } => ({ extra })
-const moveToMenu: MenuItemSpec = { id: 'tasks.row.move', titleKey: 'chrome.rowContext.openSplit' }
-
 /** §26.2 header-create menus (a subset of the global create menu, §3.2). */
 const CREATE = {
   home: { default: 'tasks.create', menu: ['docs.create_document', 'calendar.create_event', 'im.create_chat', 'vc.start_meeting', 'goals.create'] },
@@ -94,7 +89,7 @@ const CREATE = {
 const ALL_PINNED_KINDS: EntityKind[] = ['note', 'task', 'project', 'goal', 'space', 'channel', 'file', 'base', 'form']
 
 /** UI-SPEC §26.2 — one row per left sidebar. */
-export const FIXTURE_SIDEBAR_SURFACES: readonly string[] = [
+export const SURFACE_SIDEBAR_SURFACES: readonly string[] = [
   'home', 'chat', 'messenger', 'docs', 'wiki', 'drive', 'base', 'forms', 'tasks',
   'calendar', 'meetings', 'goals', 'contacts', 'feed', 'inbox', 'agent-center', 'settings', 'search',
 ]
@@ -106,7 +101,7 @@ const SIDEBARS: Record<string, SidebarSchema> = {
     section('recent', 'provider'),
     section('collections', 'static'),
     section('people', 'provider'),
-  ], { pinned: { kinds: ALL_PINNED_KINDS }, contextMenu: rowMenu({ id: 'home.row.remove-recent', titleKey: 'chrome.rowContext.archive' }) }),
+  ], { pinned: { kinds: ALL_PINNED_KINDS }, contextMenu: { extra: [{ id: 'home.row.remove-recent', titleKey: 'chrome.rowContext.archive' }] } }),
   chat: sidebar('chat', 260, MODE.chat, CREATE.chat, [
     section('pinned', 'static'),
     section('history', 'provider', { counter: { provider: 'counter.chat.history', tone: 'volume' } }),
@@ -156,7 +151,7 @@ const SIDEBARS: Record<string, SidebarSchema> = {
     section('lists', 'provider', { drop: 'tasks.add_to_list' }),
     section('views', 'provider'),
     section('recent', 'provider'),
-  ], { pinned: { kinds: ['task', 'task-list'] }, contextMenu: rowMenu(moveToMenu) }),
+  ], { pinned: { kinds: ['task', 'task-list'] }, contextMenu: { extra: [{ id: 'tasks.row.move', titleKey: 'chrome.rowContext.openSplit' }] } }),
   calendar: sidebar('calendar', 240, MODE.calendar, CREATE.calendar, [
     section('views', 'static', { counter: { provider: 'counter.calendar.invites', tone: 'action' } }),
     section('collections', 'provider'),
@@ -208,7 +203,7 @@ const SIDEBARS: Record<string, SidebarSchema> = {
 }
 
 /** UI-SPEC §26.3 — one row per top bar (page surfaces included). */
-export const FIXTURE_TOPBAR_SURFACES: readonly string[] = [
+export const SURFACE_TOPBAR_SURFACES: readonly string[] = [
   'home', 'chat', 'messenger', 'docs', 'doc', 'wiki', 'drive', 'base', 'form', 'forms', 'tasks',
   'calendar', 'meetings', 'meetings-call', 'goals', 'goal', 'project', 'space', 'contacts',
   'feed', 'inbox', 'mail', 'agent-center', 'settings', 'search',
@@ -243,7 +238,7 @@ const TOP_BARS: Record<string, TopBarSchema> = {
 }
 
 /** One contribution per surface; a page surface reuses its section's sidebar. */
-export const SURFACE_CHROME_FIXTURE: readonly SurfaceChromeContribution[] = FIXTURE_TOPBAR_SURFACES.map((surface) => {
+export const SURFACE_CHROME_FIXTURE: readonly SurfaceChromeContribution[] = SURFACE_TOPBAR_SURFACES.map((surface) => {
   const own = SIDEBARS[surface]
   return {
     surface,
@@ -253,7 +248,5 @@ export const SURFACE_CHROME_FIXTURE: readonly SurfaceChromeContribution[] = FIXT
 })
 
 /** Sidebars every surface package must register, in rail order (§26.2). */
-export const FIXTURE_PAGE_SURFACES_WITHOUT_SIDEBAR = FIXTURE_TOPBAR_SURFACES.filter((surface) => !SIDEBARS[surface])
+export const SURFACE_PAGE_SURFACES_WITHOUT_SIDEBAR = SURFACE_TOPBAR_SURFACES.filter((surface) => !SIDEBARS[surface])
 
-/** The complete menu a row opens: the common block plus the surface extras. */
-export const FIXTURE_ROW_MENU_EXAMPLE = buildRowContextMenu(rowMenu(moveToMenu).extra)

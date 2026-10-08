@@ -18,10 +18,10 @@ import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  FIXTURE_SIDEBAR_SURFACES,
-  FIXTURE_TOPBAR_SURFACES,
+  SURFACE_SIDEBAR_SURFACES,
+  SURFACE_TOPBAR_SURFACES,
   SURFACE_CHROME_FIXTURE,
-} from './fixtures/surface-chrome.ts'
+} from '../chrome-reference.ts'
 import {
   COMMON_ROW_CONTEXT_MENU,
   COUNTER_DISPLAY_CAP,
@@ -106,11 +106,11 @@ describe('W1-15 chrome slot ids (W1-07 registry)', () => {
 
 describe('W1-15 chrome schema lint', () => {
   it('covers every surface of UI-SPEC §26.2 (sidebar) and §26.3 (top bar)', () => {
-    expect(FIXTURE_SIDEBAR_SURFACES.length).toBe(18)
-    expect(FIXTURE_TOPBAR_SURFACES.length).toBe(25)
+    expect(SURFACE_SIDEBAR_SURFACES.length).toBe(18)
+    expect(SURFACE_TOPBAR_SURFACES.length).toBe(25)
     const issues = lintChromeCatalogue(SURFACE_CHROME_FIXTURE, {
-      requireSidebar: FIXTURE_SIDEBAR_SURFACES,
-      requireTopBar: FIXTURE_TOPBAR_SURFACES,
+      requireSidebar: SURFACE_SIDEBAR_SURFACES,
+      requireTopBar: SURFACE_TOPBAR_SURFACES,
     })
     expect(issues).toEqual([])
   })

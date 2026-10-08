@@ -19,6 +19,7 @@
 
 import type { EntityKind } from '../entities/kinds.ts'
 import type { CommandType } from '../commands/envelope.ts'
+import { SURFACE_CHROME_FIXTURE } from './chrome-reference.ts'
 
 /**
  * A chrome surface: a rail surface (`home`, `chat`, `messenger`, `docs`,
@@ -499,3 +500,40 @@ export function lintChromeCatalogue(
   }
   return issues
 }
+
+// ---------------------------------------------------------------------------
+// The W1-10 (#1507) harness view of the chrome registry
+// ---------------------------------------------------------------------------
+
+/**
+ * One surface's chrome as the W1-10 test harness reads it
+ * (`packages/test-harness/src/gates/chrome-dock.ts`, gate `chrome-schema-lint`):
+ * the **rendered** right zone — the surface's own items in §26.1 order plus the
+ * shell's `@rox`, which is always last — and the number of center controls.
+ */
+export interface ChromeSchemaSummary {
+  surface: SurfaceId
+  rightZone: string[]
+  centerControls: number
+}
+
+/** Project one contribution into the harness shape. */
+export function chromeSchemaSummary(contribution: SurfaceChromeContribution): ChromeSchemaSummary {
+  const topBar = contribution.topBar
+  const rightZone = (topBar?.right ?? []).map((item) => (typeof item === 'string' ? item : 'primary'))
+  return {
+    surface: contribution.surface,
+    rightZone: [...rightZone, TOPBAR_AGENT_BUTTON_ID],
+    centerControls: topBar?.center ? 1 : 0,
+  }
+}
+
+/**
+ * Every surface the reference chrome registry ships, in the harness shape.
+ * CHR (#1533) and the wave-2 surface packages replace the per-surface
+ * registrations; this list is what the `chrome-schema-lint` gate lints today.
+ */
+export const CHROME_SCHEMAS: readonly ChromeSchemaSummary[] = SURFACE_CHROME_FIXTURE.map(chromeSchemaSummary)
+
+/** Surfaces that must have a schema (UI-SPEC §26.2 sidebars + §26.3 top bars). */
+export const CHROME_SURFACES: readonly SurfaceId[] = SURFACE_CHROME_FIXTURE.map((contribution) => contribution.surface)

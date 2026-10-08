@@ -15,7 +15,7 @@ const REPO = join(import.meta.dir, "../../../../../");
 
 const W1_15_SOURCES = [
   "packages/core/src/platform/chrome.ts",
-  "packages/core/src/platform/__tests__/fixtures/surface-chrome.ts",
+  "packages/core/src/platform/chrome-reference.ts",
   "packages/core/src/agent-panel/context.ts",
   "packages/core/src/agent-panel/session.ts",
   "packages/core/src/xfn/commands.ts",

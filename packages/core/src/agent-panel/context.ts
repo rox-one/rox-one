@@ -405,3 +405,68 @@ export function fitContextBudget(
 
 /** Entity kinds that never auto-attach: private local notes (§18.3 rule 1a). */
 export const NEVER_AUTO_ATTACH_PRIVATE_KINDS: readonly EntityKind[] = ['note']
+
+// ---------------------------------------------------------------------------
+// The W1-10 (#1507) harness view of §18.3 rule 1
+// ---------------------------------------------------------------------------
+
+/**
+ * The acting user (W1-10 `agent-panel-privacy` gate). The decision does not
+ * depend on it today — §18.3 rule 1 is about the *viewer's own* access, and
+ * `canRead` carries the evaluated ACL — but a provider receives it so a later
+ * rule (a shared-vs-private workspace, a delegated actor) needs no signature
+ * change.
+ */
+export interface PrivacyActor {
+  principalId: string
+  workspaceId: string
+}
+
+/**
+ * Everything §18.3 rule 1 needs about one candidate ref. `canRead` is the
+ * already-evaluated `acl.can(actor, 'read', ref)`, so a provider never has to
+ * resolve anything itself.
+ */
+export interface PrivacyCandidate {
+  /** Canonical ref (`kind:id`); the decision never parses it. */
+  ref: string
+  /** Entity kind of the ref (`note`, `channel-message`, `goal`, `task`, …). */
+  entityKind: string
+  authority?: 'local' | 'workspace'
+  /** The ref is the panel's focus. */
+  isFocus?: boolean
+  /** The ref is a direct-message item. */
+  isDm?: boolean
+  /** The DM is the one currently open. */
+  isOpenDm?: boolean
+  canRead: boolean
+}
+
+export interface AttachDecision {
+  /** Send the ref with the next message without asking. */
+  attach: boolean
+  /**
+   * The ref is withheld: it becomes the dashed «Личная заметка — добавить?»
+   * consent chip, or `{ref, restricted: true}` when the viewer cannot read it.
+   */
+  redacted: boolean
+}
+
+/**
+ * `decideAutoAttach` — §18.3 rule 1 as the W1-10 harness calls it
+ * (`packages/test-harness/src/gates/agent-privacy.ts`). The same rule as
+ * `mayAutoAttachRef`; this adapter takes the facts in the wire shape the gate
+ * supplies, so the contract is one function with two views.
+ */
+export function decideAutoAttach(candidate: PrivacyCandidate, actor: PrivacyActor): AttachDecision {
+  void actor
+  const attach = mayAutoAttachRef({
+    isFocus: candidate.isFocus === true,
+    isPrivateLocalNote: candidate.entityKind === 'note' && candidate.authority === 'local',
+    isDirectMessage: candidate.isDm === true,
+    isOpenDirectMessage: candidate.isOpenDm === true,
+    canRead: candidate.canRead,
+    explicitlyAttached: false,
+  })
+  return { attach, redacted: !attach }
+}

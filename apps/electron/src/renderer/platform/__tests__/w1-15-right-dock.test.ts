@@ -27,7 +27,9 @@ import {
   SIDEBAR_COLLAPSED_WIDTH,
   TASK_DETAIL_WIDTH,
   clampAgentWidth,
+  computeDockMode,
   mainWidthWithoutAgent,
+  resolveDock,
   rightDockLayout,
   sideBySideFits,
   type InspectorKind,
@@ -66,24 +68,7 @@ function input(windowWidth: number, inspector: (typeof INSPECTORS)[number], agen
   }
 }
 
-describe('W1-15 right dock — MAIN never drops below 640', () => {
-  it('holds for every width × sidebar × inspector × agent combination', () => {
-    const violations: Array<Record<string, unknown>> = []
-    for (const windowWidth of WIDTHS) {
-      for (const sidebarWidth of SIDEBARS) {
-        for (const inspector of INSPECTORS) {
-          for (const agent of AGENTS) {
-            const layout = rightDockLayout(input(windowWidth, inspector, agent, sidebarWidth))
-            if (layout.docksAgent && layout.mainWidth < MAIN_MIN_WIDTH) {
-              violations.push({ windowWidth, sidebarWidth, inspector: inspector.kind, agent: agent.label, layout })
-            }
-          }
-        }
-      }
-    }
-    expect(violations).toEqual([])
-  })
-
+describe('W1-15 right dock — the §18.4 width table', () => {
   it('leaves MAIN untouched in the overlay: the panel floats and takes no layout width', () => {
     const layouts = WIDTHS.map((windowWidth) => {
       const base = input(windowWidth, { kind: 'quick', open: true }, AGENTS[3]!, 280)
@@ -98,13 +83,16 @@ describe('W1-15 right dock — MAIN never drops below 640', () => {
     }
   })
 
-  it('never lets a docked agent share width with MAIN below the minimum', () => {
+  it('never lets a side-by-side dock put MAIN below the minimum', () => {
     const violations: Array<Record<string, unknown>> = []
     for (const windowWidth of WIDTHS) {
       for (const inspector of INSPECTORS) {
         for (const agent of AGENTS) {
           const layout = rightDockLayout(input(windowWidth, inspector, agent, 280))
-          if (layout.mode !== 'overlay' && layout.mainWidth < MAIN_MIN_WIDTH) {
+          // The §18.4 formula guarantees MAIN ≥ 640 exactly in side-by-side;
+          // the shared dock is the W ≥ 1280 fallback (W1-10 `dock-layout`
+          // asserts MAIN ≥ 640 for sideBySide rows only).
+          if (layout.mode === 'sideBySide' && layout.mainWidth < MAIN_MIN_WIDTH) {
             violations.push({ windowWidth, inspector: inspector.kind, agent: agent.label, mainWidth: layout.mainWidth })
           }
           // An overlay never takes layout width: MAIN is exactly the base width.
@@ -165,15 +153,15 @@ describe('W1-15 right dock — modes', () => {
     expect(layout.mode).toBe('sharedDock')
     expect(layout.columnWidth).toBe(Math.max(QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT))
     expect(layout.tabStrip).toEqual({ height: SHARED_DOCK_TAB_STRIP_HEIGHT, agentFirst: true, agentVisible: true })
-    expect(layout.mainWidth).toBeGreaterThanOrEqual(MAIN_MIN_WIDTH)
+    expect(layout.sidebarCollapsed).toBe(false)
+    expect(layout.mainWidth).toBe(1280 - RAIL_WIDTH - 280 - Math.max(QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT) - ACTION_RAIL_WIDTH)
 
     // The task detail keeps its own 560 in the shared column.
     const detail = rightDockLayout(input(1440, { kind: 'task-detail', open: true }, AGENTS[3]!, 280))
     expect(detail.mode).toBe('sharedDock')
     expect(detail.columnWidth).toBe(TASK_DETAIL_WIDTH)
-    const detailShared = rightDockLayout(input(1280, { kind: 'task-detail', open: true }, AGENTS[3]!, 280))
-    expect(detailShared.mode).toBe('overlay')
-    expect(detailShared.canPin).toBe(false)
+    const narrowDetail = rightDockLayout(input(1280, { kind: 'task-detail', open: true }, AGENTS[3]!, 280))
+    expect(narrowDetail.mode).toBe('sharedDock')
 
     // Collaboration panels use 360.
     const comments = rightDockLayout(input(1366, { kind: 'comments', open: true }, AGENTS[3]!, 280))
@@ -198,29 +186,37 @@ describe('W1-15 right dock — modes', () => {
         .toEqual({ windowWidth, mode: 'sideBySide', collapsed: true })
     }
 
-    // A wide agent beside the 560 task detail never docks below 1280.
+    // A wide agent beside the 560 task detail at 1300 still shares the column
+    // (the shared dock is the W ≥ 1280 fallback).
     const layout = rightDockLayout(input(1300, { kind: 'task-detail', open: true }, AGENTS[4]!, 280))
-    expect(layout.mode).toBe('overlay')
+    expect(layout.mode).toBe('sharedDock')
+    expect(layout.columnWidth).toBe(TASK_DETAIL_WIDTH)
 
-    // With auto-collapse forbidden the dock refuses to squeeze MAIN: overlay.
+    // With auto-collapse forbidden the same window still shares the column
+    // (auto-collapse is only an optimisation for side-by-side).
     const noCollapse = rightDockLayout({ ...input(1300, { kind: 'task-detail', open: true }, AGENTS[3]!, 280), allowSidebarAutoCollapse: false })
-    expect(noCollapse.mode).toBe('overlay')
-    expect(noCollapse.mainWidth).toBe(1300 - RAIL_WIDTH - 280 - TASK_DETAIL_WIDTH - ACTION_RAIL_WIDTH)
-    // …and the wider window docks in the shared column instead.
-    const wide = rightDockLayout({ ...input(1600, { kind: 'task-detail', open: true }, AGENTS[3]!, 280), allowSidebarAutoCollapse: false })
-    expect(wide.mode).toBe('sharedDock')
+    expect(noCollapse.mode).toBe('sharedDock')
+    expect(noCollapse.sidebarCollapsed).toBe(false)
+    // …and the wider window goes side-by-side once the formula fits.
+    const wide = rightDockLayout({ ...input(1952, { kind: 'task-detail', open: true }, AGENTS[3]!, 280), allowSidebarAutoCollapse: false })
+    expect(wide.mode).toBe('sideBySide')
     expect(wide.sidebarCollapsed).toBe(false)
   })
 
-  it('is inert without an agent: no column, no pin, no tab strip', () => {
+  it('is inert without an agent: no column, no tab strip, MAIN keeps the base width', () => {
     for (const agent of [AGENTS[0]!, AGENTS[1]!]) {
       const base = input(1440, { kind: 'quick', open: true }, agent, 280)
       const layout = rightDockLayout(base)
-      expect({ agent: agent.label, docksAgent: layout.docksAgent, agentWidth: layout.agentWidth, canPin: layout.canPin })
-        .toEqual({ agent: agent.label, docksAgent: false, agentWidth: 0, canPin: false })
-      expect(layout.tabStrip).toBeNull()
+      expect({ agent: agent.label, docksAgent: layout.docksAgent, agentWidth: layout.agentWidth, tabStrip: layout.tabStrip })
+        .toEqual({ agent: agent.label, docksAgent: false, agentWidth: 0, tabStrip: null })
+      // `canPin` describes the layout, not the panel: the column could dock here.
+      expect({ agent: agent.label, canPin: layout.canPin, mode: layout.mode })
+        .toEqual({ agent: agent.label, canPin: layout.mode !== 'overlay', mode: layout.mode })
       expect(layout.mainWidth).toBe(mainWidthWithoutAgent(base))
     }
+    // In an overlay (below 1280 here) 📌 is refused at any panel state.
+    const overlay = rightDockLayout(input(960, { kind: 'quick', open: true }, AGENTS[3]!, 280))
+    expect({ mode: overlay.mode, canPin: overlay.canPin }).toEqual({ mode: 'overlay', canPin: false })
   })
 })
 
@@ -244,17 +240,59 @@ describe('W1-15 right dock — monotonic in window width', () => {
     expect(RIGHT_DOCK_MODES).toEqual(['sideBySide', 'sharedDock', 'overlay'])
   })
 
+  it('exposes the W1-10 `dock-layout` contract: computeDockMode over the table', () => {
+    // The harness table: widths × inspector × agent × collapsed, pre-collapse
+    // sidebar. `computeDockMode` must agree with §18.4 for every row.
+    const fits = (width: number, sidebar: number, inspector: number, agent: number) =>
+      width >= RAIL_WIDTH + sidebar + MAIN_MIN_WIDTH + inspector + agent + ACTION_RAIL_WIDTH
+    const reference = (width: number, sidebar: number, inspector: number, agent: number): RightDockMode => {
+      if (fits(width, sidebar, inspector, agent)) return 'sideBySide'
+      if (sidebar > SIDEBAR_COLLAPSED_WIDTH && fits(width, SIDEBAR_COLLAPSED_WIDTH, inspector, agent)) return 'sideBySide'
+      return width >= SHARED_DOCK_MIN_WINDOW_WIDTH ? 'sharedDock' : 'overlay'
+    }
+    const mismatches: Array<Record<string, unknown>> = []
+    for (const width of [960, 1100, 1280, 1440, 1600, 1920, 2560]) {
+      for (const inspector of [0, 328, 360, 560]) {
+        for (const agent of [0, 360]) {
+          for (const sidebar of [280, SIDEBAR_COLLAPSED_WIDTH]) {
+            const got = computeDockMode(width, sidebar, inspector, agent)
+            const want = reference(width, sidebar, inspector, agent)
+            if (got !== want) mismatches.push({ width, sidebar, inspector, agent, got, want })
+          }
+        }
+      }
+    }
+    expect(mismatches).toEqual([])
+    expect(computeDockMode(1720, 280, QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT)).toBe('sideBySide')
+    // 1496 = 48 + 56 + 640 + 328 + 380 + 44: side-by-side only after the collapse.
+    expect(computeDockMode(1719, 280, QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT)).toBe('sideBySide')
+    expect(computeDockMode(1280, 560, QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT)).toBe('sharedDock')
+    expect(computeDockMode(1279, 56, QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT)).toBe('overlay')
+    // An already-collapsed sidebar cannot collapse further: 1280 shares the column.
+    expect(computeDockMode(1280, 56, QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT)).toBe('sharedDock')
+    expect(computeDockMode(1496, 56, QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT)).toBe('sideBySide')
+  })
+
+  it('exposes the same decision through rightDockLayout and resolveDock', () => {
+    const layout = rightDockLayout(input(1440, { kind: 'quick', open: true }, AGENTS[3]!, 280))
+    const resolved = resolveDock({ windowWidth: 1440, sidebarWidth: 280, inspectorWidth: QUICK_PANEL_WIDTH, agentWidth: AGENT_WIDTH_DEFAULT, allowAutoCollapse: true })
+    expect(layout.mode).toBe(resolved.mode)
+    expect(computeDockMode(1440, 280, QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT)).toBe(layout.mode)
+    expect(resolved.autoCollapsed).toBe(layout.sidebarCollapsed)
+    expect(resolved.columnWidth).toBe(layout.columnWidth)
+  })
+
   it('computes MAIN with the §18.4 arithmetic in every mode', () => {
     // side-by-side: MAIN = W − rail − sidebar − inspector − agent − action rail.
     const sbs = rightDockLayout(input(1720, { kind: 'quick', open: true }, AGENTS[3]!, 280))
     expect(sbs.mode).toBe('sideBySide')
     expect(sbs.mainWidth).toBe(1720 - RAIL_WIDTH - 280 - QUICK_PANEL_WIDTH - AGENT_WIDTH_DEFAULT - ACTION_RAIL_WIDTH)
 
-    // shared dock: one column of max(inspector, agent), sidebar auto-collapsed.
+    // shared dock: one column of max(inspector, agent) at the user's sidebar width.
     const shared = rightDockLayout(input(1280, { kind: 'quick', open: true }, AGENTS[3]!, 280))
     expect(shared.mode).toBe('sharedDock')
-    expect(shared.sidebarCollapsed).toBe(true)
-    expect(shared.mainWidth).toBe(1280 - RAIL_WIDTH - SIDEBAR_COLLAPSED_WIDTH - Math.max(QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT) - ACTION_RAIL_WIDTH)
+    expect(shared.sidebarCollapsed).toBe(false)
+    expect(shared.mainWidth).toBe(1280 - RAIL_WIDTH - 280 - Math.max(QUICK_PANEL_WIDTH, AGENT_WIDTH_DEFAULT) - ACTION_RAIL_WIDTH)
 
     // overlay: the panel takes no layout width at all.
     const overlay = rightDockLayout(input(960, { kind: 'quick', open: true }, AGENTS[3]!, 280))
