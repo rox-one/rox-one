@@ -12,6 +12,7 @@
  * rail is byte-identical to the baseline.
  */
 import type { Disposable } from '@rox/core/platform'
+import { UNIFIED_SURFACE_FLAGS, isUnifiedSurfaceId } from '../../shared/surface-routes'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import {
   addSlotRegistrySeeder,
@@ -134,12 +135,14 @@ export const CORE_GLOBAL_CREATE_ITEMS: ReadonlyArray<SlotContribution<GlobalCrea
   },
   {
     id: 'spaces.new-space', slot: GLOBAL_CREATE_SLOT, order: 90, source: W107,
-    titleKey: 'surfaces.create.newSpace', icon: 'LayoutGrid', flag: GLOBAL_CREATE_OWNER_FLAGS.spaces,
+    // Its fallback route is the Goals mode root, so it also needs that flag.
+    titleKey: 'surfaces.create.newSpace', icon: 'LayoutGrid', flag: [GLOBAL_CREATE_OWNER_FLAGS.spaces, WORKBENCH_FLAG.modeGoalsV1],
     payload: { group: 'create', intent: { type: 'command', name: 'spaces.create', fallbackRoute: 'goals' } },
   },
   {
     id: 'identity.new-team', slot: GLOBAL_CREATE_SLOT, order: 92, source: W107,
-    titleKey: 'surfaces.create.newTeam', icon: 'UsersRound', flag: GLOBAL_CREATE_OWNER_FLAGS.identityPlaceholders,
+    // Its fallback route is the Contacts mode root, so it also needs that flag.
+    titleKey: 'surfaces.create.newTeam', icon: 'UsersRound', flag: [GLOBAL_CREATE_OWNER_FLAGS.identityPlaceholders, WORKBENCH_FLAG.modeContactsV1],
     payload: { group: 'create', intent: { type: 'command', name: 'identity.create_team', fallbackRoute: 'contacts' } },
   },
   {
@@ -192,6 +195,23 @@ export interface GlobalCreateMenuModel {
   hasFlaggedItems: boolean
 }
 
+/**
+ * Flags an intent's target needs: a route (or command fallback route) into a
+ * unified mode root only resolves while that mode's flag is on, so the entry
+ * must require it too — otherwise it would navigate to «unavailable».
+ */
+export function intentRouteFlags(intent: GlobalCreateIntent | undefined): string[] {
+  if (!intent || intent.type === 'host') return []
+  const route = intent.type === 'route' ? intent.route : intent.fallbackRoute
+  if (!route) return []
+  const root = route.split('?')[0]!.split('/')[0]!
+  return isUnifiedSurfaceId(root) ? [UNIFIED_SURFACE_FLAGS[root]] : []
+}
+
+function routeGateOpen(intent: GlobalCreateIntent | undefined, ctx: SlotListContext): boolean {
+  return intentRouteFlags(intent).every((flag) => ctx.flags.has(flag))
+}
+
 function hasFlag(flag: SlotContribution['flag']): boolean {
   return flag !== undefined && (typeof flag === 'string' ? flag.length > 0 : flag.length > 0)
 }
@@ -209,16 +229,19 @@ export function buildGlobalCreateMenu(
     for (const child of item.payload?.children ?? []) {
       const probe: SlotContribution = { id: child.id, slot: GLOBAL_CREATE_SLOT, source: item.source, flag: child.flag }
       if (!isSlotContributionVisible(probe, ctx)) continue
-      children.push({ id: `${item.id}/${child.id}`, titleKey: child.titleKey, icon: child.icon, intent: child.intent, flagged: hasFlag(child.flag), children: [] })
+      if (!routeGateOpen(child.intent, ctx)) continue
+      children.push({ id: `${item.id}/${child.id}`, titleKey: child.titleKey, icon: child.icon, intent: child.intent, flagged: hasFlag(child.flag) || intentRouteFlags(child.intent).length > 0, children: [] })
     }
-    const intent = item.payload?.intent
+    // An own intent whose target mode is off is dropped (children may remain).
+    const ownIntent = item.payload?.intent
+    const intent = ownIntent && routeGateOpen(ownIntent, ctx) ? ownIntent : undefined
     if (!intent && children.length === 0) continue
     const entry: GlobalCreateMenuEntry = {
       id: item.id,
       titleKey: item.titleKey,
       icon: item.icon,
       intent,
-      flagged: hasFlag(item.flag) || children.some((child) => child.flagged),
+      flagged: hasFlag(item.flag) || intentRouteFlags(intent).length > 0 || children.some((child) => child.flagged),
       // A submenu with only the parent's own action collapses to a plain item.
       children: children.length > 1 || (children.length === 1 && !intent) ? children : [],
     }

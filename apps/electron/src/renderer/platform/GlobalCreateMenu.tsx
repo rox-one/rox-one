@@ -19,7 +19,7 @@ import {
 } from '@rox/ui'
 import { useSlotContributions } from './useSlots'
 import { useAtomValue } from 'jotai'
-import { enabledShellFlagsAtom } from './unified-flags'
+import { enabledShellFlagsAtom, flagContextKeys } from './unified-flags'
 import {
   buildGlobalCreateMenu,
   GLOBAL_CREATE_SLOT,
@@ -57,7 +57,8 @@ export function GlobalCreateMenu({ fallback, trigger, label, navigate, host }: G
   const flags = useAtomValue(enabledShellFlagsAtom)
   // Subscribes to registry changes; the model itself is built below.
   const contributions = useSlotContributions(GLOBAL_CREATE_SLOT)
-  const model = useMemo(() => buildGlobalCreateMenu({ flags }), [flags, contributions])
+  // `keys` so entries with a `when` clause see the flag context keys too.
+  const model = useMemo(() => buildGlobalCreateMenu({ flags, keys: flagContextKeys(flags) }), [flags, contributions])
 
   if (!model.hasFlaggedItems) return <>{fallback}</>
 
