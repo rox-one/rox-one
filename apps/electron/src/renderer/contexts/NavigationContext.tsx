@@ -634,6 +634,7 @@ export function NavigationProvider({
         }
         // A malformed link must retain at least one primary working surface.
         if (entries.every(entry => entry.tool)) entries[0].tool = undefined
+
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
         const restored = store.get(panelStackAtom)
         const primaryIndex = Number(params.get('pi') ?? '0')
