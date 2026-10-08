@@ -256,8 +256,12 @@ export function cutExcerpt(excerpt: string, maxChars: number = AGENT_EXCERPT_MAX
   if (maxChars <= 0) return ''
   if (excerpt.length <= maxChars) return excerpt
   const window = excerpt.slice(0, maxChars)
-  const blockBreak = Math.max(window.lastIndexOf('\n\n'), window.lastIndexOf('\n'))
-  if (blockBreak > 0) return window.slice(0, blockBreak)
+  // Prefer the last blank-line (block) break inside the budget, then the last
+  // line break; neither includes the break itself.
+  const blankLine = window.lastIndexOf('\n\n')
+  if (blankLine > 0) return window.slice(0, blankLine)
+  const line = window.lastIndexOf('\n')
+  if (line > 0) return window.slice(0, line)
   const whitespace = window.search(/\s\S*$/)
   if (whitespace > 0) return window.slice(0, whitespace)
   return window
