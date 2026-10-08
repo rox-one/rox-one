@@ -30,6 +30,9 @@ export function readPersonalTasks(store: PersonalTaskPersistStore): PersonalTask
   if (!backedUp.has(store)) {
     backedUp.add(store)
     try { store.ensureSchemaBackup() } catch { /* best effort — never blocks reads */ }
+    // W1-06 (#1503): MIG-01/02 run unconditionally, once per store, only after
+    // the verbatim backup succeeded. Idempotent; revisions never change.
+    try { if (store.hasSchemaBackup() && !store.isMigratedToV3()) store.migrateToV3() } catch { /* retried next launch */ }
   }
   const records = store.list()
   return {
