@@ -67,7 +67,9 @@ Two transports, one implementation (`NotifyService`):
   `POST /v1/workspaces/{ws}/notifications/read` for the Inbox.
 
 Both are scoped to the authenticated principal, and both push
-`notification.read` on `user:{id}` so a second device syncs.
+`notification.read` on `user:{id}` so a second device syncs. The frame is
+sequenced in the **workspace's** realtime log (the one the gateway replays),
+never in a log keyed by the recipient — the composed-server suite pins that.
 
 ## Email batching
 
@@ -118,8 +120,16 @@ type twice throws, so the Feed cannot depend on import order.
 * `apps/workspace-service/test/notify.test.ts` — a goal update notifies
   champion, reviewer and subscribers in a two-user workspace, never the actor
   or a member without access; mark-read and push; route negatives; batching.
+* `apps/workspace-service/test/notify.pg.test.ts` — the same exit criterion on
+  the *composed* server (`createWorkspaceServer` + a real command transaction +
+  the real relay + a real WebSocket) with the W1-05 DDL applied: the Inbox route
+  is reachable only because the root configured notify, and mark-read travels
+  back on `user:{id}`. Skips without Postgres (`ROX_TEST_PG_URL` or a temp
+  `initdb` cluster).
 * `apps/electron/src/renderer/pages/inbox/__tests__/inbox-activity.test.ts` —
   the per-module gating.
+* `apps/electron/src/renderer/components/review/__tests__/registry.test.ts` —
+  the renderer registry.
 
 ## Known gaps
 
