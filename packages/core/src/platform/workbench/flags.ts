@@ -65,6 +65,11 @@ export const WORKBENCH_FLAG = {
   // W1-03 (#1500)
   /** Command bus (W1-03) — local executor, outbox and workspace realtime client. Default OFF. */
   commandsBusV1: 'commands.bus.v1',
+  // W1-09 (#1506) — Inbox activity surfaces. The notification *pipeline* has no
+  // flag (it only reacts to committed domain events); each Inbox tab is gated
+  // by its module: review by goals.checkins.v1, mention by entities.links.v1,
+  // assignment by tasks.shared.v1, and the notifications tab by this one.
+  notifyInboxV1: 'notify.inbox.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -237,6 +242,9 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.modeGoalsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeContactsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.docsSharedV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  // W1-09 (#1506): Inbox Review / Mentions / Assignments are gated by their
+  // module flags (registered by their owners); this one gates the notify tab.
+  { id: WORKBENCH_FLAG.notifyInboxV1, defaultValue: false, dependencies: [], rollbackSafe: true },
 ];
 
 export function resolveEnabledFlags(

@@ -2,12 +2,22 @@
  * Pure aggregation for the Входящие mode screen: everything waiting on me,
  * normalized into InboxItem rows from sources that already exist in the app
  * (pending permissions/credentials, plans, memory proposals, skill candidates,
- * new messenger senders, unread agent replies). No I/O here.
+ * new messenger senders, unread agent replies) plus the W1-09 workspace
+ * activity surfaces (Review, Mentions, Assignments, Notifications). No I/O here.
+ *
+ * The activity surfaces are gated per module (`INBOX_KIND_FLAGS`): while a
+ * module's flag is off its items are not built at all, so the mode screen is
+ * byte-identical to before (W1-09 acceptance).
  */
 
+import type { NotificationKind, ReviewAction, ReviewGroup } from '@rox/core/notify'
+import { formatEntityRef, isEntityKind, type EntityRef } from '@rox/core/entities'
 import type { TeamInboxItem } from '@rox/shared/team'
 
 export type InboxKind = 'permission' | 'credential' | 'plan' | 'memory' | 'skill' | 'sender' | 'reply' | 'error' | 'mail' | 'team-recipient'
+  // W1-09 (#1506) — activity surfaces (TECH-SPEC §4.11, UI-SPEC §12).
+  | 'review' | 'mention' | 'assignment' | 'notification'
+export type InboxActivityKind = 'review' | 'mention' | 'assignment' | 'notification'
 export type InboxGroup = 'decision' | 'message'
 export type InboxView = 'all' | 'decisions' | 'messages' | 'snoozed' | 'done'
 export type InboxFilter = InboxView | { kind: InboxKind }
@@ -18,6 +28,11 @@ export interface InboxItem {
   group: InboxGroup
   /** Blocks an agent until answered (drives the pill badge). */
   blocking: boolean
+  /**
+   * Display title. For activity items this is the entity ref (`goal:<id>`)
+   * until the entity resolver fills in a real title — the Inbox never invents
+   * content it was not given.
+   */
   title: string
   /** Where it came from: session name, platform, … */
   source: string
@@ -25,6 +40,12 @@ export interface InboxItem {
   sessionId?: string
   /** Stable source-object identity retained through aggregation and actions. */
   sourceRef?: { domain: 'team-recipient'; organizationId: string; requestId: string; targetKind: string; targetId: string; targetRevision: string }
+  /** W1-09: the entity an activity item points at (resolved at render time). */
+  entity?: EntityRef
+  /** W1-09: the Review group of a review row (drives the «Нужно ваше подтверждение» badge). */
+  reviewGroup?: ReviewGroup
+  /** W1-09: the primary action of a review row. */
+  action?: ReviewAction
   data?: unknown
 }
 
@@ -37,6 +58,48 @@ export const EMPTY_INBOX_STATE: InboxState = { done: {}, snoozed: {} }
 
 export const DECISION_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'team-recipient']
 export const ALL_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'mail', 'team-recipient']
+export const ACTIVITY_KINDS: readonly InboxActivityKind[] = ['review', 'mention', 'assignment', 'notification']
+/** Every kind the model can produce, activity surfaces included (counts cover them). */
+export const EVERY_KIND: readonly InboxKind[] = [...ALL_KINDS, ...ACTIVITY_KINDS]
+
+/**
+ * The flag that owns each activity surface ("Inbox tabs are gated per module",
+ * PLAN §3 W1-09). Ids are the workbench flags of the owning modules; a flag
+ * registered by another wave-1/2 package simply reports off until that package
+ * lands, so nothing new is visible before its module does.
+ */
+export const INBOX_KIND_FLAGS: Readonly<Record<InboxActivityKind, string>> = {
+  review: 'goals.checkins.v1',
+  mention: 'entities.links.v1',
+  assignment: 'tasks.shared.v1',
+  notification: 'notify.inbox.v1',
+}
+
+/** The activity surfaces whose module flag is enabled (empty when none is). */
+export function enabledInboxKinds(enabledFlags: ReadonlySet<string>): ReadonlySet<InboxActivityKind> {
+  return new Set(ACTIVITY_KINDS.filter(kind => enabledFlags.has(INBOX_KIND_FLAGS[kind])))
+}
+
+/** Where a notification lands in the Inbox (UI-SPEC §12 tabs). */
+const NOTIFICATION_SURFACE: Readonly<Partial<Record<NotificationKind, InboxActivityKind>>> = {
+  mention: 'mention',
+  suggestion: 'mention',
+  comment_reply: 'mention',
+  thread_resolved: 'mention',
+  assignment: 'assignment',
+  check_in_due: 'review',
+  check_in_submitted: 'review',
+  retrospective: 'review',
+  approval_request: 'review',
+  task_due: 'review',
+  task_overdue: 'review',
+  milestone_due: 'review',
+  kpi_update_due: 'review',
+}
+
+export function inboxKindForNotification(kind: NotificationKind): InboxActivityKind {
+  return NOTIFICATION_SURFACE[kind] ?? 'notification'
+}
 
 export interface SessionLike {
   id: string
@@ -95,6 +158,26 @@ export interface PendingSenderLike {
   reason?: string
 }
 
+/** A notification row as the Inbox needs it: ids only, titles resolve later. */
+export interface InboxNotificationLike {
+  id: string
+  kind: NotificationKind
+  at: number
+  entity?: unknown
+  actorId?: string
+  read?: boolean
+}
+
+/** Narrow an untrusted ref (`{kind,id}`) to a canonical `EntityRef`. */
+function entityRefOf(value: unknown): EntityRef | undefined {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const candidate = value as { kind?: unknown; id?: unknown; fragment?: unknown }
+  if (typeof candidate.kind !== 'string' || !isEntityKind(candidate.kind)) return undefined
+  if (typeof candidate.id !== 'string' || candidate.id.length === 0) return undefined
+  if (typeof candidate.fragment === 'string' && candidate.fragment.length > 0) return { kind: candidate.kind, id: candidate.id, fragment: candidate.fragment }
+  return { kind: candidate.kind, id: candidate.id }
+}
+
 export interface InboxSources {
   sessions: readonly SessionLike[]
   permissions: ReadonlyMap<string, readonly PermissionLike[]>
@@ -104,6 +187,14 @@ export interface InboxSources {
   pendingSenders?: readonly PendingSenderLike[]
   /** Only server-confirmed addressed requests from the team domain. */
   teamInbox?: readonly TeamInboxItem[]
+  /**
+   * W1-09 (#1506): workspace notifications (Review, Mentions, Assignments,
+   * Notifications). Items whose surface is not enabled are dropped, so a
+   * module that is off contributes nothing.
+   */
+  notifications?: readonly InboxNotificationLike[]
+  /** W1-09: which activity surfaces are enabled (see `enabledInboxKinds`). */
+  enabledKinds?: ReadonlySet<InboxActivityKind>
   /** First-seen timestamps for items without their own time (keeps order stable). */
   firstSeen?: ReadonlyMap<string, number>
   now: number
@@ -227,7 +318,32 @@ export function buildInboxItems(src: InboxSources): InboxItem[] {
       data: item,
     })
   }
+  const enabled = src.enabledKinds ?? EMPTY_KIND_SET
+  for (const notification of src.notifications ?? []) {
+    const kind = inboxKindForNotification(notification.kind)
+    if (!enabled.has(kind)) continue
+    const entity = entityRefOf(notification.entity)
+    const id = `notif:${notification.id}`
+    items.push({
+      id, kind, group: kind === 'review' ? 'decision' : 'message',
+      blocking: notification.kind === 'approval_request',
+      title: entity ? formatEntityRef(entity) : notification.kind,
+      source: entity?.kind ?? notification.kind,
+      at: notification.at, data: notification,
+      ...(entity ? { entity } : {}),
+      ...(kind === 'review' ? { reviewGroup: reviewGroupFor(notification.kind) } : {}),
+    })
+  }
   return sortInbox(items)
+}
+
+const EMPTY_KIND_SET: ReadonlySet<InboxActivityKind> = new Set()
+
+/** The Review group a review-surface kind belongs to (UI-SPEC §12). */
+function reviewGroupFor(kind: NotificationKind): ReviewGroup {
+  if (kind === 'approval_request') return 'needs_approval'
+  if (kind === 'check_in_submitted' || kind === 'retrospective') return 'needs_review'
+  return 'due_soon'
 }
 
 /** Decisions first (blocking ones oldest-first: longest wait on top), then messages newest-first. */
@@ -262,7 +378,7 @@ export function filterInbox(items: readonly InboxItem[], state: InboxState, filt
 
 export function inboxCounts(items: readonly InboxItem[], state: InboxState, now: number) {
   const active = items.filter((item) => isActive(state, item, now))
-  const byKind = Object.fromEntries(ALL_KINDS.map((k) => [k, active.filter((i) => i.kind === k).length])) as Record<InboxKind, number>
+  const byKind = Object.fromEntries(EVERY_KIND.map((k) => [k, active.filter((i) => i.kind === k).length])) as Record<InboxKind, number>
   return {
     all: active.length,
     decisions: active.filter((i) => i.group === 'decision').length,

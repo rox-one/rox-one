@@ -31,6 +31,8 @@ import {
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
 import {
+  ACTIVITY_KINDS,
+  ALL_KINDS,
   filterInbox,
   markDone,
   reopen,
@@ -68,9 +70,14 @@ const KIND_TONE: Record<InboxKind, Tone> = {
   error: 'danger',
   mail: 'info',
   'team-recipient': 'info',
+  // W1-09 (#1506) — activity surfaces (only rendered while their flag is on).
+  review: 'warning',
+  mention: 'accent',
+  assignment: 'info',
+  notification: 'muted',
 }
 
-const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'team-recipient']
+const KINDS: readonly InboxKind[] = [...ALL_KINDS, ...ACTIVITY_KINDS]
 const SWITCH_CLASS = 'relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 motion-reduce:transition-none motion-reduce:before:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-60'
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
@@ -92,7 +99,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     [teamInboxEnabled, teamInboxConnected, trustedViewer, teamRoster.selfUserId, teamRoster.members, teamState],
   )
   const teamActorKey = trustedViewer && teamRoster.selfUserId ? JSON.stringify(['native', teamRoster.identityIssuer, teamRoster.selfUserId]) : null
-  const { items, state, setState, counts, now, loaded, loading, errors, staleSources, reload, workspaceId, shell, sessions, actorContext, actorContextRef: contextRef } = useInboxItems({ withRemote: true, teamInbox, teamActorKey })
+  const { items, state, setState, counts, activityKinds, now, loaded, loading, errors, staleSources, reload, workspaceId, shell, sessions, actorContext, actorContextRef: contextRef } = useInboxItems({ withRemote: true, teamInbox, teamActorKey })
   const [preferences, setPreferences] = useAtom(inboxPreferencesAtom)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<InboxPageFilter>('all')
@@ -402,7 +409,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
 
   const navigator = <InboxSidebar filter={filter} counts={filteredCounts} onSelect={setFilter} mail={mail} onSelectFolder={openFolder}
     onOpenMeetings={() => navigate(routes.view.meetings())} onConnectTeam={() => navigate(routes.view.settings('organizations'))}
-    teamNeedsConnection={teamInboxEnabled && !teamInboxConnected} />
+    teamNeedsConnection={teamInboxEnabled && !teamInboxConnected} activityKinds={activityKinds} />
 
   const row = (item: InboxItem) => {
     const sourceKey = item.kind === 'memory' ? 'memory' : item.kind === 'skill' ? 'skills' : item.kind === 'sender' ? 'senders' : null
