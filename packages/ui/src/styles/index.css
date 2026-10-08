@@ -23,6 +23,10 @@
 @plugin "@tailwindcss/typography";
 /* Inter is bundled locally (packages/ui/src/fonts/inter) — no CDN dependency. */
 @import "./inter-font-face.css";
+/* The app theme is class-driven (ThemeContext toggles `html.dark`), so bind the
+   `dark:` variant to that class instead of Tailwind's prefers-color-scheme
+   default, which ignores the in-app theme switch. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* =============================================================================
    SEMANTIC TOKENS

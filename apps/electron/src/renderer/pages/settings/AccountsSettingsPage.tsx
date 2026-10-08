@@ -390,7 +390,7 @@ export default function AccountsSettingsPage() {
                   variant={notesCloudActive ? 'ghost' : 'secondary'}
                   disabled={connecting || !workspaceId}
                   onClick={() => {
-                    setCloudLabel(connectionAccountSubtitle(notesCloud?.accountLabel, ''))
+                    setCloudLabel(notesCloud?.accountLabel ?? '')
                     setCloudToken('')
                     setCloudFormOpen(true)
                   }}

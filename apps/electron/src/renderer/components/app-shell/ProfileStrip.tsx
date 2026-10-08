@@ -122,7 +122,7 @@ export function ProfileStrip({
             'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             className,
           )}
-          aria-label={t('profile.openSettings', { name: displayName })}
+          aria-label={t('profile.openMenu', { name: displayName })}
           aria-describedby={detailsId}
           title={`${displayName} · ${accountDetails}`}
           data-tutorial="profile-strip"
