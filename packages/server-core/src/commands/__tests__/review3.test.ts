@@ -99,7 +99,7 @@ describe('one wired registry (COMMAND_MODULES)', () => {
     expect(wired).toContain('system.ping')
     expect(boundCommandTypes(createCommandRegistry())).toEqual(wired)
     expect(boundCommandTypes(getLocalCommandRegistry())).toEqual(wired)
-    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system', 'domain-schemas', 'reference-handlers'])
+    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system', 'domain-schemas', 'collab', 'drive', 'xsc', 'reference-handlers'])
   })
 
   test('every module binds idempotently', () => {

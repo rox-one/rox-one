@@ -64,7 +64,7 @@ export const eventDraftSchema = z
     call: z.boolean().optional(),
   })
   .strict()
-  .refine(event => Date.parse(event.end) > Date.parse(event.start), { message: 'event end must be after its start' })
+  .refine(event => Date.parse(event.end) > Date.parse(event.start), { message: 'event end must not precede its start' })
 
 export const viewQuerySchema = z.union([
   z.object({ kind: z.literal('saved-view'), ref: refSchema }).strict(),
@@ -122,7 +122,7 @@ export const XSC_COMMAND_SCHEMAS: CommandSchemaMap = {
     call: z.boolean().optional(),
     origin: xscOriginSchema.optional(),
     description: longTextSchema.optional(),
-  }).refine(payload => Date.parse(payload.end) > Date.parse(payload.start), { message: 'event end must be after its start' }),
+  }).refine(payload => Date.parse(payload.end) > Date.parse(payload.start), { message: 'event end must not precede its start' }),
   'calendar.create_event_from_message': cmd({
     ...createIdShape,
     origin: messageOriginSchema,

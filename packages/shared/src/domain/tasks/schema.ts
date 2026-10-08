@@ -6,6 +6,7 @@ import {
   type CommandSchemaMap,
 } from '../common'
 
+// W1-14 (#1511): the §12 create-from-* commands moved to @rox/shared/xsc.
 export const taskListIdSchema = z.enum(['inbox', 'today', 'upcoming', 'anytime', 'someday'])
 export const workItemPrioritySchema = z.enum(['none', 'low', 'normal', 'high', 'urgent'])
 export const workItemSizeSchema = z.enum(['xs', 's', 'm', 'l', 'xl'])
@@ -187,9 +188,6 @@ export const TASKS_COMMAND_SCHEMAS: CommandSchemaMap = {
   'task_list_groups.delete': emptyPayload,
   'task_statuses.update_set': cmd({ statuses: z.array(taskStatusSchema).min(1).max(30) })
     .refine(value => new Set(value.statuses.map(status => status.key)).size === value.statuses.length, { message: 'duplicate status key' }),
-  'tasks.create_from_selection': cmd({ ...createIdShape, ...originShape, docRef: refSchema, blockId: idSchema, text: z.string().min(1).max(5000) }),
-  'tasks.create_many_from_checklist': cmd({ docRef: refSchema, items: z.array(z.object({ blockId: idSchema, text: titleSchema }).strict()).min(1).max(100), listId: idSchema.optional() }),
-  'tasks.create_from_message': cmd({ ...createIdShape, ...originShape, chatId: idSchema, seq: z.number().int().nonnegative() }),
   'tasks.create_from_email': cmd({ ...createIdShape, ...originShape, threadId: idSchema, messageId: idSchema.optional() }),
 }
 

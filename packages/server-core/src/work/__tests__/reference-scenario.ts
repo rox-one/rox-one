@@ -81,7 +81,7 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('docs.restore_version', doc, { version: 1 }),
   s('docs.set_public_sharing', doc, { enabled: true }),
   s('docs.update_permissions', doc, { entries: [{ principalId: BOB, role: 'editor' }] }),
-  s('docs.suggest_changes', doc, { id: U('sugg'), kind: 'insert', anchor: { from: 1 }, summary: 'add intro' }),
+  s('docs.suggest_changes', doc, { id: U('sugg'), kind: 'insert', anchor: { start: 'AAA=', end: 'AAE=', quote: 'intro' }, summary: 'add intro' }),
   s('docs.decide_suggestion', doc, { suggestionId: U('sugg'), decision: 'accepted' }),
   s('docs.sync_suggestions', doc, { suggestionIds: [U('sugg')] }),
   s('docs.record_view', doc),

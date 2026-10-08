@@ -52,11 +52,27 @@ export const syncSuggestionsSchema = cmd({ suggestionIds: z.array(idSchema).max(
 
 export const decideSuggestionSchema = cmd({ suggestionId: idSchema, decision: z.enum(SUGGESTION_DECISIONS) })
 
+export const DOC_SUGGESTION_STATUSES = ['open', 'accepted', 'rejected', 'stale'] as const
+
+/** The mark kinds a client may report; `block` is derived from the doc structure. */
+export const SUGGESTION_MARK_KINDS = ['insert', 'delete', 'replace', 'format', 'block'] as const
+
+/**
+ * A new suggestion mark: the kind, the Y-relative anchor the mark covers and
+ * the summary the panel lists (`doc_suggestion`, 17-collab.sql).
+ */
+export const suggestChangesSchema = cmd({
+  id: idSchema.optional(),
+  kind: z.enum(SUGGESTION_MARK_KINDS.filter(kind => kind !== 'block')),
+  anchor: yAnchorSchema,
+  summary: z.string().min(1).max(2000),
+})
+
 /** `docs.record_view` and `im.mark_read` carry only their target / seq. */
 export const markReadSchema = cmd({ seq: z.number().int().nonnegative() })
 
-export const DOC_SUGGESTION_STATUSES = ['open', 'accepted', 'rejected', 'stale'] as const
-export const SUGGESTION_MARK_KINDS = ['insert', 'delete', 'replace', 'format', 'block'] as const
+/** `docs.record_view`: the doc is the target, the call carries no other input. */
+export const recordViewSchema = cmd({})
 
 /** `doc_suggestion` row (`17-collab.sql`). */
 export const docSuggestionSchema: z.ZodType<DocSuggestion> = z
@@ -109,6 +125,8 @@ export const busyBlockSchema = z.object({ start: isoDateTimeSchema, end: isoDate
 /** Payload schema per catalogue command this package owns. */
 export const COLLAB_COMMAND_SCHEMAS: CommandSchemaMap = {
   'presence.heartbeat': presenceHeartbeatSchema,
+  'docs.suggest_changes': suggestChangesSchema,
+  'docs.record_view': recordViewSchema,
   'presence.join': presenceObjectSchema,
   'presence.leave': presenceObjectSchema,
   'calendar.free_busy': freeBusySchema,
