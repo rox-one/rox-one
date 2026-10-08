@@ -156,7 +156,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
               </StyledDropdownMenuItem>
             )
           })}
-        </div>
+        </div>}
       </StyledDropdownMenuContent>
     </DropdownMenu>
   )

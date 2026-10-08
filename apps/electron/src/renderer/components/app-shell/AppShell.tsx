@@ -2832,7 +2832,7 @@ function AppShellContent({
     },
     {
       id: "nav:notes",
-      title: t(notesTitleKey(shellFlags, 'workbench.mode.notes')),
+      title: t(notesTitleKey(shellFlags, APP_NAV_DESTINATIONS_BY_ID.notes.labelKey)),
       icon: APP_NAV_DESTINATIONS_BY_ID.notes.icon,
       variant: isNotesNavigation(navState) ? "default" : "ghost",
       onClick: handleNotesClick,

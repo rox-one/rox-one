@@ -1,7 +1,8 @@
 /**
  * W1-07 (#1504, review4 #3 — owner decision): the left ActivityRail and the
  * compact destination list also list registered modes, in pill / ⌘1…7 order.
- * With every mode flag off both render exactly APP_NAV_DESTINATIONS (main).
+ * With every mode flag off the rail renders exactly the baseline seven core
+ * modes and the compact list exactly APP_NAV_DESTINATIONS (main).
  */
 import { afterEach, describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
@@ -14,7 +15,7 @@ import { getDefaultStore } from 'jotai'
 import { RESET } from 'jotai/utils'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { NavigationContext } from '@/contexts/NavigationContext'
-import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
+import { CORE_MODES } from '../modes-seed'
 import { resolveCompactWorkspaceSelection } from '@/components/app-shell/compact-workspace-navigation'
 import type { PanelStackEntry } from '@/atoms/panel-stack'
 import { ActivityRail } from '../ActivityRail'
@@ -49,7 +50,7 @@ afterEach(() => {
 const pill = (flags: Iterable<string>) => listShellModes(getModeRegistry(), {}, new Set(flags))
 
 describe('railModeEntries (pure)', () => {
-  it('all mode flags off: no extra entries → exactly APP_NAV_DESTINATIONS', () => {
+  it('all mode flags off: no extra entries beyond the baseline seven modes', () => {
     expect(railModeEntries(pill([]))).toEqual([])
   })
 
@@ -92,23 +93,35 @@ function renderRail(): string {
 
 const railIds = (html: string) => [...html.matchAll(/data-testid="(rail-(?:item|mode)-[^"]+)"/g)].map((match) => match[1])
 
+/** Baseline rail on main: the seven core modes (A1/TZ), pinned with ⌘1…7. */
+const BASELINE_RAIL_IDS = CORE_MODES.map((mode) => `rail-item-${mode.contribution.id}`)
+
 describe('ActivityRail render', () => {
-  it('all mode flags off: exactly APP_NAV_DESTINATIONS, no modes group', () => {
+  it('all mode flags off: exactly the baseline seven modes, no modes group', () => {
     const html = renderRail()
-    expect(railIds(html)).toEqual(APP_NAV_DESTINATIONS.map((dest) => `rail-item-${dest.id}`))
+    expect(railIds(html)).toEqual(BASELINE_RAIL_IDS)
     expect(html).not.toContain('data-testid="rail-modes"')
   })
 
-  it('mode flags on: destinations, then modes in pill order (incl. a wave-2 mode)', () => {
+  it('mode flags on: baseline modes, then registered modes in pill order (incl. a wave-2 mode)', () => {
     registerSeededMode(fakeMode)
     const store = getDefaultStore()
     for (const flag of [...UNIFIED_FLAGS, WIKI_FLAG]) store.set(workbenchFlagAtom(flag), true)
     const html = renderRail()
     expect(html).toContain('data-testid="rail-modes"')
-    expect(railIds(html)).toEqual([
-      ...APP_NAV_DESTINATIONS.map((dest) => `rail-item-${dest.id}`),
-      'rail-mode-messenger', 'rail-mode-calendar', 'rail-mode-goals', 'rail-mode-wiki', 'rail-mode-contacts',
-    ])
+    const extras = railModeEntries(pill([...UNIFIED_FLAGS, WIKI_FLAG])).map((mode) => `rail-mode-${mode.id}`)
+    expect(extras).toEqual(['rail-mode-messenger', 'rail-mode-calendar', 'rail-mode-goals', 'rail-mode-wiki', 'rail-mode-contacts'])
+    expect(railIds(html)).toEqual([...BASELINE_RAIL_IDS, ...extras])
+  })
+
+  it('docs.shared.v1 relabels the rail Notes mode («Документы») without touching the ids', () => {
+    const store = getDefaultStore()
+    store.set(workbenchFlagAtom(WIKI_FLAG), true)
+    const html = renderRail()
+    expect(html).toContain('workbench.mode.docs')
+    expect(html).not.toContain('workbench.mode.notes')
+    expect(railIds(html)).toContain('rail-item-notes')
+    expect(html).not.toContain('data-testid="rail-modes"')
   })
 })
 

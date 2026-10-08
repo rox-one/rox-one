@@ -32,9 +32,8 @@ import { isModeNavigable, type ModeContribution } from '@rox/core/platform'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import type { Route } from '../../shared/routes'
-import { getModeRegistry } from './mode-registry-bootstrap'
-import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
-import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
+import { CORE_MODES, type SeededMode } from './modes-seed'
+import { useShellModes } from './useModes'
 import { resolveLucideIcon } from './lucide-icon'
 import { useInboxBlockingCount } from '@/hooks/useInboxItems'
 import { handleModePillKeyDown } from './mode-pill-keyboard'
@@ -142,8 +141,7 @@ function PillItems({
 export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
   const { t, i18n } = useTranslation()
   const navState = useNavigationState()
-  const flags = useAtomValue(modeScreenFlagsAtom)
-  const modes = resolveSeededModes(getModeRegistry().list(), flags)
+  const { modes } = useShellModes()
   const activeId = modes.find((mode) => seedById[mode.id]?.isActive(navState))?.id ?? null
   const inboxBlocking = useInboxBlockingCount()
   const badges = { inbox: inboxBlocking }

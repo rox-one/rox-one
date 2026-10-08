@@ -33,6 +33,7 @@ import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
 import { ModesRailGroup } from './ModesRailGroup'
+import { useShellModes } from './useModes'
 import { routes, type Route } from '../../shared/routes'
 
 export { RailRow } from './RailRow'
@@ -131,9 +132,11 @@ export function ActivityRail() {
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
   const navState = useNavigationState()
   const modeFlags = useAtomValue(modeScreenFlagsAtom)
+  const { shellFlags } = useShellModes()
   const modes = resolveSeededModes(
     CORE_MODES.map((mode) => mode.contribution),
     modeFlags,
+    shellFlags,
   )
   const activeId = modes.find((mode) => seedById[mode.id]?.isActive(navState))?.id ?? null
 

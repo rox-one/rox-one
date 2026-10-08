@@ -552,6 +552,30 @@
       "when": null
     },
     {
+      "id": "panel.focusLeft",
+      "hotkey": "mod+alt+left",
+      "category": "Navigation",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
+      "id": "panel.focusRight",
+      "hotkey": "mod+alt+right",
+      "category": "Navigation",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
+      "id": "panel.focusUp",
+      "hotkey": "mod+alt+up",
+      "category": "Navigation",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
+      "id": "panel.focusDown",
+      "hotkey": "mod+alt+down",
+      "category": "Navigation",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
       "id": "chat.stopProcessing",
       "hotkey": "escape",
       "category": "Chat",
@@ -642,7 +666,11 @@
       "mode.slot6",
       "mode.slot7",
       "panel.focusNext",
-      "panel.focusPrev"
+      "panel.focusPrev",
+      "panel.focusLeft",
+      "panel.focusRight",
+      "panel.focusUp",
+      "panel.focusDown"
     ],
     "View": [
       "view.toggleSidebar",
@@ -852,6 +880,26 @@
       "id": "panel.focusPrev",
       "when": null,
       "hotkey": "mod+shift+["
+    },
+    {
+      "id": "panel.focusLeft",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": "mod+alt+left"
+    },
+    {
+      "id": "panel.focusRight",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": "mod+alt+right"
+    },
+    {
+      "id": "panel.focusUp",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": "mod+alt+up"
+    },
+    {
+      "id": "panel.focusDown",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": "mod+alt+down"
     },
     {
       "id": "chat.cyclePermissionMode",
