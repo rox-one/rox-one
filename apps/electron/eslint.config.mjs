@@ -17,6 +17,7 @@ import noDirectFileOpen from './eslint-rules/no-direct-file-open.cjs'
 import noInlineSourceAuthCheck from './eslint-rules/no-inline-source-auth-check.cjs'
 import noHardcodedZIndex from './eslint-rules/no-hardcoded-z-index.cjs'
 import noNonstandardShadows from './eslint-rules/no-nonstandard-shadows.cjs'
+import uiTokens from './eslint-rules/ui-tokens.cjs'
 
 export default [
   // Ignore patterns
@@ -85,6 +86,8 @@ export default [
           'no-nonstandard-shadows': noNonstandardShadows,
         },
       },
+      // UI token rules (UI-A2): warn + ratchet, see eslint-rules/ui-tokens.cjs
+      rox: uiTokens.plugin,
     },
     settings: {
       react: {
@@ -113,7 +116,12 @@ export default [
       'craft-sources/no-inline-source-auth-check': 'error',
 
       // Custom style rule — use z-index token scale instead of hardcoded literals
-      'craft-styles/no-hardcoded-z-index': 'error',
+      // (style objects; the rox rule below adds the v2 class and alias checks)
+      'craft-styles/no-hardcoded-z-index': uiTokens.Z_INDEX_V1,
+
+      // UI token rules (UI-A2, #1568). Counts are ratcheted by scripts/lint-baseline.ts
+      // against eslint-baselines/ui-tokens.json; a rule flips to error at 0.
+      ...uiTokens.rules,
 
       // Custom style rule — enforce approved shadow classes/tokens only
       'craft-styles/no-nonstandard-shadows': ['error', {
@@ -143,6 +151,12 @@ export default [
         ],
       }],
     },
+  },
+
+  // Tests assert on banned class strings on purpose; keep them outside the token ratchet.
+  {
+    files: uiTokens.TEST_FILES.map((glob) => `src/${glob}`),
+    rules: uiTokens.off,
   },
 
   // Temporary exceptions for unresolved shadow migrations.

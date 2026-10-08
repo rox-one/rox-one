@@ -9,6 +9,8 @@ import tsParser from '@typescript-eslint/parser'
 import noHardcodedZIndex from './eslint-rules/no-hardcoded-z-index.cjs'
 import noFloatingZTokensInIsland from './eslint-rules/no-floating-z-tokens-in-island.cjs'
 import noNonstandardShadows from './eslint-rules/no-nonstandard-shadows.cjs'
+// UI token rules (UI-A2, #1568) live with the electron rules; one plugin for both packages.
+import uiTokens from '../../apps/electron/eslint-rules/ui-tokens.cjs'
 
 export default [
   // Ignore patterns
@@ -40,6 +42,7 @@ export default [
           'no-nonstandard-shadows': noNonstandardShadows,
         },
       },
+      rox: uiTokens.plugin,
     },
     rules: {
       // Prevent direct Radix dropdown imports — use StyledDropdown wrappers instead
@@ -52,8 +55,12 @@ export default [
         ],
       }],
 
-      // Enforce centralized z-index token scale
-      'craft-styles/no-hardcoded-z-index': 'error',
+      // Enforce centralized z-index token scale (style objects; the rox rule adds
+      // the v2 class and deprecated-alias checks)
+      'craft-styles/no-hardcoded-z-index': uiTokens.Z_INDEX_V1,
+
+      // UI token rules: warn + ratchet (scripts/lint-baseline.ts, eslint-baselines/ui-tokens.json)
+      ...uiTokens.rules,
 
       // Enforce dedicated island z-index tokens in island components
       'craft-styles/no-floating-z-tokens-in-island': 'error',
@@ -76,6 +83,12 @@ export default [
         allowInlineNone: true,
       }],
     },
+  },
+
+  // Tests assert on banned class strings on purpose; keep them outside the token ratchet.
+  {
+    files: uiTokens.TEST_FILES.map((glob) => `src/${glob}`),
+    rules: uiTokens.off,
   },
 
   // Temporary exceptions for unresolved shadow migrations.
