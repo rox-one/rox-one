@@ -16,6 +16,7 @@ import { TEAM_FLAG, dispatchTeam, readTeamState, teamActionContext, useTeamFlag,
 import { useTeamRoster } from '@/components/team/use-team-roster'
 import { useTranslation } from 'react-i18next'
 import { navigate, routes } from '@/lib/navigate'
+import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { useInboxItems } from '@/hooks/useInboxItems'
 import {
   Badge,
@@ -25,7 +26,6 @@ import {
   GroupLabel,
   ListHeader,
   ListRow,
-  ModeScreenLayout,
   SectionLabel,
   useListKeys,
   type Tone,
@@ -55,6 +55,7 @@ import { InboxSidebar, InboxKindIcon, isMailFilter, type InboxPageFilter } from 
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
+import { toErrorMessage } from '@/lib/errors'
 
 const KIND_TONE: Record<InboxKind, Tone> = {
   permission: 'warning',
@@ -74,6 +75,7 @@ const SWITCH_CLASS = 'relative h-4 w-7 shrink-0 cursor-pointer appearance-none r
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
+  const canHandleKeyboard = usePanelKeyboardGuard()
   const tourSignals = useTourSignals()
   const listTourRef = useTourTarget('inbox.list')
   const actionsTourRef = useTourTarget('inbox.actions')
@@ -251,7 +253,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       setState((s) => markDone(s, item.id, Date.now()))
       select(next)
     } catch (error) {
-      if (contextRef.current === context) setActionError(error instanceof Error ? error.message : String(error))
+      if (contextRef.current === context) setActionError(toErrorMessage(error))
     } finally {
       if (contextRef.current === context) setBusy(null)
     }
@@ -304,7 +306,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
         }
         succeeded.add(id)
       } catch (error) {
-        failed[id] = error instanceof Error ? error.message : String(error)
+        failed[id] = toErrorMessage(error)
       }
     }
     if (contextRef.current !== context) return
@@ -333,7 +335,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       if (contextRef.current !== context) return
       after?.()
     } catch (error) {
-      if (contextRef.current === context) setActionError(error instanceof Error ? error.message : String(error))
+      if (contextRef.current === context) setActionError(toErrorMessage(error))
     } finally {
       if (contextRef.current === context) setBusy(null)
     }
@@ -363,9 +365,14 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     }
   })
 
-  const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openSession)
+  const handleListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openSession)
+  const onListKeys: typeof handleListKeys = event => {
+    if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
+    handleListKeys(event)
+  }
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || !canHandleKeyboard(event.target)) return
       if (contextRef.current !== actorContext || !actorContext.actorKey) return
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, [contenteditable="true"]')) return

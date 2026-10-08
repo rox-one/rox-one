@@ -1,0 +1,44 @@
+$ bun run scripts/electron-build-main.ts
+🔍 Verifying Session Tools Core...
+✅ Session tools core verified
+🥧 Building Pi Agent Server...
+Bundled 3345 modules in 687ms
+
+  index.js  32.0 MB  (entry point)
+
+✅ Pi agent server built successfully
+🔌 Building unified network interceptor...
+
+  apps/electron/dist/interceptor.cjs  70.2kb
+
+⚡ Done in 20ms
+✅ Interceptor built successfully
+📨 Building WhatsApp worker...
+
+  packages/messaging-whatsapp-worker/dist/worker.cjs  5.8mb ⚠️
+
+⚡ Done in 278ms
+✅ WhatsApp worker built successfully
+🎮 Building Discord worker...
+🎮 Building Discord worker (bundling discord.js) — build 2026-10-03T22:34:49.088Z (29f4c9e5a+dirty)...
+
+  packages/messaging-discord-worker/dist/worker.cjs  3.7mb ⚠️
+
+⚡ Done in 267ms
+🔍 Verifying worker output...
+✅ Discord worker built (3.74 MB) → /Users/t/Projects/rox-navigation-rebuild-20261003/packages/messaging-discord-worker/dist/worker.cjs
+✅ Discord worker built successfully
+🔨 Building extension-host worker...
+
+  apps/electron/dist/extension-host-worker.cjs  11.1kb
+
+⚡ Done in 7ms
+✅ extension-host worker built
+🔨 Building main process...
+
+  apps/electron/dist/main.cjs  55.5mb ⚠️
+
+⚡ Done in 3206ms
+⏳ Waiting for file to stabilize...
+🔍 Verifying build output...
+✅ Build complete and verified

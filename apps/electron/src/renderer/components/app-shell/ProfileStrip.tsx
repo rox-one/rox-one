@@ -13,12 +13,11 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { formatCostUsd } from './input/turn-progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import roxLogo from '@/assets/rox-logo.png'
 import type { ProfilePlan } from '../../../shared/types'
 
-const bundledDefaultAvatar = new URL(
-  '../../../../resources/default-avatar.svg',
-  import.meta.url,
-).href
+// Brand fallback: the Rox mark (same source as the app symbol).
+const bundledDefaultAvatar = roxLogo
 
 export interface ProfileStripData {
   displayName: string

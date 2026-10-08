@@ -21,6 +21,7 @@ import {
   type FirstResultCheckpoint,
   type FirstResultStore,
 } from '@rox/core/rox2'
+import { toErrorMessage } from '@/lib/errors'
 
 export const FIRST_RESULT_STORAGE_KEY = 'rox.onboarding.first-result.v1'
 export const FIRST_RESULT_ARTIFACTS_KEY = 'rox.onboarding.first-result.artifacts.v1'
@@ -151,7 +152,7 @@ export function createDefaultFirstResultPorts(api?: FirstResultHostApi | null): 
 }
 
 function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err)
+  return toErrorMessage(err)
 }
 
 export function createStorageAdapter(storage: StorageLike): FirstResultStore {

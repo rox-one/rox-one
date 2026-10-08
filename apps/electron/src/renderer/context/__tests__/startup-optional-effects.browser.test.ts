@@ -2,10 +2,11 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../test-utils/chromium-executable'
 
 const repository = resolve(import.meta.dirname, '../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/startup-optional-effects')
-const executablePath = '/usr/bin/chromium'
+const executablePath = await resolveChromiumExecutable()
 const url = 'http://127.0.0.1:5323'
 const proofDirectory = process.env.STARTUP_OPTIONAL_EFFECTS_PROOF_DIR
 type Fixture = {

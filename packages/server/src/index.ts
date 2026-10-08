@@ -236,6 +236,7 @@ const instance = await (async () => {
             nodeBin: waNodeBin,
           },
         })
+        const learning = sessionManager.getLearningRpcService()
         return {
           sessionManager,
           platform,
@@ -243,6 +244,7 @@ const instance = await (async () => {
           browserPaneManager: vpsBrowserManager ?? undefined,
           messagingRegistry: messagingHandle.registry,
           nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
+          ...(learning ? { learning } : {}),
         }
       },
       registerAllRpcHandlers: registerCoreRpcHandlers,

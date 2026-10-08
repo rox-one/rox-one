@@ -61,4 +61,3 @@ describe('full product learning catalogue', () => {
     expect(validateProductTourCatalogue(null).length).toBeGreaterThan(0)
   })
 })
-

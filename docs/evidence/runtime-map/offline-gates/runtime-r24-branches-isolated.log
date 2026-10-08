@@ -1,0 +1,15 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/sessions/__tests__/branch-from-session-id.test.ts:
+(pass) session persistence: branchFromSessionId > includes branchFromSessionId in SESSION_PERSISTENT_FIELDS [0.07ms]
+(pass) session persistence: branchFromSessionId > pickSessionFields preserves branchFromSessionId when present [0.15ms]
+(pass) session persistence: branchFromSessionId > round-trips branchFromSessionId through JSONL write/read and listSessions [5.75ms]
+
+apps/electron/src/renderer/components/session-workbench/__tests__/fan-out-jobs.test.ts:
+(pass) buildFanOutChildJobs > caps via planner and marks 8 running [0.38ms]
+(pass) buildFanOutChildJobs > throws when over 32 [0.27ms]
+
+ 5 pass
+ 0 fail
+ 13 expect() calls
+Ran 5 tests across 2 files. [825.00ms]

@@ -287,43 +287,32 @@ html .popover-styled {
 }
 
 /* =============================================================================
-   DISABLE ANIMATIONS FOR DIALOGS, DROPDOWNS, AND POPOVERS
+   EXISTING DIALOG AND MENU MOTION POLICY
 
    Radix UI (used by shadcn/ui) applies animations via data-state attributes.
-   This globally disables enter/exit animations for overlay components.
-
-   To re-enable for specific components, use: animation: revert !important;
+   Shared Popover and Tooltip primitives own their finite reveal animations.
+   Keep existing dialog/menu behavior until those components opt into motion.
 ============================================================================= */
 
 /* Dialog overlay (backdrop) */
-[data-radix-dialog-overlay] {
+[data-radix-dialog-overlay]:not([data-overlay-motion]) {
   animation: none !important;
 }
 
 /* Dialog content */
-[role="dialog"][data-state],
-[data-radix-dialog-content] {
+[role="dialog"][data-state]:not([data-overlay-motion]),
+[data-radix-dialog-content]:not([data-overlay-motion]) {
   animation: none !important;
 }
 
 /* Dropdown menu content */
-[data-radix-menu-content],
-[data-radix-dropdown-menu-content] {
-  animation: none !important;
-}
-
-/* Popover content */
-[data-radix-popover-content] {
+[data-radix-menu-content]:not([data-overlay-motion]),
+[data-radix-dropdown-menu-content]:not([data-overlay-motion]) {
   animation: none !important;
 }
 
 /* Select content */
 [data-radix-select-content] {
-  animation: none !important;
-}
-
-/* Tooltip content (if you want tooltips instant too) */
-[data-radix-tooltip-content] {
   animation: none !important;
 }
 
@@ -811,6 +800,15 @@ html .popover-styled {
     width: 100%;
     max-width: 100%;
     min-width: 0;
+  }
+
+  [data-layout="info-property"] {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  [data-layout="info-property"] > dt {
+    width: auto !important;
   }
 }
 
@@ -1341,5 +1339,30 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
     --input-surface-opaque: Canvas !important;
     --surface-titlebar-opaque: Canvas !important;
     --surface-toolbar-opaque: Canvas !important;
+  }
+}
+
+/* Chrome controls keep a mouse target floor without enlarging content rows. */
+.header-icon-btn,
+.panel-header-btn,
+.input-toolbar-btn,
+.send-btn {
+  min-width: var(--control-hit-min);
+  min-height: var(--control-hit-min);
+}
+
+[data-layout="collection-controls"] :is(button, input, select) {
+  min-width: var(--control-hit-min);
+  min-height: var(--control-hit-min);
+}
+
+@media (pointer: coarse) {
+  .header-icon-btn,
+  html[data-shell-style="zen"] .header-icon-btn,
+  .input-toolbar-btn,
+  .send-btn,
+  [data-compact] .turn-action-btn {
+    min-width: 44px;
+    min-height: 44px;
   }
 }

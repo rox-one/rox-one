@@ -4,6 +4,13 @@
  * Key paths are internal and may be reorganized freely.
  */
 export const RPC_CHANNELS = {
+  workspaceWork: {
+    READ: 'workspaceWork:read',
+    WRITE: 'workspaceWork:write',
+    DELETE: 'workspaceWork:delete',
+    SNAPSHOT_PROFILE: 'workspaceWork:snapshotProfile',
+    CHANGED: 'workspaceWork:changed',
+  },
   runtimeTrace: {
     GET_SNAPSHOT: 'runtimeTrace:getSnapshot',
     READ_EVENTS: 'runtimeTrace:readEvents',
@@ -206,6 +213,10 @@ export const RPC_CHANNELS = {
     READ: 'notes:read',
     SAVE: 'notes:save',
     CREATE: 'notes:create',
+    LIST_COMMENTS: 'notes:listComments',
+    CREATE_COMMENT: 'notes:createComment',
+    UPDATE_COMMENT: 'notes:updateComment',
+    DELETE_COMMENT: 'notes:deleteComment',
     PREPARE_CREATE: 'notes:prepareCreate',
     RENAME: 'notes:rename',
     MOVE: 'notes:move',
@@ -343,6 +354,7 @@ export const RPC_CHANNELS = {
   system: {
     VERSIONS: 'system:versions',
     HOME_DIR: 'system:homeDir',
+    CONFIG_DIR: 'system:configDir',
     IS_DEBUG_MODE: 'system:isDebugMode',
   },
   update: {
@@ -685,6 +697,34 @@ export const RPC_CHANNELS = {
     EDIT_PROPOSAL: 'memory:editProposal',
     DELETE_PROPOSAL: 'memory:deleteProposal',
     CHANGED: 'memory:changed',
+  },
+  /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
+   *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
+   *  are deliberately absent from the renderer channel map. */
+  learning: {
+    // Read
+    LIST_CANDIDATES: 'learning:listCandidates',
+    GET_CANDIDATE: 'learning:getCandidate',
+    LIST_EVIDENCE: 'learning:listEvidence',
+    GET_OUTCOME: 'learning:getOutcome',
+    GET_EXPERIMENT: 'learning:getExperiment',
+    GET_STATS: 'learning:getStats',
+    GET_SKILL_EFFECTIVENESS: 'learning:getSkillEffectiveness',
+    GET_POLICY: 'learning:getPolicy',
+    GET_TIMELINE: 'learning:getTimeline',
+    // Actions
+    APPROVE: 'learning:approve',
+    REJECT: 'learning:reject',
+    ROLLBACK: 'learning:rollback',
+    REVALIDATE: 'learning:revalidate',
+    FORCE_REFLECT: 'learning:forceReflect',
+    CONSOLIDATE: 'learning:consolidate',
+    CURATE_SKILLS: 'learning:curateSkills',
+    RUN_POLICY_LEARNING: 'learning:runPolicyLearning',
+    // Agent / native actions
+    OBSERVE: 'learning:observe',
+    RECORD_OUTCOME: 'learning:recordOutcome',
+    RECORD_CORRECTION: 'learning:recordCorrection',
   },
   statuses: {
     LIST: 'statuses:list',
@@ -1074,6 +1114,15 @@ export const RPC_CHANNELS = {
     RESOLVE: 'entities:resolve',
     /** Push: local link store changed for a workspace. */
     LINKS_CHANGED: 'entities:linksChanged',
+  },
+  // W1-03 (#1500)
+  commands: {
+    /** Execute a CommandEnvelope through the command bus; returns a CommandReceipt. */
+    EXECUTE: 'commands:execute',
+    /** Capability discovery: registered commands with {available, reason}. */
+    LIST: 'commands:list',
+    /** Push: realtime event frame or command-bus status for a workspace. */
+    EVENT: 'commands:event',
   },
 } as const
 

@@ -1,3 +1,5 @@
+import type { KanbanBoardConfig } from '@rox/shared/kanban/browser'
+import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import type { BuiltInKanbanColumnId, KanbanColumnId, KanbanColumnMeta } from './types'
 
 /** Expanded column min-width so five columns fit ~1400px with gap. */
@@ -51,6 +53,45 @@ export const KANBAN_COLUMNS: readonly (KanbanColumnMeta & {
     isBuiltIn: true,
   },
 ] as const
+
+const BUILTIN_COLUMNS_BY_ID: Record<string, (typeof KANBAN_COLUMNS)[number]> = Object.fromEntries(
+  KANBAN_COLUMNS.map(column => [column.id, column] as const),
+)
+
+/**
+ * Resolve the board's effective columns for a workspace.
+ *
+ * Merges `kanban/config.json` onto the built-in defs: config wins for
+ * label/color/collapsed/prompt/dropStatus; built-ins keep their `labelKey` so
+ * consumers can localize when no override label is set. Custom columns are
+ * appended in config order. Falls back to `KANBAN_COLUMNS` when no config exists.
+ */
+export function resolveBoardColumns(config: KanbanBoardConfig | null): KanbanColumnMeta[] {
+  if (!config?.columns?.length) {
+    return KANBAN_COLUMNS.map(c => ({
+      ...c,
+      color: DEFAULT_KANBAN_COLUMN_COLORS[c.id],
+      collapsed: c.defaultCollapsed ?? false,
+    }))
+  }
+
+  return config.columns.map(col => {
+    const builtin = BUILTIN_COLUMNS_BY_ID[col.id]
+    const isBuiltIn = col.isBuiltIn ?? !!builtin
+    return {
+      id: col.id,
+      labelKey: builtin?.labelKey,
+      name: col.label,
+      color: col.color ?? (builtin ? DEFAULT_KANBAN_COLUMN_COLORS[builtin.id] : undefined),
+      dropStatusId: col.dropStatusId ?? builtin?.dropStatusId ?? (isBuiltIn ? col.id : undefined),
+      defaultCollapsed: builtin?.defaultCollapsed,
+      collapsed: col.collapsed ?? builtin?.defaultCollapsed ?? false,
+      promptEnabled: col.promptEnabled,
+      prompt: col.prompt,
+      isBuiltIn,
+    } satisfies KanbanColumnMeta
+  })
+}
 
 /**
  * Default board placement for a status id.

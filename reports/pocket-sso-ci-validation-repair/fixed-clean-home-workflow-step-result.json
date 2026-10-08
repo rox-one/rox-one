@@ -1,0 +1,23 @@
+{
+  "exitCode": 1,
+  "home": "/tmp/rox-pocket-ci-full-step-home-fnyjawg5",
+  "ambientHomeModelsPresentAfter": false,
+  "exactWorkflowStep": true,
+  "files": 10,
+  "command": [
+    "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+    "test",
+    "--timeout",
+    "180000",
+    "packages/shared/src/auth/__tests__/rox-account-authority.test.ts",
+    "packages/shared/src/auth/__tests__/rox-pocket-client.test.ts",
+    "apps/electron/src/main/__tests__/pocket-account-store.test.ts",
+    "apps/electron/src/main/__tests__/pocket-account-store-durable-write.test.ts",
+    "scripts/probes/pocket-vault-diagnostics.test.ts",
+    "packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts",
+    "packages/server-core/src/sessions/pocket-helper-owner.test.ts",
+    "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts",
+    "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts",
+    "packages/shared/src/agent/__tests__/omp-public-runtime.test.ts"
+  ]
+}

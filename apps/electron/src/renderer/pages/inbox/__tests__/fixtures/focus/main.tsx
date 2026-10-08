@@ -5,7 +5,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import InboxPage from '../../../../InboxPage'
 import { Context } from './context'
-import { sessionMetaMapAtom } from './sessions'
+import { sessionMetaMapAtom, windowWorkspaceIdAtom } from './sessions'
 import type { MailLocalApi, MailSummary, MailStatus } from '../../../../../../shared/mail-local'
 import en from '../../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import '@/index.css'
@@ -66,6 +66,7 @@ await i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en', resources:
 function App() {
   const [workspace, setWorkspace] = useState('workspace-A')
   fixture.switchWorkspace = setWorkspace
+  store.set(windowWorkspaceIdAtom, workspace)
   return <Provider store={store}><Context.Provider value={{ activeWorkspaceId: workspace, pendingPermissions: new Map(), pendingCredentials: new Map(), onRespondToPermission: async () => {} }}><div className="h-screen w-full overflow-hidden"><InboxPage /></div></Context.Provider></Provider>
 }
 createRoot(document.getElementById('root')!).render(mode === 'identity-strict' ? <React.StrictMode><App /></React.StrictMode> : <App />)

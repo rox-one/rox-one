@@ -12,6 +12,7 @@ import { detectEngine } from './local-asr'
 import { IMPORTABLE_AUDIO_EXTENSIONS, isMeetingId } from './local-model'
 import { LocalMeetingStore, type LocalTranscriptionContext } from './local-store'
 import { MeetingCloudAsr } from './cloud-asr'
+import { WorkspaceWorkStore } from '@rox/server-core/workspace-work/store'
 import { isAllowedServerEndpoint } from '../server-endpoint-policy'
 
 let store: LocalMeetingStore | null = null
@@ -101,6 +102,15 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
     },
   })
   const s = new LocalMeetingStore({ root, detectEngine: (meeting) => cloud.engine(meeting?.workspaceId ?? null),
+    validateTaskReference: (meeting, actionId, ref) => {
+      if (ref.scope === 'personal') return true
+      if (!meeting.workspaceId || ref.workspaceId !== meeting.workspaceId) return false
+      const workspace = getWorkspaceByNameOrId(meeting.workspaceId)
+      if (!workspace || workspace.id !== ref.workspaceId || workspace.remoteServer) return false
+      const resolution = new WorkspaceWorkStore(workspace.rootPath, workspace.id).resolveTask(ref.id)
+      return resolution.status === 'available' && resolution.task.links.some(link => link.kind === 'meeting' &&
+        link.workspaceId === workspace.id && link.id === meeting.id && link.anchor === actionId)
+    },
     transcribeCloud: (input, meeting, context) => cloud.transcribe(input, meeting, context),
     getTranscriptionContext: (meeting) => {
       if (!meeting.workspaceId) return undefined
@@ -161,7 +171,20 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
   handle(C.EXTRACTION_ATTACH, (e, id: string, input: Parameters<LocalMeetingStore['attachExtraction']>[1]) => { meetingContext(e, id); return s.attachExtraction(id, input) })
   handle(C.EXTRACTION_FINISH, (e, id: string, input: Parameters<LocalMeetingStore['finishExtraction']>[1]) => { meetingContext(e, id); return s.finishExtraction(id, input) })
   handle(C.EXTRACTION_FAIL, (e, id: string, input: Parameters<LocalMeetingStore['failExtraction']>[1]) => { meetingContext(e, id); return s.failExtraction(id, input) })
-  handle(C.ACTION_SAVE, (e, id: string, input: Parameters<LocalMeetingStore['saveAction']>[1]) => { meetingContext(e, id); return s.saveAction(id, input) })
+  handle(C.ACTION_SAVE, (e, id: string, input: Parameters<LocalMeetingStore['saveAction']>[1]) => {
+    const { meeting } = meetingContext(e, id)
+    const ref = input?.patch?.taskRef
+    if (ref?.scope === 'workspace') {
+      if (!meeting.workspaceId || ref.workspaceId !== meeting.workspaceId) return { ok: false, code: 'WORKSPACE_MISMATCH' }
+      const workspace = getWorkspaceByNameOrId(meeting.workspaceId)
+      if (!workspace || workspace.id !== ref.workspaceId || workspace.remoteServer) return { ok: false, code: 'task-storage-unavailable' }
+      const resolution = new WorkspaceWorkStore(workspace.rootPath, workspace.id).resolveTask(ref.id)
+      if (resolution.status !== 'available' || !resolution.task.links.some(link => link.kind === 'meeting' && link.workspaceId === workspace.id && link.id === id && link.anchor === input.actionId)) {
+        return { ok: false, code: 'task-link-unavailable' }
+      }
+    }
+    return s.saveAction(id, input)
+  })
   handle(C.TRASH, async (e, id: string) => {
     if (!isMeetingId(id) || !s.canRemove(id)) return false
     meetingContext(e, id)

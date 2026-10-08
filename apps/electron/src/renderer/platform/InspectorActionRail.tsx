@@ -18,15 +18,13 @@ import {
 } from '@/atoms/panel-stack'
 import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
 import { bottomTerminalOpenAtom, inspectorUserOpenedAtom, inspectorVisibleAtom } from '@/atoms/unified-shell'
-import {
-  ROX_MEETINGS_COMPOSE_EVENT,
-  ROX_NOTES_COMPOSE_EVENT,
-  ROX_TASKS_COMPOSE_EVENT,
-} from './inspector-compose-events'
+import { requestCompose } from './inspector-compose-events'
 import { useNavigation } from '@/contexts/NavigationContext'
-import { routes, type ViewRoute } from '../../shared/routes'
+import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { cn } from '@/lib/utils'
 import { CHROME_DENSITY } from './chrome-density'
+// W1-07 (#1504): «+» becomes the §3.2 create menu once a flagged entry is visible.
+import { GlobalCreateMenu } from './GlobalCreateMenu'
 
 const INSPECTOR_RAIL_WIDTH = CHROME_DENSITY.railWidth
 
@@ -96,22 +94,29 @@ export function InspectorActionRail({
   )
 
   const onNewSession = useCallback(() => {
-    void navigate(routes.action.newSession())
+    // A2: "Плюсик … это должен быть запуск новой сессии … должна открываться
+    // панель с новой сессией" — open it in a new panel instead of replacing the
+    // focused one; pushPanel auto-focuses the created panel.
+    void navigate(routes.action.newSession(), { newPanel: true })
   }, [navigate])
 
+  // A2 (стр. 42-47): a create button opens the create sub-page of a *new*
+  // adjacent panel. The request is recorded before the panel is pushed and
+  // consumed by that screen when it mounts — dispatch-after-push would race
+  // the mount and was silently lost when the screen was not already open.
   const onNewTask = useCallback(() => {
+    requestCompose('tasks')
     openAdjacent(routes.view.tasks())
-    window.dispatchEvent(new CustomEvent(ROX_TASKS_COMPOSE_EVENT, { detail: { mode: 'create' } }))
   }, [openAdjacent])
 
   const onNewEvent = useCallback(() => {
+    requestCompose('meetings')
     openAdjacent(routes.view.meetings())
-    window.dispatchEvent(new CustomEvent(ROX_MEETINGS_COMPOSE_EVENT, { detail: { mode: 'create' } }))
   }, [openAdjacent])
 
   const onNewNote = useCallback(() => {
+    requestCompose('notes')
     openAdjacent(routes.view.notes())
-    window.dispatchEvent(new CustomEvent(ROX_NOTES_COMPOSE_EVENT, { detail: { mode: 'create' } }))
   }, [openAdjacent])
 
   const onBrowser = useCallback(() => {
@@ -144,9 +149,26 @@ export function InspectorActionRail({
       style={{ width: INSPECTOR_RAIL_WIDTH }}
       data-inspector-action-rail
     >
-      <ActionButton label={t('inspector.action.newSession')} onClick={onNewSession}>
-        <Plus className="h-4 w-4" />
-      </ActionButton>
+      <GlobalCreateMenu
+        label={t('surfaces.create.menu')}
+        navigate={(route) => void navigate(route as Route)}
+        host={{ newSession: onNewSession, newTask: onNewTask, newEvent: onNewEvent, newNote: onNewNote, browser: onBrowser, terminal: onTerminal }}
+        trigger={({ label }) => (
+          <button
+            type="button"
+            aria-label={label}
+            data-global-create-trigger
+            className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-foreground/45 transition-colors hover:bg-foreground/5 hover:text-foreground"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        )}
+        fallback={
+          <ActionButton label={t('inspector.action.newSession')} onClick={onNewSession}>
+            <Plus className="h-4 w-4" />
+          </ActionButton>
+        }
+      />
       <ActionButton label={t('inspector.action.newTask')} onClick={onNewTask}>
         <SquareCheck className="h-4 w-4" />
       </ActionButton>
@@ -160,18 +182,27 @@ export function InspectorActionRail({
         <Globe className="h-4 w-4" />
       </ActionButton>
       <div className="mt-auto flex flex-col items-center gap-0.5">
-        <ActionButton
-          label={t('inspector.pin')}
-          active={edgeMode === 'pinned'}
-          onClick={onPin}
-        >
-          <Pin className="h-4 w-4" />
-        </ActionButton>
-        <ActionButton label={t('inspector.action.terminal')} active={terminalActive} onClick={onTerminal}>
-          <SquareTerminal className="h-4 w-4" />
-        </ActionButton>
+        {/* A4: the pin affordance appears only in the hover-revealed state. In
+            the closed/pinned rail the slot stays empty.
+            A2: low group mirrors the left rail — «Скрыть» (the same height as
+            the sidebar toggle there) sits above the terminal call, and
+            «терминал» is the lowest control ("в самой нижней кнопочке у нас
+            вызов терминала. Потом выше чуть-чуть идет пространство … и дальше
+            кнопочка вскрытия и раскрытия сайдбара"). */}
+        {edgeMode === 'hover' && (
+          <ActionButton
+            label={t('inspector.pin')}
+            onClick={onPin}
+          >
+            <Pin className="h-4 w-4" />
+          </ActionButton>
+        )}
         <ActionButton label={t('inspector.hide')} onClick={onCollapse}>
           <ChevronsRight className="h-4 w-4" />
+        </ActionButton>
+        <div className="pt-1.5" />
+        <ActionButton label={t('inspector.action.terminal')} active={terminalActive} onClick={onTerminal}>
+          <SquareTerminal className="h-4 w-4" />
         </ActionButton>
       </div>
     </div>

@@ -91,8 +91,9 @@ export class SourceManager {
     const active = this.getActiveSlugs();
     const intended = this.getIntendedSlugs();
     this.config.onDebug?.(`Active sources: ${[...active].join(', ') || 'none'}`);
-    const failed = [...intended].filter(slug => !active.has(slug)
-      && this.allSources.find(source => source.config.slug === slug)?.config.type !== 'local');
+    const failed = this.allSources.filter(source =>
+      source.config.type !== 'local' && intended.has(source.config.slug) && !active.has(source.config.slug)
+    ).map(source => source.config.slug);
     if (failed.length > 0) this.config.onDebug?.(`Sources with failed builds: ${failed.join(', ')}`);
   }
 

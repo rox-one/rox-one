@@ -121,5 +121,9 @@ export function getDefaultProviderType(provider: AgentProvider): LlmProviderType
       return 'pi';
     case 'omp':
       return 'omp';
+    case 'rox':
+      return 'omp';
+    default:
+      return 'anthropic';
   }
 }

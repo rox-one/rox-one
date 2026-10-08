@@ -24,13 +24,23 @@ const crypto = require('crypto');
 
 function hasCurrentAssetProvenance(assetsCar, sourceSvg) {
   const provenanceFile = `${assetsCar}.source-sha256`;
-  if (!fs.existsSync(provenanceFile)) {
+  // Deterministic fallback: any missing file or read error means "no provenance"
+  // and the app falls back to icon.icns. Never throw out of the build.
+  try {
+    if (!fs.existsSync(provenanceFile) || !fs.existsSync(sourceSvg)) {
+      return false;
+    }
+
+    const recordedHash = fs.readFileSync(provenanceFile, 'utf8').trim();
+    if (!recordedHash) {
+      return false;
+    }
+    const sourceHash = crypto.createHash('sha256').update(fs.readFileSync(sourceSvg)).digest('hex');
+    return recordedHash === sourceHash;
+  } catch (err) {
+    console.log(`Warning: could not verify Assets.car provenance (${err.message}); using fallback icon.icns`);
     return false;
   }
-
-  const recordedHash = fs.readFileSync(provenanceFile, 'utf8').trim();
-  const sourceHash = crypto.createHash('sha256').update(fs.readFileSync(sourceSvg)).digest('hex');
-  return recordedHash === sourceHash;
 }
 
 module.exports = async function afterPack(context) {

@@ -15,7 +15,7 @@ function render(platform: string, locale: string) {
     join(import.meta.dir, 'fixtures/shortcut-hints.tsx'), platform, locale,
   ], { cwd: root, env: process.env })
   if (result.exitCode !== 0) throw new Error(result.stderr.toString())
-  return JSON.parse(result.stdout.toString()) as Record<'tasks' | 'detail' | 'quickEntry' | 'memory' | 'meetings' | 'selection' | 'registry', string>
+  return JSON.parse(result.stdout.toString()) as Record<'tasks' | 'detail' | 'quickEntry' | 'memory' | 'learning' | 'meetings' | 'selection' | 'registry', string>
 }
 
 describe('ROX-004 rendered shortcut hints', () => {
@@ -40,6 +40,7 @@ describe('ROX-004 rendered shortcut hints', () => {
         // deliberately not mounted. Catalog interpolation is covered below.
         expect(html.memory).toContain('data-testid="memory-search"')
         expect(html.memory).not.toContain('data-testid="memory-detail-empty"')
+        expect(html.learning).toContain('data-testid="learning-screen"')
         expect(html.meetings).toContain(mac ? '⌘F' : 'Ctrl+F')
         expect(html.selection).toContain(mac ? '⇧' : 'Shift')
         expect(html.selection).toContain(mac ? '⌘' : 'Ctrl')

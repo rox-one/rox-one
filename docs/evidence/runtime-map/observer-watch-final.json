@@ -1,0 +1,48 @@
+{
+  "class": "actual-filesystem-watcher-and-production-bridge-with-bounded-fixture-frames",
+  "assertionsPassed": true,
+  "sourceRevision": "d8d48783c543cf202b399631e91d9b6355fb523a",
+  "sourceRevisionBefore": "d8d48783c543cf202b399631e91d9b6355fb523a",
+  "sourceSha256": {
+    "observer": "8ba08484b8d053a853bab11a58ed649cce0b072daef7b3f13ac1e5d3c0ff6a12",
+    "bridge": "5bd28405544e1e55759667a4f8d9f2ac4aa61e6ca0e086a7a3c573de76626203",
+    "test": "025bf5849550dfdc6e46532cf23ebd6a07155cc1e06f20b7e236950e0c5c755c"
+  },
+  "measuredSourcesStable": true,
+  "clockScope": "Bun performance.now() in one process, append initiation to actual observer callback; includes local scheduling and preceding drain work",
+  "environment": {
+    "platform": "linux",
+    "kernel": "6.18.44",
+    "bun": "1.3.14",
+    "nodeCompatibility": "24.3.0",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "availableParallelism": 8,
+    "totalMemoryBytes": 10451464192
+  },
+  "measurements": {
+    "physicalFrames": 97,
+    "uniqueSourceFrames": 95,
+    "exactReplaysDroppedByBridge": 2,
+    "sourceGap": {
+      "first": 40,
+      "last": 40,
+      "coverageEvents": 1
+    },
+    "appendedButUndeliveredFramesHighWater": 32,
+    "queuedFramesAfterBursts": 0,
+    "deliveryMs": 25.268689999999992,
+    "mapMs": 4.393220999999812,
+    "appendToCallbackMs": {
+      "p50": 1.4190790000000106,
+      "p95": 4.690765999999996,
+      "max": 4.746389000000022
+    },
+    "frameLimitBytes": 524288,
+    "oversizedFramesRejected": 1
+  },
+  "limits": [
+    "Controlled fixture frames exercise production filesystem transport and bridge, not SDK/provider execution.",
+    "Measured local latency is not a global product budget or an installed-platform acceptance claim.",
+    "The 64 MiB producer spool quota and emitter-count quota are not exercised by this bounded decoder test."
+  ]
+}

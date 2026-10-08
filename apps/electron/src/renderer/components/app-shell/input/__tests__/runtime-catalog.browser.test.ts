@@ -2,10 +2,11 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } fr
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as domExpect, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 const repository = resolve(import.meta.dir, '../../../../../../../..')
 const fixture = resolve(import.meta.dir, 'fixtures/runtime-catalog')
-const executable = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium'
+const executable = await resolveChromiumExecutable()
 const fixtureUrl = process.env.RUNTIME_CATALOG_FIXTURE_URL ?? 'http://127.0.0.1:5271'
 const proofDirectory = process.env.RUNTIME_CATALOG_PROOF_DIR
 
