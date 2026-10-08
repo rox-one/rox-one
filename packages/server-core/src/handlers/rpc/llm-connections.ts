@@ -42,11 +42,11 @@ function shouldRefreshOAuth(oauth: StoredLlmOAuth): boolean {
   return isTokenExpired(oauth.expiresAt)
 }
 
-async function refreshLlmOAuthIfNeeded(
+/** Read stored OAuth for a connection (no network), migrating legacy Claude creds. */
+async function readLlmOAuth(
   connection: LlmConnection,
   manager: ReturnType<typeof getCredentialManager>,
-  logger?: HandlerDeps['platform']['logger'],
-): Promise<{ oauth: StoredLlmOAuth | null; refreshError?: string }> {
+): Promise<StoredLlmOAuth | null> {
   let oauth = await manager.getLlmOAuth(connection.slug)
 
   // Fallback: for Anthropic connections whose credentials predate per-connection
@@ -63,6 +63,39 @@ async function refreshLlmOAuthIfNeeded(
       oauth = await manager.getLlmOAuth(connection.slug)
     }
   }
+  return oauth
+}
+
+/**
+ * Last automatic-refresh outcome per connection slug, so a listing that skips
+ * the network (`refresh: false`) still reports a failure a previous refresh
+ * hit, exactly like the refreshing listing does.
+ */
+const oauthRefreshErrors = new Map<string, { refreshToken: string | undefined; error: string }>()
+
+/** A recorded failure only applies while the same refresh token is stored (re-auth clears it). */
+function knownOAuthRefreshError(slug: string, oauth: StoredLlmOAuth | null): string | undefined {
+  const known = oauthRefreshErrors.get(slug)
+  return known && oauth && known.refreshToken === oauth.refreshToken ? known.error : undefined
+}
+
+async function refreshLlmOAuthIfNeeded(
+  connection: LlmConnection,
+  manager: ReturnType<typeof getCredentialManager>,
+  logger?: HandlerDeps['platform']['logger'],
+): Promise<{ oauth: StoredLlmOAuth | null; refreshError?: string }> {
+  const result = await refreshLlmOAuthIfNeededUncached(connection, manager, logger)
+  if (result.refreshError) oauthRefreshErrors.set(connection.slug, { refreshToken: result.oauth?.refreshToken, error: result.refreshError })
+  else oauthRefreshErrors.delete(connection.slug)
+  return result
+}
+
+async function refreshLlmOAuthIfNeededUncached(
+  connection: LlmConnection,
+  manager: ReturnType<typeof getCredentialManager>,
+  logger?: HandlerDeps['platform']['logger'],
+): Promise<{ oauth: StoredLlmOAuth | null; refreshError?: string }> {
+  const oauth = await readLlmOAuth(connection, manager)
 
   if (!oauth) return { oauth: null }
   if (!shouldRefreshOAuth(oauth)) return { oauth }
@@ -105,6 +138,43 @@ async function refreshLlmOAuthIfNeeded(
     logger?.warn(`OAuth auto-refresh failed for ${connection.slug}: ${message}`)
     return { oauth, refreshError: message }
   }
+}
+
+/** Options for LIST_WITH_STATUS. Omitted = `{ refresh: true }` (legacy behaviour). */
+export interface ListLlmConnectionsWithStatusOptions {
+  /**
+   * `false`: never wait on the network. Expiring OAuth tokens are refreshed in
+   * the background and `llmConnections.CHANGED` is pushed when that finishes;
+   * agents still refresh on use. Used by the renderer's startup listing.
+   */
+  refresh?: boolean
+}
+
+const backgroundOAuthRefreshes = new Set<string>()
+
+/** Refresh expiring OAuth tokens off the request path, then notify listeners once. */
+function scheduleBackgroundOAuthRefresh(
+  server: RpcServer,
+  connections: readonly LlmConnection[],
+  logger?: HandlerDeps['platform']['logger'],
+): void {
+  const pending = connections.filter(conn => !backgroundOAuthRefreshes.has(conn.slug))
+  if (pending.length === 0) return
+  for (const conn of pending) backgroundOAuthRefreshes.add(conn.slug)
+  const timer = setTimeout(() => {
+    const manager = getCredentialManager()
+    void Promise.allSettled(pending.map(conn => refreshLlmOAuthIfNeeded(conn, manager, logger)))
+      .then(() => {
+        pushTyped(server, RPC_CHANNELS.llmConnections.CHANGED, { to: 'all' })
+      })
+      .catch((error: unknown) => {
+        logger?.warn(`Background OAuth refresh notification failed: ${error instanceof Error ? error.message : String(error)}`)
+      })
+      .finally(() => {
+        for (const conn of pending) backgroundOAuthRefreshes.delete(conn.slug)
+      })
+  }, 0)
+  ;(timer as { unref?: () => void }).unref?.()
 }
 
 export const HANDLED_CHANNELS = [
@@ -562,20 +632,41 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
   })
 
   // List all LLM connections with authentication status
-  server.handle(RPC_CHANNELS.llmConnections.LIST_WITH_STATUS, async (): Promise<LlmConnectionWithStatus[]> => {
+  server.handle(RPC_CHANNELS.llmConnections.LIST_WITH_STATUS, async (_ctx, options?: ListLlmConnectionsWithStatusOptions): Promise<LlmConnectionWithStatus[]> => {
     const connections = getLlmConnections()
     const credentialManager = getCredentialManager()
     const defaultSlug = getDefaultLlmConnection()
+    const refresh = options?.refresh !== false
+    const deferredRefresh: LlmConnection[] = []
 
-    return Promise.all(connections.map(async (conn): Promise<LlmConnectionWithStatus> => {
-      const { oauth, refreshError } = conn.authType === 'oauth'
-        ? await refreshLlmOAuthIfNeeded(conn, credentialManager, deps.platform.logger)
-        : { oauth: null, refreshError: undefined }
+    const listed = await Promise.all(connections.map(async (conn): Promise<LlmConnectionWithStatus> => {
+      let oauth: StoredLlmOAuth | null = null
+      let refreshError: string | undefined
+      // Expired-but-refreshable token whose refresh was deferred to the background.
+      let refreshPending = false
+      if (conn.authType === 'oauth') {
+        if (refresh) {
+          ({ oauth, refreshError } = await refreshLlmOAuthIfNeeded(conn, credentialManager, deps.platform.logger))
+        } else {
+          oauth = await readLlmOAuth(conn, credentialManager)
+          if (oauth && shouldRefreshOAuth(oauth)) {
+            refreshError = knownOAuthRefreshError(conn.slug, oauth)
+            deferredRefresh.push(conn)
+            // Report it the way a successful refresh would (agents refresh on
+            // use); a known failure keeps the expired/failed status.
+            refreshPending = !refreshError
+          }
+        }
+      }
 
       // Check if credentials exist for this connection after any automatic refresh.
       const hasCredentials = await credentialManager.hasLlmCredentials(conn.slug, conn.authType, conn.providerType)
-      const oauthTimeRemainingMs = oauth?.expiresAt ? oauth.expiresAt - Date.now() : undefined
+      const rawTimeRemainingMs = oauth?.expiresAt ? oauth.expiresAt - Date.now() : undefined
+      const oauthTimeRemainingMs = refreshPending && rawTimeRemainingMs !== undefined && rawTimeRemainingMs <= 0
+        ? undefined
+        : rawTimeRemainingMs
       const oauthExpired = conn.authType === 'oauth'
+        && !refreshPending
         && !!oauth?.expiresAt
         && oauth.expiresAt <= Date.now()
 
@@ -625,6 +716,8 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
         isDefault: conn.slug === defaultSlug,
       }
     }))
+    if (deferredRefresh.length > 0) scheduleBackgroundOAuthRefresh(server, deferredRefresh, deps.platform.logger)
+    return listed
   })
 
   // Get a specific LLM connection by slug

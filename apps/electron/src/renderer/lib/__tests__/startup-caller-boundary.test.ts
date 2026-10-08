@@ -56,6 +56,7 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     setWorkspaceDefaultLlmConnection: (value: unknown) => workspaceConfigurations.push(value),
     setAppState: (value: string) => states.push(value), setStartupBootstrapError: (value: unknown) => errors.push(value),
     resolveDefaultConnectionSlug: (connections: Array<{ slug: string }>) => connections[0]?.slug,
+    startupLlmConnectionsPublishedRef: { current: false },
     // Even a stale profile fixture cannot act as startup identity.
     usernameConfirmed: true, storage: { get: () => true },
     t: (key: string) => key, console: { error: () => {} },
@@ -97,7 +98,8 @@ describe('actual App startup caller boundary', () => {
     expect(h.workspaces).toEqual(['ws-a'])
     expect(h.configurations).toEqual([[], 'omp'])
     expect(h.calls.filter((call: string) => call === 'workspace')).toHaveLength(2)
-    expect(h.calls.filter((call: string) => call === 'identity')).toHaveLength(3)
+    // Initial read + final readback; the runtime check reuses the initial identity.
+    expect(h.calls.filter((call: string) => call === 'identity')).toHaveLength(2)
     expect(h.calls).not.toContain('host-accounts')
     expect(h.calls).not.toContain('setup')
   })
@@ -109,6 +111,20 @@ describe('actual App startup caller boundary', () => {
     expect(h.authorities).toEqual(['local'])
     expect(h.calls).toContain('host-accounts')
     expect(h.calls).not.toContain('summary')
+  })
+
+  it('local startup lists connections once, without an OAuth refresh, and reuses the list', async () => {
+    const listOptions: unknown[] = []
+    const ref = { current: false }
+    const h = harness({
+      getOrgIdentity: async () => ({ ...nativeIdentity, authority: 'local' }),
+      listLlmConnectionsWithStatus: async (options?: unknown) => { listOptions.push(options); return [{ slug: 'existing', isDefault: true, providerType: 'omp' }] },
+    }, { startupLlmConnectionsPublishedRef: ref })
+    await h.run()
+    expect(h.states).toEqual(['ready'])
+    expect(listOptions).toEqual([{ refresh: false }])
+    expect(h.configurations).toEqual([[{ slug: 'existing', isDefault: true, providerType: 'omp' }], 'existing'])
+    expect(ref.current).toBe(true)
   })
 
   it('authoritative null workspace remains a picker result and never invokes transport recovery', async () => {

@@ -921,6 +921,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     setShowResetDialog(true)
   }, [])
 
+  // Set when startup published the LLM connection list for a ready local app.
+  const startupLlmConnectionsPublishedRef = useRef(false)
+
   // Check auth state and get window's workspace ID on mount
   useEffect(() => {
     let cancelled = false
@@ -941,10 +944,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         }
         // A failed read is unavailable, never evidence of an absent workspace
         // or a completed Welcome. Only fresh caller identity can authorize entry.
-        let workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+        // Independent reads run together; results are still judged in order.
+        const initialProbes = await Promise.all([
+          probeWithRetry(() => window.electronAPI.getWindowWorkspace()),
+          probeWithRetry(() => window.electronAPI.getOrgIdentity()),
+          probeWithRetry(() => window.electronAPI.getRoxCloudState()),
+        ])
         if (cancelled) return
-        const identityProbe = await probeWithRetry(() => window.electronAPI.getOrgIdentity())
-        if (cancelled) return
+        let workspaceProbe = initialProbes[0]
+        const identityProbe = initialProbes[1]
         if (!identityProbe.ok) throw identityProbe.error
         const identity = identityProbe.value
         if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
@@ -957,6 +965,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           if (!setupProbe.ok) throw setupProbe.error
           startupSetupNeeds = setupProbe.value
         }
+        // The cloud read is reused unless transport recovery runs below.
+        let cloudProbe = initialProbes[2]
         if (!workspaceProbe.ok) {
           if (isStartupAuthorityDenial(workspaceProbe.error)) throw workspaceProbe.error
           const transportProbe = await probeWithRetry(
@@ -967,10 +977,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           if (!transportProbe.ok) throw transportProbe.error
           workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
           if (cancelled) return
+          if (workspaceProbe.ok) {
+            cloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
+            if (cancelled) return
+          }
         }
         if (!workspaceProbe.ok) throw workspaceProbe.error
-        const cloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
-        if (cancelled) return
         if (!cloudProbe.ok) throw cloudProbe.error
         if (cloudProbe.value.required && !cloudProbe.value.connected) {
           startupSetupNeeds = { ...(startupSetupNeeds ?? { needsBillingConfig: false, needsCredentials: false, isFullyConfigured: false }), needsRoxCloud: true, shouldShowOnboardingOnLaunch: true, isFullyConfigured: false }
@@ -981,8 +993,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         let startupRuntimeSummary: StartupRuntimeSummary | null = null
         let startupDefaultSlug: string | undefined
         if (startupState !== 'onboarding') {
+          // Reuse the identity read above and the runtime check's own connection
+          // list (when it changed nothing); skip the OAuth network refresh at boot.
+          const runtimeRead: { connections: readonly LlmConnectionWithStatus[] | null } = { connections: null }
           const runtimeProbe = await probeWithRetry(
-            () => ensureRoxRuntimeDefault(window.electronAPI), { delaysMs: [] },
+            () => ensureRoxRuntimeDefault(window.electronAPI, {
+              identity,
+              listOptions: { refresh: false },
+              onConnectionsRead: connections => { runtimeRead.connections = connections },
+            }), { delaysMs: [] },
           )
           if (cancelled) return
           if (!runtimeProbe.ok) throw runtimeProbe.error
@@ -994,7 +1013,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             startupDefaultSlug = runtimeProbe.value.slug
             startupRuntimeSummary = runtimeProbe.value.runtimeSummary ?? null
           } else {
-            const connectionsProbe = await probeWithRetry(() => window.electronAPI.listLlmConnectionsWithStatus())
+            const connectionsProbe = runtimeRead.connections
+              ? { ok: true as const, value: [...runtimeRead.connections] }
+              : await probeWithRetry(() => window.electronAPI.listLlmConnectionsWithStatus({ refresh: false }))
             if (cancelled) return
             if (!connectionsProbe.ok) throw connectionsProbe.error
             startupConnections = connectionsProbe.value
@@ -1003,7 +1024,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         }
         // Runtime setup and transport recovery can outlive the original actor
         // or window binding. Publish only after current readback matches both.
-        const finalIdentityProbe = await probeWithRetry(() => window.electronAPI.getOrgIdentity())
+        const [finalIdentityProbe, finalWorkspaceProbe, finalCloudProbe] = await Promise.all([
+          probeWithRetry(() => window.electronAPI.getOrgIdentity()),
+          probeWithRetry(() => window.electronAPI.getWindowWorkspace()),
+          probeWithRetry(() => window.electronAPI.getRoxCloudState()),
+        ])
         if (cancelled) return
         if (!finalIdentityProbe.ok) throw finalIdentityProbe.error
         const currentIdentity = finalIdentityProbe.value
@@ -1012,12 +1037,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           || identity.authority === 'native' && currentIdentity.issuer !== identity.issuer) {
           throw new Error('runtime-identity-changed')
         }
-        const finalWorkspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
-        if (cancelled) return
         if (!finalWorkspaceProbe.ok) throw finalWorkspaceProbe.error
         if (finalWorkspaceProbe.value !== workspaceProbe.value) throw new Error('runtime-workspace-changed')
-        const finalCloudProbe = await probeWithRetry(() => window.electronAPI.getRoxCloudState())
-        if (cancelled) return
         if (!finalCloudProbe.ok) throw finalCloudProbe.error
         if (cloudProbe.value.account?.user.id !== finalCloudProbe.value.account?.user.id) throw new Error('ROX_ACCOUNT_CHANGED')
         const finalStartupState = decideStartupAppState({ identityProbe: finalIdentityProbe, workspaceProbe: finalWorkspaceProbe, cloudProbe: finalCloudProbe })
@@ -1034,6 +1055,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           setRuntimeSummary(startupRuntimeSummary)
           setDefaultLlmConnectionSlug(startupDefaultSlug)
           if (startupRuntimeSummary) setWorkspaceDefaultLlmConnection(startupRuntimeSummary.slug)
+          // The ready effect below would list the same connections again.
+          if (identity.authority === 'local' && finalStartupState === 'ready') startupLlmConnectionsPublishedRef.current = true
         }
         setAppState(finalStartupState)
       } catch (error) {
@@ -1111,11 +1134,16 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       }
     }).catch(() => { /* non-fatal startup check */ })
     void loadSessionsFromServer()
-    // Load LLM connections with authentication status
-    window.electronAPI.listLlmConnectionsWithStatus().then((connections) => {
-      setLlmConnections(connections)
-      setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
-    })
+    // Load LLM connections with authentication status, unless startup just
+    // published them (llmConnections.CHANGED keeps them current afterwards).
+    if (startupLlmConnectionsPublishedRef.current) {
+      startupLlmConnectionsPublishedRef.current = false
+    } else {
+      window.electronAPI.listLlmConnectionsWithStatus().then((connections) => {
+        setLlmConnections(connections)
+        setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
+      })
+    }
     // Load persisted input drafts into ref (no re-render needed).
     // Attachment files are not read here — hydration happens lazily when the session
     // is opened so app startup isn't delayed by reading potentially large files.

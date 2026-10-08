@@ -2321,7 +2321,8 @@ export interface ElectronAPI {
 
   // LLM Connections (provider configurations)
   listLlmConnections(): Promise<LlmConnection[]>
-  listLlmConnectionsWithStatus(): Promise<LlmConnectionWithStatus[]>
+  /** `{ refresh: false }` skips the OAuth network refresh (startup); it then runs in the background and pushes llmConnections.CHANGED. */
+  listLlmConnectionsWithStatus(options?: { refresh?: boolean }): Promise<LlmConnectionWithStatus[]>
   getStartupRuntimeSummary(): Promise<import('@rox/shared/protocol').StartupRuntimeSummary | null>
   getLlmConnection(slug: string): Promise<LlmConnection | null>
   getLlmConnectionApiKey(slug: string): Promise<string | null>
