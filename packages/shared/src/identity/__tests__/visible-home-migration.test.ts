@@ -276,3 +276,50 @@ describe('readPersistedVisibleRootFlag', () => {
       expect(readPersistedVisibleRootFlag(home)).toBe(false)
     }))
 })
+
+describe('manifest equality property (seeded, no new deps)', () => {
+  // Mulberry32 — deterministic across runs.
+  function rng(seed: number): () => number {
+    let state = seed >>> 0
+    return () => {
+      state |= 0
+      state = (state + 0x6d2b79f5) | 0
+      let t = Math.imul(state ^ (state >>> 15), 1 | state)
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+  }
+
+  it('random trees survive the move with identical manifests', () =>
+    withHome((home) => {
+      const next = rng(0x1510)
+      const names = ['config.json', 'state.db', 'notes', 'ws', 'a', 'b', 'deep']
+      for (let tree = 0; tree < 5; tree++) {
+        const hidden = join(home, '.rox')
+        rmSync(hidden, { recursive: true, force: true })
+        rmSync(join(home, 'rox'), { recursive: true, force: true })
+        try {
+          lstatSync(join(home, '.rox')).isSymbolicLink() && rmSync(join(home, '.rox'))
+        } catch {
+          // no stale link
+        }
+        const fileCount = 3 + Math.floor(next() * 8)
+        for (let i = 0; i < fileCount; i++) {
+          const depth = Math.floor(next() * 3)
+          const parts = Array.from({ length: depth }, () => names[Math.floor(next() * names.length)])
+          const name = `${names[Math.floor(next() * names.length)]}-${i}.json`
+          const rel = [...parts, name].join('/')
+          const full = join(hidden, rel)
+          mkdirSync(join(full, '..'), { recursive: true })
+          const size = Math.floor(next() * 300)
+          writeFileSync(full, `${tree}/${rel}/`.repeat(size % 7) + `#${i}`)
+        }
+        const before = buildVisibleHomeManifest(hidden)
+        const result = migrateHiddenRoxHome(baseOptions(home, { timestamp: `prop-${tree}` }))
+        expect(result.outcome).toBe('migrated')
+        expect(visibleHomeManifestsEqual(before, buildVisibleHomeManifest(join(home, 'rox')))).toBe(true)
+        const reverted = revertVisibleRoxHome(baseOptions(home, { timestamp: `prop-${tree}` }))
+        expect(reverted.outcome).toBe('reverted')
+      }
+    }))
+})
