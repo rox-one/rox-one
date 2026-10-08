@@ -203,14 +203,10 @@ describe('link extraction', () => {
     expect(wikilinkTargetsToRefs('[[Alpha]]')).toEqual([{ to: { kind: 'note', id: 'Alpha' } }])
   })
 
-  it('collects canonical kind:id refs with line anchors', () => {
-    const refs = extractEntityRefsFromText('task:t1 blocks note:n2\nthen project:p1 and task:t1')
-    expect(refs).toEqual([
-      { to: { kind: 'task', id: 't1' }, line: 1 },
-      { to: { kind: 'note', id: 'n2' }, line: 1 },
-      { to: { kind: 'project', id: 'p1' }, line: 2 },
-    ])
+  it('free-text kind:id refs are inert (explicit syntax only)', () => {
+    expect(extractEntityRefsFromText('task:t1 blocks note:n2\nthen project:p1 and task:t1')).toEqual([])
     expect(extractEntityRefsFromText('not-a-ref: x and unknown:thing')).toEqual([])
+    expect(extractEntityRefsFromText('doc:2 and user:admin and file:///Users/a/b')).toEqual([])
   })
 
   it('walks TipTap documents and attributes links to their block', () => {
@@ -221,8 +217,9 @@ describe('link extraction', () => {
           type: 'paragraph',
           attrs: { id: 'blk-1' },
           content: [
-            { type: 'text', text: 'link to task:t1' },
+            { type: 'text', text: 'link to [[task:t1]]' },
             { type: 'text', text: 'wiki [[Alpha]]' },
+            { type: 'text', text: 'bare task:t9 creates no link' },
           ],
         },
         {
@@ -239,9 +236,10 @@ describe('link extraction', () => {
   })
 
   it('anchors message links by their sequence', () => {
-    expect(extractLinksFromMessage({ content: 'cc task:t7 and [[Alpha]]', sequence: 42 })).toEqual([
+    expect(extractLinksFromMessage({ content: 'cc [[task:t7]] and [[Alpha]]', sequence: 42 })).toEqual([
       { to: { kind: 'task', id: 't7' }, seq: 42 },
       { to: { kind: 'note', id: 'Alpha' }, seq: 42 },
     ])
+    expect(extractLinksFromMessage({ content: 'cc task:t7 bare creates no link', sequence: 42 })).toEqual([])
   })
 })
