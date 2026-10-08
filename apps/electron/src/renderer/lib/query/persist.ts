@@ -1,4 +1,5 @@
 import { dehydrate, hydrate, type DehydratedState, type QueryClient } from '@tanstack/react-query'
+import type { NoteSummary } from '../../../shared/types'
 import { queryKeyDomain, queryKeyWorkspace, type RoxQueryDomain } from './keys'
 
 /**
@@ -13,7 +14,7 @@ import { queryKeyDomain, queryKeyWorkspace, type RoxQueryDomain } from './keys'
  */
 export const PERSISTED_DOMAINS: ReadonlySet<RoxQueryDomain> = new Set<RoxQueryDomain>(['notes-list', 'agents-catalog'])
 /** Bump when a persisted shape changes; older records are discarded. */
-export const ROX_QUERY_CACHE_BUSTER = 'rox-query-v1'
+export const ROX_QUERY_CACHE_BUSTER = 'rox-query-v2'
 export const ROX_QUERY_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60_000
 export const ROX_QUERY_CACHE_MAX_CHARS = 4_000_000
 /** Writes wait for quiet time: a debounce, then an idle callback. */
@@ -22,8 +23,44 @@ export const ROX_QUERY_PERSIST_DEBOUNCE_MS = 2_000
 export interface PersistedRoxQueryCache {
   buster: string
   workspaceId: string
+  /**
+   * The principal the entries were read as (org identity
+   * authority/issuer/userId, or `local`). A record is only restored when the
+   * current principal matches: notes.LIST is ACL-filtered per caller, so a
+   * previous account's list must not paint after an account change that
+   * happened while no renderer was running.
+   */
+  principal: string
   savedAt: number
   state: DehydratedState
+}
+
+/** Principal key for the persisted record. `local` when no org identity is available. */
+export async function readPersistencePrincipal(api: { getOrgIdentity?: () => Promise<{ userId?: string; authority?: string; issuer?: string } | null> } | undefined): Promise<string> {
+  try {
+    const identity = await api?.getOrgIdentity?.()
+    if (identity?.userId && (identity.authority === 'native' || identity.authority === 'local')) {
+      return JSON.stringify([identity.authority, identity.issuer ?? '', identity.userId])
+    }
+  } catch { /* fall through: local */ }
+  return 'local'
+}
+
+const NOTE_SUMMARY_FIELDS = ['id', 'title', 'path', 'relativePath', 'tags', 'properties', 'links', 'assetRefs', 'updatedAt', 'createdAt', 'size'] as const
+
+/**
+ * notes-list entries are projected to NoteSummary fields. In principal mode
+ * notes.LIST returns full NoteDocument objects (content, backlink previews,
+ * nativeRevision, sourceStoreId); none of that goes to disk.
+ */
+export function projectPersistedQueryData(key: readonly unknown[], data: unknown): unknown {
+  if (queryKeyDomain(key) !== 'notes-list' || !Array.isArray(data)) return data
+  return data.map(note => {
+    if (!note || typeof note !== 'object') return note
+    const summary: Partial<NoteSummary> = {}
+    for (const field of NOTE_SUMMARY_FIELDS) if (field in (note as object)) (summary as Record<string, unknown>)[field] = (note as Record<string, unknown>)[field]
+    return summary
+  })
 }
 
 export interface RoxQueryStorage {
@@ -38,34 +75,53 @@ function isPersistedKey(key: readonly unknown[], workspaceId: string): boolean {
 }
 
 /** The record for one workspace, or null when there is nothing (or too much) to store. */
-export function buildPersistedRoxQueryCache(client: QueryClient, workspaceId: string, now = Date.now()): PersistedRoxQueryCache | null {
+export function buildPersistedRoxQueryCache(client: QueryClient, workspaceId: string, principal: string, now = Date.now()): PersistedRoxQueryCache | null {
   const state = dehydrate(client, {
-    shouldDehydrateQuery: query => query.state.status === 'success' && isPersistedKey(query.queryKey, workspaceId),
+    shouldDehydrateQuery: query => query.state.status === 'success' && isPersistedKey(query.queryKey, workspaceId)
+      && isFreshPersistedEntry(query.state.dataUpdatedAt, now),
     shouldDehydrateMutation: () => false,
   })
+  // Projected here (not via serializeData) so the size cap is checked on the
+  // exact bytes that go to disk, and so the in-memory entry stays untouched.
+  for (const query of state.queries) {
+    query.state = { ...query.state, data: projectPersistedQueryData(query.queryKey, query.state.data) }
+  }
   if (state.queries.length === 0) return null
   if (JSON.stringify(state).length > ROX_QUERY_CACHE_MAX_CHARS) return null
-  return { buster: ROX_QUERY_CACHE_BUSTER, workspaceId, savedAt: now, state }
+  return { buster: ROX_QUERY_CACHE_BUSTER, workspaceId, principal, savedAt: now, state }
 }
 
 export function isRestorableRoxQueryCache(value: unknown, now = Date.now()): value is PersistedRoxQueryCache {
   if (!value || typeof value !== 'object') return false
   const record = value as Partial<PersistedRoxQueryCache>
   if (record.buster !== ROX_QUERY_CACHE_BUSTER || typeof record.workspaceId !== 'string' || !record.workspaceId) return false
+  if (typeof record.principal !== 'string' || !record.principal) return false
   if (typeof record.savedAt !== 'number' || now - record.savedAt > ROX_QUERY_CACHE_MAX_AGE_MS || record.savedAt > now + 60_000) return false
   const queries = record.state?.queries
   if (!Array.isArray(queries) || (record.state?.mutations?.length ?? 0) > 0) return false
   // Defence in depth: a record never smuggles another workspace or domain in.
-  return queries.every(query => Array.isArray(query?.queryKey) && isPersistedKey(query.queryKey, record.workspaceId!))
+  if (!queries.every(query => Array.isArray(query?.queryKey) && isPersistedKey(query.queryKey, record.workspaceId!))) return false
+  if (!queries.every(query => typeof query?.state?.dataUpdatedAt === 'number' && query.state.dataUpdatedAt <= now + 60_000)) return false
+  return queries.some(query => isFreshPersistedEntry(query.state.dataUpdatedAt, now))
+}
+
+/**
+ * Age is each entry's own dataUpdatedAt (when it was last read), not the
+ * record's savedAt: re-saving an entry that was never revalidated cannot
+ * extend its lifetime.
+ */
+export function isFreshPersistedEntry(dataUpdatedAt: number, now = Date.now()): boolean {
+  return now - dataUpdatedAt <= ROX_QUERY_CACHE_MAX_AGE_MS
 }
 
 /**
  * Hydrate a restored record. Restored entries are marked invalidated, so the
  * first surface that reads one paints it and then revalidates in background.
  */
-export function restoreRoxQueryCache(client: QueryClient, record: PersistedRoxQueryCache): void {
-  hydrate(client, record.state)
-  for (const restored of record.state.queries) {
+export function restoreRoxQueryCache(client: QueryClient, record: PersistedRoxQueryCache, now = Date.now()): void {
+  const queries = record.state.queries.filter(query => isFreshPersistedEntry(query.state.dataUpdatedAt, now))
+  hydrate(client, { ...record.state, queries })
+  for (const restored of queries) {
     const state = client.getQueryState(restored.queryKey)
     if (state && state.dataUpdatedAt === restored.state.dataUpdatedAt) {
       void client.invalidateQueries({ queryKey: restored.queryKey, exact: true, refetchType: 'none' })
@@ -97,12 +153,17 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
   idle?: IdleScheduler
   debounceMs?: number
   now?: () => number
+  /** Current principal; a record bound to another principal is removed, not restored. */
+  principal?: () => Promise<string>
 } = {}): RoxQueryPersistence {
   const idle = options.idle ?? defaultIdle
   const debounceMs = options.debounceMs ?? ROX_QUERY_PERSIST_DEBOUNCE_MS
   const now = options.now ?? Date.now
+  const principal = options.principal ?? (() => Promise.resolve('local'))
   let stopped = false
   let restored = false
+  /** True once a new read succeeded after restore, so an untouched restore is never re-saved. */
+  let dirty = false
   let lastWorkspace: string | null = null
   let debounce: ReturnType<typeof setTimeout> | null = null
   let cancelIdle: (() => void) | null = null
@@ -117,14 +178,22 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
 
   const write = () => {
     cancelIdle = null
-    if (stopped || !lastWorkspace) return
+    if (stopped || !lastWorkspace || !dirty) return
     const writeGeneration = generation
-    const record = buildPersistedRoxQueryCache(client, lastWorkspace, now())
-    if (!record) return
-    void storage.write(record).catch(() => { /* best effort: the cache is an optimisation */ }).then(() => {
-      // A clear() that raced this write wins.
-      if (writeGeneration !== generation) void storage.remove().catch(() => {})
-    })
+    const workspaceId = lastWorkspace
+    void principal().then(current => {
+      // clear() (identity change) or stop() while the principal was read.
+      if (stopped || writeGeneration !== generation) return
+      const record = buildPersistedRoxQueryCache(client, workspaceId, current, now())
+      if (!record) {
+        // Over the size cap (or nothing left): the older record must not stay on disk.
+        return storage.remove().catch(() => {})
+      }
+      return storage.write(record).catch(() => { /* best effort: the cache is an optimisation */ }).then(() => {
+        // A clear() that raced this write wins.
+        if (writeGeneration !== generation) void storage.remove().catch(() => {})
+      })
+    }, () => {})
   }
 
   const schedule = () => {
@@ -141,23 +210,28 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
     if (event.type !== 'updated' || event.action.type !== 'success') return
     const workspaceId = queryKeyWorkspace(event.query.queryKey)
     if (!workspaceId || !isPersistedKey(event.query.queryKey, workspaceId)) return
+    dirty = true
     lastWorkspace = workspaceId
     schedule()
   })
 
   const readGeneration = generation
-  const ready = storage.read().then(value => {
+  const ready = Promise.all([storage.read(), principal()]).then(([value, current]) => {
     // stop() or clear() (identity change) before the read finished: never restore.
     if (stopped || readGeneration !== generation) return
-    if (isRestorableRoxQueryCache(value, now())) {
-      restoreRoxQueryCache(client, value)
+    const record = value as Partial<PersistedRoxQueryCache> | null | undefined
+    if (isRestorableRoxQueryCache(value, now()) && record?.principal === current) {
+      restoreRoxQueryCache(client, value, now())
       lastWorkspace ??= value.workspaceId
     } else if (value !== undefined && value !== null) {
+      // Unreadable, expired, or bound to a different principal.
       void storage.remove().catch(() => {})
     }
   }, () => { /* unreadable store: start empty */ }).finally(() => {
     restored = true
-    if (lastWorkspace) schedule()
+    // Only a read that succeeded after start is worth a write; an untouched
+    // restore is never re-saved.
+    if (dirty && lastWorkspace) schedule()
   })
 
   return {
@@ -166,6 +240,7 @@ export function startRoxQueryPersistence(client: QueryClient, storage: RoxQueryS
       generation++
       cancelPending()
       lastWorkspace = null
+      dirty = false
       await storage.remove().catch(() => {})
     },
     stop() {
