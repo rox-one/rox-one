@@ -12,7 +12,8 @@ import { RESET } from 'jotai/utils'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { GlobalCreateMenu } from '../GlobalCreateMenu'
 import { workbenchFlagAtom } from '../unified-flags'
-import { __resetSlotRegistryForTests } from '../slots'
+import { __resetSlotRegistryForTests, getSlotRegistry } from '../slots'
+import { GLOBAL_CREATE_SLOT } from '../global-create'
 
 const i18n = createInstance()
 void i18n.init({ lng: 'ru', resources: {}, initAsync: false })
@@ -46,5 +47,15 @@ describe('GlobalCreateMenu', () => {
     const html = renderMenu()
     expect(html).toContain('data-global-create-trigger')
     expect(html).not.toContain('data-baseline-plus')
+  })
+
+  it('flags OFF + an unflagged wave-2 entry: renders the menu trigger; disposing restores the baseline «+»', () => {
+    const handle = getSlotRegistry().register({
+      id: 'wiki.new-page', slot: GLOBAL_CREATE_SLOT, source: 'wave2.wiki', titleKey: 'wiki.create.page',
+      payload: { intent: { type: 'route', route: 'notes' } },
+    })
+    expect(renderMenu()).toContain('data-global-create-trigger')
+    handle.dispose()
+    expect(renderMenu()).toBe('<button type="button" data-baseline-plus="true">+</button>')
   })
 })
