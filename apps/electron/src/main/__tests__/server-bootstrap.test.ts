@@ -358,6 +358,22 @@ describe('W1-13 storage.visible-root.v1 remote layout', () => {
     expect(restart).not.toContain('CRAFT_')
   })
 
+  it('flag ON + SPLIT (data moved, a new legacy dir appeared): restarts from ~/rox', async () => {
+    const m = await load()
+    const commands: string[] = []
+    const installedVisible = m.checkInstalledCommand(m.VISIBLE_REMOTE_LAYOUT)
+    const { deps } = makeDeps({
+      visibleRoot: true, initialToken: 'saved', probeResults: [false, true],
+      runRemote: scripted({
+        [m.REMOTE_LAYOUT_PROBE_COMMAND]: 'MOVABLE\n',
+        [m.REMOTE_HOME_MOVE_COMMAND]: 'SPLIT\n',
+        [installedVisible]: 'INSTALLED\n',
+      }, commands),
+    })
+    await bootstrapRemoteServer(HOST, deps)
+    expect(commands).toContain(m.buildRestartCommand(HOST.remotePort, false, m.VISIBLE_REMOTE_LAYOUT))
+  })
+
   it('flag ON + move refused (KEPT): stays on the legacy layout', async () => {
     const m = await load()
     const commands: string[] = []

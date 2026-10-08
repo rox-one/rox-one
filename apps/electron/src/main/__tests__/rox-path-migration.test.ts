@@ -132,4 +132,99 @@ describe('W1-13 remote visible-home shell commands (flag ON only)', () => {
     expect(existsSync(join(root, 'rox'))).toBe(false)
     expect(existsSync(join(root, '.rox'))).toBe(false)
   }))
+
+  // Review 2 (finding 6): wait for the managed server, real lock path,
+  // re-check before ln -s, never-nesting rollback.
+  const realMv = spawnSync('/bin/sh', ['-c', 'command -v mv']).stdout.toString().trim()
+  const moveIn = (root: string, extraEnv: Record<string, string> = {}) =>
+    spawnSync('/bin/sh', ['-c', REMOTE_HOME_MOVE_COMMAND], { env: { ...process.env, HOME: root, ...extraEnv } })
+  const plantManaged = (root: string, startScript = '#!/bin/sh\n') => {
+    mkdirSync(join(root, '.rox/remote-server/config'), { recursive: true })
+    writeFileSync(join(root, '.rox/remote-server/start.sh'), startScript, { mode: 0o755 })
+    writeFileSync(join(root, '.rox/remote-server/config/settings.json'), '{}')
+  }
+  const fakeBin = (root: string, tools: Record<string, string>) => {
+    const bin = join(root, 'fakebin')
+    mkdirSync(bin)
+    for (const [name, body] of Object.entries(tools)) writeFileSync(join(bin, name), `#!/bin/sh\n${body}\n`, { mode: 0o755 })
+    return { PATH: `${bin}:${process.env.PATH ?? ''}` }
+  }
+  // A "managed server": a shell running ~/.rox/remote-server/start.sh.
+  const startFakeServer = (root: string, seconds: number) => {
+    plantManaged(root, `#!/bin/sh\nsleep ${seconds} &\necho $! > "$HOME/sleep.pid"\nwait\n`)
+    return Bun.spawn(['/bin/sh', join(root, '.rox/remote-server/start.sh')], { env: { ...process.env, HOME: root } })
+  }
+  const stopFakeServer = async (root: string, server: ReturnType<typeof Bun.spawn>) => {
+    try { process.kill(Number(readFileSync(join(root, 'sleep.pid'), 'utf8').trim())) } catch { /* gone */ }
+    server.kill()
+    await server.exited
+  }
+  const waitFor = async (check: () => boolean) => {
+    for (let i = 0; i < 100 && !check(); i++) await Bun.sleep(20)
+  }
+
+  it('the move command never contains the literal server path (pgrep/ps self-match)', () => {
+    expect(REMOTE_HOME_MOVE_COMMAND).not.toContain('.rox/remote-server')
+    expect(REMOTE_HOME_MOVE_COMMAND).toContain('pgrep -u "$(id -u)" -f "[.]rox/$d"')
+    expect(REMOTE_HOME_MOVE_COMMAND).toContain('~/.rox/$d/config/.server.lock')
+    expect(REMOTE_HOME_MOVE_COMMAND).toContain('~/.rox/.app.lock')
+    expect(REMOTE_HOME_MOVE_COMMAND).toContain('! test -e ~/.rox && ! test -L ~/.rox && ln -s "$HOME/rox" ~/.rox')
+    expect(REMOTE_HOME_MOVE_COMMAND).toContain('! test -e ~/.rox && ! test -L ~/.rox && mv ~/rox ~/.rox')
+  })
+
+  it('keeps the legacy layout while the managed server is still running after the wait', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'rox-paths-'))
+    const server = startFakeServer(root, 30)
+    try {
+      await waitFor(() => existsSync(join(root, 'sleep.pid')))
+      const result = moveIn(root, { ROX_REMOTE_MOVE_WAIT: '1' })
+      expect(result.stdout.toString().trim()).toBe('KEPT')
+      expect(lstatSync(join(root, '.rox')).isDirectory()).toBe(true)
+      expect(existsSync(join(root, 'rox'))).toBe(false)
+    } finally {
+      await stopFakeServer(root, server)
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('moves once the managed server exits within the wait', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'rox-paths-'))
+    const server = startFakeServer(root, 1)
+    try {
+      await waitFor(() => existsSync(join(root, 'sleep.pid')))
+      const result = moveIn(root, { ROX_REMOTE_MOVE_WAIT: '8' })
+      expect(result.stdout.toString().trim()).toBe('MOVED')
+      expect(lstatSync(join(root, '.rox')).isSymbolicLink()).toBe(true)
+      expect(existsSync(join(root, 'rox/remote-server/config/settings.json'))).toBe(true)
+    } finally {
+      await stopFakeServer(root, server)
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('honours the managed server\'s own config lock', () => temporary(root => {
+    plantManaged(root)
+    writeFileSync(join(root, '.rox/remote-server/config/.server.lock'), JSON.stringify({ pid: process.pid, startedAt: Date.now() }))
+    expect(moveIn(root).stdout.toString().trim()).toBe('KEPT')
+    expect(existsSync(join(root, 'rox'))).toBe(false)
+  }))
+
+  it('a legacy dir that reappears before ln -s is never nested into: SPLIT, data in ~/rox', () => temporary(root => {
+    plantManaged(root)
+    const env = fakeBin(root, { mv: `${realMv} "$@" || exit $?\nif ! test -e "$HOME/.mv-once"; then touch "$HOME/.mv-once"; mkdir "$HOME/.rox"; fi` })
+    expect(moveIn(root, env).stdout.toString().trim()).toBe('SPLIT')
+    expect(existsSync(join(root, 'rox/remote-server/start.sh'))).toBe(true)
+    expect(lstatSync(join(root, '.rox')).isDirectory()).toBe(true)
+    expect(readdirSync(join(root, '.rox'))).toEqual([]) // no ~/.rox/rox link
+    expect(statSync(join(root, 'rox')).mode & 0o777).toBe(0o700)
+  }))
+
+  it('ln -s failure rolls back into the absent legacy path: KEPT', () => temporary(root => {
+    plantManaged(root)
+    const env = fakeBin(root, { ln: 'exit 1' })
+    expect(moveIn(root, env).stdout.toString().trim()).toBe('KEPT')
+    expect(existsSync(join(root, '.rox/remote-server/config/settings.json'))).toBe(true)
+    expect(lstatSync(join(root, '.rox')).isDirectory()).toBe(true)
+    expect(existsSync(join(root, 'rox'))).toBe(false)
+  }))
 })

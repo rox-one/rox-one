@@ -217,17 +217,33 @@ export const REMOTE_LAYOUT_PROBE_COMMAND =
 
 /**
  * Flag ON only: move the legacy `~/.rox` home to `~/rox` and leave a compat
- * symlink. Run only after the managed server was killed. Prints `MOVED` or
- * `KEPT`; keeps the legacy home when `~/rox` appeared meanwhile, when a live
- * writer still holds a home lock, or when the symlink cannot be created (the
- * move is rolled back). Never deletes anything.
+ * symlink. Run only after the managed server was killed. Prints:
+ * - `MOVED` — moved, compat link in place;
+ * - `KEPT`  — nothing moved (or the move was rolled back): legacy layout;
+ * - `SPLIT` — the data is in `~/rox` but a new legacy home appeared before the
+ *   link (or the rollback could not run): visible layout, nothing nested.
+ * Steps: wait (bounded, `ROX_REMOTE_MOVE_WAIT` seconds, default 10) until no
+ * managed server from the legacy home runs, else keep; keep while a live
+ * writer holds a home lock (incl. the managed server's own config lock);
+ * re-check right before `ln -s` that the legacy path is still free (a
+ * directory there would nest the link); roll back only into an absent legacy
+ * path. The pattern/paths never contain the literal server path, so pgrep/ps
+ * never match this shell itself. Never deletes anything.
  */
-export const REMOTE_HOME_MOVE_COMMAND = String.raw`if test -d ~/.rox && ! test -L ~/.rox && ! test -e ~/rox && ! test -L ~/rox; then ` +
-  String.raw`live=; for lock in ~/.rox/.server.lock ~/.rox/config.json.lock; do ` + // legacy home writer locks
+export const REMOTE_HOME_MOVE_COMMAND = String.raw`if test -d ~/.rox && ! test -L ~/.rox && ! test -e ~/rox && ! test -L ~/rox; then ` + // legacy home, ~/rox free
+  String.raw`d=remote-server; w=$ROX_REMOTE_MOVE_WAIT; case "$w" in ''|*[!0-9]*) w=10;; esac; ` +
+  String.raw`alive() { if command -v pgrep >/dev/null 2>&1; then pgrep -u "$(id -u)" -f "[.]rox/$d" >/dev/null 2>&1; ` + // legacy managed server
+  String.raw`else ps -u "$(id -u)" -o args= 2>/dev/null | grep -q "[.]rox/$d"; fi; }; ` + // legacy managed server (no pgrep)
+  String.raw`i=0; while alive && test "$i" -lt "$w"; do sleep 1; i=$((i+1)); done; ` +
+  String.raw`live=; if alive; then live=1; fi; ` +
+  String.raw`for lock in ~/.rox/.server.lock ~/.rox/config.json.lock ~/.rox/.app.lock ~/.rox/$d/config/.server.lock; do ` + // legacy home writer locks
   String.raw`pid=$(sed -n -e 's/.*"pid"[^0-9]*\([0-9][0-9]*\).*/\1/p' -e 's/^\([0-9][0-9]*\)$/\1/p' "$lock" 2>/dev/null | head -n 1); ` +
   String.raw`if test -n "$pid" && kill -0 "$pid" 2>/dev/null; then live=1; fi; done; ` +
   String.raw`if test -n "$live"; then echo KEPT; ` +
-  String.raw`elif mv ~/.rox ~/rox; then if ln -s "$HOME/rox" ~/.rox; then chmod 700 ~/rox; echo MOVED; else mv ~/rox ~/.rox; echo KEPT; fi; ` + // legacy compat symlink
+  String.raw`elif mv ~/.rox ~/rox; then ` + // legacy home → visible
+  String.raw`if ! test -e ~/.rox && ! test -L ~/.rox && ln -s "$HOME/rox" ~/.rox; then chmod 700 ~/rox; echo MOVED; ` + // legacy compat symlink, re-checked
+  String.raw`elif ! test -e ~/.rox && ! test -L ~/.rox && mv ~/rox ~/.rox; then echo KEPT; ` + // legacy rollback, never nested
+  String.raw`else chmod 700 ~/rox; echo SPLIT; fi; ` +
   String.raw`else echo KEPT; fi; else echo KEPT; fi`
 
 /** mkdir for the remote home; the visible home is private (0700). */
@@ -248,7 +264,8 @@ export async function resolveRemoteLayout(host: SshHostConfig, deps: ServerBoots
     // Kill the managed server BEFORE its home moves out from under it.
     await deps.runRemote(host, VISIBLE_KILL_MANAGED_SERVER_COMMAND)
     const moved = (await deps.runRemote(host, REMOTE_HOME_MOVE_COMMAND)).trim()
-    return moved === 'MOVED' ? VISIBLE_REMOTE_LAYOUT : LEGACY_REMOTE_LAYOUT
+    // SPLIT: the data already lives in ~/rox (a new legacy dir appeared).
+    return moved === 'MOVED' || moved === 'SPLIT' ? VISIBLE_REMOTE_LAYOUT : LEGACY_REMOTE_LAYOUT
   }
   return LEGACY_REMOTE_LAYOUT // FOREIGN, LEGACY or unknown output
 }
