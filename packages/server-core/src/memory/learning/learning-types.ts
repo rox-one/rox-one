@@ -178,6 +178,16 @@ export interface LearningTargetStores {
   removePolicy: (id: string) => boolean
 }
 
+/** Result of routing one distilled item through the learning pipeline (PRD §45 Wave 3–4, WP-110 seam). */
+export interface DistillIngestResult {
+  /** False when the learning layer is disabled — the caller keeps its legacy behavior. */
+  handled: boolean
+  promoted: boolean
+  candidateId?: string
+  /** Human-readable reason when not promoted. */
+  reason?: string
+}
+
 /** Ports the LearningService exposes to RPC and to MemoryService (PRD §15/§31). */
 export interface LearningServicePorts {
   observeCompletion: (evt: {
@@ -188,6 +198,24 @@ export interface LearningServicePorts {
   recordCorrection: (correction: UserCorrection) => void
   recordToolOutcome: (input: { workspaceId: string; sessionId: string; tool: string; ok: boolean; error?: string; ts: string }) => void
   recordContextUsage: (input: { workspaceId: string; sessionId: string; lessons: Array<{ rule: string; scope: 'global' | 'workspace' }>; skills: string[] }) => void
+  /**
+   * MemoryService seam (PRD §31/§45 Wave 3–4): route one distilled lesson/skill draft
+   * through repeat-evidence → validation → promotion. `handled=false` tells the caller
+   * to keep its legacy behavior (learning disabled / out of scope).
+   */
+  ingestDistilled: (input: {
+    workspaceId: string
+    sessionId: string
+    kind: 'lesson' | 'skill'
+    /** Lesson rule text (kind 'lesson'). */
+    rule?: string
+    category?: string
+    negative?: boolean
+    /** Scope override; defaults to the workspace scope for the candidate type. */
+    scope?: LearningScope
+    /** Skill draft (kind 'skill'). */
+    skill?: { slug: string; description: string; body: string; supersedes?: string }
+  }) => Promise<DistillIngestResult>
   /** Force a reflection pass for one session (RPC learning:forceReflect). */
   reflectSession: (workspaceId: string, sessionId: string) => Promise<{ candidates: LearningCandidate[] }>
   /** Background jobs (§10-14). */

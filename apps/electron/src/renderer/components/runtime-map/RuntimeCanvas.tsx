@@ -4,20 +4,26 @@ import '@xyflow/react/dist/style.css'
 import { useTranslation } from 'react-i18next'
 import type { RuntimeGraph, RuntimeNode } from '@rox/core/runtime-trace'
 import { RuntimeNodeCard, type RuntimeFlowNode } from './nodes/RuntimeNodeCard'
+import { LearningNodeCard, type LearningFlowNode } from './nodes/LearningNodeCard'
+import { nodeAriaLabel } from './nodes/node-content'
 import { AgentLane, type AgentLaneNode } from './AgentLane'
 import { CARD_WIDTH, type RuntimeLayout, type TimelineMode } from './layout/stable-layout'
 import { reconcileFlowNodes } from './layout/reconcile-flow-nodes'
+import { learningFlowNode, learningRowY } from './layout/learning-flow'
 import { initialRuntimeCardGeometry, initialRuntimeLaneGeometry } from './layout/initial-geometry'
 import { overviewMinimumZoom } from './layout/viewport-policy'
+import type { LearningMapEdge, LearningMapNode } from './learning-nodes'
 
-const nodeTypes = { runtime: RuntimeNodeCard, lane: AgentLane }
-type FlowNode = RuntimeFlowNode | AgentLaneNode
+const nodeTypes = { runtime: RuntimeNodeCard, lane: AgentLane, learning: LearningNodeCard }
+type FlowNode = RuntimeFlowNode | AgentLaneNode | LearningFlowNode
 export interface RuntimeCanvasApi { fit: () => void; focusLatest: () => void; focusNode: (id: string) => void }
 export interface RuntimeCanvasProps {
   graph: RuntimeGraph; nodes: RuntimeNode[]; layout: RuntimeLayout; scopeKey: string; selectedId?: string
   onSelect: (node: RuntimeNode) => void; following: boolean; onInspect: () => void
   collapsed: Set<string>; onToggleLane: (agentId: string) => void; apiRef: React.Ref<RuntimeCanvasApi>
   timelineMode: TimelineMode
+  /** PRD §30 learning chain nodes/edges merged into the map (no `RuntimeEvent`). */
+  learningNodes?: readonly LearningMapNode[]; learningEdges?: readonly LearningMapEdge[]
 }
 
 function loadViewport(scopeKey: string): Viewport | undefined {
@@ -29,7 +35,7 @@ function loadViewport(scopeKey: string): Viewport | undefined {
 }
 
 export function RuntimeCanvas(props: RuntimeCanvasProps) { return <ReactFlowProvider><RuntimeCanvasInner {...props} /></ReactFlowProvider> }
-function RuntimeCanvasInner({ graph, nodes, layout, scopeKey, selectedId, onSelect, following, onInspect, collapsed, onToggleLane, apiRef, timelineMode }: RuntimeCanvasProps) {
+function RuntimeCanvasInner({ graph, nodes, layout, scopeKey, selectedId, onSelect, following, onInspect, collapsed, onToggleLane, apiRef, timelineMode, learningNodes, learningEdges }: RuntimeCanvasProps) {
   const { t } = useTranslation()
   const flow = React.useRef<ReactFlowInstance<FlowNode, Edge> | null>(null)
   const container = React.useRef<HTMLDivElement>(null)
@@ -40,22 +46,32 @@ function RuntimeCanvasInner({ graph, nodes, layout, scopeKey, selectedId, onSele
   const [minimumZoom, setMinimumZoom] = React.useState(Math.min(0.25, restoredViewport?.zoom ?? 0.25))
   const compact = zoom < 0.65
   const visibleIds = React.useMemo(() => new Set(nodes.filter(node => !collapsed.has(node.agentId)).map(node => node.id)), [nodes, collapsed])
+  // Learning chains have no lane, so they render in a supplementary row below the lanes.
+  const learningRow = React.useMemo(() => learningRowY(layout), [layout])
+  const learningIds = React.useMemo(() => new Set((learningNodes ?? []).map(node => node.id)), [learningNodes])
   const flowNodes = React.useMemo<FlowNode[]>(() => {
     const candidates: FlowNode[] = [
     ...graph.lanes.map(lane => ({ id: `lane:${lane.id}`, type: 'lane' as const, ...initialRuntimeLaneGeometry, position: layout.lanes.get(lane.id) || { x: -292, y: 44 }, data: { lane, collapsed: collapsed.has(lane.agentId), onToggle: onToggleLane }, draggable: false, selectable: false, focusable: false, style: { width: 250 } })),
     ...nodes.filter(node => visibleIds.has(node.id)).map(node => {
       const cached = nodeCache.current.get(node.id)
       const ariaLabel = cached?.type === 'runtime' && nodeLabelTranslation.current === t && cached.data.runtime.kind === node.kind && cached.data.runtime.seq === node.seq
-        ? cached.ariaLabel : t('runtimeMap.eventAria', { type: t(`runtimeMap.kind.${node.kind}`), sequence: node.seq })
+        ? cached.ariaLabel : nodeAriaLabel(node, t)
       return { id: node.id, type: 'runtime' as const, ...initialRuntimeCardGeometry(compact), position: layout.positions.get(node.id) || { x: 0, y: 44 }, data: { runtime: node }, draggable: false, selectable: true, selected: selectedId === node.id, style: { width: CARD_WIDTH }, ariaLabel }
+    }),
+    ...(learningNodes ?? []).map((node, index) => {
+      const cached = nodeCache.current.get(node.id)
+      return learningFlowNode(node, index, t, compact, learningRow, cached?.type === 'learning' ? cached : undefined)
     }),
     ]
     const reconciled = reconcileFlowNodes(nodeCache.current, candidates)
     nodeCache.current = reconciled.cache
     nodeLabelTranslation.current = t
     return reconciled.nodes
-  }, [graph.lanes, layout, nodes, visibleIds, collapsed, onToggleLane, selectedId, t, compact])
-  const edges = React.useMemo<Edge[]>(() => graph.edges.filter(edge => visibleIds.has(edge.source) && visibleIds.has(edge.target)).map(edge => ({ ...edge, type: 'smoothstep', className: `runtime-edge runtime-edge-${edge.kind}`, selectable: false, focusable: false, animated: false })), [graph.edges, visibleIds])
+  }, [graph.lanes, layout, nodes, visibleIds, collapsed, onToggleLane, selectedId, t, compact, learningNodes, learningRow])
+  const edges = React.useMemo<Edge[]>(() => [
+    ...graph.edges.filter(edge => visibleIds.has(edge.source) && visibleIds.has(edge.target)).map(edge => ({ ...edge, type: 'smoothstep', className: `runtime-edge runtime-edge-${edge.kind}`, selectable: false, focusable: false, animated: false })),
+    ...(learningEdges ?? []).filter(edge => learningIds.has(edge.source) && learningIds.has(edge.target)).map(edge => ({ id: edge.id, source: edge.source, target: edge.target, type: 'smoothstep', className: `runtime-edge runtime-edge-${edge.kind}`, selectable: false, focusable: false, animated: false })),
+  ], [graph.edges, visibleIds, learningEdges, learningIds])
   const latest = nodes.at(-1)
   const cameraInitialized = React.useRef(false)
   const animationDuration = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 120
@@ -63,7 +79,7 @@ function RuntimeCanvasInner({ graph, nodes, layout, scopeKey, selectedId, onSele
   function fit() {
     const instance = flow.current, element = container.current
     if (!instance || !element) return
-    const ids = visibleIds.size ? [...visibleIds] : graph.lanes.map(lane => `lane:${lane.id}`)
+    const ids = visibleIds.size || learningIds.size ? [...visibleIds, ...learningIds] : graph.lanes.map(lane => `lane:${lane.id}`)
     const bounds = instance.getNodesBounds(ids)
     const minimum = overviewMinimumZoom(bounds, { width: element.clientWidth, height: element.clientHeight })
     setMinimumZoom(minimum)

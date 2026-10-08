@@ -52,6 +52,7 @@ import { AuditLog } from './AuditLog'
 import { search as ftsSearch } from './fts-index'
 import { compactWorkspaceHistory } from './decay'
 import { EpisodicMemory, withTimeout as episodicWithTimeout } from './episodic-memory'
+import type { LearningServicePorts } from './learning/learning-types'
 
 /** Max chars of serialized conversation window sent to the distiller (front-truncated). */
 const DISTILL_WINDOW_CHARS = 160_000
@@ -141,6 +142,13 @@ export interface MemoryServiceDeps {
    * to attribute (session predates F4 or memory was disabled at spawn).
    */
   readSessionProvenance?: (sessionId: string) => Array<{ rule: string; scope: LessonScope }>
+  /**
+   * WP-110 continual-learning seam. Absent → every legacy path is unchanged
+   * (distilled lessons/skills go straight to LessonStore/SkillPendingQueue and
+   * no usage is reported). Injecting it lets the learning layer own distilled
+   * items and receive per-context usage attribution.
+   */
+  learningService?: LearningServicePorts
 }
 
 /**
@@ -409,7 +417,7 @@ export class MemoryService {
    * (EPISODIC_PROMPT_BUDGET_MS) and fail-soft so a cold model download or any
    * episodic error only means the tail is omitted — never a broken prompt.
    */
-  async buildMemoryBlocks(opts?: { query?: string; nativeContext?: NativeMemoryContext }): Promise<MemoryPromptBlocks | undefined> {
+  async buildMemoryBlocks(opts?: { query?: string; nativeContext?: NativeMemoryContext; sessionId?: string }): Promise<MemoryPromptBlocks | undefined> {
     if (!this.config.enabled) return undefined
     opts?.nativeContext?.assertAuthorized()
     const owner = opts?.nativeContext?.owner
@@ -444,6 +452,22 @@ export class MemoryService {
       memoryBlock: formatWorkspaceMemoryForPrompt(memory) || undefined,
       // Provenance (spec F4): exactly the lessons handed to formatLessonsForPrompt.
       used: lessons.map(l => ({ rule: l.rule, scope: l.scope })),
+    }
+    // WP-110: tell the learning layer which lessons were injected into this
+    // session's prompt (effectiveness attribution, PRD §31). Fail-soft like the
+    // other optional deps: a missing service, a missing session id or any throw
+    // must never affect prompt assembly.
+    if (this.deps.learningService && opts?.sessionId) {
+      try {
+        this.deps.learningService.recordContextUsage({
+          workspaceId: this.deps.workspaceId ?? this.deps.workspaceRoot,
+          sessionId: opts.sessionId,
+          lessons: blocks.used ?? [],
+          skills: [],
+        })
+      } catch (err) {
+        this.logger.warn('MemoryService: recordContextUsage failed', err)
+      }
     }
     // M2: semantic (episodic) recall tail (spec §M2). Opt-in via memory.semantic;
     // needs a query to match against. Budgeted and fully fail-soft.
@@ -653,10 +677,10 @@ export class MemoryService {
       this.logger.warn(`MemoryService: runDistill failed for ${job.sessionId}`, err)
       return
     }
-    this.applyResult(job, result)
+    await this.applyResult(job, result)
   }
 
-  private applyResult(job: DistillJob, result: DistillResult): void {
+  private async applyResult(job: DistillJob, result: DistillResult): Promise<void> {
     const workspaceId = this.deps.workspaceId ?? this.deps.workspaceRoot
     let wroteMemory = false
     try {
@@ -674,6 +698,10 @@ export class MemoryService {
         result.skill_candidate.description = redactSecrets(result.skill_candidate.description, extraPatterns)
       }
       for (const lesson of result.lessons) {
+        // WP-110: the learning layer gets first refusal on the distilled lesson
+        // (repeat-evidence → validation → promotion). handled=true → it owns the
+        // item and the legacy LessonStore write below is skipped.
+        if (await this.ingestDistilledLesson(job, lesson, workspaceId)) continue
         const store = this.deps.lessonStoreFactory?.('workspace') ?? this.defaultLessonStore('workspace')
         const entry: Lesson = {
           ts: new Date(this.clock()).toISOString(),
@@ -718,9 +746,16 @@ export class MemoryService {
       if (result.skill_candidate && job.full) {
         const autoCreate = (this.deps.isSkillAutoCreateEnabled ?? getSkillsAutoCreateFromSessions)()
         const cand = result.skill_candidate
-        if (!autoCreate) {
+        const sensitive = SENSITIVE_RE.test(cand.slug) || SENSITIVE_RE.test(cand.body)
+        // WP-110: the learning layer gets first refusal, but never on a sensitive
+        // candidate. handled=false (learning disabled/out of scope) → the exact
+        // legacy path below; a throw inside is fail-soft and falls back here too.
+        const handled = !sensitive && (await this.ingestDistilledSkill(job, cand, workspaceId))
+        if (handled) {
+          // the learning layer owns this candidate — skip the legacy queue write
+        } else if (!autoCreate) {
           // gated off by default — drop
-        } else if (SENSITIVE_RE.test(cand.slug) || SENSITIVE_RE.test(cand.body)) {
+        } else if (sensitive) {
           this.logger.warn(`MemoryService: dropped sensitive skill candidate '${cand.slug}'`)
         } else {
           const candidate: SkillCandidate = {
@@ -745,6 +780,61 @@ export class MemoryService {
     }
     if (wroteMemory) {
       this.emit('memory:changed', [workspaceId, 'both'])
+    }
+  }
+
+  /**
+   * WP-110: route one distilled lesson through the learning layer.
+   * Returns true when the learning layer took ownership — the caller must then
+   * skip the legacy LessonStore write. Fail-soft: no service, or any throw
+   * (logged), returns false so the legacy write still persists the lesson.
+   */
+  private async ingestDistilledLesson(
+    job: DistillJob,
+    lesson: DistillResult['lessons'][number],
+    workspaceId: string,
+  ): Promise<boolean> {
+    const learning = this.deps.learningService
+    if (!learning) return false
+    try {
+      const res = await learning.ingestDistilled({
+        workspaceId,
+        sessionId: job.sessionId,
+        kind: 'lesson',
+        rule: lesson.rule,
+        category: lesson.category,
+        negative: lesson.negative,
+      })
+      return res.handled === true
+    } catch (err) {
+      this.logger.warn(`MemoryService: ingestDistilled(lesson) failed for ${job.sessionId}`, err)
+      return false
+    }
+  }
+
+  /**
+   * WP-110: route one distilled skill candidate through the learning layer.
+   * Returns true when the learning layer took ownership (skip the legacy
+   * SkillPendingQueue enqueue). Fail-soft on a missing service or any throw.
+   */
+  private async ingestDistilledSkill(
+    job: DistillJob,
+    cand: NonNullable<DistillResult['skill_candidate']>,
+    workspaceId: string,
+  ): Promise<boolean> {
+    const learning = this.deps.learningService
+    if (!learning) return false
+    try {
+      const res = await learning.ingestDistilled({
+        workspaceId,
+        sessionId: job.sessionId,
+        kind: 'skill',
+        skill: { slug: cand.slug, description: cand.description, body: cand.body },
+      })
+      return res.handled === true
+    } catch (err) {
+      this.logger.warn(`MemoryService: ingestDistilled(skill) failed for ${job.sessionId}`, err)
+      return false
     }
   }
 }

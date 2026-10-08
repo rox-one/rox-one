@@ -25,13 +25,13 @@ graph LR
 
 | PRD §45 | WP | Суть | Статус |
 |---|---|---|---|
-| Wave 1 Observability | WP-101, WP-107, WP-114 | observation/outcome ledger + lifecycle hooks | A: done · B/C: planned |
-| Wave 2 Reflection | WP-102, WP-108 | patterns → hypotheses → candidates | A: done · B: planned |
-| Wave 3 Memory validation | WP-110 | distill → candidate → validate → lesson | planned |
-| Wave 4 Skill evolution | WP-105, WP-110 | skill candidate + patch → version → promote/rollback | A (engines): done · B (wiring): planned |
-| Wave 5 Outcome learning | WP-111, WP-114 | effectiveness, experiments, rollback по регрессии | planned |
-| Wave 6 Policy learning | WP-105, WP-109 | policy learner + job | A (learner): done · B: planned |
-| Wave 7 Autonomous learning | WP-107..109 | LearningWorker: reflect/consolidate/curate/evaluate | planned |
+| Wave 1 Observability | WP-101, WP-107, WP-114 | observation/outcome ledger + lifecycle hooks | done (A+B+C) |
+| Wave 2 Reflection | WP-102, WP-108 | patterns → hypotheses → candidates | done (A+B) |
+| Wave 3 Memory validation | WP-110 | distill → candidate → validate → lesson | done |
+| Wave 4 Skill evolution | WP-105, WP-110 | skill candidate + patch → version → promote/rollback | done (A engines + B wiring) |
+| Wave 5 Outcome learning | WP-111, WP-114 | effectiveness, experiments, rollback по регрессии | done (WP-113 + WP-113b: failure evidence + error-rate trigger) |
+| Wave 6 Policy learning | WP-105, WP-109 | policy learner + job | done |
+| Wave 7 Autonomous learning | WP-107..109 | LearningWorker: reflect/consolidate/curate/evaluate | done (WP-117 composition: LearningHost + bus) |
 
 ## Общая архитектура слоёв
 
@@ -62,7 +62,7 @@ SessionManager ──emit──▶ SessionEventBus ──▶ LearningService (ob
 | WP-105 Skill/Policy | `SkillEvolutionEngine.ts`, `PolicyLearner.ts` | `skill-evolution.test.ts`, `policy-learner.test.ts` | keep/improve/archive границы; patch refusal <3 failures; policy только для ≥10 задач с Δsuccess ≥0.1 и консистентным паттерном; fingerprint детерминирован |
 | WP-106 Config | `packages/shared/src/config/storage.ts` (правка), `packages/shared/src/config/__tests__/skills-learning-policy.test.ts` | тот же файл | `getSkillsLearningPolicy()` + legacy `autoCreateFromSessions` → `off/candidate` (§43); строгая валидация; `getSkillsAutoCreateFromSessions()` не тронут |
 
-Верификация фазы: `bun test packages/server-core/src/memory/` (базовые 187 + новые), `bun test packages/shared/src/config/__tests__/skills-learning-policy.test.ts`, `tsc --noEmit` в `packages/server-core` и `packages/shared`.
+Верификация фазы: `bun test packages/server-core/src/memory/` (базовые 187 + новые), `bun test packages/shared/src/config/__tests__/skills-learning-policy.test.ts`, `tsc --noEmit` в `packages/server-core` и `packages/shared`. — **выполнено** (commit `e60860f9e`; config-сьют 13 pass).
 
 ## Wave B — сервис, хуки, протокол (WP-107…WP-113)
 
@@ -76,6 +76,8 @@ SessionManager ──emit──▶ SessionEventBus ──▶ LearningService (ob
 | WP-112 UI | `apps/electron/src/renderer/components/learning/LearningScreen.tsx` (+ панели), `atoms/learning.ts`, `contexts/NavigationContext.tsx` | WP-111 | renderer-тесты навигации/атомов | экран Learning рядом с Memory/Skills/Sessions; dashboard §26, candidate inspector §27, skill evolution §28, timeline §29; RU + Rox Mono + светлая компактная тема |
 | WP-113 Outcome wiring | `learning/OutcomeStore` (использование из WP-101), правки `LearningService`/`LearningWorker` | WP-108/109 | `outcome-wiring.test.ts` | `session.completed/failed` → `TaskOutcome`; `evaluateOutcomes` → `EffectivenessScorer`; регрессия (drop > 0.1 или correctionRate > 0.25) автоматически запускает `RollbackManager` (PRD §40–41) |
 
+**Статус WP-107…113 — done.** WP-113 закрыт с расширением по PRD §40: `observeCompletion` пишет `TaskOutcome` (`out_<sessionId>`, fingerprint = sha256(workspaceId \0 category)), на каждый revert пишется failure evidence (`failed_outcome`, ref = mutationId), добавлен error-rate триггер регрессии (§40 третий пункт; порог — переиспользован `rollbackSuccessDrop`, PRD числа не называет).
+
 Верификация фазы: `bun test packages/server-core/src/` (полный server-core сьют), `bun run typecheck:all`, узкие сьюты протокола и renderer'а.
 
 ## Wave C — приёмка (WP-114…WP-116)
@@ -85,6 +87,18 @@ SessionManager ──emit──▶ SessionEventBus ──▶ LearningService (ob
 | WP-114 E2E §46 | `packages/server-core/src/memory/learning/__tests__/learning-loop.e2e.test.ts` | всё выше | единый тест 12 шагов §46: задача → коррекция → observation → reflection → повтор → evidence → ACTIVE → использование → outcome → effectiveness → auto-rollback → timeline с полной причинной цепочкой |
 | WP-115 Runtime Map | `apps/electron/src/renderer/components/runtime-map/*` (правка) | WP-112 | узлы Memory/Skill/Policy/Evidence/Outcome в live-map (PRD §30) |
 | WP-116 Docs/норма | `docs/memory/learning.md` (новая), обновление `docs/memory/*` | все | норма §48 зафиксирована; операторская инструкция: как читать timeline, approve/reject/rollback |
+
+**Статус Wave C:** WP-114 — done (12 шагов §46 в одном тесте, 62 expect, реальные stores, без моков движков); WP-115 — done (`learning-nodes.ts`: 5 узлов Memory/Skill/Policy/Evidence/Outcome, стили, 8 тестов; live-feed — WP-115b, см. отклонения); WP-116 — done (`docs/memory/learning.md` 346 строк + локальный индекс).
+
+## Известные отклонения и принятые ограничения (report-only)
+
+1. **Skills не авто-промоутятся из `ingestDistilled`**: evidence skill-кандидата — только `skill_usage`, проход `outcome_evidence` всегда не ok → нужен явный `approveCandidate`. Осознанно; молча не «исправлялось».
+2. `handled: false` из `ingestDistilled` имеет reason `'learning disabled'` и при `enabled:false`, и при `autoCreate:'off'`.
+3. `getTimeline`: записи mutation/rollback не несут `candidateId` (experiment несёт).
+4. `evaluateOutcomes` сравнивает before/after по глобальному пулу outcomes, а не по `taskFingerprint` (§19 ideal); fingerprint пишется, но для сопоставимости пока не используется. `qualityScore` в триггерах не участвует.
+5. Runtime map: learning-узлы (5 видов) выводятся в live-канвас через read-only overlay (WP-115b: `learning-overlay.ts`, `useLearningOverlay`, `LearningNodeCard`, fail-soft при ошибке/`UNSUPPORTED_OPERATION`). Ограничение: push-канала у learning нет — overlay перечитывается при смене workspaceId (как и `LearningScreen`), поэтому утверждённый кандидат появляется на карте после её ремаунта. Фильтры toolbar и context-mode allowlist намеренно не расширялись (потребовали бы новых locale-ключей).
+6. GC не удаляет, только рекомендует: в замороженном `LearningTargetStores` нет archive-порта.
+7. Вне исходной таблицы: **WP-117 Composition** — выполнен (`LearningHost`, `SessionManager` bus-хуки, electron `main/index.ts`, headless `packages/server/src/index.ts`).
 
 ## Definition of Done (PRD §46)
 
