@@ -3,6 +3,7 @@ import { LayoutGrid, List, X } from 'lucide-react'
 import type { ComponentEntry } from './types'
 import { cn } from '@/lib/utils'
 import { getModelShortName } from '@config/models'
+import { ROX_DEFAULT_PARENT_MODEL } from '@config/rox-public-models'
 import type { ProjectColorTreatment } from '@/utils/project-colors'
 import { KanbanBoard } from '@/components/app-shell/kanban/KanbanBoard'
 import { TaskTile } from '@/components/app-shell/kanban/TaskTile'
@@ -193,7 +194,9 @@ function buildTaskWindowProps(task: KanbanTask): TaskWindowProps {
     title: task.title,
     project,
     status: mockStatusesById.get(task.statusId),
-    model: task.model,
+    // Playground windows need a concrete label, but should never resurrect the
+    // Anthropic DEFAULT_MODEL for an inherited task.
+    model: task.model ?? ROX_DEFAULT_PARENT_MODEL,
     userMessage: `Coordinate "${task.title}" and route each part to the best-fit model.`,
     assistantIntro: hasSubtasks
       ? "I'm acting as the orchestrator — here are the subtasks I've spawned, each routed to a best-fit model:"
@@ -219,9 +222,9 @@ function buildSubtaskWindowProps(sub: KanbanSubtask, parent: KanbanTask): TaskWi
     title: sub.title,
     project,
     status: mockStatusesById.get(SUBTASK_STATUS_BY_RUN_STATE[sub.runState]),
-    model: sub.model,
+    model: sub.model ?? ROX_DEFAULT_PARENT_MODEL,
     userMessage: sub.title,
-    assistantIntro: `Spawned from "${parent.title}" and routed to ${getModelShortName(sub.model)} as the best fit for this subtask.`,
+    assistantIntro: `Spawned from "${parent.title}" and routed to ${getModelShortName(sub.model ?? ROX_DEFAULT_PARENT_MODEL)} as the best fit for this subtask.`,
     subtasks: [],
     assistantFollowUp: followUp[sub.runState],
   }

@@ -20,4 +20,5 @@ export * from './platform/index.ts';
 export * from './knowledge/index.ts';
 export * from './tasks/personal/index.ts';
 export * from './rox2/index.ts';
+export * from './entities/index.ts';
 export * from './meetings/index.ts';

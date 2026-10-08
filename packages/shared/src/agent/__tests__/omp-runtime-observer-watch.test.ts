@@ -1,5 +1,5 @@
 import { expect, it } from 'bun:test';
-import { appendFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync, type FSWatcher } from 'node:fs';
+import { appendFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { availableParallelism, cpus, platform, release, tmpdir, totalmem } from 'node:os';
 import { join } from 'node:path';
@@ -7,10 +7,10 @@ import { execFileSync } from 'node:child_process';
 import { OmpRuntimeObserver, OMP_OBSERVATION_MAX_FRAME_BYTES, type OmpRuntimeObservation } from '../omp-runtime-observer.ts';
 import { OmpRuntimeTraceBridge } from '../omp-runtime-trace-bridge.ts';
 
-const waitFor = async (ready: () => boolean, diagnostics: () => unknown = () => undefined): Promise<void> => {
+const waitFor = async (ready: () => boolean): Promise<void> => {
   const deadline = performance.now() + 3_000;
   while (!ready()) {
-    if (performance.now() >= deadline) throw new Error(`Actual filesystem watcher delivery did not complete: ${JSON.stringify(diagnostics())}`);
+    if (performance.now() >= deadline) throw new Error('Actual filesystem watcher delivery did not complete');
     await new Promise(resolve => setTimeout(resolve, 5));
   }
 };
@@ -42,10 +42,6 @@ it('delivers bounded append bursts through the actual watcher with source order,
     mapped.push(...bridge.map(event));
     mapMs += performance.now() - mappingStarted;
   }, error => errors.push(error));
-  const watcherEvents: Array<{ event: string; filename: string | null }> = [];
-  (observer as unknown as { watcher?: FSWatcher }).watcher?.on('change', (event, filename) => {
-    watcherEvents.push({ event, filename: filename?.toString() ?? null });
-  });
   const frame = (sourceSeq: number): OmpRuntimeObservation => ({
     version: 1, id: randomUUID(), sourceId: 'bounded-watch-fixture-source', sourceSeq,
     observedAt: Date.now(), elapsedMs: performance.now(), runId: 'watch-fixture-run',
@@ -74,7 +70,7 @@ it('delivers bounded append bursts through the actual watcher with source order,
       }
       target += burst.length;
       // No manual drain: only the actual fs.watch callback delivers these frames.
-      await waitFor(() => received.length === target, () => ({ target, received: received.length, pending: pending.length, errors: errors.map(error => error.message), watcherEvents }));
+      await waitFor(() => received.length === target);
     }
     const deliveryMs = performance.now() - started;
     expect(errors).toHaveLength(0);
@@ -110,7 +106,6 @@ it('delivers bounded append bursts through the actual watcher with source order,
       environment: { platform: platform(), kernel: release(), bun: process.versions.bun, nodeCompatibility: process.versions.node,
         cpu: cpus()[0]?.model, availableParallelism: availableParallelism(), totalMemoryBytes: totalmem() },
       measurements: { physicalFrames: physical.length, uniqueSourceFrames: sequences.length, exactReplaysDroppedByBridge: 2,
-        watcherNotifications: watcherEvents,
         sourceGap: { first: 40, last: 40, coverageEvents: gaps.length },
         appendedButUndeliveredFramesHighWater: highWaterFrames, queuedFramesAfterBursts: pending.length,
         deliveryMs, mapMs, appendToCallbackMs: { p50: percentile(0.5), p95: percentile(0.95), max: sorted.at(-1) },

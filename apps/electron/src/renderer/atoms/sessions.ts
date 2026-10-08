@@ -15,13 +15,14 @@ import type { Session, Message, SessionPriority } from '../../shared/types'
 
 import { markStatusUnseen } from '@/lib/sidebar-unseen-status'
 import { countGitCommits, countToolCalls } from '@rox/shared/sessions/collection'
+import type { AgentProfileSnapshot } from '@rox/shared/workspace-work'
 
 /**
  * Session metadata for list display (lightweight, no messages)
  * Used by SessionList to avoid re-rendering on message changes
  */
 export interface SessionMeta {
-  agentProfileSnapshot?: import('@rox/shared/workspace-work').AgentProfileSnapshot
+  agentProfileSnapshot?: AgentProfileSnapshot
   id: string
   name?: string
   /** Preview of first user message (for title fallback) */

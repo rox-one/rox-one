@@ -19,7 +19,7 @@ import { createE2bApiServer } from './e2b-tools.ts';
 import { isManagedBuiltinSource } from './builtin-sources.ts';
 import { createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk';
 import { debug } from '../utils/debug.ts';
-import { resolveStdioConfig } from '../utils/paths.ts';
+import { expandVars, resolveStdioConfig } from '../utils/paths.ts';
 import { buildRuntimeBuiltinMcpConfig, getBuiltinMcpReadiness } from './builtin-mcp.ts';
 
 /**
@@ -387,6 +387,9 @@ export class SourceServerBuilder {
               : mcp.transport === 'stdio' ? SERVER_BUILD_ERRORS.STDIO_COMMAND_MISSING
               : !mcp.url ? SERVER_BUILD_ERRORS.MCP_URL_MISSING
               : SERVER_BUILD_ERRORS.AUTH_REQUIRED;
+            if (error === SERVER_BUILD_ERRORS.AUTH_REQUIRED) {
+              debug(`[SourceServerBuilder] MCP server ${source.config.slug} needs auth`);
+            }
             errors.push({
               sourceSlug: source.config.slug,
               error,

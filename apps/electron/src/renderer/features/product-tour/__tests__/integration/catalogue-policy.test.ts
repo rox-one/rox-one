@@ -86,7 +86,11 @@ for (const tour of catalogue) for (const step of tour.steps) describe(`${step.te
     state = dispatch(state, { type: 'SIGNAL', signal: signal(step) })
     expect(state.phase).toBe('handed-off')
     state = dispatch(state, { type: 'HANDOFF_CLOSED', runToken: binding.runToken, stepId: step.id })
-    if (step.completion.requireAcknowledgementAfterEvidence) state = dispatch(state, { type: 'ACK', runToken: binding.runToken, stepId: step.id, at: 120 })
+    if (step.completion.requireAcknowledgementAfterEvidence) {
+      expect(state.phase).toBe('locating')
+      state = dispatch(state, { type: 'TARGET_READY', runToken: binding.runToken, stepId: step.id })
+      state = dispatch(state, { type: 'ACK', runToken: binding.runToken, stepId: step.id, at: 120 })
+    }
     expect(state.phase).toBe('finished')
   })
 })

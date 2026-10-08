@@ -7,9 +7,9 @@
  */
 
 import { CraftMcpClient, formatMcpUrlForLog, isManagedLocalQdrantConfig } from './client.js';
-import { isBlockedEnvVar } from '@rox/core/env';
 import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { isBlockedEnvVar } from '@rox/core/env';
 import { debug } from '../utils/debug.ts';
 import { normalizeMcpUrl } from '../sources/server-builder.ts';
 import type { McpTransport } from '../sources/types.ts';

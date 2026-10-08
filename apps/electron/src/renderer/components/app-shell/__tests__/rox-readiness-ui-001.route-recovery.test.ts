@@ -37,8 +37,9 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
     ['terminal/terminal-one', 'TerminalSurfacePage', 'terminalId', 'terminal-one'],
     ['cloud-run/run-one', 'CloudRunSurfacePage', 'runId', 'run-one'],
     ...['dossier', 'radar', 'decisions', 'focus'].map(screen => [`${screen}/item/item-one`, 'ExtraScreenHost', 'screen', screen]),
-    // The navigation rebuild routes the agents screen to its workspace page; the extra-screen item contract was never used for agents.
-    ['agents/item/item-one', 'AgentsWorkspacePage', null, null],
+    // The navigation rebuild hands the whole agents screen to its workspace page,
+    // so no selected item is forwarded there.
+    ['agents/item/item-one', 'AgentsWorkspacePage', '', ''],
   ]
   for (const [route, host, prop, value] of cases) {
     it(`dispatches ${route} with its own selected entity`, async () => {
@@ -59,8 +60,13 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
         expect(html).not.toContain('data-route-host="ChatPage"')
         return
       }
+      if (host === 'AgentsWorkspacePage') {
+        expect(html).toContain('data-route-host="AgentsWorkspacePage"')
+        expect(html).not.toContain('session.selectConversation')
+        return
+      }
       expect(html).toContain(`data-route-host="${host}"`)
-      if (prop) expect(html).toContain(`&quot;${prop}&quot;:&quot;${value}&quot;`)
+      expect(html).toContain(`&quot;${prop}&quot;:&quot;${value}&quot;`)
       expect(html).not.toContain('session.selectConversation')
       if (host === 'SourceInfoPage' || host === 'SkillInfoPage') expect(html).toContain('&quot;workspaceId&quot;:&quot;workspace-a&quot;')
     })

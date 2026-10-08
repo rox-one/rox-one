@@ -905,8 +905,14 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   hide(id: string): void {
     const instance = this.instances.get(id)
-    // Embedded instances have no OS window — hiding is driven by syncEmbeddedBounds(null).
-    if (!instance || instance.embedded) return
+    if (!instance) return
+
+    if (instance.embedded) {
+      this.hideEmbeddedInstance(instance)
+      return
+    }
+
+    this.closePopupsForParent(instance.id, 'parent_hide')
 
     // Re-entrancy guard: bail if a hide is already in progress. Prevents the
     // 'close' listener from re-entering hide() during teardown, which can crash
@@ -2416,7 +2422,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     instance.embeddedRect = normalized
 
     if (!normalized) {
-      this.detachEmbeddedViews(instance)
+      this.hideEmbeddedInstance(instance)
       return
     }
 
@@ -2425,12 +2431,15 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       // A stale or foreign sender must never move a native surface onto another
       // workspace window. Keep it detached until its owning renderer reports again.
       mainLog.warn(`[browser-pane] syncEmbeddedBounds: no authorized host window for id=${id}; hiding for now`)
-      instance.embeddedRect = null
-      this.detachEmbeddedViews(instance)
+      this.hideEmbeddedInstance(instance)
       return
     }
 
     this.attachEmbeddedViews(instance, hostWindow)
+    if (instance.embeddedAttached && !instance.isVisible) {
+      instance.isVisible = true
+      this.emitStateChange(instance)
+    }
   }
 
   /** Resolve the renderer-owned managed window, preferring authenticated sender identity. */
@@ -2586,6 +2595,16 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
   }
 
+  private hideEmbeddedInstance(instance: BrowserInstance): void {
+    this.closePopupsForParent(instance.id, 'parent_hide')
+    instance.embeddedRect = null
+    this.detachEmbeddedViews(instance)
+    if (instance.isVisible) {
+      instance.isVisible = false
+      this.emitStateChange(instance)
+    }
+  }
+
   /** Lay out the embedded views within the last reported rect, clamped to the host. */
   private layoutEmbeddedViews(instance: BrowserInstance): void {
     const hostWindow = instance.embeddedHostWindow
@@ -2607,7 +2626,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     if (width <= 0 || height <= 0) {
       // Rect fully outside the host window — hide instead of leaving stale views.
       mainLog.info(`[browser-pane] embedded rect outside host window id=${instance.id}; hiding`)
-      this.detachEmbeddedViews(instance)
+      this.hideEmbeddedInstance(instance)
       return
     }
 
@@ -3651,7 +3670,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     })
   }
 
-  private unregisterPopupWindow(popupWindow: BrowserWindow, reason: 'closed' | 'parent_destroy' | 'reparented'): void {
+  private unregisterPopupWindow(popupWindow: BrowserWindow, reason: 'closed' | 'parent_destroy' | 'parent_hide' | 'reparented'): void {
     const popupWcId = popupWindow.webContents.id
     const parentId = this.popupParentByWebContentsId.get(popupWcId)
     if (!parentId) return
@@ -3669,7 +3688,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     mainLog.info(`[browser-pane] popup closed parent=${parentId} popupWebContentsId=${popupWcId} reason=${reason}`)
   }
 
-  private closePopupsForParent(parentId: string, reason: 'parent_destroy'): void {
+  private closePopupsForParent(parentId: string, reason: 'parent_destroy' | 'parent_hide'): void {
     const popups = this.popupWindowsByParentInstanceId.get(parentId)
     if (!popups || popups.size === 0) return
 

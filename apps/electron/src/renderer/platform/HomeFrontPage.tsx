@@ -199,7 +199,7 @@ function SortableWidget({
       data-home-cell={placement.id}
       data-home-size={placement.size}
       className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
-style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `span ${span} / span ${span}`, gridRow: `span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height: contentSized ? 'fit-content' : height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
+      style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `span ${span} / span ${span}`, gridRow: `span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height: contentSized ? 'fit-content' : height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={
@@ -576,7 +576,7 @@ export function HomeFrontPage() {
                       type="button"
                       onClick={() => setPickerOpen(true)}
                       className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-[13px] font-bold text-muted-foreground hover:text-foreground"
-style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${Math.ceil(widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) / trackPitch)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
+                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${Math.ceil(widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) / trackPitch)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
                     >
                       <Plus className="h-5 w-5" />
                       {t('workbench.home.edit.addWidget')}

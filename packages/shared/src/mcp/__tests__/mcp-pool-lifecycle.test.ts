@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,12 +17,13 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-function fakeClient(): PoolClient & { isClosed: boolean; closes: number; calls: number } {
+function fakeClient(): PoolClient & { closed: boolean; closes: number; calls: number } {
   return {
-    isClosed: false, closes: 0, calls: 0,
+    closed: false, closes: 0, calls: 0,
+    isConnected() { return !this.closed; },
     listTools: async () => [{ name: 'inspect', inputSchema: { type: 'object' } }],
     async callTool() { this.calls++; return { content: [{ type: 'text', text: 'ok' }] }; },
-    async close() { this.closes++; this.isClosed = true; },
+    async close() { this.closes++; this.closed = true; },
   };
 }
 
@@ -49,13 +50,16 @@ describe('McpClientPool liveness and lifecycle races', () => {
       const pool = new LifecyclePool();
       const client = fakeClient();
       await pool.register('source', client, config);
-      client.isClosed = true;
+      client.closed = true;
       expect(pool.isConnected('source')).toBe(false);
       expect(pool.getConnectedSlugs()).toEqual([]);
       expect(pool.getTools('source')).toEqual([]);
       expect(pool.getProxyToolDefs()).toEqual([]);
       expect(pool.getProxyToolName('source', 'inspect')).toBeNull();
-      expect(pool.isProxyTool('mcp__source__inspect')).toBe(false);
+      // The registry keeps the proxy name so the next call routes through the
+      // pool and triggers recovery (main's contract, see mcp-pool-recovery);
+      // only the advertised tool views are cleared while the transport is dead.
+      expect(pool.isProxyTool('mcp__source__inspect')).toBe(true);
       if (reconcile === 'sync') expect(await pool.sync({ source: config })).toEqual([]);
       else await pool.ensureConnected('source', config);
       expect(client.closes).toBe(1);
@@ -70,7 +74,7 @@ describe('McpClientPool liveness and lifecycle races', () => {
     const pool = new LifecyclePool();
     const client = fakeClient();
     client.listTools = async () => {
-      client.isClosed = true;
+      client.closed = true;
       return [{ name: 'inspect', inputSchema: { type: 'object' } }];
     };
     try {
@@ -87,7 +91,7 @@ describe('McpClientPool liveness and lifecycle races', () => {
     const teardown = deferred<void>();
     client.close = async () => { client.closes++; started.resolve(); await teardown.promise; };
     await pool.register('source', client, config);
-    client.isClosed = true;
+    client.closed = true;
     const syncing = pool.sync({ source: config });
     const ensuring = pool.ensureConnected('source', config);
     try {
@@ -204,7 +208,7 @@ describe('McpClientPool liveness and lifecycle races', () => {
     const pool = new FailingPool();
     const client = fakeClient();
     await pool.register('source', client, config);
-    client.isClosed = true;
+    client.closed = true;
     pool.failNext = true;
     expect(await pool.sync({ source: config })).toEqual(['source']);
     expect(client.closes).toBe(1);
@@ -271,7 +275,7 @@ describe('SourceServerBuilder -> McpClientPool real subprocess lifecycle', () =>
       expect(fixture.config.cwd).toBe(fixture.folder);
       expect(await pool.sync({ fixture: fixture.config })).toEqual([]);
       const first = JSON.parse((await pool.callTool('mcp__fixture__inspect', {})).content);
-      expect(first.cwd).toBe(fixture.folder);
+      expect(first.cwd).toBe(await realpath(fixture.folder));
       expect(first.relative).toBe('source-local payload');
       expect(first.args).toEqual(['argument with spaces']);
       expect(first.value).toBe(fixture.folder);
@@ -282,7 +286,7 @@ describe('SourceServerBuilder -> McpClientPool real subprocess lifecycle', () =>
       await writeFile(join(other, 'relative.txt'), 'replacement-local payload');
       await pool.ensureConnected('fixture', { ...fixture.config, cwd: other });
       const second = JSON.parse((await pool.callTool('mcp__fixture__inspect', {})).content);
-      expect(second.cwd).toBe(other);
+      expect(second.cwd).toBe(await realpath(other));
       expect(second.relative).toBe('replacement-local payload');
       expect(second.pid).not.toBe(first.pid);
     } finally {
@@ -300,8 +304,11 @@ describe('SourceServerBuilder -> McpClientPool real subprocess lifecycle', () =>
         const result = await pool.callTool('mcp__fixture__die', {}, { timeoutMs: 2000 });
         expect(result.isError).toBe(true);
         expect(result.sourceSlug).toBe('fixture');
-        expect(pool.isConnected('fixture')).toBe(false);
-        expect(pool.getProxyToolDefs()).toEqual([]);
+        // Main's pool recovers the dead transport in place, without replaying
+        // the failed call; the branch left the source disconnected until the
+        // next sync. Either way exactly one child per connect is spawned.
+        expect(pool.isConnected('fixture')).toBe(true);
+        expect(pool.getProxyToolDefs().map(tool => tool.name)).toContain('mcp__fixture__inspect');
         expect((await readFile(join(fixture.root, 'calls.txt'), 'utf8')).trim().split('\n')).toHaveLength(1);
         if (reconcile === 'sync') expect(await pool.sync({ fixture: fixture.config })).toEqual([]);
         else await pool.ensureConnected('fixture', fixture.config);

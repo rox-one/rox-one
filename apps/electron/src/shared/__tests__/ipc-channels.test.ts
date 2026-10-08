@@ -167,6 +167,9 @@ const EXPECTED_CHANNELS: string[] = [
   'drafts:get',
   'drafts:getAll',
   'drafts:set',
+  'entities:links',
+  'entities:linksChanged',
+  'entities:resolve',
   'environment:changed',
   'environment:get',
   'environment:save',
@@ -304,6 +307,26 @@ const EXPECTED_CHANNELS: string[] = [
   'labels:delete',
   'labels:list',
   'labels:update',
+  'learning:approve',
+  'learning:consolidate',
+  'learning:curateSkills',
+  'learning:forceReflect',
+  'learning:getCandidate',
+  'learning:getExperiment',
+  'learning:getOutcome',
+  'learning:getPolicy',
+  'learning:getSkillEffectiveness',
+  'learning:getStats',
+  'learning:getTimeline',
+  'learning:listCandidates',
+  'learning:listEvidence',
+  'learning:observe',
+  'learning:recordCorrection',
+  'learning:recordOutcome',
+  'learning:reject',
+  'learning:revalidate',
+  'learning:rollback',
+  'learning:runPolicyLearning',
   'logo:getUrl',
   'marketplace:CHANGED',
   'marketplace:catalog',
@@ -439,8 +462,10 @@ const EXPECTED_CHANNELS: string[] = [
   'nativeData:readEntity',
   'notes:changed',
   'notes:create',
+  'notes:createComment',
   'notes:delete',
   'notes:deleteAsset',
+  'notes:deleteComment',
   'notes:deleteFolder',
   'notes:getBacklinks',
   'notes:getDailyNote',
@@ -450,6 +475,7 @@ const EXPECTED_CHANNELS: string[] = [
   'notes:importAsset',
   'notes:list',
   'notes:listAssets',
+  'notes:listComments',
   'notes:move',
   'notes:prepareCreate',
   'notes:read',
@@ -460,6 +486,7 @@ const EXPECTED_CHANNELS: string[] = [
   'notes:save',
   'notes:search',
   'notes:unwatch',
+  'notes:updateComment',
   'notes:updateProperties',
   'notes:watch',
   'notesImport:execute',
@@ -823,6 +850,11 @@ const EXPECTED_CHANNELS: string[] = [
   'workspace:writeImage',
   'workspaceSettings:get',
   'workspaceSettings:update',
+  'workspaceWork:changed',
+  'workspaceWork:delete',
+  'workspaceWork:read',
+  'workspaceWork:snapshotProfile',
+  'workspaceWork:write',
   'workspaces:checkSlug',
   'workspaces:create',
   'workspaces:get',
@@ -878,6 +910,12 @@ describe('BroadcastEventMap payload shapes', () => {
   it('contextDocs:CHANGED carries no payload', () => {
     type Payload = BroadcastEventMap[typeof RPC_CHANNELS.contextDocs.CHANGED]
     const _check: AssertTuple<Payload, 0> = true
+    expect(_check).toBe(true)
+  })
+
+  it('entities:linksChanged carries (workspaceId)', () => {
+    type Payload = BroadcastEventMap[typeof RPC_CHANNELS.entities.LINKS_CHANGED]
+    const _check: AssertTuple<Payload, 1> = true
     expect(_check).toBe(true)
   })
 })

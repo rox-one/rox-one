@@ -22,9 +22,8 @@ describe('McpClientPool transport failures', () => {
       const pool = new McpClientPool({ debug: (message) => logs.push(message) });
       try {
         expect(await pool.sync({ docs: { type: 'http', url: `http://127.0.0.1:${port}/mcp?key=private-query` } })).toEqual(['docs']);
-        // 503 stays inside the pool's transient connection-setup retry policy
-        // (see the matching case in mcp-pool-legacy-sse.test.ts), so the empty
-        // body is answered by exactly one retried POST — and never by SSE.
+        // 503 is a recoverable status, so the pool reconnects once (see
+        // mcp-pool-legacy-sse.test.ts); no GET/SSE fallback is ever attempted.
         expect(methods).toEqual(status === 503 ? ['POST', 'POST'] : ['POST']);
         expect(logs.join('\n')).toContain(`HTTP ${status}`);
         expect(logs.join('\n')).toContain(`/mcp`);

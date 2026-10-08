@@ -101,10 +101,10 @@ async function selectMenu(row: Locator, label: string) {
   await row.getByRole('button').last().click()
   const popover = page.locator('[data-slot="popover-content"]')
   if (await popover.locator('input').count()) await popover.locator('input').fill(label)
-  await popover.getByRole('button', { name: label, exact: true }).click()
+  await popover.getByRole('option', { name: label, exact: true }).click()
 }
 async function snapshot(p: Page) {
-  await waitUsable(p, 'snapshot')
+  await waitUsable(page, 'snapshot')
   return p.evaluate(() => {
     const root = document.documentElement
     const style = getComputedStyle(root)
@@ -307,7 +307,7 @@ try {
     await appearance(page)
     const row = page.locator('[data-layout="settings-row"]').filter({ has: page.getByText(boundWorkspace.name, { exact: true }) })
     await row.getByRole('button').last().click()
-    await page.locator('[data-slot="popover-content"]').getByRole('button', { name: /^Использовать по умолчанию/ }).click()
+    await page.locator('[data-slot="popover-content"]').getByRole('option', { name: /^Использовать по умолчанию/ }).click()
     await page.waitForFunction(async id => await (window as any).electronAPI.getWorkspaceColorTheme(id) === null, boundWorkspace.id)
   }
   report.preconditions = { workspaceOverrideBefore: existingOverride, workspaceOverrideAfter: null,

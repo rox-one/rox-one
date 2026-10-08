@@ -213,6 +213,10 @@ export const RPC_CHANNELS = {
     READ: 'notes:read',
     SAVE: 'notes:save',
     CREATE: 'notes:create',
+    LIST_COMMENTS: 'notes:listComments',
+    CREATE_COMMENT: 'notes:createComment',
+    UPDATE_COMMENT: 'notes:updateComment',
+    DELETE_COMMENT: 'notes:deleteComment',
     PREPARE_CREATE: 'notes:prepareCreate',
     RENAME: 'notes:rename',
     MOVE: 'notes:move',
@@ -1102,6 +1106,14 @@ export const RPC_CHANNELS = {
     FINALIZE: 'meetings:finalize',
     ADD_MANUAL_NOTE: 'meetings:addManualNote',
     CORRECT_SEGMENT: 'meetings:correctSegment',
+  },
+  entities: {
+    /** Query/command dispatcher for the local entity-link store. */
+    LINKS: 'entities:links',
+    /** Batch entity preview resolution (local + workspace). */
+    RESOLVE: 'entities:resolve',
+    /** Push: local link store changed for a workspace. */
+    LINKS_CHANGED: 'entities:linksChanged',
   },
 } as const
 

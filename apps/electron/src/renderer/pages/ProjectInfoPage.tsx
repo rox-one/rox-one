@@ -44,6 +44,8 @@ import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
 import type { LoadedProject, OkrCycle, OkrKeyResult, OkrObjective, OkrProgress, ProjectOkrDocument, ProjectAsset } from '@rox/shared/projects/types'
 import { calculateOkrCycle, createOkrCycle } from '@rox/shared/projects'
 import { useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { measureTargetGeometry } from '@/features/product-tour/ui/geometry'
+import { observeTargetGeometry } from '@/features/product-tour/ui/geometry-observer'
 import { deriveProjectSignals } from '@/features/product-tour/adapters/work/tasks-projects'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -73,19 +75,41 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const projectMountedRef = useRef(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+const projectSummaryRef = useRef<HTMLDivElement | null>(null)
   const projectReadsMountedRef = projectMountedRef
   const projectReadRevisionRef = projectRequestRef
-  useEffect(() => tour.capability('projects.available', loading
-    ? { state: 'pending', reason: 'installing' }
-    : error ? { state: 'unavailable', reason: 'api-unavailable' }
-      : project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' }), [tour, loading, error, project])
+  // The selected detail may load while the already-ready Projects API remains
+  // usable. A missing reader or an actual failed read still blocks honestly.
   useEffect(() => {
-    if (loading || error || !project) return
-    const observation = tour.capture()
-    for (const signal of deriveProjectSignals(observation, project, true)) {
-      tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
+    if (typeof window.electronAPI?.getProject !== 'function') {
+      tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
+    } else if (loading) {
+      tour.capability('projects.available', { state: 'pending', reason: 'installing' })
+    } else if (error) {
+      tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
+    } else {
+      tour.capability('projects.available', project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' })
     }
   }, [tour, loading, error, project])
+  useEffect(() => {
+    const element = projectSummaryRef.current
+    if (loading || error || !project || project.workspaceId !== workspaceId || project.config.slug !== projectSlug || !element) return
+    const observation = tour.capture()
+    if (!observation) return
+    let emitted = false
+    let stop = () => {}
+    const complete = () => {
+      if (emitted || !measureTargetGeometry(element)) return
+      emitted = true
+      stop()
+      for (const signal of deriveProjectSignals(observation, project, true)) {
+        tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
+      }
+    }
+    complete()
+    if (!emitted) stop = observeTargetGeometry(element, complete)
+    return () => stop()
+  }, [tour, loading, error, project, workspaceId, projectSlug])
   const [tab, setTab] = useState<TabKey>('sessions')
   const [taskStore, setTaskStore] = useState(loadPersonalTaskStore)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -561,6 +585,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
         <Info_Page.Content>
           <Info_Page.Hero
             avatar={
+              <div ref={projectSummaryRef} style={{ display: 'inline-flex' }}>
               <ProjectIcon
                 workspaceId={workspaceId}
                 projectSlug={project.config.slug}
@@ -569,6 +594,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                 className="h-6 w-6"
                 iconClassName="h-6 w-6 text-foreground/60"
               />
+              </div>
             }
             title={project.config.name}
             tagline={project.config.description ?? t('projectInfo.taglineFallback')}

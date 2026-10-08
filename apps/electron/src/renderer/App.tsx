@@ -51,6 +51,7 @@ import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recover
 import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
 import { readLocalSessionCapability, loadCallerSessionInventory } from './lib/caller-session-loading'
 import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
+import { getSessionsRequiringPermissionModeReconcile } from './lib/permission-mode-reconcile'
 import { extractWorkspaceSlugFromPath } from '@rox/shared/utils/workspace-slug'
 import { DEFAULT_THINKING_LEVEL } from '@rox/shared/agent/thinking-levels'
 import { initRendererPerf } from './lib/perf'
@@ -74,12 +75,15 @@ import {
 } from '@/atoms/sessions'
 import { sourcesAtom } from '@/atoms/sources'
 import { skillsAtom } from '@/atoms/skills'
+import { recordSuccessfulCompletionAtom } from '@/atoms/header-status'
 import {
   showBackgroundFinishedChipAtom,
   pushBackgroundFinishedAtom,
 } from '@/atoms/background-finished'
 import { visibleSessionIdsAtom } from '@/atoms/panel-stack'
 import { featureUnifiedShellAtom, featureWorkbenchAtom } from '@/atoms/unified-shell'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { useEntitiesLinksFlagSync } from '@/lib/entities-links-sync'
 import { getSessionTitle } from '@/utils/session'
 import { extractBadges } from '@/lib/mentions'
 import { getDefaultStore } from 'jotai'
@@ -358,6 +362,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   )
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
   const workbenchEnabled = useAtomValue(featureWorkbenchAtom)
+  const entitiesLinksEnabled = useAtomValue(featureEntitiesLinksV1Atom)
+  // Push entities.links.v1 into the route parser + main (deep links, RPC).
+  useEntitiesLinksFlagSync(entitiesLinksEnabled)
   const unifiedShellChrome = unifiedShell || workbenchEnabled
 
   useEffect(() => {
@@ -421,6 +428,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // LLM connections with authentication status (for provider selection)
   const [llmConnections, setLlmConnections] = useState<LlmConnectionWithStatus[]>([])
+  const existingConnectionSlugs = useMemo(
+    () => new Set(llmConnections.map((connection) => connection.slug)),
+    [llmConnections],
+  )
   const [runtimeSummary, setRuntimeSummary] = useState<StartupRuntimeSummary | null>(null)
   const runtimeRefreshGeneration = useRef(0)
   // Workspace default LLM connection (for new sessions)
@@ -579,6 +590,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         ...defaultSessionOptions,
         ...current,
         permissionMode: session.permissionMode ?? defaultSessionOptions.permissionMode,
+        permissionModeVersion: session.permissionModeVersion ?? current?.permissionModeVersion,
         thinkingLevel: session.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
       }
 
@@ -653,9 +665,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       for (const s of loadedSessions) {
         const hasNonDefaultMode = s.permissionMode && s.permissionMode !== 'ask'
         const hasNonDefaultThinking = s.thinkingLevel && s.thinkingLevel !== DEFAULT_THINKING_LEVEL
-        if (hasNonDefaultMode || hasNonDefaultThinking) {
+        const hasPermissionModeVersion = typeof s.permissionModeVersion === 'number'
+        if (hasNonDefaultMode || hasNonDefaultThinking || hasPermissionModeVersion) {
           optionsMap.set(s.id, {
             permissionMode: s.permissionMode ?? 'ask',
+            permissionModeVersion: s.permissionModeVersion,
             thinkingLevel: s.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
           })
         }
@@ -670,7 +684,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         markReady: () => setSessionsLoaded(true),
         reconcileAll: () =>
           Promise.allSettled(
-            loadedSessions.map((s) => reconcilePermissionModeState(s.id)),
+            getSessionsRequiringPermissionModeReconcile(loadedSessions)
+              .map((sessionId) => reconcilePermissionModeState(sessionId)),
           ),
       })
 
@@ -759,7 +774,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       for (const session of sessions) {
         syncSessionOptionsFromSession(session)
       }
-      await Promise.allSettled(sessions.map(s => reconcilePermissionModeState(s.id)))
+      await Promise.allSettled(
+        getSessionsRequiringPermissionModeReconcile(sessions)
+          .map((sessionId) => reconcilePermissionModeState(sessionId)),
+      )
 
       return nextMetaMap
     } catch (err) {
@@ -861,6 +879,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     onComplete: handleOnboardingComplete,
     onConfigSaved: refreshLlmConnections,
     initialSetupNeeds: setupNeeds || undefined,
+    existingSlugs: existingConnectionSlugs,
     // Onboarding is the single name screen; provider setup lives in Settings → ИИ.
     initialStep: 'welcome',
   })
@@ -1380,6 +1399,13 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
               completeEvent.didReceiveNewFinalMessage !== false
 
             if (isSuccessfulCompletion) {
+              store.set(recordSuccessfulCompletionAtom, {
+                session: updatedSession,
+                event: completeEvent,
+                title: getSessionTitle(updatedSession),
+                notifyInHeader: store.get(visibleSessionIdsAtom).has(sessionId),
+                now: Date.now(),
+              })
             // Get the last assistant/plan message as preview
             const lastMessage = updatedSession.messages.findLast(
               m => (m.role === 'assistant' || m.role === 'plan') && !m.isIntermediate

@@ -22,6 +22,8 @@ import {
 import { HARNESS_SKIP_LIST, type HarnessSkipId } from '@rox/core/platform'
 import { navigate, routes } from '@/lib/navigate'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -123,6 +125,11 @@ export function WorkbenchChromeSettings() {
   const [harnessAgentIntel, setHarnessAgentIntel] = useAtom(featureWorkbenchHarnessAgentIntelV1Atom)
   const [harnessExtCenter, setHarnessExtCenter] = useAtom(featureWorkbenchHarnessExtCenterV1Atom)
   const [harnessAgentTeams, setHarnessAgentTeams] = useAtom(featureWorkbenchHarnessAgentTeamsAtom)
+  const [entitiesLinks, setEntitiesLinks] = useAtom(featureEntitiesLinksV1Atom)
+  // Main owns the effective state: CRAFT_FEATURE_ENTITIES_LINKS overrides the
+  // toggle in both directions, so show the forced value and lock the switch.
+  const entitiesLinksState = useEntitiesLinksEffectiveState()
+  const entitiesLinksForced = entitiesLinksState.envOverride !== undefined
 
   return (
     <>
@@ -202,6 +209,15 @@ export function WorkbenchChromeSettings() {
           description={t('settings.appearance.workbenchHarnessAgentTeamsDesc')}
           checked={harnessAgentTeams}
           onCheckedChange={setHarnessAgentTeams}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.entitiesLinks')}
+          description={entitiesLinksForced
+            ? t(entitiesLinksState.envOverride ? 'settings.appearance.entitiesEnvForcedOn' : 'settings.appearance.entitiesEnvForcedOff')
+            : t('settings.appearance.entitiesLinksDesc')}
+          checked={entitiesLinksForced ? entitiesLinksState.enabled : entitiesLinks}
+          disabled={entitiesLinksForced}
+          onCheckedChange={setEntitiesLinks}
         />
       </SettingsCard>
     </SettingsSection>

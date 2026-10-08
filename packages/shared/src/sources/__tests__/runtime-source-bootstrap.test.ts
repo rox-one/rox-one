@@ -42,15 +42,22 @@ describe('native/public source bootstrap', () => {
   });
 
   test('usability follows the source type and agrees with authentication requirements', () => {
-    for (const config of [
-      { type: 'local' as const, local: { path: 'C:/notes' }, api: { baseUrl: 'https://old.example', authType: 'bearer' as const } },
-      { type: 'mcp' as const, mcp: { transport: 'stdio' as const, command: 'node', authType: 'oauth' as const } },
-      { type: 'api' as const, api: { baseUrl: 'https://public.example', authType: 'none' as const }, mcp: { authType: 'oauth' as const } },
-    ]) {
-      const s = source({ ...config, isAuthenticated: false });
-      expect(sourceNeedsAuthentication(s)).toBe(false);
-      expect(isSourceUsable(s)).toBe(true);
-      expect(isSourceUsable(source({ ...config, enabled: false }))).toBe(false);
+    // Local usability follows live folder evidence, so the local case needs a
+    // real directory; the claim under test is auth ownership by source type.
+    const localDir = mkdtempSync(join(tmpdir(), 'source-usable-'));
+    try {
+      for (const config of [
+        { type: 'local' as const, local: { path: localDir }, api: { baseUrl: 'https://old.example', authType: 'bearer' as const } },
+        { type: 'mcp' as const, mcp: { transport: 'stdio' as const, command: 'node', authType: 'oauth' as const } },
+        { type: 'api' as const, api: { baseUrl: 'https://public.example', authType: 'none' as const }, mcp: { authType: 'oauth' as const } },
+      ]) {
+        const s = source({ ...config, isAuthenticated: false });
+        expect(sourceNeedsAuthentication(s)).toBe(false);
+        expect(isSourceUsable(s)).toBe(true);
+        expect(isSourceUsable(source({ ...config, enabled: false }))).toBe(false);
+      }
+    } finally {
+      rmSync(localDir, { recursive: true, force: true });
     }
     const authenticatedApi = source({ type: 'api', api: { baseUrl: 'https://example.com', authType: 'bearer' } });
     expect(sourceNeedsAuthentication(authenticatedApi)).toBe(true);

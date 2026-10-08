@@ -22,6 +22,8 @@ import {
 import { ContextMenuProvider } from '@/components/ui/menu-context'
 import { SidebarMenu, type SidebarMenuType } from './SidebarMenu'
 import { SortableList, type SortableItemData } from '@/components/ui/sortable-list'
+import type { AppNavDestinationId } from './nav-destinations'
+import { getServiceContextLinks } from './service-navigation'
 
 /** Context menu configuration for sidebar items */
 export interface SidebarContextMenuConfig {
@@ -124,6 +126,8 @@ interface LeftSidebarProps {
   focusedItemId?: string | null
   /** Whether this is a nested sidebar (child of expandable item) */
   isNested?: boolean
+  /** Limit the outer sidebar to its service; nested sections keep their children. */
+  serviceId?: AppNavDestinationId | null
   onExpand?: (link: LinkItem) => void
 }
 
@@ -187,13 +191,16 @@ const itemVariants: Variants = {
  * - Uses @dnd-kit with DragOverlay portaled to document.body (no clipping)
  * - Two-phase drop animation: overlay fades out, ghost fades in
  */
-export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, onExpand }: LeftSidebarProps) {
+export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand }: LeftSidebarProps) {
   const { t } = useTranslation()
   const reduceMotion = useReducedMotion()
+  const visibleLinks = !isNested && serviceId !== undefined
+    ? getServiceContextLinks(links, serviceId)
+    : links
   // For nested sidebars, wrap in motion container for stagger effect
   const NavWrapper = isNested && !reduceMotion ? motion.nav : 'nav'
   const navProps = isNested && !reduceMotion ? {
-    variants: nestedContainerVariants(links.length),
+    variants: nestedContainerVariants(visibleLinks.length),
     initial: 'hidden',
     animate: 'visible',
     exit: 'exit',
@@ -207,7 +214,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
           isNested ? "pl-5 pr-0 relative" : "px-2"
         )}
         role="navigation"
-        aria-label={t('rail.title')}
+        aria-label={t(isNested ? 'sidebar.subNavigation' : 'sidebar.contextNavigation')}
         {...navProps}
       >
         {/* Vertical line for nested items - 4px left of chevron center */}
@@ -217,7 +224,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
             aria-hidden="true"
           />
         )}
-        {links.map((item) => {
+        {visibleLinks.map((item) => {
           // Handle separator items
           if (isSeparatorItem(item)) {
             return (
@@ -578,6 +585,8 @@ interface SidebarButtonProps {
 // and pass props like data-state="open" directly onto this button element.
 const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(
   ({ link, itemProps, isOverlay, groupDisclosure, sectionId, toggleRef, onGroupToggle, groupAriaLabel, className: extraClassName, ...radixProps }, forwardedRef) => {
+    // Empty buckets remain navigable, without repeating a column of zeroes.
+    const badge = link.label === '0' ? undefined : link.label
     const seRail = useSuperEngineeringProfile()
     return (
       <button
@@ -599,14 +608,14 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         onClick={isOverlay ? undefined : (groupDisclosure ? onGroupToggle : link.onClick)}
         type="button"
         title={link.tooltip}
-        aria-current={link.variant === 'default' ? 'page' : undefined}
+        aria-current={link.variant === 'default' && !groupDisclosure ? 'page' : undefined}
         data-tutorial={link.dataTutorial}
         data-sidebar-link-id={link.id}
         aria-expanded={link.expandable ? !!link.expanded : undefined}
         aria-controls={link.expandable ? sectionId : undefined}
         aria-label={groupAriaLabel}
         className={cn(
-          "group flex w-full min-w-0 items-center gap-2 rounded-lg text-[13px] select-none outline-none transition-colors",
+          "group flex min-h-7 w-full min-w-0 items-center gap-2 rounded-lg text-[13px] select-none outline-none transition-colors [@media(pointer:coarse)]:min-h-11",
           "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
           // Compact mode: 4px less total height (py-[3px] vs py-[5px])
           link.compact ? "py-[3px]" : "py-[5px]",
@@ -630,7 +639,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         <span className="relative h-3.5 w-3.5 shrink-0 flex items-center justify-center">
           {renderIcon(link)}
         </span>
-        <span className="min-w-0 truncate">{link.title}</span>
+        <span className="min-w-0 truncate text-left">{link.title}</span>
         {/* After-title element: type indicator icon, right-aligned before count badge, revealed on hover */}
         {link.afterTitle && (
           <span data-touch-reveal="true" className="ml-auto opacity-100">
@@ -642,15 +651,15 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           <span
             className={cn(
               'h-1.5 w-1.5 shrink-0 rounded-full bg-accent',
-              !link.afterTitle && !link.label && 'ml-auto'
+              !link.afterTitle && !badge && 'ml-auto'
             )}
             aria-hidden
           />
         )}
-        {/* Label Badge: count/status always visible (muted) */}
-        {link.label && (
-          <span data-touch-reveal="true" className={cn(link.afterTitle || link.hasUnseen ? 'ml-0' : 'ml-auto', 'text-xs text-text-secondary opacity-100')}>
-            {link.label}
+        {/* Useful counts and nonnumeric status labels keep a stable right edge. */}
+        {badge && (
+          <span data-touch-reveal="true" className={cn(link.afterTitle || link.hasUnseen ? 'ml-0' : 'ml-auto', 'shrink-0 text-xs tabular-nums text-text-secondary opacity-100')}>
+            {badge}
           </span>
         )}
       </button>

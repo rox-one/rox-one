@@ -13,7 +13,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: '@/components/settings', replacement: resolve(root, 'settings.ts') },
-      { find: /^@craft-agent\/ui$/, replacement: resolve(repository, 'packages/ui/src/components/ui/PremiumMenuSelect.tsx') },
+      { find: /^@rox\/ui$/, replacement: resolve(repository, 'packages/ui/src/components/ui/PremiumMenuSelect.tsx') },
       { find: '@rox/shared/environment', replacement: resolve(repository, 'packages/shared/src/environment/versioning.ts') },
       { find: '@', replacement: renderer },
       { find: 'react', replacement: resolve(repository, 'node_modules/react') },

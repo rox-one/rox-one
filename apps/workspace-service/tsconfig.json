@@ -12,5 +12,5 @@
       "@rox/server-core/*": ["../../packages/server-core/src/*"]
     }
   },
-  "include": ["src/**/*", "../../packages/shared/src/**/*.d.ts"], "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*", "test/**/*", "../../packages/shared/src/**/*.d.ts"], "exclude": ["node_modules", "dist"]
 }

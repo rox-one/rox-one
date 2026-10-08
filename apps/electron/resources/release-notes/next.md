@@ -14,8 +14,10 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 - **Zed-inspired appearance** — Added Nordfox - opaque, Min Dark (Blurred), and Siri Light palettes for the interface, code, and terminal. New installations start with Nordfox; existing theme choices remain intact.
 
-- **Joined workspace panels** — Workspace panes now meet at one-pixel separators, with square panel corners, four-pixel controls and cards, and six-pixel menus and dialogs. Glass is limited to title bars, navigation, and inspector chrome; reading and editing surfaces remain opaque.
 
+
+
+- **Joined workspace panels** — Workspace panes now meet at one-pixel separators, with square panel corners, four-pixel controls and cards, and six-pixel menus and dialogs. Glass is limited to title bars, navigation, and inspector chrome; reading and editing surfaces remain opaque.
 - **Windows runtime prerequisites** — The installer can provision verified private GitHub CLI, Git, Node, jq and yq dependencies, with optional native Git Bash and WSL 2 setup. Runtime subprocesses now use the selected dependency environment consistently.
 - **GitHub Copilot GPT-5.6 models** — GitHub Copilot connections now show GPT-5.6 Luna, Terra, and Sol when those models are available to the account.
 - **Native iOS workspace redesign** — Refined server onboarding, added searchable and filterable session rows, introduced document-style assistant responses and richer tool activity cards, surfaced model and permission controls in the composer, improved approval safety, and made the iPad session sidebar visible by default.

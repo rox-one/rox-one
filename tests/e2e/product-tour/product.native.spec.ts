@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test'
 import { bootNativeProduct } from './native-harness'
 
 test('NATIVE-01/NATIVE-02: fresh product setup appears and tour cannot auto-start', async ({}, info) => {
-  const product = await bootNativeProduct()
+  const product = await bootNativeProduct(diagnostics => info.attach('native-startup-diagnostics', {
+    body: Buffer.from(JSON.stringify(diagnostics, null, 2)), contentType: 'application/json',
+  }))
   try {
     await expect(product.page.locator('#root')).not.toBeEmpty()
     await expect(product.page.locator('#onboarding-username')).toBeVisible()

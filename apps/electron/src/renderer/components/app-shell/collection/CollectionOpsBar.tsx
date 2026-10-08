@@ -44,8 +44,9 @@ export function CollectionOpsBar({
 }: CollectionOpsBarProps) {
   return (
     <div
+      data-layout="collection-ops"
       className={cn(
-        'flex flex-wrap items-start justify-between gap-2 border-b border-border/40 bg-background/80 px-4 py-2',
+        'flex min-h-10 flex-wrap items-center justify-between gap-2 border-b border-border-subtle bg-surface-elevated px-3 py-1',
         className,
       )}
     >
@@ -58,7 +59,7 @@ export function CollectionOpsBar({
         labels={labels}
         className="min-w-0 flex-1"
       />
-      <div className="flex shrink-0 items-center gap-2">
+      <div data-layout="collection-controls" className="flex shrink-0 flex-wrap items-center gap-1">
         <CollectionFilterMenu
           filters={filters}
           onFiltersChange={onFiltersChange}

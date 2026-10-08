@@ -3,6 +3,7 @@
  */
 
 import type { LoadedSource } from '../../sources/types.ts'
+import { isSourceUsable } from '../../sources/storage.ts'
 import type { ExtensionPermission, ExtensionRecord, ExtensionStatus } from '../types.ts'
 import { parseExtensionManifest } from '../manifest.ts'
 
@@ -16,8 +17,11 @@ function sourcePermissions(source: LoadedSource): ExtensionPermission[] {
     perms.add('ui.panel')
   }
   // Credential presence → secrets.use bookkeeping (scoped id, not secret value).
+  // Auth-bearing sources only; isSourceUsable() also covers authType: 'none'
+  // sources, which have no credential to scope.
   const credKey = `${source.config.type}::${source.workspaceId}::${source.config.slug}`
-  if (source.config.isAuthenticated || source.config.connectionStatus === 'connected') {
+  const authType = source.config.type === 'mcp' ? source.config.mcp?.authType : source.config.api?.authType
+  if (authType !== undefined && authType !== 'none' && isSourceUsable(source)) {
     perms.add(`secrets.use:${credKey}`)
   }
   return [...perms]

@@ -34,7 +34,8 @@
     "workspace-service:build": "bun run --cwd apps/workspace-service build",
     "workspace-service:typecheck": "bun run --cwd apps/workspace-service typecheck",
     "workspace-service:test": "bun run --cwd apps/workspace-service test",
-    "workspace-service:package": "bun run workspace-service:build && tar -czf apps/workspace-service/workspace-service.tgz -C apps/workspace-service dist/index.js migrations/01-domain-contract.sql migrations/01-local-auth-bootstrap.sql -C ../.. LICENSE NOTICE notices/THIRD-PARTY-NOTICES.txt",
+    "workspace-service:test:migrations": "bun run --cwd apps/workspace-service test:migrations",
+    "workspace-service:package": "bun run workspace-service:build && tar -czf apps/workspace-service/workspace-service.tgz -C apps/workspace-service dist/index.js migrations/01-domain-contract.sql migrations/01-local-auth-bootstrap.sql migrations/48-license-audit.sql migrations/502-directory.sql migrations/503-acl.sql migrations/504-files.sql migrations/505-events.sql migrations/506-notify.sql migrations/507-search.sql migrations/508-social.sql migrations/509-spaces.sql migrations/510-docs.sql migrations/511-drive-wiki.sql migrations/512-im.sql migrations/513-identity-lifecycle.sql migrations/514-agent-governance.sql migrations/515-automation-rules.sql migrations/516-drive-quota.sql migrations/517-collab.sql migrations/520-work-item.sql migrations/521-calendar.sql migrations/522-goals.sql migrations/523-projects.sql migrations/524-check-ins-reviews.sql migrations/525-kpi.sql migrations/526-templates.sql migrations/530-vc.sql migrations/551-workplace.sql migrations/552-mail.sql -C ../.. LICENSE NOTICE notices/THIRD-PARTY-NOTICES.txt",
     "server:start": "bun run packages/server/src/index.ts",
     "server:dev": "bun run server:build:subprocess && CRAFT_DEBUG=true CRAFT_BUNDLED_ASSETS_ROOT=$PWD/apps/electron bun run packages/server/src/index.ts",
     "server:build": "bun run scripts/build-server.ts",
@@ -126,7 +127,7 @@
     "rx:validate": "bun run scripts/rx-validate.ts",
     "prepare": "husky",
     "test:product-tour": "bun test apps/electron/src/renderer/features/product-tour && bun test apps/electron/src/renderer/components/app-shell/input/__tests__/product-learning-input.browser.test.ts && bun test apps/electron/src/renderer/context/__tests__/product-tour-layers.test.ts && bun test scripts/product-tour/native-process.test.ts",
-"test:product-tour:e2e": "node node_modules/@playwright/test/cli.js test --config tests/e2e/product-tour/playwright.config.ts",
+    "test:product-tour:e2e": "node node_modules/@playwright/test/cli.js test --config tests/e2e/product-tour/playwright.config.ts",
     "test:product-tour:native": "bun scripts/product-tour/run-native.ts"
   },
   "devDependencies": {

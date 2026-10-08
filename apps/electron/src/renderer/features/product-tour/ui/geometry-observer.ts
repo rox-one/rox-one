@@ -1,7 +1,8 @@
 import { measureTargetGeometry, type TargetGeometry } from './geometry'
 
 /** Exists only during presentation. At most one measurement runs per animation frame. */
-export function observeTargetGeometry(element: HTMLElement, onChange: (geometry: TargetGeometry | null) => void): () => void {
+export function observeTargetGeometry(element: HTMLElement, onChange: (geometry: TargetGeometry | null) => void,
+  measure: (element: HTMLElement) => TargetGeometry | null = measureTargetGeometry): () => void {
   const document = element.ownerDocument
   const view = document.defaultView
   if (!view) return () => {}
@@ -13,7 +14,7 @@ export function observeTargetGeometry(element: HTMLElement, onChange: (geometry:
     frame = view.requestAnimationFrame(() => {
       frame = null
       if (disposed) return
-      onChange(measureTargetGeometry(element))
+      onChange(measure(element))
       if (transitions.size) {
         const now = view.performance.now()
         for (const [node, properties] of transitions) {

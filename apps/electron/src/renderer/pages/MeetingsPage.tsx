@@ -40,9 +40,6 @@ import {
   type LocalGroup,
 } from './meetings/local-meetings-model'
 import { getAppLocale } from '@rox/shared/i18n'
-import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
-import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
-import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
 import { MeetingRequestTracker } from './meetings/request-state'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 

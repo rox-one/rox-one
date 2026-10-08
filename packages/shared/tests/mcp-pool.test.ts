@@ -49,8 +49,10 @@ function httpConfig(token: string, url = 'https://mcp.example.com'): SdkMcpServe
 class TestablePool extends McpClientPool {
   public connectCalls: Array<{ slug: string; config: SdkMcpServerConfig }> = [];
   public disconnectCalls: string[] = [];
+  public failConnections = false;
 
   protected override async connectSource(slug: string, config: SdkMcpServerConfig): Promise<void> {
+    if (this.failConnections) throw new Error('Server unavailable');
     this.connectCalls.push({ slug, config });
     await this.registerClient(slug, makeMockClient());
     this.activeConfigs.set(slug, config);
@@ -178,17 +180,11 @@ describe('McpClientPool.sync — config change detection', () => {
   });
 
   it('reports failure when reconnect fails after token refresh', async () => {
-    let connectAttempts = 0;
-    const failPool = new class extends TestablePool {
-      protected override async connectSource(slug: string, config: SdkMcpServerConfig): Promise<void> {
-        connectAttempts++;
-        if (connectAttempts > 1) throw new Error('Server unavailable');
-        return super.connectSource(slug, config);
-      }
-    }();
+    const failPool = new TestablePool();
 
     await failPool.sync({ craft: httpConfig('old-token') });
     expect(failPool.isConnected('craft')).toBe(true);
+    failPool.failConnections = true;
 
     // Token refresh — disconnect succeeds but reconnect throws
     const failures = await failPool.sync({ craft: httpConfig('new-token') });

@@ -404,6 +404,8 @@ export function InspectorHost() {
           )}
           style={layout.overlay ? { width: layout.width, right: INSPECTOR_RAIL_WIDTH } : { width: layout.width }}
           id={controlsId}
+          role="complementary"
+          aria-label={t(titleKey)}
           data-inspector-panel={layout.overlay ? 'overlay' : 'docked'}
         >
           <InspectorResizeSash

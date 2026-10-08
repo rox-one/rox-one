@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { usePanelResize } from '@/hooks/usePanelResize'
 import { SIDE_PANEL_DEFAULT_WIDTH } from '@/lib/shell-layout-preferences'
 import { cn } from '@/lib/utils'
+import { inspectorWidthLimits } from './inspector-model'
 import { inspectorResizeBounds, inspectorResizeWidthForKey } from './inspector-resize'
 
 /** Golden Gate interaction recovery, with current InspectorHost layout limits. */
-export function InspectorResizeSash({ width, viewportWidth, maxWidth, controlsId, active, onPreview, onCommit, onCancel }: {
-  width: number; viewportWidth: number; maxWidth: number; controlsId: string; active: boolean
+export function InspectorResizeSash({ width, viewportWidth, maxWidth = Math.max(280, inspectorWidthLimits(viewportWidth).max), controlsId, active, onPreview, onCommit, onCancel }: {
+  width: number; viewportWidth: number; maxWidth?: number; controlsId: string; active: boolean
   onPreview: (width: number) => void; onCommit: (width: number) => void; onCancel: () => void
 }) {
   const { t } = useTranslation()

@@ -45,9 +45,11 @@ import type { ConfirmDialogSpec, FileDialogSpec, BrowserCapabilityRequest } from
 import type { RpcClient } from '@rox/server-core/transport'
 import type { RemoteServerConfig } from '@rox/core/types'
 import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
+import type { EntitiesLinksEffectiveState } from '@rox/shared/feature-flags'
 import { isSshBacked } from '../shared/ssh'
 import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-local'
 import { MAIL_IPC, type MailLocalApi } from '../shared/mail-local'
+import { OPEN_DESIGN_IPC_CHANNELS } from '../shared/open-design'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
 import { createDeviceDiagnosticsBridge } from './device-diagnostics'
@@ -323,6 +325,12 @@ let cancelPendingChatGptOAuth: (() => void) | null = null
 let pendingChatGptOAuthState: string | undefined
 
 ;(api as any).getRuntimeEnvironment = (): 'electron' | 'web' => 'electron'
+
+;(api as ElectronAPI).openDesign = {
+  open: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.OPEN),
+  status: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.STATUS),
+  stop: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.STOP),
+}
 
 // ---------------------------------------------------------------------------
 // Transport connection state logging (for remote connections)
@@ -635,6 +643,29 @@ client.onConnectionStateChanged((state) => {
 
 // i18n: sync language changes to main process (for native menus/dialogs)
 ;(api as ElectronAPI).changeLanguage = (lang: string) => ipcRenderer.invoke('i18n:changeLanguage', lang)
+
+// entities.links.v1: the renderer owns the persisted toggle; main owns the
+// EFFECTIVE state (env override > toggle) and returns it, so the renderer
+// route gate, the main deep-link parser and the entity RPC agree.
+;(api as ElectronAPI).setEntitiesLinksEnabled = (enabled: boolean) =>
+  ipcRenderer.invoke('entities:setLinksEnabled', enabled)
+// Synchronous bootstrap report (before the first React render).
+;(api as ElectronAPI).syncEntitiesLinksState = (persisted: boolean) => {
+  try {
+    const state: unknown = ipcRenderer.sendSync('entities:syncLinksState', persisted)
+    return state && typeof state === 'object' && typeof (state as { enabled?: unknown }).enabled === 'boolean'
+      ? state as EntitiesLinksEffectiveState
+      : null
+  } catch (error) {
+    console.error('[entities] syncLinksState failed:', error)
+    return null
+  }
+}
+;(api as ElectronAPI).onEntitiesLinksStateChanged = (cb: (state: EntitiesLinksEffectiveState) => void) => {
+  const handler = (_e: unknown, state: EntitiesLinksEffectiveState) => cb(state)
+  ipcRenderer.on('entities:linksStateChanged', handler)
+  return () => { ipcRenderer.removeListener('entities:linksStateChanged', handler) }
+}
 
 ;(api as ElectronAPI).remoteTlsInspect = (url: string) =>
   ipcRenderer.invoke('remoteTls:inspect', url)

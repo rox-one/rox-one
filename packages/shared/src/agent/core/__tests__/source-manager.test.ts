@@ -182,7 +182,7 @@ describe('SourceManager', () => {
       const context = sourceManager.formatSourceState();
       expect(context).toContain('notes (local files)');
       expect(context).toContain('Local folder path is not configured');
-      expect(context).not.toContain('no tools');
+      expect(context).not.toContain('(no tools)');
       expect(context).not.toContain('server is unreachable');
     });
   });

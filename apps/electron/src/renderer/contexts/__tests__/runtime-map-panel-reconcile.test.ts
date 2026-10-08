@@ -9,6 +9,8 @@ import { parseRouteToNavigationState } from '../../../shared/route-parser'
 import { routes } from '../../../shared/routes'
 import { normalizePanelRouteForReconcile } from '../navigation-reconcile'
 import { decodePanelEntries, encodePanelEntries } from '../../lib/panel-url'
+import { panelStackAtom, primaryPanelIdAtom } from '../../atoms/panel-stack'
+import { decodeToolContexts } from '../../components/app-shell/auxiliary-persistence'
 
 // Execute the actual callbacks, without mounting React or introducing an RPC.
 const source = readFileSync(join(import.meta.dir, '../NavigationContext.tsx'), 'utf8')
@@ -34,18 +36,28 @@ function fixture(workspaceId: string | null = 'workspace-a') {
   const requestRuntimeSelection = actualCallback('requestRuntimeSelection', { store, workspaceId, parseRuntimeMapViewRequest, runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey })
   const reconciled: Array<{ entries: Array<{ route: string; proportion: number }>; focusedIndex: number }> = []
   const reconcilePanelStackAtom = Symbol('actual stack collaborator')
+  let stack: Array<{ id: string; tool?: unknown }> = []
   const reconcile = actualCallback('reconcileFromUrlParams', {
     routes, requestRuntimeSelection, parseRouteToNavigationState, decodePanelEntries, normalizePanelRouteForReconcile,
     resolveAutoSelectionRef: { current: (state: unknown) => state },
     rightSidebarRef: { current: undefined }, setRightSidebar: () => {}, reconcilePanelStackAtom,
-    store: { set: (target: unknown, value: typeof reconciled[number]) => {
-      expect(target).toBe(reconcilePanelStackAtom)
-      for (const entry of value.entries) {
-        const reference = parseRuntimeMapViewRequest(entry.route)
-        if (reference && workspaceId) expect(selection(reference.sessionId)?.eventId).toBe(reference.eventId)
-      }
-      reconciled.push(value)
-    } },
+    workspaceId, panelStackAtom, primaryPanelIdAtom, decodeToolContexts,
+    store: {
+      get: (target: unknown) => {
+        expect(target).toBe(panelStackAtom)
+        return stack
+      },
+      set: (target: unknown, value: { entries: Array<{ route: string; proportion: number; tool?: unknown }>; focusedIndex: number }) => {
+        if (target === primaryPanelIdAtom) return
+        expect(target).toBe(reconcilePanelStackAtom)
+        for (const entry of value.entries) {
+          const reference = parseRuntimeMapViewRequest(entry.route)
+          if (reference && workspaceId) expect(selection(reference.sessionId)?.eventId).toBe(reference.eventId)
+        }
+        reconciled.push(value)
+        stack = value.entries.map((entry, index) => ({ id: `panel-${index}`, tool: entry.tool }))
+      },
+    },
   }) as (params: URLSearchParams) => void
   return { store, selection, reconcile, reconciled }
 }

@@ -35,6 +35,12 @@ describe('meeting Conation shells fail-closed (Mail/CRM/calendar/room)', () => {
     }
   })
 
+  test('rejects an explicit queued success before normalization hides the contradictory flag', () => {
+    const result = { executionMode: 'live' as const, lifecycle: 'queued' as const, verification: 'unverified' as const, ok: true }
+    expect(() => assertMeetingConationShellNotLive(result)).toThrow('queued meeting Conation shell must not report success')
+    expect(() => assertMeetingConationShellNotLive({ ...result, ok: false })).not.toThrow()
+  })
+
   test('gate attaches Rox2 without making a DTO claim live', () => {
     const gated = gateMeetingConationShell('mail', { status: 'queued', live: false })
     expect(isClaimableLive(gated.rox2)).toBe(false)

@@ -48,8 +48,8 @@ import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
-import { join, dirname, resolve, isAbsolute, delimiter, basename, relative, sep } from 'node:path';
-import { mkdirSync, readFileSync, readdirSync, copyFileSync, cpSync, existsSync, realpathSync, statSync } from 'node:fs';
+import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { cpSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
 import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
@@ -68,8 +68,9 @@ import { randomUUID } from 'node:crypto';
 import { OmpRuntimeObserver } from './omp-runtime-observer.ts';
 import { OmpRuntimeTraceBridge } from './omp-runtime-trace-bridge.ts';
 import { known, unknown, type RuntimeAgentObservation, type RuntimeContent } from '@rox/core/runtime-trace';
-import { whichTool, executableCandidates, pathEnvKey } from '../toolchain/exec.ts';
+import { executableCandidates, pathEnvKey, whichTool } from '../toolchain/exec.ts';
 import { setupI18n } from '../i18n/index.ts';
+
 
 import { AbortReason } from './backend/types.ts';
 import type {

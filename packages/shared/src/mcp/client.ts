@@ -378,7 +378,7 @@ class McpConnection {
 
   async callTool(name: string, args: Record<string, unknown>, options?: PoolCallToolOptions): Promise<unknown> {
     if (!this.connected) {
-      await this.connect({ signal: options?.signal });
+      await this.connect();
     }
 
     try {

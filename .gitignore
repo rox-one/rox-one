@@ -96,3 +96,7 @@ work/test-all/
 # Product Learning local verification artifacts
 /test-results/
 /playwright-report/
+
+# Local scratch space and Playwright/browser-test output
+.scratch/
+test-results/

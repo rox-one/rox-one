@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { useResizeGradient } from '@/hooks/useResizeGradient'
+import { useHorizontalResizeGradient } from '@/hooks/useHorizontalResizeGradient'
 import {
   PANEL_SASH_HIT_WIDTH,
   PANEL_SASH_HIT_WIDTH_COARSE,
@@ -71,8 +72,10 @@ export function ResizeHandle({
   ...rest
 }: ResizeHandleProps & React.HTMLAttributes<HTMLDivElement>) {
   const { t } = useTranslation()
-  const { ref, handlers, gradientStyle } = useResizeGradient()
   const vertical = orientation === 'vertical'
+  const verticalGradient = useResizeGradient()
+  const horizontalGradient = useHorizontalResizeGradient()
+  const { ref, handlers, gradientStyle } = vertical ? verticalGradient : horizontalGradient
   const hit = sashHitWidthPx()
   const label = t(labelKey)
   const valueText = t('shell.resize.valuePx', { value: Math.round(valueNow) })
@@ -152,7 +155,7 @@ export function ResizeHandle({
       onPointerLeave={handlers.onMouseLeave}
       onDoubleClick={() => { if (!disabled) onReset?.() }}
       onKeyDown={handleKeyDown}
-      onBlur={() => { if (!dragging) onKeyCommit?.() }}
+      onBlur={() => { if (document.hasFocus()) onKeyCommit?.() }}
     >
       <div
         className="h-full"

@@ -124,6 +124,8 @@ export const setCollectionDisplayAtom = atom(
           collectionDisplayUpdateVersions.get(workspaceId) === version &&
           get(collectionDisplayLoadRevisionAtom) === revision &&
           (activeWorkspaceId == null || activeWorkspaceId === workspaceId) &&
+          // The server echoes the saved display back; applying it with fresh
+          // identities re-renders every consumer even when nothing changed.
           !areCollectionDisplaysEqual(get(collectionDisplayAtom), saved)
         ) {
           set(collectionDisplayAtom, cloneDisplay(saved))
