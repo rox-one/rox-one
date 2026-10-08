@@ -18,7 +18,7 @@ const domains={
   mail:['packages/shared/src/mail/jmap-client.ts','apps/electron/src/main/mail/mail-service.ts','apps/electron/src/renderer/pages/inbox/mail/useMail.ts'],
   crm:['apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts','apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx',p],
   calendar:['packages/core/src/calendar/types.ts','packages/core/src/calendar/adapters.ts','packages/core/src/calendar/store.ts','packages/core/src/calendar/occurrences.ts'],
-  calls:['packages/core/src/meetings/model.ts','packages/server-core/src/meetings/rooms.ts','packages/server-core/src/handlers/rpc/meetings.ts','apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx'],
+  calls:['packages/core/src/meetings/model.ts','packages/server-core/src/meetings/rooms.ts','packages/server-core/src/handlers/rpc/meetings.ts','apps/electron/src/renderer/pages/MeetingsPage.tsx'],
   agents:['packages/shared/src/agent/session-tool-defs.ts','packages/core/src/rox2/surface-context.ts','packages/server-core/src/meetings/executor.ts'],
   automation:['packages/shared/src/automations/types.ts','packages/shared/src/automations/meeting-followup.ts','packages/server-core/src/handlers/rpc/automations.ts'],
   files:['packages/server-core/src/handlers/rpc/files.ts','packages/shared/src/projects/storage.ts','packages/shared/src/pages/share-bundle.ts'],
