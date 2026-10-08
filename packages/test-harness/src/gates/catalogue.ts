@@ -109,19 +109,25 @@ export async function loadCatalogue(opts: CatalogueInputs = {}): Promise<Catalog
   if (registryPath && !existsSync(registryPath)) {
     problems.push(`${COMMAND_REGISTRY_PATH}: missing while ${CATALOGUE_MODULE_PATH} exists; the gates read handler and schema bindings from ${WIRED_REGISTRY_EXPORT}() there (merge #1500 before #1507; fail closed)`)
   } else if (registryPath) {
+    let mod: Record<string, unknown> | null = null
     try {
-      const mod = (await import(registryPath)) as Record<string, unknown>
-      if (typeof mod[WIRED_REGISTRY_EXPORT] !== 'function') {
-        problems.push(`${COMMAND_REGISTRY_PATH}: must export ${WIRED_REGISTRY_EXPORT}(), the registry with every module's handlers and schemas bound via COMMAND_MODULES (#1507 review 3 contract; merge #1500 before #1507). ${typeof mod.createCommandRegistry === 'function' ? 'createCommandRegistry() alone does not see bindings made by callers. ' : ''}Failing closed.`)
-      } else {
-        const made = await (mod[WIRED_REGISTRY_EXPORT] as () => unknown)()
+      mod = (await import(registryPath)) as Record<string, unknown>
+    } catch (error) {
+      problems.push(`${COMMAND_REGISTRY_PATH}: import failed: ${errorMessage(error)}`)
+    }
+    const exported = mod?.[WIRED_REGISTRY_EXPORT]
+    if (mod && typeof exported !== 'function') {
+      problems.push(`${COMMAND_REGISTRY_PATH}: must export ${WIRED_REGISTRY_EXPORT}(), the registry with every module's handlers and schemas bound via COMMAND_MODULES (#1507 review 3 contract; merge #1500 before #1507). ${typeof mod.createCommandRegistry === 'function' ? 'createCommandRegistry() alone does not see bindings made by callers. ' : ''}Failing closed.`)
+    } else if (mod) {
+      try {
+        const made = await (exported as () => unknown)()
         if (made === null || typeof made !== 'object') problems.push(`${factory} returned ${made === null ? 'null' : typeof made}`)
         else if (typeof (made as RegistryLike).handler !== 'function' || typeof (made as RegistryLike).get !== 'function') {
           problems.push(`${factory}: the registry must expose get(type) and handler(type)`)
         } else registry = made as RegistryLike
+      } catch (error) {
+        problems.push(`${factory} failed: ${errorMessage(error)}`)
       }
-    } catch (error) {
-      problems.push(`${factory} failed: ${errorMessage(error)}`)
     }
   }
 

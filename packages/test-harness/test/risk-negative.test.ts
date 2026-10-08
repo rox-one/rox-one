@@ -132,6 +132,9 @@ describe('runtime catalogue reader', () => {
     expect(badRegistry.problems.join(' ')).toContain('must export createWiredCommandRegistry()')
     const throwing = await loadCatalogue({ repoRoot: repo({ registry: `export function createWiredCommandRegistry() { throw new Error('wiring boom') }` }) })
     expect(throwing.problems.join(' ')).toContain('wiring boom')
+    expect(throwing.problems.join(' ')).toContain('createWiredCommandRegistry() failed')
+    const unimportable = await loadCatalogue({ repoRoot: repo({ registry: `import './nope.ts'\nexport function createWiredCommandRegistry() {}` }) })
+    expect(unimportable.problems.join(' ')).toContain(`${REG}: import failed`)
   })
   test('catalogue present but registry.ts missing fails closed (no silent catalogue-only downgrade)', async () => {
     const root = repo({ registry: null })
