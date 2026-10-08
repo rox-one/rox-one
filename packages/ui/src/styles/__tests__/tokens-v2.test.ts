@@ -416,10 +416,20 @@ describe('token foundation v2: values (step 2)', () => {
       caption: ['11px', '14px'], small: ['12px', '16px'], body: ['13px', '20px'], reading: ['15px', '24px'],
       'title-sm': ['15px', '20px'], title: ['18px', '24px'], display: ['24px', '32px'],
     }
+    // Line heights are unitless ratios that resolve to the listed px on the element.
+    const ratio = (v: string) => {
+      const m = v.match(/^calc\((\d+(?:\.\d+)?) \/ (\d+(?:\.\d+)?)\)$/)
+      if (!m) throw new Error(`not a unitless calc ratio: ${v}`)
+      return Number(m[1]) / Number(m[2])
+    }
     for (const [step, [size, lh]] of Object.entries(pairs)) {
       expect(theme[`--text-${step}`], step).toBe(size)
-      expect(theme[`--text-${step}--line-height`], step).toBe(lh)
+      expect(ratio(theme[`--text-${step}--line-height`]!) * px(size), step).toBeCloseTo(px(lh), 6)
     }
+    for (const [name, value] of Object.entries(theme)) {
+      if (name.endsWith('--line-height')) expect(value, name).not.toMatch(/px/)
+    }
+    expect(stripComments(indexCss)).toMatch(/body\s*\{[^}]*line-height:\s*var\(--text-body--line-height\);/)
     const remap = { xs: 'caption', sm: 'small', base: 'body', lg: 'reading', xl: 'title' }
     for (const [tw, step] of Object.entries(remap)) {
       expect(theme[`--text-${tw}`], tw).toBe(theme[`--text-${step}`])
