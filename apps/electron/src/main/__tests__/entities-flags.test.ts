@@ -10,7 +10,7 @@
  */
 import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
 import { stubMainLogger } from './stub-main-logger'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ENTITIES_LINKS_WORKBENCH_FLAG, isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
@@ -32,7 +32,7 @@ import {
 // this clone does not have installed. Stub the logger by absolute path so the
 // pure parse logic stays testable here.
 stubMainLogger()
-const { parseDeepLink, resolveDeepLinkTarget, isEntityOnlyDeepLink } = await import('../deep-link')
+const { parseDeepLink, resolveDeepLinkTarget, resolveDeepLinkTargetDetailed, isEntityOnlyDeepLink, __resetDeepLinkSequenceForTests } = await import('../deep-link')
 
 const quiet = { warn: () => {}, error: () => {} }
 const dirs: string[] = []
@@ -138,6 +138,22 @@ describe('main entities-links flag owner', () => {
       expect(parseDeepLink('rox://docs/file/f-1')?.view).toBe('docs/file/f-1')
     })
 
+    it('a first launch with the flag off writes nothing; once on, off is persisted too (review 4 #7)', () => {
+      const dir = tempDir()
+      const file = join(dir, ENTITIES_LINKS_STATE_FILE)
+      expect(loadPersistedEntitiesLinksFlag(dir, { logger: quiet })).toBeUndefined()
+      applyEntitiesLinksFlag(false) // bootstrap report of a never-enabled toggle
+      applyEntitiesLinksFlag(false)
+      expect(existsSync(file)).toBe(false)
+      expect(isEntitiesLinksFlagKnown()).toBe(true) // known for this session
+      applyEntitiesLinksFlag(true)
+      applyEntitiesLinksFlag(false)
+      expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual({ enabled: false })
+      __resetEntitiesLinksFlagForTests()
+      expect(loadPersistedEntitiesLinksFlag(dir, { logger: quiet })).toBe(false)
+      expect(isEntitiesLinksFlagKnown()).toBe(true)
+    })
+
     it('a malformed copy reads as OFF and unknown', () => {
       const dir = tempDir()
       writeFileSync(join(dir, ENTITIES_LINKS_STATE_FILE), '{"enabled": "yes"')
@@ -172,17 +188,25 @@ describe('main entities-links flag owner', () => {
       expect((await handles.get(ENTITIES_LINKS_IPC.SET)!({}, 'true') as { enabled: boolean }).enabled).toBe(false)
     })
 
-    it('index.ts registers the channels outside every isClientOnly branch, before windows', () => {
+    it('index.ts registers the channels first thing in whenReady, before any await (review 4 #8)', () => {
       const source = readFileSync(new URL('../index.ts', import.meta.url), 'utf8')
+      const ready = source.indexOf('app.whenReady().then(async () => {')
       const register = source.indexOf('registerEntitiesLinksIpc(ipcMain')
+      const firstAwait = source.indexOf('await ', ready)
       const declared = source.indexOf('const isClientOnly = !!process.env.CRAFT_SERVER_URL')
-      const firstServerOnly = source.indexOf('if (!isClientOnly) {', declared)
       const windows = source.indexOf('await createInitialWindows()')
-      expect(register).toBeGreaterThan(declared)
-      expect(register).toBeLessThan(firstServerOnly)
+      expect(ready).toBeGreaterThan(0)
+      expect(register).toBeGreaterThan(ready)
+      expect(register).toBeLessThan(firstAwait)
+      // Unconditional: before (outside) every isClientOnly branch and windows.
+      expect(register).toBeLessThan(declared)
       expect(register).toBeLessThan(windows)
       expect(source.match(/registerEntitiesLinksIpc\(ipcMain/g)).toHaveLength(1)
-      expect(source.indexOf('loadPersistedEntitiesLinksFlag(CONFIG_DIR')).toBeLessThan(register)
+      const load = source.indexOf('loadPersistedEntitiesLinksFlag(CONFIG_DIR')
+      expect(load).toBeGreaterThan(ready)
+      expect(load).toBeLessThan(register)
+      // Static import: no dynamic import (an await) in front of it.
+      expect(source).toContain("import { loadPersistedEntitiesLinksFlag, registerEntitiesLinksIpc } from './entities-flags'")
     })
   })
 
@@ -230,8 +254,32 @@ describe('main entities-links flag owner', () => {
     it('handleDeepLink and the first-window initialDeepLink go through the hold', () => {
       const deepLink = readFileSync(new URL('../deep-link.ts', import.meta.url), 'utf8')
       const windowManager = readFileSync(new URL('../window-manager.ts', import.meta.url), 'utf8')
-      expect(deepLink).toContain('const target = await resolveDeepLinkTarget(url)')
+      expect(deepLink).toContain('const { target, dropped } = await resolveDeepLinkTargetDetailed(url)')
+      expect(deepLink).toContain("if (dropped === 'superseded') return { success: false, error: 'Deep link superseded by a later link' }")
       expect(windowManager).toContain('const target = await resolveDeepLinkTarget(initialDeepLink)')
+    })
+
+    it('a held entity link superseded by a later link is dropped (review 4 #9)', async () => {
+      __resetDeepLinkSequenceForTests()
+      const held = resolveDeepLinkTargetDetailed('rox://docs/file/f-1', { timeoutMs: 1000 })
+      // A later non-entity link is handled immediately …
+      expect((await resolveDeepLinkTarget('rox://tasks/task/t-1'))?.view).toBe('tasks/task/t-1')
+      applyEntitiesLinksFlag(true)
+      // … so the older held link must not navigate after it.
+      expect(await held).toEqual({ target: null, dropped: 'superseded' })
+      // Without a later link the held one resolves normally; timeouts say so.
+      __resetEntitiesLinksFlagForTests()
+      const alone = resolveDeepLinkTargetDetailed('rox://docs/file/f-2', { timeoutMs: 1000 })
+      applyEntitiesLinksFlag(true)
+      expect((await alone).target?.view).toBe('docs/file/f-2')
+      __resetEntitiesLinksFlagForTests()
+      expect(await resolveDeepLinkTargetDetailed('rox://docs/file/f-3', { timeoutMs: 1 })).toEqual({ target: null, dropped: 'timeout' })
+    })
+
+    it('the cold-start pending link is not awaited in the init path (review 4 #9)', () => {
+      const source = readFileSync(new URL('../index.ts', import.meta.url), 'utf8')
+      expect(source).not.toContain('await handleDeepLink(pendingDeepLink')
+      expect(source).toContain('handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(')
     })
   })
 })

@@ -19,12 +19,14 @@
  * override applies inside `isEntitiesLinksEnabled`) and the server-core live
  * workbench-flag source. Main, renderer and server therefore always agree.
  *
- * Durable copy: main persists the last reported toggle to
+ * Durable copy: once the toggle has been ON (the value is true, or a copy
+ * already exists) main persists the last reported toggle to
  * `<configDir>/entities-links.json` and reads it at boot, so cold-start
  * deep links (`rox://docs/…`) are parsed against the user's real setting
- * before any renderer has mounted. When no durable copy exists yet (first
- * launch with this build), entity deep links are held until the first
- * renderer report (`whenEntitiesLinksFlagKnown`, 10 s timeout).
+ * before any renderer has mounted. A user who never enabled the flag gets no
+ * file at all (flags off = identical to main); without a copy, entity deep
+ * links are held until the first renderer report of the session
+ * (`whenEntitiesLinksFlagKnown`, 10 s timeout).
  *
  * Registered unconditionally — thin clients (`CRAFT_SERVER_URL`) need the
  * local deep-link gate too; a remote server only sees its own env override
@@ -129,6 +131,8 @@ function applyToConsumers(enabled: boolean): void {
 
 function persist(enabled: boolean): void {
   if (!stateFile) return
+  // Never create the file for a flag that was never on (review 4 #7).
+  if (!enabled && !existsSync(stateFile)) return
   try {
     atomicWriteFileSync(stateFile, `${JSON.stringify({ enabled })}\n`)
   } catch (error) {
