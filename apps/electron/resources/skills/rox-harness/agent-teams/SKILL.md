@@ -15,7 +15,7 @@ If Appearance → Workbench → **Agent Teams** (`workbench.harness.agentTeams`)
 
 ## Durable state (`.agent-teams/`)
 
-Persist roster + mailbox pointers under the **workspace** root (not Cordis, not `~/.rox` by default):
+Persist roster + mailbox pointers under the **workspace** root (not Cordis, not `~/rox` by default):
 
 ```
 <workspace>/.agent-teams/<teamId>/

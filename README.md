@@ -40,10 +40,10 @@ Managed acpx CLI is pinned to **0.19.4**, with verified package integrity and pr
 
 ## Configuration and context
 
-The canonical configuration directory is `~/.rox`. Set `ROX_CONFIG_DIR` to use an isolated profile.
+The canonical configuration directory is `~/rox`. Set `ROX_CONFIG_DIR` to use an isolated profile.
 
 ```text
-~/.rox/
+~/rox/
   config.json
   credentials.enc
   preferences.json

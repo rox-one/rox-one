@@ -18,7 +18,7 @@ Automations allow you to trigger actions automatically when specific events occu
 Automations are configured in `automations.json` at the root of your workspace:
 
 ```
-~/.rox/workspaces/{workspaceId}/automations.json
+~/rox/workspaces/{workspaceId}/automations.json
 ```
 
 ## Editing Automations
@@ -503,7 +503,7 @@ If you haven't paired a supergroup yet:
 3. **Promote the bot to admin with "Manage Topics".** Group name → Edit → Administrators → Add Administrator → pick the bot → toggle on **Manage Topics** → Save. This is the step most people miss; without it, topic creation fails with `400: not enough rights to create a topic`.
 4. **Pair the supergroup.** In ROX: Settings → Messaging → Telegram → **Pair Supergroup**. Copy the 6-digit code, then in any topic of the supergroup type `/pair <code>`. The bot confirms and the Settings row updates with the group's title.
 
-Verify by checking the supergroup row in Settings shows the group title. If automation runs fail later, `~/.rox/logs/messaging-gateway.log` will show `automation_topic_bind_failed` with the underlying Telegram error.
+Verify by checking the supergroup row in Settings shows the group title. If automation runs fail later, `~/rox/logs/messaging-gateway.log` will show `automation_topic_bind_failed` with the underlying Telegram error.
 
 ## Complete Examples
 

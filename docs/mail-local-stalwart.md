@@ -8,10 +8,10 @@ outbound delivery to other domains is disabled.
 
 | | |
 |---|---|
-| Binary | `~/.rox/mail/bin/stalwart` (Stalwart Community v0.16.24, darwin-arm64) |
-| Config | `~/.rox/mail/etc/config.json` |
-| Data | `~/.rox/mail/stalwart/` (RocksDB) |
-| Logs | `~/.rox/mail/logs/` |
+| Binary | `~/rox/mail/bin/stalwart` (Stalwart Community v0.16.24, darwin-arm64) |
+| Config | `~/rox/mail/etc/config.json` |
+| Data | `~/rox/mail/stalwart/` (RocksDB) |
+| Logs | `~/rox/mail/logs/` |
 | Autostart | LaunchAgent `~/Library/LaunchAgents/one.rox.mail.stalwart.plist` (RunAtLoad + KeepAlive) |
 | HTTP / JMAP / admin | `http://127.0.0.1:8480` (loopback only, no TLS) |
 | SMTP (inbound) | `127.0.0.1:2525` |
@@ -62,7 +62,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8480/healthz/live
   shows in «Все»).
 * Flag `inbox.mail.v1` (default on; env `CRAFT_FEATURE_INBOX_MAIL=0` turns it off).
   Server URL: `ROX_MAIL_SERVER_URL`, or the form in the Почта status panel
-  (stored in `~/.rox/mail/config.json` under the app config dir). Plain http is
+  (stored in `~/rox/mail/config.json` under the app config dir). Plain http is
   accepted only for loopback. `ROX_MAIL_HANDLE` overrides the handle (tests).
 * Mailbox handle: rox.one account email/name → profile email/display name → `mark`.
   Stalwart account description `rox:<uuid>` marks the owner; a mailbox owned by someone
