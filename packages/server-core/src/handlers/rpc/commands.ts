@@ -36,6 +36,8 @@ import { SqliteCommandStore } from '../../commands/local-store.ts'
 import { CommandStoreUnavailable, type CommandStore } from '../../commands/store.ts'
 import { createWiredCommandRegistry } from '../../commands/registry.ts'
 import { getCommandBusFlags } from '../../commands/flags.ts'
+import { configureReferenceRuntime, type ReferenceRuntime } from '../../work/reference/module.ts'
+import { personalTasksStore } from './personal-tasks.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.commands.EXECUTE, RPC_CHANNELS.commands.LIST] as const
 
@@ -56,6 +58,8 @@ export interface CommandsHandlerRuntime {
   /** Workspace-authority sink (host wires `WorkspaceCommandSync` when the workspace is shared). */
   workspaceSink?: (workspaceId: string) => WorkspaceCommandSink | null
   resolveTargetAuthority?: (workspaceId: string, ref: EntityRef) => ExecutionAuthority | undefined
+  /** W1-06 reference-handler runtime overrides (default: workspace root, local PersonalTask store, live flags). */
+  referenceRuntime?: Partial<ReferenceRuntime>
 }
 
 let sharedRegistry: CommandRegistry | null = null
@@ -89,12 +93,21 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
   const storeFor = runtime.storeFor ?? (workspace => new SqliteCommandStore({ workspaceRoot: workspace.rootPath }))
   const routers = new Map<string, { router: CommandRouter; store: CommandStore }>()
 
+  // W1-06: reference handlers write `{workspaceRoot}/work/` and the PersonalTask v3 store on the local authority.
+  const restoreReferenceRuntime = configureReferenceRuntime({
+    workspaceRoot: id => workspaceFor(id)?.rootPath ?? null,
+    personalTaskStore: () => personalTasksStore(),
+    isFlagEnabled: flag => flags()?.has(flag) === true,
+    ...runtime.referenceRuntime,
+  })
+
   const unsubscribe = bus.subscribe((workspaceId, frame) => {
     const event: CommandBusPushEvent = { kind: 'realtime', frame }
     pushTyped(server, RPC_CHANNELS.commands.EVENT, { to: 'workspace', workspaceId }, workspaceId, event)
   })
   server.onShutdown?.(() => {
     unsubscribe()
+    restoreReferenceRuntime()
     for (const { store } of routers.values()) {
       try { void store.close?.() } catch { /* best effort */ }
     }
@@ -118,7 +131,11 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
         store,
         authority: 'local',
         isEnabled: enabled,
-        publish: events => { bus.publish(events) },
+        publish: events => {
+          bus.publish(events)
+          // A task written through the bus lands in the PersonalTask store: refresh the Tasks UI like personalTasks:put does.
+          if (events.some(event => event.subject?.kind === 'task')) pushTyped(server, RPC_CHANNELS.personalTasks.CHANGED, { to: 'all' }, { at: Date.now() })
+        },
         ...(runtime.authorizer ? { authorizer: runtime.authorizer } : {}),
       })
       const router = new CommandRouter({

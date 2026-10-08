@@ -1,0 +1,470 @@
+{
+  "report": {
+    "status": "migrated",
+    "migration": "mig-04-05",
+    "ranAt": "2026-10-08T12:00:00.000Z",
+    "created": 15,
+    "unchanged": 0,
+    "projects": [
+      {
+        "slug": "alpha",
+        "projectId": "proj-alpha",
+        "created": {
+          "okr-cycle": 1,
+          "goal": 2,
+          "goal-target": 2,
+          "goal-check": 1,
+          "entity-link": 2,
+          "milestone": 3
+        },
+        "unchanged": 0,
+        "tasksLinked": 2,
+        "tasksMissing": [
+          "task-missing"
+        ],
+        "notes": [],
+        "errors": []
+      },
+      {
+        "slug": "beta",
+        "projectId": "proj-beta",
+        "created": {
+          "okr-cycle": 1,
+          "goal": 1,
+          "goal-target": 1,
+          "entity-link": 1
+        },
+        "unchanged": 0,
+        "tasksLinked": 0,
+        "tasksMissing": [],
+        "notes": [
+          "okr: strict validation failed; imported leniently",
+          "okr: objective obj-a: unusable key result",
+          "okr: cycle cycle-draft: objective without id or title"
+        ],
+        "errors": []
+      },
+      {
+        "slug": "gamma",
+        "projectId": "proj-gamma",
+        "created": {},
+        "unchanged": 0,
+        "tasksLinked": 0,
+        "tasksMissing": [],
+        "notes": [],
+        "errors": [
+          "roadmap: corrupt roadmap.json skipped"
+        ]
+      }
+    ]
+  },
+  "work": {
+    "cycles/52bedaba-c44c-52ac-9859-b1910ace66c5.json": {
+      "id": "52bedaba-c44c-52ac-9859-b1910ace66c5",
+      "collection": "cycles",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-alpha",
+          "sourceId": "cycle-q4"
+        },
+        "name": "Q4 2026",
+        "startsOn": "2026-10-01",
+        "endsOn": "2026-12-31",
+        "timeZone": "Europe/Moscow",
+        "status": "published",
+        "originProjectId": "proj-alpha",
+        "publishedAt": "2026-10-01T09:00:00.000Z",
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "cycles/55992a67-e15d-5458-a29c-2d65dd262865.json": {
+      "id": "55992a67-e15d-5458-a29c-2d65dd262865",
+      "collection": "cycles",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-beta",
+          "sourceId": "cycle-draft"
+        },
+        "name": "Draft cycle",
+        "startsOn": "2026-10-01",
+        "endsOn": "2026-10-01",
+        "timeZone": "UTC",
+        "status": "draft",
+        "originProjectId": "proj-beta",
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "goal-checks/b4efc598-2a5f-5b5f-ac9a-26b8b52784c5.json": {
+      "id": "b4efc598-2a5f-5b5f-ac9a-26b8b52784c5",
+      "collection": "goal-checks",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-alpha",
+          "sourceId": "kr-launch"
+        },
+        "goalId": "8dab967f-b4b8-526f-acb4-ccb6ab5e6e88",
+        "name": "Launch the onboarding flow",
+        "weight": 1,
+        "sortKey": "a001",
+        "done": true,
+        "evidence": [
+          {
+            "id": "ev-2",
+            "label": "Release notes"
+          }
+        ],
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "goal-targets/17c75358-6239-51f6-898f-8504076526de.json": {
+      "id": "17c75358-6239-51f6-898f-8504076526de",
+      "collection": "goal-targets",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-alpha",
+          "sourceId": "kr-cost"
+        },
+        "goalId": "e9ca0764-0737-53cd-b627-6ef5366f931f",
+        "name": "Monthly infra cost",
+        "weight": 1,
+        "sortKey": "a000",
+        "fromValue": 1200,
+        "toValue": 900,
+        "value": null,
+        "unit": "USD",
+        "direction": "decrease",
+        "evidence": [],
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "goal-targets/5a0cd2d9-a65d-5db8-865d-a19b7623983e.json": {
+      "id": "5a0cd2d9-a65d-5db8-865d-a19b7623983e",
+      "collection": "goal-targets",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-alpha",
+          "sourceId": "kr-wat"
+        },
+        "goalId": "8dab967f-b4b8-526f-acb4-ccb6ab5e6e88",
+        "name": "Weekly active teams",
+        "weight": 3,
+        "sortKey": "a000",
+        "ownerLabel": "Mark",
+        "fromValue": 40,
+        "toValue": 100,
+        "value": 62,
+        "unit": "teams",
+        "direction": "increase",
+        "evidence": [
+          {
+            "id": "ev-1",
+            "label": "Dashboard",
+            "uri": "https://example.test/d"
+          }
+        ],
+        "measuredAt": "2026-10-05T10:00:00.000Z",
+        "freshness": "fresh",
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "goal-targets/c10fa87f-96b5-557f-8786-05673057cde9.json": {
+      "id": "c10fa87f-96b5-557f-8786-05673057cde9",
+      "collection": "goal-targets",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-beta",
+          "sourceId": "kr-ok"
+        },
+        "goalId": "55d8e9ea-71c9-5fb6-872c-3daa7386fca5",
+        "name": "Signed contracts",
+        "weight": 0,
+        "sortKey": "a000",
+        "fromValue": 0,
+        "toValue": 5,
+        "value": 1,
+        "unit": "",
+        "direction": "increase",
+        "evidence": [],
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "goals/55d8e9ea-71c9-5fb6-872c-3daa7386fca5.json": {
+      "id": "55d8e9ea-71c9-5fb6-872c-3daa7386fca5",
+      "collection": "goals",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-beta",
+          "sourceId": "obj-a"
+        },
+        "scope": "personal",
+        "goalKind": "objective",
+        "okrCycleId": "55992a67-e15d-5458-a29c-2d65dd262865",
+        "name": "Objective without weights",
+        "creatorId": "principal-mark",
+        "weight": 0,
+        "sortKey": "a000",
+        "startOn": "2026-10-01",
+        "dueOn": "2026-10-01",
+        "publishState": "draft",
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "goals/8dab967f-b4b8-526f-acb4-ccb6ab5e6e88.json": {
+      "id": "8dab967f-b4b8-526f-acb4-ccb6ab5e6e88",
+      "collection": "goals",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-alpha",
+          "sourceId": "obj-growth"
+        },
+        "scope": "personal",
+        "goalKind": "objective",
+        "okrCycleId": "52bedaba-c44c-52ac-9859-b1910ace66c5",
+        "name": "Grow weekly active teams",
+        "description": "Focus on retention",
+        "creatorId": "principal-mark",
+        "ownerLabel": "Mark",
+        "weight": 2,
+        "sortKey": "a000",
+        "startOn": "2026-10-01",
+        "dueOn": "2026-12-31",
+        "publishState": "published",
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "goals/e9ca0764-0737-53cd-b627-6ef5366f931f.json": {
+      "id": "e9ca0764-0737-53cd-b627-6ef5366f931f",
+      "collection": "goals",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-alpha",
+          "sourceId": "obj-cost"
+        },
+        "scope": "personal",
+        "goalKind": "objective",
+        "okrCycleId": "52bedaba-c44c-52ac-9859-b1910ace66c5",
+        "name": "Cut infra cost",
+        "creatorId": "principal-mark",
+        "weight": 1,
+        "sortKey": "a001",
+        "startOn": "2026-10-01",
+        "dueOn": "2026-12-31",
+        "publishState": "published",
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "links/3a74dedc-5113-56a2-8bca-cbe7c8f42761.json": {
+      "id": "3a74dedc-5113-56a2-8bca-cbe7c8f42761",
+      "collection": "links",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-beta",
+          "sourceId": "obj-a"
+        },
+        "fromKind": "goal",
+        "fromId": "55d8e9ea-71c9-5fb6-872c-3daa7386fca5",
+        "fromFragment": null,
+        "toKind": "project",
+        "toId": "proj-beta",
+        "toFragment": null,
+        "relation": "aligned-to",
+        "role": "okr-of",
+        "anchor": null,
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "links/d17230b2-f244-5f43-8bb2-9f3876d5e740.json": {
+      "id": "d17230b2-f244-5f43-8bb2-9f3876d5e740",
+      "collection": "links",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-alpha",
+          "sourceId": "obj-growth"
+        },
+        "fromKind": "goal",
+        "fromId": "8dab967f-b4b8-526f-acb4-ccb6ab5e6e88",
+        "fromFragment": null,
+        "toKind": "project",
+        "toId": "proj-alpha",
+        "toFragment": null,
+        "relation": "aligned-to",
+        "role": "okr-of",
+        "anchor": null,
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "links/dee64f6e-5414-5120-aa9e-1c314011d539.json": {
+      "id": "dee64f6e-5414-5120-aa9e-1c314011d539",
+      "collection": "links",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-04",
+          "projectId": "proj-alpha",
+          "sourceId": "obj-cost"
+        },
+        "fromKind": "goal",
+        "fromId": "e9ca0764-0737-53cd-b627-6ef5366f931f",
+        "fromFragment": null,
+        "toKind": "project",
+        "toId": "proj-alpha",
+        "toFragment": null,
+        "relation": "aligned-to",
+        "role": "okr-of",
+        "anchor": null,
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "milestones/ms-beta.json": {
+      "id": "ms-beta",
+      "collection": "milestones",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-05",
+          "projectId": "proj-alpha",
+          "sourceId": "ms-beta"
+        },
+        "projectId": "proj-alpha",
+        "title": "Public beta",
+        "description": "Invite 50 teams",
+        "status": "pending",
+        "roadmapStatus": "active",
+        "startOn": "2026-10-01",
+        "dueOn": "2026-11-15",
+        "stages": [
+          {
+            "id": "st-1",
+            "title": "Invites",
+            "done": true,
+            "substages": []
+          }
+        ],
+        "sortKey": "a000",
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "milestones/ms-ga.json": {
+      "id": "ms-ga",
+      "collection": "milestones",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-05",
+          "projectId": "proj-alpha",
+          "sourceId": "ms-ga"
+        },
+        "projectId": "proj-alpha",
+        "title": "General availability",
+        "status": "done",
+        "roadmapStatus": "done",
+        "completedAt": "2026-10-08T12:00:00.000Z",
+        "dueOn": "2026-12-20",
+        "stages": [],
+        "sortKey": "a001",
+        "lastCommandId": "mig-04-05"
+      }
+    },
+    "milestones/ms-later.json": {
+      "id": "ms-later",
+      "collection": "milestones",
+      "revision": 1,
+      "schemaVersion": 1,
+      "record": {
+        "createdAt": "2026-10-08T12:00:00.000Z",
+        "updatedAt": "2026-10-08T12:00:00.000Z",
+        "createdBy": "principal-mark",
+        "origin": {
+          "migration": "MIG-05",
+          "projectId": "proj-alpha",
+          "sourceId": "ms-later"
+        },
+        "projectId": "proj-alpha",
+        "title": "Enterprise",
+        "status": "pending",
+        "roadmapStatus": "blocked",
+        "stages": [],
+        "sortKey": "a002",
+        "lastCommandId": "mig-04-05"
+      }
+    }
+  }
+}
