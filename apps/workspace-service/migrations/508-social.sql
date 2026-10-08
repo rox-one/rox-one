@@ -60,8 +60,9 @@ CREATE TABLE reaction (
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   CONSTRAINT reaction_identity PRIMARY KEY (workspace_id, resource_kind, resource_id, principal_id, emoji)
 );
--- Replaces message_reaction; covering index for IM performance (DATA-MODEL §5.3).
-CREATE INDEX reaction_covering ON reaction (workspace_id, resource_kind, resource_id, principal_id);
+-- Replaces message_reaction (DATA-MODEL §5.3). The reaction_identity PK btree is the
+-- covering index for IM reads: a separate (workspace_id, resource_kind, resource_id,
+-- principal_id) index would be a strict prefix of it and only double the write cost.
 
 CREATE TABLE subscription (
   workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),

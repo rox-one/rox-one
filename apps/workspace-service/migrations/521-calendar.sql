@@ -77,11 +77,15 @@ CREATE TABLE room (
 );
 
 CREATE TABLE freebusy_cache (
-  cache_key text PRIMARY KEY,
+  cache_key text NOT NULL,
   workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),
   payload jsonb NOT NULL DEFAULT '{}',
   fetched_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  expires_at timestamptz NOT NULL
+  expires_at timestamptz NOT NULL,
+  -- cache_key is derived from free text (account / principal + range) and a principal can
+  -- belong to several workspaces, so the key is per workspace: an upsert in B never
+  -- overwrites A's payload and a lookup in B never serves A's cached external calendar.
+  CONSTRAINT freebusy_cache_identity PRIMARY KEY (workspace_id, cache_key)
 );
 CREATE INDEX freebusy_cache_expiry ON freebusy_cache (expires_at);
 
