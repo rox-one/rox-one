@@ -6624,7 +6624,7 @@
   "settings.about.updateReady": "Mise à jour prête",
   "settings.about.version": "Version",
   "settings.account.analyticsConsent": "Product analytics",
-  "settings.account.analyticsConsentDesc": "Optional. Local progress is always kept. Cloud analytics stay off until you opt in.",
+  "settings.account.analyticsConsentDesc": "On by default. Local progress is always kept. Turn off to stop cloud analytics.",
   "settings.account.avatar": "Avatar",
   "settings.account.avatarFailed": "Could not update avatar: {{message}}",
   "settings.account.avatarSaved": "Avatar updated",
