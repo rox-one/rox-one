@@ -504,3 +504,43 @@ overlay-renderer), пиннинг модели `resolveDeepgramModel()` (nova-3 
 2 pass · `renderer/lib/__tests__/transcripts-notebook.test.ts` 3 pass / 0 fail · `meeting-task-bridge.test.ts`
 7 pass · `ipc-channels.test.ts` 8 pass · `channel-map-parity.test.ts` 4 pass · `deepgram-transcription.test.ts`
 22 pass / 0 fail / 61 expect.
+
+## Волна 4b — перепроверка, разбор красного CI и программа его починки (2026-10-09)
+
+### Адверсариальная проверка «Волны 4» (независимый read-only агент)
+Итог: **8 пунктов CONFIRMED сырыми строками рецептов, 2 — без рецепта, 2 — склейка двух разных прогонов.**
+- CONFIRMED: кликабельность «Диктовки»; canvas-волна 24 сэмпла / 7 значений 0.15…0.3429; драфт `"проверка диктовки "` len 18; пустые тосты; заметка 152 B + якорь `96507d5c`; `ROX Voice` 420×72 `onscreen:true` (оконный сервер); A9 `630,79 119×28 hitIsSelf:true`; запись встречи (таймер 00:00→00:13, `levelMax 88`, whisper 2 сегмента); зеркало в заметки (2.3 КБ и 8.9 КБ, якоря).
+- Без рецепта были: (а) «повтор не создал дубль» и (б) «10 сэмплов / 27 высот / 43–77 %» — донор чисел найден (`/tmp/rox-overlay-port.ts`), но его stdout нигде не сохранён.
+- Склейка: в двух пунктах «pid 80909» (профиль fresh2) стоял рядом с «front = Finder» и `stop {ok:true}`, которые относятся к прогону 9334 (в прогоне 80909 спереди был OrbStack, стоп вернул `{ok:false, no overlay target}`).
+
+**Перепроверка на финальном бандле закрыла оба пробела** (свежий профиль `/tmp/rox-qa-fresh3`, порт 9336, квитанции `live/fresh3-*` и `live/overlay*.json` этого прогона):
+- **дедуп**: два идентичных прогона композера → ровно один `проверка диктовки.md` (152 B, sha256 в `live/fresh3-receipts.txt`);
+- **оверлей**: цель `ROX Voice` грузится из `…/app/dist/renderer/voice-overlay.html` (тот самый упакованный вход, который теперь пинит тест), 16 полос, 48 сэмплов, **42 различных ширины 41…78 %**;
+- **мини-окно при front = Finder** (`live/overlay-front-recording.txt`, `live/overlay-windows-recording.json`: owner=Rox, `ROX Voice` 420×72, `onscreen:true`) и **собственная кнопка стопа** → `{ok:true}` (`live/overlay-stop.json`), после — окна нет; хоткей-путь (оверлей → main → владелец) снова довёл транскрипт до композера (`live/overlay-hotkey-send.json` → `states[0].text = "проверка диктовки "`);
+- **встречи**: `live/fresh3-meetings-record.log` (13 с, координатный стоп) и зеркало-заметка «Транскрипт встречи…» с телом whisper и якорем `397fc1fa`;
+- **гейты на финальном дереве**: `sort-locales` EXIT=0 · `i18n parity OK (11 locales, 9553 keys each)` · `typecheck` 0 · `overlay-owner` 1/2 pass · `command-input` 10 · `registration` 2 · `transcripts-notebook` 3 · `meeting-task-bridge` 7 · `ipc-channels` 8 · `channel-map-parity` 4 · `deepgram` 22 — везде 0 fail. (Число ключей 9554 в строке выше — состояние на момент той проверки; после последующих мержей — 9553.)
+
+### Регрессия моей волны в CI — найдена, исправлена, подтверждена
+Факты: у workflow `product-tour-native` **нет ни одного зелёного прогона** (последние 200 запусков: 100 cancelled + 80 failure). Мой первый мерж `3f1a978e9` добавил четыре *новых* красных кейса `T-VOICE-OWNER` в job `browser-and-domain` — единственная регрессия волны.
+- Причина: тест-харнесс подменяет только OS-поверхность Electron фейковым окном, у которого был `loadURL`, но не `loadFile`; `overlay-owner.ts` грузит упакованный вход через `loadFile` → `TypeError: created.loadFile is not a function` в `publish()`. (Upstream использовал `loadURL('file://…/../renderer/voice-overlay.html')` — неверный путь в упаковке; это и был баг «оверлей не виден».)
+- Фикс (`83a8c393d`, в main): фейк получил оба метода и **пинит упакованный путь** (`renderer/voice-overlay.html`, без `..`). Локально 11 pass / 0 fail; **в CI на `83a8c393d` красных `T-VOICE-OWNER` больше нет** (job: 404 pass; среди `(fail)` — только унаследованные).
+
+### Унаследованные красные: атрибуция и программа починки
+На `83a8c393d` красными остаются (все были и на `b26b48b4b`/`dc7e8436f`): `T-MEETINGS-LIST/RESULT` (30 с таймаут), `T-PROJECT-OPEN…`, «A failed owned project detail…» — **реальные дефекты продукта**; `fresh-native-smoke (windows)` — 2 кейса, **жёсткие дедлайны проб 2 000/5 000 мс**; `fresh-native-smoke (macos)` — смоук убит по 180-с родительскому дедлайну. 15 таймаутов `persistence/progress.test.ts` в том прогоне оказались **флаком** (прошли сами).
+
+| Группа | Файлы | Правка | Проверка |
+|---|---|---|---|
+| A. macOS-смоук | `tests/e2e/product-tour/native-harness.ts`, `native.config.ts` | `rm` не был импортирован (teardown падал `ReferenceError`); `globalTimeout: 150_000` (< родительских 180 000) + `actionTimeout: 15_000`; teardown ограничен 20 с с SIGKILL-фолбэком, удаление профиля — с ретраями и без падения теста; профиль перенесён в `test-results/product-tour/native/profiles/<pid>`, лог приложения (`home/Library/Logs/Electron/main.log`) цепляется к отчёту | CLI сам завершается: было 180 с + SIGKILL, стало `timedOut:false, signal:null`; на спокойной машине тело теста проходит за **27 с** (в CI висел вечно); лог показал ~75 с холодного старта на bundled-skills sync + MCP-провижининг |
+| B. Таймауты persistence | `…/persistence/browser-test-harness.ts` | `--disable-dev-shm-usage` в аргументы запуска Chromium (стандартный фикс 5-с «клина» в контейнерах) | `progress.test.ts` локально **17 pass / 0 fail** |
+| C. Дефекты продуктового tour | `pages/ProjectInfoPage.tsx`, `…/runtime/ProductTourProvider.tsx` | эффект `projects.available` не возвращал disposer и оставлял вечный pending; `ready` поднят выше `pending` в слиянии contributions | оба целевых кейса `project-collection.browser.test.ts` — **1 pass / 0 fail** (в CI были красными) |
+| D. Фикстура встреч | `…/meetings-automations/native-ui.browser.test.ts` | `finishCatalog` резолвил один запрос из нескольких ожидающих — теперь дренит все (как `finishTranscript`) | `T-MEETINGS-LIST/RESULT` (A → B → A) и ранее флаковавший `T-MEETINGS-RESULT: changing the panel…` — оба **1 pass / 0 fail** |
+| E. Windows-пробы | `authority/os-private-path.ts`, `native-os-owner.ts` (+2 согласующих теста) | сняты две строки перекодировки консоли (единственный код между маркерами `process-start`→`input-ready`, где вставал ребёнок); дедлайны проб 2 000/5 000 → 15 000 (стандарт репозитория, `DPAPI_TIMEOUT_MS`) | локально `os-private-path.test.ts` **12/12**, `rox-readiness-ui-001.windows-owner.test.ts` **19/19** (на darwin win32-кейс скипается); windows-лейн — в CI |
+
+**Остаётся открытым (честно):** зелёный macOS-смоук в CI — за локальными правками (тело проходит, teardown больше не падает); итог — по следующему прогону `product-tour-native`. Отдельное продуктовое решение владельца — ограниченный quit-путь `apps/electron/src/main/index.ts:2052-2056` (`Promise.race` + `app.exit(0)` через 5 с), чтобы зависшая подсистема не оставляла зомби-процесс.
+
+### Наблюдения окружения QA (не продукт волны)
+- `[PersistenceQueue] Failed to write session … ENOENT … rename … session.jsonl.tmp` пачками в свежем профиле: каталог `workspaces/<ws>/sessions` есть, отсутствуют каталоги конкретных сессий (включая авто-сессии агентов) — кандидат на отдельный разбор ядра сессий.
+- `[Chat] Failed to load skills: Request timeout: skills:get (30000ms)`; `[FreeFormInput] Failed to resume pending plan execution: Error: Connection lost` и `[WsRpc] Sequence gap` при реконнектах; сборка `mcp-server-qdrant` падает (`pyo3` vs Python 3.14) при провижининге MCP.
+- QA-профиль видит сессии локального сервера приложения (в списке — реальные сессии): прогоны не приватны, наружу ничего не отправляется.
+- Готча навигации: `meetings-record` жмёт `nav:home`, но с `route=meetings` дашборд не поднимается — нужен DOM-клик по `[data-sidebar-link-id="nav:home"]`.
+- `tests/e2e/product-tour/native-startup.test.ts` импортирует несуществующие `openNativeStartup`/`NativeStartupDiagnostics` — мёртвый файл, не запускается ни одним workflow.
