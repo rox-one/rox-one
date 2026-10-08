@@ -4,6 +4,7 @@ import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@rox/core/platform/identity/types'
 import { requireOsOwner } from './native-os-owner'
+import { requireOsPrivatePaths, secureOsPrivatePaths, VerifiedPrivateFileGuard } from './os-private-path.ts'
 
 export const NATIVE_AUTHORITY_ACTIONS = ['read', 'write', 'delete', 'subscribe', 'manage'] as const
 export type NativeAuthorityAction = (typeof NATIVE_AUTHORITY_ACTIONS)[number]
@@ -450,6 +451,16 @@ export class NativeAuthority {
     if (!principal || !this.#verifiedPrincipals.has(principal)) return false
     return this.#currentAuthorization(principal, workspaceId, action) !== null &&
       (nativeRoot === undefined || this.#rootBelongsToWorkspace(workspaceId, nativeRoot))
+  }
+
+  /** Public membership projection for workspace-owned assignments. No credentials or host-private profile. */
+  listWorkspaceMembers(principal: NativePrincipal, workspaceId: string): Array<{ id: string; name: string }> {
+    if (!this.authorize(principal, workspaceId, 'read')) throw new Error('Workspace membership denied')
+    return this.#db.prepare(`SELECT s.id, COALESCE(p.name,s.label) AS name FROM subjects s
+      JOIN grants g ON g.subject_id=s.id AND g.workspace_id=? AND g.action='read'
+      JOIN grant_versions v ON v.subject_id=g.subject_id AND v.workspace_id=g.workspace_id AND v.action=g.action AND v.version=g.version
+      LEFT JOIN self_profiles p ON p.subject_id=s.id AND p.issuer=?
+      WHERE s.disabled=0 ORDER BY s.id`).all(workspaceId, this.#issuerId) as Array<{ id: string; name: string }>
   }
 
   /** Pairing provenance lives in private authority custody, not an editable

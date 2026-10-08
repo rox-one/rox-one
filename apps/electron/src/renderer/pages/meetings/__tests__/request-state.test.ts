@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { MeetingRequestTracker } from '../request-state'
+import { EMPTY_MEETING_DRAFT, MeetingRequestTracker, clearSubmittedDraftFields, meetingStatusKey } from '../request-state'
 
 describe('committed meeting request ownership', () => {
   test('coalesces duplicate writes while unrelated work remains independent', () => {
@@ -37,6 +37,17 @@ describe('committed meeting request ownership', () => {
     expect(current.finish()).toBe(false)
     expect(newer.isCurrent()).toBe(true)
   })
+  test('a cancelled request can restart and its old completion never clears the new owner', () => {
+    const tracker = new MeetingRequestTracker()
+    tracker.setScope('a')
+    const old = tracker.begin('search')!
+    tracker.cancel('search')
+    const current = tracker.begin('search')!
+    expect(old.isCurrent()).toBe(false)
+    expect(old.finish()).toBe(false)
+    expect(tracker.isPending('search')).toBe(true)
+    expect(current.finish()).toBe(true)
+  })
   test('finishing rejected work permits retry without clearing a later owner', () => {
     const tracker = new MeetingRequestTracker()
     tracker.setScope(null)
@@ -47,5 +58,20 @@ describe('committed meeting request ownership', () => {
     expect(retry.isCurrent()).toBe(true)
     tracker.cancelAll()
     expect(retry.isCurrent()).toBe(false)
+  })
+})
+
+describe('meeting form drafts and status labels', () => {
+  test('only clears fields still equal to the successfully submitted text', () => {
+    const draft = { ...EMPTY_MEETING_DRAFT, title: 'Task', noteText: 'Edited while saving', segmentId: 'segment-1', replacement: 'new correction' }
+    const next = clearSubmittedDraftFields(draft, { title: 'Task', noteText: 'Old note', segmentId: 'segment-1', replacement: 'old correction' })
+    expect(next).toEqual({ ...draft, title: '', segmentId: '' })
+    expect(draft.title).toBe('Task')
+  })
+
+  test('maps known states to localizable labels and unknown states to a safe fallback', () => {
+    expect(meetingStatusKey('capturing')).toBe('meetings.state.capturing')
+    expect(meetingStatusKey('permission_required')).toBe('meetings.state.permission_required')
+    expect(meetingStatusKey('<unsafe>')).toBe('common.unknown')
   })
 })

@@ -3,7 +3,8 @@ import { chromium, type Browser } from '@playwright/test'
 import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
 import type { TourCapability } from '../../contracts'
-import { runNativeBrowserProcess } from '../work/meetings-automations/native-browser-process'
+import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../work/meetings-automations/native-browser-process'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 declare global { interface Window { sourcePickerTest: { stats: { paused: number; captured: number; committed: number; selected: string[]; nativeLayers(): number; readiness: TourCapability | null }; mount(enabled: boolean, localMcpEnabled?: boolean | null, compact?: boolean, preselected?: boolean): void } } }
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE
 let registeredIsolatedCase = false
@@ -16,7 +17,7 @@ beforeAll(async () => {
   stage('source-picker:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><html><body><div id="root"></div><script type="module" src="/script.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) } })
   stage('source-picker:browser:launch')
-  browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), headless: true, args: ['--no-sandbox'] })
   stage('source-picker:browser:ready')
 }, 30_000)
 afterAll(async () => { await browser?.close(); server?.stop(true) }, 30_000)

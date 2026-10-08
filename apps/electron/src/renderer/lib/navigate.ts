@@ -33,6 +33,13 @@ export interface NavigateOptions {
   targetLaneId?: 'main'
   /** Skip auto-selecting first item when navigating to a list view (used when closing panels) */
   skipAutoSelect?: boolean
+  /** Navigate the primary panel instead of the currently focused panel */
+  primary?: boolean
+}
+
+/** Payload carried on the {@link NAVIGATE_EVENT} custom event. */
+export interface NavigateEventDetail extends NavigateOptions {
+  route: Route
 }
 
 /**
@@ -47,4 +54,26 @@ export function navigate(route: Route, options?: NavigateOptions): void {
     bubbles: true,
   })
   window.dispatchEvent(event)
+}
+
+/**
+ * Subscribe to internal navigation events.
+ *
+ * Attaches a listener for {@link NAVIGATE_EVENT} on `target` (the window by
+ * default) and invokes `handler(detail.route, detail)` for every dispatch.
+ * Returns an unsubscribe function that removes the listener.
+ *
+ * Can be called from anywhere in the app.
+ */
+export function subscribeNavigateEvents(
+  handler: (route: Route, detail: NavigateEventDetail) => void,
+  target: EventTarget = window,
+): () => void {
+  const listener = (event: Event) => {
+    const detail = (event as CustomEvent<NavigateEventDetail>).detail
+    if (!detail) return
+    handler(detail.route, detail)
+  }
+  target.addEventListener(NAVIGATE_EVENT, listener)
+  return () => target.removeEventListener(NAVIGATE_EVENT, listener)
 }

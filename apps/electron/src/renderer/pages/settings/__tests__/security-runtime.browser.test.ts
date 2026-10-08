@@ -2,11 +2,12 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as playwrightExpect, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 
 const repository = resolve(import.meta.dirname, '../../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/security-runtime')
 const url = 'http://127.0.0.1:5194'
-const chromiumPath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium'
+const chromiumPath = await resolveChromiumExecutable()
 const proofDirectory = process.env.SECURITY_RUNTIME_PROOF_DIR
 const expectDOM = playwrightExpect.configure({ timeout: 3_000 })
 

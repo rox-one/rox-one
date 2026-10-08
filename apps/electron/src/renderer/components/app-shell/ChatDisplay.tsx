@@ -10,8 +10,6 @@ import { useChatOutputFollow } from "./useChatOutputFollow"
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { resolvePublishedToolSource } from '@/features/product-tour/adapters/connections'
 import { beginChatUserTurn, beginChatPermissionResponse, cancelChatUserTurn, deriveExecutionCapabilities, observeChatSessionReopened } from '@/features/product-tour/adapters/chat'
-import { followChatOutput } from "./chat-scroll"
-import { useChatOutputFollow } from "./useChatOutputFollow"
 import { createMessageTts } from '@/lib/message-tts'
 import { useAuthenticatedReactionActor } from '@/hooks/useMessageReactionActor'
 import { messageActionId } from '@/lib/message-action-id'
@@ -28,7 +26,7 @@ import {
   Info,
   X,
 } from "lucide-react"
-import { motion, AnimatePresence } from "motion/react"
+import { motion, AnimatePresence, useReducedMotion } from "motion/react"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 
@@ -464,7 +462,7 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
 }
 
 /**
- * Scrolls to target element on mount, before browser paint.
+ * Scrolls the chat viewport on mount, leaving the workspace position intact.
  * Uses useLayoutEffect to ensure scroll happens before content is visible.
  */
 function ScrollOnMount({
@@ -609,6 +607,9 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   const appShellContext = useAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
+  const prefersReducedMotion = useReducedMotion()
+  const reducedMotionRef = React.useRef(!!prefersReducedMotion)
+  reducedMotionRef.current = !!prefersReducedMotion
 
   const handleOpenWorkflow = useCallback(() => {
     if (!session?.id) return
@@ -1811,7 +1812,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       if (!turnContainer) return false
 
       interruptOutputFollow()
-      turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      turnContainer.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
       return true
     }
 
@@ -1870,13 +1871,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         const byId = document.getElementById(messageId)
         if (byId) {
           interruptOutputFollow()
-          byId.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          byId.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
           return true
         }
         return false
       }
       interruptOutputFollow()
-      turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      turnContainer.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
       return true
     }
 

@@ -1,0 +1,11 @@
+version: 0.11.8
+files:
+  - url: Rox-arm64.zip
+    sha512: ZCpme/K4U6cQ9IK7kxp/oOJXn6soZLPaaZ37W454tBXwI1bvMCDX2ov2SlhcN77kdqytqkk4oNymczVGTQo5/w==
+    size: 338417829
+  - url: Rox-arm64.dmg
+    sha512: 5tTUPt2h+ZjPZYmM7FeUq5GaJHdzUPYJrfRSXK1jb4WuB+M94D7cmEoueOKolg1P6mwwfThstI5xvRw4qdDtfA==
+    size: 347345914
+path: Rox-arm64.zip
+sha512: ZCpme/K4U6cQ9IK7kxp/oOJXn6soZLPaaZ37W454tBXwI1bvMCDX2ov2SlhcN77kdqytqkk4oNymczVGTQo5/w==
+releaseDate: '2026-10-03T21:21:09.420Z'

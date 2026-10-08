@@ -2,9 +2,10 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 const repository = resolve(import.meta.dirname, '../../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/optional-native-effects')
-const executablePath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium'
+const executablePath = await resolveChromiumExecutable()
 const url = 'http://127.0.0.1:5339'
 type Fixture = { calls: Array<{ method: string; value?: unknown }>; toggle(): void; session(id: string): void; changed(id: string): void; reconnect(): void; resolve(index: number, name: string): void; held(): string[]; language(value: string): Promise<void>; allowLanguage(): void; stopLanguage(): void; resolveFocus(value: boolean): void; focus(value: boolean): void; capturedFocus(value: boolean): void }
 describe.skipIf(!existsSync(executablePath))('actual optional native effects tolerate authority denial and fence their session lifecycle', () => {

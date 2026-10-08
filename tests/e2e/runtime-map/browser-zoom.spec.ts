@@ -50,8 +50,32 @@ test('actual Chromium browser 200 percent zoom preserves the mounted chat and do
     await expect(page.getByTestId('attachments-count')).toHaveText('1')
     expect(await page.evaluate(() => (window as unknown as { runtimeDiagnostics: { chatMounts: number; chatSends: number } }).runtimeDiagnostics)).toMatchObject({ chatMounts: 1, chatSends: 0 })
     const metrics = await page.evaluate(() => ({ devicePixelRatio, cssViewportWidth: innerWidth, cssViewportHeight: innerHeight, visualViewportScale: visualViewport?.scale }))
-    await page.screenshot({ path: info.outputPath('actual-browser-zoom-200.png'), fullPage: true })
-    await info.attach('actual-browser-zoom.json', { body: JSON.stringify({ actualZoom, mechanism: 'Chrome native tabs.setZoom/getZoom; isolated local extension', metrics, errors }, null, 2), contentType: 'application/json' })
+    const geometry = await page.evaluate(() => {
+      const measure = (testId: string) => {
+        const element = document.querySelector<HTMLElement>(`[data-testid="${testId}"]`)!
+        const rect = element.getBoundingClientRect()
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+          intersectionWidth: Math.max(0, Math.min(rect.right, innerWidth) - Math.max(rect.left, 0)),
+          intersectionHeight: Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0)),
+          scrollLeft: element.scrollLeft, scrollTop: element.scrollTop, clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }
+      }
+      return { split: measure('chat-runtime-split'), chat: measure('runtime-chat-slot'), map: measure('runtime-map-slot'), dock: measure('runtime-map-dock') }
+    })
+    expect(geometry.chat.width).toBeGreaterThanOrEqual(360)
+    expect(geometry.map.width).toBeGreaterThanOrEqual(360)
+    expect(geometry.chat.intersectionWidth).toBeGreaterThanOrEqual(350)
+    expect(geometry.map.intersectionWidth).toBeGreaterThanOrEqual(350)
+    expect(geometry.chat.intersectionHeight).toBeGreaterThan(100)
+    expect(geometry.map.intersectionHeight).toBeGreaterThan(100)
+    expect(geometry.map.x).toBeGreaterThanOrEqual(geometry.chat.x + geometry.chat.width - 1)
+    // Playwright 1.49 fullPage creates an unscaled document clip at native zoom.
+    // Capture Chrome's actual viewport without a clip or emulation override.
+    const cdp = await context.newCDPSession(page)
+    const layoutMetrics = await cdp.send('Page.getLayoutMetrics')
+    const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false })
+    await writeFile(info.outputPath('actual-browser-zoom-200.png'), Buffer.from(screenshot.data, 'base64'))
+    await info.attach('actual-browser-zoom.json', { body: JSON.stringify({ actualZoom, mechanism: 'Chrome native tabs.setZoom/getZoom; isolated local extension',
+      screenshotMechanism: 'Chrome Page.captureScreenshot actual viewport; no clip/scale/emulation override', metrics, geometry, layoutMetrics, errors }, null, 2), contentType: 'application/json' })
     expect(errors).toEqual([])
   } finally {
     await context.close()

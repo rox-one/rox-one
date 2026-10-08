@@ -1,0 +1,79 @@
+{
+  "baseHead": "5eae16dcc5ffa96c3259fed497275f9ebf0732eb",
+  "nativeFrozenRevision": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "onlyAuthoredTestDelta": "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts",
+  "inputs": {
+    "packages/shared/src/auth/__tests__/rox-account-authority.test.ts": {
+      "sha256": "ee59c00565faa098ae53cd800f64af33b73abb42198a04f45ed62c12d656f181",
+      "bytes": 13699,
+      "unchangedFromNativeAa80": true
+    },
+    "packages/shared/src/auth/__tests__/rox-pocket-client.test.ts": {
+      "sha256": "4104610acb5ab6a5e45897c02cb30614d056c4880a5597757553770e098bbbc7",
+      "bytes": 5437,
+      "unchangedFromNativeAa80": true
+    },
+    "apps/electron/src/main/__tests__/pocket-account-store.test.ts": {
+      "sha256": "76f5b425445554f654a6a37792876162c6eddf9f977819bee9ddf6c4122ce111",
+      "bytes": 4483,
+      "unchangedFromNativeAa80": true
+    },
+    "apps/electron/src/main/__tests__/pocket-account-store-durable-write.test.ts": {
+      "sha256": "16ca42d406465da5fa3d11d4bce12c4d69ea170a0a851b81f9c45f2c5bc09577",
+      "bytes": 4127,
+      "unchangedFromNativeAa80": true
+    },
+    "scripts/probes/pocket-vault-diagnostics.test.ts": {
+      "sha256": "325ca376e11f9dc3fd8d87da1aaae203a8659985630726575b1dd152693ad7df",
+      "bytes": 4490,
+      "unchangedFromNativeAa80": true
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts": {
+      "sha256": "4389eede9ba59405569c86d4966b5786733a1961d0407ea03f4fabaf0b342580",
+      "bytes": 892,
+      "unchangedFromNativeAa80": true
+    },
+    "packages/server-core/src/sessions/pocket-helper-owner.test.ts": {
+      "sha256": "ef7366d11901096fb3ec9582498fada62d90c1831de15750d31db0db0e6c3319",
+      "bytes": 4371,
+      "unchangedFromNativeAa80": true
+    },
+    "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts": {
+      "sha256": "05fa8e65bad725225855db6a29158803c7659ed9bc56b77664943af3a778c0b6",
+      "bytes": 8538,
+      "unchangedFromNativeAa80": true
+    },
+    "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts": {
+      "sha256": "add63bf7f72ba9f274006c97f8802abc65f6b6bc2766005de866acd6f495398f",
+      "bytes": 7170,
+      "unchangedFromNativeAa80": false
+    },
+    "packages/shared/src/agent/__tests__/omp-public-runtime.test.ts": {
+      "sha256": "e060ad34ceb797860a998a067ebb9cf95584876f8e0b4b3af8960444cd576019",
+      "bytes": 12751,
+      "unchangedFromNativeAa80": true
+    },
+    ".github/workflows/desktop-release.yml": {
+      "sha256": "a75b62177dab1e2635de78fb722f4fa511a9580591934b9919bba011f6446110",
+      "bytes": 7568,
+      "unchangedFromNativeAa80": true
+    },
+    "packages/shared/src/agent/omp-agent.ts": {
+      "sha256": "84f039c05dc4d4081e0d8f164c9fcc7f84136c911d978bc3130a94e0fb9d62a2",
+      "bytes": 107112,
+      "unchangedFromNativeAa80": true
+    },
+    "packages/shared/src/agent/omp-first-run.ts": {
+      "sha256": "207e7f10c070f632dfb61bee5771db8435f44a15dc4002674edc9699fc4b88ff",
+      "bytes": 14362,
+      "unchangedFromNativeAa80": true
+    },
+    "packages/shared/src/agent/__tests__/omp-fake-cli.ts": {
+      "sha256": "6368653751ee81dfc1fc2eff73ee90f8acfbf88f27023ecc5ad9dc28b2b182a3",
+      "bytes": 17180,
+      "unchangedFromNativeAa80": true
+    }
+  },
+  "productDeltaFromAa80": false,
+  "diagnosticPublicRuntimeEditsReverted": true
+}

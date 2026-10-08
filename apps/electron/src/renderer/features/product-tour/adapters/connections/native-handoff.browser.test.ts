@@ -7,6 +7,10 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runNativeBrowserProcess } from '../work/meetings-automations/native-browser-process'
 import type { RuntimeState, CapabilitySnapshot } from '../../contracts'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
+
+// The production dictation toggle follows the host platform modifier.
+const dictationChord = process.platform === 'darwin' ? 'Meta+Shift+D' : 'Control+Shift+D'
 
 interface Snapshot { state: RuntimeState; capabilities: CapabilitySnapshot; calls: { microphone: number; stoppedTracks: number; start: number; grant: number; stop: number; cancel: number; list: number; audit: number; writes: number }; nativeModals: number; nativeLayers: number; auditRequests: Array<{ workspaceId: string }> }
 declare global { interface Window { nativeHandoff: { controller: { ready: boolean; start(id: 'OBT-06' | 'OBT-24', mode?: 'new' | 'replay'): Promise<void>; pause(): void }; snapshot(): Snapshot; acceptMicrophone(index?: number): void; denyMicrophone(index?: number): void; cancelPrompt(): void; unmountVoice(): void; settleAudit(index: number, outcome?: 'ready' | 'denied'): void; switchWorkspace(id: string): void } } }
@@ -34,7 +38,7 @@ beforeAll(async () => {
     if (path === '/renderer.css') return new Response(css, { headers: { 'content-type': 'text/css' } })
     return new Response('<!doctype html><link rel="stylesheet" href="/renderer.css"><div id="root"></div><script type="module" src="/script.js"></script>', { headers: { 'content-type': 'text/html' } })
   } })
-  browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), headless: true, args: ['--no-sandbox'] })
 }, 30_000)
 afterAll(async () => { if (isolatedCase) { await browser?.close(); server?.stop(true) } })
 function browserTest(name: string, operation: () => Promise<void>) {
@@ -81,12 +85,12 @@ for (const step of ['start', 'review'] as const) browserTest(`T-VOICE-HANDOFF na
     if (step === 'review') {
       await next(page)
       await page.locator('[data-product-tour-step="voice.review"]').waitFor()
-      await page.keyboard.press('Control+Shift+D')
+      await page.keyboard.press(dictationChord)
     } else await page.getByRole('button', { name: 'Dictate', exact: true }).click()
     const token = await blurHeldPrompt(page)
     await page.evaluate(() => { window.dispatchEvent(new Event('focus')); window.nativeHandoff.acceptMicrophone() })
     await page.getByRole('button', { name: 'Stop dictation', exact: true }).waitFor()
-    await page.keyboard.press('Control+Shift+D')
+    await page.keyboard.press(dictationChord)
     await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.stop === 1)
     await page.waitForFunction(() => window.nativeHandoff.snapshot().state.attemptEvidence['voice.review']?.level === 'observed')
     const inserted = await page.evaluate(() => window.nativeHandoff.snapshot())
@@ -137,7 +141,7 @@ for (const outcome of ['denied', 'granted'] as const) browserTest(`T-VOICE-HANDO
     expect(closed.calls.start).toBe(outcome === 'granted' ? 1 : 0)
     expect(closed.state.attemptEvidence['voice.review']?.level).toBeUndefined()
     if (outcome === 'granted') {
-      await page.keyboard.press('Control+Shift+D')
+      await page.keyboard.press(dictationChord)
       await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.stop === 1)
       await page.waitForFunction(() => (document.querySelector('[aria-label=Draft]') as HTMLTextAreaElement | null)?.value === 'Existing draft PRIVATE FIXTURE TRANSCRIPT')
       expect((await page.evaluate(() => window.nativeHandoff.snapshot())).state.attemptEvidence['voice.review']?.level).toBeUndefined()

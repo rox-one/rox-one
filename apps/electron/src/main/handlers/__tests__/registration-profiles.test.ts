@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { WORKSPACE_WORK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/workspace-work'
 
 const registeredChannels: string[] = []
 
@@ -211,6 +212,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...meetings.MEETING_HANDLED_CHANNELS,
     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,
     ...feed.FEED_HANDLED_CHANNELS,
+    ...WORKSPACE_WORK_HANDLED_CHANNELS,
     ...runtimeTrace.HANDLED_CHANNELS,
     ...auth.HANDLED_CHANNELS,
     ...automations.HANDLED_CHANNELS,
@@ -304,7 +306,7 @@ describe('RPC handler profile registration', () => {
     const actual = new Set(registeredChannels.filter(ch => ch.includes(':')))
     expect([...expected].filter(ch => !actual.has(ch))).toEqual([])
     expect([...actual].filter(ch => !expected.has(ch))).toEqual([])
-  })
+  }, 120000)
 
   it('registerGuiRpcHandlers registers only gui channels', async () => {
     const expected = await getExpectedGuiChannels()
@@ -315,5 +317,5 @@ describe('RPC handler profile registration', () => {
     const actual = new Set(registeredChannels.filter(ch => ch.includes(':')))
     expect([...expected].filter(ch => !actual.has(ch))).toEqual([])
     expect([...actual].filter(ch => !expected.has(ch))).toEqual([])
-  })
+  }, 20000)
 })

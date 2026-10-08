@@ -1,0 +1,18 @@
+{
+  "source": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "verifiedArtifacts": [
+    {
+      "name": "Rox-arm64.dmg",
+      "sha256": "031fefdc8c3bc3873d6878f0cae679bb8a40602080fab2cf0bc132ec984b78d1",
+      "bytes": 347345914
+    },
+    {
+      "name": "Rox-arm64.zip",
+      "sha256": "3916e3463c83ce4518d2bcf14fd668508c9e55d48e631a85b0f02964e375ffe0",
+      "bytes": 338417829
+    }
+  ],
+  "checks": 9,
+  "actualSignature": "adhoc",
+  "scope": "Independent local hash/integrity receipt readback; no installed GUI/Pocket/provider acceptance"
+}

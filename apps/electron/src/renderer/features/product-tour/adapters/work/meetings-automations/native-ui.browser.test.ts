@@ -3,6 +3,7 @@ import { createServer, type Server } from 'node:http'
 import { build } from 'esbuild'
 import { chromium, type Browser, type Page } from '@playwright/test'
 import { resolve } from 'node:path'
+import { resolveChromiumExecutable } from '../../../../../test-utils/chromium-executable'
 
 // Real renderer components and DOM; the native transport is an isolated explicit fixture.
 // This is component evidence, not a macOS microphone or full App acceptance claim.
@@ -96,7 +97,7 @@ beforeAll(async () => {
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   base = 'http://127.0.0.1:' + (server.address() as { port: number }).port
-  browser = await chromium.launch({ headless: true, executablePath: process.env.ROX_BROWSER_PATH ?? '/usr/bin/chromium', args: ['--no-sandbox'] })
+  browser = await chromium.launch({ headless: true, executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
 }, 30_000)
 
 afterAll(async () => { await browser?.close(); server?.close() })
@@ -141,6 +142,17 @@ describe('A11 rendered native surfaces', () => {
     expect(await page.evaluate(() => (window as any).fixture.previewProfile()))
       .toContain('Role perspectives: rox.meeting.analyst, rox.meeting.scribe.')
     await page.getByRole('tab', { name: 'meetings.local.tab.actions' }).click()
+    expect((await inspect(page)).events).toHaveLength(1)
+    expect((await inspect(page)).mutations).toEqual([])
+    await page.close()
+  })
+
+  it('T-MEETINGS-RESULT: a mounted native action conversion stays idle on Start and replay', async () => {
+    const page = await fixture('meetings', 'action')
+    await page.evaluate(() => (window as any).fixture.start('run-a'))
+    expect((await inspect(page)).events).toEqual([])
+    expect((await inspect(page)).mutations).toEqual([])
+    await page.getByRole('tab', { name: 'meetings.local.tab.actions' }).click()
     expect(await page.getByTestId('meeting-action-to-task').isVisible()).toBe(true)
     const opened = await inspect(page)
     expect(opened.accepted).toHaveLength(1)
@@ -152,7 +164,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  browserTest('T-MEETINGS-RESULT: a delayed native load cannot finish a replay or another panel', async () => {
+  it('T-MEETINGS-RESULT: a delayed native load cannot finish a replay or another panel', async () => {
     const page = await fixture('meetings', 'transcript')
     await page.evaluate(() => (window as any).fixture.start('run-old'))
     await page.getByRole('tab', { name: 'meetings.local.tab.transcript' }).click()

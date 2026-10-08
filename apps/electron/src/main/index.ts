@@ -9,7 +9,7 @@ loadShellEnv()
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, safeStorage, session, shell, type BrowserWindowConstructorOptions } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, safeStorage, session, shell, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 import { hostname, homedir } from 'os'
 import * as Sentry from '@sentry/electron/main'
@@ -77,9 +77,10 @@ if (persistedUiLanguage) {
 const machineId = createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16)
 Sentry.setUser({ id: machineId })
 
-import { join, delimiter } from 'path'
+import { join, delimiter, resolve, sep } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, readdirSync } from 'fs'
+import { fileURLToPath } from 'url'
 import { resolveOemManagedLayout } from '@rox/shared/knowledge/oem-pin'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 
@@ -130,6 +131,8 @@ import { prependPath, pathEnvKey } from '@rox/shared/toolchain'
 import { setPowerShellValidatorRoot } from '@rox/shared/agent'
 import { handleDeepLink } from './deep-link'
 import { BrowserPaneManager } from './browser-pane-manager'
+import { OpenDesignRuntimeManager, isTrustedOpenDesignIpcEvent, registerOpenDesignIpcHandlers } from './open-design-runtime'
+import { OpenDesignWindowController } from './open-design-window'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
 import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
@@ -262,6 +265,7 @@ const LEGACY_DEEPLINK_SCHEME = 'craftagents'
 let windowManager: WindowManager | null = null
 let sessionManager: SessionManager | null = null
 let browserPaneManager: BrowserPaneManager | null = null
+let openDesignRuntime: OpenDesignRuntimeManager | null = null
 let oauthFlowStore: OAuthFlowStore | null = null
 let moduleSink: EventSink | null = null
 let moduleClientResolver: ((webContentsId: number) => string | undefined) | null = null
@@ -473,6 +477,44 @@ async function createInitialWindows(): Promise<void> {
   mainLog.info(`Created window for first workspace: ${workspaces[0].name}`)
 }
 
+// Trust boundary for main-process IPC that is only meant for Rox's own windows:
+// the sender must be a window this process created, on the app's own renderer
+// URL (dev server or packaged file:// index.html).
+function isTrustedRoxRendererUrl(url: string): boolean {
+  if (!url) return false
+  const devServerUrl = process.env.VITE_DEV_SERVER_URL
+  if (devServerUrl) {
+    try {
+      return new URL(url).origin === new URL(devServerUrl).origin
+    } catch {
+      return false
+    }
+  }
+
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'file:') return false
+    const filePath = resolve(fileURLToPath(parsed))
+    const rendererRoot = resolve(join(__dirname, 'renderer'))
+    return filePath === join(rendererRoot, 'index.html') || filePath.startsWith(rendererRoot + sep)
+  } catch {
+    return false
+  }
+}
+
+function isRegisteredRoxRendererWebContents(sender: WebContents): boolean {
+  const win = windowManager?.getWindowByWebContentsId(sender.id)
+  return !!win && win.webContents === sender
+}
+
+function isTrustedRoxRendererIpcEvent(event: IpcMainInvokeEvent): boolean {
+  return isTrustedOpenDesignIpcEvent({
+    event,
+    isRegisteredRoxWebContents: isRegisteredRoxRendererWebContents,
+    isTrustedMainFrameUrl: isTrustedRoxRendererUrl,
+  })
+}
+
 app.whenReady().then(async () => {
   // Export packaged state as env var so logger.ts (and headless Bun) don't need 'electron'
   process.env.CRAFT_IS_PACKAGED = app.isPackaged ? 'true' : 'false'
@@ -591,6 +633,16 @@ app.whenReady().then(async () => {
     // Create the application menu (needs windowManager for New Window action)
     createApplicationMenu(windowManager)
 
+    openDesignRuntime = new OpenDesignRuntimeManager({
+      userDataDir: join(app.getPath('userData'), 'open-design-runtime'),
+      windowController: new OpenDesignWindowController(),
+    })
+    registerOpenDesignIpcHandlers({
+      ipcMain,
+      isTrustedSender: isTrustedRoxRendererIpcEvent,
+      runtime: openDesignRuntime,
+    })
+
     // When CRAFT_SERVER_URL is set, this Electron instance is a thin client —
     // it only creates windows whose preload connects to the remote server.
     // Skip server-side initialization (SessionManager, model refresh, platform injection).
@@ -638,7 +690,7 @@ app.whenReady().then(async () => {
     }) : undefined
     app.once('will-quit', () => { disposeVoiceHotkeys(); voiceOverlay?.dispose() })
     registerMeetingCaptureIpc()
-    registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
+    const localMeetings = registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
       getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
       getWorkspaceGenerationForWindow: (id) => windowManager?.getWorkspaceGenerationForWindow(id) ?? null,
     })
@@ -1044,6 +1096,15 @@ app.whenReady().then(async () => {
             browserPaneManager: browserPaneManager ?? undefined,
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
+            // Workspace-work link validation: a meeting link only resolves when the
+            // local meeting belongs to the workspace (and the action anchor exists).
+            workspaceWorkReferences: {
+              exists: (workspaceId, _root, link) => {
+                if (link.kind !== 'meeting') return false
+                const meeting = localMeetings.read(link.id)
+                return meeting?.workspaceId === workspaceId && (!link.anchor || meeting.actions.some(action => action.id === link.anchor))
+              },
+            },
             ...(!isHeadless ? { browserCredentials } : {}),
             ...(voiceOverlay ? { voiceOverlay } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
@@ -1734,6 +1795,16 @@ async function performQuitCleanup(): Promise<void> {
     browserPaneManager.destroyAll()
   }
 
+  // Stop only the namespace this process started. The manager talks through
+  // Open Design sidecar IPC and never falls back to process-wide killing.
+  if (openDesignRuntime) {
+    try {
+      await openDesignRuntime.stop()
+    } catch (err) {
+      mainLog.warn('[open-design] shutdown failed:', err instanceof Error ? err.message : err)
+    }
+  }
+
   // Stop all per-workspace Extension Hosts (utilityProcess children) cleanly.
   try {
     await stopAllExtensionHosts()
@@ -1838,7 +1909,7 @@ app.on('before-quit', async (event) => {
   // reach here — installUpdate's beforeUpdateInstallHook already ran
   // performQuitCleanup and set isQuitting, so the guard at the top returns early
   // and Squirrel.Mac's quit proceeds uninterrupted so the update installs (#891).
-  if (sessionManager) {
+  if (sessionManager || openDesignRuntime?.hasActiveRuntime()) {
     event.preventDefault()
     await performQuitCleanup()
     app.exit(0)

@@ -56,7 +56,7 @@ const sessionFields = ['id', 'workspaceId', 'workspaceName', 'name', 'preview', 
   'lastReadMessageId', 'hasUnread', 'enabledSourceSlugs', 'model', 'llmConnection', 'thinkingLevel',
   'lastMessageRole', 'lastFinalMessageId', 'createdAt', 'messageCount', 'tokenUsage', 'hidden',
   'isArchived', 'archivedAt', 'supportsBranching', 'branchFromMessageId', 'branchFromSessionId',
-  'parentSessionId', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
+  'parentSessionId', 'agentProfileSnapshot', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
 
 /** Public metadata IDs are never host paths or project-context capabilities. */
 function nativeProjectMembership(membership: { projectId?: unknown; projectIds?: unknown }): { projectId?: string; projectIds: string[] } {

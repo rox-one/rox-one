@@ -34,6 +34,7 @@ import type {
   LocalMeeting,
   LocalMeetingPatch,
   LocalMeetingAction,
+  LocalMeetingTaskRef,
   LocalMeetingExtractionResult,
   LocalTranscriptSegmentUpdate,
   LocalTranscript,
@@ -47,6 +48,7 @@ import {
   mimeForAudioExt,
   newMeetingId,
   normalizeMeeting,
+  normalizeMeetingTaskRef,
   normalizeTranscript,
   parseWhisperJson,
   transcriptMarkdown,
@@ -99,6 +101,8 @@ export type LocalMeetingStoreDeps = {
   transcribeCloud?: (input: TranscriptionRequest, meeting: LocalMeeting, context?: LocalTranscriptionContext) => Promise<NormalizedTranscript>
   /** Main-process window binding, never a renderer-supplied grant. */
   getTranscriptionContext?: (meeting: LocalMeeting) => LocalTranscriptionContext | undefined
+  /** Authoritative task origin resolver. New shared backlinks fail closed without it. */
+  validateTaskReference?: (meeting: LocalMeeting, actionId: string, ref: LocalMeetingTaskRef) => boolean
 }
 
 export class LocalMeetingStore {
@@ -209,6 +213,18 @@ export class LocalMeetingStore {
   }
 
   update(id: string, patch: LocalMeetingPatch): LocalMeeting | null {
+    const meeting = this.read(id)
+    if (!meeting) return null
+    if (Array.isArray(patch.actions)) {
+      for (const action of patch.actions) {
+        if (!action || typeof action !== 'object' || !('taskRef' in action) || action.taskRef === undefined) continue
+        const ref = normalizeMeetingTaskRef(action.taskRef)
+        const prior = meeting.actions.find(current => current.id === action.id)?.taskRef
+        if (!ref || ref.scope === 'workspace' && ref.workspaceId !== meeting.workspaceId ||
+          prior && JSON.stringify(prior) !== JSON.stringify(ref) ||
+          !prior && ref.scope === 'workspace' && this.deps.validateTaskReference?.(meeting, action.id, ref) !== true) return null
+      }
+    }
     return this.mutate(id, (m) => applyPatch(m, patch, this.now()))
   }
 
@@ -266,14 +282,20 @@ export class LocalMeetingStore {
   }
 
   /** Save one action against fresh metadata so another window cannot lose siblings. */
-  saveAction(id: string, input: { actionId: string; patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId'>>; remove?: boolean; create?: boolean }): MeetingsLocalResult<LocalMeeting> {
+  saveAction(id: string, input: { actionId: string; patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId' | 'taskRef'>>; remove?: boolean; create?: boolean }): MeetingsLocalResult<LocalMeeting> {
     const meeting = this.read(id)
     if (!meeting || !input?.actionId) return { ok: false, code: 'meeting-not-found' }
     const exists = meeting.actions.some((action) => action.id === input.actionId)
     if (!exists && !input.create) return { ok: false, code: 'action-not-found' }
     const patch = input.patch ?? {}
     if ('text' in patch && (typeof patch.text !== 'string' || !patch.text.trim())) return { ok: false, code: 'action-empty' }
-    const changes = { ...(typeof patch.text === 'string' ? { text: patch.text.trim().slice(0, 10_000) } : {}), ...(typeof patch.done === 'boolean' ? { done: patch.done } : {}), ...(typeof patch.taskId === 'string' ? { taskId: patch.taskId.slice(0, 200) } : {}), editedAt: this.now() }
+    const taskRef = normalizeMeetingTaskRef(patch.taskRef)
+    if ('taskRef' in patch && (!taskRef || taskRef.scope === 'workspace' && taskRef.workspaceId !== meeting.workspaceId)) return { ok: false, code: 'WORKSPACE_MISMATCH' }
+    const currentRef = meeting.actions.find(action => action.id === input.actionId)?.taskRef
+    if (taskRef && currentRef && JSON.stringify(taskRef) !== JSON.stringify(currentRef)) return { ok: false, code: 'task-link-conflict' }
+    if (taskRef?.scope === 'workspace' && !currentRef && this.deps.validateTaskReference?.(meeting, input.actionId, taskRef) !== true) return { ok: false, code: 'task-link-unavailable' }
+    const changes = { ...(typeof patch.text === 'string' ? { text: patch.text.trim().slice(0, 10_000) } : {}), ...(typeof patch.done === 'boolean' ? { done: patch.done } : {}),
+      ...(taskRef ? { taskRef, taskId: taskRef.scope === 'personal' ? taskRef.id : undefined } : typeof patch.taskId === 'string' ? { taskId: patch.taskId.slice(0, 200) } : {}), editedAt: this.now() }
     const actions = input.remove ? meeting.actions.filter((action) => action.id !== input.actionId) : exists ? meeting.actions.map((action) => action.id === input.actionId ? { ...action, ...changes } : action)
       : [...meeting.actions, { id: input.actionId, text: String(changes.text ?? ''), done: false, createdAt: this.now(), ...changes }]
     if (input.create && !changes.text) return { ok: false, code: 'action-empty' }

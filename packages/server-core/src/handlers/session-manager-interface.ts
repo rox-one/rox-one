@@ -27,6 +27,7 @@ import type {
   BulkUpdateSessionsResult,
 } from '@rox/shared/protocol'
 import type { SessionBundle, DispatchMode } from '@rox/shared/sessions'
+import type { AgentProfileSnapshot } from '@rox/shared/workspace-work'
 import type { SessionProvenance } from '@rox/shared/memory/types'
 import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 import type { EventSink } from '../transport'
@@ -68,7 +69,7 @@ export interface ISessionManager {
   createSession(
     workspaceId: string,
     options?: CreateSessionOptions,
-    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; agentProfileSnapshot?: AgentProfileSnapshot | null },
   ): Promise<Session>
   /** Resolved working directory of a live session (Tasks Conductor uses it so children inherit
    *  the orchestrator's cwd). */
@@ -252,6 +253,7 @@ export interface ISessionManager {
     workspaceId: string,
     bundle: SessionBundle,
     mode: DispatchMode,
+    internal?: { defaultAgentProfileSnapshot?: AgentProfileSnapshot | null },
   ): Promise<{ sessionId: string; warnings?: string[] }>
 
   /**
@@ -363,6 +365,7 @@ export interface ISessionManager {
  * overrides) can be added without churn at every call site.
  */
 export interface ExecutePromptAutomationInput {
+  automationContext?: import('@rox/shared/automations/types').AutomationContextReference
   /** Host supplied only; never copied from RPC payload. */
   roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext
   runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch

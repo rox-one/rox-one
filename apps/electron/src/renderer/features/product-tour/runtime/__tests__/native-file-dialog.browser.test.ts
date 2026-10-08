@@ -8,6 +8,7 @@ import { readFile, rm, writeFile } from 'node:fs/promises'
 import en from '../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../../adapters/work/meetings-automations/native-browser-process'
 import { adoptVerifiedRendererArtifact, bindRendererControls, createFreshRendererDirectory, fileDigest, loadOrBuildRendererArtifact, verifyRendererArtifact } from '../../../../../../../../scripts/product-tour/native-renderer-artifact.mjs'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_FILE_DIALOG_CASE
 let registeredCase = false
@@ -76,7 +77,7 @@ beforeAll(async () => {
   stage('file-dialog:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'Content-Type': 'text/javascript' } }) : new Response(`<!doctype html><style>${spinnerLayout}svg{width:20px;height:20px}main>div{min-height:50px}button{min-width:30px;min-height:24px}</style><div id="root"></div><script type="module" src="/script.js"></script>`, { headers: { 'Content-Type': 'text/html' } }) } })
   stage('file-dialog:browser:launch')
-  browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
   stage('file-dialog:browser:ready')
 }, 30_000)
 afterAll(async () => {

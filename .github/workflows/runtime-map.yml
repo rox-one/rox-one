@@ -38,3 +38,58 @@ jobs:
           name: runtime-map-native-loop
           path: ${{ runner.temp }}/runtime-map-native-loop.json
           if-no-files-found: error
+
+  renderer-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: '24' }
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with: { bun-version: '1.3.14' }
+      - run: bun install --frozen-lockfile --ignore-scripts
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - name: Install the locked Playwright Chromium and system dependencies
+        run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Capture source and runtime identities before browser execution
+        run: |
+          mkdir -p docs/evidence/runtime-map/hosted-renderer
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          paths = subprocess.check_output(['git', 'ls-files', 'apps/electron/src', 'packages/core/src/runtime-trace', 'packages/shared/src', 'packages/server-core/src/sessions/runtime-trace', 'tests/e2e/runtime-map', 'tests/fixtures/runtime-trace'], text=True).splitlines()
+          receipt = {'classification': 'hosted-production-renderer-isolated-store-and-journal', 'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'bun': subprocess.check_output(['bun', '--version'], text=True).strip(), 'node': subprocess.check_output(['node', '--version'], text=True).strip(), 'sourcesBefore': {p: hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths}}
+          pathlib.Path('docs/evidence/runtime-map/hosted-renderer/source.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          print(receipt['revision'], receipt['bun'], receipt['node'], len(paths))
+          PY
+      - name: Exercise the exact thirteen browser cases including genuine native zoom
+        env:
+          ROX_RUNTIME_EVIDENCE_RUN: hosted-final
+        run: |
+          set -o pipefail
+          export ROX_TEST_BUN="$(command -v bun)"
+          node node_modules/@playwright/test/cli.js test --config tests/e2e/runtime-map/playwright.config.ts catalog.spec.ts stream.spec.ts context.spec.ts overview.spec.ts browser-zoom.spec.ts --grep 'production catalogs|journal streams|pending permission|empty production|grouped context|actual Fit overview|actual Chromium' 2>&1 | tee docs/evidence/runtime-map/hosted-renderer/command.log
+      - name: Verify that tested source files remained unchanged
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          p = pathlib.Path('docs/evidence/runtime-map/hosted-renderer/source.json')
+          if not p.exists(): raise SystemExit('Browser source receipt was not created')
+          receipt = json.loads(p.read_text())
+          receipt['sourcesAfter'] = {s: hashlib.sha256(pathlib.Path(s).read_bytes()).hexdigest() for s in receipt['sourcesBefore']}
+          receipt['sourcesStable'] = receipt['sourcesAfter'] == receipt['sourcesBefore']
+          p.write_text(json.dumps(receipt, indent=2) + '\n')
+          assert receipt['sourcesStable'], 'Browser source changed during execution'
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: runtime-map-renderer-acceptance
+          path: |
+            docs/evidence/runtime-map/hosted-renderer
+            docs/evidence/runtime-map/browser-results.json
+            docs/evidence/runtime-map/browser-artifacts/hosted-final
+            node_modules/.cache/runtime-map-e2e-build/runtime-build-receipt.json
+          if-no-files-found: error

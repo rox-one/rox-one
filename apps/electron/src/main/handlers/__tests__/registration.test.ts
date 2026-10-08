@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { WORKSPACE_WORK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/workspace-work'
 
 const registeredChannels: string[] = []
 
@@ -220,6 +221,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...meetings.MEETING_HANDLED_CHANNELS,
     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,
     ...feed.FEED_HANDLED_CHANNELS,
+    ...WORKSPACE_WORK_HANDLED_CHANNELS,
     ...runtimeTrace.HANDLED_CHANNELS,
     ...auth.HANDLED_CHANNELS,
     ...automations.HANDLED_CHANNELS,

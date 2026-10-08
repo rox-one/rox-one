@@ -3,10 +3,11 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:f
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 const repository = resolve(import.meta.dirname, '../../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/voice-history')
 const url = 'http://127.0.0.1:5299'
-const executablePath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium'
+const executablePath = await resolveChromiumExecutable()
 const proofDirectory = process.env.VOICE_HISTORY_PROOF_DIR
 const timeout = 30_000
 

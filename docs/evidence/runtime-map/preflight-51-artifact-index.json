@@ -1,0 +1,58 @@
+{
+  "classification": "actual production renderer components; deterministic executor/real journal for Context; explicitly typed performance load for overview; no installed-app/live-provider claim",
+  "rootSourceCommit": "51b130531",
+  "initialIsolatedCommit": "bb6d718a4a9abee612e0b7871e11e2a1225a2de7",
+  "canonicalFixtureCorrection": "8fb0715a0",
+  "buildReceipt": {
+    "head": "bb6d718a4a9abee612e0b7871e11e2a1225a2de7",
+    "sourceFingerprint": "1098cc2be9a5d928bfd639afaca7a97ab162bcad029df4367a7acc48ddc5110b",
+    "indexSha256": "9fc6c7b341d5396a754f1f6154eeb1099313a9e986359d0c62741cda77cbd5b7"
+  },
+  "overviewCase": {
+    "pass": 1,
+    "fail": 0,
+    "physicalCardCount": 200,
+    "focusReturnNormalZoom": 1,
+    "independentVisualReviewer": "W4/canvas actual two PNG views; 20 lanes ×10 visible cards, statusbars distinct; normal Inspector readable"
+  },
+  "contextCases": {
+    "pass": 2,
+    "fail": 0,
+    "exitCode": 0,
+    "elapsedSeconds": 11.2,
+    "reuse": "verified identical production source fingerprint/index hash; test-server/spec-only canonicalroot identity correction"
+  },
+  "timingBudgets": "not measured in these recorded functional cases",
+  "media": [
+    {
+      "artifact": "docs/evidence/runtime-map/media/runtime-map-bounded-overview-51.png",
+      "source": "docs/evidence/runtime-map/browser-artifacts/overview-context-51/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/runtime-map-dense-fit-overview.png",
+      "sha256": "393ec359f2016be183dd01fb47a8dada43c6fee689b0d4cf1c33ec930b39a09e"
+    },
+    {
+      "artifact": "docs/evidence/runtime-map/media/runtime-map-overview-focus-51.png",
+      "source": "docs/evidence/runtime-map/browser-artifacts/overview-context-51/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/overview-focus-return.png",
+      "sha256": "9e333cd8925d112b14869b0d7e266a08bf332e27246d23bf64ce9ddac9052461"
+    },
+    {
+      "artifact": "docs/evidence/runtime-map/media/context-root-light-51.png",
+      "source": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-22a30-t-child-provenance-in-light/context-root-light.png",
+      "sha256": "4e86ea3674e913acae38ac8539c21dbde58fa1ead7b83ad825f5ac5f3b1d9c4e"
+    },
+    {
+      "artifact": "docs/evidence/runtime-map/media/context-child-light-51.png",
+      "source": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-22a30-t-child-provenance-in-light/context-child-light.png",
+      "sha256": "a42133e93d1f426cda8add1833e4e58e6428f855c549d4633c73b6049d98c66f"
+    },
+    {
+      "artifact": "docs/evidence/runtime-map/media/context-root-dark-51.png",
+      "source": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/context-root-dark.png",
+      "sha256": "91e6b42a79c1eab5e7dc6cdbe03411fac964743e84a2a489eaf06ad56a7590d6"
+    },
+    {
+      "artifact": "docs/evidence/runtime-map/media/context-child-dark-51.png",
+      "source": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/context-child-dark.png",
+      "sha256": "79520b43e22340f7e69ccfebab23d2d49da62ca9a45c7c2d3e983c959461fc02"
+    }
+  ]
+}

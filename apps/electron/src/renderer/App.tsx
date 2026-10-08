@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { DraftPersistence } from '@/lib/draft-persistence'
 import { waitForTransportConnected } from './lib/transport-wait'
 import { decideStartupAppState, isStartupAuthorityDenial, probeWithRetry } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
@@ -50,6 +51,7 @@ import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recover
 import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
 import { readLocalSessionCapability, loadCallerSessionInventory } from './lib/caller-session-loading'
 import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
+import { getSessionsRequiringPermissionModeReconcile } from './lib/permission-mode-reconcile'
 import { extractWorkspaceSlugFromPath } from '@rox/shared/utils/workspace-slug'
 import { DEFAULT_THINKING_LEVEL } from '@rox/shared/agent/thinking-levels'
 import { initRendererPerf } from './lib/perf'
@@ -73,6 +75,7 @@ import {
 } from '@/atoms/sessions'
 import { sourcesAtom } from '@/atoms/sources'
 import { skillsAtom } from '@/atoms/skills'
+import { recordSuccessfulCompletionAtom } from '@/atoms/header-status'
 import {
   showBackgroundFinishedChipAtom,
   pushBackgroundFinishedAtom,
@@ -419,6 +422,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // LLM connections with authentication status (for provider selection)
   const [llmConnections, setLlmConnections] = useState<LlmConnectionWithStatus[]>([])
+  const existingConnectionSlugs = useMemo(
+    () => new Set(llmConnections.map((connection) => connection.slug)),
+    [llmConnections],
+  )
   const [runtimeSummary, setRuntimeSummary] = useState<StartupRuntimeSummary | null>(null)
   const runtimeRefreshGeneration = useRef(0)
   // Workspace default LLM connection (for new sessions)
@@ -441,6 +448,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   // during typing; attachments are stored as lightweight refs (path + name) and
   // hydrated via readFileAttachment() on session switch.
   const sessionDraftsRef = useRef<Map<string, SessionDraft>>(new Map())
+  const changedDraftsRef = useRef(new Set<string>())
   // Unified session options for all session-scoped settings
   const [sessionOptions, setSessionOptions] = useState<Map<string, SessionOptions>>(new Map())
 
@@ -576,6 +584,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         ...defaultSessionOptions,
         ...current,
         permissionMode: session.permissionMode ?? defaultSessionOptions.permissionMode,
+        permissionModeVersion: session.permissionModeVersion ?? current?.permissionModeVersion,
         thinkingLevel: session.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
       }
 
@@ -650,9 +659,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       for (const s of loadedSessions) {
         const hasNonDefaultMode = s.permissionMode && s.permissionMode !== 'ask'
         const hasNonDefaultThinking = s.thinkingLevel && s.thinkingLevel !== DEFAULT_THINKING_LEVEL
-        if (hasNonDefaultMode || hasNonDefaultThinking) {
+        const hasPermissionModeVersion = typeof s.permissionModeVersion === 'number'
+        if (hasNonDefaultMode || hasNonDefaultThinking || hasPermissionModeVersion) {
           optionsMap.set(s.id, {
             permissionMode: s.permissionMode ?? 'ask',
+            permissionModeVersion: s.permissionModeVersion,
             thinkingLevel: s.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
           })
         }
@@ -667,7 +678,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         markReady: () => setSessionsLoaded(true),
         reconcileAll: () =>
           Promise.allSettled(
-            loadedSessions.map((s) => reconcilePermissionModeState(s.id)),
+            getSessionsRequiringPermissionModeReconcile(loadedSessions)
+              .map((sessionId) => reconcilePermissionModeState(sessionId)),
           ),
       })
 
@@ -756,7 +768,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       for (const session of sessions) {
         syncSessionOptionsFromSession(session)
       }
-      await Promise.allSettled(sessions.map(s => reconcilePermissionModeState(s.id)))
+      await Promise.allSettled(
+        getSessionsRequiringPermissionModeReconcile(sessions)
+          .map((sessionId) => reconcilePermissionModeState(sessionId)),
+      )
 
       return nextMetaMap
     } catch (err) {
@@ -858,6 +873,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     onComplete: handleOnboardingComplete,
     onConfigSaved: refreshLlmConnections,
     initialSetupNeeds: setupNeeds || undefined,
+    existingSlugs: existingConnectionSlugs,
     // Onboarding is the single name screen; provider setup lives in Settings → ИИ.
     initialStep: 'welcome',
   })
@@ -1098,8 +1114,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     // Attachment files are not read here — hydration happens lazily when the session
     // is opened so app startup isn't delayed by reading potentially large files.
     window.electronAPI.getAllDrafts().then((drafts) => {
-      if (Object.keys(drafts).length > 0) {
-        sessionDraftsRef.current = new Map(Object.entries(drafts))
+      for (const [id, draft] of Object.entries(drafts)) {
+        if (!changedDraftsRef.current.has(id) && !sessionDraftsRef.current.has(id)) sessionDraftsRef.current.set(id, draft)
       }
     })
     // Load app-level theme
@@ -1377,6 +1393,13 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
               completeEvent.didReceiveNewFinalMessage !== false
 
             if (isSuccessfulCompletion) {
+              store.set(recordSuccessfulCompletionAtom, {
+                session: updatedSession,
+                event: completeEvent,
+                title: getSessionTitle(updatedSession),
+                notifyInHeader: store.get(visibleSessionIdsAtom).has(sessionId),
+                now: Date.now(),
+              })
             // Get the last assistant/plan message as preview
             const lastMessage = updatedSession.messages.findLast(
               m => (m.role === 'assistant' || m.role === 'plan') && !m.isIntermediate
@@ -1939,14 +1962,29 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // Handle input draft changes per session with debounced persistence
   const draftSaveTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const draftWritesRef = useRef(new DraftPersistence((id, draft) => window.electronAPI.setDraft(id, draft)))
+  const persistDraftNow = useCallback((sessionId: string) => {
+    const next = draftWritesRef.current.save(sessionId, sessionDraftsRef.current.get(sessionId) ?? { text: '' })
+    void next.catch(error => {
+      console.error('[drafts] Persist failed', error)
+      toast.error(t('navigation.draftSaveFailed'), { id: 'draft-save-failed' })
+    })
+    return next
+  }, [t])
+  const flushDraftSaves = useCallback(async () => {
+    const ids = [...draftSaveTimeoutRef.current.keys()]
+    draftSaveTimeoutRef.current.forEach(clearTimeout)
+    draftSaveTimeoutRef.current.clear()
+    await Promise.all(ids.map(persistDraftNow))
+    await draftWritesRef.current.flush()
+  }, [persistDraftNow])
 
   // Cleanup draft save timers on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
-      draftSaveTimeoutRef.current.forEach(clearTimeout)
-      draftSaveTimeoutRef.current.clear()
+      void flushDraftSaves().catch(error => console.error('[drafts] Flush failed', error))
     }
-  }, [])
+  }, [flushDraftSaves])
 
   // Getter for draft text - reads from ref without triggering re-renders
   const getDraft = useCallback((sessionId: string): string => {
@@ -2001,14 +2039,14 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       clearTimeout(existingTimeout)
     }
     const timeout = setTimeout(() => {
-      const draft = sessionDraftsRef.current.get(sessionId) ?? { text: '' }
-      window.electronAPI.setDraft(sessionId, draft)
+      void persistDraftNow(sessionId)
       draftSaveTimeoutRef.current.delete(sessionId)
     }, DRAFT_SAVE_DEBOUNCE_MS)
     draftSaveTimeoutRef.current.set(sessionId, timeout)
-  }, [])
+  }, [persistDraftNow])
 
   const handleInputChange = useCallback((sessionId: string, value: string) => {
+    changedDraftsRef.current.add(sessionId)
     const text = coerceInputText(value)
     const existing = sessionDraftsRef.current.get(sessionId)
     const existingAttachments = Array.isArray(existing?.attachments) ? existing.attachments : []
@@ -2028,6 +2066,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [schedulePersistDraft])
 
   const handleAttachmentsChange = useCallback((sessionId: string, attachments: FileAttachment[]) => {
+    changedDraftsRef.current.add(sessionId)
     const existing = sessionDraftsRef.current.get(sessionId)
     const refs: DraftAttachmentRef[] = []
     for (const a of attachments) {
@@ -2281,7 +2320,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   // - With openInNewWindow=true: open in new window (or focus existing)
   const handleSelectWorkspace = useCallback(async (workspaceId: string, openInNewWindow = false) => {
     // If selecting current workspace, do nothing
-    if (workspaceId === windowWorkspaceId) return
+    if (workspaceId === windowWorkspaceId) return true
 
     if (openInNewWindow) {
       // Open (or focus) the window for the selected workspace
@@ -2289,6 +2328,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     } else {
       const scope = sessionScopeRef.current
       // Switch workspace in current window
+      try { await flushDraftSaves() }
+      catch {
+        toast.error(t('navigation.draftSaveFailed'), { id: 'draft-save-failed' })
+        return false
+      }
       // 1. Update the main process's window-workspace mapping
       await runPersonalTaskScopeTransition(() => window.electronAPI.switchWorkspace(workspaceId), () => sessionScopeRef.current === scope, scope)
 
@@ -2324,19 +2368,26 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       store.set(sessionIdsAtom, [])
 
       // Note: NavigationContext detects the workspaceId change and handles
-      // panel restoration from the stored workspace URL (or defaults to allSessions).
+      // panel restoration from the stored workspace URL (or defaults to Inbox).
       // Sessions and theme will reload automatically due to windowWorkspaceId dependency
       // in useEffect hooks.
     }
-  }, [windowWorkspaceId, setSession, store])
+    return true
+  }, [windowWorkspaceId, setSession, store, flushDraftSaves, t])
 
   // Handle workspace switch by slug (called by NavigationContext on popstate when ?ws= changes)
   const handleSwitchWorkspaceBySlug = useCallback(async (slug: string) => {
     const target = workspaces.find(w => w.slug === slug)
     if (!target) return false
-    await handleSelectWorkspace(target.id)
-    return true
+    return await handleSelectWorkspace(target.id)
   }, [workspaces, handleSelectWorkspace])
+
+  // UI callers do not consume the navigation restoration result. Keep the
+  // boolean result private to the history controller, which must stop on a
+  // failed draft flush before attempting to restore the target workspace.
+  const handleSelectWorkspaceForUI = useCallback(async (workspaceId: string, openInNewWindow = false): Promise<void> => {
+    await handleSelectWorkspace(workspaceId, openInNewWindow)
+  }, [handleSelectWorkspace])
 
   // Handle workspace refresh (e.g., after icon upload)
   const handleRefreshWorkspaces = useCallback(() => {
@@ -2387,7 +2438,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     onOpenFile: handleOpenFile,
     onOpenUrl: handleOpenUrl,
     // Workspace
-    onSelectWorkspace: handleSelectWorkspace,
+    onSelectWorkspace: handleSelectWorkspaceForUI,
     onRefreshWorkspaces: handleRefreshWorkspaces,
     // App actions
     onOpenSettings: handleOpenSettings,
@@ -2431,7 +2482,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     handleRespondToCredential,
     handleOpenFile,
     handleOpenUrl,
-    handleSelectWorkspace,
+    handleSelectWorkspaceForUI,
     handleRefreshWorkspaces,
     handleOpenSettings,
     handleOpenKeyboardShortcuts,
@@ -2588,6 +2639,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           onCreateSession={handleCreateSession}
           onInputChange={handleInputChange}
           getDraft={getDraft}
+          hasDraftAttachments={(id) => getDraftAttachmentRefs(id).length > 0}
           onAutoDeleteEmptySession={handleAutoDeleteEmptySession}
           isReady={appState === 'ready'}
           isSessionsReady={sessionsLoaded}
@@ -2601,7 +2653,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}
           <OmniboxHost />
-          <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspace} />
+          <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspaceForUI} />
 
           {/* Splash screen overlay - fades out when fully ready */}
           {showSplash && (
@@ -2617,7 +2669,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
               <WorkspaceIconRail
                 workspaces={workspaces}
                 activeWorkspaceId={windowWorkspaceId}
-                onSelect={handleSelectWorkspace}
+                onSelect={handleSelectWorkspaceForUI}
                 onWorkspaceCreated={handleRefreshWorkspaces}
               />
             )}

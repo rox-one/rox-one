@@ -133,6 +133,7 @@ import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/ato
 import { collectionDisplayAtom, loadCollectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom, loadCollectionFiltersAtom } from "@/atoms/collection-filters"
+import { activeWorkspaceContextAtom, workspaceProjectContextsAtom } from "@/atoms/workspace-context"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
 import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
@@ -149,6 +150,7 @@ import type { LabelConfig, LabelTreeNode } from "@rox/shared/labels"
 import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
+import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
@@ -533,6 +535,8 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
+  const [projectContexts, setProjectContexts] = useAtom(workspaceProjectContextsAtom)
+  const selectedProjectId = activeWorkspaceId ? projectContexts[activeWorkspaceId] ?? null : null
   const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
   const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const hasContextualSidebar = isInboxNavigation(navState) || isFeedNavigation(navState) || isNotesNavigation(navState)
@@ -545,6 +549,7 @@ function AppShellContent({
   }, [contextualSidebarKey])
 
   const store = useStore()
+  useEffect(() => { store.set(activeWorkspaceContextAtom, activeWorkspaceId) }, [store, activeWorkspaceId])
   const panelStack = useAtomValue(panelStackAtom)
   const productLearning = useProductLearning()
   const tourNewSessionTarget = useTourTarget('session.new', { variant: 'regular' })
@@ -601,6 +606,12 @@ function AppShellContent({
   // Unavailable addresses have no collection navigator or resize boundary.
   const hideModuleMiddleNav =
     navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+  // A single session catalog is the workspace until an actual session is opened.
+  const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
+    panelCount,
+    isCompact: isAutoCompact,
+    navigatorHidden: effectiveSidebarAndNavigatorHidden,
+  })
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -666,6 +677,12 @@ function AppShellContent({
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
+  useEffect(() => {
+    if (!isSessionsNavigation(navState)) return
+    const current = store.get(collectionFiltersAtom)
+    const projectId = selectedProjectId ? [selectedProjectId] : undefined
+    if (JSON.stringify(current.projectId) !== JSON.stringify(projectId)) setCollectionFilters({ ...current, projectId })
+  }, [selectedProjectId, sessionFilterKey, store, setCollectionFilters])
   const prevKeyRef = React.useRef(sessionFilterKey ?? 'allSessions')
   const skipRailChipClearRef = React.useRef(false)
 
@@ -2845,8 +2862,9 @@ function AppShellContent({
         }}
       >
         {/* AppShell owns primary navigation; the host keeps optional workspace chrome. */}
-        <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} ownsPrimaryNavigation>
+        <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} isCompact={isAutoCompact} catalogOnly={navigatorExpanded} onOpenBrowser={() => { void handleNewBrowserWindow() }} ownsPrimaryNavigation>
           <PanelStackContainer
+          navigatorExpanded={navigatorExpanded}
           sidebarSlot={
             <div
               ref={sidebarRef}
@@ -2856,6 +2874,14 @@ function AppShellContent({
               data-focus-zone="sidebar"
               tabIndex={sidebarFocused ? 0 : -1}
               onKeyDown={handleSidebarTreeKeyDown}
+              onPointerDownCapture={() => {
+                const main = store.get(panelStackAtom).find(panel => !panel.tool)
+                if (main) store.set(focusedPanelIdAtom, main.id)
+              }}
+              onFocusCapture={() => {
+                const main = store.get(panelStackAtom).find(panel => !panel.tool)
+                if (main) store.set(focusedPanelIdAtom, main.id)
+              }}
             >
             <div className="flex h-full flex-col select-none">
               {/* Sidebar Top Section */}
@@ -2863,6 +2889,17 @@ function AppShellContent({
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
                 {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
                 <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
+                {activeWorkspaceId && !isSidebarCollapsed && (
+                  <div className="px-3 py-2 border-b border-foreground/5">
+                    <label className="block text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
+                    <select id="workspace-project-context" value={selectedProjectId ?? ''}
+                      className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+                      onChange={event => setProjectContexts(previous => ({ ...previous, [activeWorkspaceId]: event.target.value || null }))}>
+                      <option value="">{t('navigation.allProjects')}</option>
+                      {projects.map(project => <option key={project.config.id} value={project.config.id}>{project.config.name}</option>)}
+                    </select>
+                  </div>
+                )}
                 <div ref={setShellSidebarSlot} hidden={isSidebarCollapsed} data-primary-sidebar-context className="mb-2 border-b border-foreground/5 empty:hidden">
                   {isSettingsNavigation(navState) && !isAutoCompact && (
                     <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />
@@ -2910,7 +2947,7 @@ function AppShellContent({
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : sidebarWidth}
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
-              style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
+              style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
               data-shell-role="chrome"
             >

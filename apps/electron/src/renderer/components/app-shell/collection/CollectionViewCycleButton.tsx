@@ -121,7 +121,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
 
   return (
     <div
-      ref={isSessionCollection ? viewTarget : undefined}
+      ref={registerView}
       className={cn('group/cycle inline-flex items-stretch rounded-[var(--radius-control)]', className)}
       onContextMenu={(event) => {
         event.preventDefault()

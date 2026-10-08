@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { shouldSetThemeOverride, themeToCSS, type ThemeFile } from './theme'
+import { BACKGROUND_HEX, DEFAULT_THEME, shouldSetThemeOverride, themeToCSS, type ThemeFile } from './theme'
 
 function loadBundledTheme(id: string): ThemeFile {
   const path = join(import.meta.dir, '../../../../apps/electron/resources/themes', `${id}.json`)
@@ -34,6 +34,34 @@ describe('GitHub and Ghostty palettes', () => {
   it('emit Ghostty StyleDark #292c33', () => {
     const css = themeToCSS(loadBundledTheme('ghostty'), true)
     expect(css).toContain('--background: #292c33;')
+  })
+})
+
+describe('semantic theme surfaces', () => {
+  it('applies a custom input fill without replacing the input border token', () => {
+    const css = themeToCSS({ background: '#fafafa', input: '#eeeeee' })
+    expect(css).toContain('--input-surface: #eeeeee;')
+    expect(css).not.toContain('--input:')
+  })
+
+  it('keeps semantic RGB aliases in sync with the selected dark palette', () => {
+    const css = themeToCSS({ accent: '#123456', dark: { accent: '#abcdef', success: '#408060' } }, true)
+    expect(css).toContain('--accent: #abcdef;')
+    expect(css).toContain('--accent-rgb: 171, 205, 239;')
+    expect(css).toContain('--success-rgb: 64, 128, 96;')
+  })
+
+  it('uses the same default colors in the preset, renderer, and native window', () => {
+    const preset = loadBundledTheme('default')
+    const css = readFileSync(join(import.meta.dir, '../../../ui/src/styles/index.css'), 'utf8')
+    for (const role of ['background', 'foreground', 'accent', 'info', 'success', 'destructive'] as const) {
+      expect(preset[role]).toBe(DEFAULT_THEME[role])
+      expect(preset.dark?.[role]).toBe(DEFAULT_THEME.dark?.[role])
+      expect(css).toContain(`--${role}: ${DEFAULT_THEME[role]};`)
+      expect(css).toContain(`--${role}: ${DEFAULT_THEME.dark?.[role]};`)
+    }
+    expect(preset.background).toBe(BACKGROUND_HEX.light)
+    expect(preset.dark?.background).toBe(BACKGROUND_HEX.dark)
   })
 })
 

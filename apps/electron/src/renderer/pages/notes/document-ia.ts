@@ -14,13 +14,13 @@ export const NOTES_RAIL_STORAGE_KEY = 'notes:rails:v1'
 export const NOTES_FOLD_STORAGE_PREFIX = 'notes:folds:'
 
 export const DEFAULT_NOTES_RAIL_LAYOUT = {
-  vault: 280,
+  vault: 240,
   toc: 180,
   comments: 220,
   inspector: 260,
   vaultCollapsed: false,
-  tocCollapsed: false,
-  commentsCollapsed: false,
+  tocCollapsed: true,
+  commentsCollapsed: true,
   inspectorCollapsed: true,
 } as const
 
@@ -89,9 +89,9 @@ export function parseNotesRailLayout(raw: string | null): NotesRailLayout {
       toc: clampRail(Number(parsed.toc), fallback.toc),
       comments: clampRail(Number(parsed.comments), fallback.comments),
       inspector: clampRail(Number(parsed.inspector), fallback.inspector),
-      vaultCollapsed: parsed.vaultCollapsed === true,
-      tocCollapsed: parsed.tocCollapsed === true,
-      commentsCollapsed: parsed.commentsCollapsed === true,
+      vaultCollapsed: typeof parsed.vaultCollapsed === 'boolean' ? parsed.vaultCollapsed : fallback.vaultCollapsed,
+      tocCollapsed: typeof parsed.tocCollapsed === 'boolean' ? parsed.tocCollapsed : fallback.tocCollapsed,
+      commentsCollapsed: typeof parsed.commentsCollapsed === 'boolean' ? parsed.commentsCollapsed : fallback.commentsCollapsed,
     }
   } catch {
     return fallback

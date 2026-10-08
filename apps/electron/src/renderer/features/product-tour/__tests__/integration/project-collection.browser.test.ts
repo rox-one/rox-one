@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readFile } from 'node:fs/promises'
 import { runNativeBrowserProcess } from '../../adapters/work/meetings-automations/native-browser-process'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 const root = resolve(import.meta.dir, '../../../../../../../..')
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_PROJECT_COLLECTION_CASE
@@ -49,7 +50,7 @@ beforeAll(async () => {
     return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'Content-Type': 'application/javascript' } })
       : new Response('<!doctype html><html><head><style>svg{width:16px;height:16px}.pt-6{padding-top:24px}button{padding:6px}header{padding:10px}h2{margin:8px 0}[data-product-tour-popover]{background:white;border:1px solid black;width:240px;padding:12px}</style></head><body><div id="root"></div><script src="/script.js"></script></body></html>', {headers:{'Content-Type':'text/html'}})
   } })
-  browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
 }, 30_000)
 afterAll(async () => { await browser?.close(); server?.stop(true) })
 function browserTest(name: string, operation: (page: Page) => Promise<void>) {

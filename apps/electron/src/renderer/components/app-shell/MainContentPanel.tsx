@@ -5,6 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
+import { MessageSquarePlus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
+import { navigate, routes } from '@/lib/navigate'
 import { MemoryScreen } from '../memory/MemoryScreen'
 import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
@@ -77,8 +81,9 @@ const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
 const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
 const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
 const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
-const TasksPage = lazyRoutePage(() => import('@/pages/TasksPage'))
-const MeetingsPage = lazyRoutePage(() => import('@/pages/MeetingsPage'))
+const TasksPage = lazyRoutePage(() => import('@/pages/workspace-work/WorkspaceTasksPage'))
+const MeetingsPage = lazyRoutePage(() => import('@/pages/workspace-work/PlanWorkspacePage'))
+const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
 const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
 const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
 const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
@@ -665,7 +670,9 @@ export function MainContentPanel({
   if (isTasksNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <TasksPage selectedId={navState.details?.taskId ?? null} />
+        <TasksPage
+          selectedId={navState.details?.taskId ?? null}
+        />
       </Panel>
     )
   }
@@ -673,7 +680,9 @@ export function MainContentPanel({
   if (isMeetingsNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <MeetingsPage selectedId={navState.details?.meetingId ?? null} />
+        <MeetingsPage
+          selectedId={navState.details?.meetingId ?? null}
+        />
       </Panel>
     )
   }
@@ -693,6 +702,8 @@ export function MainContentPanel({
       </Panel>
     )
   }
+
+  if (isScreenNavigation(navState) && navState.screen === 'agents') return wrapWithStoplight(<Panel variant="grow" className={className}><AgentsWorkspacePage /></Panel>)
 
   if (isScreenNavigation(navState)) {
     return wrapWithStoplight(
@@ -783,11 +794,16 @@ export function MainContentPanel({
         </Panel>
       )
     }
+    // Focus mode or an explicitly added empty tile still offers a useful action.
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t("session.noSessionSelected")}</p>
-        </div>
+        <EntityListEmptyScreen icon={<MessageSquarePlus />} title={t('session.noSessionSelected')} description={t('session.selectConversation')} className="h-full">
+          <Button type="button" variant="secondary" size="sm" onClick={() => {
+            const params = navState.filter.kind === 'state' ? { status: navState.filter.stateId }
+              : navState.filter.kind === 'label' ? { label: navState.filter.labelId } : undefined
+            navigate(routes.action.newSession(params))
+          }}>{t('session.newSession')}</Button>
+        </EntityListEmptyScreen>
         {sessionsBulkBar}
       </Panel>
     )

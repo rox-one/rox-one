@@ -1,0 +1,276 @@
+{
+  "classification": "renderer-e2e / independent offline; not installed-app or live-provider",
+  "testedProductionRoot": "51b130531",
+  "fitCorrection": "44c4739ba",
+  "isolatedMeasuredHead": "8fb0715a068c5fe40feccea9c90d94828018bfa3",
+  "hardware": {
+    "gitHead": "8fb0715a068c5fe40feccea9c90d94828018bfa3",
+    "node": "v24.19.0",
+    "platform": "linux",
+    "release": "6.18.44",
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpuCount": 9,
+    "totalMemoryBytes": 10451464192,
+    "cgroupCpuMax": "800000 100000",
+    "cgroupMemoryMax": "8589934592",
+    "loadBeforePan": [
+      0.45,
+      0.69,
+      0.76
+    ],
+    "loadAfterPan": [
+      0.45,
+      0.69,
+      0.76
+    ]
+  },
+  "commands": [
+    {
+      "command": "ROX_RUNTIME_REUSE_BUILD=1 ROX_TEST_BUN=<pinned-bun> node node_modules/@playwright/test/cli.js test --config tests/e2e/runtime-map/playwright.config.ts",
+      "exitCode": 1,
+      "result": "17 pass / 2 fail; explicit previous successful bundle cache verified after spec-only Node24 locale correction",
+      "report": "browser-final-integrated-results.json",
+      "log": "browser-final-integrated.log"
+    },
+    {
+      "command": "ROX_TEST_BUN=<pinned-bun> node node_modules/@playwright/test/cli.js test --config tests/e2e/runtime-map/playwright.config.ts catalog.spec.ts performance.spec.ts --grep \"intersected category|10000-event\"",
+      "exitCode": 0,
+      "result": "2 pass; displayed canonical ID query correction and public bounds Fit correction",
+      "report": "browser-final-remediation-results.json",
+      "log": "browser-final-remediation.log"
+    },
+    {
+      "command": "bun test <exact scoped files in independent-unit-latest.log>",
+      "exitCode": 0,
+      "result": "91 pass / 3 skip / 0 fail /349 assertions",
+      "log": "independent-unit-latest.log"
+    },
+    {
+      "command": "bun test packages/messaging-gateway/src/__tests__/router.test.ts packages/server-core/src/sessions/execute-prompt-automation-test-mode.test.ts",
+      "exitCode": 0,
+      "result": "16 pass /0 fail /51 assertions",
+      "log": "launch-authority-unit.log"
+    },
+    {
+      "command": "bun test tests/e2e/runtime-map/catalog-store.test.ts tests/e2e/runtime-map/journal-harness.test.ts",
+      "exitCode": 0,
+      "result": "3 pass /0 fail /33 assertions",
+      "log": "catalog-journal-unit.log"
+    },
+    {
+      "command": "ROX_RUNTIME_REUSE_BUILD=1 <pinned-browser/Bun/Node> Playwright context.spec.ts",
+      "exitCode": 0,
+      "result": "2pass/11.2s, canonicalroot fixture identity; unchanged production source fingerprint",
+      "report": "browser-context-canonical-51-results.json",
+      "log": "browser-context-canonical-51.log"
+    },
+    {
+      "command": "ROX_RUNTIME_REUSE_BUILD=1 ROX_RUNTIME_PROFILE=0 <pinned-browser/Bun/Node> Playwright performance.spec.ts",
+      "exitCode": 0,
+      "result": "1pass/10.4s,200actualphysicalcards14.4/31.6/16.7ms;recordersoff",
+      "report": "browser-physical200-perf-51-results.json",
+      "log": "browser-physical200-perf-51.log"
+    }
+  ],
+  "media": [
+    "ROX-live-map-dark.png",
+    "ROX-live-map-light.png",
+    "ROX-live-map-stream.webm",
+    "ROX-welcome-light.png",
+    "historical-event-cold-snapshot.png",
+    "integrations-dark-1280.png",
+    "integrations-dark-1440.png",
+    "integrations-dark-1920.png",
+    "integrations-light-1280.png",
+    "integrations-light-1440.png",
+    "integrations-light-1920.png",
+    "retained-workflow-editor.png",
+    "skills-dark-1280.png",
+    "skills-dark-1440.png",
+    "skills-dark-1920.png",
+    "skills-keyboard-multiselect.png",
+    "skills-light-1280.png",
+    "skills-light-1440.png",
+    "skills-light-1920.png",
+    "skills-pack-readback.png",
+    "sources-existing-multiselect-dark.png",
+    "welcome-dark-1920-reduced-motion.png"
+  ],
+  "limits": [
+    "No macOS/Windows installed-app smoke",
+    "No paid/live-provider calls or third-party account authorization",
+    "Local OMP AF_UNIX blocked EPERM; actual hosted native SDK run37147330512 passed with explicit fixture provider",
+    "Current6 catalog contrast/layout cases passed;12 media independently reviewed",
+    "New upstream App/Navigation integration requires coordinator gates/scoped revalidation",
+    "Context2 source51 physical interaction passed; genuine200% hosted fullChrome still pending.",
+    "Geometric200 historical receipt superseded by independently viewed boundedoverview actual200 physicalprofile.",
+    "No full production MainContentPanel/NavigationProvider mount in W8 harness; production child components are mounted and full app routing separately reviewed."
+  ],
+  "reviewedOwnerEvidence": [
+    {
+      "path": "backend-storage-and-cancellation.md",
+      "class": "actual local executor / production dispatcher / canonical storage with explicit fake CLI",
+      "receipts": [
+        {
+          "tests": 63,
+          "assertions": 277,
+          "exitCode": 0
+        },
+        {
+          "tests": 27,
+          "assertions": 143,
+          "exitCode": 0
+        }
+      ],
+      "reviewedBy": "W8; execution by backend owner/coordinator"
+    },
+    {
+      "path": "native-loop-hosted-37147330512.json",
+      "review": "native-loop-w8-review.json",
+      "class": "actual pinned native SDK fixture provider on hosted Ubuntu",
+      "workflowRun": 37147330512,
+      "nativeLoopExitCode": 0,
+      "boundaryTests": 72,
+      "boundaryAssertions": 352
+    },
+    {
+      "path": "artifact-readback.md / artifact-readback.json",
+      "class": "actual production TaskRunner/filesystem/collector/projector integration, injected deterministic session execution",
+      "testCommit": "9e4606665",
+      "receiptCommit": "6bb767909",
+      "tests": 22,
+      "assertions": 115,
+      "exitCode": 0,
+      "reviewedBy": "W8 read actual test and receipt; execution by projection owner"
+    },
+    {
+      "path": "native-provider-context-w8-review.json",
+      "class": "actual native SDK fixture provider Context fingerprint comparison; HTTP/tokenization unknown",
+      "workflowRun": 37151837237,
+      "comparisons": 4,
+      "independentlyRecomputedBy": "W8",
+      "exitCode": 0
+    }
+  ],
+  "finalLocalRenderer": {
+    "productionRoot": "f02c3d2a09dafbce1502abe0cf9e56bdacd6ba23",
+    "isolatedHead": "f2a70beb25944ef158f0651f40f858f8b9fc19e7",
+    "appsTree": "60ec90a882ea47b5c0c9bca2851a941ed5423fa8",
+    "packagesTree": "816edb65f303e87069f88caff21f21538dffc48e",
+    "e2eTree": "b1a8f14b2774255f189accc4c6ffa0bbc7dfaa8c",
+    "fixtureTree": "edd529fdba55c6a39ae2775c83e5d4539675bd41",
+    "buildFingerprint": "995e61a9365089b7899b9d9013a28a1d7825ebd89c2fa2a590a12044d4655030",
+    "entrySha256": "6361ee6b9da4fb62060b511e93f837abd7af3a7e017648e80b7862a76eea2850",
+    "local12": {
+      "pass": 10,
+      "fail": 2,
+      "exitCode": 1,
+      "report": "browser-sourcefreeze-initial-12-results.json",
+      "log": "browser-sourcefreeze-initial-12.log",
+      "reason": "Context fixture missing required clockDomain; corrected8ec8541c6"
+    },
+    "contextFirstRemediation": {
+      "pass": 0,
+      "fail": 2,
+      "exitCode": 1,
+      "report": "browser-sourcefreeze-context-first-remediation-results.json",
+      "log": "browser-sourcefreeze-context-pointer-failed.log",
+      "reason": "Real More/header physical pointer interception; CSS corrected9df14e753"
+    },
+    "contextAfterCss": {
+      "status": "interrupted before renderer assertions",
+      "exitCode": null,
+      "reason": "exec transport reset during fresh build; process session disappeared",
+      "log": "browser-sourcefreeze-context-remediation.log"
+    },
+    "fullChrome13": {
+      "exitCode": 1,
+      "report": "browser-sourcefreeze-full-chrome-blocked-results.json",
+      "log": "browser-sourcefreeze-full-chrome-blocked.log",
+      "reason": "AF_UNIX EPERM process_singleton_posix at browser startup; no product assertions"
+    },
+    "mediaIndex": "final-media-source-index.json"
+  },
+  "rendererDensityQualification": {
+    "status": "PASS actual physical200 recorder-off profile",
+    "cards": 200,
+    "minimumMeasuredCssPixels": {
+      "width": 57.884033203125,
+      "height": 10.7991943359375
+    },
+    "minimumStatusSvgCssPixels": {
+      "width": 2,
+      "height": 2
+    },
+    "eventP95Ms": 14.400000005960464,
+    "denseStatusP95Ms": 31.599999994039536,
+    "panP95Ms": 16.700000000000728,
+    "pageErrors": [],
+    "receipt": "renderer-performance-final.json",
+    "historicalSubpixelReceipt": "renderer-performance-subpixel-superseded.json"
+  },
+  "historicalDensitySource": {
+    "productionRoot": "d6200d023",
+    "fitCorrection": "4652eb451",
+    "isolatedMeasuredHead": "4b52308f67b34a2acf53197e2c793daf70ad098b",
+    "qualification": "superseded:200 subpixel DOM intersections failed actual visual density"
+  },
+  "latestScopedRenderer": {
+    "classification": "actual production renderer components; deterministic executor/real journal for Context; explicitly typed performance load for overview; no installed-app/live-provider claim",
+    "rootSourceCommit": "51b130531",
+    "initialIsolatedCommit": "bb6d718a4a9abee612e0b7871e11e2a1225a2de7",
+    "canonicalFixtureCorrection": "8fb0715a0",
+    "buildReceipt": {
+      "head": "bb6d718a4a9abee612e0b7871e11e2a1225a2de7",
+      "sourceFingerprint": "1098cc2be9a5d928bfd639afaca7a97ab162bcad029df4367a7acc48ddc5110b",
+      "indexSha256": "9fc6c7b341d5396a754f1f6154eeb1099313a9e986359d0c62741cda77cbd5b7"
+    },
+    "overviewCase": {
+      "pass": 1,
+      "fail": 0,
+      "physicalCardCount": 200,
+      "focusReturnNormalZoom": 1,
+      "independentVisualReviewer": "W4/canvas actual two PNG views; 20 lanes ×10 visible cards, statusbars distinct; normal Inspector readable"
+    },
+    "contextCases": {
+      "pass": 2,
+      "fail": 0,
+      "exitCode": 0,
+      "elapsedSeconds": 11.2,
+      "reuse": "verified identical production source fingerprint/index hash; test-server/spec-only canonicalroot identity correction"
+    },
+    "timingBudgets": "not measured in these recorded functional cases",
+    "media": [
+      {
+        "artifact": "docs/evidence/runtime-map/media/runtime-map-bounded-overview-51.png",
+        "source": "docs/evidence/runtime-map/browser-artifacts/overview-context-51/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/runtime-map-dense-fit-overview.png",
+        "sha256": "393ec359f2016be183dd01fb47a8dada43c6fee689b0d4cf1c33ec930b39a09e"
+      },
+      {
+        "artifact": "docs/evidence/runtime-map/media/runtime-map-overview-focus-51.png",
+        "source": "docs/evidence/runtime-map/browser-artifacts/overview-context-51/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/overview-focus-return.png",
+        "sha256": "9e333cd8925d112b14869b0d7e266a08bf332e27246d23bf64ce9ddac9052461"
+      },
+      {
+        "artifact": "docs/evidence/runtime-map/media/context-root-light-51.png",
+        "source": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-22a30-t-child-provenance-in-light/context-root-light.png",
+        "sha256": "4e86ea3674e913acae38ac8539c21dbde58fa1ead7b83ad825f5ac5f3b1d9c4e"
+      },
+      {
+        "artifact": "docs/evidence/runtime-map/media/context-child-light-51.png",
+        "source": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-22a30-t-child-provenance-in-light/context-child-light.png",
+        "sha256": "a42133e93d1f426cda8add1833e4e58e6428f855c549d4633c73b6049d98c66f"
+      },
+      {
+        "artifact": "docs/evidence/runtime-map/media/context-root-dark-51.png",
+        "source": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/context-root-dark.png",
+        "sha256": "91e6b42a79c1eab5e7dc6cdbe03411fac964743e84a2a489eaf06ad56a7590d6"
+      },
+      {
+        "artifact": "docs/evidence/runtime-map/media/context-child-dark-51.png",
+        "source": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/context-canonical-51/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/context-child-dark.png",
+        "sha256": "79520b43e22340f7e69ccfebab23d2d49da62ca9a45c7c2d3e983c959461fc02"
+      }
+    ]
+  }
+}

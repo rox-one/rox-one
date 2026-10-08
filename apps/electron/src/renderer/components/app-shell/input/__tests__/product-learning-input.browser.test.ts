@@ -3,10 +3,11 @@ import { build } from 'esbuild'
 import { chromium, type Browser } from '@playwright/test'
 import { resolve } from 'node:path'
 import { existsSync } from 'node:fs'
+import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 let browser: Browser, server: ReturnType<typeof Bun.serve>
 const repository = resolve(import.meta.dir, '../../../../../../../..')
-const executablePath = process.env.CHROMIUM_EXECUTABLE ?? (existsSync(chromium.executablePath()) ? chromium.executablePath() : '/usr/bin/chromium')
+const executablePath = await resolveChromiumExecutable()
 
 describe.skipIf(!existsSync(executablePath))('production learning input registrations and native handoff', () => {
 beforeAll(async () => {
@@ -24,7 +25,7 @@ beforeAll(async () => {
   } })
   browser = await chromium.launch({ executablePath, args: ['--no-sandbox'] })
 }, 40_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) })
+afterAll(async () => { await browser?.close(); server?.stop(true) }, 20_000)
 
 for (const compact of [false, true]) {
   for (const kind of ['permission', 'admin_approval']) test(`native ${kind} ${compact ? 'compact' : 'desktop'} has one visible scoped request and action target`, async () => {

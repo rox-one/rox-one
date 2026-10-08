@@ -8,6 +8,7 @@ import type { RequestContext } from '@rox/server-core/transport'
 import type { HotkeyCommand } from '@rox/shared/voice/hotkey-types'
 import type { RuntimeState, StepId, TourSignal, TourProgress } from '../contracts'
 import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../adapters/work/meetings-automations/native-browser-process'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 
 interface NativeContinuitySnapshot { phase: RuntimeState['phase']; stepId?: StepId; evidence: RuntimeState['attemptEvidence']; progress: TourProgress | null; signals: TourSignal[]; calls: { getUserMedia: number; startVoiceCapture: number; grantVoicePermission: number; stopVoiceCapture: number; cancelVoiceCapture: number; copyVoiceText: number; getSources: number } }
 declare global { interface Window { nativeContinuity: { start(kind: 'voice' | 'source', emptyTranscript?: boolean, delivery?: 'draft' | 'clipboard', trailingSpace?: boolean, paired?: boolean, deferredStart?: boolean): void; show(): void; acknowledge(): void; snapshot(): NativeContinuitySnapshot; clipboard(): string; focusPeer(): void; hotkey(payload: { command: HotkeyCommand; recordingId?: string }): void; resolveStart(): void } } }
@@ -33,7 +34,7 @@ beforeAll(async () => {
   stage('continuity:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><div id="root"></div><script type="module" src="/script.js"></script>', { headers: { 'content-type': 'text/html' } }) } })
   stage('continuity:browser:launch')
-  browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), headless: true, args: ['--no-sandbox'] })
   stage('continuity:browser:ready')
 }, 30_000)
 afterAll(async () => {

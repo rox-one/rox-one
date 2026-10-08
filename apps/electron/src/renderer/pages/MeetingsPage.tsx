@@ -8,6 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useTranslation } from 'react-i18next'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
+import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { cn } from '@/lib/utils'
 import { formatHotkeyDisplay } from '@/lib/platform'
 import {
@@ -39,9 +40,6 @@ import {
   type LocalGroup,
 } from './meetings/local-meetings-model'
 import { getAppLocale } from '@rox/shared/i18n'
-import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
-import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
-import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
 import { MeetingRequestTracker } from './meetings/request-state'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
@@ -66,6 +64,7 @@ const ERROR_KEYS: Record<string, string> = {
 
 export default function MeetingsPage(props: { selectedId?: string | null; workspaceId?: string | null }) {
   const { t, i18n } = useTranslation()
+  const canHandleKeyboard = usePanelKeyboardGuard()
   const shell = useOptionalAppShellContext()
   const locale = i18n.resolvedLanguage || i18n.language || getAppLocale()
   const workspaceId = props.workspaceId ?? shell?.activeWorkspaceId ?? null
@@ -250,10 +249,15 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const timeFmt = useMemo(() => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }), [locale])
   const dayFmt = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' }), [locale])
 
-  const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (m) => selectMeeting(m.id))
+  const handleListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (m) => selectMeeting(m.id))
+  const onListKeys: typeof handleListKeys = event => {
+    if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
+    handleListKeys(event)
+  }
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || !canHandleKeyboard(event.target)) return
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
         event.preventDefault()
         searchRef.current?.focus()
@@ -261,7 +265,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [canHandleKeyboard])
 
   async function handleRecord() {
     const request = requestTracker.begin('record', workspaceId)

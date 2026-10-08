@@ -54,6 +54,10 @@ const NEW_LABEL_KEYS = [
   'shortcuts.action.modeSlot6',
   'shortcuts.action.modeSlot7',
   'shortcuts.action.advisorReview',
+  'shortcuts.action.focusPanelDown',
+  'shortcuts.action.focusPanelLeft',
+  'shortcuts.action.focusPanelRight',
+  'shortcuts.action.focusPanelUp',
   'shortcuts.action.sessionWorkflow',
   'shortcuts.action.simplifyDiff',
 ] as const

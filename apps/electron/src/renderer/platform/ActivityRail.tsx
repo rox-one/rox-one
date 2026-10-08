@@ -5,8 +5,10 @@
  * The destinations list mirrors AppShell's `links[]` via the shared
  * `APP_NAV_DESTINATIONS` config (no divergent copy); navigation goes through
  * NavigationContext's `navigate()` (the URL stays the source of truth).
- * Wave-gated destinations (`route: null`) render disabled-with-tooltip;
- * Knowledge navigates since W2 (flag-off state lives in the surface).
+ * Wave-gated destinations (`route: null`) render disabled-with-tooltip unless
+ * they carry an `action` (the browser reuses the existing native/WebUI opener
+ * instead of inventing a route); Knowledge navigates since W2 (flag-off state
+ * lives in the surface).
  *
  * Two states, persisted via `activityRailCollapsedAtom`
  * (KEYS.activityRailCollapsed):
@@ -17,7 +19,7 @@
  * the two-key Workbench rollout is enabled, so there is no flag check here.
  */
 import { useSyncExternalStore, type ReactNode } from 'react'
-import { useAtom } from 'jotai'
+import { useAtom, useSetAtom } from 'jotai'
 import { ChevronsLeft, ChevronsRight, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom } from '@/atoms/unified-shell'
@@ -27,6 +29,7 @@ import {
   APP_NAV_DESTINATIONS,
   type AppNavDestination,
 } from '../components/app-shell/nav-destinations'
+import { focusServicePanelAtom } from '../components/app-shell/service-navigation'
 import { CHROME_DENSITY } from './chrome-density'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
@@ -88,12 +91,27 @@ export function useEffectiveRailCollapsed(): {
   return { collapsed, toggle }
 }
 
-function RailItem({ dest, collapsed }: { dest: AppNavDestination; collapsed: boolean }) {
+export interface ActivityRailProps {
+  /** Reuses the existing native inspector or WebUI browser workflow. */
+  onOpenBrowser?: () => void
+}
+
+function RailItem({
+  dest,
+  collapsed,
+  onOpenBrowser,
+}: {
+  dest: AppNavDestination
+  collapsed: boolean
+  onOpenBrowser?: () => void
+}) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navState = useNavigationState()
+  const focusServicePanel = useSetAtom(focusServicePanelAtom)
   const label = t(dest.labelKey)
-  const disabled = dest.route === null
+  // `route: null` disables a destination only when it has no action to run.
+  const disabled = dest.route === null && !dest.action
   return (
     <RailRow
       icon={dest.icon}
@@ -102,7 +120,16 @@ function RailItem({ dest, collapsed }: { dest: AppNavDestination; collapsed: boo
       collapsed={collapsed}
       disabled={disabled}
       active={!disabled && dest.isActive(navState)}
-      onClick={() => void navigate(dest.route!())}
+      onClick={() => {
+        // Focus an already-open service panel before opening a second copy.
+        if (focusServicePanel(dest.id)) return
+        if (dest.action === 'open-browser') {
+          if (onOpenBrowser) onOpenBrowser()
+          else window.dispatchEvent(new CustomEvent('craft:open-vps-browser'))
+          return
+        }
+        if (dest.route) void navigate(dest.route())
+      }}
       muted
       testId={`rail-item-${dest.id}`}
     />
@@ -115,7 +142,7 @@ function RailSection({ collapsed, children }: { collapsed: boolean; children: Re
   )
 }
 
-export function ActivityRail() {
+export function ActivityRail({ onOpenBrowser }: ActivityRailProps = {}) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { collapsed, toggle } = useEffectiveRailCollapsed()
@@ -134,7 +161,7 @@ export function ActivityRail() {
     >
       <RailSection collapsed={collapsed}>
         {APP_NAV_DESTINATIONS.map((dest) => (
-          <RailItem key={dest.id} dest={dest} collapsed={collapsed} />
+          <RailItem key={dest.id} dest={dest} collapsed={collapsed} onOpenBrowser={onOpenBrowser} />
         ))}
       </RailSection>
       <ExtraScreensRailGroup collapsed={collapsed} />

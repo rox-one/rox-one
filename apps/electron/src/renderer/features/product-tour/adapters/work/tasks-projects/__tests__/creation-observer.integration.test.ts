@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import type { VersionedPersonalTask } from '@rox/core/tasks/personal'
 import { NativePersonalTasksStore, type NativePersonalTaskScope } from '../../../../../../../../../../packages/server-core/src/handlers/rpc/native-personal-tasks'
 import type { PersonalTasksApi } from '../../../../../../lib/personal-tasks-sync'
-import { hydratePersonalTasks, loadPersonalTaskStore, persistPersonalTaskStore, subscribePersonalTaskCommits, setPersonalTaskScope } from '../../../../../../lib/personal-tasks'
+import { hydratePersonalTasks, loadPersonalTaskStore, persistPersonalTaskStore, setPersonalTaskScope, subscribePersonalTaskCommits } from '../../../../../../lib/personal-tasks'
 
 function deferred() {
   let resolve!: () => void
@@ -61,9 +61,9 @@ function fixture() {
   }
   const nativeWindow = Object.assign(new EventTarget(), { electronAPI: api, setTimeout: globalThis.setTimeout })
   Object.assign(globalThis, { window: nativeWindow, localStorage: storage })
-  let off: (() => void) | undefined
-  try {
-    setPersonalTaskScope({ authority: 'local', userId: 'isolated-local-test', workspaceId: 'fixture-workspace' })
+  async function bind(subject = 'fixture-alice', workspaceId = 'workspace-a') {
+    scope = { principal: { issuer: 'fixture-authority', subject, credentialId: subject, credentialVersion: 1 }, workspaceId, rootPath: join(root, workspaceId) }
+    setPersonalTaskScope({ authority: 'native', issuer: scope.principal.issuer, userId: subject, workspaceId })
     await hydratePersonalTasks()
     return scope
   }
@@ -102,13 +102,49 @@ test('T-TASKS-CREATE: cache row emits only after real native write and canonical
     f.readback.resolve()
     const record = await f.completion
     expect(record.task).toEqual(JSON.parse(JSON.stringify(created)))
-    expect(new PersonalTaskPersistStore(root).get(created.id)).toEqual(record)
-    expect(records).toHaveLength(1)
-  } finally {
-    release()
-    off?.()
-    setPersonalTaskScope(null)
-    Object.assign(globalThis, { window: oldWindow, localStorage: oldStorage })
-    rmSync(root, { recursive: true, force: true })
-  }
+    const reopened = new NativePersonalTasksStore(f.root).read(scope, () => {})
+    expect({ task: reopened.tasks[0], revision: reopened.revisions[created.id] }).toEqual(record)
+    expect(f.records).toHaveLength(1)
+  } finally { await f.cleanup() }
+}, 5000)
+
+test('T-TASKS-CREATE: a foreign caller transition rejects a held native PUT without publishing evidence', async () => {
+  const f = fixture()
+  try {
+    const original = await f.bind()
+    const next = loadPersonalTaskStore()
+    const created = next.create({ id: 'private-alice-task', title: 'Private Alice task', list: 'inbox' })
+    persistPersonalTaskStore(next)
+    await f.writeEntered.promise
+    const foreign = await f.bind('fixture-bob', 'workspace-b')
+    f.write.resolve()
+    await f.writeSettled.promise
+    expect(f.rejectedWrite()).toBeTrue()
+    expect(f.store.read(original, () => {}).tasks).toEqual([])
+    expect(f.store.read(foreign, () => {}).tasks).toEqual([])
+    expect(loadPersonalTaskStore().get(created.id)).toBeUndefined()
+    expect(f.records).toEqual([])
+  } finally { await f.cleanup() }
+}, 5000)
+
+test('T-TASKS-CREATE: an old successful read-back cannot publish after caller A→B→A', async () => {
+  const f = fixture()
+  try {
+    const original = await f.bind()
+    const next = loadPersonalTaskStore()
+    const created = next.create({ id: 'accepted-alice-task', title: 'Accepted Alice task', list: 'inbox' })
+    persistPersonalTaskStore(next)
+    f.write.resolve()
+    await f.readbackEntered.promise
+    expect(f.store.read(original, () => {}).tasks[0]?.id).toBe(created.id)
+    const foreign = await f.bind('fixture-bob', 'workspace-b')
+    expect(loadPersonalTaskStore().get(created.id)).toBeUndefined()
+    expect(f.store.read(foreign, () => {}).tasks).toEqual([])
+    await f.bind()
+    // The new A visit may load the canonical row, but cannot inherit old completion evidence.
+    expect(loadPersonalTaskStore().get(created.id)).toBeDefined()
+    f.readback.resolve()
+    await f.drain()
+    expect(f.records).toEqual([])
+  } finally { await f.cleanup() }
 }, 5000)

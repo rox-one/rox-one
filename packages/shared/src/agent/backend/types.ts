@@ -23,6 +23,7 @@ import type { Workspace } from '../../config/storage.ts';
 import type { SessionConfig as Session } from '../../sessions/storage.ts';
 import type { SourceManager } from '../core/source-manager.ts';
 import type { MemoryPromptBlocks } from '../../memory/types.ts';
+import type { AgentProfileSnapshot } from '../../workspace-work/types.ts';
 
 // Import AbortReason and RecoveryMessage from core module (single source of truth)
 import { AbortReason, type RecoveryMessage } from '../core/index.ts';
@@ -168,6 +169,9 @@ export interface BackendHostRuntimeContext {
  * Provider-specific runtime details are resolved by backend drivers internally.
  */
 export interface CoreBackendConfig {
+  /** Frozen server-owned profile; legacy unbound sessions omit this capability ceiling. */
+  agentProfileSnapshot?: import('../../workspace-work/types.ts').AgentProfileSnapshot;
+  allowedSkillSlugs?: readonly string[];
   /** Supplied by host authority; renderer and model inputs cannot set identity. */
   roxExecutionContext?: import('../../auth/rox-account-authority.ts').RoxExecutionContext;
   /** Workspace configuration */
@@ -706,6 +710,11 @@ export interface BackendConfig extends CoreBackendConfig {
    * store themselves.
    */
   memoryBlocks?: MemoryPromptBlocks;
+  /** Skill slugs allowed for this backend (empty = all allowed) */
+  allowedSkillSlugs?: readonly string[];
+  /** Agent profile snapshot for skill/role binding */
+  agentProfileSnapshot?: AgentProfileSnapshot;
+
 
   /**
    * Opaque runtime payload resolved by backend drivers.

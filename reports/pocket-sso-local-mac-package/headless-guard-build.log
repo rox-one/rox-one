@@ -1,0 +1,7 @@
+/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/reports/pocket-sso-local-mac-package/no-ui-keychain-guard.m:6:21: warning: 'SecKeychainSetUserInteractionAllowed' is deprecated: first deprecated in macOS 10.10 - SecKeychain is deprecated [-Wdeprecated-declarations]
+    6 |   OSStatus status = SecKeychainSetUserInteractionAllowed(false);
+      |                     ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Security.framework/Headers/SecKeychain.h:639:10: note: 'SecKeychainSetUserInteractionAllowed' has been explicitly marked deprecated here
+  639 | OSStatus SecKeychainSetUserInteractionAllowed(Boolean state)
+      |          ^
+1 warning generated.

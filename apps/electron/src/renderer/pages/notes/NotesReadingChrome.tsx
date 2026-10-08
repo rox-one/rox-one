@@ -2,6 +2,7 @@ import * as React from 'react'
 import { MessageSquarePlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { canFocusNotesControl } from './focus-state'
 
 /**
  * Note reading surface: tone steps instead of borders. Side panels (notes
@@ -36,7 +37,7 @@ export function NotesEditorHeadlineStyles() {
         font-size: 15px;
         line-height: 1.7;
       }
-      .notes-editor-prose .ProseMirror > :first-child {
+      .notes-editor-prose .ProseMirror > h1:first-child {
         color: var(--foreground);
         font-size: 2rem;
         font-weight: 700;
@@ -134,7 +135,7 @@ export function loadNoteComments(noteId: string): NoteComment[] {
 }
 
 function saveNoteComments(noteId: string, comments: NoteComment[]): void {
-  localStorage.setItem(commentsKey(noteId), JSON.stringify(comments))
+  try { localStorage.setItem(commentsKey(noteId), JSON.stringify(comments)) } catch { /* Markdown remains canonical if the optional cache is unavailable. */ }
 }
 
 function extractHeadings(markdown: string): Array<{ id: string; level: number; text: string }> {
@@ -222,6 +223,8 @@ export function NotesCommentComposer({
   onCancel,
   top,
   className,
+  focusRequested = false,
+  onFocusHandled,
 }: {
   quote: string
   body: string
@@ -230,16 +233,20 @@ export function NotesCommentComposer({
   onCancel?: () => void
   top?: number
   className?: string
+  focusRequested?: boolean
+  onFocusHandled?: () => void
 }) {
   const { t } = useTranslation()
   const composeRef = React.useRef<HTMLTextAreaElement>(null)
   React.useEffect(() => {
-    composeRef.current?.focus()
-  }, [quote])
+    if (!focusRequested) return
+    if (canFocusNotesControl(composeRef.current)) composeRef.current.focus({ preventScroll: true })
+    onFocusHandled?.()
+  }, [focusRequested, onFocusHandled])
   return (
     <form
       className={cn(
-        'w-[240px] rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background p-2 shadow-thin',
+        'w-[240px] max-w-[calc(100%-16px)] rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background p-2 shadow-thin',
         className,
       )}
       data-testid="notes-comments-compose"
@@ -267,6 +274,7 @@ export function NotesCommentComposer({
             onSubmit()
           }
         }}
+        aria-label={t('notes.comments.title')}
         rows={3}
         placeholder={quote ? t('notes.comments.placeholderOnSelection') : t('notes.comments.placeholder')}
         className={cn(
@@ -317,6 +325,10 @@ export function NotesComments({
   onJumpToQuote,
   width,
   composerTop,
+  draftBody,
+  onDraftBodyChange,
+  focusRequested,
+  onFocusHandled,
 }: {
   noteId: string
   draftQuote: string
@@ -326,15 +338,23 @@ export function NotesComments({
   onJumpToQuote?: (quote: string) => void
   width?: number
   composerTop?: number
+  draftBody?: string
+  onDraftBodyChange?: (body: string) => void
+  focusRequested?: boolean
+  onFocusHandled?: () => void
 }) {
   const { t } = useTranslation()
-  const [comments, setComments] = React.useState<NoteComment[]>(() => markdownComments ?? loadNoteComments(noteId))
-  const [body, setBody] = React.useState('')
+  const [localComments, setComments] = React.useState<NoteComment[]>(() => markdownComments ?? loadNoteComments(noteId))
+  const comments = markdownComments ?? localComments
+  const [localBody, setLocalBody] = React.useState('')
+  const body = draftBody ?? localBody
+  const setBody = onDraftBodyChange ?? setLocalBody
 
   React.useEffect(() => {
     setComments(markdownComments ?? loadNoteComments(noteId))
-    setBody('')
   }, [markdownComments, noteId])
+
+  React.useEffect(() => setLocalBody(''), [noteId])
 
   const add = React.useCallback(() => {
     const text = body.trim()
@@ -344,11 +364,11 @@ export function NotesComments({
       { id: crypto.randomUUID(), quote: draftQuote.trim(), body: text, createdAt: Date.now() },
     ]
     setComments(next)
-    saveNoteComments(noteId, next)
+    if (!markdownComments) saveNoteComments(noteId, next)
     onCommit?.(next)
     setBody('')
     onClearDraft()
-  }, [body, comments, draftQuote, noteId, onClearDraft, onCommit])
+  }, [body, comments, draftQuote, markdownComments, noteId, onClearDraft, onCommit, setBody])
 
   return (
     <aside className="notes-side-surface relative flex shrink-0 flex-col" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
@@ -386,7 +406,9 @@ export function NotesComments({
           body={body}
           onBodyChange={setBody}
           onSubmit={add}
-          onCancel={onClearDraft}
+          onCancel={() => { setBody(''); onClearDraft() }}
+          focusRequested={focusRequested}
+          onFocusHandled={onFocusHandled}
         />
       ) : null}
     </aside>
@@ -398,53 +420,61 @@ export function NotesCommentHighlights({
   hidden,
   contentKey,
   onActivate,
+  editorRef,
 }: {
   comments: NoteComment[]
   hidden: boolean
   contentKey: string
+  editorRef?: React.RefObject<HTMLElement | null>
   onActivate: (comment: NoteComment, rect: DOMRect) => void
 }) {
+  const overlayRef = React.useRef<HTMLDivElement>(null)
   const [hits, setHits] = React.useState<Array<{ id: string; top: number; left: number; width: number; height: number }>>([])
 
   React.useLayoutEffect(() => {
-    const root = document.querySelector('.notes-editor .ProseMirror') as HTMLElement | null
-    const editor = document.querySelector('.notes-editor') as HTMLElement | null
-    if (!root || !editor) {
-      setHits([])
-      return
-    }
-    const editorBox = editor.getBoundingClientRect()
-    const next: Array<{ id: string; top: number; left: number; width: number; height: number }> = []
-    for (const comment of comments) {
-      const quote = comment.quote.trim()
-      if (!quote) continue
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-      let node: Node | null
-      while ((node = walker.nextNode())) {
-        const text = node.textContent ?? ''
-        const idx = text.indexOf(quote)
-        if (idx < 0) continue
-        const range = document.createRange()
-        range.setStart(node, idx)
-        range.setEnd(node, Math.min(text.length, idx + quote.length))
-        for (const rect of Array.from(range.getClientRects())) {
-          next.push({
-            id: comment.id,
-            top: rect.top - editorBox.top + editor.scrollTop,
-            left: rect.left - editorBox.left + editor.scrollLeft,
-            width: rect.width,
-            height: rect.height,
-          })
+    const editor = editorRef?.current ?? overlayRef.current?.closest<HTMLElement>('.notes-editor')
+    if (!editor) return
+    let frame = 0
+    const measure = () => {
+      frame = 0
+      const root = editor.querySelector('.ProseMirror')
+      if (!root || editor.getClientRects().length === 0) { setHits([]); return }
+      const editorBox = editor.getBoundingClientRect()
+      const next: Array<{ id: string; top: number; left: number; width: number; height: number }> = []
+      for (const comment of comments) {
+        const quote = comment.quote.trim()
+        if (!quote) continue
+        const walker = editor.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          const text = node.textContent ?? ''
+          const index = text.indexOf(quote)
+          if (index < 0) continue
+          const range = editor.ownerDocument.createRange()
+          range.setStart(node, index)
+          range.setEnd(node, Math.min(text.length, index + quote.length))
+          for (const rect of Array.from(range.getClientRects())) {
+            next.push({ id: comment.id, top: rect.top - editorBox.top + editor.scrollTop, left: rect.left - editorBox.left + editor.scrollLeft, width: rect.width, height: rect.height })
+          }
+          break
         }
-        break
       }
+      setHits(next)
     }
-    setHits(next)
-  }, [comments, contentKey])
+    const invalidate = () => { if (!frame) frame = requestAnimationFrame(measure) }
+    const observer = new ResizeObserver(invalidate)
+    observer.observe(editor)
+    editor.addEventListener('load', invalidate, true)
+    invalidate()
+    return () => {
+      observer.disconnect()
+      editor.removeEventListener('load', invalidate, true)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [comments, contentKey, editorRef])
 
-  if (hits.length === 0) return null
   return (
-    <div className="pointer-events-none absolute inset-0 z-[1]" data-testid="notes-comment-highlights">
+    <div ref={overlayRef} className="pointer-events-none absolute inset-0 z-[1]" data-testid="notes-comment-highlights">
       {hits.map((hit, index) => {
         const comment = comments.find((item) => item.id === hit.id)
         if (!comment) return null

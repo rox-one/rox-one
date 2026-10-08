@@ -83,6 +83,7 @@ export async function listNativeMeetingsViaRpc(input: {
   if (!input.api) return { ok: false, code: 'rpc-unavailable' }
   if (!input.workspaceId) return { ok: false, code: 'workspace-required' }
   const result = await input.api.listMeetings(input.workspaceId)
+  if (result.denied) return { ok: false, code: 'workspace-required' }
   return { ok: true, meetings: (result.page ?? []).map(rowFromMeeting) }
 }
 

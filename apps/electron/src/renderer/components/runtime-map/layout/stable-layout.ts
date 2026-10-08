@@ -55,3 +55,48 @@ export function windowRuntimeNodes(nodes: RuntimeNode[], page: number, size = 20
   const start = Math.max(0, Math.floor(page)) * size
   return nodes.slice(start, start + size)
 }
+
+export interface RuntimeOverviewLane { x: number; y: number; width: number; height: number }
+export interface RuntimeOverviewLayout { positions: Map<string, RuntimePosition>; lanes: Map<string, RuntimeOverviewLane> }
+
+/** Lane row pitch/box for the compressed overview; mirrors the lane geometry hints without importing the cyclic module. */
+const OVERVIEW_LANE_STEP = 96
+const OVERVIEW_LANE_WIDTH = 250
+const OVERVIEW_LANE_HEIGHT = 80
+const NO_COLLAPSED: ReadonlySet<string> = new Set()
+
+/**
+ * Bounded presentation overview: one chronological row per lane, every visible node on it.
+ * Collapsing a lane drops its nodes from `positions` while its lane box stays in `lanes`.
+ * Depends only on agent id, seq and id, so payload text and other non-topological deltas are stable.
+ */
+export function layoutRuntimeOverview(graph: RuntimeGraph, visible: RuntimeNode[], collapsed: ReadonlySet<string> = NO_COLLAPSED): RuntimeOverviewLayout {
+  const positions = new Map<string, RuntimePosition>()
+  const lanes = new Map<string, RuntimeOverviewLane>()
+  const laneRow = new Map(graph.lanes.map((lane, index) => [lane.id, index]))
+  const lanedAgents = new Set(graph.lanes.map(lane => lane.agentId))
+  const grouped = new Map<string, RuntimeNode[]>()
+  for (const node of visible) {
+    const members = grouped.get(node.agentId)
+    if (members) members.push(node)
+    else grouped.set(node.agentId, [node])
+  }
+  const row = (members: RuntimeNode[], y: number, agentId: string) => {
+    if (collapsed.has(agentId)) return
+    ;[...members].sort((a, b) => a.seq - b.seq || a.id.localeCompare(b.id)).forEach((node, column) => positions.set(node.id, { x: column * COLUMN_WIDTH, y }))
+  }
+  for (const lane of graph.lanes) {
+    const members = grouped.get(lane.agentId)
+    if (!members?.length) continue
+    const y = laneRow.get(lane.id)! * OVERVIEW_LANE_STEP
+    lanes.set(lane.id, { x: 0, y, width: OVERVIEW_LANE_WIDTH, height: OVERVIEW_LANE_HEIGHT })
+    row(members, y, lane.agentId)
+  }
+  // Defensive: a node whose agent has no lane still belongs to the visible window.
+  let orphanRow = graph.lanes.length
+  for (const [agentId, members] of grouped) {
+    if (lanedAgents.has(agentId)) continue
+    row(members, orphanRow++ * OVERVIEW_LANE_STEP, agentId)
+  }
+  return { positions, lanes }
+}

@@ -1,0 +1,26 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/messaging-gateway/src/__tests__/router.test.ts:
+(pass) Router > forwards a text-only bound message to sendMessage [16.33ms]
+(pass) Router > materializes a localPath attachment into FileAttachment[] and StoredAttachment[] [4.02ms]
+(pass) Router > does not leak binary bytes into FileAttachment.text for non-text media [2.07ms]
+(pass) Router > contains a path-traversal fileName inside the session attachments dir [10.07ms]
+(pass) Router > drops attachments that have no localPath [0.63ms]
+(pass) Router > forwards caption-less attachments with empty text [1.64ms]
+(pass) Router > routes unbound channels to Commands.handle [0.63ms]
+(pass) Router > routes the same chatId + different threadIds to the per-topic session [1.04ms]
+(pass) Router > falls through to Commands when message lands in an unbound topic [0.93ms]
+(pass) Router > ignores un-mentioned guild messages when trigger is "mention" [1.17ms]
+(pass) Router > routes @mentioned guild messages when trigger is "mention" [0.80ms]
+(pass) Router > routes un-mentioned guild messages when trigger is "all" [0.85ms]
+(pass) Router > always routes DMs regardless of mention (trigger "mention") [1.15ms]
+
+packages/server-core/src/sessions/execute-prompt-automation-test-mode.test.ts:
+(pass) executePromptAutomation waitForCompletion > waitForCompletion:false returns as soon as the session is created (does not await the turn) [4.08ms]
+(pass) executePromptAutomation waitForCompletion > default (waitForCompletion unset) awaits sendMessage and propagates its error [0.43ms]
+(pass) executePromptAutomation waitForCompletion > preserves the internally supplied scheduler occurrence as runtime launch context [0.32ms]
+
+ 16 pass
+ 0 fail
+ 51 expect() calls
+Ran 16 tests across 2 files. [1.67s]

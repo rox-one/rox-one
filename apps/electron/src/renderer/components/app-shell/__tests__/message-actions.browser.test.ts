@@ -3,10 +3,11 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { chromium, expect as playwrightExpect, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 
 const repository=resolve(import.meta.dirname,'../../../../../../..')
 const fixture=resolve(import.meta.dirname,'fixtures/message-actions')
-const executablePath=process.env.CHROMIUM_EXECUTABLE??'/usr/bin/chromium'
+const executablePath=await resolveChromiumExecutable()
 const frontend='http://127.0.0.1:5198'
 const backend='http://127.0.0.1:5199'
 const proofDirectory=process.env.MESSAGE_ACTIONS_PROOF_DIR

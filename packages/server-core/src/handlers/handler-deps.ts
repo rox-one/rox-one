@@ -16,6 +16,7 @@ import type {
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
 } from '@rox/shared/openclaw'
+import type { WorkspaceTaskLink } from '@rox/shared/workspace-work'
 
 export interface OpenClawSecurityWorkspaceInput {
   readonly workspaceId: string
@@ -78,6 +79,10 @@ export interface HandlerDeps<
   /** Optional GUI-only overlay; never controlled through an untrusted SET_OVERLAY RPC. */
   voiceOverlay?: NativeVoiceOverlayHost
   commandGateway?: PendingCommandsStore
+  /** Host-owned canonical adapters for native objects linked from workspace tasks. */
+  workspaceWorkReferences?: {
+    exists(workspaceId: string, workspaceRootPath: string, link: WorkspaceTaskLink): boolean
+  }
   /** Server-composed native capability boundary and durable canonical-file data plane. */
   nativeData?: {
     authority: NativeAuthority
