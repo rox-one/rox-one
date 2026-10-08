@@ -3697,7 +3697,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
 
       <SuperEngineeringShellExtras />
 
-      {/* Fallback voice dictation: records + drafts a new session when no composer owns the mic. */}
+      {/* Global voice dictation: records + drafts a new session when no active composer owns the mic. */}
       <GlobalVoiceDictation />
 
       </ShellSidebarContext.Provider>

@@ -15,10 +15,10 @@ import type { HotkeyCommand } from '@rox/shared/voice/hotkey-types'
 import {
   claimDictation,
   currentOwner,
-  isComposerPresent,
   releaseDictation,
   setDictationIntent,
 } from './dictation-ownership'
+import { activeComposerPresent } from './composer-presence'
 import type { DictationOwner } from './dictation-ownership'
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -43,8 +43,8 @@ async function cancelHostCapture(): Promise<void> {
 }
 
 /**
- * The composer control always wins: when it is mounted (or another dictation
- * owner is active) global dictation must stay completely inert.
+ * The active composer control always wins: when one is on screen (or another
+ * dictation owner is active) global dictation must stay completely inert.
  */
 export interface DictationYieldState {
   composerPresent: boolean
@@ -57,10 +57,13 @@ export function shouldYieldDictation(state: DictationYieldState): boolean {
 }
 
 /**
- * Fallback dictation path used when no composer owns the microphone: the voice
- * hotkey records, then drops the finished transcript into a brand-new session
- * draft. The mini-overlay window renders the live wave from
- * `publishVoiceLevel` — the composer publishes the same channel when it owns.
+ * The only global dictation host. When an active composer control is on
+ * screen (or another dictation owner holds the microphone) this host stays
+ * completely inert and the composer handles the hotkey itself; otherwise it
+ * records, drops the finished transcript into a brand-new session draft and
+ * files it as a transcript note. The mini-overlay window renders the live wave
+ * from `publishVoiceLevel`; the composer publishes the same channel when it
+ * owns.
  *
  * Renders nothing unless the cloud-consent dialog is open.
  */
@@ -186,7 +189,7 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
 
   const startRecording = useCallback(async (selectedPrefs: VoicePrefs | null = prefsRef.current) => {
     if (!mountedRef.current || startingRef.current) return
-    if (shouldYieldDictation({ composerPresent: isComposerPresent(), activeOwner: currentOwner(), ownOwner: owner })) return
+    if (shouldYieldDictation({ composerPresent: activeComposerPresent(), activeOwner: currentOwner(), ownOwner: owner })) return
     if (!selectedPrefs) return
     if (selectedPrefs.sttEngine === 'cloud-rox' && (!selectedPrefs.cloudAsrConsent || selectedPrefs.privacyMigrationPending)) {
       setConsentOpen(true)
@@ -279,7 +282,7 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
 
   const handleCommand = useCallback(async (command: HotkeyCommand) => {
     if (!mountedRef.current) return
-    if (shouldYieldDictation({ composerPresent: isComposerPresent(), activeOwner: currentOwner(), ownOwner: owner })) return
+    if (shouldYieldDictation({ composerPresent: activeComposerPresent(), activeOwner: currentOwner(), ownOwner: owner })) return
     if (command === 'cancel') {
       cancelRecordingRef.current()
       return
@@ -336,7 +339,7 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
       if (!mod || !event.shiftKey || event.key.toLowerCase() !== 'd' || event.isComposing) return
       if (event.defaultPrevented) return
       // The composer control binds the same accelerator when it is mounted.
-      if (shouldYieldDictation({ composerPresent: isComposerPresent(), activeOwner: currentOwner(), ownOwner: owner })) return
+      if (shouldYieldDictation({ composerPresent: activeComposerPresent(), activeOwner: currentOwner(), ownOwner: owner })) return
       event.preventDefault()
       void commandRef.current('toggle')
     }

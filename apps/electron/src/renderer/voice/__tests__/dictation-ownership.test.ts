@@ -3,9 +3,7 @@ import {
   claimDictation,
   currentOwner,
   isComposerOwned,
-  isComposerPresent,
   peekIntent,
-  registerComposerPresence,
   releaseDictation,
   setDictationIntent,
 } from '../dictation-ownership'
@@ -82,17 +80,6 @@ describe('dictation ownership arbitration', () => {
     expect(peekIntent(other)).toBe(null)
     expect(peekIntent()).toEqual({ source: 'global', delivery: 'draft' })
     releaseDictation(owner)
-  })
-
-  it('tracks composer presence with an idempotent unregister', () => {
-    const unregisterA = registerComposerPresence()
-    const unregisterB = registerComposerPresence()
-    expect(isComposerPresent()).toBe(true)
-    unregisterA()
-    unregisterA()
-    expect(isComposerPresent()).toBe(true)
-    unregisterB()
-    expect(isComposerPresent()).toBe(false)
   })
 
   it('reports composer ownership only for a composer-sourced intent', () => {

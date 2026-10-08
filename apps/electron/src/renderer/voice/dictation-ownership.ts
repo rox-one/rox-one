@@ -17,7 +17,6 @@ export interface DictationIntent {
 
 let owner: DictationOwner | null = null
 let intent: DictationIntent | null = null
-let composerPresence = 0
 
 /** Claim dictation for `candidate`; `false` when another owner already holds it. */
 export function claimDictation(candidate: DictationOwner): boolean {
@@ -48,22 +47,6 @@ export function releaseDictation(target: DictationOwner): void {
   if (owner !== target) return
   owner = null
   intent = null
-}
-
-/** Register a mounted composer control; the returned function unregisters it. */
-export function registerComposerPresence(): () => void {
-  composerPresence += 1
-  let released = false
-  return () => {
-    if (released) return
-    released = true
-    composerPresence = Math.max(0, composerPresence - 1)
-  }
-}
-
-/** Whether any composer control is mounted at all. */
-export function isComposerPresent(): boolean {
-  return composerPresence > 0
 }
 
 /** Whether the active owner's intent targets the composer. */

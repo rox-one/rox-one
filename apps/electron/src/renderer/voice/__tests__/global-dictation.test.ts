@@ -16,8 +16,8 @@ const depsPresent = existsSync(join(__dirname, '../../lib/voice/level-meter.ts')
 
 describe('global voice dictation wiring', () => {
   it('yields to the composer on every command and hotkey path', () => {
-    expect(source).toContain('isComposerPresent')
-    expect(source).toContain('shouldYieldDictation({ composerPresent: isComposerPresent()')
+    expect(source).toContain('activeComposerPresent')
+    expect(source).toContain('shouldYieldDictation({ composerPresent: activeComposerPresent()')
     expect(source).toContain('createVoiceLevelMeter')
   })
 

@@ -12,7 +12,7 @@ import { useOptionalModalRegistry } from '@/context/ModalContext'
 import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { isMac } from '@/lib/platform'
 import { VoiceCommandController } from '../../../voice/command-controller'
-import { claimDictation, currentOwner, registerComposerPresence, releaseDictation, setDictationIntent, type DictationOwner } from '../../../voice/dictation-ownership'
+import { claimDictation, currentOwner, releaseDictation, setDictationIntent, type DictationOwner } from '../../../voice/dictation-ownership'
 import { createVoiceLevelMeter, type VoiceLevelMeterHandle } from '@/lib/voice/level-meter'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
 import { createDictationRequestGuard, setDictationLevel, useDictationLevel } from './voice-dictation-state'
@@ -85,8 +85,6 @@ export function VoiceDictationControl({
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   const workspaceIdRef = useRef<string | null>(workspaceId)
   workspaceIdRef.current = workspaceId
-  // A composer control is mounted: expose that to the global dictation owner.
-  useEffect(() => registerComposerPresence(), [])
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const voiceTarget = useTourTarget('composer.voice', { variant: compactMode ? 'compact' : 'regular' })
   const tourSignals = useTourSignals()
