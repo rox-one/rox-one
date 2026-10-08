@@ -24,7 +24,7 @@ import { XSC_DERIVED_FROM_RELATION, XSC_DERIVED_FROM_ROLE, xscDerivationKey, xsc
 type MessageOrigin = Extract<XscOrigin, { kind: 'message' }>
 import { deterministicId, isDeleted, type ReferenceOutcome, type ReferenceTx } from '../work/reference/engine'
 import { addLink, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, authorizeTaskContainers, boundRef, refString, validateLink } from '../work/reference/ops'
-import { appendMessage } from '../work/reference/specs/messenger'
+import { appendMessage, assertCanPost } from '../work/reference/specs/messenger'
 import { taskDefaults } from '../work/reference/specs/tasks'
 import type { RecordData, StoredRecord } from '../work/reference/types'
 import type { ReferenceSpecMap } from '../work/reference/specs/types'
@@ -172,10 +172,21 @@ async function insertCall(tx: ReferenceTx, callId: string, participants: readonl
   return record
 }
 
-/** The card a `*_from_message` command posts back into the origin chat (rule 2: a ref, not a copy). */
-async function postCard(tx: ReferenceTx, chatId: string, salt: string, card: RecordData): Promise<StoredRecord> {
+/**
+ * The origin chat of a message command, authorized and postable — called
+ * *before* the command's first write, so a refused card never leaves a task or
+ * an event behind on a backend without transactions.
+ */
+async function postableChat(tx: ReferenceTx, chatRef: string): Promise<StoredRecord> {
+  const chatId = idOfRef(chatRef)
   await authorizeRef(tx, { kind: 'channel', id: chatId }, 'write')
   const chat = await tx.require('channel', chatId)
+  await assertCanPost(tx, chat)
+  return chat
+}
+
+/** The card a `*_from_message` command posts back into the origin chat (rule 2: a ref, not a copy). */
+async function postCard(tx: ReferenceTx, chat: StoredRecord, salt: string, card: RecordData): Promise<StoredRecord> {
   return appendMessage(tx, chat, { doc: '', card }, {}, salt)
 }
 
@@ -321,6 +332,7 @@ export const XSC_REFERENCE_SPECS: ReferenceSpecMap = {
       const origin = tx.payload.origin as MessageOrigin
       const originRef = xscOriginRef(origin)
       await authorizeOrigin(tx, originRef)
+      const chat = await postableChat(tx, String(origin.chatRef))
       if (tx.payload.listRef) await authorizeTaskContainers(tx, { listId: (tx.payload.listRef as EntityRef).id })
       const id = tx.createId()
       const { ref } = await insertTask(tx, id, {
@@ -332,7 +344,7 @@ export const XSC_REFERENCE_SPECS: ReferenceSpecMap = {
       for (const follower of (tx.payload.followers ?? []) as string[]) {
         await tx.upsert('subscription', `${refString(ref)}:${follower}`, { kind: 'follower', canceled: false }, { resourceKind: 'task', resourceId: id, principalId: follower })
       }
-      const card = await postCard(tx, idOfRef(String(origin.chatRef)), 'card', { kind: 'task', ref })
+      const card = await postCard(tx, chat, 'card', { kind: 'task', ref })
       return { collection: 'task', id, changes: ['title'], result: { taskRef: ref, cardMessageSeq: card.data.seq } }
     },
   },
@@ -375,6 +387,7 @@ export const XSC_REFERENCE_SPECS: ReferenceSpecMap = {
       const origin = tx.payload.origin as MessageOrigin
       const chatId = idOfRef(String(origin.chatRef))
       await authorizeOrigin(tx, xscOriginRef(origin))
+      const chat = await postableChat(tx, String(origin.chatRef))
       const requested = tx.payload.attendees
       const attendees = requested === 'chat' ? await chatMembers(tx, chatId) : await authorizeAttendees(tx, requested as unknown[])
       const start = String(tx.payload.start ?? tx.now)
@@ -387,7 +400,7 @@ export const XSC_REFERENCE_SPECS: ReferenceSpecMap = {
         start,
         end,
       }, attendees, origin)
-      const card = await postCard(tx, chatId, 'card', { kind: 'calendar-event', ref: { kind: 'calendar-event', id } })
+      const card = await postCard(tx, chat, 'card', { kind: 'calendar-event', ref: { kind: 'calendar-event', id } })
       return out('calendar-event', record, ['startAt', 'endAt'], { result: { eventRef: { kind: 'calendar-event', id }, cardMessageSeq: card.data.seq } })
     },
   },
