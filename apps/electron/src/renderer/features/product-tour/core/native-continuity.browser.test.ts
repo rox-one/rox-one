@@ -209,6 +209,9 @@ for (const action of ['stop', 'cancel'] as const) for (const deferred of [false,
     hide() {}
     destroy() { this.destroyed = true; this.emit('closed') }
     async loadURL() {}
+    // The packaged branch of the shipped overlay owner loads dist/renderer next
+    // to main.cjs; this fixture reports isPackaged above, so it must accept it.
+    async loadFile() {}
   }
   // Only the OS Electron surface is replaced. Command authorization and delivery
   // below run through the actual overlay owner and authenticated hotkey router.

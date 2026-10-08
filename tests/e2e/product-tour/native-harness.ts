@@ -1,10 +1,10 @@
 import { _electron, type ElectronApplication, type Page } from '@playwright/test'
-import { mkdtemp, mkdir } from 'node:fs/promises'
+import { mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { createRequire } from 'node:module'
-import { observeFirstNativeWindow } from './native-startup'
+import { observeFirstNativeWindow, type NativeStartupDiagnostics } from './native-startup'
 
 const repository = resolve(import.meta.dirname, '../../..')
 
@@ -33,9 +33,13 @@ export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiag
     NODE_ENV: 'test',
   })
   let app: ElectronApplication
-  try { app = await _electron.launch({ executablePath, args: [main], cwd: repository, env }) }
+  try {
+    // The parent CLI deadline is 180 s and the spec deadline is 90 s. An explicit
+    // launch budget keeps the reported failure inside both instead of expiring them.
+    app = await _electron.launch({ executablePath, args: [main], cwd: repository, env, timeout: 45_000 })
+  }
   catch (error) { await rm(profile, { recursive: true, force: true }); throw error }
   const page = await observeFirstNativeWindow(app, profile,
-    resolve(repository, 'test-results/product-tour/native', `startup-${process.pid}.json`))
+    resolve(repository, 'test-results/product-tour/native', `startup-${process.pid}.json`), { report })
   return { app, page, async dispose() { await app.close(); await rm(profile, { recursive: true, force: true }) } }
 }

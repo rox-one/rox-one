@@ -79,17 +79,19 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
   const projectReadsMountedRef = projectMountedRef
   const projectReadRevisionRef = projectRequestRef
   // The selected detail may load while the already-ready Projects API remains
-  // usable. A missing reader or an actual failed read still blocks honestly.
+  // usable, so a read in flight publishes nothing at all: only an actual failure
+  // or a resolved absence may downgrade the capability. Every contribution is
+  // released on unmount and before each re-evaluation, otherwise the failed read
+  // of a left detail page would outlive its own page and keep the tour blocked.
   useEffect(() => {
     if (typeof window.electronAPI?.getProject !== 'function') {
-      tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
-    } else if (loading) {
-      tour.capability('projects.available', { state: 'pending', reason: 'installing' })
-    } else if (error) {
-      tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
-    } else {
-      tour.capability('projects.available', project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' })
+      return tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
     }
+    if (loading) return
+    if (error) {
+      return tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
+    }
+    return tour.capability('projects.available', project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' })
   }, [tour, loading, error, project])
   useEffect(() => {
     const element = projectSummaryRef.current
