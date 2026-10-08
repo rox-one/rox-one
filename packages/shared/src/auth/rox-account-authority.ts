@@ -244,6 +244,19 @@ export class RoxAccountAuthority {
     this.current(caller, record)
     return Object.freeze({ caller: Object.freeze({ ...caller }), cloudAccountId: record.accountId, authGeneration: record.authGeneration })
   }
+  /**
+   * Fresh Rox access token for host-owned cloud calls (e.g. mail
+   * provisioning). Refreshes when near expiry like `capture`/`state`, so the
+   * caller never needs to know about token lifetimes. Never logged.
+   */
+  async accessToken(caller: RoxCloudOwner): Promise<string> {
+    const state = await this.state(caller)
+    if (!state.connected) throw new Error(state.connectError || 'ROX_ACCOUNT_NOT_READY')
+    const record = await this.record(caller)
+    if (!record) throw new Error('ROX_ACCOUNT_NOT_READY')
+    this.current(caller, record)
+    return record.accessToken
+  }
   assertCurrent(context: RoxExecutionContext): void {
     const record = this.records.get(callerKey(context.caller))
     if (!record || record.accountId !== context.cloudAccountId || record.authGeneration !== context.authGeneration) throw new Error('ROX_ACCOUNT_CHANGED')
