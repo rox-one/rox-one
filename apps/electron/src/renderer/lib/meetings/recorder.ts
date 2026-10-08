@@ -5,7 +5,7 @@
  * local whisper.cpp transcript. Nothing is uploaded.
  */
 import { useSyncExternalStore } from 'react'
-import type { LocalMeeting, MeetingsLocalApi } from '../../../shared/meetings-local'
+import type { LocalMeeting, LocalMeetingSource, MeetingsLocalApi } from '../../../shared/meetings-local'
 import { toErrorMessage } from '@/lib/errors'
 
 export type RecorderStatus = 'idle' | 'starting' | 'recording' | 'paused' | 'stopping'
@@ -137,7 +137,7 @@ async function stopMediaRecorder(recorder: MediaRecorder): Promise<void> {
 
 export type StartResult = { ok: true; meeting: LocalMeeting } | { ok: false; code: string }
 
-export async function startRecording(input: { meetingId?: string; title: string; workspaceId: string | null }): Promise<StartResult> {
+export async function startRecording(input: { meetingId?: string; title: string; workspaceId: string | null; source?: LocalMeetingSource; calendarEventId?: string }): Promise<StartResult> {
   const api = meetingsApi()
   if (!api) return { ok: false, code: 'unavailable' }
   if (session || state.status !== 'idle') return { ok: false, code: 'already-recording' }
@@ -161,7 +161,7 @@ export async function startRecording(input: { meetingId?: string; title: string;
     }
     const mimeType = pickMimeType()
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType, audioBitsPerSecond: 64_000 } : undefined)
-    const started = await api.recStart({ meetingId: input.meetingId, title: input.title, workspaceId: input.workspaceId, mimeType: recorder.mimeType || mimeType || 'audio/webm' })
+    const started = await api.recStart({ meetingId: input.meetingId, title: input.title, workspaceId: input.workspaceId, mimeType: recorder.mimeType || mimeType || 'audio/webm', source: input.source, calendarEventId: input.calendarEventId })
     if (!started.ok) {
       stream.getTracks().forEach((track) => track.stop())
       stream = null
