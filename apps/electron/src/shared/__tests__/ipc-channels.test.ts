@@ -166,6 +166,7 @@ const EXPECTED_CHANNELS: string[] = [
   'debug:log',
   'deeplink:navigate',
   'dialog:openFolder',
+  'directory:exportDossier',
   'drafts:delete',
   'drafts:get',
   'drafts:getAll',
