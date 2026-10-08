@@ -417,7 +417,7 @@ describe('P35 leftover wrap collapse', () => {
   })
   it('applies every unique leftover wrap on current Russian catalog keys', () => {
     const keys = Object.keys(WRAPPED_RU)
-    expect(keys).toHaveLength(393)
+    expect(keys).toHaveLength(391)
     expect(keys).toEqual([...keys].sort())
 
     for (const key of keys) {
