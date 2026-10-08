@@ -3,17 +3,20 @@
  */
 import './memory-test-setup'
 import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'fs'
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync, existsSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer, HandlerFn, RequestContext } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { NativeAuthority } from '../../authority/native-authority'
 
 let workspaceRoot: string
 const configDir = process.env.CRAFT_CONFIG_DIR!
+let nativeFixture: { authority: NativeAuthority; credential: string } | undefined
 
 mock.module('@rox/shared/config', () => ({
+  resolveConfigDir: () => configDir,
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () => [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }],
@@ -21,8 +24,36 @@ mock.module('@rox/shared/config', () => ({
 
 import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryHandlers } from './memory'
+import { MemoryProposalStore } from '../../memory/MemoryProposalStore'
+import { approveMemoryProposalDurably } from '../../memory/approve-memory-proposal'
+import { LessonStore } from '../../memory/LessonStore'
+import type { MemoryProposal } from '@rox/shared/memory/proposals'
 
-function createHarness() {
+function nativeActor(label: string): NonNullable<RequestContext['principal']> {
+  if (!nativeFixture) {
+    const authority = new NativeAuthority({ stateDir: join(workspaceRoot, 'authority') })
+    const descriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY')
+    let administrator: ReturnType<NativeAuthority['bootstrapLocalAdministrator']>
+    try {
+      Object.defineProperty(process.stdin, 'isTTY', { configurable: true, value: true })
+      administrator = authority.bootstrapLocalAdministrator('memory fixture operator')
+    } finally {
+      if (descriptor) Object.defineProperty(process.stdin, 'isTTY', descriptor)
+      else Reflect.deleteProperty(process.stdin, 'isTTY')
+    }
+    authority.registerWorkspace(administrator.credential, 'ws1', workspaceRoot)
+    nativeFixture = { authority, credential: administrator.credential }
+  }
+  const { authority, credential } = nativeFixture
+  const actor = authority.redeemEnrollment(authority.issueEnrollment(credential, label, Date.now() + 60000), label)
+  if (!actor) throw new Error('Native fixture enrollment failed')
+  authority.grantWorkspace(credential, actor.principal.subject, 'ws1', ['read', 'write'])
+  const principal = authority.authenticate(actor.credential)
+  if (!principal) throw new Error('Native fixture authentication failed')
+  return principal
+}
+
+function createHarness(context?: Partial<RequestContext>, sessionManager?: Partial<HandlerDeps['sessionManager']>, current?: () => boolean) {
   const handlers = new Map<string, HandlerFn>()
   const server: RpcServer = {
     handle(channel, handler) { handlers.set(channel, handler) },
@@ -30,10 +61,12 @@ function createHarness() {
     async invokeClient() { return undefined },
     hasClientCapability() { return false },
     findClientsWithCapability() { return [] },
+    ...(current || context?.principal ? { isRequestContextCurrent: current ?? (() => true) } : {}),
   }
   const deps: HandlerDeps = {
-    sessionManager: {} as HandlerDeps['sessionManager'],
+    sessionManager: (sessionManager ?? {}) as HandlerDeps['sessionManager'],
     oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
+    ...(context?.principal && nativeFixture ? { nativeData: { authority: nativeFixture.authority } as HandlerDeps['nativeData'] } : {}),
     platform: {
       appRootPath: '/',
       resourcesPath: '/',
@@ -49,15 +82,19 @@ function createHarness() {
   const invoke = (channel: string, ...args: unknown[]) => {
     const handler = handlers.get(channel)
     if (!handler) throw new Error(`No handler for ${channel}`)
-    return handler({ clientId: 'c1', workspaceId: null } as unknown as RequestContext, ...args)
+    return handler({ clientId: 'c1', workspaceId: null, webContentsId: null, ...context } as RequestContext, ...args)
   }
   return { invoke }
 }
 
 beforeEach(() => {
-  workspaceRoot = mkdtempSync(join(tmpdir(), 'mem-prop-ws-'))
+  workspaceRoot = realpathSync(mkdtempSync(join(tmpdir(), 'mem-prop-ws-')))
+  nativeFixture = undefined
   rmSync(configDir, { recursive: true, force: true })
   mkdirSync(configDir, { recursive: true })
+  writeFileSync(join(configDir, 'config.json'), JSON.stringify({
+    workspaces: [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot, createdAt: 1 }], activeWorkspaceId: 'ws1',
+  }))
   mkdirSync(join(workspaceRoot, 'projects', 'rox'), { recursive: true })
   writeFileSync(join(workspaceRoot, 'projects', 'rox', 'config.json'), JSON.stringify({
     id: 'proj_rox',
@@ -68,7 +105,107 @@ beforeEach(() => {
   }))
 })
 
+describe('durable approval, ownership and recovery', () => {
+  function savedProposal(owner?: { issuer: string; subject: string }): { store: MemoryProposalStore; proposal: MemoryProposal } {
+    const store = new MemoryProposalStore(join(workspaceRoot, 'memory'))
+    const proposal: MemoryProposal = {
+      id: 'mp_durable', text: 'Always preserve the current document', kind: 'rule', status: 'pending',
+      sessionId: 'sess1', workspaceId: 'ws1', projectId: 'proj_rox', ...(owner ? { owner } : {}),
+      sourceMessageIds: ['m1'], provenance: { trigger: 'brain' }, riskFlags: [], conflicts: [], editHistory: [],
+      createdAt: '2026-10-03T00:00:00.000Z', updatedAt: '2026-10-03T00:00:00.000Z', cost: { tokens: 10, model: 'rox/fast' },
+    }
+    store.save(proposal)
+    return { store, proposal }
+  }
+
+  it('never approves a missing project or a failed target write', () => {
+    const { store, proposal } = savedProposal()
+    expect(() => approveMemoryProposalDurably({ store, workspaceRoot, proposalId: proposal.id, scope: 'project', projectId: 'missing' })).toThrow('Project memory target not found')
+    expect(new MemoryProposalStore(join(workspaceRoot, 'memory')).get(proposal.id)?.status).toBe('pending')
+    mkdirSync(join(workspaceRoot, 'projects', 'rox', 'MEMORY.md'))
+    expect(() => approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'project' })).toThrow()
+    const reloaded = new MemoryProposalStore(join(workspaceRoot, 'memory')).get(proposal.id)
+    expect(reloaded?.status).toBe('pending')
+    expect(reloaded?.approval?.writtenAt).toBeUndefined()
+  })
+
+  it('recovers after target write but before status commit without duplicating project memory', () => {
+    const { store, proposal } = savedProposal()
+    const save = store.save.bind(store)
+    let writes = 0
+    store.save = (value) => {
+      if (++writes === 2) throw new Error('simulated status disk failure')
+      return save(value)
+    }
+    expect(() => approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'project' })).toThrow('status disk failure')
+    const path = join(workspaceRoot, 'projects', 'rox', 'MEMORY.md')
+    const before = readFileSync(path, 'utf8')
+    const reloaded = new MemoryProposalStore(join(workspaceRoot, 'memory'))
+    expect(reloaded.get(proposal.id)?.status).toBe('pending')
+    const result = approveMemoryProposalDurably({ store: reloaded, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'project' })
+    expect(result?.status).toBe('approved_project')
+    expect(result?.approval?.writtenAt).toBeTruthy()
+    expect(readFileSync(path, 'utf8')).toBe(before)
+    expect(approveMemoryProposalDurably({ store: reloaded, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'project' })?.approval).toEqual(result?.approval)
+  })
+
+  it('writes an explicit workspace target without touching legacy global lessons', () => {
+    const { store, proposal } = savedProposal()
+    const result = approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'workspace' })
+    expect(result?.status).toBe('approved_workspace')
+    const lessons = new LessonStore(join(workspaceRoot, 'memory', 'lessons.jsonl'), 'workspace').list()
+    expect(lessons).toHaveLength(1)
+    expect(lessons[0]?.scope).toBe('workspace')
+    expect(lessons[0]?.source.proposalId).toBe(proposal.id)
+    expect(existsSync(join(configDir, 'memory', 'lessons.jsonl'))).toBe(false)
+  })
+
+  it('confirms a deduplicated lesson with different letter case and recovers its receipt after reload', () => {
+    const { store, proposal } = savedProposal()
+    const lessons = new LessonStore(join(workspaceRoot, 'memory', 'lessons.jsonl'), 'workspace')
+    lessons.add({ ts: proposal.createdAt, rule: proposal.text.toLowerCase(), category: 'general', scope: 'workspace', source: { sessionId: 'earlier', trigger: 'explicit' } })
+    const save = store.save.bind(store)
+    let writes = 0
+    store.save = value => {
+      if (++writes === 2) throw new Error('simulated status disk failure')
+      return save(value)
+    }
+    expect(() => approveMemoryProposalDurably({ store, workspaceRoot, proposalId: proposal.id, scope: 'workspace' })).toThrow('status disk failure')
+    const result = approveMemoryProposalDurably({ store: new MemoryProposalStore(join(workspaceRoot, 'memory')), workspaceRoot, proposalId: proposal.id, scope: 'workspace' })
+    expect(result?.status).toBe('approved_workspace')
+    expect(result?.approval?.writtenAt).toBeTruthy()
+    expect(new LessonStore(lessons.filePath, 'workspace').list()).toHaveLength(1)
+  })
+
+  it('requires a verified personal owner and isolates authenticated lessons', () => {
+    const owner = { issuer: 'test', subject: 'alice' }
+    const { store, proposal } = savedProposal(owner)
+    expect(() => approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'personal' })).toThrow('authenticated owner')
+    const result = approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'personal', owner })
+    expect(result?.status).toBe('approved_personal')
+    const lessons = new LessonStore(join(configDir, 'memory', 'lessons.jsonl'), 'global')
+    expect(lessons.listForOwner(owner)).toHaveLength(1)
+    expect(lessons.listForOwner({ issuer: 'test', subject: 'bob' })).toHaveLength(0)
+    expect(lessons.listForOwner()).toHaveLength(0)
+  })
+
+  it('rejects stale workspace bindings and hides another author’s proposals', async () => {
+    const alice = nativeActor('alice')
+    const owner = { issuer: alice.issuer, subject: alice.subject }
+    savedProposal(owner)
+    const stale = createHarness({ workspaceId: 'foreign' })
+    await expect(stale.invoke(RPC_CHANNELS.memory.LIST_PROPOSALS, 'ws1')).rejects.toThrow('Workspace access denied')
+    const principal = nativeActor('bob')
+    const other = createHarness({ workspaceId: 'ws1', principal })
+    expect(await other.invoke(RPC_CHANNELS.memory.LIST_PROPOSALS, 'ws1')).toEqual([])
+    await expect(other.invoke(RPC_CHANNELS.memory.LIST_PROPOSALS, 'foreign')).rejects.toThrow('Workspace access denied')
+    await expect(other.invoke(RPC_CHANNELS.memory.APPROVE_PROPOSAL, 'ws1', 'mp_durable', 'personal')).rejects.toThrow('owner access denied')
+  })
+})
+
 afterEach(() => {
+  nativeFixture?.authority.close()
+  nativeFixture = undefined
   rmSync(workspaceRoot, { recursive: true, force: true })
 })
 
@@ -156,6 +293,46 @@ describe('memory proposal LLM extraction with regex fallback', () => {
       { id: 'm2', role: 'assistant', content: 'Хорошо, буду отвечать коротко.' },
     ],
   }
+
+  for (const native of [false, true]) {
+    it(`rejects a foreign or missing canonical session before any ${native ? 'native' : 'local'} LLM call`, async () => {
+      let calls = 0
+      const context: Partial<RequestContext> = { workspaceId: 'ws1',
+        ...(native ? { principal: nativeActor('alice') } : {}) }
+      const { invoke } = createHarness(context, {
+        getSessions: () => [{ id: 'owned', workspaceId: 'ws1' }, { id: 'foreign', workspaceId: 'ws2' }] as ReturnType<HandlerDeps['sessionManager']['getSessions']>,
+        getSession: async id => ({ id, workspaceId: 'ws1', messages: input.messages }) as Awaited<ReturnType<HandlerDeps['sessionManager']['getSession']>>,
+        querySessionLlm: async () => { calls++; return { text: '{"proposals":[]}' } },
+      })
+      for (const sessionId of ['foreign', 'missing']) {
+        await expect(invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, { ...input, sessionId })).rejects.toThrow(native ? 'Session access denied' : 'Memory session workspace access denied')
+      }
+      expect(calls).toBe(0)
+      expect(new MemoryProposalStore(join(workspaceRoot, 'memory')).list()).toHaveLength(0)
+      await invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, { ...input, sessionId: 'owned' })
+      expect(calls).toBe(1)
+    })
+  }
+
+  it('rechecks the extraction grant before the provider and after its awaited result', async () => {
+    let current = false
+    let calls = 0
+    const reply = Promise.withResolvers<{ text: string }>()
+    const started = Promise.withResolvers<void>()
+    const { invoke } = createHarness({ workspaceId: 'ws1' }, {
+      getSessions: () => [{ id: input.sessionId, workspaceId: 'ws1' }] as ReturnType<HandlerDeps['sessionManager']['getSessions']>,
+      querySessionLlm: async () => { calls++; started.resolve(); return reply.promise },
+    }, () => current)
+    await expect(invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, input)).rejects.toThrow('no longer authorized')
+    expect(calls).toBe(0)
+    current = true
+    const pending = invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, input)
+    await started.promise
+    current = false
+    reply.resolve({ text: '{"proposals":[{"text":"Keep a private rule","kind":"rule","sources":[1]}]}' })
+    await expect(pending).rejects.toThrow('no longer authorized')
+    expect(new MemoryProposalStore(join(workspaceRoot, 'memory')).list()).toHaveLength(0)
+  })
 
   it('uses the model answer and asks for the fast tier', async () => {
     const { extractWithLlmFallback } = await import('./memory-proposals')

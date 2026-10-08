@@ -449,6 +449,16 @@ export class NativeAuthority {
       (nativeRoot === undefined || this.#rootBelongsToWorkspace(workspaceId, nativeRoot))
   }
 
+  /** Public membership projection for workspace-owned assignments. No credentials or host-private profile. */
+  listWorkspaceMembers(principal: NativePrincipal, workspaceId: string): Array<{ id: string; name: string }> {
+    if (!this.authorize(principal, workspaceId, 'read')) throw new Error('Workspace membership denied')
+    return this.#db.prepare(`SELECT s.id, COALESCE(p.name,s.label) AS name FROM subjects s
+      JOIN grants g ON g.subject_id=s.id AND g.workspace_id=? AND g.action='read'
+      JOIN grant_versions v ON v.subject_id=g.subject_id AND v.workspace_id=g.workspace_id AND v.action=g.action AND v.version=g.version
+      LEFT JOIN self_profiles p ON p.subject_id=s.id AND p.issuer=?
+      WHERE s.disabled=0 ORDER BY s.id`).all(workspaceId, this.#issuerId) as Array<{ id: string; name: string }>
+  }
+
   /** Pairing provenance lives in private authority custody, not an editable
    * workspace binding file. Only an authenticated session delegate can write it. */
   registerMessagingBinding(principal: NativePrincipal, binding: NativeMessagingBinding, nativeRoot: string): void {

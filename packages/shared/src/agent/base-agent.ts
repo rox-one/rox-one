@@ -958,7 +958,8 @@ ${formattedMessages}
   } {
     const workspaceRoot = this.config.workspace?.rootPath ?? this.workingDirectory;
     const projectRoot = this.config.session?.workingDirectory;
-    const skills = loadAllSkills(workspaceRoot, projectRoot, this.getSkillLoadOptions());
+    const skills = loadAllSkills(workspaceRoot, projectRoot, this.getSkillLoadOptions())
+      .filter(skill => this.config.allowedSkillSlugs === undefined || this.config.allowedSkillSlugs.includes(skill.slug));
     const skillSlugs = skills.map(s => s.slug);
 
     this.debug(`[extractSkillPaths] Available skills: ${skillSlugs.join(', ')}`);
@@ -1064,7 +1065,8 @@ ${formattedMessages}
 
     // Prepend read directive to the message so the model reads SKILL.md first.
     const directive = this.formatSkillDirective(skillPaths);
-    const messageParts = [branchSeedContext, transferredSessionContext, directive, cleanMessage].filter(Boolean);
+    const profileRole = this.config.agentProfileSnapshot ? `[Captured agent role]\n${this.config.agentProfileSnapshot.role}\n[/Captured agent role]` : null;
+    const messageParts = [profileRole, branchSeedContext, transferredSessionContext, directive, cleanMessage].filter(Boolean);
     const effectiveMessage = messageParts.join('\n\n');
 
     // Capture the raw user message for source-activation auto-retry. `cleanMessage`

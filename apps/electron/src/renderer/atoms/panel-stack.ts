@@ -16,6 +16,12 @@ function generatePanelId(): string {
 export type PanelType = 'session' | 'source' | 'settings' | 'skills' | 'browser' | 'knowledge' | 'other'
 export type PanelLaneId = 'main'
 export type OpenIntent = 'implicit' | 'explicit'
+export type AuxiliaryTool = 'agent' | 'tasks' | 'automations' | 'memory'
+export interface ToolContextReference {
+  workspaceId: string
+  projectId?: string
+  route: ViewRoute
+}
 
 export interface PanelLanePolicy {
   id: PanelLaneId
@@ -41,10 +47,69 @@ export interface PanelStackEntry {
   proportion: number
   panelType: PanelType
   laneId: PanelLaneId
+  /** Tools keep their own routes without taking over primary navigation. */
+  tool?: AuxiliaryTool
+  toolContext?: ToolContextReference
 }
 
 export const panelStackAtom = atom<PanelStackEntry[]>([])
-export const focusedPanelIdAtom = atom<string | null>(null)
+const focusedPanelIdValueAtom = atom<string | null>(null)
+export const primaryPanelIdAtom = atom<string | null>(null)
+export const lastAuxiliaryToolAtom = atom<AuxiliaryTool | null>(null)
+export const focusedPanelIdAtom = atom(
+  get => get(focusedPanelIdValueAtom),
+  (get, set, id: string | null) => {
+    set(focusedPanelIdValueAtom, id)
+    const entry = get(panelStackAtom).find(panel => panel.id === id)
+    if (entry && !entry.tool) set(primaryPanelIdAtom, id)
+    if (entry?.tool && entry.tool !== 'agent') set(lastAuxiliaryToolAtom, entry.tool)
+  },
+)
+
+export const primaryPanelRouteAtom = atom(get => {
+  const stack = get(panelStackAtom)
+  return (stack.find(entry => entry.id === get(primaryPanelIdAtom) && !entry.tool)
+    ?? stack.find(entry => !entry.tool))?.route ?? null
+})
+
+export const openAuxiliaryPanelAtom = atom(null, (get, set, input: {
+  tool: AuxiliaryTool; route: ViewRoute; context?: ToolContextReference
+}) => {
+  const stack = get(panelStackAtom)
+  const existing = stack.find(entry => entry.tool === input.tool)
+  if (existing) {
+    set(focusedPanelIdAtom, existing.id)
+    return
+  }
+  const entry = { ...createEntry(input.route, 1), tool: input.tool, toolContext: input.context }
+  set(panelStackAtom, normalizeProportions([...stack, entry]))
+  set(focusedPanelIdAtom, entry.id)
+})
+
+/** Surface navigation always targets the retained primary panel. */
+export const updatePrimaryPanelRouteAtom = atom(null, (get, set, route: ViewRoute) => {
+  const stack = get(panelStackAtom)
+  const primary = stack.find(entry => entry.id === get(primaryPanelIdAtom) && !entry.tool)
+    ?? stack.find(entry => !entry.tool)
+  if (!primary) {
+    const entry = createEntry(route, 1)
+    set(panelStackAtom, normalizeProportions([entry, ...stack]))
+    set(focusedPanelIdAtom, entry.id)
+  } else {
+    set(panelStackAtom, stack.map(entry => entry.id === primary.id
+      ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry))
+    set(focusedPanelIdAtom, primary.id)
+  }
+})
+
+/** Late asynchronous results address their owning panel, never current focus. */
+export const updatePanelRouteByIdAtom = atom(null, (get, set, input: { id: string; route: ViewRoute }) => {
+  const stack = get(panelStackAtom)
+  if (!stack.some(entry => entry.id === input.id)) return false
+  set(panelStackAtom, stack.map(entry => entry.id === input.id
+    ? { ...entry, route: input.route, panelType: getPanelTypeFromRoute(input.route) } : entry))
+  return true
+})
 
 export const panelCountAtom = atom((get) => get(panelStackAtom).length)
 
@@ -228,6 +293,13 @@ export const closePanelAtom = atom(
     const stack = get(panelStackAtom)
     const idx = stack.findIndex(p => p.id === id)
     if (idx === -1) return
+    // The main surface remains available while a tool is open. Closing it
+    // returns to the default inbox rather than leaving an orphan tool stack.
+    if (!stack[idx].tool && stack.some(panel => panel.tool) && stack.filter(panel => !panel.tool).length === 1) {
+      set(panelStackAtom, stack.map(panel => panel.id === id ? { ...panel, route: 'inbox' as ViewRoute, panelType: 'other' } : panel))
+      set(focusedPanelIdAtom, id)
+      return
+    }
     const remaining = [...stack.slice(0, idx), ...stack.slice(idx + 1)]
 
     set(panelStackAtom, normalizeProportions(remaining))
@@ -242,7 +314,7 @@ export const closePanelAtom = atom(
 export const reconcilePanelStackAtom = atom(
   null,
   (get, set, { entries, focusedIndex }: {
-    entries: { route: ViewRoute; proportion: number }[]
+    entries: { route: ViewRoute; proportion: number; tool?: AuxiliaryTool; toolContext?: ToolContextReference }[]
     focusedIndex?: number
   }): boolean => {
     if (entries.length === 0) return false
@@ -256,26 +328,26 @@ export const reconcilePanelStackAtom = atom(
     const newStack = entries.map((target, i) => {
       const positional = current[i]
 
-      if (positional && positional.route === target.route && !used.has(positional.id)) {
+      if (positional && positional.route === target.route && positional.tool === target.tool && !used.has(positional.id)) {
         used.add(positional.id)
         const updated = createEntry(target.route, target.proportion, positional.id)
-        return { ...updated, proportion: target.proportion }
+        return { ...updated, proportion: target.proportion, tool: target.tool, toolContext: target.toolContext }
       }
 
-      const any = current.find(c => c.route === target.route && !used.has(c.id))
+      const any = current.find(c => c.route === target.route && c.tool === target.tool && !used.has(c.id))
       if (any) {
         used.add(any.id)
         const updated = createEntry(target.route, target.proportion, any.id)
-        return { ...updated, proportion: target.proportion }
+        return { ...updated, proportion: target.proportion, tool: target.tool, toolContext: target.toolContext }
       }
 
       if (positional && !used.has(positional.id)) {
         used.add(positional.id)
         const updated = createEntry(target.route, target.proportion, positional.id)
-        return { ...updated, proportion: target.proportion }
+        return { ...updated, proportion: target.proportion, tool: target.tool, toolContext: target.toolContext }
       }
 
-      return createEntry(target.route, target.proportion)
+      return { ...createEntry(target.route, target.proportion), tool: target.tool, toolContext: target.toolContext }
     })
 
     const normalized = normalizeProportions(newStack)
@@ -287,6 +359,8 @@ export const reconcilePanelStackAtom = atom(
         p.route === current[i].route &&
         p.laneId === current[i].laneId &&
         p.panelType === current[i].panelType &&
+        p.tool === current[i].tool &&
+        JSON.stringify(p.toolContext) === JSON.stringify(current[i].toolContext) &&
         Math.abs(p.proportion - current[i].proportion) < 0.001
       )
     ) {
@@ -348,7 +422,7 @@ export const updateFocusedPanelRouteAtom = atom(
 
     const updated = stack.map((p) =>
       p.id === focused.id
-        ? { ...createEntry(route, p.proportion, p.id), proportion: p.proportion }
+        ? { ...p, ...createEntry(route, p.proportion, p.id), proportion: p.proportion }
         : p
     )
 

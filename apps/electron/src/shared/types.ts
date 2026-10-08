@@ -530,6 +530,11 @@ export interface WorkGraphConnectionRecord {
 }
 
 export interface ElectronAPI {
+  workspaceWorkRead(workspaceId: string): Promise<import('@rox/shared/workspace-work').WorkspaceWorkSnapshot>
+  workspaceWorkWrite(workspaceId: string, input: import('@rox/shared/workspace-work').WorkspaceWorkWrite): Promise<import('@rox/shared/workspace-work').WorkspaceWorkResult>
+  workspaceWorkDelete(workspaceId: string, input: import('@rox/shared/workspace-work').WorkspaceWorkDelete): Promise<import('@rox/shared/workspace-work').WorkspaceWorkResult>
+  workspaceWorkSnapshotProfile(workspaceId: string, profileId?: string): Promise<import('@rox/shared/workspace-work').AgentProfileSnapshot | null>
+  onWorkspaceWorkChanged(callback: (workspaceId: string, revision: number) => void): () => void
   getRuntimeTraceSnapshot(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
   readRuntimeTraceEvents(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
   readRuntimeTracePayload(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>

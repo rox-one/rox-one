@@ -17,6 +17,11 @@ function listener(channel: string) {
 }
 
 export const CHANNEL_MAP = {
+  workspaceWorkRead: invoke(RPC_CHANNELS.workspaceWork.READ),
+  workspaceWorkWrite: invoke(RPC_CHANNELS.workspaceWork.WRITE),
+  workspaceWorkDelete: invoke(RPC_CHANNELS.workspaceWork.DELETE),
+  workspaceWorkSnapshotProfile: invoke(RPC_CHANNELS.workspaceWork.SNAPSHOT_PROFILE),
+  onWorkspaceWorkChanged: listener(RPC_CHANNELS.workspaceWork.CHANGED),
   getRuntimeTraceSnapshot: invoke(RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT),
   readRuntimeTraceEvents: invoke(RPC_CHANNELS.runtimeTrace.READ_EVENTS),
   readRuntimeTracePayload: invoke(RPC_CHANNELS.runtimeTrace.READ_PAYLOAD),

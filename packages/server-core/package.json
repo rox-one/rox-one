@@ -25,7 +25,8 @@
     "./workgraph": "./src/workgraph/index.ts",
     "./observability": "./src/observability/index.ts",
     "./meetings": "./src/meetings/index.ts",
-    "./docs/*": "./src/docs/*.ts"
+    "./docs/*": "./src/docs/*.ts",
+    "./workspace-work/*": "./src/workspace-work/*.ts"
   },
   "scripts": {},
   "dependencies": {

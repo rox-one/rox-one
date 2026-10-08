@@ -16,6 +16,7 @@ import { TEAM_FLAG, dispatchTeam, readTeamState, teamActionContext, useTeamFlag,
 import { useTeamRoster } from '@/components/team/use-team-roster'
 import { useTranslation } from 'react-i18next'
 import { navigate, routes } from '@/lib/navigate'
+import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { useInboxItems } from '@/hooks/useInboxItems'
 import {
   Badge,
@@ -74,6 +75,7 @@ const SWITCH_CLASS = 'relative h-4 w-7 shrink-0 cursor-pointer appearance-none r
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
+  const canHandleKeyboard = usePanelKeyboardGuard()
   const tourSignals = useTourSignals()
   const listTourRef = useTourTarget('inbox.list')
   const actionsTourRef = useTourTarget('inbox.actions')
@@ -93,7 +95,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const { items, state, setState, counts, now, loaded, loading, errors, staleSources, reload, workspaceId, shell, sessions, actorContext, actorContextRef: contextRef } = useInboxItems({ withRemote: true, teamInbox, teamActorKey })
   const [preferences, setPreferences] = useAtom(inboxPreferencesAtom)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<InboxPageFilter>('all')
+  const [filter, setFilter] = useState<InboxPageFilter>('decisions')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [bulkAction, setBulkAction] = useState<'read' | 'archive' | null>(null)
   const [bulkFailures, setBulkFailures] = useState<Record<string, string>>({})
@@ -363,9 +365,14 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     }
   })
 
-  const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openSession)
+  const handleListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openSession)
+  const onListKeys: typeof handleListKeys = event => {
+    if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
+    handleListKeys(event)
+  }
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || !canHandleKeyboard(event.target)) return
       if (contextRef.current !== actorContext || !actorContext.actorKey) return
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, [contenteditable="true"]')) return

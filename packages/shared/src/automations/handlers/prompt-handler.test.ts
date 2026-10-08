@@ -343,6 +343,18 @@ describe('PromptHandler', () => {
   });
 
   describe('onPromptsReady callback', () => {
+    it('retains canonical project and dialogue context on an emitted prompt', async () => {
+      const onPromptsReady = jest.fn();
+      const context = { workspaceId: 'test-workspace', projectId: 'project', object: { kind: 'session' as const, id: 'dialogue' } };
+      const handler = new PromptHandler(createOptions({ onPromptsReady }), createMockConfigProvider({ LabelAdd: [{ context, actions: [{ type: 'prompt', prompt: 'Review' }] }] }));
+      handler.subscribe(bus);
+      await bus.emit('LabelAdd', { workspaceId: 'test-workspace', projectId: 'other', sessionId: 'dialogue', timestamp: Date.now(), label: 'review' });
+      expect(onPromptsReady).not.toHaveBeenCalled();
+      await bus.emit('LabelAdd', { workspaceId: 'test-workspace', projectId: 'project', sessionId: 'dialogue', timestamp: Date.now(), label: 'review' });
+      const prompts: PendingPrompt[] = onPromptsReady.mock.calls[0]![0];
+      expect(prompts[0]?.automationContext).toEqual(context);
+      handler.dispose();
+    });
     it('should deliver multiple prompts from a single event', async () => {
       const onPromptsReady = jest.fn();
       const configProvider = createMockConfigProvider({

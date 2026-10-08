@@ -10,8 +10,11 @@ import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capabili
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
 import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue } from 'jotai'
-import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
+import { useAtomValue, useStore } from 'jotai'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
+import { captureWorkspaceToolOpen, openWorkspaceTool, type WorkspaceToolOpenIntent } from '@/lib/open-workspace-tool'
+import { projectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
@@ -24,7 +27,6 @@ import { parseNoteBlockAddress, resolveNoteBlockId } from '@rox/core/mindmap/der
 import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { NavigationContext } from '@/contexts/NavigationContext'
-import { RightSessionShell } from '@/components/session-workbench/RightSessionShell'
 import {
   bindRightSessionContext,
   describeRightSessionOpen,
@@ -338,26 +340,22 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     activeWorkspaceId,
     onCreateSession,
     onOpenFile,
-    onSendMessage,
     onInputChange,
-    getDraft,
     labels = [],
     sessionStatuses = [],
     projects = [],
+    panelId,
   } = useAppShellContext()
-  const activeSessionId = useAtomValue(activeSessionIdAtom)
+  const store = useStore()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const activeProjectId = activeSessionId ? sessionMetaMap.get(activeSessionId)?.projectId : undefined
-  const activeProjectSlug = projects.find((p) => p.id === activeProjectId)?.slug
+  const workspaceProjects = useAtomValue(workspaceProjectContextsAtom)
+  const activeProjectId = activeWorkspaceId ? workspaceProjects[activeWorkspaceId] ?? undefined : undefined
+  const noteScope = React.useMemo(() => projectNoteScope(activeProjectId, projects), [activeProjectId, projects])
   const [rightSessionContext, setRightSessionContext] = React.useState<Rox2Context | null>(null)
-  const [sideSessionPrompt, setSideSessionPrompt] = React.useState('')
-  const [sideNoteChip, setSideNoteChip] = React.useState<{ title: string; path: string } | null>(null)
-  const [rightSessionFocusToken, setRightSessionFocusToken] = React.useState(0)
-  const sideSessionId = rightSessionContext?.sessionId ?? null
+  const [openingAgent, setOpeningAgent] = React.useState(false)
+  const openingAgentRef = React.useRef(false)
   React.useEffect(() => {
-    if (rightSessionContext && rightSessionContext.workspaceId !== activeWorkspaceId) {
-      setRightSessionContext(null); setSideSessionPrompt(''); setSideNoteChip(null)
-    }
+    if (rightSessionContext && rightSessionContext.workspaceId !== activeWorkspaceId) setRightSessionContext(null)
   }, [activeWorkspaceId, rightSessionContext])
   const [notes, setNotes] = React.useState<NoteSummary[]>([])
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
@@ -440,7 +438,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [setDocRowEl, docRowWidth] = useNotesPanelWidth<HTMLDivElement>()
   const [setShellEl, shellWidth] = useNotesPanelWidth<HTMLDivElement>()
   const [inspectorSheetOpen, setInspectorSheetOpen] = React.useState(false)
-  const inlineAuxiliary = notesAuxiliaryFits(shellWidth, inspectorCollapsed, Boolean(rightSessionContext))
+  const inlineAuxiliary = notesAuxiliaryFits(shellWidth, inspectorCollapsed, false)
   const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
@@ -1139,8 +1137,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setTagDraft(activeNote?.tags.join(', ') ?? '')
   }, [activeNote?.id, activeNote?.tags])
 
+  const scopedNotes = React.useMemo(() => notes.filter(note => noteInProjectScope(note.id, noteScope)), [notes, noteScope])
   const visibleNotes = React.useMemo(() => {
-    const filtered = filterNotes(searchResults ?? notes, searchResults ? '' : query, selectedTag)
+    const filtered = filterNotes((searchResults ?? scopedNotes).filter(note => noteInProjectScope(note.id, noteScope)), searchResults ? '' : query, selectedTag)
     if (searchResults) return filtered
     // Apply stable sidebar order — new notes (not yet in order) go to front
     const orderIndex = new Map(sidebarOrder.map((id, i) => [id, i]))
@@ -1152,12 +1151,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       if (ib === -1) return 1
       return ia - ib
     })
-  }, [notes, sidebarOrder, searchResults, query, selectedTag])
+  }, [scopedNotes, noteScope, sidebarOrder, searchResults, query, selectedTag])
   const allTags = React.useMemo(() => {
     const tags = new Set<string>()
-    notes.forEach(note => note.tags.forEach(tag => tags.add(tag)))
+    scopedNotes.forEach(note => note.tags.forEach(tag => tags.add(tag)))
     return [...tags].sort((a, b) => a.localeCompare(b))
-  }, [notes])
+  }, [scopedNotes])
 
   const currentProperties = React.useMemo(() => activeNote?.properties ?? {}, [activeNote?.properties])
   const propertyEntries = React.useMemo(
@@ -1231,11 +1230,13 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   const handleCreate = async () => {
     if (!activeWorkspaceId || !createTitle.trim()) return
+    const destination = noteCreationFolder(noteScope, createInFolder)
+    if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     if (!await flushBeforeAction()) return
     const note = await createNoteWithEvidence(
       activeWorkspaceId,
       createTitle.trim(),
-      createInFolder,
+      destination.folder,
       mutationOptions(activeWorkspaceId, createTitle.trim(), null),
     )
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, note.id), note.nativeRevision ?? null)
@@ -1248,8 +1249,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   const openCreateNoteDialog = (folder?: string) => {
     setCreateTitle('')
-    const projectFolder = activeProjectSlug ? `projects/${activeProjectSlug}` : undefined
-    setCreateInFolder(folder ?? projectFolder)
+    const destination = noteCreationFolder(noteScope, folder)
+    if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
+    setCreateInFolder(destination.folder)
     setCreateDialogOpen(true)
   }
 
@@ -1261,8 +1263,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   const handleCreateFolder = async () => {
     if (!activeWorkspaceId || !createFolderName.trim()) return
+    const destination = newProjectNoteFolder(noteScope, createFolderName)
+    if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
+    const folder = destination.folder!
     if (!await flushBeforeAction()) return
-    const folder = stripMdExtension(createFolderName.trim()).replace(/^\/+|\/+$/g, '')
     const note = await createNoteWithEvidence(
       activeWorkspaceId,
       t('notes.untitled'),
@@ -1486,6 +1490,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }
 
   const openRenameFolderDialog = (folder: string) => {
+    if (!noteCreationFolder(noteScope, folder).allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     setRenameFolderTarget(folder)
     setRenameFolderName(folder.split('/').pop() ?? folder)
     setRenameFolderDialogOpen(true)
@@ -1493,6 +1498,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   const handleRenameFolder = async () => {
     if (!activeWorkspaceId || !renameFolderTarget || !renameFolderName.trim()) return
+    const parent = renameFolderTarget.slice(0, Math.max(0, renameFolderTarget.lastIndexOf('/')))
+    const target = [parent, renameFolderName.trim()].filter(Boolean).join('/')
+    if (!noteCreationFolder(noteScope, renameFolderTarget).allowed || !noteCreationFolder(noteScope, target).allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     try {
       await window.electronAPI.renameFolderNote(activeWorkspaceId, renameFolderTarget, renameFolderName.trim())
       setRenameFolderDialogOpen(false)
@@ -1506,12 +1514,14 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }
 
   const openDeleteFolderDialog = (folder: string) => {
+    if (!noteCreationFolder(noteScope, folder).allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     setDeleteFolderTarget(folder)
     setDeleteFolderDialogOpen(true)
   }
 
   const handleDeleteFolder = async () => {
     if (!activeWorkspaceId || !deleteFolderTarget) return
+    if (!noteCreationFolder(noteScope, deleteFolderTarget).allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     try {
       const result = await window.electronAPI.deleteFolderNote(activeWorkspaceId, deleteFolderTarget)
       setDeleteFolderDialogOpen(false)
@@ -1886,8 +1896,13 @@ h1,h2,h3{margin-top:1.5em}
     sessionName: string
     prompt: string
     chip: { title: string; path: string }
+    reuse?: boolean
+    intent?: WorkspaceToolOpenIntent
   }) => {
-    if (!activeWorkspaceId || !activeNote) return
+    if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
+    if (noteScope.kind === 'unavailable') { toast.error(t('navigation.notes.scopeUnavailable')); return }
+    const intent = opts.intent ?? captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    if (!intent) return
     const entity = bindNativeNote({
       id: activeNote.id,
       title: activeNote.title,
@@ -1901,24 +1916,34 @@ h1,h2,h3{margin-top:1.5em}
       permissionMode: 'allow-all' as const,
       revisionByEntityId: revisionByEntityId(entity.id, activeNote.updatedAt),
     }
-    if (describeRightSessionOpen(rightSessionContext, surface) === 'reuse') {
-      setRightSessionFocusToken((n) => n + 1)
+    const reuseSessionId = rightSessionContext?.sessionId
+    const reuseMeta = reuseSessionId ? sessionMetaMap.get(reuseSessionId) : undefined
+    if (opts.reuse !== false && reuseSessionId && reuseMeta && reuseMeta.projectId === activeProjectId && describeRightSessionOpen(rightSessionContext, surface) === 'reuse') {
+      openWorkspaceTool(store, intent, routes.view.allSessions(reuseSessionId))
       return
     }
-    // The session service resolves the selected workspace's provider and model.
-    const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName })
-    const ctx = bindRightSessionContext({ ...surface, sessionId: session.id })
-    // Prefill only — do NOT auto-send. Keep note open; open side session panel.
-    onInputChange(session.id, opts.prompt)
-    setRightSessionContext(ctx)
-    setSideSessionPrompt(opts.prompt)
-    setSideNoteChip(opts.chip)
-    setRightSessionFocusToken((n) => n + 1)
-  }, [activeWorkspaceId, activeNote, rightSessionContext, onCreateSession, onInputChange])
+    openingAgentRef.current = true
+    setOpeningAgent(true)
+    try {
+      // The canonical session service resolves this workspace's provider, model and default profile.
+      const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName, projectId: activeProjectId })
+      // Prefill the canonical draft only; opening the utility never sends the note automatically.
+      onInputChange(session.id, opts.prompt)
+      if (openWorkspaceTool(store, intent, routes.view.allSessions(session.id))) {
+        setRightSessionContext(bindRightSessionContext({ ...surface, sessionId: session.id }))
+      }
+    } catch (error) {
+      toast.error(t('common.error'), { description: error instanceof Error ? error.message : String(error) })
+    } finally {
+      openingAgentRef.current = false
+      setOpeningAgent(false)
+    }
+  }, [activeWorkspaceId, activeNote, activeProjectId, noteScope, rightSessionContext, sessionMetaMap, store, panelId, onCreateSession, onInputChange, t])
 
-  const handleAskAgent = async (mode: AIActionMode = 'extract-tasks') => {
-    if (!activeWorkspaceId || !activeNote) return
-    if (!await flushBeforeAction()) return
+  const handleAskAgent = React.useCallback(async (mode: AIActionMode = 'extract-tasks') => {
+    if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
+    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    if (!intent || !await flushBeforeAction()) return
     const { sessionNameKey } = AI_PROMPTS[mode]
     const attachPath = `notes/${activeNote.relativePath}`
     const attachTitle = activeNote.title
@@ -1949,12 +1974,14 @@ h1,h2,h3{margin-top:1.5em}
       sessionName: `${t(sessionNameKey)}: ${activeNote.title}`,
       prompt,
       chip: { title: attachTitle, path: attachPath },
+      intent,
     })
-  }
+  }, [activeWorkspaceId, activeNote, activeProjectId, store, panelId, flushBeforeAction, t, activeNoteTasks, content, openNotesRightSession])
 
   const handleBoundChat = async () => {
-    if (!activeWorkspaceId || !activeNote) return
-    if (!await flushBeforeAction()) return
+    if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
+    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    if (!intent || !await flushBeforeAction()) return
     const attachPath = `notes/${activeNote.relativePath}`
     const prompt = [
       t('notes.ai.contextHeader', { title: activeNote.title }),
@@ -1965,23 +1992,9 @@ h1,h2,h3{margin-top:1.5em}
       sessionName: activeNote.title,
       prompt,
       chip: { title: activeNote.title, path: attachPath },
+      intent,
     })
   }
-
-  const closeSideSession = React.useCallback(() => {
-    setRightSessionContext(null)
-    setSideSessionPrompt('')
-    setSideNoteChip(null)
-  }, [])
-
-  const sendSideSession = React.useCallback(() => {
-    if (!sideSessionId) return
-    const draft = (getDraft(sideSessionId) || sideSessionPrompt).trim()
-    if (!draft) return
-    onSendMessage(sideSessionId, draft)
-    onInputChange(sideSessionId, '')
-    setSideSessionPrompt('')
-  }, [sideSessionId, sideSessionPrompt, getDraft, onSendMessage, onInputChange])
 
   const openAssetRenameDialog = (asset: NoteAsset) => {
     if (assetsUnavailable) return
@@ -2151,8 +2164,11 @@ h1,h2,h3{margin-top:1.5em}
     editor.chain().focus().deleteRange({ from, to }).insertContent(snippet ?? item.insert).run()
     setCommandQuery(null)
     if (item.subject === 'action' && item.id === 'bang:ask-agent') void handleAskAgent('summarize')
-    if (item.subject === 'session') navigate(routes.view.allSessions(item.insert.replace('@session:', '')))
-  }, [commandQuery])
+    if (item.subject === 'session' && activeWorkspaceId) {
+      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+      if (intent) openWorkspaceTool(store, intent, routes.view.allSessions(item.insert.replace('@session:', '')))
+    }
+  }, [commandQuery, activeWorkspaceId, activeProjectId, store, panelId, handleAskAgent])
 
   const wikiMenu = showWikiMenu ? (
     <div
@@ -2310,12 +2326,12 @@ h1,h2,h3{margin-top:1.5em}
             onCopyNoteLink={copyNoteLink}
             onCopyNotePath={copyNotePath}
             onRevealNote={revealNote}
-            emptyMessage={query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
+            emptyMessage={noteScope.kind === 'unavailable' ? t('navigation.notes.scopeUnavailable') : query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
           />
         </div>
         </DndContext>
         <div className="shrink-0 px-3 py-2 text-[11px] text-muted-foreground/80">
-          {t('notes.vault.noteCount', { count: notes.length })} · {assetsUnavailable
+          {t('notes.vault.noteCount', { count: scopedNotes.length })} · {assetsUnavailable
             ? `${t('notes.inspector.assets')}: ${t('common.unavailable')}`
             : t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
@@ -2355,11 +2371,11 @@ h1,h2,h3{margin-top:1.5em}
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
           <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
-          <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
+          <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} disabled={openingAgent} />
           <button
             className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
             onClick={() => void handleBoundChat()}
-            disabled={!activeNote}
+            disabled={!activeNote || openingAgent}
             title={t('notes.sideSession.newChat')}
             data-testid="notes-bound-chat"
           >
@@ -2381,6 +2397,12 @@ h1,h2,h3{margin-top:1.5em}
             {saveError ? t('notes.save.failed') : saving ? t('common.saving') : dirty ? t('notes.save.autosaving') : activeNote ? t('notes.save.saved') : ''}
           </span>
         </div>
+
+        {noteScope.kind === 'unavailable' ? (
+          <div role="status" className="mx-3 mb-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">{t('navigation.notes.scopeUnavailable')}</div>
+        ) : activeNote && !noteInProjectScope(activeNote.id, noteScope) ? (
+          <div role="status" data-testid="notes-outside-project" className="mx-3 mb-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">{t('navigation.notes.currentOutsideProject', { project: noteScope.kind === 'project' ? noteScope.name : '' })}</div>
+        ) : null}
 
         {assetsUnavailable && (
           <div className="mx-3 mb-2 flex min-w-0 items-center justify-between gap-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground"
@@ -2499,7 +2521,7 @@ h1,h2,h3{margin-top:1.5em}
               view={noteView}
               blockTree={visibleBlockTree?.listTree}
               onOpenBlock={openStableBlock}
-              notes={notes.map((note) => ({
+              notes={scopedNotes.map((note) => ({
                 id: note.id,
                 title: note.title,
                 markdown: note.id === activeNote.id ? content : '',
@@ -2549,16 +2571,13 @@ h1,h2,h3{margin-top:1.5em}
                   // Real session with provenance.noteId — not toast-only / not summarize-as-proxy.
                   if (!activeWorkspaceId) return
                   try {
-                    const session = await onCreateSession(activeWorkspaceId, {
-                      name: converted.title,
-                    })
                     const prompt = [
                       `provenance.noteId: ${converted.provenance.noteId}`,
                       '',
                       converted.prompt,
                     ].join('\n')
-                    onInputChange(session.id, prompt)
-                    navigate(routes.view.allSessions(session.id))
+                    await openNotesRightSession({ sessionName: converted.title, prompt, reuse: false,
+                      chip: { title: activeNote.title, path: `notes/${activeNote.relativePath}` } })
                   } catch (err) {
                     toast.error(err instanceof Error ? err.message : String(err))
                   }
@@ -2845,23 +2864,6 @@ h1,h2,h3{margin-top:1.5em}
           )}
         </div>
       </main>
-
-      {rightSessionContext && (
-        <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, rightSessionContext.sessionId])} inline={inlineAuxiliary} open={!inlineAuxiliary} title={t('notes.sideSession.title')} onClose={closeSideSession}>
-        <RightSessionShell
-          context={rightSessionContext}
-          prompt={sideSessionPrompt}
-          focusToken={rightSessionFocusToken}
-          chips={sideNoteChip ? [{ id: rightSessionContext.entityRefs[0] ?? 'note', title: sideNoteChip.title, detail: sideNoteChip.path }] : undefined}
-          onPromptChange={(value) => {
-            setSideSessionPrompt(value)
-            if (sideSessionId) onInputChange(sideSessionId, value)
-          }}
-          onSend={sendSideSession}
-          onClose={closeSideSession}
-        />
-        </NotesResponsiveRail>
-      )}
 
       <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={inlineAuxiliary} open={!inlineAuxiliary && inspectorSheetOpen} title={t('notes.inspector.title')} onClose={() => setInspectorSheetOpen(false)}>
       <NoteInspector

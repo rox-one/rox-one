@@ -92,11 +92,14 @@ export interface LocalMeetingQuestion {
   createdAt: number
 }
 
+export type LocalMeetingTaskRef = { scope: 'personal'; id: string } | { scope: 'workspace'; workspaceId: string; id: string }
+
 export interface LocalMeetingAction {
   id: string
   text: string
   done: boolean
   taskId?: string
+  taskRef?: LocalMeetingTaskRef
   generated?: boolean
   sourceSegmentIds?: string[]
   sourceTranscriptRevision?: number
@@ -250,7 +253,7 @@ export interface MeetingsLocalApi {
   attachExtraction(id: string, input: { runId: string; sessionId: string }): Promise<MeetingsLocalResult<LocalMeeting>>
   finishExtraction(id: string, input: { runId: string; result: LocalMeetingExtractionResult }): Promise<MeetingsLocalResult<LocalMeeting>>
   failExtraction(id: string, input: { runId: string; code: string }): Promise<MeetingsLocalResult<LocalMeeting>>
-  saveAction(id: string, input: { actionId: string; patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId'>>; remove?: boolean; create?: boolean }): Promise<MeetingsLocalResult<LocalMeeting>>
+  saveAction(id: string, input: { actionId: string; patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId' | 'taskRef'>>; remove?: boolean; create?: boolean }): Promise<MeetingsLocalResult<LocalMeeting>>
   trash(id: string): Promise<boolean>
   recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string }): Promise<MeetingsLocalResult<LocalMeeting>>
   recChunk(meetingId: string, chunk: Uint8Array): Promise<boolean>

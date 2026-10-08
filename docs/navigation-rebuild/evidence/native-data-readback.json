@@ -1,0 +1,45 @@
+{
+  "read_at": "2026-10-03T22:39:48.769234+00:00",
+  "scope": "isolated synthetic desktop fixture; UI operations before final main refresh",
+  "workspaceId": "2ebaf193-670c-9f4b-5994-f4a1e9ab6a55",
+  "revision": 3,
+  "tasks": [
+    {
+      "title": "Проверка навигации · задача пространства",
+      "description": "Создано через дополнительную панель рядом с календарём.",
+      "status": "in-progress",
+      "assigneeId": null,
+      "project": null,
+      "dueAt": null,
+      "links": [],
+      "id": "task_b65b9bba-9a07-4a6c-adc5-873c1d4a0327",
+      "workspaceId": "2ebaf193-670c-9f4b-5994-f4a1e9ab6a55",
+      "revision": 2,
+      "createdAt": 1791064431692,
+      "updatedAt": 1791066076680,
+      "authorId": "c00264c3-d411-4970-a338-d4ad484e054a"
+    }
+  ],
+  "workBlocks": [
+    {
+      "taskId": "task_b65b9bba-9a07-4a6c-adc5-873c1d4a0327",
+      "startAt": 1791093600000,
+      "endAt": 1791097200000,
+      "id": "block_8c1b1698-8873-44ec-b569-b9919843e732",
+      "workspaceId": "2ebaf193-670c-9f4b-5994-f4a1e9ab6a55",
+      "authorId": "c00264c3-d411-4970-a338-d4ad484e054a",
+      "revision": 1,
+      "createdAt": 1791066166180,
+      "updatedAt": 1791066166180
+    }
+  ],
+  "drafts": {
+    "drafts": {
+      "261004-bold-branch": {
+        "text": "Проверка навигации: этот черновик должен пережить смену поверхности и перезапуск."
+      }
+    },
+    "updatedAt": 1791065979365
+  },
+  "final_native_acceptance": "pending Mac unlock"
+}

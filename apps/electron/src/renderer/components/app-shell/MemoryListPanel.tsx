@@ -59,6 +59,10 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
   // L3: rules used in ≥2 workspaces, candidates for global promotion
   const [promotionCandidates, setPromotionCandidates] = React.useState<PromotionCandidate[]>([])
   const [proposals, setProposals] = React.useState<MemoryProposal[]>([])
+  const [proposalLoadError, setProposalLoadError] = React.useState(false)
+  const proposalWorkspace = React.useRef(workspaceId)
+  proposalWorkspace.current = workspaceId
+  const proposalReadGeneration = React.useRef(0)
   // Y1: 7-day audit counters + live store aggregates for the insights card
   const [insights, setInsights] = React.useState<MemoryInsights | null>(null)
   // L2: conflicts reported by ADD_LESSON for the just-added rule (panel stays in the form)
@@ -121,11 +125,18 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
 
   const loadProposals = React.useCallback(() => {
     if (!workspaceId) { setProposals([]); return }
+    const generation = ++proposalReadGeneration.current
     window.electronAPI
       .listMemoryProposals(workspaceId)
-      .then((items) => setProposals(items.filter((p) => p.status !== 'deleted')))
-      .catch(() => setProposals([]))
+      .then((items) => {
+        if (proposalWorkspace.current !== workspaceId || generation !== proposalReadGeneration.current) return
+        setProposals(items.filter((p) => p.workspaceId === workspaceId && p.status !== 'deleted'))
+        setProposalLoadError(false)
+      })
+      .catch(() => { if (proposalWorkspace.current === workspaceId && generation === proposalReadGeneration.current) setProposalLoadError(true) })
   }, [workspaceId])
+
+  React.useEffect(() => { setProposals([]); setProposalLoadError(false) }, [workspaceId])
 
   // Y1: the server accepts an optional workspace id — without one the card
   // falls back to global-only aggregates (audit reads are best-effort).
@@ -547,10 +558,14 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       </div>
       </>)}
 
-      {workspaceId && proposals.filter((p) => p.status === 'pending' || p.status === 'approved_project').length > 0 && (
+      {proposalLoadError && <div role="alert" className="mx-1 flex items-center gap-2 text-xs text-destructive">
+        <span>{t('memory.proposal.reloadFailed')}</span>
+        <button type="button" className="rounded-md border border-foreground/15 px-2 py-1 text-foreground" onClick={loadProposals}>{t('memory.proposal.retryLoad')}</button>
+      </div>}
+      {workspaceId && proposals.filter((p) => p.workspaceId === workspaceId && (p.status === 'pending' || p.status.startsWith('approved_'))).length > 0 && (
         <div className="mx-1 flex flex-col gap-2" data-memory-proposal-review>
           <div className={sectionTitleClass()}>{t('memory.proposal.review')}</div>
-          {proposals.filter((p) => p.status === 'pending' || p.status === 'approved_project').map((proposal) => (
+          {proposals.filter((p) => p.workspaceId === workspaceId && (p.status === 'pending' || p.status.startsWith('approved_'))).map((proposal) => (
             <MemoryProposalCard key={proposal.id} proposal={proposal} workspaceId={workspaceId} onChanged={loadProposals} />
           ))}
         </div>

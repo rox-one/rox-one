@@ -21,6 +21,7 @@ import { countGitCommits, countToolCalls } from '@rox/shared/sessions/collection
  * Used by SessionList to avoid re-rendering on message changes
  */
 export interface SessionMeta {
+  agentProfileSnapshot?: import('@rox/shared/workspace-work').AgentProfileSnapshot
   id: string
   name?: string
   /** Preview of first user message (for title fallback) */

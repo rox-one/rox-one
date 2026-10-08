@@ -53,6 +53,17 @@ export type AgentEvent =
 
 export type AutomationTrigger = AppEvent | AgentEvent
 
+export type AutomationObjectKind = 'session' | 'page' | 'meeting' | 'task' | 'decision' | 'note' | 'mail'
+export interface AutomationContextReference {
+  workspaceId: string
+  projectId?: string
+  object?: { kind: AutomationObjectKind; id: string }
+}
+export interface AutomationContextPause {
+  reason: 'target-deleted' | 'target-out-of-scope'
+  detectedAt: string
+}
+
 export const APP_EVENTS: AppEvent[] = [
   'LabelAdd', 'LabelRemove', 'LabelConfigChange',
   'PermissionModeChange', 'FlagChange', 'TodoStateChange', 'SessionStatusChange', 'SchedulerTick',
@@ -221,6 +232,8 @@ export interface AutomationListItem {
   summary: string
   /** Whether this automation is enabled */
   enabled: boolean
+  context?: AutomationContextReference
+  contextPause?: AutomationContextPause
   /** Regex matcher (if any) */
   matcher?: string
   /** Cron expression (SchedulerTick only) */
@@ -541,6 +554,8 @@ interface AutomationsConfigMatcher {
   labels?: string[]
   conditions?: AutomationConditionUI[]
   enabled?: boolean
+  context?: AutomationContextReference
+  contextPause?: AutomationContextPause
   actions?: RawAction[]
   _editorRevision?: string
 }
@@ -628,6 +643,8 @@ export function parseAutomationsConfig(json: unknown): AutomationListItem[] {
         name: deriveAutomationName(eventName, matcher),
         summary: deriveAutomationSummary(eventName, matcher),
         enabled: matcher.enabled !== false,
+        context: matcher.context,
+        contextPause: matcher.contextPause,
         matcher: matcher.matcher,
         cron: matcher.cron,
         timezone: matcher.timezone,

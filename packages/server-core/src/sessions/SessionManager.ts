@@ -5,6 +5,8 @@ import { RuntimeTraceService, type RuntimeTraceRun } from './runtime-trace/servi
 import { known, unknown, type RuntimeContextBlock, type RuntimeTraceQuery, type RuntimeEventsQuery, type RuntimePayloadQuery, type RuntimeLaunch } from '@rox/core/runtime-trace'
 import { CLIENT_BROWSER_INVOKE } from '@rox/server-core/transport'
 import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@rox/server-core/handlers'
+import { resolveWorkspaceAutomationContext } from '../automations/context-resolver'
+import { automationContextFailure } from '@rox/shared/automations/context'
 import { RemoteBrowserPaneManager } from './RemoteBrowserPaneManager'
 import {
   applyShareRevoked,
@@ -139,6 +141,8 @@ import { resolveBulkLabels } from '@rox/shared/sessions/collection'
 import { messageToStored, storedToMessage, type Message, type StoredAttachment, type ToolDisplayMeta, type TokenUsage, type SessionMemoryMode } from '@rox/core/types'
 import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlAsync, getEmojiIcon, resetSummarizationClient, resolveToolIcon, readFileAttachment, selectSpreadMessages, normalizePath } from '@rox/shared/utils'
 import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, type LoadedSkill } from '@rox/shared/skills'
+import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
+import { captureAgentProfileSnapshot } from '../workspace-work/profile.ts'
 import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@rox/shared/prompts/system'
 import { retrieveSourcesForPrompt } from '../sources/source-index-facade'
 import { getToolIconsDir, getMiniModel, isRoxPublicModelId, ROX_DEFAULT_SUBAGENT_MODEL } from '@rox/shared/config'
@@ -925,6 +929,7 @@ interface ManagedSession {
   hasUnread?: boolean
   // Per-session source selection (slugs of enabled sources)
   enabledSourceSlugs?: string[]
+  agentProfileSnapshot?: AgentProfileSnapshot
   // Labels applied to this session (additive tags, many-per-session)
   labels?: string[]
   // Workspace-scoped membership metadata; only the primary is used for project defaults.
@@ -1069,7 +1074,7 @@ interface ManagedSession {
   // Token refresh manager for OAuth token refresh with rate limiting
   tokenRefreshManager: TokenRefreshManager
   // Metadata for sessions created by automations
-  triggeredBy?: { automationName?: string; event?: string; timestamp?: number }
+  triggeredBy?: { automationName?: string; event?: string; timestamp?: number; context?: import('@rox/shared/automations/types').AutomationContextReference }
   // Promise that resolves when the agent instance is ready (for title gen to await)
   agentReady?: Promise<void>
   agentReadyResolve?: () => void
@@ -2034,6 +2039,7 @@ export class SessionManager implements ISessionManager {
             isFlagged: header.isFlagged,
             sessionStatus: header.sessionStatus,
             sessionName: header.name,
+            projectId: header.projectId,
           }).catch((error) => {
             sessionLog.error(`[Automations] Failed to update session metadata:`, error)
           })
@@ -2059,6 +2065,7 @@ export class SessionManager implements ISessionManager {
         enableScheduler: true,
         knowledgeExecutor: this.createKnowledgeActionExecutor(workspaceRootPath, workspaceId),
         cloudRunSubmitExecutor: this.createCloudRunSubmitExecutor(workspaceRootPath, workspaceId),
+        resolveContextReference: reference => resolveWorkspaceAutomationContext(workspaceRootPath, workspaceId, reference),
         onPromptsReady: async (prompts) => {
           // Claim scheduled occurrences durably before any session or provider work.
           const settled = await Promise.allSettled(
@@ -2092,6 +2099,7 @@ export class SessionManager implements ISessionManager {
                 const result = await this.executePromptAutomation({
                   workspaceId,
                   workspaceRootPath,
+                  automationContext: pending.automationContext,
                   prompt: pending.prompt,
                   labels: pending.labels,
                   permissionMode: pending.permissionMode,
@@ -2485,7 +2493,7 @@ export class SessionManager implements ISessionManager {
         // F3: per-session memory-mode lookup — incognito/temporary sessions skip
         // all memory writes (distill/branch/idle triggers). Unknown sessions default
         // to 'persistent' so a session being torn down never loses lessons it earned.
-        getSessionMode: (sessionId) => this.sessions.get(sessionId)?.memoryMode ?? 'persistent',
+        getSessionMode: (sessionId) => this.sessions.get(sessionId)?.agentProfileSnapshot?.memoryScope === 'none' ? 'temporary' : this.sessions.get(sessionId)?.memoryMode ?? 'persistent',
         getNativeContext: (sessionId) => this.nativeMemoryContextFor(sessionId, workspace.id),
         // L1: session provenance (F4) for the feedback loop — which lessons the
         // session saw, so a bad ending can attribute conflicts per scope.
@@ -2568,7 +2576,7 @@ export class SessionManager implements ISessionManager {
     sessionLog.info(`Reloading sources for session ${managed.id}`)
 
     // Reload all sources from disk (craft-agents-docs is always available as MCP server)
-    const allSources = loadAllSources(workspaceRootPath)
+    const allSources = loadAllSources(workspaceRootPath).filter(source => !managed.agentProfileSnapshot || managed.agentProfileSnapshot.sourceSlugs.includes(source.config.slug))
     managed.agent.setAllSources(allSources)
 
     // Rebuild MCP and API servers for session's enabled sources
@@ -2751,6 +2759,7 @@ export class SessionManager implements ISessionManager {
           const automationSystem = this.automationSystems.get(workspaceRootPath)
           if (automationSystem) {
             automationSystem.setInitialSessionMetadata(meta.id, {
+              projectId: meta.projectId,
               permissionMode: meta.permissionMode,
               labels: meta.labels,
               isFlagged: meta.isFlagged,
@@ -2990,6 +2999,7 @@ export class SessionManager implements ISessionManager {
 
     // Auto-enable the source in the session after successful auth
     if (result.success && result.sourceSlug) {
+      assertProfileSources(managed.agentProfileSnapshot, [result.sourceSlug])
       const slugSet = new Set(managed.enabledSourceSlugs || [])
       if (!slugSet.has(result.sourceSlug)) {
         slugSet.add(result.sourceSlug)
@@ -3009,7 +3019,7 @@ export class SessionManager implements ISessionManager {
       const workspaceRootPath = managed.workspace.rootPath
       const sessionPath = getSessionStoragePath(workspaceRootPath, managed.id)
       const enabledSlugs = managed.enabledSourceSlugs || []
-      const allSources = loadAllSources(workspaceRootPath)
+      const allSources = loadAllSources(workspaceRootPath).filter(source => !managed.agentProfileSnapshot || managed.agentProfileSnapshot.sourceSlugs.includes(source.config.slug))
       const enabledSources = allSources.filter(s =>
         enabledSlugs.includes(s.config.slug) && isSourceUsable(s)
       )
@@ -3451,7 +3461,7 @@ export class SessionManager implements ISessionManager {
     // announced to the renderer (see notifySessionCreated). Callers that register the session
     // themselves — the `sessions:create` RPC adds it from the return value — pass
     // `{ emitCreatedEvent: false }` to avoid a redundant hydrate.
-    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null },
   ): Promise<Session> {
     internal?.nativeMemoryContext?.assertAuthorized()
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -3463,6 +3473,27 @@ export class SessionManager implements ISessionManager {
     // Options.permissionMode overrides the workspace default (used by EditPopover for auto-execute)
     const workspaceRootPath = workspace.rootPath
     const wsConfig = loadWorkspaceConfig(workspaceRootPath)
+    const parentSession = options?.parentSessionId ? await this.getSession(options.parentSessionId) : null
+    if (options?.parentSessionId && (!parentSession || parentSession.workspaceId !== workspace.id)) throw new Error('Parent session workspace mismatch')
+    const branchSession = options?.branchFromSessionId ? await this.getSession(options.branchFromSessionId) : null
+    if (options?.branchFromSessionId && (!branchSession || branchSession.workspaceId !== workspace.id)) throw new Error('Branch session workspace mismatch')
+    if (parentSession && branchSession) {
+      const identity = (snapshot?: AgentProfileSnapshot) => snapshot ? JSON.stringify({ ...snapshot, capturedAt: undefined }) : 'unbound'
+      if (identity(parentSession.agentProfileSnapshot) !== identity(branchSession.agentProfileSnapshot)) throw new Error('Parent and branch agent profile bindings conflict')
+    }
+    // Descendants inherit the parent's captured ceiling, even when workspace
+    // defaults or profile definitions changed since the parent was created.
+    // Null preserves an unbound legacy parent rather than applying a new default.
+    const capturedAncestor = branchSession ?? parentSession
+    if (capturedAncestor && options?.agentProfileId && options.agentProfileId !== capturedAncestor.agentProfileSnapshot?.profileId) {
+      throw new Error('Descendant agent profile must match its captured ancestor')
+    }
+    const profileBinding = capturedAncestor ? capturedAncestor.agentProfileSnapshot ?? null : internal?.agentProfileSnapshot
+    const agentProfileSnapshot = profileBinding === undefined
+      ? captureAgentProfileSnapshot(workspaceRootPath, workspace.id, options?.agentProfileId)
+      : profileBinding ? structuredClone(profileBinding) : undefined
+    if (agentProfileSnapshot && agentProfileSnapshot.workspaceId !== workspace.id) throw new Error('Agent profile workspace mismatch')
+    assertProfileSources(agentProfileSnapshot, options?.enabledSourceSlugs ?? agentProfileSnapshot?.sourceSlugs ?? [])
     const globalDefaults = loadConfigDefaults()
 
     // Read permission mode from workspace config, fallback to global defaults
@@ -3482,7 +3513,7 @@ export class SessionManager implements ISessionManager {
     const defaultModel = wsConfig?.defaults?.model
     // Get default enabled sources from workspace config
     const defaultEnabledSourceSlugs = resolveDefaultSessionSources(
-      workspaceRootPath, options?.enabledSourceSlugs, wsConfig?.defaults?.enabledSourceSlugs,
+      workspaceRootPath, options?.enabledSourceSlugs ?? agentProfileSnapshot?.sourceSlugs, wsConfig?.defaults?.enabledSourceSlugs,
     )
 
     // Resolve model tier hints ('fast' / 'default') to actual model IDs.
@@ -3817,10 +3848,12 @@ export class SessionManager implements ISessionManager {
       taskRunId: options?.taskRunId,
       taskNodeId: options?.taskNodeId,
       taskDraft: options?.taskDraft,
+      agentProfileSnapshot,
+      memoryMode: agentProfileSnapshot?.memoryScope === 'none' ? 'temporary' : undefined,
       // Persist only an EXPLICIT selection (e.g. a task's spec.sources on its subtasks).
       // The workspace-default fallback stays dynamic — freezing it into the header would
       // pin every ordinary session to the defaults as of its creation time.
-      enabledSourceSlugs: options?.enabledSourceSlugs,
+      enabledSourceSlugs: options?.enabledSourceSlugs ?? agentProfileSnapshot?.sourceSlugs,
     })
 
     // Branch: copy messages from source session up to and including the branch point
@@ -4006,6 +4039,7 @@ export class SessionManager implements ISessionManager {
     const automationSystem = this.automationSystems.get(workspaceRootPath)
     if (automationSystem) {
       automationSystem.setInitialSessionMetadata(storedSession.id, {
+        projectId: storedSession.projectId,
         permissionMode: storedSession.permissionMode,
         labels: storedSession.labels,
         isFlagged: storedSession.isFlagged,
@@ -4455,7 +4489,7 @@ export class SessionManager implements ISessionManager {
         )
       }
       const enabledSlugs = managed.enabledSourceSlugs || []
-      const allSources = loadAllSources(managed.workspace.rootPath)
+      const allSources = loadAllSources(managed.workspace.rootPath).filter(source => !managed.agentProfileSnapshot || managed.agentProfileSnapshot.sourceSlugs.includes(source.config.slug))
       const enabledSources = allSources.filter(s =>
         enabledSlugs.includes(s.config.slug) && isSourceUsable(s)
       )
@@ -4624,16 +4658,18 @@ export class SessionManager implements ISessionManager {
         .map(m => m.content)
         .join('\n')
         .trim()
-      let memoryBlocks = managed.memoryMode === 'temporary'
+      let memoryBlocks = managed.memoryMode === 'temporary' || managed.agentProfileSnapshot?.memoryScope === 'none'
         ? undefined
         : await this.memoryServiceFor(managed.workspace)?.buildMemoryBlocks({ query: memoryQuery,
+          workspaceOnly: !!managed.agentProfileSnapshot,
           nativeContext: this.nativeMemoryContextFor(managed.id, managed.workspace.id) })
       // P2.7: FTS-retrieve local source docs into the same memoryBlocks payload
       // (sourcesBlock). Same memoryQuery as lessons; fail-soft on missing index.
       if (memoryQuery && managed.workspace?.rootPath) {
         try {
           const retrieved = await retrieveSourcesForPrompt(managed.workspace.rootPath, memoryQuery)
-          const sourcesBlock = formatSourceRetrieveForPrompt(retrieved.hits)
+          const allowedHits = retrieved.hits.filter(hit => !managed.agentProfileSnapshot || managed.agentProfileSnapshot.sourceSlugs.includes(hit.path.split('/')[0]!))
+          const sourcesBlock = formatSourceRetrieveForPrompt(allowedHits)
           if (sourcesBlock) {
             memoryBlocks = { ...(memoryBlocks ?? {}), sourcesBlock }
           }
@@ -4687,6 +4723,8 @@ export class SessionManager implements ISessionManager {
         coreConfig: this.fenceRoxSessionCallbacks(managed.id, execution, {
         roxExecutionContext: execution,
         workspace: managed.workspace,
+        agentProfileSnapshot: managed.agentProfileSnapshot,
+        allowedSkillSlugs: managed.agentProfileSnapshot?.skillSlugs,
         memoryBlocks,
         miniModel,
         thinkingLevel: managed.thinkingLevel,
@@ -4709,7 +4747,7 @@ export class SessionManager implements ISessionManager {
         // Claude-specific
         isHeadless: !AGENT_FLAGS.defaultModesEnabled,
         skipConfigWatcher: true, // Server owns workspace-level ConfigWatcher — don't duplicate in agents
-        automationSystem: this.automationSystems.get(managed.workspace.rootPath),
+        automationSystem: managed.agentProfileSnapshot && !managed.agentProfileSnapshot.automationEnabled ? undefined : this.automationSystems.get(managed.workspace.rootPath),
         systemPromptPreset: managed.systemPromptPreset,
         debugMode: _platform?.isDebugMode ? { enabled: true, logFilePath: _platform.getLogFilePath?.() } : undefined,
         enable1MContext,
@@ -5414,6 +5452,8 @@ export class SessionManager implements ISessionManager {
         // which must stay dependency-free of @rox/shared); the creation flow
         // itself is createTaskFromSpec, shared verbatim with the tasks:create RPC.
         createTaskFn: async (input) => {
+          assertProfileSources(managed.agentProfileSnapshot, input.sources ?? [])
+          assertProfileSkills(managed.agentProfileSnapshot, input.skills ?? [])
           const ws = managed.workspace
           // Match spawn_session: an explicit project wins, otherwise keep newly
           // captured work in the project that owns the invoking session.
@@ -5457,7 +5497,7 @@ export class SessionManager implements ISessionManager {
             throw new Error(`Invalid task spec: ${parsed.error.issues.map(i => i.message).join('; ')}`)
           }
 
-          const created = await createTaskFromSpec(this, ws.id, ws.rootPath, parsed.data)
+          const created = await createTaskFromSpec(this, ws.id, ws.rootPath, parsed.data, { agentProfileSnapshot: managed.agentProfileSnapshot ?? null })
           await this.captureRuntime(async () => {
             const run = this.runtimeTrace.getActive(managed.id)
             if (run) await this.runtimeTrace.record(run, 'artifact.created', { artifact: { id: `task:${created.slug}`, label: parsed.data.title, kind: 'task-spec', uri: `task://${created.slug}`, content: await this.runtimeTrace.content(run, JSON.stringify(parsed.data)) } })
@@ -5663,6 +5703,7 @@ export class SessionManager implements ISessionManager {
 
       // Wire up onSourceActivationRequest to auto-enable sources when agent tries to use them
       managed.agent.onSourceActivationRequest = async (sourceSlug: string): Promise<boolean> => {
+        if (managed.agentProfileSnapshot && !managed.agentProfileSnapshot.sourceSlugs.includes(sourceSlug)) return false
         sessionLog.info(`Source activation request for session ${managed.id}:`, sourceSlug)
 
         const workspaceRootPath = managed.workspace.rootPath
@@ -6092,6 +6133,7 @@ export class SessionManager implements ISessionManager {
     }
 
     const workspaceRootPath = managed.workspace.rootPath
+    assertProfileSources(managed.agentProfileSnapshot, sourceSlugs)
     sessionLog.info(`Setting sources for session ${sessionId}:`, sourceSlugs)
 
     // Clean up credential cache for sources being disabled (security)
@@ -6121,7 +6163,7 @@ export class SessionManager implements ISessionManager {
       }
 
       // Set all sources for context (agent sees full list with descriptions, including built-ins)
-      const allSources = loadAllSources(workspaceRootPath)
+      const allSources = loadAllSources(workspaceRootPath).filter(source => !managed.agentProfileSnapshot || managed.agentProfileSnapshot.sourceSlugs.includes(source.config.slug))
       managed.agent.setAllSources(allSources)
 
       // Set active source servers (tools are only available from these)
@@ -7170,6 +7212,7 @@ export class SessionManager implements ISessionManager {
     this.assertRoxSessionExecution(sessionId, execution)
     rpcContext?.nativeMemoryContext?.assertAuthorized()
     this.setLastMessageClientId(sessionId, rpcContext?.callerClientId)
+    assertProfileSkills(managed.agentProfileSnapshot, [...(options?.skillSlugs ?? []), ...extractSkillMentions([message])])
 
     // Source-activation auto-retry dedup (craft-agents-oss#804). When the server
     // has just scheduled or committed a "[<slug> activated]" retry, drop a matching
@@ -7470,7 +7513,7 @@ export class SessionManager implements ISessionManager {
           const currentSlugs = new Set(managed.enabledSourceSlugs || [])
           const toEnable: string[] = []
           const skipped: string[] = []
-          const candidateSlugs = Array.from(requiredSources)
+          const candidateSlugs = Array.from(requiredSources).filter(slug => !managed.agentProfileSnapshot || managed.agentProfileSnapshot.sourceSlugs.includes(slug))
           const loadedSources = getSourcesBySlugs(workspaceRoot, candidateSlugs)
           const usableSources = new Set(
             loadedSources
@@ -7544,7 +7587,7 @@ export class SessionManager implements ISessionManager {
     sendSpan.mark('agent.ready')
 
     // Always set all sources for context (even if none are enabled), including built-ins
-    const allSources = loadAllSources(workspaceRootPath)
+    const allSources = loadAllSources(workspaceRootPath).filter(source => !managed.agentProfileSnapshot || managed.agentProfileSnapshot.sourceSlugs.includes(source.config.slug))
     agent.setAllSources(allSources)
     sendSpan.mark('sources.loaded')
 
@@ -9310,6 +9353,7 @@ export class SessionManager implements ISessionManager {
   async setSessionMemoryMode(sessionId: string, mode: SessionMemoryMode): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (managed) {
+      if (managed.agentProfileSnapshot?.memoryScope === 'none' && mode !== 'temporary') throw new Error('Memory outside captured agent profile')
       managed.memoryMode = mode === 'persistent' ? undefined : mode
       this.setMetadataWriteGuard(managed)
 
@@ -9817,7 +9861,7 @@ export class SessionManager implements ISessionManager {
         const workspaceRootPath = managed.workspace.rootPath
         let toolDisplayMeta: ToolDisplayMeta | undefined
         if (formattedToolInput && Object.keys(formattedToolInput).length > 0) {
-          const allSources = loadAllSources(workspaceRootPath)
+          const allSources = loadAllSources(workspaceRootPath).filter(source => !managed.agentProfileSnapshot || managed.agentProfileSnapshot.sourceSlugs.includes(source.config.slug))
           toolDisplayMeta = await resolveToolDisplayMeta(event.toolName, formattedToolInput, workspaceRootPath, allSources)
         }
 
@@ -10636,6 +10680,7 @@ export class SessionManager implements ISessionManager {
       automationName,
       telegramTopic,
       waitForCompletion,
+      automationContext,
       runtimeLaunch,
     } = input
 
@@ -10665,6 +10710,7 @@ export class SessionManager implements ISessionManager {
     // Create a new session for this automation
     const session = await this.createSession(workspaceId, {
       name: sessionName,
+      projectId: automationContext?.projectId,
       labels: resolvedLabels,
       permissionMode: permissionMode || 'safe',
       enabledSourceSlugs: resolved?.sourceSlugs,
@@ -10682,7 +10728,7 @@ export class SessionManager implements ISessionManager {
     // and the session is identifiable as automation-initiated after reload
     const managed = this.sessions.get(session.id)
     if (managed) {
-      managed.triggeredBy = { automationName, timestamp: Date.now() }
+      managed.triggeredBy = { automationName, timestamp: Date.now(), ...(automationContext ? { context: automationContext } : {}) }
       this.persistSession(managed)
     }
 
@@ -10941,6 +10987,7 @@ export class SessionManager implements ISessionManager {
     workspaceId: string,
     bundle: SessionBundle,
     mode: DispatchMode,
+    internal?: { defaultAgentProfileSnapshot?: AgentProfileSnapshot | null },
   ): Promise<{ sessionId: string; warnings?: string[] }> {
     sessionLog.info(`[import] Starting import: workspaceId=${workspaceId}, mode=${mode}, bundleSessionId=${bundle?.session?.header?.id ?? 'unknown'}, files=${bundle?.files?.length ?? 0}`)
 
@@ -10957,6 +11004,26 @@ export class SessionManager implements ISessionManager {
 
     const warnings: string[] = []
     const workspaceRootPath = workspace.rootPath
+    const header = bundle.session.header
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(header.id)) throw new Error('Invalid imported source session ID')
+    if (bundle.files.some(file => typeof file?.relativePath !== 'string' ||
+      file.relativePath.replace(/\\/g, '/').split('/').filter(part => part && part !== '.').join('/') === 'session.jsonl')) {
+      throw new Error('Session metadata cannot be supplied as an imported attachment')
+    }
+    // Imported capability claims never establish authority. Only an actual
+    // source record in this canonical workspace can carry a historical binding.
+    const canonicalSource = header.workspaceRootPath === workspaceRootPath ? loadStoredSession(workspaceRootPath, header.id) : null
+    const agentProfileSnapshot = canonicalSource ? canonicalSource.agentProfileSnapshot
+      : internal?.defaultAgentProfileSnapshot === undefined
+        ? captureAgentProfileSnapshot(workspaceRootPath, workspace.id) : internal.defaultAgentProfileSnapshot ?? undefined
+    if (agentProfileSnapshot && agentProfileSnapshot.workspaceId !== workspace.id) throw new Error('Imported agent profile workspace mismatch')
+    const profileSnapshot = agentProfileSnapshot ? structuredClone(agentProfileSnapshot) : undefined
+    const enabledSourceSlugs = profileSnapshot
+      ? (header.enabledSourceSlugs ?? profileSnapshot.sourceSlugs).filter(slug => profileSnapshot.sourceSlugs.includes(slug))
+      : header.enabledSourceSlugs
+    if (profileSnapshot && header.enabledSourceSlugs?.some(slug => !profileSnapshot.sourceSlugs.includes(slug))) {
+      warnings.push('Imported source selection was narrowed to the captured workspace agent profile.')
+    }
 
     // Determine session ID
     const sessionId = mode === 'move'
@@ -10964,7 +11031,7 @@ export class SessionManager implements ISessionManager {
       : generateSessionId(workspaceRootPath)
 
     // Check for ID collision on move
-    if (mode === 'move' && this.sessions.has(sessionId)) {
+    if (mode === 'move' && (this.sessions.has(sessionId) || loadStoredSession(workspaceRootPath, sessionId))) {
       throw new Error(`Session ${sessionId} already exists in target workspace`)
     }
 
@@ -10972,7 +11039,6 @@ export class SessionManager implements ISessionManager {
     const sessionDir = ensureSessionDir(workspaceRootPath, sessionId)
 
     // Build the stored session from bundle data
-    const header = bundle.session.header
     const storedSession: StoredSession = {
       id: sessionId,
       workspaceRootPath,
@@ -10990,7 +11056,9 @@ export class SessionManager implements ISessionManager {
       previousPermissionMode: header.previousPermissionMode,
       sessionStatus: header.sessionStatus,
       labels: header.labels,
-      enabledSourceSlugs: header.enabledSourceSlugs,
+      enabledSourceSlugs,
+      agentProfileSnapshot: profileSnapshot,
+      memoryMode: profileSnapshot?.memoryScope === 'none' ? 'temporary' : header.memoryMode,
       workingDirectory: header.workingDirectory,
       model: header.model,
       llmConnection: header.llmConnection,
@@ -11101,6 +11169,7 @@ export class SessionManager implements ISessionManager {
     const automationSystem = this.automationSystems.get(workspaceRootPath)
     if (automationSystem) {
       automationSystem.setInitialSessionMetadata(sessionId, {
+        projectId: managed.projectId,
         permissionMode: storedSession.permissionMode,
         labels: storedSession.labels,
         isFlagged: storedSession.isFlagged,

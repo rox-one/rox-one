@@ -68,7 +68,7 @@ export interface ISessionManager {
   createSession(
     workspaceId: string,
     options?: CreateSessionOptions,
-    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext },
+    internal?: { emitCreatedEvent?: boolean; agentProfileSnapshot?: import('@rox/shared/workspace-work').AgentProfileSnapshot | null; nativeMemoryContext?: NativeMemoryContext },
   ): Promise<Session>
   /** Resolved working directory of a live session (Tasks Conductor uses it so children inherit
    *  the orchestrator's cwd). */
@@ -252,6 +252,7 @@ export interface ISessionManager {
     workspaceId: string,
     bundle: SessionBundle,
     mode: DispatchMode,
+    internal?: { defaultAgentProfileSnapshot?: import('@rox/shared/workspace-work').AgentProfileSnapshot | null },
   ): Promise<{ sessionId: string; warnings?: string[] }>
 
   /**
@@ -363,6 +364,7 @@ export interface ISessionManager {
  * overrides) can be added without churn at every call site.
  */
 export interface ExecutePromptAutomationInput {
+  automationContext?: import('@rox/shared/automations/types').AutomationContextReference
   /** Host supplied only; never copied from RPC payload. */
   roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext
   runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch

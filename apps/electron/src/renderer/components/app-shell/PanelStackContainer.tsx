@@ -5,10 +5,12 @@
  * compact navigation only change placement/visibility; they never reparent a
  * panel, so its draft, scroll position and embedded surface survive.
  */
-import { useRef, useEffect, useMemo, useCallback } from 'react'
+import { useRef, useEffect, useMemo, useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { visibleWorkspacePanels } from './auxiliary-layout'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { motion, useReducedMotion } from 'motion/react'
-import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
+import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
 import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, resolvePanelGridTracks } from '@/lib/panel-workspace-layout'
@@ -62,6 +64,21 @@ export function PanelStackContainer({
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
   const focusedRoute = useAtomValue(focusedPanelRouteAtom)
+  const primaryId = useAtomValue(primaryPanelIdAtom)
+  const lastTool = useAtomValue(lastAuxiliaryToolAtom)
+  const { t } = useTranslation()
+  const layoutRef = useRef<HTMLDivElement>(null)
+  const [availableWidth, setAvailableWidth] = useState(0)
+  useEffect(() => {
+    const element = layoutRef.current
+    if (!element) return
+    const observer = new ResizeObserver(() => setAvailableWidth(element.clientWidth))
+    observer.observe(element); setAvailableWidth(element.clientWidth)
+    return () => observer.disconnect()
+  }, [])
+  const hasTools = panels.some(entry => entry.tool)
+  const visibleIds = isCompact ? [focusedPanelId ?? panels[0]?.id].filter((id): id is string => !!id)
+    : visibleWorkspacePanels(panels, Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth)), focusedPanelId, lastTool, primaryId)
   const { mode, preferences, setTracks } = usePanelWorkspaceLayout()
   const reduceMotion = useReducedMotion()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -69,21 +86,21 @@ export function PanelStackContainer({
   const lastDomFocusRef = useRef<{ element: Element; panelId: string | null } | null>(null)
   const composingRef = useRef(false)
   const focusedId = panels.some((entry) => entry.id === focusedPanelId) ? focusedPanelId : panels[0]?.id
-  const singlePanel = isCompact || mode === 'focus' || panels.length <= 1
-  const shape = useMemo(() => panelGridShape(panels.length, singlePanel ? 'focus' : mode), [panels.length, singlePanel, mode])
+  const singlePanel = hasTools ? visibleIds.length <= 1 : isCompact || mode === 'focus' || panels.length <= 1
+  const shape = useMemo(() => panelGridShape(hasTools ? visibleIds.length : panels.length, singlePanel ? 'focus' : hasTools ? 'columns' : mode), [panels.length, visibleIds.length, hasTools, singlePanel, mode])
   const tracks = useMemo(() => resolvePanelGridTracks(preferences, shape, panels.map((entry) => entry.proportion)), [preferences, shape, panels])
   const gridKey = panelGridKey(shape)
   const panelIds = useMemo(() => panels.map((entry) => entry.id), [panels])
   const panelIdentity = `${preferences.workspaceId}:${panelIds.join(':')}`
-  const hasSidebar = !isCompact && sidebarWidth > 0
-  const hasNavigator = navigatorWidth > 0
-  const expandedNavigator = navigatorExpanded && hasNavigator && !isCompact
+  const hasSidebar = !isCompact && !isSidebarAndNavigatorHidden && sidebarWidth > 0
+  const hasNavigator = !isSidebarAndNavigatorHidden && navigatorWidth > 0
+  const expandedNavigator = !hasTools && navigatorExpanded && hasNavigator && !isCompact
   const isLeftEdge = !hasSidebar && !hasNavigator
   const focusedNavState = focusedRoute ? parseRouteToNavigationStateOrUnavailable(focusedRoute) : null
-  const hasSelectedContent = isCompact && compactPanelShowsContent(panels.length, hasNavigator, isDetailNavState(focusedNavState))
+  const hasSelectedContent = isCompact && (hasTools || compactPanelShowsContent(panels.length, hasNavigator, isDetailNavState(focusedNavState)))
   const transition = isResizing || reduceMotion ? { duration: 0 } : PANEL_TRANSITION
-  const gridMinWidth = singlePanel ? 0 : shape.columns * PANEL_GRID_MIN_WIDTH + (shape.columns - 1) * PANEL_GAP
-  const gridMinHeight = shape.rows <= 1 ? 0 : shape.rows * PANEL_GRID_MIN_HEIGHT + (shape.rows - 1) * PANEL_GAP
+  const gridMinWidth = hasTools || singlePanel ? 0 : shape.columns * PANEL_GRID_MIN_WIDTH + (shape.columns - 1) * PANEL_GAP
+  const gridMinHeight = hasTools || shape.rows <= 1 ? 0 : shape.rows * PANEL_GRID_MIN_HEIGHT + (shape.rows - 1) * PANEL_GAP
 
   const focusPanelInDirection = useCallback((direction: PanelSpatialDirection): boolean => {
     if (singlePanel || isPanelResizeActive()) return false
@@ -100,7 +117,7 @@ export function PanelStackContainer({
       const id = element.dataset.panelId
       return id && right > left && bottom > top ? [{ id, left, top, right, bottom }] : []
     })
-    const topologyTarget = panelGridFocusTarget(panelIds, focusedId, shape, direction)
+    const topologyTarget = panelGridFocusTarget(hasTools ? visibleIds : panelIds, focusedId, shape, direction)
     const nextPanelId = topologyTarget && bounds.some(bound => bound.id === topologyTarget)
       ? topologyTarget : findPanelInDirection(focusedId, bounds, direction)
     if (!nextPanelId) return false
@@ -110,7 +127,7 @@ export function PanelStackContainer({
     setFocusedPanelId(nextPanelId)
     nextPanel.focus({ preventScroll: true })
     return true
-  }, [focusedId, setFocusedPanelId, singlePanel, panelIds, shape])
+  }, [focusedId, setFocusedPanelId, singlePanel, panelIds, shape, hasTools, visibleIds])
 
   const handleSpatialPanelKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const direction = SPATIAL_DIRECTION_BY_KEY[event.key]
@@ -198,11 +215,12 @@ export function PanelStackContainer({
 
   return (
     <div
+      ref={layoutRef}
       onKeyDown={handleSpatialPanelKeyDown}
       data-mobile-menu-root="true"
       data-shell-density={isCompact ? 'compact' : 'regular'}
       data-panel-layout={isCompact ? 'compact' : mode}
-      className="flex-1 min-h-0 min-w-0 flex relative z-panel panel-scroll @container/shell"
+      className="flex-1 min-h-0 min-w-0 flex flex-col relative z-panel panel-scroll @container/shell"
       style={{
         overflowX: isCompact ? 'hidden' : 'auto',
         overflowY: isCompact ? 'hidden' : 'auto',
@@ -214,8 +232,14 @@ export function PanelStackContainer({
         marginRight: isCompact ? 0 : -PANEL_EDGE_INSET,
       }}
     >
+      {hasTools && <div role="tablist" aria-label={t('navigation.openPanels')} className="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-2 py-1">
+        {panels.map(entry => <button key={entry.id} type="button" role="tab" aria-controls={entry.id} aria-selected={entry.id === focusedId}
+          onClick={() => setFocusedPanelId(entry.id)} className={`whitespace-nowrap rounded px-3 py-1 text-xs ${entry.id === focusedId ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}>
+          {entry.tool ? t(`navigation.tools.${entry.tool}`) : t('navigation.mainSurface')}
+        </button>)}
+      </div>}
       <motion.div
-        className="flex h-full relative"
+        className="flex min-h-0 flex-1 relative"
         initial={false}
         animate={{ paddingLeft: !hasSidebar && !isCompact ? PANEL_EDGE_INSET : 0 }}
         transition={transition}
@@ -276,7 +300,7 @@ export function PanelStackContainer({
             display: expandedNavigator ? 'none' : undefined,
             // Preserve a usable content viewport even when saved rail widths
             // exceed this window. The outer shell supplies overflow as fallback.
-            minWidth: isCompact ? 0 : PANEL_GRID_MIN_WIDTH,
+            minWidth: hasTools || isCompact ? 0 : PANEL_GRID_MIN_WIDTH,
           }}
         >
           <motion.div
@@ -298,7 +322,7 @@ export function PanelStackContainer({
               zIndex: isCompact ? 10 : undefined,
               minWidth: gridMinWidth,
               minHeight: gridMinHeight,
-              gridTemplateColumns: singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
+              gridTemplateColumns: hasTools ? visibleIds.map(id => panels.find(entry => entry.id === id)?.tool && visibleIds.length > 1 ? '360px' : 'minmax(0, 1fr)').join(' ') : singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
               gridTemplateRows: shape.rows === 1 ? 'minmax(0, 1fr)' : tracks.rows.map((weight) => `minmax(${PANEL_GRID_MIN_HEIGHT}px, ${weight}fr)`).join(' '),
               gap: PANEL_GAP,
               pointerEvents: isCompact && !hasSelectedContent ? 'none' : 'auto',
@@ -306,8 +330,8 @@ export function PanelStackContainer({
           >
             {panels.map((entry, index) => {
               const isFocused = entry.id === focusedId
-              const isHidden = singlePanel && !isFocused
-              const column = singlePanel ? 0 : index % shape.columns
+              const isHidden = hasTools ? !visibleIds.includes(entry.id) : singlePanel && !isFocused
+              const column = hasTools ? Math.max(0, visibleIds.indexOf(entry.id)) : singlePanel ? 0 : index % shape.columns
               return (
                 <PanelSlot
                   key={entry.id}
@@ -322,7 +346,7 @@ export function PanelStackContainer({
                   isCompact={isCompact}
                   layoutStyle={{
                     gridColumn: column + 1,
-                    gridRow: singlePanel ? 1 : Math.floor(index / shape.columns) + 1,
+                    gridRow: hasTools || singlePanel ? 1 : Math.floor(index / shape.columns) + 1,
                     minWidth: 0,
                     minHeight: 0,
                     width: '100%',
@@ -332,10 +356,10 @@ export function PanelStackContainer({
                 />
               )
             })}
-            {!singlePanel && Array.from({ length: shape.columns - 1 }, (_, index) => (
+            {!hasTools && !singlePanel && Array.from({ length: shape.columns - 1 }, (_, index) => (
               <PanelGridResizeSash key={`${gridKey}:x:${index}:${panelIdentity}`} axis="x" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
             ))}
-            {!singlePanel && Array.from({ length: shape.rows - 1 }, (_, index) => (
+            {!hasTools && !singlePanel && Array.from({ length: shape.rows - 1 }, (_, index) => (
               <PanelGridResizeSash key={`${gridKey}:y:${index}:${panelIdentity}`} axis="y" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
             ))}
           </motion.div>

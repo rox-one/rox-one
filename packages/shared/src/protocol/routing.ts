@@ -478,6 +478,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
 // ---------------------------------------------------------------------------
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+  RPC_CHANNELS.workspaceWork.READ,
+  RPC_CHANNELS.workspaceWork.WRITE,
+  RPC_CHANNELS.workspaceWork.DELETE,
+  RPC_CHANNELS.workspaceWork.SNAPSHOT_PROFILE,
+  RPC_CHANNELS.workspaceWork.CHANGED,
   RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT,
   RPC_CHANNELS.runtimeTrace.READ_EVENTS,
   RPC_CHANNELS.runtimeTrace.READ_PAYLOAD,

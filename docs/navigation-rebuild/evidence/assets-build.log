@@ -1,0 +1,3 @@
+$ cd apps/electron && bun scripts/copy-assets.ts
+✓ Copied resources/ → dist/resources/ (skipped unread session/bridge MCP servers)
+✓ Copied powershell-parser.ps1 → dist/resources/
