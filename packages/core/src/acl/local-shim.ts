@@ -57,6 +57,10 @@ export function createLocalAcl(options: LocalAclOptions = {}): LocalAcl {
       return Promise.all(refs.map(ref => shim.evaluate(principal, action, ref)))
     },
     roleOf,
+    async isActiveMember(principal: AclPrincipal): Promise<boolean> {
+      if (principal.status === 'placeholder' || principal.status === 'deactivated') return false
+      return !owners || owners.has(principal.id)
+    },
   }
   return shim
 }

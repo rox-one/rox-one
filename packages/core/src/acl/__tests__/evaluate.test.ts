@@ -40,14 +40,13 @@ function tree(): MemoryAclFacts {
 }
 
 describe('inheritance space → goal → project → task', () => {
-  it('a space role flows down the whole chain', async () => {
+  it('space members get the space-wide default (viewer) down the chain, not their space role', async () => {
     const acl = createAcl(tree())
-    for (const ref of [space, goal, project, task]) {
-      const decision = await acl.evaluate(alice, 'comment', ref)
-      expect(decision).toMatchObject({ allowed: true, role: 'commenter' })
-      expect(await acl.can(alice, 'edit', ref)).toBe(false)
+    expect(await acl.evaluate(alice, 'comment', space)).toMatchObject({ allowed: true, role: 'commenter' })
+    for (const ref of [goal, project, task]) {
+      expect(await acl.evaluate(alice, 'view', ref), ref.kind).toMatchObject({ allowed: true, role: 'viewer', source: 'inherited' })
+      expect(await acl.can(alice, 'comment', ref)).toBe(false)
     }
-    expect((await acl.evaluate(alice, 'view', task)).source).toBe('inherited')
   })
 
   it('a contextual tag lower in the chain raises only its subtree', async () => {
@@ -225,9 +224,12 @@ describe('negatives (PLAN §1.4)', () => {
     const acl = createAcl(facts)
     expect(await acl.evaluate({ id: 'mallory', workspaceId: OTHER_WS }, 'view', doc)).toMatchObject({ allowed: false, reason: 'not_found' })
     // A fact source that returns a foreign-workspace node is rejected too.
+    // reported exactly like a missing ref (no cross-workspace existence oracle).
     facts.setResource({ ref: { kind: 'note', id: 'foreign' }, workspaceId: WS }, OTHER_WS)
-    expect(await acl.evaluate({ id: 'mallory', workspaceId: OTHER_WS }, 'view', { kind: 'note', id: 'foreign' }))
-      .toMatchObject({ allowed: false, reason: 'cross_workspace' })
+    const foreign = await acl.evaluate({ id: 'mallory', workspaceId: OTHER_WS }, 'view', { kind: 'note', id: 'foreign' })
+    const missing = await acl.evaluate({ id: 'mallory', workspaceId: OTHER_WS }, 'view', { kind: 'note', id: 'never' })
+    expect(foreign).toEqual(missing)
+    expect(foreign).toMatchObject({ allowed: false, reason: 'not_found' })
   })
 
   it('placeholder and deactivated principals cannot act', async () => {
@@ -281,5 +283,167 @@ describe('policy_epoch cache', () => {
   it('fragments share the entity decision', async () => {
     const acl = createAcl(tree())
     expect(await acl.can(alice, 'view', { ...task, fragment: 'b-1' })).toBe(true)
+  })
+})
+
+describe('space → child inheritance (DATA-MODEL §8.2.3, owner decision)', () => {
+  const kpi: EntityRef = { kind: 'kpi', id: 'k1' }
+  const spaceDoc: EntityRef = { kind: 'note', id: 'sd1' }
+
+  function spaceTree(): MemoryAclFacts {
+    const facts = tree()
+    facts.setResource({ ref: kpi, workspaceId: WS, parents: [space], spaceId: 'sp1' })
+    facts.setResource({ ref: spaceDoc, workspaceId: WS, parents: [space], spaceId: 'sp1' })
+    return facts
+  }
+
+  it('no policy: space-visible kinds inherit viewer even for space managers; other kinds inherit nothing', async () => {
+    const facts = spaceTree().grant(WS, space, { subjectType: 'principal', subjectId: 'alice', role: 'manager' })
+    const acl = createAcl(facts)
+    expect(await acl.evaluate(alice, 'manage_access', space)).toMatchObject({ allowed: true, role: 'manager' })
+    expect(await acl.evaluate(alice, 'view', kpi)).toMatchObject({ allowed: true, role: 'viewer', source: 'inherited' })
+    expect(await acl.can(alice, 'edit', kpi)).toBe(false)
+    expect(await acl.can(alice, 'edit', goal)).toBe(false)
+    expect(await acl.can(alice, 'view', spaceDoc)).toBe(false) // notes are not space-visible by default
+    expect(await acl.can(bob, 'view', kpi)).toBe(false) // not a space member
+  })
+
+  it('"Everyone in the space can edit" preset: members inherit editor; a preset without a role caps at viewer', async () => {
+    const facts = spaceTree()
+      .setPolicy(WS, kpi, { defaultSubject: 'space', defaultRole: 'editor' })
+      .setPolicy(WS, spaceDoc, { defaultSubject: 'space', defaultRole: null })
+    const acl = createAcl(facts)
+    expect(await acl.evaluate(alice, 'edit', kpi)).toMatchObject({ allowed: true, role: 'editor' })
+    expect(await acl.evaluate(alice, 'view', spaceDoc)).toMatchObject({ allowed: true, role: 'viewer' })
+    expect(await acl.can(alice, 'comment', spaceDoc)).toBe(false)
+    expect(await acl.can(bob, 'view', kpi)).toBe(false)
+  })
+
+  it('"Everyone in the space can view" yields viewer even for space editors, except explicit per-resource grants', async () => {
+    const facts = spaceTree()
+      .grant(WS, space, { subjectType: 'principal', subjectId: 'alice', role: 'editor' })
+      .grant(WS, space, { subjectType: 'principal', subjectId: 'bob', role: 'editor' })
+      .setPolicy(WS, kpi, { defaultSubject: 'space', defaultRole: 'viewer' })
+      .grant(WS, kpi, { subjectType: 'principal', subjectId: 'bob', role: 'editor' })
+    const acl = createAcl(facts)
+    expect(await acl.evaluate(alice, 'view', kpi)).toMatchObject({ allowed: true, role: 'viewer' })
+    expect(await acl.can(alice, 'edit', kpi)).toBe(false)
+    expect(await acl.evaluate(bob, 'edit', kpi)).toMatchObject({ allowed: true, role: 'editor', source: 'explicit' })
+  })
+
+  it('company access of a space (default_access company_edit) reaches only company-wide children, capped at their preset', async () => {
+    const carl: AclPrincipal = { id: 'carl', workspaceId: WS }
+    const companyChild: EntityRef = { kind: 'goal', id: 'g-company' }
+    const facts = spaceTree()
+      .setMember(WS, 'carl', { role: 'member' })
+      .grant(WS, space, { subjectType: 'workspace', subjectId: WS, role: 'editor' }) // company_edit
+    facts.setResource({ ref: companyChild, workspaceId: WS, parents: [space], spaceId: 'sp1' })
+    facts.setPolicy(WS, companyChild, { defaultSubject: 'workspace', defaultRole: 'viewer' })
+    const acl = createAcl(facts)
+    expect(await acl.can(carl, 'edit', space)).toBe(true)
+    expect(await acl.can(carl, 'view', goal)).toBe(false) // space-wide child: carl is not a space member
+    expect(await acl.can(carl, 'view', kpi)).toBe(false)
+    expect(await acl.evaluate(carl, 'view', companyChild)).toMatchObject({ allowed: true, role: 'viewer', source: 'policy' })
+    expect(await acl.can(carl, 'edit', companyChild)).toBe(false)
+  })
+
+  it('secret / invited children never inherit, whatever their preset', async () => {
+    const facts = spaceTree()
+      .setPolicy(WS, secretGoal, { defaultSubject: 'space', defaultRole: 'editor' })
+      .grant(WS, secretGoal, { subjectType: 'space', subjectId: 'sp1', role: 'editor' })
+      .grant(WS, secretGoal, { subjectType: 'workspace', subjectId: WS, role: 'viewer' })
+    const acl = createAcl(facts)
+    const decision = await acl.evaluate(alice, 'view', secretGoal)
+    expect(decision).toMatchObject({ allowed: false, secret: true })
+    expect(listingVisibility(decision)).toBe('hide')
+  })
+
+  it('folder → items still inherit the folder role; the folder itself is capped by the space rule', async () => {
+    const folder: EntityRef = { kind: 'folder', id: 'f1' }
+    const item: EntityRef = { kind: 'note', id: 'fi1' }
+    const facts = spaceTree().grant(WS, space, { subjectType: 'principal', subjectId: 'alice', role: 'manager' })
+    facts.setResource({ ref: folder, workspaceId: WS, parents: [space], spaceId: 'sp1' })
+    facts.setResource({ ref: item, workspaceId: WS, parents: [folder], spaceId: 'sp1' })
+    facts.grant(WS, folder, { subjectType: 'principal', subjectId: 'bob', role: 'editor' })
+    const acl = createAcl(facts)
+    expect(await acl.evaluate(alice, 'view', item)).toMatchObject({ allowed: true, role: 'viewer' })
+    expect(await acl.evaluate(bob, 'edit', item)).toMatchObject({ allowed: true, role: 'editor', source: 'inherited' })
+  })
+})
+
+describe('space membership (owner decision)', () => {
+  it('space chat membership makes a space member', async () => {
+    const facts = tree()
+    facts.setResource({ ref: space, workspaceId: WS, chatId: 'ch-space' })
+    facts.setGroups(WS, 'bob', { departmentIds: [], channelIds: ['ch-space'] })
+    const acl = createAcl(facts)
+    expect(await acl.evaluate(bob, 'view', goal)).toMatchObject({ allowed: true })
+    expect(await acl.can({ id: 'olga', workspaceId: WS, kind: 'guest' }, 'view', goal)).toBe(false)
+  })
+
+  for (const role of ['minimal', 'free_busy', 'follower'] as const) {
+    it(`a ${role} grant on the space does not make a space member`, async () => {
+      const facts = tree()
+        .setGroups(WS, 'bob', { departmentIds: ['dep-1'], channelIds: [] })
+        .grant(WS, space, { subjectType: 'principal', subjectId: 'bob', role })
+        .grant(WS, space, { subjectType: 'department', subjectId: 'dep-1', role })
+        .grant(WS, doc, { subjectType: 'space', subjectId: 'sp1', role: 'editor' })
+        .setPolicy(WS, project, { defaultSubject: 'space', defaultRole: 'editor' })
+      facts.setResource({ ref: project, workspaceId: WS, parents: [goal], spaceId: 'sp1' })
+      const acl = createAcl(facts)
+      expect(await acl.can(bob, 'view', doc)).toBe(false)
+      expect(await acl.can(bob, 'edit', project)).toBe(true) // champion of the parent goal → manager, unrelated to space
+      expect((await acl.evaluate(bob, 'view', { kind: 'kpi', id: 'none' })).reason).toBe('not_found')
+      expect(await acl.can(alice, 'view', doc)).toBe(true) // alice's commenter grant does count
+    })
+  }
+
+  it('viewer / department / channel grants (≥ viewer) do make space members', async () => {
+    const facts = tree()
+      .setGroups(WS, 'bob', { departmentIds: ['dep-1'], channelIds: [] })
+      .grant(WS, space, { subjectType: 'department', subjectId: 'dep-1', role: 'viewer' })
+      .grant(WS, doc, { subjectType: 'space', subjectId: 'sp1', role: 'commenter' })
+    const acl = createAcl(facts)
+    expect(await acl.evaluate(bob, 'comment', doc)).toMatchObject({ allowed: true, role: 'commenter' })
+  })
+})
+
+describe('role cache TTL and batching', () => {
+  class CountingFacts extends MemoryAclFacts {
+    epochReads = 0
+    override policyEpoch(workspaceId: string): string {
+      this.epochReads += 1
+      return super.policyEpoch(workspaceId)
+    }
+  }
+
+  it('a cached role expires after 45 s even without an epoch bump', async () => {
+    const facts = tree()
+    let clock = 1_000_000
+    const acl = createAcl(facts, { now: () => clock })
+    expect(await acl.can(alice, 'view', goal)).toBe(true)
+    const reads = facts.resourceReads
+    clock += 44_000
+    expect(await acl.can(alice, 'view', goal)).toBe(true)
+    expect(facts.resourceReads).toBe(reads)
+    clock += 2_000
+    expect(await acl.can(alice, 'view', goal)).toBe(true)
+    expect(facts.resourceReads).toBeGreaterThan(reads)
+  })
+
+  it('evaluateMany reads the epoch once and each fact once per batch, keeping order', async () => {
+    const counting = new CountingFacts()
+    for (const id of ['alice', 'bob']) counting.setMember(WS, id, { role: 'member' })
+    counting.setResource({ ref: space, workspaceId: WS })
+    counting.setResource({ ref: goal, workspaceId: WS, parents: [space], spaceId: 'sp1' })
+    counting.setResource({ ref: project, workspaceId: WS, parents: [goal], spaceId: 'sp1' })
+    counting.grant(WS, space, { subjectType: 'principal', subjectId: 'alice', role: 'viewer' })
+    const refs: EntityRef[] = Array.from({ length: 20 }, (_, i) => (i % 2 ? project : { kind: 'task', id: `missing-${i}` }))
+    const acl = createAcl(counting, { concurrency: 4 })
+    const decisions = await acl.evaluateMany(alice, 'view', refs)
+    expect(counting.epochReads).toBe(1)
+    expect(decisions.map(d => d.allowed)).toEqual(refs.map(r => r.kind === 'project'))
+    // project, goal, space each read once; the 10 distinct missing tasks once each.
+    expect(counting.resourceReads).toBe(13)
   })
 })

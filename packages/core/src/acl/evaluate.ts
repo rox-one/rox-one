@@ -3,18 +3,34 @@
  *
  * DATA-MODEL §8.2 role sources, evaluated in order (the highest role wins):
  *   1. explicit `acl_entry` rows (subjects: principal | department | channel |
- *      space | workspace | link);
+ *      space | workspace | link). On a secret resource the group subjects
+ *      `space` / `workspace` are ignored ("Only invited people");
  *   2. contextual role tags (owner, champion, reviewer, contributor, assignee);
- *   3. parent inheritance (space → goal → project → task, folder → items, …)
- *      unless the resource is secret ("Only invited people");
+ *   3. parent inheritance (folder → items, project → milestones / tasks,
+ *      goal → targets / checks, task-list → tasks, …), never into a secret
+ *      resource. A **space** parent is special (§8.2.3 "when privacy =
+ *      Everyone in the space…"): the child gets space-member access only
+ *      when its own privacy is space-wide (`resource_policy.default_subject =
+ *      'space'`, or no policy and the kind is space-visible by default — see
+ *      `SPACE_VISIBLE_BY_DEFAULT_KINDS`), capped at the child's preset role
+ *      (`default_role`, viewer when absent). Nothing else flows down from a
+ *      space: neither the member's role on the space nor the space's company
+ *      access (`default_access = company_*`); a child is company-visible only
+ *      through its own company-wide preset;
  *   4. privacy presets / `resource_policy` defaults (space, workspace, link).
  * Then the §8.3 rule for the action is applied (`../entities/permissions.ts`).
  *
+ * Space membership (`isSpaceMember`) = active membership of the space chat
+ * (`AclResourceNode.chatId` ∈ the principal's channels) OR an explicit
+ * principal / department / channel grant on the space with a lattice role ≥
+ * viewer. `minimal`, `free_busy`, `follower` (and `guest`) grants do not make
+ * anyone a space member.
+ *
  * Hard denials come first and are never overridden by any grant:
- *   - principal from another workspace (`cross_workspace`);
  *   - no active workspace membership — revoked / left / removed (`not_member`);
  *   - placeholder or deactivated principal (`placeholder` / `inactive`);
- *   - unknown or deleted resource (`not_found`).
+ *   - unknown or deleted resource, or a resource of another workspace
+ *     (`not_found` — a foreign ref is indistinguishable from a missing one).
  *
  * Guests (`principal.kind === 'guest'`) only receive roles from grants made to
  * them explicitly (principal entries, contextual tags, valid share links) and
@@ -22,9 +38,12 @@
  * space, department, channel) and policy defaults never apply to them, and
  * their role is capped at `editor`.
  *
- * Results are cached per workspace `policy_epoch` (✔ `workspace.policy_epoch`):
- * a bump invalidates every cached role for that workspace. Writers of ACL
- * facts (entries, policies, memberships, contextual tags) must bump the epoch.
+ * Caching: role results are keyed by workspace `policy_epoch` (a bump drops
+ * every cached role of that workspace) AND expire after `cacheTtlMs`
+ * (default 45 s) as defence in depth for writers that forget the bump. The
+ * facts whose writers must bump the epoch are listed on `AclFactSource`.
+ * Within one evaluation batch the epoch is read once, fact reads are
+ * memoised and refs are evaluated with bounded concurrency.
  *
  * The engine is pure TypeScript over an injected `AclFactSource`; the server
  * (`apps/workspace-service/src/modules/acl`) backs it with Postgres and the
@@ -35,7 +54,7 @@ import { applyPermissionRule, roleWithTags, type ContextualTag } from '../entiti
 import type { EntityKind } from '../entities/kinds.ts'
 import type { EntityRef } from '../entities/refs.ts'
 import type { AclAction } from './actions.ts'
-import { effectiveRole, maxRole, minRole, roleAtLeast, type AclRole, type AclStoredRole } from './roles.ts'
+import { effectiveRole, isAclRole, maxRole, minRole, roleAtLeast, type AclRole, type AclStoredRole } from './roles.ts'
 
 /** `acl_entry.resource_type` values (DDL `503-acl.sql`). */
 export const ACL_RESOURCE_TYPES = [
@@ -92,6 +111,8 @@ export interface AclResourceNode {
   privacy?: 'inherit' | 'invited'
   /** Owning space, for `space` subjects / presets. */
   spaceId?: string | null
+  /** Space nodes only: the space chat; its active members are space members (§5.7). */
+  chatId?: string | null
   ownerId?: string | null
   championId?: string | null
   reviewerId?: string | null
@@ -124,7 +145,30 @@ export interface AclPrincipalGroups {
 
 type MaybePromise<T> = T | Promise<T>
 
-/** Facts the engine needs; the server backs this with SQL, tests with memory. */
+/**
+ * Facts the engine needs; the server backs this with SQL, tests with memory.
+ *
+ * EPOCH-BUMPING FACTS — every writer of one of these must bump
+ * `workspace.policy_epoch` in the same transaction (the 45 s cache TTL is only
+ * defence in depth):
+ *   - `acl_entry` rows (insert / update / delete) and `resource_policy` rows
+ *     (default_subject, default_role, policy.privacy / link_token /
+ *     link_expires_at);
+ *   - `workspace_member` (insert, role, status, deleted_at) and
+ *     `principal.status` / `principal.kind` / `principal.deleted_at`;
+ *   - `department_member`, `department.deleted_at`;
+ *   - `chat_member` (role, state) — channel grants and space membership —
+ *     and `chat.visibility`, `chat.deleted_at`;
+ *   - contextual tags: owner / creator, `champion_id`, `reviewer_id`,
+ *     `project_member`, `work_item_member`, `goal.creator_id`;
+ *   - tree shape: parent_goal_id, project_id, milestone_id, parent_id,
+ *     folder_id, wiki_space_id, space_id, owner_type / owner_id,
+ *     `task_in_list`, `space.chat_id`;
+ *   - visibility columns: `project.visibility`, `space.default_access`,
+ *     `space.is_company_space`, `goal.scope`, `task_list.share_mode`,
+ *     `doc.public_token`;
+ *   - soft deletes (`deleted_at`) of any resource row.
+ */
 export interface AclFactSource {
   policyEpoch(workspaceId: string): MaybePromise<string>
   membership(workspaceId: string, principalId: string): MaybePromise<AclMembership | null>
@@ -132,6 +176,11 @@ export interface AclFactSource {
   entries(workspaceId: string, ref: EntityRef): MaybePromise<readonly AclEntryFact[]>
   policy(workspaceId: string, ref: EntityRef): MaybePromise<AclPolicyFact | null>
   groups(workspaceId: string, principalId: string): MaybePromise<AclPrincipalGroups>
+  /**
+   * Optional per-evaluation view (e.g. with a request-local row cache). The
+   * engine calls it once per `evaluate` / `evaluateMany` batch.
+   */
+  scoped?(): AclFactSource
 }
 
 export type AclRoleSource =
@@ -144,7 +193,6 @@ export type AclRoleSource =
   | 'local-owner'
 
 export type AclDenyReason =
-  | 'cross_workspace'
   | 'not_member'
   | 'placeholder'
   | 'inactive'
@@ -174,7 +222,7 @@ export interface AclRoleResult {
   championAbsent: boolean
   hasChildren: boolean
   kind: EntityKind
-  denied?: Extract<AclDenyReason, 'cross_workspace' | 'not_member' | 'placeholder' | 'inactive' | 'not_found'>
+  denied?: Extract<AclDenyReason, 'not_member' | 'placeholder' | 'inactive' | 'not_found'>
 }
 
 export interface Acl {
@@ -183,6 +231,11 @@ export interface Acl {
   evaluate(principal: AclPrincipal, action: AclAction, ref: EntityRef): Promise<AclDecision>
   evaluateMany(principal: AclPrincipal, action: AclAction, refs: readonly EntityRef[]): Promise<AclDecision[]>
   roleOf(principal: AclPrincipal, ref: EntityRef): Promise<AclRoleResult>
+  /**
+   * Active principal (not placeholder / deactivated) with an active membership
+   * of `principal.workspaceId`. Never cached (used for `user:{id}` topics).
+   */
+  isActiveMember(principal: AclPrincipal): Promise<boolean>
 }
 
 export interface AclEngine extends Acl {
@@ -198,6 +251,31 @@ export interface CreateAclOptions {
   cacheCapacity?: number
   /** Max inheritance depth (default 16; cycles are also guarded). */
   maxDepth?: number
+  /** Role-cache entry lifetime in ms (default 45 000; defence in depth next to the epoch). */
+  cacheTtlMs?: number
+  /** Max refs evaluated concurrently in one batch (default 8). */
+  concurrency?: number
+}
+
+export const DEFAULT_ACL_CACHE_TTL_MS = 45_000
+export const DEFAULT_ACL_CONCURRENCY = 8
+
+/**
+ * Kinds whose spec default privacy is "Everyone in the space…" (DATA-MODEL
+ * §8.2.3: goals, projects, KPIs, folders, the board). With no
+ * `resource_policy` row they inherit space-member access, capped at viewer.
+ */
+export const SPACE_VISIBLE_BY_DEFAULT_KINDS: readonly EntityKind[] = ['goal', 'project', 'kpi', 'folder', 'task-list']
+
+/** Cap for space → child inheritance; `null` when the child is not space-wide. */
+export function spaceInheritanceCap(kind: EntityKind, policy: AclPolicyFact | null): AclRole | null {
+  if (policy) return policy.defaultSubject === 'space' ? (policy.defaultRole ?? 'viewer') : null
+  return SPACE_VISIBLE_BY_DEFAULT_KINDS.includes(kind) ? 'viewer' : null
+}
+
+/** Grants that confer space membership: a lattice role ≥ viewer (not minimal / follower / free_busy / guest). */
+function grantsSpaceMembership(role: AclStoredRole): boolean {
+  return isAclRole(role) && roleAtLeast(role, 'viewer')
 }
 
 /** Kinds where share links may grant access (DATA-MODEL §8.2.4: docs, forms only). */
@@ -276,15 +354,58 @@ function raise(acc: RoleAccumulator, role: AclRole | null, source: AclRoleSource
   }
 }
 
+/** Run `fn` over `items` with at most `limit` in flight; results keep input order. */
+async function mapBounded<T, R>(items: readonly T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length)
+  let next = 0
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const index = next++
+      out[index] = await fn(items[index]!)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker))
+  return out
+}
+
+/** Per-batch memo over a fact source: each distinct read happens once per batch. */
+function memoizeFacts(facts: AclFactSource): AclFactSource {
+  const memo = new Map<string, Promise<unknown>>()
+  const once = <T>(key: string, load: () => MaybePromise<T>): Promise<T> => {
+    let hit = memo.get(key) as Promise<T> | undefined
+    if (!hit) {
+      hit = Promise.resolve().then(load)
+      memo.set(key, hit)
+    }
+    return hit
+  }
+  const refKey = (ref: EntityRef) => `${ref.kind}:${ref.id}`
+  return {
+    policyEpoch: ws => once(`e\0${ws}`, () => facts.policyEpoch(ws)),
+    membership: (ws, p) => once(`m\0${ws}\0${p}`, () => facts.membership(ws, p)),
+    resource: (ws, ref) => once(`r\0${ws}\0${refKey(ref)}`, () => facts.resource(ws, ref)),
+    entries: (ws, ref) => once(`a\0${ws}\0${refKey(ref)}`, () => facts.entries(ws, ref)),
+    policy: (ws, ref) => once(`p\0${ws}\0${refKey(ref)}`, () => facts.policy(ws, ref)),
+    groups: (ws, p) => once(`g\0${ws}\0${p}`, () => facts.groups(ws, p)),
+  }
+}
+
+interface CachedRole {
+  result: AclRoleResult
+  at: number
+}
+
 /** Create an ACL engine over a fact source. */
 export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}): AclEngine {
   const now = options.now ?? Date.now
   const capacity = options.cacheCapacity ?? 10_000
   const maxDepth = options.maxDepth ?? 16
-  const cache = new Map<string, AclRoleResult>()
+  const ttlMs = options.cacheTtlMs ?? DEFAULT_ACL_CACHE_TTL_MS
+  const concurrency = options.concurrency ?? DEFAULT_ACL_CONCURRENCY
+  const cache = new Map<string, CachedRole>()
   const epochByWorkspace = new Map<string, string>()
 
-  const remember = (key: string, value: AclRoleResult): void => {
+  const remember = (key: string, value: CachedRole): void => {
     if (cache.has(key)) cache.delete(key)
     cache.set(key, value)
     if (cache.size > capacity) {
@@ -293,8 +414,8 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
     }
   }
 
-  async function currentEpoch(workspaceId: string): Promise<string> {
-    const epoch = String(await facts.policyEpoch(workspaceId))
+  async function currentEpoch(source: AclFactSource, workspaceId: string): Promise<string> {
+    const epoch = String(await source.policyEpoch(workspaceId))
     const previous = epochByWorkspace.get(workspaceId)
     if (previous !== undefined && previous !== epoch) {
       const prefix = `${workspaceId}\0${previous}\0`
@@ -304,78 +425,91 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
     return epoch
   }
 
-  async function roleOf(principal: AclPrincipal, ref: EntityRef): Promise<AclRoleResult> {
-    const base: AclRoleResult = {
-      role: null, source: null, secret: false, tags: [], championAbsent: false, hasChildren: false, kind: ref.kind,
-    }
-    if (principal.status === 'placeholder') return { ...base, denied: 'placeholder' }
-    if (principal.status === 'deactivated') return { ...base, denied: 'inactive' }
+  const baseFor = (ref: EntityRef): AclRoleResult => ({
+    role: null, source: null, secret: false, tags: [], championAbsent: false, hasChildren: false, kind: ref.kind,
+  })
+
+  /** One evaluation batch: epoch read once, facts memoised, refs evaluated concurrently. */
+  async function rolesOf(principal: AclPrincipal, refs: readonly EntityRef[]): Promise<AclRoleResult[]> {
+    if (principal.status === 'placeholder') return refs.map(ref => ({ ...baseFor(ref), denied: 'placeholder' }))
+    if (principal.status === 'deactivated') return refs.map(ref => ({ ...baseFor(ref), denied: 'inactive' }))
+    const source = memoizeFacts(facts.scoped?.() ?? facts)
     const workspaceId = principal.workspaceId
-    const epoch = await currentEpoch(workspaceId)
-    const key = [workspaceId, epoch, principal.id, principal.kind ?? 'human', principal.linkToken ?? '', aclRefKey(ref)].join('\0')
-    const cached = cache.get(key)
-    if (cached) {
-      remember(key, cached)
-      return cached
-    }
-    const result = await computeRole(principal, ref, base)
-    remember(key, result)
-    return result
+    const epoch = await currentEpoch(source, workspaceId)
+    return mapBounded(refs, concurrency, async ref => {
+      const key = [workspaceId, epoch, principal.id, principal.kind ?? 'human', principal.linkToken ?? '', aclRefKey(ref)].join('\0')
+      const cached = cache.get(key)
+      const at = now()
+      if (cached && at - cached.at <= ttlMs) {
+        remember(key, cached)
+        return cached.result
+      }
+      const result = await computeRole(source, principal, ref, baseFor(ref))
+      remember(key, { result, at })
+      return result
+    })
   }
 
-  async function computeRole(principal: AclPrincipal, ref: EntityRef, base: AclRoleResult): Promise<AclRoleResult> {
+  async function computeRole(source: AclFactSource, principal: AclPrincipal, ref: EntityRef, base: AclRoleResult): Promise<AclRoleResult> {
     const workspaceId = principal.workspaceId
-    const membership = await facts.membership(workspaceId, principal.id)
+    const membership = await source.membership(workspaceId, principal.id)
     if (!membership || (membership.status !== undefined && membership.status !== 'active')) {
       return { ...base, denied: 'not_member' }
     }
-    const root = await facts.resource(workspaceId, ref)
-    if (!root || root.deleted) return { ...base, denied: 'not_found' }
-    if (root.workspaceId !== workspaceId) return { ...base, denied: 'cross_workspace' }
+    const root = await source.resource(workspaceId, ref)
+    // A foreign-workspace ref is reported exactly like a missing one (no existence oracle).
+    if (!root || root.deleted || root.workspaceId !== workspaceId) return { ...base, denied: 'not_found' }
 
     const guest = principal.kind === 'guest'
-    const groups = guest ? { departmentIds: [], channelIds: [] } : await facts.groups(workspaceId, principal.id)
-    const spaceMemberCache = new Map<string, boolean>()
+    const groups = guest ? { departmentIds: [], channelIds: [] } : await source.groups(workspaceId, principal.id)
+    const spaceMemberCache = new Map<string, Promise<boolean>>()
     const nowMs = now()
 
-    // Space membership = an explicit (non-policy) grant on the space itself.
-    const isSpaceMember = async (spaceId: string): Promise<boolean> => {
-      if (guest) return false
-      const hit = spaceMemberCache.get(spaceId)
-      if (hit !== undefined) return hit
-      spaceMemberCache.set(spaceId, false) // guards self-reference
-      const spaceRef: EntityRef = { kind: 'space', id: spaceId }
-      const entries = await facts.entries(workspaceId, spaceRef)
-      let member = false
-      for (const entry of entries) {
-        if (entry.subjectType === 'principal' && entry.subjectId === principal.id) member = true
-        else if (entry.subjectType === 'department' && groups.departmentIds.includes(entry.subjectId)) member = true
-        else if (entry.subjectType === 'channel' && groups.channelIds.includes(entry.subjectId)) member = true
-        if (member) break
+    const nodeCache = new Map<string, Promise<AclResourceNode | null>>([[aclRefKey(ref), Promise.resolve(root)]])
+    const loadNode = (target: EntityRef): Promise<AclResourceNode | null> => {
+      const key = aclRefKey(target)
+      let hit = nodeCache.get(key)
+      if (!hit) {
+        hit = Promise.resolve(source.resource(workspaceId, target))
+          .then(node => node && !node.deleted && node.workspaceId === workspaceId ? node : null)
+        nodeCache.set(key, hit)
       }
-      spaceMemberCache.set(spaceId, member)
-      return member
+      return hit
     }
 
-    const nodeCache = new Map<string, AclResourceNode | null>([[aclRefKey(ref), root]])
-    const loadNode = async (target: EntityRef): Promise<AclResourceNode | null> => {
-      const key = aclRefKey(target)
-      if (nodeCache.has(key)) return nodeCache.get(key) ?? null
-      const node = await facts.resource(workspaceId, target)
-      const usable = node && !node.deleted && node.workspaceId === workspaceId ? node : null
-      nodeCache.set(key, usable)
-      return usable
+    // Space membership: active space-chat member, or an explicit principal /
+    // department / channel grant on the space with a lattice role ≥ viewer.
+    const isSpaceMember = (spaceId: string): Promise<boolean> => {
+      if (guest) return Promise.resolve(false)
+      let hit = spaceMemberCache.get(spaceId)
+      if (!hit) {
+        hit = (async () => {
+          const spaceRef: EntityRef = { kind: 'space', id: spaceId }
+          const space = await loadNode(spaceRef)
+          if (!space) return false
+          if (space.chatId && groups.channelIds.includes(space.chatId)) return true
+          for (const entry of await source.entries(workspaceId, spaceRef)) {
+            if (!grantsSpaceMembership(entry.role)) continue
+            if (entry.subjectType === 'principal' && entry.subjectId === principal.id) return true
+            if (entry.subjectType === 'department' && groups.departmentIds.includes(entry.subjectId)) return true
+            if (entry.subjectType === 'channel' && groups.channelIds.includes(entry.subjectId)) return true
+          }
+          return false
+        })()
+        spaceMemberCache.set(spaceId, hit)
+      }
+      return hit
     }
 
     const roleOn = async (node: AclResourceNode, depth: number, visiting: Set<string>): Promise<RoleAccumulator> => {
       const acc: RoleAccumulator = { role: null, source: null }
-      const policy = await facts.policy(workspaceId, node.ref)
+      const policy = await source.policy(workspaceId, node.ref)
       const secret = node.privacy === 'invited'
       const linkOk = LINK_SHAREABLE_KINDS.includes(node.ref.kind)
         && !!principal.linkToken && !linkExpired(policy, nowMs)
 
-      // 1. Explicit entries.
-      for (const entry of await facts.entries(workspaceId, node.ref)) {
+      // 1. Explicit entries (group subjects space / workspace are void on secret resources).
+      for (const entry of await source.entries(workspaceId, node.ref)) {
         const role = effectiveRole(entry.role)
         switch (entry.subjectType) {
           case 'principal':
@@ -388,10 +522,10 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
             if (!guest && groups.channelIds.includes(entry.subjectId)) raise(acc, role, 'explicit')
             break
           case 'space':
-            if (!guest && await isSpaceMember(entry.subjectId)) raise(acc, role, 'explicit')
+            if (!guest && !secret && await isSpaceMember(entry.subjectId)) raise(acc, role, 'explicit')
             break
           case 'workspace':
-            if (!guest && entry.subjectId === workspaceId) raise(acc, role, 'explicit')
+            if (!guest && !secret && entry.subjectId === workspaceId) raise(acc, role, 'explicit')
             break
           case 'link':
             if (linkOk && entry.subjectId === principal.linkToken) raise(acc, role, 'link')
@@ -408,11 +542,17 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
         for (const parentRef of node.parents ?? []) {
           const parentKey = aclRefKey(parentRef)
           if (visiting.has(parentKey)) continue
+          if (parentRef.kind === 'space') {
+            // §8.2.3: space-member access only into space-wide children, capped at their preset role.
+            const cap = spaceInheritanceCap(node.ref.kind, policy)
+            if (cap && await isSpaceMember(parentRef.id)) raise(acc, cap, 'inherited')
+            continue
+          }
           const parent = await loadNode(parentRef)
           if (!parent) continue
-          visiting.add(parentKey)
-          const inherited = await roleOn(parent, depth + 1, visiting)
-          visiting.delete(parentKey)
+          const branch = new Set(visiting)
+          branch.add(parentKey)
+          const inherited = await roleOn(parent, depth + 1, branch)
           raise(acc, inherited.role, 'inherited')
         }
       }
@@ -449,14 +589,21 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
       return (await engine.evaluate(principal, action, ref)).allowed
     },
     async evaluate(principal, action, ref) {
-      return decide(action, await roleOf(principal, ref))
+      const [result] = await rolesOf(principal, [ref])
+      return decide(action, result!)
     },
     async evaluateMany(principal, action, refs) {
-      const out: AclDecision[] = []
-      for (const ref of refs) out.push(await engine.evaluate(principal, action, ref))
-      return out
+      return (await rolesOf(principal, refs)).map(result => decide(action, result))
     },
-    roleOf,
+    async roleOf(principal, ref) {
+      const [result] = await rolesOf(principal, [ref])
+      return result!
+    },
+    async isActiveMember(principal) {
+      if (principal.status === 'placeholder' || principal.status === 'deactivated') return false
+      const membership = await facts.membership(principal.workspaceId, principal.id)
+      return !!membership && (membership.status === undefined || membership.status === 'active')
+    },
     clearCache() {
       cache.clear()
       epochByWorkspace.clear()

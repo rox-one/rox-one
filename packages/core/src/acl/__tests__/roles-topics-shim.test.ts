@@ -135,4 +135,29 @@ describe('topic authorizer (TECH-SPEC §3.5)', () => {
     expect(await authorize(alice, 'garbage')).toBe(false)
     expect(calls).toEqual(['view:channel:c1', 'view:goal:g-secret'])
   })
+
+  it('user:{id} requires an active principal with an active workspace membership', async () => {
+    const facts = new MemoryAclFacts()
+      .setMember('ws', 'alice', { role: 'member', status: 'active' })
+      .setMember('ws', 'lena', { role: 'member', status: 'left' })
+      .setMember('ws', 'rita', { role: 'member', status: 'removed' })
+      .setMember('ws', 'ivan', { role: 'member', status: 'invited' })
+    const authorize = createAclTopicAuthorizer(createAcl(facts))
+    expect(await authorize({ id: 'alice', workspaceId: 'ws' }, 'user:alice')).toBe(true)
+    expect(await authorize({ id: 'alice', workspaceId: 'ws', status: 'deactivated' }, 'user:alice')).toBe(false)
+    expect(await authorize({ id: 'alice', workspaceId: 'ws', status: 'placeholder' }, 'user:alice')).toBe(false)
+    for (const id of ['lena', 'rita', 'ivan']) expect(await authorize({ id, workspaceId: 'ws' }, `user:${id}`)).toBe(false)
+    expect(await authorize({ id: 'nobody', workspaceId: 'ws' }, 'user:nobody')).toBe(false)
+    expect(await authorize({ id: 'alice', workspaceId: 'other' }, 'user:alice')).toBe(false)
+    // Membership is re-read on every subscribe (never cached).
+    facts.setMember('ws', 'alice', { role: 'member', status: 'left' })
+    expect(await authorize({ id: 'alice', workspaceId: 'ws' }, 'user:alice')).toBe(false)
+  })
+
+  it('local shim: user topics for admitted active principals only', async () => {
+    const authorize = createAclTopicAuthorizer(createLocalAcl({ ownerPrincipalIds: ['local'] }))
+    expect(await authorize({ id: 'local', workspaceId: 'ws' }, 'user:local')).toBe(true)
+    expect(await authorize({ id: 'other', workspaceId: 'ws' }, 'user:other')).toBe(false)
+    expect(await authorize({ id: 'local', workspaceId: 'ws', status: 'deactivated' }, 'user:local')).toBe(false)
+  })
 })

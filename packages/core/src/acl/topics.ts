@@ -5,7 +5,8 @@
  * injected authorizer. `createAclTopicAuthorizer(acl)` parses the topic into
  * an entity ref and requires `acl.can(principal, 'view', ref)`:
  *
- *   user:{id}              → only the principal itself
+ *   user:{id}              → only the principal itself, and only while it is
+ *                            active with an active workspace membership
  *   entity:{kind}:{id}     → { kind, id } (kind aliases normalised)
  *   space:{id} / channel:{id} / doc:{id} / task-list:{id} / calendar:{id} /
  *   meeting:{id} / …       → the aliased kind (doc → note, meeting → call)
@@ -52,7 +53,7 @@ export function createAclTopicAuthorizer(acl: Acl): TopicAuthorizer {
   return async (principal, topic) => {
     const parsed = parseTopicRef(topic)
     if (!parsed) return false
-    if (parsed.type === 'user') return parsed.principalId === principal.id && principal.status !== 'placeholder'
+    if (parsed.type === 'user') return parsed.principalId === principal.id && await acl.isActiveMember(principal)
     return acl.can(principal, 'view', parsed.ref)
   }
 }
