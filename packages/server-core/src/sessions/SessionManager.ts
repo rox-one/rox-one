@@ -1009,7 +1009,7 @@ interface ManagedSession {
     options?: SendMessageOptions
     messageId?: string  // Pre-generated ID for matching with UI
     optimisticMessageId?: string  // Frontend's ID for reliable event matching
-    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext }
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; roxExecutionContext?: RoxExecutionContext; runtimeLaunch?: RuntimeLaunch }
     roxExecutionContext?: RoxExecutionContext // Captured host owner, retained through deferred replay.
     roxOwnerResource?: string // Sealed exact-generation owner for crash/restart recovery.
   }>
@@ -4367,9 +4367,10 @@ export class SessionManager implements ISessionManager {
   }
 
   private createSpawnSessionHandler(managed: ManagedSession, execution?: RoxExecutionContext): NonNullable<AgentInstance['onSpawnSession']> {
-    const assertOwner = () => this.assertRoxSessionExecution(managed.id, execution)
     return async (request) => {
+      const assertOwner = () => this.assertRoxSessionExecution(managed.id, execution)
       assertOwner()
+      // The guarded host invocation owns this launch; child creation may outlive its chat turn.
       const parentRun = this.runtimeTrace.getActive(managed.id)
       const launchOrigin = parentRun ? { ...parentRun } : undefined
       sessionLog.info(`Spawn session request from session ${managed.id}:`, request.name || '(unnamed)')

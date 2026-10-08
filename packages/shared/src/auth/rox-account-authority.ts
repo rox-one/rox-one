@@ -180,13 +180,16 @@ export class RoxAccountAuthority {
   }
   async bind(resource: string, context: RoxExecutionContext): Promise<void> {
     this.assertCurrent(context)
-    if (!this.store.writeBinding) throw new Error('ROX_SECURE_BINDING_UNAVAILABLE')
+    const taskRun = resource.startsWith('task-run:')
+    if (!this.store.writeBinding || (taskRun && !this.store.readBinding)) throw new Error('ROX_SECURE_BINDING_UNAVAILABLE')
     const next = (this.bindingOperations.get(resource) ?? Promise.resolve()).catch(() => {}).then(async () => {
       this.assertCurrent(context)
-      const exclusiveSession = resource.startsWith('session:') || resource.startsWith('queued-message:')
-      const previous = exclusiveSession ? await this.store.readBinding?.(resource) : undefined
+      // Deferred task runs retain their initiating credential owner, like queued messages.
+      const sealedExecution = taskRun || resource.startsWith('queued-message:')
+      const exclusiveOwner = sealedExecution || resource.startsWith('session:')
+      const previous = exclusiveOwner ? await this.store.readBinding?.(resource) : undefined
       if (previous && callerKey(previous.caller) !== callerKey(context.caller)) throw new Error('ROX_SESSION_OWNER_CONFLICT')
-      if (previous && resource.startsWith('queued-message:') && (previous.accountId !== context.cloudAccountId || previous.authGeneration !== context.authGeneration)) throw new Error('ROX_ACCOUNT_CHANGED')
+      if (previous && sealedExecution && (previous.accountId !== context.cloudAccountId || previous.authGeneration !== context.authGeneration)) throw new Error('ROX_ACCOUNT_CHANGED')
       this.assertCurrent(context)
       await this.store.writeBinding!(resource, { caller: { ...context.caller }, accountId: context.cloudAccountId, authGeneration: context.authGeneration })
       this.assertCurrent(context)

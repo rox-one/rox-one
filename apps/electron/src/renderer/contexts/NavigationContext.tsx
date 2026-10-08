@@ -553,7 +553,6 @@ export function NavigationProvider({
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
-      if (initialRoute) requestRuntimeSelection(initialRoute)
 
       // Restore right sidebar
       if (sidebarParam) {
@@ -596,6 +595,9 @@ export function NavigationProvider({
       }
 
       if (entries.length > 0) {
+        // Restore read-only map references for every actual panel, including
+        // unfocused panels and layouts published without a separate ?route=.
+        for (const entry of entries) requestRuntimeSelection(entry.route)
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
       }
     },

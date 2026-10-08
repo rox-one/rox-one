@@ -1,0 +1,30 @@
+{
+  "class": "W8 independent review of stored hosted native SDK receipt; not a new native execution",
+  "receipt": "native-loop-hosted-37147330512.json",
+  "receiptFileSha256": "6576d647dedde7dfb81fca0c66383217974155c202b7850a38000c10b6ac3944",
+  "workflowRun": 37147330512,
+  "workflowJob": 111273869337,
+  "artifactRawJsonSha256": "2932b42f41036a66181adb38dbcb6e5e81a3f67ac605e82ff366de7a05556a2b",
+  "nativeLoopExit": 0,
+  "assertionsPassed": true,
+  "counts": {
+    "observations": 63,
+    "hooks": 121,
+    "fixtureProviderCalls": 10
+  },
+  "verified": [
+    "task child \u2192 restricted grandchild actual ancestry and parent task spans",
+    "actual separate native eval registry ID and completion",
+    "restricted read/yield tool boundaries and 32768 model readback versus200000 worker",
+    "actual native fixture file read and all successful yielded results",
+    "no network/paid provider requests"
+  ],
+  "limits": [
+    "Provider responses come from the native SDK fixture provider. This is not a paid/live-provider or remote HTTP serialization smoke.",
+    "Native fixture does not emit before_provider_request; snapshots explicitly report partial coverage for provider serialized payload and exact input tokenization.",
+    "Native eval lifecycle does not emit parentToolCallId in this path; eval parentSpan is omitted, while actual parent agent identity is known.",
+    "Native content capture bounds remain visible as trace.coverage when reached.",
+    "This Linux hosted SDK probe is separate from renderer tests and does not confirm installed macOS/Windows applications.",
+    "Local workspace AF_UNIX native FileLock creation remains EPERM; no lock, permission, model readback or integrity bypass was used."
+  ]
+}

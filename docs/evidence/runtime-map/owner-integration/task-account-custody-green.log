@@ -1,0 +1,27 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+(pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [3.31ms]
+(pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [1.52ms]
+(pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [1.76ms]
+(pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [0.45ms]
+(pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [0.98ms]
+(pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [0.91ms]
+(pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [4.20ms]
+(pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [2.93ms]
+(pass) Pocket host account authority > fences a running executor when account key generation changes [0.55ms]
+(pass) Pocket host account authority > invalidates the running executor when the active key is revoked [0.37ms]
+(pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [0.60ms]
+(pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [0.66ms]
+(pass) Pocket host account authority > fences crash-window active records and drains logout on ordinary restart state reads [0.62ms]
+(pass) Pocket host account authority > keeps a pending logout fail-closed across clear failure and broker outage restarts [0.64ms]
+(pass) Pocket host account authority > serializes first session owner claims and preserves caller binding across restart [1.11ms]
+(pass) Pocket host account authority > restores sealed queued-message owners only for their exact execution generation [0.69ms]
+(pass) Pocket host account authority > serializes concurrent task-run owner claims without letting a foreign caller replace the first owner [0.96ms]
+(pass) Pocket host account authority > keeps a sealed task-run owner immutable when the same caller reauthenticates or changes account [1.95ms]
+(pass) Pocket host account authority > does not claim sealed task-run custody when the existing store cannot read its owner binding [0.32ms]
+
+ 19 pass
+ 0 fail
+ 97 expect() calls
+Ran 19 tests across 1 file. [593.00ms]

@@ -1,0 +1,17 @@
+{
+  "label": "source-after-corrected-fixture",
+  "command": [
+    "python3",
+    "/workspace/scratch/d0a9c1c6c094/ui001-source.py",
+    "docs/evidence/runtime-map/ui001-bounded/7ec867830",
+    "after"
+  ],
+  "cwd": "/workspace/scratch/d0a9c1c6c094/worktrees/ui001-qualification",
+  "startedUtc": "2026-10-03T22:39:11.269524+00:00",
+  "elapsedSeconds": 0.065,
+  "exitCode": 1,
+  "timedOut": false,
+  "timeoutSeconds": 30,
+  "environment": {},
+  "log": "source-after-corrected-fixture.log"
+}

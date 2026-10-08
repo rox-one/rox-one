@@ -1,0 +1,131 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/mcp/__tests__/mcp-pool.test.ts:
+(pass) McpClientPool.ensureConnected > connects an absent source once [2.16ms]
+(pass) McpClientPool.ensureConnected > is a no-op when already connected with an unchanged config [0.52ms]
+(pass) McpClientPool.ensureConnected > reconnects when the auth header changed (token refresh) [0.54ms]
+(pass) McpClientPool.ensureConnected > does not touch other pool members [0.42ms]
+(pass) McpClientPool.ensureConnected > refuses stdio configs when local MCP is disabled for the workspace [1.35ms]
+
+packages/shared/src/mcp/__tests__/env-blocklist.test.ts:
+(pass) stdio MCP subprocess env blocklist > excludes secrets-runtime staging vars from the spawn env (transport params) [17.39ms]
+(pass) stdio MCP subprocess env blocklist > lets explicit config.env entries win over the inherited-env filter [1.66ms]
+(pass) stdio MCP subprocess env blocklist > spawns a real MCP server whose own process env excludes blocked vars [173.50ms]
+
+packages/shared/src/mcp/__tests__/client-sse.test.ts:
+(pass) CraftMcpClient — SSE transport > connects to a legacy SSE-only server and lists tools [52.61ms]
+(pass) CraftMcpClient — SSE transport > calls a tool over the SSE POST channel [15.91ms]
+(pass) CraftMcpClient — SSE transport > sends configured headers on the SSE handshake and the POST channel [16.40ms]
+(pass) CraftMcpClient — SSE transport > rejects missing authorization on both protected SSE endpoints [9.90ms]
+(pass) CraftMcpClient — SSE transport > fails cleanly when pointed at the SSE-only endpoint with HTTP transport [3.21ms]
+(pass) McpClientPool — SSE source mapping > connects a type:"sse" source via the real SSE transport (no http coercion) [17.31ms]
+(pass) validateMcpConnection — SSE transport > honors mcpTransport:"sse" instead of forcing Streamable HTTP [12.50ms]
+
+packages/shared/src/mcp/__tests__/redirect-guard.test.ts:
+(pass) createMcpGuardedFetch > passes non-redirect responses through untouched [5.35ms]
+(pass) createMcpGuardedFetch > follows a same-origin redirect [7.07ms]
+(pass) createMcpGuardedFetch > preserves method and body across a same-origin 307 [6.31ms]
+(pass) createMcpGuardedFetch > throws McpRedirectError on a cross-origin redirect and never issues the second request [12.05ms]
+(pass) createMcpGuardedFetch > refuses a redirect chain that starts same-origin and escapes cross-origin [9.48ms]
+(pass) createMcpGuardedFetch > caps same-origin redirect loops with McpRedirectError [9.40ms]
+(pass) createMcpGuardedFetch > returns a 3xx without a Location header as-is (no redirect to follow) [4.71ms]
+(pass) CraftMcpClient — redirect SSRF guard > SSE transport never follows a cross-origin 302 from the MCP endpoint [2517.70ms]
+(pass) CraftMcpClient — redirect SSRF guard > Streamable HTTP transport rejects a cross-origin 302 with a typed error [23.57ms]
+(pass) CraftMcpClient — redirect SSRF guard > Streamable HTTP still completes the handshake across a same-origin 307 [23.59ms]
+
+packages/shared/src/mcp/__tests__/client-qdrant-sharing.test.ts:
+(pass) managed embedded Qdrant client leases > recognizes the pinned official stdio launch and excludes mixed remote settings [0.39ms]
+(pass) managed embedded Qdrant client leases > explicit local mode omits blank and inherited remote settings from the subprocess [88.39ms]
+(pass) managed embedded Qdrant client leases > session-scoped inherited directories do not prevent sharing across chats [68.94ms]
+(pass) managed embedded Qdrant client leases > shares one subprocess across a startup probe, session pool and direct tool caller [78.70ms]
+(pass) managed embedded Qdrant client leases > coalesces concurrent direct connects and tools/list requests [71.13ms]
+(pass) managed embedded Qdrant client leases > source validation leases the process already held by a session [66.51ms]
+(pass) managed embedded Qdrant client leases > normalizes storage paths and environment key order [57.94ms]
+(pass) managed embedded Qdrant client leases > canonicalizes a symlinked parent before the database directory exists [75.67ms]
+(pass) managed embedded Qdrant client leases > rejects conflicting active configs for one directory and releases the directory on final close [490.77ms]
+(pass) managed embedded Qdrant client leases > keeps different storage directories independent [64.77ms]
+(pass) managed embedded Qdrant client leases > closing one lease during initialize preserves another waiting session [116.77ms]
+(pass) managed embedded Qdrant client leases > closing one lease cancels its tools/list wait without cancelling another lease [69.60ms]
+(pass) managed embedded Qdrant client leases > closing one lease cancels its tool request while another lease keeps using the process [73.97ms]
+(pass) managed embedded Qdrant client leases > caller cancellation settles a tool call during initialize without cancelling another lease [66.47ms]
+(pass) managed embedded Qdrant client leases > final close cancels initialize, cleans up the process and permits another owner [135.90ms]
+(pass) managed embedded Qdrant client leases > waits for the final transport shutdown before starting a replacement [318.19ms]
+(pass) managed embedded Qdrant client leases > cleans up failed shared handshakes and removes the registry entry on final release [407.80ms]
+(pass) managed embedded Qdrant client leases > restarts one crashed subprocess for all remaining leases [150.20ms]
+(pass) managed embedded Qdrant client leases > remote Qdrant configurations keep independent connections even with a leftover local path [104.99ms]
+(pass) managed embedded Qdrant client leases > explicit remote mode omits an unrelated inherited local storage path [107.99ms]
+(pass) managed embedded Qdrant client leases > custom executable launches keep independent connections [57.62ms]
+(pass) closing a stalled SSE handshake settles direct and pool connection promises [20.39ms]
+
+packages/shared/src/mcp/__tests__/proxy-tool-name.test.ts:
+(pass) proxy-tool-name > sanitizes characters outside [A-Za-z0-9_-] so OpenAI/Codex accept the name [0.13ms]
+(pass) proxy-tool-name > disambiguates post-sanitization collisions with _2, _3, … [0.14ms]
+(pass) proxy-tool-name > keeps generated names within the 128-char provider limit [2.03ms]
+(pass) proxy-tool-name > exposes prefix / strip / restore so pool-server and local-name lookup cannot drift [0.11ms]
+(pass) proxy-tool-name > production builders import this module and do not keep a local mcp__${} template [1.33ms]
+
+packages/shared/src/mcp/__tests__/credentialed-urls.test.ts:
+(pass) validateSourceConfig — credentialed MCP URLs > rejects an MCP URL with username and password [14.17ms]
+(pass) validateSourceConfig — credentialed MCP URLs > rejects an MCP URL with a bare username [0.42ms]
+(pass) validateSourceConfig — credentialed MCP URLs > accepts a clean MCP URL [0.20ms]
+(pass) validateSourceConfig — credentialed MCP URLs > still accepts stdio configs (no URL involved) [0.23ms]
+(pass) CraftMcpClient — userinfo defense in depth > strips userinfo from the SSE transport URL [1.40ms]
+(pass) CraftMcpClient — userinfo defense in depth > strips userinfo from the Streamable HTTP transport URL [0.44ms]
+(pass) formatMcpUrlForLog > strips userinfo, query, and hash [0.06ms]
+(pass) formatMcpUrlForLog > keeps a clean URL origin + pathname [0.03ms]
+(pass) formatMcpUrlForLog > never throws on an unparseable URL [0.08ms]
+
+packages/shared/src/mcp/__tests__/mcp-pool-recovery.test.ts:
+(pass) McpClientPool transport recovery > cleans up a failed handshake and retries a transient connection error once [1.47ms]
+(pass) McpClientPool transport recovery > bounds failed attempts and retries the configured source on the next sync [0.71ms]
+(pass) McpClientPool transport recovery > does not retry an authentication failure [0.27ms]
+(pass) McpClientPool transport recovery > reconnects a known disconnected transport before calling a tool and refreshes tools [1.87ms]
+(pass) McpClientPool transport recovery > reconnects after an ambiguous tool failure without replaying the request [0.80ms]
+(pass) McpClientPool transport recovery > keeps a healthy connection on a tool validation failure [0.29ms]
+(pass) McpClientPool transport recovery > recovers an expired HTTP MCP session without replaying its tool call [0.41ms]
+(pass) McpClientPool transport recovery > a failed recovery remains retryable on the next sync [1.35ms]
+(pass) McpClientPool transport recovery > a failed recovery retries on the next tool call without another sync [0.57ms]
+(pass) McpClientPool transport recovery > an aborted retry does not start another handshake after failed recovery [0.54ms]
+(pass) McpClientPool transport recovery > caller cancellation settles during recovery before the request while another caller can recover [0.81ms]
+(pass) McpClientPool transport recovery > caller cancellation settles during recovery after an ambiguous failure while another caller can recover [0.24ms]
+(pass) McpClientPool transport recovery > recovery respects the local MCP gate after it changes [0.47ms]
+(pass) McpClientPool transport recovery > disconnect clears retry state after failed recovery [0.58ms]
+(pass) McpClientPool transport recovery > sync removal clears retry state after failed recovery [0.50ms]
+(pass) McpClientPool transport recovery > disconnectAll clears retry state after failed recovery [0.41ms]
+(pass) McpClientPool transport recovery > starts unrelated sources while another connection is still pending [0.88ms]
+(pass) McpClientPool transport recovery > reconnects after in-place mutation of stdio credentials, arguments, command and cwd [0.98ms]
+(pass) McpClientPool transport recovery > reconnects after in-place mutation of HTTP API-key headers [0.54ms]
+(pass) McpClientPool transport recovery > coalesces simultaneous recovery before two separate tool requests [0.39ms]
+(pass) McpClientPool transport recovery > applies fresh credentials requested while the previous handshake is pending [0.44ms]
+(pass) McpClientPool transport recovery > serializes two credential updates while closing the previous connection [0.49ms]
+(pass) McpClientPool transport recovery > a concurrent config change during recovery settles without waiting on itself [0.47ms]
+(pass) McpClientPool transport recovery > a newer empty sync prevents an older sync from starting connections [0.27ms]
+(pass) McpClientPool transport recovery > a newer sync cancels a handshake for a source that it removed [0.45ms]
+(pass) McpClientPool transport recovery > teardown cancels a queued connection before its handshake starts [0.38ms]
+(pass) McpClientPool transport recovery > does not execute a tool removed by the reconnecting server [0.37ms]
+(pass) McpClientPool transport recovery > sync reconnects a closed transport even when the config is unchanged [0.41ms]
+(pass) McpClientPool transport recovery > teardown cancels and drains an in-flight handshake without registering tools [0.40ms]
+(pass) McpClientPool transport recovery > teardown during recovery cannot resurrect a disconnected source [0.52ms]
+
+packages/shared/src/mcp/__tests__/client-lifecycle.test.ts:
+(pass) CraftMcpClient lifecycle > reports an exited stdio subprocess and the pool restarts it before the next tool request [247.45ms]
+(pass) CraftMcpClient lifecycle > resolves managed launchers and adds their PATH before spawning a local server [66.76ms]
+(pass) CraftMcpClient lifecycle > preserves explicit executable paths and source-specific PATH values [57.58ms]
+
+packages/shared/src/mcp/__tests__/validation-secrets.test.ts:
+(pass) stdio diagnostics redact configured vault secrets from server stderr [51.45ms]
+(pass) HTTP probe redacts echoed URL, header and access-token credentials from errors and debug logs [9.26ms]
+(pass) an invalid remote URL produces a sanitized validation result [0.66ms]
+
+packages/shared/src/mcp/__tests__/validation.test.ts:
+(pass) validateStdioMcpConnection > returns success and tool list for a spec-compliant stdio server [104.42ms]
+(pass) validateStdioMcpConnection > surfaces a framing hint when the server uses LSP-style Content-Length framing [6137.96ms]
+(pass) validateStdioMcpConnection > succeeds on a slow cold-start server that emits stderr activity throughout init [12789.99ms]
+(pass) validateStdioMcpConnection > fails at the ceiling when a server floods stderr but never completes initialize [10019.92ms]
+(pass) validateStdioMcpConnection > returns a clean "command not found" message for ENOENT [35.09ms]
+(pass) validateStdioMcpConnection > surfaces stderr output when the server exits immediately [96.95ms]
+
+ 103 pass
+ 0 fail
+ 401 expect() calls
+Ran 103 tests across 11 files. [37.14s]

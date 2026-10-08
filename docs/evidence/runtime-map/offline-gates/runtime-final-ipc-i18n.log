@@ -1,0 +1,32 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/shared/__tests__/ipc-channels.test.ts:
+(pass) RPC_CHANNELS wire-format stability > contains exactly 811 channel strings [0.88ms]
+(pass) RPC_CHANNELS wire-format stability > preserves exact wire-format strings (sorted equality) [0.54ms]
+(pass) RPC_CHANNELS wire-format stability > has no duplicate wire-format strings [0.71ms]
+(pass) BroadcastEventMap payload shapes > sources:changed carries (workspaceId, sources) [0.03ms]
+(pass) BroadcastEventMap payload shapes > sources:indexChanged carries (workspaceId, payload) [0.02ms]
+(pass) BroadcastEventMap payload shapes > skills:changed carries (workspaceId, skills) [0.01ms]
+(pass) BroadcastEventMap payload shapes > contextDocs:CHANGED carries no payload [0.01ms]
+
+apps/electron/src/renderer/__tests__/i18n-keys-coverage.test.ts:
+(pass) i18n key coverage > finds a meaningful number of literal keys [0.04ms]
+(pass) i18n key coverage > every literal t() key exists in en.json [5.50ms]
+(pass) i18n key coverage > every literal t() key exists in ru.json [1.98ms]
+(pass) i18n interpolation syntax > en.json uses {{var}} interpolation, never {var} [14.02ms]
+(pass) i18n interpolation syntax > ru.json uses {{var}} interpolation, never {var} [16.61ms]
+(pass) i18n interpolation syntax > ar.json uses {{var}} interpolation, never {var} [12.35ms]
+(pass) i18n interpolation syntax > de.json uses {{var}} interpolation, never {var} [6.97ms]
+(pass) i18n interpolation syntax > zh-Hant.json uses {{var}} interpolation, never {var} [5.64ms]
+(pass) i18n interpolation syntax > hu.json uses {{var}} interpolation, never {var} [16.12ms]
+(pass) i18n interpolation syntax > fr.json uses {{var}} interpolation, never {var} [17.13ms]
+(pass) i18n interpolation syntax > ko.json uses {{var}} interpolation, never {var} [16.70ms]
+(pass) i18n interpolation syntax > zh-Hans.json uses {{var}} interpolation, never {var} [14.60ms]
+(pass) i18n interpolation syntax > pl.json uses {{var}} interpolation, never {var} [14.10ms]
+(pass) i18n interpolation syntax > ja.json uses {{var}} interpolation, never {var} [15.88ms]
+(pass) i18n interpolation syntax > es.json uses {{var}} interpolation, never {var} [19.68ms]
+
+ 22 pass
+ 0 fail
+ 22 expect() calls
+Ran 22 tests across 2 files. [1.59s]

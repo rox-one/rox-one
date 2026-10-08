@@ -44,17 +44,27 @@ async function main(): Promise<void> {
     systemPrompt: { sha256: string; byteLength: number; parts: number };
     messages: { sha256: string; byteLength: number; count: number };
     toolSchemas: { sha256: string; byteLength: number; count: number };
+    toolParameters: Array<{ name: string; sha256: string; byteLength: number }>;
     userTextParts: Array<{ sha256: string; byteLength: number; containsOriginalRootPrompt: boolean }>;
   }> = [];
   const contextComparisons: Array<{
     agentId: string; snapshotId: string; providerCall: number; effectivePromptSha256: string;
     effectivePromptByteLength: number; systemPromptSha256: string; systemPromptByteLength: number;
     actualProviderContextSha256: string; actualProviderContextByteLength: number;
-    matchedFields: ['effectivePrompt:user-text-part', 'systemPrompt:ordered-parts'];
+    matchedFields: ['effectivePrompt:user-text-part', 'systemPrompt:ordered-parts', 'tool-parameters:native-normalization'];
     matchesEffectivePromptPart: true; matchesSystemPromptParts: true;
+    matchesOrderedToolNames: true;
+    toolParameters: Array<{
+      name: string; declaredSchema: { sha256: string; byteLength: number };
+      nativeWireSchema: { sha256: string; byteLength: number };
+      actualProviderParameters: { sha256: string; byteLength: number };
+      matchingNativeNormalizationProfiles: Array<{ injectIntent: boolean; pruneDescriptions: boolean }>;
+      matched: true;
+    }>;
     originalRootPromptDistinct?: true; originalRootPromptIncluded?: true;
   }> = [];
   const fingerprint = (value: string) => ({ sha256: createHash('sha256').update(value).digest('hex'), byteLength: Buffer.byteLength(value) });
+  const providerToolParameters = new Map<number, Array<{ name: string; parameters: any; intent: any; description: string }>>();
   let taskResult: unknown;
   let evalResult: unknown;
   try {
@@ -69,6 +79,9 @@ async function main(): Promise<void> {
     const { EventBus } = await import(base + '/src/utils/event-bus.ts');
     const { createMockModel } = await import(base + '/node_modules/@oh-my-pi/pi-ai/src/providers/mock.ts');
     const { getSupportedEfforts } = await import(base + '/node_modules/@oh-my-pi/pi-catalog/src/model-thinking.ts');
+    // These converters are public package exports, also used by native delivery.
+    const { arkToWireSchema, toolWireSchema } = await import(base + '/node_modules/@oh-my-pi/pi-ai/src/index.ts');
+    const { normalizeTools } = await import(base + '/node_modules/@oh-my-pi/pi-agent-core/src/index.ts');
     writeFileSync(join(root, 'worker-policy.js'), OMP_WORKER_POLICY_SOURCE, { mode: 0o600 });
     writeFileSync(join(root, 'fixture.txt'), 'NATIVE_READ_OK\n', { mode: 0o600 });
     const settings = Settings.isolated({
@@ -128,6 +141,10 @@ async function main(): Promise<void> {
           typeof message.content === 'string' ? [message.content] : Array.isArray(message.content)
             ? message.content.flatMap((part: any) => part.type === 'text' && typeof part.text === 'string' ? [part.text] : []) : []);
         if (providerContexts.length >= 32 || userTextParts.length > 128 || (context.systemPrompt?.length ?? 0) > 128) throw new Error('Native fixture provider Context evidence exceeded bounds');
+        const parameters = (context.tools ?? []).map((tool: any) => ({ name: tool.name, parameters: structuredClone(tool.parameters),
+          intent: tool.intent, description: tool.description ?? '' }));
+        if (parameters.some((tool: any) => Buffer.byteLength(JSON.stringify(tool.parameters)) > 524288)) throw new Error('Native fixture tool schema evidence exceeded bounds');
+        providerToolParameters.set(providerRequests.length, parameters);
         providerContexts.push({
           call: providerRequests.length, model: { id: model.id, provider: model.provider },
           tools: context.tools?.map((tool: any) => tool.name) ?? [], boundary: 'native fixture provider Context',
@@ -135,6 +152,7 @@ async function main(): Promise<void> {
           systemPrompt: { ...fingerprint(JSON.stringify(context.systemPrompt ?? [])), parts: context.systemPrompt?.length ?? 0 },
           messages: { ...fingerprint(JSON.stringify(context.messages)), count: context.messages.length },
           toolSchemas: { ...fingerprint(JSON.stringify(context.tools ?? [])), count: context.tools?.length ?? 0 },
+          toolParameters: parameters.map((tool: any) => ({ name: tool.name, ...fingerprint(JSON.stringify(tool.parameters)) })),
           userTextParts: userTextParts.map(part => ({ ...fingerprint(part), containsOriginalRootPrompt: part.includes('NATIVE_PARENT_TASK') })),
         });
         const mock = mocks.get(model.id);
@@ -215,12 +233,37 @@ async function main(): Promise<void> {
         && call.systemPrompt.sha256 === systemPrompt.sha256
         && call.userTextParts.some(part => part.sha256 === effectivePrompt.sha256 && part.byteLength === effectivePrompt.byteLength));
       if (!actual) throw new Error('Native effective prompt/system snapshot did not match actual fixture provider Context');
+      const schemaBlock = snapshot.blocks.find(block => block.kind === 'tool-schema');
+      if (!schemaBlock?.content.text || schemaBlock.content.truncated) throw new Error('Native declared parameter schemas unavailable for actual provider comparison');
+      const definitions = JSON.parse(schemaBlock.content.text);
+      const delivered = providerToolParameters.get(actual.call);
+      if (!Array.isArray(definitions) || !delivered || JSON.stringify(definitions.map(tool => tool.name)) !== JSON.stringify(delivered.map(tool => tool.name))) throw new Error('Native ordered tool names differ from actual fixture provider Context');
+      const toolParameters: typeof contextComparisons[number]['toolParameters'] = definitions.map((definition: any, index: number) => {
+        if (definition.parametersAvailability !== 'available' || definition.parameters === undefined) throw new Error('Declared native parameter schema was not captured');
+        const provided = delivered[index]!;
+        // Reapply the exact public native conversion to the observed declaration.
+        // The read-only adapter returns only captured JSON; no tool/validator runs.
+        const wire = definition.parametersConversion === 'ArkType.toJsonSchema'
+          ? arkToWireSchema({ toJsonSchema: () => structuredClone(definition.parameters) } as any)
+          : toolWireSchema({ name: definition.name, parameters: definition.parameters } as any);
+        const actualProviderParameters = fingerprint(JSON.stringify(provided.parameters));
+        const matchingNativeNormalizationProfiles: Array<{ injectIntent: boolean; pruneDescriptions: boolean }> = [];
+        for (const injectIntent of [false, true]) for (const pruneDescriptions of [false, true]) {
+          const normalized = normalizeTools([{ name: definition.name, description: provided.description, intent: provided.intent, parameters: wire }] as any,
+            { injectIntent, pruneDescriptions })![0]!.parameters;
+          const compared = fingerprint(JSON.stringify(normalized));
+          if (compared.sha256 === actualProviderParameters.sha256 && compared.byteLength === actualProviderParameters.byteLength) matchingNativeNormalizationProfiles.push({ injectIntent, pruneDescriptions });
+        }
+        if (!matchingNativeNormalizationProfiles.length) throw new Error('Observed declared parameter schema does not reproduce actual native provider parameters: ' + definition.name);
+        return { name: definition.name, declaredSchema: fingerprint(JSON.stringify(definition.parameters)), nativeWireSchema: fingerprint(JSON.stringify(wire)),
+          actualProviderParameters, matchingNativeNormalizationProfiles, matched: true as const };
+      });
       const comparison: typeof contextComparisons[number] = { agentId, snapshotId: snapshot.id, providerCall: actual.call,
         effectivePromptSha256: effectivePrompt.sha256, effectivePromptByteLength: effectivePrompt.byteLength,
         systemPromptSha256: systemPrompt.sha256, systemPromptByteLength: systemPrompt.byteLength,
         actualProviderContextSha256: actual.context.sha256, actualProviderContextByteLength: actual.context.byteLength,
-        matchedFields: ['effectivePrompt:user-text-part', 'systemPrompt:ordered-parts'],
-        matchesEffectivePromptPart: true, matchesSystemPromptParts: true };
+        matchedFields: ['effectivePrompt:user-text-part', 'systemPrompt:ordered-parts', 'tool-parameters:native-normalization'],
+        matchesEffectivePromptPart: true, matchesSystemPromptParts: true, matchesOrderedToolNames: true, toolParameters };
       if (agentId === 'root') {
         if (snapshot.originalPrompt.text !== 'NATIVE_PARENT_TASK' || fingerprint(snapshot.originalPrompt.text).sha256 === effectivePrompt.sha256
           || !actual.userTextParts.some(part => part.sha256 === effectivePrompt.sha256 && part.containsOriginalRootPrompt)) throw new Error('Original root prompt was not preserved distinctly inside actual provider Context');
@@ -239,6 +282,7 @@ async function main(): Promise<void> {
         dispatch: ['before_subagent_spawn', 'subagent_identity'].includes(event.hook) ? event.payload : undefined })),
       observations, taskResult, evalResult, providerRequests, providerContexts, contextComparisons,
       contextComparisonBoundary: { available: 'Actual native fixture provider Context after native transforms',
+        toolSchemaComparison: 'Captured declared parameters, public native arkToWireSchema/toolWireSchema and normalizeTools reproduce actual delivered parameter hash/bytes. Matching profiles are measured equality, not a configured-option readback.',
         unavailable: ['HTTP serialized request payload', 'exact provider tokenization'] },
     });
     console.log(JSON.stringify({ assertionsPassed: true, networkAttempts, requests: requests.map(({ kind, tools }) => ({ kind, tools })), observations: observations.length }));
@@ -249,6 +293,7 @@ async function main(): Promise<void> {
       requests: requests.map(({ kind, tools, reasoning }) => ({ kind, tools, reasoning })),
       observations, taskResult, evalResult, providerRequests, providerContexts, contextComparisons, transportErrors,
       contextComparisonBoundary: { available: 'Actual native fixture provider Context after native transforms',
+        toolSchemaComparison: 'Captured declared parameters, public native arkToWireSchema/toolWireSchema and normalizeTools reproduce actual delivered parameter hash/bytes. Matching profiles are measured equality, not a configured-option readback.',
         unavailable: ['HTTP serialized request payload', 'exact provider tokenization'] },
       rawHooks: raw.map(event => ({ hook: event.hook, agent: event.agent, nativeSessionId: event.nativeSessionId, sourceSeq: event.sourceSeq,
         dispatch: ['before_subagent_spawn', 'subagent_identity'].includes(event.hook) ? event.payload : undefined })),

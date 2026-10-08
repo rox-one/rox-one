@@ -35,6 +35,10 @@ const requests=[],actions=[];
 const source=slug=>({config:{slug,name:slug,type:'api',api:{baseUrl:'https://fixture.invalid'},enabled:true},folderPath:'/fixture/'+slug});
 let sources=['one','two'].map(source),skills=[{slug:'skill-one',source:'workspace'}];
 window.electronAPI={
+ getRuntimeTraceSnapshot:async(query)=>({schemaVersion:1,workspaceId:query.workspaceId,sessionId:query.sessionId,
+  runs:[],events:[],coverage:{state:'unavailable',source:'runtime',missing:['ui001-runtime-not-recorded'],reason:'UI-001 navigation fixture does not record runtime execution'}}),
+ readRuntimeTraceEvents:async()=>{throw new Error('Runtime event paging is outside this navigation fixture')},
+ readRuntimeTracePayload:async()=>{throw new Error('Runtime payload reads are outside this navigation fixture')},
  getSources:async(ws)=>{requests.push(['sources',ws]);return sources},getSkills:async(ws,cwd)=>{requests.push(['skills',ws,cwd]);return skills},
  getSessionMessages:async(id)=>{requests.push(['messages',props.workspace,id]);return null},
  onSourcesChanged:fn=>{sourceListeners.add(fn);return()=>sourceListeners.delete(fn)},
