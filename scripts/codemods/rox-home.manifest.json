@@ -24,7 +24,7 @@
     { "path": "packages/session-tools-core/src/templates/loader.ts", "mode": "ast", "rules": [{ "from": "~/.rox/workspaces/ws/sources/linear", "to": "~/rox/workspaces/ws/sources/linear" }] },
     { "path": "packages/session-tools-core/src/handlers/mermaid-validate.ts", "mode": "manual", "markers": ["ctx.roxHomeDisplay", "docs/mermaid.md"] },
     { "path": "apps/electron/src/main/meetings/local-asr.ts", "mode": "manual", "markers": ["ROX_HIDDEN_HOME_LINK_NAME", "models"] },
-    { "path": "apps/electron/src/main/ssh-tunnel/server-bootstrap.ts", "mode": "manual", "markers": ["REMOTE_HOME_MOVE_COMMAND", "LEGACY_ROX_REMOTE_INSTALL_DIR", "~/rox/remote-server"] },
+    { "path": "apps/electron/src/main/ssh-tunnel/server-bootstrap.ts", "mode": "manual", "markers": ["REMOTE_HOME_MOVE_COMMAND", "REMOTE_LAYOUT_PROBE_COMMAND", "VISIBLE_REMOTE_LAYOUT", "~/rox/remote-server"] },
     { "path": "apps/electron/src/main/ssh-tunnel/ssh-tunnel-manager.ts", "mode": "manual", "markers": ["~/rox/remote-server/.token"] },
     { "path": "scripts/install-app.sh", "mode": "manual", "markers": ["visible_root_flag_on", "legacy_home", "craft-cli migrate-config --auto"] },
     { "path": "scripts/verify-server-container-context.ts", "mode": "text", "rules": [{ "from": "'.craft-agent/credentials.json', '.rox/private.json'", "to": "'.craft-agent/credentials.json', 'rox/private.json', '.rox/private.json'" }] },

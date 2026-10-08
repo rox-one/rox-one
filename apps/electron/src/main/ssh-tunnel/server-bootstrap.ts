@@ -26,32 +26,39 @@ export interface BootstrapResult {
 }
 
 /** Directory on the remote host where the managed server is installed. */
-export const REMOTE_INSTALL_DIR = '~/rox/remote-server'
-export const REMOTE_LOG_PATH = '~/rox/remote-server/server.log'
+export const REMOTE_INSTALL_DIR = '~/.rox/remote-server'
+export const REMOTE_LOG_PATH = '~/.rox/remote-server/server.log'
 /** Token file on the remote (0600). The token travels over ssh stdin, never argv. */
-export const REMOTE_TOKEN_PATH = '~/rox/remote-server/.token'
+export const REMOTE_TOKEN_PATH = '~/.rox/remote-server/.token'
 
 /**
- * Legacy managed install (W1-13, §10.4). New installs use `~/rox` directly;
- * an existing `~/.rox/remote-server` is detected and reused until upgrade,
- * then moved with a compatibility symlink.
+ * W1-13 (#1510): where the managed remote install lives. With
+ * `storage.visible-root.v1` OFF (default) every command uses
+ * {@link LEGACY_REMOTE_LAYOUT}, i.e. exactly main's paths and commands.
  */
-export const LEGACY_ROX_REMOTE_INSTALL_DIR = '~/.rox/remote-server'
-/** Probe: reuse whichever remote home already exists. */
-export const REMOTE_INSTALL_PROBE_COMMAND =
-  `if test -d ${REMOTE_INSTALL_DIR}; then echo CANONICAL; ` +
-  `elif test -d ${LEGACY_ROX_REMOTE_INSTALL_DIR}; then echo LEGACY_ROX; fi`
-/**
- * Remote move + symlink for the next upgrade (§10.4). Only when `~/rox` is
- * absent (`mv ~/.rox ~/rox && ln -s ~/rox ~/.rox`); otherwise the legacy
- * remote-server dir alone is moved into `~/rox/remote-server` with a
- * symlink left behind. Never deletes.
- */
-export const REMOTE_HOME_MOVE_COMMAND =
-  `if test -d ~/.rox && ! test -e ~/rox; then mv ~/.rox ~/rox && ln -s ~/rox ~/.rox; ` +
-  `elif test -d ${LEGACY_ROX_REMOTE_INSTALL_DIR} && ! test -e ${REMOTE_INSTALL_DIR}; then ` +
-  `mkdir -p ~/rox && mv ${LEGACY_ROX_REMOTE_INSTALL_DIR} ${REMOTE_INSTALL_DIR} && ` +
-  `ln -s ${REMOTE_INSTALL_DIR} ${LEGACY_ROX_REMOTE_INSTALL_DIR}; fi`
+export interface RemoteServerLayout {
+  /** Rox home on the remote host. */
+  home: string
+  installDir: string
+  logPath: string
+  tokenPath: string
+}
+
+/** Flag OFF: main's layout, byte-for-byte. */
+export const LEGACY_REMOTE_LAYOUT: RemoteServerLayout = {
+  home: '~/.rox', // legacy hidden home (main)
+  installDir: REMOTE_INSTALL_DIR,
+  logPath: REMOTE_LOG_PATH,
+  tokenPath: REMOTE_TOKEN_PATH,
+}
+
+/** Flag ON: the visible remote home (only when it is ours or brand new). */
+export const VISIBLE_REMOTE_LAYOUT: RemoteServerLayout = {
+  home: '~/rox',
+  installDir: '~/rox/remote-server',
+  logPath: '~/rox/remote-server/server.log',
+  tokenPath: '~/rox/remote-server/.token',
+}
 
 export interface RunRemoteOptions {
   /** Timeout for the remote command, ms. */
@@ -84,6 +91,8 @@ export interface ServerBootstrapDeps {
   probeAttempts?: number
   /** Delay between post-start probe attempts, ms. */
   probeIntervalMs?: number
+  /** W1-13: `storage.visible-root.v1` is active locally. Absent/false = main's remote behaviour. */
+  visibleRoot?: boolean
 }
 
 const DEFAULT_PROBE_ATTEMPTS = 40
@@ -100,25 +109,26 @@ export function posixSingleQuote(s: string): string {
 
 /** Build the remote shell command that writes the token file from stdin. The
  * token is piped over ssh stdin so the secret never appears in any argv; umask 077 makes it 0600 from creation. */
-export function buildWriteTokenCommand(): string {
+export function buildWriteTokenCommand(layout: RemoteServerLayout = LEGACY_REMOTE_LAYOUT): string {
   return (
-    `mkdir -p ${REMOTE_INSTALL_DIR} && umask 077 && ` +
-    `cat > ${REMOTE_TOKEN_PATH} && chmod 600 ${REMOTE_TOKEN_PATH}`
+    `mkdir -p ${layout.installDir} && umask 077 && ` +
+    `cat > ${layout.tokenPath} && chmod 600 ${layout.tokenPath}`
   )
 }
 
 /** Build the remote shell command that installs an uploaded archive and starts
  * the server. The token is read from the 0600 file, never argv; detached under nohup. */
-function buildLaunch(remotePort: number, legacyCompatibility = false): string {
+function buildLaunch(remotePort: number, legacyCompatibility = false, layout: RemoteServerLayout = LEGACY_REMOTE_LAYOUT): string {
   // Literal file reads keep token values out of argv. Legacy aliases are only
   // enabled for a copied legacy artifact, and use the same canonical state.
+  const { installDir, tokenPath, logPath } = layout
   const legacyEnv = legacyCompatibility
-    ? `CRAFT_SERVER_TOKEN="$(cat ${REMOTE_TOKEN_PATH})" CRAFT_RPC_PORT=${remotePort} CRAFT_CONFIG_DIR=${REMOTE_INSTALL_DIR}/config `
+    ? `CRAFT_SERVER_TOKEN="$(cat ${tokenPath})" CRAFT_RPC_PORT=${remotePort} CRAFT_CONFIG_DIR=${installDir}/config `
     : ''
   return (
-    `ROX_SERVER_TOKEN="$(cat ${REMOTE_TOKEN_PATH})" ROX_RPC_PORT=${remotePort} ` +
-    `ROX_CONFIG_DIR=${REMOTE_INSTALL_DIR}/config ` + legacyEnv +
-    `nohup ${REMOTE_INSTALL_DIR}/start.sh > ${REMOTE_LOG_PATH} 2>&1 < /dev/null &`
+    `ROX_SERVER_TOKEN="$(cat ${tokenPath})" ROX_RPC_PORT=${remotePort} ` +
+    `ROX_CONFIG_DIR=${installDir}/config ` + legacyEnv +
+    `nohup ${installDir}/start.sh > ${logPath} 2>&1 < /dev/null &`
   )
 }
 
@@ -129,36 +139,43 @@ function detach(launch: string): string {
   return `sh -c ${posixSingleQuote(launch)} > /dev/null 2>&1 < /dev/null`
 }
 
-export function buildStartCommand(archiveRemotePath: string, remotePort: number): string {
+export function buildStartCommand(archiveRemotePath: string, remotePort: number, layout: RemoteServerLayout = LEGACY_REMOTE_LAYOUT): string {
   // Extract into the install dir, then start start.sh detached, logging to server.log.
+  const { installDir } = layout
   return [
-    `mkdir -p ${REMOTE_INSTALL_DIR}`,
-    `tar -xzf ${archiveRemotePath} -C ${REMOTE_INSTALL_DIR}`,
-    `chmod +x ${REMOTE_INSTALL_DIR}/start.sh ${REMOTE_INSTALL_DIR}/bin/craft-server 2>/dev/null || true`,
+    `mkdir -p ${installDir}`,
+    `tar -xzf ${archiveRemotePath} -C ${installDir}`,
+    `chmod +x ${installDir}/start.sh ${installDir}/bin/craft-server 2>/dev/null || true`,
     `rm -f ${archiveRemotePath}`,
-    detach(buildLaunch(remotePort)),
+    detach(buildLaunch(remotePort, false, layout)),
   ].join(' && ')
 }
 
 /** Restart an already-installed server without re-uploading the artifact — the
  * path taken when the process died but the install dir is intact. */
-export function buildRestartCommand(remotePort: number, legacyCompatibility = false): string {
-  return detach(buildLaunch(remotePort, legacyCompatibility))
+export function buildRestartCommand(remotePort: number, legacyCompatibility = false, layout: RemoteServerLayout = LEGACY_REMOTE_LAYOUT): string {
+  return detach(buildLaunch(remotePort, legacyCompatibility, layout))
 }
 
 /** Explicit compatibility source; never used for new installs. */
 export const LEGACY_REMOTE_INSTALL_DIR = '~/.craft-agent/remote-server'
-const LEGACY_MARKER = `${REMOTE_INSTALL_DIR}/.legacy-env-compat`
+const legacyMarker = (installDir: string) => `${installDir}/.legacy-env-compat`
 
 /** Canonical installation wins; legacy is only imported on requested restart. */
-export const CHECK_INSTALLED_COMMAND =
-  `if test -x ${REMOTE_INSTALL_DIR}/start.sh; then ` +
-  `if test -f ${LEGACY_MARKER}; then echo INSTALLED_LEGACY; else echo INSTALLED; fi; ` +
-  `elif test -x ${LEGACY_REMOTE_INSTALL_DIR}/start.sh; then echo LEGACY_INSTALLED; ` +
-  `elif test -x ${LEGACY_ROX_REMOTE_INSTALL_DIR}/start.sh; then echo LEGACY_ROX_INSTALLED; fi`
+export function checkInstalledCommand(layout: RemoteServerLayout = LEGACY_REMOTE_LAYOUT): string {
+  const { installDir } = layout
+  return (
+    `if test -x ${installDir}/start.sh; then ` +
+    `if test -f ${legacyMarker(installDir)}; then echo INSTALLED_LEGACY; else echo INSTALLED; fi; ` +
+    `elif test -x ${LEGACY_REMOTE_INSTALL_DIR}/start.sh; then echo LEGACY_INSTALLED; fi`
+  )
+}
+export const CHECK_INSTALLED_COMMAND = checkInstalledCommand()
 
 /** Copy missing legacy files, preserving canonical conflicts and the source. */
-export const IMPORT_LEGACY_INSTALL_COMMAND =
+export function importLegacyInstallCommand(layout: RemoteServerLayout = LEGACY_REMOTE_LAYOUT): string {
+  const { installDir } = layout
+  return (
   `test -x ${LEGACY_REMOTE_INSTALL_DIR}/start.sh || { echo 'Legacy remote install is missing; reinstall the managed ROX server.' >&2; exit 1; }; ` +
   `copy_missing() { for source in "$1"/* "$1"/.[!.]* "$1"/..?*; do ` +
   `test -e "$source" || test -L "$source" || continue; target="$2/\${source##*/}"; ` +
@@ -166,23 +183,82 @@ export const IMPORT_LEGACY_INSTALL_COMMAND =
   `if test -L "$target" || { test -e "$target" && ! test -d "$target"; }; then continue; fi; ` +
   `mkdir -p "$target" && copy_missing "$source" "$target" || return 1; ` +
   `elif ! test -e "$target" && ! test -L "$target"; then cp -pP "$source" "$target" || return 1; fi; done; }; ` +
-  `mkdir -p ${REMOTE_INSTALL_DIR} && copy_missing ${LEGACY_REMOTE_INSTALL_DIR} ${REMOTE_INSTALL_DIR} && ` +
-  `touch ${LEGACY_MARKER} && test -x ${REMOTE_INSTALL_DIR}/start.sh`
+  `mkdir -p ${installDir} && copy_missing ${LEGACY_REMOTE_INSTALL_DIR} ${installDir} && ` +
+  `touch ${legacyMarker(installDir)} && test -x ${installDir}/start.sh`
+  )
+}
+export const IMPORT_LEGACY_INSTALL_COMMAND = importLegacyInstallCommand()
 
 export const KILL_MANAGED_SERVER_COMMAND =
-  `pkill -f '[.](rox|craft-agent)/remote-server|/rox/remote-server' 2>/dev/null || true`
+  `pkill -f '[.](rox|craft-agent)/remote-server' 2>/dev/null || true`
 
-async function prepareRestart(host: SshHostConfig, deps: ServerBootstrapDeps): Promise<{ installed: boolean; legacy: boolean }> {
-  const status = (await deps.runRemote(host, CHECK_INSTALLED_COMMAND)).trim()
+/** Flag ON only: also matches a server started from the visible `~/rox` home. */
+export const VISIBLE_KILL_MANAGED_SERVER_COMMAND =
+  `pkill -f '([./]rox|[.]craft-agent)/remote-server' 2>/dev/null || true`
+
+/**
+ * Flag ON only: classify the remote homes. Prints one of
+ * - `VISIBLE`  — `~/rox/remote-server` exists, or legacy `~/.rox` already
+ *               symlinks to `~/rox` (a migrated home).
+ * - `FOREIGN`  — `~/rox` exists but is not a Rox home: never write into it,
+ *               stay on the legacy layout.
+ * - `MOVABLE`  — a managed install lives in a real legacy `~/.rox` and `~/rox` is absent.
+ * - `LEGACY`   — legacy `~/.rox` exists without a managed install (e.g. a desktop
+ *               Rox on that host): keep main's layout, never create an empty `~/rox`.
+ * - `FRESH`    — neither home exists.
+ */
+export const REMOTE_LAYOUT_PROBE_COMMAND =
+  `if test -d ~/rox/remote-server; then echo VISIBLE; ` +
+  `elif test -L ~/.rox && test -d ~/rox && test "$(cd ~/.rox && pwd -P)" = "$(cd ~/rox && pwd -P)"; then echo VISIBLE; ` + // legacy symlink → visible
+  `elif test -e ~/rox || test -L ~/rox; then echo FOREIGN; ` +
+  `elif test -x ~/.rox/remote-server/start.sh && test -d ~/.rox && ! test -L ~/.rox; then echo MOVABLE; ` + // legacy install
+  `elif test -e ~/.rox || test -L ~/.rox; then echo LEGACY; ` +
+  `else echo FRESH; fi`
+
+/**
+ * Flag ON only: move the legacy `~/.rox` home to `~/rox` and leave a compat
+ * symlink. Run only after the managed server was killed. Prints `MOVED` or
+ * `KEPT`; keeps the legacy home when `~/rox` appeared meanwhile, when a live
+ * writer still holds a home lock, or when the symlink cannot be created (the
+ * move is rolled back). Never deletes anything.
+ */
+export const REMOTE_HOME_MOVE_COMMAND = String.raw`if test -d ~/.rox && ! test -L ~/.rox && ! test -e ~/rox && ! test -L ~/rox; then ` +
+  String.raw`live=; for lock in ~/.rox/.server.lock ~/.rox/config.json.lock; do ` + // legacy home writer locks
+  String.raw`pid=$(sed -n -e 's/.*"pid"[^0-9]*\([0-9][0-9]*\).*/\1/p' -e 's/^\([0-9][0-9]*\)$/\1/p' "$lock" 2>/dev/null | head -n 1); ` +
+  String.raw`if test -n "$pid" && kill -0 "$pid" 2>/dev/null; then live=1; fi; done; ` +
+  String.raw`if test -n "$live"; then echo KEPT; ` +
+  String.raw`elif mv ~/.rox ~/rox; then if ln -s "$HOME/rox" ~/.rox; then chmod 700 ~/rox; echo MOVED; else mv ~/rox ~/.rox; echo KEPT; fi; ` + // legacy compat symlink
+  String.raw`else echo KEPT; fi; else echo KEPT; fi`
+
+/** mkdir for the remote home; the visible home is private (0700). */
+function mkdirHomeCommand(layout: RemoteServerLayout): string {
+  return layout === LEGACY_REMOTE_LAYOUT ? 'mkdir -p ~/.rox' : `mkdir -p ${layout.home} && chmod 700 ${layout.home}` // legacy: main
+}
+
+/**
+ * Pick the layout for this (re)start. Flag OFF: main's layout, no probe.
+ * Flag ON: visible only when it is ours or brand new; a managed legacy home is
+ * moved only after the managed server is killed; a foreign `~/rox` is never touched.
+ */
+export async function resolveRemoteLayout(host: SshHostConfig, deps: ServerBootstrapDeps): Promise<RemoteServerLayout> {
+  if (deps.visibleRoot !== true) return LEGACY_REMOTE_LAYOUT
+  const probe = (await deps.runRemote(host, REMOTE_LAYOUT_PROBE_COMMAND)).trim()
+  if (probe === 'VISIBLE' || probe === 'FRESH') return VISIBLE_REMOTE_LAYOUT
+  if (probe === 'MOVABLE') {
+    // Kill the managed server BEFORE its home moves out from under it.
+    await deps.runRemote(host, VISIBLE_KILL_MANAGED_SERVER_COMMAND)
+    const moved = (await deps.runRemote(host, REMOTE_HOME_MOVE_COMMAND)).trim()
+    return moved === 'MOVED' ? VISIBLE_REMOTE_LAYOUT : LEGACY_REMOTE_LAYOUT
+  }
+  return LEGACY_REMOTE_LAYOUT // FOREIGN, LEGACY or unknown output
+}
+
+async function prepareRestart(host: SshHostConfig, deps: ServerBootstrapDeps, layout: RemoteServerLayout): Promise<{ installed: boolean; legacy: boolean }> {
+  const status = (await deps.runRemote(host, checkInstalledCommand(layout))).trim()
   if (status === 'LEGACY_INSTALLED') {
-    await deps.runRemote(host, IMPORT_LEGACY_INSTALL_COMMAND)
+    await deps.runRemote(host, importLegacyInstallCommand(layout))
   }
-  if (status === 'LEGACY_ROX_INSTALLED') {
-    // W1-13 (§10.4): legacy `~/.rox` managed install → move + symlink, then
-    // restart from the canonical `~/rox` path.
-    await deps.runRemote(host, REMOTE_HOME_MOVE_COMMAND)
-  }
-  return { installed: ['INSTALLED', 'INSTALLED_LEGACY', 'LEGACY_INSTALLED', 'LEGACY_ROX_INSTALLED'].includes(status), legacy: status.includes('LEGACY') }
+  return { installed: ['INSTALLED', 'INSTALLED_LEGACY', 'LEGACY_INSTALLED'].includes(status), legacy: status.includes('LEGACY') }
 }
 
 /** Run the full bootstrap. Assumes the SSH tunnel is already established and the
@@ -204,18 +280,20 @@ export async function bootstrapRemoteServer(
     onProgress({ phase: 'ready' })
     return { token: stored }
   }
+  const layout = await resolveRemoteLayout(host, deps)
+  const killCommand = deps.visibleRoot === true ? VISIBLE_KILL_MANAGED_SERVER_COMMAND : KILL_MANAGED_SERVER_COMMAND
   if (alreadyAlive) {
     // A server answers but we hold no token for it. If OUR install dir is present,
     // it's a managed server whose token we lost — restart with a fresh token.
-    const installation = await prepareRestart(host, deps)
+    const installation = await prepareRestart(host, deps, layout)
     if (installation.installed) {
       const token = deps.generateToken()
       await deps.storeToken(host.id, token)
       onProgress({ phase: 'starting-server', detail: 'restart' })
-      await deps.runRemote(host, buildWriteTokenCommand(), { stdin: token })
+      await deps.runRemote(host, buildWriteTokenCommand(layout), { stdin: token })
       // The old (token-less to us) server still holds the port; kill it first.
-      await deps.runRemote(host, KILL_MANAGED_SERVER_COMMAND)
-      await deps.runRemote(host, buildRestartCommand(host.remotePort, installation.legacy))
+      await deps.runRemote(host, killCommand)
+      await deps.runRemote(host, buildRestartCommand(host.remotePort, installation.legacy, layout))
       onProgress({ phase: 'waiting-for-server' })
       for (let attempt = 0; attempt < probeAttempts; attempt++) {
         if (await deps.probe()) {
@@ -240,13 +318,13 @@ export async function bootstrapRemoteServer(
   // 2. Server not answering but we manage this host and the install is intact
   //    (process died: crash, reboot, OOM kill) — restart it without re-uploading.
   if (stored) {
-    const installation = await prepareRestart(host, deps)
+    const installation = await prepareRestart(host, deps, layout)
     if (installation.installed) {
       onProgress({ phase: 'starting-server', detail: 'restart' })
       // Re-write the token file (cheap to refresh) and relaunch; fall through to
       // a full reinstall if the restart doesn't bring the server up.
-      await deps.runRemote(host, buildWriteTokenCommand(), { stdin: stored })
-      await deps.runRemote(host, buildRestartCommand(host.remotePort, installation.legacy))
+      await deps.runRemote(host, buildWriteTokenCommand(layout), { stdin: stored })
+      await deps.runRemote(host, buildRestartCommand(host.remotePort, installation.legacy, layout))
       onProgress({ phase: 'waiting-for-server' })
       for (let attempt = 0; attempt < probeAttempts; attempt++) {
         if (await deps.probe()) {
@@ -268,10 +346,10 @@ export async function bootstrapRemoteServer(
   onProgress({ phase: 'building-server', detail: `${target.platform}-${target.arch}` })
   const artifact = await deps.resolveArtifact(target)
 
-  // 5. Upload + extract (new installs use `~/rox` directly, §10.4).
-  const remoteArchive = `~/rox/${artifact.archiveName}`
+  // 5. Upload + extract.
+  const remoteArchive = `${layout.home}/${artifact.archiveName}`
   onProgress({ phase: 'uploading-server' })
-  await deps.runRemote(host, 'mkdir -p ~/rox')
+  await deps.runRemote(host, mkdirHomeCommand(layout))
   await deps.uploadFile(host, artifact.archivePath, remoteArchive)
 
   // 6. Generate + store token, transfer it via stdin (never argv), then
@@ -280,11 +358,11 @@ export async function bootstrapRemoteServer(
   await deps.storeToken(host.id, token)
 
   onProgress({ phase: 'installing-server' })
-  await deps.runRemote(host, buildWriteTokenCommand(), { stdin: token })
+  await deps.runRemote(host, buildWriteTokenCommand(layout), { stdin: token })
 
   onProgress({ phase: 'starting-server' })
   // Extracting a large archive + launching can take a while; allow generous time.
-  await deps.runRemote(host, buildStartCommand(remoteArchive, host.remotePort), {
+  await deps.runRemote(host, buildStartCommand(remoteArchive, host.remotePort, layout), {
     timeoutMs: 180_000,
   })
 
@@ -301,7 +379,7 @@ export async function bootstrapRemoteServer(
   // Failure — surface a tail of the remote log to help diagnosis (no secrets in it).
   let logTail = ''
   try {
-    logTail = (await deps.runRemote(host, `tail -n 30 ${REMOTE_LOG_PATH} 2>/dev/null || true`)).trim()
+    logTail = (await deps.runRemote(host, `tail -n 30 ${layout.logPath} 2>/dev/null || true`)).trim()
   } catch {
     /* best effort */
   }

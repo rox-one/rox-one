@@ -309,20 +309,109 @@ describe('legacy managed remote compatibility', () => {
   })
 })
 
-describe('W1-13 legacy ~/.rox remote install', () => {
-  it('runs the remote move + symlink before restarting from ~/rox', async () => {
-    const { REMOTE_HOME_MOVE_COMMAND } = await import('../ssh-tunnel/server-bootstrap.ts')
+describe('W1-13 storage.visible-root.v1 remote layout', () => {
+  async function load() {
+    return import('../ssh-tunnel/server-bootstrap.ts')
+  }
+  function scripted(answers: Record<string, string>, commands: string[]): ServerBootstrapDeps['runRemote'] {
+    return async (_host, command) => {
+      commands.push(command)
+      if (command.includes('uname')) return 'Darwin arm64\n'
+      return answers[command] ?? ''
+    }
+  }
+
+  it('flag OFF: no probe, no move, exactly main\'s legacy paths', async () => {
+    const { REMOTE_LAYOUT_PROBE_COMMAND, REMOTE_HOME_MOVE_COMMAND } = await load()
+    const { deps, rec } = makeDeps({ initialToken: 'saved', probeResults: [false, true] })
+    await bootstrapRemoteServer(HOST, deps)
+    expect(rec.remoteCommands).not.toContain(REMOTE_LAYOUT_PROBE_COMMAND)
+    expect(rec.remoteCommands).not.toContain(REMOTE_HOME_MOVE_COMMAND)
+    expect(rec.remoteCommands).toContain('mkdir -p ~/.rox')
+    expect(rec.uploads[0]!.remote).toBe('~/.rox/craft-server-1.0.0-darwin-arm64.tar.gz')
+    expect(rec.remoteCommands.join('\n')).not.toMatch(/~\/rox\b/)
+    // main's exact strings
+    expect(buildWriteTokenCommand()).toBe('mkdir -p ~/.rox/remote-server && umask 077 && cat > ~/.rox/remote-server/.token && chmod 600 ~/.rox/remote-server/.token')
+    expect(KILL_MANAGED_SERVER_COMMAND).toBe(`pkill -f '[.](rox|craft-agent)/remote-server' 2>/dev/null || true`)
+  })
+
+  it('flag ON + managed legacy home: kills the server BEFORE moving, then restarts from ~/rox without CRAFT_ aliases', async () => {
+    const m = await load()
     const commands: string[] = []
-    const { deps, rec } = makeDeps({
-      initialToken: 'saved-token', probeResults: [false, true],
-      runRemote: async (_host, command) => {
-        commands.push(command)
-        return command === CHECK_INSTALLED_COMMAND ? 'LEGACY_ROX_INSTALLED\n' : ''
-      },
+    const installedVisible = m.checkInstalledCommand(m.VISIBLE_REMOTE_LAYOUT)
+    const { deps } = makeDeps({
+      visibleRoot: true, initialToken: 'saved', probeResults: [false, true],
+      runRemote: scripted({
+        [m.REMOTE_LAYOUT_PROBE_COMMAND]: 'MOVABLE\n',
+        [m.REMOTE_HOME_MOVE_COMMAND]: 'MOVED\n',
+        [installedVisible]: 'INSTALLED\n',
+      }, commands),
     })
     await bootstrapRemoteServer(HOST, deps)
-    expect(commands).toContain(REMOTE_HOME_MOVE_COMMAND)
-    expect(commands.indexOf(REMOTE_HOME_MOVE_COMMAND)).toBeLessThan(commands.indexOf(buildWriteTokenCommand()))
-    expect(rec.uploads).toHaveLength(0)
+    const kill = commands.indexOf(m.VISIBLE_KILL_MANAGED_SERVER_COMMAND)
+    const move = commands.indexOf(m.REMOTE_HOME_MOVE_COMMAND)
+    expect(kill).toBeGreaterThanOrEqual(0)
+    expect(kill).toBeLessThan(move)
+    const restart = m.buildRestartCommand(HOST.remotePort, false, m.VISIBLE_REMOTE_LAYOUT)
+    expect(commands).toContain(restart)
+    expect(restart).toContain('ROX_CONFIG_DIR=~/rox/remote-server/config')
+    expect(restart).not.toContain('CRAFT_')
+  })
+
+  it('flag ON + move refused (KEPT): stays on the legacy layout', async () => {
+    const m = await load()
+    const commands: string[] = []
+    const { deps } = makeDeps({
+      visibleRoot: true, initialToken: 'saved', probeResults: [false, true],
+      runRemote: scripted({
+        [m.REMOTE_LAYOUT_PROBE_COMMAND]: 'MOVABLE\n',
+        [m.REMOTE_HOME_MOVE_COMMAND]: 'KEPT\n',
+        [CHECK_INSTALLED_COMMAND]: 'INSTALLED\n',
+      }, commands),
+    })
+    await bootstrapRemoteServer(HOST, deps)
+    expect(commands).toContain(buildRestartCommand(HOST.remotePort))
+    expect(commands).toContain(buildWriteTokenCommand())
+  })
+
+  it('flag ON + foreign ~/rox: never moves or writes into it', async () => {
+    const m = await load()
+    const commands: string[] = []
+    const { deps, rec } = makeDeps({
+      visibleRoot: true, probeResults: [false, true],
+      runRemote: scripted({ [m.REMOTE_LAYOUT_PROBE_COMMAND]: 'FOREIGN\n' }, commands),
+    })
+    await bootstrapRemoteServer(HOST, deps)
+    expect(commands).not.toContain(m.REMOTE_HOME_MOVE_COMMAND)
+    expect(commands).toContain('mkdir -p ~/.rox')
+    expect(rec.uploads[0]!.remote.startsWith('~/.rox/')).toBe(true)
+    const rest = commands.filter(c => c !== m.REMOTE_LAYOUT_PROBE_COMMAND && c !== m.VISIBLE_KILL_MANAGED_SERVER_COMMAND).join('\n')
+    expect(rest).not.toMatch(/~\/rox\b/)
+  })
+
+  it('flag ON + legacy home without a managed install: keeps legacy (never an empty ~/rox)', async () => {
+    const m = await load()
+    const commands: string[] = []
+    const { deps } = makeDeps({
+      visibleRoot: true, probeResults: [false, true],
+      runRemote: scripted({ [m.REMOTE_LAYOUT_PROBE_COMMAND]: 'LEGACY\n' }, commands),
+    })
+    await bootstrapRemoteServer(HOST, deps)
+    expect(commands).toContain('mkdir -p ~/.rox')
+    expect(commands.join('\n')).not.toContain('mkdir -p ~/rox')
+  })
+
+  it('flag ON + fresh host: installs into a private ~/rox', async () => {
+    const m = await load()
+    const commands: string[] = []
+    const { deps, rec } = makeDeps({
+      visibleRoot: true, probeResults: [false, true],
+      runRemote: scripted({ [m.REMOTE_LAYOUT_PROBE_COMMAND]: 'FRESH\n' }, commands),
+    })
+    await bootstrapRemoteServer(HOST, deps)
+    expect(commands).toContain('mkdir -p ~/rox && chmod 700 ~/rox')
+    expect(rec.uploads[0]!.remote).toBe('~/rox/craft-server-1.0.0-darwin-arm64.tar.gz')
+    expect(commands).toContain(m.buildStartCommand('~/rox/craft-server-1.0.0-darwin-arm64.tar.gz', HOST.remotePort, m.VISIBLE_REMOTE_LAYOUT))
+    expect(commands.join('\n')).not.toContain('CRAFT_')
   })
 })
