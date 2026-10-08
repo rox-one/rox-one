@@ -12,8 +12,9 @@ describe('renderer node builtin stub', () => {
     expect(stub).toContain('export class X509Certificate')
   })
   it('rejects host-only skill link operations', async () => {
-    const { readlinkSync, symlinkSync } = await import('../node-stub.ts')
+    const { readlinkSync, symlinkSync, linkSync } = await import('../node-stub.ts')
     expect(() => readlinkSync('/skills/review')).toThrow('requires the host API')
     expect(() => symlinkSync('/skills/review', '/external/review')).toThrow('requires the host API')
+    expect(() => linkSync('/skills/review', '/external/review')).toThrow('requires the host API')
   })
 })
