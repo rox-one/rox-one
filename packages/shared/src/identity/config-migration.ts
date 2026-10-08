@@ -249,7 +249,7 @@ import {
   writeSync as _writeMigrationFd,
 } from 'node:fs'
 import { uptime as _osUptime } from 'node:os'
-import { basename as _basenameMigration, dirname as _dirnameMigration, relative as _relativeMigration, sep as _pathSep, posix as _posixPath, win32 as _win32Path } from 'node:path'
+import { basename as _basenameMigration, dirname as _dirnameMigration, isAbsolute as _isAbsoluteMigration, relative as _relativeMigration, resolve as _resolveMigration, sep as _pathSep, posix as _posixPath, win32 as _win32Path } from 'node:path'
 import { createHash as _createLockHash, randomBytes as _randomLockBytes } from 'node:crypto'
 import { accessSync as _accessMigration, constants as _fsConstants, realpathSync as _realpathMigration } from 'node:fs'
 
@@ -629,6 +629,12 @@ export interface MigrateHiddenRoxHomeOptions {
    * `COPYFILE_EXCL`.
    */
   copyFile?: (source: string, destination: string) => void
+  /**
+   * Injectable link creation for links inside the trees (tests assert the
+   * Windows junction type and simulate EPERM for file symlinks). Default
+   * `symlinkSync`.
+   */
+  symlink?: _SymlinkFn
   /**
    * Retry a failed merge at once, even while `_mergeRetryBlocked` holds it
    * (an explicit `migrate-config`). The boot migration retries a transient
@@ -1244,6 +1250,55 @@ function _ensurePrivateDir(path: string): void {
 }
 
 type _CopyFileFn = (source: string, destination: string) => void
+type _SymlinkFn = (target: string, path: string, type?: 'dir' | 'file' | 'junction') => void
+const _defaultSymlink: _SymlinkFn = (target, path, type) => _symlinkMigration(target, path, type)
+
+/**
+ * Recreate the link found at `from` (its target text `link`) at `to`.
+ * Windows: a link to a directory becomes a junction (no Developer Mode or
+ * admin needed; the same as the compat link and Rox's own in-home creators),
+ * with an absolute target (junctions cannot be relative; a relative target
+ * keeps its meaning at the new place). A file symlink needs the symlink
+ * privilege there: when it cannot be created (EPERM) this returns false and
+ * the caller keeps it as a conflict instead of failing the whole walk.
+ */
+function _recreateLink(from: string, link: string, to: string, platform: NodeJS.Platform, symlink: _SymlinkFn): boolean {
+  if (platform !== 'win32') {
+    symlink(link, to)
+    return true
+  }
+  const absolute = _isAbsoluteMigration(link) ? link : _resolveMigration(_dirnameMigration(to), link)
+  let isDir = false
+  try {
+    isDir = _statMigration(from).isDirectory()
+  } catch {
+    try {
+      isDir = _statMigration(absolute).isDirectory()
+    } catch {
+      isDir = false
+    }
+  }
+  if (isDir) {
+    symlink(absolute, to, 'junction')
+    return true
+  }
+  try {
+    symlink(link, to, 'file')
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException | null)?.code === 'EPERM') return false
+    throw error
+  }
+  return true
+}
+
+/**
+ * A link that cannot be recreated (see `_recreateLink`) kept as a conflict:
+ * a small text file `<target>.rox-symlink` holding the link's target.
+ */
+function _writeLinkPlaceholder(target: string, link: string): void {
+  mkdirSync(_dirnameMigration(target), { recursive: true, mode: 0o700 })
+  _writeMigrationFile(`${target}.rox-symlink`, `${link}\n`, { encoding: 'utf8', mode: 0o600, flag: 'wx' })
+}
 
 const _defaultCopyFile: _CopyFileFn = (source, destination) =>
   _copyMigrationFile(source, destination, _fsConstants.COPYFILE_EXCL)
@@ -1895,7 +1950,13 @@ function _ensureVisibleRootFlagIn(file: string): void {
  * bookkeeping (locks, Settings state, manifest) and merge bookkeeping under
  * `.migration/` are skipped. Used before a data-less `~/rox` is moved aside.
  */
-function _importMissingEntries(source: string, destination: string, copyFile: _CopyFileFn): void {
+function _importMissingEntries(
+  source: string,
+  destination: string,
+  copyFile: _CopyFileFn,
+  platform: NodeJS.Platform = process.platform,
+  symlink: _SymlinkFn = _defaultSymlink,
+): void {
   const walk = (rel: string): void => {
     for (const name of _readdirMigration(rel ? join(source, rel) : source)) {
       const childRel = rel ? `${rel}/${name}` : name
@@ -1914,7 +1975,9 @@ function _importMissingEntries(source: string, destination: string, copyFile: _C
       if (st.isSymbolicLink()) {
         if (!existing) {
           mkdirSync(_dirnameMigration(to), { recursive: true })
-          _symlinkMigration(_readlinkMigration(from), to)
+          // A file symlink Windows will not create stays in the moved-aside
+          // `~/rox` (absent from the home, so it is kept as a conflict).
+          _recreateLink(from, _readlinkMigration(from), to, platform, symlink)
         }
       } else if (st.isDirectory()) {
         if (existing && !existing.isDirectory()) continue
@@ -1969,13 +2032,78 @@ function _pruneAside(dir: string, visibleDir: string, rel: string): void {
       continue
     }
     if (st.isSymbolicLink()) {
-      if (targetStat.isSymbolicLink() && _readlinkMigration(target) === _readlinkMigration(full)) _unlinkMigration(full)
+      if (targetStat.isSymbolicLink() && _sameLinkAtHome(full, target)) _unlinkMigration(full)
       continue
     }
     if (st.isFile() && targetStat.isFile() && _filesIdentical(full, st, target, targetStat, { trustMeta: false })) {
       _unlinkMigration(full)
+      continue
     }
+    if (!rel && st.isFile() && targetStat.isFile() && _asideRootFileSubsumed(name, full, target)) _unlinkMigration(full)
   }
+}
+
+/**
+ * The moved-aside link `aside` means what the home's link `home` does: the
+ * same target text, or (a Windows junction recreated with an absolute
+ * target) the aside's target taken at the home's place resolves to the same
+ * real path. Resolution only; nothing is read or written through the links.
+ */
+function _sameLinkAtHome(aside: string, home: string): boolean {
+  const asideLink = _readlinkMigration(aside)
+  const homeLink = _readlinkMigration(home)
+  if (asideLink === homeLink) return true
+  const asideAtHome = _isAbsoluteMigration(asideLink) ? asideLink : _resolveMigration(_dirnameMigration(home), asideLink)
+  const a = _realpathOrUndefined(asideAtHome)
+  return a !== undefined && a === _realpathOrUndefined(home)
+}
+
+function _readJsonObject(path: string): Record<string, unknown> | undefined {
+  try {
+    const parsed: unknown = JSON.parse(_readMigrationFile(path, 'utf8'))
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function _jsonEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
+  if (Array.isArray(a) !== Array.isArray(b)) return false
+  const ka = Object.keys(a as object)
+  const kb = Object.keys(b as object)
+  if (ka.length !== kb.length) return false
+  return ka.every((k) => Object.prototype.hasOwnProperty.call(b, k) && _jsonEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]))
+}
+
+/**
+ * Root files of a data-less `~/rox` that carry nothing the home lacks, so a
+ * moved-aside copy is no conflict (review 8): the `workbench-flags.json`
+ * whose enabled flags the home already has (its flag was merged into the
+ * home's file), and a `config.json` without workspaces whose other keys are
+ * the home's (or empty: `null`). Anything else stays a conflict.
+ */
+function _asideRootFileSubsumed(name: string, aside: string, home: string): boolean {
+  const asideJson = _readJsonObject(aside)
+  const homeJson = _readJsonObject(home)
+  if (!asideJson || !homeJson) return false
+  const othersMatch = (skip: string): boolean =>
+    Object.keys(asideJson).every((k) => k === skip || asideJson[k] === null || _jsonEqual(asideJson[k], homeJson[k]))
+  if (name === ROX_WORKBENCH_FLAGS_FILE_NAME) {
+    const asideEnabled = asideJson.enabled
+    const homeEnabled = homeJson.enabled
+    if (asideEnabled !== undefined && !Array.isArray(asideEnabled)) return false
+    if (!Array.isArray(homeEnabled) && asideEnabled !== undefined && asideEnabled.length > 0) return false
+    const homeSet = new Set(Array.isArray(homeEnabled) ? homeEnabled : [])
+    return (asideEnabled ?? []).every((flag) => homeSet.has(flag)) && othersMatch('enabled')
+  }
+  if (name === 'config.json') {
+    const workspaces = asideJson.workspaces
+    if (workspaces !== undefined && !(Array.isArray(workspaces) && workspaces.length === 0)) return false
+    return othersMatch('workspaces')
+  }
+  return false
 }
 
 /**
@@ -2140,6 +2268,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
   const timestamp = _migrationTimestamp(options)
   const rename = options?.rename ?? _renameMigration
   const copyFile = options?.copyFile ?? _defaultCopyFile
+  const symlink = options?.symlink ?? _defaultSymlink
   const linkDir =
     options?.linkDir ??
     ((target: string, path: string, type: 'dir' | 'junction') => {
@@ -2265,8 +2394,11 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     }
     return undefined
   }
-  const deferredUnmovable = (blocker: string, code = 'storage.migration.legacyNotRenamable'): VisibleHomeMigrationResult =>
-    done('deferred-unmovable', { diagnostics: [code, `rename:${blocker}`] })
+  const deferredUnmovable = (
+    blocker: string,
+    code = 'storage.migration.legacyNotRenamable',
+    extra: string[] = [],
+  ): VisibleHomeMigrationResult => done('deferred-unmovable', { diagnostics: [code, `rename:${blocker}`, ...extra] })
   const lockHolders = (bothExist: boolean): string[] =>
     options?.isLocked
       ? options.isLocked(paths.hiddenDir)
@@ -2458,7 +2590,9 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     if (hiddenChoiceMarker) previous = undefined
     const visibleAuthoritative = !hiddenChoiceMarker && (previous !== undefined || roxHomeHasUserData(paths.visibleDir))
     const blocker = mergePrecheckBlocker(!visibleAuthoritative)
-    if (blocker) return deferredUnmovable(blocker)
+    // `uses:visible`: Rox keeps running on `~/rox` (Settings says so; only
+    // the leftovers stay in `~/.rox`).
+    if (blocker) return deferredUnmovable(blocker, undefined, visibleAuthoritative ? ['uses:visible'] : [])
     if (stalePrevious || hiddenChoiceMarker) {
       _removeMergeIncompleteMarker(paths.visibleDir)
       _removeImportSidecar(paths.visibleDir)
@@ -2469,7 +2603,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       //    `~/.rox` first (e.g. the workbench flags that switched the
       //    visible home on), so every crash point leaves a consistent home.
       const flagWasOn = readPersistedVisibleRootFlag(paths.homeDir)
-      if (!hiddenChoiceMarker) _importMissingEntries(paths.visibleDir, paths.hiddenDir, copyFile)
+      if (!hiddenChoiceMarker) _importMissingEntries(paths.visibleDir, paths.hiddenDir, copyFile, platform, symlink)
       if (flagWasOn) _ensureVisibleRootFlagIn(join(paths.hiddenDir, ROX_WORKBENCH_FLAGS_FILE_NAME))
       holders = lockHolders(true)
       if (holders.length > 0) return deferredByHolders(holders)
@@ -2607,7 +2741,8 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         noteAttempt()
         const target = freeTarget(rel)
         mkdirSync(_dirnameMigration(target), { recursive: true })
-        _symlinkMigration(_readlinkMigration(source), target)
+        const link = _readlinkMigration(source)
+        if (!_recreateLink(source, link, target, platform, symlink)) _writeLinkPlaceholder(target, link)
         return
       }
       if (st.isDirectory()) {
@@ -2630,7 +2765,11 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     // attempt: a handled path whose legacy entry is unchanged is skipped; a
     // changed one is never resurrected where `~/rox` no longer has it, only
     // stashed. Nothing is ever written through a link on the `~/rox` side.
-    const mergeEntry = (rel: string): void => {
+    // `removed`: under a directory an earlier attempt handled that `~/rox`
+    // no longer has (the user deleted it): what was handled stays removed;
+    // anything never handled is kept aside, never dropped and never
+    // resurrected into `~/rox`.
+    const mergeEntry = (rel: string, removed = false): void => {
       if (++mergedEntries % heartbeatEvery === 0) {
         release.touch()
         flushSidecar()
@@ -2640,16 +2779,23 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       const to = join(paths.visibleDir, rel)
       const fromStat = _lstatMigration(from)
       const handled = sidecar.handled.get(rel)
+      const mergeChildren = (childrenRemoved: boolean): void => {
+        for (const name of _readdirMigration(from)) mergeEntry(`${rel}/${name}`, childrenRemoved)
+        // Per completed directory: a crash loses at most the records of the
+        // directory in progress (narrow resurrection window).
+        flushSidecar()
+      }
       if (fromStat.isSymbolicLink()) {
         const link = _readlinkMigration(from)
         if (handled?.k === 'l' && handled.l === link) return
-        const toStat = lstatOrUndefined(to)
+        const toStat = removed ? undefined : lstatOrUndefined(to)
         if (!toStat) {
-          if (handled) {
+          if (handled || removed) {
             stashTree(from, rel)
           } else {
             mkdirSync(_dirnameMigration(to), { recursive: true })
-            _symlinkMigration(link, to)
+            // A file symlink Windows will not create: kept as a conflict.
+            if (!_recreateLink(from, link, to, platform, symlink)) stashTree(from, rel)
           }
         } else {
           let same = false
@@ -2665,20 +2811,31 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       }
       if (fromStat.isDirectory()) {
         if (handled?.k === 't') return
-        const toStat = lstatOrUndefined(to)
+        if (removed && !handled) {
+          stashTree(from, rel)
+          record(rel, { k: 't' })
+          return
+        }
+        const toStat = removed ? undefined : lstatOrUndefined(to)
         if (toStat && !toStat.isDirectory()) {
           stashTree(from, rel)
           record(rel, { k: 't' })
           return
         }
-        // Removed from ~/rox since an earlier attempt handled it: stays removed.
-        if (!toStat && handled) return
-        if (!handled) record(rel, { k: 'd' })
+        // Handled by an earlier attempt, gone from ~/rox since: stays removed
+        // (only the children that attempt handled are skipped).
+        if (!toStat && handled) {
+          mergeChildren(true)
+          return
+        }
         // New dirs stay owner-writable until their subtree is merged, then get
         // the source mode (a failed attempt never leaves an unwritable dir
         // that would block the retry).
         if (!toStat) mkdirSync(to, { recursive: true, mode: 0o700 })
-        for (const name of _readdirMigration(from)) mergeEntry(`${rel}/${name}`)
+        // Recorded only once ~/rox has it: a failed mkdir (full disk,
+        // EACCES) never reads as a user deletion on the retry.
+        if (!handled) record(rel, { k: 'd' })
+        mergeChildren(false)
         if (!toStat) {
           try {
             _chmodMigration(to, fromStat.mode & 0o777)
@@ -2691,12 +2848,13 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       if (!fromStat.isFile()) return
       if (handled?.k === 'f' && handled.s === fromStat.size && handled.m === fromStat.mtimeMs) return
       // Leftover of a copy that crashed on an earlier attempt.
-      _dropCopyTemp(to)
-      const toStat = lstatOrUndefined(to)
+      if (!removed) _dropCopyTemp(to)
+      const toStat = removed ? undefined : lstatOrUndefined(to)
       if (!toStat) {
         // Never handled: copy it in. Handled before but gone from ~/rox (the
-        // user deleted it) and changed in ~/.rox since: keep that version aside.
-        if (handled) stash(from, rel)
+        // user deleted it) and changed in ~/.rox since, or never handled under
+        // a removed dir: keep that version aside.
+        if (handled || removed) stash(from, rel)
         else _copyFilePreservingMeta(from, to, fromStat, copyFile)
       } else if (!toStat.isFile() || !_filesIdentical(from, fromStat, to, toStat)) {
         // A link at the ~/rox side (dotfiles, dangling) or different bytes:
@@ -2711,6 +2869,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         // dir; they are never carried into ~/rox.
         if (_isMergeRootBookkeeping(name)) continue
         mergeEntry(name)
+        flushSidecar()
       }
       flushSidecar()
     } catch (error) {

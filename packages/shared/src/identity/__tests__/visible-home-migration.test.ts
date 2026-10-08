@@ -457,7 +457,9 @@ describe('merge never lets fresh defaults beat user data', () => {
       writeHiddenFile(home, 'config.json', real)
       writeHiddenFile(home, 'workspaces/ws1/config.json', '{"id":"ws1"}')
       mkdirSync(join(home, 'rox'), { recursive: true })
-      writeFileSync(join(home, 'rox', 'config.json'), JSON.stringify({ workspaces: [] }))
+      // Review 8: a bare `{ workspaces: [] }` carries nothing and is pruned;
+      // a default with its own settings is kept.
+      writeFileSync(join(home, 'rox', 'config.json'), JSON.stringify({ workspaces: [], colorTheme: 'light' }))
       const oldDate = new Date('2020-01-01')
       utimesSync(join(home, '.rox', 'config.json'), oldDate, oldDate)
       const result = migrateHiddenRoxHome(baseOptions(home))
@@ -465,7 +467,7 @@ describe('merge never lets fresh defaults beat user data', () => {
       expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toBe(real)
       // The default is kept, never lost.
       expect(readFileSync(join(home, 'rox', ROX_HOME_MIGRATION_DIR_NAME, 'conflicts', 'ts-001', 'config.json'), 'utf8')).toBe(
-        JSON.stringify({ workspaces: [] }),
+        JSON.stringify({ workspaces: [], colorTheme: 'light' }),
       )
     }))
 

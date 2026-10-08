@@ -208,9 +208,10 @@ describe('incomplete merge (finding 3; review 7: the pre-merge resolution stays 
       expect(result.outcome).toBe('merged')
       expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('real')
       expect(readFileSync(join(home, 'rox', 'secret', 'token'), 'utf8')).toBe('shh')
-      // The default config is kept, never lost.
-      expect(result.conflicts).toEqual(['ts-r2/config.json'])
-      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-r2', 'config.json'), 'utf8')).toBe('{"workspaces":[]}')
+      // Review 8: the bare default config (no workspaces, nothing else)
+      // carries nothing the home lacks: no spurious conflict.
+      expect(result.conflicts).toEqual([])
+      expect(existsSync(join(home, 'rox', '.migration', 'conflicts', 'ts-r2', 'config.json'))).toBe(false)
       expect(existsSync(mergeIncompleteMarkerPath(join(home, 'rox')))).toBe(false)
       expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
       expect(readdirSync(home).filter((n) => n.startsWith('.rox.migrated-'))).toEqual([])

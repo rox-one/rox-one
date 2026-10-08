@@ -222,7 +222,8 @@ describe('incomplete-merge marker around the final rename (finding 3)', () => {
       expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
       const retry = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-retry' }))
       expect(retry.outcome).toBe('migrated')
-      expect(retry.conflicts).toEqual(['ts-r3/config.json'])
+      // Review 8: the bare default config of the data-less ~/rox is no conflict.
+      expect(retry.conflicts).toEqual([])
       expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('real')
       expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
     }))

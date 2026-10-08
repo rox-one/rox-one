@@ -128,7 +128,7 @@ describe('no destructive probe: non-destructive pre-checks (option A)', () => {
         chmodSync(home, 0o700)
       }
       expect(result.outcome).toBe('deferred-unmovable')
-      expect(result.diagnostics).toEqual(['storage.migration.legacyNotRenamable', 'rename:parent-not-writable'])
+      expect(result.diagnostics).toEqual(['storage.migration.legacyNotRenamable', 'rename:parent-not-writable', 'uses:visible'])
       expect(copy.calls).toEqual([])
       expect(existsSync(join(home, 'rox', '.migration'))).toBe(false)
       expect(lstatSync(join(home, '.rox')).isDirectory()).toBe(true)
