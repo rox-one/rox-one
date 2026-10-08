@@ -10,6 +10,7 @@ import { checkChromeLintGate, checkDockLayoutGate, CHROME_PATH, RIGHT_DOCK_PATH 
 import { checkAgentPrivacyGate, AGENT_CONTEXT_PATH } from '../src/gates/agent-privacy.ts'
 import { runPermissionMatrixGate } from '../src/gates/permission-matrix.ts'
 import { checkVisualGate } from '../src/gates/visual-axe.ts'
+import { runConfigPathsGate, CONFIG_PATHS_SCRIPT, CONFIG_PATHS_TIMEOUT_MS } from '../src/gates/config-paths.ts'
 
 const PERMISSIONS_PATH = join('packages', 'core', 'src', 'entities', 'permissions.ts')
 
@@ -123,5 +124,25 @@ describe('visual gate never passes vacuously', () => {
     const res = checkVisualGate({ screenIds: ['inbox'], env: {} })
     expect(res.status).toBe('pending')
     expect(res.summary).toContain('wave-2 browser driver')
+  })
+})
+
+describe('config-paths: the #1510 script runs under a timeout (#1507 review 4)', () => {
+  test('the default cap is 180 s', () => {
+    expect(CONFIG_PATHS_TIMEOUT_MS).toBe(180_000)
+  })
+  test('a script that overruns is killed and the gate fails with a timeout message', async () => {
+    const root = repo({ [CONFIG_PATHS_SCRIPT]: `console.log('scanning'); await Bun.sleep(30_000)\n` })
+    const res = await runConfigPathsGate({ repoRoot: root, timeoutMs: 1_000 })
+    expect(res.status).toBe('fail')
+    expect(res.summary).toContain('timed out')
+    expect(res.summary).toContain(CONFIG_PATHS_SCRIPT)
+    expect(res.violations?.[0]).toContain('timed out after 1000 ms')
+  })
+  test('exit code still decides when the script finishes in time', async () => {
+    expect((await runConfigPathsGate({ repoRoot: repo({ [CONFIG_PATHS_SCRIPT]: `console.log('ok')\n` }) })).status).toBe('pass')
+    const bad = await runConfigPathsGate({ repoRoot: repo({ [CONFIG_PATHS_SCRIPT]: `console.error('bad path'); process.exit(1)\n` }) })
+    expect(bad.status).toBe('fail')
+    expect(bad.violations).toEqual(['bad path'])
   })
 })

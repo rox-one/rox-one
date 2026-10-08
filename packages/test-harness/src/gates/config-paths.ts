@@ -3,22 +3,36 @@
  *
  * Wraps `scripts/check-config-paths.ts` (owned by #1510 — **this package
  * must not author it**). Script missing → pending. Present → executed via
- * `bun` and its exit code decides pass/fail.
+ * `bun` and its exit code decides pass/fail. The run is capped at
+ * CONFIG_PATHS_TIMEOUT_MS (#1507 review 4): a script that hangs or overruns
+ * is killed and the gate FAILS with a timeout message, instead of holding the
+ * CI job until its 30-minute limit.
  */
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { pending, type GateResult } from './types.ts'
 
 export const CONFIG_PATHS_SCRIPT = join('scripts', 'check-config-paths.ts')
+/** #1510's script took ~40–50 s on a loaded box; 3 minutes leaves headroom. */
+export const CONFIG_PATHS_TIMEOUT_MS = 180_000
 
-export async function runConfigPathsGate(opts: { repoRoot?: string } = {}): Promise<GateResult> {
+export async function runConfigPathsGate(opts: { repoRoot?: string; timeoutMs?: number } = {}): Promise<GateResult> {
   const gate = 'config-paths'
   const root = opts.repoRoot ?? join(import.meta.dir, '..', '..', '..', '..')
   const script = join(root, CONFIG_PATHS_SCRIPT)
   if (!existsSync(script)) return pending(gate, CONFIG_PATHS_SCRIPT, '1510')
 
-  const proc = Bun.spawnSync(['bun', script], { cwd: root, stdout: 'pipe', stderr: 'pipe' })
+  const timeoutMs = opts.timeoutMs ?? CONFIG_PATHS_TIMEOUT_MS
+  const proc = Bun.spawnSync(['bun', script], { cwd: root, stdout: 'pipe', stderr: 'pipe', timeout: timeoutMs })
   const output = `${proc.stdout?.toString() ?? ''}${proc.stderr?.toString() ?? ''}`.trim()
+  if (proc.exitedDueToTimeout) {
+    return {
+      gate,
+      status: 'fail',
+      summary: `config-path grep gate timed out: ${CONFIG_PATHS_SCRIPT} did not finish within ${Math.round(timeoutMs / 1000)} s and was killed`,
+      violations: [`${CONFIG_PATHS_SCRIPT} timed out after ${timeoutMs} ms (killed with ${proc.signalCode ?? 'SIGTERM'})`, ...output.split('\n').filter(Boolean).slice(0, 19)],
+    }
+  }
   if (proc.exitCode === 0) {
     return { gate, status: 'pass', summary: output.slice(0, 300) || 'config-path grep gate green' }
   }
