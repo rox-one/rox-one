@@ -64,6 +64,13 @@ const FILE_EXEMPTS: FileExempt[] = [
   { file: 'docs/plans/2026-10-07-rox-visible-config-migration.md', reason: 'the migration policy doc (intentional legacy-path narrative, W1-13 note)' },
   { file: 'docs/cli.md', reason: 'documents rox migrate-config itself (intentional legacy-path narrative)' },
   { file: 'plans/identity-migration-plan.md', reason: 'dated migration plan (historical evidence)' },
+  { file: 'docs/specs/2026-10-08-lark-operately-unified/', reason: 'the unified spec that defines ADR-U13 / TECH-SPEC §10 (intentional legacy-path narrative)', dirPrefix: true },
+  { file: 'docs/plans/2026-10-08-rox-user-batch.md', reason: 'dated user-batch plan (historical evidence of the ~/.rox → ~/rox state)' },
+  {
+    file: 'packages/server-core/src/handlers/rpc/notes.ts',
+    reason: 'notes-root-relative `.rox` meta dir (comments), not the home config dir',
+    lineMustMatch: ['ROX_META_DIR'],
+  },
   { file: 'apps/electron/resources/docs/sources.md', reason: 'user-docs connection examples (pre-existing ~/Documents samples, not Rox defaults)' },
   { file: 'apps/electron/resources/skills/', reason: 'bundled third-party skill content (owned by skill authors, not Rox storage)', dirPrefix: true },
   { file: 'apps/electron/src/renderer/playground/', reason: 'storybook-style mock data (not real paths)', dirPrefix: true },
