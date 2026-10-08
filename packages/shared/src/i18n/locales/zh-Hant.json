@@ -5958,6 +5958,7 @@
   "rail.knowledgeDisabled": "Knowledge —— 將隨知識工作區（W2 階段）提供",
   "rail.pin": "固定側邊欄",
   "rail.title": "活動列",
+  "rail.unpin": "取消固定側邊欄",
   "research.citation.contradiction": "日期衝突",
   "research.citation.dateUnknown": "日期未知",
   "research.citation.hoverAria": "來源：{{title}}",

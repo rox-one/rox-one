@@ -5974,6 +5974,7 @@
   "rail.knowledgeDisabled": "المعرفة — متاحة مع مساحة عمل المعرفة (الموجة W2)",
   "rail.pin": "تثبيت الشريط الجانبي",
   "rail.title": "شريط النشاط",
+  "rail.unpin": "إلغاء تثبيت الشريط الجانبي",
   "research.citation.contradiction": "تواريخ متعارضة",
   "research.citation.dateUnknown": "التاريخ غير معروف",
   "research.citation.hoverAria": "المصدر: {{title}}",

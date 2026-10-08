@@ -5958,6 +5958,7 @@
   "rail.knowledgeDisabled": "Knowledge — a Knowledge munkaterülettel érkezik (W2-hullám)",
   "rail.pin": "Oldalsáv rögzítése",
   "rail.title": "Aktivítássáv",
+  "rail.unpin": "Oldalsáv rögzítésének feloldása",
   "research.citation.contradiction": "Ellentmondó dátumok",
   "research.citation.dateUnknown": "Dátum ismeretlen",
   "research.citation.hoverAria": "Forrás: {{title}}",

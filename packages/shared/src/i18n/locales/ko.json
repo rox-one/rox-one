@@ -5958,6 +5958,7 @@
   "rail.knowledgeDisabled": "Knowledge — Knowledge 워크스페이스에서 제공됩니다(wave W2)",
   "rail.pin": "사이드바 고정",
   "rail.title": "활동 표시줄",
+  "rail.unpin": "사이드바 고정 해제",
   "research.citation.contradiction": "날짜 충돌",
   "research.citation.dateUnknown": "날짜 모름",
   "research.citation.hoverAria": "출처: {{title}}",

@@ -5970,6 +5970,7 @@
   "rail.knowledgeDisabled": "Knowledge — pojawi się wraz z obszarem roboczym Knowledge (fala W2)",
   "rail.pin": "Przypnij panel boczny",
   "rail.title": "Pasek aktywności",
+  "rail.unpin": "Odepnij panel boczny",
   "research.citation.contradiction": "Sprzeczne daty",
   "research.citation.dateUnknown": "Data nieznana",
   "research.citation.hoverAria": "Źródło: {{title}}",

@@ -5961,6 +5961,7 @@
   "rail.knowledgeDisabled": "Knowledge — arrive avec l'espace de travail Knowledge (vague W2)",
   "rail.pin": "Épingler le panneau latéral",
   "rail.title": "Rail d'activités",
+  "rail.unpin": "Détacher la barre latérale",
   "research.citation.contradiction": "Dates contradictoires",
   "research.citation.dateUnknown": "Date inconnue",
   "research.citation.hoverAria": "Source : {{title}}",

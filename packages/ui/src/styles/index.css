@@ -1016,6 +1016,29 @@ html[data-ui-profile="super-engineering"] .input-container {
   border-color: var(--chrome-glass-border);
 }
 
+/* Active navigation marker: a thin looping accent sweep on the selected rail
+   row replaces the heavy accent fill and 2px accent bar. Static tint + position
+   come from the caller; this only paints the animated hairline. Kill-switches:
+   html[data-render-profile="performance"] (renderer/index.css) and
+   prefers-reduced-motion below, which leave a solid hairline. */
+.rox-nav-shimmer {
+  position: relative;
+}
+
+.rox-nav-shimmer::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .chrome-label {
   font-size: var(--chrome-font-size);
   letter-spacing: var(--chrome-tracking);
@@ -1157,8 +1180,14 @@ html[data-shell-material="solid"] {
   }
 
   .spinner-cube,
-  .animate-shimmer::after {
+  .animate-shimmer::after,
+  .rox-nav-shimmer::after {
     animation: none !important;
+  }
+
+  /* The sweep freezes at its transparent end; keep a solid hairline instead. */
+  .rox-nav-shimmer::after {
+    background: var(--accent);
   }
 }
 

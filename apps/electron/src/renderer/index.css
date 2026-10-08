@@ -1117,6 +1117,11 @@ html[data-render-profile="performance"] :is(.animate-shimmer-loading, .animate-s
 html[data-render-profile="performance"] .animate-shimmer::after {
   animation: none !important;
 }
+/* The nav sweep freezes at its transparent end; keep a solid hairline instead. */
+html[data-render-profile="performance"] .rox-nav-shimmer::after {
+  animation: none !important;
+  background: var(--accent);
+}
 /* Decorative pulses (skeleton loaders, motion-safe icons) stop too. Spinners
    (animate-spin) keep turning, and pulses that carry live state (recording,
    running) opt out with data-live-indicator. */
