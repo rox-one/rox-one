@@ -37,7 +37,7 @@ test('Windows ownership keeps a fixed encoded script and a literal target outsid
   expect(script).not.toContain('$identity.Groups')
   expect(script).not.toContain(target)
   expect(script).not.toContain('Set-Acl')
-  expect(invocations[0]!.options).toMatchObject({ timeout: 2_000, maxBuffer: 1_024, windowsHide: true,
+  expect(invocations[0]!.options).toMatchObject({ timeout: 15_000, maxBuffer: 1_024, windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe'], env: { ...env, ROX_NATIVE_OWNER_PROBE_PATH: target } })
   expect(env.ROX_NATIVE_OWNER_PROBE_PATH).toBe('stale inherited target')
 })
