@@ -32,6 +32,7 @@ const PRODUCTION_BUILDERS = [
   'packages/shared/src/mcp/pool-server.ts',
   'packages/shared/src/agent/permissions-config.ts',
   'packages/shared/src/agent/backend/base-event-adapter.ts',
+  'packages/shared/src/pages/action-bridge.ts',
 ] as const
 
 describe('proxy-tool-name', () => {

@@ -544,7 +544,7 @@ export class McpClientPool {
    * Get last known tools for a configured source, including during recovery.
    */
   getTools(slug: string): Tool[] {
-    return this.toolCache.get(slug) || [];
+    return this.isConnected(slug) ? this.toolCache.get(slug) || [] : [];
   }
 
   /**
@@ -592,7 +592,7 @@ export class McpClientPool {
    * Resolve the LLM-facing proxy name for an original MCP tool name.
    */
   getProxyToolName(slug: string, originalName: string): string | null {
-    return this.sourceToolProxyNames.get(slug)?.get(originalName) ?? null;
+    return this.isConnected(slug) ? this.sourceToolProxyNames.get(slug)?.get(originalName) ?? null : null;
   }
 
   /**
@@ -615,7 +615,7 @@ export class McpClientPool {
     const defs: ProxyToolDef[] = [];
 
     for (const slug of targetSlugs) {
-      const tools = this.toolCache.get(slug) || [];
+      const tools = this.getTools(slug);
       for (const tool of tools) {
         const proxyName = this.getProxyToolName(slug, tool.name);
         if (!proxyName) continue;
@@ -727,6 +727,7 @@ export class McpClientPool {
       return {
         content: text,
         isError: !!result.isError,
+        ...(result.isError ? { sourceSlug: slug } : {}),
       };
     } catch (err) {
       // A request may have reached the server before the transport failed.

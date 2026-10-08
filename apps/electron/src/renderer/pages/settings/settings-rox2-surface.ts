@@ -11,6 +11,7 @@ import {
   queuedResult,
   requiresExplicitGrant,
   type Rox2Context,
+  type Rox2CanonicalResult,
   type Rox2Permission,
   type Rox2Result,
 } from '@rox/core/rox2'
@@ -170,7 +171,7 @@ export function settingsPageActionResult(opts: {
   source: 'native' | 'fixture' | 'conation'
   granted?: boolean
   deletionStatus?: 'none' | 'queued' | 'completed'
-}): Rox2Result {
+}): Rox2CanonicalResult {
   const entityId = formatRox2EntityId('connection', `settings-${opts.pageId}`)
   if (opts.source === 'fixture') {
     return fixtureResult('settings.fixture', `Playground ${opts.pageId} stories are fixture, not live`)
