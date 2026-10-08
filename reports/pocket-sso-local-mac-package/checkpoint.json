@@ -1,0 +1,44 @@
+{
+  "objective": "Produce local unsigned Mac arm64 package and isolated headless Pocket store proof at aa80",
+  "acceptance": [
+    "Canonical desktop-release DMG ZIP updater manifest and native resources pass",
+    "Headless Electron39 actual Keychain write/read store probe or precise sanitized limitation",
+    "Exact source unchanged; all owned commands settle"
+  ],
+  "cwd": "/tmp/rox-pocket-mac-package-aa80-20261004",
+  "tasks": [
+    {
+      "id": "install",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "id": "package",
+      "status": "passed",
+      "attempt": 2,
+      "exitCode": 0,
+      "receipt": "package-verification.json"
+    },
+    {
+      "id": "headless-store",
+      "status": "passed",
+      "receipt": "native-keychain-receipt.json"
+    }
+  ],
+  "decisions": [
+    "No GUI/no foreground/no DeveloperID or Apple credentials/no notarization/no publishing/no production changes; clarified local ad-hoc packaging allowed",
+    "Explicit product-free config directory under owned scratch",
+    "Canonical scripts and frozen Bun1.3.14 lockfile; use Node22.23.3 PATH"
+  ],
+  "evidence": [
+    "source-binding.json",
+    "build-attempt2-exit.json",
+    "manifest-darwin-arm64.json",
+    "package-verification.json",
+    "native-keychain-receipt.json",
+    "cleanup-receipt.json"
+  ],
+  "active_ids": {},
+  "next_action": "Lead owns optional packaged GUI/Pocket/provider canary and delivery; no worker commands remain",
+  "updatedAt": "2026-10-03T21:25:32.991124+00:00"
+}

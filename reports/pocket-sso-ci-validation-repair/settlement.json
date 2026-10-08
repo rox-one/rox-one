@@ -1,0 +1,57 @@
+{
+  "completedAt": "2026-10-03T23:16:25.291754+00:00",
+  "ownedProcessesRunning": false,
+  "securityDiagnostic": {
+    "childPid": 48317,
+    "parentPid": 48238,
+    "operation": "security add-generic-password",
+    "service": "rox.credentials",
+    "beforeAgentSetupCompleted": true,
+    "observedBlockedSecondsAtLeast": 35,
+    "termination": "SIGTERM only owned child; enclosing diagnostic test exited0",
+    "diagnosticArgvSecretOmitted": true
+  },
+  "cleanup": [
+    {
+      "path": "/tmp/rox-pocket-ci-step-attempt2-cw_bhrq_",
+      "ownedFilesRemoved": 44,
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-pocket-ci-clean-home-nhtimsr9",
+      "ownedFilesRemoved": 20,
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-pocket-ci-fixed-clean-home-lx_3oqzx",
+      "ownedFilesRemoved": 20,
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-pocket-ci-owned-5ekg2n25",
+      "ownedFilesRemoved": 49,
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-pocket-ci-full-step-home-fnyjawg5",
+      "ownedFilesRemoved": 44,
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-public-debug-home-xwr35z8w",
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-pocket-ci-final-domain-7tyg_jm2",
+      "ownedFilesRemoved": 21,
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-pocket-ci-owned-am9o4ccc",
+      "ownedFilesRemoved": 49,
+      "existsAfter": false
+    }
+  ],
+  "globalKeychainItemsDeleted": false,
+  "reason": "No owned global keychain item established; no shared user service deletion attempted."
+}

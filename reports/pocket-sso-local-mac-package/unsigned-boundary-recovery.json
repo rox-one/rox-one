@@ -1,0 +1,12 @@
+{
+  "stoppedOwnedPids": [
+    97757,
+    98268,
+    97773,
+    86096,
+    82045
+  ],
+  "reason": "canonical builder default attempted ad-hoc signature despite disabled credential discovery; requested no signing",
+  "developerIdOrAppleCredentialsUsed": false,
+  "nextAction": "inspect supported identity=null override; retain original package failure history"
+}
