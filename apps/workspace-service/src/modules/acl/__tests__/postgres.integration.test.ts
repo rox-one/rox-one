@@ -8,7 +8,7 @@
  */
 import { describe, expect, test } from 'bun:test'
 import { SQL, type TransactionSQL } from 'bun'
-import { createAcl } from '../../../../../../packages/core/src/acl/index.ts'
+import { createAcl, listingVisibility } from '../../../../../../packages/core/src/acl/index.ts'
 import { PostgresAclRepository } from '../repository.ts'
 import { PostgresDirectoryRepository } from '../../directory/repository.ts'
 
@@ -293,6 +293,151 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       expect(await directory.departments(ws)).toEqual([{ departmentId: dept, parentId: null, name: 'Eng', headId: bob }])
       expect(await directory.departmentMembers(ws, dept)).toEqual([bob])
       expect((await directory.principal(ws, bob))?.departmentIds).toEqual([dept])
+    })
+  })
+
+  test('review 5: real shares only un-secret, deleted space chats, channel join rule, calendar_member, members lists', async () => {
+    await inRollback(async tx => {
+      const [ws, owner, alice, bob, dave, carl] = [id(), id(), id(), id(), id(), id()]
+      const q = (sql: string, params: unknown[] = []) => tx.unsafe(sql, params)
+      for (const p of [owner, alice, bob, dave, carl]) await q(`INSERT INTO principal (principal_id, kind, status) VALUES ($1, 'human', 'active')`, [p])
+      await q(`INSERT INTO workspace (workspace_id, owner_principal_id, name) VALUES ($1, $2, 'WS5')`, [ws, owner])
+      for (const p of [owner, alice, bob, dave, carl]) {
+        await q(`INSERT INTO workspace_member (workspace_id, principal_id, role, status) VALUES ($1, $2, $3, 'active')`, [ws, p, p === owner ? 'owner' : 'member'])
+      }
+      const grant = (rtype: string, rid: string, stype: string, sid: string, role: string) =>
+        q(`INSERT INTO acl_entry (acl_id, workspace_id, resource_type, resource_id, subject_type, subject_id, role) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [id(), ws, rtype, rid, stype, sid, role])
+      const preset = (rtype: string, rid: string, subject: string | null, role: string | null, policy: object = {}) =>
+        q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, default_subject, default_role, policy) VALUES ($1, $2, $3, $4, $5, $6, $7::text::jsonb)`, [id(), ws, rtype, rid, subject, role, JSON.stringify(policy)])
+      const personalDoc = async () => { const d = id(); await q(`INSERT INTO doc (doc_id, workspace_id, owner_id) VALUES ($1, $2, $3)`, [d, ws, alice]); return d }
+      const personalCalendar = async () => { const k = id(); await q(`INSERT INTO calendar (calendar_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'principal', $3, 'Alice')`, [k, ws, alice]); return k }
+      const calendarMember = (k: string, stype: string, sid: string, role: string) =>
+        q(`INSERT INTO calendar_member (calendar_id, subject_type, subject_id, role) VALUES ($1, $2, $3, $4)`, [k, stype, sid, role])
+      const makeSpace = async (name: string, chatVisibility: 'public' | 'private', secret = false) => {
+        const [chat, root, space] = [id(), id(), id()]
+        await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility) VALUES ($1, $2, 'space', $3)`, [chat, ws, chatVisibility])
+        await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'space', $3, 'Root')`, [root, ws, space])
+        await q(`INSERT INTO space (space_id, workspace_id, name, chat_id, root_folder_id) VALUES ($1, $2, $3, $4, $5)`, [space, ws, name, chat, root])
+        await q(`UPDATE chat SET space_id = $2 WHERE chat_id = $1`, [chat, space])
+        if (secret) await preset('space', space, null, null, { privacy: 'invited' })
+        return { chat, space }
+      }
+      const bump = () => q(`UPDATE workspace SET policy_epoch = policy_epoch + 1 WHERE workspace_id = $1`, [ws])
+
+      // 1. Only grants that actually give access un-secret personal content.
+      const fbCalendar = await personalCalendar()
+      await grant('calendar', fbCalendar, 'workspace', ws, 'free_busy')
+      const [rolelessDoc, expiredLinkDoc, liveLinkDoc, spacePresetDoc, minimalDoc, followerDoc, foreignWsDoc] =
+        [await personalDoc(), await personalDoc(), await personalDoc(), await personalDoc(), await personalDoc(), await personalDoc(), await personalDoc()]
+      await preset('note', rolelessDoc, 'workspace', null)
+      await preset('note', expiredLinkDoc, 'link', 'viewer', { link_token: 'old', link_expires_at: '2020-01-01T00:00:00Z' })
+      await preset('note', liveLinkDoc, 'link', 'viewer', { link_token: 'live', link_expires_at: '2999-01-01T00:00:00Z' })
+      await preset('note', spacePresetDoc, 'space', 'editor')
+      await grant('note', minimalDoc, 'workspace', ws, 'minimal')
+      await grant('note', followerDoc, 'workspace', ws, 'follower')
+      await grant('note', foreignWsDoc, 'workspace', id(), 'viewer')
+
+      // 2. A members-only space whose public chat dave self-joined; a private-chat space bob belongs to.
+      const closed = await makeSpace('Closed', 'public')
+      await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [closed.chat, dave])
+      const closedGoal = id()
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Closed goal', $3, $4)`, [closedGoal, ws, owner, closed.space])
+      const team = await makeSpace('Team', 'private')
+      await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [team.chat, bob])
+
+      // 3. Chat X is public in a secret space (dave self-joined); chat Y is private (dave invited).
+      const hidden = await makeSpace('Hidden', 'public', true)
+      await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [hidden.chat, dave])
+      const privateChat = id()
+      await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility) VALUES ($1, $2, 'group', 'private')`, [privateChat, ws])
+      await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [privateChat, dave])
+      const [xDoc, yDoc] = [await personalDoc(), await personalDoc()]
+      await grant('note', xDoc, 'channel', hidden.chat, 'editor')
+      await grant('note', yDoc, 'channel', privateChat, 'editor')
+
+      // 4. calendar_member shares.
+      const [personShared, wsFreeBusy, wsViewer, chatShared] = [await personalCalendar(), await personalCalendar(), await personalCalendar(), await personalCalendar()]
+      await calendarMember(personShared, 'principal', bob, 'viewer')
+      await calendarMember(wsFreeBusy, 'workspace', ws, 'free_busy')
+      await calendarMember(wsViewer, 'workspace', ws, 'viewer')
+      await calendarMember(chatShared, 'channel', hidden.chat, 'viewer')
+      await calendarMember(chatShared, 'channel', privateChat, 'free_busy')
+
+      // 5. 'members' task lists: user-owned and project-owned.
+      const [userList, project, projectList, listedTask] = [id(), id(), id(), id()]
+      await q(`INSERT INTO task_list (task_list_id, workspace_id, owner_type, owner_id, name, share_mode) VALUES ($1, $2, 'user', $3, 'Mine', 'members')`, [userList, ws, alice])
+      await grant('task-list', userList, 'principal', carl, 'editor')
+      await q(`INSERT INTO work_item (work_item_id, workspace_id, owner_principal_id, title) VALUES ($1, $2, $3, 'In list')`, [listedTask, ws, alice])
+      await q(`INSERT INTO task_in_list (task_list_id, work_item_id, sort_key) VALUES ($1, $2, 'm')`, [userList, listedTask])
+      await q(`INSERT INTO work_item_member (work_item_id, principal_id, role) VALUES ($1, $2, 'assignee')`, [listedTask, dave])
+      await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility) VALUES ($1, $2, $3, 'Open', 'members')`, [project, ws, alice])
+      await q(`INSERT INTO task_list (task_list_id, workspace_id, owner_type, owner_id, name, share_mode) VALUES ($1, $2, 'project', $3, 'Project members', 'members')`, [projectList, ws, project])
+      await grant('task-list', projectList, 'principal', carl, 'viewer')
+
+      const facts = new PostgresAclRepository(tx)
+      const acl = createAcl(facts)
+      const who = async (p: string, linkToken?: string) => ({ id: p, workspaceId: ws, ...(await facts.principal(p))!, ...(linkToken ? { linkToken } : {}) })
+      const evaluate = async (p: string, action: Parameters<typeof acl.can>[1], kind: Parameters<typeof acl.can>[2]['kind'], rid: string, link?: string) =>
+        await acl.evaluate(await who(p, link), action, { kind, id: rid })
+
+      // 1. A workspace free_busy calendar stays owner-only secret: no owner manager, others free/busy only.
+      expect(await evaluate(owner, 'view', 'calendar', fbCalendar)).toMatchObject({ allowed: false, secret: true, role: 'minimal' })
+      expect(await evaluate(owner, 'manage_access', 'calendar', fbCalendar)).toMatchObject({ allowed: false })
+      expect(await evaluate(bob, 'view_title', 'calendar', fbCalendar)).toMatchObject({ allowed: true, preview: 'minimal', role: 'minimal' })
+      expect(await evaluate(bob, 'view', 'calendar', fbCalendar)).toMatchObject({ allowed: false })
+      expect(await evaluate(alice, 'edit', 'calendar', fbCalendar)).toMatchObject({ allowed: true })
+      for (const [label, rid] of [['role-less preset', rolelessDoc], ['expired link', expiredLinkDoc], ['space preset', spacePresetDoc],
+        ['workspace minimal', minimalDoc], ['workspace follower', followerDoc], ['foreign workspace subject', foreignWsDoc]] as const) {
+        expect(await evaluate(owner, 'view', 'note', rid), label).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+      }
+      expect(await evaluate(bob, 'view', 'note', expiredLinkDoc, 'old')).toMatchObject({ allowed: false })
+      // An unexpired link preset is a real share: no longer personal, the link works.
+      expect(await evaluate(owner, 'manage_access', 'note', liveLinkDoc)).toMatchObject({ allowed: true, secret: false })
+      expect(await evaluate(bob, 'view', 'note', liveLinkDoc, 'live')).toMatchObject({ allowed: true })
+
+      // 2. Deleting a space chat never re-enables chat-derived membership.
+      expect(await evaluate(dave, 'view', 'space', closed.space)).toMatchObject({ allowed: false, role: null })
+      expect(await evaluate(bob, 'edit', 'space', team.space)).toMatchObject({ allowed: true, role: 'editor' })
+      for (const chat of [closed.chat, team.chat]) await q(`UPDATE chat SET deleted_at = now() WHERE chat_id = $1`, [chat])
+      await bump()
+      expect(await evaluate(dave, 'view', 'space', closed.space)).toMatchObject({ allowed: false, role: null })
+      expect(await evaluate(dave, 'view', 'goal', closedGoal)).toMatchObject({ allowed: false, role: null })
+      expect(await evaluate(bob, 'view', 'space', team.space)).toMatchObject({ allowed: false, role: null })
+
+      // 3. A doc shared with chat X (public in a secret space) gives the self-joiner nothing; invite-only Y works.
+      expect(await evaluate(dave, 'view', 'note', xDoc)).toMatchObject({ allowed: false, role: null })
+      expect(await evaluate(dave, 'edit', 'note', yDoc)).toMatchObject({ allowed: true, role: 'editor' })
+
+      // 4. calendar_member: a person share — the sharee sees it, the calendar stays secret for the owner.
+      expect(await evaluate(bob, 'view', 'calendar', personShared)).toMatchObject({ allowed: true, role: 'viewer' })
+      expect(await evaluate(owner, 'view', 'calendar', personShared)).toMatchObject({ allowed: false, secret: true })
+      expect(await evaluate(carl, 'view_title', 'calendar', personShared)).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+      // … workspace free_busy: others free/busy only, still secret.
+      expect(await evaluate(bob, 'view_title', 'calendar', wsFreeBusy)).toMatchObject({ allowed: true, role: 'minimal' })
+      expect(await evaluate(bob, 'view', 'calendar', wsFreeBusy)).toMatchObject({ allowed: false })
+      expect(await evaluate(owner, 'manage_access', 'calendar', wsFreeBusy)).toMatchObject({ allowed: false, secret: true })
+      // … workspace viewer: a real share (no longer personal).
+      expect(await evaluate(bob, 'view', 'calendar', wsViewer)).toMatchObject({ allowed: true, role: 'viewer' })
+      expect(await evaluate(owner, 'manage_access', 'calendar', wsViewer)).toMatchObject({ allowed: true, secret: false })
+      // … channel subjects pass the join rule: X gives nothing, invite-only Y gives its free/busy.
+      expect(await evaluate(dave, 'view_title', 'calendar', chatShared)).toMatchObject({ allowed: true, role: 'minimal' })
+      expect(await evaluate(dave, 'view', 'calendar', chatShared)).toMatchObject({ allowed: false })
+
+      // 5. 'members' lists: non-members get no row at all, the workspace owner is not manager.
+      for (const rid of [userList, projectList]) {
+        for (const p of [bob, owner]) {
+          const decision = await evaluate(p, 'view', 'task-list', rid)
+          expect(decision, `${rid === userList ? 'user' : 'project'} list ${p === owner ? 'owner' : 'bob'}`).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+          expect(listingVisibility(decision)).toBe('hide')
+        }
+        expect(await evaluate(carl, 'view', 'task-list', rid)).toMatchObject({ allowed: true })
+      }
+      expect(await evaluate(alice, 'manage_access', 'task-list', userList)).toMatchObject({ allowed: true })
+      // Its tasks inherit the secrecy; the assignee and the list member still reach them.
+      expect(await evaluate(owner, 'view', 'task', listedTask)).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+      expect(await evaluate(bob, 'view', 'task', listedTask)).toMatchObject({ allowed: false, secret: true })
+      expect(await evaluate(dave, 'view', 'task', listedTask)).toMatchObject({ allowed: true })
+      expect(await evaluate(carl, 'edit', 'task', listedTask)).toMatchObject({ allowed: true })
     })
   })
 })

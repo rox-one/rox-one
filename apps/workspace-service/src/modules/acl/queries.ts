@@ -38,13 +38,18 @@
  *   - a space project with visibility 'members' is space-wide (space parent,
  *     capped like other space children), not workspace-visible;
  *   - task lists list their project / space owner as a parent only for
- *     share_mode IN ('space', 'workspace'); otherwise as an ancestor only
- *     ('members' lists are reachable only through their own grants). Chat-owned lists keep the chat parent (capped
- *     chat edge, owner decision 3) — 'private' lists are secret anyway;
+ *     share_mode IN ('space', 'workspace'); otherwise as an ancestor only.
+ *     share_mode 'private' and 'members' ("only invited people") lists of a
+ *     user / project / space are secret (owner decision, review 5): reachable
+ *     only through their own grants / members, no workspace-owner bypass, and
+ *     their tasks inherit the secrecy through the walk (assignee / explicit
+ *     grants still apply). Chat-owned lists keep the chat parent (capped
+ *     chat edge, owner decision 3) — 'private' ones are secret too;
  *   - chats emit no owner (ownership = active chat_member role only).
  *
  * Personal content is owner-only secret ("Only invited people", owner
- * decision review 4) unless shared (`personalShared`): docs with no folder,
+ * decision review 4) unless shared with a group in a way that actually grants
+ * access (`personalShared`, review 5): docs with no folder,
  * wiki, space, parent_ref or public_token; user-owned folders (and, through
  * the secrecy walk, their docs); principal-owned calendars; tasks with no
  * project, space, parent, milestone or list. Principal / department /
@@ -108,28 +113,64 @@ export const sqlChatMembers = (p: string) => `
 /**
  * Space members = active members of the space's chat (DATA-MODEL §5.7,
  * `space.chat_id`, ADR-U07). Mapped to principal entries on the space so
- * `isSpaceMember` and inheritance see them.
+ * `isSpaceMember` and inheritance see them. A deleted (or foreign) space chat
+ * has no members: its former members never count (review 5).
  */
 export const sqlSpaceMembers = (p: string) => `
   SELECT cm.principal_id::text AS principal_id, cm.role FROM ${p}chat_member cm
   JOIN ${p}space s ON s.chat_id = cm.chat_id AND s.workspace_id = $2::uuid AND s.deleted_at IS NULL
+  JOIN ${p}chat c ON c.chat_id = cm.chat_id AND c.deleted_at IS NULL AND c.workspace_id = $2::uuid
   WHERE s.space_id = $1::uuid AND cm.state = 'active'
   ORDER BY 1`
+
+/**
+ * Calendar shares from `calendar_member` (517-collab.sql) — the canonical
+ * calendar share store; `acl_entry` rows on a calendar are honoured too.
+ * Workspace-scoped through the calendar row (`$1`), calendar id `$2`.
+ */
+export const sqlCalendarMembers = (p: string) => `
+  SELECT cm.subject_type, cm.subject_id::text AS subject_id, cm.role FROM ${p}calendar_member cm
+  JOIN ${p}calendar k ON k.calendar_id = cm.calendar_id AND k.workspace_id = $1::uuid
+  WHERE cm.calendar_id = $2::uuid
+  ORDER BY 1, 2`
 
 /** Workspace-scoped (`$2`) "Only invited people" flag from `resource_policy.policy.privacy`. */
 const policySecret = (p: string, type: string, idExpr: string) =>
   `EXISTS (SELECT 1 FROM ${p}resource_policy rp WHERE rp.workspace_id = $2::uuid AND rp.resource_type IN (${aclStoredResourceTypes(type).map(t => `'${t}'`).join(', ')}) AND rp.resource_id = ${idExpr}::text AND rp.policy->>'privacy' = 'invited')`
 
+/** Group-grant roles that actually give access to content (lattice ≥ viewer; not minimal / free_busy / follower). */
+const SHARING_ROLES = `('owner', 'manager', 'editor', 'commenter', 'viewer', 'guest')`
+
 /**
- * Personal content shared beyond invited people: a `resource_policy` preset
- * (default_subject space / workspace / link) or a workspace / space subject
- * grant. Workspace-scoped (`$2`). Unshared personal content is owner-only
- * secret (owner decision, review 4).
+ * Personal content shared beyond invited people, counting only shares that
+ * actually give access (review 5):
+ *   - a `resource_policy` preset with a role: default_subject 'workspace', or
+ *     — for docs, the only link-shareable kind here — 'link' with a token that
+ *     has not expired (an unparsable expiry counts as expired, like the
+ *     engine). A 'space' preset is ignored: personal content has no space,
+ *     so it grants nobody;
+ *   - a workspace (this workspace) or space subject `acl_entry` with a role
+ *     ≥ viewer (`free_busy`, `minimal`, `follower` share no content);
+ *   - calendars: the same in `calendar_member` (owner / editor / viewer;
+ *     never free_busy).
+ * Workspace-scoped (`$2`). Unshared personal content is owner-only secret
+ * (owner decision, review 4); principal / department / channel shares apply
+ * on the secret row without un-secreting it.
  */
 const personalShared = (p: string, type: string, idExpr: string) => {
   const types = aclStoredResourceTypes(type).map(t => `'${t}'`).join(', ')
-  return `(EXISTS (SELECT 1 FROM ${p}resource_policy rp WHERE rp.workspace_id = $2::uuid AND rp.resource_type IN (${types}) AND rp.resource_id = ${idExpr}::text AND rp.default_subject IS NOT NULL)`
-    + ` OR EXISTS (SELECT 1 FROM ${p}acl_entry ae WHERE ae.workspace_id = $2::uuid AND ae.resource_type IN (${types}) AND ae.resource_id = ${idExpr}::text AND ae.subject_type IN ('workspace', 'space')))`
+  const linkPreset = type === 'note'
+    ? ` OR (rp.default_subject = 'link' AND COALESCE(rp.policy->>'link_token', '') <> ''`
+      + ` AND (rp.policy->>'link_expires_at' IS NULL OR COALESCE(jsonb_path_exists_tz(rp.policy, '$.link_expires_at.datetime() ? (@ > $now.datetime())', jsonb_build_object('now', now()), true), false)))`
+    : ''
+  const calendar = type === 'calendar'
+    ? ` OR EXISTS (SELECT 1 FROM ${p}calendar_member km WHERE km.calendar_id = ${idExpr} AND km.role IN ('owner', 'editor', 'viewer')`
+      + ` AND ((km.subject_type = 'workspace' AND km.subject_id = $2::uuid) OR km.subject_type = 'space'))`
+    : ''
+  return `(EXISTS (SELECT 1 FROM ${p}resource_policy rp WHERE rp.workspace_id = $2::uuid AND rp.resource_type IN (${types}) AND rp.resource_id = ${idExpr}::text`
+    + ` AND rp.default_role IS NOT NULL AND (rp.default_subject = 'workspace'${linkPreset}))`
+    + ` OR EXISTS (SELECT 1 FROM ${p}acl_entry ae WHERE ae.workspace_id = $2::uuid AND ae.resource_type IN (${types}) AND ae.resource_id = ${idExpr}::text`
+    + ` AND ((ae.subject_type = 'workspace' AND ae.subject_id = $2::uuid::text) OR ae.subject_type = 'space') AND ae.role IN ${SHARING_ROLES})${calendar})`
 }
 
 const NONE = `NULL::text`
@@ -145,7 +186,7 @@ const INNER_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
       CASE WHEN s.default_access = 'company_edit' THEN 'editor' WHEN s.default_access = 'company_comment' THEN 'commenter'
            WHEN s.default_access = 'company_view' OR s.is_company_space THEN 'viewer' ELSE NULL END AS implicit_raw,
       ${NONE} AS link_token, s.chat_id::text AS chat_id, ${EMPTY} AS ancestor_refs,
-      EXISTS (SELECT 1 FROM ${p}chat sc WHERE sc.chat_id = s.chat_id AND sc.workspace_id = $2::uuid AND sc.visibility = 'public' AND sc.deleted_at IS NULL) AS chat_public,
+      EXISTS (SELECT 1 FROM ${p}chat sc WHERE sc.chat_id = s.chat_id AND sc.workspace_id = $2::uuid AND sc.visibility = 'public') AS chat_public,
       (s.is_company_space OR s.default_access <> 'members') AS company_wide
     FROM ${p}space s WHERE s.space_id = $1::uuid AND s.workspace_id = $2::uuid`,
   goal: p => `
@@ -226,7 +267,8 @@ const INNER_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
       CASE WHEN l.owner_type = 'space' THEN l.owner_id::text END AS space_id,
       CASE WHEN l.owner_type = 'user' THEN l.owner_id::text END AS owner_id,
       ${NONE} AS champion_id, ${NONE} AS reviewer_id, ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
-      (l.share_mode = 'private' OR ${policySecret(p, 'task-list', 'l.task_list_id')}) AS secret,
+      (l.share_mode = 'private' OR (l.share_mode = 'members' AND l.owner_type IN ('user', 'project', 'space'))
+        OR ${policySecret(p, 'task-list', 'l.task_list_id')}) AS secret,
       CASE WHEN l.share_mode = 'workspace' THEN 'viewer' ELSE NULL END AS implicit_raw,
       ${NONE} AS link_token, ${NONE} AS chat_id, CASE WHEN l.owner_type IN ('project', 'space') AND l.share_mode NOT IN ('space', 'workspace') THEN ARRAY[l.owner_type || ':' || l.owner_id::text] ELSE ${EMPTY} END AS ancestor_refs, NULL::boolean AS chat_public, NULL::boolean AS company_wide
     FROM ${p}task_list l WHERE l.task_list_id = $1::uuid AND l.workspace_id = $2::uuid`,

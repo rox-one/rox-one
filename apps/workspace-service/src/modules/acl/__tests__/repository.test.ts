@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { SQL } from 'bun'
 import { PostgresAclRepository, resourceFromRow, type ResourceRow } from '../repository.ts'
-import { RESOURCE_LOADERS, aclStoredResourceTypes } from '../queries.ts'
+import { RESOURCE_LOADERS, aclStoredResourceTypes, sqlSpaceMembers } from '../queries.ts'
 import type { AclEntryFact } from '../../../../../../packages/core/src/acl/index.ts'
 
 const WS = '11111111-1111-4111-8111-111111111111'
@@ -99,10 +99,28 @@ describe('loader SQL (review 2 owner decisions)', () => {
     expect(sql('calendar')).toContain("k.owner_type = 'principal' AND NOT")
     expect(sql('task')).toContain('w.project_id IS NULL AND w.space_id IS NULL AND w.parent_id IS NULL AND w.milestone_id IS NULL')
     for (const kind of ['note', 'folder', 'calendar', 'task'] as const) {
-      expect(sql(kind), kind).toContain("rp.default_subject IS NOT NULL")
-      expect(sql(kind), kind).toContain("ae.subject_type IN ('workspace', 'space')")
+      expect(sql(kind), kind).toContain('rp.default_role IS NOT NULL')
+      expect(sql(kind), kind).toContain("(ae.subject_type = 'workspace' AND ae.subject_id = $2::uuid::text) OR ae.subject_type = 'space'")
+      expect(sql(kind), kind).toContain("ae.role IN ('owner', 'manager', 'editor', 'commenter', 'viewer', 'guest')")
       expect(sql(kind), kind).toContain('ae.workspace_id = $2::uuid')
     }
+  })
+
+  test('personalShared (review 5): sub-viewer grants, role-less / space presets and expired links do not un-secret', () => {
+    for (const kind of ['note', 'folder', 'calendar', 'task'] as const) {
+      expect(sql(kind), kind).not.toMatch(/ae\.role IN \([^)]*'(minimal|free_busy|follower)'/)
+      expect(sql(kind), kind).not.toContain("rp.default_subject = 'space'")
+    }
+    // Only docs are link-shareable; the link preset needs a token that has not expired.
+    expect(sql('note')).toContain("rp.default_subject = 'link' AND COALESCE(rp.policy->>'link_token', '') <> ''")
+    expect(sql('note')).toContain('jsonb_path_exists_tz(rp.policy')
+    for (const kind of ['folder', 'calendar', 'task'] as const) expect(sql(kind), kind).not.toContain("'link'")
+    // Calendars also count calendar_member shares ≥ viewer, never free_busy.
+    expect(sql('calendar')).toContain("calendar_member km WHERE km.calendar_id = k.calendar_id AND km.role IN ('owner', 'editor', 'viewer')")
+  })
+
+  test("task lists in 'private' or 'members' mode are secret for user / project / space owners (review 5)", () => {
+    expect(sql('task-list')).toContain("l.share_mode = 'private' OR (l.share_mode = 'members' AND l.owner_type IN ('user', 'project', 'space'))")
   })
 
   test('goal-owned folders and members-mode lists keep their cut parents as secrecy ancestors', () => {
@@ -122,6 +140,8 @@ describe('loader SQL (review 2 owner decisions)', () => {
 
   test('spaces expose chat_public / company_wide for the join rule', () => {
     expect(sql('space')).toContain('sc.workspace_id = $2::uuid AND sc.visibility')
+    // A deleted public chat stays public for the join rule (its members never count anyway).
+    expect(sql('space')).toContain("sc.visibility = 'public') AS chat_public")
     expect(sql('space')).toContain("(s.is_company_space OR s.default_access <> 'members') AS company_wide")
   })
 
@@ -230,6 +250,39 @@ describe('PostgresAclRepository', () => {
       { subjectType: 'principal', subjectId: G, role: 'commenter', via: 'chat' },
     ])
     expect(calls.find(c => c.sql.includes('cm.role FROM'))!.params).toEqual([C, WS])
+  })
+
+  test('entries: space members come only from a live space chat of this workspace (review 5)', () => {
+    expect(sqlSpaceMembers('"public".')).toContain('JOIN "public".chat c ON c.chat_id = cm.chat_id AND c.deleted_at IS NULL AND c.workspace_id = $2::uuid')
+  })
+
+  test('entries: calendar_member rows become calendar grants (canonical calendar share store)', async () => {
+    const { db, calls } = fakeDb(sql => {
+      if (sql.includes('FROM "public".acl_entry')) return [{ subject_type: 'principal', subject_id: P, role: 'commenter' }]
+      if (sql.includes('FROM "public".calendar_member cm')) return [
+        { subject_type: 'principal', subject_id: G, role: 'owner' },
+        { subject_type: 'channel', subject_id: C, role: 'viewer' },
+        { subject_type: 'space', subject_id: C, role: 'editor' },
+        { subject_type: 'workspace', subject_id: WS, role: 'free_busy' },
+        { subject_type: 'department', subject_id: C, role: 'viewer' },
+        { subject_type: 'principal', subject_id: C, role: 'god' },
+      ]
+      return []
+    })
+    expect(await new PostgresAclRepository(db).entries(WS, { kind: 'calendar', id: G })).toEqual([
+      { subjectType: 'principal', subjectId: P, role: 'commenter' },
+      { subjectType: 'principal', subjectId: G, role: 'manager' },
+      { subjectType: 'channel', subjectId: C, role: 'viewer' },
+      { subjectType: 'space', subjectId: C, role: 'editor' },
+      { subjectType: 'workspace', subjectId: WS, role: 'free_busy' },
+    ])
+    const call = calls.find(c => c.sql.includes('calendar_member cm'))!
+    expect(call.params).toEqual([WS, G])
+    expect(call.sql).toContain('k.workspace_id = $1::uuid')
+    // Other kinds never read calendar_member.
+    const other = fakeDb(() => [])
+    await new PostgresAclRepository(other.db).entries(WS, { kind: 'note', id: G })
+    expect(other.calls.some(c => c.sql.includes('calendar_member'))).toBe(false)
   })
 
   test('entries: space chat members become space member grants', async () => {

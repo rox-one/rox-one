@@ -10,7 +10,7 @@
  * (`packages/core/src/acl/evaluate.ts`). Concretely, for the tables read
  * here, writers of: acl_entry, resource_policy, workspace_member, principal
  * (status / kind / deleted_at), department(_member), chat(_member),
- * project_member, work_item_member, task_in_list, and the owner / champion /
+ * calendar_member, project_member, work_item_member, task_in_list, and the owner / champion /
  * reviewer / parent / space / folder / visibility / share_mode / scope /
  * default_access / public_token / deleted_at columns of the resource tables
  * in `queries.ts` must bump `workspace.policy_epoch`. Cached roles also expire
@@ -36,6 +36,7 @@ import {
   type AclPrincipalStatus,
   type AclResourceNode,
   type AclRole,
+  type AclStoredRole,
   type AclSubjectType,
 } from '../../../../../packages/core/src/acl/index.ts'
 import { isEntityKind } from '../../../../../packages/core/src/entities/kinds.ts'
@@ -46,6 +47,7 @@ import {
   sqlChannels,
   sqlChatMembers,
   sqlDepartments,
+  sqlCalendarMembers,
   sqlEntries,
   sqlMembership,
   sqlPolicy,
@@ -63,6 +65,9 @@ const POLICY_ROLES: ReadonlySet<string> = new Set(['viewer', 'commenter', 'edito
 /** Roles a loader may emit as the implicit workspace entry (`minimal` = public chat: see and join only). */
 const IMPLICIT_ROLES: ReadonlySet<string> = new Set(['minimal', 'viewer', 'commenter', 'editor'])
 const CHAT_ROLE: Readonly<Record<string, AclRole>> = { owner: 'manager', admin: 'editor', member: 'commenter' }
+/** calendar_member.role → stored ACL role (517-collab.sql). */
+const CALENDAR_ROLE: Readonly<Record<string, AclStoredRole>> = { owner: 'manager', editor: 'editor', viewer: 'viewer', free_busy: 'free_busy' }
+const CALENDAR_SUBJECTS: ReadonlySet<string> = new Set(['principal', 'space', 'channel', 'workspace'])
 /** Space chat role → space role (Operately space members default to edit access). */
 const SPACE_ROLE: Readonly<Record<string, AclRole>> = { owner: 'manager', admin: 'manager', member: 'editor' }
 
@@ -183,8 +188,20 @@ export class PostgresAclRepository implements AclFactSource {
         }
       }
     }
+    // calendar_member is the canonical calendar share store (acl_entry is also
+    // honoured): principal / space / channel / workspace subjects, owner →
+    // manager. Channel subjects pass the engine's join rule like any grant.
+    if (ref.kind === 'calendar' && UUID.test(ref.id)) {
+      const shares = await this.query<{ subject_type: string; subject_id: string; role: string }>(sqlCalendarMembers(this.prefix), [workspaceId, ref.id])
+      for (const share of shares) {
+        const role = CALENDAR_ROLE[share.role]
+        if (role && CALENDAR_SUBJECTS.has(share.subject_type)) {
+          out.push({ subjectType: share.subject_type as AclSubjectType, subjectId: share.subject_id, role })
+        }
+      }
+    }
     // Table-level visibility rides on the node (`implicitEntries`); chat / space
-    // membership is the only thing synthesised here. A chat's ownership comes
+    // membership (and calendar_member above) are the only things synthesised here. A chat's ownership comes
     // only from the active chat_member role (never chat.created_by).
     if (ref.kind === 'channel' && UUID.test(ref.id)) {
       const members = await this.query<{ principal_id: string; role: string }>(sqlChatMembers(this.prefix), [ref.id, workspaceId])
