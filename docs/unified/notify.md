@@ -136,5 +136,8 @@ type twice throws, so the Feed cannot depend on import order.
 * The renderer does not fetch notifications yet: `useInboxItems` accepts a
   `notifications` option, and the workspace notify client that fills it is
   wave-2 work (the REV package).
+* The Home «Трекер входящих» widget keeps its pre-W1-09 legend
+  (`ALL_KINDS`), so activity surfaces do not appear in that bar even when
+  their module flag is on.
 * `packages/core/src/notify/review.ts` (the Review query model) is a contract:
   the surface that consumes it ships with M10.
