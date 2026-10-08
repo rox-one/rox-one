@@ -26,7 +26,14 @@
  *    action, champion / reviewer grants, reviewer check-in only while the
  *    champion is absent, goal deletion blocked while children exist). An
  *    action this transcription does not know fails, so a new #1501 action
- *    needs a matching rule here.
+ *    needs a matching rule here;
+ * 6. completeness (#1507 review 3): for every `kind` that appears, every
+ *    §8.3 action (SPEC_MIN_ROLE) × every role (SPEC_ROLES plus `null`) ×
+ *    the no-tag scenario (`tags: []`, `championAbsent: false`) has a row,
+ *    and so does every tag scenario #1501 exports as
+ *    `PERMISSION_MATRIX_TAG_SCENARIOS` (`{ tags, championAbsent }[]`, when
+ *    exported; malformed = fail). A generator that drops kinds' actions,
+ *    roles or scenarios no longer passes on the subset it still emits.
  */
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -47,7 +54,17 @@ export interface PermissionMatrixRow {
 
 export interface PermissionMatrixModule {
   generatePermissionMatrix: () => PermissionMatrixRow[]
+  /** Optional #1501 export: the tag scenarios the generator enumerates. */
+  PERMISSION_MATRIX_TAG_SCENARIOS?: unknown
 }
+
+export interface TagScenario {
+  tags: readonly string[]
+  championAbsent: boolean
+}
+
+/** Always required, whether or not #1501 exports its scenarios. */
+export const NO_TAG_SCENARIO: TagScenario = { tags: [], championAbsent: false }
 
 export const PERMISSIONS_PATH = join('packages', 'core', 'src', 'entities', 'permissions.ts')
 
@@ -110,7 +127,60 @@ function rowKey(row: PermissionMatrixRow): string {
   return `${row.kind}|${row.action}|${row.role ?? 'none'}|${[...(row.tags ?? [])].join('+') || '-'}|ca=${row.championAbsent}|ch=${row.hasChildren}`
 }
 
-/** Pure check over a matrix (exported for self-tests). */
+function scenarioKey(s: TagScenario): string {
+  return `${[...s.tags].sort().join('+') || '-'}|ca=${s.championAbsent}`
+}
+
+/** Validates #1501's optional PERMISSION_MATRIX_TAG_SCENARIOS export; returns a problem string or the scenarios. */
+export function parseTagScenarios(value: unknown): TagScenario[] | string {
+  if (!Array.isArray(value)) return 'PERMISSION_MATRIX_TAG_SCENARIOS must be an array of { tags, championAbsent }'
+  for (const s of value) {
+    if (s === null || typeof s !== 'object' || !Array.isArray((s as TagScenario).tags) ||
+      !(s as TagScenario).tags.every((t) => typeof t === 'string' && t in SPEC_TAG_ROLE) ||
+      typeof (s as TagScenario).championAbsent !== 'boolean') {
+      return `PERMISSION_MATRIX_TAG_SCENARIOS entry ${JSON.stringify(s)?.slice(0, 120)} is not { tags: known tag[], championAbsent: boolean }`
+    }
+  }
+  return value as TagScenario[]
+}
+
+/**
+ * Completeness (invariant 6): per kind seen, every SPEC_MIN_ROLE action ×
+ * SPEC_ROLES + null × (no-tag scenario + `tagScenarios`) needs at least one
+ * row (any hasChildren). One violation per kind, with up to 5 examples.
+ */
+export function checkPermissionMatrixCompleteness(rows: unknown[], tagScenarios: readonly TagScenario[] = []): string[] {
+  const present = new Set<string>()
+  const kinds = new Set<string>()
+  for (const raw of rows) {
+    const row = raw as PermissionMatrixRow
+    if (row === null || typeof row !== 'object' || typeof row.kind !== 'string' || typeof row.action !== 'string' || !Array.isArray(row.tags)) continue
+    kinds.add(row.kind)
+    present.add(`${row.kind}|${row.action}|${row.role ?? 'none'}|${scenarioKey({ tags: row.tags, championAbsent: row.championAbsent === true })}`)
+  }
+  const scenarios = new Map<string, TagScenario>([[scenarioKey(NO_TAG_SCENARIO), NO_TAG_SCENARIO]])
+  for (const s of tagScenarios) scenarios.set(scenarioKey(s), s)
+  const roles: Array<string | null> = [...SPEC_ROLES, null]
+  const violations: string[] = []
+  for (const kind of [...kinds].sort()) {
+    const missing: string[] = []
+    for (const action of Object.keys(SPEC_MIN_ROLE)) {
+      for (const role of roles) {
+        for (const key of scenarios.keys()) {
+          const k = `${kind}|${action}|${role ?? 'none'}|${key}`
+          if (!present.has(k)) missing.push(k)
+        }
+      }
+    }
+    if (missing.length > 0) {
+      const total = Object.keys(SPEC_MIN_ROLE).length * roles.length * scenarios.size
+      violations.push(`matrix incomplete for kind '${kind}': ${missing.length} of ${total} action × role (incl. none) × tag-scenario combinations have no row, e.g. ${missing.slice(0, 5).join(', ')}`)
+    }
+  }
+  return violations
+}
+
+/** Pure per-row check over a matrix (exported for self-tests; completeness is checkPermissionMatrixCompleteness). */
 export function checkPermissionMatrixRows(rows: unknown[]): string[] {
   const violations: string[] = []
   if (rows.length === 0) return ['permission matrix is empty']
@@ -180,6 +250,14 @@ export async function runPermissionMatrixGate(opts: {
     return inputBroken(gate, PERMISSIONS_PATH, `generatePermissionMatrix() threw: ${errorMessage(error)}`)
   }
   if (!Array.isArray(rows)) return inputBroken(gate, PERMISSIONS_PATH, 'generatePermissionMatrix() must return an array')
-  const violations = checkPermissionMatrixRows(rows)
-  return gateFromViolations(gate, violations, `${rows.length} matrix row(s) match DATA-MODEL §8 (shape, tag roles, invariants, §8.3 rules)`)
+  let scenarios: TagScenario[] = []
+  if (mod.PERMISSION_MATRIX_TAG_SCENARIOS !== undefined) {
+    const parsed = parseTagScenarios(mod.PERMISSION_MATRIX_TAG_SCENARIOS)
+    if (typeof parsed === 'string') return inputBroken(gate, PERMISSIONS_PATH, parsed)
+    scenarios = parsed
+  }
+  const violations = [...checkPermissionMatrixRows(rows), ...(rows.length > 0 ? checkPermissionMatrixCompleteness(rows, scenarios) : [])]
+  const kinds = new Set(rows.map((r) => (r as PermissionMatrixRow)?.kind)).size
+  const scenarioCount = new Set([NO_TAG_SCENARIO, ...scenarios].map(scenarioKey)).size
+  return gateFromViolations(gate, violations, `${rows.length} matrix row(s) match DATA-MODEL §8 (shape, tag roles, invariants, §8.3 rules) and cover ${kinds} kind(s) × ${Object.keys(SPEC_MIN_ROLE).length} actions × ${SPEC_ROLES.length + 1} roles × ${scenarioCount} tag scenario(s)`)
 }

@@ -6,7 +6,7 @@ import { describe, expect, test } from 'bun:test'
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { checkPermissionMatrixRows, runPermissionMatrixGate, specAllowed, specEffectiveRole, type PermissionMatrixRow } from '../src/gates/permission-matrix.ts'
+import { checkPermissionMatrixCompleteness, checkPermissionMatrixRows, runPermissionMatrixGate, specAllowed, specEffectiveRole, type PermissionMatrixRow } from '../src/gates/permission-matrix.ts'
 
 const dir = join(import.meta.dir, 'fixture-data')
 
@@ -28,7 +28,8 @@ describe('permission-matrix gate', () => {
     const res = await runPermissionMatrixGate({ fixtureModulePath: join(dir, 'matrix-good.ts') })
     expect(res.violations).toBeUndefined()
     expect(res.status).toBe('pass')
-    expect(res.summary).toContain('14 matrix row(s) match DATA-MODEL §8')
+    expect(res.summary).toContain('2352 matrix row(s) match DATA-MODEL §8')
+    expect(res.summary).toContain('cover 2 kind(s) × 12 actions × 7 roles × 7 tag scenario(s)')
   })
   test('fails on a well-formed but wrong matrix, naming each broken invariant', async () => {
     const res = await runPermissionMatrixGate({ fixtureModulePath: join(dir, 'matrix-bad.ts') })
@@ -76,6 +77,46 @@ describe('permission-matrix gate', () => {
     const v = checkPermissionMatrixRows(rows)
     expect(v.length).toBe(51)
     expect(v.at(-1)).toContain('truncated')
+  })
+  const good = join(dir, 'matrix-good.ts')
+  /** A module that re-exports the complete fixture through a row filter (and optionally its own scenarios). */
+  function filtered(filter: string, scenarios = 'export { PERMISSION_MATRIX_TAG_SCENARIOS }'): string {
+    return moduleFile(`import { generatePermissionMatrix as all, PERMISSION_MATRIX_TAG_SCENARIOS } from ${JSON.stringify(good)}
+${scenarios}
+export function generatePermissionMatrix() { return all().filter((r) => ${filter}) }`)
+  }
+  test('completeness: a subset of correct rows fails (#1507 review 3)', async () => {
+    // only no-access denied rows: every row is individually correct.
+    const onlyNull = await runPermissionMatrixGate({ fixtureModulePath: filtered('r.role === null && r.tags.length === 0') })
+    expect(onlyNull.status).toBe('fail')
+    expect(onlyNull.violations?.join('\n')).toContain("matrix incomplete for kind 'goal'")
+    expect(onlyNull.violations?.join('\n')).toContain('goal|view_title|minimal|-|ca=false')
+    // a dropped action for one kind.
+    const noProjectTransfer = await runPermissionMatrixGate({ fixtureModulePath: filtered("!(r.kind === 'project' && r.action === 'transfer')") })
+    expect(noProjectTransfer.violations).toEqual([expect.stringContaining("matrix incomplete for kind 'project': 49 of 588")])
+    // a dropped role.
+    const noCommenter = await runPermissionMatrixGate({ fixtureModulePath: filtered("r.role !== 'commenter'") })
+    expect(noCommenter.violations?.join('\n')).toContain('|commenter|-|ca=false')
+    // a dropped tag scenario that #1501 exports.
+    const noAbsentReviewer = await runPermissionMatrixGate({ fixtureModulePath: filtered('!(r.tags.includes("reviewer") && r.championAbsent)') })
+    expect(noAbsentReviewer.status).toBe('fail')
+    expect(noAbsentReviewer.violations?.join('\n')).toContain('|reviewer|ca=true')
+    // without the scenarios export only the no-tag scenario is required.
+    const noExport = await runPermissionMatrixGate({ fixtureModulePath: filtered('!(r.tags.includes("reviewer") && r.championAbsent)', '') })
+    expect(noExport.status).toBe('pass')
+    expect(noExport.summary).toContain('× 1 tag scenario(s)')
+  })
+  test('completeness: malformed PERMISSION_MATRIX_TAG_SCENARIOS fails closed', async () => {
+    const bad = await runPermissionMatrixGate({ fixtureModulePath: filtered('true', "export const PERMISSION_MATRIX_TAG_SCENARIOS = [{ tags: ['watcher'], championAbsent: false }]") })
+    expect(bad.status).toBe('fail')
+    expect(bad.violations?.join(' ')).toContain('PERMISSION_MATRIX_TAG_SCENARIOS entry')
+  })
+  test('checkPermissionMatrixCompleteness reports one violation per incomplete kind', () => {
+    const rows = [row({ kind: 'goal' }), row({ kind: 'task', action: 'edit', role: 'editor', effectiveRole: 'editor' })]
+    const v = checkPermissionMatrixCompleteness(rows, [{ tags: ['champion'], championAbsent: false }])
+    expect(v).toHaveLength(2)
+    expect(v[0]).toContain("kind 'goal': 167 of 168")
+    expect(v[1]).toContain("kind 'task': 167 of 168")
   })
   test('present but not evaluable fails closed', async () => {
     expect((await runPermissionMatrixGate({ fixtureModulePath: moduleFile(`export const x = 1`) })).status).toBe('fail')
