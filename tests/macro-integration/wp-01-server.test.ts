@@ -243,7 +243,8 @@ describe('WP-01 actual composed workspace service, PostgreSQL and cryptographic 
     expect(await f.counts()).toEqual({ projects: 1, receipts: 1, events: 1 })
     const restarted = await f.restart()
     expect(restarted.migrations.applied).toEqual([])
-    expect(restarted.migrations.retained).toEqual(['01-domain-contract.sql', '01-local-auth-bootstrap.sql'])
+    // Startup always loads the full sorted set (01-*, 48, 5NN-*), so a restart retains all of it.
+    expect(restarted.migrations.retained).toEqual((await loadWorkspaceBootstrapMigrations(resolve(import.meta.dir, '../../apps/workspace-service/migrations'))).map(m => m.name))
     expect((await f.http('/.well-known/jwks.json')).body).toEqual(jwks.body)
     const retried = await f.http(f.basePath + '/commands/project.createShared', f.ownerToken, input)
     expect(retried.status).toBe(200)

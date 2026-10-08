@@ -96,6 +96,7 @@ import {
   DEFAULT_NAVIGATION_STATE,
 } from '../../shared/types'
 import { sessionMetaMapAtom, updateSessionMetaAtom, type SessionMeta } from '@/atoms/sessions'
+import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
 import {
   panelStackAtom,
   pushPanelAtom,
@@ -243,6 +244,10 @@ export function NavigationProvider({
   const [rightSidebar, setRightSidebar] = useState<RightSidebarPanel | undefined>()
   const rightSidebarRef = useRef<RightSidebarPanel | undefined>(rightSidebar)
 
+  // entities.links.v1 gates kind-first entity routes inside the route
+  // parser; re-resolve the focused route whenever the effective state flips.
+  const entitiesLinksEnabled = useEntitiesLinksEffectiveState().enabled
+
   // NavigationState derived from the focused panel's route
   const navigationState: NavigationState = useMemo(() => {
     const base: NavigationState = unavailableWorkspaceSlug
@@ -261,7 +266,7 @@ export function NavigationProvider({
       }
     }
     return rightSidebar ? { ...state, rightSidebar } : state
-  }, [focusedRoute, rightSidebar, unavailableWorkspaceSlug, sessionMetaMap, workspaceId, remoteWorkspaceId])
+  }, [focusedRoute, rightSidebar, unavailableWorkspaceSlug, sessionMetaMap, workspaceId, remoteWorkspaceId, entitiesLinksEnabled])
 
   // =========================================================================
   // BROWSER HISTORY TRACKING

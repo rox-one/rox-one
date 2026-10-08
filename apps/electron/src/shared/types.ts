@@ -12,6 +12,9 @@ import type { MeetingsLocalApi } from './meetings-local'
 import type { MailLocalApi } from './mail-local'
 import type { OpenDesignApi } from './open-design'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
+import { parseEntityRoute } from './entity-routes'
+import { isEntityRoutesEnabled } from './route-parser'
+import type { EntitiesLinksEffectiveState } from '@rox/shared/feature-flags'
 import type {
   Message as CoreMessage,
   MessageRole as CoreMessageRole,
@@ -29,6 +32,7 @@ import type {
   SessionMemoryMode,
   ServerHealth,
 } from '@rox/core/types';
+import type { EntityRef } from '@rox/core/entities'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -2461,6 +2465,15 @@ export interface ElectronAPI {
   // Language
   changeLanguage(lang: string): Promise<void>
 
+  // Entity links (entities.links.v1): the renderer reports its persisted
+  // toggle; main returns the EFFECTIVE state (env override > toggle) that
+  // the renderer route gate and Settings UI must use.
+  setEntitiesLinksEnabled(enabled: boolean): Promise<EntitiesLinksEffectiveState>
+  /** Synchronous bootstrap report; null when the bridge is unavailable. */
+  syncEntitiesLinksState?(persisted: boolean): EntitiesLinksEffectiveState | null
+  /** Effective-state changes broadcast by main to every window. */
+  onEntitiesLinksStateChanged?(callback: (state: EntitiesLinksEffectiveState) => void): () => void
+
   // Resources (cross-workspace export/import)
   exportResources(workspaceId: string, options: ExportResourcesOptions): Promise<ExportResult>
   importResources(workspaceId: string, bundle: ResourceBundle, mode: ResourceImportMode): Promise<ResourceImportResult>
@@ -2883,6 +2896,18 @@ export interface TerminalNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/**
+ * Kind-first entity surface navigation state (W1-01). `route` is the canonical
+ * app route from `@rox/core/entities`' `entityRoute`; `ref` is its parsed form.
+ */
+export interface EntityNavigationState {
+  navigator: 'entity'
+  route: string
+  ref: EntityRef
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
 /** A view address that cannot be resolved; retain it for recovery and history. */
 export interface UnavailableNavigationState {
   navigator: 'unavailable'
@@ -2917,6 +2942,7 @@ export type NavigationState =
   | ExtensionNavigationState
   | DiffNavigationState
   | TerminalNavigationState
+  | EntityNavigationState
   | ConnectionsNavigationState
   | HomeNavigationState
   | ScreenNavigationState
@@ -3020,6 +3046,10 @@ export const isDiffNavigation = (
 export const isTerminalNavigation = (
   state: NavigationState
 ): state is TerminalNavigationState => state.navigator === 'terminal'
+
+export const isEntityNavigationState = (
+  state: NavigationState
+): state is EntityNavigationState => state.navigator === 'entity'
 
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
   navigator: 'sessions',
@@ -3142,6 +3172,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
       return `terminal/${encodeURIComponent(state.details.id)}`
     }
     return 'terminal'
+  }
+  if (state.navigator === 'entity') {
+    return `entity/${state.route}`
   }
   // Chats
   const f = state.filter
@@ -3332,6 +3365,16 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+
+  // Kind-first entity keys mirror the route format: `entity/{route}`.
+  // Gated behind `entities.links.v1` exactly like the main-process
+  // deep-link parser: persisted tabs/history restore nothing when off.
+  if (key.startsWith('entity/')) {
+    if (!isEntityRoutesEnabled()) return null
+    const parsed = parseEntityRoute(key.slice('entity/'.length))
+    if (!parsed) return null
+    return { navigator: 'entity', route: parsed.canonicalRoute, ref: parsed.ref, details: null }
+  }
   {
     const extraScreen = parseExtraScreenSegments(key.split('/'))
     if (extraScreen) {

@@ -70,6 +70,8 @@ export interface BroadcastEventMap {
   ]
   [RPC_CHANNELS.labels.CHANGED]: [workspaceId: string]
   [RPC_CHANNELS.statuses.CHANGED]: [workspaceId: string]
+  // Entities (W1-02) — local link store changed for a workspace.
+  [RPC_CHANNELS.entities.LINKS_CHANGED]: [workspaceId: string]
   // Toolchain install progress (global, local toolchain)
   [RPC_CHANNELS.toolchain.STATUS_CHANGED]: [status: ToolStatus]
   [RPC_CHANNELS.automations.CHANGED]: [workspaceId: string]
