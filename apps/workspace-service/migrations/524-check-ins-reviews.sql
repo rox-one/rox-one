@@ -25,9 +25,15 @@ CREATE TABLE check_in (
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz
 );
--- Review surface: check-ins per subject, newest first; "needs your review" per reviewer.
+-- Review surface: check-ins per subject, newest first.
 CREATE INDEX check_in_subject ON check_in (subject_type, subject_id, created_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX check_in_pending_ack ON check_in (workspace_id, acknowledged_at) WHERE acknowledged_at IS NULL AND state = 'published' AND deleted_at IS NULL;
+-- "Needs your review": unacknowledged published check-ins on the subjects the viewer
+-- reviews (project.reviewer_id / goal.reviewer_id), newest first:
+--   WHERE workspace_id = $ws AND subject_type = $t AND subject_id = ANY($reviewed_ids)
+--     AND acknowledged_at IS NULL AND state = 'published' AND deleted_at IS NULL
+--   ORDER BY created_at DESC
+CREATE INDEX check_in_pending_ack ON check_in (workspace_id, subject_type, subject_id, created_at DESC)
+  WHERE acknowledged_at IS NULL AND state = 'published' AND deleted_at IS NULL;
 
 CREATE TABLE review (
   review_id uuid PRIMARY KEY,

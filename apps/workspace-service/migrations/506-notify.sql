@@ -19,9 +19,11 @@ CREATE TABLE notification (
   schema_version integer NOT NULL DEFAULT 1 CHECK (schema_version > 0),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
--- Inbox feed: newest first per recipient; quick panel "unread" filter.
+-- Inbox feed: newest first per recipient. Quick panel: unread only, newest first
+-- (WHERE principal_id = $1 AND read_at IS NULL ORDER BY created_at DESC LIMIT n) is
+-- served in order by the partial index, without sorting every unread row.
 CREATE INDEX notification_inbox ON notification (principal_id, created_at DESC);
-CREATE INDEX notification_unread ON notification (principal_id) WHERE read_at IS NULL;
+CREATE INDEX notification_unread ON notification (principal_id, created_at DESC) WHERE read_at IS NULL;
 
 CREATE TABLE notification_pref (
   workspace_id uuid NOT NULL REFERENCES workspace(workspace_id),

@@ -676,7 +676,7 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
     }
   }, 120000)
 
-  itDb('EXPLAIN uses the key-query indexes (work map, chat feed, backlinks, review)', async () => {
+  itDb('EXPLAIN uses the key-query indexes (work map, chat feed, backlinks, quick panel, review)', async () => {
     const db = new SQL(testDb!.url)
     try {
       const schema = `w105_explain_${randomBytes(4).toString('hex')}`
@@ -705,7 +705,6 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
             ['message_chat_seq', `SELECT message_id FROM "${schema}".message WHERE chat_id = '${NIL}' AND deleted_at IS NULL ORDER BY seq DESC LIMIT 50`],
             ['entity_link_to', `SELECT link_id FROM "${schema}".entity_link WHERE to_kind = 'goal' AND to_id = '${probeTo}' AND deleted_at IS NULL`],
             ['check_in_subject', `SELECT check_in_id FROM "${schema}".check_in WHERE subject_type = 'goal' AND subject_id = '${NIL}' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 20`],
-            ['notification_unread', `SELECT notification_id FROM "${schema}".notification WHERE principal_id = '${NIL}' AND read_at IS NULL ORDER BY created_at DESC LIMIT 20`],
           ]
           for (const [label, q] of queries) {
             const rows = await tx.unsafe<{ plan: string }[]>(`EXPLAIN ${q}`)
@@ -731,6 +730,48 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
         const messageIndexes = await db.unsafe<{ indexname: string }[]>(
           `SELECT indexname FROM pg_indexes WHERE schemaname = '${schema}' AND tablename = 'message' ORDER BY indexname`)
         expect(messageIndexes.map(i => i.indexname)).not.toContain('message_feed')
+
+        // Quick panel + "needs your review": seed skewed data (mostly read / acknowledged)
+        // and ANALYZE, so the partial indexes are the cheap path by statistics rather
+        // than by accident of an empty table; forbid seq scans and sorts so the plan must
+        // deliver newest-first order from the index itself.
+        const reader = randomUUID()
+        const subject = randomUUID()
+        await db.unsafe(`INSERT INTO "${schema}".principal (principal_id) VALUES ('${reader}')`)
+        await db.unsafe(`INSERT INTO "${schema}".notification (notification_id, workspace_id, principal_id, kind, read_at, created_at)
+          SELECT gen_random_uuid(), '${wsId}', CASE WHEN g % 4 = 0 THEN '${reader}'::uuid ELSE '${BOT}'::uuid END, 'mention',
+                 CASE WHEN g % 100 = 0 THEN NULL ELSE now() END, now() - make_interval(secs => g)
+            FROM generate_series(1, 4000) AS g`)
+        await db.unsafe(`INSERT INTO "${schema}".check_in (check_in_id, workspace_id, subject_type, subject_id, author_id, status, message, acknowledged_at, created_at)
+          SELECT gen_random_uuid(), '${wsId}', 'project', CASE WHEN g % 2 = 0 THEN '${subject}'::uuid ELSE gen_random_uuid() END, '${BOT}', 'on_track', '{}',
+                 CASE WHEN g % 100 = 0 THEN NULL ELSE now() END, now() - make_interval(secs => g)
+            FROM generate_series(1, 4000) AS g`)
+        await db.unsafe(`ANALYZE "${schema}".notification`)
+        await db.unsafe(`ANALYZE "${schema}".check_in`)
+        const orderedPlans = await db.begin(async tx => {
+          await tx.unsafe('SET LOCAL enable_seqscan = off')
+          await tx.unsafe('SET LOCAL enable_sort = off')
+          const explain = async (q: string) => (await tx.unsafe<Record<string, string>[]>(`EXPLAIN ${q}`)).map(r => Object.values(r).join(' ')).join('\n')
+          return {
+            unread: await explain(`SELECT notification_id FROM "${schema}".notification
+              WHERE principal_id = '${reader}' AND read_at IS NULL ORDER BY created_at DESC LIMIT 20`),
+            review: await explain(`SELECT check_in_id FROM "${schema}".check_in
+              WHERE workspace_id = '${wsId}' AND subject_type = 'project' AND subject_id = '${subject}'
+                AND acknowledged_at IS NULL AND state = 'published' AND deleted_at IS NULL
+              ORDER BY created_at DESC LIMIT 20`),
+          }
+        })
+        expect(orderedPlans.unread).toContain('notification_unread')
+        expect(orderedPlans.unread).not.toMatch(/\bSort\b/)
+        expect(orderedPlans.review).toContain('check_in_pending_ack')
+        expect(orderedPlans.review).not.toMatch(/\bSort\b/)
+        // Structural pin as well, independent of planner costing.
+        const defs = await db.unsafe<{ indexname: string; indexdef: string }[]>(
+          `SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = '${schema}' AND indexname IN ('notification_unread', 'check_in_pending_ack') ORDER BY indexname`)
+        expect(defs.map(d => d.indexdef.replace(/"?[a-z0-9_]+"?\./g, ''))).toEqual([
+          'CREATE INDEX check_in_pending_ack ON check_in USING btree (workspace_id, subject_type, subject_id, created_at DESC) WHERE ((acknowledged_at IS NULL) AND (state = \'published\'::text) AND (deleted_at IS NULL))',
+          'CREATE INDEX notification_unread ON notification USING btree (principal_id, created_at DESC) WHERE (read_at IS NULL)',
+        ])
       } finally {
         await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
       }
