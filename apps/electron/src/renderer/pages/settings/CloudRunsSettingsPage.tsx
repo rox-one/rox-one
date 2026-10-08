@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { routes } from '@/lib/navigate'
+import { toErrorMessage } from '@/lib/errors'
 import { settingsPageActionAllowed, settingsRuntimeSource } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
@@ -101,23 +102,6 @@ function SettingText({ label, description }: { label: string; description: strin
   )
 }
 
-function formatUnknownError(error: unknown): string {
-  if (error instanceof Error) return error.message
-  if (typeof error === 'string') return error
-  if (error && typeof error === 'object') {
-    const record = error as { message?: unknown; code?: unknown; error?: unknown }
-    if (typeof record.message === 'string' && record.message.trim()) return record.message
-    if (typeof record.error === 'string' && record.error.trim()) return record.error
-    if (typeof record.code === 'string' && record.code.trim()) return record.code
-    try {
-      return JSON.stringify(error)
-    } catch {
-      return String(error)
-    }
-  }
-  return String(error)
-}
-
 function translateCloudRunsError(message: string, t: (key: string) => string): string {
   if (message.startsWith('security.assurance.')) return t(message)
   return message
@@ -153,7 +137,7 @@ export default function CloudRunsSettingsPage() {
       setConfig(next)
       setDraft(draftFromConfig(next))
     } catch (error) {
-      setLoadError(formatUnknownError(error))
+      setLoadError(toErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -192,7 +176,7 @@ export default function CloudRunsSettingsPage() {
         }),
       )
       .catch((error) => {
-        const message = translateCloudRunsError(formatUnknownError(error), t)
+        const message = translateCloudRunsError(toErrorMessage(error), t)
         setSaveError(message)
         setFailedPatch(nextPatch)
         toast.error(t('cloudRuns.error'), { description: message })

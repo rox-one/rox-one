@@ -1,0 +1,100 @@
+2026-10-03T22:34:37.4140320Z ##[group]apps/electron/src/main/__tests__/pocket-account-store-durable-write.test.ts:
+2026-10-03T22:34:37.4483580Z (pass) actual Pocket store flushes pending records through Windows-write-capable handles and preserves sealed recovery [34.45ms]
+2026-10-03T22:34:37.4484810Z 
+2026-10-03T22:34:37.4485550Z ##[endgroup]
+2026-10-03T22:34:37.4485850Z 
+2026-10-03T22:34:37.4486700Z ##[group]packages/shared/src/auth/__tests__/rox-pocket-client.test.ts:
+2026-10-03T22:34:37.4540780Z (pass) Pocket v2 proof client > uses S256 proof and operation id exclusively in main requests [1.16ms]
+2026-10-03T22:34:37.4542720Z (pass) Pocket v2 proof client > rejects foreign broker redirect and malformed token envelopes [0.32ms]
+2026-10-03T22:34:37.4544660Z (pass) Pocket v2 proof client > cancels a late approval even when HTTP transport ignores its abort [0.15ms]
+2026-10-03T22:34:37.4548150Z (pass) Pocket v2 proof client > rejects foreign-account credential and a redirected inference base [0.40ms]
+2026-10-03T22:34:37.4552160Z (pass) Pocket v2 proof client > projects account snapshot without credential canaries even if the server sends accidental extra fields [0.13ms]
+2026-10-03T22:34:39.4597850Z (pass) Pocket v2 proof client > reuses the same redemption proof after a dropped approved response [2003.64ms]
+2026-10-03T22:34:39.4598800Z 
+2026-10-03T22:34:39.4599570Z ##[endgroup]
+2026-10-03T22:34:39.4600010Z 
+2026-10-03T22:34:39.4600480Z ##[group]packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+2026-10-03T22:34:39.4688930Z (pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [4.64ms]
+2026-10-03T22:34:39.4705330Z (pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [1.77ms]
+2026-10-03T22:34:39.4731810Z (pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [2.60ms]
+2026-10-03T22:34:39.4734830Z (pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [0.42ms]
+2026-10-03T22:34:39.4742830Z (pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [0.73ms]
+2026-10-03T22:34:39.4746600Z (pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [0.39ms]
+2026-10-03T22:34:39.4785070Z (pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [3.44ms]
+2026-10-03T22:34:39.4820290Z (pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [3.66ms]
+2026-10-03T22:34:39.4827950Z (pass) Pocket host account authority > fences a running executor when account key generation changes [0.76ms]
+2026-10-03T22:34:39.4837120Z (pass) Pocket host account authority > invalidates the running executor when the active key is revoked [0.83ms]
+2026-10-03T22:34:39.4855920Z (pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [1.89ms]
+2026-10-03T22:34:39.4866390Z (pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [1.03ms]
+2026-10-03T22:34:39.4887410Z (pass) Pocket host account authority > fences crash-window active records and drains logout on ordinary restart state reads [1.93ms]
+2026-10-03T22:34:39.4909710Z (pass) Pocket host account authority > keeps a pending logout fail-closed across clear failure and broker outage restarts [2.12ms]
+2026-10-03T22:34:39.4936800Z (pass) Pocket host account authority > serializes first session owner claims and preserves caller binding across restart [2.44ms]
+2026-10-03T22:34:39.4940310Z (pass) Pocket host account authority > restores sealed queued-message owners only for their exact execution generation [0.85ms]
+2026-10-03T22:34:39.4941010Z 
+2026-10-03T22:34:39.4942050Z ##[endgroup]
+2026-10-03T22:34:39.4943780Z 
+2026-10-03T22:34:39.4944450Z ##[group]packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:
+2026-10-03T22:34:40.5220750Z (pass) actual OmpAgent private public catalog lifecycle > confirms the R1 Max provider/model before executing a new default-model turn [249.05ms]
+2026-10-03T22:34:40.5956860Z (pass) actual OmpAgent private public catalog lifecycle > uses trusted account key after final environment assembly despite wrong ambient/connection/session keys [73.82ms]
+2026-10-03T22:34:40.7192870Z (pass) actual OmpAgent private public catalog lifecycle > keeps the successor profile when the predecessor close disposer arrives after actual respawn [123.69ms]
+2026-10-03T22:34:40.7574240Z (pass) actual OmpAgent private public catalog lifecycle > removes the private profile after an actual pre-ready child failure [38.08ms]
+2026-10-03T22:34:40.8186440Z (pass) actual OmpAgent private public catalog lifecycle > runs actual mini/title and call_llm children with the account key and aborts old identity after logout [61.14ms]
+2026-10-03T22:34:40.8234480Z (pass) actual OmpAgent private public catalog lifecycle > never dispatches zero balance or ownerless public executions [4.81ms]
+2026-10-03T22:34:40.8721150Z (pass) actual OmpAgent private public catalog lifecycle > kills an actual in-flight one-shot at logout and never accepts its delayed result [48.66ms]
+2026-10-03T22:34:40.9683760Z (pass) actual OmpAgent private public catalog lifecycle > redacts a personal key echoed by an actual child from debug logs and one-shot errors [96.04ms]
+2026-10-03T22:34:40.9871040Z (pass) actual OmpAgent private public catalog lifecycle > cleans prepared runtime artifacts when logout occurs immediately before dispatch [18.72ms]
+2026-10-03T22:34:40.9872660Z 
+2026-10-03T22:34:40.9874030Z ##[endgroup]
+2026-10-03T22:34:40.9874220Z 
+2026-10-03T22:34:40.9874830Z ##[group]packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:
+2026-10-03T22:34:41.0343610Z 39 | }
+2026-10-03T22:34:41.0344360Z 40 | 
+2026-10-03T22:34:41.0346040Z 41 | test('actual OmpAgent respawns in both credential/catalog directions and preserves each domain key', async () => {
+2026-10-03T22:34:41.0347610Z 42 |   const f = await fixture()
+2026-10-03T22:34:41.0349030Z 43 |   try {
+2026-10-03T22:34:41.0350520Z 44 |     expect((await chatEvents(f.agent, 'private first', 30_000)).some(e => e.type === 'text_complete')).toBe(true)
+2026-10-03T22:34:41.0351280Z                                                                                                             ^
+2026-10-03T22:34:41.0351820Z error: expect(received).toBe(expected)
+2026-10-03T22:34:41.0352070Z 
+2026-10-03T22:34:41.0352220Z Expected: true
+2026-10-03T22:34:41.0352490Z Received: false
+2026-10-03T22:34:41.0352730Z 
+2026-10-03T22:34:41.0353180Z       at <anonymous> (/Users/runner/work/rox-one/rox-one/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:44:104)
+2026-10-03T22:34:41.0353650Z 
+2026-10-03T22:34:41.0362040Z ##[error]Expected: true
+Received: false
+
+      at <anonymous> (/Users/runner/work/rox-one/rox-one/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:44:104)
+2026-10-03T22:34:41.0364600Z (fail) actual OmpAgent respawns in both credential/catalog directions and preserves each domain key [43.52ms]
+2026-10-03T22:35:01.0448360Z 59 |   const f = await fixture(true)
+2026-10-03T22:35:01.0495330Z 60 |   try {
+2026-10-03T22:35:01.0498490Z 61 |     const first = chatEvents(f.agent, 'old delayed private turn', 30_000)
+2026-10-03T22:35:01.0506400Z 62 |     const deadline = Date.now() + 20_000
+2026-10-03T22:35:01.0508310Z 63 |     while (!f.fake.readRpcLog().some(frame => frame.type === 'prompt')) {
+2026-10-03T22:35:01.0510040Z 64 |       if (Date.now() > deadline) throw Error('old prompt did not dispatch')
+2026-10-03T22:35:01.0511630Z                                             ^
+2026-10-03T22:35:01.0512850Z error: old prompt did not dispatch
+2026-10-03T22:35:01.0519570Z       at <anonymous> (/Users/runner/work/rox-one/rox-one/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:64:40)
+2026-10-03T22:35:01.0520410Z 
+2026-10-03T22:35:01.0528990Z ##[error]
+      at <anonymous> (/Users/runner/work/rox-one/rox-one/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:64:40)
+2026-10-03T22:35:01.0535850Z (fail) actual in-flight credential-domain switch retires old child and ignores its delayed stream [19999.99ms]
+2026-10-03T22:35:01.1208930Z (pass) credential-domain switch during asynchronous native preparation never spawns its obsolete profile [76.17ms]
+2026-10-03T22:35:01.1210310Z 
+2026-10-03T22:35:01.1211460Z ##[endgroup]
+2026-10-03T22:35:01.1212190Z 
+2026-10-03T22:35:01.1213330Z ##[group]packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts:
+2026-10-03T22:35:03.7882870Z (pass) actual registerCoreRpcHandlers serves Connect/bootstrap/logout over authenticated local RPC [2659.91ms]
+2026-10-03T22:35:03.7884180Z 
+2026-10-03T22:35:03.7885330Z ##[endgroup]
+2026-10-03T22:35:03.7885910Z 
+2026-10-03T22:35:03.7891570Z 2 tests failed:
+2026-10-03T22:35:03.7893380Z (fail) actual OmpAgent respawns in both credential/catalog directions and preserves each domain key [43.52ms]
+2026-10-03T22:35:03.7896050Z (fail) actual in-flight credential-domain switch retires old child and ignores its delayed stream [19999.99ms]
+2026-10-03T22:35:03.7897010Z 
+2026-10-03T22:35:03.7897760Z  45 pass
+2026-10-03T22:35:03.7899170Z  2 fail
+2026-10-03T22:35:03.7900670Z  244 expect() calls
+2026-10-03T22:35:03.7901630Z Ran 47 tests across 10 files. [30.00s]
+2026-10-03T22:35:03.7951270Z ##[error]Process completed with exit code 1.
+2026-10-03T22:35:03.8239420Z Post job cleanup.

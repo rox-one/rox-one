@@ -50,7 +50,7 @@ export function AddWorkspaceStep_ConnectRemote({
   const isReconnectMode = !!reconnectWorkspace
   const [serverUrl, setServerUrl] = useState(initialUrl ?? '')
   const [token, setToken] = useState(initialToken ?? '')
-  const [homeDir, setHomeDir] = useState('')
+  const [configDir, setConfigDir] = useState('')
   const [testState, setTestState] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle')
   const [testError, setTestError] = useState<string | null>(null)
   const [remoteWorkspaces, setRemoteWorkspaces] = useState<Array<{ id: string; name: string }>>([])
@@ -62,7 +62,7 @@ export function AddWorkspaceStep_ConnectRemote({
   const [tlsTrust, setTlsTrust] = useState<RemoteTlsTrust | undefined>(undefined)
 
   useEffect(() => {
-    window.electronAPI.getHomeDir().then(setHomeDir)
+    window.electronAPI.getConfigDir().then(setConfigDir)
   }, [])
 
   const isCreateNew = selectedValue === CREATE_NEW_VALUE
@@ -193,7 +193,7 @@ export function AddWorkspaceStep_ConnectRemote({
       }
     }
 
-    if (!homeDir) return
+    if (!configDir) return
 
     if (isCreateNew || isFreshServer) {
       // Create new workspace on remote server via direct RPC, then connect locally
@@ -201,7 +201,7 @@ export function AddWorkspaceStep_ConnectRemote({
       if (!name) return
 
       try {
-        const prepared = await prepareRemoteWorkspace({ url: serverUrl, token, name, homeDir, sshHostId, tlsTrust })
+        const prepared = await prepareRemoteWorkspace({ url: serverUrl, token, name, configDir, sshHostId, tlsTrust })
         await onCreate(prepared.folderPath, prepared.name, prepared.remoteServer)
       } catch (err) {
         setTestState('error')
@@ -214,14 +214,14 @@ export function AddWorkspaceStep_ConnectRemote({
         url: serverUrl,
         token,
         name: selectedWorkspace.name,
-        homeDir,
+        configDir,
         remoteWorkspaceId: selectedWorkspace.id,
         sshHostId,
         tlsTrust,
       })
       await onCreate(prepared.folderPath, prepared.name, prepared.remoteServer)
     }
-  }, [serverUrl, token, homeDir, isCreateNew, isFreshServer, newWorkspaceName, selectedWorkspace, onCreate, isReconnectMode, onUpdate, reconnectWorkspace, sshHostId, tlsTrust, t])
+  }, [serverUrl, token, configDir, isCreateNew, isFreshServer, newWorkspaceName, selectedWorkspace, onCreate, isReconnectMode, onUpdate, reconnectWorkspace, sshHostId, tlsTrust, t])
 
   const canConnect = testState === 'ok' && !isCreating && (
     isReconnectMode ? true :

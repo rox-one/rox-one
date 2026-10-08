@@ -9,6 +9,8 @@ import { z } from 'zod'
 import {
   isEntityKind,
   isEntityRelation,
+  kindTakesFragment,
+  normalizeEntityFragment,
   type EntityKind,
   type EntityLink,
   type EntityRef,
@@ -25,11 +27,21 @@ export const entityRelationSchema = z
   .refine(isEntityRelation, { message: 'unknown entity relation' })
   .transform(value => value as EntityRelation)
 
-export const entityRefSchema: z.ZodType<EntityRef> = z.object({
-  kind: entityKindSchema,
-  id: z.string().min(1),
-  fragment: z.string().min(1).optional(),
-})
+export const entityRefSchema: z.ZodType<EntityRef> = z
+  .object({
+    kind: entityKindSchema,
+    id: z.string().min(1),
+    fragment: z.string().min(1).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.fragment !== undefined && !kindTakesFragment(value.kind)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `kind "${value.kind}" does not take a fragment` })
+    }
+  })
+  .transform((value) => {
+    if (value.fragment === undefined) return value
+    return { ...value, fragment: normalizeEntityFragment(value.kind, value.fragment) }
+  })
 
 export const entityLinkAnchorSchema = z.object({
   blockId: z.string().min(1).optional(),

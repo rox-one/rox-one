@@ -1,0 +1,114 @@
+{
+  "createdUtc": "2026-10-03T22:50:11.386214+00:00",
+  "qualification": "PASS for authorized bounded A/B/C1/C2/D local renderer and explicit IPC fixtures",
+  "productionBaseRevision": "c22ba7c690674cb0e806b6f11211d19063195410",
+  "testedRevision": "f6dda1fd18e81c743f6955cf4d19ceba5666bd51",
+  "fixtureCorrectionCommits": [
+    "7ec867830710d444c70af12238cc1345498b6b0a",
+    "6c77f08452d4bb8ffebd5d7a726ad2112cce56f0",
+    "56052f6f3e2772cb007f397b81be5166b8001cdd",
+    "f80f3b3a921e290ce9340d0f0833dbf9790c77e6",
+    "f6dda1fd18e81c743f6955cf4d19ceba5666bd51"
+  ],
+  "changedProductionFiles": [],
+  "changedFixtureFiles": [
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.component-harness.ts"
+  ],
+  "runtimes": {
+    "bun": "1.3.14 (0d9b296a)",
+    "node": "v24.19.0",
+    "chromium": "131.0.6778.33",
+    "chromiumExecutable": "/root/.cache/ms-playwright/chromium_headless_shell-1148/chrome-linux/headless_shell"
+  },
+  "phases": [
+    {
+      "phase": "A-unit",
+      "passed": 29,
+      "failed": 0,
+      "bunAssertions": 232,
+      "exitCode": 0,
+      "log": "f6dda1fd1/A-unit.log",
+      "receipt": "f6dda1fd1/A-unit.json"
+    },
+    {
+      "phase": "B-main-browser",
+      "passed": 11,
+      "failed": 0,
+      "bunAssertions": 23,
+      "exitCode": 0,
+      "log": "f6dda1fd1/B-main-browser.log",
+      "receipt": "f6dda1fd1/B-main-browser.json"
+    },
+    {
+      "phase": "C1-navigation-cli",
+      "passed": 17,
+      "failed": 0,
+      "bunAssertions": null,
+      "exitCode": 0,
+      "log": "f6dda1fd1/C1-navigation-cli.log",
+      "receipt": "f6dda1fd1/C1-navigation-cli.json"
+    },
+    {
+      "phase": "C2-recovery-cli",
+      "passed": 22,
+      "failed": 0,
+      "bunAssertions": null,
+      "exitCode": 0,
+      "log": "f6dda1fd1/C2-recovery-cli.log",
+      "receipt": "f6dda1fd1/C2-recovery-cli.json"
+    },
+    {
+      "phase": "D-navigation-browser",
+      "passed": 38,
+      "failed": 0,
+      "bunAssertions": 131,
+      "exitCode": 0,
+      "log": "f6dda1fd1/D-navigation-browser.log",
+      "receipt": "f6dda1fd1/D-navigation-browser.json"
+    }
+  ],
+  "totalCases": 117,
+  "bunTests": 78,
+  "bunAssertions": 386,
+  "pinnedSourceCount": 24,
+  "extractedBundleInputCount": 197,
+  "componentBundleInputCounts": {
+    "C1": 1869,
+    "C2": 1878
+  },
+  "fullUi001WorkflowQualified": false,
+  "nativeInstalledHostedAcceptanceQualified": false,
+  "historicalCandidateManifestRewritten": false,
+  "limitations": [
+    "Full test:mcp-onboarding remains blocked locally because its ConfigWatcher starts the unrequested Context7 service; this bounded qualification never ran or routed that command into CI.",
+    "Mounted fixtures use explicit IPC/session/resource rows and leaf presentation boundaries; runtime snapshot coverage is unavailable and provider requests are forbidden.",
+    "Native Windows/macOS and actual hosted acceptance are separate; no installed acceptance claimed."
+  ],
+  "preservedFailures": [
+    {
+      "source": "c22ba7c690",
+      "phase": "B",
+      "exitCode": 1,
+      "cause": "Source-extracted dispatcher omitted unconditional useNavigation readiness hook."
+    },
+    {
+      "source": "7ec867830",
+      "phase": "B",
+      "exitCode": 1,
+      "cause": "Deleted-session selector used obsolete route-session-unavailable/data-session-id."
+    },
+    {
+      "source": "6c77f0845",
+      "phase": "C2",
+      "exitCode": 1,
+      "cause": "Entity presentation stub intercepted SourceStatusIndicator/deriveConnectionStatus exports before browser execution."
+    },
+    {
+      "source": "f80f3b3a9",
+      "phase": "C2",
+      "exitCode": 1,
+      "cause": "Shared UI barrel imported unrelated KaTeX font assets without a loader before browser execution; same production tooltip module and actual TooltipProvider resolve the fixture."
+    }
+  ]
+}

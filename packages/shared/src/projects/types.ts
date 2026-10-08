@@ -195,7 +195,7 @@ export interface ProjectPromptContext {
   /** Lightweight manifest of reference files (newest-first); bodies are read on-demand. */
   assets: { filename: string; mimeType: string; sizeBytes: number }[];
   /** Absolute path to MEMORY.md, so the agent knows where to persist learnings. */
-  memoryPath: string;
+  memoryPath?: string;
   /** MEMORY.md content, already capped by loadProjectMemory. */
   memoryContent?: string;
   /** Compact roadmap (goal, definition of done, milestones, requirements) from roadmap.json. */

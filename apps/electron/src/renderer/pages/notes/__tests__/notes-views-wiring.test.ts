@@ -70,7 +70,9 @@ describe('issues 07–09 wiring', () => {
     expect(host).toContain('onKeyDown={onCanvasKeyDown}')
     expect(host).toContain("key === 'f'")
     expect(host).toContain('notesCanvasStorageKey')
-    expect(notesPage).toMatch(/<EntityViewTabs[\s\S]{0,5000}map[\s\S]{0,5000}<MindMapHost/)
+    expect(notesPage).toContain('<NotesViewMenu')
+    expect(notesPage).toContain('<MindMapHost')
+    expect(notesPage).toContain('data-testid="notes-retained-editor"')
   })
 
   it('exposes Fit/Reset/Rewrite node, inspector status and sticky/frame/group chrome on session canvas', () => {

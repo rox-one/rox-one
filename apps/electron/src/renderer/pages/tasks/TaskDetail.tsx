@@ -495,7 +495,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     className="h-6 w-[120px] rounded-[var(--radius-card)] bg-foreground/[0.04] px-2 text-[12px] outline-none placeholder:text-text-muted"
                   />
                   {tagSuggestions.length ? (
-                    <span className="absolute left-0 top-7 z-10 flex min-w-[140px] flex-col rounded-[var(--radius-card)] bg-background p-1 shadow-[0_6px_20px_rgba(0,0,0,0.2),0_0_0_1px_color-mix(in_oklch,var(--foreground)_12%,transparent)]">
+                    <span className="absolute left-0 top-7 z-10 flex min-w-[140px] flex-col rounded-[var(--radius-card)] bg-background p-1 shadow-modal-small">
                       {tagSuggestions.map((tag) => (
                         <button key={tag} type="button" onMouseDown={(event) => { event.preventDefault(); addTag(tag) }} className="h-6 rounded-[var(--radius-control)] px-2 text-left text-[12px] hover:bg-foreground/[0.07]">#{tag}</button>
                       ))}

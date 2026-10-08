@@ -11,7 +11,7 @@
  * returns per-ref `unavailable` placeholders to keep the response shape.
  */
 
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import { isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
 import {
@@ -23,8 +23,10 @@ import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { Actor, EntityLink, EntityPreview, EntityRef, Resolver } from '@rox/core/entities'
 import type { RequestContext } from '../../transport/types.ts'
 import type { HandlerDeps } from '../handler-deps'
-import { getEntityLinkStore } from '../../entities/link-store.ts'
+import { closeEntityLinkStores, getEntityLinkStore } from '../../entities/link-store.ts'
 import { DefaultResolverHost } from '../../entities/resolver-host.ts'
+import { ensureNoteLinksPruned, noteLinkSourceProbeFor, observeEntitiesLinksEnabled } from '../../entities/note-links-indexer.ts'
+import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.entities.LINKS, RPC_CHANNELS.entities.RESOLVE] as const
 
@@ -65,6 +67,24 @@ export function resetEntityResolvers(): void {
   hostsByWorkspace.clear()
 }
 
+/**
+ * Drop cached previews for one ref in one workspace host (realtime
+ * `entity.changed`). Exported next to `registerEntityResolver`.
+ */
+export function invalidateEntity(workspaceId: string, ref: EntityRef): void {
+  hostsByWorkspace.get(workspaceId)?.invalidate(ref)
+}
+
+/** Drop all cached previews for one workspace (exported next to `registerEntityResolver`). */
+export function invalidateWorkspaceEntities(workspaceId: string): void {
+  hostsByWorkspace.get(workspaceId)?.clear()
+}
+
+/** Drop all cached previews across every workspace host. */
+export function clearEntityCaches(): void {
+  for (const host of hostsByWorkspace.values()) host.clear()
+}
+
 function unavailablePreview(ref: EntityRef): EntityPreview {
   return {
     ref,
@@ -101,15 +121,23 @@ export interface EntitiesHandlerRuntime {
   /** Host-provided workspace lookup (tests pass a fixed map). */
   workspaceFor?: (id: string) => { id: string; rootPath: string } | null
   /**
-   * Enabled workbench flags for this host (user-toggleable). When it contains
-   * `entities.links.v1` the subsystem is enabled; `CRAFT_FEATURE_ENTITIES_LINKS`
-   * remains as an explicit env override (see `isEntitiesLinksEnabled`).
+   * Enabled workbench flags for this host (user-toggleable). A live getter
+   * is preferred over a snapshot: the `entities.links.v1` toggle applies
+   * without re-registering handlers. When omitted, the process-wide live
+   * source from `entities/workbench-flags` applies (Electron main publishes
+   * renderer toggles there). `CRAFT_FEATURE_ENTITIES_LINKS` remains as an
+   * explicit env override (see `isEntitiesLinksEnabled`).
    */
-  enabledWorkbenchFlags?: ReadonlySet<string>
+  enabledWorkbenchFlags?: ReadonlySet<string> | (() => ReadonlySet<string> | undefined)
+}
+
+function resolveEnabledFlags(runtime: EntitiesHandlerRuntime): ReadonlySet<string> | undefined {
+  if (typeof runtime.enabledWorkbenchFlags === 'function') return runtime.enabledWorkbenchFlags()
+  return runtime.enabledWorkbenchFlags ?? getEntitiesWorkbenchFlags()
 }
 
 function isEnabled(runtime: EntitiesHandlerRuntime): boolean {
-  return isEntitiesLinksEnabled(runtime.enabledWorkbenchFlags)
+  return isEntitiesLinksEnabled(resolveEnabledFlags(runtime))
 }
 
 function actorFor(ctx: RequestContext): Actor {
@@ -119,23 +147,32 @@ function actorFor(ctx: RequestContext): Actor {
 
 export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, runtime: EntitiesHandlerRuntime = {}): void {
   const workspaceFor = runtime.workspaceFor ?? (getWorkspaceByNameOrId as (id: string) => { id: string; rootPath: string } | null)
+  server.onShutdown?.(() => closeEntityLinkStores())
 
-  const requireWorkspaceRoot = (workspaceId: string): string => {
+  const requireWorkspace = (ctx: RequestContext, workspaceId: string): { id: string; rootPath: string } => {
+    if (ctx.principal && workspaceId !== ctx.workspaceId) {
+      throw new CodedError('FORBIDDEN', 'Entity workspace access denied')
+    }
     const workspace = workspaceFor(workspaceId)
-    if (!workspace) throw new Error('Workspace not found')
-    return workspace.rootPath
+    if (!workspace) throw new CodedError('NOT_FOUND', 'Workspace not found')
+    return workspace
   }
 
   server.handle(RPC_CHANNELS.entities.LINKS, async (ctx, workspaceId: string, input: unknown): Promise<EntitiesLinksResult> => {
     const request: EntityLinksRequest = entityLinksRequestSchema.parse(input)
-    if (!isEnabled(runtime)) {
+    if (!observeEntitiesLinksEnabled(isEnabled(runtime))) {
       if (request.op === 'add' || request.op === 'remove') return { ok: false, reason: 'disabled' }
       return request.op === 'outgoing'
         ? { ok: true, op: 'outgoing', links: [] }
         : { ok: true, op: 'backlinks', links: [] }
     }
-    const root = requireWorkspaceRoot(workspaceId)
-    const store = getEntityLinkStore(root)
+    const workspace = requireWorkspace(ctx, workspaceId)
+    const store = getEntityLinkStore(workspace.rootPath)
+    // First store use after the flag turned on: drop indexer rows of notes
+    // deleted/renamed while it was off (review 4, owner decision).
+    if (ensureNoteLinksPruned(workspace) > 0) {
+      pushTyped(server, RPC_CHANNELS.entities.LINKS_CHANGED, { to: 'workspace', workspaceId: workspace.id }, workspace.id)
+    }
 
     switch (request.op) {
       case 'add': {
@@ -147,12 +184,12 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
           anchor: request.anchor,
           createdBy: actorFor(ctx).id,
         })
-        pushTyped(server, RPC_CHANNELS.entities.LINKS_CHANGED, { to: 'workspace', workspaceId }, workspaceId)
+        pushTyped(server, RPC_CHANNELS.entities.LINKS_CHANGED, { to: 'workspace', workspaceId: workspace.id }, workspace.id)
         return { ok: true, op: 'add', link }
       }
       case 'remove': {
         const removed = store.remove({ from: request.from, to: request.to, relation: request.relation })
-        if (removed) pushTyped(server, RPC_CHANNELS.entities.LINKS_CHANGED, { to: 'workspace', workspaceId }, workspaceId)
+        if (removed) pushTyped(server, RPC_CHANNELS.entities.LINKS_CHANGED, { to: 'workspace', workspaceId: workspace.id }, workspace.id)
         return { ok: true, op: 'remove', removed }
       }
       case 'outgoing':
@@ -163,7 +200,8 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
           relations: request.relations,
           cursor: request.cursor,
           limit: request.limit,
-        })
+        // One notes-root resolution per call, then existsSync per source id.
+        }, { sourceExists: noteLinkSourceProbeFor(workspace) })
         return page.nextCursor
           ? { ok: true, op: 'backlinks', links: page.links, nextCursor: page.nextCursor }
           : { ok: true, op: 'backlinks', links: page.links }
@@ -174,7 +212,11 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
   server.handle(RPC_CHANNELS.entities.RESOLVE, async (ctx, workspaceId: string, input: unknown): Promise<EntityPreview[]> => {
     const request = entityResolveRequestSchema.parse(input)
     if (!isEnabled(runtime)) return request.refs.map(ref => unavailablePreview(ref))
-    const previews = await hostForWorkspace(workspaceId).resolve(request.refs, actorFor(ctx))
+    // Same principal/workspace check as feed:list: remote-eligible channels
+    // must never trust the workspaceId argument. Hosts are keyed by the
+    // validated id so unknown ids never allocate hosts.
+    const workspace = requireWorkspace(ctx, workspaceId)
+    const previews = await hostForWorkspace(workspace.id).resolve(request.refs, actorFor(ctx))
     return previews.map(redactPreviewForWire)
   }, { nativeAction: 'read' })
 }

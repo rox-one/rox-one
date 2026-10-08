@@ -8,7 +8,7 @@
  */
 
 import { ROX2_RELATION_KINDS } from '../rox2/platform-contract.ts'
-import type { EntityRef } from './refs.ts'
+import { formatEntityRef, type EntityRef } from './refs.ts'
 
 export { ROX2_RELATION_KINDS }
 
@@ -57,8 +57,9 @@ export const ENTITY_LINK_SCHEMA_VERSION = 1
 
 /**
  * Dedupe identity: a link is unique per `(from, relation, to)` regardless of
- * role/anchor. Used by the store to upsert instead of duplicating.
+ * role/anchor. Built from the canonical escaped literals (`formatEntityRef`)
+ * as a JSON tuple so raw `#`/`|` in ids can never collide.
  */
 export function entityLinkDedupeKey(link: Pick<EntityLink, 'from' | 'relation' | 'to'>): string {
-  return `${link.from.kind}:${link.from.id}#${link.from.fragment ?? ''}|${link.relation}|${link.to.kind}:${link.to.id}#${link.to.fragment ?? ''}`
+  return JSON.stringify([formatEntityRef(link.from), link.relation, formatEntityRef(link.to)])
 }

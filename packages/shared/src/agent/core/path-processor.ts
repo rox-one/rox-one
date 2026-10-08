@@ -32,10 +32,10 @@ export { expandPath, normalizePath, pathStartsWith, toPortablePath };
  */
 const CONFIG_FILE_PATTERNS = [
   // ROX configs (legacy paths accepted for compatibility)
-  /\.(?:rox|craft-agents?)\/.*\/(config|permissions|theme|guide|labels|statuses)\.json$/,
-  /\.(?:rox|craft-agents?)\/config\.json$/,
-  /\.(?:rox|craft-agents?)\/preferences\.json$/,
-  /\.(?:rox|craft-agents?)\/.*\/SKILL\.md$/,
+  /[./](?:rox|craft-agents?)\/.*\/(config|permissions|theme|guide|labels|statuses)\.json$/,
+  /[./](?:rox|craft-agents?)\/config\.json$/,
+  /[./](?:rox|craft-agents?)\/preferences\.json$/,
+  /[./](?:rox|craft-agents?)\/.*\/SKILL\.md$/,
   // Common config files
   /package\.json$/,
   /tsconfig\.json$/,

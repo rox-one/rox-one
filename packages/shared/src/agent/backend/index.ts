@@ -83,6 +83,9 @@ export {
   validateConnection,
 } from './factory.ts';
 
+// Internal driver helpers re-exported for cross-package consumers (session branch validation)
+export { getDefaultProviderType } from './internal/driver-types.ts';
+
 // Shared infrastructure
 export { BaseEventAdapter } from './base-event-adapter.ts';
 export { EventQueue } from './event-queue.ts';

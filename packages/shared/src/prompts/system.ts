@@ -499,7 +499,7 @@ export function formatProjectContextForPrompt(ctx: ProjectPromptContext): string
     lines.push('</project_roadmap>');
   }
 
-  lines.push(`<project_memory_path>${sanitizeProjectBodyText(ctx.memoryPath)}</project_memory_path>`);
+  if (ctx.memoryPath) lines.push(`<project_memory_path>${sanitizeProjectBodyText(ctx.memoryPath)}</project_memory_path>`);
   if (ctx.memoryContent?.trim()) {
     lines.push('<project_memory>');
     lines.push(sanitizeProjectBodyText(ctx.memoryContent.trim()));
@@ -513,10 +513,12 @@ export function formatProjectContextForPrompt(ctx: ProjectPromptContext): string
     lines.push(`its absolute path (<project_assets_path> + filename) only when it's relevant — you do not need`);
     lines.push(`to read them all.`);
   }
-  lines.push(`<project_memory> is authoritative accumulated knowledge for this project; treat it as`);
-  lines.push(`established context. When you learn something durable (a decision, gotcha, convention, or`);
-  lines.push(`project-specific user preference), record it in MEMORY.md at <project_memory_path> via Write/Edit —`);
-  lines.push(`concise, newest/most-important first, kept under ~5000 tokens.`);
+  if (ctx.memoryPath) {
+    lines.push(`<project_memory> is authoritative accumulated knowledge for this project; treat it as`);
+    lines.push(`established context. When you learn something durable (a decision, gotcha, convention, or`);
+    lines.push(`project-specific user preference), record it in MEMORY.md at <project_memory_path> via Write/Edit —`);
+    lines.push(`concise, newest/most-important first, kept under ~5000 tokens.`);
+  }
   if (ctx.roadmapContent?.trim()) {
     lines.push(`<project_roadmap> is the user's agreed spec for this project (goal, definition of done, milestones,`);
     lines.push(`requirements with acceptance criteria). Work towards it and check results against its acceptance criteria.`);

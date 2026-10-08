@@ -85,6 +85,26 @@ test('projects a missing config without seeding a file', async () => {
 })
 
 describe('automation graph save RPC', () => {
+  test('retains a runtime pause and graph layout, returning the actual persisted revision', async () => {
+    const path = join(workspaceRoot, 'automations.json')
+    const initial = { version: 2, automations: { SchedulerTick: [{ id: 'stable', context: { workspaceId: 'ws1', object: { kind: 'page', id: 'deleted' } }, actions: [{ type: 'prompt', prompt: 'Review' }] }] } }
+    const graph = projectAutomationsToGraph(initial)
+    const matcher = graph.nodes.find(node => node.kind === 'matcher')!
+    matcher.position = { x: 123, y: 456 }
+    writeFileSync(path, JSON.stringify({ ...initial, automationGraph: graph }))
+    const { invoke } = createHarness()
+    const saved = await invoke(RPC_CHANNELS.automations.SAVE_GRAPH, { workspaceId: 'ws1', graph, baseRevision: automationGraphRevision(JSON.parse(readFileSync(path, 'utf8'))) }) as { revision: string; graph: typeof graph }
+    let observed = JSON.parse(readFileSync(path, 'utf8'))
+    expect(observed.automations.SchedulerTick[0].contextPause.reason).toBe('target-deleted')
+    expect(saved.revision).toBe(automationGraphRevision(observed))
+    expect(saved.graph.nodes.find(node => node.kind === 'matcher')?.position).toEqual({ x: 123, y: 456 })
+    const savedMatcher = saved.graph.nodes.find(node => node.kind === 'matcher')!
+    if (savedMatcher.kind === 'matcher') delete savedMatcher.data.contextPause
+    const second = await invoke(RPC_CHANNELS.automations.SAVE_GRAPH, { workspaceId: 'ws1', graph: saved.graph, baseRevision: saved.revision }) as { revision: string }
+    observed = JSON.parse(readFileSync(path, 'utf8'))
+    expect(observed.automations.SchedulerTick[0].contextPause.reason).toBe('target-deleted')
+    expect(second.revision).toBe(automationGraphRevision(observed))
+  })
   test('atomically persists compiled automations and metadata without stale-write clobbering', async () => {
     const configPath = join(workspaceRoot, 'automations.json')
     const initial = {

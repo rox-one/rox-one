@@ -1,0 +1,62 @@
+{
+  "sourceCommit": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "sourceTree": "0837b00fc7847c64f416c5d7f78c49844e9302c3",
+  "trackedStatus": "",
+  "files": [
+    {
+      "path": "bun.lock",
+      "sha256": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
+      "bytes": 607996,
+      "exactGitHeadBytes": true
+    },
+    {
+      "path": "package.json",
+      "sha256": "9dd7540b8edda02ffbf7032ad3519950fed9c7137f493e4249d9a4027d3bde19",
+      "bytes": 18146,
+      "exactGitHeadBytes": true
+    },
+    {
+      "path": "scripts/desktop-release.ts",
+      "sha256": "dfb14a06c21d9435c096a5ce957ef02a5f017dea9a9f36db247df730cc645e14",
+      "bytes": 5399,
+      "exactGitHeadBytes": true
+    },
+    {
+      "path": "scripts/verify-update-metadata.ts",
+      "sha256": "97c9f23a4aeb5ef91c33167cd512cf0fad3fa56d31ffab942bf2b2128c6d5c65",
+      "bytes": 1361,
+      "exactGitHeadBytes": true
+    },
+    {
+      "path": "scripts/probes/pocket-vault-native.ts",
+      "sha256": "844cf5f7a3d76dd77dac0807e4b4a120049207384cf11e2c015648ffec3e0794",
+      "bytes": 5187,
+      "exactGitHeadBytes": true
+    },
+    {
+      "path": "scripts/probes/pocket-vault-diagnostics.ts",
+      "sha256": "4849aa412ae57a755fce4579d47aa7cee244153b3a35408926c521f735535287",
+      "bytes": 4906,
+      "exactGitHeadBytes": true
+    },
+    {
+      "path": "apps/electron/package.json",
+      "sha256": "9fd6733c4e92bf591c5f9393bd921b556d94ed60e1dd45f6950d580b95734326",
+      "bytes": 4959,
+      "exactGitHeadBytes": true
+    },
+    {
+      "path": "apps/electron/electron-builder.yml",
+      "sha256": "f81679372fca09f8978afa2fac3869536f0f488001112165106e8fdad9fc024d",
+      "bytes": 10858,
+      "exactGitHeadBytes": true
+    },
+    {
+      "path": "apps/electron/src/main/pocket-account-store.ts",
+      "sha256": "3fbe73a90d4387c04da14aeb3a6a4cff7788733e21ccca82419c3e48c3bb9014",
+      "bytes": 5051,
+      "exactGitHeadBytes": true
+    }
+  ],
+  "checkedAt": "2026-10-03T21:12:49.100584+00:00"
+}

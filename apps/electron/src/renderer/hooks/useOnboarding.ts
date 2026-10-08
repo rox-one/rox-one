@@ -35,6 +35,7 @@ import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
 import { cancelOnboardingOAuth, isProviderManagedOAuthMethod } from './oauth-cancel'
 import { visibleError } from './onboarding-visible-error'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * Identifies how the setup surface was opened. Existing callers are explicit
@@ -757,7 +758,7 @@ export function useOnboarding({
           connectError = st?.connectError ?? undefined
         } catch (err) {
           stateReadFailed = true
-          stateReadError = err instanceof Error ? err.message : String(err)
+          stateReadError = toErrorMessage(err)
         } finally { readingState = false }
         if (roxPollGeneration.current !== generation || finished) return
         const decision = decideRoxConnectPoll({

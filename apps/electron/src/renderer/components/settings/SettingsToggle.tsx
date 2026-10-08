@@ -50,30 +50,34 @@ export function SettingsToggle({
   inCard = true,
 }: SettingsToggleProps) {
   const id = React.useId()
+  const labelId = `${id}-label`
+  const descriptionId = description ? `${id}-description` : undefined
 
   return (
     <div
       data-layout="settings-row"
       className={cn(
-        'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
         disabled && 'opacity-50',
         className
       )}
     >
       <label htmlFor={id} className="flex-1 min-w-0 cursor-pointer select-none">
-        <div className={settingsUI.label}>{label}</div>
+        <div id={labelId} className={settingsUI.label}>{label}</div>
         {description && (
-          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</div>
+          <div id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</div>
         )}
       </label>
       <Switch
         id={id}
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}
         data-layout="settings-control"
-        className="ml-4 shrink-0"
+        className="shrink-0"
       />
     </div>
   )

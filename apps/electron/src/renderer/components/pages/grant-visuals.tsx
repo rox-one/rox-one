@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import type { PageActionDescriptor, PageActionGrant } from '@rox/shared/pages/types'
 import { isPageGrantUsable } from '@rox/shared/pages/types'
 import { relativeTime } from './page-visuals'
+import { toErrorMessage } from '@/lib/errors'
 
 type Translate = (key: string, opts?: Record<string, unknown>) => string
 
@@ -71,7 +72,7 @@ export function useGrantRemoval(workspaceId: string, pageSlug: string): {
       await window.electronAPI.revokePageGrant(workspaceId, pageSlug, grantId)
     } catch (err) {
       toast.error(t('toast.pageGrantRemoveFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     } finally {
       setBusyGrantId(null)

@@ -45,6 +45,7 @@ import { registerCodeIntelligenceHandlers } from './code-intelligence'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
+import { registerWorkspaceWorkHandlers } from './workspace-work'
 import { registerFeedHandlers } from './feed'
 import { registerCollectionHandlers } from './collection'
 
@@ -62,6 +63,7 @@ import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
 import { registerSkillsPendingHandlers } from './skills-pending'
+import { registerLearningHandlers } from './learning'
 export function cleanupCoreClientResources(clientId: string): void {
   cleanupSessionFileWatchForClient(clientId)
   cleanupNotesWatchForClient(clientId)
@@ -69,7 +71,8 @@ export function cleanupCoreClientResources(clientId: string): void {
 }
 import { registerBrowserPaneHandlers } from './browser-pane'
 import { registerBrowserProfileImportHandlers } from './browser-profile-import'
-import { registerEntitiesHandlers } from './entities.ts'
+import { registerEntitiesHandlers, type EntitiesHandlerRuntime } from './entities.ts'
+import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -79,6 +82,14 @@ export interface CoreRpcRegistrationOptions {
    * channel registrations and the app fails to boot.
    */
   browserPane?: boolean
+  /**
+   * Runtime for the entity handlers. Defaults to the process-wide live
+   * workbench-flag source (Electron main publishes renderer toggles there);
+   * pass an explicit runtime in tests. The flag is read live on every call —
+   * never a registration-time snapshot — with `CRAFT_FEATURE_ENTITIES_LINKS`
+   * as the env override.
+   */
+  entities?: EntitiesHandlerRuntime
 }
 
 export function registerCoreRpcHandlers(
@@ -122,6 +133,7 @@ export function registerCoreRpcHandlers(
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
+  registerWorkspaceWorkHandlers(server, deps)
   registerFeedHandlers(server, deps)
   registerCollectionHandlers(server, deps)
 
@@ -139,11 +151,12 @@ export function registerCoreRpcHandlers(
   registerMemoryIoHandlers(server, deps)
   registerMemoryInsightsHandlers(server, deps)
   registerSkillsPendingHandlers(server, deps)
+  registerLearningHandlers(server, deps)
   registerNotesHandlers(server, deps)
   if (deps.nativeData) registerNativeDataHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)
-  registerEntitiesHandlers(server, deps)
+  registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }

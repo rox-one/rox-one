@@ -1,0 +1,13 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/e2e/runtime-map/journal-harness.test.ts:
+(pass) persistent real collector and shell restore without repeating actions [68.07ms]
+(pass) large payloads use confined references and bounded reads with redaction [48.03ms]
+
+tests/e2e/runtime-map/catalog-store.test.ts:
+(pass) browser catalog snapshot and pack mutations use actual temporary-store readers [36.94ms]
+
+ 3 pass
+ 0 fail
+ 33 expect() calls
+Ran 3 tests across 2 files. [1.64s]

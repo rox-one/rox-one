@@ -7,12 +7,15 @@ import type { EntityRef } from '@rox/core/entities'
 import type { HandlerFn, RequestContext, RpcHandlerOptions, RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import { closeEntityLinkStores } from '../../../entities/link-store.ts'
+import { __resetNoteLinksPruneStateForTests } from '../../../entities/note-links-indexer.ts'
 import { registerEntitiesHandlers, registerEntityResolver, resetEntityResolvers, type EntitiesHandlerRuntime } from '../entities.ts'
 
 const roots: string[] = []
 let previousFlag: string | undefined
 
 beforeEach(() => {
+  // A Notes probe registered by another suite in this process must not filter these sources.
+  __resetNoteLinksPruneStateForTests()
   previousFlag = process.env.CRAFT_FEATURE_ENTITIES_LINKS
 })
 

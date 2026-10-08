@@ -2,11 +2,14 @@ import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { cpus, loadavg, platform, release, totalmem } from 'node:os'
+import { measureRuntimeCardVisibility } from './visible-cards'
 
 const server = 'http://127.0.0.1:4177'
 test.beforeEach(async ({ request }) => { expect((await request.post(`${server}/reset`, { data: {} })).ok()).toBe(true) })
 test.use({ trace: 'off', video: 'off' })
 test('production ingress and canvas measure 10000-event 20-agent load', async ({ page }, info) => {
+  const pageErrors: string[] = []
+  page.on('pageerror', error => pageErrors.push(error.message))
   await page.goto('/', { waitUntil: 'domcontentloaded' })
   await page.getByTestId('toggle-map').click()
   await expect(page.getByTestId('runtime-map-dock')).toBeVisible()
@@ -26,13 +29,12 @@ test('production ingress and canvas measure 10000-event 20-agent load', async ({
   for (let index = 0; index < 20; index++) deltas.push(await page.evaluate(async () => (window as unknown as { runtimePerformance: { measureVisibleUpdate(): Promise<number> } }).runtimePerformance.measureVisibleUpdate()))
   await page.getByRole('button', { name: 'Показать видимые события целиком', exact: true }).click()
   await expect.poll(() => page.getByTestId('runtime-node').count()).toBeGreaterThanOrEqual(180)
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('rox.runtime-map.camera:fixture-workspace:fixture-session:test-panel') ?? '{}').zoom ?? 1)).toBeLessThan(.05)
-  const denseMountedCards = await page.getByTestId('runtime-node').count()
-  const denseVisibleCards = await page.getByTestId('runtime-node').evaluateAll(cards => cards.filter(card => {
-    const rect = card.getBoundingClientRect(), viewport = document.querySelector('[data-testid="runtime-canvas"]')!.getBoundingClientRect()
-    return rect.right > viewport.left && rect.left < viewport.right && rect.bottom > viewport.top && rect.top < viewport.bottom
-  }).length)
-  expect(denseVisibleCards).toBeGreaterThanOrEqual(180)
+  await expect.poll(async () => (await measureRuntimeCardVisibility(page)).physicallyPaintable).toBe(200)
+  const denseVisibility = await measureRuntimeCardVisibility(page)
+  const denseMountedCards = denseVisibility.mounted
+  const denseVisibleCards = denseVisibility.physicallyPaintable
+  // Capture the physical overview before the pan gesture can move it out of view.
+  await page.screenshot({ path: info.outputPath('runtime-map-dense-fit-overview.png'), fullPage: true })
   const denseDeltas: number[] = []
   for (let index = 0; index < 20; index++) denseDeltas.push(await page.evaluate(async () => (window as unknown as { runtimePerformance: { measureVisibleUpdate(mode: 'completion-status'): Promise<number> } }).runtimePerformance.measureVisibleUpdate('completion-status')))
   const canvas = await page.getByTestId('runtime-canvas').boundingBox()
@@ -70,10 +72,11 @@ test('production ingress and canvas measure 10000-event 20-agent load', async ({
   const secondsMetrics = ['TaskDuration', 'ScriptDuration', 'LayoutDuration', 'RecalcStyleDuration']
   const readSystemValue = (path: string) => { try { return readFileSync(path, 'utf8').trim() } catch { return null } }
   const result = { class: 'renderer-component-performance', rendererBuild: 'vite-production', recording: false, cpuProfiler: !!profiler, syntheticFixture: true, measuredDelta: 'tool.completed result replacement on an existing span', viewport: { width: 1440, height: 900 }, profile,
-    denseMountedCards, denseVisibleCards, denseCamera: 'actual user Fit overview; compact headers/status remain visible, bodies hidden',
+    denseMountedCards, denseVisibleCards, denseVisibility, denseCamera: 'actual user Fit overview; each fully contained card >=40×8 CSS pixels with status SVG >=2×2; source identities retained',
     mountedCards: await page.getByTestId('runtime-node').count(), eventToVisiblePaintMs: deltas, eventToVisiblePaintP95Ms: p95(deltas),
     denseEventToVisiblePaintMs: denseDeltas, denseEventToVisiblePaintP95Ms: p95(denseDeltas), denseMeasuredDelta: 'running→succeeded status/icon on 20 distinct existing tool spans',
     panFrameMs: frames, panFrameP95Ms: p95(frames), browser: await page.evaluate(() => navigator.userAgent),
+    pageErrors,
     chromiumPerformanceMetrics: { eventMetricsBefore, panMetricsBefore, panMetricsAfter, panElapsedMs,
       panDurationDeltasSeconds: Object.fromEntries(secondsMetrics.map(name => [name, panMetricsAfter[name] - panMetricsBefore[name]])),
       heapUnit: 'bytes', durationUnit: 'seconds; cumulative Chromium Performance.getMetrics counters; no CPU percentage inferred' },
@@ -87,4 +90,5 @@ test('production ingress and canvas measure 10000-event 20-agent load', async ({
   expect(result.eventToVisiblePaintP95Ms).toBeLessThan(150)
   expect(result.denseEventToVisiblePaintP95Ms).toBeLessThan(150)
   expect(result.panFrameP95Ms).toBeLessThan(32)
+  expect(pageErrors).toEqual([])
 })

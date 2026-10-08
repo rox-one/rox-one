@@ -6,6 +6,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterAll, mock } from 'bun:test'
+import type { BrowserInstanceInfo } from '../browser-pane-manager'
+import type { WindowManager } from '../window-manager'
 
 const createdWindows: any[] = []
 let toolbarLoadFailuresRemaining = 0
@@ -15,13 +17,19 @@ const mockIpcMainHandle = mock(() => {})
 function createMockWebContents() {
   const listeners: Record<string, Function[]> = {}
   let currentUrl = 'about:blank'
+  // Populated by tests that exercise webContents-id-keyed bookkeeping (popups, embed hosts).
+  const webContentsId: number | undefined = undefined
   return {
+    id: webContentsId,
     userAgent: 'Mock Chrome Electron/99.0.0',
     session: {},
     isDestroyed: mock(() => false),
     on: (event: string, cb: Function) => {
       if (!listeners[event]) listeners[event] = []
       listeners[event].push(cb)
+    },
+    removeListener: (event: string, cb: Function) => {
+      listeners[event] = (listeners[event] || []).filter(fn => fn !== cb)
     },
     loadURL: mock(async (url: string) => {
       currentUrl = url
@@ -119,6 +127,9 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
       if (!listeners[event]) listeners[event] = []
       listeners[event].push(cb)
     },
+    removeListener: (event: string, cb: Function) => {
+      listeners[event] = (listeners[event] || []).filter(fn => fn !== cb)
+    },
     once: (event: string, cb: Function) => {
       const wrapped = (...args: any[]) => {
         listeners[event] = (listeners[event] || []).filter(fn => fn !== wrapped)
@@ -152,6 +163,20 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
   }
   createdWindows.push(win)
   return win
+}
+
+/** Structural slice of `createMockWindow()` the embedded-pane host helper reads. */
+interface EmbedHostWindow {
+  webContents: { id: number | undefined }
+  isDestroyed: () => boolean
+}
+
+/** Window-manager stub used by embedded-pane tests — narrower than the real WindowManager. */
+interface EmbedHostWindowManager {
+  getWindowByWebContentsId: (webContentsId: number) => EmbedHostWindow | null
+  getWorkspaceForWindow: (webContentsId: number) => string | null
+  getLastActiveWindow: () => EmbedHostWindow | null
+  getAllWindows: () => Array<{ window: EmbedHostWindow; workspaceId: string }>
 }
 
 import { electronMockExports } from './electron-mock-exports'
@@ -273,6 +298,109 @@ describe('BrowserPaneManager', () => {
     mockShellOpenExternal.mockClear()
     mockIpcMainHandle.mockClear()
     manager = new BrowserPaneManager()
+  })
+
+  /** Wire a mock window as the embedded-pane host; returns its webContents id. */
+  function attachEmbedHost(host: EmbedHostWindow): number {
+    const hostWebContentsId = host.webContents.id ?? 991
+    host.webContents.id = hostWebContentsId
+    const windowManagerStub: EmbedHostWindowManager = {
+      getWindowByWebContentsId: (webContentsId) => (webContentsId === hostWebContentsId ? host : null),
+      getWorkspaceForWindow: () => 'ws-a',
+      getLastActiveWindow: () => host,
+      getAllWindows: () => [{ window: host, workspaceId: 'ws-a' }],
+    }
+    // Mock windows expose only the window-manager surface the embedded attach path reads.
+    manager.setWindowManager(windowManagerStub as unknown as WindowManager)
+    return hostWebContentsId
+  }
+
+  it('hides embedded instances by detaching views without removing the registry entry', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    const hostWebContentsId = attachEmbedHost(host)
+
+    const stateEvents: BrowserInstanceInfo[] = []
+    manager.onStateChange((info) => stateEvents.push(info))
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+
+    const instance = manager.getInstance(id)
+    if (!instance) throw new Error('Expected embedded browser instance')
+    expect(host.contentView.children).toContain(instance.pageView)
+    expect(manager.listInstances().find((item) => item.id === id)).toMatchObject({
+      embedded: true,
+      isVisible: true,
+      workspaceId: 'ws-a',
+    })
+
+    manager.hide(id)
+
+    expect(host.contentView.removeChildView).toHaveBeenCalledTimes(3)
+    expect(host.contentView.children).not.toContain(instance.pageView)
+    expect(manager.listInstances().find((item) => item.id === id)).toMatchObject({
+      embedded: true,
+      isVisible: false,
+      workspaceId: 'ws-a',
+    })
+    expect(stateEvents.some((event) => event.id === id && event.isVisible === false)).toBe(true)
+  })
+
+  it('reopens a hidden embedded instance when bounds are synced again', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    const hostWebContentsId = attachEmbedHost(host)
+
+    const stateEvents: BrowserInstanceInfo[] = []
+    manager.onStateChange((info) => stateEvents.push(info))
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+    manager.hide(id)
+    manager.syncEmbeddedBounds(id, { x: 20, y: 30, width: 640, height: 360 }, hostWebContentsId)
+
+    const instance = manager.getInstance(id)
+    if (!instance) throw new Error('Expected embedded browser instance')
+    expect(host.contentView.children).toContain(instance.pageView)
+    expect(manager.listInstances().find((item) => item.id === id)).toMatchObject({
+      embedded: true,
+      isVisible: true,
+      workspaceId: 'ws-a',
+    })
+    const eventsForInstance = stateEvents.filter((event) => event.id === id)
+    expect(eventsForInstance[eventsForInstance.length - 1]?.isVisible).toBe(true)
+  })
+
+  it('destroys a hidden embedded instance when close is explicit', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    const hostWebContentsId = attachEmbedHost(host)
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+    manager.hide(id)
+    manager.destroyInstance(id)
+
+    expect(manager.listInstances().some((item) => item.id === id)).toBe(false)
+  })
+
+  it('closes child popups when an embedded instance is hidden', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    const hostWebContentsId = attachEmbedHost(host)
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    const instance = manager.getInstance(id)
+    if (!instance) throw new Error('Expected embedded browser instance')
+
+    const popupWindow = createMockWindow({ width: 520, height: 720 })
+    // Mock webContents exposes the test-only `_emit` bridge used by sibling popup tests.
+    const pageWebContents = instance.pageView.webContents as unknown as {
+      _emit: (event: string, ...args: unknown[]) => void
+    }
+    pageWebContents._emit('did-create-window', popupWindow, { url: 'https://auth.example.test/login' })
+
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+    manager.hide(id)
+
+    expect(popupWindow.destroy).toHaveBeenCalledTimes(1)
   })
 
   it('creates and lists instances', () => {
@@ -1176,7 +1304,7 @@ describe('BrowserPaneManager', () => {
     })
 
     it('emits state change when agent control is set and cleared', () => {
-      const stateEvents: any[] = []
+      const stateEvents: BrowserInstanceInfo[] = []
       manager.onStateChange((info) => stateEvents.push(info))
 
       manager.createInstance('ac-state')

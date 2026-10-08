@@ -20,6 +20,7 @@ import { routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import type { LoadedPage } from '@rox/shared/pages/types'
 import type { LoadedSource } from '../../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * Trusted-chrome reconnect banner: when a source this page holds grants on
@@ -96,7 +97,7 @@ export function PageSourceAuthBanner({ workspaceId, page, sources, className }: 
       }
     } catch (err) {
       toast.error(t('toast.pageSourceReconnectFailed', { name: source.config.name }), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     } finally {
       setBusySlug(null)
@@ -187,7 +188,7 @@ export function ReconnectCredentialDialog({
       onClose()
     } catch (err) {
       toast.error(t('toast.pageSourceReconnectFailed', { name: source.config.name }), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     } finally {
       setSaving(false)
