@@ -219,6 +219,63 @@ export function canPostToChat(input: { postingPolicy?: ChatPostingPolicy; role: 
   return true
 }
 
+// ── ACL projection (D-v2-2: private chats are hidden from non-members) ──────
+
+/**
+ * `resource_policy.privacy` for a chat, as the W1-04 ACL engine consumes it:
+ * a private chat is `'invited'` — secret, so its name, members and content are
+ * redacted from every listing, search result, mention and preview for a
+ * non-member, and inheritance never flows through it (§8.2 "privacy presets").
+ * A public chat inherits normally (`'inherit'`).
+ */
+export function chatPrivacyFor(chat: Pick<TeamChat, 'visibility'>): 'inherit' | 'invited' {
+  return chat.visibility === 'private' ? 'invited' : 'inherit'
+}
+
+/** What one principal may do with one chat, derived from visibility + membership. */
+export interface ChatAclProjection {
+  /** `false` = the chat must not appear in a list, search or preview (§15.1). */
+  visible: boolean
+  /** The highest ACL action the principal may take on the chat resource. */
+  action: 'none' | 'view_title' | 'view' | 'comment' | 'edit' | 'manage_access'
+  /** `pending_activation` members are listed but cannot act yet. */
+  pendingActivation: boolean
+  /** The resource is secret to everyone else (ACL `secret` flag). */
+  secret: boolean
+}
+
+/**
+ * The chat's ACL projection for one principal. It is the single rule the
+ * resolver, the search provider and the IM listings share, so "private chats
+ * are invisible to non-members" is decided in one place:
+ *
+ * - a public chat is visible to active workspace members (`view`);
+ * - a private chat is visible to its members only, and secret to everyone else;
+ * - a chat owner / admin may `manage_access`, a member may post (`comment`);
+ * - a placeholder (`pending_activation`) is visible to nobody and cannot act.
+ */
+export function chatAclProjection(input: {
+  chat: Pick<TeamChat, 'visibility' | 'archivedAt'>
+  member: { role: 'owner' | 'admin' | 'member'; state: 'active' | 'pending_activation' | 'left' | 'removed' } | null
+  workspaceActive: boolean
+}): ChatAclProjection {
+  const { chat, member } = input
+  const secret = chat.visibility === 'private'
+  const active = member?.state === 'active'
+  const pendingActivation = member?.state === 'pending_activation'
+  const archived = chat.archivedAt !== null && chat.archivedAt !== undefined
+  if (!input.workspaceActive) return { visible: false, action: 'none', pendingActivation, secret }
+  if (secret) {
+    if (!active) return { visible: false, action: 'none', pendingActivation, secret }
+    return { visible: true, action: member?.role === 'owner' || member?.role === 'admin' ? 'manage_access' : 'comment', pendingActivation, secret }
+  }
+  if (!active) {
+    // A public chat is listed for members who have not joined yet: title only.
+    return { visible: true, action: 'view_title', pendingActivation, secret: archived ? true : secret }
+  }
+  return { visible: true, action: member?.role === 'owner' || member?.role === 'admin' ? 'manage_access' : 'comment', pendingActivation, secret }
+}
+
 /** Requests that carry the team-chat contract; the catalogue declares the same names. */
 export const TEAM_CHAT_COMMANDS = [
   'workspaces.create',

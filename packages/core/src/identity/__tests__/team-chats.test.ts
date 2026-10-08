@@ -10,6 +10,8 @@
 import { describe, expect, it } from 'bun:test'
 import {
   CHAT_CREATION_POLICIES,
+  chatAclProjection,
+  chatPrivacyFor,
   CHAT_INVITE_POLICIES,
   CHAT_POSTING_POLICIES,
   GENERAL_CHAT_INVARIANTS,
@@ -128,5 +130,47 @@ describe('the frozen command names', () => {
     ])
     expect(isTeamChatCommand('im.create_chat')).toBe(true)
     expect(isTeamChatCommand('im.update_chat')).toBe(false)
+  })
+})
+describe('ACL projection (private chats are hidden from non-members)', () => {
+  it('a private chat is never visible to a non-member, and is secret', () => {
+    const projection = chatAclProjection({ chat: privateGroup, member: null, workspaceActive: true })
+    expect(projection).toEqual({ visible: false, action: 'none', pendingActivation: false, secret: true })
+    expect(chatPrivacyFor(privateGroup)).toBe('invited')
+  })
+
+  it('a public chat is listed for every active member; a joiner sees only the title', () => {
+    const outsider = chatAclProjection({ chat: publicChannel, member: null, workspaceActive: true })
+    expect(outsider).toEqual({ visible: true, action: 'view_title', pendingActivation: false, secret: false })
+    const member = chatAclProjection({ chat: publicChannel, member: { role: 'member', state: 'active' }, workspaceActive: true })
+    expect(member.action).toBe('comment')
+    const admin = chatAclProjection({ chat: publicChannel, member: { role: 'admin', state: 'active' }, workspaceActive: true })
+    expect(admin.action).toBe('manage_access')
+    expect(chatPrivacyFor(publicChannel)).toBe('inherit')
+  })
+
+  it('an active member of a private chat may act; a pending placeholder may not', () => {
+    const member = chatAclProjection({ chat: privateGroup, member: { role: 'member', state: 'active' }, workspaceActive: true })
+    expect(member).toEqual({ visible: true, action: 'comment', pendingActivation: false, secret: true })
+    const owner = chatAclProjection({ chat: privateGroup, member: { role: 'owner', state: 'active' }, workspaceActive: true })
+    expect(owner.action).toBe('manage_access')
+    const pending = chatAclProjection({ chat: general, member: { role: 'member', state: 'pending_activation' }, workspaceActive: true })
+    expect(pending.visible).toBe(true)
+    expect(pending.action).toBe('view_title')
+    expect(pending.pendingActivation).toBe(true)
+  })
+
+  it('a left / removed member loses a private chat entirely, and a non-member loses both', () => {
+    for (const state of ['left', 'removed'] as const) {
+      expect(chatAclProjection({ chat: privateGroup, member: { role: 'member', state }, workspaceActive: true }).visible).toBe(false)
+      expect(chatAclProjection({ chat: publicChannel, member: { role: 'member', state }, workspaceActive: true }).action).toBe('view_title')
+    }
+    expect(chatAclProjection({ chat: general, member: { role: 'member', state: 'active' }, workspaceActive: false }))
+      .toEqual({ visible: false, action: 'none', pendingActivation: false, secret: false })
+  })
+
+  it('an archived public chat is not listed as viewable', () => {
+    const archived = chatAclProjection({ chat: { ...publicChannel, archivedAt: '2026-10-08T00:00:00.000Z' }, member: null, workspaceActive: true })
+    expect(archived).toEqual({ visible: true, action: 'view_title', pendingActivation: false, secret: true })
   })
 })
