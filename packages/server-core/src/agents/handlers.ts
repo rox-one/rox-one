@@ -592,10 +592,10 @@ function workspaceOfActor(runtime: AgentsRuntime, ctx: CommandHandlerContext<unk
     const chat = runtime.identity.chat(chatId)
     if (chat) return chat.workspaceId
   }
-  for (const membership of runtime.identity.membershipsOf(ctx.actor.principalId)) {
-    if (membership.status === 'active') return membership.workspaceId
-  }
-  return ''
+  const memberships = runtime.identity.membershipsOf(ctx.actor.principalId)
+  // An active membership wins; a non-active one still identifies the workspace,
+  // so the handler answers FORBIDDEN (not NOT_FOUND) for a placeholder.
+  return memberships.find(membership => membership.status === 'active')?.workspaceId ?? memberships[0]?.workspaceId ?? ''
 }
 
 // ── agents (§13) ───────────────────────────────────────────────────────────
