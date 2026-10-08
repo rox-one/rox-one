@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isVisibleRoxHomeActive, resolveConfigDir, resetConfigDirCachesForTests, runVisibleHomeAutoMigration } from '../../../../../packages/shared/src/config/env.ts'
 import { createStorageVisibleRootHandlers, registerStorageVisibleRootIpc } from '../storage-visible-root-ipc'
-import { STORAGE_VISIBLE_ROOT_CHANNELS } from '../../shared/storage-visible-root'
+import { STORAGE_VISIBLE_ROOT_CHANNELS, storageMigrationStatusMessageKey } from '../../shared/storage-visible-root'
 
 // Temp HOME only — never the real dot-configs.
 let home: string
@@ -90,5 +90,61 @@ describe('W1-13 Settings toggle (storage.visible-root.v1)', () => {
     expect(existsSync(flagFile())).toBe(false)
     const state = registered.get(STORAGE_VISIBLE_ROOT_CHANNELS.SET)!({ sender: { id: 1 } }, true) as { enabled: boolean }
     expect(state.enabled).toBe(true)
+  })
+})
+
+describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => {
+  const stateFile = () => join(home, '.rox', 'storage-migration-state.json')
+  const plantState = (kind: string) => {
+    mkdirSync(join(home, '.rox'), { recursive: true })
+    writeFileSync(stateFile(), JSON.stringify({
+      kind, diagnostic: 'storage.migration.legacyNotRenamable', diagnostics: ['storage.migration.legacyNotRenamable'], at: '2026-10-08T07:00:00.000Z',
+    }))
+  }
+
+  it('get() reports the persisted deferral; turning the flag OFF clears it', () => {
+    plantState('deferred-unmovable')
+    const handlers = createStorageVisibleRootHandlers({ env: {}, homeDir: home, activeAtLaunch: true })
+    handlers.set(true)
+    const on = handlers.get()
+    expect(on.lastMigration).toEqual({
+      kind: 'deferred-unmovable', diagnostic: 'storage.migration.legacyNotRenamable', at: '2026-10-08T07:00:00.000Z',
+    })
+    expect(storageMigrationStatusMessageKey(on)).toBe('storage.settings.deferredUnmovable')
+    const off = handlers.set(false)
+    expect(off.lastMigration).toBeUndefined()
+    expect(existsSync(stateFile())).toBe(false)
+    expect(existsSync(join(home, 'rox'))).toBe(false)
+  })
+
+  it('no state file: no lastMigration and no message', () => {
+    mkdirSync(join(home, '.rox'))
+    const state = createStorageVisibleRootHandlers({ env: {}, homeDir: home, activeAtLaunch: false }).get()
+    expect('lastMigration' in state).toBe(false)
+    expect(storageMigrationStatusMessageKey(state)).toBeUndefined()
+  })
+
+  it('the explanatory line only shows for a deferral while the toggle is ON', () => {
+    const base = { enabled: true, activeAtLaunch: true, locked: false, restartRequired: false }
+    const at = '2026-10-08T07:00:00.000Z'
+    expect(storageMigrationStatusMessageKey({ ...base, lastMigration: { kind: 'deferred-locked', at } })).toBe('storage.settings.deferredLocked')
+    expect(storageMigrationStatusMessageKey({ ...base, lastMigration: { kind: 'relaunch-required', at } })).toBeUndefined()
+    expect(storageMigrationStatusMessageKey({ ...base, enabled: false, lastMigration: { kind: 'deferred-locked', at } })).toBeUndefined()
+    // Env-locked toggle: the launch state decides.
+    expect(storageMigrationStatusMessageKey({ ...base, enabled: false, locked: true, lastMigration: { kind: 'deferred-unmovable', at } }))
+      .toBe('storage.settings.deferredUnmovable')
+  })
+
+  it('both strings exist in all 12 locales, with the Russian text as specified', () => {
+    const locales = ['ar', 'de', 'en', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-Hans', 'zh-Hant']
+    const dir = join(import.meta.dir, '../../../../../packages/shared/src/i18n/locales')
+    for (const locale of locales) {
+      const messages = JSON.parse(readFileSync(join(dir, `${locale}.json`), 'utf8')) as Record<string, string>
+      expect(messages['storage.settings.deferredUnmovable']?.length).toBeGreaterThan(0)
+      expect(messages['storage.settings.deferredLocked']?.length).toBeGreaterThan(0)
+    }
+    const ru = JSON.parse(readFileSync(join(dir, 'ru.json'), 'utf8')) as Record<string, string>
+    expect(ru['storage.settings.deferredUnmovable']).toBe('Не удалось перенести ~/.rox (отдельный том или точка монтирования) — данные остаются в ~/.rox')
+    expect(ru['storage.settings.deferredLocked']).toBe('Перенос отложен: Rox запущен в другом окне или процессе')
   })
 })

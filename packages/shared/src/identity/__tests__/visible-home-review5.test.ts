@@ -34,9 +34,13 @@ import {
   isLockFileLive,
   migrateHiddenRoxHome,
   ROX_MIGRATION_LOCK_FILE_NAME,
+  ROX_STORAGE_MIGRATION_STATE_FILE_NAME,
+  readStorageMigrationState,
+  recordStorageMigrationOutcome,
+  storageMigrationStateFilePath,
   type MigrateHiddenRoxHomeOptions,
 } from '../config-migration.ts'
-import { resetConfigDirCachesForTests } from '../../config/env.ts'
+import { resetConfigDirCachesForTests, runVisibleHomeAutoMigration } from '../../config/env.ts'
 
 beforeEach(() => resetConfigDirCachesForTests())
 
@@ -347,6 +351,73 @@ describe('rename-probe move-back and stranded-probe recovery (finding 2)', () =>
       expect(result.outcome).toBe('deferred-unmovable')
       expect(result.diagnostics).toEqual(['storage.migration.strandedProbe', `probe:${probe}`])
       expect(existsSync(probe)).toBe(true)
+      expect(existsSync(join(home, 'rox'))).toBe(false)
+    }))
+})
+
+describe('last migration outcome for Settings (finding 4)', () => {
+  const flagOn = (home: string): void =>
+    write(join(home, '.rox', 'workbench-flags.json'), JSON.stringify({ enabled: ['storage.visible-root.v1'] }))
+  const stateFile = (dir: string): string => join(dir, ROX_STORAGE_MIGRATION_STATE_FILE_NAME)
+
+  it('a deferral is written atomically next to workbench-flags.json; success clears it', () =>
+    withHome((home) => {
+      plantHidden(home)
+      flagOn(home)
+      const result = { outcome: 'deferred-unmovable' as const, diagnostics: ['storage.migration.legacyNotRenamable', 'rename:EXDEV'], dryRun: false }
+      recordStorageMigrationOutcome(result, home, Date.parse('2026-10-08T07:00:00Z'))
+      expect(storageMigrationStateFilePath(home)).toBe(stateFile(join(home, '.rox')))
+      expect(readStorageMigrationState(home)).toEqual({
+        kind: 'deferred-unmovable',
+        diagnostic: 'storage.migration.legacyNotRenamable',
+        diagnostics: ['storage.migration.legacyNotRenamable', 'rename:EXDEV'],
+        at: '2026-10-08T07:00:00.000Z',
+      })
+      expect(statSync(stateFile(join(home, '.rox'))).mode & 0o777).toBe(0o600)
+      expect(readdirSync(join(home, '.rox')).filter((n) => n.includes('.tmp-'))).toEqual([])
+
+      recordStorageMigrationOutcome({ outcome: 'deferred-locked', diagnostics: ['storage.migration.deferredLocked'], dryRun: false }, home)
+      expect(readStorageMigrationState(home)?.kind).toBe('deferred-locked')
+      recordStorageMigrationOutcome({ outcome: 'noop', diagnostics: [], dryRun: false }, home)
+      expect(readStorageMigrationState(home)?.kind).toBe('deferred-locked')
+      recordStorageMigrationOutcome({ outcome: 'deferred-locked', diagnostics: [], dryRun: true }, home)
+      recordStorageMigrationOutcome({ outcome: 'already-visible', diagnostics: [], dryRun: false }, home)
+      expect(readStorageMigrationState(home)).toBeUndefined()
+    }))
+
+  it('relaunchRequired is recorded in ~/rox; nothing is written when the home dir is missing', () =>
+    withHome((home) => {
+      recordStorageMigrationOutcome({ outcome: 'deferred-locked', diagnostics: [], dryRun: false }, home)
+      expect(readdirSync(home)).toEqual([])
+      write(join(home, 'rox', 'config.json'), '{}')
+      recordStorageMigrationOutcome(
+        { outcome: 'migrated', diagnostics: ['storage.migration.compatLinkMissing'], dryRun: false, relaunchRequired: true },
+        home,
+      )
+      expect(readStorageMigrationState(home)?.kind).toBe('relaunch-required')
+      expect(existsSync(stateFile(join(home, 'rox')))).toBe(true)
+    }))
+
+  it('the boot migration records an unmovable legacy home, then clears it once the flag is OFF', () =>
+    withHome((home) => {
+      plantHidden(home)
+      flagOn(home)
+      const pinned = (source: string, destination: string): void => {
+        if (source === join(home, '.rox')) throw Object.assign(new Error('EXDEV'), { code: 'EXDEV' })
+        renameSync(source, destination)
+      }
+      const boot = runVisibleHomeAutoMigration({
+        env: {},
+        homeDir: home,
+        migrate: (o) => migrateHiddenRoxHome({ ...o, ...opts(home), rename: pinned }),
+      })
+      expect(boot?.result?.outcome).toBe('deferred-unmovable')
+      expect(readStorageMigrationState(home)?.kind).toBe('deferred-unmovable')
+
+      resetConfigDirCachesForTests()
+      writeFileSync(join(home, '.rox', 'workbench-flags.json'), JSON.stringify({ enabled: [] }))
+      expect(runVisibleHomeAutoMigration({ env: {}, homeDir: home })).toBeUndefined()
+      expect(readStorageMigrationState(home)).toBeUndefined()
       expect(existsSync(join(home, 'rox'))).toBe(false)
     }))
 })

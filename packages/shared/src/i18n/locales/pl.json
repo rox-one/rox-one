@@ -7535,6 +7535,8 @@
   "storage.migratedToast": "Pliki Rox znajdują się teraz w folderze ~/rox",
   "storage.notice.conflicts": "Niektóre pliki istniały w obu folderach. Nieużyte wersje zachowano w ~/rox/.migration/conflicts: {{files}}",
   "storage.notice.foreignDeferred": "Folder ~/rox zawiera już inne pliki, więc Rox pozostał przy obecnym folderze. Przenieś lub zmień nazwę ~/rox i uruchom ponownie Rox, aby przełączyć.",
+  "storage.settings.deferredLocked": "Przeniesienie odłożone: Rox działa w innym oknie lub procesie",
+  "storage.settings.deferredUnmovable": "Nie udało się przenieść ~/.rox (osobny wolumin lub punkt montowania) — dane pozostają w ~/.rox",
   "storage.settings.description": "Rox przechowuje wszystkie pliki lokalne w jednym widocznym folderze.",
   "storage.settings.locked": "Ustawione przez zmienną środowiskową ROX_CONFIG_DIR lub ROX_STORAGE_VISIBLE_ROOT.",
   "storage.settings.migrateNow": "Przenieś ~/.rox do ~/rox teraz",

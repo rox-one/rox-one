@@ -11,7 +11,9 @@
 import { homedir } from 'node:os'
 import { isVisibleRoxHomeActive } from '@rox/shared/config'
 import {
+  clearStorageMigrationState,
   readPersistedVisibleRootFlag,
+  readStorageMigrationState,
   visibleRootEnvOverride,
   writePersistedVisibleRootFlag,
 } from '@rox/shared/identity'
@@ -46,12 +48,23 @@ export function createStorageVisibleRootHandlers(options: {
 
   const get = (): StorageVisibleRootState => {
     const enabled = readPersistedVisibleRootFlag(homeDir)
-    return { enabled, activeAtLaunch, locked, restartRequired: !locked && enabled !== activeAtLaunch }
+    const last = readStorageMigrationState(homeDir)
+    return {
+      enabled,
+      activeAtLaunch,
+      locked,
+      restartRequired: !locked && enabled !== activeAtLaunch,
+      ...(last
+        ? { lastMigration: { kind: last.kind, ...(last.diagnostic ? { diagnostic: last.diagnostic } : {}), at: last.at } }
+        : {}),
+    }
   }
   const set = (input: unknown): StorageVisibleRootState => {
     if (typeof input !== 'boolean') throw new Error('STORAGE_VISIBLE_ROOT_INVALID')
     if (locked) throw new Error('STORAGE_VISIBLE_ROOT_LOCKED')
     writePersistedVisibleRootFlag(input, homeDir)
+    // Flag OFF: an earlier deferral note no longer applies.
+    if (!input) clearStorageMigrationState(homeDir)
     return get()
   }
   return { get, set }

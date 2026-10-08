@@ -7529,6 +7529,8 @@
   "storage.migratedToast": "Rox 文件现已位于 ~/rox 文件夹",
   "storage.notice.conflicts": "部分文件在两个文件夹中都存在。未使用的版本保存在 ~/rox/.migration/conflicts：{{files}}",
   "storage.notice.foreignDeferred": "~/rox 文件夹中已有其他文件，因此 Rox 继续使用当前文件夹。移动或重命名 ~/rox 并重启 Rox 即可切换。",
+  "storage.settings.deferredLocked": "迁移已推迟：Rox 正在另一个窗口或进程中运行",
+  "storage.settings.deferredUnmovable": "无法移动 ~/.rox（独立卷或挂载点）— 数据仍保留在 ~/.rox 中",
   "storage.settings.description": "Rox 将所有本地文件保存在一个可见文件夹中。",
   "storage.settings.locked": "由环境变量 ROX_CONFIG_DIR 或 ROX_STORAGE_VISIBLE_ROOT 设置。",
   "storage.settings.migrateNow": "立即将 ~/.rox 移动到 ~/rox",

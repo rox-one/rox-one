@@ -6,11 +6,14 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RotateCw } from 'lucide-react'
+import { Info, RotateCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
-import type { StorageVisibleRootState } from '../../../shared/storage-visible-root'
+import {
+  storageMigrationStatusMessageKey,
+  type StorageVisibleRootState,
+} from '../../../shared/storage-visible-root'
 
 export function StorageVisibleRootSettings() {
   const { t } = useTranslation()
@@ -38,6 +41,8 @@ export function StorageVisibleRootSettings() {
   }, [t])
 
   if (!state) return null
+  // Settings only (no popup): why the toggle is ON but files stay in ~/.rox.
+  const statusKey = storageMigrationStatusMessageKey(state)
 
   return (
     <SettingsSection title={t('storage.settings.title')} description={t('storage.settings.description')}>
@@ -50,6 +55,15 @@ export function StorageVisibleRootSettings() {
           onCheckedChange={(checked) => { void onChange(checked) }}
         />
       </SettingsCard>
+      {statusKey && (
+        <div
+          data-testid="storage-visible-root-last-migration"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground"
+        >
+          <Info className="h-3.5 w-3.5 shrink-0" />
+          <span className="flex-1">{t(statusKey)}</span>
+        </div>
+      )}
       {state.restartRequired && (
         <div
           data-testid="storage-visible-root-restart"

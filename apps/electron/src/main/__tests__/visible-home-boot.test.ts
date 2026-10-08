@@ -3,7 +3,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, rmSync, uti
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { resetConfigDirCachesForTests } from '../../../../../packages/shared/src/config/env.ts'
-import { ROX_DESKTOP_APP_LOCK_NAME, desktopAppRuntimeLockPath } from '../../../../../packages/shared/src/identity/config-migration.ts'
+import { ROX_DESKTOP_APP_LOCK_NAME, desktopAppRuntimeLockPaths } from '../../../../../packages/shared/src/identity/config-migration.ts'
 import { migrationNoticeFromBoot, needsRelaunchOntoVisibleHome, registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from '../visible-home-boot'
 import { STORAGE_MIGRATION_NOTICE_CHANNELS } from '../../shared/storage-visible-root'
 
@@ -33,10 +33,10 @@ describe('W1-13 desktop boot: migration only in the primary instance', () => {
     expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
     // the lock was written after the move, through the compat link
     expect(existsSync(join(home, 'rox', ROX_DESKTOP_APP_LOCK_NAME))).toBe(true)
-    expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(true)
+    expect(desktopAppRuntimeLockPaths(configDir).every((p) => existsSync(p))).toBe(true)
     boot.release()
     expect(existsSync(join(home, 'rox', ROX_DESKTOP_APP_LOCK_NAME))).toBe(false)
-    expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(false)
+    expect(desktopAppRuntimeLockPaths(configDir).some((p) => existsSync(p))).toBe(false)
   })
 
   it('a non-primary instance (numbered / headless) never migrates', () => {
@@ -56,9 +56,9 @@ describe('W1-13 desktop boot: migration only in the primary instance', () => {
     expect(boot.notice).toBeNull()
     expect(existsSync(join(home, 'rox'))).toBe(false)
     expect(readdirSync(configDir).sort()).toEqual(before)
-    expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(true)
+    expect(desktopAppRuntimeLockPaths(configDir).every((p) => existsSync(p))).toBe(true)
     boot.release()
-    expect(existsSync(desktopAppRuntimeLockPath(configDir))).toBe(false)
+    expect(desktopAppRuntimeLockPaths(configDir).some((p) => existsSync(p))).toBe(false)
   })
 
   it('foreign ~/rox: deferred-foreign notice, nothing moved', () => {

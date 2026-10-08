@@ -298,6 +298,102 @@ export function visibleRootFlagFilePath(homeDir: string = homedir()): string {
   return visibleIsHome ? visibleFile : legacyFile
 }
 
+/**
+ * Last migration outcome the user should know about (Settings → Storage):
+ * a deferral, or a move that needs a relaunch. A small per-user state file
+ * next to `workbench-flags.json`, written atomically by the app's boot
+ * migration; cleared on success and when the flag goes OFF.
+ */
+export const ROX_STORAGE_MIGRATION_STATE_FILE_NAME = 'storage-migration-state.json'
+
+export type StorageMigrationStateKind = 'deferred-unmovable' | 'deferred-locked' | 'relaunch-required'
+
+export interface StorageMigrationState {
+  kind: StorageMigrationStateKind
+  /** First diagnostic code (e.g. `storage.migration.legacyNotRenamable`). */
+  diagnostic?: string
+  /** All diagnostics of that run (codes and details). */
+  diagnostics: string[]
+  /** ISO timestamp of the run. */
+  at: string
+}
+
+const _STORAGE_MIGRATION_STATE_KINDS: ReadonlySet<string> = new Set([
+  'deferred-unmovable',
+  'deferred-locked',
+  'relaunch-required',
+])
+
+export function storageMigrationStateFilePath(homeDir: string = homedir()): string {
+  return join(_dirnameMigration(visibleRootFlagFilePath(homeDir)), ROX_STORAGE_MIGRATION_STATE_FILE_NAME)
+}
+
+/** Best effort; a missing or malformed file reads as no state. */
+export function readStorageMigrationState(homeDir: string = homedir()): StorageMigrationState | undefined {
+  try {
+    const parsed = JSON.parse(readFileSync(storageMigrationStateFilePath(homeDir), 'utf8')) as Partial<StorageMigrationState>
+    if (typeof parsed?.kind !== 'string' || !_STORAGE_MIGRATION_STATE_KINDS.has(parsed.kind)) return undefined
+    if (typeof parsed.at !== 'string') return undefined
+    const diagnostics = Array.isArray(parsed.diagnostics)
+      ? parsed.diagnostics.filter((value): value is string => typeof value === 'string')
+      : []
+    return {
+      kind: parsed.kind as StorageMigrationStateKind,
+      ...(typeof parsed.diagnostic === 'string' ? { diagnostic: parsed.diagnostic } : {}),
+      diagnostics,
+      at: parsed.at,
+    }
+  } catch {
+    return undefined
+  }
+}
+
+/** Atomic (no-follow temp + rename). Never creates a home dir: skipped when the dir is missing. */
+export function writeStorageMigrationState(state: StorageMigrationState, homeDir: string = homedir()): void {
+  const file = storageMigrationStateFilePath(homeDir)
+  if (!existsSync(_dirnameMigration(file))) return
+  _writeFileAtomicNoFollow(file, `${JSON.stringify(state, null, 2)}\n`)
+}
+
+export function clearStorageMigrationState(homeDir: string = homedir()): void {
+  try {
+    _unlinkMigration(storageMigrationStateFilePath(homeDir))
+  } catch {
+    // absent
+  }
+}
+
+/**
+ * Persist what Settings should explain after a boot migration: deferrals
+ * (`deferred-unmovable`, `deferred-locked`) and `relaunchRequired`; a usable
+ * outcome clears it. Other outcomes leave the file as it is.
+ */
+export function recordStorageMigrationOutcome(
+  result: Pick<VisibleHomeMigrationResult, 'outcome' | 'diagnostics' | 'dryRun' | 'relaunchRequired'> | undefined,
+  homeDir: string = homedir(),
+  now: number = Date.now(),
+): void {
+  if (!result || result.dryRun) return
+  const kind: StorageMigrationStateKind | undefined = result.relaunchRequired
+    ? 'relaunch-required'
+    : result.outcome === 'deferred-unmovable' || result.outcome === 'deferred-locked'
+      ? result.outcome
+      : undefined
+  if (kind) {
+    writeStorageMigrationState(
+      {
+        kind,
+        ...(result.diagnostics[0] ? { diagnostic: result.diagnostics[0] } : {}),
+        diagnostics: [...result.diagnostics],
+        at: new Date(now).toISOString(),
+      },
+      homeDir,
+    )
+    return
+  }
+  if (VISIBLE_HOME_USABLE_OUTCOMES.has(result.outcome)) clearStorageMigrationState(homeDir)
+}
+
 function _readEnabledFlags(file: string): string[] | undefined {
   try {
     if (!existsSync(file)) return undefined
@@ -622,7 +718,7 @@ function _readLockNoFollow(path: string): string {
  * renamed over the lock path (a rename replaces a planted link, it never
  * follows it).
  */
-function _writeLockFileExclusive(path: string, content: string): void {
+function _writeFileAtomicNoFollow(path: string, content: string): void {
   const temp = `${path}.tmp-${process.pid}-${_randomLockBytes(8).toString('hex')}`
   const fd = _openMigrationLock(
     temp,
@@ -816,7 +912,7 @@ function _desktopRuntimeLockProbePaths(configDir: string, options?: RuntimeLockL
 /**
  * Electron main: hold the desktop app lock(s) for the process lifetime.
  * Returns the release function (call on quit). Best effort: a failed write
- * never blocks startup. Every lock is written with `_writeLockFileExclusive`
+ * never blocks startup. Every lock is written with `_writeFileAtomicNoFollow`
  * (random-suffix O_EXCL|O_NOFOLLOW temp, then rename).
  */
 export function holdDesktopAppLock(
@@ -842,7 +938,7 @@ export function holdDesktopAppLock(
   const held: string[] = []
   for (const path of paths) {
     try {
-      _writeLockFileExclusive(path, content)
+      _writeFileAtomicNoFollow(path, content)
       held.push(path)
     } catch {
       // best effort

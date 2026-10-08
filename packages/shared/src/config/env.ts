@@ -39,7 +39,9 @@ import {
 import {
   ROX_STORAGE_VISIBLE_ROOT_FLAG_ID,
   VISIBLE_HOME_USABLE_OUTCOMES,
+  clearStorageMigrationState,
   migrateHiddenRoxHome,
+  recordStorageMigrationOutcome,
   readPersistedVisibleRootFlag,
   resolveVisibleHomeWithoutMigration,
   visibleRootEnvOverride,
@@ -147,9 +149,24 @@ export function runVisibleHomeAutoMigration(options?: {
 }): VisibleHomeAutoMigration | undefined {
   const env = options?.env ?? process.env;
   const homeDir = options?.homeDir ?? homedir();
-  if (!isVisibleRoxHomeActive(env, homeDir)) return undefined;
+  if (!isVisibleRoxHomeActive(env, homeDir)) {
+    // Flag OFF: a deferral note from an earlier flag-ON launch no longer
+    // applies (only ever removes that file; creates nothing).
+    try {
+      clearStorageMigrationState(homeDir);
+    } catch {
+      // best effort
+    }
+    return undefined;
+  }
   try {
     const result = (options?.migrate ?? migrateHiddenRoxHome)({ homeDir, env });
+    try {
+      // Settings explains a deferral / relaunch; success clears it.
+      recordStorageMigrationOutcome(result, homeDir);
+    } catch {
+      // best effort: never blocks startup
+    }
     if (!VISIBLE_HOME_USABLE_OUTCOMES.has(result.outcome)) {
       console.warn(
         `[rox] Visible-home migration ${result.outcome}; keeping the current Rox home.`,
