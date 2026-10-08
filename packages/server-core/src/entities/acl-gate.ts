@@ -50,10 +50,14 @@ export interface EntityAclGate {
   principalFor(actor: Actor): AclPrincipal | Promise<AclPrincipal>
 }
 
-/** What a host injects per workspace: the ACL and (optionally) its principal mapping. */
+/**
+ * What a host injects per workspace: the ACL AND its principal mapping. The
+ * mapping is required — only the local shim may default to
+ * `principalForActor` (which knows nothing about guests or principal status).
+ */
 export interface EntityAclRuntime {
   acl: Acl
-  principalFor?(actor: Actor): AclPrincipal | Promise<AclPrincipal>
+  principalFor(actor: Actor): AclPrincipal | Promise<AclPrincipal>
 }
 
 /** `EntitiesHandlerRuntime.acl`: per-workspace ACL runtime, sync or async. */
@@ -66,8 +70,26 @@ export function principalForActor(workspaceId: string, actor: Actor): AclPrincip
   return { id: actor.id, workspaceId, kind: actor.kind === 'agent' ? 'bot' : 'human' }
 }
 
-export function createEntityAclGate(workspaceId: string, acl: Acl = LOCAL_ACL, principalFor?: EntityAclRuntime['principalFor']): EntityAclGate {
-  return { acl, principalFor: principalFor ?? (actor => principalForActor(workspaceId, actor)) }
+/**
+ * Gate for one workspace. Without arguments: the local shim (owner of
+ * everything) with the default actor mapping. With an injected ACL the
+ * principal mapping is mandatory, and every mapped principal must belong to
+ * `workspaceId` — a mismatch fails closed (the principal is treated as
+ * deactivated, so every check is denied).
+ */
+export function createEntityAclGate(workspaceId: string): EntityAclGate
+export function createEntityAclGate(workspaceId: string, acl: Acl, principalFor: EntityAclRuntime['principalFor']): EntityAclGate
+export function createEntityAclGate(workspaceId: string, acl?: Acl, principalFor?: EntityAclRuntime['principalFor']): EntityAclGate {
+  if (!acl) return { acl: LOCAL_ACL, principalFor: actor => principalForActor(workspaceId, actor) }
+  if (typeof principalFor !== 'function') throw new Error('An injected entity ACL requires principalFor')
+  return {
+    acl,
+    async principalFor(actor) {
+      const principal = await principalFor(actor)
+      if (principal && principal.workspaceId === workspaceId) return principal
+      return { id: actor.id, workspaceId, status: 'deactivated' }
+    },
+  }
 }
 
 /** Build the gate for a workspace from the (optional, possibly async) runtime factory. */

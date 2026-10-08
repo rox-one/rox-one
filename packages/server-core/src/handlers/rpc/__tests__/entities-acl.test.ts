@@ -14,7 +14,10 @@ import type { HandlerFn, RequestContext, RpcServer } from '@rox/server-core/tran
 import type { HandlerDeps } from '../../handler-deps'
 import { closeEntityLinkStores } from '../../../entities/link-store.ts'
 import { registerEntitiesHandlers, registerEntityResolver, resetEntityResolvers } from '../entities.ts'
-import type { EntityAclFactory } from '../../../entities/acl-gate.ts'
+import { principalForActor, type EntityAclFactory, type EntityAclRuntime } from '../../../entities/acl-gate.ts'
+
+/** An injected workspace ACL always comes with its principal mapping. */
+const withMapping = (acl: Acl): EntityAclRuntime => ({ acl, principalFor: actor => principalForActor('ws', actor) })
 
 const roots: string[] = []
 let previousFlag: string | undefined
@@ -91,7 +94,7 @@ describe('entities handlers with the default local shim', () => {
 describe('entities handlers with a workspace ACL', () => {
   it('outgoing redacts unviewable targets and omits secret goals', async () => {
     const calls: string[] = []
-    const f = fixture(async () => ({ acl: workspaceAcl(calls) }))
+    const f = fixture(async () => (withMapping(workspaceAcl(calls))))
     for (const to of [goal, secretGoal, task]) await f.links({ op: 'add', from: note, to, relation: 'mentions' })
     calls.length = 0
     const out = await f.links({ op: 'outgoing', ref: note }) as { links: Array<{ to: EntityRef }> }
@@ -101,7 +104,7 @@ describe('entities handlers with a workspace ACL', () => {
 
   it('backlinks omit unviewable sources; unviewable targets list nothing', async () => {
     const calls: string[] = []
-    const f = fixture(async () => ({ acl: workspaceAcl(calls) }))
+    const f = fixture(async () => (withMapping(workspaceAcl(calls))))
     await f.links({ op: 'add', from: note, to: goal, relation: 'mentions' })
     const back = await f.links({ op: 'backlinks', ref: goal }) as { links: Array<{ from: EntityRef }> }
     expect(back.links.map(l => l.from)).toEqual([note])
@@ -111,7 +114,7 @@ describe('entities handlers with a workspace ACL', () => {
 
   it('link writes require edit on the source', async () => {
     const calls: string[] = []
-    const f = fixture(async () => ({ acl: workspaceAcl(calls) }))
+    const f = fixture(async () => (withMapping(workspaceAcl(calls))))
     await expect(f.links({ op: 'add', from: goal, to: note, relation: 'mentions' })).rejects.toThrow('Entity link access denied')
     await expect(f.links({ op: 'remove', from: task, to: note, relation: 'mentions' })).rejects.toThrow('Entity link access denied') // viewer only
     expect(await f.links({ op: 'add', from: note, to: goal, relation: 'mentions' })).toMatchObject({ ok: true, op: 'add' })
@@ -128,7 +131,7 @@ describe('entities handlers with a workspace ACL', () => {
         return refs.map(ref => ({ ref, status: 'ok', title: `T ${ref.id}`, kindLabel: 'k', icon: 'i', authority: 'workspace', etag: 'e' }))
       },
     })
-    const f = fixture(async () => ({ acl: workspaceAcl(calls) }))
+    const f = fixture(async () => (withMapping(workspaceAcl(calls))))
     const previews = await f.resolve({ refs: [goal, secretGoal, task] }) as EntityPreview[]
     expect(previews.map(p => [p.status, p.title])).toEqual([['ok', 'T g1'], ['no_access', ''], ['ok', 'T t1']])
     expect(seen).toEqual([goal, task])
@@ -144,7 +147,7 @@ describe('entities handlers with a workspace ACL', () => {
     })
     const calls: string[] = []
     let factoryCalls = 0
-    const f = fixture(async () => { factoryCalls += 1; return { acl: workspaceAcl(calls) } })
+    const f = fixture(async () => { factoryCalls += 1; return withMapping(workspaceAcl(calls)) })
     for (let i = 0; i < 3; i++) {
       const previews = await f.resolve({ refs: [goal, secretGoal] }) as EntityPreview[]
       expect(previews.map(p => p.status)).toEqual(['ok', 'no_access'])
@@ -187,11 +190,32 @@ describe('entities handlers with a workspace ACL', () => {
     const f = fixture(async () => {
       attempts += 1
       if (attempts === 1) throw new Error('acl backend down')
-      return { acl: workspaceAcl(calls) }
+      return withMapping(workspaceAcl(calls))
     })
     await expect(f.resolve({ refs: [goal] })).rejects.toThrow('acl backend down')
     await Promise.resolve()
     expect((await f.resolve({ refs: [goal] }) as EntityPreview[]).length).toBe(1)
     expect(attempts).toBe(2)
+  })
+
+  it('a runtime that injects an ACL without principalFor fails closed (nothing resolved, no link written)', async () => {
+    const seen: EntityRef[] = []
+    registerEntityResolver({
+      kinds: ['goal'],
+      async resolve(refs): Promise<EntityPreview[]> {
+        seen.push(...refs)
+        return refs.map(ref => ({ ref, status: 'ok', title: `T ${ref.id}`, kindLabel: 'k', icon: 'i', authority: 'workspace', etag: 'e' }))
+      },
+    })
+    const f = fixture(async () => ({ acl: workspaceAcl([]) }) as unknown as EntityAclRuntime)
+    await expect(f.resolve({ refs: [goal] })).rejects.toThrow('requires principalFor')
+    await expect(f.links({ op: 'add', from: note, to: goal, relation: 'mentions' })).rejects.toThrow('requires principalFor')
+    expect(seen).toEqual([])
+  })
+
+  it('a principal mapped into another workspace is denied everything', async () => {
+    const f = fixture(async () => ({ acl: workspaceAcl([]), principalFor: (actor): AclPrincipal => ({ id: actor.id, workspaceId: 'ws-other' }) }))
+    expect((await f.resolve({ refs: [goal, note] }) as EntityPreview[]).map(p => p.status)).toEqual(['no_access', 'no_access'])
+    await expect(f.links({ op: 'add', from: note, to: goal, relation: 'mentions' })).rejects.toThrow('Entity link access denied')
   })
 })

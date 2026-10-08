@@ -7,7 +7,10 @@ import { describe, expect, it } from 'bun:test'
 import { createAcl, MemoryAclFacts } from '@rox/core/acl'
 import type { Actor, EntityPreview, EntityRef, Resolver } from '@rox/core/entities'
 import { DefaultResolverHost } from '../resolver-host.ts'
-import { createEntityAclGate, filterBacklinks, filterOutgoingLinks, noAccessPreview, RESTRICTED_REF_ID } from '../acl-gate.ts'
+import { createEntityAclGate, filterBacklinks, filterOutgoingLinks, noAccessPreview, principalForActor, resolveEntityAclGate, RESTRICTED_REF_ID } from '../acl-gate.ts'
+
+/** Gate over an injected ACL with the (required) principal mapping. */
+const gateFor = (acl: ReturnType<typeof createAcl>) => createEntityAclGate(WS, acl, actor => principalForActor(WS, actor))
 
 const WS = 'ws'
 const alice: Actor = { id: 'alice', kind: 'user' }
@@ -50,7 +53,7 @@ function recordingResolver(seen: EntityRef[]): Resolver {
 describe('DefaultResolverHost with an ACL gate', () => {
   it('redacts denied refs without calling the resolver and strips minimal previews', async () => {
     const seen: EntityRef[] = []
-    const host = new DefaultResolverHost({ acl: createEntityAclGate(WS, createAcl(facts())) })
+    const host = new DefaultResolverHost({ acl: gateFor(createAcl(facts())) })
     host.register(recordingResolver(seen))
     const previews = await host.resolve([open, secret, minimal, plain], alice)
 
@@ -70,7 +73,7 @@ describe('DefaultResolverHost with an ACL gate', () => {
   it('a revoked grant takes effect on the next resolve even though previews are cached', async () => {
     const f = facts()
     const seen: EntityRef[] = []
-    const host = new DefaultResolverHost({ acl: createEntityAclGate(WS, createAcl(f)) })
+    const host = new DefaultResolverHost({ acl: gateFor(createAcl(f)) })
     host.register(recordingResolver(seen))
     expect((await host.resolve([open], alice))[0]!.status).toBe('ok')
     f.revoke(WS, open, 'principal', 'alice')
@@ -100,21 +103,46 @@ describe('link listing filters', () => {
   })
 
   it('outgoing: viewable targets kept, unviewable redacted, secret omitted', async () => {
-    const gate = createEntityAclGate(WS, createAcl(facts()))
+    const gate = gateFor(createAcl(facts()))
     const out = await filterOutgoingLinks(gate, alice, open, [link(open, minimal), link(open, plain), link(open, secret)])
     expect(out.map(l => l.to)).toEqual([minimal, { kind: 'goal', id: RESTRICTED_REF_ID }])
   })
 
   it('outgoing of an unviewable source is empty', async () => {
-    const gate = createEntityAclGate(WS, createAcl(facts()))
+    const gate = gateFor(createAcl(facts()))
     expect(await filterOutgoingLinks(gate, alice, plain, [link(plain, open)])).toEqual([])
     expect(await filterOutgoingLinks(gate, alice, minimal, [link(minimal, open)])).toEqual([])
   })
 
   it('backlinks: unviewable sources are omitted; unviewable target lists nothing', async () => {
-    const gate = createEntityAclGate(WS, createAcl(facts()))
+    const gate = gateFor(createAcl(facts()))
     const back = await filterBacklinks(gate, alice, open, [link(plain, open), link(secret, open), link(minimal, open)])
     expect(back.map(l => l.from)).toEqual([minimal])
     expect(await filterBacklinks(gate, alice, secret, [link(open, secret)])).toEqual([])
+  })
+})
+
+describe('injected ACL requires its principal mapping (review 3)', () => {
+  it('an injected ACL without principalFor is rejected (only the local shim may default)', async () => {
+    const acl = createAcl(facts())
+    expect(() => (createEntityAclGate as (ws: string, acl: unknown, p?: unknown) => unknown)(WS, acl)).toThrow('requires principalFor')
+    await expect(resolveEntityAclGate(WS, async () => ({ acl }) as never)).rejects.toThrow('requires principalFor')
+  })
+
+  it('a principal mapped into another workspace fails closed', async () => {
+    const gate = createEntityAclGate(WS, createAcl(facts()), actor => ({ id: actor.id, workspaceId: 'other-ws' }))
+    const principal = await gate.principalFor(alice)
+    expect(principal).toMatchObject({ workspaceId: WS, status: 'deactivated' })
+    expect(await gate.acl.evaluate(principal, 'view', open)).toMatchObject({ allowed: false, reason: 'inactive' })
+    const host = new DefaultResolverHost({ acl: gate })
+    const seen: EntityRef[] = []
+    host.register(recordingResolver(seen))
+    expect((await host.resolve([open], alice)).map(p => p.status)).toEqual(['no_access'])
+    expect(seen).toEqual([])
+  })
+
+  it('a principal of the gate workspace passes through unchanged', async () => {
+    const gate = createEntityAclGate(WS, createAcl(facts()), actor => ({ id: actor.id, workspaceId: WS, kind: 'guest' }))
+    expect(await gate.principalFor(alice)).toEqual({ id: 'alice', workspaceId: WS, kind: 'guest' })
   })
 })
