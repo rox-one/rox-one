@@ -9,7 +9,7 @@
 import { describe, expect, test } from 'bun:test'
 import { existsSync } from 'node:fs'
 import { seedTwoUserWorkspace } from '@rox/test-harness'
-import { makeTempWorkspace, tempHomeEnv, pgOrSkip } from './helpers.ts'
+import { makeTempWorkspace, tempHomeEnv, pgOrSkip } from './harness-helpers.ts'
 
 describe('workspace-service harness', () => {
   test('seeded workspace has owner, member, spaces and chats', () => {
