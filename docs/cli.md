@@ -148,8 +148,21 @@ attempt; nothing there is ever overwritten). Only `migrate-config` and the deskt
 at launch, with the flag on) ever move files; other commands just read the
 current location.
 
+Files are copied atomically (temp file, then rename), so an interrupted
+merge never leaves a truncated file behind. A link inside `~/rox` (for
+example to a dotfiles repo) is never written through: the legacy version is
+kept under `conflicts/` instead. A legacy link that differs from `~/rox` is
+kept there too. If `~/.rox` cannot be renamed in place (for example it is a
+mount point), the migration defers (`deferred-unmovable`) without copying
+anything. While it runs, the migration holds `~/.rox-migrate.lock` (removed
+afterwards). It also honours the desktop app's runtime lock in the temp
+directory, `$XDG_RUNTIME_DIR` and `/tmp`. Apps in a separate sandbox (a
+private `/tmp`) can only be seen through the `.app.lock` that the app keeps in
+the config dir while the flag is on.
+
 `--auto` never prompts and does nothing (exit 0) unless the flag is active;
-with the flag on it exits 1 when the migration is deferred (live locks),
+with the flag on it exits 1 when the migration is deferred (live locks, a
+legacy folder that cannot be renamed),
 `~/.rox` points elsewhere, or the move fails. Every non-zero exit leaves the
 legacy home in place; nothing is ever deleted.
 

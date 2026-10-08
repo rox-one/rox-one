@@ -464,15 +464,17 @@ export interface MigrateHiddenRoxHomeOptions {
   isLocked?: (hiddenDir: string) => string[]
   /** Skip the process lock file (tests running migrations concurrently). */
   skipProcessLock?: boolean
-  /** Process lock path (default `${tmpdir()}/rox-migrate-${uid}.lock`). */
+  /** Process lock path (default `$HOME/.rox-migrate.lock`, next to the homes). */
   processLockPath?: string
+  /** Older lock locations still honoured when live (tests; default the tmpdir lock). */
+  legacyProcessLockPaths?: string[]
   /** Injectable PID liveness probe (tests). */
   isPidAlive?: (pid: number) => boolean
   /** Injectable clock (tests). */
   now?: () => number
   /** Revert only: whether the visible-root flag is active (default: env + persisted file). */
   flagActive?: boolean
-  /** Runtime desktop-lock path for a config dir (tests; default `desktopAppRuntimeLockPaths`). */
+  /** Runtime desktop-lock path for a config dir (tests; replaces every `desktopAppRuntimeLockPaths` location). */
   desktopRuntimeLockPath?: (configDir: string) => string
   /**
    * Injectable byte copy into a fresh temp file (tests simulate a crash
@@ -604,21 +606,46 @@ export const ROX_DESKTOP_APP_LOCK_NAME = '.app.lock'
 /** Lock files inside a Rox home whose live holders must defer a move. */
 export const ROX_HOME_WRITER_LOCK_NAMES = ['config.json.lock', '.server.lock', ROX_DESKTOP_APP_LOCK_NAME] as const
 
+function _lockUid(): string {
+  try {
+    return String(process.getuid?.() ?? 'default')
+  } catch {
+    return 'default' // non-POSIX
+  }
+}
+
 /**
  * Per-user runtime twin of the desktop app lock, outside the home (tmpdir),
  * keyed by the config dir path the app runs on. Lets an explicit
  * `migrate-config` defer while a flag-OFF app runs without adding a file to
- * the config dir.
+ * the config dir. This is the original (compat) location; see
+ * `desktopAppRuntimeLockPaths` for every location written and probed.
  */
-export function desktopAppRuntimeLockPath(configDir: string): string {
-  let uid = 'default'
-  try {
-    uid = String(process.getuid?.() ?? 'default')
-  } catch {
-    // non-POSIX
-  }
+export function desktopAppRuntimeLockPath(configDir: string, tmp: string = tmpdir()): string {
   const key = _createLockHash('sha256').update(configDir).digest('hex').slice(0, 16)
-  return join(tmpdir(), `rox-desktop-${uid}-${key}.lock`)
+  return join(tmp, `rox-desktop-${_lockUid()}-${key}.lock`)
+}
+
+/**
+ * Every runtime desktop-lock location, written by the app and probed by a
+ * migration: the process tmpdir (compat), `$XDG_RUNTIME_DIR` when set, and
+ * `/tmp` on POSIX. A CLI and an app with different `TMPDIR`s still meet in
+ * one of them. Never under `$HOME`: a flag-OFF app adds nothing to the home.
+ * Limitation: processes in different mount namespaces (snap/flatpak private
+ * `/tmp` without a shared runtime dir) or under another uid cannot see each
+ * other's runtime lock; the in-config-dir `.app.lock` (flag ON) still does.
+ */
+export function desktopAppRuntimeLockPaths(
+  configDir: string,
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+  tmp: string = tmpdir(),
+  platform: NodeJS.Platform = process.platform,
+): string[] {
+  const dirs = [tmp]
+  const runtimeDir = env.XDG_RUNTIME_DIR?.trim()
+  if (runtimeDir && _posixPath.isAbsolute(runtimeDir)) dirs.push(runtimeDir)
+  if (platform !== 'win32') dirs.push('/tmp')
+  return [...new Set(dirs.map((dir) => desktopAppRuntimeLockPath(configDir, dir)))]
 }
 
 /**
@@ -626,9 +653,18 @@ export function desktopAppRuntimeLockPath(configDir: string): string {
  * Returns the release function (call on quit). Best effort: a failed write
  * never blocks startup.
  */
-export function holdDesktopAppLock(configDir: string, options: { inConfigDir: boolean; now?: number }): () => void {
+export function holdDesktopAppLock(
+  configDir: string,
+  options: {
+    inConfigDir: boolean
+    now?: number
+    env?: NodeJS.ProcessEnv | Record<string, string | undefined>
+    /** Runtime lock locations (tests; default `desktopAppRuntimeLockPaths`). */
+    runtimeLockPaths?: string[]
+  },
+): () => void {
   const content = JSON.stringify({ pid: process.pid, startedAt: options.now ?? Date.now(), kind: 'desktop-app' })
-  const paths = [desktopAppRuntimeLockPath(configDir)]
+  const paths = [...(options.runtimeLockPaths ?? desktopAppRuntimeLockPaths(configDir, options.env ?? process.env))]
   if (options.inConfigDir) paths.push(join(configDir, ROX_DESKTOP_APP_LOCK_NAME))
   const held: string[] = []
   for (const path of paths) {
@@ -658,13 +694,19 @@ function _liveHomeLockHolders(dir: string, options?: MigrateHiddenRoxHomeOptions
   const isPidAlive = options?.isPidAlive ?? defaultIsPidAlive
   const holders: string[] = []
   const probes: Array<[string, string]> = ROX_HOME_WRITER_LOCK_NAMES.map((name) => [name, join(dir, name)])
-  probes.push(['desktop-app', options?.desktopRuntimeLockPath?.(dir) ?? desktopAppRuntimeLockPath(dir)])
+  const runtimeLocks = options?.desktopRuntimeLockPath
+    ? [options.desktopRuntimeLockPath(dir)]
+    : desktopAppRuntimeLockPaths(dir, options?.env ?? process.env)
+  for (const path of runtimeLocks) probes.push(['desktop-app', path])
+  let desktopLive = false
   for (const [name, path] of probes) {
+    if (name === 'desktop-app' && desktopLive) continue
     try {
       // `.server.lock` / `.app.lock` are long-lived PID files (a server or the
       // app may run for days): liveness + boot time decide, no TTL.
       if (isLockFileLive(path, { now, isPidAlive, pidlessTtlMs: ROX_PIDLESS_LOCK_TTL_MS })) {
         holders.push(name)
+        if (name === 'desktop-app') desktopLive = true
       }
     } catch {
       // unreadable — do not block on a failed probe
@@ -998,14 +1040,22 @@ function _writeMigrationReport(
   }
 }
 
-function _defaultProcessLockPath(): string {
-  let uid = 'default'
-  try {
-    uid = String(process.getuid?.() ?? 'default')
-  } catch {
-    // non-POSIX — single shared lock name
-  }
-  return join(tmpdir(), `rox-migrate-${uid}.lock`)
+/**
+ * Migration process lock: a fixed file next to the two homes it protects
+ * (`$HOME/.rox-migrate.lock`), so every process that migrates this home
+ * meets on it whatever its `TMPDIR`. Created only while a migration or revert
+ * runs (flag ON or an explicit `migrate-config`) and removed afterwards; a
+ * flag-OFF app never creates it.
+ */
+export const ROX_MIGRATION_LOCK_FILE_NAME = '.rox-migrate.lock'
+
+function _defaultProcessLockPath(options?: MigrateHiddenRoxHomeOptions): string {
+  return join(options?.homeDir ?? homedir(), ROX_MIGRATION_LOCK_FILE_NAME)
+}
+
+/** Lock location of earlier builds (`${tmpdir()}/rox-migrate-<uid>.lock`): still honoured when live. */
+function _legacyProcessLockPaths(options?: MigrateHiddenRoxHomeOptions): string[] {
+  return options?.legacyProcessLockPaths ?? [join(tmpdir(), `rox-migrate-${_lockUid()}.lock`)]
 }
 
 /**
@@ -1014,8 +1064,19 @@ function _defaultProcessLockPath(): string {
  * and taken over once; a live lock defers.
  */
 function _acquireProcessLock(options?: MigrateHiddenRoxHomeOptions): (() => void) | { deferred: string } {
-  const lockPath = options?.processLockPath ?? _defaultProcessLockPath()
+  const lockPath = options?.processLockPath ?? _defaultProcessLockPath(options)
   const now = options?.now?.() ?? Date.now()
+  // A live lock at the old tmpdir location (a still-running older build) defers too.
+  for (const legacy of _legacyProcessLockPaths(options)) {
+    if (legacy === lockPath) continue
+    const legacyLive = isLockFileLive(legacy, {
+      now,
+      isPidAlive: options?.isPidAlive ?? defaultIsPidAlive,
+      ttlMs: ROX_MIGRATION_LOCK_TTL_MS,
+      pidlessTtlMs: 60_000,
+    })
+    if (legacyLive) return { deferred: legacy }
+  }
   const tryCreate = (): (() => void) | null => {
     try {
       const fd = _openMigrationLock(lockPath, 'wx', 0o600)

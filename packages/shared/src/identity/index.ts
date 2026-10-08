@@ -78,6 +78,8 @@ export {
   buildVisibleHomeManifest,
   defaultVisibleHomePaths,
   desktopAppRuntimeLockPath,
+  desktopAppRuntimeLockPaths,
+  ROX_MIGRATION_LOCK_FILE_NAME,
   holdDesktopAppLock,
   isForeignVisibleHome,
   isLockFileLive,
