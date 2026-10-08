@@ -112,6 +112,10 @@ function nodeBuiltinStubPlugin() {
 const SIDE_EFFECT_FREE_MODULES = [
   /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|locales[\\/][^\\/]+\.json)$/,
   /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock)\.tsx$/,
+  // The diff viewers register a custom element and Shiki themes at module
+  // load; marked here so the @rox/ui barrel re-export alone does not pull them
+  // (and Shiki) into startup. Wherever they are used, that code still runs.
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]code-viewer[\\/](?:ShikiDiffViewer|UnifiedDiffViewer)\.tsx$/,
 ]
 
 /**

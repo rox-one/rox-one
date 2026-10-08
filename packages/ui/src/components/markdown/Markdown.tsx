@@ -5,9 +5,8 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { cn } from '../../lib/utils'
 import { CodeBlock, InlineCode } from './CodeBlock'
-import { MarkdownDiffBlock } from './MarkdownDiffBlock'
-// Heavy renderers (mermaid/elkjs, pdf.js, KaTeX, JSON view, grids) load on
-// first use; see lazy-blocks.tsx. Aliased so the render code stays unchanged.
+// Heavy renderers (mermaid/elkjs, pdf.js, KaTeX, diffs/Shiki, JSON view,
+// grids) load on first use; see lazy-blocks.tsx. Aliased so the render code stays unchanged.
 import {
   LazyMarkdownJsonBlock as MarkdownJsonBlock,
   LazyMarkdownMermaidBlock as MarkdownMermaidBlock,
@@ -15,6 +14,7 @@ import {
   LazyMarkdownSpreadsheetBlock as MarkdownSpreadsheetBlock,
   LazyMarkdownLatexBlock as MarkdownLatexBlock,
   LazyMarkdownPdfBlock as MarkdownPdfBlock,
+  LazyMarkdownDiffBlock as MarkdownDiffBlock,
 } from './lazy-blocks'
 import { MarkdownHtmlBlock } from './MarkdownHtmlBlock'
 import { MarkdownImageBlock } from './MarkdownImageBlock'

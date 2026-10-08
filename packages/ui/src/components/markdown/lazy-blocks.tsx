@@ -2,6 +2,7 @@
  * Lazily loaded rich markdown blocks (PERF-04).
  *
  * The mermaid (beautiful-mermaid + elkjs), PDF (react-pdf + pdf.js), KaTeX,
+ * diff (@pierre/diffs renderer + Shiki),
  * JSON-view, datatable and spreadsheet renderers together are several MB of
  * JavaScript that every window used to parse at startup, even though most
  * conversations never contain such a block. Each block now loads on first use;
@@ -11,6 +12,7 @@
 import * as React from 'react'
 import { CodeBlock } from './CodeBlock'
 import type { MarkdownPdfBlockProps } from './MarkdownPdfBlock'
+import type { MarkdownDiffBlockProps } from './MarkdownDiffBlock'
 import type { MarkdownJsonBlockProps } from './MarkdownJsonBlock'
 import type { MarkdownDatatableBlockProps } from './MarkdownDatatableBlock'
 import type { MarkdownSpreadsheetBlockProps } from './MarkdownSpreadsheetBlock'
@@ -99,4 +101,10 @@ export const LazyMarkdownSpreadsheetBlock = lazyBlock<MarkdownSpreadsheetBlockPr
   () => import('./MarkdownSpreadsheetBlock').then((m) => m.MarkdownSpreadsheetBlock),
   'json',
   'LazyMarkdownSpreadsheetBlock',
+)
+
+export const LazyMarkdownDiffBlock = lazyBlock<MarkdownDiffBlockProps>(
+  () => import('./MarkdownDiffBlock').then((m) => m.MarkdownDiffBlock),
+  'diff',
+  'LazyMarkdownDiffBlock',
 )

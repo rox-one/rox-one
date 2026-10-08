@@ -8,7 +8,7 @@
  * JavaScript regex engine can tokenize a few grammars differently.
  */
 import { bundledLanguages, codeToHtml, type BundledLanguage } from 'shiki'
-import { resolveShikiTheme } from '../code-viewer/zedShikiThemes'
+import { resolveShikiTheme } from '../code-viewer/zedShikiThemeData'
 
 export function isBundledLanguage(lang: string): lang is BundledLanguage {
   return lang in bundledLanguages
