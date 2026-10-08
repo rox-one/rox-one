@@ -47,6 +47,7 @@ import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
 import { isCompoundRoutePrefix } from '../shared/route-parser'
 // W1-07 (#1504)
 import { isClosedUnifiedSurfaceRoot } from '../shared/surface-routes'
+import { isSurfaceGateReceived, whenSurfaceGateReady } from './surface-routes-ipc'
 import { parseRuntimeMapLinkUrl } from '../shared/runtime-map-link'
 
 export interface DeepLinkTarget {
@@ -265,6 +266,48 @@ function buildDeepLinkWithoutWindowParam(url: string): string {
 }
 
 /**
+ * W1-07 (#1504): true for `rox://<mode>` / `rox://workspace/{id}/<mode>` whose
+ * mode gate is currently closed — the only links worth re-parsing once the
+ * renderer has pushed its flags.
+ */
+export function isClosedSurfaceRootDeepLink(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (!isRoxDeeplinkProtocol(parsed.protocol)) return false
+    if (isClosedUnifiedSurfaceRoot(`${parsed.hostname}${parsed.pathname}`)) return true
+    if (parsed.hostname !== 'workspace') return false
+    const parts = parsed.pathname.split('/').slice(1)
+    return Boolean(parts[0]) && isClosedUnifiedSurfaceRoot(parts.slice(1).join('/'))
+  } catch {
+    return false
+  }
+}
+
+/** How long a cold-start mode-root link waits for the renderer's first gate push. */
+export const SURFACE_GATE_WAIT_MS = 10_000
+
+/**
+ * `parseDeepLink`, but a mode-root link that hits a still-closed gate before
+ * the renderer's first push (cold start: the link launched the app) is held
+ * until that push and re-parsed. On timeout it is dropped and logged. After
+ * the first push nothing waits, so flags-off behaviour is main's.
+ */
+export async function resolveDeepLinkTarget(
+  url: string,
+  options: { timeoutMs?: number } = {},
+): Promise<DeepLinkTarget | null> {
+  const target = parseDeepLink(url)
+  if (target || isSurfaceGateReceived() || !isClosedSurfaceRootDeepLink(url)) return target
+  mainLog.info('[DeepLink] Holding mode-root link until the renderer pushes the surface gate:', url)
+  const ready = await whenSurfaceGateReady(options.timeoutMs ?? SURFACE_GATE_WAIT_MS)
+  if (!ready) {
+    mainLog.warn('[DeepLink] Surface gate never arrived; dropping mode-root link:', url)
+    return null
+  }
+  return parseDeepLink(url)
+}
+
+/**
  * Handle a deep link by navigating to the target
  */
 export async function handleDeepLink(
@@ -274,7 +317,7 @@ export async function handleDeepLink(
   resolveClientId?: (webContentsId: number) => string | undefined,
   preferredClientId?: string,
 ): Promise<DeepLinkResult> {
-  const target = parseDeepLink(url)
+  const target = await resolveDeepLinkTarget(url)
 
   if (!target) {
     // Return success for null targets (like auth-callback) - they're handled elsewhere

@@ -476,8 +476,9 @@ export class WindowManager {
     if (initialDeepLink) {
       window.once('ready-to-show', () => {
         // Import parseDeepLink dynamically to avoid circular dependency
-        import('./deep-link').then(({ parseDeepLink }) => {
-          const target = parseDeepLink(initialDeepLink)
+        import('./deep-link').then(async ({ resolveDeepLinkTarget }) => {
+          // W1-07 (#1504): a mode-root link waits for the first surface-gate push.
+          const target = await resolveDeepLinkTarget(initialDeepLink)
           if (target && (target.view || target.action)) {
             // Wait a bit for React to mount and register IPC listeners
             setTimeout(() => {
