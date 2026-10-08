@@ -8,7 +8,9 @@
  * Every bus outcome (applied, duplicate, conflict, rejected) is a receipt with
  * HTTP 200; HTTP errors are reserved for transport-level failures. A store /
  * connection failure (`CommandStoreUnavailable`: nothing committed) answers
- * 503 SERVICE_UNAVAILABLE so the client's outbox retries the same envelope.
+ * 503 SERVICE_UNAVAILABLE so the client's outbox retries the same envelope;
+ * so does an identity-store failure while authenticating
+ * (`AuthenticationUnavailableError`), which other routes still map to 401.
  *
  * Post-commit revalidation: if the session is revoked or membership is lost
  * while the command executes, the effect may already be committed but the
@@ -25,7 +27,20 @@ import { IdentityDomainError, type AuthenticatedActor } from '../../../../../pac
 import type { CommandReceipt } from '../../../../../packages/core/src/commands/index.ts'
 import { requireActor, requireUuid } from '../identity/commands.ts'
 import { CommandStoreUnavailable } from '../../../../../packages/server-core/src/commands/store.ts'
+import { AuthenticationUnavailableError } from '../../auth/verified-actor.ts'
 import { HttpFailure, bearer, defineRoute, jsonBody, query, readBody, send } from '../../routing.ts'
+
+/**
+ * An identity-store outage while authenticating is not a credential problem:
+ * answer 503 so the client's outbox backs off and retries rather than
+ * pausing for new credentials (401).
+ */
+async function authPhase<T>(operation: () => Promise<T>): Promise<T> {
+  try { return await operation() } catch (error) {
+    if (error instanceof AuthenticationUnavailableError) throw new HttpFailure('SERVICE_UNAVAILABLE', 503)
+    throw error
+  }
+}
 
 export interface WorkspaceCommandHttpAuthority {
   execute(actor: AuthenticatedActor, workspaceId: string, envelope: unknown): Promise<CommandReceipt>
@@ -46,9 +61,9 @@ export const commandBusRoute = defineRoute<{ workspaceSegment: string }>({
     if (req.method !== 'POST') throw new HttpFailure('METHOD_NOT_ALLOWED', 405, 'POST')
     query(params, false)
     const { actorResolver } = options
-    let bound = await actorResolver.authenticate(bearer(req))
+    let bound = await authPhase(() => actorResolver.authenticate(bearer(req)))
     const body = jsonBody(await readBody(req, maxBytes, timeoutMs), req)
-    bound = await actorResolver.revalidate(bound)
+    bound = await authPhase(() => actorResolver.revalidate(bound))
     requireActor(bound.actor, workspaceId)
     let receipt: CommandReceipt
     try {
@@ -57,7 +72,7 @@ export const commandBusRoute = defineRoute<{ workspaceSegment: string }>({
       if (error instanceof CommandStoreUnavailable) throw new HttpFailure('SERVICE_UNAVAILABLE', 503)
       throw error
     }
-    bound = await actorResolver.revalidate(bound)
+    bound = await authPhase(() => actorResolver.revalidate(bound))
     requireActor(bound.actor, workspaceId)
     send(res, 200, receipt)
   },

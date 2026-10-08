@@ -89,9 +89,11 @@ describe('DomainEventRelay', () => {
     })
     closers.push(() => relay.close())
     await relay.publish(await commit(store, 'w', 2))
+    await relay.idle()
     expect(frames.map(f => f.seq)).toEqual([1, 2])
     expect(relay.sinkWatermarks('w')).toEqual([2, 0])
     await relay.publish(await commit(store, 'w')) // the bus must not see 1, 2 again
+    await relay.idle()
     expect(frames.map(f => [f.seq, f.eventId])).toEqual([[1, frames[0]!.eventId], [2, frames[1]!.eventId], [3, frames[2]!.eventId]])
     expect(new Set(frames.map(f => f.eventId)).size).toBe(3)
     // Quiet workspace: the scheduled retry delivers to Valkey on its own.
@@ -114,8 +116,10 @@ describe('DomainEventRelay', () => {
     const fourth = await commit(store, 'w')
     await relay.publish(fourth) // seq 4 publishes before seq 3
     await relay.publish(third)
+    await relay.idle()
     expect(seen).toEqual([3, 4])
     await relay.publish(await commit(store, 'fresh-workspace'))
+    await relay.idle()
     expect(seen).toEqual([3, 4, 1])
   })
 })
@@ -204,12 +208,12 @@ describe('RealtimeGateway lifetime, limits and caching', () => {
     const g = setup(WORKSPACE_MEMBER_AUTHORIZER, { revalidationCacheMs: 0 })
     g.t.live.set('c2', { principalId: 'alice', workspaceId: g.ws })
     const phone = { clientId: 'c2', workspaceId: g.ws, principalId: 'alice', deviceKey: 'phone' }
-    await g.gateway.subscribe(g.ctx, { topics: [{ topic: 'user:alice' }] })
+    await g.gateway.subscribe(g.ctx, { topics: [{ topic: 'user:alice' }], resume: true })
     g.bus.publish([pinged(g.ws, 'alice')])
     await g.gateway.flush()
     g.t.close('c1') // laptop saw seq 1
     await Bun.sleep(5)
-    await g.gateway.subscribe(phone, { topics: [{ topic: 'user:alice' }] })
+    await g.gateway.subscribe(phone, { topics: [{ topic: 'user:alice' }], resume: true })
     g.bus.publish([pinged(g.ws, 'alice')])
     g.bus.publish([pinged(g.ws, 'alice')])
     await g.gateway.flush()

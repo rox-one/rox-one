@@ -66,6 +66,8 @@ interface Subscription {
   workspaceId: string
   principalId: string
   deviceKey: string | undefined
+  /** The client asked for server-side resume (`resume: true`): only then are cursors persisted. */
+  resume: boolean
   topics: Map<string, { lastSeq: number; aclCheckedAt?: number }>
   /** Per-client delivery chain: frames leave in seq order. */
   chain: Promise<void>
@@ -136,6 +138,7 @@ export class RealtimeGateway {
       // (its disconnect hook already ran); no await between this check and the insert.
       if (ctx.isCurrent && !ctx.isCurrent()) throw new IdentityDomainError('UNAUTHENTICATED')
       const sub = this.subscriptionFor(ctx)
+      if (request.resume === true) sub.resume = true
       if (!sub.topics.has(topic) && sub.topics.size >= this.maxTopics) {
         results.push({ topic, status: 'limit_exceeded', seq: 0, epoch })
         continue
@@ -179,7 +182,7 @@ export class RealtimeGateway {
   private subscriptionFor(ctx: RealtimeClientContext): Subscription {
     let sub = this.clients.get(ctx.clientId)
     if (!sub || sub.workspaceId !== ctx.workspaceId || sub.principalId !== ctx.principalId) {
-      sub = { workspaceId: ctx.workspaceId, principalId: ctx.principalId, deviceKey: ctx.deviceKey, topics: new Map(), chain: Promise.resolve() }
+      sub = { workspaceId: ctx.workspaceId, principalId: ctx.principalId, deviceKey: ctx.deviceKey, resume: false, topics: new Map(), chain: Promise.resolve() }
       this.clients.set(ctx.clientId, sub)
     }
     return sub
@@ -219,7 +222,17 @@ export class RealtimeGateway {
     if (!sub) return
     this.clients.delete(clientId)
     await sub.chain
-    for (const [topic, state] of sub.topics) await this.saveCursor(sub, topic, state.lastSeq)
+    const owner = cursorOwner(sub)
+    const cursors = this.options.cursors
+    if (!sub.resume || !cursors || !owner || sub.topics.size === 0) return
+    const epoch = this.options.bus.epoch
+    const entries = [...sub.topics].map(([topic, state]) => ({ topic, position: { epoch, seq: state.lastSeq } }))
+    try {
+      if (cursors.saveMany) await cursors.saveMany(owner, entries, this.options.policyEpoch ?? 1)
+      else for (const entry of entries) await cursors.save(owner, entry.topic, entry.position, this.options.policyEpoch ?? 1)
+    } catch (error) {
+      this.options.onError?.(error)
+    }
   }
 
   private now(): number {
@@ -228,7 +241,7 @@ export class RealtimeGateway {
 
   private async saveCursor(sub: Subscription, topic: string, seq: number): Promise<void> {
     const owner = cursorOwner(sub)
-    if (!this.options.cursors || !owner) return
+    if (!sub.resume || !this.options.cursors || !owner) return
     try {
       await this.options.cursors.save(owner, topic, { epoch: this.options.bus.epoch, seq }, this.options.policyEpoch ?? 1)
     } catch (error) {

@@ -27,6 +27,7 @@ import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../src/
 import { migrationFromSource } from '../src/database/migrations.ts'
 import { loadProtectedWorkspaceDatabaseUrl } from '../src/auth/postgres-identity.ts'
 import { commandLockKeys } from '../src/modules/commands/store.ts'
+import { someErrorInChain } from '../../../packages/server-core/src/commands/store.ts'
 
 const configPath = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
 const hasDatabase = existsSync(configPath)
@@ -36,6 +37,7 @@ afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) awai
 
 const flags = new Set<string>()
 const flaky = { terminateNext: 0, calls: 0 }
+const aborted = { calls: 0 }
 
 function registry() {
   const r = createCommandRegistry({ isFlagEnabled: flag => flags.has(flag) })
@@ -55,6 +57,15 @@ function registry() {
   })
   r.define({ type: 'test.flagged', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, flag: 'test.module.v1' })
   r.bind('test.flagged', async () => ({ revision: 1, result: { ok: true } }))
+  r.define({ type: 'test.aborted', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.bind('test.aborted', async ctx => {
+    // A handler that swallows a failed statement leaves the transaction aborted:
+    // the store's own receipt insert then fails with 25P02 (deterministic).
+    const { sql } = ctx.transaction as { sql: SQL }
+    aborted.calls += 1
+    try { await sql.unsafe('SELECT 1 / 0') } catch { /* swallowed */ }
+    return { revision: 1 }
+  })
   r.define({ type: 'test.unbound', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
   r.define({ type: 'test.bump', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
   r.bind('test.bump', async ctx => {
@@ -210,7 +221,7 @@ describe.skipIf(!hasDatabase)('W1-03 command bus on the composed workspace servi
     const ownerToken = await f.token(f.owner.login)
     const topic = `user:${f.owner.principalId}`
     const first = await f.ws(ownerToken)
-    await first.client.invoke(REALTIME_RPC.SUBSCRIBE, f.workspaceId, { topics: [{ topic }] })
+    await first.client.invoke(REALTIME_RPC.SUBSCRIBE, f.workspaceId, { topics: [{ topic }], resume: true }) // opts into server cursors
     await f.http(f.commandsPath, ownerToken, f.ping('1'))
     await f.until(() => first.frames.length === 1)
     const epoch = first.frames[0]!.epoch
@@ -218,6 +229,8 @@ describe.skipIf(!hasDatabase)('W1-03 command bus on the composed workspace servi
     await Bun.sleep(100)
     await f.http(f.commandsPath, ownerToken, f.ping('2'))
     await f.http(f.commandsPath, ownerToken, f.ping('3'))
+    // Fan-out runs after the responses: wait until the bus sequenced both.
+    await f.until(() => f.service.commandBus!.bus.latest(f.workspaceId, topic) === 3)
 
     const second = await f.ws(ownerToken)
     const replay = await second.client.invoke(REALTIME_RPC.SUBSCRIBE, f.workspaceId, { topics: [{ topic, sinceSeq: 1, epoch }] }) as RealtimeSubscribeResult
@@ -376,5 +389,64 @@ describe.skipIf(!hasDatabase)('W1-03 review 1 regressions on PostgreSQL', () => 
     await f.until(() => live.frames.length === 2)
     await Bun.sleep(150)
     expect(revoked.frames).toHaveLength(1)
+  }, 30_000)
+})
+
+describe.skipIf(!hasDatabase)('W1-03 review 2 regressions on PostgreSQL', () => {
+  test('25P02 (aborted transaction) is a terminal INTERNAL receipt: the outbox does not retry it and the queue moves on', async () => {
+    const f = await fixture()
+    const token = await f.token(f.owner.login)
+    aborted.calls = 0
+    const direct = await f.http(f.commandsPath, token, { ...f.ping(), type: 'test.aborted' })
+    expect(direct).toMatchObject({ status: 200, body: { status: 'rejected', error: { code: 'INTERNAL' } } })
+    expect(await f.counts()).toEqual({ receipts: 0, events: 0 })
+    const outbox = new InMemoryCommandOutbox()
+    const receipts: CommandReceipt[] = []
+    const sync = new WorkspaceCommandSync({
+      outbox, autoDrain: false,
+      transport: new WorkspaceCommandHttpClient({ baseUrl: f.base, token: () => token }),
+      onReceipt: (_w, receipt) => receipts.push(receipt),
+    })
+    const poison = { ...f.ping(), type: 'test.aborted' }
+    const next = f.ping('after')
+    await sync.enqueue(f.workspaceId, poison as never)
+    await sync.enqueue(f.workspaceId, next as never)
+    expect(await sync.drain(f.workspaceId, { force: true })).toEqual({ sent: 2, failed: 0, remaining: 0 })
+    expect(receipts.map(r => [r.commandId, r.status])).toEqual([[poison.commandId, 'rejected'], [next.commandId, 'applied']])
+    expect(aborted.calls).toBe(2) // once directly, once from the outbox: never retried
+    expect(f.errors.filter(e => someErrorInChain(e, c => (c as { errno?: string }).errno === '25P02')).length).toBeGreaterThanOrEqual(2)
+    f.errors.length = 0
+  }, 30_000)
+
+  test('NUL in ids or payloads and unsafe revisions are VALIDATION receipts, never store errors', async () => {
+    const f = await fixture()
+    const token = await f.token(f.owner.login)
+    const cases = [
+      f.ping('nul\u0000inside'),
+      { ...f.ping(), payload: { ['k\u0000']: 1 } },
+      { ...f.ping(), commandId: 'id\u0000x' },
+      { ...f.ping(), idempotencyKey: 'key\nline' },
+      { ...f.ping(), expectedRevision: 2 ** 63 },
+    ]
+    for (const body of cases) {
+      expect(await f.http(f.commandsPath, token, body)).toMatchObject({ status: 200, body: { status: 'rejected', error: { code: 'VALIDATION' } } })
+    }
+    expect(await f.counts()).toEqual({ receipts: 0, events: 0 })
+    expect(f.errors).toEqual([])
+  }, 30_000)
+
+  test('a hung Valkey does not delay the 200; WS clients still get their frames', async () => {
+    let calls = 0
+    const f = await fixture({ valkey: { publish: () => { calls += 1; return new Promise<never>(() => {}) } } })
+    const token = await f.token(f.owner.login)
+    const client = await f.ws(token)
+    await client.client.invoke(REALTIME_RPC.SUBSCRIBE, f.workspaceId, { topics: [{ topic: `user:${f.owner.principalId}` }] })
+    for (const nonce of ['1', '2']) {
+      const started = Date.now()
+      expect((await f.http(f.commandsPath, token, f.ping(nonce))).body).toMatchObject({ status: 'applied' })
+      expect(Date.now() - started).toBeLessThan(2_000)
+    }
+    await f.until(() => client.frames.length === 2)
+    expect(calls).toBe(1)
   }, 30_000)
 })

@@ -6,7 +6,9 @@
  * `subscribe({ resume: true })` continues without trusting a client offset.
  * Cursors are per device: two devices of one principal never overwrite each
  * other's position. The row id is derived from that key (`cursorId`), so a
- * save is one upsert. Cursors bound to an older policy epoch or past
+ * save is one upsert (a disconnect writes all of a client's cursors in one
+ * multi-row upsert). Only clients that opted into resume (`resume: true`)
+ * persist cursors. Cursors bound to an older policy epoch or past
  * `expires_at` are ignored (→ snapshot).
  */
 
@@ -25,12 +27,21 @@ export interface RealtimeCursorOwner {
   deviceKey: string
 }
 
+export interface RealtimeCursorEntry {
+  topic: string
+  position: RealtimeCursorPosition
+}
+
 export interface RealtimeCursorStore {
   save(owner: RealtimeCursorOwner, topic: string, position: RealtimeCursorPosition, policyEpoch: number): Promise<void>
+  /** All cursors of one owner in one write (disconnect); falls back to `save` per topic when absent. */
+  saveMany?(owner: RealtimeCursorOwner, entries: readonly RealtimeCursorEntry[], policyEpoch: number): Promise<void>
   load(owner: RealtimeCursorOwner, topic: string, policyEpoch: number): Promise<RealtimeCursorPosition | null>
 }
 
 export const DEFAULT_CURSOR_TTL_MS = 24 * 60 * 60 * 1000
+/** Rows per multi-row cursor upsert (7 parameters each). */
+export const CURSOR_UPSERT_CHUNK = 500
 
 /** Deterministic UUID-shaped row id for (workspace, principal, device, topic). */
 export function cursorId(owner: RealtimeCursorOwner, topic: string): string {
@@ -45,6 +56,10 @@ export class InMemoryRealtimeCursorStore implements RealtimeCursorStore {
 
   async save(owner: RealtimeCursorOwner, topic: string, position: RealtimeCursorPosition, policyEpoch: number): Promise<void> {
     this.rows.set(cursorId(owner, topic), { position: { ...position }, policyEpoch, expiresAt: this.now() + this.ttlMs })
+  }
+
+  async saveMany(owner: RealtimeCursorOwner, entries: readonly RealtimeCursorEntry[], policyEpoch: number): Promise<void> {
+    for (const entry of entries) await this.save(owner, entry.topic, entry.position, policyEpoch)
   }
 
   async load(owner: RealtimeCursorOwner, topic: string, policyEpoch: number): Promise<RealtimeCursorPosition | null> {
@@ -67,6 +82,24 @@ export class PostgresRealtimeCursorStore implements RealtimeCursorStore {
       ON CONFLICT (cursor_id) DO UPDATE SET policy_epoch = EXCLUDED.policy_epoch, position = EXCLUDED.position, expires_at = EXCLUDED.expires_at`,
     [cursorId(owner, topic), owner.workspaceId, owner.principalId, topic, policyEpoch, { epoch: position.epoch, seq: position.seq },
       new Date(Date.now() + this.ttlMs).toISOString()])
+  }
+
+  /** One multi-row upsert per chunk (topic sets are capped per client). */
+  async saveMany(owner: RealtimeCursorOwner, entries: readonly RealtimeCursorEntry[], policyEpoch: number): Promise<void> {
+    const expiresAt = new Date(Date.now() + this.ttlMs).toISOString()
+    for (let offset = 0; offset < entries.length; offset += CURSOR_UPSERT_CHUNK) {
+      const chunk = entries.slice(offset, offset + CURSOR_UPSERT_CHUNK)
+      const params: unknown[] = []
+      const rows = chunk.map(entry => {
+        const base = params.length
+        params.push(cursorId(owner, entry.topic), owner.workspaceId, owner.principalId, entry.topic, policyEpoch,
+          { epoch: entry.position.epoch, seq: entry.position.seq }, expiresAt)
+        return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}::jsonb, $${base + 7})`
+      })
+      await this.database.unsafe(`INSERT INTO ${this.prefix}realtime_cursor (cursor_id, workspace_id, principal_id, topic, policy_epoch, position, expires_at)
+        VALUES ${rows.join(', ')}
+        ON CONFLICT (cursor_id) DO UPDATE SET policy_epoch = EXCLUDED.policy_epoch, position = EXCLUDED.position, expires_at = EXCLUDED.expires_at`, params)
+    }
   }
 
   async load(owner: RealtimeCursorOwner, topic: string, policyEpoch: number): Promise<RealtimeCursorPosition | null> {

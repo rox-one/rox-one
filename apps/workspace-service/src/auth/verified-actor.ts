@@ -52,6 +52,28 @@ export class AuthenticationError extends Error {
   constructor() { super('Authentication required'); this.name = 'AuthenticationError'; }
 }
 
+/**
+ * W1-03 (#1500): the identity/membership store failed (not the credential).
+ * Still an AuthenticationError (401 wherever it is not mapped explicitly);
+ * the command bus route answers 503 so an outbox retries instead of pausing.
+ */
+export class AuthenticationUnavailableError extends AuthenticationError {
+  readonly reason: unknown;
+  // name, code, status and message stay those of AuthenticationError (identical outside the commands route).
+  constructor(reason: unknown) { super(); this.reason = reason; }
+}
+
+async function io<T>(operation: () => Promise<T>): Promise<T> {
+  try { return await operation(); } catch (error) {
+    if (error instanceof AuthenticationError) throw error;
+    throw new AuthenticationUnavailableError(error);
+  }
+}
+
+const rethrow = (error: unknown): never => {
+  throw error instanceof AuthenticationUnavailableError ? error : new AuthenticationError();
+};
+
 const nonempty = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0 && value.length <= 2048;
 
@@ -98,10 +120,10 @@ export function createVerifiedActorResolver<TActor extends object>(
 
   async function materialize(identity: VerifiedSessionIdentity, session: PersistedAuthSession): Promise<VerifiedActorSession<TActor>> {
     assertLive(session, identity);
-    const workspaceIds = await memberships.listActiveWorkspaceIds(identity.principalId);
+    const workspaceIds = await io(() => memberships.listActiveWorkspaceIds(identity.principalId));
     if (!Array.isArray(workspaceIds) || workspaceIds.some(id => !nonempty(id))) throw new AuthenticationError();
     // Membership resolution can await I/O; reread session to observe a revoke during it.
-    const latestSession = await repository.findSession(identity.issuer, identity.sessionId);
+    const latestSession = await io(() => repository.findSession(identity.issuer, identity.sessionId));
     assertLive(latestSession, identity);
     const freshIdentity = Object.freeze({ ...identity, expiresAt: Math.min(identity.expiresAt, latestSession.expiresAt) });
     const actor = createActor({ ...freshIdentity, authenticatedWorkspaceIds: Object.freeze([...new Set(workspaceIds)].sort()) });
@@ -125,31 +147,31 @@ export function createVerifiedActorResolver<TActor extends object>(
         if (!nonempty(payload.sub) || typeof payload.exp !== 'number' || !Number.isFinite(payload.exp) ||
             (payload.sid !== undefined && !nonempty(payload.sid)) ||
             (payload.jti !== undefined && !nonempty(payload.jti))) throw new AuthenticationError();
-        const principalId = await repository.resolvePrincipal(issuer, payload.sub);
+        const principalId = await io(() => repository.resolvePrincipal(issuer, payload.sub as string));
         if (!nonempty(principalId)) throw new AuthenticationError();
-        const session = await repository.resolveSession({
-          issuer, subject: payload.sub, principalId,
+        const session = await io(() => repository.resolveSession({
+          issuer, subject: payload.sub as string, principalId,
           verifiedSessionId: payload.sid as string | undefined, verifiedTokenId: payload.jti,
-          tokenExpiresAt: payload.exp * 1000,
-        });
+          tokenExpiresAt: (payload.exp as number) * 1000,
+        }));
         if (!session) throw new AuthenticationError();
         const identity: VerifiedSessionIdentity = Object.freeze({
           issuer, subject: payload.sub, principalId,
           sessionId: session.sessionId, deviceId: session.deviceId, expiresAt: payload.exp * 1000,
         });
         return await materialize(identity, session);
-      } catch { throw new AuthenticationError(); }
+      } catch (error) { return rethrow(error); }
     },
     /** Refresh before protected operations/replay. Commands still enforce policy in their DB transaction. */
     async revalidate(bound: VerifiedActorSession<TActor>): Promise<VerifiedActorSession<TActor>> {
       try {
         const identity = issued.get(bound);
         if (!identity || now().getTime() >= identity.expiresAt ||
-            await repository.resolvePrincipal(identity.issuer, identity.subject) !== identity.principalId) throw new AuthenticationError();
-        const session = await repository.findSession(identity.issuer, identity.sessionId);
+            await io(() => repository.resolvePrincipal(identity.issuer, identity.subject)) !== identity.principalId) throw new AuthenticationError();
+        const session = await io(() => repository.findSession(identity.issuer, identity.sessionId));
         assertLive(session, identity);
         return await materialize(identity, session);
-      } catch { throw new AuthenticationError(); }
+      } catch (error) { return rethrow(error); }
     },
   };
 }

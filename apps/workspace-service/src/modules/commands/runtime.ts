@@ -36,6 +36,8 @@ export interface WorkspaceCommandBusConfiguration {
   readonly revalidationCacheMs?: number
   /** Relay retry backoff after a sink failure. */
   readonly relayRetryBaseMs?: number
+  /** Sweep idle realtime replay windows every this many ms (default 60 s, `0` disables). */
+  readonly evictIntervalMs?: number
   readonly onError?: (error: unknown) => void
 }
 
@@ -48,6 +50,8 @@ export interface WorkspaceCommandBus {
   readonly ready: Promise<void>
   /** Attach the realtime gateway to the WS transport (after the server exists). */
   attach(server: WsRpcServer & RealtimePushTransport): RealtimeGateway
+  /** Stop timers (relay retries, idle-window sweep); also runs on server shutdown after `attach`. */
+  close(): void
 }
 
 export function createWorkspaceCommandBus(database: SQL, schema: string, configuration: WorkspaceCommandBusConfiguration): WorkspaceCommandBus {
@@ -67,6 +71,21 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
     ...(configuration.registry ? { registry: configuration.registry } : {}),
     ...(configuration.onError ? { onError: configuration.onError } : {}),
   })
+  // TopicLog windows are otherwise only evicted lazily on access; sweep them so
+  // workspaces that went quiet release their replay buffers.
+  const evictIntervalMs = configuration.evictIntervalMs ?? 60_000
+  let evictTimer: ReturnType<typeof setInterval> | null = null
+  if (evictIntervalMs > 0) {
+    evictTimer = setInterval(() => {
+      try { bus.evictIdle() } catch (error) { configuration.onError?.(error) }
+    }, evictIntervalMs)
+    ;(evictTimer as { unref?: () => void }).unref?.()
+  }
+  const close = () => {
+    if (evictTimer) clearInterval(evictTimer)
+    evictTimer = null
+    relay.close()
+  }
   const cursors = configuration.cursors === undefined ? new PostgresRealtimeCursorStore(database, schema) : configuration.cursors
   return {
     service,
@@ -74,6 +93,7 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
     relay,
     store,
     ready,
+    close,
     attach(server) {
       const gateway = new RealtimeGateway({
         bus,
@@ -84,7 +104,7 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
         ...(configuration.onError ? { onError: configuration.onError } : {}),
       })
       registerRealtimeHandlers(server, gateway)
-      server.onShutdown(() => { gateway.close(); relay.close() })
+      server.onShutdown(() => { gateway.close(); close() })
       return gateway
     },
   }

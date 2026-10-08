@@ -80,6 +80,7 @@ describe('POST /v1/workspaces/{ws}/commands', () => {
     expect(first.body).toMatchObject({ commandId: ping.commandId, status: 'applied', result: { pong: true, nonce: 'n1', authority: 'workspace' } })
     const events = await f.store.listEvents(f.workspaceId)
     expect(events).toEqual([expect.objectContaining({ type: 'system.pinged', actorId: f.owner.principalId, causationId: ping.commandId, sequence: 1 })])
+    await f.relay.idle() // fan-out runs after the response
     expect(frames).toEqual([expect.objectContaining({ topic: `user:${f.owner.principalId}`, type: 'system.pinged', seq: 1, payload: { commandId: ping.commandId, nonce: 'n1' } })])
     const again = await f.post(ping)
     expect(again).toMatchObject({ status: 200, body: { status: 'duplicate', original: first.body } })
@@ -242,7 +243,7 @@ describe('RealtimeGateway', () => {
 
   test('server-side cursor: disconnect stores the position, resume replays from it', async () => {
     const g = gatewaySetup()
-    await g.gateway.subscribe(g.alice, { topics: [{ topic: 'user:alice' }] })
+    await g.gateway.subscribe(g.alice, { topics: [{ topic: 'user:alice' }], resume: true }) // opts into server cursors
     g.pinged('alice', 1)
     await g.gateway.flush()
     g.t.disconnect('c-alice')
@@ -266,6 +267,7 @@ describe('events relay + Valkey sink', () => {
     const append = async (n: number) => {
       const events = await store.transaction('w', async tx => tx.appendEvents([{ eventId: `e${n}`, workspaceId: 'w', type: 'system.pinged', aggregateRevision: 0, payload: {}, createdAt: 'now' }]))
       await relay.publish(events)
+      await relay.idle()
     }
     await append(1)
     expect(errors).toHaveLength(1)

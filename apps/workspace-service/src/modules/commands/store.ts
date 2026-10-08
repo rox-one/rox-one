@@ -15,6 +15,7 @@ import type { CommandReceipt } from '../../../../../packages/core/src/commands/i
 import type { DomainEvent } from '../../../../../packages/core/src/events/index.ts'
 import {
   CommandStoreUniqueViolation,
+  someErrorInChain,
   type CommandStore,
   type CommandStoreTransaction,
   type ListEventsOptions,
@@ -79,9 +80,15 @@ const TRANSIENT_DRIVER = /^(ERR_POSTGRES_(CONNECTION_CLOSED|CONNECTION_TIMEOUT|I
  * exceptions (08), transaction rollbacks incl. serialization failure and
  * deadlock (40001 / 40P01), insufficient resources (53), admin shutdown
  * (57P01-03), lock timeout (55P03), system errors (58), and driver-level
- * connection loss / timeouts.
+ * connection loss / timeouts — on the error or anywhere in its `cause` chain.
+ * Everything else (22xxx data errors, 23xxx constraints, 25P02, 42xxx) is
+ * deterministic and becomes a terminal INTERNAL receipt.
  */
 export function isTransientPostgresError(error: unknown): boolean {
+  return someErrorInChain(error, isTransientPostgresErrorOnly)
+}
+
+function isTransientPostgresErrorOnly(error: unknown): boolean {
   const record = error as { errno?: unknown; code?: unknown; sqlState?: unknown } | null
   if (!record || typeof record !== 'object') return false
   for (const value of [record.errno, record.sqlState, record.code]) {
