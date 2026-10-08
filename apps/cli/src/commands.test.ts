@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'bun:test'
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { formatCliSessionError, parseArgs, resolveApiKey, runMigrateConfig, shouldSetupLlmConnection } from './index.ts'
@@ -523,4 +524,76 @@ describe('migrate-config --auto semantics (W1-13 fix1)', () => {
       const run = await runMigrateConfig(argsFor(home, '--auto', '--revert'), {})
       expect(run.code).toBe(2)
     }))
+})
+
+describe('migrate-config is side-effect free on the real home (W1-13 review 2)', () => {
+  // Real subprocess: the CLI's import-time config resolution runs against a
+  // temp HOME whose persisted storage.visible-root.v1 flag is ON.
+  const cli = join(import.meta.dir, 'index.ts')
+  const plantHome = (prefix: string): string => {
+    const home = mkdtempSync(join(tmpdir(), prefix))
+    mkdirSync(join(home, '.rox', 'workspaces', 'a'), { recursive: true })
+    writeFileSync(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"a"}]}')
+    writeFileSync(join(home, '.rox', 'workbench-flags.json'), JSON.stringify({ enabled: ['storage.visible-root.v1'] }))
+    return home
+  }
+  const snapshot = (home: string): string[] => {
+    const out: string[] = []
+    const walk = (dir: string, rel: string): void => {
+      for (const name of readdirSync(dir).sort()) {
+        // bun's own cache under a temp HOME, and the CLI logger's logs/ dir
+        // (created at import with the flag OFF too: base behaviour).
+        if (name === '.bun' || name === 'logs') continue
+        const full = join(dir, name)
+        const st = lstatSync(full)
+        out.push(`${rel}${name}:${st.isSymbolicLink() ? 'link' : st.isDirectory() ? 'dir' : 'file'}`)
+        if (st.isDirectory() && !st.isSymbolicLink()) walk(full, `${rel}${name}/`)
+      }
+    }
+    walk(home, '')
+    return out
+  }
+  const runCli = (home: string, ...args: string[]) => {
+    const env: Record<string, string> = {}
+    for (const [key, value] of Object.entries(process.env)) {
+      if (value !== undefined && key !== 'ROX_CONFIG_DIR' && key !== 'CRAFT_CONFIG_DIR' && key !== 'ROX_STORAGE_VISIBLE_ROOT') env[key] = value
+    }
+    env.HOME = home
+    env.USERPROFILE = home
+    return spawnSync(process.execPath, [cli, 'migrate-config', ...args], { env, cwd: home, encoding: 'utf8', timeout: 60_000 })
+  }
+
+  it('--dry-run moves nothing even though the flag is ON', () => {
+    const home = plantHome('rox-cli-r2-')
+    try {
+      const before = snapshot(home)
+      const run = runCli(home, '--dry-run')
+      expect(run.status).toBe(0)
+      expect(run.stdout).toContain('Outcome: migrated (dry run)')
+      expect(snapshot(home)).toEqual(before)
+      expect(lstatSync(join(home, '.rox')).isDirectory()).toBe(true)
+      expect(existsSync(join(home, 'rox'))).toBe(false)
+    } finally {
+      rmSync(home, { recursive: true, force: true })
+    }
+  })
+
+  it('--home <path> never touches the invoking HOME', () => {
+    const home = plantHome('rox-cli-r2-real-')
+    const other = plantHome('rox-cli-r2-other-')
+    try {
+      const before = snapshot(home)
+      const dry = runCli(home, '--dry-run', '--home', other)
+      expect(dry.status).toBe(0)
+      const migrate = runCli(home, '--home', other)
+      expect(migrate.status).toBe(0)
+      expect(migrate.stdout).toContain('Outcome: migrated')
+      expect(lstatSync(join(other, '.rox')).isSymbolicLink()).toBe(true)
+      expect(snapshot(home)).toEqual(before)
+      expect(existsSync(join(home, 'rox'))).toBe(false)
+    } finally {
+      rmSync(home, { recursive: true, force: true })
+      rmSync(other, { recursive: true, force: true })
+    }
+  })
 })
