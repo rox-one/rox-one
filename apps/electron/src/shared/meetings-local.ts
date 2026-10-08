@@ -44,7 +44,7 @@ export const MEETINGS_LOCAL_IPC = {
 } as const
 
 export type LocalMeetingStatus = 'planned' | 'recording' | 'paused' | 'ready'
-export type LocalMeetingSource = 'microphone' | 'import' | 'none'
+export type LocalMeetingSource = 'microphone' | 'import' | 'calendar' | 'none'
 export type TranscriptStatus = 'none' | 'queued' | 'running' | 'done' | 'failed' | 'unavailable' | 'cancelled' | 'partial'
 
 export interface LocalMeetingAudio {
@@ -169,6 +169,8 @@ export interface LocalMeeting {
   durationMs: number
   status: LocalMeetingStatus
   source: LocalMeetingSource
+  /** Local calendar occurrence that auto-started this recording; absent for ad-hoc. */
+  calendarEventId?: string
   participants: string[]
   notes: string
   /** User-selected analysis profile; does not grant tools or background work. */
@@ -255,7 +257,7 @@ export interface MeetingsLocalApi {
   failExtraction(id: string, input: { runId: string; code: string }): Promise<MeetingsLocalResult<LocalMeeting>>
   saveAction(id: string, input: { actionId: string; patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId' | 'taskRef'>>; remove?: boolean; create?: boolean }): Promise<MeetingsLocalResult<LocalMeeting>>
   trash(id: string): Promise<boolean>
-  recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string }): Promise<MeetingsLocalResult<LocalMeeting>>
+  recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string; source?: LocalMeetingSource; calendarEventId?: string }): Promise<MeetingsLocalResult<LocalMeeting>>
   recChunk(meetingId: string, chunk: Uint8Array): Promise<boolean>
   recState(meetingId: string, state: { paused: boolean; durationMs: number }): Promise<void>
   recStop(meetingId: string, input: { durationMs: number }): Promise<MeetingsLocalResult<LocalMeeting>>

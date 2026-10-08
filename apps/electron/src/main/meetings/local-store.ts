@@ -38,6 +38,7 @@ import type {
   LocalMeetingPatch,
   LocalMeetingAction,
   LocalMeetingTaskRef,
+  LocalMeetingSource,
   LocalMeetingExtractionResult,
   LocalTranscriptSegmentUpdate,
   LocalTranscript,
@@ -327,7 +328,7 @@ export class LocalMeetingStore {
 
   // ── Recording ────────────────────────────────────────────────────────────
 
-  recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string; owner: number; transcriptionContext?: LocalTranscriptionContext }): MeetingsLocalResult<LocalMeeting> {
+  recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string; owner: number; source?: LocalMeetingSource; calendarEventId?: string; transcriptionContext?: LocalTranscriptionContext }): MeetingsLocalResult<LocalMeeting> {
     if (this.active.size > 0) return { ok: false, code: 'already-recording' }
     let meeting = input.meetingId ? this.read(input.meetingId) : null
     if (input.meetingId && !meeting) return { ok: false, code: 'meeting-not-found' }
@@ -341,7 +342,8 @@ export class LocalMeetingStore {
     const next = this.write({
       ...meeting,
       status: 'recording',
-      source: 'microphone',
+      source: input.source === 'calendar' ? 'calendar' : 'microphone',
+      calendarEventId: input.source === 'calendar' ? input.calendarEventId : undefined,
       startedAt: now,
       endedAt: undefined,
       durationMs: 0,
