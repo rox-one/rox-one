@@ -773,6 +773,23 @@ export const mockElectronAPI = {
   },
   sessionTopicCloudRun: async () => ({ topic: '' }),
   fabricInfisicalHealth: async () => ({ available: false }),
+  fabricInfisicalPreviewAccount: async (input: Record<string, string>) => ({
+    label: 'Infisical',
+    siteUrl: input.siteUrl,
+    clientId: input.clientId,
+    projectId: input.projectId,
+    environment: input.environment,
+    secretPath: input.secretPath,
+    secretKey: input.secretKey,
+    locator: {
+      type: 'infisical' as const,
+      projectId: input.projectId,
+      environment: input.environment,
+      secretPath: input.secretPath,
+      secretKey: input.secretKey,
+    },
+  }),
+  fabricInfisicalCommitImport: async () => ({ id: 'conn_playground' }),
   openclawRuntime: {
     getStatus: async ({ workspaceId }: { workspaceId: string }) => ({
       runtimeId: 'playground-runtime',

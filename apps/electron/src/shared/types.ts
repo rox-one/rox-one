@@ -318,8 +318,8 @@ export type {
 
 import type { ViewConfig as KnowledgeViewConfig } from '@rox/shared/views';
 export type { KnowledgeViewConfig };
-import type { SecretRefEntry, SecretRefsSettingsPayload } from '@rox/shared/secrets';
-export type { SecretRefEntry, SecretRefsSettingsPayload };
+import type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview, InfisicalAccountPreviewInput } from '@rox/shared/secrets';
+export type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview, InfisicalAccountPreviewInput };
 import type { ZenShellSnapshot } from './shell-appearance';
 import type { ListDocTreeResult } from '@rox/core/knowledge/providers/siyuan';
 
@@ -1515,6 +1515,8 @@ export interface ElectronAPI {
   getCredentialMigrationStatus(): Promise<CredentialMigrationResult<CredentialMigrationStatusDto>>
   rollbackCredentialMigration(migrationId: string): Promise<CredentialMigrationResult<CredentialMigrationRollbackDto>>
   fabricInfisicalHealth(): Promise<{ available: boolean; providerId?: string }>
+  fabricInfisicalPreviewAccount(input: InfisicalAccountPreviewInput): Promise<InfisicalAccountPreview>
+  fabricInfisicalCommitImport(input: InfisicalAccountPreviewInput & { clientSecret: string; workspaceId?: string }): Promise<{ id: string }>
   fabricListConnections(...args: unknown[]): Promise<unknown>
   fabricCreateConnection(...args: unknown[]): Promise<unknown>
   fabricListCredentials(...args: unknown[]): Promise<unknown>
