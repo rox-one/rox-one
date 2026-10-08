@@ -25,12 +25,20 @@ export { type EntityNodesOptions } from './TiptapMarkdownEditor'
 export { EntityMention, type EntityMentionOptions } from './extensions/EntityMention'
 export { EntityEmbed, type EntityEmbedOptions } from './extensions/EntityEmbed'
 export {
+  entityEmbedInputRule,
+  entityEmbedPasteRule,
+  entityMentionInputRule,
+  entityMentionPasteRule,
+} from './extensions/entity-input-rules'
+export {
   ENTITY_EMBED_NODE,
   ENTITY_MENTION_NODE,
   canonicalEntityTarget,
+  entityEmbedBlockStart,
   entityRefFromTarget,
   installEntityMarkdownRules,
   matchEntityEmbed,
+  matchEntityEmbedLine,
   matchEntityMention,
   sanitizeMentionLabel,
   serializeEntityEmbed,

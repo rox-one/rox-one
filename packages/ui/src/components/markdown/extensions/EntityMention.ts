@@ -8,6 +8,13 @@
  * - `onRequestInsert` binds Mod-Shift-K («Связать элемент Rox…») so the host
  *   can open its EntityPicker and call `insertEntityMention`.
  *
+ * - `source` keeps the original Markdown of parsed/typed mentions so saving
+ *   never rewrites user text; picker-inserted mentions have no source and
+ *   serialise canonically.
+ * - Input/paste rules turn typed or pasted explicit syntax into the node
+ *   (see `entity-input-rules.ts`). TODO(UI-SPEC MentionMenu): the `[[`/`@`
+ *   suggestion menu is a later package.
+ *
  * The extension is opt-in: TiptapMarkdownEditor only adds it when the host
  * passes `entityNodes` (renderer: behind `entities.previews.v1`).
  */
@@ -23,6 +30,7 @@ import {
   serializeEntityMention,
   type MarkdownItLike,
 } from '../entity-markdown'
+import { entityMentionInputRule, entityMentionPasteRule } from './entity-input-rules'
 
 export interface EntityMentionOptions {
   onEntityClick?: (ref: string, event: MouseEvent) => void
@@ -63,6 +71,13 @@ export const EntityMention = Node.create<EntityMentionOptions>({
         parseHTML: (el: HTMLElement) => el.getAttribute('data-label') ?? el.textContent ?? '',
         renderHTML: (attrs: { label?: string }) => ({ 'data-label': attrs.label ?? '' }),
       },
+      // Original Markdown (`[[doc:2| Plan ]]`), serialised verbatim while it
+      // still matches ref/label. Empty for picker-inserted mentions.
+      source: {
+        default: '',
+        parseHTML: (el: HTMLElement) => el.getAttribute('data-source') ?? '',
+        renderHTML: (attrs: { source?: string }) => (attrs.source ? { 'data-source': attrs.source } : {}),
+      },
     }
   },
 
@@ -75,7 +90,7 @@ export const EntityMention = Node.create<EntityMentionOptions>({
   },
 
   renderText({ node }) {
-    return serializeEntityMention(node.attrs.ref as string, node.attrs.label as string)
+    return serializeEntityMention(node.attrs.ref as string, node.attrs.label as string, node.attrs.source as string)
   },
 
   addNodeView() {
@@ -88,7 +103,7 @@ export const EntityMention = Node.create<EntityMentionOptions>({
       insertEntityMention: (attrs) => ({ commands }) => {
         const ref = canonicalEntityTarget(attrs.ref)
         if (!ref) return false
-        return commands.insertContent({ type: this.name, attrs: { ref, label: attrs.label ?? '' } })
+        return commands.insertContent({ type: this.name, attrs: { ref, label: attrs.label ?? '', source: '' } })
       },
     }
   },
@@ -101,6 +116,14 @@ export const EntityMention = Node.create<EntityMentionOptions>({
         return true
       },
     }
+  },
+
+  addInputRules() {
+    return [entityMentionInputRule(this.type)]
+  },
+
+  addPasteRules() {
+    return [entityMentionPasteRule(this.type)]
   },
 
   addProseMirrorPlugins() {
@@ -126,8 +149,8 @@ export const EntityMention = Node.create<EntityMentionOptions>({
   addStorage() {
     return {
       markdown: {
-        serialize(state: { write: (text: string) => void }, node: { attrs: { ref?: string; label?: string } }) {
-          state.write(serializeEntityMention(node.attrs.ref ?? '', node.attrs.label))
+        serialize(state: { write: (text: string) => void }, node: { attrs: { ref?: string; label?: string; source?: string } }) {
+          state.write(serializeEntityMention(node.attrs.ref ?? '', node.attrs.label, node.attrs.source))
         },
         parse: {
           setup(markdownit: MarkdownItLike) {
@@ -151,14 +174,25 @@ export const EntityMention = Node.create<EntityMentionOptions>({
         from = idx + 2
       }
     },
-    tokenize: (src: string) => {
+    tokenize: (src: string, tokens) => {
+      // `![[…]]` mid-line: the `!` was lexed as text just before; leave the
+      // whole thing as text so it round-trips unchanged.
+      const previous = tokens[tokens.length - 1] as { raw?: string } | undefined
+      if (previous?.raw?.endsWith('!')) return undefined
       const match = matchEntityMention(src)
       if (!match) return undefined
-      return { type: ENTITY_MENTION_NODE, raw: match.raw, ref: match.ref, label: match.label ?? '' }
+      return { type: ENTITY_MENTION_NODE, raw: match.raw, ref: match.ref, label: match.label ?? '', source: match.raw }
     },
   },
 
-  parseMarkdown: (token) => ({ type: ENTITY_MENTION_NODE, attrs: { ref: token.ref, label: token.label ?? '' } }),
+  parseMarkdown: (token) => ({
+    type: ENTITY_MENTION_NODE,
+    attrs: { ref: token.ref, label: token.label ?? '', source: token.source ?? '' },
+  }),
 
-  renderMarkdown: (node) => serializeEntityMention(String(node.attrs?.ref ?? ''), node.attrs?.label as string | undefined),
+  renderMarkdown: (node) => serializeEntityMention(
+    String(node.attrs?.ref ?? ''),
+    node.attrs?.label as string | undefined,
+    node.attrs?.source as string | undefined,
+  ),
 })

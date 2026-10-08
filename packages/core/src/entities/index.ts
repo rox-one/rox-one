@@ -61,6 +61,13 @@ export {
   type ParsedEntityRoute,
 } from './parse-route.ts'
 
+// Shared wikilink target classifier (extractor + editor agree).
+export {
+  classifyWikilinkTarget,
+  explicitEntityRefFromWikilinkTarget,
+  type WikilinkTargetClass,
+} from './wikilink-target.ts'
+
 // Entity links (W1-02).
 export {
   ENTITY_LINK_SCHEMA_VERSION,

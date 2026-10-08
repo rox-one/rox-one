@@ -14,16 +14,19 @@
  */
 
 import {
+  classifyWikilinkTarget,
   entityRefKey,
-  isEntityKind,
-  normalizeKindAlias,
-  parseEntityRef,
   parseEntityRouteOrLegacy,
   type EntityRef,
 } from '@rox/core/entities'
 
 export interface ExtractedLink {
   to: EntityRef
+  /**
+   * Set only for block embeds (`entityEmbed` TipTap nodes). Absent means the
+   * default mention/wikilink relation chosen by the indexer.
+   */
+  relation?: 'embeds'
   blockId?: string
   seq?: number
   line?: number
@@ -48,6 +51,9 @@ export function extractWikilinkTargets(text: string): string[] {
 /**
  * Lenient wikilink target parse shared by the text, mark and node paths.
  *
+ * Delegates to the shared classifier in `@rox/core/entities`
+ * (`classifyWikilinkTarget`) so the editor's mention/embed nodes and the
+ * link index agree:
  * - Direct entity literals win (including kind aliases like `doc:hello`).
  * - `unexpected-fragment` re-parses the part before `#` and links to the
  *   entity (`[[note:abc#Heading]]` → `note:abc`).
@@ -56,26 +62,7 @@ export function extractWikilinkTargets(text: string): string[] {
  *   `[[doc: plan]]`). Nothing is trimmed silently.
  */
 export function parseWikilinkTarget(inner: string): EntityRef | null {
-  if (!inner) return null
-  const hashIndex = inner.indexOf('#')
-  const head = hashIndex === -1 ? inner : inner.slice(0, hashIndex)
-  const colonIndex = head.indexOf(':')
-  if (colonIndex <= 0) {
-    const title = head.trim()
-    if (!title || title.includes(':')) return null
-    return { kind: 'note', id: title }
-  }
-  const rawKind = head.slice(0, colonIndex)
-  const rawId = head.slice(colonIndex + 1)
-  if (rawId.length > 0 && /^\s/.test(rawId)) return { kind: 'note', id: inner }
-  if (!isEntityKind(normalizeKindAlias(rawKind))) return { kind: 'note', id: inner }
-  const direct = parseEntityRef(inner)
-  if (direct.ok) return direct.value
-  if (direct.error.code === 'unexpected-fragment') {
-    const reparsed = parseEntityRef(head)
-    if (reparsed.ok) return reparsed.value
-  }
-  return null
+  return classifyWikilinkTarget(inner)?.ref ?? null
 }
 
 /**
@@ -181,7 +168,9 @@ export function extractLinksFromTiptapDoc(doc: TiptapNode): ExtractedLink[] {
   const seen = new Set<string>()
 
   const push = (link: ExtractedLink) => {
-    const key = entityRefKey(link.to)
+    // Embeds dedupe separately so a mention and an embed of the same entity
+    // both survive (different relations).
+    const key = link.relation ? `${link.relation}|${entityRefKey(link.to)}` : entityRefKey(link.to)
     if (seen.has(key)) return
     seen.add(key)
     out.push(link)
@@ -245,6 +234,17 @@ export function extractLinksFromTiptapDoc(doc: TiptapNode): ExtractedLink[] {
       }
     } else if (node.type === 'mention' || node.type === 'entityMention') {
       pushMentionTarget(node.attrs?.ref ?? node.attrs?.entityRef ?? node.attrs?.target ?? node.attrs)
+    } else if (node.type === 'entityEmbed') {
+      // W1-08 block embed (`![[kind:id]]`): `attrs.ref` is the canonical ref.
+      const target = node.attrs?.ref
+      if (typeof target === 'string' && target.trim()) {
+        const ref = parseWikilinkTarget(target.trim())
+        if (ref) {
+          const link: ExtractedLink = { to: ref, relation: 'embeds' }
+          if (currentBlock) link.blockId = currentBlock
+          push(link)
+        }
+      }
     }
     if (node.text) {
       for (const link of wikilinkTargetsToRefs(node.text)) {
