@@ -179,12 +179,11 @@ describe('unpaired tables and the shrink-only allowlist', () => {
     expect(res.status).toBe('fail')
     expect(res.violations?.join(' ')).toContain("'user_profile' was added; the allowlist may only shrink")
   })
-  test('the checked-in allowlist is well-formed, sorted and has no duplicates', async () => {
+  test('the checked-in allowlist is well-formed, sorted and has no duplicates (it may shrink to empty)', async () => {
     const { readAllowlist } = await import('../src/gates/allowlist.ts')
     const read = readAllowlist(join(import.meta.dir, '..', '..', '..'), 'packages/test-harness/allowlists/ddl-unpaired-tables.json', 'tables')
     expect(read.ok).toBe(true)
     if (read.ok) {
-      expect(read.entries.length).toBeGreaterThan(0)
       expect([...read.entries].sort()).toEqual(read.entries)
     }
   })
