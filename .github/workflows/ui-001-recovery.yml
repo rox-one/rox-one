@@ -148,7 +148,8 @@ jobs:
             apps/electron/src/renderer/components/app-shell/__tests__/device-status-chip.browser.test.ts \
             apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.browser.test.ts \
             apps/electron/src/renderer/components/app-shell/__tests__/message-actions.browser.test.ts \
-            apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts
+            apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts \
+            apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/appearance.browser.test.ts
           do
             bun test --timeout 60000 "$test_path"
           done

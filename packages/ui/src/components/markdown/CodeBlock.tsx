@@ -183,7 +183,7 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 
   // Full mode: rich styling with header and copy button
   return (
-    <div className={cn('relative group rounded-[var(--radius-card,4px)] overflow-hidden border border-border-subtle bg-surface-input', className)}>
+    <div className={cn('relative group rounded-[var(--radius-card,4px)] overflow-hidden border border-border-subtle bg-background', className)}>
       {/* Language label + copy button */}
       <div className="flex min-h-9 items-center justify-between gap-2 px-3 py-1 bg-surface-elevated border-b border-border-subtle text-xs">
         <span className="text-text-secondary font-medium">
