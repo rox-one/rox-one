@@ -14,6 +14,7 @@ const GLOBAL_KEYS = [
   'FocusEvent', 'InputEvent', 'CustomEvent', 'DragEvent', 'DataTransfer', 'Range', 'Selection', 'DOMParser',
   'requestAnimationFrame', 'cancelAnimationFrame', 'ClipboardEvent', 'ResizeObserver', 'IntersectionObserver',
   'CSS', 'XMLSerializer', 'DOMRect', 'ShadowRoot', 'HTMLDivElement', 'HTMLSpanElement', 'Image', 'File', 'FileReader',
+  'customElements', 'matchMedia', 'localStorage', 'sessionStorage',
 ] as const
 
 let installed: Window | null = null
@@ -25,7 +26,12 @@ export function installDom(): Window {
   for (const key of GLOBAL_KEYS) {
     if (key === 'window') { g.window = win; continue }
     const value = (win as unknown as Record<string, unknown>)[key]
-    if (value !== undefined && g[key] === undefined) g[key] = typeof value === 'function' && /^[a-z]/.test(key) ? (value as Function).bind(win) : value
+    if (value === undefined) continue
+    // DOM classes (incl. Event/CustomEvent) must come from happy-dom so
+    // dispatchEvent accepts them; Bun's own globals are replaced in tests.
+    if (/^[A-Z]/.test(key) || key === 'document' || g[key] === undefined) {
+      g[key] = typeof value === 'function' && /^[a-z]/.test(key) ? (value as Function).bind(win) : value
+    }
   }
   g.document = win.document
   ;(g as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
@@ -36,3 +42,7 @@ export function installDom(): Window {
 export function resetDom(): void {
   if (installed) installed.document.body.innerHTML = ''
 }
+
+// Install on import: ES imports are hoisted, so modules such as react-dom
+// (which feature-detect `document` at load time) must see the DOM already.
+installDom()
