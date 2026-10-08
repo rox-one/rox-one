@@ -35,12 +35,12 @@ describe('cn(): tailwind-merge knows the Rox token utilities', () => {
   it('registers exactly the z layers and text steps the tokens define', () => {
     const z = stripComments(readFileSync(join(tokensDir, 'z.css'), 'utf8'))
     const layers = [...z.matchAll(/--z-index-([\w-]+)\s*:/g)].map((m) => m[1])
-    expect([...ROX_Z_LAYERS].sort()).toEqual(layers.sort())
+    expect(([...ROX_Z_LAYERS] as string[]).sort()).toEqual(layers.sort())
 
     const type = stripComments(readFileSync(join(tokensDir, 'type.css'), 'utf8'))
     const steps = [...type.matchAll(/--text-([\w-]+?)\s*:/g)].map((m) => m[1]!)
       .filter((s) => !s.includes('--') && !['xs', 'sm', 'base', 'lg', 'xl'].includes(s))
-    expect([...ROX_TEXT_SIZES].sort()).toEqual([...new Set(steps)].sort())
+    expect(([...ROX_TEXT_SIZES] as string[]).sort()).toEqual([...new Set(steps)].sort())
   })
 
   it('requires tailwind-merge v3 (the `text` theme key) everywhere the shared cn() runs', () => {
