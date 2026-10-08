@@ -140,7 +140,11 @@ Rox process holds a lock (`.server.lock`, or the desktop app's `.app.lock`).
 
 The migration itself also defers while the desktop app or a server is running,
 and when `~/rox` already holds files that are not a Rox home (nothing is moved,
-merged or re-permissioned). Only `migrate-config` and the desktop app (once,
+merged or re-permissioned). A `~/rox` that is only a link into the legacy
+home is replaced by the real folder (the link itself is removed, never its
+target). When both folders hold different versions of a file, the unused one
+is kept under `~/rox/.migration/conflicts/<timestamp>/` (one folder per
+attempt; nothing there is ever overwritten). Only `migrate-config` and the desktop app (once,
 at launch, with the flag on) ever move files; other commands just read the
 current location.
 

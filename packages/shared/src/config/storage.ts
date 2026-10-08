@@ -850,9 +850,10 @@ export function backupConfigFile(): void {
 export function ensureConfigDir(): void {
   if (configDirInitialized) return;
 
-  // With `storage.visible-root.v1` ON, `resolveConfigDir()` runs
-  // `migrateHiddenRoxHome()` before any store opens (W1-13, MIG-13) and the
-  // visible home is private (0700). Flag OFF: main's mkdir, unchanged.
+  // `resolveConfigDir()` is read-only (W1-13, MIG-13): it never migrates.
+  // Only Electron main (after its single-instance lock) and an explicit
+  // `migrate-config` move `~/.rox` → `~/rox`. With `storage.visible-root.v1`
+  // ON a newly created home is private (0700). Flag OFF: main's mkdir, unchanged.
   const dir = resolveConfigDir();
   if (!existsSync(dir)) {
     mkdirSync(dir, isVisibleRoxHomeActive() ? { recursive: true, mode: 0o700 } : { recursive: true });
