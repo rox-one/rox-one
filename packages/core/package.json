@@ -39,7 +39,9 @@
     "./types": "./src/types/index.ts",
     "./utils": "./src/utils/index.ts",
     "./commands": "./src/commands/index.ts",
-    "./events": "./src/events/index.ts"
+    "./events": "./src/events/index.ts",
+    "./acl": "./src/acl/index.ts",
+    "./entities/permissions": "./src/entities/permissions.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

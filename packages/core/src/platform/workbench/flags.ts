@@ -65,6 +65,9 @@ export const WORKBENCH_FLAG = {
   // W1-03 (#1500)
   /** Command bus (W1-03) — local executor, outbox and workspace realtime client. Default OFF. */
   commandsBusV1: 'commands.bus.v1',
+  // W1-04 (#1501)
+  /** MIG-06 Dossier → contact-card export IPC (`directory:exportDossier`). Default OFF. */
+  contactsDossierExportV1: 'contacts.dossier-export.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -229,6 +232,8 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.entitiesLinksV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   // W1-03 (#1500): command bus — default OFF, inert until explicitly enabled.
   { id: WORKBENCH_FLAG.commandsBusV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  // W1-04 (#1501): Dossier export IPC — default OFF, inert until enabled.
+  { id: WORKBENCH_FLAG.contactsDossierExportV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   // Extra screens («Ещё»): workbench.mode.<id>.v1, default ON
   ...EXTRA_SCREEN_FEATURE_FLAGS,
   // W1-07 (#1504): unified mode screens + Docs relabel — default OFF, inert when off.
