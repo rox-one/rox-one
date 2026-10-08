@@ -157,8 +157,9 @@ export const COMMON_ROW_CONTEXT_MENU: readonly MenuItemSpec[] = [
 export function buildRowContextMenu(extra: readonly MenuItemSpec[] = []): MenuItemSpec[] {
   if (extra.length === 0) return [...COMMON_ROW_CONTEXT_MENU]
   const replacements = new Map(extra.map((item) => [item.id, item]))
-  const tail = COMMON_ROW_CONTEXT_MENU.filter((item) => item.id === 'entity.row.divider-2')
-  const head = COMMON_ROW_CONTEXT_MENU.filter((item) => item.id !== 'entity.row.divider-2')
+  const tailStart = COMMON_ROW_CONTEXT_MENU.findIndex((item) => item.id === 'entity.row.divider-2')
+  const head = COMMON_ROW_CONTEXT_MENU.slice(0, tailStart)
+  const tail = COMMON_ROW_CONTEXT_MENU.slice(tailStart)
   const additions = extra.filter((item) => !COMMON_ROW_CONTEXT_MENU.some((common) => common.id === item.id))
   const rendered = head.map((item) => replacements.get(item.id) ?? item)
   return [...rendered, ...additions, ...tail]
@@ -197,12 +198,12 @@ export const COUNTER_DISPLAY_CAP = 99
 export const COUNTER_QUERY_PREFIX = 'counter.'
 
 export function counterQueryName(id: string): string {
-  if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(id)) throw new Error(`Invalid counter id: ${String(id)}`)
+  if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9.-]*$/.test(id)) throw new Error(`Invalid counter id: ${String(id)}`)
   return `${COUNTER_QUERY_PREFIX}${id}`
 }
 
 export function isCounterQueryName(value: unknown): boolean {
-  return typeof value === 'string' && /^counter\.[a-z0-9][a-z0-9-]*$/.test(value)
+  return typeof value === 'string' && /^counter\.[a-z0-9][a-z0-9.-]*$/.test(value)
 }
 
 /** The `user:` topic a principal's counters actually travel on. */
@@ -277,7 +278,11 @@ export interface SidebarSection {
 }
 
 export interface SidebarHeaderCreate {
-  /** `+` runs the surface default. */
+  /**
+   * `+` runs the surface default. A domain command name *or* a renderer action
+   * id (`app.newChat`) — both use the same `<module>.<operation>` grammar, and
+   * the surface decides which registry resolves it.
+   */
   default: CommandType
   /** `▾` lists the surface's other create items (subset of the global create menu). */
   menu: CommandType[]
@@ -415,8 +420,12 @@ function lintTopBar(schema: TopBarSchema, issues: ChromeLintIssue[]): void {
 
   const left = schema.left ?? []
   if (new Set(left).size !== left.length) at('left-zone-unique', 'duplicate left-zone items')
+  let leftPrevious = -1
   for (const item of left) {
-    if (!(TOPBAR_LEFT_ZONE_ITEMS as readonly string[]).includes(item)) at('left-zone-item', `unknown left item: ${String(item)}`)
+    const index = (TOPBAR_LEFT_ZONE_ITEMS as readonly string[]).indexOf(item)
+    if (index < 0) { at('left-zone-item', `unknown left item: ${String(item)}`); continue }
+    if (index < leftPrevious) at('left-zone-order', `${item} is out of the §26.1 left order`)
+    leftPrevious = index
   }
 
   // Exactly one center control: a single value (never a list), and a views
