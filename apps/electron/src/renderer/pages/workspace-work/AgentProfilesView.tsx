@@ -4,7 +4,7 @@ import { Bot, Plus, RefreshCw, Star, Trash2 } from 'lucide-react'
 import type { AgentProfile, AgentProfileInput } from '@rox/shared/workspace-work'
 import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
 import { useQuery } from '@tanstack/react-query'
-import { roxQueryClient } from '@/lib/query/client'
+import { ROX_REVALIDATE_AFTER_MS, roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
 
 const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
@@ -28,10 +28,14 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
   const { snapshot } = work
   const [draft, setDraft] = useState<ProfileDraft | null>(null)
   // PERF-09: shared cache; sources/skills change events invalidate it (lib/query/event-bridge.ts).
+  // Stale-while-revalidate like every surface: a revisit paints the cached
+  // catalog and refetches in the background unless it was read < 10 s ago.
   const catalogQuery = useQuery({
     queryKey: roxKeys.agentsCatalog(workspaceId),
     queryFn: () => readCatalog(workspaceId),
     enabled: !!workspaceId,
+    staleTime: ROX_REVALIDATE_AFTER_MS,
+    refetchOnMount: true,
   }, roxQueryClient())
   const { data: catalogData, isError: catalogFailed } = catalogQuery
   const catalog = useMemo(() => ({

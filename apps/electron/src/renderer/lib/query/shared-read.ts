@@ -27,6 +27,25 @@ interface KeyState {
 
 const states = new WeakMap<QueryClient, Map<string, KeyState>>()
 
+/**
+ * Identity fence for every cache write, not only sharedRead's. An identity
+ * change bumps the epoch (resetSharedReads); a write captured before the
+ * change then no-ops, so the previous principal's data never lands in the
+ * freshly cleared cache.
+ */
+let writeEpoch = 0
+
+export function cacheWriteEpoch(): number {
+  return writeEpoch
+}
+
+/** setQueryData that drops the write when the identity changed since `epoch`. */
+export function fencedSetQueryData<T>(client: QueryClient, queryKey: QueryKey, value: T, epoch = writeEpoch): boolean {
+  if (epoch !== writeEpoch) return false
+  client.setQueryData(queryKey, value)
+  return true
+}
+
 export function sharedRead<T>(client: QueryClient, queryKey: QueryKey, read: () => Promise<T>, options: SharedReadOptions<T> = {}): Promise<T> {
   const hash = hashKey(queryKey)
   let byKey = states.get(client)
@@ -37,13 +56,14 @@ export function sharedRead<T>(client: QueryClient, queryKey: QueryKey, read: () 
   const entry = state
   if (options.join && entry.inflight) return entry.inflight.promise as Promise<T>
   const seq = ++entry.started
+  const epoch = writeEpoch
   const promise = (async () => {
     try {
       const value = await read()
-      if (states.get(client) === scope && seq > entry.written
+      if (epoch === writeEpoch && states.get(client) === scope && seq > entry.written
         && (options.replaces ? options.replaces(value, client.getQueryData<T>(queryKey)) : true)) {
         entry.written = seq
-        client.setQueryData(queryKey, value)
+        fencedSetQueryData(client, queryKey, value, epoch)
       }
       return value
     } finally {
@@ -55,5 +75,6 @@ export function sharedRead<T>(client: QueryClient, queryKey: QueryKey, read: () 
 }
 
 export function resetSharedReads(client: QueryClient): void {
+  writeEpoch++
   states.delete(client)
 }

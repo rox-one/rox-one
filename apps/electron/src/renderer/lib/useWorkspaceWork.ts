@@ -2,17 +2,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { WorkspaceWorkSnapshot } from '@rox/shared/workspace-work'
 import { getWorkspaceWorkClient, workspaceWorkFailure, type WorkspaceWorkErrorCode, type WorkspaceWorkMutation, type WorkspaceWorkRemoval } from './workspace-work-client'
 import { hashKey } from '@tanstack/react-query'
-import { roxQueryClient } from './query/client'
+import { isRecentlyRead, roxQueryClient } from './query/client'
 import { roxKeys } from './query/keys'
-import { sharedRead } from './query/shared-read'
+import { cacheWriteEpoch, fencedSetQueryData, sharedRead } from './query/shared-read'
+import { meetsAnnouncedRevision } from './query/workspace-work-revision'
 
 /**
  * PERF-09 (#1576): the snapshot lives in the shared query cache (memory only,
  * keyed by workspace), so Tasks, Plan, Agents and the auxiliary panel share
- * one read, and a revisit paints the last snapshot at once. A cached entry is
- * reused as-is while no newer revision was announced; otherwise it is shown
- * and revalidated in the background. Writes always start from a verified
- * revision.
+ * one read, and a revisit paints the last snapshot at once
+ * (stale-while-revalidate): the cached snapshot is shown and a background
+ * read starts unless the entry was read less than ROX_REVALIDATE_AFTER_MS
+ * ago and nothing newer was announced. Access flags, members and references
+ * change without a workspaceWork.CHANGED event, so a revisit never trusts
+ * an older snapshot without reading. Writes always start from a verified
+ * revision, and every cache write is fenced by the identity epoch.
  */
 function cachedSnapshot(workspaceId: string): WorkspaceWorkSnapshot | null {
   if (!workspaceId) return null
@@ -20,9 +24,17 @@ function cachedSnapshot(workspaceId: string): WorkspaceWorkSnapshot | null {
   return cached?.workspaceId === workspaceId ? cached : null
 }
 
+/** Read within the SWR window, not invalidated, and not older than the newest announced revision. */
 function cacheIsCurrent(workspaceId: string): boolean {
-  const state = roxQueryClient().getQueryState(roxKeys.workspaceWork(workspaceId))
-  return !!state && state.status === 'success' && !state.isInvalidated
+  const key = roxKeys.workspaceWork(workspaceId)
+  const client = roxQueryClient()
+  const cached = client.getQueryData<WorkspaceWorkSnapshot>(key)
+  return !!cached && isRecentlyRead(client, key) && meetsAnnouncedRevision(cached)
+}
+
+/** The cache entry only moves forward, and never to a revision older than one announced. */
+function replacesCached(next: WorkspaceWorkSnapshot, cached: WorkspaceWorkSnapshot | undefined): boolean {
+  return meetsAnnouncedRevision(next) && (!cached || cached.revision <= next.revision)
 }
 
 export function useWorkspaceWork(workspaceId: string) {
@@ -36,27 +48,34 @@ export function useWorkspaceWork(workspaceId: string) {
     verified: false, inflight: null as Promise<void> | null,
   }), [workspaceId])
 
-  const accept = useCallback((next: WorkspaceWorkSnapshot) => {
+  /**
+   * `epoch` is the identity epoch captured when the read or mutation began:
+   * the cache write is dropped when the identity changed meanwhile (the
+   * cache was cleared for the new principal). Without an epoch (the value
+   * came from the cache itself) nothing is written.
+   */
+  const accept = useCallback((next: WorkspaceWorkSnapshot, epoch?: number) => {
     if (!scope.active || next.workspaceId !== scope.workspaceId) return
     if (current.current?.workspaceId === next.workspaceId && current.current.revision > next.revision) return
     current.current = next
     setSnapshot(next)
+    if (epoch === undefined) return
     const client = roxQueryClient()
     const key = roxKeys.workspaceWork(scope.workspaceId)
-    const cached = client.getQueryData<WorkspaceWorkSnapshot>(key)
-    if (!cached || cached.revision <= next.revision) client.setQueryData(key, next)
+    if (replacesCached(next, client.getQueryData<WorkspaceWorkSnapshot>(key))) fencedSetQueryData(client, key, next, epoch)
   }, [scope])
 
   const load = useCallback(async (options: { join?: boolean; minRevision?: number } = {}) => {
     if (!scope.active) return
     const request = ++scope.request
+    const epoch = cacheWriteEpoch()
     setLoading(true)
     const run = (async () => {
       try {
         const client = roxQueryClient()
         const key = roxKeys.workspaceWork(scope.workspaceId)
         const read = (join: boolean) => sharedRead(client, key, () => getWorkspaceWorkClient(scope.workspaceId).read(), {
-          join, replaces: (next, cached) => !cached || cached.revision <= next.revision,
+          join, replaces: replacesCached,
         })
         // A mount read joins one already in flight (two views, one RPC); a
         // read that started before the announced revision cannot answer for it.
@@ -66,7 +85,7 @@ export function useWorkspaceWork(workspaceId: string) {
         }
         if (!scope.active || scope.request !== request) return
         scope.verified = true
-        accept(next)
+        accept(next, epoch)
         setError(null)
       } catch (failure) {
         if (scope.active && scope.request === request) setError(workspaceWorkFailure(failure))
@@ -85,10 +104,11 @@ export function useWorkspaceWork(workspaceId: string) {
     current.current = cached
     setSnapshot(cached); setPending(false); setError(null)
     if (cached && cacheIsCurrent(scope.workspaceId)) {
-      // Nothing newer was announced since this snapshot was read.
+      // Read moments ago and nothing newer was announced: no second read.
       scope.verified = true
       setLoading(false)
     } else {
+      // Paint the cached snapshot (if any) and revalidate in the background.
       void load({ join: true })
     }
     let off: (() => void) | undefined
@@ -112,13 +132,14 @@ export function useWorkspaceWork(workspaceId: string) {
     const before = current.current
     if (!scope.active || scope.pending || !before || before.workspaceId !== scope.workspaceId) return false
     scope.pending = true; setPending(true); setError(null)
+    const epoch = cacheWriteEpoch()
     try {
       const client = getWorkspaceWorkClient(scope.workspaceId)
       const result = remove
         ? await client.remove(expectedRevision ?? before.revision, input as WorkspaceWorkRemoval)
         : await client.write(expectedRevision ?? before.revision, input as WorkspaceWorkMutation)
       if (!scope.active) return false
-      accept(result.snapshot)
+      accept(result.snapshot, epoch)
       return true
     } catch (failure) {
       if (!scope.active) return false

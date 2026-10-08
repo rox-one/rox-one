@@ -3,6 +3,7 @@ import type { ElectronAPI } from '../../../shared/types'
 import type { WorkspaceWorkSnapshot } from '@rox/shared/workspace-work'
 import { queryKeyDomain, queryKeyWorkspace, roxKeys, type InboxQuerySource, type RoxQueryDomain } from './keys'
 import { resetSharedReads } from './shared-read'
+import { announceWorkspaceWorkRevision, resetAnnouncedWorkspaceWorkRevisions } from './workspace-work-revision'
 
 export type RoxQueryEventAPI = Partial<Pick<ElectronAPI,
   | 'onWorkspaceWorkChanged'
@@ -47,6 +48,9 @@ export function startRoxQueryEventBridge(client: QueryClient, api: RoxQueryEvent
   }
 
   on(api.onWorkspaceWorkChanged, (workspaceId: string, revision: number) => {
+    // Remembered even without an entry: a read already in flight that
+    // resolves with an older revision must not become "current".
+    announceWorkspaceWorkRevision(workspaceId, revision)
     const key = roxKeys.workspaceWork(workspaceId)
     const cached = client.getQueryData<WorkspaceWorkSnapshot>(key)
     if (!cached || !(cached.revision >= revision)) void client.invalidateQueries({ queryKey: key, exact: true })
@@ -67,6 +71,7 @@ export function startRoxQueryEventBridge(client: QueryClient, api: RoxQueryEvent
   on(api.onReconnected, () => { void client.invalidateQueries() })
   on(api.onIdentityChanged, () => {
     resetSharedReads(client)
+    resetAnnouncedWorkspaceWorkRevisions()
     client.clear()
     options.onIdentityChanged?.()
   })

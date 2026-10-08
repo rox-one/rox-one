@@ -91,6 +91,7 @@ import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
 import { toErrorMessage } from '@/lib/errors'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
+import { cacheWriteEpoch, fencedSetQueryData } from '@/lib/query/shared-read'
 
 /** PERF-09: last list per (workspace, actor), memory only; the page revalidates on mount. */
 function cachedFeed(workspaceId: string | null, caller: FeedCaller): FeedListResult | null {
@@ -286,11 +287,13 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       setLoadError('unavailable')
       return
     }
+    const epoch = cacheWriteEpoch()
     try {
       const res = await api.feedList(workspaceId)
       if (generation !== loadGeneration.current || !current()) return
       setData(res ?? EMPTY)
-      if (workspaceId) roxQueryClient().setQueryData(roxKeys.feed(workspaceId, caller.preferenceKey), res ?? EMPTY)
+      // Fenced: an identity change during the read drops the cache write.
+      if (workspaceId) fencedSetQueryData(roxQueryClient(), roxKeys.feed(workspaceId, caller.preferenceKey), res ?? EMPTY, epoch)
       setSourceDataWorkspaceId(workspaceId)
       setLoadError(null)
     } catch (e) {
