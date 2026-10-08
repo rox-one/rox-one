@@ -96,7 +96,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const { items, state, setState, counts, now, loaded, loading, errors, staleSources, reload, workspaceId, shell, sessions, actorContext, actorContextRef: contextRef } = useInboxItems({ withRemote: true, teamInbox, teamActorKey })
   const [preferences, setPreferences] = useAtom(inboxPreferencesAtom)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<InboxPageFilter>('decisions')
+  const [filter, setFilter] = useState<InboxPageFilter>('all')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [bulkAction, setBulkAction] = useState<'read' | 'archive' | null>(null)
   const [bulkFailures, setBulkFailures] = useState<Record<string, string>>({})
