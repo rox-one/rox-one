@@ -28,6 +28,44 @@ import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registr
 import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
 import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
+import { isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
+
+/**
+ * Entity-route gate (W1-02, product decision).
+ *
+ * The kind-first entity routes are inert unless `entities.links.v1` is on.
+ * The renderer sets the override from its workbench flag atom; tests use the
+ * setter. Without an override, the env `CRAFT_FEATURE_ENTITIES_LINKS`
+ * applies (default OFF). With the flag off, `rox://goals/goal/x`,
+ * `rox://docs/file/x` etc. are rejected exactly as on main.
+ */
+let entityRoutesOverride: boolean | undefined
+
+export function setEntityRoutesEnabled(enabled: boolean): void {
+  entityRoutesOverride = enabled
+}
+
+export function resetEntityRoutesEnabled(): void {
+  entityRoutesOverride = undefined
+}
+
+export function isEntityRoutesEnabled(): boolean {
+  if (entityRoutesOverride !== undefined) return entityRoutesOverride
+  return isEntitiesLinksEnabled()
+}
+
+/** Prefixes that only exist for the kind-first entity routes (no legacy owner). */
+const ENTITY_ONLY_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
+  'docs',
+  'messenger',
+  'calendar',
+  'goals',
+  'contacts',
+  'workflows',
+  'base',
+  'forms',
+  'comments',
+])
 
 // =============================================================================
 // Route Types
@@ -100,7 +138,14 @@ export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
+  if (ENTITY_ONLY_ROUTE_PREFIXES.has(firstSegment)) return isEntityRoutesEnabled()
   return COMPOUND_ROUTE_PREFIXES.includes(firstSegment)
+}
+
+/** Flag-aware prefix check for deep-link acceptance (`rox://<prefix>/...`). */
+export function isCompoundRoutePrefix(prefix: string): boolean {
+  if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) return isEntityRoutesEnabled()
+  return (COMPOUND_ROUTE_PREFIXES as readonly string[]).includes(prefix)
 }
 
 function splitRouteQuery(route: string): [string, string | undefined] {
@@ -136,15 +181,17 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
 
   const first = segments[0]
 
-  // Kind-first entity routes (W1-01). Tried before the legacy branches so the
-  // new shapes win for shared prefixes (tasks/list, projects/milestone, …); a
-  // non-match falls through and legacy parsing keeps owning its own routes.
-  const entity = parseEntityRoute(route)
-  if (entity) {
-    return {
-      navigator: 'entity',
-      details: { type: 'entity', id: formatEntityRef(entity.ref) },
-      entityRef: entity.ref,
+  // Kind-first entity routes (W1-01). Gated behind `entities.links.v1`: with
+  // the flag off the legacy branches below keep owning their own routes and
+  // the new shapes are rejected exactly as on main.
+  if (isEntityRoutesEnabled()) {
+    const entity = parseEntityRoute(route)
+    if (entity) {
+      return {
+        navigator: 'entity',
+        details: { type: 'entity', id: formatEntityRef(entity.ref) },
+        entityRef: entity.ref,
+      }
     }
   }
 
@@ -1029,7 +1076,7 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
   const rightSidebar = parseRightSidebarParam(sidebarParam)
   if (rightSidebar) unavailable.rightSidebar = rightSidebar
   try {
-    if ((route.includes('#') && !isEntityCompoundRoute(route)) || /[\u0000-\u001f\u007f]/.test(route)) return unavailable
+    if ((route.includes('#') && !(isEntityRoutesEnabled() && isEntityCompoundRoute(route))) || /[\u0000-\u001f\u007f]/.test(route)) return unavailable
     // Some legacy routes retain encoded slugs, but malformed encoding is never
     // a valid entity address, even when that parser branch does not decode it.
     const path = route.split('?')[0]

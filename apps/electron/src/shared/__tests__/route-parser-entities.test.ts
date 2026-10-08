@@ -5,7 +5,7 @@
  * compound pair and the NavigationState pair, and is recognised as a compound
  * route. Legacy routes keep their own navigators (no stealing).
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
 import {
   isCompoundRoute,
   parseCompoundRoute,
@@ -15,6 +15,8 @@ import {
   buildRouteFromNavigationState,
   resolveRouteNavigationState,
   degradeSurfaceNavigationState,
+  setEntityRoutesEnabled,
+  resetEntityRoutesEnabled,
   type NavigatorType,
 } from '../route-parser'
 import { isEntityCompoundRoute, parseEntityRoute } from '../entity-routes'
@@ -77,6 +79,9 @@ const cases: Case[] = [
 ]
 
 describe('entity routes: builders and parser', () => {
+  beforeEach(() => setEntityRoutesEnabled(true))
+  afterEach(() => resetEntityRoutesEnabled())
+
   test('builders emit the canonical route, including the fragment forms', () => {
     for (const { label, route, build } of cases) {
       expect(build(), label).toBe(route)
@@ -151,6 +156,9 @@ describe('entity routes: legacy routes are not stolen', () => {
 })
 
 describe('entity routes: malformed shapes stay unavailable', () => {
+  beforeEach(() => setEntityRoutesEnabled(true))
+  afterEach(() => resetEntityRoutesEnabled())
+
   const malformed = [
     'goals', 'goals/goal', 'goals/goal/g-1/extra', 'goals/goal/g-1#x-1', 'goals/goal/g-1#t-',
     'goals/space/s-1/kpisx', 'goals/okrs', 'goals/okrs?cycle=', 'goals/okrs?other=1',

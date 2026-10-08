@@ -1,12 +1,15 @@
 /**
  * Reviewer fix #7 — ids carrying `#`/`%` round-trip through refs and routes.
  */
-import { describe, test, expect } from 'bun:test'
+import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
 import { formatEntityRef, parseEntityRef } from '@rox/core/entities'
 import { parseEntityRoute } from '../entity-routes'
-import { buildCompoundRoute, parseCompoundRoute } from '../route-parser'
+import { buildCompoundRoute, parseCompoundRoute, resetEntityRoutesEnabled, setEntityRoutesEnabled } from '../route-parser'
 
 describe('entity id escaping round-trips through the route parser', () => {
+  beforeEach(() => setEntityRoutesEnabled(true))
+  afterEach(() => resetEntityRoutesEnabled())
+
   test('task ids with # and % survive format/parse and the entity route', () => {
     for (const id of ['a#b', '100%', 'a#100%b']) {
       const literal = formatEntityRef({ kind: 'task', id })

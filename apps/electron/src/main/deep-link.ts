@@ -44,7 +44,7 @@ import type { WindowManager } from './window-manager'
 import { RPC_CHANNELS } from '../shared/types'
 import type { EventSink } from '@rox/server-core/transport'
 import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
-import { COMPOUND_ROUTE_PREFIXES } from '../shared/route-parser'
+import { isCompoundRoutePrefix } from '../shared/route-parser'
 import { parseRuntimeMapLinkUrl } from '../shared/runtime-map-link'
 
 export interface DeepLinkTarget {
@@ -138,9 +138,10 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
 
     // Compound route prefixes — shared with the renderer route parser so every
     // navigable view (home, tasks, notes, meetings, knowledge, projects, …)
-    // is reachable via rox://<route>.
+    // is reachable via rox://<route>. Entity-only prefixes (docs, goals, …)
+    // are gated behind `entities.links.v1` via isCompoundRoutePrefix.
     // rox://allSessions/..., rox://settings/..., etc. (compound routes)
-    if (COMPOUND_ROUTE_PREFIXES.includes(host)) {
+    if (isCompoundRoutePrefix(host)) {
       // Reconstruct the full compound route from host + pathname
       const viewRoute = withViewQuery(`${host}${parsed.pathname}`, parsed)
       return {
@@ -165,7 +166,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
 
       // Parse compound routes: /workspace/{id}/{compoundRoute}
       // e.g., /workspace/ws123/allSessions/session/abc123
-      if (routeType && COMPOUND_ROUTE_PREFIXES.includes(routeType)) {
+      if (routeType && isCompoundRoutePrefix(routeType)) {
         const viewRoute = withViewQuery(pathParts.slice(1).join('/'), parsed)
         result.view = viewRoute
         return result

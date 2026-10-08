@@ -100,6 +100,16 @@ function redactPreviewForWire(preview: EntityPreview): EntityPreview {
 export interface EntitiesHandlerRuntime {
   /** Host-provided workspace lookup (tests pass a fixed map). */
   workspaceFor?: (id: string) => { id: string; rootPath: string } | null
+  /**
+   * Enabled workbench flags for this host (user-toggleable). When it contains
+   * `entities.links.v1` the subsystem is enabled; `CRAFT_FEATURE_ENTITIES_LINKS`
+   * remains as an explicit env override (see `isEntitiesLinksEnabled`).
+   */
+  enabledWorkbenchFlags?: ReadonlySet<string>
+}
+
+function isEnabled(runtime: EntitiesHandlerRuntime): boolean {
+  return isEntitiesLinksEnabled(runtime.enabledWorkbenchFlags)
 }
 
 function actorFor(ctx: RequestContext): Actor {
@@ -118,7 +128,7 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
 
   server.handle(RPC_CHANNELS.entities.LINKS, async (ctx, workspaceId: string, input: unknown): Promise<EntitiesLinksResult> => {
     const request: EntityLinksRequest = entityLinksRequestSchema.parse(input)
-    if (!isEntitiesLinksEnabled()) {
+    if (!isEnabled(runtime)) {
       if (request.op === 'add' || request.op === 'remove') return { ok: false, reason: 'disabled' }
       return request.op === 'outgoing'
         ? { ok: true, op: 'outgoing', links: [] }
@@ -163,7 +173,7 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
 
   server.handle(RPC_CHANNELS.entities.RESOLVE, async (ctx, workspaceId: string, input: unknown): Promise<EntityPreview[]> => {
     const request = entityResolveRequestSchema.parse(input)
-    if (!isEntitiesLinksEnabled()) return request.refs.map(ref => unavailablePreview(ref))
+    if (!isEnabled(runtime)) return request.refs.map(ref => unavailablePreview(ref))
     const previews = await hostForWorkspace(workspaceId).resolve(request.refs, actorFor(ctx))
     return previews.map(redactPreviewForWire)
   }, { nativeAction: 'read' })

@@ -108,17 +108,31 @@ export function isNativeIndexWatchEnabled(): boolean {
 }
 
 /**
+ * Workbench flag id for the entity links subsystem.
+ * Mirrors `WORKBENCH_FLAG.entitiesLinksV1` in
+ * `packages/core/src/platform/workbench/flags.ts` (kept as a literal here
+ * so `@rox/shared` stays free of the platform import graph).
+ */
+export const ENTITIES_LINKS_WORKBENCH_FLAG = 'entities.links.v1';
+
+/**
  * Runtime-evaluated check for the entity links subsystem (W1-02: link store,
  * resolver, `rox://` deep-link targets).
  *
  * Server-evaluated — same shape as `isPagesSharingEnabled`: the renderer gates
  * its UI on the `entities.links.v1` workbench flag and learns the server-side
- * state from the RPC responses. Defaults to DISABLED; override with
- * CRAFT_FEATURE_ENTITIES_LINKS=1|0.
+ * state from the RPC responses. The user-toggleable workbench flag controls
+ * the default; `CRAFT_FEATURE_ENTITIES_LINKS=1|0` remains as an explicit
+ * env override. Defaults to DISABLED.
+ *
+ * Pass the enabled workbench flag set when the caller tracks it (server
+ * handlers receive it via runtime; the renderer passes its atom state).
+ * Without a set, only the env override applies (still default OFF).
  */
-export function isEntitiesLinksEnabled(): boolean {
+export function isEntitiesLinksEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
   const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_ENTITIES_LINKS'));
   if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(ENTITIES_LINKS_WORKBENCH_FLAG)) return true;
   return false;
 }
 

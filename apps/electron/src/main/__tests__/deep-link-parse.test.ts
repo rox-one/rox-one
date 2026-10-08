@@ -1,12 +1,32 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
 import { parseDeepLink } from '../deep-link'
-import { COMPOUND_ROUTE_PREFIXES, parseRouteToNavigationState } from '../../shared/route-parser'
+import {
+  COMPOUND_ROUTE_PREFIXES,
+  parseRouteToNavigationState,
+  resetEntityRoutesEnabled,
+  setEntityRoutesEnabled,
+} from '../../shared/route-parser'
+
+const ENTITY_ONLY_PREFIXES = new Set([
+  'docs',
+  'messenger',
+  'calendar',
+  'goals',
+  'contacts',
+  'workflows',
+  'base',
+  'forms',
+  'comments',
+])
 
 /**
  * rox://<route> must accept every view route the renderer navigator knows,
  * not just the historical allSessions/flagged/state/sources/settings/skills.
  */
 describe('parseDeepLink view routes', () => {
+  beforeEach(() => setEntityRoutesEnabled(true))
+  afterEach(() => resetEntityRoutesEnabled())
+
   const NAVIGATOR_ROUTES = [
     'home',
     'tasks',
@@ -50,8 +70,24 @@ describe('parseDeepLink view routes', () => {
 
   it('accepts every shared compound prefix', () => {
     for (const prefix of COMPOUND_ROUTE_PREFIXES) {
+      if (ENTITY_ONLY_PREFIXES.has(prefix)) continue
       expect(parseDeepLink(`rox://${prefix}`)?.view).toBe(prefix)
     }
+  })
+
+  it('gates entity-only deep links behind entities.links.v1', () => {
+    setEntityRoutesEnabled(false)
+    expect(parseDeepLink('rox://goals/goal/g-1')).toBeNull()
+    expect(parseDeepLink('rox://docs/file/f-1')).toBeNull()
+    // Workspace-targeted entity routes carry no view when off (as on main).
+    expect(parseDeepLink('rox://workspace/ws1/goals/goal/g-1')?.view).toBeUndefined()
+    // Legacy routes stay accepted while entity routes are rejected.
+    expect(parseDeepLink('rox://tasks/task/t-1')?.view).toBe('tasks/task/t-1')
+
+    setEntityRoutesEnabled(true)
+    expect(parseDeepLink('rox://goals/goal/g-1')?.view).toBe('goals/goal/g-1')
+    expect(parseDeepLink('rox://docs/file/f-1')?.view).toBe('docs/file/f-1')
+    expect(parseDeepLink('rox://workspace/ws1/goals/goal/g-1')?.view).toBe('goals/goal/g-1')
   })
 
   it('supports workspace-targeted view routes', () => {
