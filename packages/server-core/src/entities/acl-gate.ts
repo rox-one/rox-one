@@ -16,7 +16,10 @@
  *
  * The local host uses `createLocalAcl()` (owner of everything), so with the
  * shim in place local behaviour is unchanged; a shared / remote host injects
- * the workspace ACL through `EntitiesHandlerRuntime.acl`.
+ * the workspace ACL AND its principal mapping through
+ * `EntitiesHandlerRuntime.acl` (async `{ acl, principalFor }`), so guests,
+ * principal status and placeholders resolve exactly as in the workspace
+ * service's `WorkspaceAcl.principalFor`.
  */
 
 import {
@@ -40,9 +43,21 @@ export const RESTRICTED_REF_ID = 'restricted'
 
 export interface EntityAclGate {
   acl: Acl
-  /** Map a resolver actor to an ACL principal in the gate's workspace. */
-  principalFor(actor: Actor): AclPrincipal
+  /**
+   * Map a resolver actor to an ACL principal in the gate's workspace. May be
+   * async: the injected mapping looks up `principal.kind` / `status`.
+   */
+  principalFor(actor: Actor): AclPrincipal | Promise<AclPrincipal>
 }
+
+/** What a host injects per workspace: the ACL and (optionally) its principal mapping. */
+export interface EntityAclRuntime {
+  acl: Acl
+  principalFor?(actor: Actor): AclPrincipal | Promise<AclPrincipal>
+}
+
+/** `EntitiesHandlerRuntime.acl`: per-workspace ACL runtime, sync or async. */
+export type EntityAclFactory = (workspaceId: string) => EntityAclRuntime | Promise<EntityAclRuntime>
 
 /** The process-wide local shim (single-user host: owner of everything). */
 const LOCAL_ACL: Acl = createLocalAcl()
@@ -51,8 +66,15 @@ export function principalForActor(workspaceId: string, actor: Actor): AclPrincip
   return { id: actor.id, workspaceId, kind: actor.kind === 'agent' ? 'bot' : 'human' }
 }
 
-export function createEntityAclGate(workspaceId: string, acl: Acl = LOCAL_ACL): EntityAclGate {
-  return { acl, principalFor: actor => principalForActor(workspaceId, actor) }
+export function createEntityAclGate(workspaceId: string, acl: Acl = LOCAL_ACL, principalFor?: EntityAclRuntime['principalFor']): EntityAclGate {
+  return { acl, principalFor: principalFor ?? (actor => principalForActor(workspaceId, actor)) }
+}
+
+/** Build the gate for a workspace from the (optional, possibly async) runtime factory. */
+export async function resolveEntityAclGate(workspaceId: string, factory?: EntityAclFactory): Promise<EntityAclGate> {
+  if (!factory) return createEntityAclGate(workspaceId)
+  const runtime = await factory(workspaceId)
+  return createEntityAclGate(workspaceId, runtime.acl, runtime.principalFor?.bind(runtime))
 }
 
 /** Wire-shaped `no_access` preview built through `restrictPreview` (no entity data). */
@@ -94,7 +116,7 @@ export async function resolveWithAcl(
   actor: Actor,
   resolveAllowed: (refs: EntityRef[]) => Promise<EntityPreview[]>,
 ): Promise<EntityPreview[]> {
-  const principal = gate.principalFor(actor)
+  const principal = await gate.principalFor(actor)
   const decisions = await gate.acl.evaluateMany(principal, 'view', refs)
   const allowedIdx: number[] = []
   for (let i = 0; i < refs.length; i++) if (decisions[i]!.preview !== 'none') allowedIdx.push(i)
@@ -112,14 +134,14 @@ function redactTarget(link: EntityLink): EntityLink {
 }
 
 async function sourceViewable(gate: EntityAclGate, actor: Actor, ref: EntityRef): Promise<boolean> {
-  const decision: AclDecision = await gate.acl.evaluate(gate.principalFor(actor), 'view', ref)
+  const decision: AclDecision = await gate.acl.evaluate(await gate.principalFor(actor), 'view', ref)
   return decision.allowed
 }
 
 /** Outgoing links of `source`: both ends viewable, or the target redacted; secret targets omitted. */
 export async function filterOutgoingLinks(gate: EntityAclGate, actor: Actor, source: EntityRef, links: readonly EntityLink[]): Promise<EntityLink[]> {
   if (!(await sourceViewable(gate, actor, source))) return []
-  const decisions = await gate.acl.evaluateMany(gate.principalFor(actor), 'view', links.map(link => link.to))
+  const decisions = await gate.acl.evaluateMany(await gate.principalFor(actor), 'view', links.map(link => link.to))
   const out: EntityLink[] = []
   links.forEach((link, i) => {
     const visibility = listingVisibility(decisions[i]!)
@@ -132,7 +154,7 @@ export async function filterOutgoingLinks(gate: EntityAclGate, actor: Actor, sou
 /** Backlinks of `target`: the target must be viewable; unviewable sources are omitted. */
 export async function filterBacklinks(gate: EntityAclGate, actor: Actor, target: EntityRef, links: readonly EntityLink[]): Promise<EntityLink[]> {
   if (!(await sourceViewable(gate, actor, target))) return []
-  const decisions = await gate.acl.evaluateMany(gate.principalFor(actor), 'view', links.map(link => link.from))
+  const decisions = await gate.acl.evaluateMany(await gate.principalFor(actor), 'view', links.map(link => link.from))
   const out: EntityLink[] = []
   links.forEach((link, i) => {
     const visibility = listingVisibility(decisions[i]!)
@@ -143,5 +165,5 @@ export async function filterBacklinks(gate: EntityAclGate, actor: Actor, target:
 
 /** Link writes require `edit` on the source. */
 export async function canWriteLink(gate: EntityAclGate, actor: Actor, from: EntityRef): Promise<boolean> {
-  return gate.acl.can(gate.principalFor(actor), 'edit', from)
+  return gate.acl.can(await gate.principalFor(actor), 'edit', from)
 }

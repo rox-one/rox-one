@@ -27,8 +27,13 @@ import { closeEntityLinkStores, getEntityLinkStore } from '../../entities/link-s
 import { DefaultResolverHost } from '../../entities/resolver-host.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 // W1-04 (#1501): every resolve / link listing / link write is ACL-checked.
-import type { Acl } from '@rox/core/acl'
-import { canWriteLink, createEntityAclGate, filterBacklinks, filterOutgoingLinks } from '../../entities/acl-gate.ts'
+import {
+  canWriteLink,
+  filterBacklinks,
+  filterOutgoingLinks,
+  resolveEntityAclGate,
+  type EntityAclFactory,
+} from '../../entities/acl-gate.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.entities.LINKS, RPC_CHANNELS.entities.RESOLVE] as const
 
@@ -48,16 +53,22 @@ export type EntitiesLinksResult =
 const resolverRegistrations: Resolver[] = []
 const hostsByWorkspace = new Map<string, DefaultResolverHost>()
 // W1-04 (#1501): the ACL gate is installed once, when the host is created; a
-// host is rebuilt only if a different runtime ACL factory registers.
-const hostAclFactory = new WeakMap<DefaultResolverHost, ((workspaceId: string) => Acl) | undefined>()
+// host is rebuilt only if a different runtime ACL factory registers, or if
+// building its (async) gate failed — the next request then retries.
+const hostAclFactory = new WeakMap<DefaultResolverHost, EntityAclFactory | undefined>()
 
-function hostForWorkspace(workspaceId: string, acl?: (workspaceId: string) => Acl): DefaultResolverHost {
+function hostForWorkspace(workspaceId: string, acl?: EntityAclFactory): DefaultResolverHost {
   let host = hostsByWorkspace.get(workspaceId)
   if (!host || hostAclFactory.get(host) !== acl) {
-    host = new DefaultResolverHost({ acl: createEntityAclGate(workspaceId, acl?.(workspaceId)) })
-    for (const resolver of resolverRegistrations) host.register(resolver)
-    hostsByWorkspace.set(workspaceId, host)
-    hostAclFactory.set(host, acl)
+    const gate = resolveEntityAclGate(workspaceId, acl)
+    const created = new DefaultResolverHost({ acl: gate })
+    gate.catch(() => {
+      if (hostsByWorkspace.get(workspaceId) === created) hostsByWorkspace.delete(workspaceId)
+    })
+    for (const resolver of resolverRegistrations) created.register(resolver)
+    hostsByWorkspace.set(workspaceId, created)
+    hostAclFactory.set(created, acl)
+    host = created
   }
   return host
 }
@@ -136,11 +147,13 @@ export interface EntitiesHandlerRuntime {
    */
   enabledWorkbenchFlags?: ReadonlySet<string> | (() => ReadonlySet<string> | undefined)
   /**
-   * W1-04 (#1501): ACL for a workspace. Defaults to the local single-user
-   * shim (`createLocalAcl`, owner of everything) so local behaviour is
-   * unchanged; shared / remote hosts inject the workspace ACL here.
+   * W1-04 (#1501): ACL runtime for a workspace — `{ acl, principalFor }`,
+   * sync or async. Defaults to the local single-user shim (`createLocalAcl`,
+   * owner of everything) so local behaviour is unchanged; shared / remote
+   * hosts inject the workspace ACL and its principal mapping (guest kind,
+   * status, placeholders — as `WorkspaceAcl.principalFor`) here.
    */
-  acl?: (workspaceId: string) => Acl
+  acl?: EntityAclFactory
 }
 
 function resolveEnabledFlags(runtime: EntitiesHandlerRuntime): ReadonlySet<string> | undefined {
@@ -179,7 +192,7 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
         : { ok: true, op: 'backlinks', links: [] }
     }
     const workspace = requireWorkspace(ctx, workspaceId)
-    const gate = createEntityAclGate(workspace.id, runtime.acl?.(workspace.id))
+    const gate = await resolveEntityAclGate(workspace.id, runtime.acl)
     if ((request.op === 'add' || request.op === 'remove') && !(await canWriteLink(gate, actorFor(ctx), request.from))) {
       throw new CodedError('FORBIDDEN', 'Entity link access denied')
     }

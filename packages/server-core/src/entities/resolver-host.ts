@@ -29,8 +29,11 @@ export interface ResolverHostOptions {
   cacheTtlMs?: number
   /** Max refs per resolver call (default 100). */
   batchSize?: number
-  /** W1-04 (#1501): ACL gate; every resolve is checked per ref via `acl.evaluate`. */
-  acl?: EntityAclGate
+  /**
+   * W1-04 (#1501): ACL gate (or a pending one — the injected runtime may be
+   * async); every resolve is checked per ref via `acl.evaluate`.
+   */
+  acl?: EntityAclGate | Promise<EntityAclGate>
 }
 
 function unavailablePreview(ref: EntityRef): EntityPreview {
@@ -62,7 +65,7 @@ export class DefaultResolverHost implements ResolverHost {
   private readonly cache: EntityResolutionCache
   private readonly remoteResolve?: (refs: EntityRef[], actor: Actor) => Promise<EntityPreview[]>
   private readonly batchSize: number
-  private readonly aclGate?: EntityAclGate
+  private readonly aclGate?: EntityAclGate | Promise<EntityAclGate>
 
   constructor(options: ResolverHostOptions = {}) {
     this.cache = new EntityResolutionCache(options.cacheCapacity ?? 5000, options.cacheTtlMs ?? 60_000)
@@ -89,7 +92,7 @@ export class DefaultResolverHost implements ResolverHost {
   async resolve(refs: EntityRef[], actor: Actor): Promise<EntityPreview[]> {
     // W1-04 (#1501): previews are computed with the viewer's rights. Denied
     // refs never reach a resolver; the cache below only ever sees allowed refs.
-    if (this.aclGate) return resolveWithAcl(this.aclGate, refs, actor, allowed => this.resolveUnchecked(allowed, actor))
+    if (this.aclGate) return resolveWithAcl(await this.aclGate, refs, actor, allowed => this.resolveUnchecked(allowed, actor))
     return this.resolveUnchecked(refs, actor)
   }
 
