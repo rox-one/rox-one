@@ -39,6 +39,10 @@ when the fix lands.
 | `rox/no-raw-error-render` (all) | no `presentError` yet | #1569 (UI-A3) |
 | `rox/prefer-primitives` `rawCheckbox` | no Checkbox primitive yet | #1592 (UI-C1) |
 
+Ungating is a weakening: adding a rule or messageId to `UNGATED` (or widening a list to the whole
+rule) fails the PR versus the base baseline until an owner adds the `ui-baseline-override` label,
+and `--check` fails while `UNGATED` and this file's `ungated` section disagree (run `--update`).
+
 `<select>`, `role="tab"`, raw tooltips and fixed overlays stay gated: Select, Tabs, Tooltip and
 Dialog primitives exist.
 
