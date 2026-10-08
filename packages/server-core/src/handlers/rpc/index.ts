@@ -71,6 +71,8 @@ import { registerBrowserPaneHandlers } from './browser-pane'
 import { registerBrowserProfileImportHandlers } from './browser-profile-import'
 import { registerEntitiesHandlers, type EntitiesHandlerRuntime } from './entities.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
+// W1-04 (#1501)
+import { registerDirectoryHandlers } from './directory.ts'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -154,5 +156,7 @@ export function registerCoreRpcHandlers(
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)
   registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
+  // W1-04 (#1501): Dossier export IPC (flag contacts.dossier-export.v1, default OFF).
+  registerDirectoryHandlers(server, deps, { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }

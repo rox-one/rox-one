@@ -475,6 +475,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.entities.LINKS,
   RPC_CHANNELS.entities.LINKS_CHANGED,
 
+  // W1-04 (#1501) — Dossier export writes the host's local contact store.
+  RPC_CHANNELS.directory.EXPORT_DOSSIER,
+
 ])
 
 // ---------------------------------------------------------------------------

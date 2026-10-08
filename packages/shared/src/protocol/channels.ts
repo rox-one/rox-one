@@ -1075,6 +1075,11 @@ export const RPC_CHANNELS = {
     /** Push: local link store changed for a workspace. */
     LINKS_CHANGED: 'entities:linksChanged',
   },
+  // W1-04 (#1501)
+  directory: {
+    /** MIG-06: one-shot export of the renderer Dossier payload into local contact cards. */
+    EXPORT_DOSSIER: 'directory:exportDossier',
+  },
 } as const
 
 // IPC_CHANNELS compat alias removed — all consumers now use RPC_CHANNELS
