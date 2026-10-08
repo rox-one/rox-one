@@ -24,6 +24,7 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
+import { resolveDisplayName } from '@/components/app-shell/profile-strip-account'
 import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
 import { MiniDashboardCards } from '@/components/app-shell/MiniDashboardCards'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -288,7 +289,7 @@ export default function AccountSettingsPage() {
     }
   }
 
-  const name = profile?.displayName || t('profile.defaultName')
+  const name = resolveDisplayName(cloudAccount, profile?.displayName, t('profile.defaultName'))
   const plan = profile?.plan ?? 'standard'
   const progressPct = Math.round((gamification?.progress ?? 0) * 100)
   const recent = gamification?.recentEvents ?? []

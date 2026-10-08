@@ -133,7 +133,7 @@ const shellReplies: Record<string, unknown> = {
   getUpdateInfo: { status: 'up-to-date' }, getLlmConnection: null, getDefaultLlmConnection: 'rox-kimi',
   getMemorySettings: { enabled: false }, getMemoryOnboardingStatus: { completed: false },
   getSessionOptions: { permissionMode: 'allow-all' }, getEnabledModelIds: [],
-  getGamificationProfile: { xp: 0, level: 1, progress: 0, balance: null, weeklyXp: { current: 0, previous: 0 }, quests: [], questRecords: [], ratings: [], analyticsConsent: false },
+  getGamificationProfile: { xp: 0, level: 1, progress: 0, balance: null, weeklyXp: { current: 0, previous: 0 }, quests: [], questRecords: [], ratings: [], analyticsConsent: true },
 }
 const emptyReads = new Set(['getSources', 'getSkills', 'getProjects', 'getLabels', 'getStatuses', 'getSessionStatuses', 'getWorkspaceSources', 'getWorkspaceSkills', 'getWorkspaceProjects', 'getWorkspaceLabels', 'getWorkspaceSessionStatuses', 'listLlmConnections', 'listLlmConnectionsWithStatus', 'getSessionTodo', 'getFeedSources', 'listOrganizations', 'getCustomThemes', 'getAutomations', 'getMemoryEntries', 'getNavigationHistory', 'getPluginRegistry', 'getPersonalTasks', 'listLabels', 'listViews', 'getPages'])
 for (const [method, entry] of Object.entries(CHANNEL_MAP)) {

@@ -485,7 +485,7 @@ export const mockElectronAPI = {
       { id: 'first_task' as const, status: 'available' as const },
     ],
     ratings: [],
-    analyticsConsent: false,
+    analyticsConsent: true,
   }),
   applyGamificationQuest: async (payload: unknown) => {
     console.log('[Playground] applyGamificationQuest', payload)
