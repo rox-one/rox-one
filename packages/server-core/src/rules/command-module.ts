@@ -20,7 +20,7 @@ import { CommandRejection, type CommandRegistry } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { DAILY_VAULT_FOLDER, dailyNoteId } from '@rox/core/docs/daily'
 import { systemListId } from '@rox/core/automation'
-import { AUTOMATION_COMMAND_SCHEMAS, appendDailyLinkRequestSchema, ensureDailyNoteRequestSchema } from '@rox/shared/automation'
+import { appendDailyLinkRequestSchema, ensureDailyNoteRequestSchema } from '@rox/shared/automation'
 import { referenceHandler, type ReferenceOp, type ReferenceTx } from '../work/reference/engine'
 import { addLink, authorizeBound, authorizeRef } from '../work/reference/ops'
 import { referenceBackendFor } from '../work/reference/module'
@@ -38,6 +38,10 @@ const ensureSystemList: ReferenceOp = async tx => {
   const id = tx.createId('system-list')
   const current = await tx.get('task-list', id)
   if (current) {
+    // An explicit id naming another principal's list is a create conflict
+    // (same rule as `identity.ensure_placeholder`); a retry of this very
+    // command finds its own row and is answered with `existed: true`.
+    if (tx.payload.id !== undefined && current.data.createdBy !== tx.actor) tx.createConflict(current.revision)
     return { collection: 'task-list', id, revision: current.revision, ref: { kind: 'task-list', id }, changes: [], result: { existed: true, systemKey } }
   }
   const name = typeof tx.payload.name === 'string' && tx.payload.name ? tx.payload.name : (SYSTEM_LIST_NAMES[systemKey] ?? systemKey)
@@ -119,8 +123,10 @@ const appendDailyLink: ReferenceOp = async tx => {
 export const AUTOMATION_COMMAND_MODULE: CommandModule = {
   name: 'automation',
   bind(registry: CommandRegistry) {
-    registry.bindSchema('task_lists.ensure_system_list', AUTOMATION_COMMAND_SCHEMAS['task_lists.ensure_system_list']!)
-    registry.bindSchema('notify.send_invite_email', AUTOMATION_COMMAND_SCHEMAS['notify.send_invite_email']!)
+    // `task_lists.ensure_system_list` / `notify.send_invite_email` schemas are part
+    // of `COMMAND_PAYLOAD_SCHEMAS` (`@rox/shared/domain`, module `automation`) and
+    // are bound by DOMAIN_SCHEMA_COMMAND_MODULE; only the daily-note pair is
+    // extended here, because §14.3 gives it the deterministic, in-place contract.
     registry.bindSchema('docs.ensure_daily_note', ensureDailyNoteRequestSchema)
     registry.bindSchema('docs.append_daily_link', appendDailyLinkRequestSchema)
 

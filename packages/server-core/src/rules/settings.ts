@@ -8,6 +8,7 @@
  * and enforcing the admin / per-user split of DATA-MODEL §5.16).
  */
 
+import { randomUUID } from 'node:crypto'
 import {
   RULE_IDS,
   defaultRuleSettings,
@@ -122,7 +123,7 @@ export class RuleSettingsService {
     const params = update.params ? validateRuleParams(id, update.params) : current?.params ?? {}
     const now = (this.options.now?.() ?? new Date()).toISOString()
     await this.options.store.upsert({
-      automationRuleId: current?.automationRuleId ?? this.options.newId?.() ?? `${this.options.workspaceId}:${id}:${principalId ?? 'workspace'}`,
+      automationRuleId: current?.automationRuleId ?? this.options.newId?.() ?? randomUUID(),
       ruleId: id,
       workspaceId: this.options.workspaceId,
       enabled: update.enabled ?? current?.enabled ?? true,
