@@ -372,6 +372,8 @@ bun test \
 - **Встречи**: подвкладка «Встречи» → `[data-testid="meetings-start"]` = «Начать запись» (706,91,119×28), «Импорт аудио», пустое состояние «Пока нет встреч. Начните запись с микрофона или импортируйте аудиофайл — транскрипт появится автоматически».
 - **Заметки**: список заметок, «Ежедневная заметка», «Импорт папки…», «Новая заметка».
 
+**Снимки живого прогона** (renderer через `Page.captureScreenshot`, `docs/evidence/ui-batch-20261008/`): `sessions-inspector-collapsed.png`, `settings-appearance.png`, `settings-account.png`, `meetings-recordings.png`, `topbar-browser-tab.png`, `profile-popover.png`.
+
 **Готчи живого прогона (для будущих QA-сессий).**
 - Второй инстанс с тем же `ROX_CONFIG_DIR` держит `.server.lock` → следующий запуск не поднимает локальный сервер: окно создаётся, но renderer пуст (CDP отвечает, `/json/list` пуст, в логе `Failed to initialize app: Another server instance is already running (PID …)`). Перед запуском снимать прежний `launchctl`-job и процесс по порту; лончер дополнительно удаляет lock с мёртвым pid.
 - Отладочный лог main-процесса включается `CRAFT_IS_PACKAGED=false` (в production-режиме транспорты `electron-log` выключены); флаг `--debug` в Electron 39 уходит в устаревший `node --debug` и даёт шум DEP0062 с петлёй релончей.
