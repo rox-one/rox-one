@@ -119,7 +119,6 @@ export {
 
 export {
   ActivityRendererRegistry,
-  rendererModuleOf,
   type ActivityRendererRegistration,
 } from './renderers-contract.ts'
 

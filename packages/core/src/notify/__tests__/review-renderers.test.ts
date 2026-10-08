@@ -14,7 +14,6 @@ import {
   groupReviewItems,
   isReviewOverdue,
   mergeReviewItems,
-  rendererModuleOf,
   reviewCounts,
   reviewGroupForKind,
   setNotifyCommandHost,
@@ -95,7 +94,6 @@ describe('activity renderer registry', () => {
     expect(renderers.forEvent('im.message.receive_v1')).toBeUndefined()
     expect(renderers.has('goals.goal_check_in')).toBe(true)
     expect(renderers.list()).toHaveLength(2)
-    expect(rendererModuleOf('goals.goal_check_in')).toBe('goals')
   })
 
   it('rejects a duplicate registration for one event type or module', () => {

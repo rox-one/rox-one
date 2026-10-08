@@ -10,11 +10,7 @@
  * dependencies while the lookup rules stay in one place.
  */
 
-/** `<module>.<action>` → `<module>`; a bare type is its own module. */
-export function rendererModuleOf(eventType: string): string {
-  const dot = eventType.indexOf('.')
-  return dot === -1 ? eventType : eventType.slice(0, dot)
-}
+import { moduleOfEventType } from './activity.ts'
 
 export interface ActivityRendererRegistration<R> {
   /** Stable id (diagnostics, duplicates, i18n keys). */
@@ -60,7 +56,7 @@ export class ActivityRendererRegistry<R> {
 
   /** Exact event type, then the module fallback; `undefined` when nothing handles it. */
   forEvent(eventType: string): ActivityRendererRegistration<R> | undefined {
-    return this.byEventType.get(eventType) ?? this.byModule.get(rendererModuleOf(eventType))
+    return this.byEventType.get(eventType) ?? this.byModule.get(moduleOfEventType(eventType))
   }
 
   has(eventType: string): boolean {
