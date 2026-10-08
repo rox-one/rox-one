@@ -4,7 +4,9 @@
  * DATA-MODEL §8.2 role sources, evaluated in order (the highest role wins):
  *   1. explicit `acl_entry` rows (subjects: principal | department | channel |
  *      space | workspace | link). On a secret resource the group subjects
- *      `space` / `workspace` are ignored ("Only invited people");
+ *      `space` / `workspace` are ignored ("Only invited people") — except a
+ *      `free_busy` grant on a calendar, which reveals free/busy only (folded
+ *      to `minimal`) and so still applies to a secret calendar;
  *   2. contextual role tags (owner, champion, reviewer, contributor, assignee);
  *   3. parent inheritance (folder → items, project → milestones / tasks,
  *      goal → targets / checks / check-ins, task-list → tasks, …), never into
@@ -45,18 +47,23 @@
  * while the principal is a member of that space: a champion removed from the
  * space keeps nothing beyond what the edges give.
  *
- * Space membership through the space chat counts only when joining that chat
- * was allowed: a chat-derived membership (`groups.channelIds`, or entries
- * marked `via: 'chat'`) is ignored for a space whose chat is public while the
- * space is not company-wide or is secret — a self-join there must never grant
- * the space. Likewise a chat in a non-company or secret space is never open
- * to the workspace: workspace-subject grants / presets on it are ignored.
+ * Join rule (one predicate, `chatEntriesCount`): chat-member-derived access
+ * counts only when joining that chat was allowed. On a space, the space-chat
+ * membership (`groups.channelIds` ∋ space chat, or entries marked
+ * `via: 'chat'`) is ignored when the space chat is public while the space is
+ * not company-wide or is secret — a self-join there must never grant the
+ * space. On a chat, its `via: 'chat'` entries — and every `channel`-subject
+ * grant naming it, anywhere — count only when the chat is invite-only or open
+ * to the workspace (no space, or a company-wide non-secret one); a missing /
+ * deleted chat counts for nothing. Likewise a chat in a non-company or secret
+ * space is never open to the workspace: workspace-subject grants / presets on
+ * it are ignored.
  *
  * Space membership (`isSpaceMember`) = active membership of the space chat
  * (`AclResourceNode.chatId` ∈ the principal's channels, subject to the join
  * rule above) OR an explicit
  * principal / department / channel grant on the space with a lattice role ≥
- * viewer. `minimal`, `free_busy`, `follower` (and `guest`) grants do not make
+ * viewer (a channel grant only through a chat that passes the join rule). `minimal`, `free_busy`, `follower` (and `guest`) grants do not make
  * anyone a space member.
  *
  * Hard denials come first and are never overridden by any grant:
@@ -214,6 +221,8 @@ type MaybePromise<T> = T | Promise<T>
  *   - `department_member`, `department.deleted_at`;
  *   - `chat_member` (role, state) — channel grants and space membership —
  *     and `chat.visibility`, `chat.deleted_at`;
+ *   - `calendar_member` rows (the canonical calendar share store, read as
+ *     calendar entries next to `acl_entry`);
  *   - contextual tags: owner / creator, `champion_id`, `reviewer_id`,
  *     `project_member`, `work_item_member`, `goal.creator_id`;
  *   - tree shape: parent_goal_id, project_id, milestone_id, parent_id,
@@ -367,6 +376,15 @@ export function spaceChatMembershipCounts(space: AclResourceNode): boolean {
  */
 export function carriesSecrecy(parentKind: EntityKind, childKind: EntityKind): boolean {
   return !(parentKind === 'goal' && (childKind === 'goal' || childKind === 'project'))
+}
+
+/**
+ * A stored group grant (space / workspace subject) that still applies on a
+ * secret resource: free/busy on a calendar reveals no content (owner decision,
+ * review 5 — "Show only free/busy" on a personal calendar).
+ */
+function survivesSecrecy(kind: EntityKind, role: AclStoredRole): boolean {
+  return kind === 'calendar' && role === 'free_busy'
 }
 
 /** Grants that confer space membership: a lattice role ≥ viewer (not minimal / follower / free_busy / guest). */
@@ -587,6 +605,44 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
     const policyOf = async (node: AclResourceNode): Promise<AclPolicyFact | null> =>
       (await source.policy(workspaceId, node.ref)) ?? node.defaultPolicy ?? null
 
+    // A chat may be open to the workspace (public: see / join) only when it has
+    // no space, or its space is company-wide and not secret (owner decision).
+    const chatOpenToWorkspace = async (chat: AclResourceNode): Promise<boolean> => {
+      for (const parentRef of chat.parents ?? []) {
+        if (parentRef.kind !== 'space') continue
+        const space = await loadNode(parentRef)
+        if (!space || space.privacy === 'invited' || space.companyWide !== true) return false
+      }
+      return true
+    }
+
+    // The single join predicate (review 5): do chat-member-derived facts on
+    // this node count? Space: per `spaceChatMembershipCounts`. Chat: only when
+    // invite-only or open to the workspace (a self-join of a public chat in a
+    // non-company / secret space grants nothing). Other kinds: always.
+    const chatEntriesCount = async (node: AclResourceNode): Promise<boolean> => {
+      if (node.ref.kind === 'space') return spaceChatMembershipCounts(node)
+      if (node.ref.kind === 'channel') return node.privacy === 'invited' || await chatOpenToWorkspace(node)
+      return true
+    }
+
+    // `groups.channelIds` filtered by the join rule: a `channel`-subject grant
+    // matches only through a chat whose entries count. A missing / deleted /
+    // foreign chat counts for nothing (fail closed).
+    const channelCache = new Map<string, Promise<boolean>>()
+    const inChannel = (chatId: string): Promise<boolean> => {
+      if (guest || !groups.channelIds.includes(chatId)) return Promise.resolve(false)
+      let hit = channelCache.get(chatId)
+      if (!hit) {
+        hit = (async () => {
+          const chat = await loadNode({ kind: 'channel', id: chatId })
+          return !!chat && await chatEntriesCount(chat)
+        })()
+        channelCache.set(chatId, hit)
+      }
+      return hit
+    }
+
     // Space membership: active space-chat member, or an explicit principal /
     // department / channel grant on the space with a lattice role ≥ viewer.
     const spaceMemberCache = new Map<string, Promise<boolean>>()
@@ -599,14 +655,14 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
           if (!space) return false
           // Chat-derived membership counts only if joining the space chat was allowed:
           // a public chat may be self-joined only for a company-wide, non-secret space.
-          const chatCounts = spaceChatMembershipCounts(space)
+          const chatCounts = await chatEntriesCount(space)
           if (chatCounts && space.chatId && groups.channelIds.includes(space.chatId)) return true
           for (const entry of await entriesOf(space)) {
             if (!grantsSpaceMembership(entry.role)) continue
             if (entry.via === 'chat' && !chatCounts) continue
             if (entry.subjectType === 'principal' && entry.subjectId === principal.id) return true
             if (entry.subjectType === 'department' && groups.departmentIds.includes(entry.subjectId)) return true
-            if (entry.subjectType === 'channel' && groups.channelIds.includes(entry.subjectId)) return true
+            if (entry.subjectType === 'channel' && await inChannel(entry.subjectId)) return true
           }
           return false
         })()
@@ -621,13 +677,13 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
     const chatMemberRole = async (chat: AclResourceNode): Promise<AclRole | null> => {
       let role: AclRole | null = null
       // Same join rule as on the chat itself (a self-join of a closed public chat grants nothing).
-      const chatEntriesCount = chat.privacy === 'invited' || await chatOpenToWorkspace(chat)
+      const counts = await chatEntriesCount(chat)
       for (const entry of await entriesOf(chat)) {
         const granted = effectiveRole(entry.role)
-        if (entry.via === 'chat' && !chatEntriesCount) continue
+        if (entry.via === 'chat' && !counts) continue
         if (entry.subjectType === 'principal' && entry.subjectId === principal.id) role = maxRole(role, granted)
         else if (!guest && entry.subjectType === 'department' && groups.departmentIds.includes(entry.subjectId)) role = maxRole(role, granted)
-        else if (!guest && entry.subjectType === 'channel' && groups.channelIds.includes(entry.subjectId)) role = maxRole(role, granted)
+        else if (!guest && entry.subjectType === 'channel' && await inChannel(entry.subjectId)) role = maxRole(role, granted)
       }
       return role
     }
@@ -672,28 +728,13 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
       return { secret: false, incomplete }
     }
 
-    // A chat may be open to the workspace (public: see / join) only when it has
-    // no space, or its space is company-wide and not secret (owner decision).
-    const chatOpenToWorkspace = async (chat: AclResourceNode): Promise<boolean> => {
-      for (const parentRef of chat.parents ?? []) {
-        if (parentRef.kind !== 'space') continue
-        const space = await loadNode(parentRef)
-        if (!space || space.privacy === 'invited' || space.companyWide !== true) return false
-      }
-      return true
-    }
-
     const roleOn = async (node: AclResourceNode, depth: number, visiting: Set<string>): Promise<RoleAccumulator> => {
       const acc: RoleAccumulator = { role: null, source: null }
       const policy = await policyOf(node)
       const secret = node.privacy === 'invited'
       const workspaceOpen = node.ref.kind !== 'channel' || await chatOpenToWorkspace(node)
-      // Chat-member entries (`via: 'chat'`) count only where joining was allowed:
-      // on a space, per `spaceChatMembershipCounts`; on a public chat, only if the
-      // chat is open to the workspace (no space, or a company-wide non-secret one).
-      const chatEntriesCount = node.ref.kind === 'space'
-        ? spaceChatMembershipCounts(node)
-        : node.ref.kind === 'channel' ? (secret || workspaceOpen) : true
+      // Chat-member entries (`via: 'chat'`) count only where joining was allowed (`chatEntriesCount`).
+      const viaChatCounts = await chatEntriesCount(node)
       const linkOk = LINK_SHAREABLE_KINDS.includes(node.ref.kind)
         && !!principal.linkToken && !linkExpired(policy, nowMs)
 
@@ -702,20 +743,20 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
         const role = effectiveRole(entry.role)
         switch (entry.subjectType) {
           case 'principal':
-            if (entry.via === 'chat' && !chatEntriesCount) break
+            if (entry.via === 'chat' && !viaChatCounts) break
             if (entry.subjectId === principal.id) raise(acc, role, 'explicit')
             break
           case 'department':
             if (!guest && groups.departmentIds.includes(entry.subjectId)) raise(acc, role, 'explicit')
             break
           case 'channel':
-            if (!guest && groups.channelIds.includes(entry.subjectId)) raise(acc, role, 'explicit')
+            if (await inChannel(entry.subjectId)) raise(acc, role, 'explicit')
             break
           case 'space':
-            if (!guest && !secret && await isSpaceMember(entry.subjectId)) raise(acc, role, 'explicit')
+            if (!guest && (!secret || survivesSecrecy(node.ref.kind, entry.role)) && await isSpaceMember(entry.subjectId)) raise(acc, role, 'explicit')
             break
           case 'workspace':
-            if (!guest && !secret && workspaceOpen && entry.subjectId === workspaceId) raise(acc, role, 'explicit')
+            if (!guest && (!secret || survivesSecrecy(node.ref.kind, entry.role)) && workspaceOpen && entry.subjectId === workspaceId) raise(acc, role, 'explicit')
             break
           case 'link':
             if (linkOk && entry.subjectId === principal.linkToken) raise(acc, role, 'link')

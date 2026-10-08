@@ -850,3 +850,104 @@ describe('space node role via chat membership (review 4)', () => {
     expect(await createAcl(f).evaluate(carl, 'comment', chatSpace)).toMatchObject({ allowed: true, role: 'commenter' })
   })
 })
+
+describe('channel-subject grants follow the chat join rule (review 5)', () => {
+  const closedSpace: EntityRef = { kind: 'space', id: 'sp-r5' }
+  const companySpace: EntityRef = { kind: 'space', id: 'sp-r5-co' }
+  const chatX: EntityRef = { kind: 'channel', id: 'ch-x' }
+  const sharedDoc: EntityRef = { kind: 'note', id: 'd-r5' }
+  const dave: AclPrincipal = { id: 'dave', workspaceId: WS }
+
+  /** dave self-joined chat X; X is shared on a doc, on a space and on a chat. */
+  function withChat(spaceNode: Partial<AclResourceNode>, chatNode: Partial<AclResourceNode> = {}): MemoryAclFacts {
+    const f = tree().setMember(WS, 'dave', { role: 'member' })
+    f.setResource({ ref: closedSpace, workspaceId: WS, chatId: 'ch-other', ...spaceNode })
+    f.setResource({ ref: companySpace, workspaceId: WS, companyWide: true })
+    f.setResource({ ref: chatX, workspaceId: WS, parents: [closedSpace], spaceId: 'sp-r5', ...chatNode })
+    f.setResource({ ref: sharedDoc, workspaceId: WS })
+    f.setGroups(WS, 'dave', { departmentIds: [], channelIds: ['ch-x'] })
+    f.grant(WS, sharedDoc, { subjectType: 'channel', subjectId: 'ch-x', role: 'editor' })
+    return f
+  }
+
+  it('a doc shared with chat X, public in a secret space, gives a self-joiner nothing', async () => {
+    const acl = createAcl(withChat({ privacy: 'invited', companyWide: true }))
+    expect(await acl.evaluate(dave, 'view', sharedDoc)).toMatchObject({ allowed: false, role: null })
+  })
+
+  it('… nor when X is public in a members-only space', async () => {
+    const acl = createAcl(withChat({ companyWide: false }))
+    expect(await acl.evaluate(dave, 'view', sharedDoc)).toMatchObject({ allowed: false, role: null })
+  })
+
+  it('a private (invite-only) X or a public X in a company-wide space still counts', async () => {
+    expect(await createAcl(withChat({ companyWide: false }, { privacy: 'invited' })).evaluate(dave, 'edit', sharedDoc)).toMatchObject({ allowed: true, role: 'editor' })
+    expect(await createAcl(withChat({}, { parents: [companySpace], spaceId: 'sp-r5-co' })).evaluate(dave, 'edit', sharedDoc)).toMatchObject({ allowed: true, role: 'editor' })
+    expect(await createAcl(withChat({}, { parents: [] })).evaluate(dave, 'edit', sharedDoc)).toMatchObject({ allowed: true, role: 'editor' })
+  })
+
+  it('a missing / deleted X counts for nothing', async () => {
+    const f = withChat({ companyWide: false }, { privacy: 'invited', deleted: true })
+    expect(await createAcl(f).evaluate(dave, 'view', sharedDoc)).toMatchObject({ allowed: false, role: null })
+  })
+
+  it('isSpaceMember: a space shared with X does not make the self-joiner a member', async () => {
+    const memberSpace: EntityRef = { kind: 'space', id: 'sp-r5-m' }
+    const memberGoal: EntityRef = { kind: 'goal', id: 'g-r5-m' }
+    const build = (chat: Partial<AclResourceNode>) => {
+      const f = withChat({ companyWide: false }, chat)
+      f.setResource({ ref: memberSpace, workspaceId: WS })
+      f.setResource({ ref: memberGoal, workspaceId: WS, parents: [memberSpace], spaceId: 'sp-r5-m' })
+      f.grant(WS, memberSpace, { subjectType: 'channel', subjectId: 'ch-x', role: 'viewer' })
+      return f
+    }
+    expect(await createAcl(build({})).can(dave, 'view', memberGoal)).toBe(false)
+    expect(await createAcl(build({})).evaluate(dave, 'view', memberSpace)).toMatchObject({ allowed: false, role: null })
+    expect(await createAcl(build({ privacy: 'invited' })).can(dave, 'view', memberGoal)).toBe(true)
+  })
+
+  it('chatMemberRole: a chat shared with X gives the self-joiner nothing on its children', async () => {
+    const parentChat: EntityRef = { kind: 'channel', id: 'ch-parent' }
+    const chatFolder: EntityRef = { kind: 'folder', id: 'f-r5' }
+    const build = (chat: Partial<AclResourceNode>) => {
+      const f = withChat({ companyWide: false }, chat)
+      f.setResource({ ref: parentChat, workspaceId: WS, privacy: 'invited' })
+      f.setResource({ ref: chatFolder, workspaceId: WS, parents: [parentChat] })
+      f.grant(WS, parentChat, { subjectType: 'channel', subjectId: 'ch-x', role: 'editor' })
+      return f
+    }
+    expect(await createAcl(build({})).evaluate(dave, 'view', chatFolder)).toMatchObject({ allowed: false, role: null })
+    expect(await createAcl(build({})).evaluate(dave, 'view', parentChat)).toMatchObject({ allowed: false, role: null })
+    expect(await createAcl(build({ privacy: 'invited' })).evaluate(dave, 'view', chatFolder)).toMatchObject({ allowed: true, role: 'viewer' })
+  })
+})
+
+describe('free/busy on a secret calendar (review 5)', () => {
+  const calendar: EntityRef = { kind: 'calendar', id: 'cal-r5' }
+
+  function personalCalendar(): MemoryAclFacts {
+    const f = tree()
+    // A principal calendar shown to the workspace as free/busy only stays owner-only secret.
+    f.setResource({ ref: calendar, workspaceId: WS, ownerId: 'alice', privacy: 'invited' })
+    f.grant(WS, calendar, { subjectType: 'workspace', subjectId: WS, role: 'free_busy' })
+    return f
+  }
+
+  it('others get free/busy (minimal) only; the workspace owner gets no manager bypass', async () => {
+    const acl = createAcl(personalCalendar())
+    expect(await acl.evaluate(bob, 'view_title', calendar)).toMatchObject({ allowed: true, role: 'minimal', preview: 'minimal', secret: true })
+    expect(await acl.evaluate(bob, 'view', calendar)).toMatchObject({ allowed: false, role: 'minimal' })
+    expect(await acl.evaluate(owner, 'view', calendar)).toMatchObject({ allowed: false, role: 'minimal', secret: true })
+    expect(await acl.evaluate(owner, 'manage_access', calendar)).toMatchObject({ allowed: false })
+    expect(await acl.evaluate(alice, 'edit', calendar)).toMatchObject({ allowed: true })
+  })
+
+  it('a stronger workspace grant on a secret calendar stays void; free_busy on a secret non-calendar too', async () => {
+    const f = personalCalendar()
+    f.grant(WS, calendar, { subjectType: 'workspace', subjectId: WS, role: 'viewer' })
+    expect(await createAcl(f).evaluate(bob, 'view_title', calendar)).toMatchObject({ allowed: false, role: null })
+    const g = tree()
+    g.grant(WS, secretGoal, { subjectType: 'workspace', subjectId: WS, role: 'free_busy' })
+    expect(await createAcl(g).evaluate(alice, 'view_title', secretGoal)).toMatchObject({ allowed: false, role: null })
+  })
+})
