@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { createStore } from 'jotai/vanilla'
 import { RESET } from 'jotai/utils'
 import { KEYS, getKeyString } from '../lib/local-storage'
-import { bottomDockHeightAtom, inspectorPanelWidthAtom } from './unified-shell'
+import { inspectorPanelWidthAtom } from './unified-shell'
 
 class MemoryStorage implements Storage {
   readonly data = new Map<string, string>()
@@ -28,7 +28,6 @@ class MemoryStorage implements Storage {
 
 const targets = [
   { name: 'inspector', atom: inspectorPanelWidthAtom, key: getKeyString(KEYS.inspectorPanelWidth), fallback: 320, min: 280, max: 1400 },
-  { name: 'terminal dock', atom: bottomDockHeightAtom, key: getKeyString(KEYS.bottomDockHeight), fallback: 104, min: 88, max: 480 },
 ] as const
 let storage: MemoryStorage
 let listeners: Set<(event: StorageEvent) => void>

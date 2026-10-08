@@ -24,6 +24,7 @@ import { Badge, Button, ListHeader, SectionLabel } from '@/components/mode-scree
 import { ColorDot, ColorPicker, HealthDot, SourceIcon, Sparkline, TagEditor } from './FeedParts'
 import { itemsPerDay, sourceErrorText, sourceHealth, sourceHost, sourceLabel } from './feed-model'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface FeedPreset {
   id: 'github' | 'youtube' | 'blog' | 'hn' | 'habr' | 'x'
@@ -98,7 +99,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
     const timer = setTimeout(() => {
       api.feedPreviewSource(url)
         .then((res) => { if (reqId.current === id) setPreview(res) })
-        .catch((e) => { if (reqId.current === id) setPreview({ ok: false, error: e instanceof Error ? e.message : String(e) }) })
+        .catch((e) => { if (reqId.current === id) setPreview({ ok: false, error: toErrorMessage(e) }) })
         .finally(() => { if (reqId.current === id) setChecking(false) })
     }, 450)
     return () => clearTimeout(timer)
@@ -150,7 +151,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
       reset()
       onAdded(res.source.id)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(toErrorMessage(e))
     } finally {
       setAdding(false)
     }
@@ -347,7 +348,7 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
   const [error, setError] = React.useState<string | null>(null)
   const run = async (operation: () => Promise<unknown>) => {
     setError(null)
-    try { await operation(); await reload() } catch (failure) { setError(failure instanceof Error ? failure.message : String(failure)) }
+    try { await operation(); await reload() } catch (failure) { setError(toErrorMessage(failure)) }
   }
   const update = (id: string, patch: FeedSourcePatch) => run(async () => api?.feedUpdateSource(id, patch))
   const check = (id: string) => run(async () => api?.feedRefresh(id))
@@ -425,7 +426,7 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
   const run = async (key: string, fn: () => Promise<unknown>) => {
     setBusy(key)
     setErr(null)
-    try { await fn(); await reload() } catch (e) { setErr(e instanceof Error ? e.message : String(e)) } finally { setBusy(null) }
+    try { await fn(); await reload() } catch (e) { setErr(toErrorMessage(e)) } finally { setBusy(null) }
   }
 
   if (!source) {

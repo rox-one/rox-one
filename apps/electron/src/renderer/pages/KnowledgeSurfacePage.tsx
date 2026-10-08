@@ -54,6 +54,7 @@ import {
   type SiyuanSurfaceMode,
   type SiyuanSurfaceRef,
 } from '@/knowledge/siyuan-url'
+import { toErrorMessage } from '@/lib/errors'
 
 const DOCK_OPEN_DELAY_MS = 800
 
@@ -311,7 +312,7 @@ export default function KnowledgeSurfacePage({
         setError(null)
         setRemoved(false)
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err))
+        if (!cancelled) setError(toErrorMessage(err))
       }
     })()
     return () => {

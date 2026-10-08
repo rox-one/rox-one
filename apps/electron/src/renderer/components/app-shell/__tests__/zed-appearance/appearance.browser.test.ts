@@ -67,7 +67,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     'apps/electron/src/renderer/lib/web-chrome-preference.ts',
     'apps/electron/src/renderer/components/app-shell/PanelResizeSash.tsx',
     'apps/electron/src/renderer/components/app-shell/ResizeHandle.tsx',
-    'apps/electron/src/renderer/components/session-inspector/BottomTerminalDock.tsx',
+    'apps/electron/src/renderer/components/app-shell/TerminalPanel.tsx',
     'apps/electron/src/renderer/components/session-inspector/InspectorTerminal.tsx',
     'packages/ui/src/context/ShikiThemeContext.tsx',
     'packages/ui/src/components/markdown/CodeBlock.tsx',
@@ -193,7 +193,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
       root: 'html', body: 'body', app: '#root', row: '[data-testid="panel-row"]',
       topbar: '[data-testid="topbar"]', sidebar: '[data-testid="sidebar"]', sidebarInner: '[data-testid="sidebar-inner"]', navigator: '[data-testid="navigator"]', navigatorInner: '[data-testid="navigator-inner"]', inspector: '[data-testid="inspector"]', strip: '[data-testid="strip"]',
       work: '[data-testid="work-panel"]', second: '[data-testid="second-panel"]', sash: '[data-sash-pair]',
-      dock: '[data-bottom-terminal]', dockSash: '[data-bottom-terminal] [role="separator"]', terminal: '.rox-inspector-terminal', dockHeader: '[data-bottom-terminal] > .h-6',
+      dock: '[data-terminal-panel]', cell: '[data-terminal-cell]', terminal: '.rox-inspector-terminal', dockHeader: '[data-terminal-panel] > .h-6',
       control: '[data-testid="control"]', card: '[data-testid="card"] > div', composer: '.input-container', code: '[data-testid="code"] > div',
     }
     const result = Object.fromEntries(Object.entries(selectors).map(([key, selector]) => {
@@ -223,21 +223,20 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(styles.work.border[1]).toBe('0px')
     expect(styles.second.border[0]).toBe('1px')
   }
-  const terminalSeam = (styles: any, hit: number) => {
-    expect(styles.dockSash.position).toBe('absolute')
-    expect(styles.dockSash.rect.height).toBe(hit)
-    expect(styles.dockSash.rect.width).toBeCloseTo(styles.dock.rect.width, 1)
-    // The absolute hit zone overlaps the ordinary divider without adding a
-    // gap or displacing the header and terminal transcript. Header dimensions
-    // scale with the existing font density and must stay stable after resizing.
-    const center = styles.dockSash.rect.top + hit / 2
-    expect(center).toBeGreaterThanOrEqual(styles.dock.rect.top)
-    expect(center).toBeLessThanOrEqual(styles.dock.rect.top + 1)
-    expect(styles.row.rect.bottom).toBeCloseTo(styles.dock.rect.top, 1)
-    expect(styles.dock.rect.bottom).toBeCloseTo(styles.strip.rect.top, 1)
+  const terminalSeam = (styles: any) => {
+    // The terminal is the last cell of the first column: it closes flush with
+    // the stack bottom, carries only its own ordinary top divider and takes
+    // half of the column height instead of a full-width dock band.
     expect(styles.dock.verticalBorder[0]).toBe('1px')
-    expect(styles.row.verticalBorder[1]).toBe('0px')
+    expect(styles.dock.rect.width).toBeCloseTo(styles.work.rect.width, 1)
+    expect(styles.dock.rect.width).toBeLessThan(styles.row.rect.width * 0.75)
+    expect(styles.cell.rect.bottom).toBeCloseTo(styles.row.rect.bottom, 1)
+    expect(styles.dock.rect.bottom).toBeCloseTo(styles.cell.rect.bottom, 1)
+    expect(styles.dock.rect.top).toBeCloseTo(styles.work.rect.bottom, 1)
+    expect(styles.cell.rect.height).toBeCloseTo(styles.work.rect.height, 0)
     expect(styles.dockHeader.rect.height).toBeGreaterThan(0)
+    // Header dimensions scale with the existing font density and must stay
+    // stable: the transcript starts directly after the header row.
     expect(styles.dockHeader.rect.bottom).toBeCloseTo(styles.terminal.rect.top, 1)
     expect(styles.dock.radius).toBe('0px')
     expect(styles.dock.shadow).toBe('none')
@@ -293,7 +292,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(styles.work.backdrop).toBe('none')
     expect(styles.work.shadow).toBe('none')
     seam(styles, 12)
-    terminalSeam(styles, 12)
+    terminalSeam(styles)
     const terminalInput = page.locator('.rox-inspector-terminal').getByRole('textbox', { name: 'Command', exact: true })
     await terminalInput.fill('fixture ANSI only')
     await terminalInput.press('Enter')
@@ -367,7 +366,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     const initial = await computed()
     expect(initial.media.coarse).toBe(true)
     seam(initial, 24)
-    terminalSeam(initial, 24)
+    terminalSeam(initial)
     const bounds = await page.locator('[data-sash-pair]').boundingBox()
     const session = await context.newCDPSession(page)
     const touch = (x: number) => [{ x, y: bounds!.y + 100 }]
@@ -383,82 +382,41 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     await proof('resize-coarse-pointer')
   }, 45_000)
 
-  it('the actual terminal dock resizes with fine pointer and keyboard, cancels and resets without changing its header', async () => {
+  it('keeps the terminal cell at half of the first column while its panel sash resizes', async () => {
     await load()
     const initial = await computed()
-    terminalSeam(initial, 12)
-    const sash = page.locator('[data-bottom-terminal]').getByRole('separator', { name: 'Resize terminal height', exact: true })
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '104')
-    const dragTo = async (distance: number) => {
-      const bounds = await sash.boundingBox()
-      if (!bounds) throw new Error('Production terminal sash has no bounds')
-      await page.mouse.move(bounds.x + 60, bounds.y + bounds.height / 2)
-      await page.mouse.down()
-      await page.mouse.move(bounds.x + 60, bounds.y + bounds.height / 2 - distance, { steps: 5 })
-    }
-    await dragTo(24)
+    terminalSeam(initial)
+    const sash = page.locator('[data-sash-pair]')
+    const box = await sash.boundingBox()
+    if (!box) throw new Error('Production sash has no bounds')
+    await page.mouse.move(box.x + box.width / 2, box.y + 100)
+    await page.mouse.down()
+    await page.mouse.move(box.x + box.width / 2 + 120, box.y + 100, { steps: 8 })
     await page.mouse.up()
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '128')
-    terminalSeam(await computed(), 12)
-    await dragTo(32)
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '160')
-    await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointercancel', { pointerType: 'mouse', pointerId: 1 })))
-    await page.mouse.up()
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '128')
-    await sash.focus()
-    await sash.press('ArrowUp')
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '136')
-    await sash.press('Enter')
-    await sash.press('Shift+ArrowDown')
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '104')
-    await sash.press('Escape')
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '136')
-    await sash.dblclick({ position: { x: 60, y: 6 } })
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '104')
-    await sash.press('Home')
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '88')
-    await sash.press('End')
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '270')
-    await sash.press('Escape')
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '104')
-    expect((await computed()).dockHeader.rect.height).toBe(initial.dockHeader.rect.height)
-    terminalSeam(await computed(), 12)
-    await proof('terminal-resize-fine-pointer')
+    const dragged = await computed()
+    // The cell width follows the panel column; its height stays half of the
+    // column (the row height) and the header never changes size.
+    expect(dragged.work.rect.width).toBeGreaterThan(initial.work.rect.width + 100)
+    expect(dragged.dock.rect.width).toBeCloseTo(dragged.work.rect.width, 1)
+    expect(dragged.dock.rect.height).toBeCloseTo(initial.dock.rect.height, 0)
+    expect(dragged.dockHeader.rect.height).toBe(initial.dockHeader.rect.height)
+    seam(dragged, 12)
+    terminalSeam(dragged)
+    await proof('terminal-panel-cell')
   }, 45_000)
 
-  it('the actual terminal dock uses its 24px touch zone and restores cancelled touch height', async () => {
-    await context.close()
-    context = await browser.newContext({ viewport: { width: 1720, height: 900 }, hasTouch: true, colorScheme: 'light' })
-    page = await context.newPage()
-    page.setDefaultTimeout(15_000)
-    page.setDefaultNavigationTimeout(30_000)
-    page.on('pageerror', error => pageErrors.push(error.message))
+  it('unmounts the terminal cell and lets the panel fill the column when it is hidden', async () => {
     await load()
-    const initial = await computed()
-    expect(initial.media.coarse).toBe(true)
-    terminalSeam(initial, 24)
-    const sash = page.locator('[data-bottom-terminal] [role="separator"]')
-    const session = await context.newCDPSession(page)
-    const touchDrag = async (distance: number) => {
-      const bounds = await sash.boundingBox()
-      if (!bounds) throw new Error('Production terminal sash has no touch bounds')
-      const x = bounds.x + 60
-      const y = bounds.y + bounds.height / 2
-      await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] })
-      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - distance }] })
-    }
-    await touchDrag(24)
-    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '128')
-    terminalSeam(await computed(), 24)
-    await touchDrag(32)
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '160')
-    await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] })
-    await expectDOM(sash).toHaveAttribute('aria-valuenow', '128')
-    await session.detach()
-    expect((await computed()).dockHeader.rect.height).toBe(initial.dockHeader.rect.height)
-    terminalSeam(await computed(), 24)
-    await proof('terminal-resize-coarse-pointer')
+    terminalSeam(await computed())
+    await page.locator('[data-terminal-panel]').getByRole('button', { name: 'Hide inspector', exact: true }).click()
+    await expectDOM(page.locator('[data-terminal-panel]')).toHaveCount(0)
+    await expectDOM(page.locator('[data-terminal-cell]')).toHaveCount(0)
+    const work = await page.locator('[data-testid="work-panel"]').boundingBox()
+    const row = await page.locator('[data-testid="panel-row"]').boundingBox()
+    expect(work!.height).toBeCloseTo(row!.height, 1)
+    await page.screenshot({ path: resolve(proofDirectory, 'terminal-panel-closed.png'), fullPage: true, timeout: 15_000 })
+    await load()
+    terminalSeam(await computed())
   }, 45_000)
 
   it('preview cancellation restores the saved palette and selection survives reload without changing fonts', async () => {

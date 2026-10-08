@@ -2,7 +2,7 @@
  * Shared kit for mode screens (Задачи / Встречи / Входящие / Лента):
  * navigator (220 px) → list (≈440 px) → detail. Flat and borderless — panels
  * are separated by background tone steps only; accent marks the active item,
- * counters and the primary action. Font is --font-sans (Arial Narrow);
+ * counters and the primary action. Font is --font-sans (locally bundled Inter);
  * monospace only for code. High contrast: selection also gets an inset
  * accent bar and bold text, so it never relies on a subtle tint alone.
  */
@@ -185,10 +185,12 @@ export function ListHeader({
   actions?: React.ReactNode
 }) {
   return (
-    <header className="flex min-h-[44px] shrink-0 items-center gap-2 px-3 pt-2">
+    <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
       <h2 className="text-[15px] font-semibold">{title}</h2>
       {subtitle ? <span className="truncate text-[12px] text-text-muted">{subtitle}</span> : null}
-      <div className="ml-auto flex items-center gap-1">{actions}</div>
+      {/* Wrap instead of overflowing: in a narrow list column the action row drops to its own
+          line (and wraps internally) so a later button is never clipped by Panel's overflow-hidden. */}
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-1">{actions}</div>
     </header>
   )
 }

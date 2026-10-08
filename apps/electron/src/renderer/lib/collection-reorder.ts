@@ -3,6 +3,7 @@
  */
 
 import type { SessionMeta } from '@/atoms/sessions'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface RankNeighbors {
   prevId?: string
@@ -14,7 +15,7 @@ export interface RankReorderRequest extends RankNeighbors {
 }
 
 export function isStaleRankNeighborsError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error)
+  const message = toErrorMessage(error)
   return /RANK_NEIGHBORS_STALE/.test(message)
 }
 

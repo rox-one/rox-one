@@ -1301,8 +1301,8 @@ export default function AiSettingsPage() {
                 </div>
               </SettingsSection>
 
-              {/* Performance */}
-              <SettingsSection title={t("settings.ai.performance")} description={t("settings.ai.performanceDesc")}>
+              {/* Experimental features */}
+              <SettingsSection title={t("settings.ai.experimentalFeatures")} description={t("settings.ai.experimentalFeaturesDesc")}>
                 <SettingsCard>
                   <SettingsToggle
                     label={t("settings.ai.extendedContext")}

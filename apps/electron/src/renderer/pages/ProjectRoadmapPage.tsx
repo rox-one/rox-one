@@ -86,6 +86,7 @@ import { MilestoneList, RoadmapTimeline } from './project/ProjectTimeline'
 import { ProjectRequirements } from './project/ProjectRequirements'
 import { ProjectInputs, type PickOption } from './project/ProjectInputs'
 import { ProjectAiPanel, type AiStatus, type ImproveProposal, type ImproveTarget } from './project/ProjectAiPanel'
+import { toErrorMessage } from '@/lib/errors'
 
 interface ProjectInfoPageProps {
   projectSlug: string
@@ -169,7 +170,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
       loadedOnce.current = true
     } catch (err) {
       console.error('[ProjectInfoPage] Failed to load project:', err)
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -428,7 +429,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
       await window.electronAPI.sendMessage(session.id, fullPrompt)
       toast.success(t('projectRoadmap.delegated', { title: task.title }))
     } catch (err) {
-      toast.error(t('tasks.delegate.failed', { error: err instanceof Error ? err.message : String(err) }))
+      toast.error(t('tasks.delegate.failed', { error: toErrorMessage(err) }))
     } finally {
       setDelegatingId(null)
     }

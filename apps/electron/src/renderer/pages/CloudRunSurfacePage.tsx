@@ -9,6 +9,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface CloudRunSurfacePageProps {
   /** Run id from `cloud-run/{runId}` route details. Null = bare navigator. */
@@ -125,7 +126,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
         publish({
           kind: 'unavailable',
           reason: 'error',
-          message: error instanceof Error ? error.message : String(error),
+          message: toErrorMessage(error),
         })
       } finally {
         if (isCurrent()) inFlight = false

@@ -363,6 +363,15 @@ export interface ToolIconMapping {
   commands: string[]
 }
 
+/** Tool icon config location plus resolved mappings (main owns the real config dir). */
+export interface ToolIconsConfig {
+  /** Absolute directory holding tool-icons.json and the icon files. */
+  dir: string
+  /** Absolute path to tool-icons.json. */
+  configPath: string
+  mappings: ToolIconMapping[]
+}
+
 /**
  * Browser pane creation options
  */
@@ -1376,6 +1385,8 @@ export interface ElectronAPI {
   /** Returns the renderer host environment without going through RPC. */
   getRuntimeEnvironment(): 'electron' | 'web'
   getHomeDir(): Promise<string>
+  /** Absolute config directory that owns workspaces/, tool-icons/ and friends. */
+  getConfigDir(): Promise<string>
   isDebugMode(): Promise<boolean>
 
   // Transport connection status (preload-local, not RPC channels)
@@ -2105,7 +2116,7 @@ export interface ElectronAPI {
   writeWorkspaceImage(workspaceId: string, relativePath: string, base64: string, mimeType: string): Promise<void>
 
   // Tool icon mappings
-  getToolIconMappings(): Promise<ToolIconMapping[]>
+  getToolIconMappings(): Promise<ToolIconsConfig>
 
   // Theme (app-level default)
   getAppTheme(): Promise<import('@rox/shared/config').ThemeOverrides | null>

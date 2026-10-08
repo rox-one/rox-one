@@ -1,3 +1,7 @@
+## Active plan (2026-10-08) — пользовательский батч (оболочка, настройки, бренд, облако, секреты)
+
+Источник: ТЗ пользователя + 16 скриншотов 2026-10-08. Исполняемый план, требования и таблица верификации: [docs/plans/2026-10-08-rox-user-batch.md](plans/2026-10-08-rox-user-batch.md). Дополняет (не заменяет) план 2026-10-07 ниже.
+
 ## Active plan (2026-10-07) — ROX shell, cloud runs, secrets
 
 Executable task graph: [docs/plans/2026-10-07-rox-shell-cloud-platform.md](plans/2026-10-07-rox-shell-cloud-platform.md)

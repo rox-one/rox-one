@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { toErrorMessage } from '@/lib/errors'
 import {
   sanitizeConnectionAuditRows,
   sanitizeConnectionBindingRows,
@@ -46,7 +47,7 @@ type PreviewRow = {
 type SurfaceState = 'ready' | 'unavailable' | 'error'
 
 function classifyFailClosed(error: unknown): SurfaceState {
-  const message = error instanceof Error ? error.message : String(error ?? '')
+  const message = toErrorMessage(error ?? '')
   if (/unsupported_test|_unavailable|unavailable/i.test(message)) return 'unavailable'
   if (/not found/i.test(message)) return 'error'
   return 'error'
@@ -323,11 +324,11 @@ export default function ConnectionsPage() {
       setSurface('unavailable')
       return
     }
-    toast.error(error instanceof Error ? error.message : String(error ?? ''))
+    toast.error(toErrorMessage(error ?? ''))
   }
 
   function actionError(connectionId: string, error: unknown) {
-    const message = error instanceof Error ? error.message : String(error ?? '')
+    const message = toErrorMessage(error ?? '')
     if (classifyFailClosed(error) === 'unavailable') {
       setSurface('unavailable')
       return

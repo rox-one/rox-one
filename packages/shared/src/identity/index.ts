@@ -50,15 +50,21 @@ export {
 
 export {
   ROX_MIGRATION_STAMP_NAME,
+  ROX_VISIBLE_MIGRATION_STAMP_NAME,
   defaultBrandMigrationPaths,
   exportBrandConfig,
   readMigrationStamp,
   rollbackBrandConfigMigration,
   runBrandConfigMigration,
+  runVisibleConfigMigration,
   stampPath,
+  visibleStampPath,
   uninstallBrandConfig,
   type BrandMigrationOutcome,
   type BrandMigrationResult,
   type BrandMigrationStamp,
+  type VisibleMigrationOutcome,
+  type VisibleMigrationResult,
+  type VisibleMigrationStamp,
 } from './config-migration.ts'
 export { UI_BRAND_MANIFEST, UI_BRAND_ALLOWLIST } from './ui-brand.ts'

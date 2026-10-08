@@ -1,6 +1,7 @@
 /** Bounded startup reads. Transport failure never substitutes for caller identity
  * or authoritative workspace readback; provider readiness stays in Settings. */
 import type { SetupNeeds } from '../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 
 export type StartupAppState = 'onboarding' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -33,7 +34,7 @@ class ProbeDeadlineError extends Error {
 /** Terminal authority denial cannot recover through a cached profile or retry. */
 export function isStartupAuthorityDenial(error: unknown): boolean {
   const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : ''
-  const message = error instanceof Error ? error.message : String(error)
+  const message = toErrorMessage(error)
   return ['AUTH_FAILED', 'FORBIDDEN', 'UNAUTHENTICATED', 'UNAUTHORIZED'].includes(code)
     || /\b(?:AUTH_FAILED|FORBIDDEN|UNAUTHENTICATED|UNAUTHORIZED)\b/.test(message)
 }

@@ -7,14 +7,12 @@ import {
   type InspectorEdgeRevealMode,
 } from '@/atoms/panel-auto-hide'
 import { inspectorUserOpenedAtom, inspectorVisibleAtom } from '@/atoms/unified-shell'
-import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 
 const EDGE_ZONE_PX = 8
 const HOVER_DELAY_MS = 250
 
 export function useEdgeRevealPanel(enabled: boolean) {
-  const seProfile = useSuperEngineeringProfile()
-  const active = enabled && seProfile
+  const active = enabled
   const [mode, setMode] = useAtom(inspectorEdgeRevealModeAtom)
   const [hoverActive, setHoverActive] = useAtom(inspectorEdgeHoverActiveAtom)
   const [visible, setVisible] = useAtom(inspectorVisibleAtom)

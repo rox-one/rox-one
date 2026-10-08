@@ -27,6 +27,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { CredentialMigrationCard } from './CredentialMigrationCard'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -39,10 +40,6 @@ const STATUS_TONE: Record<ServiceConnection['status'], string> = {
   expired: 'text-warning',
   error: 'text-destructive',
   disconnected: 'text-muted-foreground',
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
 }
 
 function providerLabel(provider: ServiceProvider | string, t: (k: string) => string): string {
@@ -76,7 +73,7 @@ export default function AccountsSettingsPage() {
       setState(next)
       setDisplayName(next.profile.displayName)
     } catch (error) {
-      toast.error(t('settings.accounts.loadFailed', { message: errorMessage(error) }))
+      toast.error(t('settings.accounts.loadFailed', { message: toErrorMessage(error) }))
     }
   }, [t, workspaceId])
 
@@ -96,7 +93,7 @@ export default function AccountsSettingsPage() {
       const result = await window.electronAPI.getCredentialHealth()
       setHealth(result)
     } catch (error) {
-      toast.error(t('settings.accounts.healthFailed', { message: errorMessage(error) }))
+      toast.error(t('settings.accounts.healthFailed', { message: toErrorMessage(error) }))
     } finally {
       setCheckingHealth(false)
     }
@@ -121,7 +118,7 @@ export default function AccountsSettingsPage() {
       setState(next)
       toast.success(t('settings.accounts.profileSaved'))
     } catch (error) {
-      toast.error(t('settings.accounts.profileSaveFailed', { message: errorMessage(error) }))
+      toast.error(t('settings.accounts.profileSaveFailed', { message: toErrorMessage(error) }))
     } finally {
       setSavingProfile(false)
     }
@@ -179,7 +176,7 @@ export default function AccountsSettingsPage() {
       setState(next)
       toast.success(t('settings.accounts.disconnected'))
     } catch (error) {
-      toast.error(t('settings.accounts.disconnectFailed', { message: errorMessage(error) }))
+      toast.error(t('settings.accounts.disconnectFailed', { message: toErrorMessage(error) }))
     } finally {
       setBusyId(null)
     }
@@ -192,7 +189,7 @@ export default function AccountsSettingsPage() {
       )
       setState(next)
     } catch (error) {
-      toast.error(t('settings.accounts.refreshFailed', { message: errorMessage(error) }))
+      toast.error(t('settings.accounts.refreshFailed', { message: toErrorMessage(error) }))
     }
   }
 
@@ -212,7 +209,7 @@ export default function AccountsSettingsPage() {
       void load()
       void runHealthCheck()
     } catch (error) {
-      toast.error(t('settings.accounts.resetFailed', { message: errorMessage(error) }))
+      toast.error(t('settings.accounts.resetFailed', { message: toErrorMessage(error) }))
     }
   }
 
