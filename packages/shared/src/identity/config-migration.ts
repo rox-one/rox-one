@@ -707,7 +707,49 @@ function _readLockNoFollow(path: string): string {
  * renamed over the lock path (a rename replaces a planted link, it never
  * follows it).
  */
-function _writeFileAtomicNoFollow(path: string, content: string): void {
+/** Test hooks for the win32 rename retry in `_writeFileAtomicNoFollow`. */
+export interface AtomicLockWriteIo {
+  platform?: NodeJS.Platform
+  rename?: (source: string, destination: string) => void
+  sleep?: (ms: number) => void
+}
+
+/** Backoff (≈1 s total) for a win32 rename blocked by a reader/AV scanner. */
+const _WIN32_RENAME_RETRY_MS = [25, 50, 100, 200, 300, 325]
+const _WIN32_TRANSIENT_RENAME_CODES = new Set(['EPERM', 'EACCES', 'EBUSY'])
+
+function _sleepSync(ms: number): void {
+  try {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+  } catch {
+    // no Atomics.wait: retry immediately
+  }
+}
+
+/**
+ * Rename, retried briefly on win32 when the destination is momentarily
+ * held open (EPERM/EACCES/EBUSY from a reader or an antivirus scanner).
+ */
+export function _renameWithWin32Retry(source: string, destination: string, io?: AtomicLockWriteIo): void {
+  const rename = io?.rename ?? _renameMigration
+  if ((io?.platform ?? process.platform) !== 'win32') {
+    rename(source, destination)
+    return
+  }
+  const sleep = io?.sleep ?? _sleepSync
+  for (let attempt = 0; ; attempt++) {
+    try {
+      rename(source, destination)
+      return
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException | null)?.code
+      if (attempt >= _WIN32_RENAME_RETRY_MS.length || !code || !_WIN32_TRANSIENT_RENAME_CODES.has(code)) throw error
+      sleep(_WIN32_RENAME_RETRY_MS[attempt]!)
+    }
+  }
+}
+
+export function _writeFileAtomicNoFollow(path: string, content: string, io?: AtomicLockWriteIo): void {
   const temp = `${path}.tmp-${process.pid}-${_randomLockBytes(8).toString('hex')}`
   const fd = _openMigrationLock(
     temp,
@@ -720,7 +762,7 @@ function _writeFileAtomicNoFollow(path: string, content: string): void {
     } finally {
       _closeMigrationLock(fd)
     }
-    _renameMigration(temp, path)
+    _renameWithWin32Retry(temp, path, io)
   } catch (error) {
     try {
       _unlinkMigration(temp)
