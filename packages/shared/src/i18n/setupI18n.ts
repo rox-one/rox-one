@@ -14,7 +14,7 @@ const buildResources = () => Object.fromEntries(
   ]),
 );
 
-// Safe as a boolean guard because init is synchronous (initImmediate: false).
+// Safe as a boolean guard because init is synchronous (initAsync: false).
 // If async init is ever needed, replace with a promise-based singleton.
 let initialized = false;
 
@@ -45,7 +45,7 @@ export function setupI18n(
     fallbackLng: [DEFAULT_LANGUAGE_CODE, "en"],
     supportedLngs: [...SUPPORTED_LANGUAGE_CODES],
     interpolation: { escapeValue: false },
-    initImmediate: false, // synchronous init — resources are bundled inline
+    initAsync: false, // synchronous init — resources are bundled inline
     detection: {
       // Explicit user choice (localStorage) wins; otherwise the default
       // language is Russian — the OS locale (navigator) must not override it.
