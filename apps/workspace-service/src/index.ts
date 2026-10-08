@@ -153,7 +153,7 @@ export async function runWorkspaceCLI(arguments_: readonly string[]): Promise<nu
     const configuration = await loadRuntimeConfiguration(configurationPath)
     if (command === 'bootstrap-account' && configuration.workspace.authentication.mode !== 'local-bootstrap') throw new RuntimeFailure('INVALID_ARGUMENTS')
     const input = command === 'serve' ? undefined : validateAdminInput(command, await adminInput())
-    const migrations = await loadWorkspaceBootstrapMigrations(configuration.migrationsDirectory, Boolean(configuration.workspace.licenseRegistry))
+    const migrations = await loadWorkspaceBootstrapMigrations(configuration.migrationsDirectory)
     database = new SQL(configuration.databaseUrl, { max: configuration.poolSize, connectionTimeout: DATABASE_CONNECTION_TIMEOUT_SECONDS })
     const drain = new WorkspaceRequestDrain()
     service = await createWorkspaceServer({ ...configuration.workspace, database, migrations, requestLifecycle: drain })

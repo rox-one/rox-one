@@ -27,7 +27,7 @@ export async function fixture(delayChecker = false) {
   const url=await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG??join(homedir(),'.agents/state/rox-compound-workspace/postgres-environment.json'))
   let database=new SQL(url,{max:12});const workspaceId=randomUUID();const resourceId=randomUUID();const issuer='urn:rox:wp48:'+randomUUID();const password='synthetic-wp48-'+randomUUID()
   const authDirectory=join(root,'auth');mkdirSync(authDirectory,{mode:0o700});const stateDirectory=join(root,'audit-state');mkdirSync(stateDirectory,{mode:0o700})
-  const migrations=await loadWorkspaceBootstrapMigrations(resolve(import.meta.dir,'../../apps/workspace-service/migrations'),true)
+  const migrations=await loadWorkspaceBootstrapMigrations(resolve(import.meta.dir,'../../apps/workspace-service/migrations'))
   let service:Awaited<ReturnType<typeof createWorkspaceServer>>|undefined;const clients:WsRpcClient[]=[]
   let listenerPort=0
   const current=()=>required(service)
