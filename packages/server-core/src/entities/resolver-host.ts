@@ -18,6 +18,7 @@ import {
   type ResolverHost,
 } from '@rox/core/entities'
 import { entityRefKey } from '@rox/core/entities'
+import { resolveWithAcl, type EntityAclGate } from './acl-gate.ts'
 
 export interface ResolverHostOptions {
   /** Optional remote fan-out for workspace-owned kinds. */
@@ -28,6 +29,8 @@ export interface ResolverHostOptions {
   cacheTtlMs?: number
   /** Max refs per resolver call (default 100). */
   batchSize?: number
+  /** W1-04 (#1501): ACL gate; every resolve is checked per ref via `acl.evaluate`. */
+  acl?: EntityAclGate
 }
 
 function unavailablePreview(ref: EntityRef): EntityPreview {
@@ -59,11 +62,18 @@ export class DefaultResolverHost implements ResolverHost {
   private readonly cache: EntityResolutionCache
   private readonly remoteResolve?: (refs: EntityRef[], actor: Actor) => Promise<EntityPreview[]>
   private readonly batchSize: number
+  private aclGate?: EntityAclGate
 
   constructor(options: ResolverHostOptions = {}) {
     this.cache = new EntityResolutionCache(options.cacheCapacity ?? 5000, options.cacheTtlMs ?? 60_000)
     this.remoteResolve = options.remoteResolve
     this.batchSize = options.batchSize ?? 100
+    this.aclGate = options.acl
+  }
+
+  /** W1-04 (#1501): install / replace the ACL gate. */
+  setAcl(gate: EntityAclGate | undefined): void {
+    this.aclGate = gate
   }
 
   register(resolver: Resolver): void {
@@ -82,6 +92,13 @@ export class DefaultResolverHost implements ResolverHost {
   }
 
   async resolve(refs: EntityRef[], actor: Actor): Promise<EntityPreview[]> {
+    // W1-04 (#1501): previews are computed with the viewer's rights. Denied
+    // refs never reach a resolver; the cache below only ever sees allowed refs.
+    if (this.aclGate) return resolveWithAcl(this.aclGate, refs, actor, allowed => this.resolveUnchecked(allowed, actor))
+    return this.resolveUnchecked(refs, actor)
+  }
+
+  private async resolveUnchecked(refs: EntityRef[], actor: Actor): Promise<EntityPreview[]> {
     const out: (EntityPreview | undefined)[] = new Array(refs.length)
     const cacheKeys = refs.map(ref => resolverCacheKey(actor, ref))
     // Dedupe identical refs (same actor + ref) to a single resolver call.
