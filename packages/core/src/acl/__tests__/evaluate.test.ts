@@ -951,3 +951,66 @@ describe('free/busy on a secret calendar (review 5)', () => {
     expect(await createAcl(g).evaluate(alice, 'view_title', secretGoal)).toMatchObject({ allowed: false, role: null })
   })
 })
+
+describe('free/busy never flows to calendar events (review 6)', () => {
+  const calendar: EntityRef = { kind: 'calendar', id: 'cal-r6' }
+  const event: EntityRef = { kind: 'calendar-event', id: 'ev-r6' }
+
+  function withEvent(privacy?: 'invited'): MemoryAclFacts {
+    const f = tree()
+    f.setMember(WS, 'zoe', { role: 'member' })
+    f.setResource({ ref: calendar, workspaceId: WS, ownerId: 'zoe', ...(privacy ? { privacy } : {}) })
+    f.setResource({ ref: event, workspaceId: WS, parents: [calendar] })
+    return f
+  }
+
+  it('a workspace free_busy grant on a secret calendar gives free/busy on the calendar only, nothing on its events', async () => {
+    const f = withEvent('invited')
+    f.grant(WS, calendar, { subjectType: 'workspace', subjectId: WS, role: 'free_busy' })
+    const acl = createAcl(f)
+    expect(await acl.evaluate(bob, 'view_title', calendar)).toMatchObject({ allowed: true, role: 'minimal' })
+    expect(await acl.evaluate(bob, 'view_title', event)).toMatchObject({ allowed: false, role: null, secret: true, preview: 'none' })
+    expect(listingVisibility(await acl.evaluate(bob, 'view_title', event))).toBe('hide')
+    expect(await acl.evaluate(owner, 'view_title', event)).toMatchObject({ allowed: false, role: null })
+  })
+
+  it('free_busy grants on a non-secret calendar (workspace, space, person) do not reach its events', async () => {
+    const f = withEvent()
+    f.grant(WS, calendar, { subjectType: 'workspace', subjectId: WS, role: 'free_busy' })
+    f.grant(WS, calendar, { subjectType: 'space', subjectId: 'sp1', role: 'free_busy' })
+    f.grant(WS, calendar, { subjectType: 'principal', subjectId: 'bob', role: 'free_busy' })
+    const acl = createAcl(f)
+    for (const who of [alice, bob]) {
+      expect(await acl.evaluate(who, 'view_title', calendar), who.id).toMatchObject({ allowed: true, role: 'minimal' })
+      expect(await acl.evaluate(who, 'view_title', event), who.id).toMatchObject({ allowed: false, role: null })
+    }
+  })
+
+  it('a viewer grant on a non-secret calendar still inherits to its events', async () => {
+    const f = withEvent()
+    f.grant(WS, calendar, { subjectType: 'workspace', subjectId: WS, role: 'viewer' })
+    f.grant(WS, calendar, { subjectType: 'principal', subjectId: 'bob', role: 'free_busy' })
+    const acl = createAcl(f)
+    expect(await acl.evaluate(bob, 'view', event)).toMatchObject({ allowed: true, role: 'viewer', source: 'inherited' })
+    expect(await acl.evaluate(alice, 'view', event)).toMatchObject({ allowed: true, role: 'viewer', source: 'inherited' })
+  })
+
+  it('a free_busy grant on a chat does not reach the chat\'s children (chat edge)', async () => {
+    const chat: EntityRef = { kind: 'channel', id: 'ch-r6' }
+    const chatFolder: EntityRef = { kind: 'folder', id: 'f-r6' }
+    const f = tree()
+    f.setResource({ ref: chat, workspaceId: WS, privacy: 'invited' })
+    f.setResource({ ref: chatFolder, workspaceId: WS, parents: [chat] })
+    f.grant(WS, chat, { subjectType: 'principal', subjectId: 'bob', role: 'free_busy' })
+    f.grant(WS, chat, { subjectType: 'principal', subjectId: 'alice', role: 'viewer' })
+    const acl = createAcl(f)
+    expect(await acl.evaluate(bob, 'view_title', chatFolder)).toMatchObject({ allowed: false, role: null })
+    expect(await acl.evaluate(alice, 'view', chatFolder)).toMatchObject({ allowed: true, role: 'viewer' })
+  })
+
+  it('free/busy on the event itself still applies there', async () => {
+    const f = withEvent()
+    f.grant(WS, event, { subjectType: 'principal', subjectId: 'bob', role: 'free_busy' })
+    expect(await createAcl(f).evaluate(bob, 'view_title', event)).toMatchObject({ allowed: true, role: 'minimal' })
+  })
+})

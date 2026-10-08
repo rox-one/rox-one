@@ -440,4 +440,63 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       expect(await evaluate(carl, 'edit', 'task', listedTask)).toMatchObject({ allowed: true })
     })
   })
+
+  test('review 6: space shares un-secret personal content only while the space is live and in this workspace', async () => {
+    await inRollback(async tx => {
+      const [ws, ws2, owner, alice, bob] = [id(), id(), id(), id(), id()]
+      const q = (sql: string, params: unknown[] = []) => tx.unsafe(sql, params)
+      for (const p of [owner, alice, bob]) await q(`INSERT INTO principal (principal_id, kind, status) VALUES ($1, 'human', 'active')`, [p])
+      await q(`INSERT INTO workspace (workspace_id, owner_principal_id, name) VALUES ($1, $2, 'WS6')`, [ws, owner])
+      await q(`INSERT INTO workspace (workspace_id, owner_principal_id, name) VALUES ($1, $2, 'WS6-other')`, [ws2, owner])
+      for (const p of [owner, alice, bob]) {
+        await q(`INSERT INTO workspace_member (workspace_id, principal_id, role, status) VALUES ($1, $2, $3, 'active')`, [ws, p, p === owner ? 'owner' : 'member'])
+      }
+      const makeSpace = async (inWs: string, name: string) => {
+        const [chat, root, space] = [id(), id(), id()]
+        await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility) VALUES ($1, $2, 'space', 'private')`, [chat, inWs])
+        await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'space', $3, 'Root')`, [root, inWs, space])
+        await q(`INSERT INTO space (space_id, workspace_id, name, chat_id, root_folder_id) VALUES ($1, $2, $3, $4, $5)`, [space, inWs, name, chat, root])
+        await q(`UPDATE chat SET space_id = $2 WHERE chat_id = $1`, [chat, space])
+        await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [chat, bob])
+        return space
+      }
+      const [live, deleted, foreign] = [await makeSpace(ws, 'Live'), await makeSpace(ws, 'Deleted'), await makeSpace(ws2, 'Foreign')]
+      await q(`UPDATE space SET deleted_at = now() WHERE space_id = $1`, [deleted])
+      const personalDoc = async (space: string) => {
+        const d = id()
+        await q(`INSERT INTO doc (doc_id, workspace_id, owner_id) VALUES ($1, $2, $3)`, [d, ws, alice])
+        await q(`INSERT INTO acl_entry (acl_id, workspace_id, resource_type, resource_id, subject_type, subject_id, role) VALUES ($1, $2, 'note', $3, 'space', $4, 'viewer')`, [id(), ws, d, space])
+        return d
+      }
+      const personalCalendar = async (space: string) => {
+        const k = id()
+        await q(`INSERT INTO calendar (calendar_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'principal', $3, 'Alice')`, [k, ws, alice])
+        await q(`INSERT INTO calendar_member (calendar_id, subject_type, subject_id, role) VALUES ($1, 'space', $2, 'viewer')`, [k, space])
+        return k
+      }
+      const docs = { live: await personalDoc(live), deleted: await personalDoc(deleted), foreign: await personalDoc(foreign) }
+      const calendars = { live: await personalCalendar(live), deleted: await personalCalendar(deleted), foreign: await personalCalendar(foreign) }
+
+      const facts = new PostgresAclRepository(tx)
+      const acl = createAcl(facts)
+      const who = async (p: string) => ({ id: p, workspaceId: ws, ...(await facts.principal(p))! })
+      const evaluate = async (p: string, action: Parameters<typeof acl.can>[1], kind: 'note' | 'calendar', rid: string) =>
+        await acl.evaluate(await who(p), action, { kind, id: rid })
+
+      for (const [kind, rows] of [['note', docs], ['calendar', calendars]] as const) {
+        // A live space in this workspace is a real share: no longer personal, its members see it.
+        expect(await evaluate(owner, 'manage_access', kind, rows.live), `${kind} live`).toMatchObject({ allowed: true, secret: false })
+        expect(await evaluate(bob, 'view', kind, rows.live), `${kind} live`).toMatchObject({ allowed: true, role: 'viewer' })
+        // A deleted or foreign-workspace space shares nothing: the item stays owner-only secret.
+        for (const label of ['deleted', 'foreign'] as const) {
+          const decision = await evaluate(owner, 'view', kind, rows[label])
+          expect(decision, `${kind} ${label}`).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+          expect(listingVisibility(decision), `${kind} ${label}`).toBe('hide')
+          expect(await evaluate(owner, 'manage_access', kind, rows[label]), `${kind} ${label}`).toMatchObject({ allowed: false })
+          expect(await evaluate(bob, 'view_title', kind, rows[label]), `${kind} ${label}`).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+          expect(await evaluate(alice, 'edit', kind, rows[label]), `${kind} ${label}`).toMatchObject({ allowed: true })
+        }
+      }
+    })
+  })
 })

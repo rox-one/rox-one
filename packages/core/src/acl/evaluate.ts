@@ -381,7 +381,8 @@ export function carriesSecrecy(parentKind: EntityKind, childKind: EntityKind): b
 /**
  * A stored group grant (space / workspace subject) that still applies on a
  * secret resource: free/busy on a calendar reveals no content (owner decision,
- * review 5 — "Show only free/busy" on a personal calendar).
+ * review 5 — "Show only free/busy" on a personal calendar). Only on the
+ * evaluated calendar itself: never inherited by its events (review 6).
  */
 function survivesSecrecy(kind: EntityKind, role: AclStoredRole): boolean {
   return kind === 'calendar' && role === 'free_busy'
@@ -679,6 +680,8 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
       // Same join rule as on the chat itself (a self-join of a closed public chat grants nothing).
       const counts = await chatEntriesCount(chat)
       for (const entry of await entriesOf(chat)) {
+        // Only used for chat → child inheritance: free/busy never flows (review 6).
+        if (entry.role === 'free_busy') continue
         const granted = effectiveRole(entry.role)
         if (entry.via === 'chat' && !counts) continue
         if (entry.subjectType === 'principal' && entry.subjectId === principal.id) role = maxRole(role, granted)
@@ -738,8 +741,14 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
       const linkOk = LINK_SHAREABLE_KINDS.includes(node.ref.kind)
         && !!principal.linkToken && !linkExpired(policy, nowMs)
 
+      // Free/busy grants (incl. those surviving secrecy) apply only on the
+      // evaluated resource itself (depth 0): they reveal free/busy of that
+      // calendar and never flow to children (events) over any edge (review 6).
+      const atRoot = depth === 0
+
       // 1. Explicit (stored + row-derived) entries; group subjects space / workspace are void on secret resources.
       for (const entry of await entriesOf(node)) {
+        if (!atRoot && entry.role === 'free_busy') continue
         const role = effectiveRole(entry.role)
         switch (entry.subjectType) {
           case 'principal':
@@ -753,10 +762,10 @@ export function createAcl(facts: AclFactSource, options: CreateAclOptions = {}):
             if (await inChannel(entry.subjectId)) raise(acc, role, 'explicit')
             break
           case 'space':
-            if (!guest && (!secret || survivesSecrecy(node.ref.kind, entry.role)) && await isSpaceMember(entry.subjectId)) raise(acc, role, 'explicit')
+            if (!guest && (!secret || (atRoot && survivesSecrecy(node.ref.kind, entry.role))) && await isSpaceMember(entry.subjectId)) raise(acc, role, 'explicit')
             break
           case 'workspace':
-            if (!guest && (!secret || survivesSecrecy(node.ref.kind, entry.role)) && workspaceOpen && entry.subjectId === workspaceId) raise(acc, role, 'explicit')
+            if (!guest && (!secret || (atRoot && survivesSecrecy(node.ref.kind, entry.role))) && workspaceOpen && entry.subjectId === workspaceId) raise(acc, role, 'explicit')
             break
           case 'link':
             if (linkOk && entry.subjectId === principal.linkToken) raise(acc, role, 'link')

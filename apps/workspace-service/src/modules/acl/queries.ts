@@ -150,7 +150,9 @@ const SHARING_ROLES = `('owner', 'manager', 'editor', 'commenter', 'viewer', 'gu
  *     engine). A 'space' preset is ignored: personal content has no space,
  *     so it grants nobody;
  *   - a workspace (this workspace) or space subject `acl_entry` with a role
- *     ≥ viewer (`free_busy`, `minimal`, `follower` share no content);
+ *     ≥ viewer (`free_busy`, `minimal`, `follower` share no content); a space
+ *     subject counts only while that space exists in this workspace and is
+ *     not deleted (review 6);
  *   - calendars: the same in `calendar_member` (owner / editor / viewer;
  *     never free_busy).
  * Workspace-scoped (`$2`). Unshared personal content is owner-only secret
@@ -165,12 +167,15 @@ const personalShared = (p: string, type: string, idExpr: string) => {
     : ''
   const calendar = type === 'calendar'
     ? ` OR EXISTS (SELECT 1 FROM ${p}calendar_member km WHERE km.calendar_id = ${idExpr} AND km.role IN ('owner', 'editor', 'viewer')`
-      + ` AND ((km.subject_type = 'workspace' AND km.subject_id = $2::uuid) OR km.subject_type = 'space'))`
+      + ` AND ((km.subject_type = 'workspace' AND km.subject_id = $2::uuid)`
+      + ` OR (km.subject_type = 'space' AND EXISTS (SELECT 1 FROM ${p}space ks WHERE ks.space_id = km.subject_id AND ks.workspace_id = $2::uuid AND ks.deleted_at IS NULL))))`
     : ''
   return `(EXISTS (SELECT 1 FROM ${p}resource_policy rp WHERE rp.workspace_id = $2::uuid AND rp.resource_type IN (${types}) AND rp.resource_id = ${idExpr}::text`
     + ` AND rp.default_role IS NOT NULL AND (rp.default_subject = 'workspace'${linkPreset}))`
     + ` OR EXISTS (SELECT 1 FROM ${p}acl_entry ae WHERE ae.workspace_id = $2::uuid AND ae.resource_type IN (${types}) AND ae.resource_id = ${idExpr}::text`
-    + ` AND ((ae.subject_type = 'workspace' AND ae.subject_id = $2::uuid::text) OR ae.subject_type = 'space') AND ae.role IN ${SHARING_ROLES})${calendar})`
+    + ` AND ((ae.subject_type = 'workspace' AND ae.subject_id = $2::uuid::text)`
+    + ` OR (ae.subject_type = 'space' AND EXISTS (SELECT 1 FROM ${p}space s WHERE s.space_id::text = ae.subject_id AND s.workspace_id = $2::uuid AND s.deleted_at IS NULL)))`
+    + ` AND ae.role IN ${SHARING_ROLES})${calendar})`
 }
 
 const NONE = `NULL::text`

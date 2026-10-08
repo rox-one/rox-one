@@ -100,7 +100,7 @@ describe('loader SQL (review 2 owner decisions)', () => {
     expect(sql('task')).toContain('w.project_id IS NULL AND w.space_id IS NULL AND w.parent_id IS NULL AND w.milestone_id IS NULL')
     for (const kind of ['note', 'folder', 'calendar', 'task'] as const) {
       expect(sql(kind), kind).toContain('rp.default_role IS NOT NULL')
-      expect(sql(kind), kind).toContain("(ae.subject_type = 'workspace' AND ae.subject_id = $2::uuid::text) OR ae.subject_type = 'space'")
+      expect(sql(kind), kind).toContain(`(ae.subject_type = 'workspace' AND ae.subject_id = $2::uuid::text) OR (ae.subject_type = 'space' AND EXISTS (SELECT 1 FROM "public".space s WHERE s.space_id::text = ae.subject_id AND s.workspace_id = $2::uuid AND s.deleted_at IS NULL))`)
       expect(sql(kind), kind).toContain("ae.role IN ('owner', 'manager', 'editor', 'commenter', 'viewer', 'guest')")
       expect(sql(kind), kind).toContain('ae.workspace_id = $2::uuid')
     }
@@ -117,6 +117,9 @@ describe('loader SQL (review 2 owner decisions)', () => {
     for (const kind of ['folder', 'calendar', 'task'] as const) expect(sql(kind), kind).not.toContain("'link'")
     // Calendars also count calendar_member shares ≥ viewer, never free_busy.
     expect(sql('calendar')).toContain("calendar_member km WHERE km.calendar_id = k.calendar_id AND km.role IN ('owner', 'editor', 'viewer')")
+    // Review 6: a space share counts only while the space exists in this workspace and is not deleted.
+    expect(sql('calendar')).toContain(`km.subject_type = 'space' AND EXISTS (SELECT 1 FROM "public".space ks WHERE ks.space_id = km.subject_id AND ks.workspace_id = $2::uuid AND ks.deleted_at IS NULL)`)
+    for (const kind of ['note', 'folder', 'calendar', 'task'] as const) expect(sql(kind), kind).not.toMatch(/OR [a-z]{2}\.subject_type = 'space'\)/)
   })
 
   test("task lists in 'private' or 'members' mode are secret for user / project / space owners (review 5)", () => {
