@@ -56,6 +56,7 @@ const FILE_EXEMPTS: FileExempt[] = [
   },
   { file: 'apps/electron/resources/skills/', reason: 'bundled skill content (owned by skill authors incl. vendored scripts; not Rox storage)', dirPrefix: true },
   { file: 'docs/plans/2026-10-07-rox-visible-config-migration.md', reason: 'the migration policy doc (intentional legacy-path narrative, W1-13 note)' },
+  { file: 'docs/cli.md', reason: 'documents rox migrate-config itself (intentional legacy-path narrative)' },
   { file: 'plans/identity-migration-plan.md', reason: 'dated migration plan (historical evidence)' },
   { file: 'apps/electron/resources/docs/sources.md', reason: 'user-docs connection examples (pre-existing ~/Documents samples, not Rox defaults)' },
   { file: 'apps/electron/resources/skills/', reason: 'bundled third-party skill content (owned by skill authors, not Rox storage)', dirPrefix: true },

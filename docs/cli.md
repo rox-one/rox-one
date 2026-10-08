@@ -122,6 +122,20 @@ craft-cli invoke sessions:get '"workspace-123"'
 craft-cli listen session:event
 ```
 
+### Storage Migration (W1-13)
+
+```bash
+craft-cli migrate-config              # Move ~/.rox to ~/rox (never deletes)
+craft-cli migrate-config --dry-run    # Preview only, write nothing
+craft-cli migrate-config --revert     # Move ~/rox back to ~/.rox
+craft-cli migrate-config --auto       # Non-interactive (for install scripts)
+```
+
+Local-only: needs no server URL and works regardless of the
+`storage.visible-root.v1` flag. `~/.rox` is left as a symlink
+(Windows: junction) to `~/rox`; `--revert` is refused while
+`~/rox/.migration/conflicts` is non-empty.
+
 ### Run (Self-Contained)
 
 ```bash
