@@ -413,7 +413,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
               </Button>
             ) : null}
             <Button variant="primary" data-testid="meetings-start" disabled={!api || busyRecording} onClick={() => void handleRecord()}>
-              <span aria-hidden className={cn('size-1.5 rounded-full bg-current', busyRecording && 'animate-pulse')} />
+              <span aria-hidden data-live-indicator className={cn('size-1.5 rounded-full bg-current', busyRecording && 'animate-pulse')} />
               {busyRecording ? t('meetings.local.recordingNow', { time: formatDuration(recordedMs(rec)) }) : t('meetings.screen.startRecording')}
             </Button>
           </>

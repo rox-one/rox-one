@@ -8,7 +8,7 @@ export const iconComponents: ComponentEntry[] = [
     id: 'craft-agents-symbol',
     name: 'CraftAgentsSymbol',
     category: 'Icons',
-    description: 'ROX "E" pixel art symbol icon (brand color: #9570BE)',
+    description: 'Rox ink avatar brand mark (theme-aware: black on light, white on dark)',
     component: CraftAgentsSymbol,
     props: [
       {

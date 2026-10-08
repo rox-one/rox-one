@@ -587,6 +587,7 @@ export const RPC_CHANNELS = {
     CANCEL: 'voice:cancel',
     GRANT: 'voice:grantPermission',
     CHUNK: 'voice:chunk',
+    LEVEL: 'voice:level',
     HISTORY_LIST: 'voice:historyList',
     HISTORY_GET: 'voice:historyGet',
     HISTORY_FAVORITE: 'voice:historyFavorite',
@@ -1115,7 +1116,7 @@ export const RPC_CHANNELS = {
     /** Push: local link store changed for a workspace. */
     LINKS_CHANGED: 'entities:linksChanged',
   },
-// W1-03 (#1500)
+  // W1-03 (#1500)
   commands: {
     /** Execute a CommandEnvelope through the command bus; returns a CommandReceipt. */
     EXECUTE: 'commands:execute',

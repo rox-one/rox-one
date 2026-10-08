@@ -8,8 +8,8 @@ import { useTourTarget } from '@/features/product-tour/runtime/hooks'
  * Presentation:
  * - Desktop (`compact` false): Radix DropdownMenu.
  * - Compact (`compact` true): vaul Drawer (nested when opened from craft-menu)
- *   so the menu is not trapped under the craft-menu Drawer overlay
- *   (z-dropdown 100 < z-modal 200).
+ *   so it stacks inside the craft-menu Drawer instead of floating over it
+ *   (shared menus are on z-island, above the drawer scrim/modal).
  */
 
 import * as React from 'react'
@@ -23,7 +23,6 @@ import {
   FolderPlus,
   Shield,
   Trash2,
-  User,
 } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useSetAtom } from 'jotai'
@@ -53,7 +52,35 @@ import { waitForTransportConnected } from '@/lib/transport-wait'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { isSshBackedWorkspace } from '../../../shared/ssh'
+import blackInkAvatar from '@/assets/rox-avatar-ink-black.png'
+import whiteInkAvatar from '@/assets/rox-avatar-ink-white.png'
 import type { CredentialHealthStatus, IdentityState, Workspace } from '../../../shared/types'
+
+/**
+ * Round identity avatar for the Identity Center profile header: the user's own
+ * image when present, otherwise the Rox ink mark (black on light surfaces,
+ * white on dark ones — a theme-aware pair, never `dark:invert`).
+ */
+function ProfileAvatar({ src, className }: { src?: string; className?: string }) {
+  return (
+    <span className={cn('relative block shrink-0 overflow-hidden rounded-full bg-surface-pressed', className)}>
+      {src ? (
+        <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
+      ) : (
+        <>
+          <img src={blackInkAvatar} alt="" draggable={false} className="h-full w-full object-cover dark:hidden" />
+          <img
+            src={whiteInkAvatar}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="hidden h-full w-full object-cover dark:block"
+          />
+        </>
+      )}
+    </span>
+  )
+}
 
 export interface AccountMenuProps {
   /**
@@ -70,6 +97,98 @@ export interface AccountMenuProps {
   onWorkspaceCreated?: (workspace: Workspace) => void
   onWorkspaceRemoved?: () => void
   workspaceUnreadMap?: Record<string, boolean>
+  /**
+   * Creation flow owned by a host that outlives this menu. The compact
+   * craft-menu Drawer (PanelHeader) hosts it so it can close itself when the
+   * creation screen opens without unmounting the screen with the drawer.
+   */
+  creationFlow?: WorkspaceCreationFlow
+  /** Called whenever the creation/reconnect screen opens (e.g. to close a host Drawer). */
+  onOpenCreationScreen?: () => void
+}
+
+export interface WorkspaceCreationFlow {
+  /** Opens the creation screen, or the reconnect screen for `reconnectWorkspace`. */
+  open: (reconnectWorkspace?: Workspace) => void
+  /** The fullscreen creation screen; render it outside any surface that may close. */
+  screen: React.ReactNode
+}
+
+/**
+ * Workspace creation / reconnect flow (fullscreen overlay at --z-fullscreen).
+ * Lives in a hook so a host that outlives AccountMenu can own it.
+ */
+export function useWorkspaceCreationFlow({
+  activeWorkspaceId,
+  onSelectWorkspace,
+  onWorkspaceCreated,
+}: Pick<AccountMenuProps, 'activeWorkspaceId' | 'onSelectWorkspace' | 'onWorkspaceCreated'>): WorkspaceCreationFlow {
+  const { t } = useTranslation()
+  const [showCreationScreen, setShowCreationScreen] = React.useState(false)
+  const [reconnectTarget, setReconnectTarget] = React.useState<Workspace | null>(null)
+  const setFullscreenOverlayOpen = useSetAtom(fullscreenOverlayOpenAtom)
+  const showingRef = React.useRef(false)
+  showingRef.current = showCreationScreen
+
+  const open = React.useCallback((reconnectWorkspace?: Workspace) => {
+    setReconnectTarget(reconnectWorkspace ?? null)
+    setShowCreationScreen(true)
+    setFullscreenOverlayOpen(true)
+  }, [setFullscreenOverlayOpen])
+
+  const handleWorkspaceCreated = ({ workspace, activation }: WorkspaceCreationSuccess) => {
+    setShowCreationScreen(false)
+    setFullscreenOverlayOpen(false)
+    toast.success(t('toast.createdWorkspace', { name: workspace.name }))
+    onWorkspaceCreated?.(workspace)
+    void onSelectWorkspace(activation?.activeWorkspaceId ?? workspace.id)
+  }
+
+  const handleCloseCreationScreen = React.useCallback(() => {
+    setShowCreationScreen(false)
+    setReconnectTarget(null)
+    setFullscreenOverlayOpen(false)
+  }, [setFullscreenOverlayOpen])
+
+  const handleReconnectWorkspace = React.useCallback(
+    async (
+      workspaceId: string,
+      remoteServer: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string; tlsTrust?: import('../../../shared/types').RemoteTlsTrust },
+    ) => {
+      await window.electronAPI.updateWorkspaceRemoteServer(workspaceId, remoteServer)
+      if (workspaceId === activeWorkspaceId) {
+        await window.electronAPI.reconnectTransport()
+        await waitForTransportConnected(window.electronAPI)
+      } else {
+        await Promise.resolve(onSelectWorkspace(workspaceId))
+        await waitForTransportConnected(window.electronAPI)
+      }
+      handleCloseCreationScreen()
+      toast.success(t('toast.workspaceReconnected'))
+    },
+    [activeWorkspaceId, handleCloseCreationScreen, onSelectWorkspace, t],
+  )
+
+  // Unmounting the owner while the screen is open must not leave the
+  // fullscreen-overlay flag stuck on.
+  React.useEffect(() => () => {
+    if (showingRef.current) setFullscreenOverlayOpen(false)
+  }, [setFullscreenOverlayOpen])
+
+  const screen = (
+    <AnimatePresence>
+      {showCreationScreen && (
+        <WorkspaceCreationScreen
+          onWorkspaceCreated={handleWorkspaceCreated}
+          onClose={handleCloseCreationScreen}
+          reconnectWorkspace={reconnectTarget ?? undefined}
+          onReconnectWorkspace={handleReconnectWorkspace}
+        />
+      )}
+    </AnimatePresence>
+  )
+
+  return { open, screen }
 }
 
 function sectionLabel(text: string) {
@@ -100,13 +219,14 @@ export function AccountMenu({
   onWorkspaceCreated,
   onWorkspaceRemoved,
   workspaceUnreadMap,
+  creationFlow: hostedCreationFlow,
+  onOpenCreationScreen,
 }: AccountMenuProps) {
   const { t } = useTranslation()
   const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', workspaceId: activeWorkspaceId ?? undefined, variant: compact ? 'compact' : 'regular' })
   const [open, setOpen] = React.useState(false)
-  const [showCreationScreen, setShowCreationScreen] = React.useState(false)
-  const [reconnectTarget, setReconnectTarget] = React.useState<Workspace | null>(null)
-  const setFullscreenOverlayOpen = useSetAtom(fullscreenOverlayOpenAtom)
+  const ownCreationFlow = useWorkspaceCreationFlow({ activeWorkspaceId, onSelectWorkspace, onWorkspaceCreated })
+  const creationFlow = hostedCreationFlow ?? ownCreationFlow
   const selectedWorkspace = workspaces.find((w) => w.id === activeWorkspaceId)
   const workspaceIconMap = useWorkspaceIcons(workspaces)
   const connectionState = useTransportConnectionState()
@@ -268,18 +388,15 @@ export function AccountMenu({
       : t('accountMenu.healthIssues', { count: credentialHealth.issues?.length ?? 0 })
     : t('accountMenu.healthUnknown')
 
-  const handleNewWorkspace = () => {
-    setShowCreationScreen(true)
-    setFullscreenOverlayOpen(true)
-    closeMenu()
+  /** Opens creation (or reconnect) and lets a host surface (craft-menu Drawer) close. */
+  const openCreationScreen = (reconnectWorkspace?: Workspace) => {
+    creationFlow.open(reconnectWorkspace)
+    onOpenCreationScreen?.()
   }
 
-  const handleWorkspaceCreated = ({ workspace, activation }: WorkspaceCreationSuccess) => {
-    setShowCreationScreen(false)
-    setFullscreenOverlayOpen(false)
-    toast.success(t('toast.createdWorkspace', { name: workspace.name }))
-    onWorkspaceCreated?.(workspace)
-    void onSelectWorkspace(activation?.activeWorkspaceId ?? workspace.id)
+  const handleNewWorkspace = () => {
+    openCreationScreen()
+    closeMenu()
   }
 
   const handleRemoveWorkspace = React.useCallback(
@@ -299,38 +416,10 @@ export function AccountMenu({
     [activeWorkspaceId, onWorkspaceRemoved, t],
   )
 
-  const handleCloseCreationScreen = React.useCallback(() => {
-    setShowCreationScreen(false)
-    setReconnectTarget(null)
-    setFullscreenOverlayOpen(false)
-  }, [setFullscreenOverlayOpen])
-
-  const handleReconnectWorkspace = React.useCallback(
-    async (
-      workspaceId: string,
-      remoteServer: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string; tlsTrust?: import('../../../shared/types').RemoteTlsTrust },
-    ) => {
-      await window.electronAPI.updateWorkspaceRemoteServer(workspaceId, remoteServer)
-      if (workspaceId === activeWorkspaceId) {
-        await window.electronAPI.reconnectTransport()
-        await waitForTransportConnected(window.electronAPI)
-      } else {
-        await Promise.resolve(onSelectWorkspace(workspaceId))
-        await waitForTransportConnected(window.electronAPI)
-      }
-      handleCloseCreationScreen()
-      toast.success(t('toast.workspaceReconnected'))
-    },
-    [activeWorkspaceId, handleCloseCreationScreen, onSelectWorkspace, t],
-  )
-
-
   const selectWorkspace = (workspace: Workspace, openInNewWindow?: boolean) => {
     const disconnected = isRemoteDisconnected(workspace.id)
     if (disconnected && workspace.remoteServer) {
-      setReconnectTarget(workspace)
-      setShowCreationScreen(true)
-      setFullscreenOverlayOpen(true)
+      openCreationScreen(workspace)
       closeMenu()
       return
     }
@@ -378,18 +467,8 @@ export function AccountMenu({
     </button>
   )
 
-  const creationScreen = (
-    <AnimatePresence>
-      {showCreationScreen && (
-        <WorkspaceCreationScreen
-          onWorkspaceCreated={handleWorkspaceCreated}
-          onClose={handleCloseCreationScreen}
-          reconnectWorkspace={reconnectTarget ?? undefined}
-          onReconnectWorkspace={handleReconnectWorkspace}
-        />
-      )}
-    </AnimatePresence>
-  )
+  // A hosted flow renders its screen in the host; only the own flow renders here.
+  const creationScreen = hostedCreationFlow ? null : ownCreationFlow.screen
 
   // ---------------------------------------------------------------------------
   // Compact: Drawer surface (nested under craft-menu Drawer when applicable)
@@ -410,9 +489,7 @@ export function AccountMenu({
             <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-6 flex flex-col gap-0.5">
               {drawerSectionLabel(t('accountMenu.section.profile'))}
               <div className="flex items-center gap-3 px-3 py-3">
-                <div className="h-7 w-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
-                  <User className="h-4 w-4 text-foreground/60" />
-                </div>
+                <ProfileAvatar src={profile?.avatar} className="h-7 w-7 shadow-minimal" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium">
                     {profile?.displayName || t('profile.defaultName')}
@@ -582,11 +659,14 @@ export function AccountMenu({
 
         <StyledDropdownMenuContent align="start" sideOffset={6} minWidth="min-w-72">
           {sectionLabel(t('accountMenu.section.profile'))}
-          <div className="px-2 py-1.5">
-            <div className="truncate text-sm font-medium">
-              {profile?.displayName || t('profile.defaultName')}
+          <div className="flex items-center gap-3 px-2 py-1.5">
+            <ProfileAvatar src={profile?.avatar} className="h-8 w-8 shadow-minimal" />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">
+                {profile?.displayName || t('profile.defaultName')}
+              </div>
+              <div className="text-[11px] text-muted-foreground">{profileModeLabel}</div>
             </div>
-            <div className="text-[11px] text-muted-foreground">{profileModeLabel}</div>
           </div>
           <StyledDropdownMenuItem onClick={openAccountPage} className="font-sans">
             {t('accountMenu.editProfile')}
@@ -600,9 +680,7 @@ export function AccountMenu({
                 key={workspace.id}
                 onClick={(e) => {
                   if (disconnected && workspace.remoteServer) {
-                    setReconnectTarget(workspace)
-                    setShowCreationScreen(true)
-                    setFullscreenOverlayOpen(true)
+                    openCreationScreen(workspace)
                     return
                   }
                   if (disconnected) return

@@ -151,6 +151,9 @@ jobs:
         # This launches dist/main.cjs with an isolated profile, not a browser fixture.
         # The runner leaves full NATIVE-01/02/03 acceptance NOT_RUN in its report.
         run: bun scripts/product-tour/run-native.ts
+        env:
+          # Keep the isolated profile on disk so a red lane ships userData logs in the artifact.
+          ROX_PRODUCT_TOUR_NATIVE_KEEP_PROFILE: '1'
       - name: Upload native smoke evidence and unresolved platform gates
         if: always()
         uses: actions/upload-artifact@v4

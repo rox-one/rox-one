@@ -9,6 +9,38 @@ export const ROCKS_T1_ROUTE = 'rox-ultra'
 /** Latest general prerecorded family; version=latest selects its current release. */
 export const DEEPGRAM_TRANSCRIPTION_MODEL = 'nova-3'
 export const DEEPGRAM_TRANSCRIPTION_NAME = 'Deepgram Nova-3'
+/**
+ * Opt-in only. The pinned default is Nova-3; the live model catalog may raise it
+ * to a newer released Nova family only when the operator sets this to a truthy
+ * value. Never upgrade implicitly.
+ */
+export const DEEPGRAM_MODEL_UPGRADE_ENV = 'DEEPGRAM_ALLOW_MODEL_UPGRADE'
+
+/** The requested Deepgram model: an explicit DEEPGRAM_MODEL override, else the pinned Nova-3. */
+export function resolveDeepgramModel(env: Record<string, string | undefined> = {}): string {
+  const configured = env.DEEPGRAM_MODEL
+  return typeof configured === 'string' && configured.trim() ? configured.trim() : DEEPGRAM_TRANSCRIPTION_MODEL
+}
+
+/** True only when the operator explicitly allows a catalog-driven Nova family upgrade. */
+export function deepgramModelUpgradeEnabled(env: Record<string, string | undefined> = {}): boolean {
+  const value = env[DEEPGRAM_MODEL_UPGRADE_ENV]
+  return typeof value === 'string' && /^(?:1|true|yes|on)$/i.test(value.trim())
+}
+
+/**
+ * Model options for `DeepgramTranscriptionAdapter` on the production path.
+ *
+ * An explicit `DEEPGRAM_MODEL` pin wins and suppresses catalog upgrades; without
+ * one the adapter keeps the pinned Nova-3 default and may raise it from the live
+ * catalog only when the operator opted in. Passing the *resolved* default here
+ * instead would look like an explicit pin and make the opt-in inert.
+ */
+export function deepgramTranscriptionOptions(env: Record<string, string | undefined> = {}): { model: string | undefined; allowModelUpgrade: boolean } {
+  const configured = env.DEEPGRAM_MODEL
+  const model = typeof configured === 'string' && configured.trim() ? configured.trim() : undefined
+  return { model, allowModelUpgrade: deepgramModelUpgradeEnabled(env) }
+}
 export const SPARK_PROCESS_ALIAS = 'gpt-5.3-spark'
 export const COMPOUND_FALLBACK_MODEL = 'groq/compound'
 export const VOICE_ACCESS_TOKEN_TTL_MS = 15 * 60 * 1000

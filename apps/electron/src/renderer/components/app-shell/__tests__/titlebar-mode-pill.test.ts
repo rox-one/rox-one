@@ -69,8 +69,9 @@ describe('titlebar mode pill source contract', () => {
     expect(topBar).not.toContain('TopBarUsageSlot')
   })
 
-  it('uses the plate-free portrait for the titlebar mark', () => {
-    expect(tileMark).toContain('rox-mark-portrait-18.png')
+  it('uses the plate-free ink avatar for the titlebar mark', () => {
+    expect(tileMark).toContain('rox-avatar-ink-black.png')
+    expect(tileMark).toContain('rox-avatar-ink-white.png')
     expect(tileMark).not.toContain('rox-mark-tile-')
   })
   it('exposes the mode pill on Главная without requiring experimental Workbench chrome', () => {

@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from 'node:fs'
+import { isSpawnEnvReady, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
 import { spawn } from 'node:child_process'
 import { homedir } from 'node:os'
 import { join, basename } from 'path'
@@ -438,6 +439,8 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     if (typeof dirPath !== 'string' || !isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) {
       return { opened: false, reason: 'forbidden' }
     }
+    // PATH snapshot below must be the login-shell PATH (bounded wait on spawn-env gates).
+    if (!isSpawnEnvReady()) await whenSpawnEnvReady()
     const extraDirs = [
       ...DEFAULT_EDITOR_EXTRA_DIRS,
       join(homedir(), '.local', 'bin'),

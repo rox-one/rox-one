@@ -244,6 +244,41 @@ export function isIdentityPlaceholdersEnabled(enabledWorkbenchFlags?: ReadonlySe
 }
 
 /**
+ * Workbench flag id for the visible Rox home (`~/rox` resolution + MIG-13
+ * auto-migration, W1-13 #1510).
+ * Mirrors `WORKBENCH_FLAG.storageVisibleRootV1` in
+ * `packages/core/src/platform/workbench/flags.ts` (kept as a literal here
+ * so `@rox/shared` stays free of the platform import graph).
+ */
+export const STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG = 'storage.visible-root.v1';
+
+/**
+ * Runtime-evaluated check for the visible Rox home (W1-13: `~/rox`
+ * resolution + MIG-13 auto-migration).
+ *
+ * Server-evaluated — same shape as `isEntitiesLinksEnabled`: the workbench
+ * flag is authoritative, and an env override is allowed for tests only.
+ * `ROX_STORAGE_VISIBLE_ROOT=1|0` wins; the deprecated
+ * `CRAFT_FEATURE_STORAGE_VISIBLE_ROOT=1|0` alias still works. Defaults to
+ * DISABLED (PRD D-v2-12: ON by default only after the W3-02 rehearsal).
+ *
+ * Pass the enabled workbench flag set when the caller tracks it. Without a
+ * set, only the env override applies (still default OFF).
+ */
+export function isStorageVisibleRootEnabled(
+  enabledWorkbenchFlags?: ReadonlySet<string>,
+  env?: NodeJS.ProcessEnv | Record<string, string | undefined>,
+): boolean {
+  // Renderer-safe: no node imports; `env` defaults to process.env when present.
+  const read = (key: string): string | undefined => (env ? env[key]?.trim() || undefined : getEnv(key)?.trim() || undefined);
+  const override =
+    parseBooleanEnv(read('ROX_STORAGE_VISIBLE_ROOT')) ??
+    parseBooleanEnv(read('CRAFT_FEATURE_STORAGE_VISIBLE_ROOT'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG) === true;
+}
+
+/**
  * Runtime-evaluated check for Pages sharing (Cloudflare publication).
  *
  * Server-evaluated: the renderer learns it via `pages:getShareCapabilities`,

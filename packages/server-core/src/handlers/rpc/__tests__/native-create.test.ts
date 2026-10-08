@@ -93,13 +93,42 @@ async function invoke(connection: TestConnection, channel: string, ...args: unkn
   return waitMessage(connection.socket, connection.messages, message => message.id === id)
 }
 
+type CreationPlan = {
+  context: { issuer: string; subject: string; workspaceId: string; permissionFence: string }
+  writePermissionFence: string
+  mutation: { nativeId: string; expectedRevision: null; schemaVersion: 1; changes: Array<{ path: string; content: string }> }
+}
+
+// `createdAt` is the sole wall-clock field: the plan builder stamps it into the
+// note frontmatter (`buildInitialNoteContent` -> Date.now()), so two identical
+// PREPARE_CREATE calls legitimately differ there. Compare everything else in
+// full and bound the timestamp to the observed planning window instead.
+const FRONTMATTER_CREATED_AT = /^createdAt: (\d+)$/m
+
+function frontmatterCreatedAt(content: string): number {
+  const match = FRONTMATTER_CREATED_AT.exec(content)
+  if (!match) throw new Error('expected createdAt in note frontmatter')
+  return Number(match[1])
+}
+
+function withoutFrontmatterCreatedAt(plan: CreationPlan): CreationPlan {
+  return {
+    ...plan,
+    mutation: {
+      ...plan.mutation,
+      changes: plan.mutation.changes.map(change => ({ ...change, content: change.content.replace(FRONTMATTER_CREATED_AT, 'createdAt: <clock>') })),
+    },
+  }
+}
+
 
 test('canonical native creation plan has no file/journal writes, matches CREATE bytes and denies read-only/foreign/revoked principals', async () => {
   const f = await fixture(true)
   const writer = await connect(f.url, f.issued.credential)
+  const planningWindowStart = Date.now()
   const first = await invoke(writer, RPC_CHANNELS.notes.PREPARE_CREATE, f.workspaceId, 'Canonical: title', 'nested')
   expect(first.type).toBe('response')
-  const plan = first.result as { context: { issuer: string; subject: string; workspaceId: string; permissionFence: string }; writePermissionFence: string; mutation: { nativeId: string; expectedRevision: null; schemaVersion: 1; changes: Array<{ path: string; content: string }> } }
+  const plan = first.result as CreationPlan
   expect(plan.context).toMatchObject({ issuer: f.issued.principal.issuer, subject: f.issued.principal.subject, workspaceId: f.workspaceId })
   expect(plan.context.permissionFence).toMatch(/^[a-f0-9]{64}$/)
   expect(plan.writePermissionFence).toMatch(/^[a-f0-9]{64}$/)
@@ -110,10 +139,20 @@ test('canonical native creation plan has no file/journal writes, matches CREATE 
   const empty = await invoke(writer, RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })
   expect((empty.result as { changes: unknown[] }).changes).toEqual([])
   const repeat = await invoke(writer, RPC_CHANNELS.notes.PREPARE_CREATE, f.workspaceId, 'Canonical: title', 'nested')
-  expect(repeat.result).toEqual(plan)
+  const planningWindowEnd = Date.now()
+  const repeated = repeat.result as CreationPlan
+  expect(withoutFrontmatterCreatedAt(repeated)).toEqual(withoutFrontmatterCreatedAt(plan))
+  const firstCreatedAt = frontmatterCreatedAt(plan.mutation.changes[0]!.content)
+  const repeatCreatedAt = frontmatterCreatedAt(repeated.mutation.changes[0]!.content)
+  expect(repeatCreatedAt).toBeGreaterThanOrEqual(firstCreatedAt)
+  expect(firstCreatedAt).toBeGreaterThanOrEqual(planningWindowStart)
+  expect(repeatCreatedAt).toBeLessThanOrEqual(planningWindowEnd)
   const created = await invoke(writer, RPC_CHANNELS.notes.CREATE, f.workspaceId, 'Canonical: title', 'nested', { operationId: 'canonical-existing-create', expectedRevision: null, schemaVersion: 1 })
   expect(created.type).toBe('response')
-  expect(readFileSync(join(f.root, plan.mutation.changes[0]!.path), 'utf8')).toBe(plan.mutation.changes[0]!.content)
+  // CREATE stamps its own wall-clock `createdAt` just like PREPARE, so the
+  // persisted bytes equal the plan only modulo that single frontmatter line.
+  const writtenNote = readFileSync(join(f.root, plan.mutation.changes[0]!.path), 'utf8')
+  expect(writtenNote.replace(FRONTMATTER_CREATED_AT, 'createdAt: <clock>')).toBe(plan.mutation.changes[0]!.content.replace(FRONTMATTER_CREATED_AT, 'createdAt: <clock>'))
   expect(await invoke(writer, RPC_CHANNELS.notes.PREPARE_CREATE, 'workspace-other', 'Denied')).toHaveProperty('error')
   expect(await invoke(writer, RPC_CHANNELS.notes.PREPARE_CREATE, f.workspaceId, 'Denied', '../outside')).toHaveProperty('error')
   const issued = f.authority.redeemEnrollment(f.authority.issueEnrollment(f.admin.credential, 'reader', Date.now() + 60_000), 'reader')!

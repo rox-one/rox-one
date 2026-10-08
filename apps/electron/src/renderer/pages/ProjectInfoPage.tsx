@@ -81,15 +81,17 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
   // The selected detail may load while the already-ready Projects API remains
   // usable. A missing reader or an actual failed read still blocks honestly.
   useEffect(() => {
+    // Loading publishes nothing: the already-ready Projects API must stay
+    // usable while this detail resolves. Every published contribution returns
+    // its disposer so a stale state cannot outlive the effect.
     if (typeof window.electronAPI?.getProject !== 'function') {
-      tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
-    } else if (loading) {
-      tour.capability('projects.available', { state: 'pending', reason: 'installing' })
-    } else if (error) {
-      tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
-    } else {
-      tour.capability('projects.available', project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' })
+      return tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
     }
+    if (loading) return
+    if (error) {
+      return tour.capability('projects.available', { state: 'unavailable', reason: 'api-unavailable' })
+    }
+    return tour.capability('projects.available', project ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' })
   }, [tour, loading, error, project])
   useEffect(() => {
     const element = projectSummaryRef.current

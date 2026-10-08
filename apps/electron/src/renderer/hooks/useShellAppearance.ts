@@ -2,12 +2,14 @@ import { useEffect } from 'react'
 import type { ZenShellSnapshot } from '../../shared/shell-appearance'
 import { subscribeDesktopShellAppearance } from '@/lib/shell-appearance-subscription'
 import { resolveWebChromeMaterial, subscribeWebChromePreference } from '@/lib/web-chrome-preference'
+import { applyRenderProfile } from '@/lib/render-profile-dom'
 
 function applySnapshot(snapshot: ZenShellSnapshot): void {
   const root = document.documentElement
   // Keep the material fallback even when shell styling is disabled, so an
   // explicit opt-out cannot leave the default glass chrome visible.
   root.setAttribute('data-shell-material', snapshot.material)
+  applyRenderProfile(root, snapshot)
   if (snapshot.enabled) {
     root.setAttribute('data-shell-style', 'zen')
   } else {

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import type { AutomationContextReference, AutomationContextPause, AutomationListItem, AutomationObjectKind } from './types'
 
 export interface AutomationContextObjectChoice {
@@ -33,7 +34,7 @@ export async function saveAutomationContextBinding(workspaceId: string, automati
 
 export function ContextBindingEditor({ workspaceId, value, paused, projects, objects = [], onSave, disabled }: ContextBindingEditorProps) {
   const { t } = useTranslation()
-  const reducedMotion = useReducedMotion()
+  const reducedMotion = usePrefersReducedMotion()
   const [projectId, setProjectId] = React.useState(value?.projectId ?? '')
   const [kind, setKind] = React.useState<AutomationObjectKind | ''>(value?.object?.kind ?? '')
   const [objectId, setObjectId] = React.useState(value?.object?.id ?? '')

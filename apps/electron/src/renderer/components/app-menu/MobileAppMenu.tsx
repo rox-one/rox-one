@@ -2,7 +2,7 @@ import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { useEffect, useMemo, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import * as Icons from 'lucide-react'
+import { getMenuIcon } from './menu-icons'
 import { motion, AnimatePresence } from 'motion/react'
 import { useRegisterDismissibleLayer } from '@/context/DismissibleLayerContext'
 import { RoxTileMark } from '../icons/RoxTileMark'
@@ -56,9 +56,10 @@ function stackReducer(state: SheetState, action: StackAction): SheetState {
   }
 }
 
+// Schema icon names resolve through an explicit map (see menu-icons.ts) so the
+// startup bundle does not keep every lucide icon.
 function getIcon(name: string): React.ComponentType<{ className?: string }> | null {
-  const IconComponent = Icons[name as keyof typeof Icons] as React.ComponentType<{ className?: string }> | undefined
-  return IconComponent ?? null
+  return getMenuIcon(name)
 }
 
 function renderRowIcon(iconName: string, rowId: string): React.ReactNode {

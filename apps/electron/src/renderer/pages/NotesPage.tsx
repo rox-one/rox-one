@@ -1,7 +1,8 @@
 import { useNavigation } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, NotesViewMenu, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
-import { notesAuxiliaryFits } from './notes/notes-layout'
+import { notesAuxiliaryFits, type NotesRail } from './notes/notes-layout'
+import { usePanelWorkspaceLayout, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
 import { projectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
@@ -28,6 +29,9 @@ import { parseNoteBlockAddress, resolveNoteBlockId } from '@rox/core/mindmap/der
 import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { NavigationContext } from '@/contexts/NavigationContext'
+import { RightSessionShell } from '@/components/session-workbench/RightSessionShell'
+// W1-08 (#1505): entity mentions in the rich editor (inert unless entities.previews.v1).
+import { useNoteEntityMentions } from '@/components/entities/NoteEntityMentions'
 import {
   bindRightSessionContext,
   describeRightSessionOpen,
@@ -400,6 +404,22 @@ function updateMarkdownTitle(content: string, title: string): string {
   return content
 }
 
+/**
+ * Panel-layout mode → which Notes rails may render inline.
+ * Best-effort only: saved widths are never rewritten, and the document keeps
+ * priority via NOTE_COLUMN_MIN when the surface is too narrow.
+ */
+const NOTES_RAILS_BY_LAYOUT: Record<PanelWorkspaceLayoutMode, Record<NotesRail, boolean>> = {
+  auto: { vault: true, toc: true, comments: true },
+  columns: { vault: true, toc: true, comments: true },
+  'grid-3': { vault: true, toc: true, comments: true },
+  'grid-2': { vault: true, toc: false, comments: false },
+  focus: { vault: false, toc: false, comments: false },
+}
+
+/** Readable minimum for the document column; rails yield before it does. */
+const NOTE_COLUMN_MIN = 460
+
 export default function NotesPage(props: NotesPageProps) {
   const { t } = useTranslation()
   const { activeWorkspaceId } = useAppShellContext()
@@ -452,6 +472,8 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const shellSidebarTarget = useShellSidebarTarget()
   const { t } = useTranslation()
+  // Panel-layout mode drives which side rails this surface may render.
+  const { mode: panelLayoutMode } = usePanelWorkspaceLayout()
   const notesHeaderTitleKey = useNotesTitleKey('notes.header.title')
   const navigationRevision = React.useContext(NavigationContext)?.navigationRevision
   const {
@@ -562,6 +584,19 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   // rails can yield before the note column gets unreadably narrow.
   const [setDocRowEl, docRowWidth] = useNotesPanelWidth<HTMLDivElement>()
   const [setShellEl, shellWidth] = useNotesPanelWidth<HTMLDivElement>()
+  // User-chosen panel layouts keep the document at NOTE_COLUMN_MIN: once the
+  // shell is too narrow the vault rail stays collapsed until it fits again.
+  // `auto` keeps its original width rules, so the latch never engages there.
+  const [vaultStarved, setVaultStarved] = React.useState(false)
+  React.useEffect(() => {
+    if (panelLayoutMode === 'auto' || docRowWidth <= 0) {
+      setVaultStarved(false)
+      return
+    }
+    setVaultStarved((previous) => previous
+      ? docRowWidth < NOTE_COLUMN_MIN + railLayout.vault
+      : docRowWidth < NOTE_COLUMN_MIN)
+  }, [panelLayoutMode, docRowWidth, railLayout.vault])
   const [inspectorSheetOpen, setInspectorSheetOpen] = React.useState(false)
   const inlineAuxiliary = notesAuxiliaryFits(shellWidth, inspectorCollapsed, false)
   const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
@@ -777,6 +812,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeNote, content, noteView, visibleBlockTree])
   const activeNoteIdRef = React.useRef<string | null>(null)
   const richEditorRef = React.useRef<TiptapEditorHandle | null>(null)
+  // W1-08 (#1505): returns { entityNodes: undefined, picker: null } while the flag is off.
+  const noteEntityMentions = useNoteEntityMentions({ workspaceId: activeWorkspaceId, editorRef: richEditorRef })
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   React.useEffect(() => { dirtyRef.current = dirty }, [dirty])
@@ -2314,7 +2351,7 @@ h1,h2,h3{margin-top:1.5em}
 
   const wikiMenu = showWikiMenu ? (
     <div
-      className="absolute z-20 w-80 rounded-[var(--radius-overlay)] border border-border/70 bg-popover p-1 shadow-strong"
+      className="absolute z-20 w-80 rounded-md border border-border/70 bg-popover p-1 shadow-strong"
       data-testid="notes-wiki-menu"
       style={wikiAnchor
         ? { left: Math.max(4, wikiAnchor.x), top: wikiAnchor.y }
@@ -2370,25 +2407,29 @@ h1,h2,h3{margin-top:1.5em}
   // Display-only: rails the user left open auto-hide (comments first, then
   // the outline) while the note column would drop below NOTE_COLUMN_MIN.
   // Persisted rail preferences are untouched.
-  const NOTE_COLUMN_MIN = 460
   const noteColumnWidth = (toc: boolean, comments: boolean) =>
     docRowWidth - (toc ? railLayout.toc : 0) - (comments ? railLayout.comments : 0)
   const roomFor = (toc: boolean, comments: boolean) =>
     docRowWidth <= 0 || noteColumnWidth(toc, comments) >= NOTE_COLUMN_MIN
-  const commentsShown = !railLayout.commentsCollapsed
-    && (Boolean(commentDraftQuote) || roomFor(!railLayout.tocCollapsed, true))
-  const tocShown = !railLayout.tocCollapsed && roomFor(true, commentsShown)
+  // Panel-layout mode restricts which rails may show; widths stay untouched.
+  const railsAllowed = NOTES_RAILS_BY_LAYOUT[panelLayoutMode]
+  // `auto` keeps its original width rules, so the starvation latch never applies there.
+  const vaultStarvedForMode = panelLayoutMode !== 'auto' && vaultStarved
+  const vaultShown = railsAllowed.vault && !railLayout.vaultCollapsed && !vaultStarvedForMode
+  const commentsShown = railsAllowed.comments && !railLayout.commentsCollapsed
+    && (Boolean(commentDraftQuote) || roomFor(railsAllowed.toc && !railLayout.tocCollapsed, true))
+  const tocShown = railsAllowed.toc && !railLayout.tocCollapsed && roomFor(true, commentsShown)
   // The compact view menu measures the toolbar the vault rail leaves behind.
-  const toolbarWidth = shellWidth - (railLayout.vaultCollapsed ? 0 : railLayout.vault)
+  const toolbarWidth = shellWidth - (vaultShown ? railLayout.vault : 0)
 
   return (
     <>
     <NotesEditorHeadlineStyles />
-    <div ref={setShellEl} className="notes-shell flex h-full min-w-0">
+    <div ref={setShellEl} className="notes-shell flex h-full min-w-0" data-notes-layout={panelLayoutMode}>
       <ShellSidebarPortal
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
-        style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
-        hidden={railLayout.vaultCollapsed}
+        style={{ width: vaultShown ? railLayout.vault : 0 }}
+        hidden={!vaultShown}
         data-testid="notes-vault-rail"
         data-focus-zone="sidebar"
         onKeyDown={handleSidebarTreeKeyDown}
@@ -2480,7 +2521,7 @@ h1,h2,h3{margin-top:1.5em}
             : t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
       </ShellSidebarPortal>
-      {!shellSidebarTarget && <NotesRailSash
+      {railsAllowed.vault && !vaultStarvedForMode && !shellSidebarTarget && <NotesRailSash
         width={railLayout.vault}
         onWidth={(vault) => setRailLayout({ vault })}
         collapsed={railLayout.vaultCollapsed}
@@ -2912,8 +2953,10 @@ h1,h2,h3{margin-top:1.5em}
                 placeholder={t('notes.editor.placeholder')}
                 foldingStorageKey={`rox:notes:folding:${activeWorkspaceId}:${activeNote.id}`}
                 markdownEngine="legacy"
+                entityNodes={noteEntityMentions.entityNodes}
                 className="notes-editor-prose mx-auto w-full max-w-[70ch] min-h-full"
               />
+              {noteEntityMentions.picker}
               <NotesCommentHighlights
                 comments={markdownComments}
                 hidden={!commentsShown}

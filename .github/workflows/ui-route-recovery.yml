@@ -56,6 +56,10 @@ jobs:
           apps/electron/src/renderer/lib/__tests__/rox-readiness-ui-001.panel-url.test.ts
           apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts
       - name: Typecheck Electron renderer and shared contracts
+        env:
+          # macOS runners default the V8 old space to ~2 GB and the renderer
+          # typecheck needs more; match the renderer build budget used elsewhere.
+          NODE_OPTIONS: --max-old-space-size=4096
         run: bun run typecheck:electron
       - name: Install isolated Chromium
         run: bunx playwright install --with-deps chromium

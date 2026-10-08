@@ -820,7 +820,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
           <div
             role="menu"
             aria-label={t('mindmap.addNode')}
-            className="absolute z-20 w-44 max-w-[calc(100%-1rem)] max-h-[calc(100%-1rem)] overflow-y-auto rounded-lg border border-border/60 bg-background/95 py-1 shadow-strong backdrop-blur"
+            className="absolute z-20 w-44 max-w-[calc(100%-1rem)] max-h-[calc(100%-1rem)] overflow-y-auto rounded-lg border border-border/60 bg-[rgb(from_var(--paper)_r_g_b_/_1)] py-1 shadow-strong"
             style={{ left: contextMenu.x, top: contextMenu.y }}
             onPointerDown={(event) => event.stopPropagation()}
             onKeyDown={(event) => {

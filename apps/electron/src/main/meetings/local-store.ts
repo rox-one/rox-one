@@ -59,7 +59,7 @@ import {
 } from './local-model'
 import { decodeToWav, probeDurationMs, remuxAudio, runWhisper } from './local-asr'
 import { applyExtractionResult, EXTRACTION_START_TIMEOUT_MS, EXTRACTION_RUN_TIMEOUT_MS } from './local-extraction'
-import { DeepgramTranscriptionAdapter, loadVoicePrefs, type NormalizedTranscript, type TranscriptionRequest } from '@rox/shared/voice'
+import { DeepgramTranscriptionAdapter, deepgramTranscriptionOptions, loadVoicePrefs, type NormalizedTranscript, type TranscriptionRequest } from '@rox/shared/voice'
 
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024 * 1024
 
@@ -897,7 +897,8 @@ export class LocalMeetingStore {
           language: prefs.recognitionLanguage === 'auto' ? undefined : prefs.recognitionLanguage, signal }
         const result = this.deps.transcribeCloud
           ? await this.deps.transcribeCloud(input, meeting, job.context)
-          : await new DeepgramTranscriptionAdapter({ apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '', model: process.env.DEEPGRAM_MODEL }).transcribe(input)
+          : await new DeepgramTranscriptionAdapter({ apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '',
+            ...deepgramTranscriptionOptions(process.env) }).transcribe(input)
         if (signal.aborted || !this.isCurrentJob(job, 'running')) return
         resolvedModel = result.resolvedModelId ?? result.requestedModelId
         modelRevision = result.modelRevision

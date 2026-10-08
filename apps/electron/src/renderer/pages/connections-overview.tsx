@@ -21,6 +21,8 @@ import { MessagingPlatformIcon } from '@/components/messaging/MessagingPlatformI
 import { ReconnectCredentialDialog, reconnectFlavor } from '@/components/pages/PageSourceAuthBanner'
 import { sourcesAtom } from '@/atoms/sources'
 import { navigate, routes } from '@/lib/navigate'
+import { connectionAccountSubtitle, connectionProviderLabel } from '@/lib/connection-labels'
+import { getProviderIcon } from '@/lib/provider-icons'
 import type { LoadedSource, MessagingPlatformRuntimeInfo, ServiceConnection } from '../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -98,7 +100,7 @@ export function OverviewRow({
     <li className="flex items-center gap-3 px-4 py-3" data-testid={testId ?? 'connections-overview-row'}>
       <div className="flex h-6 w-6 shrink-0 items-center justify-center">{icon}</div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium text-foreground">{title}</div>
+        <div className="truncate text-sm font-medium text-foreground" title={title}>{title}</div>
         {subtitle ? <div className="truncate text-xs text-muted-foreground" title={subtitle}>{subtitle}</div> : null}
       </div>
       <StatusBadge status={status} />
@@ -378,8 +380,12 @@ export function ConnectionsOverview({ workspaceId, reloadKey }: { workspaceId: s
         ) : (
           services.map((connection) => {
             const status = serviceOverviewStatus(connection)
-            const key = `settings.accounts.provider.${connection.provider}`
-            const label = t(key) === key ? String(connection.provider) : t(key)
+            const label = connectionProviderLabel(connection.provider, t)
+            const subtitle = connectionAccountSubtitle(
+              connection.accountLabel,
+              t('connections.account.connected'),
+            )
+            const providerIcon = getProviderIcon(connection.provider)
             const managedElsewhere = connection.readOnly
             const target = connection.provider === 'siyuan-local'
               ? routes.view.settings('knowledge')
@@ -389,9 +395,11 @@ export function ConnectionsOverview({ workspaceId, reloadKey }: { workspaceId: s
             return (
               <OverviewRow
                 key={connection.id}
-                icon={<span className="h-5 w-5 rounded-[var(--radius-card)] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{label.slice(0, 1).toUpperCase()}</span>}
+                icon={providerIcon
+                  ? <img src={providerIcon} alt="" className="h-5 w-5 rounded-[var(--radius-card)]" />
+                  : <span aria-hidden className="h-5 w-5 rounded-[var(--radius-card)] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{label.slice(0, 1).toUpperCase()}</span>}
                 title={label}
-                subtitle={connection.accountLabel}
+                subtitle={subtitle}
                 status={status}
               >
                 <Button

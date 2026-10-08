@@ -26,7 +26,8 @@ import {
   Info,
   X,
 } from "lucide-react"
-import { motion, AnimatePresence, useReducedMotion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
+import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 
@@ -607,7 +608,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   const appShellContext = useAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
-  const prefersReducedMotion = useReducedMotion()
+  const prefersReducedMotion = usePrefersReducedMotion()
   const reducedMotionRef = React.useRef(!!prefersReducedMotion)
   reducedMotionRef.current = !!prefersReducedMotion
 

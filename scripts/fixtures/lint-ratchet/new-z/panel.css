@@ -1,0 +1,11 @@
+.panel {
+  z-index: var(--z-popover);
+}
+
+.legacy {
+  z-index: 60;
+}
+
+.new {
+  z-index: 9999;
+}

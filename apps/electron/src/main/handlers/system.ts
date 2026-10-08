@@ -6,6 +6,7 @@ import { promisify } from 'util'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { emptyGitWorkingTreeStatus } from '@rox/shared/git/status'
 import { readGitBranchName, readGitWorkingTreeStatus } from '@rox/shared/git/exec'
+import { isSpawnEnvReady, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
 import { readGitWorkspaceSnapshot } from '@rox/shared/git/workspace'
 import { getGitBashPath, setGitBashPath, clearGitBashPath } from '@rox/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
@@ -126,6 +127,8 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
       }
     })()
     if (!usable || isSensitiveAgentCwd(dirPath)) return null
+    // git children need the login-shell PATH / repaired prerequisites (bounded wait).
+    if (!isSpawnEnvReady()) await whenSpawnEnvReady()
     return readGitBranchName(dirPath)
   })
 
@@ -141,6 +144,8 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
     if (!usable || isSensitiveAgentCwd(dirPath)) {
       return emptyGitWorkingTreeStatus()
     }
+    // git children need the login-shell PATH / repaired prerequisites (bounded wait).
+    if (!isSpawnEnvReady()) await whenSpawnEnvReady()
     return readGitWorkingTreeStatus(dirPath)
   })
 
@@ -155,9 +160,10 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
         return false
       }
     })()
-    if (!usable || isSensitiveAgentCwd(dirPath)) {
-      return readGitWorkspaceSnapshot(dirPath)
-    }
+    // Forbidden (unusable/sensitive) dir: empty snapshot, no git, no wait — same as server-core.
+    if (!usable || isSensitiveAgentCwd(dirPath)) return readGitWorkspaceSnapshot('')
+    // git children need the login-shell PATH / repaired prerequisites (bounded wait).
+    if (!isSpawnEnvReady()) await whenSpawnEnvReady()
     return readGitWorkspaceSnapshot(dirPath)
   })
 
