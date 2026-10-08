@@ -3001,7 +3001,6 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           isCompact={isAutoCompact}
           showWorkspaceSelector={true}
           surfaceNavigationActive={true}
-          modeBarActive={isHomeNavigation(navState)}
           leftInset={topBarLeftInset}
         />
 
