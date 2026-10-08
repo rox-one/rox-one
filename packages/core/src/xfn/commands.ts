@@ -49,8 +49,16 @@ export type XfnId = (typeof XFN_IDS)[number]
 /** One capability row: what it dispatches, who owns it and who replaces the reference handler. */
 export interface XfnCapability {
   id: XfnId
-  /** Domain command-bus commands (TECH-SPEC §20 «Command» column). */
+  /**
+   * Entry points whose contract this package owns — every one needs an XFN
+   * schema (`XFN_SCHEMAS`) and a risk class.
+   */
   commands: readonly CommandType[]
+  /**
+   * Owner commands a reference handler dispatches internally (X-15, X-22,
+   * X-24…). Their schemas belong to the owner module; XFN never binds them.
+   */
+  dispatches?: readonly CommandType[]
   /** Read models — never commands (the catalogue test asserts they are absent). */
   queries: readonly string[]
   /** UI entry points — a renderer action, not a bus command. */
@@ -68,17 +76,17 @@ export interface XfnCapability {
 /** TECH-SPEC §20, row for row. */
 export const XFN_CAPABILITIES: readonly XfnCapability[] = [
   {
-    id: 'X-13', commands: ['entities.drop'], queries: [], uiCommands: ['entities.drop'],
+    id: 'X-13', commands: ['entities.drop'], queries: [], uiCommands: [],
     ownerModule: 'core', risk: 'as-resolved', undo: 'via the resolved command',
     titleKey: 'xfn.x13.title', descriptionKey: 'xfn.x13.description', replacedBy: 'XFN (#1534)',
   },
   {
-    id: 'X-14', commands: ['calendar.create_time_block', 'links.add'], queries: [], uiCommands: [],
+    id: 'X-14', commands: ['calendar.create_time_block'], dispatches: ['calendar.create_event', 'links.add'], queries: [], uiCommands: [],
     ownerModule: 'calendar', risk: 'routine', undo: 'yes',
     titleKey: 'xfn.x14.title', descriptionKey: 'xfn.x14.description', replacedBy: 'XFN (#1534)',
   },
   {
-    id: 'X-15', commands: ['meetings.publish_outcomes', 'decisions.create', 'tasks.create', 'docs.append_block', 'im.send_message'],
+    id: 'X-15', commands: ['meetings.publish_outcomes', 'decisions.create'], dispatches: ['tasks.create', 'docs.append_block', 'im.send_message'],
     queries: [], uiCommands: [], ownerModule: 'meetings', risk: 'consequential', undo: 'per created item',
     titleKey: 'xfn.x15.title', descriptionKey: 'xfn.x15.description', replacedBy: 'XFN (#1534)',
   },
@@ -93,7 +101,7 @@ export const XFN_CAPABILITIES: readonly XfnCapability[] = [
     titleKey: 'xfn.x17.title', descriptionKey: 'xfn.x17.description', replacedBy: 'XFN (#1534)',
   },
   {
-    id: 'X-18', commands: ['goals.link_work', 'goals.unlink_work', 'links.add', 'links.remove'], queries: [], uiCommands: [],
+    id: 'X-18', commands: ['goals.link_work', 'goals.unlink_work'], dispatches: ['links.add', 'links.remove'], queries: [], uiCommands: [],
     ownerModule: 'goals', risk: 'own-else-consequential', undo: 'yes',
     titleKey: 'xfn.x18.title', descriptionKey: 'xfn.x18.description', replacedBy: 'XFN (#1534)',
   },
@@ -114,17 +122,18 @@ export const XFN_CAPABILITIES: readonly XfnCapability[] = [
   },
   {
     id: 'X-22',
-    commands: ['tasks.create_from_email', 'calendar.create_event_from_email', 'docs.create_from_email', 'im.share_entity', 'drive.import_attachment'],
+    commands: ['tasks.create_from_email', 'calendar.create_event_from_email', 'docs.create_from_email', 'im.share_entity'],
+    dispatches: ['tasks.create', 'calendar.create_event', 'docs.create_document', 'im.send_message', 'drive.import_attachment', 'links.add'],
     queries: [], uiCommands: [], ownerModule: 'tasks', risk: 'consequential', undo: 'yes',
     titleKey: 'xfn.x22.title', descriptionKey: 'xfn.x22.description', replacedBy: 'XFN (#1534)',
   },
   {
-    id: 'X-23', commands: ['forms.configure_on_submit', 'tables.insert_row'], queries: [], uiCommands: [],
+    id: 'X-23', commands: ['forms.configure_on_submit', 'tables.insert_row'], dispatches: ['tasks.create', 'im.send_message'], queries: [], uiCommands: [],
     ownerModule: 'forms', risk: 'consequential', undo: 'per action',
     titleKey: 'xfn.x23.title', descriptionKey: 'xfn.x23.description', replacedBy: 'XFN (#1534)',
   },
   {
-    id: 'X-24', commands: ['vc.start_meeting'], queries: [], uiCommands: [],
+    id: 'X-24', commands: ['vc.start_meeting'], dispatches: ['links.add'], queries: [], uiCommands: [],
     ownerModule: 'meetings', risk: 'consequential', undo: 'end call',
     titleKey: 'xfn.x24.title', descriptionKey: 'xfn.x24.description', replacedBy: 'XFN (#1534)',
   },
@@ -134,7 +143,7 @@ export const XFN_CAPABILITIES: readonly XfnCapability[] = [
     titleKey: 'xfn.x25.title', descriptionKey: 'xfn.x25.description', replacedBy: 'AGP (#1532)',
   },
   {
-    id: 'X-26', commands: ['entities.pin', 'entities.unpin', 'entities.reorder_pins'], queries: [], uiCommands: [],
+    id: 'X-26', commands: ['entities.pin', 'entities.unpin', 'entities.reorder_pins'], dispatches: ['links.add', 'links.remove'], queries: [], uiCommands: [],
     ownerModule: 'core', risk: 'routine', undo: 'yes',
     titleKey: 'xfn.x26.title', descriptionKey: 'xfn.x26.description', replacedBy: 'XFN (#1534)',
   },
@@ -146,9 +155,18 @@ export function xfnCapability(id: XfnId): XfnCapability {
   return found
 }
 
-/** Every domain command X-13…X-26 dispatches (the binding target list). */
+/** Every domain command X-13…X-26 dispatches as an entry point (the binding target list). */
 export const XFN_COMMAND_NAMES: readonly CommandType[] = [
   ...new Set(XFN_CAPABILITIES.flatMap((entry) => entry.commands)),
+].sort()
+
+/**
+ * Owner commands the reference handlers dispatch internally. Their contract
+ * (schema, risk class, handler) belongs to the owner module — XFN never binds
+ * them; the list exists so the harness can assert the dispatch surface.
+ */
+export const XFN_DISPATCHED_COMMANDS: readonly CommandType[] = [
+  ...new Set(XFN_CAPABILITIES.flatMap((entry) => entry.dispatches ?? [])),
 ].sort()
 
 /** Read models: never registered as commands. */

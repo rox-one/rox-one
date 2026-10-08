@@ -14,6 +14,7 @@
  * - `acl` → W1-04's `Acl` engine (`@rox/core/acl`), already present.
  */
 
+import type { EntityKind } from '../entities/kinds.ts'
 import type { EntityRef } from '../entities/refs.ts'
 import type { CommandHandlerContext, CommandHandlerResult } from '../commands/registry.ts'
 import type { CommandType } from '../commands/envelope.ts'
@@ -86,6 +87,28 @@ export interface CreateXfnPortsOptions {
   acl?: Acl
 }
 
+/**
+ * Entity kind the reference dispatcher reports for a known owner command.
+ * `null` = the command creates no single entity (`links.add` / `links.remove`),
+ * or the stub cannot guess it — the reference harness only needs the refs the
+ * X-13…X-26 handlers propagate (derived-from, time-block, outcomes).
+ */
+const DISPATCH_RESULT_KIND: Readonly<Record<string, EntityKind | null>> = {
+  'tasks.create': 'task',
+  'docs.create_document': 'note',
+  'docs.append_block': 'note',
+  'calendar.create_event': 'calendar-event',
+  'calendar.create_time_block': 'calendar-event',
+  'decisions.create': 'decision',
+  'vc.start_meeting': 'call',
+  'drive.import_attachment': 'file',
+  'im.send_message': 'channel-message',
+  'tables.insert_row': 'base-record',
+  'goals.create': 'goal',
+  'links.add': null,
+  'links.remove': null,
+}
+
 export function createXfnPorts(options: CreateXfnPortsOptions): XfnPorts {
   const journal = options.journal ?? { dispatches: [] }
   let pins = options.pins ?? EMPTY_LOCAL_PINS_STATE
@@ -97,7 +120,12 @@ export function createXfnPorts(options: CreateXfnPortsOptions): XfnPorts {
     async dispatch(command, payload) {
       journal.dispatches.push({ command, payload })
       seq += 1
-      return { revision: seq, result: { command, payload } }
+      const kind = DISPATCH_RESULT_KIND[command]
+      return {
+        ...(kind ? { ref: { kind, id: `${kind}-${seq}` } as EntityRef } : {}),
+        revision: seq,
+        result: command === 'docs.append_block' ? { blockId: `block-${seq}` } : { command, payload },
+      }
     },
     async query(name) {
       return options.queries?.[name] ?? null
