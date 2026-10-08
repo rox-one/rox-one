@@ -30,7 +30,8 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { ChevronDown, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCompensateForStoplight } from '@/context/StoplightContext'
@@ -48,7 +49,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
-import { AccountMenu } from './AccountMenu'
+import { AccountMenu, useWorkspaceCreationFlow } from './AccountMenu'
 
 // Padding to compensate for macOS traffic lights (stoplight buttons)
 // Traffic lights positioned at x:18, ~52px wide = 70px + 14px gap
@@ -88,9 +89,18 @@ function CompactChatHeader({ leadingAction, titleNode, viewSwitch, centerButton,
     onRefreshWorkspaces,
   } = useAppShellContext()
   const [menuOpen, setMenuOpen] = useState(false)
+  // The creation/reconnect screen (fullscreen layer) replaces this Drawer
+  // rather than stacking over an open one. The header owns the flow, so the
+  // screen outlives the Drawer, and the Drawer closes when the screen opens.
+  const creationFlow = useWorkspaceCreationFlow({
+    activeWorkspaceId,
+    onSelectWorkspace,
+    onWorkspaceCreated: onRefreshWorkspaces,
+  })
 
   return (
     <div className="relative flex h-full min-w-0 flex-1 items-center justify-between">
+      {creationFlow.screen}
       <div className="titlebar-no-drag shrink-0">
         {leadingAction}
       </div>
@@ -118,6 +128,8 @@ function CompactChatHeader({ leadingAction, titleNode, viewSwitch, centerButton,
               onSelectWorkspace={onSelectWorkspace}
               onWorkspaceCreated={onRefreshWorkspaces}
               onWorkspaceRemoved={onRefreshWorkspaces}
+              creationFlow={creationFlow}
+              onOpenCreationScreen={() => setMenuOpen(false)}
             />
             {viewSwitch && <div className="flex items-center justify-start">{viewSwitch}</div>}
             {(centerButton || actions) && (
@@ -215,7 +227,7 @@ export function PanelHeader({
   className,
   isRegeneratingTitle,
 }: PanelHeaderProps) {
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   // Fall back to AppShellContext.leadingAction so per-panel back buttons (set by
   // PanelSlot in compact mode) propagate to every page's PanelHeader without each
   // page having to forward the prop manually. ChatPage explicitly passes its own
@@ -467,7 +479,7 @@ export function PanelHeader({
   const basePadding = leadingAction ? 8 : 16
 
   const baseClassName = cn(
-    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-panel h-[var(--chrome-panel-header-height)] bg-surface-elevated border-b border-border-subtle',
+    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-chrome h-[var(--chrome-panel-header-height)] bg-surface-elevated border-b border-border-subtle',
     // Only use static paddingLeft class when not animating
     !shouldCompensate && (paddingLeft || (leadingAction ? 'pl-2' : 'pl-4')),
     className

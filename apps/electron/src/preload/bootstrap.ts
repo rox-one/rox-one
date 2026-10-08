@@ -18,6 +18,7 @@
 
 import '@sentry/electron/preload'
 import { contextBridge, ipcRenderer, shell, webUtils } from 'electron'
+import { STARTUP_PERF_MARK_CHANNEL, isStartupPerfEnabled, isValidRendererMarkName } from '../shared/startup-perf'
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
 import { RoutedClient } from '../transport/routed-client'
 import { ProjectAuthorityConnection } from '../transport/project-authority-connection'
@@ -585,6 +586,9 @@ client.onConnectionStateChanged((state) => {
 
 // App lifecycle — direct IPC (not WS RPC) since it restarts the server itself
 ;(api as ElectronAPI).relaunchApp = () => ipcRenderer.invoke('app:relaunch')
+;(api as ElectronAPI).getStorageVisibleRoot = () => ipcRenderer.invoke('storage:visibleRoot:get')
+;(api as ElectronAPI).setStorageVisibleRoot = (enabled: boolean) => ipcRenderer.invoke('storage:visibleRoot:set', enabled)
+;(api as ElectronAPI).takeStorageMigrationNotice = () => ipcRenderer.invoke('storage:migrationNotice:take')
 ;(api as ElectronAPI).removeWorkspace = (workspaceId: string) => ipcRenderer.invoke('workspace:remove', workspaceId)
 ;(api as ElectronAPI).invokeOnServer = (url: string, token: string, channel: string, ...args: any[]) =>
   ipcRenderer.invoke('server:invokeOnServer', url, token, channel, ...args)
@@ -684,12 +688,6 @@ client.onConnectionStateChanged((state) => {
   filters?: Array<{ name: string; extensions: string[] }>
 }) => ipcRenderer.invoke('file:saveText', opts)
 
-// Voice overlay level meter: the owner window publishes mic RMS over a dedicated
-// channel; the main-process overlay host only accepts it from the verified owner
-// and forwards it to the non-focus-stealing mini-window as render state.
-;(api as ElectronAPI).publishVoiceLevel = (level: number) =>
-  ipcRenderer.send('rox:owned-voice-overlay:level', level)
-
 // Local meeting recordings — direct IPC: microphone audio, files and the
 // whisper.cpp transcriber are device-local (see main/meetings/local-ipc.ts).
 {
@@ -783,4 +781,14 @@ if (process.isMainFrame) {
 }
 if (openClawHostControl) {
   contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
+}
+// PERF-01: renderer startup/navigation marks → main startup timeline.
+// Fire-and-forget; names are validated in main against a strict pattern.
+if (process.isMainFrame) {
+  contextBridge.exposeInMainWorld('roxStartupPerf', {
+    enabled: isStartupPerfEnabled(),
+    mark: (name: unknown, epochMs: unknown) => {
+      if (isValidRendererMarkName(name) && typeof epochMs === 'number') ipcRenderer.send(STARTUP_PERF_MARK_CHANNEL, name, epochMs)
+    },
+  })
 }

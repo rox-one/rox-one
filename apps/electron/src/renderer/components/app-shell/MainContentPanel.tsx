@@ -66,6 +66,7 @@ import {
 } from '../../knowledge/KnowledgeHome'
 
 import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
+import { endRouteSwitch } from '@/lib/startup-perf'
 export { lazyRoutePage } from '@/lib/route-recovery'
 
 function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
@@ -245,6 +246,10 @@ export function MainContentPanel({
   // Detail state belongs to its workspace and entity, including project-level skills.
   // W1-07 (#1504): the surface id joins the key (unified mode roots).
   const routeKey = panelRouteKey(navState, { activeWorkspaceId, unavailableWorkspaceSlug, activeSessionWorkingDirectory })
+  // PERF-01: route switch painted (pairs with startRouteSwitch in navigate()).
+  useEffect(() => {
+    endRouteSwitch(navState.navigator)
+  }, [routeKey])
   const [sessionSelection] = useSession()
   const store = useStore()
   const catalogSessionId = sessionSelection.selected

@@ -1,3 +1,5 @@
+// PERF-01: first import so `renderer:script-start` precedes React/i18n evaluation.
+import { markFirstPaintAfterCommit } from './lib/startup-perf'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { init as sentryInit } from '@sentry/electron/renderer'
@@ -8,7 +10,8 @@ import App from './App'
 import { ThemeProvider } from './context/ThemeContext'
 import { windowWorkspaceIdAtom } from './atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
-import { setupI18n } from '@rox/shared/i18n'
+import { StorageMigrationNotices } from './components/storage/StorageMigrationNotices'
+import { setupRendererI18n } from '@rox/shared/i18n/lazy'
 import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils/redaction'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
@@ -18,12 +21,22 @@ import './components/app-shell/titlebar-mode-pill.css'
 import { installRendererPerfHarness } from './perf/install'
 import { syncMainProcessLanguage } from './lib/main-language-sync'
 import { ShellStoreBridge } from './platform/ShellStoreBridge'
+import { RenderProfileMotionConfig } from './lib/render-profile-motion'
+import { seedRenderProfile, startRenderProfileSync } from './lib/render-profile-dom'
 import { seedEntitiesLinksGate } from './lib/entities-links-sync'
 
 const rendererPerfHarness = installRendererPerfHarness()
 
+// PERF-07: own `data-render-profile` at the root, before React and AppShell,
+// so every startup screen (loading, onboarding, reauth, workspace picker)
+// renders with the active profile. The snapshot request starts right here.
+seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
+const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
+import.meta.hot?.dispose(stopRenderProfileSync)
+
 // Initialize i18n before any React rendering
-const i18n = setupI18n([LanguageDetector, initReactI18next])
+// (bootstrap.ts preloads the active locale + fallbacks; others load on switch)
+const i18n = setupRendererI18n([LanguageDetector, initReactI18next])
 // One-shot bootstrap: ensure the main process's i18n + preferences.json learn
 // the language we just restored from localStorage. The main-process IPC handler
 // validates the code and persists idempotently, so this is safe to run on every
@@ -122,12 +135,16 @@ function Root() {
 
   return (
     <ThemeProvider activeWorkspaceId={workspaceId}>
-      {/* W1-07 (#1504): W1-07 gates outside React read this Provider's store. */}
-      <ShellStoreBridge />
-      {rendererPerfHarness.enabled
-        ? <React.Profiler id="rox-root" onRender={rendererPerfHarness.onRender}>{app}</React.Profiler>
-        : app}
-      <Toaster />
+      {/* PERF-07: low-power profile also stops motion/react springs. */}
+      <RenderProfileMotionConfig>
+        {/* W1-07 (#1504): W1-07 gates outside React read this Provider's store. */}
+        <ShellStoreBridge />
+        {rendererPerfHarness.enabled
+          ? <React.Profiler id="rox-root" onRender={rendererPerfHarness.onRender}>{app}</React.Profiler>
+          : app}
+        <Toaster />
+        <StorageMigrationNotices />
+      </RenderProfileMotionConfig>
     </ThemeProvider>
   )
 }
@@ -146,3 +163,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </Sentry.ErrorBoundary>
   </React.StrictMode>
 )
+markFirstPaintAfterCommit()

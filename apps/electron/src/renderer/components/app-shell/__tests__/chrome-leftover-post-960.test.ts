@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import {
+  PANEL_EDGE_INSET,
+  PANEL_GAP,
+  PANEL_STACK_BOTTOM_INSET,
+  PANEL_STACK_TOP_INSET,
+} from '../panel-constants'
 
 const appShell = join(import.meta.dir, '..')
 const browser = join(import.meta.dir, '../../browser/WebBrowserPanel.tsx')
@@ -55,10 +61,13 @@ describe('ship-rox-chrome-leftover-post-960', () => {
 
   it('keeps all panes flush without extra terminal dock margins', () => {
     const constants = readFileSync(join(appShell, 'panel-constants.ts'), 'utf8')
-    expect(constants).toContain('PANEL_STACK_TOP_INSET = 0')
-    expect(constants).toContain('PANEL_STACK_BOTTOM_INSET = 0')
-    expect(constants).toContain('PANEL_GAP = 0')
-    expect(constants).toContain('PANEL_EDGE_INSET = 0')
+    // Values come from the generated chrome tokens (tokens/chrome.css).
+    expect(constants).toContain('PANEL_STACK_TOP_INSET = CHROME_TOKENS.panelStackTopInset')
+    expect(constants).toContain('PANEL_GAP = CHROME_TOKENS.panelGap')
+    expect(PANEL_STACK_TOP_INSET).toBe(0)
+    expect(PANEL_STACK_BOTTOM_INSET).toBe(0)
+    expect(PANEL_GAP).toBe(0)
+    expect(PANEL_EDGE_INSET).toBe(0)
     expect(stack).toContain('COMPACT_PANEL_TOP_GAP = 0')
     const panel = readFileSync(join(appShell, 'TerminalPanel.tsx'), 'utf8')
     expect(panel).not.toContain('mx-0.5 mb-0.5')

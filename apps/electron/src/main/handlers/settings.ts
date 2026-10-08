@@ -1,7 +1,7 @@
 import { BrowserWindow } from 'electron'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
-import { setZenShellPreference } from '@rox/shared/config'
+import { setRenderProfilePreference, setZenShellPreference } from '@rox/shared/config'
 import { parseZenShellPatch } from '../../shared/shell-appearance'
 import { peekZenShellSnapshotForWindow, reapplyZenShellOnAllWindows } from '../shell-material'
 import type { HandlerDeps } from './handler-deps'
@@ -52,8 +52,11 @@ export function registerSettingsGuiHandlers(server: RpcServer, deps: HandlerDeps
   })
 
   server.handle(RPC_CHANNELS.appearance.SET_ZEN_SHELL, async (ctx, raw: unknown) => {
-    const patch = parseZenShellPatch(raw)
-    setZenShellPreference(patch)
+    const { renderProfile, ...shellPatch } = parseZenShellPatch(raw)
+    // A low-power-only patch must not pin Zen defaults or write twice.
+    if (Object.keys(shellPatch).length > 0) setZenShellPreference(shellPatch)
+    // PERF-07: the low-power toggle persists here and ships in the same snapshot.
+    if (renderProfile !== undefined) setRenderProfilePreference(renderProfile)
     reapplyZenShellOnAllWindows()
     // Paint and GPU state can differ between windows; publish each actual state.
     for (const window of BrowserWindow.getAllWindows()) {

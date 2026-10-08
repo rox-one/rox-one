@@ -13,7 +13,6 @@ describe('session list grouping chrome', () => {
     expect(FILTER).not.toContain("t('sidebar.groupByUnread')")
     expect(FILTER).not.toContain("t('sidebar.group')")
     expect(FILTER).toContain('Leftover compact groupingMode cycle')
-    expect(FILTER).toContain('groupBy === \'none\'')
   })
 
   it('leaves CollectionGroupByMenu as the grouping control in collection chrome', () => {

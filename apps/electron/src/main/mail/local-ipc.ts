@@ -46,14 +46,18 @@ async function identityHints(): Promise<{ ownerUuid?: string | null; handles: Ar
   try {
     const cloud = (await getRoxAccountAuthority().state(LOCAL_ROX_CALLER)).account?.user
     if (cloud?.id) ownerUuid = cloud.id
-    if (cloud?.email) handles.push(cloud.email)
+    // The displayed name is the primary, deterministic source of the mailbox
+    // handle (normalised/transliterated by the shared mail helpers); addresses
+    // only serve as a fallback so a fresh profile gets a stable @rox.one name
+    // without any env override.
     if (cloud?.name) handles.push(cloud.name)
+    if (cloud?.email) handles.push(cloud.email)
   } catch { /* not connected to rox.one */ }
   try {
     const { getIdentityStore } = await import('@rox/core/platform/identity/store')
     const profile = getIdentityStore(CONFIG_DIR).getState().profile as { displayName?: string; email?: string }
-    if (profile?.email) handles.splice(ownerUuid ? 1 : 0, 0, profile.email)
     if (profile?.displayName) handles.push(profile.displayName)
+    if (profile?.email) handles.push(profile.email)
   } catch { /* profile optional */ }
   return { ownerUuid, handles }
 }

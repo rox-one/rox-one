@@ -2,13 +2,15 @@ import { createRoot } from 'react-dom/client'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
-import { setupI18n } from '@rox/shared/i18n'
+import { initRendererI18n } from '@rox/shared/i18n/lazy'
+import { createLatestStateBuffer, type StateSource } from './lib/latest-state-buffer'
 import type { OverlayState } from '@rox/shared/voice'
 import { VOICE_OVERLAY_REQUIRES_CONATION_FLAG } from './voice-overlay-rox2-surface'
 
 export { VOICE_OVERLAY_REQUIRES_CONATION_FLAG, VOICE_OVERLAY_SURFACE_ID, voiceOverlaySurfaceResult } from './voice-overlay-rox2-surface'
 
-setupI18n([LanguageDetector, initReactI18next])
+// Only the active locale (+ fallbacks) is loaded; rendering waits for it below.
+const i18nReady = initRendererI18n([LanguageDetector, initReactI18next])
 
 declare global {
   interface Window { voiceOverlay?: {
@@ -18,7 +20,60 @@ declare global {
   } }
 }
 
-export function OverlayApp() {
+/** Number of bars in the overlay wave; short enough to read as a level meter. */
+const WAVE_BAR_COUNT = 16
+const WAVE_BAR_INDEXES = Array.from({ length: WAVE_BAR_COUNT }, (_, index) => index)
+
+/**
+ * Live microphone level wave for the owned overlay.
+ *
+ * `renderer/components/voice/VoiceLevelWave.tsx` (the in-app meter) is
+ * deliberately not imported here: this surface is its own Vite entry
+ * (`voice-overlay.html`) with a separate browser fixture that resolves no `@`
+ * alias, and the tiny always-on-top pill must stay free of app-only modules.
+ * The renderer below is the minimal equivalent, driven by the same normalized
+ * RMS (0..1) that the voice host publishes for the real capture.
+ */
+function OverlayLevelWave({ level, active, label }: { level: number; active: boolean; label: string }) {
+  const bars = useRef<Array<HTMLSpanElement | null>>([])
+  const levelRef = useRef(level)
+  const activeRef = useRef(active)
+  levelRef.current = level
+  activeRef.current = active
+
+  useEffect(() => {
+    const history = new Array<number>(WAVE_BAR_COUNT).fill(0)
+    let smoothed = 0
+    let frame = requestAnimationFrame(function tick() {
+      const target = activeRef.current ? Math.min(1, Math.max(0, levelRef.current)) : 0
+      smoothed = target > smoothed ? target : smoothed * 0.72 + target * 0.28
+      history.shift()
+      history.push(smoothed)
+      bars.current.forEach((bar, index) => {
+        if (!bar) return
+        const value = history[index] ?? 0
+        bar.style.height = `${Math.max(12, Math.round(value * 100))}%`
+        bar.style.opacity = String(0.35 + value * 0.65)
+      })
+      frame = requestAnimationFrame(tick)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  return (
+    <span role="img" aria-label={label} style={{ display: 'flex', alignItems: 'center', gap: 2, width: 64, height: 18 }}>
+      {WAVE_BAR_INDEXES.map(index => (
+        <span
+          key={index}
+          ref={node => { bars.current[index] = node }}
+          style={{ flex: '1 1 0', minWidth: 1, height: '12%', borderRadius: 1, background: '#f4f4f5', transition: 'height 90ms linear, opacity 90ms linear' }}
+        />
+      ))}
+    </span>
+  )
+}
+
+export function OverlayApp({ subscribe }: { subscribe?: StateSource<OverlayState> } = {}) {
   if (VOICE_OVERLAY_REQUIRES_CONATION_FLAG) {
     throw new Error('Voice overlay is native and must not require Conation')
   }
@@ -37,12 +92,13 @@ export function OverlayApp() {
   const [pending, setPending] = useState(false)
   useEffect(() => {
     mounted.current = true
-    const unsubscribe = window.voiceOverlay?.onState(next => {
+    const onState = (next: OverlayState) => {
       generation.current++
       setState(next); setCommandError(false); setPending(false)
-    })
+    }
+    const unsubscribe = subscribe ? subscribe(onState) : window.voiceOverlay?.onState(onState)
     return () => { mounted.current = false; generation.current++; unsubscribe?.() }
-  }, [])
+  }, [subscribe])
   const command = async (action: 'stop' | 'cancel') => {
     const current = generation.current
     setPending(true); setCommandError(false)
@@ -83,9 +139,7 @@ export function OverlayApp() {
         background: state.phase === 'recording' ? '#ef4444' : '#a1a1aa',
       }} />
       <span style={{ fontSize: 12, minWidth: 64 }}>{phaseKey[state.phase] ? t(phaseKey[state.phase]) : ''}</span>
-      <span style={{ width: 48, height: 8, background: '#27272a', borderRadius: 4, overflow: 'hidden' }}>
-        <span style={{ display: 'block', height: '100%', width: `${Math.min(100, state.rms * 400)}%`, background: '#f4f4f5', transition: 'width 150ms linear' }} />
-      </span>
+      <OverlayLevelWave level={state.rms} active={state.phase === 'recording'} label={t('voice.overlay.level')} />
       <span style={{ fontSize: 11 }}>{`${Math.floor(state.elapsedMs / 60000)}:${String(Math.floor(state.elapsedMs / 1000) % 60).padStart(2, '0')}`}</span>
       {commandError ? <span role="alert">{t('voice.overlay.error')}</span> : null}
       {state.streaming && state.partialTranscript ? <span style={{ fontSize: 11 }}>{state.partialTranscript}</span> : null}
@@ -96,4 +150,10 @@ export function OverlayApp() {
 }
 
 const root = document.getElementById('root')
-if (root) createRoot(root).render(<OverlayApp />)
+if (root) {
+  // Subscribe before the locale load so a state pushed meanwhile is replayed.
+  const overlayState = createLatestStateBuffer<OverlayState>(
+    window.voiceOverlay ? callback => window.voiceOverlay!.onState(callback) : undefined,
+  )
+  void i18nReady.then(() => createRoot(root).render(<OverlayApp subscribe={overlayState.subscribe} />))
+}

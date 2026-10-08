@@ -568,7 +568,7 @@ export function ApiKeyInput({
               {presets.find(p => p.key === activePreset)?.label}
               <ChevronDown className="size-2.5 opacity-50" />
             </DropdownMenuTrigger>
-            <StyledDropdownMenuContent align="end" className="z-floating-menu">
+            <StyledDropdownMenuContent align="end">
               {presets.map((preset) => (
                 <StyledDropdownMenuItem
                   key={preset.key}
@@ -811,11 +811,11 @@ export function ApiKeyInput({
               {activeTierConfig && tierDropdownPosition && (
                 <>
                   <div
-                    className="fixed inset-0 z-floating-backdrop"
+                    className="fixed inset-0 z-menu-backdrop"
                     onClick={() => { setOpenTier(null); setTierFilter('') }}
                   />
                   <div
-                    className="fixed z-floating-menu min-w-[200px] overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small"
+                    className="fixed z-island min-w-[200px] overflow-hidden rounded-md bg-background text-foreground shadow-modal-small"
                     style={{
                       top: tierDropdownPosition.top,
                       left: tierDropdownPosition.left,

@@ -476,6 +476,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.entities.LINKS,
   RPC_CHANNELS.entities.LINKS_CHANGED,
 
+  // W1-04 (#1501) — Dossier export writes the host's local contact store.
+  RPC_CHANNELS.directory.EXPORT_DOSSIER,
+
 ])
 
 // ---------------------------------------------------------------------------
@@ -514,6 +517,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.voice.CANCEL,
   RPC_CHANNELS.voice.GRANT,
   RPC_CHANNELS.voice.CHUNK,
+  RPC_CHANNELS.voice.LEVEL,
   RPC_CHANNELS.voice.HISTORY_LIST,
   RPC_CHANNELS.voice.HISTORY_GET,
   RPC_CHANNELS.voice.HISTORY_FAVORITE,
@@ -1101,6 +1105,12 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
 
   // Entities (W1-02) — resolution may fan out to the workspace owner.
   RPC_CHANNELS.entities.RESOLVE,
+
+  // W1-03 (#1500) — the command bus runs on whichever server owns the
+  // workspace (its executor store and outbox live under the workspace root).
+  RPC_CHANNELS.commands.EXECUTE,
+  RPC_CHANNELS.commands.LIST,
+  RPC_CHANNELS.commands.EVENT,
 ])
 
 // ---------------------------------------------------------------------------

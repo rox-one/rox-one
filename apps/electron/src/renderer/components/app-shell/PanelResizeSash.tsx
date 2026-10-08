@@ -107,7 +107,7 @@ export function PanelResizeSash({
       dragging={resize.dragging}
       disabled={!left || !right}
       data-sash-pair={`${leftId}::${rightId}`}
-      className="relative z-panel flex justify-center"
+      className="relative z-sash flex justify-center"
       style={{
         alignSelf: 'stretch',
         ...inlineSashGeometry(sashHitWidthPx()),

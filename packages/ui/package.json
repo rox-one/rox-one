@@ -8,6 +8,7 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./lib/utils": "./src/lib/utils.ts",
     "./chat": "./src/components/chat/index.ts",
     "./chat/SessionViewer": "./src/components/chat/SessionViewer.tsx",
     "./chat/TurnCard": "./src/components/chat/TurnCard.tsx",
@@ -16,7 +17,8 @@
     "./annotations/follow-up-state": "./src/components/annotations/follow-up-state.ts",
     "./ui/drawer": "./src/components/ui/drawer.tsx",
     "./context": "./src/context/index.ts",
-    "./styles": "./src/styles/index.css"
+    "./styles": "./src/styles/index.css",
+    "./primitives": "./src/components/primitives/index.ts"
   },
   "dependencies": {
     "@rox/core": "workspace:*",
@@ -50,7 +52,7 @@
     "remark-gfm": ">=4.0.0",
     "remark-math": ">=6.0.0",
     "shiki": "^3.21.0",
-    "tailwind-merge": ">=2.0.0",
+    "tailwind-merge": ">=3.0.0",
     "tailwindcss": ">=4.0.0",
     "react-pdf": ">=10.0.0",
     "i18next": ">=26.0.0",

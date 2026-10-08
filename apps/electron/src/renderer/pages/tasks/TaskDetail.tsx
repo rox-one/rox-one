@@ -22,6 +22,8 @@ import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { formatHotkeyDisplay } from '@/lib/platform'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'
+// W1-08 (#1505): «Упоминается в» backlinks (renders nothing while entities.previews.v1 is off).
+import { TaskEntityBacklinks } from '@/components/entities/TaskEntityBacklinks'
 import type { TaskDetailDraft } from './use-task-detail-drafts'
 import { checklistProgress, daysUntil, deriveTaskSource, mergeNotesMarkers, visibleNotes, type AgentChip, type AgentSessionLike } from './task-model'
 
@@ -572,6 +574,7 @@ export function TaskDetail(props: TaskDetailProps) {
             <input className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-foreground/[0.04] px-2 text-[12px] outline-none" value={linkId} onChange={(event) => setLinkId(event.target.value)} placeholder={t('tasks.linkIdPlaceholder')} aria-label={t('tasks.linkIdPlaceholder')} />
             <Button onClick={() => { if (!props.isDraftCurrent() || !linkId.trim()) return; const id = linkId.trim(); mutate((current) => { current.link(task.id, { kind: linkKind, id }) }); props.onDraftSubmit('linkId', linkId) }}>{t('tasks.addLink')}</Button>
           </div>
+          <TaskEntityBacklinks taskId={task.id} />
         </>
       ) : null}
 

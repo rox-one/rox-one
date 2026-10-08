@@ -27,7 +27,7 @@ export interface InlineSkillMentionProps {
 // Shared Styles (matching slash-command-menu)
 // ============================================================================
 
-const MENU_CONTAINER_STYLE = 'min-w-[240px] overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small'
+const MENU_CONTAINER_STYLE = 'min-w-[240px] overflow-hidden rounded-md bg-background text-foreground shadow-modal-small'
 const MENU_LIST_STYLE = 'max-h-[240px] overflow-y-auto p-1'
 const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 text-[13px]'
 const MENU_ITEM_SELECTED = 'bg-foreground/5'
@@ -127,7 +127,7 @@ export function InlineSkillMention({
   return (
     <div
       ref={menuRef}
-      className={cn('fixed z-dropdown', MENU_CONTAINER_STYLE, className)}
+      className={cn('fixed z-popover', MENU_CONTAINER_STYLE, className)}
       style={{ left: Math.round(position.x) - 10, bottom: bottomPosition }}
     >
       <div className={MENU_LIST_STYLE}>

@@ -29,7 +29,7 @@ export class InlineMenuSurface<T> {
     this.element = document.createElement('div')
     this.element.className = options.className
     this.element.style.position = 'fixed'
-    this.element.style.zIndex = String(options.zIndex ?? 'var(--z-panel, 50)')
+    this.element.style.zIndex = String(options.zIndex ?? 'var(--z-popover, 100)')
     this.element.addEventListener('mousedown', this.handleMouseDown)
   }
 

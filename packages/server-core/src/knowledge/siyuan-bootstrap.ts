@@ -7,6 +7,7 @@
  */
 
 import { spawn, execFile } from 'node:child_process'
+import { isSpawnEnvReady, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
 import { existsSync, mkdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
@@ -275,7 +276,17 @@ export function ensureDefaultLocalConnection(
   return { connectionId: saved.id, created: true }
 }
 
+/**
+ * Binary detection and the kernel child read process.env.PATH: wait (bounded)
+ * for the host's spawn-env gates (macOS login-shell PATH, Windows repair)
+ * unless the caller injected an explicit PATH.
+ */
+async function awaitSpawnEnv(deps: BootstrapDeps): Promise<void> {
+  if (deps.pathEnv === undefined && !isSpawnEnvReady()) await whenSpawnEnvReady()
+}
+
 export async function getKernelBootstrapStatus(deps: BootstrapDeps = {}): Promise<KernelBootstrapStatus> {
+  await awaitSpawnEnv(deps)
   const configDir = resolveConfigDir(deps)
   const dataDir = siyuanDataDir(configDir)
   const platform = deps.platform ?? process.platform
@@ -312,6 +323,8 @@ export async function getKernelBootstrapStatus(deps: BootstrapDeps = {}): Promis
  * Never throws for "not installed" — returns ok:false with install guidance.
  */
 export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<EnsureLocalKernelResult> {
+  if (startInFlight) return startInFlight
+  await awaitSpawnEnv(deps)
   if (startInFlight) return startInFlight
 
   const now = deps.now ?? Date.now
@@ -517,6 +530,7 @@ export function maybeAutoStartLocalKernel(deps: BootstrapDeps = {}): void {
 
   void (async () => {
     try {
+      await awaitSpawnEnv(deps)
       const store = new KnowledgeConnectionsStore(resolveConfigDir(deps))
       const { connectionId } = ensureDefaultLocalConnection(store)
       const probeUrl = probeBaseUrlFromStore(store, connectionId)

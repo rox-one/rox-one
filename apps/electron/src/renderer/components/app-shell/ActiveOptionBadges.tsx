@@ -662,7 +662,7 @@ function PermissionModeDropdown({ permissionMode, onPermissionModeChange, sessio
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small"
+        className="w-auto p-0 rounded-md bg-background text-foreground shadow-modal-small"
         side="top"
         align="start"
         sideOffset={4}

@@ -101,7 +101,7 @@
 | B2 | tool-icons `~/rox` | **частично** | Резолвер уже предпочитает `~/rox` **если существует** (`env.ts:56-67`); ничего не создаёт `~/rox`; на машине `/Users/t/rox/tool-icons/` есть (55 иконок + tool-icons.json); UI-хардкоды `EditPopover.tsx:543-555`, `AppearanceSettingsPage.tsx:431`; локали уже исправлены лидом (48 замен `~/.craft-agent`→`~/rox`) |
 | B3 | экспериментальные | **сделано** | Секция `performance` переименована в «Экспериментальные функции» (`AiSettingsPage.tsx:1305`, ключи `settings.ai.experimentalFeatures(+Desc)` во всех 12 локалях — вставка лида); все 3 тумблера уже имеют описания (existing-ключи: `extendedContextDesc`, `extendedPromptCacheDesc`, `rtk.description`/`notInstalledDesc`); инспектор-панель по умолчанию ЗАКРЫТА (A6; `unified-shell.ts:272` default=false — лид ранее ошибочно ставил true, откат поручён F-A2/A6). Живой — G-02 |
 | B4 | «Не устанавливаем» | **сделано (удалено целиком)** | По решению пользователя (E-01 §5, 2026-10-08) секция вычищена из приложения: UI (`WorkbenchChromeSettings.tsx` 248 → 172), код-канон (`harness-skip-list.ts` + re-export), 39 ключей × 12 локалей, guard-тесты; заморозка остаётся анти-целью H-03 §9. Верификация — блок E-01 «Верификация» |
-| C1 | бренд-остаток | **сделано (каталог Liquid Glass — нет)** | Иконки применены `5e839a627` (committed `icon.icns`=Rox). Воркер: удалены мёртвые craft-ассеты (4 png `craft-logos`, `rox-mark-*`, `CraftAppIcon`, `CraftAgentsLogo`+реестр, `craft_logo_c.svg`, `default-avatar.svg`), About через `app.setAboutPanelOptions` (`main/index.ts:288-293`), copyright/maintainer Rox (`electron-builder.yml:3,270`), avatar→`rox-logo.png`, `afterPack.cjs` детерминирован (fallback `icon.icns` без throw). `actool` недоступен (только CommandLineTools) → `resources/icon.icon/` (старый Craft-svg) и `Assets.car` не тронуты, `.source-sha256` не создан ⇒ на всех macOS используется `icon.icns` (Rox). Живой — G-02 |
+| C1 | бренд-остаток | **сделано (каталог Liquid Glass — нет)** | Иконки применены `5e839a627` (committed `icon.icns`=Rox). Воркер: удалены мёртвые craft-ассеты (4 png `craft-logos`, `rox-mark-*`, `CraftAppIcon`, `CraftAgentsLogo`+реестр, `craft_logo_c.svg`, `default-avatar.svg`), About через `app.setAboutPanelOptions` (`main/index.ts:288-293`), copyright/maintainer Rox (`electron-builder.yml:3,270`), avatar→`rox-avatar-ink-{black,white}.png` (волна 2: `rox-logo.png` удалён), `afterPack.cjs` детерминирован (fallback `icon.icns` без throw). `actool` недоступен (только CommandLineTools) → `resources/icon.icon/` (старый Craft-svg) и `Assets.car` не тронуты, `.source-sha256` не создан ⇒ на всех macOS используется `icon.icns` (Rox). Живой — G-02 |
 | C2 | Inter | **расхождение подтверждено** | Inter только с Google CDN; `font-roles.test.ts:23-32` ждёт Arial Narrow при `--font-sans`=Inter (`index.css:136`). Фикс F-C2 |
 | C3 | `~/rox` | **частично** | 3 raw-резолвера + regex `config-validator.ts:39-50` + отсутствие миграции `~/.rox`→`~/rox`; UI-хардкоды `AddWorkspaceStep_CreateNew.tsx:91`, `remote-workspace-create.ts:55`. Фикс F-C3 (ConfigSeam) |
 | D1 | облачные запуски | **документация опережает код** | Снапшот-артефакт Daytona в репе отсутствует (только `docs/cloud-runs-runtime.md:7-12`); Exa/Brave/Langfuse нет в BUILTIN_MCP_CATALOG; установка = 2 Dockerfile + wrangler deploy + secrets. Согласование — E-01 |
@@ -205,7 +205,7 @@ bun test \
 - Проверка с реальным Chromium (`chromium-1148`): те же 8 browser-файлов → **68 pass / 4 fail** (`/tmp/rox-chromium-merged2.log`). Все 4 fail — в `features/product-tour/core/native-continuity.browser.test.ts`: вложенный harness печатает `continuity:case:passed`, падает же 30-секундный hook-таймаут (`a beforeEach/afterEach hook timed out`, 30 006/30 002/35 242 мс при load≈127) — то есть таймаут под нагрузкой, а не функциональный провал; файл есть и в baseline-red (`/tmp/rox-red/files.txt:7`). **`zed-appearance/appearance.browser.test.ts` с env проходит целиком** — правки внешнего вида/Inter его не ломают.
 - Ребилд на merged-дереве: `bun run electron:dist:mac` → EXIT=0, 343 с; `apps/electron/release/mac-arm64/Rox.app` mtime 2026-10-08 09:23:18; `release/Rox-arm64.dmg` 333 512 781 B (09:25); собраны arm64+x64 (DMG+ZIP+blockmap).
 - Живая приёмка (G-02): **всё ещё заблокирована** — экран залочен (`CGSSessionScreenIsLocked=Yes`), keychain-ACL привязан к cdhash бандла и после пересборки в 09:23 требует нового клика «Always Allow». Оркестратор: `~/Projects/archive/rox-one-batch-20261008/live-g02.sh` (пишет `live/summary.txt`, `live/<step>.log`, `live/rox-live-<label>.png`, `live/ocr-<label>.txt`); копии всех CDP-скриптов из `/tmp` лежат в `live-scripts/` (переживают очистку `/tmp`), `bash -n` — OK.
-- Бренд-остатки (проверено кодом, без правок): splash/онбординг/пустой чат/меню приложения рисуют новый Rox-знак (`CraftAgentsSymbol` → `assets/rox-logo.png`; `RoxTileMark` → `rox-mark-portrait-{18,36,54}.png`); аватар рабочего пространства мигрирует `main/brand-icon-migration.ts` + сид из `resources/workspace-icon.png` (`main/index.ts:407,436-444`); «About» = версия/обновления (логотипа в нём нет). **Осознанно не переименовываем `thecraftagents.com`**: это живые инфраструктурные эндпоинты, а не UI-остатки — docs base `packages/shared/src/docs/doc-links.ts:6`, update channel `identity/manifest.ts:36`, OAuth relay `auth/oauth-relay.ts:3`, versions `version/manifest.ts:3`, pages share API `pages/publisher.ts:35`, ссылка в системном промпте `prompts/system.ts:933`. Playground-хардкоды (`playground/registry/generate-icons.ts:13,116`, `playground/registry/sample-icons.ts:7`, `playground/recent-working-dirs.ts`) — dev-поверхность, не пользовательские экраны.
+- Бренд-остатки (проверено кодом, без правок; оба маркера позже переведены на ink-пару — волна 2): splash/онбординг/пустой чат/меню приложения рисуют новый Rox-знак (`CraftAgentsSymbol` и `RoxTileMark` → `assets/rox-avatar-ink-{black,white}.png`, theme-aware пара; `rox-logo.*` и `rox-mark-portrait-{18,36,54}.png` удалены); аватар рабочего пространства мигрирует `main/brand-icon-migration.ts` + сид из `resources/workspace-icon.png` (`main/index.ts:407,436-444`); «About» = версия/обновления (логотипа в нём нет). **Осознанно не переименовываем `thecraftagents.com`**: это живые инфраструктурные эндпоинты, а не UI-остатки — docs base `packages/shared/src/docs/doc-links.ts:6`, update channel `identity/manifest.ts:36`, OAuth relay `auth/oauth-relay.ts:3`, versions `version/manifest.ts:3`, pages share API `pages/publisher.ts:35`, ссылка в системном промпте `prompts/system.ts:933`. Playground-хардкоды (`playground/registry/generate-icons.ts:13,116`, `playground/registry/sample-icons.ts:7`, `playground/recent-working-dirs.ts`) — dev-поверхность, не пользовательские экраны.
 
 ## G-02e — разбор пост-merge красных, фикстуры и гигиена прогонов (2026-10-08, вторая волна)
 
@@ -260,55 +260,247 @@ bun test \
 - **Пост-merge гейты и финал:** на `e205e5b89` (47 файлов): **221 pass / 1 skip / 4 fail** — предсуществующие `chrome-leftover-post-960` ×1, `zen-shell-splitter` ×1, `workspace-history-switch` ×1 + флейк `daytona-provider` ×1 (изолированно зелёный). Финальный `origin/main` — **`78cc32c26`** (merge PR #1600 «fix/rox-post-rebuild-red-suite»: правит `AppShell.tsx` + 5 тестовых файлов; логику рейлов/инспектора не трогает); на нём: контроль всех ранее красных файлов (5 шт.) → **28 pass / 1 skip / 0 fail** (`/tmp/e01-gate-final.log`), документированный 10-файловый гейт → **75 pass / 1 skip / 0 fail** (`/tmp/e01-gate-doc10-final.log`), `bun scripts/sort-locales.ts --check` → EXIT=0, `check-i18n-parity` → `11 locales, 9330 keys each`. Полный 47-файловый набор собирался инлайн и его состав в артефактах не сохранился — строка «47 файлов» относится к `e205e5b89`; все известные красные на `78cc32c26` позеленели.
 - **Готчи повторных прогонов**: (1) первый boot после пересборки ~3 мин уходит в uv-сборку `pydantic-core`/`mcp-server-qdrant` (maturin; виден в `app.log`, не фатально); (2) `rox-wait7.ts` жёстко писал ws в `/tmp/rox-ws.txt` и не получал порт — пофикшено (`rox-wait7.ts` пишет в `wsOut`; `live-g02.sh` передаёт `"$PORT" "$WSFILE"` и ждёт 300 с); (3) модалка «Научите агента своим правилам» блокирует hit-тесты — первым шагом `rox-dismiss.ts`; (4) инстанс может молча завершиться после прогона (креш-репорта нет; приёмка снимается до этого); (5) на загруженной машине shell маунтится позже 300 с (сегодня: renderer-таргет ~60 с, ссылки — спустя ~1 мин после таймаута wait7; повторный probe безвреден).
 
-## Волна голоса и встреч (2026-10-08, четвёртая волна: VV-1…VV-5)
+---
 
-**Требование пользователя (голосом, 2026-10-08):** (1) стабильная запись с real-time волной громкости у места диктовки в композере и во всплывающем мини-окне при свёрнутом/нефокусированном приложении; (2) транскрибация через Deepgram Nova-3 (`diarize`, автo-язык, абзацы/пунктуация); (3) вставка транскрипта в тот же чат при записи из чата либо в **драфт новой сессии** при хоткее без смонтированного композера; (4) все транскрипты сохраняются в заметках в раздел «Мои транскрипты»; (5) живое подтверждение записи встреч (A9).
+## Волна 2026-10-08 10:40 — второй запрос пользователя (UI-полировка, бренд, транскрибация)
 
-**Ревизия-носитель:** `51abb2478` (worktree `archive/rox-one-e01-wt`, ветка `e01-decisions`).
+**Источник:** запрос пользователя 2026-10-08 10:40:36 (правки UI) + 10:44:21 (запись/транскрибация); 5 скриншотов 13:20–13:28; 2 бренд-ассета (полный логотип ink-white; глаз-1024 как «что не нравится»).
+**Ветка:** `feat/ui-polish-20261008` от `origin/main 51abb24782e4709dc40809e25b592f2d35720d1e` (worktree `~/Projects/archive/rox-reconcile-20261008`).
+**Политика та же:** ни force-push, ни rebase; коммиты только по своим путям; мердж — merge-коммитом в `main` после CI.
 
-### Разведка и решения (заморожены до реализации)
+### Решения по бренду (пиксельная экспертиза без vision — Pillow/ASCII)
 
-- **Владелец волны — renderer.** У main нет `MediaStream`, а `VoiceHost.overlay()` (`packages/shared/src/voice/host.ts:228-240`) жёстко отдаёт `rms: 0` — серверный уровень был бы фейком. Новый канал `rox:owned-voice-overlay:level`: `ipcRenderer.send` из `preload/bootstrap.ts` через `ElectronAPI.publishVoiceLevel?(level)`, `ipcMain.on` в `createNativeVoiceOverlayHost`; карта `webContentsId → rms` внутри owner-модуля (чужой отправитель игнорируется, не-число/NaN отбрасывается, значение клампится в 0..1), `sendState()` мержит `rms` перед `webContents.send`. Канал НЕ входит в `RPC_CHANNELS` → `shared/__tests__/ipc-channels.test.ts` не трогается; `scripts/check-raw-sends.sh` ловит только `(webContents|sender|window).send(`, поэтому `ipcMain.on`/`ipcRenderer.send` гейт не ломают (и сам скрипт — мёртвый: `rg: command not found` → всегда EXIT=0).
-- **Мини-окно показывается при `phase !== 'hidden'` независимо от фокуса владельца**: `onBlur → hide` снят, `onFocus → sendState()` оставлен, из guard'а команды снят `!owner.isFocused()` (сохранены `event.sender !== child.webContents` и `currentOwner()`); защита `nextOwner !== owner && !nextOwner.isFocused()` в `publish()` сохранена — чужой захват по-прежнему запрещён.
-- **Метр — общий util** `renderer/lib/voice/level-meter.ts`: семантика перенесена из `meetings/recorder.ts:89-115` без изменений (AnalyserNode `fftSize = 1024`, `rms = √(Σx²/n)`, `db = 20·log10(max(rms,1e-6))`, `v = clamp((db+60)/60,0,1)`, сглаживание `v > s ? v : s*0.8 + v*0.2`, округление до 0.01). Драйверы: `interval` (100 мс — встречи, побайтово прежнее поведение) и `frame` (rAF + watchdog `setInterval(200 мс)`, который эмитит только при устаревании кадра >350 мс — rAF троттлится в свёрнутом окне). Никогда не бросает: нет `AudioContext`/анализатора → no-op handle (безопасно для headless-фикстур).
-- **Запись переживает сворачивание/нефокус**: из `canStart()` убран гейт `document.hidden`, снят обработчик `visibilitychange → cancelRecording` (мини-окно теперь показывает запись при любом фокусе); явные stop/cancel/ошибка не меняются.
-- **Хоткей без композера** — новый `renderer/voice/global-dictation.tsx`, смонтированный в `AppShell.tsx`: при `isComposerPresent()` полностью бездействует (иначе двойная запись); владение — через `renderer/voice/dictation-ownership.ts` (`claimDictation`/`setDictationIntent`/`releaseDictation`/`peekIntent`/`currentOwner` + `registerComposerPresence`/`isComposerPresent`/`isComposerOwned`), куда переведён и `VoiceDictationControl`. Захват зеркалит проверенную последовательность композера (`getUserMedia` → `MediaRecorder` → `startVoiceCapture` → `grantVoicePermission` → чанки по 1 МиБ → `stopVoiceCapture` → `job.transcript`), consent-гейт `cloud-rox` повторён. Вставка — `navigate(routes.action.newSession({ input: text, send: false }), { newPanel: true, targetLaneId: 'main' })`: `NavigationContext` при `send !== 'true'` вызывает `onInputChange(session.id, parsed.params.input!)` через `setTimeout(…, 100)` — текст оказывается в **драфте** новой сессии, без автоотправки.
-- **«Мои транскрипты» — папка заметок, одна заметка на транскрипт.** `renderer/lib/transcripts/notes.ts`: `createNote(ws, title, 'Мои транскрипты', { operationId: crypto.randomUUID(), expectedRevision: null, schemaVersion: 1 })` (папку создаёт сам `ensureSafeNoteDirectory` — mkdir recursive + проверка симлинков; кириллица проходит `sanitizeFilename`), затем native-путь `createNativeNotesSyncController()` → `start(ws)` → `queueSave(created, markdown)` → `flush()` (receipt ищется по `operationId`) → `stop()`; фолбэк для markdown-документа — `saveNote(ws, id, markdown, revision, sourceStoreId)`. Шаблоны — `ProjectRoadmapPage.exportToNote` (~:648-700) и `NotesPage.duplicateNote` (~:1528-1550). Заметка на каждый транскрипт вместо дописывания в общий журнал: свежий документ от `createNote` уже несёт `nativeRevision`, поэтому CAS-цепочка не нужна (`queueSave` требует ровно одну свежую ревизию; повторный `queueSave` без нового `start` дал бы `HASH_CONFLICT`).
-- **Deepgram: адаптер уже соответствует ТЗ** (аудит `DeepgramAudit`). `packages/shared/src/voice/adapters/deepgram-transcription.ts:116-137` безусловно шлёт `model, version=latest, smart_format=true, punctuate=true, diarize_model=latest, paragraphs=true, utterances=true` и **ровно одно** из `detect_language=true` / `language=<code>`; `diarize=true` не шлётся. Единственная недетерминированность — `model`: при пустом `options.model` идёт лишний `GET https://api.deepgram.com/v1/models` и выбирается новейшая доступная Nova (nova-4+, если релизнута); константа `DEEPGRAM_TRANSCRIPTION_MODEL='nova-3'` (`contracts.ts:10`) — только фолбэк после неудачи. Продакшн-вызовы (`server-core/.../voice.ts:140-142`, `main/meetings/local-ipc.ts:86-88`, `local-store.ts:900`) всегда передают `model: process.env.DEEPGRAM_MODEL` (обычно `undefined`). Строгая фиксация nova-3 возможна явной передачей `model`/`DEEPGRAM_MODEL`; правок в адаптер не вносится — тесты сборки query уже есть (`deepgram-transcription.test.ts:81-100`).
+- `logo-ink-white.png` (3558×3799) == `rox-avatar-ink-white.png` (959×1024) — один и тот же арт («девушка»); ink-white = **белые** штрихи (mean RGB 255) для тёмных поверхностей.
+- `rox-avatar-ink-black.png` (959×1024, mean 0,0,0) — тот же арт чёрным, для светлых поверхностей. Оба файла в `apps/electron/src/renderer/assets/` (были untracked — легализуются в этом батче).
+- `rox-logo.png` (512×512, mean 140) == `eye-1024-rounded.png` — это и есть «глаз»; `rox-logo.svg` встраивает ту же картинку base64 (256×256). Оба выведены из обращения и **удалены в волне 2**.
+- `rox-mark-portrait-{18,36,54}.png` (mean ~121) — старые тилевые марки ModeBar; заменены тем же ink-артом и **удалены в волне 2**.
+- `assets/provider-icons/rox.svg` (32×32, плитка `#0A377B` + белая «R» + розовая точка) — это «буковка r» в подключениях; заменяется на логотип.
+- **Интерфейс батча (заморожено):** `CraftAgentsSymbol` становится theme-aware сам (пара ink-black/ink-white, потребители снимают `dark:invert`); новые ключи i18n — только через манифесты `work/i18n/<Worker>.json` (`{"key": {"en","ru"}}`), 12 локалей мержит лид; новый проп TopBar — `onOpenBrowserTab: () => void`; новый компонент — `components/app-shell/InspectorInfoMenu.tsx` (`export function InspectorInfoMenu({ className })`).
 
-### Граф слайсов (владельцы — файлы не пересекаются; лид — интеграция и единый прогон гейта)
+### Требования и владельцы (файлы не пересекаются)
 
-| ID | Deliverable | Файлы (владелец) | Верификация |
-|---|---|---|---|
-| VV-1 | Метр + владение + волна в композере | `lib/voice/level-meter.ts`, `voice/dictation-ownership.ts`, `input/VoiceDictationControl.tsx`, `input/FreeFormInputContextBadge.tsx`, `lib/meetings/recorder.ts` (ComposerWave) | unit (метр: математика/сглаживание/стоп; владение) + `voice-composer.test.ts`; живой прогон |
-| VV-2 | Мини-окно: снять focus-гейты, канал уровня | `main/voice/overlay-owner.ts`, `preload/bootstrap.ts`, `shared/types.ts`, оба `main/voice/__tests__` (OverlayLevelMain) | `cd apps/electron && bun test src/main/voice/__tests__/`; живой прогон без фокуса |
-| VV-3 | Хоткей без композера → драфт новой сессии | `voice/global-dictation.tsx`, монтаж в `components/app-shell/AppShell.tsx` (GlobalDictation) | source-тест wiring + живой хоткей |
-| VV-4 | Заметки «Мои транскрипты» | `lib/transcripts/notes.ts` (TranscriptNotes) | unit: билдеры + markdown/native ветки с фейковым api |
-| VV-5 | Встречи → заметки + живая проверка A9 | `lib/meetings/…` (MeetingNotes) | unit дедупа `meetingId:generation` + живой прогон A9 |
-| VV-6 | Первый запуск облачного диктанта: старт после закрытия консентного модала | `input/VoiceDictationControl.tsx` (`waitForComposerRelease`) | `voice-dictation.browser.test.ts` (кейс consent: red на HEAD → green) |
-| VV-G | Локали, гейт, сборка, живая приёмка | лид | `sort-locales --check`, i18n parity, 10-файловый гейт + затронутые, `typecheck`, живой прогон 9334 |
+| # | Требование | Владелец (воркер) | Файлы | Верификация |
+|---|---|---|---|---|
+| W-01 | Топбар: порядок слева `back → forward → toggle sidebar → AccountMenu → DeviceStatusChip`; убрать «Карта»/«Новое окно браузера»/«Терминал»; «Новая вкладка» — самая правая (t(), prop `onOpenBrowserTab`); Help вынесен в `InspectorInfoMenu` | TopbarRework | `TopBar.tsx`, new `InspectorInfoMenu.tsx` | живой OCR топбара; `browser-surface-v2.test.ts` переписан лидом |
+| W-02 | Справка/инфо — в правом рейле НАД «Скрыть инспектор» | RailInfoButton | `platform/InspectorHost.tsx` | живой прогон (порядок нижней группы) |
+| W-03 | «Новая вкладка» = фокус инспектора + свежая вкладка через `createEmbedded` (не `browserPane.create`); i18n `New Tab` в main+tollbar; мёртвый compact-бренч | BrowserTabFlow | `AppShell.tsx`, `BrowserTabStrip.tsx`, `browser-toolbar.tsx`, `main/browser-pane-manager.ts` | живой прогон + статический запрет `create({show:true})` |
+| W-04 | Левый рейл: иконки как справа; шестерёнка ниже стрелки; pin темнее; обводка тоньше | LeftSidebarChrome | `SidebarChrome.tsx`, `LeftSidebar.tsx` | живой прогон (rail-toggle/rail-pin, hover-разворот) |
+| W-05 | Круглая аватарка + имя внизу слева; баланс без «—»; юзер-поповер в нативном стиле (ЛК) | AccountSurfaces | `ProfileStrip.tsx`, `AccountMenu.tsx` (+новый поповер) | живой прогон (поповер, баланс) |
+| W-06 | Аватары/бренд: `CraftAgentsSymbol` theme-aware; `RoxTileMark`; About/splash/onboarding/playground; XP-блок «Недавние начисления» не столбиком; уровень виден | BrandAssets | `icons/CraftAgentsSymbol.tsx`, `icons/RoxTileMark.tsx`, `SplashScreen.tsx`, onboarding×4, `PlaygroundApp.tsx`, `registry/icons.tsx`, `AccountSettingsPage.tsx` | живой OCR; `titlebar-mode-pill.test.ts` ассерт обновлён |
+| W-07 | Пустой стейт/панель новой сессии: RU-текст (taglines, QuickStart, CloneFromUrl), новый марк, без `dark:invert` | ChatEntryPolish | `EmptyChatWelcome.tsx`, `ProjectHub.tsx`, `QuickStartDialog.tsx`, `CloneFromUrlDialog.tsx`, `hub-taglines.ts`, поверхность новой сессии | живой OCR пустого чата |
+| W-08 | Кнопка облака над чатом: поднять и закрепить | CloudChip | `InputContainer.tsx`, `CloudRunsChip.tsx`, `ChatInputZone.tsx` | живой прогон (позиция/sticky) |
+| W-09 | Sessions: браузер не открывается сам; причина — навигация/дефолты инспектора | SessionsDefaultBrowser | `NavigationContext.tsx` + nav-тест | живой прогон: вход в Sessions инспектор закрыт |
+| W-10 | Подключения: человекочитаемые названия; логотип вместо «R» | ConnectionsSurface | `connections-overview.tsx`, `AccountsSettingsPage.tsx`, `lib/provider-icons.ts`, `provider-icons/rox.svg` | живой OCR карточек подключений |
+| W-11 | Разрешения: обрезка кнопки (settings-row/stacking) + скачки шрифтов (Suspense/font-display) | PermissionsPolish | `PermissionsSettingsPage.tsx`, `MainContentPanel.tsx`, `ThemeContext.tsx`, (`packages/ui/src/styles/index.css` при нужде) | живой прогон узкой панели |
+| W-12 | Удаление мёртвых модулей | DeadModules | `platform/SurfaceNavigationRail.tsx`, `platform/WorkspaceIconRail.tsx` (+только их тесты) | grep 0 ссылок |
+| W-13 | Раскладка панелей в заметках/задачах/календаре | (лид после LayoutPanelsRecon) | TBD по разведке | живой прогон переключателя |
+| W-14 | Раскладка i18n: мерж манифестов, `sort-locales`, parity | лид | `packages/shared/src/i18n/locales/*` | `sort-locales --check` + `check-i18n-parity` EXIT=0 |
+| W-15 | Тесты-контракты: переписать `browser-surface-v2.test.ts` под новый топбар; удалить/переписать stale (`compact-session-list-filter.test.ts:16`, решить `right-session-shell.test.ts`) | лид | тест-файлы | прогон затронутых |
 
-### Верификация (заполняется по мере прогонов)
+### Фаза 2 — запись и транскрибация (запрос 10:44:21), отдельный DoD
 
-- **Локальный ASR — два разных движка, не путать.** *Встречи* идут через реальный движок main-процесса (`main/meetings/local-asr.ts` → `whisper-cli`): предстартовая проверка живьём `whisper-cli -m ~/.rox/models/ggml-large-v3-turbo-q5_0.bin -f live/voice-test.wav -l auto -t 6 -oj -pp` → `auto-detected language: ru (p = 0.999610)`, 1245 мс; живая запись встречи расшифрована им же («Привет, это проверка голосового ввода в РАКС. Запись работает.», `live/meetings-record.json`, 2 сегмента, revision 1). *Диктовка* идёт через `createProductionLocalTranscribeAdapter` (`packages/shared/src/voice/runtime.ts:158`, `fixtures: false`), а `packages/shared/src/voice/local/whisper-adapter.ts:14` при `fixtures: false` безусловно бросает `LocalModelError('not-ready', 'Whisper weights are not installed')` — локальной инференции у диктовки в продукте нет (наличие весов и `whisperStatus: ready` ничего не меняют). Поэтому живая приёмка диктовки (композер, хоткей, заметки, мини-окно) выполнена с QA-швом `patch-fixture-main.py` (`CRAFT_VOICE_LOCAL_FIXTURE=1`, правится только гитигнорный `release/.../main.cjs`, продуктовый код не тронут; после приёмки шов снят — `codesign -v` снова «valid on disk»). Готча: `voice.json` читается из `ROX_CONFIG_DIR` — писать `sttEngine: 'local'` в `cfg-merged/voice.json`, а не в localStorage (в overlay-окне localStorage не шарится).
-- **Ключа Deepgram на машине нет** (`service-secrets.env` отсутствует во всех проверенных конфиг-каталогах, `DEEPGRAM_MODEL`/`ROX_SERVICE_SECRETS_FILE` unset) — живая облачная транскрибация в QA не воспроизводится; проверяется сборка запроса/мок, а пользователю сообщается требуемый ключ.
-- **Чужие живые процессы Rox не трогать**: pid 11875 (:9226, `.rox-merge-dist-ud2`), pid 12906 (:9227, `.rox-merge-dist-ud3`), pid 16853 (`/Applications/Rox.app`, :9333). QA-инстанс лида — порт 9334, профиль `rox-verify`, убивать только его (`pkill -9 -f 'userdata[-]merged'`).
-- **Playwright-Chromium на этой машине — заглушка** (`~/Library/Caches/ms-playwright/` = 436 КБ, `Chromium.app/Contents/Frameworks` отсутствует → `dlopen … Chromium Framework` + SIGABRT даже после `rm -rf __dirlock && bunx playwright install chromium`, 472 с). Browser-сюиты прогоняются подменой на системный Chrome: `LEARNING_CHROMIUM_PATH=…/Google Chrome CHROMIUM_EXECUTABLE=…/Google Chrome` (`renderer/test-utils/chromium-executable.ts`).
-- **`voice-dictation.browser.test.ts` (Chrome-подмена)**: до фиксов волны 22 pass / 10 fail (каскад после трёх «microphone denied»-кейсов: провал START → 30-секундный таймаут → Bun добивал фикстуру, отсюда «element(s) not found» во всех последующих). После фикса `VoiceDictationControl.startRecording` (забор `stillCurrent = isCurrentCapture(captureId)` **до** `releaseDictation(owner)`; иначе `releaseDictation` обнулял владельца → `isCurrentCapture` = false → контрол залипал в `starting`, и `currentOwner()` блокировал следующий START у соседних кейсов) → 31 pass / 1 fail, причём единственный оставшийся (consent) падает и на HEAD без правок волны (stash трёх файлов: `0 pass / 1 fail`, тот же таймаут `Stop dictation`).
-- **VV-6 — red→green**: кейс «asks for cloud upload consent at first use and starts only after the saved grant» падал потому, что `enableCloudTranscription` звал `startRecording(next)` синхронно после `setConsentOpen(false)`, а Radix держит всё дерево приложения `aria-hidden` до конца exit-анимации → `canStart()` отбивал старт по `host.closest('[hidden], [inert], [aria-hidden="true"]')`. Замер релиза в браузере: `0/52/103 мс — blocked`, `155 мс — free` (`[role="dialog"]` исчезает одновременно). Фикс: `waitForComposerRelease()` (ожидание свободы хоста, граница 600 мс, шаг 25 мс) + повторная проверка `captureId` перед стартом → файл целиком **32 pass / 0 fail / 148 expect** (40,7 с).
-- **Сюита голоса без браузера** (`voice-composer` + `renderer/voice` + `lib/voice` + `lib/transcripts` + `lib/meetings` + `main/voice`): 72 pass / 0 fail / 260 expect; `bun run typecheck` — EXIT=0; `sort-locales --check` — EXIT=0; i18n parity — «OK (11 locales, 9331 keys each)»; 10-файловый гейт — 75 pass / 1 skip / 0 fail.
-- **`native-continuity.browser.test.ts` (T-VOICE-OWNER) — регрессия от VV-2, найдена первым прогоном**: подмена модуля `electron` в этом файле давала только `ipcMain.handle/removeHandler`, а `createNativeVoiceOverlayHost` теперь зовёт `ipcMain.on(VOICE_OVERLAY_LEVEL, …)` → `TypeError: ipcMain.on is not a function` на конструировании хоста, все 4 кейса `stop|cancel × before|after START` падали (7 pass / 4 fail), причём падение маскировало сами проверки. Фикс — достроить фейк до реального API Electron (`on` + `removeListener` поверх Map слушателей) → **4 pass / 0 fail** (39,4 с), файл целиком **11 pass / 0 fail** (82,7 с).
-- **Живой прогон 9334** (профиль `rox-verify`, бандл ветки `e01-decisions`, `live-scripts/voice-live.ts` + точечные CDP-скрипты + оконный сервер). Все пять поверхностей подтверждены на реальном приложении:
-  - **Композер (VV-1) — PASS**: кнопка «Диктовка» перекрыта соседней кнопкой «Браузер» той же строки, поэтому драйвер жмёт её DOM-обработчик (как и «Стоп»; координатный клик попадал в перекрытие). Волна живая: 24 сэмпла × 10 полос, 14 различных наборов (`[0.25,0.531,0.813,0.531,0.25,0.4,0.7,1,0.7,0.4]`…), `aria-pressed false→true→false`, вставка `composerValue: "проверка диктовки "` (len 18, трейлинг-пробел по `trailingSpace: true`), `leavesInsideComposer: 1`; единственный лист вне композера — строка сущности в списке сессий (`entity-row-btn`), не утекший markdown. Скриншот `live/composer.png` (625 753 Б).
-  - **Мини-окно (VV-2/VV-3) — PASS**: при старте из хоткея при **нефронтовом** Rox оконный сервер видит `ROX Voice` `onscreen=true` (420×72 @841,1233, pid 90353) — `live/overlay-windows-recording.json`, `live/overlay-overlay-window.txt` (VERDICT PASS, frontmost=Finder); полоса уровня в overlay-окне: 48 сэмплов, 8 различных ширин (`100% 40% 84% 16% 0% 88% 4% 96%`), 45/48 ненулевых (`live/overlay.json`); стоп **собственной кнопкой окна**: `window.voiceOverlay.stop(recordingId)` → `{ok:true}` → поверхность исчезла с первой же проверки (`live/overlay-stop.json`, `settled: true`). OS-скриншоты `~/Pictures/Shots/rox-overlay-{1,2}.png` и по-оконные `rox-overlay-window-{1,2}.png`.
-  - **Хоткей без композера (VV-3) — PASS**: в раскладке без композеров (`panels=[inbox,home]`, `composers: 0`) Cmd+Shift+D (`Input.dispatchKeyEvent`, modifiers 4|8) → запись → повторное нажатие → новая сессия `261008-silver-harbor` с драфтом `"проверка диктовки"` (`live/hotkey.json`).
-  - **Заметки «Мои транскрипты» (VV-4) — PASS**: каждый путь оставляет заметку с телом: композер 21:07/21:09/21:25, хоткей 21:10, overlay 21:12/21:45 (`**Источник:** Голосовой ввод`, `**Модель:** whisper-large-v3-turbo`); встречи зеркалируются отдельной веткой (ниже).
-  - **Встречи (VV-5 + A9) — PASS**: `[data-testid="meetings-start"]` («Начать запись») в разделе «Встречи» разложен и кликабелен (`rect 535,109 113×23`, `hitIsSelf: true`, `live/meetings.json`), клик реально стартует запись; живое подтверждение — строка встречи «● Запись 5:48», чип в топ-баре `meeting-rec-indicator` («Запись 01:42») и виджет «Встречи / Идёт запись» на Главной; в узкой (`349 px`) `ModeScreen`-панели панель записи скрыта за вкладкой «Список» — переключение на «Подробности» раскладывает `meeting-rec-stop` (553,861 100×23, `hitIsSelf: true`), координатный клик останавливает запись (`live/meetings-pane-stop.json`). Реальный whisper-cli расшифровал 14 с записи (2 сегмента) и записал заметку-зеркало с `[00:00]`/`[00:05]` (416 Б за 14 с); леджер дедупа `craft-meetings-transcript-notes` = `["m-20261008-192747-gj0e:6","m-20261008-212658-g2cx:1",…]`; зеркальные заметки появляются асинхронно (21:27, 21:31, 21:43).
-  - **Осторожно с `document.hasFocus()`**: рендерер этого приложения рапортует `true` даже когда спереди Finder/Chrome (`--disable-backgrounding-occluded-windows` и родственные флаги) — критерий «Rox не на переднем плане» снимается оконным сервером (`lsappinfo front` / `winlist.m`), а не рендерером.
-- **Готча QA-бандла: `--use-mock-keychain`.** Фикстурный шов правит `main.cjs`, из-за чего ломается печать ресурсов (`codesign -v`: «a sealed resource is missing or invalid; file added: main.cjs.qa-orig; file modified: main.cjs») и каждый boot вешает запрос Keychain на элемент `Rox Safe Storage` (Electron `safeStorage`/Chromium OSCrypt, `keychain_password_mac.mm`; в ACL — чужие cdhash `030bcbf9…`/`9951df66…`, текущий бинарь `a20f7125…`). Диалог блокирует главный поток внутри `SecItemCopyMatching` (виден в `sample`), CDP принимает соединение и не отвечает; `pkill -9 -f SecurityAgent.bundle` снимает ожидание, но упирается в экран `ROX_OS_SECURE_STORAGE_UNAVAILABLE` (`pocket-account-store.ts:61`) с «Повторить» по кругу. Решение QA-инстанса — флаг **`--use-mock-keychain`** в `live-scripts/rox-qa-launch.sh` (продуктовый код не менялся): OSCrypt не ходит в Keychain, `safeStorage.isEncryptionAvailable()` истинно, ошибок `errAuthorizationInternal` — 0.
-- **Инстанс живёт только в своей сессии**: приложение, поднятое внутри длинного bash-джоба, умирает вместе с ним по дедлайну (bg_11 1500 с → pid 27462 мёртв); запускать через `subprocess.Popen(..., start_new_session=True)` и `</dev/null` (при закрытии stdin приложение завершается само).
-- **Два дефекта VV-2, исправленные до живой приёмки**: (1) в упакованной сборке overlay грузился `loadURL(dev-server)` — теперь `app.isPackaged ? loadFile(join(__dirname, 'renderer', 'voice-overlay.html'))`, ошибка загрузки обрабатывается (`void loading.catch(...)`); (2) первая публикация при нефронтовом владельце отбрасывалась guard'ом — теперь `if (child && nextOwner !== owner && !nextOwner.isFocused()) return` пропускает первый показ (поверхность создаётся, фокус не крадётся). Тесты: `overlay-owner.isolated.ts` — 6 pass / 53 expect, `overlay-owner.test.ts` — пин `6 pass`.
-- **`window.voiceOverlay.stop()` требует `recordingId`**: `main/voice/overlay-owner.ts` сверяет его с `latest.state.recordingId` при `phase === 'recording'` (иначе `{ok:false}`), а UI передаёт id из `onState` (`renderer/voice-overlay.tsx:50`). Вызов без аргумента молча ничего не делает — это была ошибка драйвера, а не продукта; драйвер приведён к UI-пути.
-- **`meeting-rec-stop` с нулевым rect — не дефект вёрстки**: `RecordingPanel` действительно смонтирован дважды (`pages/meetings/LocalMeetingDetail.tsx:594` и `:1075`), но нулевой rect даёт узкая (`349 px`) `ModeScreen`-панель (`components/mode-screen/ModeScreen.tsx:77`: `narrow ? pane === 'detail' ? 'flex min-w-0' : 'hidden'`), а не разметка `flex items-center gap-3` с `flex-1`/`shrink-0`. На вкладке «Подробности» кнопка разложена и кликабельна (замер выше) — правок продукта не потребовалось; драйвер теперь нажимает вкладку панели перед DOM-фолбэком.
-- **Транзиентный отказ записи заметки** (не дефект диктовки): дважды (21:16, 21:20) тело заметки не записалось — `MarkdownCommitError('rateLimited', 'Document claim requires recovery')` (`packages/server-core/src/docs/markdown-commit.ts:764`, гонка за `claim.lock` каталога заметок): заметка создаётся, остаётся 89 Б + тост с ошибкой; последующие записи (21:25, 21:27, 21:43, 21:45) прошли нормально, поведение продукта не менялось.
-- **Оракулы без vision-канала** (в этой сессии `read <png>?q=` недоступен — «ChatGPT usage limit»): оконный сервер `live-scripts/winlist.m` (pid/owner/onscreen/rect), пиксельные статистики `live-scripts/png-stats.py`, OCR `swift /tmp/omp-ocr.swift`, полный `screencapture -x` (4112×2658 = 2× от 2056×1329 pt). Electron не отдаёт Runtime браузерного CDP у main-процесса — видимость мини-окна оценивается оконным сервером.
+Требования пользователя: автозапись и транскрибация встреч; транскрибация любых аудиосообщений; live-волна громкости в диалоге + мини-оверлей при сворачивании; транскрипт → в чат/в драфт новой сессии по хоткею; папка «Мои транскрипты» в заметках; Deepgram Nova 3, авто-язык, абзацы/пунктуация.
+
+- Разведка: `TranscribeRecon` (read-only) — карта meetings/voice/audio/notes/hotkeys/secrets + варианты архитектуры.
+- DoD (черновик, уточняется по разведке): (1) запись встречи стартует из UI, аудио сохраняется детерминированно; (2) STT-сервис Deepgram Nova 3 с авто-языком и абзацами/пунктуацией (ключ — из per-user секретов); (3) транскрипт доступен в UI встречи и как заметка в «Мои транскрипты»; (4) аудиосообщение в чате транскрибируется; (5) live-уровень громкости в диалоге записи и мини-оверлей при сворачивании; (6) хоткей вставляет транскрипт в чат/драфт новой сессии; (7) негативные сценарии (нет ключа/нет сети/отмена) не роняют приложение.
+
+### Верификация волны (план)
+
+1. `bun test` по затронутым путям → `bun run typecheck:all` → `validate:ci` (эталон i18n parity после мержа манифестов).
+2. `bun run electron:dist:mac` → живой инстанс (свой порт + `--user-data-dir`) → OCR целевых экранов (топбар, рейл, сессии, подключения, разрешения, XP, пустой чат) → скриншоты.
+3. PR `feat/ui-polish-20261008` → CI → merge-коммит в `main` (без `--admin`) → post-merge проверка и отчёт (RU).
+
+---
+
+## Итог волны 2 — реконсиляция, классификация красных, пост-ревью правки
+
+**Реконсиляция.** `origin/main` уехал с `51abb2478` до `fdc3533eac4aa1afa1dd7779672c090a8763a85b` — подтянут merge-коммитом `58c6a1fa6` (без rebase/force). Итог ветки: 106 файлов, +3140/−1730 от `51abb2478`.
+
+**Классификация красных (41 файл из `/tmp/sea-failing.json`).** Метод: `classify-one.sh` (junit-репортёр, 6 параллельно) на базе `51abb2478` и на рабочем дереве → `type<TAB>pass/exit` в `SUMMARY.tsv`.
+- **37/41 файлов совпали** pass/fail байт-в-байт — предсуществующие красные базы, не регрессии волны.
+- `runtime-catalog.browser.test.ts` (база `0/1` → дерево `0/9`) — артефакт окружения: причины падения разные («Failed to fetch dynamically imported module» в базе, «Target page … closed» на дереве).
+- `native-handoff.browser.test.ts` (`9/3` → `10/2`) и `project-collection.browser.test.ts` (`11/4` → `13/2`) — **улучшения** (не регрессии).
+- `topbar-shortcuts.test.ts` (`9/0` → `7/1`) и `shortcut-hints.test.ts` (`18/0` → `12/6`) — регрессии волны, обе устранены: (а) хук `usePanelWorkspaceLayout()` в `TasksPage` бросал `useAppShellContext must be used within an AppShellProvider` в standalone-фикстуре → добавлен не-бросающий `useOptionalPanelWorkspaceLayout()`; (б) тест топбара пинил убранный аффорданс «Карта» → переписан под реальный Map-bridge (`AppShell.tsx` → `ChatDisplay`, `detail: { sessionId, view: 'map' }`). Контрольный прогон обеих: **26 pass / 0 fail**.
+
+**Правки по ревью renderer-диффа (все 5 находок + фикс хука выше).**
+1. **P1, тема**: `packages/ui/src/styles/index.css` — добавлен `@custom-variant dark (&:where(.dark, .dark *));`. В Tailwind v4 `dark:` по умолчанию компилируется в `prefers-color-scheme`, а тема приложения классовая (`ThemeContext` пишет `html.dark`; ни `darkMode`, ни `nativeTheme.themeSource` в репо нет) — 165 `dark:`-утилит были завязаны на системную схему вместо переключателя.
+2. **P2**: `AccountsSettingsPage.tsx` — `setCloudLabel(notesCloud?.accountLabel ?? '')` вместо `connectionAccountSubtitle` (тот display-хелпер обрезал метку до 64 символов и подменял технические метки на пустую строку).
+3. **P3**: `en.json` — `se.tagline.chineseRoom` с настоящим апострофом.
+4. **P3**: `ProfileStrip.tsx` — `aria-label` кнопки = `t('profile.openMenu', { name })` (кнопка открывает поповер профиля, а не настройки); ключ добавлен во все 12 локалей; `aria-haspopup` не задаём — его проставляет Radix `PopoverTrigger`.
+5. **P3, чистка rail-наследия**: удалены `KEYS.workspaceRailLinks`, `lib/rail-links.ts`, ассеты `rox-logo.{svg,png}` и `rox-mark-portrait-{18,36,54}.png`, из всех 12 локалей — по 18 ключей (`workspaceRail.*` ×10, `navigation.rail|surfaceGroup|toolGroup`, `navigation.toolHelp.*` ×4, `profile.openSettings`). Перед удалением: 0 ссылок в коде/тестах, 0 динамических спеков.
+
+**Открытый вопрос (закрыт).** `AccountSettingsPage`: строка Email показывает реальный адрес ящика (read-only, из `mail.status()`), тогда как `persist()` по-прежнему отправляет `profile.email` из identity-профиля. **Решено оставить**: `profile.email` — живое поле identity-контракта (читают `AccountsSettingsPage` как fallback подписи аккаунта, `main/mail/local-ipc.ts` как handle почты; тесты server-core проверяют set/clear), а снятие UI-редактирования — осознанная смена поверхности, не мёртвый код.
+
+**Проверки после правок:** `sort-locales --check` EXIT=0 · `check-i18n-parity` → `i18n parity OK (11 locales, 9546 keys each)` · `p35-collapse-wrap-locales` 3/3 · `shortcut-hints` + `topbar-shortcuts` 26/26.
+
+---
+
+## Волна 2 — финальная реконсиляция, ратчет токенов и ре-пины тестов (2026-10-08, вторая половина дня)
+
+**Реконсиляция (второй мердж `main`).** `origin/main` уехал с `fdc3533ea` до **`0fc3af48f`** («ui/a2-style-lint-ratchet», PR #1613) — подтянут merge-коммитом **`4ade5108e`** (без rebase/force). База PR = `0fc3af48f` = merge-base.
+**Масштаб PR (финальный):** `git diff --stat origin/main HEAD` = **122 файла, +3296 / −2134** (95 `apps/electron`, 20 `packages/shared`, 3 `packages/ui`, 1 `server-core`, 3 `docs`). От `51abb2478` тот же дифф выглядит как 671 файл — это артефакт влитого main, поэтому PR описывается только от `0fc3af48f`.
+
+**Разрешённые конфликты (7 блоков).** Трио `LeftSidebar.tsx`/`TopBar.tsx`/`input/InputContainer.tsx` (наши правки топбара против рефакторинга оболочки в main), `ScrambleTagline.tsx`, `NotesPage.tsx`, `TasksPage.tsx`, `InspectorHost.tsx`, `AccountMenu.tsx`, `packages/shared/src/types.ts`, 12× локали и `packages/ui/src/styles/index.css` (наш `@custom-variant dark` против токен-правок main).
+**`WorkspaceIconRail` в `main` удалён** — тумблер «Панель иконок рабочих пространств» убран вместе с rail-наследием (наш коммит `0d48cd157` поверх main'овских правок).
+
+**Ратчет токенов после мерджа.** Первый прогон `bun run lint:ui-tokens` дал рост на 13 строках (все — наши правки). Рост устранён **кодовыми правками в токены**, `--update`/метка `ui-baseline-override` не применялись: 7 файлов (`ProfileStrip`, `AccountMenu`, `UserProfilePopover`, `InspectorInfoMenu`, `PlanWorkspacePage`, `PermissionsSettingsPage`, `voice/hotkey-dictation-host`). Итог: `lint-baseline: OK — 8273 baselined violations across 543 files, none new` (`/tmp/uitokens4.log`, EXIT=0).
+
+**Ре-пины тестов (2 файла).** `profile-strip-accessibility.isolated.tsx` — 3 ассерта `aria-label` под осознанный ре-нейм ключа (`profile.openSettings` → `profile.openMenu`, ключ добавлен во все 12 локалей). `sidebar-chrome-accessibility.test.tsx` — 3 порядковых счётчика кнопок (`toHaveLength(3/1/2)`), **красные уже на `origin/main`** (в промо-слоте реально рендерится `PromoSlot` с телом и `data-promo-slot`, в рейле — `rail-toggle`/`rail-settings`), переписаны на атрибутные контракты: `data-tutorial="profile-strip"` + `aria-haspopup="dialog"`/`aria-expanded="false"`, `data-promo-slot="onboarding|reminder"`, кнопка закрытия = `aria-label="Dismiss"` (`common.dismiss`), CTA-текст. Контроль целевого набора из 7 файлов: **27 pass / 0 fail**.
+
+**Мёртвый ключ.** `sidebar.guidance.dismiss` (0 ссылок в коде, только в устаревшем ассерте) удалён из всех 12 локалей; `check-i18n-parity` → `i18n parity OK (11 locales, 9554 keys each)`, `sort-locales --check` EXIT=0.
+
+**Предсуществующие красные гейты (CI их не запускает, PR не блокируются).** Доказаны на `main`:
+- `scripts/check-raw-sends.sh` — падает на `apps/electron/src/main/meetings/local-ipc.ts:22`, строка есть в `origin/main` (в другом ворктри проходил лишь из-за отсутствия `rg` в PATH).
+- `scripts/check-task-tool-checks.sh` — падает на 4 файлах, ни один из которых не в нашем диффе.
+- `bun run lint:ui` — 2 error в main-коде: `packages/ui/src/styles/index.css:27` (arbitrary shadow) и текст фикстуры `styles/__tests__/tokens-v2.test.ts:495`; наши 53 изменённых не-тестовых `apps/electron/**/*.{ts,tsx}` дают 0 error / 570 warnings.
+- `packages/shared/src/agent/__tests__/omp-{permission-mode,rpc-transport}*.test.ts` (входят в CI-скрипт `test:mcp-onboarding`) падают таймаутами **идентично на baseline** (`fdc3533ea`) и на нашем HEAD — код этих тестов и их модулей диффом не затронут; локальный sandbox лишает дочерние процессы сети, в CI (GitHub runners) этой причины нет. Проверка CI-эквивалента выполняется вне sandbox через `launchctl`.
+
+---
+
+## Волна 3 — второй мердж main, ремонт IPC-снапшота и живая приёмка (2026-10-08, вечер)
+
+**Реконсиляция №2.** `origin/main` уехал с `0fc3af48f` до **`8396f349c`** (PR #1614, merge `feat/convergence-20261007`) — влит merge-коммитом **`c2351ece0`** (без rebase/force). Пересечений с нашими файлами нет: main в этот раз менял только 6 PNG-снапшотов `tests/visual/playground.spec.ts-snapshots/chat-display-*`. Итог: **122 файла, +3297 / −2134, 18 коммитов впереди `origin/main`** по коду; вместе с этой секцией плана и снимками приёмки — 128 файлов, +3321 / −2134, 20 коммитов.
+
+**Починен дрейф IPC-снапшота (предсуществующий на main).** `apps/electron/src/shared/__tests__/ipc-channels.test.ts` («Auto-generated by `scripts/ipc-inventory.ts`») не содержал `'directory:exportDossier'`, хотя `packages/shared/src/protocol/channels.ts` его содержит, поэтому `contains exactly 852 channel strings` падал на `main` и на любой ветке. Генератора в дереве нет; снапшот починен вручную (прецедент — `docs/final-readiness/execution/cloud/OWNER-UI-001/verification/ipc-snapshot-followup/result.json`). Файл зелёный: 8 pass / 0 fail.
+
+**Живая приёмка на финальном бандле** (`release/mac-arm64/Rox.app`, окно видимо: `rox-winlist` → 1400×900, layer 0, onscreen; CDP page-таргет живой). Визуальные доказательства — `Page.captureScreenshot` (renderer) + OCR; `screencapture` захватывает и перекрывающие окна, поэтому для UI-доказательств он не используется.
+- **Топбар**: порядок кнопок `Назад(74) · Вперёд(108) · Показать/скрыть боковую панель(142) · рабочее пространство(176) · диагностика(398) … Расположение панелей(1290) · Показать инспектор(1326) · Новая вкладка(1360)`. `bannedTopbarAffordances=[]` — «Карта»/«Терминал»/«Новое окно браузера» отсутствуют; «Новая вкладка» — крайняя правая и открывает вкладку в `rox-topbar-browser-strip`.
+- **Профиль**: стрип 308×64, `aria-label="Открыть меню профиля — Пользователь"`, аватар — тема-зависимая пара `rox-avatar-ink-black-*.png`/`rox-avatar-ink-white-*.png`; поповер: «Пользователь · Стандарт · Ур. 1 · Баланс Нет данных · Опыт 0 / 100 XP · Настройки аккаунта · Выйти».
+- **Настройки → Внешний вид**: `railWordPresent=false`, `railMentions=[]` — тумблера «Панель иконок рабочих пространств» нет; секции «Рантайм / Контекст и предпочтения / ИИ», «Режим (Системная/Светлая/Тёмная)», «Контраст», «Цветовая тема».
+- **Настройки → Аккаунт**: «Аккаунт ROX · Пользователь · Организация · Публичное имя · Статус аккаунта», почтовый адрес `mark4@rox.one` (read-only из `mail.status()`).
+- **Сессии**: `data-inspector="collapsed"`, инспектор закрыт по умолчанию, рейла инспектора нет.
+- **Встречи**: подвкладка «Встречи» → `[data-testid="meetings-start"]` = «Начать запись» (706,91,119×28), «Импорт аудио», пустое состояние «Пока нет встреч. Начните запись с микрофона или импортируйте аудиофайл — транскрипт появится автоматически».
+- **Заметки**: список заметок, «Ежедневная заметка», «Импорт папки…», «Новая заметка».
+
+**Снимки живого прогона** (renderer через `Page.captureScreenshot`, `docs/evidence/ui-batch-20261008/`): `sessions-inspector-collapsed.png`, `settings-appearance.png`, `settings-account.png`, `meetings-recordings.png`, `topbar-browser-tab.png`, `profile-popover.png`.
+
+**Готчи живого прогона (для будущих QA-сессий).**
+- Второй инстанс с тем же `ROX_CONFIG_DIR` держит `.server.lock` → следующий запуск не поднимает локальный сервер: окно создаётся, но renderer пуст (CDP отвечает, `/json/list` пуст, в логе `Failed to initialize app: Another server instance is already running (PID …)`). Перед запуском снимать прежний `launchctl`-job и процесс по порту; лончер дополнительно удаляет lock с мёртвым pid.
+- Отладочный лог main-процесса включается `CRAFT_IS_PACKAGED=false` (в production-режиме транспорты `electron-log` выключены); флаг `--debug` в Electron 39 уходит в устаревший `node --debug` и даёт шум DEP0062 с петлёй релончей.
+- Первый холодный переход в «тяжёлые» разделы (все сессии, заметки) может не уложиться в 25 с — повторный прогон после прогрева проходит без таймаутов.
+
+## Волна 4 — конвергенция голосовой волны (VV-1…VV-6) с upstream `4739a0e54` + живая приёмка
+
+**Что произошло.** Пока волна VV-1…VV-6 делалась в ветке `e01-decisions`, тот же запрос пользователя (10:44:21 —
+«Фаза 2 — запись и транскрибация») был реализован второй раз и влит в `origin/main` коммитом **`4739a0e54`**
+(2026-10-08 15:19, «feat(voice): meetings transcription + dictation, transcripts notebook, mailbox provisioning»):
+композерная волна `components/voice/VoiceLevelWave.tsx` + `use-microphone-level.ts`, заметки
+`lib/transcripts-notebook.ts` (content-addressed, `rox-transcript:<fnv1a>`), хост хоткея
+`voice/hotkey-dictation-host.tsx` (драфт новой сессии), уровень микрофона через общий контракт
+`VoiceHost.level()` → `voice:level` (protocol/routing → server-core rpc → transport map → overlay-owner →
+overlay-renderer), пиннинг модели `resolveDeepgramModel()` (nova-3 по умолчанию, апгрейд только по
+`DEEPGRAM_ALLOW_MODEL_UPGRADE`) и правки почты/встреч. Две реализации дублировали одну и ту же волну.
+
+**Решение (конвергенция, не дубль).** Основой взята реализация из `main`; собственные дубли из ветки удалены
+(`level-meter`, `dictation-ownership`, `global-dictation`, `transcripts/notes`, `transcript-notes` и их тесты), из
+ветки лида перенесены **только фиксы, которых в `main` нет**. Итоговый код-дифф волны против `origin/main` —
+три файла: `main/voice/overlay-owner.ts`, его изолированный тест и `renderer/lib/transcripts-notebook.ts`.
+
+**Фиксы в `apps/electron/src/main/voice/overlay-owner.ts`** (мини-оверлей при свёрнутом приложении):
+1. **Показ не зависит от фокуса владельца.** Было `const show = owner!.isFocused() && phase !== 'hidden'` плюс
+   `onBlur → hide` — при свёрнутом/нефронтовом приложении мини-окно не показывалось вовсе (это и есть основной
+   пользовательский сценарий «мини-оверлей при сворачивании»). Стало `const show = latest!.state.phase !== 'hidden'`;
+   `blur`-обработчик снят (регистрация и `removeListener`), гейт `|| !owner!.isFocused()` из обработчика команд
+   убран — «Стоп»/«Отмена» самого окна работают, пока приложение не в фокусе.
+2. **Первая публикация при нефронтовом владельце создаёт поверхность.** Guard
+   `if (nextOwner !== owner && !nextOwner.isFocused()) return` получает префикс `child &&`: живой поверхностью
+   по-прежнему не может завладеть фоновый актор, но первый показ (хоткей при свёрнутом приложении) не отбрасывается.
+3. **Упакованная сборка грузит свой entry.** Было `file://${join(__dirname, '../renderer/voice-overlay.html')}`
+   (каталогом выше — там файла нет), стало `created.loadFile(join(__dirname, 'renderer', 'voice-overlay.html'))`
+   (рядом с `main.cjs`, как у остальных renderer-entry) + `void loading.catch(…)`.
+
+**Фикс в `apps/electron/src/renderer/lib/transcripts-notebook.ts`** (заметка-транскрипт должна доживать до диска):
+до правки под конкуренцией за claim-гейт стора заметок запись падала и **молча терялась** (в консоли
+`[transcripts-notebook] transcript not saved Error: Document claim requires recovery`), а неудачная попытка
+оставляла **пустую заметку** — отсюда пустые 145–150 Б «Транскрипты встреч» и дубли `(2)`/`(3)`. Добавлено:
+1. **Ретраи с бэкоффом** (`[0, 400, 1000, 2000, 4000, 6000]` мс) на транзиентные ошибки claim-гейта
+   (`Document claim requires recovery`, `Document writer is busy`, `rateLimited`), включая RPC-ошибки в виде
+   plain-объекта (не `Error`);
+2. **Сериализация записей** (module-level очередь): стартовое зеркалирование нескольких встреч больше не воюет
+   само с собой за claim-гейт; у очереди есть **дедлайн 20 с**, чтобы один зависший вызов не заклинил следующие;
+3. **Уборка пустого стаба**: если запись тела так и не прошла, созданная этим вызовом пустая заметка удаляется
+   (только когда в ней нет ничего, кроме заголовка) — вместо неё остаётся предупреждение в консоли.
+Юнит-тест `renderer/lib/__tests__/transcripts-notebook.test.ts`: ретрай на claim-ошибку (2 попытки), отсутствие
+стаба при перманентной ошибке (`deleteNote` вызван, повтор не делается), сериализация двух параллельных
+транскриптов — **3 pass / 0 fail**.
+
+**Живая приёмка на бандле после конвергенции** (профиль `rox-verify`, порт 9334, фикстурный шов в гитигнорном
+`main.cjs`, после прогонов шов снят):
+- **Композер (VV-1, свежий профиль 9336)**: кнопка диктовки разложена и кликабельна
+  (`disabled: false`, `hitIsSelf: true`), композерная волна — `canvas` (`VoiceLevelWave`): 24 сэмпла, 7 различных
+  значений доли «нарисованных» пикселей (0.15…0.3429), транскрипт лёг в драфт (`"проверка диктовки "`, len 18),
+  тостов об ошибках нет; заметка-транскрипт записана в «Мои записи/Мои транскрипты» с телом и content-anchor
+  (`проверка диктовки.md`, `<!-- rox-transcript:96507d5c -->`), повторная идентичная диктовка **не создала
+  дубль** (content-addressed дедуп ✓).
+- **Мини-окно при свёрнутом/нефронтовом приложении (VV-2/VV-3, свежий профиль)**: запись запущена из композера,
+  приложение расфокусировано (`open -a Finder`, front = Finder) — оконный сервер видит `ROX Voice`
+  `420×72 @841,1233`, `onscreen: true`, pid 80909 (наш инстанс), по-оконный скриншот снят; в рендерере оверлея
+  16-полосный метр: 10 сэмплов, **27 различных высот**, 43–77 %; стоп **собственной кнопкой окна**
+  (`window.voiceOverlay.stop(recordingId)` → `{ok:true}`) вернул транскрипт в драфт композера. Это и есть
+  перенесённый фикс: без него `owner.isFocused()` + `onBlur → hide` не показали бы окно вовсе.
+- **Хоткей (VV-3) — живьём не воспроизводится в этом окружении.** Upstream перевёл вход глобальной диктовки на
+  OS-уровень (`globalShortcut` регистрируется в main, `before-input-event` в `main/voice/command-input.ts`),
+  а синтетическое событие клавиши из CDP такой шорткат не поднимает (инъекция настоящих keystrokes требует
+  Accessibility/TCC, которого у QA-сессии нет). Поэтому глобальный вход подтверждён юнит-тестами upstream
+  (`registration.isolated.ts` 2 pass, `command-input.test.ts` 10 pass) и живой проверкой самой цепочки
+  «оверлей → main → владелец → транскрипт» (стоп из оверлея выше). На волне лида (до конвергенции) тот же путь
+  проверялся живьём: синтетический Cmd+Shift+D из рендерера создавал сессию с драфтом (сессия `261008-silver-harbor`).
+- **Встречи (A9/VV-5)**: `[data-testid="meetings-start"]` («Начать запись») разложена и кликабельна на свежем
+  профиле (`630,79 119×28`, `hitIsSelf: true`, `inViewport: true`) и на 9334 (`535,109 113×23`, `hitIsSelf: true`);
+  запись встречи (панель записи, чип топ-бара `meeting-rec-indicator`, таймер `00:00→00:13`, живой метр
+  `levelMax 88`, `error: null`) и остановка из вкладки «Подробности» узкой `ModeScreen` проверены на 9334 —
+  интерфейс встреч волной не менялся. Реальный `whisper-cli` расшифровал 14 с (2 сегмента: «Привет, это проверка
+  голосового ввода в РАКС. Запись работает.»), а **зеркало в заметки на смерженном бандле** отработало на 9334:
+  в «Мои записи/Мои транскрипты» лежат «Транскрипт встречи: …» с телами (2.3 КБ и 9 КБ) и якорями
+  `<!-- rox-transcript:… -->`; пустые 145–150 Б файлы — артефакты до патча писателя. На свежем профиле запись
+  встречи повторно не снималась: холодный переход в «Встречи» не уложился в таймаут драйвера трижды подряд
+  (известная готча «тяжёлых разделов»), а home-дашборд в новом рабочем пространстве не монтируется — путь
+  «быстрое действие Главной» снят на 9334 (встреча `m-20261008-212658-g2cx`).
+
+**Готчи живого прогона (для будущих QA-сессий).**
+- **`--use-mock-keychain` обязателен для патченного QA-бандла.** Фикстурный шов правит `main.cjs` → печать
+  ресурсов ломается (`codesign -v`: «a sealed resource is missing or invalid»), и каждый boot вешает запрос
+  Keychain на `Rox Safe Storage` (Chromium OSCrypt, `keychain_password_mac.mm`; в ACL чужие cdhash). Диалог
+  блокирует главный поток в `SecItemCopyMatching` (видно в `sample`), CDP принимает соединение и не отвечает;
+  `pkill -9 -f SecurityAgent.bundle` снимает ожидание, но упирается в экран `ROX_OS_SECURE_STORAGE_UNAVAILABLE`
+  (`pocket-account-store.ts:61`) с «Повторить» по кругу. Лечится флагом `--use-mock-keychain` в
+  `live-scripts/rox-qa-launch.sh` (продуктовый код не менялся).
+- **Свежий QA-профиль должен создать сам инстанс.** Если положить в пустой `ROX_CONFIG_DIR` только `voice.json`,
+  приложение остаётся в полу-инициализированном состоянии: писатель заметок работает (диктовка легла заметкой
+  `проверка диктовки.md` ✓), но сессии не персистятся (`[PersistenceQueue] Failed to write session … ENOENT:
+  rename … session.jsonl.tmp`) и **диктовка отдаёт пустой транскрипт без тоста** (и хоткей тогда не открывает
+  сессию с драфтом). Порядок для QA: дать приложению поднять профиль с нуля (свой `config.json` + рабочие
+  каталоги), затем остановить его, подменить `voice.json` (`sttEngine: local-whisper`, `delivery: draft`,
+  `trailingSpace: true`, `asrModelId: whisper-large-v3-turbo`, `recognitionLanguage: ru`), снова запустить.
+- **Профиль `cfg-merged` может «заклинить» запись заметок (окружение, не продукт).** С ~22:15 в профиле
+  `rox-verify/cfg-merged` **любая** запись заметок перестала отвечать: `listNotes`/`readNote` (чтения ✓)
+  отвечают, а `createNote`/`saveNote` висят — и 8 с, и 30 с (проверено и прямым вызовом
+  `window.electronAPI.createNote`, и из UI: стартовое зеркалирование встреч легло файлами 22:14–22:15, дальше —
+  тишина). При этом в нативных сторах чисто (`pending=0`, `aborted_operations=0`, `conflicts=0`), claim-локов
+  на диске нет, а мягкий перезапуск (`kill -TERM`, дать процессу выйти) **не помогает**. На **свежем профиле**
+  (`ROX_QA_ROOT=/tmp/rox-qa-fresh`, свой cfg/user-data) запись работает сразу ✓ — поэтому живая приёмка заметок
+  выполнена на нём. Практика для QA: если запись заметок в профиле висит, не тратить время на диагностику
+  стора, а поднимать свежий профиль (`ROX_QA_ROOT` в `live-scripts/rox-qa-launch.sh`).
+- **Инстанс живёт только в своей сессии**: приложение, поднятое внутри длинного bash-джоба, умирает вместе с
+  ним по дедлайну; запускать через `subprocess.Popen(..., start_new_session=True)` и `</dev/null`.
+- **`document.hasFocus()` в этом приложении недостоверен** (рапортует `true` даже когда спереди Finder):
+  критерий «Rox не на переднем плане» снимается оконным сервером (`lsappinfo front` / `winlist.m`).
+- **`window.voiceOverlay.stop()` требует `recordingId`** (сверяется с `latest.state.recordingId` при
+  `phase === 'recording'`); UI передаёт его из `onState` — вызов без аргумента молча ничего не делает.
+- **`meeting-rec-stop` с нулевым rect — не дефект вёрстки**: нулевой rect даёт узкая (`349 px`)
+  `ModeScreen`-панель (`components/mode-screen/ModeScreen.tsx:77`); переключение на вкладку «Подробности»
+  раскладывает кнопку (553,861 100×23, `hitIsSelf: true`), координатный клик останавливает запись.
+- **Оракулы без vision-канала** (`read <png>?q=` в этой сессии недоступен): оконный сервер
+  `live-scripts/winlist.m`, пиксельные статистики `live-scripts/png-stats.py`, OCR `swift /tmp/omp-ocr.swift`,
+  полный `screencapture -x` (4112×2658 = 2× от 2056×1329 pt). Уровень волны читается из DOM только там, где он
+  DOM (`span[style*="height"]` у оверлея); композерная волна — `canvas` (`VoiceLevelWave`), её живой оракул =
+  доля «нарисованных» пикселей канваса по сэмплам.
+
+**Гейты после конвергенции** (все — на финальном дереве; файлы `*.isolated.ts` запускаются по одному, как в их
+врапперах — в общем прогоне их `mock.module('electron')` конфликтует): `bun run typecheck` (shared) EXIT=0 ·
+`sort-locales --check` EXIT=0 · `check-i18n-parity` → `i18n parity OK (11 locales, 9554 keys each)` ·
+`overlay-owner.test.ts` 1 pass (враппер, пинит `2 pass` и `0 fail` изолированного файла) ·
+`overlay-owner.isolated.ts` 2 pass / 0 fail / 27 expect · `command-input.test.ts` 10 pass · `registration.isolated.ts`
+2 pass · `renderer/lib/__tests__/transcripts-notebook.test.ts` 3 pass / 0 fail · `meeting-task-bridge.test.ts`
+7 pass · `ipc-channels.test.ts` 8 pass · `channel-map-parity.test.ts` 4 pass · `deepgram-transcription.test.ts`
+22 pass / 0 fail / 61 expect.

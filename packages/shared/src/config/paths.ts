@@ -4,8 +4,9 @@
  * Supports multi-instance development via ROX_CONFIG_DIR (preferred) or
  * CRAFT_CONFIG_DIR as a deprecated compatibility alias.
  *
- * Default (clean install): ~/.rox/
- * Legacy configuration is imported once into ~/.rox without removing its source.
+ * Default: `~/rox` (visible home) when `storage.visible-root.v1` is on;
+ * otherwise `~/rox` if it exists, else the legacy `~/.rox`.
+ * Legacy configuration is imported once without removing its source.
  * Explicit overrides isolate development instances and skip global import.
  *
  * CRAFT_CONFIG_DIR still works and logs

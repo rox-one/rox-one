@@ -570,7 +570,10 @@ export const mockElectronAPI = {
   },
   onContextDocsChanged: () => () => {},
   listMemoryLessons: async () => [],
+  listMemoryProposals: async () => [],
+  listPromotionCandidates: async () => [],
   onMemoryChanged: () => () => {},
+  onSkillsPendingChanged: () => () => {},
   readFile: async (path: string) => {
     throw new Error(`Playground has no file: ${path}`)
   },
@@ -758,6 +761,11 @@ export const mockElectronAPI = {
   relaunchApp: async () => {
     throw new Error('Playground fixture. Not live.')
   },
+  getStorageVisibleRoot: async () => ({ enabled: false, activeAtLaunch: false, locked: false, restartRequired: false }),
+  setStorageVisibleRoot: async () => {
+    throw new Error('Playground fixture. Not live.')
+  },
+  takeStorageMigrationNotice: async () => null,
   listCloudRuns: async () => [],
   listCloudRunSchedules: async () => [],
   submitCloudRun: async (payload: unknown) => {
@@ -886,11 +894,15 @@ export const mockElectronAPI = {
   }),
   onPrivacyChanged: () => () => {},
   getShellSnapshot: async () => playgroundZenSnapshot(),
-  setZenShell: async (patch: { enabled?: boolean; materialPreference?: 'system' | 'glass' | 'opaque' }) => {
+  setZenShell: async (patch: { enabled?: boolean; materialPreference?: 'system' | 'glass' | 'opaque'; renderProfile?: 'auto' | 'performance' | 'standard' }) => {
     playgroundZenState = {
       ...playgroundZenState,
       enabled: patch.enabled !== undefined ? patch.enabled === true : playgroundZenState.enabled,
       preference: patch.materialPreference ?? playgroundZenState.preference,
+      ...(patch.renderProfile !== undefined && {
+        renderProfilePreference: patch.renderProfile,
+        renderProfile: patch.renderProfile === 'performance' ? 'performance' as const : 'standard' as const,
+      }),
     }
     const next = playgroundZenSnapshot()
     for (const listener of playgroundZenListeners) listener(next)

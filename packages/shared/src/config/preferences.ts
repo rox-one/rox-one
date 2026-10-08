@@ -7,7 +7,8 @@ import {
   DEFAULT_LANGUAGE_CODE,
   isSupportedLanguageCode,
 } from '../i18n/languages.ts';
-import { LOCALE_REGISTRY, type LanguageCode } from '../i18n/registry.ts';
+// Native names only: avoid registry.ts, which statically imports every locale bundle.
+import { LOCALE_META, type LanguageCode } from '../i18n/locale-meta.ts';
 import { resolveConfigDir } from "./paths.ts"
 import {
   persistAgentIdentity,
@@ -66,6 +67,12 @@ export interface UserPreferences {
   zenShellEnabled?: boolean;
   /** User material preference while Zen Shell is on. Default `system`. */
   zenShellMaterialPreference?: 'system' | 'glass' | 'opaque';
+  /**
+   * Low-power rendering profile (PERF-07). Main-owned like Zen Shell; `auto`
+   * (or missing) turns it on for Windows and software/blocklisted GPUs.
+   * Not exposed via `update_user_preferences`.
+   */
+  renderProfilePreference?: 'auto' | 'performance' | 'standard';
   // When the preferences were last updated
   updatedAt?: number;
 }
@@ -213,7 +220,7 @@ export function setPersistedUiLanguage(code: LanguageCode): void {
  * invalid configurations consistently use the Russian default.
  */
 export function resolveTitleLanguageName(): string {
-  return LOCALE_REGISTRY[getPersistedUiLanguage()].nativeName;
+  return LOCALE_META[getPersistedUiLanguage()].nativeName;
 }
 
 /**
@@ -224,7 +231,7 @@ export function formatPreferencesForPrompt(): string {
 
   // Derive language from the persisted Appearance → Language choice.
   const langCode = getPersistedUiLanguage();
-  const langName = LOCALE_REGISTRY[langCode].nativeName;
+  const langName = LOCALE_META[langCode].nativeName;
 
   if (Object.keys(prefs).length === 0 ||
       (!prefs.name && !prefs.timezone && !prefs.location && !prefs.notes && langCode === 'en')) {
@@ -294,7 +301,7 @@ export function formatPreferencesDisplay(): string {
     }
 
     const displayLangCode = getPersistedUiLanguage();
-    const displayLangName = LOCALE_REGISTRY[displayLangCode].nativeName;
+    const displayLangName = LOCALE_META[displayLangCode].nativeName;
     lines.push(`- Language: ${displayLangName} (via Appearance settings)`);
 
     if (hasNotes) {
@@ -359,4 +366,24 @@ export function setZenShellPreference(patch: {
     zenShellMaterialPreference: materialPreference,
   });
   return { enabled, materialPreference };
+}
+
+export type RenderProfilePreferenceValue = 'auto' | 'performance' | 'standard';
+
+/** PERF-07 low-power rendering choice; unknown or missing values are `auto`. */
+export function getRenderProfilePreference(): RenderProfilePreferenceValue {
+  const value = loadPreferences().renderProfilePreference;
+  if (value === 'auto' || value === 'performance' || value === 'standard') return value;
+  return 'auto';
+}
+
+/** Persist the low-power rendering choice. Idempotent when unchanged. */
+export function setRenderProfilePreference(value: RenderProfilePreferenceValue): RenderProfilePreferenceValue {
+  if (value !== 'auto' && value !== 'performance' && value !== 'standard') {
+    throw new Error('renderProfilePreference must be auto, performance, or standard');
+  }
+  const current = loadPreferences();
+  if (current.renderProfilePreference === value) return value;
+  savePreferences({ ...current, renderProfilePreference: value });
+  return value;
 }
