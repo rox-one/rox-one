@@ -67,11 +67,11 @@ export function resetEntityResolvers(): void {
 }
 
 /**
- * Drop cached previews for one ref across every workspace host (realtime
+ * Drop cached previews for one ref in one workspace host (realtime
  * `entity.changed`). Exported next to `registerEntityResolver`.
  */
-export function invalidateEntity(_workspaceId: string, ref: EntityRef): void {
-  for (const host of hostsByWorkspace.values()) host.invalidate(ref)
+export function invalidateEntity(workspaceId: string, ref: EntityRef): void {
+  hostsByWorkspace.get(workspaceId)?.invalidate(ref)
 }
 
 /** Drop all cached previews for one workspace (exported next to `registerEntityResolver`). */
