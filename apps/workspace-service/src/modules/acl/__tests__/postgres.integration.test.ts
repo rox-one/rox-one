@@ -115,6 +115,21 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility, deleted_at) VALUES ($1, $2, $3, 'Dead', 'members', now())`, [deadProject, ws, owner])
       await q(`INSERT INTO milestone (milestone_id, workspace_id, project_id, title, sort_key) VALUES ($1, $2, $3, 'M', 'm')`, [deadMilestone, ws, deadProject])
       await q(`INSERT INTO work_item (work_item_id, workspace_id, owner_principal_id, title, project_id) VALUES ($1, $2, $3, 'Orphan', $4)`, [deadTask, ws, owner, deadProject])
+      // Review 4 — personal content is owner-only secret unless shared.
+      const [myDoc, myFolder, myFolderDoc, myCalendar, looseTask, sharedDoc, childOfPersonal] = [id(), id(), id(), id(), id(), id(), id()]
+      await q(`INSERT INTO doc (doc_id, workspace_id, owner_id) VALUES ($1, $2, $3)`, [myDoc, ws, alice])
+      await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'user', $3, 'Mine')`, [myFolder, ws, alice])
+      await q(`INSERT INTO doc (doc_id, workspace_id, owner_id, folder_id) VALUES ($1, $2, $3, $4)`, [myFolderDoc, ws, alice, myFolder])
+      await q(`INSERT INTO calendar (calendar_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'principal', $3, 'Alice')`, [myCalendar, ws, alice])
+      await q(`INSERT INTO work_item (work_item_id, workspace_id, owner_principal_id, title) VALUES ($1, $2, $3, 'Loose')`, [looseTask, ws, alice])
+      await q(`INSERT INTO work_item_member (work_item_id, principal_id, role) VALUES ($1, $2, 'assignee')`, [looseTask, bob])
+      await q(`INSERT INTO doc (doc_id, workspace_id, owner_id) VALUES ($1, $2, $3)`, [sharedDoc, ws, alice])
+      await q(`INSERT INTO acl_entry (acl_id, workspace_id, resource_type, resource_id, subject_type, subject_id, role) VALUES ($1, $2, 'note', $3, 'workspace', $4, 'viewer')`, [id(), ws, sharedDoc, ws])
+      for (const [rtype, rid, role] of [['note', myDoc, 'commenter'], ['folder', myFolder, 'viewer'], ['calendar', myCalendar, 'free_busy']] as const) {
+        await q(`INSERT INTO acl_entry (acl_id, workspace_id, resource_type, resource_id, subject_type, subject_id, role) VALUES ($1, $2, $3, $4, 'principal', $5, $6)`, [id(), ws, rtype, rid, bob, role])
+      }
+      // A company goal under the personal goal: governed by its own privacy.
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, parent_goal_id) VALUES ($1, $2, 'company', 'Under personal', $3, $4)`, [childOfPersonal, ws, owner, personal])
       const presetGoal = id()
       await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Space edit goal', $3, $4)`, [presetGoal, ws, owner, space])
       await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, default_subject, default_role) VALUES ($1, $2, 'goal', $3, 'space', 'editor')`, [id(), ws, presetGoal])
@@ -219,6 +234,9 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       expect(await acl.evaluate(await who(alice), 'view_title', { kind: 'channel', id: hiddenChat })).toMatchObject({ allowed: false, role: null, secret: true })
       // Joining the public chat of a members-only space does not make alice a space member.
       expect(await can(alice, 'view', 'goal', openGoal)).toBe(false)
+      // … nor any role on that space itself (review 4), while the private space chat's member keeps editor.
+      expect(await acl.evaluate(await who(alice), 'view', { kind: 'space', id: openSpace })).toMatchObject({ allowed: false, role: null })
+      expect(await acl.evaluate(await who(bob), 'edit', { kind: 'space', id: space })).toMatchObject({ allowed: true, role: 'editor' })
       expect(await acl.evaluate(await who(bob), 'view_title', { kind: 'channel', id: openChat })).toMatchObject({ allowed: false, role: null })
       // Deleted project → its milestone and task are not found.
       expect((await acl.evaluate(await who(owner), 'view', { kind: 'milestone', id: deadMilestone })).reason).toBe('not_found')
@@ -237,6 +255,23 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       await q(`UPDATE workspace SET policy_epoch = policy_epoch + 1 WHERE workspace_id = $1`, [ws])
       expect(await can(bob, 'view', 'goal', championGoal)).toBe(false)
       expect(await can(bob, 'view', 'goal', spaceGoal)).toBe(false)
+      // Review 4 — the workspace owner cannot see a member's personal doc, folder doc, calendar or loose task.
+      for (const [kind, rid] of [['note', myDoc], ['folder', myFolder], ['note', myFolderDoc], ['calendar', myCalendar], ['task', looseTask]] as const) {
+        const decision = await acl.evaluate(await who(owner), 'view', { kind, id: rid })
+        expect(decision, `owner ${kind}`).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+        expect(await can(alice, 'edit', kind, rid), `alice ${kind}`).toBe(true)
+      }
+      // … while explicit shares, free_busy and the assignee tag still work.
+      expect(await can(bob, 'comment', 'note', myDoc)).toBe(true)
+      expect(await can(bob, 'view', 'note', myFolderDoc)).toBe(true) // through the shared folder
+      expect(await acl.evaluate(await who(bob), 'view_title', { kind: 'calendar', id: myCalendar })).toMatchObject({ allowed: true, preview: 'minimal' })
+      expect(await can(bob, 'edit', 'task', looseTask)).toBe(true)
+      // A workspace-shared personal doc is no longer personal.
+      expect(await can(owner, 'manage_access', 'note', sharedDoc)).toBe(true)
+      expect(await can(bob, 'view', 'note', sharedDoc)).toBe(true)
+      // A company goal under a personal goal: company-viewable, owner bypass applies.
+      expect(await can(bob, 'view', 'goal', childOfPersonal)).toBe(true)
+      expect(await acl.evaluate(await who(owner), 'manage_access', { kind: 'goal', id: childOfPersonal })).toMatchObject({ allowed: true, secret: false })
       // Hard denials.
       expect((await acl.evaluate(await who(gone), 'view', { kind: 'goal', id: company })).reason).toBe('not_member')
       expect((await acl.evaluate(await who(ph), 'view', { kind: 'goal', id: company })).reason).toBe('placeholder')

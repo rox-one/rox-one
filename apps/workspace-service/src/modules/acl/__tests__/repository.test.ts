@@ -86,11 +86,23 @@ describe('loader SQL (review 2 owner decisions)', () => {
   const parentsOf = (text: string) => text.slice(text.indexOf('FROM ('), text.indexOf('AS parent_refs'))
   const ancestorsOf = (text: string) => text.slice(text.lastIndexOf('AS chat_id'), text.indexOf('AS ancestor_refs', text.lastIndexOf('AS chat_id')))
 
-  test('goals and projects list their parent goal only as a secrecy ancestor (no goal → goal / project inheritance)', () => {
-    expect(parentsOf(sql('goal'))).not.toContain('parent_goal_id')
-    expect(parentsOf(sql('project'))).not.toContain('parent_goal_id')
-    expect(ancestorsOf(sql('goal'))).toContain("'goal:' || g.parent_goal_id")
-    expect(ancestorsOf(sql('project'))).toContain("'goal:' || pj.parent_goal_id")
+  test('goals and projects do not list their parent goal at all (own privacy: no inheritance, no secrecy)', () => {
+    for (const kind of ['goal', 'project'] as const) {
+      expect(parentsOf(sql(kind))).not.toContain('parent_goal_id')
+      expect(ancestorsOf(sql(kind))).not.toContain('parent_goal_id')
+    }
+  })
+
+  test('personal content is owner-only secret unless shared', () => {
+    expect(sql('note')).toContain('d.folder_id IS NULL AND d.wiki_space_id IS NULL AND d.space_id IS NULL AND d.parent_ref IS NULL AND d.public_token IS NULL')
+    expect(sql('folder')).toContain("f.owner_type = 'user' AND NOT")
+    expect(sql('calendar')).toContain("k.owner_type = 'principal' AND NOT")
+    expect(sql('task')).toContain('w.project_id IS NULL AND w.space_id IS NULL AND w.parent_id IS NULL AND w.milestone_id IS NULL')
+    for (const kind of ['note', 'folder', 'calendar', 'task'] as const) {
+      expect(sql(kind), kind).toContain("rp.default_subject IS NOT NULL")
+      expect(sql(kind), kind).toContain("ae.subject_type IN ('workspace', 'space')")
+      expect(sql(kind), kind).toContain('ae.workspace_id = $2::uuid')
+    }
   })
 
   test('goal-owned folders and members-mode lists keep their cut parents as secrecy ancestors', () => {
@@ -109,7 +121,7 @@ describe('loader SQL (review 2 owner decisions)', () => {
   })
 
   test('spaces expose chat_public / company_wide for the join rule', () => {
-    expect(sql('space')).toContain('AS chat_public')
+    expect(sql('space')).toContain('sc.workspace_id = $2::uuid AND sc.visibility')
     expect(sql('space')).toContain("(s.is_company_space OR s.default_access <> 'members') AS company_wide")
   })
 
