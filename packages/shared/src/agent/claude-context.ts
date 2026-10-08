@@ -81,6 +81,7 @@ export interface ClaudeContextOptions {
   workspaceId: string;
   onPlanSubmitted: (planPath: string) => void;
   onAuthRequest: (request: unknown) => void;
+  getHostBashEnv?: SessionToolContext['getHostBashEnv'];
 }
 
 /**
@@ -287,7 +288,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
     sessionId,
     workspacePath,
     roxHomeDisplay: roxHomeDocDisplay(),
-    getHostBashEnv: () => createHostBashEnv(),
+    getHostBashEnv: options.getHostBashEnv ?? createHostBashEnv,
     get sourcesPath() { return join(workspacePath, 'sources'); },
     get skillsPath() { return join(workspacePath, 'skills'); },
     plansFolderPath: getSessionPlansPath(workspacePath, sessionId),
