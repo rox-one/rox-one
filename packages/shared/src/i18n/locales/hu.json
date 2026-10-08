@@ -6201,6 +6201,8 @@
   "settings.appearance.defaultZoomLevelDesc": "Set the permanent app zoom level for all windows",
   "settings.appearance.description": "Téma, betűtípus, eszközikonok",
   "settings.appearance.editFile": "Fájl szerkesztése",
+  "settings.appearance.entitiesLinks": "Entitáslinkek (kísérleti)",
+  "settings.appearance.entitiesLinksDesc": "Entitások összekötése jegyzetekben, feladatokban és dokumentumokban [[kind:id]], rox:// mélylinkek és visszamutató linkek segítségével. Alapból kikapcsolva.",
   "settings.appearance.font": "Betűtípus",
   "settings.appearance.fontArialNarrow": "Arial Narrow",
   "settings.appearance.fontChat": "Ügynök csevegés",

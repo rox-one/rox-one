@@ -1,23 +1,18 @@
-import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
-import { parseDeepLink } from '../deep-link'
+import { describe, expect, it, beforeEach, afterEach, mock } from 'bun:test'
+
+// Stub the main logger (electron-log → electron binary, not installed in
+// this clone) so the pure deep-link parse logic stays testable here.
+mock.module(new URL('../logger.ts', import.meta.url).pathname, () => ({
+  mainLog: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
+}))
+const { parseDeepLink } = await import('../deep-link')
 import {
   COMPOUND_ROUTE_PREFIXES,
+  ENTITY_ONLY_ROUTE_PREFIXES,
   parseRouteToNavigationState,
   resetEntityRoutesEnabled,
   setEntityRoutesEnabled,
 } from '../../shared/route-parser'
-
-const ENTITY_ONLY_PREFIXES = new Set([
-  'docs',
-  'messenger',
-  'calendar',
-  'goals',
-  'contacts',
-  'workflows',
-  'base',
-  'forms',
-  'comments',
-])
 
 /**
  * rox://<route> must accept every view route the renderer navigator knows,
@@ -70,7 +65,7 @@ describe('parseDeepLink view routes', () => {
 
   it('accepts every shared compound prefix', () => {
     for (const prefix of COMPOUND_ROUTE_PREFIXES) {
-      if (ENTITY_ONLY_PREFIXES.has(prefix)) continue
+      if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) continue
       expect(parseDeepLink(`rox://${prefix}`)?.view).toBe(prefix)
     }
   })

@@ -36,6 +36,25 @@ describe('entity routes flag gate', () => {
     expect(isEntityRoutesEnabled()).toBe(false)
   })
 
+  test('env override wins over the setter in both directions', () => {
+    const previous = process.env.CRAFT_FEATURE_ENTITIES_LINKS
+    try {
+      process.env.CRAFT_FEATURE_ENTITIES_LINKS = '1'
+      setEntityRoutesEnabled(false)
+      expect(isEntityRoutesEnabled()).toBe(true)
+      expect(isCompoundRoutePrefix('goals')).toBe(true)
+      expect(parseCompoundRoute('goals/goal/g-1')?.navigator).toBe('entity')
+      process.env.CRAFT_FEATURE_ENTITIES_LINKS = '0'
+      setEntityRoutesEnabled(true)
+      expect(isEntityRoutesEnabled()).toBe(false)
+      expect(isCompoundRoutePrefix('goals')).toBe(false)
+      expect(parseCompoundRoute('goals/goal/g-1')).toBeNull()
+    } finally {
+      if (previous === undefined) delete process.env.CRAFT_FEATURE_ENTITIES_LINKS
+      else process.env.CRAFT_FEATURE_ENTITIES_LINKS = previous
+    }
+  })
+
   test('flag off rejects entity routes exactly as on main', () => {
     setEntityRoutesEnabled(false)
     for (const route of ENTITY_ROUTES) {

@@ -636,6 +636,11 @@ client.onConnectionStateChanged((state) => {
 // i18n: sync language changes to main process (for native menus/dialogs)
 ;(api as ElectronAPI).changeLanguage = (lang: string) => ipcRenderer.invoke('i18n:changeLanguage', lang)
 
+// entities.links.v1: renderer owns the persisted atom; notify main so the
+// deep-link parser and entity RPC handlers agree with the renderer.
+;(api as ElectronAPI).setEntitiesLinksEnabled = (enabled: boolean) =>
+  ipcRenderer.invoke('entities:setLinksEnabled', enabled)
+
 ;(api as ElectronAPI).remoteTlsInspect = (url: string) =>
   ipcRenderer.invoke('remoteTls:inspect', url)
 ;(api as ElectronAPI).remoteTlsDecide = (payload) =>

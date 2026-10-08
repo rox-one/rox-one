@@ -6201,6 +6201,8 @@
   "settings.appearance.defaultZoomLevelDesc": "모든 창에 적용할 영구적인 앱 확대/축소 수준을 설정합니다",
   "settings.appearance.description": "테마, 글꼴, 도구 아이콘",
   "settings.appearance.editFile": "파일 편집",
+  "settings.appearance.entitiesLinks": "엔터티 링크(실험적)",
+  "settings.appearance.entitiesLinksDesc": "[[kind:id]], rox:// 딥 링크, 백링크로 노트·작업·문서의 엔터티를 연결합니다. 기본값은 꺼짐.",
   "settings.appearance.font": "글꼴",
   "settings.appearance.fontArialNarrow": "Arial Narrow",
   "settings.appearance.fontChat": "에이전트 채팅",
