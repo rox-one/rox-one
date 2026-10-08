@@ -42,6 +42,7 @@ import type { NoteSummary } from '@rox/shared/protocol'
 import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { parseAutomationsConfig, type AutomationListItem } from '@/components/automations/types'
@@ -103,10 +104,17 @@ export interface WidgetProps {
 
 function useNow(intervalMs: number): number {
   const [now, setNow] = useState(() => Date.now())
+  // PERF-10 (#1577): a retired Home surface keeps its widgets mounted but stops
+  // their clock; the value is recomputed as soon as the surface is active again.
+  const visible = useEffectiveVisible()
   useEffect(() => {
+    if (!visible) {
+      setNow(Date.now())
+      return
+    }
     const timer = window.setInterval(() => setNow(Date.now()), intervalMs)
     return () => window.clearInterval(timer)
-  }, [intervalMs])
+  }, [intervalMs, visible])
   return now
 }
 
@@ -600,11 +608,13 @@ function BalanceWidget({ edit }: WidgetProps) {
       setState(/no handler/i.test(message) ? { status: 'unavailable' } : { status: 'error', message })
     }
   }, [])
+  const visible = useEffectiveVisible()
   useEffect(() => {
+    if (!visible) return
     void load()
     const timer = window.setInterval(() => void load(), 5 * 60_000)
     return () => window.clearInterval(timer)
-  }, [load])
+  }, [load, visible])
   const open = () => navigate(routes.view.settings('account'))
   return (
     <WidgetFrame testId="balance" title={t('workbench.home.w.balance')} onOpen={open} edit={edit}>

@@ -26,6 +26,7 @@ import { toErrorMessage } from '@/lib/errors'
 import { ROX_REVALIDATE_AFTER_MS, roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
 import { sharedRead } from '@/lib/query/shared-read'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 const EMPTY_MAP = new Map<string, never[]>()
 /**
@@ -63,6 +64,9 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
   const requests = useRef<Record<InboxRemoteSource, number>>({ memory: 0, skills: 0, senders: 0 })
   const firstSeen = useRef(new Map<string, number>())
   const [now, setNow] = useState(() => Date.now())
+  // PERF-10 (#1577): a retired keep-alive surface must not poll — the Inbox and
+  // the Feed share this hook, so the pause lives here, not in either page.
+  const visible = useEffectiveVisible()
 
   useEffect(() => {
     // PERF-09: paint the last result for this exact workspace + actor, then revalidate.
@@ -86,9 +90,10 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
   }, [context])
 
   useEffect(() => {
+    if (!visible) return
     const timer = window.setInterval(() => setNow(Date.now()), 60_000)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [visible])
 
   /**
    * `which` (a change event or an action on one source) and any explicit
@@ -146,7 +151,7 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
   }, [contextRef, refreshIdentity, workspaceId])
 
   useEffect(() => {
-    if (!withRemote || !context.actorKey) return
+    if (!withRemote || !context.actorKey || !visible) return
     void load(undefined, 'shared')
     const api = window.electronAPI
     const offSenders = api?.onMessagingPendingChanged?.(() => void load('senders'))
@@ -162,7 +167,7 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
       window.removeEventListener('focus', onFocus)
       window.clearInterval(timer)
     }
-  }, [withRemote, load, workspaceId, context])
+  }, [withRemote, load, workspaceId, context, visible])
 
   const sessions = useMemo(
     () => [...sessionMap.values()].filter((s) =>

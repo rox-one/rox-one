@@ -17,7 +17,7 @@ let closeBrowser: (() => Promise<void>) | undefined
 function mainFunctions() {
   const source = readFileSync(join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
   const file = ts.createSourceFile('MainContentPanel.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['useSelectedResourceAvailability', 'MainContentPanel', 'lazyRoutePage', 'RouteErrorBoundary', 'RouteRecoveryContext'])
+  const names = new Set(['useSelectedResourceAvailability', 'MainContentPanel', 'SurfaceRoutePanel', 'lazyRoutePage', 'RouteErrorBoundary', 'RouteRecoveryContext'])
   return file.statements.filter(node => (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node))
     ? names.has(node.name?.text ?? '')
     : ts.isVariableStatement(node) && node.declarationList.declarations.some(decl => names.has(decl.name.getText(file))))
@@ -133,6 +133,10 @@ async function bundle() {
     // and content recovery callbacks above remain the production implementation.
     const TourPanelScope=Pass, navigationEntity=()=>({}), UnavailableAutomationTour=()=>null;
     const SendResourceToWorkspaceDialog=()=>null, MultiSelectPanel=()=>null, CollectionBulkBar=()=>null;
+    // PERF-10 (#1577): the keep-alive host is out of scope for route dispatch;
+    // stub it to keep exactly the active surface mounted, as before the host.
+    const RetainedSurfacePane=props=>props.children, surfaceKeepAliveCapacity=()=>1,
+      useKeepAliveSurfaces=(key,node)=>[{key,node}];
     const leaf=name=>props=>React.createElement('div',{'data-leaf':name,'data-entity':props.sessionId||props.sourceSlug||props.skillSlug||props.noteId||props.pageSlug||props.runId||props.terminalId||props.extensionId||props.screen||''},name);
     const ChatPage=leaf('session'),SourceInfoPage=leaf('source'),SkillInfoPage=leaf('skill'),
       SkillsCatalogPage=leaf('skills-catalog'),IntegrationsCatalogPage=leaf('integrations-catalog'),MemoryScreen=leaf('memory'),

@@ -53,6 +53,26 @@ export const PERF_BUDGETS: Record<PerfMarkName, BudgetDefinition> = {
     maxCollectionReloads: 0,
     ciGate: false,
   },
+  /**
+   * PERF-10 (#1577) owner decision D2: whole warmed surfaces, not requests.
+   * The warm-up covers the rail surfaces' chunks and data, so a first visit
+   * paints and a revisit among the five retained ones only repaints; paying a
+   * cold read or losing a retained pane breaks the sample.
+   */
+  surface_revisit: {
+    name: 'surface_revisit',
+    p95Ms: 100,
+    maxCollectionReloads: 0,
+    maxIpcPerInteraction: { 'sessions.list': 0, 'sessions.messages': 0 },
+    ciGate: true,
+  },
+  surface_first_warm: {
+    name: 'surface_first_warm',
+    p95Ms: 200,
+    maxCollectionReloads: 0,
+    maxIpcPerInteraction: { 'sessions.list': 0, 'sessions.messages': 0 },
+    ciGate: true,
+  },
 }
 
 export const CACHED_SESSION_SWITCH_P95_MS = PERF_BUDGETS.cached_session_switch.p95Ms
