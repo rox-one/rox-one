@@ -33,6 +33,8 @@ import { collectionComponents } from './collection'
 import { notesComponents } from './notes'
 import { settingsComponents } from './settings'
 import { normalizeDiscoveredPlaygroundStories, normalizePlaygroundStories } from './story-loader'
+// W1-08 (#1505): entity UI primitives.
+import { entityPrimitiveComponents } from './entity-primitives'
 
 export * from './types'
 export {
@@ -84,6 +86,8 @@ export const componentRegistry: ComponentEntry[] = normalizePlaygroundStories([
   ...notesComponents,
   ...settingsComponents,
   ...normalizeDiscoveredPlaygroundStories(discoveredStoryModules),
+  // W1-08 (#1505)
+  ...entityPrimitiveComponents,
 ])
 
 export function getCategories(): CategoryGroup[] {

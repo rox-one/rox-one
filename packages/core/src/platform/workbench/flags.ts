@@ -68,6 +68,8 @@ export const WORKBENCH_FLAG = {
   // W1-04 (#1501)
   /** MIG-06 Dossier → contact-card export IPC (`directory:exportDossier`). Default OFF. */
   contactsDossierExportV1: 'contacts.dossier-export.v1',
+  // W1-08 (#1505) — entity hover cards / unfurls / mention chips. Default OFF.
+  entitiesPreviewsV1: 'entities.previews.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -234,6 +236,8 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.commandsBusV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   // W1-04 (#1501): Dossier export IPC — default OFF, inert until enabled.
   { id: WORKBENCH_FLAG.contactsDossierExportV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  // W1-08 (#1505): default OFF; requires entities.links.v1.
+  { id: WORKBENCH_FLAG.entitiesPreviewsV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.entitiesLinksV1], rollbackSafe: true },
   // Extra screens («Ещё»): workbench.mode.<id>.v1, default ON
   ...EXTRA_SCREEN_FEATURE_FLAGS,
   // W1-07 (#1504): unified mode screens + Docs relabel — default OFF, inert when off.

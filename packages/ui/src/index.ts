@@ -92,6 +92,15 @@ export {
   type ImageCardStackProps,
   type ImageCardStackItem,
 } from './components/markdown'
+// W1-08 (#1505): entity mention / embed nodes (opt-in via `entityNodes`).
+export {
+  EntityMention,
+  EntityEmbed,
+  serializeEntityMention,
+  serializeEntityEmbed,
+  isWikilinkSafeRefLiteral,
+  type EntityNodesOptions,
+} from './components/markdown'
 
 // UI primitives
 export {

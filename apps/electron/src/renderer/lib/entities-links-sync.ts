@@ -32,6 +32,8 @@ let effective: EntitiesLinksEffectiveState = DEFAULT_STATE
 /** True once main has acknowledged a report (sync seed or async push). */
 let reportedToMain = false
 const listeners = new Set<() => void>()
+/** The latest `setEntitiesLinksEnabled` round trip, until main answers. */
+let inFlightPush: Promise<unknown> | null = null
 
 function bridge(): Bridge | undefined {
   try {
@@ -107,7 +109,7 @@ export function pushEntitiesLinksFlag(enabled: boolean): Promise<EntitiesLinksEf
     return Promise.resolve(effective)
   }
   if (!pending) return Promise.resolve(effective)
-  return pending.then(
+  const result = pending.then(
     (state) => {
       if (isEffectiveState(state)) {
         reportedToMain = true
@@ -120,6 +122,21 @@ export function pushEntitiesLinksFlag(enabled: boolean): Promise<EntitiesLinksEf
       return effective
     },
   )
+  inFlightPush = result
+  const clear = () => { if (inFlightPush === result) inFlightPush = null }
+  result.then(clear, clear)
+  return result
+}
+
+/**
+ * Resolves once main has answered the latest toggle push, or `null` when no
+ * push is in flight. Main applies the toggle over ipcMain while entity RPCs
+ * use the RPC transport, so callers that must observe main's new state (the
+ * preview cache) re-check after this.
+ */
+export function entitiesLinksSettled(): Promise<void> | null {
+  const pending = inFlightPush
+  return pending ? pending.then(() => undefined, () => undefined) : null
 }
 
 /** Effective state for components (Settings toggle, navigation memo). */
@@ -149,6 +166,7 @@ export function useEntitiesLinksFlagSync(persisted: boolean): void {
 export function __resetEntitiesLinksSyncForTests(): void {
   effective = DEFAULT_STATE
   reportedToMain = false
+  inFlightPush = null
   listeners.clear()
   setEntityRoutesEnabled(false)
 }

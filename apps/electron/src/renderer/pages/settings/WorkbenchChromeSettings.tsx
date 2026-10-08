@@ -20,6 +20,7 @@ import {
 } from '@/atoms/unified-shell'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { EntitiesPreviewsSettingsToggle } from '@/components/entities/EntitiesPreviewsSettingsToggle'
 import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
 import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ExtraScreensSettings } from './ExtraScreensSettings'
@@ -144,6 +145,7 @@ export function WorkbenchChromeSettings() {
           disabled={entitiesLinksForced}
           onCheckedChange={setEntitiesLinks}
         />
+        <EntitiesPreviewsSettingsToggle />
       </SettingsCard>
     </SettingsSection>
     <ExtraScreensSettings />
