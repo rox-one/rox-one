@@ -265,26 +265,36 @@ async function gitTestInventory(root: string): Promise<string[] | null> {
   return [...new Set(output.split('\0').filter(Boolean))]
 }
 
-/** Check and use the same inode, even if its pathname changes during IO. */
+/** Check and use the same inode, even if its pathname changes during IO.
+ * Ancestor re-checks compare the current resolution with the snapshot below:
+ * Windows realpath spellings are not fixed points (8.3 short names, drive-root
+ * form), so requiring each ancestor to resolve onto its own spelling would
+ * reject a stable directory instead of detecting an actual replacement. */
 const MAX_TEST_SOURCE_BYTES = 16 * 1024 * 1024
 const MAX_CAPTURE_BYTES = 64 * 1024 * 1024
 const descriptorAncestors = new WeakMap<import('node:fs/promises').FileHandle, () => Promise<void>>()
 
 async function openRegularFile(path: string, flags: number, mode?: number) {
   const directory = await realpath(dirname(path))
-  const ancestors: Array<{ path: string; dev: bigint; ino: bigint }> = []
+  const ancestors: Array<{ path: string; dev: bigint; ino: bigint; resolved: string }> = []
   for (let parent = directory; ; parent = dirname(parent)) {
     const stat = await lstat(parent, { bigint: true })
-    if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('File ancestor changed')
-    ancestors.push({ path: parent, dev: stat.dev, ino: stat.ino })
+    if (!stat.isDirectory() || stat.isSymbolicLink())
+      throw new Error(`File ancestor changed: ${parent} is ${stat.isSymbolicLink() ? 'a symbolic link' : 'not a directory'}`)
+    ancestors.push({ path: parent, dev: stat.dev, ino: stat.ino, resolved: await realpath(parent) })
     if (dirname(parent) === parent) break
   }
   const assertAncestors = async () => {
-    if (await realpath(dirname(path)) !== directory) throw new Error('File ancestor changed')
+    const currentDirectory = await realpath(dirname(path))
+    if (currentDirectory !== directory) throw new Error(`File ancestor changed: ${dirname(path)} now resolves to ${currentDirectory}, not ${directory}`)
     for (const ancestor of ancestors) {
       const stat = await lstat(ancestor.path, { bigint: true })
-      if (!stat.isDirectory() || stat.isSymbolicLink() || stat.dev !== ancestor.dev || stat.ino !== ancestor.ino
-        || await realpath(ancestor.path) !== ancestor.path) throw new Error('File ancestor changed')
+      const current = await realpath(ancestor.path)
+      const drift = !stat.isDirectory() ? 'is no longer a directory'
+        : stat.isSymbolicLink() ? 'became a symbolic link'
+        : stat.dev !== ancestor.dev || stat.ino !== ancestor.ino ? `identity changed from ${ancestor.dev}:${ancestor.ino} to ${stat.dev}:${stat.ino}`
+        : current !== ancestor.resolved ? `now resolves to ${current}, previously ${ancestor.resolved}` : undefined
+      if (drift) throw new Error(`File ancestor changed: ${ancestor.path} ${drift}`)
     }
   }
   const noFollow = constants.O_NOFOLLOW ?? 0, nonBlock = constants.O_NONBLOCK ?? 0

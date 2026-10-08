@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { followChatOutput } from './chat-scroll'
+import { prefersReducedMotionNow } from '@/lib/render-profile-motion'
 
 interface ChatScrollOwner { readonly sessionId: string; readonly viewport: HTMLDivElement }
 /** Queued output follows only its committed session/viewport incarnation, including A→B→A. */
@@ -47,7 +48,7 @@ export function useChatOutputFollow(sessionId: string | undefined, viewportRef: 
       // Preserve the current policy: unfocused panels follow instantly, focused readers control stickiness.
       stickToBottom: !focusedRef.current || stickRef.current,
       focused: focusedRef.current,
-      reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      reducedMotion: prefersReducedMotionNow(),
       documentVisible: document.visibilityState === 'visible',
     })
     if (followed) begin(previousTop)

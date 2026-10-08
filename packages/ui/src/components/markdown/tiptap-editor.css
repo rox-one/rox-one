@@ -260,6 +260,11 @@
   background: transparent;
 }
 
+/* PERF-07 low-power profile: keep the static placeholder, stop the loop. */
+html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-loading='true'] {
+  animation: none;
+}
+
 @keyframes tiptap-image-shimmer {
   0% {
     background-position: 200% 0;
@@ -323,7 +328,7 @@
   align-items: center;
   gap: 2px;
   padding: 4px;
-  border-radius: var(--radius-overlay, 6px);
+  border-radius: var(--radius-md, 8px);
   background: var(--background);
   border: none;
   box-shadow: var(--shadow-modal-small);
@@ -336,7 +341,7 @@
   min-width: 320px;
   max-width: 480px;
   padding: 6px;
-  border-radius: var(--radius-overlay, 6px);
+  border-radius: var(--radius-md, 8px);
 }
 
 .tiptap-bubble-btn {

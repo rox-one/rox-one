@@ -1,7 +1,8 @@
 import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { AnimatePresence, motion, useIsPresent, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useIsPresent } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { AlertCircle, BookOpen, CheckCircle2, Info, MoreHorizontal, Sparkles, X } from 'lucide-react'
 import { headerStatusAtom, dismissHeaderStatusAtom, headerSuggestionAtom } from '@/atoms/header-status'
 import { focusedSessionIdAtom } from '@/atoms/panel-stack'
@@ -50,7 +51,7 @@ export function HeaderStatusPresence({ children, ...props }: Omit<ComponentProps
 /** Mount once in the stable header. This lane never moves keyboard focus. */
 export function HeaderStatusLane({ className }: HeaderStatusLaneProps) {
   const { t } = useTranslation()
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   const focusedSessionId = useAtomValue(focusedSessionIdAtom)
   const status = useAtomValue(headerStatusAtom).current

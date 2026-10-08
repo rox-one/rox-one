@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { useOverlayPortalTarget } from "@rox/ui/context"
 import { cn } from "@/lib/utils"
 import { useTourNativeLayer } from '@/features/product-tour/runtime/native-layer'
 
@@ -19,10 +20,24 @@ function DialogTrigger({
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
 }
 
+/**
+ * Portals to the enclosing fullscreen overlay's root when there is one
+ * (FullscreenOverlayBase → OverlayPortalRoot), so a dialog opened from an
+ * overlay stacks above it (fullscreen 350 > scrim 200 / modal 210); otherwise
+ * to <body>. An explicit `container` wins.
+ */
 function DialogPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+  const target = useOverlayPortalTarget(container)
+  return (
+    <DialogPrimitive.Portal
+      data-slot="dialog-portal"
+      container={target}
+      {...props}
+    />
+  )
 }
 
 function DialogClose({
@@ -40,7 +55,7 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       data-overlay-motion="true"
       className={cn(
-        "fixed inset-0 z-modal bg-[var(--dialog-backdrop)]",
+        "fixed inset-0 z-scrim bg-[var(--dialog-backdrop)]",
         className
       )}
       {...props}

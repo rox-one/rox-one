@@ -149,7 +149,7 @@ function Confirm({ title, body, confirmLabel, onConfirm, onCancel, children }: {
   React.useEffect(() => { ref.current?.focus() }, [])
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 pt-[14vh]"
+      className="fixed inset-0 z-modal flex items-start justify-center bg-black/30 pt-[14vh]"
       onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel() }}
       onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onCancel() } }}
     >

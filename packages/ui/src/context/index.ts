@@ -14,3 +14,12 @@ export {
   useShikiTheme,
   type ShikiThemeProviderProps,
 } from './ShikiThemeContext'
+
+export {
+  OverlayPortalContainerProvider,
+  OverlayPortalRoot,
+  useOverlayPortalContainer,
+  useOverlayPortalTarget,
+  type OverlayPortalContainerProviderProps,
+  type OverlayPortalRootProps,
+} from './OverlayPortalContext'

@@ -206,7 +206,7 @@ export function WorkspaceCreationScreen({
     <FullscreenOverlayBase
       isOpen={true}
       onClose={handleClose}
-      className={cn("z-splash flex flex-col bg-background", className)}
+      className={cn("flex flex-col bg-background", className)}
     >
       <motion.div
         initial={{ opacity: 0 }}

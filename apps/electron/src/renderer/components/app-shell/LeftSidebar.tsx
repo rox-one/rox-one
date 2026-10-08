@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import * as React from "react"
-import { AnimatePresence, motion, useIsPresent, useReducedMotion, type Variants } from "motion/react"
+import { AnimatePresence, motion, useIsPresent, type Variants } from "motion/react"
+import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 
 import { useTranslation } from "react-i18next"
 
@@ -193,7 +194,7 @@ const itemVariants: Variants = {
  */
 export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand }: LeftSidebarProps) {
   const { t } = useTranslation()
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   const visibleLinks = !isNested && serviceId !== undefined
     ? getServiceContextLinks(links, serviceId)
     : links
@@ -329,7 +330,7 @@ function ExpandableSection({
   isNested: boolean | undefined
 }) {
   const { t } = useTranslation()
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   const bodyRef = React.useRef<HTMLDivElement>(null)
   const toggleRef = React.useRef<HTMLButtonElement>(null)
   const sectionId = sidebarSectionDomId(link.id)

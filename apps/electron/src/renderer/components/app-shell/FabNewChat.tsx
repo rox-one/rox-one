@@ -33,7 +33,7 @@ export function FabNewChat({ onClick, className }: FabNewChatProps) {
       onClick={() => { beginChatSessionCreation(tourSignals.capture()); onClick() }}
       aria-label={t("menu.newChat")}
       className={cn(
-        "fixed right-4 z-30 size-14 rounded-full",
+        "fixed right-4 z-raised size-14 rounded-full",
         "bg-accent text-white",
         "flex items-center justify-center",
         // Layered shadow: ambient drop + accent-tinted glow + subtle inner highlight

@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { cn } from '@/lib/utils'
 import {
   SUPER_ENGINEERING_HUB_TAGLINES,
@@ -31,7 +32,7 @@ export function ScrambleTagline({
   className,
   cycleMs = 3200,
 }: ScrambleTaglineProps) {
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   const [index, setIndex] = React.useState(0)
   const [display, setDisplay] = React.useState(phrases[0] ?? '')
   const phrase = phrases[index % phrases.length] ?? ''

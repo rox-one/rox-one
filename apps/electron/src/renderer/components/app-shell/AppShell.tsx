@@ -2990,7 +2990,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
 
       {false && isAutoCompact && !isSidebarAndNavigatorHidden && (
-        <div data-compact-profile className="chrome-rail fixed bottom-1 left-1 z-panel flex h-11 items-center gap-1 rounded-xl px-1" data-shell-role="chrome">
+        <div data-compact-profile className="chrome-rail fixed bottom-1 left-1 z-chrome flex h-11 items-center gap-1 rounded-xl px-1" data-shell-role="chrome">
           <ProfileStrip data={profileStripWithSpend} compact onClick={() => handleSettingsClick('account')} className="w-10 p-0.5" />
           <button type="button" onClick={() => handleSettingsClick()} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-9 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
             <Settings className="size-4" aria-hidden />
@@ -3124,7 +3124,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
-              className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
+              className="h-full flex flex-col min-w-0 relative z-chrome chrome-strip"
               data-shell-role="chrome"
             >
             <PanelHeader
@@ -3334,7 +3334,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={SIDEBAR_WIDTH_MIN}
           valueMax={SIDEBAR_WIDTH_MAX}
           dragging={sidebarResize.dragging || isResizing === 'sidebar'}
-          className="absolute z-panel"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
@@ -3392,7 +3392,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={NAVIGATOR_WIDTH_MIN}
           valueMax={NAVIGATOR_WIDTH_MAX}
           dragging={navigatorResize.dragging || isResizing === 'session-list'}
-          className="absolute z-panel"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
