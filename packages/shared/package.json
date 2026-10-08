@@ -167,7 +167,8 @@
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",
     "./commands/schemas": "./src/commands/schemas.ts",
-    "./notify/schemas": "./src/notify/schemas.ts"
+    "./notify/schemas": "./src/notify/schemas.ts",
+    "./xfn/schemas": "./src/xfn/schemas.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
