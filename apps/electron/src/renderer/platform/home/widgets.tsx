@@ -4,7 +4,7 @@
  * source is unavailable or empty the widget says so and why.
  */
 import * as React from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useNotesTitleKey } from '../useNotesTitleKey'
 import { useTranslation } from 'react-i18next'
@@ -575,7 +575,12 @@ function ModelsWidget({ edit, width, size = 'S' }: WidgetProps) {
 // Баланс
 // ---------------------------------------------------------------------------
 
-type BalanceState = { status: 'loading' } | { status: 'ok'; balance: number } | { status: 'disconnected' } | { status: 'error'; message: string } | { status: 'unavailable' }
+type BalanceState =
+  | { status: 'loading' }
+  | { status: 'ok'; balance: number; updating?: boolean; syncedAt?: number | null }
+  | { status: 'disconnected' }
+  | { status: 'error'; message: string }
+  | { status: 'unavailable' }
 
 function BalanceWidget({ edit }: WidgetProps) {
   const { t } = useTranslation()
@@ -584,6 +589,8 @@ function BalanceWidget({ edit }: WidgetProps) {
   const { all } = useHomeSessions()
   const usage = useMemo(() => buildUsageOverview(all, now, 7), [all, now])
   const [state, setState] = useState<BalanceState>({ status: 'loading' })
+  // A transient outage keeps the last confirmed snapshot on screen.
+  const lastBalance = useRef<number | null>(null)
   const load = useCallback(async () => {
     const api = window.electronAPI
     if (typeof api?.getRoxBalance !== 'function') {
@@ -591,18 +598,29 @@ function BalanceWidget({ edit }: WidgetProps) {
       return
     }
     try {
-      setState(await api.getRoxBalance())
+      const next = await api.getRoxBalance()
+      if (next.status === 'ok') lastBalance.current = next.balance
+      setState(next)
     } catch (e) {
       const message = toErrorMessage(e)
-      // Never surfaced: logged for diagnostics, the widget shows «—».
+      // Never surfaced: logged for diagnostics, the widget keeps the snapshot.
       console.warn('[home] balance unavailable:', message)
-      setState(/no handler/i.test(message) ? { status: 'unavailable' } : { status: 'error', message })
+      setState(lastBalance.current !== null
+        ? { status: 'ok', balance: lastBalance.current, updating: true }
+        : /no handler/i.test(message) ? { status: 'unavailable' } : { status: 'error', message })
     }
   }, [])
   useEffect(() => {
     void load()
-    const timer = window.setInterval(() => void load(), 5 * 60_000)
-    return () => window.clearInterval(timer)
+    const timer = window.setInterval(() => void load(), 30_000)
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') void load() }
+    window.addEventListener('focus', refreshWhenVisible)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refreshWhenVisible)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+    }
   }, [load])
   const open = () => navigate(routes.view.settings('account'))
   return (
@@ -612,7 +630,13 @@ function BalanceWidget({ edit }: WidgetProps) {
           label={t('workbench.home.balance.credits')}
           value={<span className="text-[28px] leading-9">{state.status === 'ok' ? fmt.num(state.balance) : state.status === 'loading' ? '…' : '—'}</span>}
         />
-        {state.status === 'disconnected' ? (
+        {state.status === 'ok' ? (
+          <span className="px-1.5 text-[12px] leading-4 text-muted-foreground" data-home-balance-note="">
+            {state.updating
+              ? t('workbench.home.balance.updating')
+              : state.syncedAt ? t('workbench.home.balance.updated', { time: fmt.when(state.syncedAt, Date.now()) }) : ''}
+          </span>
+        ) : state.status === 'disconnected' ? (
           <div className="flex min-w-0 flex-col items-start gap-1 px-1.5">
             <WidgetButton onClick={open}>{t('workbench.home.balance.connect')}</WidgetButton>
             <span className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">{t('workbench.home.balance.disconnectedHint')}</span>
