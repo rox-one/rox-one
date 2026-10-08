@@ -15,16 +15,19 @@ import { useCallback, useLayoutEffect, useRef, useState, type MutableRefObject }
 import {
   BookOpen,
   Calendar,
+  CalendarDays,
+  Contact,
   Home,
   Inbox,
   ListTodo,
   MessageSquare,
+  MessagesSquare,
   NotebookPen,
   Rss,
+  Target,
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue } from 'jotai'
 import { isModeNavigable, type ModeContribution } from '@rox/core/platform'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
@@ -32,6 +35,7 @@ import type { Route } from '../../shared/routes'
 import { getModeRegistry } from './mode-registry-bootstrap'
 import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
 import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
+import { resolveLucideIcon } from './lucide-icon'
 import { useInboxBlockingCount } from '@/hooks/useInboxItems'
 import { handleModePillKeyDown } from './mode-pill-keyboard'
 
@@ -39,12 +43,16 @@ import { handleModePillKeyDown } from './mode-pill-keyboard'
 export const MODE_ICONS: Record<string, LucideIcon> = {
   BookOpen,
   Calendar,
+  CalendarDays,
+  Contact,
   Home,
   Inbox,
   ListTodo,
   MessageSquare,
+  MessagesSquare,
   NotebookPen,
   Rss,
+  Target,
 }
 
 const seedById: Record<string, SeededMode> = Object.fromEntries(
@@ -86,7 +94,8 @@ function PillItems({
   return (
     <>
       {modes.map((mode) => {
-        const Icon = MODE_ICONS[mode.icon] ?? Inbox
+        // W1-07 (#1504): the registration's icon name, MODE_ICONS as fallback.
+        const Icon = resolveLucideIcon(mode.icon) ?? MODE_ICONS[mode.icon] ?? Inbox
         const title = t(mode.titleKey)
         const disabled = !isModeNavigable(mode)
         const active = mode.id === activeId
@@ -146,7 +155,7 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
   const [indicator, setIndicator] = useState<{ x: number; w: number } | null>(null)
   const [ready, setReady] = useState(false)
 
-  const modeKey = modes.map((mode) => `${mode.id}:${mode.rootRoute ? 1 : 0}`).join('|')
+  const modeKey = modes.map((mode) => `${mode.id}:${mode.rootRoute ? 1 : 0}:${mode.titleKey}`).join('|')
 
   // Sliding indicator geometry follows the active segment.
   const syncIndicator = useCallback(() => {

@@ -12,7 +12,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { routes } from '@/lib/navigate'
 import { isMac } from '@/lib/platform'
-import { actionsByCategory, useActionLabel, type ActionId } from '@/actions'
+import { useActionLabel, type ActionId } from '@/actions'
+// W1-07 (#1504): flag-gated actions show (and rebind) once their flag is on.
+import { useActionsByCategory } from '@/actions/useVisibleActions'
 
 interface ShortcutItem {
   keys: string[]
@@ -99,6 +101,7 @@ function ActionShortcutRow({ actionId }: { actionId: ActionId }) {
 }
 
 export default function ShortcutsPage() {
+  const actionsByCategory = useActionsByCategory()
   const { t } = useTranslation()
   const componentSpecificSections = useComponentSpecificSections()
 

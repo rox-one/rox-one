@@ -1,12 +1,17 @@
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { Check, PanelsTopLeft, PanelTop } from 'lucide-react'
+import { Check, LayoutGrid, PanelsTopLeft, PanelTop } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { focusedPanelIdAtom, panelStackAtom } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { getSessionTitle } from '@/utils/session'
 import { buildSurfaceTabViews } from '@/platform/surface-tab-model'
+import { navDestinationLabelKey, railModeEntries } from '@/platform/surface-shell'
+import { useShellModes } from '@/platform/useModes'
+import { isModeActive } from '@/platform/mode-registry-bootstrap'
+import { resolveLucideIcon } from '@/platform/lucide-icon'
+import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { resolveViewRoute } from '../../../shared/route-parser'
 import { TopBarButton } from '@/components/ui/TopBarButton'
 import {
@@ -33,7 +38,11 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const shellFlags = useAtomValue(enabledShellFlagsAtom)
   const activeService = getActiveService(navigation)
+  // W1-07 (#1504): registered modes after the destinations, in pill order;
+  // empty with every mode flag off (exactly APP_NAV_DESTINATIONS, as on main).
+  const modeEntries = railModeEntries(useShellModes().modes)
   const tabs = buildSurfaceTabViews({
     entries,
     focusedPanelId,
@@ -90,7 +99,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
                 const service = serviceId ? APP_NAV_DESTINATIONS_BY_ID[serviceId] : null
                 const Icon = service?.icon ?? PanelTop
                 const title = state.navigator === 'unavailable' ? t('common.unavailable')
-                  : tab.kind === null && service ? t(service.labelKey) : tab.title
+                  : tab.kind === null && service ? t(navDestinationLabelKey(service, shellFlags)) : tab.title
                 return (
                   <StyledDropdownMenuItem
                     key={tab.panelId}
@@ -125,12 +134,29 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
                 className="min-h-9 [@media(pointer:coarse)]:min-h-11"
               >
                 <Icon className="size-4 shrink-0" aria-hidden />
-                <span className="flex-1">{t(destination.labelKey)}</span>
+                <span className="flex-1">{t(navDestinationLabelKey(destination, shellFlags))}</span>
                 {destination.id === activeService && <Check className="size-3.5 shrink-0" aria-hidden />}
               </StyledDropdownMenuItem>
             )
           })}
-        </div>}
+          {modeEntries.map((mode) => {
+            const Icon = resolveLucideIcon(mode.icon) ?? LayoutGrid
+            const active = isModeActive(mode.id, navigation)
+            return (
+              <StyledDropdownMenuItem
+                key={`mode:${mode.id}`}
+                data-mode-id={mode.id}
+                aria-current={active ? 'page' : undefined}
+                onSelect={() => activate({ kind: 'mode', route: mode.rootRoute! })}
+                className="min-h-9 [@media(pointer:coarse)]:min-h-11"
+              >
+                <Icon className="size-4 shrink-0" aria-hidden />
+                <span className="flex-1">{t(mode.titleKey)}</span>
+                {active && <Check className="size-3.5 shrink-0" aria-hidden />}
+              </StyledDropdownMenuItem>
+            )
+          })}
+        </div>
       </StyledDropdownMenuContent>
     </DropdownMenu>
   )

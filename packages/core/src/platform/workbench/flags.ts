@@ -54,6 +54,14 @@ export const WORKBENCH_FLAG = {
   modeFeedV1: 'workbench.mode.feed.v1',
   /** Entities (W1-02) — link store, resolver and deep links. Default OFF. */
   entitiesLinksV1: 'entities.links.v1',
+  // W1-07 (#1504) — unified mode screens and the Docs relabel. Default OFF:
+  // while off the modes are absent from the pill/hotkeys/routes (not disabled).
+  modeMessengerV1: 'workbench.mode.messenger.v1',
+  modeCalendarV1: 'workbench.mode.calendar.v1',
+  modeGoalsV1: 'workbench.mode.goals.v1',
+  modeContactsV1: 'workbench.mode.contacts.v1',
+  /** Notes → «Документы» relabel key + shared Docs (DOC-1 builds on it). */
+  docsSharedV1: 'docs.shared.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -218,6 +226,12 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.entitiesLinksV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   // Extra screens («Ещё»): workbench.mode.<id>.v1, default ON
   ...EXTRA_SCREEN_FEATURE_FLAGS,
+  // W1-07 (#1504): unified mode screens + Docs relabel — default OFF, inert when off.
+  { id: WORKBENCH_FLAG.modeMessengerV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.modeCalendarV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.modeGoalsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.modeContactsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.docsSharedV1, defaultValue: false, dependencies: [], rollbackSafe: true },
 ];
 
 export function resolveEnabledFlags(
