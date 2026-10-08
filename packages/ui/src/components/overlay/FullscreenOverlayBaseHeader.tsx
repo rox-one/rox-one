@@ -174,7 +174,7 @@ function FilePathBadge({ filePath }: FilePathBadgeProps) {
               <span className="truncate group-hover:underline">{display}</span>
             </button>
           </DropdownMenuTrigger>
-          <StyledDropdownMenuContent sideOffset={6} align="center" style={{ zIndex: 'var(--z-floating-menu, 400)' }}>
+          <StyledDropdownMenuContent sideOffset={6} align="center">
             {dropdownItems}
           </StyledDropdownMenuContent>
         </DropdownMenu>
