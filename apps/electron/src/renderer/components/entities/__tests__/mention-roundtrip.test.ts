@@ -351,7 +351,7 @@ describe('input and paste rules without Markdown (rule-only path)', () => {
     editor.destroy()
     expect(nodes).toEqual([])
     expect(json.content?.[0]?.type).toBe('codeBlock')
-    expect(json.content?.[0]?.content).toEqual([{ type: 'text', text: 'const x = 1[[task:1]] and ![[goal:q4]]' }])
+    expect(JSON.stringify(json.content?.[0]?.content)).toBe(JSON.stringify([{ type: 'text', text: 'const x = 1[[task:1]] and ![[goal:q4]]' }]))
   })
 
   it('pasting inline code keeps the code span (negative)', () => {
