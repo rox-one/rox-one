@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
-import type { RpcServer, RequestContext } from '../../transport/types'
+import type { RpcServer, RequestContext, RpcHandlerOptions } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
 
 let workspaceRoot = ''
@@ -18,15 +18,17 @@ import { registerAutomationsHandlers } from './automations'
 
 type Handler = (context: RequestContext, ...args: unknown[]) => unknown | Promise<unknown>
 
-function createHarness() {
+function createHarness(context: Partial<RequestContext> = {}, isCurrent?: RpcServer['isRequestContextCurrent']) {
   const handlers = new Map<string, Handler>()
+  const grants = new Map<string, RpcHandlerOptions | undefined>()
   const pushes: Array<{ channel: string; args: unknown[] }> = []
   const server = {
-    handle(channel: string, handler: Handler) { handlers.set(channel, handler) },
+    handle(channel: string, handler: Handler, options?: RpcHandlerOptions) { handlers.set(channel, handler); grants.set(channel, options) },
     push(channel: string, _target: unknown, ...args: unknown[]) { pushes.push({ channel, args }) },
     async invokeClient() { return undefined },
     hasClientCapability() { return false },
     findClientsWithCapability() { return [] },
+    ...(isCurrent ? { isRequestContextCurrent: isCurrent } : {}),
   } as unknown as RpcServer
   const deps = {
     sessionManager: {},
@@ -41,9 +43,10 @@ function createHarness() {
     invoke: async (channel: string, ...args: unknown[]) => {
       const handler = handlers.get(channel)
       if (!handler) throw new Error(`Missing handler: ${channel}`)
-      return handler({ clientId: 'c', workspaceId: 'ws1', webContentsId: null } as RequestContext, ...args)
+      return handler({ clientId: 'c', workspaceId: 'ws1', webContentsId: null, ...context } as RequestContext, ...args)
     },
     pushes,
+    grants,
   }
 }
 
@@ -68,6 +71,53 @@ beforeEach(() => { workspaceRoot = mkdtempSync(join(tmpdir(), 'rox-automation-ed
 afterEach(() => { rmSync(workspaceRoot, { recursive: true, force: true }) })
 
 describe('automations editor RPC', () => {
+  test('read authority does not seed executable automations into an absent config', async () => {
+    const { invoke } = createHarness({}, (_context, action) => action === 'read')
+    expect(await invoke(RPC_CHANNELS.automations.GET, 'ws1')).toBeNull()
+    expect(existsSync(configPath())).toBe(false)
+  })
+  test('does not persist a queued mutation after its authority is revoked', async () => {
+    writeInitial()
+    const before = readFileSync(configPath(), 'utf8')
+    let current = true
+    const { invoke } = createHarness({}, () => current)
+    const pending = invoke(RPC_CHANNELS.automations.UPDATE, 'ws1', 'SchedulerTick', 0, { event: 'SchedulerTick', matcher: { name: 'Revoked' } })
+    current = false
+    await expect(pending).rejects.toThrow('no longer authorized')
+    expect(readFileSync(configPath(), 'utf8')).toBe(before)
+  })
+  test('requires the caller workspace binding and declares native action grants', async () => {
+    writeInitial()
+    const { invoke, grants } = createHarness({ workspaceId: 'other' })
+    await expect(invoke(RPC_CHANNELS.automations.GET, 'ws1')).rejects.toThrow('Workspace access denied')
+    expect(grants.get(RPC_CHANNELS.automations.GET)?.nativeAction).toBe('read')
+    expect(grants.get(RPC_CHANNELS.automations.UPDATE)?.nativeAction).toBe('write')
+    expect(grants.get(RPC_CHANNELS.automations.DELETE)?.nativeAction).toBe('delete')
+  })
+
+  test('preserves the pause during unrelated edits and clears it only through validated explicit relink', async () => {
+    writeInitial()
+    const config = readConfig()
+    config.automations.SchedulerTick[0].context = { workspaceId: 'ws1' }
+    config.automations.SchedulerTick[0].contextPause = { reason: 'target-deleted', detectedAt: '2026-10-03T00:00:00.000Z' }
+    writeFileSync(configPath(), JSON.stringify(config))
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.automations.UPDATE, 'ws1', 'SchedulerTick', 0, { event: 'SchedulerTick', matcher: { name: 'Renamed', contextPause: null } })
+    expect(readConfig().automations.SchedulerTick[0].contextPause.reason).toBe('target-deleted')
+    await invoke(RPC_CHANNELS.automations.SET_ENABLED, 'ws1', 'SchedulerTick', 0, true)
+    expect(readConfig().automations.SchedulerTick[0].contextPause.reason).toBe('target-deleted')
+    const saved = readFileSync(configPath(), 'utf8')
+    await expect(invoke(RPC_CHANNELS.automations.UPDATE, 'ws1', 'SchedulerTick', 0, { event: 'SchedulerTick', matcher: { context: { workspaceId: 'foreign' } } })).rejects.toThrow('outside its workspace/project')
+    expect(readFileSync(configPath(), 'utf8')).toBe(saved)
+    await invoke(RPC_CHANNELS.automations.UPDATE, 'ws1', 'SchedulerTick', 0, { event: 'SchedulerTick', matcher: { context: { workspaceId: 'ws1' } } })
+    const result = readConfig().automations.SchedulerTick[0]
+    expect(result.contextPause).toBeUndefined()
+    expect(result.context).toEqual({ workspaceId: 'ws1' })
+    expect(result.id).toBe('aaa111')
+    expect(result.actions).toEqual(config.automations.SchedulerTick[0].actions)
+    expect(result.attributeAllowList).toEqual(['keep'])
+  })
+
   test('toggle writes enabled flag and pushes CHANGED', async () => {
     writeInitial()
     const { invoke, pushes } = createHarness()

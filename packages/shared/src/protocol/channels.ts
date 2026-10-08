@@ -4,6 +4,13 @@
  * Key paths are internal and may be reorganized freely.
  */
 export const RPC_CHANNELS = {
+  workspaceWork: {
+    READ: 'workspaceWork:read',
+    WRITE: 'workspaceWork:write',
+    DELETE: 'workspaceWork:delete',
+    SNAPSHOT_PROFILE: 'workspaceWork:snapshotProfile',
+    CHANGED: 'workspaceWork:changed',
+  },
   runtimeTrace: {
     GET_SNAPSHOT: 'runtimeTrace:getSnapshot',
     READ_EVENTS: 'runtimeTrace:readEvents',

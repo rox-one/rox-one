@@ -79,8 +79,9 @@ const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
 const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
 const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
 const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
-const TasksPage = lazyRoutePage(() => import('@/pages/TasksPage'))
-const MeetingsPage = lazyRoutePage(() => import('@/pages/MeetingsPage'))
+const TasksPage = lazyRoutePage(() => import('@/pages/workspace-work/WorkspaceTasksPage'))
+const MeetingsPage = lazyRoutePage(() => import('@/pages/workspace-work/PlanWorkspacePage'))
+const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
 const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
 const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
 const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
@@ -703,6 +704,8 @@ export function MainContentPanel({
       </Panel>
     )
   }
+
+  if (isScreenNavigation(navState) && navState.screen === 'agents') return wrapWithStoplight(<Panel variant="grow" className={className}><AgentsWorkspacePage /></Panel>)
 
   if (isScreenNavigation(navState)) {
     return wrapWithStoplight(

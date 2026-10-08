@@ -1,0 +1,2 @@
+$ bun run scripts/electron-build-resources.ts
+📦 Copied resources to dist

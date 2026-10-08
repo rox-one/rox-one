@@ -77,6 +77,7 @@ export type SessionPriority = 'none' | 'urgent' | 'high' | 'medium' | 'low'
  */
 export interface Session {
   id: string
+  agentProfileSnapshot?: import('../workspace-work/types.ts').AgentProfileSnapshot
   workspaceId: string
   workspaceName: string
   name?: string
@@ -168,6 +169,8 @@ export interface Session {
 }
 
 export interface CreateSessionOptions {
+  /** Capture this workspace profile once; absent selects the persisted workspace default. */
+  agentProfileId?: string
   name?: string
   permissionMode?: PermissionMode
   /**

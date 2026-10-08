@@ -232,6 +232,20 @@ export const AutomationConditionSchema: z.ZodType<AutomationCondition> = z.lazy(
 // Matcher Schema
 // ============================================================================
 
+export const AutomationContextReferenceSchema = z.object({
+  workspaceId: z.string().min(1).max(512),
+  projectId: z.string().min(1).max(512).optional(),
+  object: z.object({
+    kind: z.enum(['session', 'page', 'meeting', 'task', 'decision', 'note', 'mail']),
+    id: z.string().min(1).max(512),
+  }).strict().optional(),
+}).strict();
+
+export const AutomationContextPauseSchema = z.object({
+  reason: z.enum(['target-deleted', 'target-out-of-scope']),
+  detectedAt: z.string().datetime(),
+}).strict();
+
 export const AutomationMatcherSchema = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
@@ -241,6 +255,8 @@ export const AutomationMatcherSchema = z.object({
   permissionMode: z.enum(['safe', 'ask', 'allow-all']).optional(),
   labels: z.array(z.string()).optional(),
   enabled: z.boolean().optional(),
+  context: AutomationContextReferenceSchema.optional(),
+  contextPause: AutomationContextPauseSchema.optional(),
   conditions: z.array(AutomationConditionSchema).optional(),
   // Telegram forum-topic name (1–128 chars). Silently ignored at runtime when
   // no supergroup is paired or the Telegram adapter is not connected.

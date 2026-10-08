@@ -124,6 +124,10 @@ export interface HandlerDeps<
   /** Optional GUI-only overlay; never controlled through an untrusted SET_OVERLAY RPC. */
   voiceOverlay?: NativeVoiceOverlayHost
   commandGateway?: PendingCommandsStore
+  /** Host-owned canonical adapters for native objects linked from workspace tasks. */
+  workspaceWorkReferences?: {
+    exists(workspaceId: string, workspaceRootPath: string, link: import('@rox/shared/workspace-work').WorkspaceTaskLink): boolean
+  }
   /** Server-composed native capability boundary and durable canonical-file data plane. */
   nativeData?: {
     authority: NativeAuthority

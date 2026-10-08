@@ -18,6 +18,9 @@ import { isValidThinkingLevel, THINKING_LEVEL_IDS } from '@rox/shared/agent/thin
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import { assertNativeSession, assertNativeWorkspace, nativeAnnotation, nativeSession } from './native-session-scope'
 import { awardNativeXpAndBroadcast } from './gamification'
+import { workspaceWorkContext } from './workspace-work'
+import { loadProjectById } from '@rox/shared/projects'
+import { validateEntityId } from '../../workspace-work/validation'
 import type { RequestContext } from '../../transport/types'
 import type { NativeMemoryContext } from '../../memory/MemoryService'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
@@ -278,6 +281,10 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   // Create a new session
   server.handle(RPC_CHANNELS.sessions.CREATE, async (ctx, workspaceId: string, options?: import('@rox/shared/protocol').CreateSessionOptions) => {
     assertNativeWorkspace(ctx, deps, workspaceId)
+    // The wire selects an ID, never supplies authority or a fabricated capability snapshot.
+    const capturedProfile = ctx.principal
+      ? (() => { const { service, actor } = workspaceWorkContext(ctx, workspaceId, deps, server); return service.snapshotProfile(actor, options?.agentProfileId) })()
+      : undefined
     if (ctx.principal) {
       if (!server.isRequestContextCurrent?.(ctx)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       if (options?.branchFromSessionId) assertNativeSession(ctx, deps, server, options.branchFromSessionId)
@@ -295,9 +302,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         && !deps.nativeData?.authority.authorize(ctx.principal, workspaceId, 'write', options.workingDirectory)) {
         throw new CodedError('FORBIDDEN', 'Working directory access denied')
       }
-      // Explicit construction prevents task/project/system-prompt fields from
-      // selecting unrelated host resources. Native sessions start in their own folder.
-      options = { name: options?.name, permissionMode: options?.permissionMode,
+      if (options?.projectId) {
+        const projectId = validateEntityId(options.projectId)
+        const project = loadProjectById(workspace.rootPath, projectId)
+        if (!project || project.config.id !== projectId) throw new CodedError('NOT_FOUND', 'Workspace project unavailable')
+      }
+      // Project association is validated above; explicit construction keeps task
+      // and system-prompt fields from selecting unrelated host resources.
+      options = { name: options?.name, permissionMode: options?.permissionMode, agentProfileId: options?.agentProfileId,
+        projectId: options?.projectId, parentSessionId: options?.parentSessionId,
         thinkingLevel: options?.thinkingLevel, model: options?.model, llmConnection: options?.llmConnection,
         sessionStatus: options?.sessionStatus, labels: options?.labels, isFlagged: options?.isFlagged,
         enabledSourceSlugs: options?.enabledSourceSlugs, branchFromSessionId: options?.branchFromSessionId,
@@ -309,6 +322,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // The renderer adds the session synchronously from this return value (App.tsx handleCreateSession),
     // so suppress the broadcast to avoid a redundant hydrate round-trip.
     const session = await sessionManager.createSession(workspaceId, options, { emitCreatedEvent: false,
+      agentProfileSnapshot: capturedProfile,
       nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId) })
     end()
     return ctx.principal ? nativeSession(session) : session
@@ -920,12 +934,19 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   // Import a session bundle into a target workspace
   // targetWorkspaceId is passed explicitly (not from context) so the renderer
   // can import into any workspace the server manages, not just the active one.
-  const importHandler = async (_ctx: any, targetWorkspaceId: string, bundle: unknown, mode: string) => {
+  const importHandler = async (ctx: RequestContext, targetWorkspaceId: string, bundle: unknown, mode: string) => {
     await sessionManager.waitForInit()
     if (!targetWorkspaceId || typeof targetWorkspaceId !== 'string') throw new Error('targetWorkspaceId is required')
     if (mode !== 'move' && mode !== 'fork') throw new Error(`Invalid dispatch mode: ${mode}`)
 
-    return sessionManager.importSession(targetWorkspaceId, bundle as import('@rox/shared/sessions').SessionBundle, mode)
+    assertNativeWorkspace(ctx, deps, targetWorkspaceId)
+    const defaultProfile = ctx.principal ? (() => {
+      const { service, actor } = workspaceWorkContext(ctx, targetWorkspaceId, deps, server)
+      actor.assertCurrent('write')
+      return service.snapshotProfile(actor)
+    })() : undefined
+    return sessionManager.importSession(targetWorkspaceId, bundle as import('@rox/shared/sessions').SessionBundle, mode,
+      defaultProfile === undefined ? undefined : { defaultAgentProfileSnapshot: defaultProfile })
   }
   server.handle(RPC_CHANNELS.sessions.IMPORT, importHandler)
   // Also register as transferable so chunked transfer can invoke it on commit
@@ -943,9 +964,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   // Import a summarized remote-transfer payload into a target workspace.
-  server.handle(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER, async (_ctx, targetWorkspaceId: string, payload: import('@rox/shared/protocol').RemoteSessionTransferPayload) => {
+  server.handle(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER, async (ctx, targetWorkspaceId: string, payload: import('@rox/shared/protocol').RemoteSessionTransferPayload) => {
     await sessionManager.waitForInit()
     if (!targetWorkspaceId || typeof targetWorkspaceId !== 'string') throw new Error('targetWorkspaceId is required')
+    assertNativeWorkspace(ctx, deps, targetWorkspaceId)
+    if (ctx.principal) {
+      const { service, actor } = workspaceWorkContext(ctx, targetWorkspaceId, deps, server)
+      actor.assertCurrent('write')
+      service.snapshotProfile(actor)
+    }
     return sessionManager.importRemoteSessionTransfer(targetWorkspaceId, payload)
   })
 }

@@ -181,6 +181,8 @@ export function resolveClaudeThinkingOptions(args: {
 
 export interface ClaudeAgentConfig {
   workspace: Workspace;
+  agentProfileSnapshot?: BackendConfig['agentProfileSnapshot'];
+  allowedSkillSlugs?: BackendConfig['allowedSkillSlugs'];
   session?: Session;           // Current session (primary isolation boundary)
   mcpToken?: string;           // Override token (for testing)
   model?: string;
@@ -718,8 +720,8 @@ export class ClaudeAgent extends BaseAgent {
           mimeType: a.mimeType,
           sizeBytes: a.sizeBytes,
         })),
-        memoryPath: getProjectMemoryPath(this.workspaceRootPath, slug),
-        memoryContent: loadProjectMemory(this.workspaceRootPath, slug) ?? undefined,
+        memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(this.workspaceRootPath, slug),
+        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(this.workspaceRootPath, slug) ?? undefined,
         roadmapContent: loadProjectRoadmapPromptText(this.workspaceRootPath, slug),
       };
     } catch (error) {
@@ -781,6 +783,8 @@ export class ClaudeAgent extends BaseAgent {
     const backendConfig: BackendConfig = {
       provider: 'anthropic',
       workspace: config.workspace,
+      agentProfileSnapshot: config.agentProfileSnapshot,
+      allowedSkillSlugs: config.allowedSkillSlugs,
       session: config.session,
       model,
       thinkingLevel: config.thinkingLevel,
@@ -1027,7 +1031,7 @@ export class ClaudeAgent extends BaseAgent {
 
       // Pin system prompt components on first chat() call for consistency after compaction
       // The SDK's resume mechanism expects system prompt consistency within a session
-      const currentPreferencesPrompt = formatPreferencesForPrompt();
+      const currentPreferencesPrompt = this.config.agentProfileSnapshot ? '' : formatPreferencesForPrompt();
       const currentCoAuthorPref = getCoAuthorPreference();
 
       if (this.pinnedPreferencesPrompt === null) {

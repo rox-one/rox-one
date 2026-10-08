@@ -41,6 +41,8 @@ import {
 } from './types'
 import { DEFAULT_SCHEDULE, buildCron, isPlausibleCron, parseSchedule, type ScheduleKind, type ScheduleModel } from './schedule-model'
 import { computeNextRuns } from './utils'
+import { ContextBindingEditor, saveAutomationContextBinding } from './ContextBindingEditor'
+import { useAutomationContextCatalog } from './useAutomationContextCatalog'
 import './automations.css'
 import { TourScopeContext, useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
@@ -544,6 +546,7 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
   const [connections, setConnections] = React.useState<LlmConnection[]>([])
   const [history, setHistory] = React.useState<ExecutionEntry[]>([])
   const [historyLoading, setHistoryLoading] = React.useState(false)
+  const contextCatalog = useAutomationContextCatalog(workspaceId)
 
   const baseline = React.useMemo(() => comparable(draftFrom(automation)), [automation])
   const dirty = comparable(draft) !== baseline
@@ -727,6 +730,14 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
       </p>
 
       <div className="rox-autom-scroll">
+        {workspaceId && <>
+          {contextCatalog.catalog?.unavailable && <p role="status" className="text-xs text-muted-foreground">{t('automations.context.catalogUnavailable')}</p>}
+          <ContextBindingEditor workspaceId={workspaceId} value={automation.context} paused={automation.contextPause}
+            projects={contextCatalog.catalog?.projects ?? []} objects={contextCatalog.catalog?.objects ?? []}
+            disabled={saving || running || dirty || !contextCatalog.catalog}
+            onSave={async reference => { await saveAutomationContextBinding(workspaceId, automation, reference); contextCatalog.refresh() }} />
+          <button type="button" className="rox-autom-btn is-ghost" onClick={contextCatalog.refresh}>{t('automations.context.refreshCatalog')}</button>
+        </>}
         <Step tourRef={triggerTarget} n={1} title={t('automations.stepWhen')} hint={t('automations.stepWhenHint')} testId="automation-step-when">
           <div className="rox-autom-inline" role="group" aria-label={t('automations.stepWhen')}>
             {(['scheduled', 'event', 'agent'] as AutomationGroup[]).map((g) => (

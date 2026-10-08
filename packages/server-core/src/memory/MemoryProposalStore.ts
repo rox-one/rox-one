@@ -2,10 +2,11 @@
  * JSONL store for session-learning memory proposals.
  * Fail-soft: corrupt lines are skipped. Never stores secret material.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync } from 'fs'
 import { dirname, join } from 'path'
 import type { MemoryProposal } from '@rox/shared/memory/proposals'
 import { redactProposalSecrets } from '@rox/shared/memory/proposals'
+import { atomicWriteFileSync } from '@rox/shared/utils/files'
 
 export class MemoryProposalStore {
   readonly filePath: string
@@ -65,8 +66,6 @@ export class MemoryProposalStore {
 
   private rewrite(items: MemoryProposal[]): void {
     mkdirSync(dirname(this.filePath), { recursive: true })
-    const tmp = `${this.filePath}.tmp`
-    writeFileSync(tmp, items.map((p) => JSON.stringify(p)).join('\n') + (items.length ? '\n' : ''))
-    renameSync(tmp, this.filePath)
+    atomicWriteFileSync(this.filePath, items.map((p) => JSON.stringify(p)).join('\n') + (items.length ? '\n' : ''), { durable: true })
   }
 }

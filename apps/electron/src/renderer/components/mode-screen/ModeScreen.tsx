@@ -9,17 +9,27 @@
 import * as React from 'react'
 import { ResponsiveModeScreenLayout, type ResponsiveModeScreen } from './ResponsiveModeScreen'
 import { cn } from '@/lib/utils'
-import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { useTranslation } from 'react-i18next'
 import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
 
-export function ModeScreenLayout({
+export function ModeScreenLayout(props: {
+  navigator: React.ReactNode; list: React.ReactNode; detail: React.ReactNode; status?: React.ReactNode
+  testId?: string; wideList?: boolean; detailKey?: string | null; responsive?: ResponsiveModeScreen
+}) {
+  return props.responsive
+    ? <ResponsiveModeScreenLayout {...props} responsive={props.responsive} />
+    : <FallbackModeScreenLayout {...props} />
+}
+
+function FallbackModeScreenLayout({
   navigator,
   list,
   detail,
   status,
   testId,
   wideList,
-  responsive,
+  detailKey,
 }: {
   navigator: React.ReactNode
   list: React.ReactNode
@@ -28,33 +38,48 @@ export function ModeScreenLayout({
   testId?: string
   /** List takes the free width (galleries); detail becomes a fixed side pane. */
   wideList?: boolean
-  /** Only explicit consumers opt into content-width master/detail and owned focus. */
-  responsive?: ResponsiveModeScreen
+  detailKey?: string | null
 }) {
-  if (responsive) return <ResponsiveModeScreenLayout navigator={navigator} list={list} detail={detail} status={status} testId={testId} responsive={responsive} />
+  const { t } = useTranslation()
+  const target = useShellSidebarTarget()
+  const root = React.useRef<HTMLDivElement | null>(null)
+  const [width, setWidth] = React.useState(0)
+  const [pane, setPane] = React.useState<'navigation' | 'list' | 'detail'>('list')
+  React.useEffect(() => {
+    if (!root.current) return
+    const element = root.current
+    const observer = new ResizeObserver(() => setWidth(element.clientWidth))
+    observer.observe(element); setWidth(element.clientWidth)
+    return () => observer.disconnect()
+  }, [])
+  const narrow = width > 0 && width < (target ? 640 : 860)
+  React.useEffect(() => { if (detailKey !== undefined) setPane(detailKey ? 'detail' : 'list') }, [detailKey])
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px] text-foreground" data-testid={testId}>
+    <div ref={root} className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px] text-foreground" data-testid={testId}>
+      {narrow && <div role="tablist" aria-label={t('navigation.openPanels')} className="flex shrink-0 gap-1 border-b border-border p-2">
+        {(['navigation', 'list', 'detail'] as const).filter(item => item !== 'navigation' || !target).map(item => <button type="button" role="tab" key={item} aria-selected={pane === item} onClick={() => setPane(item)} className={cn('rounded px-2 py-1 text-xs', pane === item && 'bg-accent/10 text-accent')}>{t(`navigation.modePanes.${item}`)}</button>)}
+      </div>}
       <div className="flex min-h-0 flex-1">
-        <ShellSidebarPortal className="w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3">
+        <ShellSidebarPortal className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
           {navigator}
         </ShellSidebarPortal>
         {detail == null ? (
           <section className="flex min-w-0 flex-1 flex-col bg-foreground/[0.025]">{list}</section>
         ) : wideList ? (
           <>
-            <section className="flex min-w-[280px] flex-1 flex-col bg-foreground/[0.025]">{list}</section>
-            <section className="flex w-[320px] shrink-0 flex-col overflow-y-auto bg-background">{detail}</section>
+            <section className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', narrow && pane !== 'list' ? 'hidden' : 'flex')}>{list}</section>
+            <section className={cn('min-w-0 flex-col overflow-y-auto bg-background', narrow ? pane === 'detail' ? 'flex flex-1' : 'hidden' : 'flex w-[320px] shrink-0')}>{detail}</section>
           </>
         ) : (
           <>
-            <section className="flex w-[440px] min-w-[240px] shrink flex-col bg-foreground/[0.025]">{list}</section>
+            <section className={cn('min-w-0 flex-col bg-foreground/[0.025]', narrow ? pane === 'list' ? 'flex flex-1' : 'hidden' : 'flex w-[440px] min-w-[240px] shrink')}>{list}</section>
             {/* The detail keeps a readable width; the list gives way first in narrow windows. */}
-            <section className="flex min-w-[320px] flex-1 flex-col overflow-y-auto bg-background">{detail}</section>
+            <section className={cn('flex-1 flex-col overflow-y-auto bg-background', narrow ? pane === 'detail' ? 'flex min-w-0' : 'hidden' : 'flex min-w-[320px]')}>{detail}</section>
           </>
         )}
       </div>
       {status ? (
-        <div className="flex h-7 shrink-0 items-center gap-2 bg-surface-rail px-3 text-[11px] text-text-muted" role="status">
+        <div className="flex min-h-7 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-surface-rail px-3 py-1 text-[11px] text-text-muted" role="status">
           {status}
         </div>
       ) : null}
