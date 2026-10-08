@@ -41,10 +41,12 @@ CREATE TABLE work_item (
   deleted_at timestamptz,
   -- project's PK is (workspace_id, project_id) (01-domain-contract), so the FK carries the
   -- workspace: no task on another workspace's project or on a missing one. milestone sorts
-  -- later; its FK (work_item_milestone_fk) is added in 523-projects.sql.
+  -- later; its FK (work_item_milestone_fk, milestone of the task's own project) and the
+  -- milestone-needs-project CHECK are added in 523-projects.sql.
   CONSTRAINT work_item_project_fk FOREIGN KEY (workspace_id, project_id) REFERENCES project(workspace_id, project_id)
 );
--- Work map + task boards: scope filters.
+-- Work map + task boards: scope filters. work_item_project / work_item_milestone are partial
+-- (live rows only), so a future hard purge of projects / milestones needs non-partial indexes.
 CREATE INDEX work_item_space ON work_item (workspace_id, space_id) WHERE deleted_at IS NULL;
 CREATE INDEX work_item_project ON work_item (workspace_id, project_id) WHERE project_id IS NOT NULL AND deleted_at IS NULL;
 CREATE INDEX work_item_milestone ON work_item (milestone_id) WHERE milestone_id IS NOT NULL AND deleted_at IS NULL;

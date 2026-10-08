@@ -188,17 +188,23 @@ keys over free-text or client-supplied values are scoped:
   and stays global.
 - `project_member`, `milestone` and `work_item` reference `project
   (workspace_id, project_id)`; `project_member`'s key includes `workspace_id`.
-  `work_item_milestone_fk (workspace_id, milestone_id)` → `milestone`'s
-  `UNIQUE (workspace_id, milestone_id)` is added in `523` (milestone sorts
-  after `520`); `work_item_project` is `(workspace_id, project_id)`.
+  A task may only sit in a milestone of its own project:
+  `work_item_milestone_fk (workspace_id, project_id, milestone_id)` →
+  `milestone`'s `milestone_project_key UNIQUE (workspace_id, project_id,
+  milestone_id)`, plus `work_item_milestone_needs_project CHECK (milestone_id
+  IS NULL OR project_id IS NOT NULL)` (the FK is MATCH SIMPLE and skips a NULL
+  `project_id`). Both are added in `523` (milestone sorts after `520`);
+  `work_item_project` is `(workspace_id, project_id)`. `work_item_project` /
+  `work_item_milestone` are partial (live rows), so a future hard purge of
+  projects / milestones needs non-partial indexes for the FK checks.
 - Social (`508`): `entity_link_uniq (workspace_id, from_kind, from_id,
   relation, to_kind, to_id, COALESCE(role, ''))`, `entity_link_to
   (workspace_id, to_kind, to_id)`, `entity_link_from (workspace_id, from_kind,
   from_id)`, `comment_by_resource (workspace_id, resource_kind, resource_id,
   created_at)`, `comment_open_threads (workspace_id, resource_kind,
   resource_id)`, `reaction` `PRIMARY KEY (workspace_id, resource_kind,
-  resource_id, principal_id, emoji)` and `reaction_covering (workspace_id,
-  resource_kind, resource_id, principal_id)`, `subscription` `PRIMARY KEY
+  resource_id, principal_id, emoji)` (also the covering index for IM reads; no
+  separate prefix index), `subscription` `PRIMARY KEY
   (workspace_id, resource_kind, resource_id, principal_id)`. A principal in two
   workspaces can react to / follow the same resource id in both, and an
   `ON CONFLICT` upsert in one never rewrites the other's row.
@@ -208,6 +214,10 @@ keys over free-text or client-supplied values are scoped:
   (workspace_id, principal_id, score DESC)`, `drive_recent` / `drive_favorite`
   `PRIMARY KEY (workspace_id, principal_id, item_ref)`. These four tables carry
   a `workspace_id` column that the DATA-MODEL DDL does not list yet (spec follow-up).
+- External calendar cache (`521`): `freebusy_cache` `PRIMARY KEY (workspace_id,
+  cache_key)`. The key is derived from free text (account / principal + range),
+  so a principal in two workspaces never overwrites or reads the other
+  workspace's cached free/busy.
 - Lookup indexes over free-text refs or ids that are unique only per workspace
   (project ids: `project`'s key is `(workspace_id, project_id)`):
   `domain_event_subject (workspace_id, subject_kind, subject_id)`,

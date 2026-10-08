@@ -57,12 +57,18 @@ CREATE TABLE milestone (
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz,
   CONSTRAINT milestone_project_fk FOREIGN KEY (workspace_id, project_id) REFERENCES project(workspace_id, project_id),
-  -- Target of work_item_milestone_fk below (keeps the task and its milestone in one workspace).
-  CONSTRAINT milestone_workspace_key UNIQUE (workspace_id, milestone_id)
+  -- Target of work_item_milestone_fk below: a task's milestone is in the task's own
+  -- workspace AND the task's own project.
+  CONSTRAINT milestone_project_key UNIQUE (workspace_id, project_id, milestone_id)
 );
 CREATE INDEX milestone_project ON milestone (workspace_id, project_id) WHERE deleted_at IS NULL;
 
--- Deferred from 520-work-item.sql (milestone sorts later): a task's milestone must exist
--- and belong to the task's workspace.
+-- Deferred from 520-work-item.sql (milestone sorts later). A task may only sit in a
+-- milestone of its own project (owner decision, Operately semantics): the milestone must
+-- exist in the task's workspace and in the task's project. The FK is MATCH SIMPLE, so it
+-- is skipped when project_id is NULL; the CHECK closes that gap (no milestone without a
+-- project).
+ALTER TABLE work_item ADD CONSTRAINT work_item_milestone_needs_project
+  CHECK (milestone_id IS NULL OR project_id IS NOT NULL);
 ALTER TABLE work_item ADD CONSTRAINT work_item_milestone_fk
-  FOREIGN KEY (workspace_id, milestone_id) REFERENCES milestone(workspace_id, milestone_id);
+  FOREIGN KEY (workspace_id, project_id, milestone_id) REFERENCES milestone(workspace_id, project_id, milestone_id);

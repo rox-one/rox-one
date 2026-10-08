@@ -484,7 +484,7 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
     }
   }, 120000)
 
-  itDb('tenant-scoped keys: ACL, social, personal refs, system lists, daily docs, upload/ledger idempotency; project children FK to their project', async () => {
+  itDb('tenant-scoped keys: ACL, social, personal refs, free/busy cache, system lists, daily docs, upload/ledger idempotency; project children FK to their project, task milestone in its own project', async () => {
     const db = new SQL(testDb!.url)
     const schema = `w105_tenant_${randomBytes(4).toString('hex')}`
     await db.unsafe(`CREATE SCHEMA "${schema}"`)
@@ -553,15 +553,30 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
       // Every key / lookup index over a free-text or per-workspace id leads with workspace_id.
       const tenantIndexes = [
         'entity_link_uniq', 'entity_link_to', 'entity_link_from', 'comment_by_resource', 'comment_open_threads',
-        'reaction_identity', 'reaction_covering', 'subscription_identity', 'domain_event_subject', 'audit_by_target',
+        'reaction_identity', 'subscription_identity', 'domain_event_subject', 'audit_by_target',
         'file_object_source', 'contact_star_identity', 'search_usage_identity', 'search_usage_rank',
         'drive_recent_identity', 'drive_favorite_identity', 'task_list_owner', 'milestone_project',
-        'check_in_subject', 'review_subject',
+        'check_in_subject', 'review_subject', 'freebusy_cache_identity',
       ]
       const indexDefs = await db.unsafe<{ indexname: string; indexdef: string }[]>(
         `SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = '${schema}' AND indexname IN (${tenantIndexes.map(n => `'${n}'`).join(', ')})`)
       expect(indexDefs.map(d => d.indexname).sort()).toEqual([...tenantIndexes].sort())
       for (const d of indexDefs) expect(d.indexdef, d.indexname).toMatch(/USING btree \(workspace_id, /)
+      // reaction_identity is the covering index for IM reads; no redundant prefix index.
+      const [{ n: coveringCount }] = await db.unsafe<{ n: number }[]>(
+        `SELECT count(*)::int AS n FROM pg_indexes WHERE schemaname = '${schema}' AND indexname = 'reaction_covering'`)
+      expect(coveringCount).toBe(0)
+
+      // External free/busy cache: a free-text cache key is per workspace.
+      const freebusy = (ws: string, payload: string) => `INSERT INTO ${s}.freebusy_cache (workspace_id, cache_key, payload, expires_at)
+        VALUES ('${ws}', 'acct:shared|2026-10-08', '${payload}', now() + interval '5 minutes')`
+      await db.unsafe(freebusy(wsA, '{"src":"a"}'))
+      await db.unsafe(freebusy(wsB, '{"src":"b"}'))
+      await expect(run(freebusy(wsA, '{}'))).rejects.toThrow(/freebusy_cache_identity/)
+      await db.unsafe(`${freebusy(wsB, '{"src":"b2"}')} ON CONFLICT (workspace_id, cache_key) DO UPDATE SET payload = EXCLUDED.payload`)
+      const cached = await db.unsafe<{ workspace_id: string; src: string }[]>(
+        `SELECT workspace_id, payload->>'src' AS src FROM ${s}.freebusy_cache ORDER BY src`)
+      expect(cached).toEqual([{ workspace_id: wsA, src: 'a' }, { workspace_id: wsB, src: 'b2' }])
 
       // One backlog and one daily doc per user per workspace (a principal can be in several).
       const backlog = (ws: string) => `INSERT INTO ${s}.task_list (task_list_id, workspace_id, owner_type, owner_id, name, system_role)
@@ -601,17 +616,31 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
       await expect(run(milestone(wsB, project))).rejects.toThrow(/milestone_project_fk/)
       await expect(run(milestone(wsA, randomUUID()))).rejects.toThrow(/milestone_project_fk/)
 
-      // work_item: project and milestone must exist in the task's own workspace.
+      // work_item: project and milestone must exist in the task's own workspace, and the
+      // milestone must belong to the task's own project.
       const milestoneA = randomUUID()
       await db.unsafe(`INSERT INTO ${s}.milestone (milestone_id, workspace_id, project_id, title, sort_key) VALUES ('${milestoneA}', '${wsA}', '${project}', 'm2', 'n')`)
+      const otherProject = randomUUID()
+      const otherMilestone = randomUUID()
+      await db.unsafe(`INSERT INTO ${s}.project (workspace_id, project_id, owner_principal_id, name, visibility) VALUES ('${wsA}', '${otherProject}', '${BOT}', 'p2', 'members')`)
+      await db.unsafe(`INSERT INTO ${s}.milestone (milestone_id, workspace_id, project_id, title, sort_key) VALUES ('${otherMilestone}', '${wsA}', '${otherProject}', 'm3', 'o')`)
       const task = (ws: string, cols: string, vals: string) => `INSERT INTO ${s}.work_item (work_item_id, workspace_id, owner_principal_id, title${cols})
         VALUES (gen_random_uuid(), '${ws}', '${user}', 't'${vals})`
       await db.unsafe(task(wsA, ', project_id, milestone_id', `, '${project}', '${milestoneA}'`))
+      await db.unsafe(task(wsA, ', project_id, milestone_id', `, '${otherProject}', '${otherMilestone}'`))
+      await db.unsafe(task(wsA, ', project_id', `, '${project}'`))
       await db.unsafe(task(wsB, '', ''))
       await expect(run(task(wsB, ', project_id', `, '${project}'`))).rejects.toThrow(/work_item_project_fk/)
       await expect(run(task(wsA, ', project_id', `, '${randomUUID()}'`))).rejects.toThrow(/work_item_project_fk/)
-      await expect(run(task(wsB, ', milestone_id', `, '${milestoneA}'`))).rejects.toThrow(/work_item_milestone_fk/)
-      await expect(run(task(wsA, ', milestone_id', `, '${randomUUID()}'`))).rejects.toThrow(/work_item_milestone_fk/)
+      // Milestone of another project in the same workspace.
+      await expect(run(task(wsA, ', project_id, milestone_id', `, '${project}', '${otherMilestone}'`))).rejects.toThrow(/work_item_milestone_fk/)
+      // Milestone without a project (MATCH SIMPLE would skip the FK; the CHECK rejects it).
+      await expect(run(task(wsA, ', milestone_id', `, '${milestoneA}'`))).rejects.toThrow(/work_item_milestone_needs_project/)
+      await expect(run(task(wsB, ', milestone_id', `, '${milestoneA}'`))).rejects.toThrow(/work_item_milestone_needs_project/)
+      // Missing milestone in the task's own project.
+      await expect(run(task(wsA, ', project_id, milestone_id', `, '${project}', '${randomUUID()}'`))).rejects.toThrow(/work_item_milestone_fk/)
+      // Re-pointing an existing task's project away from its milestone is rejected too.
+      await expect(run(`UPDATE ${s}.work_item SET project_id = '${otherProject}' WHERE milestone_id = '${milestoneA}'`)).rejects.toThrow(/work_item_milestone_fk/)
       const [projectIndex] = await db.unsafe<{ def: string }[]>(`SELECT pg_get_indexdef('${schema}.work_item_project'::regclass) AS def`)
       expect(projectIndex!.def).toContain('(workspace_id, project_id)')
     } finally {
