@@ -31,7 +31,7 @@ import { useEntityPreviewsEnabled } from './flags'
 import { useEntityWorkspaceId } from './entity-context'
 import { openEntity } from './open-entity'
 import { previewRenderersFor } from './preview-registry'
-import { useEntityPreview, type EntityPreviewView } from './use-entity-preview'
+import { revalidateEntityPreview, useEntityPreview, type EntityPreviewView } from './use-entity-preview'
 
 export const ENTITY_HOVER_DELAY_MS = 300
 const HOVER_CLOSE_MS = 150
@@ -88,6 +88,13 @@ function ValidEntityChip({
   const loading = controlledPreview === undefined && fetched.status === 'loading'
 
   const [hoverOpen, setHoverOpen] = React.useState(false)
+  // Hover-open refreshes a preview older than the TTL in the background.
+  const fetchesPreview = enabled && controlledPreview === undefined
+  const refKey = formatEntityRef(ref)
+  React.useEffect(() => {
+    if (hoverOpen && fetchesPreview) revalidateEntityPreview(workspaceId, ref)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoverOpen, fetchesPreview, workspaceId, refKey])
   const openTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const clearTimers = () => {

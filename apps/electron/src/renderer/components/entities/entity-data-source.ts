@@ -19,11 +19,24 @@ export interface EntityBacklinksPage {
   nextCursor?: string
 }
 
+/**
+ * An entity of `kind` changed (renamed, status changed, deleted). `ids`
+ * narrows it to specific entities; `workspaceId` to one workspace. Absent
+ * fields mean "any".
+ */
+export interface EntityChangeEvent {
+  kind: EntityKind
+  workspaceId?: string
+  ids?: string[]
+}
+
 export interface EntityDataSource {
   resolve(workspaceId: string, refs: EntityRef[]): Promise<EntityPreview[]>
   backlinks(workspaceId: string, ref: EntityRef, options?: { cursor?: string; limit?: number }): Promise<EntityBacklinksPage>
   search(workspaceId: string, query: string, options?: { kinds?: readonly EntityKind[]; limit?: number }): Promise<EntitySearchHit[]>
   onLinksChanged(callback: (workspaceId: string) => void): () => void
+  /** Optional: entity change events, so mounted previews refresh after a rename/delete. */
+  onEntitiesChanged?(callback: (event: EntityChangeEvent) => void): () => void
 }
 
 /** Placeholder preview used when the bridge is missing or the call failed. */
@@ -44,6 +57,18 @@ interface EntitiesBridge {
   entitiesResolve?: (workspaceId: string, input: { refs: EntityRef[] }) => Promise<EntityPreview[]>
   entitiesLinks?: (workspaceId: string, input: unknown) => Promise<unknown>
   onEntitiesLinksChanged?: (callback: (workspaceId: string) => void) => () => void
+  // Existing change broadcasts reused for preview freshness (no new channels).
+  onNotesChanged?: (callback: (payload: { workspaceId?: string; noteId?: string } | string) => void) => () => void
+  onPersonalTasksChanged?: (callback: (payload: unknown) => void) => () => void
+}
+
+/** Map an existing `notes:changed` payload to an entity change event. */
+export function noteChangeToEntityEvent(payload: { workspaceId?: string; noteId?: string } | string | null | undefined): EntityChangeEvent {
+  if (typeof payload === 'string') return payload ? { kind: 'note', workspaceId: payload } : { kind: 'note' }
+  const event: EntityChangeEvent = { kind: 'note' }
+  if (payload?.workspaceId) event.workspaceId = payload.workspaceId
+  if (payload?.noteId) event.ids = [payload.noteId]
+  return event
 }
 
 function bridge(): EntitiesBridge | null {
@@ -78,6 +103,14 @@ export const electronEntityDataSource: EntityDataSource = {
   onLinksChanged(callback) {
     const api = bridge()
     return api?.onEntitiesLinksChanged ? api.onEntitiesLinksChanged(callback) : () => {}
+  },
+  onEntitiesChanged(callback) {
+    const api = bridge()
+    const offs: Array<() => void> = []
+    if (api?.onNotesChanged) offs.push(api.onNotesChanged((payload) => callback(noteChangeToEntityEvent(payload))))
+    // Personal tasks broadcast carries no workspace or ids: refresh every task preview.
+    if (api?.onPersonalTasksChanged) offs.push(api.onPersonalTasksChanged(() => callback({ kind: 'task' })))
+    return () => { for (const off of offs) off() }
   },
 }
 
