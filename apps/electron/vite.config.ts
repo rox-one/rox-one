@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { readFileSync } from 'fs'
@@ -97,6 +97,57 @@ function nodeBuiltinStubPlugin() {
   }
 }
 
+/**
+ * Modules re-exported by package barrels that the startup graph imports but
+ * whose exports only lazy surfaces use. None has top-level side effects (CSS
+ * they import travels with the chunk that ends up using them), so mark them
+ * side-effect free and let Rollup keep them out of the startup chunks:
+ * - `@rox/shared/i18n` still re-exports the eager `registry.ts` (static import
+ *   of every locale JSON) and `setupI18n.ts` for the main process and tests;
+ *   the renderer loads locales on demand through `@rox/shared/i18n/lazy`.
+ * - `@rox/ui` re-exports `TiptapMarkdownEditor` (tiptap, KaTeX, editor CSS),
+ *   used only by the lazily loaded Notes page, and the datatable/spreadsheet
+ *   blocks, which Markdown renders through lazy wrappers (lazy-blocks.tsx).
+ */
+const SIDE_EFFECT_FREE_MODULES = [
+  /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|locales[\\/][^\\/]+\.json)$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock)\.tsx$/,
+]
+
+/**
+ * Vendor chunks for large packages the main window loads at startup. Keeps
+ * the shared startup chunk under ~2.5 MB without moving lazily used code
+ * forward: every package listed here is already in the startup graph, and
+ * none is used by the small browser-toolbar / empty-state / voice-overlay
+ * entries except React, which all entries load anyway. lucide-react is left
+ * to Rollup on purpose: as one chunk it would add ~0.9 MB to those entries.
+ */
+const VENDOR_CHUNKS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^(?:react|react-dom|scheduler)$/, 'vendor-react'],
+  [/^(?:zod)$/, 'vendor-zod'],
+  [/^(?:date-fns|react-day-picker|chrono-node|@date-fns\/.+)$/, 'vendor-dates'],
+  [/^(?:@sentry|@sentry-internal)\/.+$/, 'vendor-sentry'],
+]
+
+function vendorChunk(id: string): string | undefined {
+  const pkg = /[\\/]node_modules[\\/]((?:@[^\\/]+[\\/])?[^\\/]+)[\\/]/.exec(id)?.[1]?.replace('\\', '/')
+  if (!pkg) return undefined
+  return VENDOR_CHUNKS.find(([pattern]) => pattern.test(pkg))?.[1]
+}
+
+function sideEffectFreeModulesPlugin(): Plugin {
+  return {
+    name: 'rox-side-effect-free-modules',
+    enforce: 'post',
+    transform(code, id) {
+      const file = id.split('?')[0]
+      if (!SIDE_EFFECT_FREE_MODULES.some(pattern => pattern.test(file))) return null
+      // Code is unchanged; `map: null` keeps the existing source map.
+      return { code, map: null, moduleSideEffects: false }
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
     react({
@@ -117,6 +168,7 @@ export default defineConfig({
     stubNpmLocksPlugin(),
     worktreeCraftPackagePlugin(),
     nodeBuiltinStubPlugin(),
+    sideEffectFreeModulesPlugin(),
     // Sentry source map upload — intentionally disabled. See CLAUDE.md for re-enabling instructions.
     // sentryVitePlugin({
     //   org: process.env.SENTRY_ORG,
@@ -142,7 +194,10 @@ export default defineConfig({
         'browser-toolbar': resolve(__dirname, 'src/renderer/browser-toolbar.html'),
         'browser-empty-state': resolve(__dirname, 'src/renderer/browser-empty-state.html'),
         'voice-overlay': resolve(__dirname, 'src/renderer/voice-overlay.html'),
-      }
+      },
+      output: {
+        manualChunks: vendorChunk,
+      },
     }
   },
   resolve: {
