@@ -29,6 +29,7 @@ import { expandPath, toPortablePath, getBundledAssetsDir } from '../utils/paths.
 import { debug } from '../utils/debug.ts';
 import { atomicWriteFileSync, readJsonFileSync, safeJsonParse } from '../utils/files.ts';
 import { CONFIG_DIR, resolveConfigDir } from './paths.ts';
+import { isVisibleRoxHomeActive } from './env.ts';
 import type { StoredAttachment, StoredMessage } from '@rox/core/types';
 import type { Plan } from '../agent/plan-types.ts';
 import type { PermissionMode } from '../agent/mode-manager.ts';
@@ -850,10 +851,11 @@ export function ensureConfigDir(): void {
   if (configDirInitialized) return;
 
   // With `storage.visible-root.v1` ON, `resolveConfigDir()` runs
-  // `migrateHiddenRoxHome()` before any store opens (W1-13, MIG-13).
+  // `migrateHiddenRoxHome()` before any store opens (W1-13, MIG-13) and the
+  // visible home is private (0700). Flag OFF: main's mkdir, unchanged.
   const dir = resolveConfigDir();
   if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true, mode: 0o700 });
+    mkdirSync(dir, isVisibleRoxHomeActive() ? { recursive: true, mode: 0o700 } : { recursive: true });
   }
 
   // Snapshot an existing config.json (dated, keep last 3) before anything can
@@ -4329,7 +4331,8 @@ import { copyFileSync } from 'fs';
 const TOOL_ICONS_DIR_NAME = 'tool-icons';
 
 /**
- * Returns the path to the tool-icons directory: {configDir}/tool-icons/ (default ~/rox).
+ * Returns the path to the tool-icons directory: {configDir}/tool-icons/
+ * (`~/rox` when it exists or storage.visible-root.v1 is on, else the legacy hidden home).
  */
 export function getToolIconsDir(): string {
   return join(resolveConfigDir(), TOOL_ICONS_DIR_NAME);
