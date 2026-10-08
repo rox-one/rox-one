@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { resetConfigDirCachesForTests } from '../../../../../packages/shared/src/config/env.ts'
 import { ROX_DESKTOP_APP_LOCK_NAME, desktopAppRuntimeLockPath } from '../../../../../packages/shared/src/identity/config-migration.ts'
-import { migrationNoticeFromBoot, registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from '../visible-home-boot'
+import { migrationNoticeFromBoot, needsRelaunchOntoVisibleHome, registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from '../visible-home-boot'
 import { STORAGE_MIGRATION_NOTICE_CHANNELS } from '../../shared/storage-visible-root'
 
 // Temp HOME only — never the real dot-configs.
@@ -80,7 +80,8 @@ describe('W1-13 desktop boot: migration only in the primary instance', () => {
     utimesSync(join(home, 'rox', 'config.json'), old, old)
     const boot = runVisibleHomeBoot({ primary: true, configDir: join(home, '.rox'), env: ON, homeDir: home })
     expect(boot.notice?.kind).toBe('merged')
-    expect(boot.notice?.conflicts).toContain('config.json')
+    // per-attempt stash dir: <timestamp>/config.json
+    expect(boot.notice?.conflicts.some((c) => /^[^/]+\/config\.json$/.test(c))).toBe(true)
     boot.release()
   })
 
@@ -91,6 +92,40 @@ describe('W1-13 desktop boot: migration only in the primary instance', () => {
     expect(migrationNoticeFromBoot({ result: { ...base, outcome: 'deferred-locked' } })).toBeNull()
     expect(migrationNoticeFromBoot({ result: { ...base, outcome: 'already-symlinked' } })).toBeNull()
     expect(migrationNoticeFromBoot({ result: { ...base, outcome: 'migrated', dryRun: true } })).toBeNull()
+  })
+})
+
+describe('W1-13 review 3: compat link missing after the move', () => {
+  const moved = (relaunchRequired: boolean) => ({
+    result: {
+      outcome: 'migrated' as const, visibleDir: join(home, 'rox'), hiddenDir: join(home, '.rox'), dryRun: false,
+      manifest: [], conflicts: [], diagnostics: ['storage.migration.compatLinkMissing'], announceToast: true, relaunchRequired,
+    },
+  })
+
+  it('relaunches (and holds no lock) when this process runs on the legacy path', () => {
+    mkdirSync(join(home, 'rox'))
+    let relaunched = 0
+    let locked = 0
+    const boot = runVisibleHomeBoot({
+      primary: true, configDir: join(home, '.rox'), env: ON, homeDir: home,
+      migrate: () => moved(true),
+      holdLock: () => { locked++; return () => {} },
+      relaunch: () => { relaunched++ },
+    })
+    expect(relaunched).toBe(1)
+    expect(locked).toBe(0)
+    expect(boot.relaunching).toBe(true)
+    // a recreated legacy dir is not ~/rox either
+    mkdirSync(join(home, '.rox'))
+    expect(needsRelaunchOntoVisibleHome(moved(true), join(home, '.rox'))).toBe(true)
+  })
+
+  it('no relaunch when already on ~/rox or when the link exists', () => {
+    mkdirSync(join(home, 'rox'))
+    expect(needsRelaunchOntoVisibleHome(moved(true), join(home, 'rox'))).toBe(false)
+    expect(needsRelaunchOntoVisibleHome(moved(false), join(home, '.rox'))).toBe(false)
+    expect(needsRelaunchOntoVisibleHome(undefined, join(home, '.rox'))).toBe(false)
   })
 })
 

@@ -389,7 +389,17 @@ if (!gotTheLock) {
 // process keeps its resolved CONFIG_DIR; the next launch picks up ~/rox. Every
 // instance that runs holds the app lifetime lock so migrations defer meanwhile.
 const visibleHomeBoot = gotTheLock
-  ? runVisibleHomeBoot({ primary: !allowMultiInstance && !process.env.CRAFT_HEADLESS, configDir: CONFIG_DIR })
+  ? runVisibleHomeBoot({
+      primary: !allowMultiInstance && !process.env.CRAFT_HEADLESS,
+      configDir: CONFIG_DIR,
+      // Data moved to ~/rox but the compat link is missing: restart onto it
+      // instead of running on a vanished legacy dir (next launch resolves ~/rox).
+      relaunch: () => {
+        mainLog.warn('Visible Rox home moved without a compat link; relaunching onto it')
+        app.relaunch()
+        app.exit(0)
+      },
+    })
   : null
 if (visibleHomeBoot) {
   if (visibleHomeBoot.notice) mainLog.info('Visible Rox home migration notice', visibleHomeBoot.notice)

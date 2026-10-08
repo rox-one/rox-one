@@ -15,6 +15,7 @@
  * - The notice is taken once by a managed window (toast + conflicts list, or
  *   the foreign-folder warning).
  */
+import { realpathSync } from 'node:fs'
 import { isVisibleRoxHomeActive, runVisibleHomeAutoMigration, type VisibleHomeAutoMigration } from '@rox/shared/config'
 import { holdDesktopAppLock } from '@rox/shared/identity'
 import { STORAGE_MIGRATION_NOTICE_CHANNELS, type StorageMigrationNotice } from '../shared/storage-visible-root'
@@ -40,10 +41,33 @@ export interface VisibleHomeBootDependencies {
   migrate?: typeof runVisibleHomeAutoMigration
   holdLock?: typeof holdDesktopAppLock
   flagActive?: () => boolean
+  /** Restart the app (Electron main: `app.relaunch(); app.exit(0)`). */
+  relaunch?: () => void
+}
+
+/**
+ * The migration moved the data to `~/rox` but could not leave the `~/.rox`
+ * compat link: a process whose config dir is not (a path to) `~/rox` must
+ * not continue on a vanished or recreated legacy dir.
+ */
+export function needsRelaunchOntoVisibleHome(boot: VisibleHomeAutoMigration | undefined, configDir: string): boolean {
+  const result = boot?.result
+  if (!result?.relaunchRequired) return false
+  const real = (path: string): string | undefined => {
+    try {
+      return realpathSync(path)
+    } catch {
+      return undefined
+    }
+  }
+  const current = real(configDir)
+  return current === undefined || current !== real(result.visibleDir)
 }
 
 export interface VisibleHomeBoot {
   notice: StorageMigrationNotice | null
+  /** The app is restarting onto `~/rox` (no lock held, nothing else to do). */
+  relaunching: boolean
   /** Release the app lock (call on will-quit). */
   release(): void
 }
@@ -51,10 +75,14 @@ export interface VisibleHomeBoot {
 export function runVisibleHomeBoot(deps: VisibleHomeBootDependencies): VisibleHomeBoot {
   const migrate = deps.migrate ?? runVisibleHomeAutoMigration
   const boot = deps.primary ? migrate({ env: deps.env, homeDir: deps.homeDir }) : undefined
+  if (deps.relaunch && needsRelaunchOntoVisibleHome(boot, deps.configDir)) {
+    deps.relaunch()
+    return { notice: null, relaunching: true, release: () => {} }
+  }
   const flagActive = deps.flagActive ?? (() => isVisibleRoxHomeActive(deps.env, deps.homeDir))
   // After the migration: the lock never becomes migration data itself.
   const release = (deps.holdLock ?? holdDesktopAppLock)(deps.configDir, { inConfigDir: flagActive() })
-  return { notice: migrationNoticeFromBoot(boot), release }
+  return { notice: migrationNoticeFromBoot(boot), relaunching: false, release }
 }
 
 export function registerStorageMigrationNoticeIpc(deps: {

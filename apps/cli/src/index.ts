@@ -930,6 +930,9 @@ export async function runMigrateConfig(
   if (result.conflicts.length > 0) {
     lines.push(`Conflicts kept under .migration/conflicts: ${result.conflicts.join(', ')}`)
   }
+  if (result.relaunchRequired) {
+    lines.push('The compatibility link could not be created: restart running Rox apps and servers so they use ~/rox')
+  }
   if (result.reportPath) lines.push(`Report: ${result.reportPath}`)
   if (result.announceToast && !args.dryRun) lines.push('Rox files are now in the ~/rox folder')
   if (result.diagnostics.length > 0) lines.push(`Notes: ${result.diagnostics.join('; ')}`)
