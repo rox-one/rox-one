@@ -7,7 +7,8 @@ import { MANIFEST_DATA } from '../manifest-data';
 import { createResolver } from '../resolver';
 import { createManager } from '../manager';
 import { toolchainPaths } from '../manifest';
-import { createFileProbeCache, dependencyVersionUsable, readWindowsBootstrap, WINDOWS_BOOTSTRAP_TOOLS, WINDOWS_PROBE_CACHE_TTL_MS, setWindowsBootstrapRuntime } from '../windows-bootstrap';
+import { createFileProbeCache, dependencyVersionUsable, readWindowsBootstrap, WINDOWS_BOOTSTRAP_TOOLS, WINDOWS_DEPENDENCY_REQUIREMENTS, WINDOWS_PROBE_CACHE_TTL_MS, WINDOWS_PROBE_REQUIREMENTS_HASH, windowsProbeCacheSalt, setWindowsBootstrapRuntime } from '../windows-bootstrap';
+import { createHash } from 'node:crypto';
 
 let dir: string;
 let root: string;
@@ -227,6 +228,44 @@ describe('PERF-03 probe parallelism and cache', () => {
     const expired = createFileProbeCache(cacheFile, { now: () => t }); await expired.load();
     await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: expired });
     expect(probes.length).toBe(WINDOWS_BOOTSTRAP_TOOLS.length);
+  });
+  it('folds the app version and the requirements hash into the cache key (update or raised minimum re-probes)', async () => {
+    receipt(); const cacheFile = join(dir, 'managed', 'probe-cache.json');
+    const v1 = createFileProbeCache(cacheFile, { appVersion: '1.0.0' }); await v1.load();
+    await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: v1 }); await v1.flush();
+    expect(probes.length).toBe(WINDOWS_BOOTSTRAP_TOOLS.length);
+    const stored = JSON.parse(await filesystem.readFile(cacheFile, 'utf8')) as { entries: Record<string, number> };
+    expect(Object.keys(stored.entries).every((key) => key.startsWith(`app=1.0.0|req=${WINDOWS_PROBE_REQUIREMENTS_HASH}|`))).toBe(true);
+
+    // Same version → cache hit.
+    probes = []; const same = createFileProbeCache(cacheFile, { appVersion: '1.0.0' }); await same.load();
+    await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: same });
+    expect(probes).toEqual([]);
+
+    // App update → every tool re-probed; stale entries pruned on flush.
+    probes = []; const v2 = createFileProbeCache(cacheFile, { appVersion: '1.1.0' }); await v2.load();
+    await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: v2 }); await v2.flush();
+    expect(probes.length).toBe(WINDOWS_BOOTSTRAP_TOOLS.length);
+    const after = JSON.parse(await filesystem.readFile(cacheFile, 'utf8')) as { entries: Record<string, number> };
+    expect(Object.keys(after.entries).every((key) => key.startsWith('app=1.1.0|'))).toBe(true);
+
+    // Entries recorded under different acceptance rules (e.g. a lower minimum) are ignored.
+    const foreign = Object.fromEntries(Object.entries(after.entries).map(([key, at]) => [key.replace(`req=${WINDOWS_PROBE_REQUIREMENTS_HASH}`, 'req=0000000000000000'), at]));
+    await filesystem.writeFile(cacheFile, JSON.stringify({ ...after, entries: foreign }));
+    probes = []; const raised = createFileProbeCache(cacheFile, { appVersion: '1.1.0' }); await raised.load();
+    await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: raised });
+    expect(probes.length).toBe(WINDOWS_BOOTSTRAP_TOOLS.length);
+  });
+  it('derives the requirements hash from the acceptance table used by dependencyVersionUsable', () => {
+    const expected = createHash('sha256').update(JSON.stringify(Object.entries(WINDOWS_DEPENDENCY_REQUIREMENTS)
+      .map(([tool, rule]) => [tool, rule instanceof RegExp ? `${rule.source}/${rule.flags}` : rule]))).digest('hex').slice(0, 16);
+    expect(WINDOWS_PROBE_REQUIREMENTS_HASH).toBe(expected);
+    expect(windowsProbeCacheSalt('2.3.4')).toBe(`app=2.3.4|req=${expected}`);
+    expect(windowsProbeCacheSalt(undefined)).toBe(`app=unknown|req=${expected}`);
+    expect(dependencyVersionUsable('node', 'v22.23.0')).toBe(true);
+    expect(dependencyVersionUsable('node', 'v22.22.9')).toBe(false);
+    expect(dependencyVersionUsable('gh', 'gh version 2.60.0 (2024-10-01)')).toBe(true);
+    expect(dependencyVersionUsable('yq', 'yq (https://github.com/mikefarah/yq/) version v3.4.1')).toBe(false);
   });
   it('treats a corrupt probe cache as empty', async () => {
     receipt(); const cacheFile = join(dir, 'probe-cache.json'); writeFileSync(cacheFile, '{not json');

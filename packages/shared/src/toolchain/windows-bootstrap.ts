@@ -1,5 +1,6 @@
 /** Node-safe, read-only bridge to the non-secret native installer receipt. */
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { promises as fs, constants } from 'node:fs';
 import * as path from 'node:path';
 import { MANIFEST_DATA } from './manifest-data';
@@ -20,19 +21,34 @@ export function bootstrapToolName(name: string): WindowsBootstrapTool | null {
   return WINDOWS_BOOTSTRAP_TOOLS.find((tool) => tool === bare) ?? null;
 }
 
+/**
+ * Acceptance rules for `--version` output. Single source of truth: hashed into
+ * the persistent probe-cache key, so raising a minimum invalidates cached
+ * "usable" verdicts immediately (not after the 7-day TTL).
+ */
+export const WINDOWS_DEPENDENCY_REQUIREMENTS = {
+  gh: /^gh version ([2-9]|[1-9]\d+)\./,
+  git: /^git version ([2-9]|[1-9]\d+)\./,
+  jq: /^jq-[1-9]\d*\./,
+  yq: /version v?([4-9]|[1-9]\d+)\./,
+  node: { major: 22, minor: 23 },
+  gitBash: /^GNU bash, version [4-9]\./,
+} as const;
+
+export const WINDOWS_PROBE_REQUIREMENTS_HASH = createHash('sha256')
+  .update(JSON.stringify(Object.entries(WINDOWS_DEPENDENCY_REQUIREMENTS)
+    .map(([tool, rule]) => [tool, rule instanceof RegExp ? `${rule.source}/${rule.flags}` : rule])))
+  .digest('hex').slice(0, 16);
+
 export function dependencyVersionUsable(name: WindowsBootstrapTool, text: string): boolean {
-  switch (name) {
-    case 'gh': return /^gh version ([2-9]|[1-9]\d+)\./.test(text);
-    case 'git': return /^git version ([2-9]|[1-9]\d+)\./.test(text);
-    case 'jq': return /^jq-[1-9]\d*\./.test(text);
-    case 'yq': return /version v?([4-9]|[1-9]\d+)\./.test(text);
-    case 'node': {
-      const match = /^v(\d+)\.(\d+)\.(\d+)/.exec(text);
-      if (!match) return false;
-      const [major, minor] = match.slice(1).map(Number);
-      return major! > 22 || (major === 22 && minor! >= 23);
-    }
+  if (name === 'node') {
+    const match = /^v(\d+)\.(\d+)\.(\d+)/.exec(text);
+    if (!match) return false;
+    const [major, minor] = match.slice(1).map(Number);
+    const min = WINDOWS_DEPENDENCY_REQUIREMENTS.node;
+    return major! > min.major || (major === min.major && minor! >= min.minor);
   }
+  return WINDOWS_DEPENDENCY_REQUIREMENTS[name].test(text);
 }
 
 /** Fixed argv, bounded output/time, no shell, credential reads or receipt-supplied arguments. */
@@ -61,27 +77,40 @@ export function windowsProbeCacheKey(kind: string, file: string, stat: { size: n
   return [kind, path.normalize(file).toLowerCase(), stat.size, stat.mtimeMs, stat.ctimeMs, String(stat.ino)].join('|');
 }
 
+/** Namespace folded into every probe-cache key: app build + acceptance rules. */
+export function windowsProbeCacheSalt(appVersion?: string | null): string {
+  return `app=${appVersion || 'unknown'}|req=${WINDOWS_PROBE_REQUIREMENTS_HASH}`;
+}
+
 /**
  * JSON-file backed probe cache. `load()` is a single small read; `flush()`
- * writes only when new entries were added. Never throws.
+ * writes only when entries were added or pruned. Every key is prefixed with
+ * {@link windowsProbeCacheSalt} (app version + requirements hash), so an app
+ * update or a raised minimum never reuses an older "usable" verdict; entries
+ * from other salts are pruned on load. Never throws.
  */
-export function createFileProbeCache(file: string, options: { now?: () => number; ttlMs?: number } = {}) {
+export function createFileProbeCache(file: string, options: { now?: () => number; ttlMs?: number; appVersion?: string | null } = {}) {
   const now = options.now ?? Date.now;
   const ttlMs = options.ttlMs ?? WINDOWS_PROBE_CACHE_TTL_MS;
+  const salt = windowsProbeCacheSalt(options.appVersion);
+  const salted = (key: string) => `${salt}|${key}`;
   let entries = new Map<string, number>();
   let dirty = false;
   return {
+    salt,
     async load(): Promise<void> {
       try {
         const parsed = JSON.parse(await fs.readFile(file, 'utf8'));
         if (parsed?.version !== PROBE_CACHE_VERSION || typeof parsed.entries !== 'object' || !parsed.entries) return;
         const t = now();
-        entries = new Map(Object.entries(parsed.entries as Record<string, unknown>)
-          .filter((pair): pair is [string, number] => typeof pair[1] === 'number' && t - pair[1] <= ttlMs && pair[1] <= t));
+        const all = Object.entries(parsed.entries as Record<string, unknown>);
+        entries = new Map(all.filter((pair): pair is [string, number] =>
+          pair[0].startsWith(`${salt}|`) && typeof pair[1] === 'number' && t - pair[1] <= ttlMs && pair[1] <= t));
+        if (entries.size !== all.length) dirty = true; // prune stale salts/expired entries on next flush
       } catch { entries = new Map(); }
     },
-    has(key: string): boolean { return entries.has(key); },
-    add(key: string): void { if (!entries.has(key)) { entries.set(key, now()); dirty = true; } },
+    has(key: string): boolean { return entries.has(salted(key)); },
+    add(key: string): void { const k = salted(key); if (!entries.has(k)) { entries.set(k, now()); dirty = true; } },
     async flush(): Promise<void> {
       if (!dirty) return;
       try {
@@ -287,7 +316,7 @@ export async function readWindowsBootstrap(options: WindowsBootstrapOptions = {}
       execFile(expected, ['--noprofile', '--norc', '--version'],
         { timeout: 5_000, maxBuffer: 64 * 1024, windowsHide: true },
         (error, stdout) => {
-          const ok = !error && /^GNU bash, version [4-9]\./.test(stdout);
+          const ok = !error && WINDOWS_DEPENDENCY_REQUIREMENTS.gitBash.test(stdout);
           if (ok && bashKey) probeCache?.add(bashKey);
           resolve(ok ? expected : null);
         });
