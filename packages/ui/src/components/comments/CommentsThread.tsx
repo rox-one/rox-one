@@ -153,7 +153,7 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
             {allowReplies && depth === 0 && thread.onCreate ? (
               <button type="button" onClick={() => setReplying((v) => !v)} className={actionClass}>{t('entities.ui.comments.reply')}</button>
             ) : null}
-            {comment.mine && thread.onEdit ? <button type="button" onClick={() => setEditing(true)} className={actionClass}>{t('entities.ui.comments.edit')}</button> : null}
+            {comment.mine && thread.onEdit ? <button type="button" onClick={() => { setEditDraft(comment.body); setEditing(true) }} className={actionClass}>{t('entities.ui.comments.edit')}</button> : null}
             {comment.mine && thread.onDelete ? <button type="button" onClick={() => thread.onDelete?.(comment.id)} className={actionClass}>{t('entities.ui.comments.delete')}</button> : null}
           </div>
         ) : null}
