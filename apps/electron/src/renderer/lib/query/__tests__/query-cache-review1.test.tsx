@@ -154,38 +154,48 @@ describe('error: every cache write goes through the identity fence', () => {
 })
 
 describe('error: the event bridge runs in every runtime; only desktop persists', () => {
+  // Review 2: identity events and reconnects re-check the principal; the
+  // cache is only dropped when it changed (see query-cache-review2).
   function api(runtime: 'electron' | 'web') {
     const listeners = new Map<string, () => void>()
+    const who = { userId: 'u' }
     const value = {
       getRuntimeEnvironment: () => runtime,
       onIdentityChanged: (callback: () => void) => { listeners.set('identity', callback); return () => listeners.delete('identity') },
       onReconnected: (callback: () => void) => { listeners.set('reconnected', callback); return () => listeners.delete('reconnected') },
-      getOrgIdentity: async () => ({ userId: 'u', authority: 'local' as const }),
+      getOrgIdentity: async () => ({ userId: who.userId, authority: 'local' as const }),
     }
-    return { value, emit: (name: string) => listeners.get(name)?.() }
+    return { value, who, emit: (name: string) => listeners.get(name)?.() }
   }
+  const settle = async () => { for (let i = 0; i < 6; i++) await flush() }
 
-  it('web: identity change clears the cache, reconnect invalidates; nothing is persisted', () => {
+  it('web: a principal change clears the cache, reconnect invalidates; nothing is persisted', async () => {
     const storage = memoryStorage()
-    const { value, emit } = api('web')
+    const { value, who, emit } = api('web')
     const stop = startRoxQueryRuntime(value as never, storage)
     const client = roxQueryClient()
     client.setQueryData(roxKeys.workspaceWork('ws'), snapshot('ws', 1))
     emit('reconnected')
+    await settle()
     expect(client.getQueryState(roxKeys.workspaceWork('ws'))?.isInvalidated).toBe(true)
+    who.userId = 'other'
     emit('identity')
+    await settle()
     expect(client.getQueryData(roxKeys.workspaceWork('ws'))).toBeUndefined()
     expect(storage.log).toEqual([])
     stop()
   })
 
-  it('desktop: the bridge and persistence both start', () => {
+  it('desktop: the bridge and persistence both start', async () => {
     const storage = memoryStorage()
-    const { value, emit } = api('electron')
+    const { value, who, emit } = api('electron')
     const stop = startRoxQueryRuntime(value as never, storage)
+    await settle()
     expect(storage.log).toEqual(['read'])
     roxQueryClient().setQueryData(roxKeys.notesList('ws'), [])
+    who.userId = 'other'
     emit('identity')
+    await settle()
     expect(roxQueryClient().getQueryData(roxKeys.notesList('ws'))).toBeUndefined()
     stop()
   })
@@ -198,11 +208,11 @@ describe('warning: the persisted record is bound to the principal', () => {
     return buildPersistedRoxQueryCache(client, 'ws', principal, Date.now())!
   }
 
-  it('principal key: org identity authority/issuer/userId, else local', async () => {
+  it('principal key: org identity authority/issuer/userId; unknown fails closed (review 2)', async () => {
     expect(await readPersistencePrincipal({ getOrgIdentity: async () => ({ userId: 'u1', authority: 'native', issuer: 'https://idp' }) }))
       .toBe(JSON.stringify(['native', 'https://idp', 'u1']))
-    expect(await readPersistencePrincipal({ getOrgIdentity: async () => { throw new Error('offline') } })).toBe('local')
-    expect(await readPersistencePrincipal(undefined)).toBe('local')
+    expect(await readPersistencePrincipal({ getOrgIdentity: async () => { throw new Error('offline') } })).toBeNull()
+    expect(await readPersistencePrincipal(undefined)).toBeNull()
   })
 
   it('hydrates only when the stored principal matches; otherwise removes the record', async () => {
