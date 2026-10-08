@@ -71,8 +71,6 @@ export const KEYS = {
   // What's New
   // What's New — per-version seen list (timeline)
   whatsNewSeenVersions: 'whats-new-seen-versions',
-  // Workspace icon rail custom links (workspace-scoped via suffix)
-  workspaceRailLinks: 'workspace-rail-links',
   // Session multi-view tab (session-scoped via suffix) — legacy; prefer entityViewMode
   sessionViewMode: 'session-view-mode',
   // Entity multi-view tab (scoped via suffix e.g. session:<id>, note:<id>)

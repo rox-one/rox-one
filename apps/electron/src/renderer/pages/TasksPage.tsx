@@ -66,7 +66,7 @@ import { useTourSignals, useTourTarget, type TourObservation } from '@/features/
 import { derivePersonalTaskSignals, tasksProjectsCapabilities } from '@/features/product-tour/adapters/work/tasks-projects'
 import { navigate, routes } from '@/lib/navigate'
 import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
-import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
+import { useOptionalPanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
 import { cn } from '@/lib/utils'
 import { formatHotkeyDisplay } from '@/lib/platform'
 import {
@@ -158,7 +158,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const canHandleKeyboard = usePanelKeyboardGuard()
   const workspace = useActiveWorkspace()
   const shell = useOptionalAppShellContext()
-  const { mode: layoutMode } = usePanelWorkspaceLayout()
+  const { mode: layoutMode } = useOptionalPanelWorkspaceLayout()
   const tour = useTourSignals({ workspaceId: workspace?.id })
   const quickEntryTarget = useTourTarget('tasks.quick-entry', { workspaceId: workspace?.id })
   const pendingCreates = useRef(new Map<string, { observation: TourObservation; task: PersonalTask }>())

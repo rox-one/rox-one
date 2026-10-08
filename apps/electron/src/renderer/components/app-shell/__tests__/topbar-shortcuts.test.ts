@@ -3,11 +3,13 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const appShellPath = join(__dirname, '../AppShell.tsx')
+const chatDisplayPath = join(__dirname, '../ChatDisplay.tsx')
 const profileStripPath = join(__dirname, '../ProfileStrip.tsx')
 const topBarPath = join(__dirname, '../TopBar.tsx')
 
 describe('TopBar navigation cutover', () => {
   const appShellSource = readFileSync(appShellPath, 'utf8')
+  const chatDisplaySource = readFileSync(chatDisplayPath, 'utf8')
   const profileStripSource = readFileSync(profileStripPath, 'utf8')
   const source = readFileSync(topBarPath, 'utf8')
 
@@ -39,9 +41,11 @@ describe('TopBar navigation cutover', () => {
     expect(source).toContain('{showInspectorToggle && (')
   })
 
-  it('keeps the focused-session Map bridge in AppShell', () => {
+  it('keeps the focused-session Map bridge in AppShell and ChatDisplay', () => {
     expect(appShellSource).toContain("new CustomEvent('craft:session-view'")
-    expect(appShellSource).toContain("detail: { sessionId: effectiveSessionId, view: 'map' }")
+    expect(appShellSource).toContain("detail: { sessionId: id, view: 'map' }")
+    expect(chatDisplaySource).toContain("new CustomEvent('craft:session-view'")
+    expect(chatDisplaySource).toContain("view: 'map'")
   })
 
   it('does not retain the legacy TopBar What’s New action', () => {
