@@ -161,10 +161,12 @@ export interface SessionToolContext {
   workspacePath: string;
 
   /**
-   * Resolved Rox home (`~/rox`, W1-13). Optional so older backends keep
-   * compiling; handlers fall back to the visible-home default.
+   * How user-facing hints refer to the Rox home (W1-13): the legacy hidden
+   * home text with `storage.visible-root.v1` OFF, the resolved config dir
+   * (`~/rox`) when it is ON. Optional so older backends keep compiling;
+   * handlers fall back to the legacy text.
    */
-  configDir?: string;
+  roxHomeDisplay?: string;
 
   /** Path to sources folder within workspace */
   get sourcesPath(): string;

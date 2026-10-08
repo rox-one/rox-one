@@ -15,6 +15,9 @@ export interface MermaidValidateArgs {
   render?: boolean;
 }
 
+/** Legacy hidden Rox home as shown in hints (flag OFF default). */
+const LEGACY_ROX_HOME_DISPLAY = '~/.rox';
+
 /**
  * Handle the mermaid_validate tool call.
  *
@@ -29,9 +32,9 @@ export async function handleMermaidValidate(
   args: MermaidValidateArgs
 ): Promise<ToolResult> {
   const { code } = args;
-  // W1-13: point at the resolved config dir; the visible home is the default
-  // when the backend predates the `configDir` context field.
-  const mermaidDoc = `${ctx.configDir ?? '~/rox'}/docs/mermaid.md`;
+  // W1-13: the docs live in the Rox home the backend reports; without it,
+  // the legacy text (unchanged flag-OFF behaviour).
+  const mermaidDoc = `${ctx.roxHomeDisplay ?? LEGACY_ROX_HOME_DISPLAY}/docs/mermaid.md`;
 
   try {
     // renderMermaidSVG throws if syntax/layout is invalid. Use the renderer path

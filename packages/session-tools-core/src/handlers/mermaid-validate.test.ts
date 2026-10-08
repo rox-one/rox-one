@@ -46,3 +46,18 @@ describe('handleMermaidValidate', () => {
     expect(parseResult(result).valid).toBe(false);
   });
 });
+
+describe('handleMermaidValidate docs hint (W1-13)', () => {
+  const invalid = { code: 'notADiagram\n  A --> B' };
+  const suggestion = async (ctx: object) =>
+    (JSON.parse((await handleMermaidValidate(ctx as any, invalid)).content[0]!.text) as { suggestion?: string })
+      .suggestion;
+
+  it('keeps the legacy hint without a Rox home from the backend (flag OFF)', async () => {
+    expect(await suggestion({})).toBe('Check the syntax against ~/.rox/docs/mermaid.md');
+  });
+
+  it('uses the Rox home the backend reports', async () => {
+    expect(await suggestion({ roxHomeDisplay: '~/rox' })).toBe('Check the syntax against ~/rox/docs/mermaid.md');
+  });
+});

@@ -67,6 +67,7 @@ import { debug } from '../utils/debug.ts';
 import { getSessionPlansPath, getSessionPath, getSessionDataPath } from '../sessions/storage.ts';
 import { updatePreferences as updatePreferencesImpl } from '../config/preferences.ts';
 import { resolveConfigDir } from "../config/paths.ts"
+import { roxHomeDocDisplay } from "../docs/index.ts"
 
 // Re-export types that may be needed by consumers
 export type { SessionToolContext, SessionToolCallbacks } from '@rox/session-tools-core';
@@ -285,7 +286,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
   const context: SessionToolContext = {
     sessionId,
     workspacePath,
-    configDir: resolveConfigDir(),
+    roxHomeDisplay: roxHomeDocDisplay(),
     getHostBashEnv: () => createHostBashEnv(),
     get sourcesPath() { return join(workspacePath, 'sources'); },
     get skillsPath() { return join(workspacePath, 'skills'); },
