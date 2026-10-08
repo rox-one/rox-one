@@ -12,7 +12,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { SettingsSection, SettingsCard, SettingsRow } from '@/components/settings'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { isMac } from '@/lib/platform'
-import { actionsByCategory, useActionLabel, type ActionId } from '@/actions'
+import { useActionLabel, type ActionId } from '@/actions'
+// W1-07 (#1504): flag-gated actions show (and rebind) once their flag is on.
+import { useActionsByCategory } from '@/actions/useVisibleActions'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
 function shortcutsCatalogLive(granted = true): boolean {
@@ -108,6 +110,7 @@ function ActionShortcutRow({ actionId }: { actionId: ActionId }) {
 }
 
 export default function ShortcutsPage() {
+  const actionsByCategory = useActionsByCategory()
   const { t } = useTranslation()
   const componentSpecificSections = useComponentSpecificSections()
   const catalogLive = shortcutsCatalogLive(true)

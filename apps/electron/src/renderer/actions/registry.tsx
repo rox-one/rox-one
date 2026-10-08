@@ -6,7 +6,7 @@ import { getKeybindingContext, evaluateWhen } from './keybinding-context'
 // W1-07 (#1504): flag-gated actions + per-platform default chords.
 import { getDefaultStore } from 'jotai'
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
-import { isActionFlagEnabled, resolveDefaultHotkey } from './hotkeys'
+import { isActionFlagEnabled, resolveActionHotkey } from './hotkeys'
 
 interface ActionRegistryContextType {
   // Register a handler for an action
@@ -64,10 +64,7 @@ export function ActionRegistryProvider({ children }: { children: React.ReactNode
   // Get hotkey for action
   const getHotkey = useCallback((actionId: ActionId): string | null => {
     // Check user overrides first
-    if (userOverrides.current.has(actionId)) {
-      return userOverrides.current.get(actionId) ?? null
-    }
-    return resolveDefaultHotkey(actions[actionId] as ActionDefinition)
+    return resolveActionHotkey(actions[actionId] as ActionDefinition, userOverrides.current)
   }, [])
 
   // Get display string

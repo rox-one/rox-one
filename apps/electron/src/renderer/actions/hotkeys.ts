@@ -47,3 +47,33 @@ export function findHotkeyCollisions(
   }
   return collisions
 }
+
+/**
+ * Effective chord: a user override (rebinding) wins, flag-gated or not; else
+ * the platform default. The registry still ignores a flag-gated action while
+ * its flag is off, whatever it is bound to.
+ */
+export function resolveActionHotkey(
+  action: ActionDefinition,
+  overrides: ReadonlyMap<string, string | null>,
+  mac: boolean = isMac,
+): string | null {
+  if (overrides.has(action.id)) return overrides.get(action.id) ?? null
+  return resolveDefaultHotkey(action, mac)
+}
+
+/**
+ * Actions grouped by category for the shortcut pages: the baseline list plus
+ * every flag-gated action whose flag is enabled, in definition order.
+ */
+export function actionsByCategoryFor(
+  definitions: readonly ActionDefinition[],
+  flags: ReadonlySet<string>,
+): Record<string, ActionDefinition[]> {
+  const grouped: Record<string, ActionDefinition[]> = {}
+  for (const action of definitions) {
+    if (!isActionFlagEnabled(action, flags)) continue
+    ;(grouped[action.category] ??= []).push(action)
+  }
+  return grouped
+}
