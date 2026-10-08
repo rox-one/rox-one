@@ -556,7 +556,8 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
           const out: Array<{ label: string; plan: string }> = []
           const queries: Array<[string, string]> = [
             ['goal_space', `SELECT goal_id FROM "${schema}".goal WHERE workspace_id = '${NIL}' AND space_id = '${NIL}' AND deleted_at IS NULL`],
-            ['message_feed', `SELECT message_id FROM "${schema}".message WHERE chat_id = '${NIL}' AND deleted_at IS NULL ORDER BY seq DESC LIMIT 50`],
+            // Chat feed is served by the UNIQUE (chat_id, seq) btree scanned backward.
+            ['message_chat_seq', `SELECT message_id FROM "${schema}".message WHERE chat_id = '${NIL}' AND deleted_at IS NULL ORDER BY seq DESC LIMIT 50`],
             ['entity_link_to', `SELECT link_id FROM "${schema}".entity_link WHERE to_kind = 'goal' AND to_id = '${probeTo}' AND deleted_at IS NULL`],
             ['check_in_subject', `SELECT check_in_id FROM "${schema}".check_in WHERE subject_type = 'goal' AND subject_id = '${NIL}' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 20`],
             ['notification_unread', `SELECT notification_id FROM "${schema}".notification WHERE principal_id = '${NIL}' AND read_at IS NULL ORDER BY created_at DESC LIMIT 20`],
@@ -571,6 +572,20 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
           expect(`${label}: ${plan}`).toMatch(/Index Scan|Bitmap Heap Scan/)
           expect(plan).toContain(label)
         }
+        // The unique btree can deliver newest-first order by itself (no Sort node):
+        // on an empty table the planner prefers bitmap+sort, so forbid the sort to prove it.
+        const feedPlan = await db.begin(async tx => {
+          await tx.unsafe('SET LOCAL enable_seqscan = off')
+          await tx.unsafe('SET LOCAL enable_sort = off')
+          const rows = await tx.unsafe<Record<string, string>[]>(
+            `EXPLAIN SELECT message_id FROM "${schema}".message WHERE chat_id = '${NIL}' AND deleted_at IS NULL ORDER BY seq DESC LIMIT 50`)
+          return rows.map(r => Object.values(r).join(' ')).join('\n')
+        })
+        expect(feedPlan).toContain('Index Scan Backward using message_chat_seq')
+        expect(feedPlan).not.toMatch(/\bSort\b/)
+        const messageIndexes = await db.unsafe<{ indexname: string }[]>(
+          `SELECT indexname FROM pg_indexes WHERE schemaname = '${schema}' AND tablename = 'message' ORDER BY indexname`)
+        expect(messageIndexes.map(i => i.indexname)).not.toContain('message_feed')
       } finally {
         await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
       }

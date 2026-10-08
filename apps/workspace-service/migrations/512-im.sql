@@ -45,10 +45,10 @@ CREATE TABLE message (
   schema_version integer NOT NULL DEFAULT 1 CHECK (schema_version > 0),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz,
-  UNIQUE (chat_id, seq)
+  -- Also the chat-feed index: newest-first pages are a backward scan of this btree,
+  -- so there is no separate (chat_id, seq DESC) index for every insert to maintain.
+  CONSTRAINT message_chat_seq UNIQUE (chat_id, seq)
 );
--- Chat feed: newest-first page per chat.
-CREATE INDEX message_feed ON message (chat_id, seq DESC) WHERE deleted_at IS NULL;
 
 CREATE TABLE message_flag (
   message_id uuid NOT NULL REFERENCES message(message_id),
