@@ -8,6 +8,7 @@
  */
 import * as React from 'react'
 import { ResponsiveModeScreenLayout, type ResponsiveModeScreen } from './ResponsiveModeScreen'
+import type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
 import { cn } from '@/lib/utils'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import { useTranslation } from 'react-i18next'
@@ -16,10 +17,12 @@ import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, 
 export function ModeScreenLayout(props: {
   navigator: React.ReactNode; list: React.ReactNode; detail: React.ReactNode; status?: React.ReactNode
   testId?: string; wideList?: boolean; detailKey?: string | null; responsive?: ResponsiveModeScreen
+  layout?: PanelWorkspaceLayoutMode
 }) {
+  const layout = props.layout ?? 'auto'
   return props.responsive
-    ? <ResponsiveModeScreenLayout {...props} responsive={props.responsive} />
-    : <FallbackModeScreenLayout {...props} />
+    ? <ResponsiveModeScreenLayout {...props} layout={layout} responsive={props.responsive} />
+    : <FallbackModeScreenLayout {...props} layout={layout} />
 }
 
 function FallbackModeScreenLayout({
@@ -30,6 +33,7 @@ function FallbackModeScreenLayout({
   testId,
   wideList,
   detailKey,
+  layout = 'auto',
 }: {
   navigator: React.ReactNode
   list: React.ReactNode
@@ -39,6 +43,7 @@ function FallbackModeScreenLayout({
   /** List takes the free width (galleries); detail becomes a fixed side pane. */
   wideList?: boolean
   detailKey?: string | null
+  layout?: PanelWorkspaceLayoutMode
 }) {
   const { t } = useTranslation()
   const target = useShellSidebarTarget()
@@ -52,18 +57,27 @@ function FallbackModeScreenLayout({
     observer.observe(element); setWidth(element.clientWidth)
     return () => observer.disconnect()
   }, [])
-  const narrow = width > 0 && width < (target ? 640 : 860)
+  const narrowThreshold = target ? 640 : 860
+  const measuredNarrow = width > 0 && width < narrowThreshold
+  const emergencyNarrow = width > 0 && width < 480
+  const focusDetail = layout === 'focus'
+  const showNavigator = layout === 'auto' || layout === 'grid-3' || layout === 'columns'
+  const narrow = layout === 'auto' ? measuredNarrow : layout === 'focus' ? false : emergencyNarrow
   React.useEffect(() => { if (detailKey !== undefined) setPane(detailKey ? 'detail' : 'list') }, [detailKey])
   return (
-    <div ref={root} className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px] text-foreground" data-testid={testId}>
+    <div ref={root} className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px] text-foreground" data-testid={testId} data-mode-layout={layout}>
       {narrow && <div role="tablist" aria-label={t('navigation.openPanels')} className="flex shrink-0 gap-1 border-b border-border p-2">
         {(['navigation', 'list', 'detail'] as const).filter(item => item !== 'navigation' || !target).map(item => <button type="button" role="tab" key={item} aria-selected={pane === item} onClick={() => setPane(item)} className={cn('rounded px-2 py-1 text-xs', pane === item && 'bg-accent/10 text-accent')}>{t(`navigation.modePanes.${item}`)}</button>)}
       </div>}
       <div className="flex min-h-0 flex-1">
-        <ShellSidebarPortal className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
-          {navigator}
-        </ShellSidebarPortal>
-        {detail == null ? (
+        {showNavigator ? (
+          <ShellSidebarPortal className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
+            {navigator}
+          </ShellSidebarPortal>
+        ) : null}
+        {focusDetail ? (
+          <section className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-background">{detail != null ? detail : list}</section>
+        ) : detail == null ? (
           <section className="flex min-w-0 flex-1 flex-col bg-foreground/[0.025]">{list}</section>
         ) : wideList ? (
           <>

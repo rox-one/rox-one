@@ -17,6 +17,7 @@ export function createNativeVoiceOverlayHost(options: {
   let latest: Parameters<NativeVoiceOverlayHost['publish']>[0] | null = null
   let stopSent = false
   let cancelSent = false
+  let visible = false
   let terminalTimer: ReturnType<typeof setTimeout> | undefined
   const disposeSurface = () => {
     if (terminalTimer) clearTimeout(terminalTimer)
@@ -25,7 +26,7 @@ export function createNativeVoiceOverlayHost(options: {
     owner?.removeListener('focus', onFocus)
     owner?.removeListener('closed', onClosed)
     const old = child
-    child = null; owner = null; latest = null; stopSent = false; cancelSent = false
+    child = null; owner = null; latest = null; stopSent = false; cancelSent = false; visible = false
     if (old && !old.isDestroyed()) old.destroy()
   }
   const currentOwner = () => {
@@ -36,10 +37,13 @@ export function createNativeVoiceOverlayHost(options: {
   const sendState = () => {
     if (!currentOwner() || !child || child.isDestroyed()) { disposeSurface(); return }
     child.webContents.send(VOICE_OVERLAY_STATE, latest!.state)
-    if (owner!.isFocused() && latest!.state.phase !== 'hidden') child.showInactive()
+    const show = owner!.isFocused() && latest!.state.phase !== 'hidden'
+    if (show === visible) return
+    visible = show
+    if (show) child.showInactive()
     else child.hide()
   }
-  function onBlur() { child?.hide() }
+  function onBlur() { visible = false; child?.hide() }
   function onFocus() { sendState() }
   function onClosed() { disposeSurface() }
   ipcMain.handle(VOICE_OVERLAY_COMMAND, (event, action: unknown, recordingId: unknown) => {

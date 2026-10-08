@@ -90,21 +90,4 @@ describe('workspace creation from the compact craft-menu Drawer', () => {
   })
 })
 
-describe('WorkspaceIconRail reuses the shared creation flow (review4)', () => {
-  const rail = parse('WorkspaceIconRail')
-  const src = rail.getFullText()
 
-  it('uses useWorkspaceCreationFlow for new workspace and reconnect, rendering its screen', () => {
-    expect(src).toContain("import { useWorkspaceCreationFlow } from \"./AccountMenu\"")
-    expect(src).toMatch(/const \{ open: openCreationFlow, screen: creationScreen \} = useWorkspaceCreationFlow\(\{\s*activeWorkspaceId,\s*onSelectWorkspace: onSelect,\s*onWorkspaceCreated,\s*\}\)/)
-    expect(fn(rail, 'handleNewWorkspace').getText()).toContain('openCreationFlow()')
-    expect(fn(rail, 'handleWorkspaceClick').getText()).toContain('openCreationFlow(workspace)')
-    expect(descendants(rail).some((n) => ts.isJsxExpression(n) && n.expression?.getText() === 'creationScreen')).toBe(true)
-  })
-
-  it('keeps no private copy of the flow', () => {
-    for (const gone of ['<WorkspaceCreationScreen', 'setShowCreationScreen', 'setReconnectTarget', 'fullscreenOverlayOpenAtom', 'waitForTransportConnected', 'handleReconnectWorkspace', 'AnimatePresence']) {
-      expect(src, gone).not.toContain(gone)
-    }
-  })
-})

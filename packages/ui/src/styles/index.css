@@ -25,6 +25,10 @@
 @import "./inter-font-face.css";
 /* Design tokens v2: geometry, type, icon, z, elevation, motion, state, chrome. */
 @import "./tokens/index.css";
+/* The app theme is class-driven (ThemeContext toggles `html.dark`), so bind the
+   `dark:` variant to that class instead of Tailwind's prefers-color-scheme
+   default, which ignores the in-app theme switch. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* =============================================================================
    SEMANTIC TOKENS

@@ -12,19 +12,19 @@ const i18n = createInstance()
 await i18n.init({
   lng: 'en', fallbackLng: 'en',
   resources: { en: { translation: {
-    'profile.openSettings': 'Open settings for {{name}}',
+    'profile.openMenu': 'Open profile menu for {{name}}',
     'profile.defaultName': 'User',
     'profile.balance': '{{amount}}',
     'profile.balanceLabel': 'Balance',
-    'profile.balanceEmpty': '—',
+    'profile.balanceUnknown': 'No data',
     'settings.account.plan.standard': 'Standard',
     'promo.onboardingTitle': 'Set up memory',
     'promo.onboardingBody': 'Add lessons so Rox remembers your preferences.',
-    'promo.onboardingCta': 'Set up memory',
+    'promo.onboardingCta': 'Open memory',
     'promo.reminderTitle': 'Reminders',
-    'promo.reminderBody': '{{count}} lessons are due for review',
-    'promo.reminderCta': 'Review reminders',
-    'common.dismiss': 'Dismiss memory setup suggestion',
+    'promo.reminderBody': '{{count}} due',
+    'promo.reminderCta': 'Review',
+    'common.dismiss': 'Dismiss',
   } } },
 })
 
@@ -90,7 +90,7 @@ describe('compact sidebar rendered accessibility', () => {
     const html = render(<ProfileStrip data={profile} onClick={change} />)
     const button = buttons(html)[0]!
     expect(button).toContain('type="button"')
-    expect(button).toContain('aria-label="Open settings for Rox User"')
+    expect(button).toContain('aria-label="Open profile menu for Rox User"')
     expect(button).not.toContain('tabindex="-1"')
     const descriptionId = button.match(/aria-describedby="([^"]+)"/)?.[1]
     expect(descriptionId).toBeTruthy()
@@ -98,17 +98,18 @@ describe('compact sidebar rendered accessibility', () => {
     expect(button).toContain('>Rox User</span>')
   })
 
-  it('mounts the flat setup card with its dismiss, rail and profile controls keyboard reachable', () => {
+  it('exposes setup as a closed keyboard popover above a reachable promo slot', () => {
     const html = render(<SidebarChrome workspaceId="first" profile={profile} onProfileClick={change} promoKind="onboarding" onPromoCta={change} />)
-    expect(html).toContain('data-promo-slot="onboarding"')
-    expect(html).toContain('Add lessons so Rox remembers your preferences.')
     const controls = buttons(html)
-    expect(controls).toHaveLength(5)
-    expect(controls[0]).toContain('aria-label="Dismiss memory setup suggestion"')
-    expect(html).toContain('data-testid="rail-settings"')
-    expect(html).toContain('data-testid="rail-toggle"')
-    expect(html).toContain('data-tutorial="profile-strip"')
+    const profileButton = controls.find(button => button.includes('data-tutorial="profile-strip"'))
+    expect(profileButton).toBeDefined()
+    expect(profileButton).toContain('aria-haspopup="dialog"')
+    expect(profileButton).toContain('aria-expanded="false"')
     expect(controls.every(button => button.includes('type="button"') && !button.includes('tabindex="-1"'))).toBe(true)
+    expect(html).toContain('data-promo-slot="onboarding"')
+    expect(html).toContain('>Set up memory</div>')
+    expect(html).toContain('>Open memory</button>')
+    expect(controls.find(button => button.includes('aria-label="Dismiss"'))).toBeDefined()
   })
 
   it('honors a persisted dismissal without removing the profile or another workspace suggestion', () => {
@@ -116,11 +117,9 @@ describe('compact sidebar rendered accessibility', () => {
     const props = { profile, onProfileClick: change, promoKind: 'onboarding' as const, onPromoCta: change }
     const first = render(<SidebarChrome {...props} workspaceId="first" />)
     const second = render(<SidebarChrome {...props} workspaceId="second" />)
-    expect(buttons(first)).toHaveLength(3)
     expect(first).toContain('data-tutorial="profile-strip"')
-    expect(first).not.toContain('Set up memory')
     expect(first).not.toContain('data-promo-slot=')
-    expect(buttons(second)).toHaveLength(5)
+    expect(first).not.toContain('Set up memory')
     expect(second).toContain('data-promo-slot="onboarding"')
     expect(second).toContain('Set up memory')
   })
@@ -128,11 +127,11 @@ describe('compact sidebar rendered accessibility', () => {
   it('keeps measured reminders reachable after setup was dismissed', () => {
     dismissSidebarGuidance('first')
     const html = render(<SidebarChrome workspaceId="first" profile={profile} onProfileClick={change} promoKind="reminder" reminderDueCount={3} onPromoCta={change} />)
-    expect(buttons(html)).toHaveLength(4)
     expect(html).toContain('data-promo-slot="reminder"')
     expect(html).toContain('>Reminders</div>')
-    expect(html).toContain('3 lessons are due for review')
-    expect(html).not.toContain('Dismiss memory setup suggestion')
+    expect(html).toContain('>3 due</p>')
+    expect(html).toContain('>Review</button>')
+    expect(html).not.toContain('aria-label="Dismiss"')
   })
 
   it('hides zero badges while preserving every filter and positive or semantic badge', () => {

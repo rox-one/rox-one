@@ -791,6 +791,7 @@ const EXPECTED_CHANNELS: string[] = [
   'voice:historySelect',
   'voice:hotkey',
   'voice:job',
+  'voice:level',
   'voice:modelsList',
   'voice:overlay',
   'voice:process',

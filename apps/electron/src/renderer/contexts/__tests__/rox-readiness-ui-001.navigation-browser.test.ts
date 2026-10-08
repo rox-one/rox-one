@@ -826,4 +826,17 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await routeIs('notes/note/current-after-remote-aba')
   })
 
+  browserTest('the session inspector sidebar never auto-opens the Sessions screen',async()=>{
+    // A `sidebar=` address is a leftover of an explicit open. It is restored on
+    // the surface that hosts the inspector …
+    await page.goto(base+'/?'+new URLSearchParams({ws:'a',route:'notes/note/a',sidebar:'browser'}).toString())
+    await routeIs('notes/note/a')
+    expect((await snapshot()).nav.rightSidebar).toEqual({type:'browser'})
+    // … but a Sessions address never restores it, so entering Sessions cannot
+    // auto-open the browser before the user opens a section from the rail.
+    await page.goto(base+'/?'+new URLSearchParams({ws:'a',route:'allSessions/session/first-a',sidebar:'browser'}).toString())
+    await routeIs('allSessions/session/first-a')
+    expect((await snapshot()).nav.rightSidebar).toBeUndefined()
+  })
+
 })

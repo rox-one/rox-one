@@ -557,6 +557,7 @@ export const CHANNEL_MAP = {
   cancelVoiceCapture: invoke(RPC_CHANNELS.voice.CANCEL),
   grantVoicePermission: invoke(RPC_CHANNELS.voice.GRANT),
   sendVoiceChunk: invoke(RPC_CHANNELS.voice.CHUNK),
+  sendVoiceLevel: invoke(RPC_CHANNELS.voice.LEVEL),
   listVoiceHistory: invoke(RPC_CHANNELS.voice.HISTORY_LIST),
   getVoiceHistoryItem: invoke(RPC_CHANNELS.voice.HISTORY_GET),
   favoriteVoiceRecording: invoke(RPC_CHANNELS.voice.HISTORY_FAVORITE),
