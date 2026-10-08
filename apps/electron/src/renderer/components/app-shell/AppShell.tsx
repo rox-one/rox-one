@@ -805,7 +805,11 @@ function AppShellContent({
   const [searchQuery, setSearchQuery] = React.useState('')
 
   // CollectionDisplay is the workspace-persisted grouping owner. A legacy
-  // per-view grouping preference must not override the current groupBy.
+  // per-view grouping preference must not override the current groupBy
+  // (MOD-COLLECTIONS-01 unification): `groupBy === 'none'` means date groups.
+  // Group labels are preserved in session-list/list-grouping (historic key
+  // shapes kept); the legacy `view-filters` `groupingMode` is neither read
+  // nor written anymore.
   const isStateSubView = sessionFilter?.kind === 'state'
 
   const chatGroupingMode: ChatGroupingMode = isStateSubView
@@ -1060,7 +1064,12 @@ function AppShellContent({
   }, [activeWorkspaceId])
 
   // Reset UI state when workspace changes
-  // This prevents stale search queries, focused items, and filter state from persisting
+  // This prevents stale search queries and focused items from persisting.
+  // CollectionDisplay / CollectionFilters are workspace-persisted
+  // (collection/display.json + collection/filters.json via RPC): reload them
+  // for the new workspace so chips survive restart/switch (FR-11) instead of
+  // resetting to defaults (which would also persist the reset over the saved
+  // filters on the next write).
   const previousWorkspaceRef = React.useRef<string | null>(null)
   const [workspaceUiStateId, setWorkspaceUiStateId] = React.useState<string | null>(null)
   // Cancel gestures synchronously before a queued timer can use new handlers.

@@ -19,7 +19,7 @@ import { createE2bApiServer } from './e2b-tools.ts';
 import { isManagedBuiltinSource } from './builtin-sources.ts';
 import { createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk';
 import { debug } from '../utils/debug.ts';
-import { expandVars, resolveStdioConfig } from '../utils/paths.ts';
+import { resolveStdioConfig } from '../utils/paths.ts';
 import { buildRuntimeBuiltinMcpConfig, getBuiltinMcpReadiness } from './builtin-mcp.ts';
 
 /**
@@ -30,6 +30,10 @@ export const SERVER_BUILD_ERRORS = {
   AUTH_REQUIRED: 'Authentication required',
   TOKEN_EXPIRED: 'Token expired',
   CREDENTIALS_NEEDED: 'Credentials needed',
+  MCP_CONFIG_MISSING: 'MCP configuration missing',
+  STDIO_COMMAND_MISSING: 'Stdio command missing',
+  MCP_URL_MISSING: 'MCP URL missing',
+  API_CONFIG_MISSING: 'API configuration missing',
 } as const;
 
 /**
@@ -376,13 +380,16 @@ export class SourceServerBuilder {
               credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
             });
             errors.push({ sourceSlug: source.config.slug, error: readiness.reason || readiness.status });
-          } else if (source.config.mcp?.transport !== 'stdio' && source.config.mcp?.authType !== 'none') {
-            // Only report auth error for HTTP/SSE sources that need auth
-            // Stdio sources don't need auth
-            debug(`[SourceServerBuilder] MCP server ${source.config.slug} needs auth`);
+          } else {
+            const mcp = source.config.mcp;
+            // A missing URL/command is a configuration error, not missing auth.
+            const error = !mcp ? SERVER_BUILD_ERRORS.MCP_CONFIG_MISSING
+              : mcp.transport === 'stdio' ? SERVER_BUILD_ERRORS.STDIO_COMMAND_MISSING
+              : !mcp.url ? SERVER_BUILD_ERRORS.MCP_URL_MISSING
+              : SERVER_BUILD_ERRORS.AUTH_REQUIRED;
             errors.push({
               sourceSlug: source.config.slug,
-              error: SERVER_BUILD_ERRORS.AUTH_REQUIRED,
+              error,
             });
           }
         } else if (source.config.type === 'api') {
@@ -398,6 +405,11 @@ export class SourceServerBuilder {
           );
           if (server) {
             apiServers[source.config.slug] = server;
+          } else {
+            errors.push({
+              sourceSlug: source.config.slug,
+              error: source.config.api ? SERVER_BUILD_ERRORS.CREDENTIALS_NEEDED : SERVER_BUILD_ERRORS.API_CONFIG_MISSING,
+            });
           }
         }
       } catch (error) {

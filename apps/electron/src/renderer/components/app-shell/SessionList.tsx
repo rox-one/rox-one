@@ -224,7 +224,7 @@ export function SessionList({
     groupingMode,
   )
 
-  // --- Selection (atom-backed, shared with ChatDisplay + BatchActionPanel) ---
+  // --- Selection (atom-backed, shared with ChatDisplay + CollectionBulkBar) ---
   const {
     select: selectSession,
     toggle: toggleSession,

@@ -4,7 +4,7 @@
  * credentials and until AUD #333. No fake dialer, no iframe inbox.
  */
 
-import { joinRoom } from '../rooms.ts'
+import { joinRoom, ROOM_PROVIDER_DECISION } from '../rooms.ts'
 import { blocked, denied, unknownEffect, type MeetingOpResult } from '../types.ts'
 import { occurrenceKey, type CalendarOccurrence } from './calendar-calls.ts'
 import { proposeCrmEdit, resolveCrmTarget, type CrmTarget } from './crm.ts'
@@ -161,7 +161,7 @@ export function joinNativeRoom(input: {
   readonly actorId: string
   readonly guest?: boolean
   readonly recordingConsent?: boolean
-}): { ok: false; reason: string; decided: false } {
+}): { ok: false; reason: string; decided: typeof ROOM_PROVIDER_DECISION.decided } {
   const result = joinRoom(
     {
       roomId: input.roomId,

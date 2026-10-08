@@ -22,6 +22,23 @@ function cloneDisplay(display: CollectionDisplay = DEFAULT_COLLECTION_DISPLAY): 
 /** Current workspace CollectionDisplay (defaults until loaded). */
 export const collectionDisplayAtom = atom<CollectionDisplay>(cloneDisplay())
 
+/** Content equality for display prefs (visibleProperties order-sensitive). */
+export function areCollectionDisplaysEqual(a: CollectionDisplay, b: CollectionDisplay): boolean {
+  if (a === b) return true
+  return (
+    a.version === b.version &&
+    a.groupBy === b.groupBy &&
+    a.orderBy === b.orderBy &&
+    a.orderDir === b.orderDir &&
+    a.showEmptyGroups === b.showEmptyGroups &&
+    a.showCompleted === b.showCompleted &&
+    a.density === b.density &&
+    a.hoverActions === b.hoverActions &&
+    a.visibleProperties.length === b.visibleProperties.length &&
+    a.visibleProperties.every((p, i) => p === b.visibleProperties[i])
+  )
+}
+
 /** True while a workspace display load is in flight. */
 export const collectionDisplayLoadingAtom = atom(false)
 
@@ -84,6 +101,12 @@ export const setCollectionDisplayAtom = atom(
         ? [...patch.visibleProperties]
         : [...prev.visibleProperties],
     }
+    // No-op guard: same rationale as collectionFiltersAtom — skip the disk
+    // write, broadcast, and re-render cascade when the patch changes nothing
+    // (e.g. re-selecting the active grouping).
+    if (areCollectionDisplaysEqual(prev, next)) {
+      return prev
+    }
     set(collectionDisplayAtom, next)
 
     if (!workspaceId || typeof window === 'undefined' || !window.electronAPI?.setCollectionDisplay) {
@@ -100,7 +123,8 @@ export const setCollectionDisplayAtom = atom(
         if (
           collectionDisplayUpdateVersions.get(workspaceId) === version &&
           get(collectionDisplayLoadRevisionAtom) === revision &&
-          (activeWorkspaceId == null || activeWorkspaceId === workspaceId)
+          (activeWorkspaceId == null || activeWorkspaceId === workspaceId) &&
+          !areCollectionDisplaysEqual(get(collectionDisplayAtom), saved)
         ) {
           set(collectionDisplayAtom, cloneDisplay(saved))
         }

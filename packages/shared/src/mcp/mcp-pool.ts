@@ -15,6 +15,7 @@
 
 import { CraftMcpClient, DEFAULT_CONNECTION_TIMEOUT_MS, formatMcpUrlForLog, type McpClientConfig, type McpConnectOptions, type PoolCallToolOptions, type PoolClient } from './client.ts';
 import { ApiSourcePoolClient } from './api-source-pool-client.ts';
+import { withToolchainPathPrefix } from '../toolchain-runtime.ts';
 import type { SdkMcpServerConfig } from '../agent/backend/types.ts';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -60,7 +61,7 @@ export interface McpToolResult {
 /**
  * Convert SdkMcpServerConfig (used by backend types) to CraftMcpClient config.
  */
-function sdkConfigToClientConfig(config: SdkMcpServerConfig): McpClientConfig | null {
+async function sdkConfigToClientConfig(config: SdkMcpServerConfig): Promise<McpClientConfig | null> {
   if (config.type === 'http' || config.type === 'sse') {
     return {
       // Keep the declared transport: coercing sse → http deterministically
@@ -71,13 +72,34 @@ function sdkConfigToClientConfig(config: SdkMcpServerConfig): McpClientConfig | 
     };
   }
   if (config.type === 'stdio') {
+    const env = { ...config.env };
+    // Electron's PATH may not include managed node/npx/uv. Source overrides
+    // still supply the tail of PATH; installed toolchain bins take precedence.
+    const pathKey = process.platform === 'win32'
+      ? Object.keys(env).reverse().find(key => key.toUpperCase() === 'PATH')
+      : 'PATH';
+    const inheritedPathKey = process.platform === 'win32'
+      ? Object.keys(process.env).reverse().find(key => key.toUpperCase() === 'PATH')
+      : 'PATH';
+    const { PATH } = await withToolchainPathPrefix({
+      PATH: (pathKey ? env[pathKey] : undefined) ?? (inheritedPathKey ? process.env[inheritedPathKey] : undefined) ?? '',
+    });
+    env.PATH = PATH;
+    if (process.platform === 'win32') {
+      // CraftMcpClient and the SDK merge inherited env again. Node and
+      // cross-spawn choose different keys when PATH/Path both exist. Give
+      // every inherited/source alias the same value so lookup and child agree.
+      for (const key of [...Object.keys(process.env), ...Object.keys(env)]) {
+        if (key.toUpperCase() === 'PATH') env[key] = PATH;
+      }
+    }
     return {
       transport: 'stdio',
       command: config.command,
       args: config.args,
-      env: {
+env: {
         ...Object.fromEntries((config.envVars ?? []).flatMap(name => process.env[name] === undefined ? [] : [[name, process.env[name]!]])),
-        ...config.env,
+        ...env,
       },
       cwd: config.cwd,
     };
@@ -228,7 +250,7 @@ export class McpClientPool {
     let tools: Tool[];
     try {
       tools = await client.listTools(options);
-      if (client.isConnected?.() === false) throw new Error(`MCP source "${slug}" closed during tool discovery`);
+      if (client.isConnected?.() === false || client.isClosed) throw new Error(`MCP source "${slug}" closed during tool discovery`);
       if (!canRegister()) throw new Error(`MCP connection cancelled for source "${slug}"`);
     } catch (error) {
       await client.close().catch(() => {});
@@ -294,7 +316,7 @@ export class McpClientPool {
     if (existing) return existing.promise;
     if (this.isConnected(slug)) return;
     const connectionConfig = structuredClone(config);
-    const clientConfig = sdkConfigToClientConfig(connectionConfig);
+    const clientConfig = await sdkConfigToClientConfig(connectionConfig);
     if (!clientConfig) {
       this.debug(`Unknown MCP server type for ${slug}: ${(config as { type: string }).type}`);
       return;
@@ -373,7 +395,7 @@ export class McpClientPool {
 
   private connectionErrorContext(slug: string, config: McpClientConfig, error: unknown): string {
     const endpoint = config.transport === 'stdio' ? config.command : formatMcpUrlForLog(config.url);
-    const status = error instanceof StreamableHTTPError && error.code !== undefined ? `, HTTP ${error.code}` : '';
+    const status = error instanceof StreamableHTTPError && error.code !== undefined && error.code >= 100 ? `, HTTP ${error.code}` : '';
     return `MCP source ${slug} (${config.transport}: ${endpoint}${status}) failed: ${error instanceof Error ? error.message : String(error)}`;
   }
 
@@ -457,7 +479,8 @@ export class McpClientPool {
     this.clients.delete(slug);
     if (!preserveTools) this.removeToolMappings(slug);
     this.activeConfigs.delete(slug);
-    await client?.close().catch(() => {});
+    if (client) await client.close().catch(() => {});
+    this.debug(`Disconnected source: ${slug}`);
   }
 
   /**
@@ -541,10 +564,14 @@ export class McpClientPool {
   // ============================================================
 
   /**
-   * Get last known tools for a configured source, including during recovery.
+   * Tools a connected source currently publishes. A disconnected (or terminally
+   * closed) source exposes none: the LLM-facing view follows liveness, while
+   * proxy-name resolution stays available for call routing during recovery.
    */
   getTools(slug: string): Tool[] {
-    return this.toolCache.get(slug) || [];
+    // The tool view follows liveness: a disconnected source exposes no tools until
+    // recovery republishes them (proxy-name lookup stays available for call routing).
+    return this.isConnected(slug) ? this.toolCache.get(slug) || [] : [];
   }
 
   /**
@@ -559,7 +586,7 @@ export class McpClientPool {
    */
   isConnected(slug: string): boolean {
     const client = this.clients.get(slug);
-    return !!client && client.isConnected?.() !== false;
+    return !!client && client.isConnected?.() !== false && !client.isClosed;
   }
 
   private async recoverClient(slug: string, failedClient?: PoolClient): Promise<void> {
@@ -573,7 +600,7 @@ export class McpClientPool {
     const recovery = this.runSourceOperation(slug, async canContinue => {
       const current = this.clients.get(slug);
       if (failedClient && current !== failedClient) return;
-      if (!failedClient && current && current.isConnected?.() !== false) return;
+      if (!failedClient && current && current.isConnected?.() !== false && !current.isClosed) return;
       await this.removeClient(slug, true);
       if (!canContinue()) {
         throw new Error(`MCP reconnection cancelled for source "${slug}"`);
@@ -592,6 +619,7 @@ export class McpClientPool {
    * Resolve the LLM-facing proxy name for an original MCP tool name.
    */
   getProxyToolName(slug: string, originalName: string): string | null {
+    if (this.clients.get(slug)?.isClosed === true) return null;
     return this.sourceToolProxyNames.get(slug)?.get(originalName) ?? null;
   }
 
@@ -615,7 +643,7 @@ export class McpClientPool {
     const defs: ProxyToolDef[] = [];
 
     for (const slug of targetSlugs) {
-      const tools = this.toolCache.get(slug) || [];
+      const tools = this.getTools(slug);
       for (const tool of tools) {
         const proxyName = this.getProxyToolName(slug, tool.name);
         if (!proxyName) continue;
@@ -665,7 +693,7 @@ export class McpClientPool {
       options?.signal?.throwIfAborted();
       // A transport known to be closed has not received this call yet. It is
       // safe to reconnect and execute once on the replacement connection.
-      if (!client || client.isConnected?.() === false) {
+      if (!client || client.isConnected?.() === false || client.isClosed) {
         await waitForRecovery(this.recoverClient(slug, client), options?.signal);
         client = this.clients.get(slug);
         if (!client || !this.getProxyToolName(slug, originalName)) {
@@ -727,12 +755,18 @@ export class McpClientPool {
       return {
         content: text,
         isError: !!result.isError,
+        ...(result.isError ? { sourceSlug: slug } : {}),
       };
     } catch (err) {
       // A request may have reached the server before the transport failed.
       // Restore the connection for subsequent calls without replaying it.
-      if (client && this.clients.get(slug) === client && this.activeConfigs.has(slug) &&
-          !options?.signal?.aborted && (client.isConnected?.() === false || needsConnectionRecovery(err))) {
+      // A client that already reports its transport closed is a different case:
+      // teardown/rebuild is left to the next reconcile (same-config sync, an
+      // explicit ensureConnected, or the pre-call recovery gate), so this call
+      // reports the failure against the source as it actually is.
+      const transportKnownClosed = client?.isConnected?.() === false || client?.isClosed === true;
+      if (client && !transportKnownClosed && this.clients.get(slug) === client && this.activeConfigs.has(slug) &&
+          !options?.signal?.aborted && needsConnectionRecovery(err)) {
         await waitForRecovery(this.recoverClient(slug, client), options?.signal).catch(recoveryError => {
           if (!options?.signal?.aborted) {
             this.debug(`Failed to recover MCP source ${slug}: ${recoveryError instanceof Error ? recoveryError.message : String(recoveryError)}`);
@@ -751,6 +785,9 @@ export class McpClientPool {
    * Check if a tool name is an MCP proxy tool managed by this pool.
    */
   isProxyTool(toolName: string): boolean {
-    return this.proxyTools.has(toolName);
+    const info = this.proxyTools.get(toolName);
+    // A terminally closed client has no proxy view; a disconnected-but-recoverable
+    // source keeps it so a later tool call can resolve the name and retry recovery.
+    return !!info && this.clients.get(info.slug)?.isClosed !== true;
   }
 }

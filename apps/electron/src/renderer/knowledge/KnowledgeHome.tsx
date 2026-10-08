@@ -386,6 +386,9 @@ export function KnowledgeHome() {
 
   // Probe whether the legacy external knowledge engine is up. Empty state
   // Rox Notes only — no SiYuan install/start CTA and no SiYuan document routes.
+  // Cached via kernel-availability: repeat tab switches reuse the last verdict
+  // (30s TTL) instead of re-firing engineStatus (2.5s bootstrap probe + up to
+  // 10s getVersion) on every mount.
   useEffect(() => {
     if (typeof window === 'undefined') return
     const api = window.electronAPI?.knowledge

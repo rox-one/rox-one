@@ -48,8 +48,8 @@ import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
-import { join, dirname, resolve, isAbsolute, delimiter } from 'node:path';
-import { mkdirSync, readFileSync, readdirSync, copyFileSync, cpSync, existsSync } from 'node:fs';
+import { join, dirname, resolve, isAbsolute, delimiter, basename, relative, sep } from 'node:path';
+import { mkdirSync, readFileSync, readdirSync, copyFileSync, cpSync, existsSync, realpathSync, statSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
 import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
@@ -68,9 +68,8 @@ import { randomUUID } from 'node:crypto';
 import { OmpRuntimeObserver } from './omp-runtime-observer.ts';
 import { OmpRuntimeTraceBridge } from './omp-runtime-trace-bridge.ts';
 import { known, unknown, type RuntimeAgentObservation, type RuntimeContent } from '@rox/core/runtime-trace';
-import { whichTool } from '../toolchain/exec.ts';
+import { whichTool, executableCandidates, pathEnvKey } from '../toolchain/exec.ts';
 import { setupI18n } from '../i18n/index.ts';
-
 
 import { AbortReason } from './backend/types.ts';
 import type {
@@ -220,6 +219,77 @@ export function composeOmpAppendSystemPrompt(input: {
 /** Spawn argv fragment that pushes composed system prompt into OMP. */
 export function getOmpSpawnSystemPromptArgs(append: string): string[] {
   return ['--append-system-prompt', append];
+}
+
+export interface OmpLaunchSpec {
+  command: string;
+  argsPrefix: string[];
+}
+
+/**
+ * Windows cannot CreateProcess a .cmd/.bat file (Node reports spawn EINVAL).
+ * Bypass known OMP package shims using package.json's bin entry, never cmd.exe:
+ * prompts and multiline system context must remain literal argv, not shell code.
+ * Unknown batch overrides fail closed; point OMP_CLI_PATH at a native binary or
+ * the CLI script instead. Unix/native launches retain their existing behavior.
+ */
+export function buildOmpLaunchSpec(
+  executable: string,
+  env: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform = process.platform,
+): OmpLaunchSpec {
+  if (platform !== 'win32') return { command: executable, argsPrefix: [] };
+
+  const isFile = (file: string): boolean => {
+    try { return statSync(file).isFile(); } catch { return false; }
+  };
+  // The last-resort bare 'omp' also needs PATH lookup: CreateProcess does not
+  // resolve npm's .cmd shims. Use the effective child PATH, including overrides.
+  const pathEnv = env[pathEnvKey(env, true)] ?? '';
+  if (!isAbsolute(executable) && !/[\\/]/.test(executable)) {
+    const names = executableCandidates(executable, true);
+    for (const dir of pathEnv.split(';').filter(Boolean)) {
+      const found = names.map((name) => join(dir.replace(/^"|"$/g, ''), name)).find(isFile);
+      if (found) { executable = found; break; }
+    }
+  }
+
+  let script: string | undefined;
+  if (/\.(cmd|bat)$/i.test(executable)) {
+    const binDir = dirname(resolve(executable));
+    // Managed tarball layout; npm global and node_modules/.bin layouts.
+    const packageDirs = [
+      join(binDir, '..', 'package'),
+      join(binDir, 'node_modules', '@oh-my-pi', 'pi-coding-agent'),
+      join(binDir, '..', '@oh-my-pi', 'pi-coding-agent'),
+    ];
+    if (/^omp\.(cmd|bat)$/i.test(basename(executable))) {
+      for (const packageDir of packageDirs) {
+        try {
+          const pkg = JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8'));
+          const bin = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.omp;
+          if (pkg.name !== '@oh-my-pi/pi-coding-agent' || typeof bin !== 'string') continue;
+          const root = realpathSync(packageDir);
+          const entry = realpathSync(resolve(packageDir, bin));
+          const rel = relative(root, entry);
+          if (!rel || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel) || !isFile(entry)) continue;
+          if (!/\.(js|mjs|cjs|ts)$/i.test(entry)) continue;
+          script = entry;
+          break;
+        } catch { /* Not a recognized, complete OMP package layout. */ }
+      }
+    }
+    if (!script) throw new Error(`OMP batch launcher cannot be started safely: ${executable}. Set OMP_CLI_PATH to the CLI script or a native executable.`);
+  } else if (/\.(js|mjs|cjs|ts)$/i.test(executable)) {
+    script = resolve(executable);
+  }
+  if (!script) return { command: executable, argsPrefix: [] };
+
+  // Preserve the installed wrapper's Bun precedence without interpreting it.
+  const managedBun = join(dirname(executable), '..', '..', '..', 'bun', 'current', 'bun-windows-x64', 'bun.exe');
+  const command = env.CRAFT_BUN_PATH?.trim() || (isFile(managedBun) ? managedBun : 'bun');
+  if (/\.(cmd|bat)$/i.test(command)) throw new Error('OMP requires a native Bun executable, not a batch launcher.');
+  return { command, argsPrefix: [script] };
 }
 
 /**
@@ -2705,6 +2775,15 @@ export class OmpAgent extends BaseAgent {
   }
 
   async queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
+    // `omp -p` exposes no verified --max-tokens/--temperature flags (`omp
+    // --help` lists only --model for shaping a one-shot), so these MAY-honored
+    // contract fields are intentionally NOT forwarded — never silently folded
+    // into the prompt. Logged for observability ([MOD-AGENT-04]).
+    if (request.maxTokens !== undefined || request.temperature !== undefined) {
+      this.debug(
+        `queryLlm: ignoring unsupported one-shot fields (maxTokens=${String(request.maxTokens)}, temperature=${String(request.temperature)})`,
+      );
+    }
     const prompt = request.systemPrompt
       ? `${request.systemPrompt}\n\n${request.prompt}`
       : request.prompt;

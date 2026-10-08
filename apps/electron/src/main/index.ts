@@ -492,6 +492,7 @@ app.whenReady().then(async () => {
       preference: getToolchainDependencyMode(),
       gitBashPreference: getGitBashPath(),
     })
+    // Structured non-secret diagnostics; never log receipt errors or process output.
     if (result?.missingTools.length || result?.recoveryCode) mainLog.warn('[windows-bootstrap]', result)
     else if (result) mainLog.info('[windows-bootstrap]', result)
   }
