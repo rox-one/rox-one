@@ -59,8 +59,29 @@ describe('install-app.sh config dir (W1-13)', () => {
       expect(resolveDir(home, { ROX_STORAGE_VISIBLE_ROOT: '1' })).toBe(`${join(home, 'rox')}|true`)
       mkdirSync(join(home, '.rox'))
       expect(resolveDir(home, { ROX_STORAGE_VISIBLE_ROOT: 'on' })).toBe(`${join(home, '.rox')}|true`)
+      // An empty ~/rox next to the legacy tree is not the home yet.
       mkdirSync(join(home, 'rox'))
+      expect(resolveDir(home, { ROX_STORAGE_VISIBLE_ROOT: 'TRUE' })).toBe(`${join(home, '.rox')}|true`)
+      writeFileSync(join(home, 'rox', 'config.json'), '{}')
       expect(resolveDir(home, { ROX_STORAGE_VISIBLE_ROOT: 'TRUE' })).toBe(`${join(home, 'rox')}|true`)
+    }))
+
+  it('flag ON: a foreign ~/rox (no Rox markers) is never chosen, even without a legacy home', () =>
+    withHome((home) => {
+      mkdirSync(join(home, 'rox'))
+      writeFileSync(join(home, 'rox', 'README.md'), '# my project')
+      expect(resolveDir(home, { ROX_STORAGE_VISIBLE_ROOT: '1' })).toBe(`${join(home, '.rox')}|true`)
+      mkdirSync(join(home, '.rox'))
+      expect(resolveDir(home, { ROX_STORAGE_VISIBLE_ROOT: '1' })).toBe(`${join(home, '.rox')}|true`)
+    }))
+
+  it('a foreign ~/rox does not hide the persisted legacy flag', () =>
+    withHome((home) => {
+      mkdirSync(join(home, '.rox'))
+      writeFileSync(join(home, '.rox', 'workbench-flags.json'), JSON.stringify({ enabled: ['storage.visible-root.v1'] }))
+      mkdirSync(join(home, 'rox'))
+      writeFileSync(join(home, 'rox', 'README.md'), '# my project')
+      expect(resolveDir(home)).toBe(`${join(home, '.rox')}|true`)
     }))
 
   it('flag ON via the persisted workbench-flags.json; env 0 overrides it', () =>

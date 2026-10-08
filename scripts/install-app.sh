@@ -73,24 +73,34 @@ if [ "$metadata_only" = true ]; then exit 0; fi
 
 # W1-13: storage.visible-root.v1 (default OFF). Mirrors resolveConfigDir's
 # flag sources: env override first, then the persisted workbench-flags.json
-# in the flag-OFF config dir (~/rox if it exists, else the legacy ~/.rox).
+# (~/rox's only once ~/rox is a Rox home, else the legacy ~/.rox file).
 legacy_home="$HOME/.rox" # legacy hidden home (the flag-OFF default)
+# A Rox home has one of the markers (same list as ROX_HOME_MARKER_NAMES).
+is_rox_home() {
+  local marker
+  [ -d "$1" ] || return 1
+  for marker in config.json workspaces .migration workbench-flags.json; do
+    [ -e "$1/$marker" ] && return 0
+  done
+  return 1
+}
 visible_root_flag_on() {
   case "$(printf '%s' "${ROX_STORAGE_VISIBLE_ROOT:-${CRAFT_FEATURE_STORAGE_VISIBLE_ROOT:-}}" | tr '[:upper:]' '[:lower:]')" in
     1|true|yes|on) return 0 ;;
     0|false|no|off) return 1 ;;
   esac
-  local flags_file="$legacy_home/workbench-flags.json"
-  [ -d "$HOME/rox" ] && flags_file="$HOME/rox/workbench-flags.json"
+  local flags_file="$legacy_home/workbench-flags.json" # legacy flag file
+  if is_rox_home "$HOME/rox" && [ -f "$HOME/rox/workbench-flags.json" ]; then flags_file="$HOME/rox/workbench-flags.json"; fi
   [ -f "$flags_file" ] && grep -q '"storage\.visible-root\.v1"' "$flags_file"
 }
 visible_root=false
 if [ -z "${ROX_CONFIG_DIR:-}" ] && visible_root_flag_on; then visible_root=true; fi
 if [ -n "${ROX_CONFIG_DIR:-}" ]; then
   config_dir="$ROX_CONFIG_DIR"
-elif [ "$visible_root" = true ] && { [ -d "$HOME/rox" ] || [ ! -e "$legacy_home" ]; }; then
-  # Flag ON: the visible home, but never created next to an unmigrated
-  # legacy tree (the app migrates ~/.rox itself on launch).
+elif [ "$visible_root" = true ] && { is_rox_home "$HOME/rox" || { [ ! -e "$HOME/rox" ] && [ ! -L "$HOME/rox" ] && [ ! -e "$legacy_home" ]; }; }; then
+  # Flag ON: ~/rox only once it is a Rox home, or on a clean machine. A
+  # foreign ~/rox (a project checkout) is never written to, and ~/rox is
+  # never created next to an unmigrated legacy tree (the app migrates it).
   config_dir="$HOME/rox"
 else
   config_dir="$legacy_home" # flag OFF: exactly as before W1-13
