@@ -40,11 +40,48 @@ export interface RemoveEntityLinkInput {
   relation: EntityRelation
 }
 
+/** One desired outgoing link for `replaceOutgoing`. */
+export interface DesiredOutgoingLink {
+  to: EntityRef
+  relation: EntityRelation
+  anchor?: EntityLinkAnchor
+}
+
+/**
+ * Which outgoing rows a writer owns. Reconcile/cleanup never reads, deletes
+ * or rewrites rows outside this scope (e.g. a manual `relates-to` link added
+ * through `entities:links`).
+ */
+export interface OutgoingOwnership {
+  createdBy: string
+  relations: readonly EntityRelation[]
+}
+
+export interface ReplaceOutgoingResult {
+  /** Owned links inserted. */
+  added: number
+  /** Owned links deleted. */
+  removed: number
+  /**
+   * Owned links whose anchor (e.g. line) moved; refreshed in place without a
+   * revision bump. Not a link-set change: callers must not notify for it.
+   */
+  refreshed: number
+}
+
 export interface BacklinkQuery {
   kinds?: string[]
   relations?: string[]
   cursor?: string
   limit?: number
+}
+
+export interface BacklinkOptions {
+  /**
+   * Drop links whose source can no longer be found (e.g. a note deleted while
+   * the flag was off). Pagination still advances over the raw rows.
+   */
+  sourceExists?: (ref: EntityRef) => boolean
 }
 
 export interface BacklinkPage {
@@ -73,6 +110,15 @@ interface LinkRow {
 
 const DEFAULT_BACKLINK_LIMIT = 200
 const MAX_BACKLINK_LIMIT = 1000
+
+function ownershipClause(owner: OutgoingOwnership | undefined): { sql: string; params: string[] } {
+  if (!owner) return { sql: '', params: [] }
+  if (owner.relations.length === 0) return { sql: ' AND 0', params: [] }
+  return {
+    sql: ` AND created_by=? AND relation IN (${owner.relations.map(() => '?').join(',')})`,
+    params: [owner.createdBy, ...owner.relations],
+  }
+}
 
 function rowToLink(row: LinkRow): EntityLink {
   const anchor: EntityLinkAnchor = {}
@@ -139,14 +185,8 @@ export class EntityLinkStore {
   /** Upsert a link by `(from, relation, to)`; returns the stored record. */
   add(input: AddEntityLinkInput): EntityLink {
     const dedupeKey = entityLinkDedupeKey(input)
-    const existing = this.db
-      .prepare('SELECT link_id, created_at, revision FROM entity_links WHERE dedupe_key=?')
-      .get(dedupeKey) as { link_id: string; created_at: string; revision: number } | undefined
-    const linkId = existing?.link_id ?? `lnk_${randomUUID()}`
-    const createdAt = existing?.created_at ?? new Date().toISOString()
-    const revision = (existing?.revision ?? 0) + 1
     const anchor = input.anchor ?? {}
-    this.db
+    const row = this.db
       .prepare(
         `INSERT INTO entity_links (
            link_id, from_kind, from_id, from_fragment, to_kind, to_id, to_fragment,
@@ -155,10 +195,12 @@ export class EntityLinkStore {
          ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
          ON CONFLICT(dedupe_key) DO UPDATE SET
            role=excluded.role, anchor_block_id=excluded.anchor_block_id, anchor_seq=excluded.anchor_seq,
-           anchor_line=excluded.anchor_line, anchor_target_id=excluded.anchor_target_id, revision=excluded.revision`,
+           anchor_line=excluded.anchor_line, anchor_target_id=excluded.anchor_target_id,
+           revision=entity_links.revision + 1
+         RETURNING *`,
       )
-      .run(
-        linkId,
+      .get(
+        `lnk_${randomUUID()}`,
         input.from.kind,
         input.from.id,
         input.from.fragment ?? null,
@@ -172,11 +214,11 @@ export class EntityLinkStore {
         anchor.line ?? null,
         anchor.targetId ?? null,
         input.createdBy,
-        createdAt,
-        revision,
+        new Date().toISOString(),
+        1,
         dedupeKey,
-      )
-    return this.readByDedupe(dedupeKey)!
+      ) as unknown as LinkRow
+    return rowToLink(row)
   }
 
   /** Remove a link by `(from, relation, to)`; true when a row was deleted. */
@@ -194,7 +236,7 @@ export class EntityLinkStore {
   }
 
   /** Links pointing at `ref`, filtered and paginated by link id. Fragment is matched NULL-safe. */
-  backlinks(ref: EntityRef, query: BacklinkQuery = {}): BacklinkPage {
+  backlinks(ref: EntityRef, query: BacklinkQuery = {}, options: BacklinkOptions = {}): BacklinkPage {
     const limit = Math.min(query.limit ?? DEFAULT_BACKLINK_LIMIT, MAX_BACKLINK_LIMIT)
     const clauses = ['to_kind=?', 'to_id=?', 'to_fragment IS ?']
     const params: Array<string | number | null> = [ref.kind, ref.id, ref.fragment ?? null]
@@ -213,9 +255,134 @@ export class EntityLinkStore {
     const rows = this.db
       .prepare(`SELECT * FROM entity_links WHERE ${clauses.join(' AND ')} ORDER BY link_id ASC LIMIT ?`)
       .all(...params, limit + 1) as unknown as LinkRow[]
-    const page = rows.slice(0, limit).map(rowToLink)
-    const nextCursor = rows.length > limit ? page[page.length - 1]?.linkId : undefined
+    const raw = rows.slice(0, limit).map(rowToLink)
+    const nextCursor = rows.length > limit ? raw[raw.length - 1]?.linkId : undefined
+    const sourceExists = options.sourceExists
+    const page = sourceExists ? raw.filter(link => sourceExists(link.from)) : raw
     return nextCursor ? { links: page, nextCursor } : { links: page }
+  }
+
+  /**
+   * Reconcile the OWNED outgoing links of `from` to exactly `desired`, in one
+   * IMMEDIATE transaction. Only rows matching `owner` (author + relations)
+   * are read, deleted or refreshed; any other row — a manual `relates-to` link,
+   * or a same-key link someone else authored — is never touched (the insert
+   * is `ON CONFLICT DO NOTHING`, so its role/anchor survive).
+   *
+   * Change detection is the link SET (added/removed). Anchors are refreshed
+   * in place without a revision bump and reported as `refreshed`, so
+   * inserting a line above the links is not a change. Idempotent; duplicates
+   * in `desired` collapse to the first `(relation, to)`; `from.fragment` is
+   * matched NULL-safe. Statements are prepared once per call.
+   */
+  replaceOutgoing(from: EntityRef, desired: readonly DesiredOutgoingLink[], owner: OutgoingOwnership): ReplaceOutgoingResult {
+    const relations = new Set<string>(owner.relations)
+    const wanted = new Map<string, DesiredOutgoingLink>()
+    for (const link of desired) {
+      if (!relations.has(link.relation)) continue
+      const key = entityLinkDedupeKey({ from, relation: link.relation, to: link.to })
+      if (!wanted.has(key)) wanted.set(key, link)
+    }
+    const result: ReplaceOutgoingResult = { added: 0, removed: 0, refreshed: 0 }
+    const scope = ownershipClause(owner)
+    this.db.exec('BEGIN IMMEDIATE')
+    try {
+      const existing = this.db
+        .prepare(`SELECT link_id, dedupe_key, anchor_block_id, anchor_seq, anchor_line, anchor_target_id FROM entity_links WHERE from_kind=? AND from_id=? AND from_fragment IS ?${scope.sql}`)
+        .all(from.kind, from.id, from.fragment ?? null, ...scope.params) as unknown as Array<Pick<LinkRow, 'link_id' | 'anchor_block_id' | 'anchor_seq' | 'anchor_line' | 'anchor_target_id'> & { dedupe_key: string }>
+      const present = new Map(existing.map(row => [row.dedupe_key, row]))
+      let remove: ReturnType<DatabaseSync['prepare']> | null = null
+      let insert: ReturnType<DatabaseSync['prepare']> | null = null
+      let refresh: ReturnType<DatabaseSync['prepare']> | null = null
+      for (const row of existing) {
+        if (wanted.has(row.dedupe_key)) continue
+        remove ??= this.db.prepare('DELETE FROM entity_links WHERE link_id=?')
+        remove.run(row.link_id)
+        result.removed += 1
+      }
+      const now = new Date().toISOString()
+      for (const [key, link] of wanted) {
+        const anchor = link.anchor ?? {}
+        const row = present.get(key)
+        if (row) {
+          const same = row.anchor_block_id === (anchor.blockId ?? null)
+            && row.anchor_seq === (anchor.seq ?? null)
+            && row.anchor_line === (anchor.line ?? null)
+            && row.anchor_target_id === (anchor.targetId ?? null)
+          if (same) continue
+          refresh ??= this.db.prepare('UPDATE entity_links SET anchor_block_id=?, anchor_seq=?, anchor_line=?, anchor_target_id=? WHERE link_id=?')
+          refresh.run(anchor.blockId ?? null, anchor.seq ?? null, anchor.line ?? null, anchor.targetId ?? null, row.link_id)
+          result.refreshed += 1
+          continue
+        }
+        insert ??= this.db.prepare(
+          `INSERT INTO entity_links (
+             link_id, from_kind, from_id, from_fragment, to_kind, to_id, to_fragment,
+             relation, role, anchor_block_id, anchor_seq, anchor_line, anchor_target_id,
+             created_by, created_at, revision, dedupe_key
+           ) VALUES (?,?,?,?,?,?,?,?,NULL,?,?,?,?,?,?,1,?)
+           ON CONFLICT(dedupe_key) DO NOTHING`,
+        )
+        const inserted = insert.run(
+          `lnk_${randomUUID()}`,
+          from.kind,
+          from.id,
+          from.fragment ?? null,
+          link.to.kind,
+          link.to.id,
+          link.to.fragment ?? null,
+          link.relation,
+          anchor.blockId ?? null,
+          anchor.seq ?? null,
+          anchor.line ?? null,
+          anchor.targetId ?? null,
+          owner.createdBy,
+          now,
+          key,
+        )
+        // A same-key row owned by someone else stays exactly as it is.
+        if (Number(inserted.changes) > 0) result.added += 1
+      }
+      this.db.exec('COMMIT')
+    } catch (error) {
+      try { this.db.exec('ROLLBACK') } catch { /* already rolled back */ }
+      throw error
+    }
+    return result
+  }
+
+  /** Remove the outgoing links of `from` (only `owner`'s rows when given); returns the number removed. */
+  removeOutgoing(from: EntityRef, owner?: OutgoingOwnership): number {
+    const scope = ownershipClause(owner)
+    const changes = this.db
+      .prepare(`DELETE FROM entity_links WHERE from_kind=? AND from_id=? AND from_fragment IS ?${scope.sql}`)
+      .run(from.kind, from.id, from.fragment ?? null, ...scope.params).changes
+    return Number(changes)
+  }
+
+  /**
+   * Remove every outgoing link whose source is `kind` with an id starting
+   * with `idPrefix` (e.g. all notes under a renamed folder `projects/`),
+   * only `owner`'s rows when given. Exact prefix compare with no LIKE
+   * wildcards; the length is SQLite's own `length(?)` of the bound prefix, so
+   * astral characters (emoji folder names) count the same on both sides.
+   */
+  removeOutgoingByIdPrefix(kind: EntityRef['kind'], idPrefix: string, owner?: OutgoingOwnership): number {
+    if (!idPrefix) return 0
+    const scope = ownershipClause(owner)
+    const changes = this.db
+      .prepare(`DELETE FROM entity_links WHERE from_kind=? AND substr(from_id, 1, length(?)) = ?${scope.sql}`)
+      .run(kind, idPrefix, idPrefix, ...scope.params).changes
+    return Number(changes)
+  }
+
+  /** Distinct source ids of `kind` that have rows (only `owner`'s rows when given). */
+  outgoingSourceIds(kind: EntityRef['kind'], owner?: OutgoingOwnership): string[] {
+    const scope = ownershipClause(owner)
+    const rows = this.db
+      .prepare(`SELECT DISTINCT from_id FROM entity_links WHERE from_kind=?${scope.sql} ORDER BY from_id`)
+      .all(kind, ...scope.params) as unknown as Array<{ from_id: string }>
+    return rows.map(row => row.from_id)
   }
 
   count(): number {
@@ -225,11 +392,6 @@ export class EntityLinkStore {
 
   close(): void {
     this.db.close()
-  }
-
-  private readByDedupe(dedupeKey: string): EntityLink | undefined {
-    const row = this.db.prepare('SELECT * FROM entity_links WHERE dedupe_key=?').get(dedupeKey) as unknown as LinkRow | undefined
-    return row ? rowToLink(row) : undefined
   }
 }
 

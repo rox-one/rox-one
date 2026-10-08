@@ -6212,6 +6212,8 @@
   "settings.appearance.defaultZoomLevelDesc": "عيّن مستوى التكبير الدائم للتطبيق لجميع النوافذ",
   "settings.appearance.description": "النسق والخط وأيقونات الأدوات",
   "settings.appearance.editFile": "تحرير الملف",
+  "settings.appearance.entitiesEnvForcedOff": "مُعطّل قسرًا بواسطة CRAFT_FEATURE_ENTITIES_LINKS=0. احذف المتغير لاستخدام هذا المفتاح.",
+  "settings.appearance.entitiesEnvForcedOn": "مُفعّل قسرًا بواسطة CRAFT_FEATURE_ENTITIES_LINKS=1. احذف المتغير لاستخدام هذا المفتاح.",
   "settings.appearance.entitiesLinks": "روابط الكيانات (تجريبي)",
   "settings.appearance.entitiesLinksDesc": "اربط الكيانات في الملاحظات والمهام والمستندات عبر [[kind:id]] وروابط rox:// والروابط الخلفية. متوقف افتراضيًا.",
   "settings.appearance.entitiesPreviews": "معاينات الكيانات (تجريبي)",

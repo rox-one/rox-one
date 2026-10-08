@@ -26,6 +26,7 @@ import { parseRox2EntityId } from '@rox/core/rox2'
 import { createDescriptorResolver, FileDescriptorStore, type ContentOwner, type ContentPolicy } from '../../docs/descriptor-resolver.ts'
 import { awardXpSafe } from '@rox/shared/gamification'
 import { awardNativeXpAndBroadcast } from './gamification'
+import { createNoteLinksIndexer, createNoteLinksSerializer, setNoteLinksSourceProbe, type NoteLinksRevision, type NoteLinksWorkspace } from '../../entities/note-links-indexer.ts'
 import {
   contentHash,
   isClaimableLive,
@@ -1202,6 +1203,89 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   const changed = (payload: NoteChangedPayload, target: { to: 'workspace'; workspaceId: string } | { to: 'client'; clientId: string } = { to: 'workspace', workspaceId: payload.workspaceId }) => {
     pushTyped(server, RPC_CHANNELS.notes.CHANGED, target, payload)
   }
+  // W1-02 (#1499) note-mention indexer: reconciles each persisted note's
+  // explicit-syntax links in the workspace link store. Inert while
+  // entities.links.v1 is off (checked before any read); failures are logged
+  // and never fail the note operation; the note text is never rewritten.
+  const noteLinks = createNoteLinksIndexer({
+    notify: workspaceId => pushTyped(server, RPC_CHANNELS.entities.LINKS_CHANGED, { to: 'workspace', workspaceId }, workspaceId),
+  })
+  const noteLinksWorkspace = (workspaceId: string): NoteLinksWorkspace | null => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    return workspace ? { id: workspace.id, rootPath: workspace.rootPath } : null
+  }
+  const indexNoteLinks = (workspaceId: string, noteId: string, content: string): void => {
+    if (!noteLinks.isEnabled()) return
+    try {
+      const workspace = noteLinksWorkspace(workspaceId)
+      if (workspace) noteLinks.index(workspace, noteId, content)
+    } catch (error) {
+      console.warn('[entities] note link indexing failed:', error)
+    }
+  }
+  const removeNoteLinks = (workspaceId: string, noteId: string): void => {
+    if (!noteLinks.isEnabled()) return
+    try {
+      const workspace = noteLinksWorkspace(workspaceId)
+      if (workspace) noteLinks.remove(workspace, noteId)
+    } catch (error) {
+      console.warn('[entities] note link cleanup failed:', error)
+    }
+  }
+  const removeFolderNoteLinks = (workspaceId: string, folder: string): void => {
+    if (!noteLinks.isEnabled()) return
+    try {
+      const workspace = noteLinksWorkspace(workspaceId)
+      if (workspace) noteLinks.removeFolder(workspace, folder)
+    } catch (error) {
+      console.warn('[entities] note link cleanup failed:', error)
+    }
+  }
+  // Phantom-source pruning and backlinks filtering ask the Notes authority
+  // whether a source note id still exists (native journal root or vault).
+  const disposeNoteLinksProbe = setNoteLinksSourceProbe((workspace, noteId) => {
+    const native = deps.nativeData?.authority.resolveWorkspace(workspace.id)
+    const notesRoot = native ? join(native.nativeRoot, NOTES_DIR) : getWorkspaceNotesRoot(workspace.id)
+    return existsSync(notePathFromId(notesRoot, noteId))
+  })
+  server.onShutdown?.(disposeNoteLinksProbe)
+  // Native (journal) paths index outside the vault lease: serialize per
+  // (workspace, note) and drop out-of-order stale reads by journal revision.
+  const nativeNoteLinks = createNoteLinksSerializer()
+  const nativeRevision = (note: { nativeId?: string; nativeRevision?: number }): NoteLinksRevision | undefined =>
+    typeof note.nativeId === 'string' && typeof note.nativeRevision === 'number'
+      ? { nativeId: note.nativeId, revision: note.nativeRevision }
+      : undefined
+  const indexNativeNoteLinks = (
+    workspaceId: string,
+    note: { id: string; content: string; nativeId?: string; nativeRevision?: number },
+    options: { reset?: boolean } = {},
+  ): Promise<void> => {
+    if (!noteLinks.isEnabled()) return Promise.resolve()
+    return nativeNoteLinks.run(workspaceId, note.id, () => indexNoteLinks(workspaceId, note.id, note.content), {
+      revision: nativeRevision(note),
+      reset: options.reset,
+    })
+  }
+  const removeNativeNoteLinks = (workspaceId: string, noteId: string, previous?: { nativeId?: string; nativeRevision?: number }): Promise<void> => {
+    if (!noteLinks.isEnabled()) return Promise.resolve()
+    return nativeNoteLinks.run(workspaceId, noteId, () => removeNoteLinks(workspaceId, noteId), {
+      tombstone: previous ? nativeRevision(previous) : undefined,
+    })
+  }
+  /** Filesystem vault: re-read the persisted note (gone → drop its links). */
+  const reindexVaultNoteLinks = async (workspaceId: string, notesRoot: string, noteId: string): Promise<void> => {
+    if (!noteLinks.isEnabled()) return
+    let content: string
+    try {
+      content = await readFile(notePathFromId(notesRoot, noteId), 'utf-8')
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') removeNoteLinks(workspaceId, noteId)
+      else console.warn('[entities] note link indexing could not read the note:', error)
+      return
+    }
+    indexNoteLinks(workspaceId, noteId, content)
+  }
   const watchedClients = new Set<string>()
   const watchRequests = new Map<string, number>()
   let watchesDisposed = false
@@ -1241,6 +1325,10 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       try { lastInternalMtime.set(filePath, (await stat(filePath)).mtimeMs) }
       catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error }
       refreshVaultIndex(notesRoot)
+      // Every filesystem-vault write (notes:save, content:commitMarkdown,
+      // create/rename/move/delete, folder ops, daily notes) lands here once
+      // per affected note id.
+      if (reason !== 'asset' && reason !== 'descriptor') await reindexVaultNoteLinks(workspaceId, notesRoot, noteId)
       changed({ workspaceId, reason, noteId, ...(eventId ? { eventId } : {}) })
     },
   })
@@ -1311,6 +1399,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         // Award only a real unambiguous canonical edge, once for its lifetime.
         if (targets.length === 1) awardNativeXpAndBroadcast(server, deps, ctx, 'note_linked', JSON.stringify([workspaceId, updated.entity.nativeId, targets[0]!.nativeId]))
       }
+      await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'save', noteId: note.id })
       return note
     }
@@ -1371,6 +1460,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       const created = await findNativeNote(deps, context, relativeId)
       const note = await nativeNoteDocument(deps, context, created.entity, created.file, created.entities)
       awardNativeXpAndBroadcast(server, deps, ctx, 'first_note', JSON.stringify([workspaceId, created.entity.nativeId]))
+      await indexNativeNoteLinks(workspaceId, note, { reset: true })
       changed({ workspaceId, reason: 'create', noteId: note.id })
       return note
     }
@@ -1394,11 +1484,15 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       ])
       const renamed = await findNativeNote(deps, context, nextId)
       const note = await nativeNoteDocument(deps, context, renamed.entity, renamed.file, renamed.entities)
+      if (note.id !== noteId) await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
+      await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'rename', noteId: note.id })
       return { note, updatedNotes: [] }
     }
     const result = await renameNote(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    // Move events only name the target id; the new id was re-indexed there.
+    if (result.note.id !== noteId) removeNoteLinks(workspaceId, noteId)
     return result
   }, { nativeAction: 'write' })
 
@@ -1418,11 +1512,16 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       ])
       const moved = await findNativeNote(deps, context, nextId)
       const note = await nativeNoteDocument(deps, context, moved.entity, moved.file, moved.entities)
+      if (note.id !== noteId) await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
+      await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'move', noteId: note.id })
       return { note }
     }
     const note = await moveNoteInFilesystem(getWorkspaceNotesRoot(workspaceId), noteId, targetFolder)
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    // A plain filesystem rename emits no change events: move the links here.
+    if (note.id !== noteId) removeNoteLinks(workspaceId, noteId)
+    indexNoteLinks(workspaceId, note.id, note.content)
     changed({ workspaceId, reason: 'move', noteId: note.id })
     return { note }
   }, { nativeAction: 'write' })
@@ -1438,6 +1537,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         path: file.path,
         content: null,
       })))
+      await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
       changed({ workspaceId, reason: 'delete', noteId })
       return true
     }
@@ -1453,6 +1553,9 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     nativeContent.assertScope(ctx, workspaceId)
     const result = await renameFolder(getWorkspaceNotesRoot(workspaceId), folder, nextName, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), target => nativeContent.folderSnapshot(ctx, workspaceId, target))
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    // moveFolder events name only the new ids (re-indexed there); drop the
+    // old ids' links unless the folder did not actually move.
+    if (result.movedNotes.some(id => !id.startsWith(`${folder.replace(/\/+$/, '')}/`))) removeFolderNoteLinks(workspaceId, folder)
     return result
   }, { access: 'localElectron' })
 
@@ -1611,6 +1714,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       await commitNativeNote(deps, context, found.entity.nativeId, operation, [{ path: found.file.path, content }])
       const updated = await findNativeNote(deps, context, noteId)
       const note = await nativeNoteDocument(deps, context, updated.entity, updated.file, updated.entities)
+      await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'properties', noteId: note.id })
       return note
     }

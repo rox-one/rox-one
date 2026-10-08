@@ -6202,6 +6202,8 @@
   "settings.appearance.defaultZoomLevelDesc": "Set the permanent app zoom level for all windows",
   "settings.appearance.description": "テーマ、フォント、ツールアイコン",
   "settings.appearance.editFile": "ファイルを編集",
+  "settings.appearance.entitiesEnvForcedOff": "CRAFT_FEATURE_ENTITIES_LINKS=0 により強制的にオフです。この切り替えを使うには変数を削除してください。",
+  "settings.appearance.entitiesEnvForcedOn": "CRAFT_FEATURE_ENTITIES_LINKS=1 により強制的にオンです。この切り替えを使うには変数を削除してください。",
   "settings.appearance.entitiesLinks": "エンティティリンク（実験的）",
   "settings.appearance.entitiesLinksDesc": "[[kind:id]]、rox://ディープリンク、バックリンクでメモ・タスク・ドキュメントのエンティティをつなげます。既定ではオフ。",
   "settings.appearance.entitiesPreviews": "エンティティのプレビュー（実験的）",

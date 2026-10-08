@@ -6202,6 +6202,8 @@
   "settings.appearance.defaultZoomLevelDesc": "Set the permanent app zoom level for all windows",
   "settings.appearance.description": "Thème, police, icônes d'outils",
   "settings.appearance.editFile": "Modifier le fichier",
+  "settings.appearance.entitiesEnvForcedOff": "Désactivé de force par CRAFT_FEATURE_ENTITIES_LINKS=0. Supprimez la variable pour utiliser ce réglage.",
+  "settings.appearance.entitiesEnvForcedOn": "Activé de force par CRAFT_FEATURE_ENTITIES_LINKS=1. Supprimez la variable pour utiliser ce réglage.",
   "settings.appearance.entitiesLinks": "Liens d’entités (expérimental)",
   "settings.appearance.entitiesLinksDesc": "Liez les entités des notes, tâches et documents via [[kind:id]], liens profonds rox:// et backlinks. Désactivé par défaut.",
   "settings.appearance.entitiesPreviews": "Aperçus d’entités (expérimental)",

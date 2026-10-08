@@ -1,10 +1,9 @@
-import { describe, expect, it, beforeEach, afterEach, mock } from 'bun:test'
+import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
+import { stubMainLogger } from './stub-main-logger'
 
 // Stub the main logger (electron-log → electron binary, not installed in
 // this clone) so the pure deep-link parse logic stays testable here.
-mock.module(new URL('../logger.ts', import.meta.url).pathname, () => ({
-  mainLog: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
-}))
+stubMainLogger()
 const { parseDeepLink } = await import('../deep-link')
 import {
   COMPOUND_ROUTE_PREFIXES,

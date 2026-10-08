@@ -6202,6 +6202,8 @@
   "settings.appearance.defaultZoomLevelDesc": "Set the permanent app zoom level for all windows",
   "settings.appearance.description": "主题、字体、工具图标",
   "settings.appearance.editFile": "编辑文件",
+  "settings.appearance.entitiesEnvForcedOff": "已被 CRAFT_FEATURE_ENTITIES_LINKS=0 强制关闭。移除该变量后才能使用此开关。",
+  "settings.appearance.entitiesEnvForcedOn": "已被 CRAFT_FEATURE_ENTITIES_LINKS=1 强制开启。移除该变量后才能使用此开关。",
   "settings.appearance.entitiesLinks": "实体链接（实验性）",
   "settings.appearance.entitiesLinksDesc": "通过 [[kind:id]]、rox:// 深层链接和反向链接关联笔记、任务和文档中的实体。默认关闭。",
   "settings.appearance.entitiesPreviews": "实体预览（实验性）",

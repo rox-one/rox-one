@@ -14,3 +14,29 @@ describe('entityRefSchema fragment rule', () => {
     expect(entityRefSchema.safeParse({ kind: 'note', id: 'n1' }).success).toBe(true)
   })
 })
+
+describe('entityRefSchema fragment canonicalisation (review 3 #4)', () => {
+  it('strips route-level prefixes exactly like parseEntityRef', async () => {
+    const { parseEntityRef, entityRoute, formatEntityRef } = await import('@rox/core/entities')
+    const cases: Array<[Record<string, string>, string]> = [
+      [{ kind: 'goal-target', id: 'g1', fragment: 't-3' }, 'goal-target:g1#t-3'],
+      [{ kind: 'goal-check', id: 'g1', fragment: 'k-7' }, 'goal-check:g1#k-7'],
+      [{ kind: 'channel-message', id: 'c1', fragment: 'seq-128' }, 'channel-message:c1#seq-128'],
+    ]
+    for (const [input, literal] of cases) {
+      const parsed = entityRefSchema.parse(input)
+      const viaLiteral = parseEntityRef(literal)
+      expect(viaLiteral.ok).toBe(true)
+      if (!viaLiteral.ok) continue
+      expect(parsed).toEqual(viaLiteral.value)
+      expect(formatEntityRef(parsed)).toBe(formatEntityRef(viaLiteral.value))
+    }
+    expect(entityRoute(entityRefSchema.parse({ kind: 'goal-target', id: 'g1', fragment: 't-3' }))).not.toContain('t-t-')
+  })
+
+  it('leaves canonical and non-prefixed fragments alone', () => {
+    expect(entityRefSchema.parse({ kind: 'goal-target', id: 'g1', fragment: '3' })).toEqual({ kind: 'goal-target', id: 'g1', fragment: '3' })
+    expect(entityRefSchema.parse({ kind: 'wiki-space', id: 'w', fragment: 't-3' })).toEqual({ kind: 'wiki-space', id: 'w', fragment: 't-3' })
+    expect(entityRefSchema.parse({ kind: 'task', id: 't1' })).toEqual({ kind: 'task', id: 't1' })
+  })
+})

@@ -18,6 +18,10 @@ describe('classifyWikilinkTarget', () => {
     expect(classifyWikilinkTarget('note: итоги')).toEqual({ type: 'title', ref: { kind: 'note', id: 'note: итоги' } })
     expect(classifyWikilinkTarget('task: что-то')).toEqual({ type: 'title', ref: { kind: 'note', id: 'task: что-то' } })
     expect(classifyWikilinkTarget('My note')).toEqual({ type: 'title', ref: { kind: 'note', id: 'My note' } })
+    // #1499 a8ef61add: a `#Heading` suffix is not part of a note title.
+    expect(classifyWikilinkTarget('Встреча: итоги#Решения')).toEqual({ type: 'title', ref: { kind: 'note', id: 'Встреча: итоги' } })
+    expect(classifyWikilinkTarget('note: итоги#H')).toEqual({ type: 'title', ref: { kind: 'note', id: 'note: итоги' } })
+    expect(classifyWikilinkTarget('My note#H')).toEqual({ type: 'title', ref: { kind: 'note', id: 'My note' } })
   })
 
   it('malformed targets classify as nothing (negative)', () => {

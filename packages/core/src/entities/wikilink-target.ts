@@ -13,7 +13,8 @@
  *   `[[note:abc#Heading]]` links to `note:abc`.
  * - A `prefix:` that is not a known kind, or an id with leading whitespace,
  *   makes the whole target a plain note title (`[[Встреча: итоги]]`,
- *   `[[note: итоги]]`). Nothing is trimmed silently.
+ *   `[[note: итоги]]`). A `#Heading` suffix is not part of the title
+ *   (#1499 a8ef61add): `[[Встреча: итоги#Решения]]` → note `Встреча: итоги`.
  * - A colon-less target is a note title (`[[My note]]`).
  *
  * Callers pass the inner target (between `[[` and `|`/`]]`), already
@@ -42,8 +43,8 @@ export function classifyWikilinkTarget(inner: string): WikilinkTargetClass | nul
   }
   const rawKind = head.slice(0, colonIndex)
   const rawId = head.slice(colonIndex + 1)
-  if (rawId.length > 0 && /^\s/.test(rawId)) return { type: 'title', ref: { kind: 'note', id: inner } }
-  if (!isEntityKind(normalizeKindAlias(rawKind))) return { type: 'title', ref: { kind: 'note', id: inner } }
+  if (rawId.length > 0 && /^\s/.test(rawId)) return { type: 'title', ref: { kind: 'note', id: head.trim() } }
+  if (!isEntityKind(normalizeKindAlias(rawKind))) return { type: 'title', ref: { kind: 'note', id: head.trim() } }
   const direct = parseEntityRef(inner)
   if (direct.ok) return { type: 'entity', ref: direct.value }
   if (direct.error.code === 'unexpected-fragment') {

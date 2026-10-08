@@ -13,6 +13,7 @@ import type { MailLocalApi } from './mail-local'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { parseEntityRoute } from './entity-routes'
 import { isEntityRoutesEnabled } from './route-parser'
+import type { EntitiesLinksEffectiveState } from '@rox/shared/feature-flags'
 import type {
   Message as CoreMessage,
   MessageRole as CoreMessageRole,
@@ -2408,9 +2409,14 @@ export interface ElectronAPI {
   // Language
   changeLanguage(lang: string): Promise<void>
 
-  // Entity links (entities.links.v1): renderer notifies main so the
-  // deep-link parser and entity RPC handlers agree with the renderer
-  setEntitiesLinksEnabled(enabled: boolean): Promise<{ ok: boolean }>
+  // Entity links (entities.links.v1): the renderer reports its persisted
+  // toggle; main returns the EFFECTIVE state (env override > toggle) that
+  // the renderer route gate and Settings UI must use.
+  setEntitiesLinksEnabled(enabled: boolean): Promise<EntitiesLinksEffectiveState>
+  /** Synchronous bootstrap report; null when the bridge is unavailable. */
+  syncEntitiesLinksState?(persisted: boolean): EntitiesLinksEffectiveState | null
+  /** Effective-state changes broadcast by main to every window. */
+  onEntitiesLinksStateChanged?(callback: (state: EntitiesLinksEffectiveState) => void): () => void
 
   // Resources (cross-workspace export/import)
   exportResources(workspaceId: string, options: ExportResourcesOptions): Promise<ExportResult>

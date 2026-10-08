@@ -37,6 +37,7 @@ export {
   entityRefKey,
   formatEntityRef,
   kindTakesFragment,
+  normalizeEntityFragment,
   parseEntityRef,
   type EntityRef,
   type RefError,
