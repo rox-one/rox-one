@@ -136,7 +136,8 @@ describe('conflict stashes are never overwritten (finding 2)', () => {
   const failFinalRenameOnce = () => {
     let failed = false
     return (source: string, destination: string): void => {
-      if (!failed && destination.includes('.rox.migrated-')) {
+      // A transient failure after the rename probe succeeded (review 4: the probe itself is renamable).
+      if (!failed && destination.includes('.rox.migrated-') && !destination.endsWith('-probe')) {
         failed = true
         throw errno('EBUSY')
       }
@@ -264,7 +265,7 @@ describe('EXDEV swap failure (finding 5)', () => {
   const exdevRename = (options: { failSwap: boolean; failMoveBack: boolean }) =>
     (source: string, destination: string): void => {
       if (source.endsWith('.rox') && destination.endsWith('rox') && !destination.endsWith('.rox')) throw errno('EXDEV')
-      if (options.failSwap && destination.includes('.rox.migrated-')) throw errno('EBUSY')
+      if (options.failSwap && destination.includes('.rox.migrated-') && !destination.endsWith('-probe')) throw errno('EBUSY')
       if (options.failMoveBack && destination.includes('rox.tmp-')) throw errno('EBUSY')
       renameSync(source, destination)
     }

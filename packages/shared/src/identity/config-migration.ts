@@ -241,9 +241,9 @@ import {
   writeSync as _writeMigrationFd,
 } from 'node:fs'
 import { uptime as _osUptime } from 'node:os'
-import { dirname as _dirnameMigration, relative as _relativeMigration, sep as _pathSep, posix as _posixPath, win32 as _win32Path } from 'node:path'
+import { basename as _basenameMigration, dirname as _dirnameMigration, relative as _relativeMigration, sep as _pathSep, posix as _posixPath, win32 as _win32Path } from 'node:path'
 import { createHash as _createLockHash } from 'node:crypto'
-import { realpathSync as _realpathMigration } from 'node:fs'
+import { constants as _fsConstants, realpathSync as _realpathMigration } from 'node:fs'
 
 /** Name of the visible Rox home inside a home directory. */
 export const ROX_VISIBLE_HOME_DIR_NAME = ROX_HOME_DIR_NAME
@@ -380,6 +380,7 @@ export type VisibleHomeOutcome =
   | 'deferred-locked'
   | 'deferred-foreign'
   | 'deferred-link'
+  | 'deferred-unmovable'
   | 'reverted'
   | 'revert-refused'
   | 'skipped-env-override'
@@ -471,8 +472,14 @@ export interface MigrateHiddenRoxHomeOptions {
   now?: () => number
   /** Revert only: whether the visible-root flag is active (default: env + persisted file). */
   flagActive?: boolean
-  /** Runtime desktop-lock path for a config dir (tests; default `desktopAppRuntimeLockPath`). */
+  /** Runtime desktop-lock path for a config dir (tests; default `desktopAppRuntimeLockPaths`). */
   desktopRuntimeLockPath?: (configDir: string) => string
+  /**
+   * Injectable byte copy into a fresh temp file (tests simulate a crash
+   * mid-copy: write partial bytes, then throw). Default `copyFileSync` with
+   * `COPYFILE_EXCL`.
+   */
+  copyFile?: (source: string, destination: string) => void
 }
 
 export interface VisibleHomePaths {
@@ -782,22 +789,66 @@ function _ensurePrivateDir(path: string): void {
   }
 }
 
-function _copyFilePreservingMeta(source: string, destination: string, st: import('node:fs').Stats): void {
-  mkdirSync(_dirnameMigration(destination), { recursive: true })
-  _copyMigrationFile(source, destination)
+type _CopyFileFn = (source: string, destination: string) => void
+
+const _defaultCopyFile: _CopyFileFn = (source, destination) =>
+  _copyMigrationFile(source, destination, _fsConstants.COPYFILE_EXCL)
+
+/** Deterministic sibling temp of a copy target (a retry replaces crash leftovers). */
+function _copyTempPath(destination: string): string {
+  return join(_dirnameMigration(destination), `.${_basenameMigration(destination)}.rox-copy.tmp`)
+}
+
+function _dropCopyTemp(destination: string): void {
   try {
-    _chmodMigration(destination, st.mode & 0o777)
+    // unlink never follows a link: a planted link at the temp name is removed, not written through.
+    _unlinkMigration(_copyTempPath(destination))
   } catch {
-    // best effort
-  }
-  try {
-    _utimesMigration(destination, st.atime, st.mtime)
-  } catch {
-    // best effort — mtimes feed the merge rule, never correctness
+    // absent
   }
 }
 
-function _copyTreeWithModes(source: string, destination: string, isRoot = true): void {
+/**
+ * Atomic copy: bytes go to a sibling temp (created fresh, never through a
+ * link), mode and times are set there, then one rename puts the complete
+ * file in place. A crash mid-copy leaves the previous target (or nothing)
+ * plus a temp that the next attempt replaces — never a truncated target
+ * with a fresh mtime that would win the merge rule.
+ */
+function _copyFilePreservingMeta(
+  source: string,
+  destination: string,
+  st: import('node:fs').Stats,
+  copyFile: _CopyFileFn = _defaultCopyFile,
+): void {
+  mkdirSync(_dirnameMigration(destination), { recursive: true })
+  const temp = _copyTempPath(destination)
+  _dropCopyTemp(destination)
+  try {
+    copyFile(source, temp)
+    try {
+      _chmodMigration(temp, st.mode & 0o777)
+    } catch {
+      // best effort
+    }
+    try {
+      _utimesMigration(temp, st.atime, st.mtime)
+    } catch {
+      // best effort — mtimes feed the merge rule, never correctness
+    }
+    _renameMigration(temp, destination)
+  } catch (error) {
+    _dropCopyTemp(destination)
+    throw error
+  }
+}
+
+function _copyTreeWithModes(
+  source: string,
+  destination: string,
+  isRoot = true,
+  copyFile: _CopyFileFn = _defaultCopyFile,
+): void {
   const st = _lstatMigration(source)
   if (st.isSymbolicLink()) {
     mkdirSync(_dirnameMigration(destination), { recursive: true })
@@ -813,7 +864,7 @@ function _copyTreeWithModes(source: string, destination: string, isRoot = true):
     for (const name of _readdirMigration(source)) {
       // The in-flight manifest is migration scaffolding, not user data.
       if (isRoot && name === ROX_HOME_MIGRATION_MANIFEST_NAME) continue
-      _copyTreeWithModes(join(source, name), join(destination, name), false)
+      _copyTreeWithModes(join(source, name), join(destination, name), false, copyFile)
     }
     // Source mode after the children are in (restrictive dirs stay copyable).
     if (!isRoot) {
@@ -825,7 +876,7 @@ function _copyTreeWithModes(source: string, destination: string, isRoot = true):
     }
     return
   }
-  if (st.isFile()) _copyFilePreservingMeta(source, destination, st)
+  if (st.isFile()) _copyFilePreservingMeta(source, destination, st, copyFile)
 }
 
 /**
@@ -1300,6 +1351,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
   const platform = options?.platform ?? process.platform
   const timestamp = _migrationTimestamp(options)
   const rename = options?.rename ?? _renameMigration
+  const copyFile = options?.copyFile ?? _defaultCopyFile
   const linkDir =
     options?.linkDir ??
     ((target: string, path: string, type: 'dir' | 'junction') => {
@@ -1349,6 +1401,44 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         return undefined
     }
   }
+  // The legacy dir must be renamable in place (it is not a mount point and
+  // its parent allows the rename): otherwise the final rename of a copy or
+  // merge would fail after all the work, and every launch would repeat a
+  // full copy. Probed by renaming it to a sibling and straight back.
+  const legacyRenameBlocker = (): string | undefined => {
+    try {
+      if (_statMigration(paths.hiddenDir).dev !== _statMigration(paths.homeDir).dev) return 'mount-point'
+    } catch {
+      // fall through to the rename probe
+    }
+    const probe = `${paths.hiddenDir}.migrated-${timestamp}-probe`
+    if (_pathPresent(probe)) return 'probe-path-busy'
+    try {
+      rename(paths.hiddenDir, probe)
+    } catch (error) {
+      return (error as NodeJS.ErrnoException | null)?.code ?? 'rename-failed'
+    }
+    try {
+      rename(probe, paths.hiddenDir)
+    } catch {
+      try {
+        rename(probe, paths.hiddenDir)
+      } catch (error) {
+        // Keep the legacy path resolving (never strand on a vanished dir).
+        try {
+          linkDir(probe, paths.hiddenDir, linkType)
+        } catch {
+          // reported below
+        }
+        throw new Error(
+          `Legacy home rename probe could not move back (data intact at ${probe}): ${(error as Error).message}`,
+        )
+      }
+    }
+    return undefined
+  }
+  const deferredUnmovable = (blocker: string): VisibleHomeMigrationResult =>
+    done('deferred-unmovable', { diagnostics: ['storage.migration.legacyNotRenamable', `rename:${blocker}`] })
   const lockHolders = (bothExist: boolean): string[] =>
     options?.isLocked
       ? options.isLocked(paths.hiddenDir)
@@ -1466,9 +1556,15 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
           if ((error as NodeJS.ErrnoException | null)?.code !== 'EXDEV') throw error
         }
         if (!moved) {
+          // Copy nothing unless the original can be renamed away afterwards.
+          const blocker = legacyRenameBlocker()
+          if (blocker) {
+            dropScaffolding()
+            return deferredUnmovable(blocker)
+          }
           rmSync(staging, { recursive: true, force: true })
           _ensurePrivateDir(staging)
-          _copyTreeWithModes(paths.hiddenDir, staging)
+          _copyTreeWithModes(paths.hiddenDir, staging, true, copyFile)
           const mismatches = _verifyCopyAgainstSource(paths.hiddenDir, staging, manifest)
           if (mismatches.length > 0) {
             // Our own staging copy only; the original is untouched.
@@ -1559,6 +1655,10 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     // the first attempt, and recorded in an incomplete-merge marker: a merge
     // that failed halfway never lets its partial copy (or later writes to it)
     // win a retry, and read-only resolution keeps the pre-merge choice.
+    // A legacy dir that cannot be renamed away defers before anything is
+    // copied or stashed (no repeated merge per launch).
+    const mergeBlocker = legacyRenameBlocker()
+    if (mergeBlocker) return deferredUnmovable(mergeBlocker)
     _ensurePrivateDir(paths.visibleDir)
     const hiddenId = _treeId(paths.hiddenDir)
     let previous = readMergeIncompleteMarker(paths.visibleDir)
@@ -1594,7 +1694,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       }
     }
     const stash = (source: string, rel: string): void => {
-      _copyFilePreservingMeta(source, freeTarget(rel), _lstatMigration(source))
+      _copyFilePreservingMeta(source, freeTarget(rel), _lstatMigration(source), copyFile)
     }
     // A legacy directory where `~/rox` has a file: keep the whole subtree.
     const stashTree = (source: string, rel: string): void => {
@@ -1617,17 +1717,27 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       const to = join(paths.visibleDir, rel)
       const fromStat = _lstatMigration(from)
       if (fromStat.isSymbolicLink()) {
-        let toExists = false
+        let toStat: import('node:fs').Stats | undefined
         try {
-          _lstatMigration(to)
-          toExists = true
+          toStat = _lstatMigration(to)
         } catch {
-          toExists = false
+          toStat = undefined
         }
-        if (!toExists) {
+        const link = _readlinkMigration(from)
+        if (!toStat) {
           mkdirSync(_dirnameMigration(to), { recursive: true })
-          _symlinkMigration(_readlinkMigration(from), to)
+          _symlinkMigration(link, to)
+          return
         }
+        // Same link on both sides: nothing to keep. Anything else in ~/rox
+        // stays; the legacy link is stashed (and reported), never dropped.
+        let same = false
+        try {
+          same = toStat.isSymbolicLink() && _readlinkMigration(to) === link
+        } catch {
+          same = false
+        }
+        if (!same) stashTree(from, rel)
         return
       }
       if (fromStat.isDirectory()) {
@@ -1656,11 +1766,22 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         return
       }
       if (!fromStat.isFile()) return
-      if (!existsSync(to)) {
-        _copyFilePreservingMeta(from, to, fromStat)
+      // Leftover of a copy that crashed on an earlier attempt.
+      _dropCopyTemp(to)
+      // lstat: a link at the ~/rox side (to a dotfiles repo, or dangling) is
+      // a conflict — the legacy file is stashed and the link and its target
+      // stay untouched. Nothing is ever written through a link.
+      let toStat: import('node:fs').Stats | undefined
+      try {
+        toStat = _lstatMigration(to)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException | null)?.code !== 'ENOENT') throw error
+        toStat = undefined
+      }
+      if (!toStat) {
+        _copyFilePreservingMeta(from, to, fromStat, copyFile)
         return
       }
-      const toStat = _statMigration(to)
       if (!toStat.isFile()) {
         stash(from, rel)
         return
@@ -1669,7 +1790,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       const hiddenWins = preferHidden ? true : preferVisible ? false : fromStat.mtimeMs > toStat.mtimeMs
       if (hiddenWins) {
         stash(to, rel)
-        _copyFilePreservingMeta(from, to, fromStat)
+        _copyFilePreservingMeta(from, to, fromStat, copyFile)
       } else {
         stash(from, rel)
       }
