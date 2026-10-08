@@ -7547,6 +7547,8 @@
   "storage.legacySymlink": "~/.rox — ссылка для совместимости, продолжает работать",
   "storage.migrated": "Перенесено в ~/rox",
   "storage.migratedToast": "Файлы Rox теперь в папке ~/rox",
+  "storage.notice.conflicts": "Некоторые файлы были в обеих папках. Неиспользованные версии сохранены в ~/rox/.migration/conflicts: {{files}}",
+  "storage.notice.foreignDeferred": "В папке ~/rox уже есть посторонние файлы, поэтому Rox оставил текущую папку. Переместите или переименуйте ~/rox и перезапустите Rox, чтобы переключиться.",
   "storage.settings.description": "Rox хранит все локальные файлы в одной видимой папке.",
   "storage.settings.locked": "Задано переменной окружения ROX_CONFIG_DIR или ROX_STORAGE_VISIBLE_ROOT.",
   "storage.settings.migrateNow": "Перенести ~/.rox в ~/rox сейчас",

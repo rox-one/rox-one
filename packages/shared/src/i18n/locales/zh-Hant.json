@@ -7527,6 +7527,8 @@
   "storage.legacySymlink": "~/.rox 是相容性連結，可繼續使用",
   "storage.migrated": "已遷移至 ~/rox",
   "storage.migratedToast": "Rox 檔案現已位於 ~/rox 資料夾",
+  "storage.notice.conflicts": "部分檔案在兩個資料夾中都存在。未使用的版本保存在 ~/rox/.migration/conflicts：{{files}}",
+  "storage.notice.foreignDeferred": "~/rox 資料夾中已有其他檔案，因此 Rox 繼續使用目前的資料夾。移動或重新命名 ~/rox 並重新啟動 Rox 即可切換。",
   "storage.settings.description": "Rox 將所有本機檔案保存在單一可見資料夾中。",
   "storage.settings.locked": "由環境變數 ROX_CONFIG_DIR 或 ROX_STORAGE_VISIBLE_ROOT 設定。",
   "storage.settings.migrateNow": "立即將 ~/.rox 移至 ~/rox",

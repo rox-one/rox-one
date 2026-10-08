@@ -7531,6 +7531,8 @@
   "storage.legacySymlink": "~/.rox رابط توافق ويستمر في العمل",
   "storage.migrated": "تم النقل إلى ~/rox",
   "storage.migratedToast": "أصبحت ملفات Rox الآن في مجلد ~/rox",
+  "storage.notice.conflicts": "بعض الملفات كانت موجودة في كلا المجلدين. النسخ غير المستخدمة محفوظة في ~/rox/.migration/conflicts: {{files}}",
+  "storage.notice.foreignDeferred": "يحتوي مجلد ~/rox بالفعل على ملفات أخرى، لذلك أبقى Rox على مجلده الحالي. انقل ~/rox أو أعد تسميته ثم أعد تشغيل Rox للتبديل.",
   "storage.settings.description": "يحفظ Rox جميع الملفات المحلية في مجلد واحد مرئي.",
   "storage.settings.locked": "محدد بواسطة متغير البيئة ROX_CONFIG_DIR أو ROX_STORAGE_VISIBLE_ROOT.",
   "storage.settings.migrateNow": "نقل ~/.rox إلى ~/rox الآن",

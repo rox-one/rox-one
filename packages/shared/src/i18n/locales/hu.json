@@ -7527,6 +7527,8 @@
   "storage.legacySymlink": "A ~/.rox kompatibilitási hivatkozás, továbbra is működik",
   "storage.migrated": "Áthelyezve a ~/rox mappába",
   "storage.migratedToast": "A Rox-fájlok mostantól a ~/rox mappában vannak",
+  "storage.notice.conflicts": "Néhány fájl mindkét mappában megvolt. A nem használt változatok itt maradtak: ~/rox/.migration/conflicts: {{files}}",
+  "storage.notice.foreignDeferred": "A ~/rox mappa már más fájlokat tartalmaz, ezért a Rox a jelenlegi mappáját használja tovább. Helyezd át vagy nevezd át a ~/rox mappát, majd indítsd újra a Roxot a váltáshoz.",
   "storage.settings.description": "A Rox az összes helyi fájlt egyetlen látható mappában tárolja.",
   "storage.settings.locked": "A ROX_CONFIG_DIR vagy a ROX_STORAGE_VISIBLE_ROOT környezeti változó határozza meg.",
   "storage.settings.migrateNow": "~/.rox áthelyezése most a ~/rox mappába",

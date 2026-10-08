@@ -8,6 +8,7 @@ import App from './App'
 import { ThemeProvider } from './context/ThemeContext'
 import { windowWorkspaceIdAtom } from './atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
+import { StorageMigrationNotices } from './components/storage/StorageMigrationNotices'
 import { setupI18n } from '@rox/shared/i18n'
 import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils/redaction'
 import { initReactI18next } from 'react-i18next'
@@ -124,6 +125,7 @@ function Root() {
         ? <React.Profiler id="rox-root" onRender={rendererPerfHarness.onRender}>{app}</React.Profiler>
         : app}
       <Toaster />
+      <StorageMigrationNotices />
     </ThemeProvider>
   )
 }
