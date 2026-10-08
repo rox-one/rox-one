@@ -211,12 +211,33 @@ export interface UnfurlWorkerHostOptions extends UnfurlWorkerOptions {
 }
 
 /**
+ * Build the `workerData` payload for the unfurl Worker Thread.
+ *
+ * Only structured-cloneable knobs may cross the thread boundary. Callbacks and
+ * `signal` are not cloneable, and a bag a caller prepared for an in-process run
+ * can also carry live runtime state (an open `IntelligenceStore` wrapping a
+ * `DatabaseSync` handle); `new Worker` throws `DataCloneError` for such values
+ * synchronously, so the payload is whitelisted here rather than spread from
+ * the caller's bag.
+ */
+export function unfurlWorkerData(
+  dbPath: string,
+  options: UnfurlWorkerHostOptions = {},
+): { dbPath: string; options: UnfurlWorkerOptions } {
+  const forwarded: UnfurlWorkerOptions = {}
+  if (options.batchSize !== undefined) forwarded.batchSize = options.batchSize
+  if (options.batchDelayMs !== undefined) forwarded.batchDelayMs = options.batchDelayMs
+  if (options.perUrlDelayMs !== undefined) forwarded.perUrlDelayMs = options.perUrlDelayMs
+  if (options.maxBatches !== undefined) forwarded.maxBatches = options.maxBatches
+  return { dbPath, options: forwarded }
+}
+
+/**
  * Spawn the unfurl Worker Thread.
  *
- * `options` callbacks and `signal` stay on this thread (they are not
- * structured-cloneable); only the plain options travel in `workerData`. The
- * returned `Worker` is the raw `worker_threads` object — the caller owns its
- * lifecycle (`terminate`, `exit`).
+ * Only {@link unfurlWorkerData}'s whitelisted knobs travel in `workerData`; the
+ * callbacks and `signal` stay on this thread. The returned `Worker` is the raw
+ * `worker_threads` object — the caller owns its lifecycle (`terminate`, `exit`).
  */
 export function startUnfurlWorker(input: {
   entryPath: string
@@ -224,8 +245,8 @@ export function startUnfurlWorker(input: {
   options?: UnfurlWorkerHostOptions
 }): Worker {
   const options = input.options ?? {}
-  const { onProgress, signal, onDone, onError, ...cloneable } = options
-  const worker = new Worker(input.entryPath, { workerData: { dbPath: input.dbPath, options: cloneable } })
+  const { onProgress, signal, onDone, onError } = options
+  const worker = new Worker(input.entryPath, { workerData: unfurlWorkerData(input.dbPath, options) })
 
   const forward = (message: UnfurlWorkerMessage): void => {
     if (message.type === 'progress') onProgress?.(message.progress)

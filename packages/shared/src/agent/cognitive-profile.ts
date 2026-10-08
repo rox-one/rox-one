@@ -76,10 +76,23 @@ function dropOverlongLines(text: string): string {
     .join('\n');
 }
 
-function ensureWrapper(text: string): string {
+function stripOuterWrapper(text: string): string {
   const trimmed = text.trim();
-  if (trimmed.startsWith(OPEN_TAG) && trimmed.endsWith(CLOSE_TAG)) return trimmed;
-  return `${OPEN_TAG}\n${trimmed}\n${CLOSE_TAG}`;
+  if (trimmed.startsWith(OPEN_TAG) && trimmed.endsWith(CLOSE_TAG)) {
+    return trimmed.slice(OPEN_TAG.length, trimmed.length - CLOSE_TAG.length).trim();
+  }
+  return trimmed;
+}
+
+/**
+ * De-fang wrapper tags embedded in the body. Values are rendered from
+ * browser-derived data, so a literal closing tag would end the element early
+ * (and a literal opening tag would re-open it) inside the agent prompt.
+ */
+function neutraliseWrapperTags(text: string): string {
+  return text.replace(/<\/?user_cognitive_profile[^>]*>/gi, (tag) =>
+    tag.replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
+  );
 }
 
 /**
@@ -92,10 +105,12 @@ export function sanitizeCognitiveProfileBlock(raw: string | null | undefined): s
   let text = stripControlCharacters(raw);
   text = dropOverlongLines(text);
   text = collapseBlankLines(text);
+  text = stripOuterWrapper(text);
+  text = neutraliseWrapperTags(text);
 
-  if (!text.trim()) return null;
+  if (!text) return null;
 
-  text = ensureWrapper(text);
+  text = `${OPEN_TAG}\n${text}\n${CLOSE_TAG}`;
 
   if (text.length > MAX_BLOCK_LENGTH) {
     // Truncate the body, not the wrapper: cutting the whole string would drop

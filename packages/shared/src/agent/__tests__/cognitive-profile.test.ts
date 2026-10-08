@@ -103,6 +103,24 @@ describe('sanitizeCognitiveProfileBlock', () => {
     expect(sanitizeCognitiveProfileBlock(raw)).toBe(raw);
   });
 
+  it('neutralizes wrapper tags embedded in the body', () => {
+    const result = sanitizeCognitiveProfileBlock(`before ${CLOSE} middle ${OPEN} after`);
+    expect(result).not.toBeNull();
+    expect(result!.startsWith(`${OPEN}\n`)).toBe(true);
+    expect(result!.endsWith(`\n${CLOSE}`)).toBe(true);
+    // The body's tags are escaped; exactly one real wrapper pair remains.
+    expect(result).toContain('&lt;/user_cognitive_profile&gt;');
+    expect(result).toContain('&lt;user_cognitive_profile&gt;');
+    expect(result!.match(/<\/user_cognitive_profile>/g) ?? []).toHaveLength(1);
+    expect(result!.match(/<user_cognitive_profile>/g) ?? []).toHaveLength(1);
+  });
+
+  it('is stable when the cached block is sanitized again', () => {
+    const once = sanitizeCognitiveProfileBlock(`${OPEN}\n- tech_stack: TypeScript\n${CLOSE}`);
+    expect(once).not.toBeNull();
+    expect(sanitizeCognitiveProfileBlock(once)).toBe(once);
+  });
+
   it('truncates over-long input at a line boundary with the ellipsis marker', () => {
     // ~30 lines x 300 chars ≈ 9000 chars, comfortably over the 8000 budget.
     const body = Array.from({ length: 30 }, (_, i) => `line-${i}-${'a'.repeat(290)}`).join('\n');

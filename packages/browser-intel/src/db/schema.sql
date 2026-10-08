@@ -78,7 +78,9 @@ CREATE TABLE IF NOT EXISTS fact_visits (
   url_id          INTEGER NOT NULL REFERENCES dim_urls(id) ON DELETE CASCADE,
   visit_time      INTEGER NOT NULL,
   visit_time_utc  TEXT,
-  transition_type TEXT,
+  -- Missing transitions are stored as '' (never NULL): SQLite treats NULLs as
+  -- distinct in the UNIQUE index below, which would defeat re-ingest dedupe.
+  transition_type TEXT    NOT NULL DEFAULT '',
   visit_duration  INTEGER,
   visit_source    TEXT,
   visit_count     INTEGER,

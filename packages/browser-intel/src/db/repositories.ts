@@ -476,12 +476,18 @@ export class IntelligenceStore {
       `INSERT INTO dim_urls
          (url, raw_url, scheme, host, domain, path, query, fragment, unfurl_status, first_seen_at, last_seen_at,
           visit_count, bookmark_count, search_count)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 1, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 0, 0, 0)
        ON CONFLICT(url) DO UPDATE SET
-         last_seen_at = excluded.last_seen_at,
-         visit_count = dim_urls.visit_count + 1,
-         bookmark_count = dim_urls.bookmark_count + excluded.bookmark_count,
-         search_count = dim_urls.search_count + excluded.search_count`,
+         last_seen_at = MAX(dim_urls.last_seen_at, excluded.last_seen_at)`,
+    )
+    // Counters move only when the matching fact row is actually new; bumping
+    // them per ingested record inflates every URL stat on each re-ingest.
+    const bumpUrlCounters = this.db.prepare(
+      `UPDATE dim_urls
+          SET visit_count = visit_count + 1,
+              bookmark_count = bookmark_count + ?,
+              search_count = search_count + ?
+        WHERE id = ?`,
     )
     const insertVisit = this.db.prepare(
       `INSERT OR IGNORE INTO fact_visits
@@ -512,8 +518,6 @@ export class IntelligenceStore {
           parts.fragment,
           now,
           now,
-          isBookmark,
-          hasSearch,
         )
         const urlId = toNumber(readRow<IdRow>(selectUrl, parts.normalizedUrl)?.id) ?? 0
         if (urlId <= 0) {
@@ -526,7 +530,10 @@ export class IntelligenceStore {
           urlId,
           record.visitTime,
           record.visitTime > 0 ? new Date(record.visitTime).toISOString() : null,
-          record.transitionType,
+          // Non-null sentinel: SQLite treats NULLs as distinct in a UNIQUE
+          // index, so a missing transition must be '' or a re-ingest duplicates
+          // the visit and inflates every rollup.
+          record.transitionType ?? '',
           record.visitDuration,
           record.visitSource,
           record.visitCount,
@@ -537,8 +544,10 @@ export class IntelligenceStore {
           'hindsight',
           now,
         )
-        if (Number(result.changes) > 0) inserted += 1
-        else skipped += 1
+        if (Number(result.changes) > 0) {
+          inserted += 1
+          bumpUrlCounters.run(isBookmark, hasSearch, urlId)
+        } else skipped += 1
       }
       return { inserted, skipped, urls: touchedUrls.size }
     })

@@ -8,8 +8,12 @@
 
 import { parentPort, workerData } from 'node:worker_threads'
 
-import { handleUnfurlWorkerMessage } from '@rox/browser-intel'
-import type { UnfurlWorkerMessage, UnfurlWorkerOptions } from '@rox/browser-intel'
+// Narrow subpath import on purpose: the package barrel re-exports acquisition
+// and insights, whose shared/agent graph drags the Claude SDK — an
+// `import.meta.url` consumer that crashes the CJS bundle at load — into a
+// worker that only needs the unfurl loop and the SQLite store.
+import { handleUnfurlWorkerMessage } from '@rox/browser-intel/workers/unfurl'
+import type { UnfurlWorkerMessage, UnfurlWorkerOptions } from '@rox/browser-intel/types'
 
 /** Structured-clone payload sent by `startUnfurlWorker`. */
 interface UnfurlWorkerData {

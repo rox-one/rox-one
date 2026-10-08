@@ -8,10 +8,9 @@
  */
 
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test'
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { setTimeout as delay } from 'node:timers/promises'
 
 import type {
   DetectedBrowser,
@@ -74,13 +73,19 @@ function makeDeps(overrides: Partial<PipelineDeps> = {}): PipelineDeps {
   }
 }
 
-async function waitForRun(timeoutMs = 5000): Promise<void> {
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    if (runtime.getBrowserIntelStateSnapshot().lastRunAt !== null) return
-    await delay(10)
-  }
-  throw new Error('browser-intel run did not complete in time')
+/**
+ * Resolve on the next runtime state broadcast — a run's completion event.
+ * Waiting on the event (not on a sleep) keeps the assertions tied to the
+ * pipeline's own signal; a regression instead trips bun's test timeout.
+ */
+function nextStateEvent(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const off = runtime.onBrowserIntelEvent((event) => {
+      if (event.type !== 'state') return
+      off()
+      resolve()
+    })
+  })
 }
 
 beforeEach(() => {
@@ -138,12 +143,13 @@ describe('browser-intel runtime', () => {
     const unsubscribe = runtime.onBrowserIntelEvent((event) => {
       events.push(event.type === 'state' ? { type: event.type, state: event.state } : { type: event.type })
     })
+    const completed = nextStateEvent()
 
     expect(runtime.startBrowserIntelRun()).toEqual({ started: true })
     expect(runtime.startBrowserIntelRun()).toEqual({ started: false })
 
     releaseUnfurl()
-    await waitForRun()
+    await completed
     unsubscribe()
 
     const stages = events.filter((event) => event.type === 'progress')
@@ -174,5 +180,55 @@ describe('browser-intel runtime', () => {
     expect(state.consent).toBe(false)
     expect(existsSync(cachePath)).toBe(false)
     expect(events.some((event) => event.type === 'state' && event.consent === false)).toBe(true)
+  })
+
+  test('granting consent after startup schedules the first run', async () => {
+    runtime.__setPipelineDepsForTests(makeDeps())
+    runtime.__setStartupDelayForTests(5)
+
+    const state = await runtime.setBrowserIntelConsentAndSync(true)
+    expect(state.consent).toBe(true)
+
+    // The grant alone must start indexing in this session; before the fix only
+    // an app start with persisted consent armed a run, so no completion event
+    // would ever arrive here.
+    const completed = nextStateEvent()
+    await completed
+    expect(typeof runtime.getBrowserIntelStateSnapshot().lastRunAt).toBe('number')
+  })
+
+  test('the unfurl worker receives cloneable options only, never the live store', async () => {
+    const capturePath = join(configDir, 'worker-data.json')
+    const entryPath = join(configDir, 'fake-unfurl-worker.cjs')
+    writeFileSync(
+      entryPath,
+      [
+        "const { parentPort, workerData } = require('node:worker_threads')",
+        "const { writeFileSync } = require('node:fs')",
+        `writeFileSync(${JSON.stringify(capturePath)}, JSON.stringify(workerData))`,
+        "parentPort.postMessage({ type: 'progress', progress: { batches: 0, processed: 0, failed: 0, pendingRemaining: 0, lastBatchMs: 0, cpuMsTotal: 0 } })",
+        "parentPort.postMessage({ type: 'done', outcome: { batches: 0, processed: 0, failed: 0, pendingRemaining: 0, cpuMsTotal: 0 } })",
+        '',
+      ].join('\n'),
+    )
+
+    const deps = makeDeps()
+    delete deps.runUnfurl // drive the real Worker host instead of an in-process stub
+    runtime.__setPipelineDepsForTests(deps)
+    runtime.__setUnfurlWorkerEntryForTests(entryPath)
+    runtime.__setStartupDelayForTests(5)
+
+    await runtime.setBrowserIntelConsentAndSync(true)
+    // The fake worker records its workerData before posting `done`, so the
+    // completion event proves the capture file is already on disk.
+    await nextStateEvent()
+
+    const captured = JSON.parse(readFileSync(capturePath, 'utf8')) as {
+      dbPath: string
+      options: Record<string, unknown>
+    }
+    expect(captured.dbPath).toBe(paths.dbPath)
+    expect(captured.options.store).toBeUndefined()
+    expect(Object.keys(captured.options).sort()).toEqual(['batchDelayMs', 'batchSize'])
   })
 })

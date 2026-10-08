@@ -61,6 +61,10 @@ let running = false
 let abortController: AbortController | null = null
 let startupTimer: TimerHandle | null = null
 let intervalTimer: TimerHandle | null = null
+/** Deferred-first-run delay; shortened by `__setStartupDelayForTests`. */
+let startupDelayMs = STARTUP_DELAY_MS
+/** Test seam: built worker bundle path; `null` uses the dist sibling. */
+let workerEntryOverride: string | null = null
 const listeners = new Set<BrowserIntelEventListener>()
 
 /**
@@ -71,6 +75,16 @@ let testDeps: PipelineDeps | null = null
 
 export function __setPipelineDepsForTests(deps: PipelineDeps | null): void {
   testDeps = deps
+}
+
+/** Test seam: shortens the deferred first run (`null` restores the default). */
+export function __setStartupDelayForTests(ms: number | null): void {
+  startupDelayMs = ms ?? STARTUP_DELAY_MS
+}
+
+/** Test seam: overrides the built worker bundle path (`null` restores the dist sibling). */
+export function __setUnfurlWorkerEntryForTests(entryPath: string | null): void {
+  workerEntryOverride = entryPath
 }
 
 function ensurePaths(): BrowserIntelPaths {
@@ -122,10 +136,15 @@ function readState(): BrowserIntelState {
 /**
  * Spawn the unfurl Worker Thread, forward its progress and resolve with the
  * final outcome. The Worker is always terminated, even when it fails.
+ *
+ * The pipeline hands an in-process runner its open store as part of `options`;
+ * that live `DatabaseSync` handle must never reach `workerData` (structured
+ * clone throws `DataCloneError`), so only {@link startUnfurlWorker}'s
+ * whitelisted knobs survive the trip below.
  */
 async function runUnfurlViaWorker(options: UnfurlWorkerOptions & { dbPath: string }): Promise<UnfurlBatchOutcome> {
   const { dbPath, ...workerOptions } = options
-  const entryPath = join(__dirname, BROWSER_INTEL_WORKER_BASENAME)
+  const entryPath = workerEntryOverride ?? join(__dirname, BROWSER_INTEL_WORKER_BASENAME)
   const signal = options.signal ?? abortController?.signal
 
   const { promise, resolve, reject } = Promise.withResolvers<UnfurlBatchOutcome>()
@@ -184,6 +203,40 @@ function readSnapshot<T>(read: (store: IntelligenceStore, dbPath: string) => T, 
 }
 
 /**
+ * Arm the deferred first run and the recurring interval, once each.
+ *
+ * Called at startup when consent is already persisted, and again when the user
+ * opts in during onboarding — opting in must index in this session, not after
+ * the next launch. The startup timer clears itself once it fires so a later
+ * opt-in can arm a fresh near-term run.
+ */
+function scheduleBrowserIntelRun(): void {
+  if (!startupTimer) {
+    const tick = (): void => {
+      startupTimer = null
+      try {
+        startBrowserIntelRun()
+      } catch (error) {
+        logError('scheduled run failed to start', error)
+      }
+    }
+    startupTimer = setTimeout(tick, startupDelayMs)
+    startupTimer.unref()
+  }
+  if (!intervalTimer) {
+    const tick = (): void => {
+      try {
+        startBrowserIntelRun()
+      } catch (error) {
+        logError('scheduled run failed to start', error)
+      }
+    }
+    intervalTimer = setInterval(tick, INTERVAL_MS)
+    intervalTimer.unref()
+  }
+}
+
+/**
  * Register the runtime once at app startup.
  *
  * Resolves the filesystem layout, wires the cognitive-profile provider into the
@@ -208,17 +261,7 @@ export function initBrowserIntelRuntime(): void {
     if (startupTimer || intervalTimer) return
     if (!readState().consent) return
 
-    const tick = (): void => {
-      try {
-        startBrowserIntelRun()
-      } catch (error) {
-        logError('scheduled run failed to start', error)
-      }
-    }
-    startupTimer = setTimeout(tick, STARTUP_DELAY_MS)
-    intervalTimer = setInterval(tick, INTERVAL_MS)
-    startupTimer.unref()
-    intervalTimer.unref()
+    scheduleBrowserIntelRun()
   } catch (error) {
     logError('initialization failed', error)
   }
@@ -244,6 +287,10 @@ export async function setBrowserIntelConsentAndSync(consent: boolean): Promise<B
       logWarn('failed to clear the cognitive-profile cache', error)
     }
     cancelBrowserIntelRun()
+  } else {
+    // Opting in during onboarding must start indexing in this session; the
+    // deferred timer keeps the first run off the onboarding's critical path.
+    scheduleBrowserIntelRun()
   }
   emit({ type: 'state', state })
   return state
@@ -354,6 +401,8 @@ export function disposeBrowserIntelRuntime(): void {
   setCognitiveProfileProvider(null)
   paths = null
   testDeps = null
+  startupDelayMs = STARTUP_DELAY_MS
+  workerEntryOverride = null
   running = false
   abortController = null
 }
