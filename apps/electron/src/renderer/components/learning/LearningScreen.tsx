@@ -623,6 +623,18 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
     </section>
   )
 
+  // Declared before resultBanner: the detail panel invokes resultBanner during
+  // render, so later `const` helpers would hit TDZ on the mutations branch.
+  const mutationTargetLabel = (targetType: string) => (MUTATION_TARGETS.includes(targetType as typeof MUTATION_TARGETS[number])
+    ? t(`learning.screen.target.${targetType}`)
+    : targetType)
+  const mutationStatusLabel = (status: string) => (MUTATION_STATUSES.includes(status as typeof MUTATION_STATUSES[number])
+    ? t(`learning.screen.mutationStatus.${status}`)
+    : status)
+  const policyStatusLabel = (status: string) => (POLICY_STATUSES.includes(status as typeof POLICY_STATUSES[number])
+    ? t(`learning.screen.policies.status.${status}`)
+    : status)
+
   const resultBanner = (candidateId: string) => {
     if (!result || result.id !== candidateId) return null
     if (result.kind === 'promotion') {
@@ -746,16 +758,6 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
       <p>{t('learning.screen.keysHint', { selectAll: formatHotkeyDisplay('mod+enter') })}</p>
     </div>
   )
-
-  const mutationTargetLabel = (targetType: string) => (MUTATION_TARGETS.includes(targetType as typeof MUTATION_TARGETS[number])
-    ? t(`learning.screen.target.${targetType}`)
-    : targetType)
-  const mutationStatusLabel = (status: string) => (MUTATION_STATUSES.includes(status as typeof MUTATION_STATUSES[number])
-    ? t(`learning.screen.mutationStatus.${status}`)
-    : status)
-  const policyStatusLabel = (status: string) => (POLICY_STATUSES.includes(status as typeof POLICY_STATUSES[number])
-    ? t(`learning.screen.policies.status.${status}`)
-    : status)
 
   const renderTimelineEntry = (entry: LearningTimelineEntryDto) => (
     <li key={entry.id} data-testid="learning-timeline-row" className="flex flex-wrap items-baseline gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.03] px-2.5 py-1.5 text-[11px]">
