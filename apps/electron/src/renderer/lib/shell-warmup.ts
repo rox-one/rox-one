@@ -46,6 +46,12 @@ export function warmupDiagnostics(): WarmupStatus | null {
   return activeQueue ? activeQueue.status() : null
 }
 
+if (typeof window !== 'undefined') {
+  // Packaged probe hook (PERF-10): `warmup-heap-probe.ts` reads the queue over CDP.
+  const probeWindow = window as Window & { __roxWarmup?: () => WarmupStatus | null }
+  probeWindow.__roxWarmup = warmupDiagnostics
+}
+
 /**
  * Install the idle warm-up and return its stop. Called by the shell once
  * session metadata and the active workspace exist; `stop` cancels the queue

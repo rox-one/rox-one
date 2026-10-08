@@ -41,7 +41,7 @@ panel own their LRU (a split view keeps its own five).
 | Switching among any 5 visited surfaces: p95 ≤ 100 ms (CI gate **on**) | gated | `surface_revisit` budget (`perf/budgets.ts`), samples from `simulateSurfaceKeepAlive` driven by the real `advanceRetention`; a capacity < 5 fails the gate (`perf/__tests__/surface-keepalive-sim.test.ts`). |
 | First visit to any surface after warm-up ≤ 200 ms (Mac) / 250 ms (Windows) | gated at 200 ms | `surface_first_warm` budget with **zero** `sessions.list`/`sessions.messages` per sample; a skipped warm-up fails the gate. |
 | Warm-up ≤ 1.5 s idle CPU, no long task > 50 ms, input preempts | verified | CPU budget and input cancellation in `lib/__tests__/warmup.test.ts`; the model asserts `longestSliceMs ≤ 4 ms` (≤ the 50 ms long-task bound). |
-| Warm-up ≤ 25 MB | **not verified here** | Needs a packaged Electron run (heap measurement); the structural bounds are the retention capacity (≤ 5 surfaces) and the metadata-only persisted cache from #1576. |
+| Warm-up ≤ 25 MB | measured, report-only | Packaged probe `apps/electron/scripts/perf/warmup-heap-probe.ts` (CI job `warmup-probe`, `continue-on-error: true`): renderer JS-heap delta after a forced GC, plus `longtask` entries; the structural bounds stay the retention capacity (≤ 5 surfaces) and the metadata-only persisted cache from #1576. |
 | Hidden surfaces make 0 timer-driven RPCs | verified | `useEffectiveVisible()` gates the Inbox/Feed poller and Home widget clocks; `surface_revisit`/`surface_first_warm` gate zero `sessions.messages`/`sessions.list`; keep-alive tests cover the pause contract. |
 
 Run the gate locally:
@@ -52,6 +52,7 @@ bun test src/renderer/perf                                  # models + budgets
 bun run ../../scripts/bench/renderer-perf-report.ts --ci    # CI gate over the budget table
 ```
 
-Known gaps (honest list): no packaged-Electron measurement (startup/render
-level), no Windows machine in this environment, and the `≤ 25 MB` criterion
-above. Everything else is exercised by unit tests plus the CI budget gate.
+Known gaps (honest list): no Windows machine in this environment, and the
+packaged numbers (`warmup-probe`) are report-only, JS-heap-only — they measure
+the renderer, not DOM/C++ or main-process memory, and they do not gate a merge.
+Everything else is exercised by unit tests plus the CI budget gate.
