@@ -5,10 +5,23 @@
  * (owner #1502) against zod schemas in `packages/shared/src/domain/*.ts`
  * (owner #1503).
  *
- * Input policy (owner decision): `pending` only while an input is absent —
- * no `5NN-*.sql` file, or no zod module in the schemas dir. Once both exist
- * the gate must compare something: zero table↔schema pairs is a FAILURE
- * (the mapping is broken), never a silent pending.
+ * Tables = every `CREATE TABLE` in the 5NN files plus every table those
+ * files extend with `ALTER TABLE … ADD [COLUMN]` (principal, workspace,
+ * workspace_member, project, …); added columns join the table's column
+ * list, so drift on them is caught too.
+ *
+ * Unpaired tables (owner decision, #1507 review 2): a table with no zod
+ * schema is a VIOLATION unless it is listed in the checked-in, shrink-only
+ * `packages/test-harness/allowlists/ddl-unpaired-tables.json` (seeded with
+ * the tables that had no schema when the gate landed). A new table missing
+ * from the list fails; an entry whose table now pairs, or no longer
+ * exists, is stale and fails until it is removed (see allowlist.ts).
+ *
+ * Input policy (types.ts): no `5NN-*.sql` file → pending. With migrations
+ * but no zod module yet, the allowlist is still enforced (every table must
+ * be listed) and the gate reports pending for the column comparison. Once
+ * zod modules exist, zero table↔schema pairs is a FAILURE (the mapping is
+ * broken), never a silent pending.
  *
  * Pairing, per table (first hit wins):
  * 1. `tableToSchema(table)` override → a schema file whose keys are used;
@@ -19,20 +32,26 @@
  *
  * Columns and keys are compared case- and separator-insensitively, so
  * snake_case SQL (`link_id`) matches camelCase zod (`linkId`). The SQL
- * parser is dependency-free but handles comments, schema-qualified and
- * multi-word types (`public.citext`, `double precision`, `timestamp with
- * time zone`, arrays), several columns on one line, and table constraints.
+ * parser is dependency-free but handles comments, dollar-quoted bodies,
+ * schema-qualified and multi-word types (`public.citext`, `double
+ * precision`, `timestamp with time zone`, arrays), several columns on one
+ * line, and table constraints.
  */
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import { pending, gateFromViolations, type GateResult } from './types.ts'
+import { pending, type GateResult } from './types.ts'
+import { resolveAllowlist, type AllowlistInputs } from './allowlist.ts'
 
 export interface ParityOptions {
   repoRoot?: string
   migrationsDir?: string
   schemasDir?: string
   tableToSchema?: (table: string) => string | null
+  /** Injected allowlist state (self-tests); default: the checked-in file + git merge-base. */
+  allowlist?: AllowlistInputs
 }
+
+export const DDL_ALLOWLIST_PATH = join('packages', 'test-harness', 'allowlists', 'ddl-unpaired-tables.json')
 
 /** The unified DDL files this gate compares (#1502 numbering). */
 export const UNIFIED_MIGRATION_RE = /^5\d\d-[A-Za-z0-9_-]+\.sql$/
@@ -51,6 +70,12 @@ function stripSqlComments(sql: string): string {
       const stop = end === -1 ? sql.length : end + 1
       out += sql.slice(i, stop)
       i = stop
+    } else if (ch === '$' && /^\$[A-Za-z_]*\$/.test(sql.slice(i, i + 64))) {
+      // Dollar-quoted body (DO blocks, functions): skipped, never parsed as DDL.
+      const tag = /^\$[A-Za-z_]*\$/.exec(sql.slice(i, i + 64))![0]
+      const end = sql.indexOf(tag, i + tag.length)
+      i = end === -1 ? sql.length : end + tag.length
+      out += ' '
     } else if (ch === '-' && sql[i + 1] === '-') {
       const nl = sql.indexOf('\n', i)
       i = nl === -1 ? sql.length : nl
@@ -130,6 +155,66 @@ export function extractTables(sql: string): Map<string, string[]> {
   return tables
 }
 
+/** End of the statement starting at `from` (top-level `;`), honouring quotes and brackets. */
+function statementEnd(text: string, from: number): number {
+  let depth = 0
+  for (let i = from; i < text.length; i += 1) {
+    const ch = text[i]
+    if (ch === "'" || ch === '"') {
+      const end = text.indexOf(ch, i + 1)
+      if (end === -1) return text.length
+      i = end
+    } else if (ch === '(') depth += 1
+    else if (ch === ')') depth -= 1
+    else if (ch === ';' && depth === 0) return i
+  }
+  return text.length
+}
+
+const ADD_NON_COLUMN_RE = /^ADD\s+(?:CONSTRAINT|PRIMARY\s+KEY|UNIQUE|CHECK|FOREIGN\s+KEY|EXCLUDE)\b/i
+const ADD_COLUMN_RE = /^ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+\S/i
+
+/** `ALTER TABLE <t> ADD [COLUMN] [IF NOT EXISTS] <col> <type>, ADD …;` → table → added columns. */
+export function extractAddedColumns(sql: string): Map<string, string[]> {
+  const added = new Map<string, string[]>()
+  const clean = stripSqlComments(sql)
+  const re = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?(?:"?[A-Za-z_][A-Za-z0-9_]*"?\s*\.\s*)?"?([A-Za-z_][A-Za-z0-9_]*)"?\s+/gi
+  let m: RegExpExecArray | null
+  while ((m = re.exec(clean)) !== null) {
+    const start = m.index + m[0].length
+    const end = statementEnd(clean, start)
+    const table = m[1]!.toLowerCase()
+    for (const action of splitTopLevel(clean.slice(start, end))) {
+      if (ADD_NON_COLUMN_RE.test(action)) continue
+      const cm = ADD_COLUMN_RE.exec(action)
+      if (!cm) continue
+      const list = added.get(table) ?? []
+      list.push((cm[1] ?? cm[2])!.toLowerCase())
+      added.set(table, list)
+    }
+    re.lastIndex = end
+  }
+  return added
+}
+
+/** Every table the 5NN files create or extend, with its (created + added) columns. */
+export function extractUnifiedTables(sources: Array<{ file: string; sql: string }>): Map<string, { file: string; cols: string[] }> {
+  const tables = new Map<string, { file: string; cols: string[] }>()
+  for (const { file, sql } of sources) {
+    for (const [table, cols] of extractTables(sql)) {
+      const prev = tables.get(table)
+      tables.set(table, { file: prev?.file ?? file, cols: [...(prev?.cols ?? []), ...cols] })
+    }
+  }
+  for (const { file, sql } of sources) {
+    for (const [table, cols] of extractAddedColumns(sql)) {
+      const prev = tables.get(table)
+      tables.set(table, { file: prev?.file ?? file, cols: [...new Set([...(prev?.cols ?? []), ...cols])] })
+    }
+  }
+  return tables
+}
+
 const ZOD_KEY_RE = /(?:[{,\n]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*z\./
 
 /** Every `key: z.…` in a source file (all objects, any depth). */
@@ -182,7 +267,7 @@ function listSchemaFiles(schemasDir: string): string[] {
 }
 
 export function checkDdlZodParity(opts: ParityOptions = {}): GateResult {
-  const root = opts.migrationsDir && opts.schemasDir ? '' : (opts.repoRoot ?? defaultRoot())
+  const root = opts.repoRoot ?? defaultRoot()
   const migrationsDir = opts.migrationsDir ?? join(root, 'apps', 'workspace-service', 'migrations')
   const schemasDir = opts.schemasDir ?? join(root, 'packages', 'shared', 'src', 'domain')
   const gate = 'ddl-zod-parity'
@@ -191,8 +276,8 @@ export function checkDdlZodParity(opts: ParityOptions = {}): GateResult {
     ? readdirSync(migrationsDir).filter((f) => UNIFIED_MIGRATION_RE.test(f)).sort()
     : []
   if (sqlFiles.length === 0) return pending(gate, 'apps/workspace-service/migrations/5NN-*.sql', '1502')
+  const tables = extractUnifiedTables(sqlFiles.map((file) => ({ file, sql: readFileSync(join(migrationsDir, file), 'utf8') })))
   const schemaFiles = existsSync(schemasDir) && statSync(schemasDir).isDirectory() ? listSchemaFiles(schemasDir) : []
-  if (schemaFiles.length === 0) return pending(gate, 'packages/shared/src/domain/*.ts', '1503')
 
   const objects = new Map<string, { file: string; keys: string[] }>()
   const fileSources = new Map<string, string>()
@@ -219,31 +304,39 @@ export function checkDdlZodParity(opts: ParityOptions = {}): GateResult {
     return null
   }
 
-  const violations: string[] = []
+  const allowlist = resolveAllowlist(root, DDL_ALLOWLIST_PATH, 'tables', opts.allowlist)
+  const allowed = new Set(allowlist.entries)
+  const violations: string[] = [...allowlist.problems]
   let compared = 0
-  let tableCount = 0
-  for (const file of sqlFiles) {
-    for (const [table, cols] of extractTables(readFileSync(join(migrationsDir, file), 'utf8'))) {
-      tableCount += 1
-      const pair = resolvePair(table)
-      if (!pair) continue
-      compared += 1
-      const keys = new Set(pair.keys.map(normalizeFieldName))
-      for (const col of cols) {
-        if (!keys.has(normalizeFieldName(col))) violations.push(`${file}:${table}: column '${col}' has no zod key in ${pair.label}`)
-      }
+  let unpairedAllowed = 0
+  for (const [table, { file, cols }] of tables) {
+    const pair = schemaFiles.length > 0 ? resolvePair(table) : null
+    if (!pair) {
+      if (allowed.has(table)) unpairedAllowed += 1
+      else violations.push(`${file}:${table}: no zod schema (name it ${zodNameCandidates(table).slice(0, 3).join(' / ')}) and not in ${DDL_ALLOWLIST_PATH.split('\\').join('/')}`)
+      continue
+    }
+    compared += 1
+    if (allowed.has(table)) violations.push(`${file}:${table}: now pairs with ${pair.label}; remove it from the unpaired allowlist (the allowlist only shrinks)`)
+    const keys = new Set(pair.keys.map(normalizeFieldName))
+    for (const col of cols) {
+      if (!keys.has(normalizeFieldName(col))) violations.push(`${file}:${table}: column '${col}' has no zod key in ${pair.label}`)
     }
   }
-  if (compared === 0) {
-    return {
-      gate,
-      status: 'fail',
-      summary: `0 table↔schema pairs among ${tableCount} table(s) and ${schemaFiles.length} zod module(s)`,
-      violations: [
-        `no ${basename(migrationsDir)}/5NN-*.sql table maps to a zod object in ${basename(schemasDir)}/: name the object after the table ` +
-          `(work_item → WorkItem / WorkItemSchema / workItemSchema) or pass tableToSchema`,
-      ],
-    }
+  for (const entry of allowlist.entries) {
+    if (!tables.has(entry)) violations.push(`unpaired allowlist entry '${entry}' is not a table in the 5NN migrations; remove it`)
   }
-  return gateFromViolations(gate, violations, `${compared}/${tableCount} table(s) compared, columns match zod keys`)
+  const tail = `${tables.size} table(s) in ${sqlFiles.length} 5NN file(s), ${unpairedAllowed} allowlisted unpaired`
+  if (schemaFiles.length > 0 && compared === 0) {
+    violations.unshift(
+      `no ${basename(migrationsDir)}/5NN-*.sql table maps to a zod object in ${basename(schemasDir)}/: name the object after the table ` +
+        `(work_item → WorkItem / WorkItemSchema / workItemSchema) or pass tableToSchema`,
+    )
+    return { gate, status: 'fail', summary: `0 table↔schema pairs among ${tables.size} table(s) and ${schemaFiles.length} zod module(s)`, violations }
+  }
+  if (violations.length > 0) return { gate, status: 'fail', summary: `${violations.length} violation(s); ${tail}`, violations }
+  if (schemaFiles.length === 0) {
+    return { gate, status: 'pending', summary: `pending (input not present: packages/shared/src/domain/*.ts from #1503); allowlist holds: ${tail}` }
+  }
+  return { gate, status: 'pass', summary: `${compared}/${tables.size} table(s) paired, columns match zod keys; ${tail}` }
 }
