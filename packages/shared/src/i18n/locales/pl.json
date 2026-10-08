@@ -3554,6 +3554,7 @@
   "meetings.local.tr.viewRevision": "Wyświetl wersję {{revision}}",
   "meetings.local.transcribe": "Transcribe",
   "meetings.local.transcriptEngine": "Transcription",
+  "meetings.local.transcriptNoteFailed": "Could not save the meeting “{{title}}” transcript to the transcripts folder",
   "meetings.local.transcription": "Transcription",
   "meetings.local.trash": "Delete meeting",
   "meetings.local.trashConfirm": "Move the meeting folder to the Trash?",

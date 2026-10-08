@@ -8,6 +8,7 @@ import { buildSummaryPrompt, parseSummaryExtraction } from '../../pages/meetings
 import { loadDecisions, saveDecisions } from '../../pages/extra-screens/decisions/decisions-store'
 import type { DecisionCandidate } from '../../pages/extra-screens/decisions/decisions-model'
 import { readWorkspaceJsonSnapshot, saveWorkspaceJson } from '../extra-screens/storage'
+import { useMeetingTranscriptNotes } from './transcript-notes'
 
 const inflight = new Set<string>()
 const START_TIMEOUT_MS = 120_000
@@ -117,6 +118,9 @@ export async function syncMeetingExtraction(api: MeetingsLocalApi, meeting: Loca
 }
 
 export function useAutomaticMeetingExtraction(workspaceId: string | null): void {
+  // App-wide mount point: mirror finished transcripts into the notes vault even
+  // when no meetings screen is open (this hook runs from AppShell's background).
+  useMeetingTranscriptNotes(workspaceId)
   useEffect(() => {
     const api = meetingsApi()
     if (!api || !workspaceId) return

@@ -146,6 +146,7 @@ type ApiToChannelMapKeys = Exclude<
   | 'remoteTlsInspect' // direct IPC — inspect peer cert before token handshake
   | 'remoteTlsDecide' // direct IPC — accept/reject/rollover enrollment
   | 'exitMiniWindow' // direct IPC — native window lifecycle
+  | 'publishVoiceLevel' // direct one-way IPC send — renderer-owned overlay level, no WS RPC
   | 'onPanelFocusDirection' // direct IPC — native directional focus shortcut
 > | BrowserPaneKeys
   | KnowledgeKeys

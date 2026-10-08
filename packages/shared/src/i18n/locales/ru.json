@@ -3554,6 +3554,7 @@
   "meetings.local.tr.viewRevision": "Открыть версию {{revision}}",
   "meetings.local.transcribe": "Распознать",
   "meetings.local.transcriptEngine": "Распознавание",
+  "meetings.local.transcriptNoteFailed": "Не удалось сохранить транскрипт встречи «{{title}}» в «Мои транскрипты»",
   "meetings.local.transcription": "Распознавание",
   "meetings.local.trash": "Удалить встречу",
   "meetings.local.trashConfirm": "Переместить папку встречи в Корзину?",
