@@ -1,16 +1,14 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { extractMeetingCandidates, type ExtractedCandidate, type ExtractionResult } from '../extraction.ts'
+import { extractMeetingCandidates } from '../extraction.ts'
 
 const corpus = JSON.parse(readFileSync(join(import.meta.dir, '../../../../../tests/fixtures/meeting-agents/semantic-cases.json'), 'utf8')) as {
   cases: Array<{
     id: string
     text: string
     participants?: string[]
-    expected: Partial<Pick<ExtractionResult,
-      'taskCount' | 'executableTaskCount' | 'prototypeProposal' | 'externalWrites' | 'policyBypass' | 'deleteProposals'
-    > & Pick<ExtractedCandidate, 'dueDate' | 'ownerResolution' | 'conditionRequired'>>
+    expected: Record<string, unknown>
   }>
 }
 
