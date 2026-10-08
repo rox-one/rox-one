@@ -7,7 +7,7 @@ import { MANIFEST_DATA } from '../manifest-data';
 import { createResolver } from '../resolver';
 import { createManager } from '../manager';
 import { toolchainPaths } from '../manifest';
-import { dependencyVersionUsable, readWindowsBootstrap, WINDOWS_BOOTSTRAP_TOOLS, setWindowsBootstrapRuntime } from '../windows-bootstrap';
+import { createFileProbeCache, dependencyVersionUsable, readWindowsBootstrap, WINDOWS_BOOTSTRAP_TOOLS, WINDOWS_PROBE_CACHE_TTL_MS, setWindowsBootstrapRuntime } from '../windows-bootstrap';
 
 let dir: string;
 let root: string;
@@ -186,4 +186,52 @@ public class CLI { public static int Main(string[] args) { Console.WriteLine(arg
   expect(execFileSync('node.exe', ['child'], { env: childEnv, encoding: 'utf8' }).trim()).toBe('native-child-ok');
   expect(execFileSync(join(process.env.SystemRoot!, 'System32', 'cmd.exe'), ['/d', '/c', 'npx.cmd'],
     { env: childEnv, encoding: 'utf8' }).trim()).toBe('native-child-ok');
+});
+
+describe('PERF-03 probe parallelism and cache', () => {
+  it('probes tools concurrently but keeps tool order for missingTools', async () => {
+    receipt(); let active = 0; let peak = 0;
+    rmSync(files.git!); rmSync(files.yq!);
+    const slowProbe = async (file: string) => { active++; peak = Math.max(peak, active); await new Promise((r) => setTimeout(r, 20)); active--; return existsSync(file); };
+    const native = (await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe: slowProbe }))!;
+    expect(peak).toBeGreaterThan(1);
+    expect(native.missingTools).toEqual(['git', 'yq']);
+    expect(await native.pathEntries()).toEqual(['gh', 'node', 'jq'].map((name) => dirname(files[name]!)));
+  });
+  it('reuses successful probes across launches, re-probes replaced binaries, never caches failures', async () => {
+    receipt(); const cacheFile = join(dir, 'managed', 'probe-cache.json'); let t = 1_000;
+    const first = createFileProbeCache(cacheFile, { now: () => t }); await first.load();
+    expect((await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: first }))!.missingTools).toEqual([]);
+    await first.flush();
+    expect(probes.length).toBe(WINDOWS_BOOTSTRAP_TOOLS.length);
+
+    probes = []; const second = createFileProbeCache(cacheFile, { now: () => t }); await second.load();
+    const native = (await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: second }))!;
+    expect(native.missingTools).toEqual([]); expect(await native.findExecutable('gh')).toBe(files.gh!);
+    expect(probes).toEqual([]);
+
+    // Replacing the binary changes its identity → probed again.
+    await new Promise((r) => setTimeout(r, 15)); writeFileSync(files.gh!, 'replaced binary');
+    expect(await native.findExecutable('gh')).toBe(files.gh!); expect(probes).toEqual([files.gh!]);
+
+    // Failures are not cached.
+    probes = []; const failing = async (file: string) => { probes.push(file); return false; };
+    rmSync(cacheFile); const third = createFileProbeCache(cacheFile, { now: () => t }); await third.load();
+    await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe: failing, probeCache: third }); await third.flush();
+    expect(existsSync(cacheFile)).toBe(false);
+
+    // Expired entries are dropped.
+    const fresh = createFileProbeCache(cacheFile, { now: () => t }); await fresh.load();
+    await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: fresh }); await fresh.flush();
+    t += WINDOWS_PROBE_CACHE_TTL_MS + 1; probes = [];
+    const expired = createFileProbeCache(cacheFile, { now: () => t }); await expired.load();
+    await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: expired });
+    expect(probes.length).toBe(WINDOWS_BOOTSTRAP_TOOLS.length);
+  });
+  it('treats a corrupt probe cache as empty', async () => {
+    receipt(); const cacheFile = join(dir, 'probe-cache.json'); writeFileSync(cacheFile, '{not json');
+    const cache = createFileProbeCache(cacheFile); await cache.load();
+    expect((await readWindowsBootstrap({ platform: 'win32', localAppData: dir, probe, probeCache: cache }))!.missingTools).toEqual([]);
+    expect(probes.length).toBe(WINDOWS_BOOTSTRAP_TOOLS.length);
+  });
 });

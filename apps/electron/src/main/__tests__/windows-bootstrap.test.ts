@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { initializeWindowsBootstrap } from '../windows-bootstrap';
+import { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair, resetWindowsBootstrapRepairForTests, repairBackoffMs, repairStatePath, REPAIR_BACKOFF_BASE_MS, REPAIR_BACKOFF_MAX_MS } from '../windows-bootstrap';
 import { getWindowsBootstrapRuntime, setWindowsBootstrapRuntime } from '@rox/shared/toolchain';
 import type { WindowsBootstrapRuntime } from '@rox/shared/toolchain';
 
 const dirs: string[] = [];
-afterEach(() => { setWindowsBootstrapRuntime(null); for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
+afterEach(() => { setWindowsBootstrapRuntime(null); resetWindowsBootstrapRepairForTests(); for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 function fixture() {
   const dir = mkdtempSync(join(process.platform === 'win32' ? join(process.env.LOCALAPPDATA!, 'Temp', 'opencode') : tmpdir(), 'rox-startup-'));
   dirs.push(dir);
@@ -27,26 +27,67 @@ function runtime(mode: 'auto' | 'bundled' | 'system', missing = false): WindowsB
 describe('Windows startup handoff', () => {
   it('registers before children and preserves PATH casing, managed bins and vendored rg', async () => {
     const opts = fixture(); const native = runtime('auto');
-    const result = await initializeWindowsBootstrap({ ...opts, read: async () => native,
-      run: async () => { throw new Error('unnecessary recovery'); } });
-    expect(result?.mode).toBe('auto'); expect(getWindowsBootstrapRuntime()).toBe(native);
+    const result = await initializeWindowsBootstrap({ ...opts, read: async () => native });
+    expect(result?.mode).toBe('auto'); expect(result?.repairNeeded).toBe(false); expect(getWindowsBootstrapRuntime()).toBe(native);
     expect(opts.env.Path).toBe('C:\\selected-node;C:\\unrelated;C:\\vendored-rg;C:\\managed\\omp');
     expect('PATH' in opts.env).toBe(false);
   });
-  it.each([1, 2, 3, 3010])('surfaces recovery exit %s, uses preference, re-reads receipt, never opts into WSL', async (code) => {
-    const opts = fixture(); let reads = 0; const calls: unknown[][] = [];
+  it('never runs the PowerShell repair inline; reports repairNeeded instead', async () => {
+    const opts = fixture(); let reads = 0;
     const result = await initializeWindowsBootstrap({ ...opts, preference: 'system',
-      read: async (options) => { expect(options?.preference).toBe('system'); return runtime('system', ++reads === 1); },
-      run: async (...args) => { calls.push(args); return code; } });
-    expect(result?.recoveryCode).toBe(code); expect(reads).toBe(2);
-    expect(calls[0]![1]).toBe('system'); expect(calls[0]!.length).toBe(3);
+      read: async (options) => { expect(options?.preference).toBe('system'); reads++; return runtime('system', true); } });
+    expect(reads).toBe(1); expect(result?.repairNeeded).toBe(true); expect(result?.missingTools).toEqual(['node']);
     expect(JSON.stringify(result)).not.toContain('error');
   });
+  it.each([1, 2, 3, 3010])('background repair surfaces exit %s, uses preference, re-reads receipt, never opts into WSL', async (code) => {
+    const opts = fixture(); let reads = 0; const calls: unknown[][] = []; let gateOpened = false;
+    let open!: () => void; const gate = new Promise<void>((resolve) => { open = resolve; });
+    const pending = scheduleWindowsBootstrapRepair({ ...opts, preference: 'system', missingTools: ['node'], mode: 'system',
+      after: gate.then(() => { gateOpened = true; }), now: () => 1_000,
+      read: async (options) => { expect(options?.preference).toBe('system'); reads++; return runtime('system', true); },
+      run: async (...args) => { expect(gateOpened).toBe(true); calls.push(args); return code; } });
+    await new Promise((resolve) => setTimeout(resolve, 5)); expect(calls.length).toBe(0);
+    open();
+    const outcome = await pending;
+    expect(outcome).toEqual({ ran: true, recoveryCode: code, attempts: 1, missingTools: ['node'] });
+    expect(reads).toBe(1); expect(calls[0]![1]).toBe('system'); expect(calls[0]!.length).toBe(3);
+    const state = JSON.parse(readFileSync(repairStatePath(opts.managedRoot), 'utf8'));
+    expect(state).toEqual({ attempts: 1, lastAttemptAt: 1_000, lastCode: code, missingKey: 'node', mode: 'system' });
+  });
+  it('backs off repeated repairs, at most once per launch, and resets when the missing set changes', async () => {
+    const opts = fixture(); let runs = 0; let t = 0;
+    const base = { ...opts, missingTools: ['node'], now: () => t,
+      read: async () => runtime('auto', true), run: async () => { runs++; return 1; } };
+    expect((await scheduleWindowsBootstrapRepair(base)).ran).toBe(true);
+    expect(await scheduleWindowsBootstrapRepair(base)).toEqual({ ran: false, reason: 'already-ran' });
+    resetWindowsBootstrapRepairForTests(); t = REPAIR_BACKOFF_BASE_MS - 1;
+    expect(await scheduleWindowsBootstrapRepair(base)).toEqual({ ran: false, reason: 'backoff', nextAttemptAt: REPAIR_BACKOFF_BASE_MS });
+    resetWindowsBootstrapRepairForTests(); t = REPAIR_BACKOFF_BASE_MS;
+    expect(await scheduleWindowsBootstrapRepair(base)).toMatchObject({ ran: true, attempts: 2 });
+    resetWindowsBootstrapRepairForTests(); t += REPAIR_BACKOFF_BASE_MS; // < 2h backoff for attempt 2
+    expect((await scheduleWindowsBootstrapRepair(base)).ran).toBe(false);
+    resetWindowsBootstrapRepairForTests();
+    expect(await scheduleWindowsBootstrapRepair({ ...base, missingTools: ['git', 'node'] })).toMatchObject({ ran: true, attempts: 1 });
+    expect(runs).toBe(3);
+    expect(repairBackoffMs(0)).toBe(0); expect(repairBackoffMs(3)).toBe(4 * REPAIR_BACKOFF_BASE_MS);
+    expect(repairBackoffMs(50)).toBe(REPAIR_BACKOFF_MAX_MS);
+  });
+  it('clears the backoff once the repair fixes every tool and applies the new runtime', async () => {
+    const opts = fixture(); const fixed = runtime('auto');
+    const outcome = await scheduleWindowsBootstrapRepair({ ...opts, missingTools: ['node'], now: () => 5,
+      read: async () => fixed, run: async () => 0 });
+    expect(outcome).toEqual({ ran: true, recoveryCode: 0, attempts: 0, missingTools: [] });
+    expect(getWindowsBootstrapRuntime()).toBe(fixed); expect(opts.env.Path.startsWith('C:\\selected-node;')).toBe(true);
+    expect(JSON.parse(readFileSync(repairStatePath(opts.managedRoot), 'utf8')).attempts).toBe(0);
+  });
   it('does not provision for non-Windows/dev launches', async () => {
-    const opts = fixture(); const run = async () => { throw new Error('unexpected provisioning'); };
-    expect(await initializeWindowsBootstrap({ ...opts, platform: 'linux', run })).toBeNull();
-    await initializeWindowsBootstrap({ ...opts, isPackaged: false, read: async () => null, run });
+    const opts = fixture(); const run = async (): Promise<number> => { throw new Error('unexpected provisioning'); };
+    expect(await initializeWindowsBootstrap({ ...opts, platform: 'linux' })).toBeNull();
+    const dev = await initializeWindowsBootstrap({ ...opts, isPackaged: false, read: async () => null });
+    expect(dev?.repairNeeded).toBe(false);
     expect(getWindowsBootstrapRuntime()).toBeNull();
+    expect(await scheduleWindowsBootstrapRepair({ ...opts, isPackaged: false, missingTools: ['node'], run })).toEqual({ ran: false, reason: 'not-needed' });
+    expect(existsSync(repairStatePath(opts.managedRoot))).toBe(false);
   });
   it('removes inherited private/stale prerequisite paths in system mode without dropping managed OMP', async () => {
     const opts = fixture(); const omp = join(opts.managedRoot, 'omp', 'current', 'bin');

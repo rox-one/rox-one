@@ -6,9 +6,11 @@ import { RoxAccountAuthority, setRoxAccountAuthority } from '@rox/shared/auth'
 import { validateConfigurationCliEntries } from './configuration-cli-compat'
 import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
-// This ensures tools like Homebrew, nvm, etc. are available to the agent
-import { loadShellEnv } from './shell-env'
-loadShellEnv()
+// This ensures tools like Homebrew, nvm, etc. are available to the agent.
+// PERF-03: non-blocking — applies the cached env (or fallback PATH) now and
+// refreshes from the login shell in the background; agent spawns await it.
+import { startShellEnvLoad, whenShellEnvReady } from './shell-env'
+startShellEnvLoad()
 markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
@@ -568,19 +570,33 @@ app.whenReady().then(async () => {
 
   if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
     markStartup(STARTUP_MARKS.winBootstrapStart)
-    const { initializeWindowsBootstrap } = await import('./windows-bootstrap')
+    const { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair } = await import('./windows-bootstrap')
     const { getToolchainDependencyMode, getGitBashPath } = await import('@rox/shared/config')
-    const result = await initializeWindowsBootstrap({
+    const bootstrapOptions = {
       isPackaged: app.isPackaged,
       resourcesPath: process.resourcesPath,
       managedRoot: join(CONFIG_DIR, 'toolchain'),
       preference: getToolchainDependencyMode(),
       gitBashPreference: getGitBashPath(),
-    })
+    }
+    // PERF-03: parallel, cached `--version` probes; never runs bootstrap.ps1 here.
+    const result = await initializeWindowsBootstrap(bootstrapOptions)
     markStartup(STARTUP_MARKS.winBootstrapEnd)
     // Structured non-secret diagnostics; never log receipt errors or process output.
-    if (result?.missingTools.length || result?.recoveryCode) mainLog.warn('[windows-bootstrap]', result)
+    if (result?.missingTools.length) mainLog.warn('[windows-bootstrap]', result)
     else if (result) mainLog.info('[windows-bootstrap]', result)
+    if (result?.repairNeeded) {
+      // Offline repair runs at most once per backoff window, after first paint.
+      void scheduleWindowsBootstrapRepair({
+        ...bootstrapOptions,
+        missingTools: result.missingTools,
+        mode: result.mode,
+        after: whenStartupMark(STARTUP_MARKS.rendererFirstPaint),
+      }).then((repair) => {
+        if (repair.ran) mainLog.warn('[windows-bootstrap] background repair', repair)
+        else mainLog.info('[windows-bootstrap] background repair skipped', repair)
+      }).catch((err) => mainLog.warn('[windows-bootstrap] background repair failed:', err))
+    }
   }
 
   try {
@@ -1033,6 +1049,8 @@ app.whenReady().then(async () => {
             updateBadgeCount,
             onSessionStarted,
             onSessionStopped,
+            // PERF-03: first agent spawn waits for the background shell-env capture (macOS).
+            beforeAgentSpawn: () => whenShellEnvReady(),
             captureException: (error, context) => {
               Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
                 tags: {
