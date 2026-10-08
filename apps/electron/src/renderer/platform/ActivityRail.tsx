@@ -30,6 +30,7 @@ import {
 import { CHROME_DENSITY } from './chrome-density'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
+import { ModesRailGroup } from './ModesRailGroup'
 import { routes } from '../../shared/routes'
 import { navDestinationLabelKey } from './surface-shell'
 import { enabledShellFlagsAtom } from './unified-flags'
@@ -140,6 +141,8 @@ export function ActivityRail() {
           <RailItem key={dest.id} dest={dest} collapsed={collapsed} />
         ))}
       </RailSection>
+      {/* W1-07 (#1504): registered modes in pill order; renders nothing with every mode flag off. */}
+      <ModesRailGroup collapsed={collapsed} />
       <ExtraScreensRailGroup collapsed={collapsed} />
       <div className={cn('mt-auto flex flex-col gap-[4px] pt-[8px]', collapsed ? 'items-center' : 'items-stretch')}>
         <RailRow

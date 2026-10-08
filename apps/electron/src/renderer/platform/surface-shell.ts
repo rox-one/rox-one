@@ -6,7 +6,7 @@
 import { WORKBENCH_FLAG, type ModeContribution, type ModeRegistry } from '@rox/core/platform'
 import type { ModeScreenFlags } from '@/atoms/mode-flags'
 import type { UnifiedSurfaceId } from '../../shared/surface-routes'
-import { DOCS_RELABEL_TITLE_KEY, resolveSeededModes } from './modes-seed'
+import { CORE_MODES, DOCS_RELABEL_TITLE_KEY, resolveSeededModes } from './modes-seed'
 import { flagContextKeys } from './unified-flags'
 
 /** Modes of the pill / ⌘1…7: flag-gated `when`s, mode-screen flags, relabels. */
@@ -16,6 +16,21 @@ export function listShellModes(
   shellFlags: ReadonlySet<string>,
 ): ModeContribution[] {
   return resolveSeededModes(registry.list(flagContextKeys(shellFlags)), modeFlags, shellFlags)
+}
+
+/** The baseline seven modes (home … inbox) — already reachable from the rail on main. */
+export const BASELINE_MODE_IDS: ReadonlySet<string> = new Set(CORE_MODES.map((mode) => mode.contribution.id))
+
+/**
+ * W1-07 (#1504, owner decision): registered modes the left ActivityRail and
+ * the compact destination list add after `APP_NAV_DESTINATIONS` — every
+ * navigable mode beyond the baseline seven (unified modes, wave-2
+ * `registerSeededMode`), in the exact pill / ⌘1…7 order (`modes` is the
+ * `useShellModes().modes` list). Empty with every mode flag off, so both
+ * render exactly `APP_NAV_DESTINATIONS` as on main.
+ */
+export function railModeEntries(modes: readonly ModeContribution[]): ModeContribution[] {
+  return modes.filter((mode) => mode.rootRoute !== null && !BASELINE_MODE_IDS.has(mode.id))
 }
 
 /** Header / tab title key of a unified mode root. */
