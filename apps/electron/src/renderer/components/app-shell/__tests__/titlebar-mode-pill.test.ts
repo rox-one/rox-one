@@ -43,8 +43,9 @@ describe('titlebar mode pill layout', () => {
 
 describe('titlebar mode pill source contract', () => {
   it('renders every mode in one pill with no overflow menu', () => {
-    // W1-07 (#1504): flag-gated modes are listed via their flag context keys.
-    expect(modeBar).toContain('getModeRegistry().list(flagContextKeys(shellFlags))')
+    // W1-07 (#1504): flag-gated modes come from the reactive shared list
+    // (flag context keys + late registrations), see platform/useModes.ts.
+    expect(modeBar).toContain('useShellModes()')
     expect(modeBar).not.toContain('listPinnedModes')
     expect(modeBar).not.toContain('DropdownMenu')
     expect(modeBar).toContain('rox-mode-pill-indicator')

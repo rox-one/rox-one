@@ -28,15 +28,13 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue } from 'jotai'
 import { isModeNavigable, type ModeContribution } from '@rox/core/platform'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import type { Route } from '../../shared/routes'
-import { getModeRegistry, isModeActive } from './mode-registry-bootstrap'
-import { resolveSeededModes } from './modes-seed'
-import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
-import { enabledShellFlagsAtom, flagContextKeys } from './unified-flags'
+import { isModeActive } from './mode-registry-bootstrap'
+import { useShellModes } from './useModes'
+import { resolveLucideIcon } from './lucide-icon'
 import { useInboxBlockingCount } from '@/hooks/useInboxItems'
 import { handleModePillKeyDown } from './mode-pill-keyboard'
 
@@ -90,7 +88,8 @@ function PillItems({
   return (
     <>
       {modes.map((mode) => {
-        const Icon = MODE_ICONS[mode.icon] ?? Inbox
+        // W1-07 (#1504): the registration's icon name, MODE_ICONS as fallback.
+        const Icon = resolveLucideIcon(mode.icon) ?? MODE_ICONS[mode.icon] ?? Inbox
         const title = t(mode.titleKey)
         const disabled = !isModeNavigable(mode)
         const active = mode.id === activeId
@@ -137,9 +136,8 @@ function PillItems({
 export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
   const { t, i18n } = useTranslation()
   const navState = useNavigationState()
-  const flags = useAtomValue(modeScreenFlagsAtom)
-  const shellFlags = useAtomValue(enabledShellFlagsAtom)
-  const modes = resolveSeededModes(getModeRegistry().list(flagContextKeys(shellFlags)), flags, shellFlags)
+  // W1-07 (#1504): resolved modes; re-renders on late registerSeededMode().
+  const { modes } = useShellModes()
   const activeId = modes.find((mode) => isModeActive(mode.id, navState))?.id ?? null
   const inboxBlocking = useInboxBlockingCount()
   const badges = { inbox: inboxBlocking }
