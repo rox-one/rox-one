@@ -142,14 +142,12 @@ function AttachmentBubble({ attachment, onRemove, onRetry, disabled }: Attachmen
               {attachment.name}
             </span>
             {isTranscribing ? (
+              /* eslint-disable-next-line rox/no-arbitrary-text-size -- 10px sub-caption is below the 11px type-token floor */
               <span className="text-[10px] text-muted-foreground">{t('chat.audioTranscribing')}</span>
             ) : transcriptFailed ? (
-              <button
-                type="button"
-                onClick={onRetry}
-                disabled={!onRetry}
-                className="flex items-center gap-1 text-[10px] text-destructive hover:underline disabled:no-underline disabled:opacity-70"
-              >
+              /* eslint-disable-next-line rox/no-arbitrary-text-size -- 10px sub-caption is below the 11px type-token floor */
+              <button type="button" onClick={onRetry} disabled={!onRetry} className="flex items-center gap-1 text-[10px] text-destructive hover:underline disabled:no-underline disabled:opacity-70">
+                {/* eslint-disable-next-line rox/icon-size-tokens -- 10px icon is below the icon-token scale (icon-status starts at 12px) */}
                 <RotateCw className="h-2.5 w-2.5" />
                 {t('chat.audioTranscriptRetry')}
               </button>

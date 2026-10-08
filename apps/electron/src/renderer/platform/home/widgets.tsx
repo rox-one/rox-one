@@ -631,7 +631,7 @@ function BalanceWidget({ edit }: WidgetProps) {
           value={<span className="text-[28px] leading-9">{state.status === 'ok' ? fmt.num(state.balance) : state.status === 'loading' ? '…' : '—'}</span>}
         />
         {state.status === 'ok' ? (
-          <span className="px-1.5 text-[12px] leading-4 text-muted-foreground" data-home-balance-note="">
+          <span className="px-1.5 text-small leading-4 text-muted-foreground" data-home-balance-note="">
             {state.updating
               ? t('workbench.home.balance.updating')
               : state.syncedAt ? t('workbench.home.balance.updated', { time: fmt.when(state.syncedAt, Date.now()) }) : ''}

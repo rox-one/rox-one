@@ -172,7 +172,7 @@ export default function SecretsPage(_props: { itemId: string | null }) {
             <Chip tone={provider === 'connected' ? 'ok' : provider === 'checking' ? 'neutral' : 'warn'}>
               {t(statusKey)}
             </Chip>
-            {providerId && <span className="text-[12px] text-muted-foreground">{providerId}</span>}
+            {providerId && <span className="text-small text-muted-foreground">{providerId}</span>}
           </div>
 
           <SectionLabel>
@@ -185,19 +185,19 @@ export default function SecretsPage(_props: { itemId: string | null }) {
             <div className="text-muted-foreground">{t('extraScreens.secrets.refsEmpty')}</div>
           )}
           {refs && refs.map((ref) => (
-            <div key={`${ref.name}:${ref.envVar}`} className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/5">
+            <div key={`${ref.name}:${ref.envVar}`} className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-surface-hover">
               <div className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate font-mono text-[12px]">{ref.name}</span>
-                <span className="shrink-0 truncate font-mono text-[12px] text-muted-foreground">{ref.envVar}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-small">{ref.name}</span>
+                <span className="shrink-0 truncate font-mono text-small text-muted-foreground">{ref.envVar}</span>
               </div>
-              <div className="mt-0.5 flex items-center gap-2 text-[12px] text-muted-foreground">
+              <div className="mt-0.5 flex items-center gap-2 text-small text-muted-foreground">
                 <span>{t('extraScreens.secrets.refProvider')}: {ref.provider ?? t('extraScreens.secrets.refAny')}</span>
                 {ref.ref && <span className="min-w-0 truncate font-mono">{ref.ref}</span>}
               </div>
             </div>
           ))}
           {refs && refs.length === 0 && (
-            <div className="pt-1 text-[12px] text-muted-foreground">{t('extraScreens.secrets.refsEmptyHint')}</div>
+            <div className="pt-1 text-small text-muted-foreground">{t('extraScreens.secrets.refsEmptyHint')}</div>
           )}
         </div>
       </ScreenColumn>
@@ -206,33 +206,33 @@ export default function SecretsPage(_props: { itemId: string | null }) {
         <div className="min-w-0 max-w-[720px]">
           <Card>
             <CardTitle>{t('extraScreens.secrets.connectTitle')}</CardTitle>
-            <p className="mt-1 text-[12px] text-muted-foreground">{t('extraScreens.secrets.connectHint')}</p>
+            <p className="mt-1 text-small text-muted-foreground">{t('extraScreens.secrets.connectHint')}</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <label className="flex flex-col gap-1 text-[12px]">
+              <label className="flex flex-col gap-1 text-small">
                 {t('extraScreens.secrets.field.siteUrl')}
                 <TextField value={form.siteUrl} onChange={field('siteUrl')} placeholder="https://app.infisical.com" />
               </label>
-              <label className="flex flex-col gap-1 text-[12px]">
+              <label className="flex flex-col gap-1 text-small">
                 {t('extraScreens.secrets.field.projectId')}
                 <TextField value={form.projectId} onChange={field('projectId')} placeholder="project-id" />
               </label>
-              <label className="flex flex-col gap-1 text-[12px]">
+              <label className="flex flex-col gap-1 text-small">
                 {t('extraScreens.secrets.field.clientId')}
                 <TextField value={form.clientId} onChange={field('clientId')} placeholder="client-id" />
               </label>
-              <label className="flex flex-col gap-1 text-[12px]">
+              <label className="flex flex-col gap-1 text-small">
                 {t('extraScreens.secrets.field.clientSecret')}
                 <TextField value={form.clientSecret} onChange={field('clientSecret')} placeholder="••••••••" />
               </label>
-              <label className="flex flex-col gap-1 text-[12px]">
+              <label className="flex flex-col gap-1 text-small">
                 {t('extraScreens.secrets.field.environment')}
                 <TextField value={form.environment} onChange={field('environment')} placeholder="prod" />
               </label>
-              <label className="flex flex-col gap-1 text-[12px]">
+              <label className="flex flex-col gap-1 text-small">
                 {t('extraScreens.secrets.field.secretPath')}
                 <TextField value={form.secretPath} onChange={field('secretPath')} placeholder="/" />
               </label>
-              <label className="flex flex-col gap-1 text-[12px]">
+              <label className="flex flex-col gap-1 text-small">
                 {t('extraScreens.secrets.field.secretKey')}
                 <TextField value={form.secretKey} onChange={field('secretKey')} placeholder="SECRET_KEY" />
               </label>
@@ -248,7 +248,7 @@ export default function SecretsPage(_props: { itemId: string | null }) {
             </div>
 
             {preview && (
-              <div className="mt-2 text-[12px] text-success">
+              <div className="mt-2 text-small text-success">
                 {t('extraScreens.secrets.previewOk', {
                   label: preview.label,
                   project: preview.projectId,
@@ -257,9 +257,9 @@ export default function SecretsPage(_props: { itemId: string | null }) {
               </div>
             )}
             {connected && (
-              <div className="mt-2 text-[12px] text-success">{t('extraScreens.secrets.connectDone')}</div>
+              <div className="mt-2 text-small text-success">{t('extraScreens.secrets.connectDone')}</div>
             )}
-            {accountError && <div className="mt-2 text-[12px] text-destructive" role="alert">{accountError}</div>}
+            {accountError && <div className="mt-2 text-small text-destructive" role="alert">{accountError}</div>}
           </Card>
         </div>
       </ScreenDetail>

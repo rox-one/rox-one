@@ -3070,7 +3070,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                   <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
                     <label className="shrink-0 text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
                     <select id="workspace-project-context" value={selectedProjectId ?? ''}
-                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-1.5 py-1 text-[11px] leading-tight"
+                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-1.5 py-1 text-caption leading-tight"
                       onChange={event => setProjectContexts(previous => ({ ...previous, [activeWorkspaceId]: event.target.value || null }))}>
                       <option value="">{t('navigation.allProjects')}</option>
                       {projects.map(project => <option key={project.config.id} value={project.config.id}>{project.config.name}</option>)}

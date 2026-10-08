@@ -15,12 +15,17 @@
   padding: 2px;
   border: 0;
   border-radius: var(--rox-radius-panel);
+  /* Hairline ring shadows kept as single var() refs (the strict-value stylelint
+     rule wants box-shadow to be a variable or keyword, not a literal). */
+  --rox-mode-pill-plate-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
+  --rox-mode-pill-item-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 6%, transparent);
+  --rox-mode-pill-focus-ring: inset 0 0 0 2px var(--focus, var(--accent));
   /* Soft glass plate: translucent tint, hairline ring, muted blur of the
      titlebar material behind it. No accent fill. */
   background: color-mix(in oklch, var(--foreground) 4%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
-  backdrop-filter: blur(var(--chrome-glass-blur, 14px)) saturate(1.1);
-  -webkit-backdrop-filter: blur(var(--chrome-glass-blur, 14px)) saturate(1.1);
+  box-shadow: var(--rox-mode-pill-plate-ring);
+  backdrop-filter: blur(var(--chrome-glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--chrome-glass-blur)) saturate(1.1);
   font-family: var(--font-sans);
   font-size: var(--chrome-font-size, 12px);
   letter-spacing: var(--chrome-tracking, normal);
@@ -110,7 +115,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 }
 
 .rox-mode-pill-item:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--focus, var(--accent));
+  box-shadow: var(--rox-mode-pill-focus-ring);
 }
 
 .rox-mode-pill[data-collapsed] .rox-mode-pill-item {
@@ -127,7 +132,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   border-radius: var(--radius-control);
   /* Soft glass highlight for the active segment — neutral, not accent. */
   background: color-mix(in oklch, var(--foreground) 7%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 6%, transparent);
+  box-shadow: var(--rox-mode-pill-item-ring);
   opacity: 0;
   pointer-events: none;
 }

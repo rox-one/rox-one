@@ -77,7 +77,7 @@ export function MailNavSection({ mail, activeFolderId, onSelectFolder }: {
     <NavSection title={t('inbox.mail.section')}>
       {s?.state === 'ready' && address ? (
         <div className="flex items-center gap-1 px-2 pb-1" data-testid="mail-address">
-          <span className="shrink-0 text-[12px] font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
+          <span className="shrink-0 text-small font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
           <span className="min-w-0 flex-1 truncate text-[12px] font-semibold" title={address}>{address}</span>
           <button type="button" onClick={() => void copy()} className="h-6 shrink-0 rounded-[var(--radius-control)] px-1.5 text-[11px] text-text-secondary hover:bg-foreground/[0.06] hover:text-foreground" data-testid="mail-copy">
             {copied ? t('inbox.mail.copied') : t('inbox.mail.copy')}

@@ -344,6 +344,7 @@ function AudioAttachmentTile({ attachment, onFileClick }: { attachment: StoredAt
           <span className="text-xs font-medium line-clamp-2 break-all" title={attachment.name}>
             {attachment.name}
           </span>
+          {/* eslint-disable-next-line rox/no-arbitrary-text-size -- 10px sub-caption is below the 11px type-token floor */}
           <span className="text-[10px] text-muted-foreground">
             {getFileTypeLabel(attachment.type, attachment.mimeType, attachment.name)}
           </span>
@@ -409,7 +410,7 @@ function AudioTranscriptBlock({
               data-touch-reveal="true"
               className="flex items-center gap-1 text-destructive hover:underline disabled:no-underline disabled:opacity-60"
             >
-              <RotateCw className={cn('h-3 w-3', retrying && 'animate-spin')} />
+              <RotateCw className={cn('icon-status', retrying && 'animate-spin')} />
               {t('chat.audioTranscriptRetry')}
             </button>
           )}
@@ -418,8 +419,9 @@ function AudioTranscriptBlock({
 
       {transcript.status === 'done' && (
         <div className="rounded-[var(--radius-card)] bg-user-message-bubble px-5 py-3.5 text-sm break-words min-w-0 select-text w-full">
+          {/* eslint-disable-next-line rox/no-arbitrary-text-size -- 10px sub-caption is below the 11px type-token floor */}
           <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            <Mic className="h-3 w-3" aria-hidden="true" />
+            <Mic className="icon-status" aria-hidden="true" />
             {t('chat.audioTranscript')}
           </div>
           <p className="m-0 whitespace-pre-wrap">{transcript.text}</p>
@@ -430,9 +432,9 @@ function AudioTranscriptBlock({
         type="button"
         onClick={() => setExpanded(value => !value)}
         data-touch-reveal="true"
-        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+        className="flex items-center gap-1 text-caption text-muted-foreground hover:text-foreground"
       >
-        {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        {expanded ? <ChevronUp className="icon-status" /> : <ChevronDown className="icon-status" />}
         {t(expanded ? 'chat.audioHide' : 'chat.audioShow')}
       </button>
       {expanded && <AudioAttachmentTile attachment={attachment} onFileClick={onFileClick} />}

@@ -309,7 +309,7 @@ export default function ImportSettingsPage() {
             </p>
           ) : null}
           {truncated ? (
-            <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-truncated">
+            <p className="text-sm text-warning" data-testid="session-import-truncated">
               {t('settings.import.truncated', { count: entries.length })}
             </p>
           ) : null}
@@ -389,11 +389,11 @@ export default function ImportSettingsPage() {
           {error ? <div className="text-xs text-destructive">{error}</div> : null}
           {entries.length === 0 && !loading ? (
             scanUnavailable ? (
-              <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-unavailable">
+              <p className="text-sm text-warning" data-testid="session-import-unavailable">
                 {t('settings.import.emptyUnavailable')}
               </p>
             ) : scanAborted ? (
-              <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-aborted">
+              <p className="text-sm text-warning" data-testid="session-import-aborted">
                 {t('settings.import.emptyAborted')}
               </p>
             ) : (

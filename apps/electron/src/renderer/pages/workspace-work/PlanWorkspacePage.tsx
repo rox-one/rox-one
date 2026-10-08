@@ -124,8 +124,8 @@ export default function PlanWorkspacePage({ selectedId }: { selectedId?: string 
               if (next.section) setSection(next.section)
             }}
             className={cn(
-              'inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] px-2.5 text-[12px] outline-none focus-visible:ring-1 focus-visible:ring-ring',
-              active ? 'bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
+              'inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] px-2.5 text-small outline-none focus-visible:ring-1 focus-visible:ring-ring',
+              active ? 'bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-surface-hover hover:text-foreground',
               !selectable && 'cursor-not-allowed text-text-muted opacity-60',
             )}>
             <Icon className={cn('size-3.5', active ? 'text-accent' : 'text-text-muted')} aria-hidden />
