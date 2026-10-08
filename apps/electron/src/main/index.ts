@@ -601,6 +601,24 @@ app.whenReady().then(async () => {
       mainLog.info(`Client-only mode: CRAFT_SERVER_URL=${process.env.CRAFT_SERVER_URL} (server initialization skipped)`)
     }
 
+    // Entity links flag (entities.links.v1). Registered unconditionally —
+    // local, thin-client and headless hosts all parse rox:// deep links in
+    // this process — and before any window loads, because the renderer
+    // reports its persisted toggle synchronously at bootstrap. Main owns the
+    // effective state (env override > toggle) and keeps a durable copy so
+    // cold-start entity deep links see the user's setting.
+    {
+      const { loadPersistedEntitiesLinksFlag, registerEntitiesLinksIpc } = await import('./entities-flags')
+      loadPersistedEntitiesLinksFlag(CONFIG_DIR, { logger: mainLog })
+      registerEntitiesLinksIpc(ipcMain, {
+        broadcast: (channel, state) => {
+          for (const win of BrowserWindow.getAllWindows()) {
+            if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, state)
+          }
+        },
+      })
+    }
+
     // Initialize notification service (always — triggered by server push events)
     initNotificationService(windowManager)
 
@@ -1140,12 +1158,6 @@ app.whenReady().then(async () => {
         const { removeWorkspace: remove } = await import('@rox/shared/config')
         return remove(workspaceId)
       })
-
-      // Entity links flag (entities.links.v1): renderer owns the persisted
-      // atom and notifies main so the deep-link parser and the entity RPC
-      // handlers agree with the renderer without a restart.
-      const { registerEntitiesLinksIpc } = await import('./entities-flags')
-      registerEntitiesLinksIpc(ipcMain)
 
       // SSH remote hosts + tunnels (Remote-SSH style bootstrap to a remote server)
       const { registerSshTunnelIpc } = await import('./ssh-tunnel/ipc')

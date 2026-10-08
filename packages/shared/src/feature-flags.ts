@@ -115,6 +115,42 @@ export function isNativeIndexWatchEnabled(): boolean {
  */
 export const ENTITIES_LINKS_WORKBENCH_FLAG = 'entities.links.v1';
 
+/** Env key for the explicit `entities.links.v1` override. */
+export const ENTITIES_LINKS_ENV_KEY = 'CRAFT_FEATURE_ENTITIES_LINKS';
+
+/**
+ * Explicit env override for `entities.links.v1`, if set to a known boolean.
+ * Returns undefined in the context-isolated renderer (no `process`): the
+ * renderer learns the effective state from main instead (see
+ * `EntitiesLinksEffectiveState`).
+ */
+export function parseEntitiesLinksEnvOverride(env?: Record<string, string | undefined>): boolean | undefined {
+  return parseBooleanEnv(env ? env[ENTITIES_LINKS_ENV_KEY] : getEnv(ENTITIES_LINKS_ENV_KEY));
+}
+
+export interface EntitiesLinksEffectiveState {
+  /** Value all three hosts (main, renderer, server) must agree on. */
+  enabled: boolean;
+  /** Persisted user toggle (workbench flag), before the env override. */
+  persisted: boolean;
+  /** Explicit env override when `CRAFT_FEATURE_ENTITIES_LINKS` parses. */
+  envOverride: boolean | undefined;
+}
+
+/**
+ * Single effective-state computation shared by main (which publishes it over
+ * IPC), the renderer (which consumes it for the route gate + Settings UI)
+ * and tests. Precedence: explicit env override > persisted workbench flag.
+ * Default OFF. Agrees with `isEntitiesLinksEnabled` by construction.
+ */
+export function resolveEntitiesLinksEffectiveState(
+  persisted: boolean,
+  envOverride: boolean | undefined = parseEntitiesLinksEnvOverride(),
+): EntitiesLinksEffectiveState {
+  if (envOverride !== undefined) return { enabled: envOverride, persisted, envOverride };
+  return { enabled: persisted, persisted, envOverride: undefined };
+}
+
 /**
  * Runtime-evaluated check for the entity links subsystem (W1-02: link store,
  * resolver, `rox://` deep-link targets).
@@ -130,7 +166,7 @@ export const ENTITIES_LINKS_WORKBENCH_FLAG = 'entities.links.v1';
  * Without a set, only the env override applies (still default OFF).
  */
 export function isEntitiesLinksEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
-  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_ENTITIES_LINKS'));
+  const override = parseEntitiesLinksEnvOverride();
   if (override !== undefined) return override;
   if (enabledWorkbenchFlags?.has(ENTITIES_LINKS_WORKBENCH_FLAG)) return true;
   return false;
