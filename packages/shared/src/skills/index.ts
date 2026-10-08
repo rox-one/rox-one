@@ -55,6 +55,7 @@ export {
 export {
   ensureBundledSkillsInBackground,
   whenBundledSkillsSettled,
+  whenBundledSkillsReadyForAgents,
   type BundledSkillsBackgroundOptions,
   type BundledSkillsBackgroundOutcome,
 } from './bundled-background.ts';

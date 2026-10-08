@@ -27,6 +27,7 @@ import {
   type SourceConnectionStatus,
 } from '@rox/shared/sources'
 import { getToolchain, withToolchainPathPrefix } from '@rox/shared/toolchain-runtime'
+import { isSpawnEnvReady, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
 import { isLocalMcpEnabled } from '@rox/shared/workspaces'
 import { buildServersFromSources } from './build-servers.ts'
 
@@ -292,8 +293,10 @@ export class BuiltinMcpStartup {
       })
     }
     // Starting in a microtask lets SessionManager finish its synchronous setup.
+    // npx/uvx/qmd children need the full login PATH (macOS) and repaired
+    // prerequisites (Windows): bounded wait on the host's spawn-env gates.
     const task = Promise.resolve()
-      .then(() => this.checkWorkspace(root))
+      .then(() => isSpawnEnvReady() ? this.checkWorkspace(root) : whenSpawnEnvReady().then(() => this.checkWorkspace(root)))
       .catch(error => {
         if (!this.controller.signal.aborted) this.log(`Built-in MCP startup deferred: ${safeError(error)}`)
       })

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
-import { mkdtempSync, rmSync, readFileSync, statSync, writeFileSync, existsSync } from 'node:fs'
+import { chmodSync, mkdtempSync, rmSync, readFileSync, statSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -9,8 +9,9 @@ mock.module('../logger', () => {
 })
 
 const {
-  SHELL_ENV_CACHE_TTL_MS, filterCacheableEnv, isShellEnvReady, parseShellEnvOutput, readShellEnvCache, resetShellEnvForTests,
-  shellEnvCacheKey, startShellEnvLoad, whenShellEnvReady, writeShellEnvCache,
+  SHELL_ENV_CACHE_TTL_MS, captureLoginShellEnv, defaultShellEnvCachePath, filterCacheableEnv, isSecretEnvVar, isShellEnvReady,
+  isShellEnvSettled, parseShellEnvOutput, readShellEnvCache, readShellEnvCacheEntry, resetShellEnvForTests, shellEnvCacheKey,
+  shellEnvSpawnGate, startShellEnvLoad, whenShellEnvReady, writeShellEnvCache,
 } = await import('../shell-env')
 
 let home: string
@@ -53,11 +54,12 @@ describe('shell-env (PERF-03)', () => {
     expect(raw).not.toContain('ghp_secret')
     expect(JSON.parse(raw).omittedKeys).toBe(1)
     expect(statSync(cachePath).mode & 0o777).toBe(0o600)
+    expect(statSync(join(cachePath, '..')).mode & 0o777).toBe(0o700)
   })
 
   it('applies a complete cache immediately and is ready without waiting; refresh runs later', async () => {
     const key = shellEnvCacheKey('/bin/zsh', home)
-    writeShellEnvCache(cachePath, { version: 1, key, capturedAt: 1_000, env: { PATH: '/cached/bin:/usr/bin', NVM_DIR: '/n' }, omittedKeys: 0 })
+    writeShellEnvCache(cachePath, { version: 2, key, capturedAt: 1_000, env: { PATH: '/cached/bin:/usr/bin', NVM_DIR: '/n' }, omittedKeys: 0 })
     const env = baseEnv(); let calls = 0
     startShellEnvLoad({ platform: 'darwin', env, home, cachePath, now: () => 2_000, refreshDelayMs: 10,
       capture: async () => { calls++; return output({ PATH: '/fresh/bin' }) } })
@@ -69,7 +71,7 @@ describe('shell-env (PERF-03)', () => {
 
   it('waits for the capture when the cache had to omit secrets', async () => {
     const key = shellEnvCacheKey('/bin/zsh', home)
-    writeShellEnvCache(cachePath, { version: 1, key, capturedAt: 1_000, env: { PATH: '/cached/bin' }, omittedKeys: 2 })
+    writeShellEnvCache(cachePath, { version: 2, key, capturedAt: 1_000, env: { PATH: '/cached/bin' }, omittedKeys: 2 })
     const env = baseEnv(); const capture = deferred<string>()
     startShellEnvLoad({ platform: 'darwin', env, home, cachePath, now: () => 2_000, capture: () => capture.promise })
     expect(env.PATH).toBe('/cached/bin'); expect(isShellEnvReady()).toBe(false)
@@ -79,7 +81,7 @@ describe('shell-env (PERF-03)', () => {
 
   it('invalidates the cache on rc-file change, TTL expiry, shell change or corruption', () => {
     const key = shellEnvCacheKey('/bin/zsh', home)
-    writeShellEnvCache(cachePath, { version: 1, key, capturedAt: 1_000, env: { PATH: '/p' }, omittedKeys: 0 })
+    writeShellEnvCache(cachePath, { version: 2, key, capturedAt: 1_000, env: { PATH: '/p' }, omittedKeys: 0 })
     expect(readShellEnvCache(cachePath, key, 1_000 + SHELL_ENV_CACHE_TTL_MS)).not.toBeNull()
     expect(readShellEnvCache(cachePath, key, 1_001 + SHELL_ENV_CACHE_TTL_MS)).toBeNull()
     expect(readShellEnvCache(cachePath, shellEnvCacheKey('/bin/bash', home), 1_000)).toBeNull()
@@ -109,5 +111,109 @@ describe('shell-env (PERF-03)', () => {
     expect(parseShellEnvOutput(output({ A: 'x=y', VITE_X: '1' }))).toEqual({ A: 'x=y' })
     expect(filterCacheableEnv({ PATH: '/p', AWS_SECRET_ACCESS_KEY: 's', NPM_TOKEN: 't', HOMEBREW_PREFIX: '/opt' }))
       .toEqual({ env: { PATH: '/p', HOMEBREW_PREFIX: '/opt' }, omitted: 2 })
+  })
+
+  it('denylist covers KEY$, _PAT$, PASS, PWD$, DSN, WEBHOOK and URL userinfo; exempts known non-secrets', () => {
+    for (const key of ['OPENAI_KEY', 'STRIPE_SECRET_KEY', 'GH_PAT', 'GITLAB_PAT', 'DB_PASS', 'PASSPHRASE', 'MYSQL_PWD',
+      'SENTRY_DSN', 'SLACK_WEBHOOK_URL', 'GITHUB_TOKEN', 'CLIENT_SECRET', 'SMTP_PASSWORD', 'ANTHROPIC_API_KEY',
+      'AWS_ACCESS_KEY_ID', 'GOOGLE_APPLICATION_CREDENTIALS', 'NPM_AUTH']) {
+      expect(isSecretEnvVar(key, 'x')).toBe(true)
+    }
+    for (const key of ['PWD', 'OLDPWD', 'SSH_AUTH_SOCK', 'XAUTHORITY', 'TERM_SESSION_ID', 'ITERM_SESSION_ID',
+      'SECURITYSESSIONID', 'PATH', 'HOME', 'NVM_DIR', 'HOMEBREW_PREFIX', 'LANG', 'GOPATH', 'JAVA_HOME']) {
+      expect(isSecretEnvVar(key, '/some/value')).toBe(false)
+    }
+    // URL with userinfo is a secret whatever the variable is called.
+    expect(isSecretEnvVar('DATABASE_URL', 'postgres://app:hunter2@db.internal:5432/app')).toBe(true)
+    expect(isSecretEnvVar('PROXY', 'http://user:pw@proxy:8080')).toBe(true)
+    expect(isSecretEnvVar('HOMEPAGE', 'https://example.com/a:b@c')).toBe(false)
+    expect(isSecretEnvVar('HTTP_PROXY', 'http://proxy:8080')).toBe(false)
+    // Exempt keys still drop a credential-bearing value.
+    expect(isSecretEnvVar('PWD', 'https://u:p@host/')).toBe(true)
+    const filtered = filterCacheableEnv({ PATH: '/p', PWD: '/w', SSH_AUTH_SOCK: '/tmp/s', GH_PAT: 'x', REDIS: 'redis://:pw@h:6379' })
+    expect(filtered.env).toEqual({ PATH: '/p', PWD: '/w', SSH_AUTH_SOCK: '/tmp/s' })
+    expect(filtered.omitted).toBe(2)
+  })
+
+  it('keeps the cache in a private 0700 directory (file 0600), tightening an existing directory', () => {
+    expect(defaultShellEnvCachePath('/Users/me')).toBe('/Users/me/Library/Caches/Rox/shell-env/env.json')
+    const path = join(home, 'cache-dir', 'env.json')
+    writeShellEnvCache(path, { version: 2, key: 'k', capturedAt: 1, env: { PATH: '/p' }, omittedKeys: 0 })
+    chmodSync(join(home, 'cache-dir'), 0o755)
+    writeShellEnvCache(path, { version: 2, key: 'k', capturedAt: 2, env: { PATH: '/p' }, omittedKeys: 0 })
+    expect(statSync(join(home, 'cache-dir')).mode & 0o777).toBe(0o700)
+    expect(statSync(path).mode & 0o777).toBe(0o600)
+  })
+
+  it('ignores caches written by the previous format (version 1)', () => {
+    const key = shellEnvCacheKey('/bin/zsh', home)
+    writeShellEnvCache(cachePath, { version: 1, key, capturedAt: 1_000, env: { PATH: '/old' }, omittedKeys: 0 })
+    expect(readShellEnvCacheEntry(cachePath, key, 1_000)).toBeNull()
+  })
+
+  it('applies an expired-but-matching cache (not ready) instead of the bare fallback, then refreshes', async () => {
+    const key = shellEnvCacheKey('/bin/zsh', home)
+    writeShellEnvCache(cachePath, { version: 2, key, capturedAt: 1_000, env: { PATH: '/cached/bin:/usr/bin', NVM_DIR: '/n' }, omittedKeys: 0 })
+    const now = 1_000 + SHELL_ENV_CACHE_TTL_MS + 1
+    expect(readShellEnvCacheEntry(cachePath, key, now)?.expired).toBe(true)
+    const env = baseEnv(); const capture = deferred<string>(); let calls = 0
+    startShellEnvLoad({ platform: 'darwin', env, home, cachePath, now: () => now, capture: () => { calls++; return capture.promise } })
+    expect(env.PATH).toBe('/cached/bin:/usr/bin')
+    expect(env.PATH!.includes('/opt/homebrew/bin')).toBe(false)
+    expect(env.NVM_DIR).toBe('/n')
+    expect(isShellEnvReady()).toBe(false)
+    expect(calls).toBe(1)
+    capture.resolve(output({ PATH: '/fresh/bin' }))
+    await whenShellEnvReady()
+    expect(env.PATH).toBe('/fresh/bin')
+    expect(readShellEnvCache(cachePath, key, now)?.capturedAt).toBe(now)
+  })
+
+  it('latches after the first bounded wait times out: later waits and the spawn gate never block again', async () => {
+    const env = baseEnv(); const capture = deferred<string>()
+    startShellEnvLoad({ platform: 'darwin', env, home, cachePath, capture: () => capture.promise })
+    expect(isShellEnvSettled()).toBe(false)
+    expect(shellEnvSpawnGate.isReady()).toBe(false)
+    const started = performance.now()
+    await whenShellEnvReady(30)
+    expect(performance.now() - started).toBeGreaterThanOrEqual(25)
+    expect(isShellEnvReady()).toBe(false)
+    expect(isShellEnvSettled()).toBe(true)
+    expect(shellEnvSpawnGate.isReady()).toBe(true)
+    const again = performance.now()
+    await whenShellEnvReady(10_000)
+    await shellEnvSpawnGate.wait()
+    expect(performance.now() - again).toBeLessThan(20)
+    capture.resolve(output({ PATH: '/late/bin' }))
+    await new Promise(r => setTimeout(r, 0))
+    expect(env.PATH).toBe('/late/bin')
+    expect(isShellEnvReady()).toBe(true)
+  })
+})
+
+describe('captureLoginShellEnv (real child process)', () => {
+  const fakeShell = (body: string) => {
+    const path = join(home, 'fake-shell.sh')
+    writeFileSync(path, `#!/bin/sh\n${body}\n`)
+    chmodSync(path, 0o755)
+    return path
+  }
+
+  it('closes stdin so an rc file that reads stdin cannot block until the timeout', async () => {
+    const shell = fakeShell('read line\necho __ENV_START__\necho PATH=/from/fake')
+    const started = performance.now()
+    const out = await captureLoginShellEnv(shell, { HOME: home }, 4_000)
+    expect(performance.now() - started).toBeLessThan(2_000)
+    expect(parseShellEnvOutput(out)).toEqual({ PATH: '/from/fake' })
+  })
+
+  it('kills a shell that ignores SIGTERM (SIGKILL on timeout)', async () => {
+    const shell = fakeShell("trap '' TERM\nwhile :; do sleep 0.05; done")
+    const started = performance.now()
+    let error: unknown
+    try { await captureLoginShellEnv(shell, { HOME: home }, 200) } catch (e) { error = e }
+    expect(error).toBeDefined()
+    expect((error as { signal?: string }).signal).toBe('SIGKILL')
+    expect(performance.now() - started).toBeLessThan(2_000)
   })
 })

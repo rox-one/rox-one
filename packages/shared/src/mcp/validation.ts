@@ -11,6 +11,7 @@ import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { isBlockedEnvVar } from '@rox/core/env';
 import { debug } from '../utils/debug.ts';
+import { isSpawnEnvReady, whenSpawnEnvReady } from '../toolchain/spawn-readiness.ts';
 import { normalizeMcpUrl } from '../sources/server-builder.ts';
 import type { McpTransport } from '../sources/types.ts';
 import { isSensitiveKeyName, REDACTED_VALUE } from '../utils/redaction.ts';
@@ -373,6 +374,9 @@ export async function validateStdioMcpConnection(
   config: StdioValidationConfig
 ): Promise<McpValidationResult> {
   const { command, args = [], env = {}, cwd, timeout = 30000 } = config;
+  // The stdio child inherits process.env PATH: wait (bounded) for the host's
+  // spawn-env gates (macOS login-shell capture, Windows prerequisite repair).
+  if (!isSpawnEnvReady()) await whenSpawnEnvReady();
   const secrets = Object.entries(env).filter(([key]) => isSensitiveKeyName(key) || /session|hash|api_id/i.test(key))
     .map(([, value]) => value).filter(Boolean).sort((a, b) => b.length - a.length);
   const redact = (text: string) => secrets.reduce((safe, value) => safe.split(value).join(REDACTED_VALUE), text);

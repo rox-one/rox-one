@@ -82,6 +82,14 @@ function defaultRunInWorker(script: string, target: ResolvedBundledSkillsTarget)
 }
 
 let inflight: Promise<BundledSkillsBackgroundOutcome> | null = null;
+/** Resolved target of the in-flight job (for the agent pre-check). */
+let inflightTarget: ResolvedBundledSkillsTarget | null = null;
+/** Stamp verdict for the in-flight job: null until checked. */
+let stampMatched: boolean | null = null;
+/** Opens the job's gate early (an agent needs the skills now). */
+let releaseGate: (() => void) | null = null;
+/** Latched after the first agent wait timed out. */
+let agentWaitLatched = false;
 
 /** Resolves once the current background sync (if any) has finished. Never rejects. */
 export function whenBundledSkillsSettled(): Promise<void> {
@@ -91,14 +99,47 @@ export function whenBundledSkillsSettled(): Promise<void> {
 /** Test hook. */
 export function resetBundledSkillsBackgroundForTests(): void {
   inflight = null;
+  inflightTarget = null;
+  stampMatched = null;
+  releaseGate = null;
+  agentWaitLatched = false;
+}
+
+function stampIsCurrent(target: ResolvedBundledSkillsTarget): boolean {
+  if (stampMatched === null) stampMatched = isBundledSkillsSyncCurrent(target);
+  return stampMatched;
+}
+
+/**
+ * Called before a new agent is created. When the install is already current
+ * (stamp matched) or no sync is pending this resolves immediately. Otherwise
+ * (first install / bundle upgrade) it opens the job's gate early and waits for
+ * the merge, bounded by `timeoutMs`; the first timeout latches so later agents
+ * never wait again. Never rejects.
+ */
+export function whenBundledSkillsReadyForAgents(timeoutMs = 10_000): Promise<void> {
+  const job = inflight;
+  if (!job || agentWaitLatched || stampMatched === true) return Promise.resolve();
+  if (stampMatched === null && inflightTarget) {
+    if (!inflightTarget.bundleRoot || stampIsCurrent(inflightTarget)) return Promise.resolve();
+  }
+  releaseGate?.();
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { agentWaitLatched = true; resolve(); }, timeoutMs);
+    (timer as { unref?: () => void }).unref?.();
+    job.then(() => { clearTimeout(timer); resolve(); }, () => { clearTimeout(timer); resolve(); });
+  });
 }
 
 function gateWithTimeout(after: Promise<unknown> | undefined, maxMs: number): Promise<void> {
   if (!after) return Promise.resolve();
   return new Promise((resolve) => {
-    const timer = setTimeout(resolve, maxMs);
+    let done = false;
+    const finish = () => { if (done) return; done = true; clearTimeout(timer); releaseGate = null; resolve(); };
+    const timer = setTimeout(finish, maxMs);
     (timer as { unref?: () => void }).unref?.();
-    after.then(() => { clearTimeout(timer); resolve(); }, () => { clearTimeout(timer); resolve(); });
+    releaseGate = finish;
+    after.then(finish, finish);
   });
 }
 
@@ -114,12 +155,22 @@ export function ensureBundledSkillsInBackground(options: BundledSkillsBackground
     return Promise.resolve({ status: 'up-to-date', packs: 0, failedPacks: 0, localModifiedPacks: 0, via: 'none', durationMs: 0, joined: true });
   }
   const log = options.log ?? (() => {});
+  stampMatched = null;
+  // Resolve inputs up front (config read, no bundle walk) so an agent that
+  // starts before first paint can check the stamp and release the gate.
+  let target: ResolvedBundledSkillsTarget;
+  try {
+    target = options.target ?? resolveBundledSkillsTarget();
+  } catch (error) {
+    return Promise.resolve({ status: 'failed', packs: 0, failedPacks: 0, localModifiedPacks: 0, via: 'none', durationMs: 0,
+      error: error instanceof Error ? error.message : String(error) });
+  }
+  inflightTarget = target;
   inflight = (async (): Promise<BundledSkillsBackgroundOutcome> => {
     await gateWithTimeout(options.after, options.maxGateWaitMs ?? 15_000);
     // Yield once more so the gate's own continuation (paint/IPC) runs first.
     await new Promise<void>(resolve => setImmediate(resolve));
     const started = Date.now();
-    const target = options.target ?? resolveBundledSkillsTarget();
     const finish = (result: BundledSkillsJobResult, via: BundledSkillsBackgroundOutcome['via']): BundledSkillsBackgroundOutcome => {
       if (result.status === 'synced') {
         // Workers have their own module instances; drop this thread's caches.
@@ -133,7 +184,7 @@ export function ensureBundledSkillsInBackground(options: BundledSkillsBackground
     };
     if (!target.bundleRoot) return finish({ status: 'no-bundle', packs: 0, failedPacks: 0, localModifiedPacks: 0 }, 'none');
     // O(1)-ish on packaged builds (build-time fingerprint + stat of state files).
-    if (isBundledSkillsSyncCurrent(target)) return finish({ status: 'up-to-date', packs: 0, failedPacks: 0, localModifiedPacks: 0 }, 'none');
+    if (stampIsCurrent(target)) return finish({ status: 'up-to-date', packs: 0, failedPacks: 0, localModifiedPacks: 0 }, 'none');
     const script = options.workerScript;
     if (script && (options.runInWorker || existsSync(script))) {
       try {

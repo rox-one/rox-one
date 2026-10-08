@@ -9,11 +9,13 @@ import {
   __resetSiyuanBootstrapForTests,
   ensureDefaultLocalConnection,
   ensureLocalKernel,
+  getKernelBootstrapStatus,
   probeKernelHealth,
   siyuanDataDir,
   SIYUAN_LOCAL_CONNECTION_ID,
 } from '../siyuan-bootstrap'
 import { KnowledgeConnectionsStore } from '../connections-store'
+import { registerSpawnEnvGate, resetSpawnEnvGatesForTests } from '@rox/shared/toolchain/spawn-readiness'
 
 let configDir: string
 const PREVIOUS_CONFIG_DIR = process.env.CRAFT_CONFIG_DIR
@@ -384,4 +386,24 @@ describe('ensureLocalKernel', () => {
     expect(called.some((u) => u.includes('/api/notebook/createNotebook'))).toBe(true)
   })
 
+})
+
+describe('spawn-env gate (PERF-03 review)', () => {
+  const down = (async () => { throw new Error('ECONNREFUSED') }) as unknown as typeof fetch
+  it('binary detection waits for the host spawn-env gate unless PATH was injected', async () => {
+    let ready = false; let open!: () => void
+    const gate = new Promise<void>(resolve => { open = () => { ready = true; resolve() } })
+    registerSpawnEnvGate('test', { isReady: () => ready, wait: () => gate })
+    try {
+      // Explicit PATH: no wait.
+      const injected = await getKernelBootstrapStatus({ configDir, pathEnv: '', existsSync: () => false, fetchImpl: down, env: {} })
+      expect(injected.binaryFound).toBe(false)
+      let done = false
+      const pending = getKernelBootstrapStatus({ configDir, existsSync: () => false, fetchImpl: down, env: {} }).then(r => { done = true; return r })
+      await new Promise(resolve => setTimeout(resolve, 20))
+      expect(done).toBe(false)
+      open()
+      expect((await pending).running).toBe(false)
+    } finally { resetSpawnEnvGatesForTests() }
+  })
 })

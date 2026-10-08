@@ -131,6 +131,7 @@
     "./feed": "./src/feed/index.ts",
     "./toolchain": "./src/toolchain/index.ts",
     "./toolchain-runtime": "./src/toolchain-runtime.ts",
+    "./toolchain/spawn-readiness": "./src/toolchain/spawn-readiness.ts",
     "./toolchain/types": "./src/toolchain/types.ts",
     "./tools": "./src/tools/index.ts",
     "./utils": "./src/utils/index.ts",

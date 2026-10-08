@@ -9,8 +9,11 @@ import { resolveNumberedUserDataDir } from './numbered-user-data'
 // This ensures tools like Homebrew, nvm, etc. are available to the agent.
 // PERF-03: non-blocking — applies the cached env (or fallback PATH) now and
 // refreshes from the login shell in the background; agent spawns await it.
-import { startShellEnvLoad, whenShellEnvReady } from './shell-env'
+import { shellEnvSpawnGate, startShellEnvLoad } from './shell-env'
+import { createLatchedGate, registerSpawnEnvGate, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
 startShellEnvLoad()
+// Builtin MCP / MCP validation / git / siyuan / agent spawns await this gate.
+registerSpawnEnvGate('shell-env', shellEnvSpawnGate)
 markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
@@ -127,7 +130,7 @@ import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
 import { resolveWorkspaceMachineName } from '@rox/shared/os/user-display-name'
 import { ensureDemoPage } from '@rox/shared/pages'
 import { initializeDocs } from '@rox/shared/docs'
-import { ensureBundledSkillsInBackground } from '@rox/shared/skills'
+import { ensureBundledSkillsInBackground, whenBundledSkillsReadyForAgents } from '@rox/shared/skills'
 import { initializeReleaseNotes } from '@rox/shared/release-notes'
 import { ensureDefaultPermissions } from '@rox/shared/agent/permissions-config'
 import { ensureToolIcons, ensurePresetThemes } from '@rox/shared/config'
@@ -570,7 +573,7 @@ app.whenReady().then(async () => {
 
   if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
     markStartup(STARTUP_MARKS.winBootstrapStart)
-    const { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair } = await import('./windows-bootstrap')
+    const { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair, WINDOWS_REPAIR_SPAWN_WAIT_MS } = await import('./windows-bootstrap')
     const { getToolchainDependencyMode, getGitBashPath } = await import('@rox/shared/config')
     const bootstrapOptions = {
       isPackaged: app.isPackaged,
@@ -578,6 +581,7 @@ app.whenReady().then(async () => {
       managedRoot: join(CONFIG_DIR, 'toolchain'),
       preference: getToolchainDependencyMode(),
       gitBashPreference: getGitBashPath(),
+      appVersion: app.getVersion(),
     }
     // PERF-03: parallel, cached `--version` probes; never runs bootstrap.ps1 here.
     const result = await initializeWindowsBootstrap(bootstrapOptions)
@@ -587,7 +591,7 @@ app.whenReady().then(async () => {
     else if (result) mainLog.info('[windows-bootstrap]', result)
     if (result?.repairNeeded) {
       // Offline repair runs at most once per backoff window, after first paint.
-      void scheduleWindowsBootstrapRepair({
+      const repairSettled = scheduleWindowsBootstrapRepair({
         ...bootstrapOptions,
         missingTools: result.missingTools,
         mode: result.mode,
@@ -596,6 +600,8 @@ app.whenReady().then(async () => {
         if (repair.ran) mainLog.warn('[windows-bootstrap] background repair', repair)
         else mainLog.info('[windows-bootstrap] background repair skipped', repair)
       }).catch((err) => mainLog.warn('[windows-bootstrap] background repair failed:', err))
+      // Spawns that need the prerequisites wait (bounded, latching) for the repair.
+      registerSpawnEnvGate('windows-repair', createLatchedGate(repairSettled, WINDOWS_REPAIR_SPAWN_WAIT_MS))
     }
   }
 
@@ -634,6 +640,7 @@ app.whenReady().then(async () => {
     after: whenStartupMark(STARTUP_MARKS.rendererFirstPaint).then(() => markStartup(STARTUP_MARKS.skillsSyncStart)),
     log: (level, message, data) => mainLog[level](message, data),
   }).then((outcome) => {
+    if (outcome.via === 'inline') markStartupOnce(STARTUP_MARKS.skillsSyncInline)
     markStartupOnce(STARTUP_MARKS.skillsSyncEnd)
     if (outcome.status === 'failed') mainLog.warn('[bundled-skills] background sync failed:', outcome.error)
   })
@@ -1049,8 +1056,13 @@ app.whenReady().then(async () => {
             updateBadgeCount,
             onSessionStarted,
             onSessionStopped,
-            // PERF-03: first agent spawn waits for the background shell-env capture (macOS).
-            beforeAgentSpawn: () => whenShellEnvReady(),
+            // PERF-03: a new agent waits (bounded, latching) for the spawn env
+            // (macOS shell capture / Windows repair) and, only on first install
+            // or upgrade (stamp miss), for the bundled-skills merge (~10 s cap).
+            beforeAgentSpawn: async () => {
+              await whenSpawnEnvReady()
+              await whenBundledSkillsReadyForAgents(10_000)
+            },
             captureException: (error, context) => {
               Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
                 tags: {

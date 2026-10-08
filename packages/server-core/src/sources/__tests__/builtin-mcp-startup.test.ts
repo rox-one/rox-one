@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import type { FolderSourceConfig, LoadedSource } from '@rox/shared/sources'
 import { BuiltinMcpStartup, type BuiltinMcpStartupDependencies } from '../builtin-mcp-startup.ts'
+import { registerSpawnEnvGate, resetSpawnEnvGatesForTests } from '@rox/shared/toolchain/spawn-readiness'
 
 const services: BuiltinMcpStartup[] = []
 afterEach(async () => { await Promise.all(services.splice(0).map(service => service.stop())) })
@@ -69,6 +70,21 @@ function harness(sources: LoadedSource[] = [source()]) {
 }
 
 describe('built-in MCP startup', () => {
+  it('waits for the host spawn-env gate (shell env / Windows repair) before installing or spawning', async () => {
+    const h = harness()
+    let ready = false; let open!: () => void
+    const gate = new Promise<void>(resolve => { open = () => { ready = true; resolve() } })
+    registerSpawnEnvGate('test', { isReady: () => ready, wait: () => gate })
+    try {
+      const run = h.create().ensureWorkspace('/workspace/test')
+      await new Promise(resolve => setTimeout(resolve, 20))
+      expect(h.counts).toMatchObject({ installs: 0, builds: 0, lists: 0 })
+      open()
+      await run
+      expect(h.counts).toMatchObject({ installs: 1, lists: 1 })
+    } finally { resetSpawnEnvGatesForTests() }
+  })
+
   it('seeds and checks each launch, closes the probe, and does not invoke normal tools', async () => {
     const h = harness()
     const first = h.create()

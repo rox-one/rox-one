@@ -14,6 +14,13 @@ describe('git RPC handlers', () => {
       expect(src).toContain('readGitBranchName')
       expect(src).not.toContain("execSync('git status")
       expect(src).not.toContain("execSync('git rev-parse")
+      // PERF-03 review: boot-time git helpers wait (bounded) for the spawn env.
+      expect(src).toContain("from '@rox/shared/toolchain/spawn-readiness'")
+      for (const helper of ['readGitBranchName(dirPath)', 'readGitWorkingTreeStatus(dirPath)']) {
+        const at = src.indexOf(`return ${helper}`)
+        expect(at).toBeGreaterThan(0)
+        expect(src.slice(Math.max(0, at - 200), at)).toContain('await whenSpawnEnvReady()')
+      }
     }
   })
 })

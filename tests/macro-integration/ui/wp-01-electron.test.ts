@@ -198,11 +198,15 @@ if (process.argv.includes('--seed-profile')) {
 if (process.argv.includes('--verify-shell')) {
   const profile = process.env.ROX_CONFIG_DIR
   if (!profile?.includes('rox-wp01-electron-')) throw new Error('Owned shell verification profile required')
-  const { loadShellEnv } = await import('../../../apps/electron/src/main/shell-env')
+  const { startShellEnvLoad, whenShellEnvReady, isShellEnvReady } = await import('../../../apps/electron/src/main/shell-env')
   const { existsSync } = await import('node:fs')
   const { delimiter } = await import('node:path')
   const { getToolchainDisabled } = await import('@rox/shared/config')
-  loadShellEnv()
+  // The loader is non-blocking (PERF-03): wait for the real login-shell capture
+  // before asserting on PATH, and fail if it never landed (bounded wait elapsed).
+  startShellEnvLoad({ cachePath: join(profile, 'shell-env-cache.json') })
+  await whenShellEnvReady()
+  if (!isShellEnvReady()) throw new Error('Login shell environment capture did not complete')
   const securityPaths = (process.env.PATH ?? '').split(delimiter).map(directory => join(directory,'security')).filter(path => existsSync(path))
   if (process.env.SHELL !== '/bin/bash' || securityPaths.length) throw new Error('Actual login shell reintroduced security')
   console.log(JSON.stringify({ shell:process.env.SHELL, path:process.env.PATH, securityPaths,

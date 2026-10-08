@@ -8,7 +8,7 @@ export { currentPlatform, toolchainPaths, loadManifest, TOOLCHAIN_MANIFEST } fro
 export type { ManifestToolData } from './manifest-data';
 export { createResolver } from './resolver';
 export { pathEnvKey, prependPath } from './exec';
-export { readWindowsBootstrap, setWindowsBootstrapRuntime, getWindowsBootstrapRuntime, createFileProbeCache, windowsProbeCacheKey, WINDOWS_PROBE_CACHE_TTL_MS } from './windows-bootstrap';
+export { readWindowsBootstrap, setWindowsBootstrapRuntime, getWindowsBootstrapRuntime, createFileProbeCache, windowsProbeCacheKey, windowsProbeCacheSalt, WINDOWS_PROBE_CACHE_TTL_MS, WINDOWS_PROBE_REQUIREMENTS_HASH, WINDOWS_DEPENDENCY_REQUIREMENTS } from './windows-bootstrap';
 export type { WindowsBootstrapRuntime, WindowsDependencyMode, WindowsProbeCache, FileProbeCache } from './windows-bootstrap';
 export type { ResolverOptions } from './resolver';
 export { OPENCLAW_CAPABILITIES, probeOpenClawCapabilities } from './openclaw';
@@ -33,3 +33,5 @@ export {
 } from './craft-native';
 export { StatusEmitter } from './status';
 export type { StatusListener } from './status';
+export { registerSpawnEnvGate, isSpawnEnvReady, whenSpawnEnvReady, createLatchedGate, resetSpawnEnvGatesForTests } from './spawn-readiness';
+export type { SpawnEnvGate } from './spawn-readiness';

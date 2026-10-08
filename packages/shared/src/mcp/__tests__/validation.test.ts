@@ -2,11 +2,28 @@ import { describe, expect, it } from 'bun:test'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { validateStdioMcpConnection } from '../validation.ts'
+import { registerSpawnEnvGate, resetSpawnEnvGatesForTests } from '../../toolchain/spawn-readiness.ts'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const FIXTURE = (name: string) => join(HERE, 'fixtures', name)
 
 describe('validateStdioMcpConnection', () => {
+  it('waits for the host spawn-env gate before resolving/spawning the command', async () => {
+    let ready = false
+    let open!: () => void
+    const gate = new Promise<void>(resolve => { open = () => { ready = true; resolve() } })
+    registerSpawnEnvGate('test', { isReady: () => ready, wait: () => gate })
+    try {
+      let done = false
+      const pending = validateStdioMcpConnection({ command: 'definitely-not-a-real-command-rox', timeout: 2000 })
+        .then(result => { done = true; return result })
+      await new Promise(resolve => setTimeout(resolve, 20))
+      expect(done).toBe(false)
+      open()
+      expect((await pending).error).toContain('Command not found')
+    } finally { resetSpawnEnvGatesForTests() }
+  })
+
   it(
     'returns success and tool list for a spec-compliant stdio server',
     async () => {

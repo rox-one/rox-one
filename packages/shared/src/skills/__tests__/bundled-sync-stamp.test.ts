@@ -21,7 +21,7 @@ import {
   readBundledSkillsFingerprint,
   writeBundledSkillsFingerprint,
 } from '../bundled-fingerprint.ts';
-import { ensureBundledSkillsInBackground, resetBundledSkillsBackgroundForTests, whenBundledSkillsSettled } from '../bundled-background.ts';
+import { ensureBundledSkillsInBackground, resetBundledSkillsBackgroundForTests, whenBundledSkillsReadyForAgents, whenBundledSkillsSettled } from '../bundled-background.ts';
 
 let tempDir: string;
 let bundleRoot: string;
@@ -217,5 +217,53 @@ describe('background scheduler', () => {
       workerScript: join(import.meta.dir, '..', 'bundled-sync.worker.ts') });
     expect(outcome.via).toBe('worker'); expect(outcome.status).toBe('synced');
     expect(read('alpha/notes.txt')).toBe('notes v1');
+  });
+
+  it('agent wait: no wait when the stamp matched, even before the gate opened', async () => {
+    seed('v1'); sync({ skipIfCurrent: false });
+    resetBundledSkillsInitialized();
+    let workerRuns = 0; let open!: () => void;
+    const gate = new Promise<void>(resolve => { open = resolve; });
+    const pending = ensureBundledSkillsInBackground({ target: target(), after: gate, workerScript: 'unused.cjs',
+      runInWorker: async () => { workerRuns++; return { status: 'synced', packs: 0, failedPacks: 0, localModifiedPacks: 0 }; } });
+    const started = performance.now();
+    await whenBundledSkillsReadyForAgents(5_000);
+    expect(performance.now() - started).toBeLessThan(100);
+    open();
+    expect((await pending).status).toBe('up-to-date'); expect(workerRuns).toBe(0);
+  });
+
+  it('agent wait: on a stamp miss (first install/upgrade) opens the gate early and waits for the merge', async () => {
+    seed('v1');
+    let opened = false;
+    const gate = new Promise<void>(() => {}); // first paint never arrives in this test
+    const pending = ensureBundledSkillsInBackground({ target: target(), after: gate, maxGateWaitMs: 60_000, workerScript: 'unused.cjs',
+      runInWorker: async (_script, t) => { opened = true; return runBundledSkillsSyncJob(t); } });
+    await whenBundledSkillsReadyForAgents(5_000);
+    expect(opened).toBe(true);
+    expect(read('alpha/SKILL.md')).toBe(skillMd('alpha', 'v1'));
+    expect((await pending).status).toBe('synced');
+  });
+
+  it('agent wait: bounded, and latches after the first timeout', async () => {
+    seed('v1');
+    let release!: () => void;
+    const slow = new Promise<void>(resolve => { release = resolve; });
+    const pending = ensureBundledSkillsInBackground({ target: target(), workerScript: 'unused.cjs',
+      runInWorker: async (_script, t) => { await slow; return runBundledSkillsSyncJob(t); } });
+    const started = performance.now();
+    await whenBundledSkillsReadyForAgents(40);
+    expect(performance.now() - started).toBeGreaterThanOrEqual(35);
+    const again = performance.now();
+    await whenBundledSkillsReadyForAgents(5_000);
+    expect(performance.now() - again).toBeLessThan(20);
+    release();
+    expect((await pending).status).toBe('synced');
+  });
+
+  it('agent wait: resolves immediately when no sync was scheduled', async () => {
+    const started = performance.now();
+    await whenBundledSkillsReadyForAgents(5_000);
+    expect(performance.now() - started).toBeLessThan(20);
   });
 });

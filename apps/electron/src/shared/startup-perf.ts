@@ -26,6 +26,8 @@ export const STARTUP_MARKS = {
   /** Bundled skills background sync (PERF-02). */
   skillsSyncStart: 'main:skills-sync:start',
   skillsSyncEnd: 'main:skills-sync:end',
+  /** The bundled-skills merge ran inline on the main thread (worker unavailable/failed). */
+  skillsSyncInline: 'main:skills-sync:inline',
   /** Renderer bundle started executing. */
   rendererScriptStart: 'renderer:script-start',
   /** First frame after the first React commit. */

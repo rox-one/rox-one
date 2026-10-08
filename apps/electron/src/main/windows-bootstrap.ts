@@ -1,4 +1,18 @@
-/** Native prerequisite handoff before any local source/agent/MCP initialization. */
+/**
+ * Native Windows prerequisite handoff (gh/git/node/jq/yq + optional Git Bash).
+ *
+ * Boot (PERF-03): `initializeWindowsBootstrap` reads the installer receipt,
+ * resolves tools with parallel, cached `--version` probes and registers the
+ * runtime/PATH *before* any local source/agent/MCP initialization — but it
+ * never runs bootstrap.ps1 inline. When a packaged install is missing
+ * prerequisites it returns `repairNeeded`; the host then schedules
+ * {@link scheduleWindowsBootstrapRepair} after first paint (at most once per
+ * launch, recorded backoff) and registers the repair promise as a spawn-env
+ * gate (`@rox/shared/toolchain/spawn-readiness`). Agent creation, builtin MCP
+ * startup, MCP validation, git and siyuan spawns await that gate with a
+ * bounded (~6 s), latching wait; a successful repair re-applies PATH for every
+ * child spawned afterwards.
+ */
 import { execFile } from 'node:child_process';
 import { existsSync, promises as fs } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -33,6 +47,8 @@ export interface WindowsBootstrapInitOptions {
   read?: typeof readWindowsBootstrap;
   /** Persist successful `--version` probes under managedRoot (default true). */
   probeCache?: boolean;
+  /** App version folded into the probe-cache key (an update re-probes). */
+  appVersion?: string | null;
 }
 
 function probeCachePath(managedRoot: string): string {
@@ -79,7 +95,7 @@ export async function initializeWindowsBootstrap(options: WindowsBootstrapInitOp
   if ((options.platform ?? process.platform) !== 'win32') return null;
   const key = pathEnvKey(env, true);
   const inheritedPath = env[key] ?? '';
-  const probeCache = options.probeCache === false ? undefined : createFileProbeCache(probeCachePath(options.managedRoot));
+  const probeCache = options.probeCache === false ? undefined : createFileProbeCache(probeCachePath(options.managedRoot), { appVersion: options.appVersion });
   await probeCache?.load();
   const read = options.read ?? readWindowsBootstrap;
   const readOptions = readOptionsFor(options, env, inheritedPath, probeCache);
@@ -140,6 +156,9 @@ export type WindowsRepairOutcome =
 let repairScheduled = false;
 export function resetWindowsBootstrapRepairForTests(): void { repairScheduled = false; }
 
+/** Bounded wait for spawns while a background repair is pending (mirrors the macOS shell env). */
+export const WINDOWS_REPAIR_SPAWN_WAIT_MS = 6_000;
+
 /**
  * Run the offline bootstrap.ps1 repair in the background, at most once per
  * launch and at most once per backoff window (1 h doubling, capped at 7 d,
@@ -185,7 +204,7 @@ export async function scheduleWindowsBootstrapRepair(options: WindowsBootstrapIn
   const mode = options.mode ?? options.preference ?? 'auto';
   // Only native offline provisioning. WSL consent is installer-only.
   const recoveryCode = await (options.run ?? runNativeBootstrap)(script, mode, env);
-  const probeCache = options.probeCache === false ? undefined : createFileProbeCache(probeCachePath(options.managedRoot));
+  const probeCache = options.probeCache === false ? undefined : createFileProbeCache(probeCachePath(options.managedRoot), { appVersion: options.appVersion });
   await probeCache?.load();
   const key = pathEnvKey(env, true);
   const readOptions = readOptionsFor(options, env, env[key] ?? '', probeCache);

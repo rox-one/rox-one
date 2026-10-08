@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair, resetWindowsBootstrapRepairForTests, repairBackoffMs, repairStatePath, REPAIR_BACKOFF_BASE_MS, REPAIR_BACKOFF_MAX_MS } from '../windows-bootstrap';
+import { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair, resetWindowsBootstrapRepairForTests, repairBackoffMs, repairStatePath, REPAIR_BACKOFF_BASE_MS, REPAIR_BACKOFF_MAX_MS, WINDOWS_REPAIR_SPAWN_WAIT_MS } from '../windows-bootstrap';
+import { createLatchedGate, isSpawnEnvReady, registerSpawnEnvGate, resetSpawnEnvGatesForTests, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness';
+import { windowsProbeCacheSalt } from '@rox/shared/toolchain';
 import { getWindowsBootstrapRuntime, setWindowsBootstrapRuntime } from '@rox/shared/toolchain';
 import type { WindowsBootstrapRuntime } from '@rox/shared/toolchain';
 
@@ -25,6 +27,25 @@ function runtime(mode: 'auto' | 'bundled' | 'system', missing = false): WindowsB
     async isExcludedPath() { return false; } };
 }
 describe('Windows startup handoff', () => {
+  it('passes the app version into the persistent probe-cache key', async () => {
+    const opts = fixture(); let seen: { has(key: string): boolean } | undefined;
+    await initializeWindowsBootstrap({ ...opts, appVersion: '9.8.7',
+      read: async (options) => { seen = (options as { probeCache?: { has(key: string): boolean } }).probeCache; return runtime('auto'); } });
+    expect((seen as unknown as { salt: string }).salt).toBe(windowsProbeCacheSalt('9.8.7'));
+  });
+  it('a pending repair gates spawns with a bounded (~6 s), latching wait', async () => {
+    expect(WINDOWS_REPAIR_SPAWN_WAIT_MS).toBe(6_000);
+    resetSpawnEnvGatesForTests();
+    try {
+      let finish!: () => void; const repair = new Promise<void>((resolve) => { finish = resolve; });
+      registerSpawnEnvGate('windows-repair', createLatchedGate(repair, 40));
+      expect(isSpawnEnvReady()).toBe(false);
+      const started = performance.now(); await whenSpawnEnvReady();
+      expect(performance.now() - started).toBeGreaterThanOrEqual(35);
+      expect(isSpawnEnvReady()).toBe(true); // latched after the first timeout
+      finish();
+    } finally { resetSpawnEnvGatesForTests(); }
+  });
   it('registers before children and preserves PATH casing, managed bins and vendored rg', async () => {
     const opts = fixture(); const native = runtime('auto');
     const result = await initializeWindowsBootstrap({ ...opts, read: async () => native });
