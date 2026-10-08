@@ -9,7 +9,8 @@ describe('module home navigator parity (Memory/Tasks/Meetings/Projects/Pages)', 
   it('collapses the middle navigator for all five module homes', () => {
     expect(appShellSource).toContain('hideModuleMiddleNav')
     expect(appShellSource).toContain('isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView')
-    expect(appShellSource).toContain('isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav')
+    // W1-07 (#1504): unified surface roots collapse the navigator too.
+    expect(appShellSource).toContain('isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isSurfaceNavigation(navState) || hideModuleMiddleNav')
     expect(appShellSource).toContain('!isBoardView && !hideModuleMiddleNav')
   })
 

@@ -207,7 +207,10 @@ import { dispatchFocusInputEvent } from "./input/focus-input-events"
 import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
-import { isScreenNavigation } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation } from '../../../shared/types'
+// W1-07 (#1504): unified mode roots + Docs relabel.
+import { enabledShellFlagsAtom } from '@/platform/unified-flags'
+import { notesTitleKey, surfaceTitleKey } from '@/platform/surface-shell'
 import { MiniSessionSurface } from "./MiniSessionSurface"
 
 /**
@@ -533,6 +536,7 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
+  const shellFlags = useAtomValue(enabledShellFlagsAtom)
   const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
   const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const hasContextualSidebar = isInboxNavigation(navState) || isFeedNavigation(navState) || isNotesNavigation(navState)
@@ -597,10 +601,13 @@ function AppShellContent({
   // Mode screens (Входящие, Лента) render their own three panels too.
   // «Ещё» screens (Досье, Радар, Решения, Центр агентов, Фокус) do the same —
   // without this the navigator column stayed mounted and empty beside them.
+  // W1-07 (#1504): unified mode roots render their own page (or empty state).
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
+    || isSurfaceNavigation(navState)
   // Unavailable addresses have no collection navigator or resize boundary.
   const hideModuleMiddleNav =
     navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    || isSurfaceNavigation(navState)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -2339,6 +2346,11 @@ function AppShellContent({
       return t("workbench.home.title")
     }
 
+    // W1-07 (#1504): unified mode roots use their mode title.
+    if (isSurfaceNavigation(navState)) {
+      return t(surfaceTitleKey(navState.surface))
+    }
+
     if (isConnectionsNavigation(navState)) {
       return t("sidebar.connections")
     }
@@ -2355,7 +2367,8 @@ function AppShellContent({
 
     // Notes navigator
     if (isNotesNavigation(navState)) {
-      return t("sidebar.notes")
+      // W1-07 (#1504): «Документы» under docs.shared.v1.
+      return t(notesTitleKey(shellFlags, "sidebar.notes"))
     }
 
     // Automations navigator
@@ -2392,7 +2405,7 @@ function AppShellContent({
       default:
         return t("sidebar.allSessions")
     }
-  }, [navState, t, sessionFilter, automationFilter, labelConfigs, viewConfigs, effectiveSessionStatuses])
+  }, [navState, t, sessionFilter, automationFilter, labelConfigs, viewConfigs, effectiveSessionStatuses, shellFlags])
 
   // Build recursive sidebar items from the shared display-sorted label tree.
   // Each node renders with condensed height (compact: true) since many labels expected.
@@ -2908,7 +2921,7 @@ function AppShellContent({
           </div>
           }
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : sidebarWidth}
-          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
+          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isSurfaceNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
@@ -3105,7 +3118,7 @@ function AppShellContent({
             )}
             </div>
           )}
-          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || hideModuleMiddleNav ? 0 : sessionListWidth))}
+          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isSurfaceNavigation(navState) || hideModuleMiddleNav ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || hideModuleMiddleNav ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
           isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
           isCompact={isAutoCompact}
