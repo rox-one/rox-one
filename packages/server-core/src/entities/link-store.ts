@@ -1,14 +1,15 @@
 /**
  * W1-02 — Local entity-link store.
  *
- * One SQLite database per workspace at `<root>/.craft/entity-links.sqlite`
- * (WAL). Links dedupe on `(from, relation, to)`; backlinks query the
+ * One SQLite database per workspace at `<root>/.rox/entity-links.sqlite`
+ * (WAL; never shipped — no migration from the unshipped `.craft` path).
+ * Links dedupe on `(from, relation, to)`; backlinks query the
  * `(to_kind, to_id)` index. The flag `entities.links.v1` gates all handlers
  * that use this store, so nothing runs when the flag is off.
  */
 
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
-import { mkdirSync } from 'node:fs'
+import { chmodSync, lstatSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import {
@@ -97,13 +98,24 @@ function rowToLink(row: LinkRow): EntityLink {
   return link
 }
 
+/** Private workspace-local directory (0700), mirroring other local stores under `.rox`. */
+function privateDirectory(path: string): void {
+  mkdirSync(path, { recursive: true, mode: 0o700 })
+  const stat = lstatSync(path)
+  if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('Private entity-link storage is unavailable')
+  if (typeof process.getuid === 'function' && stat.uid !== process.getuid()) {
+    throw new Error('Private entity-link storage is unavailable')
+  }
+  chmodSync(path, 0o700)
+}
+
 export class EntityLinkStore {
   private readonly db: DatabaseSync
   readonly dbPath: string
 
   constructor(options: EntityLinkStoreOptions) {
-    const dir = join(options.workspaceRoot, '.craft')
-    mkdirSync(dir, { recursive: true })
+    const dir = join(options.workspaceRoot, '.rox')
+    privateDirectory(dir)
     this.dbPath = join(dir, 'entity-links.sqlite')
     this.db = new DatabaseSync(this.dbPath)
     this.db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;')
