@@ -313,6 +313,49 @@ for (const engine of ['legacy', 'official'] as const) {
       expect(nodes).toEqual([])
     })
 
+    it('![[kind:id]] typed or pasted inside a blockquote / list / task item stays text (#1505 fix3)', () => {
+      const p = (text?: string): JSONContent => ({ type: 'paragraph', ...(text ? { content: [{ type: 'text', text }] } : {}) })
+      const containers: Array<[string, (inner: JSONContent) => JSONContent]> = [
+        ['blockquote', (inner) => ({ type: 'blockquote', content: [inner] })],
+        ['bulletList', (inner) => ({ type: 'bulletList', content: [{ type: 'listItem', content: [inner] }] })],
+        ['listItem 2nd paragraph', (inner) => ({ type: 'bulletList', content: [{ type: 'listItem', content: [p('item'), inner] }] })],
+        ['taskList', (inner) => ({ type: 'taskList', content: [{ type: 'taskItem', attrs: { checked: false }, content: [inner] }] })],
+      ]
+      for (const [name, wrap] of containers) {
+        for (const mode of ['type', 'paste'] as const) {
+          const run = (entityNodesOn: boolean) => {
+            const editor = makeEditor(engine, { type: 'doc', content: [wrap(p())] }, { taskLists: true, entityNodes: entityNodesOn })
+            editor.commands.focus('end')
+            const $from = editor.state.selection.$from
+            expect($from.parent.type.name).toBe('paragraph')
+            expect($from.depth).toBeGreaterThan(1)
+            if (mode === 'type') typeText(editor, '![[task:1]]')
+            else editor.view.pasteText('![[task:1]]')
+            const result = { nodes: entityNodes(editor), text: editor.state.selection.$from.parent.textContent, out: toMarkdown(editor, engine) }
+            editor.destroy()
+            return result
+          }
+          const on = run(true)
+          const off = run(false)
+          expect({ name, mode, nodes: on.nodes, text: on.text }).toEqual({ name, mode, nodes: [], text: '![[task:1]]' })
+          expect(on.out).toBe(off.out)
+        }
+      }
+    })
+
+    it('![[kind:id]] typed or pasted into a doc-level paragraph still becomes an embed (positive control)', () => {
+      for (const mode of ['type', 'paste'] as const) {
+        const editor = makeEditor(engine, 'Intro', { taskLists: true })
+        editor.commands.focus('end')
+        editor.commands.enter()
+        if (mode === 'type') typeText(editor, '![[task:1]]')
+        else editor.view.pasteText('![[task:1]]')
+        const nodes = entityNodes(editor)
+        editor.destroy()
+        expect(nodes.map((n) => n.type)).toEqual(['entityEmbed'])
+      }
+    })
+
     it('pasted plain text with explicit syntax becomes nodes; plain titles do not', () => {
       const editor = makeEditor(engine)
       editor.commands.focus('end')

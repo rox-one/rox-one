@@ -112,7 +112,13 @@ export function entityMentionPasteRule(type: NodeType): PasteRule {
   })
 }
 
-/** Replace the paragraph around `pos` with an embed block; false when not allowed. */
+/**
+ * Replace the paragraph around `pos` with an embed block; false when not
+ * allowed. Only a doc-level paragraph converts, the same top-level rule the
+ * Markdown parsers use: an embed typed inside a blockquote, callout, column
+ * or list/task item would save as `> ![[…]]` and reload as text, so there
+ * the text stays exactly as typed.
+ */
 function replaceParagraphWithEmbed(
   state: EditorState,
   tr: Transaction,
@@ -123,7 +129,7 @@ function replaceParagraphWithEmbed(
 ): boolean {
   const $pos = state.doc.resolve(pos)
   const paragraph = $pos.parent
-  if (paragraph.type.name !== 'paragraph' || $pos.depth < 1) return false
+  if (paragraph.type.name !== 'paragraph' || $pos.depth !== 1) return false
   const container = $pos.node($pos.depth - 1)
   const index = $pos.index($pos.depth - 1)
   if (!container.canReplaceWith(index, index + 1, type)) return false
@@ -134,7 +140,7 @@ function replaceParagraphWithEmbed(
     const after = before + embed.nodeSize
     const next = tr.doc.nodeAt(after)
     const paragraphType = state.schema.nodes.paragraph
-    if ((!next || !next.isTextblock) && paragraphType && $pos.depth === 1) {
+    if ((!next || !next.isTextblock) && paragraphType) {
       tr.insert(after, paragraphType.create())
     }
     const target = tr.doc.nodeAt(after)
