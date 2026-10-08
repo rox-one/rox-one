@@ -279,24 +279,10 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
     }
   }
 
-  if (!halted()) {
-    opencode: for (const root of [join(home, '.local', 'share', 'opencode'), join(home, '.opencode')]) {
-      for (const db of [...walkFiles(root, '.db', 3, halted), ...walkFiles(root, '.sqlite', 3, halted)]) {
-        if (
-          !consider({
-            id: `opencode:${db}`,
-            kind: 'opencode',
-            sourcePath: db,
-            title: redactSecrets(db).text,
-            userTurns: 0,
-            skipReason: 'empty',
-          })
-        ) {
-          break opencode
-        }
-      }
-    }
-  }
+  // opencode is intentionally NOT scanned: it keeps chats in per-project
+  // stores with no stable, documented layout we can read safely, so it is
+  // reported as "not supported" in the UI (UNSUPPORTED_FOREIGN_SESSION_KINDS)
+  // instead of a stub that only emitted empty rows.
 
   const hermesRoot = join(home, '.hermes', 'sessions')
   if (!halted()) {

@@ -32,6 +32,56 @@ import { extractLabelId, toggleLabelInList } from '@rox/shared/labels'
 import type { SessionMeta } from '@/atoms/sessions'
 import { createSessionLink, copySessionLink, presentSessionLink, requestJoinSession, SessionLinkError, type SessionLinkKind } from '@/lib/session-sharing'
 
+// ── Shared knowledge-connection probe ───────────────────────────────────────
+// The answer is workspace-independent and identical for every session menu, so
+// one request is performed per app session and every menu (and every row)
+// subscribes to the cached result instead of firing its own
+// `knowledge.listConnections()` when the menu mounts — previously one request
+// per mounted menu, which is what made opening/rendering the menu feel heavy.
+let knowledgeConnectionCache: boolean | null = null
+let knowledgeConnectionProbe: Promise<void> | null = null
+const knowledgeConnectionListeners = new Set<() => void>()
+
+function runKnowledgeConnectionProbe(): void {
+  if (knowledgeConnectionProbe || knowledgeConnectionCache !== null) return
+  knowledgeConnectionProbe = (async () => {
+    let available = false
+    try {
+      const list = await window.electronAPI?.knowledge?.listConnections?.()
+      available = Array.isArray(list) && list.length > 0
+    } catch {
+      available = false
+    }
+    knowledgeConnectionCache = available
+    for (const listener of knowledgeConnectionListeners) listener()
+  })()
+}
+
+function subscribeKnowledgeConnection(listener: () => void): () => void {
+  knowledgeConnectionListeners.add(listener)
+  runKnowledgeConnectionProbe()
+  return () => {
+    knowledgeConnectionListeners.delete(listener)
+  }
+}
+
+function getKnowledgeConnectionSnapshot(): boolean {
+  return knowledgeConnectionCache === true
+}
+
+/**
+ * Whether at least one knowledge connection is available, shared across every
+ * session menu. Returns the cached value and triggers the single probe only
+ * when no menu has needed it yet.
+ */
+export function useKnowledgeConnectionAvailable(): boolean {
+  return React.useSyncExternalStore(
+    subscribeKnowledgeConnection,
+    getKnowledgeConnectionSnapshot,
+    getKnowledgeConnectionSnapshot,
+  )
+}
+
 export interface UseSessionMenuActionsOptions {
   item: SessionMeta
   onLabelsChange?: (labels: string[]) => void

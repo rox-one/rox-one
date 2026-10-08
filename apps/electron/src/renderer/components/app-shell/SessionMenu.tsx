@@ -51,7 +51,7 @@ import { getFileManagerName } from '@/lib/platform'
 import type { SessionMeta } from '@/atoms/sessions'
 import { getSessionStatus, hasUnreadMeta, hasMessagesMeta } from '@/utils/session'
 import { MessagingSessionMenuItem } from '@/components/messaging/MessagingSessionMenuItem'
-import { useSessionMenuActions } from '@/hooks/useSessionMenuActions'
+import { useKnowledgeConnectionAvailable, useSessionMenuActions } from '@/hooks/useSessionMenuActions'
 import { publishSessionDialogAtom } from '@/atoms/knowledge-publish'
 import { navigate, routes } from '@/lib/navigate'
 import { requestLearnFromSession } from '@/lib/session-learn-request'
@@ -143,22 +143,9 @@ export function SessionMenu({
 
   const actions = useSessionMenuActions({ item, onLabelsChange })
   const setPublishDialog = useSetAtom(publishSessionDialogAtom)
-  const [hasKnowledgeConnection, setHasKnowledgeConnection] = React.useState(false)
-
-  React.useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const list = await window.electronAPI?.knowledge?.listConnections?.()
-        if (!cancelled) setHasKnowledgeConnection(Array.isArray(list) && list.length > 0)
-      } catch {
-        if (!cancelled) setHasKnowledgeConnection(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // Shared, deduplicated across every session menu — no per-menu request when
+  // the menu mounts, so opening the menu stays instant.
+  const hasKnowledgeConnection = useKnowledgeConnectionAvailable()
 
 
   // Get menu components from context (works with both DropdownMenu and ContextMenu)
