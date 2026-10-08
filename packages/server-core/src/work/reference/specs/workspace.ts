@@ -6,10 +6,9 @@
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { deterministicId, isDeleted, type ReferenceOutcome, type ReferenceTx } from '../engine'
-import { addLink, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, boundRef, create, omit, patchMany, payloadFields, refString, removeLink, setting, softDelete, storedAclRole, subjectTypeOf, targetRef, transition, update, validateLink } from '../ops'
-import { REFERENCE_COLLECTIONS } from '../collections'
+import { addLink, assertNotOwner, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, boundRef, create, omit, patchMany, payloadFields, recordOwnerOf, refString, removeLink, setting, softDelete, storedAclRole, subjectTypeOf, targetRef, transition, update, validateLink } from '../ops'
 import type { RecordData, StoredRecord } from '../types'
-import { appendMessage } from './messenger'
+import { appendMessage, assertCanPost } from './messenger'
 import { taskDefaults } from './tasks'
 import type { ReferenceSpecMap } from './types'
 
@@ -72,9 +71,9 @@ export const CALENDAR_REFERENCE_SPECS: ReferenceSpecMap = {
     return create('calendar', payloadFields(), { defaults: t => ({ ownerType: 'principal', ownerId: t.actor }) })(tx)
   },
   'calendar.subscribe': async tx => {
+    // A subscription is the actor's own row: the calendar only needs to be readable (checked before it is loaded).
+    await authorizeRef(tx, { kind: 'calendar', id: tx.payload.calendarId }, 'read')
     const calendar = await tx.require('calendar', tx.payload.calendarId)
-    // A subscription is the actor's own row: the calendar only needs to be readable.
-    await authorizeRef(tx, { kind: 'calendar', id: calendar.id }, 'read')
     const row = await tx.upsert('calendar-subscription', `${calendar.id}:${tx.actor}`, payloadFields('calendarId')(tx) as RecordData, { calendarId: calendar.id, principalId: tx.actor })
     return out('calendar-subscription', row, ['subscribed'], { ref: { kind: 'calendar', id: calendar.id } })
   },
@@ -93,9 +92,8 @@ export const CALENDAR_REFERENCE_SPECS: ReferenceSpecMap = {
 
 /** The payload call is the resource these workspace commands act on: authorized at `write`. */
 async function payloadCall(tx: ReferenceTx): Promise<StoredRecord> {
-  const call = await tx.require('call', tx.payload.callId)
-  await authorizeRef(tx, { kind: 'call', id: call.id }, 'write')
-  return call
+  await authorizeRef(tx, { kind: 'call', id: tx.payload.callId }, 'write')
+  return tx.require('call', tx.payload.callId)
 }
 
 async function hostCall(tx: ReferenceTx): Promise<StoredRecord> {
@@ -126,8 +124,9 @@ export const MEETINGS_REFERENCE_SPECS: ReferenceSpecMap = {
     await authorizeId(tx, 'note', tx.payload.notesDocId, 'read')
     for (const decision of (tx.payload.decisions ?? []) as RecordData[]) if (decision.source) await authorizeRef(tx, decision.source as EntityRef, 'read')
     // The destination chat is posted into (authorizer `write` + membership + posting policy), checked before the first write.
+    if (tx.payload.toChatId) await authorizeRef(tx, { kind: 'channel', id: tx.payload.toChatId }, 'write')
     const chat = tx.payload.toChatId ? await tx.require('channel', tx.payload.toChatId) : null
-    if (chat) await authorizeRef(tx, { kind: 'channel', id: chat.id }, 'write')
+    if (chat) await assertCanPost(tx, chat)
     const tasks: string[] = []
     for (const [index, task] of ((tx.payload.tasks ?? []) as RecordData[]).entries()) {
       const id = tx.newId(`task-${index}`)
@@ -174,9 +173,9 @@ export const CONTACTS_REFERENCE_SPECS: ReferenceSpecMap = {
     const sources: StoredRecord[] = []
     for (const sourceId of tx.payload.sourceIds as string[]) {
       if (sourceId === card.id) throw new CommandRejection('VALIDATION', 'cannot merge a card into itself')
+      await authorizeRef(tx, { kind, id: sourceId } as EntityRef, 'destroy')
       const source = await tx.require('contact-card', sourceId)
       if (source.data.ownerScope !== card.data.ownerScope || source.data.ownerId !== card.data.ownerId) throw new CommandRejection('FORBIDDEN', `contact card ${sourceId} has another owner`)
-      await authorizeRef(tx, { kind, id: source.id } as EntityRef, 'destroy')
       sources.push(source)
     }
     for (const source of sources) await tx.update('contact-card', source, { mergedInto: card.id, deletedAt: tx.now })
@@ -216,9 +215,26 @@ async function react(tx: ReferenceTx, subject: EntityRef, emoji: string, on: boo
   return out('reaction', await tx.upsert('reaction', id, {}, { resourceKind: subject.kind, resourceId: subject.id, principalId: tx.actor, emoji }), ['emoji'], { ref: subject })
 }
 
+/**
+ * Subscriptions are the caller's own unless they act for others:
+ * - unsubscribing someone else needs manage (`share`) on the resource;
+ * - subscribing someone else needs `write` on the resource (the target) and
+ *   that person's own `read` through the authorizer evaluated for them; when
+ *   the authorizer cannot answer for other principals, only self.
+ */
 async function subscribe(tx: ReferenceTx, canceled: boolean): Promise<ReferenceOutcome> {
   const subject = targetRef(tx)
-  const principals: string[] = tx.payload.principalIds?.length ? tx.payload.principalIds : [tx.actor]
+  const principals: string[] = [...new Set<string>(tx.payload.principalIds?.length ? tx.payload.principalIds : [tx.actor])]
+  const others = principals.filter(principalId => principalId !== tx.actor)
+  if (others.length > 0 && canceled) await authorizeRef(tx, subject, 'share')
+  if (others.length > 0 && !canceled) {
+    await authorizeRef(tx, subject, 'write')
+    for (const principalId of others) {
+      const canRead = await tx.canFor(principalId, 'read', subject)
+      if (canRead === undefined) throw new CommandRejection('FORBIDDEN', 'subscribing other people needs an authorizer that answers for them; subscribe yourself only')
+      if (!canRead) throw new CommandRejection('FORBIDDEN', `${principalId} cannot read ${subject.kind}:${subject.id}`)
+    }
+  }
   let last: StoredRecord | null = null
   for (const principalId of principals) {
     last = await tx.upsert('subscription', `${refString(subject)}:${principalId}`, { canceled }, { resourceKind: subject.kind, resourceId: subject.id, principalId, kind: 'explicit' })
@@ -310,14 +326,12 @@ const aclSubject = (tx: ReferenceTx, requireTarget = true): EntityRef => {
 const aclId = (tx: ReferenceTx, subject: EntityRef, kind: string, id: string) => deterministicId(tx.ctx.workspaceId, 'acl', refString(subject), kind, id)
 
 
-async function grant(tx: ReferenceTx, subject: EntityRef, principal: { kind: string; id: string }, role: string): Promise<StoredRecord> {
+/** Upsert an ACL entry; an existing `owner` entry is never overwritten (except by `transfer`). */
+async function grant(tx: ReferenceTx, subject: EntityRef, principal: { kind: string; id: string }, role: string, options: { transfer?: boolean } = {}): Promise<StoredRecord> {
   const subjectType = subjectTypeOf(principal.kind)
-  return tx.upsert('acl-entry', aclId(tx, subject, subjectType, principal.id), { role: storedAclRole(role), grantedBy: tx.actor }, { resourceType: subject.kind, resourceId: subject.id, subjectType, subjectId: principal.id })
-}
-
-/** Collection whose records are refs of `kind` (resources an ACL entry can name). */
-function collectionOfKind(kind: string): string | undefined {
-  return Object.entries(REFERENCE_COLLECTIONS).find(([, spec]) => (spec as { kind?: string }).kind === kind)?.[0]
+  const id = aclId(tx, subject, subjectType, principal.id)
+  if (!options.transfer) await assertNotOwner(tx, subject, principal.id, await tx.get('acl-entry', id))
+  return tx.upsert('acl-entry', id, { role: storedAclRole(role), grantedBy: tx.actor }, { resourceType: subject.kind, resourceId: subject.id, subjectType, subjectId: principal.id })
 }
 
 /**
@@ -331,10 +345,7 @@ async function requireOwner(tx: ReferenceTx, subject: EntityRef): Promise<void> 
     if (entry.data.role !== storedAclRole('owner')) throw new CommandRejection('FORBIDDEN', 'only the owner can transfer ownership')
     return
   }
-  const collection = collectionOfKind(subject.kind)
-  const record = collection ? await tx.get(collection, subject.id) : null
-  const owner = record ? record.data.ownerId ?? record.data.ownerPrincipalId ?? record.data.createdBy : undefined
-  if (owner !== tx.actor) throw new CommandRejection('FORBIDDEN', 'only the owner can transfer ownership')
+  if ((await recordOwnerOf(tx, subject)) !== tx.actor) throw new CommandRejection('FORBIDDEN', 'only the owner can transfer ownership')
 }
 
 export const ACL_REFERENCE_SPECS: ReferenceSpecMap = {
@@ -342,8 +353,8 @@ export const ACL_REFERENCE_SPECS: ReferenceSpecMap = {
   'acl.revoke': async tx => {
     const subject = aclSubject(tx)
     const entry = await tx.get('acl-entry', aclId(tx, subject, subjectTypeOf(tx.payload.principal.kind), tx.payload.principal.id))
+    await assertNotOwner(tx, subject, tx.payload.principal.id, entry)
     if (!entry || isDeleted(entry)) throw new CommandRejection('NOT_FOUND', 'no such grant')
-    if (entry.data.role === 'owner') throw new CommandRejection('FORBIDDEN', 'transfer ownership instead of revoking the owner')
     return out('acl-entry', await tx.softDelete('acl-entry', entry), ['role'], { ref: subject })
   },
   'acl.set_link': async tx => { const subject = aclSubject(tx); return out('acl-link', await tx.upsert('acl-link', refString(subject), { scope: tx.payload.scope, role: tx.payload.role ?? null }, { resourceType: subject.kind, resourceId: subject.id }), ['scope'], { ref: subject }) },
@@ -370,9 +381,9 @@ export const ACL_REFERENCE_SPECS: ReferenceSpecMap = {
     const subject = aclSubject(tx)
     if (tx.payload.toPrincipalId === tx.actor) throw new CommandRejection('VALIDATION', 'already the owner')
     await requireOwner(tx, subject)
-    const owner = await grant(tx, subject, { kind: 'user', id: tx.payload.toPrincipalId }, 'owner')
+    const owner = await grant(tx, subject, { kind: 'user', id: tx.payload.toPrincipalId }, 'owner', { transfer: true })
     // The previous owner keeps full access, no longer ownership.
-    await grant(tx, subject, { kind: 'user', id: tx.actor }, 'full_access')
+    await grant(tx, subject, { kind: 'user', id: tx.actor }, 'full_access', { transfer: true })
     return out('acl-entry', owner, ['role'], { ref: subject })
   },
 }
@@ -445,9 +456,9 @@ export const ENTITIES_REFERENCE_SPECS: ReferenceSpecMap = {
 const placeholderKey = (tx: ReferenceTx) => deterministicId(tx.ctx.workspaceId, 'placeholder', String(tx.payload.email ?? tx.payload.externalRef ?? tx.payload.displayName).toLowerCase())
 
 async function placeholderIn(tx: ReferenceTx, state: string): Promise<StoredRecord> {
+  // The placeholder person is the resource these workspace commands change (authorized before it is loaded).
+  await authorizeRef(tx, { kind: 'person', id: tx.payload.placeholderId }, 'write')
   const placeholder = await tx.require('placeholder', tx.payload.placeholderId)
-  // The placeholder person is the resource these workspace commands change.
-  await authorizeRef(tx, { kind: 'person', id: placeholder.id }, 'write')
   if (placeholder.data.state !== state) throw new CommandRejection('VALIDATION', `placeholder is ${String(placeholder.data.state)}`)
   return placeholder
 }
@@ -463,6 +474,8 @@ export const IDENTITY_REFERENCE_SPECS: ReferenceSpecMap = {
   'identity.ensure_placeholder': async tx => {
     const id = (tx.payload.id as string | undefined) ?? placeholderKey(tx)
     const current = await tx.get('placeholder', id)
+    // A client id naming someone else's placeholder is a create conflict (revision only); the email / name key dedupes.
+    if (current && tx.payload.id !== undefined && current.data.createdBy !== tx.actor) tx.createConflict(current.revision)
     if (current) return out('placeholder', current, [], { ref: { kind: 'person', id }, result: { existed: true } })
     return out('placeholder', await tx.insert('placeholder', id, { ...payloadFields()(tx), state: 'placeholder' }), ['state'], { ref: { kind: 'person', id }, result: { existed: false } })
   },
@@ -481,6 +494,8 @@ export const AGENTS_REFERENCE_SPECS: ReferenceSpecMap = {
     if (tx.payload.ownerId !== tx.actor) throw new CommandRejection('FORBIDDEN', 'a personal agent can only be provisioned for yourself')
     const id = (tx.payload.id as string | undefined) ?? deterministicId(tx.ctx.workspaceId, 'agent', tx.payload.ownerId)
     const current = await tx.get('agent', id)
+    // Another user's agent under this id: a create conflict (revision only), never "existed".
+    if (current && current.data.ownerId !== tx.actor) tx.createConflict(current.revision)
     if (current) return out('agent', current, [], { ref: null, result: { existed: true } })
     return out('agent', await tx.insert('agent', id, { ownerId: tx.payload.ownerId, ...(tx.payload.name ? { name: tx.payload.name } : {}), status: 'active' }), ['status'], { ref: null, result: { existed: false } })
   },
@@ -550,9 +565,11 @@ export const WORKPLACE_REFERENCE_SPECS: ReferenceSpecMap = {
     event: 'projects.project_created',
     op: async tx => {
       const template = await tx.requireTarget('project-template')
-      await authorizeId(tx, 'space', tx.payload.spaceId, 'write')
-      const id = tx.createId()
       const base = ((template.data.payload as RecordData | undefined)?.project ?? {}) as RecordData
+      // The project lands in the payload space, else the template's (written into); its parent goal is referenced.
+      await authorizeId(tx, 'space', tx.payload.spaceId ?? base.spaceId, 'write')
+      await authorizeId(tx, 'goal', base.parentGoalId, 'read')
+      const id = tx.createId()
       return out('project', await tx.insert('project', id, { ...base, status: 'active', name: tx.payload.name, championId: tx.actor, templateId: template.id, ...(tx.payload.spaceId ? { spaceId: tx.payload.spaceId } : {}), ...(tx.payload.startOn ? { startedAt: tx.payload.startOn } : {}) }), ['name'])
     },
   },

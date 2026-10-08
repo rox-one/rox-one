@@ -360,3 +360,61 @@ describe('local work store: case-unique file names', () => {
     expect(work.get('goal', 'Goal')!.record).toEqual({ name: 'Upper' })
   })
 })
+
+describe('review 3: portable names, foreign files and UI-only lists', () => {
+  test('encodeWorkId escapes Windows reserved stems and hash-suffixes overlong names; existing files are still read', async () => {
+    const { encodeWorkId, previousEncodeWorkId, MAX_ENCODED_NAME } = await import('../local-work-store')
+    for (const id of ['con', 'NUL', 'aux.json', 'com1', 'lpt9.x', 'prn']) expect(/^(con|prn|aux|nul|com\d|lpt\d)(\.|$)/i.test(encodeWorkId(id))).toBe(false)
+    expect(encodeWorkId('console')).toBe('console')
+    expect(encodeWorkId('trailing.')).toBe('trailing%2E')
+    const long = `Goal-${'x'.repeat(300)}`.slice(0, 256)
+    const other = `${long.slice(0, -1)}y`
+    expect(encodeWorkId(long).length).toBeLessThanOrEqual(MAX_ENCODED_NAME)
+    expect(encodeWorkId(long)).not.toBe(encodeWorkId(other))
+    const work = new LocalWorkStore({ workspaceRoot: root })
+    expect(work.put('goal', long, { name: 'long' }, null)).toMatchObject({ status: 'accepted' })
+    expect(work.put('goal', 'con', { name: 'device' }, null)).toMatchObject({ status: 'accepted' })
+    expect(work.get('goal', long)!.record).toEqual({ name: 'long' })
+    expect(work.list('goal').map(file => file.id).sort()).toEqual(['con', long].sort())
+    expect(readdirSync(join(work.root, 'goal')).every(name => name.length <= MAX_ENCODED_NAME + 5)).toBe(true)
+    // A file written under the round-2 name (`con.json`) is read and moved on write.
+    const { writeFileSync } = await import('node:fs')
+    writeFileSync(join(work.root, 'goal', `${previousEncodeWorkId('aux')}.json`), JSON.stringify({ id: 'aux', collection: 'goal', revision: 2, schemaVersion: 1, record: { name: 'old' } }))
+    expect(work.get('goal', 'aux')).toMatchObject({ revision: 2, record: { name: 'old' } })
+    expect(work.put('goal', 'aux', { name: 'new' }, 2)).toMatchObject({ status: 'accepted', file: { revision: 3 } })
+    expect(existsSync(join(work.root, 'goal', 'aux.json'))).toBe(false)
+    expect(work.get('goal', 'aux')!.record).toEqual({ name: 'new' })
+    expect(work.remove('goal', long)).toBe(true)
+    expect(work.get('goal', long)).toBeNull()
+  })
+
+  test('personal tasks: a file holding another id (case-insensitive filesystem) is never read, overwritten or deleted as this id', async () => {
+    const { copyFileSync } = await import('node:fs')
+    const base = { notes: '', list: 'inbox', tags: [], priority: 'none', evening: false, links: [], order: 0, createdAt: 1 }
+    tasks.put({ ...base, id: 'Abc', title: 'Upper' } as PersonalTask)
+    const dir = (tasks as unknown as { dir: string }).dir
+    // Simulate case folding: `abc.json` resolves to the file of `Abc`.
+    copyFileSync(join(dir, 'Abc.json'), join(dir, 'abc.json'))
+    expect(tasks.get('abc')).toBeNull()
+    expect(tasks.getWorkItem('abc')).toBeNull()
+    expect(tasks.putIfRevision({ task: { ...base, id: 'abc', title: 'lower' } as PersonalTask, expectedRevision: null })).toMatchObject({ status: 'conflict', current: null })
+    expect(() => tasks.put({ ...base, id: 'abc', title: 'lower' } as PersonalTask)).toThrow()
+    expect(tasks.delete('abc')).toBe(false)
+    expect(existsSync(join(dir, 'abc.json'))).toBe(true)
+    const item = tasks.getWorkItem('Abc')!.item
+    expect(tasks.putWorkItem({ ...item, id: 'abc' }, null)).toMatchObject({ status: 'conflict', current: null })
+    expect(tasks.get('Abc')!.task.title).toBe('Upper')
+  })
+
+  test('a UI change to a list the bus never wrote moves its CAS revision', async () => {
+    tasks.writeMeta({ projects: [{ id: 'p-ui', name: 'Home', order: 1 }], areas: [], headings: [], audit: [] })
+    expect(tasks.getTaskList('p-ui')!.revision).toBe(1)
+    const meta = tasks.readMeta()!
+    tasks.writeMeta({ ...meta, projects: meta.projects.map(project => ({ ...project, name: 'House' })) })
+    expect(tasks.getTaskList('p-ui')).toMatchObject({ revision: 2, data: { name: 'House' } })
+    const harness = createHarness({ local: store })
+    expect(await harness.run({ type: 'task_lists.update', target: { kind: 'task-list', id: 'p-ui' }, payload: { notes: 'x' } }, { expectedRevision: 1 })).toMatchObject({ status: 'conflict', conflict: { currentRevision: 2 } })
+    expect(await harness.run({ type: 'task_lists.update', target: { kind: 'task-list', id: 'p-ui' }, payload: { notes: 'x' } }, { expectedRevision: 2 })).toMatchObject({ status: 'applied' })
+    expect(tasks.readMeta()!.projects[0]).toMatchObject({ name: 'House', notes: 'x' })
+  })
+})

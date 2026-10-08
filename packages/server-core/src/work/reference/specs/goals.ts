@@ -1,13 +1,12 @@
 /** W1-06 (#1503) — Reference ops: goals & OKR, check-ins, projects, milestones, reviews, spaces, KPIs. */
 
 import { CommandRejection } from '@rox/core/commands'
-import type { ReferenceTx } from '../engine'
+import { isDeleted, type ReferenceOutcome, type ReferenceTx } from '../engine'
 import type { EntityRef } from '@rox/core/entities'
 import {
   addLink, assoc, authorizeId, authorizeRef, authorizeWorkspace, boundRef, childCreate, childDelete, childUpdate, create, omit, patchMany, payloadFields, removeLink, requireChild,
   softDelete, targetRef, transition, unassoc, update, type Mapper,
 } from '../ops'
-import type { ReferenceOutcome } from '../engine'
 import type { RecordData } from '../types'
 import type { ReferenceSpecMap } from './types'
 
@@ -52,12 +51,12 @@ function createGoal(tx: ReferenceTx): Promise<ReferenceOutcome> {
   return (async () => {
     const p = tx.payload
     const id = tx.createId()
-    if (p.parentGoalId) await tx.require('goal', p.parentGoalId)
-    if (p.okrCycleId) await tx.require('okr-cycle', p.okrCycleId)
-    // Written into its space / cycle (`write`); the parent goal is only referenced.
+    // Written into its space / cycle (`write`); the parent goal is only referenced. Authorized before loading.
     await authorizeId(tx, 'space', p.spaceId, 'write')
     await authorizeId(tx, 'okr-cycle', p.okrCycleId, 'write')
     await authorizeId(tx, 'goal', p.parentGoalId, 'read')
+    if (p.parentGoalId) await tx.require('goal', p.parentGoalId)
+    if (p.okrCycleId) await tx.require('okr-cycle', p.okrCycleId)
     const data = omit(p, ['id', 'targets', 'checks'])
     const targets = ((p.targets ?? []) as RecordData[]).map((target, index) => ({ id: (target.id as string | undefined) ?? tx.newId(`target-${index}`), target, index }))
     const checks = ((p.checks ?? []) as RecordData[]).map((check, index) => ({ id: (check.id as string | undefined) ?? tx.newId(`check-${index}`), check, index }))
@@ -89,9 +88,9 @@ function linkGoal(add: boolean, relationOf: (tx: ReferenceTx) => string, ends: (
 
 async function alignEnds(tx: ReferenceTx, goalId: string): Promise<[LinkRef, LinkRef]> {
   if (tx.payload.toGoalId === goalId) throw new CommandRejection('VALIDATION', 'a goal cannot align to itself')
-  await tx.require('goal', tx.payload.toGoalId)
-  // The TO side of the link is only referenced.
+  // The TO side of the link is only referenced (authorized before it is loaded).
   await authorizeRef(tx, { kind: 'goal', id: tx.payload.toGoalId }, 'read')
+  await tx.require('goal', tx.payload.toGoalId)
   return [{ kind: 'goal', id: goalId }, { kind: 'goal', id: tx.payload.toGoalId }]
 }
 
@@ -113,8 +112,8 @@ export const GOALS_REFERENCE_SPECS: ReferenceSpecMap = {
       const parent = tx.payload.parentGoalId
       if (parent) {
         if (parent === current!.id) throw new CommandRejection('VALIDATION', 'a goal cannot be its own parent')
-        await tx.require('goal', parent)
         await authorizeRef(tx, { kind: 'goal', id: parent }, 'read')
+        await tx.require('goal', parent)
       }
       return { parentGoalId: parent }
     }),
@@ -165,16 +164,24 @@ export const GOALS_REFERENCE_SPECS: ReferenceSpecMap = {
   },
   'okr.import_from_cycle': async tx => {
     const cycle = await tx.requireTarget('okr-cycle')
-    await tx.require('okr-cycle', tx.payload.fromCycleId)
-    // The source cycle and the copied goals are only read.
+    // The source cycle and the copied goals are only read (authorized before they are loaded).
     await authorizeRef(tx, { kind: 'okr-cycle', id: tx.payload.fromCycleId }, 'read')
-    const imported: string[] = []
+    await tx.require('okr-cycle', tx.payload.fromCycleId)
+    const copies: Array<{ index: number; data: RecordData }> = []
     for (const [index, goalId] of ((tx.payload.goalIds ?? []) as string[]).entries()) {
-      const source = await tx.get('goal', goalId)
-      if (!source || source.data.okrCycleId !== tx.payload.fromCycleId) continue
       await authorizeRef(tx, { kind: 'goal', id: goalId }, 'read')
+      const source = await tx.get('goal', goalId)
+      if (!source || isDeleted(source) || source.data.okrCycleId !== tx.payload.fromCycleId) continue
+      const data = omit(source.data, ['createdAt', 'updatedAt', 'createdBy', 'lastCommandId', 'closedAt', 'successStatus', 'lastCheckInId', 'lastCheckInStatus', 'deletedAt'])
+      // The copy lands in the source's space (written into) under its parent goal (referenced).
+      await authorizeId(tx, 'space', data.spaceId, 'write')
+      await authorizeId(tx, 'goal', data.parentGoalId, 'read')
+      copies.push({ index, data })
+    }
+    const imported: string[] = []
+    for (const { index, data } of copies) {
       const id = tx.newId(`import-${index}`)
-      await tx.insert('goal', id, { ...omit(source.data, ['createdAt', 'updatedAt', 'createdBy', 'lastCommandId', 'closedAt', 'successStatus', 'lastCheckInId', 'lastCheckInStatus']), okrCycleId: cycle.id, publishState: 'draft' })
+      await tx.insert('goal', id, { ...data, okrCycleId: cycle.id, publishState: 'draft' })
       imported.push(id)
     }
     return { collection: 'okr-cycle', id: cycle.id, revision: cycle.revision, result: { imported }, changes: ['goals'] }
@@ -185,13 +192,18 @@ export const GOALS_REFERENCE_SPECS: ReferenceSpecMap = {
   'goals.acknowledge_check_in': { op: transition('check-in', acknowledge), event: 'goals.goal_check_in_acknowledgement' },
   /** Denormalised summary on the goal (written by CHK through GOAL's command, PLAN §1.3). */
   'goals.record_check_in_summary': update('goal', tx => ({ lastCheckInId: tx.payload.checkInId, lastCheckInStatus: tx.payload.status, ...(tx.payload.nextCheckInDueAt !== undefined ? { nextCheckInDueAt: tx.payload.nextCheckInDueAt } : {}) })),
+  /**
+   * Catalogued at `read`: the draft is an actor-private record (`check-in-draft`,
+   * owned by the actor), never a row of the shared check-in store. Publishing it
+   * is `goals.create_check_in` / `projects.create_check_in` (write on the subject).
+   */
   'checkins.draft_from_activity': async tx => {
     const target = targetRef(tx)
     const subjectType = target.kind === 'project' ? 'project' : 'goal'
     const subject = await tx.require(subjectType, tx.target(subjectType))
     const id = tx.createId()
-    const record = await tx.insert('check-in', id, { subjectType, subjectId: subject.id, authorId: tx.actor, status: 'pending', message: '', source: 'agent_draft', state: 'draft', notify: 'none', ...(tx.payload.since ? { activitySince: tx.payload.since } : {}) })
-    return { collection: 'check-in', id, revision: record.revision, changes: ['state'] }
+    const record = await tx.insert('check-in-draft', id, { ownerId: tx.actor, subjectType, subjectId: subject.id, status: 'pending', message: '', source: 'agent_draft', ...(tx.payload.since ? { activitySince: tx.payload.since } : {}) })
+    return { collection: 'check-in-draft', id, revision: record.revision, ref: target, changes: ['state'] }
   },
   'goals.link_work': linkGoal(true, tx => tx.payload.relation ?? 'aligned-to', workEnds),
   'goals.unlink_work': linkGoal(false, tx => tx.payload.relation ?? 'aligned-to', workEnds),
@@ -211,8 +223,8 @@ export const PROJECTS_REFERENCE_SPECS: ReferenceSpecMap = {
   'projects.update_parent_goal': {
     event: 'projects.project_goal_connection',
     op: update('project', async tx => {
-      if (tx.payload.parentGoalId) await tx.require('goal', tx.payload.parentGoalId)
       await authorizeId(tx, 'goal', tx.payload.parentGoalId, 'read')
+      if (tx.payload.parentGoalId) await tx.require('goal', tx.payload.parentGoalId)
       return { parentGoalId: tx.payload.parentGoalId }
     }),
   },
@@ -271,9 +283,9 @@ export const PROJECTS_REFERENCE_SPECS: ReferenceSpecMap = {
   'milestones.complete': { op: transition('milestone', async (tx, current) => {
     if (tx.payload.moveToMilestoneId) {
       // Open tasks move to another milestone of the same project.
+      await authorizeRef(tx, { kind: 'milestone', id: tx.payload.moveToMilestoneId }, 'write')
       const next = await tx.require('milestone', tx.payload.moveToMilestoneId)
       if (next.data.projectId !== current!.data.projectId) throw new CommandRejection('NOT_FOUND', 'moveToMilestoneId is not in this project')
-      await authorizeRef(tx, { kind: 'milestone', id: next.id }, 'write')
     }
     return ({ status: 'done', completedAt: tx.now, roadmapStatus: 'done', openTasks: tx.payload.openTasks, ...(tx.payload.moveToMilestoneId ? { movedTasksTo: tx.payload.moveToMilestoneId } : {}) })
   }), event: 'projects.project_milestone_updating' },
@@ -297,16 +309,16 @@ export const PROJECTS_REFERENCE_SPECS: ReferenceSpecMap = {
   'projects.acknowledge_check_in': { op: transition('check-in', acknowledge), event: 'projects.project_check_in_acknowledged' },
   'reviews.create': async tx => {
     const subjectCollection = tx.payload.subjectType === 'okr_cycle' ? 'okr-cycle' : tx.payload.subjectType
-    await tx.require(subjectCollection, tx.payload.subjectId)
     // The reviewed subject and the review doc are only referenced.
     await authorizeId(tx, subjectCollection, tx.payload.subjectId, 'read')
+    await tx.require(subjectCollection, tx.payload.subjectId)
     await authorizeId(tx, 'note', tx.payload.docId, 'read')
     return create('review', tx => ({ ...payloadFields()(tx) as RecordData, authorId: tx.actor }))(tx)
   },
   'reviews.acknowledge': transition('review', acknowledge),
   'reviews.create_cycle_review': async tx => {
-    await tx.require('okr-cycle', tx.payload.okrCycleId)
     await authorizeId(tx, 'okr-cycle', tx.payload.okrCycleId, 'read')
+    await tx.require('okr-cycle', tx.payload.okrCycleId)
     return create('review', tx => ({ subjectType: 'okr_cycle', subjectId: tx.payload.okrCycleId, authorId: tx.actor, ...(tx.payload.notes ? { notes: tx.payload.notes } : {}), ...(tx.payload.score ? { score: tx.payload.score } : {}) }))(tx)
   },
 }
@@ -351,7 +363,18 @@ export const SPACES_REFERENCE_SPECS: ReferenceSpecMap = {
     const row = await tx.upsert('task-status-set', `space:${space.id}`, { statuses: tx.payload.statuses }, { ownerType: 'space', ownerId: space.id })
     return { collection: 'task-status-set', id: row.id, revision: row.revision, ref: tx.rawTarget ?? null, changes: ['statuses'] }
   },
-  'spaces.join': { op: assoc('space-member', 'space', tx => tx.actor, tx => ({ role: 'editor', principalId: tx.actor }), 'spaceId'), event: 'spaces.space_joining' },
+  'spaces.join': {
+    event: 'spaces.space_joining',
+    op: async tx => {
+      const space = await tx.requireTarget('space')
+      const id = `${space.id}:${tx.actor}`
+      const current = await tx.get('space-member', id)
+      // An existing membership (any role) is left unchanged; the role is set only when the row is (re)created.
+      if (current && !isDeleted(current)) return { collection: 'space-member', id, revision: current.revision, ref: tx.rawTarget ?? null, changes: [], result: { existed: true } }
+      const row = await tx.upsert('space-member', id, { role: 'editor', principalId: tx.actor }, { spaceId: space.id, principalId: tx.actor })
+      return { collection: 'space-member', id, revision: row.revision, ref: tx.rawTarget ?? null, changes: ['role'], result: { existed: false } }
+    },
+  },
   'spaces.leave': unassoc('space-member', 'space', tx => tx.actor),
   'spaces.delete': async tx => {
     const space = await tx.requireTarget('space')
@@ -365,8 +388,8 @@ export const KPIS_REFERENCE_SPECS: ReferenceSpecMap = {
   'kpis.create': {
     event: 'kpis.kpi_created',
     op: async tx => {
-      await tx.require('space', tx.payload.spaceId)
       await authorizeId(tx, 'space', tx.payload.spaceId, 'write')
+      await tx.require('space', tx.payload.spaceId)
       return create('kpi', payloadFields(), { defaults: tx => ({ unit: '', direction: 'increase', championId: tx.actor }) })(tx)
     },
   },

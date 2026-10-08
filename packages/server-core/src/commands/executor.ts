@@ -304,6 +304,15 @@ export class CommandExecutor {
                 return false
               }
             },
+            authorizeFor: async (principalId, action, ref) => {
+              if (this.authorizer.answersForAnyPrincipal !== true) return undefined
+              try {
+                return (await this.authorizer.can({ principalId, kind: 'user', workspaceId }, action, ref)) === true
+              } catch (error) {
+                if (this.isTransient(error)) throw error
+                return false
+              }
+            },
           })) ?? {}
         } catch (error) {
           if (error instanceof CommandConflict || error instanceof CommandRejection) throw error

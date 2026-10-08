@@ -193,7 +193,10 @@ export class PersonalTaskPersistStore {
 
   put(task: PersonalTask): PersistedPersonalTask {
     this.assertSafeId(task.id)
-    return this.withRecordLock(task.id, () => this.putUnlocked(task))
+    return this.withRecordLock(task.id, () => {
+      if (this.occupant(task.id)) throw new TypeError(`Personal-task file name of ${JSON.stringify(task.id)} is taken by another id (case-insensitive filesystem)`)
+      return this.putUnlocked(task)
+    })
   }
 
   putIfRevision(write: PersonalTaskWrite): PersonalTaskWriteResult {
@@ -206,6 +209,8 @@ export class PersonalTaskPersistStore {
       if ((current?.revision ?? null) !== write.expectedRevision) {
         return { status: 'conflict', current: current ? { task: current.task, revision: current.revision } : null }
       }
+      // The file name is taken by another id (case-insensitive filesystem): never overwrite it.
+      if (!current && this.occupant(write.task.id)) return { status: 'conflict', current: null }
       return { status: 'accepted', record: this.putUnlocked(write.task) }
     })
   }
@@ -245,6 +250,9 @@ export class PersonalTaskPersistStore {
       if ((current?.revision ?? null) !== expectedRevision) {
         return { status: 'conflict', current: current ? { item: this.toItem(current), revision: current.revision } : null }
       }
+      // Create on a file name taken by another id (case-insensitive filesystem): a conflict, revision only.
+      const occupant = current ? null : this.occupant(item.id)
+      if (occupant) return { status: 'conflict', current: null }
       const { task, work } = fromWorkItem(item, current?.task ?? null)
       if (current && tasksEqual(current.task, task) && workEqual(current.work, work)) {
         return { status: 'accepted', record: { item: this.toItem(current), revision: current.revision } }
@@ -260,9 +268,9 @@ export class PersonalTaskPersistStore {
   delete(id: string): boolean {
     if (!TASK_ID_RE.test(id)) return false
     return this.withRecordLock(id, () => {
-      const path = this.recordPath(id)
-      if (!existsSync(path)) return false
-      unlinkSync(path)
+      // Only this id's own file (never another task's on a case-insensitive filesystem).
+      if (!this.readRecord(id)) return false
+      unlinkSync(this.recordPath(id))
       return true
     })
   }
@@ -308,7 +316,6 @@ export class PersonalTaskPersistStore {
   writeMeta(meta: PersonalTaskMeta): void {
     this.withRecordLock(META_LOCK_ID, () => {
       const states = this.readListState()
-      if (Object.keys(states).length === 0) return this.writeMetaUnlocked(meta)
       const merged = this.mergeUiMeta(meta, this.readMeta(), states)
       this.writeMetaUnlocked(merged, states)
     })
@@ -337,6 +344,7 @@ export class PersonalTaskPersistStore {
     for (const entry of meta.audit ?? []) {
       if ((entry?.action === 'project.trash' || entry?.action === 'project.restore') && typeof entry.detail === 'string') lastUiAction.set(entry.detail, entry.action)
     }
+    const untracked = projects.filter(project => project?.id && !states[project.id])
     for (const [id, state] of Object.entries(states)) {
       const index = projects.findIndex(entry => entry?.id === id)
       if (state.removed) {
@@ -359,6 +367,14 @@ export class PersonalTaskPersistStore {
         continue
       }
       states[id] = { ...state, revision: this.projectAsList(onDisk, state).revision + 1, fingerprint: stableJson(projects[index]) }
+    }
+    // A UI change to a list the bus never wrote starts its CAS tracking too (revision 1 → 2, …),
+    // so a bus write still holding revision 1 conflicts.
+    for (const project of untracked) {
+      const onDisk = disk?.projects.find(entry => entry?.id === project.id)
+      if (onDisk && stableJson(onDisk) !== stableJson(project)) {
+        states[project.id] = { revision: this.projectAsList(onDisk, undefined).revision + 1, fingerprint: stableJson(project), extra: {} }
+      }
     }
     return { ...meta, projects }
   }
@@ -651,7 +667,18 @@ export class PersonalTaskPersistStore {
     if (!TASK_ID_RE.test(id)) return null
     const path = this.recordPath(id)
     if (!existsSync(path)) return null
-    return parsePersonalTaskPersistFile(readFileSync(path, 'utf8'))
+    const parsed = parsePersonalTaskPersistFile(readFileSync(path, 'utf8'))
+    // Case-insensitive filesystem: `task1.json` can resolve to `Task1.json` — another task.
+    return parsed && parsed.id === id ? parsed : null
+  }
+
+  /** The record of another id the path of `id` resolves to (case-insensitive filesystems), if any. */
+  private occupant(id: string): PersistFile | null {
+    const path = this.recordPath(id)
+    if (!existsSync(path)) return null
+    let parsed: PersistFile | null
+    try { parsed = parsePersonalTaskPersistFile(readFileSync(path, 'utf8')) } catch { return null }
+    return parsed && parsed.id !== id ? parsed : null
   }
 
   private readAll(): PersistFile[] {

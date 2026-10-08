@@ -6,6 +6,7 @@
 import { normalizeRoleAlias } from '@rox/core/acl'
 import { CommandRejection } from '@rox/core/commands'
 import { isEntityKind, isEntityRelation, type EntityRef } from '@rox/core/entities'
+import { REFERENCE_COLLECTIONS } from './collections'
 import { deterministicId, isDeleted, type ReferenceOp, type ReferenceOutcome, type ReferenceTx } from './engine'
 import type { RecordData, StoredRecord } from './types'
 
@@ -275,3 +276,27 @@ export const subjectTypeOf = (kind: string): string => ACL_SUBJECT_TYPE[kind] ??
 
 /** Command role names (`full_access` …) → the W1-04 lattice stored in `acl_entry.role` (`manager`). */
 export const storedAclRole = (role: string): string => normalizeRoleAlias(role) ?? role
+
+/** Collection whose records are refs of `kind` (resources an ACL entry can name). */
+export function collectionOfKind(kind: string): string | undefined {
+  return Object.entries(REFERENCE_COLLECTIONS).find(([, spec]) => (spec as { kind?: string }).kind === kind)?.[0]
+}
+
+/** The record owner / creator of a resource (its implicit owner while it has no `owner` ACL entry). */
+export async function recordOwnerOf(tx: ReferenceTx, subject: EntityRef): Promise<unknown> {
+  const collection = collectionOfKind(subject.kind)
+  const record = collection ? await tx.get(collection, subject.id) : null
+  return record ? record.data.ownerId ?? record.data.ownerPrincipalId ?? record.data.createdBy : undefined
+}
+
+/**
+ * Ownership changes only through `acl.transfer_ownership`: a grant, revoke,
+ * access decision or permission edit of a principal's entry is FORBIDDEN when
+ * that entry is `owner`, or — without an entry — when the principal is the
+ * resource's implicit owner (record owner / creator).
+ */
+export async function assertNotOwner(tx: ReferenceTx, subject: EntityRef, principalId: string, entry: StoredRecord | null): Promise<void> {
+  const live = entry && !isDeleted(entry) ? entry : null
+  const owner = live ? live.data.role === storedAclRole('owner') : (await recordOwnerOf(tx, subject)) === principalId
+  if (owner) throw new CommandRejection('FORBIDDEN', "the owner's access changes only through acl.transfer_ownership")
+}

@@ -3,8 +3,8 @@
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { deterministicId, isDeleted, type ReferenceOutcome, type ReferenceTx } from '../engine'
-import { addLink, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, boundRef, childCreate, childUpdate, create, omit, payloadFields, refString, storedAclRole, transition, update } from '../ops'
-import type { RecordData } from '../types'
+import { addLink, assertNotOwner, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, boundRef, childCreate, collectionOfKind, childUpdate, create, omit, payloadFields, refString, storedAclRole, transition, update } from '../ops'
+import type { RecordData, StoredRecord } from '../types'
 import type { ReferenceSpecMap } from './types'
 
 const UPLOAD_SESSION_TTL_MS = 24 * 60 * 60 * 1000
@@ -53,6 +53,7 @@ async function ensureDaily(tx: ReferenceTx): Promise<{ id: string; revision: num
 async function aclEntry(tx: ReferenceTx, resource: EntityRef, principalId: string, role: string | null): Promise<void> {
   const id = deterministicId(tx.ctx.workspaceId, 'acl', refString(resource), 'principal', principalId)
   const current = await tx.get('acl-entry', id)
+  await assertNotOwner(tx, resource, principalId, current)
   if (role === null) {
     if (current && !isDeleted(current)) await tx.softDelete('acl-entry', current)
     return
@@ -71,6 +72,17 @@ async function authorizeDocContainers(tx: ReferenceTx): Promise<void> {
 }
 
 /** Owner of a folder: a personal folder is the actor's own, any other owner needs `write`. */
+/** Whether `folderId` is (inside) one of `ancestors` (walks `parentId`, bounded). */
+async function isInside(tx: ReferenceTx, folderId: string, ancestors: ReadonlySet<string>): Promise<boolean> {
+  let current: string | null = folderId
+  for (let depth = 0; current && depth < 256; depth += 1) {
+    if (ancestors.has(current)) return true
+    const parent: unknown = (await tx.get('folder', current))?.data.parentId
+    current = typeof parent === 'string' && parent ? parent : null
+  }
+  return false
+}
+
 async function authorizeFolderOwner(tx: ReferenceTx): Promise<void> {
   const { ownerType, ownerId } = tx.payload
   if (ownerId === undefined) return
@@ -156,20 +168,45 @@ const openUpload = create('upload-session', payloadFields(), { defaults: tx => (
 
 export const DRIVE_REFERENCE_SPECS: ReferenceSpecMap = {
   'drive.create_folder': async tx => {
+    // The parent folder is written into: authorized (bound to a folder target) before it is loaded.
+    await authorizeId(tx, 'folder', tx.payload.parentId, 'write', { bound: true })
     if (tx.payload.parentId) await tx.require('folder', tx.payload.parentId)
     await authorizeFolderOwner(tx)
     return create('folder', payloadFields(), { defaults: tx => ({ ownerType: 'user', ownerId: tx.actor }), container: { kind: 'folder', field: 'parentId' } })(tx)
   },
   'drive.rename_folder': update('folder'),
+  /**
+   * A move: the item leaves its current folder (placement row detached, the
+   * item's `folderId` / a folder's `parentId` updated) and lands in the
+   * destination. Destination (bound to a folder target), every item and every
+   * source folder (moved FROM) need `write`, all checked before the first write.
+   */
   'drive.move_items': async tx => {
+    await authorizeBound(tx, { kind: 'folder', id: tx.payload.toFolderId }, 'write')
     const folder = await tx.require('folder', tx.payload.toFolderId)
-    // Destination folder (the target when one is sent) and every moved item need `write`.
-    await authorizeBound(tx, { kind: 'folder', id: folder.id }, 'write')
-    for (const item of tx.payload.items as EntityRef[]) await authorizeRef(tx, item, 'write')
+    const moves: Array<{ item: EntityRef; record: StoredRecord | null; collection: string | undefined; field: string; from: string | null }> = []
     for (const item of tx.payload.items as EntityRef[]) {
+      await authorizeRef(tx, item, 'write')
+      if (item.kind === 'folder' && item.id === folder.id) throw new CommandRejection('VALIDATION', 'a folder cannot be moved into itself')
+      const collection = collectionOfKind(item.kind)
+      const record = collection ? await tx.get(collection, item.id) : null
+      const field = item.kind === 'folder' ? 'parentId' : 'folderId'
+      const from = record && typeof record.data[field] === 'string' && record.data[field] ? String(record.data[field]) : null
+      if (from && from !== folder.id) await authorizeRef(tx, { kind: 'folder', id: from } as EntityRef, 'write')
+      moves.push({ item, record, collection, field, from })
+    }
+    if (moves.some(move => move.item.kind === 'folder') && await isInside(tx, folder.id, new Set(moves.filter(move => move.item.kind === 'folder').map(move => move.item.id)))) {
+      throw new CommandRejection('VALIDATION', 'a folder cannot be moved into its own subfolder')
+    }
+    for (const { item, record, collection, field, from } of moves) {
+      if (from && from !== folder.id) {
+        const placement = await tx.get('folder-item', `${from}:${refString(item)}`)
+        if (placement && !isDeleted(placement) && !placement.data.isShortcut) await tx.softDelete('folder-item', placement)
+      }
+      if (record && collection && !isDeleted(record) && record.data[field] !== folder.id) await tx.update(collection, record, { [field]: folder.id })
       await tx.upsert('folder-item', `${folder.id}:${refString(item)}`, { isShortcut: false, addedBy: tx.actor }, { folderId: folder.id, itemRef: refString(item) })
     }
-    return { collection: 'folder', id: folder.id, revision: folder.revision, changes: ['items'] }
+    return { collection: 'folder', id: folder.id, revision: folder.revision, changes: ['items'], result: { moved: moves.map(move => refString(move.item)) } }
   },
   'drive.add_link': create('drive-link', payloadFields(), { defaults: tx => ({ linkType: 'other', authorId: tx.actor }), container: { kind: 'folder', field: 'folderId' } }),
   'drive.upload_file': create('file', payloadFields(), { defaults: tx => ({ uploadedBy: tx.actor, currentVersion: 1 }), container: { kind: 'folder', field: 'folderId' } }),
@@ -187,8 +224,8 @@ export const DRIVE_REFERENCE_SPECS: ReferenceSpecMap = {
     return { collection: 'drive-favorite', id, revision: record.revision, ref: tx.payload.item, changes: ['favorite'] }
   },
   'drive.add_shortcut': async tx => {
+    await authorizeBound(tx, { kind: 'folder', id: tx.payload.folderId }, 'write')
     const folder = await tx.require('folder', tx.payload.folderId)
-    await authorizeBound(tx, { kind: 'folder', id: folder.id }, 'write')
     await authorizeRef(tx, tx.payload.item as EntityRef, 'read')
     const record = await tx.upsert('folder-item', `${folder.id}:${refString(tx.payload.item)}`, { isShortcut: true, addedBy: tx.actor }, { folderId: folder.id, itemRef: refString(tx.payload.item) })
     return { collection: 'folder-item', id: record.id, revision: record.revision, ref: { kind: 'folder', id: folder.id }, changes: ['shortcut'] }

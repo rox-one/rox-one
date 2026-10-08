@@ -125,6 +125,9 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
         'createdAt', 'updatedAt', 'createdBy', 'lastCommandId', 'completedAt', 'cancelledAt', 'reopenedAt', 'archivedAt', 'trashedAt', 'deletedAt',
         'nativeId', 'sourceStoreId', 'repeatOf', 'repeatOccurrenceAt', 'repeatNextId', 'reminderDeliveredFor', 'reminderRetryAt', 'reminderError',
       ])
+      // The copy is written into the source's containers: each needs `write` (only the source was authorized).
+      await authorizeTaskContainers(tx, copy)
+      await authorizeWorkspace(tx, copy.sharedWorkspaceId)
       const record = await tx.insert('task', tx.createId(), { ...copy, title: tx.payload.title ?? source.data.title, statusKey: 'pending', ownerPrincipalId: tx.actor })
       await addLink(tx, { kind: 'task', id: record.id }, { kind: 'task', id: source.id }, 'derived-from', { role: 'duplicate' })
       return { collection: 'task', id: record.id, revision: record.revision, changes: ['title'], result: { sourceId: source.id } }
@@ -156,8 +159,8 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     event: 'task.task_list_added',
     op: async tx => {
       const task = await tx.requireTarget('task')
-      await tx.require('task-list', tx.payload.listId)
       await authorizeTaskContainers(tx, { listId: tx.payload.listId, sectionId: tx.payload.sectionId })
+      await tx.require('task-list', tx.payload.listId)
       if (tx.ctx.authority === 'local') {
         // Local: a task sits in one PersonalTask project (= list); no association rows.
         const record = await tx.update('task', task, { listId: tx.payload.listId, ...(tx.payload.sectionId ? { sectionId: tx.payload.sectionId } : task.data.listId === tx.payload.listId ? {} : { sectionId: null }) })
@@ -192,10 +195,10 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
   'tasks.add_dependency': async tx => {
     const task = await tx.requireTarget('task')
     const other = tx.payload.blocks ?? tx.payload.blockedBy
-    await tx.require('task', other)
     if (other === task.id) throw new CommandRejection('VALIDATION', 'a task cannot depend on itself')
-    // The other task is only referenced by the dependency.
+    // The other task is only referenced by the dependency (authorized before it is loaded).
     await authorizeRef(tx, { kind: 'task', id: other }, 'read')
+    await tx.require('task', other)
     const [from, to] = tx.payload.blocks ? [task.id, other] : [other, task.id]
     const link = await addLink(tx, { kind: 'task', id: from }, { kind: 'task', id: to }, 'blocks')
     return { collection: 'entity-link', id: link.id, revision: link.revision, ref: tx.rawTarget ?? null, changes: ['blocks'] }
@@ -219,13 +222,14 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
   'task_lists.delete': softDelete('task-list'),
   ...workspaceOnly({
     'task_sections.create': async tx => {
+      await authorizeId(tx, 'task-list', tx.payload.taskListId, 'write', { bound: true })
       await tx.require('task-list', tx.payload.taskListId)
       return create('task-section', payloadFields(), { defaults: () => ({ sortKey: 'a0' }), container: { kind: 'task-list', field: 'taskListId' } })(tx)
     },
     'task_sections.update': update('task-section'),
     'task_sections.move': async tx => {
-      if (tx.payload.taskListId) await tx.require('task-list', tx.payload.taskListId)
       await authorizeId(tx, 'task-list', tx.payload.taskListId, 'write')
+      if (tx.payload.taskListId) await tx.require('task-list', tx.payload.taskListId)
       return update('task-section')(tx)
     },
     'task_sections.delete': softDelete('task-section'),

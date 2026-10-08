@@ -44,7 +44,8 @@ The PersonalTask v3 store (MIG-01/02/03) is in `src/tasks/personal-persist.ts`.
   bus write the UI has not listed yet (`unseen`, cleared by `readPersonalTasks` →
   `markTaskListsSeen`) keeps the disk version and a bus removal stays removed (tombstone until
   listed); any other UI change to a bus list bumps its CAS revision past the one the bus last
-  served (one bump per UI edit), so a stale `task_lists.*` write conflicts. Residual window: a
+  served (one bump per UI edit), so a stale `task_lists.*` write conflicts. A UI change to a
+  list the bus never wrote starts its tracking the same way (revision 1 → 2 …). Residual window: a
   UI edit to a bus list made before the UI listed the bus write is replaced by the bus version.
 - Tasks UI refresh: every `task` / `task-list` write of the local backend, and a MIG-05 task
   placement, calls `ReferenceRuntime.personalTasksChanged`; `commands:execute` pushes one
@@ -54,6 +55,17 @@ The PersonalTask v3 store (MIG-01/02/03) is in `src/tasks/personal-persist.ts`.
   not on the bus yet: their `task` / `task-list` commands answer `UNAVAILABLE` and never touch
   the device owner's store; their other local commands run (MIG-04/05 waits for an owner
   session so placements are never dropped).
+- Foreign files: on a case-insensitive filesystem `task1.json` can resolve to the file of
+  `Task1`. The PersonalTask store only treats a file as `id` when its stored id is `id`
+  (`readRecord`); a create on a path holding another id is a conflict (revision only), and
+  `put` / `delete` refuse it.
+- `work/<dir>/` file names (`encodeWorkId`): `%XX` for anything outside `[a-z0-9._-]` (case
+  unique), Windows reserved stems (`con`, `prn`, `aux`, `nul`, `com0-9`, `lpt0-9`, before the
+  first `.`) get their first character escaped, a trailing `.` is escaped, and stems longer
+  than 160 bytes are cut and suffixed `~<sha256/32>` (`~` is never literal otherwise). The id
+  stored in the file is authoritative (`list` reads it; `get` checks it). Files under the
+  earlier encodings (first build: upper case literal; round 2: no reserved / length rules) are
+  still read and moved to the current name on the next write.
 - `task_sections.*` and `task_list_groups.*` answer `UNAVAILABLE` on the local authority until
   TSK-1 (headings / areas stay UI-managed); on the workspace authority they are table rows.
 
@@ -88,6 +100,15 @@ The PersonalTask v3 store (MIG-01/02/03) is in `src/tasks/personal-persist.ts`.
     be on the same entity, kind and id). Those commands need the target. Relational ids of the
     target's kind (dependency, alignment, parent goal, forward destination, merge sources,
     import-from cycle) are authorized on their own instead.
+  - **authorize before load**: a payload id is authorized before `tx.require` / `tx.get`
+    loads it, so a denied caller gets `FORBIDDEN` whether or not the record exists (never a
+    `NOT_FOUND` existence oracle).
+  - **inherited containers**: a command that copies a record into the source's containers
+    authorizes them at `write` and rejects with `FORBIDDEN` (never strips them):
+    `tasks.duplicate` (list / section / shared workspace), `okr.import_from_cycle` (each
+    copied goal's space; parent goal `read`; deleted or other-cycle sources are skipped, and
+    the copy never carries `deletedAt`), `project_templates.create_project` (payload space,
+    else the template's; parent goal `read`).
   - another workspace (`tasks.share`, `projects.share`) is `authorizeWorkspace`: `write` at
     workspace level in that workspace.
   - `acl.*` `subject`, `links.*` `from`, `reminders.create` `subject` must be the target;
@@ -97,6 +118,35 @@ The PersonalTask v3 store (MIG-01/02/03) is in `src/tasks/personal-persist.ts`.
     sent, must match).
   - `acl.transfer_ownership`: only the current owner (an `owner` ACL entry, or no entry and the
     record's owner / creator) transfers; the new owner gets `owner`, the old one `full_access`.
+    Ownership changes **only** there: `acl.grant`, `acl.revoke`, `acl.decide_request` and
+    `docs.update_permissions` are `FORBIDDEN` on the owner's entry (`assertNotOwner`: an
+    `owner` entry, or no entry and the implicit record owner / creator).
+  - Chat membership: a `channel-member` row counts only while `state: 'active'` (and not
+    deleted). `im.leave_chat` sets `state: 'left'`; `im.mark_read` / `mark_unread` /
+    `update_member_state` need an active row and only update it (never create or revive one);
+    `im.add_members` is members-only (`invitePolicy: 'members'`; `admins` needs owner/admin) and
+    re-adds a left member with the default role; a disbanded p2p chat (deterministic id) is
+    revived by `im.get_or_create_p2p` with both members active.
+  - `spaces.join` leaves an existing membership (and its role) unchanged.
+  - Subscriptions (`subscriptions.subscribe` / `unsubscribe`, `principalIds` defaults to the
+    caller): unsubscribing anyone else needs `share` (manage) on the resource; subscribing
+    anyone else needs `write` on it **and** each subscribed person's own `read`, asked through
+    `ctx.authorizeFor(principalId, …)` — the same authorizer evaluated for that principal. It
+    answers only when the authorizer declares `answersForAnyPrincipal: true`; otherwise
+    (`LOCAL_OWNER_AUTHORIZER`, the current workspace-service authorizer) subscribing others is
+    `FORBIDDEN` and only self-subscription works.
+  - `checkins.draft_from_activity` (verb `read`) writes an actor-private `check-in-draft`
+    record (`ownerId` = actor, `work/check-in-drafts/` locally, a snapshot collection on
+    Postgres), never a `check_in` row or the shared check-in store. Publishing it is the normal
+    check-in create command (`goals.create_check_in` / `projects.create_check_in`), which needs
+    `write` on the subject.
+  - `drive.move_items` is a move: destination (bound), every item and every source folder
+    need `write`, all checked first; then the old placement row is detached (shortcuts stay),
+    the item's `folderId` (a folder's `parentId`) is updated and the destination placement is
+    written. A folder cannot move into itself or its own subtree (`VALIDATION`).
+  - `agents.provision_personal_agent` / `identity.ensure_placeholder` (explicit id): an
+    existing record of another owner / creator under the id is a create conflict (revision
+    only), never `existed: true`. Placeholders keyed by email / name still dedupe.
   - `milestones.reorder` / `okr.publish_objectives` touch only the target's own records; other
     ids are reported in `missing`. `milestones.complete` moves tasks only to a milestone of the
     same project.
@@ -142,10 +192,14 @@ keeping every usable cycle / objective / key result and listing what it skipped.
   handler (memory); per-command VALIDATION / FORBIDDEN / UNAVAILABLE; scope, conflict, expiry,
   handler-level permission, idempotent replay.
 - `__tests__/reference-local.test.ts`: the same scenario on the local SQLite authority, the
-  Tasks UI meta merge, principal UNAVAILABLE, the refresh push, case-unique file names.
+  Tasks UI meta merge (UI-only list CAS too), principal UNAVAILABLE, the refresh push,
+  case-unique / portable file names, foreign PersonalTask files.
 - `__tests__/reference-authorization.test.ts`: payload-named resources through a recording
   authorizer (FORBIDDEN and positive cases), bound ids, chat membership, merges, reorders,
   ownership transfer, agent approvals, drop direction.
+- `__tests__/reference-guards.test.ts`: chat membership rows, ACL owner protection, inherited
+  containers, `spaces.join`, private check-in drafts, subscriptions for others, drive moves,
+  own-id create conflicts, authorize-before-load (FORBIDDEN, not NOT_FOUND).
 - `apps/workspace-service/test/reference-handlers.pg.test.ts`: the scenario on PostgreSQL with
   the full W1-05 DDL (temp `initdb` cluster or `ROX_TEST_PG_URL`; skipped otherwise).
 - `__tests__/goals-migration.test.ts`: MIG-04/05 fixtures, golden output, idempotent re-run,

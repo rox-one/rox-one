@@ -3,17 +3,22 @@
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { deterministicId, isDeleted, LAST_COMMAND_FIELD, type ReferenceOutcome, type ReferenceTx } from '../engine'
-import { assoc, authorizeId, authorizeRef, childCreate, childDelete, childUpdate, omit, payloadFields, refString, requireChild, softDelete, unassoc, update } from '../ops'
+import { authorizeId, authorizeRef, childCreate, childDelete, childUpdate, omit, refString, requireChild, softDelete, unassoc, update } from '../ops'
 import type { RecordData, StoredRecord } from '../types'
 import type { ReferenceSpecMap } from './types'
 
 const ADMIN_ROLES = new Set(['owner', 'admin'])
 
+/**
+ * Add (or re-add) members. An active member is left as is; a member who left
+ * or was removed comes back with `role` (a former owner does not regain it).
+ */
 async function addMembers(tx: ReferenceTx, chatId: string, principalIds: Iterable<string>, role = 'member'): Promise<void> {
   for (const principalId of new Set(principalIds)) {
     const id = `${chatId}:${principalId}`
     const current = await tx.get('channel-member', id)
-    await tx.upsert('channel-member', id, { state: 'active', ...(current ? {} : { role, joinedAt: tx.now }) }, { chatId, principalId })
+    if (memberRole(current) !== undefined) continue
+    await tx.upsert('channel-member', id, { state: 'active', role, joinedAt: tx.now }, { chatId, principalId })
   }
 }
 
@@ -24,8 +29,42 @@ async function createChat(tx: ReferenceTx, id: string, data: RecordData, memberI
   return record
 }
 
+/** The role of an active member (`state: 'active'`, not deleted); undefined for anyone else. */
 function memberRole(member: StoredRecord | null): string | undefined {
-  return member && !isDeleted(member) && member.data.state !== 'left' ? String(member.data.role ?? 'member') : undefined
+  return member && !isDeleted(member) && member.data.state === 'active' ? String(member.data.role ?? 'member') : undefined
+}
+
+/** The actor's active membership row of a chat (FORBIDDEN otherwise). */
+async function activeMember(tx: ReferenceTx, chatId: string): Promise<{ row: StoredRecord; role: string }> {
+  const row = await tx.get('channel-member', `${chatId}:${tx.actor}`)
+  const role = memberRole(row)
+  if (!row || role === undefined) throw new CommandRejection('FORBIDDEN', 'not a member of this chat')
+  return { row, role }
+}
+
+/**
+ * Posting needs active membership of the chat and its posting policy
+ * (`admins` → owner / admin only). Call it before the first write of a
+ * command that posts (appendMessage checks again).
+ */
+export async function assertCanPost(tx: ReferenceTx, chat: StoredRecord): Promise<void> {
+  const role = memberRole(await tx.get('channel-member', `${chat.id}:${tx.actor}`))
+  if (role === undefined) throw new CommandRejection('FORBIDDEN', 'only members can post in this chat')
+  if (chat.data.postingPolicy === 'admins' && !ADMIN_ROLES.has(role)) throw new CommandRejection('FORBIDDEN', 'only admins can post in this chat')
+}
+
+/**
+ * Self-scoped member state (read marks, mute, …): only on the actor's
+ * existing active membership — never creates or revives a member row.
+ */
+function ownMembership(map: (tx: ReferenceTx) => RecordData) {
+  return async (tx: ReferenceTx): Promise<ReferenceOutcome> => {
+    const chat = await tx.requireTarget('channel')
+    const { row } = await activeMember(tx, chat.id)
+    const changes = map(tx)
+    const record = await tx.update('channel-member', row, changes)
+    return { collection: 'channel-member', id: record.id, revision: record.revision, ref: tx.rawTarget ?? null, changes: Object.keys(changes).sort() }
+  }
 }
 
 /**
@@ -33,9 +72,7 @@ function memberRole(member: StoredRecord | null): string | undefined {
  * the chat and its posting policy (`admins` → owner / admin only).
  */
 export async function appendMessage(tx: ReferenceTx, chat: StoredRecord, content: unknown, extra: RecordData = {}, salt = 'message'): Promise<StoredRecord> {
-  const role = memberRole(await tx.get('channel-member', `${chat.id}:${tx.actor}`))
-  if (role === undefined) throw new CommandRejection('FORBIDDEN', 'only members can post in this chat')
-  if (chat.data.postingPolicy === 'admins' && !ADMIN_ROLES.has(role)) throw new CommandRejection('FORBIDDEN', 'only admins can post in this chat')
+  await assertCanPost(tx, chat)
   const id = salt === 'message' ? tx.createId() : tx.newId(salt)
   // Retry with a lost receipt: the message is already there — don't burn another `seq`.
   const existing = await tx.get('channel-message', id)
@@ -55,7 +92,6 @@ async function ownMessage(tx: ReferenceTx): Promise<StoredRecord> {
 }
 
 const chatOutcome = (record: StoredRecord, changes: string[], result?: Record<string, unknown>): ReferenceOutcome => ({ collection: 'channel', id: record.id, revision: record.revision, changes, ...(result ? { result } : {}) })
-const self = (tx: ReferenceTx) => tx.actor
 
 export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
   'im.create_chat': async tx => {
@@ -69,6 +105,13 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
     const id = deterministicId(tx.ctx.workspaceId, 'p2p', ...[tx.actor, tx.payload.peerId].sort())
     const existing = await tx.get('channel', id)
     if (existing && !isDeleted(existing)) return chatOutcome(existing, [], { existed: true })
+    if (existing) {
+      // A disbanded p2p chat (deterministic id) is revived, with both members back.
+      const revived = await tx.update('channel', existing, { deletedAt: null })
+      await addMembers(tx, id, [tx.actor], 'owner')
+      await addMembers(tx, id, [tx.payload.peerId])
+      return chatOutcome(revived, ['deletedAt'], { existed: false })
+    }
     const record = await createChat(tx, id, { kind: 'p2p', visibility: 'private' }, [tx.payload.peerId])
     return chatOutcome(record, ['kind'], { existed: false })
   },
@@ -77,7 +120,8 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
     op: async tx => {
       const chat = await tx.requireTarget('channel')
       const role = memberRole(await tx.get('channel-member', `${chat.id}:${tx.actor}`))
-      if (chat.data.invitePolicy === 'admins' && !ADMIN_ROLES.has(role ?? '')) throw new CommandRejection('FORBIDDEN', 'only admins can add members')
+      if (role === undefined) throw new CommandRejection('FORBIDDEN', 'only members can add members')
+      if (chat.data.invitePolicy === 'admins' && !ADMIN_ROLES.has(role)) throw new CommandRejection('FORBIDDEN', 'only admins can add members')
       await addMembers(tx, chat.id, tx.payload.memberIds)
       return chatOutcome(chat, ['members'])
     },
@@ -93,7 +137,7 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
       return chatOutcome(chat, ['members'])
     },
   },
-  'im.update_member_state': assoc('channel-member', 'channel', self, payloadFields(), 'chatId'),
+  'im.update_member_state': ownMembership(tx => ({ ...tx.payload })),
   'im.update_policy': update('channel'),
   'im.send_message': {
     event: 'im.message.receive_v1',
@@ -115,9 +159,10 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
   },
   'im.forward_messages': async tx => {
     const source = await tx.requireTarget('channel')
+    // The destination is posted into: authorized at `write` (before it is loaded), then membership + posting policy.
+    await authorizeRef(tx, { kind: 'channel', id: tx.payload.toChatId }, 'write')
     const destination = await tx.require('channel', tx.payload.toChatId)
-    // The destination is posted into: authorized at `write`, membership + posting policy in appendMessage.
-    await authorizeRef(tx, { kind: 'channel', id: destination.id }, 'write')
+    await assertCanPost(tx, destination)
     const originals: StoredRecord[] = []
     for (const messageId of tx.payload.messageIds as string[]) {
       const original = await tx.require('channel-message', messageId)
@@ -152,13 +197,13 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
   },
   'im.update_tab': childUpdate('channel-tab', 'channel', 'chatId', 'tabId'),
   'im.delete_tab': childDelete('channel-tab', 'channel', 'chatId', 'tabId'),
-  'im.mark_read': { op: assoc('channel-member', 'channel', self, tx => ({ lastReadSeq: tx.payload.seq }), 'chatId'), event: 'im.message.message_read_v1' },
-  'im.mark_unread': assoc('channel-member', 'channel', self, tx => ({ lastReadSeq: Math.max(0, tx.payload.seq - 1) }), 'chatId'),
+  'im.mark_read': { op: ownMembership(tx => ({ lastReadSeq: tx.payload.seq })), event: 'im.message.message_read_v1' },
+  'im.mark_unread': ownMembership(tx => ({ lastReadSeq: Math.max(0, tx.payload.seq - 1) })),
   'im.create_label': childCreate('channel-label', 'channel', 'chatId'),
   'im.label_chats': childUpdate('channel-label', 'channel', 'chatId', 'labelId', tx => ({ messageIds: tx.payload.messageIds })),
   'im.create_space_chat': async tx => {
-    await tx.require('space', tx.payload.spaceId)
     await authorizeId(tx, 'space', tx.payload.spaceId, 'write')
+    await tx.require('space', tx.payload.spaceId)
     const record = await createChat(tx, tx.createId(), { kind: 'space', visibility: 'private', name: tx.payload.name, spaceId: tx.payload.spaceId }, tx.payload.memberIds ?? [])
     return chatOutcome(record, ['kind', 'name', 'spaceId'])
   },
@@ -177,7 +222,16 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
       return chatOutcome(chat, ['members'])
     },
   },
-  'im.leave_chat': { op: unassoc('channel-member', 'channel', self), event: 'im.chat.member.user.deleted_v1' },
+  'im.leave_chat': {
+    event: 'im.chat.member.user.deleted_v1',
+    op: async tx => {
+      const chat = await tx.requireTarget('channel')
+      const row = await tx.get('channel-member', `${chat.id}:${tx.actor}`)
+      if (!row || memberRole(row) === undefined) throw new CommandRejection('NOT_FOUND', `${chat.id}:${tx.actor} not found`)
+      const record = await tx.update('channel-member', row, { state: 'left', deletedAt: tx.now })
+      return { collection: 'channel-member', id: record.id, revision: record.revision, ref: tx.rawTarget ?? null, changes: ['deletedAt', 'state'] }
+    },
+  },
   'im.set_visibility': update('channel'),
   'im.share_entity': async tx => {
     const chat = await tx.requireTarget('channel')

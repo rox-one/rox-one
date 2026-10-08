@@ -75,6 +75,14 @@ export class ReferenceTx {
     return (await this.ctx.authorize(action, ref, options)) === true
   }
 
+  /** The authorizer evaluated for another principal (`undefined`: it cannot answer for them). */
+  async canFor(principalId: string, action: string, ref: EntityRef | null): Promise<boolean | undefined> {
+    if (principalId === this.actor) return this.can(action, ref)
+    if (!this.ctx.authorizeFor) return undefined
+    const answer = await this.ctx.authorizeFor(principalId, action, ref)
+    return answer === undefined ? undefined : answer === true
+  }
+
   get actor(): string {
     return this.ctx.actor.principalId
   }
@@ -160,7 +168,7 @@ export class ReferenceTx {
   }
 
   /** A create hit an existing id: report only its revision, never the record (it may be outside the caller's ACL). */
-  private createConflict(revision: number): never {
+  createConflict(revision: number): never {
     return this.ctx.conflict(revision, { error: 'id already exists' })
   }
 

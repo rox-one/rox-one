@@ -37,6 +37,8 @@ export const REFERENCE_COLLECTIONS = {
   'goal-check': { kind: 'goal-check', table: 'goal_check', localDir: 'goal-checks' },
   'okr-cycle': { kind: 'okr-cycle', table: 'okr_cycle', localDir: 'cycles' },
   'check-in': { kind: 'check-in', table: 'check_in', localDir: 'check-ins' },
+  /** Actor-private check-in drafts (`checkins.draft_from_activity`), never in the shared check-in store. */
+  'check-in-draft': { localDir: 'check-in-drafts' },
   review: { kind: 'review', table: 'review', localDir: 'reviews' },
   // Projects
   project: { kind: 'project', localDir: 'projects' },

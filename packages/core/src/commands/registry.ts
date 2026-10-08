@@ -92,6 +92,13 @@ export interface CommandHandlerContext<P = unknown> {
    * transient one is rethrown (retryable). Absent outside the executor.
    */
   authorize?(action: string, ref: EntityRef | null, options?: { workspaceId?: string }): Promise<boolean>
+  /**
+   * The same authorizer evaluated for another principal of this workspace
+   * (e.g. may each subscribed person read the resource). `undefined` when the
+   * authorizer cannot answer for anyone but the caller
+   * (`Authorizer.answersForAnyPrincipal` unset); fails closed like `authorize`.
+   */
+  authorizeFor?(principalId: string, action: string, ref: EntityRef | null): Promise<boolean | undefined>
 }
 
 export interface CommandHandlerResult<R = unknown> {
