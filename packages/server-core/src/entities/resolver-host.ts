@@ -24,6 +24,8 @@ export interface ResolverHostOptions {
   remoteResolve?: (refs: EntityRef[], actor: Actor) => Promise<EntityPreview[]>
   /** LRU capacity (default 5000). */
   cacheCapacity?: number
+  /** Preview TTL in ms (default 60s; 0 disables expiry). */
+  cacheTtlMs?: number
   /** Max refs per resolver call (default 100). */
   batchSize?: number
 }
@@ -59,7 +61,7 @@ export class DefaultResolverHost implements ResolverHost {
   private readonly batchSize: number
 
   constructor(options: ResolverHostOptions = {}) {
-    this.cache = new EntityResolutionCache(options.cacheCapacity ?? 5000)
+    this.cache = new EntityResolutionCache(options.cacheCapacity ?? 5000, options.cacheTtlMs ?? 60_000)
     this.remoteResolve = options.remoteResolve
     this.batchSize = options.batchSize ?? 100
   }
