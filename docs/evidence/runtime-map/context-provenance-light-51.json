@@ -1,0 +1,41 @@
+{
+  "theme": "light",
+  "fixture": {
+    "rootSnapshotId": "fixture-root-context-v1",
+    "childSnapshotId": "fixture-child-context-v1",
+    "agents": {
+      "root": "session:fixture-session",
+      "child": "session:fixture-session:native:context-child",
+      "missing": "session:fixture-session:native:context-no-snapshot"
+    }
+  },
+  "sourceIds": [
+    "d3f6d9e4-5b08-47cd-a606-81a2539f7d51",
+    "d3f6d9e4-5b08-47cd-a606-81a2539f7d51",
+    "d3f6d9e4-5b08-47cd-a606-81a2539f7d51",
+    "d3f6d9e4-5b08-47cd-a606-81a2539f7d51",
+    "d3f6d9e4-5b08-47cd-a606-81a2539f7d51",
+    "d3f6d9e4-5b08-47cd-a606-81a2539f7d51"
+  ],
+  "before": {
+    "runtimeStarts": 1,
+    "terminalExecutions": 0,
+    "providerRequests": 0,
+    "eventCount": 6,
+    "step": 2,
+    "steps": 16,
+    "sourceConnections": 1,
+    "rootRunId": "run-f37e35ea-cdce-4cc9-abf0-b3ccbff0477c"
+  },
+  "after": {
+    "runtimeStarts": 1,
+    "terminalExecutions": 0,
+    "providerRequests": 0,
+    "eventCount": 6,
+    "step": 2,
+    "steps": 16,
+    "sourceConnections": 1,
+    "rootRunId": "run-f37e35ea-cdce-4cc9-abf0-b3ccbff0477c"
+  },
+  "errors": []
+}

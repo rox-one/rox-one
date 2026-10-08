@@ -16,6 +16,7 @@ import { useActiveWorkspace } from '@/context/AppShellContext'
 import type { BrowserDataAutoStatus, DiscoveredProfile, ImportSummary } from '@rox/shared/browser/profile-import'
 import type { BrowserCredentialCapability } from '@rox/shared/browser/browser-credential-host'
 import { browserImportConsent, browserImportProfileSelection } from './browser-import-consent'
+import { toErrorMessage } from '@/lib/errors'
 
 const STATE_KEYS: Record<DiscoveredProfile['state'], string> = {
   ok: 'settings.browserImport.stateOk',
@@ -62,7 +63,7 @@ export default function BrowserProfileImportPanel() {
     void window.electronAPI.getEnvironmentSetup().then(({ prefs }) => {
       if (!cancelled) setCategories(prefs.browserImport.value ?? [])
     }).catch((err) => {
-      if (!cancelled) setError(err instanceof Error ? err.message : String(err))
+      if (!cancelled) setError(toErrorMessage(err))
     })
     const unsubscribe = window.electronAPI.onEnvironmentChanged?.((prefs) => {
       if (!cancelled) setCategories(prefs.browserImport.value ?? [])
@@ -82,7 +83,7 @@ export default function BrowserProfileImportPanel() {
       setCategories(prefs.browserImport.value ?? [])
     } catch (err) {
       setCategories(previous)
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     } finally {
       setSavingPreferences(false)
     }
@@ -96,7 +97,7 @@ export default function BrowserProfileImportPanel() {
         setCookieDomains((current) => current || status.domains?.join(', ') || '')
       }
     } catch (err) {
-      setCookieError(err instanceof Error ? err.message : String(err))
+      setCookieError(toErrorMessage(err))
     }
   }, [])
 
@@ -109,7 +110,7 @@ export default function BrowserProfileImportPanel() {
       setDataAuto(status)
     } catch (err) {
       if (activeWorkspaceId.current !== workspace.id || workspaceEpoch.current.generation !== generation) return
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     }
   }, [workspace?.id])
 
@@ -140,7 +141,7 @@ export default function BrowserProfileImportPanel() {
       })
       if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setDataAuto(status)
     } catch (err) {
-      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(err instanceof Error ? err.message : String(err))
+      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(toErrorMessage(err))
     } finally { if (workspaceEpoch.current.generation === generation) setDataBusy(false) }
   }, [workspace?.id, dataBusy, selectedId])
 
@@ -196,7 +197,7 @@ export default function BrowserProfileImportPanel() {
         domains: on ? allowedDomains : undefined,
       }))
     } catch (err) {
-      setCookieError(err instanceof Error ? err.message : String(err))
+      setCookieError(toErrorMessage(err))
     }
   }, [cookieDomains, selectedId, t])
 
@@ -206,7 +207,7 @@ export default function BrowserProfileImportPanel() {
     try {
       setCookieAuto(await window.electronAPI.browserCookieAutoRun())
     } catch (err) {
-      setCookieError(err instanceof Error ? err.message : String(err))
+      setCookieError(toErrorMessage(err))
     }
   }, [])
 
@@ -241,7 +242,7 @@ export default function BrowserProfileImportPanel() {
       setProfiles(found)
       setSelectedId((current) => found.some((profile) => profile.id === current) ? current : null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -264,7 +265,7 @@ export default function BrowserProfileImportPanel() {
       }
     } catch (err) {
       if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) {
-        const message = err instanceof Error ? err.message : String(err)
+        const message = toErrorMessage(err)
         setError(message.startsWith('browser-credentials-') || message.startsWith('protected-credential-')
           ? t('settings.browserImport.credentials.error') : message)
       }
@@ -285,7 +286,7 @@ export default function BrowserProfileImportPanel() {
       setSummary(null)
       await refreshDataAuto()
     } catch (err) {
-      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(err instanceof Error ? err.message : String(err))
+      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(toErrorMessage(err))
     } finally {
       if (workspaceEpoch.current.generation === generation) setLoading(false)
     }
@@ -306,7 +307,7 @@ export default function BrowserProfileImportPanel() {
       })
       await refreshDataAuto()
     } catch (err) {
-      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(err instanceof Error ? err.message : String(err))
+      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(toErrorMessage(err))
     } finally {
       if (workspaceEpoch.current.generation === generation) setLoading(false)
     }

@@ -62,6 +62,17 @@ module.exports = {
     return {
       // Match: .config.isAuthenticated access
       MemberExpression(node) {
+        // Writes are state-setting, not runtime checks: the rule targets inline
+        // *checks* that miss authType: 'none' sources (credential-manager.ts is
+        // file-allowed for the same reason). `source.config.isAuthenticated = false`
+        // is the prescribed way to mirror persisted state for isSourceUsable().
+        if (
+          node.parent &&
+          node.parent.type === 'AssignmentExpression' &&
+          node.parent.left === node
+        ) {
+          return
+        }
         // Check if property is 'isAuthenticated'
         if (
           node.property.type === 'Identifier' &&

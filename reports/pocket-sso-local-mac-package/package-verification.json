@@ -1,0 +1,183 @@
+{
+  "sourceCommit": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "sourceTrackedStatus": "",
+  "platform": "darwin-arm64",
+  "appPath": "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app",
+  "canonicalManifestCredentialSignedFlag": false,
+  "actualSignature": "adhoc",
+  "developerIdSigned": false,
+  "notarized": false,
+  "published": false,
+  "electronVersion": "39.2.7",
+  "artifacts": [
+    {
+      "name": "Rox-arm64.dmg",
+      "size": 347345914,
+      "sha256": "031fefdc8c3bc3873d6878f0cae679bb8a40602080fab2cf0bc132ec984b78d1",
+      "path": "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/Rox-arm64.dmg"
+    },
+    {
+      "name": "Rox-arm64.zip",
+      "size": 338417829,
+      "sha256": "3916e3463c83ce4518d2bcf14fd668508c9e55d48e631a85b0f02964e375ffe0",
+      "path": "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/Rox-arm64.zip"
+    }
+  ],
+  "criticalPackagedFiles": [
+    {
+      "path": "Contents/MacOS/Rox",
+      "size": 34992,
+      "sha256": "02b5406610eda3f4e40a543be57a91c162a67fac84a103ff6f0259f1af4db763"
+    },
+    {
+      "path": "Contents/Resources/app/dist/main.cjs",
+      "size": 56697230,
+      "sha256": "485198e45ef87ceab975162520bb516a706584aecbb2175627b22f69db60acdb"
+    },
+    {
+      "path": "Contents/Resources/app/dist/bootstrap-preload.cjs",
+      "size": 13677919,
+      "sha256": "41003ed8199db37920ce86b1e0a2c96cbc641b73d0515345c76fe608ddd50208"
+    },
+    {
+      "path": "Contents/Resources/app/dist/browser-toolbar-preload.cjs",
+      "size": 2729,
+      "sha256": "e4445103043b46368f4b79fb09e42de98b6043cf0b6dc2ec80dcef4841bab91e"
+    },
+    {
+      "path": "Contents/Resources/app/dist/renderer/index.html",
+      "size": 2916,
+      "sha256": "d874d963f6b002f1a00285b5e4f87aaec1daec7c712e1d6e305f6eb625d8024d"
+    },
+    {
+      "path": "Contents/Resources/app/resources/pi-agent-server/index.js",
+      "size": 34806148,
+      "sha256": "6b245ae2fa7ab543586a6a88b462993d4cb8f1af8c0e587326abe79d1dd5f6b4"
+    },
+    {
+      "path": "Contents/Resources/app/vendor/bun/bun",
+      "size": 63078512,
+      "sha256": "a7ea6c65cb610a2800dffaa7dfab36105c655bc9204dad3312fb332174846294"
+    },
+    {
+      "path": "Contents/Resources/app/resources/bin/darwin-arm64/uv",
+      "size": 44013072,
+      "sha256": "0aa3acf4442a19e18c9c2e804f819567a90382f7bf28ad6e05a86f3329252302"
+    },
+    {
+      "path": "Contents/Resources/app/node_modules/@anthropic-ai/claude-agent-sdk-binary/claude",
+      "size": 199009568,
+      "sha256": "85c4c52c244441b9e9f0d808e36842755a7bdc23b382217417e04dfb96afc91a"
+    },
+    {
+      "path": "Contents/Resources/app/node_modules/@tursodatabase/database-darwin-arm64/package.json",
+      "size": 329,
+      "sha256": "b509594a8b3c005123b9f76b2b622f58f17ac3e217f1bee9be2cabde2ddd8309"
+    },
+    {
+      "path": "Contents/Resources/app-update.yml",
+      "size": 114,
+      "sha256": "e947758b03de3bb206cfd398fd604fca20a072e1b73c4ba40efb27faaaae9ad1"
+    },
+    {
+      "path": "Contents/Info.plist",
+      "size": 4391,
+      "sha256": "c0b48f6c60c155ff26e14f7c0770c97ececccd69470259ad8ea526247c67f499"
+    }
+  ],
+  "checks": [
+    {
+      "check": "zip-integrity",
+      "argv": [
+        "/usr/bin/unzip",
+        "-tqq",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/Rox-arm64.zip"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "dmg-integrity",
+      "argv": [
+        "/usr/bin/hdiutil",
+        "verify",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/Rox-arm64.dmg"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "codesign-details",
+      "argv": [
+        "/usr/bin/codesign",
+        "-dv",
+        "--verbose=4",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "codesign-integrity",
+      "argv": [
+        "/usr/bin/codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "--verbose=2",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "architecture-Rox",
+      "argv": [
+        "/usr/bin/file",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app/Contents/MacOS/Rox"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "architecture-bun",
+      "argv": [
+        "/usr/bin/file",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app/Contents/Resources/app/vendor/bun/bun"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "architecture-uv",
+      "argv": [
+        "/usr/bin/file",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app/Contents/Resources/app/resources/bin/darwin-arm64/uv"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "architecture-claude",
+      "argv": [
+        "/usr/bin/file",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app/Contents/Resources/app/node_modules/@anthropic-ai/claude-agent-sdk-binary/claude"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "packaged-electron-plist",
+      "argv": [
+        "/usr/libexec/PlistBuddy",
+        "-c",
+        "Print :CFBundleVersion",
+        "/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/mac-arm64/Rox.app/Contents/Frameworks/Electron Framework.framework/Resources/Info.plist"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0
+    }
+  ],
+  "verifiedAt": "2026-10-03T21:23:02.858970+00:00",
+  "scope": "Local packaged artifact integrity and headless Keychain persistence. GUI first launch, Pocket login, provider canary and release acceptance pending."
+}

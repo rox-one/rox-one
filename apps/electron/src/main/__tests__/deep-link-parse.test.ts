@@ -1,32 +1,34 @@
 import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
-import { parseDeepLink } from '../deep-link'
+import { stubMainLogger } from './stub-main-logger'
+
+// Stub the main logger (electron-log → electron binary, not installed in
+// this clone) so the pure deep-link parse logic stays testable here.
+stubMainLogger()
+const { parseDeepLink } = await import('../deep-link')
 import {
   COMPOUND_ROUTE_PREFIXES,
+  ENTITY_ONLY_ROUTE_PREFIXES,
   parseRouteToNavigationState,
   resetEntityRoutesEnabled,
   setEntityRoutesEnabled,
 } from '../../shared/route-parser'
-
-const ENTITY_ONLY_PREFIXES = new Set([
-  'docs',
-  'messenger',
-  'calendar',
-  'goals',
-  'contacts',
-  'workflows',
-  'base',
-  'forms',
-  'comments',
-])
 
 /**
  * rox://<route> must accept every view route the renderer navigator knows,
  * not just the historical allSessions/flagged/state/sources/settings/skills.
  */
 describe('parseDeepLink view routes', () => {
-  beforeEach(() => setEntityRoutesEnabled(true))
+beforeEach(() => setEntityRoutesEnabled(true))
   afterEach(() => resetEntityRoutesEnabled())
 
+  it('routes copied runtime references to a workspace-scoped session view', () => {
+    const target = parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=tool-1')
+    expect(target?.workspaceId).toBe('ws1')
+    expect(target?.view).toBe('allSessions/session/s1?runtimeRun=r1&runtimeEvent=tool-1')
+    expect(target?.action).toBeUndefined()
+    expect(parseRouteToNavigationState(target!.view!)).not.toBeNull()
+    expect(parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=e&send=true')).toBeNull()
+  })
   const NAVIGATOR_ROUTES = [
     'home',
     'tasks',
@@ -70,7 +72,7 @@ describe('parseDeepLink view routes', () => {
 
   it('accepts every shared compound prefix', () => {
     for (const prefix of COMPOUND_ROUTE_PREFIXES) {
-      if (ENTITY_ONLY_PREFIXES.has(prefix)) continue
+      if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) continue
       expect(parseDeepLink(`rox://${prefix}`)?.view).toBe(prefix)
     }
   })

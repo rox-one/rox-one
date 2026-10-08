@@ -14,6 +14,12 @@ export interface ActionDefinition {
    *  - 'navigatorFocus'           — only when navigator is focused
    *  @see evaluateWhen() in keybinding-context.ts */
   when?: string
+  /** W1-07 (#1504): Windows/Linux chord when it must differ from the macOS
+   *  `defaultHotkey` (e.g. ⌃1 on macOS is Ctrl+1 = mod+1 elsewhere). */
+  defaultHotkeyNonMac?: string | null
+  /** W1-07 (#1504): workbench flag id. While it is off the action has no
+   *  hotkey, is not listed and never intercepts a key. */
+  flag?: string
 }
 
 export type ActionId = keyof typeof import('./definitions').actions

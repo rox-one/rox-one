@@ -1,0 +1,38 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/e2e/meeting-agents/harness.test.ts:
+331 |
+332 |   try {
+333 |     await waitForFile(input.readyFile, 20_000)
+334 |   } catch (err) {
+335 |     await stopChild(child, pid, input.userDataDir)
+336 |     throw new BootMeetingAppError(
+                ^
+BootMeetingAppError: Electron did not become ready. stderr=[20:1003/101923.268710:ERROR:dbus/bus.cc:408] Failed to connect to the bus: Failed to open socket: Operation not permitted
+(node:20) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `electron --trace-warnings ...` to show where the warning was created)
+[20:1003/101923.419598:ERROR:ui/ozone/platform/x11/ozone_platform_x11.cc:249] Missing X server or $DISPLAY
+[20:1003/101923.419654:ERROR:ui/aura/env.cc:257] The platform failed to initialize.  Exiting.
+
+    code: "electron-ready-timeout"
+
+      at spawnElectron (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/tests/e2e/meeting-agents/harness.ts:336:11)
+
+155 |     if (existsSync(path)) {
+156 |       return await readFile(path, 'utf8')
+157 |     }
+158 |     await new Promise((r) => setTimeout(r, 50))
+159 |   }
+160 |   throw new BootMeetingAppError('electron-ready-timeout', `ready file not written: ${path}`)
+              ^
+BootMeetingAppError: ready file not written: /tmp/meeting-agents-ahNJSx/userData/harness-ready.json
+ details: undefined,
+    code: "electron-ready-timeout"
+
+      at waitForFile (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/tests/e2e/meeting-agents/harness.ts:160:9)
+(fail) meeting-agents harness (#385) > bootMeetingApp starts a live Electron pid on an isolated profile [20116.18ms]
+
+ 0 pass
+ 9 filtered out
+ 1 fail
+Ran 1 test across 1 file. [20.38s]

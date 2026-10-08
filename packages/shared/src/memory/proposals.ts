@@ -22,13 +22,27 @@ export type MemoryProposalKind =
 export type MemoryProposalStatus =
   | 'pending'
   | 'approved_global'
+  | 'approved_workspace'
+  | 'approved_personal'
   | 'approved_project'
   | 'rejected'
   | 'deleted'
 
 export type MemoryProposalTrigger = 'activity' | 'close' | 'brain'
 
-export type MemoryProposalScope = 'global' | 'project'
+/** Global is the legacy machine scope; personal requires a verified owner. */
+export type MemoryProposalScope = 'global' | 'workspace' | 'project' | 'personal'
+
+export interface MemoryProposalApproval {
+  scope: MemoryProposalScope
+  projectId?: string
+  owner?: { issuer: string; subject: string }
+  consentEventId: string
+  textHash: string
+  /** Present only after the canonical target has been flushed and read back. */
+  writtenAt?: string
+  target?: string
+}
 
 export interface MemoryProposalConflict {
   existingRule: string
@@ -69,6 +83,8 @@ export interface MemoryProposal {
   createdAt: string
   updatedAt: string
   cost: MemoryProposalCost
+  /** Durable write intent/receipt for retry after a crash or storage failure. */
+  approval?: MemoryProposalApproval
 }
 
 export interface TranscriptMessage {
@@ -430,7 +446,9 @@ export function approveProposal(input: ApproveProposalInput): ApproveProposalRes
   const now = (input.now ?? new Date()).toISOString()
   const edited = input.editedText ? editProposal(input.proposal, input.editedText, input.now) : input.proposal
   const consentEventId = input.consentEventId ?? `consent_${edited.id}_${input.scope}`
-  const status: MemoryProposalStatus = input.scope === 'global' ? 'approved_global' : 'approved_project'
+  const status: MemoryProposalStatus = input.scope === 'global' ? 'approved_global'
+    : input.scope === 'workspace' ? 'approved_workspace'
+      : input.scope === 'personal' ? 'approved_personal' : 'approved_project'
   const projectId = input.scope === 'project' ? (input.projectId ?? edited.projectId) : edited.projectId
 
   const next: MemoryProposal = {
@@ -451,7 +469,7 @@ export function approveProposal(input: ApproveProposalInput): ApproveProposalRes
     lesson: {
       rule: next.text,
       category,
-      scope: input.scope === 'global' ? 'global' : 'workspace',
+      scope: input.scope === 'global' || input.scope === 'personal' ? 'global' : 'workspace',
     },
   }
 }

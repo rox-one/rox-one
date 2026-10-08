@@ -1,4 +1,5 @@
 import { useAtomValue } from 'jotai'
+import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
 import { createSearchFence, openCurrentSearchResult } from '@/features/product-tour/adapters/knowledge'
@@ -22,6 +23,7 @@ interface SearchPageProps {
 
 export default function SearchPage({ initialQuery }: SearchPageProps) {
   const { t } = useTranslation()
+  const notesHeadingKey = useNotesTitleKey('searchPage.notes')
   const { navigate: navigateInPanel } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   const sessionMeta = useAtomValue(sessionMetaMapAtom)
@@ -188,7 +190,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
         ) : (
           <div className="space-y-7">
             <section>
-              {sourceHeading(t('searchPage.notes'), notes)}
+              {sourceHeading(t(notesHeadingKey), notes)}
               <ul className="space-y-1">
                 {notes.items.map((note) => (
                   <li key={note.id}>

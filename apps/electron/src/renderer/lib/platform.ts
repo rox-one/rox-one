@@ -38,6 +38,7 @@ export function formatHotkeyDisplay(hotkey: string, mac = isMac): string {
     if (part === 'mod') return mac ? '⌘' : 'Ctrl'
     if (part === 'shift') return mac ? '⇧' : 'Shift'
     if (part === 'alt') return mac ? '⌥' : 'Alt'
+    if (part === 'ctrl') return mac ? '⌃' : 'Ctrl' // W1-07 (#1504)
     if (part === 'escape') return 'Esc'
     if (part === 'tab') return 'Tab'
     if (part === 'space') return 'Space'

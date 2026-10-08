@@ -1,0 +1,338 @@
+{
+  "rule": "Assigned ownership is a concurrency mutex for the single autonomous fan-out. Workers write only assigned paths; A0 may resolve integration conflicts in shared files during convergence/finalization. No human approval is required for handoff, push, PR or final merge.",
+  "agents": {
+    "A0": {
+      "name": "Интегратор и контракты",
+      "goal": "Заморозить публичные API, вмонтировать весь механизм и принять результат, не создавать конкурирующие onboarding пути.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/contracts/",
+        "apps/electron/src/renderer/features/product-tour/runtime/",
+        "apps/electron/src/renderer/actions/",
+        "docs/product-tour/",
+        "docs/superpowers/specs/",
+        "docs/superpowers/plans/"
+      ],
+      "files": [
+        "package.json",
+        "bun.lock",
+        "apps/electron/src/renderer/App.tsx",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+        "apps/electron/src/renderer/components/app-shell/OnboardingDialog.tsx",
+        "apps/electron/src/renderer/components/app-shell/QuestProgressCard.tsx",
+        "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx",
+        "apps/electron/src/renderer/components/app-shell/WorkspaceIconRail.tsx",
+        "apps/electron/src/renderer/lib/local-storage.ts",
+        "apps/electron/src/shared/settings-registry.ts",
+        "apps/electron/src/renderer/pages/settings/settings-pages.ts",
+        "apps/electron/src/renderer/components/icons/SettingsIcons.tsx",
+        "apps/electron/src/renderer/pages/settings/LearningSettingsPage.tsx"
+      ],
+      "exports": [
+        "ProductTourProvider",
+        "ProductTourHost",
+        "TourPanelScope",
+        "useTourTarget",
+        "useTourSignals",
+        "LearningSettingsPage"
+      ],
+      "tests": [
+        "host readiness/startup arbitration",
+        "one event bridge",
+        "settings route and replay/reset",
+        "flag-off cleanup"
+      ]
+    },
+    "A1": {
+      "name": "Чистый движок и policies",
+      "goal": "Детерминированные переходы, eligibility, evidence, версии и защита от устаревших событий.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/core/"
+      ],
+      "files": [],
+      "exports": [
+        "transition",
+        "evaluateEligibility",
+        "satisfiesCompletionPolicy",
+        "reconcileProgressVersion"
+      ],
+      "tests": [
+        "state transitions",
+        "skip != verified",
+        "replay keeps milestones",
+        "old run token rejected",
+        "ambiguous correlation blocks"
+      ]
+    },
+    "A2": {
+      "name": "Spotlight, targets и доступность",
+      "goal": "Подсвечивать правильный живой элемент без конфликтов focus, scroll и native dialogs.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/ui/"
+      ],
+      "files": [
+        "apps/electron/src/renderer/context/ModalContext.tsx",
+        "apps/electron/src/renderer/context/DismissibleLayerContext.tsx",
+        "apps/electron/src/renderer/lib/dismissible-layer-bridge.ts",
+        "apps/electron/src/renderer/context/__tests__/product-tour-layers.test.ts"
+      ],
+      "exports": [
+        "createTargetRegistry",
+        "SpotlightOverlay",
+        "TourPopover",
+        "TourErrorBoundary",
+        "measureTargetGeometry"
+      ],
+      "tests": [
+        "same target in two panels",
+        "StrictMode remount",
+        "non-modal focus",
+        "Esc/Cmd+W nesting",
+        "90/100/125% zoom",
+        "no overlay over modal"
+      ]
+    },
+    "A3": {
+      "name": "Прогресс и приватная диагностика",
+      "goal": "Атомарно сохранять обучение в клиентском профиле, без нового backend и отправки содержимого.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/persistence/",
+        "apps/electron/src/renderer/features/product-tour/analytics/"
+      ],
+      "files": [],
+      "exports": [
+        "createProgressRepository",
+        "createLeaseRepository",
+        "createMemoryOnlyRepository",
+        "sanitizeLearningEvent",
+        "computeLearningMetrics"
+      ],
+      "tests": [
+        "concurrent mutations",
+        "lease fencing",
+        "storage denied",
+        "schema future version",
+        "scoped reset",
+        "forbidden data excluded"
+      ]
+    },
+    "A4": {
+      "name": "Сессии, composer и выполнение",
+      "goal": "Подключить первый реальный результат и весь контроль сессии к текущему UI и каноническим событиям.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/adapters/chat/"
+      ],
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+        "apps/electron/src/renderer/components/app-shell/FabNewChat.tsx",
+        "apps/electron/src/renderer/components/app-shell/SessionList.tsx",
+        "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx",
+        "apps/electron/src/renderer/components/app-shell/ActiveTasksBar.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/CompactModelSelector.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/VoiceDictationControl.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx",
+        "apps/electron/src/renderer/components/app-shell/collection/CollectionViewCycleButton.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/agents/AgentCenterPage.tsx"
+      ],
+      "exports": [
+        "deriveChatSignals",
+        "correlateUserTurn",
+        "deriveExecutionCapabilities",
+        "chatTargetBindings"
+      ],
+      "tests": [
+        "welcome excluded",
+        "accepted user message",
+        "new final vs intermediate/cancel/error",
+        "fast completion",
+        "stop not invoked",
+        "voice/file explicit only"
+      ]
+    },
+    "A5": {
+      "name": "Проекты и личные задачи",
+      "goal": "Показать проектную привязку, сохранение PersonalTask и добровольную delegation.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/adapters/work/tasks-projects/"
+      ],
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/renderer/pages/TasksPage.tsx",
+        "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+        "apps/electron/src/renderer/lib/personal-tasks.ts",
+        "apps/electron/src/renderer/hooks/useProjects.ts"
+      ],
+      "exports": [
+        "deriveProjectSignals",
+        "derivePersonalTaskSignals",
+        "tasksProjectsCapabilities"
+      ],
+      "tests": [
+        "PersonalTask actual persistence",
+        "optimistic row rejected",
+        "delegation links both sides",
+        "no session-board confusion"
+      ]
+    },
+    "A6": {
+      "name": "Заметки, память, страницы и поиск",
+      "goal": "Замкнуть создание → сохранение → поиск, соблюдая scope и native authority.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/adapters/knowledge/"
+      ],
+      "files": [
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+        "apps/electron/src/renderer/pages/SearchPage.tsx",
+        "apps/electron/src/renderer/lib/native-notes-sync.ts"
+      ],
+      "exports": [
+        "deriveKnowledgeSignals",
+        "knowledgeCapabilities",
+        "knowledgeTargetBindings"
+      ],
+      "tests": [
+        "Note save acknowledgement",
+        "Memory actual write vs dialog close",
+        "Page host not iframe",
+        "stale search query/workspace",
+        "read-only/unavailable branch"
+      ]
+    },
+    "A7": {
+      "name": "Источники, навыки и подключения",
+      "goal": "Разделить selection/readiness/use, LLM settings и Connection Fabric; не инициировать OAuth/import/grants.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/adapters/connections/"
+      ],
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx",
+        "apps/electron/src/renderer/pages/SourceInfoPage.tsx",
+        "apps/electron/src/renderer/components/ui/SourceSelectorPopover.tsx",
+        "apps/electron/src/renderer/components/ui/CompactSourceSelector.tsx",
+        "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+        "apps/electron/src/renderer/components/ui/SkillSelectorPopover.tsx",
+        "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+        "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx"
+      ],
+      "exports": [
+        "deriveConnectionSignals",
+        "connectionCapabilities",
+        "resolvePublishedToolSource"
+      ],
+      "tests": [
+        "selected != connected",
+        "MCP installing does not block first tour",
+        "source tool provenance",
+        "Connection Fabric unavailable",
+        "no automatic credential actions"
+      ]
+    },
+    "A8": {
+      "name": "Каталог и все локали",
+      "goal": "Внести все 25/56 сценарии с точными текстами и поддержать существующие проверки i18n.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/catalogue/",
+        "packages/shared/src/i18n/locales/"
+      ],
+      "files": [],
+      "exports": [
+        "productTourCatalogue",
+        "validateProductTourCatalogue"
+      ],
+      "tests": [
+        "unique ids",
+        "56 copy pairs",
+        "placeholders parity",
+        "all repo locales",
+        "sorted keys",
+        "catalogue has no executable strings"
+      ]
+    },
+    "A9": {
+      "name": "Независимая приёмка и E2E",
+      "goal": "Подготовить реальные проверки, затем проверить интегрированное приложение, не выдавая fixture-only тест за native успех.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/__tests__/integration/",
+        "tests/e2e/product-tour/",
+        "scripts/product-tour/"
+      ],
+      "files": [],
+      "exports": [
+        "playwright.config.ts",
+        "native.config.ts",
+        "run-native.ts",
+        "acceptance-report.md"
+      ],
+      "tests": [
+        "all step policies mapped",
+        "real App mounting",
+        "canonical persistence",
+        "macOS/Windows smoke",
+        "restricted WebUI",
+        "feature off rollback"
+      ]
+    },
+    "A10": {
+      "name": "Inbox и Feed",
+      "goal": "Научить управлению вниманием и потоком материалов, не смешивая triage с выдачей разрешений.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/adapters/work/inbox-feed/"
+      ],
+      "files": [
+        "apps/electron/src/renderer/pages/InboxPage.tsx",
+        "apps/electron/src/renderer/pages/FeedPage.tsx",
+        "apps/electron/src/renderer/pages/feed/FeedSources.tsx",
+        "apps/electron/src/renderer/pages/feed/FeedParts.tsx"
+      ],
+      "exports": [
+        "deriveInboxFeedSignals",
+        "inboxFeedCapabilities"
+      ],
+      "tests": [
+        "Done is not approve",
+        "empty queue is honest",
+        "stale feed target",
+        "no fake RSS content",
+        "no auto external requests"
+      ]
+    },
+    "A11": {
+      "name": "Встречи и автоматизации",
+      "goal": "Показать доступные артефакты, trigger/action/control без автоматической записи и исполнения.",
+      "prefixes": [
+        "apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/"
+      ],
+      "files": [
+        "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+        "apps/electron/src/renderer/components/automations/AutomationEditor.tsx"
+      ],
+      "exports": [
+        "deriveMeetingsAutomationSignals",
+        "meetingsAutomationCapabilities"
+      ],
+      "tests": [
+        "no microphone auto start",
+        "missing artifact is deferred",
+        "timezone visible",
+        "toggle/run never auto-called",
+        "empty automation prerequisite"
+      ]
+    }
+  },
+  "integrationAuthority": {
+    "owner": "A0",
+    "scope": "continuous integration, conflict resolution, release verification, push/PR/merge to main",
+    "humanApprovalRequired": false,
+    "branchProtectionBypassAllowed": false
+  }
+}

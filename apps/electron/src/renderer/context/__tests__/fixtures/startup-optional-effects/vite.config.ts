@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
-      { find: /^@craft-agent\/ui$/, replacement: resolve(repository, 'packages/ui/src/components/ui/StyledDropdown.tsx') },
+      { find: /^@rox\/ui$/, replacement: resolve(repository, 'packages/ui/src/components/ui/StyledDropdown.tsx') },
       { find: '@config', replacement: resolve(repository, 'packages/shared/src/config') },
       { find: '@', replacement: resolve(repository, 'apps/electron/src/renderer') },
       { find: 'react', replacement: resolve(repository, 'node_modules/react') },

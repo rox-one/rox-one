@@ -1,0 +1,35 @@
+✘ [ERROR] No matching export in "ui001:entity-ui" for import "SourceStatusIndicator"
+
+    apps/electron/src/renderer/pages/SourceInfoPage.tsx:21:9:
+      21 │ import { SourceStatusIndicator, deriveConnectionStatus } from '@/c...
+         ╵          ~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] No matching export in "ui001:entity-ui" for import "deriveConnectionStatus"
+
+    apps/electron/src/renderer/pages/SourceInfoPage.tsx:21:32:
+      21 │ ...urceStatusIndicator, deriveConnectionStatus } from '@/component...
+         ╵                         ~~~~~~~~~~~~~~~~~~~~~~
+
+1462 |     let { file, line, column } = e.location;
+1463 |     let pluginText = e.pluginName ? `[plugin: ${e.pluginName}] ` : "";
+1464 |     return `
+1465 | ${file}:${line}:${column}: ERROR: ${pluginText}${e.text}`;
+1466 |   }).join("");
+1467 |   let error = new Error(text);
+                         ^
+error: Build failed with 2 errors:
+apps/electron/src/renderer/pages/SourceInfoPage.tsx:21:9: ERROR: No matching export in "ui001:entity-ui" for import "SourceStatusIndicator"
+apps/electron/src/renderer/pages/SourceInfoPage.tsx:21:32: ERROR: No matching export in "ui001:entity-ui" for import "deriveConnectionStatus"
+      at failureErrorWithLog (/workspace/scratch/d0a9c1c6c094/rox-one/node_modules/esbuild/lib/main.js:1467:19)
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/rox-one/node_modules/esbuild/lib/main.js:926:25)
+      at buildResponseToResult (/workspace/scratch/d0a9c1c6c094/rox-one/node_modules/esbuild/lib/main.js:924:7)
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/rox-one/node_modules/esbuild/lib/main.js:603:9)
+      at handleIncomingPacket (/workspace/scratch/d0a9c1c6c094/rox-one/node_modules/esbuild/lib/main.js:658:12)
+      at readFromStdout (/workspace/scratch/d0a9c1c6c094/rox-one/node_modules/esbuild/lib/main.js:581:7)
+      at emit (node:events:95:22)
+      at addChunk (internal:streams/readable:264:47)
+      at readableAddChunkPushByteMode (internal:streams/readable:242:18)
+      at handleNumberResult (internal:streams/native-readable:69:18)
+      at <anonymous> (internal:streams/native-readable:43:68)
+
+Bun v1.3.14 (Linux x64)

@@ -6,6 +6,7 @@
  */
 import { useSyncExternalStore } from 'react'
 import type { LocalMeeting, MeetingsLocalApi } from '../../../shared/meetings-local'
+import { toErrorMessage } from '@/lib/errors'
 
 export type RecorderStatus = 'idle' | 'starting' | 'recording' | 'paused' | 'stopping'
 
@@ -219,7 +220,7 @@ export async function startRecording(input: { meetingId?: string; title: string;
       }
     }
     stream?.getTracks().forEach((track) => track.stop())
-    set({ ...IDLE, error: error instanceof Error ? error.message : String(error) })
+    set({ ...IDLE, error: toErrorMessage(error) })
     return { ok: false, code: 'start-failed' }
   }
 }

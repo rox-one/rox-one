@@ -287,7 +287,6 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
     sessionId,
     workspacePath,
     roxHomeDisplay: roxHomeDocDisplay(),
-    getHostBashEnv: () => createHostBashEnv(),
     get sourcesPath() { return join(workspacePath, 'sources'); },
     get skillsPath() { return join(workspacePath, 'skills'); },
     plansFolderPath: getSessionPlansPath(workspacePath, sessionId),

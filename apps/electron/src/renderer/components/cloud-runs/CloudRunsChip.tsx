@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input'
 import { useRegisterModal } from '@/context/ModalContext'
 import { navigate, routes } from '@/lib/navigate'
 import { getAppLocale } from '@rox/shared/i18n'
+import { toErrorMessage } from '@/lib/errors'
 
 type RunState = 'queued' | 'start' | 'ready' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired'
 interface ListedRun {
@@ -144,7 +145,7 @@ function CloudRunsChipInner({
       setRuns(result.runs)
       setRefreshError(null)
     } catch (error) {
-      setRefreshError(translateCloudRunsError(error instanceof Error ? error.message : String(error), t))
+      setRefreshError(translateCloudRunsError(toErrorMessage(error), t))
     }
   }, [t])
 
@@ -214,7 +215,7 @@ function CloudRunsChipInner({
       await fn()
     } catch (error) {
       toast.error(t('cloudRuns.error'), {
-        description: translateCloudRunsError(error instanceof Error ? error.message : String(error), t),
+        description: translateCloudRunsError(toErrorMessage(error), t),
       })
     } finally {
       setBusy(null)

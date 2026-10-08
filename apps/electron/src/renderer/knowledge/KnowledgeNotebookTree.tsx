@@ -145,6 +145,13 @@ export function selectFavoriteEnvelopes(
  * Loads all navigator sections. Honest fallbacks: notebooks report
  * 'unavailable' on a typed RPC failure / missing channel / no connection;
  * views and envelopes fail soft to empty lists (workspace-local stores).
+ *
+ * `skipKernelReads` is the tab-switch fast path: when the kernel is known
+ * absent (see `kernel-availability`), skip every kernel-touching RPC
+ * (`listNotebooks` + per-envelope `get` title resolution, each with a 10s
+ * client timeout) and report notebooks as unavailable immediately. Local
+ * stores (`viewsList`, `envelopeList`) are still read so Recent/Favorites and
+ * saved views render without waiting on the kernel.
  */
 export async function loadKnowledgeNavigatorData(
   api: KnowledgeNavigatorApi,
@@ -192,6 +199,7 @@ export async function loadKnowledgeNavigatorData(
 
     // Best-effort title resolution in parallel; per-row failure keeps the row
     // (label falls back to the ref id) rather than poisoning the section.
+    // Skipped on the known-absent fast path: every `get` is a kernel RPC.
     const titles = new Map<string, string>()
     if (typeof api.get === 'function' && connectionId && await canReadKernel && opts.isCurrent?.() !== false) {
       const uniqueRefs = new Map<string, KnowledgeRef>()

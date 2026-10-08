@@ -1,5 +1,5 @@
 import type { SafeReason, TargetId, TargetRegistry, TourBinding, TourTargetRegistration } from '../contracts'
-import { measureTargetGeometry } from './geometry'
+import { measureTourTargetGeometry } from './geometry'
 
 export interface TargetRegistryOptions {
   /** Shell fallback must be explicitly declared by the active step descriptor. */
@@ -43,7 +43,7 @@ export function createTargetRegistry(options: TargetRegistryOptions = {}): Targe
       const scope = options.getTargetScope?.(id) ?? 'bound-panel'
       const candidates = Array.from(targets.values(), ({ target }) => target).filter((target) => target.id === id && matchesScope(target, binding, scope))
       if (!candidates.length) return { status: 'blocked', reason: 'target-missing' }
-      const visible = candidates.filter((target) => (!rendererDocument || target.element.ownerDocument === rendererDocument) && measureTargetGeometry(target.element))
+      const visible = candidates.filter((target) => (!rendererDocument || target.element.ownerDocument === rendererDocument) && measureTourTargetGeometry(target))
       if (!visible.length) return { status: 'blocked', reason: 'target-occluded' }
       const preferred = options.getPreferredVariant?.()
       const exactVariant = preferred ? visible.filter((target) => target.variant === preferred) : []

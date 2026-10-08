@@ -1,7 +1,9 @@
 import * as React from 'react'
-import { ListTree, MessageSquare, PanelRight } from 'lucide-react'
+import { Check, ChevronDown, ListTree, MessageSquare, PanelRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuTrigger, StyledDropdownMenuContent, StyledDropdownMenuItem } from '@/components/ui/styled-dropdown'
+import type { EntityViewCapability, EntityViewId } from '@/components/app-shell/EntityViewTabs'
 import { canFocusNotesControl, isNotesPanelUnavailable } from './focus-state'
 
 export function useNotesPanelWidth<T extends HTMLElement>() {
@@ -105,4 +107,37 @@ export function NotesInspectorToggle({ inline, open, onToggle }: { inline: boole
   const { t } = useTranslation()
   if (inline) return null
   return <button type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" aria-label={t('notes.inspector.title')} title={t('notes.inspector.title')} aria-haspopup="dialog" aria-expanded={open} onClick={onToggle}><PanelRight className="h-4 w-4" aria-hidden /></button>
+}
+
+
+/** Compact note-view switcher: same capabilities as the tab row, offered as a menu in narrow toolbars. */
+export function NotesViewMenu({ value, onChange, capabilities, compact = false }: {
+  value: EntityViewId
+  onChange: (view: EntityViewId) => void
+  capabilities: EntityViewCapability[]
+  compact?: boolean
+}) {
+  const { t } = useTranslation()
+  const active = capabilities.find((capability) => capability.id === value)
+  const Icon = active?.icon
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="rox-control shrink-0 gap-1 px-2 text-[12px]" aria-label={`${t('entityView.tabsLabel')}: ${active ? t(active.labelKey) : ''}`}>
+          {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden="true" /> : null}
+          <span className={compact ? 'sr-only' : 'max-w-24 truncate'}>{active ? t(active.labelKey) : t('entityView.tabsLabel')}</span>
+          <ChevronDown className="size-3 shrink-0 text-text-muted" aria-hidden="true" />
+        </button>
+      </DropdownMenuTrigger>
+      <StyledDropdownMenuContent align="start" className="w-44">
+        {capabilities.filter((capability) => capability.available).map(({ id, labelKey, icon: ViewIcon }) => (
+          <StyledDropdownMenuItem key={id} role="menuitemradio" aria-checked={value === id} onSelect={() => onChange(id)}>
+            <ViewIcon className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="flex-1">{t(labelKey)}</span>
+            {value === id ? <Check className="size-3.5" aria-hidden="true" /> : null}
+          </StyledDropdownMenuItem>
+        ))}
+      </StyledDropdownMenuContent>
+    </DropdownMenu>
+  )
 }

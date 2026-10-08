@@ -37,6 +37,7 @@ export {
   entityRefKey,
   formatEntityRef,
   kindTakesFragment,
+  normalizeEntityFragment,
   parseEntityRef,
   type EntityRef,
   type RefError,
@@ -52,6 +53,14 @@ export {
   entityRoute,
   isEntityRoutePrefix,
 } from './routes.ts'
+
+// Shared app-route → ref parser (kind-first + frozen legacy shapes).
+export {
+  isEntityCompoundRoute,
+  parseEntityRoute,
+  parseEntityRouteOrLegacy,
+  type ParsedEntityRoute,
+} from './parse-route.ts'
 
 // Entity links (W1-02).
 export {

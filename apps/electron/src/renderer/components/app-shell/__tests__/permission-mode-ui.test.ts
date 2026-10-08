@@ -6,6 +6,7 @@ import * as React from 'react'
 import { PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, type PermissionMode } from '@rox/shared/agent/modes'
 import { defaultSessionOptions, mergeSessionOptions, type SessionOptions } from '../../../hooks/useSessionOptions'
 import { readLocalSessionCapability } from '../../../lib/caller-session-loading'
+import { toErrorMessage } from '../../../lib/errors'
 
 const renderer = resolve(import.meta.dir, '../../..')
 
@@ -120,7 +121,7 @@ function appHarness() {
     useCallback: (callback: unknown) => callback,
     setSessionOptions: (update: (current: Map<string, SessionOptions>) => Map<string, SessionOptions>) => { options = update(options); optionsRef.current = options },
     sessionOptionsRef: optionsRef, permissionModeRequestsRef: { current: new Map() }, callerAuthorityRef: { current: 'local' },
-    defaultSessionOptions, mergeSessionOptions, readLocalSessionCapability,
+    defaultSessionOptions, mergeSessionOptions, readLocalSessionCapability, toErrorMessage,
     sessionOptions: options,
     t: (key: string) => key, toast: { error: (message: string) => errors.push(message) },
     window: { electronAPI: {

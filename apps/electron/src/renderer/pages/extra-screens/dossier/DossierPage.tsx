@@ -59,6 +59,7 @@ import {
 } from './dossier-model'
 import { getSessionTitle } from '@/utils/session'
 import { ExtraScreenItemUnavailable } from '../ExtraScreenItemUnavailable'
+import { toErrorMessage } from '@/lib/errors'
 
 const NS = 'dossier'
 const AVATAR_TONES = ['bg-accent/25', 'bg-info/25', 'bg-success/25', 'bg-warning/25', 'bg-foreground/15']
@@ -438,7 +439,7 @@ function DossierDetail({
       })
       onUpdate({ briefSessionId: sessionId })
     } catch (error) {
-      setBriefError(error instanceof Error ? error.message : String(error))
+      setBriefError(toErrorMessage(error))
     } finally {
       setStarting(false)
     }

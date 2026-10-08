@@ -7,12 +7,12 @@ const snakeSource = readFileSync(join(import.meta.dir, '..', 'security', 'Securi
 
 describe('SecuritySettingsPage source contracts', () => {
   it('uses only the safe data surface, retains a stale snapshot on refresh failure, and clears a known-empty latest result', () => {
-    expect(source).toContain('runtimeApi.getStatus')
-    expect(source).toContain('auditApi.getLatest')
-    expect(source).toContain('window.electronAPI.securityAudit.run')
+    expect(source).toContain('api.getStatus({ workspaceId: workspaceId! })')
+    expect(source).toContain('api.getLatest({ workspaceId: workspaceId! })')
+    expect(source).toContain('auditApi.run({ workspaceId, mode: action.mode })')
     expect(source).toContain('setAuditRunning(true)')
     expect(source).toContain('setSnapshotFreshness(\'stale\')')
-    expect(source).toContain('setSnapshot(null)')
+    expect(source).toContain('setSnapshot(state.data)')
     expect(source).toContain("t('security.audit.refreshingLastSnapshot'")
     expect(source).toContain("t('security.audit.stale'")
     expect(source).not.toMatch(/error\.message|String\(error\)|raw stderr|secretDiagnostics/i)
@@ -21,11 +21,14 @@ describe('SecuritySettingsPage source contracts', () => {
   it('renders truthful loading, unavailable, partial, and deep-not-requested states through current i18n key patterns', () => {
     for (const key of [
       'security.loading',
-      'security.error.apiUnavailable',
+      'security.error.auditUnavailable',
+      'security.error.runtimeUnavailable',
       'security.coverage.notRequested',
     ]) {
       expect(source).toContain('t' + "('" + key + "')")
     }
+    expect(source).toContain("t(runtimeResource.phase === 'failed' ? 'security.openclaw.loadFailed' : 'security.openclaw.unavailable')")
+    expect(source).toContain("t(auditResource.phase === 'failed' ? 'security.error.loadFailed' : 'security.error.auditUnavailable')")
     expect(source).toContain("t(`security.runtime.state.${displayedRuntime?.state ?? 'unavailable'}`)")
     expect(source).toContain('t(`security.coverage.${displayedSnapshot.coverage.craft}`)')
     expect(source).toContain('t(`security.coverage.${displayedSnapshot.coverage.openclaw}`)')
@@ -58,7 +61,7 @@ describe('SecuritySettingsPage source contracts', () => {
 
   it('puts every mutation behind a pending confirmation before it can invoke an API', () => {
     expect(source).toContain('setPendingAction')
-    expect(source).toContain('runConfirmedSecurityAction(pendingAction')
+    expect(source).toContain('runConfirmedSecurityAction(action, performPendingAction)')
     expect(source).toContain('onOpenChange={(open) => {')
     expect(source).toContain('if (!open) setPendingAction(null)')
     expect(source).toContain("case 'install':")

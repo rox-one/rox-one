@@ -1,0 +1,92 @@
+{
+  "classification": "Actual production component browser capture; isolated deterministic executor/actual journal. No installed-app claim.",
+  "sourceRoot": "f02c3d2a09dafbce1502abe0cf9e56bdacd6ba23",
+  "isolatedHead": "f2a70beb25944ef158f0651f40f858f8b9fc19e7",
+  "media": [
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-752d8-metadata-and-bounded-layout/integrations-dark-1440.png",
+      "target": "docs/evidence/runtime-map/media/integrations-dark-1440.png",
+      "sha256": "69012da5c94ac79cf1ef9ff25d225744e63882ca453a666f9978d6068f9f5950"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-752d8-metadata-and-bounded-layout/skills-dark-1440.png",
+      "target": "docs/evidence/runtime-map/media/skills-dark-1440.png",
+      "sha256": "890f9824ad8d717c01d3dafdaf09918637bb342c3b5e812c8b2530025f6f529a"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-e397c-metadata-and-bounded-layout/skills-dark-1920.png",
+      "target": "docs/evidence/runtime-map/media/skills-dark-1920.png",
+      "sha256": "038d3abb831d57aaa356ac4f59f783ec9f2dacceb4b27a570aa6e30905933285"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-e397c-metadata-and-bounded-layout/integrations-dark-1920.png",
+      "target": "docs/evidence/runtime-map/media/integrations-dark-1920.png",
+      "sha256": "4a454115321d253c7b7861d507f7e5e5c3198870a460115ec555e94382b1e6b1"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-c5396-metadata-and-bounded-layout/integrations-light-1920.png",
+      "target": "docs/evidence/runtime-map/media/integrations-light-1920.png",
+      "sha256": "fac27e31c10092301fedf75ba71df15751eb353b2cefe88bb1c981ad0dd71ab7"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-c5396-metadata-and-bounded-layout/skills-light-1920.png",
+      "target": "docs/evidence/runtime-map/media/skills-light-1920.png",
+      "sha256": "ff0fca5a65a7c084ce238f77526c5be257193bb781ba4cf85cf2223136f95958"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-68b35-metadata-and-bounded-layout/integrations-dark-1280.png",
+      "target": "docs/evidence/runtime-map/media/integrations-dark-1280.png",
+      "sha256": "e1b029d82cd61a30d70ef3d40c71184522f22dde8c7924c8c39311507af27eb9"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-68b35-metadata-and-bounded-layout/skills-dark-1280.png",
+      "target": "docs/evidence/runtime-map/media/skills-dark-1280.png",
+      "sha256": "15515ec41ca10705c38a23b40dcdf84f4b12268beb22533583d4b23c69b1373e"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-1d9df-metadata-and-bounded-layout/skills-light-1440.png",
+      "target": "docs/evidence/runtime-map/media/skills-light-1440.png",
+      "sha256": "e8e1af76c125548b9fe38df8760e00e608d7fc6d5cbcdf75024e93e1f1bc4fc5"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-1d9df-metadata-and-bounded-layout/integrations-light-1440.png",
+      "target": "docs/evidence/runtime-map/media/integrations-light-1440.png",
+      "sha256": "1ac1583a7700e4b97ecf2acafb482af1f0c4e5702e121e1efd15df3ef6739f25"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-edd6c-metadata-and-bounded-layout/integrations-light-1280.png",
+      "target": "docs/evidence/runtime-map/media/integrations-light-1280.png",
+      "sha256": "37bcbef1c809ecaf73faabd55975a78807a1fe5381ebff02bef36b1919bb7286"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-edd6c-metadata-and-bounded-layout/skills-light-1280.png",
+      "target": "docs/evidence/runtime-map/media/skills-light-1280.png",
+      "sha256": "42c57be0eebf1635316a0c23ed19cfcf872eaa1ca4087d821e6eb54093dbb05b"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/stream-real-ChatDisplay-st-ead37-streams-into-the-right-dock/split-stream-light.png",
+      "target": "docs/evidence/runtime-map/media/ROX-live-map-light.png",
+      "sha256": "683ae0a170ebd0c954c548f10bc0e63c5e3ae557671921cd1cb804dc4ec0262d"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/stream-pending-permission--69bb0--in-dark-and-narrow-layouts/permission-dark.png",
+      "target": "docs/evidence/runtime-map/media/ROX-live-map-dark.png",
+      "sha256": "a45575146a3f68fec480d32506010333210497a6f67b1fda9d117ad595c1b083"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/stream-empty-production-ch-56ac8-ns-above-the-lower-composer/empty-chat-welcome.png",
+      "target": "docs/evidence/runtime-map/media/ROX-welcome-light.png",
+      "sha256": "90be13e153528dddf5e236dea45ce366801ff1de816b67ad63165f2495aa073e"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/runtime-map-dense-fit-overview.png",
+      "target": "docs/evidence/runtime-map/media/runtime-map-dense-fit-overview.png",
+      "sha256": "6a9ef9960f519a688e97d3b6b3e2d1a00bec7c4517f2dbe090bff6c609fe4dd9"
+    },
+    {
+      "source": "docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/stream-real-ChatDisplay-st-ead37-streams-into-the-right-dock/video.webm",
+      "target": "docs/evidence/runtime-map/media/ROX-live-map-stream.webm",
+      "sha256": "16bad8272553acc40983860e11702260cf6256e379ff7244c5c204e82b91fa61"
+    }
+  ]
+}

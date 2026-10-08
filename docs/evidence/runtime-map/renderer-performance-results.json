@@ -1,0 +1,146 @@
+{
+  "config": {
+    "configFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/playwright.config.ts",
+    "rootDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 15000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "",
+        "name": "",
+        "testDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+        "testIgnore": [],
+        "testMatch": [
+          "*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "version": "1.49.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "performance.spec.ts",
+      "file": "performance.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "production ingress and canvas measure 10000-event 20-agent load",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "failed",
+                  "duration": 7974,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m32\u001b[39m\nReceived:   \u001b[31m50\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m32\u001b[39m\nReceived:   \u001b[31m50\u001b[39m\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts:37:32",
+                    "matcherResult": {
+                      "message": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m32\u001b[39m\nReceived:   \u001b[31m50\u001b[39m",
+                      "pass": false
+                    },
+                    "location": {
+                      "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts",
+                      "column": 32,
+                      "line": 37
+                    },
+                    "snippet": "  35 |   await page.screenshot({ path: info.outputPath('load-10000-events.png'), fullPage: true })\n  36 |   expect(result.eventToVisiblePaintP95Ms).toBeLessThan(150)\n> 37 |   expect(result.panFrameP95Ms).toBeLessThan(32)\n     |                                ^\n  38 | })\n  39 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts",
+                        "column": 32,
+                        "line": 37
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m32\u001b[39m\nReceived:   \u001b[31m50\u001b[39m\n\n  35 |   await page.screenshot({ path: info.outputPath('load-10000-events.png'), fullPage: true })\n  36 |   expect(result.eventToVisiblePaintP95Ms).toBeLessThan(150)\n> 37 |   expect(result.panFrameP95Ms).toBeLessThan(32)\n     |                                ^\n  38 | })\n  39 |\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts:37:32"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T17:42:44.015Z",
+                  "attachments": [
+                    {
+                      "name": "browser-performance.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJjbGFzcyI6ICJyZW5kZXJlci1jb21wb25lbnQtcGVyZm9ybWFuY2UiLAogICJyZW5kZXJlckJ1aWxkIjogInZpdGUtcHJvZHVjdGlvbiIsCiAgInJlY29yZGluZyI6IGZhbHNlLAogICJjcHVQcm9maWxlciI6IGZhbHNlLAogICJzeW50aGV0aWNGaXh0dXJlIjogdHJ1ZSwKICAibWVhc3VyZWREZWx0YSI6ICJ0b29sLmNvbXBsZXRlZCByZXN1bHQgcmVwbGFjZW1lbnQgb24gYW4gZXhpc3Rpbmcgc3BhbiIsCiAgInZpZXdwb3J0IjogewogICAgIndpZHRoIjogMTQ0MCwKICAgICJoZWlnaHQiOiA5MDAKICB9LAogICJwcm9maWxlIjogewogICAgImZpeHR1cmVFdmVudHMiOiAxMDAwMCwKICAgICJwcm9qZWN0ZWROb2RlcyI6IDIyMSwKICAgICJhZ2VudHMiOiAyMCwKICAgICJpbmdyZXNzTXMiOiAyNDAzLAogICAgIm1vdW50ZWRDYXJkcyI6IDAKICB9LAogICJtb3VudGVkQ2FyZHMiOiAzLAogICJldmVudFRvVmlzaWJsZVBhaW50TXMiOiBbCiAgICAyMy4zOTk5OTk5OTg1MDk4ODQsCiAgICAyMy4xMDAwMDAwMDE0OTAxMTYsCiAgICAxOS4zMDAwMDAwMDQ0NzAzNSwKICAgIDExLjI5OTk5OTk5NzAxOTc2OCwKICAgIDE0LjcwMDAwMDAwMjk4MDIzMiwKICAgIDguMjk5OTk5OTk3MDE5NzY4LAogICAgMTAuNSwKICAgIDExLjYwMDAwMDAwMTQ5MDExNiwKICAgIDguNjAwMDAwMDAxNDkwMTE2LAogICAgMTAuODk5OTk5OTk4NTA5ODg0LAogICAgMTAuNjAwMDAwMDAxNDkwMTE2LAogICAgMTIuODk5OTk5OTk4NTA5ODg0LAogICAgMTEuNjk5OTk5OTk1NTI5NjUyLAogICAgNS4xOTk5OTk5OTU1Mjk2NTIsCiAgICAxMiwKICAgIDkuNjk5OTk5OTk1NTI5NjUyLAogICAgMTIsCiAgICAxMi41OTk5OTk5OTQwMzk1MzYsCiAgICA5LjcwMDAwMDAwMjk4MDIzMiwKICAgIDE1LjIwMDAwMDAwMjk4MDIzMgogIF0sCiAgImV2ZW50VG9WaXNpYmxlUGFpbnRQOTVNcyI6IDIzLjEwMDAwMDAwMTQ5MDExNiwKICAicGFuRnJhbWVNcyI6IFsKICAgIDE2LjUzODAwMDAwMDAwMDAxLAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNzk5OTk5OTk5OTk5MjcyLAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuODAwMDAwMDAwMDAwMTgyLAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuODAwMDAwMDAwMDAwMTgyLAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMjAwLAogICAgNTAsCiAgICAxNi42OTk5OTk5OTk5OTk4MTgsCiAgICAxNi42OTk5OTk5OTk5OTk4MTgsCiAgICAxNi42MDAwMDAwMDAwMDAzNjQsCiAgICA4My4zMDAwMDAwMDAwMDAxOCwKICAgIDE2LjU5OTk5OTk5OTk5OTQ1NCwKICAgIDY2LjgwMDAwMDAwMDAwMDE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMjE2LjYwMDAwMDAwMDAwMDM2LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTUwLAogICAgNjYuNjAwMDAwMDAwMDAwMzYsCiAgICAzNTAsCiAgICAxMzMuMzk5OTk5OTk5OTk5NjQsCiAgICAxNi41LAogICAgMTYuODAwMDAwMDAwMDAwMTgyLAogICAgMzMuMzAwMDAwMDAwMDAwMTgsCiAgICAxNi42OTk5OTk5OTk5OTk4MTgsCiAgICAxNi41OTk5OTk5OTk5OTk0NTQsCiAgICAxNi43MDAwMDAwMDAwMDA3MjgsCiAgICAxNi42OTk5OTk5OTk5OTk4MTgsCiAgICAxNi42OTk5OTk5OTk5OTk4MTgsCiAgICAxNi41LAogICAgMTYuODAwMDAwMDAwMDAwMTgyLAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuODAwMDAwMDAwMDAwMTgyLAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNTk5OTk5OTk5OTk5NDU0LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjAwMDAwMDAwMDAwMzY0LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNjk5OTk5OTk5OTk5ODE4LAogICAgMTYuNzAwMDAwMDAwMDAwNzI4CiAgXSwKICAicGFuRnJhbWVQOTVNcyI6IDUwLAogICJicm93c2VyIjogIk1vemlsbGEvNS4wIChYMTE7IExpbnV4IHg4Nl82NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTMxLjAuNjc3OC4zMyBTYWZhcmkvNTM3LjM2Igp9"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/performance-production-ing-75cf7-e-10000-event-20-agent-load/test-failed-1.png"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/performance.spec.ts",
+                    "column": 32,
+                    "line": 37
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b15d6361b2fc38288977-2d3a507db4417240233b",
+          "file": "performance.spec.ts",
+          "line": 6,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T17:41:45.058Z",
+    "duration": 67129.59700000001,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

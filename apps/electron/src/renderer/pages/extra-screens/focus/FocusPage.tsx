@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils'
 import { Card, CardTitle, Chip, ScreenButton, ScreenColumn, ScreenDetail, ScreenHeader, ScreenRoot, SectionLabel } from '../ui'
 import { calendarEventsToday, mergeDay, rankTopTasks, startOfDay, type DayEvent } from './focus-model'
 import { collectDaySummary, writeDaySummary } from './focus-summary'
+import { toErrorMessage } from '@/lib/errors'
 
 const PRESETS = [25, 50, 90]
 const CALENDAR_KEY = 'rox.calendar.v1'
@@ -118,7 +119,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
       setSummaryNoteId(noteId)
       setSummaryState('written')
     } catch (e) {
-      setSummaryError(e instanceof Error ? e.message : String(e))
+      setSummaryError(toErrorMessage(e))
       setSummaryState('error')
     }
   }

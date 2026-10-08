@@ -43,7 +43,9 @@ describe('titlebar mode pill layout', () => {
 
 describe('titlebar mode pill source contract', () => {
   it('renders every mode in one pill with no overflow menu', () => {
-    expect(modeBar).toContain('getModeRegistry().list()')
+    // W1-07 (#1504): flag-gated modes come from the reactive shared list
+    // (flag context keys + late registrations), see platform/useModes.ts.
+    expect(modeBar).toContain('useShellModes()')
     expect(modeBar).not.toContain('listPinnedModes')
     expect(modeBar).not.toContain('DropdownMenu')
     expect(modeBar).toContain('rox-mode-pill-indicator')
@@ -71,8 +73,10 @@ describe('titlebar mode pill source contract', () => {
     expect(tileMark).toContain('rox-mark-portrait-18.png')
     expect(tileMark).not.toContain('rox-mark-tile-')
   })
-  it('exposes the seven primary surfaces without requiring experimental Workbench chrome', () => {
-    expect(topBar).toContain('const showModePill = !isCompact')
+  it('exposes the mode pill on Главная without requiring experimental Workbench chrome', () => {
+    const appShell = read('components/app-shell/AppShell.tsx')
+    expect(topBar).toContain('const showModePill = !isCompact && (modeBarActive ?? !surfaceNavigationActive)')
+    expect(appShell).toContain('modeBarActive={isHomeNavigation(navState)}')
     expect(topBar).not.toContain('const showModePill = chrome.showModeBar')
   })
 

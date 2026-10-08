@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import { deriveKnowledgeSignals, pageLeaseMatches } from '../../../features/product-tour/adapters/knowledge'
+import type { TourScope, TourSignal } from '../../../features/product-tour/contracts'
+import type { TourRuntimePort } from '../../../features/product-tour/runtime/hooks'
 
 // Execute the actual PageView hooks with controlled commits and RPC timing.
 // This fixture proves renderer ownership; it is not backend authorization proof.
@@ -12,9 +15,24 @@ const end = component.body.statements.findIndex(node => ts.isVariableStatement(n
   && node.declarationList.declarations.some(declaration => declaration.name.getText(ast).includes('confirmingDelete')))
 if (end < 0) throw new Error('Actual PageView lifecycle boundary missing')
 const executable = ts.transpileModule(component.body.statements.slice(0, end).map(node => node.getText(ast)).join('\n')
-  + '\nreturn { page, fallbackResolved, currentLease, currentLeaseError, snapshotReady, snapshotState };', {
+  + '\nreturn { page, fallbackResolved, currentLease, currentLeaseError, snapshotReady, snapshotState, markHostRendered: setRenderedLeaseId };', {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
 }).outputText
+
+// Execute the real hook bodies against the controlled React scheduler below.
+// Runtime ports record observations; they never invent a rendered-host outcome.
+function hookDeclaration(path: string, name: string) {
+  const text = readFileSync(new URL(path, import.meta.url), 'utf8')
+  const file = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const declaration = file.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === name) as ts.FunctionDeclaration | undefined
+  if (!declaration) throw new Error(`Actual ${name} hook missing`)
+  return declaration.getText(file).replace(/^export /, '')
+}
+const hookExecutable = ts.transpileModule([
+  hookDeclaration('../../../features/product-tour/runtime/hooks.tsx', 'useTourTarget'),
+  hookDeclaration('../../../features/product-tour/runtime/hooks.tsx', 'useTourSignals'),
+  hookDeclaration('../../../features/product-tour/adapters/knowledge/hooks.ts', 'useKnowledgeSignals'),
+].join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText
 
 const deferred = <T>() => {
   let resolve!: (value: T) => void, reject!: (error: unknown) => void
@@ -31,7 +49,7 @@ const page = (workspaceId = 'a', digest = 'digest-1') => ({
   workspaceId, workspaceRootPath: `/${workspaceId}`, config: { slug: 'shared', name: workspaceId, contentDigest: digest, updatedAt: 1 },
 })
 const lease = (digest = 'digest-1', leaseId = 'lease-1') => ({
-  lease: { leaseId, pageSlug: 'shared', contentDigest: digest, nonce: 'fixture-nonce', issuedAt: 1, expiresAt: 100 }, content: '<p>fixture</p>',
+  lease: { leaseId, pageSlug: 'shared', contentDigest: digest, nonce: 'fixture-nonce', issuedAt: Date.now(), expiresAt: Date.now() + 60_000 }, content: '<p>fixture</p>',
 })
 
 function fixture(api: Record<string, unknown> = {}) {
@@ -40,12 +58,40 @@ function fixture(api: Record<string, unknown> = {}) {
   let stateCursor = 0
   let pending: Array<{ create: () => (() => void) | undefined; deps: unknown[] }> = []
   const releases: Array<[string, string]> = []
+  const signals: TourSignal[] = []
+  const scopes = new Map<string, TourScope>()
+  const TourRuntimeContext = Symbol('runtime'), TourScopeContext = Symbol('scope')
+  let inheritedScope: TourScope | null = null
+  let operation = 0
+  const runtime: TourRuntimePort = {
+    enabled: true,
+    capture: scope => ({ binding: { ...scope, clientProfileId: 'fixture-profile', runToken: 'fixture-run' }, operationToken: `operation-${++operation}`, at: Date.now() }),
+    emit: signal => { signals.push(signal) },
+    register: () => () => {},
+    setCapability: () => () => {},
+  }
   const actualApi = {
     getPage: async () => null, createPageLease: async () => lease(), getPageData: async () => ({ value: 1 }),
     releasePageLease: async (workspaceId: string, leaseId: string) => { releases.push([workspaceId, leaseId]) }, ...api,
   }
+  const translate = (key: string) => key
+  const memoize = (create: () => unknown, deps: unknown[]) => {
+    const slot = stateCursor++
+    const previous = states[slot] as { deps: unknown[]; value: unknown } | undefined
+    if (!previous || previous.deps.length !== deps.length || !deps.every((value, index) => Object.is(value, previous.deps[index]))) {
+      states[slot] = { deps, value: create() }
+    }
+    return (states[slot] as { value: unknown }).value
+  }
   const React = {
-    useMemo: (fn: () => unknown) => fn(),
+    useMemo: memoize,
+    useCallback(create: unknown, deps: unknown[]) { return memoize(() => create, deps) },
+    useContext(context: symbol) { return context === TourRuntimeContext ? runtime : inheritedScope },
+    useRef(initial: unknown) {
+      const slot = stateCursor++
+      if (!(slot in states)) states[slot] = { current: initial }
+      return states[slot]
+    },
     useState(initial: unknown) {
       const slot = stateCursor++
       if (!(slot in states)) states[slot] = typeof initial === 'function' ? (initial as () => unknown)() : initial
@@ -72,7 +118,7 @@ function fixture(api: Record<string, unknown> = {}) {
       },
     }
   }
-  return { render, releases, dispose: () => { effects.forEach(effect => effect.dispose?.()) } }
+  return { render, releases, signals, dispose: () => { effects.forEach(effect => effect.dispose?.()) } }
 }
 
 describe('UI-001 actual PageView fallback, lease and snapshot lifecycle', () => {
@@ -161,5 +207,32 @@ describe('UI-001 actual PageView fallback, lease and snapshot lifecycle', () => 
     expect(view.page).toBeNull()
     expect(view.fallbackResolved).toBe(true)
     view.commit(); f.dispose()
+  })
+  test('real learning hooks publish only after the current host load and never reuse that load for a new digest', async () => {
+    let acquisitions = 0
+    const f = fixture({ createPageLease: async () => ++acquisitions === 1 ? lease() : lease('digest-2', 'lease-2') }), pages = [page()]
+    f.render('a', pages).commit(); await flush()
+    const loaded = f.render('a', pages); loaded.commit()
+    expect(f.signals).toEqual([])
+    loaded.markHostRendered('lease-1')
+    f.render('a', pages).commit()
+    expect(f.signals).toHaveLength(1)
+    expect(f.signals[0]).toMatchObject({ name: 'page.rendered', level: 'observed', origin: 'ui-observation', binding: { workspaceId: 'a', panelId: 'fixture-panel', entityId: 'shared' } })
+    const changed = [page('a', 'digest-2')]
+    f.render('a', changed).commit(); await flush()
+    const changedView = f.render('a', changed); changedView.commit()
+    expect(changedView.currentLease.lease.leaseId).toBe('lease-2')
+    expect(f.signals).toHaveLength(1)
+    f.dispose()
+  })
+  test('expired native lease never becomes a current host or learning evidence', async () => {
+    const expired = lease(); expired.lease.expiresAt = Date.now() - 1
+    const f = fixture({ createPageLease: async () => expired }), pages = [page()]
+    f.render('a', pages).commit(); await flush()
+    const loaded = f.render('a', pages)
+    expect(loaded.currentLease).toBeNull()
+    loaded.markHostRendered('lease-1'); f.render('a', pages).commit()
+    expect(f.signals).toEqual([])
+    f.dispose()
   })
 })

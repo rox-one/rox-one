@@ -1,0 +1,52 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/handlers/rpc/__tests__/pocket-task-owner.test.ts:
+13 |     } } }))
+14 |     const child = Bun.spawn([process.execPath, '--tsconfig-override', config, join(import.meta.dir, 'fixtures/pocket-task-owner.ts')], {
+15 |       cwd: root, env: { ...process.env, NODE_ENV: 'test', ROX_CONFIG_DIR: directory, CRAFT_CONFIG_DIR: directory }, stdout: 'pipe', stderr: 'pipe',
+16 |     })
+17 |     const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+18 |     expect({ exit, stdout, stderr }).toMatchObject({ exit: 0 })
+                                          ^
+error: expect(received).toMatchObject(expected)
+
+  {
+-   "exit": 0,
++   "exit": 1,
++   "stderr": 
++ "Internal error: directory mismatch for directory "/tmp/rox-task-pocket-owner-A4Gvf6/tsconfig.json", fd 4. You don't need to do anything, but this indicates a bug.
++ 52 | const server = { handle(channel: string, handler: HandlerFn) { handlers.set(channel, handler) }, push(channel: string, _target: unknown, ...result: unknown[]) { if (channel === RPC_CHANNELS.tasks.GENERATED) { generatedResult = result; generatedResolve() } } } as unknown as RpcServer
++ 53 | const logger = { info() {}, warn() {}, error() {}, debug() {} }
++ 54 | registerTasksHandlers(server, { sessionManager: manager, platform: { logger } } as unknown as HandlerDeps)
++ 55 | await handlers.get(RPC_CHANNELS.tasks.GENERATE)!(context(a), 'Workspace alias', { goal: 'Isolated owner draft', model: 'rox/standard' })
++ 56 | await generated
++ 57 | assert.equal(backendOwners.length, 1, `The production generation must reach the actual factory: ${JSON.stringify({factoryBoundaryErrors, generatedResult})}`)
++             ^
++ AssertionError: The production generation must reach the actual factory: {"factoryBoundaryErrors":[],"generatedResult":["Workspace alias",{"orchestratorSessionId":"261003-awake-woods","slug":"","yaml":"","validation":{"valid":false,"errors":[],"warnings":[]},"error":"The actual backend factory must receive the initiating RPC owner"}]}
++ 
++ 0 !== 1
++ 
++  generatedMessage: false,
++      actual: 0,
++    expected: 1,
++    operator: "strictEqual",
++        code: "ERR_ASSERTION"
++ 
++       at /workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/handlers/rpc/__tests__/fixtures/pocket-task-owner.ts:57:8
++ 
++ Bun v1.3.14 (Linux x64)
++ "
++ ,
++   "stdout": "",
+  }
+
+- Expected  - 1
++ Received  + 26
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/server-pocket-fixtures/packages/server-core/src/handlers/rpc/__tests__/pocket-task-owner.test.ts:18:38)
+(fail) task RPC and deferred runner dispatch retain the existing sealed Pocket owner [1293.77ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [1462.00ms]

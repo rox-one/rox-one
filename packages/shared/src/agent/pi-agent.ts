@@ -227,8 +227,8 @@ export class PiAgent extends BaseAgent {
           mimeType: a.mimeType,
           sizeBytes: a.sizeBytes,
         })),
-        memoryPath: getProjectMemoryPath(root, slug),
-        memoryContent: loadProjectMemory(root, slug) ?? undefined,
+        memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(root, slug),
+        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(root, slug) ?? undefined,
         roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {

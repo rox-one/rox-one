@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { createPortal } from 'react-dom'
-import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { handleSidebarTreeKeyDown } from './sidebar-keyboard'
 
@@ -9,8 +8,7 @@ export const ShellSidebarContext = React.createContext<HTMLElement | null>(null)
 
 export function useShellSidebarTarget(): HTMLElement | null {
   const target = React.useContext(ShellSidebarContext)
-  const shell = useOptionalAppShellContext()
-  return shell?.isFocusedPanel === false ? null : target
+  return target
 }
 
 export function ShellSidebarPortal({ children, className, ...props }: React.HTMLAttributes<HTMLElement>) {

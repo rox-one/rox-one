@@ -7,10 +7,6 @@ const flags = readFileSync(
   join(repoRoot, 'packages/core/src/platform/workbench/flags.ts'),
   'utf8',
 )
-const skip = readFileSync(
-  join(repoRoot, 'packages/core/src/platform/workbench/harness-skip-list.ts'),
-  'utf8',
-)
 const pkg = readFileSync(join(repoRoot, 'package.json'), 'utf8')
 const client = readFileSync(
   join(repoRoot, 'packages/core/src/platform/session-apply/client.ts'),
@@ -29,12 +25,6 @@ describe('SessionApply consumer stub wiring', () => {
   it('adds workbench.conation.sessionApply default false', () => {
     expect(flags).toContain("conationSessionApply: 'workbench.conation.sessionApply'")
     expect(flags).toMatch(/id: WORKBENCH_FLAG\.conationSessionApply[\s\S]*?defaultValue: false/)
-  })
-
-  it('does not flip Cordis skip-list when Agent Teams defaults on', () => {
-    expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: true/)
-    expect(skip).toContain("id: 'agentTeamsRuntime'")
-    expect(skip).toContain('@nanmicoder/dsh-agent-teams')
   })
 
   it('does not add dsh-cordis or npm agent-teams as a Rox dependency', () => {

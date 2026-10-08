@@ -7,6 +7,7 @@
 import { saveTaskSpec, type TaskSpec } from '@rox/shared/tasks'
 import { createLogger } from '@rox/shared/utils'
 import type { ISessionManager } from '../handlers/session-manager-interface'
+import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
 
 const log = createLogger('tasks-create')
 
@@ -72,8 +73,10 @@ export async function createTaskFromSpec(
   workspaceId: string,
   workspaceRoot: string,
   spec: TaskSpec,
-  opts?: { save?: boolean },
+  opts?: { save?: boolean; agentProfileSnapshot?: AgentProfileSnapshot | null },
 ): Promise<CreateTaskFromSpecResult> {
+  assertProfileSources(opts?.agentProfileSnapshot ?? undefined, spec.sources ?? [])
+  assertProfileSkills(opts?.agentProfileSnapshot ?? undefined, spec.skills ?? [])
   if (opts?.save !== false) saveTaskSpec(workspaceRoot, spec)
 
   const orchestrator = await sessionManager.createSession(workspaceId, {
@@ -89,7 +92,7 @@ export async function createTaskFromSpec(
     ...(spec.defaults?.llmConnection ? { llmConnection: spec.defaults.llmConnection } : {}),
     // Persisted task autonomy also seeds the orchestrator session (children read it via the runner).
     ...(spec.defaults?.permissionMode ? { permissionMode: spec.defaults.permissionMode } : {}),
-  })
+  }, opts?.agentProfileSnapshot === undefined ? undefined : { agentProfileSnapshot: opts.agentProfileSnapshot })
   const setup = await finishTaskOrchestrator(sessionManager, orchestrator.id, spec)
   return { slug: spec.id, orchestratorSessionId: orchestrator.id, ...setup }
 }

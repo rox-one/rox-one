@@ -1,0 +1,11 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:
+(pass) actual OmpAgent respawns in both credential/catalog directions and preserves each domain key [2971.14ms]
+(pass) actual in-flight credential-domain switch retires old child and ignores its delayed stream [2128.94ms]
+(pass) credential-domain switch during asynchronous native preparation never spawns its obsolete profile [1535.01ms]
+
+ 3 pass
+ 0 fail
+ 15 expect() calls
+Ran 3 tests across 1 file. [8.50s]

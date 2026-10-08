@@ -29,6 +29,7 @@ import {
   mapReduceVisibleSessions,
 } from './collection-map-reduce'
 import { isClaimableLive } from '@rox/core/rox2'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface CollectionBulkBarProps {
   workspaceId: string | null | undefined
@@ -203,7 +204,7 @@ export function CollectionBulkBar({
         await refreshUnknownOperation(operation).catch(() => undefined)
         toast.error(
           t('collection.bulk.failed', {
-            message: error instanceof Error ? error.message : String(error),
+            message: toErrorMessage(error),
           }),
         )
       } finally {
@@ -263,7 +264,7 @@ export function CollectionBulkBar({
     } catch (error) {
       toast.error(
         t('collection.bulk.mapFailed', {
-          message: error instanceof Error ? error.message : String(error),
+          message: toErrorMessage(error),
         }),
       )
     } finally {
@@ -284,7 +285,7 @@ export function CollectionBulkBar({
       role="toolbar"
       aria-label={`${t('collection.bulk.title')}: ${t('collection.bulk.selected', { count: visibleSelection.count })}`}
     >
-      <div className="inline-flex flex-wrap items-center gap-1.5 rounded-[var(--radius-overlay)] border border-border bg-card/95 px-3 py-2 shadow-modal-small backdrop-blur">
+      <div data-layout="collection-controls" className="inline-flex max-w-[calc(100vw-24px)] flex-wrap items-center gap-1.5 rounded-[var(--radius-overlay)] border border-border-subtle bg-surface-popover px-3 py-2 shadow-modal-small">
         <span className="text-xs font-semibold text-foreground/90" aria-live="polite">
           {t('collection.bulk.selected', { count: visibleSelection.count })}
         </span>
