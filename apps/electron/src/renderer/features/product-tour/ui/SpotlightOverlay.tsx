@@ -3,7 +3,7 @@ import * as Popover from '@radix-ui/react-popover'
 import type { SafeReason, TourBinding, TourStep, TourTargetRegistration } from '../contracts'
 import { useModalRegistry } from '../../../context/ModalContext'
 import { useDismissibleLayerRegistry } from '../../../context/DismissibleLayerContext'
-import { measureTargetGeometry, type TargetGeometry } from './geometry'
+import { measureTourTargetGeometry, type TargetGeometry } from './geometry'
 import { observeTargetGeometry } from './geometry-observer'
 import { TourPopover } from './TourPopover'
 
@@ -39,7 +39,7 @@ export function SpotlightOverlay({ target, step, binding, open = true, onPause, 
     || layers.getSnapshot().some((layer) => layer.id !== layerId), [modals, layers, layerId])
   const handedOff = modalSnapshot.some((layer) => layer.id !== layerId) || layerSnapshot.some((layer) => layer.id !== layerId)
   const active = open && !handedOff
-  const [geometry, setGeometry] = useState<TargetGeometry | null>(() => measureTargetGeometry(target.element))
+  const [geometry, setGeometry] = useState<TargetGeometry | null>(() => measureTourTargetGeometry(target))
   const popupRef = useRef<HTMLDivElement | null>(null)
   const callbacks = useRef({ onPause, onHandoffChange })
   callbacks.current = { onPause, onHandoffChange }
@@ -56,10 +56,11 @@ export function SpotlightOverlay({ target, step, binding, open = true, onPause, 
 
   useLayoutEffect(() => {
     if (!active) return
-    const measured = measureTargetGeometry(target.element)
+    const measure = (element: HTMLElement) => measureTourTargetGeometry({ id: target.id, element })
+    const measured = measure(target.element)
     setGeometry((current) => sameGeometry(current, measured) ? current : measured)
-    return observeTargetGeometry(target.element, (next) => setGeometry((current) => sameGeometry(current, next) ? current : next))
-  }, [active, target.element])
+    return observeTargetGeometry(target.element, (next) => setGeometry((current) => sameGeometry(current, next) ? current : next), measure)
+  }, [active, target.element, target.id])
 
   useEffect(() => {
     if (active && !geometry) callbacks.current.onPause('target-occluded')

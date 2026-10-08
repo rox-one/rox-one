@@ -1,0 +1,161 @@
+{
+  "classification": "W8 independent source and actual native artifact review; R06 available-schema omission found before release",
+  "workflowRun": 37155111140,
+  "rawArtifactSha256": "7e8d76b09358f5c4cb337384faa2fd9cc4174e678e17fa18961fc969bf8cbda8",
+  "reviewedNativeVersion": "18.4.12",
+  "agents": [
+    {
+      "agentId": "root",
+      "snapshotId": "01a103b0-a70b-7000-a47b-41b0069597a5:context:2",
+      "blockKindsInOrder": [
+        "system",
+        "system",
+        "tool-schema",
+        "history",
+        "history",
+        "history",
+        "user"
+      ],
+      "orders": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "allAvailableBlocksComplete": true,
+      "observedToolNames": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "observedToolProperties": [
+        "description",
+        "name",
+        "sourceInfo"
+      ],
+      "parameterSchemasInPublishedSnapshot": 0,
+      "toolMetadataUtf8Sha256": "5ad8598e79ba06baed1222922a71d32762d0bbc74ea4d676404166aa975a0948"
+    },
+    {
+      "agentId": "ReliableCougar",
+      "snapshotId": "01a103b0-a852-7000-83b9-6b90d32c6646:context:2",
+      "blockKindsInOrder": [
+        "system",
+        "system",
+        "system",
+        "system",
+        "tool-schema",
+        "history",
+        "history",
+        "user"
+      ],
+      "orders": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "allAvailableBlocksComplete": true,
+      "observedToolNames": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "observedToolProperties": [
+        "description",
+        "name",
+        "parameters",
+        "sourceInfo"
+      ],
+      "parameterSchemasInPublishedSnapshot": 1,
+      "toolMetadataUtf8Sha256": "3271bda86472c254b1d2344468574e03aac9e85174445295f28ea1b8a96babac"
+    },
+    {
+      "agentId": "ReliableCougar.AsleepClam",
+      "snapshotId": "01a103b0-a8c0-7000-97b4-3fd1ebc03e44:context:2",
+      "blockKindsInOrder": [
+        "system",
+        "system",
+        "system",
+        "system",
+        "tool-schema",
+        "history",
+        "user"
+      ],
+      "orders": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "allAvailableBlocksComplete": true,
+      "observedToolNames": [
+        "read",
+        "yield"
+      ],
+      "observedToolProperties": [
+        "description",
+        "name",
+        "parameters",
+        "sourceInfo"
+      ],
+      "parameterSchemasInPublishedSnapshot": 1,
+      "toolMetadataUtf8Sha256": "54f75cc3b93f823e4f51a63455608c522daa0807245a09480709238522fa2e54"
+    },
+    {
+      "agentId": "eval-worker-fixture",
+      "snapshotId": "01a103b0-a9e7-7000-8f76-5e2de6721c45:context:2",
+      "blockKindsInOrder": [
+        "system",
+        "system",
+        "system",
+        "system",
+        "tool-schema",
+        "user"
+      ],
+      "orders": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "allAvailableBlocksComplete": true,
+      "observedToolNames": [
+        "read",
+        "yield"
+      ],
+      "observedToolProperties": [
+        "description",
+        "name",
+        "parameters",
+        "sourceInfo"
+      ],
+      "parameterSchemasInPublishedSnapshot": 1,
+      "toolMetadataUtf8Sha256": "54f75cc3b93f823e4f51a63455608c522daa0807245a09480709238522fa2e54"
+    }
+  ],
+  "finding": "Actual observed available system/history/user parts are ordered and complete. Native tool metadata names/descriptions/provenance are captured, but available callable ToolInfo.parameters were omitted by observer sanitizer returning undefined for function values.",
+  "sourceEvidence": [
+    "Pinned native src/extensibility/extensions/types.ts:766 ToolInfo.parameters",
+    "Pinned native src/session/session-tools.ts:726 getAllToolInfos returns parameters",
+    "Pinned native src/extensibility/tool-proxy.ts:20 documents callable ArkType schema.toJsonSchema",
+    "ROX packages/shared/src/agent/omp-runtime-observer.ts sanitized handles primitives/arrays/objects and returns undefined for functions"
+  ],
+  "ownerConfirmed": "W2 confirmed callable schema loss and is implementing explicit supported toJsonSchema projection before existing sanitizer; conversion failure must remain unavailable.",
+  "requiredClosure": "Actual native SDK snapshot containing safe public parameter schemas and per-boundary fingerprint proof; no equality claim for transformed provider-normalized whole packet or HTTP serialization.",
+  "status": "pending owner fix and actual native verification",
+  "exitCode": 0
+}

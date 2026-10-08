@@ -5,23 +5,32 @@ import { join } from 'node:path'
 const root = join(import.meta.dirname, '..')
 
 describe('inspector action rail compose wiring', () => {
-  it('exports stable event names consumed by mode screens', () => {
-    const events = readFileSync(join(root, 'inspector-compose-events.ts'), 'utf8')
-    expect(events).toContain("export const ROX_TASKS_COMPOSE_EVENT = 'rox:tasks:compose'")
-    expect(events).toContain("export const ROX_MEETINGS_COMPOSE_EVENT = 'rox:meetings:compose'")
-    expect(events).toContain("export const ROX_NOTES_COMPOSE_EVENT = 'rox:notes:compose'")
+  it('exposes a mount-safe compose request API for the mode screens', () => {
+    const requests = readFileSync(join(root, 'inspector-compose-events.ts'), 'utf8')
+    expect(requests).toContain('export function requestCompose(target: ComposeTarget)')
+    expect(requests).toContain('export function consumePendingCompose(target: ComposeTarget)')
+    expect(requests).toContain("export type ComposeTarget = 'tasks' | 'meetings' | 'notes'")
   })
 
-  it('TasksPage listens for tasks compose', () => {
-    const tasks = readFileSync(join(root, '../pages/TasksPage.tsx'), 'utf8')
-    expect(tasks).toContain('ROX_TASKS_COMPOSE_EVENT')
-    expect(tasks).toContain('addEventListener')
+  it('every mode screen consumes its own compose request on mount', () => {
+    for (const [file, target] of [
+      ['../pages/TasksPage.tsx', 'tasks'],
+      ['../pages/MeetingsPage.tsx', 'meetings'],
+      ['../pages/NotesPage.tsx', 'notes'],
+    ] as const) {
+      const page = readFileSync(join(root, file), 'utf8')
+      expect(page).toContain(`consumePendingCompose('${target}')`)
+      expect(page).not.toContain('COMPOSE_EVENT')
+    }
   })
 
-  it('InspectorActionRail dispatches compose after adjacent navigation', () => {
+  it('InspectorActionRail requests compose for the panel it pushes next', () => {
     const rail = readFileSync(join(root, 'InspectorActionRail.tsx'), 'utf8')
     expect(rail).toContain('pushPanelAtom')
-    expect(rail).toContain('ROX_TASKS_COMPOSE_EVENT')
+    expect(rail).toContain("requestCompose('tasks')")
+    expect(rail).toContain("requestCompose('meetings')")
+    expect(rail).toContain("requestCompose('notes')")
     expect(rail).toContain('focusedPanelIndexAtom')
+    expect(rail).not.toContain('dispatchEvent')
   })
 })

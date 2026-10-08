@@ -6,6 +6,7 @@
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
+import { useNotesTitleKey } from '../useNotesTitleKey'
 import { useTranslation } from 'react-i18next'
 import { Cron } from 'croner'
 import {
@@ -85,6 +86,7 @@ import {
 } from './home-data'
 import { Dot, SectionLabel, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
 import { QuickTaskInput } from './QuickTaskInput'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface WidgetProps {
   edit: WidgetEditProps | null
@@ -591,7 +593,7 @@ function BalanceWidget({ edit }: WidgetProps) {
     try {
       setState(await api.getRoxBalance())
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e)
+      const message = toErrorMessage(e)
       // Never surfaced: logged for diagnostics, the widget shows «—».
       console.warn('[home] balance unavailable:', message)
       setState(/no handler/i.test(message) ? { status: 'unavailable' } : { status: 'error', message })
@@ -1070,13 +1072,14 @@ function useNotes(workspaceId: string | null): { available: boolean; loaded: boo
 
 function NotesWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
+  const titleKey = useNotesTitleKey('workbench.home.w.notes')
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
   const state = useNotes(workspace?.id ?? null)
   const shown = useMemo(() => recentByUpdated(state.notes, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns)), [state.notes, width, size])
   return (
-    <WidgetFrame testId="notes" title={t('workbench.home.w.notes')} onOpen={() => navigate(routes.view.notes())} edit={edit}>
+    <WidgetFrame testId="notes" title={t(titleKey)} onOpen={() => navigate(routes.view.notes())} edit={edit}>
       {!state.available ? (
         <WidgetEmpty text={t('workbench.home.notes.unavailable')} />
       ) : state.loaded && shown.length === 0 ? (

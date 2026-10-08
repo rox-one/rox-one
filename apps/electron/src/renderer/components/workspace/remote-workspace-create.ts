@@ -45,14 +45,15 @@ export async function prepareRemoteWorkspace(args: {
   url: string
   token: string
   name: string
-  homeDir: string
+  /** ROX config dir; the local folder lives under `<configDir>/workspaces`. */
+  configDir: string
   remoteWorkspaceId?: string
   /** When set, the created workspace is SSH-backed and durably bound to this host. */
   sshHostId?: string
   tlsTrust?: RemoteTlsTrust
 }): Promise<{ folderPath: string; name: string; remoteServer: RemoteServerBinding }> {
-  const { url, token, name, homeDir, sshHostId, tlsTrust } = args
-  const defaultBasePath = `${homeDir}/.craft-agent/workspaces`
+  const { url, token, name, configDir, sshHostId, tlsTrust } = args
+  const defaultBasePath = `${configDir}/workspaces`
 
   let remoteWorkspaceId = args.remoteWorkspaceId
   let workspaceName = name

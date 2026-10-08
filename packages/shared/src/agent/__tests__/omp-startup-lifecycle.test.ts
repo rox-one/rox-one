@@ -37,11 +37,11 @@ function setup(scenario: string): { agent: OmpAgent; fake: FakeOmp } {
   return { agent, fake };
 }
 
-afterEach(() => {
+afterEach(async () => {
   for (const agent of agents.splice(0)) agent.destroy();
   restoreEnv?.();
   restoreEnv = null;
-  fake?.cleanup();
+  await fake?.cleanup();
   fake = null;
 });
 

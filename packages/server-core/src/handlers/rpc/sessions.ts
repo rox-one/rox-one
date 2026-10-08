@@ -1,4 +1,4 @@
-import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
+import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER, type RoxExecutionContext } from '@rox/shared/auth'
 import { readFile, writeFile, stat } from 'fs/promises'
 import { join } from 'path'
 import {
@@ -18,11 +18,15 @@ import { isValidThinkingLevel, THINKING_LEVEL_IDS } from '@rox/shared/agent/thin
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import { assertNativeSession, assertNativeWorkspace, nativeAnnotation, nativeSession } from './native-session-scope'
 import { awardNativeXpAndBroadcast } from './gamification'
+import { workspaceWorkContext } from './workspace-work'
+
 import type { RequestContext } from '../../transport/types'
 import type { NativeMemoryContext } from '../../memory/MemoryService'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
 import { dirname } from 'path'
 import { assertNativeInboxPath, assertNativeInboxWorkspace, nativeInboxOwner } from './native-inbox-scope'
+import { loadProjectById } from '@rox/shared/projects'
+import { validateEntityId } from '../../workspace-work/validation'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
@@ -49,6 +53,39 @@ interface ClientSessionWatchState {
 const clientSessionWatches = new Map<string, ClientSessionWatchState>()
 
 const SESSION_GET_LOG_ID_LIMIT = 25
+
+type RoxCaller = { issuer: string; subject: string }
+
+/**
+ * Resolve the Rox caller identity for an RPC request: a cloud principal when
+ * present, otherwise the local/native identity.
+ */
+function roxCallerFor(ctx: RequestContext): RoxCaller {
+  return ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
+}
+
+/**
+ * Capture the Rox account execution context for a request.
+ *
+ * A local/native caller (no cloud principal) MUST NOT be blocked by an
+ * unconnected Rox account: local OMP turns reach the model with the local key,
+ * and the Rox account gate is a proxy authorization, not the credential the
+ * child process uses. A genuine cloud caller (ctx.principal present) still
+ * requires a current account, so the cloud path is unchanged.
+ *
+ * Returns undefined when no authority is installed or the local caller has no
+ * account; throws only for a cloud caller, preserving the strict cloud contract.
+ */
+async function captureRoxExecutionContext(ctx: RequestContext): Promise<RoxExecutionContext | undefined> {
+  const authority = peekRoxAccountAuthority()
+  if (!authority) return undefined
+  try {
+    return await authority.capture(roxCallerFor(ctx))
+  } catch (error) {
+    if (ctx.principal) throw error
+    return undefined
+  }
+}
 
 function nativeMemoryContext(ctx: RequestContext, deps: HandlerDeps, server: RpcServer, workspaceId: string): NativeMemoryContext | undefined {
   const owner = nativeInboxOwner(ctx)
@@ -278,6 +315,10 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   // Create a new session
   server.handle(RPC_CHANNELS.sessions.CREATE, async (ctx, workspaceId: string, options?: import('@rox/shared/protocol').CreateSessionOptions) => {
     assertNativeWorkspace(ctx, deps, workspaceId)
+    // The wire selects an ID, never supplies authority or a fabricated capability snapshot.
+    const capturedProfile = ctx.principal
+      ? (() => { const { service, actor } = workspaceWorkContext(ctx, workspaceId, deps, server); return service.snapshotProfile(actor, options?.agentProfileId) })()
+      : undefined
     if (ctx.principal) {
       if (!server.isRequestContextCurrent?.(ctx)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       if (options?.branchFromSessionId) assertNativeSession(ctx, deps, server, options.branchFromSessionId)
@@ -295,9 +336,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         && !deps.nativeData?.authority.authorize(ctx.principal, workspaceId, 'write', options.workingDirectory)) {
         throw new CodedError('FORBIDDEN', 'Working directory access denied')
       }
-      // Explicit construction prevents task/project/system-prompt fields from
-      // selecting unrelated host resources. Native sessions start in their own folder.
-      options = { name: options?.name, permissionMode: options?.permissionMode,
+      if (options?.projectId) {
+        const projectId = validateEntityId(options.projectId)
+        const project = loadProjectById(workspace.rootPath, projectId)
+        if (!project || project.config.id !== projectId) throw new CodedError('NOT_FOUND', 'Workspace project unavailable')
+      }
+      // Project association is validated above; explicit construction keeps task
+      // and system-prompt fields from selecting unrelated host resources.
+      options = { name: options?.name, permissionMode: options?.permissionMode, agentProfileId: options?.agentProfileId,
+        projectId: options?.projectId, parentSessionId: options?.parentSessionId,
         thinkingLevel: options?.thinkingLevel, model: options?.model, llmConnection: options?.llmConnection,
         sessionStatus: options?.sessionStatus, labels: options?.labels, isFlagged: options?.isFlagged,
         enabledSourceSlugs: options?.enabledSourceSlugs, branchFromSessionId: options?.branchFromSessionId,
@@ -309,6 +356,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // The renderer adds the session synchronously from this return value (App.tsx handleCreateSession),
     // so suppress the broadcast to avoid a redundant hydrate round-trip.
     const session = await sessionManager.createSession(workspaceId, options, { emitCreatedEvent: false,
+      agentProfileSnapshot: capturedProfile,
       nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId) })
     end()
     return ctx.principal ? nativeSession(session) : session
@@ -349,12 +397,11 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
     // Capture the caller's clientId for error routing
     const callerClientId = ctx.clientId
-    const cloudCaller = ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
-    const roxExecutionContext = await peekRoxAccountAuthority()?.capture(cloudCaller)
     // Native options were stripped above. Invalid producer telemetry cannot turn
     // a generated dispatch into the exception for the user's original input.
     const runtimeLaunch = options?.runtimeLaunch === undefined ? undefined
       : isRuntimeLaunch(options.runtimeLaunch) ? options.runtimeLaunch : { kind: 'unknown' as const }
+    const roxExecutionContext = await captureRoxExecutionContext(ctx)
 
     return await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
       let acked = false
@@ -607,10 +654,10 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         return getBroInviteService().listPresence(sessionId, (await sessionManager.getSession(sessionId))?.workspaceId ?? ctx.workspaceId)
       case 'refreshTitle':
         log.info(`IPC: refreshTitle received for session ${sessionId}`)
-        return sessionManager.refreshTitle(sessionId, await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER))
+        return sessionManager.refreshTitle(sessionId, await captureRoxExecutionContext(ctx))
       case 'improveDraft':
         log.info(`IPC: improveDraft received for session ${sessionId}`)
-        return sessionManager.improveDraft(sessionId, command.text, await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER))
+        return sessionManager.improveDraft(sessionId, command.text, await captureRoxExecutionContext(ctx))
       // Connection selection (locked after first message)
       case 'setConnection':
         log.info(`IPC: setConnection received for session ${sessionId}, connection: ${command.connectionSlug}`)
@@ -920,12 +967,19 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   // Import a session bundle into a target workspace
   // targetWorkspaceId is passed explicitly (not from context) so the renderer
   // can import into any workspace the server manages, not just the active one.
-  const importHandler = async (_ctx: any, targetWorkspaceId: string, bundle: unknown, mode: string) => {
+  const importHandler = async (ctx: RequestContext, targetWorkspaceId: string, bundle: unknown, mode: string) => {
     await sessionManager.waitForInit()
     if (!targetWorkspaceId || typeof targetWorkspaceId !== 'string') throw new Error('targetWorkspaceId is required')
     if (mode !== 'move' && mode !== 'fork') throw new Error(`Invalid dispatch mode: ${mode}`)
 
-    return sessionManager.importSession(targetWorkspaceId, bundle as import('@rox/shared/sessions').SessionBundle, mode)
+    assertNativeWorkspace(ctx, deps, targetWorkspaceId)
+    const defaultProfile = ctx.principal ? (() => {
+      const { service, actor } = workspaceWorkContext(ctx, targetWorkspaceId, deps, server)
+      actor.assertCurrent('write')
+      return service.snapshotProfile(actor)
+    })() : undefined
+    return sessionManager.importSession(targetWorkspaceId, bundle as import('@rox/shared/sessions').SessionBundle, mode,
+      defaultProfile === undefined ? undefined : { defaultAgentProfileSnapshot: defaultProfile })
   }
   server.handle(RPC_CHANNELS.sessions.IMPORT, importHandler)
   // Also register as transferable so chunked transfer can invoke it on commit
@@ -943,9 +997,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   // Import a summarized remote-transfer payload into a target workspace.
-  server.handle(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER, async (_ctx, targetWorkspaceId: string, payload: import('@rox/shared/protocol').RemoteSessionTransferPayload) => {
+  server.handle(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER, async (ctx, targetWorkspaceId: string, payload: import('@rox/shared/protocol').RemoteSessionTransferPayload) => {
     await sessionManager.waitForInit()
     if (!targetWorkspaceId || typeof targetWorkspaceId !== 'string') throw new Error('targetWorkspaceId is required')
+    assertNativeWorkspace(ctx, deps, targetWorkspaceId)
+    if (ctx.principal) {
+      const { service, actor } = workspaceWorkContext(ctx, targetWorkspaceId, deps, server)
+      actor.assertCurrent('write')
+      service.snapshotProfile(actor)
+    }
     return sessionManager.importRemoteSessionTransfer(targetWorkspaceId, payload)
   })
 }

@@ -271,6 +271,17 @@ export type AutomationCondition = TimeCondition | StateCondition | LogicalCondit
 // Matcher Definition
 // ============================================================================
 
+export type AutomationObjectKind = 'session' | 'page' | 'meeting' | 'task' | 'decision' | 'note' | 'mail';
+export interface AutomationContextReference {
+  workspaceId: string;
+  projectId?: string;
+  object?: { kind: AutomationObjectKind; id: string };
+}
+export interface AutomationContextPause {
+  reason: 'target-deleted' | 'target-out-of-scope';
+  detectedAt: string;
+}
+
 export interface AutomationMatcher {
   /** Short 6-character hex ID for stable identification across config changes. */
   id?: string;
@@ -288,6 +299,10 @@ export interface AutomationMatcher {
   labels?: string[];
   /** Whether this automation matcher is enabled. Defaults to true. Set to false to disable without removing. */
   enabled?: boolean;
+  /** Canonical typed association; display names and prompts are never identity. */
+  context?: AutomationContextReference;
+  /** Persistent latch: only an explicit, validated relink clears it. */
+  contextPause?: AutomationContextPause;
   /**
    * Attribute names this matcher is allowed to set_attribute with elevated trust.
    * Documentation + enforcement hint: names outside the list still propose but
@@ -356,6 +371,8 @@ export interface AutomationGraphMatcherData {
   permissionMode?: PermissionMode;
   labels?: string[];
   enabled?: boolean;
+  context?: AutomationContextReference;
+  contextPause?: AutomationContextPause;
   attributeAllowList?: string[];
   conditions?: AutomationCondition[];
   telegramTopic?: string;
@@ -502,6 +519,8 @@ export type ActionExecutionResult = PromptActionResult | WebhookActionResult | S
 
 /** A pending prompt with its metadata */
 export interface PendingPrompt {
+  /** Preserved for session creation/project binding by the host executor. */
+  automationContext?: AutomationContextReference;
   /** The session ID this prompt should be sent to */
   sessionId: string | undefined;
   /** The automation matcher ID this prompt originated from */
@@ -619,6 +638,8 @@ export interface SdkAutomationCallbackMatcher {
  * Only includes fields that trigger automations.
  */
 export interface SessionMetadataSnapshot {
+  /** Canonical project ID, retained for context-bound event rules. */
+  projectId?: string;
   permissionMode?: string;
   labels?: string[];
   isFlagged?: boolean;

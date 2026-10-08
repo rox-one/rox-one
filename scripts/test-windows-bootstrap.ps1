@@ -99,7 +99,7 @@ Invoke-RoxRegisteredApp -Executable (Resolve-RoxInstalledExecutable -ReadRegistr
     foreach ($case in @('fresh', 'legacy-upgrade', 'custom-unicode-metacharacters')) {
         $appDir = switch ($case) {
             'fresh' { Join-Path $unicodeProfile 'Programs\Rox' }
-            'legacy-upgrade' { Join-Path $unicodeProfile 'Programs\@craft-agentelectron' }
+            'legacy-upgrade' { Join-Path $unicodeProfile 'Programs\@roxelectron' }
             'custom-unicode-metacharacters' { Join-Path $unicodeProfile "custom O'Connor & literal %ROX_NOT_EXPANDED%" }
         }
         $null = New-Item -ItemType Directory -Path $appDir -Force
@@ -123,7 +123,7 @@ Invoke-RoxRegisteredApp -Executable (Resolve-RoxInstalledExecutable -ReadRegistr
         } finally { $child.Dispose() }
     }
     $fresh = Join-Path $unicodeProfile 'Programs\Rox'
-    $legacy = Join-Path $unicodeProfile 'Programs\@craft-agentelectron'
+    $legacy = Join-Path $unicodeProfile 'Programs\@roxelectron'
     $script:registrations = @{ "CurrentUser/Registry64/$guidKey" = $legacy; "LocalMachine/Registry64/$guidKey" = $fresh }
     Assert ((Resolve-RoxInstalledExecutable -ReadRegistry $reader) -eq (Join-Path $legacy 'Rox.exe')) 'per-user upgraded registration wins over machine registration'
     $script:registrations = @{ "CurrentUser/Registry64/$guidKey" = (Join-Path $root 'stale'); "CurrentUser/Registry32/$guidKey" = $fresh }

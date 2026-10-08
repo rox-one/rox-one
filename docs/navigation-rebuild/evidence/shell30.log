@@ -1,0 +1,50 @@
+bun test v1.4.2 (43848b5a7)
+
+apps/electron/src/renderer/atoms/__tests__/auxiliary-panels.test.ts:
+(pass) retained workspace panels > tool focus and late dialogue creation cannot replace the main surface [4.00ms]
+(pass) retained workspace panels > tools are singletons and closing tools retains the owning main entry [0.40ms]
+(pass) retained workspace panels > closing the last main surface with tools keeps a primary inbox [0.49ms]
+(pass) retained workspace panels > reload preserves context and matching React ownership with equal routes [1.05ms]
+(pass) retained workspace panels > wide, intermediate and narrow layouts show reachable panels without removing entries [0.22ms]
+
+apps/electron/src/renderer/contexts/__tests__/navigation-history-key.test.ts:
+(pass) buildSemanticHistoryKey > changes when focused panel index changes even if routes are identical [0.12ms]
+(pass) buildSemanticHistoryKey > stays stable for identical semantic inputs [0.03ms]
+(pass) canRunInitialRestore > returns false until session metadata is ready [0.03ms]
+(pass) canRunInitialRestore > returns true only when all restore conditions are satisfied [0.01ms]
+
+apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:
+(pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [0.34ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.03ms]
+(pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [0.06ms]
+(pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [0.02ms]
+(pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [0.05ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.02ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.03ms]
+(pass) auto-selected collection retains opaque view parameters [0.09ms]
+
+apps/electron/src/renderer/lib/__tests__/open-workspace-tool.test.ts:
+(pass) explicit workspace utility links > opens an automation separately without replacing the Pages primary panel [0.41ms]
+(pass) explicit workspace utility links > retargets an existing utility rather than duplicating it or redirecting the main [0.16ms]
+(pass) explicit workspace utility links > does not deliver a late creation into another workspace [7.94ms]
+(pass) explicit workspace utility links > does not steal focus after the user moves to another pane in the same workspace [0.50ms]
+(pass) explicit workspace utility links > does not resurrect an explicitly closed agent after a pending creation [0.29ms]
+(pass) explicit workspace utility links > keeps late responses out of a primary surface that changed after the click [0.19ms]
+
+apps/electron/src/renderer/lib/__tests__/navigate-events.test.ts:
+(pass) surface navigation through the real event receiver retains a focused agent and its context [0.83ms]
+(pass) new-panel and auto-selection options survive the same receiver [0.06ms]
+
+apps/electron/src/renderer/lib/__tests__/draft-persistence.test.ts:
+(pass) a slow old write cannot overwrite a newer snapshot with attachments [0.94ms]
+(pass) retrying a flush recovers a transient failure without changing the draft [0.32ms]
+(pass) a failed write is visible and an explicit new save recovers [0.14ms]
+
+apps/electron/src/renderer/pages/workspace-work/__tests__/workspace-route-actions.test.ts:
+(pass) calendar task links keep the canonical task context > retargets the retained Tasks panel from project A to B without changing the calendar [181.26ms]
+(pass) Tasks routes select either canonical scope in a retained panel > follows workspace → personal → workspace IDs while preserving manual scope on a bare route [12.39ms]
+
+ 30 pass
+ 0 fail
+ 78 expect() calls
+Ran 30 tests across 7 files. [795.00ms]

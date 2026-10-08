@@ -477,7 +477,7 @@ export class WindowManager {
       window.once('ready-to-show', () => {
         // Import parseDeepLink dynamically to avoid circular dependency
         import('./deep-link').then(async ({ resolveDeepLinkTarget }) => {
-          // W1-02 (#1499): an entity link waits until entities.links.v1 is known.
+          // W1-02 (#1499) entity hold, then W1-07 (#1504) surface-gate hold.
           const target = await resolveDeepLinkTarget(initialDeepLink)
           if (target && (target.view || target.action)) {
             // Wait a bit for React to mount and register IPC listeners

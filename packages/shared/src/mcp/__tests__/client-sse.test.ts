@@ -212,6 +212,26 @@ describe('CraftMcpClient — SSE transport', () => {
 // ============================================================
 
 describe('McpClientPool — SSE source mapping', () => {
+  it('falls back from an HTTP initialize 405 to legacy SSE, preserving headers and tool routing', async () => {
+    const before = seen.length
+    const pool = new McpClientPool()
+    try {
+      expect(await pool.sync({
+        stub: { type: 'http', url: sseUrl, headers: { Authorization: 'Bearer fallback-test' } },
+      })).toEqual([])
+      expect(pool.getTools('stub').map((t) => t.name)).toEqual(['echo_sse'])
+      expect(await pool.callTool('mcp__stub__echo_sse', { text: 'fallback' })).toEqual({
+        content: 'sse-echo:fallback', isError: false,
+      })
+      const related = seen.slice(before)
+      expect(related[0]?.method).toBe('POST')
+      expect(related.some((r) => r.method === 'GET' && r.path === '/sse')).toBe(true)
+      expect(related.every((r) => r.authorization === 'Bearer fallback-test')).toBe(true)
+    } finally {
+      await pool.disconnectAll()
+    }
+  })
+
   it('connects a type:"sse" source via the real SSE transport (no http coercion)', async () => {
     const pool = new McpClientPool()
     try {

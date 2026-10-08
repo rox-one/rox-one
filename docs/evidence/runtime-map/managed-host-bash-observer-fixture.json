@@ -1,0 +1,41 @@
+{
+  "class": "actual-host-handler-and-observer-with-controlled-context-adapters",
+  "cause": "Incoming managed host environment recovery intentionally bypasses the legacy env-less port whenever the actual caller context supplies getHostBashEnv. The former fallback fixture assumed this caller had no provider.",
+  "productionChanged": false,
+  "before": {
+    "command": "bun test packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts -t 'creates a new attempt'",
+    "exitCode": 1,
+    "expectedLegacyPortCalls": 1,
+    "actualLegacyPortCalls": 0
+  },
+  "after": {
+    "command": "bun test packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts",
+    "exitCode": 0,
+    "testsPassed": 20,
+    "testsFailed": 0,
+    "assertions": 124,
+    "testSha256": "dddc19261e6004b5550f0bf458981622775b39b8cdc6c925ca5aa42ae942f74c",
+    "managedProviderCase": {
+      "actualProviderPresent": true,
+      "actualLegacyPortCalls": 0,
+      "actualLocalStdout": "actual-out",
+      "actualLocalStderr": "actual-err",
+      "actualExitCode": 7,
+      "attemptId": "omitted for primary actual execution"
+    },
+    "legacyFallbackCase": {
+      "adapter": "Clone the actual registry caller only for this fixture with getHostBashEnv undefined; production cache and handler stay unchanged.",
+      "actualLegacyPortCalls": 1,
+      "portBehavior": "Controlled port callback throws after it is genuinely invoked.",
+      "actualLocalStdout": "local-fallback-output",
+      "actualLocalExitCode": 0,
+      "actualFallbackAttemptId": "same-native-tool-id:local:2",
+      "sharedToolUseId": "same-native-tool-id"
+    }
+  },
+  "limits": [
+    "Local Bash stdout/stderr and exit codes are real owned process evidence.",
+    "The controlled port failure does not claim an installed native sidecar or remote provider smoke.",
+    "OMP RPC/model cancellation still does not confirm host process termination; no AbortSignal was added."
+  ]
+}

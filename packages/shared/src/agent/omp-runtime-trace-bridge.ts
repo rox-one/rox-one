@@ -116,7 +116,9 @@ export class OmpRuntimeTraceBridge {
         workingDirectory: event.cwd,
         coverage: {
           state: 'partial', source: 'runtime',
-          missing: [...(providerPayload ? [] : ['provider-serialized-payload']), 'exact-input-tokenization', ...(event.truncated ? ['bounded-native-content'] : [])],
+          missing: [...(providerPayload ? [] : ['provider-serialized-payload', 'native-provider-tool-normalization']),
+            ...(!providerPayload && !schemasAvailable() ? ['native-tool-parameters'] : []),
+            'exact-input-tokenization', ...(event.truncated ? ['bounded-native-content'] : [])],
           reason: providerPayload ? 'Observed provider payload; exact tokenization is not emitted' : 'Observed native hook projection; provider serialization can add or transform fields',
         },
       };
@@ -125,6 +127,12 @@ export class OmpRuntimeTraceBridge {
       id: `${event.id}:block:${order}`, kind, label, source, order, content: content(value, event.truncated),
       included: true, reduction: event.truncated ? 'truncated' : 'unknown',
     });
+    const schemasAvailable = (): boolean => Array.isArray(state!.toolDefinitions)
+      && state!.toolDefinitions.length === state!.tools.length
+      && state!.toolDefinitions.every(tool => record(tool).parametersAvailability === 'available' && record(tool).parameters !== undefined);
+    const toolsBlock = (): RuntimeContextBlock => block(schemasAvailable() ? 'tool-schema' : 'native',
+      schemasAvailable() ? 'Native declared tool parameter schemas' : 'Native tool metadata; parameter schema unavailable',
+      state!.toolDefinitions ?? state!.tools, state!.systemPrompt.length, 'OMP ExtensionAPI.getAllTools; privacy-filtered declared schema');
 
     if (event.truncated) {
       make('trace.coverage', { coverage: { state: 'partial', source: 'runtime', missing: ['bounded-native-content'], reason: 'Native event exceeded content capture bounds' } });
@@ -159,7 +167,7 @@ export class OmpRuntimeTraceBridge {
         state.toolDefinitions = event.payload.toolDefinitions;
         const snapshot = captured([
           ...state.systemPrompt.map((part, i) => block('system', `Native system ${i + 1}`, part, i, 'OMP before_agent_start')),
-          block('tool-schema', 'Available native tools', event.payload.toolDefinitions ?? state.tools, state.systemPrompt.length, 'OMP ExtensionAPI.getAllTools'),
+          toolsBlock(),
           block('user', 'Delivered prompt', state.prompt, state.systemPrompt.length + 1, 'OMP before_agent_start'),
         ], 'OMP before_agent_start');
         if (!main) make('agent.assigned', { assignment: {
@@ -173,6 +181,8 @@ export class OmpRuntimeTraceBridge {
         break;
       }
       case 'context': {
+        if (Array.isArray(event.payload.tools)) state.tools = event.payload.tools.filter((name): name is string => typeof name === 'string');
+        if (Array.isArray(event.payload.toolDefinitions)) state.toolDefinitions = event.payload.toolDefinitions;
         const messages = Array.isArray(event.payload.messages) ? event.payload.messages : [];
         const latestUser = [...messages].reverse().map(record).find(message => message.role === 'user');
         if (latestUser) {
@@ -181,7 +191,7 @@ export class OmpRuntimeTraceBridge {
         }
         const blocks = [
           ...state.systemPrompt.map((part, i) => block('system', `Native system ${i + 1}`, part, i, 'OMP before_agent_start')),
-          block('tool-schema', 'Available native tools', state.toolDefinitions ?? state.tools, state.systemPrompt.length, 'OMP ExtensionAPI.getAllTools'),
+          toolsBlock(),
           ...messages.map((message, i) => {
             const role = record(message).role;
             return block(role === 'user' ? 'user' : 'history', typeof role === 'string' ? role : 'Native message', message,

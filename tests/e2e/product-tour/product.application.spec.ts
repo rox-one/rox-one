@@ -1,4 +1,9 @@
 import { test, expect, type Page, type TestInfo } from '@playwright/test'
+import { RPC_CHANNELS } from '../../../packages/shared/src/protocol'
+import { NATIVE_REPLICA_IPC } from '../../../packages/shared/src/protocol/native-replica'
+
+// Evidence scope: authenticated WebUI App with real isolated native Notes and
+// canonical session read stores. Shell/custody adapters do not prove desktop startup or OS IPC.
 
 const marker = 'rox-product-tour-application-test-only'
 const flag = 'craft-feature-product-tour-v1'
@@ -43,13 +48,43 @@ test('APP-01/APP-06: an existing profile without the tour flag loads the real Ap
   await attachEvidence(page, info)
 })
 
-test('APP-05: restricted WebUI keeps host inventory unavailable and denies a direct host-session read', async ({ page }, info) => {
+test('APP-05: authenticated WebUI keeps host inventory unavailable while native reads remain workspace scoped', async ({ page }, info) => {
   await openApp(page, 'allSessions', true)
   await expect(page.getByText('Sessions: Unavailable', { exact: true })).toBeVisible()
-  expect(await page.evaluate(async () => {
-    try { await window.electronAPI.getSessions(); return false }
-    catch { return true }
-  })).toBe(true)
+  const store = (await evidence(page)).sessionStore as { ownedSessionId: string; foreignSessionId: string }
+  const sessions = await page.evaluate(() => window.electronAPI.getSessions())
+  expect(sessions).toHaveLength(1)
+  expect(sessions[0]).toMatchObject({ id: store.ownedSessionId, name: 'Owned native metadata', workspaceId: 'product-tour-owned-workspace' })
+  expect(JSON.stringify(sessions)).not.toContain(store.foreignSessionId)
+  for (const hostField of ['workspaceRootPath', 'sessionFolderPath', 'workingDirectory', 'sdkCwd']) {
+    expect(sessions[0]).not.toHaveProperty(hostField)
+  }
+  expect(await page.evaluate(async (foreignId) => {
+    try { await window.electronAPI.getSessionMessages(foreignId); return null }
+    catch (error) { return (error as { code?: string }).code }
+  }, store.foreignSessionId)).toBe('FORBIDDEN')
+  const nativeScope = await page.evaluate(async () => {
+    const own = await window.electronAPI.nativeData.readEntity({ workspaceId: 'product-tour-owned-workspace', kind: 'notes', nativeId: 'unowned-note' })
+    try { await window.electronAPI.nativeData.readEntity({ workspaceId: 'product-tour-ungranted-workspace', kind: 'notes', nativeId: 'unowned-note' }); return { own, foreignError: null } }
+    catch (error) { return { own, foreignError: (error as { code?: string }).code } }
+  })
+  // Native-data's authenticated workspace mismatch is sanitized as HANDLER_ERROR.
+  expect(nativeScope).toEqual({ own: null, foreignError: 'HANDLER_ERROR' })
+  expect(await page.evaluate(() => window.electronAPI.getWorkspaces())).toMatchObject([{ id: 'product-tour-owned-workspace', rootPath: '' }])
+  // Subscription success uses the production grant fence; no fixture event is emitted.
+  await page.evaluate(() => window.electronAPI.watchNotes((window as any).__productTourApplication.workspaceId))
+  const custody = await page.evaluate(async (channel) => {
+    const application = (window as any).__productTourApplication
+    return { context: await application.client.invoke(channel, { workspaceId: application.workspaceId }),
+      // A separately owned fixture window tests subframe rejection. Real page
+      // Notes actions below exercise the accepted main-frame custody path.
+      webContentsId: (await fetch('/__fixture/bootstrap').then(response => response.json())).webContentsId }
+  }, RPC_CHANNELS.nativeData.GET_CONTEXT)
+  const subframe = await page.request.post('/__fixture/ipc', { data: {
+    channel: NATIVE_REPLICA_IPC.OPEN, webContentsId: custody.webContentsId, frame: 'subframe', input: { context: custody.context },
+  } })
+  expect(subframe.status()).toBe(400)
+  expect((await subframe.json()).error).toContain('authenticated managed workspace window')
   expect(await page.evaluate(() => (window as any).__productTourApplication.restricted)).toBe(true)
   await expect(page.locator('[data-product-tour-overlay]')).toHaveCount(0)
   await attachEvidence(page, info)
@@ -57,6 +92,11 @@ test('APP-05: restricted WebUI keeps host inventory unavailable and denies a dir
 
 test('DOMAIN-12: the real Notes UI creates, edits, commits, reloads, and finds a canonical native note', async ({ page }, info) => {
   await openApp(page, 'notes')
+  await page.evaluate(async () => {
+    ;(window as any).__productTourNativeNoteEvents = []
+    window.electronAPI.onNotesChanged(payload => (window as any).__productTourNativeNoteEvents.push(payload))
+    await window.electronAPI.watchNotes((window as any).__productTourApplication.workspaceId)
+  })
   const title = `Acceptance note ${Date.now()}`
   const content = 'Unique acceptance phrase 49217; persisted by the actual native journal.'
   await page.getByRole('button', { name: 'New note', exact: true }).first().click()
@@ -71,6 +111,11 @@ test('DOMAIN-12: the real Notes UI creates, edits, commits, reloads, and finds a
     const result = await evidence(page)
     return result.nativeFiles.some((file: { actualContent: string; content: string }) => file.actualContent.includes(content) && file.actualContent === file.content)
   }).toBe(true)
+  // The actual canonical disk write triggers the production watcher/projection.
+  await expect.poll(() => page.evaluate(() => (window as any).__productTourNativeNoteEvents.length)).toBeGreaterThan(0)
+  const noteEvents = await page.evaluate(() => (window as any).__productTourNativeNoteEvents as Array<Record<string, unknown>>)
+  expect(noteEvents.every(event => event.workspaceId === 'product-tour-owned-workspace')).toBe(true)
+  expect(noteEvents.every(event => Object.keys(event).every(key => ['workspaceId', 'reason', 'noteId', 'eventId'].includes(key)))).toBe(true)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await waitForApp(page)
   await expect(page.locator('[contenteditable="true"]').first()).toContainText(content)

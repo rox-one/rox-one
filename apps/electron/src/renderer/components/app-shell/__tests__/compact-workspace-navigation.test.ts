@@ -55,10 +55,14 @@ describe('compact workspace navigation', () => {
     const store = createStore()
     store.set(pushPanelAtom, { route: routes.view.notes('draft') })
     store.set(pushPanelAtom, { route: routes.view.allSessions('chat') })
+    store.set(pushPanelAtom, { route: routes.view.browser('embedded') })
     const panels = store.get(panelStackAtom)
     expect(
       resolveCompactWorkspaceSelection(panels, panels[1].id, { kind: 'service', serviceId: 'notes' }),
     ).toEqual({ kind: 'focus', panelId: panels[0].id })
+    expect(
+      resolveCompactWorkspaceSelection(panels, panels[1].id, { kind: 'service', serviceId: 'browser' }),
+    ).toEqual({ kind: 'focus', panelId: panels[2].id })
     expect(
       resolveCompactWorkspaceSelection(panels, panels[1].id, { kind: 'service', serviceId: 'sessions' }),
     ).toEqual({ kind: 'focus', panelId: panels[1].id })

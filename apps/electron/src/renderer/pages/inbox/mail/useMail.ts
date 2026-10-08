@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MailFolder, MailFolderRole, MailLocalApi, MailMessage, MailResult, MailStatus, MailSummary } from '../../../../shared/mail-local'
 import type { InboxActorContext } from '../../../hooks/useInboxActorContext'
+import { toErrorMessage } from '@/lib/errors'
 
 function api(): MailLocalApi | null {
   return (typeof window !== 'undefined' ? (window.electronAPI as { mailLocal?: MailLocalApi } | undefined)?.mailLocal : undefined) ?? null
@@ -67,7 +68,7 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
       setStatus(s); setError(null)
       return s
     } catch (failure) {
-      if (current()) setError(failure instanceof Error ? failure.message : String(failure))
+      if (current()) setError(toErrorMessage(failure))
       return null
     } finally { if (current()) setStatusLoading(false) }
   }, [options.workspaceId, sameActor])
@@ -97,7 +98,7 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
         if (current() && openId.current === m?.id) setMessage(m)
       }
     } catch (e) {
-      if (current()) setError(e instanceof Error ? e.message : String(e))
+      if (current()) setError(toErrorMessage(e))
     } finally {
       if (current()) setLoading(false)
     }
@@ -112,7 +113,7 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
     const current = () => contextRef.current === context && sameActor() && statusRequest.current === request
     setStatus((s) => (s ? { ...s, state: 'provisioning' } : s))
     try { const r = await a.ensureMailbox(); if (!current()) return; if (r.ok) { setStatus(r.value); setError(null) } else setError(r.message) }
-    catch (failure) { if (current()) setError(failure instanceof Error ? failure.message : String(failure)) }
+    catch (failure) { if (current()) setError(toErrorMessage(failure)) }
   }, [options.workspaceId, sameActor])
 
   useEffect(() => {
@@ -168,7 +169,7 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
         setUnread((list) => list.filter((item) => item.id !== id))
       }
     } catch (e) {
-      if (current()) setError(e instanceof Error ? e.message : String(e))
+      if (current()) setError(toErrorMessage(e))
     }
   }, [options.workspaceId, sameActor])
 

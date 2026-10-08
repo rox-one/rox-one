@@ -25,6 +25,7 @@ import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ContextDocContent, ContextDocInfo, Lesson } from '../../../shared/types'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { toErrorMessage } from '@/lib/errors'
 
 const BUILTIN_CONTEXT_DOCS = new Set(['soul.md', 'rules.md'])
 
@@ -81,7 +82,7 @@ export default function ContextSettingsPage() {
       .catch((error) => {
         console.error('Failed to list context docs:', error)
         setLoadingDocs(false)
-        setPageError(error instanceof Error ? error.message : String(error))
+        setPageError(toErrorMessage(error))
       })
   }, [])
 
@@ -180,7 +181,7 @@ export default function ContextSettingsPage() {
       })
       .catch((error) => {
         console.error('Failed to read context doc:', error)
-        setPageError(error instanceof Error ? error.message : String(error))
+        setPageError(toErrorMessage(error))
       })
   }, [])
 
@@ -225,7 +226,7 @@ export default function ContextSettingsPage() {
         }
       } catch (error) {
         console.error('Failed to delete context doc:', error)
-        setPageError(error instanceof Error ? error.message : String(error))
+        setPageError(toErrorMessage(error))
       } finally {
         setDeleting(false)
       }
@@ -252,7 +253,7 @@ export default function ContextSettingsPage() {
       setDocs((prev) => prev.map((d) => (d.filename === updated.filename ? updated : d)))
     } catch (error) {
       console.error('Failed to write context doc:', error)
-      setPageError(error instanceof Error ? error.message : String(error))
+      setPageError(toErrorMessage(error))
     } finally {
       setSaving(false)
     }
@@ -283,7 +284,7 @@ export default function ContextSettingsPage() {
       openDoc(created.filename)
     } catch (error) {
       console.error('Failed to create context doc:', error)
-      setPageError(error instanceof Error ? error.message : String(error))
+      setPageError(toErrorMessage(error))
     } finally {
       setAdding(false)
     }
@@ -303,7 +304,7 @@ export default function ContextSettingsPage() {
       setDocs((prev) => prev.map((d) => (d.filename === updated.filename ? { ...d, ...updated } : d)))
     } catch (error) {
       console.error('Failed to accept template:', error)
-      setPageError(error instanceof Error ? error.message : String(error))
+      setPageError(toErrorMessage(error))
     } finally {
       setTemplateBusy(false)
     }
@@ -327,7 +328,7 @@ export default function ContextSettingsPage() {
       setDocs((prev) => prev.map((d) => (d.filename === updated.filename ? { ...d, ...updated } : d)))
     } catch (error) {
       console.error('Failed to keep mine template:', error)
-      setPageError(error instanceof Error ? error.message : String(error))
+      setPageError(toErrorMessage(error))
     } finally {
       setTemplateBusy(false)
     }

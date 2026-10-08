@@ -9,7 +9,7 @@
  * 2. The convenience exports (ANTHROPIC_MODELS, OPENAI_MODELS) auto-update
  * 3. Update llm-connections.ts if adding a new built-in connection
  */
-import { toRoxPublicModelDefinitions } from './rox-public-models.ts';
+import { ROX_PUBLIC_MODEL_CATALOG, isRoxPublicModelId, toRoxPublicModelDefinitions } from './rox-public-models.ts';
 // Bedrock-native → bare Anthropic ID reverse mapping.
 // Duplicated from llm-connections.ts to avoid circular imports (llm-connections imports models).
 // Must stay in sync with BEDROCK_MODEL_MAP in llm-connections.ts.
@@ -93,7 +93,7 @@ export function normalizeDeprecatedModelId(modelId: string): string {
 /**
  * Provider identifier for AI backends.
  */
-export type ModelProvider = 'anthropic' | 'pi';
+export type ModelProvider = 'anthropic' | 'pi' | 'rox';
 
 /**
  * Full model definition with capabilities and costs.
@@ -119,6 +119,19 @@ export interface ModelDefinition {
   supportsThinking?: boolean;
   /** Explicit per-model image input capability hint, primarily for custom endpoints. */
   supportsImages?: boolean;
+}
+
+/**
+ * UI-facing model metadata. `provider` is deliberately optional: an arbitrary
+ * model string must not be attributed to Anthropic merely because the legacy
+ * catalog is Anthropic-first.
+ */
+export interface ModelDisplayMetadata {
+  id: string;
+  name: string;
+  shortName: string;
+  /** Public ROX endpoints report `'rox'`; catalog models report their own provider. */
+  provider?: ModelProvider;
 }
 
 // ============================================
@@ -387,4 +400,40 @@ export function isAdaptiveThinkingAlwaysOnModel(modelId: string): boolean {
  */
 export function getModelProvider(modelId: string): ModelProvider | undefined {
   return getModelById(modelId)?.provider;
+}
+
+/**
+ * Resolve display metadata for built-in and public ROX models.
+ *
+ * This is intentionally separate from `getModelDisplayName`: callers that
+ * render provider marks need to distinguish an unknown model from a known
+ * Anthropic model. In particular, a missing model must never inherit the
+ * Anthropic/Claude identity through a UI fallback.
+ *
+ * Returns undefined for unknown or arbitrary models.
+ */
+export function getModelDisplayMetadata(modelId: string | null | undefined): ModelDisplayMetadata | undefined {
+  const id = modelId?.trim();
+  if (!id) return undefined;
+  // Public ROX endpoints are served by the Rox backend whatever the transport:
+  // report the Rox brand rather than the `pi` registry provider they ship with.
+  if (isRoxPublicModelId(id)) {
+    const roxModel = ROX_PUBLIC_MODEL_CATALOG.find(entry => entry.id === id);
+    if (roxModel) {
+      return {
+        id,
+        name: roxModel.name,
+        shortName: roxModel.shortName,
+        provider: 'rox',
+      };
+    }
+  }
+  const model = getModelById(id);
+  if (!model) return undefined;
+  return {
+    id: model.id,
+    name: model.name,
+    shortName: model.shortName,
+    provider: model.provider,
+  };
 }

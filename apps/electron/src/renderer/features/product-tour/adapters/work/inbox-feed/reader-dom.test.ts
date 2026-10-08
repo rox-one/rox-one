@@ -2,8 +2,9 @@ import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { chromium, type Browser } from '@playwright/test'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { resolveChromiumExecutable } from '../../../../../test-utils/chromium-executable'
 
-const executablePath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium'
+const executablePath = await resolveChromiumExecutable()
 let browser: Browser | undefined
 let server: ReturnType<typeof Bun.serve> | undefined
 beforeAll(async () => {

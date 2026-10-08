@@ -15,7 +15,7 @@
  * - SessionManager uses ~30 lines instead of ~300
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveAutomationsConfigPath, generateShortId } from './resolve-config-path.ts';
 import { compactAutomationHistorySync } from './history-store.ts';
@@ -26,6 +26,9 @@ import { type AutomationsConfig, type AutomationEvent, type AutomationMatcher, t
 import { buildPageRefreshMatchers } from '../pages/refresh.ts';
 import { validateAutomationsConfig } from './validation.ts';
 import { matcherMatchesSdk } from './utils.ts';
+import { reconcileAutomationContext, type AutomationContextResolver, type AutomationContextResolution } from './context.ts';
+import { persistAutomationContextPause, resolveLocalAutomationContextReference } from './context-storage.ts';
+import { atomicWriteFileSync } from '../utils/files.ts';
 import { SchedulerService, type SchedulerTickPayload } from '../scheduler/scheduler-service.ts';
 
 const log = createLogger('automation-system');
@@ -71,6 +74,8 @@ export interface AutomationSystemOptions {
   uiClosed?: () => boolean;
   /** Injected clock for meeting follow-up ticks. */
   now?: () => number;
+  /** Authoritative adapter for workspace tasks/native/provider objects. */
+  resolveContextReference?: AutomationContextResolver;
 }
 
 // ============================================================================
@@ -214,7 +219,16 @@ export class AutomationSystem implements AutomationsConfigProvider {
       }
 
       if (changed) {
-        writeFileSync(configPath, JSON.stringify(raw, null, 2) + '\n', 'utf-8');
+        atomicWriteFileSync(configPath, JSON.stringify(raw, null, 2) + '\n', { durable: true });
+        // Validation clones the document. Activate only IDs confirmed in canonical storage.
+        for (const [event, matchers] of Object.entries(eventMap)) {
+          const active = this.config?.automations[event as AutomationEvent];
+          if (!active || !Array.isArray(matchers)) continue;
+          for (let index = 0; index < matchers.length; index++) {
+            const id = (matchers[index] as { id?: unknown }).id;
+            if (active[index] && typeof id === 'string') active[index]!.id = id;
+          }
+        }
         log.debug('[AutomationSystem] Backfilled missing matcher IDs');
       }
     } catch {
@@ -256,7 +270,24 @@ export class AutomationSystem implements AutomationsConfigProvider {
   }
 
   getMatchersForEvent(event: AutomationEvent): AutomationMatcher[] {
-    const configured = this.config?.automations[event] ?? [];
+    const all = this.config?.automations[event] ?? [];
+    const configured = all.filter((matcher, index) => {
+      if (matcher.contextPause) return false;
+      if (!matcher.context) return true;
+      if (!matcher.id) return false;
+      let resolved: AutomationContextResolution;
+      try {
+        resolved = this.options.resolveContextReference?.(matcher.context)
+          ?? resolveLocalAutomationContextReference(this.options.workspaceRootPath, this.options.workspaceId, matcher.context);
+      } catch { resolved = { status: 'unavailable' }; }
+      const next = reconcileAutomationContext(matcher, this.options.workspaceId, resolved);
+      if (next !== matcher) {
+        all[index] = next;
+        try { persistAutomationContextPause(resolveAutomationsConfigPath(this.options.workspaceRootPath), next); }
+        catch (error) { this.options.onError?.(event, error instanceof Error ? error : new Error(String(error))); }
+      }
+      return !next.contextPause && resolved.status === 'available';
+    });
     if (event !== 'SchedulerTick') return configured
     const extras: AutomationMatcher[] = []
     if (this.pageRefreshMatchers.length > 0) extras.push(...this.pageRefreshMatchers)
@@ -432,12 +463,14 @@ export class AutomationSystem implements AutomationsConfigProvider {
     // Common fields for all events
     const sessionName = next.sessionName;
     const labels = next.labels ?? [];
+    const projectId = next.projectId;
 
     // Permission mode change
     if (prev.permissionMode !== next.permissionMode) {
       await this.eventBus.emit('PermissionModeChange', {
         sessionId,
         sessionName,
+        projectId,
         workspaceId: this.options.workspaceId,
         timestamp,
         labels,
@@ -456,6 +489,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
         await this.eventBus.emit('LabelAdd', {
           sessionId,
           sessionName,
+          projectId,
           workspaceId: this.options.workspaceId,
           timestamp,
           labels: [...nextLabels],
@@ -470,6 +504,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
         await this.eventBus.emit('LabelRemove', {
           sessionId,
           sessionName,
+          projectId,
           workspaceId: this.options.workspaceId,
           timestamp,
           labels: [...nextLabels],
@@ -486,6 +521,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
       await this.eventBus.emit('FlagChange', {
         sessionId,
         sessionName,
+        projectId,
         workspaceId: this.options.workspaceId,
         timestamp,
         labels,
@@ -499,6 +535,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
       await this.eventBus.emit('SessionStatusChange', {
         sessionId,
         sessionName,
+        projectId,
         workspaceId: this.options.workspaceId,
         timestamp,
         labels,
@@ -584,7 +621,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
   async executeAgentEvent(event: AgentEvent, input: SdkAutomationInput, signal?: AbortSignal): Promise<number> {
     if (!this.config) return 0;
 
-    const matchers = this.config.automations[event];
+    const matchers = this.getMatchersForEvent(event);
     if (!matchers?.length) return 0;
 
     let matchedCount = 0;

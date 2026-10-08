@@ -10,6 +10,7 @@ import type { SessionMeta } from "@/atoms/sessions"
 import type { ViewConfig } from "@rox/shared/views"
 import type { SessionFilter } from "@/contexts/NavigationContext"
 import { getListGroupKey, type ListGroupingMode } from "@/components/app-shell/session-list/list-grouping"
+import { toErrorMessage } from "@/lib/errors"
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -394,7 +395,7 @@ export function useSessionSearch({
       } catch (error) {
         if (cancelled) return
         // Detect search unavailable (ripgrep not found) vs transient errors
-        const message = error instanceof Error ? error.message : String(error)
+        const message = toErrorMessage(error)
         if (message.includes('SearchUnavailableError') || message.includes('ripgrep')) {
           console.warn('[useSessionSearch] Search unavailable:', message)
           setIsSearchUnavailable(true)

@@ -29,6 +29,7 @@ import {
 import { isClaimableLive } from '@rox/core/rox2'
 import BrowserProfileImportPanel from './BrowserProfileImportPanel'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -64,7 +65,7 @@ export default function ImportSettingsPage() {
       const next = await window.electronAPI.foreignAutoImportStatus({ workspaceId: workspace?.id })
       setAuto(next)
     } catch (err) {
-      setAutoError(err instanceof Error ? err.message : String(err))
+      setAutoError(toErrorMessage(err))
     }
   }, [workspace?.id])
 
@@ -82,7 +83,7 @@ export default function ImportSettingsPage() {
       try {
         setAuto(await window.electronAPI.foreignAutoImportRun({ workspaceId: workspace?.id, all }))
       } catch (err) {
-        setAutoError(err instanceof Error ? err.message : String(err))
+        setAutoError(toErrorMessage(err))
         void refreshAuto()
       }
     },
@@ -95,7 +96,7 @@ export default function ImportSettingsPage() {
       try {
         setAuto(await window.electronAPI.foreignAutoImportSet({ workspaceId: workspace?.id, enabled }))
       } catch (err) {
-        setAutoError(err instanceof Error ? err.message : String(err))
+        setAutoError(toErrorMessage(err))
       }
     },
     [workspace?.id],
@@ -172,7 +173,7 @@ export default function ImportSettingsPage() {
       setSelected({})
       setResults([])
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -208,7 +209,7 @@ export default function ImportSettingsPage() {
       }
       setResults(resultLines)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     } finally {
       setLoading(false)
     }
