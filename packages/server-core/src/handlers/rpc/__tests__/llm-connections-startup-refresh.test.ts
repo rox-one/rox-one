@@ -34,6 +34,8 @@ mock.module('@rox/shared/auth/claude-token', () => ({
   ...actualClaudeToken,
   refreshClaudeToken: async () => {
     refreshCalls++
+    // Network latency, so concurrent callers overlap.
+    await new Promise(resolve => setTimeout(resolve, 20))
     if (refreshFails) throw new Error('refresh revoked')
     return { accessToken: 'fresh', refreshToken: 'refresh-2', expiresAt: Date.now() + 3_600_000 }
   },
@@ -59,6 +61,7 @@ const list = (...args: unknown[]) =>
   handlers.get(RPC_CHANNELS.llmConnections.LIST_WITH_STATUS)!({ clientId: 'c1', workspaceId: null } as unknown as RequestContext, ...args) as Promise<Listed[]>
 const settle = async () => {
   for (let i = 0; i < 5; i++) await new Promise(resolve => setTimeout(resolve, 0))
+  await new Promise(resolve => setTimeout(resolve, 40))
 }
 
 beforeEach(async () => {
@@ -105,5 +108,25 @@ describe('LIST_WITH_STATUS startup refresh', () => {
     expect(listed!.isAuthenticated).toBe(false)
     expect(listed!.authError).toBe('OAuth auto-refresh failed. Re-authenticate to continue.')
     expect(listed!.oauthRefreshError).toBe('refresh revoked')
+  })
+
+  test('concurrent refreshing listings share one refresh (single-flight per slug)', async () => {
+    stored = { accessToken: 'old', refreshToken: 'refresh-5', expiresAt: Date.now() - 1000 }
+    const [a, b] = await Promise.all([list(), list()])
+    expect(refreshCalls).toBe(1)
+    expect(a![0]!.isAuthenticated).toBe(true)
+    expect(b![0]!.isAuthenticated).toBe(true)
+    expect(a![0]!.oauthRefreshError).toBeUndefined()
+    expect(b![0]!.oauthRefreshError).toBeUndefined()
+  })
+
+  test('the background startup refresh and a refreshing listing share one refresh', async () => {
+    stored = { accessToken: 'old', refreshToken: 'refresh-6', expiresAt: Date.now() - 1000 }
+    await list({ refresh: false })
+    const [listed] = await list()
+    await settle()
+    expect(refreshCalls).toBe(1)
+    expect(listed!.isAuthenticated).toBe(true)
+    expect(listed!.oauthRefreshError).toBeUndefined()
   })
 })

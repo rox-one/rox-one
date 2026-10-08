@@ -79,15 +79,34 @@ function knownOAuthRefreshError(slug: string, oauth: StoredLlmOAuth | null): str
   return known && oauth && known.refreshToken === oauth.refreshToken ? known.error : undefined
 }
 
-async function refreshLlmOAuthIfNeeded(
+type OAuthRefreshResult = { oauth: StoredLlmOAuth | null; refreshError?: string }
+
+/**
+ * Single-flight per connection slug. Refresh tokens rotate and are single-use
+ * (Anthropic, OpenAI): two concurrent refreshes with the same token make one
+ * fail with invalid_grant (a false "re-authenticate" state) and can trip reuse
+ * detection. The background startup refresh and any refreshing listing share
+ * one in-flight read+refresh per slug.
+ */
+const oauthRefreshesInFlight = new Map<string, Promise<OAuthRefreshResult>>()
+
+function refreshLlmOAuthIfNeeded(
   connection: LlmConnection,
   manager: ReturnType<typeof getCredentialManager>,
   logger?: HandlerDeps['platform']['logger'],
-): Promise<{ oauth: StoredLlmOAuth | null; refreshError?: string }> {
-  const result = await refreshLlmOAuthIfNeededUncached(connection, manager, logger)
-  if (result.refreshError) oauthRefreshErrors.set(connection.slug, { refreshToken: result.oauth?.refreshToken, error: result.refreshError })
-  else oauthRefreshErrors.delete(connection.slug)
-  return result
+): Promise<OAuthRefreshResult> {
+  const inFlight = oauthRefreshesInFlight.get(connection.slug)
+  if (inFlight) return inFlight
+  const run = (async () => {
+    const result = await refreshLlmOAuthIfNeededUncached(connection, manager, logger)
+    if (result.refreshError) oauthRefreshErrors.set(connection.slug, { refreshToken: result.oauth?.refreshToken, error: result.refreshError })
+    else oauthRefreshErrors.delete(connection.slug)
+    return result
+  })().finally(() => {
+    if (oauthRefreshesInFlight.get(connection.slug) === run) oauthRefreshesInFlight.delete(connection.slug)
+  })
+  oauthRefreshesInFlight.set(connection.slug, run)
+  return run
 }
 
 async function refreshLlmOAuthIfNeededUncached(
