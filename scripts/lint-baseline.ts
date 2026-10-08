@@ -640,7 +640,7 @@ export async function main(argv: string[], env: Record<string, string | undefine
   }
   if (comparison.decreases.length) {
     const saved = comparison.decreases.reduce((sum, entry) => sum + entry.baseline - entry.current, 0)
-    console.log(`lint-baseline: ${saved} fewer violations than the baseline; run \`bun run lint:ui-tokens:update\` to lock them in.`)
+    console.log(`lint-baseline: ${saved} fewer violations than the baseline; lock them in with \`--update\` (merging in-flight UI trees: eslint-baselines/README.md).`)
   }
   if (!failed) {
     const total = Object.values(totals(current)).reduce((sum, count) => sum + count, 0)
