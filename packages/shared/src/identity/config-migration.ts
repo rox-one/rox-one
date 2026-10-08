@@ -232,6 +232,7 @@ import {
   readFileSync as _readMigrationFile,
   readlinkSync as _readlinkMigration,
   renameSync as _renameMigration,
+  rmdirSync as _rmdirMigration,
   statSync as _statMigration,
   symlinkSync as _symlinkMigration,
   unlinkSync as _unlinkMigration,
@@ -378,6 +379,7 @@ export type VisibleHomeOutcome =
   | 'symlink-elsewhere'
   | 'deferred-locked'
   | 'deferred-foreign'
+  | 'deferred-link'
   | 'reverted'
   | 'revert-refused'
   | 'skipped-env-override'
@@ -1093,14 +1095,65 @@ export function readMergeIncompleteMarker(visibleDir: string): MergeIncompleteMa
   }
 }
 
+/** Remove a directory symlink/junction itself (never its target, never recursive). */
+function _removeDirLink(path: string): void {
+  if (!_lstatMigration(path).isSymbolicLink()) throw new Error(`${path} is not a link`)
+  try {
+    _unlinkMigration(path)
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException | null)?.code
+    // Windows junctions: rmdir removes the reparse point only.
+    if (code !== 'EPERM' && code !== 'EISDIR') throw error
+    _rmdirMigration(path)
+  }
+  if (_pathPresent(path)) throw new Error(`${path} is still present`)
+}
+
+function _pathPresent(path: string): boolean {
+  try {
+    _lstatMigration(path)
+    return true
+  } catch {
+    return false
+  }
+}
+
 type VisibleHomeState =
   | 'symlinked'
   | 'symlink-elsewhere'
+  | 'visible-links-hidden'
   | 'foreign'
   | 'clean'
   | 'visible-only'
   | 'hidden-only'
   | 'both'
+
+function _realpathOrUndefined(path: string): string | undefined {
+  try {
+    return (_realpathMigration.native ?? _realpathMigration)(path)
+  } catch {
+    return undefined
+  }
+}
+
+function _visibleRelationToHidden(
+  paths: VisibleHomePaths,
+  platform: NodeJS.Platform,
+): 'inside-hidden' | 'contains-hidden' | undefined {
+  const visible = _realpathOrUndefined(paths.visibleDir)
+  const hidden = _realpathOrUndefined(paths.hiddenDir)
+  if (!visible || !hidden) return undefined
+  const fold = (p: string): string => {
+    const trimmed = p.length > 1 ? p.replace(/[\\/]+$/, '') : p
+    return platform === 'win32' || platform === 'darwin' ? trimmed.toLowerCase() : trimmed
+  }
+  const v = fold(visible)
+  const h = fold(hidden)
+  const sep = platform === 'win32' ? '\\' : _pathSep
+  if (v === h || v.startsWith(h + sep)) return 'inside-hidden'
+  if (h.startsWith(v + sep)) return 'contains-hidden'
+  return undefined
+}
 
 function _classifyVisibleHome(paths: VisibleHomePaths, platform: NodeJS.Platform): VisibleHomeState {
   let hiddenStat: import('node:fs').Stats | undefined
@@ -1111,6 +1164,14 @@ function _classifyVisibleHome(paths: VisibleHomePaths, platform: NodeJS.Platform
   }
   if (hiddenStat?.isSymbolicLink() === true) {
     return _isSymlinkTo(paths.hiddenDir, paths.visibleDir, platform) ? 'symlinked' : 'symlink-elsewhere'
+  }
+  if (hiddenStat?.isDirectory() === true) {
+    // `~/rox` resolving into the hidden tree (e.g. `ln -s ~/.rox ~/rox`) is
+    // the same data, never a second home to merge; a `~/rox` that contains
+    // it (e.g. a link to $HOME) is not ours.
+    const relation = _visibleRelationToHidden(paths, platform)
+    if (relation === 'inside-hidden') return 'visible-links-hidden'
+    if (relation === 'contains-hidden') return 'foreign'
   }
   if (isForeignVisibleHome(paths.visibleDir)) return 'foreign'
   const visibleExists = existsSync(paths.visibleDir)
@@ -1138,6 +1199,7 @@ export function resolveVisibleHomeWithoutMigration(
       return paths.visibleDir
     case 'foreign':
     case 'hidden-only':
+    case 'visible-links-hidden':
       return paths.hiddenDir
     case 'symlink-elsewhere':
       return existsSync(paths.visibleDir) && roxHomeHasUserData(paths.visibleDir) ? paths.visibleDir : paths.hiddenDir
@@ -1231,6 +1293,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
   if (early) return early
 
   // Only `~/.rox` (real dir), or both real dirs: check live writers first.
+  // (`visible-links-hidden` is a single tree reached twice.)
   let holders = lockHolders(state === 'both')
   if (holders.length > 0) return deferredByHolders(holders)
 
@@ -1255,6 +1318,19 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     if (settledNow) return settledNow
     holders = lockHolders(state === 'both')
     if (holders.length > 0) return deferredByHolders(holders)
+    if (state === 'visible-links-hidden') {
+      // Remove only the `~/rox` link (never its target), then the plain
+      // hidden-only move. If the link cannot be removed: defer, untouched.
+      const deferredLink = (): VisibleHomeMigrationResult =>
+        done('deferred-link', { diagnostics: ['storage.migration.visibleLinkIntoHidden'] })
+      try {
+        _removeDirLink(paths.visibleDir)
+      } catch {
+        return deferredLink()
+      }
+      state = _classifyVisibleHome(paths, platform)
+      if (state !== 'hidden-only') return settled(state) ?? deferredLink()
+    }
     manifest = buildVisibleHomeManifest(paths.hiddenDir, { hash: false })
     base.manifest = manifest
     const summary = summarizeVisibleHomeManifest(manifest)
