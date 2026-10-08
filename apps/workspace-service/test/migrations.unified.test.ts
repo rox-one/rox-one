@@ -2,7 +2,7 @@
 // Static inventory / ordering / FK-target / enum checks always run.
 // Migrate-up runs need Postgres: ROX_TEST_PG_URL, else the compound-workspace
 // environment file, else a temp initdb cluster, else the DB block is skipped.
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test, afterAll } from 'bun:test'
 import { SQL } from 'bun'
 import { spawnSync } from 'node:child_process'
 import { mkdtemp, readdir, readFile } from 'node:fs/promises'
@@ -283,6 +283,10 @@ const testDb = await resolveTestDatabase()
 if (testDb) console.log(`[w1-05] migrate-up tests use ${testDb.label}`)
 else console.log('[w1-05] no Postgres available: migrate-up tests skip (static checks still ran)')
 const itDb = testDb ? test : test.skip
+
+afterAll(async () => {
+  await testDb?.cleanup()
+})
 
 async function loadMigrations() {
   const names = (await readdir(MIGRATIONS_DIR)).filter(n => n.endsWith('.sql'))
