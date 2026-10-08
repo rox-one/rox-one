@@ -119,6 +119,8 @@ export const KEYS = {
   featureWorkbenchModeFeedV1: 'feature-workbench-mode-feed-v1',
   // Entities (entities.links.v1) — default OFF, inert until enabled
   featureEntitiesLinksV1: 'feature-entities-links-v1',
+  // W1-09 (#1506): Inbox notification surface (notify.inbox.v1) — default OFF
+  featureNotifyInboxV1: 'feature-notify-inbox-v1',
   // Входящие: done / snoozed item ids (renderer-only triage state)
   inboxState: 'inbox-state-v1',
   featureWorkbenchConationShell: 'feature-workbench-conation-shell',

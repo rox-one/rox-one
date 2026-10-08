@@ -99,7 +99,8 @@ describe('one wired registry (COMMAND_MODULES)', () => {
     expect(wired).toContain('system.ping')
     expect(boundCommandTypes(createCommandRegistry())).toEqual(wired)
     expect(boundCommandTypes(getLocalCommandRegistry())).toEqual(wired)
-    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system'])
+    // W1-09 (#1506) appended the notify module.
+    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system', 'notify'])
   })
 
   test('every module binds idempotently', () => {

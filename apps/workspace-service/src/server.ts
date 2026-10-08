@@ -174,6 +174,8 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
     actorResolver,
     ...(localIssuer ? { localIssuer, publicJwks: localIssuer.jwks() } : {}),
     ...(commandBus ? { commandBus: commandBus.service } : {}),
+    // W1-09 (#1506): notify routes only exist while the module is configured.
+    ...(commandBus?.notify ? { notify: commandBus.notify.http } : {}),
   })
   async function authenticationPhase<T>(operation: () => Promise<T>): Promise<T> {
     if (lifecycle && !lifecycle.begin()) throw new AuthenticationError()

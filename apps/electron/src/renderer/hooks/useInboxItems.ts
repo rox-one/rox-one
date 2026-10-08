@@ -3,6 +3,11 @@
  * into InboxItem rows. Blocking sources (permissions, credentials, plans) are
  * read from AppShellContext + session metadata (no IPC); the rest are fetched
  * through existing RPCs only when `withRemote` (the Входящие page) is on.
+ *
+ * W1-09 (#1506): the activity surfaces (Review / Mentions / Assignments /
+ * Notifications) join when their module flag is on. `enabledInboxKinds` reads
+ * the shell's flag set, so with every flag off the built rows are exactly the
+ * ones this hook produced before.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
@@ -11,15 +16,22 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { inboxStateForWorkspace } from '@/atoms/inbox'
 import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 import {
+  ACTIVITY_KINDS,
   buildInboxItems,
+  enabledInboxKinds,
   inboxCounts,
   pruneInboxState,
   type InboxItem,
+  type InboxNotificationLike,
+  type InboxActivityKind,
   type MemoryProposalLike,
   type PendingSenderLike,
   type PendingSkillLike,
   type SessionLike,
 } from '@/pages/inbox/inbox-model'
+import { WORKBENCH_FLAG } from '@rox/core/platform/workbench'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { featureNotifyInboxV1Atom } from '@/atoms/notify-inbox'
 import type { TeamInboxItem } from '@rox/shared/team'
 import { useInboxActorContext } from './useInboxActorContext'
 import { toErrorMessage } from '@/lib/errors'
@@ -28,8 +40,31 @@ const EMPTY_MAP = new Map<string, never[]>()
 
 export type InboxRemoteSource = 'memory' | 'skills' | 'senders'
 
-export function useInboxItems(options: { withRemote?: boolean; teamInbox?: readonly TeamInboxItem[]; teamActorKey?: string | null } = {}) {
+export function useInboxItems(options: {
+  withRemote?: boolean
+  teamInbox?: readonly TeamInboxItem[]
+  teamActorKey?: string | null
+  /**
+   * W1-09 (#1506): workspace notifications for the activity surfaces. The
+   * caller owns the fetch (the workspace notify client is wave 2); items whose
+   * module flag is off are dropped here, never rendered.
+   */
+  notifications?: readonly InboxNotificationLike[]
+} = {}) {
   const withRemote = options.withRemote ?? false
+  // Dedicated flag atoms only: the Inbox hook is loaded by the browser test
+  // fixture, and the shell's flag set reaches `node:fs`. `goals.checkins.v1`
+  // and `tasks.shared.v1` join here when their owners ship an atom — until
+  // then their surfaces stay off by definition.
+  const entitiesLinks = useAtomValue(featureEntitiesLinksV1Atom)
+  const notifyInbox = useAtomValue(featureNotifyInboxV1Atom)
+  const enabledFlags = useMemo(() => {
+    const flags = new Set<string>()
+    if (entitiesLinks) flags.add(WORKBENCH_FLAG.entitiesLinksV1)
+    if (notifyInbox) flags.add(WORKBENCH_FLAG.notifyInboxV1)
+    return flags
+  }, [entitiesLinks, notifyInbox])
+  const enabledKinds: ReadonlySet<InboxActivityKind> = useMemo(() => enabledInboxKinds(enabledFlags), [enabledFlags])
   const shell = useOptionalAppShellContext()
   const workspaceId = shell?.activeWorkspaceId ?? null
   const { context, contextRef, identityError, refreshIdentity } = useInboxActorContext(workspaceId, withRemote)
@@ -136,12 +171,14 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
       pendingSkills: withRemote && remoteContext === context ? skills : [],
       pendingSenders: withRemote && remoteContext === context ? senders : [],
       teamInbox: options.teamActorKey === undefined || options.teamActorKey === context.actorKey ? options.teamInbox : [],
+      notifications: options.notifications ?? [],
+      enabledKinds,
       firstSeen: firstSeen.current,
       now,
     })
     for (const item of built) if (!firstSeen.current.has(item.id)) firstSeen.current.set(item.id, item.at)
     return built
-  }, [sessions, shell?.pendingPermissions, shell?.pendingCredentials, memory, skills, senders, options.teamInbox, options.teamActorKey, withRemote, now, remoteContext, context])
+  }, [sessions, shell?.pendingPermissions, shell?.pendingCredentials, memory, skills, senders, options.teamInbox, options.teamActorKey, options.notifications, enabledKinds, withRemote, now, remoteContext, context])
 
   const allLoaded = loaded.memory && loaded.skills && loaded.senders
   const allSuccessful = remoteContext === context && allLoaded && !errors.memory && !errors.skills && !errors.senders
@@ -156,12 +193,15 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
   }, [withRemote, allSuccessful, items, state, now, setState])
 
   const counts = useMemo(() => inboxCounts(items, state, now), [items, state, now])
+  // Enabled activity surfaces in the model's canonical order (sidebar order).
+  const activityKinds = useMemo(() => ACTIVITY_KINDS.filter((kind) => enabledKinds.has(kind)), [enabledKinds])
 
   return {
     items,
     state,
     setState,
     counts,
+    activityKinds,
     now,
     loaded: identityError ? { memory: true, skills: true, senders: true } : remoteContext === context ? loaded : { memory: false, skills: false, senders: false },
     loading: remoteContext === context ? loading : { memory: false, skills: false, senders: false },
