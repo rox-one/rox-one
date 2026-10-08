@@ -8,14 +8,17 @@
  * can be table-tested, and read only while `agent.panel.v1` is on (with the
  * flag off the shell keeps using `inspector-layout.ts` unchanged).
  *
- * Rules (§25.5), in order:
+ * Rules (§18.4, §25.5), in order:
  *   1. side-by-side when W ≥ rail 48 + sidebar + MAIN 640 + inspector + agent
- *      + action rail 44 (the §18.4 formula);
- *   2. shared dock when that does not fit but W ≥ 1280: inspector and agent
- *      share one column with a 32 px tab strip on top;
- *   3. overlay when W < 1280 or MAIN would drop below 640 — the panel floats
- *      and takes no layout width;
- *   4. before the agent shrinks MAIN, the left sidebar auto-collapses to 56.
+ *      + action rail 44 — the formula is exactly MAIN ≥ 640;
+ *   2. failed that, auto-collapse the sidebar to 56 and try again (tried before
+ *      the agent is allowed to shrink MAIN; §26.4 can turn this off);
+ *   3. failed that, the shared dock at W ≥ 1280: inspector and agent share one
+ *      column (32 px tab strip) at the pre-collapse sidebar width. W1-10's
+ *      #1507 review-2 owner decision resolves §25.5 rules 2 and 3 this way, so
+ *      `computeDockMode` and the harness `dock-layout` table agree row for row;
+ *   4. overlay otherwise (W < 1280): the panel floats over MAIN and takes no
+ *      layout width, so the shell never reflows for it.
  */
 
 /** Mode rail (UI-SPEC §26.1 window anatomy). */
