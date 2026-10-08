@@ -6,7 +6,7 @@ ones they inherit.
 
 | Path | Role |
 | --- | --- |
-| `local-work-store.ts` | JSON-per-record store at `{workspaceRoot}/work/<collection>/<id>.json` (`{id, collection, revision, schemaVersion, record, deleted?}`), dir 0700 / file 0600, tmp + rename writes, CAS `put` (`null` = create only), verbatim `write` for migrations. |
+| `local-work-store.ts` | JSON-per-record store at `{workspaceRoot}/work/<collection>/<id>.json` (`{id, collection, revision, schemaVersion, record, deleted?}`), dir 0700 / file 0600, tmp + rename writes, CAS `put` (`null` = create only), verbatim `write` for migrations. File names are case-unique (`encodeWorkId`: `%XX` for anything outside `[a-z0-9._-]`, upper case included), so `Goal` and `goal` never share a file on a case-insensitive filesystem; files of the first W1-06 build (upper case literal) are still read, and a write moves them to the new name (a legacy file of another id sitting at the new name is moved to its own name first). |
 | `reference/` | One generic reference handler per catalogue command (CRUD-level, ACL already checked by the executor's authorizer stage). |
 | `migrations/goals-migration.ts` | MIG-04 (`okr.json` → cycle / goal / target / check + `aligned-to` link) and MIG-05 (`roadmap.json` milestones → `milestone`, `taskIds` → task placement). Gated by `goals.v1`. |
 
@@ -34,8 +34,26 @@ The PersonalTask v3 store (MIG-01/02/03) is in `src/tasks/personal-persist.ts`.
   PersonalTask meta projects (the Things projects / MIG-02 lists the Tasks UI shows), so
   `listId` == v2 `projectId` and the UI and the bus see one list. Bus-only list fields
   (`sortKey`, `statusSetEnabled`, …) and the list CAS revision live in
-  `personal-tasks-meta.json` `work.listState`; a UI edit since the last bus write moves the
-  revision on. Local lists are personal (`ownerType: 'user'`).
+  `personal-tasks-meta.json` `work.listState`. Local lists are personal (`ownerType: 'user'`).
+  `task_lists.update` with `completedAt` is `VALIDATION` locally (the v2 project has one
+  completion slot, set by `task_lists.archive` → `archivedAt`).
+- Tasks UI meta writes (`personalTasks:put` sends the full meta, no base) are merged against
+  the lists the bus wrote (`PersonalTaskPersistStore.writeMeta`): a bus list missing from the
+  UI write is kept unless the UI trashed it (disk copy trashed, or its last
+  `project.trash|restore` audit entry is a trash; `emptyTrash` is the only UI hard delete); a
+  bus write the UI has not listed yet (`unseen`, cleared by `readPersonalTasks` →
+  `markTaskListsSeen`) keeps the disk version and a bus removal stays removed (tombstone until
+  listed); any other UI change to a bus list bumps its CAS revision past the one the bus last
+  served (one bump per UI edit), so a stale `task_lists.*` write conflicts. Residual window: a
+  UI edit to a bus list made before the UI listed the bus write is replaced by the bus version.
+- Tasks UI refresh: every `task` / `task-list` write of the local backend, and a MIG-05 task
+  placement, calls `ReferenceRuntime.personalTasksChanged`; `commands:execute` pushes one
+  `personalTasks:changed` after the command (whatever its receipt subject).
+- Principal-scoped sessions (remote / headless clients with `ctx.principal`) keep personal
+  tasks in their native per-scope store (`NativePersonalTasksStore`, a different API), which is
+  not on the bus yet: their `task` / `task-list` commands answer `UNAVAILABLE` and never touch
+  the device owner's store; their other local commands run (MIG-04/05 waits for an owner
+  session so placements are never dropped).
 - `task_sections.*` and `task_list_groups.*` answer `UNAVAILABLE` on the local authority until
   TSK-1 (headings / areas stay UI-managed); on the workspace authority they are table rows.
 
@@ -47,11 +65,44 @@ The PersonalTask v3 store (MIG-01/02/03) is in `src/tasks/personal-persist.ts`.
   it); `appendMessage` returns its message without taking another `seq`; multi-record creates
   (`createTaskFrom`, `createGoal`, `spaces.create`, checklist import …) check every id and link
   with `assertAbsent` / `validateLink` before the first write.
-- Authorization: the executor authorizes the envelope target only, so handlers act on it. A
-  payload ref naming another resource (`acl.*` `subject`, `links.*` `from`, `reminders.create`
-  `subject`) is `FORBIDDEN`; `acl.grant / revoke / set_link / transfer_ownership` and `links.*`
-  need a target; `acl.decide_request` needs the request's resource as target;
-  `mail.share_to_chat` targets the destination chat (`payload.chatId`, if sent, must match).
+- Authorization: the executor authorizes the envelope target (`authorizer.can(principal,
+  definition.verb, target)`) and hands handlers `ctx.authorize(verb, ref, {workspaceId?})`, the
+  same authorizer for the same principal (`ReferenceTx.can`; without it every payload check
+  fails closed). The rule for payload ids (helpers next to `boundRef` in `ops.ts`):
+  - every resource named in the payload that the command **writes to, writes into**
+    (destination container, chat, folder, list, calendar, space, doc), **deletes, reorders or
+    links FROM** is authorized at the verb the command would need if it were the target:
+    `write` for containers and docs (`authorizeRef` / `authorizeId` / `authorizeTaskContainers`),
+    `destroy` for what it deletes (`contacts.merge_cards` sources), `share` stays target-only
+    (`acl.*`). Posting into a chat also needs active membership plus the posting policy
+    (`appendMessage`, every post: `im.send_message`, `im.forward_messages`,
+    `meetings.publish_outcomes`, `mail.share_to_chat`).
+  - a resource that is only **referenced** (TO side of a link, a dependency's other task, an
+    alignment / parent goal, an embedded block, an origin, a reference recorded by
+    `docs.create_from_messages`) needs `read`.
+  - **bound** ids (`authorizeBound`, `boundRef`): a container / doc / form / origin id of the
+    same kind as the envelope target must repeat it (`FORBIDDEN` otherwise), e.g. `tasks.create`
+    on a list target with another `listId`, `calendar.create_event` `calendarId`,
+    `milestones.create` `projectId`, `docs.*_block` `docRef`, `docs.apply_patch` `noteId`,
+    `forms.configure_on_submit` `formRef`, `comments.create` `parent` (and a reply's thread must
+    be on the same entity, kind and id). Those commands need the target. Relational ids of the
+    target's kind (dependency, alignment, parent goal, forward destination, merge sources,
+    import-from cycle) are authorized on their own instead.
+  - another workspace (`tasks.share`, `projects.share`) is `authorizeWorkspace`: `write` at
+    workspace level in that workspace.
+  - `acl.*` `subject`, `links.*` `from`, `reminders.create` `subject` must be the target;
+    `acl.grant / revoke / set_link / transfer_ownership` and `links.*` need a target;
+    `acl.decide_request` needs the request's resource as target; `acl.request_access` acts on
+    its bare subject; `mail.share_to_chat` targets the destination chat (`payload.chatId`, if
+    sent, must match).
+  - `acl.transfer_ownership`: only the current owner (an `owner` ACL entry, or no entry and the
+    record's owner / creator) transfers; the new owner gets `owner`, the old one `full_access`.
+  - `milestones.reorder` / `okr.publish_objectives` touch only the target's own records; other
+    ids are reported in `missing`. `milestones.complete` moves tasks only to a milestone of the
+    same project.
+  - Agents: `agents.invoke` (owner only) opens a pending `agent-approval` (id = invocation id,
+    approvers = the agent's owner); `agents.decide_approval` needs that pending approval, an
+    approver, and decides once.
 - Events: one domain event per command (catalogue event type where one fits), payload
   `{reference: true, command, collection, id, revision, changes}` — field names only.
 - Errors: missing target / wrong target kind / schema-constraint violation → `VALIDATION`;
@@ -61,6 +112,17 @@ The PersonalTask v3 store (MIG-01/02/03) is in `src/tasks/personal-persist.ts`.
   `{error: 'id already exists'}`, never the existing record); expired upload session / access
   request → `VALIDATION`.
 - `commands.batch` only records the batch; nested execution is W1-15.
+
+## PersonalTask v3 (MIG-01 / MIG-02): rollback
+
+`readPersonalTasks` runs MIG-01/02 unconditionally (no flag), once per store, and only after
+`ensureSchemaBackup` copied every task file and the meta verbatim to
+`{configDir}/personal-tasks-backups/<stamp>-v<previous>/`. Revisions never change and v2 readers
+still find `task`. Rolling back to a v2 build is safe to start, but its next UI save rewrites a
+task file as `{id, revision, task}` and drops the `work` half (`assigneeIds`,
+`sharedWorkspaceId`, `lastCommandId`, `origin`, bus-only fields) and the meta `work` block
+(list CAS state). To undo the migration itself, stop the app and copy the backup directory's
+files back over `personal-tasks/` and `personal-tasks-meta.json`.
 
 ## MIG-04 / MIG-05
 
@@ -79,7 +141,11 @@ keeping every usable cycle / objective / key result and listing what it skipped.
 - `__tests__/reference-handlers.test.ts`: every catalogue command runs through its reference
   handler (memory); per-command VALIDATION / FORBIDDEN / UNAVAILABLE; scope, conflict, expiry,
   handler-level permission, idempotent replay.
-- `__tests__/reference-local.test.ts`: the same scenario on the local SQLite authority.
+- `__tests__/reference-local.test.ts`: the same scenario on the local SQLite authority, the
+  Tasks UI meta merge, principal UNAVAILABLE, the refresh push, case-unique file names.
+- `__tests__/reference-authorization.test.ts`: payload-named resources through a recording
+  authorizer (FORBIDDEN and positive cases), bound ids, chat membership, merges, reorders,
+  ownership transfer, agent approvals, drop direction.
 - `apps/workspace-service/test/reference-handlers.pg.test.ts`: the scenario on PostgreSQL with
   the full W1-05 DDL (temp `initdb` cluster or `ROX_TEST_PG_URL`; skipped otherwise).
 - `__tests__/goals-migration.test.ts`: MIG-04/05 fixtures, golden output, idempotent re-run,

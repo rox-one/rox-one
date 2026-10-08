@@ -61,9 +61,18 @@ export class ReferenceTx {
   /** Records this execution wrote (`collection\u0000id`), to tell them from an earlier attempt's. */
   private readonly written = new Set<string>()
 
-  constructor(readonly ctx: CommandHandlerContext<unknown>, readonly backend: RecordBackend, now: Date) {
+  constructor(readonly ctx: CommandHandlerContext<unknown>, readonly backend: RecordBackend, now: Date, readonly verb = 'write') {
     this.payload = (ctx.payload ?? {}) as Record<string, any>
     this.now = now.toISOString()
+  }
+
+  /**
+   * The executor's authorizer for this command's principal (fail closed: no
+   * authorizer, or a non-transient authorizer error, denies).
+   */
+  async can(action: string, ref: EntityRef | null, options: { workspaceId?: string } = {}): Promise<boolean> {
+    if (!this.ctx.authorize) return false
+    return (await this.ctx.authorize(action, ref, options)) === true
   }
 
   get actor(): string {
@@ -214,10 +223,10 @@ export class ReferenceTx {
 const writtenKey = (collection: string, id: string) => `${collection}\u0000${id}`
 
 /** Build one catalogue command's handler from its op. */
-export function referenceHandler(type: string, op: ReferenceOp, options: ReferenceEngineOptions & { eventType?: string }): CommandHandler<unknown, unknown> {
+export function referenceHandler(type: string, op: ReferenceOp, options: ReferenceEngineOptions & { eventType?: string; verb?: string }): CommandHandler<unknown, unknown> {
   return async ctx => {
     const backend = await options.backendFor(ctx)
-    const tx = new ReferenceTx(ctx, backend, options.now())
+    const tx = new ReferenceTx(ctx, backend, options.now(), options.verb)
     const outcome = await op(tx)
     const spec = collectionSpec(outcome.collection)
     const ref = outcome.ref === null ? undefined : outcome.ref ?? (spec.kind ? { kind: spec.kind, id: outcome.id } : ctx.envelope.target)

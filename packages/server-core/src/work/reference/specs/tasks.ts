@@ -4,7 +4,7 @@ import { statusLifecycle } from '@rox/core/tasks/personal'
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import type { ReferenceOp, ReferenceTx } from '../engine'
-import { addLink, assoc, create, omit, payloadFields, refString, softDelete, transition, unassoc, update, validateLink, type Mapper } from '../ops'
+import { addLink, assoc, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, authorizeTaskContainers, authorizeWorkspace, create, omit, payloadFields, refString, softDelete, transition, unassoc, update, validateLink, type Mapper } from '../ops'
 import type { RecordData } from '../types'
 import type { ReferenceSpecMap } from './types'
 
@@ -29,10 +29,20 @@ function lifecycleFields(tx: ReferenceTx, statusKey: string): RecordData {
   return { statusKey, completedAt: null, cancelledAt: null }
 }
 
+/**
+ * The origin a task is derived from is only referenced (`read`); a target of
+ * its kind must be that origin. The list it lands in needs `write`.
+ */
+async function authorizeTaskOrigin(tx: ReferenceTx, ref: EntityRef): Promise<void> {
+  await authorizeOrigin(tx, ref)
+  await authorizeTaskContainers(tx, { listId: tx.payload.listId })
+}
+
 function createTaskFrom(origin: (tx: ReferenceTx) => EntityRef, map: Mapper, relation = 'derived-from') {
   const base = create('task', map, { defaults: taskDefaults })
   return async (tx: ReferenceTx) => {
     const ref = origin(tx)
+    await authorizeTaskOrigin(tx, ref)
     // Everything that can fail is checked before the first (non-transactional on local) write.
     validateLink({ kind: 'task', id: tx.createId() }, ref, relation)
     await tx.assertAbsent('task', tx.createId())
@@ -66,8 +76,28 @@ function workspaceOnly(specs: Record<string, ReferenceOp>): Record<string, Refer
   }]))
 }
 
+/** Owner of a task list → the resource its creator must be able to write (`user` lists are the actor's own). */
+async function authorizeListOwner(tx: ReferenceTx): Promise<void> {
+  const { ownerType, ownerId } = tx.payload
+  if (ownerId === undefined) return
+  if (ownerType === undefined || ownerType === 'user') {
+    if (ownerId !== tx.actor) throw new CommandRejection('FORBIDDEN', 'a personal task list belongs to its creator')
+    return
+  }
+  const kind = ownerType === 'chat' ? 'channel' : ownerType
+  await authorizeBound(tx, { kind, id: ownerId } as EntityRef, 'write')
+}
+
 export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
-  'tasks.create': { op: create('task', payloadFields(), { defaults: taskDefaults, container: { kind: 'task-list', field: 'listId' } }), event: 'task.task_adding' },
+  'tasks.create': {
+    event: 'task.task_adding',
+    op: async tx => {
+      // Every container the payload names needs `write`; a container-kind target is the container.
+      await authorizeTaskContainers(tx, tx.payload, { bound: true })
+      const listTarget = tx.targetOf('task-list')
+      return create('task', t => ({ ...payloadFields()(t) as RecordData, ...(t.payload.listId === undefined && listTarget ? { listId: listTarget } : {}) }), { defaults: taskDefaults })(tx)
+    },
+  },
   'tasks.update': update('task'),
   'tasks.update_status': { op: transition('task', tx => lifecycleFields(tx, tx.payload.statusKey)), event: 'task.task_status_change' },
   'tasks.complete': { op: transition('task', tx => ({ statusKey: 'done', completedAt: tx.payload.completedAt ?? tx.now, cancelledAt: null })), event: 'task.task_closing' },
@@ -100,7 +130,14 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
       return { collection: 'task', id: record.id, revision: record.revision, changes: ['title'], result: { sourceId: source.id } }
     },
   },
-  'tasks.move': { op: update('task'), event: 'task.task_moving' },
+  'tasks.move': {
+    event: 'task.task_moving',
+    op: async tx => {
+      if (tx.payload.parentId && tx.payload.parentId === tx.rawTarget?.id) throw new CommandRejection('VALIDATION', 'a task cannot be its own parent')
+      await authorizeTaskContainers(tx, tx.payload)
+      return update('task')(tx)
+    },
+  },
   'tasks.update_assignees': {
     event: 'task.task_assignee_assignment',
     op: update('task', (tx, current) => {
@@ -112,7 +149,7 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
   },
   /** Local: the per-user fields live on the PersonalTask itself; server: `work_item_user_state`. */
   'tasks.set_user_state': async tx => {
-    if (tx.ctx.authority === 'local') return update('task', payloadFields('hidden'))(tx)
+    if (tx.ctx.authority === 'local') return update('task', payloadFields())(tx)
     return assoc('task-user-state', 'task', () => tx.actor, payloadFields(), 'taskId')(tx)
   },
   'tasks.add_to_list': {
@@ -120,6 +157,7 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     op: async tx => {
       const task = await tx.requireTarget('task')
       await tx.require('task-list', tx.payload.listId)
+      await authorizeTaskContainers(tx, { listId: tx.payload.listId, sectionId: tx.payload.sectionId })
       if (tx.ctx.authority === 'local') {
         // Local: a task sits in one PersonalTask project (= list); no association rows.
         const record = await tx.update('task', task, { listId: tx.payload.listId, ...(tx.payload.sectionId ? { sectionId: tx.payload.sectionId } : task.data.listId === tx.payload.listId ? {} : { sectionId: null }) })
@@ -131,6 +169,7 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     },
   },
   'tasks.remove_from_list': async tx => {
+    await authorizeId(tx, 'task-list', tx.payload.listId, 'write')
     if (tx.ctx.authority === 'local') {
       const task = await tx.requireTarget('task')
       if (task.data.listId !== tx.payload.listId) throw new CommandRejection('NOT_FOUND', 'the task is not in this list')
@@ -142,12 +181,21 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     if (task.data.listId === tx.payload.listId) await tx.update('task', task, { listId: null, sectionId: null })
     return result
   },
-  'tasks.share': { op: transition('task', tx => ({ sharedWorkspaceId: tx.payload.workspaceId, ...(tx.payload.listId ? { listId: tx.payload.listId } : {}) })), event: 'task.task_shared' },
+  'tasks.share': {
+    event: 'task.task_shared',
+    op: async tx => {
+      await authorizeWorkspace(tx, tx.payload.workspaceId)
+      await authorizeId(tx, 'task-list', tx.payload.listId, 'write')
+      return transition('task', t => ({ sharedWorkspaceId: t.payload.workspaceId, ...(t.payload.listId ? { listId: t.payload.listId } : {}) }))(tx)
+    },
+  },
   'tasks.add_dependency': async tx => {
     const task = await tx.requireTarget('task')
     const other = tx.payload.blocks ?? tx.payload.blockedBy
     await tx.require('task', other)
     if (other === task.id) throw new CommandRejection('VALIDATION', 'a task cannot depend on itself')
+    // The other task is only referenced by the dependency.
+    await authorizeRef(tx, { kind: 'task', id: other }, 'read')
     const [from, to] = tx.payload.blocks ? [task.id, other] : [other, task.id]
     const link = await addLink(tx, { kind: 'task', id: from }, { kind: 'task', id: to }, 'blocks')
     return { collection: 'entity-link', id: link.id, revision: link.revision, ref: tx.rawTarget ?? null, changes: ['blocks'] }
@@ -157,19 +205,27 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     if (tx.ctx.authority === 'local' && tx.payload.ownerType !== undefined && tx.payload.ownerType !== 'user') {
       throw new CommandRejection('VALIDATION', 'local task lists are personal (ownerType user)')
     }
+    await authorizeListOwner(tx)
+    await authorizeId(tx, 'task-list-group', tx.payload.groupId, 'write')
     return create('task-list', payloadFields(), { defaults: tx => ({ ownerType: 'user', ownerId: tx.actor, sortKey: 'a0', statusSetEnabled: false }) })(tx)
   },
-  'task_lists.update': update('task-list'),
+  'task_lists.update': async tx => {
+    // v2 project.completedAt is the archive state: a local list is completed with task_lists.archive.
+    if (tx.ctx.authority === 'local' && tx.payload.completedAt !== undefined) throw new CommandRejection('VALIDATION', 'completedAt is set with task_lists.archive on the local authority')
+    await authorizeId(tx, 'task-list-group', tx.payload.groupId, 'write')
+    return update('task-list')(tx)
+  },
   'task_lists.archive': transition('task-list', tx => ({ archivedAt: tx.payload.archived === false ? null : tx.now })),
   'task_lists.delete': softDelete('task-list'),
   ...workspaceOnly({
     'task_sections.create': async tx => {
       await tx.require('task-list', tx.payload.taskListId)
-      return create('task-section', payloadFields(), { defaults: () => ({ sortKey: 'a0' }) })(tx)
+      return create('task-section', payloadFields(), { defaults: () => ({ sortKey: 'a0' }), container: { kind: 'task-list', field: 'taskListId' } })(tx)
     },
     'task_sections.update': update('task-section'),
     'task_sections.move': async tx => {
       if (tx.payload.taskListId) await tx.require('task-list', tx.payload.taskListId)
+      await authorizeId(tx, 'task-list', tx.payload.taskListId, 'write')
       return update('task-section')(tx)
     },
     'task_sections.delete': softDelete('task-section'),
@@ -188,6 +244,7 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
   'tasks.create_many_from_checklist': {
     event: 'task.task_adding',
     op: async tx => {
+      await authorizeTaskOrigin(tx, tx.payload.docRef as EntityRef)
       const items = (tx.payload.items as Array<{ blockId: string; text: string }>).map((item, index) => ({
         item, id: tx.newId(`item-${index}`), origin: { ...tx.payload.docRef, fragment: `block-${item.blockId}` } as EntityRef,
       }))

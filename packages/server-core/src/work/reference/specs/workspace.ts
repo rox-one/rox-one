@@ -6,7 +6,8 @@
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { deterministicId, isDeleted, type ReferenceOutcome, type ReferenceTx } from '../engine'
-import { addLink, boundRef, create, omit, patchMany, payloadFields, refString, removeLink, setting, softDelete, storedAclRole, subjectTypeOf, targetRef, transition, update, validateLink } from '../ops'
+import { addLink, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, boundRef, create, omit, patchMany, payloadFields, refString, removeLink, setting, softDelete, storedAclRole, subjectTypeOf, targetRef, transition, update, validateLink } from '../ops'
+import { REFERENCE_COLLECTIONS } from '../collections'
 import type { RecordData, StoredRecord } from '../types'
 import { appendMessage } from './messenger'
 import { taskDefaults } from './tasks'
@@ -26,6 +27,10 @@ async function defaultCalendar(tx: ReferenceTx): Promise<string> {
 }
 
 async function createEvent(tx: ReferenceTx, fields: RecordData, origin?: EntityRef): Promise<ReferenceOutcome> {
+  // A payload calendar must repeat a calendar target and is written into; the room is booked; the origin is only referenced.
+  await authorizeId(tx, 'calendar', fields.calendarId, 'write', { bound: true })
+  await authorizeId(tx, 'room', fields.roomId, 'write')
+  if (origin) await authorizeOrigin(tx, origin)
   const calendarId = (fields.calendarId as string | undefined) ?? tx.targetOf('calendar') ?? await defaultCalendar(tx)
   await tx.require('calendar', calendarId)
   const id = tx.createId()
@@ -60,13 +65,21 @@ export const CALENDAR_REFERENCE_SPECS: ReferenceSpecMap = {
       return out('event-rsvp', row, ['status'], { ref: tx.rawTarget ?? null })
     },
   },
-  'calendar.create_calendar': create('calendar', payloadFields(), { defaults: tx => ({ ownerType: 'principal', ownerId: tx.actor }) }),
+  'calendar.create_calendar': async tx => {
+    const { ownerType, ownerId } = tx.payload
+    if (ownerId !== undefined && (ownerType === undefined || ownerType === 'user') && ownerId !== tx.actor) throw new CommandRejection('FORBIDDEN', 'a personal calendar belongs to its creator')
+    if (ownerType === 'space') await authorizeId(tx, 'space', ownerId, 'write')
+    return create('calendar', payloadFields(), { defaults: t => ({ ownerType: 'principal', ownerId: t.actor }) })(tx)
+  },
   'calendar.subscribe': async tx => {
     const calendar = await tx.require('calendar', tx.payload.calendarId)
+    // A subscription is the actor's own row: the calendar only needs to be readable.
+    await authorizeRef(tx, { kind: 'calendar', id: calendar.id }, 'read')
     const row = await tx.upsert('calendar-subscription', `${calendar.id}:${tx.actor}`, payloadFields('calendarId')(tx) as RecordData, { calendarId: calendar.id, principalId: tx.actor })
     return out('calendar-subscription', row, ['subscribed'], { ref: { kind: 'calendar', id: calendar.id } })
   },
   'calendar.book_room': async tx => {
+    await authorizeId(tx, 'room', tx.payload.roomId, 'write')
     const id = tx.newId('booking')
     const row = await tx.insert('room-booking', id, { ...tx.payload, bookedBy: tx.actor })
     return out('room-booking', row, ['roomId', 'startAt', 'endAt'], { ref: { kind: 'room', id: tx.payload.roomId } })
@@ -78,21 +91,30 @@ export const CALENDAR_REFERENCE_SPECS: ReferenceSpecMap = {
 
 // ── meetings ─────────────────────────────────────────────────────────────
 
-async function hostCall(tx: ReferenceTx): Promise<StoredRecord> {
+/** The payload call is the resource these workspace commands act on: authorized at `write`. */
+async function payloadCall(tx: ReferenceTx): Promise<StoredRecord> {
   const call = await tx.require('call', tx.payload.callId)
+  await authorizeRef(tx, { kind: 'call', id: call.id }, 'write')
+  return call
+}
+
+async function hostCall(tx: ReferenceTx): Promise<StoredRecord> {
+  const call = await payloadCall(tx)
   if (call.data.hostId !== tx.actor) throw new CommandRejection('FORBIDDEN', 'only the host can do this')
   return call
 }
 
 export const MEETINGS_REFERENCE_SPECS: ReferenceSpecMap = {
   'vc.start_meeting': async tx => {
+    await authorizeId(tx, 'calendar-event', tx.payload.eventId, 'read')
+    await authorizeId(tx, 'channel', tx.payload.chatId, 'write')
     const id = tx.createId()
     const record = await tx.insert('call', id, { ...payloadFields('inviteeIds')(tx), hostId: tx.actor, state: 'live', startedAt: tx.now, recording: false })
     await tx.upsert('call-participant', `${id}:${tx.actor}`, { joinedAt: tx.now, role: 'host' }, { callId: id, principalId: tx.actor })
     return out('call', record, ['state'], { result: { invited: tx.payload.inviteeIds ?? [] } })
   },
   'vc.join': async tx => {
-    const call = await tx.require('call', tx.payload.callId)
+    const call = await payloadCall(tx)
     if (call.data.state === 'ended') throw new CommandRejection('VALIDATION', 'meeting has ended')
     const row = await tx.upsert('call-participant', `${call.id}:${tx.actor}`, { joinedAt: tx.now, ...payloadFields('callId')(tx) }, { callId: call.id, principalId: tx.actor })
     return out('call-participant', row, ['joinedAt'], { ref: { kind: 'call', id: call.id } })
@@ -101,6 +123,11 @@ export const MEETINGS_REFERENCE_SPECS: ReferenceSpecMap = {
   'vc.set_recording': async tx => out('call', await tx.update('call', await hostCall(tx), { recording: tx.payload.recording }), ['recording']),
   'meetings.publish_outcomes': async tx => {
     const source = targetRef(tx)
+    await authorizeId(tx, 'note', tx.payload.notesDocId, 'read')
+    for (const decision of (tx.payload.decisions ?? []) as RecordData[]) if (decision.source) await authorizeRef(tx, decision.source as EntityRef, 'read')
+    // The destination chat is posted into (authorizer `write` + membership + posting policy), checked before the first write.
+    const chat = tx.payload.toChatId ? await tx.require('channel', tx.payload.toChatId) : null
+    if (chat) await authorizeRef(tx, { kind: 'channel', id: chat.id }, 'write')
     const tasks: string[] = []
     for (const [index, task] of ((tx.payload.tasks ?? []) as RecordData[]).entries()) {
       const id = tx.newId(`task-${index}`)
@@ -114,15 +141,14 @@ export const MEETINGS_REFERENCE_SPECS: ReferenceSpecMap = {
       await tx.insert('doc-block', id, { docKind: source.kind, docId: source.id, kind: 'decision', ...decision })
       decisions.push(id)
     }
-    if (tx.payload.toChatId) {
-      const chat = await tx.require('channel', tx.payload.toChatId)
-      await appendMessage(tx, chat, { doc: '', unfurls: [{ ref: source }] }, {}, 'outcomes')
-    }
+    if (chat) await appendMessage(tx, chat, { doc: '', unfurls: [{ ref: source }] }, {}, 'outcomes')
     return { collection: 'doc-block', id: decisions[0] ?? tasks[0] ?? tx.newId('outcomes'), ref: source, changes: ['tasks', 'decisions'], result: { tasks, decisions } }
   },
 }
 
 // ── people & contacts ────────────────────────────────────────────────────
+
+const invite = create('invitation', payloadFields('spaceIds'), { defaults: tx => ({ status: 'pending', invitedBy: tx.actor, expiresAt: later(tx, 14), targets: tx.payload.spaceIds ?? [] }) })
 
 export const CONTACTS_REFERENCE_SPECS: ReferenceSpecMap = {
   'people.update_profile': async tx => out('person', await tx.upsert('person', tx.actor, payloadFields()(tx) as RecordData, { principalId: tx.actor }), Object.keys(tx.payload).sort()),
@@ -131,10 +157,11 @@ export const CONTACTS_REFERENCE_SPECS: ReferenceSpecMap = {
     if (tx.payload.managerId === personId) throw new CommandRejection('VALIDATION', 'a person cannot manage themselves')
     return out('person', await tx.upsert('person', personId, { managerId: tx.payload.managerId }, { principalId: personId }), ['managerId'])
   },
-  'people.invite': { op: create('invitation', payloadFields('spaceIds'), { defaults: tx => ({ status: 'pending', invitedBy: tx.actor, expiresAt: later(tx, 14), targets: tx.payload.spaceIds ?? [] }) }), event: 'people.invitations_sent' },
+  'people.invite': { op: async tx => { for (const spaceId of (tx.payload.spaceIds ?? []) as string[]) await authorizeId(tx, 'space', spaceId, 'write'); return invite(tx) }, event: 'people.invitations_sent' },
   'people.convert_to_guest': async tx => {
     const personId = tx.target('person')
     if (personId === tx.actor) throw new CommandRejection('FORBIDDEN', 'cannot convert yourself to a guest')
+    for (const spaceId of (tx.payload.keepSpaceIds ?? []) as string[]) await authorizeId(tx, 'space', spaceId, 'write')
     return out('person', await tx.upsert('person', personId, { role: 'guest', state: 'guest', ...(tx.payload.keepSpaceIds ? { keepSpaceIds: tx.payload.keepSpaceIds } : {}) }, { principalId: personId }), ['role'])
   },
   'people.add_workspace_member': { op: async tx => out('person', await tx.upsert('person', tx.payload.principalId, { role: tx.payload.role, state: 'active' }, { principalId: tx.payload.principalId }), ['role'], { ref: { kind: 'person', id: tx.payload.principalId } }), event: 'people.member_added' },
@@ -142,16 +169,23 @@ export const CONTACTS_REFERENCE_SPECS: ReferenceSpecMap = {
   'contacts.update_card': update('contact-card'),
   'contacts.merge_cards': async tx => {
     const card = await tx.requireTarget('contact-card')
+    const kind = targetRef(tx).kind
+    // Every source is deleted by the merge: same owner scope as the target and `destroy` on it, all checked before the first write.
+    const sources: StoredRecord[] = []
     for (const sourceId of tx.payload.sourceIds as string[]) {
       if (sourceId === card.id) throw new CommandRejection('VALIDATION', 'cannot merge a card into itself')
       const source = await tx.require('contact-card', sourceId)
-      await tx.update('contact-card', source, { mergedInto: card.id, deletedAt: tx.now })
+      if (source.data.ownerScope !== card.data.ownerScope || source.data.ownerId !== card.data.ownerId) throw new CommandRejection('FORBIDDEN', `contact card ${sourceId} has another owner`)
+      await authorizeRef(tx, { kind, id: source.id } as EntityRef, 'destroy')
+      sources.push(source)
     }
+    for (const source of sources) await tx.update('contact-card', source, { mergedInto: card.id, deletedAt: tx.now })
     const merged = [...new Set([...((card.data.mergedFrom as string[] | undefined) ?? []), ...tx.payload.sourceIds])]
     return out('contact-card', await tx.update('contact-card', card, { mergedFrom: merged }), ['mergedFrom'])
   },
   'contacts.star': update('contact-card'),
-  'contacts.add_touch': update('contact-card', (tx, current) => {
+  'contacts.add_touch': update('contact-card', async (tx, current) => {
+    if (tx.payload.source) await authorizeRef(tx, tx.payload.source as EntityRef, 'read')
     const touch = { at: tx.payload.at ?? tx.now, ...omit(tx.payload, ['at']), ...(tx.payload.source ? { source: refString(tx.payload.source) } : {}) }
     return { lastTouchAt: touch.at, touches: [...((current!.data.touches as RecordData[] | undefined) ?? []), touch] }
   }),
@@ -196,10 +230,11 @@ export const SOCIAL_REFERENCE_SPECS: ReferenceSpecMap = {
   'comments.create': {
     event: 'entities.comment_added',
     op: async tx => {
-      const parent = (tx.payload.parent as EntityRef | undefined) ?? targetRef(tx)
+      // The commented entity is the authorized target (a payload parent may only repeat it).
+      const parent = boundRef(tx, tx.payload.parent as EntityRef | undefined, { requireTarget: true })
       if (tx.payload.threadId) {
         const root = await tx.require('comment', tx.payload.threadId)
-        if (root.data.resourceId !== parent.id) throw new CommandRejection('NOT_FOUND', 'thread is not on this entity')
+        if (root.data.resourceKind !== parent.kind || root.data.resourceId !== parent.id) throw new CommandRejection('NOT_FOUND', 'thread is not on this entity')
       }
       const id = tx.createId()
       const record = await tx.insert('comment', id, {
@@ -219,6 +254,7 @@ export const SOCIAL_REFERENCE_SPECS: ReferenceSpecMap = {
     event: 'task.task_adding',
     op: async tx => {
       const comment = await tx.requireTarget('comment')
+      await authorizeId(tx, 'task-list', tx.payload.listId, 'write')
       const content = comment.data.content
       const id = tx.createId()
       const record = await tx.insert('task', id, { ...(await taskDefaults(tx)), title: tx.payload.title ?? (typeof content === 'string' ? content.slice(0, 500) : `comment:${comment.id}`), ...(tx.payload.listId ? { listId: tx.payload.listId } : {}), ...(tx.payload.assigneeIds ? { assigneeIds: tx.payload.assigneeIds } : {}), origin: { kind: 'comment', id: comment.id } })
@@ -255,7 +291,12 @@ export const NOTIFY_REFERENCE_SPECS: ReferenceSpecMap = {
     if (tx.payload.quietHours !== undefined) last = await tx.upsert('notification-pref', `${tx.actor}:quiet-hours`, { quietHours: tx.payload.quietHours }, { principalId: tx.actor })
     return out('notification-pref', last!, ['prefs'], { ref: null })
   },
-  'reminders.create': create('reminder', tx => ({ remindAt: tx.payload.remindAt, ...(tx.payload.note ? { note: tx.payload.note } : {}), subjectRef: refString(boundRef(tx, tx.payload.subject as EntityRef | undefined)) }), { defaults: tx => ({ state: 'scheduled', ownerId: tx.actor }) }),
+  'reminders.create': async tx => {
+    // A reminder only references its subject: the target, or a readable payload subject.
+    const subject = boundRef(tx, tx.payload.subject as EntityRef | undefined)
+    await authorizeRef(tx, subject, 'read')
+    return create('reminder', t => ({ remindAt: t.payload.remindAt, ...(t.payload.note ? { note: t.payload.note } : {}), subjectRef: refString(subject) }), { defaults: t => ({ state: 'scheduled', ownerId: t.actor }) })(tx)
+  },
   'reminders.cancel': transition('reminder', () => ({ state: 'cancelled' })),
 }
 
@@ -272,6 +313,28 @@ const aclId = (tx: ReferenceTx, subject: EntityRef, kind: string, id: string) =>
 async function grant(tx: ReferenceTx, subject: EntityRef, principal: { kind: string; id: string }, role: string): Promise<StoredRecord> {
   const subjectType = subjectTypeOf(principal.kind)
   return tx.upsert('acl-entry', aclId(tx, subject, subjectType, principal.id), { role: storedAclRole(role), grantedBy: tx.actor }, { resourceType: subject.kind, resourceId: subject.id, subjectType, subjectId: principal.id })
+}
+
+/** Collection whose records are refs of `kind` (resources an ACL entry can name). */
+function collectionOfKind(kind: string): string | undefined {
+  return Object.entries(REFERENCE_COLLECTIONS).find(([, spec]) => (spec as { kind?: string }).kind === kind)?.[0]
+}
+
+/**
+ * Only the current owner transfers ownership: the actor's ACL entry on the
+ * resource is `owner`, or — while the resource has no ACL entry for the actor
+ * at all — the actor created / owns the record.
+ */
+async function requireOwner(tx: ReferenceTx, subject: EntityRef): Promise<void> {
+  const entry = await tx.get('acl-entry', aclId(tx, subject, 'principal', tx.actor))
+  if (entry && !isDeleted(entry)) {
+    if (entry.data.role !== storedAclRole('owner')) throw new CommandRejection('FORBIDDEN', 'only the owner can transfer ownership')
+    return
+  }
+  const collection = collectionOfKind(subject.kind)
+  const record = collection ? await tx.get(collection, subject.id) : null
+  const owner = record ? record.data.ownerId ?? record.data.ownerPrincipalId ?? record.data.createdBy : undefined
+  if (owner !== tx.actor) throw new CommandRejection('FORBIDDEN', 'only the owner can transfer ownership')
 }
 
 export const ACL_REFERENCE_SPECS: ReferenceSpecMap = {
@@ -306,7 +369,9 @@ export const ACL_REFERENCE_SPECS: ReferenceSpecMap = {
   'acl.transfer_ownership': async tx => {
     const subject = aclSubject(tx)
     if (tx.payload.toPrincipalId === tx.actor) throw new CommandRejection('VALIDATION', 'already the owner')
+    await requireOwner(tx, subject)
     const owner = await grant(tx, subject, { kind: 'user', id: tx.payload.toPrincipalId }, 'owner')
+    // The previous owner keeps full access, no longer ownership.
     await grant(tx, subject, { kind: 'user', id: tx.actor }, 'full_access')
     return out('acl-entry', owner, ['role'], { ref: subject })
   },
@@ -314,7 +379,16 @@ export const ACL_REFERENCE_SPECS: ReferenceSpecMap = {
 
 // ── entities ─────────────────────────────────────────────────────────────
 
-const DROP_RELATIONS: Record<string, string> = { link: 'relates-to', embed: 'embeds', attach: 'attached-to' }
+/**
+ * Drop intent → link. `embed`: the target embeds the dropped source (target →
+ * source, like a doc block); `link` / `attach`: the source links to / is
+ * attached to the target (source → target, so the source is the FROM side).
+ */
+const DROP_LINKS: Record<string, { relation: string; fromTarget: boolean }> = {
+  link: { relation: 'relates-to', fromTarget: false },
+  embed: { relation: 'embeds', fromTarget: true },
+  attach: { relation: 'attached-to', fromTarget: false },
+}
 const pinKey = (tx: ReferenceTx, entity: EntityRef) => `${tx.actor}:${tx.rawTarget ? refString(tx.rawTarget) : 'workspace'}:${refString(entity)}`
 
 export const ENTITIES_REFERENCE_SPECS: ReferenceSpecMap = {
@@ -322,6 +396,8 @@ export const ENTITIES_REFERENCE_SPECS: ReferenceSpecMap = {
     event: 'entities.link_added',
     op: async tx => {
       const from = boundRef(tx, tx.payload.from as EntityRef | undefined, { requireTarget: true })
+      // The TO side is only referenced.
+      await authorizeRef(tx, tx.payload.to as EntityRef, 'read')
       const link = await addLink(tx, from, tx.payload.to, tx.payload.relation, { ...(tx.payload.role ? { role: tx.payload.role } : {}), ...(tx.payload.anchor ? { anchor: tx.payload.anchor } : {}) })
       return out('entity-link', link, ['relation'], { ref: from })
     },
@@ -330,6 +406,7 @@ export const ENTITIES_REFERENCE_SPECS: ReferenceSpecMap = {
     event: 'entities.link_removed',
     op: async tx => {
       const from = boundRef(tx, tx.payload.from as EntityRef | undefined, { requireTarget: true })
+      await authorizeRef(tx, tx.payload.to as EntityRef, 'read')
       const link = await removeLink(tx, from, tx.payload.to, tx.payload.relation)
       if (!link) throw new CommandRejection('NOT_FOUND', 'link not found')
       return out('entity-link', link, ['relation'], { ref: from })
@@ -337,13 +414,20 @@ export const ENTITIES_REFERENCE_SPECS: ReferenceSpecMap = {
   },
   'entities.drop': async tx => {
     const target = targetRef(tx)
+    const source = tx.payload.source as EntityRef
+    const link = DROP_LINKS[tx.payload.intent]
+    // A link FROM the source writes it (`write`); otherwise the source is only referenced.
+    await authorizeRef(tx, source, link && !link.fromTarget ? 'write' : 'read')
+    if (link) validateLink(link.fromTarget ? target : source, link.fromTarget ? source : target, link.relation)
     const id = tx.newId('drop')
-    const record = await tx.insert('entity-drop', id, { targetRef: refString(target), sourceRef: refString(tx.payload.source), intent: tx.payload.intent })
-    const relation = DROP_RELATIONS[tx.payload.intent]
-    if (relation) await addLink(tx, tx.payload.source, target, relation, { role: 'drop' })
+    const record = await tx.insert('entity-drop', id, { targetRef: refString(target), sourceRef: refString(source), intent: tx.payload.intent })
+    if (link) await addLink(tx, link.fromTarget ? target : source, link.fromTarget ? source : target, link.relation, { role: 'drop' })
     return out('entity-drop', record, ['intent'], { ref: target })
   },
-  'entities.pin': async tx => out('entity-pin', await tx.upsert('entity-pin', pinKey(tx, tx.payload.entity), { sortKey: tx.payload.sortKey ?? 'a0' }, { principalId: tx.actor, entityRef: refString(tx.payload.entity) }), ['pinned'], { ref: tx.payload.entity }),
+  'entities.pin': async tx => {
+    await authorizeRef(tx, tx.payload.entity as EntityRef, 'read')
+    return out('entity-pin', await tx.upsert('entity-pin', pinKey(tx, tx.payload.entity), { sortKey: tx.payload.sortKey ?? 'a0' }, { principalId: tx.actor, entityRef: refString(tx.payload.entity) }), ['pinned'], { ref: tx.payload.entity })
+  },
   'entities.unpin': async tx => {
     const pin = await tx.get('entity-pin', pinKey(tx, tx.payload.entity))
     if (!pin || isDeleted(pin)) throw new CommandRejection('NOT_FOUND', 'not pinned')
@@ -362,6 +446,8 @@ const placeholderKey = (tx: ReferenceTx) => deterministicId(tx.ctx.workspaceId, 
 
 async function placeholderIn(tx: ReferenceTx, state: string): Promise<StoredRecord> {
   const placeholder = await tx.require('placeholder', tx.payload.placeholderId)
+  // The placeholder person is the resource these workspace commands change.
+  await authorizeRef(tx, { kind: 'person', id: placeholder.id }, 'write')
   if (placeholder.data.state !== state) throw new CommandRejection('VALIDATION', `placeholder is ${String(placeholder.data.state)}`)
   return placeholder
 }
@@ -398,17 +484,31 @@ export const AGENTS_REFERENCE_SPECS: ReferenceSpecMap = {
     if (current) return out('agent', current, [], { ref: null, result: { existed: true } })
     return out('agent', await tx.insert('agent', id, { ownerId: tx.payload.ownerId, ...(tx.payload.name ? { name: tx.payload.name } : {}), status: 'active' }), ['status'], { ref: null, result: { existed: false } })
   },
+  /**
+   * Personal agents run for their owner. The reference invocation is queued
+   * behind a pending approval (id = invocation id) its owner decides with
+   * `agents.decide_approval`; context refs are only read.
+   */
   'agents.invoke': async tx => {
     const agent = await tx.require('agent', tx.payload.agentId)
+    if (agent.data.ownerId !== tx.actor) throw new CommandRejection('FORBIDDEN', 'only the owner can invoke a personal agent')
     if (agent.data.status === 'paused') throw new CommandRejection('UNAVAILABLE', 'agent is paused')
+    for (const ref of (tx.payload.context ?? []) as EntityRef[]) await authorizeRef(tx, ref, 'read')
     const id = tx.createId()
-    return out('agent-invocation', await tx.insert('agent-invocation', id, { ...payloadFields()(tx), status: 'queued', invokedBy: tx.actor }), ['status'], { ref: tx.rawTarget ?? null })
+    await tx.assertAbsent('agent-invocation', id)
+    await tx.assertAbsent('agent-approval', id)
+    const record = await tx.insert('agent-invocation', id, { ...payloadFields()(tx), status: 'queued', invokedBy: tx.actor, approvalId: id })
+    await tx.insert('agent-approval', id, { invocationId: id, agentId: agent.id, status: 'pending', approverIds: [String(agent.data.ownerId)], requestedBy: tx.actor })
+    return out('agent-invocation', record, ['status'], { ref: tx.rawTarget ?? null, result: { approvalId: id } })
   },
   'agents.decide_approval': async tx => {
-    const current = await tx.get('agent-approval', tx.payload.approvalId)
-    if (current?.data.decision) throw new CommandRejection('VALIDATION', 'approval already decided')
-    if (typeof current?.data.expiresAt === 'string' && Date.parse(current.data.expiresAt) <= Date.parse(tx.now)) throw new CommandRejection('VALIDATION', 'approval expired')
-    const record = await tx.upsert('agent-approval', tx.payload.approvalId, { decision: tx.payload.decision, decidedBy: tx.actor, decidedAt: tx.now, ...(tx.payload.note ? { note: tx.payload.note } : {}) })
+    // Only an existing, pending approval can be decided, and only by one of its approvers.
+    const current = await tx.require('agent-approval', tx.payload.approvalId)
+    if (current.data.decision || (current.data.status !== undefined && current.data.status !== 'pending')) throw new CommandRejection('VALIDATION', 'approval already decided')
+    if (typeof current.data.expiresAt === 'string' && Date.parse(current.data.expiresAt) <= Date.parse(tx.now)) throw new CommandRejection('VALIDATION', 'approval expired')
+    const approvers = Array.isArray(current.data.approverIds) ? (current.data.approverIds as unknown[]).map(String) : typeof current.data.approverId === 'string' ? [current.data.approverId] : []
+    if (!approvers.includes(tx.actor)) throw new CommandRejection('FORBIDDEN', 'not an approver of this request')
+    const record = await tx.update('agent-approval', current, { status: tx.payload.decision === 'approve' ? 'approved' : 'denied', decision: tx.payload.decision, decidedBy: tx.actor, decidedAt: tx.now, ...(tx.payload.note ? { note: tx.payload.note } : {}) })
     return out('agent-approval', record, ['decision'], { ref: null })
   },
   'agents.pause': async tx => out('agent', await tx.update('agent', await ownAgent(tx), { status: tx.payload.paused === false ? 'active' : 'paused' }), ['status'], { ref: null }),
@@ -422,6 +522,7 @@ export const WORKPLACE_REFERENCE_SPECS: ReferenceSpecMap = {
     const chatId = tx.target('channel')
     if (tx.payload.chatId !== undefined && tx.payload.chatId !== chatId) throw new CommandRejection('FORBIDDEN', 'chatId must match the target chat')
     const chat = await tx.require('channel', chatId)
+    await authorizeRef(tx, { kind: 'mail-thread', id: tx.payload.threadId }, 'read')
     const message = await appendMessage(tx, chat, { doc: tx.payload.comment ?? '', unfurls: [{ ref: { kind: 'mail-thread', id: tx.payload.threadId } }] })
     return out('channel-message', message, ['content'], { result: { seq: message.data.seq } })
   },
@@ -429,6 +530,8 @@ export const WORKPLACE_REFERENCE_SPECS: ReferenceSpecMap = {
     event: 'task.task_adding',
     op: async tx => {
       const origin: EntityRef = { kind: 'mail-thread', id: tx.payload.threadId }
+      await authorizeBound(tx, origin, 'read')
+      await authorizeId(tx, 'task-list', tx.payload.listId, 'write')
       const id = tx.createId()
       validateLink({ kind: 'task', id }, origin, 'derived-from')
       await tx.assertAbsent('task', id)
@@ -447,6 +550,7 @@ export const WORKPLACE_REFERENCE_SPECS: ReferenceSpecMap = {
     event: 'projects.project_created',
     op: async tx => {
       const template = await tx.requireTarget('project-template')
+      await authorizeId(tx, 'space', tx.payload.spaceId, 'write')
       const id = tx.createId()
       const base = ((template.data.payload as RecordData | undefined)?.project ?? {}) as RecordData
       return out('project', await tx.insert('project', id, { ...base, status: 'active', name: tx.payload.name, championId: tx.actor, templateId: template.id, ...(tx.payload.spaceId ? { spaceId: tx.payload.spaceId } : {}), ...(tx.payload.startOn ? { startedAt: tx.payload.startOn } : {}) }), ['name'])
@@ -463,5 +567,9 @@ export const WORKPLACE_REFERENCE_SPECS: ReferenceSpecMap = {
     const types = (tx.payload.commands as Array<{ type: string }>).map(command => command.type)
     return out('command-batch', await tx.insert('command-batch', id, { types, atomic: tx.payload.atomic, status: 'accepted' }), ['status'], { ref: tx.rawTarget ?? null })
   },
-  'forms.configure_on_submit': setting('form-hook', tx => refString(tx.payload.formRef), tx => ({ formRef: refString(tx.payload.formRef), actions: tx.payload.actions })),
+  /** The form is the authorized target (a payload formRef may only repeat it). */
+  'forms.configure_on_submit': async tx => {
+    const form = boundRef(tx, tx.payload.formRef as EntityRef, { requireTarget: true })
+    return setting('form-hook', () => refString(form), t => ({ formRef: refString(form), actions: t.payload.actions }))(tx)
+  },
 }

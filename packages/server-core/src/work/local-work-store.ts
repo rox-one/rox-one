@@ -11,6 +11,11 @@
  * File format: `{ id, collection, revision, schemaVersion, record, deleted? }`.
  * Writes are atomic (tmp file + rename) and compare-and-set on `revision`.
  * Directories are created 0700 and files 0600 (same policy as `.rox/`).
+ *
+ * File names are case-unique (`encodeWorkId` escapes upper case), so ids that
+ * differ only in case never share a file on a case-insensitive filesystem.
+ * Files written by the first W1-06 build (upper case kept literally) are
+ * still read; a write moves them to the new name.
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
@@ -34,14 +39,27 @@ export type LocalWorkPutResult<T> =
 
 const COLLECTION_RE = /^[a-z][a-z0-9-]{0,63}$/
 
-/** Filesystem-safe, reversible id encoding (`%XX` for anything outside `[A-Za-z0-9._-]`). */
-export function encodeWorkId(id: string): string {
+function encodeWith(id: string, literal: RegExp): string {
   if (!id || id.length > 256) throw new TypeError('Invalid work record id')
   const encoded = Array.from(new TextEncoder().encode(id), byte => {
     const char = String.fromCharCode(byte)
-    return /[A-Za-z0-9_-]/.test(char) || (char === '.' && id !== '.' && id !== '..') ? char : `%${byte.toString(16).toUpperCase().padStart(2, '0')}`
+    return literal.test(char) || (char === '.' && id !== '.' && id !== '..') ? char : `%${byte.toString(16).toUpperCase().padStart(2, '0')}`
   }).join('')
   return encoded.startsWith('.') ? `%2E${encoded.slice(1)}` : encoded
+}
+
+/**
+ * Filesystem-safe, reversible, case-unique id encoding: `%XX` for anything
+ * outside `[a-z0-9._-]` (upper case too, so `Goal` and `goal` never collide on
+ * a case-insensitive filesystem). Decodes with `decodeURIComponent`.
+ */
+export function encodeWorkId(id: string): string {
+  return encodeWith(id, /[a-z0-9_-]/)
+}
+
+/** The first W1-06 encoding (upper case literal): read and migrated on write. */
+export function legacyEncodeWorkId(id: string): string {
+  return encodeWith(id, /[A-Za-z0-9_-]/)
 }
 
 export function decodeWorkId(name: string): string {
@@ -59,22 +77,37 @@ export class LocalWorkStore {
     return join(this.collectionDir(collection), `${encodeWorkId(id)}.json`)
   }
 
+  /** Pre-case-unique file name of `id` (equal to `path` for ids without upper case). */
+  legacyPath(collection: string, id: string): string {
+    return join(this.collectionDir(collection), `${legacyEncodeWorkId(id)}.json`)
+  }
+
   get<T = Record<string, unknown>>(collection: string, id: string): LocalWorkRecord<T> | null {
     const path = this.path(collection, id)
-    if (!existsSync(path)) return null
-    return parseRecord<T>(readFileSync(path, 'utf8'), collection, id)
+    // parseRecord checks the stored id: on a case-insensitive filesystem a
+    // legacy name can resolve to another record's file.
+    const current = existsSync(path) ? parseRecord<T>(readFileSync(path, 'utf8'), collection, id) : null
+    if (current) return current
+    const legacy = this.legacyPath(collection, id)
+    if (legacy === path || !existsSync(legacy)) return null
+    return parseRecord<T>(readFileSync(legacy, 'utf8'), collection, id)
   }
 
   list<T = Record<string, unknown>>(collection: string): LocalWorkRecord<T>[] {
     const dir = this.collectionDir(collection)
     if (!existsSync(dir)) return []
     const out: LocalWorkRecord<T>[] = []
+    const seen = new Set<string>()
     for (const name of readdirSync(dir).sort()) {
       if (!name.endsWith('.json')) continue
       let id: string
       try { id = decodeWorkId(name.slice(0, -5)) } catch { continue }
+      // A record can be listed under its legacy and its new name (mid-migration).
+      if (seen.has(id)) continue
       const record = this.get<T>(collection, id)
-      if (record) out.push(record)
+      if (!record) continue
+      seen.add(id)
+      out.push(record)
     }
     return out
   }
@@ -100,22 +133,48 @@ export class LocalWorkStore {
     const dir = this.collectionDir(file.collection)
     mkdirSync(dir, { recursive: true, mode: 0o700 })
     const path = this.path(file.collection, file.id)
-    const tmp = `${path}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`
-    writeFileSync(tmp, `${JSON.stringify(file, null, 2)}\n`, { mode: 0o600 })
-    renameSync(tmp, path)
+    // Case-insensitive filesystem: the new name can resolve to a legacy file of
+    // another id (`Goal.json` for `goal`). Move that record to its own new name first.
+    const occupant = existsSync(path) ? storedId(path) : undefined
+    if (occupant !== undefined && occupant !== file.id) {
+      atomicWrite(this.path(file.collection, occupant), readFileSync(path, 'utf8'))
+      unlinkSync(path)
+    }
+    atomicWrite(path, `${JSON.stringify(file, null, 2)}\n`)
+    const legacy = this.legacyPath(file.collection, file.id)
+    if (legacy !== path && existsSync(legacy) && storedId(legacy) === file.id) unlinkSync(legacy)
   }
 
-  /** Hard delete (association rows). */
+  /** Hard delete (association rows): the new and the legacy file of `id`. */
   remove(collection: string, id: string): boolean {
-    const path = this.path(collection, id)
-    if (!existsSync(path)) return false
-    unlinkSync(path)
-    return true
+    let removed = false
+    for (const path of new Set([this.path(collection, id), this.legacyPath(collection, id)])) {
+      if (!existsSync(path) || storedId(path) !== id) continue
+      unlinkSync(path)
+      removed = true
+    }
+    return removed
   }
 
   private collectionDir(collection: string): string {
     if (!COLLECTION_RE.test(collection)) throw new TypeError(`Invalid work collection: ${collection}`)
     return join(this.root, collection)
+  }
+}
+
+function atomicWrite(path: string, content: string): void {
+  const tmp = `${path}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`
+  writeFileSync(tmp, content, { mode: 0o600 })
+  renameSync(tmp, path)
+}
+
+/** The id stored in a record file (undefined when unreadable). */
+function storedId(path: string): string | undefined {
+  try {
+    const raw: unknown = JSON.parse(readFileSync(path, 'utf8'))
+    return raw && typeof raw === 'object' && typeof (raw as { id?: unknown }).id === 'string' ? (raw as { id: string }).id : undefined
+  } catch {
+    return undefined
   }
 }
 

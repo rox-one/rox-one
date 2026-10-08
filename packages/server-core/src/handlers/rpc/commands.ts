@@ -12,6 +12,7 @@
  * answers `{ enabled: false, commands: [] }`.
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import { isCommandBusEnabled } from '@rox/shared/feature-flags'
@@ -24,6 +25,7 @@ import {
   type CommandReceipt,
   type CommandRegistry,
   type ExecutionAuthority,
+  CommandRejection,
 } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
@@ -62,6 +64,14 @@ export interface CommandsHandlerRuntime {
   referenceRuntime?: Partial<ReferenceRuntime>
 }
 
+/** Per-`commands:execute` scope: who is executing, and whether the PersonalTask store changed. */
+interface CommandScope {
+  principalScoped: boolean
+  tasksChanged: boolean
+}
+
+const commandScope = new AsyncLocalStorage<CommandScope>()
+
 let sharedRegistry: CommandRegistry | null = null
 let sharedBus: InProcessEventBus | null = null
 
@@ -94,11 +104,26 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
   const routers = new Map<string, { router: CommandRouter; store: CommandStore }>()
 
   // W1-06: reference handlers write `{workspaceRoot}/work/` and the PersonalTask v3 store on the local authority.
+  const pushTasksChanged = () => pushTyped(server, RPC_CHANNELS.personalTasks.CHANGED, { to: 'all' }, { at: Date.now() })
+  const taskStore = runtime.referenceRuntime?.personalTaskStore ?? (() => personalTasksStore())
   const restoreReferenceRuntime = configureReferenceRuntime({
     workspaceRoot: id => workspaceFor(id)?.rootPath ?? null,
-    personalTaskStore: () => personalTasksStore(),
     isFlagEnabled: flag => flags()?.has(flag) === true,
     ...runtime.referenceRuntime,
+    personalTaskStore: id => {
+      // A principal-scoped session (remote / headless client) owns a native per-scope task store
+      // (`NativePersonalTasksStore`, a different API): its task commands are not on the bus yet.
+      // The other local commands still run; nothing is written to the device owner's store.
+      if (commandScope.getStore()?.principalScoped) throw new CommandRejection('UNAVAILABLE', 'Personal tasks of a principal-scoped session are not available on the command bus yet')
+      return taskStore(id)
+    },
+    // A task / list written through the bus (or a MIG-05 placement) lands in the PersonalTask store:
+    // refresh the Tasks UI like personalTasks:put does, once, after the command finished.
+    personalTasksChanged: () => {
+      const scope = commandScope.getStore()
+      if (scope) scope.tasksChanged = true
+      else pushTasksChanged()
+    },
   })
 
   const unsubscribe = bus.subscribe((workspaceId, frame) => {
@@ -131,11 +156,7 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
         store,
         authority: 'local',
         isEnabled: enabled,
-        publish: events => {
-          bus.publish(events)
-          // A task written through the bus lands in the PersonalTask store: refresh the Tasks UI like personalTasks:put does.
-          if (events.some(event => event.subject?.kind === 'task')) pushTyped(server, RPC_CHANNELS.personalTasks.CHANGED, { to: 'all' }, { at: Date.now() })
-        },
+        publish: events => { bus.publish(events) },
         ...(runtime.authorizer ? { authorizer: runtime.authorizer } : {}),
       })
       const router = new CommandRouter({
@@ -157,12 +178,15 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
       return rejectedReceipt(typeof id === 'string' && id.length <= 256 ? id : '', 'UNAVAILABLE', 'Command bus is disabled')
     }
     const workspace = requireWorkspace(ctx, workspaceId)
+    const scope: CommandScope = { principalScoped: Boolean(ctx.principal), tasksChanged: false }
     try {
-      return await routerFor(workspace).route({ workspaceId: workspace.id, actor: actorFor(ctx), envelope })
+      return await commandScope.run(scope, () => routerFor(workspace).route({ workspaceId: workspace.id, actor: actorFor(ctx), envelope }))
     } catch (error) {
       // Nothing was committed: a retryable RPC error, never a terminal receipt.
       if (error instanceof CommandStoreUnavailable) throw new CodedError('HANDLER_ERROR', 'Command store unavailable; nothing was committed, retry')
       throw error
+    } finally {
+      if (scope.tasksChanged) pushTasksChanged()
     }
   }, { nativeAction: 'write' })
 

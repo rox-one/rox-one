@@ -30,8 +30,15 @@ export interface ReferenceRuntime {
   now(): Date
   /** Local authority: workspace root for `{root}/work/` (null → NOT_FOUND). */
   workspaceRoot(workspaceId: string): string | null
-  /** Local authority: the PersonalTask v3 store backing `task` (null → `work/tasks/`). */
+  /**
+   * Local authority: the PersonalTask v3 store backing `task` / `task-list`
+   * (null → `work/tasks/`). May throw a `CommandRejection` (e.g. UNAVAILABLE
+   * for a principal-scoped session): task commands then answer with it, the
+   * other local commands still run.
+   */
   personalTaskStore(workspaceId: string): PersonalTaskPersistStore | null
+  /** The PersonalTask store changed under the Tasks UI (a task / list write, a MIG-05 placement). */
+  personalTasksChanged(): void
   /** Local authority: link index mirror (null → links stay in `work/links/` only). */
   linkIndex(workspaceRoot: string): LocalLinkIndex | null
   /** Live flag lookup (the link index is only opened while `entities.links.v1` is on). */
@@ -44,6 +51,7 @@ const DEFAULT_RUNTIME: ReferenceRuntime = {
   now: () => new Date(),
   workspaceRoot: () => null,
   personalTaskStore: () => null,
+  personalTasksChanged: () => {},
   linkIndex: root => {
     if (!runtime.isFlagEnabled('entities.links.v1')) return null
     let store = linkStores.get(root)
@@ -80,10 +88,22 @@ export function referenceBackendFor(ctx: CommandHandlerContext<unknown>): Record
     case 'sqlite': {
       const root = runtime.workspaceRoot(ctx.workspaceId)
       if (!root) throw new CommandRejection('NOT_FOUND', 'Workspace not found')
-      const tasks = runtime.personalTaskStore(ctx.workspaceId)
-      // MIG-04/05 (goals.v1): once per workspace and process, before the first local command reads the work store.
-      ensureGoalsMigrated({ workspaceRoot: root, workspaceId: ctx.workspaceId, isFlagEnabled: flag => runtime.isFlagEnabled(flag), tasks, now: () => runtime.now(), actorId: ctx.actor.principalId })
-      return new LocalRecordBackend({ work: new LocalWorkStore({ workspaceRoot: root }), tasks, links: runtime.linkIndex(root) })
+      let tasks: PersonalTaskPersistStore | null = null
+      let tasksUnavailable: unknown
+      try { tasks = runtime.personalTaskStore(ctx.workspaceId) } catch (error) { tasksUnavailable = error }
+      // MIG-04/05 (goals.v1): once per workspace and process, before the first local command reads the work store
+      // (deferred while the task store is unavailable to this session, so MIG-05 placements are never dropped).
+      if (tasksUnavailable === undefined) {
+        const report = ensureGoalsMigrated({ workspaceRoot: root, workspaceId: ctx.workspaceId, isFlagEnabled: flag => runtime.isFlagEnabled(flag), tasks, now: () => runtime.now(), actorId: ctx.actor.principalId })
+        if (report?.status === 'migrated' && report.projects.some(project => project.tasksLinked > 0)) runtime.personalTasksChanged()
+      }
+      return new LocalRecordBackend({
+        work: new LocalWorkStore({ workspaceRoot: root }),
+        tasks,
+        ...(tasksUnavailable !== undefined ? { tasksUnavailable } : {}),
+        links: runtime.linkIndex(root),
+        onTasksChanged: () => runtime.personalTasksChanged(),
+      })
     }
     case 'postgres':
       if (!handle.sql || typeof handle.prefix !== 'string') break
@@ -105,6 +125,6 @@ export function bindReferenceHandlers(registry: CommandRegistry): void {
   for (const [type, spec] of Object.entries(REFERENCE_SPECS)) {
     if (!registry.has(type) || registry.handler(type)) continue
     const { op, event } = typeof spec === 'function' ? { op: spec, event: undefined } : spec
-    registry.bind(type, referenceHandler(type, op, { now: () => runtime.now(), backendFor: referenceBackendFor, ...(event ? { eventType: event } : {}) }))
+    registry.bind(type, referenceHandler(type, op, { now: () => runtime.now(), backendFor: referenceBackendFor, verb: registry.get(type)!.verb, ...(event ? { eventType: event } : {}) }))
   }
 }

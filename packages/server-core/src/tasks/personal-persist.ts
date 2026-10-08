@@ -79,6 +79,10 @@ interface TaskListBusState {
   revision: number
   fingerprint: string
   extra: Record<string, unknown>
+  /** Written by the bus after the Tasks UI last listed (`markTaskListsSeen`): a UI meta write keeps the disk version. */
+  unseen?: boolean
+  /** Removed by the bus (tombstone until the UI listed): a stale UI meta write cannot bring it back. */
+  removed?: boolean
 }
 
 /** Serializes meta.json writers (UI `writeMeta` and the bus list writes). `~` never appears in a task id. */
@@ -289,8 +293,74 @@ export class PersonalTaskPersistStore {
     }
   }
 
+  /**
+   * Full meta write from the Tasks UI (`personalTasks:put`, no base). Merged
+   * against the lists the command bus wrote (`work.listState`), so a stale UI
+   * copy can neither drop nor revert them:
+   * - a bus list missing from the UI write is kept, unless the UI trashed it
+   *   (disk copy trashed, or its last `project.trash|restore` audit entry is a
+   *   trash): `emptyTrash` is the only UI hard delete;
+   * - a bus list the UI has not listed since the bus wrote it keeps the disk
+   *   version; a bus-removed one stays removed;
+   * - any other UI change to a bus list bumps its CAS revision past the one
+   *   the bus last served, so a later stale `task_lists.*` write conflicts.
+   */
   writeMeta(meta: PersonalTaskMeta): void {
-    this.withRecordLock(META_LOCK_ID, () => this.writeMetaUnlocked(meta))
+    this.withRecordLock(META_LOCK_ID, () => {
+      const states = this.readListState()
+      if (Object.keys(states).length === 0) return this.writeMetaUnlocked(meta)
+      const merged = this.mergeUiMeta(meta, this.readMeta(), states)
+      this.writeMetaUnlocked(merged, states)
+    })
+  }
+
+  /** The Tasks UI listed the store: bus writes so far are now visible to it (see `writeMeta`). */
+  markTaskListsSeen(): void {
+    if (!Object.values(this.readListState()).some(state => state.unseen)) return
+    this.withRecordLock(META_LOCK_ID, () => {
+      const states = this.readListState()
+      let changed = false
+      for (const [id, state] of Object.entries(states)) {
+        if (!state.unseen) continue
+        changed = true
+        if (state.removed) delete states[id]
+        else states[id] = { revision: state.revision, fingerprint: state.fingerprint, extra: state.extra }
+      }
+      const meta = this.readMeta()
+      if (changed && meta) this.writeMetaUnlocked(meta, states)
+    })
+  }
+
+  private mergeUiMeta(meta: PersonalTaskMeta, disk: PersonalTaskMeta | null, states: Record<string, TaskListBusState>): PersonalTaskMeta {
+    const projects = [...(meta.projects ?? [])]
+    const lastUiAction = new Map<string, string>()
+    for (const entry of meta.audit ?? []) {
+      if ((entry?.action === 'project.trash' || entry?.action === 'project.restore') && typeof entry.detail === 'string') lastUiAction.set(entry.detail, entry.action)
+    }
+    for (const [id, state] of Object.entries(states)) {
+      const index = projects.findIndex(entry => entry?.id === id)
+      if (state.removed) {
+        if (index >= 0 && state.unseen) projects.splice(index, 1)
+        continue
+      }
+      const onDisk = disk?.projects.find(entry => entry?.id === id) ?? null
+      if (!onDisk) {
+        if (index < 0) delete states[id]
+        continue
+      }
+      if (index < 0) {
+        if (!state.unseen && (onDisk.trashedAt != null || lastUiAction.get(id) === 'project.trash')) delete states[id]
+        else projects.push(onDisk)
+        continue
+      }
+      if (stableJson(projects[index]) === stableJson(onDisk)) continue
+      if (state.unseen) {
+        projects[index] = onDisk
+        continue
+      }
+      states[id] = { ...state, revision: this.projectAsList(onDisk, state).revision + 1, fingerprint: stableJson(projects[index]) }
+    }
+    return { ...meta, projects }
   }
 
   // ── W1-06: v2 projects as v3 task lists (local `task_lists.*`) ─────────
@@ -332,7 +402,7 @@ export class PersonalTaskPersistStore {
       const projects = [...meta.projects]
       if (index >= 0) projects[index] = project
       else projects.push(project)
-      this.writeMetaUnlocked({ ...meta, projects }, { ...states, [id]: { revision, fingerprint: stableJson(project), extra } })
+      this.writeMetaUnlocked({ ...meta, projects }, { ...states, [id]: { revision, fingerprint: stableJson(project), extra, unseen: true } })
       return { status: 'accepted', revision }
     })
   }
@@ -343,7 +413,9 @@ export class PersonalTaskPersistStore {
       const meta = this.readMeta()
       if (!meta || !meta.projects.some(entry => entry?.id === id)) return false
       const states = this.readListState()
-      delete states[id]
+      const project = meta.projects.find(entry => entry?.id === id)!
+      // Tombstone until the UI listed: a stale UI meta write must not resurrect the list.
+      states[id] = { revision: this.projectAsList(project, states[id]).revision + 1, fingerprint: '', extra: {}, removed: true, unseen: true }
       this.writeMetaUnlocked({ ...meta, projects: meta.projects.filter(entry => entry?.id !== id) }, states)
       return true
     })
@@ -355,7 +427,13 @@ export class PersonalTaskPersistStore {
     const out: Record<string, TaskListBusState> = {}
     for (const [id, state] of Object.entries(raw)) {
       if (isPlainRecord(state) && Number.isInteger(state.revision) && typeof state.fingerprint === 'string') {
-        out[id] = { revision: state.revision as number, fingerprint: state.fingerprint, extra: isPlainRecord(state.extra) ? state.extra : {} }
+        out[id] = {
+          revision: state.revision as number,
+          fingerprint: state.fingerprint,
+          extra: isPlainRecord(state.extra) ? state.extra : {},
+          ...(state.unseen === true ? { unseen: true } : {}),
+          ...(state.removed === true ? { removed: true } : {}),
+        }
       }
     }
     return out

@@ -49,19 +49,37 @@ function dataToItem(id: string, data: RecordData, revision: number): WorkItem {
 export interface LocalBackendOptions {
   work: LocalWorkStore
   tasks?: PersonalTaskPersistStore | null
+  /** The task store is not available to this session (thrown on any `task` / `task-list` access). */
+  tasksUnavailable?: unknown
   links?: LocalLinkIndex | null
+  /** Called once per backend (= per command) after the first `task` / `task-list` write. */
+  onTasksChanged?: () => void
 }
+
+const PERSONAL_TASK_COLLECTIONS = new Set(['task', 'task-list'])
 
 export class LocalRecordBackend implements RecordBackend {
   readonly name = 'local' as const
+  private tasksChanged = false
 
   constructor(private readonly options: LocalBackendOptions) {}
+
+  private assertTasksAvailable(collection: string): void {
+    if (this.options.tasksUnavailable !== undefined && PERSONAL_TASK_COLLECTIONS.has(collection)) throw this.options.tasksUnavailable
+  }
+
+  private markTasksChanged(): void {
+    if (this.tasksChanged) return
+    this.tasksChanged = true
+    try { this.options.onTasksChanged?.() } catch { /* a refresh push never fails the command */ }
+  }
 
   private dir(collection: string): string {
     return collectionSpec(collection).localDir ?? collection
   }
 
   async get(collection: string, id: string): Promise<StoredRecord | null> {
+    this.assertTasksAvailable(collection)
     if (collection === 'task' && this.options.tasks) {
       let persisted
       try { persisted = this.options.tasks.getWorkItem(id) } catch { return null }
@@ -78,6 +96,7 @@ export class LocalRecordBackend implements RecordBackend {
   }
 
   async put(write: RecordWrite) {
+    this.assertTasksAvailable(write.collection)
     if (write.collection === 'task' && this.options.tasks) {
       let result
       try {
@@ -89,6 +108,7 @@ export class LocalRecordBackend implements RecordBackend {
       if (result.status === 'conflict') {
         return { status: 'conflict' as const, current: result.current ? { id: write.id, revision: result.current.revision, data: write.expectedRevision === null ? {} : itemToData(result.current.item) } : null }
       }
+      this.markTasksChanged()
       return { status: 'accepted' as const, revision: result.record.revision }
     }
     if (write.collection === 'task-list' && this.options.tasks) {
@@ -100,6 +120,7 @@ export class LocalRecordBackend implements RecordBackend {
         throw error
       }
       if (result.status === 'conflict') return { status: 'conflict' as const, current: result.current ? { id: write.id, revision: result.current.revision, data: write.expectedRevision === null ? {} : result.current.data } : null }
+      this.markTasksChanged()
       return { status: 'accepted' as const, revision: result.revision }
     }
     let result
@@ -116,8 +137,12 @@ export class LocalRecordBackend implements RecordBackend {
   }
 
   async remove(collection: string, id: string): Promise<boolean> {
-    if (collection === 'task' && this.options.tasks) return this.options.tasks.delete(id)
-    if (collection === 'task-list' && this.options.tasks) return this.options.tasks.removeTaskList(id)
+    this.assertTasksAvailable(collection)
+    if (PERSONAL_TASK_COLLECTIONS.has(collection) && this.options.tasks) {
+      const removed = collection === 'task' ? this.options.tasks.delete(id) : this.options.tasks.removeTaskList(id)
+      if (removed) this.markTasksChanged()
+      return removed
+    }
     const current = await this.get(collection, id)
     const removed = this.options.work.remove(this.dir(collection), id)
     if (removed && collection === 'entity-link' && current) this.mirrorLink({ ...current.data, deletedAt: 'removed' })

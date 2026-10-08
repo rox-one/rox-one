@@ -211,8 +211,9 @@ describe('local authority: task lists are the PersonalTask meta projects', () =>
     expect(tasks.get(U('t-ui'))!.task.projectId).toBe('p-ui')
     expect(await harness.run({ type: 'task_lists.update', target: { kind: 'task-list', id: 'p-ui' }, payload: { notes: 'weekend' } }, { expectedRevision: 1 })).toMatchObject({ status: 'applied', revision: 2 })
     expect(tasks.readMeta()!.projects).toEqual([{ id: 'p-ui', name: 'Home', order: 3, areaId: 'a-1', notes: 'weekend' }])
-    // The UI renames it: a bus write at the old revision conflicts.
+    // The UI (after listing the bus write) renames it: a bus write at the old revision conflicts.
     const meta = tasks.readMeta()!
+    tasks.markTaskListsSeen()
     tasks.writeMeta({ ...meta, projects: [{ ...meta.projects[0]!, name: 'House' }] })
     expect(await harness.run({ type: 'task_lists.update', target: { kind: 'task-list', id: 'p-ui' }, payload: { notes: 'x' } }, { expectedRevision: 2 })).toMatchObject({ status: 'conflict', conflict: { currentRevision: 3 } })
     expect(await harness.run({ type: 'tasks.add_to_list', target: { kind: 'task', id: U('t-ui') }, payload: { listId: 'p-missing' } })).toMatchObject({ error: { code: 'NOT_FOUND' } })
@@ -225,5 +226,137 @@ describe('local authority: task lists are the PersonalTask meta projects', () =>
     expect(await harness.run({ type: 'task_list_groups.create', payload: { name: 'G' } })).toMatchObject({ error: { code: 'UNAVAILABLE' } })
     expect(await harness.run({ type: 'task_lists.create', payload: { name: 'Team', ownerType: 'space', ownerId: U('space') } })).toMatchObject({ error: { code: 'VALIDATION' } })
     expect(tasks.readMeta()!.headings).toEqual([])
+  })
+})
+
+describe('local authority: review 2 fixes', () => {
+  test('tasks.set_user_state keeps hidden (and evening)', async () => {
+    const harness = createHarness({ local: store })
+    await harness.run({ type: 'tasks.create', payload: { id: U('t-h'), title: 'Hide me' } })
+    expect(await harness.run({ type: 'tasks.set_user_state', target: { kind: 'task', id: U('t-h') }, payload: { hidden: true, evening: true } })).toMatchObject({ status: 'applied' })
+    expect(tasks.getWorkItem(U('t-h'))!.item.hidden).toBe(true)
+    expect(tasks.get(U('t-h'))!.task.evening).toBe(true)
+  })
+
+  test('task_lists.update completedAt is VALIDATION locally (task_lists.archive sets it)', async () => {
+    const harness = createHarness({ local: store })
+    await harness.run({ type: 'task_lists.create', payload: { id: U('l'), name: 'L' } })
+    expect(await harness.run({ type: 'task_lists.update', target: { kind: 'task-list', id: U('l') }, payload: { completedAt: NOW.toISOString() } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(tasks.readMeta()!.projects[0]!.completedAt).toBeUndefined()
+  })
+
+  test('a stale Tasks UI meta write neither drops nor reverts a bus list', async () => {
+    tasks.writeMeta({ projects: [{ id: 'p-ui', name: 'Home', order: 1 }], areas: [], headings: [], audit: [] })
+    const stale = tasks.readMeta()!
+    const harness = createHarness({ local: store })
+    expect(await harness.run({ type: 'task_lists.create', payload: { id: U('l-bus'), name: 'Sprint' } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'task_lists.update', target: { kind: 'task-list', id: 'p-ui' }, payload: { name: 'House' } })).toMatchObject({ status: 'applied' })
+    // The UI saves the meta it had before the bus writes (a heading edit).
+    tasks.writeMeta({ ...stale, headings: [{ id: 'h-1', projectId: 'p-ui', title: 'Soon', order: 0 }] })
+    const after = tasks.readMeta()!
+    expect(after.projects.map(project => [project.id, project.name])).toEqual([['p-ui', 'House'], [U('l-bus'), 'Sprint']])
+    expect(after.headings).toEqual([{ id: 'h-1', projectId: 'p-ui', title: 'Soon', order: 0 }])
+    expect(tasks.getTaskList(U('l-bus'))!.revision).toBe(1)
+  })
+
+  test('a bus-removed list stays removed under a stale UI write', async () => {
+    const harness = createHarness({ local: store })
+    await harness.run({ type: 'task_lists.create', payload: { id: U('l-gone'), name: 'Gone' } })
+    tasks.markTaskListsSeen()
+    const stale = tasks.readMeta()!
+    // Hard removal through the backend (the bus soft-deletes with task_lists.delete).
+    expect(tasks.removeTaskList(U('l-gone'))).toBe(true)
+    tasks.writeMeta(stale)
+    expect(tasks.readMeta()!.projects).toEqual([])
+    // Once listed, the tombstone is gone.
+    tasks.markTaskListsSeen()
+    expect(JSON.stringify(tasks.readMeta())).not.toContain(U('l-gone'))
+  })
+
+  test('UI edits after listing are kept and each one moves the CAS revision; emptyTrash still deletes', async () => {
+    const harness = createHarness({ local: store })
+    await harness.run({ type: 'task_lists.create', payload: { id: U('l'), name: 'One' } })
+    tasks.markTaskListsSeen()
+    const edit = (name: string, extra: Record<string, unknown> = {}) => {
+      const meta = tasks.readMeta()!
+      tasks.writeMeta({ ...meta, projects: meta.projects.map(project => ({ ...project, name, ...extra })) })
+    }
+    edit('Two')
+    expect(tasks.getTaskList(U('l'))).toMatchObject({ revision: 2, data: { name: 'Two' } })
+    edit('Three')
+    expect(tasks.getTaskList(U('l'))).toMatchObject({ revision: 3, data: { name: 'Three' } })
+    expect(await harness.run({ type: 'task_lists.update', target: { kind: 'task-list', id: U('l') }, payload: { notes: 'x' } }, { expectedRevision: 2 })).toMatchObject({ status: 'conflict', conflict: { currentRevision: 3 } })
+    // A list the UI left out without trashing it survives; a trashed one is deleted by emptyTrash.
+    const meta = tasks.readMeta()!
+    tasks.writeMeta({ ...meta, projects: [] })
+    expect(tasks.readMeta()!.projects.map(project => project.id)).toEqual([U('l')])
+    edit('Three', { trashedAt: NOW.getTime() })
+    tasks.writeMeta({ ...tasks.readMeta()!, projects: [] })
+    expect(tasks.readMeta()!.projects).toEqual([])
+    expect(tasks.getTaskList(U('l'))).toBeNull()
+  })
+
+  test('a principal-scoped session gets UNAVAILABLE for tasks; other local commands still run', async () => {
+    const { CommandRejection } = await import('@rox/core/commands')
+    configureReferenceRuntime({ personalTaskStore: () => { throw new CommandRejection('UNAVAILABLE', 'principal-scoped') } })
+    const harness = createHarness({ local: store })
+    expect(await harness.run({ type: 'tasks.create', payload: { id: U('t-p'), title: 'x' } })).toMatchObject({ error: { code: 'UNAVAILABLE' } })
+    expect(await harness.run({ type: 'task_lists.create', payload: { id: U('l-p'), name: 'L' } })).toMatchObject({ error: { code: 'UNAVAILABLE' } })
+    expect(await harness.run({ type: 'goals.create', payload: { id: U('g-p'), name: 'G' } })).toMatchObject({ status: 'applied' })
+    expect(tasks.list()).toEqual([])
+    expect(tasks.readMeta()).toBeNull()
+  })
+
+  test('task store writes notify the Tasks UI once per command (MIG-05 placements too)', async () => {
+    let changed = 0
+    configureReferenceRuntime({ personalTasksChanged: () => { changed += 1 } })
+    const harness = createHarness({ local: store })
+    await harness.run({ type: 'goals.create', payload: { id: U('g-n'), name: 'G' } })
+    expect(changed).toBe(0)
+    await harness.run({ type: 'task_lists.create', payload: { id: U('l-n'), name: 'L' } })
+    expect(changed).toBe(1)
+    const doc = { kind: 'note', id: 'Notes/list.md' }
+    expect(await harness.run({ type: 'tasks.create_many_from_checklist', target: doc, payload: { docRef: doc, items: [{ blockId: 'b1', text: 'a' }, { blockId: 'b2', text: 'b' }] } })).toMatchObject({ status: 'applied' })
+    expect(tasks.list()).toHaveLength(2)
+    expect(changed).toBe(2)
+  })
+})
+
+describe('local work store: case-unique file names', () => {
+  test('ids differing only in case get distinct files; legacy files are read and migrated', async () => {
+    const { encodeWorkId, legacyEncodeWorkId } = await import('../local-work-store')
+    expect(encodeWorkId('Goal')).not.toBe(encodeWorkId('goal'))
+    expect(encodeWorkId('Goal').toLowerCase()).not.toBe(encodeWorkId('goal').toLowerCase())
+    expect(encodeWorkId('abc-1.2_x')).toBe('abc-1.2_x')
+    const work = new LocalWorkStore({ workspaceRoot: root })
+    // A file written by the first W1-06 build (upper case literal).
+    mkdirSync(join(work.root, 'goal'), { recursive: true })
+    const legacy = { id: 'Goal-A', collection: 'goal', revision: 3, schemaVersion: 1, record: { name: 'Legacy' } }
+    const { writeFileSync } = await import('node:fs')
+    writeFileSync(join(work.root, 'goal', `${legacyEncodeWorkId('Goal-A')}.json`), JSON.stringify(legacy))
+    expect(work.get('goal', 'Goal-A')).toMatchObject({ revision: 3, record: { name: 'Legacy' } })
+    expect(work.list('goal').map(file => file.id)).toEqual(['Goal-A'])
+    expect(work.put('goal', 'goal-a', { name: 'lower' }, null)).toMatchObject({ status: 'accepted' })
+    expect(work.put('goal', 'Goal-A', { name: 'Updated' }, 3)).toMatchObject({ status: 'accepted', file: { revision: 4 } })
+    expect(readdirSync(join(work.root, 'goal')).sort()).toEqual([`${encodeWorkId('Goal-A')}.json`, 'goal-a.json'].sort())
+    expect(work.get('goal', 'Goal-A')!.record).toEqual({ name: 'Updated' })
+    expect(work.get('goal', 'goal-a')!.record).toEqual({ name: 'lower' })
+    expect(work.list('goal').map(file => file.id).sort()).toEqual(['Goal-A', 'goal-a'])
+    expect(work.remove('goal', 'Goal-A')).toBe(true)
+    expect(work.get('goal', 'Goal-A')).toBeNull()
+    expect(work.get('goal', 'goal-a')).not.toBeNull()
+  })
+
+  test('on a case-insensitive filesystem the new name of one id never clobbers a legacy file of another', async () => {
+    const { legacyEncodeWorkId } = await import('../local-work-store')
+    const work = new LocalWorkStore({ workspaceRoot: root })
+    mkdirSync(join(work.root, 'goal'), { recursive: true })
+    const { writeFileSync } = await import('node:fs')
+    // Simulate the case-folded lookup: the legacy file of `Goal` sits at the new name of `goal`.
+    writeFileSync(join(work.root, 'goal', `${legacyEncodeWorkId('goal')}.json`), JSON.stringify({ id: 'Goal', collection: 'goal', revision: 1, schemaVersion: 1, record: { name: 'Upper' } }))
+    expect(work.get('goal', 'goal')).toBeNull()
+    expect(work.put('goal', 'goal', { name: 'lower' }, null)).toMatchObject({ status: 'accepted' })
+    expect(work.get('goal', 'goal')!.record).toEqual({ name: 'lower' })
+    expect(work.get('goal', 'Goal')!.record).toEqual({ name: 'Upper' })
   })
 })

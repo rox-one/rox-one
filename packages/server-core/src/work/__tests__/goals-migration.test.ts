@@ -132,11 +132,14 @@ describe('MIG-04 / MIG-05 (goals.v1)', () => {
   test('the first local command with goals.v1 on migrates, then goal commands edit the migrated records', async () => {
     rmSync(join(workspaceRoot, 'projects', 'gamma', 'roadmap.json'))
     const store = new SqliteCommandStore({ workspaceRoot })
-    configureReferenceRuntime({ now: () => NOW, workspaceRoot: () => workspaceRoot, personalTaskStore: () => tasks, isFlagEnabled: () => true })
+    let tasksChanged = 0
+    configureReferenceRuntime({ now: () => NOW, workspaceRoot: () => workspaceRoot, personalTaskStore: () => tasks, isFlagEnabled: () => true, personalTasksChanged: () => { tasksChanged += 1 } })
     try {
       const goalId = deterministicId('mig-04', 'proj-alpha', 'objective', 'obj-growth')
       const receipt = await createHarness({ local: store }).run({ type: 'goals.update_name', target: { kind: 'goal', id: goalId }, payload: { name: 'Grow active teams' } })
       expect(receipt).toMatchObject({ status: 'applied', revision: 2 })
+      // MIG-05 placed tasks into milestones: the Tasks UI is told to refresh.
+      expect(tasksChanged).toBe(1)
       expect(existsSync(goalsMigrationReportPath(workspaceRoot))).toBe(true)
       expect(new LocalWorkStore({ workspaceRoot }).get('goals', goalId)!.record.name).toBe('Grow active teams')
     } finally {

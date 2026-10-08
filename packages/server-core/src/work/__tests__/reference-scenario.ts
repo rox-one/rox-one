@@ -270,8 +270,8 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('acl.grant', doc, { principal: { kind: 'user', id: BOB }, role: 'editor' }),
   s('acl.set_link', doc, { scope: 'workspace', role: 'viewer' }),
   s('acl.revoke', doc, { principal: { kind: 'user', id: BOB } }),
-  s('acl.request_access', doc, { id: U('req'), role: 'viewer' }),
-  s('acl.decide_request', doc, { requestId: U('req'), decision: 'approve' }, BOB),
+  s('acl.request_access', doc, { id: U('req'), role: 'viewer' }, BOB),
+  s('acl.decide_request', doc, { requestId: U('req'), decision: 'approve' }),
   s('acl.transfer_ownership', doc, { toPrincipalId: BOB }),
   // entities
   s('links.add', t('task', 'task'), { to: t('goal', 'goal'), relation: 'aligned-to' }),
@@ -287,14 +287,15 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('identity.merge_placeholder', undefined, { placeholderId: U('ph2'), intoPrincipalId: BOB }),
   s('onboarding.seed_starter_content', t('space', 'space')),
   s('agents.provision_personal_agent', undefined, { id: U('agent'), ownerId: ACTOR_ID }),
-  s('agents.invoke', undefined, { agentId: U('agent'), prompt: 'Summarise' }),
-  s('agents.decide_approval', undefined, { approvalId: U('approval'), decision: 'approve' }),
+  s('agents.invoke', undefined, { id: U('invocation'), agentId: U('agent'), prompt: 'Summarise' }),
+  // agents.invoke opened a pending approval (id = invocation id) for the agent's owner.
+  s('agents.decide_approval', undefined, { approvalId: U('invocation'), decision: 'approve' }),
   s('agents.pause', undefined, { agentId: U('agent') }),
   // workplace
   s('mail.share_to_chat', t('channel', 'chat'), { threadId: 'thread-1' }),
   s('mail.create_task_from_thread', { kind: 'mail-thread', id: 'thread-1' }, { id: U('reply-task'), threadId: 'thread-1', title: 'Reply' }),
   s('commands.batch', undefined, { commands: [{ type: 'tasks.complete', target: t('task', 'task'), payload: {} }] }),
-  s('forms.configure_on_submit', undefined, { formRef: t('form', 'form'), actions: [{ type: 'tasks.create' }] }),
+  s('forms.configure_on_submit', t('form', 'form'), { formRef: t('form', 'form'), actions: [{ type: 'tasks.create' }] }),
   // teardown (deletes last)
   s('kpis.delete_annotation', t('kpi', 'kpi'), { annotationId: U('annot') }),
   s('kpis.delete_entry', t('kpi', 'kpi'), { entryId: U('entry') }),

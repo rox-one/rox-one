@@ -84,6 +84,14 @@ export interface CommandHandlerContext<P = unknown> {
   transaction?: unknown
   /** Abort with a `conflict` receipt (expectedRevision mismatch); nothing is committed. */
   conflict(currentRevision: number, current?: unknown): never
+  /**
+   * The executor's authorizer for the command's principal (W1-06 #1503): a
+   * handler checks every resource its payload names that is not the envelope
+   * target (`ref = null` = workspace-level; `workspaceId` asks about another
+   * workspace). Fails closed: a non-transient authorizer error is `false`, a
+   * transient one is rethrown (retryable). Absent outside the executor.
+   */
+  authorize?(action: string, ref: EntityRef | null, options?: { workspaceId?: string }): Promise<boolean>
 }
 
 export interface CommandHandlerResult<R = unknown> {

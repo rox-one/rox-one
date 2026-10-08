@@ -24,13 +24,22 @@ function outcome(collection: string, record: StoredRecord, changes: RecordData, 
   return { collection, id: record.id, revision: record.revision, changes: Object.keys(changes).sort(), ...extra }
 }
 
-/** Create a record; `container` copies a matching target id into a field (e.g. a section's list). */
+/**
+ * Create a record; `container` copies a matching target id into a field (e.g. a
+ * section's list). A payload container id must repeat a target of that kind
+ * (another id is FORBIDDEN) and is otherwise authorized at `write`.
+ */
 export function create(collection: string, map: Mapper = payloadFields(), options: { container?: { kind: string; field: string }; defaults?: Mapper; salt?: string } = {}): ReferenceOp {
   return async tx => {
     const data = { ...(options.defaults ? await options.defaults(tx) : {}), ...(await map(tx)) }
-    if (options.container && data[options.container.field] === undefined) {
-      const containerId = tx.targetOf(options.container.kind)
-      if (containerId) data[options.container.field] = containerId
+    if (options.container) {
+      const { kind, field } = options.container
+      const payloadId = tx.payload[field]
+      if (typeof payloadId === 'string' && payloadId) await authorizeBound(tx, { kind, id: payloadId } as EntityRef, 'write')
+      if (data[field] === undefined) {
+        const containerId = tx.targetOf(kind)
+        if (containerId) data[field] = containerId
+      }
     }
     const record = await tx.insert(collection, tx.createId(options.salt), data)
     return outcome(collection, record, data)
@@ -179,6 +188,79 @@ export function boundRef(tx: ReferenceTx, payloadRef: EntityRef | undefined, opt
   }
   if (!target && (options.requireTarget || !payloadRef)) throw new CommandRejection('VALIDATION', `${tx.commandType} needs a target`)
   return payloadRef ?? target!
+}
+
+/**
+ * Rox2 verbs a payload-named resource is authorized at (the executor's
+ * authorizer vocabulary): `write` for anything written to / into / moved /
+ * reordered / linked from, `destroy` for deletes, `share` for ACL changes,
+ * `read` for a resource that is only referenced.
+ */
+export type RefVerb = 'read' | 'write' | 'share' | 'destroy'
+
+/**
+ * Authorize a payload-named resource with the executor's authorizer
+ * (FORBIDDEN when denied). The envelope target itself was already authorized
+ * at the command verb, so it is skipped for that verb and for `read`.
+ */
+export async function authorizeRef(tx: ReferenceTx, ref: EntityRef, verb: RefVerb): Promise<EntityRef> {
+  const target = tx.rawTarget
+  if (target && target.kind === ref.kind && target.id === ref.id && (verb === 'read' || verb === tx.verb)) return ref
+  if (!(await tx.can(verb, { kind: ref.kind, id: ref.id }))) {
+    throw new CommandRejection('FORBIDDEN', `${tx.commandType} needs ${verb} on ${ref.kind}:${ref.id}`)
+  }
+  return ref
+}
+
+/**
+ * A payload id naming the resource the command acts in (destination
+ * container, doc, form): a target of the same kind with another id is
+ * FORBIDDEN (`boundRef`), anything else is authorized at `verb`.
+ */
+export async function authorizeBound(tx: ReferenceTx, ref: EntityRef, verb: RefVerb = 'write'): Promise<EntityRef> {
+  const target = tx.rawTarget
+  if (target && target.kind === ref.kind && target.id !== ref.id) {
+    throw new CommandRejection('FORBIDDEN', `${tx.commandType} acts on ${ref.kind}:${ref.id} but is authorized for ${target.kind}:${target.id}`)
+  }
+  return authorizeRef(tx, ref, verb)
+}
+
+/**
+ * The origin a record is made from (a message, a mail thread, an event …) is
+ * only referenced: `read`, bound to a target of its kind. A message origin
+ * (`channel-message` `<chatId>:<seq>`) is read through its chat.
+ */
+export async function authorizeOrigin(tx: ReferenceTx, ref: EntityRef): Promise<void> {
+  const chatId = ref.kind === 'channel-message' && ref.id.includes(':') ? ref.id.slice(0, ref.id.lastIndexOf(':')) : null
+  await authorizeBound(tx, (chatId ? { kind: 'channel', id: chatId } : { kind: ref.kind, id: ref.id }) as EntityRef, 'read')
+}
+
+/** `authorizeRef` for an optional payload id of a known kind (absent / null ids are skipped). */
+export async function authorizeId(tx: ReferenceTx, kind: string, id: unknown, verb: RefVerb, options: { bound?: boolean } = {}): Promise<void> {
+  if (typeof id !== 'string' || !id) return
+  const ref = { kind, id } as EntityRef
+  if (options.bound) await authorizeBound(tx, ref, verb)
+  else await authorizeRef(tx, ref, verb)
+}
+
+/** Payload fields of a work item that name its container (TECH-SPEC §4.3), by entity kind. */
+export const TASK_CONTAINER_FIELDS: Readonly<Record<string, string>> = {
+  listId: 'task-list', sectionId: 'task-section', listGroupId: 'task-list-group', parentId: 'task', projectId: 'project', milestoneId: 'milestone', spaceId: 'space',
+}
+
+/**
+ * `write` on every container a task create / move names. `bound` (creates,
+ * where a container-kind target IS the container) keeps a different id of the
+ * target's kind FORBIDDEN.
+ */
+export async function authorizeTaskContainers(tx: ReferenceTx, fields: Record<string, unknown>, options: { bound?: boolean } = {}): Promise<void> {
+  for (const [field, kind] of Object.entries(TASK_CONTAINER_FIELDS)) await authorizeId(tx, kind, fields[field], 'write', options)
+}
+
+/** Sharing into another workspace needs `write` there (the authorizer is asked about that workspace). */
+export async function authorizeWorkspace(tx: ReferenceTx, workspaceId: unknown): Promise<void> {
+  if (typeof workspaceId !== 'string' || !workspaceId || workspaceId === tx.ctx.workspaceId) return
+  if (!(await tx.can('write', null, { workspaceId }))) throw new CommandRejection('FORBIDDEN', `${tx.commandType} needs write in workspace ${workspaceId}`)
 }
 
 export function targetRef(tx: ReferenceTx): EntityRef {

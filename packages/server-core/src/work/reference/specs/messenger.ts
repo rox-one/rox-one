@@ -3,7 +3,7 @@
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { deterministicId, isDeleted, LAST_COMMAND_FIELD, type ReferenceOutcome, type ReferenceTx } from '../engine'
-import { assoc, childCreate, childDelete, childUpdate, omit, payloadFields, refString, requireChild, softDelete, unassoc, update } from '../ops'
+import { assoc, authorizeId, authorizeRef, childCreate, childDelete, childUpdate, omit, payloadFields, refString, requireChild, softDelete, unassoc, update } from '../ops'
 import type { RecordData, StoredRecord } from '../types'
 import type { ReferenceSpecMap } from './types'
 
@@ -28,10 +28,14 @@ function memberRole(member: StoredRecord | null): string | undefined {
   return member && !isDeleted(member) && member.data.state !== 'left' ? String(member.data.role ?? 'member') : undefined
 }
 
-/** Append a message to a chat (next `seq`; posting policy enforced). */
+/**
+ * Append a message to a chat (next `seq`). Posting needs active membership of
+ * the chat and its posting policy (`admins` → owner / admin only).
+ */
 export async function appendMessage(tx: ReferenceTx, chat: StoredRecord, content: unknown, extra: RecordData = {}, salt = 'message'): Promise<StoredRecord> {
   const role = memberRole(await tx.get('channel-member', `${chat.id}:${tx.actor}`))
-  if (chat.data.postingPolicy === 'admins' && !ADMIN_ROLES.has(role ?? '')) throw new CommandRejection('FORBIDDEN', 'only admins can post in this chat')
+  if (role === undefined) throw new CommandRejection('FORBIDDEN', 'only members can post in this chat')
+  if (chat.data.postingPolicy === 'admins' && !ADMIN_ROLES.has(role)) throw new CommandRejection('FORBIDDEN', 'only admins can post in this chat')
   const id = salt === 'message' ? tx.createId() : tx.newId(salt)
   // Retry with a lost receipt: the message is already there — don't burn another `seq`.
   const existing = await tx.get('channel-message', id)
@@ -112,11 +116,17 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
   'im.forward_messages': async tx => {
     const source = await tx.requireTarget('channel')
     const destination = await tx.require('channel', tx.payload.toChatId)
-    const forwarded: string[] = []
-    for (const [index, messageId] of (tx.payload.messageIds as string[]).entries()) {
+    // The destination is posted into: authorized at `write`, membership + posting policy in appendMessage.
+    await authorizeRef(tx, { kind: 'channel', id: destination.id }, 'write')
+    const originals: StoredRecord[] = []
+    for (const messageId of tx.payload.messageIds as string[]) {
       const original = await tx.require('channel-message', messageId)
       if (original.data.chatId !== source.id) throw new CommandRejection('NOT_FOUND', `${messageId} is not in this chat`)
-      const copy = await appendMessage(tx, destination, original.data.content, { forwardedFrom: { chatId: source.id, messageId } }, `forward-${index}`)
+      originals.push(original)
+    }
+    const forwarded: string[] = []
+    for (const [index, original] of originals.entries()) {
+      const copy = await appendMessage(tx, destination, original.data.content, { forwardedFrom: { chatId: source.id, messageId: original.id } }, `forward-${index}`)
       forwarded.push(copy.id)
     }
     return { collection: 'channel', id: destination.id, revision: destination.revision, changes: ['messages'], result: { forwarded } }
@@ -132,8 +142,14 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
     const record = await tx.upsert('channel-notice', chat.id, { content: tx.payload.content, updatedBy: tx.actor }, { chatId: chat.id })
     return { collection: 'channel-notice', id: chat.id, revision: record.revision, ref: tx.rawTarget ?? null, changes: ['content'] }
   },
-  'im.update_announcement': update('channel', tx => ({ announcementDocId: tx.payload.docId })),
-  'im.create_tab': childCreate('channel-tab', 'channel', 'chatId', tx => ({ ...omit(tx.payload, ['id', 'ref']), ...(tx.payload.ref ? { ref: refString(tx.payload.ref) } : {}) })),
+  'im.update_announcement': async tx => {
+    await authorizeId(tx, 'note', tx.payload.docId, 'read')
+    return update('channel', t => ({ announcementDocId: t.payload.docId }))(tx)
+  },
+  'im.create_tab': async tx => {
+    if (tx.payload.ref) await authorizeRef(tx, tx.payload.ref as EntityRef, 'read')
+    return childCreate('channel-tab', 'channel', 'chatId', t => ({ ...omit(t.payload, ['id', 'ref']), ...(t.payload.ref ? { ref: refString(t.payload.ref) } : {}) }))(tx)
+  },
   'im.update_tab': childUpdate('channel-tab', 'channel', 'chatId', 'tabId'),
   'im.delete_tab': childDelete('channel-tab', 'channel', 'chatId', 'tabId'),
   'im.mark_read': { op: assoc('channel-member', 'channel', self, tx => ({ lastReadSeq: tx.payload.seq }), 'chatId'), event: 'im.message.message_read_v1' },
@@ -142,11 +158,13 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
   'im.label_chats': childUpdate('channel-label', 'channel', 'chatId', 'labelId', tx => ({ messageIds: tx.payload.messageIds })),
   'im.create_space_chat': async tx => {
     await tx.require('space', tx.payload.spaceId)
+    await authorizeId(tx, 'space', tx.payload.spaceId, 'write')
     const record = await createChat(tx, tx.createId(), { kind: 'space', visibility: 'private', name: tx.payload.name, spaceId: tx.payload.spaceId }, tx.payload.memberIds ?? [])
     return chatOutcome(record, ['kind', 'name', 'spaceId'])
   },
   'im.create_entity_chat': async tx => {
     const subject = tx.payload.subject as EntityRef
+    await authorizeRef(tx, subject, 'read')
     const record = await createChat(tx, tx.createId(), { kind: 'entity', visibility: 'private', subjectRef: refString(subject), ...(tx.payload.name ? { name: tx.payload.name } : {}) }, tx.payload.memberIds ?? [])
     return chatOutcome(record, ['kind', 'subjectRef'])
   },
@@ -163,6 +181,7 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
   'im.set_visibility': update('channel'),
   'im.share_entity': async tx => {
     const chat = await tx.requireTarget('channel')
+    await authorizeRef(tx, tx.payload.entity as EntityRef, 'read')
     const message = await appendMessage(tx, chat, { doc: tx.payload.comment ?? '', unfurls: [{ ref: tx.payload.entity }] })
     return { collection: 'channel-message', id: message.id, revision: message.revision, changes: ['content'], result: { seq: message.data.seq } }
   },
