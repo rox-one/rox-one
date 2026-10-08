@@ -12,7 +12,7 @@
  */
 
 import {
-  liveViewers, mergePresenceStatus, presenceChangedAllowed, presenceTransition, statusForHeartbeat,
+  PRESENCE_TTL_SECONDS, liveViewers, mergePresenceStatus, presenceChangedAllowed, presenceTransition, statusForHeartbeat,
   type PresenceHeartbeatPayload, type PresenceHeartbeatResult, type PresenceObjectPayload, type PresenceObjectResult, type PresenceState,
   type PresenceStatus, type PresenceTransition,
 } from '@rox/core/collab'
@@ -60,9 +60,7 @@ export class PresenceStore {
 
   /** Current status as others see it: an expired record reads as `offline`. */
   statusOf(workspaceId: string, principalId: string, now: number): PresenceStatus {
-    const entry = this.presence.get(key(workspaceId, principalId))
-    if (!entry) return 'offline'
-    return (entry.pending?.to ?? entry.state.status) satisfies PresenceStatus
+    return this.live(workspaceId, principalId, now)?.state.status ?? 'offline'
   }
 
   snapshot(workspaceId: string, principalIds: readonly string[], now: number): PresenceSnapshot[] {
@@ -75,7 +73,7 @@ export class PresenceStore {
   private live(workspaceId: string, principalId: string, now: number): StoredPresence | null {
     const entry = this.presence.get(key(workspaceId, principalId))
     if (!entry) return null
-    return now - entry.seenAt >= 60_000 ? null : entry
+    return now - entry.seenAt >= PRESENCE_TTL_SECONDS * 1000 ? null : entry
   }
 
   async heartbeat(workspaceId: string, principalId: string, payload: PresenceHeartbeatPayload, now: number): Promise<PresenceHeartbeatResult> {
@@ -98,7 +96,7 @@ export class PresenceStore {
       pending: emit ? transition : null,
     }
     this.presence.set(key(workspaceId, principalId), entry)
-    return { status: next, expiresAt: now + 60_000, notify }
+    return { status: next, expiresAt: now + PRESENCE_TTL_SECONDS * 1000, notify }
   }
 
   /** The `presence.changed` frame the caller must publish, or `null`. */

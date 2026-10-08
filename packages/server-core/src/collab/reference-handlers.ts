@@ -317,8 +317,9 @@ export function resetCollabRuntime(): void {
 }
 
 /** The §11.9 aggregate: the caller's own calendars, plus those shared with them. */
-export function freeBusyOp(events: FreeBusyEventQuery = referenceFreeBusyEvents): ReferenceOp {
+export function freeBusyOp(events?: FreeBusyEventQuery): ReferenceOp {
   return async tx => {
+    const query = events ?? runtime.freeBusyEvents
     const payload = tx.payload as { principals: string[]; range: TimeRange }
     const principals: Record<string, BusyBlock[]> = {}
     const unavailable: string[] = []
@@ -326,7 +327,7 @@ export function freeBusyOp(events: FreeBusyEventQuery = referenceFreeBusyEvents)
       // "Find a time" aggregates over calendars the caller may read; the rest
       // of the principal's time is not theirs to see.
       if (!(await tx.can('read', { kind: 'person', id: principalId }))) throw new CommandRejection('FORBIDDEN', `cannot read the calendars of ${principalId}`)
-      const found = await events(tx, principalId, payload.range)
+      const found = await query(tx, principalId, payload.range)
       principals[principalId] = freeBusyBlocks(found, payload.range)
     }
     return { collection: 'calendar-event', id: payload.principals[0] ?? '', changes: ['free_busy'], ref: null, result: { principals, unavailable } }
@@ -364,7 +365,7 @@ export function bindCollabContracts(registry: CommandRegistry, bindings: CollabC
     const { op, event } = typeof spec === 'function' ? { op: spec, event: undefined } : spec
     registry.bind(type, referenceHandler(type, op, { now: bindings.now, backendFor: bindings.backendFor, verb: registry.get(type)!.verb, ...(event ? { eventType: event } : {}) }))
   }
-  for (const [type, handler] of Object.entries(presenceHandlers())) {
+  for (const [type, handler] of Object.entries(presenceHandlers(presenceStore, bindings.now))) {
     if (!registry.has(type) || registry.handler(type)) continue
     registry.bind(type, handler)
   }

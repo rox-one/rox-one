@@ -14,7 +14,7 @@
 
 import type { EntityRef } from '../entities/refs.ts'
 import type { CommandRiskContext, RiskClass } from '../commands/registry.ts'
-import { MIB_BYTES } from './quota.ts'
+import { UPLOAD_PART_MAX_BYTES, UPLOAD_PART_MIN_BYTES } from './upload.ts'
 import type { QuotaExceededDetail } from './quota.ts'
 
 /** `QUOTA_EXCEEDED` (`COMMAND_ERROR_CODES`), the §16.3 admission rejection. */
@@ -146,8 +146,10 @@ export const MAX_UPLOAD_PARTS = 10_000
 export function planUploadParts(sizeExpected: number): UploadPartPlan {
   const size = Math.max(0, Math.trunc(sizeExpected))
   if (size === 0) return { partSizeBytes: 0, partCount: 1 }
-  let partSizeBytes = 8 * MIB_BYTES
-  while (partSizeBytes < 64 * MIB_BYTES && Math.ceil(size / partSizeBytes) > MAX_UPLOAD_PARTS) partSizeBytes *= 2
-  const capped = Math.min(partSizeBytes, Math.max(64 * MIB_BYTES, size))
-  return { partSizeBytes: capped, partCount: Math.max(1, Math.ceil(size / capped)) }
+  // A file below the multipart minimum is one part of its own size (S3 allows
+  // that for a single-part upload).
+  if (size <= UPLOAD_PART_MIN_BYTES) return { partSizeBytes: size, partCount: 1 }
+  let partSizeBytes = UPLOAD_PART_MIN_BYTES
+  while (partSizeBytes < UPLOAD_PART_MAX_BYTES && Math.ceil(size / partSizeBytes) > MAX_UPLOAD_PARTS) partSizeBytes *= 2
+  return { partSizeBytes, partCount: Math.ceil(size / partSizeBytes) }
 }

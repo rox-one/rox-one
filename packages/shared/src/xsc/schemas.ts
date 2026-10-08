@@ -24,8 +24,8 @@ export const personRefSchema = idSchema
 /** A person, or an email to invite (§15.2). */
 export const personOrEmailSchema = z.union([personRefSchema, z.object({ email: z.string().email().max(320) }).strict()])
 
-/** `docRef` of a block command: the doc the block lives in. */
-export const noteRefSchema = refSchema
+/** `note:<id>` as a string (§12 `NoteRef`: `docs.create_from_messages`, `vc.start_meeting`). */
+export const noteRefSchema = z.string().max(512).regex(/^note:.+$/, { message: 'noteRef must look like note:<id>' })
 
 const docBlockOriginSchema = z
   .object({ kind: z.literal('doc-block'), docRef: z.string().min(1).max(512), blockId: idSchema, anchor: yAnchorSchema.optional() })
