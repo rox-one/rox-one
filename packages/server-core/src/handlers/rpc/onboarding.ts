@@ -242,8 +242,10 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
   }, { access: 'localElectron', nativeAction: 'read' })
   server.handle(RPC_CHANNELS.onboarding.GET_ROX_BALANCE, async ctx => {
     const state = await getRoxAccountAuthority().state(caller(ctx))
-    if (state.connectError) return { status: 'error', message: state.connectError }
-    if (!state.account) return { status: 'disconnected' }
-    return { status: 'ok', balance: Number(state.account.balance.balanceRox) }
+    // The snapshot is the single source of truth for the balance. A cached
+    // snapshot served during an outage keeps its last known value and reports
+    // `updating` instead of degrading to a dash.
+    if (!state.account) return state.connectError ? { status: 'error', message: state.connectError } : { status: 'disconnected' }
+    return { status: 'ok', balance: Number(state.account.balance.availableRox), updating: state.updating, syncedAt: state.lastSyncedAt }
   }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 }

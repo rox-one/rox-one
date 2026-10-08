@@ -98,6 +98,7 @@ import { SidebarChrome } from "./SidebarChrome"
 import { focusServicePanelAtom } from "./service-navigation"
 import type { AppNavDestinationId } from "./nav-destinations"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
+import { useRoxCloudAccount } from "@/hooks/useRoxCloudAccount"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { resolvePromoSlot } from "@/platform/promo-slot"
 import { viewportBand } from "@/platform/viewport-band"
@@ -508,23 +509,9 @@ function AppShellContent({
 
 
 
-  // Real rox.one balance for the connected Rox cloud account (null → «—»).
-  const [roxCloudAccount, setRoxCloudAccount] = React.useState<import('@rox/shared/auth').RoxAccountSnapshot | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const res = await window.electronAPI.getRoxCloudState()
-        if (cancelled || !res) return
-        setRoxCloudAccount(res.account ?? null)
-      } catch {
-        if (!cancelled) setRoxCloudAccount(null)
-      }
-    }
-    void load()
-    const timer = window.setInterval(() => { void load() }, 30_000)
-    return () => { cancelled = true; window.clearInterval(timer) }
-  }, [])
+  // Real rox.one balance from the account snapshot, kept current by the shared
+  // ≤30 s poll + focus refresh. It degrades to a dash only before first sync.
+  const roxCloudAccount = useRoxCloudAccount().account
 
   const [isResizing, setIsResizing] = React.useState<'sidebar' | 'session-list' | null>(null)
   const workspaceIdForLayout = activeWorkspaceId ?? '_default'

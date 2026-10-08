@@ -37,6 +37,7 @@ import type { EntityRef } from '@rox/core/entities'
 // W1-08 (#1505): entity links/preview bridge types.
 import type { EntityLink, EntityPreview } from '@rox/core/entities'
 import type { EntityLinksRequest } from '@rox/shared/entities'
+import type { RoxAccountSnapshot } from '@rox/shared/auth'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -1699,14 +1700,18 @@ export interface ElectronAPI {
     connected: boolean
     authBaseUrl: string
     user: { id?: string; email?: string; name?: string } | null
-    account?: import('@rox/shared/auth').RoxAccountSnapshot | null
+    account?: RoxAccountSnapshot | null
     connectError?: string | null
     connectExpiresAt?: number | null
+    /** True while the last snapshot is served from cache during a broker outage. */
+    updating?: boolean
+    /** Epoch ms of the last snapshot the broker confirmed; null when never synced. */
+    lastSyncedAt?: number | null
   }>
   clearRoxCloud(): Promise<{ success: boolean }>
   /** Real rox.one balance (GET /api/me/balance) for the connected Rox cloud account. */
   getRoxBalance(): Promise<
-    | { status: 'ok'; balance: number }
+    | { status: 'ok'; balance: number; updating?: boolean; syncedAt?: number | null }
     | { status: 'disconnected' }
     | { status: 'error'; message: string }
   >
