@@ -34,3 +34,13 @@ export function initialsOf(name: string): string {
   const second = parts.length > 1 ? parts[parts.length - 1]!.charAt(0) : ''
   return (first + second).toUpperCase()
 }
+
+/**
+ * Format an instant, or return '' when it is missing or not a valid date
+ * (`Intl.DateTimeFormat#format` throws a RangeError on an invalid Date).
+ */
+export function formatInstant(format: Intl.DateTimeFormat, value: string | number | Date | null | undefined): string {
+  if (value === null || value === undefined || value === '') return ''
+  const date = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(date.getTime()) ? '' : format.format(date)
+}

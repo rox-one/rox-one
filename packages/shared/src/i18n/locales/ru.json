@@ -1613,6 +1613,7 @@
   "entities.ui.activity.generic": "{{actor}} · {{type}}",
   "entities.ui.activity.title": "Активность",
   "entities.ui.activity.today": "Сегодня",
+  "entities.ui.activity.unknownDate": "Дата неизвестна",
   "entities.ui.activity.yesterday": "Вчера",
   "entities.ui.backlinks.count_few": "{{count}} упоминания",
   "entities.ui.backlinks.count_many": "{{count}} упоминаний",

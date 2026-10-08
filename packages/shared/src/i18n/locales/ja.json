@@ -1611,6 +1611,7 @@
   "entities.ui.activity.generic": "{{actor}} · {{type}}",
   "entities.ui.activity.title": "アクティビティ",
   "entities.ui.activity.today": "今日",
+  "entities.ui.activity.unknownDate": "日付不明",
   "entities.ui.activity.yesterday": "昨日",
   "entities.ui.backlinks.count_one": "{{count}} 件の参照",
   "entities.ui.backlinks.count_other": "{{count}} 件の参照",

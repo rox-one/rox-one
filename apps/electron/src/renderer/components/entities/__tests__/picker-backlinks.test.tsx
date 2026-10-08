@@ -1,7 +1,7 @@
 /**
  * W1-08 (#1505) — EntityPicker rows, backlinks grouping, preview batching.
  */
-import { flush, mount, renderMarkup, resetDom, testWindow } from './test-env'
+import { flush, mount, renderMarkup, resetDom, testWindow, setupEntityTestEnv } from './test-env'
 import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act } from 'react'
 import type { EntityRef } from '@rox/core/entities'
@@ -16,6 +16,8 @@ import {
 } from '../entity-data-source'
 import { entityPreviewStore, resetEntityPreviewStores } from '../use-entity-preview'
 import { FIXTURE_BACKLINKS } from '../fixtures'
+
+setupEntityTestEnv()
 
 afterEach(() => {
   setEntityDataSource(null)
@@ -69,6 +71,30 @@ describe('buildEntityPickerItems', () => {
     expect(search).toHaveBeenCalled()
     expect(options[0]).toContain('Rox Desktop')
     expect(onSelect).toHaveBeenCalledWith({ ref: { kind: 'project', id: 'p1' }, title: 'Rox Desktop' })
+  })
+
+  it('Enter during IME composition does not link a row (negative)', async () => {
+    setEntityDataSource({
+      async resolve() { return [] },
+      async backlinks() { return { links: [] } },
+      async search() { return [{ ref: { kind: 'project', id: 'p1' } as EntityRef, title: 'Rox Desktop' }] },
+      onLinksChanged() { return () => {} },
+    } satisfies EntityDataSource)
+    const onSelect = mock(() => {})
+    const mounted = await mount(<EntityPickerPanel workspaceId="ws" initialQuery="rox" onSelect={onSelect} />)
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 200)) })
+    const input = mounted.container.querySelector('input')!
+    await act(async () => {
+      input.focus()
+      input.dispatchEvent(new testWindow.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, isComposing: true }) as unknown as Event)
+      input.dispatchEvent(new testWindow.KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, bubbles: true } as never) as unknown as Event)
+    })
+    expect(onSelect).not.toHaveBeenCalled()
+    await act(async () => {
+      input.dispatchEvent(new testWindow.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }) as unknown as Event)
+    })
+    await mounted.unmount()
+    expect(onSelect).toHaveBeenCalledTimes(1)
   })
 
   it('shows «Ничего не найдено» when there is nothing to offer', async () => {

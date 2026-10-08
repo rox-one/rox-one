@@ -13,7 +13,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/utils'
-import { FOCUS_RING, HOVER_TINT, MOTION_FAST } from '../primitives/tokens'
+import { FOCUS_RING, HOVER_TINT, MOTION_FAST, formatInstant } from '../primitives/tokens'
 import { PersonAvatar, type PersonOption } from '../person-field/PeopleList'
 import { ReactionsBar, type ReactionSummary } from '../reactions/ReactionsBar'
 
@@ -124,7 +124,9 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-baseline gap-2 text-[12px]">
           <span className="font-semibold">{comment.author.name}</span>
-          <time dateTime={comment.createdAt} className="text-text-muted">{timeFmt.format(new Date(comment.createdAt))}</time>
+          {formatInstant(timeFmt, comment.createdAt) ? (
+            <time dateTime={comment.createdAt} className="text-text-muted">{formatInstant(timeFmt, comment.createdAt)}</time>
+          ) : null}
           {comment.editedAt && !comment.deleted ? <span className="text-text-muted">· {t('entities.ui.comments.edited')}</span> : null}
         </div>
         {comment.deleted ? (

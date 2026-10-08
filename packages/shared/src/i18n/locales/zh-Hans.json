@@ -1611,6 +1611,7 @@
   "entities.ui.activity.generic": "{{actor}} · {{type}}",
   "entities.ui.activity.title": "动态",
   "entities.ui.activity.today": "今天",
+  "entities.ui.activity.unknownDate": "日期未知",
   "entities.ui.activity.yesterday": "昨天",
   "entities.ui.backlinks.count_one": "{{count}} 个引用",
   "entities.ui.backlinks.count_other": "{{count}} 个引用",

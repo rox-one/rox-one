@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/utils'
 import { PersonAvatar, type PersonOption } from '../person-field/PeopleList'
 import { groupByDay } from './group-by-day'
+import { formatInstant } from '../primitives/tokens'
 
 export interface ActivityEvent {
   id: string
@@ -50,7 +51,9 @@ export function ActivityTimeline({ events, renderers, now, timeZone, className }
       {groups.map((group) => (
         <div key={group.day} className="flex flex-col gap-1">
           <h4 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-            {group.relative ? t(`entities.ui.activity.${group.relative}`) : dayFmt.format(new Date(group.items[0]!.at))}
+            {group.relative
+              ? t(`entities.ui.activity.${group.relative}`)
+              : formatInstant(dayFmt, group.items[0]!.at) || t('entities.ui.activity.unknownDate')}
           </h4>
           <ol className="flex flex-col gap-1">
             {group.items.map((event) => (
@@ -61,7 +64,9 @@ export function ActivityTimeline({ events, renderers, now, timeZone, className }
                     ?? event.summary
                     ?? t('entities.ui.activity.generic', { actor: event.actor.name, type: event.type })}
                 </span>
-                <time dateTime={event.at} className="shrink-0 tabular-nums text-text-muted">{timeFmt.format(new Date(event.at))}</time>
+                {formatInstant(timeFmt, event.at) ? (
+                  <time dateTime={event.at} className="shrink-0 tabular-nums text-text-muted">{formatInstant(timeFmt, event.at)}</time>
+                ) : null}
               </li>
             ))}
           </ol>

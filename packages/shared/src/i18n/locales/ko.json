@@ -1611,6 +1611,7 @@
   "entities.ui.activity.generic": "{{actor}} · {{type}}",
   "entities.ui.activity.title": "활동",
   "entities.ui.activity.today": "오늘",
+  "entities.ui.activity.unknownDate": "날짜 알 수 없음",
   "entities.ui.activity.yesterday": "어제",
   "entities.ui.backlinks.count_one": "참조 {{count}}개",
   "entities.ui.backlinks.count_other": "참조 {{count}}개",

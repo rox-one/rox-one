@@ -1611,6 +1611,7 @@
   "entities.ui.activity.generic": "{{actor}} · {{type}}",
   "entities.ui.activity.title": "Tevékenység",
   "entities.ui.activity.today": "Ma",
+  "entities.ui.activity.unknownDate": "Ismeretlen dátum",
   "entities.ui.activity.yesterday": "Tegnap",
   "entities.ui.backlinks.count_one": "{{count}} hivatkozás",
   "entities.ui.backlinks.count_other": "{{count}} hivatkozás",

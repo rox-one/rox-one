@@ -100,6 +100,8 @@ export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuer
   }
 
   const onKeyDown = (event: React.KeyboardEvent) => {
+    // IME composition (ja/ko/zh-*): Enter commits the composed text, not a row.
+    if (event.nativeEvent.isComposing || event.keyCode === 229) return
     if (event.key === 'ArrowDown') { event.preventDefault(); setActive((i) => Math.min(i + 1, Math.max(items.length - 1, 0))) }
     else if (event.key === 'ArrowUp') { event.preventDefault(); setActive((i) => Math.max(i - 1, 0)) }
     else if (event.key === 'Enter') { event.preventDefault(); choose(items[active]) }

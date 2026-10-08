@@ -1613,6 +1613,7 @@
   "entities.ui.activity.generic": "{{actor}} · {{type}}",
   "entities.ui.activity.title": "Aktywność",
   "entities.ui.activity.today": "Dzisiaj",
+  "entities.ui.activity.unknownDate": "Nieznana data",
   "entities.ui.activity.yesterday": "Wczoraj",
   "entities.ui.backlinks.count_few": "{{count}} odwołania",
   "entities.ui.backlinks.count_many": "{{count}} odwołań",

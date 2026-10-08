@@ -1611,6 +1611,7 @@
   "entities.ui.activity.generic": "{{actor}} · {{type}}",
   "entities.ui.activity.title": "Actividad",
   "entities.ui.activity.today": "Hoy",
+  "entities.ui.activity.unknownDate": "Fecha desconocida",
   "entities.ui.activity.yesterday": "Ayer",
   "entities.ui.backlinks.count_one": "{{count}} referencia",
   "entities.ui.backlinks.count_other": "{{count}} referencias",

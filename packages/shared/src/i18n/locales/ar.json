@@ -1611,6 +1611,7 @@
   "entities.ui.activity.generic": "{{actor}} · {{type}}",
   "entities.ui.activity.title": "النشاط",
   "entities.ui.activity.today": "اليوم",
+  "entities.ui.activity.unknownDate": "تاريخ غير معروف",
   "entities.ui.activity.yesterday": "أمس",
   "entities.ui.backlinks.count_few": "{{count}} إشارات",
   "entities.ui.backlinks.count_many": "{{count}} إشارة",
