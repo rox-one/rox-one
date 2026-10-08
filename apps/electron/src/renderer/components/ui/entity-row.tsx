@@ -298,7 +298,7 @@ export function EntityRow({
         </button>
       )
       : (
-        <DropdownMenu modal={true} open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
@@ -480,11 +480,16 @@ export function EntityRow({
 
       {/* Compact drawer mount — the render-prop is rendered here as a
        *  sibling of the row so the drawer's portal can mount above the
-       *  current panel without being clipped by the row's overflow. */}
-      {useCompactMenu && compactMenu?.({
-        open: compactMenuOpen,
-        onOpenChange: setCompactMenuOpen,
-      })}
+       *  current panel without being clipped by the row's overflow.
+       *  Mounted only while open: a long compact list would otherwise build
+       *  one drawer (and its hooks) per row on first paint. Mounting it is a
+       *  sibling swap, not a row remount, so no interaction state is lost. */}
+      {useCompactMenu && compactMenuOpen
+        ? compactMenu?.({
+            open: compactMenuOpen,
+            onOpenChange: setCompactMenuOpen,
+          })
+        : null}
     </div>
   )
 
@@ -499,9 +504,11 @@ export function EntityRow({
           virtualized row heights don't shift. */}
       {showSeparator && <div aria-hidden className={cn(separatorClassName, 'h-px')} />}
 
-      {/* Wrap with ContextMenu if menu content is provided */}
+      {/* Wrap with ContextMenu if menu content is provided. The root is inert
+          until opened (Radix mounts its content lazily), so it is always
+          present to keep the row subtree stable and right-click working. */}
       {resolvedContextMenu ? (
-        <ContextMenu modal={true} onOpenChange={setContextMenuOpen}>
+        <ContextMenu modal={false} onOpenChange={setContextMenuOpen}>
           <ContextMenuTrigger asChild>
             {innerContent}
           </ContextMenuTrigger>

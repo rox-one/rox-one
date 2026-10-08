@@ -869,6 +869,8 @@ export interface ElectronAPI {
     scannedAt: number
     cachePath: string
     truncated?: boolean
+    aborted?: boolean
+    unavailable?: 'not-live'
   }>
   foreignPersistSessions(args: {
     workspaceId: string
