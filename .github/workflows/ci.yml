@@ -33,3 +33,20 @@ jobs:
         # Uses local protocol fixtures and injected installers, without cloud keys or upstream downloads.
         # The script isolates RPC module mocks from the real transport and transcript suites.
         run: bun run test:mcp-onboarding
+  # W1-10 (#1507): unified gates run on every PR. Pending (sibling input not
+  # landed) never fails; real violations do.
+  unified-gates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.3.14' }
+      - run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: bun test packages/test-harness
+      - run: bun test apps/workspace-service/test e2e/unified
+      - run: bun run scripts/check-provenance.ts
+      - run: bun run scripts/run-unified-gates.ts
