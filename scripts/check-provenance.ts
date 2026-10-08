@@ -2,10 +2,13 @@
 /**
  * W1-10 (#1507) — provenance gate (TECH-SPEC §6.1).
  *
- * Fails when branch files:
- * - declare an Enterprise-Edition source path (never reused — see TECH-SPEC §6.1);
- * - mention Operately in TS/TSX without the per-file provenance header;
- * - carry a GPL/AGPL licence header or SPDX identifier in a source file.
+ * Fails when branch SOURCE files (docs and other prose are never checked,
+ * so specs may quote these rules):
+ * - declare an Enterprise-Edition origin in a comment / provenance header
+ *   (`Source:` line, §6.1 `file:` line, or an Operately GitHub blob/tree
+ *   URL into the EE app directory) — never reused, see TECH-SPEC §6.1;
+ * - claim derivation from Operately without the per-file provenance header;
+ * - carry a GPL/AGPL licence header or SPDX identifier.
  *
  * Scope: files changed on this branch vs the merge-base with the base
  * branch, plus untracked files. The base is `ROX_PROVENANCE_BASE` when set,
@@ -17,10 +20,10 @@
  * git command exits 1. It never reports a vacuous "0 files scanned" pass
  * because git could not answer.
  *
- * Literal-pattern rules skip the gate's own implementation
- * (`packages/test-harness/`, this script) and `*.test.ts` files, whose
- * in-memory fixtures simulate violations without shipping them. The
- * Enterprise-Edition declaration rule applies to every file, no exceptions.
+ * Exemptions: only the files that must spell the patterns out to test them
+ * (`FIXTURE_FILES`) skip the derivation and GPL rules. The EE rule has no
+ * exemptions; the detector assembles its patterns so its own comments
+ * never contain them.
  */
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -57,11 +60,13 @@ function changedFiles(): string[] {
   return [...new Set([...tracked, ...untracked])].filter((f) => !f.startsWith('~/'))
 }
 
-const SELF_PREFIXES = ['packages/test-harness/', 'scripts/check-provenance.ts']
-
-function isTestFile(path: string): boolean {
-  return path.endsWith('.test.ts') || path.endsWith('.test.tsx')
-}
+/** Exact files that spell the derivation / GPL patterns out as test fixtures. */
+const FIXTURE_FILES = [
+  'scripts/check-provenance.ts',
+  'packages/test-harness/src/gates/provenance.ts',
+  'packages/test-harness/test/provenance.test.ts',
+  'packages/test-harness/test/provenance-script.test.ts',
+]
 
 const files = changedFiles()
   .filter((f) => existsSync(join(ROOT, f)))
@@ -73,11 +78,7 @@ const files = changedFiles()
     }
   })
 
-// The ee-declaration rule has no exclusions; literal rules skip the gate
-// itself and test files (see the header comment).
-const violations = checkProvenanceFiles(files, {
-  excludePrefixes: [...SELF_PREFIXES, ...files.filter((f) => isTestFile(f.path)).map((f) => f.path)],
-})
+const violations = checkProvenanceFiles(files, { excludePrefixes: FIXTURE_FILES })
 
 if (violations.length > 0) {
   console.error(`provenance check failed (base ${BASE}):`)
