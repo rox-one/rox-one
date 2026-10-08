@@ -129,6 +129,7 @@ import { initializeBackendHostRuntime } from '@rox/shared/agent/backend'
 import { prependPath, pathEnvKey } from '@rox/shared/toolchain'
 import { setPowerShellValidatorRoot } from '@rox/shared/agent'
 import { handleDeepLink } from './deep-link'
+import { loadPersistedEntitiesLinksFlag, registerEntitiesLinksIpc } from './entities-flags'
 import { BrowserPaneManager } from './browser-pane-manager'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
@@ -475,6 +476,27 @@ async function createInitialWindows(): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  // Entity links flag (entities.links.v1) — FIRST, before any await: every
+  // renderer reports its persisted toggle with a synchronous IPC at
+  // bootstrap, so the listener must exist even if later init throws (a
+  // window created afterwards, e.g. macOS 'activate', must never block on an
+  // unanswered sendSync). Registered unconditionally — local, thin-client
+  // and headless hosts all parse rox:// deep links in this process. Main
+  // owns the effective state (env override > toggle) and keeps a durable
+  // copy so cold-start entity deep links see the user's setting.
+  try {
+    loadPersistedEntitiesLinksFlag(CONFIG_DIR, { logger: mainLog })
+  } catch (error) {
+    mainLog.error('[entities] failed to load the entities.links.v1 durable copy:', error)
+  }
+  registerEntitiesLinksIpc(ipcMain, {
+    broadcast: (channel, state) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, state)
+      }
+    },
+  })
+
   // Export packaged state as env var so logger.ts (and headless Bun) don't need 'electron'
   process.env.CRAFT_IS_PACKAGED = app.isPackaged ? 'true' : 'false'
 
@@ -1147,12 +1169,6 @@ app.whenReady().then(async () => {
         return remove(workspaceId)
       })
 
-      // Entity links flag (entities.links.v1): renderer owns the persisted
-      // atom and notifies main so the deep-link parser and the entity RPC
-      // handlers agree with the renderer without a restart.
-      const { registerEntitiesLinksIpc } = await import('./entities-flags')
-      registerEntitiesLinksIpc(ipcMain)
-
       // SSH remote hosts + tunnels (Remote-SSH style bootstrap to a remote server)
       const { registerSshTunnelIpc } = await import('./ssh-tunnel/ipc')
       registerSshTunnelIpc()
@@ -1638,10 +1654,17 @@ app.whenReady().then(async () => {
     }
 
     // Process pending deep link from cold start
+    // Not awaited: an entity link may be held for up to 10 s until the
+    // entities.links.v1 state is known, which must not delay the rest of
+    // init (the 'activate' handler below, the "initialized" log). There is no
+    // retry: the link is consumed here, and a failure is logged and dropped.
     if (pendingDeepLink) {
-      mainLog.info('Processing pending deep link:', pendingDeepLink)
-      await handleDeepLink(pendingDeepLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined)
+      const coldStartLink = pendingDeepLink
       pendingDeepLink = null
+      mainLog.info('Processing pending deep link:', coldStartLink)
+      handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
+        mainLog.error('Failed to handle pending deep link (dropped, no retry):', err)
+      })
     }
 
     mainLog.info('App initialized successfully')

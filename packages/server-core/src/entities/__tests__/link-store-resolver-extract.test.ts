@@ -80,11 +80,16 @@ describe('EntityLinkStore', () => {
       })
 
       expect(second.linkId).toBe(first.linkId)
-      expect(second.createdBy).toBe('user-1')
+      // Setting a role/anchor takes ownership of the row (review 5 #3).
+      expect(second.createdBy).toBe('user-2')
       expect(second.revision).toBe(2)
       expect(second.role).toBe('reviewer')
       expect(second.anchor).toEqual({ line: 9 })
       expect(store.count()).toBe(1)
+      // A bare re-add (no role, no anchor) keeps the author.
+      const third = store.add({ from: note('n1'), to: task('t1'), relation: 'mentions', createdBy: 'user-3' })
+      expect(third.linkId).toBe(first.linkId)
+      expect(third.createdBy).toBe('user-2')
       // A different relation is a distinct link.
       store.add({ from: note('n1'), to: task('t1'), relation: 'blocks', createdBy: 'user-1' })
       expect(store.count()).toBe(2)

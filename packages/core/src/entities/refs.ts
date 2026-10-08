@@ -83,8 +83,12 @@ function decodeRefPart(value: string): string {
  * Strip route-level prefixes so `goal-target:g1#t-3`,
  * `goal-check:g1#k-7` and `channel-message:c1#seq-128` normalise to the
  * canonical fragments `3`, `7` and `128`.
+ *
+ * Exported for the Zod schema layer (`@rox/shared/entities`), which must
+ * canonicalise the same prefixes `parseEntityRef` strips so RPC `add` can
+ * never store a second encoding (`#t-t-3`).
  */
-function normalizeFragment(kind: EntityKind, fragment: string): string {
+export function normalizeEntityFragment(kind: EntityKind, fragment: string): string {
   if (kind === 'goal-target' && fragment.startsWith('t-') && fragment.length > 2) {
     return fragment.slice(2)
   }
@@ -139,7 +143,7 @@ export function parseEntityRef(input: string): Result<EntityRef, RefError> {
   if (rawFragment === undefined) {
     return { ok: true, value: { kind: kind as EntityKind, id } }
   }
-  const fragment = normalizeFragment(kind as EntityKind, decodeRefPart(rawFragment))
+  const fragment = normalizeEntityFragment(kind as EntityKind, decodeRefPart(rawFragment))
   if (fragment.length === 0) {
     return refError('empty-fragment', input, 'reference fragment is empty')
   }

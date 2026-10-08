@@ -126,6 +126,8 @@ type ApiToChannelMapKeys = Exclude<
   | 'changeLanguage' // direct IPC to main process — syncs i18n language
   | 'setUnifiedSurfaceRoutesEnabled' // W1-07 direct IPC — surface route gate for main deep links
   | 'setEntitiesLinksEnabled' // direct IPC to main process — entities.links.v1 flag mirror
+  | 'syncEntitiesLinksState' // direct sendSync to main — entities.links.v1 bootstrap report
+  | 'onEntitiesLinksStateChanged' // direct IPC listener — effective entities.links.v1 state
   | 'exportNotePdf' // direct IPC to main process — uses BrowserWindow.printToPDF
   | 'saveTextFile' // direct IPC — save dialog + write for knowledge export
   | 'getFilePath' // renderer-local — webUtils.getPathForFile, no IPC round-trip

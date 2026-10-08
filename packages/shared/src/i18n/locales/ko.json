@@ -6058,6 +6058,8 @@
   "settings.appearance.defaultZoomLevelDesc": "모든 창에 적용할 영구적인 앱 확대/축소 수준을 설정합니다",
   "settings.appearance.description": "테마, 글꼴, 도구 아이콘",
   "settings.appearance.editFile": "파일 편집",
+  "settings.appearance.entitiesEnvForcedOff": "CRAFT_FEATURE_ENTITIES_LINKS=0으로 강제로 꺼져 있습니다. 이 토글을 사용하려면 변수를 제거하세요.",
+  "settings.appearance.entitiesEnvForcedOn": "CRAFT_FEATURE_ENTITIES_LINKS=1로 강제로 켜져 있습니다. 이 토글을 사용하려면 변수를 제거하세요.",
   "settings.appearance.entitiesLinks": "엔터티 링크(실험적)",
   "settings.appearance.entitiesLinksDesc": "[[kind:id]], rox:// 딥 링크, 백링크로 노트·작업·문서의 엔터티를 연결합니다. 기본값은 꺼짐.",
   "settings.appearance.font": "글꼴",

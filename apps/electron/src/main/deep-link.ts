@@ -44,10 +44,12 @@ import type { WindowManager } from './window-manager'
 import { RPC_CHANNELS } from '../shared/types'
 import type { EventSink } from '@rox/server-core/transport'
 import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
-import { isCompoundRoutePrefix } from '../shared/route-parser'
+import { ENTITY_ONLY_ROUTE_PREFIXES, isCompoundRoutePrefix } from '../shared/route-parser'
 // W1-07 (#1504)
 import { isClosedUnifiedSurfaceRoot } from '../shared/surface-routes'
 import { isSurfaceGateReceived, whenSurfaceGateReady } from './surface-routes-ipc'
+// W1-02 (#1499): cold-start entity deep links wait for the entities.links.v1 state.
+import { ENTITIES_FLAG_WAIT_MS, isEntitiesLinksFlagKnown, whenEntitiesLinksFlagKnown } from './entities-flags'
 import { parseRuntimeMapLinkUrl } from '../shared/runtime-map-link'
 
 export interface DeepLinkTarget {
@@ -283,28 +285,107 @@ export function isClosedSurfaceRootDeepLink(url: string): boolean {
   }
 }
 
+/**
+ * W1-02 (#1499): true for `rox://<entity-only prefix>/…` and
+ * `rox://workspace/{id}/<entity-only prefix>/…` (docs, goals, base, …) —
+ * the links whose acceptance depends on `entities.links.v1`.
+ */
+export function isEntityOnlyDeepLink(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (!isRoxDeeplinkProtocol(parsed.protocol)) return false
+    if (parsed.hostname === 'workspace') {
+      const parts = parsed.pathname.split('/').slice(1)
+      return Boolean(parts[0]) && ENTITY_ONLY_ROUTE_PREFIXES.has(parts[1] ?? '')
+    }
+    return ENTITY_ONLY_ROUTE_PREFIXES.has(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
 /** How long a cold-start mode-root link waits for the renderer's first gate push. */
 export const SURFACE_GATE_WAIT_MS = 10_000
 
 /**
- * `parseDeepLink`, but a mode-root link that hits a still-closed gate before
- * the renderer's first push (cold start: the link launched the app) is held
- * until that push and re-parsed. On timeout it is dropped and logged. After
- * the first push nothing waits, so flags-off behaviour is main's.
+ * Per-app EXTERNAL deep-link sequence: every link arriving through external
+ * ingress (`handleDeepLink`: OS open-url, second instance, cold start) takes
+ * the next number. A held external link that resolves after a LATER
+ * external link arrived is dropped, so the user's most recent link wins (a
+ * held link would otherwise navigate after a later link that was handled
+ * immediately). Internal navigations (`createWindow({ initialDeepLink })`,
+ * e.g. OPEN_SESSION_IN_NEW_WINDOW) neither bump nor supersede.
+ */
+let deepLinkSequence = 0
+
+export type DeepLinkDropReason = 'timeout' | 'superseded'
+
+/**
+ * `resolveDeepLinkTarget` with the reason a held link was dropped
+ * (`target: null` plus `dropped`); a plain unparseable link has no reason.
+ *
+ * Two holds, in order:
+ *  1. W1-02 (#1499) entity hold — an entity-only link that arrives before
+ *     main knows the `entities.links.v1` state waits for that state.
+ *  2. W1-07 (#1504) surface hold — a mode-root link that hits a still-closed
+ *     gate before the renderer's first push waits for that push (or for the
+ *     gate to latch open-as-is after a timeout) and is re-parsed.
+ * Either hold drops the link on timeout (logged) or when a later external
+ * link superseded it. Once both states are known nothing waits, so
+ * flags-off behaviour is main's.
+ */
+export async function resolveDeepLinkTargetDetailed(
+  url: string,
+  options: { timeoutMs?: number; external?: boolean } = {},
+): Promise<{ target: DeepLinkTarget | null; dropped?: DeepLinkDropReason }> {
+  const sequence = options.external ? ++deepLinkSequence : null
+  const superseded = () => sequence !== null && sequence !== deepLinkSequence
+
+  // 1. Entity hold (#1499).
+  if (!isEntitiesLinksFlagKnown() && isEntityOnlyDeepLink(url)) {
+    mainLog.info('[DeepLink] Holding entity link until the entities.links.v1 state is known:', url)
+    const ready = await whenEntitiesLinksFlagKnown(options.timeoutMs ?? ENTITIES_FLAG_WAIT_MS)
+    if (superseded()) {
+      mainLog.info('[DeepLink] Dropping held entity link superseded by a later link:', url)
+      return { target: null, dropped: 'superseded' }
+    }
+    if (!ready) {
+      mainLog.warn('[DeepLink] entities.links.v1 state never arrived; dropping entity link:', url)
+      return { target: null, dropped: 'timeout' }
+    }
+  }
+
+  // 2. Surface hold (#1504).
+  const target = parseDeepLink(url)
+  if (target || isSurfaceGateReceived() || !isClosedSurfaceRootDeepLink(url)) return { target }
+  mainLog.info('[DeepLink] Holding mode-root link until the renderer pushes the surface gate:', url)
+  const ready = await whenSurfaceGateReady(options.timeoutMs ?? SURFACE_GATE_WAIT_MS)
+  if (superseded()) {
+    mainLog.info('[DeepLink] Dropping held mode-root link superseded by a later link:', url)
+    return { target: null, dropped: 'superseded' }
+  }
+  if (!ready) {
+    mainLog.warn('[DeepLink] Surface gate never arrived; dropping mode-root link:', url)
+    return { target: null, dropped: 'timeout' }
+  }
+  return { target: parseDeepLink(url) }
+}
+
+/**
+ * `resolveDeepLinkTargetDetailed` without the drop reason. Internal callers
+ * (window-manager's `initialDeepLink`) use this form: they never supersede a
+ * held external link and are never superseded.
  */
 export async function resolveDeepLinkTarget(
   url: string,
   options: { timeoutMs?: number } = {},
 ): Promise<DeepLinkTarget | null> {
-  const target = parseDeepLink(url)
-  if (target || isSurfaceGateReceived() || !isClosedSurfaceRootDeepLink(url)) return target
-  mainLog.info('[DeepLink] Holding mode-root link until the renderer pushes the surface gate:', url)
-  const ready = await whenSurfaceGateReady(options.timeoutMs ?? SURFACE_GATE_WAIT_MS)
-  if (!ready) {
-    mainLog.warn('[DeepLink] Surface gate never arrived; dropping mode-root link:', url)
-    return null
-  }
-  return parseDeepLink(url)
+  return (await resolveDeepLinkTargetDetailed(url, options)).target
+}
+
+/** Test seam. */
+export function __resetDeepLinkSequenceForTests(): void {
+  deepLinkSequence = 0
 }
 
 /**
@@ -317,8 +398,9 @@ export async function handleDeepLink(
   resolveClientId?: (webContentsId: number) => string | undefined,
   preferredClientId?: string,
 ): Promise<DeepLinkResult> {
-  const target = await resolveDeepLinkTarget(url)
+  const { target, dropped } = await resolveDeepLinkTargetDetailed(url, { external: true })
 
+  if (dropped === 'superseded') return { success: false, error: 'Deep link superseded by a later link' }
   if (!target) {
     // Return success for null targets (like auth-callback) - they're handled elsewhere
     if (url.includes('auth-callback')) {
