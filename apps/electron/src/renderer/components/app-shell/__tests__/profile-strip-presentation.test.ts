@@ -14,7 +14,7 @@ describe('ProfileStrip presentation', () => {
     expect(src).toContain('data-tutorial="profile-strip"')
     expect(src).toContain("t(`settings.account.plan.${plan}`)")
     expect(src).toContain("t('profile.balanceLabel')")
-    expect(src).toContain("t('profile.balanceEmpty')")
+    expect(src).not.toContain("t('profile.balanceEmpty')")
     expect(src).toContain("t('profile.balanceUnknown')")
     expect(src).not.toContain('initialsFromName')
     expect(src).not.toContain('role="progressbar"')

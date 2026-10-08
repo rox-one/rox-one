@@ -5590,7 +5590,6 @@
   "productTour.workspace.workspace.scope.title": "Твой текущий контекст",
   "profile.accountSettings": "Настройки аккаунта",
   "profile.balance": "{{amount}}",
-  "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Баланс",
   "profile.balanceUnknown": "Нет данных",
   "profile.defaultName": "Пользователь",
