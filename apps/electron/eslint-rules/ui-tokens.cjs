@@ -78,7 +78,7 @@ function isUngated(ruleId, messageId) {
 }
 
 /** Tests and fixtures assert on banned strings on purpose; they are outside the ratchet. */
-const TEST_FILES = ['**/__tests__/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}']
+const TEST_FILES = ['**/__tests__/**', '**/*.{test,spec}.{ts,tsx,mts,cts,js,jsx,mjs,cjs}']
 
 const off = Object.fromEntries(Object.keys(rules).map((rule) => [rule, 'off']))
 

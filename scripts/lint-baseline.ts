@@ -61,6 +61,18 @@ const SCRIPT_ROOT = resolve(import.meta.dir ?? dirname(new URL(import.meta.url).
 export const ESLINT_TARGETS = ['apps/electron/src', 'packages/ui/src', 'apps/viewer/src', 'apps/webui/src']
 /** CSS the stylelint rules run on. */
 export const CSS_TARGETS = ['apps/electron/src', 'packages/ui/src', 'apps/viewer/src', 'apps/webui/src']
+/**
+ * Script extensions the ESLint rules run on. Every JS/TS flavour counts, so moving a component to
+ * .jsx / .js / .mts does not take it out of the ratchet. Tests stay excluded (TEST_FILES).
+ */
+export const ESLINT_EXTENSIONS = ['ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs']
+const ESLINT_GLOB = `**/*.{${ESLINT_EXTENSIONS.join(',')}}`
+const ESLINT_IGNORES = ['**/node_modules/**', '**/dist/**', '**/*.d.{ts,mts,cts}']
+/**
+ * stylelint's ignore file. Passing /dev/null means only the owned .stylelintrc.cjs `ignoreFiles`
+ * can exclude CSS; a root .stylelintignore (unowned, picked up from cwd by default) cannot.
+ */
+export const STYLELINT_IGNORE_PATH = '/dev/null'
 export const DEFAULT_BASELINE = 'eslint-baselines/ui-tokens.json'
 export const STYLELINT_PREFIX = 'stylelint/'
 
@@ -152,9 +164,11 @@ function eslintConfig(root: string): Linter.Config[] {
   const uiTokens = loadUiTokens(root)
   const zIndexRule = require(resolve(root, 'apps/electron/eslint-rules/no-hardcoded-z-index.cjs'))
   return [
-    { ignores: ['**/node_modules/**', '**/dist/**', '**/*.d.ts', ...uiTokens.TEST_FILES] },
+    // The only ignores: this owned config (overrideConfigFile: true loads no eslint.config.* and
+    // flat config reads no .eslintignore). collectLint checks nothing else dropped a file.
+    { ignores: [...ESLINT_IGNORES, ...uiTokens.TEST_FILES] },
     {
-      files: ['**/*.{ts,tsx}'],
+      files: [ESLINT_GLOB],
       languageOptions: {
         parser: tsParser as Linter.Parser,
         parserOptions: { ecmaVersion: 'latest', sourceType: 'module', ecmaFeatures: { jsx: true } },
@@ -168,7 +182,49 @@ function eslintConfig(root: string): Linter.Config[] {
       },
       rules: eslintRuleEntries(uiTokens),
     },
+    {
+      // CommonJS sources (main-process shims) are scripts, not modules.
+      files: ['**/*.{cjs,cts}'],
+      languageOptions: { sourceType: 'commonjs' },
+    },
   ]
+}
+
+/** Root-relative POSIX paths under `targets` matching `pattern`, minus any of `excludes`. */
+export function expectedFiles(root: string, targets: string[], pattern: string, excludes: string[], dot: boolean): string[] {
+  const glob = new Bun.Glob(pattern)
+  const excluded = excludes.map((exclude) => new Bun.Glob(exclude))
+  const found: string[] = []
+  for (const target of targets) {
+    for (const file of glob.scanSync({ cwd: resolve(root, target), onlyFiles: true, dot })) {
+      const key = `${target.replace(/\/+$/, '')}/${file.split('\\').join('/')}`
+      if (key.split('/').includes('node_modules')) continue
+      if (excluded.some((exclude) => exclude.match(key))) continue
+      found.push(key)
+    }
+  }
+  return found.sort()
+}
+
+/** Of the files stylelint reported as ignored, those not covered by the config's ignoreFiles. */
+export function ignoredOutsideConfig(ignored: string[], ignoreFiles: string[]): string[] {
+  const globs = ignoreFiles.map((pattern) => new Bun.Glob(pattern))
+  return ignored.filter((file) => !globs.some((glob) => glob.match(file)))
+}
+
+/**
+ * Fail when a linter silently skipped a file it should have linted (an ignore file, a narrowed
+ * `files` glob ...): those violations would leave the counts as a "decrease" and nothing fails.
+ */
+export function assertLinted(tool: string, expected: string[], linted: Set<string>) {
+  const missing = expected.filter((file) => !linted.has(file))
+  if (missing.length) {
+    const shown = missing.slice(0, 20).join('\n  ')
+    throw new Error(
+      `${tool} skipped ${missing.length} file(s) the ratchet must count (an ignore file or ignore option?):\n  ${shown}` +
+        (missing.length > 20 ? `\n  ... and ${missing.length - 20} more` : ''),
+    )
+  }
 }
 
 function add(counts: Counts, file: string, rule: string, by = 1) {
@@ -245,7 +301,12 @@ export async function collectLint(
       overrideConfig: eslintConfig(root),
       errorOnUnmatchedPattern: false,
     })
-    const results = await eslint.lintFiles(existingEslint.map((target) => `${target}/**/*.{ts,tsx}`))
+    const results = await eslint.lintFiles(existingEslint.map((target) => `${target}/${ESLINT_GLOB}`))
+    assertLinted(
+      'ESLint',
+      expectedFiles(root, existingEslint, ESLINT_GLOB, [...ESLINT_IGNORES, ...uiTokens.TEST_FILES], true),
+      new Set(results.map((result) => toKey(result.filePath))),
+    )
     for (const result of results) {
       const file = toKey(result.filePath)
       for (const message of result.messages) {
@@ -269,6 +330,8 @@ export async function collectLint(
   const existingCss = cssTargets.filter((target) => existsSync(resolve(root, target)))
   if (existingCss.length) {
     const { default: stylelint } = await import('stylelint')
+    const stylelintConfig = require(resolve(root, '.stylelintrc.cjs')) as { ignoreFiles?: string | string[] }
+    const ignoreFiles = [stylelintConfig.ignoreFiles ?? []].flat()
     const { results } = await stylelint.lint({
       cwd: root,
       configFile: resolve(root, '.stylelintrc.cjs'),
@@ -277,7 +340,23 @@ export async function collectLint(
       allowEmptyInput: true,
       // Same as noInlineConfig: disable comments are counted, justified ones exempted below.
       ignoreDisables: true,
+      // Never a root .stylelintignore: only the owned config's ignoreFiles may exclude CSS.
+      ignorePath: STYLELINT_IGNORE_PATH,
     })
+    // Files dropped before linting (an ignore file) never get a result; files the config ignores
+    // get `ignored: true`. Both must be accounted for by the owned ignoreFiles.
+    const ignoredElsewhere = ignoredOutsideConfig(
+      results.filter((result) => result.ignored).map((result) => toKey(result.source ?? '')),
+      ignoreFiles,
+    )
+    if (ignoredElsewhere.length) {
+      throw new Error(`stylelint ignored files outside .stylelintrc.cjs ignoreFiles:\n  ${ignoredElsewhere.join('\n  ')}`)
+    }
+    assertLinted(
+      'stylelint',
+      expectedFiles(root, existingCss, '**/*.css', ignoreFiles, false),
+      new Set(results.filter((result) => !result.ignored).map((result) => toKey(result.source ?? ''))),
+    )
     // An invalid rule option makes stylelint skip that rule silently: its counts would drop to 0
     // (a "decrease") and its gate would be gone. Fail instead, like ESLint does.
     const invalidOptions = new Set(results.flatMap((result) => (result.invalidOptionWarnings ?? []).map((warning) => warning.text)))
@@ -391,11 +470,32 @@ export function applyRenames(counts: Counts, renames: Rename[]): Counts {
   return sortCounts(moved)
 }
 
-/** Rules whose baseline total is 0 must be errors: the "flip to error at 0" step of the ratchet. */
-export function rulesToFlip(baselineCounts: Counts, severities: Record<string, Severity>): string[] {
+/**
+ * Rules whose baseline total is 0 must be errors: the "flip to error at 0" step of the ratchet.
+ * A partially ungated rule (UNGATED messageIds) with ungated messages left is not flipped yet:
+ * flipping it would turn those ungated warnings into editor/lint errors. See deferredFlips.
+ */
+export function rulesToFlip(
+  baselineCounts: Counts,
+  severities: Record<string, Severity>,
+  ungatedTotals: Record<string, number> = {},
+): string[] {
   const sums = totals(baselineCounts)
   return Object.entries(severities)
-    .filter(([rule, severity]) => severity === 'warn' && (sums[rule] ?? 0) === 0)
+    .filter(([rule, severity]) => severity === 'warn' && (sums[rule] ?? 0) === 0 && (ungatedTotals[rule] ?? 0) === 0)
+    .map(([rule]) => rule)
+    .sort()
+}
+
+/** Warn rules at 0 gated violations that still have ungated ones: flip once the ungated part lands. */
+export function deferredFlips(
+  baselineCounts: Counts,
+  severities: Record<string, Severity>,
+  ungatedTotals: Record<string, number>,
+): string[] {
+  const sums = totals(baselineCounts)
+  return Object.entries(severities)
+    .filter(([rule, severity]) => severity === 'warn' && (sums[rule] ?? 0) === 0 && (ungatedTotals[rule] ?? 0) > 0)
     .map(([rule]) => rule)
     .sort()
 }
@@ -677,11 +777,13 @@ export async function main(argv: string[], env: Record<string, string | undefine
     }
     const ungated = partial ? baseline.ungated : ungatedSummary(root, lint.ungated)
     writeJson(baselinePath, buildBaseline(next, severities, ungated))
-    const flips = partial ? [] : rulesToFlip(next, severities)
+    const flips = partial ? [] : rulesToFlip(next, severities, ungatedTotals)
+    const deferred = partial ? [] : deferredFlips(next, severities, ungatedTotals)
     console.log(`lint-baseline: wrote ${relative(root, baselinePath)} (${Object.keys(next).length} files, ${elapsed}s)`)
     for (const [rule, total] of Object.entries(totals(next)).sort()) console.log(`  ${rule}: ${total}`)
     for (const [rule, total] of Object.entries(ungatedTotals).sort()) console.log(`  (ungated) ${rule}: ${total}`)
     if (flips.length) console.log(`lint-baseline: at 0, flip to error: ${flips.join(', ')}`)
+    if (deferred.length) console.log(`lint-baseline: gated part at 0; flip to error once the ungated part lands: ${deferred.join(', ')}`)
     return 0
   }
 
@@ -708,11 +810,15 @@ export async function main(argv: string[], env: Record<string, string | undefine
     )
   }
   if (!partial) {
-    const flips = rulesToFlip(baselineFiles, severities)
+    const flips = rulesToFlip(baselineFiles, severities, ungatedTotals)
     if (flips.length) {
       failed = true
       console.error(`lint-baseline: these rules are at 0 and must be flipped to 'error': ${flips.join(', ')}`)
       console.error('  ESLint: apps/electron/eslint-rules/ui-tokens.cjs; stylelint: .stylelintrc.cjs (severity: "error").')
+    }
+    const deferred = deferredFlips(baselineFiles, severities, ungatedTotals)
+    if (deferred.length) {
+      console.log(`lint-baseline: gated part at 0; flip to error once the ungated part lands: ${deferred.join(', ')}`)
     }
     const drifted = Object.keys(severities).filter((rule) => baseline.rules[rule]?.severity !== severities[rule])
     const dropped = Object.keys(baseline.rules).filter((rule) => !(rule in severities))

@@ -24,6 +24,11 @@ bun run lint:ui-tokens:update --base origin/<stack-base>   # stacked PR: a later
   ```
 
   File-wide, block, bare (no rule) and reason-less disables still count.
+- Files: every `.ts/.tsx/.mts/.cts/.js/.jsx/.mjs/.cjs` and `.css` file under the UI trees, except
+  tests (`__tests__`, `*.test.*`, `*.spec.*`), `.d.*` and `dist`. Only the owned configs decide
+  what is skipped: the script's ESLint `ignores` (no `eslint.config.*`, no `.eslintignore`) and
+  `.stylelintrc.cjs` `ignoreFiles` (stylelint runs with `ignorePath: /dev/null`, so a root
+  `.stylelintignore` has no effect). The run fails if a linter skipped any other file.
 - A rule at 0 flips from warning to error (its severity is recorded in the baseline).
 - The ratchet only ever fails on growth. Decreases are reported and stay recorded until the next
   `--update`, so the baseline is a ceiling, not a mirror. Run `--update` to lock decreases in.

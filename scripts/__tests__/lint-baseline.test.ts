@@ -11,7 +11,11 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import {
   applyRenames,
+  assertLinted,
   buildBaseline,
+  deferredFlips,
+  expectedFiles,
+  ignoredOutsideConfig,
   collectCounts,
   collectLint,
   compareCounts,
@@ -128,6 +132,17 @@ describe('lint-baseline: ratchet maths', () => {
   it('requires a rule at 0 to be an error', () => {
     const severities = { 'rox/no-hardcoded-z-index': 'warn', 'rox/no-raw-color': 'warn', 'rox/prefer-primitives': 'warn', 'rox/no-arbitrary-radius': 'error' } as const
     expect(rulesToFlip(baseline, severities)).toEqual(['rox/prefer-primitives'])
+  })
+
+  it('defers the flip of a partially ungated rule while ungated messages remain (review4 info)', () => {
+    const severities = { 'rox/prefer-primitives': 'warn', 'rox/no-raw-color': 'warn' } as const
+    const gatedZero: Counts = { 'a.tsx': { 'rox/no-raw-color': 1 } }
+    expect(rulesToFlip(gatedZero, severities, { 'rox/prefer-primitives': 3 })).toEqual([])
+    expect(deferredFlips(gatedZero, severities, { 'rox/prefer-primitives': 3 })).toEqual(['rox/prefer-primitives'])
+    // Once the ungated part is gone too, the flip is due.
+    expect(rulesToFlip(gatedZero, severities, { 'rox/prefer-primitives': 0 })).toEqual(['rox/prefer-primitives'])
+    expect(deferredFlips(gatedZero, severities, {})).toEqual([])
+    expect(rulesToFlip(gatedZero, severities)).toEqual(['rox/prefer-primitives'])
   })
 
   it('merges counts from another tree by per-file max', () => {
@@ -382,6 +397,51 @@ describe('lint-baseline: rename limit and stylelint config errors (review3 infos
     writeFileSync(join(broken, 'apps/electron/src/a.css'), '.a { color: #fff; }\n')
     await expect(collectLint(broken, { eslintTargets: [] })).rejects.toThrow('Invalid option name "bogus" for rule "color-no-hex"')
   }, 60_000)
+})
+
+describe('lint-baseline: nothing outside the owned config can drop files (review4)', () => {
+  const Z_TSX = 'export const P = () => <div className="z-50" />\n'
+
+  it('ignores a root .stylelintignore and .eslintignore; counts every JS/TS flavour; tests stay out', async () => {
+    const repo = ratchetRepo()
+    const src = join(repo, 'apps/electron/src')
+    mkdirSync(join(src, 'shims'), { recursive: true })
+    writeFileSync(join(src, 'a.css'), '.a { color: #fff; }\n')
+    writeFileSync(join(src, 'Panel.tsx'), Z_TSX)
+    writeFileSync(join(src, 'Moved.jsx'), Z_TSX)
+    writeFileSync(join(src, 'layers.mjs'), "export const L = 'absolute z-50'\n")
+    writeFileSync(join(src, 'layers.mts'), "export const L: string = 'absolute z-[60]'\n")
+    writeFileSync(join(src, 'shims/legacy.cjs'), "if (!module.exports.L) return\nmodule.exports = { L: 'absolute z-50' }\n")
+    writeFileSync(join(src, 'Panel.test.jsx'), Z_TSX)
+    writeFileSync(join(src, 'types.d.mts'), "export declare const L: 'z-50'\n")
+    writeFileSync(join(repo, '.stylelintignore'), '**/*.css\n')
+    writeFileSync(join(repo, '.eslintignore'), '**/*\n')
+    const { counts } = await collectLint(repo)
+    expect(counts['apps/electron/src/a.css']?.['stylelint/color-no-hex']).toBe(1)
+    for (const file of ['Panel.tsx', 'Moved.jsx', 'layers.mjs', 'layers.mts', 'shims/legacy.cjs']) {
+      expect(counts[`apps/electron/src/${file}`]?.['rox/no-hardcoded-z-index'], file).toBe(1)
+    }
+    expect(counts['apps/electron/src/Panel.test.jsx']).toBeUndefined()
+    expect(counts['apps/electron/src/types.d.mts']).toBeUndefined()
+  }, 60_000)
+
+  it('lists the files a linter must see and fails when one was skipped', () => {
+    const repo = tempRepo()
+    mkdirSync(join(repo, 'src/a/__tests__'), { recursive: true })
+    mkdirSync(join(repo, 'src/dist'), { recursive: true })
+    for (const file of ['src/a/x.css', 'src/a/__tests__/t.css', 'src/dist/y.css', 'src/z.css']) writeFileSync(join(repo, file), '')
+    const expected = expectedFiles(repo, ['src'], '**/*.css', ['**/dist/**', '**/__tests__/**'], false)
+    expect(expected).toEqual(['src/a/x.css', 'src/z.css'])
+    expect(() => assertLinted('stylelint', expected, new Set(expected))).not.toThrow()
+    expect(() => assertLinted('stylelint', expected, new Set(['src/z.css']))).toThrow('stylelint skipped 1 file(s)')
+  })
+
+  it('accepts stylelint `ignored` results only under the config ignoreFiles', () => {
+    const ignoreFiles = ['**/node_modules/**', '**/dist/**', 'apps/electron/resources/**']
+    expect(ignoredOutsideConfig(['apps/ui/dist/a.css', 'apps/electron/resources/b.css'], ignoreFiles)).toEqual([])
+    expect(ignoredOutsideConfig(['apps/electron/src/c.css', 'apps/ui/dist/a.css'], ignoreFiles)).toEqual(['apps/electron/src/c.css'])
+    expect(ignoredOutsideConfig(['packages/ui/src/d.css'], [])).toEqual(['packages/ui/src/d.css'])
+  })
 })
 
 describe('lint-baseline: base-branch baseline (review1 W1)', () => {
