@@ -22,9 +22,17 @@ import { installRendererPerfHarness } from './perf/install'
 import { syncMainProcessLanguage } from './lib/main-language-sync'
 import { ShellStoreBridge } from './platform/ShellStoreBridge'
 import { RenderProfileMotionConfig } from './lib/render-profile-motion'
+import { seedRenderProfile, startRenderProfileSync } from './lib/render-profile-dom'
 import { seedEntitiesLinksGate } from './lib/entities-links-sync'
 
 const rendererPerfHarness = installRendererPerfHarness()
+
+// PERF-07: own `data-render-profile` at the root, before React and AppShell,
+// so every startup screen (loading, onboarding, reauth, workspace picker)
+// renders with the active profile. The snapshot request starts right here.
+seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
+const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
+import.meta.hot?.dispose(stopRenderProfileSync)
 
 // Initialize i18n before any React rendering
 // (bootstrap.ts preloads the active locale + fallbacks; others load on switch)
