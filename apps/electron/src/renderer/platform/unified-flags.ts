@@ -146,6 +146,19 @@ export function createShellFlagContextKeyProvider(
 const installedStores = new WeakSet<object>()
 
 /**
+ * Mirror the gate into the main process so `rox://<mode>` deep links follow
+ * the same flags (main is default-closed). No-op outside Electron / in tests.
+ */
+export function pushSurfaceRoutesToMain(ids: Iterable<string>): void {
+  try {
+    const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+    api?.setUnifiedSurfaceRoutesEnabled?.([...ids])?.catch(() => {})
+  } catch {
+    // best effort — main stays default-closed
+  }
+}
+
+/**
  * Keep the shared route parser's surface gate in sync with the flag atoms.
  * Idempotent per store; runs once at module load in the renderer so the very
  * first route parse already sees persisted flags.
@@ -153,7 +166,11 @@ const installedStores = new WeakSet<object>()
 export function installShellFlagBridges(store: ReturnType<typeof getDefaultStore> = getDefaultStore()): void {
   if (installedStores.has(store)) return
   installedStores.add(store)
-  const sync = () => setUnifiedSurfaceRoutesEnabled(enabledUnifiedSurfaces(store.get(enabledShellFlagsAtom)))
+  const sync = () => {
+    const ids = enabledUnifiedSurfaces(store.get(enabledShellFlagsAtom))
+    setUnifiedSurfaceRoutesEnabled(ids)
+    pushSurfaceRoutesToMain(ids)
+  }
   sync()
   store.sub(enabledShellFlagsAtom, sync)
 }

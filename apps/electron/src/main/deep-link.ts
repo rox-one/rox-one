@@ -45,6 +45,8 @@ import { RPC_CHANNELS } from '../shared/types'
 import type { EventSink } from '@rox/server-core/transport'
 import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
 import { isCompoundRoutePrefix } from '../shared/route-parser'
+// W1-07 (#1504)
+import { isClosedUnifiedSurfaceRoot } from '../shared/surface-routes'
 import { parseRuntimeMapLinkUrl } from '../shared/runtime-map-link'
 
 export interface DeepLinkTarget {
@@ -141,6 +143,9 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
     // is reachable via rox://<route>. Entity-only prefixes (docs, goals, …)
     // are gated behind `entities.links.v1` via isCompoundRoutePrefix.
     // rox://allSessions/..., rox://settings/..., etc. (compound routes)
+    // W1-07 (#1504): a bare mode root (rox://messenger) follows its own mode
+    // flag, pushed from the renderer over IPC (main/surface-routes-ipc.ts).
+    if (isClosedUnifiedSurfaceRoot(`${host}${parsed.pathname}`)) return null
     if (isCompoundRoutePrefix(host)) {
       // Reconstruct the full compound route from host + pathname
       const viewRoute = withViewQuery(`${host}${parsed.pathname}`, parsed)
@@ -166,6 +171,8 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
 
       // Parse compound routes: /workspace/{id}/{compoundRoute}
       // e.g., /workspace/ws123/allSessions/session/abc123
+      // W1-07 (#1504): same mode-flag gate for /workspace/{id}/messenger.
+      if (routeType && isClosedUnifiedSurfaceRoot(pathParts.slice(1).join('/'))) return null
       if (routeType && isCompoundRoutePrefix(routeType)) {
         const viewRoute = withViewQuery(pathParts.slice(1).join('/'), parsed)
         result.view = viewRoute

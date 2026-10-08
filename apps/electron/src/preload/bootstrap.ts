@@ -635,6 +635,9 @@ client.onConnectionStateChanged((state) => {
 
 // i18n: sync language changes to main process (for native menus/dialogs)
 ;(api as ElectronAPI).changeLanguage = (lang: string) => ipcRenderer.invoke('i18n:changeLanguage', lang)
+// W1-07 (#1504): push the unified surface route gate to main (deep links).
+;(api as ElectronAPI).setUnifiedSurfaceRoutesEnabled = (ids: string[]) =>
+  ipcRenderer.invoke('shell:setSurfaceRoutesEnabled', ids)
 
 ;(api as ElectronAPI).remoteTlsInspect = (url: string) =>
   ipcRenderer.invoke('remoteTls:inspect', url)

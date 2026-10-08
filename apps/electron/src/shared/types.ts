@@ -2404,6 +2404,8 @@ export interface ElectronAPI {
 
   // Language
   changeLanguage(lang: string): Promise<void>
+  /** W1-07 (#1504): unified surfaces whose mode flag is on → main's deep-link gate. */
+  setUnifiedSurfaceRoutesEnabled?(ids: string[]): Promise<{ ok: true }>
 
   // Resources (cross-workspace export/import)
   exportResources(workspaceId: string, options: ExportResourcesOptions): Promise<ExportResult>

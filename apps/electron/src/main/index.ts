@@ -1141,6 +1141,10 @@ app.whenReady().then(async () => {
         return remove(workspaceId)
       })
 
+      // W1-07 (#1504): unified surface route gate (renderer flags → main deep links)
+      const { registerSurfaceRoutesIpc } = await import('./surface-routes-ipc')
+      registerSurfaceRoutesIpc(ipcMain)
+
       // SSH remote hosts + tunnels (Remote-SSH style bootstrap to a remote server)
       const { registerSshTunnelIpc } = await import('./ssh-tunnel/ipc')
       registerSshTunnelIpc()

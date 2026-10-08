@@ -67,6 +67,17 @@ export function isUnifiedSurfaceRouteEnabled(id: string): id is UnifiedSurfaceId
   return isUnifiedSurfaceId(id) && enabledSurfaces.has(id)
 }
 
+/**
+ * True for a bare mode-root route (`messenger`, `messenger?x=1`) whose
+ * surface gate is closed. Entity routes under the same prefix
+ * (`messenger/<id>`) are #1499's and keep following `entities.links.v1`.
+ */
+export function isClosedUnifiedSurfaceRoot(route: string): boolean {
+  const path = route.split('#')[0]!.split('?')[0]!
+  const segments = path.split('/').filter(Boolean)
+  return segments.length === 1 && isUnifiedSurfaceId(segments[0]) && !enabledSurfaces.has(segments[0])
+}
+
 /** Bare mode-root route for a surface (`messenger`, `calendar`, …). */
 export function unifiedSurfaceRoute<S extends UnifiedSurfaceId>(surface: S): S {
   return surface
