@@ -11,6 +11,7 @@ import ReactDOM from 'react-dom/client'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initRendererI18n } from '@rox/shared/i18n/lazy'
+import { createLatestStateBuffer } from './lib/latest-state-buffer'
 import { EyeOff, X, XCircle, Bug, Download, History, User } from 'lucide-react'
 import { BrowserControls } from '@rox/ui'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
@@ -65,6 +66,15 @@ declare global {
   }
 }
 
+// Subscribe before the locale load: the main process pushes the full toolbar
+// state once on did-finish-load, which can land before the first render.
+const toolbarStateUpdates = createLatestStateBuffer<ToolbarState>(
+  window.browserToolbar ? callback => window.browserToolbar.onStateUpdate(callback) : undefined,
+)
+const toolbarThemeColors = createLatestStateBuffer<string | null>(
+  window.browserToolbar ? callback => window.browserToolbar.onThemeColor(callback) : undefined,
+)
+
 /* ------------------------------------------------------------------ */
 /*  App                                                                */
 /* ------------------------------------------------------------------ */
@@ -88,7 +98,7 @@ function BrowserToolbarApp() {
 
   useEffect(() => {
     if (!api) return
-    return api.onStateUpdate((s) => {
+    return toolbarStateUpdates.subscribe((s) => {
       setState(s)
       // Sync theme color from full state push (initial load / reconnection)
       if ('themeColor' in s) {
@@ -99,7 +109,7 @@ function BrowserToolbarApp() {
 
   useEffect(() => {
     if (!api) return
-    return api.onThemeColor(setThemeColor)
+    return toolbarThemeColors.subscribe(setThemeColor)
   }, [api])
 
   useEffect(() => {

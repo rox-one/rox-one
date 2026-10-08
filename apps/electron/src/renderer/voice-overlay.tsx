@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initRendererI18n } from '@rox/shared/i18n/lazy'
+import { createLatestStateBuffer, type StateSource } from './lib/latest-state-buffer'
 import type { OverlayState } from '@rox/shared/voice'
 import { VOICE_OVERLAY_REQUIRES_CONATION_FLAG } from './voice-overlay-rox2-surface'
 
@@ -19,7 +20,7 @@ declare global {
   } }
 }
 
-export function OverlayApp() {
+export function OverlayApp({ subscribe }: { subscribe?: StateSource<OverlayState> } = {}) {
   if (VOICE_OVERLAY_REQUIRES_CONATION_FLAG) {
     throw new Error('Voice overlay is native and must not require Conation')
   }
@@ -38,12 +39,13 @@ export function OverlayApp() {
   const [pending, setPending] = useState(false)
   useEffect(() => {
     mounted.current = true
-    const unsubscribe = window.voiceOverlay?.onState(next => {
+    const onState = (next: OverlayState) => {
       generation.current++
       setState(next); setCommandError(false); setPending(false)
-    })
+    }
+    const unsubscribe = subscribe ? subscribe(onState) : window.voiceOverlay?.onState(onState)
     return () => { mounted.current = false; generation.current++; unsubscribe?.() }
-  }, [])
+  }, [subscribe])
   const command = async (action: 'stop' | 'cancel') => {
     const current = generation.current
     setPending(true); setCommandError(false)
@@ -97,4 +99,10 @@ export function OverlayApp() {
 }
 
 const root = document.getElementById('root')
-if (root) void i18nReady.then(() => createRoot(root).render(<OverlayApp />))
+if (root) {
+  // Subscribe before the locale load so a state pushed meanwhile is replayed.
+  const overlayState = createLatestStateBuffer<OverlayState>(
+    window.voiceOverlay ? callback => window.voiceOverlay!.onState(callback) : undefined,
+  )
+  void i18nReady.then(() => createRoot(root).render(<OverlayApp subscribe={overlayState.subscribe} />))
+}
