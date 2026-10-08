@@ -1,8 +1,8 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, type Plugin, type Rollup } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { readFileSync } from 'fs'
-import { join, resolve } from 'path'
+import { join, posix, relative, resolve } from 'path'
 
 // NOTE: Source map upload to Sentry is intentionally disabled.
 // To re-enable, uncomment the sentryVitePlugin below and add SENTRY_AUTH_TOKEN,
@@ -152,6 +152,59 @@ function sideEffectFreeModulesPlugin(): Plugin {
   }
 }
 
+/**
+ * PERF-04: bootstrap.ts loads the active locale chunks before it runs
+ * `import('./main')`, so i18n is initialised before main.tsx renders. Without
+ * help the browser would only start fetching the ~5 MB main chunk graph after
+ * the locales arrive. Emit <link rel="modulepreload"> (fetch + compile, no
+ * evaluation) for main's static chunk closure, plus a style preload for its
+ * CSS, so both downloads run in parallel. Evaluation order is unchanged.
+ */
+function modulePreloadMainChunkPlugin(): Plugin {
+  const toPosix = (path: string) => path.replace(/\\/g, '/')
+  return {
+    name: 'rox-modulepreload-main-chunk',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        if (!ctx.bundle || !toPosix(ctx.filename).endsWith('/src/renderer/index.html')) return
+        const chunks = new Map(
+          Object.values(ctx.bundle)
+            .filter((output): output is Rollup.OutputChunk => output.type === 'chunk')
+            .map(chunk => [chunk.fileName, chunk]),
+        )
+        // Not facadeModuleId: Rollup leaves it unset for this dynamic entry.
+        const main = [...chunks.values()].find(chunk =>
+          chunk.isDynamicEntry && chunk.moduleIds.some(id => toPosix(id).endsWith('/src/renderer/main.tsx')))
+        if (!main) return
+        const files = new Set<string>()
+        const css = new Set<string>()
+        const stack = [main.fileName]
+        while (stack.length) {
+          const file = stack.pop()!
+          const chunk = chunks.get(file)
+          if (!chunk || files.has(file)) continue
+          files.add(file)
+          for (const cssFile of chunk.viteMetadata?.importedCss ?? []) css.add(cssFile)
+          stack.push(...chunk.imports)
+        }
+        const htmlDir = posix.dirname(toPosix(relative(resolve(__dirname, 'src/renderer'), ctx.filename)))
+        const href = (file: string) => `./${posix.relative(htmlDir, file)}`
+        const present = (file: string) => html.includes(posix.relative(htmlDir, file))
+        return [
+          ...[...files].filter(file => !present(file)).map(file => ({
+            tag: 'link', attrs: { rel: 'modulepreload', crossorigin: true, href: href(file) }, injectTo: 'head' as const,
+          })),
+          ...[...css].filter(file => !present(file)).map(file => ({
+            tag: 'link', attrs: { rel: 'preload', as: 'style', crossorigin: true, href: href(file) }, injectTo: 'head' as const,
+          })),
+        ]
+      },
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
     react({
@@ -173,6 +226,7 @@ export default defineConfig({
     worktreeCraftPackagePlugin(),
     nodeBuiltinStubPlugin(),
     sideEffectFreeModulesPlugin(),
+    modulePreloadMainChunkPlugin(),
     // Sentry source map upload — intentionally disabled. See CLAUDE.md for re-enabling instructions.
     // sentryVitePlugin({
     //   org: process.env.SENTRY_ORG,

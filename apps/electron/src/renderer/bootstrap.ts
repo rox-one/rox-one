@@ -30,6 +30,9 @@ try {
 if (typeof window !== 'undefined' && window.electronAPI) {
   // PERF-04: only the active locale and its fallbacks are fetched (never
   // rejects), so main.tsx can initialize i18n synchronously before rendering.
+  // main's chunk graph is already downloading in parallel: the build emits
+  // <link rel="modulepreload"> for it (vite.config.ts), which fetches and
+  // compiles without evaluating, so i18n still initialises first.
   void preloadRendererLocales().then(() => { void import('./main') })
 } else {
   void import('./browser-preview/BrowserPreview').then(({ renderBrowserPreview }) => {
