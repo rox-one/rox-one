@@ -50,30 +50,56 @@ function camel(name: string): string {
   return name.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase())
 }
 
-/** Parses `--name: <n>px | var(--other)` declarations into px numbers. */
-export function parseChromeBlock(body: string, scope: Record<string, number> = {}): Record<string, number> {
-  const out: Record<string, number> = {}
+/** Raw `--name: value` declarations of a block, in source order (values unresolved). */
+export function parseRawBlock(body: string): Record<string, string> {
+  const out: Record<string, string> = {}
   for (const raw of body.split(';')) {
     const decl = raw.trim()
     if (!decl) continue
     const m = decl.match(/^--([a-z0-9-]+)\s*:\s*(.+)$/)
     if (!m) throw new Error(`chrome.css: unsupported declaration "${decl}"`)
-    const [, name, value] = m as unknown as [string, string, string]
-    const px = value.match(/^(-?\d+(?:\.\d+)?)px$/)
-    if (px) {
-      out[name] = Number(px[1])
-      continue
-    }
-    const ref = value.match(/^var\(--([a-z0-9-]+)\)$/)
-    if (ref) {
-      const resolved = out[ref[1]!] ?? scope[ref[1]!]
-      if (resolved === undefined) throw new Error(`chrome.css: --${name} references unknown --${ref[1]}`)
-      out[name] = resolved
-      continue
-    }
-    throw new Error(`chrome.css: --${name} must be a px value or var() reference, got "${value}"`)
+    out[m[1]!] = m[2]!.trim()
   }
   return out
+}
+
+/**
+ * Resolves a raw block to px numbers. `var(--x)` is looked up in the same
+ * (merged) map, like the browser does at computed-value time on <html>:
+ * an override of `--control-sm` also changes `--chrome-control: var(--control-sm)`.
+ */
+export function resolveChromeBlock(raw: Record<string, string>): Record<string, number> {
+  const out: Record<string, number> = {}
+  const resolving = new Set<string>()
+  const resolveName = (name: string): number => {
+    if (name in out) return out[name]!
+    const value = raw[name]
+    if (value === undefined) throw new Error(`chrome.css: unknown --${name}`)
+    if (resolving.has(name)) throw new Error(`chrome.css: var() cycle at --${name}`)
+    resolving.add(name)
+    let result: number
+    const px = value.match(/^(-?\d+(?:\.\d+)?)px$/)
+    const ref = value.match(/^var\(--([a-z0-9-]+)\)$/)
+    if (px) {
+      result = Number(px[1])
+    } else if (ref) {
+      if (!(ref[1]! in raw)) throw new Error(`chrome.css: --${name} references unknown --${ref[1]}`)
+      result = resolveName(ref[1]!)
+    } else {
+      throw new Error(`chrome.css: --${name} must be a px value or var() reference, got "${value}"`)
+    }
+    resolving.delete(name)
+    out[name] = result
+    return result
+  }
+  const ordered: Record<string, number> = {}
+  for (const name of Object.keys(raw)) ordered[name] = resolveName(name)
+  return ordered
+}
+
+/** Parses `--name: <n>px | var(--other)` declarations into px numbers. */
+export function parseChromeBlock(body: string): Record<string, number> {
+  return resolveChromeBlock(parseRawBlock(body))
 }
 
 export function readChromeTokens(css = readFileSync(CHROME_TOKENS_CSS, 'utf8')): {
@@ -81,12 +107,17 @@ export function readChromeTokens(css = readFileSync(CHROME_TOKENS_CSS, 'utf8')):
   comfortable: Record<string, number>
 } {
   const clean = stripComments(css)
-  const compact = parseChromeBlock(topLevelBlock(clean, ':root'))
-  const overrides = parseChromeBlock(topLevelBlock(clean, COMFORTABLE_SELECTOR), compact)
-  for (const key of Object.keys(overrides)) {
-    if (!(key in compact)) throw new Error(`chrome.css: comfortable override --${key} has no compact default`)
+  const compactRaw = parseRawBlock(topLevelBlock(clean, ':root'))
+  const overridesRaw = parseRawBlock(topLevelBlock(clean, COMFORTABLE_SELECTOR))
+  for (const key of Object.keys(overridesRaw)) {
+    if (!(key in compactRaw)) throw new Error(`chrome.css: comfortable override --${key} has no compact default`)
   }
-  return { compact, comfortable: { ...compact, ...overrides } }
+  // Merge the raw declarations first, then resolve: var() references in the
+  // compact block pick up comfortable overrides (same as the cascade).
+  return {
+    compact: resolveChromeBlock(compactRaw),
+    comfortable: resolveChromeBlock({ ...compactRaw, ...overridesRaw }),
+  }
 }
 
 function renderObject(tokens: Record<string, number>): string {

@@ -66,6 +66,24 @@ describe('chrome tokens (UI-A1: one source of truth for chrome numbers)', () => 
     }
   })
 
+  it('comfortable var() aliases resolve against the comfortable values (cascade order)', () => {
+    // --chrome-control: var(--control-sm) is declared on :root; on <html
+    // data-density="comfortable"> the browser resolves it with the overridden
+    // --control-sm, so the generated numbers must do the same.
+    expect(CHROME_TOKENS.chromeControl).toBe(CHROME_TOKENS.controlSm)
+    expect(CHROME_TOKENS.chromeControlLg).toBe(CHROME_TOKENS.controlMd)
+    expect(CHROME_TOKENS_COMFORTABLE.chromeControl).toBe(CHROME_TOKENS_COMFORTABLE.controlSm)
+    expect(CHROME_TOKENS_COMFORTABLE.chromeControlLg).toBe(CHROME_TOKENS_COMFORTABLE.controlMd)
+    expect(CHROME_TOKENS_COMFORTABLE.chromeControl).toBe(28)
+    expect(CHROME_TOKENS_COMFORTABLE.chromeControlLg).toBe(32)
+
+    const css = ':root { --a: 4px; --b: var(--a); --c: var(--b); } html[data-density="comfortable"] { --a: 8px; }'
+    expect(readChromeTokens(css)).toEqual({
+      compact: { a: 4, b: 4, c: 4 },
+      comfortable: { a: 8, b: 8, c: 8 },
+    })
+  })
+
   it('compact sizes follow the 4px grid where the spec defines them', () => {
     for (const key of ['controlSm', 'controlMd', 'controlLg', 'railButton', 'rowH', 'rowH2line', 'chromeTopbarHeight'] as const) {
       expect(CHROME_TOKENS[key] % 4).toBe(0)
@@ -77,5 +95,6 @@ describe('chrome tokens (UI-A1: one source of truth for chrome numbers)', () => 
     expect(() => parseChromeBlock('--a: var(--missing);')).toThrow()
     expect(parseChromeBlock('--a: 4px; --b: var(--a);')).toEqual({ a: 4, b: 4 })
     expect(() => readChromeTokens(':root { --a: 4px; } html[data-density="comfortable"] { --b: 8px; }')).toThrow()
+    expect(() => parseChromeBlock('--a: var(--b); --b: var(--a);')).toThrow()
   })
 })

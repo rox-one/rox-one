@@ -124,9 +124,9 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   /** --chrome-rail-expanded-width */
   chromeRailExpandedWidth: 188,
   /** --chrome-control */
-  chromeControl: 24,
+  chromeControl: 28,
   /** --chrome-control-lg */
-  chromeControlLg: 28,
+  chromeControlLg: 32,
   /** --chrome-tab-strip-height */
   chromeTabStripHeight: 36,
   /** --chrome-status-height */
