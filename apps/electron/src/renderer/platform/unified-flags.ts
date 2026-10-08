@@ -27,7 +27,7 @@ import {
   setUnifiedSurfaceRoutesEnabled,
   type UnifiedSurfaceId,
 } from '../../shared/surface-routes'
-import { isSurfaceMounted } from './surface-activity'
+import { isSurfaceActive } from './surface-activity'
 
 /** Flags owned by W1-07; all default OFF. */
 export const W1_07_FLAG_IDS = [
@@ -137,7 +137,7 @@ export function createShellFlagContextKeyProvider(
       const values: Record<string, boolean> = {}
       for (const id of ids) values[id] = enabled.has(id)
       // Messenger-only commands (⌃1…4 quick panels) — same key as the keymap.
-      values.messengerActive = isSurfaceMounted('messenger')
+      values.messengerActive = isSurfaceActive('messenger', store)
       return values
     },
   }

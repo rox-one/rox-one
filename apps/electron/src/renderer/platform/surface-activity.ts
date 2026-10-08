@@ -1,31 +1,25 @@
 /**
- * W1-07 (#1504) — which unified surfaces are mounted right now.
+ * W1-07 (#1504) — which unified surface is the active one right now.
  *
- * `SurfaceHost` marks its surface while mounted. Keybinding `when` clauses
- * read it synchronously (e.g. the ⌃1…4 quick panels are Messenger-only,
- * UI-SPEC §15) without React state or re-renders.
+ * "Active" means the focused panel shows that surface's mode root. Unfocused
+ * panels stay mounted (hidden in single-panel mode, dimmed in split view), so
+ * "mounted" is not enough: the ⌃1…4 quick panels are Messenger-only
+ * (UI-SPEC §15) and must not fire after the user leaves Messenger.
+ *
+ * Read synchronously by keybinding `when` clauses and the Omnibox context
+ * provider — no React state, no re-renders.
  */
+import { getDefaultStore } from 'jotai'
+import { focusedPanelRouteAtom } from '@/atoms/panel-stack'
+import { parseRouteToNavigationState } from '../../shared/route-parser'
 import type { UnifiedSurfaceId } from '../../shared/surface-routes'
 
-const mounted = new Map<UnifiedSurfaceId, number>()
+type StoreReader = Pick<ReturnType<typeof getDefaultStore>, 'get'>
 
-/** Mark `surface` mounted; returns the unmark function (idempotent). */
-export function markSurfaceMounted(surface: UnifiedSurfaceId): () => void {
-  mounted.set(surface, (mounted.get(surface) ?? 0) + 1)
-  let done = false
-  return () => {
-    if (done) return
-    done = true
-    const next = (mounted.get(surface) ?? 1) - 1
-    if (next <= 0) mounted.delete(surface)
-    else mounted.set(surface, next)
-  }
-}
-
-export function isSurfaceMounted(surface: UnifiedSurfaceId): boolean {
-  return (mounted.get(surface) ?? 0) > 0
-}
-
-export function __resetSurfaceActivityForTests(): void {
-  mounted.clear()
+/** True while the focused panel's route resolves to `surface`'s mode root. */
+export function isSurfaceActive(surface: UnifiedSurfaceId, store: StoreReader = getDefaultStore()): boolean {
+  const route = store.get(focusedPanelRouteAtom)
+  if (!route) return false
+  const navState = parseRouteToNavigationState(route)
+  return navState?.navigator === 'surface' && navState.surface === surface
 }

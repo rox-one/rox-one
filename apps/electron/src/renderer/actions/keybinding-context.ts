@@ -11,7 +11,7 @@
 import type { FocusZoneId } from '@/context/FocusContext'
 import { hasOpenOverlay } from '@/lib/overlay-detection'
 // W1-07 (#1504): Messenger-only shortcuts (⌃1…4 quick panels).
-import { isSurfaceMounted } from '@/platform/surface-activity'
+import { isSurfaceActive } from '@/platform/surface-activity'
 
 /**
  * Context keys available in when-clause expressions.
@@ -30,7 +30,7 @@ export interface KeybindingContext {
   sidebarFocus: boolean
   /** A modal dialog or dropdown/popover is open */
   menuOpen: boolean
-  /** W1-07 (#1504): the Messenger surface is mounted (its mode is shown) */
+  /** W1-07 (#1504): the focused panel shows the Messenger surface */
   messengerActive?: boolean
 }
 
@@ -104,7 +104,7 @@ export function getKeybindingContext(e: KeyboardEvent): KeybindingContext {
     navigatorFocus: _currentZone === 'navigator',
     sidebarFocus: _currentZone === 'sidebar',
     menuOpen: hasOpenOverlay(),
-    messengerActive: isSurfaceMounted('messenger'),
+    messengerActive: isSurfaceActive('messenger'),
   }
 }
 
@@ -151,7 +151,7 @@ export function snapshotKeybindingContext(): KeybindingContext {
     navigatorFocus: _currentZone === 'navigator',
     sidebarFocus: _currentZone === 'sidebar',
     menuOpen: typeof document !== 'undefined' ? hasOpenOverlay() : false,
-    messengerActive: isSurfaceMounted('messenger'),
+    messengerActive: isSurfaceActive('messenger'),
   }
 }
 
