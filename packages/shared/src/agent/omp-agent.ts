@@ -58,6 +58,7 @@ import { formatProjectContextForPrompt } from '../prompts/system.ts';
 import { MCP_USAGE_GUIDANCE } from '../prompts/mcp-guidance.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
 import { getContextDocsPromptBlock } from '../context-docs/index.ts';
+import { getCognitiveProfileBlock } from './cognitive-profile.ts';
 import { formatPreferencesForPrompt } from '../config/preferences.ts';
 import type { AgentEvent, AgentEventUsage } from '@rox/core/types';
 import type { FileAttachment } from '../utils/files.ts';
@@ -193,13 +194,15 @@ const OMP_ROX_CONTEXT_PROMPT = [
 /**
  * Compose the `--append-system-prompt` payload for OMP spawn.
  * Ordering mirrors getSystemPrompt: ROX briefing → preferences → project →
- * context docs (rules/soul) → memory blocks → retrieved sources.
+ * context docs (rules/soul) → memory blocks → retrieved sources →
+ * dynamic `<user_cognitive_profile>` (untrusted, appended last).
  */
 export function composeOmpAppendSystemPrompt(input: {
   workingDirectory: string;
   preferences?: string | null;
   projectContextBlock?: string | null;
   memoryBlocks?: MemoryPromptBlocks | null;
+  cognitiveProfileBlock?: string | null;
 }): string {
   const parts = [OMP_ROX_CONTEXT_PROMPT];
   if (input.preferences) parts.push(input.preferences);
@@ -214,6 +217,9 @@ export function composeOmpAppendSystemPrompt(input: {
   if (blocks?.lessonsBlock) parts.push(blocks.lessonsBlock);
   if (blocks?.memoryBlock) parts.push(blocks.memoryBlock);
   if (blocks?.sourcesBlock) parts.push(blocks.sourcesBlock);
+  // Dynamic cognitive profile — derived from third-party web content, so it
+  // sits last (after every trusted block) and is sanitized upstream.
+  if (input.cognitiveProfileBlock) parts.push(input.cognitiveProfileBlock);
   return parts.join('\n');
 }
 
@@ -538,7 +544,8 @@ export class OmpAgent extends BaseAgent {
    * briefing plus (when present) user preferences, bound-project context, and
    * the self-learning memory blocks (learned lessons + workspace memory)
    * after the project memory block, mirroring getSystemPrompt ordering.
-   * Evaluated at spawn time, so a respawn picks up memory updates.
+   * Evaluated at spawn time, so a respawn picks up memory and cognitive-profile
+   * updates.
    */
   private buildCraftContextPrompt(): string {
     const projectContext = this.resolveProjectContext();
@@ -547,6 +554,7 @@ export class OmpAgent extends BaseAgent {
       preferences: this.config.agentProfileSnapshot ? '' : formatPreferencesForPrompt(),
       projectContextBlock: projectContext ? formatProjectContextForPrompt(projectContext) : null,
       memoryBlocks: this.config.memoryBlocks,
+      cognitiveProfileBlock: getCognitiveProfileBlock(),
     });
   }
   private _sessionToolContext: SessionToolContext | null = null;

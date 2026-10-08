@@ -279,8 +279,9 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
 }
 
 async function getExpectedGuiChannels(): Promise<Set<string>> {
-  const [browser, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard] = await Promise.all([
+  const [browser, browserIntel, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard] = await Promise.all([
     import('../browser'),
+    import('../browser-intel'),
     import('../system'),
     import('../workspace'),
     import('../settings'),
@@ -292,6 +293,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
 
   return new Set([
     ...browser.HANDLED_CHANNELS,
+    ...browserIntel.HANDLED_CHANNELS,
     ...system.GUI_HANDLED_CHANNELS,
     ...workspace.GUI_HANDLED_CHANNELS,
     ...settings.GUI_HANDLED_CHANNELS,

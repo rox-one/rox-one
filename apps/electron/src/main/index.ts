@@ -164,6 +164,7 @@ import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
 import { registerNativeReplicaForWindows } from './native-replica-bootstrap'
+import { initBrowserIntelRuntime } from './browser-intel/index'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
 
 // Initialize electron-log for renderer process support
@@ -262,6 +263,16 @@ if (isDebugMode) {
   if (isDebugMode) {
     mainLog.info('CLI tools configured:', { uvBinary: process.env.CRAFT_UV, binDir, scriptsDir, bundledUvExists, uvPython: process.env.UV_PYTHON ?? null })
   }
+}
+
+// Browser Intelligence runtime: background-only, opt-in pipeline whose unfurl
+// stage runs in a Worker Thread. Registered after the CLI/env block so
+// CRAFT_RESOURCES_BASE is set for the packaged schema lookup, and before any
+// window is created. A failure must never block startup.
+try {
+  initBrowserIntelRuntime()
+} catch (error) {
+  mainLog.warn('[browser-intel] runtime initialization failed', error)
 }
 
 // Register Pi model resolver so llm-connections.ts can resolve Pi models

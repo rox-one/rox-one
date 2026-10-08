@@ -551,6 +551,12 @@ import type {
   ExtensionSurfaceState,
 } from '@rox/shared/protocol'
 
+// Browser Intelligence Pipeline contract — frozen in the workspace package
+// `@rox/browser-intel` (already linked into this app's node_modules). Type-only
+// so nothing from the package is bundled into the renderer.
+import type { BrowserIntelState, IntelligenceStats, ProfileSlotRecord, PipelineProgress } from '@rox/browser-intel'
+export type { BrowserIntelState, IntelligenceStats, ProfileSlotRecord, PipelineProgress }
+
 export interface WorkGraphConnectionRecord {
   readonly id: string
   readonly workspaceId: string
@@ -899,6 +905,15 @@ export interface ElectronAPI {
   browserCookieAutoStatus(): Promise<BrowserCookieAutoStatus>
   browserCookieAutoSet(args: { consent: boolean; profileId?: string; domains?: string[] }): Promise<BrowserCookieAutoStatus>
   browserCookieAutoRun(): Promise<BrowserCookieAutoStatus>
+  // Browser Intelligence Pipeline (local-only; reads/stages on this machine)
+  getBrowserIntelState(): Promise<BrowserIntelState>
+  setBrowserIntelConsent(consent: boolean): Promise<BrowserIntelState>
+  getBrowserIntelStats(): Promise<IntelligenceStats>
+  getBrowserIntelSlots(): Promise<ProfileSlotRecord[]>
+  startBrowserIntelRun(): Promise<{ started: boolean }>
+  cancelBrowserIntelRun(): Promise<{ cancelled: boolean }>
+  onBrowserIntelProgress(cb: (progress: PipelineProgress) => void): () => void
+  onBrowserIntelStateChanged(cb: (state: BrowserIntelState) => void): () => void
   importBrowserProfile(args: {
     workspaceId: string
     profileId: string
