@@ -23,7 +23,9 @@ export {
 export { checkRiskClassPresence, CATALOGUE_PATH } from './risk-class.ts'
 export {
   checkNegativeTestPresence,
-  NEGATIVE_TITLE_RE,
+  STRONG_NEGATIVE_RE,
+  TEST_TITLE_NEGATIVE_RE,
+  TEST_SHAPES_HELP,
   NEGATIVE_CODE_TOKENS,
   DEFAULT_TEST_ROOTS,
   EXCLUDED_TEST_DIRS,

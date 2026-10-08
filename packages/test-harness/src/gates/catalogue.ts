@@ -278,6 +278,8 @@ export function commandGateResult(args: {
   check: (cmd: CatalogueCommand) => string | null
   allowlist: { entries: string[]; problems: string[] }
   okNoun: string
+  /** Appended to the failure summary when a command fails `check` (e.g. the supported test shapes). */
+  hint?: string
 }): import('./types.ts').GateResult {
   const { gate, readout, check, allowlist } = args
   if (!readout.present) {
@@ -289,6 +291,7 @@ export function commandGateResult(args: {
   const gated = readout.commands.filter((c) => c.gated)
   const unbound = readout.commands.length - gated.length
   let exempt = 0
+  let failedChecks = 0
   for (const cmd of gated) {
     const problem = check(cmd)
     if (problem === null) continue
@@ -296,6 +299,7 @@ export function commandGateResult(args: {
       exempt += 1
       continue
     }
+    failedChecks += 1
     violations.push(problem)
   }
   for (const id of allowlist.entries) {
@@ -305,7 +309,10 @@ export function commandGateResult(args: {
     else if (check(cmd) === null) violations.push(`allowlist entry '${id}' now passes; remove it (the allowlist only shrinks)`)
   }
   const tail = `${unbound} unbound command(s) pending (no handler, schemaBound false; bindings from ${readout.bindingSource})`
-  if (violations.length > 0) return { gate, status: 'fail', summary: `${violations.length} violation(s); ${tail}`, violations }
+  if (violations.length > 0) {
+    const hint = failedChecks > 0 && args.hint ? `; ${args.hint}` : ''
+    return { gate, status: 'fail', summary: `${violations.length} violation(s); ${tail}${hint}`, violations }
+  }
   if (gated.length === 0) return { gate, status: 'pending', summary: `pending: no command has a bound handler or schemaBound: true yet; ${tail}` }
   return { gate, status: 'pass', summary: `${gated.length - exempt} gated command(s) ${args.okNoun}${exempt ? ` (${exempt} allowlisted)` : ''}; ${tail}` }
 }

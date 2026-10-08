@@ -12,7 +12,7 @@ import { mkdtempSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { checkRiskClassPresence } from '../src/gates/risk-class.ts'
-import { checkNegativeTestPresence, collectTestFiles, coveredCommands, EXCLUDED_TEST_DIRS } from '../src/gates/negative-tests.ts'
+import { checkNegativeTestPresence, collectTestFiles, coveredCommands, EXCLUDED_TEST_DIRS, TEST_SHAPES_HELP } from '../src/gates/negative-tests.ts'
 import { loadCatalogue } from '../src/gates/catalogue.ts'
 import { parseAllowlist, shrinkOnlyViolations } from '../src/gates/allowlist.ts'
 
@@ -292,7 +292,7 @@ describe('negative-tests gate', () => {
         'apps/workspace-service/test/zz.test.ts': `
           test('zz_fixture.create rejects a viewer', async () => { const r = await run('zz_fixture.create'); expect(r.error.code).toBe('FORBIDDEN') })
           describe('zz_fixture.delete', () => {
-            it('fails on a stale revision with conflict', () => {})
+            it('fails on a stale revision with conflict', () => { expect(r.code).toBe('CONFLICT') })
           })`,
       },
     })
@@ -374,7 +374,7 @@ describe('negative-tests gate', () => {
           test('zz_fixture.create quota exceeded', () => {})
           test.todo('zz_fixture.delete permission denied')
           test.skip('zz_fixture.delete conflict', () => {})
-          test('zz_fixture.deleteAll conflict', () => {})`,
+          test('zz_fixture.deleteAll denied', () => {})`,
       },
     })
     const res = await checkNegativeTestPresence({ repoRoot: root, allowlist: NO_ALLOWLIST })
@@ -408,5 +408,92 @@ describe('negative-tests gate', () => {
     const res = await checkNegativeTestPresence({ repoRoot: root, allowlist: { entries: ['zz_fixture.delete'], baseEntries: ['zz_fixture.delete'] } })
     expect(res.status).toBe('pass')
     expect(res.summary).toContain('(1 allowlisted)')
+  })
+
+  test('a failing gate names the supported test shapes (#1507 review 4)', async () => {
+    const res = await checkNegativeTestPresence({ repoRoot: repo({ registry }), allowlist: NO_ALLOWLIST })
+    expect(res.status).toBe('fail')
+    expect(res.summary).toContain(TEST_SHAPES_HELP)
+    expect(TEST_SHAPES_HELP).toContain('test.each/it.each/describe.each(table)(title, fn)')
+  })
+})
+
+describe('negative-tests: parameterised tests (#1507 review 4)', () => {
+  const ids = ['zz_fixture.create', 'zz_fixture.delete', 'zz_fixture.archive']
+  const cover = (src: string) => [...coveredCommands(src, ids)].sort()
+
+  test('test.each(table)(title, fn): literal ids in the table count as titles', () => {
+    expect(cover(`test.each(['zz_fixture.create', 'zz_fixture.delete'])('%s is denied for a viewer', async (id) => { await run(id, viewer) })`))
+      .toEqual(['zz_fixture.create', 'zz_fixture.delete'])
+    // nested arrays and a negative assertion instead of a title keyword.
+    expect(cover(`test.each([['zz_fixture.archive', 'viewer'], ['zz_fixture.archive', 'commenter']])('%s as %s', async (id, role) => {
+      await expect(run(id, role)).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })`)).toEqual(['zz_fixture.archive'])
+  })
+  test('it.each with object rows and a template title', () => {
+    expect(cover("it.each([{ id: 'zz_fixture.delete', role: 'viewer' }])(`$id is forbidden for $role`, ({ id, role }) => { run(id, role) })"))
+      .toEqual(['zz_fixture.delete'])
+    expect(cover(`it.each([{ id: "zz_fixture.create" }])('$id', async ({ id }) => { expect((await run(id)).status).toBe(429) })`)).toEqual(['zz_fixture.create'])
+  })
+  test('describe.each(table)(title, fn): table ids count as titles for the tests inside it only', () => {
+    const src = `
+      describe.each(['zz_fixture.delete'])('%s', (id) => {
+        test('is denied for a viewer', async () => { await run(id, viewer) })
+        test('works for the owner', async () => { await run(id, owner) })
+      })
+      test('a sibling outside', async () => { await expect(run('x')).rejects.toMatchObject({ code: 'FORBIDDEN' }) })`
+    expect(cover(src)).toEqual(['zz_fixture.delete'])
+    // the nested test still needs its own negative outcome.
+    expect(cover(`describe.each(['zz_fixture.delete'])('%s', (id) => { test('works for the owner', () => { run(id) }) })`)).toEqual([])
+  })
+  test('a template title with literal ids counts; computed ids in a loop do not', () => {
+    expect(cover('test(`zz_fixture.create is rejected when ${reason}`, () => {})')).toEqual(['zz_fixture.create'])
+    expect(cover("for (const id of ['zz_fixture.create']) { test(`${id} denied`, () => { run(id) }) }")).toEqual([])
+  })
+  test('assertion rules are unchanged: no negative outcome, skipped .each, or non-id table literals do not count', () => {
+    expect(cover(`test.each(['zz_fixture.create'])('%s works', (id) => { expect(run(id)).toBe(1) })`)).toEqual([])
+    expect(cover(`test.skip.each(['zz_fixture.create'])('%s denied', () => {})`)).toEqual([])
+    expect(cover(`describe.skip.each(['zz_fixture.create'])('%s', () => { test('denied', () => {}) })`)).toEqual([])
+    // a code literal in the table is neither a keyword nor an assertion.
+    expect(cover(`test.each([['zz_fixture.create', 'FORBIDDEN']])('%s returns %s', (id, code) => { run(id) })`)).toEqual([])
+    // only exact id literals: a prefix or a sentence in the table does not count.
+    expect(cover(`test.each(['zz_fixture.create_bulk', 'zz_fixture.create twice'])('%s denied', () => {})`)).toEqual([])
+  })
+  test('the gate passes on a module whose negatives are written with .each', async () => {
+    const root = repo({
+      registry: [['zz_fixture.create', { handler: true }], ['zz_fixture.delete', { schema: true }]],
+      tests: { 'apps/workspace-service/test/zz.test.ts': `test.each(['zz_fixture.create', 'zz_fixture.delete'])('%s is denied for a viewer', async (id) => { await run(id) })` },
+    })
+    const res = await checkNegativeTestPresence({ repoRoot: root, allowlist: NO_ALLOWLIST })
+    expect(res.status).toBe('pass')
+    expect(res.summary).toContain('2 gated command(s) have negative tests')
+  })
+})
+
+describe('negative-tests: narrowed keyword rules (#1507 review 4)', () => {
+  const ids = ['zz_fixture.create']
+  const cover = (src: string) => [...coveredCommands(src, ids)]
+
+  test('describe-level keywords count only when unambiguous', () => {
+    for (const kw of ['denied', 'permission denied', 'forbidden', 'unauthorized', 'unauthorised', 'rate limited', 'quota exceeded', 'expired', 'rejected']) {
+      expect(cover(`describe('${kw} for viewers', () => { test('zz_fixture.create', () => { run() }) })`)).toEqual(ids)
+    }
+    for (const kw of ['conflict resolution', 'conflicts', 'quota', 'shows quota usage', 'wrong scope', 'out of scope', 'rate limits']) {
+      expect(cover(`describe('${kw}', () => { test('zz_fixture.create', () => { run() }) })`)).toEqual([])
+    }
+    // the review example: a describe('conflict resolution') with a positive assertion covers nothing.
+    expect(cover(`describe('conflict resolution', () => test('zz_fixture.create merges fields', () => expect(m).toEqual(x)))`)).toEqual([])
+  })
+  test("bare quota / conflict count only in the test's own title alongside a negative assertion", () => {
+    expect(cover(`test('zz_fixture.create shows quota usage', () => { expect(r.used).toBe(3) })`)).toEqual([])
+    expect(cover(`test('zz_fixture.create conflict-free merge', () => { expect(r.ok).toBe(true) })`)).toEqual([])
+    expect(cover(`test('zz_fixture.create on conflict', () => {})`)).toEqual([])
+    expect(cover(`test('zz_fixture.create on conflict', async () => { expect((await run()).status).toBe(409) })`)).toEqual(ids)
+    expect(cover(`test('zz_fixture.create over quota', async () => { expect(r.error.code).toBe('QUOTA_EXCEEDED') })`)).toEqual(ids)
+  })
+  test("the test's own title keeps scope / rate-limit wording and the unambiguous keywords", () => {
+    for (const title of ['zz_fixture.create wrong scope', 'zz_fixture.create out of scope', 'zz_fixture.create hits the rate limit', 'zz_fixture.create is unauthorized', 'zz_fixture.create rejected when stale', 'zz_fixture.create quota exceeded']) {
+      expect(cover(`test('${title}', () => {})`)).toEqual(ids)
+    }
   })
 })
