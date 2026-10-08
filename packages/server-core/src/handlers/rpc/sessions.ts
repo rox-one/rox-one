@@ -178,6 +178,18 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER,
 ] as const
 
+/**
+ * sessions.GET list item (PERF-06): metadata only. Messages are already empty;
+ * the transfer hand-off summary is server-side prompt input (read through
+ * getTransferredSessionSummary) and never rendered, so it stays off the list.
+ */
+export function toSessionListSummary<T extends object>(session: T): T {
+  // Present at runtime (picked from the persisted fields) though not on Session.
+  if (!('transferredSessionSummary' in session)) return session
+  const { transferredSessionSummary: _omit, ...rest } = session as T & { transferredSessionSummary?: unknown }
+  return rest as T
+}
+
 export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { sessionManager, platform } = deps
   if (deps.nativeData) sessionManager.setNativeMemoryContextPolicy?.(workspaceId => deps.nativeData!.authority.isRegisteredWorkspace(workspaceId))
@@ -250,7 +262,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       returnedIds: summarizeIds(sessions.map(s => s.id)),
     })
 
-    return ctx.principal ? sessions.map(nativeSession) : sessions
+    const summaries = sessions.map(toSessionListSummary)
+    return ctx.principal ? summaries.map(nativeSession) : summaries
   }, { nativeAction: 'read' })
 
   // Get unread summary across all workspaces
