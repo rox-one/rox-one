@@ -16,7 +16,9 @@ import { cn } from '../../lib/utils'
 import { LANGUAGE_MAP } from './language-map'
 import { registerCraftShikiThemes } from './registerShikiThemes'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
-import { getShikiThemeType } from './zedShikiThemes'
+import { getShikiThemeType } from './zedShikiThemeData'
+
+export { getDiffStats } from './diff-stats'
 
 // Register the diffs-container custom element if not already registered
 // This is necessary because the React component renders a custom element
@@ -63,19 +65,6 @@ export interface ShikiDiffViewerProps {
   className?: string
 }
 
-/**
- * Calculate addition/deletion stats from a FileDiffMetadata
- * Useful for displaying change counts in headers
- */
-export function getDiffStats(fileDiff: FileDiffMetadata): { additions: number; deletions: number } {
-  let additions = 0
-  let deletions = 0
-  for (const hunk of fileDiff.hunks) {
-    additions += hunk.additionCount
-    deletions += hunk.deletionCount
-  }
-  return { additions, deletions }
-}
 
 function getLanguageFromPath(filePath: string, explicit?: string): string {
   if (explicit) return explicit

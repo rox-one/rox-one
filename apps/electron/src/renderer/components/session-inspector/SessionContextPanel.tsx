@@ -33,7 +33,12 @@ export function SessionContextPanel({ sessionId }: { sessionId: string | null })
       transcript: [],
       attachments: [],
     })
-    const skillBodies = skills.map((skill) => skill.content || skill.slug)
+    // Skill list payloads are summaries (body length only); count the same
+    // chars as before: the body when present, else the slug.
+    const skillChars = skills.reduce((total, skill) => {
+      const bodyChars = skill.contentLength ?? skill.content.length
+      return total + (bodyChars > 0 ? bodyChars : skill.slug.length)
+    }, 0)
     const mcpToolSchemas = (session.messages ?? [])
       .map((message) => message.toolName)
       .filter((name): name is string => Boolean(name?.startsWith('mcp__') && !name.startsWith('mcp__session__')))
@@ -45,7 +50,8 @@ export function SessionContextPanel({ sessionId }: { sessionId: string | null })
     )
     return assembleContextShares({
       systemPrompt: '',
-      skillBodies,
+      skillBodies: [],
+      skillChars,
       mcpToolSchemas,
       transcript: sessionMessagesToTranscript(session.messages ?? []),
       attachments,

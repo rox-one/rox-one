@@ -11,14 +11,15 @@ export { OverlayErrorBanner, type OverlayErrorBannerProps } from './OverlayError
 
 // Specialized overlays
 export { CodePreviewOverlay, type CodePreviewOverlayProps } from './CodePreviewOverlay'
-export { MultiDiffPreviewOverlay, type MultiDiffPreviewOverlayProps, type FileChange, type DiffViewerSettings } from './MultiDiffPreviewOverlay'
+export { MultiDiffPreviewOverlay, type MultiDiffPreviewOverlayProps, type FileChange, type DiffViewerSettings } from './LazyMultiDiffPreviewOverlay'
 export { TerminalPreviewOverlay, type TerminalPreviewOverlayProps } from './TerminalPreviewOverlay'
 export { GenericOverlay, detectLanguage, detectLanguageFromPath, type GenericOverlayProps } from './GenericOverlay'
 export { JSONPreviewOverlay, type JSONPreviewOverlayProps } from './JSONPreviewOverlay'
 export { DataTableOverlay, type DataTableOverlayProps } from './DataTableOverlay'
 export { DocumentFormattedMarkdownOverlay, type DocumentFormattedMarkdownOverlayProps } from './DocumentFormattedMarkdownOverlay'
 export { ImagePreviewOverlay, type ImagePreviewOverlayProps } from './ImagePreviewOverlay'
-export { PDFPreviewOverlay, type PDFPreviewOverlayProps } from './PDFPreviewOverlay'
+// Lazy entry: react-pdf/pdf.js load on first open (PERF-04).
+export { PDFPreviewOverlay, type PDFPreviewOverlayProps } from './LazyPDFPreviewOverlay'
 export { MermaidPreviewOverlay, type MermaidPreviewOverlayProps } from './MermaidPreviewOverlay'
 export { HTMLPreviewOverlay, type HTMLPreviewOverlayProps } from './HTMLPreviewOverlay'
 export { ActivityCardsOverlay, type ActivityCardsOverlayProps } from './ActivityCardsOverlay'
