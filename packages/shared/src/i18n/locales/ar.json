@@ -6062,6 +6062,8 @@
   "settings.appearance.defaultZoomLevelDesc": "عيّن مستوى التكبير الدائم للتطبيق لجميع النوافذ",
   "settings.appearance.description": "النسق والخط وأيقونات الأدوات",
   "settings.appearance.editFile": "تحرير الملف",
+  "settings.appearance.entitiesLinks": "روابط الكيانات (تجريبي)",
+  "settings.appearance.entitiesLinksDesc": "اربط الكيانات في الملاحظات والمهام والمستندات عبر [[kind:id]] وروابط rox:// والروابط الخلفية. متوقف افتراضيًا.",
   "settings.appearance.font": "الخط",
   "settings.appearance.fontArialNarrow": "Arial Narrow",
   "settings.appearance.fontChat": "محادثة الوكيل",

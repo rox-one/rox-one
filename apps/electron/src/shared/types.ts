@@ -13,6 +13,7 @@ import type { MailLocalApi } from './mail-local'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { parseEntityRoute } from './entity-routes'
 import { isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
+import { isEntityRoutesEnabled } from './route-parser'
 import type {
   Message as CoreMessage,
   MessageRole as CoreMessageRole,
@@ -2407,6 +2408,10 @@ export interface ElectronAPI {
   /** W1-07 (#1504): unified surfaces whose mode flag is on → main's deep-link gate. */
   setUnifiedSurfaceRoutesEnabled?(ids: string[]): Promise<{ ok: true }>
 
+  // Entity links (entities.links.v1): renderer notifies main so the
+  // deep-link parser and entity RPC handlers agree with the renderer
+  setEntitiesLinksEnabled(enabled: boolean): Promise<{ ok: boolean }>
+
   // Resources (cross-workspace export/import)
   exportResources(workspaceId: string, options: ExportResourcesOptions): Promise<ExportResult>
   importResources(workspaceId: string, bundle: ResourceBundle, mode: ResourceImportMode): Promise<ResourceImportResult>
@@ -3305,7 +3310,10 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
   if (isUnifiedSurfaceRouteEnabled(key)) return { navigator: 'surface', surface: key, details: null }
 
   // Kind-first entity keys mirror the route format: `entity/{route}`.
+  // Gated behind `entities.links.v1` exactly like the main-process
+  // deep-link parser: persisted tabs/history restore nothing when off.
   if (key.startsWith('entity/')) {
+    if (!isEntityRoutesEnabled()) return null
     const parsed = parseEntityRoute(key.slice('entity/'.length))
     if (!parsed) return null
     return { navigator: 'entity', route: parsed.canonicalRoute, ref: parsed.ref, details: null }

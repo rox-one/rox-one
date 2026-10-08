@@ -6064,6 +6064,8 @@
   "settings.appearance.defaultZoomLevelDesc": "Set the permanent app zoom level for all windows",
   "settings.appearance.description": "Motyw, czcionka, ikony narzędzi",
   "settings.appearance.editFile": "Edytuj plik",
+  "settings.appearance.entitiesLinks": "Linki encji (eksperymentalne)",
+  "settings.appearance.entitiesLinksDesc": "Łącz encje w notatkach, zadaniach i dokumentach przez [[kind:id]], linki rox:// i linki zwrotne. Domyślnie wyłączone.",
   "settings.appearance.font": "Czcionka",
   "settings.appearance.fontArialNarrow": "Arial Narrow",
   "settings.appearance.fontChat": "Czat agenta",

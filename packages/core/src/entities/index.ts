@@ -53,6 +53,14 @@ export {
   isEntityRoutePrefix,
 } from './routes.ts'
 
+// Shared app-route → ref parser (kind-first + frozen legacy shapes).
+export {
+  isEntityCompoundRoute,
+  parseEntityRoute,
+  parseEntityRouteOrLegacy,
+  type ParsedEntityRoute,
+} from './parse-route.ts'
+
 // Entity links (W1-02).
 export {
   ENTITY_LINK_SCHEMA_VERSION,

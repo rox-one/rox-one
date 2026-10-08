@@ -1147,6 +1147,12 @@ app.whenReady().then(async () => {
         return remove(workspaceId)
       })
 
+      // Entity links flag (entities.links.v1): renderer owns the persisted
+      // atom and notifies main so the deep-link parser and the entity RPC
+      // handlers agree with the renderer without a restart.
+      const { registerEntitiesLinksIpc } = await import('./entities-flags')
+      registerEntitiesLinksIpc(ipcMain)
+
       // SSH remote hosts + tunnels (Remote-SSH style bootstrap to a remote server)
       const { registerSshTunnelIpc } = await import('./ssh-tunnel/ipc')
       registerSshTunnelIpc()

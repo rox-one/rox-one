@@ -6058,6 +6058,8 @@
   "settings.appearance.defaultZoomLevelDesc": "Set the permanent app zoom level for all windows",
   "settings.appearance.description": "テーマ、フォント、ツールアイコン",
   "settings.appearance.editFile": "ファイルを編集",
+  "settings.appearance.entitiesLinks": "エンティティリンク（実験的）",
+  "settings.appearance.entitiesLinksDesc": "[[kind:id]]、rox://ディープリンク、バックリンクでメモ・タスク・ドキュメントのエンティティをつなげます。既定ではオフ。",
   "settings.appearance.font": "フォント",
   "settings.appearance.fontArialNarrow": "Arial Narrow",
   "settings.appearance.fontChat": "エージェントチャット",

@@ -28,7 +28,7 @@ import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registr
 import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
 import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
-import { isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
+import { ENTITIES_LINKS_WORKBENCH_FLAG, isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
 import { isOpenUnifiedSurfaceRoot, isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
 
 /**
@@ -36,9 +36,11 @@ import { isOpenUnifiedSurfaceRoot, isUnifiedSurfaceRouteEnabled, type UnifiedSur
  *
  * The kind-first entity routes are inert unless `entities.links.v1` is on.
  * The renderer sets the override from its workbench flag atom; tests use the
- * setter. Without an override, the env `CRAFT_FEATURE_ENTITIES_LINKS`
- * applies (default OFF). With the flag off, `rox://goals/goal/x`,
- * `rox://docs/file/x` etc. are rejected exactly as on main.
+ * setter. The override feeds the workbench flag set into
+ * `isEntitiesLinksEnabled`, so the env `CRAFT_FEATURE_ENTITIES_LINKS`
+ * keeps overriding in both directions (default OFF). With the flag off,
+ * `rox://goals/goal/x`, `rox://docs/file/x` etc. are rejected exactly as on
+ * main.
  */
 let entityRoutesOverride: boolean | undefined
 
@@ -51,12 +53,16 @@ export function resetEntityRoutesEnabled(): void {
 }
 
 export function isEntityRoutesEnabled(): boolean {
-  if (entityRoutesOverride !== undefined) return entityRoutesOverride
-  return isEntitiesLinksEnabled()
+  const flags = entityRoutesOverride === undefined
+    ? undefined
+    : entityRoutesOverride
+      ? new Set([ENTITIES_LINKS_WORKBENCH_FLAG])
+      : new Set<string>()
+  return isEntitiesLinksEnabled(flags)
 }
 
 /** Prefixes that only exist for the kind-first entity routes (no legacy owner). */
-const ENTITY_ONLY_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
+export const ENTITY_ONLY_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
   'docs',
   'messenger',
   'calendar',
@@ -1411,6 +1417,9 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
 
   switch (parsed.name) {
     case 'entity': {
+      // Persisted `entity/...` tab/history keys restore nothing while the
+      // flag is off — same unavailable outcome as the main-process parser.
+      if (!isEntityRoutesEnabled()) return null
       if (!parsed.id) return null
       const result = parseEntityRef(parsed.id)
       if (!result.ok) return null

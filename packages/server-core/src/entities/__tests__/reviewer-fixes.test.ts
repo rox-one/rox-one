@@ -201,8 +201,11 @@ describe('reviewer fix #6 — wikilinks prefer entity refs', () => {
   it('parses entity-looking targets instead of minting bogus notes', () => {
     expect(wikilinkTargetsToRefs('[[task:t1|Fix]]')).toEqual([{ to: { kind: 'task', id: 't1' } }])
     expect(wikilinkTargetsToRefs('[[Alpha]]')).toEqual([{ to: { kind: 'note', id: 'Alpha' } }])
-    // Unknown kinds are not minted as notes.
-    expect(wikilinkTargetsToRefs('[[widget:1]]')).toEqual([])
+    // Unknown `prefix:` is a plain note title, not a dropped link
+    // (`[[Встреча: итоги]]` must survive as a note).
+    expect(wikilinkTargetsToRefs('[[widget:1]]')).toEqual([{ to: { kind: 'note', id: 'widget:1' } }])
+    expect(wikilinkTargetsToRefs('[[Встреча: итоги]]')).toEqual([{ to: { kind: 'note', id: 'Встреча: итоги' } }])
+    expect(wikilinkTargetsToRefs('[[doc: plan]]')).toEqual([{ to: { kind: 'note', id: 'doc: plan' } }])
     // Alias form resolves to the canonical kind.
     expect(wikilinkTargetsToRefs('[[doc:hello]]')).toEqual([{ to: { kind: 'note', id: 'hello' } }])
   })
