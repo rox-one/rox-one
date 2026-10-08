@@ -2,7 +2,17 @@
    utilities are generated for these layers only.
 
    Numeric `z-10…z-50` / `z-[n]` are retired by the lint ratchet (UI-A2) and
-   the codemod sweep (UI-C2). */
+   the codemod sweep (UI-C2).
+
+   Order (low → high): page content < chrome < sashes < popovers <
+   fullscreen overlays < tooltips < dialog scrim < modal < toasts <
+   islands / in-overlay menus < splash.
+   - Fullscreen overlays (FullscreenOverlayBase, zen views) sit BELOW the
+     dialog scrim and modal, so a dialog opened from one dims it and sits on
+     top, and BELOW tooltips, so tooltips stay visible inside them.
+   - Menus, popovers and context menus that open inside a fullscreen overlay
+     use `z-island` (or `var(--z-island)`); plain `z-popover` is for menus in
+     the regular app chrome. */
 :root {
   --z-base: 0;
   --z-raised: 1;
@@ -10,6 +20,7 @@
   --z-chrome: 20;
   --z-sash: 30;
   --z-popover: 100;
+  --z-fullscreen: 120;
   --z-tooltip: 150;
   --z-scrim: 200;
   --z-modal: 210;
@@ -22,13 +33,13 @@
      call sites. They have no Tailwind utility; do not add new uses.
      Floating menus stay above modals and fullscreen overlays (they open from
      inside them), so they share the island layer; their click-catching
-     backdrops sit between modal and island. */
+     backdrops sit between modal and island (toast layer). `--z-overlay` was
+     the old name for the fullscreen layer. */
   --z-local: var(--z-sticky);
   --z-titlebar: var(--z-chrome);
   --z-panel: var(--z-chrome);
   --z-dropdown: var(--z-popover);
-  --z-overlay: var(--z-modal);
-  --z-fullscreen: var(--z-modal);
+  --z-overlay: var(--z-fullscreen);
   --z-floating-backdrop: var(--z-toast);
   --z-floating-menu: var(--z-island);
   --z-island-overlay: var(--z-toast);
@@ -41,6 +52,7 @@
   --z-index-chrome: var(--z-chrome);
   --z-index-sash: var(--z-sash);
   --z-index-popover: var(--z-popover);
+  --z-index-fullscreen: var(--z-fullscreen);
   --z-index-tooltip: var(--z-tooltip);
   --z-index-scrim: var(--z-scrim);
   --z-index-modal: var(--z-modal);

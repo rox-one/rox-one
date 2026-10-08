@@ -57,7 +57,7 @@ const px = (v: string) => {
 }
 
 const LAYERS = [
-  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'tooltip',
+  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'fullscreen', 'tooltip',
   'scrim', 'modal', 'toast', 'island', 'island-popover', 'splash',
 ] as const
 
@@ -131,7 +131,7 @@ describe('token foundation v2: z layers', () => {
     const root = rootOf(token('z.css'))
     const values = Object.fromEntries(LAYERS.map((l) => [l, Number(resolve(root[`--z-${l}`]!, root))]))
     expect(values).toEqual({
-      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, tooltip: 150,
+      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, fullscreen: 120, tooltip: 150,
       scrim: 200, modal: 210, toast: 300, island: 400, 'island-popover': 410, splash: 600,
     })
     const ordered = LAYERS.map((l) => values[l]!)
@@ -167,8 +167,24 @@ describe('token foundation v2: z layers', () => {
     expect(z('scrim')).toBeLessThan(z('modal'))
   })
 
+  it('puts fullscreen overlays below the dialog scrim/modal and below tooltips', () => {
+    const root = rootOf(token('z.css'))
+    const z = (n: string) => Number(resolve(`var(--z-${n})`, root))
+    // A dialog opened from a fullscreen overlay dims it and sits on top.
+    expect(z('fullscreen')).toBeLessThan(z('scrim'))
+    expect(z('fullscreen')).toBeLessThan(z('modal'))
+    // Tooltips and in-overlay menus (island) stay visible inside the overlay.
+    expect(z('tooltip')).toBeGreaterThan(z('fullscreen'))
+    expect(z('island')).toBeGreaterThan(z('fullscreen'))
+    // Still above app chrome and regular popovers.
+    expect(z('fullscreen')).toBeGreaterThan(z('chrome'))
+    expect(z('fullscreen')).toBeGreaterThan(z('popover'))
+    // Legacy name for the same layer.
+    expect(z('overlay')).toBe(z('fullscreen'))
+  })
+
   it('no source uses a retired z utility class', () => {
-    const retired = /(?<![-\w])z-(local|titlebar|panel|dropdown|overlay|fullscreen|floating-backdrop|floating-menu|island-overlay)(?![-\w])/
+    const retired = /(?<![-\w])z-(local|titlebar|panel|dropdown|overlay|floating-backdrop|floating-menu|island-overlay)(?![-\w])/
     const offenders: string[] = []
     const glob = new Bun.Glob('{apps/electron/src,packages/ui/src}/**/*.{ts,tsx}')
     for (const file of glob.scanSync({ cwd: repoRoot })) {
