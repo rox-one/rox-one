@@ -225,8 +225,10 @@ export const REMOTE_LAYOUT_PROBE_COMMAND =
  * Steps: wait (bounded, `ROX_REMOTE_MOVE_WAIT` seconds, default 10) until no
  * managed server from the legacy home runs, else keep; keep while a live
  * writer holds a home lock (incl. the managed server's own config lock);
- * re-check right before `ln -s` that the legacy path is still free (a
- * directory there would nest the link); roll back only into an absent legacy
+ * re-check right before `mv` that `~/rox` is still free and the legacy home is
+ * still a real dir (another bootstrap may have moved it during the wait;
+ * `mv -T` where supported); re-check right before `ln -s` that the legacy
+ * path is still free (a directory there would nest the link); roll back only into an absent legacy
  * path. The pattern/paths never contain the literal server path, so pgrep/ps
  * never match this shell itself. Never deletes anything.
  */
@@ -239,10 +241,13 @@ export const REMOTE_HOME_MOVE_COMMAND = String.raw`if test -d ~/.rox && ! test -
   String.raw`for lock in ~/.rox/.server.lock ~/.rox/config.json.lock ~/.rox/.app.lock ~/.rox/$d/config/.server.lock; do ` + // legacy home writer locks
   String.raw`pid=$(sed -n -e 's/.*"pid"[^0-9]*\([0-9][0-9]*\).*/\1/p' -e 's/^\([0-9][0-9]*\)$/\1/p' "$lock" 2>/dev/null | head -n 1); ` +
   String.raw`if test -n "$pid" && kill -0 "$pid" 2>/dev/null; then live=1; fi; done; ` +
+  // `mv -T` (GNU/busybox) never moves into an existing directory; BSD mv has
+  // no -T, so there the re-check right before mv is the guard.
+  String.raw`T=; t=$(mktemp -d 2>/dev/null) && : > "$t/a" && mv -T "$t/a" "$t/b" 2>/dev/null && T=-T; test -n "$t" && rm -rf "$t"; ` +
   String.raw`if test -n "$live"; then echo KEPT; ` +
-  String.raw`elif mv ~/.rox ~/rox; then ` + // legacy home → visible
+  String.raw`elif test -d ~/.rox && ! test -L ~/.rox && ! test -e ~/rox && ! test -L ~/rox && mv $T ~/.rox ~/rox; then ` + // legacy home → visible, re-checked (wait window)
   String.raw`if ! test -e ~/.rox && ! test -L ~/.rox && ln -s "$HOME/rox" ~/.rox; then chmod 700 ~/rox; echo MOVED; ` + // legacy compat symlink, re-checked
-  String.raw`elif ! test -e ~/.rox && ! test -L ~/.rox && mv ~/rox ~/.rox; then echo KEPT; ` + // legacy rollback, never nested
+  String.raw`elif ! test -e ~/.rox && ! test -L ~/.rox && mv $T ~/rox ~/.rox; then echo KEPT; ` + // legacy rollback, never nested
   String.raw`else chmod 700 ~/rox; echo SPLIT; fi; ` +
   String.raw`else echo KEPT; fi; else echo KEPT; fi`
 

@@ -169,7 +169,8 @@ describe('W1-13 remote visible-home shell commands (flag ON only)', () => {
     expect(REMOTE_HOME_MOVE_COMMAND).toContain('~/.rox/$d/config/.server.lock')
     expect(REMOTE_HOME_MOVE_COMMAND).toContain('~/.rox/.app.lock')
     expect(REMOTE_HOME_MOVE_COMMAND).toContain('! test -e ~/.rox && ! test -L ~/.rox && ln -s "$HOME/rox" ~/.rox')
-    expect(REMOTE_HOME_MOVE_COMMAND).toContain('! test -e ~/.rox && ! test -L ~/.rox && mv ~/rox ~/.rox')
+    expect(REMOTE_HOME_MOVE_COMMAND).toContain('! test -e ~/.rox && ! test -L ~/.rox && mv $T ~/rox ~/.rox')
+    expect(REMOTE_HOME_MOVE_COMMAND).toContain('! test -e ~/rox && ! test -L ~/rox && mv $T ~/.rox ~/rox')
   })
 
   it('keeps the legacy layout while the managed server is still running after the wait', async () => {
@@ -211,12 +212,62 @@ describe('W1-13 remote visible-home shell commands (flag ON only)', () => {
 
   it('a legacy dir that reappears before ln -s is never nested into: SPLIT, data in ~/rox', () => temporary(root => {
     plantManaged(root)
-    const env = fakeBin(root, { mv: `${realMv} "$@" || exit $?\nif ! test -e "$HOME/.mv-once"; then touch "$HOME/.mv-once"; mkdir "$HOME/.rox"; fi` })
+    const env = fakeBin(root, { mv: `${realMv} "$@" || exit $?\ncase "$*" in *"$HOME/.rox $HOME/rox"*) mkdir "$HOME/.rox" ;; esac` })
     expect(moveIn(root, env).stdout.toString().trim()).toBe('SPLIT')
     expect(existsSync(join(root, 'rox/remote-server/start.sh'))).toBe(true)
     expect(lstatSync(join(root, '.rox')).isDirectory()).toBe(true)
     expect(readdirSync(join(root, '.rox'))).toEqual([]) // no ~/.rox/rox link
     expect(statSync(join(root, 'rox')).mode & 0o777).toBe(0o700)
+  }))
+
+  // Review 4 (finding 4): ~/rox (or a moved legacy home) appearing during
+  // the wait window is re-checked right before mv; mv -T where supported.
+  const nested = (root: string) => existsSync(join(root, 'rox/.rox')) || existsSync(join(root, 'rox/rox'))
+
+  it('~/rox appearing during the wait is never moved into: KEPT, nothing nested', () => temporary(root => {
+    plantManaged(root)
+    const env = fakeBin(root, { pgrep: 'mkdir -p "$HOME/rox" && echo mine > "$HOME/rox/notes.txt"; exit 1' })
+    expect(moveIn(root, env).stdout.toString().trim()).toBe('KEPT')
+    expect(readdirSync(join(root, 'rox'))).toEqual(['notes.txt'])
+    expect(lstatSync(join(root, '.rox')).isDirectory()).toBe(true)
+    expect(nested(root)).toBe(false)
+  }))
+
+  it('a second bootstrap that already moved and linked never produces a self-loop', () => temporary(root => {
+    plantManaged(root)
+    const env = fakeBin(root, {
+      pgrep: `if ! test -L "$HOME/.rox"; then ${realMv} "$HOME/.rox" "$HOME/rox" && ln -s "$HOME/rox" "$HOME/.rox"; fi; exit 1`,
+    })
+    expect(moveIn(root, env).stdout.toString().trim()).toBe('KEPT')
+    expect(lstatSync(join(root, '.rox')).isSymbolicLink()).toBe(true)
+    expect(existsSync(join(root, 'rox/remote-server/start.sh'))).toBe(true)
+    expect(nested(root)).toBe(false)
+  }))
+
+  it('BSD mv without -T: the re-check still guards the race, and a clean move works', () => {
+    const bsdMv = `if test "$1" = -T; then echo "mv: illegal option -- T" >&2; exit 64; fi; exec ${realMv} "$@"`
+    temporary(root => {
+      plantManaged(root)
+      const env = fakeBin(root, { mv: bsdMv, pgrep: 'mkdir -p "$HOME/rox/x"; exit 1' })
+      expect(moveIn(root, env).stdout.toString().trim()).toBe('KEPT')
+      expect(nested(root)).toBe(false)
+    })
+    temporary(root => {
+      plantManaged(root)
+      expect(moveIn(root, fakeBin(root, { mv: bsdMv })).stdout.toString().trim()).toBe('MOVED')
+      expect(lstatSync(join(root, '.rox')).isSymbolicLink()).toBe(true)
+    })
+  })
+
+  it('mv -T refuses a ~/rox created between the re-check and mv', () => temporary(root => {
+    plantManaged(root)
+    const env = fakeBin(root, {
+      mv: `if test "$2" = "$HOME/.rox" || test "$1" = "$HOME/.rox"; then mkdir -p "$HOME/rox" && echo late > "$HOME/rox/late.txt"; fi; exec ${realMv} "$@"`,
+    })
+    expect(moveIn(root, env).stdout.toString().trim()).toBe('KEPT')
+    expect(readdirSync(join(root, 'rox'))).toEqual(['late.txt'])
+    expect(lstatSync(join(root, '.rox')).isDirectory()).toBe(true)
+    expect(nested(root)).toBe(false)
   }))
 
   it('ln -s failure rolls back into the absent legacy path: KEPT', () => temporary(root => {
