@@ -19,6 +19,18 @@
  * re-adds the topic or schedules a retry, and a stale `subscribed` /
  * `snapshot_required` for a topic nobody wants any more is unsubscribed so the
  * server keeps no subscription the caller dropped.
+ *
+ * Unsubscribe-before-subscribe ordering: the WS-RPC server handles one
+ * socket's messages concurrently (each awaits session revalidation first), so
+ * a later subscribe can overtake an earlier unsubscribe of the same topic at
+ * the gateway and be deleted by it — the client would believe it is
+ * subscribed while the server holds nothing. Every unsubscribe (explicit or
+ * the cleanup of a stale reply) is therefore tracked per topic until its RPC
+ * settles, and a subscribe request for such a topic is only sent after it
+ * settled (success or failure — a failed unsubscribe leaves the server
+ * subscription, which the new subscribe simply re-sets). The wait is bounded
+ * by the transport's request timeout; a request still waiting when the
+ * subscriber closes is abandoned (rejects) instead of hanging.
  */
 
 import {
@@ -82,6 +94,10 @@ export class RealtimeSubscriber {
   /** Topics the caller wants → current intent token (revoked by `unsubscribe`). */
   private readonly wanted = new Map<string, number>()
   private intentSeq = 0
+  /** Topics with an in-flight unsubscribe RPC → resolves (never rejects) once all of them settled. */
+  private readonly unsubscribing = new Map<string, Promise<void>>()
+  /** Requests waiting for an unsubscribe → release (called by `close()` so none hangs). */
+  private readonly unsubscribeWaiters = new Set<() => void>()
   private closed = false
   private readonly options: RealtimeSubscriberOptions
 
@@ -114,12 +130,6 @@ export class RealtimeSubscriber {
     // releases it exactly once (duplicates in `topics` or in the result can't
     // unbalance the counter of a concurrent request).
     const requested = [...new Set(topics)]
-    const request: RealtimeSubscribeRequest = {
-      topics: requested.map(topic => {
-        const position = this.tracker.position(topic)
-        return position ? { topic, sinceSeq: position.seq, epoch: position.epoch } : { topic }
-      }),
-    }
     for (const topic of requested) {
       const entry = this.pending.get(topic) ?? { requests: 0, frames: [] }
       entry.requests += 1
@@ -130,6 +140,24 @@ export class RealtimeSubscriber {
     const settle = (topic: string): RealtimeFrame[] => (unsettled.delete(topic) ? this.settlePending(topic) : [])
     let result: RealtimeSubscribeResult
     try {
+      // An unsubscribe of one of these topics still in flight must reach the
+      // gateway first, or it could delete the subscription this request makes.
+      const blockers = new Set<Promise<void>>()
+      for (const topic of requested) {
+        const blocker = this.unsubscribing.get(topic)
+        if (blocker) blockers.add(blocker)
+      }
+      if (blockers.size > 0) {
+        await this.waitForUnsubscribes(blockers)
+        if (this.closed) throw new Error('RealtimeSubscriber closed')
+      }
+      // Positions are read when the request is actually sent.
+      const request: RealtimeSubscribeRequest = {
+        topics: requested.map(topic => {
+          const position = this.tracker.position(topic)
+          return position ? { topic, sinceSeq: position.seq, epoch: position.epoch } : { topic }
+        }),
+      }
       result = await this.options.connection.subscribe(request)
     } catch (error) {
       for (const topic of requested) settle(topic)
@@ -149,12 +177,20 @@ export class RealtimeSubscriber {
       for (const frame of settle(item.topic)) this.onFrame(frame)
     }
     if (leaked.length > 0 && !this.closed) {
-      void (async () => {
-        try { await this.options.connection.unsubscribe(leaked) } catch (error) { this.options.onError?.(error) }
-      })()
+      this.sendUnsubscribe(leaked).catch(error => { this.options.onError?.(error) })
     }
     for (const topic of requested) for (const frame of settle(topic)) this.onFrame(frame)
     return result.topics
+  }
+
+  /** Resolves once every blocker settled, or as soon as the subscriber closes. */
+  private waitForUnsubscribes(blockers: Iterable<Promise<void>>): Promise<void> {
+    if (this.closed) return Promise.resolve()
+    return new Promise<void>(resolve => {
+      const release = () => { this.unsubscribeWaiters.delete(release); resolve() }
+      this.unsubscribeWaiters.add(release)
+      void Promise.all(blockers).then(release)
+    })
   }
 
   /** Ends one in-flight request for `topic`; returns buffered frames when it was the last. */
@@ -176,7 +212,29 @@ export class RealtimeSubscriber {
       if (retry?.timer) clearTimeout(retry.timer)
       this.unavailableRetries.delete(topic)
     }
-    await this.options.connection.unsubscribe(topics)
+    await this.sendUnsubscribe(topics)
+  }
+
+  /**
+   * Sends one unsubscribe RPC and marks its topics as unsubscribing until it
+   * settles (registered synchronously, so a subscribe issued right after sees
+   * it). The returned promise rejects with the RPC error; the tracking never does.
+   */
+  private sendUnsubscribe(topics: string[]): Promise<void> {
+    let sent: Promise<void>
+    try {
+      sent = Promise.resolve(this.options.connection.unsubscribe(topics))
+    } catch (error) {
+      sent = Promise.reject(error)
+    }
+    const done = sent.then(() => {}, () => {})
+    for (const topic of new Set(topics)) {
+      const previous = this.unsubscribing.get(topic)
+      const entry: Promise<void> = previous ? Promise.all([previous, done]).then(() => {}) : done
+      this.unsubscribing.set(topic, entry)
+      void entry.then(() => { if (this.unsubscribing.get(topic) === entry) this.unsubscribing.delete(topic) })
+    }
+    return sent
   }
 
   /** Resubscribe all topics from their last positions (after a reconnect). */
@@ -186,6 +244,7 @@ export class RealtimeSubscriber {
 
   close(): void {
     this.closed = true
+    for (const release of [...this.unsubscribeWaiters]) release()
     this.unlisten()
     for (const retry of this.unavailableRetries.values()) if (retry.timer) clearTimeout(retry.timer)
     this.unavailableRetries.clear()

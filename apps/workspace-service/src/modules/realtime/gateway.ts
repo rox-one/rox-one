@@ -199,16 +199,19 @@ export class RealtimeGateway {
     if (!decoded.ok) throw new IdentityDomainError('INVALID_PAYLOAD')
     const sub = this.clients.get(ctx.clientId)
     if (!sub || sub.workspaceId !== ctx.workspaceId || sub.principalId !== ctx.principalId) return { topics: [] }
-    const removed: string[] = []
-    for (const topic of decoded.value.topics) {
+    // Remove every topic (and an emptied client) synchronously, before any
+    // cursor write: a concurrent subscribe on the same socket that lands while
+    // the writes are pending must not be deleted by this unsubscribe.
+    const removed: Array<[string, TopicState]> = []
+    for (const topic of new Set(decoded.value.topics)) {
       const state = sub.topics.get(topic)
       if (!state) continue
       sub.topics.delete(topic)
-      removed.push(topic)
-      await this.saveCursor(sub, topic, state)
+      removed.push([topic, state])
     }
-    if (sub.topics.size === 0) this.clients.delete(ctx.clientId)
-    return { topics: removed }
+    if (sub.topics.size === 0 && this.clients.get(ctx.clientId) === sub) this.clients.delete(ctx.clientId)
+    for (const [topic, state] of removed) await this.saveCursor(sub, topic, state)
+    return { topics: removed.map(([topic]) => topic) }
   }
 
   private subscriptionFor(ctx: RealtimeClientContext): Subscription {
