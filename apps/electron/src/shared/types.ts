@@ -34,6 +34,9 @@ import type {
   ServerHealth,
 } from '@rox/core/types';
 import type { EntityRef } from '@rox/core/entities'
+// W1-08 (#1505): entity links/preview bridge types.
+import type { EntityLink, EntityPreview } from '@rox/core/entities'
+import type { EntityLinksRequest } from '@rox/shared/entities'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -821,6 +824,11 @@ export interface ElectronAPI {
 
   // App lifecycle
   relaunchApp(): Promise<void>
+  /** W1-13: Settings → visible Rox home toggle (direct IPC; applies on next launch). */
+  getStorageVisibleRoot(): Promise<import('./storage-visible-root').StorageVisibleRootState>
+  setStorageVisibleRoot(enabled: boolean): Promise<import('./storage-visible-root').StorageVisibleRootState>
+  /** W1-13: this launch's home-migration notice, returned once (then null). */
+  takeStorageMigrationNotice(): Promise<import('./storage-visible-root').StorageMigrationNotice | null>
   removeWorkspace(workspaceId: string): Promise<boolean>
   invokeOnServer(url: string, token: string, channel: string, ...args: any[]): Promise<any>
 
@@ -1864,6 +1872,8 @@ export interface ElectronAPI {
   cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
   grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>
   sendVoiceChunk(payload: { audioBase64: string }): Promise<{ ok: true }>
+  /** Transient microphone RMS (0..1) for the live capture wave; ignored outside `recording`. */
+  sendVoiceLevel(payload: { level: number }): Promise<{ ok: true }>
   editVoiceTranscript(payload: { id: string; expectedRevisionId: string; text: string }): Promise<{ ok: true; revisionId: string }>
   selectVoiceTranscript(payload: { id: string; expectedRevisionId: string; revisionId: string }): Promise<{ ok: true; revisionId: string }>
   readVoiceRecordingAudio(payload: { id: string; offset: number; token?: string }): Promise<{ audioBase64: string; offset: number; totalBytes: number; token: string; hash: string; mimeType: string }>
@@ -2181,6 +2191,8 @@ export interface ElectronAPI {
   setZenShell(patch: {
     enabled?: boolean
     materialPreference?: 'system' | 'glass' | 'opaque'
+    /** PERF-07 low-power rendering choice. */
+    renderProfile?: 'auto' | 'performance' | 'standard'
   }): Promise<ZenShellSnapshot>
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
 
@@ -2322,7 +2334,8 @@ export interface ElectronAPI {
 
   // LLM Connections (provider configurations)
   listLlmConnections(): Promise<LlmConnection[]>
-  listLlmConnectionsWithStatus(): Promise<LlmConnectionWithStatus[]>
+  /** `{ refresh: false }` skips the OAuth network refresh (startup); it then runs in the background and pushes llmConnections.CHANGED. */
+  listLlmConnectionsWithStatus(options?: { refresh?: boolean }): Promise<LlmConnectionWithStatus[]>
   getStartupRuntimeSummary(): Promise<import('@rox/shared/protocol').StartupRuntimeSummary | null>
   getLlmConnection(slug: string): Promise<LlmConnection | null>
   getLlmConnectionApiKey(slug: string): Promise<string | null>
@@ -2557,7 +2570,21 @@ export interface ElectronAPI {
   refreshMarketplaceCatalog(): Promise<MarketplaceCatalogResult>
   onMarketplaceProgress(callback: (payload: MarketplaceProgressPayload) => void): () => void
   onMarketplaceChanged(callback: (payload: MarketplaceChangedPayload) => void): () => void
+
+  // W1-08 (#1505) — entity links / previews (W1-02 RPCs). Inert unless the
+  // server has `entities.links.v1` on (handlers return empty/unavailable).
+  entitiesLinks(workspaceId: string, input: EntityLinksRequest): Promise<EntitiesLinksResultDto>
+  entitiesResolve(workspaceId: string, input: { refs: EntityRef[] }): Promise<EntityPreview[]>
+  onEntitiesLinksChanged(callback: (workspaceId: string) => void): () => void
 }
+
+/** W1-08 (#1505): mirror of server-core `EntitiesLinksResult` (W1-02). */
+export type EntitiesLinksResultDto =
+  | { ok: true; op: 'add'; link: EntityLink }
+  | { ok: true; op: 'remove'; removed: boolean }
+  | { ok: true; op: 'outgoing'; links: EntityLink[] }
+  | { ok: true; op: 'backlinks'; links: EntityLink[]; nextCursor?: string }
+  | { ok: false; reason: 'disabled' }
 
 export interface MessagingPlatformRuntimeInfo {
   platform: string

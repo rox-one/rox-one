@@ -9,7 +9,8 @@ import { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { visibleWorkspacePanels } from './auxiliary-layout'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
 import { bottomTerminalOpenAtom } from '@/atoms/unified-shell'
 import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
@@ -92,7 +93,7 @@ export function PanelStackContainer({
   const visibleIds = isCompact ? [focusedPanelId ?? panels[0]?.id].filter((id): id is string => !!id)
     : visibleWorkspacePanels(panels, Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth)), focusedPanelId, lastTool, primaryId)
   const { mode, preferences, setTracks } = usePanelWorkspaceLayout()
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   const scrollRef = useRef<HTMLDivElement>(null)
   const previousFocusedPanelRef = useRef(focusedPanelId)
   const lastDomFocusRef = useRef<{ element: Element; panelId: string | null } | null>(null)
@@ -242,7 +243,7 @@ export function PanelStackContainer({
       data-mobile-menu-root="true"
       data-shell-density={isCompact ? 'compact' : 'regular'}
       data-panel-layout={isCompact ? 'compact' : mode}
-      className="flex-1 min-h-0 min-w-0 flex flex-col relative z-panel panel-scroll @container/shell"
+      className="flex-1 min-h-0 min-w-0 flex flex-col relative z-chrome panel-scroll @container/shell"
       style={{
         overflowX: isCompact ? 'hidden' : 'auto',
         overflowY: isCompact ? 'hidden' : 'auto',

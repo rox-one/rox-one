@@ -119,6 +119,9 @@ type ApiToChannelMapKeys = Exclude<
   | 'isChannelAvailable'
   | 'getSystemWarnings' // reads env var set at startup — no IPC needed
   | 'relaunchApp' // direct IPC to main process — not through WS RPC
+  | 'getStorageVisibleRoot' // direct IPC — host-local workbench-flags.json (W1-13)
+  | 'setStorageVisibleRoot' // direct IPC — host-local workbench-flags.json (W1-13)
+  | 'takeStorageMigrationNotice' // direct IPC — host-local launch notice (W1-13)
   | 'removeWorkspace' // direct IPC to main process — modifies local config
   | 'invokeOnServer' // direct IPC to main process — cross-server RPC
   | 'transferSessionToWorkspace' // direct IPC to main process — orchestrated remote transfer

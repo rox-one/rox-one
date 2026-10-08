@@ -62,7 +62,7 @@ export function MoveDialog({
           }}
           placeholder={t('tasks.move.placeholder')}
           aria-label={t('tasks.move.placeholder')}
-          className="h-8 w-full rounded-[var(--radius-overlay)] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted"
+          className="h-8 w-full rounded-sm bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted"
         />
       </div>
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2" role="listbox" aria-label={title}>

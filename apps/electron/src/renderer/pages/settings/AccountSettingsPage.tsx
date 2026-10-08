@@ -24,6 +24,7 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
+import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
 import { MiniDashboardCards } from '@/components/app-shell/MiniDashboardCards'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
@@ -38,7 +39,7 @@ import {
   type Profile,
   type ProfilePlan,
 } from '../../../shared/types'
-import roxLogo from '@/assets/rox-logo.png'
+import { MAIL_DEFAULT_DOMAIN } from '../../../shared/mail-local'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
 /**
@@ -53,9 +54,6 @@ export const meta: DetailsPageMeta = {
   navigator: 'settings',
   slug: 'account',
 }
-
-// Brand fallback: the Rox mark (same source as the app symbol).
-const bundledDefaultAvatar = roxLogo
 
 const XP_EVENT_KEYS: Record<XpEventType, string> = {
   session_completed: 'settings.account.event.sessionCompleted',
@@ -87,7 +85,7 @@ function errorMessage(error: unknown): string {
 }
 
 function formatBalance(balance: number | null, t: (key: string, opts?: Record<string, unknown>) => string): string {
-  if (balance === null || !Number.isFinite(balance)) return t('profile.balanceEmpty')
+  if (balance === null || !Number.isFinite(balance)) return t('profile.balanceUnknown')
   return t('profile.balance', { amount: balance })
 }
 
@@ -122,6 +120,8 @@ export default function AccountSettingsPage() {
   const [profile, setProfile] = React.useState<Profile | null>(null)
   const [displayName, setDisplayName] = React.useState('')
   const [email, setEmail] = React.useState('')
+  const [mailAddress, setMailAddress] = React.useState<string | null>(null)
+  const [mailDomain, setMailDomain] = React.useState(MAIL_DEFAULT_DOMAIN)
   const [saving, setSaving] = React.useState(false)
   const [changingAvatar, setChangingAvatar] = React.useState(false)
   const [gamification, setGamification] = React.useState<GamificationSnapshot | null>(null)
@@ -178,6 +178,24 @@ export default function AccountSettingsPage() {
     void readCloud()
     const timer = setInterval(() => { void readCloud() }, 30_000)
     return () => { cancelled = true; clearInterval(timer) }
+  }, [])
+
+  React.useEffect(() => {
+    const mail = window.electronAPI.mailLocal
+    if (!mail) return
+    let cancelled = false
+    const read = async () => {
+      try {
+        const status = await mail.status()
+        if (cancelled) return
+        setMailAddress(status.address)
+        setMailDomain(status.domain || MAIL_DEFAULT_DOMAIN)
+      } catch { /* the mail bridge is optional */ }
+    }
+    void read()
+    const off = mail.onChanged(() => { void read() })
+    const timer = window.setInterval(() => { void read() }, 30_000)
+    return () => { cancelled = true; off(); window.clearInterval(timer) }
   }, [])
 
   const persist = async (input: Parameters<typeof window.electronAPI.identityUpdateProfile>[0]) => {
@@ -274,6 +292,11 @@ export default function AccountSettingsPage() {
   const plan = profile?.plan ?? 'standard'
   const progressPct = Math.round((gamification?.progress ?? 0) * 100)
   const recent = gamification?.recentEvents ?? []
+  // Always-visible defaults: even before the XP service answers (or if it is
+  // unavailable) the "Level and XP" block renders a concrete level and total.
+  const level = gamification?.level ?? 1
+  const lifetimeXp = gamification?.xp ?? 0
+  const nextThreshold = gamification?.nextThreshold ?? null
   const dashboard = React.useMemo(() => {
     const workspaceId = workspace?.id
     const remoteWorkspaceId = workspace?.remoteServer?.remoteWorkspaceId
@@ -328,7 +351,7 @@ export default function AccountSettingsPage() {
                 <Avatar className="h-14 w-14">
                   {profile?.avatar ? <AvatarImage src={profile.avatar} alt="" /> : null}
                   <AvatarFallback delayMs={0} className="bg-foreground/10">
-                    <img src={bundledDefaultAvatar} alt="" className="h-full w-full object-cover" />
+                    <CraftAgentsSymbol className="h-full w-full" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col gap-2">
@@ -360,20 +383,21 @@ export default function AccountSettingsPage() {
             </SettingsRow>
             <SettingsRow
               label={t('settings.account.email')}
-              description={t('settings.account.emailHint')}
+              description={t('settings.account.mailboxHint', { domain: mailDomain })}
             >
-              <Input
-                value={email}
-                maxLength={254}
-                type="email"
-                disabled={saving || !profile}
-                onChange={(event) => setEmail(event.target.value)}
-                className="h-8 min-w-[240px]"
-                inputMode="email"
-                autoComplete="email"
-                placeholder={t('settings.account.emailEmpty')}
-                aria-label={t('settings.account.email')}
-              />
+              {mailAddress ? (
+                <span
+                  className="min-w-0 max-w-[320px] truncate font-mono text-sm"
+                  title={mailAddress}
+                  data-testid="settings-mail-address"
+                >
+                  {mailAddress}
+                </span>
+              ) : (
+                <span className="min-w-[240px] text-sm text-muted-foreground" data-testid="settings-mail-pending">
+                  {t('settings.account.mailboxPending')}
+                </span>
+              )}
             </SettingsRow>
             <SettingsRow label="">
               <Button size="sm" onClick={() => void handleSaveProfile()} disabled={saving || !profile || !displayName.trim()}>
@@ -414,12 +438,10 @@ export default function AccountSettingsPage() {
           </SettingsCard>
         </SettingsSection>
 
-        <SettingsSection title={t('quests.sectionTitle')}><QuestProgressCard scopeKey={workspace?.id} /></SettingsSection>
-
         <SettingsSection title={t('settings.account.progressSection')}>
           <SettingsCard>
             <SettingsRow label={t('settings.account.level')}>
-              <span className="text-sm">{t('profile.level', { level: gamification?.level ?? 1 })}</span>
+              <span className="text-sm">{t('profile.level', { level })}</span>
             </SettingsRow>
             <SettingsRow
               label={t('settings.account.xp')}
@@ -428,11 +450,11 @@ export default function AccountSettingsPage() {
               <div className="min-w-[220px] space-y-1.5">
                 <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
                   <span>
-                    {gamification?.nextThreshold == null
-                      ? t('profile.xpMax', { xp: gamification?.xp ?? 0 })
+                    {nextThreshold == null
+                      ? t('profile.xpMax', { xp: lifetimeXp })
                       : t('profile.xpProgress', {
-                          current: gamification?.xp ?? 0,
-                          next: gamification.nextThreshold,
+                          current: lifetimeXp,
+                          next: nextThreshold,
                         })}
                   </span>
                   <span>{progressPct}%</span>
@@ -460,9 +482,12 @@ export default function AccountSettingsPage() {
               {recent.length === 0 ? (
                 <span className="text-sm text-muted-foreground">{t('settings.account.recentXpEmpty')}</span>
               ) : (
-                <ul className="text-xs space-y-1 min-w-[220px]">
+                <ul className="grid min-w-[240px] grid-cols-1 gap-x-6 text-xs sm:grid-cols-2">
                   {recent.slice(0, 8).map((event, index) => (
-                    <li key={`${event.at}-${index}`} className="flex justify-between gap-3">
+                    <li
+                      key={`${event.at}-${index}`}
+                      className="flex items-center justify-between gap-3 border-b border-border/40 py-1.5 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0"
+                    >
                       <span>{t(XP_EVENT_KEYS[event.type] ?? event.type)}</span>
                       <span className="tabular-nums text-muted-foreground">+{event.xp}</span>
                     </li>
@@ -472,6 +497,8 @@ export default function AccountSettingsPage() {
             </SettingsRow>
           </SettingsCard>
         </SettingsSection>
+
+        <SettingsSection title={t('quests.sectionTitle')}><QuestProgressCard scopeKey={workspace?.id} /></SettingsSection>
 
         <SettingsSection title={t('settings.accounts.connectionsSection')}>
           <SettingsCard>

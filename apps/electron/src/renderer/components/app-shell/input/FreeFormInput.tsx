@@ -2,7 +2,8 @@ import { useTourSignals, useTourTarget, type TourObservation } from '@/features/
 import { beginChatCommit } from '@/features/product-tour/adapters/chat'
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import {
   Paperclip,
   ArrowUp,
@@ -380,7 +381,7 @@ export function FreeFormInput({
   onRequestExpand,
 }: FreeFormInputProps) {
   const { t } = useTranslation()
-  const prefersReducedMotion = useReducedMotion()
+  const prefersReducedMotion = usePrefersReducedMotion()
   const tourVariant = compactMode ? 'compact' : 'regular'
   const tourSignals = useTourSignals({ sessionId, workspaceId })
   const inputTarget = useTourTarget('composer.input', { sessionId, workspaceId, variant: tourVariant })

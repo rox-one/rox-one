@@ -7,7 +7,6 @@ import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
-  Settings,
   ChevronRight,
   ChevronDown,
   MoreHorizontal,
@@ -39,7 +38,9 @@ import {
 // SessionStatusIcons no longer used - icons come from dynamic sessionStatuses
 import { SourceAvatar } from "@/components/ui/source-avatar"
 import { TopBar } from "./TopBar"
-import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
+import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, openOrFocusBrowserPanelAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
+import { activeBrowserInstanceIdAtom } from '@/atoms/browser-pane'
+import { openOrFocusEmbeddedBrowserPanel } from '@/platform/browser-panel-lifecycle'
 import { workspaceProjectContextsAtom, activeWorkspaceContextAtom } from '@/atoms/workspace-context'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
 import { SquarePenRounded } from "../icons/SquarePenRounded"
@@ -91,7 +92,7 @@ import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
 import { visibleExtraScreens } from "@/pages/extra-screens/registry"
-import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
 import { focusServicePanelAtom } from "./service-navigation"
@@ -2323,6 +2324,8 @@ function AppShellContent({
   const setInspectorChromeCollapsed = useSetAtom(inspectorChromeCollapsedAtom)
   const setInspectorSection = useSetAtom(inspectorSectionAtom)
   const setInspectorPanelWidth = useSetAtom(inspectorPanelWidthAtom)
+  const openOrFocusBrowserPanel = useSetAtom(openOrFocusBrowserPanelAtom)
+  const setActiveBrowserInstanceId = useSetAtom(activeBrowserInstanceIdAtom)
   const seProfile = useSuperEngineeringProfile()
   const [inspectorEdgeMode, setInspectorEdgeMode] = useAtom(inspectorEdgeRevealModeAtom)
   const setInspectorUserOpened = useSetAtom(inspectorUserOpenedAtom)
@@ -2374,12 +2377,28 @@ function AppShellContent({
     setInspectorPanelWidth((width) => Math.max(width, 560))
   }, [setInspectorChromeCollapsed, setInspectorPanelWidth, setInspectorSection, setInspectorVisible])
 
-  const handleOpenMap = useCallback(() => {
-    if (!effectiveSessionId) return
-    window.dispatchEvent(new CustomEvent('craft:session-view', {
-      detail: { sessionId: effectiveSessionId, view: 'map' },
-    }))
-  }, [effectiveSessionId])
+  const openBrowserTab = useCallback(() => {
+    // (а) Focus the in-app inspector browser surface — same desktop affordance
+    // the VPS "open browser" bridge uses.
+    handleNewBrowserWindow()
+    if (isWebUI) return // Web UI has no embedded browser; the panel above is enough.
+
+    // (б) Create a fresh embedded tab through the same preload path
+    // InspectorBrowserPane uses (RPC browserPane.createEmbedded — never the
+    // windowed `create` RPC), then open/focus it as a browser panel so the new
+    // tab is actually visible (canonical path: InspectorActionRail.onBrowser /
+    // focusBrowserWindow). InspectorBrowserPane owns the native view lifecycle.
+    void window.electronAPI.browserPane
+      .createEmbedded({ useImportedCookies: true })
+      .catch(() => window.electronAPI.browserPane.createEmbedded())
+      .then((instanceId) => {
+        setActiveBrowserInstanceId(instanceId)
+        openOrFocusEmbeddedBrowserPanel({ instanceId, openOrFocusBrowserPanel })
+      })
+      .catch((error) => {
+        console.warn('[AppShell] Failed to open a new browser tab:', error)
+      })
+  }, [handleNewBrowserWindow, isWebUI, openOrFocusBrowserPanel, setActiveBrowserInstanceId])
 
   React.useEffect(() => {
     const handleOpenBrowser = () => {
@@ -2974,8 +2993,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           onToggleChatPictureInPicture={handleToggleChatPictureInPicture}
           onAddSessionPanel={() => handleNewChat(true)}
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
-          onOpenMap={handleOpenMap}
-          mapAvailable={Boolean(effectiveSessionId)}
+          onOpenBrowserTab={openBrowserTab}
           showInspectorToggle={(unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled) && !inspectorSuppressed}
           compactHeaderRenderer={compactHeaderRenderer}
           isCompactChatMode={isAutoCompact && isSessionsNavigation(navState) && !!navState.details}
@@ -2988,15 +3006,6 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
         />
 
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
-
-      {false && isAutoCompact && !isSidebarAndNavigatorHidden && (
-        <div data-compact-profile className="chrome-rail fixed bottom-1 left-1 z-panel flex h-11 items-center gap-1 rounded-xl px-1" data-shell-role="chrome">
-          <ProfileStrip data={profileStripWithSpend} compact onClick={() => handleSettingsClick('account')} className="w-10 p-0.5" />
-          <button type="button" onClick={() => handleSettingsClick()} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-9 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
-            <Settings className="size-4" aria-hidden />
-          </button>
-        </div>
-      )}
 
       {/* === OUTER LAYOUT: Unified Panel Stack | Right Sidebar === */}
       <div className="flex h-full min-h-0 flex-col">
@@ -3124,7 +3133,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
-              className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
+              className="h-full flex flex-col min-w-0 relative z-chrome chrome-strip"
               data-shell-role="chrome"
             >
             <PanelHeader
@@ -3334,7 +3343,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={SIDEBAR_WIDTH_MIN}
           valueMax={SIDEBAR_WIDTH_MAX}
           dragging={sidebarResize.dragging || isResizing === 'sidebar'}
-          className="absolute z-panel"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
@@ -3392,7 +3401,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={NAVIGATOR_WIDTH_MIN}
           valueMax={NAVIGATOR_WIDTH_MAX}
           dragging={navigatorResize.dragging || isResizing === 'session-list'}
-          className="absolute z-panel"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,

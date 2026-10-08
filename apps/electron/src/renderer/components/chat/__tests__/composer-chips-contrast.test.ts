@@ -22,7 +22,7 @@ describe('composer cloud chip contrast', () => {
 
     expect(cloud).toContain('bg-background')
     expect(input).toContain('bg-background')
-    expect(input).toContain('absolute top-2 right-2 z-20')
+    expect(input).toContain('relative z-20 mb-1.5 flex justify-end')
     expect(input).toContain('rounded-md bg-background p-0.5')
   })
 })

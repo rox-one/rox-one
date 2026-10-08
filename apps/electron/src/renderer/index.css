@@ -138,24 +138,10 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
   --color-foreground-1\.5: var(--foreground-1\.5);
   --color-sidebar-hover: color-mix(in oklch, var(--text-primary) 4%, var(--surface-rail));
 
-  /* Electron-specific stacking and container query utilities. */
-  --z-index-base: var(--z-base);
-  --z-index-local: var(--z-local);
-  --z-index-sticky: var(--z-sticky);
-  --z-index-titlebar: var(--z-titlebar);
-  --z-index-panel: var(--z-panel);
-  --z-index-dropdown: var(--z-dropdown);
-  --z-index-tooltip: var(--z-tooltip);
-  --z-index-modal: var(--z-modal);
-  --z-index-overlay: var(--z-overlay);
-  --z-index-fullscreen: var(--z-fullscreen);
-  --z-index-floating-backdrop: var(--z-floating-backdrop);
-  --z-index-floating-menu: var(--z-floating-menu);
-  --z-index-island-overlay: var(--z-island-overlay);
-  --z-index-island: var(--z-island);
-  --z-index-island-popover: var(--z-island-popover);
-  --z-index-splash: var(--z-splash);
+  /* Stacking utilities (`z-chrome`, `z-popover`, …) come from the shared
+     layer set in @rox/ui/styles tokens/z.css; no renderer-only z names. */
 
+  /* Electron-specific container query utilities. */
   --container-3xs: 16rem;
   --container-panel-compact: 28rem;
   --container-panel-medium: 40rem;
@@ -178,7 +164,7 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
    @rox/ui/styles. */
 @layer utilities {
   /* Bare `rounded` compiles to a literal .25rem (3.75px at the 15px root);
-     pin it to the xs token so it sits on the 4/6/8/10/12 radius scale. */
+     pin it to the xs token so it sits on the 0/4/6/8/12 radius scale. */
   .rounded {
     border-radius: var(--radius-xs);
   }
@@ -272,7 +258,7 @@ html[data-contrast="high"] .map-toolbar-btn[aria-pressed="true"] {
    policy applies to scenic and ordinary palettes. Reading surfaces stay solid. */
 html[data-scenic] .rox-shell-pane {
   position: relative;
-  z-index: var(--z-panel);
+  z-index: var(--z-chrome);
 }
 html .input-container {
   background: rgb(from var(--input-surface, var(--paper)) r g b / 1);
@@ -571,7 +557,8 @@ html .popover-styled {
 
 [data-sonner-toast] {
   box-shadow: var(--shadow-modal-small) !important;
-  background-color: oklch(from var(--popover) l c h / 0.8) !important;
+  /* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). */
+  background-color: oklch(from var(--popover) l c h / 1) !important;
   -webkit-app-region: no-drag !important;
   /* Fixed width to ensure text truncation works */
   width: 356px !important;
@@ -1008,8 +995,11 @@ html [data-inspector-panel] { --shell-glass-surface: var(--shell-glass-inspector
     --shell-glass-strip: color-mix(in srgb, rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) 88%, transparent);
     --shell-glass-inspector: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 88%, transparent);
   }
-  html[data-shell-runtime="web"]:not([data-shell-css-material="solid"]) :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]),
-  html[data-shell-runtime="electron"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+  /* PERF-07: native vibrancy/Mica already composite the window glass, so a
+     CSS blur on top only re-samples transparent pixels on every scroll
+     (PERF-AUDIT B14). Desktop windows keep the translucent tints above and
+     let the OS material show through; only browser CSS glass blurs. */
+  html[data-shell-runtime="web"]:not([data-shell-css-material="solid"]) :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
     backdrop-filter: blur(var(--shell-glass-blur)) saturate(1.15);
     -webkit-backdrop-filter: blur(var(--shell-glass-blur)) saturate(1.15);
   }
@@ -1058,6 +1048,80 @@ html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [dat
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
+}
+
+/* =============================================================================
+   OPAQUE OVERLAYS (PERF-07 / UI-AUDIT P1-10)
+
+   Popovers, menus, tooltips, toasts and dialogs are always opaque and never
+   composite a backdrop blur, whatever a call site's utilities ask for. Glass
+   belongs to chrome strips only.
+============================================================================= */
+html :is(
+  [data-sonner-toast],
+  [data-slot="tooltip-content"],
+  [data-slot="popover-content"],
+  [data-slot="hover-card-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="context-menu-content"],
+  [data-slot="context-menu-sub-content"],
+  [data-slot="select-content"],
+  [data-slot="dialog-content"],
+  [role="tooltip"],
+  [role="menu"],
+  [role="dialog"],
+  [role="alertdialog"]
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* =============================================================================
+   LOW-POWER RENDERING PROFILE (PERF-07, rox-one#1566)
+
+   `html[data-render-profile="performance"]` comes from main (render-profile.ts
+   via the shell snapshot). On by default on Windows and on software or
+   blocklisted GPU compositing; Settings → Appearance → Low-power mode.
+   No CSS backdrop blur anywhere, solid surface tints, reduced motion.
+============================================================================= */
+html[data-render-profile="performance"] {
+  --shell-glass-blur: 0px;
+  --chrome-glass-blur: 0px;
+  --chrome-glass-bg: var(--surface-elevated);
+  --shell-backdrop-tint: var(--surface-elevated) !important;
+  --shell-glass-topbar: rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1) !important;
+  --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1) !important;
+  --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) !important;
+  --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1) !important;
+  --motion-fast: 0ms;
+  --motion-normal: 0ms;
+  --motion-base: 0ms;
+  --motion-slow: 0ms;
+}
+html[data-render-profile="performance"] *,
+html[data-render-profile="performance"] *::before,
+html[data-render-profile="performance"] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+html[data-render-profile="performance"] :is(.animate-in, .animate-out, [data-overlay-motion], [data-state="open"], [data-state="closed"]) {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0s !important;
+}
+html[data-render-profile="performance"] :is(.animate-shimmer-loading, .animate-shimmer-text),
+html[data-render-profile="performance"] .animate-shimmer::after {
+  animation: none !important;
+}
+/* Decorative pulses (skeleton loaders, motion-safe icons) stop too. Spinners
+   (animate-spin) keep turning, and pulses that carry live state (recording,
+   running) opt out with data-live-indicator. */
+html[data-render-profile="performance"] :is(.animate-pulse, .motion-safe\:animate-pulse):not([data-live-indicator]) {
+  animation: none !important;
 }
 
 /* TurnCard action buttons (Copy, Markdown) — outside @container/shell,

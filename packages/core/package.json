@@ -41,7 +41,9 @@
     "./commands": "./src/commands/index.ts",
     "./events": "./src/events/index.ts",
     "./notify": "./src/notify/index.ts",
-    "./platform/workbench": "./src/platform/workbench/index.ts"
+    "./platform/workbench": "./src/platform/workbench/index.ts",
+    "./acl": "./src/acl/index.ts",
+    "./entities/permissions": "./src/entities/permissions.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

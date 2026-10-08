@@ -23,7 +23,7 @@ describe('sidebar dashboard source contracts', () => {
 
   it('keeps TopBar session/browser shortcuts as labeled icon buttons', () => {
     expect(topBar).toContain('session.newSessionInPanel')
-    expect(topBar).toContain('browser.newWindow')
+    expect(topBar).toContain('browser.newTab')
     expect(topBar).not.toContain('menu.addPanelMenu')
   })
 })

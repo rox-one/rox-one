@@ -1107,7 +1107,7 @@ export function RecordingPanel({ compact }: { compact?: boolean }) {
   const lit = Math.round(rec.level * bars)
   return (
     <div data-testid="meeting-recording-panel" className={cn('flex items-center gap-3 rounded-[var(--radius-control)] bg-destructive/[0.06] px-3', compact ? 'py-2' : 'py-3')}>
-      <span aria-hidden className={cn('size-2.5 shrink-0 rounded-full bg-destructive', rec.status === 'recording' && 'animate-pulse')} />
+      <span aria-hidden data-live-indicator className={cn('size-2.5 shrink-0 rounded-full bg-destructive', rec.status === 'recording' && 'animate-pulse')} />
       <span className={cn('shrink-0 font-semibold tabular-nums', compact ? 'text-[15px]' : 'text-[22px]')} data-testid="meeting-rec-timer">{formatRecClock(recordedMs(rec))}</span>
       <span className="flex h-4 min-w-0 flex-1 items-end gap-[2px]" aria-label={t('meetings.local.level')} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(rec.level * 100)}>
         {Array.from({ length: bars }, (_, i) => (

@@ -587,6 +587,7 @@ export const RPC_CHANNELS = {
     CANCEL: 'voice:cancel',
     GRANT: 'voice:grantPermission',
     CHUNK: 'voice:chunk',
+    LEVEL: 'voice:level',
     HISTORY_LIST: 'voice:historyList',
     HISTORY_GET: 'voice:historyGet',
     HISTORY_FAVORITE: 'voice:historyFavorite',
@@ -1123,6 +1124,11 @@ export const RPC_CHANNELS = {
     LIST: 'commands:list',
     /** Push: realtime event frame or command-bus status for a workspace. */
     EVENT: 'commands:event',
+  },
+  // W1-04 (#1501)
+  directory: {
+    /** MIG-06: one-shot export of the renderer Dossier payload into local contact cards. */
+    EXPORT_DOSSIER: 'directory:exportDossier',
   },
 } as const
 

@@ -7,6 +7,7 @@
 
 import * as React from 'react'
 
+import { useDocumentResizingFlag } from '@/hooks/useDocumentResizingFlag'
 import { createLayoutCommitDebouncer, SHELL_LAYOUT_KEYBOARD_DEBOUNCE_MS } from '@/lib/shell-layout-preferences'
 import { createResizeController, type ResizeBounds, type ResizeController } from '@/components/app-shell/resize-controller'
 import type { PanelResizeAxis } from '@/lib/panel-workspace-layout'
@@ -27,6 +28,8 @@ export function usePanelResize(handlers: UsePanelResizeHandlers, axis: PanelResi
   const previousBodyRef = React.useRef<{ cursor: string; userSelect: string }>({ cursor: '', userSelect: '' })
   const ownsBodyStylesRef = React.useRef(false)
   const [dragging, setDragging] = React.useState(false)
+  // html[data-resizing] zeroes motion tokens while the drag is live.
+  useDocumentResizingFlag(dragging)
 
   const keyboardCommit = React.useMemo(
     () => createLayoutCommitDebouncer(() => {

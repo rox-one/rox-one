@@ -20,9 +20,11 @@ import {
 } from '@/atoms/unified-shell'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { EntitiesPreviewsSettingsToggle } from '@/components/entities/EntitiesPreviewsSettingsToggle'
 import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
 import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ExtraScreensSettings } from './ExtraScreensSettings'
+import { StorageVisibleRootSettings } from './StorageVisibleRootSettings'
 
 function ModeScreenToggle({ id }: { id: ModeScreenId }) {
   const { t } = useTranslation()
@@ -144,9 +146,11 @@ export function WorkbenchChromeSettings() {
           disabled={entitiesLinksForced}
           onCheckedChange={setEntitiesLinks}
         />
+        <EntitiesPreviewsSettingsToggle />
       </SettingsCard>
     </SettingsSection>
     <ExtraScreensSettings />
+    <StorageVisibleRootSettings />
     <SettingsSection
       title={t('settings.appearance.workbenchModeScreens')}
       description={t('settings.appearance.workbenchModeScreensDesc')}

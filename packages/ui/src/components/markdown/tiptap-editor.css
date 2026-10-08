@@ -260,6 +260,11 @@
   background: transparent;
 }
 
+/* PERF-07 low-power profile: keep the static placeholder, stop the loop. */
+html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-loading='true'] {
+  animation: none;
+}
+
 @keyframes tiptap-image-shimmer {
   0% {
     background-position: 200% 0;
@@ -323,7 +328,7 @@
   align-items: center;
   gap: 2px;
   padding: 4px;
-  border-radius: var(--radius-overlay, 6px);
+  border-radius: var(--radius-md, 8px);
   background: var(--background);
   border: none;
   box-shadow: var(--shadow-modal-small);
@@ -336,7 +341,7 @@
   min-width: 320px;
   max-width: 480px;
   padding: 6px;
-  border-radius: var(--radius-overlay, 6px);
+  border-radius: var(--radius-md, 8px);
 }
 
 .tiptap-bubble-btn {
@@ -837,4 +842,32 @@
       color-mix(in oklch, var(--accent) 26%, transparent),
       color-mix(in oklch, var(--accent) 12%, transparent)
     );
+}
+
+/* W1-08 (#1505): fallback look for entity mention / embed nodes when the host
+   passes no React node view. Rox tokens only. */
+.tiptap-editor .tiptap-entity-mention {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  max-width: 240px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--accent) 10%, transparent);
+  color: var(--text-primary, var(--foreground));
+  font-size: 0.92em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: baseline;
+}
+
+.tiptap-editor .tiptap-entity-embed {
+  margin: 8px 0;
+  padding: 10px 12px;
+  max-width: 420px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 13px;
 }

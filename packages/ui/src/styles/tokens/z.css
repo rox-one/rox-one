@@ -1,0 +1,84 @@
+/* Z-index layers (UI-AUDIT §3.5). The only stacking names; Tailwind `z-*`
+   utilities are generated for these layers only.
+
+   Numeric `z-10…z-50` / `z-[n]` are retired by the lint ratchet (UI-A2) and
+   the codemod sweep (UI-C2).
+
+   Order (low → high): page content < sticky < chrome < sashes <
+   chrome-only menus (popover) < dialog scrim < modal < toast step <
+   fullscreen overlays < menu click-catching backdrops < menus (island) <
+   in-menu popovers < tooltips < splash. (Real toasts are sonner, z-index
+   999999999, above everything.)
+   - Fullscreen overlays (FullscreenOverlayBase, zen views) sit ABOVE the
+     dialog scrim/modal and drawers (main's 350), so an overlay opened from a
+     drawer or popover always covers its launcher. Dialogs and drawers opened
+     from INSIDE an overlay portal into the overlay's own root
+     (OverlayPortalRoot / useOverlayPortalContainer; the shared Dialog and
+     Drawer wrappers do this), so they stack above its content. Do not lower
+     this layer to get a dialog above an overlay.
+   - Tooltips are the topmost transient layer: above menus, popovers,
+     dialogs and fullscreen overlays, so no tooltip can be hidden under the
+     surface its trigger lives in. No per-site z override is needed.
+   - Menus are on the island layer: the shared primitives (Select,
+     DropdownMenu, Popover, ContextMenu, StyledDropdown, StyledContextMenu,
+     SimpleDropdown) default to `z-island`, so a menu opened from a dialog,
+     drawer or fullscreen overlay paints above it (and above toasts). They
+     keep portaling to <body>.
+   - `z-popover` is ONLY for explicit chrome-only menus that must stay under
+     dialogs and fullscreen overlays (composer mention/slash/label menus, the
+     inline editor menu surface, the product tour, EditPopover). Do not use
+     it as a default for a shared primitive.
+   - Click-catching backdrops for menus use `z-menu-backdrop` (390, main's
+     value: the step just below island and above fullscreen), so a menu
+     opened inside a fullscreen overlay still closes on an outside click and
+     the menu and any island trigger stay clickable above it. */
+:root {
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 10;
+  --z-chrome: 20;
+  --z-sash: 30;
+  --z-popover: 100;
+  --z-scrim: 200;
+  --z-modal: 210;
+  --z-toast: 300;
+  --z-fullscreen: 350;
+  --z-menu-backdrop: 390;
+  --z-island: 400;
+  --z-island-popover: 410;
+  --z-tooltip: 450;
+  --z-splash: 600;
+
+  /* Deprecated CSS-variable names, kept for inline `style={{ zIndex: 'var(--z-…)' }}`
+     call sites. They have no Tailwind utility; do not add new uses.
+     Floating menus stay above modals and fullscreen overlays (they open from
+     inside them), so they share the island layer; their click-catching
+     backdrops are the menu-backdrop step, between fullscreen and island.
+     `--z-overlay` was the old name for the fullscreen layer. */
+  --z-local: var(--z-sticky);
+  --z-titlebar: var(--z-chrome);
+  --z-panel: var(--z-chrome);
+  --z-dropdown: var(--z-popover);
+  --z-overlay: var(--z-fullscreen);
+  --z-floating-backdrop: var(--z-menu-backdrop);
+  --z-floating-menu: var(--z-island);
+  --z-island-overlay: var(--z-menu-backdrop);
+}
+
+@theme inline {
+  --z-index-base: var(--z-base);
+  --z-index-raised: var(--z-raised);
+  --z-index-sticky: var(--z-sticky);
+  --z-index-chrome: var(--z-chrome);
+  --z-index-sash: var(--z-sash);
+  --z-index-popover: var(--z-popover);
+  --z-index-scrim: var(--z-scrim);
+  --z-index-modal: var(--z-modal);
+  --z-index-toast: var(--z-toast);
+  --z-index-fullscreen: var(--z-fullscreen);
+  --z-index-menu-backdrop: var(--z-menu-backdrop);
+  --z-index-island: var(--z-island);
+  --z-index-island-popover: var(--z-island-popover);
+  --z-index-tooltip: var(--z-tooltip);
+  --z-index-splash: var(--z-splash);
+}

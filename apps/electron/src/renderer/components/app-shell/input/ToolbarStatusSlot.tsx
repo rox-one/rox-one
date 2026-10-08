@@ -12,7 +12,8 @@
  */
 
 import * as React from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { Globe } from 'lucide-react'
 import { useAtomValue } from 'jotai'
 import { useTranslation, Trans } from 'react-i18next'
@@ -44,7 +45,7 @@ export function ToolbarStatusSlot({
   turnProgress = null,
 }: ToolbarStatusSlotProps) {
   const { t } = useTranslation()
-  const prefersReducedMotion = useReducedMotion()
+  const prefersReducedMotion = usePrefersReducedMotion()
   // Filter to the active workspace so a session here doesn't surface a
   // browser-status banner for an agent running in a different workspace.
   // Accept both the local workspace id (manual tabs) and the remote-mirror

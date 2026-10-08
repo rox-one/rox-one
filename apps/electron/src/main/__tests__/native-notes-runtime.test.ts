@@ -562,7 +562,11 @@ test('concurrent same-path native creation rejects the losing mutation, retainin
   expect(changes.changes).toHaveLength(1)
   expect(changes.changes[0].operationId).toBe('other-client-create')
   expect(changes.entities[0].revision).toBe(1)
-  expect(readFileSync(join(f.root, queued!.changes[0]!.path), 'utf8')).toBe(queued!.changes[0]!.content!)
+  // The winner's CREATE stamps its own wall-clock `createdAt` in the server
+  // plan, while the losing plan carries the bridge's stamp; the two documents
+  // are identical by design apart from that single advisory line.
+  const clockless = (content: string) => content.replace(/^(createdAt: )\d+$/m, '$1<clock>')
+  expect(clockless(readFileSync(join(f.root, queued!.changes[0]!.path), 'utf8'))).toBe(clockless(queued!.changes[0]!.content!))
   await bridge.nativeReplica.close(handle)
 })
 

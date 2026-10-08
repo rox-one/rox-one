@@ -58,7 +58,6 @@ export const KEYS = {
   // Appearance
   showConnectionIcons: 'show-connection-icons',
   projectColorTreatment: 'project-color-treatment', // 'stripe' | 'stripe-tint'
-  workspaceSelectorRail: 'workspace-selector-rail',
   /** SE profile (opt-in via theme) */
   seLeftSidebarLayout: 'se-left-sidebar-layout',
   seAutoHideSidebars: 'se-auto-hide-sidebars',
@@ -72,8 +71,6 @@ export const KEYS = {
   // What's New
   // What's New — per-version seen list (timeline)
   whatsNewSeenVersions: 'whats-new-seen-versions',
-  // Workspace icon rail custom links (workspace-scoped via suffix)
-  workspaceRailLinks: 'workspace-rail-links',
   // Session multi-view tab (session-scoped via suffix) — legacy; prefer entityViewMode
   sessionViewMode: 'session-view-mode',
   // Entity multi-view tab (scoped via suffix e.g. session:<id>, note:<id>)
@@ -121,6 +118,8 @@ export const KEYS = {
   featureEntitiesLinksV1: 'feature-entities-links-v1',
   // W1-09 (#1506): Inbox notification surface (notify.inbox.v1) — default OFF
   featureNotifyInboxV1: 'feature-notify-inbox-v1',
+  // Entity previews (entities.previews.v1, W1-08) — default OFF, needs links
+  featureEntitiesPreviewsV1: 'feature-entities-previews-v1',
   // Входящие: done / snoozed item ids (renderer-only triage state)
   inboxState: 'inbox-state-v1',
   featureWorkbenchConationShell: 'feature-workbench-conation-shell',

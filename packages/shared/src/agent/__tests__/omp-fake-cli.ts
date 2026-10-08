@@ -82,11 +82,16 @@ function send(obj) {
   if (readScenario() === 'transport-oversize') chunks[0].byteLength = 67108865;
   if (readScenario() === 'transport-interrupted') chunks.splice(1, chunks.length, { type: 'response', success: true, data: {} });
   for (const chunk of chunks) {
-    process.stdout.write(JSON.stringify(chunk) + '\n');
+    const line = JSON.stringify(chunk) + '\n';
     if (readScenario() === 'transport-incomplete') {
-      process.stdout.write('', () => process.exit(0));
+      // process.exit() skips stdout draining, and an empty write's callback can
+      // fire before this large frame reaches the pipe — exit only once the
+      // surviving first chunk is actually flushed, or the parent reads a
+      // truncated line and reports the wrong transport error.
+      process.stdout.write(line, () => process.exit(0));
       break;
     }
+    process.stdout.write(line);
   }
 }
 
