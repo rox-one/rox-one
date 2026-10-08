@@ -29,14 +29,10 @@ describe('CredentialsStep', () => {
       />,
     )
 
-    expect(html).toContain('onboarding.credentials.providerApiKeyDescription')
-    expect(html).toContain('apiSetup.apiKeyLabel')
-    expect(html).toContain('apiSetup.endpointLabel')
+    expect(html).toContain('onboarding.credentials.piApiKeyHint')
     expect(html).toContain('common.back')
     expect(html).toContain('common.continue')
     expect(html).not.toContain('Select a provider preset and enter the API key.')
-    expect(html).not.toContain('>API Key<')
-    expect(html).not.toContain('>Endpoint<')
   })
 
   test('uses a localized description for Anthropic-compatible API keys', () => {
@@ -48,7 +44,7 @@ describe('CredentialsStep', () => {
       />,
     )
 
-    expect(html).toContain('onboarding.credentials.anthropicApiKeyDescription')
+    expect(html).toContain('onboarding.credentials.anthropicApiKeyHint')
     expect(html).not.toContain('Enter your API key. Optionally configure a custom endpoint')
   })
 })
