@@ -150,11 +150,15 @@ const installedStores = new WeakSet<object>()
  * the same flags (main is default-closed). No-op outside Electron / in tests.
  */
 export function pushSurfaceRoutesToMain(ids: Iterable<string>): void {
+  const list = [...ids]
+  const warn = (err: unknown) =>
+    console.warn('[unified-flags] surface route gate push to main failed; rox://<mode> deep links stay closed', list, err)
   try {
     const api = typeof window !== 'undefined' ? window.electronAPI : undefined
-    api?.setUnifiedSurfaceRoutesEnabled?.([...ids])?.catch(() => {})
-  } catch {
-    // best effort — main stays default-closed
+    api?.setUnifiedSurfaceRoutesEnabled?.(list)?.catch(warn)
+  } catch (err) {
+    // main stays default-closed
+    warn(err)
   }
 }
 
