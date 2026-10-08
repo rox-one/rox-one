@@ -42,4 +42,17 @@ describe('cn(): tailwind-merge knows the Rox token utilities', () => {
       .filter((s) => !s.includes('--') && !['xs', 'sm', 'base', 'lg', 'xl'].includes(s))
     expect([...ROX_TEXT_SIZES].sort()).toEqual([...new Set(steps)].sort())
   })
+
+  it('requires tailwind-merge v3 (the `text` theme key) everywhere the shared cn() runs', () => {
+    const repoRoot = join(import.meta.dir, '../../../../..')
+    const pkg = (p: string) => JSON.parse(readFileSync(join(repoRoot, p), 'utf8'))
+    expect(pkg('packages/ui/package.json').peerDependencies['tailwind-merge']).toBe('>=3.0.0')
+    for (const app of ['packages/ui', 'apps/viewer', 'apps/electron']) {
+      const resolved = Bun.resolveSync('tailwind-merge/package.json', join(repoRoot, app))
+      const major = Number(JSON.parse(readFileSync(resolved, 'utf8')).version.split('.')[0])
+      expect(major, app).toBeGreaterThanOrEqual(3)
+    }
+    const viewerRange = pkg('apps/viewer/package.json').devDependencies?.['tailwind-merge'] ?? pkg('apps/viewer/package.json').dependencies?.['tailwind-merge']
+    if (viewerRange) expect(viewerRange).toMatch(/^\^?3\./)
+  })
 })
