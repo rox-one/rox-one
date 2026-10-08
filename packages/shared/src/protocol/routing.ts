@@ -471,6 +471,8 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.fabric.REVOKE_CONNECTION,
   RPC_CHANNELS.fabric.GITHUB_STATUS,
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
+  RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
+  RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
 
   // Entities (W1-02) — the link store is a workspace-local SQLite file.
   RPC_CHANNELS.entities.LINKS,
