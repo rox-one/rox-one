@@ -12,7 +12,8 @@ import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../navigati
 import { rendererEffect as productionRendererEffect, deferred, settle } from '../../components/app-shell/__tests__/rox-readiness-ui-001.effect-harness'
 
 import { decodePanelEntries, encodePanelEntries } from '../../lib/panel-url'
-import { focusedPanelIdAtom, focusedPanelRouteAtom } from '../../atoms/panel-stack'
+import { decodeToolContexts } from '../../components/app-shell/auxiliary-persistence'
+import { focusedPanelIdAtom, focusedPanelRouteAtom, panelStackAtom, primaryPanelIdAtom, parseSessionIdFromRoute } from '../../atoms/panel-stack'
 import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '../../atoms/runtime-trace'
 import { parseRuntimeMapViewRequest } from '../../../shared/runtime-map-link'
 
@@ -419,8 +420,9 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
     const writes: any[] = []
     for (const route of ['knowledge/alien/abc', 'allSessions/session', 'cloud-run/%', 'unknown/raw']) {
       callback('reconcileFromUrlParams', {
-        store: { set: (_key: unknown, value: unknown) => writes.push(value) }, reconcilePanelStackAtom: {},
+        store: { set: (key: unknown, value: unknown) => { if (key !== primaryPanelIdAtom) writes.push(value) }, get: (key: unknown) => (key === panelStackAtom ? [] : undefined) }, reconcilePanelStackAtom: {},
         parseRouteToNavigationState, normalizePanelRouteForReconcile, buildRouteFromNavigationState,
+        workspaceId: 'a', decodeToolContexts, panelStackAtom, primaryPanelIdAtom, parseSessionIdFromRoute,
         resolveAutoSelectionRef: { current: (state: unknown) => state }, setRightSidebar: () => {},
       })(new URLSearchParams({ route }))
       expect(writes.at(-1)).toEqual({ entries: [{ route, proportion: 1 }], focusedIndex: 0 })
@@ -432,8 +434,9 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
       const writes: any[] = []
       let autoSelections = 0
       callback('reconcileFromUrlParams', {
-        routes, store: { set: (_key: unknown, value: unknown) => writes.push(value) }, reconcilePanelStackAtom: {},
+        routes, store: { set: (key: unknown, value: unknown) => { if (key !== primaryPanelIdAtom) writes.push(value) }, get: (key: unknown) => (key === panelStackAtom ? [] : undefined) }, reconcilePanelStackAtom: {},
         parseRouteToNavigationState, normalizePanelRouteForReconcile, buildRouteFromNavigationState,
+        workspaceId: 'a', decodeToolContexts, panelStackAtom, primaryPanelIdAtom, parseSessionIdFromRoute,
         resolveAutoSelectionRef: { current: (state: any) => {
           autoSelections++
           return { ...state, details: { type: 'session', sessionId: 'unrelated-existing-chat' } }
@@ -450,8 +453,9 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
     for (const route of ['sources/source/current?keep=a%2Fb', 'notes/note/parent/child?keep=a%2Fb', 'unknown/raw']) {
       const writes: any[] = []
       callback('reconcileFromUrlParams', {
-        routes, store: { set: (_key: unknown, value: unknown) => writes.push(value) }, reconcilePanelStackAtom: {},
+        routes, store: { set: (key: unknown, value: unknown) => { if (key !== primaryPanelIdAtom) writes.push(value) }, get: (key: unknown) => (key === panelStackAtom ? [] : undefined) }, reconcilePanelStackAtom: {},
         parseRouteToNavigationState, normalizePanelRouteForReconcile, buildRouteFromNavigationState,
+        workspaceId: 'a', decodeToolContexts, panelStackAtom, primaryPanelIdAtom, parseSessionIdFromRoute,
         resolveAutoSelectionRef: { current: () => { throw new Error('Explicit target must not auto-select') } },
         setRightSidebar: () => {},
       })(new URLSearchParams({ route, panels: 'v2:{' }))
@@ -515,7 +519,7 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
         panelStack: [], parseSessionIdFromRoute: () => null,
         prevVisibleSessionIdsRef: { current: new Set(['empty']) }, onAutoDeleteEmptySession: (id: string) => deleted.push(id),
         sessionMetaMapAtom: {}, store: { get: () => new Map([['empty', { workspaceId: metaWorkspace }]]) },
-        workspaceId: 'a', remoteWorkspaceId: 'remote-a', isSessionsReady: true, getDraft: () => '',
+        workspaceId: 'a', remoteWorkspaceId: 'remote-a', isSessionsReady: true, getDraft: () => '', hasDraftAttachments: () => false,
       })
     }
     expect(deleted).toEqual(['empty'])

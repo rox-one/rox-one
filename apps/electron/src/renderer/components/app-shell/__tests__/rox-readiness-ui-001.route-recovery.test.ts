@@ -36,7 +36,8 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
     ['extension/extension-one/view-one', 'ExtensionSurfacePage', 'extensionId', 'extension-one'],
     ['terminal/terminal-one', 'TerminalSurfacePage', 'terminalId', 'terminal-one'],
     ['cloud-run/run-one', 'CloudRunSurfacePage', 'runId', 'run-one'],
-    ...['dossier', 'radar', 'decisions', 'agents', 'focus'].map(screen => [`${screen}/item/item-one`, 'ExtraScreenHost', 'screen', screen]),
+    ['agents/item/item-one', 'AgentsWorkspacePage', 'screen', 'agents'],
+    ...['dossier', 'radar', 'decisions', 'focus'].map(screen => [`${screen}/item/item-one`, 'ExtraScreenHost', 'screen', screen]),
   ]
   for (const [route, host, prop, value] of cases) {
     it(`dispatches ${route} with its own selected entity`, async () => {
@@ -55,6 +56,14 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
         expect(html).toContain('data-testid="route-resource-loading"')
         expect(html).toContain(`data-route-entity="${value}"`)
         expect(html).not.toContain('data-route-host="ChatPage"')
+        return
+      }
+      if (host === 'AgentsWorkspacePage') {
+        // The agents screen mounts the dedicated workspace page without the
+        // generic ExtraScreenHost screen/item props.
+        expect(html).toContain('data-route-host="AgentsWorkspacePage"')
+        expect(html).not.toContain('data-route-host="ExtraScreenHost"')
+        expect(html).not.toContain('session.selectConversation')
         return
       }
       expect(html).toContain(`data-route-host="${host}"`)

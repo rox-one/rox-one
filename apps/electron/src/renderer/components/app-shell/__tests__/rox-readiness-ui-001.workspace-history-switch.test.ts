@@ -15,7 +15,7 @@ if (!callback) throw new Error('Actual App workspace-history callback is absent'
 const program = ts.transpileModule(`const callback = ${callback.getText(ast)}; return callback;`, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
 }).outputText
-function fixture(switchWorkspace: (id: string) => Promise<void>) {
+function fixture(switchWorkspace: (id: string) => Promise<unknown>) {
   return new Function('useCallback', 'workspaces', 'handleSelectWorkspace', program)(
     (fn: unknown) => fn, [{ id: 'workspace-id', slug: 'workspace-slug' }], switchWorkspace,
   ) as (slug: string) => Promise<boolean>
@@ -31,7 +31,12 @@ test('actual App rejects a deleted workspace slug without requesting a switch', 
 test('actual App confirms a history switch only after its asynchronous operation finishes', async () => {
   let finish!: () => void
   const calls: string[] = []
-  const switchBySlug = fixture(id => { calls.push(id); return new Promise(resolve => { finish = resolve }) })
+  const switchBySlug = fixture(id => {
+    calls.push(id)
+    const { promise, resolve } = Promise.withResolvers<boolean>()
+    finish = () => resolve(true)
+    return promise
+  })
   let confirmed = false
   const result = switchBySlug('workspace-slug').then(value => { confirmed = value; return value })
   await Promise.resolve()
