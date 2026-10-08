@@ -143,6 +143,32 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.browserPane.REMOVED]: [id: string]
   [RPC_CHANNELS.browserPane.INTERACTED]: [id: string]
 
+  // Browser Intelligence Pipeline (global, local-only). Payload shapes mirror
+  // `@rox/browser-intel` PipelineProgress / BrowserIntelState; they are declared
+  // inline rather than imported because that package already depends on
+  // @rox/shared, so a protocol-level import would create a dependency cycle.
+  [RPC_CHANNELS.browserIntel.PROGRESS]: [progress: {
+    stage: 'detect' | 'scan' | 'stage' | 'hindsight' | 'ingest' | 'unfurl' | 'aggregate' | 'synthesize'
+    message: string
+    current: number
+    total: number
+    startedAt: number
+  }]
+  [RPC_CHANNELS.browserIntel.STATE_CHANGED]: [state: {
+    consent: boolean
+    consentAt: number | null
+    lastRunAt: number | null
+    lastResult: {
+      profiles: number
+      visits: number
+      urls: number
+      slots: number
+      errors: number
+    } | null
+    error: string | null
+    revision: number
+  }]
+
   // SiYuan engine surface events (global; workspace isolation renderer-side)
   [RPC_CHANNELS.siyuan.STATE_CHANGED]: [state: SiyuanSurfaceState]
   [RPC_CHANNELS.siyuan.REMOVED]: [id: string]

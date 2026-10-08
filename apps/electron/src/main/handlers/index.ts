@@ -8,6 +8,7 @@ import { registerVoiceClipboardGuiHandlers } from './voice-clipboard'
 import { registerSystemGuiHandlers } from './system'
 import { registerWorkspaceGuiHandlers } from './workspace'
 import { registerBrowserHandlers } from './browser'
+import { registerBrowserIntelHandlers } from './browser-intel'
 import { registerSettingsGuiHandlers } from './settings'
 import { registerSiyuanHandlers } from './siyuan'
 import { registerExtensionHostHandlers } from './extension-host'
@@ -21,6 +22,7 @@ export function registerGuiRpcHandlers(server: RpcServer, deps: HandlerDeps): vo
   registerVoiceClipboardGuiHandlers(server, deps)
   registerWorkspaceGuiHandlers(server, deps)
   registerBrowserHandlers(server, deps)
+  registerBrowserIntelHandlers(server, deps)
   registerSettingsGuiHandlers(server, deps)
   registerSiyuanHandlers(server, deps)
   registerExtensionHostHandlers(server, deps)

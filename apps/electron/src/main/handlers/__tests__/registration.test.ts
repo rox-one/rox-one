@@ -201,8 +201,9 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/pages'),
   ])
 
-  const [browser, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceClipboard] = await Promise.all([
+  const [browser, browserIntel, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceClipboard] = await Promise.all([
     import('../browser'),
+    import('../browser-intel'),
     import('../system'),
     import('../workspace'),
     import('../settings'),
@@ -281,6 +282,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...messaging.HANDLED_CHANNELS,
     ...pages.HANDLED_CHANNELS,
     ...browser.HANDLED_CHANNELS,
+    ...browserIntel.HANDLED_CHANNELS,
     ...guiSystem.GUI_HANDLED_CHANNELS,
     ...guiWorkspace.GUI_HANDLED_CHANNELS,
     ...guiSettings.GUI_HANDLED_CHANNELS,

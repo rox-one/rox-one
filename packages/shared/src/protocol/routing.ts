@@ -276,6 +276,16 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET,
   RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN,
 
+  // browserIntel — reads/stages local browser profile files only; never remote-eligible.
+  RPC_CHANNELS.browserIntel.GET_STATE,
+  RPC_CHANNELS.browserIntel.SET_CONSENT,
+  RPC_CHANNELS.browserIntel.GET_STATS,
+  RPC_CHANNELS.browserIntel.GET_SLOTS,
+  RPC_CHANNELS.browserIntel.START_RUN,
+  RPC_CHANNELS.browserIntel.CANCEL_RUN,
+  RPC_CHANNELS.browserIntel.PROGRESS,
+  RPC_CHANNELS.browserIntel.STATE_CHANGED,
+
   // gitbash — Windows-specific local
   RPC_CHANNELS.gitbash.CHECK,
   RPC_CHANNELS.gitbash.BROWSE,

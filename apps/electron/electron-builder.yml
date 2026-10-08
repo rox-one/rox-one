@@ -24,6 +24,10 @@ files:
   - "!dist/renderer/src/**"
   - "!**/*.map"
   - package.json
+  # Browser Intelligence: the unfurl Worker Thread bundle (spawned by dist/main.cjs)
+  # and its runtime resources (the schema.sql the DB loader searches for).
+  - dist/browser-intel-worker.cjs
+  - dist/resources/browser-intel/**/*
   # Include Pi agent server subprocess for Pi SDK sessions (KEEP)
   - resources/pi-agent-server/**/*
   # Ticket 10: unread Codex/Copilot MCP servers are not packaged
@@ -58,6 +62,8 @@ files:
   - resources/bin/pptx-tool.cmd
   - resources/bin/ical-tool
   - resources/bin/ical-tool.cmd
+  - resources/bin/hindsight
+  - resources/bin/hindsight.cmd
   # Platform files below re-include only the target's binaries. Resources are
   # also copied under dist/, so both paths must be excluded from this common
   # matcher. A platform matcher containing only exclusions would add **/*.
