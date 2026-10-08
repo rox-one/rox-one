@@ -327,12 +327,33 @@ describe('token foundation v2: z layers', () => {
   it('content inside a fullscreen overlay uses local layers, not the fullscreen layer', () => {
     // The overlay is its own stacking context: z-fullscreen inside it means
     // nothing relative to the page and only competes with the overlay's own
-    // portal root (dialogs/drawers). The AI-settings close button sits on a
-    // local step above the setup content.
+    // portal root (dialogs/drawers).
     const text = readFileSync(join(repoRoot, 'apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx'), 'utf8')
     const body = text.slice(text.indexOf('<FullscreenOverlayBase'), text.indexOf('</FullscreenOverlayBase>'))
     expect(body).not.toMatch(/(?<![-\w])z-fullscreen(?![-\w])/)
-    expect(body).toContain('className="fixed top-0 right-0 z-sticky h-[50px]')
+  })
+
+  it('the AI-settings API-setup close button stacks above the wizard titlebar drag strip and is no-drag', () => {
+    // OnboardingWizard (rendered inside the same overlay, no stacking context of
+    // its own) paints a fixed titlebar drag strip over the top 50px; the close
+    // control must sit above it or its clicks land on the drag region.
+    const root = rootOf(token('z.css'))
+    const zv = (n: string) => Number(resolve(`var(--z-${n})`, root))
+    const wizard = readFileSync(join(repoRoot, 'apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx'), 'utf8')
+    const strip = wizard.match(/className="titlebar-drag-region fixed top-0 left-0 right-0 h-\[50px\] (z-[\w-]+)"/)
+    expect(strip?.[1]).toBe('z-chrome')
+    const stripZ = zv(strip![1]!.slice(2))
+
+    const text = readFileSync(join(repoRoot, 'apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx'), 'utf8')
+    const body = text.slice(text.indexOf('<FullscreenOverlayBase'), text.indexOf('</FullscreenOverlayBase>'))
+    expect(body).toContain('<OnboardingWizard')
+    const close = body.slice(body.lastIndexOf('<div', body.indexOf('onClick={handleCloseApiSetup}')), body.indexOf('onClick={handleCloseApiSetup}'))
+    expect(close).toContain('className="titlebar-no-drag fixed top-0 right-0 h-[50px]')
+    expect(close).not.toMatch(/(?<![-\w])z-[a-z]/) // no low/fullscreen utility competing with the inline layer
+    const z = close.match(/zIndex: 'calc\(var\(--z-([\w-]+)\) \+ (\d+)\)'/)
+    expect(z).not.toBeNull()
+    expect(zv(z![1]!) + Number(z![2])).toBeGreaterThan(stripZ)
+    expect(zv(z![1]!) + Number(z![2])).toBeLessThan(zv('fullscreen'))
   })
 
   it('no source uses a retired z utility class', () => {

@@ -1401,8 +1401,12 @@ export default function AiSettingsPage() {
                   editInitialValues={editInitialValues}
                   className="h-full"
                 />
+                {/* Local layer inside the overlay's stacking context: above the
+                    wizard's titlebar drag strip (fixed, z-chrome), and a no-drag
+                    region, so the close button stays clickable. */}
                 <div
-                  className="fixed top-0 right-0 z-sticky h-[50px] flex items-center pr-5 [-webkit-app-region:no-drag]"
+                  className="titlebar-no-drag fixed top-0 right-0 h-[50px] flex items-center pr-5"
+                  style={{ zIndex: 'calc(var(--z-chrome) + 1)' }}
                 >
                   <button
                     onClick={handleCloseApiSetup}
