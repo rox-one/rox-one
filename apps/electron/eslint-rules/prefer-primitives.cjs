@@ -4,10 +4,10 @@
  * Hand-rolled controls drift from the system (and render OS-styled popups on Windows).
  *
  * Disallowed:
- *   <select>                        -> Select primitive
- *   <input type="checkbox">         -> Checkbox primitive
- *   role="tab"                      -> Tabs (panels) / Segmented (filters)
- *   <button title={t('...')}>       -> Tooltip primitive (also on *Button components)
+ *   <select>                        -> Select (@/components/ui/select, Radix)
+ *   <input type="checkbox">         -> Checkbox (#1592; messageId rawCheckbox is ungated until it lands)
+ *   role="tab"                      -> Tabs (@/components/ui/tabs); Segmented for filters (#1592)
+ *   <button title={t('...')}>       -> Tooltip (packages/ui tooltip / ActionTooltip; also on *Button)
  *   'fixed inset-0' in a class list -> Dialog / Sheet / FullscreenOverlayBase (scrim + portal + z layer)
  */
 
@@ -50,10 +50,10 @@ module.exports = {
     docs: { description: 'Use the shared primitives instead of native or hand-rolled controls.' },
     schema: [],
     messages: {
-      nativeSelect: 'Native <select>. Use the Select primitive.',
-      rawCheckbox: 'Raw <input type="checkbox">. Use the Checkbox primitive.',
-      roleTab: 'Hand-rolled role="tab". Use Tabs (panels) or Segmented (filters).',
-      titleTooltip: 'title={t(...)} on a button. Use the Tooltip primitive (native titles are slow, unstyled and invisible to keyboard users).',
+      nativeSelect: 'Native <select>. Use the Select primitive (@/components/ui/select).',
+      rawCheckbox: 'Raw <input type="checkbox">. Use the Checkbox primitive once it lands (#1592); not gated by the ratchet until then.',
+      roleTab: 'Hand-rolled role="tab". Use Tabs (@/components/ui/tabs); filter segments can use SettingsSegmentedControl until Segmented lands (#1592).',
+      titleTooltip: 'title={t(...)} on a button. Use the Tooltip primitive (@rox/ui Tooltip or ActionTooltip); native titles are slow, unstyled and invisible to keyboard users.',
       fixedOverlay: "Hand-rolled 'fixed inset-0' overlay. Use Dialog, Sheet or FullscreenOverlayBase (portal, scrim and z layer included).",
     },
   },

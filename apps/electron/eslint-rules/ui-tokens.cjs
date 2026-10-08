@@ -2,7 +2,8 @@
  * rox/* UI token lint rules: one plugin, one severity table (UI-A2, #1568; UI-AUDIT §8.1).
  *
  * Used by apps/electron/eslint.config.mjs, packages/ui/eslint.config.mjs and the CI ratchet
- * (scripts/lint-baseline.ts), so editors, `bun run lint` and CI see the same rules.
+ * (scripts/lint-baseline.ts), so editors, `bun run lint` and CI see the same rules there.
+ * apps/viewer and apps/webui have no ESLint config: their trees are ratcheted in CI only.
  *
  * Every rule starts at 'warn'. The ratchet keeps per-file counts in
  * eslint-baselines/ui-tokens.json from growing. A rule whose baseline total reaches 0 must be
@@ -54,9 +55,31 @@ const rules = {
 /** craft-styles/no-hardcoded-z-index: the v1 style-object check, unchanged and still an error. */
 const Z_INDEX_V1 = ['error', { checkClasses: false, checkDeprecatedAliases: false }]
 
+/**
+ * Rules (or messageIds) that warn in editors but are NOT part of the --check growth gate,
+ * because new code has no compliant fix yet. Each entry names the work that lands the fix;
+ * when it merges, delete the entry and rebaseline (`bun run lint:ui-tokens:update`).
+ *
+ * TODO(#1569 UI-A3): gate rox/no-raw-error-render once presentError() exists.
+ * TODO(#1592 UI-C1): gate prefer-primitives rawCheckbox once the Checkbox primitive exists.
+ * (role="tab" stays gated: Tabs exists in components/ui/tabs; <select> stays gated: Select
+ * exists in components/ui/select; titles -> @rox/ui Tooltip; overlays -> Dialog/Sheet.)
+ */
+const UNGATED = {
+  'rox/no-raw-error-render': { messageIds: null, until: '#1569 (UI-A3: presentError)' },
+  'rox/prefer-primitives': { messageIds: ['rawCheckbox'], until: '#1592 (UI-C1: Checkbox primitive)' },
+}
+
+/** Is this message outside the ratchet gate? */
+function isUngated(ruleId, messageId) {
+  const entry = UNGATED[ruleId]
+  if (!entry) return false
+  return entry.messageIds === null || entry.messageIds.includes(messageId)
+}
+
 /** Tests and fixtures assert on banned strings on purpose; they are outside the ratchet. */
 const TEST_FILES = ['**/__tests__/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}']
 
 const off = Object.fromEntries(Object.keys(rules).map((rule) => [rule, 'off']))
 
-module.exports = { plugin, rules, off, Z_INDEX_V1, TEST_FILES }
+module.exports = { plugin, rules, off, Z_INDEX_V1, TEST_FILES, UNGATED, isUngated }
