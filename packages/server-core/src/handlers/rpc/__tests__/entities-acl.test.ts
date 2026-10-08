@@ -70,6 +70,7 @@ function workspaceAcl(calls: string[]): Acl {
     evaluate: wrap('evaluate', engine.evaluate),
     evaluateMany: wrap('evaluateMany', engine.evaluateMany),
     roleOf: engine.roleOf,
+    isActiveMember: engine.isActiveMember,
   }
 }
 
@@ -129,5 +130,22 @@ describe('entities handlers with a workspace ACL', () => {
     expect(previews.map(p => [p.status, p.title])).toEqual([['ok', 'T g1'], ['no_access', ''], ['no_access', '']])
     expect(seen).toEqual([goal])
     expect(calls).toContain('evaluateMany')
+  })
+
+  it('installs the ACL gate once per workspace host, not per request', async () => {
+    registerEntityResolver({
+      kinds: ['goal'],
+      async resolve(refs): Promise<EntityPreview[]> {
+        return refs.map(ref => ({ ref, status: 'ok', title: `T ${ref.id}`, kindLabel: 'k', icon: 'i', authority: 'workspace', etag: 'e' }))
+      },
+    })
+    const calls: string[] = []
+    let factoryCalls = 0
+    const f = fixture(() => { factoryCalls += 1; return workspaceAcl(calls) })
+    for (let i = 0; i < 3; i++) {
+      const previews = await f.resolve({ refs: [goal, secretGoal] }) as EntityPreview[]
+      expect(previews.map(p => p.status)).toEqual(['ok', 'no_access'])
+    }
+    expect(factoryCalls).toBe(1)
   })
 })

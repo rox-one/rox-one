@@ -47,13 +47,17 @@ export type EntitiesLinksResult =
  */
 const resolverRegistrations: Resolver[] = []
 const hostsByWorkspace = new Map<string, DefaultResolverHost>()
+// W1-04 (#1501): the ACL gate is installed once, when the host is created; a
+// host is rebuilt only if a different runtime ACL factory registers.
+const hostAclFactory = new WeakMap<DefaultResolverHost, ((workspaceId: string) => Acl) | undefined>()
 
-function hostForWorkspace(workspaceId: string): DefaultResolverHost {
+function hostForWorkspace(workspaceId: string, acl?: (workspaceId: string) => Acl): DefaultResolverHost {
   let host = hostsByWorkspace.get(workspaceId)
-  if (!host) {
-    host = new DefaultResolverHost()
+  if (!host || hostAclFactory.get(host) !== acl) {
+    host = new DefaultResolverHost({ acl: createEntityAclGate(workspaceId, acl?.(workspaceId)) })
     for (const resolver of resolverRegistrations) host.register(resolver)
     hostsByWorkspace.set(workspaceId, host)
+    hostAclFactory.set(host, acl)
   }
   return host
 }
@@ -223,9 +227,7 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
     // must never trust the workspaceId argument. Hosts are keyed by the
     // validated id so unknown ids never allocate hosts.
     const workspace = requireWorkspace(ctx, workspaceId)
-    const host = hostForWorkspace(workspace.id)
-    host.setAcl(createEntityAclGate(workspace.id, runtime.acl?.(workspace.id)))
-    const previews = await host.resolve(request.refs, actorFor(ctx))
+    const previews = await hostForWorkspace(workspace.id, runtime.acl).resolve(request.refs, actorFor(ctx))
     return previews.map(redactPreviewForWire)
   }, { nativeAction: 'read' })
 }

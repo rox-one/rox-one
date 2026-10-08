@@ -62,18 +62,13 @@ export class DefaultResolverHost implements ResolverHost {
   private readonly cache: EntityResolutionCache
   private readonly remoteResolve?: (refs: EntityRef[], actor: Actor) => Promise<EntityPreview[]>
   private readonly batchSize: number
-  private aclGate?: EntityAclGate
+  private readonly aclGate?: EntityAclGate
 
   constructor(options: ResolverHostOptions = {}) {
     this.cache = new EntityResolutionCache(options.cacheCapacity ?? 5000, options.cacheTtlMs ?? 60_000)
     this.remoteResolve = options.remoteResolve
     this.batchSize = options.batchSize ?? 100
     this.aclGate = options.acl
-  }
-
-  /** W1-04 (#1501): install / replace the ACL gate. */
-  setAcl(gate: EntityAclGate | undefined): void {
-    this.aclGate = gate
   }
 
   register(resolver: Resolver): void {
