@@ -54,6 +54,26 @@ export async function assertCanPost(tx: ReferenceTx, chat: StoredRecord): Promis
 }
 
 /**
+ * Chat settings — name / description, policies, visibility, top notice,
+ * announcement, tabs, labels — are changed by the chat owner / admins only
+ * (TECH-SPEC §4.1 `im.set_visibility` owner / admin; UI-SPEC chat settings
+ * panel). A plain member must not be able to weaken them.
+ */
+async function requireChatAdmin(tx: ReferenceTx, chatId: string): Promise<void> {
+  const { role } = await activeMember(tx, chatId)
+  if (!ADMIN_ROLES.has(role)) throw new CommandRejection('FORBIDDEN', 'only an owner or admin can change chat settings')
+}
+
+/** A chat-settings op: owner / admin of the target chat first, then the op. */
+function adminOnly(op: (tx: ReferenceTx) => Promise<ReferenceOutcome>): (tx: ReferenceTx) => Promise<ReferenceOutcome> {
+  return async (tx: ReferenceTx) => {
+    const chat = await tx.requireTarget('channel')
+    await requireChatAdmin(tx, chat.id)
+    return op(tx)
+  }
+}
+
+/**
  * Self-scoped member state (read marks, mute, …): only on the actor's
  * existing active membership — never creates or revives a member row.
  */
@@ -98,7 +118,7 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
     const record = await createChat(tx, tx.createId(), omit(tx.payload, ['id', 'memberIds']), tx.payload.memberIds ?? [])
     return chatOutcome(record, ['kind', 'name', 'visibility'])
   },
-  'im.update_chat': { op: update('channel'), event: 'im.chat.updated_v1' },
+  'im.update_chat': { op: adminOnly(update('channel')), event: 'im.chat.updated_v1' },
   'im.disband_chat': { op: softDelete('channel'), event: 'im.chat.disbanded_v1' },
   'im.get_or_create_p2p': async tx => {
     if (tx.payload.peerId === tx.actor) throw new CommandRejection('VALIDATION', 'peer must be another principal')
@@ -138,7 +158,7 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
     },
   },
   'im.update_member_state': ownMembership(tx => ({ ...tx.payload })),
-  'im.update_policy': update('channel'),
+  'im.update_policy': adminOnly(update('channel')),
   'im.send_message': {
     event: 'im.message.receive_v1',
     op: async tx => {
@@ -182,25 +202,25 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
     return { collection: 'channel-pin', id: record.id, revision: record.revision, ref: tx.rawTarget ?? null, changes: ['pinned'] }
   },
   'im.unpin': unassoc('channel-pin', 'channel', tx => tx.payload.messageId),
-  'im.set_top_notice': async tx => {
+  'im.set_top_notice': adminOnly(async tx => {
     const chat = await tx.requireTarget('channel')
     const record = await tx.upsert('channel-notice', chat.id, { content: tx.payload.content, updatedBy: tx.actor }, { chatId: chat.id })
     return { collection: 'channel-notice', id: chat.id, revision: record.revision, ref: tx.rawTarget ?? null, changes: ['content'] }
-  },
-  'im.update_announcement': async tx => {
+  }),
+  'im.update_announcement': adminOnly(async tx => {
     await authorizeId(tx, 'note', tx.payload.docId, 'read')
     return update('channel', t => ({ announcementDocId: t.payload.docId }))(tx)
-  },
-  'im.create_tab': async tx => {
+  }),
+  'im.create_tab': adminOnly(async tx => {
     if (tx.payload.ref) await authorizeRef(tx, tx.payload.ref as EntityRef, 'read')
     return childCreate('channel-tab', 'channel', 'chatId', t => ({ ...omit(t.payload, ['id', 'ref']), ...(t.payload.ref ? { ref: refString(t.payload.ref) } : {}) }))(tx)
-  },
-  'im.update_tab': childUpdate('channel-tab', 'channel', 'chatId', 'tabId'),
-  'im.delete_tab': childDelete('channel-tab', 'channel', 'chatId', 'tabId'),
+  }),
+  'im.update_tab': adminOnly(childUpdate('channel-tab', 'channel', 'chatId', 'tabId')),
+  'im.delete_tab': adminOnly(childDelete('channel-tab', 'channel', 'chatId', 'tabId')),
   'im.mark_read': { op: ownMembership(tx => ({ lastReadSeq: tx.payload.seq })), event: 'im.message.message_read_v1' },
   'im.mark_unread': ownMembership(tx => ({ lastReadSeq: Math.max(0, tx.payload.seq - 1) })),
-  'im.create_label': childCreate('channel-label', 'channel', 'chatId'),
-  'im.label_chats': childUpdate('channel-label', 'channel', 'chatId', 'labelId', tx => ({ messageIds: tx.payload.messageIds })),
+  'im.create_label': adminOnly(childCreate('channel-label', 'channel', 'chatId')),
+  'im.label_chats': adminOnly(childUpdate('channel-label', 'channel', 'chatId', 'labelId', tx => ({ messageIds: tx.payload.messageIds }))),
   'im.create_space_chat': async tx => {
     await authorizeId(tx, 'space', tx.payload.spaceId, 'write')
     await tx.require('space', tx.payload.spaceId)
@@ -232,7 +252,7 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
       return { collection: 'channel-member', id: record.id, revision: record.revision, ref: tx.rawTarget ?? null, changes: ['deletedAt', 'state'] }
     },
   },
-  'im.set_visibility': update('channel'),
+  'im.set_visibility': adminOnly(update('channel')),
   'im.share_entity': async tx => {
     const chat = await tx.requireTarget('channel')
     await authorizeRef(tx, tx.payload.entity as EntityRef, 'read')

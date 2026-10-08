@@ -344,8 +344,20 @@ async function createSpace(tx: ReferenceTx): Promise<ReferenceOutcome> {
   return { collection: 'space', id, revision: record.revision, changes: Object.keys(omit(p, ['id'])).sort(), result: { chatId, rootFolderId: folderId } }
 }
 
+/**
+ * Space ownership is fixed: no command grants, demotes, removes or leaves
+ * away the owner role — changing it needs an ownership transfer, which this
+ * module does not offer yet (W1-06 review 4).
+ */
+async function assertOwnershipUntouched(tx: ReferenceTx, spaceId: string, principalId: string, role?: string): Promise<void> {
+  if (role === 'owner') throw new CommandRejection('FORBIDDEN', 'the space owner can only change through an ownership transfer')
+  const row = await tx.get('space-member', `${spaceId}:${principalId}`)
+  if (row && !isDeleted(row) && row.data.role === 'owner') throw new CommandRejection('FORBIDDEN', 'the space owner can only change through an ownership transfer')
+}
+
 async function spaceMembers(tx: ReferenceTx, members: Array<{ principalId: string; role: string }>): Promise<ReferenceOutcome> {
   const space = await tx.requireTarget('space')
+  for (const { principalId, role } of members) await assertOwnershipUntouched(tx, space.id, principalId, role)
   for (const { principalId, role } of members) await tx.upsert('space-member', `${space.id}:${principalId}`, { role }, { spaceId: space.id, principalId })
   return { collection: 'space', id: space.id, revision: space.revision, changes: ['members'], result: { members: members.map(m => m.principalId) } }
 }
@@ -355,7 +367,14 @@ export const SPACES_REFERENCE_SPECS: ReferenceSpecMap = {
   'spaces.update': { op: update('space'), event: 'spaces.group_edited' },
   'spaces.update_tools': update('space', (tx, current) => ({ tools: { ...(current!.data.tools as RecordData | undefined), ...tx.payload.tools } })),
   'spaces.add_members': { op: tx => spaceMembers(tx, tx.payload.members), event: 'spaces.space_members_added' },
-  'spaces.remove_member': { op: unassoc('space-member', 'space', tx => tx.payload.principalId), event: 'spaces.space_member_removed' },
+  'spaces.remove_member': {
+    op: async tx => {
+      const space = await tx.requireTarget('space')
+      await assertOwnershipUntouched(tx, space.id, String(tx.payload.principalId))
+      return unassoc('space-member', 'space', t => t.payload.principalId)(tx)
+    },
+    event: 'spaces.space_member_removed',
+  },
   'spaces.update_members_permissions': { op: tx => spaceMembers(tx, tx.payload.members), event: 'spaces.space_members_permissions_edited' },
   'spaces.update_general_access': { op: update('space'), event: 'spaces.space_permissions_edited' },
   'spaces.update_task_statuses': async tx => {
@@ -375,7 +394,11 @@ export const SPACES_REFERENCE_SPECS: ReferenceSpecMap = {
       return { collection: 'space-member', id, revision: row.revision, ref: tx.rawTarget ?? null, changes: ['role'], result: { existed: false } }
     },
   },
-  'spaces.leave': unassoc('space-member', 'space', tx => tx.actor),
+  'spaces.leave': async tx => {
+    const space = await tx.requireTarget('space')
+    await assertOwnershipUntouched(tx, space.id, tx.actor)
+    return unassoc('space-member', 'space', t => t.actor)(tx)
+  },
   'spaces.delete': async tx => {
     const space = await tx.requireTarget('space')
     if (tx.payload.confirmName !== space.data.name) throw new CommandRejection('VALIDATION', 'confirmName does not match the space name')

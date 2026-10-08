@@ -9,6 +9,19 @@ import type { ReferenceSpecMap } from './types'
 
 const UPLOAD_SESSION_TTL_MS = 24 * 60 * 60 * 1000
 
+const PUBLIC_TOKEN_BYTES = 16
+
+/**
+ * A public-link token is 128 bits from the platform CSPRNG (W1-06 review 4):
+ * deterministic ids (`tx.newId` / `tx.createId`) are guessable, so a token
+ * must never be derived from them or from the command id.
+ */
+function publicToken(): string {
+  const bytes = new Uint8Array(PUBLIC_TOKEN_BYTES)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
 const noteDefaults = (tx: ReferenceTx): RecordData => ({ ownerId: tx.actor, subtype: 'doc', state: 'draft', title: '' })
 
 /** A doc derived from `origin` (only referenced: `read`; a target of its kind must be it). */
@@ -114,7 +127,12 @@ export const DOCS_REFERENCE_SPECS: ReferenceSpecMap = {
   },
   'docs.schedule_post': transition('note', tx => ({ state: 'scheduled', scheduledAt: tx.payload.scheduledAt })),
   'docs.restore_version': { op: transition('note', tx => ({ restoredFromVersion: tx.payload.version, snapshotAt: tx.now })), event: 'docs.document_version_restored' },
-  'docs.set_public_sharing': { op: transition('note', tx => ({ publicToken: tx.payload.enabled ? tx.newId('public') : null })), event: 'docs.document_public_sharing_changed' },
+  'docs.set_public_sharing': {
+    // Enabling mints one random token per document; re-running the command (a
+    // retried command id, or a second enable) keeps the existing token.
+    op: transition('note', (tx, current) => ({ publicToken: tx.payload.enabled ? ((current?.data.publicToken as string | undefined) ?? publicToken()) : null })),
+    event: 'docs.document_public_sharing_changed',
+  },
   'docs.update_permissions': {
     event: 'docs.permission_changed',
     op: async tx => {

@@ -149,6 +149,21 @@ export const MEETINGS_REFERENCE_SPECS: ReferenceSpecMap = {
 
 const invite = create('invitation', payloadFields('spaceIds'), { defaults: tx => ({ status: 'pending', invitedBy: tx.actor, expiresAt: later(tx, 14), targets: tx.payload.spaceIds ?? [] }) })
 
+/**
+ * Workspace ownership is fixed: no command grants the owner role, demotes or
+ * converts the owner — that needs an ownership transfer, which this module
+ * does not offer yet (W1-06 review 4). The owner is the `workspace.ownerId`
+ * (when the record exists) or a `person` row carrying the owner role.
+ */
+async function assertWorkspaceOwnershipUntouched(tx: ReferenceTx, options: { role?: unknown; principalId?: string }): Promise<void> {
+  if (options.role === 'owner') throw new CommandRejection('FORBIDDEN', 'the workspace owner can only change through an ownership transfer')
+  if (options.principalId === undefined) return
+  const workspace = await tx.get('workspace', tx.ctx.workspaceId)
+  if (workspace && !isDeleted(workspace) && workspace.data.ownerId === options.principalId) throw new CommandRejection('FORBIDDEN', 'the workspace owner can only change through an ownership transfer')
+  const person = await tx.get('person', options.principalId)
+  if (person && !isDeleted(person) && person.data.role === 'owner') throw new CommandRejection('FORBIDDEN', 'the workspace owner can only change through an ownership transfer')
+}
+
 export const CONTACTS_REFERENCE_SPECS: ReferenceSpecMap = {
   'people.update_profile': async tx => out('person', await tx.upsert('person', tx.actor, payloadFields()(tx) as RecordData, { principalId: tx.actor }), Object.keys(tx.payload).sort()),
   'people.set_manager': async tx => {
@@ -156,14 +171,29 @@ export const CONTACTS_REFERENCE_SPECS: ReferenceSpecMap = {
     if (tx.payload.managerId === personId) throw new CommandRejection('VALIDATION', 'a person cannot manage themselves')
     return out('person', await tx.upsert('person', personId, { managerId: tx.payload.managerId }, { principalId: personId }), ['managerId'])
   },
-  'people.invite': { op: async tx => { for (const spaceId of (tx.payload.spaceIds ?? []) as string[]) await authorizeId(tx, 'space', spaceId, 'write'); return invite(tx) }, event: 'people.invitations_sent' },
+  'people.invite': {
+    op: async tx => {
+      await assertWorkspaceOwnershipUntouched(tx, { role: tx.payload.role })
+      for (const spaceId of (tx.payload.spaceIds ?? []) as string[]) await authorizeId(tx, 'space', spaceId, 'write')
+      return invite(tx)
+    },
+    event: 'people.invitations_sent',
+  },
   'people.convert_to_guest': async tx => {
     const personId = tx.target('person')
     if (personId === tx.actor) throw new CommandRejection('FORBIDDEN', 'cannot convert yourself to a guest')
+    await assertWorkspaceOwnershipUntouched(tx, { principalId: personId })
     for (const spaceId of (tx.payload.keepSpaceIds ?? []) as string[]) await authorizeId(tx, 'space', spaceId, 'write')
     return out('person', await tx.upsert('person', personId, { role: 'guest', state: 'guest', ...(tx.payload.keepSpaceIds ? { keepSpaceIds: tx.payload.keepSpaceIds } : {}) }, { principalId: personId }), ['role'])
   },
-  'people.add_workspace_member': { op: async tx => out('person', await tx.upsert('person', tx.payload.principalId, { role: tx.payload.role, state: 'active' }, { principalId: tx.payload.principalId }), ['role'], { ref: { kind: 'person', id: tx.payload.principalId } }), event: 'people.member_added' },
+  'people.add_workspace_member': {
+    op: async tx => {
+      const principalId = String(tx.payload.principalId)
+      await assertWorkspaceOwnershipUntouched(tx, { role: tx.payload.role, principalId })
+      return out('person', await tx.upsert('person', principalId, { role: tx.payload.role, state: 'active' }, { principalId }), ['role'], { ref: { kind: 'person', id: principalId } })
+    },
+    event: 'people.member_added',
+  },
   'contacts.create_card': create('contact-card', payloadFields(), { defaults: tx => ({ ownerScope: 'personal', ownerId: tx.actor, kind: 'person', handles: [] }) }),
   'contacts.update_card': update('contact-card'),
   'contacts.merge_cards': async tx => {

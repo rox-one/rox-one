@@ -37,8 +37,9 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('spaces.update_general_access', t('space', 'space'), { defaultAccess: 'company_view' }),
   s('spaces.update_task_statuses', t('space', 'space'), { statuses }),
   s('spaces.remove_member', t('space', 'space'), { principalId: U('carol') }),
-  s('spaces.leave', t('space', 'space')),
-  s('spaces.join', t('space', 'space')),
+  // The space owner cannot leave (ownership changes only through a transfer): the round trip runs as BOB (editor).
+  s('spaces.leave', t('space', 'space'), {}, BOB),
+  s('spaces.join', t('space', 'space'), {}, BOB),
   // messenger
   s('im.create_chat', undefined, { id: U('chat'), name: 'general', visibility: 'public', memberIds: [BOB] }),
   s('im.update_chat', t('channel', 'chat'), { name: 'general-2' }),
