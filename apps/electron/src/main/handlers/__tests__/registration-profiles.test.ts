@@ -215,6 +215,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...meetings.MEETING_HANDLED_CHANNELS,
     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,
     ...feed.FEED_HANDLED_CHANNELS,
+    ...WORKSPACE_WORK_HANDLED_CHANNELS,
     ...runtimeTrace.HANDLED_CHANNELS,
     ...WORKSPACE_WORK_HANDLED_CHANNELS,
     ...RUNTIME_TRACE_HANDLED_CHANNELS,

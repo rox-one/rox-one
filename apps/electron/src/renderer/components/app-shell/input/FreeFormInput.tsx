@@ -2,7 +2,7 @@ import { useTourSignals, useTourTarget, type TourObservation } from '@/features/
 import { beginChatCommit } from '@/features/product-tour/adapters/chat'
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   Paperclip,
   ArrowUp,
@@ -68,6 +68,8 @@ import {
   modelSupportsImages,
 } from '@config/llm-connections'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
+import { useOptionalModalRegistry } from '@/context/ModalContext'
+import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
 import { SourceAvatar } from '@/components/ui/source-avatar'
 import { SourceSelectorPopover } from '@/components/ui/SourceSelectorPopover'
@@ -378,6 +380,7 @@ export function FreeFormInput({
   onRequestExpand,
 }: FreeFormInputProps) {
   const { t } = useTranslation()
+  const prefersReducedMotion = useReducedMotion()
   const tourVariant = compactMode ? 'compact' : 'regular'
   const tourSignals = useTourSignals({ sessionId, workspaceId })
   const inputTarget = useTourTarget('composer.input', { sessionId, workspaceId, variant: tourVariant })
@@ -388,7 +391,32 @@ export function FreeFormInput({
   const sourcesTarget = useTourTarget('composer.sources', { sessionId, workspaceId, variant: tourVariant })
   const skillsTarget = useTourTarget('composer.skills', { sessionId, workspaceId, variant: tourVariant })
   const compactDirectoryTarget = useTourTarget('composer.directory', { sessionId, workspaceId, variant: 'compact' })
-  const attachmentObservationRef = React.useRef<TourObservation | null>(null)
+  const modalRegistry = useOptionalModalRegistry()
+  const dismissibleRegistry = useOptionalDismissibleLayerRegistry()
+  const attachmentScopeRef = React.useRef({ workspaceId, sessionId })
+  if (attachmentScopeRef.current.workspaceId !== workspaceId || attachmentScopeRef.current.sessionId !== sessionId) {
+    attachmentScopeRef.current = { workspaceId, sessionId }
+  }
+  const attachmentMountedRef = React.useRef(true)
+  const attachmentPickerRef = React.useRef<{
+    observation: TourObservation | null
+    signals: typeof tourSignals
+    scope: typeof attachmentScopeRef.current
+    cancelled: boolean
+    retireLayer: () => void
+    settle: () => void
+    cancel: () => void
+  } | null>(null)
+  React.useEffect(() => {
+    attachmentMountedRef.current = true
+    return () => { attachmentMountedRef.current = false; attachmentPickerRef.current?.cancel() }
+  }, [])
+  // A new scope/attempt retires only the old tour layer. Keep the native selection's
+  // scope until it settles; a legitimate file still belongs to the same session.
+  React.useEffect(() => () => {
+    const picker = attachmentPickerRef.current
+    if (picker?.signals === tourSignals) picker.retireLayer()
+  }, [tourSignals])
   React.useEffect(() => tourSignals.capability('attachments.available', { state: 'ready' }), [tourSignals])
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const promptHistoryRef = React.useRef<PromptHistory>(EMPTY_PROMPT_HISTORY)
@@ -715,12 +743,6 @@ export function FreeFormInput({
   const containerRef = React.useRef<HTMLDivElement>(null)
   const sourceButtonRef = React.useRef<HTMLButtonElement>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-  React.useEffect(() => {
-    const input = fileInputRef.current
-    const cancel = () => { tourSignals.handoff(attachmentObservationRef.current, false); attachmentObservationRef.current = null }
-    input?.addEventListener('cancel', cancel)
-    return () => input?.removeEventListener('cancel', cancel)
-  }, [tourSignals])
 
   // Merge refs for RichTextInput
   const internalInputRef = React.useRef<RichTextInputHandle>(null)
@@ -1307,26 +1329,17 @@ export function FreeFormInput({
     return () => observer.disconnect()
   }, [onHeightChange])
 
-  // In compact mode, immediately report collapsed height when the input is
-  // collapsed during processing. This ensures smooth animation timing.
-  // When the user expands (or processing ends), the ResizeObserver takes
-  // over and reports the actual rendered height.
-  React.useEffect(() => {
-    if (!onHeightChange) return
-    if (isCollapsedInCompact) {
-      // Collapsed state - only bottom bar visible (~44px)
-      onHeightChange(44)
-    }
-  }, [isCollapsedInCompact, onHeightChange])
+  // ResizeObserver also measures the collapsed toolbar. A fixed height would
+  // clip its wrapped controls or an expanded context row in narrow panels.
 
   // Check if running in Electron environment (has electronAPI)
   const hasElectronAPI = typeof window !== 'undefined' && !!window.electronAPI
 
   // Shared helper: read a File, add as attachment, decrement loading count
-  const processFileAttachment = async (file: File, overrideName?: string, observation: TourObservation | null = null) => {
+  const processFileAttachment = async (file: File, overrideName?: string, observation: TourObservation | null = null, isCurrent: () => boolean = () => true) => {
     try {
       const attachment = await readFileAsAttachment(file, overrideName)
-      if (attachment) {
+      if (attachment && isCurrent()) {
         setAttachments(prev => [...prev, attachment])
         tourSignals.emit(observation, 'attachment.ready', 'observed', 'ui-observation')
       }
@@ -1338,28 +1351,63 @@ export function FreeFormInput({
 
   // File attachment handlers
   const handleAttachClick = () => {
-    if (disabled) return
-    attachmentObservationRef.current = tourSignals.capture()
-    tourSignals.handoff(attachmentObservationRef.current, true)
-    fileInputRef.current?.click()
+    const input = fileInputRef.current
+    if (disabled || !input) return
+    attachmentPickerRef.current?.cancel()
+    const observation = tourSignals.capture()
+    const id = `native-file-picker-${crypto.randomUUID()}`
+    let unregisterModal = () => {}
+    let unregisterLayer = () => {}
+    let layerOpen = true
+    let settled = false
+    const picker: NonNullable<typeof attachmentPickerRef.current> = {
+      observation, signals: tourSignals, scope: attachmentScopeRef.current, cancelled: false,
+      retireLayer() {
+        if (!layerOpen) return
+        layerOpen = false
+        unregisterLayer(); unregisterModal()
+        // A late callback never closes a replacement picker in the same attempt.
+        if (attachmentPickerRef.current === picker) tourSignals.handoff(observation, false)
+      },
+      settle() {
+        if (settled) return
+        settled = true
+        picker.retireLayer()
+        input.removeEventListener('cancel', picker.cancel)
+        if (attachmentPickerRef.current === picker) attachmentPickerRef.current = null
+      },
+      cancel() { if (settled) return; picker.cancelled = true; picker.settle() },
+    }
+    attachmentPickerRef.current = picker
+    input.addEventListener('cancel', picker.cancel)
+    // Register synchronously: the native picker may blur after React paints.
+    unregisterModal = modalRegistry?.registerModal(id, picker.cancel) ?? unregisterModal
+    unregisterLayer = dismissibleRegistry?.registerLayer({ id, type: 'modal', close: picker.cancel }) ?? unregisterLayer
+    tourSignals.handoff(observation, true)
+    try { input.click() } catch (error) { picker.cancel(); throw error }
   }
 
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const input = e.currentTarget
+    const picker = attachmentPickerRef.current
+    const files = input.files
+    if (!files || files.length === 0) { picker?.cancel(); return }
 
-    const observation = attachmentObservationRef.current
-    attachmentObservationRef.current = null
+    const scope = picker?.scope ?? attachmentScopeRef.current
+    const observation = picker?.observation ?? null
+    // Selection closes the actual native prompt. File reading does not suppress
+    // ordinary window blur, and uses the context captured before its async work.
+    picker?.settle()
+    const isCurrent = () => attachmentMountedRef.current && attachmentScopeRef.current === scope && !picker?.cancelled
     const fileList = Array.from(files)
     setLoadingCount(prev => prev + fileList.length)
-
-    for (const file of fileList) {
-      await processFileAttachment(file, undefined, observation)
+    try {
+      for (const file of fileList) await processFileAttachment(file, undefined, observation, isCurrent)
+    } finally {
+      // Reset only when no replacement prompt owns this input.
+      if (!attachmentPickerRef.current) input.value = ''
+      picker?.settle()
     }
-
-    // Reset input so re-selecting the same file triggers onChange again
-    e.target.value = ''
-    tourSignals.handoff(observation, false)
   }
 
   const handleRemoveAttachment = (index: number) => {
@@ -1893,7 +1941,7 @@ export function FreeFormInput({
       <div
         ref={containerRef}
         className={cn(
-          'overflow-hidden transition-all',
+          'overflow-hidden transition-colors motion-reduce:transition-none',
           // Container styling - only when not wrapped by InputContainer
           !unstyled && 'rounded-[var(--radius-composer)] shadow-middle',
           !unstyled && 'bg-background',
@@ -2011,15 +2059,15 @@ export function FreeFormInput({
           {followUpItems.length > 0 && (
             <motion.div
               key="follow-up-chips"
-              layout={animateFollowUpLayout}
-              initial={{ opacity: 0, height: 0 }}
+              layout={!prefersReducedMotion && animateFollowUpLayout}
+              initial={prefersReducedMotion ? false : { opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.18, ease: [0.2, 0, 0.2, 1] }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.18, ease: [0.2, 0, 0.2, 1] }}
               className="overflow-hidden"
             >
-              <motion.div layout={animateFollowUpLayout} className="px-3 pt-3.5 pb-0">
-                <motion.div layout={animateFollowUpLayout} className="flex flex-wrap gap-1">
+              <motion.div layout={!prefersReducedMotion && animateFollowUpLayout} className="px-3 pt-2 pb-0">
+                <motion.div layout={!prefersReducedMotion && animateFollowUpLayout} className="flex flex-wrap gap-1">
                   <AnimatePresence initial={false}>
                     {followUpItems.map((item, idx) => {
                       const chipIndex = item.index ?? idx + 1
@@ -2028,29 +2076,21 @@ export function FreeFormInput({
                       const noteExcerpt = formatFollowUpChipText(item.noteLabel, t('chat.followUp'), 50)
 
                       return (
-                        <motion.button
+                        <motion.div
                           key={item.id}
-                          type="button"
-                          layout={animateFollowUpLayout}
-                          initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                          layout={!prefersReducedMotion && animateFollowUpLayout}
+                          initial={prefersReducedMotion ? false : { opacity: 0, y: 6, scale: 0.98 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                          transition={{ duration: 0.16, ease: [0.2, 0, 0.2, 1] }}
-                          className="inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-[var(--radius-control)] bg-foreground/2 pl-1.5 pr-2 py-1 text-[13px] text-foreground/80 select-none transition-colors hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                          onClick={(event) => {
-                            const rect = event.currentTarget.getBoundingClientRect()
-                            onFollowUpClick?.(item, {
-                              x: rect.left + rect.width / 2,
-                              y: rect.top - 8,
-                            })
-                          }}
+                          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.98 }}
+                          transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: [0.2, 0, 0.2, 1] }}
+                          className="inline-flex max-w-full items-center gap-0.5 overflow-hidden rounded-[var(--radius-control)] border border-border/50 bg-foreground/2 text-[13px] text-foreground/80"
                         >
                           <Tooltip delayDuration={250}>
                             <TooltipTrigger asChild>
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                className="inline-flex h-4 min-w-4 cursor-pointer items-center justify-center rounded-[var(--radius-control)] bg-background px-0.5 text-[10px] font-medium text-foreground shadow-minimal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                              <button
+                                type="button"
+                                aria-label={`${t('chat.selectedText')} ${chipIndex}: ${tooltipText}`}
+                                className="input-toolbar-btn inline-flex h-7 min-w-7 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-[11px] font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 onMouseDown={(event) => {
                                   event.preventDefault()
                                   event.stopPropagation()
@@ -2060,27 +2100,30 @@ export function FreeFormInput({
                                   event.stopPropagation()
                                   onFollowUpIndexClick?.(item)
                                 }}
-                                onKeyDown={(event) => {
-                                  if (event.key === 'Enter' || event.key === ' ') {
-                                    event.preventDefault()
-                                    event.stopPropagation()
-                                    onFollowUpIndexClick?.(item)
-                                  }
-                                }}
                               >
                                 {chipIndex}
-                              </span>
+                              </button>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-[420px] break-words text-xs">
                               {tooltipText}
                             </TooltipContent>
                           </Tooltip>
-                          <span className="min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap pr-0.5 text-left">
+                          <button
+                            type="button"
+                            className="input-toolbar-btn min-h-7 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--radius-control)] px-1.5 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            onClick={(event) => {
+                              const rect = event.currentTarget.getBoundingClientRect()
+                              onFollowUpClick?.(item, {
+                                x: rect.left + rect.width / 2,
+                                y: rect.top - 8,
+                              })
+                            }}
+                          >
                             <span className="italic text-foreground/60">{selectedExcerpt}</span>
                             <span className="mx-1 text-foreground/40">·</span>
                             <span>{noteExcerpt}</span>
-                          </span>
-                        </motion.button>
+                          </button>
+                        </motion.div>
                       )
                     })}
                   </AnimatePresence>
@@ -2118,7 +2161,7 @@ export function FreeFormInput({
             'overflow-y-auto',
             compactMode && isWebUI
               ? 'px-3 pt-2 pb-1 min-h-[44px]'
-              : 'pl-5 pr-4 pt-4 pb-3 min-h-[88px]',
+              : 'px-3 pt-3 pb-2 min-h-[72px]',
           )}
           style={{ maxHeight: inputMaxHeight }}
           data-tutorial="chat-input"
@@ -2189,7 +2232,7 @@ export function FreeFormInput({
             icon={<Paperclip className="h-4 w-4" />}
             label={attachments.length > 0
               ? t("chat.filesCount", { count: attachments.length })
-              : t("chat.attach")
+              : t('chat.attachFiles')
             }
             isExpanded={false}
             hasSelection={attachments.length > 0}
@@ -2202,7 +2245,8 @@ export function FreeFormInput({
             disabled={disabled}
             compactMode
             inputValue={input}
-            onInputChange={onInputChange}
+            sessionId={sessionId}
+            onInputChange={handleInputChange}
           />
           {isWebUI && (
             <FreeFormInputContextBadge
@@ -2330,7 +2374,8 @@ export function FreeFormInput({
           <VoiceDictationControl
             disabled={disabled}
             inputValue={input}
-            onInputChange={onInputChange}
+            sessionId={sessionId}
+            onInputChange={handleInputChange}
           />
 
           {isWebUI && (
@@ -2498,8 +2543,9 @@ export function FreeFormInput({
                   <button
                     ref={modelTarget}
                     type="button"
+                    aria-label={`${t('common.model')}: ${connectionUnavailable ? t('common.unavailable') : currentModelDisplayName}`}
                     className={cn(
-                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-[9px] shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/5 transition-colors select-none",
+                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-[9px] shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/5 transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                       modelDropdownOpen && "bg-foreground/5",
                       connectionUnavailable && "text-destructive",
                     )}
@@ -2520,7 +2566,7 @@ export function FreeFormInput({
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent side="top">
-                {t('common.model')}
+                {t('common.model')}: {currentModelDisplayName}
               </TooltipContent>
             </Tooltip>
             <StyledDropdownMenuContent side="top" align="end" sideOffset={8} className="min-w-[260px]">
@@ -2886,6 +2932,7 @@ export function FreeFormInput({
                     type="button"
                     onClick={handleCompactClick}
                     disabled={isProcessing}
+                    aria-label={t(isProcessing ? 'chat.contextUsageWait' : 'chat.contextUsageCompact', { percent: usagePercent })}
                     className="inline-flex items-center h-6 px-2 text-[12px] font-medium bg-info/10 rounded-[var(--radius-control)] shadow-tinted select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       '--shadow-color': 'var(--info-rgb)',
@@ -2896,10 +2943,7 @@ export function FreeFormInput({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  {isProcessing
-                    ? `${usagePercent}% context used — wait for current operation`
-                    : `${usagePercent}% context used — click to compact`
-                  }
+                  {t(isProcessing ? 'chat.contextUsageWait' : 'chat.contextUsageCompact', { percent: usagePercent })}
                 </TooltipContent>
               </Tooltip>
             )
@@ -2912,7 +2956,7 @@ export function FreeFormInput({
               size="icon"
               variant="secondary"
               aria-label={t('chat.stopResponse')}
-              className="send-btn h-7 w-7 rounded-full shrink-0 hover:bg-foreground/15 active:bg-foreground/20 ml-2"
+              className="send-btn h-7 w-7 rounded-full shrink-0 hover:bg-foreground/15 active:bg-foreground/20 ml-1"
               onClick={() => handleStop(false)}
             >
               <Square className="h-3 w-3 fill-current" />
@@ -2923,7 +2967,7 @@ export function FreeFormInput({
               type="submit"
               size="icon"
               aria-label={t('shortcuts.sendMessage')}
-              className="send-btn h-7 w-7 rounded-full shrink-0 ml-2"
+              className="send-btn h-7 w-7 rounded-full shrink-0 ml-1"
               disabled={!hasContent || disabled || disableSend}
               data-tutorial="send-button"
             >

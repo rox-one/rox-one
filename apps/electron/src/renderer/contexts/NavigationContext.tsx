@@ -58,7 +58,7 @@ import {
 import { routes, type Route, type ViewRoute } from '../../shared/routes'
 import { parsePermissionMode } from '@rox/shared/agent/mode-types'
 import { subscribeNavigateEvents, type NavigateOptions } from '../lib/navigate'
-import { preserveRouteQuery, normalizePanelRouteForReconcile } from './navigation-reconcile'
+import { normalizePanelRouteForReconcile, preserveRouteQuery } from './navigation-reconcile'
 import { encodePanelEntries, decodePanelEntries } from '@/lib/panel-url'
 import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
 import * as storage from '@/lib/local-storage'
@@ -106,6 +106,7 @@ import {
   primaryPanelIdAtom,
   updatePrimaryPanelRouteAtom,
   type AuxiliaryTool,
+  type ToolContextReference,
   focusedPanelIndexAtom,
   updateFocusedPanelRouteAtom,
   parseSessionIdFromRoute,
@@ -170,6 +171,7 @@ interface NavigationProviderProps {
   onInputChange?: (sessionId: string, value: string) => void
   /** Get draft input text for a session (reads from ref, no re-render) */
   getDraft?: (sessionId: string) => string
+  /** Whether a session still holds draft attachments beyond its draft text */
   hasDraftAttachments?: (sessionId: string) => boolean
   /** Auto-delete an empty session (no confirmation needed) */
   onAutoDeleteEmptySession?: (sessionId: string) => void
@@ -579,7 +581,7 @@ export function NavigationProvider({
       }
 
       // Parse panel entries from URL
-      let entries: { route: ViewRoute; proportion: number; tool?: AuxiliaryTool; toolContext?: import('@/atoms/panel-stack').ToolContextReference }[] = []
+      let entries: { route: ViewRoute; proportion: number; tool?: AuxiliaryTool; toolContext?: ToolContextReference }[] = []
       let focusedIndex = 0
 
       const parsedPanels = panelsParam ? decodePanelEntries(panelsParam) : []
@@ -1022,6 +1024,19 @@ export function NavigationProvider({
           }
           break
 
+        case 'open-design': {
+          try {
+            const status = await window.electronAPI.openDesign.open()
+            if (status.state === 'disabled' || status.state === 'error') {
+              toast.error(status.message ?? t('toast.failedToCreateBrowser'))
+            }
+          } catch (error) {
+            console.error('[Navigation] Failed to open Open Design runtime:', error)
+            toast.error(t('toast.failedToCreateBrowser'))
+          }
+          break
+        }
+
         default:
           console.warn('[Navigation] Unknown action:', parsed.name)
       }
@@ -1311,7 +1326,7 @@ export function NavigationProvider({
     lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
 
     // If nothing was in the URL, navigate to default
-    if (!params.get('route') && !params.get('panels') && (!requested || requested === workspaceSlug)) {
+    if (!params.get('route') && !params.has('panels') && (!requested || requested === workspaceSlug)) {
       navigate(routes.view.inbox())
     }
 

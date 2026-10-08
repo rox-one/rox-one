@@ -39,7 +39,6 @@ import {
 // SessionStatusIcons no longer used - icons come from dynamic sessionStatuses
 import { SourceAvatar } from "@/components/ui/source-avatar"
 import { TopBar } from "./TopBar"
-import { SurfaceNavigationRail, type PrimarySurfaceId } from './SurfaceNavigationRail'
 import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
 import { workspaceProjectContextsAtom, activeWorkspaceContextAtom } from '@/atoms/workspace-context'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
@@ -154,6 +153,7 @@ import type { LabelConfig, LabelTreeNode } from "@rox/shared/labels"
 import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
+import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
@@ -562,17 +562,6 @@ function AppShellContent({
   const selectedProjectId = activeWorkspaceId ? projectContexts[activeWorkspaceId] ?? null : null
   const liveWorkspace = useRef(activeWorkspaceId)
   liveWorkspace.current = activeWorkspaceId
-  const surfaceRoutes = {
-    inbox: routes.view.inbox(), feed: routes.view.feed(), plan: routes.view.meetings(),
-    projects: routes.view.projects(), pages: routes.view.pages(), dialogues: routes.view.allSessions(),
-    agents: routes.view.screen('agents'),
-  }
-  const selectedSurface: PrimarySurfaceId = navState.navigator === 'inbox' ? 'inbox'
-    : navState.navigator === 'feed' ? 'feed' : navState.navigator === 'meetings' ? 'plan'
-    : navState.navigator === 'projects' ? 'projects'
-    : navState.navigator === 'pages' || navState.navigator === 'notes' ? 'pages'
-    : navState.navigator === 'screen' && navState.screen === 'agents' ? 'agents'
-    : navState.navigator === 'screen' && ['dossier', 'decisions'].includes(navState.screen) ? 'plan' : 'dialogues'
   const [openingAgent, setOpeningAgent] = useState(false)
   const toolIntentGeneration = React.useRef(0)
   const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
@@ -674,6 +663,12 @@ function AppShellContent({
   // Unavailable addresses have no collection navigator or resize boundary.
   const hideModuleMiddleNav =
     navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+  // A single session catalog is the workspace until an actual session is opened.
+  const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
+    panelCount,
+    isCompact: isAutoCompact,
+    navigatorHidden: effectiveSidebarAndNavigatorHidden,
+  })
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -2995,6 +2990,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
         {/* AppShell owns primary navigation; the host keeps optional workspace chrome. */}
         <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} ownsPrimaryNavigation>
           <PanelStackContainer
+          navigatorExpanded={navigatorExpanded}
           sidebarSlot={
             <div
               ref={sidebarRef}
@@ -3103,7 +3099,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : sidebarWidth}
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
-              style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
+              style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
               data-shell-role="chrome"
             >

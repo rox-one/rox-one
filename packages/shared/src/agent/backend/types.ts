@@ -23,6 +23,7 @@ import type { Workspace } from '../../config/storage.ts';
 import type { SessionConfig as Session } from '../../sessions/storage.ts';
 import type { SourceManager } from '../core/source-manager.ts';
 import type { MemoryPromptBlocks } from '../../memory/types.ts';
+import type { AgentProfileSnapshot } from '../../workspace-work/types.ts';
 
 // Import AbortReason and RecoveryMessage from core module (single source of truth)
 import { AbortReason, type RecoveryMessage } from '../core/index.ts';
@@ -709,6 +710,11 @@ export interface BackendConfig extends CoreBackendConfig {
    * store themselves.
    */
   memoryBlocks?: MemoryPromptBlocks;
+  /** Skill slugs allowed for this backend (empty = all allowed) */
+  allowedSkillSlugs?: readonly string[];
+  /** Agent profile snapshot for skill/role binding */
+  agentProfileSnapshot?: AgentProfileSnapshot;
+
 
   /**
    * Opaque runtime payload resolved by backend drivers.

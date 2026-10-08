@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test'
 import type { TourBinding, TourTargetRegistration } from '../../contracts'
 import { createTargetRegistry } from '../target-registry'
-import { measureTargetGeometry } from '../geometry'
+import { measureTargetGeometry, measureTourTargetGeometry } from '../geometry'
 
 const binding: TourBinding = { workspaceId: 'workspace', panelId: 'one', sessionId: 'session', entityId: 'entity', clientProfileId: 'profile', runToken: 'attempt' }
 
@@ -119,6 +119,32 @@ describe('scoped live target resolution', () => {
 })
 
 describe('CSS pixel geometry', () => {
+  it('clips only native result targets to their visible viewport intersection', () => {
+    const node = element({ top: -120.25, height: 540 })
+    expect(measureTargetGeometry(node)).toBeNull()
+    expect(measureTourTargetGeometry({ id: 'composer.input', element: node })).toBeNull()
+    for (const id of ['session.final-result', 'session.tool-result'] as const) {
+      expect(measureTourTargetGeometry({ id, element: node })?.rect).toEqual({ x: 20, y: 0, left: 20, top: 0, right: 120, bottom: 419.75, width: 100, height: 419.75 })
+    }
+  })
+
+  it('result intersection policy retains hidden, detached, empty, offscreen and iframe rejection', () => {
+    for (const id of ['session.final-result', 'session.tool-result'] as const) {
+      for (const node of [element({ connected: false }), element({ hidden: true }), element({ width: 0 }), element({ top: -100, height: 30 }), element({ top: 900 }), element({ frame: true })]) {
+        expect(measureTourTargetGeometry({ id, element: node })).toBeNull()
+      }
+    }
+  })
+
+  it('hit tests the actual visible result intersection and rejects a covering native surface', () => {
+    const node = element({ top: -120.25, height: 540 }), hits: number[][] = []
+    const document = node.ownerDocument as unknown as { elementsFromPoint: (x: number, y: number) => unknown[] }
+    document.elementsFromPoint = (x, y) => { hits.push([x, y]); return [{ closest: () => null, contains: () => false }] }
+    Object.assign(node, { contains: () => false })
+    expect(measureTourTargetGeometry({ id: 'session.final-result', element: node })).toBeNull()
+    expect(hits).toEqual([[70, 209.875]])
+  })
+
   it('UI-05 preserves fractional coordinates without device pixel scaling', () => {
     const measured = measureTargetGeometry(element({ left: 25.25, top: 41.5, width: 91.75, height: 35.5 }))
     expect(measured?.rect).toEqual({ x: 25.25, y: 41.5, left: 25.25, top: 41.5, right: 117, bottom: 77, width: 91.75, height: 35.5 })

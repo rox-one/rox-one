@@ -12,7 +12,8 @@
  */
 import { atom, type WritableAtom } from 'jotai'
 import { atomWithStorage, RESET } from 'jotai/utils'
-import { KEYS, getKeyString } from '@/lib/local-storage'
+import { KEYS, get, getKeyString } from '@/lib/local-storage'
+import { resolveInspectorDefaults } from '@/platform/inspector-model'
 import { SIDE_PANEL_DEFAULT_WIDTH } from '@/lib/shell-layout-preferences'
 
 export const INSPECTOR_PANEL_WIDTH_MIN = 280
@@ -268,10 +269,15 @@ export const activityRailCollapsedAtom = atomWithStorage<boolean>(
  */
 export const activityRailNarrowOverrideAtom = atom<boolean>(false)
 
+const inspectorDefaults = resolveInspectorDefaults({
+  visible: get<unknown>(KEYS.inspectorVisible, undefined),
+  chromeCollapsed: get<unknown>(KEYS.inspectorChromeCollapsed, undefined),
+})
+
 /** Inspector panel visibility (the 48px section rail itself always renders). */
 export const inspectorVisibleAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorVisible),
-  false,
+  inspectorDefaults.visible,
   undefined,
   { getOnInit: true },
 )
@@ -301,7 +307,7 @@ export const topBarSurfaceTabsSlotAtom = atom<HTMLElement | null>(null)
 /** Entire inspector chrome (panel + section rail) collapsed to a restore strip. */
 export const inspectorChromeCollapsedAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorChromeCollapsed),
-  false,
+  inspectorDefaults.chromeCollapsed,
   undefined,
   { getOnInit: true },
 )

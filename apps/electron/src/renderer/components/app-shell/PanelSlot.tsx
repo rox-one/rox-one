@@ -13,7 +13,7 @@
  * when the stack becomes empty.
  */
 
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom, useAtomValue } from 'jotai'
 import { cn } from '@/lib/utils'
@@ -25,8 +25,8 @@ import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton
 import { MainContentPanel } from './MainContentPanel'
 import { PANEL_MIN_WIDTH } from './panel-constants'
 import { NavigationContext } from '@/contexts/NavigationContext'
-import { useContext } from 'react'
 import { ShellSidebarContext } from './ShellSidebarPortal'
+import { destroyBrowserInstanceForRoute } from '@/platform/browser-panel-lifecycle'
 import { AuxiliaryToolPanel } from './AuxiliaryToolPanel'
 import { WorkspaceToolContext } from '@/atoms/workspace-context'
 
@@ -50,6 +50,7 @@ interface PanelSlotProps {
   isCompact?: boolean
   /** Layout mode changes keep hidden siblings mounted and inert. */
   isHidden?: boolean
+  /** Grid placement supplied by the persistent workspace container. */
   layoutStyle?: React.CSSProperties
 }
 
@@ -82,8 +83,9 @@ export function PanelSlot({
   }, [isHidden])
 
   const handleClose = useCallback(() => {
+    destroyBrowserInstanceForRoute(entry.route)
     closePanel(entry.id)
-  }, [closePanel, entry.id])
+  }, [closePanel, entry.id, entry.route])
 
   // Build close button for PanelHeader (via context override)
   const closeButton = useMemo(() => {
@@ -119,6 +121,7 @@ export function PanelSlot({
     isFocusedPanel,
   }), [parentContext, closeButton, backButton, isFocusedPanel, entry.id])
   const panelNavigation = navigation && navState ? { ...navigation, navigationState: navState } : navigation
+
 
   const handlePointerDown = useCallback(() => {
     if (!isHidden && !isFocusedPanel) {
@@ -165,15 +168,19 @@ export function PanelSlot({
           ),
           ...(isOnly
             ? { flexGrow: 1, minWidth: 0 }
-            : { flexGrow: entry.tool ? 0 : proportion, flexShrink: entry.tool ? 0 : 1,
-                flexBasis: entry.tool ? 360 : 0, minWidth: entry.tool ? 300 : PANEL_MIN_WIDTH }
+            : {
+                flexGrow: entry.tool ? 0 : proportion,
+                flexShrink: entry.tool ? 0 : 1,
+                flexBasis: entry.tool ? 360 : 0,
+                minWidth: entry.tool ? 300 : PANEL_MIN_WIDTH,
+              }
           ),
           ...layoutStyle,
           ...(isHidden ? { visibility: 'hidden', pointerEvents: 'none' } : {}),
         }}
       >
         <div className="h-full flex flex-col">
-<div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <AppShellProvider value={contextOverride}>
               <NavigationContext.Provider value={panelNavigation}>
                 <ShellSidebarContext.Provider value={entry.tool || (primaryId && primaryId !== entry.id) ? null : sidebarTarget}>

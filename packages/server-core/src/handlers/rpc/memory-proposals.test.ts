@@ -6,14 +6,14 @@ import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test'
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync, existsSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS, type Session } from '@rox/shared/protocol'
 import type { RpcServer, HandlerFn, RequestContext } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { NativeAuthority } from '../../authority/native-authority'
+import { NativeAuthority, type NativeIssuedCredential } from '../../authority/native-authority'
 
 let workspaceRoot: string
-const configDir = process.env.CRAFT_CONFIG_DIR!
 let nativeFixture: { authority: NativeAuthority; credential: string } | undefined
+const configDir = process.env.CRAFT_CONFIG_DIR!
 
 mock.module('@rox/shared/config', () => ({
   resolveConfigDir: () => configDir,
@@ -33,7 +33,7 @@ function nativeActor(label: string): NonNullable<RequestContext['principal']> {
   if (!nativeFixture) {
     const authority = new NativeAuthority({ stateDir: join(workspaceRoot, 'authority') })
     const descriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY')
-    let administrator: ReturnType<NativeAuthority['bootstrapLocalAdministrator']>
+    let administrator: NativeIssuedCredential
     try {
       Object.defineProperty(process.stdin, 'isTTY', { configurable: true, value: true })
       administrator = authority.bootstrapLocalAdministrator('memory fixture operator')
@@ -123,7 +123,7 @@ describe('durable approval, ownership and recovery', () => {
     expect(() => approveMemoryProposalDurably({ store, workspaceRoot, proposalId: proposal.id, scope: 'project', projectId: 'missing' })).toThrow('Project memory target not found')
     expect(new MemoryProposalStore(join(workspaceRoot, 'memory')).get(proposal.id)?.status).toBe('pending')
     mkdirSync(join(workspaceRoot, 'projects', 'rox', 'MEMORY.md'))
-    expect(() => approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'project' })).toThrow()
+    expect(() => approveMemoryProposalDurably({ store, workspaceRoot, proposalId: proposal.id, scope: 'project' })).toThrow()
     const reloaded = new MemoryProposalStore(join(workspaceRoot, 'memory')).get(proposal.id)
     expect(reloaded?.status).toBe('pending')
     expect(reloaded?.approval?.writtenAt).toBeUndefined()
@@ -137,21 +137,21 @@ describe('durable approval, ownership and recovery', () => {
       if (++writes === 2) throw new Error('simulated status disk failure')
       return save(value)
     }
-    expect(() => approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'project' })).toThrow('status disk failure')
+    expect(() => approveMemoryProposalDurably({ store, workspaceRoot, proposalId: proposal.id, scope: 'project' })).toThrow('status disk failure')
     const path = join(workspaceRoot, 'projects', 'rox', 'MEMORY.md')
     const before = readFileSync(path, 'utf8')
     const reloaded = new MemoryProposalStore(join(workspaceRoot, 'memory'))
     expect(reloaded.get(proposal.id)?.status).toBe('pending')
-    const result = approveMemoryProposalDurably({ store: reloaded, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'project' })
+    const result = approveMemoryProposalDurably({ store: reloaded, workspaceRoot, proposalId: proposal.id, scope: 'project' })
     expect(result?.status).toBe('approved_project')
     expect(result?.approval?.writtenAt).toBeTruthy()
     expect(readFileSync(path, 'utf8')).toBe(before)
-    expect(approveMemoryProposalDurably({ store: reloaded, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'project' })?.approval).toEqual(result?.approval)
+    expect(approveMemoryProposalDurably({ store: reloaded, workspaceRoot, proposalId: proposal.id, scope: 'project' })?.approval).toEqual(result?.approval)
   })
 
   it('writes an explicit workspace target without touching legacy global lessons', () => {
     const { store, proposal } = savedProposal()
-    const result = approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'workspace' })
+    const result = approveMemoryProposalDurably({ store, workspaceRoot, proposalId: proposal.id, scope: 'workspace' })
     expect(result?.status).toBe('approved_workspace')
     const lessons = new LessonStore(join(workspaceRoot, 'memory', 'lessons.jsonl'), 'workspace').list()
     expect(lessons).toHaveLength(1)
@@ -180,8 +180,8 @@ describe('durable approval, ownership and recovery', () => {
   it('requires a verified personal owner and isolates authenticated lessons', () => {
     const owner = { issuer: 'test', subject: 'alice' }
     const { store, proposal } = savedProposal(owner)
-    expect(() => approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'personal' })).toThrow('authenticated owner')
-    const result = approveMemoryProposalDurably({ store, workspaceRoot: workspaceRoot, proposalId: proposal.id, scope: 'personal', owner })
+    expect(() => approveMemoryProposalDurably({ store, workspaceRoot, proposalId: proposal.id, scope: 'personal' })).toThrow('authenticated owner')
+    const result = approveMemoryProposalDurably({ store, workspaceRoot, proposalId: proposal.id, scope: 'personal', owner })
     expect(result?.status).toBe('approved_personal')
     const lessons = new LessonStore(join(configDir, 'memory', 'lessons.jsonl'), 'global')
     expect(lessons.listForOwner(owner)).toHaveLength(1)
@@ -297,11 +297,13 @@ describe('memory proposal LLM extraction with regex fallback', () => {
   for (const native of [false, true]) {
     it(`rejects a foreign or missing canonical session before any ${native ? 'native' : 'local'} LLM call`, async () => {
       let calls = 0
-      const context: Partial<RequestContext> = { workspaceId: 'ws1',
-        ...(native ? { principal: nativeActor('alice') } : {}) }
+      const context: Partial<RequestContext> = {
+        workspaceId: 'ws1',
+        ...(native ? { principal: nativeActor('alice') } : {}),
+      }
       const { invoke } = createHarness(context, {
-        getSessions: () => [{ id: 'owned', workspaceId: 'ws1' }, { id: 'foreign', workspaceId: 'ws2' }] as ReturnType<HandlerDeps['sessionManager']['getSessions']>,
-        getSession: async id => ({ id, workspaceId: 'ws1', messages: input.messages }) as Awaited<ReturnType<HandlerDeps['sessionManager']['getSession']>>,
+        getSessions: () => [{ id: 'owned', workspaceId: 'ws1' }, { id: 'foreign', workspaceId: 'ws2' }] as Session[],
+        getSession: async id => ({ id, workspaceId: 'ws1', messages: input.messages }) as Session,
         querySessionLlm: async () => { calls++; return { text: '{"proposals":[]}' } },
       })
       for (const sessionId of ['foreign', 'missing']) {
@@ -320,7 +322,7 @@ describe('memory proposal LLM extraction with regex fallback', () => {
     const reply = Promise.withResolvers<{ text: string }>()
     const started = Promise.withResolvers<void>()
     const { invoke } = createHarness({ workspaceId: 'ws1' }, {
-      getSessions: () => [{ id: input.sessionId, workspaceId: 'ws1' }] as ReturnType<HandlerDeps['sessionManager']['getSessions']>,
+      getSessions: () => [{ id: input.sessionId, workspaceId: 'ws1' }] as Session[],
       querySessionLlm: async () => { calls++; started.resolve(); return reply.promise },
     }, () => current)
     await expect(invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, input)).rejects.toThrow('no longer authorized')

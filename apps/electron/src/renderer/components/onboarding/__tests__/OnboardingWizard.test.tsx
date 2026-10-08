@@ -137,7 +137,7 @@ describe('OnboardingWizard', () => {
     expect(html).not.toContain('onboarding.providerSelect.setupLater')
   })
 
-  test('renders the OMP first-run credential step with the typed code', () => {
+  test('renders the Rox CLI credential step without exposing internal runtime codes', () => {
     const html = renderToStaticMarkup(
       <OnboardingWizard
         state={{
@@ -155,7 +155,7 @@ describe('OnboardingWizard', () => {
 
     expect(html).toContain('errors.omp.noModels.title')
     expect(html).toContain('errors.omp.noModels.message')
-    expect(html).toContain('OMP_NO_MODELS')
+    expect(html).not.toContain('OMP_NO_MODELS')
   })
 
   test('first-run welcome collects a username for display name', () => {

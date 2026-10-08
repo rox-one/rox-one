@@ -215,6 +215,7 @@ export function CompactModelSelector({
             ? t('common.unavailable')
             : `${t('common.model')}: ${currentModelDisplayName}`}
           className={cn(
+            "input-toolbar-btn focus-visible:ring-1 focus-visible:ring-ring motion-reduce:transition-none",
             isWebUI
               ? 'h-6 w-6 p-0 text-[9px] font-medium rounded-[var(--radius-control)] flex items-center justify-center outline-none select-none shrink-0'
               : 'h-6 pl-1.5 pr-1.5 text-[9px] font-medium rounded-[var(--radius-control)] flex items-center gap-1 outline-none select-none min-w-[56px] shrink',

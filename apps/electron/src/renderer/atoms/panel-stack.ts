@@ -6,7 +6,7 @@
 
 import { atom } from 'jotai'
 import { parseRouteToNavigationState, parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
-import type { ViewRoute } from '../../shared/routes'
+import { routes, type ViewRoute } from '../../shared/routes'
 
 let nextPanelId = 0
 function generatePanelId(): string {
@@ -16,11 +16,15 @@ function generatePanelId(): string {
 export type PanelType = 'session' | 'source' | 'settings' | 'skills' | 'browser' | 'knowledge' | 'other'
 export type PanelLaneId = 'main'
 export type OpenIntent = 'implicit' | 'explicit'
+
+/** Retained utility panels opened beside the primary surface, never replacing it. */
 export type AuxiliaryTool = 'agent' | 'tasks' | 'automations' | 'memory'
+
+/** Display context a retained tool panel restores with. Hosts still re-check every write. */
 export interface ToolContextReference {
   workspaceId: string
-  projectId?: string
   route: ViewRoute
+  projectId?: string
 }
 
 export interface PanelLanePolicy {
@@ -47,7 +51,7 @@ export interface PanelStackEntry {
   proportion: number
   panelType: PanelType
   laneId: PanelLaneId
-  /** Tools keep their own routes without taking over primary navigation. */
+  /** Set for retained auxiliary tool panels; the primary surface has no tool. */
   tool?: AuxiliaryTool
   toolContext?: ToolContextReference
 }
@@ -161,15 +165,23 @@ export function getDefaultLaneForType(_type: PanelType): PanelLaneId {
   return 'main'
 }
 
-function createEntry(route: ViewRoute, proportion: number, id?: string): PanelStackEntry {
+function createEntry(
+  route: ViewRoute,
+  proportion: number,
+  id?: string,
+  extras?: { tool?: AuxiliaryTool; toolContext?: ToolContextReference },
+): PanelStackEntry {
   const panelType = getPanelTypeFromRoute(route)
-  return {
+  const entry: PanelStackEntry = {
     id: id ?? generatePanelId(),
     route,
     proportion,
     panelType,
     laneId: 'main',
   }
+  if (extras?.tool) entry.tool = extras.tool
+  if (extras?.toolContext) entry.toolContext = extras.toolContext
+  return entry
 }
 
 function normalizeProportions(stack: PanelStackEntry[]): PanelStackEntry[] {
@@ -325,29 +337,31 @@ export const reconcilePanelStackAtom = atom(
     const requestedFocusIndex = Math.min(focusedIndex ?? 0, entries.length - 1)
     const requestedFocusRoute = entries[requestedFocusIndex]?.route ?? entries[0].route
 
+    const build = (target: typeof entries[number], id?: string): PanelStackEntry => {
+      const entry = createEntry(target.route, target.proportion, id, { tool: target.tool, toolContext: target.toolContext })
+      return { ...entry, proportion: target.proportion }
+    }
+
     const newStack = entries.map((target, i) => {
       const positional = current[i]
 
       if (positional && positional.route === target.route && positional.tool === target.tool && !used.has(positional.id)) {
         used.add(positional.id)
-        const updated = createEntry(target.route, target.proportion, positional.id)
-        return { ...updated, proportion: target.proportion, tool: target.tool, toolContext: target.toolContext }
+        return build(target, positional.id)
       }
 
       const any = current.find(c => c.route === target.route && c.tool === target.tool && !used.has(c.id))
       if (any) {
         used.add(any.id)
-        const updated = createEntry(target.route, target.proportion, any.id)
-        return { ...updated, proportion: target.proportion, tool: target.tool, toolContext: target.toolContext }
+        return build(target, any.id)
       }
 
       if (positional && !used.has(positional.id)) {
         used.add(positional.id)
-        const updated = createEntry(target.route, target.proportion, positional.id)
-        return { ...updated, proportion: target.proportion, tool: target.tool, toolContext: target.toolContext }
+        return build(target, positional.id)
       }
 
-      return { ...createEntry(target.route, target.proportion), tool: target.tool, toolContext: target.toolContext }
+      return build(target)
     })
 
     const normalized = normalizeProportions(newStack)
@@ -360,7 +374,7 @@ export const reconcilePanelStackAtom = atom(
         p.laneId === current[i].laneId &&
         p.panelType === current[i].panelType &&
         p.tool === current[i].tool &&
-        JSON.stringify(p.toolContext) === JSON.stringify(current[i].toolContext) &&
+        JSON.stringify(p.toolContext ?? null) === JSON.stringify(current[i].toolContext ?? null) &&
         Math.abs(p.proportion - current[i].proportion) < 0.001
       )
     ) {
@@ -451,4 +465,81 @@ export const focusPrevPanelAtom = atom(
     const prevIdx = (currentIdx - 1 + stack.length) % stack.length
     set(focusedPanelIdAtom, stack[prevIdx].id)
   }
+)
+
+/** Average per-panel share used before normalization when appending a panel. */
+function averageShare(stack: readonly PanelStackEntry[]): number {
+  return stack.length > 0 ? stack.reduce((sum, panel) => sum + panel.proportion, 0) / stack.length : 1
+}
+
+export interface OpenOrFocusPanelRouteInput {
+  route: ViewRoute
+  afterIndex?: number
+  targetLaneId?: PanelLaneId
+  intent?: OpenIntent
+}
+
+export interface OpenOrFocusPanelRouteResult {
+  status: 'focused' | 'opened'
+  panelId: string
+}
+
+/**
+ * Input for atomically resuming an embedded browser panel.
+ *
+ * Browser panes can be offered by multiple surfaces at once (the workbench tab
+ * strip and the browser strip). Keep their de-duplication in the store rather
+ * than relying on a component's rendered panel-stack snapshot.
+ */
+export interface OpenOrFocusBrowserPanelInput {
+  instanceId: string
+  afterIndex?: number
+}
+
+/**
+ * Focus the panel already showing `route`, or open it once when it is absent.
+ *
+ * The lookup and the append share one Jotai write transaction, so two immediate
+ * opens of the same route cannot append duplicate panels.
+ */
+export const openOrFocusPanelRouteAtom = atom(
+  null,
+  (get, set, { route, afterIndex }: OpenOrFocusPanelRouteInput): OpenOrFocusPanelRouteResult => {
+    const stack = get(panelStackAtom)
+    const existing = stack.find((entry) => entry.route === route)
+
+    if (existing) {
+      set(focusedPanelIdAtom, existing.id)
+      return { status: 'focused', panelId: existing.id }
+    }
+
+    const insertAt = afterIndex !== undefined && afterIndex >= 0 && afterIndex < stack.length
+      ? afterIndex + 1
+      : stack.length
+
+    const newEntry = createEntry(route, averageShare(stack))
+    set(panelStackAtom, normalizeProportions([
+      ...stack.slice(0, insertAt),
+      newEntry,
+      ...stack.slice(insertAt),
+    ]))
+    set(focusedPanelIdAtom, newEntry.id)
+    return { status: 'opened', panelId: newEntry.id }
+  }
+)
+
+/**
+ * Atomically focus the panel for an embedded browser instance, or create it
+ * once when it is not yet present. The `get` and `set` calls occur inside the
+ * same Jotai write transaction, so two immediate resume actions cannot append
+ * duplicate `routes.view.browser(instanceId)` panels.
+ */
+export const openOrFocusBrowserPanelAtom = atom(
+  null,
+  (_get, set, { instanceId, afterIndex }: OpenOrFocusBrowserPanelInput): OpenOrFocusPanelRouteResult =>
+    set(openOrFocusPanelRouteAtom, {
+      route: routes.view.browser(instanceId),
+      afterIndex,
+      targetLaneId: 'main',
+    }),
 )

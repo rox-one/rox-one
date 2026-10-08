@@ -4,9 +4,12 @@ import { resolve } from 'node:path'
 import ts from 'typescript'
 import { createStore } from 'jotai'
 import {
-  activeBrowserInstanceIdAtom, browserInstancesAtom, filterInstancesForWorkspace,
+  activeBrowserInstanceIdAtom, browserInstancesAtom, browserPaneRegistryStatusAtom,
+  filterInstancesForWorkspace, markBrowserPaneRegistryFailedAtom,
   removeBrowserInstanceAtom, setBrowserInstancesAtom, updateBrowserInstanceAtom,
 } from '../../../atoms/browser-pane'
+import { openOrFocusBrowserPanelAtom } from '../../../atoms/panel-stack'
+import { openOrFocusEmbeddedBrowserPanel } from '../../../platform/browser-panel-lifecycle'
 import { resolveWorkbenchChrome } from '../../../platform/workbench-chrome'
 
 const directory = resolve(import.meta.dir, '..')
@@ -77,6 +80,8 @@ function harness() {
     clearTimeout: (id: number) => timers.delete(id),
     activeBrowserInstanceIdAtom, browserInstancesAtom, filterInstancesForWorkspace,
     removeBrowserInstanceAtom, setBrowserInstancesAtom, updateBrowserInstanceAtom,
+    browserPaneRegistryStatusAtom, markBrowserPaneRegistryFailedAtom,
+    openOrFocusBrowserPanelAtom, openOrFocusEmbeddedBrowserPanel,
   })
   const registry = evaluate(resolve(directory, 'WorkspaceBrowserRegistry.tsx'), 'WorkspaceBrowserRegistry', {
     useWorkspaceBrowserWindows: hook,

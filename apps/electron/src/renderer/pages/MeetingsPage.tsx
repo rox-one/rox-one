@@ -117,6 +117,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     catalogUpdatesRef.current = null
     setMeetings([])
     setLoadState(api ? 'loading' : 'error')
+    setLoadedWorkspaceId(undefined)
     setTranscriptText({})
     setLocalSelectedId(null)
     setBanner(null)

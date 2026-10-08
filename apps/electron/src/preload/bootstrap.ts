@@ -48,6 +48,7 @@ import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../
 import { isSshBacked } from '../shared/ssh'
 import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-local'
 import { MAIL_IPC, type MailLocalApi } from '../shared/mail-local'
+import { OPEN_DESIGN_IPC_CHANNELS } from '../shared/open-design'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
 import { createDeviceDiagnosticsBridge } from './device-diagnostics'
@@ -323,6 +324,12 @@ let cancelPendingChatGptOAuth: (() => void) | null = null
 let pendingChatGptOAuthState: string | undefined
 
 ;(api as any).getRuntimeEnvironment = (): 'electron' | 'web' => 'electron'
+
+;(api as ElectronAPI).openDesign = {
+  open: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.OPEN),
+  status: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.STATUS),
+  stop: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.STOP),
+}
 
 // ---------------------------------------------------------------------------
 // Transport connection state logging (for remote connections)

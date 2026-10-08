@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { parseRouteToNavigationState } from '../../../../shared/route-parser'
+import { routes } from '../../../../shared/routes'
+import { APP_NAV_DESTINATIONS_BY_ID } from '../nav-destinations'
+import { getActiveService, getServiceContextLinks, serviceHasNavigator } from '../service-navigation'
 
 const appShellSource = readFileSync(join(__dirname, '../AppShell.tsx'), 'utf8')
 const navDestinationsSource = readFileSync(join(__dirname, '../nav-destinations.ts'), 'utf8')
@@ -9,6 +13,17 @@ const notesPageSource = readFileSync(join(__dirname, '../../../pages/NotesPage.t
 
 describe('local Notes entry points', () => {
   it('wires the primary shell sidebar and keyboard navigation to Notes', () => {
+    const notes = APP_NAV_DESTINATIONS_BY_ID.notes
+    const state = parseRouteToNavigationState(routes.view.notes())!
+    expect(notes.railGroup).toBe('primary')
+    expect(getActiveService(state)).toBe('notes')
+    expect(serviceHasNavigator(state)).toBe(false)
+    expect(getServiceContextLinks([
+      { id: 'nav:notes' },
+      { id: 'nav:labels' },
+      { id: 'nav:skills' },
+      { id: 'nav:knowledge' },
+    ], 'notes')).toEqual([{ id: 'nav:notes' }])
     const primaryLinks = appShellSource.slice(
       appShellSource.indexOf('id: "nav:projects"'),
       appShellSource.indexOf('// --- Separator before footer ---'),
@@ -33,6 +48,10 @@ describe('local Notes entry points', () => {
 
     expect(notesDestination).toContain('route: () => routes.view.notes()')
     expect(notesDestination).toContain('isActive: isNotesNavigation')
+    const notesDestinationEntry = APP_NAV_DESTINATIONS_BY_ID.notes
+    expect(notesDestinationEntry.route?.()).toBe(routes.view.notes())
+    expect(notesDestinationEntry.isActive(parseRouteToNavigationState(routes.view.notes('local-note'))!)).toBe(true)
+    expect(notesDestinationEntry.isActive(parseRouteToNavigationState(routes.view.knowledge())!)).toBe(false)
     expect(notesRailLink).toContain('navigate(routes.view.notes());')
     expect(notesRailLink).not.toContain('navigate(routes.view.knowledge());')
   })

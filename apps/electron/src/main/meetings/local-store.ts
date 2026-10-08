@@ -233,7 +233,7 @@ export class LocalMeetingStore {
           !prior && ref.scope === 'workspace' && this.deps.validateTaskReference?.(meeting, action.id, ref) !== true) return null
       }
     }
-    return this.write(applyPatch(meeting, patch, this.now()))
+    return this.mutate(id, (m) => applyPatch(m, patch, this.now()))
   }
 
   /** Claim an unscoped device meeting once, after IPC verifies the live window. */

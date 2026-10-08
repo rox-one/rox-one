@@ -8,6 +8,16 @@
 
 import type { NavigationState } from '../../shared/types'
 
+/** A single session catalog is the workspace until an actual session is opened. */
+export function sessionCatalogOwnsWorkspace(
+  nav: NavigationState | null,
+  options: { panelCount: number; isCompact: boolean; navigatorHidden: boolean },
+): boolean {
+  return !options.isCompact && !options.navigatorHidden && options.panelCount <= 1
+    && nav?.navigator === 'sessions' && !nav.details
+    && (!nav.viewMode || nav.viewMode === 'list')
+}
+
 /**
  * Returns true when the focused panel's nav state is in "detail" mode —
  * i.e. the user has drilled past the navigator into a specific item.

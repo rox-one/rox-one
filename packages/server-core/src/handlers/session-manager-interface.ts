@@ -27,6 +27,7 @@ import type {
   BulkUpdateSessionsResult,
 } from '@rox/shared/protocol'
 import type { SessionBundle, DispatchMode } from '@rox/shared/sessions'
+import type { AgentProfileSnapshot } from '@rox/shared/workspace-work'
 import type { SessionProvenance } from '@rox/shared/memory/types'
 import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 import type { EventSink } from '../transport'
@@ -68,7 +69,7 @@ export interface ISessionManager {
   createSession(
     workspaceId: string,
     options?: CreateSessionOptions,
-    internal?: { emitCreatedEvent?: boolean; agentProfileSnapshot?: import('@rox/shared/workspace-work').AgentProfileSnapshot | null; nativeMemoryContext?: NativeMemoryContext },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; agentProfileSnapshot?: AgentProfileSnapshot | null },
   ): Promise<Session>
   /** Resolved working directory of a live session (Tasks Conductor uses it so children inherit
    *  the orchestrator's cwd). */
@@ -252,7 +253,7 @@ export interface ISessionManager {
     workspaceId: string,
     bundle: SessionBundle,
     mode: DispatchMode,
-    internal?: { defaultAgentProfileSnapshot?: import('@rox/shared/workspace-work').AgentProfileSnapshot | null },
+    internal?: { defaultAgentProfileSnapshot?: AgentProfileSnapshot | null },
   ): Promise<{ sessionId: string; warnings?: string[] }>
 
   /**

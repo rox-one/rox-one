@@ -2,9 +2,10 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../../test-utils/chromium-executable'
 const repository = resolve(import.meta.dirname, '../../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/caller')
-const executablePath = '/usr/bin/chromium'
+const executablePath = await resolveChromiumExecutable()
 const url = 'http://127.0.0.1:5234'
 type Fixture = { calls: Array<{ method: string; actor: string; args?: unknown[] }>; switchActor(next: string): void; changeActorWithoutEvent(next: string): void; failIdentity(): void; recoverIdentity(): void; resolveList(index: number, title?: string): void; resolveTasks(): void; resolveNotes(): void }
 

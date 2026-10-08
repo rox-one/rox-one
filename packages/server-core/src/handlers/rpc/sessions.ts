@@ -19,13 +19,14 @@ import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import { assertNativeSession, assertNativeWorkspace, nativeAnnotation, nativeSession } from './native-session-scope'
 import { awardNativeXpAndBroadcast } from './gamification'
 import { workspaceWorkContext } from './workspace-work'
-import { loadProjectById } from '@rox/shared/projects'
-import { validateEntityId } from '../../workspace-work/validation'
+
 import type { RequestContext } from '../../transport/types'
 import type { NativeMemoryContext } from '../../memory/MemoryService'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
 import { dirname } from 'path'
 import { assertNativeInboxPath, assertNativeInboxWorkspace, nativeInboxOwner } from './native-inbox-scope'
+import { loadProjectById } from '@rox/shared/projects'
+import { validateEntityId } from '../../workspace-work/validation'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'

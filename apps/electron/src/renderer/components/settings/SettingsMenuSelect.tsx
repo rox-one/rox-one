@@ -182,6 +182,7 @@ export function SettingsMenuSelect({
       <PopoverTrigger asChild disabled={disabled}>
         <button
           type="button"
+          data-slot="button"
           aria-label={ariaLabel}
           aria-labelledby={labelId ? `${labelId} ${valueId}` : undefined}
           aria-describedby={descriptionId}
@@ -193,11 +194,11 @@ export function SettingsMenuSelect({
             }
           }}
           className={cn(
-            'inline-flex items-center h-8 px-3 gap-1 text-sm rounded-lg',
-            'bg-background shadow-minimal',
-            'hover:bg-foreground/[0.02] transition-colors',
+            'inline-flex min-w-0 max-w-full items-center h-8 px-3 gap-1.5 text-[13px] rounded-md',
+            'bg-surface-input text-text-primary shadow-minimal',
+            settingsUI.interactive,
             'disabled:cursor-not-allowed disabled:opacity-50',
-            isOpen && 'bg-foreground/[0.02]',
+            isOpen && 'bg-surface-selected',
             className
           )}
         >
@@ -209,7 +210,7 @@ export function SettingsMenuSelect({
         align="end"
         sideOffset={4}
         collisionPadding={8}
-        className="p-1.5"
+        className="flex max-h-(--radix-popover-content-available-height) flex-col p-1.5"
         style={{ width: menuWidth, maxWidth: `calc(100vw / ${viewportZoom} - 16px)` }}
         role="presentation"
         onKeyDown={handleKeyDown}
@@ -217,9 +218,10 @@ export function SettingsMenuSelect({
         onMouseLeave={() => onHover?.(null)}
       >
         {showSearch && (
-          <div className="relative mb-1.5">
+          <div className="relative mb-1.5 shrink-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
             <input
+              data-slot="input"
               ref={searchInputRef}
               type="text"
               role="combobox"
@@ -233,14 +235,14 @@ export function SettingsMenuSelect({
               placeholder={effectiveSearchPlaceholder}
               className={cn(
                 'w-full h-8 pl-8 pr-3 text-sm rounded-md',
-                'bg-foreground/5 border-0',
-                'placeholder:text-muted-foreground',
-                'focus:outline-none focus:ring-1 focus:ring-foreground/20'
+                'bg-surface-input text-text-primary border border-border-strong',
+                'placeholder:text-text-muted',
+                'focus-visible:outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus/25'
               )}
             />
           </div>
         )}
-        <div ref={listRef} id={listId} role="listbox" aria-label={labelId ? undefined : ariaLabel ?? effectivePlaceholder} aria-labelledby={labelId} aria-activedescendant={showSearch ? undefined : activeId} tabIndex={showSearch ? -1 : 0} className="space-y-0.5 max-h-64 overflow-auto outline-none focus-visible:ring-1 focus-visible:ring-ring">
+        <div ref={listRef} id={listId} role="listbox" aria-label={labelId ? undefined : ariaLabel ?? effectivePlaceholder} aria-labelledby={labelId} aria-activedescendant={showSearch ? undefined : activeId} tabIndex={showSearch ? -1 : 0} className="min-h-0 space-y-0.5 max-h-64 overflow-auto outline-none focus-visible:ring-1 focus-visible:ring-ring">
           {filteredOptions.length === 0 ? (
             <div role="status" className="px-2.5 py-3 text-sm text-muted-foreground text-center">
               {t('common.noResults')}
@@ -252,6 +254,7 @@ export function SettingsMenuSelect({
                 <button
                   key={option.value}
                   type="button"
+                  data-slot="button"
                   id={`${id}-option-${index}`}
                   role="option"
                   aria-selected={isSelected}
@@ -263,10 +266,10 @@ export function SettingsMenuSelect({
                   onMouseEnter={() => { if (!option.disabled) activateOption(enabledOptions.indexOf(option)) }}
                   onFocus={() => { if (!option.disabled) activateOption(enabledOptions.indexOf(option)) }}
                   className={cn(
-                    'w-full flex items-center justify-between px-2.5 py-2 rounded-lg',
-                    'hover:bg-foreground/5 transition-colors text-left',
-                    isSelected && 'bg-foreground/3',
-                    option === activeOption && 'bg-foreground/5',
+                    'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-left',
+                    settingsUI.interactive,
+                    isSelected && 'bg-surface-selected',
+                    option === activeOption && 'ring-1 ring-inset ring-focus/70',
                     option.disabled && 'cursor-not-allowed opacity-50'
                   )}
                 >
@@ -345,8 +348,8 @@ export function SettingsMenuSelectRow({
     <div
       data-layout="settings-row"
       className={cn(
-        'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
         className
       )}
     >
@@ -356,7 +359,7 @@ export function SettingsMenuSelectRow({
           <p id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
         )}
       </div>
-      <div data-layout="settings-control" className="ml-4 shrink-0">
+      <div data-layout="settings-control" className={settingsUI.control}>
         <SettingsMenuSelect
           aria-labelledby={labelId}
           aria-describedby={descriptionId}
