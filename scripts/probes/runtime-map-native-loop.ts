@@ -8,7 +8,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { resolveConfigDir } from '../../packages/shared/src/config/paths.ts';
+import { hostRoxToolchainRoot } from '../lib/host-rox-toolchain.ts';
 import { OMP_WORKER_POLICY_SOURCE } from '../../packages/shared/src/agent/omp-worker-policy.ts';
 import { OmpRuntimeObserver, type OmpRuntimeObservation } from '../../packages/shared/src/agent/omp-runtime-observer.ts';
 import { OmpRuntimeTraceBridge } from '../../packages/shared/src/agent/omp-runtime-trace-bridge.ts';
@@ -16,7 +16,7 @@ import type { RuntimeAgentObservation } from '../../packages/core/src/runtime-tr
 import { writeWorkerEvidence } from './omp-worker-loop.ts';
 
 async function main(): Promise<void> {
-  const base = process.env.ROX_OMP_PACKAGE_DIR ?? join(resolveConfigDir(), 'toolchain', 'omp', '18.4.12', 'package');
+  const base = process.env.ROX_OMP_PACKAGE_DIR ?? join(hostRoxToolchainRoot(), 'omp', '18.4.12', 'package');
   if (JSON.parse(readFileSync(join(base, 'package.json'), 'utf8')).version !== '18.4.12') throw new Error('Expected pinned native OMP 18.4.12');
   const root = mkdtempSync(join(tmpdir(), 'rox-native-runtime-map-'));
   const outputPath = process.argv[2] ?? join(tmpdir(), 'rox-runtime-map-native-loop.json');

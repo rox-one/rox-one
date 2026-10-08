@@ -22,3 +22,17 @@ describe('seedSourceToolchainRoot (W1-13)', () => {
     expect(seedSourceToolchainRoot({}, home, () => false)).toBe(join(home, '.rox', 'toolchain'))
   })
 })
+
+describe('hostRoxToolchainRoot (W1-13)', () => {
+  it('ignores ROX_CONFIG_DIR and never resolves through the migrator', async () => {
+    const { hostRoxToolchainRoot } = await import('../../scripts/lib/host-rox-toolchain.ts')
+    const previous = process.env.ROX_CONFIG_DIR
+    process.env.ROX_CONFIG_DIR = '/work/rox-readiness-ui-001-profile'
+    try {
+      expect(hostRoxToolchainRoot(home, () => false)).toBe(join(home, '.rox', 'toolchain'))
+    } finally {
+      if (previous === undefined) delete process.env.ROX_CONFIG_DIR
+      else process.env.ROX_CONFIG_DIR = previous
+    }
+  })
+})

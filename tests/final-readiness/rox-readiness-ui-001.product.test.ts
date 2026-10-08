@@ -27,7 +27,7 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     const bunPath = process.env.ROX_UI_001_BUN ?? process.execPath
     const executablePath = process.env.ROX_UI_001_ELECTRON ?? join(root, 'work/electron-39.2.7/Electron.app/Contents/MacOS/Electron')
     const harnessPaths = ['tests/final-readiness/rox-readiness-ui-001.product.test.ts',
-      'tests/final-readiness/rox-readiness-ui-001.seed.ts', 'tests/final-readiness/rox-readiness-ui-001.source-toolchain.ts',
+      'tests/final-readiness/rox-readiness-ui-001.seed.ts', 'tests/final-readiness/rox-readiness-ui-001.source-toolchain.ts', 'scripts/lib/host-rox-toolchain.ts',
       'tests/final-readiness/rox-readiness-ui-001.node-driver.ts',
       'tests/final-readiness/rox-readiness-ui-001.build.ts', 'work/rox-readiness-ui-001.native-driver.cjs']
     const harnessReceipt = { capturedBeforeSeedAndNativeLaunch: true, capturedAt: new Date().toISOString(),
