@@ -18,6 +18,7 @@ import {
   enabledInboxKinds,
   inboxCounts,
   inboxKindForNotification,
+  type InboxActivityKind,
   type InboxNotificationLike,
   type InboxSources,
 } from '../inbox-model'
@@ -55,7 +56,7 @@ describe('inbox activity surfaces', () => {
   })
 
   it('maps each notification kind onto its Inbox tab', () => {
-    const expected: ReadonlyArray<readonly [NotificationKind, string]> = [
+    const expected: ReadonlyArray<readonly [NotificationKind, InboxActivityKind]> = [
       ['mention', 'mention'],
       ['assignment', 'assignment'],
       ['check_in_submitted', 'review'],
@@ -114,8 +115,8 @@ describe('inbox activity surfaces', () => {
       notification({ id: 'c', kind: 'mention' }),
     ], Object.values(INBOX_KIND_FLAGS)))
     const byId = Object.fromEntries(items.map((item) => [item.id, item]))
-    expect(byId['notif:a']).toMatchObject({ group: 'decision', blocking: true, reviewGroup: 'needs_approval' })
-    expect(byId['notif:b']).toMatchObject({ group: 'decision', blocking: false, reviewGroup: 'needs_review' })
+    expect(byId['notif:a']).toMatchObject({ group: 'decision', blocking: true, reviewGroup: 'needs_approval', action: 'approve' })
+    expect(byId['notif:b']).toMatchObject({ group: 'decision', blocking: false, reviewGroup: 'needs_review', action: 'acknowledge' })
     expect(byId['notif:c']).toMatchObject({ group: 'message', blocking: false })
     expect(byId['notif:c'] && 'reviewGroup' in byId['notif:c']).toBe(false)
     // Blocking rows lead the sort (oldest wait first), then newest-first.
