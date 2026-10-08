@@ -20,6 +20,22 @@ export interface RealtimePublication {
   payload?: unknown
 }
 
+/**
+ * Projector contract (W1-06 and every module that registers one):
+ *
+ * - **Total.** A projector must return (possibly `[]`) for every event of its
+ *   type, including old payload versions and missing optional fields; it must
+ *   never throw. Pure, synchronous, ids-only payloads.
+ * - **Tested.** Each projector ships unit tests covering its topics, payload
+ *   shape and edge cases (no subject, deleted refs, legacy payloads).
+ * - **Failure fallback is narrow.** If a projector throws anyway, the error is
+ *   reported (`ProjectorError`) and only the ids-only `defaultEventProjection`
+ *   is added: it reaches the subject's `entity:{kind}:{id}` topic alone, and
+ *   nothing at all when the event has no subject. Frames the projector meant
+ *   for `channel:`, `task-list:`, `space:`, `calendar:` or `user:` topics are
+ *   lost silently (no seq is consumed, so subscribers see no gap). See
+ *   `packages/core/src/events/README.md` (UNDONE).
+ */
 export type EventProjector = (event: DomainEvent) => RealtimePublication[]
 
 /** Generic projection: the subject's entity topic with an ids-only payload. */

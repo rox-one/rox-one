@@ -71,13 +71,13 @@ describe('TopicLog seq + gap recovery', () => {
   test('replays the missing frames, or requires a snapshot', () => {
     const log = new TopicLog({ epoch: 'e1', capacity: 3 })
     for (let i = 1; i <= 5; i++) log.append('t:1', frame(i))
-    expect(log.replay('t:1', 5)).toMatchObject({ kind: 'up_to_date', latestSeq: 5 })
-    const replay = log.replay('t:1', 3)
+    expect(log.replay('t:1', 5, log.epoch)).toMatchObject({ kind: 'up_to_date', latestSeq: 5 })
+    const replay = log.replay('t:1', 3, log.epoch)
     expect(replay.kind).toBe('events')
     if (replay.kind === 'events') expect(replay.frames.map(f => f.seq)).toEqual([4, 5])
-    expect(log.replay('t:1', 1)).toMatchObject({ kind: 'snapshot_required', latestSeq: 5 }) // window starts at 3
-    expect(log.replay('t:1', 2).kind).toBe('events') // oldest retained = 3 = 2 + 1
-    expect(log.replay('t:1', 9)).toMatchObject({ kind: 'snapshot_required' }) // client ahead
+    expect(log.replay('t:1', 1, log.epoch)).toMatchObject({ kind: 'snapshot_required', latestSeq: 5 }) // window starts at 3
+    expect(log.replay('t:1', 2, log.epoch).kind).toBe('events') // oldest retained = 3 = 2 + 1
+    expect(log.replay('t:1', 9, log.epoch)).toMatchObject({ kind: 'snapshot_required' }) // client ahead
     expect(log.replay('t:1', 4, 'other-epoch')).toMatchObject({ kind: 'snapshot_required' })
     expect(log.replay('t:1', -1).kind).toBe('snapshot_required')
     expect(new TopicLog({ epoch: 'e2' }).replay('t:none', 0, 'old')).toMatchObject({ kind: 'up_to_date' })

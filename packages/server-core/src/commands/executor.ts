@@ -226,6 +226,12 @@ export class CommandExecutor {
       return await run(ctx)
     } catch (error) {
       if (error instanceof CommandStoreUnavailable) throw error
+      // A middleware (policy, rate-limit, audit reads) hit a transient store
+      // error: nothing committed, so it stays retryable (503, kept in the
+      // outbox) instead of becoming a terminal INTERNAL receipt.
+      if (!(error instanceof CommandConflict || error instanceof CommandRejection) && this.isTransient(error)) {
+        throw this.unavailable(envelope, error)
+      }
       return this.errorReceipt(envelope, error)
     }
   }

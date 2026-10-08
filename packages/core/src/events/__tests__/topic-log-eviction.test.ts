@@ -17,10 +17,10 @@ describe('TopicLog eviction', () => {
     now = 1200
     expect(log.evictIdle()).toBe(1) // only a was idle
     expect(log.windowCount()).toBe(1)
-    expect(log.replay('user:a', 1)).toMatchObject({ kind: 'snapshot_required', latestSeq: 2 })
-    expect(log.replay('user:a', 2)).toMatchObject({ kind: 'up_to_date' })
+    expect(log.replay('user:a', 1, log.epoch)).toMatchObject({ kind: 'snapshot_required', latestSeq: 2 })
+    expect(log.replay('user:a', 2, log.epoch)).toMatchObject({ kind: 'up_to_date' })
     expect(log.append('user:a', frame).seq).toBe(3) // counters survive eviction
-    expect(log.replay('user:a', 2)).toMatchObject({ kind: 'events', frames: [expect.objectContaining({ seq: 3 })] })
+    expect(log.replay('user:a', 2, log.epoch)).toMatchObject({ kind: 'events', frames: [expect.objectContaining({ seq: 3 })] })
   })
 
   test('append sweeps idle windows on its own (no host timer needed)', () => {

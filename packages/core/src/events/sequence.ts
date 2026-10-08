@@ -95,6 +95,11 @@ export class TopicLog {
     return this.windows.size
   }
 
+  /** Topics with a seq counter in this epoch (they are never pruned; owners rotate the log past a cap). */
+  seqCount(): number {
+    return this.seqs.size
+  }
+
   latest(topic: Topic): number {
     return this.seqs.get(topic) ?? 0
   }
@@ -171,6 +176,10 @@ export class TopicLog {
     const latestSeq = this.latest(topic)
     const base = { latestSeq, epoch: this.epoch }
     if (!Number.isSafeInteger(sinceSeq) || sinceSeq < 0) return { kind: 'snapshot_required', ...base }
+    // A position without its epoch can't be trusted: logs are recreated with a
+    // new epoch (idle drop, seq-cap rotation, restart) and their seqs restart,
+    // so `sinceSeq` might belong to an older log. Only "from the start" is safe.
+    if (epoch === undefined && sinceSeq > 0) return { kind: 'snapshot_required', ...base }
     if (epoch !== undefined && epoch !== this.epoch) {
       // Seqs from another epoch mean nothing here; only an empty history is safe.
       return sinceSeq === 0 && latestSeq === 0 ? { kind: 'up_to_date', ...base } : { kind: 'snapshot_required', ...base }

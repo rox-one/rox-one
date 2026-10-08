@@ -18,6 +18,17 @@ import {
 
 export type EventBusListener = (workspaceId: string, frame: RealtimeEventFrame, event: DomainEvent) => void
 
+/** Answers whether a workspace's log must survive an idle sweep (e.g. it has live realtime subscribers). */
+export type EventBusRetainer = (workspaceId: string) => boolean
+
+/**
+ * Seq counters one workspace log may hold before `evictIdle` rotates it (new
+ * epoch, clients refetch once via `snapshot_required`). Counters are never
+ * pruned inside an epoch (a seq must not repeat), so this bounds the memory
+ * of a workspace that never goes quiet.
+ */
+export const DEFAULT_MAX_SEQ_COUNTERS_PER_WORKSPACE = 50_000
+
 export interface InProcessEventBusOptions {
   projections?: EventProjectionRegistry
   /** Replay window per topic. */
@@ -28,6 +39,8 @@ export interface InProcessEventBusOptions {
   windowIdleTtlMs?: number
   /** Replay windows retained per workspace (LRU, default 5000). */
   maxWindowsPerWorkspace?: number
+  /** Rotate a workspace log holding more seq counters than this (default 50 000). */
+  maxSeqCountersPerWorkspace?: number
   now?: () => Date
   onListenerError?: (error: unknown) => void
   /**
@@ -42,6 +55,7 @@ export class InProcessEventBus {
   readonly projections: EventProjectionRegistry
   private readonly logs = new Map<string, TopicLog>()
   private readonly listeners = new Set<EventBusListener>()
+  private readonly retainers = new Set<EventBusRetainer>()
   private readonly options: InProcessEventBusOptions
   /** Base sequencer epoch; a workspace log recreated after an idle drop gets `${epoch}~${n}`. */
   readonly epoch: string
@@ -127,17 +141,38 @@ export class InProcessEventBus {
   }
 
   /**
+   * Keep a workspace's log through idle sweeps while `retainer` says so (the
+   * realtime gateway retains workspaces with live subscriptions, so a quiet
+   * but connected workspace still answers `up_to_date` on resubscribe).
+   * Retained logs are still rotated past the seq-counter cap. Returns a disposer.
+   */
+  retain(retainer: EventBusRetainer): () => void {
+    this.retainers.add(retainer)
+    return () => { this.retainers.delete(retainer) }
+  }
+
+  private isRetained(workspaceId: string): boolean {
+    for (const retainer of this.retainers) {
+      try { if (retainer(workspaceId) === true) return true } catch (error) { this.options.onListenerError?.(error) }
+    }
+    return false
+  }
+
+  /**
    * Evict idle replay windows and remembered event ids in every workspace log,
-   * then drop logs with nothing left (hosts call this on a timer). A dropped
-   * workspace starts a new log with a new epoch on its next event, so held
-   * positions resolve to `snapshot_required` rather than silent duplicates.
+   * then drop logs with nothing left unless retained (hosts call this on a
+   * timer). A log whose seq-counter count exceeds `maxSeqCountersPerWorkspace`
+   * is rotated even when retained. A dropped or rotated workspace starts a new
+   * log with a new epoch on its next event, so held positions resolve to
+   * `snapshot_required` rather than silent duplicates.
    */
   evictIdle(): number {
     let evicted = 0
     let dropped = false
+    const cap = Math.max(1, Math.floor(this.options.maxSeqCountersPerWorkspace ?? DEFAULT_MAX_SEQ_COUNTERS_PER_WORKSPACE))
     for (const [workspaceId, log] of this.logs) {
       evicted += log.evictIdle()
-      if (log.isIdle()) {
+      if (log.seqCount() > cap || (log.isIdle() && !this.isRetained(workspaceId))) {
         this.logs.delete(workspaceId)
         dropped = true
       }
