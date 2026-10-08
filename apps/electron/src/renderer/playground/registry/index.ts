@@ -32,6 +32,8 @@ import { premiumMenuComponents } from './premium-menu'
 import { collectionComponents } from './collection'
 import { notesComponents } from './notes'
 import { settingsComponents } from './settings'
+// W1-08 (#1505): entity UI primitives.
+import { entityPrimitiveComponents } from './entity-primitives'
 
 export * from './types'
 export {
@@ -76,6 +78,8 @@ export const componentRegistry: ComponentEntry[] = [
   ...collectionComponents,
   ...notesComponents,
   ...settingsComponents,
+  // W1-08 (#1505)
+  ...entityPrimitiveComponents,
 ]
 
 export function getCategories(): CategoryGroup[] {
