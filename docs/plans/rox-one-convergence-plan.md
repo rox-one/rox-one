@@ -80,7 +80,7 @@ On conflict, missing check, provider failure, permission denial, unavailable pla
 
 ## 7. Observed worktree receipts — session-owned test/locale slice (2026-10-08, 05:00–06:20 MSK)
 
-Scope: this section records slice-level receipts on the `feat/convergence-20261007` working tree while several foreign sessions were concurrently writing the same tree. It does not promote any Section 3 item above its recorded status and is evidence class “source-local checks” only — not product, platform, security or service acceptance.
+Scope: this section records slice-level receipts on the `feat/convergence-20261007` working tree while several foreign sessions were concurrently writing the same tree. It does not promote any Section 3 item above its recorded status and is evidence class “source-local checks” only — not product, platform, security or service acceptance. A concurrent integration session folded the slice (including these docs) into commit `385aaf59d`; the re-checked frozen revision is `3fd43af8c` (worktree clean, 2026-10-08 06:16 MSK).
 
 Session-owned paths: 11 test-infrastructure files under `apps/electron/src/renderer/features/product-tour/**`; `apps/electron/src/renderer/test-utils/chromium-executable.ts` (new; environment-aware Chromium resolution: `LEARNING_CHROMIUM_PATH` → `CHROMIUM_EXECUTABLE` → `ROX_BROWSER_PATH` → `/usr/bin/chromium` → Playwright bundled binary, consumed by 10 browser-test call sites); `apps/electron/src/main/__tests__/pocket-account-store-dpapi.test.ts` (new; DPAPI portability so the suite is executable on macOS); 12 locale catalogs `packages/shared/src/i18n/locales/*.json` (own key groups only).
 

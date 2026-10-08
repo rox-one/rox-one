@@ -75,7 +75,7 @@ Security and product tour receipts must be bound to the exact integrated source 
 
 ### 5.1 Observed receipts — session-owned test/locale slice (2026-10-08)
 
-Bound to the working tree on `feat/convergence-20261007` while foreign sessions concurrently wrote the same tree; evidence class 3 (local checks) only — no product/platform/service acceptance is implied.
+Bound to the working tree on `feat/convergence-20261007` while foreign sessions concurrently wrote the same tree; evidence class 3 (local checks) only — no product/platform/service acceptance is implied. Slice content is contained in commit `385aaf59d`; gates re-verified at frozen revision `3fd43af8c` (worktree clean).
 
 - Wave-A regression batch (8 test files, including the repaired `runtime-map-panel-reconcile.test.ts`): `29 pass / 0 fail`, 131 expects, `[1494.00ms]`, exit 0.
 - `native-file-dialog.browser.test.ts` standalone on a quiet tree: `10 pass / 0 fail [35.82s]`, exit 0.
