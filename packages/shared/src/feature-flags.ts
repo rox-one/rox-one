@@ -136,6 +136,26 @@ export function isEntitiesLinksEnabled(enabledWorkbenchFlags?: ReadonlySet<strin
   return false;
 }
 
+// W1-03 (#1500)
+/**
+ * Workbench flag id for the command bus. Mirrors `WORKBENCH_FLAG.commandsBusV1`
+ * in `packages/core/src/platform/workbench/flags.ts`.
+ */
+export const COMMAND_BUS_WORKBENCH_FLAG = 'commands.bus.v1';
+
+/**
+ * Runtime-evaluated check for the command bus (W1-03: `commands:*` RPC,
+ * local executor, workspace outbox + realtime client). Same shape as
+ * `isEntitiesLinksEnabled`; `CRAFT_FEATURE_COMMAND_BUS=1|0` is the explicit
+ * env override. Defaults to DISABLED.
+ */
+export function isCommandBusEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_COMMAND_BUS'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(COMMAND_BUS_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
 /**
  * Runtime-evaluated check for Pages sharing (Cloudflare publication).
  *

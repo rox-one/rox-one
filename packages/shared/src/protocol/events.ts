@@ -28,6 +28,7 @@ import type {
   SessionsBulkChangedEvent,
 } from './dto'
 import type { ExtensionsChangedPayload } from '../extensions/types'
+import type { CommandBusPushEvent } from '../commands/push'
 import type { VoicePrefs } from '../voice/types.ts'
 import type { OverlayState } from '../voice/overlay-types.ts'
 import type { VoiceJob } from '../voice/job-machine.ts'
@@ -71,6 +72,8 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.statuses.CHANGED]: [workspaceId: string]
   // Entities (W1-02) — local link store changed for a workspace.
   [RPC_CHANNELS.entities.LINKS_CHANGED]: [workspaceId: string]
+  // W1-03 (#1500) — command bus push (realtime event frames, bus status).
+  [RPC_CHANNELS.commands.EVENT]: [workspaceId: string, event: CommandBusPushEvent]
   // Toolchain install progress (global, local toolchain)
   [RPC_CHANNELS.toolchain.STATUS_CHANGED]: [status: ToolStatus]
   [RPC_CHANNELS.automations.CHANGED]: [workspaceId: string]

@@ -1072,6 +1072,12 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
 
   // Entities (W1-02) — resolution may fan out to the workspace owner.
   RPC_CHANNELS.entities.RESOLVE,
+
+  // W1-03 (#1500) — the command bus runs on whichever server owns the
+  // workspace (its executor store and outbox live under the workspace root).
+  RPC_CHANNELS.commands.EXECUTE,
+  RPC_CHANNELS.commands.LIST,
+  RPC_CHANNELS.commands.EVENT,
 ])
 
 // ---------------------------------------------------------------------------

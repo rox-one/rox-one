@@ -162,7 +162,9 @@
     "./code-intelligence": "./src/code-intelligence/index.ts",
     "./security": "./src/security/index.ts",
     "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts",
-    "./config/server-services": "./src/config/server-services.ts"
+    "./config/server-services": "./src/config/server-services.ts",
+    "./commands": "./src/commands/index.ts",
+    "./commands/schemas": "./src/commands/schemas.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
