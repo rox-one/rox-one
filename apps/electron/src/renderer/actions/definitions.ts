@@ -410,6 +410,8 @@ export const actions = {
     defaultHotkeyNonMac: 'alt+1',
     category: 'View',
     flag: W1_07_ACTION_FLAG.messenger,
+    // UI-SPEC §15: Messenger only.
+    when: 'messengerActive',
   },
   'messenger.quickPanelTasks': {
     id: 'messenger.quickPanelTasks',
@@ -419,6 +421,8 @@ export const actions = {
     defaultHotkeyNonMac: 'alt+2',
     category: 'View',
     flag: W1_07_ACTION_FLAG.messenger,
+    // UI-SPEC §15: Messenger only.
+    when: 'messengerActive',
   },
   'messenger.quickPanelCalendar': {
     id: 'messenger.quickPanelCalendar',
@@ -428,6 +432,8 @@ export const actions = {
     defaultHotkeyNonMac: 'alt+3',
     category: 'View',
     flag: W1_07_ACTION_FLAG.messenger,
+    // UI-SPEC §15: Messenger only.
+    when: 'messengerActive',
   },
   'messenger.quickPanelContacts': {
     id: 'messenger.quickPanelContacts',
@@ -437,6 +443,8 @@ export const actions = {
     defaultHotkeyNonMac: 'alt+4',
     category: 'View',
     flag: W1_07_ACTION_FLAG.messenger,
+    // UI-SPEC §15: Messenger only.
+    when: 'messengerActive',
   },
   // ⌘F stays `app.search`; Docs takes it over mode-aware (see shell-shortcuts.ts).
   'docs.findInDoc': {

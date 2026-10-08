@@ -10,13 +10,14 @@
  * Reachable only while the surface's `workbench.mode.<id>.v1` flag is on (the
  * route gate in `shared/surface-routes.ts`).
  */
-import type { ComponentType } from 'react'
+import { useEffect, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CalendarDays, Contact, MessagesSquare, Target, type LucideIcon } from 'lucide-react'
 import { EmptyState } from '@/components/mode-screen/ModeScreen'
 import type { UnifiedSurfaceId } from '../../shared/surface-routes'
 import { useSlotContributions } from './useSlots'
 import type { SlotId } from './slots'
+import { markSurfaceMounted } from './surface-activity'
 
 export interface SurfacePageProps {
   surface: UnifiedSurfaceId
@@ -60,6 +61,8 @@ export function SurfaceEmptyState({ surface }: SurfacePageProps) {
 }
 
 export function SurfaceHost({ surface }: SurfacePageProps) {
+  // Messenger-only shortcuts (`when: messengerActive`) read this.
+  useEffect(() => markSurfaceMounted(surface), [surface])
   const pages = useSlotContributions<SurfacePagePayload>(surfacePageSlot(surface))
   const Page = pages.find((page) => page.payload?.component)?.payload?.component
   return Page ? <Page surface={surface} /> : <SurfaceEmptyState surface={surface} />
