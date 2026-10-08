@@ -44,18 +44,24 @@ export interface ResolverHost {
 interface CacheEntry {
   etag: string
   preview: EntityPreview
+  /** Epoch ms when the entry expires; 0 means never. */
+  expiresAt: number
 }
 
 /**
  * Bounded LRU keyed by `entityRefKey`, storing the last preview + etag per
- * ref. Entries are evicted least-recently-used first.
+ * ref. Entries are evicted least-recently-used first and expire after
+ * `ttlMs` (0 = never; default 0 to keep ad-hoc consumers stable — the
+ * resolver host passes the 60s preview TTL).
  */
 export class EntityResolutionCache {
   private readonly capacity: number
+  private readonly ttlMs: number
   private readonly map = new Map<string, CacheEntry>()
 
-  constructor(capacity = 5000) {
+  constructor(capacity = 5000, ttlMs = 0) {
     this.capacity = capacity
+    this.ttlMs = ttlMs
   }
 
   get size(): number {
@@ -65,6 +71,10 @@ export class EntityResolutionCache {
   get(key: string): EntityPreview | undefined {
     const entry = this.map.get(key)
     if (!entry) return undefined
+    if (entry.expiresAt !== 0 && entry.expiresAt <= Date.now()) {
+      this.map.delete(key)
+      return undefined
+    }
     // Refresh recency.
     this.map.delete(key)
     this.map.set(key, entry)
@@ -73,7 +83,11 @@ export class EntityResolutionCache {
 
   set(key: string, preview: EntityPreview): void {
     if (this.map.has(key)) this.map.delete(key)
-    this.map.set(key, { etag: preview.etag, preview })
+    this.map.set(key, {
+      etag: preview.etag,
+      preview,
+      expiresAt: this.ttlMs > 0 ? Date.now() + this.ttlMs : 0,
+    })
     if (this.map.size > this.capacity) {
       const oldest = this.map.keys().next()
       if (!oldest.done) this.map.delete(oldest.value)
