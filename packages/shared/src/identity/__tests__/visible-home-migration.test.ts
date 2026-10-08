@@ -138,8 +138,8 @@ describe('migrateHiddenRoxHome start states', () => {
       expect(readFileSync(join(home, 'rox', 'only-visible.txt'), 'utf8')).toBe('visible')
       expect(readFileSync(join(home, 'rox', 'only-hidden.txt'), 'utf8')).toBe('hidden')
       expect(readFileSync(join(home, 'rox', 'conflict.txt'), 'utf8')).toBe('new-hidden')
-      expect(result.conflicts).toEqual(['conflict.txt'])
-      expect(readFileSync(join(home, 'rox', ROX_HOME_MIGRATION_DIR_NAME, 'conflicts', 'conflict.txt'), 'utf8')).toBe(
+      expect(result.conflicts).toEqual(['ts-001/conflict.txt']) // per-attempt stash dir
+      expect(readFileSync(join(home, 'rox', ROX_HOME_MIGRATION_DIR_NAME, 'conflicts', 'ts-001', 'conflict.txt'), 'utf8')).toBe(
         'old-visible',
       )
       expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
@@ -439,7 +439,7 @@ describe('merge never lets fresh defaults beat user data', () => {
       expect(result.outcome).toBe('merged')
       expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toBe(real)
       // The default is kept, never lost.
-      expect(readFileSync(join(home, 'rox', ROX_HOME_MIGRATION_DIR_NAME, 'conflicts', 'config.json'), 'utf8')).toBe(
+      expect(readFileSync(join(home, 'rox', ROX_HOME_MIGRATION_DIR_NAME, 'conflicts', 'ts-001', 'config.json'), 'utf8')).toBe(
         JSON.stringify({ workspaces: [] }),
       )
     }))

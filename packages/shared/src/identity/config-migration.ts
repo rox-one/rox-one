@@ -434,6 +434,12 @@ export interface VisibleHomeMigrationResult {
   reportPath?: string
   /** Set on migrated/merged runs: the UI shows the move toast once. */
   announceToast: boolean
+  /**
+   * The data is in `~/rox` but the `~/.rox` compat link could not be created
+   * (and a rollback was impossible): a process running on the legacy path
+   * must restart onto `~/rox` instead of continuing on a vanished dir.
+   */
+  relaunchRequired?: boolean
 }
 
 export interface MigrateHiddenRoxHomeOptions {
@@ -1069,29 +1075,38 @@ export interface MergeIncompleteMarker {
   visibleHasData: boolean
   /** The dir processes keep using until the merge completes. */
   choice: 'hidden' | 'visible'
+  /** `dev:ino` of the hidden tree the snapshot was taken from. */
+  hiddenId?: string
 }
 
-export function mergeIncompleteMarkerPath(visibleDir: string): string {
-  return join(visibleDir, ROX_HOME_MIGRATION_DIR_NAME, ROX_MERGE_INCOMPLETE_MARKER_NAME)
-}
-
-export function readMergeIncompleteMarker(visibleDir: string): MergeIncompleteMarker | undefined {
+/** `dev:ino` identity of a directory (undefined when the FS reports no inode). */
+function _treeId(path: string): string | undefined {
   try {
-    const parsed = JSON.parse(_readMigrationFile(mergeIncompleteMarkerPath(visibleDir), 'utf8')) as Partial<MergeIncompleteMarker>
-    return {
-      startedAt: typeof parsed.startedAt === 'number' ? parsed.startedAt : 0,
-      hiddenHasData: parsed.hiddenHasData === true,
-      visibleHasData: parsed.visibleHasData === true,
-      choice: parsed.choice === 'visible' ? 'visible' : 'hidden',
-    }
+    const st = _lstatMigration(path, { bigint: true })
+    if (st.ino === 0n) return undefined
+    return `${st.dev}:${st.ino}`
   } catch {
-    try {
-      // Present but unreadable/garbled: still an incomplete merge.
-      _lstatMigration(mergeIncompleteMarkerPath(visibleDir))
-      return { startedAt: 0, hiddenHasData: true, visibleHasData: false, choice: 'hidden' }
-    } catch {
-      return undefined
-    }
+    return undefined
+  }
+}
+
+/** A marker still describes this hidden tree (not one recreated after a rename). */
+function _markerMatchesHidden(marker: MergeIncompleteMarker, hiddenDir: string): boolean {
+  if (!marker.hiddenId) return true // unverifiable (older marker / no inodes): keep it
+  return marker.hiddenId === _treeId(hiddenDir)
+}
+
+function _writeMergeIncompleteMarker(visibleDir: string, marker: MergeIncompleteMarker): void {
+  const markerPath = mergeIncompleteMarkerPath(visibleDir)
+  mkdirSync(_dirnameMigration(markerPath), { recursive: true, mode: 0o700 })
+  _writeMigrationFile(markerPath, `${JSON.stringify(marker)}\n`, { encoding: 'utf8', mode: 0o600 })
+}
+
+function _removeMergeIncompleteMarker(visibleDir: string): void {
+  try {
+    _unlinkMigration(mergeIncompleteMarkerPath(visibleDir))
+  } catch {
+    // already gone
   }
 }
 
@@ -1115,6 +1130,62 @@ function _pathPresent(path: string): boolean {
     return true
   } catch {
     return false
+  }
+}
+
+/**
+ * Everything kept under `.migration/conflicts/` (all attempts), as posix
+ * paths relative to it; empty directories end with `/`.
+ */
+function _listConflicts(conflictsRoot: string): string[] {
+  const out: string[] = []
+  const walk = (dir: string, rel: string): void => {
+    let names: string[]
+    try {
+      names = _readdirMigration(dir)
+    } catch {
+      return
+    }
+    if (names.length === 0 && rel) out.push(`${rel}/`)
+    for (const name of names) {
+      const full = join(dir, name)
+      const childRel = rel ? `${rel}/${name}` : name
+      let st: import('node:fs').Stats
+      try {
+        st = _lstatMigration(full)
+      } catch {
+        continue
+      }
+      if (st.isDirectory()) walk(full, childRel)
+      else out.push(childRel)
+    }
+  }
+  walk(conflictsRoot, '')
+  return out.sort()
+}
+
+export function mergeIncompleteMarkerPath(visibleDir: string): string {
+  return join(visibleDir, ROX_HOME_MIGRATION_DIR_NAME, ROX_MERGE_INCOMPLETE_MARKER_NAME)
+}
+
+export function readMergeIncompleteMarker(visibleDir: string): MergeIncompleteMarker | undefined {
+  try {
+    const parsed = JSON.parse(_readMigrationFile(mergeIncompleteMarkerPath(visibleDir), 'utf8')) as Partial<MergeIncompleteMarker>
+    return {
+      startedAt: typeof parsed.startedAt === 'number' ? parsed.startedAt : 0,
+      hiddenHasData: parsed.hiddenHasData === true,
+      visibleHasData: parsed.visibleHasData === true,
+      choice: parsed.choice === 'visible' ? 'visible' : 'hidden',
+      ...(typeof parsed.hiddenId === 'string' && parsed.hiddenId ? { hiddenId: parsed.hiddenId } : {}),
+    }
+  } catch {
+    try {
+      // Present but unreadable/garbled: still an incomplete merge.
+      _lstatMigration(mergeIncompleteMarkerPath(visibleDir))
+      return { startedAt: 0, hiddenHasData: true, visibleHasData: false, choice: 'hidden' }
+    } catch {
+      return undefined
+    }
   }
 }
 
@@ -1205,7 +1276,9 @@ export function resolveVisibleHomeWithoutMigration(
       return existsSync(paths.visibleDir) && roxHomeHasUserData(paths.visibleDir) ? paths.visibleDir : paths.hiddenDir
     case 'both': {
       const marker = readMergeIncompleteMarker(paths.visibleDir)
-      if (marker) return marker.choice === 'visible' ? paths.visibleDir : paths.hiddenDir
+      if (marker && _markerMatchesHidden(marker, paths.hiddenDir)) {
+        return marker.choice === 'visible' ? paths.visibleDir : paths.hiddenDir
+      }
       return roxHomeHasUserData(paths.visibleDir) ? paths.visibleDir : paths.hiddenDir
     }
   }
@@ -1344,7 +1417,47 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         // best effort; equality is still verified after the move
       }
       // Only `~/.rox`: atomic rename, EXDEV falls back to copy + verify + swap.
+      const migratedPath = `${paths.hiddenDir}.migrated-${timestamp}`
+      const staging = `${paths.visibleDir}.tmp-${process.pid}`
+      // Our own cross-device copy (never user data): move it back out of ~/rox.
+      const discardCopy = (): boolean => {
+        try {
+          rename(paths.visibleDir, staging)
+        } catch {
+          return false
+        }
+        rmSync(staging, { recursive: true, force: true })
+        return true
+      }
+      // Last resort when the copy cannot leave ~/rox: pin the legacy tree.
+      const pinHidden = (): void => {
+        try {
+          _writeMergeIncompleteMarker(paths.visibleDir, {
+            startedAt: options?.now?.() ?? Date.now(),
+            hiddenHasData: true,
+            visibleHasData: false,
+            choice: 'hidden',
+            ...(_treeId(paths.hiddenDir) ? { hiddenId: _treeId(paths.hiddenDir) } : {}),
+          })
+        } catch {
+          // best effort
+        }
+      }
+      const dropScaffolding = (): void => {
+        try {
+          _unlinkMigration(manifestPath)
+        } catch {
+          // never written / already gone
+        }
+      }
+      let originalMode: number | undefined
+      try {
+        originalMode = _statMigration(paths.hiddenDir).mode & 0o777
+      } catch {
+        originalMode = undefined
+      }
       let moved = false
+      let viaCopy = false
       try {
         try {
           rename(paths.hiddenDir, paths.visibleDir)
@@ -1353,7 +1466,6 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
           if ((error as NodeJS.ErrnoException | null)?.code !== 'EXDEV') throw error
         }
         if (!moved) {
-          const staging = `${paths.visibleDir}.tmp-${process.pid}`
           rmSync(staging, { recursive: true, force: true })
           _ensurePrivateDir(staging)
           _copyTreeWithModes(paths.hiddenDir, staging)
@@ -1364,22 +1476,64 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
             throw new Error(`Cross-device copy verification failed: ${mismatches.slice(0, 5).join(', ')}`)
           }
           rename(staging, paths.visibleDir)
-          // Never delete: keep the original under a timestamped name.
-          rename(paths.hiddenDir, `${paths.hiddenDir}.migrated-${timestamp}`)
+          try {
+            // Never delete: keep the original under a timestamped name.
+            rename(paths.hiddenDir, migratedPath)
+          } catch (error) {
+            // The original never moved: take our copy back out so the state
+            // is exactly as before (or pin the legacy tree if we cannot).
+            if (!discardCopy()) pinHidden()
+            throw error
+          }
+          viaCopy = true
         }
       } catch (error) {
-        if (!moved) {
-          // Nothing moved: drop our scaffolding so the legacy tree is as before.
-          try {
-            _unlinkMigration(manifestPath)
-          } catch {
-            // never written / already gone
-          }
-        }
+        if (!moved && !viaCopy) dropScaffolding()
         throw error
       }
       _ensurePrivateDir(paths.visibleDir)
-      linkDir(paths.visibleDir, paths.hiddenDir, linkType)
+      try {
+        linkDir(paths.visibleDir, paths.hiddenDir, linkType)
+      } catch (error) {
+        // No compat link. If the legacy path is still free, undo the move so
+        // every process keeps a valid config dir; otherwise the data stays in
+        // ~/rox and the caller must restart onto it.
+        if (!_pathPresent(paths.hiddenDir)) {
+          if (moved) {
+            try {
+              rename(paths.visibleDir, paths.hiddenDir)
+              if (originalMode !== undefined) {
+                try {
+                  _chmodMigration(paths.hiddenDir, originalMode)
+                } catch {
+                  // best effort
+                }
+              }
+              dropScaffolding()
+              throw error
+            } catch (rollbackError) {
+              if (rollbackError === error) throw error
+            }
+          } else {
+            try {
+              rename(migratedPath, paths.hiddenDir)
+              if (!discardCopy()) pinHidden()
+              dropScaffolding()
+              throw error
+            } catch (rollbackError) {
+              if (rollbackError === error) throw error
+            }
+          }
+        }
+        const result = done('migrated', {
+          manifest: buildVisibleHomeManifest(paths.visibleDir, { hash: false }),
+          diagnostics: ['storage.migration.compatLinkMissing'],
+          announceToast: true,
+          relaunchRequired: true,
+        })
+        result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summary)
+        return result
+      }
       const after = buildVisibleHomeManifest(paths.visibleDir, { hash: false })
       const equal = visibleHomeManifestsEqual(manifest, after)
       if (equal) {
@@ -1406,52 +1560,54 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     // that failed halfway never lets its partial copy (or later writes to it)
     // win a retry, and read-only resolution keeps the pre-merge choice.
     _ensurePrivateDir(paths.visibleDir)
-    const previous = readMergeIncompleteMarker(paths.visibleDir)
+    const hiddenId = _treeId(paths.hiddenDir)
+    let previous = readMergeIncompleteMarker(paths.visibleDir)
+    // A snapshot of a different hidden tree (the original was renamed away
+    // and something recreated `~/.rox`) is stale: take a fresh one.
+    if (previous && !_markerMatchesHidden(previous, paths.hiddenDir)) previous = undefined
     const hiddenHasData = previous?.hiddenHasData ?? roxHomeHasUserData(paths.hiddenDir)
     const visibleHasData = previous?.visibleHasData ?? roxHomeHasUserData(paths.visibleDir)
-    if (!previous) {
-      const marker: MergeIncompleteMarker = {
-        startedAt: options?.now?.() ?? Date.now(),
-        hiddenHasData,
-        visibleHasData,
-        // Until the merge completes, the intact legacy home wins whenever it
-        // holds user data (a partial ~/rox is mixed); ~/rox only when the
-        // legacy home had nothing to lose.
-        choice: hiddenHasData || !visibleHasData ? 'hidden' : 'visible',
-      }
-      const markerPath = mergeIncompleteMarkerPath(paths.visibleDir)
-      mkdirSync(_dirnameMigration(markerPath), { recursive: true, mode: 0o700 })
-      // Strict: without the marker a partial merge could later win.
-      _writeMigrationFile(markerPath, `${JSON.stringify(marker)}\n`, { encoding: 'utf8', mode: 0o600 })
+    const marker: MergeIncompleteMarker = previous ?? {
+      startedAt: options?.now?.() ?? Date.now(),
+      hiddenHasData,
+      visibleHasData,
+      // Until the merge completes, the intact legacy home wins whenever it
+      // holds user data (a partial ~/rox is mixed); ~/rox only when the
+      // legacy home had nothing to lose.
+      choice: hiddenHasData || !visibleHasData ? 'hidden' : 'visible',
+      ...(hiddenId ? { hiddenId } : {}),
     }
+    // Strict: without the marker a partial merge could later win.
+    if (!previous) _writeMergeIncompleteMarker(paths.visibleDir, marker)
     const preferHidden = hiddenHasData && !visibleHasData
     const preferVisible = visibleHasData && !hiddenHasData
-    const conflicts: string[] = []
     const conflictsRoot = join(paths.visibleDir, ROX_HOME_MIGRATION_DIR_NAME, 'conflicts')
+    // Per attempt: a retry never overwrites an earlier stash (it may be the
+    // only copy left of a losing file). Same-attempt collisions get a suffix.
+    const attemptRoot = join(conflictsRoot, timestamp)
+    const freeTarget = (rel: string): string => {
+      const base = join(attemptRoot, rel)
+      if (!_pathPresent(base)) return base
+      for (let n = 1; ; n++) {
+        const candidate = `${base}.${n}`
+        if (!_pathPresent(candidate)) return candidate
+      }
+    }
     const stash = (source: string, rel: string): void => {
-      const target = join(conflictsRoot, rel)
-      _copyFilePreservingMeta(source, target, _lstatMigration(source))
-      conflicts.push(rel)
+      _copyFilePreservingMeta(source, freeTarget(rel), _lstatMigration(source))
     }
     // A legacy directory where `~/rox` has a file: keep the whole subtree.
     const stashTree = (source: string, rel: string): void => {
       const st = _lstatMigration(source)
-      const target = join(conflictsRoot, rel)
       if (st.isSymbolicLink()) {
+        const target = freeTarget(rel)
         mkdirSync(_dirnameMigration(target), { recursive: true })
-        try {
-          _symlinkMigration(_readlinkMigration(source), target)
-        } catch (error) {
-          if ((error as NodeJS.ErrnoException | null)?.code !== 'EEXIST') throw error
-        }
-        conflicts.push(rel)
+        _symlinkMigration(_readlinkMigration(source), target)
         return
       }
       if (st.isDirectory()) {
-        mkdirSync(target, { recursive: true })
-        const names = _readdirMigration(source)
-        if (names.length === 0) conflicts.push(`${rel}/`)
-        for (const name of names) stashTree(join(source, name), `${rel}/${name}`)
+        mkdirSync(join(attemptRoot, rel), { recursive: true })
+        for (const name of _readdirMigration(source)) stashTree(join(source, name), `${rel}/${name}`)
         return
       }
       if (st.isFile()) stash(source, rel)
@@ -1522,16 +1678,39 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       if (name === ROX_HOME_MIGRATION_MANIFEST_NAME) continue
       mergeEntry(name)
     }
-    rename(paths.hiddenDir, `${paths.hiddenDir}.migrated-${timestamp}`)
-    linkDir(paths.visibleDir, paths.hiddenDir, linkType)
+    const mergedFrom = `${paths.hiddenDir}.migrated-${timestamp}`
+    rename(paths.hiddenDir, mergedFrom)
+    // The merge is complete in ~/rox from here on: the marker must not keep
+    // pointing processes at a legacy path that is gone (or gets recreated).
+    _removeMergeIncompleteMarker(paths.visibleDir)
+    const conflicts = _listConflicts(conflictsRoot)
+    const diagnostics = conflicts.length > 0 ? ['storage.migration.conflictsKept'] : []
     try {
-      _unlinkMigration(mergeIncompleteMarkerPath(paths.visibleDir))
-    } catch {
-      // already gone
+      linkDir(paths.visibleDir, paths.hiddenDir, linkType)
+    } catch (error) {
+      // Legacy path still free: put the original back (state as before the
+      // final step, marker restored; a retry re-merges identical files).
+      if (!_pathPresent(paths.hiddenDir)) {
+        try {
+          rename(mergedFrom, paths.hiddenDir)
+          _writeMergeIncompleteMarker(paths.visibleDir, marker)
+          throw error
+        } catch (rollbackError) {
+          if (rollbackError === error) throw error
+        }
+      }
+      const result = done('merged', {
+        conflicts,
+        diagnostics: [...diagnostics, 'storage.migration.compatLinkMissing'],
+        announceToast: true,
+        relaunchRequired: true,
+      })
+      result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summarizeVisibleHomeManifest(manifest))
+      return result
     }
     const result = done('merged', {
-      conflicts: conflicts.sort(),
-      diagnostics: conflicts.length > 0 ? ['storage.migration.conflictsKept'] : [],
+      conflicts,
+      diagnostics,
       announceToast: true,
     })
     result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summarizeVisibleHomeManifest(manifest))
@@ -1578,12 +1757,7 @@ export function revertVisibleRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
   if (flagActive) {
     return { ...base, outcome: 'revert-refused', diagnostics: ['storage.migration.revertRefusedFlagActive'] }
   }
-  let conflictEntries: string[] = []
-  try {
-    conflictEntries = _readdirMigration(join(paths.visibleDir, ROX_HOME_MIGRATION_DIR_NAME, 'conflicts'))
-  } catch {
-    conflictEntries = []
-  }
+  const conflictEntries = _listConflicts(join(paths.visibleDir, ROX_HOME_MIGRATION_DIR_NAME, 'conflicts'))
   if (conflictEntries.length > 0) {
     return {
       ...base,
