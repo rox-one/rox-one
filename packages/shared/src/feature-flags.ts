@@ -228,3 +228,23 @@ export const FEATURE_FLAGS = {
     return isPagesSharingEnabled();
   },
 } as const;
+
+// W1-04 (#1501) — MIG-06 Dossier export into the local contact store.
+/**
+ * Workbench flag id for the Dossier → contact-card export
+ * (`directory:exportDossier`). Mirrors `WORKBENCH_FLAG.contactsDossierExportV1`
+ * in `packages/core/src/platform/workbench/flags.ts`.
+ */
+export const DOSSIER_EXPORT_WORKBENCH_FLAG = 'contacts.dossier-export.v1';
+
+/**
+ * Server-evaluated check for the Dossier export IPC (same shape as
+ * `isEntitiesLinksEnabled`). The workbench flag is authoritative;
+ * `CRAFT_FEATURE_DOSSIER_EXPORT=1|0` is an explicit override for tests.
+ * Defaults to DISABLED: while off, the handler writes nothing.
+ */
+export function isDossierExportEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_DOSSIER_EXPORT'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(DOSSIER_EXPORT_WORKBENCH_FLAG) === true;
+}
