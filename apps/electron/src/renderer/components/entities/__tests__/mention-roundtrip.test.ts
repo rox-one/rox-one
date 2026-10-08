@@ -484,7 +484,7 @@ describe('a mention right after a literal `!` (#1505 fix3)', () => {
   const text = (value: string, marks?: JSONContent['marks']): JSONContent => ({ type: 'text', text: value, ...(marks ? { marks } : {}) })
   const para = (...content: JSONContent[]): JSONContent => ({ type: 'paragraph', content })
   const doc = (...content: JSONContent[]): JSONContent => ({ type: 'doc', content })
-  const shape = (editor: Editor) => (editor.getJSON().content ?? []).map((node) => [node.type, (node.content ?? []).map((c) => c.type === 'text' ? c.text : c.type)])
+  const shape = (editor: Editor) => (editor.getJSON().content ?? []).map((node) => [node.type, (node.content ?? []).map((c: JSONContent) => c.type === 'text' ? String(c.text ?? '') : c.type)])
 
   it('legacy (Notes): `Done!` + picker chip saves `Done\\![[task:1]]` and reloads as text + mention', () => {
     const editor = makeEditor('legacy', 'Done!')
