@@ -20,12 +20,22 @@ import { modeRegistryStore } from '../useModes'
 import { resolveLucideIcon } from '../lucide-icon'
 import { isSurfaceActive } from '../surface-activity'
 import {
+  DEDICATED_FLAG_ATOMS,
+  connectShellStore,
   createShellFlagContextKeyProvider,
+  currentShellFlags,
   enabledShellFlagsAtom,
+  genericFlagIds,
   installShellFlagBridges,
   pushSurfaceRoutesToMain,
+  shellFlagBridgeStore,
   workbenchFlagAtom,
 } from '../unified-flags'
+import { getShellStore, setShellStore } from '../shell-store'
+import { isActionFlagEnabled } from '@/actions/hotkeys'
+import { featureWorkbenchHarnessAgentTeamsAtom } from '@/atoms/unified-shell'
+import { panelRouteKey } from '@/components/app-shell/panel-route-key'
+import type { NavigationState } from '../../../shared/types'
 import { createSlotRegistry } from '../slots'
 import {
   GLOBAL_CREATE_OWNER_FLAGS,
@@ -51,6 +61,7 @@ const ctx = (extra: Partial<KeybindingContext> = {}): KeybindingContext =>
 
 afterEach(() => {
   __resetModeRegistryForTests()
+  setShellStore(null)
   resetUnifiedSurfaceRoutes()
   const store = getDefaultStore()
   store.set(panelStackAtom, [])
@@ -206,13 +217,18 @@ describe('quick panels are Messenger-only (UI-SPEC §15)', () => {
     expect(isSurfaceActive('messenger', store)).toBe(false)
   })
 
-  it('the keymap context reads the focused panel from the shared store', () => {
-    setUnifiedSurfaceRoutesEnabled(['messenger'])
-    const store = getDefaultStore()
-    seedPanels(store, 'm')
+  it('the keymap context reads the focused panel from the connected Provider store', () => {
+    const provider = createStore()
+    const disconnect = connectShellStore(provider)
+    provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), true)
+    seedPanels(provider, 'm')
     expect(evaluateWhen('messengerActive', snapshotKeybindingContext())).toBe(true)
-    seedPanels(store, 'n')
+    seedPanels(provider, 'n')
     expect(evaluateWhen('messengerActive', snapshotKeybindingContext())).toBe(false)
+    // The default store's panel stack is irrelevant once connected.
+    seedPanels(getDefaultStore(), 'm')
+    expect(evaluateWhen('messengerActive', snapshotKeybindingContext())).toBe(false)
+    disconnect()
   })
 
   it('the omnibox context provider exposes messengerActive for its store', () => {
@@ -317,28 +333,116 @@ describe('surface gate → main', () => {
   })
 })
 
-describe('one jotai store for React and module-level readers', () => {
-  it('main.tsx hands the default store to the Provider', () => {
+describe('W1-07 gates read the <JotaiProvider> store (main.tsx unchanged)', () => {
+  it('main.tsx keeps the baseline Provider (no store prop) and mounts the bridge', () => {
     const main = read('main.tsx')
-    expect(main).toContain('<JotaiProvider store={getDefaultStore()}>')
-    expect(main).not.toContain('<JotaiProvider>')
+    expect(main).toContain('<JotaiProvider>')
+    expect(main).not.toMatch(/<JotaiProvider[^>]*store=/)
+    expect(main).not.toContain('getDefaultStore')
+    expect(main).toContain('<ShellStoreBridge />')
+    const bridge = read('platform/ShellStoreBridge.tsx')
+    expect(bridge).toContain('const store = useStore()')
+    expect(bridge).toContain('useLayoutEffect(() => connectShellStore(store), [store])')
   })
 
-  it('the module-level readers use getDefaultStore() (= the Provider store)', () => {
-    expect(read('actions/registry.tsx')).toContain('getDefaultStore().get(enabledShellFlagsAtom)')
-    expect(read('actions/shell-shortcuts.ts')).toContain('getDefaultStore().get(enabledShellFlagsAtom)')
-    expect(read('platform/unified-flags.ts')).toContain('installShellFlagBridges(store: ReturnType<typeof getDefaultStore> = getDefaultStore())')
+  it('gates outside React use the shell store; baseline Omnibox providers keep getDefaultStore()', () => {
+    expect(read('actions/registry.tsx')).toContain('shellFlags ??= currentShellFlags()')
+    expect(read('actions/registry.tsx')).not.toContain('getDefaultStore')
+    expect(read('actions/shell-shortcuts.ts')).toContain('isTakeoverActive(takeover, currentShellFlags())')
+    expect(read('actions/shell-shortcuts.ts')).not.toContain('getDefaultStore')
+    expect(read('platform/surface-activity.ts')).toContain('store: StoreReader = getShellStore()')
+    const bootstrap = read('platform/omnibox-bootstrap.ts')
+    expect(bootstrap).toContain('getFlags: () => currentShellFlags()')
+    expect(bootstrap).toContain('const store = getDefaultStore()')
+    expect(bootstrap).toContain('() => Array.from(store.get(sessionMetaMapAtom).values())')
+    expect(read('platform/OmniboxHost.tsx')).toContain('const store = getDefaultStore()')
   })
 
-  it('a runtime flag flip in the shared store reaches the route gate', () => {
-    const store = createStore()
-    installShellFlagBridges(store)
+  it('a runtime flag flip in the Provider store updates the route gate and the hotkey gate', () => {
+    const provider = createStore()
+    const quick = actions['messenger.quickPanelDocs'] as ActionDefinition
+    installShellFlagBridges(getDefaultStore())
+    const disconnect = connectShellStore(provider)
+    expect(getShellStore()).toBe(provider)
+    expect(shellFlagBridgeStore()).toBe(provider)
     expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(false)
-    store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), true)
-    expect(store.get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeMessengerV1)).toBe(true)
+    expect(isActionFlagEnabled(quick, currentShellFlags())).toBe(false)
+
+    provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), true)
     expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(true)
-    store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+    expect(isActionFlagEnabled(quick, currentShellFlags())).toBe(true)
+    // The default store did not change and no longer drives the gate.
+    expect(getDefaultStore().get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeMessengerV1)).toBe(false)
+    getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeCalendarV1), true)
+    expect(isUnifiedSurfaceRouteEnabled('calendar')).toBe(false)
+    getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeCalendarV1), false)
+
+    provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
     expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(false)
+    expect(isActionFlagEnabled(quick, currentShellFlags())).toBe(false)
+
+    disconnect()
+    expect(getShellStore()).toBe(getDefaultStore())
+    expect(shellFlagBridgeStore()).toBeNull()
+  })
+
+  it('the Omnibox shell-flag provider resolves the store per pull (created before connect)', () => {
+    const omnibox = createShellFlagContextKeyProvider()
+    const provider = createStore()
+    const disconnect = connectShellStore(provider)
+    expect(omnibox.pull()[WORKBENCH_FLAG.modeMessengerV1]).toBe(false)
+    provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), true)
+    expect(omnibox.pull()[WORKBENCH_FLAG.modeMessengerV1]).toBe(true)
+    disconnect()
+  })
+})
+
+describe('panel route key resets per unified surface', () => {
+  const ctx = { activeWorkspaceId: 'ws1', unavailableWorkspaceSlug: null, activeSessionWorkingDirectory: null }
+  const surface = (id: string) => ({ navigator: 'surface', surface: id, details: null }) as unknown as NavigationState
+
+  it('messenger, calendar, goals and contacts get distinct keys', () => {
+    const keys = ['messenger', 'calendar', 'goals', 'contacts'].map((id) => panelRouteKey(surface(id), ctx))
+    expect(new Set(keys).size).toBe(4)
+  })
+
+  it('every non-surface key is byte-identical to the baseline array', () => {
+    const notes = { navigator: 'notes', details: null } as unknown as NavigationState
+    expect(panelRouteKey(notes, ctx)).toBe(JSON.stringify(['ws1', null, 'notes', null, null, null, null, null, null, null, null]))
+    expect(read('components/app-shell/MainContentPanel.tsx')).toContain('const routeKey = panelRouteKey(navState, {')
+  })
+})
+
+describe('dedicated flag atoms report their real value', () => {
+  it('harnessAgentTeams follows its Appearance atom in the shell flags and Omnibox keys', () => {
+    const id = WORKBENCH_FLAG.harnessAgentTeams
+    expect(DEDICATED_FLAG_ATOMS.get(id)).toBe(featureWorkbenchHarnessAgentTeamsAtom)
+    expect(genericFlagIds()).not.toContain(id)
+    const store = createStore()
+    const omnibox = createShellFlagContextKeyProvider(store)
+    expect(omnibox.keys).toContain(id)
+    store.set(featureWorkbenchHarnessAgentTeamsAtom, true)
+    expect(store.get(enabledShellFlagsAtom).has(id)).toBe(true)
+    expect(omnibox.pull()[id]).toBe(true)
+    store.set(featureWorkbenchHarnessAgentTeamsAtom, false)
+    expect(store.get(enabledShellFlagsAtom).has(id)).toBe(false)
+    expect(omnibox.pull()[id]).toBe(false)
+  })
+})
+
+describe('global create menu icons and flags', () => {
+  it('icons resolve through resolveLucideIcon (helpers never render)', () => {
+    const menu = read('platform/GlobalCreateMenu.tsx')
+    expect(menu).toContain('resolveLucideIcon(entry.icon)')
+    expect(menu).not.toContain('function iconFor')
+    expect(menu).not.toContain("from 'lucide-react'")
+    expect(resolveLucideIcon('Plus')).not.toBeNull()
+    expect(resolveLucideIcon('createLucideIcon')).toBeNull()
+    expect(resolveLucideIcon('icons')).toBeNull()
+  })
+
+  it('hasFlag is flagList(flag).length > 0', () => {
+    expect(read('platform/global-create.ts')).toContain('return flagList(flag).length > 0')
   })
 })
 
