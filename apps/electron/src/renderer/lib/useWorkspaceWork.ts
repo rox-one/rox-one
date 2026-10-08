@@ -4,6 +4,7 @@ import { getWorkspaceWorkClient, workspaceWorkFailure, type WorkspaceWorkErrorCo
 import { hashKey } from '@tanstack/react-query'
 import { roxQueryClient } from './query/client'
 import { roxKeys } from './query/keys'
+import { sharedRead } from './query/shared-read'
 
 /**
  * PERF-09 (#1576): the snapshot lives in the shared query cache (memory only,
@@ -46,18 +47,23 @@ export function useWorkspaceWork(workspaceId: string) {
     if (!cached || cached.revision <= next.revision) client.setQueryData(key, next)
   }, [scope])
 
-  const refresh = useCallback(async () => {
+  const load = useCallback(async (options: { join?: boolean; minRevision?: number } = {}) => {
     if (!scope.active) return
     const request = ++scope.request
     setLoading(true)
     const run = (async () => {
       try {
-        // fetchQuery dedupes: two views opening the same workspace share one read.
-        const next = await roxQueryClient().fetchQuery({
-          queryKey: roxKeys.workspaceWork(scope.workspaceId),
-          queryFn: () => getWorkspaceWorkClient(scope.workspaceId).read(),
-          staleTime: 0,
+        const client = roxQueryClient()
+        const key = roxKeys.workspaceWork(scope.workspaceId)
+        const read = (join: boolean) => sharedRead(client, key, () => getWorkspaceWorkClient(scope.workspaceId).read(), {
+          join, replaces: (next, cached) => !cached || cached.revision <= next.revision,
         })
+        // A mount read joins one already in flight (two views, one RPC); a
+        // read that started before the announced revision cannot answer for it.
+        let next = await read(options.join === true)
+        if (options.minRevision !== undefined && next.revision < options.minRevision && scope.active && scope.request === request) {
+          next = await read(false)
+        }
         if (!scope.active || scope.request !== request) return
         scope.verified = true
         accept(next)
@@ -71,6 +77,7 @@ export function useWorkspaceWork(workspaceId: string) {
     scope.inflight = run
     await run
   }, [scope, accept])
+  const refresh = useCallback(() => load(), [load])
 
   useEffect(() => {
     scope.active = true
@@ -82,11 +89,11 @@ export function useWorkspaceWork(workspaceId: string) {
       scope.verified = true
       setLoading(false)
     } else {
-      void refresh()
+      void load({ join: true })
     }
     let off: (() => void) | undefined
     try { off = getWorkspaceWorkClient(scope.workspaceId).subscribe(revision => {
-      if (scope.active && revision > (current.current?.revision ?? -1)) void refresh()
+      if (scope.active && revision > (current.current?.revision ?? -1)) void load({ join: true, minRevision: revision })
     }) } catch { /* The read reports the same unavailable API visibly. */ }
     // Another view (or a mutation elsewhere) refreshed the shared entry.
     const hash = hashKey(roxKeys.workspaceWork(scope.workspaceId))
@@ -96,7 +103,7 @@ export function useWorkspaceWork(workspaceId: string) {
       if (next && next.workspaceId === scope.workspaceId && next.revision > (current.current?.revision ?? -1)) accept(next)
     })
     return () => { scope.active = false; scope.request++; off?.(); offCache() }
-  }, [scope, refresh, accept])
+  }, [scope, load, accept])
 
   const mutate = useCallback(async (input: WorkspaceWorkMutation | WorkspaceWorkRemoval, remove = false, expectedRevision?: number): Promise<boolean> => {
     if (!scope.active || scope.pending) return false
@@ -116,14 +123,14 @@ export function useWorkspaceWork(workspaceId: string) {
     } catch (failure) {
       if (!scope.active) return false
       const next = workspaceWorkFailure(failure)
-      if (next.code === 'conflict') await refresh()
+      if (next.code === 'conflict') await load()
       if (scope.active) setError(next)
       return false
     } finally {
       scope.pending = false
       if (scope.active) setPending(false)
     }
-  }, [scope, accept, refresh])
+  }, [scope, accept, load])
 
   const visible = snapshot?.workspaceId === workspaceId ? snapshot : cachedSnapshot(workspaceId)
   return {

@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { ElectronAPI } from '../../../shared/types'
 import type { WorkspaceWorkSnapshot } from '@rox/shared/workspace-work'
 import { queryKeyDomain, queryKeyWorkspace, roxKeys, type InboxQuerySource, type RoxQueryDomain } from './keys'
+import { resetSharedReads } from './shared-read'
 
 export type RoxQueryEventAPI = Partial<Pick<ElectronAPI,
   | 'onWorkspaceWorkChanged'
@@ -65,6 +66,7 @@ export function startRoxQueryEventBridge(client: QueryClient, api: RoxQueryEvent
   on(api.onMessagingPendingChanged, () => invalidateDomain(client, 'inbox', null, inboxSource('senders')))
   on(api.onReconnected, () => { void client.invalidateQueries() })
   on(api.onIdentityChanged, () => {
+    resetSharedReads(client)
     client.clear()
     options.onIdentityChanged?.()
   })

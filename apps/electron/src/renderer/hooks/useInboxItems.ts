@@ -25,6 +25,7 @@ import { useInboxActorContext } from './useInboxActorContext'
 import { toErrorMessage } from '@/lib/errors'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
+import { sharedRead } from '@/lib/query/shared-read'
 
 const EMPTY_MAP = new Map<string, never[]>()
 /**
@@ -101,16 +102,20 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
       const current = () => contextRef.current === captured && requests.current[key] === requestId
       setLoading((previous) => ({ ...previous, [key]: true }))
       try {
-        // Shared per (workspace, verified actor, source); concurrent reads are deduped.
-        const value = await roxQueryClient().fetchQuery({
-          queryKey: roxKeys.inbox(workspaceId, captured.actorKey!, key),
-          queryFn: async () => {
+        // Shared per (workspace, verified actor, source). Mount/focus/poll reads
+        // reuse a result younger than INBOX_SHARED_FRESH_MS or join one in
+        // flight; a change event (`which`) always reads.
+        const client = roxQueryClient()
+        const queryKey = roxKeys.inbox(workspaceId, captured.actorKey!, key)
+        const shared = client.getQueryState<T>(queryKey)
+        const value = !which && shared?.status === 'success' && !shared.isInvalidated && shared.data !== undefined
+          && Date.now() - shared.dataUpdatedAt < INBOX_SHARED_FRESH_MS
+          ? shared.data
+          : await sharedRead(client, queryKey, async () => {
             const request = fn()
             if (!request) throw new Error('This source is unavailable in the current runtime')
             return (await request) ?? ([] as unknown as T)
-          },
-          staleTime: which ? 0 : INBOX_SHARED_FRESH_MS,
-        })
+          }, { join: !which })
         if (!current()) return
         set(value)
         setHasSnapshot((previous) => ({ ...previous, [key]: true }))

@@ -1,6 +1,7 @@
 import type { NoteSummary } from '../../../shared/types'
 import { roxQueryClient } from './client'
 import { roxKeys } from './keys'
+import { sharedRead } from './shared-read'
 
 /**
  * PERF-09 (#1576): Notes keeps its list and its parsed-task cache in the
@@ -22,22 +23,18 @@ export function cachedNotesList(workspaceId: string | null | undefined): NoteSum
 }
 
 /**
- * Read the list through the shared cache: Home's notes widget and the Notes
- * page share one in-flight LIST (local LIST rebuilds the vault index), and
- * whichever reads first warms the other.
+ * Read the list and publish it to the shared cache, so Home's notes widget
+ * and the Notes page paint each other's last list. Every call reads (Notes
+ * refreshes after its own mutations and on change events: the newer request
+ * must win), and an older read never overwrites a newer list.
  */
 export function fetchNotesList(workspaceId: string, read: () => Promise<NoteSummary[]>): Promise<NoteSummary[]> {
-  return roxQueryClient().fetchQuery({
-    queryKey: roxKeys.notesList(workspaceId),
-    queryFn: async () => {
-      const notes = await read()
-      if (!Array.isArray(notes)) throw new Error('Invalid notes list')
-      return notes
-    },
-    staleTime: 0,
+  return sharedRead(roxQueryClient(), roxKeys.notesList(workspaceId), async () => {
+    const notes = await read()
+    if (!Array.isArray(notes)) throw new Error('Invalid notes list')
+    return notes
   })
 }
-
 
 /** The workspace's task cache (one shared instance per workspace while it lives in the cache). */
 export function notesTaskCache<T>(workspaceId: string | null | undefined): NotesTaskCache<T> {

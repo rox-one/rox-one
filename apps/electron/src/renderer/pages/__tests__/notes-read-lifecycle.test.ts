@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import ts from 'typescript'
 import { capabilityErrorCode, readScopedCapability } from '../../lib/scoped-capability-read'
+import { createRoxQueryClient, resetRoxQueryClientForTests } from '../../lib/query/client'
+import { fetchNotesList } from '../../lib/query/notes-cache'
 
 // Execute the actual NotesPage committed lease and list/assets callbacks with
 // controlled render/commit/dispose timing. These are UI lifecycle fixtures,
@@ -33,6 +35,8 @@ const pending = <T>() => {
   return { promise, resolve, reject }
 }
 function fixture() {
+  // PERF-09: the list read goes through the shared query cache; isolate it per fixture.
+  resetRoxQueryClientForTests(createRoxQueryClient())
   const refs = { notesListRequestRef: { current: 0 }, assetsRequestRef: { current: 0 },
     readWorkspaceGenerationRef: { current: 0 },
     readWorkspaceRef: { current: undefined as string | undefined }, readsMountedRef: { current: false } }
@@ -41,7 +45,7 @@ function fixture() {
   const render = (activeWorkspaceId: string | undefined, api: Record<string, unknown>) => {
     const bindings = { ...refs, activeWorkspaceId,
       React: { useLayoutEffect: (create: () => () => void) => { commit = create }, useCallback: (fn: unknown) => fn },
-      window: { electronAPI: api }, readScopedCapability, capabilityErrorCode,
+      window: { electronAPI: api }, readScopedCapability, capabilityErrorCode, fetchNotesList,
       soupDocumentListResult: () => ({ result: {} }), isClaimableLive: () => true,
       setNotesReadError: (value: unknown) => events.push(['notesError', value]),
       setAssetsReadError: (value: unknown) => events.push(['assetsError', value]),

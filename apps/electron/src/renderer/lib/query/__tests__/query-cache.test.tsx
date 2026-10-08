@@ -25,6 +25,7 @@ import {
 } from '../persist'
 import { startRoxQueryEventBridge } from '../event-bridge'
 import { cachedNotesList, fetchNotesList, notesTaskCache } from '../notes-cache'
+import { resetSharedReads, sharedRead } from '../shared-read'
 import { useWorkspaceWork } from '../../useWorkspaceWork'
 
 installDom()
@@ -63,15 +64,68 @@ describe('keys', () => {
 })
 
 describe('request dedupe', () => {
-  it('concurrent reads of one key make one request', async () => {
+  const deferred = <T,>() => {
+    let resolve!: (value: T) => void
+    const promise = new Promise<T>(yes => { resolve = yes })
+    return { promise, resolve }
+  }
+
+  it('concurrent joining reads of one key make one request', async () => {
     let calls = 0
-    const read = async () => { calls++; await flush(); return [{ id: 'n1' }] as never[] }
-    const [a, b, c] = await Promise.all([fetchNotesList('ws', read), fetchNotesList('ws', read), fetchNotesList('ws', read)])
+    const client = roxQueryClient()
+    const read = async () => { calls++; await flush(); return [{ id: 'n1' }] }
+    const key = roxKeys.notesList('ws')
+    const [a, b, c] = await Promise.all([1, 2, 3].map(() => sharedRead(client, key, read, { join: true })))
     expect(calls).toBe(1)
     expect(a).toBe(b)
     expect(b).toBe(c)
     expect(cachedNotesList('ws')).toEqual([{ id: 'n1' }] as never[])
     expect(cachedNotesList('other')).toBeNull()
+  })
+
+  it('a non-joining read starts its own request and an older one never overwrites it', async () => {
+    const client = roxQueryClient()
+    const key = roxKeys.notesList('ws')
+    const older = deferred<Array<{ id: string }>>()
+    const oldRead = sharedRead(client, key, () => older.promise, { join: true })
+    let calls = 0
+    await sharedRead(client, key, async () => { calls++; return [{ id: 'newer' }] })
+    expect(calls).toBe(1)
+    older.resolve([{ id: 'older' }])
+    expect(await oldRead).toEqual([{ id: 'older' }])
+    expect(client.getQueryData<unknown>(key)).toEqual([{ id: 'newer' }])
+  })
+
+  it('every Notes list refresh reads, newest wins', async () => {
+    let calls = 0
+    const first = deferred<never[]>()
+    const oldRead = fetchNotesList('ws', () => { calls++; return calls === 1 ? first.promise : Promise.resolve([{ id: 'new' }] as never[]) })
+    await fetchNotesList('ws', () => { calls++; return Promise.resolve([{ id: 'new' }] as never[]) })
+    first.resolve([{ id: 'old' }] as never[])
+    await oldRead
+    expect(calls).toBe(2)
+    expect(cachedNotesList('ws')).toEqual([{ id: 'new' }] as never[])
+  })
+
+  it('a revision check keeps the newer snapshot', async () => {
+    const client = roxQueryClient()
+    const key = roxKeys.workspaceWork('ws')
+    const replaces = (next: { revision: number }, cached?: { revision: number }) => !cached || cached.revision <= next.revision
+    client.setQueryData(key, { revision: 5 })
+    await sharedRead(client, key, async () => ({ revision: 4 }), { replaces })
+    expect(client.getQueryData<unknown>(key)).toEqual({ revision: 5 })
+  })
+
+  it('an identity reset fences reads still in flight', async () => {
+    const client = roxQueryClient()
+    const key = roxKeys.notesList('ws')
+    const pendingRead = deferred<Array<{ id: string }>>()
+    const running = sharedRead(client, key, () => pendingRead.promise)
+    resetSharedReads(client)
+    client.clear()
+    pendingRead.resolve([{ id: 'previous identity' }])
+    await running
+    expect(client.getQueryData<unknown>(key)).toBeUndefined()
   })
 
   it('the notes task cache is shared per workspace and separate across workspaces', () => {
@@ -128,9 +182,9 @@ describe('persistence', () => {
     const record = buildPersistedRoxQueryCache(seed(), 'ws-a', Date.now())!
     const fresh = createRoxQueryClient()
     restoreRoxQueryCache(fresh, record)
-    expect(fresh.getQueryData(roxKeys.notesList('ws-a'))).toEqual([{ id: 'n1', title: 'Note' }])
+    expect(fresh.getQueryData<unknown>(roxKeys.notesList('ws-a'))).toEqual([{ id: 'n1', title: 'Note' }])
     expect(fresh.getQueryState(roxKeys.notesList('ws-a'))?.isInvalidated).toBe(true)
-    expect(fresh.getQueryData(roxKeys.notesList('ws-b'))).toBeUndefined()
+    expect(fresh.getQueryData<unknown>(roxKeys.notesList('ws-b'))).toBeUndefined()
   })
 
   it('writes the last-used workspace at idle time and restores it on start', async () => {
@@ -150,7 +204,7 @@ describe('persistence', () => {
     const next = createRoxQueryClient()
     const restored = startRoxQueryPersistence(next, storage, { debounceMs: 0, idle: run => { run(); return () => {} } })
     await restored.ready
-    expect(next.getQueryData(roxKeys.notesList('ws-a'))).toEqual([{ id: 'n1' }])
+    expect(next.getQueryData<unknown>(roxKeys.notesList('ws-a'))).toEqual([{ id: 'n1' }])
     restored.stop()
   })
 
@@ -161,7 +215,7 @@ describe('persistence', () => {
     const persistence = startRoxQueryPersistence(next, storage, { debounceMs: 0 })
     await persistence.clear()
     await persistence.ready
-    expect(next.getQueryData(roxKeys.notesList('ws-a'))).toBeUndefined()
+    expect(next.getQueryData<unknown>(roxKeys.notesList('ws-a'))).toBeUndefined()
     expect(storage.value()).toBeUndefined()
     persistence.stop()
   })
@@ -205,7 +259,7 @@ describe('event bridge', () => {
     const { api, emit } = fakeApi()
     const stop = startRoxQueryEventBridge(client, api, { onIdentityChanged: () => { cleared++ } })
     emit('onIdentityChanged')
-    expect(client.getQueryData(roxKeys.notesList('a'))).toBeUndefined()
+    expect(client.getQueryData<unknown>(roxKeys.notesList('a'))).toBeUndefined()
     expect(cleared).toBe(1)
     stop()
   })
@@ -273,6 +327,40 @@ describe('useWorkspaceWork on the shared cache', () => {
     expect(api.reads).toEqual(['ws', 'ws'])
     await unmountAgain()
     stop()
+  })
+})
+
+describe('useWorkspaceWork change events', () => {
+  it('a revision announced while a read is in flight is not answered by that older read', async () => {
+    let serverRevision = 3
+    const reads: number[] = []
+    const gates: Array<() => void> = []
+    const changed = new Set<(workspaceId: string, revision: number) => void>()
+    ;(window as unknown as { electronAPI: unknown }).electronAPI = {
+      workspaceWorkRead: async (workspaceId: string) => {
+        const revision = serverRevision
+        reads.push(revision)
+        await new Promise<void>(resolve => gates.push(resolve))
+        return { ...emptyWorkspaceWorkState(workspaceId), revision, access: { actorId: 'o', canWrite: true, canDelete: true, canManage: true }, members: [], conflicts: [] }
+      },
+      workspaceWorkWrite: async () => { throw new Error('unused') },
+      workspaceWorkDelete: async () => { throw new Error('unused') },
+      workspaceWorkSnapshotProfile: async () => null,
+      onWorkspaceWorkChanged: (callback: (workspaceId: string, revision: number) => void) => { changed.add(callback); return () => changed.delete(callback) },
+    }
+    let handle: ReturnType<typeof useWorkspaceWork> | null = null
+    function View() { handle = useWorkspaceWork('ws-event'); return null }
+    const root = createRoot(document.createElement('div'))
+    await act(async () => { root.render(<View />) })
+    expect(reads).toEqual([3])
+    serverRevision = 4
+    await act(async () => { for (const callback of changed) callback('ws-event', 4) })
+    await act(async () => { gates.shift()!(); await flush(); await flush() })
+    expect(reads).toEqual([3, 4])
+    await act(async () => { gates.shift()!(); await flush(); await flush() })
+    expect(handle!.snapshot?.revision).toBe(4)
+    expect(roxQueryClient().getQueryData<WorkspaceWorkSnapshot>(roxKeys.workspaceWork('ws-event'))?.revision).toBe(4)
+    await act(async () => { root.unmount() })
   })
 })
 
