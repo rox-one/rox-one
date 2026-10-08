@@ -1069,11 +1069,12 @@ function useNotes(workspaceId: string | null): { available: boolean; loaded: boo
     const offHydration = subscribeCachedNotesList(workspaceId, (notes) => {
       if (!cancelled && !fresh) setState({ available: true, loaded: true, notes })
     })
-    const load = () => fetchNotesList(workspaceId, () => api.listNotes(workspaceId)).then(
+    // Mount: joinable and skipped inside the SWR window; change events read fresh.
+    const load = (mount = false) => fetchNotesList(workspaceId, () => api.listNotes(workspaceId), { mount }).then(
       (notes) => { fresh = true; if (!cancelled) setState({ available: true, loaded: true, notes: Array.isArray(notes) ? notes : [] }) },
       () => { if (!cancelled) setState({ available: false, loaded: true, notes: [] }) },
     )
-    void load()
+    void load(true)
     const off = typeof api.onNotesChanged === 'function' ? api.onNotesChanged(() => { void load() }) : undefined
     return () => { cancelled = true; offHydration(); off?.() }
   }, [workspaceId])

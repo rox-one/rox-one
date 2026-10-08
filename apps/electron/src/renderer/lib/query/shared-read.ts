@@ -17,6 +17,8 @@ import { hashKey, type QueryClient, type QueryKey } from '@tanstack/react-query'
 export interface SharedReadOptions<T> {
   join?: boolean
   replaces?: (next: T, cached: T | undefined) => boolean
+  /** What goes into the cache (e.g. a metadata projection); the caller still gets the raw value. */
+  store?: (value: T) => unknown
 }
 
 interface KeyState {
@@ -46,6 +48,24 @@ export function fencedSetQueryData<T>(client: QueryClient, queryKey: QueryKey, v
   return true
 }
 
+/**
+ * Write a local mutation result (optimistic or confirmed) through to an
+ * existing entry, fenced like every other write. The entry keeps its read
+ * time and its invalidation, so a patch never makes an entry look freshly
+ * read: the SWR window and change events still decide when it is re-read.
+ * Nothing is written when there is no entry (nothing to keep warm).
+ */
+export function fencedPatchQueryData<T>(client: QueryClient, queryKey: QueryKey, update: (cached: T) => T, epoch = writeEpoch): boolean {
+  if (epoch !== writeEpoch) return false
+  const state = client.getQueryState<T>(queryKey)
+  if (!state || state.status !== 'success' || state.data === undefined) return false
+  const next = update(state.data)
+  if (next === state.data) return false
+  client.setQueryData<T>(queryKey, next, { updatedAt: state.dataUpdatedAt })
+  if (state.isInvalidated) void client.invalidateQueries({ queryKey, exact: true, refetchType: 'none' })
+  return true
+}
+
 export function sharedRead<T>(client: QueryClient, queryKey: QueryKey, read: () => Promise<T>, options: SharedReadOptions<T> = {}): Promise<T> {
   const hash = hashKey(queryKey)
   let byKey = states.get(client)
@@ -63,7 +83,7 @@ export function sharedRead<T>(client: QueryClient, queryKey: QueryKey, read: () 
       if (epoch === writeEpoch && states.get(client) === scope && seq > entry.written
         && (options.replaces ? options.replaces(value, client.getQueryData<T>(queryKey)) : true)) {
         entry.written = seq
-        fencedSetQueryData(client, queryKey, value, epoch)
+        fencedSetQueryData(client, queryKey, options.store ? options.store(value) : value, epoch)
       }
       return value
     } finally {

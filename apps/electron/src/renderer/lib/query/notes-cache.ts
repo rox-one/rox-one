@@ -1,8 +1,9 @@
 import { hashKey } from '@tanstack/react-query'
 import type { NoteSummary } from '../../../shared/types'
-import { roxQueryClient } from './client'
+import { isRecentlyRead, roxQueryClient } from './client'
 import { roxKeys } from './keys'
-import { sharedRead } from './shared-read'
+import { projectPersistedQueryData } from './persist'
+import { fencedPatchQueryData, sharedRead } from './shared-read'
 
 /**
  * PERF-09 (#1576): Notes keeps its list and its parsed-task cache in the
@@ -11,7 +12,10 @@ import { sharedRead } from './shared-read'
  * (PERF-AUDIT B6: the task cache used to die with the page and every visit
  * re-read every note).
  *
- * The list is persisted (metadata only); the task cache stays in memory.
+ * The cached list is metadata only (NoteSummary fields, in memory and on
+ * disk): in principal mode notes.LIST returns whole NoteDocuments, and the
+ * cache would otherwise keep every visited workspace's corpus alive. Callers
+ * get the raw list. The task cache stays in memory.
  */
 export interface NotesTaskCache<T> {
   readonly tasks: Map<string, T[]>
@@ -44,16 +48,43 @@ export function subscribeCachedNotesList(workspaceId: string, adopt: (notes: Not
 
 /**
  * Read the list and publish it to the shared cache, so Home's notes widget
- * and the Notes page paint each other's last list. Every call reads (Notes
- * refreshes after its own mutations and on change events: the newer request
- * must win), and an older read never overwrites a newer list.
+ * and the Notes page paint each other's last list. An older read never
+ * overwrites a newer list.
+ *
+ * - `mount: true` (a surface opening): joins a read already in flight, and
+ *   skips the RPC when the entry was read within ROX_REVALIDATE_AFTER_MS and
+ *   nothing invalidated it (the cached metadata list is returned).
+ * - default (change events, after a mutation, explicit refresh): always a
+ *   fresh read of its own; the newer request must win.
  */
-export function fetchNotesList(workspaceId: string, read: () => Promise<NoteSummary[]>): Promise<NoteSummary[]> {
-  return sharedRead(roxQueryClient(), roxKeys.notesList(workspaceId), async () => {
+export function fetchNotesList(workspaceId: string, read: () => Promise<NoteSummary[]>, options: { mount?: boolean } = {}): Promise<NoteSummary[]> {
+  const client = roxQueryClient()
+  const key = roxKeys.notesList(workspaceId)
+  if (options.mount) {
+    const cached = client.getQueryData<NoteSummary[]>(key)
+    if (Array.isArray(cached) && isRecentlyRead(client, key)) return Promise.resolve(cached)
+  }
+  return sharedRead(client, key, async () => {
     const notes = await read()
     if (!Array.isArray(notes)) throw new Error('Invalid notes list')
     return notes
-  })
+  }, { join: options.mount === true, store: notes => projectPersistedQueryData(key, notes) })
+}
+
+/**
+ * A save or rename result patched into the cached list (metadata only),
+ * fenced by the identity epoch captured when the mutation began.
+ */
+export function patchCachedNote(workspaceId: string, note: NoteSummary, epoch: number): boolean {
+  const key = roxKeys.notesList(workspaceId)
+  const [summary] = projectPersistedQueryData(key, [note]) as NoteSummary[]
+  return fencedPatchQueryData<NoteSummary[]>(roxQueryClient(), key, list => {
+    const index = list.findIndex(entry => entry?.id === note.id)
+    if (index < 0) return list
+    const next = list.slice()
+    next[index] = summary!
+    return next
+  }, epoch)
 }
 
 /** The workspace's task cache (one shared instance per workspace while it lives in the cache). */

@@ -57,7 +57,8 @@ import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboar
 import { NotesNavigationSidebar } from './notes/NotesNavigationSidebar'
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
-import { cachedNotesList, fetchNotesList, notesTaskCache, subscribeCachedNotesList } from '@/lib/query/notes-cache'
+import { cachedNotesList, fetchNotesList, notesTaskCache, patchCachedNote, subscribeCachedNotesList } from '@/lib/query/notes-cache'
+import { cacheWriteEpoch } from '@/lib/query/shared-read'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
@@ -709,6 +710,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const noteId = activeNote.id
     const workspaceId = activeWorkspaceId
     const opening = openNoteRequestRef.current
+    const cacheEpoch = cacheWriteEpoch()
     setMarkerBusy(true)
     setMarkerError(null)
     try {
@@ -734,6 +736,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setContent(result.note.content)
       setDirty(false)
       setNotes(previous => previous.map(note => note.id === noteId ? result.note : note))
+      patchCachedNote(workspaceId, result.note, cacheEpoch)
       setCommittedBlockTree(result.blockTree)
       setContentResolution(previous => previous && previous.status !== 'error' ? {
         ...previous, content: result.note.content, revision: result.receipt.revision,
@@ -803,13 +806,15 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     })
   }, [])
 
-  const refreshNotes = React.useCallback(async () => {
+  // `mount`: joinable, and skipped inside the PERF-09 SWR window; change
+  // events, mutations and explicit refreshes always read fresh.
+  const refreshNotes = React.useCallback(async (options: { mount?: boolean } = {}) => {
     const request = ++notesListRequestRef.current
     if (!activeWorkspaceId) return
     const listed = soupDocumentListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return
     await readScopedCapability({
-      read: () => fetchNotesList(activeWorkspaceId, () => window.electronAPI.listNotes(activeWorkspaceId)),
+      read: () => fetchNotesList(activeWorkspaceId, () => window.electronAPI.listNotes(activeWorkspaceId), { mount: options.mount === true }),
       isCurrent: () => readsMountedRef.current && request === notesListRequestRef.current
         && readWorkspaceRef.current === activeWorkspaceId,
       onAvailable: next => {
@@ -1010,7 +1015,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [externalChange, openNote, t])
 
   React.useEffect(() => {
-    refreshNotes()
+    refreshNotes({ mount: true })
     refreshAssets()
     void refreshIndexHealth()
     if (!activeWorkspaceId) return
@@ -1153,6 +1158,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const revisionKey = `${activeWorkspaceId}\0${noteId}`
     const observation = dirtyRef.current ? knowledgeSignals.capture() : null
     const documentGeneration = openNoteRequestRef.current
+    const cacheEpoch = cacheWriteEpoch()
     const isCurrentDocument = () => activeNoteIdRef.current === noteId && workspaceIdRef.current === activeWorkspaceId && openNoteRequestRef.current === documentGeneration
     const queued = saveQueueRef.current.then(async () => {
       if (workspaceIdRef.current !== activeWorkspaceId || openNoteRequestRef.current !== documentGeneration) return false
@@ -1210,6 +1216,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
             await refreshNotes()
           } else {
             setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
+            patchCachedNote(activeWorkspaceId, saved, cacheEpoch)
           }
           taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
           taskCacheUpdatedAtRef.current.set(saved.id, saved.updatedAt)
@@ -2216,6 +2223,7 @@ h1,h2,h3{margin-top:1.5em}
     if (!activeWorkspaceId) return
     const workspaceId = activeWorkspaceId
     const opening = openNoteRequestRef.current
+    const cacheEpoch = cacheWriteEpoch()
     const wasActive = activeNoteIdRef.current === task.noteId
     try {
       if (wasActive && !await flushBeforeAction()) return
@@ -2254,6 +2262,7 @@ h1,h2,h3{margin-top:1.5em}
         taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
         setAllTasks([...taskCacheRef.current.values()].flat())
         setNotes(prev => prev.map(note => note.id === saved.id ? saved : note))
+        patchCachedNote(workspaceId, saved, cacheEpoch)
       }
     } catch (error) {
       if (workspaceIdRef.current === workspaceId) toast.error(error instanceof Error ? error.message : t('notes.toast.saveFailed'))

@@ -62,7 +62,11 @@ export function useWorkspaceWork(workspaceId: string) {
     if (epoch === undefined) return
     const client = roxQueryClient()
     const key = roxKeys.workspaceWork(scope.workspaceId)
-    if (replacesCached(next, client.getQueryData<WorkspaceWorkSnapshot>(key))) fencedSetQueryData(client, key, next, epoch)
+    const cached = client.getQueryData<WorkspaceWorkSnapshot>(key)
+    // A read's snapshot is already the entry (sharedRead wrote it): only
+    // mutation results are written here, so subscribers get one update.
+    if (cached === next) return
+    if (replacesCached(next, cached)) fencedSetQueryData(client, key, next, epoch)
   }, [scope])
 
   const load = useCallback(async (options: { join?: boolean; minRevision?: number } = {}) => {
