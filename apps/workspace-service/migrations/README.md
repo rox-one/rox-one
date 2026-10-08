@@ -124,7 +124,7 @@ may use `public.unaccent`.
 
 - Work map: `goal_space`, `goal_parent`, `goal_cycle`, `project_space`,
   `milestone_project`, `work_item_space`, `task_in_list_cover`.
-- Chat feed: the `UNIQUE (chat_id, seq)` btree (`message_chat_id_seq_key`), scanned
+- Chat feed: the `UNIQUE (chat_id, seq)` btree (`message_chat_seq`), scanned
   backward for newest-first pages. No separate feed index.
 - Quick panels / backlinks: `entity_link_to`, `entity_link_from`,
   `comment_by_resource`, `notification_unread`.
