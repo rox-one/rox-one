@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { init as sentryInit } from '@sentry/electron/renderer'
 import * as Sentry from '@sentry/react'
 import { captureConsoleIntegration } from '@sentry/react'
-import { Provider as JotaiProvider, useAtomValue } from 'jotai'
+import { Provider as JotaiProvider, getDefaultStore, useAtomValue } from 'jotai'
 import App from './App'
 import { ThemeProvider } from './context/ThemeContext'
 import { windowWorkspaceIdAtom } from './atoms/sessions'
@@ -131,7 +131,9 @@ function Root() {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<CrashFallback />}>
-      <JotaiProvider>
+      {/* One store for React and module-level readers (flag bridges, keydown
+          gates, Omnibox providers use getDefaultStore()) — W1-07 (#1504). */}
+      <JotaiProvider store={getDefaultStore()}>
         <Root />
       </JotaiProvider>
     </Sentry.ErrorBoundary>
