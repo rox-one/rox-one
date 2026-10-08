@@ -139,14 +139,8 @@ export class EntityLinkStore {
   /** Upsert a link by `(from, relation, to)`; returns the stored record. */
   add(input: AddEntityLinkInput): EntityLink {
     const dedupeKey = entityLinkDedupeKey(input)
-    const existing = this.db
-      .prepare('SELECT link_id, created_at, revision FROM entity_links WHERE dedupe_key=?')
-      .get(dedupeKey) as { link_id: string; created_at: string; revision: number } | undefined
-    const linkId = existing?.link_id ?? `lnk_${randomUUID()}`
-    const createdAt = existing?.created_at ?? new Date().toISOString()
-    const revision = (existing?.revision ?? 0) + 1
     const anchor = input.anchor ?? {}
-    this.db
+    const row = this.db
       .prepare(
         `INSERT INTO entity_links (
            link_id, from_kind, from_id, from_fragment, to_kind, to_id, to_fragment,
@@ -155,10 +149,12 @@ export class EntityLinkStore {
          ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
          ON CONFLICT(dedupe_key) DO UPDATE SET
            role=excluded.role, anchor_block_id=excluded.anchor_block_id, anchor_seq=excluded.anchor_seq,
-           anchor_line=excluded.anchor_line, anchor_target_id=excluded.anchor_target_id, revision=excluded.revision`,
+           anchor_line=excluded.anchor_line, anchor_target_id=excluded.anchor_target_id,
+           revision=entity_links.revision + 1
+         RETURNING *`,
       )
-      .run(
-        linkId,
+      .get(
+        `lnk_${randomUUID()}`,
         input.from.kind,
         input.from.id,
         input.from.fragment ?? null,
@@ -172,11 +168,11 @@ export class EntityLinkStore {
         anchor.line ?? null,
         anchor.targetId ?? null,
         input.createdBy,
-        createdAt,
-        revision,
+        new Date().toISOString(),
+        1,
         dedupeKey,
-      )
-    return this.readByDedupe(dedupeKey)!
+      ) as unknown as LinkRow
+    return rowToLink(row)
   }
 
   /** Remove a link by `(from, relation, to)`; true when a row was deleted. */
@@ -225,11 +221,6 @@ export class EntityLinkStore {
 
   close(): void {
     this.db.close()
-  }
-
-  private readByDedupe(dedupeKey: string): EntityLink | undefined {
-    const row = this.db.prepare('SELECT * FROM entity_links WHERE dedupe_key=?').get(dedupeKey) as unknown as LinkRow | undefined
-    return row ? rowToLink(row) : undefined
   }
 }
 
