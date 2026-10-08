@@ -136,7 +136,9 @@ export class RuleEngine {
     const outcomes: RuleRunOutcome[] = []
     for (const record of await this.host.executions.pending(this.host.workspaceId)) {
       try {
-        outcomes.push(await this.resumeExecution(record))
+        const outcome = await this.resumeExecution(record)
+        // Only executions this call actually attempted (a deferred retry is not a run).
+        if (!outcome.duplicate) outcomes.push(outcome)
       } catch (error) {
         this.host.onError?.(error)
       }

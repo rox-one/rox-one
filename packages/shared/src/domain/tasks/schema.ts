@@ -120,6 +120,9 @@ const createTaskShape = {
   ...createIdShape,
   ...Object.fromEntries(Object.entries(workItemFields).map(([key, schema]) => [key, (schema as z.ZodType).optional()])),
   title: titleSchema,
+  // W1-12 (#1509): DATA-MODEL §5.1 `origin_ref` — the entity a task was created
+  // from (R1's prep task points at its calendar event).
+  origin: refSchema.optional(),
 }
 
 const originShape = {

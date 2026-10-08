@@ -14,6 +14,7 @@ import {
   type RuleSettings,
 } from '@rox/core/automation'
 import { deterministicId } from '../work/reference/engine'
+import { collectionSpec } from '../work/reference/collections'
 import { LocalWorkStore, type LocalWorkRecord } from '../work/local-work-store'
 import type { RuleEngineHost, RuleScheduler } from './engine'
 import type { RuleExecutionStore, RuleSettingsRow, RuleSettingsStore } from './store'
@@ -39,6 +40,12 @@ export interface LocalRuleHostOptions {
   executions: RuleExecutionStore
   settingsStore: RuleSettingsStore
   dispatch: RuleEngineHost['dispatch']
+  /**
+   * Authority of the executor `dispatch` targets; the hint `by-target` steps
+   * carry. The local bus is `'local'`; a host that routes to the workspace
+   * authority passes `'workspace'`.
+   */
+  authorityHint?: 'local' | 'workspace'
   isFlagEnabled?: (flag: string) => boolean
   now?: () => Date
   scheduler?: RuleScheduler
@@ -50,6 +57,11 @@ export interface LocalRuleHostOptions {
 function recordValue(record: LocalWorkRecord<Record<string, unknown>> | null, key: string): unknown {
   const data = record?.record
   return data && typeof data === 'object' ? data[key] : undefined
+}
+
+/** The work-store directory of a reference collection (`note` → `docs`, …). */
+function workDir(collection: string): string {
+  return collectionSpec(collection).localDir ?? collection
 }
 
 export function createLocalRuleHost(options: LocalRuleHostOptions): RuleEngineHost {
@@ -72,7 +84,7 @@ export function createLocalRuleHost(options: LocalRuleHostOptions): RuleEngineHo
     workspaceId: options.workspaceId,
     executions: options.executions,
     dispatch: options.dispatch,
-    authorityHint: 'local',
+    authorityHint: options.authorityHint ?? 'local',
     now: options.now ?? (() => new Date()),
     settings,
     isFlagEnabled: options.isFlagEnabled ?? (() => false),
@@ -80,18 +92,21 @@ export function createLocalRuleHost(options: LocalRuleHostOptions): RuleEngineHo
       // ADR-U16 / D-v2-2: the General chat belongs to a team workspace and is
       // created with it. Locally it exists only when a shared workspace was
       // materialised here; otherwise R2/R4 have no team chat to join.
-      const found = work.list<Record<string, unknown>>('channel').find(entry => recordValue(entry, 'systemRole') === 'general')
+      const found = work.list<Record<string, unknown>>(workDir('channel')).find(entry => recordValue(entry, 'systemRole') === 'general')
       return found ? found.id : undefined
     },
     async personalAgent(principalId) {
-      const found = work.list<Record<string, unknown>>('agent').find(entry => recordValue(entry, 'ownerId') === principalId)
-      return found ? found.id : undefined
+      const found = work.list<Record<string, unknown>>(workDir('agent')).find(entry => recordValue(entry, 'ownerId') === principalId)
+      // STUB(#1508): a host may answer before the agent row exists — the R3 step
+      // provisions it at this deterministic id, so both agree by construction
+      // (W1-11 replaces this with the real registry lookup).
+      return found ? found.id : localAgentId(options.workspaceId, principalId)
     },
     async directChatRef(subjectPrincipalId, peerPrincipalId) {
       return { kind: 'channel', id: localP2pChatId(options.workspaceId, subjectPrincipalId, peerPrincipalId) }
     },
     async displayName(principalId) {
-      const person = work.get<Record<string, unknown>>('person', principalId)
+      const person = work.get<Record<string, unknown>>(workDir('person'), principalId)
       const name = recordValue(person, 'displayName') ?? recordValue(person, 'name')
       return typeof name === 'string' && name ? name : undefined
     },

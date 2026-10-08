@@ -124,6 +124,8 @@ export const AUTOMATION_COMMAND_SCHEMAS: CommandSchemaMap = {
   'task_lists.ensure_system_list': cmd({
     systemKey: z.string().min(1).max(64),
     ownerId: principalIdSchema.optional(),
+    /** Deterministic list id (`systemListId`), so a replay finds the same list. */
+    id: idSchema.optional(),
     name: z.string().trim().min(1).max(200).optional(),
   }),
   /** R4 step 4 — the invitation email (TECH-SPEC §15.2). */

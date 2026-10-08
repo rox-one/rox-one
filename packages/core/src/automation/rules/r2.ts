@@ -104,7 +104,7 @@ export const R2: DomainRule = {
         optional: true,
         command: {
           type: 'im.send_message',
-          payload: { content: { doc: joinCardText(params.joinCardTemplate, name) }, attribution: 'system' },
+          payload: { content: { doc: joinCardText(params.joinCardTemplate, name) }, attribution: 'unprompted' },
           target: general,
         },
       })
