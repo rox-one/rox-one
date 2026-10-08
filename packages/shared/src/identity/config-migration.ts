@@ -261,16 +261,31 @@ export const ROX_STORAGE_VISIBLE_ROOT_FLAG_ID = 'storage.visible-root.v1'
  */
 export const ROX_WORKBENCH_FLAGS_FILE_NAME = 'workbench-flags.json'
 
+/** A directory holding at least one Rox marker (config.json, workspaces, ...). */
+function _isRoxHomeDir(dir: string): boolean {
+  try {
+    return _readdirMigration(dir).some((name) => ROX_HOME_MARKER_NAMES.includes(name))
+  } catch {
+    return false
+  }
+}
+
 /**
- * The single `workbench-flags.json` that decides `storage.visible-root.v1`:
- * it lives in the directory the flag-OFF rules resolve to (`~/rox` if it
- * exists, else the legacy `~/.rox`). Reader and writer share this path so a
- * toggle always lands in the file `resolveConfigDir()` reads.
+ * The single `workbench-flags.json` that decides `storage.visible-root.v1`.
+ * `~/rox/workbench-flags.json` counts only once `~/rox` is a Rox home (has a
+ * marker); otherwise the legacy file. Whichever of the two exists is used
+ * (visible first), so a foreign or freshly created `~/rox` (a checkout, a
+ * stray mkdir) never flips the persisted flag. Reader and writer share this
+ * path so a toggle always lands in the file `resolveConfigDir()` reads.
  */
 export function visibleRootFlagFilePath(homeDir: string = homedir()): string {
-  const visible = join(homeDir, ROX_VISIBLE_HOME_DIR_NAME)
-  const dir = existsSync(visible) ? visible : join(homeDir, ROX_HIDDEN_HOME_LINK_NAME)
-  return join(dir, ROX_WORKBENCH_FLAGS_FILE_NAME)
+  const visibleDir = join(homeDir, ROX_VISIBLE_HOME_DIR_NAME)
+  const visibleFile = join(visibleDir, ROX_WORKBENCH_FLAGS_FILE_NAME)
+  const legacyFile = join(homeDir, ROX_HIDDEN_HOME_LINK_NAME, ROX_WORKBENCH_FLAGS_FILE_NAME)
+  const visibleIsHome = _isRoxHomeDir(visibleDir)
+  if (visibleIsHome && existsSync(visibleFile)) return visibleFile
+  if (existsSync(legacyFile)) return legacyFile
+  return visibleIsHome ? visibleFile : legacyFile
 }
 
 function _readEnabledFlags(file: string): string[] | undefined {

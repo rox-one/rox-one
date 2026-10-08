@@ -22,7 +22,8 @@
  *  2. the explicit `options.enabledWorkbenchFlags` set (callers that already
  *     track workbench flags);
  *  3. the persisted workbench flag in `workbench-flags.json`
- *     (`visibleRootFlagFilePath()`: the flag-OFF config dir), written by
+ *     (`visibleRootFlagFilePath()`: `~/rox`'s file only once `~/rox` is a
+ *     Rox home, else the legacy file, so a foreign `~/rox` never flips it), written by
  *     Electron main when the user toggles it in Settings; it takes effect on
  *     the next launch. The file probe and the flag-ON resolution are cached
  *     per process, so the flag-OFF hot path does a single fs read.
