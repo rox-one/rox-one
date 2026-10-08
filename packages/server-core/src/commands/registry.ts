@@ -17,6 +17,9 @@
 import { CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
 import { bindSystemPing } from './ping'
 import { bindDomainSchemas, bindReferenceHandlers } from '../work/reference/module'
+import { COLLAB_COMMAND_MODULE } from '../collab/module'
+import { DRIVE_COMMAND_MODULE } from '../drive/module'
+import { XSC_COMMAND_MODULE } from '../xsc/module'
 
 /** One owner module's bindings (handlers + schemas) for its catalogue types. */
 export interface CommandModule {
@@ -44,6 +47,11 @@ export const COMMAND_MODULES: readonly CommandModule[] = Object.freeze([
   SYSTEM_COMMAND_MODULE,
   // W1-06 (#1503)
   DOMAIN_SCHEMA_COMMAND_MODULE,
+  // W1-14 (#1511) — own schemas, risk classes and handlers; must precede the
+  // reference module, which skips types that already have a handler.
+  COLLAB_COMMAND_MODULE,
+  DRIVE_COMMAND_MODULE,
+  XSC_COMMAND_MODULE,
   REFERENCE_COMMAND_MODULE,
 ])
 

@@ -110,6 +110,11 @@ export function driveStateFor(used: number, limit: number, current: DriveState):
   return used > limit ? 'over_quota' : 'active'
 }
 
+/** `reserved_bytes` after a release (abort, expiry, completion): never negative. */
+export function creditReservation(reservedBytes: number, releasedBytes: number): number {
+  return Math.max(0, reservedBytes - Math.max(0, releasedBytes))
+}
+
 /** The thresholds crossed by this percentage, in ascending order. */
 export function crossedQuotaThresholds(percent: number): number[] {
   return QUOTA_NOTIFICATION_THRESHOLDS.filter(threshold => percent >= threshold)

@@ -9,7 +9,7 @@
 
 export {
   DEFAULT_DRIVE_QUOTA_BYTES, DRIVE_STATES, GIB_BYTES, MIB_BYTES, QUOTA_METER_CRITICAL_PERCENT, QUOTA_METER_WARNING_PERCENT,
-  QUOTA_NOTIFICATION_THRESHOLDS, QUOTA_WARNING_COOLDOWN_MS, TIB_BYTES, admitUpload, crossedQuotaThresholds, driveStateFor,
+  QUOTA_NOTIFICATION_THRESHOLDS, QUOTA_WARNING_COOLDOWN_MS, TIB_BYTES, admitUpload, creditReservation, crossedQuotaThresholds, driveStateFor,
   formatDriveSize, quotaSnapshot, quotaWarningAllowed,
 } from './quota.ts'
 export type { DriveQuota, DriveState, QuotaAdmission, QuotaExceededDetail, QuotaUsage } from './quota.ts'

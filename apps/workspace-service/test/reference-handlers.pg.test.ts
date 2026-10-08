@@ -165,9 +165,9 @@ describe('W1-06 reference handlers over PostgreSQL (skips without a database)', 
 
   itDb('create_from_* keeps origin in origin_ref and the rest in the companion', async () => {
     const harness = pgHarness()
-    const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('pg-from-msg'), chatId: U('pg-chat'), seq: 3, assigneeIds: [BOB] } })
+    const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('pg-from-msg'), origin: { kind: 'message', chatRef: `channel:${U('pg-chat')}`, seq: 3 }, title: 'From message', assignee: BOB } })
     expect(fromMessage).toMatchObject({ status: 'applied' })
-    const fromSelection = await harness.run({ type: 'tasks.create_from_selection', payload: { id: U('pg-from-sel'), docRef: { kind: 'note', id: U('pg-doc') }, blockId: 'b1', text: 'Do it' } })
+    const fromSelection = await harness.run({ type: 'tasks.create_from_selection', payload: { id: U('pg-from-sel'), origin: { kind: 'doc-block', docRef: `note:${U('pg-doc')}`, blockId: 'b1' }, title: 'Do it' } })
     expect(fromSelection).toMatchObject({ status: 'applied' })
     const rows = await db.unsafe<{ work_item_id: string; origin_ref: string }[]>(`SELECT work_item_id, origin_ref FROM "${schema}".work_item WHERE work_item_id IN ($1, $2) ORDER BY origin_ref`, [U('pg-from-msg'), U('pg-from-sel')])
     expect(rows.map(r => r.origin_ref)).toEqual([`channel-message:${U('pg-chat')}:3`, `note:${U('pg-doc')}#block-b1`])

@@ -78,6 +78,11 @@ export function resetReferenceRuntime(): void {
   linkStores.clear()
 }
 
+/** The clock the reference handlers run on (W1-14: later modules share it, so one test override covers all). */
+export function referenceRuntimeNow(): Date {
+  return runtime.now()
+}
+
 interface TransactionHandle { kind?: string; workspaceId?: string; sql?: PostgresUnsafe; prefix?: string }
 
 export function referenceBackendFor(ctx: CommandHandlerContext<unknown>): RecordBackend {

@@ -57,12 +57,22 @@ export const REFERENCE_COLLECTIONS = {
   'doc-suggestion': { localDir: 'doc-suggestions' },
   'doc-view': { localDir: 'doc-views' },
   'doc-block': { localDir: 'doc-blocks' },
+  // W1-14 (#1511) — collaboration indexes: the open suggestions of a doc, and
+  // a principal's calendar events (the reference query behind calendar.free_busy).
+  'doc-suggestion-index': { localDir: 'doc-suggestion-index' },
+  'calendar-index': { localDir: 'calendar-index' },
   folder: { kind: 'folder', table: 'folder', localDir: 'folders' },
   'folder-item': { localDir: 'folder-items' },
   'drive-link': { kind: 'drive-link', table: 'drive_link', localDir: 'drive-links' },
   'drive-favorite': { localDir: 'drive-favorites' },
   'drive-quota': { localDir: 'drives' },
   'upload-session': { localDir: 'upload-sessions' },
+  // W1-14 (#1511) — file versions, the storage ledger, preview jobs and the
+  // content-addressed blob marker (TECH-SPEC §16, DATA-MODEL §5.15).
+  'file-version': { localDir: 'file-versions' },
+  'storage-ledger': { localDir: 'storage-ledger' },
+  'file-preview': { localDir: 'file-previews' },
+  'file-blob': { localDir: 'file-blobs' },
   file: { kind: 'file', table: 'file_object', columns: { id: 'file_id' }, localDir: 'files' },
   'wiki-space': { kind: 'wiki-space', table: 'wiki_space', localDir: 'wiki-spaces' },
   'wiki-node': { localDir: 'wiki-nodes' },

@@ -10,10 +10,19 @@ import { COMMAND_CATALOGUE } from '@rox/core/commands'
 import { InMemoryCommandStore } from '../../commands/store'
 import { COMMAND_MODULES, boundCommandTypes } from '../../commands/registry'
 import { REFERENCE_SPECS, configureReferenceRuntime, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime } from '../reference'
+import { COLLAB_DIRECT_HANDLER_TYPES, COLLAB_REFERENCE_SPECS } from '../../collab/reference-handlers'
+import { DRIVE_REFERENCE_SPECS } from '../../drive/reference-handlers'
+import { XSC_REFERENCE_SPECS } from '../../xsc/reference-handlers'
 import { ALLOW_ALL, CATALOGUE_TYPES, DENY_ALL, createHarness } from './reference-harness'
 import { ACTOR_ID, BOB, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from './reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
+
+/**
+ * Commands that must not write a `domain_event`: presence lives in Valkey for
+ * 60 s (DATA-MODEL §5.17, "Ephemeral"), and `calendar.free_busy` is a query.
+ */
+const EPHEMERAL_COMMANDS: ReadonlySet<string> = new Set(['presence.heartbeat', 'presence.join', 'presence.leave', 'calendar.free_busy'])
 
 function memoryHarness(options: Parameters<typeof createHarness>[0] extends infer O ? Partial<O> : never = {}) {
   return createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore(), ...options })
@@ -26,15 +35,22 @@ beforeEach(() => {
 afterEach(() => resetReferenceRuntime())
 
 describe('reference handlers: wiring', () => {
-  test('one reference spec per non-system catalogue command', () => {
-    expect(Object.keys(REFERENCE_SPECS).sort()).toEqual(CATALOGUE_TYPES)
+  test('every non-system catalogue command has exactly one reference spec', () => {
+    // W1-14 (#1511) split the table: the W1-06 placeholders plus the collab / drive / §12
+    // module specs, which are bound (and win) earlier in COMMAND_MODULES.
+    const union = [
+      ...Object.keys(REFERENCE_SPECS), ...Object.keys(COLLAB_REFERENCE_SPECS), ...Object.keys(DRIVE_REFERENCE_SPECS), ...Object.keys(XSC_REFERENCE_SPECS),
+      ...COLLAB_DIRECT_HANDLER_TYPES,
+    ]
+    expect(union.sort()).toEqual(CATALOGUE_TYPES)
+    expect(new Set(union).size).toBe(union.length)
   })
 
   test('the wired registry binds every catalogue command and every schema', () => {
     const { registry } = memoryHarness()
     expect(boundCommandTypes(registry)).toEqual(COMMAND_CATALOGUE.map(d => d.type).sort())
     expect(registry.list().filter(d => !d.schemaBound && !d.type.startsWith('system.')).map(d => d.type)).toEqual([])
-    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system', 'domain-schemas', 'reference-handlers'])
+    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system', 'domain-schemas', 'collab', 'drive', 'xsc', 'reference-handlers'])
   })
 
   test('the scenario covers every catalogue command', () => {
@@ -49,8 +65,18 @@ describe('reference handlers: every command executes (memory backend)', () => {
     for (const step of REFERENCE_SCENARIO) {
       const receipt = await harness.run(step)
       if (receipt.status !== 'applied') { failures.push(`${step.type}: ${receipt.status} ${JSON.stringify(receipt.error ?? receipt)}`); continue }
-      if (!receipt.eventIds?.length) failures.push(`${step.type}: no domain event`)
-      if (!receipt.result || typeof (receipt.result as { collection?: unknown }).collection !== 'string') failures.push(`${step.type}: no result`)
+      // Presence and the free-busy query are ephemeral / read-only: DATA-MODEL
+      // §5.17 keeps them out of `domain_event`, so a receipt for them has no events.
+      const ephemeral = EPHEMERAL_COMMANDS.has(step.type)
+      if (!ephemeral && !receipt.eventIds?.length) failures.push(`${step.type}: no domain event`)
+      if (ephemeral && receipt.eventIds?.length) failures.push(`${step.type}: ephemeral command wrote a domain event`)
+      // A record-backed command answers with its collection; the ephemeral ones
+      // answer with presence / query state and never touch a collection.
+      if (ephemeral) {
+        if (!receipt.result || typeof receipt.result !== 'object') failures.push(`${step.type}: no result`)
+      } else if (!receipt.result || typeof (receipt.result as { collection?: unknown }).collection !== 'string') {
+        failures.push(`${step.type}: no result`)
+      }
     }
     expect(failures).toEqual([])
     const tasks = referenceMemoryRecords(WORKSPACE_ID, 'task')
@@ -138,12 +164,12 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
   test('handler-level permissions: foreign message edit, private join, admin-only posting, own access request', async () => {
     const harness = memoryHarness()
     await seed(harness, 'im.update_chat')
-    expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: U('chat') }, payload: { id: U('m2'), content: { doc: 'x' } } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: U('chat') }, payload: { chatRef: { kind: 'channel', id: U('chat') }, body: { doc: 'x' }, mentions: [], messageId: U('m2') } })).toMatchObject({ status: 'applied' })
     expect(await harness.run({ type: 'im.edit_message', target: { kind: 'channel', id: U('chat') }, payload: { messageId: U('m2'), content: { doc: 'y' } }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    await harness.run({ type: 'im.create_chat', payload: { id: U('private'), name: 'p', visibility: 'private' } })
+    await harness.run({ type: 'im.create_chat', payload: { id: U('private'), kind: 'group', name: 'p', visibility: 'private', members: [] } })
     expect(await harness.run({ type: 'im.join_chat', target: { kind: 'channel', id: U('private') }, payload: {}, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     await harness.run({ type: 'im.update_policy', target: { kind: 'channel', id: U('chat') }, payload: { postingPolicy: 'admins' } })
-    expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: U('chat') }, payload: { content: { doc: 'z' } }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: U('chat') }, payload: { chatRef: { kind: 'channel', id: U('chat') }, body: { doc: 'z' }, mentions: [] }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     await harness.run({ type: 'docs.create_document', payload: { id: U('d2'), title: 'D' } })
     await harness.run({ type: 'acl.request_access', target: { kind: 'note', id: U('d2') }, payload: { id: U('r2') } })
     expect(await harness.run({ type: 'acl.decide_request', target: { kind: 'note', id: U('d2') }, payload: { requestId: U('r2'), decision: 'approve' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
@@ -151,6 +177,7 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
 
   test('expiry: an upload session and an access request past their TTL are rejected', async () => {
     const harness = memoryHarness()
+    await harness.run({ type: 'drive.provision', payload: {} })
     await harness.run({ type: 'drive.open_upload', payload: { id: U('u-exp'), fileName: 'f', sizeExpected: 1 } })
     await harness.run({ type: 'docs.create_document', payload: { id: U('d-exp'), title: 'D' } })
     await harness.run({ type: 'acl.request_access', target: { kind: 'note', id: U('d-exp') }, payload: { id: U('r-exp') } })
@@ -167,7 +194,7 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
     expect(await harness.run({ type: 'spaces.delete', target: { kind: 'space', id: U('sp') }, payload: { confirmName: 'Opz' } })).toMatchObject({ error: { code: 'VALIDATION' } })
     await harness.run({ type: 'agents.provision_personal_agent', payload: { id: U('ag'), ownerId: ACTOR_ID } })
     await harness.run({ type: 'agents.pause', payload: { agentId: U('ag') } })
-    expect(await harness.run({ type: 'agents.invoke', payload: { agentId: U('ag'), prompt: 'x' } })).toMatchObject({ error: { code: 'UNAVAILABLE' } })
+    expect(await harness.run({ type: 'agents.invoke', payload: { agentRef: { kind: 'person', id: U('ag') }, instruction: 'x', origin: { kind: 'comment', commentId: U('c') } } })).toMatchObject({ error: { code: 'UNAVAILABLE' } })
     expect(await harness.run({ type: 'agents.provision_personal_agent', payload: { ownerId: BOB } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
   })
 
@@ -225,8 +252,8 @@ describe('reference handlers: the payload never widens the authorized target', (
 
   test('mail.share_to_chat is authorized on the destination chat', async () => {
     const harness = memoryHarness()
-    await harness.run({ type: 'im.create_chat', payload: { id: U('dest'), name: 'Dest', visibility: 'private' } })
-    await harness.run({ type: 'im.create_chat', payload: { id: U('other'), name: 'Other', visibility: 'private' } })
+    await harness.run({ type: 'im.create_chat', payload: { id: U('dest'), kind: 'group', name: 'Dest', visibility: 'private', members: [] } })
+    await harness.run({ type: 'im.create_chat', payload: { id: U('other'), kind: 'group', name: 'Other', visibility: 'private', members: [] } })
     const before = referenceMemoryRecords(WORKSPACE_ID, 'channel-message').length
     expect(await harness.run({ type: 'mail.share_to_chat', payload: { threadId: 'th-1', chatId: U('dest') } })).toMatchObject({ error: { code: 'VALIDATION' } })
     expect(await harness.run({ type: 'mail.share_to_chat', target: { kind: 'channel', id: U('dest') }, payload: { threadId: 'th-1', chatId: U('other') } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
@@ -277,8 +304,8 @@ describe('reference handlers: retry after a lost receipt (same commandId, fresh 
   })
 
   test('a retried message append keeps one message and one seq', async () => {
-    await retryHarness().run({ type: 'im.create_chat', payload: { id: U('retry-chat'), name: 'R' } })
-    const send = { type: 'im.send_message', target: { kind: 'channel' as const, id: U('retry-chat') }, payload: { content: { doc: 'hi' } } }
+    await retryHarness().run({ type: 'im.create_chat', payload: { id: U('retry-chat'), kind: 'group', name: 'R', visibility: 'public', members: [] } })
+    const send = { type: 'im.send_message', target: { kind: 'channel' as const, id: U('retry-chat') }, payload: { chatRef: { kind: 'channel', id: U('retry-chat') }, body: { doc: 'hi' }, mentions: [] } }
     const first = await retryHarness().run(send, { commandId: 'retry-send' })
     const again = await retryHarness().run(send, { commandId: 'retry-send' })
     expect(first.status).toBe('applied')
@@ -303,7 +330,7 @@ describe('reference handlers: retry after a lost receipt (same commandId, fresh 
     expect(receipt).toMatchObject({ status: 'conflict', conflict: { current: { error: 'id already exists' } } })
     expect(referenceMemoryRecords(WORKSPACE_ID, 'goal').map(r => r.id)).toEqual(['g-a'])
     await harness.run({ type: 'tasks.create', payload: { id: U('from-taken'), title: 'x' } })
-    const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('from-taken'), chatId: U('c'), seq: 1 } })
+    const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('from-taken'), origin: { kind: 'message', chatRef: `channel:${U('c')}`, seq: 1 }, title: 'From message' } })
     expect(fromMessage).toMatchObject({ status: 'conflict' })
     expect(referenceMemoryRecords(WORKSPACE_ID, 'entity-link')).toEqual([])
   })
