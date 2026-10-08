@@ -1131,6 +1131,12 @@ html[data-render-profile="performance"] :is(.animate-shimmer-loading, .animate-s
 html[data-render-profile="performance"] .animate-shimmer::after {
   animation: none !important;
 }
+/* Decorative pulses (skeleton loaders, motion-safe icons) stop too. Spinners
+   (animate-spin) keep turning, and pulses that carry live state (recording,
+   running) opt out with data-live-indicator. */
+html[data-render-profile="performance"] :is(.animate-pulse, .motion-safe\:animate-pulse):not([data-live-indicator]) {
+  animation: none !important;
+}
 
 /* TurnCard action buttons (Copy, Markdown) — outside @container/shell,
    scaled via data-compact attribute passed from the renderer */

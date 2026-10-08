@@ -81,6 +81,7 @@ export function SceneNode({ id, data, selected }: NodeProps<SceneFlowNode>) {
       <div className="mb-1 flex min-w-0 items-center gap-1.5">
         <div
           aria-hidden
+          data-live-indicator
           className={cn(
             'h-1.5 w-1.5 shrink-0 rounded-full',
             status === 'error' && 'bg-rose-400',
