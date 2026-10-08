@@ -85,22 +85,24 @@ export function sharedRead<T>(client: QueryClient, queryKey: QueryKey, read: () 
   const epoch = writeEpoch
   const invalidations = entry.invalidations
   const promise = (async () => {
-    try {
-      const value = await read()
-      if (epoch === writeEpoch && states.get(client) === scope && seq > entry.written
-        && (options.replaces ? options.replaces(value, client.getQueryData<T>(queryKey)) : true)) {
-        entry.written = seq
-        const wrote = fencedSetQueryData(client, queryKey, options.store ? options.store(value) : value, epoch)
-        // A change event arrived while this read was in flight: the value may
-        // predate it, so the entry stays invalidated (the next mount revalidates).
-        if (wrote && entry.invalidations !== invalidations) void client.invalidateQueries({ queryKey, exact: true, refetchType: 'none' })
-      }
-      return value
-    } finally {
-      if (entry.inflight?.seq === seq) entry.inflight = null
+    const value = await read()
+    if (epoch === writeEpoch && states.get(client) === scope && seq > entry.written
+      && (options.replaces ? options.replaces(value, client.getQueryData<T>(queryKey)) : true)) {
+      entry.written = seq
+      const wrote = fencedSetQueryData(client, queryKey, options.store ? options.store(value) : value, epoch)
+      // A change event arrived while this read was in flight: the value may
+      // predate it, so the entry stays invalidated (the next mount revalidates).
+      if (wrote && entry.invalidations !== invalidations) void client.invalidateQueries({ queryKey, exact: true, refetchType: 'none' })
     }
+    return value
   })()
   entry.inflight = { seq, promise }
+  // Clear on settle, not in a `finally`: `read()` may throw synchronously, and a
+  // finally would run before `entry.inflight` is set, leaving the rejected
+  // promise remembered so every later `join` read re-rejects without calling
+  // `read` again.
+  const clear = () => { if (entry.inflight?.seq === seq) entry.inflight = null }
+  void promise.then(clear, clear)
   return promise
 }
 
