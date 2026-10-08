@@ -169,7 +169,10 @@ the same modification time count as identical; otherwise they are compared in
 chunks, so a file of any size is never read into memory at once. A link
 inside `~/rox` (for example to a dotfiles repo) is never written through: the
 legacy version is kept under `conflicts/` instead. A legacy link that differs
-from `~/rox` is kept there too. Before copying, the migration checks (without
+from `~/rox` is kept there too. On Windows, links to folders are recreated as
+junctions, which cannot be relative: a relative folder link becomes an absolute
+junction into `~/rox` and may dangle after `--revert` (a file link that Windows
+will not create is kept under `conflicts/` as a `.rox-symlink` note). Before copying, the migration checks (without
 renaming anything) that `~/.rox` is not a mount point or a separate volume and
 that your home folder is writable; when `~/rox` itself has to be moved aside,
 it must be on the same disk too. Otherwise it defers (`deferred-unmovable`)

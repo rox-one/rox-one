@@ -1254,31 +1254,61 @@ type _SymlinkFn = (target: string, path: string, type?: 'dir' | 'file' | 'juncti
 const _defaultSymlink: _SymlinkFn = (target, path, type) => _symlinkMigration(target, path, type)
 
 /**
+ * Where a migrated tree ends up: links inside `source` are aimed at the same
+ * entry under `final` (`~/rox`, the home once the migration completes).
+ */
+interface _LinkRoots {
+  source: string
+  final: string
+}
+
+/**
  * Recreate the link found at `from` (its target text `link`) at `to`.
  * Windows: a link to a directory becomes a junction (no Developer Mode or
  * admin needed; the same as the compat link and Rox's own in-home creators),
- * with an absolute target (junctions cannot be relative; a relative target
- * keeps its meaning at the new place). A file symlink needs the symlink
- * privilege there: when it cannot be created (EPERM) this returns false and
- * the caller keeps it as a conflict instead of failing the whole walk.
+ * with an absolute target, since junctions cannot be relative. A relative
+ * target that stays inside the migrated tree is aimed at its final place
+ * under `roots.final` (`~/rox`), one outside it at the place it resolved to
+ * from `from`. A dangling link (its target is gone: ENOENT/ENOTDIR, never a
+ * loop) carries no file-or-dir meaning and also becomes a junction (Windows
+ * allows a missing junction target). A file symlink, or a loop, needs the
+ * symlink privilege there: when it cannot be created (EPERM) this returns
+ * false and the caller keeps it as a conflict instead of failing the walk.
  */
-function _recreateLink(from: string, link: string, to: string, platform: NodeJS.Platform, symlink: _SymlinkFn): boolean {
+function _recreateLink(
+  from: string,
+  link: string,
+  to: string,
+  platform: NodeJS.Platform,
+  symlink: _SymlinkFn,
+  roots?: _LinkRoots,
+): boolean {
   if (platform !== 'win32') {
     symlink(link, to)
     return true
   }
-  const absolute = _isAbsoluteMigration(link) ? link : _resolveMigration(_dirnameMigration(to), link)
-  let isDir = false
-  try {
-    isDir = _statMigration(from).isDirectory()
-  } catch {
+  let absolute: string
+  if (_isAbsoluteMigration(link)) {
+    absolute = link
+  } else if (roots) {
+    const resolved = _resolveMigration(_dirnameMigration(from), link)
+    const inside = _relativeMigration(roots.source, resolved)
+    absolute =
+      inside === '' || (!/^\.\.(?:[\\/]|$)/.test(inside) && !_isAbsoluteMigration(inside)) ? _resolveMigration(roots.final, inside) : resolved
+  } else {
+    absolute = _resolveMigration(_dirnameMigration(to), link)
+  }
+  const statCode = (path: string): string | undefined => {
     try {
-      isDir = _statMigration(absolute).isDirectory()
-    } catch {
-      isDir = false
+      return _statMigration(path).isDirectory() ? 'dir' : 'file'
+    } catch (error) {
+      return (error as NodeJS.ErrnoException | null)?.code ?? 'error'
     }
   }
-  if (isDir) {
+  const gone = (code: string | undefined): boolean => code === 'ENOENT' || code === 'ENOTDIR'
+  const viaSource = statCode(from)
+  const kind = viaSource === 'dir' || viaSource === 'file' ? viaSource : statCode(absolute)
+  if (kind === 'dir' || (gone(viaSource) && gone(kind))) {
     symlink(absolute, to, 'junction')
     return true
   }
@@ -1956,7 +1986,11 @@ function _importMissingEntries(
   copyFile: _CopyFileFn,
   platform: NodeJS.Platform = process.platform,
   symlink: _SymlinkFn = _defaultSymlink,
+  finalRoot: string = source,
 ): void {
+  // `source` (the data-less `~/rox`) is where the home ends up again once
+  // `~/.rox` is renamed into place: links inside it keep pointing there.
+  const roots: _LinkRoots = { source, final: finalRoot }
   const walk = (rel: string): void => {
     for (const name of _readdirMigration(rel ? join(source, rel) : source)) {
       const childRel = rel ? `${rel}/${name}` : name
@@ -1977,7 +2011,7 @@ function _importMissingEntries(
           mkdirSync(_dirnameMigration(to), { recursive: true })
           // A file symlink Windows will not create stays in the moved-aside
           // `~/rox` (absent from the home, so it is kept as a conflict).
-          _recreateLink(from, _readlinkMigration(from), to, platform, symlink)
+          _recreateLink(from, _readlinkMigration(from), to, platform, symlink, roots)
         }
       } else if (st.isDirectory()) {
         if (existing && !existing.isDirectory()) continue
@@ -2054,6 +2088,8 @@ function _sameLinkAtHome(aside: string, home: string): boolean {
   const homeLink = _readlinkMigration(home)
   if (asideLink === homeLink) return true
   const asideAtHome = _isAbsoluteMigration(asideLink) ? asideLink : _resolveMigration(_dirnameMigration(home), asideLink)
+  // A dangling pair: the same spelled-out target.
+  if (asideAtHome === _resolveMigration(_dirnameMigration(home), homeLink)) return true
   const a = _realpathOrUndefined(asideAtHome)
   return a !== undefined && a === _realpathOrUndefined(home)
 }
@@ -2734,6 +2770,8 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         throw error
       }
     }
+    // Links inside the legacy tree are aimed at their place in `~/rox`.
+    const linkRoots: _LinkRoots = { source: paths.hiddenDir, final: paths.visibleDir }
     // A legacy entry where `~/rox` has something else: keep the whole subtree.
     const stashTree = (source: string, rel: string): void => {
       const st = _lstatMigration(source)
@@ -2742,7 +2780,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         const target = freeTarget(rel)
         mkdirSync(_dirnameMigration(target), { recursive: true })
         const link = _readlinkMigration(source)
-        if (!_recreateLink(source, link, target, platform, symlink)) _writeLinkPlaceholder(target, link)
+        if (!_recreateLink(source, link, target, platform, symlink, linkRoots)) _writeLinkPlaceholder(target, link)
         return
       }
       if (st.isDirectory()) {
@@ -2795,7 +2833,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
           } else {
             mkdirSync(_dirnameMigration(to), { recursive: true })
             // A file symlink Windows will not create: kept as a conflict.
-            if (!_recreateLink(from, link, to, platform, symlink)) stashTree(from, rel)
+            if (!_recreateLink(from, link, to, platform, symlink, linkRoots)) stashTree(from, rel)
           }
         } else {
           let same = false

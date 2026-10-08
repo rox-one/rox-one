@@ -173,7 +173,8 @@ describe('Windows: directory links inside the trees become junctions (warning 2)
       expect(readFileSync(join(home, 'rox', 'skills', 'linked', 'SKILL.md'), 'utf8')).toBe('skill')
       // stashTree: ~/rox has a file there; the legacy dir link is kept as a junction.
       const stashed = join(home, 'rox', '.migration', 'conflicts', 'ts0', 'skills', 'taken')
-      expect(calls).toContainEqual({ target: join(home, 'rox', '.migration', 'conflicts', 'ts0', 'skilldata'), path: stashed, type: 'junction' })
+      // Review 9: a relative target inside the tree is aimed at its final place in ~/rox.
+      expect(calls).toContainEqual({ target: join(home, 'rox', 'skilldata'), path: stashed, type: 'junction' })
       expect(readFileSync(join(home, 'rox', 'skills', 'taken'), 'utf8')).toBe('a file in ~/rox')
       // The file symlink: EPERM → kept as a placeholder conflict.
       expect(existsSync(join(home, 'rox', 'docs', 'readme-link'))).toBe(false)
@@ -181,6 +182,42 @@ describe('Windows: directory links inside the trees become junctions (warning 2)
       expect(result.conflicts).toEqual(['ts0/docs/readme-link.rox-symlink', 'ts0/skills/taken'])
       expect(result.diagnostics).toContain('storage.migration.conflictsKept')
       expect(readFileSync(join(home, 'rox', 'readme.md'), 'utf8')).toBe('readme')
+    }))
+
+  it('review 9: a dangling directory link becomes a junction to its absolute target, no conflict', () =>
+    withHome((home) => {
+      write(join(home, 'rox', 'workspaces', 'v', 'notes.md'), 'visible ws')
+      mkdirSync(join(home, '.rox', 'skills'), { recursive: true })
+      symlinkSync('../packs/gone', join(home, '.rox', 'skills', 'dangling'))
+      // A link outside the tree keeps the place it resolved to.
+      symlinkSync('../../elsewhere/gone', join(home, '.rox', 'skills', 'outside'))
+      // A loop is not "dangling": with EPERM it stays a placeholder conflict.
+      symlinkSync('loop', join(home, '.rox', 'skills', 'loop'))
+      const calls: Call[] = []
+      const result = migrateHiddenRoxHome(
+        opts(home, { platform: 'win32', symlink: winSymlink(calls), linkDir: (target, path) => symlinkSync(target, path) }),
+      )
+      expect(result.outcome).toBe('merged')
+      expect(calls).toContainEqual({ target: join(home, 'rox', 'packs', 'gone'), path: join(home, 'rox', 'skills', 'dangling'), type: 'junction' })
+      expect(readlinkSync(join(home, 'rox', 'skills', 'dangling'))).toBe(join(home, 'rox', 'packs', 'gone'))
+      expect(calls).toContainEqual({ target: join(home, 'elsewhere', 'gone'), path: join(home, 'rox', 'skills', 'outside'), type: 'junction' })
+      expect(result.conflicts).toEqual(['ts0/skills/loop.rox-symlink'])
+    }))
+
+  it('review 9: a dangling directory link of a data-less ~/rox (move-aside) is a junction into ~/rox and no conflict', () =>
+    withHome((home) => {
+      write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"h"}]}')
+      write(join(home, 'rox', 'workbench-flags.json'), JSON.stringify({ enabled: ['storage.visible-root.v1'] }))
+      mkdirSync(join(home, 'rox', 'skills'), { recursive: true })
+      symlinkSync('../packs/gone', join(home, 'rox', 'skills', 'dangling'))
+      const calls: Call[] = []
+      const result = migrateHiddenRoxHome(
+        opts(home, { platform: 'win32', symlink: winSymlink(calls), linkDir: (target, path) => symlinkSync(target, path) }),
+      )
+      expect(result.outcome).toBe('merged')
+      expect(calls).toContainEqual({ target: join(home, 'rox', 'packs', 'gone'), path: join(home, '.rox', 'skills', 'dangling'), type: 'junction' })
+      expect(readlinkSync(join(home, 'rox', 'skills', 'dangling'))).toBe(join(home, 'rox', 'packs', 'gone'))
+      expect(result.conflicts).toEqual([])
     }))
 
   it('non-Windows: links keep the default type (no junction)', () =>
@@ -211,7 +248,8 @@ describe('Windows: directory links inside the trees become junctions (warning 2)
         opts(home, { platform: 'win32', symlink: winSymlink(calls), linkDir: (target, path) => symlinkSync(target, path) }),
       )
       expect(result.outcome).toBe('merged')
-      expect(calls).toContainEqual({ target: join(home, '.rox', 'themes', 'base'), path: join(home, '.rox', 'themes', 'current'), type: 'junction' })
+      // Review 9: aimed at the final home (~/rox), not at the compat path.
+      expect(calls).toContainEqual({ target: join(home, 'rox', 'themes', 'base'), path: join(home, '.rox', 'themes', 'current'), type: 'junction' })
       expect(readFileSync(join(home, 'rox', 'themes', 'current', 'theme.json'), 'utf8')).toBe('theme')
       expect(readFileSync(join(home, 'rox', 'notes.txt'), 'utf8')).toBe('notes')
       expect(existsSync(join(home, 'rox', 'notes-link'))).toBe(false)
