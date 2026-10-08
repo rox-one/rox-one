@@ -12,7 +12,7 @@
  *   id, workspace_id, deleted, parent_refs (text[] of `kind:id`), space_id,
  *   owner_id, champion_id, reviewer_id, contributor_ids (text[]),
  *   assignee_ids (text[]), has_children, secret, implicit_workspace_role,
- *   link_token
+ *   link_token, chat_id (space chat, spaces only)
  * `implicit_workspace_role` encodes table-level visibility that predates
  * `acl_entry` (project.visibility = 'members', public chats, company spaces,
  * company goals, workspace-shared task lists) as a synthetic
@@ -67,6 +67,7 @@ export const sqlChannels = (p: string) => `
 /** Synthetic chat-member grants on a channel (owner → manager, admin → editor, member → commenter). */
 export const sqlChatMembers = (p: string) => `
   SELECT cm.principal_id::text AS principal_id, cm.role FROM ${p}chat_member cm
+  JOIN ${p}chat c ON c.chat_id = cm.chat_id AND c.workspace_id = $2::uuid AND c.deleted_at IS NULL
   WHERE cm.chat_id = $1::uuid AND cm.state = 'active'
   ORDER BY 1`
 
@@ -77,27 +78,28 @@ export const sqlChatMembers = (p: string) => `
  */
 export const sqlSpaceMembers = (p: string) => `
   SELECT cm.principal_id::text AS principal_id, cm.role FROM ${p}chat_member cm
-  JOIN ${p}space s ON s.chat_id = cm.chat_id
+  JOIN ${p}space s ON s.chat_id = cm.chat_id AND s.workspace_id = $2::uuid AND s.deleted_at IS NULL
   WHERE s.space_id = $1::uuid AND cm.state = 'active'
   ORDER BY 1`
 
+/** Workspace-scoped (`$2`) "Only invited people" flag from `resource_policy.policy.privacy`. */
 const policySecret = (p: string, type: string, idExpr: string) =>
-  `EXISTS (SELECT 1 FROM ${p}resource_policy rp WHERE rp.resource_type IN (${aclStoredResourceTypes(type).map(t => `'${t}'`).join(', ')}) AND rp.resource_id = ${idExpr}::text AND rp.policy->>'privacy' = 'invited')`
+  `EXISTS (SELECT 1 FROM ${p}resource_policy rp WHERE rp.workspace_id = $2::uuid AND rp.resource_type IN (${aclStoredResourceTypes(type).map(t => `'${t}'`).join(', ')}) AND rp.resource_id = ${idExpr}::text AND rp.policy->>'privacy' = 'invited')`
 
 const NONE = `NULL::text`
 const EMPTY = `ARRAY[]::text[]`
 
-/** Resource loaders by entity kind. `$1` = resource id (uuid). */
-export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
+/** Raw per-kind selects (see `RESOURCE_LOADERS`). `$1` = resource id, `$2` = workspace id. */
+const INNER_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = {
   space: p => `
     SELECT s.space_id::text AS id, s.workspace_id::text AS workspace_id, (s.deleted_at IS NOT NULL) AS deleted,
       ${EMPTY} AS parent_refs, s.space_id::text AS space_id, ${NONE} AS owner_id, ${NONE} AS champion_id, ${NONE} AS reviewer_id,
       ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
       ${policySecret(p, 'space', 's.space_id')} AS secret,
       CASE WHEN s.default_access = 'company_edit' THEN 'editor' WHEN s.default_access = 'company_comment' THEN 'commenter'
-           WHEN s.default_access = 'company_view' OR s.is_company_space THEN 'viewer' ELSE NULL END AS implicit_workspace_role,
-      ${NONE} AS link_token
-    FROM ${p}space s WHERE s.space_id = $1::uuid`,
+           WHEN s.default_access = 'company_view' OR s.is_company_space THEN 'viewer' ELSE NULL END AS implicit_raw,
+      ${NONE} AS link_token, s.chat_id::text AS chat_id
+    FROM ${p}space s WHERE s.space_id = $1::uuid AND s.workspace_id = $2::uuid`,
   goal: p => `
     SELECT g.goal_id::text AS id, g.workspace_id::text AS workspace_id, (g.deleted_at IS NOT NULL) AS deleted,
       array_remove(ARRAY[
@@ -109,21 +111,21 @@ export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>
       (EXISTS (SELECT 1 FROM ${p}goal c WHERE c.parent_goal_id = g.goal_id AND c.deleted_at IS NULL)
         OR EXISTS (SELECT 1 FROM ${p}project pj WHERE pj.parent_goal_id = g.goal_id AND pj.deleted_at IS NULL)) AS has_children,
       (g.scope = 'personal' OR ${policySecret(p, 'goal', 'g.goal_id')}) AS secret,
-      CASE WHEN g.scope = 'company' THEN 'viewer' ELSE NULL END AS implicit_workspace_role,
-      ${NONE} AS link_token
-    FROM ${p}goal g WHERE g.goal_id = $1::uuid`,
+      CASE WHEN g.scope = 'company' THEN 'viewer' ELSE NULL END AS implicit_raw,
+      ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}goal g WHERE g.goal_id = $1::uuid AND g.workspace_id = $2::uuid`,
   'goal-target': p => `
     SELECT t.goal_target_id::text AS id, g.workspace_id::text AS workspace_id, (t.deleted_at IS NOT NULL OR g.deleted_at IS NOT NULL) AS deleted,
       ARRAY['goal:' || g.goal_id::text] AS parent_refs, g.space_id::text AS space_id, t.owner_id::text AS owner_id,
       ${NONE} AS champion_id, ${NONE} AS reviewer_id, ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
-      false AS secret, ${NONE} AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}goal_target t JOIN ${p}goal g ON g.goal_id = t.goal_id WHERE t.goal_target_id = $1::uuid`,
+      false AS secret, ${NONE} AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}goal_target t JOIN ${p}goal g ON g.goal_id = t.goal_id WHERE t.goal_target_id = $1::uuid AND g.workspace_id = $2::uuid`,
   'goal-check': p => `
     SELECT k.goal_check_id::text AS id, g.workspace_id::text AS workspace_id, (k.deleted_at IS NOT NULL OR g.deleted_at IS NOT NULL) AS deleted,
       ARRAY['goal:' || g.goal_id::text] AS parent_refs, g.space_id::text AS space_id, ${NONE} AS owner_id,
       ${NONE} AS champion_id, ${NONE} AS reviewer_id, ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
-      false AS secret, ${NONE} AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}goal_check k JOIN ${p}goal g ON g.goal_id = k.goal_id WHERE k.goal_check_id = $1::uuid`,
+      false AS secret, ${NONE} AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}goal_check k JOIN ${p}goal g ON g.goal_id = k.goal_id WHERE k.goal_check_id = $1::uuid AND g.workspace_id = $2::uuid`,
   project: p => `
     SELECT pj.project_id::text AS id, pj.workspace_id::text AS workspace_id, (pj.deleted_at IS NOT NULL) AS deleted,
       array_remove(ARRAY[
@@ -139,15 +141,15 @@ export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>
         WHERE pm.project_id = pj.project_id AND pm.workspace_id = pj.workspace_id AND pm.role = 'contributor'), ${EMPTY}) AS contributor_ids,
       ${EMPTY} AS assignee_ids, false AS has_children,
       (pj.visibility = 'private' OR ${policySecret(p, 'project', 'pj.project_id')}) AS secret,
-      CASE WHEN pj.visibility = 'members' THEN 'viewer' ELSE NULL END AS implicit_workspace_role,
-      ${NONE} AS link_token
-    FROM ${p}project pj WHERE pj.project_id = $1::uuid`,
+      CASE WHEN pj.visibility = 'members' THEN 'viewer' ELSE NULL END AS implicit_raw,
+      ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}project pj WHERE pj.project_id = $1::uuid AND pj.workspace_id = $2::uuid`,
   milestone: p => `
     SELECT m.milestone_id::text AS id, m.workspace_id::text AS workspace_id, (m.deleted_at IS NOT NULL) AS deleted,
       ARRAY['project:' || m.project_id::text] AS parent_refs, ${NONE} AS space_id, ${NONE} AS owner_id,
       ${NONE} AS champion_id, ${NONE} AS reviewer_id, ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
-      false AS secret, ${NONE} AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}milestone m WHERE m.milestone_id = $1::uuid`,
+      false AS secret, ${NONE} AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}milestone m WHERE m.milestone_id = $1::uuid AND m.workspace_id = $2::uuid`,
   task: p => `
     SELECT w.work_item_id::text AS id, w.workspace_id::text AS workspace_id, (w.deleted_at IS NOT NULL) AS deleted,
       array_remove(ARRAY[
@@ -162,8 +164,8 @@ export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>
       COALESCE((SELECT array_agg(wm.principal_id::text ORDER BY wm.principal_id) FROM ${p}work_item_member wm
         WHERE wm.work_item_id = w.work_item_id AND wm.role = 'assignee'), ${EMPTY}) AS assignee_ids,
       false AS has_children, ${policySecret(p, 'task', 'w.work_item_id')} AS secret,
-      ${NONE} AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}work_item w WHERE w.work_item_id = $1::uuid`,
+      ${NONE} AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}work_item w WHERE w.work_item_id = $1::uuid AND w.workspace_id = $2::uuid`,
   'task-list': p => `
     SELECT l.task_list_id::text AS id, l.workspace_id::text AS workspace_id, (l.deleted_at IS NOT NULL) AS deleted,
       CASE WHEN l.owner_type IN ('project', 'space') THEN ARRAY[l.owner_type || ':' || l.owner_id::text]
@@ -172,9 +174,9 @@ export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>
       CASE WHEN l.owner_type = 'user' THEN l.owner_id::text END AS owner_id,
       ${NONE} AS champion_id, ${NONE} AS reviewer_id, ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
       (l.share_mode = 'private' OR ${policySecret(p, 'task-list', 'l.task_list_id')}) AS secret,
-      CASE WHEN l.share_mode = 'workspace' THEN 'viewer' ELSE NULL END AS implicit_workspace_role,
-      ${NONE} AS link_token
-    FROM ${p}task_list l WHERE l.task_list_id = $1::uuid`,
+      CASE WHEN l.share_mode = 'workspace' THEN 'viewer' ELSE NULL END AS implicit_raw,
+      ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}task_list l WHERE l.task_list_id = $1::uuid AND l.workspace_id = $2::uuid`,
   note: p => `
     SELECT d.doc_id::text AS id, d.workspace_id::text AS workspace_id, (d.deleted_at IS NOT NULL) AS deleted,
       array_remove(ARRAY[
@@ -184,8 +186,8 @@ export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>
       ], NULL) AS parent_refs,
       d.space_id::text AS space_id, d.owner_id::text AS owner_id, ${NONE} AS champion_id, ${NONE} AS reviewer_id,
       ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
-      ${policySecret(p, 'note', 'd.doc_id')} AS secret, ${NONE} AS implicit_workspace_role, d.public_token AS link_token
-    FROM ${p}doc d WHERE d.doc_id = $1::uuid`,
+      ${policySecret(p, 'note', 'd.doc_id')} AS secret, ${NONE} AS implicit_raw, d.public_token AS link_token, ${NONE} AS chat_id
+    FROM ${p}doc d WHERE d.doc_id = $1::uuid AND d.workspace_id = $2::uuid`,
   folder: p => `
     SELECT f.folder_id::text AS id, f.workspace_id::text AS workspace_id, (f.deleted_at IS NOT NULL) AS deleted,
       array_remove(ARRAY[
@@ -197,16 +199,16 @@ export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>
       CASE WHEN f.owner_type = 'user' THEN f.owner_id::text END AS owner_id,
       ${NONE} AS champion_id, ${NONE} AS reviewer_id, ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
       ${policySecret(p, 'folder', 'f.folder_id')} AS secret,
-      CASE WHEN f.owner_type = 'workspace' THEN 'viewer' ELSE NULL END AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}folder f WHERE f.folder_id = $1::uuid`,
+      CASE WHEN f.owner_type = 'workspace' THEN 'viewer' ELSE NULL END AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}folder f WHERE f.folder_id = $1::uuid AND f.workspace_id = $2::uuid`,
   channel: p => `
     SELECT c.chat_id::text AS id, c.workspace_id::text AS workspace_id, (c.deleted_at IS NOT NULL) AS deleted,
       CASE WHEN c.space_id IS NOT NULL THEN ARRAY['space:' || c.space_id::text] ELSE ${EMPTY} END AS parent_refs,
       c.space_id::text AS space_id, c.created_by::text AS owner_id, ${NONE} AS champion_id, ${NONE} AS reviewer_id,
       ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
       (c.visibility = 'private' OR ${policySecret(p, 'channel', 'c.chat_id')}) AS secret,
-      CASE WHEN c.visibility = 'public' THEN 'viewer' ELSE NULL END AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}chat c WHERE c.chat_id = $1::uuid`,
+      CASE WHEN c.visibility = 'public' THEN 'viewer' ELSE NULL END AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}chat c WHERE c.chat_id = $1::uuid AND c.workspace_id = $2::uuid`,
   calendar: p => `
     SELECT k.calendar_id::text AS id, k.workspace_id::text AS workspace_id, (k.deleted_at IS NOT NULL) AS deleted,
       CASE WHEN k.owner_type = 'space' AND k.owner_id IS NOT NULL THEN ARRAY['space:' || k.owner_id::text]
@@ -215,18 +217,33 @@ export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>
       CASE WHEN k.owner_type = 'principal' THEN k.owner_id::text END AS owner_id,
       ${NONE} AS champion_id, ${NONE} AS reviewer_id, ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
       ${policySecret(p, 'calendar', 'k.calendar_id')} AS secret,
-      CASE WHEN k.owner_type = 'workspace' THEN 'viewer' ELSE NULL END AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}calendar k WHERE k.calendar_id = $1::uuid`,
+      CASE WHEN k.owner_type = 'workspace' THEN 'viewer' ELSE NULL END AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}calendar k WHERE k.calendar_id = $1::uuid AND k.workspace_id = $2::uuid`,
   kpi: p => `
     SELECT k.kpi_id::text AS id, k.workspace_id::text AS workspace_id, (k.deleted_at IS NOT NULL) AS deleted,
       ARRAY['space:' || k.space_id::text] AS parent_refs, k.space_id::text AS space_id, ${NONE} AS owner_id,
       k.champion_id::text AS champion_id, ${NONE} AS reviewer_id, ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
-      ${policySecret(p, 'kpi', 'k.kpi_id')} AS secret, ${NONE} AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}kpi k WHERE k.kpi_id = $1::uuid`,
+      ${policySecret(p, 'kpi', 'k.kpi_id')} AS secret, ${NONE} AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}kpi k WHERE k.kpi_id = $1::uuid AND k.workspace_id = $2::uuid`,
   'okr-cycle': p => `
     SELECT o.okr_cycle_id::text AS id, o.workspace_id::text AS workspace_id, (o.deleted_at IS NOT NULL) AS deleted,
       ${EMPTY} AS parent_refs, ${NONE} AS space_id, ${NONE} AS owner_id, ${NONE} AS champion_id, ${NONE} AS reviewer_id,
       ${EMPTY} AS contributor_ids, ${EMPTY} AS assignee_ids, false AS has_children,
-      ${policySecret(p, 'okr-cycle', 'o.okr_cycle_id')} AS secret, 'viewer' AS implicit_workspace_role, ${NONE} AS link_token
-    FROM ${p}okr_cycle o WHERE o.okr_cycle_id = $1::uuid`,
+      ${policySecret(p, 'okr-cycle', 'o.okr_cycle_id')} AS secret, 'viewer' AS implicit_raw, ${NONE} AS link_token, ${NONE} AS chat_id
+    FROM ${p}okr_cycle o WHERE o.okr_cycle_id = $1::uuid AND o.workspace_id = $2::uuid`,
 }
+
+const RESOURCE_COLUMNS = 'r.id, r.workspace_id, r.deleted, r.parent_refs, r.space_id, r.owner_id, r.champion_id, r.reviewer_id, '
+  + 'r.contributor_ids, r.assignee_ids, r.has_children, r.secret, r.link_token, r.chat_id'
+
+/**
+ * Resource loaders by entity kind. `$1` = resource id (uuid), `$2` = the
+ * evaluating workspace: every row (and its policy-secret lookup) is
+ * workspace-scoped, so another workspace's row never answers. The synthetic
+ * workspace grant is suppressed for secret rows ("Only invited people").
+ */
+export const RESOURCE_LOADERS: Partial<Record<EntityKind, (p: string) => string>> = Object.fromEntries(
+  Object.entries(INNER_LOADERS).map(([kind, inner]) => [kind, (p: string) => `
+    SELECT ${RESOURCE_COLUMNS}, CASE WHEN r.secret THEN NULL ELSE r.implicit_raw END AS implicit_workspace_role
+    FROM (${inner!(p)}) r`]),
+)

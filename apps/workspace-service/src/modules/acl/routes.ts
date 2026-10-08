@@ -112,9 +112,9 @@ function parseCheckBody(body: unknown): { action: AclAction; refs: EntityRef[] }
 /**
  * `POST /v1/workspaces/:workspaceId/acl/check` — `{ action, refs[] }` →
  * `{ action, results[] }` for the calling principal only (no probing other
- * principals). A missing ref and an unviewable secret ref are reported
- * identically (`allowed:false, role:null, visibility:'hide'`), so the
- * endpoint is not an existence oracle.
+ * principals). A missing ref, a ref of another workspace and an unviewable
+ * secret ref are reported identically (`allowed:false, role:null,
+ * visibility:'hide'`), so the endpoint is not an existence oracle.
  */
 export function createAclRoutes(acl: WorkspaceAcl): WorkspaceModuleRoute[] {
   return [{
@@ -126,8 +126,10 @@ export function createAclRoutes(acl: WorkspaceAcl): WorkspaceModuleRoute[] {
       const { action, refs } = parseCheckBody(body)
       const principal = await acl.principalFor(actor, workspaceId)
       const decisions = await acl.engine.evaluateMany(principal, action, refs)
-      // A hard denial of the principal itself (revoked, placeholder, …) is a 403, not per-ref noise.
-      const hard = decisions.find(d => d.reason === 'not_member' || d.reason === 'placeholder' || d.reason === 'inactive' || d.reason === 'cross_workspace')
+      // A hard denial of the principal itself (revoked, placeholder, …) is a 403.
+      // Per-ref problems (missing, foreign-workspace, secret) are never batch-wide:
+      // the engine reports a foreign ref as not_found, rendered `hide` below.
+      const hard = decisions.find(d => d.reason === 'not_member' || d.reason === 'placeholder' || d.reason === 'inactive')
       if (hard) throw new IdentityDomainError('FORBIDDEN')
       const view = action === 'view' ? decisions : await acl.engine.evaluateMany(principal, 'view', refs)
       const results: AclCheckResult[] = refs.map((ref, index) => {

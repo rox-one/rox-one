@@ -68,11 +68,11 @@ describe('route table helpers', () => {
 })
 
 describe('POST /v1/workspaces/:workspaceId/acl/check', () => {
-  test('inherited role via space membership', async () => {
+  test('space editor: editor on the space, only the space-wide default (viewer) on a space goal', async () => {
     const { routes } = setup()
     const result = await call(routes, actor(ALICE), { action: 'edit', refs: [`goal:${GOAL}`, `space:${SPACE}`] })
     expect(result.results).toEqual([
-      { ref: `goal:${GOAL}`, allowed: true, role: 'editor', visibility: 'show' },
+      { ref: `goal:${GOAL}`, allowed: false, role: 'viewer', visibility: 'show' },
       { ref: `space:${SPACE}`, allowed: true, role: 'editor', visibility: 'show' },
     ])
   })
@@ -81,6 +81,21 @@ describe('POST /v1/workspaces/:workspaceId/acl/check', () => {
     const { routes } = setup()
     const result = await call(routes, actor(ALICE), { action: 'view', refs: [`goal:${SECRET}`, `goal:${MISSING}`] })
     expect(result.results.map(r => [r.allowed, r.role, r.visibility])).toEqual([[false, null, 'hide'], [false, null, 'hide']])
+  })
+
+  test('a ref of another workspace is per-ref hidden (like a missing ref), never a batch-wide 403', async () => {
+    const { routes, facts } = setup()
+    const FOREIGN = '10000000-0000-4000-8000-0000000000aa'
+    facts.setMember(OTHER_WS, ALICE, { role: 'owner', status: 'active' })
+    facts.setResource({ ref: { kind: 'goal', id: FOREIGN }, workspaceId: OTHER_WS })
+    // A fact source that (wrongly) answers with a foreign row is still masked.
+    facts.setResource({ ref: { kind: 'goal', id: '10000000-0000-4000-8000-0000000000bb' }, workspaceId: OTHER_WS }, WS)
+    const result = await call(routes, actor(ALICE), {
+      action: 'view', refs: [`goal:${FOREIGN}`, 'goal:10000000-0000-4000-8000-0000000000bb', `goal:${MISSING}`, `goal:${GOAL}`],
+    })
+    expect(result.results.map(r => [r.allowed, r.role, r.visibility])).toEqual([
+      [false, null, 'hide'], [false, null, 'hide'], [false, null, 'hide'], [true, 'viewer', 'show'],
+    ])
   })
 
   test('champion sees the secret goal (contextual tag)', async () => {

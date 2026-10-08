@@ -61,6 +61,19 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       await q(`INSERT INTO space (space_id, workspace_id, name, chat_id, root_folder_id) VALUES ($1, $2, 'Team', $3, $4)`, [space, ws, spaceChat, rootFolder])
       await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [spaceChat, bob])
       await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Space goal', $3, $4)`, [spaceGoal, ws, owner, space])
+      const presetGoal = id()
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Space edit goal', $3, $4)`, [presetGoal, ws, owner, space])
+      await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, default_subject, default_role) VALUES ($1, $2, 'goal', $3, 'space', 'editor')`, [id(), ws, presetGoal])
+      // A company goal made "Only invited people" via resource_policy.
+      const invitedCompanyGoal = id()
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id) VALUES ($1, $2, 'company', 'Invited', $3)`, [invitedCompanyGoal, ws, owner])
+      await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, policy) VALUES ($1, $2, 'goal', $3, '{"privacy":"invited"}')`, [id(), ws, invitedCompanyGoal])
+      // Another workspace reuses the project id (project PK is (workspace_id, project_id)).
+      const ws2 = id()
+      await q(`INSERT INTO workspace (workspace_id, owner_principal_id, name) VALUES ($1, $2, 'WS2')`, [ws2, owner])
+      await q(`INSERT INTO workspace_member (workspace_id, principal_id, role, status) VALUES ($1, $2, 'owner', 'active')`, [ws2, owner])
+      await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility) VALUES ($1, $2, $3, 'Twin', 'private')`, [project, ws2, owner])
+      await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, policy) VALUES ($1, $2, 'project', $3, '{"privacy":"invited"}')`, [id(), ws2, project])
       const dept = id()
       await q(`INSERT INTO department (department_id, workspace_id, name) VALUES ($1, $2, 'Eng')`, [dept, ws])
       await q(`INSERT INTO department_member (department_id, principal_id, role) VALUES ($1, $2, 'head')`, [dept, bob])
@@ -100,8 +113,18 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       expect(await can(bob, 'comment', 'note', doc, 'pub-token')).toBe(false)
       expect(await can(guest, 'comment', 'note', secretDoc)).toBe(true)
       expect(await can(alice, 'view', 'note', secretDoc)).toBe(false)
-      expect(await can(bob, 'edit', 'goal', spaceGoal)).toBe(true)
+      // Space chat member: viewer on a space goal by default, editor only through its space preset.
+      expect(await can(bob, 'view', 'goal', spaceGoal)).toBe(true)
+      expect(await can(bob, 'edit', 'goal', spaceGoal)).toBe(false)
+      expect(await can(bob, 'edit', 'goal', presetGoal)).toBe(true)
       expect(await can(alice, 'view', 'goal', spaceGoal)).toBe(false)
+      expect(await can(alice, 'view', 'goal', presetGoal)).toBe(false)
+      // Invited policy beats the company scope: no synthetic workspace grant, hidden from listings.
+      expect(await can(alice, 'view', 'goal', invitedCompanyGoal)).toBe(false)
+      const invited = await acl.evaluate(await who(alice), 'view', { kind: 'goal', id: invitedCompanyGoal })
+      expect(invited).toMatchObject({ secret: true, preview: 'none' })
+      // The foreign twin (private + invited) does not shadow our project.
+      expect(await can(alice, 'view', 'project', project)).toBe(true)
       expect(await can(alice, 'view', 'space', space)).toBe(false)
       // Hard denials.
       expect((await acl.evaluate(await who(gone), 'view', { kind: 'goal', id: company })).reason).toBe('not_member')
@@ -115,6 +138,11 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       const directory = new PostgresDirectoryRepository(tx)
       expect((await directory.members(ws, 10)).members.map(m => m.principalId).sort()).toEqual([owner, bob, guest, ph].sort())
       expect(await directory.managerChain(ws, alice)).toEqual([bob, owner])
+      // A removed manager ends the chain (never walked through, never returned).
+      await q(`UPDATE user_profile SET manager_id = $2 WHERE principal_id = $1`, [bob, gone])
+      await q(`INSERT INTO user_profile (principal_id, workspace_id, display_name, manager_id) VALUES ($1, $2, 'Gone', $3)`, [gone, ws, owner])
+      expect(await directory.managerChain(ws, alice)).toEqual([bob])
+      await q(`UPDATE user_profile SET manager_id = $2 WHERE principal_id = $1`, [bob, owner])
       expect(await directory.directReports(ws, owner)).toEqual([bob])
       expect(await directory.departments(ws)).toEqual([{ departmentId: dept, parentId: null, name: 'Eng', headId: bob }])
       expect(await directory.departmentMembers(ws, dept)).toEqual([bob])

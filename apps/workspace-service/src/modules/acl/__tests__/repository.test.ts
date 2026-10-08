@@ -31,7 +31,7 @@ function row(overrides: Partial<ResourceRow> = {}): ResourceRow {
 }
 
 describe('resourceFromRow', () => {
-  test('maps parents, tags, privacy and implicit workspace role', () => {
+  test('maps parents, tags and privacy (a secret row drops its implicit workspace role)', () => {
     const loaded = resourceFromRow({ kind: 'goal', id: G }, row({
       parent_refs: [`goal:${C}`, 'bogus', 'nokind:1', `space:${WS}`], champion_id: P, contributor_ids: null,
       secret: true, implicit_workspace_role: 'viewer', has_children: true,
@@ -41,7 +41,16 @@ describe('resourceFromRow', () => {
     expect(loaded.node.championId).toBe(P)
     expect(loaded.node.contributorIds).toEqual([])
     expect(loaded.node.hasChildren).toBe(true)
-    expect(loaded.implicitWorkspaceRole).toBe('viewer')
+    expect(loaded.implicitWorkspaceRole).toBeNull()
+    expect(resourceFromRow({ kind: 'goal', id: G }, row({ implicit_workspace_role: 'viewer' })).implicitWorkspaceRole).toBe('viewer')
+  })
+
+  test('a secret row never carries the synthetic workspace grant', () => {
+    expect(resourceFromRow({ kind: 'goal', id: G }, row({ secret: true, implicit_workspace_role: 'viewer' })).implicitWorkspaceRole).toBeNull()
+  })
+
+  test('maps the space chat id', () => {
+    expect(resourceFromRow({ kind: 'space', id: G }, row({ chat_id: C })).node.chatId).toBe(C)
   })
 
   test('unknown implicit roles are dropped (fail closed)', () => {
@@ -66,12 +75,36 @@ describe('PostgresAclRepository', () => {
     expect(calls).toHaveLength(0)
   })
 
-  test('every loader is schema-prefixed and parameterised', () => {
+  test('every loader is schema-prefixed, workspace-scoped and suppresses the workspace grant for secrets', () => {
     for (const [kind, loader] of Object.entries(RESOURCE_LOADERS)) {
       const sql = loader!('"tenant".')
       expect(sql, kind).toContain('"tenant".')
       expect(sql, kind).toContain('$1::uuid')
+      expect(sql, kind).toMatch(/WHERE [a-z]+\.[a-z_]+ = \$1::uuid AND [a-z]+\.workspace_id = \$2::uuid/)
+      expect(sql, kind).toContain('CASE WHEN r.secret THEN NULL ELSE r.implicit_raw END AS implicit_workspace_role')
+      if (sql.includes('resource_policy rp')) expect(sql, kind).toContain('rp.workspace_id = $2::uuid')
     }
+  })
+
+  test('resource loads pass the workspace as $2', async () => {
+    const { db, calls } = fakeDb(() => [row()])
+    await new PostgresAclRepository(db).resource(WS, { kind: 'goal', id: G })
+    expect(calls[0]!.params).toEqual([G, WS])
+  })
+
+  test('scoped() loads each resource row once per batch; the base repository does not memoise', async () => {
+    const responder = (sql: string) => sql.includes('FROM "public".doc d') ? [row({ link_token: 'pub' })] : []
+    const scoped = fakeDb(responder)
+    const view = new PostgresAclRepository(scoped.db).scoped()
+    await view.resource(WS, { kind: 'note', id: G })
+    await view.entries(WS, { kind: 'note', id: G })
+    await view.policy(WS, { kind: 'note', id: G })
+    expect(scoped.calls.filter(c => c.sql.includes('FROM "public".doc d'))).toHaveLength(1)
+    const plain = fakeDb(responder)
+    const base = new PostgresAclRepository(plain.db)
+    await base.resource(WS, { kind: 'note', id: G })
+    await base.resource(WS, { kind: 'note', id: G })
+    expect(plain.calls.filter(c => c.sql.includes('FROM "public".doc d'))).toHaveLength(2)
   })
 
   test('membership and principal default v2 status columns', async () => {
@@ -99,6 +132,11 @@ describe('PostgresAclRepository', () => {
     expect(calls[0]!.params).toEqual([WS, 'goal', G])
   })
 
+  test('entries: no synthetic workspace grant for a secret row, even if SQL returned one', async () => {
+    const { db } = fakeDb(sql => sql.includes('FROM "public".goal g') ? [row({ secret: true, implicit_workspace_role: 'viewer' })] : [])
+    expect(await new PostgresAclRepository(db).entries(WS, { kind: 'goal', id: G })).toEqual([])
+  })
+
   test('entries: notes query both the note and legacy doc resource types', async () => {
     const { db, calls } = fakeDb(() => [])
     await new PostgresAclRepository(db).entries(WS, { kind: 'note', id: G })
@@ -107,7 +145,7 @@ describe('PostgresAclRepository', () => {
   })
 
   test('entries: chat members become synthetic principal grants on a channel', async () => {
-    const { db } = fakeDb(sql => {
+    const { db, calls } = fakeDb(sql => {
       if (sql.includes('FROM "public".chat c')) return [row({ id: C, secret: true })]
       if (sql.includes('cm.role FROM')) return [
         { principal_id: P, role: 'owner' }, { principal_id: G, role: 'member' }, { principal_id: WS, role: 'weird' },
@@ -119,6 +157,7 @@ describe('PostgresAclRepository', () => {
       { subjectType: 'principal', subjectId: P, role: 'manager' },
       { subjectType: 'principal', subjectId: G, role: 'commenter' },
     ])
+    expect(calls.find(c => c.sql.includes('cm.role FROM'))!.params).toEqual([C, WS])
   })
 
   test('entries: space chat members become space member grants', async () => {
