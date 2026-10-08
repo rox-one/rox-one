@@ -1,21 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 
 /** Number of bars in the wave. Short enough to read as a level meter. */
 const BAR_COUNT = 20
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReduced(query.matches)
-    const onChange = (event: MediaQueryListEvent) => setReduced(event.matches)
-    query.addEventListener('change', onChange)
-    return () => query.removeEventListener('change', onChange)
-  }, [])
-  return reduced
-}
 
 function clampLevel(value: number): number {
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0
