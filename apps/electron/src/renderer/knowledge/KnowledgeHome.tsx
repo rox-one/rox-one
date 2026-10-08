@@ -35,6 +35,7 @@ import type { ViewConfig as KnowledgeViewConfig } from '@rox/shared/views'
 import { KnowledgeProposals } from './KnowledgeProposals'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
 import { getKernelAvailability, observeKernelAvailability } from './kernel-availability'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * Which body KnowledgeHome renders. Module-level atom so other column hosts
@@ -582,7 +583,7 @@ export function KnowledgeHome() {
     } catch (error) {
       toast.error(t('knowledge.migrate.failed'), {
         id: progressToast,
-        description: error instanceof Error ? error.message : String(error),
+        description: toErrorMessage(error),
       })
     } finally {
       setMigrating(false)
@@ -620,7 +621,7 @@ export function KnowledgeHome() {
         navigate(routes.view.proposal(result.proposalId))
       } catch (error) {
         toast.error(t('knowledge.surface.error'), {
-          description: error instanceof Error ? error.message : String(error),
+          description: toErrorMessage(error),
         })
       } finally {
         setSetAttrBusy(null)

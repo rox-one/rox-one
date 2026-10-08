@@ -35,6 +35,7 @@ import { formatOrgMemberIdentity } from './organization-member-identity'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 import { TeamOrgSettingsSection } from '@/components/team/TeamOrgSettingsSection'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -92,7 +93,7 @@ export default function OrganizationsSettingsPage() {
         return list[0]?.id ?? null
       })
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       toast.error(t('settings.orgs.loadFailed'), { description: message })
     } finally {
       setLoading(false)
@@ -134,7 +135,7 @@ export default function OrganizationsSettingsPage() {
       setSelectedOrgId(organization.id)
       toast.success(t('settings.orgs.created', { name: organization.name }))
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       toast.error(t('settings.orgs.createFailed'), { description: message })
     } finally {
       setCreating(false)
@@ -184,7 +185,7 @@ export default function OrganizationsSettingsPage() {
         description: copied ? t('toast.inviteCopied') : t('settings.orgs.inviteNoMailer'),
       })
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       toast.error(t('settings.orgs.inviteFailed'), { description: message })
     } finally {
       setInviting(false)
@@ -210,7 +211,7 @@ export default function OrganizationsSettingsPage() {
       setSelectedOrgId(result.org.id)
       toast.success(t('settings.orgs.inviteAccepted', { name: result.org.name }))
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       toast.error(t('settings.orgs.acceptFailed'), { description: message })
     } finally {
       setAccepting(false)
@@ -234,7 +235,7 @@ export default function OrganizationsSettingsPage() {
       })
       toast.success(t('settings.orgs.identitySaved'))
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       toast.error(t('settings.orgs.identitySaveFailed'), { description: message })
     } finally {
       setSavingIdentity(false)
@@ -251,7 +252,7 @@ export default function OrganizationsSettingsPage() {
       await refresh()
       toast.success(t('settings.orgs.roleUpdated'))
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       toast.error(t('settings.orgs.roleUpdateFailed'), { description: message })
     } finally {
       setMembershipAction(null)
@@ -268,7 +269,7 @@ export default function OrganizationsSettingsPage() {
       await refresh()
       toast.success(t('settings.orgs.memberRemoved'))
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       toast.error(t('settings.orgs.memberRemoveFailed'), { description: message })
     } finally {
       setMembershipAction(null)
@@ -285,7 +286,7 @@ export default function OrganizationsSettingsPage() {
       await refresh()
       toast.success(t('settings.orgs.inviteRevoked'))
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = toErrorMessage(error)
       toast.error(t('settings.orgs.inviteRevokeFailed'), { description: message })
     } finally {
       setMembershipAction(null)

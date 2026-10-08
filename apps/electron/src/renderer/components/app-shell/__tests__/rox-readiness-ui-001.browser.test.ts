@@ -57,7 +57,7 @@ async function fixtureBundle() {
     import { runtimeCatalogCapabilities, runtimeCatalogScope } from './apps/electron/src/renderer/lib/runtime-catalog-capabilities';
     import * as guards from './apps/electron/src/shared/types';
     import { resolveRouteNavigationState as parseRouteToNavigationState, buildRouteFromNavigationState } from './apps/electron/src/shared/route-parser';
-    import { inspectorPanelWidthAtom, bottomDockHeightAtom, bottomTerminalOpenAtom } from './apps/electron/src/renderer/atoms/unified-shell';
+    import { inspectorPanelWidthAtom, bottomTerminalOpenAtom } from './apps/electron/src/renderer/atoms/unified-shell';
     import CloudRunSurfacePage from './apps/electron/src/renderer/pages/CloudRunSurfacePage';
     import TerminalSurfacePage from './apps/electron/src/renderer/pages/TerminalSurfacePage';
     const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation,
@@ -141,7 +141,7 @@ async function fixtureBundle() {
     }
     const root = createRoot(document.getElementById('root'));
     const rerender = () => flushSync(() => root.render(React.createElement(React.Fragment,null,React.createElement(ResizeProbe),React.createElement(MainContentPanel, { navStateOverride:nav, panelId:'fixture' }))));
-    const store = createStore(); store.sub(inspectorPanelWidthAtom,()=>{}); store.sub(bottomDockHeightAtom,()=>{});
+    const store = createStore(); store.sub(inspectorPanelWidthAtom,()=>{});
     window.ui001 = {
       navigate(route, ws='ws-a') { workspace=ws; nav=parseRouteToNavigationState(route); rerender(); },
       sessions(rows, ready=true, alias) { sessionMetas=new Map(rows.map(row=>[row.id,row])); sessionsReady=ready; remoteWorkspaceId=alias; rerender(); },
@@ -152,8 +152,8 @@ async function fixtureBundle() {
       failPage(value) { failPage=value; }, rejectLazy() { rejectLazy=true; }, lazyAttempts() { return lazyAttempts; }, delaySource() { delaySource=true; }, resolveSource(next) { deferredSource(next); },
       cloudRows(rows) { cloudRows=rows; }, failCloud() { failCloud=true; }, delayCloud() { delayCloud=true; }, resolveCloud() { deferredCloud({enabled:true}); },
       address() { return {workspace,nav}; },
-      setSize(width, height) { store.set(inspectorPanelWidthAtom,width); store.set(bottomDockHeightAtom,height); },
-      sizes() { return [store.get(inspectorPanelWidthAtom),store.get(bottomDockHeightAtom)]; },
+      setSize(width) { store.set(inspectorPanelWidthAtom,width); },
+      size() { return store.get(inspectorPanelWidthAtom); },
     }; rerender();
   `
   const result = await build({ stdin: {contents, loader:'tsx', resolveDir:root}, bundle:true, write:false, format:'iife', platform:'browser',
@@ -368,21 +368,15 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
     const other=await page.context().newPage(); await other.goto(base, {waitUntil:'domcontentloaded',timeout:30_000}); await other.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
     try {
       await page.bringToFront()
-      await page.evaluate(()=>(window as any).ui001.setSize(10_000,119.6))
-      expect(await page.evaluate(()=>(window as any).ui001.sizes())).toEqual([1400,120])
+      await page.evaluate(()=>(window as any).ui001.setSize(10_000))
+      expect(await page.evaluate(()=>(window as any).ui001.size())).toBe(1400)
       await other.bringToFront()
-      await other.waitForFunction(()=>JSON.stringify((window as any).ui001.sizes())==='[1400,120]',undefined,{polling:100})
+      await other.waitForFunction(()=>(window as any).ui001.size()===1400,undefined,{polling:100})
       // External headless CDP hosts can pause animation-frame polling in an
       // inactive tab. Restore its viewport before reload and poll data by time.
       await page.bringToFront()
       await page.reload({waitUntil:'domcontentloaded'}); await page.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
-      expect(await page.evaluate(()=>(window as any).ui001.sizes())).toEqual([1400,120])
-      await page.evaluate(()=>localStorage.setItem('craft-bottom-dock-height','1e999'))
-      await other.bringToFront()
-      await other.waitForFunction(()=>(window as any).ui001.sizes()[1]===104,undefined,{polling:100})
-      await page.bringToFront()
-      await page.reload({waitUntil:'domcontentloaded'}); await page.waitForFunction(()=>!!(window as any).ui001,undefined,{polling:100})
-      expect(await page.evaluate(()=>(window as any).ui001.sizes())).toEqual([1400,104])
+      expect(await page.evaluate(()=>(window as any).ui001.size())).toBe(1400)
     } finally { await other.close() }
   })
 })

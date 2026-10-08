@@ -20,6 +20,7 @@ import { useAppShellContext } from '@/context/AppShellContext'
 import { useNativeSurfaceBounds } from '@/hooks/useNativeSurfaceBounds'
 import { NativeSurfacePlaceholder } from '@/components/browser/NativeSurfacePlaceholder'
 import { releaseNativeSurface } from '@/lib/native-surface-dom'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface ExtensionSurfacePageProps {
   extensionId: string
@@ -155,13 +156,13 @@ export default function ExtensionSurfacePage({
           } catch (err) {
             if (!cancelled && !revoked) {
               revoked = true
-              setError(err instanceof Error ? err.message : String(err))
+              setError(toErrorMessage(err))
             }
           }
         })()
       } catch (err) {
         if (!cancelled && !revoked && request === revision) {
-          unavailable(err instanceof Error ? err.message : String(err))
+          unavailable(toErrorMessage(err))
         }
       }
     }

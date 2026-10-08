@@ -26,6 +26,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { useDirectoryPicker } from '@/hooks/useDirectoryPicker'
 import { RPC_CHANNELS } from '../../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 interface ScanNote { absolutePath: string; relativePath: string; sizeBytes: number }
 interface ScanResult { root: string; notes: ScanNote[]; skippedSymlinks: number; truncated: boolean }
 interface MaterializeResult { destinationDir: string; manifestPath: string; copiedCount: number; skippedCount: number }
@@ -70,7 +71,7 @@ export function NotesImportButton({ workspaceId, onImported }: NotesImportButton
       setPreviewWorkspaceId(workspaceId)
       setConsent(false)
     } catch (err) {
-      if (request === previewRequestRef.current) toast.error(err instanceof Error ? err.message : String(err))
+      if (request === previewRequestRef.current) toast.error(toErrorMessage(err))
     } finally {
       if (request === previewRequestRef.current) setBusy(false)
     }
@@ -96,7 +97,7 @@ export function NotesImportButton({ workspaceId, onImported }: NotesImportButton
         }),
       )
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      toast.error(toErrorMessage(err))
     } finally {
       setBusy(false)
     }

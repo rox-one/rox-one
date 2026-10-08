@@ -33,33 +33,41 @@ describe.skipIf(!existsSync(executablePath))('Radar source and schedule workflow
     await page.goto(url)
     await expectDOM(page.getByTestId('radar-setup')).toBeVisible({ timeout: 30_000 })
   }, 60_000)
-  afterEach(async () => { try { expect(errors).toEqual([]) } finally { await page.close() } })
-  afterAll(async () => { server?.kill(); await browser?.close(); await server?.exited })
+  afterEach(async () => { try { expect(errors).toEqual([]) } finally { await page.close() } }, 30_000)
+  afterAll(async () => { server?.kill('SIGKILL'); await Promise.race([browser?.close().catch(() => {}), Bun.sleep(5000)]); await server?.exited }, 30_000)
   const capture = async (name: string) => {
     if (!proof) return
     await page.screenshot({ path: resolve(proof, `radar-${name}.png`), fullPage: true })
     writeFileSync(resolve(proof, `radar-${name}.json`), JSON.stringify({ pageErrors: errors, calls: await page.evaluate(() => (window as unknown as { __radarFixture: FixtureControls }).__radarFixture.calls) }, null, 2))
   }
+  // Leaving an explicit item route returns to the overview, exactly like the workbench rail does.
+  const backToOverview = async () => {
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('rox-navigate', { detail: { route: 'radar' } })))
+    await expectDOM(page.getByTestId('radar-setup')).toBeVisible({ timeout: 15_000 })
+  }
   const addTopic = async () => {
     await page.getByTestId('radar-setup').getByRole('button', { name: 'Topic', exact: true }).click()
     await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Rox releases')
     await page.getByRole('textbox', { name: 'Name', exact: true }).press('Enter')
+    await backToOverview()
   }
   test('topic, keywords, explicit sources and daily hour survive reload', async () => {
+    await page.getByRole('combobox', { name: 'Daily sweep time', exact: true }).selectOption('11')
     await addTopic()
+    await page.getByTestId('radar-setup').getByRole('button', { name: 'Rox releases', exact: true }).click()
     await page.getByRole('textbox', { name: 'Word or phrase', exact: true }).fill('release notes')
     await page.getByRole('textbox', { name: 'Word or phrase', exact: true }).press('Enter')
     await page.getByRole('checkbox', { name: 'Exa', exact: true }).uncheck()
     await expectDOM(page.getByRole('checkbox', { name: 'Disconnected search', exact: true })).toBeDisabled()
-    await page.getByRole('combobox', { name: 'Daily sweep time', exact: true }).selectOption('11')
+    await backToOverview()
     await page.reload()
+    await expectDOM(page.getByRole('combobox', { name: 'Daily sweep time', exact: true })).toHaveValue('11')
+    await expectDOM(page.getByRole('switch', { name: 'Daily sweep', exact: true })).toBeChecked()
     await page.getByTestId('radar-setup').getByRole('button', { name: 'Rox releases', exact: true }).click()
     await expectDOM(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('Rox releases')
     await expectDOM(page.getByRole('button', { name: 'release notes', exact: true })).toBeVisible()
     await expectDOM(page.getByRole('checkbox', { name: 'Brave Search', exact: true })).toBeChecked()
     await expectDOM(page.getByRole('checkbox', { name: 'Exa', exact: true })).not.toBeChecked()
-    await expectDOM(page.getByRole('combobox', { name: 'Daily sweep time', exact: true })).toHaveValue('11')
-    await expectDOM(page.getByRole('switch', { name: 'Daily sweep', exact: true })).toBeChecked()
     await capture('setup-wide')
   }, 30_000)
   test('a real-shaped agent response displays source/date and distinct buckets; its source link opens the recorded URL', async () => {

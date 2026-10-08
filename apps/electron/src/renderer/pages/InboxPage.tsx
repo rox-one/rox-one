@@ -55,6 +55,7 @@ import { InboxSidebar, InboxKindIcon, isMailFilter, type InboxPageFilter } from 
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
+import { toErrorMessage } from '@/lib/errors'
 
 const KIND_TONE: Record<InboxKind, Tone> = {
   permission: 'warning',
@@ -251,7 +252,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       setState((s) => markDone(s, item.id, Date.now()))
       select(next)
     } catch (error) {
-      if (contextRef.current === context) setActionError(error instanceof Error ? error.message : String(error))
+      if (contextRef.current === context) setActionError(toErrorMessage(error))
     } finally {
       if (contextRef.current === context) setBusy(null)
     }
@@ -304,7 +305,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
         }
         succeeded.add(id)
       } catch (error) {
-        failed[id] = error instanceof Error ? error.message : String(error)
+        failed[id] = toErrorMessage(error)
       }
     }
     if (contextRef.current !== context) return
@@ -333,7 +334,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       if (contextRef.current !== context) return
       after?.()
     } catch (error) {
-      if (contextRef.current === context) setActionError(error instanceof Error ? error.message : String(error))
+      if (contextRef.current === context) setActionError(toErrorMessage(error))
     } finally {
       if (contextRef.current === context) setBusy(null)
     }

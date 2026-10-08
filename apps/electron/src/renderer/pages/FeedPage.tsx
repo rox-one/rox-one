@@ -85,6 +85,7 @@ import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/h
 import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
 import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
+import { toErrorMessage } from '@/lib/errors'
 
 type View = FeedView
 type Density = 'list' | 'cards'
@@ -273,7 +274,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       setSourceDataWorkspaceId(workspaceId)
       setLoadError(null)
     } catch (e) {
-      if (generation === loadGeneration.current && current()) setLoadError(e instanceof Error ? e.message : String(e))
+      if (generation === loadGeneration.current && current()) setLoadError(toErrorMessage(e))
     } finally {
       if (generation === loadGeneration.current && current()) {
         setLoadedWorkspaceId(workspaceId)
@@ -390,7 +391,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       await caller.verify()
       if (current()) await fn()
     } catch (e) {
-      if (current()) setActionError(e instanceof Error ? e.message : String(e))
+      if (current()) setActionError(toErrorMessage(e))
     } finally {
       if (current()) setBusy(null)
     }
@@ -414,7 +415,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       }
       return { ...d, annotations: next }
     })
-    if (api?.feedAnnotate) void api.feedAnnotate(ids, patch).catch((e: unknown) => { if (current()) { setActionError(e instanceof Error ? e.message : String(e)); void load() } })
+    if (api?.feedAnnotate) void api.feedAnnotate(ids, patch).catch((e: unknown) => { if (current()) { setActionError(toErrorMessage(e)); void load() } })
   }, [api, current, load])
 
   // Opening an item in the reading pane marks it read (external content only).

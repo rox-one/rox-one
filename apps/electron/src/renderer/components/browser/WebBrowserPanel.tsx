@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft, ArrowRight, ExternalLink, LoaderCircle, RefreshCw, X } from 'lucide-react'
 import { Button } from '../ui/button'
 import { cn } from '@/lib/utils'
+import { get, set, KEYS } from '@/lib/local-storage'
 import type { BrowserCookieAutoStatus } from '../../../shared/types'
 
 type BrowserSnapshot = { url: string; title: string }
@@ -25,7 +26,10 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
   const [snapshot, setSnapshot] = useState<BrowserSnapshot | null>(null)
   const [image, setImage] = useState<string | null>(null)
   const [cookieStatus, setCookieStatus] = useState<BrowserCookieAutoStatus | null>(null)
-  const [useImportedCookies, setUseImportedCookies] = useState(false)
+  // A8 (ТЗ): the opt-in lives in local storage, so the pane stops asking on every
+  // mount — it opens exactly as the user last left it. Consent still gates the use,
+  // and the inspector's own pane adopts imported cookies automatically.
+  const [useImportedCookies, setUseImportedCookies] = useState(() => get<boolean>(KEYS.browserPaneUseImportedCookies, false))
   const ownedInstance = useRef<string | null>(null)
   const [address, setAddress] = useState('about:blank')
   const [busy, setBusy] = useState(false)
@@ -62,6 +66,12 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
     }
   }, [instanceId, refresh])
 
+  // Persist the opt-in so the checkbox survives remounts; consent still gates use.
+  const updateUseImportedCookies = useCallback((next: boolean) => {
+    setUseImportedCookies(next)
+    set(KEYS.browserPaneUseImportedCookies, next)
+  }, [])
+
   useEffect(() => {
     void window.electronAPI.browserCookieAutoStatus().then(setCookieStatus).catch(() => setCookieStatus(null))
   }, [])
@@ -71,14 +81,14 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
       void window.electronAPI.browserCookieAutoStatus()
         .then((status) => {
           setCookieStatus(status)
-          if (!status.consent) setUseImportedCookies(false)
+          if (!status.consent) updateUseImportedCookies(false)
         })
         .catch(() => setCookieStatus(null))
     }
     refreshConsent()
     const timer = window.setInterval(refreshConsent, 10_000)
     return () => window.clearInterval(timer)
-  }, [open])
+  }, [open, updateUseImportedCookies])
   const canUseImportedCookies = cookieStatus?.consent === true
 
   useEffect(() => {
@@ -177,7 +187,7 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
             type="checkbox"
             checked={useImportedCookies}
             disabled={!cookieStatus?.consent || busy}
-            onChange={(event) => setUseImportedCookies(event.target.checked)}
+            onChange={(event) => updateUseImportedCookies(event.target.checked)}
           />
           <span className="truncate">{t('settings.browserImport.auto.useImportedCookies')}</span>
         </label>

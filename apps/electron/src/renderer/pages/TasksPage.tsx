@@ -47,7 +47,7 @@ import { useActiveWorkspace, useOptionalAppShellContext } from '@/context/AppShe
 import { useProjects } from '@/hooks/useProjects'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useAction } from '@/actions'
-import { ROX_TASKS_COMPOSE_EVENT } from '@/platform/inspector-compose-events'
+import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
@@ -186,9 +186,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [pendingDone, setPendingDone] = useState<ReadonlySet<string>>(new Set())
   const [quickEntry, setQuickEntry] = useState<{ initial: string } | null>(null)
   useEffect(() => {
-    const onCompose = () => setQuickEntry({ initial: '' })
-    window.addEventListener(ROX_TASKS_COMPOSE_EVENT, onCompose)
-    return () => window.removeEventListener(ROX_TASKS_COMPOSE_EVENT, onCompose)
+    // A2: «Создать новую задачу» in the inspector rail opens a fresh tasks
+    // panel; that panel consumes the create request here on mount.
+    if (consumePendingCompose('tasks')) setQuickEntry({ initial: '' })
   }, [])
   const [moveFor, setMoveFor] = useState<string | null>(null)
   const [popover, setPopover] = useState<'when' | 'deadline' | null>(null)

@@ -21,7 +21,8 @@
 
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+/* Inter is bundled locally (packages/ui/src/fonts/inter) — no CDN dependency. */
+@import "./inter-font-face.css";
 
 /* =============================================================================
    SEMANTIC TOKENS
@@ -129,10 +130,11 @@
   --md-bullets: var(--text-muted);
   --md-counters: var(--text-muted);
 
-  /* Arial Narrow (macOS system font, not bundled) is the product UI face.
-     Rox (Ioskeley Mono) stays the monospace face for code, terminal and
-     command input via --font-mono. Inter/system remain explicit preferences. */
-  --font-ui-narrow: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
+  /* Inter is the product UI face, bundled locally (packages/ui/src/fonts/inter)
+     — no CDN dependency. The default ("rox") preset and the explicit "inter"
+     preset both render Inter; "system" keeps the OS stack. Rox (Ioskeley Mono)
+     stays the monospace face for code, terminal and command input via
+     --font-mono. */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-serif: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-mono: "Rox", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
@@ -290,13 +292,15 @@
   font-display: swap;
 }
 
-/* The default ("rox") UI preset renders in Arial Narrow; code stays on --font-mono. */
+/* The default ("rox") UI preset renders in bundled Inter; code stays on --font-mono. */
 html[data-font="rox"] {
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-default: var(--font-sans);
+  font-optical-sizing: auto;
+  font-feature-settings: "cv01", "cv02", "cv03", "cv04", "case";
 }
 
-/* Inter remains an explicit user preference. */
+/* Inter is an explicit user preference, rendered from the local bundle. */
 html[data-font="inter"] {
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-default: var(--font-sans);
@@ -310,7 +314,7 @@ html[data-font="system"] {
 }
 
 html[data-chat-font="rox"] {
-  --font-chat: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
+  --font-chat: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
 }
 
 html[data-chat-font="inter"] {

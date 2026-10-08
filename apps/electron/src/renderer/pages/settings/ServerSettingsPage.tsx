@@ -27,6 +27,7 @@ import {
   SettingsToggle,
   SettingsInputRow,
 } from '@/components/settings'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -151,7 +152,7 @@ export default function ServerSettingsPage() {
       setStatus(newStatus)
       toast.success(t('settings.server.saved'))
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
+      const msg = toErrorMessage(err)
       setError(msg)
       toast.error(t('settings.server.failedToSave', { message: msg }))
     } finally {

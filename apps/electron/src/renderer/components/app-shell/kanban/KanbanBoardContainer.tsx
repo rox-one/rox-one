@@ -29,7 +29,7 @@ import { getDefaultModelsForConnection, type LlmConnectionWithStatus } from '@co
 import type { SessionStatus } from '@/config/session-status-config'
 import { KanbanBoard, type KanbanMoveTarget } from './KanbanBoard'
 import { parsePriorityGroupId } from './priority-groups'
-import { KANBAN_COLUMNS, statusToColumn } from './status-column'
+import { resolveBoardColumns, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import { CollectionViewChrome } from '../collection/CollectionViewChrome'
 import { collectionViewRoute } from '../collection/collection-view-cycle'
@@ -43,12 +43,12 @@ import type { SpecNode } from './task-spec-form'
 import type {
   BuiltInKanbanColumnId,
   KanbanColumnId,
-  KanbanColumnMeta,
   KanbanModelProviderGroup,
   KanbanProject,
   KanbanTask,
   SubtaskRunState,
 } from './types'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * Subtask run-state from the child session. A closed status wins (done), then an
@@ -121,43 +121,6 @@ function writeCollapsedGroups(workspaceId: string, keys: Set<string>): void {
   } catch {
     // sessionStorage full / unavailable — collapse state is best-effort.
   }
-}
-
-/**
- * Merge workspace board config onto the built-in column defs.
- * Config wins for label/color/collapsed/prompt/dropStatus; built-ins keep labelKey
- * as fallback when no override label is set.
- */
-function mergeBoardColumns(config: KanbanBoardConfig | null): KanbanColumnMeta[] {
-  const builtinById = new Map(KANBAN_COLUMNS.map(c => [c.id, c]))
-  const colorDefaults = DEFAULT_KANBAN_COLUMN_COLORS
-
-  if (!config?.columns?.length) {
-    return KANBAN_COLUMNS.map(c => ({
-      ...c,
-      color: colorDefaults[c.id as BuiltInKanbanColumnId],
-      collapsed: c.defaultCollapsed ?? false,
-    }))
-  }
-
-  return config.columns.map(col => {
-    const builtin = builtinById.get(col.id as BuiltInKanbanColumnId)
-    const isBuiltIn = col.isBuiltIn ?? !!builtin
-    return {
-      id: col.id,
-      labelKey: builtin?.labelKey,
-      name: col.label,
-      color:
-        col.color ??
-        (builtin ? colorDefaults[builtin.id] : undefined),
-      dropStatusId: col.dropStatusId ?? builtin?.dropStatusId ?? (isBuiltIn ? col.id : undefined),
-      defaultCollapsed: builtin?.defaultCollapsed,
-      collapsed: col.collapsed ?? builtin?.defaultCollapsed ?? false,
-      promptEnabled: col.promptEnabled,
-      prompt: col.prompt,
-      isBuiltIn,
-    } satisfies KanbanColumnMeta
-  })
 }
 
 /**
@@ -363,7 +326,7 @@ function KanbanBoardContainerInner() {
         saved => setBoardConfig(saved),
         (err: unknown) => {
           toast.error(t('kanban.toastConfigSaveFailed'), {
-            description: err instanceof Error ? err.message : String(err),
+            description: toErrorMessage(err),
           })
         },
       )
@@ -444,7 +407,7 @@ function KanbanBoardContainerInner() {
   )
 
   const activeColumns = React.useMemo(
-    () => mergeBoardColumns(boardConfig),
+    () => resolveBoardColumns(boardConfig),
     [boardConfig],
   )
 
@@ -605,7 +568,7 @@ function KanbanBoardContainerInner() {
           .runTask(activeWorkspaceId, { slug: meta.taskSlug, orchestratorSessionId: taskId })
           .catch((err: unknown) => {
             toast.error(t('tasks.toastRunFailed'), {
-              description: err instanceof Error ? err.message : String(err),
+              description: toErrorMessage(err),
             })
           })
         return
@@ -678,10 +641,12 @@ function KanbanBoardContainerInner() {
         }
 
         // Optionally fold the status to the column's configured target (optimistic).
+        // Applied verbatim: a custom status typed in Appearance settings must not be
+        // silently dropped just because it is not in the workspace status catalog.
         const autoStatus =
           activeColumns.find(c => c.id === toColumn)?.dropStatusId ?? columnStatus[toColumn]
         let appliedAutoStatus: string | undefined
-        if (autoStatus && statusesById.has(autoStatus)) {
+        if (autoStatus) {
           appliedAutoStatus = autoStatus
           updateSessionMeta(taskId, { sessionStatus: autoStatus })
         }
@@ -739,7 +704,7 @@ function KanbanBoardContainerInner() {
         } catch (error) {
           restorePrior()
           toast.error(t('kanban.toastMoveFailed'), {
-            description: error instanceof Error ? error.message : String(error),
+            description: toErrorMessage(error),
           })
           return
         }
@@ -778,7 +743,7 @@ function KanbanBoardContainerInner() {
                 processingRef.current.delete(job.sessionId)
                 updateSessionMeta(job.sessionId, { isProcessing: false })
                 toast.error(t('kanban.toastAutoRunFailed'), {
-                  description: err instanceof Error ? err.message : String(err),
+                  description: toErrorMessage(err),
                 })
               },
             },
@@ -842,7 +807,7 @@ function KanbanBoardContainerInner() {
       const current = boardConfigRef.current
       const baseColumns = current?.columns?.length
         ? current.columns.map(c => ({ ...c }))
-        : mergeBoardColumns(null).map(c => ({
+        : resolveBoardColumns(null).map(c => ({
             id: c.id,
             label: c.name,
             color: c.color,
@@ -888,7 +853,7 @@ function KanbanBoardContainerInner() {
       const current = boardConfigRef.current
       const baseColumns = current?.columns?.length
         ? current.columns.map(c => ({ ...c }))
-        : mergeBoardColumns(null).map(c => ({
+        : resolveBoardColumns(null).map(c => ({
             id: c.id,
             label: c.name,
             color: c.color,
@@ -922,7 +887,7 @@ function KanbanBoardContainerInner() {
       const current = boardConfigRef.current
       const baseColumns = current?.columns?.length
         ? current.columns.map(c => ({ ...c }))
-        : mergeBoardColumns(null).map(c => ({
+        : resolveBoardColumns(null).map(c => ({
             id: c.id,
             label: c.name,
             color: c.color,
@@ -975,7 +940,7 @@ function KanbanBoardContainerInner() {
       const current = boardConfigRef.current
       const columns = current?.columns?.length
         ? current.columns
-        : mergeBoardColumns(null).map(c => ({
+        : resolveBoardColumns(null).map(c => ({
             id: c.id,
             label: c.name,
             color: c.color,

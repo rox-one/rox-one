@@ -65,7 +65,11 @@ export function useNativeSurfaceBounds({ containerRef, instanceId, focused, remo
       tracker.unmount()
       stopDOM()
       stopResize()
-      owner.release()
+      // Unmounting a host must withdraw its rect before the owner is dropped, so
+      // main receives a null sync (and detaches the native view) unless another
+      // host of the same instance still reports a visible rect.
+      owner.update(null)
+      void owner.release()
     }
   }, [containerRef, instanceId, focused, removed])
 

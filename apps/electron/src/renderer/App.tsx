@@ -109,6 +109,7 @@ import { OmniboxHost } from '@/platform/OmniboxHost'
 import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
+import { toErrorMessage } from '@/lib/errors'
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -559,7 +560,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     } catch (error) {
       window.electronAPI.debugLog('[ModeSync] Failed to reconcile permission mode', {
         sessionId,
-        error: error instanceof Error ? error.message : String(error),
+        error: toErrorMessage(error),
       })
       return null
     }
@@ -889,7 +890,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         setAppState('onboarding')
       }
     } catch (error) {
-      toast.error(t('settings.account.loadFailed', { message: error instanceof Error ? error.message : String(error) }))
+      toast.error(t('settings.account.loadFailed', { message: toErrorMessage(error) }))
       setAppState('onboarding')
     }
   }, [t])
@@ -1018,13 +1019,13 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         if (cancelled) return
         if (webTransportBootstrap) {
           setCallerAuthority(null)
-          setStartupBootstrapError(error instanceof Error ? error.message : String(error))
+          setStartupBootstrapError(toErrorMessage(error))
           setAppState('transport-unavailable')
           return
         }
         console.error('Failed to check auth state:', error)
         setCallerAuthority(null)
-        setStartupBootstrapError(error instanceof Error ? error.message : String(error))
+        setStartupBootstrapError(toErrorMessage(error))
         setAppState('transport-unavailable')
       }
     }

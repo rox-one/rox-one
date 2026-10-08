@@ -17,6 +17,7 @@ import {
 import { PageTile, type PageTileProject } from './PageTile'
 import { DeletePageDialog } from './DeletePageDialog'
 import type { LoadedPage } from '@rox/shared/pages/types'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * Pages library — the full-width home grid (mirrors the Kanban board pane).
@@ -100,7 +101,7 @@ export function PagesHome() {
       navigate(routes.view.pages(created.slug))
     } catch (err) {
       toast.error(t('toast.pageCreateFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }, [activeWorkspaceId, projectFilter, t, navigate])
@@ -124,7 +125,7 @@ export function PagesHome() {
       }
     } catch (err) {
       toast.error(t('toast.pageDeleteFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }, [activeWorkspaceId, pendingDelete, t])

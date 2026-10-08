@@ -125,6 +125,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   // system — local OS info
   RPC_CHANNELS.system.VERSIONS,
   RPC_CHANNELS.system.HOME_DIR,
+  RPC_CHANNELS.system.CONFIG_DIR,
   RPC_CHANNELS.system.IS_DEBUG_MODE,
 
   // toolchain — local config-dir downloads/install state

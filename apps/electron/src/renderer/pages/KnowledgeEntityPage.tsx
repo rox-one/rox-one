@@ -23,6 +23,7 @@ import { knowledgeEntityCompanionRef } from '@/knowledge/knowledge-entity-ref'
 import { loadKnowledgeEntityGraph } from '@/knowledge/knowledge-entity-projection'
 import KnowledgeSurfacePage from '@/pages/KnowledgeSurfacePage'
 import type { SiyuanSurfaceRef } from '@/knowledge/siyuan-url'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface KnowledgeEntityPageProps {
   kind: SiyuanSurfaceRef['kind']
@@ -73,7 +74,7 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
         if (result.status !== 'cancelled') setProjection({ identity, ...result })
       } catch (e) {
         if (!cancelled) {
-          setProjection({ identity, status: 'error', error: e instanceof Error ? e.message : String(e) })
+          setProjection({ identity, status: 'error', error: toErrorMessage(e) })
         }
       }
     }

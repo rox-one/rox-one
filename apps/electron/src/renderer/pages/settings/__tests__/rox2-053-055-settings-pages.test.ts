@@ -26,7 +26,7 @@ describe('ROX2-053..055 native settings pages', () => {
   test('workspace, accounts, and permissions stay in SETTINGS_PAGES without Conation flags', () => {
     expect(SETTINGS_HUB_REQUIRES_CONATION_FLAG).toBe(false)
     const ids = SETTINGS_PAGES.map((page) => page.id)
-    expect(ids.slice(12, 15)).toEqual([...ROX2_SETTINGS_WAVE5_PAGE_IDS])
+    expect(ids.slice(13, 16)).toEqual([...ROX2_SETTINGS_WAVE5_PAGE_IDS])
     expect(bindSettingsHubContext('ws-1', 'workspace').surfaceId).toBe('settings:workspace')
     expect(bindSettingsHubContext('ws-1', 'accounts', 'ask').permissionMode).toBe('ask')
   })

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 
 const editor = readFileSync(join(import.meta.dir, '../SessionWorkflowEditor.tsx'), 'utf8')
 const terminal = readFileSync(join(import.meta.dir, '../../session-inspector/InspectorTerminal.tsx'), 'utf8')
-const dock = readFileSync(join(import.meta.dir, '../../session-inspector/BottomTerminalDock.tsx'), 'utf8')
+const panel = readFileSync(join(import.meta.dir, '../../app-shell/TerminalPanel.tsx'), 'utf8')
 const css = readFileSync(join(import.meta.dir, '../../../index.css'), 'utf8')
 
 describe('flat map + terminal chrome', () => {
@@ -40,7 +40,7 @@ describe('flat map + terminal chrome', () => {
   it('terminal input is flat at rest; focus is a subtle underline, HC a 2px underline', () => {
     expect(terminal).toContain('autoFocus={autoFocus}')
     expect(terminal).toContain('rox-terminal-input')
-    expect(dock).toContain('autoFocus={focusOnOpen}')
+    expect(panel).toContain('<InspectorTerminal cwd={cwd} autoFocus={autoFocus} />')
     expect(css).toMatch(/\.rox-terminal-input:focus-visible \{\s*outline: none;/)
     expect(css).toContain('.rox-terminal-prompt:has(.rox-terminal-input:focus-visible)')
     expect(css).toMatch(/html\[data-contrast="high"\] \.rox-terminal-prompt:has\(\.rox-terminal-input:focus-visible\) \{[^}]*inset 0 -2px 0 var\(--focus\)/)

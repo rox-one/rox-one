@@ -1288,6 +1288,14 @@ export interface BrowserInstanceInfo {
    * strip — they live in session panels.
    */
   embedded?: boolean
+  /**
+   * Session partition backing this instance. Cookie isolation is fixed at
+   * creation time, so renderers compare it against
+   * `ROX_BROWSER_COOKIE_IMPORT_PARTITION` to tell whether a retained pane may
+   * be reused once the user opts into imported cookies. Optional for legacy
+   * callers that predate the field.
+   */
+  partition?: string
 }
 
 export interface DeepLinkNavigation {

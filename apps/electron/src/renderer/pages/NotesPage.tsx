@@ -31,7 +31,7 @@ import {
   revisionByEntityId,
 } from '@/components/session-workbench/right-session-shell'
 import { navigate, routes } from '@/lib/navigate'
-import { ROX_NOTES_COMPOSE_EVENT } from '@/platform/inspector-compose-events'
+import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import { cn } from '@/lib/utils'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import {
@@ -115,6 +115,7 @@ import {
 } from './notes/wiki-autocomplete'
 import { createNativeNotesSyncController } from '../lib/native-notes-sync'
 import { isNativeNoteDocument, writeNoteThroughAuthority } from '../lib/notes-write-authority'
+import { toErrorMessage } from '@/lib/errors'
 
 interface NotesPageProps {
   selectedNoteId: string | null
@@ -1254,9 +1255,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }
 
   React.useEffect(() => {
-    const onCompose = () => openCreateNoteDialog()
-    window.addEventListener(ROX_NOTES_COMPOSE_EVENT, onCompose)
-    return () => window.removeEventListener(ROX_NOTES_COMPOSE_EVENT, onCompose)
+    // A2: the rail's «Создать заметку» opens a fresh notes panel, which
+    // consumes the create request here on mount.
+    if (consumePendingCompose('notes')) openCreateNoteDialog()
   }, [activeProjectSlug])
 
   const handleCreateFolder = async () => {
@@ -2542,7 +2543,7 @@ h1,h2,h3{margin-top:1.5em}
                       toast.success(t('notes.views.convertTaskDone'))
                       navigate(routes.view.tasks(created.id))
                     } catch (err) {
-                      toast.error(err instanceof Error ? err.message : String(err))
+                      toast.error(toErrorMessage(err))
                     }
                     return
                   }
@@ -2560,7 +2561,7 @@ h1,h2,h3{margin-top:1.5em}
                     onInputChange(session.id, prompt)
                     navigate(routes.view.allSessions(session.id))
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : String(err))
+                    toast.error(toErrorMessage(err))
                   }
                 })()
               }}

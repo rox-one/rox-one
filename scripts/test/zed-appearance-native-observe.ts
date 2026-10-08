@@ -21,7 +21,7 @@ try {
     const root = document.documentElement
     const api = (window as any).electronAPI
     if (api?.getRuntimeEnvironment?.() !== 'electron') throw new Error('Native runtime required')
-    const selectors = ['.chrome-topbar','.chrome-rail','.chrome-strip','[data-inspector-panel]','[data-shell-role="content"]','[data-bottom-terminal]','.rox-inspector-terminal','.input-container','.ProseMirror','pre','[role="separator"]']
+    const selectors = ['.chrome-topbar','.chrome-rail','.chrome-strip','[data-inspector-panel]','[data-shell-role="content"]','[data-terminal-panel]','.rox-inspector-terminal','.input-container','.ProseMirror','pre','[role="separator"]']
     const surfaces = selectors.flatMap(selector => Array.from(document.querySelectorAll<HTMLElement>(selector)).filter(element => element.getBoundingClientRect().width > 0).map(element => {
       const s = getComputedStyle(element), b = element.getBoundingClientRect()
       return { selector, role: element.dataset.panelRole, background: s.backgroundColor, color: s.color, radius: s.borderRadius, blur: s.backdropFilter, shadow: s.boxShadow, border: [s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth], opacity:s.opacity, font: s.fontFamily, bounds:{x:b.x,y:b.y,width:b.width,height:b.height} }

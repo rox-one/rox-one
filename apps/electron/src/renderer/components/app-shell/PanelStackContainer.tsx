@@ -9,12 +9,14 @@ import { useRef, useEffect, useMemo, useCallback } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { motion, useReducedMotion } from 'motion/react'
 import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
+import { bottomTerminalOpenAtom } from '@/atoms/unified-shell'
 import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, resolvePanelGridTracks } from '@/lib/panel-workspace-layout'
 import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
 import { isPanelResizeActive } from './resize-activity'
 import { PanelSlot } from './PanelSlot'
+import { TerminalPanel } from './TerminalPanel'
 import { PanelGridResizeSash } from './PanelGridResizeSash'
 import {
   PANEL_GAP,
@@ -60,6 +62,14 @@ export function PanelStackContainer({
 }: PanelStackContainerProps) {
   const panels = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
+  const terminalOpen = useAtomValue(bottomTerminalOpenAtom)
+  // The terminal cell mounts on every open, so TerminalPanel cannot observe the
+  // closed→open edge itself. The launch restore is the mount that happens while
+  // the shell is still initialising; every later mount follows a deliberate open.
+  const terminalFocusOnOpenRef = useRef(!terminalOpen)
+  useEffect(() => {
+    if (!terminalOpen) terminalFocusOnOpenRef.current = true
+  }, [terminalOpen])
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
   const focusedRoute = useAtomValue(focusedPanelRouteAtom)
   const { mode, preferences, setTracks } = usePanelWorkspaceLayout()
@@ -308,6 +318,9 @@ export function PanelStackContainer({
               const isFocused = entry.id === focusedId
               const isHidden = singlePanel && !isFocused
               const column = singlePanel ? 0 : index % shape.columns
+              // The terminal lives in the first cell of the first column (the only
+              // visible cell in focus/compact layouts) and splits it in half.
+              const ownsTerminal = terminalOpen && (singlePanel ? isFocused : index === 0)
               return (
                 <PanelSlot
                   key={entry.id}
@@ -320,6 +333,11 @@ export function PanelStackContainer({
                   isAtRightEdge={(singlePanel || column === shape.columns - 1) && !isRightSidebarVisible}
                   proportion={entry.proportion}
                   isCompact={isCompact}
+                  belowContent={ownsTerminal ? (
+                    <div className="flex min-h-0 shrink-0 flex-col" style={{ flexBasis: '50%' }} data-terminal-cell="true">
+                      <TerminalPanel autoFocus={terminalFocusOnOpenRef.current} />
+                    </div>
+                  ) : undefined}
                   layoutStyle={{
                     gridColumn: column + 1,
                     gridRow: singlePanel ? 1 : Math.floor(index / shape.columns) + 1,

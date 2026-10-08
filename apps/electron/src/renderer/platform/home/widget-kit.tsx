@@ -1,7 +1,7 @@
 /**
  * Главная widget kit — flat, borderless building blocks. Tone steps only (no
  * 1px lines); radius tokens 4/6/8/10/12; 4px spacing grid; type inherits
- * --font-sans (Arial Narrow). High contrast: the widget tone and the row
+ * --font-sans (locally bundled Inter). High contrast: the widget tone and the row
  * hover step get stronger via `.rox-home-widget` rules in index.css, never an
  * outline.
  */

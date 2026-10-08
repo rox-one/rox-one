@@ -26,6 +26,7 @@ import type { TFunction } from 'i18next'
 import { navigate, routes } from '@/lib/navigate'
 import { useMenuComponents } from '@/components/ui/menu-context'
 import { messagingDialogAtom } from '@/atoms/messaging'
+import { toErrorMessage } from '@/lib/errors'
 
 export type MessagingPlatform = 'telegram' | 'whatsapp' | 'lark' | 'discord' | 'wechat'
 
@@ -152,7 +153,7 @@ export function MessagingSessionMenuItem(props: MessagingSessionMenuItemProps) {
  * is surfaced verbatim so real errors aren't hidden.
  */
 export function classifyMessagingError(err: unknown, t: TFunction): string {
-  const msg = err instanceof Error ? err.message : String(err)
+  const msg = toErrorMessage(err)
   if (/platform not connected|no adapter|not configured/i.test(msg)) {
     return t('toast.messagingNotConfigured')
   }

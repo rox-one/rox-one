@@ -23,6 +23,8 @@ import {
   Globe,
   FolderOpen,
   Calendar,
+  Home,
+  Rss,
   Layers,
   Clock,
   Radio,
@@ -116,7 +118,7 @@ import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
 import { featureWorkbenchBrowserSurfaceV2Atom } from "@/atoms/unified-shell"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -209,6 +211,21 @@ import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
 import { isScreenNavigation } from '../../../shared/types'
 import { MiniSessionSurface } from "./MiniSessionSurface"
+
+/**
+ * A1: the left rail's primary navigation is exactly the ModeBar mode set
+ * (CORE_MODES: home, chat, meetings, tasks, notes, feed, inbox) in mode order.
+ * Every other `sidebarLinks` entry moves into the collapsed «Разделы приложения».
+ */
+const PRIMARY_MODE_LINK_IDS: readonly string[] = [
+  "nav:home",
+  "nav:allSessions",
+  "nav:meetings",
+  "nav:tasks",
+  "nav:notes",
+  "nav:feed",
+  "nav:inbox",
+]
 
 /**
  * AppShellProps - Minimal props interface for AppShell component
@@ -316,6 +333,9 @@ function AppShellContent({
   const [storedSidebarVisible, setIsSidebarVisible] = React.useState(() => {
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
+  // Transient hover-reveal of the collapsed rail. Deliberately NOT persisted:
+  // only storedSidebarVisible is written back to storage.
+  const [sidebarPeek, setSidebarPeek] = React.useState(false)
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
@@ -328,16 +348,17 @@ function AppShellContent({
   )
   const workbenchEnabled = workbenchAvailability === 'enabled'
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
-  const bottomTerminalOpen = useAtomValue(bottomTerminalOpenAtom)
-  const bottomDockHeight = useAtomValue(bottomDockHeightAtom)
-  // Collapsed terminal has no bottom strip (the TopBar button is the entry point).
-  const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4
+  // The terminal lives inside the first panel cell, so the absolute resize
+  // sashes of the sidebar and navigator span the full stack height.
+  const terminalClearance = PANEL_EDGE_INSET + 4
   // WorkspaceSurfaceHost suppresses its ActivityRail while AppShell owns primary navigation.
   // Keep its geometric offset at zero regardless of experimental chrome flags.
   const unifiedRailOffset = 0 // AppShell owns the single primary sidebar.
   // Preserve the saved expanded-label preference across every route. The compact
   // icon rail remains available when labels are collapsed; focus mode hides both.
-  const isSidebarVisible = storedSidebarVisible
+  // A hover peek expands every derived surface (width, labels, chrome branch)
+  // without touching the persisted preference.
+  const isSidebarVisible = storedSidebarVisible || sidebarPeek
   const isSidebarCollapsed = !isSidebarVisible
   const isPrimarySidebarRendered = true
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
@@ -535,13 +556,13 @@ function AppShellContent({
   const navState = useNavigationState()
   const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
   const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
-  const hasContextualSidebar = isInboxNavigation(navState) || isFeedNavigation(navState) || isNotesNavigation(navState)
-    || isTasksNavigation(navState) || isMeetingsNavigation(navState) || isSettingsNavigation(navState) || isScreenNavigation(navState)
   const pendingSidebarRevealId = React.useRef<string | null>(null)
   const handleExpandNavigation = useCallback((link: LinkItem) => {
     pendingSidebarRevealId.current = link.id
     setIsSidebarVisible(true)
-    setApplicationSectionsOpenFor(contextualSidebarKey)
+    // Only the «Разделы приложения» disclosure opens — and only for its own links —
+    // so the primary mode rail stays collapsed-by-default on expand.
+    setApplicationSectionsOpenFor(PRIMARY_MODE_LINK_IDS.includes(link.id) ? null : contextualSidebarKey)
   }, [contextualSidebarKey])
 
   const store = useStore()
@@ -1223,12 +1244,44 @@ function AppShellContent({
   }, { enabled: () => !document.activeElement?.closest('[data-focus-zone="sidebar"], [data-contextual-sidebar], [role="tablist"], .rox-mode-pill') })
 
   const handleToggleSidebar = useCallback(() => {
+    setSidebarPeek(false)
     if (isSidebarAndNavigatorHidden) {
       setIsSidebarAndNavigatorHidden(false)
       return
     }
     setIsSidebarVisible(v => !v)
   }, [isSidebarAndNavigatorHidden])
+
+  // Hover-reveal gesture for the collapsed rail: 250 ms dwell expands it,
+  // leaving collapses it again. Handlers are no-ops while it is already
+  // expanded, and collapse is suppressed during an active sidebar drag.
+  const sidebarPeekTimerRef = React.useRef<number | null>(null)
+  React.useEffect(() => () => {
+    if (sidebarPeekTimerRef.current !== null) window.clearTimeout(sidebarPeekTimerRef.current)
+  }, [])
+  const handleSidebarHoverEnter = useCallback(() => {
+    if (!isSidebarCollapsed || sidebarResize.dragging || isResizing === 'sidebar') return
+    if (sidebarPeekTimerRef.current !== null) window.clearTimeout(sidebarPeekTimerRef.current)
+    sidebarPeekTimerRef.current = window.setTimeout(() => {
+      sidebarPeekTimerRef.current = null
+      setSidebarPeek(true)
+    }, 250)
+  }, [isSidebarCollapsed, sidebarResize.dragging, isResizing])
+  const handleSidebarHoverLeave = useCallback(() => {
+    if (sidebarPeekTimerRef.current !== null) {
+      window.clearTimeout(sidebarPeekTimerRef.current)
+      sidebarPeekTimerRef.current = null
+    }
+    if (sidebarResize.dragging || isResizing === 'sidebar') return
+    setSidebarPeek(false)
+  }, [sidebarResize.dragging, isResizing])
+  // A live peek is only ever transient. Drop it as soon as the reveal is no
+  // longer provisional — the panel was persisted open (toggle, pin, nav link)
+  // or the shell cannot host a hovered rail — so no stale pin survives on a
+  // permanently expanded sidebar.
+  React.useEffect(() => {
+    if (storedSidebarVisible || effectiveSidebarAndNavigatorHidden || isAutoCompact) setSidebarPeek(false)
+  }, [storedSidebarVisible, effectiveSidebarAndNavigatorHidden, isAutoCompact])
 
   // Sidebar toggle (CMD+B)
   useAction('view.toggleSidebar', handleToggleSidebar)
@@ -2457,7 +2510,7 @@ function AppShellContent({
     // All Sessions: expandable with status children (sortable) + Flagged & Archived as trailing items
     {
       id: "nav:allSessions",
-      title: t(APP_NAV_DESTINATIONS_BY_ID.sessions.labelKey),
+      title: t('workbench.mode.chat'),
       label: String(workspaceSessionMetas.length),
       icon: APP_NAV_DESTINATIONS_BY_ID.sessions.icon,
       variant: sessionFilter?.kind === 'allSessions' ? "default" : "ghost",
@@ -2598,7 +2651,7 @@ function AppShellContent({
     { id: "separator:projects-memory", type: "separator" },
     {
       id: "nav:tasks",
-      title: t(APP_NAV_DESTINATIONS_BY_ID.tasks.labelKey),
+      title: t('workbench.mode.tasks'),
       icon: APP_NAV_DESTINATIONS_BY_ID.tasks.icon,
       variant: isTasksNavigation(navState) ? "default" : "ghost",
       onClick: handleTasksClick,
@@ -2613,7 +2666,7 @@ function AppShellContent({
     },
     {
       id: "nav:meetings",
-      title: t(APP_NAV_DESTINATIONS_BY_ID.meetings.labelKey),
+      title: t('workbench.mode.meetings'),
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
       variant: isMeetingsNavigation(navState) ? "default" : "ghost",
       onClick: handleMeetingsClick,
@@ -2690,7 +2743,7 @@ function AppShellContent({
     },
     {
       id: "nav:notes",
-      title: t(APP_NAV_DESTINATIONS_BY_ID.notes.labelKey),
+      title: t('workbench.mode.notes'),
       icon: APP_NAV_DESTINATIONS_BY_ID.notes.icon,
       variant: isNotesNavigation(navState) ? "default" : "ghost",
       onClick: handleNotesClick,
@@ -2756,7 +2809,34 @@ function AppShellContent({
       variant: isSettingsNavigation(navState) ? "default" : "ghost",
       onClick: () => handleSettingsClick(),
     },
+    // --- A1: remaining primary mode entries (Главная / Лента / Входящие).
+    // Ordering of the primary rail is fixed by PRIMARY_MODE_LINK_IDS below.
+    {
+      id: "nav:home",
+      title: t('workbench.mode.home'),
+      icon: Home,
+      variant: isHomeNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.home()),
+    },
+    {
+      id: "nav:feed",
+      title: t('workbench.mode.feed'),
+      icon: Rss,
+      variant: isFeedNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.feed()),
+    },
+    {
+      id: "nav:inbox",
+      title: t('workbench.mode.inbox'),
+      icon: Inbox,
+      variant: isInboxNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.inbox()),
+    },
   ]
+  const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
+    .map(id => sidebarLinks.find(link => link.id === id))
+    .filter((link): link is SidebarLinkItem => Boolean(link))
+  const applicationSectionLinks: SidebarLinkItem[] = sidebarLinks.filter(link => !PRIMARY_MODE_LINK_IDS.includes(link.id))
   const experimentalLinks: SidebarLinkItem[] = extraScreens.map(screen => ({
     id: `nav:screen:${screen.id}`,
     title: t(screen.labelKey), icon: screen.icon,
@@ -2765,21 +2845,13 @@ function AppShellContent({
     iconColor: screen.id === 'radar' ? '#38bdf8' : screen.id === 'focus' ? '#34d399' : '#c084fc',
   }))
 
-  const globalSidebarNavigation = (
-    <>
-      <LeftSidebar
-        isCollapsed={isSidebarCollapsed}
-        onExpand={handleExpandNavigation}
-        links={sidebarLinks}
-      />
-      {experimentalLinks.length > 0 && (
-        <section className="mx-1 mt-5 py-2" aria-label={t('sidebar.experimentalFeatures')}>
-          {!isSidebarCollapsed && <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
-          <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
-        </section>
-      )}
-    </>
+  const experimentalSidebarNavigation = experimentalLinks.length > 0 && (
+    <section className="mx-1 mt-5 py-2" aria-label={t('sidebar.experimentalFeatures')}>
+      {!isSidebarCollapsed && <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
+      <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
+    </section>
   )
+
   return (
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
@@ -2854,6 +2926,8 @@ function AppShellContent({
               className="h-full font-sans relative chrome-rail"
               data-shell-role="chrome"
               data-focus-zone="sidebar"
+              onPointerEnter={handleSidebarHoverEnter}
+              onPointerLeave={handleSidebarHoverLeave}
               tabIndex={sidebarFocused ? 0 : -1}
               onKeyDown={handleSidebarTreeKeyDown}
             >
@@ -2874,18 +2948,40 @@ function AppShellContent({
                       {layoutMode === 'se-workspace' && !isSidebarCollapsed && (
                         <WorkspaceNavigator workspaceRootPath={activeWorkspace?.rootPath} />
                       )}
-                      {hasContextualSidebar && !isSidebarCollapsed ? (
-                        <details className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-foreground/[0.025]" data-application-sections
+                      {/* A1: primary rail = exactly the 7 mode destinations, one gray
+                            icon each (icons only when the rail is collapsed). */}
+                        <LeftSidebar
+                          isCollapsed={isSidebarCollapsed}
+                          onExpand={handleExpandNavigation}
+                          links={primaryModeLinks}
+                        />
+                        {/* A1/A7-reachability: every other navigation destination
+                            stays reachable here, collapsed by default on every surface. */}
+                        <details
+                          className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-foreground/[0.025]"
+                          data-application-sections
                           open={applicationSectionsOpenFor === contextualSidebarKey}
-                          onToggle={event => setApplicationSectionsOpenFor(event.currentTarget.open ? contextualSidebarKey : null)}>
-                          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] px-3 py-2.5 text-[11px] font-semibold text-foreground/50 outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                          onToggle={event => setApplicationSectionsOpenFor(event.currentTarget.open ? contextualSidebarKey : null)}
+                        >
+                          <summary
+                            className={cn(
+                              'flex cursor-pointer list-none items-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
+                              isSidebarCollapsed
+                                ? 'mx-auto h-7 w-7 justify-center'
+                                : 'gap-2 px-3 py-2.5 text-[11px] font-semibold text-foreground/50',
+                            )}
+                          >
                             <Layers className="size-3.5 text-accent" aria-hidden />
-                            <span className="min-w-0 flex-1 truncate">{t('sidebar.applicationSections')}</span>
-                            <ChevronRight className="size-3.5 transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />
+                            {!isSidebarCollapsed && <span className="min-w-0 flex-1 truncate">{t('sidebar.applicationSections')}</span>}
+                            {!isSidebarCollapsed && <ChevronRight className="size-3.5 transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />}
                           </summary>
-                          {globalSidebarNavigation}
+                          <LeftSidebar
+                            isCollapsed={isSidebarCollapsed}
+                            onExpand={handleExpandNavigation}
+                            links={applicationSectionLinks}
+                          />
+                          {experimentalSidebarNavigation}
                         </details>
-                      ) : globalSidebarNavigation}
                     </>
                   )}
                 </ShellLayoutMode>
@@ -2900,6 +2996,8 @@ function AppShellContent({
                     collapsed={isSidebarCollapsed}
                     onToggleSidebar={handleToggleSidebar}
                     onOpenSettings={() => handleSettingsClick()}
+                    showPin={sidebarPeek}
+                    onPin={() => { setSidebarPeek(false); setIsSidebarVisible(true) }}
                   />
                 </div>
               </div>

@@ -21,6 +21,7 @@ import {
 import type { ProjectRoadmap } from '@rox/shared/projects/roadmap'
 import { TextButton } from './roadmap-ui'
 import { RoadmapModelResult } from './RoadmapModelResult'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface AiStatus {
   available: boolean
@@ -185,7 +186,7 @@ export function ProjectAiPanel({
       else if (res.mode === 'spec') setState((s) => ({ ...s, proposal: res.proposal, decided: [], model: res.model, proposalRevision: res.roadmapRevision }))
       else setBriefImprove(res.text)
     } catch (err) {
-      if (alive.current) setError(t('projectRoadmap.ai.errorGeneric', { error: err instanceof Error ? err.message : String(err) }))
+      if (alive.current) setError(t('projectRoadmap.ai.errorGeneric', { error: toErrorMessage(err) }))
     } finally {
       if (alive.current) setBusy(null)
     }

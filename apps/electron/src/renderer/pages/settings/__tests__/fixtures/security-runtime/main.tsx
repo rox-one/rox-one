@@ -75,7 +75,7 @@ const fixture: {
   setWorkspace: (_id: string) => {},
 }
 ;(window as any).__securityFixture = fixture
-window.addEventListener('craft-agent-navigate', (event: Event) => {
+window.addEventListener('rox-navigate', (event: Event) => {
   if (event instanceof CustomEvent) record('navigate', event.detail)
 })
 await i18n.use(initReactI18next).init({ lng: query.get('lang') ?? 'en', fallbackLng: 'en', keySeparator: false,

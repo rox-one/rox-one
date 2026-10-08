@@ -39,6 +39,7 @@ import {
   permissionsForMarketplaceKind,
 } from '@rox/shared/extensions/browser'
 import { filterMarketplaceEntries } from '@rox/shared/marketplace/filters'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -230,7 +231,7 @@ export default function MarketplaceSettingsPage() {
           console.warn('marketplace stats failed', err)
         })
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
       setLoading(false)
     }
   }, [])
@@ -248,7 +249,7 @@ export default function MarketplaceSettingsPage() {
         console.warn('marketplace stats refresh failed', err)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     } finally {
       setRefreshing(false)
     }
@@ -311,7 +312,7 @@ export default function MarketplaceSettingsPage() {
           setActionSuccess((cur) => (cur === label ? null : cur))
         }, 3000)
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(toErrorMessage(err))
       } finally {
         setBusy((b) => {
           const next = { ...b }
@@ -448,7 +449,7 @@ export default function MarketplaceSettingsPage() {
             await window.electronAPI.installMarketplaceEntry(entry.id)
           }
         } catch (err) {
-          failures.push(`${entry.title}: ${err instanceof Error ? err.message : String(err)}`)
+          failures.push(`${entry.title}: ${toErrorMessage(err)}`)
         }
       }
       await load()

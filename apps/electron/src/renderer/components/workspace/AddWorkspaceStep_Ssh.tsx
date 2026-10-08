@@ -17,6 +17,7 @@ import type {
   SshConfigImportSuggestion,
   SshBootstrapPhase,
 } from "../../../shared/types"
+import { toErrorMessage } from "@/lib/errors"
 
 interface AddWorkspaceStep_SshProps {
   onBack: () => void
@@ -152,17 +153,17 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
     try {
       const { url, token } = await window.electronAPI.sshBootstrapConnect(host.id)
       if (!url || !token) throw new Error(t("ssh.error.noUrl"))
-      const homeDir = await window.electronAPI.getHomeDir()
+      const configDir = await window.electronAPI.getConfigDir()
       const prepared = await prepareRemoteWorkspace({
         url,
         token,
         name: host.label,
-        homeDir,
+        configDir,
         sshHostId: host.id,
       })
       await onCreate(prepared.folderPath, prepared.name, prepared.remoteServer)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     } finally {
       setBootstrapping(null)
     }

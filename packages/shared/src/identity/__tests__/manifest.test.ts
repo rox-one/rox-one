@@ -19,6 +19,7 @@ import {
   readMigrationStamp,
   rollbackBrandConfigMigration,
   runBrandConfigMigration,
+  runVisibleConfigMigration,
   uninstallBrandConfig,
 } from '../config-migration.ts'
 
@@ -140,5 +141,57 @@ describe('Craft → Rox config migration', () => {
     })
     expect(result.outcome).toBe('skipped-env-override')
     expect(existsSync(join(homeDir, '.rox'))).toBe(false)
+  })
+})
+
+describe('hidden → visible ~/rox base migration', () => {
+  it('copies missing files copy-only, keeps source, and is idempotent', () => {
+    const homeDir = makeHome()
+    const hidden = join(homeDir, '.rox')
+    mkdirSync(join(hidden, 'workspaces', 'ws'), { recursive: true })
+    writeFileSync(join(hidden, 'config.json'), JSON.stringify({ workspaces: [{ id: 'w1' }] }))
+    writeFileSync(join(hidden, 'workspaces', 'ws', 'note.txt'), 'hidden')
+    // A pre-existing visible file must survive untouched.
+    mkdirSync(join(homeDir, 'rox'), { recursive: true })
+    writeFileSync(join(homeDir, 'rox', 'config.json'), JSON.stringify({ workspaces: [] }))
+
+    const first = runVisibleConfigMigration({ homeDir, env: {}, now: '2026-10-08T00:00:00.000Z' })
+    expect(first.outcome).toBe('migrated')
+    expect(existsSync(join(homeDir, 'rox', 'workspaces', 'ws', 'note.txt'))).toBe(true)
+    expect(readFileSync(join(homeDir, 'rox', 'config.json'), 'utf8')).toContain('workspaces')
+    // Source is never deleted or rewritten.
+    expect(readFileSync(join(hidden, 'config.json'), 'utf8')).toContain('w1')
+
+    const second = runVisibleConfigMigration({ homeDir, env: {} })
+    expect(second.outcome).toBe('already-migrated')
+  })
+
+  it('rewrites hidden workspace roots to the visible base with a backup', () => {
+    const homeDir = makeHome()
+    mkdirSync(join(homeDir, '.rox', 'workspaces', 'ws'), { recursive: true })
+    writeFileSync(
+      join(homeDir, '.rox', 'config.json'),
+      JSON.stringify({ workspaces: [{ id: 'w1', rootPath: '~/.rox/workspaces/ws' }] }, null, 2),
+    )
+    writeFileSync(join(homeDir, '.rox', 'workspaces', 'ws', 'note.txt'), 'x')
+
+    const result = runVisibleConfigMigration({ homeDir, env: {}, now: '2026-10-08T00:00:00.000Z' })
+    expect(result.outcome).toBe('migrated')
+    expect(result.registryRewrites).toBe(1)
+    const visible = JSON.parse(readFileSync(join(homeDir, 'rox', 'config.json'), 'utf8'))
+    expect(visible.workspaces[0].rootPath).toBe('~/rox/workspaces/ws')
+    expect(existsSync(join(homeDir, 'rox', 'config.json.bak-2026-10-08T00-00-00-000Z'))).toBe(true)
+  })
+
+  it('skips the visible copy when an explicit root is configured', () => {
+    const homeDir = makeHome()
+    mkdirSync(join(homeDir, '.rox'), { recursive: true })
+    writeFileSync(join(homeDir, '.rox', 'config.json'), '{}')
+    const result = runVisibleConfigMigration({
+      homeDir,
+      env: { ROX_CONFIG_DIR: join(homeDir, 'custom') },
+    })
+    expect(result.outcome).toBe('skipped-env-override')
+    expect(existsSync(join(homeDir, 'rox'))).toBe(false)
   })
 })

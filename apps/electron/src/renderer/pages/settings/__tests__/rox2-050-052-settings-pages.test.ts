@@ -26,7 +26,7 @@ describe('ROX2-050..052 native settings pages', () => {
   test('ai, appearance, and input stay in SETTINGS_PAGES without Conation flags', () => {
     expect(SETTINGS_HUB_REQUIRES_CONATION_FLAG).toBe(false)
     const ids = SETTINGS_PAGES.map((page) => page.id)
-    expect(ids.slice(9, 12)).toEqual([...ROX2_SETTINGS_WAVE4_PAGE_IDS])
+    expect(ids.slice(10, 13)).toEqual([...ROX2_SETTINGS_WAVE4_PAGE_IDS])
     expect(bindSettingsHubContext('ws-1', 'ai').surfaceId).toBe('settings:ai')
     expect(bindSettingsHubContext('ws-1', 'appearance', 'ask').permissionMode).toBe('ask')
   })

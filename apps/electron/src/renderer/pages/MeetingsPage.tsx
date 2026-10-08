@@ -43,7 +43,7 @@ import { MeetingRequestTracker } from './meetings/request-state'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
 import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
-import { ROX_MEETINGS_COMPOSE_EVENT } from '@/platform/inspector-compose-events'
+import { consumePendingCompose } from '@/platform/inspector-compose-events'
 
 const ERROR_KEYS: Record<string, string> = {
   'mic-denied': 'meetings.local.err.micDenied',
@@ -93,9 +93,9 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const [planAt, setPlanAt] = useState('')
   const [planningPending, setPlanningPending] = useState(false)
   useEffect(() => {
-    const onCompose = () => setPlanning(true)
-    window.addEventListener(ROX_MEETINGS_COMPOSE_EVENT, onCompose)
-    return () => window.removeEventListener(ROX_MEETINGS_COMPOSE_EVENT, onCompose)
+    // A2: the rail's «Создать событие» opens a fresh meetings panel, which
+    // consumes the create request here on mount.
+    if (consumePendingCompose('meetings')) setPlanning(true)
   }, [])
   const planDraftRef = useRef({ title: planTitle, at: planAt })
   planDraftRef.current = { title: planTitle, at: planAt }

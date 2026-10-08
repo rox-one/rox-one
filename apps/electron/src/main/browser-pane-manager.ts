@@ -2527,6 +2527,10 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       this.detachEmbeddedViews(instance)
     }
 
+    // Record the host before touching any view: if a later add throws, the
+    // pending embeddedHostWindow still lets detachEmbeddedViews remove the views
+    // already parented, so a partial attach cannot leave the pane composited.
+    instance.embeddedHostWindow = hostWindow
     try {
       this.addPaneView(hostWindow, instance.pageView)
       this.addPaneView(hostWindow, instance.nativeOverlayView)
@@ -2534,11 +2538,11 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       this.setTopPaneView(hostWindow, instance.toolbarView)
     } catch (error) {
       mainLog.warn(`[browser-pane] failed to attach embedded views id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
+      this.detachEmbeddedViews(instance)
       return
     }
 
     instance.embeddedAttached = true
-    instance.embeddedHostWindow = hostWindow
 
     const onResize = () => {
       if (hostWindow.isDestroyed()) return
@@ -4198,6 +4202,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       themeColor: instance.themeColor,
       workspaceId: instance.workspaceId,
       embedded: instance.embedded,
+      partition: instance.partition,
     }
   }
 

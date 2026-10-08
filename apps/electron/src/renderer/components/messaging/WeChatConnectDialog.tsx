@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@rox/ui'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import type { WeChatUiEvent } from '../../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 
 interface WeChatConnectDialogProps {
   open: boolean
@@ -173,5 +174,5 @@ function StatusRow({ icon, children }: { icon: React.ReactNode; children: React.
 }
 
 function errorMsg(err: unknown): string {
-  return err instanceof Error ? err.message : String(err)
+  return toErrorMessage(err)
 }

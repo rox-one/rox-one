@@ -44,6 +44,7 @@ import { computeNextRuns } from './utils'
 import './automations.css'
 import { TourScopeContext, useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
+import { toErrorMessage } from '@/lib/errors'
 
 // ============================================================================
 // Draft model
@@ -600,7 +601,7 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
       })
       return true
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      const message = toErrorMessage(err)
       setSaveError(message)
       toast.error(t('automations.saveFailed'), { description: message })
       return false

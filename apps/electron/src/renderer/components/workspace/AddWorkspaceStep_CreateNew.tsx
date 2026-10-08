@@ -28,7 +28,7 @@ interface AddWorkspaceStep_CreateNewProps {
  *
  * Fields:
  * - Workspace name (required)
- * - Location: Default (~/.craft-agent/workspaces/) or Custom
+ * - Location: Default (<config dir>/workspaces/) or Custom
  */
 export function AddWorkspaceStep_CreateNew({
   onBack,
@@ -39,7 +39,7 @@ export function AddWorkspaceStep_CreateNew({
   const [name, setName] = useState('')
   const [locationOption, setLocationOption] = useState<LocationOption>('default')
   const [customPath, setCustomPath] = useState<string | null>(null)
-  const [homeDir, setHomeDir] = useState('')
+  const [configDir, setConfigDir] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isValidating, setIsValidating] = useState(false)
   const [organizations, setOrganizations] = useState<OrganizationWithMembers[]>([])
@@ -51,9 +51,9 @@ export function AddWorkspaceStep_CreateNew({
   const [isCreatingOrganization, setIsCreatingOrganization] = useState(false)
 
 
-  // Get home directory on mount
+  // Get the ROX config dir on mount (owns the default workspaces directory)
   useEffect(() => {
-    window.electronAPI.getHomeDir().then(setHomeDir)
+    window.electronAPI.getConfigDir().then(setConfigDir)
   }, [])
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export function AddWorkspaceStep_CreateNew({
   }, [t])
 
   const slug = slugify(name)
-  const defaultBasePath = homeDir ? `${homeDir}/.craft-agent/workspaces` : null
+  const defaultBasePath = configDir ? `${configDir}/workspaces` : null
   const finalPath = locationOption === 'default'
     ? (defaultBasePath && slug ? `${defaultBasePath}/${slug}` : null)
     : customPath && slug
