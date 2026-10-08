@@ -40,6 +40,19 @@ export interface RemoveEntityLinkInput {
   relation: EntityRelation
 }
 
+/** One desired outgoing link for `replaceOutgoing`. */
+export interface DesiredOutgoingLink {
+  to: EntityRef
+  relation: EntityRelation
+  anchor?: EntityLinkAnchor
+}
+
+export interface ReplaceOutgoingResult {
+  added: number
+  updated: number
+  removed: number
+}
+
 export interface BacklinkQuery {
   kinds?: string[]
   relations?: string[]
@@ -212,6 +225,77 @@ export class EntityLinkStore {
     const page = rows.slice(0, limit).map(rowToLink)
     const nextCursor = rows.length > limit ? page[page.length - 1]?.linkId : undefined
     return nextCursor ? { links: page, nextCursor } : { links: page }
+  }
+
+  /**
+   * Reconcile every outgoing link of `from` to exactly `desired`, atomically
+   * (one IMMEDIATE transaction): new links are inserted, links whose anchor
+   * moved are updated (revision bump), links no longer present are removed.
+   * Idempotent: re-applying the same set writes nothing and reports zeros.
+   * Duplicates in `desired` collapse to the first occurrence per
+   * `(relation, to)`. Fragment of `from` is matched NULL-safe.
+   */
+  replaceOutgoing(from: EntityRef, desired: readonly DesiredOutgoingLink[], createdBy: string): ReplaceOutgoingResult {
+    const wanted = new Map<string, DesiredOutgoingLink>()
+    for (const link of desired) {
+      const key = entityLinkDedupeKey({ from, relation: link.relation, to: link.to })
+      if (!wanted.has(key)) wanted.set(key, link)
+    }
+    const result: ReplaceOutgoingResult = { added: 0, updated: 0, removed: 0 }
+    this.db.exec('BEGIN IMMEDIATE')
+    try {
+      const existing = this.db
+        .prepare('SELECT dedupe_key, anchor_block_id, anchor_seq, anchor_line, anchor_target_id FROM entity_links WHERE from_kind=? AND from_id=? AND from_fragment IS ?')
+        .all(from.kind, from.id, from.fragment ?? null) as unknown as Array<Pick<LinkRow, 'anchor_block_id' | 'anchor_seq' | 'anchor_line' | 'anchor_target_id'> & { dedupe_key: string }>
+      const remove = this.db.prepare('DELETE FROM entity_links WHERE dedupe_key=?')
+      const present = new Map(existing.map(row => [row.dedupe_key, row]))
+      for (const row of existing) {
+        if (wanted.has(row.dedupe_key)) continue
+        remove.run(row.dedupe_key)
+        result.removed += 1
+      }
+      for (const [key, link] of wanted) {
+        const anchor = link.anchor ?? {}
+        const row = present.get(key)
+        if (row) {
+          const same = row.anchor_block_id === (anchor.blockId ?? null)
+            && row.anchor_seq === (anchor.seq ?? null)
+            && row.anchor_line === (anchor.line ?? null)
+            && row.anchor_target_id === (anchor.targetId ?? null)
+          if (same) continue
+          result.updated += 1
+        } else {
+          result.added += 1
+        }
+        this.add({ from, to: link.to, relation: link.relation, anchor: link.anchor, createdBy })
+      }
+      this.db.exec('COMMIT')
+    } catch (error) {
+      try { this.db.exec('ROLLBACK') } catch { /* already rolled back */ }
+      throw error
+    }
+    return result
+  }
+
+  /** Remove every outgoing link of `from`; returns the number removed. */
+  removeOutgoing(from: EntityRef): number {
+    const changes = this.db
+      .prepare('DELETE FROM entity_links WHERE from_kind=? AND from_id=? AND from_fragment IS ?')
+      .run(from.kind, from.id, from.fragment ?? null).changes
+    return Number(changes)
+  }
+
+  /**
+   * Remove every outgoing link whose source is `kind` with an id starting
+   * with `idPrefix` (e.g. all notes under a renamed folder `projects/`).
+   * Exact prefix compare, no LIKE wildcards. Returns the number removed.
+   */
+  removeOutgoingByIdPrefix(kind: EntityRef['kind'], idPrefix: string): number {
+    if (!idPrefix) return 0
+    const changes = this.db
+      .prepare('DELETE FROM entity_links WHERE from_kind=? AND substr(from_id, 1, ?) = ?')
+      .run(kind, idPrefix.length, idPrefix).changes
+    return Number(changes)
   }
 
   count(): number {
