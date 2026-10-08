@@ -9,18 +9,26 @@
  * `packages/test-harness/allowlists/command-gates.json` (shrink-only).
  *
  * Coverage is decided per test block, per command. A `test(…)` / `it(…)`
- * call (not `.skip` / `.todo` / `.skipIf` / `.failing`) covers a command
- * when it names the command id as a whole token (in the block, its title
- * or an enclosing `describe` title) AND shows a negative outcome:
+ * call (not `.skip` / `.todo` / `.skipIf` / `.failing`) is NEGATIVE when it
+ * shows a negative outcome:
  * - a negative keyword as a whole word in the test title or an enclosing
  *   describe title (`denied`, `forbidden`, `wrong scope`, `rate limit…`,
  *   `quota`, `conflict…`, `expired`), or
- * - an assertion / error-code token in the body: a string literal that is
- *   exactly an error code (`'FORBIDDEN'`, `'RATE_LIMITED'`,
- *   `'QUOTA_EXCEEDED'`, `'APPROVAL_EXPIRED'`, `'conflict'`, …) or an HTTP
- *   403 / 409 / 429 status assertion.
- * Identifiers such as `resolveConflict`, `quotaBytes` or `notExpired` in a
- * happy-path body do not count.
+ * - a negative ASSERTION in the body: an assertion call (`expect(…)` with
+ *   its whole matcher chain, or any `expect*` / `assert*` helper call)
+ *   that contains a string literal which is exactly an error code
+ *   (`'FORBIDDEN'`, `'RATE_LIMITED'`, `'QUOTA_EXCEEDED'`,
+ *   `'APPROVAL_EXPIRED'`, `'conflict'`, …) or an HTTP 403 / 409 / 429.
+ * A negative block covers ONLY the command ids (whole tokens) that appear
+ * (#1507 review 3):
+ * - in the test title or an enclosing describe title, or
+ * - inside the negative assertion call itself
+ *   (`await expect(run('tasks.delete')).rejects.toMatchObject({ code: 'FORBIDDEN' })`).
+ * An id elsewhere in the body (a setup call such as `run('tasks.create')`,
+ * or `const r = run(id)` asserted in a later statement) does not count, and
+ * a code or status outside an assertion (a mocked response fixture such as
+ * `{ status: 403 }`) is not a negative outcome. Identifiers such as
+ * `resolveConflict`, `quotaBytes` or `notExpired` never count.
  *
  * Walk: only test files (`*.test.ts(x)`, `*.spec.ts(x)`) under the test
  * roots (`packages`, `apps/workspace-service`, `tests`, `e2e`), skipping
@@ -48,7 +56,8 @@ export const NEGATIVE_CODE_TOKENS = [
 ] as const
 
 const CODE_LITERAL_RE = new RegExp(`(['"\`])(?:${NEGATIVE_CODE_TOKENS.join('|')})\\1`)
-const HTTP_STATUS_RE = /\b(?:toBe|toEqual|toStrictEqual)\(\s*(?:403|409|429)\s*\)|\bstatus\s*:\s*(?:403|409|429)\b/
+/** Inside an assertion call only (see assertionSpans). */
+const HTTP_STATUS_RE = /(?<![\w.])(?:403|409|429)(?![\w.])/
 
 export const DEFAULT_TEST_ROOTS = ['packages', join('apps', 'workspace-service'), 'tests', 'e2e'] as const
 /** Repo-relative directories never walked (self-test fixtures live there). */
@@ -84,7 +93,7 @@ export function collectTestFiles(dir: string, out: string[], opts: { root?: stri
   }
 }
 
-interface Block { start: number; end: number; kind: 'describe' | 'test'; text: string; title: string }
+interface Block { start: number; end: number; kind: 'describe' | 'test'; text: string; title: string; body: string }
 
 /** describe / test / it blocks with their source text; skipped and todo tests are dropped. */
 export function testBlocks(source: string): Block[] {
@@ -106,6 +115,7 @@ export function testBlocks(source: string): Block[] {
       kind: m[1] === 'describe' ? 'describe' : 'test',
       text: inner,
       title: titleMatch?.[2] ?? '',
+      body: titleMatch ? inner.slice(titleMatch.index + titleMatch[0].length) : inner,
     })
   }
   return blocks
@@ -115,12 +125,47 @@ function tokenRe(id: string): RegExp {
   return new RegExp(`(?<![A-Za-z0-9_.])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_])`, 'i')
 }
 
-/** True when the block shows a negative outcome (title keyword or body code token). */
-export function isNegativeBlock(titles: string, body: string): boolean {
-  return NEGATIVE_TITLE_RE.test(titles) || CODE_LITERAL_RE.test(body) || HTTP_STATUS_RE.test(body)
+const ASSERTION_START_RE = /(?<![\w$.])(?:expect|assert)\w*(?:\s*\.\s*[A-Za-z_$][\w$]*)*\s*\(/g
+
+/**
+ * Source text of every assertion call in `body`: `expect(…)` (or an
+ * `expect*` / `assert*` helper, `assert.equal(…)` included) plus its chained
+ * members and calls (`.not`, `.rejects`, `.toBe(…)`, …).
+ */
+export function assertionSpans(body: string): string[] {
+  const spans: string[] = []
+  ASSERTION_START_RE.lastIndex = 0
+  let m: RegExpExecArray | null
+  while ((m = ASSERTION_START_RE.exec(body)) !== null) {
+    let end = matchBracket(body, m.index + m[0].length - 1)
+    if (end === -1) continue
+    for (;;) {
+      const chain = /^\s*\??\.\s*[A-Za-z_$][\w$]*\s*/.exec(body.slice(end + 1))
+      if (!chain) break
+      end += chain[0].length
+      if (body[end + 1] === '(') {
+        const close = matchBracket(body, end + 1)
+        if (close === -1) break
+        end = close
+      }
+    }
+    spans.push(body.slice(m.index, end + 1))
+    ASSERTION_START_RE.lastIndex = end + 1
+  }
+  return spans
 }
 
-/** Negative-test coverage per command id within one test source. */
+/** An assertion that checks a negative outcome (exact error-code literal or 403/409/429). */
+export function isNegativeAssertion(span: string): boolean {
+  return CODE_LITERAL_RE.test(span) || HTTP_STATUS_RE.test(span)
+}
+
+/** True when the block shows a negative outcome (title keyword or a negative assertion). */
+export function isNegativeBlock(titles: string, body: string): boolean {
+  return NEGATIVE_TITLE_RE.test(titles) || assertionSpans(body).some(isNegativeAssertion)
+}
+
+/** Negative-test coverage per command id within one test source (see the header for the rule). */
 export function coveredCommands(source: string, ids: string[]): Set<string> {
   const blocks = testBlocks(source)
   const describes = blocks.filter((b) => b.kind === 'describe')
@@ -128,9 +173,12 @@ export function coveredCommands(source: string, ids: string[]): Set<string> {
   for (const t of blocks.filter((b) => b.kind === 'test')) {
     const context = describes.filter((d) => d.start < t.start && d.end > t.end).map((d) => d.title)
     const titles = [...context, t.title].join('\n')
-    if (!isNegativeBlock(titles, t.text)) continue
-    const haystack = `${titles}\n${t.text}`
-    for (const id of ids) if (tokenRe(id).test(haystack)) covered.add(id)
+    const negativeAssertions = assertionSpans(t.body).filter(isNegativeAssertion)
+    if (!NEGATIVE_TITLE_RE.test(titles) && negativeAssertions.length === 0) continue
+    for (const id of ids) {
+      const re = tokenRe(id)
+      if (re.test(titles) || negativeAssertions.some((span) => re.test(span))) covered.add(id)
+    }
   }
   return covered
 }

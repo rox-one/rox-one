@@ -273,8 +273,44 @@ describe('negative-tests gate', () => {
     const res = await checkNegativeTestPresence({ repoRoot: root, allowlist: NO_ALLOWLIST })
     expect(res.status).toBe('fail')
     expect(res.violations?.length).toBe(2)
-    expect([...coveredCommands(`test('x', () => { run('zz_fixture.create'); expect(res.status).toBe(403) })`, ['zz_fixture.create'])]).toEqual(['zz_fixture.create'])
+    expect([...coveredCommands(`test('x', async () => { expect((await run('zz_fixture.create')).status).toBe(403) })`, ['zz_fixture.create'])]).toEqual(['zz_fixture.create'])
     expect([...coveredCommands(`test('zz_fixture.create is rate limited', () => {})`, ['zz_fixture.create'])]).toEqual(['zz_fixture.create'])
+  })
+  test('setup calls do not count: only ids in a title or inside the negative assertion call (#1507 review 3)', async () => {
+    const ids = ['zz_fixture.create', 'zz_fixture.delete', 'zz_fixture.archive']
+    const viewerCannotDelete = `
+      test('viewer cannot remove a task', async () => {
+        const created = await run('zz_fixture.create', owner)
+        await run('zz_fixture.archive', owner, created.id)
+        await expect(run('zz_fixture.delete', viewer, created.id)).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      })`
+    expect([...coveredCommands(viewerCannotDelete, ids)]).toEqual(['zz_fixture.delete'])
+    // id asserted in a later statement: no longer counts (name it in the title or inside the assertion).
+    expect([...coveredCommands(`test('x', async () => { const r = await run('zz_fixture.create'); expect(r.error.code).toBe('FORBIDDEN') })`, ids)]).toEqual([])
+    // a title keyword covers only ids named in titles, not ids in the body.
+    expect([...coveredCommands(`describe('zz_fixture.delete', () => { test('is denied for a viewer', async () => { await run('zz_fixture.create'); await run('zz_fixture.delete') }) })`, ids)]).toEqual(['zz_fixture.delete'])
+    // helper assertions count like expect(): the id must be inside the helper call.
+    expect([...coveredCommands(`test('y', async () => { await run('zz_fixture.create'); await expectDenied(run('zz_fixture.archive'), 'FORBIDDEN') })`, ids)]).toEqual(['zz_fixture.archive'])
+    const root = repo({ registry, tests: { 'e2e/zz.test.ts': viewerCannotDelete } })
+    const res = await checkNegativeTestPresence({ repoRoot: root, allowlist: NO_ALLOWLIST })
+    expect(res.violations).toEqual([
+      "command 'zz_fixture.create' (zz_fixture) is gated but has no negative test block (permission/scope/rate-limit/quota/conflict/expiry)",
+    ])
+  })
+  test('a 403 / error code in a mocked response fixture is not a negative outcome', async () => {
+    const ids = ['zz_fixture.create', 'zz_fixture.delete']
+    const fixture = `
+      test('zz_fixture.create renders the response', async () => {
+        const server = mockServer({ 'zz_fixture.delete': { status: 403, body: { code: 'FORBIDDEN' } } })
+        const r = await run('zz_fixture.create', server)
+        expect(r.ok).toBe(true)
+      })`
+    expect([...coveredCommands(fixture, ids)]).toEqual([])
+    const root = repo({ registry, tests: { 'e2e/zz.test.ts': fixture } })
+    const res = await checkNegativeTestPresence({ repoRoot: root, allowlist: NO_ALLOWLIST })
+    expect(res.violations?.length).toBe(2)
+    // a status asserted inside expect() still counts, object-literal matcher included.
+    expect([...coveredCommands(`test('z', async () => { expect(await run('zz_fixture.delete')).toMatchObject({ status: 403 }) })`, ids)]).toEqual(['zz_fixture.delete'])
   })
   test('skip/todo blocks and id prefixes do not count', async () => {
     const root = repo({
