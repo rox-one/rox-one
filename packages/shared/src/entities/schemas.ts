@@ -10,6 +10,7 @@ import {
   isEntityKind,
   isEntityRelation,
   kindTakesFragment,
+  normalizeEntityFragment,
   type EntityKind,
   type EntityLink,
   type EntityRef,
@@ -36,6 +37,10 @@ export const entityRefSchema: z.ZodType<EntityRef> = z
     if (value.fragment !== undefined && !kindTakesFragment(value.kind)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: `kind "${value.kind}" does not take a fragment` })
     }
+  })
+  .transform((value) => {
+    if (value.fragment === undefined) return value
+    return { ...value, fragment: normalizeEntityFragment(value.kind, value.fragment) }
   })
 
 export const entityLinkAnchorSchema = z.object({
