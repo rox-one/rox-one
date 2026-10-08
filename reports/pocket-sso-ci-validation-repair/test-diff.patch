@@ -1,0 +1,103 @@
+diff --git a/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts b/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts
+index 5565d7bb8..31893eb1b 100644
+--- a/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts
++++ b/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts
+@@ -1,5 +1,5 @@
+ import { expect, test } from 'bun:test'
+-import { readFileSync, writeFileSync } from 'node:fs'
++import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+ import { join } from 'node:path'
+ import type { ChildProcess } from 'node:child_process'
+ import { OmpAgent } from '../omp-agent.ts'
+@@ -10,32 +10,58 @@ import { setRoxAccountAuthority, LOCAL_ROX_CALLER } from '../../auth/rox-account
+ async function fixture(delayed = false) {
+   const fake = createFakeOmp('model-public')
+   const restore = useFakeOmpEnv(fake)
+-  const script = join(fake.dir, 'fake-omp.js')
+-  let source = readFileSync(script, 'utf8').replace('function logRpc(obj) {', `function logRpc(obj) {
+-    if (obj.type === 'prompt') {
+-      obj.personalCredentialMatches = process.env.ROX_API_KEY === 'account-key-fixture';
+-      obj.privateCredentialMatches = process.env.ROX_API_KEY === 'wrong-session-fixture-key';
+-      obj.canonicalBase = process.env.ROX_BASE_URL === 'https://api.rox.one/v1';
+-      const models = fs.readFileSync(require('node:path').join(process.env.PI_CODING_AGENT_DIR, 'models.yml'), 'utf8');
+-      obj.publicCatalog = models.includes('- id: rox/r1-max');
+-    }`)
+-  if (delayed) source = source.replace('emitTurnStream();', 'setTimeout(emitTurnStream, 500);')
+-  writeFileSync(script, source)
+-  const pocket = createPocketFixture()
+-  await pocket.authority.start(LOCAL_ROX_CALLER)
+-  await pocket.authority.state(LOCAL_ROX_CALLER)
+-  setRoxAccountAuthority(pocket.authority)
+-  const agent = new OmpAgent(makeOmpConfig(fake, {
+-    model: 'kimi-k3', roxExecutionContext: await pocket.authority.capture(LOCAL_ROX_CALLER),
+-    envOverrides: { ROX_API_KEY: 'wrong-session-fixture-key', ROX_BASE_URL: 'https://wrong.example.test/v1' },
+-  }))
+-  const children: ChildProcess[] = []
+-  const observeChild = () => { const child = (agent as any).subprocess as ChildProcess | null; if (child && !children.includes(child)) children.push(child) }
+-  return { fake, agent, observeChild, async cleanup() {
+-    observeChild(); agent.destroy()
+-    await Promise.all(children.map(child => child.exitCode !== null || child.signalCode ? Promise.resolve() : new Promise<void>(resolve => child.once('exit', () => resolve()))))
++  // Private models require an existing provider catalog. Own that prerequisite
++  // instead of depending on the developer's ~/.omp or the CI runner's home.
++  const privateHome = join(fake.dir, 'private-home')
++  const privateAgentDir = join(privateHome, '.omp', 'agent')
++  mkdirSync(privateAgentDir, { recursive: true })
++  const privateModels = 'providers:\n  rox:\n    baseUrl: https://private.example.test/v1\n    apiKey: ROX_API_KEY\n    models:\n      - id: kimi-k3\n'
++  writeFileSync(join(privateAgentDir, 'models.yml'), privateModels)
++  const savedHome = process.env.HOME
++  const savedUserProfile = process.env.USERPROFILE
++  process.env.HOME = privateHome
++  process.env.USERPROFILE = privateHome
++  const restoreFixture = () => {
++    if (savedHome === undefined) delete process.env.HOME
++    else process.env.HOME = savedHome
++    if (savedUserProfile === undefined) delete process.env.USERPROFILE
++    else process.env.USERPROFILE = savedUserProfile
+     restore(); fake.cleanup()
+-  } }
++  }
++  try {
++    const script = join(fake.dir, 'fake-omp.js')
++    let source = readFileSync(script, 'utf8').replace('function logRpc(obj) {', `function logRpc(obj) {
++      if (obj.type === 'prompt') {
++        obj.personalCredentialMatches = process.env.ROX_API_KEY === 'account-key-fixture';
++        obj.privateCredentialMatches = process.env.ROX_API_KEY === 'wrong-session-fixture-key';
++        obj.canonicalBase = process.env.ROX_BASE_URL === 'https://api.rox.one/v1';
++        const models = fs.readFileSync(require('node:path').join(process.env.PI_CODING_AGENT_DIR, 'models.yml'), 'utf8');
++        obj.publicCatalog = models.includes('- id: rox/r1-max');
++      }`)
++    if (delayed) source = source.replace('emitTurnStream();', 'setTimeout(emitTurnStream, 500);')
++    writeFileSync(script, source)
++    const pocket = createPocketFixture()
++    await pocket.authority.start(LOCAL_ROX_CALLER)
++    await pocket.authority.state(LOCAL_ROX_CALLER)
++    setRoxAccountAuthority(pocket.authority)
++    const agent = new OmpAgent(makeOmpConfig(fake, {
++      model: 'kimi-k3', roxExecutionContext: await pocket.authority.capture(LOCAL_ROX_CALLER),
++      envOverrides: { PI_CODING_AGENT_DIR: privateAgentDir, ROX_API_KEY: 'wrong-session-fixture-key', ROX_BASE_URL: 'https://wrong.example.test/v1' },
++    }))
++    const children: ChildProcess[] = []
++    const observeChild = () => { const child = (agent as any).subprocess as ChildProcess | null; if (child && !children.includes(child)) children.push(child) }
++    return { fake, agent, observeChild, privateAgentDir, privateModels, async cleanup() {
++      observeChild(); agent.destroy()
++      try {
++        await Promise.all(children.map(child => child.exitCode !== null || child.signalCode ? Promise.resolve() : new Promise<void>(resolve => child.once('exit', () => resolve()))))
++      } finally {
++        restoreFixture()
++      }
++    } }
++  } catch (error) {
++    restoreFixture()
++    throw error
++  }
+ }
+ 
+ test('actual OmpAgent respawns in both credential/catalog directions and preserves each domain key', async () => {
+@@ -51,6 +77,7 @@ test('actual OmpAgent respawns in both credential/catalog directions and preserv
+     expect(prompts.map(p => [p.personalCredentialMatches, p.privateCredentialMatches, p.canonicalBase, p.publicCatalog])).toEqual([
+       [false, true, false, false], [true, false, true, true], [false, true, false, false],
+     ])
++    expect(readFileSync(join(f.privateAgentDir, 'models.yml'), 'utf8')).toBe(f.privateModels)
+     expect(f.fake.readArgvLog()).toHaveLength(3)
+   } finally { await f.cleanup() }
+ }, 120_000)

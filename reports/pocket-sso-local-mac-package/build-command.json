@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+    "scripts/desktop-release.ts"
+  ],
+  "cwd": "/private/tmp/rox-pocket-mac-package-aa80-20261004",
+  "sourceCommit": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "environmentPolicy": "whitelist system identity/locale plus pinned toolchain and isolated config; no signing/OAuth/GitHub credential variables",
+  "platform": "darwin-arm64",
+  "startedAt": "2026-10-03T21:04:55.575013+00:00",
+  "installExitCode": 0,
+  "frozenInstallSeconds": 194.72,
+  "installedPackages": 1824
+}

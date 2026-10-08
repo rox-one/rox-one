@@ -1,0 +1,33 @@
+{
+  "ownedMountedImagesAfter": [],
+  "ownedImageCleanup": [
+    {
+      "imagePath": "/private/tmp/rox-pocket-mac-package-aa80-20261004/apps/electron/release/.tempri582xmgRox-arm64.dmg",
+      "device": "/dev/disk10",
+      "detachExitCode": 0,
+      "message": "\"disk10\" ejected.\nhdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.\n"
+    }
+  ],
+  "knownOwnedPidsChecked": [
+    3824,
+    3825,
+    6989,
+    19462,
+    82045,
+    97757,
+    98268,
+    97773,
+    86096
+  ],
+  "survivingOwnedPids": [],
+  "completedSessions": [
+    23596,
+    37899,
+    79413,
+    95582,
+    96666,
+    4718
+  ],
+  "allOwnedCommandsSettled": true,
+  "checkedAt": "2026-10-03T21:23:51.317132+00:00"
+}
