@@ -131,7 +131,7 @@ export function ResizeHandle({
       tabIndex={disabled ? -1 : 0}
       {...rest}
       className={cn(
-        'z-panel flex justify-center outline-none',
+        'z-sash flex justify-center outline-none',
         vertical ? 'cursor-col-resize items-stretch' : 'cursor-row-resize items-center',
         'focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
         dragging && 'shell-sash-active',

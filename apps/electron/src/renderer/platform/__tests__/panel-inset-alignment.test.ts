@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import {
+  PANEL_STACK_BOTTOM_INSET,
+  PANEL_STACK_TOP_INSET,
+  PANEL_STACK_VERTICAL_OVERFLOW,
+} from '../../components/app-shell/panel-constants'
 
 const platformDir = join(import.meta.dir, '..')
 const inspector = readFileSync(join(platformDir, 'InspectorHost.tsx'), 'utf8')
@@ -16,9 +21,12 @@ const constants = readFileSync(
 
 describe('panel inset alignment', () => {
   it('keeps the desktop stack flush with its chrome boundary', () => {
-    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 0')
-    expect(constants).toContain('export const PANEL_STACK_BOTTOM_INSET = 0')
-    expect(constants).toContain('export const PANEL_STACK_VERTICAL_OVERFLOW = 0')
+    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = CHROME_TOKENS.panelStackTopInset')
+    expect(constants).toContain('export const PANEL_STACK_BOTTOM_INSET = CHROME_TOKENS.panelStackBottomInset')
+    expect(constants).toContain('export const PANEL_STACK_VERTICAL_OVERFLOW = CHROME_TOKENS.panelStackVerticalOverflow')
+    expect(PANEL_STACK_TOP_INSET).toBe(0)
+    expect(PANEL_STACK_BOTTOM_INSET).toBe(0)
+    expect(PANEL_STACK_VERTICAL_OVERFLOW).toBe(0)
 
     const collapsedStart = inspector.indexOf('if (chromeCollapsed)')
     const collapsedReturn = inspector.indexOf('return (', collapsedStart)

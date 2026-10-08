@@ -1,0 +1,70 @@
+/* Chrome, control and pane numbers (UI-AUDIT §3.2).
+
+   This file is the single source of truth for shell geometry: the first
+   `:root` block and the `html[data-density="comfortable"]` block are compiled
+   into apps/electron/src/renderer/platform/chrome-tokens.ts by
+   scripts/generate-chrome-tokens.ts. Only plain `px` values or `var()`
+   references to tokens declared earlier in the same block are allowed there.
+   Run `bun run scripts/generate-chrome-tokens.ts` after editing. */
+:root {
+  /* Controls (compact density is the default). */
+  --control-hit-min: 28px;
+  --control-height: 32px;
+  --control-sm: 24px;
+  --control-md: 28px;
+  --control-lg: 32px;
+  --rail-button: 36px;
+  --row-h: 28px;
+  --row-h-2line: 44px;
+
+  /* Workbench chrome. */
+  --chrome-topbar-height: 40px;
+  --chrome-rail-width: 44px;
+  --chrome-rail-expanded-width: 188px;
+  --chrome-control: 24px;
+  --chrome-control-lg: 26px;
+  --chrome-tab-strip-height: 34px;
+  --chrome-status-height: 24px;
+  --chrome-panel-header-height: 32px;
+  --chrome-gap: 4px;
+
+  /* Panes: flush one-surface shell; sashes overlap the seam. */
+  --panel-gap: 0px;
+  --panel-edge-inset: 0px;
+  --panel-min-width: 440px;
+  --panel-grid-min-width: 320px;
+  --panel-grid-min-height: 240px;
+  --center-min-width: 420px;
+  --panel-stack-vertical-overflow: 0px;
+  --panel-stack-top-inset: 0px;
+  --panel-stack-bottom-inset: 0px;
+  --panel-sash-hit-width: 12px;
+  --panel-sash-hit-width-coarse: 24px;
+  --panel-sash-line-width: 2px;
+}
+
+/* Density swaps values, never class names. Nothing sets data-density yet;
+   compact stays the default. */
+html[data-density="comfortable"] {
+  --control-sm: 28px;
+  --control-md: 32px;
+  --control-lg: 36px;
+  --rail-button: 40px;
+  --row-h: 32px;
+  --row-h-2line: 52px;
+  --chrome-topbar-height: 44px;
+  --chrome-panel-header-height: 40px;
+  --chrome-tab-strip-height: 36px;
+  --chrome-rail-width: 52px;
+}
+
+/* Coarse pointers get explicit hit-target floors. */
+@media (pointer: coarse) {
+  :root {
+    --control-hit-min: 44px;
+    --chrome-control: 44px;
+    --chrome-control-lg: 44px;
+    --chrome-topbar-height: 56px;
+    --chrome-panel-header-height: 48px;
+  }
+}

@@ -1,0 +1,27 @@
+/* Motion (UI-AUDIT §3.7). Everything is 0 under reduced motion and while the
+   shell is resizing (`html[data-resizing]`). */
+:root {
+  --motion-instant: 0ms;
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 220ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Legacy names. */
+  --motion-normal: var(--motion-base);
+  --ease-out: var(--ease-standard);
+}
+
+html[data-resizing] {
+  --motion-fast: 0ms;
+  --motion-base: 0ms;
+  --motion-slow: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}

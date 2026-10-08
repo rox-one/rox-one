@@ -40,7 +40,7 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       data-overlay-motion="true"
       className={cn(
-        "fixed inset-0 z-modal bg-[var(--dialog-backdrop)]",
+        "fixed inset-0 z-scrim bg-[var(--dialog-backdrop)]",
         className
       )}
       {...props}

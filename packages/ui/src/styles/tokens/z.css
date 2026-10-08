@@ -1,0 +1,48 @@
+/* Z-index layers (UI-AUDIT §3.5). The only stacking names; Tailwind `z-*`
+   utilities are generated for these layers only.
+
+   Step 1 values keep today's stacking for every renamed call site:
+   chrome/sash = old panel (50), scrim = old modal (200). */
+:root {
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 10;
+  --z-chrome: 50;
+  --z-sash: 50;
+  --z-popover: 100;
+  --z-tooltip: 150;
+  --z-scrim: 200;
+  --z-modal: 200;
+  --z-toast: 300;
+  --z-island: 400;
+  --z-island-popover: 410;
+  --z-splash: 600;
+
+  /* Deprecated CSS-variable names, kept for inline `style={{ zIndex: 'var(--z-…)' }}`
+     call sites. They have no Tailwind utility; do not add new uses. */
+  --z-local: 10;
+  --z-titlebar: 40;
+  --z-panel: 50;
+  --z-dropdown: 100;
+  --z-overlay: 300;
+  --z-fullscreen: 350;
+  --z-floating-backdrop: 390;
+  --z-floating-menu: 400;
+  --z-island-overlay: 390;
+}
+
+@theme inline {
+  --z-index-base: var(--z-base);
+  --z-index-raised: var(--z-raised);
+  --z-index-sticky: var(--z-sticky);
+  --z-index-chrome: var(--z-chrome);
+  --z-index-sash: var(--z-sash);
+  --z-index-popover: var(--z-popover);
+  --z-index-tooltip: var(--z-tooltip);
+  --z-index-scrim: var(--z-scrim);
+  --z-index-modal: var(--z-modal);
+  --z-index-toast: var(--z-toast);
+  --z-index-island: var(--z-island);
+  --z-index-island-popover: var(--z-island-popover);
+  --z-index-splash: var(--z-splash);
+}

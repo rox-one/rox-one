@@ -23,6 +23,8 @@
 @plugin "@tailwindcss/typography";
 /* Inter is bundled locally (packages/ui/src/fonts/inter) — no CDN dependency. */
 @import "./inter-font-face.css";
+/* Design tokens v2: geometry, type, icon, z, elevation, motion, state, chrome. */
+@import "./tokens/index.css";
 
 /* =============================================================================
    SEMANTIC TOKENS
@@ -151,32 +153,10 @@
   --font-chat: var(--font-sans);
   --font-default: var(--font-sans);
 
-  /* Layout scale */
-  --font-size-base: 15px;
-  /* Geometry is independent of palettes: joined workbench panes, compact
-     controls/cards/composer, and detached overlays. Native window corners
-     remain owned by the OS. */
-  --radius-control: 4px;
-  --radius-card: 4px;
-  --radius-composer: 4px;
-  --radius-overlay: 6px;
-  --radius: var(--radius-control);
-  --radius-xs: 4px;
-  --radius-sm: 4px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
-  --radius-xl: var(--radius-control);
-  --radius-2xl: var(--radius-control);
-  --spacing: 0.25rem;
+  /* Root, spacing, radius, control, motion and chrome numbers live in
+     ./tokens/*.css. Native window corners remain owned by the OS. */
   --tracking-normal: 0em;
 
-  /* Mouse density is compact; coarse pointers get explicit hit-target floors. */
-  --control-hit-min: 28px;
-  --control-height: 32px;
-  --motion-fast: 120ms;
-  --motion-normal: 180ms;
-  --motion-slow: 220ms;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --text-body-leading: 1.65;
   --text-heading-tracking: -0.015em;
   --text-code-size: 13px;
@@ -191,15 +171,7 @@
   --dialog-padding: 20px;
   --dialog-backdrop: rgb(0 0 0 / 0.32);
 
-  /* Workbench chrome density (design-compact) */
-  --chrome-topbar-height: 40px;
-  --chrome-rail-width: 44px;
-  --chrome-control: 24px;
-  --chrome-control-lg: 26px;
-  --chrome-tab-strip-height: 34px;
-  --chrome-status-height: 24px;
-  --chrome-panel-header-height: 32px;
-  --chrome-gap: 4px;
+  /* Workbench chrome type and glass (geometry: ./tokens/chrome.css) */
   --chrome-font-size: 12px;
   --chrome-font-size-sm: 11px;
   --chrome-tracking: 0.01em;
@@ -223,23 +195,7 @@
      by a single low-alpha hairline instead of rounded outlined boxes. */
   --rox-shell-divider: color-mix(in oklch, var(--foreground) 6%, transparent);
 
-  /* Z-index scale */
-  --z-base: 0;
-  --z-local: 10;
-  --z-sticky: 20;
-  --z-titlebar: 40;
-  --z-panel: 50;
-  --z-dropdown: 100;
-  --z-tooltip: 150;
-  --z-modal: 200;
-  --z-overlay: 300;
-  --z-fullscreen: 350;
-  --z-floating-backdrop: 390;
-  --z-floating-menu: 400;
-  --z-island-overlay: 390;
-  --z-island: 400;
-  --z-island-popover: 410;
-  --z-splash: 600;
+  /* Z-index layers: ./tokens/z.css */
 }
 
 /* =============================================================================
@@ -421,8 +377,9 @@ html[data-contrast="high"] :focus-visible {
 
 html[data-ui-profile="super-engineering"] {
   --chrome-glass-blur: 20px;
+  /* Profiles scale radius within the token scale only (UI-A1). */
   --rox-radius-panel: 8px;
-  --rox-radius-composer: 10px;
+  --rox-radius-composer: 12px;
   --font-size-base: 13px;
   --shell-motion-disclosure: 320ms;
   --se-editor-font-scale: 1;
@@ -1043,15 +1000,8 @@ html[data-shell-style="zen"] [data-shell-role="sash"] {
 }
 
 /* Accessibility preferences apply to shared surfaces in every host app. */
+/* Coarse-pointer token floors: ./tokens/chrome.css */
 @media (pointer: coarse) {
-  :root {
-    --control-hit-min: 44px;
-    --chrome-control: 44px;
-    --chrome-control-lg: 44px;
-    --chrome-topbar-height: 56px;
-    --chrome-panel-header-height: 48px;
-  }
-
   .rox-hover-action,
   .tiptap-editor .tiptap-hover-actions {
     opacity: 1;
@@ -1082,13 +1032,8 @@ html[data-shell-material="solid"] {
   }
 }
 
+/* Reduced-motion token values: ./tokens/motion.css */
 @media (prefers-reduced-motion: reduce) {
-  :root {
-    --motion-fast: 0ms;
-    --motion-normal: 0ms;
-    --motion-slow: 0ms;
-  }
-
   *,
   *::before,
   *::after {

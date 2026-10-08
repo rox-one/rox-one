@@ -467,7 +467,7 @@ export function PanelHeader({
   const basePadding = leadingAction ? 8 : 16
 
   const baseClassName = cn(
-    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-panel h-[var(--chrome-panel-header-height)] bg-surface-elevated border-b border-border-subtle',
+    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-chrome h-[var(--chrome-panel-header-height)] bg-surface-elevated border-b border-border-subtle',
     // Only use static paddingLeft class when not animating
     !shouldCompensate && (paddingLeft || (leadingAction ? 'pl-2' : 'pl-4')),
     className

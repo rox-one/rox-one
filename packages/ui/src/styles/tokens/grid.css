@@ -1,0 +1,9 @@
+/* Root and grid (UI-AUDIT §3.0). */
+:root {
+  /* Root font size. Step 1 keeps the shipped 15px root. */
+  --font-size-root: 15px;
+  /* Legacy name; the super-engineering profile reuses it for editor code. */
+  --font-size-base: var(--font-size-root);
+  /* Tailwind v4 spacing multiplier (`p-1` = 1 step). */
+  --spacing: 0.25rem;
+}

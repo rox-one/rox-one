@@ -1,0 +1,23 @@
+/* =============================================================================
+   ROX DESIGN TOKENS v2 (UI-A1, rox-one#1567)
+
+   Single source for geometry, type, icon, stacking, elevation, motion, state
+   and chrome numbers. Colour palettes stay in ../index.css. Spec:
+   UI-AUDIT §3 / PERF-UI-PLAN §3.1 (owner decision D3).
+
+   Step 1 (aliases): every new name resolves to the value the app already
+   renders, so the switch is a pure rename. Step 2 (values) flips the values
+   in these files only. `chrome.css` is the source of
+   apps/electron/src/renderer/platform/chrome-tokens.ts
+   (regenerate with `bun run scripts/generate-chrome-tokens.ts`).
+============================================================================= */
+
+@import "./grid.css";
+@import "./radius.css";
+@import "./type.css";
+@import "./icon.css";
+@import "./chrome.css";
+@import "./z.css";
+@import "./elevation.css";
+@import "./motion.css";
+@import "./state.css";

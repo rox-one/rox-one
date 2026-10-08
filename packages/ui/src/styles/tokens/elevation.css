@@ -1,0 +1,9 @@
+/* Elevation (UI-AUDIT §3.6): tone first, shadow only when detached.
+   none: panes, cards, rows · popover: menus, popovers, hover cards, tooltips
+   overlay: dialogs, sheets, islands, toasts · ring-focus: keyboard focus only.
+   Theme-specific `--shadow-popover` values live in ../index.css (step 1). */
+:root {
+  --shadow-none: none;
+  --shadow-overlay: var(--shadow-popover);
+  --ring-focus: 0 0 0 var(--ring-width) var(--focus);
+}

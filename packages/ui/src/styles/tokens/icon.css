@@ -1,0 +1,52 @@
+/* Icon sizes (UI-AUDIT §3.4). lucide only.
+   rail 20 in a 36 box · toolbar 16 in a 28 box · inline 16 · caption 14
+   status 12 · empty-state 32 */
+:root {
+  --icon-rail: 20px;
+  --icon-toolbar: 16px;
+  --icon-inline: 16px;
+  --icon-caption: 14px;
+  --icon-status: 12px;
+  --icon-empty: 32px;
+  --icon-stroke: 1.75;
+  --icon-stroke-status: 2;
+  --icon-stroke-empty: 1.5;
+}
+
+@utility icon-rail {
+  width: var(--icon-rail);
+  height: var(--icon-rail);
+  flex-shrink: 0;
+}
+
+@utility icon-toolbar {
+  width: var(--icon-toolbar);
+  height: var(--icon-toolbar);
+  flex-shrink: 0;
+}
+
+@utility icon-inline {
+  width: var(--icon-inline);
+  height: var(--icon-inline);
+  flex-shrink: 0;
+}
+
+@utility icon-caption {
+  width: var(--icon-caption);
+  height: var(--icon-caption);
+  flex-shrink: 0;
+}
+
+@utility icon-status {
+  width: var(--icon-status);
+  height: var(--icon-status);
+  flex-shrink: 0;
+  stroke-width: var(--icon-stroke-status);
+}
+
+@utility icon-empty {
+  width: var(--icon-empty);
+  height: var(--icon-empty);
+  flex-shrink: 0;
+  stroke-width: var(--icon-stroke-empty);
+}
