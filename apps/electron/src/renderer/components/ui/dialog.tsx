@@ -64,7 +64,7 @@ function DialogContent({
         data-slot="dialog-content"
         data-overlay-motion="true"
         className={cn(
-          "popover-styled [--popover-radius:var(--radius-lg)] fixed top-1/2 left-1/2 z-modal grid w-full max-w-[calc(100vw-32px)] max-h-[calc(100dvh-32px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto gap-4 p-[var(--dialog-padding)] text-[13px] outline-none sm:max-w-lg",
+          "popover-styled fixed top-1/2 left-1/2 z-modal grid w-full max-w-[calc(100vw-32px)] max-h-[calc(100dvh-32px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto gap-4 p-[var(--dialog-padding)] text-[13px] outline-none sm:max-w-lg",
           className
         )}
         {...props}

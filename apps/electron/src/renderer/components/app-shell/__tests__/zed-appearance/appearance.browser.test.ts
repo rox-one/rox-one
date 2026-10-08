@@ -13,7 +13,17 @@ const proofDirectory = process.env.ROX_APPEARANCE_PROOF_DIR ?? resolve(homedir()
 const expectDOM = playwrightExpect.configure({ timeout: 30_000 })
 
 async function browserExecutable(): Promise<string | undefined> {
-  try { return await resolveChromiumExecutable() } catch { /* Fall back to the Playwright browser cache below. */ }
+  // An explicitly configured browser path is authoritative, mirroring the
+  // sibling suites' `describe.skipIf(!existsSync(executablePath))` guard: the
+  // unit-recovery step parks CHROMIUM_EXECUTABLE on a path that does not exist
+  // to keep browser fixtures out of the unit process, so honour it strictly and
+  // never bypass it with a cache lookup.
+  const configured = process.env.LEARNING_CHROMIUM_PATH ?? process.env.CHROMIUM_EXECUTABLE ?? process.env.ROX_BROWSER_PATH
+  if (configured !== undefined) return existsSync(configured) ? configured : undefined
+  try {
+    const resolved = await resolveChromiumExecutable()
+    if (existsSync(resolved)) return resolved
+  } catch { /* Fall back to the Playwright browser cache below. */ }
   const cache = resolve(homedir(), 'Library/Caches/ms-playwright')
   if (!existsSync(cache)) return undefined
   for (const version of readdirSync(cache).filter(name => /^chromium_headless_shell-\d+$/.test(name)).sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]))) {
@@ -269,7 +279,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(styles.attrs).toMatchObject({ runtime: 'web', material: 'solid' })
     expect(styles.attrs.mode.split(' ')).toContain(mode)
     expect(styles.attrs.mismatch).toBeUndefined()
-    for (const key of ['root', 'body', 'app', 'work', 'second', 'code', 'dock', 'terminal']) expect(styles[key].rgba).toEqual(canvas)
+    for (const key of ['root', 'body', 'app', 'work', 'second', 'code', 'dock', 'terminal']) expect(styles[key].rgba).toEqual([...canvas])
     for (const key of ['work', 'second', 'sidebar', 'navigator', 'inspector', 'topbar', 'dock']) expect(styles[key].radius).toBe('0px')
     for (const key of ['control', 'card', 'composer', 'code']) expect(styles[key].radius).toBe('4px')
     for (const key of ['topbar', 'sidebar', 'navigator', 'inspector', 'strip']) {

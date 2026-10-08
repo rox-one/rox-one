@@ -29,7 +29,7 @@ function mainFunctions() {
 function shellNavigatorExpressions() {
   const source = readFileSync(process.env.ROX_UI001_SHELL_SOURCE ?? join(import.meta.dir, '../AppShell.tsx'), 'utf8')
   const file = ts.createSourceFile('AppShell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['isBoardView', 'isPagesView', 'isTasksView', 'isMeetingsView', 'isMemoryView', 'isProjectsView', 'isModeScreenView', 'hideModuleMiddleNav'])
+  const names = new Set(['isBoardView', 'isPagesView', 'isTasksView', 'isMeetingsView', 'isMemoryView', 'isProjectsView', 'isModeScreenView', 'hideModuleMiddleNav', 'isLearningView'])
   const declarations: string[] = []
   let hidden = '', width = '', resize = ''
   function visit(node: ts.Node) {
@@ -74,6 +74,7 @@ function desktopTabTitleExpressions() {
   if (declarations.size !== 2) throw new Error('Actual desktop route title callback was not found')
   return `function DesktopTabsProbe(){
     const entries=useAtomValue(panelStackAtom),focusedPanelId=useAtomValue(focusedPanelIdAtom),{t}=useTranslation();
+    const {titleModes:shellModes}=useShellModes();
     ${declarations.get('routeTitleKeys')} ${declarations.get('resolveRouteTitle')}
     const tabs=buildSurfaceTabViews({entries,focusedPanelId,resolveRouteTitle,resolveSessionTitle:id=>id,
       labels:{untitled:'surfaceTabs.untitled',browser:'surfaceTabs.browser',panel:'surfaceTabs.panel',source:'surfaceTabs.source',
@@ -91,8 +92,16 @@ async function bundle() {
     import {Provider,atom,createStore,useAtomValue,useSetAtom,useStore} from 'jotai';
     import {NavigationProvider,useNavigation,useNavigationState} from './apps/electron/src/renderer/contexts/NavigationContext';
     import {CompactWorkspaceMenu} from './apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu';
+    import {panelRouteKey} from './apps/electron/src/renderer/components/app-shell/panel-route-key';
+    import {navigate,routes} from './apps/electron/src/renderer/lib/navigate';
+    import {endRouteSwitch} from './apps/electron/src/renderer/lib/startup-perf';
+    import {Button} from './apps/electron/src/renderer/components/ui/button';
+    import {EntityListEmptyScreen} from './apps/electron/src/renderer/components/ui/entity-list-empty';
+    import {MessageSquarePlus} from 'lucide-react';
     import {APP_NAV_DESTINATIONS} from './apps/electron/src/renderer/components/app-shell/nav-destinations';
     import {buildSurfaceTabViews} from './apps/electron/src/renderer/platform/surface-tab-model';
+    import {buildRouteTitleKeys} from './apps/electron/src/renderer/platform/surface-shell';
+    import {useShellModes} from './apps/electron/src/renderer/platform/useModes';
     import {panelStackAtom,focusedPanelIdAtom,focusedSessionIdAtom} from './apps/electron/src/renderer/atoms/panel-stack';
     import {sessionMetaMapAtom} from './apps/electron/src/renderer/atoms/sessions';
     import {useSession} from './apps/electron/src/renderer/hooks/useSession';
@@ -109,7 +118,7 @@ async function bundle() {
       isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,
       isAutomationsNavigation,isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,
       isDiffNavigation,isExtensionNavigation,isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,
-      isTerminalNavigation,isScreenNavigation} = guards;
+      isTerminalNavigation,isScreenNavigation,isSurfaceNavigation,isLearningNavigation} = guards;
     const store=createStore(), events=new Set(), labels=new Set(), sources=new Set(), skills=new Set(), calls=[];
     const records=[{id:'s1',workspaceId:'ws-a',name:'Session A'},{id:'s2',workspaceId:'ws-b',name:'Session B'}];
     store.set(sessionMetaMapAtom,new Map(records.map(x=>[x.id,x])));
@@ -145,6 +154,7 @@ async function bundle() {
       ExtensionSurfacePage=leaf('extension'),PagesHome=leaf('pages'),KanbanBoardContainer=leaf('board'),SessionTableHost=leaf('table'),
       AutomationEditor=leaf('automation'),KnowledgeDiff=leaf('diff'),KnowledgeHome=leaf('knowledge-home'),KnowledgeProposals=leaf('proposals');
     const getSettingsPageComponent=()=>leaf('settings'),recordRecentSetting=()=>{};
+    const AgentsWorkspacePage=leaf('agents'),SurfaceHost=leaf('surface');
     ${mainFunctions()}
     ${shellNavigatorExpressions()}
     ${desktopTabTitleExpressions()}
@@ -175,6 +185,11 @@ async function bundle() {
     // This fixture exercises menu behavior; product font/layout acceptance is separate.
     loader: { '.css': 'empty' },
     plugins: [{
+      name: 'production-renderer-node-boundary',
+      setup(builder: PluginBuild) {
+        builder.onResolve({ filter: /^node:/ }, () => ({ path: join(root, 'apps/electron/src/renderer/shims/node-stub.ts') }))
+      },
+    }, {
       name: 'ui001-inert-asset-urls',
       setup(builder: PluginBuild) {
         builder.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'ui001-asset' }))
@@ -255,7 +270,7 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
 
   it('multi-panel restore retains valid sibling, unavailable focus and proportions across reload', async () => {
     const route = 'notes/note/%ZZ'
-    await open(route, { panels: `allSessions/session/s1:0.6000,${route}:0.4000`, fi: '1' })
+    await open(route, { panels: `allSessions/session/s1:0.6000,${route}:0.4000`, fi: '1', pi: '1' })
     await unavailable(route)
     let state = await snapshot()
     expect(state.panels.map((p: any) => [p.route, p.proportion])).toEqual([['allSessions/session/s1', 0.6], [route, 0.4]])
@@ -510,7 +525,7 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     expect(await title.textContent()).toBe('common.unavailable')
     await page.evaluate(() => (window as any).ui001.navigate('tasks'))
     await page.waitForFunction(() => (window as any).ui001.snapshot().panels[0].route === 'tasks')
-    expect(await title.textContent()).toBe('sidebar.tasks')
+    expect(await title.textContent()).toBe('workbench.mode.tasks')
     await page.evaluate(() => (window as any).ui001.back())
     await unavailable('tasks/calendar')
     expect(await title.textContent()).toBe('common.unavailable')
