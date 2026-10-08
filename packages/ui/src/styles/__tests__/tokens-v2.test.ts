@@ -58,7 +58,7 @@ const px = (v: string) => {
 
 const LAYERS = [
   'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'fullscreen',
-  'scrim', 'modal', 'tooltip', 'toast', 'island', 'island-popover', 'splash',
+  'scrim', 'modal', 'toast', 'island', 'island-popover', 'tooltip', 'splash',
 ] as const
 
 describe('token foundation v2: structure', () => {
@@ -165,7 +165,7 @@ describe('token foundation v2: z layers', () => {
     const values = Object.fromEntries(LAYERS.map((l) => [l, Number(resolve(root[`--z-${l}`]!, root))]))
     expect(values).toEqual({
       base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, fullscreen: 120,
-      scrim: 200, modal: 210, tooltip: 250, toast: 300, island: 400, 'island-popover': 410, splash: 600,
+      scrim: 200, modal: 210, toast: 300, island: 400, 'island-popover': 410, tooltip: 450, splash: 600,
     })
     const ordered = LAYERS.map((l) => values[l]!)
     for (let i = 1; i < ordered.length; i++) expect(ordered[i], LAYERS[i]).toBeGreaterThan(ordered[i - 1]!)
@@ -239,16 +239,33 @@ describe('token foundation v2: z layers', () => {
     expect(src('packages/ui/src/components/ui/InlineMenuSurface.ts')).toContain("options.zIndex ?? 'var(--z-popover, 100)'")
   })
 
-  it('tooltips show inside dialogs; menus sit above dialogs, tooltips and toasts', () => {
+  it('tooltips are the topmost transient layer; menus sit above dialogs and the toast step', () => {
     const root = rootOf(token('z.css'))
     const z = (n: string) => Number(resolve(`var(--z-${n})`, root))
-    expect(z('tooltip')).toBeGreaterThan(z('modal'))
-    expect(z('tooltip')).toBeLessThan(z('toast'))
+    // No tooltip can be hidden under the surface its trigger lives in.
+    for (const below of ['popover', 'fullscreen', 'scrim', 'modal', 'toast', 'island', 'island-popover']) {
+      expect(z('tooltip'), below).toBeGreaterThan(z(below))
+    }
+    expect(z('tooltip')).toBeLessThan(z('splash'))
+    expect(z('island')).toBeGreaterThan(z('modal'))
     expect(z('island')).toBeGreaterThan(z('toast'))
     expect(z('island-popover')).toBeGreaterThan(z('island'))
     // Click-catching backdrops: on the toast step, below the menu layer.
     expect(z('floating-backdrop')).toBe(z('toast'))
     expect(z('floating-backdrop')).toBeLessThan(z('island'))
+  })
+
+  it('no tooltip carries a per-site z override (the layer handles it)', () => {
+    const offenders: string[] = []
+    const glob = new Bun.Glob('{apps/electron/src,packages/ui/src}/**/*.tsx')
+    for (const file of glob.scanSync({ cwd: repoRoot })) {
+      if (file.includes('__tests__') || file.includes('.test.')) continue
+      const text = readFileSync(join(repoRoot, file), 'utf8')
+      for (const m of text.matchAll(/<TooltipContent\b[^>]*>/g)) {
+        if (/(?<![-\w])z-[a-z]|zIndex/.test(m[0])) offenders.push(`${file}: ${m[0]}`)
+      }
+    }
+    expect(offenders).toEqual([])
   })
 
   it('shared Radix menu primitives default to z-island, never z-popover', () => {
@@ -259,12 +276,19 @@ describe('token foundation v2: z layers', () => {
       'apps/electron/src/renderer/components/ui/context-menu.tsx': 2,
       'apps/electron/src/renderer/components/ui/styled-context-menu.tsx': 1,
       'packages/ui/src/components/ui/StyledDropdown.tsx': 2,
+      'packages/ui/src/components/ui/SimpleDropdown.tsx': 1,
     }
     for (const [f, n] of Object.entries(files)) {
       const text = readFileSync(join(repoRoot, f), 'utf8')
       expect(text, f).not.toMatch(/(?<![-\w])z-popover(?![-\w])/)
       expect((text.match(/(?<![-\w])z-island(?![-\w])/g) ?? []).length, f).toBe(n)
     }
+  })
+
+  it('EditPopover is a chrome-level surface on z-popover (its menus and tooltips portal above)', () => {
+    const text = readFileSync(join(repoRoot, 'apps/electron/src/renderer/components/ui/EditPopover.tsx'), 'utf8')
+    expect(text).toContain('className="p-0 z-popover"')
+    expect(text).toContain('className="fixed inset-0 bg-black/5 z-sticky"')
   })
 
   it('menu click-catching backdrops use the toast step, not the menu layer', () => {

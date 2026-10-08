@@ -568,7 +568,7 @@ export function ApiKeyInput({
               {presets.find(p => p.key === activePreset)?.label}
               <ChevronDown className="size-2.5 opacity-50" />
             </DropdownMenuTrigger>
-            <StyledDropdownMenuContent align="end" style={{ zIndex: 'var(--z-island)' }}>
+            <StyledDropdownMenuContent align="end">
               {presets.map((preset) => (
                 <StyledDropdownMenuItem
                   key={preset.key}

@@ -1045,7 +1045,9 @@ export function EditPopover({
             side={side}
             align={align}
             sticky="always"
-            className="p-0"
+            // Chrome-level surface (hosts a compact chat): stays on z-popover so
+            // its own menus (z-island) and tooltips portal above it.
+            className="p-0 z-popover"
             style={{
               width: containerSize.width,
               height: containerSize.height,

@@ -15,8 +15,8 @@ describe('cn(): tailwind-merge knows the Rox token utilities', () => {
         expect(merge('fixed z-island', 'z-popover')).toBe('fixed z-popover')
         expect(merge('z-50', 'z-modal')).toBe('z-modal')
         expect(merge('z-fullscreen', 'z-[5]')).toBe('z-[5]')
-        // Tooltip content inside a menu lifts itself above the menu layer.
-        expect(merge('popover-styled z-tooltip px-2.5', 'z-island-popover')).toBe('popover-styled px-2.5 z-island-popover')
+        // A caller-supplied layer replaces a component's default layer.
+        expect(merge('popover-styled z-tooltip px-2.5', 'z-splash')).toBe('popover-styled px-2.5 z-splash')
       })
 
       it('treats the role text steps as font sizes, not colours', () => {

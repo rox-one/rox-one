@@ -317,7 +317,7 @@ export function SimpleDropdown({
           <div
             ref={menuRef}
             className={cn(
-              'fixed z-50 min-w-[140px] p-1',
+              'fixed z-island min-w-[140px] p-1',
               'bg-background rounded-md shadow-strong border border-border/50',
               'animate-in fade-in-0 zoom-in-95 duration-100',
               className

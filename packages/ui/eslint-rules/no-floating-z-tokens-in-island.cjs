@@ -6,9 +6,10 @@
  * - var(--z-floating-menu)
  * - var(--z-floating-backdrop)
  *
- * and require the island layers (styles/tokens/z.css):
- * - var(--z-island)          (400)
- * - var(--z-island-overlay)  (300, the toast step below the island)
+ * and require the layer tokens (styles/tokens/z.css):
+ * - var(--z-island)  (400) for island menus/surfaces
+ * - var(--z-toast)   (300) for their click-catching backdrops (the step
+ *   below the island; --z-island-overlay is a deprecated alias of it)
  */
 
 /** @type {import('eslint').Rule.RuleModule} */
@@ -23,7 +24,7 @@ module.exports = {
     schema: [],
     messages: {
       useIslandToken:
-        'Use island z-index tokens in island components: var(--z-island) / var(--z-island-overlay) instead of floating tokens.',
+        'Use layer tokens in island components: var(--z-island) for menus and var(--z-toast) for backdrops, instead of floating tokens.',
     },
   },
 

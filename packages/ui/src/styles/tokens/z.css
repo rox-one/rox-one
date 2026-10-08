@@ -5,15 +5,16 @@
    the codemod sweep (UI-C2).
 
    Order (low → high): page content < chrome < sashes < chrome-only menus
-   (popover) < fullscreen overlays < dialog scrim < modal < tooltips <
-   toasts / click-catching backdrops < menus (island) < in-menu popovers <
-   splash.
+   (popover) < fullscreen overlays < dialog scrim < modal <
+   click-catching backdrops (toast step) < menus (island) < in-menu
+   popovers < tooltips < splash. (Real toasts are sonner, z-index
+   999999999, above everything.)
    - Fullscreen overlays (FullscreenOverlayBase, zen views) sit BELOW the
      dialog scrim and modal, so a dialog opened from one dims it and sits on
      top.
-   - Tooltips sit above the modal so they show inside dialogs, drawers and
-     fullscreen overlays. A tooltip whose trigger lives INSIDE a menu passes
-     `z-island-popover` so the menu does not cover it.
+   - Tooltips are the topmost transient layer: above menus, popovers,
+     dialogs and fullscreen overlays, so no tooltip can be hidden under the
+     surface its trigger lives in. No per-site z override is needed.
    - Menus are on the island layer: the shared primitives (Select,
      DropdownMenu, Popover, ContextMenu, StyledDropdown, StyledContextMenu)
      default to `z-island`, so a menu opened from a dialog, drawer or
@@ -34,10 +35,10 @@
   --z-fullscreen: 120;
   --z-scrim: 200;
   --z-modal: 210;
-  --z-tooltip: 250;
   --z-toast: 300;
   --z-island: 400;
   --z-island-popover: 410;
+  --z-tooltip: 450;
   --z-splash: 600;
 
   /* Deprecated CSS-variable names, kept for inline `style={{ zIndex: 'var(--z-…)' }}`
