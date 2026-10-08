@@ -41,6 +41,7 @@ import {
   VISIBLE_HOME_USABLE_OUTCOMES,
   clearStorageMigrationState,
   migrateHiddenRoxHome,
+  recordStorageMigrationFailure,
   recordStorageMigrationOutcome,
   readPersistedVisibleRootFlag,
   resolveVisibleHomeWithoutMigration,
@@ -162,7 +163,8 @@ export function runVisibleHomeAutoMigration(options?: {
   try {
     const result = (options?.migrate ?? migrateHiddenRoxHome)({ homeDir, env });
     try {
-      // Settings explains a deferral / relaunch; success clears it.
+      // Settings explains every non-usable outcome / relaunch; anything
+      // else clears it.
       recordStorageMigrationOutcome(result, homeDir);
     } catch {
       // best effort: never blocks startup
@@ -177,6 +179,12 @@ export function runVisibleHomeAutoMigration(options?: {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn('[rox] Visible-home migration failed; keeping the current Rox home:', message);
+    try {
+      // Settings shows a generic failure line (never a stale earlier note).
+      recordStorageMigrationFailure(error, homeDir);
+    } catch {
+      // best effort
+    }
     return { error: message };
   }
 }

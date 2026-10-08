@@ -278,9 +278,12 @@ describe('last migration outcome for Settings (finding 4)', () => {
 
       recordStorageMigrationOutcome({ outcome: 'deferred-locked', diagnostics: ['storage.migration.deferredLocked'], dryRun: false }, home)
       expect(readStorageMigrationState(home)?.kind).toBe('deferred-locked')
+      // Any other outcome clears it (no stale message); a dry run changes nothing.
       recordStorageMigrationOutcome({ outcome: 'noop', diagnostics: [], dryRun: false }, home)
+      expect(readStorageMigrationState(home)).toBeUndefined()
+      recordStorageMigrationOutcome({ outcome: 'deferred-locked', diagnostics: [], dryRun: false }, home)
+      recordStorageMigrationOutcome({ outcome: 'already-visible', diagnostics: [], dryRun: true }, home)
       expect(readStorageMigrationState(home)?.kind).toBe('deferred-locked')
-      recordStorageMigrationOutcome({ outcome: 'deferred-locked', diagnostics: [], dryRun: true }, home)
       recordStorageMigrationOutcome({ outcome: 'already-visible', diagnostics: [], dryRun: false }, home)
       expect(readStorageMigrationState(home)).toBeUndefined()
     }))

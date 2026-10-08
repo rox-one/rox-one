@@ -299,7 +299,15 @@ export function visibleRootFlagFilePath(homeDir: string = homedir()): string {
  */
 export const ROX_STORAGE_MIGRATION_STATE_FILE_NAME = 'storage-migration-state.json'
 
-export type StorageMigrationStateKind = 'deferred-unmovable' | 'deferred-locked' | 'relaunch-required'
+export type StorageMigrationStateKind =
+  | 'deferred-unmovable'
+  | 'deferred-locked'
+  | 'deferred-retry'
+  | 'deferred-foreign'
+  | 'deferred-link'
+  | 'symlink-elsewhere'
+  | 'relaunch-required'
+  | 'failed'
 
 export interface StorageMigrationState {
   kind: StorageMigrationStateKind
@@ -311,10 +319,20 @@ export interface StorageMigrationState {
   at: string
 }
 
-const _STORAGE_MIGRATION_STATE_KINDS: ReadonlySet<string> = new Set([
+/** Non-usable migration outcomes that are recorded for Settings. */
+const _RECORDED_MIGRATION_OUTCOMES: ReadonlySet<string> = new Set([
   'deferred-unmovable',
   'deferred-locked',
+  'deferred-retry',
+  'deferred-foreign',
+  'deferred-link',
+  'symlink-elsewhere',
+])
+
+const _STORAGE_MIGRATION_STATE_KINDS: ReadonlySet<string> = new Set([
+  ..._RECORDED_MIGRATION_OUTCOMES,
   'relaunch-required',
+  'failed',
 ])
 
 export function storageMigrationStateFilePath(homeDir: string = homedir()): string {
@@ -357,9 +375,11 @@ export function clearStorageMigrationState(homeDir: string = homedir()): void {
 }
 
 /**
- * Persist what Settings should explain after a boot migration: deferrals
- * (`deferred-unmovable`, `deferred-locked`) and `relaunchRequired`; a usable
- * outcome clears it. Other outcomes leave the file as it is.
+ * Persist what Settings should explain after a boot migration: every
+ * non-usable outcome (deferrals, a foreign `~/rox`, a link elsewhere) and
+ * `relaunchRequired`. Every other outcome clears it, so a stale message
+ * never outlives the run that produced it. Thrown errors: see
+ * `recordStorageMigrationFailure`.
  */
 export function recordStorageMigrationOutcome(
   result: Pick<VisibleHomeMigrationResult, 'outcome' | 'diagnostics' | 'dryRun' | 'relaunchRequired'> | undefined,
@@ -369,8 +389,8 @@ export function recordStorageMigrationOutcome(
   if (!result || result.dryRun) return
   const kind: StorageMigrationStateKind | undefined = result.relaunchRequired
     ? 'relaunch-required'
-    : result.outcome === 'deferred-unmovable' || result.outcome === 'deferred-locked'
-      ? result.outcome
+    : _RECORDED_MIGRATION_OUTCOMES.has(result.outcome)
+      ? (result.outcome as StorageMigrationStateKind)
       : undefined
   if (kind) {
     writeStorageMigrationState(
@@ -384,7 +404,21 @@ export function recordStorageMigrationOutcome(
     )
     return
   }
-  if (VISIBLE_HOME_USABLE_OUTCOMES.has(result.outcome)) clearStorageMigrationState(homeDir)
+  clearStorageMigrationState(homeDir)
+}
+
+/** A boot migration that threw: recorded as `failed` with the error code. */
+export function recordStorageMigrationFailure(error: unknown, homeDir: string = homedir(), now: number = Date.now()): void {
+  const code = (error as NodeJS.ErrnoException | null)?.code
+  writeStorageMigrationState(
+    {
+      kind: 'failed',
+      diagnostic: 'storage.migration.failed',
+      diagnostics: ['storage.migration.failed', `error:${typeof code === 'string' && code ? code : 'unknown'}`],
+      at: new Date(now).toISOString(),
+    },
+    homeDir,
+  )
 }
 
 function _readEnabledFlags(file: string): string[] | undefined {

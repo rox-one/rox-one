@@ -55,7 +55,14 @@ export function createStorageVisibleRootHandlers(options: {
       locked,
       restartRequired: !locked && enabled !== activeAtLaunch,
       ...(last
-        ? { lastMigration: { kind: last.kind, ...(last.diagnostic ? { diagnostic: last.diagnostic } : {}), at: last.at } }
+        ? {
+            lastMigration: {
+              kind: last.kind,
+              ...(last.diagnostic ? { diagnostic: last.diagnostic } : {}),
+              diagnostics: [...last.diagnostics],
+              at: last.at,
+            },
+          }
         : {}),
     }
   }

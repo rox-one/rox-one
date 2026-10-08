@@ -22,22 +22,56 @@ export interface StorageVisibleRootState {
 }
 
 export interface StorageMigrationStatus {
-  kind: 'deferred-unmovable' | 'deferred-locked' | 'relaunch-required'
+  kind:
+    | 'deferred-unmovable'
+    | 'deferred-locked'
+    | 'deferred-retry'
+    | 'deferred-foreign'
+    | 'deferred-link'
+    | 'symlink-elsewhere'
+    | 'relaunch-required'
+    | 'failed'
   /** First diagnostic code, e.g. `storage.migration.legacyNotRenamable`. */
   diagnostic?: string
+  /** All diagnostics of that launch (`rename:<code>`, `failed:<code>`, …). */
+  diagnostics?: string[]
   /** ISO timestamp of that launch. */
   at: string
+}
+
+/** Rename codes of a file in use (retried at the next launch). */
+const IN_USE_CODES = new Set(['EPERM', 'EACCES', 'EBUSY'])
+/** `~/.rox` cannot leave its volume: a mount point / separate volume. */
+const UNMOVABLE_CODES = new Set(['EXDEV', 'mount-point', 'volume-root', 'cross-device', 'reparse-point'])
+
+function renameCode(status: StorageMigrationStatus): string | undefined {
+  const entry = status.diagnostics?.find((d) => d.startsWith('rename:'))
+  return entry?.slice('rename:'.length)
 }
 
 /** i18n key of the explanatory line under the toggle, when one applies. */
 export function storageMigrationStatusMessageKey(state: StorageVisibleRootState): string | undefined {
   const toggleOn = state.locked ? state.activeAtLaunch : state.enabled
-  if (!toggleOn) return undefined
-  switch (state.lastMigration?.kind) {
-    case 'deferred-unmovable':
-      return 'storage.settings.migrationDeferredUnmovable'
+  const last = state.lastMigration
+  if (!toggleOn || !last) return undefined
+  switch (last.kind) {
     case 'deferred-locked':
       return 'storage.settings.migrationDeferredLocked'
+    case 'deferred-foreign':
+      return 'storage.settings.migrationDeferredForeign'
+    case 'deferred-retry':
+      return 'storage.settings.migrationRetryLater'
+    case 'deferred-unmovable': {
+      const code = renameCode(last)
+      if (code && IN_USE_CODES.has(code)) return 'storage.settings.migrationDeferredInUse'
+      // Older state files carry no details: they were volume/mount deferrals.
+      if (!code || UNMOVABLE_CODES.has(code)) return 'storage.settings.migrationDeferredUnmovable'
+      return 'storage.settings.migrationFailed'
+    }
+    case 'deferred-link':
+    case 'symlink-elsewhere':
+    case 'failed':
+      return 'storage.settings.migrationFailed'
     default:
       return undefined
   }

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isVisibleRoxHomeActive, resolveConfigDir, resetConfigDirCachesForTests, runVisibleHomeAutoMigration } from '../../../../../packages/shared/src/config/env.ts'
 import { createStorageVisibleRootHandlers, registerStorageVisibleRootIpc } from '../storage-visible-root-ipc'
-import { STORAGE_VISIBLE_ROOT_CHANNELS, storageMigrationStatusMessageKey } from '../../shared/storage-visible-root'
+import { STORAGE_VISIBLE_ROOT_CHANNELS, storageMigrationStatusMessageKey, type StorageMigrationStatus } from '../../shared/storage-visible-root'
 
 // Temp HOME only — never the real dot-configs.
 let home: string
@@ -108,7 +108,10 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
     handlers.set(true)
     const on = handlers.get()
     expect(on.lastMigration).toEqual({
-      kind: 'deferred-unmovable', diagnostic: 'storage.migration.legacyNotRenamable', at: '2026-10-08T07:00:00.000Z',
+      kind: 'deferred-unmovable',
+      diagnostic: 'storage.migration.legacyNotRenamable',
+      diagnostics: ['storage.migration.legacyNotRenamable'],
+      at: '2026-10-08T07:00:00.000Z',
     })
     expect(storageMigrationStatusMessageKey(on)).toBe('storage.settings.migrationDeferredUnmovable')
     const off = handlers.set(false)
@@ -135,16 +138,44 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
       .toBe('storage.settings.migrationDeferredUnmovable')
   })
 
-  it('both strings exist in all 12 locales, with the Russian text as specified', () => {
+  it('the message follows the diagnostic: in use, unmovable, foreign, retry later, generic', () => {
+    const base = { enabled: true, activeAtLaunch: true, locked: false, restartRequired: false }
+    const at = '2026-10-08T07:00:00.000Z'
+    const key = (kind: StorageMigrationStatus['kind'], diagnostics: string[] = []) =>
+      storageMigrationStatusMessageKey({ ...base, lastMigration: { kind, diagnostics, at } })
+    for (const code of ['EPERM', 'EACCES', 'EBUSY']) {
+      expect(key('deferred-unmovable', ['storage.migration.legacyNotRenamable', `rename:${code}`])).toBe('storage.settings.migrationDeferredInUse')
+      expect(key('deferred-unmovable', ['storage.migration.mergeRenameFailed', `rename:${code}`])).toBe('storage.settings.migrationDeferredInUse')
+    }
+    for (const code of ['EXDEV', 'mount-point', 'volume-root', 'cross-device', 'reparse-point']) {
+      expect(key('deferred-unmovable', ['storage.migration.legacyNotRenamable', `rename:${code}`])).toBe('storage.settings.migrationDeferredUnmovable')
+    }
+    expect(key('deferred-unmovable', ['storage.migration.legacyNotRenamable', 'rename:parent-not-writable'])).toBe('storage.settings.migrationFailed')
+    expect(key('deferred-foreign')).toBe('storage.settings.migrationDeferredForeign')
+    expect(key('deferred-retry', ['storage.migration.mergeRetryLater', 'failed:EBUSY'])).toBe('storage.settings.migrationRetryLater')
+    for (const kind of ['deferred-link', 'symlink-elsewhere', 'failed'] as const) expect(key(kind)).toBe('storage.settings.migrationFailed')
+    expect(key('relaunch-required')).toBeUndefined()
+  })
+
+  it('every message exists in all 12 locales, with the Russian text as specified', () => {
     const locales = ['ar', 'de', 'en', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-Hans', 'zh-Hant']
+    const keys = [
+      'storage.settings.migrationDeferredUnmovable',
+      'storage.settings.migrationDeferredLocked',
+      'storage.settings.migrationDeferredInUse',
+      'storage.settings.migrationDeferredForeign',
+      'storage.settings.migrationRetryLater',
+      'storage.settings.migrationFailed',
+    ]
     const dir = join(import.meta.dir, '../../../../../packages/shared/src/i18n/locales')
     for (const locale of locales) {
       const messages = JSON.parse(readFileSync(join(dir, `${locale}.json`), 'utf8')) as Record<string, string>
-      expect(messages['storage.settings.migrationDeferredUnmovable']?.length).toBeGreaterThan(0)
-      expect(messages['storage.settings.migrationDeferredLocked']?.length).toBeGreaterThan(0)
+      for (const k of keys) expect(messages[k]?.length).toBeGreaterThan(0)
     }
     const ru = JSON.parse(readFileSync(join(dir, 'ru.json'), 'utf8')) as Record<string, string>
     expect(ru['storage.settings.migrationDeferredUnmovable']).toBe('Не удалось перенести ~/.rox (отдельный том или точка монтирования) — данные остаются в ~/.rox')
     expect(ru['storage.settings.migrationDeferredLocked']).toBe('Перенос отложен: Rox запущен в другом окне или процессе')
+    expect(ru['storage.settings.migrationDeferredInUse']).toBe('Перенос отложен: файлы в ~/.rox заняты другой программой, повторим при следующем запуске')
+    expect(ru['storage.settings.migrationDeferredForeign']).toBe('Папка ~/rox уже занята чужими файлами — перенос не выполнен')
   })
 })
