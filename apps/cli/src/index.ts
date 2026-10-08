@@ -916,7 +916,9 @@ export async function runMigrateConfig(
   }
   let result: Awaited<ReturnType<typeof migrateHiddenRoxHome>>
   try {
-    result = migrateHiddenRoxHome({ homeDir, env, dryRun: args.dryRun })
+    // An explicit run retries a merge whose final rename failed earlier
+    // (the boot migration waits for its cooldown); --auto never forces it.
+    result = migrateHiddenRoxHome({ homeDir, env, dryRun: args.dryRun, retryFailedMerge: !args.auto })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     return { code: 1, lines: [`Migration failed (nothing deleted): ${message}`], json: { outcome: 'error', error: message } }

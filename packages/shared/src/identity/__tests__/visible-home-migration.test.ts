@@ -386,7 +386,10 @@ describe('lock liveness (PID + timestamp)', () => {
       expect(deferred.outcome).toBe('deferred-locked')
       expect(existsSync(join(home, 'rox'))).toBe(false)
 
-      writeFileSync(processLockPath, JSON.stringify({ pid: process.ppid, startedAt: Date.now() - ROX_MIGRATION_LOCK_TTL_MS - 1000 }))
+      const expiredAt = Date.now() - ROX_MIGRATION_LOCK_TTL_MS - 1000
+      writeFileSync(processLockPath, JSON.stringify({ pid: process.ppid, startedAt: expiredAt }))
+      // The TTL is judged on the last heartbeat (mtime) too.
+      utimesSync(processLockPath, new Date(expiredAt), new Date(expiredAt))
       const expired = migrateHiddenRoxHome(baseOptions(home, { skipProcessLock: false, processLockPath, dryRun: false }))
       expect(expired.outcome).toBe('migrated')
       // Released afterwards.

@@ -152,10 +152,20 @@ Files are copied atomically (temp file, then rename), so an interrupted
 merge never leaves a truncated file behind. A link inside `~/rox` (for
 example to a dotfiles repo) is never written through: the legacy version is
 kept under `conflicts/` instead. A legacy link that differs from `~/rox` is
-kept there too. If `~/.rox` cannot be renamed in place (for example it is a
-mount point), the migration defers (`deferred-unmovable`) without copying
-anything. While it runs, the migration holds `~/.rox-migrate.lock` (removed
-afterwards). It also honours the desktop app's runtime lock in the temp
+kept there too. Before copying, the migration checks (without renaming
+anything) that `~/.rox` is not a mount point or a separate volume, that
+`~/rox` is on the same disk and that your home folder is writable; otherwise
+it defers (`deferred-unmovable`) without copying anything. Lock files and
+migration bookkeeping at the top of `~/.rox` are not copied; they stay in the
+archived `~/.rox.migrated-<timestamp>`. If renaming `~/.rox` still fails after
+a merge (for example a file is open in another program), `~/.rox` stays in use
+and the partial copy in `~/rox` is not used. A file in use is retried at the
+next launches (up to three times); after that, or for any other error, the app
+waits 24 hours before copying again. `craft-cli migrate-config` retries at once.
+The Settings page shows why the last move was postponed.
+
+While it runs, the migration holds `~/.rox-migrate.lock` (removed afterwards,
+refreshed during long merges). It also honours the desktop app's runtime lock in the temp
 directory, `$XDG_RUNTIME_DIR` and `/tmp`. Shared directories hold it in a
 private per-user `rox-<uid>/` folder. Lock files that are links or belong to
 another user are ignored. Apps in a separate sandbox (a
@@ -164,7 +174,7 @@ the config dir while the flag is on.
 
 `--auto` never prompts and does nothing (exit 0) unless the flag is active;
 with the flag on it exits 1 when the migration is deferred (live locks, a
-legacy folder that cannot be renamed),
+legacy folder that cannot be renamed, a failed merge waiting to be retried),
 `~/.rox` points elsewhere, or the move fails. Every non-zero exit leaves the
 legacy home in place; nothing is ever deleted.
 

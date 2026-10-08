@@ -136,8 +136,8 @@ describe('conflict stashes are never overwritten (finding 2)', () => {
   const failFinalRenameOnce = () => {
     let failed = false
     return (source: string, destination: string): void => {
-      // A transient failure after the rename probe succeeded (review 4: the probe itself is renamable).
-      if (!failed && destination.includes('.rox.migrated-') && !destination.endsWith('-probe')) {
+      // A transient failure of the final rename (the pre-checks passed).
+      if (!failed && destination.includes('.rox.migrated-')) {
         failed = true
         throw errno('EBUSY')
       }
@@ -153,7 +153,9 @@ describe('conflict stashes are never overwritten (finding 2)', () => {
   it('repro: a retry after a failed rename keeps V0 (per-attempt dirs)', () =>
     withHome((home) => {
       plant(home)
-      expect(() => migrateHiddenRoxHome(opts(home, { timestamp: 'ts-a', rename: failFinalRenameOnce() }))).toThrow('EBUSY')
+      const failed = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-a', rename: failFinalRenameOnce() }))
+      expect(failed.outcome).toBe('deferred-unmovable')
+      expect(failed.diagnostics).toEqual(['storage.migration.mergeRenameFailed', 'rename:EBUSY'])
       expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-a', 'config.json'), 'utf8')).toContain('V0')
       writeFileSync(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"V1"}]}') // newer edit in ~/rox
       const result = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-b' }))
@@ -165,7 +167,7 @@ describe('conflict stashes are never overwritten (finding 2)', () => {
   it('same attempt id: a differing stash gets a suffix instead of replacing V0', () =>
     withHome((home) => {
       plant(home)
-      expect(() => migrateHiddenRoxHome(opts(home, { rename: failFinalRenameOnce() }))).toThrow('EBUSY')
+      expect(migrateHiddenRoxHome(opts(home, { rename: failFinalRenameOnce() })).outcome).toBe('deferred-unmovable')
       writeFileSync(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"V1"}]}')
       const result = migrateHiddenRoxHome(opts(home))
       expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-r3', 'config.json'), 'utf8')).toContain('V0')

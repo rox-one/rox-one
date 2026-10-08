@@ -245,7 +245,7 @@ import {
 import { uptime as _osUptime } from 'node:os'
 import { basename as _basenameMigration, dirname as _dirnameMigration, relative as _relativeMigration, sep as _pathSep, posix as _posixPath, win32 as _win32Path } from 'node:path'
 import { createHash as _createLockHash, randomBytes as _randomLockBytes } from 'node:crypto'
-import { constants as _fsConstants, realpathSync as _realpathMigration } from 'node:fs'
+import { accessSync as _accessMigration, constants as _fsConstants, realpathSync as _realpathMigration } from 'node:fs'
 
 /** Name of the visible Rox home inside a home directory. */
 export const ROX_VISIBLE_HOME_DIR_NAME = ROX_HOME_DIR_NAME
@@ -513,6 +513,7 @@ export type VisibleHomeOutcome =
   | 'deferred-foreign'
   | 'deferred-link'
   | 'deferred-unmovable'
+  | 'deferred-retry'
   | 'reverted'
   | 'revert-refused'
   | 'skipped-env-override'
@@ -618,7 +619,21 @@ export interface MigrateHiddenRoxHomeOptions {
    * `COPYFILE_EXCL`.
    */
   copyFile?: (source: string, destination: string) => void
+  /**
+   * Retry a merge whose final rename failed even inside the cooldown (an
+   * explicit `migrate-config`). The boot migration waits for a change in the
+   * legacy dir or `ROX_MERGE_RETRY_COOLDOWN_MS`.
+   */
+  retryFailedMerge?: boolean
+  /** Merged entries between two heartbeats of the migration lock (tests). */
+  lockHeartbeatEvery?: number
 }
+
+/** A failed final merge rename is retried after this long (or a legacy change). */
+export const ROX_MERGE_RETRY_COOLDOWN_MS = 24 * 60 * 60 * 1000
+
+/** Default merged entries between two migration-lock heartbeats. */
+const _LOCK_HEARTBEAT_EVERY = 256
 
 export interface VisibleHomePaths {
   homeDir: string
@@ -852,7 +867,9 @@ export function isLockFileLive(path: string, options: LockLivenessOptions): bool
   // Written before the current boot (startedAt, else the file mtime — legacy
   // plain-PID locks carry no timestamp): the PID was reused, not ours.
   if (bootTime > 0 && writtenAt < bootTime) return false
-  if (options.ttlMs !== undefined && options.now - writtenAt > options.ttlMs) return false
+  // TTL from the last sign of life: a long merge touches its lock (mtime).
+  const lastSeen = Math.max(writtenAt, st.mtimeMs)
+  if (options.ttlMs !== undefined && options.now - lastSeen > options.ttlMs) return false
   return true
 }
 
@@ -1314,7 +1331,10 @@ function _defaultProcessLockPath(options?: MigrateHiddenRoxHomeOptions): string 
  * content as judged) before it is dropped, and after creating our own lock
  * we re-read it and proceed only if it still carries our token.
  */
-function _acquireProcessLock(options?: MigrateHiddenRoxHomeOptions): (() => void) | { deferred: string } {
+/** Held migration lock: call to release; `touch()` refreshes its mtime (heartbeat). */
+export type ProcessLockHandle = (() => void) & { touch: () => void }
+
+function _acquireProcessLock(options?: MigrateHiddenRoxHomeOptions): ProcessLockHandle | { deferred: string } {
   const lockPath = options?.processLockPath ?? _defaultProcessLockPath(options)
   const now = options?.now?.() ?? Date.now()
   const own: LockOwnershipOptions = { getuid: options?.getuid, lstat: options?.lockLstat }
@@ -1346,18 +1366,31 @@ function _acquireProcessLock(options?: MigrateHiddenRoxHomeOptions): (() => void
       throw error
     }
   }
-  const confirmed = (): (() => void) | { deferred: string } => {
+  const confirmed = (): ProcessLockHandle | { deferred: string } => {
     options?.lockTakeoverHook?.('created')
     // Someone replaced our fresh lock (a concurrent takeover): back off and
     // leave theirs alone.
     if (!_isOwnLockWithContent(lockPath, token, own)) return deferred
-    return () => {
+    const releaseLock = (): void => {
       try {
         if (_isOwnLockWithContent(lockPath, token, own)) _unlinkMigration(lockPath)
       } catch {
         // best effort
       }
     }
+    // Heartbeat for long merges: the TTL is judged on the newest of
+    // startedAt and mtime, so a live migrator is never taken over.
+    const touch = (): void => {
+      try {
+        if (_isOwnLockWithContent(lockPath, token, own)) {
+          const at = new Date(options?.now?.() ?? Date.now())
+          _utimesMigration(lockPath, at, at)
+        }
+      } catch {
+        // best effort
+      }
+    }
+    return Object.assign(releaseLock, { touch })
   }
   if (tryCreate()) return confirmed()
   if (isLockFileLive(lockPath, liveness)) return deferred
@@ -1479,6 +1512,34 @@ export function isForeignVisibleHome(dir: string): boolean {
 /** Written under `~/rox/.migration/` before a merge, removed once it completed. */
 export const ROX_MERGE_INCOMPLETE_MARKER_NAME = 'merge-incomplete.json'
 
+/**
+ * Root entries of the legacy dir a merge never carries into `~/rox`: the
+ * migration manifest, the Settings migration state, and lock files
+ * (`.app.lock`, `.server.lock`, `*.lock`, their temps). They stay in the
+ * archived `~/.rox.migrated-<ts>`.
+ */
+function _isMergeRootBookkeeping(name: string): boolean {
+  if (name === ROX_HOME_MIGRATION_MANIFEST_NAME || name === ROX_STORAGE_MIGRATION_STATE_FILE_NAME) return true
+  return name.endsWith('.lock') || /\.lock\.(tmp|stale)-/.test(name)
+}
+
+/** Rename codes of a file in use / a briefly protected parent: retried at the next launch. */
+const _TRANSIENT_MERGE_RENAME_CODES: ReadonlySet<string> = new Set(['EPERM', 'EACCES', 'EBUSY'])
+/** Consecutive next-launch retries of a transient failure before the cooldown. */
+export const ROX_MERGE_TRANSIENT_RETRIES = 3
+
+/**
+ * Whether the boot migration must not copy again after a failed final
+ * rename: a transient code (file in use) is retried at the next launch up to
+ * `ROX_MERGE_TRANSIENT_RETRIES` times; after that, and for any other code,
+ * only once `ROX_MERGE_RETRY_COOLDOWN_MS` has passed. A different legacy
+ * tree drops the marker earlier; an explicit `migrate-config` always retries.
+ */
+function _mergeRetryBlocked(failure: NonNullable<MergeIncompleteMarker['lastFailure']>, now: number): boolean {
+  if (now < failure.at || now - failure.at >= ROX_MERGE_RETRY_COOLDOWN_MS) return false
+  return !(_TRANSIENT_MERGE_RENAME_CODES.has(failure.code) && failure.attempts < ROX_MERGE_TRANSIENT_RETRIES)
+}
+
 export interface MergeIncompleteMarker {
   startedAt: number
   /** Pre-merge snapshot: whether each tree held user data. */
@@ -1488,6 +1549,12 @@ export interface MergeIncompleteMarker {
   choice: 'hidden' | 'visible'
   /** `dev:ino` of the hidden tree the snapshot was taken from. */
   hiddenId?: string
+  /**
+   * Last failed final rename of `~/.rox` after a complete copy. `~/.rox`
+   * stays authoritative; see `_mergeRetryBlocked` for when the boot
+   * migration copies again.
+   */
+  lastFailure?: { code: string; at: number; attempts: number }
 }
 
 /** `dev:ino` identity of a directory (undefined when the FS reports no inode). */
@@ -1588,6 +1655,18 @@ export function readMergeIncompleteMarker(visibleDir: string): MergeIncompleteMa
       visibleHasData: parsed.visibleHasData === true,
       choice: parsed.choice === 'visible' ? 'visible' : 'hidden',
       ...(typeof parsed.hiddenId === 'string' && parsed.hiddenId ? { hiddenId: parsed.hiddenId } : {}),
+      ...(parsed.lastFailure &&
+      typeof parsed.lastFailure.code === 'string' &&
+      typeof parsed.lastFailure.at === 'number' &&
+      typeof parsed.lastFailure.attempts === 'number'
+        ? {
+            lastFailure: {
+              code: parsed.lastFailure.code,
+              at: parsed.lastFailure.at,
+              attempts: parsed.lastFailure.attempts,
+            },
+          }
+        : {}),
     }
   } catch {
     try {
@@ -1761,39 +1840,32 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         return undefined
     }
   }
-  // The legacy dir must be renamable in place (it is not a mount point and
-  // its parent allows the rename): otherwise the final rename of a merge
-  // would fail after all the work, and every launch would repeat it.
-  // Probed by renaming it to a sibling and straight back.
-  const legacyRenameBlocker = (): string | undefined => {
+  // Non-destructive pre-checks that the legacy dir can be renamed away at
+  // the end of a merge, run before anything is copied: it is not a mount
+  // point (same device as its parent; on Windows not a reparse point or a
+  // volume root), `~/rox` is on the same device, and the parent is
+  // writable. Nothing is renamed: the running app never loses its dir.
+  const mergePrecheckBlocker = (): string | undefined => {
     try {
-      if (_statMigration(paths.hiddenDir).dev !== _statMigration(paths.homeDir).dev) return 'mount-point'
-    } catch {
-      // fall through to the rename probe
-    }
-    const probe = `${paths.hiddenDir}.migrated-${timestamp}-probe`
-    if (_pathPresent(probe)) return 'probe-path-busy'
-    try {
-      rename(paths.hiddenDir, probe)
-    } catch (error) {
-      return (error as NodeJS.ErrnoException | null)?.code ?? 'rename-failed'
-    }
-    try {
-      rename(probe, paths.hiddenDir)
-    } catch {
-      try {
-        rename(probe, paths.hiddenDir)
-      } catch (error) {
-        // Keep the legacy path resolving (never strand on a vanished dir).
-        try {
-          linkDir(probe, paths.hiddenDir, linkType)
-        } catch {
-          // reported below
+      if (_lstatMigration(paths.hiddenDir).isSymbolicLink()) return 'reparse-point'
+      const hiddenDev = _statMigration(paths.hiddenDir).dev
+      if (hiddenDev !== _statMigration(paths.homeDir).dev) return 'mount-point'
+      if (platform === 'win32') {
+        const real = _realpathOrUndefined(paths.hiddenDir)
+        if (real) {
+          const trimmed = real.replace(/[\\/]+$/, '')
+          const root = _win32Path.parse(real).root.replace(/[\\/]+$/, '')
+          if (/^\\\\\?\\Volume\{/i.test(real) || trimmed.toLowerCase() === root.toLowerCase()) return 'volume-root'
         }
-        throw new Error(
-          `Legacy home rename probe could not move back (data intact at ${probe}): ${(error as Error).message}`,
-        )
       }
+      if (_statMigration(paths.visibleDir).dev !== hiddenDev) return 'cross-device'
+    } catch (error) {
+      return (error as NodeJS.ErrnoException | null)?.code ?? 'stat-failed'
+    }
+    try {
+      _accessMigration(paths.homeDir, _fsConstants.W_OK)
+    } catch {
+      return 'parent-not-writable'
     }
     return undefined
   }
@@ -1828,7 +1900,8 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     return state === 'both' ? done('merged', { announceToast: true }) : done('migrated', { announceToast: true })
   }
 
-  const release = options?.skipProcessLock === true ? () => {} : _acquireProcessLock(options)
+  const release: ProcessLockHandle | { deferred: string } =
+    options?.skipProcessLock === true ? Object.assign(() => {}, { touch: () => {} }) : _acquireProcessLock(options)
   if (typeof release !== 'function') {
     return done('deferred-locked', {
       diagnostics: ['storage.migration.deferredLocked', `locked:${release.deferred}`],
@@ -1885,7 +1958,10 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         rename(paths.hiddenDir, paths.visibleDir)
       } catch (error) {
         dropScaffolding()
-        if ((error as NodeJS.ErrnoException | null)?.code === 'EXDEV') return deferredUnmovable('EXDEV')
+        const code = (error as NodeJS.ErrnoException | null)?.code
+        // EXDEV: cannot leave its volume. EPERM/EACCES/EBUSY: a file in use
+        // (Windows) or a protected parent. Nothing moved: defer.
+        if (code === 'EXDEV' || code === 'EPERM' || code === 'EACCES' || code === 'EBUSY') return deferredUnmovable(code)
         throw error
       }
       _ensurePrivateDir(paths.visibleDir)
@@ -1946,8 +2022,8 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     // that failed halfway never lets its partial copy (or later writes to it)
     // win a retry, and read-only resolution keeps the pre-merge choice.
     // A legacy dir that cannot be renamed away defers before anything is
-    // copied or stashed (no repeated merge per launch).
-    const mergeBlocker = legacyRenameBlocker()
+    // copied or stashed (non-destructive checks; no repeated merge per launch).
+    const mergeBlocker = mergePrecheckBlocker()
     if (mergeBlocker) return deferredUnmovable(mergeBlocker)
     _ensurePrivateDir(paths.visibleDir)
     const hiddenId = _treeId(paths.hiddenDir)
@@ -1955,10 +2031,25 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     // A snapshot of a different hidden tree (the original was renamed away
     // and something recreated `~/.rox`) is stale: take a fresh one.
     if (previous && !_markerMatchesHidden(previous, paths.hiddenDir)) previous = undefined
+    const nowMs = options?.now?.() ?? Date.now()
+    // An earlier final rename failed: `~/.rox` stays authoritative and the
+    // boot migration does not copy again until the retry rule allows it (no
+    // copy loop per launch). The legacy dir's mtime is not a trigger: the
+    // app's own lock and config writes change it on every launch.
+    const lastFailure = previous?.lastFailure
+    if (lastFailure && options?.retryFailedMerge !== true && _mergeRetryBlocked(lastFailure, nowMs)) {
+      return done('deferred-retry', {
+        diagnostics: [
+          'storage.migration.mergeRetryLater',
+          `failed:${lastFailure.code}`,
+          `retryAfter:${new Date(lastFailure.at + ROX_MERGE_RETRY_COOLDOWN_MS).toISOString()}`,
+        ],
+      })
+    }
     const hiddenHasData = previous?.hiddenHasData ?? roxHomeHasUserData(paths.hiddenDir)
     const visibleHasData = previous?.visibleHasData ?? roxHomeHasUserData(paths.visibleDir)
     const marker: MergeIncompleteMarker = previous ?? {
-      startedAt: options?.now?.() ?? Date.now(),
+      startedAt: nowMs,
       hiddenHasData,
       visibleHasData,
       // Until the merge completes, the intact legacy home wins whenever it
@@ -1969,6 +2060,18 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     }
     // Strict: without the marker a partial merge could later win.
     if (!previous) _writeMergeIncompleteMarker(paths.visibleDir, marker)
+    const recordFailure = (error: unknown): string => {
+      const code = (error as NodeJS.ErrnoException | null)?.code ?? 'error'
+      const attempts = lastFailure?.code === code ? lastFailure.attempts + 1 : 1
+      try {
+        _writeMergeIncompleteMarker(paths.visibleDir, { ...marker, lastFailure: { code, at: nowMs, attempts } })
+      } catch {
+        // the marker without lastFailure still keeps ~/.rox authoritative
+      }
+      return code
+    }
+    const heartbeatEvery = Math.max(1, options?.lockHeartbeatEvery ?? _LOCK_HEARTBEAT_EVERY)
+    let mergedEntries = 0
     const preferHidden = hiddenHasData && !visibleHasData
     const preferVisible = visibleHasData && !hiddenHasData
     const conflictsRoot = join(paths.visibleDir, ROX_HOME_MIGRATION_DIR_NAME, 'conflicts')
@@ -2003,6 +2106,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       if (st.isFile()) stash(source, rel)
     }
     const mergeEntry = (rel: string): void => {
+      if (++mergedEntries % heartbeatEvery === 0) release.touch()
       const from = join(paths.hiddenDir, rel)
       const to = join(paths.visibleDir, rel)
       const fromStat = _lstatMigration(from)
@@ -2085,12 +2189,26 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         stash(from, rel)
       }
     }
+    // A thrown copy error keeps the marker (resumable, retried next launch).
     for (const name of _readdirMigration(paths.hiddenDir)) {
-      if (name === ROX_HOME_MIGRATION_MANIFEST_NAME) continue
+      // Migration bookkeeping and per-dir locks stay in the archived legacy
+      // dir; they are never carried into ~/rox.
+      if (_isMergeRootBookkeeping(name)) continue
       mergeEntry(name)
     }
     const mergedFrom = `${paths.hiddenDir}.migrated-${timestamp}`
-    rename(paths.hiddenDir, mergedFrom)
+    try {
+      rename(paths.hiddenDir, mergedFrom)
+    } catch (error) {
+      // The intact ~/.rox stays authoritative (marker choice); the copy in
+      // ~/rox stays marked incomplete and unused. Retried after a change in
+      // the legacy dir, the cooldown, or an explicit migrate-config.
+      const code = recordFailure(error)
+      return done('deferred-unmovable', {
+        conflicts: _listConflicts(conflictsRoot),
+        diagnostics: ['storage.migration.mergeRenameFailed', `rename:${code}`],
+      })
+    }
     // The merge is complete in ~/rox from here on: the marker must not keep
     // pointing processes at a legacy path that is gone (or gets recreated).
     _removeMergeIncompleteMarker(paths.visibleDir)
@@ -2104,7 +2222,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       if (!_pathPresent(paths.hiddenDir)) {
         try {
           rename(mergedFrom, paths.hiddenDir)
-          _writeMergeIncompleteMarker(paths.visibleDir, marker)
+          _writeMergeIncompleteMarker(paths.visibleDir, { ...marker, lastFailure: undefined })
           throw error
         } catch (rollbackError) {
           if (rollbackError === error) throw error

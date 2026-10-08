@@ -1,7 +1,7 @@
 /**
  * W1-13 (#1510) review-5 regressions: lock files in shared dirs (planted
  * links, foreign owners, per-user subdir), the stale-lock takeover race, and
- * the rename-probe move-back / stranded-probe recovery.
+ * the Settings migration state.
  *
  * SAFETY: temp HOME (`mkdtemp`) + explicit `homeDir`/`env` only. Lock bases
  * are temp dirs; nothing is written to the real /tmp lock locations.

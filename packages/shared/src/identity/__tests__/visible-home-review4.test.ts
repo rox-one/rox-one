@@ -29,6 +29,8 @@ import { join } from 'node:path'
 import {
   migrateHiddenRoxHome,
   mergeIncompleteMarkerPath,
+  readMergeIncompleteMarker,
+  resolveVisibleHomeWithoutMigration,
   ROX_HOME_MIGRATION_MANIFEST_NAME,
   type MigrateHiddenRoxHomeOptions,
 } from '../config-migration.ts'
@@ -223,27 +225,26 @@ describe('a legacy dir that cannot be renamed away defers (finding 3)', () => {
       expect(existsSync(join(home, '.rox', ROX_HOME_MIGRATION_MANIFEST_NAME))).toBe(false)
     }))
 
-  it('both trees: deferred before any merge, stash or marker', () =>
+  it('both trees: a failed final rename defers, keeps ~/.rox authoritative and does not copy again on the next launch', () =>
     withHome((home) => {
       plantBoth(home)
       write(join(home, '.rox', 'big.json'), 'H', new Date('2025-01-01'))
       write(join(home, 'rox', 'big.json'), 'V', new Date('2020-01-01'))
       const copy = countingCopy()
-      for (const ts of ['launch-1', 'launch-2']) {
-        const result = migrateHiddenRoxHome(opts(home, { timestamp: ts, rename: pinnedRename(home), copyFile: copy.copyFile }))
-        expect(result.outcome).toBe('deferred-unmovable')
-      }
-      expect(copy.calls).toEqual([])
-      expect(existsSync(mergeIncompleteMarkerPath(join(home, 'rox')))).toBe(false)
-      expect(existsSync(join(home, 'rox', '.migration'))).toBe(false)
-      expect(readFileSync(join(home, 'rox', 'big.json'), 'utf8')).toBe('V')
+      const now = Date.parse('2026-10-08T07:00:00Z')
+      const first = migrateHiddenRoxHome(opts(home, { timestamp: 'launch-1', rename: pinnedRename(home), copyFile: copy.copyFile, now: () => now }))
+      expect(first.outcome).toBe('deferred-unmovable')
+      expect(first.diagnostics).toEqual(['storage.migration.mergeRenameFailed', 'rename:EXDEV'])
+      const copiedOnce = copy.calls.length
+      expect(copiedOnce).toBeGreaterThan(0)
+      expect(lstatSync(join(home, '.rox')).isDirectory()).toBe(true)
+      expect(readMergeIncompleteMarker(join(home, 'rox'))).toMatchObject({ choice: 'hidden', lastFailure: { code: 'EXDEV', at: now, attempts: 1 } })
+      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
+      const second = migrateHiddenRoxHome(opts(home, { timestamp: 'launch-2', rename: pinnedRename(home), copyFile: copy.copyFile, now: () => now + 60_000 }))
+      expect(second.outcome).toBe('deferred-retry')
+      expect(second.diagnostics[0]).toBe('storage.migration.mergeRetryLater')
+      expect(copy.calls.length).toBe(copiedOnce)
+      expect(existsSync(join(home, 'rox', '.migration', 'conflicts', 'launch-2'))).toBe(false)
     }))
 
-  it('a renamable legacy dir is unaffected by the merge probe (no leftovers)', () =>
-    withHome((home) => {
-      plantBoth(home)
-      const result = migrateHiddenRoxHome(opts(home))
-      expect(result.outcome).toBe('merged')
-      expect(readdirSync(home).filter((n) => n.endsWith('-probe'))).toEqual([])
-    }))
 })
