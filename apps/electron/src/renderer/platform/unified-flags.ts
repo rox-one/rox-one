@@ -11,7 +11,7 @@
  * With nothing stored, every flag here is OFF and the shell is identical to
  * the baseline.
  */
-import { atom, getDefaultStore, type WritableAtom } from 'jotai'
+import { atom, type WritableAtom } from 'jotai'
 import { atomWithStorage, RESET } from 'jotai/utils'
 import {
   WORKBENCH_FEATURE_FLAGS,
@@ -28,6 +28,7 @@ import {
   type UnifiedSurfaceId,
 } from '../../shared/surface-routes'
 import { isSurfaceActive } from './surface-activity'
+import { getShellStore, isShellStoreConnected, setShellStore, type ShellStore } from './shell-store'
 
 /** Flags owned by W1-07; all default OFF. */
 export const W1_07_FLAG_IDS = [
@@ -126,13 +127,13 @@ export function flagContextKeys(flags: ReadonlySet<string>): Record<string, bool
  * `when: <flag>` commands hide while the flag is off. Dedicated flags keep
  * their own providers (e.g. conation) and are never overridden here.
  */
-export function createShellFlagContextKeyProvider(
-  store: ReturnType<typeof getDefaultStore> = getDefaultStore(),
-): ContextKeyProvider {
+export function createShellFlagContextKeyProvider(fixedStore?: ShellStore): ContextKeyProvider {
   const ids = genericFlagIds()
   return {
     keys: [...ids, 'messengerActive'],
     pull() {
+      // Resolved per pull: the Provider store may connect after creation.
+      const store = fixedStore ?? getShellStore()
       const enabled = store.get(enabledShellFlagsAtom)
       const values: Record<string, boolean> = {}
       for (const id of ids) values[id] = enabled.has(id)
@@ -143,7 +144,12 @@ export function createShellFlagContextKeyProvider(
   }
 }
 
-const installedStores = new WeakSet<object>()
+/** Enabled flags in the shell store right now (keydown gates, takeovers). */
+export function currentShellFlags(): ReadonlySet<string> {
+  return getShellStore().get(enabledShellFlagsAtom)
+}
+
+let activeBridge: { store: ShellStore; dispose: () => void } | null = null
 
 /**
  * Mirror the gate into the main process so `rox://<mode>` deep links follow
@@ -163,20 +169,50 @@ export function pushSurfaceRoutesToMain(ids: Iterable<string>): void {
 }
 
 /**
- * Keep the shared route parser's surface gate in sync with the flag atoms.
- * Idempotent per store; runs once at module load in the renderer so the very
- * first route parse already sees persisted flags.
+ * Keep the shared route parser's surface gate (and main's copy) in sync with
+ * the flag atoms of ONE store. Installing on another store moves the bridge
+ * there, so a stale store can never push an outdated gate. Returns the
+ * disposer. Runs at module load on the fallback store so the very first route
+ * parse already sees persisted flags; `connectShellStore` then moves it to the
+ * Provider store.
  */
-export function installShellFlagBridges(store: ReturnType<typeof getDefaultStore> = getDefaultStore()): void {
-  if (installedStores.has(store)) return
-  installedStores.add(store)
+export function installShellFlagBridges(store: ShellStore = getShellStore()): () => void {
+  if (activeBridge?.store === store) return activeBridge.dispose
+  activeBridge?.dispose()
   const sync = () => {
     const ids = enabledUnifiedSurfaces(store.get(enabledShellFlagsAtom))
     setUnifiedSurfaceRoutesEnabled(ids)
     pushSurfaceRoutesToMain(ids)
   }
   sync()
-  store.sub(enabledShellFlagsAtom, sync)
+  const unsubscribe = store.sub(enabledShellFlagsAtom, sync)
+  const entry = {
+    store,
+    dispose: () => {
+      unsubscribe()
+      if (activeBridge === entry) activeBridge = null
+    },
+  }
+  activeBridge = entry
+  return entry.dispose
+}
+
+/** Store currently driving the route gate (tests / diagnostics). */
+export function shellFlagBridgeStore(): ShellStore | null {
+  return activeBridge?.store ?? null
+}
+
+/**
+ * Make `store` (the `<JotaiProvider>` store) the one every W1-07 gate reads,
+ * and move the route-gate bridge onto it. Returns the disconnect function.
+ */
+export function connectShellStore(store: ShellStore): () => void {
+  setShellStore(store)
+  const dispose = installShellFlagBridges(store)
+  return () => {
+    dispose()
+    if (isShellStoreConnected(store)) setShellStore(null)
+  }
 }
 
 if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {

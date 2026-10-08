@@ -10,8 +10,7 @@
  * document's find (`docs.findInDoc`). Lark's Docs ⌘J moved here because ⌘J is
  * the agent panel.
  */
-import { getDefaultStore } from 'jotai'
-import { enabledShellFlagsAtom } from '@/platform/unified-flags'
+import { currentShellFlags } from '@/platform/unified-flags'
 import { actions, type ActionId } from './definitions'
 import { useAction } from './useAction'
 import type { ActionDefinition } from './types'
@@ -51,7 +50,7 @@ export function useModeAwareTakeover(
 ): void {
   const takeover = takeoverFor(takeoverActionId)
   if (!takeover) throw new Error(`No mode-aware takeover declared for ${takeoverActionId}`)
-  const active = () => isTakeoverActive(takeover, getDefaultStore().get(enabledShellFlagsAtom)) && applies()
+  const active = () => isTakeoverActive(takeover, currentShellFlags()) && applies()
   useAction(takeover.takeoverActionId, handler, { enabled: active }, deps)
   useAction(takeover.baseActionId, handler, { enabled: active, priority: takeover.priority }, deps)
 }

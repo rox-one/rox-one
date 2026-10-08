@@ -50,7 +50,7 @@ import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import { registerConationOmniboxCommands } from './omnibox-conation'
 // W1-07 (#1504): entity provider (inert until a flagged source registers).
 import { createEntityOmniboxProvider } from './omnibox-entities'
-import { enabledShellFlagsAtom } from './unified-flags'
+import { currentShellFlags } from './unified-flags'
 import { resolveDefaultHotkey } from '@/actions/hotkeys'
 import type { ActionDefinition } from '@/actions/types'
 
@@ -438,7 +438,9 @@ function registerResourceProviders(
   track(
     resources.register(
       createEntityOmniboxProvider({
-        getFlags: () => store.get(enabledShellFlagsAtom),
+        // W1-07 gates read the Provider store; baseline providers below keep
+        // getDefaultStore() exactly as before.
+        getFlags: () => currentShellFlags(),
         label: t ? t('surfaces.omnibox.providerLabel', 'Entities') : 'Entities',
       }),
     ),

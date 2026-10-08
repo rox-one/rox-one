@@ -9,15 +9,15 @@
  * Read synchronously by keybinding `when` clauses and the Omnibox context
  * provider — no React state, no re-renders.
  */
-import { getDefaultStore } from 'jotai'
 import { focusedPanelRouteAtom } from '@/atoms/panel-stack'
 import { parseRouteToNavigationState } from '../../shared/route-parser'
 import type { UnifiedSurfaceId } from '../../shared/surface-routes'
+import { getShellStore, type ShellStore } from './shell-store'
 
-type StoreReader = Pick<ReturnType<typeof getDefaultStore>, 'get'>
+type StoreReader = Pick<ShellStore, 'get'>
 
 /** True while the focused panel's route resolves to `surface`'s mode root. */
-export function isSurfaceActive(surface: UnifiedSurfaceId, store: StoreReader = getDefaultStore()): boolean {
+export function isSurfaceActive(surface: UnifiedSurfaceId, store: StoreReader = getShellStore()): boolean {
   const route = store.get(focusedPanelRouteAtom)
   if (!route) return false
   const navState = parseRouteToNavigationState(route)

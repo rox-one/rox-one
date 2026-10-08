@@ -4,8 +4,7 @@ import type { ActionDefinition, ActionHandler } from './types'
 import { formatHotkeyDisplay, isMac } from '@/lib/platform'
 import { getKeybindingContext, evaluateWhen } from './keybinding-context'
 // W1-07 (#1504): flag-gated actions + per-platform default chords.
-import { getDefaultStore } from 'jotai'
-import { enabledShellFlagsAtom } from '@/platform/unified-flags'
+import { currentShellFlags } from '@/platform/unified-flags'
 import { isActionFlagEnabled, resolveActionHotkey } from './hotkeys'
 
 interface ActionRegistryContextType {
@@ -95,7 +94,7 @@ export function ActionRegistryProvider({ children }: { children: React.ReactNode
 
         // W1-07 (#1504): a flag-gated action never intercepts while its flag is off.
         if ((action as ActionDefinition).flag) {
-          shellFlags ??= getDefaultStore().get(enabledShellFlagsAtom)
+          shellFlags ??= currentShellFlags()
           if (!isActionFlagEnabled(action as ActionDefinition, shellFlags)) continue
         }
 
