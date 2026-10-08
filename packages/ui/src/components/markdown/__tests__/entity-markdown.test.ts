@@ -241,4 +241,15 @@ describe('review fixes (#1505 fix3)', () => {
     expect(types('a [[task:1]] b')).toEqual(['text', 'rox_entity_mention', 'text'])
     expect(types('[[task:1]](url)')).toEqual(['rox_entity_mention', 'text'])
   })
+
+  it('markdown-it: a mention in image alt text contributes its original Markdown to the alt (#1505 fix7)', () => {
+    const md = new MarkdownIt()
+    installEntityMarkdownRules(md)
+    expect(md.render('![alt [[task:1]]](src.png)')).toContain('alt="alt [[task:1]]"')
+    expect(md.render('![[[task:1]]](a.png)')).toContain('alt="[[task:1]]"')
+    expect(md.render('![a [[doc:2| P ]] *b*](s.png)')).toContain('alt="a [[doc:2| P ]] b"')
+    expect(md.render('![x"<y [[task:1|a"b]]](s.png)')).toContain('alt="x&quot;&lt;y [[task:1|a&quot;b]]"')
+    // Outside an alt the mention still renders as a chip span.
+    expect(md.render('a [[task:1]] b')).toContain('data-entity-mention="task:1"')
+  })
 })

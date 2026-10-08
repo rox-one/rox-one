@@ -10,6 +10,7 @@ import { Editor, type JSONContent } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
+import Image from '@tiptap/extension-image'
 import { Markdown as LegacyMarkdown } from 'tiptap-markdown'
 import { formatEntityRef, type EntityRef } from '@rox/core/entities'
 // Private marked instance per editor, as TiptapMarkdownEditor does: flag-off
@@ -618,5 +619,65 @@ describe('a mention inside Markdown link text (legacy engine, as in Notes) (#150
     const plain = makeEditor('legacy', '[[task:1]](url)')
     expect(inlineShape(plain)).toEqual([['mention', 'task:1', []], ['text', '(url)', []]])
     plain.destroy()
+  })
+})
+
+describe('a mention inside image alt text (#1505 fix7)', () => {
+  const IMAGE_CASES = ['![alt [[task:1]]](src.png)', '![[[task:1]]](a.png)', 'x ![alt [[task:1|L]] y](s.png "t") z']
+
+  /** Same Image setup as TiptapMarkdownEditor (block images, base64 allowed). */
+  function imageEditor(engine: Engine, content: string, entityNodesOn: boolean): Editor {
+    const element = document.createElement('div')
+    document.body.appendChild(element)
+    return new Editor({
+      element,
+      extensions: [
+        StarterKit,
+        Image.configure({ inline: false, allowBase64: true }),
+        ...(entityNodesOn ? [EntityMention, EntityEmbed] : []),
+        engine === 'legacy' ? LegacyMarkdown.configure({ html: false }) : OfficialMarkdown,
+      ],
+      content,
+      ...(engine === 'official' ? { contentType: 'markdown' as const } : {}),
+    })
+  }
+  function load(engine: Engine, content: string, entityNodesOn: boolean) {
+    const editor = imageEditor(engine, content, entityNodesOn)
+    const alts: string[] = []
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'image') alts.push(String(node.attrs.alt ?? ''))
+    })
+    const out = toMarkdown(editor, engine)
+    editor.destroy()
+    return { alts, out }
+  }
+
+  it('legacy (Notes): the alt keeps the mention syntax and saves exactly as with the flag off', () => {
+    const expectedAlt: Record<string, string> = {
+      '![alt [[task:1]]](src.png)': 'alt [[task:1]]',
+      '![[[task:1]]](a.png)': '[[task:1]]',
+      'x ![alt [[task:1|L]] y](s.png "t") z': 'alt [[task:1|L]] y',
+    }
+    for (const markdown of IMAGE_CASES) {
+      const on = load('legacy', markdown, true)
+      const off = load('legacy', markdown, false)
+      expect({ markdown, alts: on.alts }).toEqual({ markdown, alts: [expectedAlt[markdown]!] })
+      expect({ markdown, out: on.out }).toEqual({ markdown, out: off.out })
+      // Reloading the saved Markdown behaves exactly as with the flag off too.
+      expect(load('legacy', on.out, true)).toEqual(load('legacy', on.out, false))
+    }
+  })
+
+  it('official: the same input keeps its alt text (marked leaves it as text) and saves byte-identical, flag on and off', () => {
+    for (const markdown of IMAGE_CASES) {
+      const on = load('official', markdown, true)
+      const off = load('official', markdown, false)
+      expect({ markdown, out: on.out }).toEqual({ markdown, out: markdown })
+      expect({ markdown, out: off.out }).toEqual({ markdown, out: markdown })
+      expect(on.alts).toEqual(off.alts)
+    }
+    // Control: a plain image still is an image with its alt on both.
+    expect(load('official', '![plain](p.png)', true).alts).toEqual(['plain'])
+    expect(load('legacy', '![plain](p.png)', true).alts).toEqual(['plain'])
   })
 })

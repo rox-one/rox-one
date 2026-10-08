@@ -246,7 +246,10 @@ interface BlockState {
 export interface MarkdownItLike {
   inline: { ruler: { before: (name: string, rule: string, fn: (state: InlineState, silent: boolean) => boolean) => void } }
   block: { ruler: { before: (name: string, rule: string, fn: (state: BlockState, start: number, end: number, silent: boolean) => boolean, opts?: { alt: string[] }) => void } }
-  renderer: { rules: Record<string, unknown> }
+  renderer: {
+    rules: Record<string, unknown>
+    renderInlineAsText: (tokens: Array<{ type: string; meta?: unknown }>, options: unknown, env: unknown) => string
+  }
   utils: { escapeHtml: (value: string) => string }
 }
 
@@ -316,5 +319,19 @@ export function installEntityMarkdownRules(md: MarkdownItLike): void {
   md.renderer.rules.rox_entity_embed = (tokens: Array<{ meta: Meta }>, idx: number) => {
     const { ref, label, source } = tokens[idx]!.meta
     return `<div data-entity-embed="${esc(ref)}" data-label="${esc(label ?? '')}" data-source="${esc(source)}"></div>`
+  }
+  // Image alt text is built by `renderInlineAsText`, which keeps only text-like
+  // tokens and skips every other type. A mention in the alt
+  // (`![alt [[task:1]]](src.png)`) would vanish from the alt and the next save
+  // would rewrite it. Contribute the mention's original Markdown instead, so
+  // the alt is exactly what it is with the flag off.
+  const renderInlineAsText = md.renderer.renderInlineAsText.bind(md.renderer)
+  md.renderer.renderInlineAsText = (tokens, options, env) => {
+    if (!tokens.some((token) => token.type === 'rox_entity_mention')) return renderInlineAsText(tokens, options, env)
+    let out = ''
+    for (const token of tokens) {
+      out += token.type === 'rox_entity_mention' ? (token.meta as Meta).source : renderInlineAsText([token], options, env)
+    }
+    return out
   }
 }
