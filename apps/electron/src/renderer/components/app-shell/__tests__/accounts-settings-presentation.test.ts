@@ -16,7 +16,9 @@ describe('AccountsSettingsPage presentation', () => {
   it('gives the Notes section sole ownership of its cloud connection', () => {
     expect(src).toContain("connection.provider !== 'siyuan-cloud'")
     expect(src).toContain("connection.provider !== 'siyuan-local'")
-    expect(src).toContain("<SettingsSection title={t('sidebar.notes')}>")
+    // W1-07 (#1504): «Заметки» → «Документы» under docs.shared.v1; base key unchanged.
+    expect(src).toContain("const notesTitleKey = useNotesTitleKey('sidebar.notes')")
+    expect(src).toContain("<SettingsSection title={t(notesTitleKey)}>")
     expect(src).toContain("const notesLocal = connections.find((connection) => connection.provider === 'siyuan-local')")
     expect(src).toContain("routes.view.settings('knowledge')")
     expect(src).not.toContain('settings.accounts.siyuanCloud')

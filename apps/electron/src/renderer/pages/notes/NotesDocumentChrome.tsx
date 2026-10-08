@@ -3,6 +3,7 @@ import { notesRailKeyWidth } from './notes-layout'
 import { ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import {
   NOTES_RAIL_STORAGE_KEY,
   groupNoteCommands,
@@ -46,6 +47,7 @@ export function NotesBreadcrumbs({
   onOpenFolder?: (folder?: string) => void
 }) {
   const { t } = useTranslation()
+  const vaultTitleKey = useNotesTitleKey('notes.breadcrumb.vault')
   const crumbs = noteBreadcrumbs(noteId, title)
   return (
     <nav className="flex min-w-0 items-center gap-1 text-[12px] text-muted-foreground" aria-label={t('notes.breadcrumb.label')}>
@@ -63,7 +65,7 @@ export function NotesBreadcrumbs({
               else if (crumb.folder) onOpenFolder?.(crumb.folder)
             }}
           >
-            {crumb.id === 'vault' ? t('notes.breadcrumb.vault') : crumb.label}
+            {crumb.id === 'vault' ? t(vaultTitleKey) : crumb.label}
           </button>
         </React.Fragment>
       ))}

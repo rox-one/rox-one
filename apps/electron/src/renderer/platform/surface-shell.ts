@@ -28,6 +28,14 @@ export function notesTitleKey(shellFlags: ReadonlySet<string>, baseKey: string):
   return shellFlags.has(WORKBENCH_FLAG.docsSharedV1) ? DOCS_RELABEL_TITLE_KEY : baseKey
 }
 
+/** Label key of a nav destination (rail, inspector, compact menu): Notes follows the Docs relabel. */
+export function navDestinationLabelKey(
+  dest: { id: string; labelKey: string },
+  shellFlags: ReadonlySet<string>,
+): string {
+  return dest.id === 'notes' ? notesTitleKey(shellFlags, dest.labelKey) : dest.labelKey
+}
+
 export interface RouteTitleSources {
   destinations: ReadonlyArray<{ route?: (() => string) | null; labelKey: string }>
   modes: readonly ModeContribution[]

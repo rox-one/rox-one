@@ -17,7 +17,7 @@
  * the two-key Workbench rollout is enabled, so there is no flag check here.
  */
 import { useSyncExternalStore, type ReactNode } from 'react'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { ChevronsLeft, ChevronsRight, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom } from '@/atoms/unified-shell'
@@ -31,6 +31,8 @@ import { CHROME_DENSITY } from './chrome-density'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
 import { routes } from '../../shared/routes'
+import { navDestinationLabelKey } from './surface-shell'
+import { enabledShellFlagsAtom } from './unified-flags'
 
 export { RailRow } from './RailRow'
 
@@ -92,7 +94,8 @@ function RailItem({ dest, collapsed }: { dest: AppNavDestination; collapsed: boo
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navState = useNavigationState()
-  const label = t(dest.labelKey)
+  const shellFlags = useAtomValue(enabledShellFlagsAtom)
+  const label = t(navDestinationLabelKey(dest, shellFlags))
   const disabled = dest.route === null
   return (
     <RailRow

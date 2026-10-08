@@ -7,6 +7,8 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { getSessionTitle } from '@/utils/session'
 import { buildSurfaceTabViews } from '@/platform/surface-tab-model'
+import { navDestinationLabelKey } from '@/platform/surface-shell'
+import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { resolveViewRoute } from '../../../shared/route-parser'
 import { TopBarButton } from '@/components/ui/TopBarButton'
 import {
@@ -33,6 +35,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => v
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const shellFlags = useAtomValue(enabledShellFlagsAtom)
   const activeService = getActiveService(navigation)
   const tabs = buildSurfaceTabViews({
     entries,
@@ -90,7 +93,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => v
                 const service = serviceId ? APP_NAV_DESTINATIONS_BY_ID[serviceId] : null
                 const Icon = service?.icon ?? PanelTop
                 const title = state.navigator === 'unavailable' ? t('common.unavailable')
-                  : tab.kind === null && service ? t(service.labelKey) : tab.title
+                  : tab.kind === null && service ? t(navDestinationLabelKey(service, shellFlags)) : tab.title
                 return (
                   <StyledDropdownMenuItem
                     key={tab.panelId}
@@ -125,7 +128,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser }: { onOpenBrowser: () => v
                 className="min-h-9 [@media(pointer:coarse)]:min-h-11"
               >
                 <Icon className="size-4 shrink-0" aria-hidden />
-                <span className="flex-1">{t(destination.labelKey)}</span>
+                <span className="flex-1">{t(navDestinationLabelKey(destination, shellFlags))}</span>
                 {destination.id === activeService && <Check className="size-3.5 shrink-0" aria-hidden />}
               </StyledDropdownMenuItem>
             )
