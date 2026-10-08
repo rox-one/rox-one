@@ -10,6 +10,9 @@
 | `EXA_API_KEY`, `FIRECRAWL_API_KEY`, `BRAVE_API_KEY`, `TAVILY_API_KEY`, `E2B_API_KEY` | `server-services.ts` | Shared backend file |
 | LiveKit | meetings/voice modules | Scout: workspace + server file |
 | MCP builtin | `builtin-sources-seed` | Local seed + credential manager |
+| `PINECONE_API_KEY` | Operator master in server vault, per-user ref (vector storage / agent memory) | Server vault → per-user ref |
+
+MCP keys (`EXA`/`FIRECRAWL`/`BRAVE`/`LANGFUSE`) are provisioned per user from the operator master keys (decision 2026-10-08).
 
 ## Desktop DB
 

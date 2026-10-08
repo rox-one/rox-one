@@ -87,11 +87,13 @@
 ## Task T-17: Cloud runtime bundle (default sandbox)
 
 **Proposed default image contents (for user sign-off):**
-1. Base: Daytona snapshot (Ubuntu LTS) + `bun` + `node20` + `git` + `curl` + `jq` + `ripgrep`.
+1. Base: Daytona snapshot (Ubuntu LTS) + `bun` + `node20` + `git` + `curl` + `jq` + `ripgrep` + `Docker`/`Podman` + `Playwright`/`Chromium` + `ffmpeg`.
 2. Rox agent: `omp` CLI + pinned `@oh-my-pi/pi-coding-agent` + bundled skills subset.
 3. MCP: exa, firecrawl, brave, langfuse (stdio) — keys injected via **server** proxy, not baked in image.
 4. Env: `ROX_API_KEY` (per-user ref), `DAYTONA_API_KEY` (operator), `UV_PYTHON=3.12`.
 5. Bootstrap order: sync workspace → seed MCP configs → `omp --mode rpc` health → run subtasks.
+
+Sign-off 2026-10-08 (чат, D1): добавлены Docker/Podman, Playwright/Chromium, ffmpeg.
 
 ## Task T-18: Secrets model (scout)
 
