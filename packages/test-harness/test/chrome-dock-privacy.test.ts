@@ -7,7 +7,7 @@ import {
 } from '../src/gates/chrome-dock.ts'
 import { buildDockTable, referenceDockMode, resolveReferenceDock, dockTableInvariantHolds } from '../src/fixtures/dock.ts'
 import { checkAgentPrivacy } from '../src/gates/agent-privacy.ts'
-import { PRIVACY_ACTOR, PRIVACY_FIXTURES, referencePrivacyDecision, type PrivacyCandidate } from '../src/fixtures/privacy.ts'
+import { PRIVACY_ACTOR, PRIVACY_FIXTURES, referencePrivacyDecision, type ProviderCandidate } from '../src/fixtures/privacy.ts'
 
 describe('chrome-schema lint', () => {
   test('passes on a clean surface schema', () => {
@@ -66,7 +66,7 @@ describe('dock-layout gate', () => {
 
 describe('agent-panel privacy gate', () => {
   test('passes for a provider that decides from the candidate + actor (no fixture ids)', () => {
-    const seen: Array<[PrivacyCandidate, unknown]> = []
+    const seen: Array<[ProviderCandidate, unknown]> = []
     const res = checkAgentPrivacy((candidate, actor) => {
       seen.push([candidate, actor])
       return referencePrivacyDecision(candidate)
@@ -77,7 +77,15 @@ describe('agent-panel privacy gate', () => {
       expect(actor).toEqual(PRIVACY_ACTOR)
       expect(typeof candidate.canRead).toBe('boolean')
       expect(typeof candidate.entityKind).toBe('string')
+      expect('kind' in candidate).toBe(false)
     }
+  })
+  test('the harness kind label (the expected answer) is not passed to the provider', () => {
+    const cheat = checkAgentPrivacy((candidate) => {
+      const label = (candidate as { kind?: string }).kind
+      return label === undefined ? { attach: true, redacted: false } : { attach: label === 'allowed', redacted: label !== 'allowed' }
+    })
+    expect(cheat.status).toBe('fail')
   })
   test('the deciding facts are on the candidate: open vs other DM differ only by isOpenDm', () => {
     const other = PRIVACY_FIXTURES.find((c) => c.ref === 'channel-message:other-dm-1')!

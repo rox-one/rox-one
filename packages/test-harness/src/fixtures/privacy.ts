@@ -36,6 +36,18 @@ export interface PrivacyCandidate {
   canRead: boolean
 }
 
+/**
+ * What the #1512 provider receives: the candidate WITHOUT the harness `kind`
+ * label, which encodes the expected answer (#1507 review 3).
+ */
+export type ProviderCandidate = Omit<PrivacyCandidate, 'kind'>
+
+/** Fresh provider-facing copy of a fixture (no `kind`; a provider cannot mutate the shared fixture). */
+export function providerCandidate(candidate: PrivacyCandidate): ProviderCandidate {
+  const { kind: _label, ...facts } = candidate
+  return { ...facts }
+}
+
 /** The acting user every fixture is evaluated for. */
 export const PRIVACY_ACTOR: PrivacyActor = { principalId: 'p-privacy-actor', workspaceId: 'ws-privacy' }
 
@@ -64,7 +76,7 @@ export const PRIVACY_EXPECTATIONS: PrivacyExpectation[] = [
 ]
 
 /** A reference decision derived only from candidate facts (used by self-tests). */
-export function referencePrivacyDecision(c: PrivacyCandidate): { attach: boolean; redacted: boolean } {
+export function referencePrivacyDecision(c: ProviderCandidate): { attach: boolean; redacted: boolean } {
   const hidden = !c.canRead || (c.authority === 'local' && !c.isFocus) || (c.isDm === true && !c.isOpenDm)
   return { attach: !hidden, redacted: hidden }
 }

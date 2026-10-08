@@ -6,12 +6,14 @@
  * pending. Present → it must export `decideAttach` | `decideAutoAttach` |
  * `autoAttachDecision` with the contract
  *
- *   (candidate: PrivacyCandidate, actor: PrivacyActor) => { attach: boolean; redacted: boolean }
+ *   (candidate: ProviderCandidate, actor: PrivacyActor) => { attach: boolean; redacted: boolean }
  *
  * `candidate` carries every fact the §18.3 decision depends on (ref,
  * entityKind, authority, isFocus, isDm, isOpenDm, canRead), `actor` is the
  * acting user (`{ principalId, workspaceId }`), so an implementation never
- * needs to recognise fixture ids. It is run over the shipped fixtures; an
+ * needs to recognise fixture ids. The harness's own `kind` classification
+ * of each fixture is stripped before the call (it encodes the expected
+ * answer; #1507 review 3). It is run over the shipped fixtures; an
  * import error, a missing export, a throw or a wrong return shape FAILS
  * the gate (fail closed). An explicit provider can be injected for
  * self-tests.
@@ -19,7 +21,7 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { pending, inputBroken, errorMessage, gateFromViolations, type GateResult } from './types.ts'
-import { PRIVACY_ACTOR, PRIVACY_EXPECTATIONS, PRIVACY_FIXTURES, type PrivacyActor, type PrivacyCandidate } from '../fixtures/privacy.ts'
+import { PRIVACY_ACTOR, PRIVACY_EXPECTATIONS, PRIVACY_FIXTURES, providerCandidate, type PrivacyActor, type ProviderCandidate } from '../fixtures/privacy.ts'
 
 export const AGENT_CONTEXT_PATH = join('packages', 'core', 'src', 'agent-panel', 'context.ts')
 export const AGENT_PRIVACY_EXPORTS = ['decideAttach', 'decideAutoAttach', 'autoAttachDecision'] as const
@@ -29,7 +31,7 @@ export interface AttachDecision {
   redacted: boolean
 }
 
-export type AttachProvider = (candidate: PrivacyCandidate, actor: PrivacyActor) => AttachDecision
+export type AttachProvider = (candidate: ProviderCandidate, actor: PrivacyActor) => AttachDecision
 
 export function checkAgentPrivacy(decideAttach: AttachProvider): GateResult {
   const gate = 'agent-panel-privacy'
@@ -43,8 +45,9 @@ export function checkAgentPrivacy(decideAttach: AttachProvider): GateResult {
     }
     let got: AttachDecision
     try {
-      // Fresh copies: a provider cannot mutate the shared fixtures.
-      got = decideAttach({ ...fixture }, { ...PRIVACY_ACTOR })
+      // Fresh copies (a provider cannot mutate the shared fixtures), and the
+      // harness `kind` label is stripped: it encodes the expected answer.
+      got = decideAttach(providerCandidate(fixture), { ...PRIVACY_ACTOR })
     } catch (error) {
       violations.push(`${fixture.ref}: decideAttach threw ${errorMessage(error)}`)
       continue
