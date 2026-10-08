@@ -2,8 +2,9 @@
  * W1-10 (#1507) — workspace-service harness self-tests.
  *
  * Covers the seeded two-user workspace, temp-dir isolation and the
- * Postgres fixture contract (live when ROX_TEST_PG_URL is set, skipped
- * otherwise — never failing).
+ * Postgres fixture contract: live (after a SELECT 1 probe) when
+ * ROX_TEST_PG_URL is set, opt-in docker only with ROX_TEST_PG_DOCKER=1,
+ * skipped otherwise. A plain run never starts or pulls a container.
  */
 import { describe, expect, test } from 'bun:test'
 import { existsSync } from 'node:fs'
@@ -36,9 +37,14 @@ describe('workspace-service harness', () => {
     expect(env.HOME).not.toBe(process.env.HOME)
   })
 
-  test('postgres fixture is live-or-skipped, never failing', async () => {
+  test('postgres fixture: live when configured, otherwise skipped without docker', async () => {
     const { fixture } = await pgOrSkip()
-    expect(['live', 'skipped']).toContain(fixture.status)
-    if (fixture.cleanup) await fixture.cleanup()
+    try {
+      if (process.env.ROX_TEST_PG_URL) expect(fixture.status).toBe('live')
+      else if (process.env.ROX_TEST_PG_DOCKER !== '1') expect(fixture.status).toBe('skipped')
+      else expect(fixture.status).toBe('live')
+    } finally {
+      if (fixture.cleanup) await fixture.cleanup()
+    }
   })
 })

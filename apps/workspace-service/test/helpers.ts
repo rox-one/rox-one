@@ -3,7 +3,9 @@
  *
  * All helpers redirect HOME / config dirs at OS temp dirs via `mkdtemp`
  * (never the real `~/rox`). Postgres resolves through the harness fixture:
- * `ROX_TEST_PG_URL` when set, otherwise skipped — never failing.
+ * `ROX_TEST_PG_URL` when set (probed; throws if it never answers), a
+ * throwaway docker container only with `ROX_TEST_PG_DOCKER=1`, otherwise
+ * skipped.
  */
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'

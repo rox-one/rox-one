@@ -1,9 +1,8 @@
-/** W1-10 self-test: micro-benchmarks, visual plan, axe runner, postgres fixture. */
+/** W1-10 self-test: micro-benchmarks, visual plan, axe runner (postgres fixture: postgres.test.ts). */
 import { describe, expect, test } from 'bun:test'
 import { runMicroBenchmarks, MICRO_BENCH_BUDGETS } from '../src/bench.ts'
 import { planVisualSnapshots, SNAPSHOTS_PER_SCREEN, FIXED_CLOCK_MS } from '../src/visual.ts'
 import { runAxeAudit } from '../src/axe.ts'
-import { resolvePostgresUrl, ensurePostgres } from '../src/postgres.ts'
 
 describe('micro-benchmarks', () => {
   test('all benches run within TECH-SPEC §7 budgets', () => {
@@ -42,17 +41,5 @@ describe('axe runner', () => {
     const res = await runAxeAudit(`<html><body><img src="a.png"><button></button></body></html>`)
     expect(res.pass).toBe(false)
     expect(res.violations.length).toBeGreaterThanOrEqual(2)
-  })
-})
-
-describe('postgres fixture', () => {
-  test('ROX_TEST_PG_URL is honoured when set', () => {
-    expect(resolvePostgresUrl({ ROX_TEST_PG_URL: 'postgres://x' } as NodeJS.ProcessEnv)).toBe('postgres://x')
-    expect(resolvePostgresUrl({} as NodeJS.ProcessEnv)).toBeNull()
-  })
-  test('env URL yields a live fixture without docker', async () => {
-    const fx = await ensurePostgres({ ROX_TEST_PG_URL: 'postgres://x' } as NodeJS.ProcessEnv)
-    expect(fx.status).toBe('live')
-    expect(fx.url).toBe('postgres://x')
   })
 })
