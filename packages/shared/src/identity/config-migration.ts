@@ -1323,7 +1323,10 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         startedAt: options?.now?.() ?? Date.now(),
         hiddenHasData,
         visibleHasData,
-        choice: visibleHasData ? 'visible' : 'hidden',
+        // Until the merge completes, the intact legacy home wins whenever it
+        // holds user data (a partial ~/rox is mixed); ~/rox only when the
+        // legacy home had nothing to lose.
+        choice: hiddenHasData || !visibleHasData ? 'hidden' : 'visible',
       }
       const markerPath = mergeIncompleteMarkerPath(paths.visibleDir)
       mkdirSync(_dirnameMigration(markerPath), { recursive: true, mode: 0o700 })

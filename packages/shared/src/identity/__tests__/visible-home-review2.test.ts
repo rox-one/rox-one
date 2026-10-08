@@ -222,10 +222,22 @@ describe('incomplete merge (finding 3)', () => {
       expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, 'rox'))
     }))
 
-  it('the marker keeps a visible choice when ~/rox was already the home', () =>
+  it('a failed merge prefers the intact legacy home even when ~/rox had data', () =>
     withHome((home) => {
       write(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"v"}]}')
       write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"h"}]}')
+      write(join(home, '.rox', 'secret', 'token'), 'shh')
+      chmodSync(join(home, '.rox', 'secret'), 0o000)
+      expect(() => migrateHiddenRoxHome(opts(home))).toThrow()
+      chmodSync(join(home, '.rox', 'secret'), 0o700)
+      expect(readMergeIncompleteMarker(join(home, 'rox'))?.choice).toBe('hidden')
+      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
+    }))
+
+  it('~/rox keeps winning a failed merge only when the legacy home had no user data', () =>
+    withHome((home) => {
+      write(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"v"}]}')
+      write(join(home, '.rox', 'config.json'), '{"workspaces":[]}')
       write(join(home, '.rox', 'secret', 'token'), 'shh')
       chmodSync(join(home, '.rox', 'secret'), 0o000)
       expect(() => migrateHiddenRoxHome(opts(home))).toThrow()
