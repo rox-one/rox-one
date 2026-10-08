@@ -920,7 +920,12 @@ export const mockElectronAPI = {
     { id: 'catppuccin', path: '/mock/catppuccin.json', theme: { name: 'Catppuccin' } },
     { id: 'dracula', path: '/mock/dracula.json', theme: { name: 'Dracula' } },
   ],
-  getToolIconMappings: async () => ({}),
+  getToolIconMappings: async () => ({
+    dir: '/home/playground/rox/tool-icons',
+    configPath: '/home/playground/rox/tool-icons/tool-icons.json',
+    mappings: [],
+  }),
+  getConfigDir: async () => '/home/playground/rox',
   getHomeDir: async () => '/home/playground',
   getAllWorkspaceThemes: async () => ({}),
   awardGamificationXp: async (event: string) => {

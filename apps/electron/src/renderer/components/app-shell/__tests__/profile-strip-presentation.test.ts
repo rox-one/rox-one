@@ -9,7 +9,7 @@ describe('ProfileStrip presentation', () => {
 
   it('renders a compact identity trigger instead of persistent XP chrome', () => {
     expect(src).toContain('defaultAvatarFallback?: React.ReactNode')
-    expect(src).toContain('default-avatar.svg')
+    expect(src).toContain('rox-logo.png')
     expect(src).toContain('data-tutorial="profile-strip"')
     expect(src).toContain("t(`settings.account.plan.${plan}`)")
     expect(src).toContain("t('profile.balanceLabel')")

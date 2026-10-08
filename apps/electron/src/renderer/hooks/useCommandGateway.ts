@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { RPC_CHANNELS } from '../../shared/types'
 import type { PendingCommand } from '@rox/server-core/command-gateway'
+import { toErrorMessage } from '@/lib/errors'
 
 const POLL_MS = 10_000
 
@@ -36,7 +37,7 @@ export function useCommandGateway(workspaceId: string | undefined): UseCommandGa
       setCommands(list)
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
     }
   }, [workspaceId])
 
@@ -70,7 +71,7 @@ export function useCommandGateway(workspaceId: string | undefined): UseCommandGa
           : api.denyCommand({ workspaceId, id }))
         await load()
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(toErrorMessage(err))
       }
     },
     [workspaceId, load],

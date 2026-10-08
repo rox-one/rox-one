@@ -1,3 +1,5 @@
+import type { TourTargetRegistration } from '../contracts'
+
 /** All coordinates stay in viewport CSS pixels; browser zoom is already applied by DOMRect. */
 export interface TargetRect {
   readonly x: number
@@ -21,6 +23,15 @@ function rect(left: number, top: number, right: number, bottom: number): TargetR
 
 /** Rejects disconnected, inaccessible, clipped and frame-content targets before presenting. */
 export function measureTargetGeometry(element: HTMLElement, padding = 8): TargetGeometry | null {
+  return measureGeometry(element, padding, false)
+}
+
+/** Only native result surfaces may spotlight the portion visible inside their scroll ancestors. */
+export function measureTourTargetGeometry(target: Pick<TourTargetRegistration, 'id' | 'element'>, padding = 8): TargetGeometry | null {
+  return measureGeometry(target.element, padding, target.id === 'session.final-result' || target.id === 'session.tool-result')
+}
+
+function measureGeometry(element: HTMLElement, padding: number, visibleResult: boolean): TargetGeometry | null {
   if (!element.isConnected) return null
   const view = element.ownerDocument.defaultView
   if (!view || view.frameElement) return null
@@ -55,15 +66,18 @@ export function measureTargetGeometry(element: HTMLElement, padding = 8): Target
     }
   }
   // Small subpixel rounding differences are permitted; visibly clipped controls are not.
-  if (bounds.left < clipLeft - 0.5 || bounds.top < clipTop - 0.5
-    || bounds.right > clipRight + 0.5 || bounds.bottom > clipBottom + 0.5) return null
+  if (!visibleResult && (bounds.left < clipLeft - 0.5 || bounds.top < clipTop - 0.5
+    || bounds.right > clipRight + 0.5 || bounds.bottom > clipBottom + 0.5)) return null
+  const measured = visibleResult
+    ? rect(Math.max(bounds.left, clipLeft), Math.max(bounds.top, clipTop), Math.min(bounds.right, clipRight), Math.min(bounds.bottom, clipBottom))
+    : rect(bounds.left, bounds.top, bounds.right, bounds.bottom)
+  if (measured.width <= 0 || measured.height <= 0) return null
   // Content from a native web host is never traversed. Hit testing stays in the host document.
   if (typeof element.ownerDocument.elementsFromPoint === 'function') {
-    const hit = element.ownerDocument.elementsFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2)
+    const hit = element.ownerDocument.elementsFromPoint(measured.left + measured.width / 2, measured.top + measured.height / 2)
       .find((node) => !node.closest('[data-product-tour-overlay], [data-product-tour-popover]'))
     if (hit && !element.contains(hit) && !hit.contains(element)) return null
   }
-  const measured = rect(bounds.left, bounds.top, bounds.right, bounds.bottom)
   const inset = Math.max(0, padding)
   return { viewport: { width: view.innerWidth, height: view.innerHeight }, rect: measured, spotlightRect: rect(Math.max(0, measured.left - inset), Math.max(0, measured.top - inset), Math.min(view.innerWidth, measured.right + inset), Math.min(view.innerHeight, measured.bottom + inset)) }
 }

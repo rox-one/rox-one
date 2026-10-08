@@ -11,6 +11,8 @@ import {
 export type CompactWorkspaceSelection =
   | { kind: 'panel'; panelId: string }
   | { kind: 'service'; serviceId: AppNavDestinationId }
+  /** W1-07 (#1504): a registered mode (root route); an open panel on it is focused. */
+  | { kind: 'mode'; route: string }
 
 export type CompactWorkspaceAction =
   | { kind: 'focus'; panelId: string }
@@ -32,6 +34,11 @@ export function resolveCompactWorkspaceSelection(
     return panels.some((panel) => panel.id === selection.panelId)
       ? { kind: 'focus', panelId: selection.panelId }
       : null
+  }
+  if (selection.kind === 'mode') {
+    const focused = panels.find((panel) => panel.id === focusedPanelId)
+    const open = focused?.route === selection.route ? focused : panels.find((panel) => panel.route === selection.route)
+    return open ? { kind: 'focus', panelId: open.id } : { kind: 'navigate', route: selection.route as ViewRoute }
   }
   const panel = findServicePanel(panels, focusedPanelId, selection.serviceId)
   if (panel) return { kind: 'focus', panelId: panel.id }

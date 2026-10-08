@@ -378,7 +378,7 @@ export function loadSource(workspaceRootPath: string, sourceSlug: string): Loade
   // Pre-compute icon path for renderer (avoids fs access in browser)
   const iconPath = findIconFile(folderPath);
 
-  return {
+  const source: LoadedSource = {
     config,
     guide: loadSourceGuide(workspaceRootPath, sourceSlug),
     folderPath,
@@ -386,6 +386,9 @@ export function loadSource(workspaceRootPath: string, sourceSlug: string): Loade
     workspaceId,
     iconPath,
   };
+  return config.type === 'local'
+    ? { ...source, localFolderAvailable: getLocalSourceFolderState(source).available }
+    : source;
 }
 
 /**

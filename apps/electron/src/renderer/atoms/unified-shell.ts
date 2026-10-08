@@ -12,13 +12,12 @@
  */
 import { atom, type WritableAtom } from 'jotai'
 import { atomWithStorage, RESET } from 'jotai/utils'
-import { KEYS, getKeyString } from '@/lib/local-storage'
+import { KEYS, get, getKeyString } from '@/lib/local-storage'
+import { resolveInspectorDefaults } from '@/platform/inspector-model'
 import { SIDE_PANEL_DEFAULT_WIDTH } from '@/lib/shell-layout-preferences'
 
 export const INSPECTOR_PANEL_WIDTH_MIN = 280
 export const INSPECTOR_PANEL_WIDTH_MAX = 1400
-export const BOTTOM_DOCK_HEIGHT_MIN = 88
-export const BOTTOM_DOCK_HEIGHT_MAX = 480
 
 /** Keep corrupt/stale layout values from making shell controls inaccessible. */
 export function clampPersistedLayoutSize(
@@ -270,10 +269,15 @@ export const activityRailCollapsedAtom = atomWithStorage<boolean>(
  */
 export const activityRailNarrowOverrideAtom = atom<boolean>(false)
 
+const inspectorDefaults = resolveInspectorDefaults({
+  visible: get<unknown>(KEYS.inspectorVisible, undefined),
+  chromeCollapsed: get<unknown>(KEYS.inspectorChromeCollapsed, undefined),
+})
+
 /** Inspector panel visibility (the 48px section rail itself always renders). */
 export const inspectorVisibleAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorVisible),
-  false,
+  inspectorDefaults.visible,
   undefined,
   { getOnInit: true },
 )
@@ -303,7 +307,7 @@ export const topBarSurfaceTabsSlotAtom = atom<HTMLElement | null>(null)
 /** Entire inspector chrome (panel + section rail) collapsed to a restore strip. */
 export const inspectorChromeCollapsedAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorChromeCollapsed),
-  false,
+  inspectorDefaults.chromeCollapsed,
   undefined,
   { getOnInit: true },
 )
@@ -319,10 +323,15 @@ export type InspectorSectionId =
   | 'browser'
   | 'context'
 
-/** Active inspector section (persisted; validated on read by `inspector-model.ts`). */
+/**
+ * Active inspector section (persisted; validated on read by
+ * `inspector-model.ts`). Defaults to `browser`: the legacy `info` section is
+ * never auto-activated, and `normalizeInspectorSection` coerces a stale
+ * persisted `info` to `browser` too.
+ */
 export const inspectorSectionAtom = atomWithStorage<InspectorSectionId>(
   getKeyString(KEYS.inspectorSection),
-  'info',
+  'browser',
   undefined,
   { getOnInit: true },
 )
@@ -339,22 +348,10 @@ function createInspectorPanelWidthAtom() {
 }
 export const inspectorPanelWidthAtom = createInspectorPanelWidthAtom()
 
-/** Terminal docked under the main column (stacks with the right inspector). */
+/** Terminal panel under the first column's first cell (TopBar is the entry point). */
 export const bottomTerminalOpenAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.bottomTerminalOpen),
   false,
   undefined,
   { getOnInit: true },
 )
-
-/** Bottom terminal dock height in px. */
-function createBottomDockHeightAtom() {
-  const bottomDockHeightAtom = atomWithStorage<number>(
-    getKeyString(KEYS.bottomDockHeight),
-    104,
-    boundedNumberStorage(BOTTOM_DOCK_HEIGHT_MIN, BOTTOM_DOCK_HEIGHT_MAX, 104),
-    { getOnInit: true },
-  )
-  return withBoundedLayoutSize(bottomDockHeightAtom, 104, BOTTOM_DOCK_HEIGHT_MIN, BOTTOM_DOCK_HEIGHT_MAX)
-}
-export const bottomDockHeightAtom = createBottomDockHeightAtom()

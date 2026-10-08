@@ -4,7 +4,7 @@ Staged plan → user approve → `spawn_session` members → durable `.agent-tea
 
 ## State root
 
-`<workspace>/.agent-teams/` via `AgentTeamsStore` (`@craft-agent/core/platform/agent-teams`).
+`<workspace>/.agent-teams/` via `AgentTeamsStore` (`@rox/core/platform/agent-teams`).
 
 Captain session owns roster, DAG, and archive. Members may update assigned tasks and their own mailbox; `from` must match the calling session. Foreign, removed, and path-alias identities are rejected. The session tool is `safeMode: block`.
 

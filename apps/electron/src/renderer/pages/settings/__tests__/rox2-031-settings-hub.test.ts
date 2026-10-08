@@ -24,7 +24,7 @@ describe('ROX2-031 native settings hub', () => {
     expect(ids).toContain('account')
     expect(ids).toContain('permissions')
     expect(ids).toContain('security')
-    expect(ids).toHaveLength(22)
+    expect(ids).toHaveLength(23)
     const registry = source('apps/electron/src/shared/settings-registry.ts')
     expect(registry).toContain('SETTINGS_HUB_REQUIRES_CONATION_FLAG = false')
     expect(registry).not.toContain('conation.dev')

@@ -30,6 +30,7 @@ import { DeletePageDialog } from './DeletePageDialog'
 import { PageGrantsDialog } from './PageGrantsDialog'
 import { PageSourceAuthBanner } from './PageSourceAuthBanner'
 import { SharePageDialog, usePageShareCapabilities } from './SharePageDialog'
+import { toErrorMessage } from '@/lib/errors'
 
 interface PageViewProps {
   pageSlug: string
@@ -128,7 +129,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
         setLeaseState({ ...result, workspaceId: activeWorkspaceId })
       })
       .catch(err => {
-        if (!stale) setLeaseError({ contentDigest, message: err instanceof Error ? err.message : String(err) })
+        if (!stale) setLeaseError({ contentDigest, message: toErrorMessage(err) })
       })
 
     return () => {
@@ -191,7 +192,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
       await window.electronAPI.updatePage(activeWorkspaceId, page.config.slug, { name: next })
     } catch (err) {
       toast.error(t('toast.pageUpdateFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }, [nameDraft, activeWorkspaceId, page, t])
@@ -204,7 +205,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
       await window.electronAPI.updatePage(activeWorkspaceId, page.config.slug, { projectId })
     } catch (err) {
       toast.error(t('toast.pageUpdateFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }, [activeWorkspaceId, page, t])
@@ -248,7 +249,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
       navigate(routes.view.pages())
     } catch (err) {
       toast.error(t('toast.pageDeleteFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     }
   }, [activeWorkspaceId, page, t, navigate])

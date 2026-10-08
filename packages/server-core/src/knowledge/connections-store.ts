@@ -45,6 +45,7 @@ export function credentialIdFromRef(credentialRef: string): CredentialId | null 
 
 /** Cache of the last probe result for a connection (K-04 §3.3.1). */
 export type KnowledgeConnectionStatus = 'unknown' | 'ok' | 'needs_auth' | 'failed'
+export type KnowledgeConnectionProvider = 'siyuan' | 'local-markdown'
 
 /**
  * Validate + normalize a connection baseUrl for save (Settings → Knowledge edit
@@ -80,7 +81,7 @@ export function normalizeKnowledgeBaseUrl(raw: string): string {
  */
 export interface KnowledgeConnectionRecord {
   id: string
-  provider: 'siyuan'
+  provider: KnowledgeConnectionProvider
   mode: KnowledgeConnectionMode
   baseUrl: string
   /** CredentialManager key — never the token itself. */
@@ -102,7 +103,7 @@ export interface SaveConnectionInput {
   id?: string
   baseUrl: string
   credentialRef: string
-  provider?: 'siyuan'
+  provider?: KnowledgeConnectionProvider
   mode?: KnowledgeConnectionMode
   version?: string
   capabilitiesJson?: string
@@ -117,15 +118,40 @@ export function parseConnectionFile(content: string): KnowledgeConnectionRecord[
   try {
     const parsed: unknown = JSON.parse(content)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (r): r is KnowledgeConnectionRecord =>
-        !!r && typeof r === 'object' &&
-        typeof (r as KnowledgeConnectionRecord).id === 'string' &&
-        typeof (r as KnowledgeConnectionRecord).baseUrl === 'string' &&
-        typeof (r as KnowledgeConnectionRecord).credentialRef === 'string' &&
-        typeof (r as KnowledgeConnectionRecord).createdAt === 'string' &&
-        typeof (r as KnowledgeConnectionRecord).updatedAt === 'string',
-    )
+    const records: KnowledgeConnectionRecord[] = []
+    for (const r of parsed) {
+      const raw = r as Record<string, unknown>
+      if (
+        !r || typeof r !== 'object' ||
+        typeof raw.id !== 'string' ||
+        typeof raw.baseUrl !== 'string' ||
+        typeof raw.credentialRef !== 'string' ||
+        typeof raw.createdAt !== 'string' ||
+        typeof raw.updatedAt !== 'string'
+      ) {
+        continue
+      }
+      const provider: KnowledgeConnectionProvider | null =
+        raw.provider === undefined
+          ? 'siyuan'
+          : raw.provider === 'siyuan' || raw.provider === 'local-markdown'
+            ? raw.provider
+            : null
+      if (!provider) continue
+      records.push({
+        id: raw.id,
+        provider,
+        mode: raw.mode === 'managed' || raw.mode === 'remote' ? raw.mode : 'external-local',
+        baseUrl: raw.baseUrl,
+        credentialRef: raw.credentialRef,
+        ...(typeof raw.version === 'string' ? { version: raw.version } : {}),
+        ...(typeof raw.capabilitiesJson === 'string' ? { capabilitiesJson: raw.capabilitiesJson } : {}),
+        status: raw.status === 'ok' || raw.status === 'needs_auth' || raw.status === 'failed' ? raw.status : 'unknown',
+        createdAt: raw.createdAt,
+        updatedAt: raw.updatedAt,
+      })
+    }
+    return records
   } catch {
     return []
   }
@@ -184,6 +210,13 @@ export class KnowledgeConnectionsStore {
    * generated uuid. Returns the stored record.
    */
   save(input: SaveConnectionInput): KnowledgeConnectionRecord {
+    if (
+      input.provider !== undefined &&
+      input.provider !== 'siyuan' &&
+      input.provider !== 'local-markdown'
+    ) {
+      throw new CodedError('INVALID_REF', `knowledge: unsupported provider '${String(input.provider)}'`)
+    }
     if (input.mode === 'managed' && loadG2AcceptedVariantFromDisk() !== 'C') {
       throw new CodedError(
         'CAPABILITY_DISABLED',
@@ -237,6 +270,17 @@ export class KnowledgeConnectionsStore {
     const kept = records.filter(r => r.id !== id)
     if (kept.length === records.length) return false
     this.writeRecords(kept)
+    return true
+  }
+
+  /** Move a connection to the front so default consumers pick it first. */
+  promote(id: string): boolean {
+    const records = this.readRecords()
+    const idx = records.findIndex(r => r.id === id)
+    if (idx <= 0) return idx === 0
+    const [record] = records.splice(idx, 1)
+    records.unshift(record!)
+    this.writeRecords(records)
     return true
   }
 

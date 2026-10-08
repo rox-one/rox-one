@@ -22,6 +22,7 @@ import { ReconnectCredentialDialog, reconnectFlavor } from '@/components/pages/P
 import { sourcesAtom } from '@/atoms/sources'
 import { navigate, routes } from '@/lib/navigate'
 import type { LoadedSource, MessagingPlatformRuntimeInfo, ServiceConnection } from '../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 
 export type OverviewStatus = 'connected' | 'error' | 'notConfigured' | 'disabled' | 'pending'
 
@@ -224,7 +225,7 @@ export function ConnectionsOverview({ workspaceId, reloadKey }: { workspaceId: s
       await loadSources()
     } catch (error) {
       toast.error(t('toast.pageSourceReconnectFailed', { name: source.config.name }), {
-        description: error instanceof Error ? error.message : String(error),
+        description: toErrorMessage(error),
       })
     } finally {
       setBusy(null)
@@ -240,7 +241,7 @@ export function ConnectionsOverview({ workspaceId, reloadKey }: { workspaceId: s
       await loadSources()
     } catch (error) {
       toast.error(t('connections.overview.removeFailed'), {
-        description: error instanceof Error ? error.message : String(error),
+        description: toErrorMessage(error),
       })
     } finally {
       setBusy(null)
@@ -255,7 +256,7 @@ export function ConnectionsOverview({ workspaceId, reloadKey }: { workspaceId: s
       await loadServices()
     } catch (error) {
       toast.error(t('settings.accounts.disconnectFailed', {
-        message: error instanceof Error ? error.message : String(error),
+        message: toErrorMessage(error),
       }))
     } finally {
       setBusy(null)

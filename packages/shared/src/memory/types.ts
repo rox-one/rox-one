@@ -29,6 +29,9 @@ export interface Lesson {
   source: {
     sessionId?: string
     trigger: LessonTrigger
+    /** Explicit approval provenance, preserved in canonical lesson storage. */
+    proposalId?: string
+    consentEventId?: string
   }
   // — Lesson schema v2 (spec F1). All optional: v1 files load without migration. —
   /** How many times this lesson was included in an assembled prompt (touchUsed). */

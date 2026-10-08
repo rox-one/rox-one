@@ -1,0 +1,137 @@
+[2m[WebServer] [22m[0m[33mWarning[0m[2m:[0m [1mThe 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mwarnOnDeactivatedColors[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m33[0m[2m:[33m24[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mgetColorDepth[0m[2m ([0m[0m[36minternal:tty[0m[2m:[0m[33m42[0m[2m:[33m39[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mshouldColorize[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m14[0m[2m:[33m109[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mrefresh[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m18[0m[2m:[33m31[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:util/colors[0m[2m ([0m[0m[36minternal:util/colors[0m[2m:[0m[33m24[0m[2m:[33m16[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3minternal:assert/assertion_error[0m[2m ([0m[0m[36minternal:assert/assertion_error[0m[2m:[0m[33m2[0m[2m:[33m187[0m[2m)[0m
+[2m[WebServer] [22m[0m      [2mat [0m[0m[1m[3mloadAssertionError[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m28[0m[2m:[33m96[0m[2m)[0m
+[2m[WebServer] [22m
+
+Running 2 tests using 1 worker
+
+(node:115) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:115) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light (13.4s)
+(node:206) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:206) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark (12.7s)
+
+
+  1) context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light 
+
+    TimeoutError: locator.click: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('runtime-context-canvas').locator('[data-testid="runtime-context-group"][data-context-group="instructions"]').getByRole('button', { name: 'Ещё 2', exact: true })[22m
+    [2m    - locator resolved to <button type="button" class="runtime-context-group-more nodrag nopan">Ещё 2</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="react-flow__pane draggable">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="react-flow__pane draggable">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    18 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="react-flow__pane draggable">…</div> intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      26 |   await expect(header).toHaveAttribute('aria-expanded', 'true')
+      27 |   await expect(header).toContainText('6')
+    > 28 |   await instructions.getByRole('button', { name: 'Ещё 2', exact: true }).click()
+         |                                                                          ^
+      29 |   await expect(instructionRows).toHaveCount(6)
+      30 |   const sourceIds = await instructionRows.evaluateAll(rows => rows.map(row => row.getAttribute('data-source-event-id')))
+      31 |   expect(sourceIds.every(Boolean)).toBe(true)
+        at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts:28:74
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-context-remediation/context-grouped-context-is-22a30-t-child-provenance-in-light/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-context-remediation/context-grouped-context-is-22a30-t-child-provenance-in-light/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-context-remediation/context-grouped-context-is-22a30-t-child-provenance-in-light/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-context-remediation/context-grouped-context-is-22a30-t-child-provenance-in-light/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark 
+
+    TimeoutError: locator.click: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('runtime-context-canvas').locator('[data-testid="runtime-context-group"][data-context-group="instructions"]').getByRole('button', { name: 'Ещё 2', exact: true })[22m
+    [2m    - locator resolved to <button type="button" class="runtime-context-group-more nodrag nopan">Ещё 2</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="react-flow__pane draggable">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="react-flow__pane draggable">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    18 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="react-flow__pane draggable">…</div> intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      26 |   await expect(header).toHaveAttribute('aria-expanded', 'true')
+      27 |   await expect(header).toContainText('6')
+    > 28 |   await instructions.getByRole('button', { name: 'Ещё 2', exact: true }).click()
+         |                                                                          ^
+      29 |   await expect(instructionRows).toHaveCount(6)
+      30 |   const sourceIds = await instructionRows.evaluateAll(rows => rows.map(row => row.getAttribute('data-source-event-id')))
+      31 |   expect(sourceIds.every(Boolean)).toBe(true)
+        at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts:28:74
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-context-remediation/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-context-remediation/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-context-remediation/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/trace.zip
+    Usage:
+
+        npx playwright show-trace docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-context-remediation/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in light 
+    context.spec.ts:5:49 › grouped context is read-only and preserves root/child provenance in dark 

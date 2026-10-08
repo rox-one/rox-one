@@ -35,6 +35,8 @@ import type { ViewConfig as KnowledgeViewConfig } from '@rox/shared/views'
 import { KnowledgeProposals } from './KnowledgeProposals'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
 import { getKernelAvailability, observeKernelAvailability } from './kernel-availability'
+import { toErrorMessage } from '@/lib/errors'
+import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 
 /**
  * Which body KnowledgeHome renders. Module-level atom so other column hosts
@@ -312,6 +314,7 @@ export function KnowledgeHome() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  const notesTitleKey = useNotesTitleKey('sidebar.notes')
   const appShell = useOptionalAppShellContext()
   const activeWorkspaceRoot =
     appShell?.workspaces.find((w) => w.id === (appShell.activeWorkspaceId ?? workspaceId))?.rootPath
@@ -386,6 +389,9 @@ export function KnowledgeHome() {
 
   // Probe whether the legacy external knowledge engine is up. Empty state
   // Rox Notes only — no SiYuan install/start CTA and no SiYuan document routes.
+  // Cached via kernel-availability: repeat tab switches reuse the last verdict
+  // (30s TTL) instead of re-firing engineStatus (2.5s bootstrap probe + up to
+  // 10s getVersion) on every mount.
   useEffect(() => {
     if (typeof window === 'undefined') return
     const api = window.electronAPI?.knowledge
@@ -582,7 +588,7 @@ export function KnowledgeHome() {
     } catch (error) {
       toast.error(t('knowledge.migrate.failed'), {
         id: progressToast,
-        description: error instanceof Error ? error.message : String(error),
+        description: toErrorMessage(error),
       })
     } finally {
       setMigrating(false)
@@ -620,7 +626,7 @@ export function KnowledgeHome() {
         navigate(routes.view.proposal(result.proposalId))
       } catch (error) {
         toast.error(t('knowledge.surface.error'), {
-          description: error instanceof Error ? error.message : String(error),
+          description: toErrorMessage(error),
         })
       } finally {
         setSetAttrBusy(null)
@@ -826,7 +832,7 @@ export function KnowledgeHome() {
             className="underline underline-offset-2 hover:text-foreground"
             onClick={() => navigate(routes.view.notes())}
           >
-            {t('sidebar.notes')}
+            {t(notesTitleKey)}
           </button>
         </div>
       </div>

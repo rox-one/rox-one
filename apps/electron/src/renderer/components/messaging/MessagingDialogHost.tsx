@@ -19,6 +19,7 @@ import { messagingDialogAtom } from '@/atoms/messaging'
 import { PairingCodeDialog } from './PairingCodeDialog'
 import { WhatsAppConnectDialog } from './WhatsAppConnectDialog'
 import { WeChatConnectDialog } from './WeChatConnectDialog'
+import { toErrorMessage } from '@/lib/errors'
 
 export function MessagingDialogHost() {
   const [state, setState] = useAtom(messagingDialogAtom)
@@ -132,7 +133,7 @@ export function MessagingDialogHost() {
 }
 
 function classifyMessagingError(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err)
+  const msg = toErrorMessage(err)
   if (/not connected/i.test(msg)) {
     return 'WhatsApp is not connected yet. Reconnect it in Settings → Messaging and try again.'
   }

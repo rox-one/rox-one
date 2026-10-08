@@ -1,0 +1,31 @@
+{
+  "classification": "bounded actual authority/task handler/backend factory fixtures; provider dispatch explicitly stopped or injected",
+  "integratedSource": "e4241de23d11403f1d35d1e1fce1e2eeb24b4ea5",
+  "artifacts": [
+    {
+      "file": "w1-pocket-task-owner-final.log",
+      "sha256": "c1370dc73910af04adcb9c285ac51bfd0f0ef4ab2b9730c34db7edaa069ec41f",
+      "bytes": 8194
+    },
+    {
+      "file": "w1-task-pocket-owner-baseline-red.log",
+      "sha256": "6d795f7e377d84353e36385798a478be4dee4bfc5a9fe2f95fcec5b65fe7afdb",
+      "bytes": 2847
+    },
+    {
+      "file": "w1-pocket-fixtures-and-native-ownership-green.log",
+      "sha256": "767adc6c444babc9bb9fd87a3f298b55bc42f26141b0a8134dc3e84a794217d3",
+      "bytes": 2231
+    },
+    {
+      "file": "w1-pocket-object-fixtures-red.log",
+      "sha256": "b7c4307c3cf5484b825649e23fc4a9dbcdbf73b06d516e346550ca78724f6a5d",
+      "bytes": 10332
+    },
+    {
+      "file": "task-account-custody-green.log",
+      "sha256": "ce799b1c15ce5e5520a2c0b89afe47ef425d28e0f6e74b875986209bf7dc4a61",
+      "bytes": 2616
+    }
+  ]
+}

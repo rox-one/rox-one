@@ -9,6 +9,7 @@ import { WsRpcClient } from '../../packages/server-core/src/transport/client'
 import { DOMAIN_PROJECT_RPC } from '../../packages/shared/src/workspace-domain/identity/contracts'
 import { PostgresIdentityAuth, loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
 import { IdentityRepository } from '../../apps/workspace-service/src/modules/identity/repository'
+import { loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
 
 const DATABASE_CONFIGURATION = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
 const CHILD_TIMEOUT_MS = 5000
@@ -162,7 +163,8 @@ async function fixture() {
   return { database, schema, owner, member, identity, workspaceId, command, basePath, ownerToken, memberToken, consumerId,
     oldCursor, beforeJwks, crashAfterCommittedRequest, http, ws, token: () => token(ownerLogin), counts,
     async restart() { const ready = await start(); expect(record(ready.migrations).applied).toEqual([])
-      expect(record(ready.migrations).retained).toEqual(['01-domain-contract.sql','01-local-auth-bootstrap.sql'])
+      // Startup always loads the full sorted set (01-*, 48, 5NN-*), so a restart retains all of it.
+      expect(record(ready.migrations).retained).toEqual((await loadWorkspaceBootstrapMigrations(join(import.meta.dir, '../../apps/workspace-service/migrations'))).map(m => m.name))
       expect((await http('/.well-known/jwks.json')).body).toEqual(beforeJwks); return ready },
     async consume() { control({ action: 'consume', consumerId, schema }); return message('consumed') },
   }

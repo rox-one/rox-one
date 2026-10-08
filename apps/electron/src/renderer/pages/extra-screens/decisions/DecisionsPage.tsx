@@ -52,6 +52,7 @@ import {
   syncDecisionLessons,
   syncExtraction,
 } from './decisions-store'
+import { toErrorMessage } from '@/lib/errors'
 
 const STATUSES: DecisionStatus[] = ['accepted', 'superseded', 'reverted']
 const PERIODS: (number | null)[] = [7, 30, 90, null]
@@ -459,7 +460,7 @@ function ExtractPanel({ workspaceId, language, data }: { workspaceId: string | n
       const result = await startExtraction(workspaceId, source, language, t('extraScreens.decisions.extractSessionName', { source: source.label ?? '' }))
       if ('error' in result) setError(t('extraScreens.decisions.emptySource'))
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(toErrorMessage(e))
     } finally {
       setBusy(null)
     }

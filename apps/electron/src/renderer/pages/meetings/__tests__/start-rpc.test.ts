@@ -128,6 +128,15 @@ describe('meetings start RPC client', () => {
     expect(calls).toEqual([])
   })
 
+  it('does not present a denied catalog as an empty or readable meeting list', async () => {
+    const api: MeetingCatalogApi = {
+      createMeeting: async () => ({ meeting: null }),
+      listMeetings: async () => ({ page: [planned()], continueCursor: null, denied: true }),
+    }
+    expect(await listNativeMeetingsViaRpc({ api, workspaceId: 'ws' }))
+      .toEqual({ ok: false, code: 'workspace-required' })
+  })
+
   it('search goes through RPC args and fail-closes on missing persist root', async () => {
     const calls: Array<{ channel: string; args: unknown[] }> = []
     const api: MeetingSearchApi = {

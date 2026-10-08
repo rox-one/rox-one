@@ -125,6 +125,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   // system — local OS info
   RPC_CHANNELS.system.VERSIONS,
   RPC_CHANNELS.system.HOME_DIR,
+  RPC_CHANNELS.system.CONFIG_DIR,
   RPC_CHANNELS.system.IS_DEBUG_MODE,
 
   // toolchain — local config-dir downloads/install state
@@ -482,6 +483,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
 // ---------------------------------------------------------------------------
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+  RPC_CHANNELS.workspaceWork.READ,
+  RPC_CHANNELS.workspaceWork.WRITE,
+  RPC_CHANNELS.workspaceWork.DELETE,
+  RPC_CHANNELS.workspaceWork.SNAPSHOT_PROFILE,
+  RPC_CHANNELS.workspaceWork.CHANGED,
   RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT,
   RPC_CHANNELS.runtimeTrace.READ_EVENTS,
   RPC_CHANNELS.runtimeTrace.READ_PAYLOAD,
@@ -744,6 +750,29 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.memory.REJECT_PROPOSAL,
   RPC_CHANNELS.memory.EDIT_PROPOSAL,
   RPC_CHANNELS.memory.DELETE_PROPOSAL,
+
+  // learning — candidates/evidence/outcomes/policies live under the
+  // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).
+  RPC_CHANNELS.learning.LIST_CANDIDATES,
+  RPC_CHANNELS.learning.GET_CANDIDATE,
+  RPC_CHANNELS.learning.LIST_EVIDENCE,
+  RPC_CHANNELS.learning.GET_OUTCOME,
+  RPC_CHANNELS.learning.GET_EXPERIMENT,
+  RPC_CHANNELS.learning.GET_STATS,
+  RPC_CHANNELS.learning.GET_SKILL_EFFECTIVENESS,
+  RPC_CHANNELS.learning.GET_POLICY,
+  RPC_CHANNELS.learning.GET_TIMELINE,
+  RPC_CHANNELS.learning.APPROVE,
+  RPC_CHANNELS.learning.REJECT,
+  RPC_CHANNELS.learning.ROLLBACK,
+  RPC_CHANNELS.learning.REVALIDATE,
+  RPC_CHANNELS.learning.FORCE_REFLECT,
+  RPC_CHANNELS.learning.CONSOLIDATE,
+  RPC_CHANNELS.learning.CURATE_SKILLS,
+  RPC_CHANNELS.learning.RUN_POLICY_LEARNING,
+  RPC_CHANNELS.learning.OBSERVE,
+  RPC_CHANNELS.learning.RECORD_OUTCOME,
+  RPC_CHANNELS.learning.RECORD_CORRECTION,
 
   // skillsPending — pending skill approvals per workspace
   RPC_CHANNELS.skillsPending.LIST,
@@ -1072,6 +1101,12 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
 
   // Entities (W1-02) — resolution may fan out to the workspace owner.
   RPC_CHANNELS.entities.RESOLVE,
+
+  // W1-03 (#1500) — the command bus runs on whichever server owns the
+  // workspace (its executor store and outbox live under the workspace root).
+  RPC_CHANNELS.commands.EXECUTE,
+  RPC_CHANNELS.commands.LIST,
+  RPC_CHANNELS.commands.EVENT,
 ])
 
 // ---------------------------------------------------------------------------

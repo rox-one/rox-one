@@ -21,34 +21,36 @@ const focusPath = process.argv[2] || new URL('../../../lib/focus-session.ts', im
 const focus = await import(focusPath) as typeof import('../../../lib/focus-session')
 mock.module('@/lib/focus-session', () => focus)
 const hookPath = process.argv[3] || new URL('../../useNotifications.ts', import.meta.url).pathname
-const { useNotifications } = await import(hookPath) as typeof import('../../useNotifications')
-const session = { id: 'same-session', name: 'Private title' } as Parameters<ReturnType<typeof useNotifications>['showSessionNotification']>[0]
+// React scheduling is mocked above; this fixture invokes the actual hook's
+// deterministic closures explicitly rather than rendering a React component.
+const { useNotifications: renderNotifications } = await import(hookPath) as typeof import('../../useNotifications')
+const session = { id: 'same-session', name: 'Private title' } as Parameters<ReturnType<typeof renderNotifications>['showSessionNotification']>[0]
 const reset = (active: boolean) => { values.clear(); writes = 0; notifications.length = 0; focused = false; gui = true; focus.saveFocusState(active ? focus.startFocus(focus.emptyFocusState(), 25, Date.now()) : focus.emptyFocusState()); writes = 0 }
 reset(true)
-useNotifications({ workspaceId: 'workspace-a', enabled: false }).showSessionNotification(session, 'Private body')
+renderNotifications({ workspaceId: 'workspace-a', enabled: false }).showSessionNotification(session, 'Private body')
 assert.equal(writes, 0, 'Disabled notification must not write Focus storage')
 assert.equal(focus.loadFocusState().queue.length, 0)
 assert.equal(notifications.length, 0)
 reset(true)
-useNotifications({ workspaceId: 'workspace-a', enabled: true }).showSessionNotification(session, 'First')
-useNotifications({ workspaceId: 'workspace-b', enabled: true }).showSessionNotification(session, 'Second')
-useNotifications({ workspaceId: 'workspace-a', enabled: true }).showSessionNotification(session, 'Updated')
+renderNotifications({ workspaceId: 'workspace-a', enabled: true }).showSessionNotification(session, 'First')
+renderNotifications({ workspaceId: 'workspace-b', enabled: true }).showSessionNotification(session, 'Second')
+renderNotifications({ workspaceId: 'workspace-a', enabled: true }).showSessionNotification(session, 'Updated')
 assert.deepEqual(focus.loadFocusState().queue.map(q => [q.workspaceId, q.sessionId, q.body, q.count]), [['workspace-a', 'same-session', 'Updated', 2], ['workspace-b', 'same-session', 'Second', 1]])
 assert.equal(notifications.length, 0)
 reset(false)
-useNotifications({ workspaceId: 'workspace-a' }).showSessionNotification(session, 'x'.repeat(120))
+renderNotifications({ workspaceId: 'workspace-a' }).showSessionNotification(session, 'x'.repeat(120))
 assert.deepEqual(notifications, [['Private title', 'x'.repeat(97) + '...', 'workspace-a', 'same-session']])
 assert.equal(writes, 0)
 for (const scenario of ['focused', 'headless', 'no-workspace', 'disabled'] as const) {
   reset(false); focused = scenario === 'focused'; gui = scenario !== 'headless'
-  useNotifications({ workspaceId: scenario === 'no-workspace' ? null : 'workspace-a', enabled: scenario !== 'disabled' }).showSessionNotification(session, 'Body')
+  renderNotifications({ workspaceId: scenario === 'no-workspace' ? null : 'workspace-a', enabled: scenario !== 'disabled' }).showSessionNotification(session, 'Body')
   assert.equal(notifications.length, 0, scenario); assert.equal(writes, 0, scenario)
 }
 reset(true); focused = true; gui = false
-useNotifications({ workspaceId: 'workspace-a' }).showSessionNotification(session, 'x'.repeat(160))
+renderNotifications({ workspaceId: 'workspace-a' }).showSessionNotification(session, 'x'.repeat(160))
 assert.equal(focus.loadFocusState().queue[0]?.body?.length, 140)
 assert.equal(notifications.length, 0)
 reset(true)
-useNotifications({ workspaceId: null }).showSessionNotification(session, 'Body')
+renderNotifications({ workspaceId: null }).showSessionNotification(session, 'Body')
 assert.equal(writes, 0); assert.equal(notifications.length, 0)
 console.log('PASS actual hook closures and production Focus storage functions')

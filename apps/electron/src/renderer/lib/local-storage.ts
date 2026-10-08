@@ -93,12 +93,14 @@ export const KEYS = {
   workbenchLegacyEnabled: 'feature-unified-shell', // Bounded compatibility read only
   surfaceLayout: 'surface-layout', // Surface layout transport (URL search string; derived via platform/layout-snapshot.ts), workspace-scoped
   activityRailCollapsed: 'activity-rail-collapsed', // Preserve the user's existing collapse preference
-  inspectorVisible: 'inspector-visible',
+  // A6: right panel must be closed on every screen after launch. Bumped once so
+  // an existing user's persisted `true` no longer opens the panel; the atom keeps
+  // persisting the user's subsequent toggle.
+  inspectorVisible: 'inspector-visible-v2',
   inspectorChromeCollapsed: 'inspector-chrome-collapsed',
   inspectorSection: 'inspector-section',
   inspectorPanelWidth: 'inspector-panel-width',
   bottomTerminalOpen: 'bottom-terminal-open',
-  bottomDockHeight: 'bottom-dock-height',
   // Workbench v2 (ADR-0001) — granular chrome flags; all default OFF
   featureWorkbenchModeRegistryV1: 'feature-workbench-mode-registry-v1',
   featureWorkbenchTopChromeV2: 'feature-workbench-top-chrome-v2',
@@ -135,6 +137,8 @@ export const KEYS = {
   // Last collection layout origin (list/board/table) for Shift+click back
   collectionLastView: 'collection-last-view',
   collectionSlices: 'collection-slices',
+  // Browser panel: reuse imported cookies in this panel (consent still gates use).
+  browserPaneUseImportedCookies: 'browser-pane-use-imported-cookies',
   // Panel registry user overrides (S-03 §3.7), workspace-scoped via suffix
   panelState: 'panel-registry-state',
   // Zen Shell geometry snapshot (ZS-06). Workspace-scoped; dual-writes legacy width keys.
@@ -143,6 +147,9 @@ export const KEYS = {
   // v3 also narrows per-workspace shell-layout snapshots (v2 missed them, so a
   // later commit re-wrote the old width into the legacy key).
   sidePanelDefaults: 'side-panel-defaults-v3',
+  // W1-07 (#1504): generic per-id workbench flag store for flags without a
+  // dedicated key (`craft-workbench-flag:<flag id>`, e.g. workbench.mode.messenger.v1).
+  workbenchFlag: 'workbench-flag',
 } as const
 
 export const EVENTS = {

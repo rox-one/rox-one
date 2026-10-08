@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { TEAM_FLAG, dispatchTeam, teamActionContext, useTeamFlag, useTeamState } from './team-store'
 import { useTeamRoster } from './use-team-roster'
 import { memberInitials, memberName, syncStatusText } from './team-labels'
+import { toErrorMessage } from '@/lib/errors'
 
 const ROLES: TeamAccessRole[] = ['view', 'comment', 'run']
 
@@ -177,7 +178,7 @@ export function TeamSessionPanel({
         else toast.error(t('teamCollab.actionFailed'))
         return persisted
       } catch (err) {
-        toast.error(t('teamCollab.actionFailed'), { description: err instanceof Error ? err.message : String(err) })
+        toast.error(t('teamCollab.actionFailed'), { description: toErrorMessage(err) })
         return false
       }
     },

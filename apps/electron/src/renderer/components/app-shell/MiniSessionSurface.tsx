@@ -7,6 +7,7 @@ import { focusedSessionIdAtom } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useAppShellContext, useSession } from '@/context/AppShellContext'
 import { resolveStatusDisplayLabel } from '@/config/session-status-config'
+import { toErrorMessage } from '@/lib/errors'
 import { navigate, routes } from '@/lib/navigate'
 import { VoiceDictationControl } from './input/VoiceDictationControl'
 
@@ -39,7 +40,7 @@ export function MiniSessionSurface() {
       context.onAttachmentsChange(sessionId, [])
       setDraft('')
     } catch (error) {
-      toast.error(String(error))
+      toast.error(toErrorMessage(error))
     } finally {
       setSending(false)
     }
@@ -70,7 +71,7 @@ export function MiniSessionSurface() {
   }
 
   return (
-    <main className="h-screen w-screen overflow-hidden border border-border bg-background text-foreground shadow-xl" aria-label={t('window.mini.appTitle')}>
+    <main className="h-screen w-screen overflow-hidden border border-border bg-background text-foreground shadow-strong" aria-label={t('window.mini.appTitle')}>
       <header className="flex h-10 items-center gap-2 border-b border-border px-3">
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{session?.name || session?.preview || t('window.mini.appTitle')}</span>
         <span className="max-w-[45%] truncate text-xs text-muted-foreground" role="status" aria-live="polite" title={sessionDetails?.currentStatus?.message || undefined}>

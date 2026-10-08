@@ -29,6 +29,7 @@ import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScr
 import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
 import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
 import { ENTITIES_LINKS_WORKBENCH_FLAG, isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
+import { isOpenUnifiedSurfaceRoot, isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
 
 /**
  * Entity-route gate (W1-02, product decision).
@@ -90,13 +91,15 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
   | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
   // Kind-first entity routes (W1-01) that legacy branches do not own.
   | 'entity'
+  // Unified mode roots (W1-07): messenger / calendar / goals / contacts.
+  | 'surface'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -115,6 +118,8 @@ export interface ParsedCompoundRoute {
   viewMode?: 'list' | 'board' | 'table' | 'heatmap'
   /** Parsed entity reference (only for the `entity` navigator). */
   entityRef?: EntityRef
+  /** Unified mode root (only for the `surface` navigator, W1-07). */
+  surface?: UnifiedSurfaceId
   /**
    * Details page info (null for empty state).
    * W1 surface navigators reuse this shape: `id` is the entity id (runId /
@@ -134,7 +139,7 @@ export interface ParsedCompoundRoute {
  * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   // Kind-first entity surfaces (W1-01). Shared with the deep-link handler so
   // `rox://docs/wiki/{id}` etc. reach the renderer parser.
@@ -144,12 +149,20 @@ export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
+  // W1-07: a bare unified mode root only exists while its mode flag is on;
+  // sub-routes fall through to the entities.links.v1 gate below.
+  if (isOpenUnifiedSurfaceRoot(route)) return true
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(firstSegment)) return isEntityRoutesEnabled()
   return COMPOUND_ROUTE_PREFIXES.includes(firstSegment)
 }
 
-/** Flag-aware prefix check for deep-link acceptance (`rox://<prefix>/...`). */
-export function isCompoundRoutePrefix(prefix: string): boolean {
+/**
+ * Flag-aware prefix check for deep-link acceptance (`rox://<prefix>/...`).
+ * `route` is the full route under the prefix (defaults to the bare prefix):
+ * an open mode flag admits only the bare root, never its sub-routes.
+ */
+export function isCompoundRoutePrefix(prefix: string, route: string = prefix): boolean {
+  if (route.split(/[/?#]/)[0] === prefix && isOpenUnifiedSurfaceRoot(route)) return true
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) return isEntityRoutesEnabled()
   return (COMPOUND_ROUTE_PREFIXES as readonly string[]).includes(prefix)
 }
@@ -199,6 +212,12 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
         entityRef: entity.ref,
       }
     }
+  }
+
+  // Unified mode roots (W1-07). Bare root only; sub-pages are entity routes.
+  // With the mode flag off the gate is closed and parsing is unchanged.
+  if (segments.length === 1 && isUnifiedSurfaceRouteEnabled(first)) {
+    return { navigator: 'surface', surface: first, details: null }
   }
 
   if (first === 'search') {
@@ -326,6 +345,12 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   if (first === 'memory') {
     if (segments.length !== 1) return null
     return { navigator: 'memory', details: null }
+  }
+
+  // Learning navigator (self-learning dashboard — PRD §25-30)
+  if (first === 'learning') {
+    if (segments.length !== 1) return null
+    return { navigator: 'learning', details: null }
   }
 
   // Personal tasks (Things-style; Issue 17)
@@ -672,6 +697,10 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'memory'
   }
 
+  if (parsed.navigator === 'learning') {
+    return 'learning'
+  }
+
   if (parsed.navigator === 'tasks') {
     if (!parsed.details) return 'tasks'
     return `tasks/task/${encodeURIComponent(parsed.details.id)}`
@@ -698,6 +727,10 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
 
   if (parsed.navigator === 'home') {
     return 'home'
+  }
+
+  if (parsed.navigator === 'surface' && parsed.surface) {
+    return parsed.surface
   }
 
   if (parsed.navigator === 'screen' && parsed.screen) {
@@ -899,6 +932,11 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return { type: 'view', name: 'memory', params: {} }
   }
 
+  // Learning
+  if (compound.navigator === 'learning') {
+    return { type: 'view', name: 'learning', params: {} }
+  }
+
   if (compound.navigator === 'tasks') {
     if (!compound.details) {
       return { type: 'view', name: 'tasks', params: {} }
@@ -933,6 +971,10 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 
   if (compound.navigator === 'home') {
     return { type: 'view', name: 'home', params: {} }
+  }
+
+  if (compound.navigator === 'surface' && compound.surface) {
+    return { type: 'view', name: 'surface', params: { surface: compound.surface } }
   }
 
   if (compound.navigator === 'screen' && compound.screen) {
@@ -1183,6 +1225,11 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'memory', details: null }
   }
 
+  // Learning
+  if (compound.navigator === 'learning') {
+    return { navigator: 'learning', details: null }
+  }
+
   if (compound.navigator === 'tasks') {
     if (!compound.details) {
       return { navigator: 'tasks', details: null }
@@ -1223,6 +1270,10 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
 
   if (compound.navigator === 'home') {
     return { navigator: 'home', details: null }
+  }
+
+  if (compound.navigator === 'surface' && compound.surface) {
+    return { navigator: 'surface', surface: compound.surface, details: null }
   }
 
   if (compound.navigator === 'screen' && compound.screen) {
@@ -1423,6 +1474,8 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'skills', details: null }
     case 'memory':
       return { navigator: 'memory', details: null }
+    case 'learning':
+      return { navigator: 'learning', details: null }
     case 'tasks':
       return { navigator: 'tasks', details: null }
     case 'inbox':
@@ -1459,6 +1512,11 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'connections', details: null }
     case 'home':
       return { navigator: 'home', details: null }
+    case 'surface': {
+      const surface = parsed.params.surface
+      if (!surface || !isUnifiedSurfaceRouteEnabled(surface)) return null
+      return { navigator: 'surface', surface, details: null }
+    }
     case 'screen': {
       const screen = parsed.params.screen
       if (!isExtraScreenId(screen)) return null
@@ -1677,6 +1735,13 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
     }
   }
 
+  if (state.navigator === 'learning') {
+    return {
+      navigator: 'learning',
+      details: null,
+    }
+  }
+
   if (state.navigator === 'tasks') {
     return {
       navigator: 'tasks',
@@ -1715,6 +1780,14 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
   if (state.navigator === 'home') {
     return {
       navigator: 'home',
+      details: null,
+    }
+  }
+
+  if (state.navigator === 'surface') {
+    return {
+      navigator: 'surface',
+      surface: state.surface,
       details: null,
     }
   }

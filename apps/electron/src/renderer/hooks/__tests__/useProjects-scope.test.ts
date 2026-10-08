@@ -52,6 +52,16 @@ function harness() {
   const listeners: { callback: (workspaceId: string, list: unknown) => void; disposed: boolean }[] = []
   const errors: unknown[][] = []
   const writes: unknown[] = []
+  const capabilityRecords = new Map<string, { token: object; value: unknown }>()
+  const tourPorts = new Map<string, object>()
+  const tourPort = (scope: { workspaceId?: string }) => {
+    const id = scope.workspaceId ?? ''
+    if (!tourPorts.has(id)) tourPorts.set(id, { capability: (_name: string, value: unknown) => {
+      const token = {}; capabilityRecords.set(id, { token, value })
+      return () => { if (capabilityRecords.get(id)?.token === token) capabilityRecords.delete(id) }
+    } })
+    return tourPorts.get(id)
+  }
   const setAtom = (list: LoadedProject[]) => { writes.push(list); store.set(projectsAtom, list) }
   const equal = (a: unknown[], b: unknown[]) => a?.length === b.length && b.every((value, index) => Object.is(a[index], value))
   function memo(factory: () => unknown, deps: unknown[]) {
@@ -71,7 +81,7 @@ function harness() {
     useState(initial: unknown) {
       const index = cursor++
       if (!slots[index]) {
-        const entry = { value: initial, set: undefined as any }
+        const entry = { value: typeof initial === 'function' ? initial() : initial, set: undefined as any }
         entry.set = (value: any) => { entry.value = typeof value === 'function' ? value(entry.value) : value }
         slots[index] = entry
       }
@@ -82,8 +92,10 @@ function harness() {
     useEffect: (create: () => unknown, deps: unknown[]) => effect(create, deps, effects),
     useLayoutEffect: (create: () => unknown, deps: unknown[]) => effect(create, deps, layouts),
   }
-  const useProjects = evaluate(process.env.ROX_USE_PROJECTS_TEST_SOURCE ?? resolve(import.meta.dir, '../useProjects.ts'), {
+  // The controlled hook scheduler above runs production closures directly.
+  const renderProjects = evaluate(process.env.ROX_USE_PROJECTS_TEST_SOURCE ?? resolve(import.meta.dir, '../useProjects.ts'), {
     react: hooks, jotai: { useSetAtom: () => setAtom }, '@/atoms/projects': { projectsAtom },
+    '@/features/product-tour/runtime/hooks': { useTourSignals: tourPort },
   }).useProjects
   const previousWindow = globalThis.window
   const previousError = console.error
@@ -98,13 +110,14 @@ function harness() {
   } } as any
   console.error = (...args: unknown[]) => errors.push(args)
   const render = (id: string | null | undefined) => {
-    workspace = id; cursor = 0; result = useProjects(id)
+    workspace = id; cursor = 0; result = renderProjects(id)
     while (layouts.length) layouts.shift()!()
     while (effects.length) effects.shift()!()
     return result
   }
   return {
     render, requests, listeners, errors, writes,
+    capability: (id: string) => capabilityRecords.get(id)?.value,
     view: () => render(workspace).projects,
     atom: () => store.get(projectsAtom),
     catalog: () => store.get(projectCatalogAtom),
@@ -296,6 +309,43 @@ describe('useProjects workspace and load generations', () => {
       expect(rich).toEqual(before)
       h.listeners[0].callback('B', [rich])
       expect(h.view()).toEqual([before])
+    } finally { h.close() }
+  })
+})
+
+
+describe('useProjects tour capability follows owned API readiness', () => {
+  test('an empty successful read is ready, same-scope refresh preserves readiness, and a real denial is unavailable', async () => {
+    const h = harness()
+    try {
+      h.render('A')
+      expect(h.capability('A')).toEqual({ state: 'pending', reason: 'installing' })
+      h.requests[0].pending.resolve([]); await h.settle(); h.render('A')
+      expect(h.capability('A')).toEqual({ state: 'ready' })
+      const pending = h.refresh(); h.render('A')
+      expect(h.capability('A')).toEqual({ state: 'ready' })
+      h.requests[1].pending.reject(new Error('denied')); await pending; h.render('A')
+      expect(h.capability('A')).toEqual({ state: 'unavailable', reason: 'api-unavailable' })
+      h.listeners[0].callback('foreign', []); h.render('A')
+      expect(h.capability('A')).toEqual({ state: 'unavailable', reason: 'api-unavailable' })
+      h.listeners[0].callback('A', []); h.render('A')
+      expect(h.capability('A')).toEqual({ state: 'ready' })
+    } finally { h.close() }
+  })
+
+  test('returning to A cannot inherit an earlier A read or disposed broadcast, and tour rerenders never requery', async () => {
+    const h = harness()
+    try {
+      h.render('A'); const original = h.requests[0]; const oldListener = h.listeners[0]
+      h.render('B'); h.render('A')
+      original.pending.resolve([]); await h.settle(); oldListener.callback('A', [])
+      h.render('A')
+      expect(h.capability('A')).toEqual({ state: 'pending', reason: 'installing' })
+      h.requests[2].pending.resolve([]); await h.settle(); h.render('A')
+      expect(h.capability('A')).toEqual({ state: 'ready' })
+      const count = h.requests.length
+      for (let index = 0; index < 5; index++) h.render('A')
+      expect(h.requests.length).toBe(count)
     } finally { h.close() }
   })
 })

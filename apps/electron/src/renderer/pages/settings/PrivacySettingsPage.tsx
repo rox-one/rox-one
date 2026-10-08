@@ -20,6 +20,7 @@ import { routes } from '@/lib/navigate'
 import { isClaimableLive, normalizeRox2Result } from '@rox/core/rox2'
 import type { ConsentPurpose, PrivacyDto } from '@rox/shared/privacy'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -27,7 +28,7 @@ export const meta: DetailsPageMeta = {
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
+  return toErrorMessage(error)
 }
 
 const PURPOSE_KEYS: Array<{ purpose: ConsentPurpose; label: string; desc: string }> = [

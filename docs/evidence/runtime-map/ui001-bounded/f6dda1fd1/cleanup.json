@@ -1,0 +1,5 @@
+{
+  "checkedUtc": "2026-10-03T22:48:06.279250+00:00",
+  "remainingBrowserProcesses": [],
+  "cleanupMechanism": "Each explicit isolated Playwright fixture closes its contexts/browser and HTTP server in its own teardown/finally; bounded wrapper targets only its own child process group on timeout. No phase timed out."
+}

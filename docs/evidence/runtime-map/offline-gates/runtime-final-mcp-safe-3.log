@@ -1,0 +1,14 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/handlers/rpc/__tests__/sources.test.ts:
+(pass) sources:saveCredentials — knowledge-connection fallback (P2-12) > rechecks built-in MCP after credential rotation without claiming a connection [39.66ms]
+(pass) sources:saveCredentials — knowledge-connection fallback (P2-12) > stores the bearer token under the workspace encoded in the record credentialRef, not the active workspace [1.00ms]
+(pass) sources:saveCredentials — knowledge-connection fallback (P2-12) > still falls back to the arg workspaceId when the credentialRef is legacy/unparseable [0.48ms]
+(pass) sources:saveCredentials — knowledge-connection fallback (P2-12) > rejects a slug that is neither a source nor a knowledge connection — mistyped slugs fail loudly [0.33ms]
+(pass) sources:get — local default source seeding > creates offline-safe defaults with a local Craft Markdown Notes source [9.39ms]
+(pass) sources:get — local default source seeding > preserves an existing disabled Notes source and empty source defaults [7.58ms]
+
+ 6 pass
+ 0 fail
+ 19 expect() calls
+Ran 6 tests across 1 file. [781.00ms]

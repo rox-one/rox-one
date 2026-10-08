@@ -1,0 +1,40 @@
+// W1-03 (#1500) — Tasks (WorkItem) `tasks.*`, lists, sections, statuses (TECH-SPEC §4.3, §12, §20).
+import { CATALOGUE_FLAGS as F, moduleCatalogue } from './entry.ts'
+
+export const TASKS_COMMANDS = moduleCatalogue('tasks', F.tasksLark, [
+  ['tasks.create', 'by-target'],
+  ['tasks.update', 'by-target'],
+  ['tasks.update_status', 'by-target'],
+  ['tasks.complete', 'by-target'],
+  ['tasks.reopen', 'by-target'],
+  ['tasks.cancel', 'by-target'],
+  ['tasks.archive', 'by-target'],
+  ['tasks.delete', 'by-target', 'destroy'],
+  ['tasks.duplicate', 'by-target'],
+  ['tasks.move', 'by-target'],
+  ['tasks.update_assignees', 'by-target'],
+  ['tasks.set_user_state', 'by-target'],
+  ['tasks.add_to_list', 'by-target'],
+  ['tasks.remove_from_list', 'by-target'],
+  ['tasks.share', 'by-target', 'share', F.tasksShared],
+  ['tasks.add_dependency', 'by-target'],
+  ['tasks.update_reminders', 'by-target'],
+  ['task_lists.create', 'by-target'],
+  ['task_lists.update', 'by-target'],
+  ['task_lists.archive', 'by-target'],
+  ['task_lists.delete', 'by-target', 'destroy'],
+  ['task_sections.create', 'by-target'],
+  ['task_sections.update', 'by-target'],
+  ['task_sections.move', 'by-target'],
+  ['task_sections.delete', 'by-target', 'destroy'],
+  ['task_list_groups.create', 'by-target'],
+  ['task_list_groups.update', 'by-target'],
+  ['task_list_groups.delete', 'by-target', 'destroy'],
+  ['task_statuses.update_set', 'by-target'],
+  // §12 cross-surface creation
+  ['tasks.create_from_selection', 'by-target', 'write', F.xsc],
+  ['tasks.create_many_from_checklist', 'by-target', 'write', F.xsc],
+  ['tasks.create_from_message', 'workspace', 'write', F.xsc],
+  // §20 X-22
+  ['tasks.create_from_email', 'by-target', 'write', F.xfn],
+])

@@ -144,6 +144,7 @@ describe('sources adapter', () => {
         enabled: true,
         provider: 'linear',
         type: 'mcp' as const,
+        mcp: { url: 'https://mcp.linear.app/mcp', authType: 'oauth' as const },
         isAuthenticated: true,
         connectionStatus: 'connected' as const,
       },
