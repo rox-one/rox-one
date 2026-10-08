@@ -560,11 +560,16 @@ describe('a mention right after a literal `!` (#1505 fix3)', () => {
 })
 
 describe('a mention inside Markdown link text (legacy engine, as in Notes) (#1505 fix6)', () => {
-  const inlineShape = (editor: Editor) =>
-    (editor.getJSON().content?.[0]?.content ?? []).map((n) => [n.type, n.type === 'text' ? String(n.text ?? '') : String(n.attrs?.ref ?? ''), (n.marks ?? []).map((m) => m.type === 'link' ? `link:${String(m.attrs?.href ?? '')}` : m.type)])
+  type Shape = Array<[string, string, string[]]>
+  const inlineShape = (editor: Editor): Shape =>
+    (editor.getJSON().content?.[0]?.content ?? []).map((n: JSONContent): [string, string, string[]] => [
+      String(n.type),
+      n.type === 'text' ? String(n.text ?? '') : String(n.attrs?.ref ?? ''),
+      (n.marks ?? []).map((m) => m.type === 'link' ? `link:${String(m.attrs?.href ?? '')}` : String(m.type)),
+    ])
 
   it('`[x [[task:1]] y](http://z)` and `[[[task:1]]](url)` keep the link; the mention carries the link mark; saves are byte-identical', () => {
-    const cases: Array<[string, unknown[]]> = [
+    const cases: Array<[string, Shape]> = [
       ['[x [[task:1]] y](http://z)', [['text', 'x ', ['link:http://z']], ['mention', 'task:1', ['link:http://z']], ['text', ' y', ['link:http://z']]]],
       ['[[[task:1]]](url)', [['mention', 'task:1', ['link:url']]]],
       ['[x [[doc:2| Plan ]] y](http://z)', [['text', 'x ', ['link:http://z']], ['mention', 'note:2', ['link:http://z']], ['text', ' y', ['link:http://z']]]],
@@ -580,7 +585,7 @@ describe('a mention inside Markdown link text (legacy engine, as in Notes) (#150
       const off = makeEditor('legacy', markdown, { entityNodes: false })
       const offShape = inlineShape(off)
       off.destroy()
-      expect(offShape.every((n) => (n[2] as string[]).some((m) => m.startsWith('link:')))).toBe(true)
+      expect(offShape.every((n) => n[2].some((m) => m.startsWith('link:')))).toBe(true)
       expect(offShape.some((n) => n[0] === 'mention')).toBe(false)
     }
   })
