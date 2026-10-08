@@ -26,7 +26,7 @@ import { parseRox2EntityId } from '@rox/core/rox2'
 import { createDescriptorResolver, FileDescriptorStore, type ContentOwner, type ContentPolicy } from '../../docs/descriptor-resolver.ts'
 import { awardXpSafe } from '@rox/shared/gamification'
 import { awardNativeXpAndBroadcast } from './gamification'
-import { createNoteLinksIndexer, type NoteLinksWorkspace } from '../../entities/note-links-indexer.ts'
+import { createNoteLinksIndexer, createNoteLinksSerializer, setNoteLinksSourceProbe, type NoteLinksRevision, type NoteLinksWorkspace } from '../../entities/note-links-indexer.ts'
 import {
   contentHash,
   isClaimableLive,
@@ -1241,6 +1241,38 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       console.warn('[entities] note link cleanup failed:', error)
     }
   }
+  // Phantom-source pruning and backlinks filtering ask the Notes authority
+  // whether a source note id still exists (native journal root or vault).
+  const disposeNoteLinksProbe = setNoteLinksSourceProbe((workspace, noteId) => {
+    const native = deps.nativeData?.authority.resolveWorkspace(workspace.id)
+    const notesRoot = native ? join(native.nativeRoot, NOTES_DIR) : getWorkspaceNotesRoot(workspace.id)
+    return existsSync(notePathFromId(notesRoot, noteId))
+  })
+  server.onShutdown?.(disposeNoteLinksProbe)
+  // Native (journal) paths index outside the vault lease: serialize per
+  // (workspace, note) and drop out-of-order stale reads by journal revision.
+  const nativeNoteLinks = createNoteLinksSerializer()
+  const nativeRevision = (note: { nativeId?: string; nativeRevision?: number }): NoteLinksRevision | undefined =>
+    typeof note.nativeId === 'string' && typeof note.nativeRevision === 'number'
+      ? { nativeId: note.nativeId, revision: note.nativeRevision }
+      : undefined
+  const indexNativeNoteLinks = (
+    workspaceId: string,
+    note: { id: string; content: string; nativeId?: string; nativeRevision?: number },
+    options: { reset?: boolean } = {},
+  ): Promise<void> => {
+    if (!noteLinks.isEnabled()) return Promise.resolve()
+    return nativeNoteLinks.run(workspaceId, note.id, () => indexNoteLinks(workspaceId, note.id, note.content), {
+      revision: nativeRevision(note),
+      reset: options.reset,
+    })
+  }
+  const removeNativeNoteLinks = (workspaceId: string, noteId: string, previous?: { nativeId?: string; nativeRevision?: number }): Promise<void> => {
+    if (!noteLinks.isEnabled()) return Promise.resolve()
+    return nativeNoteLinks.run(workspaceId, noteId, () => removeNoteLinks(workspaceId, noteId), {
+      tombstone: previous ? nativeRevision(previous) : undefined,
+    })
+  }
   /** Filesystem vault: re-read the persisted note (gone → drop its links). */
   const reindexVaultNoteLinks = async (workspaceId: string, notesRoot: string, noteId: string): Promise<void> => {
     if (!noteLinks.isEnabled()) return
@@ -1367,7 +1399,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         // Award only a real unambiguous canonical edge, once for its lifetime.
         if (targets.length === 1) awardNativeXpAndBroadcast(server, deps, ctx, 'note_linked', JSON.stringify([workspaceId, updated.entity.nativeId, targets[0]!.nativeId]))
       }
-      indexNoteLinks(workspaceId, note.id, note.content)
+      await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'save', noteId: note.id })
       return note
     }
@@ -1428,7 +1460,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       const created = await findNativeNote(deps, context, relativeId)
       const note = await nativeNoteDocument(deps, context, created.entity, created.file, created.entities)
       awardNativeXpAndBroadcast(server, deps, ctx, 'first_note', JSON.stringify([workspaceId, created.entity.nativeId]))
-      indexNoteLinks(workspaceId, note.id, note.content)
+      await indexNativeNoteLinks(workspaceId, note, { reset: true })
       changed({ workspaceId, reason: 'create', noteId: note.id })
       return note
     }
@@ -1452,8 +1484,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       ])
       const renamed = await findNativeNote(deps, context, nextId)
       const note = await nativeNoteDocument(deps, context, renamed.entity, renamed.file, renamed.entities)
-      if (note.id !== noteId) removeNoteLinks(workspaceId, noteId)
-      indexNoteLinks(workspaceId, note.id, note.content)
+      if (note.id !== noteId) await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
+      await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'rename', noteId: note.id })
       return { note, updatedNotes: [] }
     }
@@ -1480,8 +1512,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       ])
       const moved = await findNativeNote(deps, context, nextId)
       const note = await nativeNoteDocument(deps, context, moved.entity, moved.file, moved.entities)
-      if (note.id !== noteId) removeNoteLinks(workspaceId, noteId)
-      indexNoteLinks(workspaceId, note.id, note.content)
+      if (note.id !== noteId) await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
+      await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'move', noteId: note.id })
       return { note }
     }
@@ -1505,7 +1537,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         path: file.path,
         content: null,
       })))
-      removeNoteLinks(workspaceId, noteId)
+      await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
       changed({ workspaceId, reason: 'delete', noteId })
       return true
     }
@@ -1682,7 +1714,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       await commitNativeNote(deps, context, found.entity.nativeId, operation, [{ path: found.file.path, content }])
       const updated = await findNativeNote(deps, context, noteId)
       const note = await nativeNoteDocument(deps, context, updated.entity, updated.file, updated.entities)
-      indexNoteLinks(workspaceId, note.id, note.content)
+      await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'properties', noteId: note.id })
       return note
     }
