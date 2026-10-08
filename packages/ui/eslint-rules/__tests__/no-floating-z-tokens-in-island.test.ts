@@ -28,7 +28,7 @@ describe('no-floating-z-tokens-in-island (ui)', () => {
     )
 
     expect(messages.length).toBe(1)
-    expect(messages[0]?.message).toContain('var(--z-toast) for backdrops')
+    expect(messages[0]?.message).toContain('var(--z-menu-backdrop) for backdrops')
   })
 
   it('flags floating backdrop token in island contexts', () => {
@@ -42,7 +42,7 @@ describe('no-floating-z-tokens-in-island (ui)', () => {
 
   it('allows island tokens in island contexts', () => {
     const messages = runRule(
-      "const zIndex = 'var(--z-island, 400)'; const overlay = 'var(--z-toast, 300)'; const legacy = 'var(--z-island-overlay, 300)'",
+      "const zIndex = 'var(--z-island, 400)'; const overlay = 'var(--z-menu-backdrop, 390)'; const legacy = 'var(--z-island-overlay, 390)'",
       '/repo/packages/ui/src/components/overlay/AnnotatableMarkdownDocument.tsx',
     )
 

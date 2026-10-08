@@ -18,13 +18,14 @@ export const ROX_Z_LAYERS = [
   'chrome',
   'sash',
   'popover',
-  'fullscreen',
-  'tooltip',
   'scrim',
   'modal',
   'toast',
+  'fullscreen',
+  'menu-backdrop',
   'island',
   'island-popover',
+  'tooltip',
   'splash',
 ] as const
 

@@ -154,7 +154,7 @@ export function FilterableSelectPopover<T>({
   return ReactDOM.createPortal(
     <>
       <div
-        className="fixed inset-0 z-toast"
+        className="fixed inset-0 z-menu-backdrop"
         onClick={() => onOpenChange(false)}
       />
 

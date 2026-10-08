@@ -23,6 +23,12 @@ export {
   ShikiThemeProvider,
   useShikiTheme,
   type ShikiThemeProviderProps,
+  OverlayPortalContainerProvider,
+  OverlayPortalRoot,
+  useOverlayPortalContainer,
+  useOverlayPortalTarget,
+  type OverlayPortalContainerProviderProps,
+  type OverlayPortalRootProps,
 } from './context'
 
 // Chat components

@@ -1402,7 +1402,7 @@ export default function AiSettingsPage() {
                   className="h-full"
                 />
                 <div
-                  className="fixed top-0 right-0 z-fullscreen h-[50px] flex items-center pr-5 [-webkit-app-region:no-drag]"
+                  className="fixed top-0 right-0 z-sticky h-[50px] flex items-center pr-5 [-webkit-app-region:no-drag]"
                 >
                   <button
                     onClick={handleCloseApiSetup}

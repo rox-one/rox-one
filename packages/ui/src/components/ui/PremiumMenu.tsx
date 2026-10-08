@@ -210,7 +210,7 @@ export function PremiumMenu({
 
   return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-toast" onClick={closeMenu} />
+      <div className="fixed inset-0 z-menu-backdrop" onClick={closeMenu} />
       <div
         data-premium-menu=""
         data-variant={variant}

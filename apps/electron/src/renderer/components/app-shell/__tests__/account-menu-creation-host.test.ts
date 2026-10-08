@@ -4,11 +4,12 @@ import { join } from 'node:path'
 import * as ts from 'typescript'
 
 /**
- * UI-A1 review3: the workspace creation / reconnect screen is a fullscreen
- * overlay (--z-fullscreen 120). Opened from the compact craft-menu Drawer
- * (scrim 200 / modal 210) it must not end up behind that Drawer, so the
- * header hosts the flow (the screen outlives the Drawer) and closes the
- * Drawer when the screen opens — for both new-workspace and reconnect.
+ * UI-A1 review3/4: the workspace creation / reconnect screen is a fullscreen
+ * overlay (--z-fullscreen 350, above the Drawer's scrim 200 / modal 210).
+ * Opened from the compact craft-menu Drawer, the launcher must not stay open
+ * under it (focus trap, scroll lock, a second Escape), so the header hosts the
+ * flow (the screen outlives the Drawer) and closes the Drawer when the screen
+ * opens — for both new-workspace and reconnect.
  */
 function parse(name: string) {
   const path = join(import.meta.dir, `../${name}.tsx`)

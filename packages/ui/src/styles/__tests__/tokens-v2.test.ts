@@ -57,8 +57,8 @@ const px = (v: string) => {
 }
 
 const LAYERS = [
-  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'fullscreen',
-  'scrim', 'modal', 'toast', 'island', 'island-popover', 'tooltip', 'splash',
+  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'scrim', 'modal',
+  'toast', 'fullscreen', 'menu-backdrop', 'island', 'island-popover', 'tooltip', 'splash',
 ] as const
 
 describe('token foundation v2: structure', () => {
@@ -164,8 +164,8 @@ describe('token foundation v2: z layers', () => {
     const root = rootOf(token('z.css'))
     const values = Object.fromEntries(LAYERS.map((l) => [l, Number(resolve(root[`--z-${l}`]!, root))]))
     expect(values).toEqual({
-      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, fullscreen: 120,
-      scrim: 200, modal: 210, toast: 300, island: 400, 'island-popover': 410, tooltip: 450, splash: 600,
+      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, scrim: 200, modal: 210,
+      toast: 300, fullscreen: 350, 'menu-backdrop': 390, island: 400, 'island-popover': 410, tooltip: 450, splash: 600,
     })
     const ordered = LAYERS.map((l) => values[l]!)
     for (let i = 1; i < ordered.length; i++) expect(ordered[i], LAYERS[i]).toBeGreaterThan(ordered[i - 1]!)
@@ -200,12 +200,16 @@ describe('token foundation v2: z layers', () => {
     expect(z('scrim')).toBeLessThan(z('modal'))
   })
 
-  it('puts fullscreen overlays below the dialog scrim/modal and below tooltips', () => {
+  it('puts fullscreen overlays above the dialog scrim/modal/toast step (main parity) and below menus and tooltips', () => {
     const root = rootOf(token('z.css'))
     const z = (n: string) => Number(resolve(`var(--z-${n})`, root))
-    // A dialog opened from a fullscreen overlay dims it and sits on top.
-    expect(z('fullscreen')).toBeLessThan(z('scrim'))
-    expect(z('fullscreen')).toBeLessThan(z('modal'))
+    // An overlay opened from a drawer/popover covers its launcher; dialogs
+    // opened from inside an overlay portal into its root instead.
+    expect(z('fullscreen')).toBe(350)
+    expect(z('fullscreen')).toBeGreaterThan(z('scrim'))
+    expect(z('fullscreen')).toBeGreaterThan(z('modal'))
+    expect(z('fullscreen')).toBeGreaterThan(z('toast'))
+    expect(z('fullscreen')).toBeLessThan(z('menu-backdrop'))
     // Tooltips and in-overlay menus (island) stay visible inside the overlay.
     expect(z('tooltip')).toBeGreaterThan(z('fullscreen'))
     expect(z('island')).toBeGreaterThan(z('fullscreen'))
@@ -233,26 +237,30 @@ describe('token foundation v2: z layers', () => {
 
   it('fullscreen overlays and their in-overlay menus use the right layers', () => {
     const src = (f: string) => readFileSync(join(repoRoot, f), 'utf8')
-    expect(src('packages/ui/src/components/overlay/FullscreenOverlayBase.tsx')).toContain("const Z_FULLSCREEN = 'var(--z-fullscreen, 120)'")
+    expect(src('packages/ui/src/components/overlay/FullscreenOverlayBase.tsx')).toContain("const Z_FULLSCREEN = 'var(--z-fullscreen, 350)'")
     const header = src('packages/ui/src/components/overlay/FullscreenOverlayBaseHeader.tsx')
     expect(header).toMatch(/contextMenuContentClasses = cn\(\s*'popover-styled z-island /)
     expect(src('packages/ui/src/components/ui/InlineMenuSurface.ts')).toContain("options.zIndex ?? 'var(--z-popover, 100)'")
   })
 
-  it('tooltips are the topmost transient layer; menus sit above dialogs and the toast step', () => {
+  it('tooltips are the topmost transient layer; menus sit above dialogs, fullscreen and their backdrops', () => {
     const root = rootOf(token('z.css'))
     const z = (n: string) => Number(resolve(`var(--z-${n})`, root))
     // No tooltip can be hidden under the surface its trigger lives in.
-    for (const below of ['popover', 'fullscreen', 'scrim', 'modal', 'toast', 'island', 'island-popover']) {
+    for (const below of ['popover', 'fullscreen', 'scrim', 'modal', 'toast', 'menu-backdrop', 'island', 'island-popover']) {
       expect(z('tooltip'), below).toBeGreaterThan(z(below))
     }
     expect(z('tooltip')).toBeLessThan(z('splash'))
     expect(z('island')).toBeGreaterThan(z('modal'))
     expect(z('island')).toBeGreaterThan(z('toast'))
     expect(z('island-popover')).toBeGreaterThan(z('island'))
-    // Click-catching backdrops: on the toast step, below the menu layer.
-    expect(z('floating-backdrop')).toBe(z('toast'))
-    expect(z('floating-backdrop')).toBeLessThan(z('island'))
+    // Click-catching backdrops: menu-backdrop (main's 390), above fullscreen
+    // (a menu inside an overlay closes on an outside click), below the menu.
+    expect(z('menu-backdrop')).toBe(390)
+    expect(z('menu-backdrop')).toBeGreaterThan(z('fullscreen'))
+    expect(z('menu-backdrop')).toBeLessThan(z('island'))
+    expect(z('floating-backdrop')).toBe(z('menu-backdrop'))
+    expect(z('island-overlay')).toBe(z('menu-backdrop'))
   })
 
   it('no tooltip carries a per-site z override (the layer handles it)', () => {
@@ -291,14 +299,15 @@ describe('token foundation v2: z layers', () => {
     expect(text).toContain('className="fixed inset-0 bg-black/5 z-sticky"')
   })
 
-  it('menu click-catching backdrops use the toast step, not the menu layer', () => {
+  it('menu click-catching backdrops use the menu-backdrop step, not the menu or toast layer', () => {
     for (const f of [
       'apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx',
       'packages/ui/src/components/ui/FilterableSelectPopover.tsx',
       'packages/ui/src/components/ui/PremiumMenu.tsx',
     ]) {
       const text = readFileSync(join(repoRoot, f), 'utf8')
-      expect(text, f).toMatch(/fixed inset-0 z-toast/)
+      expect(text, f).toMatch(/fixed inset-0 z-menu-backdrop/)
+      expect(text, f).not.toMatch(/fixed inset-0 z-toast/)
       expect(text, f).not.toMatch(/fixed inset-0 z-island/)
     }
   })
@@ -313,6 +322,17 @@ describe('token foundation v2: z layers', () => {
       expect(at, f).toBeGreaterThanOrEqual(0)
       expect(text.slice(at, text.indexOf('>', at)), f).not.toMatch(/(?<![-\w])z-[a-z]/)
     }
+  })
+
+  it('content inside a fullscreen overlay uses local layers, not the fullscreen layer', () => {
+    // The overlay is its own stacking context: z-fullscreen inside it means
+    // nothing relative to the page and only competes with the overlay's own
+    // portal root (dialogs/drawers). The AI-settings close button sits on a
+    // local step above the setup content.
+    const text = readFileSync(join(repoRoot, 'apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx'), 'utf8')
+    const body = text.slice(text.indexOf('<FullscreenOverlayBase'), text.indexOf('</FullscreenOverlayBase>'))
+    expect(body).not.toMatch(/(?<![-\w])z-fullscreen(?![-\w])/)
+    expect(body).toContain('className="fixed top-0 right-0 z-sticky h-[50px]')
   })
 
   it('no source uses a retired z utility class', () => {

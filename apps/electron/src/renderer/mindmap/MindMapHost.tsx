@@ -5,6 +5,7 @@
  */
 
 import * as React from 'react'
+import { OverlayPortalRoot } from '@rox/ui/context'
 import { useTranslation } from 'react-i18next'
 import {
   AlertCircle,
@@ -917,24 +918,28 @@ export function MindMapHost({
   if (zen) {
     return (
       <div className="fixed inset-0 z-fullscreen flex flex-col bg-background">
-        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 shrink-0">
-          <span className="text-[11px] font-medium text-muted-foreground">{t('mindmap.zen')}</span>
-          <div className="ml-auto">
-            <button
-              type="button"
-              className="h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-2 text-[11px] font-medium text-foreground hover:bg-foreground/5"
-              aria-label={t('common.close')}
-              onClick={() => {
-                setZen(false)
-                window.dispatchEvent(new CustomEvent('craft-mindmap-zen', { detail: { zen: false } }))
-              }}
-            >
-              <Minimize2 className="h-3.5 w-3.5" />
-              {t('common.close')}
-            </button>
+        {/* Fullscreen (350) sits above the dialog layers: dialogs/drawers opened
+            in zen portal into this surface's own root, above its content. */}
+        <OverlayPortalRoot>
+          <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 shrink-0">
+            <span className="text-[11px] font-medium text-muted-foreground">{t('mindmap.zen')}</span>
+            <div className="ml-auto">
+              <button
+                type="button"
+                className="h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-2 text-[11px] font-medium text-foreground hover:bg-foreground/5"
+                aria-label={t('common.close')}
+                onClick={() => {
+                  setZen(false)
+                  window.dispatchEvent(new CustomEvent('craft-mindmap-zen', { detail: { zen: false } }))
+                }}
+              >
+                <Minimize2 className="h-3.5 w-3.5" />
+                {t('common.close')}
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex-1 flex flex-col min-h-0">{body}</div>
+          <div className="flex-1 flex flex-col min-h-0">{body}</div>
+        </OverlayPortalRoot>
       </div>
     )
   }

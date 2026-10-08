@@ -88,8 +88,8 @@ function CompactChatHeader({ leadingAction, titleNode, viewSwitch, centerButton,
     onRefreshWorkspaces,
   } = useAppShellContext()
   const [menuOpen, setMenuOpen] = useState(false)
-  // The creation/reconnect screen (fullscreen layer, 120) must not open behind
-  // this Drawer (scrim 200 / modal 210). The header owns the flow, so the
+  // The creation/reconnect screen (fullscreen layer) replaces this Drawer
+  // rather than stacking over an open one. The header owns the flow, so the
   // screen outlives the Drawer, and the Drawer closes when the screen opens.
   const creationFlow = useWorkspaceCreationFlow({
     activeWorkspaceId,

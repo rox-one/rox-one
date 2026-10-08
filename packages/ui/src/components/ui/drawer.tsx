@@ -2,6 +2,7 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "../../lib/utils"
+import { useOverlayPortalTarget } from "../../context/OverlayPortalContext"
 
 function Drawer({
   ...props
@@ -15,10 +16,25 @@ function DrawerTrigger({
   return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />
 }
 
+/**
+ * Portals to the enclosing fullscreen overlay's root when there is one
+ * (FullscreenOverlayBase → OverlayPortalRoot), so a drawer opened from an
+ * overlay stacks above it (fullscreen 350 > scrim 200 / modal 210); otherwise
+ * vaul's default (the Root `container` prop, else <body>). An explicit
+ * `container` wins.
+ */
 function DrawerPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Portal>) {
-  return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />
+  const target = useOverlayPortalTarget(container)
+  return (
+    <DrawerPrimitive.Portal
+      data-slot="drawer-portal"
+      container={target}
+      {...props}
+    />
+  )
 }
 
 function DrawerClose({
