@@ -48,6 +48,11 @@ import {
 } from './omnibox-providers'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import { registerConationOmniboxCommands } from './omnibox-conation'
+// W1-07 (#1504): entity provider (inert until a flagged source registers).
+import { createEntityOmniboxProvider } from './omnibox-entities'
+import { enabledShellFlagsAtom } from './unified-flags'
+import { resolveDefaultHotkey } from '@/actions/hotkeys'
+import type { ActionDefinition } from '@/actions/types'
 
 export interface OmniboxPlatform {
   commands: CommandRegistry
@@ -161,9 +166,11 @@ function registerActionCommands(commands: CommandRegistry): void {
       defaultHotkey: string | null
       scope?: string
       when?: string
+      flag?: string
     }
     const actionId = action.id as ActionId
-    const whenParts = [action.when, scopeToWhen(action.scope)].filter(Boolean) as string[]
+    // W1-07 (#1504): flag-gated actions stay hidden until their flag is on.
+    const whenParts = [action.flag, action.when, scopeToWhen(action.scope)].filter(Boolean) as string[]
     const when = whenParts.length === 0 ? undefined : whenParts.join(' && ')
 
     const contribution: CommandContribution = {
@@ -173,7 +180,7 @@ function registerActionCommands(commands: CommandRegistry): void {
       source: 'craft',
       when,
       keywords: action.description ? [action.description] : undefined,
-      defaultHotkey: action.defaultHotkey ?? undefined,
+      defaultHotkey: resolveDefaultHotkey(action as ActionDefinition) ?? undefined,
       async execute() {
         actionExecute?.(actionId)
       },
@@ -426,6 +433,16 @@ function registerResourceProviders(
   t?: LabelResolver,
 ): void {
   const store = getDefaultStore()
+
+  // W1-07 (#1504): unified entity search; returns [] while no flagged source is on.
+  track(
+    resources.register(
+      createEntityOmniboxProvider({
+        getFlags: () => store.get(enabledShellFlagsAtom),
+        label: t ? t('surfaces.omnibox.providerLabel', 'Entities') : 'Entities',
+      }),
+    ),
+  )
 
   track(
     resources.register(

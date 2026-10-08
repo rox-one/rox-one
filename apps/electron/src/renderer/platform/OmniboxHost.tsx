@@ -27,6 +27,8 @@ import {
   setOmniboxActionExecutor,
 } from './omnibox-bootstrap'
 import { createConationContextKeyProvider } from './omnibox-conation'
+// W1-07 (#1504): live shell flags as context keys (flag-gated commands).
+import { createShellFlagContextKeyProvider } from './unified-flags'
 import { Omnibox } from './Omnibox'
 
 export function OmniboxHost() {
@@ -66,6 +68,11 @@ export function OmniboxHost() {
         boardEnabled: store.get(featureWorkbenchConationBoardAtom),
       })),
     ).dispose
+  }, [platform])
+
+  // W1-07 (#1504): every shell flag id is a context key (`when: <flag>`).
+  useEffect(() => {
+    return platform.contextKeys.registerProvider(createShellFlagContextKeyProvider()).dispose
   }, [platform])
 
   // ⌘K / mod+k via existing action hotkey system (definitions: app.omnibox)
