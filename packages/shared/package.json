@@ -76,6 +76,8 @@
     "./git/exec": "./src/git/exec.ts",
     "./git/status": "./src/git/status.ts",
     "./i18n": "./src/i18n/index.ts",
+    "./identity/schemas": "./src/identity/schemas.ts",
+    "./agents/schemas": "./src/agents/schemas.ts",
     "./icons": "./src/icons/index.ts",
     "./identity": "./src/identity/index.ts",
     "./interceptor": "./src/interceptor-common.ts",

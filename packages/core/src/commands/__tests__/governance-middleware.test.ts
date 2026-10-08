@@ -52,7 +52,7 @@ function definitionOf(type: string): CommandDefinition<unknown> {
 interface Options {
   status?: AgentBinding['status']
   standing?: readonly StandingApproval[]
-  rateLimit?: (spend: RateLimitSpend) => { allowed: true } | { allowed: false; window: 'minute' | 'hour' | 'day'; retryAfter: number }
+  rateLimit?: (spend: RateLimitSpend) => { allowed: true } | { allowed: false; window: 'minute' | 'hour' | 'day'; retryAfter: number; bucketScope?: string }
   enabled?: boolean
   permissionMode?: 'ask' | 'safe' | 'allow-all'
 }
@@ -228,14 +228,15 @@ describe('the governance chain walks the ten steps in order', () => {
 
   it('an exhausted bucket answers RATE_LIMITED with retryAfter and stops before the gate', async () => {
     const r = rig('im.send_message', {
-      rateLimit: spend => (spend.scope === AGGREGATE_SCOPE ? { allowed: false, window: 'hour', retryAfter: 90 } : { allowed: true }),
+      // One spend per command; the limiter reports which bucket refused.
+      rateLimit: () => ({ allowed: false, window: 'hour', retryAfter: 90, bucketScope: AGGREGATE_SCOPE }),
     })
     const receipt = await r.run({ chatRef: 'channel:1', text: 'hi' })
     expect(receipt.error).toMatchObject({ code: 'RATE_LIMITED' })
     expect(receipt.error?.details).toMatchObject({ retryAfter: 90, window: 'hour', bucketScope: AGGREGATE_SCOPE })
     expect(traceOf(r.ctx())).toEqual([...POLICY_STEPS].slice(0, 6).concat('audit'))
     expect(r.audit[0]?.decision).toBe('rate_limited')
-    expect(r.spent.map(spend => spend.scope)).toEqual(['im:send_chat', AGGREGATE_SCOPE])
+    expect(r.spent.map(spend => spend.scope)).toEqual(['im:send_chat'])
   })
 
   it('a failed terminal receipt is audited as failed, keeping receipt details', async () => {

@@ -16,6 +16,7 @@
 
 import { CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
 import { bindSystemPing } from './ping'
+import { AGENTS_COMMAND_MODULE } from '../agents/module.ts'
 
 /** One owner module's bindings (handlers + schemas) for its catalogue types. */
 export interface CommandModule {
@@ -29,7 +30,11 @@ export interface CommandModule {
 export const SYSTEM_COMMAND_MODULE: CommandModule = Object.freeze({ name: 'system', bind: bindSystemPing })
 
 /** Every module's bindings. Wave-2 modules register here (see the contract above). */
-export const COMMAND_MODULES: readonly CommandModule[] = Object.freeze([SYSTEM_COMMAND_MODULE])
+export const COMMAND_MODULES: readonly CommandModule[] = Object.freeze([
+  SYSTEM_COMMAND_MODULE,
+  // W1-11 (#1508): identity lifecycle, team chats and agent governance.
+  AGENTS_COMMAND_MODULE,
+])
 
 export interface WiredCommandRegistryOptions {
   isFlagEnabled?: (flag: string) => boolean

@@ -46,9 +46,17 @@ export function isChatCreationPolicy(value: unknown): value is ChatCreationPolic
 export const CHAT_POSTING_POLICIES = ['all', 'admins'] as const
 export type ChatPostingPolicy = (typeof CHAT_POSTING_POLICIES)[number]
 
+export function isChatPostingPolicy(value: unknown): value is ChatPostingPolicy {
+  return typeof value === 'string' && (CHAT_POSTING_POLICIES as readonly string[]).includes(value)
+}
+
 /** `chat.invite_policy`: who may invite into a private chat. */
 export const CHAT_INVITE_POLICIES = ['members', 'admins'] as const
 export type ChatInvitePolicy = (typeof CHAT_INVITE_POLICIES)[number]
+
+export function isChatInvitePolicy(value: unknown): value is ChatInvitePolicy {
+  return typeof value === 'string' && (CHAT_INVITE_POLICIES as readonly string[]).includes(value)
+}
 
 /** The one system role a chat can carry (513-identity-lifecycle.sql). */
 export const GENERAL_CHAT_SYSTEM_ROLE = 'general'

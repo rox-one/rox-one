@@ -47,7 +47,6 @@ import {
   agentRateLimitSubject,
   grantMatches,
   policyModeFor,
-  rateLimitScopesFor,
   standingApprovalMatches,
   type AgentBinding,
   type AgentGrant,
@@ -132,9 +131,16 @@ export interface PolicyPorts {
   park(request: ApprovalRequest): Promise<void>
 }
 
+/**
+ * A refusal names the bucket that ran out (`scope`, or `*` for the aggregate).
+ * A limiter charges the command's scope bucket **and** the aggregate bucket for
+ * one spend; charging them separately would spend each command twice.
+ */
+export type RateLimitPortDecision = RateLimitDecision | (Extract<RateLimitDecision, { allowed: false }> & { bucketScope?: string })
+
 /** Step 6's port: token buckets, separate because the bus runs it as its own middleware. */
 export interface RateLimitPort {
-  rateLimit(spend: RateLimitSpend): Promise<RateLimitDecision>
+  rateLimit(spend: RateLimitSpend): Promise<RateLimitPortDecision>
 }
 
 interface PolicyDecisionBase {
@@ -371,24 +377,24 @@ export interface RateLimitOutcome {
 export async function spendRateLimit(state: RateLimitState, port: RateLimitPort): Promise<RateLimitOutcome> {
   const subject = agentRateLimitSubject(state.agentPrincipalId)
   const walked: PolicyStep[] = [...state.trace, 'rate_limit']
-  for (const bucketScope of rateLimitScopesFor(state.scope)) {
-    const decision = await port.rateLimit({ workspaceId: state.workspaceId, subject, scope: bucketScope, cost: 1 })
-    if (!decision.allowed) {
-      return {
-        allowed: false,
-        decision: {
-          outcome: 'rate_limited',
-          riskClass: state.riskClass,
-          scope: state.scope,
-          agentPrincipalId: state.agentPrincipalId,
-          ownerPrincipalId: state.ownerPrincipalId,
-          bucketScope,
-          window: decision.window,
-          retryAfter: decision.retryAfter,
-          steps: walked,
-        },
-        trace: walked,
-      }
+  // One spend per command: the limiter charges `(agent, scope)` and
+  // `(agent, '*')` itself and reports which bucket refused (§13.2 step 6).
+  const decision = await port.rateLimit({ workspaceId: state.workspaceId, subject, scope: state.scope, cost: 1 })
+  if (!decision.allowed) {
+    return {
+      allowed: false,
+      decision: {
+        outcome: 'rate_limited',
+        riskClass: state.riskClass,
+        scope: state.scope,
+        agentPrincipalId: state.agentPrincipalId,
+        ownerPrincipalId: state.ownerPrincipalId,
+        bucketScope: 'bucketScope' in decision && typeof decision.bucketScope === 'string' ? decision.bucketScope : state.scope,
+        window: decision.window,
+        retryAfter: decision.retryAfter,
+        steps: walked,
+      },
+      trace: walked,
     }
   }
   return { allowed: true, trace: walked }

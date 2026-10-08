@@ -367,6 +367,10 @@ export function standingApprovalFromApproval(
 export const RATE_LIMIT_WINDOWS = ['minute', 'hour', 'day'] as const
 export type RateLimitWindow = (typeof RATE_LIMIT_WINDOWS)[number]
 
+export function isRateLimitWindow(value: unknown): value is RateLimitWindow {
+  return typeof value === 'string' && (RATE_LIMIT_WINDOWS as readonly string[]).includes(value)
+}
+
 export const RATE_LIMIT_WINDOW_MS: Readonly<Record<RateLimitWindow, number>> = {
   minute: 60_000,
   hour: 3_600_000,
@@ -386,6 +390,32 @@ export interface RateLimitBucket {
   perHour: number | null
   perDay: number | null
 }
+
+/**
+ * Scopes a freshly provisioned agent holds without an explicit owner grant.
+ *
+ * The risk table maps exactly these scopes to `routine` commands (private to
+ * the owner, reversible, nobody else notified). Every scope that can notify or
+ * touch other people — `tasks:assign_others`, `docs:share`, `im:send_chat`,
+ * `im:create_group`, `calendar:invite_others`, `vc:start`,
+ * `goals:publish_check_in`, `people:invite`, `*:delete` — is granted
+ * explicitly by the owner, so "the agent may do by default what is routine".
+ */
+export const DEFAULT_AGENT_GRANT_SCOPES: readonly AgentScope[] = [
+  'tasks:create',
+  'tasks:update',
+  'docs:create',
+  'docs:update',
+  'drive:write',
+  'calendar:create',
+  'goals:draft_check_in',
+  'im:send_owner_dm',
+  // `im:create_group` is granted because the *routine* case — a private chat
+  // with nobody else in it — is private to the owner. Creating a chat with
+  // other people is `consequential`, so it still reaches the owner's approval
+  // card (§15.1: "creating a chat with other people is consequential").
+  'im:create_group',
+]
 
 /** DATA-MODEL §5.14 defaults, seeded into `rate_limit_policy` per workspace. */
 export const DEFAULT_RATE_LIMIT_POLICY: readonly RateLimitBucket[] = [

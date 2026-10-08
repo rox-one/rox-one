@@ -49,6 +49,7 @@ export {
   APPROVAL_MODE_RANK,
   APPROVAL_REQUEST_STATUSES,
   APPROVAL_TTL_HOURS,
+  DEFAULT_AGENT_GRANT_SCOPES,
   DEFAULT_RATE_LIMIT_POLICY,
   DEFAULT_STANDING_APPROVAL_DAYS,
   POLICY_MODES_BY_PERMISSION_MODE,
@@ -67,6 +68,7 @@ export {
   isApprovalMode,
   isApprovalRequestStatus,
   isOwnerDmScope,
+  isRateLimitWindow,
   isScopeCovered,
   kindsOf,
   personalAgentDraft,
@@ -129,6 +131,8 @@ export {
   type PolicyStep,
   type PreflightResult,
   type RateLimitPort,
+  type RateLimitPortDecision,
+  type RateLimitState,
 } from './policy.ts'
 
 // W1-11 (#1508) — the audit chain.

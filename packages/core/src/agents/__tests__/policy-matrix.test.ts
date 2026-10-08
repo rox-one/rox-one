@@ -102,7 +102,7 @@ interface HarnessOptions {
   authorize?: Authorizer
   policy?: ApprovalPolicy
   standing?: readonly StandingApproval[]
-  rateLimit?: (spend: RateLimitSpend) => RateLimitDecision
+  rateLimit?: (spend: RateLimitSpend) => RateLimitDecision & { bucketScope?: string }
 }
 
 interface Harness {
@@ -322,9 +322,9 @@ describe('policy negatives (PLAN §1.4)', () => {
 
   it('an exhaustive bucket returns RATE_LIMITED with retryAfter, before any approval', async () => {
     const h = harness({
-      rateLimit: spend => spend.scope === AGGREGATE_SCOPE
-        ? { allowed: false, window: 'hour', retryAfter: 42 }
-        : { allowed: true },
+      // One spend per command: the limiter charges scope and aggregate itself
+      // and names the bucket that refused.
+      rateLimit: () => ({ allowed: false, window: 'hour', retryAfter: 42, bucketScope: AGGREGATE_SCOPE }),
     })
     const result = await evaluatePolicy(request('im.send_message', { chatKind: 'p2p' }), h.ports)
     expect(result.decision).toMatchObject({ outcome: 'rate_limited', bucketScope: AGGREGATE_SCOPE, window: 'hour', retryAfter: 42 })
@@ -336,7 +336,7 @@ describe('policy negatives (PLAN §1.4)', () => {
     const spent: RateLimitSpend[] = []
     const h = harness({ rateLimit: spend => { spent.push(spend); return { allowed: true } } })
     await evaluatePolicy({ ...request('im.send_message', { chatKind: 'p2p' }), ownerDm: true }, h.ports)
-    expect(spent.map(spend => spend.scope)).toEqual(['im:send_owner_dm', AGGREGATE_SCOPE])
+    expect(spent.map(spend => spend.scope)).toEqual(['im:send_owner_dm'])
     expect(spent[0]?.subject).toBe(agentRateLimitSubject(AGENT))
     expect(spent[0]?.subject).not.toBe(RULE_ALL_SUBJECT)
   })

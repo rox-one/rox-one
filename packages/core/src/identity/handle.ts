@@ -18,6 +18,9 @@ export { AGENT_DISPLAY_NAME }
 /** The global alias every agent answers to. */
 export const AGENT_HANDLE_ROOT = AGENT_HANDLE_ALIAS
 
+/** The handle a personal agent is provisioned with (the disambiguated form is derived). */
+export const PERSONAL_AGENT_HANDLE = AGENT_HANDLE_ROOT
+
 /** `@rox`, `@rox-maria`, … — the trailing part is the owner's username. */
 export const AGENT_MENTION_PATTERN = /@rox(?:-([a-z0-9][a-z0-9._-]{0,63}))?/gi
 
