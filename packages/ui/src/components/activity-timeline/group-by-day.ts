@@ -20,20 +20,35 @@ export interface DayGroup<T> {
   items: T[]
 }
 
-/** Group newest-first by day; items inside a day keep newest-first order. */
+/** Sortable time of `at`; an invalid or missing value sorts last. */
+function sortTime(at: string): number {
+  const time = Date.parse(at)
+  return Number.isNaN(time) ? Number.NEGATIVE_INFINITY : time
+}
+
+/**
+ * Group newest-first by day; items inside a day keep newest-first order.
+ * Invalid timestamps sort last (in input order) into one `invalid` group, and
+ * every day appears exactly once (groups are keyed by day), so React keys and
+ * headings never repeat.
+ */
 export function groupByDay<T extends DayKeyed>(items: readonly T[], opts: { now: number; timeZone?: string }): DayGroup<T>[] {
   const today = dayKey(opts.now, opts.timeZone)
   const yesterday = dayKey(opts.now - 86_400_000, opts.timeZone)
-  const sorted = [...items].sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
-  const groups: DayGroup<T>[] = []
+  const sorted = [...items].sort((a, b) => {
+    const ta = sortTime(a.at)
+    const tb = sortTime(b.at)
+    return ta === tb ? 0 : tb > ta ? 1 : -1
+  })
+  const groups = new Map<string, DayGroup<T>>()
   for (const item of sorted) {
     const day = dayKey(item.at, opts.timeZone)
-    let group = groups[groups.length - 1]
-    if (!group || group.day !== day) {
+    let group = groups.get(day)
+    if (!group) {
       group = { day, relative: day === today ? 'today' : day === yesterday ? 'yesterday' : null, items: [] }
-      groups.push(group)
+      groups.set(day, group)
     }
     group.items.push(item)
   }
-  return groups
+  return [...groups.values()]
 }

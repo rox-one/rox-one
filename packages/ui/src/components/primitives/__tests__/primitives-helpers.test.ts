@@ -121,6 +121,27 @@ describe('activity grouping', () => {
     ])
     expect(dayKey('2026-10-08T23:30:00Z', 'Europe/Moscow')).toBe('2026-10-09')
   })
+
+  it('invalid timestamps sort last into one group; day keys never repeat (#1505 fix3)', () => {
+    const now = Date.parse('2026-10-08T12:00:00Z')
+    const items = [
+      { id: 'bad1', at: 'garbage' },
+      { id: 't1', at: '2026-10-08T09:00:00Z' },
+      { id: 'bad2', at: '' },
+      { id: 't2', at: '2026-10-08T11:00:00Z' },
+      { id: 'y1', at: '2026-10-07T10:00:00Z' },
+      { id: 'bad3', at: undefined as unknown as string },
+      { id: 't3', at: '2026-10-08T10:00:00Z' },
+    ]
+    for (const order of [items, [...items].reverse()]) {
+      const groups = groupByDay(order, { now, timeZone: 'UTC' })
+      const days = groups.map((g) => g.day)
+      expect(days).toEqual(['2026-10-08', '2026-10-07', 'invalid'])
+      expect(new Set(days).size).toBe(days.length)
+      expect(groups[0]!.items.map((i) => i.id)).toEqual(['t2', 't3', 't1'])
+      expect(groups[2]!.items.map((i) => i.id).sort()).toEqual(['bad1', 'bad2', 'bad3'])
+    }
+  })
 })
 
 describe('gantt layout', () => {
