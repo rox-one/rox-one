@@ -52,4 +52,12 @@ describe('assembleContextShares', () => {
     })
     expect(shares.every((share) => share.chars === 0 && share.percent === 0)).toBe(true)
   })
+
+  it('counts skill chars from summaries (skillChars) the same as from bodies', () => {
+    const base = { systemPrompt: 'sys', mcpToolSchemas: [], transcript: [], attachments: [] }
+    const bodies = ['# A\nbody', '# B']
+    const fromBodies = assembleContextShares({ ...base, skillBodies: bodies })
+    const fromChars = assembleContextShares({ ...base, skillBodies: [], skillChars: bodies.join('').length })
+    expect(fromChars).toEqual(fromBodies)
+  })
 })

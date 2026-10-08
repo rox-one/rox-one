@@ -359,7 +359,8 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
   // The original user skill keeps its existing mention; the app gets a stable explicit alias.
   const applicationSkills = loadSkillsFromDir(APP_MANAGED_SKILLS_DIR, 'global');
   const reserved = new Set([...skillsBySlug.keys(), ...workspaceSkills.map(s => s.slug), ...projectSkills.map(s => s.slug), ...applicationSkills.map(s => s.slug)]);
-  for (const skill of loadSkillsFromDir(APP_MANAGED_SKILLS_DIR, 'global')) {
+  // Reuse the scan above (previously the app-managed dir was read twice).
+  for (const skill of applicationSkills) {
     if (disabledBundled.has(skill.slug)) continue;
     const collision = skillsBySlug.has(skill.slug) || workspaceSkills.some(s => s.slug === skill.slug) || projectSkills.some(s => s.slug === skill.slug);
     if (collision) {
@@ -380,6 +381,20 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
   const result = [...skillsBySlug.values(), ...shadowedOmp];
   skillsCache.set(cacheKey, { skills: result, ts: now });
   return result;
+}
+
+/**
+ * List-payload form of a skill: metadata only, body replaced by its length.
+ * Renderer lists never read bodies (SkillInfoPage loads them via
+ * loadSkillDetails), so RPC lists and CHANGED pushes send summaries.
+ */
+export function toSkillSummary(skill: LoadedSkill): LoadedSkill {
+  if (!skill.content) return skill;
+  return { ...skill, content: '', contentLength: skill.content.length };
+}
+
+export function toSkillSummaries(skills: readonly LoadedSkill[]): LoadedSkill[] {
+  return skills.map(toSkillSummary);
 }
 
 /** Selected detail only. Reuse the existing craft/managed-alias resolution and

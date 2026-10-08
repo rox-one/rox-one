@@ -13,6 +13,11 @@ export type ContextShareKind = (typeof CONTEXT_SHARE_KINDS)[number]
 export interface ContextShareInput {
   systemPrompt: string
   skillBodies: readonly string[]
+  /**
+   * Total skill chars when bodies are not at hand (list summaries carry
+   * `contentLength`). Takes precedence over `skillBodies`.
+   */
+  skillChars?: number
   mcpToolSchemas: readonly string[]
   transcript: readonly { role?: string; content: string }[]
   attachments: readonly { text?: string; size?: number }[]
@@ -47,7 +52,7 @@ export function charsForAttachments(attachments: ContextShareInput['attachments'
 export function assembleContextShares(input: ContextShareInput): ContextShare[] {
   const charsByKind: Record<ContextShareKind, number> = {
     system: input.systemPrompt.length,
-    skills: input.skillBodies.join('').length,
+    skills: input.skillChars ?? input.skillBodies.join('').length,
     mcp: input.mcpToolSchemas.join('').length,
     transcript: input.transcript.map((entry) => entry.content).join('').length,
     attachments: charsForAttachments(input.attachments),

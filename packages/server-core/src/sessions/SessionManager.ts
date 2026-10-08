@@ -144,7 +144,7 @@ import {
 import { resolveBulkLabels } from '@rox/shared/sessions/collection'
 import { messageToStored, storedToMessage, type Message, type StoredAttachment, type ToolDisplayMeta, type TokenUsage, type SessionMemoryMode } from '@rox/core/types'
 import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlAsync, getEmojiIcon, resetSummarizationClient, resolveToolIcon, readFileAttachment, selectSpreadMessages, normalizePath } from '@rox/shared/utils'
-import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, type LoadedSkill } from '@rox/shared/skills'
+import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, toSkillSummaries, type LoadedSkill } from '@rox/shared/skills'
 import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
 import { captureAgentProfileSnapshot } from '../workspace-work/profile.ts'
 import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@rox/shared/prompts/system'
@@ -2648,7 +2648,8 @@ export class SessionManager implements ISessionManager {
   private broadcastSkillsChanged(workspaceId: string, skills: import('@rox/shared/skills').LoadedSkill[]): void {
     if (!this.eventSink) return
     sessionLog.info(`Broadcasting skills changed (${skills.length} skills)`)
-    this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, skills)
+    // Metadata payload (PERF-06); listeners reload bodies through GET_DETAILS.
+    this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, toSkillSummaries(skills))
   }
 
   private broadcastPagesChanged(workspaceId: string, pages: import('@rox/shared/pages').LoadedPage[]): void {

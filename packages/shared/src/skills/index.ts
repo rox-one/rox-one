@@ -12,6 +12,8 @@ export {
   loadSkill,
   loadAllSkills,
   loadSkillDetails,
+  toSkillSummary,
+  toSkillSummaries,
   invalidateSkillsCache,
   getDisabledBundledSkillSlugsFromDisk,
   loadSkillBySlug,
