@@ -83,6 +83,9 @@ export interface ResourceRow {
   implicit_workspace_role: string | null
   link_token: string | null
   chat_id?: string | null
+  ancestor_refs?: string[] | null
+  chat_public?: boolean | null
+  company_wide?: boolean | null
 }
 
 
@@ -109,6 +112,7 @@ export function resourceFromRow(ref: EntityRef, row: ResourceRow): AclResourceNo
     ref: { kind: ref.kind, id: ref.id },
     workspaceId: row.workspace_id,
     parents: parseRefList(row.parent_refs),
+    ancestors: parseRefList(row.ancestor_refs ?? null),
     privacy: row.secret ? 'invited' : 'inherit',
     spaceId: row.space_id,
     ownerId: row.owner_id,
@@ -119,6 +123,8 @@ export function resourceFromRow(ref: EntityRef, row: ResourceRow): AclResourceNo
     hasChildren: row.has_children === true,
     deleted: row.deleted === true,
     chatId: row.chat_id ?? null,
+    ...(row.chat_public == null ? {} : { chatPublic: row.chat_public === true }),
+    ...(row.company_wide == null ? {} : { companyWide: row.company_wide === true }),
     implicitEntries,
     // A doc's public_token is a view link unless a resource_policy row says otherwise.
     defaultPolicy: row.link_token ? { defaultSubject: 'link', defaultRole: 'viewer', linkToken: row.link_token, linkExpiresAt: null } : null,
@@ -184,14 +190,14 @@ export class PostgresAclRepository implements AclFactSource {
       const members = await this.query<{ principal_id: string; role: string }>(sqlChatMembers(this.prefix), [ref.id, workspaceId])
       for (const member of members) {
         const role = CHAT_ROLE[member.role]
-        if (role) out.push({ subjectType: 'principal', subjectId: member.principal_id, role })
+        if (role) out.push({ subjectType: 'principal', subjectId: member.principal_id, role, via: 'chat' })
       }
     }
     if (ref.kind === 'space' && UUID.test(ref.id)) {
       const members = await this.query<{ principal_id: string; role: string }>(sqlSpaceMembers(this.prefix), [ref.id, workspaceId])
       for (const member of members) {
         const role = SPACE_ROLE[member.role]
-        if (role) out.push({ subjectType: 'principal', subjectId: member.principal_id, role })
+        if (role) out.push({ subjectType: 'principal', subjectId: member.principal_id, role, via: 'chat' })
       }
     }
     return out

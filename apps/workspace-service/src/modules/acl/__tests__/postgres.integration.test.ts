@@ -82,6 +82,39 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility, created_by) VALUES ($1, $2, 'group', 'public', $3)`, [publicChat, ws, alice])
       await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'admin')`, [publicChat, alice])
       await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'chat', $3, 'Chat files')`, [chatFolder, ws, publicChat])
+      // Review 3 fixtures.
+      // Goal ownership: a company goal created by bob and championed by bob.
+      const ownedGoal = id()
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, champion_id) VALUES ($1, $2, 'company', 'Owned', $3, $3)`, [ownedGoal, ws, bob])
+      // A space goal championed by bob (a space-chat member, removed later).
+      const championGoal = id()
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id, champion_id) VALUES ($1, $2, 'space', 'Champion', $3, $4, $5)`, [championGoal, ws, owner, space, bob])
+      // Secrecy-only ancestors: a goal-owned folder under the personal goal; a members list of the private project.
+      const [goalFolder, privList, listTask] = [id(), id(), id()]
+      await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'goal', $3, 'Goal files')`, [goalFolder, ws, personal])
+      await q(`INSERT INTO task_list (task_list_id, workspace_id, owner_type, owner_id, name, share_mode) VALUES ($1, $2, 'project', $3, 'Members', 'members')`, [privList, ws, privProject])
+      await q(`INSERT INTO work_item (work_item_id, workspace_id, owner_principal_id, title) VALUES ($1, $2, $3, 'Listed')`, [listTask, ws, alice])
+      await q(`INSERT INTO task_in_list (task_list_id, work_item_id, sort_key) VALUES ($1, $2, 'm')`, [privList, listTask])
+      // A secret space whose chat is 'public', with a chat-owned folder; a members-only space with a public chat alice joined.
+      const [hiddenChat, hiddenRoot, hiddenSpace, hiddenFolder] = [id(), id(), id(), id()]
+      await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility) VALUES ($1, $2, 'space', 'public')`, [hiddenChat, ws])
+      await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'space', $3, 'Root')`, [hiddenRoot, ws, hiddenSpace])
+      await q(`INSERT INTO space (space_id, workspace_id, name, chat_id, root_folder_id) VALUES ($1, $2, 'Hidden', $3, $4)`, [hiddenSpace, ws, hiddenChat, hiddenRoot])
+      await q(`UPDATE chat SET space_id = $2 WHERE chat_id = $1`, [hiddenChat, hiddenSpace])
+      await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, policy) VALUES ($1, $2, 'space', $3, '{"privacy":"invited"}')`, [id(), ws, hiddenSpace])
+      await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'chat', $3, 'Hidden chat files')`, [hiddenFolder, ws, hiddenChat])
+      const [openChat, openRoot, openSpace, openGoal] = [id(), id(), id(), id()]
+      await q(`INSERT INTO chat (chat_id, workspace_id, kind, visibility) VALUES ($1, $2, 'space', 'public')`, [openChat, ws])
+      await q(`INSERT INTO folder (folder_id, workspace_id, owner_type, owner_id, name) VALUES ($1, $2, 'space', $3, 'Root')`, [openRoot, ws, openSpace])
+      await q(`INSERT INTO space (space_id, workspace_id, name, chat_id, root_folder_id) VALUES ($1, $2, 'Members only', $3, $4)`, [openSpace, ws, openChat, openRoot])
+      await q(`UPDATE chat SET space_id = $2 WHERE chat_id = $1`, [openChat, openSpace])
+      await q(`INSERT INTO chat_member (chat_id, principal_id, role) VALUES ($1, $2, 'member')`, [openChat, alice])
+      await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Members goal', $3, $4)`, [openGoal, ws, owner, openSpace])
+      // A deleted project: its milestone and tasks are gone too.
+      const [deadProject, deadMilestone, deadTask] = [id(), id(), id()]
+      await q(`INSERT INTO project (project_id, workspace_id, owner_principal_id, name, visibility, deleted_at) VALUES ($1, $2, $3, 'Dead', 'members', now())`, [deadProject, ws, owner])
+      await q(`INSERT INTO milestone (milestone_id, workspace_id, project_id, title, sort_key) VALUES ($1, $2, $3, 'M', 'm')`, [deadMilestone, ws, deadProject])
+      await q(`INSERT INTO work_item (work_item_id, workspace_id, owner_principal_id, title, project_id) VALUES ($1, $2, $3, 'Orphan', $4)`, [deadTask, ws, owner, deadProject])
       const presetGoal = id()
       await q(`INSERT INTO goal (goal_id, workspace_id, scope, name, creator_id, space_id) VALUES ($1, $2, 'space', 'Space edit goal', $3, $4)`, [presetGoal, ws, owner, space])
       await q(`INSERT INTO resource_policy (policy_id, workspace_id, resource_type, resource_id, default_subject, default_role) VALUES ($1, $2, 'goal', $3, 'space', 'editor')`, [id(), ws, presetGoal])
@@ -174,6 +207,36 @@ describe.skipIf(!URL)('Postgres ACL + directory (#1502 schema)', () => {
       // The foreign twin (private + invited) does not shadow our project.
       expect(await can(alice, 'view', 'project', project)).toBe(true)
       expect(await can(alice, 'view', 'space', space)).toBe(false)
+      // Review 3 — secrecy-only ancestors: hidden from others, no owner bypass.
+      for (const [kind, rid] of [['folder', goalFolder], ['task-list', privList], ['task', listTask], ['channel', hiddenChat], ['folder', hiddenFolder]] as const) {
+        for (const p of [owner, bob]) {
+          const decision = await acl.evaluate(await who(p), 'view', { kind, id: rid })
+          expect(decision, `${kind} ${p === owner ? 'owner' : 'bob'}`).toMatchObject({ allowed: false, secret: true, preview: 'none' })
+        }
+      }
+      expect(await can(alice, 'view', 'task', listTask)).toBe(true) // the task's own owner
+      // The secret space's 'public' chat: no workspace minimal, title not listed.
+      expect(await acl.evaluate(await who(alice), 'view_title', { kind: 'channel', id: hiddenChat })).toMatchObject({ allowed: false, role: null, secret: true })
+      // Joining the public chat of a members-only space does not make alice a space member.
+      expect(await can(alice, 'view', 'goal', openGoal)).toBe(false)
+      expect(await acl.evaluate(await who(bob), 'view_title', { kind: 'channel', id: openChat })).toMatchObject({ allowed: false, role: null })
+      // Deleted project → its milestone and task are not found.
+      expect((await acl.evaluate(await who(owner), 'view', { kind: 'milestone', id: deadMilestone })).reason).toBe('not_found')
+      expect((await acl.evaluate(await who(owner), 'view', { kind: 'task', id: deadTask })).reason).toBe('not_found')
+      // Goal ownership follows the champion; the personal goal's creator stays owner.
+      expect(await can(bob, 'transfer', 'goal', ownedGoal)).toBe(true)
+      await q(`UPDATE goal SET champion_id = $2 WHERE goal_id = $1`, [ownedGoal, alice])
+      await q(`UPDATE workspace SET policy_epoch = policy_epoch + 1 WHERE workspace_id = $1`, [ws])
+      expect(await can(bob, 'transfer', 'goal', ownedGoal)).toBe(false)
+      expect(await can(bob, 'view', 'goal', ownedGoal)).toBe(true) // company scope
+      expect(await can(alice, 'transfer', 'goal', ownedGoal)).toBe(true)
+      expect(await can(alice, 'transfer', 'goal', personal)).toBe(true)
+      // A champion removed from the space keeps nothing beyond the edges.
+      expect(await can(bob, 'manage_access', 'goal', championGoal)).toBe(true)
+      await q(`UPDATE chat_member SET state = 'removed' WHERE chat_id = $1 AND principal_id = $2`, [spaceChat, bob])
+      await q(`UPDATE workspace SET policy_epoch = policy_epoch + 1 WHERE workspace_id = $1`, [ws])
+      expect(await can(bob, 'view', 'goal', championGoal)).toBe(false)
+      expect(await can(bob, 'view', 'goal', spaceGoal)).toBe(false)
       // Hard denials.
       expect((await acl.evaluate(await who(gone), 'view', { kind: 'goal', id: company })).reason).toBe('not_member')
       expect((await acl.evaluate(await who(ph), 'view', { kind: 'goal', id: company })).reason).toBe('placeholder')

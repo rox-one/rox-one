@@ -56,8 +56,16 @@ describe('resourceFromRow', () => {
     expect(resourceFromRow({ kind: 'channel', id: C }, row({ implicit_workspace_role: 'minimal' })).implicitEntries).toEqual(workspaceViewer('minimal'))
   })
 
-  test('maps the space chat id', () => {
-    expect(resourceFromRow({ kind: 'space', id: G }, row({ chat_id: C })).chatId).toBe(C)
+  test('maps the space chat id, chat visibility and company-wide flag', () => {
+    const node = resourceFromRow({ kind: 'space', id: G }, row({ chat_id: C, chat_public: true, company_wide: false }))
+    expect(node).toMatchObject({ chatId: C, chatPublic: true, companyWide: false })
+    expect(resourceFromRow({ kind: 'goal', id: G }, row())).not.toHaveProperty('chatPublic')
+  })
+
+  test('maps secrecy-only ancestors separately from role parents', () => {
+    const node = resourceFromRow({ kind: 'folder', id: G }, row({ parent_refs: [], ancestor_refs: [`goal:${C}`] }))
+    expect(node.parents).toEqual([])
+    expect(node.ancestors).toEqual([{ kind: 'goal', id: C }])
   })
 
   test('unknown implicit roles are dropped (fail closed)', () => {
@@ -75,9 +83,34 @@ describe('resourceFromRow', () => {
 describe('loader SQL (review 2 owner decisions)', () => {
   const sql = (kind: keyof typeof RESOURCE_LOADERS) => RESOURCE_LOADERS[kind]!('"public".')
 
-  test('goals and projects never list their parent goal (no goal → goal / project inheritance)', () => {
-    expect(sql('goal')).not.toContain("'goal:' || g.parent_goal_id")
-    expect(sql('project')).not.toContain("'goal:' || pj.parent_goal_id")
+  const parentsOf = (text: string) => text.slice(text.indexOf('FROM ('), text.indexOf('AS parent_refs'))
+  const ancestorsOf = (text: string) => text.slice(text.lastIndexOf('AS chat_id'), text.indexOf('AS ancestor_refs', text.lastIndexOf('AS chat_id')))
+
+  test('goals and projects list their parent goal only as a secrecy ancestor (no goal → goal / project inheritance)', () => {
+    expect(parentsOf(sql('goal'))).not.toContain('parent_goal_id')
+    expect(parentsOf(sql('project'))).not.toContain('parent_goal_id')
+    expect(ancestorsOf(sql('goal'))).toContain("'goal:' || g.parent_goal_id")
+    expect(ancestorsOf(sql('project'))).toContain("'goal:' || pj.parent_goal_id")
+  })
+
+  test('goal-owned folders and members-mode lists keep their cut parents as secrecy ancestors', () => {
+    expect(parentsOf(sql('folder'))).not.toContain("'goal'")
+    expect(ancestorsOf(sql('folder'))).toContain("f.owner_type = 'goal'")
+    expect(ancestorsOf(sql('task-list'))).toContain("l.share_mode NOT IN ('space', 'workspace')")
+  })
+
+  test('goal owner: creator only for personal goals, otherwise the current champion', () => {
+    expect(sql('goal')).toContain("CASE WHEN g.scope = 'personal' THEN g.creator_id::text ELSE g.champion_id::text END AS owner_id")
+  })
+
+  test('milestones and tasks of a deleted project are deleted', () => {
+    expect(sql('milestone')).toContain('pj.deleted_at IS NULL')
+    expect(sql('task')).toContain('pj.deleted_at IS NULL')
+  })
+
+  test('spaces expose chat_public / company_wide for the join rule', () => {
+    expect(sql('space')).toContain('AS chat_public')
+    expect(sql('space')).toContain("(s.is_company_space OR s.default_access <> 'members') AS company_wide")
   })
 
   test('a members project is workspace-visible only when legacy (no space) and without a policy row', () => {
@@ -86,7 +119,9 @@ describe('loader SQL (review 2 owner decisions)', () => {
 
   test('chats carry no owner and public chats only minimal', () => {
     expect(sql('channel')).not.toContain('created_by')
-    expect(sql('channel')).toContain("WHEN c.visibility = 'public' THEN 'minimal'")
+    expect(sql('channel')).toContain("CASE WHEN c.visibility = 'public' AND (c.space_id IS NULL OR EXISTS")
+    // Only company-wide, non-secret spaces may have a workspace-visible chat.
+    expect(sql('channel')).toContain("(cs.is_company_space OR cs.default_access <> 'members') AND NOT EXISTS")
   })
 
   test('a members-only task list does not list its space / project owner as a parent', () => {
@@ -179,8 +214,8 @@ describe('PostgresAclRepository', () => {
     })
     const entries = await new PostgresAclRepository(db).entries(WS, { kind: 'channel', id: C })
     expect(entries).toEqual([
-      { subjectType: 'principal', subjectId: P, role: 'manager' },
-      { subjectType: 'principal', subjectId: G, role: 'commenter' },
+      { subjectType: 'principal', subjectId: P, role: 'manager', via: 'chat' },
+      { subjectType: 'principal', subjectId: G, role: 'commenter', via: 'chat' },
     ])
     expect(calls.find(c => c.sql.includes('cm.role FROM'))!.params).toEqual([C, WS])
   })
@@ -193,8 +228,8 @@ describe('PostgresAclRepository', () => {
       return []
     })
     expect(await new PostgresAclRepository(db).entries(WS, { kind: 'space', id: C })).toEqual([
-      { subjectType: 'principal', subjectId: P, role: 'manager' },
-      { subjectType: 'principal', subjectId: G, role: 'editor' },
+      { subjectType: 'principal', subjectId: P, role: 'manager', via: 'chat' },
+      { subjectType: 'principal', subjectId: G, role: 'editor', via: 'chat' },
     ])
   })
 
