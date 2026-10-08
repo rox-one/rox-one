@@ -24,6 +24,7 @@ import { EntitiesPreviewsSettingsToggle } from '@/components/entities/EntitiesPr
 import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
 import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ExtraScreensSettings } from './ExtraScreensSettings'
+import { StorageVisibleRootSettings } from './StorageVisibleRootSettings'
 
 function ModeScreenToggle({ id }: { id: ModeScreenId }) {
   const { t } = useTranslation()
@@ -149,6 +150,7 @@ export function WorkbenchChromeSettings() {
       </SettingsCard>
     </SettingsSection>
     <ExtraScreensSettings />
+    <StorageVisibleRootSettings />
     <SettingsSection
       title={t('settings.appearance.workbenchModeScreens')}
       description={t('settings.appearance.workbenchModeScreensDesc')}

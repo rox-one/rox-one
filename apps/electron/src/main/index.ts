@@ -138,6 +138,8 @@ import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
 import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
+import { registerStorageVisibleRootIpc } from './storage-visible-root-ipc'
+import { registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from './visible-home-boot'
 import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
 import { registerPiModelResolver } from '@rox/shared/config'
 import { getPiModelsForAuthProvider, getAllPiModels } from '@rox/shared/config'
@@ -390,6 +392,29 @@ if (!gotTheLock) {
       }
     }
   })
+}
+
+// W1-13 (#1510): the visible-home migration runs only here, in the primary
+// instance after the single-instance lock (never at CONFIG_DIR import time and
+// never in numbered/second instances, headless mode, the CLI or the server). This
+// process keeps its resolved CONFIG_DIR; the next launch picks up ~/rox. Every
+// instance that runs holds the app lifetime lock so migrations defer meanwhile.
+const visibleHomeBoot = gotTheLock
+  ? runVisibleHomeBoot({
+      primary: !allowMultiInstance && !process.env.CRAFT_HEADLESS,
+      configDir: CONFIG_DIR,
+      // Data moved to ~/rox but the compat link is missing: restart onto it
+      // instead of running on a vanished legacy dir (next launch resolves ~/rox).
+      relaunch: () => {
+        mainLog.warn('Visible Rox home moved without a compat link; relaunching onto it')
+        app.relaunch()
+        app.exit(0)
+      },
+    })
+  : null
+if (visibleHomeBoot) {
+  if (visibleHomeBoot.notice) mainLog.info('Visible Rox home migration notice', visibleHomeBoot.notice)
+  app.once('will-quit', () => visibleHomeBoot.release())
 }
 
 // Helper to create initial windows on startup
@@ -734,6 +759,17 @@ app.whenReady().then(async () => {
       isDebugMode,
       getLogFilePath,
       captureError: (err) => Sentry.captureException(err),
+    })
+
+    // W1-13: Settings toggle for storage.visible-root.v1 (applies on next launch).
+    registerStorageVisibleRootIpc({
+      ipcMain,
+      isTrustedSender: (event) => Boolean(windowManager?.getWindowByWebContentsId(event.sender.id)),
+    })
+    registerStorageMigrationNoticeIpc({
+      ipcMain,
+      isTrustedSender: (event) => Boolean(windowManager?.getWindowByWebContentsId(event.sender.id)),
+      notice: visibleHomeBoot?.notice ?? null,
     })
 
     registerDeviceDiagnosticsIpc({
