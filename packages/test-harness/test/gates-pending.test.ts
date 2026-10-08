@@ -1,4 +1,4 @@
-/** W1-10 self-test: gates report pending when sibling inputs are absent. */
+/** W1-10 self-test: gates report pending only when sibling inputs are absent (fail-closed cases: gates-fail-closed.test.ts). */
 import { describe, expect, test } from 'bun:test'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -34,13 +34,16 @@ describe('gates with missing sibling inputs', () => {
     expect(res.summary).toContain('#1510')
   })
   test('v2.1 gates are pending without W1-15 inputs', async () => {
-    expect(checkChromeLintGate({ repoRoot: emptyRoot }).status).toBe('pending')
+    expect((await checkChromeLintGate({ repoRoot: emptyRoot })).status).toBe('pending')
     expect(checkOneRailGatePending().status).toBe('pending')
     expect((await checkDockLayoutGate({ repoRoot: emptyRoot })).status).toBe('pending')
     expect((await checkAgentPrivacyGate({ repoRoot: emptyRoot })).status).toBe('pending')
   })
-  test('visual and axe gates are pending without wave-2 screens', async () => {
-    expect(checkVisualGate({ repoRoot: emptyRoot }).status).toBe('pending')
-    expect((await checkAxeGate({ repoRoot: emptyRoot })).status).toBe('pending')
+  test('visual, axe and one-rail gates stay pending until the wave-2 browser driver, and say so', async () => {
+    for (const res of [checkVisualGate({ repoRoot: emptyRoot, env: {} }), await checkAxeGate({ repoRoot: emptyRoot }), checkOneRailGatePending()]) {
+      expect(res.status).toBe('pending')
+      expect(res.summary).toContain('wave-2 browser driver')
+      expect(res.summary).toContain('README')
+    }
   })
 })

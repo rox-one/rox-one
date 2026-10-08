@@ -3,7 +3,7 @@
  *
  * Discovers `generatePermissionMatrix()` in
  * `packages/core/src/entities/permissions.ts` (owner #1501). Missing →
- * pending. When present, every matrix row `{ actor, action, ref, allowed }`
+ * pending; present but not importable / not exported / throwing → fail. When present, every matrix row `{ actor, action, ref, allowed }`
  * is evaluated through the discovered `can()` (or the row's own `allowed`
  * flag is cross-checked against the DATA-MODEL §8 abbreviated rules for
  * the owner < viewer cases). An explicit fixture module can be injected
@@ -11,7 +11,7 @@
  */
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { pending, gateFromViolations, type GateResult } from './types.ts'
+import { pending, inputBroken, errorMessage, gateFromViolations, type GateResult } from './types.ts'
 
 export interface PermissionMatrixRow {
   actor: string
@@ -35,16 +35,23 @@ export async function runPermissionMatrixGate(opts: {
   const modulePath = opts.fixtureModulePath ?? join(root, PERMISSIONS_PATH)
   if (!existsSync(modulePath)) return pending(gate, PERMISSIONS_PATH, '1501')
 
-  const mod = (await import(modulePath)) as Partial<PermissionMatrixModule>
-  if (typeof mod.generatePermissionMatrix !== 'function') {
-    return {
-      gate,
-      status: 'fail',
-      summary: 'generatePermissionMatrix() is not exported',
-      violations: [`${PERMISSIONS_PATH} must export generatePermissionMatrix()`],
-    }
+  // Present but not evaluable → fail closed (types.ts input policy).
+  let mod: Partial<PermissionMatrixModule>
+  try {
+    mod = (await import(modulePath)) as Partial<PermissionMatrixModule>
+  } catch (error) {
+    return inputBroken(gate, PERMISSIONS_PATH, `import failed: ${errorMessage(error)}`)
   }
-  const rows = mod.generatePermissionMatrix()
+  if (typeof mod.generatePermissionMatrix !== 'function') {
+    return inputBroken(gate, PERMISSIONS_PATH, 'must export generatePermissionMatrix()')
+  }
+  let rows: PermissionMatrixRow[]
+  try {
+    rows = mod.generatePermissionMatrix()
+  } catch (error) {
+    return inputBroken(gate, PERMISSIONS_PATH, `generatePermissionMatrix() threw: ${errorMessage(error)}`)
+  }
+  if (!Array.isArray(rows)) return inputBroken(gate, PERMISSIONS_PATH, 'generatePermissionMatrix() must return an array')
   const violations: string[] = []
   if (rows.length === 0) violations.push('permission matrix is empty')
   const seen = new Set<string>()
