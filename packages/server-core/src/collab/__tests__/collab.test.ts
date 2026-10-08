@@ -185,3 +185,48 @@ describe('free-busy (§11.9)', () => {
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
   })
 })
+
+describe('negative paths (PLAN §1.4)', () => {
+  const denyAll: Authorizer = { can: async () => false }
+
+  test('presence.heartbeat is FORBIDDEN without access to the workspace', async () => {
+    const receipt = await memoryHarness({ authorizer: denyAll }).run({ type: 'presence.heartbeat', payload: { status: 'online', device: 'web' } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(collabPresenceStore().statusOf(WORKSPACE_ID, ACTOR_ID, NOW.getTime())).toBe('offline')
+  })
+
+  test('presence.join is FORBIDDEN without access to the workspace', async () => {
+    const receipt = await memoryHarness({ authorizer: denyAll }).run({ type: 'presence.join', payload: { ref: { kind: 'note', id: U('doc') } } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+  })
+
+  test('presence.leave is FORBIDDEN without access to the workspace', async () => {
+    const receipt = await memoryHarness({ authorizer: denyAll }).run({ type: 'presence.leave', payload: { ref: { kind: 'note', id: U('doc') } } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+  })
+
+  test('docs.suggest_changes on a doc the caller cannot write is FORBIDDEN and writes nothing', async () => {
+    const readOnly: Authorizer = { can: async (_p, verb) => verb === 'read' }
+    const harness = memoryHarness({ authorizer: readOnly })
+    await harness.run({ type: 'docs.create_document', payload: { id: U('doc'), title: 'Spec' } })
+    const receipt = await harness.run({ type: 'docs.suggest_changes', target: { kind: 'note', id: U('doc') }, payload: { id: U('sugg'), kind: 'insert', anchor: { start: 'AAE=', end: 'AAI=' }, summary: 'Insert «x»' } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('doc-suggestion')).toEqual([])
+  })
+
+  test('docs.sync_suggestions on a document the caller cannot read is FORBIDDEN', async () => {
+    const noNote: Authorizer = { can: async (_p, _verb, ref) => ref?.kind !== 'note' }
+    const harness = memoryHarness({ authorizer: noNote })
+    const receipt = await harness.run({ type: 'docs.sync_suggestions', target: { kind: 'note', id: U('doc') }, payload: { suggestionIds: [] } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('note')).toEqual([])
+  })
+
+  test('docs.record_view on a document the caller cannot read is FORBIDDEN', async () => {
+    const noNote: Authorizer = { can: async (_p, _verb, ref) => ref?.kind !== 'note' }
+    const harness = memoryHarness({ authorizer: noNote })
+    const receipt = await harness.run({ type: 'docs.record_view', target: { kind: 'note', id: U('doc') }, payload: {} })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('doc-view')).toEqual([])
+  })
+})

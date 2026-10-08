@@ -215,3 +215,86 @@ describe('events, calls and chats', () => {
     expect(records('agent-approval')[0]!.data).toMatchObject({ status: 'pending', invocationId: U('inv'), approverIds: [ACTOR_ID] })
   })
 })
+
+describe('negative paths (PLAN §1.4)', () => {
+  const denyAll: Authorizer = { can: async () => false }
+  const docWriteDenied: Authorizer = { can: async (_p, verb, ref) => !(verb === 'write' && ref?.kind === 'note') }
+
+  test('docs.insert_event_block on a doc the caller cannot write is FORBIDDEN and writes no event', async () => {
+    const harness = await seeded({ authorizer: docWriteDenied })
+    const receipt = await harness.run({ type: 'docs.insert_event_block', target: docTarget, payload: { docRef: docTarget, blockId: 'b1', event: { title: 'Kickoff', start: '2026-10-09T10:00:00Z', end: '2026-10-09T11:00:00Z' } } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('calendar-event')).toEqual([])
+    expect(records('doc-block')).toEqual([])
+  })
+
+  test('docs.insert_meeting_block on a doc the caller cannot write is FORBIDDEN and opens no call', async () => {
+    const harness = await seeded({ authorizer: docWriteDenied })
+    const receipt = await harness.run({ type: 'docs.insert_meeting_block', target: docTarget, payload: { docRef: docTarget, blockId: 'b1', mode: 'now' } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('call')).toEqual([])
+  })
+
+  test('docs.embed_view with a ref that is neither a saved view nor a query is rejected as VALIDATION', async () => {
+    const harness = await seeded()
+    const receipt = await harness.run({ type: 'docs.embed_view', target: docTarget, payload: { docRef: docTarget, blockId: 'b1', ref: { kind: 'nonsense' } } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
+  })
+
+  test('docs.embed_view on a view the caller cannot read is FORBIDDEN', async () => {
+    const viewDenied: Authorizer = { can: async (_p, verb, ref) => !(verb === 'read' && ref?.kind === 'base-view') }
+    const harness = await seeded({ authorizer: viewDenied })
+    const receipt = await harness.run({ type: 'docs.embed_view', target: docTarget, payload: { docRef: docTarget, blockId: 'b1', ref: { kind: 'saved-view', ref: { kind: 'base-view', id: U('view') } } } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('doc-block')).toEqual([])
+  })
+
+  test('docs.create_from_messages on a chat the caller cannot read is FORBIDDEN', async () => {
+    await seeded()
+    // No access to the origin chat at all: neither read nor write.
+    const noChannelRead: Authorizer = { can: async (_p, _verb, ref) => ref?.kind !== 'channel' }
+    const guarded = memoryHarness({ authorizer: noChannelRead })
+    const receipt = await guarded.run({ type: 'docs.create_from_messages', target: { kind: 'channel', id: U('chat') }, payload: { id: U('digest'), chatRef: { kind: 'channel', id: U('chat') }, seqs: [1], target: { new: { title: 'Digest' } }, format: 'plain' } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('note').find(note => note.id === U('digest'))).toBeUndefined()
+  })
+
+  test('tasks.create_from_selection from a doc the caller cannot read is FORBIDDEN', async () => {
+    const harness = await seeded()
+    const noRead: Authorizer = { can: async (_p, verb, ref) => !(verb === 'read' && ref?.kind === 'note') }
+    const guarded = memoryHarness({ authorizer: noRead })
+    await guarded.run({ type: 'docs.create_document', payload: { id: U('doc'), title: 'Spec' } })
+    const receipt = await guarded.run({ type: 'tasks.create_from_selection', payload: { id: U('sel'), origin: { kind: 'doc-block', docRef: `note:${U('doc')}`, blockId: 'b1' }, title: 'x' } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('task').find(task => task.id === U('sel'))).toBeUndefined()
+    expect(harness).toBeDefined()
+  })
+
+  test('tasks.create_many_from_checklist on a doc the caller cannot write is FORBIDDEN and creates no task', async () => {
+    const harness = await seeded({ authorizer: docWriteDenied })
+    const receipt = await harness.run({ type: 'tasks.create_many_from_checklist', target: docTarget, payload: { docRef: docTarget, blockIds: ['b1'] } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('task')).toEqual([])
+  })
+
+  test('calendar.create_event_from_message in a chat the caller left is FORBIDDEN', async () => {
+    const harness = await seeded()
+    await harness.run({ type: 'im.leave_chat', target: { kind: 'channel', id: U('chat') }, payload: {} })
+    const receipt = await harness.run({ type: 'calendar.create_event_from_message', payload: { id: U('ev'), origin: { kind: 'message', chatRef: `channel:${U('chat')}`, seq: 1 }, attendees: 'chat' } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('calendar-event')).toEqual([])
+  })
+
+  test('im.create_chat without access to the workspace is FORBIDDEN', async () => {
+    const receipt = await memoryHarness({ authorizer: denyAll }).run({ type: 'im.create_chat', payload: { id: U('c'), kind: 'group', name: 'n', visibility: 'public', members: [] } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+  })
+
+  test('vc.start_meeting with a participant the caller cannot read is FORBIDDEN and opens no call', async () => {
+    const noRead: Authorizer = { can: async (_p, verb, ref) => !(verb === 'read' && ref?.kind === 'person') }
+    const harness = memoryHarness({ authorizer: noRead })
+    const receipt = await harness.run({ type: 'vc.start_meeting', payload: { id: U('call'), participants: [BOB] } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    expect(records('call')).toEqual([])
+  })
+})

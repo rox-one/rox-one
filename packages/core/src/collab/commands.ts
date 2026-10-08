@@ -52,6 +52,7 @@ export function suggestionDecisionRisk(payload: unknown): RiskClass {
 }
 
 export type CollabContractType =
+  | 'docs.suggest_changes'
   | 'presence.heartbeat'
   | 'presence.join'
   | 'presence.leave'
@@ -63,6 +64,7 @@ export type CollabContractType =
 
 /** The collaboration commands this package declares or re-binds. */
 export const COLLAB_CONTRACT_TYPES: readonly CollabContractType[] = [
+  'docs.suggest_changes',
   'presence.heartbeat',
   'presence.join',
   'presence.leave',
@@ -75,6 +77,7 @@ export const COLLAB_CONTRACT_TYPES: readonly CollabContractType[] = [
 
 /** Risk class of every collaboration command; `@rox/server-core/collab` binds these. */
 export const COLLAB_COMMAND_RISK: Readonly<Record<CollabContractType, (payload: unknown, ctx: CommandRiskContext) => RiskClass>> = {
+  'docs.suggest_changes': collabRoutineRisk,
   'presence.heartbeat': collabRoutineRisk,
   'presence.join': collabRoutineRisk,
   'presence.leave': collabRoutineRisk,
