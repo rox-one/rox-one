@@ -947,6 +947,7 @@ export class OmpAgent extends BaseAgent {
       apiKey: env.ROX_API_KEY,
       baseUrl: accountCredential?.baseUrl ?? getLlmConnection(connectionSlug)?.baseUrl,
       publicRoxCatalog: usesPublicRoxCatalog,
+      model: this._model ?? undefined,
       sourceAgentDir: env.PI_CODING_AGENT_DIR,
       configFiles: env.PI_CONFIG_FILES,
     });
@@ -2690,6 +2691,7 @@ export class OmpAgent extends BaseAgent {
       publicRoxCatalog,
       apiKey: env.ROX_API_KEY,
       baseUrl: accountCredential?.baseUrl ?? getLlmConnection(connectionSlug)?.baseUrl,
+      model: invocationModel ?? this._model ?? undefined,
       sourceAgentDir: env.PI_CODING_AGENT_DIR,
       configFiles: env.PI_CONFIG_FILES,
     });

@@ -78,8 +78,8 @@ function ompAgentDir(homeDir: string): string {
   return join(homeDir, '.omp', 'agent');
 }
 
-function firstExisting(homeDir: string, names: readonly string[]): string | null {
-  const dir = ompAgentDir(homeDir);
+/** First existing basename inside an OMP agent directory, in preference order. */
+function firstExistingIn(dir: string, names: readonly string[]): string | null {
   for (const name of names) {
     const path = join(dir, name);
     if (existsSync(path)) return path;
@@ -103,7 +103,7 @@ function hasProvisionableKey(input: OmpFirstRunInspectInput): boolean {
 }
 
 function hasOmpModels(homeDir: string): boolean {
-  return HAS_PROVIDER_MODELS.test(readIfExists(firstExisting(homeDir, MODELS_BASENAMES)));
+  return HAS_PROVIDER_MODELS.test(readIfExists(firstExistingIn(ompAgentDir(homeDir), MODELS_BASENAMES)));
 }
 
 export function isOmpCredentialErrorCode(code: string | undefined | null): code is OmpCredentialCode {
@@ -200,6 +200,52 @@ function configYmlTemplate(): string {
   ].join('\n');
 }
 
+const UNKNOWN_MODEL_CONTEXT_WINDOW = 200000;
+
+function asMapping(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+/**
+ * Materialize the requested Rox model in the disposable OMP overlay's provider
+ * catalog.
+ *
+ * A clean home has no OMP provider catalog at all, and OMP refuses to select a
+ * model it cannot resolve, so a pinned gateway model must be declared here or
+ * the turn fails at `set_model`. Only the disposable overlay is written, and
+ * only when the provider entry is missing or incomplete: the user's own
+ * `~/.omp/agent` files are never modified.
+ */
+function ensureOverlayRoxModel(agentDir: string, baseUrl: string, model: string): void {
+  const existing = firstExistingIn(agentDir, MODELS_BASENAMES);
+  const catalog: Record<string, unknown> = (existing ? asMapping(parseYaml(readFileSync(existing, 'utf8'))) : null) ?? {};
+  const providers: Record<string, unknown> = asMapping(catalog['providers']) ?? {};
+  catalog['providers'] = providers;
+  const rox: Record<string, unknown> = asMapping(providers[ROX_OMP_PROVIDER_ID]) ?? {};
+  providers[ROX_OMP_PROVIDER_ID] = rox;
+  const models: unknown[] = Array.isArray(rox['models']) ? rox['models'] : [];
+  rox['models'] = models;
+  const declared = models.some(entry => asMapping(entry)?.['id'] === model);
+  const configuredBaseUrl = typeof rox['baseUrl'] === 'string' ? rox['baseUrl'].trim() : '';
+  if (declared && configuredBaseUrl && rox['apiKey'] === ROX_OMP_API_KEY_ENV) return;
+  rox['baseUrl'] = configuredBaseUrl || baseUrl;
+  rox['api'] = typeof rox['api'] === 'string' && rox['api'] ? rox['api'] : 'openai-completions';
+  // The gateway key reaches the child through the env indirection, never the file.
+  rox['apiKey'] = ROX_OMP_API_KEY_ENV;
+  if (!declared) {
+    const known = ROX_PUBLIC_MODEL_CATALOG.find(candidate => candidate.id === model);
+    models.push({
+      id: model,
+      name: known?.name ?? model,
+      contextWindow: known?.contextWindow ?? UNKNOWN_MODEL_CONTEXT_WINDOW,
+      reasoning: known?.supportsThinking ?? true,
+      input: known?.supportsImages ? ['text', 'image'] : ['text'],
+    });
+  }
+  writeFileSync(join(agentDir, 'models.yml'), stringifyYaml(catalog), { mode: 0o600 });
+  rmSync(join(agentDir, 'models.yaml'), { force: true });
+}
+
 export function provisionOmpRoxConfig(input: ProvisionOmpRoxConfigInput): ProvisionOmpRoxConfigResult {
   const created: string[] = [];
   const skipped: string[] = [];
@@ -208,8 +254,8 @@ export function provisionOmpRoxConfig(input: ProvisionOmpRoxConfigInput): Provis
 
   const modelsPath = join(dir, 'models.yml');
   const configPath = join(dir, 'config.yml');
-  const existingModels = firstExisting(input.homeDir, MODELS_BASENAMES);
-  const existingConfig = firstExisting(input.homeDir, CONFIG_BASENAMES);
+  const existingModels = firstExistingIn(dir, MODELS_BASENAMES);
+  const existingConfig = firstExistingIn(dir, CONFIG_BASENAMES);
   const baseUrl = (input.baseUrl?.trim() || ROX_OMP_DEFAULT_BASE_URL).replace(/\/$/, '');
 
   if (existingModels) {
@@ -252,6 +298,8 @@ export function prepareOmpRoxRuntimeConfig(input: {
   baseUrl?: string;
   /** False keeps the user's provider catalog while applying ROX runtime policy. */
   publicRoxCatalog?: boolean;
+  /** Model the app pins for this child; declared in the overlay catalog when absent. */
+  model?: string;
   sourceAgentDir?: string;
   /** Injection seams for clean-home native discovery verification. */
   bundleRoot?: string;
@@ -285,6 +333,13 @@ export function prepareOmpRoxRuntimeConfig(input: {
       rmSync(join(agentDir, 'models.yaml'), { force: true });
       writeFileSync(join(agentDir, 'models.yml'), modelsYmlTemplate(baseUrl), { mode: 0o600 });
       config.modelRoles = { ...config.modelRoles, default: `${ROX_OMP_PROVIDER_ID}/${ROX_OMP_MODEL_ID}` };
+    }
+    // The child is pinned to this exact model over RPC; the catalog it reads must
+    // therefore declare it, even on a clean home with no OMP provider config.
+    const requestedModel = input.model?.trim();
+    if (requestedModel) {
+      ensureOverlayRoxModel(agentDir, baseUrl, requestedModel);
+      config.modelRoles = { ...config.modelRoles, default: requestedModel };
     }
     config.magicKeywords = { ...config.magicKeywords, enabled: true, ultrathink: true, orchestrate: true, workflow: true };
     config.providers = { ...config.providers, autoThinkingMaxEffort: 'max' };
