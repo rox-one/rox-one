@@ -74,7 +74,7 @@ describe('team-chat schemas (D-v2-2)', () => {
   })
 
   it('every team-chat command of the catalogue has a schema', () => {
-    const catalogueTypes = new Set(COMMAND_CATALOGUE.map(definition => definition.type))
+    const catalogueTypes = new Set<string>(COMMAND_CATALOGUE.map(definition => definition.type as string))
     for (const [type, schema] of Object.entries(TEAM_CHAT_PAYLOAD_SCHEMAS)) {
       expect(catalogueTypes.has(type), `${type} must be declared in the catalogue`).toBe(true)
       expect(typeof schema.safeParse, `${type} must validate`).toBe('function')
@@ -126,7 +126,7 @@ describe('identity lifecycle schemas (§15.1, §5.11)', () => {
   })
 
   it('every identity command of the catalogue has a schema', () => {
-    const catalogueTypes = new Set(COMMAND_CATALOGUE.map(definition => definition.type))
+    const catalogueTypes = new Set<string>(COMMAND_CATALOGUE.map(definition => definition.type as string))
     for (const type of Object.keys(IDENTITY_PAYLOAD_SCHEMAS)) expect(catalogueTypes.has(type), type).toBe(true)
     expect(Object.keys(IDENTITY_PAYLOAD_SCHEMAS).sort()).toEqual([
       'identity.activate_placeholder', 'identity.ensure_placeholder', 'identity.merge_placeholder', 'people.invite',

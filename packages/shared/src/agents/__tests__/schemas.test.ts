@@ -101,7 +101,7 @@ describe('command payloads', () => {
   })
 
   it('every agents command of the catalogue has a schema', () => {
-    const catalogueTypes = new Set(COMMAND_CATALOGUE.map(definition => definition.type))
+    const catalogueTypes = new Set<string>(COMMAND_CATALOGUE.map(definition => definition.type as string))
     for (const type of Object.keys(AGENT_PAYLOAD_SCHEMAS)) expect(catalogueTypes.has(type), type).toBe(true)
     expect(Object.keys(AGENT_PAYLOAD_SCHEMAS).sort()).toEqual([
       'agents.decide_approval', 'agents.invoke', 'agents.pause', 'agents.provision_personal_agent',
