@@ -2090,7 +2090,7 @@ export function FreeFormInput({
                               <button
                                 type="button"
                                 aria-label={`${t('chat.selectedText')} ${chipIndex}: ${tooltipText}`}
-                                className="input-toolbar-btn inline-flex h-7 min-w-7 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-[11px] font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                className="input-toolbar-btn inline-flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-[9px] font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 onMouseDown={(event) => {
                                   event.preventDefault()
                                   event.stopPropagation()
@@ -2110,7 +2110,7 @@ export function FreeFormInput({
                           </Tooltip>
                           <button
                             type="button"
-                            className="input-toolbar-btn min-h-7 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--radius-control)] px-1.5 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            className="input-toolbar-btn min-h-6 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--radius-control)] px-1.5 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             onClick={(event) => {
                               const rect = event.currentTarget.getBoundingClientRect()
                               onFollowUpClick?.(item, {

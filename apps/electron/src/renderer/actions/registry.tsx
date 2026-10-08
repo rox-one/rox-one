@@ -3,6 +3,9 @@ import { actions, type ActionId } from './definitions'
 import type { ActionDefinition, ActionHandler } from './types'
 import { formatHotkeyDisplay, isMac } from '@/lib/platform'
 import { getKeybindingContext, evaluateWhen } from './keybinding-context'
+// W1-07 (#1504): flag-gated actions + per-platform default chords.
+import { currentShellFlags } from '@/platform/unified-flags'
+import { isActionFlagEnabled, resolveActionHotkey } from './hotkeys'
 
 interface ActionRegistryContextType {
   // Register a handler for an action
@@ -60,10 +63,7 @@ export function ActionRegistryProvider({ children }: { children: React.ReactNode
   // Get hotkey for action
   const getHotkey = useCallback((actionId: ActionId): string | null => {
     // Check user overrides first
-    if (userOverrides.current.has(actionId)) {
-      return userOverrides.current.get(actionId) ?? null
-    }
-    return actions[actionId].defaultHotkey
+    return resolveActionHotkey(actions[actionId] as ActionDefinition, userOverrides.current)
   }, [])
 
   // Get display string
@@ -87,9 +87,16 @@ export function ActionRegistryProvider({ children }: { children: React.ReactNode
       const context = getKeybindingContext(e)
 
       // Check all actions for matching hotkey
+      let shellFlags: ReadonlySet<string> | null = null
       for (const [actionId, action] of Object.entries(actions)) {
         const hotkey = getHotkey(actionId as ActionId)
         if (!hotkey || !matchesHotkey(e, hotkey)) continue
+
+        // W1-07 (#1504): a flag-gated action never intercepts while its flag is off.
+        if ((action as ActionDefinition).flag) {
+          shellFlags ??= currentShellFlags()
+          if (!isActionFlagEnabled(action as ActionDefinition, shellFlags)) continue
+        }
 
         // Evaluate when-clause against current context
         if (!evaluateWhen((action as ActionDefinition).when, context)) continue
@@ -139,14 +146,21 @@ export function useActionRegistry() {
 // Utility functions
 // ─────────────────────────────────────────────
 
-function matchesHotkey(e: KeyboardEvent, hotkey: string): boolean {
+export function matchesHotkey(
+  e: Pick<KeyboardEvent, 'key' | 'code' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>,
+  hotkey: string,
+  mac: boolean = isMac,
+): boolean {
   const parts = hotkey.toLowerCase().split('+')
   const key = parts[parts.length - 1]
-  const needsMod = parts.includes('mod')
+  // W1-07 (#1504): explicit ⌃ (macOS). Only constrains chords that name it, so
+  // every existing binding matches exactly as before. Off macOS Ctrl is `mod`.
+  const needsCtrl = parts.includes('ctrl')
+  const needsMod = parts.includes('mod') || (!mac && needsCtrl)
   const needsShift = parts.includes('shift')
   const needsAlt = parts.includes('alt')
 
-  const modPressed = isMac ? e.metaKey : e.ctrlKey
+  const modPressed = mac ? e.metaKey : e.ctrlKey
   const logicalKeyMatches = e.key.toLowerCase() === key
 
   // Handle special keys via physical code where logical values can vary by layout.
@@ -182,5 +196,7 @@ function matchesHotkey(e: KeyboardEvent, hotkey: string): boolean {
   const shiftCorrect = needsShift ? e.shiftKey : !e.shiftKey
   const altCorrect = needsAlt ? e.altKey : !e.altKey
 
-  return codeMatches && modCorrect && shiftCorrect && altCorrect
+  const ctrlCorrect = mac && needsCtrl ? e.ctrlKey : true
+
+  return codeMatches && modCorrect && shiftCorrect && altCorrect && ctrlCorrect
 }

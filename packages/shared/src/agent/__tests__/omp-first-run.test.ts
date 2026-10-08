@@ -319,3 +319,68 @@ describe('ompStartupErrorToAgentError credential actions', () => {
     expect(agentError.canRetry).toBe(true);
   });
 });
+
+describe('pinned model declaration in the private Rox overlay', () => {
+  it('materializes the pinned gateway model on a clean home', () => {
+    const home = tempHome();
+    const runtime = prepareOmpRoxRuntimeConfig({
+      runtimeRoot: join(home, 'runs'), homeDir: home, apiKey: 'overlay-fixture-secret',
+      publicRoxCatalog: false, model: 'rox/kimi-k2.6',
+    });
+    const raw = readFileSync(join(runtime.agentDir, 'models.yml'), 'utf8');
+    const models = parseYaml(raw);
+    expect(raw).toMatch(/apiKey:\s*ROX_API_KEY/);
+    expect(raw).not.toContain('overlay-fixture-secret');
+    expect(models.providers.rox.baseUrl).toBe('https://api.rox.one/v1');
+    expect(models.providers.rox.models.map((entry: { id: string }) => entry.id)).toEqual(['rox/kimi-k2.6']);
+    expect(parseYaml(readFileSync(join(runtime.agentDir, 'config.yml'), 'utf8')).modelRoles.default).toBe('rox/kimi-k2.6');
+    runtime.dispose();
+  });
+
+  it('honors an explicit gateway base URL and leaves a complete user catalog byte-identical', () => {
+    const home = tempHome();
+    const source = join(home, '.omp', 'agent');
+    mkdirSync(source, { recursive: true });
+    const original = 'providers:\n  rox:\n    baseUrl: https://gateway.example.test/v1\n    apiKey: ROX_API_KEY\n    models:\n      - id: rox/kimi-k2.6\n';
+    writeFileSync(join(source, 'models.yml'), original);
+    const runtime = prepareOmpRoxRuntimeConfig({
+      runtimeRoot: join(home, 'runs'), homeDir: home, apiKey: 'overlay-fixture-secret',
+      baseUrl: 'https://gateway.example.test/v1/', publicRoxCatalog: false, model: 'rox/kimi-k2.6',
+    });
+    expect(readFileSync(join(runtime.agentDir, 'models.yml'), 'utf8')).toBe(original);
+    expect(readFileSync(join(source, 'models.yml'), 'utf8')).toBe(original);
+    runtime.dispose();
+  });
+
+  it('adds the pinned model to an incomplete user catalog without modifying the user file', () => {
+    const home = tempHome();
+    const source = join(home, '.omp', 'agent');
+    mkdirSync(source, { recursive: true });
+    const original = 'providers:\n  local:\n    models:\n      - id: user-model\n';
+    writeFileSync(join(source, 'models.yml'), original);
+    const runtime = prepareOmpRoxRuntimeConfig({
+      runtimeRoot: join(home, 'runs'), homeDir: home, apiKey: 'overlay-fixture-secret',
+      publicRoxCatalog: false, model: 'rox/kimi-k2.6',
+    });
+    const models = parseYaml(readFileSync(join(runtime.agentDir, 'models.yml'), 'utf8'));
+    expect(models.providers.local.models.map((entry: { id: string }) => entry.id)).toEqual(['user-model']);
+    expect(models.providers.rox.models.map((entry: { id: string }) => entry.id)).toEqual(['rox/kimi-k2.6']);
+    expect(readFileSync(join(source, 'models.yml'), 'utf8')).toBe(original);
+    runtime.dispose();
+  });
+
+  it('normalizes a .yaml catalog copy so OMP reads the declaration it selects from', () => {
+    const home = tempHome();
+    const source = join(home, '.omp', 'agent');
+    mkdirSync(source, { recursive: true });
+    writeFileSync(join(source, 'models.yaml'), 'providers:\n  local:\n    models:\n      - id: user-model\n');
+    const runtime = prepareOmpRoxRuntimeConfig({
+      runtimeRoot: join(home, 'runs'), homeDir: home, apiKey: 'overlay-fixture-secret',
+      publicRoxCatalog: false, model: 'rox/kimi-k2.6',
+    });
+    expect(existsSync(join(runtime.agentDir, 'models.yaml'))).toBe(false);
+    const models = parseYaml(readFileSync(join(runtime.agentDir, 'models.yml'), 'utf8'));
+    expect(models.providers.rox.models.map((entry: { id: string }) => entry.id)).toEqual(['rox/kimi-k2.6']);
+    runtime.dispose();
+  });
+});

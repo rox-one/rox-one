@@ -1,4 +1,6 @@
 import type { ActionDefinition } from './types'
+// W1-07 (#1504)
+import { W1_07_ACTION_FLAG } from './action-flags'
 
 export const actions = {
   // ═══════════════════════════════════════════
@@ -405,13 +407,91 @@ export const actions = {
     category: 'Chat',
   },
 
+  // ═══════════════════════════════════════════
+  // W1-07 (#1504): unified-shell actions. Each carries a workbench `flag`; while
+  // it is off the action has no hotkey, is not listed (shortcut pages,
+  // Omnibox) and never intercepts a key — the shell is the baseline.
+  // ═══════════════════════════════════════════
+  'agent.togglePanel': {
+    id: 'agent.togglePanel',
+    labelKey: 'shortcuts.action.agentTogglePanel',
+    description: 'Show or hide the @rox agent panel',
+    defaultHotkey: 'mod+j',
+    category: 'View',
+    flag: W1_07_ACTION_FLAG.agentPanel,
+  },
+  'agent.askAboutSelection': {
+    id: 'agent.askAboutSelection',
+    labelKey: 'shortcuts.action.agentAskAboutSelection',
+    description: 'Ask @rox about the current selection',
+    defaultHotkey: 'mod+shift+j',
+    category: 'View',
+    flag: W1_07_ACTION_FLAG.agentPanel,
+  },
+  // ⌃1…4 on macOS. On Windows/Linux Ctrl+1…4 is ⌘1…4 (`mode.slot*`), so the
+  // quick panels use Alt+1…4 there. ⌘⇧1…4 stay `collection.view*`.
+  'messenger.quickPanelDocs': {
+    id: 'messenger.quickPanelDocs',
+    labelKey: 'shortcuts.action.quickPanelDocs',
+    description: 'Messenger: open the Docs quick panel',
+    defaultHotkey: 'ctrl+1',
+    defaultHotkeyNonMac: 'alt+1',
+    category: 'View',
+    flag: W1_07_ACTION_FLAG.messenger,
+    // UI-SPEC §15: Messenger only.
+    when: 'messengerActive',
+  },
+  'messenger.quickPanelTasks': {
+    id: 'messenger.quickPanelTasks',
+    labelKey: 'shortcuts.action.quickPanelTasks',
+    description: 'Messenger: open the Tasks quick panel',
+    defaultHotkey: 'ctrl+2',
+    defaultHotkeyNonMac: 'alt+2',
+    category: 'View',
+    flag: W1_07_ACTION_FLAG.messenger,
+    // UI-SPEC §15: Messenger only.
+    when: 'messengerActive',
+  },
+  'messenger.quickPanelCalendar': {
+    id: 'messenger.quickPanelCalendar',
+    labelKey: 'shortcuts.action.quickPanelCalendar',
+    description: 'Messenger: open the Calendar quick panel',
+    defaultHotkey: 'ctrl+3',
+    defaultHotkeyNonMac: 'alt+3',
+    category: 'View',
+    flag: W1_07_ACTION_FLAG.messenger,
+    // UI-SPEC §15: Messenger only.
+    when: 'messengerActive',
+  },
+  'messenger.quickPanelContacts': {
+    id: 'messenger.quickPanelContacts',
+    labelKey: 'shortcuts.action.quickPanelContacts',
+    description: 'Messenger: open the Contacts quick panel',
+    defaultHotkey: 'ctrl+4',
+    defaultHotkeyNonMac: 'alt+4',
+    category: 'View',
+    flag: W1_07_ACTION_FLAG.messenger,
+    // UI-SPEC §15: Messenger only.
+    when: 'messengerActive',
+  },
+  // ⌘F stays `app.search`; Docs takes it over mode-aware (see shell-shortcuts.ts).
+  'docs.findInDoc': {
+    id: 'docs.findInDoc',
+    labelKey: 'shortcuts.action.findInDoc',
+    description: 'Docs: find in the open document',
+    defaultHotkey: null,
+    category: 'General',
+    flag: W1_07_ACTION_FLAG.docsShared,
+  },
+
 } as const satisfies Record<string, ActionDefinition>
 
 // Type-safe action IDs
 export type ActionId = keyof typeof actions
 
 // Get all actions as array (for shortcuts page)
-export const actionList = Object.values(actions)
+// W1-07 (#1504): flag-gated actions are excluded so the lists stay baseline.
+export const actionList = (Object.values(actions) as ActionDefinition[]).filter((action) => !action.flag)
 
 // Get actions by category (for organized display)
 export const actionsByCategory = actionList.reduce((acc, action) => {

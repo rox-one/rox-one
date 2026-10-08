@@ -1,4 +1,4 @@
-import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
+import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER, type RoxExecutionContext } from '@rox/shared/auth'
 import { readFile, writeFile, stat } from 'fs/promises'
 import { join } from 'path'
 import {
@@ -53,6 +53,39 @@ interface ClientSessionWatchState {
 const clientSessionWatches = new Map<string, ClientSessionWatchState>()
 
 const SESSION_GET_LOG_ID_LIMIT = 25
+
+type RoxCaller = { issuer: string; subject: string }
+
+/**
+ * Resolve the Rox caller identity for an RPC request: a cloud principal when
+ * present, otherwise the local/native identity.
+ */
+function roxCallerFor(ctx: RequestContext): RoxCaller {
+  return ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
+}
+
+/**
+ * Capture the Rox account execution context for a request.
+ *
+ * A local/native caller (no cloud principal) MUST NOT be blocked by an
+ * unconnected Rox account: local OMP turns reach the model with the local key,
+ * and the Rox account gate is a proxy authorization, not the credential the
+ * child process uses. A genuine cloud caller (ctx.principal present) still
+ * requires a current account, so the cloud path is unchanged.
+ *
+ * Returns undefined when no authority is installed or the local caller has no
+ * account; throws only for a cloud caller, preserving the strict cloud contract.
+ */
+async function captureRoxExecutionContext(ctx: RequestContext): Promise<RoxExecutionContext | undefined> {
+  const authority = peekRoxAccountAuthority()
+  if (!authority) return undefined
+  try {
+    return await authority.capture(roxCallerFor(ctx))
+  } catch (error) {
+    if (ctx.principal) throw error
+    return undefined
+  }
+}
 
 function nativeMemoryContext(ctx: RequestContext, deps: HandlerDeps, server: RpcServer, workspaceId: string): NativeMemoryContext | undefined {
   const owner = nativeInboxOwner(ctx)
@@ -368,8 +401,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // a generated dispatch into the exception for the user's original input.
     const runtimeLaunch = options?.runtimeLaunch === undefined ? undefined
       : isRuntimeLaunch(options.runtimeLaunch) ? options.runtimeLaunch : { kind: 'unknown' as const }
-    const cloudCaller = ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
-    const roxExecutionContext = await peekRoxAccountAuthority()?.capture(cloudCaller)
+    const roxExecutionContext = await captureRoxExecutionContext(ctx)
 
     return await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
       let acked = false
@@ -622,10 +654,10 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         return getBroInviteService().listPresence(sessionId, (await sessionManager.getSession(sessionId))?.workspaceId ?? ctx.workspaceId)
       case 'refreshTitle':
         log.info(`IPC: refreshTitle received for session ${sessionId}`)
-        return sessionManager.refreshTitle(sessionId, await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER))
+        return sessionManager.refreshTitle(sessionId, await captureRoxExecutionContext(ctx))
       case 'improveDraft':
         log.info(`IPC: improveDraft received for session ${sessionId}`)
-        return sessionManager.improveDraft(sessionId, command.text, await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER))
+        return sessionManager.improveDraft(sessionId, command.text, await captureRoxExecutionContext(ctx))
       // Connection selection (locked after first message)
       case 'setConnection':
         log.info(`IPC: setConnection received for session ${sessionId}, connection: ${command.connectionSlug}`)

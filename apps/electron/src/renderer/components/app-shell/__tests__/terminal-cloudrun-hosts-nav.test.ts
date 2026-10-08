@@ -11,6 +11,7 @@ import { navigationEntity } from '../../../features/product-tour/runtime/routes'
 import { runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from '../../../atoms/runtime-trace'
 import { runtimeCatalogCapabilities, runtimeCatalogScope } from '../../../lib/runtime-catalog-capabilities'
 import { loadRuntimeTrace } from '../../../event-processor/runtime-trace-ingress'
+import { panelRouteKey } from '../panel-route-key'
 
 const mainContentSource = readFileSync(join(__dirname, '../MainContentPanel.tsx'), 'utf8')
 const navContextSource = readFileSync(
@@ -59,7 +60,7 @@ function dispatch(route: string): React.ReactElement {
   const store = createStore()
   const state = parseRouteToNavigationState(route)!
   const bindings: Record<string, unknown> = {
-    ...navigationGuards, ...Object.fromEntries(names.map(name => [name, name])), React, navigationEntity,
+    ...navigationGuards, ...Object.fromEntries(names.map(name => [name, name])), React, navigationEntity, panelRouteKey,
     useCallback: (callback: unknown) => callback, useEffect() {}, useMemo: (callback: () => unknown) => callback(),
     useState: (initial: unknown) => [initial, () => {}], useTranslation: () => ({ t: (key: string) => key }),
     useNavigationState: () => state, useNavigation: () => ({ isSessionsReady: true }),

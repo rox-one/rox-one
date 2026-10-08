@@ -28,6 +28,7 @@ import { CredentialMigrationCard } from './CredentialMigrationCard'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 import { toErrorMessage } from '@/lib/errors'
+import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -51,6 +52,7 @@ function providerLabel(provider: ServiceProvider | string, t: (k: string) => str
 
 export default function AccountsSettingsPage() {
   const { t } = useTranslation()
+  const notesTitleKey = useNotesTitleKey('sidebar.notes')
   const activeWorkspace = useActiveWorkspace()
   const workspaceId = activeWorkspace?.id
 
@@ -331,7 +333,7 @@ export default function AccountsSettingsPage() {
         </SettingsSection>
 
         {/* NOTES — sole owner of Notes connection presentation */}
-        <SettingsSection title={t('sidebar.notes')}>
+        <SettingsSection title={t(notesTitleKey)}>
           <SettingsCard>
             {notesLocal && (
               <SettingsRow

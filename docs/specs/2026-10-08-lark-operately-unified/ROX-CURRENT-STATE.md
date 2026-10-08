@@ -747,7 +747,7 @@ Also from `docs/specs/2026-08-07-siyuan-integration/00-overview.md:148-149` and 
 6. No secrets or prices in the renderer.
 7. No Terminal.app / `.command` launching.
 8. No weakening of default permissions for parity.
-9. H6 freeze list (sessionBuddy, mnemon, pluginHotReload, agentTeamsRuntime (Cordis), modlens, modsearch, dsh-automation, remote control). Canon: `packages/core/src/platform/workbench/harness-skip-list.ts`.
+9. H6 freeze list (sessionBuddy, mnemon, pluginHotReload, agentTeamsRuntime (Cordis), modlens, modsearch, dsh-automation, remote control). Canon: `packages/core/src/platform/workbench/harness-skip-list.ts` *(removed 2026-10-08, wave E-01: UI section, list and locales purged; the freeze stays an anti-goal).*
 
 - The first-party agent-teams skill "не второй оркестратор".
 - "**No Timeline / inspector DAG**" in the agent-teams follow-up.
