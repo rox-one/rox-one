@@ -248,4 +248,9 @@ describe('CHANNEL_MAP runtime contract', () => {
     expect(channels).not.toContain('__openclaw-host:open-panel')
     expect(channels).not.toContain('__openclaw-host:copy-setup-credential')
   })
+
+  it('wires the voice push channels to listeners', () => {
+    expect(CHANNEL_MAP['onTtsStreamChunk']).toMatchObject({ type: 'listener', channel: 'voice:ttsStreamChunk' })
+    expect(CHANNEL_MAP['onVoiceTrigger']).toMatchObject({ type: 'listener', channel: 'voice:trigger' })
+  })
 })

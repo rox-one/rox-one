@@ -108,10 +108,12 @@ function nodeBuiltinStubPlugin() {
  * - `@rox/ui` re-exports `TiptapMarkdownEditor` (tiptap, KaTeX, editor CSS),
  *   used only by the lazily loaded Notes page, and the datatable/spreadsheet
  *   blocks, which Markdown renders through lazy wrappers (lazy-blocks.tsx).
+ *   The same applies to MarkdownOpenUIBlock (OpenUI + recharts), rendered
+ *   through the same lazy wrapper list.
  */
 const SIDE_EFFECT_FREE_MODULES = [
   /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|locales[\\/][^\\/]+\.json)$/,
-  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock)\.tsx$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock|MarkdownOpenUIBlock)\.tsx$/,
   // The diff viewers register a custom element and Shiki themes at module
   // load; marked here so the @rox/ui barrel re-export alone does not pull them
   // (and Shiki) into startup. Wherever they are used, that code still runs.

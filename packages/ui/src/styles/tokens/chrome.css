@@ -38,9 +38,9 @@
   --panel-stack-vertical-overflow: 0px;
   --panel-stack-top-inset: 0px;
   --panel-stack-bottom-inset: 0px;
-  --panel-sash-hit-width: 12px;
+  --panel-sash-hit-width: 8px;
   --panel-sash-hit-width-coarse: 24px;
-  --panel-sash-line-width: 2px;
+  --panel-sash-line-width: 1px;
 }
 
 /* Density swaps values, never class names. Nothing sets data-density yet;

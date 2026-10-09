@@ -52,7 +52,7 @@ function fixture(runtime: EntitiesHandlerRuntime = {}) {
     },
   } as unknown as RpcServer
   registerEntitiesHandlers(server, {} as HandlerDeps, {
-    workspaceFor: id => (id === 'ws' ? { id, rootPath: root } : null),
+    workspaceFor: id => (id === 'ws' || id === 'other' ? { id, rootPath: root } : null),
     ...runtime,
   })
   const ctx: RequestContext = { clientId: 'test', workspaceId: 'ws', webContentsId: null }
@@ -130,6 +130,9 @@ describe('entities:resolve workspace trust', () => {
       principal: { credentialId: 'c1' } as unknown as RequestContext['principal'],
     }
     await expect(f.resolve({ refs: [note] }, 'other', nativeCtx)).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    // SEC-03: an unknown workspace id still answers NOT_FOUND (not FORBIDDEN),
+    // because the scope check runs after the workspace resolves.
+    await expect(f.resolve({ refs: [note] }, 'nope', nativeCtx)).rejects.toMatchObject({ code: 'NOT_FOUND' })
     const previews = (await f.resolve({ refs: [note] }, 'ws', nativeCtx)) as EntityPreview[]
     expect(previews[0]).toMatchObject({ status: 'ok', title: 'v1:n1' })
   })

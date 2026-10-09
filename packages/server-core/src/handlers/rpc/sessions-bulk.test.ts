@@ -34,6 +34,12 @@ function createHarness(
   }
   const sessionManager = {
     async waitForInit() {},
+    // The handler now gates each known target by session visibility; delegation
+    // targets in this harness are all considered absent here, so nothing is gated.
+    getSessions() {
+      return []
+    },
+    assertSessionWriteAccess() {},
     async bulkUpdateSessions(
       workspaceId: string,
       input: Pick<BulkUpdateSessionsInput, 'ids' | 'patch'>,

@@ -139,6 +139,22 @@ describe('identity RPC handlers', () => {
     ).rejects.toThrow(/credentialValue is required/)
   })
 
+  it('SEC-03: GET_STATE is scoped to the client workspace for shared-workspace clients', async () => {
+    const server = createMockServer()
+    registerIdentityHandlers(server as never, {
+      platform: { logger: { info() {}, error() {}, warn() {}, debug() {} } },
+    } as never)
+    const getState = server.handlers.get(RPC_CHANNELS.identity.GET_STATE)!
+    const shared = {
+      clientId: 's',
+      workspaceId: 'ws-1',
+      webContentsId: null,
+      actor: { principalId: 'p', deviceId: 'd', sessionId: 's', authenticatedWorkspaceIds: ['ws-1'], expiresAt: 0 },
+    }
+    await expect(getState(shared, { workspaceId: 'ws-2' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    expect(await getState(shared, { workspaceId: 'ws-1' })).toBeTruthy()
+  })
+
   it('updateProfile persists displayName', async () => {
     const server = createMockServer()
     registerIdentityHandlers(server as never, {

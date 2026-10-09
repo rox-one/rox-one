@@ -7,6 +7,7 @@ import {
   themeToCSS,
   DEFAULT_SHIKI_THEME,
   getShikiTheme,
+  resolveMaterial,
   shouldSetThemeOverride,
   type ThemeOverrides,
   type ThemeFile,
@@ -28,6 +29,8 @@ import {
   type UiFontFamily,
 } from './font-preferences'
 import { toErrorMessage } from '@/lib/errors'
+import { isGeneratedMaterialEffect, materialEffectDataUrl } from '@/lib/material-effect-art'
+import { useRenderProfile } from '@/lib/render-profile-motion'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type FontFamily = UiFontFamily
@@ -121,6 +124,59 @@ const BUNDLED_THEMES = new Map<string, ThemeFile>(
   })
 )
 
+/** Lazily create the fixed, aria-hidden material layers once per document. */
+function ensureMaterialLayer(kind: 'texture' | 'chat-effect' | 'haze'): HTMLDivElement | null {
+  if (typeof document === 'undefined') return null
+  let layer = document.querySelector<HTMLDivElement>(`.material-layer--${kind}`)
+  if (!layer) {
+    layer = document.createElement('div')
+    layer.className = `material-layer material-layer--${kind}`
+    layer.setAttribute('aria-hidden', 'true')
+    document.body.appendChild(layer)
+  }
+  return layer
+}
+
+/** Parse a `#rrggbb`, `rgb()`/`rgba()` string into a byte triplet. */
+function parseRgbTriplet(raw: string): [number, number, number] | null {
+  const hex = raw.match(/^#?([0-9a-f]{6})$/i)
+  if (hex?.[1]) {
+    const value = parseInt(hex[1], 16)
+    return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
+  }
+  const rgb = raw.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
+  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])]
+  return null
+}
+
+/** Current foreground token as RGB, for painting generated effect art. */
+function materialEffectRgb(): [number, number, number] {
+  if (typeof window === 'undefined') return [255, 255, 255]
+  const root = getComputedStyle(document.documentElement)
+  // Prefer the pre-computed byte triplet (emitted by themeToCSS for hex themes
+  // and present in the base tokens); it stays correct for oklch()/hsl()
+  // foregrounds the hex/rgb parsers below cannot read.
+  const triplet = root.getPropertyValue('--foreground-rgb').trim().match(/^(\d+)[,\s]+(\d+)[,\s]+(\d+)/)
+  if (triplet) return [Number(triplet[1]), Number(triplet[2]), Number(triplet[3])]
+  const fromToken = parseRgbTriplet(root.getPropertyValue('--foreground').trim())
+  if (fromToken) return fromToken
+  // `--foreground` may be an unparseable oklch()/color-mix(); the computed
+  // `color` always resolves to rgb(), so read it from the painted root instead
+  // of defaulting to invisible white-on-light ink.
+  if (typeof document !== 'undefined' && document.body) {
+    const body = getComputedStyle(document.body)
+    const fromColor = parseRgbTriplet(body.color)
+    if (fromColor) return fromColor
+    // Last resort: keep ink readable against the canvas background.
+    const background = parseRgbTriplet(body.backgroundColor)
+    if (background) {
+      const luma = (0.2126 * background[0] + 0.7152 * background[1] + 0.0722 * background[2]) / 255
+      return luma > 0.5 ? [17, 17, 17] : [255, 255, 255]
+    }
+  }
+  return [255, 255, 255]
+}
+
 interface ThemeProviderProps {
   children: ReactNode
   defaultMode?: ThemeMode
@@ -182,6 +238,11 @@ export function ThemeProvider({
   const [contrast, setContrastState] = useState<ContrastMode>(storedContrast(stored))
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
   const [systemPrefersMoreContrast, setSystemPrefersMoreContrast] = useState(prefersMoreContrast)
+  const [systemPrefersReducedTransparency, setSystemPrefersReducedTransparency] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-reduced-transparency: reduce)').matches
+      : false,
+  )
   const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState<ThemeMode | null>(null)
 
@@ -440,6 +501,103 @@ export function ThemeProvider({
     }
   }, [effectiveColorTheme, presetTheme, resolvedTheme, isDark, appTheme, themeLoadError])
 
+  // === Material (glass) layer ===
+  // Resolve the theme's material settings with the accessibility gates, then
+  // publish the state as data attributes. Variables come from themeToCSS.
+  // The low-power profile is mirrored on <html data-render-profile> by the
+  // shell snapshot; read it reactively so resolveMaterial and the art
+  // generator follow runtime switches.
+  const renderProfile = useRenderProfile()
+  const resolvedMaterial = useMemo(() => resolveMaterial(resolvedTheme.material, {
+    reduceTransparency: systemPrefersReducedTransparency,
+    highContrast: resolvedContrast === 'high',
+    renderProfile,
+  }), [resolvedTheme, systemPrefersReducedTransparency, resolvedContrast, renderProfile])
+
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    if (!resolvedMaterial.enabled) {
+      delete root.dataset.material
+      delete root.dataset.materialTexture
+      delete root.dataset.materialChatEffect
+      delete root.dataset.materialDeep
+      delete root.dataset.materialHaze
+      return
+    }
+    root.dataset.material = 'on'
+    const texture = resolvedMaterial.texture.kind
+    if (texture && texture !== 'none') root.dataset.materialTexture = texture
+    else delete root.dataset.materialTexture
+    const chatEffect = resolvedMaterial.chatEffect.kind
+    if (chatEffect && chatEffect !== 'none') root.dataset.materialChatEffect = chatEffect
+    else delete root.dataset.materialChatEffect
+    if (resolvedMaterial.haze.enabled) root.dataset.materialHaze = 'on'
+    else delete root.dataset.materialHaze
+    const deepPanes = Object.entries(resolvedMaterial.deepGlass)
+      .filter(([, enabled]) => enabled)
+      .map(([pane]) => pane)
+    if (deepPanes.length > 0) root.dataset.materialDeep = deepPanes.join(',')
+    else delete root.dataset.materialDeep
+  }, [resolvedMaterial])
+
+  // Mount the fixed material layers and (re)generate the chat-effect bitmap.
+  // CSS gates visibility from the data attributes; this effect owns only the
+  // DOM nodes and the generated art for the chat-effect layer.
+  useEffect(() => {
+    const chatLayer = ensureMaterialLayer('chat-effect')
+    ensureMaterialLayer('texture')
+    ensureMaterialLayer('haze')
+    if (!chatLayer) return
+    const clearArt = () => {
+      chatLayer.style.removeProperty('--material-chat-effect-image')
+      chatLayer.style.backgroundImage = ''
+    }
+    if (!resolvedMaterial.enabled) {
+      clearArt()
+      return
+    }
+    // The low-power profile must not rasterise (spec §6): the CSS layer is
+    // hidden there anyway, so skip generation and drop any existing art.
+    if (renderProfile === 'performance') {
+      clearArt()
+      return
+    }
+    const kind = resolvedMaterial.chatEffect.kind
+    if (!kind || kind === 'none') {
+      clearArt()
+      return
+    }
+    if (kind === 'gradient') {
+      // Drop any previously generated bitmap/URL before applying the gradient,
+      // so the two paths never stack.
+      clearArt()
+      chatLayer.style.backgroundImage =
+        'linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--canvas) 55%, transparent) 100%)'
+      return
+    }
+    if (!isGeneratedMaterialEffect(kind)) return
+    let cancelled = false
+    const width = Math.min(Math.max(window.innerWidth, 320), 2048)
+    const height = Math.min(Math.max(window.innerHeight, 240), 2048)
+    void materialEffectDataUrl({
+      kind,
+      width,
+      height,
+      // `intensity` only shapes the rasterised pattern; the layer's CSS opacity
+      // (`--material-chat-effect-intensity`) is the single strength multiplier.
+      intensity: resolvedMaterial.chatEffect.intensity,
+      scale: resolvedMaterial.texture.scale,
+      rgb: materialEffectRgb(),
+    }).then((url) => {
+      if (cancelled || !url) return
+      chatLayer.style.setProperty('--material-chat-effect-image', `url("${url}")`)
+      chatLayer.style.backgroundImage = `url("${url}")`
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [resolvedMaterial, isDark, renderProfile])
+
   // === System preference listener ===
   useEffect(() => {
     let active = true
@@ -455,9 +613,15 @@ export function ThemeProvider({
       if (!active) return
       setSystemPrefersMoreContrast(e.matches)
     }
+    const reducedTransparencyQuery = window.matchMedia('(prefers-reduced-transparency: reduce)')
+    const handleReducedTransparencyChange = (e: MediaQueryListEvent) => {
+      if (!active) return
+      setSystemPrefersReducedTransparency(e.matches)
+    }
 
     mediaQuery.addEventListener('change', handleMediaChange)
     contrastQuery.addEventListener('change', handleContrastChange)
+    reducedTransparencyQuery.addEventListener('change', handleReducedTransparencyChange)
 
     // Listen via Electron IPC if available (more reliable on macOS)
     let cleanup: (() => void) | undefined
@@ -480,6 +644,7 @@ export function ThemeProvider({
       active = false
       mediaQuery.removeEventListener('change', handleMediaChange)
       contrastQuery.removeEventListener('change', handleContrastChange)
+      reducedTransparencyQuery.removeEventListener('change', handleReducedTransparencyChange)
       cleanup?.()
     }
   }, [])

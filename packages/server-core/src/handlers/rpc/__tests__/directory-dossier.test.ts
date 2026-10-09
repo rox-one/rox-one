@@ -75,6 +75,11 @@ describe('directory:exportDossier', () => {
     await expect(f.call(payload, 'nope')).rejects.toThrow('Workspace not found')
     const remote = { clientId: 'r', workspaceId: 'other', webContentsId: null, principal: { credentialId: 'x' } } as unknown as RequestContext
     await expect(f.call(payload, 'ws', remote)).rejects.toThrow('Directory workspace access denied')
+    // SEC-03: a verified shared-workspace client (Actor, no principal) is scoped
+    // the same way, and an unknown id stays "Workspace not found".
+    const shared = { clientId: 's', workspaceId: 'other', webContentsId: null, actor: { principalId: 'p', deviceId: 'd', sessionId: 's', authenticatedWorkspaceIds: ['other'], expiresAt: 0 } } as unknown as RequestContext
+    await expect(f.call(payload, 'ws', shared)).rejects.toThrow('Directory workspace access denied')
+    await expect(f.call(payload, 'nope', shared)).rejects.toThrow('Workspace not found')
     const restricted = fixture({ acl: createLocalAcl({ ownerPrincipalIds: ['someone-else'] }) })
     await expect(restricted.call(payload)).rejects.toThrow('Directory access denied')
     await expect(f.call({ schemaVersion: 9, data: { entities: [] } })).rejects.toThrow('UNSUPPORTED_VERSION')

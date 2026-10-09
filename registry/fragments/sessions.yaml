@@ -294,7 +294,6 @@
     execute → provenance manifest). Managed SiYuan и индексация (FR-7) — вне.
     Runtime-прогон UI — при запуске приложения.
     FR-6 (материализация), без доступа к произвольным путям.
-  refs: [RX-SES-0008, RX-DOC-0006, RX-TSK-0412]
 
 - id: RX-TSK-0412
   title: Довести OwnedRootPolicy
@@ -420,7 +419,6 @@
     Код pairing уже в дереве (packages/messaging-gateway/src/pairing.ts,
     PairingCodeDialog.tsx, TelegramSupergroupPairingDialog.tsx) — задача
     дублирует существующую функциональность. Подписанные релизы — D2.
-  note: |
     Не начато: WebAuthn/passkeys pairing, неизменяемые публичные ссылки,
     раздельные APP_ORIGIN и SHARE_ORIGIN, защищённая поставка релизов.
     После TLS и messaging authority, отдельным соглашением.

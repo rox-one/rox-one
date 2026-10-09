@@ -9,7 +9,9 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 const evidenceRun = process.env.ROX_RUNTIME_EVIDENCE_RUN ?? `run-${Date.now()}`
 export default defineConfig({
   testDir: '.', testMatch: '*.spec.ts', workers: 1, fullyParallel: false,
-  timeout: 60_000, expect: { timeout: 10_000 },
+  // The hosted runner intermittently stalls a case (a different one each run) and blows the 10s
+  // defaults while the same case passes in isolation, so the lane budgets scale in CI only.
+  timeout: process.env.CI ? 120_000 : 60_000, expect: { timeout: process.env.CI ? 30_000 : 10_000 },
   outputDir: resolve(repoRoot, 'docs/evidence/runtime-map/browser-artifacts', evidenceRun),
   reporter: [['list'], ['json', { outputFile: resolve(repoRoot, 'docs/evidence/runtime-map/browser-results.json') }]],
   use: { baseURL: 'http://127.0.0.1:4176', viewport: { width: 1440, height: 900 },

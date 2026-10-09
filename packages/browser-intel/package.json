@@ -1,0 +1,30 @@
+{
+  "name": "@rox/browser-intel",
+  "version": "0.11.8",
+  "license": "Apache-2.0",
+  "description": "Browser Intelligence Pipeline: profile acquisition, Hindsight ingestion, URL unfurling, timeline rollups and agent memory slots",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./acquisition": "./src/acquisition/index.ts",
+    "./db": "./src/db/index.ts",
+    "./hindsight": "./src/hindsight/index.ts",
+    "./insights": "./src/insights/index.ts",
+    "./paths": "./src/paths.ts",
+    "./types": "./src/types.ts",
+    "./workers/unfurl": "./src/workers/unfurlWorker.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rox/shared": "workspace:*",
+    "@rox/session-tools-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

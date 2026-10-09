@@ -81,7 +81,7 @@ function InboxNavButton({ label, count, active, icon: Icon, tone = 'muted', onCl
 }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 py-1 text-left text-[12px] outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
+      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-[12px] outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-surface-hover text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
       <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       <Count count={count} />
@@ -165,6 +165,7 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
       <InboxNavGroup id="mail" label={t('inbox.mail.section')} icon={Mail} tone="info" count={counts.byKind.mail} active={inMail}>
         {status?.state === 'ready' && status.address ? (
           <div className="flex min-w-0 items-center gap-1 px-2 pb-1 text-[11px]" data-testid="mail-address">
+            <span className="shrink-0 font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
             <span className="min-w-0 flex-1 select-text truncate text-text-secondary" title={status.address}>{status.address}</span>
             <button type="button" onClick={() => void copyAddress()} className="shrink-0 rounded-md px-1.5 py-1 text-text-muted outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-copy">{t(copied ? 'inbox.mail.copied' : 'inbox.mail.copy')}</button>
           </div>

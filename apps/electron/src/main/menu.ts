@@ -249,7 +249,16 @@ export async function rebuildMenu(): Promise<void> {
 }
 
 /** Menu channels that are main→renderer push events in BroadcastEventMap */
-type MenuBroadcastChannel = Extract<keyof BroadcastEventMap, `menu:${string}`>
+export type MenuBroadcastChannel = Extract<keyof BroadcastEventMap, `menu:${string}`>
+
+/**
+ * Dispatch a menu channel to the focused renderer through the RPC event sink.
+ * Shared by the application menu and the tray so both use one path (never a raw
+ * `webContents.send`).
+ */
+export function dispatchMenuChannel(channel: MenuBroadcastChannel): void {
+  sendToRenderer(channel)
+}
 
 /**
  * Sends an event to the focused renderer window via the RPC event sink.

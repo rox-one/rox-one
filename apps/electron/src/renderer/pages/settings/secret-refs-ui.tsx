@@ -1,31 +1,40 @@
 /**
- * Value-free Infisical unavailable row + helpers for the secretRef settings slice.
- * Keep this module free of `@/` UI imports so bun tests can render it.
+ * Human-facing vault states for the secretRef settings slice.
+ * Keep this module free of `@/` UI imports so bun tests can render it. Raw
+ * provider error codes live in `data-*` attributes only — never as visible text.
  */
 import { useTranslation } from 'react-i18next'
 
-export function secretRefRowShowsUnavailable(
-  ref: { provider?: string },
-  infisicalAvailable: boolean,
-): boolean {
-  return ref.provider === 'infisical' && !infisicalAvailable
+export type SecretProviderStatus = 'connected' | 'disconnected'
+
+export function secretProviderStatus(vaultAvailable: boolean): SecretProviderStatus {
+  return vaultAvailable ? 'connected' : 'disconnected'
 }
 
-export function InfisicalUnavailableRow({
-  available,
-  errorCode,
-}: {
-  available: boolean
-  errorCode?: string
-}) {
+export function secretProviderStatusKey(status: SecretProviderStatus): string {
+  return status === 'connected'
+    ? 'settings.runtime.secretProviderConnected'
+    : 'settings.runtime.secretProviderNotConnected'
+}
+
+/** A ref pinned to the vault provider while the vault is unreachable. */
+export function secretRefRowShowsUnavailable(
+  ref: { provider?: string },
+  vaultAvailable: boolean,
+): boolean {
+  return ref.provider === 'infisical' && !vaultAvailable
+}
+
+/** Localized, value-free vault status line (no INFISICAL_* machine strings). */
+export function SecretProviderStatusRow({ available }: { available: boolean }) {
   const { t } = useTranslation()
-  if (available) return null
+  const status = secretProviderStatus(available)
   return (
     <div
-      data-error-code={errorCode ?? 'INFISICAL_UNAVAILABLE'}
-      className="px-4 py-2.5 text-xs text-amber-600 dark:text-amber-400"
+      data-provider-status={status}
+      className={status === 'connected' ? 'text-xs text-success' : 'text-xs text-warning'}
     >
-      {t('settings.runtime.secretInfisicalUnavailable')}
+      {t(secretProviderStatusKey(status))}
     </div>
   )
 }
