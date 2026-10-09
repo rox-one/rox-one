@@ -13,6 +13,7 @@ import { appendFile, lstat, mkdir, readFile, realpath, rm } from 'node:fs/promis
 import { createHash, randomUUID } from 'node:crypto'
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { loadEnvironmentPrefs, type EnvironmentPrefs } from '@rox/shared/environment'
 import { loadProjectById, loadProjectConfig, saveProjectConfig } from '@rox/shared/projects'
 import type { ProjectConfig } from '@rox/shared/projects'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
@@ -22,12 +23,12 @@ import {
   loadRepositorySnapshot, repositoryCurrentBranch, repositoryPolicyFingerprint, saveRepositoryBinding, saveRepositorySnapshot,
 } from '@rox/shared/code-intelligence'
 import type { RepositoryBinding, RepositoryScope } from '@rox/shared/code-intelligence'
-import { devSpacePlanHash, devSpaceRepositoryId, devSpaceRunId, DEV_SPACE_RUN_STAGES } from '@rox/shared/dev-space'
+import { devSpacePlanHash, devSpaceQuestionsRunId, devSpaceRepositoryId, devSpaceRunId, DEV_SPACE_RUN_STAGES } from '@rox/shared/dev-space'
 import {
   DEV_SPACE_READ_ARTIFACT_MAX_BYTES, DEV_SPACE_TEXT_ARTIFACT_FORMATS,
 } from '@rox/shared/dev-space'
 import type {
-  DevSpaceArtifactSummary, DevSpaceListArtifactsResult, DevSpaceManifestEntry,
+  DevSpaceArtifactSummary, DevSpaceGenerateQuestionsResult, DevSpaceListArtifactsResult, DevSpaceManifestEntry,
   DevSpaceReadArtifactResult, DevSpaceRepositoryCatalog, DevSpaceRepositoryRecord, DevSpaceRepositoryStatus, DevSpaceRun,
 } from '@rox/shared/dev-space'
 import { atomicWriteFileSync } from '@rox/shared/utils/files'
@@ -36,7 +37,7 @@ import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext } from '../../transport/types'
 import { CloneError, runGitClone, runGitPull, type CloneErrorCode } from '../../devspace/clone.ts'
-import { readDevSpaceArtifactBytes, readDevSpaceManifest } from '../../devspace/artifacts.ts'
+import { readDevSpaceArtifactBytes, readDevSpaceConsent, readDevSpaceManifest, writeDevSpaceArtifact } from '../../devspace/artifacts.ts'
 import { listDevSpaceRuns, readDevSpaceRun, writeDevSpaceRun } from '../../devspace/runs.ts'
 import { createDevSpaceToolRuntime } from '../../devspace/tool-runtime.ts'
 import {
@@ -46,6 +47,8 @@ import { registerDevSpaceStructuralStage } from '../../devspace/stages/structura
 import { registerDevSpaceLlmStage, type LlmAdapter } from '../../devspace/stages/llm.ts'
 import { registerDevSpacePublishStage, type DevSpacePublishPort } from '../../devspace/stages/publish.ts'
 import type { StructuralAdapter } from '../../devspace/adapters/contract.ts'
+import { buildQuestionContext, generateQuestionBlocks, resolveWorkingCopy } from '../../devspace/questions/index.ts'
+import { runSecurityScan } from '../../devspace/security/index.ts'
 import { registerDevSpaceToolRuntime } from '@rox/session-tools-core'
 
 export const HANDLED_CHANNELS = [
@@ -53,6 +56,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.devSpace.REMOVE_REPOSITORY, RPC_CHANNELS.devSpace.REFRESH_REPOSITORY, RPC_CHANNELS.devSpace.CANCEL,
   RPC_CHANNELS.devSpace.CAPABILITIES, RPC_CHANNELS.devSpace.LIST_RUNS, RPC_CHANNELS.devSpace.START_RUN,
   RPC_CHANNELS.devSpace.LIST_ARTIFACTS, RPC_CHANNELS.devSpace.READ_ARTIFACT,
+  RPC_CHANNELS.devSpace.GENERATE_QUESTIONS,
 ] as const
 
 export interface HandlerEnvironment {
@@ -81,6 +85,17 @@ export interface HandlerEnvironment {
   structuralAdapters?: readonly StructuralAdapter[]
   /** Test/DI seam for the `llm` stage; defaults to the standard O7 adapter set. */
   llmAdapters?: readonly LlmAdapter[]
+  /**
+   * Onboarding-profile reader for the question generator (§3.2, D1). Defaults to
+   * the real `~/.craft-agent/environment.json` storage; injected in tests so the
+   * generator never reads the host config.
+   */
+  readEnvironmentPrefs?: () => EnvironmentPrefs
+  /**
+   * Test/DI seam for the security (SBOM/OSV) half of `generateQuestions`; defaults
+   * to the real `runSecurityScan` (syft + OSV under consent).
+   */
+  runSecurityScan?: typeof runSecurityScan
 }
 
 export interface DevSpaceReconcileInput {
@@ -97,6 +112,7 @@ export const DEFAULT_ENVIRONMENT: HandlerEnvironment = {
   loadProject: loadProjectById,
   saveProject: saveProjectConfig,
   loadProjectConfig,
+  readEnvironmentPrefs: loadEnvironmentPrefs,
 }
 
 interface DevSpaceCatalogFile { schemaVersion: 1; repositories: DevSpaceRepositoryRecord[] }
@@ -622,6 +638,111 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
       truncated,
       byteLength: slice.length,
       contentHash: createHash('sha256').update(slice).digest('hex'),
+    }
+  })
+
+  // On-demand question blocks + security scan (03-SPEC-features §3, D8). Recalc is
+  // explicit (O8) — this handler is the command. The per-repo `modelConnectors`
+  // consent gates generation (no silent egress); the CVE half additionally needs
+  // `cveNetwork`, else block 3 degrades with a reason. Artifacts land in the shared
+  // manifest (kind `questions` / `sbom-cve`) with provenance.
+  operation(RPC_CHANNELS.devSpace.GENERATE_QUESTIONS, ['repositoryId'], async (_context, input, signal, root): Promise<DevSpaceGenerateQuestionsResult> => {
+    checkCancellation(signal)
+    const catalog = await readCatalog(root)
+    const record = findRecord(catalog, input.repositoryId)
+    const consent = await readDevSpaceConsent(root, record.projectSlug)
+    const generatedAt = Date.now()
+
+    if (consent === null || consent.repositoryId !== record.repositoryId || !consent.items.modelConnectors) {
+      const reason = consent === null ? 'consent-missing'
+        : consent.repositoryId !== record.repositoryId ? 'consent-repo-mismatch' : 'model-consent-denied'
+      await appendAudit(root, record.projectSlug, { event: 'questions-egress-denied', repositoryId: record.repositoryId, reason })
+      return {
+        repositoryId: record.repositoryId,
+        projectSlug: record.projectSlug,
+        snapshotId: record.lastSnapshotId ?? null,
+        status: 'denied',
+        generatedAt,
+        blocks: [],
+        security: {
+          sbom: { status: 'unavailable', packageCount: 0, reason: 'generation-denied' },
+          cve: { status: 'skipped', vulnerabilityCount: 0, reason: 'generation-denied' },
+          reasons: [reason],
+        },
+        artifacts: [],
+        reasons: [reason],
+      }
+    }
+
+    const snapshotId = record.lastSnapshotId ?? await reconcileSnapshot({ root, record, signal })
+    checkCancellation(signal)
+    const project = await loadProjectConfigFor(root, record)
+    const workingCopy = resolveWorkingCopy(root, record)
+
+    // SBOM is local (optional runner, never installs); CVE network only under consent.
+    const scanSecurity = environment.runSecurityScan ?? runSecurityScan
+    const securityScan = await scanSecurity({ cwd: workingCopy, cveNetwork: consent.items.cveNetwork, signal })
+    checkCancellation(signal)
+
+    const questionContext = await buildQuestionContext({
+      root, record, project,
+      security: { sbomAvailable: securityScan.summary.sbom.status === 'ok', cveChecked: securityScan.summary.cve.status === 'ok' },
+      ...(environment.readEnvironmentPrefs ? { readEnvironmentPrefs: environment.readEnvironmentPrefs } : {}),
+    })
+    const blocks = generateQuestionBlocks(questionContext)
+
+    // Idempotency (§3.3): extend an existing manifest for the same snapshot rather
+    // than resetting it; otherwise reuse the deterministic questions run id.
+    const existingManifest = await readDevSpaceManifest(root, record.projectSlug)
+    const runId = existingManifest && existingManifest.repositoryId === record.repositoryId
+      && existingManifest.snapshotId === snapshotId
+      ? existingManifest.runId
+      : devSpaceQuestionsRunId(record.repositoryId, snapshotId)
+
+    const artifacts: DevSpaceArtifactSummary[] = []
+    // The questions artifact is written FIRST (the renderer reads the newest `questions`).
+    const questionsEntry = await writeDevSpaceArtifact({
+      root, projectSlug: record.projectSlug, repositoryId: record.repositoryId, snapshotId, runId,
+      kind: 'questions', name: 'questions.json', format: 'json',
+      content: JSON.stringify({
+        schemaVersion: 1, repositoryId: record.repositoryId, snapshotId, generatedAt,
+        blocks, security: securityScan.summary,
+      }, null, 2),
+      producedBy: { providerId: 'devspace-questions', version: '1' },
+    })
+    artifacts.push(artifactSummary(questionsEntry, false))
+    for (const artifact of securityScan.artifacts) {
+      const entry = await writeDevSpaceArtifact({
+        root, projectSlug: record.projectSlug, repositoryId: record.repositoryId, snapshotId, runId,
+        kind: 'sbom-cve', name: artifact.name, format: artifact.format, content: artifact.content,
+        producedBy: artifact.producedBy,
+      })
+      artifacts.push(artifactSummary(entry, false))
+    }
+
+    await appendAudit(root, record.projectSlug, {
+      event: 'questions-generated', repositoryId: record.repositoryId, snapshotId,
+      questionCount: blocks.reduce((sum, block) => sum + block.questions.length, 0),
+      sbom: securityScan.summary.sbom.status, cve: securityScan.summary.cve.status,
+    })
+    if (securityScan.summary.cve.status === 'ok') {
+      await appendAudit(root, record.projectSlug, {
+        event: 'cve-egress', repositoryId: record.repositoryId,
+        packageCount: securityScan.summary.sbom.packageCount,
+        vulnerabilityCount: securityScan.summary.cve.vulnerabilityCount,
+      })
+    }
+
+    return {
+      repositoryId: record.repositoryId,
+      projectSlug: record.projectSlug,
+      snapshotId,
+      status: securityScan.summary.reasons.length > 0 ? 'partial' : 'ok',
+      generatedAt,
+      blocks,
+      security: securityScan.summary,
+      artifacts,
+      reasons: securityScan.summary.reasons,
     }
   })
 

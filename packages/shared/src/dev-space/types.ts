@@ -315,6 +315,96 @@ export interface DevSpaceReadArtifactResult {
   readonly contentHash: string
 }
 
+// ---------------------------------------------------------------------------
+// Question blocks (03-SPEC-features §3, D8) + security scan summary.
+// The generator (packages/server-core/src/devspace/questions) is invoked by the
+// `devSpace:generateQuestions` handler; contracts live here so the renderer sees
+// the same shapes.
+// ---------------------------------------------------------------------------
+
+/** The three fixed blocks (§3.1): learning, features/improvements, security. */
+export type DevSpaceQuestionBlockName = 'learn' | 'features' | 'security'
+
+/** Exactly 10 questions per block (D8). */
+export const DEV_SPACE_QUESTIONS_PER_BLOCK = 10
+
+/**
+ * Transparent «почему этот вопрос» (§3.2): which personalisation inputs and which
+ * repository artifact produced the question. Each field is present only when that
+ * input actually contributed.
+ */
+export interface DevSpaceQuestionWhy {
+  /** Onboarding role/profile (D1, `EnvironmentPrefs.role`). */
+  readonly profile?: string
+  /** Repository context: status, snapshot, size. */
+  readonly repo?: string
+  /** Working signals: uncommitted working copy, CI state. */
+  readonly signals?: string
+}
+
+/** Link to the artifact a question is generated from (§3.1: symbols/wiki/learning/sbom/...). */
+export interface DevSpaceQuestionSource {
+  readonly kind: DevSpaceManifestEntryKind
+  /** Template topic ref, e.g. `symbols`, `repo-wiki`, `source-graph`, `sbom`, `cve`. */
+  readonly ref: string
+}
+
+export interface DevSpaceQuestion {
+  readonly id: string
+  readonly block: DevSpaceQuestionBlockName
+  readonly text: string
+  readonly why: DevSpaceQuestionWhy
+  readonly source: DevSpaceQuestionSource
+}
+
+export interface DevSpaceQuestionBlock {
+  readonly block: DevSpaceQuestionBlockName
+  readonly title: string
+  readonly questions: readonly DevSpaceQuestion[]
+}
+
+/** Honest outcome of the SBOM (syft) and CVE (OSV) half of block 3 (§3.4). */
+export interface DevSpaceSecuritySummary {
+  readonly sbom: {
+    readonly status: 'ok' | 'unavailable'
+    readonly packageCount: number
+    readonly reason?: string
+  }
+  readonly cve: {
+    /** `ok` when OSV answered; `skipped` under missing consent/tool; `error` on a network fault. */
+    readonly status: 'ok' | 'skipped' | 'error'
+    readonly vulnerabilityCount: number
+    readonly reason?: string
+  }
+  /** Machine-readable degradation reasons (e.g. `syft-unavailable`, `cve-consent-denied`). */
+  readonly reasons: readonly string[]
+}
+
+export interface DevSpaceGenerateQuestionsInput {
+  readonly workspaceId: string
+  readonly requestId?: string
+  /** Catalog record id (`devrepo_<...>`). */
+  readonly repositoryId: string
+}
+
+/**
+ * `generateQuestions` result. A missing `modelConnectors` consent yields
+ * `status: 'denied'` with a reason and no blocks — the generator never runs
+ * without consent (no silent egress).
+ */
+export interface DevSpaceGenerateQuestionsResult {
+  readonly repositoryId: string
+  readonly projectSlug: string
+  readonly snapshotId: string | null
+  readonly status: 'ok' | 'partial' | 'denied'
+  readonly generatedAt: number
+  readonly blocks: readonly DevSpaceQuestionBlock[]
+  readonly security: DevSpaceSecuritySummary
+  /** Manifest entries written or replaced by this call (questions + security). */
+  readonly artifacts: readonly DevSpaceArtifactSummary[]
+  readonly reasons: readonly string[]
+}
+
 /** sha256 of the JSON-encoded input; shared by all three id formulas below. */
 function digest(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex')
@@ -338,6 +428,16 @@ export function devSpaceManifestEntryId(
 /** Run id; deterministic across retries so the same snapshot/plan is a cache hit. */
 export function devSpaceRunId(repositoryId: string, snapshotId: string, planHash: string): string {
   return `devrun_${digest([repositoryId, snapshotId, planHash])}`
+}
+
+/**
+ * Manifest run id for the on-demand question/security artifacts (D8). The caller
+ * reuses the analysis run's id when a manifest already covers the same snapshot
+ * so the manifest is extended, not reset; otherwise this deterministic id is the
+ * fallback (idempotent across reruns of the same snapshot).
+ */
+export function devSpaceQuestionsRunId(repositoryId: string, snapshotId: string): string {
+  return `devrun_${digest([repositoryId, snapshotId, 'questions'])}`
 }
 
 /**

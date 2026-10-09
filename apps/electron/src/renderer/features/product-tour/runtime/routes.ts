@@ -42,6 +42,11 @@ export function resolveTourRoute(key: RouteKey, binding: TourBinding): ViewRoute
     case 'skills': return routes.view.skills()
     case 'sources': return routes.view.sources()
     case 'tasks': return routes.view.tasks()
+    case 'devspace': return routes.view.developers()
+    case 'devspace-repo': return routes.view.developers(binding.entityId)
+    case 'playbooks': return routes.view.playbooks()
+    case 'playbooks-source': return routes.view.playbooks()
+    case 'playbooks-codebook': return routes.view.playbooks()
   }
 }
 

@@ -193,6 +193,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'devSpace:capabilities',
   'devSpace:changed',
   'devSpace:cloneProgress',
+  'devSpace:generateQuestions',
   'devSpace:listArtifacts',
   'devSpace:listRepositories',
   'devSpace:listRuns',
@@ -1029,4 +1030,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'workspaces:updateRemote',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1025
+export const EXPECTED_CHANNEL_COUNT = 1026
