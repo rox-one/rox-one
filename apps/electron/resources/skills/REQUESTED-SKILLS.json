@@ -163,6 +163,22 @@
       "prerequisites": "Groma CLI and a source repository; no populated architecture map implied."
     },
     {
+      "request": "custodian skills / system-agent playbooks",
+      "status": "bundled-adapter-or-alternative",
+      "resolution": "ROX-authored adaptation of upstream MIT operational playbooks, gated bundled skills (never privileged tools)",
+      "pack": "rox-custodian",
+      "origin": "bundled",
+      "commit": "local",
+      "license": "MIT",
+      "skills": [
+        "add-model-provider",
+        "configure-channel",
+        "diagnose-gateway"
+      ],
+      "nativeOmpAvailable": true,
+      "prerequisites": "The ROX-managed OpenClaw gateway credential (OPENCLAW_GATEWAY_TOKEN) must be provisioned; each playbook's gate is honoured by the skills eligibility pass. cloud-image-bake omitted: crabbox/AWS/Hetzner/Firecracker image-bake tooling has no ROX analogue."
+    },
+    {
       "request": "writing for agents",
       "status": "bundled-upstream",
       "resolution": "Pinned real upstream source",
