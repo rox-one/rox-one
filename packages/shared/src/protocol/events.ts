@@ -97,6 +97,10 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.projects.CHANGED]: [workspaceId: string, projects: LoadedProject[]]
   [RPC_CHANNELS.pages.CHANGED]: [workspaceId: string, pages: LoadedPage[]]
   [RPC_CHANNELS.kanban.CHANGED]: [workspaceId: string, config: KanbanBoardConfig]
+  // Wave 3 — workboard + board widget pushes. Payload-only (mirrors the
+  // feed/personalTasks changed events): the receiver re-reads by revision.
+  [RPC_CHANNELS.workboard.CHANGED]: [payload: { revision: number }]
+  [RPC_CHANNELS.board.CHANGED]: [payload: { widgetId: string; revision: number }]
   [RPC_CHANNELS.personalTasks.CHANGED]: [payload: { at: number }]
   [RPC_CHANNELS.feed.CHANGED]: [payload: { at: number }]
   [RPC_CHANNELS.collection.CHANGED]: [workspaceId: string, display: CollectionDisplay]
