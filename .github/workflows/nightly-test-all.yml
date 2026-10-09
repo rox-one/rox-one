@@ -1,0 +1,149 @@
+# DX-04: the repository test runner (scripts/test-all.ts) had no workflow.
+# This is the single nightly "is the tree still alive" command: it runs the
+# whole aggregate suite in bounded parallel against the known-red baseline
+# (scripts/test-baseline.json), so only *new* failures are surfaced.
+#
+# It is deliberately non-blocking: the job never fails the run, and the
+# scheduled trigger does not gate PRs or merges. New regressions are published
+# as workflow annotations and as the uploaded report artifact.
+name: nightly-test-all
+
+on:
+  schedule:
+    # 03:00 UTC every day.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      concurrency:
+        description: 'Parallel suite workers'
+        required: false
+        default: '4'
+      strict:
+        description: 'Fail on any red suite, ignoring the known-red baseline'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-test-all
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    name: nightly-test-all (shard ${{ matrix.shard }}/2)
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      # Live-DB suites resolve the throwaway container instead of skipping.
+      ROX_TEST_PG_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      - name: Install exact lockfile
+        run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/Library/Caches/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      - name: Install Chromium and browser runtime dependencies
+        run: bunx playwright install --with-deps chromium
+      - name: Bind every browser harness to installed Chromium
+        run: |
+          bun -e '
+            import { chromium } from "@playwright/test";
+            import { appendFileSync, existsSync } from "node:fs";
+            const browserPath = chromium.executablePath();
+            if (!existsSync(browserPath)) throw new Error("Installed Chromium executable missing");
+            const environmentFile = process.env.GITHUB_ENV;
+            if (!environmentFile) throw new Error("GitHub environment file missing");
+            appendFileSync(environmentFile, ["CHROMIUM_EXECUTABLE", "LEARNING_CHROMIUM_PATH", "ROX_BROWSER_PATH"].map(name => `${name}=${browserPath}`).join("\n") + "\n");
+          '
+      - name: Run the aggregate suite against the known-red baseline
+        id: test-all
+        # The runner's exit code is still 1 on new failures; `continue-on-error`
+        # keeps the nightly green so it never blocks anything. The report below
+        # carries the signal.
+        continue-on-error: true
+        env:
+          CONCURRENCY: ${{ github.event.inputs.concurrency || '4' }}
+        run: bun scripts/test-all.ts --shard "${{ matrix.shard }}/2" --concurrency "$CONCURRENCY" ${{ github.event.inputs.strict == 'true' && '--strict' || '' }} | tee test-all.stdout.json
+      - name: Publish new-regression signal
+        if: always()
+        run: |
+          bun -e '
+            import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+            import { join } from "node:path";
+            import { appendFileSync } from "node:fs";
+            const root = "work/test-all";
+            if (!existsSync(root)) { console.log("::warning::test-all produced no report directory"); process.exit(0); }
+            const runs = readdirSync(root).map(name => join(root, name)).filter(path => statSync(path).isDirectory()).sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
+            if (!runs.length) { console.log("::warning::test-all produced no report"); process.exit(0); }
+            const report = JSON.parse(readFileSync(join(runs[0], "report.json"), "utf8"));
+            const summary = report.summary;
+            const lines = [
+              `### nightly test-all`,
+              ``,
+              `- suites: ${summary.expected} (passed ${summary.passed}, failed ${summary.failed}, blocked ${summary.blocked})`,
+              `- new failures: **${summary.newFailures}**`,
+              `- known-red (baseline): ${summary.knownRed}`,
+              `- stale baseline entries: ${summary.stalePass}`,
+              ``,
+              `report: \`${runs[0]}/report.json\` (revision ${report.input?.head ?? "unknown"})`,
+            ];
+            if (report.baseline?.newFailures?.length) lines.push("", "New failures:", ...report.baseline.newFailures.map(path => `- \`${path}\``));
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+            if (summary.newFailures > 0) {
+              console.log(`::error::${summary.newFailures} new test failure(s); see the uploaded report artifact`);
+            } else {
+              console.log("::notice::no new test failures");
+            }
+          '
+      - name: Upload test-all evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-test-all-${{ github.sha }}-shard${{ matrix.shard }}
+          path: work/test-all/
+          if-no-files-found: warn
+          retention-days: 14
