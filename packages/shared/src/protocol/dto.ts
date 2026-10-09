@@ -508,12 +508,26 @@ export type SessionEvent =
   | { type: 'session_presence'; sessionId: string; viewers: BroPresenceMemberDto[] }
   | { type: 'session_visibility_changed'; sessionId: string; visibility: SessionVisibility }
 
+/**
+ * Queue-steering verb for a message sent while the session is mid-turn (f.4,
+ * ported from OpenClaw's `steer|followup|collect|interrupt` queue modes).
+ */
+export type SteeringVerb = 'steer' | 'followup' | 'collect' | 'interrupt'
+
 export interface SendMessageOptions {
   /** Producer telemetry only; native principals cannot supply this metadata. */
   runtimeLaunch?: RuntimeLaunch
   skillSlugs?: string[]
   badges?: ContentBadge[]
   optimisticMessageId?: string
+  /**
+   * Queue mode for a message that arrives while the session is already
+   * processing a turn. Omitted → the connection's `midStreamBehavior` decides
+   * (`steer` → steer, `queue` → followup). `collect` coalesces compatible queued
+   * messages; `interrupt` aborts the active run and drops everything already
+   * queued for the session (see `SessionManager`).
+   */
+  queueMode?: SteeringVerb
   /**
    * When true, the message drives a turn (reaches the model) but is marked
    * `hidden` on the persisted `Message` so it never renders as a transcript
@@ -1483,3 +1497,32 @@ export type CredentialMigrationResult<T> =
 /** Native document block projections carry the exact authority preconditions. */
 export type { GetBlockTreeRequest, BlockTreeResult, PreviewMarkerMappingRequest, NativeMarkerMappingPreview,
   ApplyMarkerMappingRequest, MarkerMappingCommitResult } from '@rox/server-core/docs/block-tree-service'
+
+/**
+ * Onboarding «profile» step — «А предложи сам?» one-shot preference suggestion.
+ *
+ * The renderer is the only producer; the server is the only consumer and the
+ * only place that may call a model. A reply is either usable Russian text or an
+ * explicit failure reason (never fabricated text).
+ */
+export interface SuggestPreferencesInput {
+  name?: string
+  /** ISO `yyyy-mm-dd`. */
+  birthDate?: string
+  interfaceLanguage?: string
+  communicationLanguage?: string
+  city?: string
+  timezone?: string
+  /** Free-form preferences already typed by the user. */
+  preferences?: string
+  /** Selected bubble chip ids. */
+  bubbles?: string[]
+  /** Human-readable (Russian) labels for the selected chips, in `bubbles` order. */
+  bubbleLabels?: string[]
+}
+
+export type SuggestPreferencesReason = 'no-provider' | 'timeout' | 'error'
+
+export type SuggestPreferencesResult =
+  | { ok: true; text: string }
+  | { ok: false; reason: SuggestPreferencesReason }

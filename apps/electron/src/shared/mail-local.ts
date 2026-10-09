@@ -45,6 +45,10 @@ export interface MailStatus {
   address: string | null
   push: 'open' | 'retry' | 'off'
   error?: string
+  /** Mailbox storage limit in bytes (server quota, else the 1 GiB default). */
+  quotaBytes?: number
+  /** Stored bytes reported by the server; null when the server exposes no usage. */
+  quotaUsedBytes?: number | null
 }
 
 export function isOptionalMailSetup(status: MailStatus | null | undefined): boolean {

@@ -133,10 +133,6 @@ export interface MaterialChatEffectSettings {
  */
 export interface MaterialSettings {
   enabled?: boolean;
-  /** Native window tint source (macOS vibrancy / Windows Mica tint). */
-  nativeTint?: 'theme' | 'custom' | 'off';
-  /** Tint color when nativeTint === 'custom'. */
-  tintColor?: CSSColor;
   /** Per-surface blur radius in px (0..64). */
   blur?: Partial<Record<MaterialSurface, number>>;
   /** Per-surface opacity as a fraction of the opaque surface color (0..1). */
@@ -211,8 +207,6 @@ export interface MaterialResolveContext {
 export interface ResolvedMaterial {
   enabled: boolean;
   disabledReason?: 'off' | 'reduce-transparency' | 'high-contrast';
-  nativeTint: 'theme' | 'custom' | 'off';
-  tintColor?: CSSColor;
   blur: Record<MaterialSurface, number>;
   opacity: Record<MaterialSurface, number>;
   tint?: MaterialTintSettings;
@@ -241,8 +235,6 @@ export function resolveMaterial(
   }
   const resolved: ResolvedMaterial = {
     enabled: Boolean(material?.enabled),
-    nativeTint: material?.nativeTint ?? 'theme',
-    tintColor: material?.tintColor,
     blur,
     opacity,
     tint: material?.tint ? { ...material.tint } : undefined,
@@ -658,6 +650,15 @@ export function shouldSetThemeOverride(
   if (!colorTheme || colorTheme === 'default') return true
   return false
 }
+
+/**
+ * The single fixed Rox theme.
+ *
+ * Rox ships one theme: users cannot select or customize it. Any legacy or
+ * persisted selection is coerced to this id (see ThemeProvider's
+ * `fixedColorTheme`), and the app never offers a theme/mode picker.
+ */
+export const ROX_THEME_ID = 'nordfox-opaque';
 
 /**
  * Default theme values (matches current index.css)

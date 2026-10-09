@@ -121,4 +121,19 @@ describe('resolveEnabledFlags', () => {
       })
     }
   })
+
+  // W1-12 (#1509): the domain rule engine must be OFF by default and must never
+  // be enabled implicitly — neither a bare request set nor a dependency pull.
+  it('registers automation.rules.v1 default OFF and never enables it implicitly', () => {
+    expect(WORKBENCH_FLAG.automationRulesV1).toBe('automation.rules.v1')
+    expect(WORKBENCH_FEATURE_FLAGS.find(flag => flag.id === WORKBENCH_FLAG.automationRulesV1)).toEqual({
+      id: 'automation.rules.v1',
+      defaultValue: false,
+      dependencies: [],
+      rollbackSafe: true,
+    })
+    expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG.automationRulesV1, new Set())).toBe(false)
+    expect(WORKBENCH_FEATURE_FLAGS.filter(flag => flag.defaultValue && flag.dependencies.includes(WORKBENCH_FLAG.automationRulesV1))).toEqual([])
+    expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG.automationRulesV1, new Set([WORKBENCH_FLAG.automationRulesV1]))).toBe(true)
+  })
 })

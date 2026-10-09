@@ -6,7 +6,6 @@
   "type": "module",
   "private": true,
   "trustedDependencies": [
-    "@sentry/cli",
     "@vscode/ripgrep",
     "electron",
     "electron-winstaller",
@@ -54,7 +53,8 @@
     "test:doc-tools": "python3 -m unittest apps.electron.resources.scripts.tests.test_pdf_tool_smoke apps.electron.resources.scripts.tests.test_xlsx_tool_smoke apps.electron.resources.scripts.tests.test_docx_tool_smoke apps.electron.resources.scripts.tests.test_pptx_tool_smoke apps.electron.resources.scripts.tests.test_img_tool_smoke apps.electron.resources.scripts.tests.test_ical_tool_smoke apps.electron.resources.scripts.tests.test_doc_diff_smoke apps.electron.resources.scripts.tests.test_markitdown_smoke apps.electron.resources.scripts.tests.test_hindsight_runner_smoke",
     "perf:startup": "bun apps/electron/scripts/perf/startup-bench.ts",
     "test:perf-budgets": "bun test apps/electron/src/renderer/perf packages/server-core/src/observability && bun run scripts/bench/renderer-perf-report.ts --ci && bun run scripts/bench/renderer-perf-report.ts --ci --session-count 500 && bun run scripts/bench/renderer-perf-report.ts --bundle",
-    "test:runtime-suites": "bun test apps/electron/src/__tests__/transport.test.ts && bun test packages/server-core/src/transport/__tests__ && bun test packages/server-core/src/handlers/rpc/__tests__/plugin-bridge.test.ts && bun test apps/electron/src/renderer/lib/__tests__/session-load.test.ts && bun test apps/electron/src/renderer/lib/__tests__/splash-sessions-ready.test.ts && bun test apps/electron/src/main/__tests__/quit-exit-guard.test.ts && bun test apps/electron/src/renderer/components/app-shell/session-list/__tests__/list-virtualization.test.ts",
+"test:perf:dom": "playwright test --config tests/perf/playwright.config.ts",
+    "test:runtime-suites": "bun test apps/electron/src/__tests__/transport.test.ts && bun test packages/server-core/src/transport/__tests__ && bun test packages/server-core/src/handlers/rpc/__tests__/plugin-bridge.test.ts && bun test apps/electron/src/renderer/lib/__tests__/session-load.test.ts && bun test apps/electron/src/renderer/lib/__tests__/splash-sessions-ready.test.ts && bun test apps/electron/src/main/__tests__/quit-exit-guard.test.ts && bun test apps/electron/src/main/__tests__/browser-pane-manager.test.ts && bun test apps/electron/src/renderer/components/app-shell/session-list/__tests__/list-virtualization.test.ts && bun test apps/electron/src/renderer/components/app-shell/__tests__/entity-list-virtualization.test.ts",
     "test:meetings:unit": "bun test packages/server-core/src/meetings/conation/__tests__ packages/server-core/src/meetings/__tests__/tracker-actions.test.ts packages/server-core/src/meetings/__tests__/followup.test.ts packages/server-core/src/meetings/__tests__/security.test.ts packages/server-core/src/meetings/__tests__/budgets.test.ts packages/server-core/src/meetings/__tests__/sharing-retention.test.ts packages/server-core/src/meetings/__tests__/rooms.test.ts packages/server-core/src/meetings/__tests__/release-gate.test.ts packages/server-core/src/meetings/__tests__/packaging.test.ts packages/shared/src/meeting-agents/__tests__/recipes.test.ts",
     "test:visual": "playwright test",
     "test:meetings:e2e": "ROX_MEETING_E2E_FIXTURE=1 playwright test --config tests/e2e/meeting-agents/playwright.config.ts",
@@ -101,7 +101,7 @@
     "print:system-prompt": "bun run packages/shared/src/prompts/print-system-prompt.ts",
     "browser-tool": "bun run scripts/browser-tool.ts",
     "electron:dist": "bun run electron:build && cd apps/electron && electron-builder --config electron-builder.yml --publish never",
-    "electron:dist:mac": "bun run electron:build && cd apps/electron && electron-builder --config electron-builder.yml --mac --publish never",
+    "electron:dist:mac": "bun run electron:build && cd apps/electron && bun run build:native:calendar && electron-builder --config electron-builder.yml --mac --publish never",
     "electron:dist:win": "bun run electron:build && cd apps/electron && electron-builder --config electron-builder.yml --win --publish never",
     "electron:dist:linux": "bun run electron:build && cd apps/electron && electron-builder --config electron-builder.yml --linux --publish never",
     "electron:dist:dev:mac": "bash scripts/stage-electron-native-deps.sh && CSC_IDENTITY_AUTO_DISCOVERY=false CRAFT_DEV_RUNTIME=1 bun run electron:build && cd apps/electron && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --config electron-builder.yml --mac --publish never",
@@ -136,7 +136,6 @@
     "@electron/packager": "^19.0.1",
     "@playwright/test": "1.64.0",
     "@rollup/rollup-win32-arm64-msvc": "^4.55.1",
-    "@sentry/vite-plugin": "^4.8.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
@@ -175,7 +174,6 @@
     "@anthropic-ai/claude-agent-sdk": "0.3.258",
     "@anthropic-ai/sdk": "^0.100.0",
     "@dnd-kit/dom": "^0.4.0-beta-20260227032529",
-
     "@earendil-works/pi-ai": "0.85.1",
     "@earendil-works/pi-coding-agent": "0.85.1",
     "@github/copilot-sdk": "^0.1.23",
@@ -192,8 +190,6 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@sentry/electron": "^7.7.0",
-    "@sentry/react": "^10.36.0",
     "@shikijs/cli": "^3.19.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tiptap/extension-bubble-menu": "^3.20.0",
@@ -247,5 +243,6 @@
     "@img/sharp-libvips-darwin-x64": "1.2.4",
     "@img/sharp-libvips-linux-arm64": "1.2.4",
     "@img/sharp-libvips-linux-x64": "1.2.4"
-  }
+  },
+  "packageManager": "bun@1.4.2"
 }

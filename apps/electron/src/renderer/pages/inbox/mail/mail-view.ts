@@ -129,6 +129,25 @@ export function formatBytes(n: number): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`
 }
 
+/**
+ * Localized mailbox-storage size (e.g. «1 ГБ», "1 GB") using Intl units, so
+ * the quota line reads naturally in every locale.
+ */
+export function formatStorageBytes(n: number, locale: string): string {
+  const units: ReadonlyArray<readonly [number, string]> = [
+    [1024 ** 4, 'terabyte'],
+    [1024 ** 3, 'gigabyte'],
+    [1024 ** 2, 'megabyte'],
+    [1024, 'kilobyte'],
+    [1, 'byte'],
+  ]
+  const [scale, unit] = units.find(([size]) => n >= size) ?? units[units.length - 1]!
+  const value = n / scale
+  return new Intl.NumberFormat(locale, {
+    style: 'unit', unit, unitDisplay: 'short', maximumFractionDigits: value < 10 ? 1 : 0,
+  }).format(value)
+}
+
 /** Text appended to a meeting's notes when an email is linked to it. */
 export function meetingNoteLine(m: Pick<MailSummary, 'id' | 'subject' | 'from' | 'receivedAt'>, label: string, noSubject: string): string {
   const d = new Date(m.receivedAt)

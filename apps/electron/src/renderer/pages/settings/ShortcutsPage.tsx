@@ -4,10 +4,10 @@
  * Displays keyboard shortcuts reference from the centralized action registry.
  */
 
-import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { isClaimableLive } from '@rox/core/rox2'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
+import { Kbd } from '@/components/ui/kbd'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { SettingsSection, SettingsCard, SettingsRow } from '@/components/settings'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
@@ -73,14 +73,6 @@ function useComponentSpecificSections(): ShortcutSection[] {
       ],
     },
   ]
-}
-
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium font-sans bg-muted border border-border rounded">
-      {children}
-    </kbd>
-  )
 }
 
 /**

@@ -1,0 +1,30 @@
+{
+  "ru": {
+    "onboarding.profile.title": "Немного о вас",
+    "onboarding.profile.description": "Это поможет Rox лучше понимать ваши задачи. Всё необязательно — можно заполнить позже.",
+    "onboarding.profile.cityPlaceholder": "Например, Москва",
+    "onboarding.profile.timezoneUnknown": "Часовой пояс не распознан",
+    "onboarding.profile.continue": "Продолжить",
+    "onboarding.profile.skip": "Заполнить позже",
+    "onboarding.profile.suggestNoProvider": "Нужен подключённый провайдер, чтобы предложить текст",
+    "onboarding.profile.suggestTimeout": "Провайдер не ответил вовремя. Попробуйте ещё раз",
+    "onboarding.profile.suggestReplaceConfirm": "Текст уже заполнен. Заменить его черновиком?",
+    "onboarding.profile.suggestReplace": "Заменить",
+    "onboarding.bubbles.group.function": "Профессиональная функция",
+    "onboarding.bubbles.group.area": "Профессиональная область"
+  },
+  "en": {
+    "onboarding.profile.title": "A little about you",
+    "onboarding.profile.description": "This helps Rox understand your tasks better. Everything is optional — you can fill it in later.",
+    "onboarding.profile.cityPlaceholder": "e.g. Moscow",
+    "onboarding.profile.timezoneUnknown": "Time zone not recognized",
+    "onboarding.profile.continue": "Continue",
+    "onboarding.profile.skip": "Fill in later",
+    "onboarding.profile.suggestNoProvider": "A connected provider is required to suggest text",
+    "onboarding.profile.suggestTimeout": "The provider did not respond in time. Try again",
+    "onboarding.profile.suggestReplaceConfirm": "The text is already filled in. Replace it with the draft?",
+    "onboarding.profile.suggestReplace": "Replace",
+    "onboarding.bubbles.group.function": "Professional function",
+    "onboarding.bubbles.group.area": "Professional area"
+  }
+}

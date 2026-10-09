@@ -35,8 +35,6 @@ type ChatEffectKind = 'none' | 'gradient' | 'dither' | 'ascii' | 'halftone' | 's
 
 interface MaterialSettings {
   enabled?: boolean                        // мастер-выключатель слоя
-  nativeTint?: 'theme' | 'custom' | 'off'  // источник нативного тинта macOS/Windows
-  tintColor?: CSSColor                     // для nativeTint='custom'
   blur?: Partial<Record<MaterialSurface, number>>     // 0..64 px
   opacity?: Partial<Record<MaterialSurface, number>>  // 0..1 (доля непрозрачности)
   tint?: { hue?: number; saturation?: number; lightness?: number } // -180..180, -100..100, -30..30
@@ -57,7 +55,7 @@ interface MaterialSettings {
 1. `ThemeContext`: resolve пресета + override → `material = resolveMaterial(...)` (чистый резолвер: капнуть по платформе, render-profile, a11y) → 
 2. инъекция в тот же `<style id="craft-theme-overrides">`: переменные `--material-*` (например `--material-blur-rail`, `--material-opacity-topbar`, `--material-texture-image`, `--material-haze-opacity`, `--material-chat-effect-image`);
 3. data-атрибуты `html`: `data-material="on|off"`, `data-material-texture="grain|…"`, `data-material-deep="chat,lists"`, `data-material-chat-effect="…"`;
-4. native sync: существующий `SET_ZEN_SHELL`-канал расширяется полем `tintOpacity` (для macOS tint = f(opacity.window)); при `nativeTint='off'` — solid;
+4. native sync (НЕ РЕАЛИЗОВАНО / отложено): предполагалось расширить существующий `SET_ZEN_SHELL`-канал полем `tintOpacity` (для macOS tint = f(opacity.window)); при `nativeTint='off'` — solid. Поля `nativeTint`/`tintColor` из схемы и резолвера удалены, пока нативный канал не научен их читать — follow-up;
 5. CSS-потребители: `packages/ui/src/styles/tokens/material.css` (константы-дефолты), `renderer/index.css` (оболочка/панели/чат), `packages/ui/src/styles/index.css` (chrome-зоны, `.chrome-surface`). Композиция: `color-mix(in srgb, <surface> var(--material-opacity-x, 84%), transparent)`; blur — `backdrop-filter: blur(var(--material-blur-x, 20px)) saturate(1.15)` только там, где уже разрешено (web; native — без CSS-blur).
 6. Персистентность: пользовательские значения сохраняются в `theme.json` (`material`-поле, переживает смену пресета как override) + экспорт/импорт полного JSON палитры+материала (`PresetThemeSchema`).
 
@@ -79,19 +77,19 @@ interface MaterialSettings {
 
 Реализация независимая (техники — по MIT-каталогу MonoCode, без копирования кода):
 - CSS-текстуры: grain (SVG feTurbulence, статичный), scanlines (`repeating-linear-gradient` 1px/3px), pinstripe (45°, поверхность как в #6), herringbone (тёмная тема #15);
-- Worker `material-effects.worker.ts` (OffscreenCanvas → PNG dataURL ≤2048px, детерминированный seed): dither (Bayer 4×4), ascii (глиф-битmap 6×8), halftone (точки 4×4), scanlines (каждая 3-я строка);
+- Effects (dither/ascii/halftone/scanlines) rasterise on the main thread via `materialEffectDataUrl` (`apps/electron/src/renderer/lib/material-effect-art.ts`, OffscreenCanvas → PNG dataURL ≤2048px, детерминированный seed), with a bounded LRU cache: dither (Bayer 4×4), ascii (глиф-битmap 6×8), halftone (точки 4×4), scanlines (каждая 3-я строка). Отдельный offload-worker (НЕ РЕАЛИЗОВАНО / отложено): планировался `?worker` вокруг того же растрирования, чтобы снять пиксельный цикл с UI-потока — follow-up;
 - Кэш по ключу `kind+intensity+scale+palette`, инвалидация при смене темы; при `data-render-profile=performance` — эффекты не генерируются; статичные слои (никакой анимации на покое).
 
 ## 7. Деградация и ошибки
 
 - `reduce-transparency` / high-contrast / forced-colors / performance-profile / GPU-failure / no-healthy-paint → solid (существующий resolver; настройки не теряются);
 - web без backdrop-filter → solid matte через `@supports not`;
-- ошибка воркера → чат-фон падает до градиента/none, UI не блокируется, ошибка логируется один раз;
+- ошибка генерации арта (нет canvas) → чат-фон падает до градиента/none, UI не блокируется, ошибка логируется один раз;
 - повреждённый JSON при импорте → zod-отказ с человекочитаемой ошибкой, текущая тема не меняется.
 
 ## 8. Тесты и приёмка
 
-- unit: схемы (валид/инвалид/клампы/unknown-ключи), deep-merge, резолвер (платформа×a11y×profile — таблица), worker (детерминизм и размер), persistence merge, экспорт/импорт round-trip;
+- unit: схемы (валид/инвалид/клампы/unknown-ключи), deep-merge, резолвер (платформа×a11y×profile — таблица), растрирование эффектов (детерминизм и размер), persistence merge, экспорт/импорт round-trip;
 - integration: существующие appearance-тесты (RPC, workspace priority) + material round-trip через IPC; i18n parity/sorted/coverage;
 - visual (обе темы × material on/off × маршруты Home/Sessions/Notes/Tasks/Inbox/Meetings/Settings/Appearance; 1440/375 @100/125/150%; hover/focus/motion): скриншоты + hit-tests по образцу `scripts/test/zed-appearance-web-acceptance.ts`; отдельно: reduce-transparency/high-contrast фолбэки, стабильность при reload и live-обновлении второго таба, отсутствие idle-CPU от эффектов;
 - gates: `typecheck:all`, профильные `bun test`, `lint:css`, `lint:ui-tokens` (baseline не растёт), `lint:i18n:*`.

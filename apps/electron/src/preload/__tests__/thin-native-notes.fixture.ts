@@ -115,7 +115,6 @@ class ObservedRemoteClient extends WsRpcClient {
   }
 }
 
-mock.module('@sentry/electron/preload', () => ({}))
 mock.module('../../transport/client', () => ({ WsRpcClient: ObservedRemoteClient }))
 mock.module('electron', () => ({
   contextBridge: {

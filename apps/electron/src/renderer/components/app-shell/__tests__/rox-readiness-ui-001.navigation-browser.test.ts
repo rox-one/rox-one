@@ -30,7 +30,7 @@ function mainFunctions() {
 function shellNavigatorExpressions() {
   const source = readFileSync(process.env.ROX_UI001_SHELL_SOURCE ?? join(import.meta.dir, '../AppShell.tsx'), 'utf8')
   const file = ts.createSourceFile('AppShell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['isBoardView', 'isPagesView', 'isTasksView', 'isMeetingsView', 'isMemoryView', 'isProjectsView', 'isModeScreenView', 'hideModuleMiddleNav', 'isLearningView'])
+  const names = new Set(['isBoardView', 'isPagesView', 'isTasksView', 'isMemoryView', 'isProjectsView', 'isModeScreenView', 'hideModuleMiddleNav', 'isLearningView'])
   const declarations: string[] = []
   let hidden = '', width = '', resize = ''
   function visit(node: ts.Node) {
@@ -116,7 +116,7 @@ async function bundle() {
     import {isCollectionCanvasView} from './apps/electron/src/renderer/components/app-shell/collection/collection-view-cycle';
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
     const {isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
-      isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,
+      isTasksNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,
       isAutomationsNavigation,isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,
       isDiffNavigation,isExtensionNavigation,isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,
       isTerminalNavigation,isScreenNavigation,isSurfaceNavigation,isLearningNavigation} = guards;

@@ -49,6 +49,12 @@ const preload = {
   identityGetState: async () => ({ annotationActorId: 'fixture-user', profile: { displayName: 'Test user' } }),
   getColorTheme: async () => 'pierre', getWorkspaceColorTheme: async () => null,
   getSystemTheme: async () => false, getPlatform: async () => 'linux',
+  // ChatDisplay's typing beacon (useSessionTypingBeacon) sends `setTyping` via
+  // sessionCommand on the first keystroke; the real preload always exposes it, so
+  // the fixture bridge must too (see the chat-scroll fixture for the same stub).
+  // Without it the beacon throws inside the composer's commit, InputErrorBoundary
+  // swaps the composer for its fallback and `[contenteditable="true"]` disappears.
+  sessionCommand: async () => ({}),
   getAvailableModels: async () => [], getLlmConnections: async () => [],
   getSources: () => call('/catalog/sources'), getSkills: () => call('/catalog/skills'),
   listBundledSkillPacks: () => call('/catalog/packs'), getSkillUsage: () => call('/catalog/usage'),

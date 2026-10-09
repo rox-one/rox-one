@@ -9,6 +9,7 @@ import {
   getShikiTheme,
   resolveMaterial,
   shouldSetThemeOverride,
+  ROX_THEME_ID,
   type ThemeOverrides,
   type ThemeFile,
   type ShikiThemeConfig,
@@ -137,6 +138,18 @@ function ensureMaterialLayer(kind: 'texture' | 'chat-effect' | 'haze'): HTMLDivE
   return layer
 }
 
+/** Parse a `#rrggbb`, `rgb()`/`rgba()` string into a byte triplet. */
+function parseRgbTriplet(raw: string): [number, number, number] | null {
+  const hex = raw.match(/^#?([0-9a-f]{6})$/i)
+  if (hex?.[1]) {
+    const value = parseInt(hex[1], 16)
+    return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
+  }
+  const rgb = raw.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
+  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])]
+  return null
+}
+
 /** Current foreground token as RGB, for painting generated effect art. */
 function materialEffectRgb(): [number, number, number] {
   if (typeof window === 'undefined') return [255, 255, 255]
@@ -146,14 +159,22 @@ function materialEffectRgb(): [number, number, number] {
   // foregrounds the hex/rgb parsers below cannot read.
   const triplet = root.getPropertyValue('--foreground-rgb').trim().match(/^(\d+)[,\s]+(\d+)[,\s]+(\d+)/)
   if (triplet) return [Number(triplet[1]), Number(triplet[2]), Number(triplet[3])]
-  const raw = root.getPropertyValue('--foreground').trim()
-  const hex = raw.match(/^#?([0-9a-f]{6})$/i)
-  if (hex?.[1]) {
-    const value = parseInt(hex[1], 16)
-    return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
+  const fromToken = parseRgbTriplet(root.getPropertyValue('--foreground').trim())
+  if (fromToken) return fromToken
+  // `--foreground` may be an unparseable oklch()/color-mix(); the computed
+  // `color` always resolves to rgb(), so read it from the painted root instead
+  // of defaulting to invisible white-on-light ink.
+  if (typeof document !== 'undefined' && document.body) {
+    const body = getComputedStyle(document.body)
+    const fromColor = parseRgbTriplet(body.color)
+    if (fromColor) return fromColor
+    // Last resort: keep ink readable against the canvas background.
+    const background = parseRgbTriplet(body.backgroundColor)
+    if (background) {
+      const luma = (0.2126 * background[0] + 0.7152 * background[1] + 0.0722 * background[2]) / 255
+      return luma > 0.5 ? [17, 17, 17] : [255, 255, 255]
+    }
   }
-  const rgb = raw.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
-  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])]
   return [255, 255, 255]
 }
 
@@ -169,6 +190,12 @@ interface ThemeProviderProps {
    * main process via useAppTheme(); pass a value to override that source.
    */
   appTheme?: ThemeOverrides | null
+  /**
+   * When set, the app is pinned to a single color theme: users cannot change
+   * the mode or color theme, stored selections are migrated to this id, and
+   * workspace theme overrides are ignored. Rox passes {@link ROX_THEME_ID}.
+   */
+  fixedColorTheme?: string
 }
 
 function getSystemPreference(): 'light' | 'dark' {
@@ -194,17 +221,26 @@ function saveTheme(theme: StoredTheme): void {
 export function ThemeProvider({
   children,
   defaultMode = 'dark',
-  defaultColorTheme = 'pierre',
+  defaultColorTheme = ROX_THEME_ID,
   defaultFont = 'rox',
   activeWorkspaceId = null,
-  appTheme: appThemeProp
+  appTheme: appThemeProp,
+  fixedColorTheme
 }: ThemeProviderProps) {
   const stored = loadStoredTheme()
 
+  // When the app pins a single theme, every theme/mode control becomes a no-op
+  // and persisted selections coerce to the pinned value.
+  const themeLocked = fixedColorTheme !== undefined
+  const lockedColorTheme = fixedColorTheme ?? ROX_THEME_ID
+
   // === Preference state (persisted at app level) ===
-  const [mode, setModeState] = useState<ThemeMode>(stored?.mode ?? defaultMode)
+  const [mode, setModeState] = useState<ThemeMode>(() =>
+    themeLocked ? defaultMode : (stored?.mode ?? defaultMode)
+  )
   // Only use localStorage colorTheme if user explicitly set it via UI
   const [colorTheme, setColorThemeState] = useState<string>(() => {
+    if (themeLocked) return lockedColorTheme
     if (stored?.isUserOverride && stored.colorTheme) {
       return stored.colorTheme
     }
@@ -243,8 +279,21 @@ export function ThemeProvider({
   const ipcAppTheme = useAppTheme()
   const appTheme = appThemeProp !== undefined ? appThemeProp : ipcAppTheme
 
-  // Load app-level colorTheme from config.json on mount (only if user hasn't overridden)
+  // Load app-level colorTheme from config.json on mount (only if user hasn't overridden).
+  // With a fixed theme, migrate any legacy config selection to the pinned id.
   useEffect(() => {
+    if (themeLocked) {
+      const api = window.electronAPI
+      if (!api?.getColorTheme) return
+      void api.getColorTheme?.().then((configTheme) => {
+        setColorThemeState(lockedColorTheme)
+        if (configTheme && configTheme !== lockedColorTheme) {
+          void api.setColorTheme?.(lockedColorTheme).catch(() => {})
+        }
+      }).catch(() => {})
+      return
+    }
+
     // Skip if user has explicitly set a theme via UI
     if (stored?.isUserOverride) return
 
@@ -259,6 +308,16 @@ export function ThemeProvider({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount
 
+  // With a fixed theme, coerce any locally stored legacy selection on boot.
+  useEffect(() => {
+    if (!themeLocked) return
+    const existing = loadStoredTheme()
+    if (existing && (existing.colorTheme !== lockedColorTheme || existing.mode !== defaultMode)) {
+      saveTheme({ ...existing, mode: defaultMode, colorTheme: lockedColorTheme })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount
+
   // === Preset theme state (singleton) ===
   const [presetTheme, setPresetTheme] = useState<ThemeFile | null>(null)
   const [themeResolvedFrom, setThemeResolvedFrom] = useState<'none' | 'ipc' | 'fallback'>('none')
@@ -270,23 +329,28 @@ export function ThemeProvider({
   const requestedMode = previewMode ?? mode
   const resolvedMode = requestedMode === 'system' ? systemPreference : requestedMode
   const resolvedContrast = resolveContrast(contrast, systemPrefersMoreContrast)
-  // Effective theme: preview > workspace override > app default
-  const effectiveColorTheme = previewColorTheme ?? workspaceColorTheme ?? colorTheme
-  const effectiveColorThemeSource: 'preview' | 'workspace' | 'app' =
-    previewColorTheme !== null ? 'preview' : workspaceColorTheme !== null ? 'workspace' : 'app'
+  // Effective theme: with a fixed theme the pinned id always wins; otherwise
+  // preview > workspace override > app default.
+  const effectiveColorTheme = themeLocked
+    ? lockedColorTheme
+    : previewColorTheme ?? workspaceColorTheme ?? colorTheme
+  const effectiveColorThemeSource: 'preview' | 'workspace' | 'app' = themeLocked
+    ? 'app'
+    : previewColorTheme !== null ? 'preview' : workspaceColorTheme !== null ? 'workspace' : 'app'
 
   // Late responses from a previous workspace cannot replace the active one.
+  // With a fixed theme, workspace theme overrides are ignored entirely.
   useEffect(() => {
     let cancelled = false
     const version = ++workspaceReadVersion.current
     setWorkspaceColorThemeState(null)
-    if (activeWorkspaceId) {
+    if (!themeLocked && activeWorkspaceId) {
       window.electronAPI?.getWorkspaceColorTheme?.(activeWorkspaceId).then(theme => {
         if (!cancelled && workspaceReadVersion.current === version) setWorkspaceColorThemeState(theme)
       }).catch(() => { if (!cancelled && workspaceReadVersion.current === version) setWorkspaceColorThemeState(null) })
     }
     return () => { cancelled = true }
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, themeLocked])
 
   // Load preset theme when effectiveColorTheme changes (SINGLETON - only here, not in useTheme)
   useEffect(() => {
@@ -637,14 +701,16 @@ export function ThemeProvider({
       isExternalUpdate.current = true
       selectionRequestVersion.current += 1
       const nextContrast = isContrastMode(preferences.contrast) ? preferences.contrast : storedContrast(loadStoredTheme())
-      setModeState(preferences.mode as ThemeMode)
-      setColorThemeState(preferences.colorTheme)
+      const nextMode = themeLocked ? defaultMode : preferences.mode as ThemeMode
+      const nextColorTheme = themeLocked ? lockedColorTheme : preferences.colorTheme
+      setModeState(nextMode)
+      setColorThemeState(nextColorTheme)
       setFontState(normalizeUiFont(preferences.font))
       setContrastState(nextContrast)
       const existingStored = loadStoredTheme()
       saveTheme({
-        mode: preferences.mode as ThemeMode,
-        colorTheme: preferences.colorTheme,
+        mode: nextMode,
+        colorTheme: nextColorTheme,
         font: normalizeUiFont(preferences.font),
         chatFont: existingStored?.chatFont,
         terminalFont: existingStored?.terminalFont,
@@ -657,10 +723,12 @@ export function ThemeProvider({
     })
 
     return cleanup
-  }, [])
+  }, [themeLocked, lockedColorTheme, defaultMode])
 
   // === Setters with persistence and broadcast ===
   const setMode = useCallback((newMode: ThemeMode) => {
+    // A fixed theme has no mode control: ignore user intent.
+    if (themeLocked) return
     setModeState(newMode)
     const existing = loadStoredTheme()
     saveTheme({
@@ -675,9 +743,14 @@ export function ThemeProvider({
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
       window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font, contrast })
     }
-  }, [colorTheme, font, chatFont, terminalFont, contrast])
+  }, [themeLocked, colorTheme, font, chatFont, terminalFont, contrast])
 
   const setColorTheme = useCallback((newTheme: string) => {
+    // A fixed theme is not user-selectable: keep the pinned id and ignore input.
+    if (themeLocked) {
+      setColorThemeState(lockedColorTheme)
+      return
+    }
     selectionRequestVersion.current += 1
     // Serialize config writes. Rejected writes retain the last committed
     // selection and never broadcast a preference that was not saved.
@@ -706,7 +779,7 @@ export function ThemeProvider({
         setThemeLoadError('THEME_SAVE_FAILED')
       }
     })
-  }, [mode, font, chatFont, terminalFont, contrast])
+  }, [themeLocked, lockedColorTheme, mode, font, chatFont, terminalFont, contrast])
 
   const setFont = useCallback((newFont: FontFamily) => {
     const next = normalizeUiFont(newFont)
@@ -776,7 +849,8 @@ export function ThemeProvider({
   // Workspace writes have the same acknowledgement boundary as app writes.
   const setWorkspaceColorTheme = useCallback((newTheme: string | null) => {
     const workspaceId = activeWorkspaceId
-    if (!workspaceId) return Promise.resolve(false)
+    // A fixed theme has no per-workspace override: reject writes.
+    if (themeLocked || !workspaceId) return Promise.resolve(false)
     workspaceReadVersion.current += 1
     const result = workspaceWriteQueue.current.then(async () => {
       try {
@@ -796,7 +870,7 @@ export function ThemeProvider({
     })
     workspaceWriteQueue.current = result.then(() => {})
     return result
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, themeLocked])
 
   // Listen for workspace theme changes from other windows
   useEffect(() => {

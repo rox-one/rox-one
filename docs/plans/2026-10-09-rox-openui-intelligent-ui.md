@@ -1,7 +1,8 @@
 ---
 title: OpenUI: интерактивные ответы агента в чате ROX
-status: in-progress
+status: merged
 branch: feat/intelligent-ui-20261009
+merged: PR #1637 → ef64a76db (2026-10-09; финальное приложение собрано и запущено из main этой ревизии)
 date: 2026-10-09
 ---
 

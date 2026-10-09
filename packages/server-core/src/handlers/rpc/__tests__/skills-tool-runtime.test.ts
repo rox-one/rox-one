@@ -13,7 +13,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { buildAvailableSkillsBlock, buildSkillEligibilityReport, invalidateSkillsCache } from '@rox/shared/skills'
 import { createNativeSkillsToolRuntime } from '../skills-tool-runtime'
+
+// Each case resolves the runtime's real root plan over the host's skill store, so wall time is
+// dominated by filesystem walks and grows with machine load (measured 200-240 s per case while
+// other jobs were in flight, vs ~30 s idle). Budgets only - no assertion was relaxed.
 
 // Unique slugs so a real ~/.agents/skills entry can never satisfy the assertions.
 const REAL_SLUG = 'fix6-contained-skill-7q'
@@ -53,7 +58,7 @@ describe('createNativeSkillsToolRuntime containment', () => {
 
     const searched = await runtime.search({ ...scope, query: ESCAPING_SLUG })
     expect(searched.some(hit => hit.slug === ESCAPING_SLUG)).toBe(false)
-  }, 180000)
+  }, 600_000)
 
   it('refuses to read through the escaping symlink but reads the contained skill', async () => {
     const scope = { workspaceRoot }
@@ -62,5 +67,22 @@ describe('createNativeSkillsToolRuntime containment', () => {
 
     const real = await runtime.read({ ...scope, slug: REAL_SLUG })
     expect(real?.content).toContain('CONTAINED BODY')
-  }, 180000)
+  }, 600_000)
+
+  it('advertised implies readable: the escaping symlink is neither advertised nor readable', async () => {
+    invalidateSkillsCache()
+    const report = await buildSkillEligibilityReport({ workspaceRoot, includeOmp: false, disabledPackSlugs: [] })
+    const block = buildAvailableSkillsBlock(report.eligible) ?? ''
+
+    // The report (single source of truth for the prompt block) admits the
+    // contained skill and drops the escaping link BEFORE it can be advertised.
+    expect(report.eligible.some(skill => skill.slug === REAL_SLUG)).toBe(true)
+    expect(report.eligible.some(skill => skill.slug === ESCAPING_SLUG)).toBe(false)
+    expect(block).toContain(REAL_SLUG)
+    expect(block).not.toContain(ESCAPING_SLUG)
+
+    // And every advertised slug resolves through the real read path.
+    expect(await runtime.read({ workspaceRoot, slug: REAL_SLUG })).not.toBeNull()
+    expect(await runtime.read({ workspaceRoot, slug: ESCAPING_SLUG })).toBeNull()
+  }, 600_000)
 })

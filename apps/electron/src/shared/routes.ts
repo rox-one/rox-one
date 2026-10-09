@@ -182,6 +182,10 @@ export const routes = {
     /** Learning view (learning navigator — self-learning dashboard, PRD §25-30) */
     learning: () => 'learning' as const,
 
+    /** ROX Drive (wave 1) — `drive[/folder/{folderId}]` local-first storage. */
+    drive: (folderId?: string) =>
+      folderId ? `drive/folder/${encodeURIComponent(folderId)}` as const : 'drive' as const,
+
     /** Things-style personal tasks (Issue 17). Distinct from DAG Conductor tasks. */
     tasks: (taskId?: string) =>
       taskId ? `tasks/task/${encodeURIComponent(taskId)}` as const : 'tasks' as const,
@@ -192,6 +196,12 @@ export const routes = {
     /** Mode screen `feed` — `feed[/item/{itemId}]` */
     feed: (itemId?: string) =>
       itemId ? `feed/item/${encodeURIComponent(itemId)}` as const : 'feed' as const,
+    /**
+     * Встречи. W3.2 (Согласованность-20261009): Встречи moved into the
+     * `calendar` surface; this legacy route is an alias — `meetings` resolves
+     * to the calendar surface and `meetings/meeting/{id}` selects that meeting
+     * there. Kept so old deep links and callers keep working.
+     */
     meetings: (meetingId?: string) =>
       meetingId ? `meetings/meeting/${encodeURIComponent(meetingId)}` as const : 'meetings' as const,
 

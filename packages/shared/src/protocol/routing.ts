@@ -106,6 +106,16 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.credentials.GET_MIGRATION_STATUS,
   RPC_CHANNELS.credentials.ROLLBACK_MIGRATION,
 
+  // keeper — personal secret vault: plaintext never leaves the local host.
+  RPC_CHANNELS.keeper.LIST,
+  RPC_CHANNELS.keeper.GET,
+  RPC_CHANNELS.keeper.CREATE,
+  RPC_CHANNELS.keeper.UPDATE,
+  RPC_CHANNELS.keeper.DELETE,
+  RPC_CHANNELS.keeper.REVEAL,
+  RPC_CHANNELS.keeper.UNLOCK_STATUS,
+  RPC_CHANNELS.keeper.IMPORT_BROWSER,
+
   // shell — local OS shell (openFile/showInFolder guarded for remote)
   RPC_CHANNELS.shell.OPEN_URL,
   RPC_CHANNELS.shell.OPEN_FILE,
@@ -282,6 +292,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET,
   RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN,
 
+  RPC_CHANNELS.browserCredentials.EXPORT_FOR_KEEPER,
+
   // browserIntel — reads/stages local browser profile files only; never remote-eligible.
   RPC_CHANNELS.browserIntel.GET_STATE,
   RPC_CHANNELS.browserIntel.SET_CONSENT,
@@ -310,7 +322,17 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE,
   RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
   RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
+  RPC_CHANNELS.onboarding.CHECK_HANDLE,
   RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
+  // permissions & data-access column — OS probes require the local Electron host
+  RPC_CHANNELS.onboarding.PERMISSIONS_STATUS,
+  RPC_CHANNELS.onboarding.OPEN_PERMISSION_SETTINGS,
+  RPC_CHANNELS.onboarding.SUGGEST_PREFERENCES,
+  // calendar — Google OAuth broker + local sync run on the local app server
+  RPC_CHANNELS.calendar.GOOGLE_STATUS,
+  RPC_CHANNELS.calendar.GOOGLE_CONNECT,
+  RPC_CHANNELS.calendar.GOOGLE_DISCONNECT,
+  RPC_CHANNELS.calendar.GOOGLE_SYNC,
   RPC_CHANNELS.settings.GET_NETWORK_PROXY,
   RPC_CHANNELS.settings.SET_NETWORK_PROXY,
 
@@ -513,9 +535,18 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.fabric.ACQUIRE_LEASE,
   RPC_CHANNELS.fabric.REVOKE_CONNECTION,
   RPC_CHANNELS.fabric.GITHUB_STATUS,
+  // GitHub identity linking — the device flow and the workspace link record are
+  // host-local; the token never leaves the main process.
+  RPC_CHANNELS.fabric.GITHUB_LINK_START,
+  RPC_CHANNELS.fabric.GITHUB_LINK_POLL,
+  RPC_CHANNELS.fabric.GITHUB_LINK_GET,
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
   RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
   RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
+  RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS,
+  RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS,
+  RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM,
+  RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM,
 
   // Entities (W1-02) — the link store is a workspace-local SQLite file.
   RPC_CHANNELS.entities.LINKS,
@@ -524,6 +555,26 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   // W1-04 (#1501) — Dossier export writes the host's local contact store.
   RPC_CHANNELS.directory.EXPORT_DOSSIER,
 
+  // --- carried over from feat/rox-platform-20261009 (merge 2026-10-09) ---
+  RPC_CHANNELS.drive.QUOTA,
+  RPC_CHANNELS.drive.LIST,
+  RPC_CHANNELS.drive.CREATE_FOLDER,
+  RPC_CHANNELS.drive.OPEN_UPLOAD,
+  RPC_CHANNELS.drive.UPLOAD_PART,
+  RPC_CHANNELS.drive.COMPLETE_UPLOAD,
+  RPC_CHANNELS.drive.ABORT_UPLOAD,
+  RPC_CHANNELS.drive.DELETE,
+  RPC_CHANNELS.drive.SCAN_SOURCE,
+  RPC_CHANNELS.drive.IMPORT_PLAN,
+  RPC_CHANNELS.drive.IMPORT_START,
+  RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_RESUME,
+  RPC_CHANNELS.drive.IMPORT_STATUS,
+  RPC_CHANNELS.drive.IMPORT_AUTH_START,
+  RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE,
+  RPC_CHANNELS.tgLink.START,
+  RPC_CHANNELS.tgLink.VERIFY,
+  RPC_CHANNELS.tgLink.STATUS,
   // serviceLifecycle — OS service (launchd/systemd/Windows) control is host-local.
   RPC_CHANNELS.serviceLifecycle.GET_STATUS,
   RPC_CHANNELS.serviceLifecycle.INSTALL,
@@ -536,7 +587,6 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   // diagnostics — host doctor checks read local service/port/config/log state.
   RPC_CHANNELS.diagnostics.RUN,
   RPC_CHANNELS.diagnostics.GET_LAST,
-
 ]
 
 export const LOCAL_ONLY_CHANNELS = new Set<string>(LOCAL_ONLY_CHANNEL_LIST)
@@ -712,14 +762,14 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
 
   // notes — workspace note vault
   RPC_CHANNELS.notes.LIST,
-  RPC_CHANNELS.notes.READ,
-  RPC_CHANNELS.notes.SAVE,
-  RPC_CHANNELS.notes.UPDATE_PROPERTIES,
-  RPC_CHANNELS.notes.CREATE,
   RPC_CHANNELS.notes.LIST_COMMENTS,
   RPC_CHANNELS.notes.CREATE_COMMENT,
   RPC_CHANNELS.notes.UPDATE_COMMENT,
   RPC_CHANNELS.notes.DELETE_COMMENT,
+  RPC_CHANNELS.notes.READ,
+  RPC_CHANNELS.notes.SAVE,
+  RPC_CHANNELS.notes.UPDATE_PROPERTIES,
+  RPC_CHANNELS.notes.CREATE,
   RPC_CHANNELS.notes.PREPARE_CREATE,
   RPC_CHANNELS.notes.RENAME,
   RPC_CHANNELS.notes.MOVE,
@@ -1196,6 +1246,18 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.commands.EXECUTE,
   RPC_CHANNELS.commands.LIST,
   RPC_CHANNELS.commands.EVENT,
+
+  // f.9 — node/device registry lives on the server that owns the node
+  // connections (the answering host), never proxied to a fixed local surface.
+  // Claims are declared by the node; the answering server enforces its own
+  // allowlist before any node.invoke dispatch.
+  RPC_CHANNELS.nodes.REGISTER,
+  RPC_CHANNELS.nodes.LIST,
+  RPC_CHANNELS.nodes.PRESENCE,
+  RPC_CHANNELS.nodes.INVOKE,
+  RPC_CHANNELS.nodes.INVOKE_RESULT,
+  RPC_CHANNELS.nodes.INVOKE_CANCEL,
+  RPC_CHANNELS.nodes.CHANGED,
 ]
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>(REMOTE_ELIGIBLE_CHANNEL_LIST)

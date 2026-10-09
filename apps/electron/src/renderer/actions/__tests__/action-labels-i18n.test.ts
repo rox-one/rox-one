@@ -62,6 +62,7 @@ const NEW_LABEL_KEYS = [
   'shortcuts.action.focusPanelUp',
   'shortcuts.action.sessionWorkflow',
   'shortcuts.action.simplifyDiff',
+  'shortcuts.action.togglePanelFullScreen',
   // W1-07 (#1504): flag-gated shell actions.
   'shortcuts.action.agentAskAboutSelection',
   'shortcuts.action.agentTogglePanel',

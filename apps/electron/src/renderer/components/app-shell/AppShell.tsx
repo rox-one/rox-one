@@ -119,6 +119,7 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { GlobalVoiceDictation } from "@/voice/global-dictation"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
@@ -172,10 +173,10 @@ import {
   isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
@@ -659,7 +660,6 @@ function AppShellContent({
   // (PagesHome pattern); collapse the middle navigator for all five.
   const isPagesView = isPagesNavigation(navState)
   const isTasksView = isTasksNavigation(navState)
-  const isMeetingsView = isMeetingsNavigation(navState)
   const isMemoryView = isMemoryNavigation(navState)
   const isLearningView = isLearningNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
@@ -675,7 +675,7 @@ function AppShellContent({
   // (ClipboardHistoryPanel) with its own header; keeping the middle navigator
   // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
@@ -2548,10 +2548,6 @@ function AppShellContent({
       return t("sidebar.tasks")
     }
 
-    if (isMeetingsNavigation(navState)) {
-      return t("sidebar.meetings")
-    }
-
     if (isHomeNavigation(navState)) {
       return t("workbench.home.title")
     }
@@ -2851,9 +2847,12 @@ function AppShellContent({
     },
     {
       id: "nav:meetings",
-      title: t('workbench.mode.meetings'),
+      // W3.2 (Согласованность-20261009): Встречи merged into the calendar
+      // surface — the entry keeps id/link/route and opens it, active while the
+      // calendar surface shows, but is presented as «Календарь».
+      title: t('workbench.mode.calendar'),
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
-      variant: isMeetingsNavigation(navState) ? "default" : "ghost",
+      variant: isSurfaceNavigation(navState) && navState.surface === 'calendar' ? "default" : "ghost",
       onClick: handleMeetingsClick,
     },
     // --- Sources ---
@@ -3002,6 +3001,13 @@ function AppShellContent({
       icon: Home,
       variant: isHomeNavigation(navState) ? "default" : "ghost",
       onClick: () => navigate(routes.view.home()),
+    },
+    {
+      id: "nav:drive",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.drive.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.drive.icon,
+      variant: isDriveNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.drive()),
     },
     {
       id: "nav:feed",
@@ -3775,6 +3781,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
       <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
 
       <SuperEngineeringShellExtras />
+
+      {/* Global voice dictation: records + drafts a new session when no active composer owns the mic. */}
+      <GlobalVoiceDictation />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>

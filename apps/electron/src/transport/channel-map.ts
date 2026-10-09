@@ -106,6 +106,15 @@ export const CHANNEL_MAP = {
   discoverBrowserProfiles: invoke(RPC_CHANNELS.browserProfile.DISCOVER),
   importBrowserProfile: invoke(RPC_CHANNELS.browserProfile.IMPORT),
   browserCredentialCapabilities: invoke(RPC_CHANNELS.browserProfile.CREDENTIAL_CAPABILITIES),
+  // ROX Keeper — local personal secret vault (main-process read path)
+  keeperList: invoke(RPC_CHANNELS.keeper.LIST),
+  keeperGet: invoke(RPC_CHANNELS.keeper.GET),
+  keeperCreate: invoke(RPC_CHANNELS.keeper.CREATE),
+  keeperUpdate: invoke(RPC_CHANNELS.keeper.UPDATE),
+  keeperDelete: invoke(RPC_CHANNELS.keeper.DELETE),
+  keeperReveal: invoke(RPC_CHANNELS.keeper.REVEAL),
+  keeperUnlockStatus: invoke(RPC_CHANNELS.keeper.UNLOCK_STATUS),
+  keeperImportBrowser: invoke(RPC_CHANNELS.keeper.IMPORT_BROWSER),
   browserDataAutoImport: invoke(RPC_CHANNELS.browserProfile.DATA_AUTO_IMPORT),
   rollbackBrowserProfileImport: invoke(RPC_CHANNELS.browserProfile.ROLLBACK),
   deleteImportedBrowserProfile: invoke(RPC_CHANNELS.browserProfile.DELETE),
@@ -285,9 +294,16 @@ export const CHANNEL_MAP = {
   fabricAcquireLease: invoke(RPC_CHANNELS.fabric.ACQUIRE_LEASE),
   fabricRevokeConnection: invoke(RPC_CHANNELS.fabric.REVOKE_CONNECTION),
   fabricGithubStatus: invoke(RPC_CHANNELS.fabric.GITHUB_STATUS),
+  fabricGithubLinkStart: invoke(RPC_CHANNELS.fabric.GITHUB_LINK_START),
+  fabricGithubLinkPoll: invoke(RPC_CHANNELS.fabric.GITHUB_LINK_POLL),
+  fabricGithubLinkGet: invoke(RPC_CHANNELS.fabric.GITHUB_LINK_GET),
   fabricInfisicalHealth: invoke(RPC_CHANNELS.fabric.INFISICAL_HEALTH),
   fabricInfisicalPreviewAccount: invoke(RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT),
   fabricInfisicalCommitImport: invoke(RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT),
+  fabricInfisicalListPaths: invoke(RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS),
+  fabricInfisicalListItems: invoke(RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS),
+  fabricInfisicalUpsertItem: invoke(RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM),
+  fabricInfisicalDeleteItem: invoke(RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM),
 
   // Extension Center (S-05)
   extensionsListCatalog: invoke(RPC_CHANNELS.extensions.LIST_CATALOG),
@@ -330,11 +346,15 @@ export const CHANNEL_MAP = {
   clearClaudeOAuthState: invoke(RPC_CHANNELS.onboarding.CLEAR_CLAUDE_OAUTH_STATE),
   deferSetup: invoke(RPC_CHANNELS.onboarding.DEFER_SETUP),
   saveOmpCredential: invoke(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL),
+  suggestPreferences: invoke(RPC_CHANNELS.onboarding.SUGGEST_PREFERENCES),
   startRoxConnect: invoke(RPC_CHANNELS.onboarding.START_ROX_CONNECT),
   getRoxCloudState: invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE),
   clearRoxCloud: invoke(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD),
   getRoxBalance: invoke(RPC_CHANNELS.onboarding.GET_ROX_BALANCE),
+  checkOnboardingHandle: invoke(RPC_CHANNELS.onboarding.CHECK_HANDLE),
   ensureFirstSessionWelcome: invoke(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION),
+  getOnboardingPermissionsStatus: invoke(RPC_CHANNELS.onboarding.PERMISSIONS_STATUS),
+  openOnboardingPermissionSettings: invoke(RPC_CHANNELS.onboarding.OPEN_PERMISSION_SETTINGS),
 
   // ChatGPT OAuth
   startChatGptOAuth: invoke(RPC_CHANNELS.chatgpt.START_OAUTH),
@@ -665,6 +685,12 @@ export const CHANNEL_MAP = {
   // OAuth (server-owned credentials)
   oauthRevoke: invoke(RPC_CHANNELS.oauth.REVOKE),
 
+  // Google Calendar connector (wave 1). connectGoogleCalendar is orchestrated in
+  // the preload bridge (callback server + main-process popup) and is not routed here.
+  googleCalendarStatus: invoke(RPC_CHANNELS.calendar.GOOGLE_STATUS),
+  googleCalendarDisconnect: invoke(RPC_CHANNELS.calendar.GOOGLE_DISCONNECT),
+  googleCalendarSync: invoke(RPC_CHANNELS.calendar.GOOGLE_SYNC),
+
   // Sources change listener
   onSourcesChanged: listener(RPC_CHANNELS.sources.CHANGED),
 
@@ -736,6 +762,24 @@ export const CHANNEL_MAP = {
   runLearningConsolidation: invoke(RPC_CHANNELS.learning.CONSOLIDATE),
   curateLearningSkills: invoke(RPC_CHANNELS.learning.CURATE_SKILLS),
   runPolicyLearning: invoke(RPC_CHANNELS.learning.RUN_POLICY_LEARNING),
+  // ROX Drive (wave 1) — device-local storage engine.
+  driveQuota: invoke(RPC_CHANNELS.drive.QUOTA),
+  driveList: invoke(RPC_CHANNELS.drive.LIST),
+  driveCreateFolder: invoke(RPC_CHANNELS.drive.CREATE_FOLDER),
+  driveOpenUpload: invoke(RPC_CHANNELS.drive.OPEN_UPLOAD),
+  driveUploadPart: invoke(RPC_CHANNELS.drive.UPLOAD_PART),
+  driveCompleteUpload: invoke(RPC_CHANNELS.drive.COMPLETE_UPLOAD),
+  driveAbortUpload: invoke(RPC_CHANNELS.drive.ABORT_UPLOAD),
+  driveDelete: invoke(RPC_CHANNELS.drive.DELETE),
+  driveScanSource: invoke(RPC_CHANNELS.drive.SCAN_SOURCE),
+  // ROX Drive (wave 4) — cloud import pipeline.
+  driveImportPlan: invoke(RPC_CHANNELS.drive.IMPORT_PLAN),
+  driveImportStart: invoke(RPC_CHANNELS.drive.IMPORT_START),
+  driveImportPause: invoke(RPC_CHANNELS.drive.IMPORT_PAUSE),
+  driveImportResume: invoke(RPC_CHANNELS.drive.IMPORT_RESUME),
+  driveImportStatus: invoke(RPC_CHANNELS.drive.IMPORT_STATUS),
+  driveImportAuthStart: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_START),
+  driveImportAuthComplete: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE),
 
   // Statuses
   listStatuses: invoke(RPC_CHANNELS.statuses.LIST),
@@ -1108,4 +1152,9 @@ export const CHANNEL_MAP = {
 
   // Knowledge map — auto-generated user knowledge graph (server-core builder)
   buildKnowledgeMap: invoke(RPC_CHANNELS.knowledgeMap.GET),
+
+  // Telegram account linking (R4) — local rox-tg-linkd daemon.
+  tgLinkStart: invoke(RPC_CHANNELS.tgLink.START),
+  tgLinkVerify: invoke(RPC_CHANNELS.tgLink.VERIFY),
+  tgLinkStatus: invoke(RPC_CHANNELS.tgLink.STATUS),
 } satisfies ChannelMap
