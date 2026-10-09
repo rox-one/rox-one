@@ -172,7 +172,6 @@ import {
   isMemoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isHomeNavigation,
@@ -660,7 +659,6 @@ function AppShellContent({
   // (PagesHome pattern); collapse the middle navigator for all five.
   const isPagesView = isPagesNavigation(navState)
   const isTasksView = isTasksNavigation(navState)
-  const isMeetingsView = isMeetingsNavigation(navState)
   const isMemoryView = isMemoryNavigation(navState)
   const isLearningView = isLearningNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
@@ -673,7 +671,7 @@ function AppShellContent({
     || isSurfaceNavigation(navState)
   // Unavailable addresses have no collection navigator or resize boundary.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
@@ -2541,10 +2539,6 @@ function AppShellContent({
       return t("sidebar.tasks")
     }
 
-    if (isMeetingsNavigation(navState)) {
-      return t("sidebar.meetings")
-    }
-
     if (isHomeNavigation(navState)) {
       return t("workbench.home.title")
     }
@@ -2836,9 +2830,12 @@ function AppShellContent({
     },
     {
       id: "nav:meetings",
-      title: t('workbench.mode.meetings'),
+      // W3.2 (Согласованность-20261009): Встречи merged into the calendar
+      // surface — the entry keeps id/link/route and opens it, active while the
+      // calendar surface shows, but is presented as «Календарь».
+      title: t('workbench.mode.calendar'),
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
-      variant: isMeetingsNavigation(navState) ? "default" : "ghost",
+      variant: isSurfaceNavigation(navState) && navState.surface === 'calendar' ? "default" : "ghost",
       onClick: handleMeetingsClick,
     },
     // --- Sources ---

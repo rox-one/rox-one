@@ -46,12 +46,12 @@ describe('activity rail: expanded with labels by default', () => {
     expect(group).toContain('collapsed={collapsed}')
   })
 
-  it('renders the seven core modes in TZ order, not the flat destination list (A1)', () => {
+  it('renders the six core modes in TZ order, not the flat destination list (A1)', () => {
     // Behavioural pin: the rail's mode seed (icons, labels, order).
+    // W3.2: Встречи moved into the calendar surface and is no longer a mode.
     expect(CORE_MODES.map((mode) => mode.contribution.id)).toEqual([
       'home',
       'chat',
-      'meetings',
       'tasks',
       'notes',
       'feed',

@@ -2701,7 +2701,7 @@ h1,h2,h3{margin-top:1.5em}
             </div>
           )}
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
-          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
+          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} disabled={openingAgent} />
           <button

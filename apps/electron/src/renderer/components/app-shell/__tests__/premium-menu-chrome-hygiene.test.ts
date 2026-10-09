@@ -12,7 +12,7 @@ describe('Issue 04 chrome hygiene', () => {
   })
 
   it('keeps BrowserTabStrip on StyledDropdown', () => {
-    const src = readFileSync(join(renderer, 'components/browser/BrowserTabStrip.tsx'), 'utf8')
+    const src = readFileSync(join(renderer, 'components/browser/BrowserTabStripView.tsx'), 'utf8')
     expect(src).toContain('StyledDropdownMenuContent')
     expect(src).not.toContain('PremiumMenu')
   })

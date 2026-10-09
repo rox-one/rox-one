@@ -146,7 +146,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
           onClick={() => actions.onOpenNote(note.id)}
           style={{ paddingLeft: `${10 + depth * 12}px` }}
           className={cn(
-            'notes-list-item mb-0.5 w-full rounded-[var(--radius-control)] pr-2.5 py-1.5 text-left outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring',
+            'notes-list-item mb-0.5 w-full rounded-[var(--radius-control)] pr-2.5 py-1.5 text-left outline-none hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring',
             activeNoteId === note.id && 'notes-list-item-active',
             isDragging && 'opacity-50',
           )}
@@ -154,7 +154,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
           {...listeners}
         >
           <span className="flex items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5 shrink-0 text-sky-500" aria-hidden="true" />
+            <FileText className="icon-caption shrink-0 text-sky-500" aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate text-sm">{note.title}</span>
           </span>
           {note.tags.length > 0 && (
@@ -168,33 +168,33 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
       </ContextMenuTrigger>
       <StyledContextMenuContent>
         <StyledContextMenuItem onClick={() => actions.onOpenNote(note.id)}>
-          <FileText className="h-3.5 w-3.5" />{t('common.open')}
+          <FileText className="icon-caption" />{t('common.open')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenRenameDialogForNote(note)}>
-          <Pencil className="h-3.5 w-3.5" />{t('common.rename')}
+          <Pencil className="icon-caption" />{t('common.rename')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenCreateNoteDialog(noteFolder(note) || undefined)}>
-          <FilePlus2 className="h-3.5 w-3.5" />{t('notes.menu.newHere')}
+          <FilePlus2 className="icon-caption" />{t('notes.menu.newHere')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onDuplicateNote(note)}>
-          <Copy className="h-3.5 w-3.5" />{t('notes.menu.duplicate')}
+          <Copy className="icon-caption" />{t('notes.menu.duplicate')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenMoveDialog(note)}>
-          <FolderInput className="h-3.5 w-3.5" />{t('notes.menu.moveToFolder')}
+          <FolderInput className="icon-caption" />{t('notes.menu.moveToFolder')}
         </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem onClick={() => actions.onCopyNoteLink(note)}>
-          <Link2 className="h-3.5 w-3.5" />{t('notes.menu.copyLink')}
+          <Link2 className="icon-caption" />{t('notes.menu.copyLink')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onCopyNotePath(note)}>
-          <FileText className="h-3.5 w-3.5" />{t('notes.menu.copyPath')}
+          <FileText className="icon-caption" />{t('notes.menu.copyPath')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onRevealNote(note)}>
-          <ExternalLink className="h-3.5 w-3.5" />{t('notes.menu.reveal')}
+          <ExternalLink className="icon-caption" />{t('notes.menu.reveal')}
         </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem variant="destructive" onClick={() => actions.onOpenDeleteDialogForNote(note)}>
-          <Trash2 className="h-3.5 w-3.5" />{t('common.delete')}
+          <Trash2 className="icon-caption" />{t('common.delete')}
         </StyledContextMenuItem>
       </StyledContextMenuContent>
     </ContextMenu>
@@ -229,27 +229,27 @@ function FolderNavigationItem({ node, depth, expanded, onToggleFolder, ...action
           title={node.fullPath}
           onClick={() => onToggleFolder(node.fullPath)}
           className={cn(
-            'mb-0.5 flex h-7 w-full cursor-pointer items-center gap-1 rounded-[var(--radius-control)] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-foreground/[0.04] focus-visible:ring-1 focus-visible:ring-ring',
+            'mb-0.5 flex h-7 w-full cursor-pointer items-center gap-1 rounded-[var(--radius-control)] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring',
             isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]',
           )}
           style={{ paddingLeft: `${8 + depth * 12}px` }}
         >
-          <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden="true" />
-          <FolderIcon className={cn('h-4 w-4 shrink-0', depth === 0 ? 'text-amber-500' : depth === 1 ? 'text-orange-500' : 'text-teal-500')} aria-hidden="true" />
+          <ChevronRight className={cn('icon-caption shrink-0 transition-transform duration-150 motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden="true" />
+          <FolderIcon className={cn('icon-inline shrink-0', depth === 0 ? 'text-amber-500' : depth === 1 ? 'text-orange-500' : 'text-teal-500')} aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-left">{node.name}</span>
           <span className="text-xs text-muted-foreground/50 tabular-nums">{countFolderNotes(node)}</span>
         </button>
       </ContextMenuTrigger>
       <StyledContextMenuContent>
         <StyledContextMenuItem onClick={() => actions.onOpenCreateNoteDialog(node.fullPath)}>
-          <FilePlus2 className="h-3.5 w-3.5" />{t('notes.menu.newInFolder')}
+          <FilePlus2 className="icon-caption" />{t('notes.menu.newInFolder')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenRenameFolder(node.fullPath)}>
-          <Pencil className="h-3.5 w-3.5" />{t('notes.menu.renameFolder')}
+          <Pencil className="icon-caption" />{t('notes.menu.renameFolder')}
         </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem variant="destructive" onClick={() => actions.onOpenDeleteFolder(node.fullPath)}>
-          <Trash2 className="h-3.5 w-3.5" />{t('notes.menu.deleteFolder')}
+          <Trash2 className="icon-caption" />{t('notes.menu.deleteFolder')}
         </StyledContextMenuItem>
       </StyledContextMenuContent>
     </ContextMenu>

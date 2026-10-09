@@ -66,7 +66,7 @@ async function fixtureBundle() {
     import TerminalSurfacePage from './apps/electron/src/renderer/pages/TerminalSurfacePage';
     const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation, isSurfaceNavigation,
       isLearningNavigation,
-      isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isNotesNavigation,
+      isTasksNavigation, isInboxNavigation, isFeedNavigation, isNotesNavigation,
       isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isKnowledgeNavigation,
       isDiffNavigation, isExtensionNavigation, isConnectionsNavigation, isHomeNavigation, isCloudRunNavigation,
       isTerminalNavigation, isScreenNavigation } = guards;

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: file: thumbnail:; connect-src 'self' https: http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; font-src 'self' data:;">
+  <title>Rox renderer DOM perf fixture</title>
+</head>
+<body>
+  <script>
+    globalThis.process = globalThis.process || { env: {}, cwd() { return '/' }, platform: 'linux' };
+  </script>
+  <div id="perf-root" style="display: flex; height: 100vh; width: 100vw; overflow: hidden;">
+    <div id="perf-sessions" style="display: flex; flex-direction: column; width: 360px; min-width: 360px; height: 100vh; border-right: 1px solid var(--border, #e5e7eb);"></div>
+    <div id="perf-notes" data-perf-panel="notes-navigator" style="flex: 1; height: 100vh; overflow: auto; padding: 8px;"></div>
+  </div>
+  <script type="module" src="./perf-dom.tsx"></script>
+</body>
+</html>
