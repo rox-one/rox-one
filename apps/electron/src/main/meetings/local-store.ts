@@ -31,7 +31,7 @@ import {
 import { Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createHash, randomUUID } from 'node:crypto'
-import { basename, extname, join } from 'node:path'
+import { basename, dirname, extname, join } from 'node:path'
 import type {
   LocalAsrEngine,
   LocalMeeting,
@@ -174,18 +174,26 @@ export class LocalMeetingStore {
     }
   }
 
-  private write(meeting: LocalMeeting): LocalMeeting {
-    const dir = this.dir(meeting.id)
-    mkdirSync(dir, { recursive: true })
-    const target = join(dir, 'meeting.json')
+  /**
+   * Atomic, durable write with read-back verification: write a sibling tmp,
+   * fsync it, rename over the target, fsync the directory, then confirm the
+   * bytes on disk match. Throws 'meeting-write-readback-failed' on mismatch so
+   * a silently truncated or torn write is never reported as success.
+   */
+  private writeDurable(target: string, bytes: string): void {
     const tmp = `${target}.tmp-${process.pid}`
-    const bytes = `${JSON.stringify(meeting, null, 2)}\n`
     const fd = openSync(tmp, 'w', 0o600)
     try { writeFileSync(fd, bytes); fsyncSync(fd) } finally { closeSync(fd) }
     renameSync(tmp, target)
-    const directoryFd = openSync(dir, 'r')
+    const directoryFd = openSync(dirname(target), 'r')
     try { fsyncSync(directoryFd) } finally { closeSync(directoryFd) }
     if (readFileSync(target, 'utf8') !== bytes) throw new Error('meeting-write-readback-failed')
+  }
+
+  private write(meeting: LocalMeeting): LocalMeeting {
+    const dir = this.dir(meeting.id)
+    mkdirSync(dir, { recursive: true })
+    this.writeDurable(join(dir, 'meeting.json'), `${JSON.stringify(meeting, null, 2)}\n`)
     this.deps.emit(meeting.id)
     return meeting
   }
@@ -846,14 +854,9 @@ export class LocalMeetingStore {
 
   private writeTranscriptFiles(meeting: LocalMeeting, transcript: LocalTranscript): void {
     const dir = this.dir(meeting.id)
-    const jsonPath = join(dir, 'transcript.json')
-    const jsonTemp = `${jsonPath}.tmp-${process.pid}`
-    const markdownPath = join(dir, 'transcript.md')
-    const markdownTemp = `${markdownPath}.tmp-${process.pid}`
-    writeFileSync(jsonTemp, `${JSON.stringify(transcript, null, 2)}\n`)
-    writeFileSync(markdownTemp, transcriptMarkdown(meeting, transcript))
-    renameSync(jsonTemp, jsonPath)
-    renameSync(markdownTemp, markdownPath)
+    mkdirSync(dir, { recursive: true })
+    this.writeDurable(join(dir, 'transcript.json'), `${JSON.stringify(transcript, null, 2)}\n`)
+    this.writeDurable(join(dir, 'transcript.md'), transcriptMarkdown(meeting, transcript))
   }
 
   private async runTranscription(job: TranscriptionJob, signal: AbortSignal): Promise<void> {
