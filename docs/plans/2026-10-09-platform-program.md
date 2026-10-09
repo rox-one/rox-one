@@ -146,3 +146,11 @@
 
 ### 7.4 Готовые модули десктопа (в дереве, до интеграции)
 Почта 1 ГиБ (40 тестов) · онбординг-идентичность + канал `onboarding:checkHandle` (37) · разрешения (реальные пробы macOS + каналы) · анкета/Step (32+7) · Keeper: личное хранилище `packages/shared/src/keeper/*` + `keeper:*` каналы + UI (crypto/TOTP/store тесты) · Drive: локальный движок, 8 параллельных частей, resume, страница с тайлами (30) · аналитика: `packages/shared/src/telemetry/*` (PostHog+OTLP, гейт согласия, 23) · Google Calendar: `providers/google.ts` + брокер (20) · Telegram-сервис `services/rox-tg-linkd` (в работе у агента).
+
+### 7.5 Интеграция выполнена (2026-10-09, ~03:55 UTC+3)
+- **Коммит `71d2b903b`** (ветка `feat/rox-platform-20261009`, запушен): союз обеих параллельных волн — 158 файлов; рабочее дерево чистое.
+- Гейты: **`typecheck:all` — 0 ошибок** (все пакеты, включая ui/workspace-service); целевые сюиты модулей — **166/166** в одном прогоне; **i18n parity OK** (9991 ключ × 11 локалей, отсортировано); **0 неклассифицированных каналов** в routing.ts; `ipc-channels` и `channel-map-parity` — зелёные.
+- Осталось 2 конфликтных теста (пересечение двух реализаций онбординга; ждут решения владельца):
+  `onboarding/__tests__/identity-step.test.tsx` (1 — `onAvailabilityChecked` не вызывается) и
+  `onboarding/__tests__/OnboardingWizard.test.tsx` (1 — welcome-шаг всё ещё рендерит поле юзернейма из моей реализации, тогда как тест параллельной сессии ожидает, что identity живёт только в её `IdentityStep`).
+- Дубли, требующие выбора (не удалены): календарь — мой `providers/google.ts` — живой путь (`calendar:googleSync`), альтернативный `google-calendar-adapter.ts` параллельной сессии оставлен; Keeper — мой vault подключён в «Секретах», компоненты параллельной сессии (`KeeperItemsPane` и др.) сохранены без проводки.
