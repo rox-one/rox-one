@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  rox-calendar-helper Info.plist.
+
+  build.sh embeds this file into the helper binary's __TEXT,__info_plist section so the
+  standalone executable carries its own usage descriptions (required for macOS TCC to
+  show the Calendars prompt). The packaged Electron app ALSO needs these keys in its own
+  Info.plist — see README.md for how that fragment is merged; this repo's electron-builder
+  config is owned elsewhere and is not modified here.
+-->
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>com.rox.calendar-helper</string>
+  <key>CFBundleName</key>
+  <string>rox-calendar-helper</string>
+  <key>CFBundleExecutable</key>
+  <string>rox-calendar-helper</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.0</string>
+  <key>NSCalendarsUsageDescription</key>
+  <string>Rox reads your macOS calendars to show and sync events. / Rox читает календари macOS, чтобы показывать и синхронизировать события.</string>
+  <key>NSCalendarsFullAccessUsageDescription</key>
+  <string>Rox needs full access to your macOS calendars to sync events. / Rox нужен полный доступ к календарям macOS для синхронизации событий.</string>
+</dict>
+</plist>

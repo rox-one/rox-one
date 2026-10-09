@@ -176,6 +176,7 @@ import {
   isInboxNavigation,
   isFeedNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
@@ -2986,6 +2987,13 @@ function AppShellContent({
       icon: Home,
       variant: isHomeNavigation(navState) ? "default" : "ghost",
       onClick: () => navigate(routes.view.home()),
+    },
+    {
+      id: "nav:drive",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.drive.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.drive.icon,
+      variant: isDriveNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.drive()),
     },
     {
       id: "nav:feed",

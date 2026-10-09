@@ -13,6 +13,7 @@ import { registerSettingsGuiHandlers } from './settings'
 import { registerSiyuanHandlers } from './siyuan'
 import { registerExtensionHostHandlers } from './extension-host'
 import { registerExtensionSurfaceHandlers } from './extension-surface'
+import { registerKeeperGuiHandlers } from '../keeper/register'
 import { setGithubUserToolHost } from '@rox/shared/connections'
 import { createGithubEnvImportHost, registerWorkGraphHandlers } from './workgraph'
 import type { WorkGraphKernel } from '@rox/server-core/workgraph'
@@ -27,6 +28,7 @@ export function registerGuiRpcHandlers(server: RpcServer, deps: HandlerDeps): vo
   registerSiyuanHandlers(server, deps)
   registerExtensionHostHandlers(server, deps)
   registerExtensionSurfaceHandlers(server, deps)
+  registerKeeperGuiHandlers(server, deps)
 }
 
 export function registerAllRpcHandlers(

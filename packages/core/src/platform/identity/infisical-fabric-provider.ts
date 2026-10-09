@@ -4,6 +4,11 @@
  * Distinct from packages/shared spawn-env InfisicalProvider. This adapter
  * stores locator metadata only; resolveForLease returns a branded handle.
  * Raw secret values never appear on inspect/health/write results.
+ *
+ * The keeper item methods (listItems/upsertItem/deleteItem/listPaths) back the
+ * «Секреты» vault UI and are the single explicit read/write path where secret
+ * values may cross to the renderer. They never log values and never embed a
+ * value in an error; only the caller-requested item payload carries it.
  */
 
 import { createHash } from 'node:crypto';
@@ -81,6 +86,138 @@ function fingerprint(parts: readonly string[]): string {
     hash.update('\0');
   }
   return hash.digest('hex');
+}
+
+/** Keeper item key charset and size limits (server-side enforced). */
+const KEEPER_KEY_PATTERN = /^[A-Za-z0-9._-]+$/;
+const MAX_KEEPER_KEY_LENGTH = 120;
+const MAX_KEEPER_VALUE_BYTES = 16 * 1024;
+const MAX_KEEPER_PATHS = 200;
+
+export interface InfisicalKeeperTarget {
+  readonly projectId: string;
+  readonly environment: string;
+  readonly secretPath: string;
+}
+
+export interface InfisicalKeeperItem {
+  readonly key: string;
+  /** Parsed JSON object when the stored value is one; `null` for raw values. */
+  readonly valueJson: Record<string, unknown> | null;
+  /** True when the stored value is not a JSON object (kept opaque, not echoed). */
+  readonly raw: boolean;
+  readonly updatedAt: string | null;
+}
+
+export interface InfisicalKeeperListItemsInput extends InfisicalKeeperTarget {
+  /** Transport override; falls back to the provider fetch / global fetch. */
+  readonly fetch?: FetchLike;
+}
+
+export interface InfisicalKeeperUpsertInput extends InfisicalKeeperTarget {
+  readonly key: string;
+  readonly valueJson: unknown;
+  readonly fetch?: FetchLike;
+}
+
+export interface InfisicalKeeperDeleteInput extends InfisicalKeeperTarget {
+  readonly key: string;
+  readonly fetch?: FetchLike;
+}
+
+export interface InfisicalKeeperListPathsInput {
+  readonly projectId: string;
+  readonly environment: string;
+  readonly fetch?: FetchLike;
+}
+
+interface KeeperSecretRow {
+  readonly key: string;
+  readonly value: string;
+  readonly updatedAt: string | null;
+  readonly secretPath: string | null;
+}
+
+function requireKeeperTarget(input: {
+  readonly projectId: string;
+  readonly environment: string;
+  readonly secretPath: string;
+}): InfisicalKeeperTarget {
+  const projectId = typeof input.projectId === 'string' ? input.projectId.trim() : '';
+  const environment = typeof input.environment === 'string' ? input.environment.trim() : '';
+  const secretPath =
+    typeof input.secretPath === 'string' && input.secretPath.trim().length > 0
+      ? input.secretPath.trim()
+      : '/';
+  if (!projectId || !environment) {
+    throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', 'keeper target');
+  }
+  return { projectId, environment, secretPath };
+}
+
+function validateKeeperKey(key: unknown): string {
+  if (typeof key !== 'string' || key.length === 0 || key.length > MAX_KEEPER_KEY_LENGTH || !KEEPER_KEY_PATTERN.test(key)) {
+    throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', 'item key');
+  }
+  return key;
+}
+
+function serializeKeeperValue(valueJson: unknown): string {
+  let serialized: string | undefined;
+  try {
+    serialized = JSON.stringify(valueJson);
+  } catch {
+    throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', 'valueJson');
+  }
+  if (typeof serialized !== 'string') {
+    throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', 'valueJson');
+  }
+  if (new TextEncoder().encode(serialized).length > MAX_KEEPER_VALUE_BYTES) {
+    throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', 'valueJson too large');
+  }
+  return serialized;
+}
+
+/** Parse the v3 list-secrets envelope. Malformed bodies surface as unavailable. */
+function parseKeeperSecrets(body: string): KeeperSecretRow[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    throw new ConnectionFabricError('PROVIDER_UNAVAILABLE', 'infisical response');
+  }
+  const secrets: unknown[] = [];
+  if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) && 'secrets' in parsed) {
+    const candidate = parsed.secrets;
+    if (Array.isArray(candidate)) secrets.push(...candidate);
+  }
+  const rows: KeeperSecretRow[] = [];
+  for (const entry of secrets) {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) continue;
+    const secret = entry as Record<string, unknown>;
+    const key = typeof secret.secretKey === 'string' ? secret.secretKey : '';
+    if (key.length === 0) continue;
+    rows.push({
+      key,
+      value: typeof secret.secretValue === 'string' ? secret.secretValue : '',
+      updatedAt: typeof secret.updatedAt === 'string' && secret.updatedAt.length > 0 ? secret.updatedAt : null,
+      secretPath: typeof secret.secretPath === 'string' ? secret.secretPath : null,
+    });
+  }
+  return rows;
+}
+
+/** Lenient value decode: JSON object ⇒ item, anything else ⇒ raw. */
+function decodeKeeperValue(value: string): { valueJson: Record<string, unknown> | null; raw: boolean } {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+      return { valueJson: parsed as Record<string, unknown>, raw: false };
+    }
+  } catch {
+    // unparsable ⇒ raw
+  }
+  return { valueJson: null, raw: true };
 }
 
 export class InfisicalFabricProvider implements SecretProvider {
@@ -313,6 +450,132 @@ export class InfisicalFabricProvider implements SecretProvider {
       return { id: `health_${this.id}`, status: 'unreachable', detailCode: `HTTP_${response.status}`, checkedAt };
     }
     return { id: `health_${this.id}`, status: 'healthy', checkedAt };
+  }
+
+  /**
+   * Keeper read: list secrets at a path. JSON-object values are returned as
+   * `valueJson`; every other value is marked `raw` and its bytes are withheld.
+   * Values are returned only to the explicit caller (the vault UI), never logged.
+   */
+  async listItems(input: InfisicalKeeperListItemsInput): Promise<{ items: InfisicalKeeperItem[] }> {
+    const target = requireKeeperTarget(input);
+    const response = await this.keeperRequest(this.keeperListUrl(target, false), { method: 'GET' }, input.fetch);
+    if (!response.ok) throw this.keeperHttpError(response.status);
+    const items = parseKeeperSecrets(await response.text()).map((row) => {
+      const decoded = decodeKeeperValue(row.value);
+      return {
+        key: row.key,
+        valueJson: decoded.valueJson,
+        raw: decoded.raw,
+        updatedAt: row.updatedAt,
+      };
+    });
+    return { items };
+  }
+
+  /** Keeper write: create or update a single JSON item (POST, PATCH on 409). */
+  async upsertItem(input: InfisicalKeeperUpsertInput): Promise<{ key: string; created: boolean }> {
+    const target = requireKeeperTarget(input);
+    const key = validateKeeperKey(input.key);
+    const secretValue = serializeKeeperValue(input.valueJson);
+    const locator: Extract<ProviderLocator, { type: 'infisical' }> = {
+      type: 'infisical',
+      projectId: target.projectId,
+      environment: target.environment,
+      secretPath: target.secretPath,
+      secretKey: key,
+    };
+    const body = JSON.stringify({
+      workspaceId: target.projectId,
+      environment: target.environment,
+      secretPath: target.secretPath,
+      secretValue,
+    });
+    const headers = { 'Content-Type': 'application/json' };
+    let response = await this.keeperRequest(this.rawSecretUrl(locator), { method: 'POST', headers, body }, input.fetch);
+    let created = true;
+    if (response.status === 409) {
+      created = false;
+      response = await this.keeperRequest(this.rawSecretUrl(locator), { method: 'PATCH', headers, body }, input.fetch);
+    }
+    if (!response.ok) throw this.keeperHttpError(response.status);
+    return { key, created };
+  }
+
+  /** Keeper write: delete a single item; a missing item is a no-op. */
+  async deleteItem(input: InfisicalKeeperDeleteInput): Promise<{ key: string; deleted: boolean }> {
+    const target = requireKeeperTarget(input);
+    const key = validateKeeperKey(input.key);
+    const locator: Extract<ProviderLocator, { type: 'infisical' }> = {
+      type: 'infisical',
+      projectId: target.projectId,
+      environment: target.environment,
+      secretPath: target.secretPath,
+      secretKey: key,
+    };
+    const body = JSON.stringify({
+      workspaceId: target.projectId,
+      environment: target.environment,
+      secretPath: target.secretPath,
+    });
+    const response = await this.keeperRequest(
+      this.rawSecretUrl(locator),
+      { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body },
+      input.fetch,
+    );
+    if (response.status === 404) return { key, deleted: false };
+    if (!response.ok) throw this.keeperHttpError(response.status);
+    return { key, deleted: true };
+  }
+
+  /** Keeper folders: distinct secret paths across the project, bounded and sorted. */
+  async listPaths(input: InfisicalKeeperListPathsInput): Promise<{ paths: string[] }> {
+    const target = requireKeeperTarget({ projectId: input.projectId, environment: input.environment, secretPath: '/' });
+    const response = await this.keeperRequest(this.keeperListUrl(target, true), { method: 'GET' }, input.fetch);
+    if (!response.ok) throw this.keeperHttpError(response.status);
+    const seen = new Set<string>();
+    for (const row of parseKeeperSecrets(await response.text())) {
+      if (row.secretPath === null) continue;
+      seen.add(row.secretPath.length > 0 ? row.secretPath : '/');
+      if (seen.size >= MAX_KEEPER_PATHS) break;
+    }
+    return { paths: [...seen].sort() };
+  }
+
+  private keeperHttpError(status: number): ConnectionFabricError {
+    if (status === 401 || status === 403) {
+      return new ConnectionFabricError('PROVIDER_UNAVAILABLE', `infisical auth ${status}`);
+    }
+    return new ConnectionFabricError('PROVIDER_UNAVAILABLE', `infisical HTTP ${status}`);
+  }
+
+  private keeperListUrl(target: InfisicalKeeperTarget, recursive: boolean): string {
+    const params = new URLSearchParams({
+      workspaceId: target.projectId,
+      environment: target.environment,
+      secretPath: target.secretPath,
+    });
+    if (recursive) params.set('recursive', 'true');
+    return `${this.baseUrl}/api/v3/secrets/raw?${params.toString()}`;
+  }
+
+  /** Keeper transport: explicit override, then provider fetch, then global fetch. */
+  private async keeperRequest(
+    url: string,
+    init: { method: string; headers?: Record<string, string>; body?: string },
+    override?: FetchLike,
+  ): Promise<Response> {
+    const transport: FetchLike = override ?? this.fetchImpl ?? ((input, requestInit) => globalThis.fetch(input, requestInit));
+    try {
+      return await transport(url, {
+        method: init.method,
+        headers: { ...this.authHeaders(), ...(init.headers ?? {}) },
+        ...(init.body !== undefined ? { body: init.body } : {}),
+      });
+    } catch (error) {
+      if (error instanceof ConnectionFabricError) throw error;
+      throw new ConnectionFabricError('PROVIDER_UNAVAILABLE', 'infisical transport');
+    }
   }
 
   private authHeaders(): Record<string, string> {

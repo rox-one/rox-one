@@ -224,6 +224,16 @@ bun run scripts/build/stage-servers.ts darwin "$ARCH"
 echo "Staging OEM kernel extraResources..."
 PLAT="darwin-${ARCH}" "$SCRIPT_DIR/stage-oem-kernel.sh"
 
+# 6d. Build + stage the Apple Calendar EventKit helper for the requested arch.
+#     The helper is a native Swift binary; a missing toolchain fails the build on
+#     purpose so a release never ships without calendar support.
+echo "Staging Apple Calendar helper..."
+if [[ "$ARCH" == "x64" ]]; then
+    (cd "$ELECTRON_DIR" && bun run build:native:calendar:x64)
+else
+    (cd "$ELECTRON_DIR" && bun run build:native:calendar)
+fi
+
 # 7. Package with electron-builder
 echo "Packaging app with electron-builder..."
 cd "$ELECTRON_DIR"
