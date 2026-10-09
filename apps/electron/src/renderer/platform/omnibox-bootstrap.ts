@@ -6,7 +6,7 @@
  * - Registers minimal resource providers (sessions/settings/skills/sources/knowledge/automations)
  * - knowledge.search / knowledge.openHome / knowledge.openCompat (+ siyuan.openCompat)
  * - conation.openFund / conation.openBoard (when workbench.conation.* flags on)
- * - Soft-load enabled L2+ SiYuan plugin bridge commands (fail-soft if API absent)
+ * - Soft-load enabled L2+ Rox Notes plugin bridge commands (fail-soft if API absent)
  *
  * Called once from OmniboxHost on mount. Safe to call multiple times (idempotent).
  */
@@ -249,7 +249,8 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
   }
   const openCompatAlias: CommandContribution = {
     id: 'siyuan.openCompat',
-    title: i18n.t('siyuan.openCompat'),
+    // Compat command id stays; the title reuses the surviving knowledge.openCompat key.
+    title: i18n.t('knowledge.openCompat'),
     category: i18n.t('sidebar.knowledge'),
     source: 'craft',
     keywords: ['siyuan', 'compat', 'full', 'interface', 'plugin'],
@@ -375,7 +376,7 @@ async function refreshPluginBridgeCommands(commands: CommandRegistry): Promise<v
             contributions.push({
               id,
               title: cmd.title,
-              category: i18n.t('omnibox.category.siyuanPlugin'),
+              category: i18n.t('omnibox.category.notesPlugin'),
               // Domain lands `siyuan-plugin` on the source union; cast keeps bootstrap green either way.
               source: 'siyuan-plugin' as CommandContribution['source'],
               when: cmd.when,

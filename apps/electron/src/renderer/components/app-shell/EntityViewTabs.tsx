@@ -1,5 +1,5 @@
 /**
- * Entity multi-view tabs: Standard | Map | Outline | Graph | SiYuan map | …
+ * Entity multi-view tabs: Standard | Map | Outline | Graph | Rox Notes map | …
  * Generalizes SessionViewTabs for session / note / knowledge surfaces.
  * Spec: docs/superpowers/specs/2026-08-08-entity-mindmap-views-design.md
  */
@@ -59,7 +59,7 @@ export function defaultSessionEntityCapabilities(opts?: {
     {
       id: 'mindmap',
       available: siyuan,
-      labelKey: 'entityView.mindmapSiyuan',
+      labelKey: 'entityView.mindmapKnowledge',
       icon: DEFAULT_ICONS.mindmap,
     },
     { id: 'teamchat', available: false, labelKey: 'entityView.teamChat', icon: DEFAULT_ICONS.teamchat },

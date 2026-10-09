@@ -44,7 +44,7 @@ jobs:
           packages/server-core/src/sessions/pocket-session-resource-owner.test.ts
           packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts
           packages/shared/src/agent/__tests__/omp-public-runtime.test.ts
-      - name: Runtime restoration, mandatory OMP policy, clean skill install and migration regressions
+      - name: Runtime restoration, mandatory Rox CLI policy, clean skill install and migration regressions
         run: >-
           bun test --timeout 180000
           packages/shared/src/agent/__tests__/omp-history-recovery.test.ts

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Cloudflare Worker + RunDO + container runner for craft-agents Cloud Runs (PRD docs/cloud-runs-prd.md, phase G2)",
+  "description": "Cloudflare Worker + RunDO + container runner for ROX Cloud Runs (PRD docs/cloud-runs-prd.md, phase G2)",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",

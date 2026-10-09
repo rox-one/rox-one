@@ -21,7 +21,7 @@ describe('AccountsSettingsPage presentation', () => {
     expect(src).toContain("<SettingsSection title={t(notesTitleKey)}>")
     expect(src).toContain("const notesLocal = connections.find((connection) => connection.provider === 'siyuan-local')")
     expect(src).toContain("routes.view.settings('knowledge')")
-    expect(src).not.toContain('settings.accounts.siyuanCloud')
+    expect(src).not.toContain('settings.accounts.knowledgeCloud')
     expect(src).not.toContain('settings.accounts.connectCloud')
     expect(src).not.toContain('settings.accounts.description')
   })

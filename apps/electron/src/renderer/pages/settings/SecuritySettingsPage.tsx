@@ -415,15 +415,15 @@ export default function SecuritySettingsPage() {
           <SettingsSection title={t('security.section.vault')}>
             <SettingsCard className="space-y-3 p-4">
               <div>
-                <p className="text-sm font-medium">{t('security.infisical.title')}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{t('security.infisical.hint')}</p>
+                <p className="text-sm font-medium">{t('security.keeper.title')}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t('security.keeper.hint')}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm font-medium" role="status" aria-live="polite">
                   {infisicalHealth === 'available'
-                    ? t('security.infisical.status.available')
+                    ? t('security.keeper.status.available')
                     : infisicalHealth === 'unavailable'
-                      ? t('security.infisical.status.unavailable')
+                      ? t('security.keeper.status.unavailable')
                       : t('security.loading')}
                 </p>
                 <Button
@@ -432,7 +432,7 @@ export default function SecuritySettingsPage() {
                   disabled={infisicalHealth === 'checking'}
                   onClick={() => void checkInfisicalHealth()}
                 >
-                  {t('security.infisical.check')}
+                  {t('security.keeper.check')}
                 </Button>
               </div>
             </SettingsCard>

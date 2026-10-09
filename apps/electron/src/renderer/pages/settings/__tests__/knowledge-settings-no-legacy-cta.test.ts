@@ -4,8 +4,8 @@ import { join } from 'node:path'
 
 const page = readFileSync(join(import.meta.dir, '../KnowledgeSettingsPage.tsx'), 'utf8')
 
-describe('knowledge settings rejects SiYuan kernel install CTA', () => {
-  it('points at Rox Notes and never starts or installs SiYuan', () => {
+describe('knowledge settings rejects legacy kernel install CTA', () => {
+  it('points at Rox Notes and never starts or installs a legacy engine', () => {
     expect(page).toContain("t('knowledge.roxNotes.openNotesCta')")
     expect(page).toContain('data-testid="settings-knowledge-open-rox-notes"')
     expect(page).toContain('navigate(routes.view.notes())')

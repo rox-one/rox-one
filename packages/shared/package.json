@@ -17,7 +17,7 @@
     "shell-quote": "^1.8.3",
     "yaml": "^2.8.2"
   },
-  "description": "Shared business logic for Craft Agents - agent, auth, config, credentials, MCP integration",
+  "description": "Shared business logic for ROX - agent runtime, auth, config, credentials, MCP integration",
   "devDependencies": {
     "@types/shell-quote": "^1.7.5"
   },

@@ -79,7 +79,7 @@ export type OmpStartupErrorCode =
 const OMP_STARTUP_ERROR_TEXT: Record<OmpStartupErrorCode, { title: string; message: string; canRetry: boolean }> = {
   OMP_NOT_CONFIGURED: {
     title: 'OMP runtime not configured',
-    message: 'The omp CLI is missing or its toolchain is not ready.',
+    message: 'The Rox CLI is missing or its toolchain is not ready.',
     canRetry: true,
   },
   OMP_NO_MODELS: {

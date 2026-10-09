@@ -66,7 +66,7 @@ __pycache__/
 # Lock files from other package managers
 pnpm-lock.yaml
 
-# Craft Agent local data (sessions, credentials, config)
+# Legacy Craft Agent data dir (compatibility; kept for existing installs)
 .craft-agent/
 
 # Agent Teams workspace durable state (roster / mailboxes)

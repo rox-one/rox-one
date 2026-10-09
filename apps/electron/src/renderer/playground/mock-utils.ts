@@ -774,7 +774,7 @@ export const mockElectronAPI = {
   sessionTopicCloudRun: async () => ({ topic: '' }),
   fabricInfisicalHealth: async () => ({ available: false }),
   fabricInfisicalPreviewAccount: async (input: Record<string, string>) => ({
-    label: 'Infisical',
+    label: 'Rox Keeper',
     siteUrl: input.siteUrl,
     clientId: input.clientId,
     projectId: input.projectId,

@@ -2,7 +2,7 @@
   "name": "rox",
   "version": "0.11.8",
   "license": "Apache-2.0",
-  "description": "ROX desktop workspace and OMP agent runtime",
+  "description": "ROX desktop workspace and Rox CLI agent runtime",
   "type": "module",
   "private": true,
   "trustedDependencies": [
@@ -17,8 +17,7 @@
   "workspaces": [
     "packages/*",
     "apps/*",
-    "!packages/craft-cli",
-    "!packages/craft-agents-commands"
+    "!packages/craft-cli"
   ],
   "scripts": {
     "test": "bun run scripts/test-all.ts",

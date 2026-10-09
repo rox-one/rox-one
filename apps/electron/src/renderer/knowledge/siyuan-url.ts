@@ -1,8 +1,8 @@
 /**
- * SiYuan surface URL helpers (P4 surface modes).
+ * Rox Notes surface URL helpers (P4 surface modes).
  *
  * Base: `${baseUrl}/stage/build/desktop/`
- * - document/block refs append `?id=<id>` (SiYuan web supports this)
+ * - document/block refs append `?id=<id>` (Rox Notes web build supports this)
  * - graph / global-graph / outline / backlinks still open the desktop build and
  *   pass `craftSurface=<mode>` so the host can inject a dock-open script after load
  *
@@ -12,14 +12,14 @@
 
 import type { KnowledgeRefKind } from '../../shared/types'
 
-/** Local SiYuan kernel default (mirrors SIYUAN_DEFAULT_BASE_URL in core). */
+/** Local legacy kernel default (mirrors SIYUAN_DEFAULT_BASE_URL in core). */
 export const DEFAULT_BASE_URL = 'http://localhost:6806'
 
 /** Compat-surface sentinel: `knowledge/notebook/__full__` = full-UI surface. */
 export const SIYUAN_FULL_SURFACE_ID = '__full__'
 
 /**
- * Presentation mode for an embedded SiYuan surface.
+ * Presentation mode for an embedded Rox Notes surface.
  * Orthogonal to KnowledgeKind — kind/id identify the ref; mode chooses the UI.
  */
 export type SiyuanSurfaceMode =
@@ -51,7 +51,7 @@ export interface BuildSiyuanSurfaceUrlOptions {
 }
 
 /**
- * JS injected after load when craftSurface is set — opens the matching SiYuan
+ * JS injected after load when craftSurface is set — opens the matching Rox Notes
  * dock/panel for the requested mode. Safe no-op if selectors miss.
  *
  * Modes:
@@ -138,7 +138,7 @@ export const SIYUAN_OPEN_DOCK_SCRIPT = `(() => {
 
 
 /**
- * URL of the embedded SiYuan desktop surface.
+ * URL of the embedded Rox Notes desktop surface.
  * - document/block → `?id=<id>`
  * - non-editor modes → `craftSurface=<mode>` (and id when document-like)
  */
