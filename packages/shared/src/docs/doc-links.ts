@@ -3,9 +3,6 @@
  * Summaries provide quick context; "Learn more" opens the full docs.
  */
 
-// W1-13: doc summaries refer to the Rox home through the flag-aware helper.
-import { roxHomeDocDisplay } from './home-display.ts'
-
 const DOC_BASE_URL = 'https://thecraftagents.com/docs'
 
 export type DocFeature =
@@ -98,13 +95,13 @@ export const DOCS: Record<DocFeature, DocInfo> = {
     path: '/reference/config/config-file',
     title: 'App Settings',
     summary:
-      `Configure global app settings like your default model, authentication method, and workspace list. Settings are stored in ${roxHomeDocDisplay()}/config.json.`,
+      `Configure global app settings like your default model, authentication method, and workspace list. Settings are stored in \`config.json\` in your Rox config directory.`,
   },
   preferences: {
     path: '/reference/config/preferences',
     title: 'Preferences',
     summary:
-      `Personal preferences like your name, timezone, and language that help the agent personalize responses. Stored in ${roxHomeDocDisplay()}/preferences.json.`,
+      `Personal preferences like your name, timezone, and language that help the agent personalize responses. Stored in \`preferences.json\` in your Rox config directory.`,
   },
   automations: {
     path: '/automations/overview',
