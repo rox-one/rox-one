@@ -52,7 +52,7 @@ beforeAll(async () => {
   } })
   browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
 }, 30_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) })
+afterAll(async () => { await browser?.close(); server?.stop(true) }, 30_000)
 function browserTest(name: string, operation: (page: Page) => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
   test(name, async () => {

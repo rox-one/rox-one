@@ -608,7 +608,7 @@ export function AccountMenu({
               </div>
               {siyuanCloud && (
                 <div className="px-3 py-2 text-sm text-foreground/70">
-                  {t('accountMenu.siyuanCloudStatus', {
+                  {t('accountMenu.knowledgeCloudStatus', {
                     status: t(`settings.accounts.status.${siyuanCloud.status}`),
                   })}
                 </div>
@@ -764,7 +764,7 @@ export function AccountMenu({
           </div>
           {siyuanCloud && (
             <div className="px-2 py-1.5 text-xs text-muted-foreground">
-              {t('accountMenu.siyuanCloudStatus', {
+              {t('accountMenu.knowledgeCloudStatus', {
                 status: t(`settings.accounts.status.${siyuanCloud.status}`),
               })}
             </div>

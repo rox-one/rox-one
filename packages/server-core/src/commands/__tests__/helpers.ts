@@ -13,6 +13,7 @@ export function testRegistry(options: { flags?: Set<string> } = {}) {
     verb: 'write',
     schema: PLACEHOLDER_PAYLOAD_SCHEMA,
     schemaBound: false,
+    riskClass: () => 'routine',
   })
   registry.define(counter('test.increment', 'local'))
   registry.define(counter('test.remote_increment', 'workspace'))

@@ -27,7 +27,7 @@ if (!workspaceRoot) {
   const probe = spawnSync('omp', ['--version'], { encoding: 'utf8' });
   if (probe.status !== 0) {
     console.error(
-      'omp CLI missing in image: deploy the CI-built image (Dockerfile.omp) ' +
+      'Rox CLI missing in image: deploy the CI-built image (Dockerfile.omp) ' +
       'or run with agenticMode "loop" (default). Status: ' + probe.status,
     );
     process.exit(1);

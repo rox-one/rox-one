@@ -59,7 +59,7 @@ await esbuild.build({ absWorkingDir: root, entryPoints: ['apps/electron/src/main
   define: { 'import.meta.url': '__roxElectronMainBundleFileUrl',
     'process.env.SLACK_OAUTH_CLIENT_ID': '""', 'process.env.SLACK_OAUTH_CLIENT_SECRET': '""',
     'process.env.MICROSOFT_OAUTH_CLIENT_ID': '""', 'process.env.MICROSOFT_OAUTH_CLIENT_SECRET': '""',
-    'process.env.SENTRY_ELECTRON_INGEST_URL': '""', 'process.env.CRAFT_DEV_RUNTIME': '""' },
+    'process.env.CRAFT_DEV_RUNTIME': '""' },
   external: ['electron', '@anthropic-ai/claude-agent-sdk', '@xenova/transformers', 'onnxruntime-node', 'sharp', 'koffi'],
   alias: { 'node-fetch': resolve(root, 'apps/electron/src/main/shims/node-fetch.cjs'),
     'abort-controller': resolve(root, 'apps/electron/src/main/shims/abort-controller.cjs'),

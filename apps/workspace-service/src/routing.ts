@@ -20,6 +20,8 @@ import type { createLocalIssuer } from './auth/local-issuer.ts'
 import type { LicenseAuthority } from '../../../packages/shared/src/workspace-domain/licenses/contracts.ts'
 import type { WorkspaceBroInvitationAuthority } from './modules/collaboration/invitations.ts'
 import type { WorkspaceCommandHttpAuthority } from './modules/commands/routes.ts'
+import type { WorkspaceAutomationHttpAuthority } from './modules/rules/routes.ts'
+import type { WorkspaceNotifyHttpAuthority } from './modules/notify/service.ts'
 
 export type WorkspaceActorResolver = ReturnType<typeof createVerifiedActorResolver<AuthenticatedActor>>
 export type WorkspaceLocalIssuer = Awaited<ReturnType<typeof createLocalIssuer>>
@@ -39,6 +41,12 @@ export interface WorkspaceHttpOptions {
   // W1-03 (#1500)
   /** Generic command bus (`POST /v1/workspaces/{ws}/commands`); absent → the route answers 404. */
   commandBus?: WorkspaceCommandHttpAuthority
+  // W1-12 (#1509)
+  /** `automation_rule` settings API; absent (or flag off) → its routes answer 404. */
+  automation?: WorkspaceAutomationHttpAuthority
+  // W1-09 (#1506)
+  /** Notification list / mark-read routes; absent → both paths answer 404. */
+  notify?: WorkspaceNotifyHttpAuthority
 }
 
 export class HttpFailure extends Error {

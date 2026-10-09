@@ -658,6 +658,22 @@
       "onUnavailable": "not-applicable"
     },
     {
+      "tourId": "OBT-18",
+      "id": "memory.repo",
+      "testId": "T-MEMORY-REPO",
+      "target": "memory.repo",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
       "tourId": "OBT-19",
       "id": "search.query",
       "testId": "T-SEARCH-QUERY",

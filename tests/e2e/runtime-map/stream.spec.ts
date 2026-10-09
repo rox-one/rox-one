@@ -39,6 +39,9 @@ test('real ChatDisplay stays mounted while the journal streams into the right do
   await page.screenshot({ path: info.outputPath('split-stream-light.png'), fullPage: true })
   for (let cycle = 0; cycle < 3; cycle++) { await page.getByTestId('toggle-map').click(); await page.getByTestId('toggle-map').click() }
   await expect(editor).toHaveText('Сохрани этот черновик')
+  // Regression: the toggles must not crash the composer into InputErrorBoundary's
+  // fallback (chat.inputFailedTitle) — that fallback replaces `[contenteditable]`.
+  await expect(page.getByText('Не удалось загрузить ввод')).toHaveCount(0)
   await expect(page.getByText('fixture.txt', { exact: true })).toBeVisible()
   expect(await page.evaluate(() => (window as unknown as { runtimeDiagnostics: { chatMounts: number } }).runtimeDiagnostics.chatMounts)).toBe(1)
   expect(await page.evaluate(() => (window as unknown as { runtimeDiagnostics: { chatSends: number } }).runtimeDiagnostics.chatSends)).toBe(0)

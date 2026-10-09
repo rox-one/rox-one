@@ -1,0 +1,10 @@
+{
+  "ru": {
+    "inbox.mail.storage": "Хранилище: {{used}} из {{limit}}",
+    "inbox.mail.storageUnknown": "Хранилище: использование неизвестно"
+  },
+  "en": {
+    "inbox.mail.storage": "Storage: {{used}} of {{limit}}",
+    "inbox.mail.storageUnknown": "Storage: usage unknown"
+  }
+}

@@ -10,6 +10,9 @@ resources/bin/darwin-x64/
 resources/bin/win32-x64/
 resources/bin/linux-x64/
 
+# Apple Calendar EventKit helper build output (staged into the paths above)
+native/rox-calendar-helper/bin/
+
 # OEM kernel extraResources (binaries staged locally; never git-add)
 resources/oem-kernel/*
 !resources/oem-kernel/.gitkeep

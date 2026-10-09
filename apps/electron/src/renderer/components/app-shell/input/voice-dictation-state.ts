@@ -1,3 +1,34 @@
+import { useSyncExternalStore } from 'react'
+
+/**
+ * Live microphone level for the composer dictation wave. A single global store
+ * keeps the control's publisher and the badge's subscriber in lockstep without
+ * threading the value through every intermediate component.
+ */
+let dictationLevel = 0
+const dictationLevelListeners = new Set<() => void>()
+
+/** Publish the current 0..1 level. Values are clamped; identical values are free. */
+export function setDictationLevel(level: number): void {
+  const next = Number.isFinite(level) ? Math.min(1, Math.max(0, level)) : 0
+  if (next === dictationLevel) return
+  dictationLevel = next
+  for (const listener of dictationLevelListeners) listener()
+}
+
+export function getDictationLevel(): number {
+  return dictationLevel
+}
+
+export function subscribeDictationLevel(listener: () => void): () => void {
+  dictationLevelListeners.add(listener)
+  return () => dictationLevelListeners.delete(listener)
+}
+
+export function useDictationLevel(): number {
+  return useSyncExternalStore(subscribeDictationLevel, getDictationLevel, getDictationLevel)
+}
+
 /** One request belongs to one composer; a later request or scope change expires it. */
 export function createDictationRequestGuard() {
   let generation = 0

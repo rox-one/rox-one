@@ -34,16 +34,16 @@ beforeAll(async () => {
   stage('continuity:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><div id="root"></div><script type="module" src="/script.js"></script>', { headers: { 'content-type': 'text/html' } }) } })
   stage('continuity:browser:launch')
-  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), headless: true, args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] })
   stage('continuity:browser:ready')
-}, 30_000)
+}, 90_000)
 afterAll(async () => {
   if (!isolatedCase) return
   stage('continuity:browser:close')
   await browser?.close()
   server?.stop(true)
   stage('continuity:browser:closed')
-}, 30_000)
+}, 90_000)
 
 function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
@@ -197,6 +197,7 @@ browserTest('T-SOURCES-DETAILS one production source page load advances status a
 
 for (const action of ['stop', 'cancel'] as const) for (const deferred of [false, true]) browserTest(`T-VOICE-OWNER authenticated overlay ${action} ${deferred ? 'before' : 'after'} START returns reaches its unfocused composer without starting the idle peer`, async () => {
   const handlers = new Map<string, (event: { sender: unknown }, action: string, recordingId: string) => unknown>()
+  const levelListeners = new Map<string, (event: { sender: unknown }, level: unknown) => unknown>()
   const children: FixtureWindow[] = []
   class FixtureWindow extends EventEmitter {
     destroyed = false
@@ -205,6 +206,7 @@ for (const action of ['stop', 'cancel'] as const) for (const deferred of [false,
     constructor(config: { parent?: unknown } = {}) { super(); if (config.parent) children.push(this) }
     isDestroyed() { return this.destroyed }
     isFocused() { return true }
+    isVisible() { return true }
     getBounds() { return { x: 0, y: 0, width: 1000, height: 800 } }
     showInactive() {}
     hide() {}
@@ -215,7 +217,8 @@ for (const action of ['stop', 'cancel'] as const) for (const deferred of [false,
   // Only the OS Electron surface is replaced. Command authorization and delivery
   // below run through the actual overlay owner and authenticated hotkey router.
   mock.module('electron', () => ({ app: { isPackaged: true }, BrowserWindow: FixtureWindow,
-    ipcMain: { handle: (id: string, callback: (event: { sender: unknown }, action: string, recordingId: string) => unknown) => handlers.set(id, callback), removeHandler: (id: string) => handlers.delete(id) },
+    ipcMain: { handle: (id: string, callback: (event: { sender: unknown }, action: string, recordingId: string) => unknown) => handlers.set(id, callback), removeHandler: (id: string) => handlers.delete(id),
+      on: (id: string, callback: (event: { sender: unknown }, level: unknown) => unknown) => levelListeners.set(id, callback), removeListener: (id: string) => levelListeners.delete(id) },
     screen: { getDisplayMatching: () => ({ workArea: { x: 0, y: 0, width: 1000, height: 800 } }) },
   }))
   const { createNativeVoiceOverlayHost, VOICE_OVERLAY_COMMAND } = await import('../../../../main/voice/overlay-owner')

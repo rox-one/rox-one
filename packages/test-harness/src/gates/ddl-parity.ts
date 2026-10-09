@@ -2,8 +2,8 @@
  * W1-10 (#1507) — DDL ↔ zod parity gate.
  *
  * Compares the unified server DDL `apps/workspace-service/migrations/5NN-*.sql`
- * (owner #1502) against zod schemas in `packages/shared/src/domain/*.ts`
- * (owner #1503).
+ * (owner #1502) against zod schemas under `packages/shared/src/domain/**`
+ * (owner #1503; discovered recursively, `__tests__` / `node_modules` skipped).
  *
  * Tables = every `CREATE TABLE` in the 5NN files plus every table those
  * files extend with `ALTER TABLE … ADD [COLUMN]` (principal, workspace,
@@ -262,8 +262,21 @@ export function zodNameCandidates(table: string): string[] {
   return [pascal, `${pascal}Schema`, `${camel}Schema`, `${pascal}Row`, `${pascal}RowSchema`, `${camel}RowSchema`]
 }
 
+/** Every schema source under `schemasDir`, recursively, as a path relative to it. */
 function listSchemaFiles(schemasDir: string): string[] {
-  return readdirSync(schemasDir).filter((f) => /\.(?:ts|mts)$/.test(f) && !/\.(?:test|spec|d)\.m?ts$/.test(f))
+  const files: string[] = []
+  const walk = (dir: string, prefix: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (entry.name === '__tests__' || entry.name === 'node_modules') continue
+        walk(join(dir, entry.name), `${prefix}${entry.name}/`)
+      } else if (entry.isFile() && /\.(?:ts|mts)$/.test(entry.name) && !/\.(?:test|spec|d)\.m?ts$/.test(entry.name)) {
+        files.push(`${prefix}${entry.name}`)
+      }
+    }
+  }
+  walk(schemasDir, '')
+  return files.sort()
 }
 
 export function checkDdlZodParity(opts: ParityOptions = {}): GateResult {

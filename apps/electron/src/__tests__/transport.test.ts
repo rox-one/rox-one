@@ -731,6 +731,9 @@ describe('connection state', () => {
 
     client.connect()
     await waitForStatus(client, (s) => s === 'failed')
+    // The auth rejection flips the status first; the close frame (4005) lands a
+    // tick later, so wait for it instead of racing the two events.
+    await waitUntil(() => client.getConnectionState().lastClose?.code === 4005)
 
     const state = client.getConnectionState()
     expect(state.lastClose?.code).toBe(4005)

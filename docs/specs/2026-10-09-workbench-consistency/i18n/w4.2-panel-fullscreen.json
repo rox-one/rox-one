@@ -1,0 +1,5 @@
+{
+  "panelWorkspace.expand": { "ru": "Развернуть", "en": "Expand to screen" },
+  "panelWorkspace.restore": { "ru": "Восстановить", "en": "Restore" },
+  "shortcuts.action.togglePanelFullScreen": { "ru": "Развернуть панель в экран", "en": "Toggle panel full screen" }
+}

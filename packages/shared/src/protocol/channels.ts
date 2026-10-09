@@ -264,6 +264,24 @@ export const RPC_CHANNELS = {
     PREVIEW: 'notesImport:preview',
     EXECUTE: 'notesImport:execute',
   },
+  // clipboard — Rox History (first-party clipboard history). Owned by the
+  // Electron main process (store + monitor); CHANGED is a broadcast push.
+  clipboard: {
+    LIST: 'clipboard:list',
+    GET: 'clipboard:get',
+    STAR: 'clipboard:star',
+    TAGS: 'clipboard:tags',
+    DELETE: 'clipboard:delete',
+    CLEAR: 'clipboard:clear',
+    COPY: 'clipboard:copy',
+    /** First-party secret copy: writes text + the concealed pasteboard marker. */
+    WRITE_CONCEALED: 'clipboard:writeConcealed',
+    SETTINGS_GET: 'clipboard:settingsGet',
+    SETTINGS_SET: 'clipboard:settingsSet',
+    TAG_COUNTS: 'clipboard:tagCounts',
+    STATS: 'clipboard:stats',
+    CHANGED: 'clipboard:changed',
+  },
   // knowledge — P1 read-only knowledge provider (spec 03) plus P3 write-back
   // mutation-proposal channels (spec 05) plus P4 Session→Knowledge publication
   // pipeline (spec 06). ENGINE_START is local bootstrap (detect/open/spawn);
@@ -330,6 +348,13 @@ export const RPC_CHANNELS = {
     // P6 knowledge change watcher (poll) — start/stop per connection; emits into AutomationSystem.
     WATCH: 'knowledge:watch',
     UNWATCH: 'knowledge:unwatch',
+  },
+  // knowledgeMap — the user's auto-generated knowledge graph, built by
+  // server-core (fs scan) and rendered in profile/context settings. CHANGED is
+  // emitted after a rebuild when a watcher-triggered refresh occurs.
+  knowledgeMap: {
+    GET: 'knowledgeMap:get',
+    CHANGED: 'knowledgeMap:changed',
   },
   // siyuan — P2 native knowledge surface (spec 03/P2): embedded SiYuan desktop
   // hosted in a browser pane, keyed by durable document keys (`siyuan:{kind}:{id}`)
@@ -433,6 +458,18 @@ export const RPC_CHANNELS = {
     GET_MIGRATION_STATUS: 'credentials:getMigrationStatus',
     ROLLBACK_MIGRATION: 'credentials:rollbackMigration',
   },
+  // ROX Keeper — personal secret vault. Local-only: secrets live in the main
+  // process and never reach a remote server.
+  keeper: {
+    LIST: 'keeper:list',
+    GET: 'keeper:get',
+    CREATE: 'keeper:create',
+    UPDATE: 'keeper:update',
+    DELETE: 'keeper:delete',
+    REVEAL: 'keeper:reveal',
+    UNLOCK_STATUS: 'keeper:unlockStatus',
+    IMPORT_BROWSER: 'keeper:importBrowser',
+  },
   identity: {
     GET_STATE: 'identity:getState',
     UPDATE_PROFILE: 'identity:updateProfile',
@@ -454,9 +491,17 @@ export const RPC_CHANNELS = {
     ACQUIRE_LEASE: 'fabric:acquireLease',
     REVOKE_CONNECTION: 'fabric:revokeConnection',
     GITHUB_STATUS: 'fabric:githubStatus',
+    /** Onboarding «Привязать GitHub» — existing device flow, link mode. */
+    GITHUB_LINK_START: 'fabric:githubLinkStart',
+    GITHUB_LINK_POLL: 'fabric:githubLinkPoll',
+    GITHUB_LINK_GET: 'fabric:githubLinkGet',
     INFISICAL_HEALTH: 'fabric:infisicalHealth',
     INFISICAL_PREVIEW_ACCOUNT: 'fabric:infisicalPreviewAccount',
     INFISICAL_COMMIT_IMPORT: 'fabric:infisicalCommitImport',
+    INFISICAL_LIST_PATHS: 'fabric:infisicalListPaths',
+    INFISICAL_LIST_ITEMS: 'fabric:infisicalListItems',
+    INFISICAL_UPSERT_ITEM: 'fabric:infisicalUpsertItem',
+    INFISICAL_DELETE_ITEM: 'fabric:infisicalDeleteItem',
   },
   extensions: {
     LIST_CATALOG: 'extensions:listCatalog',
@@ -524,7 +569,11 @@ export const RPC_CHANNELS = {
     GET_ROX_CLOUD_STATE: 'onboarding:getRoxCloudState',
     CLEAR_ROX_CLOUD: 'onboarding:clearRoxCloud',
     GET_ROX_BALANCE: 'onboarding:getRoxBalance',
+    CHECK_HANDLE: 'onboarding:checkHandle',
     SAVE_OMP_CREDENTIAL: 'onboarding:saveOmpCredential',
+    SUGGEST_PREFERENCES: 'onboarding:suggestPreferences',
+    PERMISSIONS_STATUS: 'onboarding:permissionsStatus',
+    OPEN_PERMISSION_SETTINGS: 'onboarding:openPermissionSettings',
   },
   llmConnections: {
     LIST: 'LLM_Connection:list',
@@ -682,6 +731,13 @@ export const RPC_CHANNELS = {
     CANCEL: 'oauth:cancel',
     REVOKE: 'oauth:revoke',
   },
+  /** Google Calendar connector (wave 1). Tokens live in the credential manager. */
+  calendar: {
+    GOOGLE_STATUS: 'calendar:googleStatus',
+    GOOGLE_CONNECT: 'calendar:googleConnect',
+    GOOGLE_DISCONNECT: 'calendar:googleDisconnect',
+    GOOGLE_SYNC: 'calendar:googleSync',
+  },
   workspace: {
     GET_PERMISSIONS: 'workspace:getPermissions',
     OPEN_IN_EDITOR: 'workspace:openInEditor',
@@ -748,6 +804,28 @@ export const RPC_CHANNELS = {
     INDEX_STATUS: 'memory:indexStatus',
     REBUILD_INDEX: 'memory:rebuildIndex',
     CHANGED: 'memory:changed',
+    // Repo projection (spec 2026-10-09 §7): read-only markdown view of a bank.
+    REPO_LIST_BANKS: 'memory:repoListBanks',
+    REPO_STATUS: 'memory:repoStatus',
+    REPO_TREE: 'memory:repoTree',
+    REPO_READ_FILE: 'memory:repoReadFile',
+    REPO_COMMITS: 'memory:repoCommits',
+    REPO_COMMIT_DIFF: 'memory:repoCommitDiff',
+    REPO_GRAPH: 'memory:repoGraph',
+    REPO_EXPORT: 'memory:repoExport',
+    // Dream (memory build) status/manual run/journal.
+    DREAM_STATUS: 'memory:dreamStatus',
+    DREAM_RUN: 'memory:dreamRun',
+    DREAM_LOG: 'memory:dreamLog',
+    // Import of human edits back through the proposals pipeline (Phase 5).
+    REPO_PREVIEW_IMPORT: 'memory:repoPreviewImport',
+    REPO_APPLY_IMPORT: 'memory:repoApplyImport',
+    REPO_REVERT_IMPORT: 'memory:repoRevertImport',
+    // Pushes.
+    REPO_CHANGED: 'memory:repoChanged',
+    DREAM_EVENT: 'memory:dreamEvent',
+    DREAM_DONE: 'memory:dreamDone',
+    REPO_IMPORT_READY: 'memory:repoImportReady',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
@@ -954,6 +1032,11 @@ export const RPC_CHANNELS = {
     COOKIE_AUTO_STATUS: 'browserProfile:cookieAutoStatus',
     COOKIE_AUTO_SET: 'browserProfile:cookieAutoSet',
     COOKIE_AUTO_RUN: 'browserProfile:cookieAutoRun',
+  },
+  // browserCredentials — host-only export of the sealed browser password vault
+  // for Keeper import. LOCAL_ONLY: the vault key never leaves the host process.
+  browserCredentials: {
+    EXPORT_FOR_KEEPER: 'browserCredentials:exportForKeeper',
   },
   // browserIntel — Browser Intelligence Pipeline surface. Reads the local
   // browser profile stores and stages them on this machine only; all channels
@@ -1213,6 +1296,73 @@ export const RPC_CHANNELS = {
   directory: {
     /** MIG-06: one-shot export of the renderer Dossier payload into local contact cards. */
     EXPORT_DOSSIER: 'directory:exportDossier',
+  },
+  // f.9 — node/device registry. Declared caps/commands are CLAIMS; the server
+  // enforces its own allowlist before dispatching any node.invoke.
+  nodes: {
+    /** Register or reconnect a node with its declared caps/commands (claims only). */
+    REGISTER: 'nodes:register',
+    /** Snapshot of registered nodes with live presence. */
+    LIST: 'nodes:list',
+    /** Node heartbeat; refreshes presence and returns the current status. */
+    PRESENCE: 'nodes:presence',
+    /** Dispatch an allowlisted command to a node; resolves with the terminal result. */
+    INVOKE: 'nodes:invoke',
+    /** Node reports the terminal outcome of a pending invoke. */
+    INVOKE_RESULT: 'nodes:invokeResult',
+    /** Cancel a pending invoke; settles exactly once. */
+    INVOKE_CANCEL: 'nodes:invokeCancel',
+    /** Push: registry or presence changed. */
+    CHANGED: 'nodes:changed',
+  },
+  /**
+   * ROX Drive (wave 1) — device-local storage engine. Bytes, the JSON index and
+   * the ledger live under the host config dir, so every channel is LOCAL_ONLY.
+   * `SCAN_SOURCE` walks a backup source root on the host for the consent step.
+   */
+  drive: {
+    QUOTA: 'drive:quota',
+    LIST: 'drive:list',
+    CREATE_FOLDER: 'drive:createFolder',
+    OPEN_UPLOAD: 'drive:openUpload',
+    UPLOAD_PART: 'drive:uploadPart',
+    COMPLETE_UPLOAD: 'drive:completeUpload',
+    ABORT_UPLOAD: 'drive:abortUpload',
+    DELETE: 'drive:delete',
+    SCAN_SOURCE: 'drive:scanSource',
+    /** Wave 4: resolve a cloud provider's tree into an idle import job. */
+    IMPORT_PLAN: 'drive:importPlan',
+    /** Wave 4: start an idle import job. */
+    IMPORT_START: 'drive:importStart',
+    /** Wave 4: stop scheduling new files once in-flight work settles. */
+    IMPORT_PAUSE: 'drive:importPause',
+    /** Wave 4: resume a paused/errored import job. */
+    IMPORT_RESUME: 'drive:importResume',
+    /** Wave 4: one job by id, or every known job when the id is omitted. */
+    IMPORT_STATUS: 'drive:importStatus',
+    /**
+     * Wave 4: begin cloud-import authorization. The host owns the OAuth clients
+     * and runs providers whose token flow must not live in the renderer; returns
+     * either a stored-token fast path, a device-code challenge, or a URL the
+     * caller opens (Google PKCE broker / Yandex code flow).
+     */
+    IMPORT_AUTH_START: 'drive:importAuthStart',
+    /**
+     * Wave 4: finish cloud-import authorization — exchange the pasted/returned
+     * code or poll the device token — and persist tokens through the same store
+     * the providers read.
+     */
+    IMPORT_AUTH_COMPLETE: 'drive:importAuthComplete',
+  },
+  /**
+   * Telegram account linking (owner spec R4) — the desktop dialog talks to the
+   * local rox-tg-linkd daemon through these LOCAL_ONLY channels; the Rox user id
+   * is resolved server-side and never proxied to a remote server.
+   */
+  tgLink: {
+    START: 'tg-link:start',
+    VERIFY: 'tg-link:verify',
+    STATUS: 'tg-link:status',
   },
 } as const
 

@@ -24,8 +24,9 @@ describe('isDetailNavState', () => {
     expect(isDetailNavState({ navigator: 'memory', details: null })).toBe(false)
     expect(isDetailNavState({ navigator: 'tasks', details: null })).toBe(false)
     expect(isDetailNavState({ navigator: 'tasks', details: { type: 'task', taskId: 't1' } })).toBe(true)
-    expect(isDetailNavState({ navigator: 'meetings', details: null })).toBe(false)
-    expect(isDetailNavState({ navigator: 'meetings', details: { type: 'meeting', meetingId: 'm1' } })).toBe(true)
+    // W3.2: a calendar surface (incl. a selected meeting) owns the content.
+    expect(isDetailNavState({ navigator: 'surface', surface: 'calendar', details: null })).toBe(true)
+    expect(isDetailNavState({ navigator: 'surface', surface: 'calendar', details: null, meetingId: 'm1' })).toBe(true)
     expect(isDetailNavState({ navigator: 'pages', details: null })).toBe(true)
     expect(isDetailNavState({ navigator: 'pages', details: { type: 'page', pageSlug: 'dash' } })).toBe(true)
   })

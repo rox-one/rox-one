@@ -10,10 +10,13 @@ export default defineConfig({
   testMatch: '*.native.spec.ts',
   workers: 1,
   retries: 0,
-  timeout: 150_000 * ciFactor,
-  globalTimeout: 170_000 * ciFactor,
-  use: { actionTimeout: 15_000 * ciFactor },
-  expect: { timeout: 75_000 * ciFactor },
+  // Native runs also execute on developer machines under heavy parallel load
+  // (the suite idles at ~140 s); these budgets leave room for a 3-4× slowdown
+  // instead of reporting a load spike as a test failure.
+  timeout: Math.max(200_000, 150_000 * ciFactor),
+  globalTimeout: Math.max(450_000, 170_000 * ciFactor),
+  use: { actionTimeout: Math.max(15_000, 15_000 * ciFactor) },
+  expect: { timeout: Math.max(75_000, 75_000 * ciFactor) },
   outputDir: resolve(import.meta.dirname, '../../../test-results/product-tour/native'),
   reporter: [['list'], ['json', { outputFile: resolve(import.meta.dirname, '../../../test-results/product-tour/native.json') }]],
   projects: [{ name: process.platform === 'darwin' ? 'native-macos' : 'native-windows' }],

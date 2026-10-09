@@ -3,9 +3,9 @@ import { i18n, setupI18n } from '../setupI18n'
 
 const KEY = 'extensions.developer.body'
 const RU_WRAPPED =
-  'Для каждой рабочей области хост расширений запускает модули craft-sandbox в изолированном процессе. Здесь задаётся список разрешённых URL для network.request. Плагины SiYuan в этом хосте расширений не выполняются.'
+  'Для каждой рабочей области хост расширений запускает модули craft-sandbox в изолированном процессе. Здесь задаётся список разрешённых URL для network.request. Плагины Rox Notes в этом хосте расширений не выполняются.'
 const EN_VALUE =
-  'Per-workspace Extension Hosts run craft-sandbox modules in a utilityProcess. Configure network.request URL allowlists here. SiYuan plugins are never executed in the host.'
+  'Per-workspace Extension Hosts run craft-sandbox modules in a utilityProcess. Configure network.request URL allowlists here. Rox Notes plugins are never executed in the host.'
 
 describe('P35-389 leftover Russian хост wrapping on extensions.developer.body', () => {
   it('wraps leftover в этом хосте as sibling в этом хосте расширений, then English stays English', async () => {

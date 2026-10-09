@@ -5,7 +5,7 @@
  */
 
 import { afterEach, describe, expect, it } from 'bun:test';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -256,6 +256,38 @@ describe('buildSkillEligibilityReport — cache alignment', () => {
   }, 180000);
 });
 
+// ============================================================
+// Realpath confinement: advertised ⇒ readable (F1 corrective fix)
+// ============================================================
+
+describe('buildSkillEligibilityReport — realpath confinement', () => {
+  afterEach(() => invalidateSkillsCache());
+
+  it('drops a skill whose symlink escapes its discovered root from the eligible report', async () => {
+    if (process.platform === 'win32') return;
+    const workspaceRoot = tmpFixture();
+    const outsideRoot = tmpFixture();
+    const contained = 'fx9-contained-skill';
+    const escaped = 'fx9-escaping-skill';
+
+    writeSkill(join(workspaceRoot, 'skills'), contained, 'Contained', 'contained skill');
+    writeSkill(outsideRoot, escaped, 'Escaped', 'escaped skill');
+    // A directory symlink under the workspace root pointing OUTSIDE it: the raw
+    // scan discovers it, but its realpath escapes the root it was found under.
+    symlinkSync(join(outsideRoot, escaped), join(workspaceRoot, 'skills', escaped), 'dir');
+
+    const report = await buildSkillEligibilityReport({
+      workspaceRoot,
+      includeOmp: false,
+      disabledPackSlugs: [],
+    });
+
+    const slugs = report.eligible.map(s => s.slug);
+    expect(slugs).toContain(contained);
+    expect(slugs).not.toContain(escaped);
+  }, 180000);
+});
+
 describe('credentialIdMatchesEnvName', () => {
   it('maps an LLM connection slug to its API-key env name', () => {
     expect(credentialIdMatchesEnvName({ type: 'llm_api_key', connectionSlug: 'openai' }, 'OPENAI_API_KEY')).toBe(true);
@@ -339,5 +371,90 @@ describe('frontmatter machine metadata', () => {
 
     const [loaded] = loadSkillsFromDir(root, 'workspace');
     expect(loaded!.metadata.requires).toEqual({ bins: ['new-bin'], env: ['REQUIRED_TOKEN'] });
+  });
+});
+
+// ============================================================
+// rox-custodian: gated bundled system-agent playbooks (matrix c2.8)
+// ============================================================
+
+describe('rox-custodian gated bundled playbooks', () => {
+  const BUNDLED_SKILLS_DIR = join(import.meta.dir, '..', '..', '..', '..', '..', 'apps', 'electron', 'resources', 'skills');
+  const CUSTODIAN_DIR = join(BUNDLED_SKILLS_DIR, 'rox-custodian');
+  const EXPECTED = ['add-model-provider', 'configure-channel', 'diagnose-gateway'];
+
+  it('parses every ported playbook through the real SKILL.md parser with its gating metadata', () => {
+    const skills = loadSkillsFromDir(CUSTODIAN_DIR, 'global');
+    expect(skills.map(s => s.slug).sort()).toEqual([...EXPECTED].sort());
+    for (const skill of skills) {
+      expect(skill.metadata.name).toBe(skill.slug);
+      expect(skill.metadata.description.length).toBeGreaterThan(20);
+      expect(skill.content.trim().length).toBeGreaterThan(0);
+      // Gated to the ROX-managed OpenClaw gateway: the runtime credential is the
+      // machine prerequisite, resolved through the ROX credential fabric.
+      expect(skill.metadata.requires?.env).toEqual(['OPENCLAW_GATEWAY_TOKEN']);
+    }
+    const diagnose = skills.find(s => s.slug === 'diagnose-gateway')!;
+    expect(diagnose.metadata.os).toEqual(['darwin', 'linux']);
+  });
+
+  it('is registered in SKILLS.lock as a first-party pack shipping exactly those skills', () => {
+    const lock = JSON.parse(readFileSync(join(BUNDLED_SKILLS_DIR, 'SKILLS.lock'), 'utf8')) as {
+      packs: { slug: string; origin: string; skills: string[] }[];
+    };
+    const pack = lock.packs.find(p => p.slug === 'rox-custodian');
+    expect(pack).toBeDefined();
+    expect(pack!.origin).toBe('bundled');
+    expect([...pack!.skills].sort()).toEqual([...EXPECTED].sort());
+  });
+
+  it('admits the playbooks only when the managed gateway credential is provisioned', async () => {
+    const catalog = loadSkillsFromDir(CUSTODIAN_DIR, 'global');
+
+    const noCredential = await evaluateSkillEligibility({
+      skills: catalog,
+      platform: 'darwin',
+      checks: { envExists: () => false },
+    });
+    expect(noCredential.eligible).toEqual([]);
+    for (const entry of noCredential.ineligible) {
+      expect(entry.reasons.map(r => r.code)).toEqual(['missing-env']);
+    }
+
+    const provisioned = await evaluateSkillEligibility({
+      skills: catalog,
+      platform: 'darwin',
+      checks: { envExists: name => name === 'OPENCLAW_GATEWAY_TOKEN' },
+    });
+    expect(provisioned.eligible.map(s => s.slug).sort()).toEqual([...EXPECTED].sort());
+    expect(provisioned.ineligible).toEqual([]);
+  });
+
+  it('honours the Unix-only gate of diagnose-gateway', async () => {
+    const catalog = loadSkillsFromDir(CUSTODIAN_DIR, 'global');
+    const report = await evaluateSkillEligibility({
+      skills: catalog,
+      platform: 'win32',
+      checks: { envExists: () => true },
+    });
+    expect(report.eligible.map(s => s.slug).sort()).toEqual(['add-model-provider', 'configure-channel']);
+    const diagnose = report.ineligible.find(entry => entry.skill.slug === 'diagnose-gateway')!;
+    expect(diagnose.reasons.map(r => r.code)).toEqual(['os-mismatch']);
+  });
+
+  it('adds no privileged tool or channel: the pack is instruction-only markdown', () => {
+    const catalog = loadSkillsFromDir(CUSTODIAN_DIR, 'global');
+    for (const skill of catalog) {
+      expect(skill.metadata.alwaysAllow).toBeUndefined();
+      expect(skill.metadata.requiredSources).toBeUndefined();
+      expect(skill.metadata.requires?.bins).toBeUndefined();
+      expect(skill.content).not.toMatch(/command-dispatch|command-tool|alwaysAllow/);
+    }
+    // Each skill is a directory holding only SKILL.md — no code that could
+    // register a tool, channel, or privileged capability.
+    for (const entry of readdirSync(CUSTODIAN_DIR, { withFileTypes: true })) {
+      expect(entry.isDirectory()).toBe(true);
+      expect(readdirSync(join(CUSTODIAN_DIR, entry.name))).toEqual(['SKILL.md']);
+    }
   });
 });

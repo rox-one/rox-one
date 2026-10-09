@@ -50,7 +50,7 @@ jobs:
           path: .compliance/auditor
           persist-credentials: false
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: '1.3.10' }
+        with: { bun-version: '1.4.2' }
       - name: Install only the independently trusted checker without lifecycle scripts
         working-directory: .compliance/auditor
         run: bun install --frozen-lockfile --ignore-scripts

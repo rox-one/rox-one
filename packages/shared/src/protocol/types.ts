@@ -133,6 +133,9 @@ export type ErrorCode =
   // session's visibility instead of the workspace role.
   | 'SESSION_READ_ONLY'
   | 'SESSION_OWNER_ONLY'
+  // Named operator role ceiling (a1.2): the connection's role lacks the method's
+  // required scope. Typed so a client can render a role-specific message.
+  | 'OPERATOR_ACCESS_DENIED'
   // Voice provider registry failures (S8): typed so a client can branch on an
   // unconfigured provider instead of receiving a collapsed HANDLER_ERROR.
   | 'unconfigured'
@@ -189,6 +192,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'PROVIDER_UNAVAILABLE',
   'SESSION_READ_ONLY',
   'SESSION_OWNER_ONLY',
+  'OPERATOR_ACCESS_DENIED',
   'unconfigured',
   'unknown-provider',
   'unsupported',
