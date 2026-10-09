@@ -33,7 +33,7 @@ import {
   type MarketplaceLockRecord,
 } from './lock.ts'
 import { resolveConfigDir } from "../config/paths.ts"
-import { GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache } from '../skills/storage.ts'
+import { ambientSkillLinksRoot, invalidateSkillsCache } from '../skills/storage.ts'
 import { invalidateOmpSkillsCache } from '../skills/omp-discovery.ts'
 import { chooseManagedSkillName, isSafeSkillName, isSkillLinkTo, linkManagedSkill, pathEntryExists, unlinkManagedSkill } from '../skills/managed.ts'
 
@@ -336,7 +336,7 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
   const configDir = options.configDir ?? resolveConfigDir()
   const paths = marketplacePaths(configDir)
   const skillsDir = options.skillsDir ?? join(configDir, 'skills')
-  const linksRoot = options.linksRoot === undefined ? (options.skillsDir ? null : GLOBAL_AGENT_SKILLS_DIR) : options.linksRoot
+  const linksRoot = options.linksRoot === undefined ? (options.skillsDir ? null : ambientSkillLinksRoot()) : options.linksRoot
   const previous = readLock(paths.lockFile).entries[entry.id]
   const execFileFn = options.execFileFn ?? defaultExecFile
   const now = () => (options.now ?? (() => Date.now()))()
