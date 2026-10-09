@@ -22,6 +22,12 @@ export interface ActivityCardsOverlayProps {
   theme?: 'light' | 'dark'
   onOpenUrl?: (url: string) => void
   onOpenFile?: (path: string) => void
+  /** Whether the source activity content is still streaming */
+  isStreaming?: boolean
+  /** Send a follow-up user message from an interactive (`openui`) block action */
+  onSendPrompt?: (text: string) => void
+  /** Owning activity identity for interactive (`openui`) block form-state scoping */
+  blockScope?: string
 }
 
 const craftAgentDarkTheme = {
@@ -66,6 +72,9 @@ export function ActivityCardsOverlay({
   theme = 'light',
   onOpenUrl,
   onOpenFile,
+  isStreaming = false,
+  onSendPrompt,
+  blockScope,
 }: ActivityCardsOverlayProps) {
   const { t } = useTranslation()
   const jsonTheme = useMemo(() => (theme === 'dark' ? craftAgentDarkTheme : craftAgentLightTheme), [theme])
@@ -80,6 +89,9 @@ export function ActivityCardsOverlay({
               onUrlClick={onOpenUrl}
               onFileClick={onOpenFile}
               hideFirstMermaidExpand={false}
+              isStreaming={isStreaming}
+              onSendPrompt={onSendPrompt}
+              blockScope={blockScope}
             >
               {content}
             </Markdown>

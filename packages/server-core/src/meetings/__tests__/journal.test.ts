@@ -159,6 +159,156 @@ describe('meeting journal (RMA-I001)', () => {
     expect(existsSync(join(report.backupDir, 'm1', 'snapshot.json'))).toBe(true)
   })
 
+  test('segment/session/summary/note events materialize in the snapshot', () => {
+    const journal = new MeetingJournal(tempRoot())
+    journal.acquireWriter()
+    journal.commit({
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      expectedRevision: 0,
+      commandId: 'c1',
+      events: [created('ws', 'm1')],
+      outboxEntries: [],
+    })
+    journal.commit({
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      expectedRevision: 1,
+      commandId: 'c2',
+      events: [
+        {
+          type: 'segment.upsert',
+          segment: {
+            meetingId: 'm1',
+            streamId: 'stream',
+            id: 's1',
+            revision: 1,
+            sequence: 0,
+            startMs: 0,
+            endMs: 1000,
+            source: 'microphone',
+            speakerId: null,
+            language: 'ru',
+            text: 'привет',
+            final: true,
+            provenance: { observer: 'asr-stream', sessionId: 'sess1', self: 'unknown' },
+          },
+        },
+        { type: 'manual.note', noteId: 'n1', text: 'заметка' },
+        {
+          type: 'session.upsert',
+          session: {
+            schemaVersion: 1,
+            sessionId: 'sess1',
+            workspaceId: 'ws',
+            meetingId: 'm1',
+            transport: 'mic',
+            mode: 'observe',
+            state: 'in_call',
+            observer: true,
+            createdAt: 0,
+            updatedAt: 5,
+            joinedAt: 5,
+            transcriptEvicted: false,
+            lineCount: 1,
+            epoch: 0,
+            cursor: { tailKeys: ['stream:s1'] },
+          },
+        },
+        {
+          type: 'summary.upsert',
+          summary: {
+            sessionId: 'sess1',
+            meetingId: 'm1',
+            windowStartMs: 0,
+            windowEndMs: 300000,
+            revision: 1,
+            text: 'итог',
+            sourceSegmentIds: ['stream:s1'],
+            generator: 'heuristic',
+            updatedAt: 6,
+          },
+        },
+      ],
+      outboxEntries: [],
+    })
+    const snapshot = journal.read('m1')
+    expect(snapshot.segments['stream:s1']?.text).toBe('привет')
+    expect(snapshot.segments['stream:s1']?.provenance?.observer).toBe('asr-stream')
+    expect(snapshot.notes.n1?.text).toBe('заметка')
+    expect(snapshot.sessions.sess1?.state).toBe('in_call')
+    expect(snapshot.summaries['sess1:0']?.text).toBe('итог')
+    expect(snapshot.summaries['sess1:0']?.generator).toBe('heuristic')
+
+    // A newer revision wins; an older replay must not clobber it.
+    journal.commit({
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      expectedRevision: 2,
+      commandId: 'c3',
+      events: [
+        {
+          type: 'segment.upsert',
+          segment: {
+            meetingId: 'm1',
+            streamId: 'stream',
+            id: 's1',
+            revision: 2,
+            sequence: 1,
+            startMs: 0,
+            endMs: 1000,
+            source: 'microphone',
+            speakerId: null,
+            language: 'ru',
+            text: 'исправлено',
+            final: true,
+          },
+        },
+      ],
+      outboxEntries: [],
+    })
+    expect(journal.read('m1').segments['stream:s1']?.text).toBe('исправлено')
+    journal.commit({
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      expectedRevision: 3,
+      commandId: 'c4',
+      events: [
+        {
+          type: 'segment.upsert',
+          segment: {
+            meetingId: 'm1',
+            streamId: 'stream',
+            id: 's1',
+            revision: 1,
+            sequence: 0,
+            startMs: 0,
+            endMs: 1000,
+            source: 'microphone',
+            speakerId: null,
+            language: 'ru',
+            text: 'stale replay',
+            final: true,
+          },
+        },
+      ],
+      outboxEntries: [],
+    })
+    expect(journal.read('m1').segments['stream:s1']?.text).toBe('исправлено')
+
+    // session.state applies to the materialized record.
+    journal.commit({
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      expectedRevision: 4,
+      commandId: 'c5',
+      events: [{ type: 'session.state', sessionId: 'sess1', state: 'paused' }],
+      outboxEntries: [],
+    })
+    expect(journal.read('m1').sessions.sess1?.state).toBe('paused')
+    journal.releaseWriter()
+  })
+
   test('unknown schema is not written', () => {
     const journal = new MeetingJournal(tempRoot())
     journal.acquireWriter()

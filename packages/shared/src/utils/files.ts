@@ -3,6 +3,7 @@ import { extname, basename, resolve, join, relative, dirname } from 'path';
 import { execSync } from 'child_process';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
+import type { AttachmentTranscript } from '@rox/core/types';
 
 /**
  * Strip UTF-8 BOM (Byte Order Mark) from a string.
@@ -96,6 +97,10 @@ export interface FileAttachment {
   storedPath?: string;
   /** Path to converted markdown version (for office files) */
   markdownPath?: string;
+  /** Speech-to-text result for audio attachments, started when the file is attached. */
+  transcript?: AttachmentTranscript;
+  /** Renderer-local identity for an in-flight attachment (never persisted). */
+  localId?: string;
 }
 
 // Supported image types for Claude API

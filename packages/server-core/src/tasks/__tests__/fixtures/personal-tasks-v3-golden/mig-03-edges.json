@@ -1,0 +1,117 @@
+[
+  {
+    "id": "t-cancel",
+    "edges": []
+  },
+  {
+    "id": "t-done",
+    "edges": [
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-done"
+        },
+        "to": {
+          "kind": "mail-thread",
+          "id": "thr-2"
+        },
+        "relation": "attached-to"
+      },
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-done"
+        },
+        "to": {
+          "kind": "workflow-run",
+          "id": "run-5"
+        },
+        "relation": "attached-to"
+      },
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-done"
+        },
+        "to": {
+          "kind": "feed-item",
+          "id": "fi-1"
+        },
+        "relation": "attached-to"
+      },
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-done"
+        },
+        "to": {
+          "kind": "decision",
+          "id": "d-4"
+        },
+        "relation": "attached-to"
+      },
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-done"
+        },
+        "to": {
+          "kind": "session",
+          "id": "s-1"
+        },
+        "relation": "attached-to"
+      }
+    ]
+  },
+  {
+    "id": "t-open",
+    "edges": [
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-open"
+        },
+        "to": {
+          "kind": "call",
+          "id": "call-7"
+        },
+        "relation": "derived-from",
+        "role": "origin"
+      },
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-open"
+        },
+        "to": {
+          "kind": "note",
+          "id": "note-1"
+        },
+        "relation": "mentions"
+      },
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-open"
+        },
+        "to": {
+          "kind": "session",
+          "id": "sess-9",
+          "fragment": "msg-m-3"
+        },
+        "relation": "derived-from"
+      },
+      {
+        "from": {
+          "kind": "task",
+          "id": "t-open"
+        },
+        "to": {
+          "kind": "channel-message",
+          "id": "0190a0b2-1111-7222-8333-444455556666"
+        },
+        "relation": "derived-from"
+      }
+    ]
+  }
+]

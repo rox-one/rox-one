@@ -1,11 +1,11 @@
 import { expect, test } from 'bun:test'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 for (const scenario of ['actors', 'races', 'lifecycle']) {
   test(`actual native WS session sharing ${scenario} with synthetic upstream`, async () => {
-    const directory = mkdtempSync(join(tmpdir(), 'native-session-sharing-'))
+    const directory = realpathSync(mkdtempSync(join(tmpdir(), 'native-session-sharing-')))
     try {
       const child = Bun.spawn([process.execPath, join(import.meta.dir, 'fixtures/native-session-sharing.ts'), scenario], {
         cwd: join(import.meta.dir, '../../../../../..'), env: { ...process.env, ROX_CONFIG_DIR: directory, CRAFT_CONFIG_DIR: directory }, stdout: 'pipe', stderr: 'pipe',

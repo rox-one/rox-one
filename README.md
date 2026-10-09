@@ -23,6 +23,7 @@ Auto-update metadata is published with GitHub releases. Unsigned macOS builds ca
 - Branches fork at the selected answer in a private copy of the parent transcript. Parent history is preserved.
 - Older sessions without native transcripts can reconstruct their stored ROX history. Missing provider metadata is explicitly marked as unavailable; malformed transcripts fail instead of silently dropping records.
 - A persistent reset marker prevents cleared or undone messages from reappearing after restart.
+- Assistant answers may carry one `openui` block that ROX renders locally as charts, tables, forms or cards. No cloud gateway is involved, and the surrounding prose stands alone.
 
 Implementation and wire contracts: [OMP RPC notes](docs/omp-rpc-notes.md), [runtime specification](docs/runtime-0.11.8-spec.md), [native fork/resume evidence](docs/evidence/omp-native-history-0.11.8.json).
 

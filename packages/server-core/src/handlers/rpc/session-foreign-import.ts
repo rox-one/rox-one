@@ -68,9 +68,15 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
       const workspaceId = args?.workspaceId
       if (!workspaceId) throw new Error('sessions.foreignDiscover: workspaceId is required')
       const listed = rpcSessionForeignImportListResult({ source: 'native' })
-      if (!isClaimableLive(listed.result)) return { entries: [], scannedAt: Date.now(), cachePath: '', truncated: false }
+      if (!isClaimableLive(listed.result)) {
+        // Not a silent empty list: tell the caller the scan could not run, so
+        // the UI can show why instead of "nothing found".
+        return { entries: [], scannedAt: Date.now(), cachePath: '', truncated: false, unavailable: 'not-live' as const }
+      }
       const read = rpcSessionForeignImportReadResult({ source: 'native', nativeId: workspaceId })
-      if (!isClaimableLive(read.result)) throw new Error('sessions.foreignDiscover is not live')
+      if (!isClaimableLive(read.result)) {
+        return { entries: [], scannedAt: Date.now(), cachePath: '', truncated: false, unavailable: 'not-live' as const }
+      }
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error('sessions.foreignDiscover: workspace not found')
       // Async + incremental: never block the main process on a big scan.

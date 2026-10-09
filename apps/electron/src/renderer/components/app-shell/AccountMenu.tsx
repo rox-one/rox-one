@@ -54,6 +54,8 @@ import { useTransportConnectionState } from '@/hooks/useTransportConnectionState
 import { isSshBackedWorkspace } from '../../../shared/ssh'
 import blackInkAvatar from '@/assets/rox-avatar-ink-black.png'
 import whiteInkAvatar from '@/assets/rox-avatar-ink-white.png'
+import { useOptionalAppShellContext } from '@/context/AppShellContext'
+import { resolveDisplayName } from './profile-strip-account'
 import type { CredentialHealthStatus, IdentityState, Workspace } from '../../../shared/types'
 
 /**
@@ -223,6 +225,9 @@ export function AccountMenu({
   onOpenCreationScreen,
 }: AccountMenuProps) {
   const { t } = useTranslation()
+  // The shell already tracks the signed-in Rox cloud account; reuse it so the
+  // menu shows the same merged name as the profile strip.
+  const roxAccount = useOptionalAppShellContext()?.roxAccount ?? null
   const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', workspaceId: activeWorkspaceId ?? undefined, variant: compact ? 'compact' : 'regular' })
   const [open, setOpen] = React.useState(false)
   const ownCreationFlow = useWorkspaceCreationFlow({ activeWorkspaceId, onSelectWorkspace, onWorkspaceCreated })
@@ -364,6 +369,8 @@ export function AccountMenu({
   }, [closeMenu, t])
 
   const profile = identity?.profile
+  // Same merge as the profile strip: the name the user signed in with wins.
+  const displayName = resolveDisplayName(roxAccount, profile?.displayName, t('profile.defaultName'))
   const connections = identity?.connections ?? []
   const connectedCount = connections.filter(
     (connection) => connection.status === 'connected' || connection.status === 'syncing',
@@ -492,7 +499,7 @@ export function AccountMenu({
                 <ProfileAvatar src={profile?.avatar} className="h-7 w-7 shadow-minimal" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium">
-                    {profile?.displayName || t('profile.defaultName')}
+                    {displayName}
                   </div>
                   <div className="text-xs text-foreground/50">
                     {profileModeLabel}
@@ -663,7 +670,7 @@ export function AccountMenu({
             <ProfileAvatar src={profile?.avatar} className="h-8 w-8 shadow-minimal" />
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">
-                {profile?.displayName || t('profile.defaultName')}
+                {displayName}
               </div>
               <div className="text-[11px] text-muted-foreground">{profileModeLabel}</div>
             </div>

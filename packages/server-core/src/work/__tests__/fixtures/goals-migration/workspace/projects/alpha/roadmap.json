@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "goal": "Ship v2",
+  "expectedResult": "",
+  "doneCriteria": [],
+  "inputs": [],
+  "requirements": [],
+  "risks": [],
+  "openQuestions": [],
+  "updatedAt": 1790000000000,
+  "milestones": [
+    { "id": "ms-beta", "title": "Public beta", "description": "Invite 50 teams", "status": "active", "startDate": "2026-10-01", "dueDate": "2026-11-15", "stages": [{ "id": "st-1", "title": "Invites", "done": true, "substages": [] }], "taskIds": ["task-1", "task-missing", "task-1"] },
+    { "id": "ms-ga", "title": "General availability", "description": "", "status": "done", "dueDate": "2026-12-20", "stages": [], "taskIds": ["task-2"] },
+    { "id": "ms-later", "title": "Enterprise", "description": "", "status": "blocked", "stages": [], "taskIds": [] }
+  ]
+}

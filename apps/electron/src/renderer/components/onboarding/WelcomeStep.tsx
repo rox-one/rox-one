@@ -7,6 +7,8 @@ import { ONBOARDING_USERNAME_MAX, parseOnboardingUsername, persistOnboardingUser
 import { createStorageAdapter, rememberLocalProfile } from "./first-result-ui"
 import { StepFormLayout, ContinueButton } from "./primitives"
 import { WelcomeBrowserImportPreferences } from './WelcomeBrowserImportPreferences'
+import { BrowserIntelOptIn } from './BrowserIntelOptIn'
+import { BrowserIntelProgress } from './BrowserIntelProgress'
 
 interface WelcomeStepProps {
   onContinue: () => void
@@ -36,6 +38,7 @@ export function WelcomeStep({
   const [username, setUsername] = useState("")
   const [saving, setSaving] = useState(false)
   const [preferenceSaving, setPreferenceSaving] = useState(false)
+  const [intelSaving, setIntelSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const submitInFlight = useRef(false)
 
@@ -64,7 +67,7 @@ export function WelcomeStep({
       onContinue()
       return
     }
-    if (submitInFlight.current || saving || preferenceSaving || isFinishing) return
+    if (submitInFlight.current || saving || preferenceSaving || intelSaving || isFinishing) return
     const trimmed = username.trim()
     if (trimmed.length === 0) {
       setError(t("onboarding.welcome.usernameRequired"))
@@ -101,7 +104,7 @@ export function WelcomeStep({
 
   const continueDisabled = isExistingUser
     ? isLoading || isFinishing
-    : isLoading || isFinishing || saving || preferenceSaving || !parseOnboardingUsername(username)
+    : isLoading || isFinishing || saving || preferenceSaving || intelSaving || !parseOnboardingUsername(username)
 
   return (
     <StepFormLayout
@@ -121,8 +124,8 @@ export function WelcomeStep({
           onClick={() => void handleContinue()}
           className="w-full"
           disabled={continueDisabled}
-          loading={isLoading || saving || preferenceSaving || isFinishing}
-          loadingText={isFinishing ? t("onboarding.completion.settingUp") : preferenceSaving ? t('common.saving') : t("common.checking")}
+          loading={isLoading || saving || preferenceSaving || intelSaving || isFinishing}
+          loadingText={isFinishing ? t("onboarding.completion.settingUp") : (preferenceSaving || intelSaving) ? t('common.saving') : t("common.checking")}
         >
           {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
         </ContinueButton>
@@ -150,6 +153,8 @@ export function WelcomeStep({
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <WelcomeBrowserImportPreferences onSavingChange={setPreferenceSaving} />
+          <BrowserIntelOptIn onSavingChange={setIntelSaving} className="mt-5" />
+          <BrowserIntelProgress className="mt-4" />
         </div>
       )}
     </StepFormLayout>

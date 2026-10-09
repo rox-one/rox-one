@@ -3,7 +3,8 @@
  * list, the open message and «Все» unread rows. Talks to the main-process
  * bridge only through window.electronAPI.mailLocal; refreshes on JMAP push
  * (main → mail:changed). Creates the user's mailbox automatically on the
- * first Входящие open when the local server is reachable.
+ * first Входящие open whenever the configured server is reachable (public Rox
+ * host or the loopback pilot).
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MailFolder, MailFolderRole, MailLocalApi, MailMessage, MailResult, MailStatus, MailSummary } from '../../../../shared/mail-local'
@@ -134,7 +135,9 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
 
   useEffect(() => {
     if (!options.active || !status) return
-    if (status.enabled && status.reachable && status.local && status.state === 'no-mailbox' && !ensureTried.current) {
+    // Reachable server + no mailbox yet → create/claim it automatically, for
+    // the public Rox host as well as the loopback pilot.
+    if (status.enabled && status.reachable && status.state === 'no-mailbox' && !ensureTried.current) {
       ensureTried.current = true
       void ensure()
     }

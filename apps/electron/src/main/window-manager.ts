@@ -489,6 +489,7 @@ export class WindowManager {
                 view: target.view,
                 action: target.action,
                 actionParams: target.actionParams,
+                source: 'app',
               })
             }, 100)
           }

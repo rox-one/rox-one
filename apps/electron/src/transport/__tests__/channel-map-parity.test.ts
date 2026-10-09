@@ -149,6 +149,7 @@ type ApiToChannelMapKeys = Exclude<
   | 'remoteTlsInspect' // direct IPC — inspect peer cert before token handshake
   | 'remoteTlsDecide' // direct IPC — accept/reject/rollover enrollment
   | 'exitMiniWindow' // direct IPC — native window lifecycle
+  | 'publishVoiceLevel' // direct one-way IPC send — renderer-owned overlay level, no WS RPC
   | 'onPanelFocusDirection' // direct IPC — native directional focus shortcut
 > | BrowserPaneKeys
   | KnowledgeKeys
@@ -247,5 +248,10 @@ describe('CHANNEL_MAP runtime contract', () => {
     const channels = Object.values(CHANNEL_MAP).map(entry => entry.channel)
     expect(channels).not.toContain('__openclaw-host:open-panel')
     expect(channels).not.toContain('__openclaw-host:copy-setup-credential')
+  })
+
+  it('wires the voice push channels to listeners', () => {
+    expect(CHANNEL_MAP['onTtsStreamChunk']).toMatchObject({ type: 'listener', channel: 'voice:ttsStreamChunk' })
+    expect(CHANNEL_MAP['onVoiceTrigger']).toMatchObject({ type: 'listener', channel: 'voice:trigger' })
   })
 })

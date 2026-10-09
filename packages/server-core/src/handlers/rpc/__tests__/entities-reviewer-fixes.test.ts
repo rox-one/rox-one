@@ -47,7 +47,9 @@ function fixture(workspaces: Record<string, string> = {}) {
   registerEntitiesHandlers(server, {} as HandlerDeps, runtime)
   const resolve = (payload: unknown, context: RequestContext, workspaceId: string) =>
     Promise.resolve(handlers.get(RPC_CHANNELS.entities.RESOLVE)!(context, workspaceId, payload))
-  return { resolve }
+  const links = (payload: unknown, context: RequestContext, workspaceId: string) =>
+    Promise.resolve(handlers.get(RPC_CHANNELS.entities.LINKS)!(context, workspaceId, payload))
+  return { resolve, links }
 }
 
 const ctxFor = (principalId: string, workspaceId = 'ws'): RequestContext => ({
@@ -160,6 +162,28 @@ describe('reviewer fix #2 — reset unregisters resolvers', () => {
     resetEntityResolvers()
     const after = (await f.resolve({ refs: [note] }, ctxFor('u'), 'ws')) as EntityPreview[]
     expect(after[0]).toMatchObject({ status: 'unavailable', title: '' })
+  })
+})
+
+describe('SEC-03 — per-handler workspace scope guard', () => {
+  it('denies a foreign workspace for links but allows it on resolve (shared-workspace client)', async () => {
+    process.env.CRAFT_FEATURE_ENTITIES_LINKS = '1'
+    const root = mkdtempSync(join(tmpdir(), 'rox-ws-'))
+    roots.push(root)
+    // Only 'ws' and 'other' exist — 'nope' is a genuinely unknown id.
+    const f = fixture({ ws: root, other: root })
+    const shared = ctxFor('u') // actor bound to 'ws', no native principal
+    await expect(f.links({ op: 'outgoing', ref: note }, shared, 'other')).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    await expect(f.links({ op: 'outgoing', ref: note }, shared, 'nope')).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    // resolve is the explicit cross-workspace-read exception for actor clients.
+    registerEntityResolver({
+      kinds: ['note'],
+      async resolve(refs, _actor) {
+        return refs.map(ref => preview(ref, 'cross-workspace'))
+      },
+    })
+    const previews = (await f.resolve({ refs: [note] }, shared, 'other')) as EntityPreview[]
+    expect(previews[0]).toMatchObject({ status: 'ok', title: 'cross-workspace' })
   })
 })
 

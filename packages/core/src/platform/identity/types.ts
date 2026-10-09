@@ -129,6 +129,13 @@ export interface Entitlement {
 export interface IdentityState {
   /** Canonical annotation author for this authenticated connection. */
   annotationActorId?: string;
+  /**
+   * The server's self actor id for this connection in session attribution and
+   * write-access checks: the principal subject for an authenticated connection,
+   * the installation identity for a local/desktop caller. Clients reuse it for
+   * "assign to me" so self-assignment targets the id the server compares.
+   */
+  sessionActorId?: string;
   profile: Profile;
   connections: ServiceConnection[];
   entitlements: Entitlement[];

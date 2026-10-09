@@ -18,7 +18,7 @@ import type { Dirent } from 'fs';
 import { homedir } from 'os';
 import { isAbsolute, join, relative, resolve, sep } from 'path';
 import matter from 'gray-matter';
-import type { LoadedSkill, SkillMetadata, SkillSource } from './types.ts';
+import type { LoadedSkill, SkillMetadata, SkillRequires, SkillSource } from './types.ts';
 import { readSkillInstructions } from './read-instructions.ts';
 import { listOmpSkills, OMP_GLOBAL_SKILLS_DIR, OMP_SHARED_SKILLS_DIR, OMP_WORKSPACE_SKILLS_DIR } from './omp-discovery.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
@@ -47,10 +47,12 @@ export const APP_MANAGED_SKILLS_DIR = join(resolveConfigDir(), 'skills');
 export const PROJECT_AGENT_SKILLS_DIR = '.agents/skills';
 
 /**
- * Normalize requiredSources frontmatter to a clean string array.
- * Accepts a single string or array of strings, trims whitespace, and deduplicates.
+ * Normalize an unknown frontmatter value into a clean, deduplicated string
+ * array. Accepts a single string or an array of strings; every entry is
+ * trimmed and empty values are dropped. Returns undefined when nothing
+ * survives, so "absent" and "empty" are indistinguishable to callers.
  */
-function normalizeRequiredSources(value: unknown): string[] | undefined {
+function normalizeStringList(value: unknown): string[] | undefined {
   const asArray = typeof value === 'string'
     ? [value]
     : Array.isArray(value)
@@ -67,6 +69,63 @@ function normalizeRequiredSources(value: unknown): string[] | undefined {
   ));
 
   return normalized.length > 0 ? normalized : undefined;
+}
+
+/** Narrow an unknown frontmatter value to a plain object, else null. */
+function asRecord(value: unknown): Record<string, unknown> | null {
+  // Cast is sound: the guard proves a non-null object before the assertion.
+  return value && typeof value === 'object' ? value as Record<string, unknown> : null;
+}
+
+/**
+ * Read the additive machine-requirement block from a skill's frontmatter.
+ *
+ * Vendored packs declare it under `metadata.openclaw`; the ROX alias
+ * `metadata.rox` overrides field-by-field. `envVars[]` entries explicitly
+ * marked `required: true` fold into `requires.env` so a pack can express a
+ * hard environment need in either spelling. Only real frontmatter values are
+ * returned — nothing is inferred or defaulted.
+ */
+function parseSkillMachineMetadata(data: Record<string, unknown>): Pick<
+  SkillMetadata,
+  'requires' | 'os' | 'skillKey' | 'primaryEnv' | 'always' | 'homepage'
+> {
+  const meta = asRecord(data.metadata) ?? {};
+  const merged: Record<string, unknown> = { ...(asRecord(meta.openclaw) ?? {}), ...(asRecord(meta.rox) ?? {}) };
+
+  const rawRequires = asRecord(merged.requires) ?? {};
+
+  // Required envVars (OpenClaw's structured spelling) fold into requires.env.
+  const requiredEnvVars = Array.isArray(merged.envVars)
+    ? merged.envVars
+        .map(asRecord)
+        .filter((entry): entry is Record<string, unknown> => entry !== null && entry.required === true)
+        .map(entry => entry.name)
+    : [];
+
+  const requires: SkillRequires | undefined = (() => {
+    const bins = normalizeStringList(rawRequires.bins);
+    const anyBins = normalizeStringList(rawRequires.anyBins);
+    const env = normalizeStringList([...(normalizeStringList(rawRequires.env) ?? []), ...requiredEnvVars]);
+    const config = normalizeStringList(rawRequires.config);
+    if (!bins && !anyBins && !env && !config) return undefined;
+    return { ...(bins ? { bins } : {}), ...(anyBins ? { anyBins } : {}), ...(env ? { env } : {}), ...(config ? { config } : {}) };
+  })();
+
+  const os = normalizeStringList(merged.os ?? data.os);
+  const skillKey = typeof merged.skillKey === 'string' && merged.skillKey.trim() ? merged.skillKey.trim() : undefined;
+  const primaryEnv = typeof merged.primaryEnv === 'string' && merged.primaryEnv.trim() ? merged.primaryEnv.trim() : undefined;
+  const homepage = typeof merged.homepage === 'string' && merged.homepage.trim() ? merged.homepage.trim() : undefined;
+  const always = merged.always === true ? true : undefined;
+
+  return {
+    ...(requires ? { requires } : {}),
+    ...(os ? { os } : {}),
+    ...(skillKey ? { skillKey } : {}),
+    ...(primaryEnv ? { primaryEnv } : {}),
+    ...(always ? { always } : {}),
+    ...(homepage ? { homepage } : {}),
+  };
 }
 
 // ============================================================
@@ -96,7 +155,8 @@ function parseSkillFile(content: string): { metadata: SkillMetadata; body: strin
         globs: parsed.data.globs as string[] | undefined,
         alwaysAllow: parsed.data.alwaysAllow as string[] | undefined,
         icon,
-        requiredSources: normalizeRequiredSources(parsed.data.requiredSources),
+        requiredSources: normalizeStringList(parsed.data.requiredSources),
+        ...parseSkillMachineMetadata(parsed.data as Record<string, unknown>),
       },
       body: parsed.content,
     };
@@ -126,7 +186,7 @@ function isDirectoryOrSymlinkToDirectory(parentDir: string, entry: Dirent): bool
 // ============================================================
 
 /** Load one craft skill through the shared instructions-file boundary. */
-function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
+export function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
   // Dot entries (.pending, .versions) are internal state, never skills.
   if (!isSafeSkillName(slug)) return null;
   const skillDir = join(skillsDir, slug);
@@ -157,7 +217,7 @@ function loadSkillAtPath(skillDir: string, slug: string, source: SkillSource): L
  * @param skillsDir - Absolute path to skills directory
  * @param source - Where these skills are loaded from
  */
-function loadSkillsFromDir(skillsDir: string, source: SkillSource): LoadedSkill[] {
+export function loadSkillsFromDir(skillsDir: string, source: SkillSource): LoadedSkill[] {
   if (!existsSync(skillsDir)) {
     return [];
   }
@@ -297,6 +357,46 @@ export interface LoadAllSkillsOptions {
    * (marked with `shadowedByCraft: true`), for UI display. Default: false.
    */
   includeShadowedOmp?: boolean;
+}
+
+/**
+ * One tier of the ordered skill discovery plan, LOWEST priority first. Mirrors
+ * the fixed tier ordering `loadAllSkills` merges (OMP < foreign global <
+ * app-managed < workspace < project) so collision reporting can attribute a
+ * slug to the tier that actually won it.
+ */
+export interface SkillRootPlanEntry {
+  /** Stable tier label used in eligibility/collision reports. */
+  label: string;
+  /** Absolute directory scanned for `{slug}/SKILL.md`. */
+  root: string;
+  /** Discovery source every skill found here is tagged with. */
+  source: SkillSource;
+  /**
+   * Tier skills discovered under `root` are skipped when their real path is
+   * inside `APP_MANAGED_SKILLS_DIR` — application links appear in the OMP and
+   * foreign-global roots and must not be double-counted (mirrors loadAllSkills).
+   */
+  excludeAppManaged: boolean;
+}
+
+/**
+ * The ordered tier plan for a workspace/project pair. Callers use it to scan
+ * each tier independently (collision attribution, disabled-pack reporting)
+ * while still relying on the same path constants as `loadAllSkills`.
+ */
+export function getSkillRootPlan(workspaceRoot: string, projectRoot?: string): SkillRootPlanEntry[] {
+  const plan: SkillRootPlanEntry[] = [
+    { label: 'omp-global', root: OMP_GLOBAL_SKILLS_DIR, source: 'omp', excludeAppManaged: true },
+    { label: 'omp-workspace', root: join(workspaceRoot, OMP_WORKSPACE_SKILLS_DIR), source: 'omp', excludeAppManaged: true },
+    { label: 'global', root: GLOBAL_AGENT_SKILLS_DIR, source: 'global', excludeAppManaged: true },
+    { label: 'app-managed', root: APP_MANAGED_SKILLS_DIR, source: 'global', excludeAppManaged: false },
+    { label: 'workspace', root: getWorkspaceSkillsPath(workspaceRoot), source: 'workspace', excludeAppManaged: false },
+  ];
+  if (projectRoot) {
+    plan.push({ label: 'project', root: join(projectRoot, PROJECT_AGENT_SKILLS_DIR), source: 'project', excludeAppManaged: false });
+  }
+  return plan;
 }
 
 export function loadAllSkills(workspaceRoot: string, projectRoot?: string, options?: LoadAllSkillsOptions): LoadedSkill[] {
@@ -570,6 +670,22 @@ export function updateSkillContent(
     if (parsed.metadata.globs?.length) data.globs = parsed.metadata.globs;
     if (parsed.metadata.alwaysAllow?.length) data.alwaysAllow = parsed.metadata.alwaysAllow;
     if (parsed.metadata.requiredSources?.length) data.requiredSources = parsed.metadata.requiredSources;
+
+    // Preserve the additive machine-requirement block: a rewrite must not
+    // silently drop a pack's declared bins/env/config/os gating.
+    const machine = parsed.metadata;
+    if (machine.requires || machine.os || machine.skillKey || machine.primaryEnv || machine.homepage || machine.always) {
+      data.metadata = {
+        openclaw: {
+          ...(machine.requires ? { requires: machine.requires } : {}),
+          ...(machine.os ? { os: machine.os } : {}),
+          ...(machine.skillKey ? { skillKey: machine.skillKey } : {}),
+          ...(machine.primaryEnv ? { primaryEnv: machine.primaryEnv } : {}),
+          ...(machine.always ? { always: true } : {}),
+          ...(machine.homepage ? { homepage: machine.homepage } : {}),
+        },
+      };
+    }
 
     const nextIcon = updates.icon !== undefined ? updates.icon : parsed.metadata.icon;
     if (nextIcon) data.icon = nextIcon;
