@@ -92,3 +92,37 @@
 3. **Решения владельца:** SEC-01-остаток (UX подтверждения для `send=true` с trusted-поверхностей), C-02 (идёт в параллельной работе), C-08, PERF-07.
 
 Отдельно замечено при финальной верификации: **`typecheck:electron` на main красный** — 4 ошибки в `apps/electron/src/renderer/App.tsx`: TS2305 «no exported member `AudioTranscriptActionsProvider`/`AudioTranscriptRetry`» в импорте из `@rox/ui` (`:96-97`) и два implicit-any в `useCallback<AudioTranscriptRetry>` (`:1940`). Факты: экспорты в исходниках присутствуют (`packages/ui/src/index.ts:41,66` и `components/chat/index.ts:17,20`), `@rox/ui` резолвится именно в исходники (`package.json` types → `src/index.ts`, `dist` не отслеживается), импорт синтаксически корректен (`type`-модификатор только у типа). Значит корень не в «устаревшей сборке» — ошибки в committed-состоянии и привязаны к коммиту `b7c049cde` (та же фича добавила и `useCallback<AudioTranscriptRetry>`); нужен разбор автором фичи. К выполненным планам отношения не имеет.
+
+## Раунд 2 — закрытие оставшегося (2026-10-09, вечер, ветка `improve/advisor-plans-round2`)
+
+Метод: 21 read-only скаут (валютность каждой находки на `3114264ee`) → правки в изолированном
+worktree → локальные гейты (`typecheck:all` — 18 воркспейсов, `validate:ci`, целевые сьюты) → PR.
+Сводка по находкам:
+
+| # | Итог |
+|---|---|
+| F-00 «`typecheck:electron` красный» | **STALE**: зелёный на `3114264ee` (CI `validate:ci` + локальный прогон). Красный воспроизводится только в чек-ауте `fix/product-tour-native-green` (до-фичевое дерево `@rox/ui`). |
+| TECH-02 | ✅ 6 мёртвых скриптов удалены, `docs/repo-known-issues.md` приведён к факту, тикет 08 отмечен (`5f0b37fd3`). |
+| TECH-05 | ✅ оба одноразовых workflow + осиротевшие `patches/settings-ia-appshell.patch` и `scripts/patch-settings-ia-locales.mjs` удалены (`5f0b37fd3`). |
+| DX-01 | ✅ 9 воркспейсов подключены, `typecheck` = `typecheck:all` (18 воркспейсов), `apps/viewer` починен (`lib` ES2022). Root `tsconfig.json` **намеренно не тронут**: его правка (`baseUrl`/`paths`) ломает `packages/ui` (TS6059) — проверено и откатано (`5f0b37fd3`). |
+| DX-02 | ✅ 3 висячих staged-алиаса удалены, husky убран (хуков нет), доки исправлены; гейт — CI (`5f0b37fd3`). |
+| C-03 | ✅ серверный `safeSend` ловит исключение (`transportLog.warn`), регресс-тест (`5556dfa55`). |
+| C-04 | ✅ реестр параметризован (`GithubProviderStack.registry`), monkey-patch удалён, тест на перекрытие (`5556dfa55`). |
+| C-05 | ✅ `before-quit`: try/catch/finally, `app.exit(0)` гарантирован (`bb307b9f5`… см. PR). |
+| C-06 | ✅ предикат `shouldSurfaceSessionLoadFailure` — глотать провал можно только при видимом транспортном баннере (`4af48bd56`). |
+| C-07 | ✅ дубли удалены, 4 `notes:*Comment` канала классифицированы (скрытая краснота: `routing.test.ts` не входит в `test:shared:all`), source-guard добавлен (`44b02e5b1`). |
+| C-09 | ✅ `assertTrustedRenderer` + 12 привилегированных мостов, toolbar привязан к view, meeting-capture fail-closed (`bb307b9f5`). |
+| SEC-04 | ✅ env-шов `CRAFT_SIYUAN_PLUGIN_FIXTURE_JSON` удалён (ничего не использовало), регресс-тест (`a7359e474`). |
+| SEC-03 | ⛔ **осознанно откатано**: `entities:resolve` легитимно обслуживает несколько воркспейсов (`entities-reviewer-fixes.test.ts:75-95`), а неизвестный id обязан оставаться «Workspace not found». Сплошной guard дал ровно 5 контрактных регрессий и 0 выигрыша в этих ветках. Нужен пер-хендлерный разбор: guard ПОСЛЕ резолва воркспейса + явные исключения для кросс-воркспейсных чтений. |
+| PERF-04 | ✅ `scripts/check-bundle-size.ts` + `perf-baselines/bundle-size.json` (floor 250 КБ, потолок 2.5 МБ) + блокирующий `bundle-size.yml`; char-loop → замкнутая формула с тестом-оракулом (`5f7b38af8`). |
+| PERF-05 | ⚠️ в основном **STALE**: таблица/канбан/PremiumMenu уже оконные; оконён боковой `SessionList` (opt-in windowing в `EntityList`, измеряемые высоты), 50-строчный довесок удалён (`d97972484`). Осталось неоконным: notes/Knowledge-деревья (только CSS-cull). |
+| PERF-06 | ✅ клиент держит last-known каталог и показывает syncing вместо «No skills configured» (`4af48bd56`). |
+| PERF-08 | ✅ `actions/cache` для `~/.bun/install/cache` (23 install-джоба) и Playwright (4 джоба) в 15 workflow; node_modules не кэшируется (`3dd9260c7`). |
+| PERF-03 | ⏸️ честный минимум (`--strict` на `electron-startup`) осознанно отложен до PERF-01 — комментарий в самом workflow; включать сейчас значит уронить лейн. |
+| TECH-06 | ✅ 4 фикса (мёртвый `native-startup.test.ts` удалён по вердикту, realpath в 4 native-сьютах, стуб `roxExecutions/roxResourceLeases`, vendored-скиллы исключены из `scripts/test-all.ts`): в целевом каталоге 25 → 5 падений (`78ead1093`). |
+| DOC-02 | ⚠️ **STALE-частично**: `.env.example` существовал; обновлён (убраны нечитаемые ключи, добавлены реально читаемые, указатель на `CONTRIBUTING.md`; только имена, без значений) (`5f0b37fd3`). |
+| DEP-01/02 | ⏸️ анализ записан: Electron 39.2.7 вне поддержки (4 открытых High), Playwright 1.49.1; апгрейд — отдельный изолированный коммит (2 литерала + lock), вне этого раунда. |
+
+Дополнительно найдено и зафиксировано (не чинилось): локальный прогон `packages/server-core/src/handlers/rpc/__tests__`
+под bun 1.4.2 даёт 2 pre-existing `SyntaxError: applyTrustedHttpHeader` и 5 падений, которых нет в CI
+(bun 1.3.14) — кандидат в продолжение TECH-06.
