@@ -716,6 +716,16 @@ export const RPC_CHANNELS = {
   podcast: {
     /** Podcast generation run; `voice:job` stays for dictation/ASR (§5.1, D13). */
     JOB: 'podcast:job',
+    /** Start a local generation run (scenario → segment TTS → ffmpeg mixdown). */
+    START: 'podcast:start',
+    /** Cancel the active local generation run; a partial mixdown is never published. */
+    CANCEL: 'podcast:cancel',
+    /** List generated episodes of a project from the audio index + manifest. */
+    EPISODES: 'podcast:episodes',
+    /** Frame-aligned read of an episode's mp3 (player + export). */
+    AUDIO: 'podcast:audio',
+    /** A `data:` URL for the player when the episode fits a single message. */
+    AUDIO_URL: 'podcast:audioUrl',
   },
   environment: {
     GET: 'environment:get',

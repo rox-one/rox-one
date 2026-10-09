@@ -64,6 +64,11 @@ export type {
 } from '@rox/shared/keeper'
 import type { RoxAccountSnapshot } from '@rox/shared/auth'
 import type { TtsStreamChunk, VoiceWakeTrigger } from '@rox/shared/voice'
+import type {
+  PodcastCancelInput, PodcastCancelResult, PodcastEpisodeAudioChunk, PodcastEpisodeAudioInput,
+  PodcastEpisodeAudioUrlInput, PodcastEpisodeAudioUrlResult, PodcastEpisodesInput, PodcastEpisodesResult,
+  PodcastJob, PodcastStartInput, PodcastStartResult,
+} from '@rox/shared/voice'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -2329,6 +2334,14 @@ export interface ElectronAPI {
   processVoiceTranscript(payload: { text: string }): Promise<unknown>
   listVoiceModels(): Promise<{ families: string[]; catalog: unknown[] }>
   onVoiceJob(callback: (job: import('@rox/shared/voice').VoiceJob) => void): () => void
+  // Podcast (D13): the pipeline runs in the local server; the renderer follows
+  // `podcast:job` and reads episode audio through the frame reader.
+  startPodcast(input: PodcastStartInput): Promise<PodcastStartResult>
+  cancelPodcast(input: PodcastCancelInput): Promise<PodcastCancelResult>
+  podcastEpisodes(input: PodcastEpisodesInput): Promise<PodcastEpisodesResult>
+  readPodcastEpisodeAudio(input: PodcastEpisodeAudioInput): Promise<PodcastEpisodeAudioChunk>
+  podcastEpisodeAudioUrl(input: PodcastEpisodeAudioUrlInput): Promise<PodcastEpisodeAudioUrlResult>
+  onPodcastJob(callback: (job: PodcastJob) => void): () => void
   onVoiceOverlay(callback: (state: import('@rox/shared/voice').OverlayState) => void): () => void
   publishVoiceLevel?(level: number): void
   onVoiceHotkey(callback: (payload: import('@rox/shared/voice/hotkey-types').VoiceHotkeyPayload) => void): () => void

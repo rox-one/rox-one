@@ -49,6 +49,7 @@ import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
 import { registerCodeIntelligenceHandlers } from './code-intelligence'
 import { registerDevSpaceHandlers, DEFAULT_ENVIRONMENT as DEV_SPACE_DEFAULT_ENVIRONMENT, type HandlerEnvironment as DevSpaceHandlerEnvironment } from './dev-space'
+import { registerPodcastHandlers, DEFAULT_ENVIRONMENT as PODCAST_DEFAULT_ENVIRONMENT, type HandlerEnvironment as PodcastHandlerEnvironment } from '../../playbooks/jobs.ts'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
@@ -117,6 +118,12 @@ export interface CoreRpcRegistrationOptions {
    * its credential fabric; without it dev-space stays a public-only host.
    */
   devSpace?: Partial<DevSpaceHandlerEnvironment>
+  /**
+   * Optional podcast environment. The host composes the scenario model connector
+   * and may substitute the synthesizer; without a connector, `podcast:start`
+   * honestly answers `connector-unavailable` instead of inventing a script.
+   */
+  podcast?: Partial<PodcastHandlerEnvironment>
 }
 
 export function registerCoreRpcHandlers(
@@ -164,6 +171,8 @@ export function registerCoreRpcHandlers(
   registerDevSpaceHandlers(server, deps, options?.devSpace
     ? { ...DEV_SPACE_DEFAULT_ENVIRONMENT, ...options.devSpace }
     : DEV_SPACE_DEFAULT_ENVIRONMENT)
+  // Podcast (D13) — local render pipeline; the scenario connector is host-composed.
+  registerPodcastHandlers(server, deps, { ...PODCAST_DEFAULT_ENVIRONMENT, ...options?.podcast })
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
