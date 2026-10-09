@@ -6,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
+import { COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue, type CommandType } from '@rox/core/commands'
 import { COMMAND_PAYLOAD_SCHEMAS } from '@rox/shared/domain'
 import { InMemoryCommandStore } from '../../commands/store'
 import { COMMAND_MODULES, boundCommandTypes } from '../../commands/registry'
@@ -37,7 +37,7 @@ const EPHEMERAL_COMMANDS: ReadonlySet<string> = new Set(['presence.heartbeat', '
  * exist. Every assertion below pins this list to what the registry reports, so
  * lifting the deferral fails this suite instead of shrinking it silently.
  */
-const XFN_DEFERRED_TYPES: readonly string[] = ['decisions.create', 'tables.insert_row']
+const XFN_DEFERRED_TYPES: readonly CommandType[] = ['decisions.create', 'tables.insert_row']
 
 /**
  * Types the domain payload-schema map does not cover yet: W1-15's two XFN names,
