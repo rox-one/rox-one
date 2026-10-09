@@ -7,9 +7,12 @@
  * can construct an isolated engine with `createLocalDrive` (or re-compose the
  * import engine with `composeDriveImportEngine({ force: true })`).
  *
- * Cloud import needs an S3-compatible destination (`ROX_DRIVE_S3_*`). When that
- * is absent the import engine is left uncomposed so `drive:import*` answers
- * `UNSUPPORTED_OPERATION` honestly instead of failing per file at runtime.
+ * Cloud import needs an S3-compatible destination, resolved from
+ * `ROX_DRIVE_S3_*` in the process env first and then from the operator file
+ * `<configDir>/drive-s3.env` (the packaged app never sees shell env). When
+ * neither is present the import engine is left uncomposed so `drive:import*`
+ * answers `UNSUPPORTED_OPERATION` honestly instead of failing per file at
+ * runtime.
  */
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -22,7 +25,12 @@ import {
 import { createOneDriveProvider } from '@rox/shared/drive/importers/providers/onedrive'
 import { createYandexDiskProvider } from '@rox/shared/drive/importers/providers/yandex-disk'
 import { createICloudProvider } from '@rox/shared/drive/importers/providers/icloud'
-import type { ImportJobRunner } from '@rox/shared/drive/importers'
+import {
+  createS3UploadTarget,
+  loadEnvFile,
+  s3TargetOptionsFromEnv,
+  type ImportJobRunner,
+} from '@rox/shared/drive/importers'
 import { createLocalDrive } from './local-drive'
 
 export interface CreateDriveServiceOptions {
@@ -56,10 +64,16 @@ export function composeDriveImportEngine(options: CreateDriveServiceOptions = {}
       clientSecret: process.env.ROX_YANDEX_CLIENT_SECRET,
     }))
     registerImportProvider(createICloudProvider())
+    // Env first (dev/server), then the operator file the packaged app can read
+    // even though it never sees the shell environment.
+    const direct = s3TargetOptionsFromEnv(process.env)
+    const fromFile = direct ? null : s3TargetOptionsFromEnv(loadEnvFile(join(configDir, 'drive-s3.env')))
+    const options = direct ?? fromFile
     return configureDriveImport({
       stateDir: join(configDir, 'drive', 'imports'),
       concurrency: 4,
       maxAttempts: 3,
+      target: options ? createS3UploadTarget(options) : undefined,
     })
   } catch (error) {
     // No ROX_DRIVE_S3_* target (or a bad one): leave imports uncomposed so the
