@@ -396,8 +396,9 @@ export function getSystemPrompt(
 
   // Optional self-learning memory (injected directly after the project memory block):
   // curated bootstrap docs, pre-formatted lesson corrections, workspace memory,
-  // and retrieved source docs.
-  const memoryInjection = `${memoryBlocks?.bootstrapBlock ?? ''}${memoryBlocks?.lessonsBlock ?? ''}${memoryBlocks?.memoryBlock ?? ''}${memoryBlocks?.sourcesBlock ?? ''}`;
+  // retrieved source docs, c1.5 recall lanes and c1.6 standing intents. This is
+  // the single injection path — recall/intents must not add a second one.
+  const memoryInjection = `${memoryBlocks?.bootstrapBlock ?? ''}${memoryBlocks?.lessonsBlock ?? ''}${memoryBlocks?.memoryBlock ?? ''}${memoryBlocks?.sourcesBlock ?? ''}${memoryBlocks?.recallBlock ?? ''}${memoryBlocks?.intentBlock ?? ''}`;
 
   // Fall back to the user's current preference when callers don't pin/pass a value,
   // so forgetting the argument can't silently re-enable the co-author trailer (see #576).
