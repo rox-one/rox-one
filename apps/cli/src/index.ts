@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * craft-cli — Terminal client for the Rox server.
+ * rox — Terminal client for the Rox server.
  *
  * Connects over WebSocket (ws:// or wss://) to a running Rox server
  * and provides commands for listing resources, managing sessions, sending
@@ -11,6 +11,7 @@ import { resolve } from 'path'
 import { formatTypedErrorForCli } from '@rox/shared/agent'
 import { getEnv } from '@rox/shared/config'
 import { CliRpcClient } from './client.ts'
+import { runKeeperCommand } from './keeper.ts'
 
 export function formatCliSessionError(ev: { type: string; error?: unknown }): string | null {
   if (ev.type === 'typed_error') {
@@ -89,7 +90,14 @@ export function parseArgs(argv: string[]): CliArgs {
     const arg = args[i]
     switch (arg) {
       case '--url':
-        url = args[++i] ?? ''
+        // `keeper` owns its own `--url` (the login/website URL). Once the
+        // command is `keeper`, keep `--url` in the tail for keeper parsing;
+        // the server URL then has to precede the command.
+        if (command === 'keeper') {
+          rest.push(arg, args[++i] ?? '')
+        } else {
+          url = args[++i] ?? ''
+        }
         break
       case '--token':
         token = args[++i] ?? ''
@@ -1533,7 +1541,7 @@ export function getValidateSteps(): ValidateStep[] {
 mkdir -p "${skillDir}" && cat > "${skillDir}/SKILL.md" << 'SKILLEOF'
 ---
 name: "CLI Validate Skill"
-description: "Validation skill created by craft-cli"
+description: "Validation skill created by rox"
 requiredSources:
   - "${sourceSlug}"
 ---
@@ -2052,9 +2060,9 @@ export async function runValidation(
 // ---------------------------------------------------------------------------
 
 function printHelp(): void {
-  process.stdout.write(`craft-cli — Terminal client for the Rox server
+  process.stdout.write(`rox — Terminal client for the Rox server
 
-Usage: craft-cli [options] <command> [args...]
+Usage: rox [options] <command> [args...]
 
 Connection:
   --url <ws[s]://...>    Server URL (default: $CRAFT_SERVER_URL)
@@ -2094,6 +2102,14 @@ Commands:
   cancel <id>            Cancel in-progress processing
   invoke <channel> [...] Raw RPC call with JSON args
   listen <channel>       Subscribe to push events (Ctrl+C to stop)
+  keeper list [--folder <name>] [--json]
+                         List vault items (secrets always masked)
+  keeper get <id> [--reveal] [--field password|totp]
+                         Show one item; --reveal needs ROX_KEEPER_ALLOW_REVEAL=1
+  keeper create --title <t> [--username --password --url --notes --folder --totp]
+                         Create an item (secrets may be piped via stdin)
+  keeper delete <id>     Delete an item
+  keeper status          Vault unlock/availability status
   migrate-config         Move ~/.rox to ~/rox (MIG-13, never deletes)
                          --dry-run       Preview only, write nothing
                          --revert        Move ~/rox back to ~/.rox (refused
@@ -2106,21 +2122,21 @@ Commands:
                          --verbose, -v       Show server stderr output
 
 Examples:
-  craft-cli run "What files are in the current directory?"
-  craft-cli run --source craft-kb "Summarize today's daily note"
-  craft-cli run --workspace-dir .github/agents --source craft-public "Read the doc"
-  craft-cli run --provider openai --model gpt-4o "Summarize this repo"
-  OPENAI_API_KEY=sk-... craft-cli run --provider openai "Hello"
-  GOOGLE_API_KEY=... craft-cli run --provider google --model gemini-2.0-flash "Hello"
-  DEEPSEEK_API_KEY=sk-... craft-cli run --provider deepseek --model deepseek-v4-flash "Hello"
-  echo "Analyze this code" | craft-cli run
-  craft-cli ping
-  craft-cli sessions
-  craft-cli send abc-123 "What files are in the current directory?"
-  echo "Summarize this" | craft-cli send abc-123
-  craft-cli --validate-server
-  craft-cli invoke system:homeDir
-  craft-cli --json workspaces | jq '.[].name'
+  rox run "What files are in the current directory?"
+  rox run --source craft-kb "Summarize today's daily note"
+  rox run --workspace-dir .github/agents --source craft-public "Read the doc"
+  rox run --provider openai --model gpt-4o "Summarize this repo"
+  OPENAI_API_KEY=sk-... rox run --provider openai "Hello"
+  GOOGLE_API_KEY=... rox run --provider google --model gemini-2.0-flash "Hello"
+  DEEPSEEK_API_KEY=sk-... rox run --provider deepseek --model deepseek-v4-flash "Hello"
+  echo "Analyze this code" | rox run
+  rox ping
+  rox sessions
+  rox send abc-123 "What files are in the current directory?"
+  echo "Summarize this" | rox send abc-123
+  rox --validate-server
+  rox invoke system:homeDir
+  rox --json workspaces | jq '.[].name'
 `)
 }
 
@@ -2232,6 +2248,11 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       case 'invoke':
         await cmdInvoke(client, args)
         break
+      case 'keeper': {
+        const code = await runKeeperCommand(client, { rest: args.rest, json: args.json })
+        if (code !== 0) process.exit(code)
+        break
+      }
       case 'listen':
         await cmdListen(client, args)
         break // never returns

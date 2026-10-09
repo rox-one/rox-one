@@ -6,7 +6,7 @@
  * - Registers minimal resource providers (sessions/settings/skills/sources/knowledge/automations)
  * - knowledge.search / knowledge.openHome / knowledge.openCompat (+ siyuan.openCompat)
  * - conation.openFund / conation.openBoard (when workbench.conation.* flags on)
- * - Soft-load enabled L2+ SiYuan plugin bridge commands (fail-soft if API absent)
+ * - Soft-load enabled L2+ Rox Notes plugin bridge commands (fail-soft if API absent)
  *
  * Called once from OmniboxHost on mount. Safe to call multiple times (idempotent).
  */
@@ -27,7 +27,7 @@ import {
   sessionMetaMapAtom,
   windowWorkspaceIdAtom,
 } from '@/atoms/sessions'
-import { skillsAtom } from '@/atoms/skills'
+import { skillsAtom, skillsSyncingAtom } from '@/atoms/skills'
 import { sourcesAtom } from '@/atoms/sources'
 import { automationsAtom } from '@/atoms/automations'
 import { navigate, routes } from '@/lib/navigate'
@@ -48,6 +48,7 @@ import {
 } from './omnibox-providers'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import { registerConationOmniboxCommands } from './omnibox-conation'
+import { registerClipboardHistoryOmniboxCommands } from './omnibox-clipboard-history'
 // W1-07 (#1504): entity provider (inert until a flagged source registers).
 import { createEntityOmniboxProvider } from './omnibox-entities'
 import { currentShellFlags } from './unified-flags'
@@ -99,6 +100,7 @@ export function bootstrapOmnibox(options?: { t?: LabelResolver }): OmniboxPlatfo
 
   registerActionCommands(p.commands)
   registerKnowledgeCommands(p.commands)
+  registerClipboardHistoryCommands(p.commands)
   registerConationCommands(p.commands, options?.t)
   registerResourceProviders(p.resources, options?.t)
   // Fail-soft: never block palette bootstrap if plugin bridge is missing.
@@ -249,7 +251,8 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
   }
   const openCompatAlias: CommandContribution = {
     id: 'siyuan.openCompat',
-    title: i18n.t('siyuan.openCompat'),
+    // Compat command id stays; the title reuses the surviving knowledge.openCompat key.
+    title: i18n.t('knowledge.openCompat'),
     category: i18n.t('sidebar.knowledge'),
     source: 'craft',
     keywords: ['siyuan', 'compat', 'full', 'interface', 'plugin'],
@@ -264,6 +267,19 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
     track(commands.register(openCompatAlias))
   } catch (err) {
     console.error('[omnibox] failed to register knowledge commands', err)
+  }
+}
+
+function registerClipboardHistoryCommands(commands: CommandRegistry): void {
+  try {
+    for (const d of registerClipboardHistoryOmniboxCommands(commands, {
+      title: i18n.t('clipboard.title'),
+      category: i18n.t('clipboard.title'),
+    })) {
+      track(d)
+    }
+  } catch (err) {
+    console.error('[omnibox] failed to register clipboard history commands', err)
   }
 }
 
@@ -375,7 +391,7 @@ async function refreshPluginBridgeCommands(commands: CommandRegistry): Promise<v
             contributions.push({
               id,
               title: cmd.title,
-              category: i18n.t('omnibox.category.siyuanPlugin'),
+              category: i18n.t('omnibox.category.notesPlugin'),
               // Domain lands `siyuan-plugin` on the source union; cast keeps bootstrap green either way.
               source: 'siyuan-plugin' as CommandContribution['source'],
               when: cmd.when,
@@ -471,6 +487,9 @@ function registerResourceProviders(
       createSkillsProvider(
         () => store.get(skillsAtom),
         (slug) => routes.view.skills(slug),
+        // Pending-sync probe: a still-syncing catalog is not authoritative, so
+        // the omnibox must not present an empty skills list as "no skills".
+        () => store.get(skillsSyncingAtom),
       ),
     ),
   )

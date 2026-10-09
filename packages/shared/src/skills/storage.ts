@@ -293,7 +293,30 @@ export function loadWorkspaceSkills(workspaceRoot: string): LoadedSkill[] {
 // The result rarely changes during a session, so we cache it per
 // (workspaceRoot, projectRoot) pair with a 5-minute safety TTL.
 
-const skillsCache = new Map<string, { skills: LoadedSkill[]; ts: number }>();
+/**
+ * The craft-tier scans a single catalog walk performs, in raw discovery order
+ * (app-managed links are still present and filtered by the consumer). Cached
+ * alongside the merged catalog so a collision-enabled eligibility pass reuses
+ * the SAME walk instead of re-scanning every tier.
+ */
+export interface CraftTierScans {
+  /** Raw `~/.agents/skills` scan (before the app-managed exclusion). */
+  global: LoadedSkill[];
+  /** Raw app-managed store scan. */
+  appManaged: LoadedSkill[];
+  /** `{workspace}/skills` scan. */
+  workspace: LoadedSkill[];
+  /** `{project}/.agents/skills` scan, empty when no project root. */
+  project: LoadedSkill[];
+}
+
+interface SkillsCacheEntry {
+  skills: LoadedSkill[];
+  scans: CraftTierScans;
+  ts: number;
+}
+
+const skillsCache = new Map<string, SkillsCacheEntry>();
 const SKILLS_CACHE_TTL = 5 * 60_000; // 5 minutes
 
 /** Dot-dir under the application skill store holding per-pack sync state. */
@@ -400,6 +423,20 @@ export function getSkillRootPlan(workspaceRoot: string, projectRoot?: string): S
 }
 
 export function loadAllSkills(workspaceRoot: string, projectRoot?: string, options?: LoadAllSkillsOptions): LoadedSkill[] {
+  return loadAllSkillsWithTierScans(workspaceRoot, projectRoot, options).skills;
+}
+
+/**
+ * Catalog walk that ALSO returns the raw per-tier craft scans it performed.
+ * Collision detection over the ordered root plan needs those scans; returning
+ * them from the same walk (and caching them together) means a collision-enabled
+ * eligibility pass performs ONE full-store walk instead of two.
+ */
+export function loadAllSkillsWithTierScans(
+  workspaceRoot: string,
+  projectRoot?: string,
+  options?: LoadAllSkillsOptions,
+): { skills: LoadedSkill[]; scans: CraftTierScans } {
   // Default false: callers embedding skills into agent context (base-agent,
   // SessionManager) must NOT inherit thousands of OMP skills. Panel/RPC code
   // passes includeOmp: true explicitly.
@@ -411,7 +448,7 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
   const now = Date.now();
   const cached = skillsCache.get(cacheKey);
   if (cached && now - cached.ts < SKILLS_CACHE_TTL) {
-    return cached.skills;
+    return { skills: cached.skills, scans: cached.scans };
   }
 
   const skillsBySlug = new Map<string, LoadedSkill>();
@@ -448,7 +485,8 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
   const workspaceSkills = loadWorkspaceSkills(workspaceRoot);
   const projectSkills = projectRoot ? loadSkillsFromDir(join(projectRoot, PROJECT_AGENT_SKILLS_DIR), 'project') : [];
   // 1. Foreign global skills (lowest craft priority): ~/.agents/skills/.
-  for (const skill of loadSkillsFromDir(GLOBAL_AGENT_SKILLS_DIR, 'global')) {
+  const globalSkills = loadSkillsFromDir(GLOBAL_AGENT_SKILLS_DIR, 'global');
+  for (const skill of globalSkills) {
     // Application links are discovered through their canonical directory below.
     // This also keeps disabled bundles hidden when a foreign skill required a link alias.
     if (isInsideSkillStore(skill.path, APP_MANAGED_SKILLS_DIR)) continue;
@@ -479,8 +517,9 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
   for (const skill of projectSkills) mergeCraftSkill(skill);
 
   const result = [...skillsBySlug.values(), ...shadowedOmp];
-  skillsCache.set(cacheKey, { skills: result, ts: now });
-  return result;
+  const scans: CraftTierScans = { global: globalSkills, appManaged: applicationSkills, workspace: workspaceSkills, project: projectSkills };
+  skillsCache.set(cacheKey, { skills: result, scans, ts: now });
+  return { skills: result, scans };
 }
 
 /**

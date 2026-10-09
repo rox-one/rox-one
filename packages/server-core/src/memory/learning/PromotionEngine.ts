@@ -44,7 +44,12 @@ export interface PromotionEngineDeps {
   audit?: LearningAudit
   thresholds?: LearningPromotionThresholds
   clock?: () => number
-  emit?: (evt: { workspaceId: string; kind: string; id: string }) => void
+  /**
+   * Durable-target change hook. `scope` is carried only for a target that lands
+   * in the GLOBAL bank ('global'); workspace targets omit it and stay
+   * backward-compatible for existing emitters.
+   */
+  emit?: (evt: { workspaceId: string; kind: string; id: string; scope?: 'global' }) => void
 }
 
 /** Statuses from which a promotion attempt is meaningful (state machine §34). */
@@ -103,10 +108,17 @@ export class PromotionEngine {
         target: mutation.targetId,
         detail: `${candidate.type} ${candidate.id} scope=${candidate.scope} approval=${opts.approval} confidence=${candidate.confidence} evidence=${this.resolvedEvidenceCount(active)}/${active.evidence.length}`,
       })
-      this.deps.emit?.({ workspaceId: opts.workspaceId, kind: 'promotion', id: active.id })
+      this.deps.emit?.({
+        workspaceId: opts.workspaceId,
+        kind: 'promotion',
+        id: active.id,
+        ...(mutation.targetType === 'lesson' && asRecord(mutation.after)?.scope === 'global'
+          ? { scope: 'global' as const }
+          : {}),
+      })
       return { promoted: true, status: 'active', mutations: [mutation] }
     } catch (error) {
-      for (const mutation of applied) this.revertApplied(mutation)
+      for (const mutation of applied) this.revertApplied(mutation, opts.workspaceId)
       return refuse(error instanceof Error ? error.message : String(error))
     }
   }
@@ -198,7 +210,7 @@ export class PromotionEngine {
   }
 
   /** Best-effort undo of a target whose promotion failed mid-flight. */
-  private revertApplied(mutation: LearningMutation): void {
+  private revertApplied(mutation: LearningMutation, workspaceId: string): void {
     try {
       const after = asRecord(mutation.after)
       if (mutation.targetType === 'lesson') {
@@ -219,6 +231,14 @@ export class PromotionEngine {
     } catch {
       // best-effort
     }
+    this.deps.emit?.({
+      workspaceId,
+      kind: 'rollback',
+      id: mutation.candidateId,
+      ...(mutation.targetType === 'lesson' && asRecord(mutation.after)?.scope === 'global'
+        ? { scope: 'global' as const }
+        : {}),
+    })
   }
 
   /** Evidence rows actually present in the store (traceability breadcrumb for the audit line). */

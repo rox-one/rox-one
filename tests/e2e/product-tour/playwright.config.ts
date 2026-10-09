@@ -25,7 +25,9 @@ export default defineConfig({
     command: 'bun scripts/product-tour/serve-application.ts',
     cwd: repository,
     url: 'http://127.0.0.1:5269',
-    timeout: 120_000,
+    // The accepted route builds the whole renderer before the server answers;
+    // that build alone runs ~2 minutes cold and slower on CI runners.
+    timeout: 600_000,
     reuseExistingServer: false,
   },
   projects: [

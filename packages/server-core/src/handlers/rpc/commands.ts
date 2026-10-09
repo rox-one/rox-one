@@ -12,6 +12,7 @@
  * answers `{ enabled: false, commands: [] }`.
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import { isCommandBusEnabled } from '@rox/shared/feature-flags'
@@ -24,6 +25,7 @@ import {
   type CommandReceipt,
   type CommandRegistry,
   type ExecutionAuthority,
+  CommandRejection,
 } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
@@ -37,6 +39,13 @@ import { SqliteCommandStore } from '../../commands/local-store.ts'
 import { CommandStoreUnavailable, type CommandStore } from '../../commands/store.ts'
 import { createWiredCommandRegistry } from '../../commands/registry.ts'
 import { getCommandBusFlags } from '../../commands/flags.ts'
+// W1-12 (#1509)
+import { createLocalRulesWiring } from '../../rules/wiring.ts'
+import { isAgentsAutonomyEnabled } from '@rox/shared/feature-flags'
+import { agentsGovernanceChain } from '../../agents/governance-install.ts'
+import { getAgentsRuntime } from '../../agents/runtime.ts'
+import { configureReferenceRuntime, type ReferenceRuntime } from '../../work/reference/module.ts'
+import { personalTasksStore } from './personal-tasks.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.commands.EXECUTE, RPC_CHANNELS.commands.LIST] as const
 
@@ -56,8 +65,20 @@ export interface CommandsHandlerRuntime {
   authorizer?: Authorizer
   /** Workspace-authority sink (host wires `WorkspaceCommandSync` when the workspace is shared). */
   workspaceSink?: (workspaceId: string) => WorkspaceCommandSink | null
+  /** Unexpected rule-engine errors (background work; never a request failure). */
+  onError?: (error: unknown) => void
   resolveTargetAuthority?: (workspaceId: string, ref: EntityRef) => ExecutionAuthority | undefined
+  /** W1-06 reference-handler runtime overrides (default: workspace root, local PersonalTask store, live flags). */
+  referenceRuntime?: Partial<ReferenceRuntime>
 }
+
+/** Per-`commands:execute` scope: who is executing, and whether the PersonalTask store changed. */
+interface CommandScope {
+  principalScoped: boolean
+  tasksChanged: boolean
+}
+
+const commandScope = new AsyncLocalStorage<CommandScope>()
 
 let sharedRegistry: CommandRegistry | null = null
 let sharedBus: InProcessEventBus | null = null
@@ -90,12 +111,53 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
   const storeFor = runtime.storeFor ?? (workspace => new SqliteCommandStore({ workspaceRoot: workspace.rootPath }))
   const routers = new Map<string, { router: CommandRouter; store: CommandStore }>()
 
+  // W1-12 (#1509): the local domain-rule consumer (`automation.rules.v1`). The
+  // wiring opens one SQLite store per workspace and subscribes only once the
+  // flag is on, so a flag-off install runs exactly as before.
+  const rules = createLocalRulesWiring({
+    bus,
+    workspaceFor,
+    dispatchFor: workspaceId => {
+      const workspace = workspaceFor(workspaceId)
+      if (!workspace) return null
+      return input => routerFor(workspace).route(input)
+    },
+    enabledWorkbenchFlags: flags,
+    isFlagEnabled: flag => flags()?.has(flag) === true,
+    ...(runtime.onError ? { onError: runtime.onError } : {}),
+  })
+
+  // W1-06: reference handlers write `{workspaceRoot}/work/` and the PersonalTask v3 store on the local authority.
+  const pushTasksChanged = () => pushTyped(server, RPC_CHANNELS.personalTasks.CHANGED, { to: 'all' }, { at: Date.now() })
+  const taskStore = runtime.referenceRuntime?.personalTaskStore ?? (() => personalTasksStore())
+  const restoreReferenceRuntime = configureReferenceRuntime({
+    workspaceRoot: id => workspaceFor(id)?.rootPath ?? null,
+    isFlagEnabled: flag => flags()?.has(flag) === true,
+    ...runtime.referenceRuntime,
+    personalTaskStore: id => {
+      // A principal-scoped session (remote / headless client) owns a native per-scope task store
+      // (`NativePersonalTasksStore`, a different API): its task commands are not on the bus yet.
+      // The other local commands still run; nothing is written to the device owner's store.
+      if (commandScope.getStore()?.principalScoped) throw new CommandRejection('UNAVAILABLE', 'Personal tasks of a principal-scoped session are not available on the command bus yet')
+      return taskStore(id)
+    },
+    // A task / list written through the bus (or a MIG-05 placement) lands in the PersonalTask store:
+    // refresh the Tasks UI like personalTasks:put does, once, after the command finished.
+    personalTasksChanged: () => {
+      const scope = commandScope.getStore()
+      if (scope) scope.tasksChanged = true
+      else pushTasksChanged()
+    },
+  })
+
   const unsubscribe = bus.subscribe((workspaceId, frame) => {
     const event: CommandBusPushEvent = { kind: 'realtime', frame }
     pushTyped(server, RPC_CHANNELS.commands.EVENT, { to: 'workspace', workspaceId }, workspaceId, event)
   })
   server.onShutdown?.(() => {
     unsubscribe()
+    rules.close()
+    restoreReferenceRuntime()
     for (const { store } of routers.values()) {
       try { void store.close?.() } catch { /* best effort */ }
     }
@@ -122,6 +184,15 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
         publish: events => { bus.publish(events) },
         ...(runtime.authorizer ? { authorizer: runtime.authorizer } : {}),
       })
+      // W1-11 (#1508): the agent governance pipeline (kill switch → audit).
+      // Inert while `agents.autonomy.v1` is off and for every non-agent command.
+      const governance = agentsGovernanceChain({
+        runtime: getAgentsRuntime(),
+        isEnabled: () => isAgentsAutonomyEnabled(flags()),
+        actionContext: pipelineCtx => (pipelineCtx.envelope.target?.kind === 'channel' ? { container: `channel:${pipelineCtx.envelope.target.id}` } : {}),
+        transport: 'ws-rpc',
+      })
+      for (const middleware of governance) local.use(middleware)
       const router = new CommandRouter({
         registry,
         local,
@@ -131,6 +202,8 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
       })
       entry = { router, store }
       routers.set(workspace.id, entry)
+      // W1-12: subscribe this workspace's rule consumer (no-op while the flag is off).
+      rules.attachWorkspace(workspace.id)
     }
     return entry.router
   }
@@ -141,12 +214,15 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
       return rejectedReceipt(typeof id === 'string' && id.length <= 256 ? id : '', 'UNAVAILABLE', 'Command bus is disabled')
     }
     const workspace = requireWorkspace(ctx, workspaceId)
+    const scope: CommandScope = { principalScoped: Boolean(ctx.principal), tasksChanged: false }
     try {
-      return await routerFor(workspace).route({ workspaceId: workspace.id, actor: actorFor(ctx), envelope })
+      return await commandScope.run(scope, () => routerFor(workspace).route({ workspaceId: workspace.id, actor: actorFor(ctx), envelope }))
     } catch (error) {
       // Nothing was committed: a retryable RPC error, never a terminal receipt.
       if (error instanceof CommandStoreUnavailable) throw new CodedError('HANDLER_ERROR', 'Command store unavailable; nothing was committed, retry')
       throw error
+    } finally {
+      if (scope.tasksChanged) pushTasksChanged()
     }
   }, { nativeAction: 'write' })
 

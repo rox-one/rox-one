@@ -1,0 +1,31 @@
+/** W1-06 (#1503) — Every module's reference ops, merged (one per catalogue command). */
+
+import { DOCS_REFERENCE_SPECS, DRIVE_REFERENCE_SPECS, WIKI_REFERENCE_SPECS } from './docs'
+import { GOALS_REFERENCE_SPECS, KPIS_REFERENCE_SPECS, PROJECTS_REFERENCE_SPECS, SPACES_REFERENCE_SPECS } from './goals'
+import { MESSENGER_REFERENCE_SPECS } from './messenger'
+import { TASKS_REFERENCE_SPECS } from './tasks'
+import type { ReferenceSpec, ReferenceSpecMap } from './types'
+import {
+  ACL_REFERENCE_SPECS, AGENTS_REFERENCE_SPECS, CALENDAR_REFERENCE_SPECS, CONTACTS_REFERENCE_SPECS, ENTITIES_REFERENCE_SPECS,
+  IDENTITY_REFERENCE_SPECS, MEETINGS_REFERENCE_SPECS, NOTIFY_REFERENCE_SPECS, SOCIAL_REFERENCE_SPECS, WORKPLACE_REFERENCE_SPECS,
+} from './workspace'
+
+export type { ReferenceSpec, ReferenceSpecMap }
+
+const MODULES: readonly ReferenceSpecMap[] = [
+  ENTITIES_REFERENCE_SPECS, MESSENGER_REFERENCE_SPECS, DOCS_REFERENCE_SPECS, DRIVE_REFERENCE_SPECS, WIKI_REFERENCE_SPECS, TASKS_REFERENCE_SPECS,
+  GOALS_REFERENCE_SPECS, PROJECTS_REFERENCE_SPECS, SPACES_REFERENCE_SPECS, KPIS_REFERENCE_SPECS, CALENDAR_REFERENCE_SPECS, MEETINGS_REFERENCE_SPECS,
+  CONTACTS_REFERENCE_SPECS, SOCIAL_REFERENCE_SPECS, NOTIFY_REFERENCE_SPECS, ACL_REFERENCE_SPECS, IDENTITY_REFERENCE_SPECS, AGENTS_REFERENCE_SPECS,
+  WORKPLACE_REFERENCE_SPECS,
+]
+
+export const REFERENCE_SPECS: ReferenceSpecMap = (() => {
+  const out: Record<string, ReferenceSpec> = {}
+  for (const module of MODULES) {
+    for (const [type, spec] of Object.entries(module)) {
+      if (type in out) throw new Error(`duplicate reference spec: ${type}`)
+      out[type] = spec
+    }
+  }
+  return Object.freeze(out)
+})()

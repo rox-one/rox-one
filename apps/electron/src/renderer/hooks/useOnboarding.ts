@@ -4,15 +4,17 @@
  * Manages the state machine for the onboarding wizard.
  *
  * First run (initialStep 'welcome'):
- * 1. Welcome — the only screen: username + «Начать»
- * 2. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
- * 3. Finish — the Rox runtime becomes the default connection automatically and
+ * 1. Welcome — the name screen («Начать»); collects public handle + organization,
+ *    reserved rox.one addresses, coin bonuses
+ * 2. Questionnaire — bubble clouds (left) and permissions (right); Continue/Skip
+ * 3. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
+ * 4. Finish — the Rox runtime becomes the default connection automatically and
  *    the app opens. There is no provider picker or completion screen.
  *
  * Settings → ИИ (initialStep 'provider-select'): provider picker →
  * credentials / local model → closes as soon as the connection is saved.
  */
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   decideRoxConnectPoll,
@@ -27,8 +29,12 @@ import type {
 } from '@/components/onboarding'
 import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
-import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
+import type { RoxCliCredentialSubmitData } from '@/components/onboarding/RoxCliCredentialStep'
 import { nextStepAfterUsername } from '@/components/onboarding/onboarding-username'
+import type { OnboardingFirstRunState } from '@/components/onboarding/OnboardingWizard'
+import { createRewardLedger, type RewardStorage } from '@/components/onboarding/onboarding-rewards'
+import { createLearningCurve, type LearningCurveStorage } from '@/components/onboarding/learning-curve'
+import { saveFirstRunDraft } from '@/components/onboarding/identity-model'
 import { ensureRoxRuntimeDefault } from '@/components/onboarding/rox-runtime-default'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
@@ -100,7 +106,7 @@ interface UseOnboardingReturn {
 
   // Local model
   handleSubmitLocalModel: (data: LocalModelSubmitData) => void
-  handleSubmitOmpCredential: (data: OmpCredentialSubmitData) => void
+  handleSubmitOmpCredential: (data: RoxCliCredentialSubmitData) => void
   handleStartOAuth: (methodOverride?: ApiSetupMethod, connectionSlugOverride?: string) => void
 
   // Claude OAuth (two-step flow)
@@ -145,6 +151,12 @@ export const BASE_SLUG_FOR_METHOD: Record<ApiSetupMethod, string> = {
   pi_copilot_oauth: 'github-copilot',
   pi_api_key: 'pi-api-key',
 }
+
+/** localStorage in the renderer; a no-op stub when a storage-less host runs the hook. */
+const firstRunStorage = typeof localStorage !== 'undefined' ? localStorage : null
+const FIRST_RUN_REWARD_STORAGE: RewardStorage = firstRunStorage ?? { getItem: () => null, setItem: () => {} }
+const FIRST_RUN_LEARNING_STORAGE: LearningCurveStorage = firstRunStorage ?? { getItem: () => null, setItem: () => {} }
+const FIRST_RUN_DRAFT_STORAGE = firstRunStorage ?? undefined
 
 /**
  * Generate a unique slug for a new connection.
@@ -273,6 +285,20 @@ export function useOnboarding({
   })
   const firstRunFinishInFlight = useRef(false)
 
+  // The shared reward ledger. Exposed through `state.firstRun` so the wizard
+  // (mounted by App with `state`) can render the questionnaire screen without
+  // new wizard props at the call site.
+  const firstRunRewards = useMemo(
+    () => createRewardLedger({ storage: FIRST_RUN_REWARD_STORAGE }),
+    [],
+  )
+  const firstRunState = useMemo<OnboardingFirstRunState>(
+    () => ({
+      rewards: firstRunRewards,
+    }),
+    [firstRunRewards],
+  )
+
   // A cloud connection is optional unless the startup caller and server both
   // explicitly request a launch gate.
   useEffect(() => {
@@ -281,13 +307,13 @@ export function useOnboarding({
     }
   }, [initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
 
-  // Seeded OMP connection without ~/.omp models / Rox key — one credential step.
+  // Seeded Rox CLI connection without ~/.omp models / Rox key — one credential step.
   // First run never stops on it: the name screen leads straight into the app and
   // the Rox key can be added later in Settings → ИИ.
   useEffect(() => {
     if (isFirstRun) return
     if (initialSetupNeeds?.needsOmpCredential && !initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'omp-credential' || s.step === 'welcome' ? s : { ...s, step: 'omp-credential' }))
+      setState(s => (s.step === 'rox-cli-credential' || s.step === 'welcome' ? s : { ...s, step: 'rox-cli-credential' }))
     }
   }, [initialSetupNeeds?.needsOmpCredential, initialSetupNeeds?.needsRoxCloud, isFirstRun])
 
@@ -395,6 +421,19 @@ export function useOnboarding({
     if (firstRunFinishInFlight.current) return
     firstRunFinishInFlight.current = true
     setState(s => ({ ...s, isFinishing: true, errorMessage: undefined }))
+    // Flush the first-run ledger and mark the draft complete before the app
+    // opens. The identity is persisted by the welcome screen itself; the
+    // questionnaire/permissions draft is written by the wizard as it leaves the
+    // questionnaire step.
+    for (const entry of firstRunRewards.entries()) {
+      if (entry.status === 'pending') firstRunRewards.confirmStep(entry.stepId)
+    }
+    saveFirstRunDraft(FIRST_RUN_DRAFT_STORAGE, { completed: true })
+    createLearningCurve({ storage: FIRST_RUN_LEARNING_STORAGE }).trackLearningEvent({
+      name: 'result',
+      stepId: 'full-onboarding',
+      source: 'human',
+    })
     const result = await ensureRoxRuntimeDefault(window.electronAPI)
     if (result.status === 'failed') {
       firstRunFinishInFlight.current = false
@@ -411,7 +450,7 @@ export function useOnboarding({
       console.warn('[Onboarding] Could not refresh runtime settings after setup:', error)
     }
     setState(s => ({ ...s, isFinishing: false, step: 'complete', completionStatus: 'complete' }))
-  }, [onConfigSaved, t])
+  }, [onConfigSaved, t, firstRunRewards])
 
   // Continue to next step
   const handleContinue = useCallback(async () => {
@@ -420,7 +459,13 @@ export function useOnboarding({
         // Handled by handleSelectProvider (card click navigates directly)
         break
 
-      case 'welcome': {
+      case 'welcome':
+        // First run: the welcome screen itself collects the public identity
+        // (nickname, organization, coins); the two-column questionnaire follows.
+        setState(s => ({ ...s, step: 'questionnaire' }))
+        break
+
+      case 'questionnaire': {
         const next = nextStepAfterUsername({
           applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
           gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
@@ -470,6 +515,9 @@ export function useOnboarding({
           onDismiss()
         }
         break
+      case 'questionnaire':
+        setState(s => ({ ...s, step: 'welcome' }))
+        break
       case 'provider-select':
         // If on Windows and Git Bash was needed, go back to git-bash step
         if (state.gitBashStatus?.platform === 'win32' && state.gitBashStatus?.found === false) {
@@ -486,7 +534,7 @@ export function useOnboarding({
       case 'local-model':
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
-      case 'omp-credential':
+      case 'rox-cli-credential':
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
     }
@@ -976,14 +1024,14 @@ export function useOnboarding({
     }
 
     if (choice === 'omp') {
-      // OMP reads auth from ~/.omp/agent. If models/config are missing, stop
+      // Rox CLI reads auth from ~/.omp/agent. If models/config are missing, stop
       // on the single Rox credential step instead of marking setup complete.
       void (async () => {
         const needs = await window.electronAPI.getSetupNeeds()
         if (needs.needsOmpCredential) {
           setState(s => ({
             ...s,
-            step: 'omp-credential',
+            step: 'rox-cli-credential',
             credentialStatus: 'idle',
             errorMessage: undefined,
           }))
@@ -1002,7 +1050,7 @@ export function useOnboarding({
           setState(s => ({
             ...s,
             credentialStatus: 'error',
-            errorMessage: visibleError(result.error, t('onboarding.ompCredential.createFailed')),
+            errorMessage: visibleError(result.error, t('onboarding.roxCliCredential.createFailed')),
           }))
           return
         }
@@ -1012,9 +1060,9 @@ export function useOnboarding({
         } else {
           setState(s => ({
             ...s,
-            step: 'omp-credential',
+            step: 'rox-cli-credential',
             credentialStatus: 'error',
-            errorMessage: visibleError(testResult.error, t('onboarding.ompCredential.testFailed')),
+            errorMessage: visibleError(testResult.error, t('onboarding.roxCliCredential.testFailed')),
           }))
         }
       })()
@@ -1076,7 +1124,7 @@ export function useOnboarding({
     }
   }, [saveAndValidateConnection, editingSlug, existingSlugs, t])
 
-  const handleSubmitOmpCredential = useCallback(async (data: OmpCredentialSubmitData) => {
+  const handleSubmitOmpCredential = useCallback(async (data: RoxCliCredentialSubmitData) => {
     setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
     try {
       const result = await window.electronAPI.saveOmpCredential(data.apiKey)
@@ -1249,7 +1297,7 @@ export function useOnboarding({
   }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, isWaitingForCode])
 
   return {
-    state,
+    state: { ...state, firstRun: firstRunState },
     handleContinue,
     handleBack,
     handleSelectProvider,

@@ -400,7 +400,7 @@ const printReport = (fileCount: number, entryCount: number, docCount: number): v
  * Дрифт-гард: пер-пакетные bunfig.toml обязаны зеркалировать корневой.
  * Bun грузит bunfig только из cwd, поэтому расхождение секций между корнем
  * и пакетами молча меняет поведение локальных прогонов (класс утечки
- * 2026-08-23: тесты из директории пакета писали в живой ~/.craft-agent).
+ * 2026-08-23: тесты из директории пакета писали в живой config dir).
  */
 const parseBunfigPreloads = (text: string): { topLevel: string[]; test: string[] } => {
   const src = text

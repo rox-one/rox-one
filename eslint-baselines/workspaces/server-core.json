@@ -63,7 +63,7 @@
     },
     "@typescript-eslint/no-unused-vars": {
       "severity": "warn",
-      "total": 208
+      "total": 206
     },
     "@typescript-eslint/no-wrapper-object-types": {
       "severity": "warn",
@@ -382,7 +382,7 @@
       "@typescript-eslint/no-unused-vars": 2
     },
     "packages/server-core/src/handlers/rpc/sessions.ts": {
-      "@typescript-eslint/no-unused-vars": 4
+      "@typescript-eslint/no-unused-vars": 2
     },
     "packages/server-core/src/handlers/rpc/sources.ts": {
       "@typescript-eslint/no-unused-vars": 1

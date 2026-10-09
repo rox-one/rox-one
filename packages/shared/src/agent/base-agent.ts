@@ -14,12 +14,14 @@
  */
 
 import { existsSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 
 import type { AgentEvent } from '@rox/core/types';
 import type { FileAttachment } from '../utils/files.ts';
 import { expandPath } from '../utils/paths.ts';
 import { buildTransferredSessionContext } from './conversation-summary.ts';
+import { AgentRunRegistry, type AgentRunTerminalState, type AgentStartHandle } from './agent-run-registry.ts';
 import type { ThinkingLevel } from './thinking-levels.ts';
 import { DEFAULT_THINKING_LEVEL, normalizeThinkingLevel } from './thinking-levels.ts';
 import type { PermissionMode } from './mode-manager.ts';
@@ -218,6 +220,60 @@ export abstract class BaseAgent implements AgentBackend {
   // ============================================================
   protected _pendingSourceActivationRestart: { sourceSlug: string; userMessage: string } | null = null;
   protected _currentTurnUserMessage: string | null = null;
+
+  // ============================================================
+  // Run correlation (f.5): every `startRun` opens one registry entry so the
+  // caller gets its runId immediately and `waitForRun` can block on the terminal
+  // outcome of exactly that run. Transcript appends are fenced on the session's
+  // active writer run id (see SessionManager / TranscriptFence).
+  // ============================================================
+  protected readonly runs = new AgentRunRegistry();
+  private activeRunId: string | null = null;
+
+  /**
+   * Start a turn and return its runId IMMEDIATELY, before any event is produced.
+   * The caller iterates `handle.events`; the registry finishes the run (and
+   * releases `waitForRun` waiters) when the generator completes or throws.
+   * Abandoning the generator without draining it leaves the run open — callers
+   * must consume or abort it.
+   */
+  startRun(message: string, attachments?: FileAttachment[], options?: ChatOptions): AgentStartHandle {
+    const runId = randomUUID();
+    this.runs.begin(runId);
+    this.activeRunId = runId;
+    return { runId, events: this.wrapRun(runId, this.chat(message, attachments, options)) };
+  }
+
+  /** Block until `runId` reaches a terminal state (resolves immediately if already terminal). */
+  waitForRun(runId: string): Promise<AgentRunTerminalState> {
+    return this.runs.wait(runId);
+  }
+
+  /** The runId of the run currently streaming, or null between turns. */
+  currentRunId(): string | null {
+    return this.activeRunId;
+  }
+
+  private async *wrapRun(runId: string, inner: AsyncGenerator<AgentEvent>): AsyncGenerator<AgentEvent> {
+    let status: AgentRunTerminalState['status'] = 'ok';
+    let error: string | undefined;
+    try {
+      for await (const event of inner) {
+        if (event.type === 'error') {
+          status = 'error';
+          error = event.message;
+        }
+        yield event;
+      }
+    } catch (err) {
+      status = err instanceof Error && err.name === 'AbortError' ? 'aborted' : 'error';
+      error = err instanceof Error ? err.message : String(err);
+      throw err;
+    } finally {
+      if (this.activeRunId === runId) this.activeRunId = null;
+      this.runs.finish(runId, status, error);
+    }
+  }
 
   setPendingSourceActivationRestart(pending: { sourceSlug: string; userMessage: string }): void {
     // First-writer-wins under parallel `mcp__session__source_test` calls. The

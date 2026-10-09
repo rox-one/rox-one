@@ -27,12 +27,12 @@ const WAVE_BAR_INDEXES = Array.from({ length: WAVE_BAR_COUNT }, (_, index) => in
 /**
  * Live microphone level wave for the owned overlay.
  *
- * `renderer/components/voice/VoiceLevelWave.tsx` (the in-app meter) is
- * deliberately not imported here: this surface is its own Vite entry
- * (`voice-overlay.html`) with a separate browser fixture that resolves no `@`
- * alias, and the tiny always-on-top pill must stay free of app-only modules.
- * The renderer below is the minimal equivalent, driven by the same normalized
- * RMS (0..1) that the voice host publishes for the real capture.
+ * The composer keeps its own meter (`renderer/lib/voice/level-meter.ts`), but
+ * that module is deliberately not imported here: this surface is its own Vite
+ * entry (`voice-overlay.html`) with a separate browser fixture that resolves no
+ * `@` alias, and the tiny always-on-top pill must stay free of app-only
+ * modules. The renderer below is the minimal equivalent, driven by the same
+ * normalized RMS (0..1) that the voice host publishes for the real capture.
  */
 function OverlayLevelWave({ level, active, label }: { level: number; active: boolean; label: string }) {
   const bars = useRef<Array<HTMLSpanElement | null>>([])

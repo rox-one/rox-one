@@ -1,4 +1,4 @@
-export { startWebuiHttpServer, createWebuiHandler, type WebuiHttpServerOptions, type WebuiHandlerOptions, type WebuiHandler } from './http-server'
+export { startWebuiHttpServer, createWebuiHandler, type WebuiHttpServerOptions, type WebuiHandlerOptions, type WebuiHandler, type MediaTicketRequest, type MediaTicketResponse } from './http-server'
 export { nodeHttpAdapter } from './node-adapter'
 export {
   validateSession,
@@ -17,3 +17,15 @@ export {
   WEBUI_SECURITY_HEADERS,
 } from './csp'
 export { readWebDefaultWorkspace } from './theme-storage'
+export {
+  MEDIA_PATH_PREFIX,
+  MEDIA_TICKET_DEFAULT_TTL_MS,
+  MEDIA_TICKET_MAX_TTL_MS,
+  deriveMediaTicketKey,
+  mediaSessionFingerprint,
+  resolveMediaFile,
+  createMediaTicket,
+  verifyMediaTicket,
+  type MediaTicket,
+  type MediaTicketPayload,
+} from './media-ticket'

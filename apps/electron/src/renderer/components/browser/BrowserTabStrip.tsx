@@ -1,33 +1,20 @@
 /**
  * BrowserTabStrip
  *
- * Rendered in the TopBar, shows compact badges for all active browser instances.
- * Each badge opens a shared action menu.
+ * The browser-instance strip of the TopBar. This file is the container: it
+ * reads the panel stack (to drop embedded panes already open as panels) and the
+ * workspace browser registry, then renders the hook-free `BrowserTabStripView`,
+ * which owns the shared tab primitive (`variant="browser"`, spec D2 / W1.1),
+ * the action menu and the anatomy. See that file for the behaviour contract.
  */
 
-import { useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
-import * as Icons from 'lucide-react'
-import { Spinner } from '@rox/ui'
 import { panelStackAtom } from '@/atoms/panel-stack'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  StyledDropdownMenuContent,
-  StyledDropdownMenuItem,
-  StyledDropdownMenuSubTrigger,
-  StyledDropdownMenuSubContent,
-  StyledDropdownMenuSeparator,
-} from '@/components/ui/styled-dropdown'
-import { BrowserTabBadge } from './BrowserTabBadge'
 import type { BrowserInstanceInfo } from '../../../shared/types'
 import { surfaceTabFromRoute } from '@/platform/layout-snapshot'
-import { getHostname } from './utils'
 import { useWorkspaceBrowserWindows } from './use-workspace-browser-windows'
-
-const DEFAULT_MAX_VISIBLE_BADGES = 3
+import { BrowserTabStripView, DEFAULT_MAX_VISIBLE_BADGES } from './BrowserTabStripView'
 
 interface BrowserTabStripProps {
   activeSessionId?: string | null
@@ -40,7 +27,6 @@ export function BrowserTabStrip({
   instancesOverride,
   maxVisibleBadges = DEFAULT_MAX_VISIBLE_BADGES,
 }: BrowserTabStripProps) {
-  const { t } = useTranslation()
   const panelStack = useAtomValue(panelStackAtom)
   const {
     orderedInstances,
@@ -52,52 +38,6 @@ export function BrowserTabStrip({
     liveWindowActions,
   } = useWorkspaceBrowserWindows({ activeSessionId, instancesOverride })
 
-  const renderBrowserActions = useCallback((instance: BrowserInstanceInfo) => {
-    const targetSessionId = instance.boundSessionId ?? instance.ownerSessionId
-    const canOpenSession = !!targetSessionId
-    const openSessionLabel = instance.agentControlActive
-      ? t('workbench.browser.openSessionUsing')
-      : t('workbench.browser.openSession')
-
-    return (
-      <>
-        <StyledDropdownMenuItem
-          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
-          aria-label={t('workbench.browser.showWindow')}
-          disabled={!liveWindowActions}
-          onSelect={() => focusBrowserWindow(instance)}
-        >
-          <Icons.Monitor className="h-3.5 w-3.5" />
-          {t('workbench.browser.showWindow')}
-        </StyledDropdownMenuItem>
-
-        <StyledDropdownMenuItem
-          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
-          aria-label={openSessionLabel}
-          disabled={!canOpenSession}
-          onSelect={() => openSessionUsingWindow(instance)}
-        >
-          <Icons.PanelRightOpen className="h-3.5 w-3.5" />
-          {openSessionLabel}
-        </StyledDropdownMenuItem>
-
-        <StyledDropdownMenuSeparator />
-
-        <StyledDropdownMenuItem
-          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
-          aria-label={t('workbench.browser.terminate')}
-          variant="destructive"
-          disabled={!liveWindowActions}
-          onSelect={() => terminateBrowserWindow(instance)}
-        >
-          <Icons.XCircle className="h-3.5 w-3.5" />
-          {t('workbench.browser.terminate')}
-        </StyledDropdownMenuItem>
-      </>
-    )
-  }, [t, liveWindowActions, focusBrowserWindow, openSessionUsingWindow, terminateBrowserWindow])
-
-  const visibleBadgeCount = Math.max(1, maxVisibleBadges)
   const openBrowserInstanceIds = useMemo(() => {
     const ids = new Set<string>()
     for (const entry of panelStack) {
@@ -112,70 +52,20 @@ export function BrowserTabStrip({
     () => embeddedInstances.filter((instance) => !openBrowserInstanceIds.has(instance.id)),
     [embeddedInstances, openBrowserInstanceIds],
   )
-  const badgeInstances = useMemo(
+  const instances = useMemo(
     () => [...orderedInstances, ...retainedEmbeddedInstances],
     [orderedInstances, retainedEmbeddedInstances],
   )
-  const visible = useMemo(
-    () => badgeInstances.slice(0, visibleBadgeCount),
-    [badgeInstances, visibleBadgeCount],
-  )
-  const overflow = useMemo(
-    () => badgeInstances.slice(visibleBadgeCount),
-    [badgeInstances, visibleBadgeCount],
-  )
-
-  if (badgeInstances.length === 0) return null
 
   return (
-    <div className="flex min-w-0 items-center gap-1.5">
-      {visible.map((instance) => (
-        <DropdownMenu key={instance.id}>
-          <DropdownMenuTrigger asChild>
-            <BrowserTabBadge
-              instance={instance}
-              isActive={instance.id === activeInstanceId}
-            />
-          </DropdownMenuTrigger>
-          <StyledDropdownMenuContent align="end" minWidth="min-w-56">
-            {renderBrowserActions(instance)}
-          </StyledDropdownMenuContent>
-        </DropdownMenu>
-      ))}
-
-      {overflow.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="min-h-[var(--control-md)] shrink-0 px-1.5 rounded-lg text-[11px] text-text-secondary bg-background shadow-minimal hover:bg-foreground/[0.03] data-[state=open]:bg-[var(--surface-tab-active,var(--foreground-5))] transition-colors cursor-pointer titlebar-no-drag"
-            >
-              +{overflow.length}
-            </button>
-          </DropdownMenuTrigger>
-          <StyledDropdownMenuContent align="end" minWidth="min-w-64">
-            {overflow.map((instance) => {
-              const hostname = getHostname(instance.url)
-              const displayLabel = instance.title.trim() || hostname || t('surfaceTabs.browser')
-              return (
-                <DropdownMenuSub key={instance.id}>
-                  <StyledDropdownMenuSubTrigger>
-                    {instance.isLoading ? (
-                      <Spinner className="text-[10px]" />
-                    ) : (
-                      <Icons.Globe className="h-3.5 w-3.5" />
-                    )}
-                    <span className="truncate">{displayLabel}</span>
-                  </StyledDropdownMenuSubTrigger>
-                  <StyledDropdownMenuSubContent minWidth="min-w-56">
-                    {renderBrowserActions(instance)}
-                  </StyledDropdownMenuSubContent>
-                </DropdownMenuSub>
-              )
-            })}
-          </StyledDropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </div>
+    <BrowserTabStripView
+      instances={instances}
+      activeInstanceId={activeInstanceId}
+      maxVisibleBadges={maxVisibleBadges}
+      liveWindowActions={liveWindowActions}
+      onFocusWindow={focusBrowserWindow}
+      onOpenSession={openSessionUsingWindow}
+      onTerminate={terminateBrowserWindow}
+    />
   )
 }

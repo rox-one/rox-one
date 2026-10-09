@@ -21,7 +21,7 @@ await i18n.use(initReactI18next).init({ lng: 'en', resources: { en: { translatio
 const metrics = { selections: [] as string[], imports: [] as string[], lists: 0, details: [] as string[], clickedAt: 0, detailMs: [] as number[], clicks: [] as string[] }
 document.addEventListener('click', event => {
   const target = event.target as Element
-  if (target.closest('[data-list-role="omp-skills"] li')) metrics.clicks.push(target.textContent ?? '')
+  if (target.closest('[data-list-role="runtime-skills"] li')) metrics.clicks.push(target.textContent ?? '')
 }, true)
 async function rpc(channel: string, workspaceId: string, ...args: unknown[]) {
   const response = await fetch('/qa-rpc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel, workspaceId, args }) })

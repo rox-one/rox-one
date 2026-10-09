@@ -119,6 +119,7 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { GlobalVoiceDictation } from "@/voice/global-dictation"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
@@ -169,12 +170,13 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
@@ -658,7 +660,6 @@ function AppShellContent({
   // (PagesHome pattern); collapse the middle navigator for all five.
   const isPagesView = isPagesNavigation(navState)
   const isTasksView = isTasksNavigation(navState)
-  const isMeetingsView = isMeetingsNavigation(navState)
   const isMemoryView = isMemoryNavigation(navState)
   const isLearningView = isLearningNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
@@ -670,8 +671,11 @@ function AppShellContent({
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
     || isSurfaceNavigation(navState)
   // Unavailable addresses have no collection navigator or resize boundary.
+  // Rox History renders its own full-height panel
+  // (ClipboardHistoryPanel) with its own header; keeping the middle navigator
+  // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
@@ -2103,6 +2107,11 @@ function AppShellContent({
     handleServiceClick('memory')
   }, [handleServiceClick])
 
+  // Handler for the «Память: репозиторий» tab (`routes.view.memory('repo')`).
+  const handleMemoryRepoClick = useCallback(() => {
+    handleServiceClick('memoryRepo')
+  }, [handleServiceClick])
+
   // Handler for learning view
   const handleLearningClick = useCallback(() => {
     handleServiceClick('learning')
@@ -2530,6 +2539,11 @@ function AppShellContent({
       return t("sidebar.memory")
     }
 
+    // Rox History navigator
+    if (isClipboardHistoryNavigation(navState)) {
+      return t("clipboard.title")
+    }
+
     // Learning navigator
     if (isLearningNavigation(navState)) {
       return t("sidebar.learning")
@@ -2537,10 +2551,6 @@ function AppShellContent({
 
     if (isTasksNavigation(navState)) {
       return t("sidebar.tasks")
-    }
-
-    if (isMeetingsNavigation(navState)) {
-      return t("sidebar.meetings")
     }
 
     if (isHomeNavigation(navState)) {
@@ -2822,8 +2832,16 @@ function AppShellContent({
       id: "nav:memory",
       title: t(APP_NAV_DESTINATIONS_BY_ID.memory.labelKey),
       icon: APP_NAV_DESTINATIONS_BY_ID.memory.icon,
-      variant: isMemoryNavigation(navState) ? "default" : "ghost",
+      // The repository tab owns `nav:memoryRepo`; keep exactly one highlighted.
+      variant: isMemoryNavigation(navState) && navState.tab !== 'repo' ? "default" : "ghost",
       onClick: handleMemoryClick,
+    },
+    {
+      id: "nav:memoryRepo",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.memoryRepo.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.memoryRepo.icon,
+      variant: isMemoryNavigation(navState) && navState.tab === 'repo' ? "default" : "ghost",
+      onClick: handleMemoryRepoClick,
     },
     {
       id: "nav:learning",
@@ -2832,11 +2850,22 @@ function AppShellContent({
       variant: isLearningNavigation(navState) ? "default" : "ghost",
       onClick: handleLearningClick,
     },
+    // --- Rox History (clipboard history) ---
+    {
+      id: "nav:clipboardHistory",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.clipboardHistory.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.clipboardHistory.icon,
+      variant: isClipboardHistoryNavigation(navState) ? "default" : "ghost",
+      onClick: () => handleServiceClick('clipboardHistory'),
+    },
     {
       id: "nav:meetings",
-      title: t('workbench.mode.meetings'),
+      // W3.2 (Согласованность-20261009): Встречи merged into the calendar
+      // surface — the entry keeps id/link/route and opens it, active while the
+      // calendar surface shows, but is presented as «Календарь».
+      title: t('workbench.mode.calendar'),
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
-      variant: isMeetingsNavigation(navState) ? "default" : "ghost",
+      variant: isSurfaceNavigation(navState) && navState.surface === 'calendar' ? "default" : "ghost",
       onClick: handleMeetingsClick,
     },
     // --- Sources ---
@@ -2987,6 +3016,13 @@ function AppShellContent({
       onClick: () => navigate(routes.view.home()),
     },
     {
+      id: "nav:drive",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.drive.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.drive.icon,
+      variant: isDriveNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.drive()),
+    },
+    {
       id: "nav:feed",
       title: t('workbench.mode.feed'),
       icon: Rss,
@@ -3103,8 +3139,8 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
-                {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
-                <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
+                {/* pb-8 = 32px clearance so content tail scrolls clear of the 32px gradient; mask is off during active settings navigation because settings list rows fall into the fade band */}
+                <div className={cn('flex-1 overflow-y-auto min-h-0 pb-8', !(isSettingsNavigation(navState) && !isAutoCompact) && 'mask-fade-bottom')}>
                 {activeWorkspaceId && !isSidebarCollapsed && (
                   <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
                     <label className="shrink-0 text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
@@ -3758,6 +3794,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
       <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
 
       <SuperEngineeringShellExtras />
+
+      {/* Global voice dictation: records + drafts a new session when no active composer owns the mic. */}
+      <GlobalVoiceDictation />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>

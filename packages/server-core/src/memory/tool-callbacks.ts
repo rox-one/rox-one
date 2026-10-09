@@ -1,26 +1,34 @@
 /**
  * tool-callbacks — the `ctx.memory` seam implementation for session host tools
- * (spec c1.3): `memory_search` / `memory_get`.
+ * (spec c1.3/c1.8): `memory_search` / `memory_get` / `memory_forget`.
  *
  * Formats MemoryIndexService results into `ToolResult`s. Every hit carries its
  * provenance path/span and a gated badge stating whether the chunk is eligible
  * for automatic prompt injection — untrusted chunks are surfaced but explicitly
- * marked so the model never treats them as trusted instructions.
+ * marked so the model never treats them as trusted instructions. Forget delegates
+ * to the workspace forget service, which removes every copy of the content.
  */
-import { successResponse, type MemoryToolCallbacks } from '@rox/session-tools-core'
+import { successResponse, errorResponse, type MemoryToolCallbacks } from '@rox/session-tools-core'
 import type { SessionMemoryMode } from '@rox/core/types'
+import type { MemoryForgetResult } from '@rox/shared/memory/types'
 import { isMemoryOriginEligibleForAutomaticInjection } from './provenance-gate'
 import type { MemoryIndexService } from './MemoryIndexService'
 
 const SNIPPET_CHARS = 240
 const GATED_ORIGINS = new Set(['untrusted', 'system'])
 
+/** c1.8: executor wired by SessionManager to the workspace forget service. */
+export type MemoryForgetExecutor = (args: { ids: string[]; reason?: string }) => MemoryForgetResult
+
 function gatedBadge(origin: string): string {
   return GATED_ORIGINS.has(origin) ? `gated: ${origin} (never auto-injected)` : `injectable: ${origin}`
 }
 
 /** Build the host-tool callbacks bound to one workspace's memory index. */
-export function buildMemoryToolCallbacks(index: MemoryIndexService): MemoryToolCallbacks {
+export function buildMemoryToolCallbacks(
+  index: MemoryIndexService,
+  forget?: MemoryForgetExecutor,
+): MemoryToolCallbacks {
   return {
     async search(args) {
       const result = index.search(args.query, args.limit ?? 8)
@@ -60,6 +68,36 @@ export function buildMemoryToolCallbacks(index: MemoryIndexService): MemoryToolC
         ].join('\n'),
       )
     },
+
+    async forget(args) {
+      if (!forget) {
+        return errorResponse('memory_forget is unavailable in this backend (no workspace memory forget service wired).')
+      }
+      const ids = (Array.isArray(args?.ids) ? args.ids : []).filter(
+        (id): id is string => typeof id === 'string' && id.trim().length > 0,
+      )
+      if (ids.length === 0) {
+        return errorResponse('memory_forget requires at least one non-empty "chunkId" in "ids".')
+      }
+      try {
+        const result = forget({ ids, ...(args.reason ? { reason: args.reason } : {}) })
+        const lines = [`## Memory forget`]
+        if (result.forgotten.length > 0) {
+          lines.push(`Forgotten ${result.forgotten.length} chunk(s); removed from corpus, index and embeddings.`, ...result.forgotten.map((id) => `- ${id}`))
+        } else {
+          lines.push('Nothing forgotten.')
+        }
+        if (result.alreadyForgotten.length > 0) {
+          lines.push(`Already forgotten (no-op): ${result.alreadyForgotten.join(', ')}`)
+        }
+        if (result.lineage) {
+          lines.push(`Lineage recorded at ${result.lineage.ts} by ${result.lineage.actor}.`)
+        }
+        return successResponse(lines.join('\n'))
+      } catch (error) {
+        return errorResponse(`memory_forget failed: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    },
   }
 }
 
@@ -75,7 +113,8 @@ export function buildMemoryToolCallbacks(index: MemoryIndexService): MemoryToolC
 export function memoryToolCallbacksForSession(
   mode: { memoryMode?: SessionMemoryMode; memoryScope?: string } | undefined,
   index: MemoryIndexService | undefined,
+  forget?: MemoryForgetExecutor,
 ): MemoryToolCallbacks | undefined {
   if (mode?.memoryMode === 'temporary' || mode?.memoryScope === 'none') return undefined
-  return index ? buildMemoryToolCallbacks(index) : undefined
+  return index ? buildMemoryToolCallbacks(index, forget) : undefined
 }

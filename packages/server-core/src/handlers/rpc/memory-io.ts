@@ -32,6 +32,8 @@ import {
 } from '@rox/core/rox2'
 import { LessonStore, lessonKey } from '../../memory/LessonStore'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
+import { notifyRepoMutation, type RepoBankRef } from '../../memory/repo/notify'
+import { ownerKey8For } from '../../memory/repo/RepoSourceProvider'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.memory.EXPORT, RPC_CHANNELS.memory.IMPORT] as const
 
@@ -188,12 +190,15 @@ export function registerMemoryIoHandlers(server: RpcServer, deps: HandlerDeps): 
 
       // — preferences (global file; bundled by both scopes) —
       const bundlePrefs = typeof bundle.preferences === 'string' ? bundle.preferences : ''
+      let wroteGlobalPreferences = false
       if (!ctx.principal && mode === 'replace') {
         globalFiles.writePreferences(bundlePrefs)
+        wroteGlobalPreferences = true
       } else if (!ctx.principal && bundlePrefs) {
         const current = globalFiles.readPreferences()
         if (!current.includes(bundlePrefs)) {
           globalFiles.writePreferences(current ? `${current.replace(/\n*$/, '')}\n\n${bundlePrefs}` : bundlePrefs)
+          wroteGlobalPreferences = true
         }
       }
 
@@ -244,6 +249,22 @@ export function registerMemoryIoHandlers(server: RpcServer, deps: HandlerDeps): 
       }
 
       broadcastChanged(server, scope === 'global' ? null : authorizedWorkspaceId ?? null, scope)
+      const ownerKey8 = owner ? ownerKey8For(owner) : undefined
+      const bank: RepoBankRef = scope === 'global'
+        ? { scope: 'main' }
+        : { scope: 'workspace', workspaceId: authorizedWorkspaceId ?? '' }
+      notifyRepoMutation(bank, 'import')
+      // An owner-carrying import stamps owner-scoped lessons: notify the
+      // owner-scoped variant in addition to the base bank, or the owner's
+      // already-materialized projection stays stale (`.meta.json` has writtenAt,
+      // so ensureMaterialized is a no-op). The base notify above still covers
+      // the ownerless context.md/history projection.
+      if (ownerKey8) notifyRepoMutation({ ...bank, ownerKey8 }, 'import')
+      // A workspace import that (re)wrote the GLOBAL preferences file also left the
+      // `main` bank's PROFILE.md stale — notify it in addition to the workspace bank.
+      if (scope === 'workspace' && wroteGlobalPreferences) {
+        notifyRepoMutation({ scope: 'main' }, 'import:preferences')
+      }
       deps.platform.logger?.info?.(`MEMORY_IMPORT: ${mode} import into ${scope} store (+${result.added} lessons, ${result.skipped} skipped)`)
       return result
     },

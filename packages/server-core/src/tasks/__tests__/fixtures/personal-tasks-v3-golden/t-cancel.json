@@ -1,0 +1,25 @@
+{
+  "id": "t-cancel",
+  "revision": 7,
+  "task": {
+    "id": "t-cancel",
+    "title": "Old idea",
+    "notes": "",
+    "list": "someday",
+    "tags": [],
+    "priority": "low",
+    "evening": false,
+    "links": [],
+    "order": -1.5,
+    "createdAt": 1770000000000,
+    "cancelledAt": 1771000000000,
+    "trashedAt": 1772000000000
+  },
+  "schemaVersion": 3,
+  "work": {
+    "authority": "local",
+    "ownerPrincipalId": "local",
+    "statusKey": "canceled",
+    "assigneeIds": []
+  }
+}

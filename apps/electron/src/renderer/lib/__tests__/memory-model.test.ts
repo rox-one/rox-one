@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { Lesson } from '@rox/shared/memory/types'
-import { clusterTopics, contextSelection, duplicateIds, lessonId, matchesFilter, mergePatch, nearDuplicates, sortLessons, tokenBudget } from '../memory-model'
+import { awaitingDream, clusterTopics, contextSelection, duplicateIds, lessonId, lessonRepoPath, matchesFilter, mergePatch, nearDuplicates, sortLessons, tokenBudget } from '../memory-model'
 
 const make = (rule: string, extra: Partial<Lesson> = {}): Lesson => ({
   ts: '2026-09-01T00:00:00.000Z', rule, category: 'workflow', scope: 'workspace', source: { trigger: 'distillation', sessionId: 's' }, ...extra,
@@ -66,5 +66,33 @@ describe('memory model', () => {
     expect(patch.mergeHistory?.lessons).toEqual([keeper, source])
     expect(patch.mergedFrom).toContain('secondary')
     expect(() => mergePatch(keeper, [make('global', { scope: 'global' })], 'combined')).toThrow('different scopes')
+  })
+
+  it('«Ожидает сна» matches lessons changed since the bank was materialized', () => {
+    const old = make('old rule', { ts: '2026-08-01T00:00:00.000Z' })
+    const edited = make('edited rule', { ts: '2026-08-01T00:00:00.000Z', editedAt: '2026-09-05T00:00:00.000Z' })
+    const fresh = make('fresh rule', { ts: '2026-09-06T00:00:00.000Z' })
+    expect(awaitingDream(old, '2026-09-01T00:00:00.000Z')).toBe(false)
+    expect(awaitingDream(edited, '2026-09-01T00:00:00.000Z')).toBe(true)
+    expect(awaitingDream(fresh, '2026-09-01T00:00:00.000Z')).toBe(true)
+    // No materialization recorded at all → everything awaits a dream.
+    expect(awaitingDream(old, null)).toBe(true)
+    expect(awaitingDream(old, undefined)).toBe(true)
+
+    const ctx = { inContext: contextSelection([old, edited, fresh]), topicOf: new Map<string, string>(), lastMaterializeAt: '2026-09-01T00:00:00.000Z' }
+    const matched = [old, edited, fresh].filter((l) => matchesFilter(l, { status: 'awaitingDream' }, ctx))
+    expect(matched.map((l) => l.rule)).toEqual(['edited rule', 'fresh rule'])
+    // The facet result still sorts through the shared lesson pipeline.
+    expect(sortLessons(matched, 'recency')).toEqual([fresh, edited])
+  })
+
+  it('resolves a lesson repository path from repo graph nodes only when present', () => {
+    const nodes = [
+      { kind: 'lesson' as const, label: 'Alpha Rule', path: 'lessons/workflow/alpha--abc123.md' },
+      { kind: 'topic' as const, label: 'alpha', path: 'TOPIC.md' },
+    ]
+    expect(lessonRepoPath(nodes, '  alpha rule ')).toBe('lessons/workflow/alpha--abc123.md')
+    expect(lessonRepoPath(nodes, 'missing rule')).toBeNull()
+    expect(lessonRepoPath(null, 'alpha rule')).toBeNull()
   })
 })

@@ -1,7 +1,9 @@
 import type { NativeVoiceOverlayHost } from './voice-overlay-host'
+import type { OnboardingPermissionsHost } from './rpc/onboarding-permissions'
 import type { NativeAuthority } from '../authority/native-authority.ts'
 import type { NativeJournal } from '../authority/native-journal.ts'
 import type { PendingCommandsStore } from '../command-gateway'
+import type { NodeRegistry } from '../nodes'
 import type { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import type { PlatformServices } from '../runtime/platform'
 import type { ISessionManager } from './session-manager-interface'
@@ -27,6 +29,16 @@ import type {
   LearningPolicy,
   TaskOutcome,
 } from '@rox/shared/memory/learning'
+import type {
+  DriveBackupSourceKind,
+  DriveFile,
+  DriveFileSource,
+  DriveFolder,
+  DriveListing,
+  DriveQuota,
+  DriveScanResult,
+  DriveUploadSession,
+} from '@rox/shared/drive'
 
 export interface OpenClawSecurityWorkspaceInput {
   readonly workspaceId: string
@@ -90,6 +102,37 @@ export interface LearningRpcService extends LearningServicePorts {
 
 
 /**
+ * ROX Drive (wave 1) — host-composed local storage engine.
+ *
+ * The Electron main process owns the bytes and the index; the server-core
+ * `drive:*` handlers validate and forward. `reservedBytes` in the quota always
+ * reflects open sessions' un-transferred parts.
+ */
+export interface DriveService {
+  getQuota: (workspaceId: string) => Promise<DriveQuota>
+  list: (workspaceId: string, folderId?: string) => Promise<DriveListing>
+  createFolder: (workspaceId: string, parentId: string, name: string) => Promise<DriveFolder>
+  openUpload: (workspaceId: string, input: OpenUploadInput) => Promise<DriveUploadSession>
+  uploadPart: (workspaceId: string, uploadId: string, index: number, bytes?: Uint8Array) => Promise<{ index: number; done: boolean }>
+  completeUpload: (workspaceId: string, uploadId: string) => Promise<DriveFile>
+  abortUpload: (workspaceId: string, uploadId: string) => Promise<void>
+  deleteFile: (workspaceId: string, fileId: string) => Promise<void>
+  scanSource: (workspaceId: string, sourceKind: DriveBackupSourceKind) => Promise<DriveScanResult>
+}
+
+export interface OpenUploadInput {
+  name: string
+  size: number
+  folderId?: string
+  source?: DriveFileSource
+  /** Device-backup source kind; the host resolves the absolute path. */
+  sourceKind?: DriveBackupSourceKind
+  /** Path relative to the backup source root (`downloads`, `documents`, …). */
+  relativePath?: string
+  expectedSha256?: string
+}
+
+/**
  * Generic handler dependency bag.
  * Concrete hosts specialize these generics to their runtime implementations.
  *
@@ -121,9 +164,26 @@ export interface HandlerDeps<
    * it is present.
    */
   learning?: LearningRpcService
+  /**
+   * Optional because the local drive engine is host-composed: headless hosts
+   * (no config-dir bytes) answer UNSUPPORTED_OPERATION until it is present.
+   */
+  drive?: DriveService
   /** Optional GUI-only overlay; never controlled through an untrusted SET_OVERLAY RPC. */
   voiceOverlay?: NativeVoiceOverlayHost
+  /**
+   * Host-composed OS permission probes for the onboarding right column.
+   * Absent on headless/thin hosts, where `onboarding:permissionsStatus`
+   * honestly answers `unsupported` for every OS-mediated permission.
+   */
+  onboardingPermissions?: OnboardingPermissionsHost
   commandGateway?: PendingCommandsStore
+  /**
+   * f.9 — server-owned node/device registry. Optional because the host that
+   * owns device connectivity composes it; `nodes:*` handlers are only
+   * registered when present.
+   */
+  nodes?: NodeRegistry
   /** Host-owned canonical adapters for native objects linked from workspace tasks. */
   workspaceWorkReferences?: {
     exists(workspaceId: string, workspaceRootPath: string, link: import('@rox/shared/workspace-work').WorkspaceTaskLink): boolean

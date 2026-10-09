@@ -24,6 +24,9 @@ import type { WorkspaceBroInvitationAuthority } from './modules/collaboration/in
 import { createDurableWorkspaceCollaboration } from './modules/collaboration/runtime.ts'
 // W1-03 (#1500)
 import { createWorkspaceCommandBus, type WorkspaceCommandBusConfiguration } from './modules/commands/runtime.ts'
+// W1-12 (#1509)
+import { createWorkspaceRules, type WorkspaceRulesOptions } from './modules/rules/runtime.ts'
+import type { WorkspaceCommandService } from './modules/commands/service.ts'
 
 const DEFAULT_SCHEMA = 'public'
 const DEFAULT_HOST = '127.0.0.1'
@@ -54,7 +57,16 @@ export interface WorkspaceServerConfiguration {
   // W1-03 (#1500)
   /** Opt-in command bus + realtime gateway; absent → nothing registered (unchanged behaviour). */
   readonly commandBus?: WorkspaceCommandBusConfiguration
+  // W1-12 (#1509)
+  /**
+   * Opt-in domain-rule consumer group (`automation.rules.v1`) and the
+   * `automation_rule` settings API. Absent → no consumer, no routes (404).
+   */
+  readonly rules?: WorkspaceRulesConfiguration
 }
+
+/** W1-12: everything the `rules` consumer group needs beyond the database. */
+export type WorkspaceRulesConfiguration = Omit<WorkspaceRulesOptions, 'database' | 'schema' | 'dispatchFor'>
 
 /**
  * Startup loads the full sorted migration set from `directory`: both `01-*` files,
@@ -164,8 +176,27 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
     if (collaborationRequests === 0) ownedCollaboration?.close()
   }
   // W1-03 (#1500)
-  const commandBus = configuration.commandBus ? createWorkspaceCommandBus(configuration.database, schema, configuration.commandBus) : undefined
+  // W1-12 (#1509): the rules consumer group dispatches through the same workspace
+  // executor as the command bus; the holder breaks the construction cycle.
+  const rulesExecutor: { service?: WorkspaceCommandService } = {}
+  const rules = configuration.rules
+    ? createWorkspaceRules({
+        database: configuration.database,
+        schema,
+        dispatchFor: () => {
+          const service = rulesExecutor.service
+          if (!service) return null
+          return input => service.executor.execute({ workspaceId: input.workspaceId, actor: input.actor, envelope: input.envelope })
+        },
+        ...configuration.rules,
+      })
+    : undefined
+  const commandBus = configuration.commandBus ? createWorkspaceCommandBus(configuration.database, schema, {
+    ...configuration.commandBus,
+    ...(rules ? { extraSinks: [...(configuration.commandBus.extraSinks ?? []), rules.sink] } : {}),
+  }) : undefined
   await commandBus?.ready
+  if (commandBus) rulesExecutor.service = commandBus.service
   const httpHandler = createWorkspaceHttpHandler({
     authority,
     collaborationAuthority,
@@ -174,6 +205,9 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
     actorResolver,
     ...(localIssuer ? { localIssuer, publicJwks: localIssuer.jwks() } : {}),
     ...(commandBus ? { commandBus: commandBus.service } : {}),
+    ...(rules ? { automation: { rules, enabled: () => rules.enabled() } } : {}),
+    // W1-09 (#1506): notify routes only exist while the module is configured.
+    ...(commandBus?.notify ? { notify: commandBus.notify.http } : {}),
   })
   async function authenticationPhase<T>(operation: () => Promise<T>): Promise<T> {
     if (lifecycle && !lifecycle.begin()) throw new AuthenticationError()
@@ -205,11 +239,13 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
     },
   })
   server.onShutdown(disposeCollaboration)
+  // W1-12 (#1509)
+  if (rules) server.onShutdown(() => rules.close())
   registerSharedProjectHandlers(server, authority, lifecycle)
   if (licenseAuthority) registerLicenseHandlers(server, licenseAuthority, lifecycle)
   // W1-03 (#1500)
   const realtimeGateway = commandBus?.attach(server)
-  return { server, authority, commandBus, realtimeGateway, repository, collaborationAuthority, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
+  return { server, authority, commandBus, realtimeGateway, rules, repository, collaborationAuthority, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
 }
 
 function requireLocalIssuer(value: Awaited<ReturnType<typeof createLocalIssuer>> | undefined) {

@@ -6,7 +6,7 @@
  * enables it in Settings or `CRAFT_FEATURE_ENTITIES_LINKS=1` overrides it.
  */
 import { atomWithStorage } from 'jotai/utils'
-import { WORKBENCH_FLAG } from '@rox/core/platform'
+import { WORKBENCH_FLAG } from '@rox/core/platform/workbench'
 import { KEYS, getKeyString } from '@/lib/local-storage'
 
 export const ENTITIES_LINKS_FLAG_ID = WORKBENCH_FLAG.entitiesLinksV1

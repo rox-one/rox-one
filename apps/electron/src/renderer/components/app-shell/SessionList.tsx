@@ -17,7 +17,7 @@ import type { LabelConfig } from "@rox/shared/labels"
 import { flattenLabels } from "@rox/shared/labels"
 import * as MultiSelect from "@/hooks/useMultiSelect"
 import { EntityListEmptyScreen } from "@/components/ui/entity-list-empty"
-import { EntityList, ENTITY_LIST_OVERSCAN, type EntityListGroup } from "@/components/ui/entity-list"
+import { EntityList, type EntityListGroup } from "@/components/ui/entity-list"
 import { RenameDialog } from "@/components/ui/rename-dialog"
 import { SessionSearchHeader } from "./SessionSearchHeader"
 import { SessionItem } from "./SessionItem"
@@ -1072,6 +1072,17 @@ export function SessionList({
     selectedIdOverride: focusedSessionId,
   })
 
+  // Rows kept mounted while virtualized so roving focus / scroll-to-selected can
+  // reach the active session even when it sits outside the scrollport.
+  const ensureVisibleKeys = useMemo(() => {
+    const keys = new Set<string>()
+    if (selectionStore.state.selected) keys.add(selectionStore.state.selected)
+    if (focusedSessionId) keys.add(focusedSessionId)
+    const active = flatRows[interactions.keyboard.activeIndex]
+    if (active) keys.add(active.item.id)
+    return keys
+  }, [selectionStore.state.selected, focusedSessionId, flatRows, interactions.keyboard.activeIndex])
+
   // Sync activeIndex when selection changes externally (e.g. from ChatDisplay)
   useEffect(() => {
     const newIndex = flatRows.findIndex(row => row.item.id === selectionStore.state.selected)
@@ -1449,10 +1460,10 @@ export function SessionList({
         onSelectGroup={handleSelectGroup}
         dropGroupKey={dropGroupKey}
         onEmptyGroupDragOver={handleEmptyGroupDragOver}
-        windowed
-        windowRowHeight={collectionDisplay.density === 'comfortable' ? 54 : 46}
-        windowOverscan={ENTITY_LIST_OVERSCAN}
-        scrollToKey={focusedSessionId ?? selectionStore.state.selected ?? null}
+        virtualize
+        estimateRowHeight={48}
+        ensureVisibleKeys={ensureVisibleKeys}
+        revealKey={selectionStore.state.selected}
       />
       </SessionListProvider>
 

@@ -133,7 +133,7 @@ describe('OnboardingWizard', () => {
       />,
     )
 
-    expect(html).toContain('onboarding.providerSelect.omp')
+    expect(html).toContain('onboarding.providerSelect.roxCli')
     expect(html).not.toContain('onboarding.providerSelect.setupLater')
   })
 
@@ -142,7 +142,7 @@ describe('OnboardingWizard', () => {
       <OnboardingWizard
         state={{
           ...roxConnectState,
-          step: 'omp-credential',
+          step: 'rox-cli-credential',
         }}
         onContinue={() => {}}
         onBack={() => {}}
@@ -153,8 +153,8 @@ describe('OnboardingWizard', () => {
       />,
     )
 
-    expect(html).toContain('errors.omp.noModels.title')
-    expect(html).toContain('errors.omp.noModels.message')
+    expect(html).toContain('errors.roxCli.noModels.title')
+    expect(html).toContain('errors.roxCli.noModels.message')
     expect(html).not.toContain('OMP_NO_MODELS')
   })
 
@@ -175,7 +175,7 @@ describe('OnboardingWizard', () => {
     )
 
     expect(html).toContain('onboarding.welcome.username')
-    expect(html).not.toContain('onboarding.welcome.usernameHint')
+    expect(html).toContain('onboarding.welcome.usernameHint')
     expect(html).toContain('onboarding-username')
   })
 
@@ -200,13 +200,13 @@ describe('OnboardingWizard', () => {
   })
 
   test('in-chat OMP_AUTH_REQUIRED uses error-code i18n copy', async () => {
-    const { OmpCredentialStep } = await import('../OmpCredentialStep')
+    const { RoxCliCredentialStep } = await import('../RoxCliCredentialStep')
     const html = renderToStaticMarkup(
-      <OmpCredentialStep compact typedCode="OMP_AUTH_REQUIRED" onSubmit={() => {}} />,
+      <RoxCliCredentialStep compact typedCode="OMP_AUTH_REQUIRED" onSubmit={() => {}} />,
     )
 
-    expect(html).toContain('errors.omp.authRequired.title')
-    expect(html).toContain('errors.omp.authRequired.message')
+    expect(html).toContain('errors.roxCli.authRequired.title')
+    expect(html).toContain('errors.roxCli.authRequired.message')
     expect(html).toContain('OMP_AUTH_REQUIRED')
   })
 })

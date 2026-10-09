@@ -26,6 +26,7 @@ import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
 import { resolveConfigDir } from "@rox/shared/config/paths"
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { projectNativeRegisteredWorkspaceEvent } from '../handlers/rpc/native-session-scope'
+import { HostScheduler } from '../scheduler/index.ts'
 import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
 import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
 import { projectNativeInboxChanged } from '../handlers/rpc/native-inbox-events'
@@ -130,6 +131,12 @@ export interface ServerInstance<TSessionManager> {
   token: string
   /** Context for server-level RPC handlers (status, health, active sessions). */
   serverHandlerContext: ServerHandlerContext
+  /**
+   * Single host-timer owner for cron registrations, interval timers and named
+   * event hooks (port row f.8). The bootstrap owns its lifecycle: it is created
+   * with the server and closed/joined from `stop()`.
+   */
+  scheduler: HostScheduler
   stop: () => Promise<void>
 }
 
@@ -488,6 +495,11 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
 
   const modelRefreshService = options.initModelRefreshService()
   const sessionManager = options.createSessionManager()
+  const scheduler = new HostScheduler({
+    logger: {
+      error: (message, error) => platform.logger.error(`[scheduler] ${message}`, error),
+    },
+  })
 
   const rpcHost = options.rpcHost ?? process.env.CRAFT_RPC_HOST ?? '127.0.0.1'
   const rpcPortRaw = options.rpcPort ?? parseInt(process.env.CRAFT_RPC_PORT ?? '9100', 10)
@@ -624,6 +636,15 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
       platform.logger.error('[bootstrap] Failed to send shutdown notification:', error)
     }
 
+    // Close admission first and join in-flight jobs before tearing down the
+    // subsystems they may touch (session manager, native journal).
+    try {
+      scheduler.beginClose()
+      await scheduler.stop()
+    } catch (error) {
+      platform.logger.error('[bootstrap] Failed to stop scheduler:', error)
+    }
+
     try {
       await stopNativeSidecar()
     } catch (error) {
@@ -685,6 +706,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     protocol: wsServer.protocol,
     token: serverToken,
     serverHandlerContext,
+    scheduler,
     stop,
   }
   } catch (error) {

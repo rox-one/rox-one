@@ -62,8 +62,13 @@ export interface CommandDefinition<P = unknown> {
   schemaBound: boolean
   /** Owner module flag; when it is off the capability is `flag_off`. */
   flag?: string
-  /** Optional until W1-11 (#1508) makes it required. */
-  riskClass?: (payload: P, ctx: CommandRiskContext) => RiskClass
+  /**
+   * Agent risk class, computed from the payload by the definition itself
+   * (TECH-SPEC §13.2 step 5). **Required** since W1-11 (#1508): a command
+   * without a classifier would silently bypass the approval policy. The
+   * catalogue builder attaches it from `@rox/core/agents/risk`.
+   */
+  riskClass: (payload: P, ctx: CommandRiskContext) => RiskClass
   /** Per-definition payload budget in bytes (default `DEFAULT_MAX_COMMAND_PAYLOAD_BYTES`). */
   maxPayloadBytes?: number
   mcp?: { name: string; description: string }
@@ -84,6 +89,21 @@ export interface CommandHandlerContext<P = unknown> {
   transaction?: unknown
   /** Abort with a `conflict` receipt (expectedRevision mismatch); nothing is committed. */
   conflict(currentRevision: number, current?: unknown): never
+  /**
+   * The executor's authorizer for the command's principal (W1-06 #1503): a
+   * handler checks every resource its payload names that is not the envelope
+   * target (`ref = null` = workspace-level; `workspaceId` asks about another
+   * workspace). Fails closed: a non-transient authorizer error is `false`, a
+   * transient one is rethrown (retryable). Absent outside the executor.
+   */
+  authorize?(action: string, ref: EntityRef | null, options?: { workspaceId?: string }): Promise<boolean>
+  /**
+   * The same authorizer evaluated for another principal of this workspace
+   * (e.g. may each subscribed person read the resource). `undefined` when the
+   * authorizer cannot answer for anyone but the caller
+   * (`Authorizer.answersForAnyPrincipal` unset); fails closed like `authorize`.
+   */
+  authorizeFor?(principalId: string, action: string, ref: EntityRef | null): Promise<boolean | undefined>
 }
 
 export interface CommandHandlerResult<R = unknown> {

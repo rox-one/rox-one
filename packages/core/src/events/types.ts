@@ -113,6 +113,9 @@ export const DOMAIN_EVENT_TYPES = [
     'suggestion_created', 'suggestion_accepted', 'suggestion_rejected', 'comment_thread_resolved',
     'comment_thread_reopened', 'doc_viewed', 'calendar_shared',
   ]),
+  // W1-12 (#1509) — rule triggers (§14.3): native events, first sight of a
+  // provider event (keyed by provider uid) and the occurrence scheduler.
+  ...moduleTypes('calendar', ['event_created', 'external_event_seen', 'occurrence_upcoming']),
 ] as const satisfies readonly DomainEventType[]
 
 const KNOWN = new Set<string>(DOMAIN_EVENT_TYPES)

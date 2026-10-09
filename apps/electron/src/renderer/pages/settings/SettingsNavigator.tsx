@@ -67,7 +67,7 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
 
   // Open settings page in a new window via deep link
   const handleOpenInNewWindow = () => {
-    window.electronAPI.openUrl(`craftagents://settings/${item.id}?window=focused`)
+    window.electronAPI.openUrl(`rox://settings/${item.id}?window=focused`)
   }
 
   return (
@@ -214,7 +214,7 @@ export default function SettingsNavigator({
       </div>
       <div className="flex-1 overflow-y-auto">
         {groupedSettingsItems.length > 0 ? (
-          <div className="pb-2">
+          <div className="pb-6">
             {groupedSettingsItems.map(({ group, pages }) => (
               <section key={group.id} className="pt-3 first:pt-1">
                 <h2 className="px-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
