@@ -44,12 +44,16 @@ import type {
   SkillCandidate,
   WorkspaceMemory,
 } from '@rox/shared/memory/types'
+import type { AuditActor, MemoryForgetResult } from '@rox/shared/memory/types'
 import { dirname } from 'path'
 import { createHash } from 'crypto'
 import { LessonStore, lessonKey } from './LessonStore'
 import { MemoryFileStore } from './MemoryFileStore'
+import { MemoryProposalStore } from './MemoryProposalStore'
 import { SkillPendingQueue } from './SkillPendingQueue'
 import { AuditLog } from './AuditLog'
+import { flushMemoryWrites, type FlushTurnResult } from './flush-turn'
+import { forgetMemoryChunks } from './forget'
 import { search as ftsSearch } from './fts-index'
 import { compactWorkspaceHistory } from './decay'
 import { EpisodicMemory, withTimeout as episodicWithTimeout } from './episodic-memory'
@@ -299,6 +303,15 @@ export class MemoryService {
     return subscribeFn((evt) => {
       try {
         this.recordActivity(evt.sessionId)
+        // c1.8 flush turn: the session boundary is where pending memory writes
+        // are committed durably. Runs even for disabled/incognito sessions —
+        // it only recovers already-approved write intents, it never creates new
+        // memory. Fail-soft: never block the completion handler.
+        try {
+          this.flushTurn()
+        } catch (err) {
+          this.logger.warn(`MemoryService: flush turn failed for ${evt.sessionId}`, err)
+        }
         if (!this.config.enabled) return
         if (this.skipsWrites(evt.sessionId)) return
         if (evt.reason === 'complete') {
@@ -593,6 +606,38 @@ export class MemoryService {
   private auditLog: AuditLog | null = null
   private get audit(): AuditLog {
     return (this.auditLog ??= new AuditLog('workspace', this.deps.workspaceRoot))
+  }
+
+  private proposalStoreInstance: MemoryProposalStore | null = null
+  private get proposalStore(): MemoryProposalStore {
+    return (this.proposalStoreInstance ??= new MemoryProposalStore(this.fileStore.memoryDir))
+  }
+
+  /**
+   * c1.8 flush turn: commit every pending memory write intent for this
+   * workspace deterministically, idempotently and crash-safely. Safe to call at
+   * any turn/session boundary; already-durable intents are skipped.
+   */
+  flushTurn(now: Date = new Date(this.clock())): FlushTurnResult {
+    return flushMemoryWrites({ store: this.proposalStore, workspaceRoot: this.deps.workspaceRoot, now })
+  }
+
+  /**
+   * c1.8 forget: remove the corpus lines, index chunks and embedding artifacts
+   * for the given chunk ids and append a content-free lineage record. `by` is
+   * the authenticated actor (an agent tool or the UI), never renderer input.
+   */
+  forgetChunks(ids: readonly string[], by: AuditActor, reason?: string): MemoryForgetResult {
+    return forgetMemoryChunks({
+      index: this.indexService,
+      workspaceRoot: this.deps.workspaceRoot,
+      audit: this.audit,
+      ids,
+      by,
+      ...(reason ? { reason } : {}),
+      now: new Date(this.clock()),
+      episodic: this.episodic,
+    })
   }
 
   private defaultLessonStore(scope: LessonScope): LessonStore {

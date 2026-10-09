@@ -60,6 +60,31 @@ describe('buildMemoryToolCallbacks (c1.3)', () => {
     expect((await callbacks.get({ chunkId: 'nope' })).content[0]!.text).toContain('No memory chunk')
     index.close()
   })
+
+  test('forget delegates to the wired executor; absent executor is a typed unavailable error', async () => {
+    const dir = tmp()
+    const index = new MemoryIndexService({ workspaceRoot: dir, workspaceId: 'ws', collectDocs: docs })
+    let received: { ids: string[]; reason?: string } | null = null
+    const callbacks = buildMemoryToolCallbacks(index, (args) => {
+      received = args
+      return {
+        forgotten: args.ids,
+        alreadyForgotten: [],
+        lineage: { ts: '2026-01-01T00:00:00.000Z', actor: 'agent', ids: args.ids, reason: args.reason ?? '', entries: [] },
+      }
+    })
+    const result = await callbacks.forget!({ ids: ['a', 'b'], reason: 'gdpr' })
+    expect(result.isError).toBe(false)
+    expect(received).toEqual({ ids: ['a', 'b'], reason: 'gdpr' })
+    expect(result.content[0]!.text).toContain('Forgotten 2 chunk(s)')
+    expect(result.content[0]!.text).toContain('Lineage recorded')
+
+    const bare = buildMemoryToolCallbacks(index)
+    const unavailable = await bare.forget!({ ids: ['a'] })
+    expect(unavailable.isError).toBe(true)
+    expect(unavailable.content[0]!.text).toContain('unavailable')
+    index.close()
+  })
 })
 
 describe('memoryToolCallbacksForSession (F3)', () => {

@@ -4,6 +4,7 @@
 import { describe, expect, test } from 'bun:test'
 import { handleMemorySearch, MEMORY_SEARCH_MAX_LIMIT } from './memory-search.ts'
 import { handleMemoryGet } from './memory-get.ts'
+import { handleMemoryForget, MEMORY_FORGET_MAX_IDS } from './memory-forget.ts'
 import { SESSION_TOOL_REGISTRY, getToolDefsAsJsonSchema } from '../tool-defs.ts'
 import { SESSION_MCP_ESSENTIAL_SUFFIXES } from '../tool-defs-filtering.ts'
 import { successResponse } from '../response.ts'
@@ -83,6 +84,59 @@ describe('memory_get handler', () => {
   })
 })
 
+describe('memory_forget handler', () => {
+  test('rejects an empty id list without calling the backend', async () => {
+    let called = false
+    const ctx = ctxWithMemory({
+      search: async () => successResponse('x'),
+      get: async () => successResponse('x'),
+      forget: async () => {
+        called = true
+        return successResponse('nope')
+      },
+    })
+    expect((await handleMemoryForget(ctx, { ids: [] })).isError).toBe(true)
+    expect((await handleMemoryForget(ctx, { ids: ['  '] })).isError).toBe(true)
+    expect(called).toBe(false)
+  })
+
+  test('reports a typed unavailable error when the backend has no forget', async () => {
+    const ctx = ctxWithMemory({ search: async () => successResponse('x'), get: async () => successResponse('x') })
+    const result = await handleMemoryForget(ctx, { ids: ['abc'] })
+    expect(result.isError).toBe(true)
+    expect(result.content[0]?.text).toContain('unavailable')
+  })
+
+  test('passes ids and reason through, capping the id list', async () => {
+    let received: { ids: string[]; reason?: string } | null = null
+    const ctx = ctxWithMemory({
+      search: async () => successResponse('x'),
+      get: async () => successResponse('x'),
+      forget: async args => {
+        received = args
+        return successResponse('forgotten')
+      },
+    })
+    const many = Array.from({ length: MEMORY_FORGET_MAX_IDS + 5 }, (_, i) => `c${i}`)
+    await handleMemoryForget(ctx, { ids: many, reason: 'gdpr' })
+    expect(received!.ids).toHaveLength(MEMORY_FORGET_MAX_IDS)
+    expect(received!.reason).toBe('gdpr')
+  })
+
+  test('surfaces backend failures as error results', async () => {
+    const ctx = ctxWithMemory({
+      search: async () => successResponse('x'),
+      get: async () => successResponse('x'),
+      forget: async () => {
+        throw new Error('forget exploded')
+      },
+    })
+    const result = await handleMemoryForget(ctx, { ids: ['abc'] })
+    expect(result.isError).toBe(true)
+    expect(result.content[0]?.text).toContain('forget exploded')
+  })
+})
+
 describe('registry wiring', () => {
   test('memory tools are read-only, safe-mode allowed and essential', () => {
     for (const name of ['memory_search', 'memory_get']) {
@@ -96,5 +150,14 @@ describe('registry wiring', () => {
     const names = getToolDefsAsJsonSchema().map(d => d.name)
     expect(names).toContain('memory_search')
     expect(names).toContain('memory_get')
+  })
+
+  test('memory_forget is registered as a mutating, safe-mode-blocked tool', () => {
+    const def = SESSION_TOOL_REGISTRY.get('memory_forget')
+    expect(def).toBeDefined()
+    expect(def!.readOnly).toBe(false)
+    expect(def!.safeMode).toBe('block')
+    expect(def!.executionMode).toBe('registry')
+    expect(getToolDefsAsJsonSchema().map(d => d.name)).toContain('memory_forget')
   })
 })

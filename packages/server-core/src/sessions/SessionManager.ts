@@ -5776,15 +5776,21 @@ export class SessionManager implements ISessionManager {
             this.enqueuePageThumbnail(managed.workspace.id, managed.workspace.rootPath, pageSlug)
           },
         }),
-        // Memory recall tools (memory_search / memory_get) — bound to the
-        // invoking session's workspace chunk index. Absent when the session is
+        // Memory recall tools (memory_search / memory_get / memory_forget) — bound to
+        // the invoking session's workspace chunk index. Absent when the session is
         // temporary / has no memory scope (no read, no write — spec F3), or when
         // the workspace disables memory (memoryServiceFor returns null), so the
         // handlers report a truthful "unavailable" instead of faking recall.
-        memory: memoryToolCallbacksForSession(
-          { memoryMode: managed.memoryMode, memoryScope: managed.agentProfileSnapshot?.memoryScope },
-          this.memoryServiceFor(managed.workspace)?.indexService,
-        ),
+        // c1.8: the forget executor removes corpus lines + chunks + embeddings and
+        // records the content-free lineage; the actor is always 'agent' here.
+        memory: (() => {
+          const memoryService = this.memoryServiceFor(managed.workspace)
+          return memoryToolCallbacksForSession(
+            { memoryMode: managed.memoryMode, memoryScope: managed.agentProfileSnapshot?.memoryScope },
+            memoryService?.indexService,
+            (args) => memoryService!.forgetChunks(args.ids, 'agent', args.reason),
+          )
+        })(),
         getSessionInfoFn: (sessionId?: string) => {
           const targetId = sessionId ?? managed.id
           const session = this.sessions.get(targetId)
