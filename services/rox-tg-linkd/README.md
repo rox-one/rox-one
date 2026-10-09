@@ -4,10 +4,11 @@ Server-side half of Rox Telegram flows — the platform's single consumer of
 `@rox_one_bot`. One small Bun/TypeScript service with no runtime dependencies:
 
 * **Account linking (desktop, owner spec R4)** — `POST /api/link/start` mints a
-  pending link with an 8-character code and a `https://t.me/<bot>?start=<token>`
-  deep link; the bot asks for the user's own contact, the contact binds the
-  phone, and the bot sends the code; `POST /api/link/verify` turns the code into
-  a durable phone binding (attempt limits, 30-minute TTL).
+  pending link with a `https://t.me/<bot>?start=<token>` deep link (the
+  8-character code is generated then but withheld until the phone is shared);
+  the bot asks for the user's own contact, the contact binds the phone, and the
+  bot sends the code; `POST /api/link/verify` turns the code into a durable
+  phone binding (attempt limits, 30-minute TTL).
 * **Phone registration / sign-in (web)** — `POST /api/register/start` mints a
   token and the user opens the bot, presses **Share phone** and sends their own
   contact. That is the whole interaction: **no code**. The website polls
@@ -21,17 +22,19 @@ Website     ──POST /api/register/start──▶ rox-tg-linkd ──getUpdate
    │  deep link (tg:// / https)                ◀── /start <token>
    │                                           ◀── contact (own only)
    └──GET /api/register/status (poll)──▶ ready { phone } ──consume──▶ account created
-Rox desktop ──POST /api/link/start─────▶ pending link + code ──▶ /api/link/verify
+Rox desktop ──POST /api/link/start─────▶ pending link + deep link ──▶ /api/link/verify
 ```
 
 ## Flow
 
 1. Desktop calls `POST /api/link/start { "roxUserId": "…" }` and receives
-   `{ linkId, code, deepLink, tgDeepLink, expiresAt, status: "waiting-code" }`.
+   `{ linkId, deepLink, tgDeepLink, expiresAt, status: "waiting-code" }`.
    `linkId` is the opaque pairing token (the same value embedded in the deep
-   link); it addresses the link without adding a second secret.
-   Repeated calls while a link is pending return the **same** token and code
-   (idempotent).
+   link); it addresses the link without adding a second secret. The 8-char
+   code is withheld until the user shares their phone; it appears on
+   `GET /api/link/status` once the status is `code-sent`.
+   Repeated calls while a link is pending return the **same** token and the
+   same expiry (idempotent).
 2. The user opens the deep link; the bot replies with a **Share contact**
    keyboard. A forwards/foreign contact (`contact.user_id !== from.id`) is
    rejected and never binds a phone.
@@ -55,8 +58,10 @@ Codes are 8 characters from `A-Z2-9` (no `0`/`1`) and live for 30 minutes.
 | `POST` | `/api/register/consume` | Close a ready registration once | `200` `400` `401` `404` `409` `410` |
 | `GET`  | `/api/health` | Honest readiness | `200` |
 
-`401` only when `LINK_AUTH_TOKEN` is set (then every `/api/link/*` and
-`/api/register/*` call needs `Authorization: Bearer <token>`).
+`401` on every `/api/link/*` and `/api/register/*` call unless it carries
+`Authorization: Bearer <token>` matching `LINK_AUTH_TOKEN`. When
+`LINK_AUTH_TOKEN` is unset the link surface is fail-closed: those calls are
+refused.
 
 `503 {"error":"no_bot_token"}` / `{"error":"no_bot_username"}` — the service
 cannot mint a usable link, so it refuses instead of inventing one.
@@ -103,7 +108,7 @@ rendered masked (`+7 999 ***-**-12`).
 | `PORT` | `8095` | HTTP listen port |
 | `TG_BOT_TOKEN` | — | bot token; empty is allowed but health reports `no-token` |
 | `TG_BOT_USERNAME` | — | without `@`; learned from `getMe` when empty |
-| `LINK_AUTH_TOKEN` | — | optional bearer for `/api/link/*` |
+| `LINK_AUTH_TOKEN` | — | bearer for `/api/link/*` and `/api/register/*` (fail-closed when empty) |
 | `LINK_TTL_MS` | `1800000` | code lifetime (30 min) |
 | `LINK_MAX_ATTEMPTS` | `10` | wrong codes before invalidation |
 | `LINK_DB_PATH` | `./data/rox-tg-linkd.sqlite` | SQLite file (`:memory:` for tests) |
@@ -127,6 +132,7 @@ then map them onto this daemon's `TG_BOT_TOKEN` / `TG_BOT_USERNAME`:
 cd services/rox-tg-linkd
 set -a; . /Users/t/.config/rox/platform-secrets-20261009.env; set +a
 TG_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" TG_BOT_USERNAME="$TELEGRAM_BOT_USERNAME" \
+  LINK_AUTH_TOKEN=dev-secret \
   PORT=18095 LINK_DB_PATH=./data/rox-tg-linkd.sqlite \
   bun run src/index.ts
 ```
@@ -138,18 +144,21 @@ curl -s http://127.0.0.1:18095/api/health
 # {"ok":true,"bot":"rox_one_bot"}
 
 curl -s -X POST http://127.0.0.1:18095/api/link/start \
-  -H 'content-type: application/json' -d '{"roxUserId":"user-1"}'
-# {"ok":true,"roxUserId":"user-1","status":"waiting-code","code":"ABCD2345", ...}
+  -H 'content-type: application/json' -H 'authorization: Bearer dev-secret' \
+  -d '{"roxUserId":"user-1"}'
+# {"ok":true,"roxUserId":"user-1","status":"waiting-code", ...}
 ```
 
 Without sourcing the secrets (or with an empty `TG_BOT_TOKEN`) the daemon still
 starts, but `/api/health` reports `{"ok":false,"reason":"no-token"}` and
-`/api/link/start` refuses with `503 {"error":"no_bot_token"}`.
+`/api/link/start` refuses with `503 {"error":"no_bot_token"}`. An unset
+`LINK_AUTH_TOKEN` is fail-closed on its own: every `/api/link/*` and
+`/api/register/*` call answers `401`.
 
 A one-off run without a secrets file:
 
 ```sh
-TG_BOT_TOKEN=… TG_BOT_USERNAME=my_rox_bot bun run services/rox-tg-linkd/src/index.ts
+TG_BOT_TOKEN=… TG_BOT_USERNAME=my_rox_bot LINK_AUTH_TOKEN=dev-secret bun run services/rox-tg-linkd/src/index.ts
 ```
 
 Then:
@@ -159,8 +168,9 @@ curl -s http://127.0.0.1:8095/api/health
 # {"ok":true,"bot":"my_rox_bot"}
 
 curl -s -X POST http://127.0.0.1:8095/api/link/start \
-  -H 'content-type: application/json' -d '{"roxUserId":"user-1"}'
-# {"ok":true,"roxUserId":"user-1","status":"waiting-code","code":"ABCD2345",
+  -H 'content-type: application/json' -H 'authorization: Bearer dev-secret' \
+  -d '{"roxUserId":"user-1"}'
+# {"ok":true,"roxUserId":"user-1","status":"waiting-code",
 #  "deepLink":"https://t.me/my_rox_bot?start=…","tgDeepLink":"tg://resolve?domain=my_rox_bot&start=…",
 #  "expiresAt":…,"remainingMs":…}
 ```
@@ -225,6 +235,7 @@ request after an idle period takes seconds (measured 5.3 s with
   `LINK_TTL_MS`, and can be cancelled from the bot; the phone is stored E.164
   and only ever rendered masked outside the API response.
 * The service is loopback-only in compose; expose it through an authenticated
-  tunnel and set `LINK_AUTH_TOKEN`.
+  tunnel and always set `LINK_AUTH_TOKEN` — the link surface is fail-closed
+  without it.
 * The bot token lives in the environment/secret store only — this repository
   ships no token.

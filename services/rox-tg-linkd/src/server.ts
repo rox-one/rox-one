@@ -10,6 +10,7 @@
  *   POST /api/register/consume { token }        → consumed (single use)
  *   GET  /api/health                            → honest readiness
  */
+import { timingSafeEqual } from 'node:crypto'
 import type { Config } from './config.ts'
 import { deepLinkHttps, deepLinkTg, effectiveStatus, isWellFormedCode, normalizeCode } from './link.ts'
 import { log } from './log.ts'
@@ -43,6 +44,7 @@ export interface StartResponse {
    * addresses the link by this id; it is never a second secret.
    */
   linkId?: string
+  /** Present once the phone is shared (status `code-sent`). */
   code?: string
   deepLink?: string
   tgDeepLink?: string
@@ -110,10 +112,16 @@ async function readJson(request: Request): Promise<Record<string, unknown> | nul
 }
 
 function isAuthorized(request: Request, config: Config): boolean {
-  if (config.authToken === '') return true
+  // Fail closed: an unconfigured token refuses every call instead of serving
+  // the whole link surface unauthenticated. The comparison is constant-time so
+  // the token cannot be recovered byte by byte through response timing.
+  if (config.authToken === '') return false
   const header = request.headers.get('authorization') ?? ''
   const match = /^Bearer\s+(.+)$/i.exec(header.trim())
-  return match !== null && match[1] === config.authToken
+  if (match === null) return false
+  const provided = Buffer.from(match[1]!)
+  const expected = Buffer.from(config.authToken)
+  return provided.length === expected.length && timingSafeEqual(provided, expected)
 }
 
 function nonEmptyString(value: unknown): string | null {
@@ -165,7 +173,7 @@ export function createRequestHandler(deps: ServerDeps): (request: Request) => Pr
           tgDeepLink: deepLinkTg(bot, pending.token),
           expiresAt: pending.expiresAt,
           remainingMs: Math.max(0, pending.expiresAt - now),
-          ...(status === 'expired' ? {} : { code: pending.code ?? undefined }),
+          ...(status === 'code-sent' ? { code: pending.code ?? undefined } : {}),
         }
         return jsonResponse(200, response)
       }

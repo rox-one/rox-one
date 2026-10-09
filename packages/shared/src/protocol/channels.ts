@@ -344,6 +344,8 @@ export const RPC_CHANNELS = {
     LOAD_PRESET: 'theme:loadPreset',
     GET_COLOR_THEME: 'theme:getColorTheme',
     SET_COLOR_THEME: 'theme:setColorTheme',
+    /** Persist the app theme's material (glass) field to theme.json (LOCAL_ONLY). */
+    SET_APP_MATERIAL: 'theme:setAppMaterial',
     BROADCAST_PREFERENCES: 'theme:broadcastPreferences',
     PREFERENCES_CHANGED: 'theme:preferencesChanged',
     GET_WORKSPACE_COLOR_THEME: 'theme:getWorkspaceColorTheme',

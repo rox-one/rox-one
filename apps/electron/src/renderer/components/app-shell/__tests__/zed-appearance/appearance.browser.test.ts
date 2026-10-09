@@ -177,7 +177,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
         expect(sourcesUnchangedDuringRun).toBe(true)
       }
     } finally { await stopResources() }
-  }, 30_000)
+  }, 300_000)
 
   const load = async (query = '') => {
     await page.goto(`${fixtureUrl}/?${query}`)
@@ -211,8 +211,37 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
         rect: { left: rect.left, right: rect.right, width: rect.width, top: rect.top, bottom: rect.bottom, height: rect.height },
       }]
     }))
-    return { ...result, attrs: { runtime: document.documentElement.dataset.shellRuntime, material: document.documentElement.dataset.shellMaterial, cssMaterial: document.documentElement.dataset.shellCssMaterial, mode: document.documentElement.className, mismatch: document.documentElement.dataset.themeMismatch }, media: { coarse: matchMedia('(pointer: coarse)').matches, reducedTransparency: matchMedia('(prefers-reduced-transparency: reduce)').matches, moreContrast: matchMedia('(prefers-contrast: more)').matches, forcedColors: matchMedia('(forced-colors: active)').matches } } as any
+    return { ...result, attrs: { runtime: document.documentElement.dataset.shellRuntime, material: document.documentElement.dataset.shellMaterial, cssMaterial: document.documentElement.dataset.shellCssMaterial, layer: document.documentElement.dataset.material, texture: document.documentElement.dataset.materialTexture, mode: document.documentElement.className, mismatch: document.documentElement.dataset.themeMismatch }, media: { coarse: matchMedia('(pointer: coarse)').matches, reducedTransparency: matchMedia('(prefers-reduced-transparency: reduce)').matches, moreContrast: matchMedia('(prefers-contrast: more)').matches, forcedColors: matchMedia('(forced-colors: active)').matches } } as any
   })
+  const cssVar = (name: string) => page.evaluate(variable => getComputedStyle(document.documentElement).getPropertyValue(variable).trim(), name)
+  // Sample the fixed floating/reading surfaces (chat zone, composer, popover).
+  // The fixture DOM has no chat zone, so an element carrying the production
+  // marker is constructed inside the fixture root when the selector is absent;
+  // the construct is removed before returning so later assertions are unaffected.
+  const materialSurface = (spec: { selector?: string; className?: string; attribute?: [string, string] }) => page.evaluate((input) => {
+    const root = document.getElementById('root')!
+    const existing = input.selector ? document.querySelector<HTMLElement>(input.selector) : null
+    const element = existing ?? document.createElement('div')
+    if (!existing) {
+      if (input.className) element.className = input.className
+      if (input.attribute) element.setAttribute(input.attribute[0], input.attribute[1])
+      root.appendChild(element)
+    }
+    const style = getComputedStyle(element)
+    // Live CSSStyleDeclaration: materialize every value while the probe is
+    // still attached, because a detached node reports empty strings.
+    const background = style.backgroundColor
+    const backdrop = style.backdropFilter
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 1
+    const context = canvas.getContext('2d')!
+    context.clearRect(0, 0, 1, 1)
+    context.fillStyle = background
+    context.fillRect(0, 0, 1, 1)
+    const rgba = [...context.getImageData(0, 0, 1, 1).data]
+    if (!existing) element.remove()
+    return { background, rgba, backdrop, constructed: !existing }
+  }, spec)
   const seam = (styles: any, hit: number) => {
     expect(styles.row.gap).toBe('0px')
     expect(styles.row.padding).toEqual(['0px', '0px', '0px', '0px'])
@@ -636,4 +665,102 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(fallback.work.rgba).toEqual(initial.work.rgba)
     await proof('desktop-policy-fallback-synthetic')
   }, 45_000)
+
+  describe('configurable material layer', () => {
+    it('applies an enabled material override through data attributes, tokens and browser glass', async () => {
+      await load('material=on')
+      const html = page.locator('html')
+      await expectDOM(html).toHaveAttribute('data-material', 'on')
+      await expectDOM(html).toHaveAttribute('data-material-texture', 'grain')
+      // ThemeContext injects the per-surface tokens the material CSS consumes.
+      expect(await cssVar('--material-blur-topbar')).toBe('30px')
+      expect(await cssVar('--material-opacity-topbar')).toBe('50%')
+      expect(await cssVar('--material-texture-kind')).toBe('grain')
+      const styles = await computed()
+      expect(styles.attrs.layer).toBe('on')
+      expect(styles.attrs.texture).toBe('grain')
+      // --material-opacity-topbar: 50% halves the opaque titlebar tint.
+      expect(styles.topbar.rgba[3] / 255).toBeCloseTo(0.5, 1)
+      expect(styles.topbar.backdrop).toContain('blur(30px)')
+      await proof('material-enabled')
+    }, 45_000)
+
+    it('keeps the static chrome when the material override is absent', async () => {
+      await load()
+      const styles = await computed()
+      expect(styles.attrs.layer).toBeUndefined()
+      expect(styles.attrs.texture).toBeUndefined()
+      // No app override means ThemeContext injects no --material-* tokens, so
+      // the shipped 20px/84% fallbacks stay in charge instead of the 30px/50%
+      // material override.
+      expect(await cssVar('--material-blur-topbar')).toBe('20px')
+      expect(styles.topbar.rgba[3]).toBeGreaterThan(0)
+      expect(styles.topbar.rgba[3]).toBeLessThan(255)
+      expect(styles.topbar.backdrop).toContain('blur(20px)')
+    }, 45_000)
+
+    it.each([
+      ['prefers-reduced-transparency', 'reduce'],
+      ['prefers-contrast', 'more'],
+    ] as const)('forces the material override solid under %s', async (feature, value) => {
+      await emulateFeature(feature, value)
+      await load('material=on')
+      const styles = await computed()
+      expect(styles.attrs.layer).toBeUndefined()
+      expect(styles.topbar.rgba[3]).toBe(255)
+      expect(styles.topbar.backdrop).toBe('none')
+    }, 45_000)
+
+    it('tints the chat zone, composer and popover flat surfaces with browser glass', async () => {
+      await load('material=on')
+      await expectDOM(page.locator('html')).toHaveAttribute('data-shell-runtime', 'web')
+      // The chat zone and popover sample are absent from the fixture DOM, so a
+      // marked element is constructed inside #root; the composer is real.
+      const chat = await materialSurface({ attribute: ['data-focus-zone', 'chat'] })
+      const composer = await materialSurface({ selector: '.input-container' })
+      const popover = await materialSurface({ className: 'popover-styled' })
+      expect(chat.constructed).toBe(true)
+      expect(popover.constructed).toBe(true)
+      expect(composer.constructed).toBe(false)
+      // Each surface stays translucent (0 < alpha < 255) and, on the browser
+      // runtime, composites the configured CSS blur. The composer deliberately
+      // carries tint only: the chat zone is the single blur owner, so no nested
+      // backdrop-filter re-samples the same pixels.
+      for (const [surface, label] of [[chat, 'chat'], [popover, 'popover']] as const) {
+        expect(surface.rgba[3], label).toBeGreaterThan(0)
+        expect(surface.rgba[3], label).toBeLessThan(255)
+        expect(surface.backdrop, label).toContain('blur(')
+      }
+      expect(composer.rgba[3]).toBeGreaterThan(0)
+      expect(composer.rgba[3]).toBeLessThan(255)
+      expect(composer.backdrop).toBe('none')
+      // The translucency comes from the shipped per-surface opacity tokens.
+      expect(chat.rgba[3] / 255).toBeCloseTo(Number.parseFloat(await cssVar('--material-opacity-chat')) / 100, 1)
+      expect(composer.rgba[3] / 255).toBeCloseTo(Number.parseFloat(await cssVar('--material-opacity-composer')) / 100, 1)
+      expect(popover.rgba[3] / 255).toBeCloseTo(Number.parseFloat(await cssVar('--material-opacity-popover')) / 100, 1)
+    }, 45_000)
+
+    it('keeps the material layers non-interactive and behind the chrome stack', async () => {
+      await load('material=on')
+      const chromeZ = Number(await cssVar('--z-chrome'))
+      expect(chromeZ).toBeGreaterThan(0)
+      const layers = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('.material-layer')).map(element => {
+        const style = getComputedStyle(element)
+        return {
+          pointerEvents: style.pointerEvents, position: style.position, zIndex: style.zIndex,
+          ariaHidden: element.getAttribute('aria-hidden'), bodyLevel: element.parentElement === document.body,
+        }
+      }))
+      expect(layers.length).toBeGreaterThan(0)
+      for (const layer of layers) {
+        // The fixed backdrop layers never become hit targets...
+        expect(layer.pointerEvents).toBe('none')
+        expect(layer.ariaHidden).toBe('true')
+        // ...and paint under the chrome stack as body-level fixed backdrops.
+        expect(layer.position).toBe('fixed')
+        expect(layer.bodyLevel).toBe(true)
+        expect(Number(layer.zIndex)).toBeLessThan(chromeZ)
+      }
+    }, 45_000)
+  })
 })

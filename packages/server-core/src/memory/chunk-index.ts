@@ -21,6 +21,7 @@
 import { createHash } from 'crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
+import { createRequire } from 'node:module'
 import type { Database } from 'bun:sqlite'
 import type {
   MemoryChunkProvenance,
@@ -31,6 +32,12 @@ import type {
 
 /** Bump when the chunking algorithm changes; a mismatch marks the index stale. */
 export const MEMORY_CHUNKING_VERSION = 1
+
+// esbuild's production CJS bundle has __filename but no import.meta.url — the
+// same idiom as packages/shared/src/utils/sqlite-runtime.ts, so the lazy
+// `bun:sqlite` capability probe below resolves under both module shapes.
+const requireBuiltin = createRequire(typeof __filename === 'string' ? __filename : import.meta.url)
+
 /** Embedding/scoring provider identity baked into the index identity. */
 export const MEMORY_INDEX_PROVIDER = 'local'
 /** Scoring model identity baked into the index identity. */
@@ -247,7 +254,7 @@ let cachedCapability: MemoryIndexCapability | undefined
 function getDatabaseCtor(): DatabaseCtor | null {
   if (cachedCtor === undefined) {
     try {
-      cachedCtor = require('bun:sqlite').Database as DatabaseCtor
+      cachedCtor = requireBuiltin('bun:sqlite').Database as DatabaseCtor
     } catch {
       cachedCtor = null
     }

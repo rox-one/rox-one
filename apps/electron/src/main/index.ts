@@ -158,6 +158,7 @@ import { validateGitBashPath, checkVCRedistInstalled } from '@rox/server-core/se
 import { createOpenClawSecurityComposition } from './openclaw-security'
 import { createOpenClawHostControlConfirmation, registerOpenClawHostControlIpc } from './openclaw-host-control'
 import { createLocalClientBindingRegistry } from './local-client-binding'
+import { installRendererSessionPolicy } from './renderer-session-policy'
 import { runQuitCleanupThenExit } from './quit-exit-guard'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
@@ -314,6 +315,20 @@ let openClawSecurityAuditService: OpenClawSecurityAuditService | null = null
 let workGraphKernel: WorkGraphKernel | null = null
 let cleanupNativeReplicaIpc: (() => void) | null = null
 const localClientBindingRegistry = createLocalClientBindingRegistry()
+
+// PERF-01 shell-first boot: the window is created before the RPC server
+// bootstrap. The preload's local client resolves its port through
+// `__await-ws-port`, which settles here once `bootstrapServer` has returned and
+// the Electron-side sinks are wired — so no renderer RPC is issued before the
+// server listens.
+let wsPortValue: number | null = null
+let resolveWsPort: ((port: number) => void) | null = null
+const wsPortReady = new Promise<number>((resolve) => { resolveWsPort = resolve })
+function publishWsPort(port: number): void {
+  if (wsPortValue !== null) return
+  wsPortValue = port
+  resolveWsPort?.(port)
+}
 
 // Messaging gateway: the bootstrap handle is created once sessionManager is
 // available (inside createHandlerDeps) and populated with the WS publisher
@@ -501,16 +516,20 @@ async function createInitialWindows(): Promise<void> {
 
   // Refresh workspace avatars that are still an auto-seeded legacy app mark
   // (byte-identical to an old bundled icon.png). User-chosen icons are untouched.
-  try {
-    const avatarPath = [
-      join(__dirname, 'resources/workspace-icon.png'),
-      join(__dirname, '../resources/workspace-icon.png'),
-      join(process.resourcesPath ?? '', 'app/resources/workspace-icon.png'),
-    ].find((p) => p && existsSync(p))
-    const refreshed = refreshLegacySeededWorkspaceIcons(workspaces, avatarPath)
-    if (refreshed.length > 0) mainLog.info(`Refreshed legacy seeded workspace icon(s): ${refreshed.length}`)
-  } catch (err) {
-    mainLog.warn('Failed to refresh legacy workspace icons', err)
+  // PERF-01: deferred until after the shell window exists so this file IO stays
+  // off the `window-created` critical path.
+  const refreshLegacyIcons = () => {
+    try {
+      const avatarPath = [
+        join(__dirname, 'resources/workspace-icon.png'),
+        join(__dirname, '../resources/workspace-icon.png'),
+        join(process.resourcesPath ?? '', 'app/resources/workspace-icon.png'),
+      ].find((p) => p && existsSync(p))
+      const refreshed = refreshLegacySeededWorkspaceIcons(workspaces, avatarPath)
+      if (refreshed.length > 0) mainLog.info(`Refreshed legacy seeded workspace icon(s): ${refreshed.length}`)
+    } catch (err) {
+      mainLog.warn('Failed to refresh legacy workspace icons', err)
+    }
   }
 
   const validWorkspaceIds = workspaces.map(ws => ws.id)
@@ -537,6 +556,7 @@ async function createInitialWindows(): Promise<void> {
 
     if (restoredCount > 0) {
       mainLog.info(`Restored ${restoredCount} window(s) from saved state`)
+      refreshLegacyIcons()
       return
     }
   }
@@ -544,6 +564,7 @@ async function createInitialWindows(): Promise<void> {
   // Default: open window for first workspace
   windowManager.createWindow({ workspaceId: workspaces[0].id })
   mainLog.info(`Created window for first workspace: ${workspaces[0].name}`)
+  refreshLegacyIcons()
 }
 
 // Trust boundary for main-process IPC that is only meant for Rox's own windows:
@@ -636,6 +657,68 @@ app.whenReady().then(async () => {
   // Register bundled assets root so all seeding functions can find their files
   // (docs, permissions, themes, tool-icons resolve via getBundledAssetsDir)
   setBundledAssetsRoot(__dirname)
+
+  // ── PERF-01 shell-first boot ─────────────────────────────────────────────
+  // Create the shell window (and the preload-critical IPC it evaluates
+  // synchronously) before the heavy startup work: credential vault restore,
+  // proxy apply, the RPC server bootstrap and everything after it (messaging
+  // init, model refresh, workspace connects). The renderer renders its loading
+  // splash and waits for the local transport through `__await-ws-port`, which
+  // main settles only once the server is listening and its sinks are wired —
+  // so no renderer RPC is issued before the server, while the window is on
+  // screen throughout.
+  const isClientOnly = !!process.env.CRAFT_SERVER_URL
+  const isHeadless = !!process.env.CRAFT_HEADLESS
+  try {
+    windowManager = new WindowManager()
+    ipcMain.on('__get-web-contents-id', (e) => {
+      e.returnValue = e.sender.id
+    })
+    ipcMain.on('__get-workspace-id', (e) => {
+      e.returnValue = readBoundWindowWorkspace(e, windowManager)
+    })
+    ipcMain.on('__get-local-client-proof', (e) => {
+      const owner = windowManager?.getWindowByWebContentsId(e.sender.id)
+      e.returnValue = owner && !owner.isDestroyed() && owner.webContents === e.sender
+        ? localClientBindingRegistry.issue(e.sender)
+        : ''
+    })
+    ipcMain.on('__get-workspace-remote-config', (e) => {
+      const wsId = windowManager?.getWorkspaceForWindow(e.sender.id)
+      if (!wsId) { e.returnValue = null; return }
+      const ws = getWorkspaceByNameOrId(wsId)
+      e.returnValue = ws?.remoteServer ?? null
+    })
+    ipcMain.handle('__await-ws-port', async (event) => {
+      if (!isRegisteredRoxRendererWebContents(event.sender)) throw new Error('IPC_SENDER_DENIED')
+      const port = await wsPortReady
+      markStartupOnce(STARTUP_MARKS.wsPortHanded)
+      return port
+    })
+    // PERF-01 shell-first boot: the preload unconditionally resolves the project
+    // authority during its eval (publish → setWorkspace → invoke). The channel
+    // must therefore exist by the time the shell window evaluates its preload,
+    // i.e. before createInitialWindows — otherwise the invoke rejects and the
+    // connection silently settles as 'denied' with no retry. Dependencies are
+    // only windowManager (already constructed) and a lazy import — kept dynamic
+    // so the project-authority implementation stays off the shell-first boot
+    // critical path (its graph is only needed once a renderer actually asks).
+    ipcMain.handle('__project-authority:resolve', async (event, localWorkspaceId: unknown) => {
+      const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
+      if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
+      const { resolveStoredProjectAuthority } = await import('./project-authority')
+      const result = await resolveStoredProjectAuthority(bound)
+      if (windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
+      return result
+    })
+    if (!isHeadless) await createInitialWindows()
+    // Application menu is built after the window so its native construction
+    // stays off the `window-created` critical path (it needs windowManager for
+    // the New Window action).
+    if (windowManager) createApplicationMenu(windowManager)
+  } catch (error) {
+    mainLog.error('[startup] shell-first window creation failed:', error)
+  }
 
   if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
     markStartup(STARTUP_MARKS.winBootstrapStart)
@@ -734,6 +817,10 @@ app.whenReady().then(async () => {
   // (first call before app.whenReady only configured Node-level proxy)
   await applyConfiguredProxySettings()
 
+  // Cancel third-party citation-favicon fetches on the app renderer session.
+  // Installed once here, before any window is created/loaded.
+  installRendererSessionPolicy(session.defaultSession)
+
   // Note: electron-updater handles pending updates internally via autoInstallOnAppQuit
 
   // Application menu is created after windowManager initialization (see below)
@@ -766,12 +853,10 @@ app.whenReady().then(async () => {
   }
 
   try {
-    // Initialize window manager
-    windowManager = new WindowManager()
-
-    // Create the application menu (needs windowManager for New Window action)
-    createApplicationMenu(windowManager)
-
+    // windowManager was created in the shell-first block above; if that failed
+    // the app cannot open any window, so fail the same way the old in-try
+    // construction did.
+    if (!windowManager) throw new Error('Window manager was not initialized')
     openDesignRuntime = new OpenDesignRuntimeManager({
       userDataDir: join(app.getPath('userData'), 'open-design-runtime'),
       windowController: new OpenDesignWindowController(),
@@ -785,9 +870,6 @@ app.whenReady().then(async () => {
     // When CRAFT_SERVER_URL is set, this Electron instance is a thin client —
     // it only creates windows whose preload connects to the remote server.
     // Skip server-side initialization (SessionManager, model refresh, platform injection).
-    const isClientOnly = !!process.env.CRAFT_SERVER_URL
-    const isHeadless = !!process.env.CRAFT_HEADLESS
-
     if (isClientOnly) {
       mainLog.info(`Client-only mode: CRAFT_SERVER_URL=${process.env.CRAFT_SERVER_URL} (server initialization skipped)`)
     }
@@ -914,7 +996,6 @@ app.whenReady().then(async () => {
     ipcMain.on('__telemetry-config', (e) => {
       e.returnValue = telemetryBootstrapConfig
     })
-
     // Language change: sync from renderer to main process, persist, and rebuild native menu.
     // Persistence here is what lets the next app launch hydrate main's i18n correctly —
     // see the `getPersistedUiLanguage()` block at the top of this file.
@@ -1579,8 +1660,13 @@ app.whenReady().then(async () => {
       ipcMain.on('__get-ws-port', (e) => {
         // Preload sendSync; registered-webcontents guard only (senderFrame may be null).
         if (!isRegisteredRoxRendererWebContents(e.sender)) return
+        // PERF-01 shell-first boot: the port is authoritative only once the
+        // server has bound and its sinks are wired (publishWsPort). Before that
+        // leave returnValue unset so the preload falls back to `__await-ws-port`
+        // instead of dialling an unbooted server.
+        if (wsPortValue === null) return
         markStartupOnce(STARTUP_MARKS.wsPortHanded)
-        e.returnValue = instance.port
+        e.returnValue = wsPortValue
       })
       ipcMain.handle('__resolve-local-ws-token', async (event, expectedWorkspaceId: unknown) => {
         try {
@@ -1615,14 +1701,8 @@ app.whenReady().then(async () => {
           if (!window.isDestroyed() && window.webContents.id !== initiatingSenderId) window.webContents.send('__project-authority:configuration-changed')
         }
       }
-      ipcMain.handle('__project-authority:resolve', async (event, localWorkspaceId: unknown) => {
-        const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
-        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
-        const { resolveStoredProjectAuthority } = await import('./project-authority')
-        const result = await resolveStoredProjectAuthority(bound)
-        if (windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
-        return result
-      })
+      // __project-authority:resolve is registered in the shell-first block above
+      // so the preload's eval-time invoke always finds it (PERF-01).
       ipcMain.handle('__project-authority:configuration', async (event, localWorkspaceId: unknown) => {
         const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
         if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
@@ -1682,13 +1762,6 @@ app.whenReady().then(async () => {
           && windowManager?.getWorkspaceForWindow(senderId) === bound && projectAuthorityRequests.get(senderId) === generation)
         if (result.ok) quiesceProjectAuthorityWindows(bound, senderId)
         return result
-      })
-
-      ipcMain.on('__get-workspace-remote-config', (e) => {
-        const wsId = windowManager?.getWorkspaceForWindow(e.sender.id)
-        if (!wsId) { e.returnValue = null; return }
-        const ws = getWorkspaceByNameOrId(wsId)
-        e.returnValue = ws?.remoteServer ?? null
       })
 
       ipcMain.handle('remoteTls:inspect', async (event, url: string) => {
@@ -1814,13 +1887,19 @@ app.whenReady().then(async () => {
         )
       }
 
-      // Wire EventSink to Electron-specific services
-      // Must happen BEFORE createInitialWindows() so event handlers use WS from the start
+      // Wire EventSink to Electron-specific services. The shell window already
+      // exists (PERF-01 shell-first boot), but its renderer only connects after
+      // this point: the WS port is published below, so event handlers use the
+      // WS sinks from the first client connection.
       windowManager.setRpcEventSink(moduleSink!, resolveClientId)
       const { setMenuEventSink, dispatchMenuChannel } = await import('./menu')
       setMenuEventSink(moduleSink!, resolveClientId)
       const { setNotificationEventSink } = await import('./notifications')
       setNotificationEventSink(moduleSink!, resolveClientId)
+
+// Release the local transport to the shell window(s): every renderer RPC
+      // (`__resolve-local-ws-token`, then the WS transport itself) is now wired.
+      publishWsPort(instance.port)
 
       // S7: host-local service lifecycle + doctor (e1.4/e1.5, e1.6). All
       // channels are LOCAL_ONLY; the launchd LaunchAgent relaunches the app
@@ -1924,12 +2003,8 @@ app.whenReady().then(async () => {
       }
     }
 
-    // Create initial windows (restores from saved state or opens first workspace)
-    // In headless mode the server runs without any UI — skip window creation.
-    if (!isHeadless) {
-      await createInitialWindows()
-    }
-    // Windows are restored: from here on a quit's window snapshot is real.
+    // Windows were created early (PERF-01 shell-first boot); this flag marks the
+    // end of startup init so a quit from here on snapshots real window state.
     appInitialized = true
 
     // Run credential health check at startup to detect issues early

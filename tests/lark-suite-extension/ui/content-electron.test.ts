@@ -239,10 +239,17 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
       })
     }
     await page.waitForFunction(() => window.electronAPI.isChannelAvailable('content:resolve'), { timeout: 30_000 })
-    const nativePort = await app.evaluate(({ ipcMain }) => {
+    const nativePort = await app.evaluate(({ ipcMain, BrowserWindow }) => {
       const listeners = ipcMain.listeners('__get-ws-port')
       if (listeners.length !== 1) throw new Error('Expected one actual native port provider')
-      const observation = { returnValue: 0 }
+      // The handler is sender-scoped: an unregistered sender must get nothing.
+      const unregistered = { returnValue: 0, sender: { id: -1 } }
+      listeners[0]!(unregistered)
+      if (unregistered.returnValue !== 0) throw new Error('Port handed to an unregistered sender')
+      // A real Rox window's webContents is the registered sender the guard expects.
+      const sender = BrowserWindow.getAllWindows()[0]?.webContents
+      if (!sender) throw new Error('Expected a live Rox window for the sender-scoped port guard')
+      const observation = { returnValue: 0, sender }
       listeners[0]!(observation)
       return observation.returnValue as number
     })

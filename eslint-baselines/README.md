@@ -106,3 +106,63 @@ bun scripts/lint-baseline.ts --update --base origin/main --merge /tmp/branch.jso
 
 Growth the new detection introduces is a one-time rebaseline: name every grown file with
 `--allow-increase`, say why in the commit message, and get owner review (CODEOWNERS).
+
+## ESLint workspace ratchet (`workspaces/`)
+
+DX-03 widens ESLint coverage past the three workspaces that had a config. Each gated workspace
+carries an `eslint.config.mjs` that builds on `scripts/eslint/base-config.mjs` (`@eslint/js` +
+`@typescript-eslint` recommended, React apps add the React Hooks rules), and its per-file,
+per-rule violation counts are recorded in `workspaces/<name>.json`. The rules are gated at
+**warning** severity, so `npx eslint` in a workspace stays green; the ratchet is the gate.
+
+```bash
+bun scripts/eslint-workspace-ratchet.ts                 # --check: counts may only go down
+bun scripts/eslint-workspace-ratchet.ts --update        # rewrite the baselines (refuses growth)
+bun scripts/eslint-workspace-ratchet.ts --check --base HEAD^1   # base-commit ceiling (CI on PRs)
+```
+
+CI runs it in `.github/workflows/eslint-workspaces.yml` (a separate job, so the validate lane's
+timings are untouched). On a pull request the PR's baseline is compared with the base commit's
+copy, so editing a baseline cannot raise a ceiling without the `eslint-workspace-override` label.
+Tests, fixtures, `.d.ts` and build output are excluded from the count. A rule at 0 keeps its
+count entry in the baseline; unlike the UI token ratchet there is no flip-to-error step yet.
+
+### What counts
+
+`base-config.mjs` runs with `linterOptions.noInlineConfig`, the same counting rule as the UI
+token ratchet: inline config is ignored, so a `/* eslint-disable */` comment never hides a
+violation from the count. The one exemption is a **next-line** or **same-line** directive that
+names the rule and carries a non-empty `-- justification`:
+
+```ts
+// eslint-disable-next-line no-empty -- probe fixture, empty block on purpose
+if (globalThis) {}
+```
+
+File-wide, block, bare (no rule) and reason-less disables still count. So a new violation cannot be
+merged behind a bare disable: the ratchet counts it and the growth gate fails.
+
+### Counted files leaving the gate
+
+A baselined file whose counts vanish is normally a "decrease" (the baseline is a ceiling, not a
+mirror). But a file can leave the gate **silently**: a workspace config `ignores` entry (or a
+narrowed `files` glob) stops linting a file it used to count, or a rename moves it out of the
+counted set (`__tests__/`, `*.test.*`, `*.d.ts`, outside `src/`). `--check` reports every baselined
+file the run no longer counts and fails unless the `eslint-workspace-override` label is present;
+`--update` refuses to drop it unless the workspace is named with `--allow-increase`, then records
+the drop explicitly. `--base <ref>` adds the `git diff -M -l0 --name-status` rename map, so a move
+*within* the counted set carries its counts (neither growth nor a drop) while a move out is a
+weakening. A plain delete (gone from disk, not a rename source) stays a decrease.
+
+### Renames and the base branch
+
+`--base <ref>` reads the base commit's baselines and its renames. A move is not growth (the base
+counts travel with the rename) and not a drop, but the PR must rebaseline: `--check --base` fails
+while the committed baseline still lists a renamed file under its old path (the PR itself would
+pass, then the push-to-main run after the merge would see the new path with no entry). Fix it with
+`--update --base <ref>` and commit the baseline. Any real growth versus the base copy — a raised
+count, a rule dropped or downgraded, or counted files moved out of the linted set — fails the PR
+until an owner adds the **`eslint-workspace-override`** label.
+`scripts/eslint-workspace-ratchet.ts`, `scripts/eslint/` and
+`.github/workflows/eslint-workspaces.yml` are owned by @agisota (`.github/CODEOWNERS`; binds when
+branch protection requires code-owner review).

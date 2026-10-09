@@ -1,0 +1,2044 @@
+{
+ "schemaVersion": 1,
+ "id": "PROGRAM-01-MASTER-20261009",
+ "issue": "https://github.com/rox-one/rox-one/issues/1157",
+ "issueState": "OPEN",
+ "taskId": "PROGRAM-01",
+ "observedAt": "2026-10-08T22:27:59Z",
+ "observationBase": {
+  "branch": "docs/sept-program-1157-master-program",
+  "head": "99b9a2ffa591165157129a6f59a4dd90d7ef46ba",
+  "originMain": "8c5abc7a32a3773645b695b79a81c327b8e6758d",
+  "parentBranch": "docs/sept-program-1158-recon",
+  "parentHead": "99b9a2ffa591165157129a6f59a4dd90d7ef46ba"
+ },
+ "statusBlock": {
+  "packageStatus": "PREPARED",
+  "programStatus": "PROGRAM NOT STARTED",
+  "uiAcceptance": "NOT CLAIMED",
+  "registryProductStatus": "IN_PROGRESS",
+  "registryPacketStatus": "PUBLISHED_VERIFIED",
+  "note": "Публикация и статусы реестра не являются приёмкой продукта; эта ветка — документы, не исполнение."
+ },
+ "scope": {
+  "included": "PRD, spec, plan, issue map/DoD, functional acceptance scenarios, источники, owners, границы файлов, интерфейсы, зависимости, риски, сводная матрица",
+  "excluded": "Исполнение app features, cloud provisioning, изменение чужих файлов, закрытие issues, U25-переключение поведения"
+ },
+ "stages": [
+  {
+   "task": "PROGRAM-01",
+   "issue": 1157,
+   "owner": "ProgramLead",
+   "dependsOn": [],
+   "registryStatus": "IN_PROGRESS",
+   "issueState": "open",
+   "note": "Root metadata/orchestration; не зависит от RELEASE-01, цикла не образует."
+  },
+  {
+   "task": "RECON-01",
+   "issue": 1158,
+   "owner": "ReconciliationOwner",
+   "dependsOn": [
+    "PROGRAM-01"
+   ],
+   "registryStatus": "IN_PROGRESS",
+   "issueState": "open",
+   "note": "Владельцы источников, dedup, активная работа; результат — ветка docs/sept-program-1158-recon (PR #1629)."
+  },
+  {
+   "task": "AUDIT-01",
+   "issue": 1159,
+   "owner": "ActualSurfaceAuditor",
+   "dependsOn": [
+    "RECON-01"
+   ],
+   "registryStatus": "NOT_RUN",
+   "issueState": "open",
+   "note": "Фактический аудит экранов на живой сборке; требует recon и сборки."
+  },
+  {
+   "task": "DATA-01",
+   "issue": 1212,
+   "owner": "SharedIntegrator",
+   "dependsOn": [
+    "RECON-01",
+    "AUDIT-01"
+   ],
+   "registryStatus": "IN_PROGRESS",
+   "issueState": "open",
+   "note": "Швы: producer/store/consumer, стабильная идентичность, ACL, версии."
+  },
+  {
+   "task": "SHARED-01",
+   "issue": 1160,
+   "owner": "SharedIntegrator",
+   "dependsOn": [
+    "DATA-01"
+   ],
+   "registryStatus": "IN_PROGRESS",
+   "issueState": "open",
+   "note": "Заморозка общих корней и единственный писатель; зависит от DATA-01."
+  },
+  {
+   "task": "INTEGRATE-01",
+   "issue": 1161,
+   "owner": "ProgramLead",
+   "dependsOn": [
+    "SHARED-01",
+    "CHAT-01",
+    "CHAT-02",
+    "TEAMS-01",
+    "TEAMS-02",
+    "TEAMS-03",
+    "COLLAB-01",
+    "COLLAB-02",
+    "COLLAB-03",
+    "COLLAB-04",
+    "COLLAB-05",
+    "INTEGRATIONS-01",
+    "INTEGRATIONS-02",
+    "SYNC-01",
+    "CALLS-01",
+    "INTEGRATIONS-03",
+    "UX-01",
+    "UX-02",
+    "DESIGN-01",
+    "ONBOARD-01",
+    "THEME-01",
+    "PROFILE-01",
+    "L10N-01",
+    "A11Y-01",
+    "SETTINGS-01",
+    "NATIVE-01",
+    "WINDOWS-01",
+    "GG-01",
+    "GG-02",
+    "GG-03",
+    "RMA-01",
+    "RMA-02",
+    "RMA-03",
+    "CONATION-AUTH-01",
+    "CONATION-E2E-01",
+    "CONATION-DELIVERY-01",
+    "DECISION-01",
+    "NOTES-01",
+    "NOTES-02",
+    "NOTES-03",
+    "CANVAS-01",
+    "CANVAS-02",
+    "MEMORY-01",
+    "MEMORY-02",
+    "SKILLS-01",
+    "PLUGINS-01",
+    "MARKETPLACE-01",
+    "IMPORTS-01",
+    "SEARCH-01",
+    "DRIVE-01",
+    "PAGES-01",
+    "DOCUMENTS-01",
+    "SPREADSHEET-01",
+    "PDF-01",
+    "SPLIT-01",
+    "MAIL-01",
+    "MAIL-02",
+    "MAIL-03",
+    "MAIL-04",
+    "VOICE-01",
+    "VOICE-02",
+    "MEETINGS-01",
+    "TRANSCRIPTIONS-01",
+    "TRANSCRIPTIONS-02",
+    "MEETINGS-02",
+    "MEETINGS-03",
+    "PROJECTS-01",
+    "TASKS-01",
+    "HOME-01",
+    "DASHBOARD-01",
+    "INBOX-01",
+    "CALENDAR-01",
+    "CRM-01",
+    "REMINDERS-01",
+    "FEED-01",
+    "QUEST-01",
+    "ARENA-01",
+    "COUNCIL-01",
+    "ACTIVITY-01",
+    "DECISIONS-01",
+    "RADAR-01",
+    "DOSSIER-01",
+    "AGENTCENTER-01",
+    "PAYMENTS-01",
+    "AGENT-BUDGET-01",
+    "FOCUS-01",
+    "AUTOMATION-01",
+    "AUTOMATION-02",
+    "SCHEDULED-01",
+    "SCHEDULED-02",
+    "REMOTE-01",
+    "REMOTE-02",
+    "RUNTIME-01",
+    "RUNTIME-02",
+    "CLI-01",
+    "BACKEND-01",
+    "BACKEND-02",
+    "ORCHESTRATION-01",
+    "SESSIONS-01",
+    "CODING-01",
+    "CONATION-SHARE-01",
+    "OKR-01",
+    "OKR-02"
+   ],
+   "registryStatus": "IN_PROGRESS",
+   "issueState": "open",
+   "note": "Последовательная интеграция атомарных потоков без потери overlay."
+  },
+  {
+   "task": "RELEASE-01",
+   "issue": 1162,
+   "owner": "IndependentReleaseVerifier",
+   "dependsOn": [
+    "RECON-01",
+    "AUDIT-01",
+    "SHARED-01",
+    "INTEGRATE-01"
+   ],
+   "registryStatus": "NOT_RUN",
+   "issueState": "open",
+   "note": "Финальная матрица на реальных платформах без сужения DoD."
+  }
+ ],
+ "graphVerification": {
+  "tasks": 109,
+  "uniqueIds": 109,
+  "duplicateIds": [],
+  "edges": 464,
+  "cycles": 0,
+  "unknownDepTargets": [],
+  "program01DependsOn": [],
+  "dependentsOfRelease01": [],
+  "allTasksHaveIssueNumber": true,
+  "duplicateIssueNumbers": [],
+  "dependentsOf": {
+   "SHARED-01": 103,
+   "DATA-01": 77,
+   "AUDIT-01": 24,
+   "RECON-01": 59,
+   "PROGRAM-01": 1
+  }
+ },
+ "requirementGroups": [
+  {
+   "group": "U01",
+   "rows": 15,
+   "kinds": {
+    "verification-gap": 15
+   },
+   "primaries": [
+    {
+     "task": "AUDIT-01",
+     "issue": 1159,
+     "owner": "ActualSurfaceAuditor",
+     "taskStatus": "NOT_RUN",
+     "rows": 6,
+     "issueState": "open"
+    },
+    {
+     "task": "FEED-01",
+     "issue": 1202,
+     "owner": "OwnerFeed",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "HOME-01",
+     "issue": 1196,
+     "owner": "OwnerHome",
+     "taskStatus": "NOT_RUN",
+     "rows": 2,
+     "issueState": "open"
+    },
+    {
+     "task": "NOTES-01",
+     "issue": 1163,
+     "owner": "OwnerNotes",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "TASKS-01",
+     "issue": 1195,
+     "owner": "OwnerTasks",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "MEMORY-02",
+     "issue": 1169,
+     "owner": "OwnerMemory",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "IMPORTS-01",
+     "issue": 1173,
+     "owner": "OwnerImports",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U02",
+   "rows": 8,
+   "kinds": {
+    "requested": 7,
+    "verification-gap": 1
+   },
+   "primaries": [
+    {
+     "task": "MAIL-01",
+     "issue": 1181,
+     "owner": "OwnerMail",
+     "taskStatus": "NOT_RUN",
+     "rows": 7,
+     "issueState": "open"
+    },
+    {
+     "task": "MAIL-02",
+     "issue": 1182,
+     "owner": "OwnerMail",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U03",
+   "rows": 1,
+   "kinds": {
+    "verification-gap": 1
+   },
+   "primaries": [
+    {
+     "task": "VOICE-01",
+     "issue": 1185,
+     "owner": "OwnerVoice",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U04",
+   "rows": 3,
+   "kinds": {
+    "requested": 3
+   },
+   "primaries": [
+    {
+     "task": "VOICE-02",
+     "issue": 1186,
+     "owner": "OwnerVoice",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 3,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U05",
+   "rows": 7,
+   "kinds": {
+    "requested": 6,
+    "verification-gap": 1
+   },
+   "primaries": [
+    {
+     "task": "MEETINGS-01",
+     "issue": 1187,
+     "owner": "OwnerMeetings",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 6,
+     "issueState": "open"
+    },
+    {
+     "task": "MEETINGS-02",
+     "issue": 1190,
+     "owner": "OwnerMeetings",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U06",
+   "rows": 4,
+   "kinds": {
+    "requested": 4
+   },
+   "primaries": [
+    {
+     "task": "UX-01",
+     "issue": 1136,
+     "owner": "OwnerUiUx",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "DESIGN-01",
+     "issue": 1138,
+     "owner": "OwnerDesign",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U07",
+   "rows": 3,
+   "kinds": {
+    "requested": 3
+   },
+   "primaries": [
+    {
+     "task": "DESIGN-01",
+     "issue": 1138,
+     "owner": "OwnerDesign",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U08",
+   "rows": 4,
+   "kinds": {
+    "requested": 4
+   },
+   "primaries": [
+    {
+     "task": "ONBOARD-01",
+     "issue": 1139,
+     "owner": "OwnerOnboarding",
+     "taskStatus": "NOT_RUN",
+     "rows": 4,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U09",
+   "rows": 6,
+   "kinds": {
+    "verification-gap": 6
+   },
+   "primaries": [
+    {
+     "task": "PROJECTS-01",
+     "issue": 1194,
+     "owner": "OwnerProjects",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 6,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U10",
+   "rows": 4,
+   "kinds": {
+    "requested": 4
+   },
+   "primaries": [
+    {
+     "task": "CHAT-02",
+     "issue": 1122,
+     "owner": "OwnerChats",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "CHAT-01",
+     "issue": 1121,
+     "owner": "OwnerChats",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U11",
+   "rows": 4,
+   "kinds": {
+    "requested": 4
+   },
+   "primaries": [
+    {
+     "task": "NATIVE-01",
+     "issue": 1145,
+     "owner": "OwnerSystemIntegration",
+     "taskStatus": "NOT_RUN",
+     "rows": 4,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U12",
+   "rows": 6,
+   "kinds": {
+    "verification-gap": 1,
+    "requested": 5
+   },
+   "primaries": [
+    {
+     "task": "MARKETPLACE-01",
+     "issue": 1172,
+     "owner": "OwnerMarketplace",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 4,
+     "issueState": "open"
+    },
+    {
+     "task": "SETTINGS-01",
+     "issue": 1144,
+     "owner": "OwnerSettings",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "UX-01",
+     "issue": 1136,
+     "owner": "OwnerUiUx",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U13",
+   "rows": 3,
+   "kinds": {
+    "requested": 3
+   },
+   "primaries": [
+    {
+     "task": "QUEST-01",
+     "issue": 1203,
+     "owner": "OwnerQuest",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 3,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U14",
+   "rows": 4,
+   "kinds": {
+    "requested": 4
+   },
+   "primaries": [
+    {
+     "task": "TEAMS-01",
+     "issue": 1123,
+     "owner": "OwnerTeams",
+     "taskStatus": "NOT_RUN",
+     "rows": 2,
+     "issueState": "open"
+    },
+    {
+     "task": "TEAMS-02",
+     "issue": 1124,
+     "owner": "OwnerTeams",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "TEAMS-03",
+     "issue": 1125,
+     "owner": "OwnerTeams",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U15",
+   "rows": 5,
+   "kinds": {
+    "requested": 5
+   },
+   "primaries": [
+    {
+     "task": "THEME-01",
+     "issue": 1140,
+     "owner": "OwnerDesign",
+     "taskStatus": "NOT_RUN",
+     "rows": 5,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U16",
+   "rows": 3,
+   "kinds": {
+    "verification-gap": 3
+   },
+   "primaries": [
+    {
+     "task": "CANVAS-01",
+     "issue": 1166,
+     "owner": "OwnerCanvas",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U17",
+   "rows": 8,
+   "kinds": {
+    "requested": 6,
+    "verification-gap": 2
+   },
+   "primaries": [
+    {
+     "task": "INTEGRATIONS-02",
+     "issue": 1132,
+     "owner": "OwnerIntegrations",
+     "taskStatus": "NOT_RUN",
+     "rows": 5,
+     "issueState": "open"
+    },
+    {
+     "task": "INTEGRATIONS-01",
+     "issue": 1131,
+     "owner": "OwnerIntegrations",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "IMPORTS-01",
+     "issue": 1173,
+     "owner": "OwnerImports",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "INTEGRATIONS-03",
+     "issue": 1135,
+     "owner": "OwnerIntegrations",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U18",
+   "rows": 9,
+   "kinds": {
+    "requested": 9
+   },
+   "primaries": [
+    {
+     "task": "COLLAB-05",
+     "issue": 1130,
+     "owner": "OwnerCollaboration",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "COLLAB-01",
+     "issue": 1126,
+     "owner": "OwnerCollaboration",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 2,
+     "issueState": "open"
+    },
+    {
+     "task": "COLLAB-04",
+     "issue": 1129,
+     "owner": "OwnerCollaboration",
+     "taskStatus": "NOT_RUN",
+     "rows": 2,
+     "issueState": "open"
+    },
+    {
+     "task": "COLLAB-03",
+     "issue": 1128,
+     "owner": "OwnerCollaboration",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "SYNC-01",
+     "issue": 1133,
+     "owner": "OwnerSync",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U19",
+   "rows": 3,
+   "kinds": {
+    "requested": 3
+   },
+   "primaries": [
+    {
+     "task": "AGENT-BUDGET-01",
+     "issue": 1213,
+     "owner": "OwnerAgents",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 3,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U20",
+   "rows": 3,
+   "kinds": {
+    "requested": 3
+   },
+   "primaries": [
+    {
+     "task": "FOCUS-01",
+     "issue": 1214,
+     "owner": "OwnerFocus",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 3,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U21",
+   "rows": 3,
+   "kinds": {
+    "requested": 2,
+    "proposal-audit": 1
+   },
+   "primaries": [
+    {
+     "task": "AUTOMATION-01",
+     "issue": 1215,
+     "owner": "OwnerAutomations",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "AUTOMATION-02",
+     "issue": 1216,
+     "owner": "OwnerAutomations",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "SCHEDULED-02",
+     "issue": 1218,
+     "owner": "OwnerScheduled",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U22",
+   "rows": 4,
+   "kinds": {
+    "requested": 3,
+    "verification-gap": 1
+   },
+   "primaries": [
+    {
+     "task": "REMOTE-01",
+     "issue": 1219,
+     "owner": "OwnerRemote",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "REMOTE-02",
+     "issue": 1220,
+     "owner": "OwnerRemote",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U23",
+   "rows": 5,
+   "kinds": {
+    "requested": 2,
+    "verification-gap": 3
+   },
+   "primaries": [
+    {
+     "task": "UX-01",
+     "issue": 1136,
+     "owner": "OwnerUiUx",
+     "taskStatus": "NOT_RUN",
+     "rows": 2,
+     "issueState": "open"
+    },
+    {
+     "task": "L10N-01",
+     "issue": 1142,
+     "owner": "OwnerLocalization",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "TASKS-01",
+     "issue": 1195,
+     "owner": "OwnerTasks",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "SETTINGS-01",
+     "issue": 1144,
+     "owner": "OwnerSettings",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U24",
+   "rows": 3,
+   "kinds": {
+    "requested": 3
+   },
+   "primaries": [
+    {
+     "task": "WINDOWS-01",
+     "issue": 1146,
+     "owner": "OwnerSystemIntegration",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U26",
+   "rows": 343,
+   "kinds": {
+    "verification-gap": 37,
+    "requested": 298,
+    "decision-reconciliation": 8
+   },
+   "primaries": [
+    {
+     "task": "CONATION-E2E-01",
+     "issue": 1154,
+     "owner": "OwnerConation",
+     "taskStatus": "NOT_RUN",
+     "rows": 101,
+     "issueState": "open"
+    },
+    {
+     "task": "CONATION-AUTH-01",
+     "issue": 1153,
+     "owner": "OwnerConation",
+     "taskStatus": "NOT_RUN",
+     "rows": 32,
+     "issueState": "open"
+    },
+    {
+     "task": "DASHBOARD-01",
+     "issue": 1197,
+     "owner": "OwnerDashboard",
+     "taskStatus": "NOT_RUN",
+     "rows": 27,
+     "issueState": "open"
+    },
+    {
+     "task": "CANVAS-02",
+     "issue": 1167,
+     "owner": "OwnerCanvas",
+     "taskStatus": "NOT_RUN",
+     "rows": 19,
+     "issueState": "open"
+    },
+    {
+     "task": "L10N-01",
+     "issue": 1142,
+     "owner": "OwnerLocalization",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 19,
+     "issueState": "open"
+    },
+    {
+     "task": "MAIL-04",
+     "issue": 1184,
+     "owner": "OwnerMail",
+     "taskStatus": "NOT_RUN",
+     "rows": 18,
+     "issueState": "open"
+    },
+    {
+     "task": "INBOX-01",
+     "issue": 1198,
+     "owner": "OwnerInbox",
+     "taskStatus": "NOT_RUN",
+     "rows": 14,
+     "issueState": "open"
+    },
+    {
+     "task": "A11Y-01",
+     "issue": 1143,
+     "owner": "OwnerAccessibility",
+     "taskStatus": "NOT_RUN",
+     "rows": 14,
+     "issueState": "open"
+    },
+    {
+     "task": "CALENDAR-01",
+     "issue": 1199,
+     "owner": "OwnerCalendar",
+     "taskStatus": "NOT_RUN",
+     "rows": 12,
+     "issueState": "open"
+    },
+    {
+     "task": "DRIVE-01",
+     "issue": 1175,
+     "owner": "OwnerDrive",
+     "taskStatus": "NOT_RUN",
+     "rows": 11,
+     "issueState": "open"
+    },
+    {
+     "task": "CRM-01",
+     "issue": 1200,
+     "owner": "OwnerCrm",
+     "taskStatus": "NOT_RUN",
+     "rows": 11,
+     "issueState": "open"
+    },
+    {
+     "task": "TASKS-01",
+     "issue": 1195,
+     "owner": "OwnerTasks",
+     "taskStatus": "NOT_RUN",
+     "rows": 10,
+     "issueState": "open"
+    },
+    {
+     "task": "SEARCH-01",
+     "issue": 1174,
+     "owner": "OwnerSearch",
+     "taskStatus": "NOT_RUN",
+     "rows": 9,
+     "issueState": "open"
+    },
+    {
+     "task": "PAYMENTS-01",
+     "issue": 1211,
+     "owner": "OwnerPayments",
+     "taskStatus": "NOT_RUN",
+     "rows": 8,
+     "issueState": "open"
+    },
+    {
+     "task": "SPREADSHEET-01",
+     "issue": 1178,
+     "owner": "OwnerDocuments",
+     "taskStatus": "NOT_RUN",
+     "rows": 7,
+     "issueState": "open"
+    },
+    {
+     "task": "CONATION-DELIVERY-01",
+     "issue": 1155,
+     "owner": "OwnerConation",
+     "taskStatus": "NOT_RUN",
+     "rows": 6,
+     "issueState": "open"
+    },
+    {
+     "task": "REMINDERS-01",
+     "issue": 1201,
+     "owner": "OwnerReminders",
+     "taskStatus": "NOT_RUN",
+     "rows": 6,
+     "issueState": "open"
+    },
+    {
+     "task": "AGENTCENTER-01",
+     "issue": 1210,
+     "owner": "OwnerAgentCenter",
+     "taskStatus": "NOT_RUN",
+     "rows": 5,
+     "issueState": "open"
+    },
+    {
+     "task": "CONATION-SHARE-01",
+     "issue": 1229,
+     "owner": "OwnerConation",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "NOTES-03",
+     "issue": 1165,
+     "owner": "OwnerNotes",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "PDF-01",
+     "issue": 1179,
+     "owner": "OwnerDocuments",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "SPLIT-01",
+     "issue": 1180,
+     "owner": "OwnerDocuments",
+     "taskStatus": "NOT_RUN",
+     "rows": 3,
+     "issueState": "open"
+    },
+    {
+     "task": "ACTIVITY-01",
+     "issue": 1206,
+     "owner": "OwnerActivity",
+     "taskStatus": "NOT_RUN",
+     "rows": 2,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U27",
+   "rows": 3,
+   "kinds": {
+    "verification-gap": 3
+   },
+   "primaries": [
+    {
+     "task": "RMA-01",
+     "issue": 1150,
+     "owner": "OwnerRma",
+     "taskStatus": "IN_PROGRESS",
+     "rows": 3,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U28",
+   "rows": 6,
+   "kinds": {
+    "verification-gap": 6
+   },
+   "primaries": [
+    {
+     "task": "RMA-02",
+     "issue": 1151,
+     "owner": "OwnerRma",
+     "taskStatus": "NOT_RUN",
+     "rows": 6,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U29",
+   "rows": 5,
+   "kinds": {
+    "verification-gap": 3,
+    "requested": 1,
+    "proposal-audit": 1
+   },
+   "primaries": [
+    {
+     "task": "MAIL-03",
+     "issue": 1183,
+     "owner": "OwnerMail",
+     "taskStatus": "NOT_RUN",
+     "rows": 2,
+     "issueState": "open"
+    },
+    {
+     "task": "CRM-01",
+     "issue": 1200,
+     "owner": "OwnerCrm",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "CALENDAR-01",
+     "issue": 1199,
+     "owner": "OwnerCalendar",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    },
+    {
+     "task": "RMA-03",
+     "issue": 1152,
+     "owner": "OwnerRma",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U30",
+   "rows": 3,
+   "kinds": {
+    "verification-gap": 3
+   },
+   "primaries": [
+    {
+     "task": "GG-02",
+     "issue": 1148,
+     "owner": "OwnerGoldenGate",
+     "taskStatus": "NOT_RUN",
+     "rows": 2,
+     "issueState": "open"
+    },
+    {
+     "task": "GG-01",
+     "issue": 1147,
+     "owner": "OwnerGoldenGate",
+     "taskStatus": "NOT_RUN",
+     "rows": 1,
+     "issueState": "open"
+    }
+   ]
+  },
+  {
+   "group": "U31",
+   "rows": 6,
+   "kinds": {
+    "verification-gap": 6
+   },
+   "primaries": [
+    {
+     "task": "GG-03",
+     "issue": 1149,
+     "owner": "OwnerGoldenGate",
+     "taskStatus": "NOT_RUN",
+     "rows": 6,
+     "issueState": "open"
+    }
+   ]
+  }
+ ],
+ "u25": {
+  "group": "U25",
+  "rows": 0,
+  "disposition": "decision-reconciliation only; FALSE/shortcut-only сохраняется, изменения не авторизованы",
+  "issue": 1156,
+  "issueState": "open"
+ },
+ "conationRows16": [
+  {
+   "id": "C01",
+   "requirement": "Authenticated populated data",
+   "primaryOwnerTasks": [
+    "CONATION-AUTH-01",
+    "INBOX-01",
+    "DRIVE-01",
+    "MAIL-04",
+    "TASKS-01",
+    "AGENTCENTER-01",
+    "CRM-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "CONATION-AUTH-01",
+     "issue": 1153
+    },
+    {
+     "task": "INBOX-01",
+     "issue": 1198
+    },
+    {
+     "task": "DRIVE-01",
+     "issue": 1175
+    },
+    {
+     "task": "MAIL-04",
+     "issue": 1184
+    },
+    {
+     "task": "TASKS-01",
+     "issue": 1195
+    },
+    {
+     "task": "AGENTCENTER-01",
+     "issue": 1210
+    },
+    {
+     "task": "CRM-01",
+     "issue": 1200
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C02",
+   "requirement": "Branch completion/delivery",
+   "primaryOwnerTasks": [
+    "CONATION-DELIVERY-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "CONATION-DELIVERY-01",
+     "issue": 1155
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C03",
+   "requirement": "Login/onboarding",
+   "primaryOwnerTasks": [
+    "CONATION-AUTH-01",
+    "L10N-01",
+    "A11Y-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "CONATION-AUTH-01",
+     "issue": 1153
+    },
+    {
+     "task": "L10N-01",
+     "issue": 1142
+    },
+    {
+     "task": "A11Y-01",
+     "issue": 1143
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C04",
+   "requirement": "Working E2E",
+   "primaryOwnerTasks": [
+    "CONATION-E2E-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "CONATION-E2E-01",
+     "issue": 1154
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C05",
+   "requirement": "Tauri/Mac desktop",
+   "primaryOwnerTasks": [
+    "CONATION-E2E-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "CONATION-E2E-01",
+     "issue": 1154
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C06",
+   "requirement": "Dashboard composition",
+   "primaryOwnerTasks": [
+    "DASHBOARD-01",
+    "CANVAS-02"
+   ],
+   "primaryIssues": [
+    {
+     "task": "DASHBOARD-01",
+     "issue": 1197
+    },
+    {
+     "task": "CANVAS-02",
+     "issue": 1167
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C07",
+   "requirement": "Inbox",
+   "primaryOwnerTasks": [
+    "INBOX-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "INBOX-01",
+     "issue": 1198
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C08",
+   "requirement": "Drive",
+   "primaryOwnerTasks": [
+    "DRIVE-01",
+    "L10N-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "DRIVE-01",
+     "issue": 1175
+    },
+    {
+     "task": "L10N-01",
+     "issue": 1142
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C09",
+   "requirement": "Mail",
+   "primaryOwnerTasks": [
+    "MAIL-04"
+   ],
+   "primaryIssues": [
+    {
+     "task": "MAIL-04",
+     "issue": 1184
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C10",
+   "requirement": "Chat",
+   "primaryOwnerTasks": [
+    "CONATION-E2E-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "CONATION-E2E-01",
+     "issue": 1154
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C11",
+   "requirement": "Tasks",
+   "primaryOwnerTasks": [
+    "TASKS-01",
+    "INBOX-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "TASKS-01",
+     "issue": 1195
+    },
+    {
+     "task": "INBOX-01",
+     "issue": 1198
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C12",
+   "requirement": "Agents",
+   "primaryOwnerTasks": [
+    "AGENTCENTER-01",
+    "CONATION-E2E-01",
+    "A11Y-01",
+    "CANVAS-02"
+   ],
+   "primaryIssues": [
+    {
+     "task": "AGENTCENTER-01",
+     "issue": 1210
+    },
+    {
+     "task": "CONATION-E2E-01",
+     "issue": 1154
+    },
+    {
+     "task": "A11Y-01",
+     "issue": 1143
+    },
+    {
+     "task": "CANVAS-02",
+     "issue": 1167
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C13",
+   "requirement": "Notes/documents/canvas",
+   "primaryOwnerTasks": [
+    "NOTES-03",
+    "CANVAS-02",
+    "SPREADSHEET-01",
+    "PDF-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "NOTES-03",
+     "issue": 1165
+    },
+    {
+     "task": "CANVAS-02",
+     "issue": 1167
+    },
+    {
+     "task": "SPREADSHEET-01",
+     "issue": 1178
+    },
+    {
+     "task": "PDF-01",
+     "issue": 1179
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C14",
+   "requirement": "Other screens",
+   "primaryOwnerTasks": [
+    "CALENDAR-01",
+    "CRM-01",
+    "SEARCH-01",
+    "PAYMENTS-01",
+    "REMINDERS-01",
+    "ACTIVITY-01",
+    "CONATION-SHARE-01",
+    "SPLIT-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "CALENDAR-01",
+     "issue": 1199
+    },
+    {
+     "task": "CRM-01",
+     "issue": 1200
+    },
+    {
+     "task": "SEARCH-01",
+     "issue": 1174
+    },
+    {
+     "task": "PAYMENTS-01",
+     "issue": 1211
+    },
+    {
+     "task": "REMINDERS-01",
+     "issue": 1201
+    },
+    {
+     "task": "ACTIVITY-01",
+     "issue": 1206
+    },
+    {
+     "task": "CONATION-SHARE-01",
+     "issue": 1229
+    },
+    {
+     "task": "SPLIT-01",
+     "issue": 1180
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C15",
+   "requirement": "Global motion and typography acceptance",
+   "primaryOwnerTasks": [
+    "A11Y-01",
+    "CONATION-E2E-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "A11Y-01",
+     "issue": 1143
+    },
+    {
+     "task": "CONATION-E2E-01",
+     "issue": 1154
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  },
+  {
+   "id": "C16",
+   "requirement": "Operational conditions still unresolved in transcript",
+   "primaryOwnerTasks": [
+    "CONATION-E2E-01",
+    "CONATION-DELIVERY-01"
+   ],
+   "primaryIssues": [
+    {
+     "task": "CONATION-E2E-01",
+     "issue": 1154
+    },
+    {
+     "task": "CONATION-DELIVERY-01",
+     "issue": 1155
+    }
+   ],
+   "status": "NOT_RUN",
+   "rows_in_register": 343,
+   "evidence": "docs/september-program/recon-1158/current-state.md + docs/september-program/requirements-conation-owners.json"
+  }
+ ],
+ "proposalsNotAuthorizing": [
+  {
+   "task": "RMA-03",
+   "issue": 1152,
+   "owner": "OwnerRma"
+  },
+  {
+   "task": "MEETINGS-03",
+   "issue": 1191,
+   "owner": "OwnerMeetings"
+  },
+  {
+   "task": "ARENA-01",
+   "issue": 1204,
+   "owner": "OwnerArena"
+  },
+  {
+   "task": "COUNCIL-01",
+   "issue": 1205,
+   "owner": "OwnerCouncil"
+  },
+  {
+   "task": "SCHEDULED-01",
+   "issue": 1217,
+   "owner": "OwnerScheduled"
+  },
+  {
+   "task": "SCHEDULED-02",
+   "issue": 1218,
+   "owner": "OwnerScheduled"
+  },
+  {
+   "task": "BACKEND-01",
+   "issue": 1224,
+   "owner": "OwnerBackend"
+  },
+  {
+   "task": "ORCHESTRATION-01",
+   "issue": 1226,
+   "owner": "OwnerOrchestration"
+  },
+  {
+   "task": "SESSIONS-01",
+   "issue": 1227,
+   "owner": "OwnerSessions"
+  },
+  {
+   "task": "CODING-01",
+   "issue": 1228,
+   "owner": "OwnerAgents"
+  }
+ ],
+ "decisionReconciliation": [
+  {
+   "task": "DECISION-01",
+   "issue": 1156
+  }
+ ],
+ "risks": [
+  {
+   "id": "R-01",
+   "title": "SHARED-01 не заморожен — блокирует 103 задачи",
+   "owner": "SharedIntegrator",
+   "issue": 1160,
+   "severity": "blocker",
+   "next": "DATA-01 (#1212) принимает контракт сущности/ревизии; далее SHARED-01 фиксирует корни с единственным писателем."
+  },
+  {
+   "id": "R-02",
+   "title": "DATA-01 без принятой версии контракта — блокирует 77 задач",
+   "owner": "SharedIntegrator",
+   "issue": 1212,
+   "severity": "blocker",
+   "next": "Принять одну версионированную EntityRef/revision-оболочку и доказать producer + двух независимых потребителей."
+  },
+  {
+   "id": "R-03",
+   "title": "Security: shared identity, provider credentials и cross-surface authorization",
+   "owner": "OwnerBackend",
+   "issue": 1225,
+   "severity": "security",
+   "next": "BACKEND-02: доказать отказ неавторизованному чтению/записи без утечки; связано с BACKEND-01 #1224."
+  },
+  {
+   "id": "R-04",
+   "title": "Security: consent и изоляция сторонних account/cookie подключений",
+   "owner": "OwnerIntegrations",
+   "issue": 1135,
+   "severity": "security",
+   "next": "INTEGRATIONS-03: согласие адресата и изоляция чтения; зависит от DATA-01/SHARED-01/AUDIT-01."
+  },
+  {
+   "id": "R-05",
+   "title": "RMA E3 не подтверждён: #385 → #387 → карточки #1150/#1151",
+   "owner": "OwnerRma",
+   "issue": 385,
+   "severity": "blocker",
+   "next": "Реальное E3-доказательство (#385); merge PR #991 приёмкой не является. #387 остаётся HELD до прохождения #385."
+  },
+  {
+   "id": "R-06",
+   "title": "Golden Gate: финальная приёмка #578 не закрыта → RELEASE-01 #1162",
+   "owner": "OwnerGoldenGate",
+   "issue": 578,
+   "severity": "blocker",
+   "next": "Визуальная/функциональная/performance и Electron/macOS матрица; из 25 детей #541 закрыт только #567."
+  },
+  {
+   "id": "R-07",
+   "title": "U25 — неразрешённое решение, не feature",
+   "owner": "OwnerDecisionReconciliation",
+   "issue": 1156,
+   "severity": "decision",
+   "next": "Независимое достоверное основание; до него поведение FALSE/shortcut-only не меняется."
+  },
+  {
+   "id": "R-08",
+   "title": "Платформы Windows/macOS/iOS не наблюдались",
+   "owner": "IndependentReleaseVerifier",
+   "issue": 1162,
+   "severity": "unverified",
+   "next": "Отдельные слоты наблюдений; iOS-слот остаётся BLOCKED с точным prerequisite, Mac/browser его не заменяют."
+  },
+  {
+   "id": "R-09",
+   "title": "Публичная публикация: приватные пути и ссылки",
+   "owner": "ProgramLead",
+   "issue": 1157,
+   "severity": "governance",
+   "next": "Перед публикацией сверить пакет на raw prompt/приватные пути/секреты; приватные входы не менять."
+  },
+  {
+   "id": "R-10",
+   "title": "Macro: права на донорский код",
+   "owner": "ProgramLead",
+   "issue": 1157,
+   "severity": "legal",
+   "next": "Корень Macro AGPLv3, apps/web — all rights reserved. Реиспользование требований допустимо, копирование кода — только после проверки прав."
+  }
+ ],
+ "acceptanceScenarios": [
+  {
+   "id": "P1",
+   "title": "Полнота U-реестра",
+   "expect": "30 подтверждённых групп U включены в матрицу; U25 отдельной строкой; пропуск любой группы = fail",
+   "how": "Сверка requirements-full.json (484 строки) с матрицей; счётчик групп и строк",
+   "status": "PASS (структурная сверка)"
+  },
+  {
+   "id": "P2",
+   "title": "Conation: 16 seq703 rows",
+   "expect": "16/16 строк с собственным владельцем; общий smoke не засчитывается",
+   "how": "Сверка 16 пунктов source-backlog.md с requirements-conation-owners.json (343 строки)",
+   "status": "PASS (структурная сверка); исполнение NOT_RUN"
+  },
+  {
+   "id": "P3",
+   "title": "Governance: issue map без фальши",
+   "expect": "Нет дублирующихся ID и циклов; PROGRAM-01 имеет пустые dependsOn; у каждой задачи есть issue",
+   "how": "Автоматическая проверка task-registry.json: дубликаты, циклы, неизвестные цели, дефолт root",
+   "status": "PASS (0 дубликатов, 0 циклов, 464 ребра)"
+  },
+  {
+   "id": "P4",
+   "title": "Public safety",
+   "expect": "Нет raw prompt, приватных абсолютных путей, секретов, cookies, персональных данных",
+   "how": "Скан артефактов по маркерам приватности",
+   "status": "PASS (скан чист)"
+  },
+  {
+   "id": "S-01",
+   "title": "Реальный аудит поверхности",
+   "expect": "Матрица каждого экрана: контролы, состояния, клавиатура, узкий экран, сохранение",
+   "how": "AUDIT-01 (#1159) на живой сборке",
+   "status": "NOT_RUN"
+  },
+  {
+   "id": "S-02",
+   "title": "Контракт сущности и синхронизации",
+   "expect": "Одна версия EntityRef/ревизии; идемпотентный повтор применяет мутацию один раз; конфликт сохраняет обе версии",
+   "how": "DATA-01 (#1212)",
+   "status": "NOT_RUN"
+  },
+  {
+   "id": "S-03",
+   "title": "Заморозка общих интерфейсов",
+   "expect": "Найденные общие корни с единственным писателем; устаревшая схема и неавторизованная мутация отклоняются",
+   "how": "SHARED-01 (#1160) после DATA-01",
+   "status": "NOT_RUN"
+  },
+  {
+   "id": "S-04",
+   "title": "RMA E3",
+   "expect": "Настоящий Electron → RPC → durable storage с уровнями evidence",
+   "how": "#385 (карточка #1150)",
+   "status": "NOT_RUN"
+  },
+  {
+   "id": "S-05",
+   "title": "RMA поставка",
+   "expect": "Packaged app, безопасное обновление, web, локали, доступность; без имитации недоступного OS capture",
+   "how": "#387 (карточка #1151)",
+   "status": "BLOCKED (ждёт #385)"
+  },
+  {
+   "id": "S-06",
+   "title": "Golden Gate полная приёмка",
+   "expect": "Visual/functional/performance и Electron/macOS; отсутствующие проверки не выдаются за пройденные",
+   "how": "#541/#578 (карточка #1149 → RELEASE-01 #1162)",
+   "status": "NOT_RUN"
+  },
+  {
+   "id": "S-07",
+   "title": "Conation iOS share",
+   "expect": "Существующий target/action и controlled receiver; payload и возврат/deep-link того же объекта",
+   "how": "CONATION-SHARE-01 (#1229)",
+   "status": "BLOCKED (нет подтверждённого target/device/runner)"
+  },
+  {
+   "id": "S-08",
+   "title": "Интеграция без потери overlay",
+   "expect": "Последовательное объединение потоков; пользовательские рабочие копии не затёрты",
+   "how": "INTEGRATE-01 (#1161)",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "id": "S-09",
+   "title": "Финальная мульти-средовая приёмка",
+   "expect": "Linux/cloud, Mac native, Windows native и iOS-слот по отдельности; DoD не сужается",
+   "how": "RELEASE-01 (#1162)",
+   "status": "NOT_RUN"
+  },
+  {
+   "id": "S-10",
+   "title": "Macro reuse",
+   "expect": "52 WP / 61 экран / 219 контролов связаны как prior planning; 2–3 улучшения на экран как proposals, не defects",
+   "how": "Раздел Macro в README + матрица предложений",
+   "status": "PREPARED / NOT_LAUNCHED"
+  }
+ ],
+ "liveCheckouts": [
+  {
+   "label": "A",
+   "repo": "rox-one/rox-one",
+   "kind": "bare mirror",
+   "ref": "fix/residual-ci-reds-20261008",
+   "head": "0b8a4dda1fe3547a7218f7234b75e5520367277b",
+   "dirty": 0,
+   "note": "280 локальных ветвей, 833 remote refs"
+  },
+  {
+   "label": "B",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "feat/w1-09-activity-notifications-inbox",
+   "head": "945182eb881350e66f85a73aec05a8f00f116e7a",
+   "dirty": 0,
+   "note": "PR #1621 head"
+  },
+  {
+   "label": "C",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "feat/w1-14-collab-xsc-drive-contracts",
+   "head": "f842f3402e59a8935dfce28653934dd1b6872683",
+   "dirty": 0,
+   "note": "PR #1626 head"
+  },
+  {
+   "label": "D",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "feat/w1-15-chrome-agent-panel-xfn",
+   "head": "93e5a86ccae6b2bdc836a38e029fe54887bf1f9e",
+   "dirty": 0,
+   "note": "PR #1625 head"
+  },
+  {
+   "label": "E",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "perf/p2-keepalive-prefetch",
+   "head": "1922d50c3a7079d03b9d7841da4b5ec2c0bbaff3",
+   "dirty": 0,
+   "note": "PR #1620 head"
+  },
+  {
+   "label": "F",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "HEAD",
+   "head": "3f1a978e91885f123ca0750cb1c829abcc59cd01",
+   "dirty": 0,
+   "note": "detached; e01-decisions tip"
+  },
+  {
+   "label": "G",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "feat/e01-voice-wave",
+   "head": "b63efe011ae3c8d6aca82836a24838227f9ffc12",
+   "dirty": 0,
+   "note": "merge завершён владельцем в ходе сессии"
+  },
+  {
+   "label": "H",
+   "repo": "rox-one/rox-one",
+   "kind": "separate clone",
+   "ref": "main",
+   "head": "e6c899357e3ad7fdddf06c2b3ef06ba403435574",
+   "dirty": 15540,
+   "note": "15 540 staged-удалений; не трогать"
+  },
+  {
+   "label": "I",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "docs/sept-program-1157-master-program",
+   "head": "99b9a2ffa591165157129a6f59a4dd90d7ef46ba",
+   "dirty": 0,
+   "note": "эта ветка (документы)"
+  }
+ ],
+ "livePullRequests": [
+  {
+   "number": 1615,
+   "head": "feat/w1-06-workitem-v3-schemas",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "feat(work): W1-06 — domain schemas, reference handlers, WorkItem v3 and local migrations (#1503)"
+  },
+  {
+   "number": 1618,
+   "head": "perf/p2-query-cache",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "perf(renderer): shared persisted query cache + PERF-09 — Notes builds tasks from the listing (no second corpus pass) (#1576)"
+  },
+  {
+   "number": 1620,
+   "head": "perf/p2-keepalive-prefetch",
+   "base": "perf/p2-query-cache",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "perf(renderer): PERF-10 — keep-alive surfaces (LRU 5), route preloads, idle warm-up and intent prefetch (#1577)"
+  },
+  {
+   "number": 1621,
+   "head": "feat/w1-09-activity-notifications-inbox",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "feat(inbox): W1-09 — activity, notifications and Inbox contracts (#1506)"
+  },
+  {
+   "number": 1622,
+   "head": "feat/w1-12-domain-rule-engine",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "feat(rules): W1-12 — domain rule engine, R1–R5 reference rules and workspace rules API (#1509)"
+  },
+  {
+   "number": 1623,
+   "head": "feat/w1-11-identity-agent-governance",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "CONFLICTING",
+   "title": "feat(agents): W1-11 — identity lifecycle, agent governance policy/audit and team-chat contracts (#1508)"
+  },
+  {
+   "number": 1624,
+   "head": "feat/e01-voice-wave",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "feat(voice): e01 wave — dictation ownership, level meter, transcript notes + follow-ups (#1560s)"
+  },
+  {
+   "number": 1625,
+   "head": "feat/w1-15-chrome-agent-panel-xfn",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "CONFLICTING",
+   "title": "feat(platform): W1-15 — surface chrome, agent panel and cross-functional contracts (#1512)"
+  },
+  {
+   "number": 1626,
+   "head": "feat/w1-14-collab-xsc-drive-contracts",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "feat(collab): W1-14 — collaboration, §12 and Drive/XSC contracts (#1511)"
+  },
+  {
+   "number": 1627,
+   "head": "fix/product-tour-native-green",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "CONFLICTING",
+   "title": "fix(product-tour): green the native acceptance workflow"
+  },
+  {
+   "number": 1628,
+   "head": "feat/rox-batch2-20261008",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "feat(batch2): real mail, audio transcripts, pills, thin focus, chrome, meetings tabs, secrets surface, profile, calendar autostart"
+  },
+  {
+   "number": 1629,
+   "head": "docs/sept-program-1158-recon",
+   "base": "main",
+   "state": "OPEN",
+   "draft": false,
+   "mergeable": "MERGEABLE",
+   "title": "docs(program): W1-P0 #1158 — source-ownership recon and dependency graph"
+  }
+ ],
+ "evidenceRefs": [
+  "docs/september-program/recon-1158/current-state.md",
+  "docs/september-program/recon-1158/source-ownership.md",
+  "docs/september-program/recon-1158/dependency-graph.md",
+  "docs/september-program/recon-1158/unconfirmed.md",
+  "docs/september-program/recon-1158/recon-1158.json",
+  "docs/september-program/task-registry.json",
+  "docs/september-program/requirements-full.json",
+  "docs/september-program/requirements-conation.json",
+  "docs/september-program/requirements-conation-owners.json",
+  "docs/september-program/requirements-addendum.json",
+  "docs/september-program/issue-index.md",
+  "docs/september-program/execution-contract.md",
+  "docs/september-program/handoff.md",
+  "docs/september-program/PRD.md",
+  "docs/spec.md",
+  "docs/plan.md"
+ ],
+ "unconfirmed": [
+  "Приватные первичные источники (координаты seqNNN, полный транскрипт, приватные аудиты early/middle/late/tail) публично недоступны: проверяемы только тезисы и U-группы.",
+  "Полнота очистки приватных ссылок в ранее опубликованных документах не проверялась; проверены только артефакты этой ветки.",
+  "Знаменатель локалей (10 против 12) не решён владельцем L10N-01 #1142; сохранены обе цифры.",
+  "U25: независимого достоверного основания нет; поведение FALSE/shortcut-only остаётся, изменение не авторизовано.",
+  "E3 для #385 не предъявлен; merge PR #991 приёмкой не является.",
+  "#387 остаётся HELD: ни одна поставка packaged app / upgrade / web / локали / доступность не предъявлена.",
+  "#389 (P2): зафиксирован только scope, реализации media rooms/screenshare/reconnect/signed bots нет.",
+  "Полная приёмка Golden Gate #541/#578 не выполнена; закрытие #567 не перепроверялось по существу.",
+  "Conation: все 16 строк seq703 — NOT_RUN; доступность донорского рантайма, сид-данных и runner не подтверждена.",
+  "Платформы: Windows native, macOS native и iOS-слот не наблюдались в этом прогоне; POSIX-доказательства их не заменяют.",
+  "Runner/cloud inventory и состояние внешних машин недоступны: не подтверждено, а не выведено по догадке.",
+  "Авторство dirty-overlay не устанавливается из git-статуса; владелец конкретного изменения не выводится.",
+  "Кросс-программные пересечения (Rox Unified, ROX Suite, Macro) — тематические гипотезы по заголовкам и меткам, не подтверждённое дублирование реализации.",
+  "Статусы `task-registry.json` (31 IN_PROGRESS / 78 NOT_RUN) — заявленные значения реестра, не подтверждённые наблюдаемым поведением продукта.",
+  "`executionProgress.deliveryRevision = null`: доставленной ревизии продукта нет.",
+  "Macro: правовая проверка реиспользования донорского кода не проводилась; граница AGPLv3 / all rights reserved зафиксирована, но не подтверждена юридически.",
+  "DoD п.7 (подтверждение публичной ссылки и issue index lead reviewer и upload owner) не выполнен: это действие людей вне репозитория.",
+  "Актуальность внешних задач и runner-слотов Rox Unified не проверялась.",
+  "Visual/native-проверки Golden Gate не выполнялись; UI-приёмка не заявляется.",
+  "Привязка владельцев к 16 строкам Conation получена сопоставлением разделов `requirements-conation-owners.json`; построчная авторитетность остаётся за владельцем CONATION-E2E-01 #1154."
+ ]
+}

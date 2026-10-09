@@ -22,7 +22,13 @@ import { isValidProviderAuthCombination } from './llm-connections.ts';
 import { SUPPORTED_LANGUAGE_CODES } from '../i18n/languages.ts';
 import type { LanguageCode } from '../i18n/languages.ts';
 import { SecretRefEntrySchema } from '../secrets/types.ts';
-import { TERMINAL_ANSI_COLOR_NAMES } from './theme.ts';
+import {
+  MATERIAL_CHAT_EFFECT_KINDS,
+  MATERIAL_CONTENT_PANES,
+  MATERIAL_SURFACES,
+  MATERIAL_TEXTURE_KINDS,
+  TERMINAL_ANSI_COLOR_NAMES,
+} from './theme.ts';
 
 // ============================================================
 // Config Directory
@@ -1645,6 +1651,47 @@ const ThemeColorShape = {
 
 const ThemeDarkOverrideSchema = z.object(ThemeColorShape).strict();
 
+const MaterialRangeSchema = (min: number, max: number) =>
+  z.number().finite().min(min).max(max).optional();
+
+/**
+ * Zod schema for the material (glass) layer. Unknown surfaces and
+ * out-of-range values are rejected; the runtime resolver clamps defensively.
+ */
+export const MaterialSettingsSchema = z.object({
+  enabled: z.boolean().optional(),
+  nativeTint: z.enum(['theme', 'custom', 'off']).optional(),
+  tintColor: CSSColorSchema.optional(),
+  blur: z.object(Object.fromEntries(
+    MATERIAL_SURFACES.map(surface => [surface, MaterialRangeSchema(0, 64)]),
+  )).strict().optional(),
+  opacity: z.object(Object.fromEntries(
+    MATERIAL_SURFACES.map(surface => [surface, MaterialRangeSchema(0, 1)]),
+  )).strict().optional(),
+  tint: z.object({
+    hue: MaterialRangeSchema(-180, 180),
+    saturation: MaterialRangeSchema(-100, 100),
+    lightness: MaterialRangeSchema(-30, 30),
+  }).strict().optional(),
+  texture: z.object({
+    kind: z.enum(MATERIAL_TEXTURE_KINDS).optional(),
+    intensity: MaterialRangeSchema(0, 1),
+    scale: MaterialRangeSchema(0.5, 3),
+  }).strict().optional(),
+  haze: z.object({
+    enabled: z.boolean().optional(),
+    intensity: MaterialRangeSchema(0, 1),
+  }).strict().optional(),
+  matte: MaterialRangeSchema(0, 1),
+  deepGlass: z.object(Object.fromEntries(
+    MATERIAL_CONTENT_PANES.map(pane => [pane, z.boolean().optional()]),
+  )).strict().optional(),
+  chatEffect: z.object({
+    kind: z.enum(MATERIAL_CHAT_EFFECT_KINDS).optional(),
+    intensity: MaterialRangeSchema(0, 1),
+  }).strict().optional(),
+}).strict();
+
 /**
  * Zod schema for app-level theme override files (~/.craft-agent/theme.json).
  * Allows partial overrides but rejects unknown keys.
@@ -1656,6 +1703,8 @@ export const ThemeOverrideSchema = z.object({
   backgroundImage: z.string().optional(),
   // Dark mode overrides
   dark: ThemeDarkOverrideSchema.optional(),
+  // Material (glass) layer
+  material: MaterialSettingsSchema.optional(),
 }).strict()
   .refine(
     (data) => {
@@ -1686,6 +1735,8 @@ export const PresetThemeSchema = z.object({
   backgroundImage: z.string().optional(),
   // Dark mode overrides
   dark: ThemeDarkOverrideSchema.optional(),
+  // Material (glass) layer
+  material: MaterialSettingsSchema.optional(),
   // Shiki theme for syntax highlighting
   shikiTheme: z.object({
     light: z.string().optional(),

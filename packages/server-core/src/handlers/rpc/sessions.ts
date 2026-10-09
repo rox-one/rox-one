@@ -1,5 +1,5 @@
-import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER, type RoxExecutionContext } from '@rox/shared/auth'
-import { readFile, writeFile, stat } from 'fs/promises'
+import { peekRoxAccountAuthority, LOCAL_ROX_CALLER, type RoxExecutionContext } from '@rox/shared/auth'
+import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import {
   RPC_CHANNELS,
@@ -10,7 +10,6 @@ import {
   type SendMessageOptions,
   type SessionEvent,
   type SessionActorRef,
-  type SessionVisibility,
   type SessionCreatedActor,
   type SessionParticipantIdentity,
   type SessionCommand,

@@ -312,12 +312,12 @@ describe('HTTP contract', () => {
   })
 
   test('start refuses without a token and without a bot username', async () => {
-    const noToken = loadConfig({ LINK_DB_PATH: ':memory:' })
+    const noToken = loadConfig({ LINK_DB_PATH: ':memory:', LINK_AUTH_TOKEN: 'api-secret' })
     const a = await handler(noToken, memoryStore())(post('/api/link/start', { roxUserId: 'user-1' }))
     expect(a.status).toBe(503)
     expect((await a.json() as { error: string }).error).toBe('no_bot_token')
 
-    const noUsername = loadConfig({ TG_BOT_TOKEN: 'tg-token', LINK_DB_PATH: ':memory:' })
+    const noUsername = loadConfig({ TG_BOT_TOKEN: 'tg-token', LINK_DB_PATH: ':memory:', LINK_AUTH_TOKEN: 'api-secret' })
     const b = await handler(noUsername, memoryStore())(post('/api/link/start', { roxUserId: 'user-1' }))
     expect(b.status).toBe(503)
     expect((await b.json() as { error: string }).error).toBe('no_bot_username')
@@ -328,19 +328,29 @@ describe('HTTP contract', () => {
     expect(response.status).toBe(401)
   })
 
-  test('start returns an 8-char code and both deep links, idempotently', async () => {
+  test('link endpoints are fail-closed when no token is configured', async () => {
+    const noToken = loadConfig({ TG_BOT_TOKEN: 'tg-token', TG_BOT_USERNAME: 'rox_bot', LINK_DB_PATH: ':memory:' })
+    const response = await handler(noToken, memoryStore())(
+      new Request('http://127.0.0.1:8095/api/link/status?roxUserId=user-1', { headers: { authorization: 'Bearer api-secret' } }),
+    )
+    expect(response.status).toBe(401)
+  })
+
+  test('start returns both deep links and withholds the code until the phone is shared', async () => {
     const fresh = memoryStore({ code: 'ABCD2345' })
     const h = handler(tokenConfig, fresh)
     const first = await h(post('/api/link/start', { roxUserId: 'user-1' }))
     expect(first.status).toBe(200)
     const body = await first.json() as Record<string, unknown>
-    expect(body.code).toBe('ABCD2345')
+    expect(body.code).toBeUndefined()
     expect(body.linkId).toBe('tkn-1')
     expect(body.status).toBe('waiting-code')
     expect(body.deepLink).toBe('https://t.me/rox_bot?start=tkn-1')
     expect(body.tgDeepLink).toBe('tg://resolve?domain=rox_bot&start=tkn-1')
     const second = await h(post('/api/link/start', { roxUserId: 'user-1' }))
-    expect((await second.json() as Record<string, unknown>).code).toBe('ABCD2345')
+    const repeat = await second.json() as Record<string, unknown>
+    expect(repeat.code).toBeUndefined()
+    expect(repeat.linkId).toBe('tkn-1')
   })
 
   test('verify walks invalid → linked and status reflects each state', async () => {

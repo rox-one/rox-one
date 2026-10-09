@@ -271,7 +271,7 @@ export function ContinueButton({
 }: ContinueButtonProps) {
   const { t } = useTranslation()
   return (
-    <Button className={cn("flex-1 max-w-[320px] bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-full", className)} disabled={disabled || loading} {...props}>
+    <Button className={cn("flex-1 max-w-[320px] bg-foreground shadow-minimal text-background disabled:opacity-100 disabled:bg-surface-input disabled:text-text-disabled rounded-full", className)} disabled={disabled || loading} {...props}>
       {loading ? (
         <>
           <Spinner className="mr-2" />
