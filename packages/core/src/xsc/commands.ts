@@ -351,7 +351,7 @@ export const XSC_DOC_BLOCK_RISK: Readonly<Record<'local' | 'workspace', RiskClas
   workspace: 'consequential',
 }
 
-export function xscDocBlockRisk(_payload?: unknown, _ctx?: CommandRiskContext): RiskClass {
+export function xscDocBlockRisk(): RiskClass {
   return XSC_DOC_BLOCK_RISK.workspace
 }
 

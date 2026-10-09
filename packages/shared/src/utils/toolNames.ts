@@ -35,6 +35,14 @@ export const PARENT_TASK_TOOLS: ReadonlySet<string> = new Set(['Task', 'Agent'])
 export const isParentTaskTool = (name: string): boolean => PARENT_TASK_TOOLS.has(name);
 
 /**
+ * OMP CLI's native task tool wire name (lowercase), as it arrives in
+ * runtime-observer hooks and worker-policy events. This is NOT a member of
+ * PARENT_TASK_TOOLS (those are the Claude-SDK names 'Task'/'Agent'). Per this
+ * file's rule, future renames belong here rather than scattered across the codebase.
+ */
+export const OMP_TASK_TOOL_NAME = 'task';
+
+/**
  * Tools that should be hidden from the UI (purely internal state changes)
  */
 export const HIDDEN_TOOLS = new Set<string>([

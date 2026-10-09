@@ -168,11 +168,11 @@ export function WidgetFrame({
           className,
         )}
       >
-        <Icon className="h-5 w-5 text-foreground/40" strokeWidth={1.6} aria-hidden />
-        <div className="text-[13px] font-semibold text-foreground">
+        <Icon className="icon-rail text-muted-foreground" aria-hidden />
+        <div className="text-body font-semibold text-foreground">
           {t(unavailable ? 'board.widget.frame.unavailableTitle' : 'board.widget.frame.runtimeErrorTitle')}
         </div>
-        <p className="max-w-[360px] text-[12px] leading-relaxed text-foreground/55">
+        <p className="max-w-[360px] text-small leading-relaxed text-muted-foreground">
           {t(unavailable ? 'board.widget.frame.unavailableBody' : 'board.widget.frame.runtimeErrorBody')}
         </p>
       </div>

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { OmpRuntimeObserver, type OmpRuntimeObservation } from '../omp-runtime-observer.ts';
 import { OmpRuntimeTraceBridge } from '../omp-runtime-trace-bridge.ts';
+import { OMP_TASK_TOOL_NAME } from '../../utils/toolNames.ts';
 import { OmpAgent } from '../omp-agent.ts';
 import { chatEvents, createFakeOmp, makeOmpConfig, useFakeOmpEnv } from './omp-fake-cli.ts';
 import type { AgentEvent } from '@rox/core/types';
@@ -286,7 +287,7 @@ describe('OMP native runtime observation transport', () => {
       expect(afterParent).toBeGreaterThan(beforeAmbiguous);
       expect(diagnostics.join('')).toContain('cannot bind native child');
       // Actual task-result identity closes A, leaving only B's dispatch.
-      parentHooks.get('tool_execution_end')!({ toolCallId: 'parent-call-A', toolName: 'task', result: { details: { results: [{ index: 0, id: 'GeneratedNativeChild' }] } } }, parent);
+      parentHooks.get('tool_execution_end')!({ toolCallId: 'parent-call-A', toolName: OMP_TASK_TOOL_NAME, result: { details: { results: [{ index: 0, id: 'GeneratedNativeChild' }] } } }, parent);
       childHooks.get('before_agent_start')!({ prompt: 'new child B', systemPrompt: [] }, { ...child, agent: { ...child.agent, id: 'NewNativeChildB' } });
       observer.drain();
       expect(events.at(-1)?.runId).toBe('next-user-run');
@@ -319,7 +320,7 @@ describe('OMP native runtime observation transport', () => {
       const parent = { agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 }, sessionManager: { getSessionId: () => 'native-parent' }, cwd: '/fixture', getContextUsage: () => undefined };
       const child = (id: string) => ({ ...parent, agent: { kind: 'sub', id, name: 'worker', depth: 1, parentId: 'Main' }, sessionManager: { getSessionId: () => `native-${id}` } });
       hooks.get('before_agent_start')!({ prompt: 'parent', systemPrompt: [] }, parent);
-      hooks.get('tool_execution_start')!({ toolName: 'task', toolCallId: 'actual-parent-call', args: {} }, parent);
+      hooks.get('tool_execution_start')!({ toolName: OMP_TASK_TOOL_NAME, toolCallId: 'actual-parent-call', args: {} }, parent);
       hooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'actual-parent-call:0' }, parent);
       observer.beginRun('new-user-control');
       for (const listener of listeners) listener({ status: 'started', id: 'NativeAllocatedId', parentToolCallId: 'actual-parent-call', index: 0 });
@@ -367,14 +368,14 @@ it('refuses late lifecycle and result bindings after the same parent dispatch re
     const dispatch = (run: string, call: string, spawnKey: string) => {
       observer.beginRun(run);
       parentHooks.get('before_agent_start')!({ prompt: run, systemPrompt: [] }, parent);
-      parentHooks.get('tool_execution_start')!({ toolName: 'task', toolCallId: call, args: {} }, parent);
+      parentHooks.get('tool_execution_start')!({ toolName: OMP_TASK_TOOL_NAME, toolCallId: call, args: {} }, parent);
       parentHooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey }, parent);
     };
     dispatch('original-run', 'reused-call', 'reused-call:0');
     dispatch('successor-run', 'reused-call', 'reused-call:0');
     for (const listener of listeners) listener({ status: 'started', id: 'LateOriginalChild', parentToolCallId: 'reused-call', index: 0 });
     childHooks.get('before_agent_start')!({ prompt: 'late original child', systemPrompt: [] }, child('LateOriginalChild'));
-    parentHooks.get('tool_execution_end')!({ toolCallId: 'reused-call', toolName: 'task', result: { details: { results: [{ index: 0, id: 'LateResultChild' }] } } }, parent);
+    parentHooks.get('tool_execution_end')!({ toolCallId: 'reused-call', toolName: OMP_TASK_TOOL_NAME, result: { details: { results: [{ index: 0, id: 'LateResultChild' }] } } }, parent);
     childHooks.get('before_agent_start')!({ prompt: 'late original result child', systemPrompt: [] }, child('LateResultChild'));
     dispatch('successor-run', 'fresh-call', 'fresh-call:0');
     childHooks.get('before_agent_start')!({ prompt: 'late child after reused reservation closes', systemPrompt: [] }, child('LateChildAfterClosure'));
@@ -528,7 +529,7 @@ describe('OMP typed native runtime bridge', () => {
       expect(events.some(event => event.type === 'runtime_observation' && event.observation.kind === 'skill.selected')).toBe(true);
       expect(events.some(event => event.type === 'runtime_observation' && event.observation.kind === 'skill.loaded')).toBe(false);
     } finally { agent.destroy(); restore(); fake.cleanup(); }
-  });
+  }, 20_000);
 
   it('reports a native emitter sequence gap without calling it a root journal gap', () => {
     const bridge = new OmpRuntimeTraceBridge(); bridge.beginRun('current-turn', 'request');

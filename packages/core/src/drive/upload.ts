@@ -123,7 +123,7 @@ export interface UploadRelease {
 }
 
 /** Abort: the reservation goes back, the session keeps its parts for forensics. */
-export function abortUpload(session: UploadSession, now: string): UploadRelease {
+export function abortUpload(session: UploadSession): UploadRelease {
   return {
     session: { ...session, status: 'aborted', reservedBytes: 0, parts: session.parts },
     releasedBytes: session.reservedBytes,

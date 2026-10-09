@@ -5,6 +5,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { StringDecoder } from 'node:string_decoder';
+import { OMP_TASK_TOOL_NAME } from '../utils/toolNames.ts';
 
 /** Actual native extension observation; these records never execute tools. */
 export interface OmpRuntimeObservation {
@@ -255,7 +256,7 @@ export default function roxRuntimeObserver(pi) {
     const reservations = parentReservations.get(ctx.agent.id);
     const own = (value, key) => value && typeof value === 'object' ? Object.getOwnPropertyDescriptor(value, key)?.value : undefined;
     const callId = own(event, 'toolCallId');
-    if (!reservations || own(event, 'toolName') !== 'task' || typeof callId !== 'string') return;
+    if (!reservations || own(event, 'toolName') !== '${OMP_TASK_TOOL_NAME}' || typeof callId !== 'string') return;
     const results = own(own(own(event, 'result'), 'details'), 'results');
     // Actual structured task-result ids close dispatch reservations, retaining
     // exact receipts for a worker whose first hook arrives after its dispatch.
@@ -277,7 +278,7 @@ export default function roxRuntimeObserver(pi) {
     'retry_fallback_applied', 'retry_fallback_succeeded', 'todo_reminder', 'goal_updated',
     'tool_approval_requested', 'tool_approval_resolved']) {
     pi.on(hook, (event, ctx) => {
-      if (hook === 'tool_execution_start' && event.toolName === 'task' && typeof event.toolCallId === 'string') {
+      if (hook === 'tool_execution_start' && event.toolName === '${OMP_TASK_TOOL_NAME}' && typeof event.toolCallId === 'string') {
         const key = identityKey(event.toolCallId, ctx.agent.id);
         if (taskInvocationRuns.size >= 128 && !taskInvocationRuns.has(key)) reservationQuotaExceeded = true;
         else {

@@ -6,6 +6,7 @@ import {
   type RuntimeModel, type RuntimeStatus, type RuntimeTask,
 } from '@rox/core/runtime-trace';
 import type { OmpRuntimeObservation } from './omp-runtime-observer.ts';
+import { OMP_TASK_TOOL_NAME } from '../utils/toolNames.ts';
 
 const record = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -280,7 +281,7 @@ export class OmpRuntimeTraceBridge {
             for (const task of tasks) make('task.state-changed', { task });
           }
         }
-        if (ending && toolName === 'task') {
+        if (ending && toolName === OMP_TASK_TOOL_NAME) {
           const details = record(record(result).details);
           // A native task can return isError=false while an individual worker
           // failed before its first lifecycle hook. Preserve that limitation.

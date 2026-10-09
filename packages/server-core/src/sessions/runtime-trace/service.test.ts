@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { RuntimeTraceService, type RuntimeTraceSession } from './service'
 import { known, type RuntimeEvent } from '@rox/core/runtime-trace'
 import { clearRegisteredSecretValues, registerSecretValues } from '@rox/shared/secrets'
+import { OMP_TASK_TOOL_NAME } from '@rox/shared/utils/toolNames'
 
 const roots: string[] = []
 afterEach(async () => { clearRegisteredSecretValues(); await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))) })
@@ -141,13 +142,13 @@ describe('runtime session collector', () => {
   it('retains actual idle background origins and drops a reused ambiguous task ID', async () => {
     const { service, emitted } = await setup()
     const old = await service.begin('parent', 'old')
-    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'old-task-tool', input: {} }, { originRun: old })
+    await service.agentEvent('parent', { type: 'tool_start', toolName: OMP_TASK_TOOL_NAME, toolUseId: 'old-task-tool', input: {} }, { originRun: old })
     await service.agentEvent('parent', { type: 'task_backgrounded', toolUseId: 'old-task-tool', taskId: 'reused-background-id' }, { originRun: old })
     const next = await service.begin('parent', 'new')
     await service.agentEvent('parent', { type: 'task_completed', taskId: 'reused-background-id', summary: 'actual old completion', turnId: 'successor-delivery-turn' }, { originRun: next })
     expect(emitted.at(-1)?.rootRunId).toBe(old.rootRunId)
     expect(emitted.at(-1)?.providerTurnId).toBeUndefined()
-    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'new-task-tool', input: {} }, { originRun: next })
+    await service.agentEvent('parent', { type: 'tool_start', toolName: OMP_TASK_TOOL_NAME, toolUseId: 'new-task-tool', input: {} }, { originRun: next })
     await service.agentEvent('parent', { type: 'task_backgrounded', toolUseId: 'new-task-tool', taskId: 'reused-background-id' }, { originRun: next })
     const before = emitted.length
     await service.agentEvent('parent', { type: 'task_completed', taskId: 'reused-background-id', summary: 'ambiguous completion' })
@@ -231,7 +232,7 @@ describe('runtime session collector', () => {
   it('normalizes genuine native root-dispatch parent spans from the exact recorded tool call', async () => {
     const { service, emitted } = await setup()
     const run = await service.begin('parent', 'prompt')
-    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'exact-dispatch-call', input: {} })
+    await service.agentEvent('parent', { type: 'tool_start', toolName: OMP_TASK_TOOL_NAME, toolUseId: 'exact-dispatch-call', input: {} })
     await service.observe('parent', { kind: 'agent.started', payload: { status: 'running' }, agentId: 'native-child', parentAgentId: 'root', parentSpanId: 'tool:exact-dispatch-call', sourceId: 'omp:real-reservation', sourceEventId: 'native-start', sourceSeq: 1, occurredAt: known(5, 'native'), clockDomain: 'omp', origin: 'observed' })
     expect(emitted.at(-1)?.parentSpanId).toBe(`${run.runId}:tool:exact-dispatch-call`)
     await service.observe('parent', { kind: 'agent.started', payload: { status: 'running' }, agentId: 'grandchild', parentAgentId: 'native-child', parentSpanId: 'native:child-native-session:tool:exact-child-call', sourceId: 'omp:real-reservation-2', sourceEventId: 'grandchild-start', sourceSeq: 1, occurredAt: known(6, 'native'), clockDomain: 'omp', origin: 'observed' })
@@ -423,7 +424,7 @@ describe('runtime session collector', () => {
     const { sessions, emitted } = await setup()
     const service = new RuntimeTraceService(id => sessions.get(id), event => emitted.push(event), undefined, 2)
     const oldest = await service.begin('parent', 'oldest')
-    await service.agentEvent('parent', { type: 'tool_start', toolName: 'task', toolUseId: 'evicted-tool', turnId: 'evicted-turn', input: {} }, { originRun: oldest })
+    await service.agentEvent('parent', { type: 'tool_start', toolName: OMP_TASK_TOOL_NAME, toolUseId: 'evicted-tool', turnId: 'evicted-turn', input: {} }, { originRun: oldest })
     await service.agentEvent('parent', { type: 'task_backgrounded', toolUseId: 'evicted-tool', taskId: 'evicted-background' }, { originRun: oldest })
     await service.finish('parent', 'complete', oldest)
     for (let index = 0; index < 5; index++) {

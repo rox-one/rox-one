@@ -72,7 +72,7 @@ async function releaseExpired(tx: ReferenceTx, drive: StoredRecord): Promise<{ d
     if (!session || isDeleted(session) || session.data.status !== 'open') continue
     if (Date.parse(String(session.data.expiresAt ?? '')) > Date.parse(tx.now)) continue
     const stored = storedSession(session)
-    const release = abortUpload({ ...stored, status: 'open' }, tx.now)
+    const release = abortUpload({ ...stored, status: 'open' })
     await tx.update(SESSION, session, { status: 'expired', reservedBytes: 0 })
     current = await tx.update(DRIVE, current, {
       reservedBytes: Math.max(0, Number(current.data.reservedBytes ?? 0) - release.releasedBytes),
@@ -288,7 +288,7 @@ export const DRIVE_REFERENCE_SPECS: ReferenceSpecMap = {
     const session = storedSession(row)
     if (session.driveId !== tx.actor) throw new CommandRejection('FORBIDDEN', 'upload session belongs to another drive')
     if (session.status !== 'open') throw new CommandRejection('VALIDATION', `upload session is ${session.status}`)
-    const release = abortUpload(session, tx.now)
+    const release = abortUpload(session)
     await tx.update(SESSION, row, { status: 'aborted', reservedBytes: 0 })
     const drive = await driveOf(tx, tx.actor)
     if (drive) {
