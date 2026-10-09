@@ -67,6 +67,26 @@ const FILE_EXEMPTS: FileExempt[] = [
   { file: 'docs/specs/2026-10-08-lark-operately-unified/', reason: 'the unified spec that defines ADR-U13 / TECH-SPEC §10 (intentional legacy-path narrative)', dirPrefix: true },
   { file: 'docs/plans/2026-10-08-rox-user-batch.md', reason: 'dated user-batch plan (historical evidence of the ~/.rox → ~/rox state)' },
   {
+    file: 'docs/clipboard-history.md',
+    reason: 'user-facing guide names the flag-OFF <CONFIG_DIR> default (~/.rox; ~/rox once storage.visible-root.v1 is ON) — same class as docs/cli.md',
+    lineMustMatch: ['<CONFIG_DIR>'],
+  },
+  {
+    file: 'docs/openclaw-port/verification/v3-skills-runtime.md',
+    reason: 'dated runtime-verification evidence: records the symlink targets actually observed, incl. the legacy profile path',
+    lineMustMatch: ['~/.rox/skills'],
+  },
+  {
+    file: 'docs/plans/2026-10-09-rox-history-and-knowledge-map.md',
+    reason: 'the plan states the prohibition itself ("ничего в ~/Desktop/~Documents"): a negation, not a new default',
+    lineMustMatch: ['ничего в'],
+  },
+  {
+    file: 'spikes/memory-repo-baseline/README.md',
+    reason: 'the spike README asserts its scratch output never touches the home Documents/Desktop folders: a negation, not a new default',
+    lineMustMatch: ['nothing is committed', 'nothing is written'],
+  },
+  {
     file: 'packages/server-core/src/handlers/rpc/notes.ts',
     reason: 'notes-root-relative `.rox` meta dir (comments), not the home config dir',
     lineMustMatch: ['ROX_META_DIR'],
