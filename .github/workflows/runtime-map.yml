@@ -1,7 +1,15 @@
 name: Runtime map native evidence
 on:
   push:
-    branches: ['codex/live-runtime-map-20261003']
+    branches: [main]
+    paths:
+      - 'packages/core/src/runtime-trace/**'
+      - 'packages/shared/src/agent/omp-runtime*'
+      - 'packages/shared/src/agent/omp-agent.ts'
+      - 'packages/server-core/src/sessions/runtime-trace/**'
+      - 'scripts/probes/*runtime-map*'
+      - 'tests/e2e/runtime-map/**'
+      - '.github/workflows/runtime-map.yml'
   pull_request:
     paths:
       - 'packages/core/src/runtime-trace/**'
