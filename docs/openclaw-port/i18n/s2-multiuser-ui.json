@@ -1,114 +1,394 @@
 {
-  "chat.typing_few": {
-    "en": "{{names}} are typing…",
-    "ru": "{{names}} печатают…"
-  },
-  "chat.typing_many": {
-    "en": "{{names}} are typing…",
-    "ru": "{{names}} печатают…"
-  },
-  "chat.typing_one": {
-    "en": "{{names}} is typing…",
-    "ru": "{{names}} печатает…"
-  },
-  "chat.typing_other": {
-    "en": "Someone is typing…",
-    "ru": "Кто-то печатает…"
-  },
-  "participants.count_few": {
-    "en": "{{count}} participants",
-    "ru": "{{count}} участника"
-  },
-  "participants.count_many": {
-    "en": "{{count}} participants",
-    "ru": "{{count}} участников"
-  },
-  "participants.count_one": {
-    "en": "{{count}} participant",
-    "ru": "{{count}} участник"
-  },
-  "participants.count_other": {
-    "en": "{{count}} participants",
-    "ru": "{{count}} участника"
-  },
-  "participants.empty": {
-    "en": "No participants yet",
-    "ru": "Участников пока нет"
-  },
-  "sessionOwner.assign": {
-    "en": "Owner",
-    "ru": "Владелец"
-  },
-  "sessionOwner.assignFailed": {
-    "en": "Couldn't change the owner",
-    "ru": "Не удалось изменить владельца"
-  },
-  "sessionOwner.assignSuccess": {
-    "en": "Owner set to {{name}}",
-    "ru": "Владелец: {{name}}"
-  },
-  "sessionOwner.assignToMe": {
-    "en": "Assign to me",
-    "ru": "Назначить на себя"
-  },
-  "sessionOwner.assignedBy": {
-    "en": "Assigned by {{name}}",
-    "ru": "Назначил: {{name}}"
-  },
-  "sessionOwner.createdBy": {
-    "en": "Created by {{name}}",
-    "ru": "Создатель: {{name}}"
-  },
-  "sessionOwner.noViewerIdentity": {
-    "en": "Connect your Rox account to assign sessions to yourself",
-    "ru": "Подключите аккаунт Rox, чтобы назначать сессии на себя"
-  },
-  "sessionOwner.ownedBy": {
-    "en": "Owned by {{name}}",
-    "ru": "Владелец: {{name}}"
-  },
-  "sessionOwner.unassigned": {
-    "en": "Unassigned",
-    "ru": "Без владельца"
-  },
-  "sessionOwner.unassignSuccess": {
-    "en": "Owner cleared",
-    "ru": "Владелец снят"
-  },
-  "sessionSharing.visibility.readOnly": {
-    "en": "Read-only",
-    "ru": "Только чтение"
-  },
-  "sessionSharing.visibility.draft": {
-    "en": "Draft",
-    "ru": "Черновик"
-  },
-  "sessionSharing.visibility.shared": {
-    "en": "Shared",
-    "ru": "Общий"
-  },
-  "sessionSharing.visibility.suggest": {
-    "en": "Suggest",
-    "ru": "Предложить"
-  },
-  "sessionSharing.visibilityFailed": {
-    "en": "Couldn't update access",
-    "ru": "Не удалось обновить доступ"
-  },
-  "sessionSharing.visibilityLabel": {
-    "en": "Access",
-    "ru": "Доступ"
-  },
-  "sessionSharing.visibilityUpdated": {
-    "en": "Access updated",
-    "ru": "Доступ обновлён"
-  },
-  "sidebarFilter.involvingMe": {
-    "en": "Involving me",
-    "ru": "Со мной"
-  },
-  "sidebarFilter.owners": {
-    "en": "Owners",
-    "ru": "Владельцы"
-  }
+ "chat.typing_few": {
+  "ar": "{{names}} يكتبون…",
+  "de": "{{names}} tippen…",
+  "en": "{{names}} are typing…",
+  "es": "{{names}} están escribiendo…",
+  "fr": "{{names}} sont en train d'écrire…",
+  "hu": "{{names}} gépelnek…",
+  "ja": "{{names}} が入力中…",
+  "ko": "{{names}}님이 입력 중…",
+  "pl": "{{names}} piszą…",
+  "ru": "{{names}} печатают…",
+  "zh-Hans": "{{names}} 正在输入…",
+  "zh-Hant": "{{names}} 正在輸入…"
+ },
+ "chat.typing_many": {
+  "ar": "{{names}} يكتبون…",
+  "de": "{{names}} tippen…",
+  "en": "{{names}} are typing…",
+  "es": "{{names}} están escribiendo…",
+  "fr": "{{names}} sont en train d'écrire…",
+  "hu": "{{names}} gépelnek…",
+  "ja": "{{names}} が入力中…",
+  "ko": "{{names}}님이 입력 중…",
+  "pl": "{{names}} piszą…",
+  "ru": "{{names}} печатают…",
+  "zh-Hans": "{{names}} 正在输入…",
+  "zh-Hant": "{{names}} 正在輸入…"
+ },
+ "chat.typing_one": {
+  "ar": "{{names}} يكتب…",
+  "de": "{{names}} tippt…",
+  "en": "{{names}} is typing…",
+  "es": "{{names}} está escribiendo…",
+  "fr": "{{names}} est en train d'écrire…",
+  "hu": "{{names}} gépel…",
+  "ja": "{{names}} が入力中…",
+  "ko": "{{names}}님이 입력 중…",
+  "pl": "{{names}} pisze…",
+  "ru": "{{names}} печатает…",
+  "zh-Hans": "{{names}} 正在输入…",
+  "zh-Hant": "{{names}} 正在輸入…"
+ },
+ "chat.typing_other": {
+  "ar": "أحدهم يكتب…",
+  "de": "Jemand tippt…",
+  "en": "Someone is typing…",
+  "es": "Alguien está escribiendo…",
+  "fr": "Quelqu'un est en train d'écrire…",
+  "hu": "Valaki gépel…",
+  "ja": "誰かが入力中…",
+  "ko": "누군가 입력 중…",
+  "pl": "Ktoś pisze…",
+  "ru": "Кто-то печатает…",
+  "zh-Hans": "有人正在输入…",
+  "zh-Hant": "有人正在輸入…"
+ },
+ "participants.count_few": {
+  "ar": "{{count}} مشاركون",
+  "de": "{{count}} Teilnehmer",
+  "en": "{{count}} participants",
+  "es": "{{count}} participantes",
+  "fr": "{{count}} participants",
+  "hu": "{{count}} résztvevő",
+  "ja": "参加者 {{count}} 人",
+  "ko": "참가자 {{count}}명",
+  "pl": "{{count}} uczestników",
+  "ru": "{{count}} участника",
+  "zh-Hans": "{{count}} 位参与者",
+  "zh-Hant": "{{count}} 位參與者"
+ },
+ "participants.count_many": {
+  "ar": "{{count}} مشاركًا",
+  "de": "{{count}} Teilnehmer",
+  "en": "{{count}} participants",
+  "es": "{{count}} participantes",
+  "fr": "{{count}} participants",
+  "hu": "{{count}} résztvevő",
+  "ja": "参加者 {{count}} 人",
+  "ko": "참가자 {{count}}명",
+  "pl": "{{count}} uczestników",
+  "ru": "{{count}} участников",
+  "zh-Hans": "{{count}} 位参与者",
+  "zh-Hant": "{{count}} 位參與者"
+ },
+ "participants.count_one": {
+  "ar": "{{count}} مشارك",
+  "de": "{{count}} Teilnehmer",
+  "en": "{{count}} participant",
+  "es": "{{count}} participante",
+  "fr": "{{count}} participant",
+  "hu": "{{count}} résztvevő",
+  "ja": "参加者 {{count}} 人",
+  "ko": "참가자 {{count}}명",
+  "pl": "{{count}} uczestnik",
+  "ru": "{{count}} участник",
+  "zh-Hans": "{{count}} 位参与者",
+  "zh-Hant": "{{count}} 位參與者"
+ },
+ "participants.count_other": {
+  "ar": "{{count}} مشارك",
+  "de": "{{count}} Teilnehmer",
+  "en": "{{count}} participants",
+  "es": "{{count}} participantes",
+  "fr": "{{count}} participants",
+  "hu": "{{count}} résztvevő",
+  "ja": "参加者 {{count}} 人",
+  "ko": "참가자 {{count}}명",
+  "pl": "{{count}} uczestników",
+  "ru": "{{count}} участника",
+  "zh-Hans": "{{count}} 位参与者",
+  "zh-Hant": "{{count}} 位參與者"
+ },
+ "participants.empty": {
+  "ar": "لا يوجد مشاركون بعد",
+  "de": "Noch keine Teilnehmer",
+  "en": "No participants yet",
+  "es": "Aún no hay participantes",
+  "fr": "Aucun participant pour l'instant",
+  "hu": "Még nincsenek résztvevők",
+  "ja": "まだ参加者はいません",
+  "ko": "아직 참가자가 없습니다",
+  "pl": "Brak uczestników",
+  "ru": "Участников пока нет",
+  "zh-Hans": "暂无参与者",
+  "zh-Hant": "尚無參與者"
+ },
+ "sessionOwner.assign": {
+  "ar": "المالك",
+  "de": "Inhaber",
+  "en": "Owner",
+  "es": "Propietario",
+  "fr": "Propriétaire",
+  "hu": "Tulajdonos",
+  "ja": "オーナー",
+  "ko": "소유자",
+  "pl": "Właściciel",
+  "ru": "Владелец",
+  "zh-Hans": "负责人",
+  "zh-Hant": "擁有者"
+ },
+ "sessionOwner.assignFailed": {
+  "ar": "تعذّر تغيير المالك",
+  "de": "Inhaber konnte nicht geändert werden",
+  "en": "Couldn't change the owner",
+  "es": "No se pudo cambiar el propietario",
+  "fr": "Impossible de changer le propriétaire",
+  "hu": "Nem sikerült módosítani a tulajdonost",
+  "ja": "オーナーを変更できませんでした",
+  "ko": "소유자를 변경하지 못했습니다",
+  "pl": "Nie udało się zmienić właściciela",
+  "ru": "Не удалось изменить владельца",
+  "zh-Hans": "无法更改负责人",
+  "zh-Hant": "無法變更擁有者"
+ },
+ "sessionOwner.assignSuccess": {
+  "ar": "تم تعيين المالك إلى {{name}}",
+  "de": "Inhaber auf {{name}} gesetzt",
+  "en": "Owner set to {{name}}",
+  "es": "Propietario establecido en {{name}}",
+  "fr": "Propriétaire défini sur {{name}}",
+  "hu": "Tulajdonos beállítva: {{name}}",
+  "ja": "オーナーを {{name}} に設定しました",
+  "ko": "소유자가 {{name}}(으)로 설정되었습니다",
+  "pl": "Właściciel ustawiony na {{name}}",
+  "ru": "Владелец: {{name}}",
+  "zh-Hans": "负责人已设为 {{name}}",
+  "zh-Hant": "擁有者已設為 {{name}}"
+ },
+ "sessionOwner.assignToMe": {
+  "ar": "تعيين إليّ",
+  "de": "Mir zuweisen",
+  "en": "Assign to me",
+  "es": "Asignármela",
+  "fr": "M'attribuer",
+  "hu": "Hozzárendelés magamhoz",
+  "ja": "自分に割り当て",
+  "ko": "나에게 할당",
+  "pl": "Przypisz do mnie",
+  "ru": "Назначить на себя",
+  "zh-Hans": "分配给我",
+  "zh-Hant": "指派給我"
+ },
+ "sessionOwner.assignedBy": {
+  "ar": "عيّنه {{name}}",
+  "de": "Zugewiesen von {{name}}",
+  "en": "Assigned by {{name}}",
+  "es": "Asignada por {{name}}",
+  "fr": "Attribué par {{name}}",
+  "hu": "Hozzárendelte: {{name}}",
+  "ja": "{{name}} が割り当て",
+  "ko": "{{name}}님이 할당함",
+  "pl": "Przypisane przez {{name}}",
+  "ru": "Назначил: {{name}}",
+  "zh-Hans": "由 {{name}} 分配",
+  "zh-Hant": "由 {{name}} 指派"
+ },
+ "sessionOwner.createdBy": {
+  "ar": "أنشأه {{name}}",
+  "de": "Erstellt von {{name}}",
+  "en": "Created by {{name}}",
+  "es": "Creada por {{name}}",
+  "fr": "Créé par {{name}}",
+  "hu": "Létrehozta: {{name}}",
+  "ja": "{{name}} が作成",
+  "ko": "{{name}}님이 생성함",
+  "pl": "Utworzone przez {{name}}",
+  "ru": "Создатель: {{name}}",
+  "zh-Hans": "由 {{name}} 创建",
+  "zh-Hant": "由 {{name}} 建立"
+ },
+ "sessionOwner.noViewerIdentity": {
+  "ar": "اربط حسابك في Rox لتعيين الجلسات لنفسك",
+  "de": "Verbinde dein Rox-Konto, um Sitzungen dir selbst zuzuweisen",
+  "en": "Connect your Rox account to assign sessions to yourself",
+  "es": "Conecta tu cuenta de Rox para asignarte sesiones",
+  "fr": "Connectez votre compte Rox pour vous attribuer des sessions",
+  "hu": "Kapcsold össze a Rox-fiókodat, hogy magadhoz rendelhesd a munkameneteket",
+  "ja": "Rox アカウントを接続すると、セッションを自分に割り当てられます",
+  "ko": "세션을 자신에게 할당하려면 Rox 계정을 연결하세요",
+  "pl": "Połącz swoje konto Rox, aby przypisywać sesje sobie",
+  "ru": "Подключите аккаунт Rox, чтобы назначать сессии на себя",
+  "zh-Hans": "连接你的 Rox 账户，即可将会话分配给自己",
+  "zh-Hant": "連接您的 Rox 帳戶，即可將工作階段指派給自己"
+ },
+ "sessionOwner.ownedBy": {
+  "ar": "يملكه {{name}}",
+  "de": "Im Besitz von {{name}}",
+  "en": "Owned by {{name}}",
+  "es": "Propiedad de {{name}}",
+  "fr": "Appartient à {{name}}",
+  "hu": "Tulajdonos: {{name}}",
+  "ja": "{{name}} が所有",
+  "ko": "{{name}}님이 소유함",
+  "pl": "Właściciel: {{name}}",
+  "ru": "Владелец: {{name}}",
+  "zh-Hans": "负责人：{{name}}",
+  "zh-Hant": "擁有者為 {{name}}"
+ },
+ "sessionOwner.unassignSuccess": {
+  "ar": "تم مسح المالك",
+  "de": "Inhaber entfernt",
+  "en": "Owner cleared",
+  "es": "Propietario eliminado",
+  "fr": "Propriétaire retiré",
+  "hu": "Tulajdonos törölve",
+  "ja": "オーナーを解除しました",
+  "ko": "소유자가 해제되었습니다",
+  "pl": "Właściciel wyczyszczony",
+  "ru": "Владелец снят",
+  "zh-Hans": "已清除负责人",
+  "zh-Hant": "已清除擁有者"
+ },
+ "sessionOwner.unassigned": {
+  "ar": "غير معيّن",
+  "de": "Nicht zugewiesen",
+  "en": "Unassigned",
+  "es": "Sin asignar",
+  "fr": "Non attribué",
+  "hu": "Nincs hozzárendelve",
+  "ja": "未割り当て",
+  "ko": "할당되지 않음",
+  "pl": "Nieprzypisane",
+  "ru": "Без владельца",
+  "zh-Hans": "未分配",
+  "zh-Hant": "未指派"
+ },
+ "sessionSharing.visibility.draft": {
+  "ar": "مسودة",
+  "de": "Entwurf",
+  "en": "Draft",
+  "es": "Borrador",
+  "fr": "Brouillon",
+  "hu": "Piszkozat",
+  "ja": "下書き",
+  "ko": "초안",
+  "pl": "Szkic",
+  "ru": "Черновик",
+  "zh-Hans": "草稿",
+  "zh-Hant": "草稿"
+ },
+ "sessionSharing.visibility.readOnly": {
+  "ar": "للقراءة فقط",
+  "de": "Nur Lesen",
+  "en": "Read-only",
+  "es": "Solo lectura",
+  "fr": "Lecture seule",
+  "hu": "Csak olvasható",
+  "ja": "読み取り専用",
+  "ko": "읽기 전용",
+  "pl": "Tylko do odczytu",
+  "ru": "Только чтение",
+  "zh-Hans": "只读",
+  "zh-Hant": "唯讀"
+ },
+ "sessionSharing.visibility.shared": {
+  "ar": "مشترك",
+  "de": "Geteilt",
+  "en": "Shared",
+  "es": "Compartida",
+  "fr": "Partagé",
+  "hu": "Megosztott",
+  "ja": "共有",
+  "ko": "공유됨",
+  "pl": "Udostępnione",
+  "ru": "Общий",
+  "zh-Hans": "共享",
+  "zh-Hant": "已分享"
+ },
+ "sessionSharing.visibility.suggest": {
+  "ar": "اقتراح",
+  "de": "Vorschlagen",
+  "en": "Suggest",
+  "es": "Sugerir",
+  "fr": "Suggérer",
+  "hu": "Javaslás",
+  "ja": "提案",
+  "ko": "제안",
+  "pl": "Sugeruj",
+  "ru": "Предложить",
+  "zh-Hans": "建议",
+  "zh-Hant": "建議"
+ },
+ "sessionSharing.visibilityFailed": {
+  "ar": "تعذّر تحديث الوصول",
+  "de": "Zugriff konnte nicht aktualisiert werden",
+  "en": "Couldn't update access",
+  "es": "No se pudo actualizar el acceso",
+  "fr": "Impossible de mettre à jour l'accès",
+  "hu": "Nem sikerült frissíteni a hozzáférést",
+  "ja": "アクセスを更新できませんでした",
+  "ko": "접근 권한을 업데이트하지 못했습니다",
+  "pl": "Nie udało się zaktualizować dostępu",
+  "ru": "Не удалось обновить доступ",
+  "zh-Hans": "无法更新访问权限",
+  "zh-Hant": "無法更新存取權"
+ },
+ "sessionSharing.visibilityLabel": {
+  "ar": "الوصول",
+  "de": "Zugriff",
+  "en": "Access",
+  "es": "Acceso",
+  "fr": "Accès",
+  "hu": "Hozzáférés",
+  "ja": "アクセス",
+  "ko": "접근 권한",
+  "pl": "Dostęp",
+  "ru": "Доступ",
+  "zh-Hans": "访问权限",
+  "zh-Hant": "存取權"
+ },
+ "sessionSharing.visibilityUpdated": {
+  "ar": "تم تحديث الوصول",
+  "de": "Zugriff aktualisiert",
+  "en": "Access updated",
+  "es": "Acceso actualizado",
+  "fr": "Accès mis à jour",
+  "hu": "Hozzáférés frissítve",
+  "ja": "アクセスを更新しました",
+  "ko": "접근 권한이 업데이트되었습니다",
+  "pl": "Dostęp zaktualizowany",
+  "ru": "Доступ обновлён",
+  "zh-Hans": "访问权限已更新",
+  "zh-Hant": "存取權已更新"
+ },
+ "sidebarFilter.involvingMe": {
+  "ar": "تشملني",
+  "de": "Mit mir",
+  "en": "Involving me",
+  "es": "Donde participo",
+  "fr": "Me concernant",
+  "hu": "Engem érint",
+  "ja": "自分が関与",
+  "ko": "나와 관련됨",
+  "pl": "Z moim udziałem",
+  "ru": "Со мной",
+  "zh-Hans": "与我相关",
+  "zh-Hant": "與我有關"
+ },
+ "sidebarFilter.owners": {
+  "ar": "المالكون",
+  "de": "Eigentümer",
+  "en": "Owners",
+  "es": "Propietarios",
+  "fr": "Propriétaires",
+  "hu": "Tulajdonosok",
+  "ja": "オーナー",
+  "ko": "소유자",
+  "pl": "Właściciele",
+  "ru": "Владельцы",
+  "zh-Hans": "负责人",
+  "zh-Hant": "擁有者"
+ }
 }
