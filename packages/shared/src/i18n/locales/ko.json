@@ -5250,6 +5250,7 @@
   "onboarding.welcome.usernameRequired": "계속하려면 사용자 이름을 입력하세요.",
   "onboarding.welcome.usernameSaveFailed": "사용자 이름을 저장하지 못했습니다. 다시 시도하세요.",
   "onboarding.welcome.usernameTooLong": "사용자 이름은 80자 이하여야 합니다.",
+  "operator.access_denied": "현재 운영자 역할로는 이 작업을 수행할 수 없습니다. 게이트웨이 관리자에게 역할 업데이트를 요청하세요.",
   "overlay.code": "코드",
   "overlay.mermaidDiagram": "Mermaid 다이어그램",
   "overlay.nextItem": "다음 항목",

@@ -5250,6 +5250,7 @@
   "onboarding.welcome.usernameRequired": "続行するにはユーザー名を入力してください。",
   "onboarding.welcome.usernameSaveFailed": "ユーザー名を保存できませんでした。もう一度お試しください。",
   "onboarding.welcome.usernameTooLong": "ユーザー名は80文字以内にしてください。",
+  "operator.access_denied": "この操作はあなたのオペレーター役割では許可されていません。ゲートウェイ管理者に役割の更新を依頼してください。",
   "overlay.code": "コード",
   "overlay.mermaidDiagram": "Mermaidダイアグラム",
   "overlay.nextItem": "次のアイテム",

@@ -5253,6 +5253,7 @@
   "onboarding.welcome.usernameRequired": "Introduce un nombre de usuario para continuar.",
   "onboarding.welcome.usernameSaveFailed": "No se pudo guardar el nombre de usuario. Inténtalo de nuevo.",
   "onboarding.welcome.usernameTooLong": "El nombre de usuario debe tener 80 caracteres o menos.",
+  "operator.access_denied": "Tu rol de operador no permite esta acción. Pide a un administrador de la puerta de enlace que actualice tu rol.",
   "overlay.code": "Código",
   "overlay.mermaidDiagram": "Diagrama Mermaid",
   "overlay.nextItem": "Siguiente elemento",

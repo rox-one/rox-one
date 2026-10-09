@@ -5276,6 +5276,7 @@
   "onboarding.welcome.usernameRequired": "Введите имя пользователя, чтобы продолжить.",
   "onboarding.welcome.usernameSaveFailed": "Не удалось сохранить имя. Попробуйте снова.",
   "onboarding.welcome.usernameTooLong": "Имя — не длиннее 80 символов.",
+  "operator.access_denied": "Ваша роль оператора не позволяет выполнить это действие. Попросите администратора шлюза обновить вашу роль.",
   "overlay.code": "Код",
   "overlay.mermaidDiagram": "Диаграмма Mermaid",
   "overlay.nextItem": "Следующий элемент",

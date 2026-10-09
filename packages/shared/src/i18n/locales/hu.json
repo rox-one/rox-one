@@ -5250,6 +5250,7 @@
   "onboarding.welcome.usernameRequired": "A folytatáshoz adj meg egy felhasználónevet.",
   "onboarding.welcome.usernameSaveFailed": "A felhasználónevet nem sikerült menteni. Próbáld újra.",
   "onboarding.welcome.usernameTooLong": "A felhasználónév legfeljebb 80 karakter lehet.",
+  "operator.access_denied": "Az operátor szerepköröd nem engedélyezi ezt a műveletet. Kérd meg a gateway adminisztrátort a szerepkör frissítésére.",
   "overlay.code": "Kód",
   "overlay.mermaidDiagram": "Mermaid diagram",
   "overlay.nextItem": "Következő elem",

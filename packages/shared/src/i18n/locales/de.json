@@ -5250,6 +5250,7 @@
   "onboarding.welcome.usernameRequired": "Gib einen Benutzernamen ein, um fortzufahren.",
   "onboarding.welcome.usernameSaveFailed": "Der Benutzername konnte nicht gespeichert werden. Versuche es erneut.",
   "onboarding.welcome.usernameTooLong": "Der Benutzername darf höchstens 80 Zeichen lang sein.",
+  "operator.access_denied": "Deine Betreiberrolle erlaubt diese Aktion nicht. Bitte einen Gateway-Administrator, deine Rolle zu aktualisieren.",
   "overlay.code": "Code",
   "overlay.mermaidDiagram": "Mermaid-Diagramm",
   "overlay.nextItem": "Nächstes Element",

@@ -5262,6 +5262,7 @@
   "onboarding.welcome.usernameRequired": "Aby kontynuować, podaj nazwę użytkownika.",
   "onboarding.welcome.usernameSaveFailed": "Nie udało się zapisać nazwy użytkownika. Spróbuj ponownie.",
   "onboarding.welcome.usernameTooLong": "Nazwa użytkownika może mieć maksymalnie 80 znaków.",
+  "operator.access_denied": "Twoja rola operatora nie pozwala na tę operację. Poproś administratora bramy o zaktualizowanie roli.",
   "overlay.code": "Kod",
   "overlay.mermaidDiagram": "Diagram Mermaid",
   "overlay.nextItem": "Następny element",

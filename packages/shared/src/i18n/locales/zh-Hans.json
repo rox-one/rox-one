@@ -5250,6 +5250,7 @@
   "onboarding.welcome.usernameRequired": "请输入用户名以继续。",
   "onboarding.welcome.usernameSaveFailed": "无法保存用户名。请重试。",
   "onboarding.welcome.usernameTooLong": "用户名不能超过 80 个字符。",
+  "operator.access_denied": "你的操作员角色无权执行此操作。请联系网关管理员更新你的角色。",
   "overlay.code": "代码",
   "overlay.mermaidDiagram": "Mermaid 图表",
   "overlay.nextItem": "下一项",
