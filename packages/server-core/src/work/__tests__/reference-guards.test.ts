@@ -51,7 +51,7 @@ describe('chat membership', () => {
 
   async function bobsChat() {
     const setup = harness()
-    await setup.run({ type: 'im.create_chat', payload: { id: chat.id, name: 'bob', visibility: 'public' }, actor: BOB })
+    await setup.run({ type: 'im.create_chat', payload: { id: chat.id, kind: 'group', name: 'bob', visibility: 'public', members: [] }, actor: BOB })
     return setup
   }
 
@@ -73,7 +73,7 @@ describe('chat membership', () => {
     expect(memberRow(ACTOR_ID)!.data).toMatchObject({ state: 'left' })
     expect(await setup.run({ type: 'im.mark_read', target: chat, payload: { seq: 1 } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(memberRow(ACTOR_ID)!.data).toMatchObject({ state: 'left' })
-    expect(await setup.run({ type: 'im.send_message', target: chat, payload: { content: { doc: 'x' } } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await setup.run({ type: 'im.send_message', target: chat, payload: { body: { doc: 'x' }, mentions: [] } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(await setup.run({ type: 'im.add_members', target: chat, payload: { memberIds: [CAROL] } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(await setup.run({ type: 'im.leave_chat', target: chat, payload: {} })).toMatchObject({ error: { code: 'NOT_FOUND' } })
     // The owner who left comes back as a plain member.
@@ -111,12 +111,12 @@ describe('chat membership', () => {
     expect(records('channel').find(record => record.id === id)!.data.deletedAt).toBeTruthy()
     expect(await setup.run({ type: 'im.get_or_create_p2p', payload: { peerId: BOB } })).toMatchObject({ status: 'applied', result: { existed: false } })
     expect(records('channel').find(record => record.id === id)!.data.deletedAt).toBeFalsy()
-    expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id }, payload: { content: { doc: 'back' } } })).toMatchObject({ status: 'applied' })
+    expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id }, payload: { body: { doc: 'back' }, mentions: [] } })).toMatchObject({ status: 'applied' })
   })
 
   test('meetings.publish_outcomes: membership and posting policy are checked before the first write', async () => {
     const setup = await bobsChat()
-    await setup.run({ type: 'vc.start_meeting', payload: { id: U('call'), title: 'Standup' } })
+    await setup.run({ type: 'vc.start_meeting', payload: { id: U('call') } })
     const receipt = await setup.run({ type: 'meetings.publish_outcomes', target: { kind: 'call', id: U('call') }, payload: { decisions: [{ title: 'Ship' }], tasks: [{ title: 'Do it' }], toChatId: chat.id } })
     expect(receipt).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(records('task')).toEqual([])

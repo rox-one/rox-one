@@ -56,7 +56,7 @@ describe('W1-06 review 4: chat settings are owner / admin only', () => {
 
   async function chats(): Promise<Harness> {
     const setup = harness()
-    expect(await setup.run({ type: 'im.create_chat', payload: { id: chat.id, name: 'general', visibility: 'public', memberIds: [BOB] } })).toMatchObject({ status: 'applied' })
+    expect(await setup.run({ type: 'im.create_chat', payload: { id: chat.id, kind: 'group', name: 'general', visibility: 'public', members: [BOB] } })).toMatchObject({ status: 'applied' })
     return setup
   }
 

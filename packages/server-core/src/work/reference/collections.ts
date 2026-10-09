@@ -57,12 +57,26 @@ export const REFERENCE_COLLECTIONS = {
   'doc-suggestion': { localDir: 'doc-suggestions' },
   'doc-view': { localDir: 'doc-views' },
   'doc-block': { localDir: 'doc-blocks' },
+  // W1-14 (#1511) — collaboration indexes: the open suggestions of a doc, and
+  // a principal's calendar events (the reference query behind calendar.free_busy).
+  'doc-suggestion-index': { localDir: 'doc-suggestion-index' },
+  'calendar-index': { localDir: 'calendar-index' },
   folder: { kind: 'folder', table: 'folder', localDir: 'folders' },
   'folder-item': { localDir: 'folder-items' },
   'drive-link': { kind: 'drive-link', table: 'drive_link', localDir: 'drive-links' },
   'drive-favorite': { localDir: 'drive-favorites' },
-  'drive-quota': { localDir: 'drives' },
-  'upload-session': { localDir: 'upload-sessions' },
+  // W1-14 (#1511): the drive row and the upload sessions have W1-05 tables
+  // (single uuid primary keys); file versions, the ledger and previews have
+  // composite / identity keys and stay in the companion snapshot until DRV
+  // writes them with its own SQL.
+  'drive-quota': { table: 'drive', columns: { id: 'drive_id', ownerPrincipalId: 'owner_principal_id', rootFolderId: 'root_folder_id', quotaBytes: 'quota_bytes', usedBytes: 'used_bytes', reservedBytes: 'reserved_bytes', trashBytes: 'trash_bytes' }, localDir: 'drives' },
+  'upload-session': { table: 'upload_session', columns: { id: 'upload_session_id', driveId: 'drive_id', folderId: 'folder_id', fileName: 'file_name', sizeExpected: 'size_expected', contentType: 'content_type', s3UploadId: 's3_upload_id', reservedBytes: 'reserved_bytes', idempotencyKey: 'idempotency_key', expiresAt: 'expires_at' }, localDir: 'upload-sessions' },
+  // W1-14 (#1511) — file versions, the storage ledger, preview jobs and the
+  // content-addressed blob marker (TECH-SPEC §16, DATA-MODEL §5.15).
+  'file-version': { localDir: 'file-versions' },
+  'storage-ledger': { localDir: 'storage-ledger' },
+  'file-preview': { localDir: 'file-previews' },
+  'file-blob': { localDir: 'file-blobs' },
   file: { kind: 'file', table: 'file_object', columns: { id: 'file_id' }, localDir: 'files' },
   'wiki-space': { kind: 'wiki-space', table: 'wiki_space', localDir: 'wiki-spaces' },
   'wiki-node': { localDir: 'wiki-nodes' },

@@ -196,9 +196,11 @@
     "./commands": "./src/commands/index.ts",
     "./commands/schemas": "./src/commands/schemas.ts",
     "./domain": "./src/domain/index.ts",
-    "./automation": "./src/automation/index.ts",
+"./automation": "./src/automation/index.ts",
     "./automation/schemas": "./src/automation/schemas.ts",
     "./drive/importers/providers/auth": "./src/drive/importers/providers/auth.ts",
+    "./collab": "./src/collab/index.ts",
+    "./xsc": "./src/xsc/index.ts",
     "./notify/schemas": "./src/notify/schemas.ts",
     "./xfn/schemas": "./src/xfn/schemas.ts",
     "./xfn": "./src/xfn/index.ts"
