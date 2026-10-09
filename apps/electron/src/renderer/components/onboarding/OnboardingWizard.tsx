@@ -15,7 +15,7 @@ import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
 import { LocalModelStep, type LocalModelSubmitData } from "./LocalModelStep"
 import { RoxConnectStep, type RoxConnectCodes } from "./RoxConnectStep"
 import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
-import { OmpCredentialStep, type OmpCredentialSubmitData } from "./OmpCredentialStep"
+import { RoxCliCredentialStep, type RoxCliCredentialSubmitData } from "./RoxCliCredentialStep"
 import type { ApiKeySubmitData, CustomEndpointModelInput } from "../apisetup"
 import type { CustomEndpointApi } from '@config/llm-connections'
 
@@ -27,7 +27,7 @@ export type OnboardingStep =
   | 'provider-select'
   | 'local-model'
   | 'credentials'
-  | 'omp-credential'
+  | 'rox-cli-credential'
   /** Terminal state: the wizard closes (onFinish) — no completion screen. */
   | 'complete'
 
@@ -69,7 +69,7 @@ interface OnboardingWizardProps {
   onBack: () => void
   onSelectApiSetupMethod: (method: ApiSetupMethod) => void
   onSubmitCredential: (data: ApiKeySubmitData) => void
-  onSubmitOmpCredential?: (data: OmpCredentialSubmitData) => void
+  onSubmitOmpCredential?: (data: RoxCliCredentialSubmitData) => void
   onStartOAuth?: (methodOverride?: ApiSetupMethod) => void
   onFinish: () => void
 
@@ -283,9 +283,9 @@ export function OnboardingWizard({
           />
         )
 
-      case 'omp-credential':
+      case 'rox-cli-credential':
         return (
-          <OmpCredentialStep
+          <RoxCliCredentialStep
             onSubmit={onSubmitOmpCredential ?? (() => {})}
             onBack={onBack}
             status={state.credentialStatus === 'validating' ? 'validating' : state.credentialStatus === 'error' ? 'error' : 'idle'}

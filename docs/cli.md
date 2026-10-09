@@ -1,4 +1,4 @@
-# craft-cli — CLI Reference
+# rox — CLI Reference
 
 Terminal client for Craft Agent server. Connects over WebSocket (`ws://` or `wss://`) to a running headless server.
 
@@ -21,10 +21,12 @@ bun install
 # Option A: Run directly
 bun run apps/cli/src/index.ts <command>
 
-# Option B: Link globally (adds craft-cli to PATH)
+# Option B: Link globally (adds rox to PATH)
 cd apps/cli && bun link
-craft-cli <command>
+rox <command>
 ```
+
+`craft-cli` remains available as a compatibility alias for the same CLI.
 
 ### Quick Start
 
@@ -61,40 +63,40 @@ These apply to the server the CLI talks to, not to the CLI binary itself:
 ### Info & Health
 
 ```bash
-craft-cli ping              # Verify connectivity (clientId + latency)
-craft-cli health            # Check credential store health
-craft-cli versions          # Show server runtime versions
+rox ping              # Verify connectivity (clientId + latency)
+rox health            # Check credential store health
+rox versions          # Show server runtime versions
 ```
 
 ### Resource Listing
 
 ```bash
-craft-cli workspaces        # List all workspaces
-craft-cli sessions          # List sessions in workspace
-craft-cli connections       # List LLM connections
-craft-cli sources           # List configured sources
+rox workspaces        # List all workspaces
+rox sessions          # List sessions in workspace
+rox connections       # List LLM connections
+rox sources           # List configured sources
 ```
 
 ### Session Operations
 
 ```bash
-craft-cli session create [--name <n>] [--mode <m>]  # Create session
-craft-cli session messages <id>                       # Print message history
-craft-cli session delete <id>                         # Delete session
-craft-cli cancel <id>                                 # Cancel processing
+rox session create [--name <n>] [--mode <m>]  # Create session
+rox session messages <id>                       # Print message history
+rox session delete <id>                         # Delete session
+rox cancel <id>                                 # Cancel processing
 ```
 
 ### Send Message (Streaming)
 
 ```bash
 # Send a message and stream the AI response in real time
-craft-cli send <session-id> <message>
+rox send <session-id> <message>
 
 # Pipe text from stdin
-echo "Summarize this file" | craft-cli send <session-id>
+echo "Summarize this file" | rox send <session-id>
 
 # Read from stdin explicitly
-cat document.txt | craft-cli send <session-id> --stdin
+cat document.txt | rox send <session-id> --stdin
 ```
 
 The `send` command subscribes to session events and streams them to stdout:
@@ -109,26 +111,26 @@ The `send` command subscribes to session events and streams them to stdout:
 
 ```bash
 # Raw RPC call — send any channel with JSON args
-craft-cli invoke <channel> [json-args...]
+rox invoke <channel> [json-args...]
 
 # Subscribe to push events (Ctrl+C to stop)
-craft-cli listen <channel>
+rox listen <channel>
 ```
 
 Examples:
 ```bash
-craft-cli invoke system:homeDir
-craft-cli invoke sessions:get '"workspace-123"'
-craft-cli listen session:event
+rox invoke system:homeDir
+rox invoke sessions:get '"workspace-123"'
+rox listen session:event
 ```
 
 ### Storage Migration (W1-13)
 
 ```bash
-craft-cli migrate-config              # Move ~/.rox to ~/rox (never deletes)
-craft-cli migrate-config --dry-run    # Preview only, write nothing
-craft-cli migrate-config --revert     # Move ~/rox back to ~/.rox
-craft-cli migrate-config --auto       # Install scripts: only when the flag is on
+rox migrate-config              # Move ~/.rox to ~/rox (never deletes)
+rox migrate-config --dry-run    # Preview only, write nothing
+rox migrate-config --revert     # Move ~/rox back to ~/.rox
+rox migrate-config --auto       # Install scripts: only when the flag is on
 ```
 
 Local-only: needs no server URL. The manual forms work regardless of the
@@ -184,7 +186,7 @@ are being brought over, renaming `~/.rox` waits for the next launch. If renaming
 files over fails (an unreadable file, a full disk), the folder in use stays
 in use and `~/.rox` keeps everything. A file in use is retried at the next launches (up
 to three times); after that, or for any other error, the app waits 24 hours
-before trying again. `craft-cli migrate-config` retries at once. The Settings
+before trying again. `rox migrate-config` retries at once. The Settings
 page shows why the last move was postponed. If the app stopped right after
 renaming `~/.rox`, the next launch creates the missing `~/.rox` link.
 
@@ -205,8 +207,8 @@ legacy home in place; nothing is ever deleted.
 ### Run (Self-Contained)
 
 ```bash
-craft-cli run <prompt>
-craft-cli run --workspace-dir ./project --source github "List open PRs"
+rox run <prompt>
+rox run --workspace-dir ./project --source github "List open PRs"
 ```
 
 The `run` command is fully self-contained — it spawns a headless server, creates a session, sends the prompt, streams the response, and exits. No separate server setup needed. An API key is resolved from `--api-key`, `$LLM_API_KEY`, or a provider-specific env var (e.g., `$ANTHROPIC_API_KEY`, `$OPENAI_API_KEY`).
@@ -231,25 +233,25 @@ The `run` command is fully self-contained — it spawns a headless server, creat
 
 ```bash
 # Multi-provider examples
-craft-cli run --provider openai --model gpt-4o "Summarize this repo"
-GOOGLE_API_KEY=... craft-cli run --provider google --model gemini-2.0-flash "Hello"
-craft-cli run --provider anthropic --base-url https://openrouter.ai/api/v1 --api-key $OR_KEY "Hello"
+rox run --provider openai --model gpt-4o "Summarize this repo"
+GOOGLE_API_KEY=... rox run --provider google --model gemini-2.0-flash "Hello"
+rox run --provider anthropic --base-url https://openrouter.ai/api/v1 --api-key $OR_KEY "Hello"
 ```
 
 Prompt can also be piped via stdin:
 ```bash
-echo "Summarize this file" | craft-cli run
-cat error.log | craft-cli run "What's causing these errors?"
+echo "Summarize this file" | rox run
+cat error.log | rox run "What's causing these errors?"
 ```
 
 ### Validate Server
 
 ```bash
 # Against a running server
-craft-cli --validate-server --url ws://127.0.0.1:9100 --token <token>
+rox --validate-server --url ws://127.0.0.1:9100 --token <token>
 
 # Self-contained (auto-spawns a server)
-craft-cli --validate-server
+rox --validate-server
 ```
 
 When no `--url` is provided, `--validate-server` automatically spawns a local headless server (same as the `run` command), runs the validation, and shuts it down.
@@ -303,22 +305,22 @@ Runs a 40-step integration test (see `getValidateSteps()` in `apps/cli/src/index
 
 ```bash
 # Get workspace IDs
-WORKSPACES=$(craft-cli --json workspaces | jq -r '.[].id')
+WORKSPACES=$(rox --json workspaces | jq -r '.[].id')
 
 # Count sessions per workspace
 for ws in $WORKSPACES; do
-  COUNT=$(craft-cli --json --workspace "$ws" sessions | jq length)
+  COUNT=$(rox --json --workspace "$ws" sessions | jq length)
   echo "$ws: $COUNT sessions"
 done
 
 # Create a session and capture its ID
-SESSION_ID=$(craft-cli --json session create --name "CI Run" | jq -r '.id')
+SESSION_ID=$(rox --json session create --name "CI Run" | jq -r '.id')
 
 # Send a message and wait for completion
-craft-cli send "$SESSION_ID" "Run the test suite and report results"
+rox send "$SESSION_ID" "Run the test suite and report results"
 
 # Clean up
-craft-cli session delete "$SESSION_ID"
+rox session delete "$SESSION_ID"
 ```
 
 ## TLS / wss://
@@ -327,10 +329,10 @@ For remote servers with TLS:
 
 ```bash
 # Trusted certificate (Let's Encrypt, etc.)
-craft-cli --url wss://server.example.com:9100 ping
+rox --url wss://server.example.com:9100 ping
 
 # Self-signed certificate
-craft-cli --url wss://server.example.com:9100 --tls-ca /path/to/ca.pem ping
+rox --url wss://server.example.com:9100 --tls-ca /path/to/ca.pem ping
 ```
 
 The `--tls-ca` flag sets `NODE_EXTRA_CA_CERTS` before connecting. You can also set `CRAFT_TLS_CA` in your environment.

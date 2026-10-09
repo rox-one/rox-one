@@ -1,5 +1,5 @@
 /**
- * KnowledgeInspector — inspector sections for the active knowledge (SiYuan) ref (W2).
+ * KnowledgeInspector — inspector sections for the active knowledge (Rox Notes) ref (W2).
  *
  * Sections, each hidden when empty:
  * - PROPERTIES: node attributes (the provider already surfaces custom-* IAL keys only).
@@ -8,7 +8,7 @@
  *
  * Data flows through the P1 read-only RPC surface only
  * (window.electronAPI.knowledge.listConnections/get/getBacklinks) — no main-process
- * probing beyond the contracted channels. P1 ships a single SiYuan connection, so the
+ * probing beyond the contracted channels. P1 ships a single knowledge connection, so the
  * first connection from listConnections() wins; per-connection selection lands with the
  * navigator slice.
  *

@@ -108,7 +108,7 @@ describe('buildSiyuanSurfaceUrl', () => {
 })
 
 describe('DEFAULT_BASE_URL', () => {
-  it('resolves to the local SiYuan kernel desktop surface through the URL builder', () => {
+  it('resolves to the local legacy kernel desktop surface through the URL builder', () => {
     expect(buildSiyuanSurfaceUrl(DEFAULT_BASE_URL)).toBe(
       'http://localhost:6806/stage/build/desktop/?craftIntegrated=1',
     )

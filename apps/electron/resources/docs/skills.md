@@ -3,7 +3,7 @@
 This guide explains how to create and configure skills in ROX.
 
 > **Supported workflow:** Use the ROX Skills interface to inspect available skills. For custom skills, edit the workspace `skills/{slug}/SKILL.md` using the format below and validate with the available `skill_validate` tool.
-> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
+> - Interface and tooling reference: [ROX configuration interfaces](./rox-cli.md)
 
 ## What Are Skills?
 

@@ -262,7 +262,7 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
     const i18n = setupI18n(); const previous = i18n.language;
     try {
       for (const [locale, entry] of Object.entries(LOCALE_REGISTRY)) {
-        expect((entry.messages as Record<string, string>)['errors.omp.runtimeUnavailable.message']).toContain('{{path}}');
+        expect((entry.messages as Record<string, string>)['errors.roxCli.runtimeUnavailable.message']).toContain('{{path}}');
         await i18n.changeLanguage(locale);
         const error = (agent as any).nativeRuntimeError('fixture-bun.exe', Object.assign(new Error('spawn ENOENT Bearer fixture-token'), { code: 'ENOENT' }));
         expect(error.message).toContain('fixture-bun.exe'); expect(error.message).toContain('CRAFT_BUN_PATH');

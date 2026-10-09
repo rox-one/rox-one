@@ -4,8 +4,8 @@ import { join } from 'node:path'
 
 const home = readFileSync(join(import.meta.dir, '../KnowledgeHome.tsx'), 'utf8')
 
-describe('knowledge home rejects SiYuan kernel install CTA', () => {
-  it('routes empty state to Rox Notes and never opens SiYuan install docs', () => {
+describe('knowledge home rejects legacy kernel install CTA', () => {
+  it('routes empty state to Rox Notes and never opens legacy install docs', () => {
     expect(home).toContain("t('knowledge.roxNotes.emptyTitle')")
     expect(home).toContain("t('knowledge.roxNotes.openNotesCta')")
     expect(home).toContain('data-testid="knowledge-open-rox-notes"')
