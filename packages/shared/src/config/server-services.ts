@@ -2,7 +2,7 @@ import { closeSync, constants, fstatSync, openSync, readFileSync } from 'node:fs
 import { join } from 'node:path'
 import { resolveConfigDir } from './paths.ts'
 
-export const SERVER_SERVICE_KEYS = ['DEEPGRAM_API_KEY', 'EXA_API_KEY', 'FIRECRAWL_API_KEY', 'BRAVE_API_KEY', 'E2B_API_KEY', 'TAVILY_API_KEY'] as const
+export const SERVER_SERVICE_KEYS = ['DEEPGRAM_API_KEY', 'EXA_API_KEY', 'FIRECRAWL_API_KEY', 'BRAVE_API_KEY', 'E2B_API_KEY', 'TAVILY_API_KEY', 'OPENAI_API_KEY'] as const
 export type ServerServiceKey = typeof SERVER_SERVICE_KEYS[number]
 
 /** Backend-only secrets; renderer configuration and source folders contain no key values. */

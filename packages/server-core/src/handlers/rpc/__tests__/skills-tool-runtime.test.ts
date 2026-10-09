@@ -1,0 +1,66 @@
+/**
+ * createNativeSkillsToolRuntime — the SHIPPED skills tool runtime. This is the
+ * would-fail-before proof for the escaping-symlink defect: discovery follows
+ * directory symlinks, so a link under `{workspace}/skills` pointing outside the
+ * root used to appear in the eligible catalog and `read()` returned the outside
+ * body. The runtime must realpath-confine every advertised/readable skill to
+ * the root it was discovered under.
+ *
+ * Runs against REAL filesystem fixtures and the production runtime (no double).
+ */
+
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { createNativeSkillsToolRuntime } from '../skills-tool-runtime'
+
+// Unique slugs so a real ~/.agents/skills entry can never satisfy the assertions.
+const REAL_SLUG = 'fix6-contained-skill-7q'
+const ESCAPING_SLUG = 'fix6-escaping-link-7q'
+
+let workspaceRoot = ''
+let outsideRoot = ''
+
+const runtime = createNativeSkillsToolRuntime()
+
+function writeSkill(dir: string, slug: string, body: string): void {
+  mkdirSync(join(dir, slug), { recursive: true })
+  writeFileSync(join(dir, slug, 'SKILL.md'), `---\nname: ${slug}\ndescription: ${slug} skill\n---\n${body}`)
+}
+
+beforeAll(() => {
+  workspaceRoot = realpathSync(mkdtempSync(join(tmpdir(), 'skills-runtime-')))
+  outsideRoot = realpathSync(mkdtempSync(join(tmpdir(), 'skills-runtime-outside-')))
+  writeSkill(join(workspaceRoot, 'skills'), REAL_SLUG, 'CONTAINED BODY')
+  writeSkill(outsideRoot, ESCAPING_SLUG, 'OUTSIDE SECRET')
+  symlinkSync(join(outsideRoot, ESCAPING_SLUG), join(workspaceRoot, 'skills', ESCAPING_SLUG), 'dir')
+})
+
+afterAll(() => {
+  rmSync(workspaceRoot, { recursive: true, force: true })
+  rmSync(outsideRoot, { recursive: true, force: true })
+})
+
+describe('createNativeSkillsToolRuntime containment', () => {
+  it('advertises a contained skill but drops a symlink that escapes its root', async () => {
+    const scope = { workspaceRoot }
+
+    const listed = await runtime.list(scope)
+    const slugs = listed.map(entry => entry.slug)
+    expect(slugs).toContain(REAL_SLUG)
+    expect(slugs).not.toContain(ESCAPING_SLUG)
+
+    const searched = await runtime.search({ ...scope, query: ESCAPING_SLUG })
+    expect(searched.some(hit => hit.slug === ESCAPING_SLUG)).toBe(false)
+  }, 180000)
+
+  it('refuses to read through the escaping symlink but reads the contained skill', async () => {
+    const scope = { workspaceRoot }
+
+    expect(await runtime.read({ ...scope, slug: ESCAPING_SLUG })).toBeNull()
+
+    const real = await runtime.read({ ...scope, slug: REAL_SLUG })
+    expect(real?.content).toContain('CONTAINED BODY')
+  }, 180000)
+})

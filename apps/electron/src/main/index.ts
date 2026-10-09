@@ -18,9 +18,9 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, safeStorage, session, shell, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
-import { hostname, homedir } from 'os'
+import { hostname, homedir, userInfo } from 'os'
 import * as Sentry from '@sentry/electron/main'
 import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils'
 
@@ -168,6 +168,20 @@ import { registerMailIpc } from './mail/local-ipc'
 import { registerNativeReplicaForWindows } from './native-replica-bootstrap'
 import { initBrowserIntelRuntime } from './browser-intel/index'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
+import {
+  buildLaunchAgentFiles,
+  createLaunchctlRunner,
+  createNodeServiceFilesystem,
+  createServiceManager,
+  defaultPortAvailable,
+  guardServiceInstall,
+  LaunchdRuntime,
+  runDoctor,
+} from '@rox/server-core/service'
+import { pushTyped } from '@rox/server-core/transport'
+import { registerServiceLifecycleIpc } from './service-lifecycle-ipc'
+import type { MenuBroadcastChannel } from './menu'
+import { TrayController } from './tray'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -1097,7 +1111,7 @@ app.whenReady().then(async () => {
       }
 
       // Read embedded server config (Server settings page)
-      const { getServerConfig } = await import('@rox/shared/config')
+      const { getServerConfig, resolveConfigDir } = await import('@rox/shared/config')
       const embeddedServerConfig = getServerConfig()
       const serverModeEnabled = embeddedServerConfig.enabled && !isClientOnly
 
@@ -1775,10 +1789,105 @@ app.whenReady().then(async () => {
       // Wire EventSink to Electron-specific services
       // Must happen BEFORE createInitialWindows() so event handlers use WS from the start
       windowManager.setRpcEventSink(moduleSink!, resolveClientId)
-      const { setMenuEventSink } = await import('./menu')
+      const { setMenuEventSink, dispatchMenuChannel } = await import('./menu')
       setMenuEventSink(moduleSink!, resolveClientId)
       const { setNotificationEventSink } = await import('./notifications')
       setNotificationEventSink(moduleSink!, resolveClientId)
+
+      // S7: host-local service lifecycle + doctor (e1.4/e1.5, e1.6). All
+      // channels are LOCAL_ONLY; the launchd LaunchAgent relaunches the app
+      // binary (override with ROX_SERVICE_EXECUTABLE/ROX_SERVICE_ARGS).
+      // auto-update is loaded dynamically so its autoUpdater side effects stay
+      // off the main-process boot path (same as the other call sites here).
+      const { detectMacAdHocSigned } = await import('./auto-update')
+      const homeDir = app.getPath('home')
+      const configDir = resolveConfigDir()
+      const serviceLabel = 'com.rox.service'
+      const serviceDirectory = join(configDir, 'service')
+      const launchAgentsDirectory = join(homeDir, 'Library', 'LaunchAgents')
+      const isBuildTrusted = () => !detectMacAdHocSigned(process.execPath)
+      const serviceManagerBase = createServiceManager({
+        platform: process.platform === 'darwin' ? 'darwin' : process.platform === 'win32' ? 'win32' : 'linux',
+        launchd: process.platform === 'darwin'
+          ? {
+              files: buildLaunchAgentFiles({
+                label: serviceLabel,
+                executable: process.env.ROX_SERVICE_EXECUTABLE ?? process.execPath,
+                args: process.env.ROX_SERVICE_ARGS
+                  ? process.env.ROX_SERVICE_ARGS.split('\u0000')
+                  : [app.getAppPath()],
+                environment: {
+                  ROX_SERVICE_MANAGED: '1',
+                  ROX_CONFIG_DIR: configDir,
+                  ...(serverModeEnabled ? { CRAFT_SERVER_TOKEN: serverToken } : {}),
+                },
+                serviceDirectory,
+                launchAgentsDirectory,
+                workingDirectory: configDir,
+                logDirectory: join(configDir, 'logs'),
+              }),
+              fs: createNodeServiceFilesystem(),
+              runtime: new LaunchdRuntime({
+                label: serviceLabel,
+                uid: userInfo().uid,
+                runner: createLaunchctlRunner(),
+              }),
+              serviceDirectory,
+              launchAgentsDirectory,
+            }
+          : undefined,
+      })
+      const serviceManager = guardServiceInstall(serviceManagerBase, isBuildTrusted)
+      const doctorLogPaths = [getMessagingGatewayLogFilePath(), getAutoUpdateLogFilePath(), getLogFilePath()]
+        .filter((path): path is string => typeof path === 'string')
+      registerServiceLifecycleIpc({
+        server: instance.wsServer,
+        service: serviceManager,
+        runDoctor: () => runDoctor({
+          getServiceStatus: () => serviceManager.getStatus(),
+          // Only a real bound port can conflict; port 0 (ephemeral loopback) is skipped.
+          servicePorts: serverModeEnabled ? [embeddedServerConfig.port] : [],
+          isPortAvailable: defaultPortAvailable,
+          configDir,
+          pathExists: async path => existsSync(path),
+          appVersion: app.getVersion(),
+          runtimeVersion: null,
+          logPaths: doctorLogPaths,
+        }),
+      })
+
+      // Menu-bar status shell (e2.1). Only with a real UI; the indicator tracks
+      // the service state and every transition is broadcast to the renderer.
+      if (!isHeadless && process.platform === 'darwin') {
+        const iconPath = resolveAppIconPngPath()
+        const tray = new Tray(iconPath ? nativeImage.createFromPath(iconPath).resize({ width: 18, height: 18 }) : nativeImage.createEmpty())
+        const trayController = new TrayController({
+          tray,
+          buildMenu: template => Menu.buildFromTemplate([...template]),
+          translate: key => i18n.t(key),
+          // The channel set comes from the tray model, never from IPC input.
+          dispatchChannel: channel => dispatchMenuChannel(channel as MenuBroadcastChannel),
+          broadcastStatus: status => pushTyped(instance.wsServer, RPC_CHANNELS.menu.TRAY_STATUS_CHANGED, { to: 'all' }, status),
+          quit: () => app.quit(),
+        })
+        let lastTrayState: string | null = null
+        const refreshTray = async () => {
+          const status = await serviceManager.getStatus()
+          if (status.state === lastTrayState) return
+          lastTrayState = status.state
+          trayController.setStatus({
+            agentState: status.state === 'failed' || status.state === 'degraded' ? 'error' : 'idle',
+            serviceState: status.state,
+          })
+        }
+        void refreshTray()
+        const trayTimer = setInterval(() => { void refreshTray() }, 30_000)
+        trayTimer.unref?.()
+        app.once('will-quit', () => {
+          clearInterval(trayTimer)
+          trayController.dispose()
+        })
+      }
 
       // Headless: print connection details
       if (isHeadless) {

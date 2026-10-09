@@ -138,6 +138,8 @@ import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSourc
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
 import { collectionDisplayAtom, loadCollectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
+import { useViewerIdentity } from '@/hooks/useSessionPresence'
+import { collectSessionOwnerOptions, hasViewerIdentity, sessionInvolvesViewer, sessionMatchesOwnerFilter } from '@/lib/session-presence'
 import { collectionFiltersAtom, collectionFilterKeyAtom, loadCollectionFiltersAtom } from "@/atoms/collection-filters"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
 import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
@@ -518,6 +520,12 @@ function AppShellContent({
   // Real rox.one balance from the account snapshot, kept current by the shared
   // ≤30 s poll + focus refresh. It degrades to a dash only before first sync.
   const roxCloudAccount = useRoxCloudAccount().account
+
+  // a2.3: sidebar owners / "involving me" filter. Matches the server-attributed
+  // creator/owner/participants fields; never a second identity store.
+  const viewer = useViewerIdentity()
+  const [involvingMe, setInvolvingMe] = React.useState(false)
+  const [ownerFilter, setOwnerFilter] = React.useState<ReadonlySet<string>>(() => new Set())
 
   const [isResizing, setIsResizing] = React.useState<'sidebar' | 'session-list' | null>(null)
   const workspaceIdForLayout = activeWorkspaceId ?? '_default'
@@ -1873,9 +1881,16 @@ function AppShellContent({
       )
     }
 
+    // a2.3: owners / "involving me" filter over server attribution.
+    if (involvingMe) result = result.filter(meta => sessionInvolvesViewer(meta, viewer))
+    if (ownerFilter.size > 0) result = result.filter(meta => sessionMatchesOwnerFilter(meta, ownerFilter))
+
     result.sort((a, b) => compareSessions(a, b, collectionDisplay.orderBy, collectionDisplay.orderDir))
     return result
-  }, [workspaceSessionMetas, activeSessionMetas, sessionFilter, labelConfigs, collectionFilters, collectionDisplay.showCompleted, collectionDisplay.orderBy, collectionDisplay.orderDir, effectiveSessionStatuses])
+  }, [workspaceSessionMetas, activeSessionMetas, sessionFilter, labelConfigs, collectionFilters, collectionDisplay.showCompleted, collectionDisplay.orderBy, collectionDisplay.orderDir, effectiveSessionStatuses, involvingMe, ownerFilter, viewer])
+
+  const viewerHasIdentity = hasViewerIdentity(viewer)
+  const sessionOwnerOptions = React.useMemo(() => collectSessionOwnerOptions(activeSessionMetas), [activeSessionMetas])
 
 
   // Ensure session messages are loaded when selected
@@ -3216,6 +3231,12 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                           setChatGroupingMode={setChatGroupingMode}
                           isStateSubView={isStateSubView}
                           onOpenSearch={() => setSearchActive(true)}
+                          involvingMe={involvingMe}
+                          setInvolvingMe={setInvolvingMe}
+                          ownerFilter={ownerFilter}
+                          setOwnerFilter={setOwnerFilter}
+                          ownerOptions={sessionOwnerOptions}
+                          viewerHasIdentity={viewerHasIdentity}
                         />
                       )}
                       <CollectionViewChrome

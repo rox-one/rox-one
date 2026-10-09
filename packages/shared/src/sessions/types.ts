@@ -13,6 +13,12 @@ import type { PermissionMode } from '../agent/mode-manager.ts';
 import type { ThinkingLevel } from '../agent/thinking-levels.ts';
 import type { StoredAttachment, MessageRole, ToolStatus, AuthRequestType, AuthStatus, CredentialInputMode, StoredMessage, SessionMemoryMode } from '@rox/core/types';
 import type { SessionPriority } from '../protocol/dto.ts';
+import type {
+  SessionCreatedActor,
+  SessionOwnerRef,
+  SessionParticipantIdentity,
+  SessionVisibility,
+} from '../protocol/session-attribution.ts';
 import type { AgentProfileSnapshot } from '../workspace-work/types.ts';
 
 export type { SessionPriority };
@@ -73,6 +79,8 @@ export const SESSION_PERSISTENT_FIELDS = [
   'taskNodeId',
   'taskNodeCount',
   'taskDraft',
+  // Session attribution (ownership/presence/skills-port)
+  'creator', 'owner', 'participants', 'visibility',
 ] as const;
 
 export type SessionPersistentField = typeof SESSION_PERSISTENT_FIELDS[number];
@@ -254,6 +262,14 @@ export interface SessionConfig {
   taskNodeCount?: number;
   /** Tasks Conductor: generate-time draft orchestrator. Hidden from the board until adopted (promoted) by createTask. */
   taskDraft?: boolean;
+  /** Actor that created this session (profile/channel/agent provenance). */
+  creator?: SessionCreatedActor;
+  /** Current owner of this session, if assigned. */
+  owner?: SessionOwnerRef;
+  /** Participants with an identity binding on this session. */
+  participants?: SessionParticipantIdentity[];
+  /** Session visibility for the viewer/collaboration surface. */
+  visibility?: SessionVisibility;
 }
 
 /**
@@ -377,6 +393,14 @@ export interface SessionHeader {
   taskNodeCount?: number;
   /** Tasks Conductor: generate-time draft orchestrator. Hidden from the board until adopted (promoted) by createTask. */
   taskDraft?: boolean;
+  /** Actor that created this session (profile/channel/agent provenance). */
+  creator?: SessionCreatedActor;
+  /** Current owner of this session, if assigned. */
+  owner?: SessionOwnerRef;
+  /** Participants with an identity binding on this session. */
+  participants?: SessionParticipantIdentity[];
+  /** Session visibility for the viewer/collaboration surface. */
+  visibility?: SessionVisibility;
   // Pre-computed fields for fast list loading
   /** Number of messages in session */
   messageCount: number;
@@ -496,4 +520,12 @@ export interface SessionMetadata {
   taskNodeCount?: number;
   /** Tasks Conductor: generate-time draft orchestrator. Hidden from the board until adopted (promoted) by createTask. */
   taskDraft?: boolean;
+  /** Actor that created this session (profile/channel/agent provenance). */
+  creator?: SessionCreatedActor;
+  /** Current owner of this session, if assigned. */
+  owner?: SessionOwnerRef;
+  /** Participants with an identity binding on this session. */
+  participants?: SessionParticipantIdentity[];
+  /** Session visibility for the viewer/collaboration surface. */
+  visibility?: SessionVisibility;
 }

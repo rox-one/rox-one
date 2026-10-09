@@ -395,8 +395,9 @@ export function getSystemPrompt(
   const contextDocsBlock = getContextDocsPromptBlock({ workingDirectory });
 
   // Optional self-learning memory (injected directly after the project memory block):
-  // pre-formatted lesson corrections, workspace memory, and retrieved source docs.
-  const memoryInjection = `${memoryBlocks?.lessonsBlock ?? ''}${memoryBlocks?.memoryBlock ?? ''}${memoryBlocks?.sourcesBlock ?? ''}`;
+  // curated bootstrap docs, pre-formatted lesson corrections, workspace memory,
+  // and retrieved source docs.
+  const memoryInjection = `${memoryBlocks?.bootstrapBlock ?? ''}${memoryBlocks?.lessonsBlock ?? ''}${memoryBlocks?.memoryBlock ?? ''}${memoryBlocks?.sourcesBlock ?? ''}`;
 
   // Fall back to the user's current preference when callers don't pin/pass a value,
   // so forgetting the argument can't silently re-enable the co-author trailer (see #576).
