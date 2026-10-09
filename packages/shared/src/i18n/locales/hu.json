@@ -9040,7 +9040,7 @@
   "settings.runtime.secretDenied": "A(z) „{{envVar}}” nem engedélyezett ({{code}})",
   "settings.runtime.secretDesc": "Nevet viselő titokhivatkozások, amelyeket az új ügynökmunkamenetekbe szúrunk. Az értékek a trezorban maradnak; itt csak hivatkozások tárolódnak.",
   "settings.runtime.secretEnvVarPlaceholder": "ENV_VAR",
-  "settings.runtime.secretInfisicalUnavailable": "Az Infisical nem érhető el (INFISICAL_UNAVAILABLE). Állítsa be: INFISICAL_TOKEN, INFISICAL_PROJECT_ID és INFISICAL_ENVIRONMENT.",
+  "settings.runtime.secretInfisicalUnavailable": "Az Rox Keeper nem érhető el (INFISICAL_UNAVAILABLE). Állítsa be: INFISICAL_TOKEN, INFISICAL_PROJECT_ID és INFISICAL_ENVIRONMENT.",
   "settings.runtime.secretNamePlaceholder": "név",
   "settings.runtime.secretNextSession": "Az új munkamenetekre vonatkozik. Az aktív munkamenetek megtartják a indításkori környezetet.",
   "settings.runtime.secretProvider": "Szolgáltató",

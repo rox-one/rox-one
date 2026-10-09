@@ -9043,7 +9043,7 @@
   "settings.runtime.secretDenied": "« {{envVar}} » n’est pas autorisée ({{code}})",
   "settings.runtime.secretDesc": "Références de secrets nommées injectées dans les nouvelles sessions d’agents. Les valeurs restent dans le coffre ; seules les références sont stockées ici.",
   "settings.runtime.secretEnvVarPlaceholder": "ENV_VAR",
-  "settings.runtime.secretInfisicalUnavailable": "Infisical est indisponible (INFISICAL_UNAVAILABLE). Définissez INFISICAL_TOKEN, INFISICAL_PROJECT_ID et INFISICAL_ENVIRONMENT.",
+  "settings.runtime.secretInfisicalUnavailable": "Rox Keeper est indisponible (INFISICAL_UNAVAILABLE). Définissez INFISICAL_TOKEN, INFISICAL_PROJECT_ID et INFISICAL_ENVIRONMENT.",
   "settings.runtime.secretNamePlaceholder": "nom",
   "settings.runtime.secretNextSession": "S’applique aux nouvelles sessions. Les sessions actives conservent l’environnement avec lequel elles ont été lancées.",
   "settings.runtime.secretProvider": "Fournisseur",

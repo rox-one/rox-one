@@ -43,6 +43,8 @@ import {
   isBrowserNavigation,
   isKnowledgeNavigation,
   isDiffNavigation,
+  isDevelopersNavigation,
+  isPlaybooksNavigation,
   isExtensionNavigation,
   isConnectionsNavigation,
   isHomeNavigation,
@@ -682,6 +684,29 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <KnowledgeHome />
+      </Panel>
+    )
+  }
+
+  if (isDevelopersNavigation(navState)) {
+    if (navState.devSpaceRepoId) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <DevSpaceRepoPage devSpaceRepoId={navState.devSpaceRepoId} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <DevSpaceHomePage />
+      </Panel>
+    )
+  }
+
+  if (isPlaybooksNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <PlaybooksHomePage />
       </Panel>
     )
   }

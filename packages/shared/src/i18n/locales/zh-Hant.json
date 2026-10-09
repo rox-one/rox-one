@@ -9040,7 +9040,7 @@
   "settings.runtime.secretDenied": "不允許使用「{{envVar}}」（{{code}}）",
   "settings.runtime.secretDesc": "注入新代理工作階段的具名密鑰參照。值保留在保管庫中，此處僅儲存參照。",
   "settings.runtime.secretEnvVarPlaceholder": "ENV_VAR",
-  "settings.runtime.secretInfisicalUnavailable": "Infisical 無法使用（INFISICAL_UNAVAILABLE）。請設定 INFISICAL_TOKEN、INFISICAL_PROJECT_ID 和 INFISICAL_ENVIRONMENT。",
+  "settings.runtime.secretInfisicalUnavailable": "Rox Keeper 無法使用（INFISICAL_UNAVAILABLE）。請設定 INFISICAL_TOKEN、INFISICAL_PROJECT_ID 和 INFISICAL_ENVIRONMENT。",
   "settings.runtime.secretNamePlaceholder": "名稱",
   "settings.runtime.secretNextSession": "套用至新啟動的工作階段。執行中的工作階段會保留啟動時的環境。",
   "settings.runtime.secretProvider": "提供者",

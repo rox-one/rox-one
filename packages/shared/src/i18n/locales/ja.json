@@ -9040,7 +9040,7 @@
   "settings.runtime.secretDenied": "「{{envVar}}」は許可されていません（{{code}}）",
   "settings.runtime.secretDesc": "新しいエージェントセッションに注入される名前付きシークレット参照。値は保管庫に残り、ここには参照だけを保存します。",
   "settings.runtime.secretEnvVarPlaceholder": "ENV_VAR",
-  "settings.runtime.secretInfisicalUnavailable": "Infisical は利用できません（INFISICAL_UNAVAILABLE）。INFISICAL_TOKEN、INFISICAL_PROJECT_ID、INFISICAL_ENVIRONMENT を設定してください。",
+  "settings.runtime.secretInfisicalUnavailable": "Rox Keeper は利用できません（INFISICAL_UNAVAILABLE）。INFISICAL_TOKEN、INFISICAL_PROJECT_ID、INFISICAL_ENVIRONMENT を設定してください。",
   "settings.runtime.secretNamePlaceholder": "名前",
   "settings.runtime.secretNextSession": "新しく起動したセッションに適用されます。実行中のセッションは起動時の環境を維持します。",
   "settings.runtime.secretProvider": "プロバイダー",
