@@ -412,8 +412,15 @@ export function jsonPropToZod(prop: any, depth = 0): z.ZodTypeAny {
         }
         return withDesc(obj.passthrough());
       }
-      // Generic object (no properties defined)
-      return withDesc(z.record(z.string(), z.unknown()));
+      // Generic object (no properties defined). Preserve open-map semantics.
+      // NOTE: do NOT use z.record() here. The Claude Agent SDK bundles zod
+      // 4.4.x and converts tool input schemas with that older copy's
+      // toJSONSchema, whose context lacks `ctx.deferred`; zod 4.6.x's record
+      // processor pushes onto ctx.deferred, so a z.record property throws
+      // "undefined is not an object (evaluating 'ctx.deferred.push')" when the
+      // proxy server lists tools. z.object({}).catchall(z.unknown()) is the
+      // exact equivalent open string→unknown map.
+      return withDesc(z.object({}).catchall(z.unknown()));
     }
     default:
       return withDesc(z.unknown());

@@ -36,7 +36,20 @@ export interface CommandModule {
 /** The bus's own module: `system.ping`. */
 export const SYSTEM_COMMAND_MODULE: CommandModule = Object.freeze({ name: 'system', bind: bindSystemPing })
 
-/** W1-06 (#1503): `@rox/shared/domain` payload schemas for every catalogue command still on the placeholder. */
+/**
+ * W1-06 (#1503): `@rox/shared/domain` payload schemas for every catalogue command
+ * still on the placeholder.
+ *
+ * PRECEDENCE RULE (command schemas): the **owning module's** schema is the one
+ * the registry keeps. `CommandRegistry.bindSchema` is last-wins, so a module
+ * must bind a schema only for the commands it owns — a placeholder entry in
+ * `COMMAND_PAYLOAD_SCHEMAS` for a command another module binds is a silent
+ * regression (the W1-06 domain map used to shadow the W1-11 #1508 identity /
+ * team-chat / agent schemas for exactly this reason; those entries were
+ * removed). The one deliberate exception is `im.browse_public_chats`, which the
+ * domain map re-issues strict *before* the agents module binds it (see
+ * `@rox/shared/domain`'s `MESSENGER_TEAM_CHAT_SCHEMAS`).
+ */
 export const DOMAIN_SCHEMA_COMMAND_MODULE: CommandModule = Object.freeze({ name: 'domain-schemas', bind: bindDomainSchemas })
 
 /**
