@@ -352,7 +352,7 @@ describe('WebUI security headers on every route', () => {
     const csp = res.headers.get('content-security-policy')
     expect(csp).toContain("frame-ancestors 'none'")
     expect(csp).toContain("object-src 'none'")
-    expect(csp).toContain("connect-src 'self' ws: wss:")
+    expect(csp).toContain("connect-src 'self'")
     expect(csp).toContain("img-src 'self' data: blob:")
     const hash = `'sha256-${createHash('sha256').update(INLINE, 'utf8').digest('base64')}'`
     if (expectHash) expect(csp).toContain(hash)

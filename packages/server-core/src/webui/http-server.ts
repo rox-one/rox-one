@@ -277,6 +277,13 @@ export interface WebuiHandlerOptions {
   wsProtocol: 'ws' | 'wss'
   /** RPC WebSocket port used when building a browser-facing fallback URL. */
   wsPort: number
+  /**
+   * Extra http(s) origins allowed for cookie-authenticated WebSocket upgrades
+   * (`CRAFT_WEBUI_ALLOWED_ORIGINS`). Each origin is admitted to the served
+   * document's `connect-src` as an explicit ws(s) origin — never as a bare
+   * scheme source.
+   */
+  allowedWebUiOrigins?: readonly string[]
   /** Health check function (injected from existing server handler). */
   getHealthCheck: () => { status: string }
   /** Logger. */
@@ -346,6 +353,14 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
 
   const loginPassword = password || secret
   const trustedProxySet = new Set(trustedProxies ?? [])
+
+  // Explicit cross-origin WebSocket endpoints admitted to `connect-src`.
+  // Bare `ws:`/`wss:` scheme sources are never emitted (they authorize any
+  // host); same-origin connections are covered by `'self'`.
+  const connectSrcOrigins = [
+    ...(publicWsUrl ? [publicWsUrl] : []),
+    ...(options.allowedWebUiOrigins ?? []),
+  ]
 
   // Hash the login password at startup (async, but resolves before first auth attempt in practice)
   const passwordReady = initPasswordHash(loginPassword)
@@ -642,7 +657,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
   }
 
   return {
-    fetch: async (req: Request) => withWebuiSecurityHeaders(await route(req)),
+    fetch: async (req: Request) => withWebuiSecurityHeaders(await route(req), connectSrcOrigins),
     dispose: () => {
       clearInterval(cleanupTimer)
       clearInterval(handoffCleanupTimer)

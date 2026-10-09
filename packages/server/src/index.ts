@@ -181,6 +181,7 @@ if (webuiEnabled && serverToken) {
     wsProtocol: rpcProtocol,
     // WebUI is served on the same port as WS — wsPort matches the RPC port
     wsPort: rpcPort,
+    allowedWebUiOrigins: webuiAllowedOrigins,
     getHealthCheck: () => healthCheckFn?.() ?? { status: 'starting' },
     logger: { info: console.log, warn: console.warn, error: console.error } as any,
   })
