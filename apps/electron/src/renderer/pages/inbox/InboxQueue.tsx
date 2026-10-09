@@ -75,7 +75,7 @@ const KIND_TONE: Record<InboxKind, Tone> = {
 }
 
 const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'team-recipient']
-const SWITCH_CLASS = 'relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-surface-pressed transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 motion-reduce:transition-none motion-reduce:before:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-60'
+const SWITCH_CLASS = 'relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 motion-reduce:transition-none motion-reduce:before:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-60' // eslint-disable-line rox/no-foreground-opacity -- a switch track must stay readable against the queue surface (colour-mix 5%/9% surface tokens measured 1.10:1 vs 1.62:1 here); no neutral surface token reaches this weight
 
 export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
