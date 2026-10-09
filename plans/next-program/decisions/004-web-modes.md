@@ -103,7 +103,7 @@ A ticket that lands the cloud-VM backend inside this repository (a real start /
 open action, not a navigation) and/or a website change for the R16 buttons.
 Until then, keep the landing honest: no fabricated success, no dead buttons.
 
-## Update — 2026-10-09 (wave 6): the web-only cloud surface is in this repository
+## Update — 2026-10-09 (wave 6, PR #1731): the web-only cloud surface is in this repository
 
 The owner asked for the remaining R16 work to be done in-repo. The previous-gen
 web application (`rox-one/old`, `apps/web`) is not available on this machine, so
