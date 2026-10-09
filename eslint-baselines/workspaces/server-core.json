@@ -39,7 +39,7 @@
     },
     "@typescript-eslint/no-require-imports": {
       "severity": "warn",
-      "total": 6
+      "total": 7
     },
     "@typescript-eslint/no-this-alias": {
       "severity": "warn",
@@ -63,7 +63,7 @@
     },
     "@typescript-eslint/no-unused-vars": {
       "severity": "warn",
-      "total": 208
+      "total": 209
     },
     "@typescript-eslint/no-wrapper-object-types": {
       "severity": "warn",
@@ -243,7 +243,7 @@
     },
     "prefer-const": {
       "severity": "warn",
-      "total": 6
+      "total": 7
     },
     "prefer-rest-params": {
       "severity": "warn",
@@ -382,7 +382,7 @@
       "@typescript-eslint/no-unused-vars": 2
     },
     "packages/server-core/src/handlers/rpc/sessions.ts": {
-      "@typescript-eslint/no-unused-vars": 4
+      "@typescript-eslint/no-unused-vars": 5
     },
     "packages/server-core/src/handlers/rpc/sources.ts": {
       "@typescript-eslint/no-unused-vars": 1
@@ -461,8 +461,14 @@
     "packages/server-core/src/memory/MemoryFileStore.ts": {
       "no-empty": 3
     },
+    "packages/server-core/src/memory/MemoryIndexService.ts": {
+      "prefer-const": 1
+    },
     "packages/server-core/src/memory/MemoryService.ts": {
       "@typescript-eslint/no-unused-vars": 1
+    },
+    "packages/server-core/src/memory/chunk-index.ts": {
+      "@typescript-eslint/no-require-imports": 1
     },
     "packages/server-core/src/memory/fts-index.ts": {
       "@typescript-eslint/no-require-imports": 1
