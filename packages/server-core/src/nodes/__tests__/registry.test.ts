@@ -122,6 +122,72 @@ describe('NodeRegistry — presence TTL', () => {
   })
 })
 
+describe('NodeRegistry — connection fencing', () => {
+  it('supersedes in-flight invokes when the node re-registers under a new connId', async () => {
+    const { registry } = fixture()
+    registry.registerNode({ nodeId: 'mac-1', declaredCommands: ['ping'], connId: 'conn-a' })
+    registry.setAllowlist('mac-1', { commands: ['ping'] })
+    const dispatch = registry.invoke('mac-1', 'ping')
+    expect(dispatch.connId).toBe('conn-a')
+    expect(registry.pendingCountFor('mac-1')).toBe(1)
+
+    registry.registerNode({ nodeId: 'mac-1', declaredCommands: ['ping'], connId: 'conn-b' })
+
+    expect(await dispatch.result).toMatchObject({ status: 'error', error: { code: 'SUPERSEDED' } })
+    expect(registry.pendingCountFor('mac-1')).toBe(0)
+    expect(registry.ownsNode('mac-1', 'conn-b')).toBe(true)
+    expect(registry.ownsNode('mac-1', 'conn-a')).toBe(false)
+  })
+
+  it('keeps in-flight invokes across a same-connId re-registration (heartbeat)', async () => {
+    const { registry } = fixture()
+    registry.registerNode({ nodeId: 'mac-1', declaredCommands: ['ping'], connId: 'conn-a' })
+    registry.setAllowlist('mac-1', { commands: ['ping'] })
+    const dispatch = registry.invoke('mac-1', 'ping')
+
+    registry.registerNode({ nodeId: 'mac-1', declaredCommands: ['ping'], connId: 'conn-a' })
+
+    expect(registry.pendingCountFor('mac-1')).toBe(1)
+    expect(registry.settleInvokeFrom(dispatch.invokeId!, { ok: 1 }, 'conn-a')).toEqual({ settled: true })
+    expect(await dispatch.result).toMatchObject({ status: 'ok', payload: { ok: 1 } })
+  })
+
+  it('refuses a settlement from a connection that does not own the invoke', async () => {
+    const { registry } = fixture()
+    registry.registerNode({ nodeId: 'mac-1', declaredCommands: ['ping'], connId: 'conn-a' })
+    registry.setAllowlist('mac-1', { commands: ['ping'] })
+    const dispatch = registry.invoke('mac-1', 'ping')
+
+    expect(registry.settleInvokeFrom(dispatch.invokeId!, { stolen: true }, 'conn-b')).toMatchObject({
+      settled: false,
+      refusal: { code: 'CONNECTION_MISMATCH' },
+    })
+    // The impostor did not settle it — the real owner still can.
+    expect(registry.pendingCountFor('mac-1')).toBe(1)
+    expect(registry.settleInvokeFrom(dispatch.invokeId!, { ok: 1 }, 'conn-a')).toEqual({ settled: true })
+    expect(await dispatch.result).toMatchObject({ status: 'ok', payload: { ok: 1 } })
+  })
+
+  it('refuses a settlement for an unknown invoke', () => {
+    const { registry } = fixture()
+    expect(registry.settleInvokeFrom('ni_404', null, 'conn-a')).toMatchObject({
+      settled: false,
+      refusal: { code: 'INVOKE_UNKNOWN' },
+    })
+  })
+
+  it('reports a null connId for a node registered without a connection identity', () => {
+    const { registry } = fixture()
+    registry.registerNode({ nodeId: 'mac-1', declaredCommands: ['ping'] })
+    registry.setAllowlist('mac-1', { commands: ['ping'] })
+    const dispatch = registry.invoke('mac-1', 'ping')
+    expect(dispatch.accepted).toBe(true)
+    expect(dispatch.connId).toBeNull()
+    // Unfenced: there is no connection identity to enforce against.
+    expect(registry.settleInvokeFrom(dispatch.invokeId!, null, 'anyone')).toEqual({ settled: true })
+  })
+})
+
 describe('NodeRegistry — bounded pending invokes', () => {
   it('enforces the per-node bound and frees a slot after settlement', async () => {
     const { registry } = fixture({ maxPendingPerNode: 2 })

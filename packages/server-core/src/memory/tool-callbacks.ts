@@ -10,7 +10,7 @@
  */
 import { successResponse, errorResponse, type MemoryToolCallbacks, type MemoryWikiCallbacks } from '@rox/session-tools-core'
 import type { SessionMemoryMode } from '@rox/core/types'
-import type { WikiClaim, WikiClaimEvidence, WikiMutation } from '@rox/shared/memory/types'
+import type { WikiClaimEvidence, WikiMutation } from '@rox/shared/memory/types'
 import type { MemoryForgetResult } from '@rox/shared/memory/types'
 import { join } from 'path'
 import { isMemoryOriginEligibleForAutomaticInjection } from './provenance-gate'
@@ -130,14 +130,14 @@ export function buildMemoryToolCallbacks(
   const wikiStore = wiki ?? new WikiClaimStore(join(index.workspaceRoot, 'memory'), 'workspace')
   return {
     async search(args) {
-      const result = index.search(args.query, args.limit ?? 8)
+      const result = await index.searchSemantic(args.query, args.limit ?? 8)
       const hits = args.path ? result.hits.filter(hit => hit.path.startsWith(args.path!)) : result.hits
       if (hits.length === 0) {
         return successResponse(`No memory chunks matched "${args.query}".`)
       }
       const lines = [
         `## Memory search: "${args.query}"`,
-        `${hits.length} hit(s) — backend ${result.capability.fts5 ? 'FTS5' : 'JS BM25'}${result.capability.vector ? ' + vector' : ''}`,
+        `${hits.length} hit(s) — backend ${result.capability.fts5 ? 'FTS5' : 'JS BM25'}${result.capability.vector || hits.some(h => typeof h.vectorScore === 'number') ? ' + vector' : ''}`,
       ]
       hits.forEach((hit, i) => {
         const snippet = hit.snippet.length > SNIPPET_CHARS ? `${hit.snippet.slice(0, SNIPPET_CHARS)}…` : hit.snippet

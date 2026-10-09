@@ -3,16 +3,16 @@
   "comment": "Recorded by `bun scripts/check-bundle-size.ts --update` against a real renderer build.",
   "budgets": {
     "EntityPicker": {
-      "totalRawBytes": 410925,
-      "gzipTotalBytes": 140371
+      "totalRawBytes": 414236,
+      "gzipTotalBytes": 141129
     },
     "MarkdownOpenUIBlock": {
       "totalRawBytes": 2278852,
-      "gzipTotalBytes": 618269
+      "gzipTotalBytes": 618214
     },
     "PDFPreviewOverlay": {
-      "totalRawBytes": 469719,
-      "gzipTotalBytes": 138902
+      "totalRawBytes": 469720,
+      "gzipTotalBytes": 138903
     },
     "ar": {
       "totalRawBytes": 728831,
@@ -47,8 +47,8 @@
       "gzipTotalBytes": 182771
     },
     "index": {
-      "totalRawBytes": 3217389,
-      "gzipTotalBytes": 976560
+      "totalRawBytes": 3217308,
+      "gzipTotalBytes": 976535
     },
     "ja": {
       "totalRawBytes": 710487,
@@ -63,24 +63,24 @@
       "gzipTotalBytes": 178369
     },
     "main": {
-      "totalRawBytes": 750534,
-      "gzipTotalBytes": 203513
+      "totalRawBytes": 754786,
+      "gzipTotalBytes": 204768
     },
     "pl": {
       "totalRawBytes": 653544,
       "gzipTotalBytes": 180124
     },
     "playground": {
-      "totalRawBytes": 774800,
-      "gzipTotalBytes": 283878
+      "totalRawBytes": 777269,
+      "gzipTotalBytes": 284606
+    },
+    "project-authority": {
+      "totalRawBytes": 2720974,
+      "gzipTotalBytes": 709013
     },
     "ru": {
       "totalRawBytes": 883949,
       "gzipTotalBytes": 200799
-    },
-    "useVisibleActions": {
-      "totalRawBytes": 3598876,
-      "gzipTotalBytes": 858862
     },
     "wasm": {
       "totalRawBytes": 634427,
@@ -105,14 +105,14 @@
       "gzipTotalBytes": 33330
     },
     "index": {
-      "totalRawBytes": 388748,
-      "gzipTotalBytes": 62790
+      "totalRawBytes": 389497,
+      "gzipTotalBytes": 62866
     }
   },
   "totals": {
-    "jsRawBytes": 34751042,
-    "jsGzipBytes": 9298978,
-    "cssRawBytes": 797728,
-    "cssGzipBytes": 121134
+    "jsRawBytes": 33922457,
+    "jsGzipBytes": 9168187,
+    "cssRawBytes": 798477,
+    "cssGzipBytes": 121210
   }
 }

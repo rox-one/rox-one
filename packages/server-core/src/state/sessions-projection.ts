@@ -4,8 +4,10 @@
  *
  * JSONL stays the source of truth. Everything written here is rebuildable:
  * `rebuildWorkspace` rescans the session directory and replaces both the
- * `session_index` rows and the index file. The index file carries a freshness
- * cookie
+ * `session_index` rows and the index file. The `session_index.header` column
+ * holds each session's full first-line header JSON, so boot can hydrate session
+ * metadata without touching a single JSONL file; `sessions-index.json` keeps the
+ * lighter list-entry subset. The index file carries a freshness cookie
  * (entry count + max header mtime); when it no longer matches the directory,
  * readers rebuild instead of trusting the cache.
  */
@@ -69,30 +71,79 @@ function sortEntries(entries: SessionIndexEntry[]): SessionIndexEntry[] {
   return entries.sort((a, b) => (b.lastUsedAt - a.lastUsedAt) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 }
 
-/** Read one session's index entry straight from its JSONL header, or null. */
-export function entryForSession(workspaceRootPath: string, sessionId: string): SessionIndexEntry | null {
+/** One session's index entry plus the raw first-line header JSON it came from. */
+interface ScannedSessionEntry {
+  entry: SessionIndexEntry
+  /** The full `session.jsonl` first line, persisted into `session_index.header`. */
+  headerJson: string
+}
+
+/** Read one session's entry + header JSON straight from its JSONL header, or null. */
+function readSessionEntry(workspaceRootPath: string, sessionId: string): ScannedSessionEntry | null {
   const file = getSessionFilePath(workspaceRootPath, sessionId)
   if (!existsSync(file)) return null
   const header = readSessionHeader(file)
   if (!header) return null
   try {
-    return entryFromHeader(header, statSync(file).mtimeMs)
+    return { entry: entryFromHeader(header, statSync(file).mtimeMs), headerJson: JSON.stringify(header) }
   } catch {
     return null
   }
 }
 
-/** Scan every session directory's header, newest first — the source-of-truth scan. */
-export function scanWorkspaceEntries(workspaceRootPath: string): SessionIndexEntry[] {
+/** Read one session's index entry straight from its JSONL header, or null. */
+export function entryForSession(workspaceRootPath: string, sessionId: string): SessionIndexEntry | null {
+  return readSessionEntry(workspaceRootPath, sessionId)?.entry ?? null
+}
+
+/** Scan every session directory's header (entry + header JSON), newest first. */
+function scanWorkspaceSessions(workspaceRootPath: string): ScannedSessionEntry[] {
   const sessionsDir = getWorkspaceSessionsPath(workspaceRootPath)
   if (!existsSync(sessionsDir)) return []
-  const entries: SessionIndexEntry[] = []
+  const sessions: ScannedSessionEntry[] = []
   for (const dirent of readdirSync(sessionsDir, { withFileTypes: true })) {
     if (!dirent.isDirectory()) continue
-    const entry = entryForSession(workspaceRootPath, dirent.name)
-    if (entry) entries.push(entry)
+    const scanned = readSessionEntry(workspaceRootPath, dirent.name)
+    if (scanned) sessions.push(scanned)
   }
-  return sortEntries(entries)
+  sessions.sort((a, b) => (b.entry.lastUsedAt - a.entry.lastUsedAt) || (a.entry.id < b.entry.id ? -1 : a.entry.id > b.entry.id ? 1 : 0))
+  return sessions
+}
+
+/** Scan every session directory's header, newest first — the source-of-truth scan. */
+export function scanWorkspaceEntries(workspaceRootPath: string): SessionIndexEntry[] {
+  return scanWorkspaceSessions(workspaceRootPath).map((scanned) => scanned.entry)
+}
+
+export interface SessionIndexDrift {
+  indexCount: number
+  scannedCount: number
+  /** Whether the index file's count + max-header-mtime cookie still matches the directory. */
+  cookieMatches: boolean
+  /** Session ids on disk that the index does not list. */
+  missingFromIndex: string[]
+  /** Session ids the index lists that are no longer on disk. */
+  staleInIndex: string[]
+}
+
+/**
+ * Read-only drift guard: compare the index file against a fresh directory scan.
+ * Never writes and never rebuilds — reports counts for a state-check/doctor caller.
+ */
+export function checkSessionIndexDrift(workspaceRootPath: string): SessionIndexDrift {
+  const cached = parseIndexFile(sessionIndexFilePath(workspaceRootPath))
+  const indexed = cached?.entries ?? []
+  const scanned = scanWorkspaceEntries(workspaceRootPath)
+  const indexedIds = new Set(indexed.map((entry) => entry.id))
+  const scannedIds = new Set(scanned.map((entry) => entry.id))
+  const live = liveCookie(workspaceRootPath)
+  return {
+    indexCount: indexed.length,
+    scannedCount: scanned.length,
+    cookieMatches: cached !== null && cached.count === live.count && cached.maxHeaderMtimeMs === live.maxHeaderMtimeMs,
+    missingFromIndex: scanned.filter((entry) => !indexedIds.has(entry.id)).map((entry) => entry.id),
+    staleInIndex: indexed.filter((entry) => !scannedIds.has(entry.id)).map((entry) => entry.id),
+  }
 }
 
 /** Cheap cookie over the directory (list + stat only, no header parse). */
@@ -164,10 +215,33 @@ function writeIndexFile(path: string, entries: SessionIndexEntry[], now: number)
   }
 }
 
-function reconcileRows(db: DatabaseSync, workspaceRootPath: string, entries: SessionIndexEntry[], now: number): void {
+/** Replace the workspace's rows, storing each session's full first-line header. */
+function reconcileRows(db: DatabaseSync, workspaceRootPath: string, sessions: readonly ScannedSessionEntry[], now: number): void {
   db.prepare('DELETE FROM session_index WHERE workspace_root = ?').run(workspaceRootPath)
   const insert = db.prepare('INSERT INTO session_index (workspace_root, session_id, header, updated_at) VALUES (?, ?, ?, ?)')
-  for (const entry of entries) insert.run(workspaceRootPath, entry.id, JSON.stringify(entry), now)
+  for (const session of sessions) insert.run(workspaceRootPath, session.entry.id, session.headerJson, now)
+}
+
+/**
+ * A stored `session_index.header` row is usable only when it is a full
+ * SessionHeader (messageCount + tokenUsage are required); pre-upgrade rows held
+ * the list-entry subset and are rejected so the boot path rescans and repairs.
+ */
+function parseHeaderRow(raw: string): SessionHeader | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (typeof parsed !== 'object' || parsed === null) return null
+    const header = parsed as Record<string, unknown>
+    const valid = typeof header.id === 'string'
+      && typeof header.workspaceRootPath === 'string'
+      && typeof header.createdAt === 'number'
+      && typeof header.lastUsedAt === 'number'
+      && typeof header.messageCount === 'number'
+      && typeof header.tokenUsage === 'object' && header.tokenUsage !== null
+    return valid ? (parsed as SessionHeader) : null
+  } catch {
+    return null
+  }
 }
 
 export interface SessionStateProjectorOptions {
@@ -200,10 +274,10 @@ export class SessionStateProjector {
       const live = liveCookie(workspaceRootPath)
       if (cached.count === live.count && cached.maxHeaderMtimeMs === live.maxHeaderMtimeMs) return cached.entries
     }
-    const entries = scanWorkspaceEntries(workspaceRootPath)
-    reconcileRows(db, workspaceRootPath, entries, this.#now())
-    writeIndexFile(path, entries, this.#now())
-    return entries
+    const scanned = scanWorkspaceSessions(workspaceRootPath)
+    reconcileRows(db, workspaceRootPath, scanned, this.#now())
+    writeIndexFile(path, scanned.map((session) => session.entry), this.#now())
+    return scanned.map((session) => session.entry)
   }
 
   /** Project a single session after a successful JSONL flush. */
@@ -211,17 +285,17 @@ export class SessionStateProjector {
     return this.#store.run({
       keys: [this.#indexKey(workspaceRootPath), sessionIndexKey(workspaceRootPath, sessionId)],
       fn: (db) => {
-        const entry = entryForSession(workspaceRootPath, sessionId)
+        const session = readSessionEntry(workspaceRootPath, sessionId)
         const next = this.#loadEntries(db, workspaceRootPath).filter((candidate) => candidate.id !== sessionId)
-        if (entry) {
-          next.push(entry)
-          upsertSessionIndexRow(db, workspaceRootPath, entry.id, JSON.stringify(entry), this.#now())
+        if (session) {
+          next.push(session.entry)
+          upsertSessionIndexRow(db, workspaceRootPath, session.entry.id, session.headerJson, this.#now())
         } else {
           db.prepare('DELETE FROM session_index WHERE workspace_root = ? AND session_id = ?').run(workspaceRootPath, sessionId)
         }
         sortEntries(next)
         writeIndexFile(sessionIndexFilePath(workspaceRootPath), next, this.#now())
-        return entry
+        return session?.entry ?? null
       },
     })
   }
@@ -243,12 +317,39 @@ export class SessionStateProjector {
     return this.#store.run({
       keys: undefined,
       fn: (db) => {
-        const entries = scanWorkspaceEntries(workspaceRootPath)
-        reconcileRows(db, workspaceRootPath, entries, this.#now())
+        const scanned = scanWorkspaceSessions(workspaceRootPath)
+        const entries = scanned.map((session) => session.entry)
+        reconcileRows(db, workspaceRootPath, scanned, this.#now())
         writeIndexFile(sessionIndexFilePath(workspaceRootPath), entries, this.#now())
         return entries
       },
     })
+  }
+
+  /**
+   * Boot fast path: full session headers served from `session_index.header`.
+   *
+   * Returns null — never scanning — unless the index file's freshness cookie
+   * still matches the directory AND the DB rows cover every indexed entry, so
+   * the caller can fall back to `listSessions` plus a queued rebuild.
+   */
+  readFreshHeaders(workspaceRootPath: string): SessionHeader[] | null {
+    const cached = parseIndexFile(sessionIndexFilePath(workspaceRootPath))
+    if (!cached) return null
+    const live = liveCookie(workspaceRootPath)
+    if (cached.count !== live.count || cached.maxHeaderMtimeMs !== live.maxHeaderMtimeMs) return null
+    const rows = this.#store.listSessionIndex(workspaceRootPath)
+    if (rows.length !== cached.entries.length) return null
+    const headerById = new Map(rows.map((row) => [row.sessionId, row.header]))
+    const headers: SessionHeader[] = []
+    for (const entry of cached.entries) {
+      const raw = headerById.get(entry.id)
+      if (raw === undefined) return null
+      const header = parseHeaderRow(raw)
+      if (header === null) return null
+      headers.push(header)
+    }
+    return headers
   }
 
   /** Read the index, rebuilding when the cache is missing or stale. */

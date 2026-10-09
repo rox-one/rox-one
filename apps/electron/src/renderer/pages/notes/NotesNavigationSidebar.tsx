@@ -179,7 +179,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, dreamNoteIds, ...action
                 data-dream-state={dreamState}
                 className={cn(
                   'rounded-[var(--radius-control)] px-1.5 py-0.5 text-caption',
-                  dreamState === 'pending' ? 'bg-status-warning/10 text-status-warning' : 'bg-foreground/[0.06] text-muted-foreground',
+                  dreamState === 'pending' ? 'bg-status-warning/10 text-status-warning' : 'bg-foreground-5 text-muted-foreground',
                 )}
               >
                 {t(dreamState === 'pending' ? 'notes.sleep.pending' : 'notes.sleep.dreamed')}
@@ -189,7 +189,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, dreamNoteIds, ...action
           {note.tags.length > 0 && (
             <span className="mt-1 flex flex-wrap gap-1 pl-5">
               {note.tags.slice(0, 3).map(tag => (
-                <span key={tag} className="rounded-[var(--radius-control)] bg-foreground/[0.06] px-1.5 py-0.5 text-caption text-muted-foreground">#{tag}</span>
+                <span key={tag} className="rounded-[var(--radius-control)] bg-foreground-5 px-1.5 py-0.5 text-caption text-muted-foreground">#{tag}</span>
               ))}
             </span>
           )}
@@ -263,12 +263,12 @@ function FolderNavigationItem({ node, depth, expanded, onToggleFolder, ...action
           onClick={() => onToggleFolder(node.fullPath)}
           className={cn(
             'mb-0.5 flex h-7 w-full cursor-pointer items-center gap-1 rounded-[var(--radius-control)] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring',
-            isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]',
+            isOver && 'ring-2 ring-accent/40 bg-accent/10',
           )}
           style={{ paddingLeft: `${8 + depth * 12}px` }}
         >
           <ChevronRight className={cn('icon-caption shrink-0 transition-transform duration-150 motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden="true" />
-          <FolderIcon className={cn('icon-inline shrink-0', depth === 0 ? 'text-status-warning' : depth === 1 ? 'text-status-info' : 'text-status-success')} aria-hidden="true" />
+          <FolderIcon className={cn('icon-inline shrink-0', depth === 0 ? 'text-status-warning' : depth === 1 ? 'text-accent' : 'text-status-success')} aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-left">{node.name}</span>
           <span className="text-xs text-muted-foreground/50 tabular-nums">{countFolderNotes(node)}</span>
         </button>

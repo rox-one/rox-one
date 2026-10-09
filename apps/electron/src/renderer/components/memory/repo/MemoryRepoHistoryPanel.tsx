@@ -52,7 +52,7 @@ export function MemoryRepoHistoryPanel({
   const list = (
     <div
       data-testid="memory-repo-history-list"
-      className="flex min-h-0 w-[268px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-surface-hover py-2"
+      className="flex min-h-0 w-[268px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-foreground-2 py-2"
     >
       {loading ? (
         <div className="px-4 py-4 text-body text-text-muted" data-testid="memory-repo-history-loading">{t('memory.repo.state.loading')}</div>
@@ -84,7 +84,7 @@ export function MemoryRepoHistoryPanel({
                     <code className={cn('text-caption', selected ? 'font-semibold text-accent' : 'text-text-secondary')}>{shortSha(commit.sha)}</code>
                     <span className="ml-auto text-caption text-text-muted">{formatCommitTime(commit.ts)}</span>
                   </span>
-                  <span className="line-clamp-2 text-small text-text-secondary">{commit.message}</span>
+                  <span className="line-clamp-2 text-small text-foreground-90">{commit.message}</span>
                   <span className="flex items-center gap-2 text-caption tabular-nums">
                     <span className="text-success">+{commit.stats.added}</span>
                     <span className="text-destructive">−{commit.stats.deleted}</span>
@@ -101,7 +101,7 @@ export function MemoryRepoHistoryPanel({
   const detail = (() => {
     if (mode === 'snapshots') {
       return (
-        <div className="mb-3 rounded-[var(--radius-control)] border border-warning/25 bg-warning/10 px-3 py-2 text-small text-text-secondary" data-testid="memory-repo-history-snapshots" role="status">
+        <div className="mb-3 rounded-[var(--radius-control)] border border-status-warning/25 bg-status-warning/10 px-3 py-2 text-small text-text-secondary" data-testid="memory-repo-history-snapshots" role="status">
           {t('memory.repo.history.snapshots')}
         </div>
       )
@@ -136,7 +136,7 @@ export function MemoryRepoHistoryPanel({
     }
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-5 text-center" data-testid="memory-repo-history-no-changes" role="alert">
-        <TriangleAlert aria-hidden="true" className="icon-rail text-warning" />
+        <TriangleAlert aria-hidden="true" className="icon-rail text-status-warning" />
         <p className="text-body text-text-secondary">{selectedCommit ? t('memory.repo.history.noChanges') : t('memory.repo.state.commitNotFound')}</p>
       </div>
     )
