@@ -3,7 +3,7 @@
  * waits on an OAuth network refresh; it refreshes in the background and
  * pushes llmConnections.CHANGED. Omitting options keeps the legacy refresh.
  */
-import { beforeEach, describe, expect, mock, test } from 'bun:test'
+import { afterAll, beforeEach, describe, expect, mock, test } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { HandlerFn, RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
@@ -40,6 +40,11 @@ mock.module('@rox/shared/auth/claude-token', () => ({
     return { accessToken: 'fresh', refreshToken: 'refresh-2', expiresAt: Date.now() + 3_600_000 }
   },
 }))
+afterAll(() => {
+  mock.module('@rox/shared/config', () => actualConfig)
+  mock.module('@rox/shared/credentials', () => actualCredentials)
+  mock.module('@rox/shared/auth/claude-token', () => actualClaudeToken)
+})
 
 const { registerLlmConnectionsHandlers } = await import('../llm-connections')
 

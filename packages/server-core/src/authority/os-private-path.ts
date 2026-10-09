@@ -130,6 +130,12 @@ function windowsPrivatePaths(paths: readonly PrivatePath[], operation: WindowsOp
   validateWindowsPrivatePaths(output, paths, operation)
 }
 
+/**
+ * The single Windows OS-owner boundary. It reuses the batch probe (fixed
+ * executable, base64 request on stdin, 180s budget) instead of a separate
+ * owner-only PowerShell subprocess, so every owner/ACL check shares one
+ * implementation and one documented timeout.
+ */
 export function requireOsOwner(path: string): void {
   if (process.platform === 'win32') {
     windowsPrivatePaths([{ path, kind: 'directory' }], 'require-private')

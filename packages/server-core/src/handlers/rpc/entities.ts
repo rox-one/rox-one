@@ -27,6 +27,7 @@ import { closeEntityLinkStores, getEntityLinkStore } from '../../entities/link-s
 import { DefaultResolverHost } from '../../entities/resolver-host.ts'
 import { ensureNoteLinksPruned, noteLinkSourceProbeFor, observeEntitiesLinksEnabled } from '../../entities/note-links-indexer.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
+import { assertWorkspaceScope } from './workspace-guard.ts'
 // W1-04 (#1501): every resolve / link listing / link write is ACL-checked.
 import {
   canWriteLink,
@@ -175,12 +176,17 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
   const workspaceFor = runtime.workspaceFor ?? (getWorkspaceByNameOrId as (id: string) => { id: string; rootPath: string } | null)
   server.onShutdown?.(() => closeEntityLinkStores())
 
-  const requireWorkspace = (ctx: RequestContext, workspaceId: string): { id: string; rootPath: string } => {
-    if (ctx.principal && workspaceId !== ctx.workspaceId) {
-      throw new CodedError('FORBIDDEN', 'Entity workspace access denied')
-    }
+  // SEC-03: resolve first so an unknown id stays "Workspace not found", then
+  // scope the argument workspace to the client's bound workspace for every
+  // authenticated identity kind (principal, actor, web UI session).
+  const requireWorkspace = (
+    ctx: RequestContext,
+    workspaceId: string,
+    identities: 'any' | 'principal' = 'any',
+  ): { id: string; rootPath: string } => {
     const workspace = workspaceFor(workspaceId)
     if (!workspace) throw new CodedError('NOT_FOUND', 'Workspace not found')
+    assertWorkspaceScope(ctx, workspaceId, 'Entity workspace access denied', identities)
     return workspace
   }
 
@@ -243,10 +249,13 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
   server.handle(RPC_CHANNELS.entities.RESOLVE, async (ctx, workspaceId: string, input: unknown): Promise<EntityPreview[]> => {
     const request = entityResolveRequestSchema.parse(input)
     if (!isEnabled(runtime)) return request.refs.map(ref => unavailablePreview(ref))
-    // Same principal/workspace check as feed:list: remote-eligible channels
-    // must never trust the workspaceId argument. Hosts are keyed by the
-    // validated id so unknown ids never allocate hosts.
-    const workspace = requireWorkspace(ctx, workspaceId)
+    // Explicit SEC-03 exception for a legitimate cross-workspace read:
+    // `entities:resolve` serves several workspaces (the resolver host is keyed
+    // per workspace — see entities-reviewer-fixes.test.ts), so an actor- or
+    // web-authenticated client may resolve outside its bound workspace. A
+    // NativePrincipal is still scoped to the workspace its credential is bound
+    // to. Hosts are keyed by the validated id so unknown ids never allocate.
+    const workspace = requireWorkspace(ctx, workspaceId, 'principal')
     const previews = await hostForWorkspace(workspace.id, runtime.acl).resolve(request.refs, actorFor(ctx))
     return previews.map(redactPreviewForWire)
   }, { nativeAction: 'read' })
