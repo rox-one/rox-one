@@ -1,6 +1,6 @@
 /**
  * Documented Playwright pin for I029 / #385. Do not use @latest.
- * Install exact: bun add -d @playwright/test@1.49.1
+ * Install exact: bun add -d @playwright/test@1.64.0
  *
  * Gate G1: product E3 is not the default. This suite opts into fixture U1 via
  * ROX_MEETING_E2E_FIXTURE=1 (set by `bun run test:meetings:e2e`). Without that
@@ -9,7 +9,7 @@
  */
 import { defineConfig } from '@playwright/test'
 
-export const PLAYWRIGHT_VERSION_PIN = '1.49.1'
+export const PLAYWRIGHT_VERSION_PIN = '1.64.0'
 
 const wantProduct = process.env.ROX_MEETING_USE_PACKAGED_APP === '1'
 const wantFixture = process.env.ROX_MEETING_E2E_FIXTURE === '1'
