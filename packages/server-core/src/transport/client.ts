@@ -134,6 +134,33 @@ export class WsRpcClient implements RpcClient {
   private connected = false
   private reconnectAttempt = 0
   private lastSeenSeq = 0
+  /**
+   * Sequence numbers of events already delivered to listeners while they could
+   * not advance `lastSeenSeq` (they arrived after a hole, so `lastSeenSeq` was
+   * frozen below the gap and the events were applied out of order). The server
+   * replays every buffered `seq > lastSeq` on reconnect, which would re-deliver
+   * exactly these events; membership suppresses that duplicate dispatch. Entries
+   * leave the set when their replay frame is suppressed, and the whole set is
+   * dropped whenever the sequence baseline resets (fresh handshake or stale
+   * reconnect), so it can never grow across a baseline change.
+   */
+  private deliveredSeqs = new Set<number>()
+  /**
+   * Latched once the current connection is known to have lost an event
+   * (sequence gap) or to have dropped a frame it could not decode. While set,
+   * the client holds `lastSeenSeq` below the loss, refuses to ack past it, and
+   * has already asked listeners for a full resync — further gaps on the same
+   * connection do not re-trigger recovery (storm guard). Cleared on the next
+   * handshake_ack, which establishes a fresh delivery baseline.
+   */
+  private resyncRequested = false
+  /**
+   * Set when a handshake_ack reports a stale reconnect (the server could not
+   * replay and may have continued or reset its per-client sequence). The next
+   * event's seq becomes the new floor without being read as a gap — the
+   * renderer already ran a full refresh for that hole.
+   */
+  private awaitingBaseline = false
   private ackTimer: ReturnType<typeof setInterval> | null = null
   private pendingReconnect: { clientId: string; lastSeq: number } | null = null
   private currentHandshakeWasReconnect = false
@@ -305,6 +332,25 @@ export class WsRpcClient implements RpcClient {
         try { cb(isStale) } catch { /* listener errors must not break transport */ }
       }
     }
+  }
+
+  /**
+   * Flag the connection as having lost delivery (sequence gap or undecodable
+   * frame) and ask listeners to run the stale-reconnect full refresh.
+   *
+   * Single-shot per handshake: the first loss latches `resyncRequested`, so a
+   * burst of gaps caused by the same hole cannot storm the recovery path.
+   * The watermark is intentionally left untouched — `lastSeenSeq` stays below
+   * the hole, so sequence_ack never lets the server evict the buffered copy
+   * and a later reconnect can still replay it.
+   */
+  private requestResync(reason: string): void {
+    if (this.destroyed || this.permanentlyClosed || !this.connected) return
+    if (this.resyncRequested) return
+    this.resyncRequested = true
+    console.warn(`[WsRpc] ${reason}; requesting full resync (seq watermark held at ${this.lastSeenSeq})`)
+    // Same recovery path as a stale reconnect: listeners perform a full refresh.
+    this.emitReconnected(true)
   }
 
   reconnectNow(): void {
@@ -643,6 +689,10 @@ export class WsRpcClient implements RpcClient {
     try {
       envelope = deserializeEnvelope(raw)
     } catch {
+      // A frame we cannot decode may have carried a push event, so the client
+      // can no longer assume it has every event. Treat it like an evicted
+      // buffer: force a full resync instead of silently dropping it.
+      this.requestResync('undecodable frame')
       return
     }
 
@@ -673,7 +723,13 @@ export class WsRpcClient implements RpcClient {
 
         if (!serverRecognizedReconnect) {
           this.lastSeenSeq = 0
+          this.deliveredSeqs.clear()
         }
+        // A completed handshake (fresh or replayed) is a new delivery baseline:
+        // release the single-shot resync latch so a later loss can recover too.
+        this.resyncRequested = false
+        // A stale reconnect has no replay: the next event establishes the floor.
+        this.awaitingBaseline = serverRecognizedReconnect && envelope.stale === true
 
         if (this.connectTimer) {
           clearTimeout(this.connectTimer)
@@ -751,15 +807,48 @@ export class WsRpcClient implements RpcClient {
       }
 
       case 'event': {
-        // Track sequence numbers for reliable delivery
+        // Track sequence numbers for reliable delivery. The watermark only
+        // advances across a contiguous run: a gap means an event was lost and
+        // must never be acknowledged away, or the server would evict the
+        // buffered copy and make the hole permanent.
+        //
+        // Events delivered while the watermark is frozen below a hole are
+        // recorded in `deliveredSeqs` (they were applied out of order). The
+        // server replays every buffered `seq > lastSeq` on reconnect, so those
+        // same events come back; a replay frame whose seq was already delivered
+        // is suppressed instead of re-dispatched (neither lose the missing one
+        // nor double the ones already applied).
+        let suppressDispatch = false
         if (typeof envelope.seq === 'number') {
-          if (this.lastSeenSeq > 0 && envelope.seq > this.lastSeenSeq + 1) {
-            console.warn(`[WsRpc] Sequence gap: expected ${this.lastSeenSeq + 1}, got ${envelope.seq}`)
+          const seq = envelope.seq
+          if (this.awaitingBaseline) {
+            // Stale reconnect: no replay was sent and the renderer already ran a
+            // full refresh, so the first post-reconnect seq is the new floor.
+            this.awaitingBaseline = false
+            this.lastSeenSeq = seq
+            this.deliveredSeqs.clear()
+          } else if (this.deliveredSeqs.has(seq)) {
+            // Replay of an event already applied after a hole — drop the
+            // duplicate. The frame still proves delivery, so let the watermark
+            // catch up when it is the next expected sequence.
+            this.deliveredSeqs.delete(seq)
+            suppressDispatch = true
+            if (seq === this.lastSeenSeq + 1) {
+              this.lastSeenSeq = seq
+            }
+          } else if (seq > this.lastSeenSeq) {
+            if (seq === this.lastSeenSeq + 1) {
+              this.lastSeenSeq = seq
+            } else {
+              this.requestResync(`sequence gap: expected ${this.lastSeenSeq + 1}, got ${seq}`)
+              // Delivered out of order: remember it so a later replay of the
+              // same event is not applied twice.
+              this.deliveredSeqs.add(seq)
+            }
           }
-          this.lastSeenSeq = envelope.seq
         }
 
-        if (envelope.channel) {
+        if (envelope.channel && !suppressDispatch) {
           // Server is shutting down — stop reconnection before dispatching
           if (envelope.channel === 'server:shuttingDown') {
             this.permanentlyClosed = true
