@@ -18,6 +18,7 @@ import {
   type LocalTranscriptRevision,
   type TranscriptStatus,
 } from '../../shared/meetings-local'
+import type { MeetingObservationProvenance, TranscriptSource } from '@rox/core/meetings'
 import { recipeById } from '@rox/shared/meeting-agents/browser'
 
 export const MEETING_ID_RE = /^m-[0-9a-z-]{4,64}$/
@@ -63,6 +64,39 @@ function normalizeTranscriptRevision(v: unknown): LocalTranscriptRevision | null
   return { revision: Math.max(0, Math.floor(revision)), createdAt, reason: o.reason }
 }
 
+const OBSERVE_SOURCES = new Set<string>(['microphone', 'system', 'import', 'room'])
+const OBSERVE_OBSERVERS = new Set<string>(['asr-stream', 'browser-caption', 'manual'])
+const OBSERVE_SELF = new Set<string>(['self', 'other', 'unknown'])
+
+function normalizeObservationProvenance(raw: unknown): MeetingObservationProvenance | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const o = raw as Record<string, unknown>
+  const observer = typeof o.observer === 'string' && OBSERVE_OBSERVERS.has(o.observer)
+    ? o.observer as MeetingObservationProvenance['observer']
+    : undefined
+  const self = typeof o.self === 'string' && OBSERVE_SELF.has(o.self)
+    ? o.self as MeetingObservationProvenance['self']
+    : undefined
+  if (!observer || !self) return undefined
+  const out: MeetingObservationProvenance = { observer, self }
+  if (str(o.observationId)) out.observationId = str(o.observationId)
+  if (str(o.sessionId)) out.sessionId = str(o.sessionId)
+  if (num(o.epoch) != null) out.epoch = num(o.epoch)!
+  if (num(o.observedAt) != null) out.observedAt = num(o.observedAt)!
+  if (o.speaker === null) out.speaker = null
+  else if (str(o.speaker)) out.speaker = str(o.speaker)
+  return out
+}
+
+function normalizeSegmentObserve(segment: Record<string, unknown>): Partial<LocalTranscriptSegment> {
+  const out: Partial<LocalTranscriptSegment> = {}
+  if (typeof segment.source === 'string' && OBSERVE_SOURCES.has(segment.source)) out.source = segment.source as TranscriptSource
+  if (segment.ownEcho === true) out.ownEcho = true
+  const provenance = normalizeObservationProvenance(segment.provenance)
+  if (provenance) out.provenance = provenance
+  return out
+}
+
 /** Tolerant reader for transcript.json, including pre-revision transcripts. */
 export function normalizeTranscript(raw: unknown): LocalTranscript | null {
   if (!raw || typeof raw !== 'object') return null
@@ -81,6 +115,7 @@ export function normalizeTranscript(raw: unknown): LocalTranscript | null {
       endMs,
       text,
       speakerId: segment.speakerId === null ? null : str(segment.speakerId).trim() || undefined,
+      ...normalizeSegmentObserve(segment),
     }]
   })
   const history = Array.isArray(o.history) ? o.history.flatMap((entry) => {

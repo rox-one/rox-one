@@ -1,0 +1,21 @@
+{
+  "meetings.observe.start": { "en": "Start observation", "ru": "Начать наблюдение" },
+  "meetings.observe.stop": { "en": "Stop observation", "ru": "Остановить наблюдение" },
+  "meetings.observe.state.idle": { "en": "Idle", "ru": "Ожидание" },
+  "meetings.observe.state.joining": { "en": "Joining", "ru": "Подключение" },
+  "meetings.observe.state.inCall": { "en": "In call", "ru": "В звонке" },
+  "meetings.observe.state.paused": { "en": "Paused", "ru": "Пауза" },
+  "meetings.observe.state.ended": { "en": "Ended", "ru": "Завершено" },
+  "meetings.observe.state.blocked": { "en": "Blocked", "ru": "Заблокировано" },
+  "meetings.observe.noSpeaker": { "en": "Speaker unknown", "ru": "Спикер не определён" },
+  "meetings.local.provenance.speaker": { "en": "Speaker", "ru": "Спикер" },
+  "meetings.local.provenance.mic": { "en": "Microphone", "ru": "Микрофон" },
+  "meetings.local.provenance.system": { "en": "System audio", "ru": "Системный звук" },
+  "meetings.local.provenance.ownEcho": { "en": "Agent voice", "ru": "Голос агента" },
+  "meetings.local.provenance.unknown": { "en": "Source unknown", "ru": "Источник неизвестен" },
+  "meetings.local.summary.rolling": { "en": "Rolling summary", "ru": "Скользящая сводка" },
+  "meetings.local.summary.heuristic": { "en": "Heuristic", "ru": "Эвристика" },
+  "meetings.local.summary.model": { "en": "Model", "ru": "Модель" },
+  "meetings.local.summary.updatedAt": { "en": "Updated {{time}}", "ru": "Обновлено {{time}}" },
+  "meetings.local.tr.ownEcho": { "en": "Agent voice", "ru": "Голос агента" }
+}

@@ -6,6 +6,8 @@
  * after explicit cloud consent; local Whisper is an optional device engine.
  */
 
+import type { MeetingObservationProvenance, TranscriptSource } from '@rox/core/meetings'
+
 export const MEETINGS_LOCAL_SCHEMA = 1
 export const MEETING_SOURCE_SEEK_SESSION_KEY = 'rox.meetings.sourceSeek.v1'
 
@@ -40,6 +42,10 @@ export const MEETINGS_LOCAL_IPC = {
   EXTRACTION_FINISH: 'meetings-local:extraction-finish',
   EXTRACTION_FAIL: 'meetings-local:extraction-fail',
   ACTION_SAVE: 'meetings-local:action-save',
+  OBSERVE_START: 'meetings-local:observe-start',
+  OBSERVE_STOP: 'meetings-local:observe-stop',
+  OBSERVE_INGEST: 'meetings-local:observe-ingest',
+  OBSERVE_LINES: 'meetings-local:observe-lines',
   CHANGED: 'meetings-local:changed',
 } as const
 
@@ -196,6 +202,34 @@ export interface LocalTranscriptSegment {
   text: string
   /** Human-correctable only when no diarization engine provides a label. */
   speakerId?: string | null
+  /** Capture channel; absent on legacy transcripts. */
+  source?: TranscriptSource
+  /** Set only when agent/own audio is genuinely observable; never fabricated. */
+  ownEcho?: boolean
+  provenance?: MeetingObservationProvenance
+}
+
+/** One live observe line, paged by monotonic `seq` (tail cursor). */
+export interface LocalObservedLine {
+  seq: number
+  speaker: string
+  text: string
+  at: number
+  ownEcho?: boolean
+}
+
+/** Raw probe pushed by the device capture/ASR path into the observe lane. */
+export interface LocalObserveIngestInput {
+  id: string
+  startMs: number
+  endMs: number
+  text: string
+  speaker?: string | null
+  source: TranscriptSource
+  observer: MeetingObservationProvenance['observer']
+  selfSpeaker?: string | null
+  observedAt?: number
+  epoch?: number
 }
 
 export interface LocalTranscriptRevision {
@@ -277,5 +311,9 @@ export interface MeetingsLocalApi {
   openDocument(id: string, docId: string): Promise<boolean>
   reveal(id: string, docId?: string): Promise<boolean>
   removeDocument(id: string, docId: string): Promise<LocalMeeting | null>
+  observeStart(id: string): Promise<MeetingsLocalResult<LocalMeeting>>
+  observeStop(id: string): Promise<MeetingsLocalResult<LocalMeeting>>
+  observeIngest(id: string, input: LocalObserveIngestInput): Promise<LocalObservedLine | null>
+  observeLines(id: string, afterSeq?: number): Promise<LocalObservedLine[]>
   onChanged(cb: (event: { id: string }) => void): () => void
 }
