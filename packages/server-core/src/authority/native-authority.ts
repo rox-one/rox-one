@@ -690,6 +690,9 @@ export class NativeAuthority {
       this.#db.prepare(`INSERT INTO operator_roles(name,definition,created_at) VALUES(?,?,?)
         ON CONFLICT(name) DO UPDATE SET definition=excluded.definition`)
         .run(roleName, JSON.stringify(normalized), Date.now())
+      // Durable tombstone: once the operator boundary has been modelled, an
+      // emptied registry must not silently reopen legacy full access.
+      this.#db.prepare("INSERT OR IGNORE INTO authority_meta(key,value) VALUES('operator_roles_configured','1')").run()
       this.#audit('operator-role.define', admin.subject_id, admin.id, undefined, { role: roleName })
       this.#db.exec('COMMIT')
     } catch (error) {
@@ -787,14 +790,24 @@ export class NativeAuthority {
     if (!configured) {
       return Object.freeze({ configured: false, role: null, scopes: ALL_OPERATOR_SCOPES })
     }
-    return resolveOperatorRoleCeiling(
+    const ceiling = resolveOperatorRoleCeiling(
       { definitions: this.#readOperatorRoleDefinitions(), default: this.#readDefaultOperatorRole() },
       row.operator_role,
     )
+    // The boundary has been modelled at some point: a principal with no
+    // applicable assignment/default gets deny-all, never a reopened registry.
+    return ceiling.configured ? ceiling : DENIED_OPERATOR_CEILING
   }
 
+  /**
+   * Whether the operator boundary has ever been established. True while a
+   * default or any definition is live, and permanently true once roles were
+   * ever defined (durable tombstone) so removing the last role cannot reopen
+   * full access.
+   */
   #operatorRolesConfigured(): boolean {
     if (this.#readDefaultOperatorRole() !== null) return true
+    if (this.#db.prepare("SELECT 1 FROM authority_meta WHERE key='operator_roles_configured'").get()) return true
     return !!this.#db.prepare('SELECT EXISTS(SELECT 1 FROM operator_roles) AS present').get()?.present
   }
 

@@ -268,9 +268,10 @@ export function classifyOperatorChannel(
 /**
  * Whether the connection's persisted ceiling permits `channel`.
  *
- * `configured:false` returns true so existing grant-based authority is
- * unchanged when no named roles are configured. LOCAL_ONLY, unclassified, and
- * empty ceilings always deny.
+ * `configured:false` returns true for classified channels so existing
+ * grant-based authority is unchanged when no named roles are ever configured.
+ * LOCAL_ONLY and unclassified channels always deny, independent of whether a
+ * ceiling is configured.
  */
 export function isChannelWithinOperatorCeiling(
   ceiling: OperatorRoleCeiling | null | undefined,
@@ -278,8 +279,10 @@ export function isChannelWithinOperatorCeiling(
   nativeAction: string | undefined,
 ): boolean {
   if (!ceiling) return false
-  if (!ceiling.configured) return true
   const requirement = classifyOperatorChannel(channel, nativeAction)
   if (!requirement.remote || requirement.scope === null) return false
+  // An unconfigured ceiling preserves legacy grant authority for ordinary
+  // channels, but it must never reopen the LOCAL_ONLY refusal above.
+  if (!ceiling.configured) return true
   return operatorScopeSatisfied(requirement.scope, ceiling.scopes)
 }
