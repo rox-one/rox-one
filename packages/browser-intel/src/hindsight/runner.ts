@@ -110,7 +110,7 @@ export function resolveHindsightCommand(deps: HindsightRunnerDeps = {}): Hindsig
   // reach the packaged `hindsight.py` script, so the resolver's leading `run`
   // is replaced with `tool run`, keeping its `--python X`.
   try {
-    const runtime = resolveScriptRuntime('python3')
+    const runtime = (deps.resolveRuntime ?? (() => resolveScriptRuntime('python3')))()
     const rest = runtime.argsPrefix[0] === 'run' ? runtime.argsPrefix.slice(1) : runtime.argsPrefix
     return {
       command: runtime.command,

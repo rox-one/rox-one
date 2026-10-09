@@ -65,15 +65,31 @@ describe('resolveHindsightCommand', () => {
     })
     expect(fromBundled).toEqual({ command: bundled, argsPrefix: [], source: 'bundled' })
 
-    // Force the uv module path to fail, then inject a fake PATH entry.
+    // Force the uv module path to fail through the explicit seam (the ambient
+    // uv of a CI runner must not decide this), then inject a fake PATH entry.
     restoreEnv(['PATH', 'CRAFT_UV', 'CRAFT_RESOURCES_BASE', 'CRAFT_IS_PACKAGED', 'CRAFT_APP_ROOT'])
     process.env.PATH = ''
     for (const key of ['CRAFT_UV', 'CRAFT_RESOURCES_BASE', 'CRAFT_IS_PACKAGED', 'CRAFT_APP_ROOT']) {
       delete process.env[key]
     }
     const dir = '/fake/path'
-    const fromPath = resolveHindsightCommand({ env: { PATH: dir }, exists: (path) => path === join(dir, 'hindsight') })
+    const fromPath = resolveHindsightCommand({
+      env: { PATH: dir },
+      exists: (path) => path === join(dir, 'hindsight'),
+      resolveRuntime: () => {
+        throw new Error('test: uv unavailable')
+      },
+    })
     expect(fromPath).toEqual({ command: join(dir, 'hindsight'), argsPrefix: [], source: 'path' })
+
+    // The python-module fallback outranks a bare PATH binary: a packaged host
+    // never prefers whatever `hindsight` happens to sit on PATH.
+    const withUv = resolveHindsightCommand({
+      env: { PATH: dir },
+      exists: (path) => path === join(dir, 'hindsight'),
+      resolveRuntime: () => ({ command: '/opt/uv', argsPrefix: ['run', '--python', '3.12'] }),
+    })
+    expect(withUv.source).toBe('python-module')
   })
 
   test('ignores a non-absolute or missing env binary', () => {
@@ -105,11 +121,13 @@ describe('resolveHindsightCommand', () => {
   })
 
   test('resolves the uv python-module fallback with the verified argv', () => {
-    restoreEnv(['CRAFT_UV', 'CRAFT_RESOURCES_BASE', 'CRAFT_IS_PACKAGED', 'CRAFT_APP_ROOT'])
-    process.env.CRAFT_UV = '/usr/local/bin/uv'
-    for (const key of ['CRAFT_RESOURCES_BASE', 'CRAFT_IS_PACKAGED', 'CRAFT_APP_ROOT']) delete process.env[key]
-
-    const command = resolveHindsightCommand({ env: {}, exists: () => false })
+    // The uv probe is injected so the case never depends on the ambient
+    // toolchain (CI runners ship uv through setup-uv).
+    const command = resolveHindsightCommand({
+      env: {},
+      exists: () => false,
+      resolveRuntime: () => ({ command: '/usr/local/bin/uv', argsPrefix: ['run', '--python', '3.12'] }),
+    })
     expect(command).toEqual({
       command: '/usr/local/bin/uv',
       argsPrefix: [
