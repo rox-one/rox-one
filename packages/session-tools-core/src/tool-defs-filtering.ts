@@ -60,6 +60,7 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'update_page',
   'write_page_data',
   'delete_page',
+  'show_widget',
   'memory_search',
   'memory_get',
   'memory_forget',

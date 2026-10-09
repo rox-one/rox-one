@@ -49,6 +49,7 @@ import {
   handleWritePageData,
   handleDeletePage,
 } from './handlers/pages.ts';
+import { handleShowWidget } from './handlers/show-widget.ts';
 import { handleArchiveSession } from './handlers/archive-session.ts';
 import { handleSendAgentMessage } from './handlers/send-agent-message.ts';
 import { handleAgentTeams } from './handlers/agent-teams.ts';
@@ -302,6 +303,14 @@ export const WritePageDataSchema = z.object({
 
 export const DeletePageSchema = z.object({
   slug: z.string().describe('Slug of the page to delete'),
+});
+
+export const ShowWidgetSchema = z.object({
+  title: z.string().describe('Operator-visible title shown above the widget frame (HTML-escaped into the document <title>)'),
+  widget_code: z.string().describe('Authored widget source. For kind "html": a self-contained HTML FRAGMENT with inline CSS/JS. Do NOT wrap it in a full <!doctype html>/<html> document — the host wraps it with the sandbox bridge, CSP, and size reporter. For kind "a2ui": the A2UI JSONL stream.'),
+  kind: z.enum(['html', 'a2ui']).optional().describe('Source format. Default: html. "a2ui" is validated and then refused with an unsupported-kind error until an A2UI renderer ships.'),
+  name: z.string().describe('Stable widget name, also its board identity and on-disk directory. Re-using a name creates a NEW revision and invalidates render tickets bound to the previous revision.'),
+  sessionId: z.string().optional().describe('Session to attribute the revision to. Defaults to the current session.'),
 });
 
 export const ListSessionsSchema = z.object({
@@ -781,6 +790,12 @@ Data model: kv is key → any JSON value; series are named lists of { t: epoch m
 
 A published page is unpublished first (best effort); the result reports publicCopyMayRemain when the remote copy could not be confirmed removed.`,
 
+  show_widget: `Stage an agent-authored widget on the workspace board. The widget is stored as a new revision of a named widget under board/widgets/{name}/ and becomes visible once the board mounts that revision in its sandboxed frame.
+
+Provide title + widget_code + name; kind defaults to "html". widget_code for "html" is a self-contained FRAGMENT (inline CSS/JS) — the host supplies the document shell, sandbox bridge and CSP, so a full <!doctype html>/<html> document is refused. kind "a2ui" accepts an A2UI JSONL stream but is validated and then refused (unsupported kind) until an A2UI renderer ships; nothing is stored.
+
+Re-using a name creates a NEW revision of the same widget and invalidates render tickets bound to the previous revision — old mounts stop working by design. Blocked in Explore/Safe mode (it writes workspace content).`,
+
   get_session_info: `Get metadata about the current session or a specific session by ID.
 
 Returns labels, status, name, permission mode, projectId (if the session is bound to a project), workingDirectory, and other details.
@@ -1022,6 +1037,9 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'update_page', description: TOOL_DESCRIPTIONS.update_page, inputSchema: UpdatePageSchema, executionMode: 'registry', safeMode: 'block', handler: handleUpdatePage },
   { name: 'write_page_data', description: TOOL_DESCRIPTIONS.write_page_data, inputSchema: WritePageDataSchema, executionMode: 'registry', safeMode: 'block', handler: handleWritePageData },
   { name: 'delete_page', description: TOOL_DESCRIPTIONS.delete_page, inputSchema: DeletePageSchema, executionMode: 'registry', safeMode: 'block', handler: handleDeletePage },
+  // Board widget (registry — writes the same board/widgets store as the
+  // board:widgetPut RPC through the grouped ctx.boardWidgets callbacks).
+  { name: 'show_widget', description: TOOL_DESCRIPTIONS.show_widget, inputSchema: ShowWidgetSchema, executionMode: 'registry', safeMode: 'block', readOnly: false, handler: handleShowWidget },
   { name: 'get_session_info', description: TOOL_DESCRIPTIONS.get_session_info, inputSchema: GetSessionInfoSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleGetSessionInfo },
   { name: 'list_sessions', description: TOOL_DESCRIPTIONS.list_sessions, inputSchema: ListSessionsSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListSessions },
   { name: 'list_background_tasks', description: TOOL_DESCRIPTIONS.list_background_tasks, inputSchema: ListBackgroundTasksSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListBackgroundTasks },

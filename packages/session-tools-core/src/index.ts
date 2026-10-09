@@ -147,6 +147,11 @@ export type {
   PageDataToolPatch,
   PageDataWriteSummary,
   DeletePageToolResult,
+  // Board widget types
+  BoardWidgetKind,
+  BoardWidgetToolRecord,
+  BoardWidgetPutInput,
+  BoardWidgetToolCallbacks,
   // Memory types
   MemoryToolCallbacks,
 } from './context.ts';
@@ -254,6 +259,7 @@ export {
   handleUpdatePage,
   handleWritePageData,
   handleDeletePage,
+  handleShowWidget,
   handleAgentTeams,
 } from './handlers/index.ts';
 
