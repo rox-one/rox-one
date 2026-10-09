@@ -105,7 +105,7 @@ reproduction; every confirmed defect was fixed with a red→green regression tes
 | c1.5 | Recall lanes: deterministic trigger + escalation sub-agent | adapt | M | deferred | recall lanes (deterministic trigger + escalation) not implemented | lane 1 must stay lexical-only and deterministic (≥0.65, top 3) |
 | c1.6 | Standing intents (prospective memory) | adapt | M | deferred | standing intents not implemented | matched on before_prompt_build; time reminders belong to cron |
 | c1.7 | Memory wiki (claims/evidence/contradictions) | adapt | M | deferred | memory wiki not implemented | separable from capture — port after core memory works |
-| c1.8 | Flush turn + forget/lineage retention | adapt | M | deferred | flush turn + forget lineage not implemented | forget must remove corpus lines + chunks + embeddings, not just prose |
+| c1.8 | Flush turn + forget/lineage retention | adapt | M | done | S6 @ 3d77c93: flush-turn.ts commits pending proposal write-intents at the session boundary (deterministic id order, receipt-idempotent, durable-intent-before-corpus = crash-safe; approve-memory-proposal.ts fault seam); forget.ts removes the corpus line (md block + lessons.jsonl line), rebuilds the chunk index and purges episodic embeddings, appends a hash-only lineage record to AuditLog (queryable, never injected); memory_forget tool (`memory-forget.ts` handler + registry); tests flush-turn.test.ts, forget.test.ts, memory-tool-callbacks.test.ts, memory-tools.test.ts | vector/embedding gap: c1.3's sqlite-vec leg is still blocked, so forget purges episodic.jsonl embeddings — when chunk vectors land they must join the same purge |
 
 ## c2 (8 rows)
 
