@@ -25,6 +25,23 @@
   --material-opacity-composer: 70%;
   --material-opacity-popover: 92%;
 
+  /* Deep-glass (opt-in) reading surfaces. `themeToCSS` emits the nine
+     configurable surfaces only, so the deep panes ship as static defaults:
+     `--material-opacity-content/editor/lists` keep the surface readable when
+     `html[data-material-deep]` opts it in, the blur mirror is browser-only. */
+  --material-opacity-content: 82%;
+  --material-opacity-editor: 82%;
+  --material-opacity-lists: 82%;
+  --material-blur-content: 20px;
+  --material-blur-editor: 20px;
+  --material-blur-lists: 20px;
+
+  /* Tint shift applied to the shell tints with relative color syntax; the zero
+     defaults make the layer identical to the static glass until configured. */
+  --material-tint-hue: 0;
+  --material-tint-saturation: 0;
+  --material-tint-lightness: 0;
+
   --material-texture-intensity: 0.35;
   --material-texture-scale: 1;
 

@@ -15,7 +15,7 @@ import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
-import { useTheme } from '@/context/ThemeContext'
+import { useTheme, useAppTheme } from '@/context/ThemeContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
 import { Monitor, Sun, Moon, Plus, Trash2, ChevronDown } from 'lucide-react'
@@ -225,10 +225,16 @@ function MaterialGroup({ title, children }: { title: string; children: ReactNode
 function MaterialEffectsSection() {
   const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
+  // Display/base value: the preset theme merged with the app override.
   const committed = resolvedTheme.material ?? null
+  // Persisted layer: the raw app-level override only. Edits must patch this
+  // layer (never the merged view) so preset-owned fields are not baked into
+  // theme.json on the first control change.
+  const overrideMaterial = useAppTheme()?.material ?? null
 
   const setAppMaterial = window.electronAPI?.setAppMaterial
   const available = typeof setAppMaterial === 'function'
+    && window.electronAPI?.getRuntimeEnvironment?.() === 'electron'
 
   const [draft, setDraft] = useState<MaterialSettings | null>(committed)
   const [saveFailed, setSaveFailed] = useState(false)
@@ -238,40 +244,69 @@ function MaterialEffectsSection() {
   const mountedRef = useRef(true)
   const timerRef = useRef<number | null>(null)
   const seqRef = useRef(0)
-  // Last value we optimistically sent (or the last committed value); used to
-  // ignore the echo of our own write while still adopting external changes.
+  const pendingRef = useRef(false)
+  // Last value we optimistically displayed (or the last committed value); used
+  // to ignore the echo of our own write while still adopting external changes.
   const lastSentRef = useRef<MaterialSettings | null>(committed)
   const committedRef = useRef<MaterialSettings | null>(committed)
   committedRef.current = committed
+  const draftRef = useRef<MaterialSettings | null>(committed)
+  draftRef.current = draft
+  // Optimistic override layer: the raw override with our own unsaved patches
+  // folded in, so rapid multi-field edits compose instead of clobbering.
+  const overrideBaseRef = useRef<MaterialSettings | null>(overrideMaterial)
+  const confirmedOverrideRef = useRef<MaterialSettings | null>(overrideMaterial)
+  confirmedOverrideRef.current = overrideMaterial
+  const importPendingRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => () => { mountedRef.current = false }, [])
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  // Adopt the raw override layer when it changes from outside our own write.
+  useEffect(() => {
+    if (pendingRef.current) return
+    overrideBaseRef.current = overrideMaterial
+  }, [overrideMaterial])
 
   useEffect(() => {
-    if (materialEquals(committed, lastSentRef.current)) return
+    if (pendingRef.current || materialEquals(committed, lastSentRef.current)) return
     lastSentRef.current = committed
+    draftRef.current = committed
     setDraft(committed)
   }, [committed])
 
-  const commit = useCallback((next: MaterialSettings | null) => {
+  const commit = useCallback((persist: MaterialSettings | null) => {
     if (typeof setAppMaterial !== 'function') return
     const seq = ++seqRef.current
-    lastSentRef.current = next
-    void setAppMaterial(next).then(
+    void setAppMaterial(persist).then(
       (overrides) => {
         if (seq !== seqRef.current) return
+        pendingRef.current = false
+        // `overrides` is the full app-theme override object; only its material
+        // layer is our persisted layer (the preset material stays untouched).
         const value = overrides?.material ?? null
-        lastSentRef.current = value
-        if (mountedRef.current) {
-          setDraft(value)
-          setSaveFailed(false)
+        overrideBaseRef.current = value
+        if (importPendingRef.current) {
+          importPendingRef.current = false
+          if (mountedRef.current) setImportStatus('success')
         }
+        if (mountedRef.current) setSaveFailed(false)
       },
       (error: unknown) => {
         if (seq !== seqRef.current) return
+        pendingRef.current = false
+        overrideBaseRef.current = confirmedOverrideRef.current
         const previous = committedRef.current
         lastSentRef.current = previous
+        if (importPendingRef.current) {
+          importPendingRef.current = false
+          if (mountedRef.current) setImportStatus('error')
+        }
         if (mountedRef.current) {
+          draftRef.current = previous
           setDraft(previous)
           setSaveFailed(true)
         }
@@ -280,15 +315,31 @@ function MaterialEffectsSection() {
     )
   }, [setAppMaterial])
 
-  const schedule = useCallback((next: MaterialSettings | null) => {
-    setDraft(next)
-    lastSentRef.current = next
+  const schedule = useCallback((
+    persist: MaterialSettings | null,
+    display: MaterialSettings | null,
+    options?: { imported?: boolean },
+  ) => {
+    seqRef.current += 1          // a newer local intent supersedes in-flight echoes
+    pendingRef.current = true
+    importPendingRef.current = options?.imported === true
+    setImportStatus(null)
+    overrideBaseRef.current = persist
+    draftRef.current = display
+    setDraft(display)
+    lastSentRef.current = display
     if (timerRef.current !== null) window.clearTimeout(timerRef.current)
     timerRef.current = window.setTimeout(() => {
       timerRef.current = null
-      commit(next)
+      commit(persist)
     }, MATERIAL_APPLY_DEBOUNCE_MS)
   }, [commit])
+
+  // Apply a single-field patch to both layers: the raw override (persisted) and
+  // the merged view (displayed optimistically).
+  const applyPatch = useCallback((patch: (material: MaterialSettings | null) => MaterialSettings) => {
+    schedule(patch(overrideBaseRef.current), patch(draftRef.current))
+  }, [schedule])
 
   const handleExport = useCallback(() => {
     const text = serializeMaterialExport(draft, t('settings.appearance.material.exportName'))
@@ -307,8 +358,11 @@ function MaterialEffectsSection() {
         setImportStatus('error')
         return
       }
-      setImportStatus('success')
-      schedule(result.material)
+      // Wholesale replace of both layers; the success note is deferred until
+      // the debounced write actually lands (commit).
+      schedule(result.material, result.material, { imported: true })
+    }).catch(() => {
+      setImportStatus('error')
     })
   }, [schedule])
 
@@ -330,7 +384,7 @@ function MaterialEffectsSection() {
           label={t('settings.appearance.material.enabled')}
           description={t('settings.appearance.material.enabledDesc')}
           checked={enabled}
-          onCheckedChange={(value) => schedule(setMaterialEnabled(draft, value))}
+          onCheckedChange={(value) => applyPatch((base) => setMaterialEnabled(base, value))}
           disabled={!available}
         />
         <SettingsRow label={t('settings.appearance.material.presets')}>
@@ -342,7 +396,7 @@ function MaterialEffectsSection() {
                 variant="outline"
                 size="sm"
                 disabled={!available}
-                onClick={() => schedule({ ...preset.material })}
+                onClick={() => schedule({ ...preset.material }, { ...preset.material })}
               >
                 {t(preset.labelKey)}
               </Button>
@@ -352,7 +406,7 @@ function MaterialEffectsSection() {
               variant="ghost"
               size="sm"
               disabled={!available}
-              onClick={() => schedule(null)}
+              onClick={() => schedule(null, null)}
             >
               {t('settings.appearance.material.reset')}
             </Button>
@@ -376,6 +430,7 @@ function MaterialEffectsSection() {
               ref={fileInputRef}
               type="file"
               accept="application/json,.json"
+              tabIndex={-1}
               className="material-file-input"
               onChange={(event) => {
                 const file = event.target.files?.[0]
@@ -420,7 +475,7 @@ function MaterialEffectsSection() {
                 value={value}
                 display={`${value}%`}
                 disabled={controlsDisabled}
-                onChange={(next) => schedule(setSurfaceOpacity(draft, row.surface, next / 100))}
+                onChange={(next) => applyPatch((base) => setSurfaceOpacity(base, row.surface, next / 100))}
               />
             )
           })}
@@ -441,7 +496,7 @@ function MaterialEffectsSection() {
                 value={value}
                 display={`${value}px`}
                 disabled={controlsDisabled}
-                onChange={(next) => schedule(setSurfaceBlur(draft, row.surface, next))}
+                onChange={(next) => applyPatch((base) => setSurfaceBlur(base, row.surface, next))}
               />
             )
           })}
@@ -457,7 +512,7 @@ function MaterialEffectsSection() {
             value={tint.hue}
             display={`${tint.hue}°`}
             disabled={controlsDisabled}
-            onChange={(next) => schedule(setTint(draft, { hue: next }))}
+            onChange={(next) => applyPatch((base) => setTint(base, { hue: next }))}
           />
           <MaterialSliderRow
             label={t('settings.appearance.material.tintSaturation')}
@@ -468,7 +523,7 @@ function MaterialEffectsSection() {
             value={tint.saturation}
             display={`${tint.saturation}%`}
             disabled={controlsDisabled}
-            onChange={(next) => schedule(setTint(draft, { saturation: next }))}
+            onChange={(next) => applyPatch((base) => setTint(base, { saturation: next }))}
           />
           <MaterialSliderRow
             label={t('settings.appearance.material.tintLightness')}
@@ -479,7 +534,7 @@ function MaterialEffectsSection() {
             value={tint.lightness}
             display={`${tint.lightness}%`}
             disabled={controlsDisabled}
-            onChange={(next) => schedule(setTint(draft, { lightness: next }))}
+            onChange={(next) => applyPatch((base) => setTint(base, { lightness: next }))}
           />
         </MaterialGroup>
 
@@ -488,7 +543,7 @@ function MaterialEffectsSection() {
             <SettingsMenuSelect
               value={texture.kind}
               disabled={controlsDisabled}
-              onValueChange={(value) => schedule(setTexture(draft, { kind: value as MaterialTextureKind }))}
+              onValueChange={(value) => applyPatch((base) => setTexture(base, { kind: value as MaterialTextureKind }))}
               options={MATERIAL_TEXTURE_KINDS.map(kind => ({
                 value: kind,
                 label: t(MATERIAL_TEXTURE_LABELS[kind]),
@@ -504,7 +559,7 @@ function MaterialEffectsSection() {
             value={texture.intensity}
             display={`${Math.round(texture.intensity * 100)}%`}
             disabled={controlsDisabled || texture.kind === 'none'}
-            onChange={(next) => schedule(setTexture(draft, { intensity: next }))}
+            onChange={(next) => applyPatch((base) => setTexture(base, { intensity: next }))}
           />
           <MaterialSliderRow
             label={t('settings.appearance.material.textureScale')}
@@ -515,7 +570,7 @@ function MaterialEffectsSection() {
             value={texture.scale}
             display={`${texture.scale.toFixed(1)}×`}
             disabled={controlsDisabled || texture.kind === 'none'}
-            onChange={(next) => schedule(setTexture(draft, { scale: next }))}
+            onChange={(next) => applyPatch((base) => setTexture(base, { scale: next }))}
           />
         </MaterialGroup>
 
@@ -524,7 +579,7 @@ function MaterialEffectsSection() {
             label={t('settings.appearance.material.hazeEnabled')}
             checked={haze.enabled}
             disabled={controlsDisabled}
-            onCheckedChange={(value) => schedule(setHaze(draft, { enabled: value }))}
+            onCheckedChange={(value) => applyPatch((base) => setHaze(base, { enabled: value }))}
           />
           <MaterialSliderRow
             label={t('settings.appearance.material.hazeIntensity')}
@@ -535,7 +590,7 @@ function MaterialEffectsSection() {
             value={haze.intensity}
             display={`${Math.round(haze.intensity * 100)}%`}
             disabled={controlsDisabled || !haze.enabled}
-            onChange={(next) => schedule(setHaze(draft, { intensity: next }))}
+            onChange={(next) => applyPatch((base) => setHaze(base, { intensity: next }))}
           />
           <MaterialSliderRow
             label={t('settings.appearance.material.matte')}
@@ -546,7 +601,7 @@ function MaterialEffectsSection() {
             value={mattePercent}
             display={`${mattePercent}%`}
             disabled={controlsDisabled}
-            onChange={(next) => schedule(setMatte(draft, next / 100))}
+            onChange={(next) => applyPatch((base) => setMatte(base, next / 100))}
           />
         </MaterialGroup>
 
@@ -555,7 +610,7 @@ function MaterialEffectsSection() {
             <SettingsMenuSelect
               value={chatEffect.kind}
               disabled={controlsDisabled}
-              onValueChange={(value) => schedule(setChatEffect(draft, { kind: value as MaterialChatEffectKind }))}
+              onValueChange={(value) => applyPatch((base) => setChatEffect(base, { kind: value as MaterialChatEffectKind }))}
               options={MATERIAL_CHAT_EFFECT_KINDS.map(kind => ({
                 value: kind,
                 label: t(MATERIAL_CHAT_EFFECT_LABELS[kind]),
@@ -571,7 +626,7 @@ function MaterialEffectsSection() {
             value={chatEffect.intensity}
             display={`${Math.round(chatEffect.intensity * 100)}%`}
             disabled={controlsDisabled || chatEffect.kind === 'none'}
-            onChange={(next) => schedule(setChatEffect(draft, { intensity: next }))}
+            onChange={(next) => applyPatch((base) => setChatEffect(base, { intensity: next }))}
           />
         </MaterialGroup>
 
@@ -595,7 +650,7 @@ function MaterialEffectsSection() {
                   label={t(row.labelKey)}
                   checked={effectiveDeepGlass(draft, row.pane)}
                   disabled={controlsDisabled}
-                  onCheckedChange={(value) => schedule(setDeepGlass(draft, row.pane, value))}
+                  onCheckedChange={(value) => applyPatch((base) => setDeepGlass(base, row.pane, value))}
                 />
               ))}
             </SettingsCard>

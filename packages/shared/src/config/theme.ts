@@ -598,27 +598,29 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
     const blur = { ...MATERIAL_DEFAULTS.blur, ...material.blur };
     const opacity = { ...MATERIAL_DEFAULTS.opacity, ...material.opacity };
     for (const surface of MATERIAL_SURFACES) {
-      vars.push(`--material-blur-${surface}: ${blur[surface]}px;`);
-      vars.push(`--material-opacity-${surface}: ${Math.round(opacity[surface] * 1000) / 10}%;`);
+      // Clamp at emission: the desktop load paths (theme.json/preset files)
+      // bypass the schema, so raw values can be out of range.
+      vars.push(`--material-blur-${surface}: ${clampNumber(blur[surface], 0, 64)}px;`);
+      vars.push(`--material-opacity-${surface}: ${Math.round(clampNumber(opacity[surface], 0, 1) * 1000) / 10}%;`);
     }
     if (material.tint) {
-      if (material.tint.hue !== undefined) vars.push(`--material-tint-hue: ${material.tint.hue}deg;`);
-      if (material.tint.saturation !== undefined) vars.push(`--material-tint-saturation: ${material.tint.saturation}%;`);
-      if (material.tint.lightness !== undefined) vars.push(`--material-tint-lightness: ${material.tint.lightness}%;`);
+      if (material.tint.hue !== undefined) vars.push(`--material-tint-hue: ${clampNumber(material.tint.hue, -180, 180)};`);
+      if (material.tint.saturation !== undefined) vars.push(`--material-tint-saturation: ${clampNumber(material.tint.saturation, -100, 100)};`);
+      if (material.tint.lightness !== undefined) vars.push(`--material-tint-lightness: ${clampNumber(material.tint.lightness, -30, 30)};`);
     }
     const texture = { ...MATERIAL_DEFAULTS.texture, ...material.texture };
     if (texture.kind !== 'none') {
       vars.push(`--material-texture-kind: ${texture.kind};`);
-      vars.push(`--material-texture-intensity: ${texture.intensity};`);
-      vars.push(`--material-texture-scale: ${texture.scale};`);
+      vars.push(`--material-texture-intensity: ${clampNumber(texture.intensity, 0, 1)};`);
+      vars.push(`--material-texture-scale: ${clampNumber(texture.scale, 0.5, 3)};`);
     }
     const haze = { ...MATERIAL_DEFAULTS.haze, ...material.haze };
-    if (haze.enabled) vars.push(`--material-haze-intensity: ${haze.intensity};`);
-    if (material.matte !== undefined) vars.push(`--material-matte: ${material.matte};`);
+    if (haze.enabled) vars.push(`--material-haze-intensity: ${clampNumber(haze.intensity, 0, 1)};`);
+    if (material.matte !== undefined) vars.push(`--material-matte: ${clampNumber(material.matte, 0, 1)};`);
     const chatEffect = { ...MATERIAL_DEFAULTS.chatEffect, ...material.chatEffect };
     if (chatEffect.kind !== 'none') {
       vars.push(`--material-chat-effect: ${chatEffect.kind};`);
-      vars.push(`--material-chat-effect-intensity: ${chatEffect.intensity};`);
+      vars.push(`--material-chat-effect-intensity: ${clampNumber(chatEffect.intensity, 0, 1)};`);
     }
   }
 

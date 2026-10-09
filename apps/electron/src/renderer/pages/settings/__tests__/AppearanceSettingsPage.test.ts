@@ -185,11 +185,14 @@ function applyMaterial(material: unknown): Promise<{ material: unknown }> {
 
 const setAppMaterial = mock(applyMaterial)
 
-// Synthetic renderer transport. Not `electron`, so the desktop-only
-// capabilities stay unavailable exactly as in the web renderer.
+// Synthetic renderer transport. The runtime environment is mutable so the
+// web gate (F2) can be asserted: `setAppMaterial` is materialized as a function
+// on every renderer, so the section must additionally check the runtime.
+let runtimeEnvironment = 'electron'
+
 Object.assign(window, {
   electronAPI: {
-    getRuntimeEnvironment: () => 'web',
+    getRuntimeEnvironment: () => runtimeEnvironment,
     setAppMaterial,
   },
 })
@@ -229,13 +232,18 @@ describe('material write seam', () => {
   })
 
   beforeEach(async () => {
+    runtimeEnvironment = 'electron'
+    await renderPage()
+  })
+
+  async function renderPage(): Promise<void> {
     container = document.createElement('div')
     document.body.appendChild(container)
     await act(async () => {
       root = createRoot(container)
       root.render(React.createElement(AppearanceSettingsPage))
     })
-  })
+  }
 
   afterEach(async () => {
     writeWaiters.length = 0
@@ -298,5 +306,25 @@ describe('material write seam', () => {
     const alert = Array.from(document.querySelectorAll('[role="alert"]'))
       .find(element => element.textContent === MATERIAL_SAVE_ERROR)
     expect(alert).toBeDefined()
+  })
+
+  it('disables the material section in the web runtime so no write can be issued', async () => {
+    // The browser renderer materializes setAppMaterial as a function, so the
+    // runtime environment is the only reliable availability signal.
+    runtimeEnvironment = 'web'
+    const previous = root
+    root = null
+    if (previous) await act(async () => { previous.unmount() })
+    await renderPage()
+
+    expect(materialToggle().disabled).toBe(true)
+    const unavailable = Array.from(document.querySelectorAll('p'))
+      .some(element => element.textContent === 'settings.appearance.material.unavailable')
+    expect(unavailable).toBe(true)
+
+    await act(async () => {
+      materialToggle().click()
+    })
+    expect(setAppMaterial).not.toHaveBeenCalled()
   })
 })

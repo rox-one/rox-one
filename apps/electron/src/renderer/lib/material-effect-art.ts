@@ -73,8 +73,11 @@ function clamp01(value: number): number {
 
 /**
  * Rasterise `params` into an RGBA byte array of length `width * height * 4`.
- * RGB is always the caller's colour; alpha encodes coverage (0 or
- * `intensity * 255`). Deterministic for a given parameter set.
+ * RGB is always the caller's colour; `intensity` shapes the pattern's coverage
+ * (thresholds/radii/line density), while the layer's CSS opacity
+ * (`--material-chat-effect-intensity`) is the single strength multiplier — so
+ * ink alpha is baked at FULL (255) rather than scaled by `intensity` again.
+ * Deterministic for a given parameter set.
  */
 export function renderMaterialEffectPixels(params: MaterialEffectParams): Uint8ClampedArray {
   const width = Math.max(0, Math.floor(params.width))
@@ -91,8 +94,8 @@ export function renderMaterialEffectPixels(params: MaterialEffectParams): Uint8C
     out[i + 3] = 0
   }
 
-  const alpha = Math.round(intensity * 255)
-  if (alpha <= 0 || width === 0 || height === 0) return out
+  const alpha = 255
+  if (intensity <= 0 || width === 0 || height === 0) return out
 
   switch (params.kind) {
     case 'dither':
@@ -208,7 +211,38 @@ function renderAscii(
   }
 }
 
+/**
+ * Bounded LRU of generated art URLs. The key includes intensity/scale/viewport,
+ * so a slider drag can mint a fresh entry per step; the cap (plus revocation of
+ * evicted blob URLs) keeps the resident set sane instead of leaking one PNG per
+ * change for the lifetime of the window.
+ */
+const DATA_URL_CACHE_MAX = 12
 const dataUrlCache = new Map<string, string>()
+
+/** Read a cached URL, refreshing its LRU position. */
+function readCachedDataUrl(key: string): string | undefined {
+  const cached = dataUrlCache.get(key)
+  if (cached === undefined) return undefined
+  dataUrlCache.delete(key)
+  dataUrlCache.set(key, cached)
+  return cached
+}
+
+/** Insert a URL and evict the least-recently-used entries (revoking blobs). */
+function writeCachedDataUrl(key: string, url: string): void {
+  dataUrlCache.delete(key)
+  dataUrlCache.set(key, url)
+  while (dataUrlCache.size > DATA_URL_CACHE_MAX) {
+    const oldestKey = dataUrlCache.keys().next().value
+    if (oldestKey === undefined) break
+    const stale = dataUrlCache.get(oldestKey)
+    dataUrlCache.delete(oldestKey)
+    if (stale?.startsWith('blob:') && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+      URL.revokeObjectURL(stale)
+    }
+  }
+}
 
 type Canvas2DContext = {
   createImageData: (w: number, h: number) => { data: Uint8ClampedArray }
@@ -222,7 +256,7 @@ type Canvas2DContext = {
  */
 export async function materialEffectDataUrl(params: MaterialEffectParams): Promise<string> {
   const key = materialEffectCacheKey(params)
-  const cached = dataUrlCache.get(key)
+  const cached = readCachedDataUrl(key)
   if (cached) return cached
 
   const width = Math.max(0, Math.floor(params.width))
@@ -267,6 +301,6 @@ export async function materialEffectDataUrl(params: MaterialEffectParams): Promi
     }
   }
 
-  if (url) dataUrlCache.set(key, url)
+  if (url) writeCachedDataUrl(key, url)
   return url
 }

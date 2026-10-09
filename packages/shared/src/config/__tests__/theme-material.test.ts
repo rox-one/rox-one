@@ -117,4 +117,14 @@ describe('material CSS emission', () => {
     expect(plain).not.toContain('--material-haze-intensity')
     expect(plain).not.toContain('--material-chat-effect:')
   })
+
+  it('clamps out-of-range raw values on emission', () => {
+    const css = themeToCSS({
+      material: { enabled: true, blur: { topbar: 999 }, opacity: { chat: 5 }, matte: 7, tint: { hue: 400 } },
+    })
+    expect(css).toContain('--material-blur-topbar: 64px;')
+    expect(css).toContain('--material-opacity-chat: 100%;')
+    expect(css).toContain('--material-matte: 1;')
+    expect(css).toContain('--material-tint-hue: 180;')
+  })
 })
