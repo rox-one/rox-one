@@ -7,7 +7,7 @@
 import type { Config } from './config.ts'
 import { log } from './log.ts'
 import { effectiveStatus, parseStartPayload } from './link.ts'
-import type { LinkStore, PendingLink } from './store.ts'
+import { effectiveRegistrationStatus, maskPhone, normalizePhone, type LinkStore, type PendingLink, type Registration } from './store.ts'
 
 export interface TelegramChat {
   id: number | string
@@ -15,6 +15,7 @@ export interface TelegramChat {
 
 export interface TelegramUser {
   id: number | string
+  username?: string
 }
 
 export interface TelegramMessage {
@@ -25,9 +26,17 @@ export interface TelegramMessage {
   contact?: { phone_number?: string; user_id?: number | string; first_name?: string }
 }
 
+export interface TelegramCallbackQuery {
+  id: string
+  from?: TelegramUser
+  message?: TelegramMessage
+  data?: string
+}
+
 export interface TelegramUpdate {
   update_id: number
   message?: TelegramMessage
+  callback_query?: TelegramCallbackQuery
 }
 
 export type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>
@@ -58,8 +67,26 @@ const REQUEST_CONTACT_TEXT = 'Поделитесь своим номером т�
 const FOREIGN_CONTACT_TEXT = 'Нужен именно ваш номер. Пожалуйста, поделитесь своим контактом, а не контактом другого человека.'
 const LINK_NOT_FOUND_TEXT = 'Ссылка не найдена или истекла. Откройте приложение Rox и нажмите «Привязать Telegram» ещё раз.'
 
+/** Website sign-up: one button, share the phone — no code is ever shown. */
+const REGISTRATION_KEYBOARD = {
+  keyboard: [[{ text: '📱 Поделиться телефоном', request_contact: true }]],
+  resize_keyboard: true,
+  one_time_keyboard: true,
+}
+
+const REGISTRATION_GREETING_TEXT =
+  'Это регистрация в Rox. Нажмите кнопку ниже, чтобы поделиться своим номером телефона, — это всё, что нужно. Код вводить не придётся.'
+
 function codeMessage(code: string): string {
   return `Ваш код: ${code}. У вас 30 минут — введите его в приложении Rox.`
+}
+
+function registrationConfirmedMessage(phone: string): string {
+  return `Номер ${maskPhone(phone)} подтверждён. Вернитесь в браузер — регистрация завершится автоматически. Если это не вы, нажмите «Это не я».`
+}
+
+function cancelKeyboard(token: string): { inline_keyboard: { text: string; callback_data: string }[][] } {
+  return { inline_keyboard: [[{ text: 'Это не я', callback_data: `rx-cancel:${token}` }]] }
 }
 
 export class TelegramApiError extends Error {
@@ -133,7 +160,7 @@ export class TelegramBot {
   async getUpdates(signal: AbortSignal): Promise<TelegramUpdate[]> {
     return this.callApi<TelegramUpdate[]>(
       'getUpdates',
-      { offset: this.offset, timeout: this.config.polling.pollTimeoutSec, allowed_updates: ['message'] },
+      { offset: this.offset, timeout: this.config.polling.pollTimeoutSec, allowed_updates: ['message', 'callback_query'] },
       signal,
     )
   }
@@ -151,13 +178,17 @@ export class TelegramBot {
    * (`contact.user_id !== from.id`) is rejected and never binds a phone.
    */
   async handleUpdate(update: TelegramUpdate): Promise<void> {
+    if (update.callback_query) {
+      await this.handleCallbackQuery(update.callback_query)
+      return
+    }
     const message = update.message
     const chatId = message?.chat?.id
-    const fromId = message?.from?.id
-    if (!message || chatId === undefined || fromId === undefined) return
+    const from = message?.from
+    if (!message || chatId === undefined || !from) return
 
     if (message.contact) {
-      await this.handleContact(chatId, fromId, message.contact)
+      await this.handleContact(chatId, from, message.contact)
       return
     }
     if (typeof message.text === 'string' && message.text.trim() !== '') {
@@ -169,8 +200,17 @@ export class TelegramBot {
     const parsed = parseStartPayload(text)
     if (!parsed || parsed.command !== 'start') return
     const token = parsed.payload
-    const pending = token ? this.store.byToken(token) : null
-    if (!token || !pending) {
+    if (!token) {
+      await this.sendMessage(chatId, LINK_NOT_FOUND_TEXT)
+      return
+    }
+    const registration = this.store.registrationByToken(token)
+    if (registration) {
+      await this.handleRegistrationStart(chatId, registration)
+      return
+    }
+    const pending = this.store.byToken(token)
+    if (!pending) {
       await this.sendMessage(chatId, LINK_NOT_FOUND_TEXT)
       return
     }
@@ -187,17 +227,53 @@ export class TelegramBot {
     await this.sendMessage(chatId, LINK_NOT_FOUND_TEXT)
   }
 
+  /** `/start <registration-token>`: greet and ask for the phone, no code. */
+  private async handleRegistrationStart(chatId: number | string, registration: Registration): Promise<void> {
+    const now = this.now()
+    const status = effectiveRegistrationStatus(registration.status, registration.expiresAt, now)
+    if (status === 'waiting') {
+      this.store.bindRegistrationChat(registration.token, String(chatId), now)
+      await this.sendMessage(chatId, REGISTRATION_GREETING_TEXT, REGISTRATION_KEYBOARD)
+      return
+    }
+    if (status === 'ready' && registration.phone) {
+      await this.sendMessage(chatId, registrationConfirmedMessage(registration.phone), cancelKeyboard(registration.token))
+      return
+    }
+    await this.sendMessage(chatId, LINK_NOT_FOUND_TEXT)
+  }
+
   private async handleContact(
     chatId: number | string,
-    fromId: number | string,
+    from: TelegramUser,
     contact: NonNullable<TelegramMessage['contact']>,
   ): Promise<void> {
+    const registration = this.store.findRegistrationByChat(String(chatId), this.now())
+    if (registration) {
+      if (String(contact.user_id ?? '') !== String(from.id)) {
+        await this.sendMessage(chatId, FOREIGN_CONTACT_TEXT, REGISTRATION_KEYBOARD)
+        return
+      }
+      const phone = normalizePhone(contact.phone_number)
+      if (phone === '') {
+        await this.sendMessage(chatId, FOREIGN_CONTACT_TEXT, REGISTRATION_KEYBOARD)
+        return
+      }
+      const confirmed = this.store.confirmRegistration(String(chatId), phone, String(from.id), from.username ?? null, this.now())
+      if (!confirmed) {
+        await this.sendMessage(chatId, LINK_NOT_FOUND_TEXT)
+        return
+      }
+      await this.sendMessage(chatId, registrationConfirmedMessage(phone), cancelKeyboard(confirmed.token))
+      return
+    }
+
     const pending: PendingLink | null = this.store.findByChat(String(chatId), this.now())
     if (!pending) {
       await this.sendMessage(chatId, LINK_NOT_FOUND_TEXT)
       return
     }
-    if (String(contact.user_id ?? '') !== String(fromId)) {
+    if (String(contact.user_id ?? '') !== String(from.id)) {
       await this.sendMessage(chatId, FOREIGN_CONTACT_TEXT, CONTACT_KEYBOARD)
       return
     }
@@ -206,12 +282,42 @@ export class TelegramBot {
       await this.sendMessage(chatId, FOREIGN_CONTACT_TEXT, CONTACT_KEYBOARD)
       return
     }
-    const bound = this.store.bindPhone(String(chatId), phone, String(fromId), this.now())
+    const bound = this.store.bindPhone(String(chatId), phone, String(from.id), this.now())
     if (!bound?.code) {
       await this.sendMessage(chatId, LINK_NOT_FOUND_TEXT)
       return
     }
     await this.sendMessage(chatId, codeMessage(bound.code))
+  }
+
+  /** «Это не я» inline button: cancel the registration, idempotently. */
+  private async handleCallbackQuery(query: TelegramCallbackQuery): Promise<void> {
+    try {
+      await this.answerCallbackQuery(query.id)
+    } catch (error) {
+      log('warn', 'answerCallbackQuery failed', { detail: error instanceof Error ? error.message : String(error) })
+    }
+    const match = /^rx-cancel:(\S+)$/.exec(query.data ?? '')
+    if (!match) return
+    const token = match[1]!
+    const cancelled = this.store.cancelRegistration(token, this.now())
+    if (!cancelled) return
+    const chatId = query.message?.chat?.id
+    const messageId = query.message?.message_id
+    if (chatId === undefined || messageId === undefined) return
+    await this.editMessageReplyMarkup(chatId, messageId)
+  }
+
+  private async answerCallbackQuery(id: string): Promise<void> {
+    await this.callApi('answerCallbackQuery', { callback_query_id: id })
+  }
+
+  private async editMessageReplyMarkup(chatId: number | string, messageId: number): Promise<void> {
+    await this.callApi('editMessageReplyMarkup', {
+      chat_id: String(chatId),
+      message_id: messageId,
+      reply_markup: { inline_keyboard: [] },
+    })
   }
 
   /** One poll + dispatch cycle. Returns how many updates were processed. */

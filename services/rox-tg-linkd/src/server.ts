@@ -5,13 +5,16 @@
  *   POST /api/link/start   { roxUserId }        → pending link + deep link
  *   POST /api/link/verify  { roxUserId, code }  → linked | expired | invalid
  *   GET  /api/link/status?roxUserId=…           → current state
+ *   POST /api/register/start   {}               → phone-registration token + deep link
+ *   GET  /api/register/status?token=…           → waiting | ready | expired | cancelled | consumed
+ *   POST /api/register/consume { token }        → consumed (single use)
  *   GET  /api/health                            → honest readiness
  */
 import type { Config } from './config.ts'
 import { deepLinkHttps, deepLinkTg, effectiveStatus, isWellFormedCode, normalizeCode } from './link.ts'
 import { log } from './log.ts'
 import type { LinkStatus } from './link.ts'
-import type { LinkStore, VerifyResult } from './store.ts'
+import { maskPhone, type LinkStore, type RegistrationStatus, type VerifyResult } from './store.ts'
 
 const MAX_BODY_BYTES = 8 * 1024
 
@@ -61,6 +64,31 @@ export interface StatusResponse {
   code?: string
 }
 
+export interface RegisterStartResponse {
+  ok: true
+  token: string
+  deepLink: string
+  tgDeepLink: string
+  expiresAt: number
+}
+
+export interface RegisterStatusResponse {
+  ok: true
+  status: RegistrationStatus
+  expiresAt: number
+  /** Present once the phone is bound (status `ready`/`consumed`). */
+  phone?: string
+  phoneMasked?: string
+  telegramUserId?: string
+  telegramUsername?: string
+  confirmedAt?: number
+}
+
+export interface RegisterConsumeResponse {
+  ok: true
+  status: 'consumed'
+}
+
 export function jsonResponse(status: number, body: unknown, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -108,7 +136,9 @@ export function createRequestHandler(deps: ServerDeps): (request: Request) => Pr
         return jsonResponse(200, { ok: true, bot: botUsername() || null })
       }
 
-      if (!pathname.startsWith('/api/link/')) return jsonResponse(404, { error: 'not_found' })
+      const isLinkRoute = pathname.startsWith('/api/link/')
+      const isRegisterRoute = pathname.startsWith('/api/register/')
+      if (!isLinkRoute && !isRegisterRoute) return jsonResponse(404, { error: 'not_found' })
       if (!isAuthorized(request, config)) return jsonResponse(401, { error: 'unauthorized' })
 
       if (pathname === '/api/link/start') {
@@ -169,6 +199,59 @@ export function createRequestHandler(deps: ServerDeps): (request: Request) => Pr
           remainingMs: view.expiresAt === null ? 0 : Math.max(0, view.expiresAt - now),
           ...(view.code ? { code: view.code } : {}),
         } satisfies StatusResponse)
+      }
+
+      if (pathname === '/api/register/start') {
+        if (request.method !== 'POST') return jsonResponse(405, { error: 'method_not_allowed' }, { allow: 'POST' })
+        if (config.botToken === '') return jsonResponse(503, { error: 'no_bot_token' })
+        const bot = botUsername()
+        if (bot === '') return jsonResponse(503, { error: 'no_bot_username' })
+        const body = await readJson(request)
+        if (body === null) return jsonResponse(400, { error: 'invalid_body' })
+
+        const registration = store.createRegistration(Date.now(), config.ttlMs)
+        const response: RegisterStartResponse = {
+          ok: true,
+          token: registration.token,
+          deepLink: deepLinkHttps(bot, registration.token),
+          tgDeepLink: deepLinkTg(bot, registration.token),
+          expiresAt: registration.expiresAt,
+        }
+        return jsonResponse(201, response)
+      }
+
+      if (pathname === '/api/register/status') {
+        if (request.method !== 'GET' && request.method !== 'HEAD') return jsonResponse(405, { error: 'method_not_allowed' }, { allow: 'GET, HEAD' })
+        const token = nonEmptyString(url.searchParams.get('token'))
+        if (!token) return jsonResponse(400, { error: 'invalid_token' })
+        const view = store.registrationStatusFor(token, Date.now())
+        if (!view) return jsonResponse(404, { error: 'not_found' })
+        const bound = view.status === 'ready' || view.status === 'consumed'
+        const response: RegisterStatusResponse = {
+          ok: true,
+          status: view.status,
+          expiresAt: view.expiresAt,
+          ...(bound && view.phone ? { phone: view.phone, phoneMasked: maskPhone(view.phone) } : {}),
+          ...(bound && view.telegramUserId ? { telegramUserId: view.telegramUserId } : {}),
+          ...(bound && view.telegramUsername ? { telegramUsername: view.telegramUsername } : {}),
+          ...(bound && view.confirmedAt !== null ? { confirmedAt: view.confirmedAt } : {}),
+        }
+        return jsonResponse(200, response)
+      }
+
+      if (pathname === '/api/register/consume') {
+        if (request.method !== 'POST') return jsonResponse(405, { error: 'method_not_allowed' }, { allow: 'POST' })
+        const body = await readJson(request)
+        const token = nonEmptyString(body?.token)
+        if (!token) return jsonResponse(400, { error: 'invalid_token' })
+
+        const result = store.consumeRegistration(token, Date.now())
+        if (result === 'consumed') return jsonResponse(200, { ok: true, status: 'consumed' } satisfies RegisterConsumeResponse)
+        if (result === 'already_consumed') return jsonResponse(409, { ok: false, error: 'already_consumed' })
+        if (result === 'not_found') return jsonResponse(404, { ok: false, error: 'not_found' })
+        if (result === 'expired') return jsonResponse(410, { ok: false, error: 'expired' })
+        if (result === 'cancelled') return jsonResponse(409, { ok: false, error: 'cancelled' })
+        return jsonResponse(409, { ok: false, error: 'not_ready' })
       }
 
       return jsonResponse(404, { error: 'not_found' })

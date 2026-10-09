@@ -3,17 +3,19 @@
  *
  * The desktop dialog never talks HTTP directly: the renderer asks the local
  * server on `tg-link:start | verify | status`, and this handler forwards to the
- * rox-tg-linkd daemon configured by `ROX_TG_LINK_URL`
- * (see services/rox-tg-linkd). The Rox user id is resolved from the Rox
- * account authority — an unauthenticated caller gets an honest `unavailable`
- * instead of a link bound to nobody.
+ * rox-tg-linkd daemon. The remote default is `https://rox.one`, whose website
+ * proxy forwards `/api/link/*` to the platform daemon (the desktop cannot reach
+ * the daemon's loopback). A local daemon is opt-in via
+ * `ROX_TG_LINK_URL=http://127.0.0.1:8095` (see services/rox-tg-linkd). The Rox
+ * user id is resolved from the Rox account authority — an unauthenticated
+ * caller gets an honest `unavailable` instead of a link bound to nobody.
  */
 import { getRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
-export const DEFAULT_TG_LINK_URL = 'http://127.0.0.1:8095'
+export const DEFAULT_TG_LINK_URL = 'https://rox.one'
 
 /** UI-facing state machine shared with the renderer hook. */
 export type TgLinkUiStatus = 'idle' | 'waiting-code' | 'code-sent' | 'linked' | 'expired' | 'unavailable'
