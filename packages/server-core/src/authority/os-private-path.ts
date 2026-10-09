@@ -48,8 +48,6 @@ export function validateWindowsPrivatePaths(value: unknown, paths: readonly Priv
 const windowsPrivatePathsScript = `
 $ErrorActionPreference = 'Stop'
 [Console]::Error.WriteLine('Windows private authority stage: process-start')
-[Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
-[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 try {
   [Console]::Error.WriteLine('Windows private authority stage: input-ready')
   $payload = [Console]::In.ReadToEnd()

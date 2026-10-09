@@ -1,12 +1,35 @@
 import { _electron, type ElectronApplication, type Page } from '@playwright/test'
-import { mkdtemp, mkdir, rm } from 'node:fs/promises'
+import { mkdir, open, rm } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { dirname, resolve, join } from 'node:path'
 import { createRequire } from 'node:module'
 import { observeFirstNativeWindow } from './native-startup'
 
 const repository = resolve(import.meta.dirname, '../../..')
+const LOG_TAIL_LIMIT = 16 * 1024
+const PROFILE_LOG_PATHS = [join('home', 'Library', 'Logs', 'Electron', 'main.log'), join('userData', 'logs', 'main.log')]
+
+/** Test-only startup evidence the native spec attaches to its Playwright report. */
+interface NativeStartupDiagnostics {
+  profile: string
+  profileLogs: Array<{ path: string; tail: string }>
+  scope: 'Owned fresh-profile startup diagnostics; no native acceptance result'
+}
+
+/** Reads only the owned profile's product log, bounded to its tail. */
+async function ownedProfileLogs(profile: string): Promise<NativeStartupDiagnostics['profileLogs']> {
+  for (const relativePath of PROFILE_LOG_PATHS) {
+    const file = await open(join(profile, relativePath), 'r').catch(() => null)
+    if (!file) continue
+    try {
+      const size = (await file.stat()).size
+      const bytes = Buffer.alloc(Math.min(size, LOG_TAIL_LIMIT))
+      const { bytesRead } = await file.read(bytes, 0, bytes.length, Math.max(0, size - bytes.length))
+      return [{ path: relativePath, tail: bytes.subarray(0, bytesRead).toString('utf8') }]
+    } finally { await file.close() }
+  }
+  return []
+}
 
 /** Reuses the existing meeting harness isolation boundaries; real product entrypoint only. */
 export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiagnostics) => Promise<void>): Promise<{ app: ElectronApplication; page: Page; dispose(): Promise<void> }> {
@@ -22,7 +45,9 @@ export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiag
   // blocks past the deadline. Re-inject the exact loader Playwright would use.
   const electronLoader = join(dirname(require.resolve('playwright-core/package.json')), 'lib/server/electron/loader.js')
   if (!existsSync(electronLoader)) throw new Error('Playwright Electron loader is required for an instrumented native launch.')
-  const profile = await mkdtemp(join(tmpdir(), 'rox-product-tour-native-'))
+  const profile = resolve(repository, 'test-results/product-tour/native/profiles', String(process.pid))
+  await rm(profile, { recursive: true, force: true })
+  await mkdir(profile, { recursive: true })
   for (const child of ['home', 'config', 'userData', 'tmp', 'appData', 'localAppData']) await mkdir(join(profile, child))
   const env: Record<string, string> = {}
   for (const name of ['PATH', 'SystemRoot', 'WINDIR', 'DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR']) {
@@ -44,5 +69,23 @@ export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiag
   catch (error) { await rm(profile, { recursive: true, force: true }); throw error }
   const page = await observeFirstNativeWindow(app, profile,
     resolve(repository, 'test-results/product-tour/native', `startup-${process.pid}.json`))
-  return { app, page, async dispose() { await app.close(); await rm(profile, { recursive: true, force: true }) } }
+  return { app, page, async dispose() {
+    // A stalled Electron shutdown must not consume the parent CLI deadline.
+    const shutdown = Promise.withResolvers<void>()
+    const bound = setTimeout(() => shutdown.resolve(), 20_000)
+    try {
+      await Promise.race([app.close().catch(() => {}), shutdown.promise])
+      try {
+        const child = app.process()
+        if (child && child.exitCode === null && child.signalCode === null) child.kill('SIGKILL')
+      } catch { /* close() disposed Playwright's process binding; nothing left to signal */ }
+      const profileLogs = await ownedProfileLogs(profile).catch(() => [])
+      if (report && profileLogs.length) await report({ profile, profileLogs, scope: 'Owned fresh-profile startup diagnostics; no native acceptance result' }).catch(() => {})
+    } finally {
+      clearTimeout(bound)
+      // Provisioning may still be writing into the profile; retry and never fail the test for cleanup.
+      await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 })
+        .catch(error => { console.error('native harness: profile cleanup skipped:', error) })
+    }
+  } }
 }

@@ -25,6 +25,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: bun test packages/core
+      - name: Verify memory feature unit suites
+        # R8-2: the server-core/shared/session-tools memory suites and the repo
+        # RPC handler run in no other workflow, so a memory regression could
+        # otherwise merge with every gate green.
+        run: bun test packages/server-core/src/memory packages/shared/src/memory packages/session-tools-core/src/handlers/memory-repo.test.ts
       - run: bun run validate:ci
         env:
           # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB heap.

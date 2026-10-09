@@ -200,6 +200,7 @@ for (const action of ['stop', 'cancel'] as const) for (const deferred of [false,
   const children: FixtureWindow[] = []
   class FixtureWindow extends EventEmitter {
     destroyed = false
+    loaded: string[] = []
     webContents = Object.assign(new EventEmitter(), { isDestroyed: () => this.destroyed, send() {}, setWindowOpenHandler() {} })
     constructor(config: { parent?: unknown } = {}) { super(); if (config.parent) children.push(this) }
     isDestroyed() { return this.destroyed }
@@ -208,8 +209,8 @@ for (const action of ['stop', 'cancel'] as const) for (const deferred of [false,
     showInactive() {}
     hide() {}
     destroy() { this.destroyed = true; this.emit('closed') }
-    async loadURL() {}
-    async loadFile() {}
+    async loadURL(url: string) { this.loaded.push(url) }
+    async loadFile(file: string) { this.loaded.push(file) }
   }
   // Only the OS Electron surface is replaced. Command authorization and delivery
   // below run through the actual overlay owner and authenticated hotkey router.
@@ -237,6 +238,8 @@ for (const action of ['stop', 'cancel'] as const) for (const deferred of [false,
     else await ownerComposer.getByRole('button', { name: 'Stop dictation', exact: true }).waitFor()
     await page.evaluate(() => window.nativeContinuity.focusPeer())
     overlay.publish({ context, position: 'bottom', state: { recordingId: 'fixture-recording', phase: action === 'cancel' && deferred ? 'permission' : 'recording', elapsedMs: 1, rms: 0, streaming: false }, assertCurrent() {} })
+    expect(children[0]!.loaded[0]).toMatch(/renderer[/\\]voice-overlay\.html$/)
+    expect(children[0]!.loaded[0]).not.toContain('..')
     expect(handlers.get(VOICE_OVERLAY_COMMAND)!({ sender: children[0]!.webContents }, action, 'fixture-recording')).toEqual({ ok: true })
     expect(commands).toHaveLength(1)
     expect(commands[0]?.recordingId).toBe('fixture-recording')

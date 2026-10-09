@@ -1808,6 +1808,40 @@ const definitions = [
           "memory.write-available"
         ],
         "onUnavailable": "not-applicable"
+      },
+      {
+        "id": "memory.repo",
+        "version": 1,
+        "target": "memory.repo",
+        "routeKey": "memory-repo",
+        "copy": {
+          "ru": {
+            "title": "Репозиторий памяти",
+            "body": "Здесь память хранится как git-репозиторий: файлы, история коммитов, сны и граф. Правки человека не перезаписываются сборкой."
+          },
+          "en": {
+            "title": "Memory repository",
+            "body": "Here memory is stored as a git repository: files, commit history, dreams and a graph. Human edits are never overwritten by the build."
+          }
+        },
+        "completion": {
+          "kind": "ack",
+          "signal": null,
+          "evidence": "acknowledged",
+          "priorState": "after-activation",
+          "requireAcknowledgementAfterEvidence": false
+        },
+        "handoff": false,
+        "optional": false,
+        "notes": "",
+        "scope": "bound-panel",
+        "missingTarget": "block-and-offer-retry-or-pause",
+        "copyKey": "productTour.memory.memory.repo.",
+        "testId": "T-MEMORY-REPO",
+        "requires": [
+          "memory.available"
+        ],
+        "onUnavailable": "block"
       }
     ],
     "entryTriggers": [
