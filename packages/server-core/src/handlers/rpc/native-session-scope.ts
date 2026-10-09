@@ -200,6 +200,21 @@ export function nativeSessionEvent(event: SessionEvent): SessionEvent | null {
         modeVersion: Number.isFinite(event.modeVersion) ? event.modeVersion : undefined,
       } : null
     case 'labels_changed': return { ...identity, type: event.type, labels: event.labels }
+    // a1.3/a1.4/a2.5: ownership, visibility and ephemeral collaboration signals
+    // cross the native boundary as display-only metadata (they never grant access).
+    case 'session_owner_changed': return { ...identity, type: event.type, owner: event.owner ? { ...event.owner } : null }
+    case 'session_visibility_changed': return { ...identity, type: event.type, visibility: event.visibility }
+    case 'session_typing': return {
+      ...identity, type: event.type,
+      actors: event.actors.map(actor => ({ accountId: actor.accountId, displayName: actor.displayName, expiresAt: actor.expiresAt })),
+    }
+    case 'session_presence': return {
+      ...identity, type: event.type,
+      viewers: event.viewers.map(viewer => ({
+        accountId: viewer.accountId, displayName: viewer.displayName, username: viewer.username,
+        role: viewer.role, status: viewer.status, joinedAt: viewer.joinedAt,
+      })),
+    }
     default: return null
   }
 }

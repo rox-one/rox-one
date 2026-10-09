@@ -28,6 +28,8 @@ import type {
   SessionEvent,
   SessionActorRef,
   SessionVisibility,
+  SessionCreatedActor,
+  SessionParticipantIdentity,
 } from '@rox/shared/protocol'
 import type { SessionBundle, DispatchMode } from '@rox/shared/sessions'
 import type { AgentProfileSnapshot } from '@rox/shared/workspace-work'
@@ -72,7 +74,7 @@ export interface ISessionManager {
   createSession(
     workspaceId: string,
     options?: CreateSessionOptions,
-    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; agentProfileSnapshot?: AgentProfileSnapshot | null },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; agentProfileSnapshot?: AgentProfileSnapshot | null; actor?: SessionCreatedActor },
   ): Promise<Session>
   /** Resolved working directory of a live session (Tasks Conductor uses it so children inherit
    *  the orchestrator's cwd). */
@@ -124,6 +126,12 @@ export interface ISessionManager {
   setKanbanColumn(sessionId: string, column: string | null): Promise<void>
   /** a1.3: assign or clear the session owner. `owner === null` clears; creator is never overwritten. */
   assignSessionOwner(sessionId: string, owner: SessionActorRef | null, assignedBy: string): Promise<void>
+  /** a2.5: throw a typed SESSION_READ_ONLY/SESSION_OWNER_ONLY error when `actorAccountId`
+   *  may not write to the session under its current visibility. */
+  assertSessionWriteAccess(sessionId: string, actorAccountId: string | null): void
+  /** a1.3: bind an actor that wrote to the session as a participant. Returns true when the
+   *  list changed (and was persisted). */
+  noteSessionParticipant(sessionId: string, participant: SessionParticipantIdentity): Promise<boolean>
   /** a2.5: set the session visibility ('shared' | 'read-only' | 'suggest' | 'draft'). */
   setSessionVisibility(sessionId: string, visibility: SessionVisibility): Promise<void>
   /** a1.4: push an ephemeral collaboration signal (typing/presence) for a session. */

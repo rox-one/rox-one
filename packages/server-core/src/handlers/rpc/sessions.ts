@@ -11,6 +11,9 @@ import {
   type SessionEvent,
   type SessionActorRef,
   type SessionVisibility,
+  type SessionCreatedActor,
+  type SessionParticipantIdentity,
+  type SessionCommand,
   type BroPresenceMemberDto,
 } from '@rox/shared/protocol'
 import type { StoredAttachment, SessionMemoryMode } from '@rox/core/types'
@@ -228,6 +231,22 @@ export function toSessionListSummary<T extends object>(session: T): T {
   return rest as T
 }
 
+/**
+ * Session commands that mutate the session (content, metadata attachment, or
+ * sharing) and therefore require write access under the session's visibility.
+ * Ephemeral signals (typing/presence), read-tracking, and read-only helpers are
+ * deliberately absent so a read-only viewer can still watch and mark read.
+ */
+const SESSION_WRITE_COMMANDS: ReadonlySet<SessionCommand['type']> = new Set([
+  'flag', 'unflag', 'archive', 'unarchive', 'rename', 'setSessionStatus',
+  'setPermissionMode', 'setThinkingLevel', 'updateWorkingDirectory', 'setSources',
+  'setLabels', 'setProjectId', 'setKanbanColumn', 'setPriority', 'setDueDate',
+  'setRank', 'reorderRank', 'shareToViewer', 'updateShare', 'revokeShare', 'inviteBro',
+  'revokeBroInvite', 'setConnection', 'setPendingPlanExecution', 'markCompactionComplete',
+  'markPendingPlanExecutionDispatched', 'clearPendingPlanExecution', 'addAnnotation',
+  'removeAnnotation', 'updateAnnotation', 'undo', 'assignOwner', 'setVisibility',
+])
+
 export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { sessionManager, platform } = deps
   if (deps.nativeData) sessionManager.setNativeMemoryContextPolicy?.(workspaceId => deps.nativeData!.authority.isRegisteredWorkspace(workspaceId))
@@ -247,10 +266,24 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     status: 'online',
     joinedAt: Date.now(),
   })
+  // a1.3: the same actor identity in creator/participant shape. Used by create
+  // (creator + first participant) and by the write paths (participant upkeep).
+  const sessionParticipant = (ctx: RequestContext): SessionParticipantIdentity => ({
+    accountId: sessionActorId(ctx),
+    displayName: sessionActorName(ctx),
+    username: ctx.principal?.subject ?? LOCAL_ROX_CALLER.subject,
+    kind: 'profile',
+  })
+  const sessionCreator = (ctx: RequestContext): SessionCreatedActor => ({
+    accountId: sessionActorId(ctx),
+    displayName: sessionActorName(ctx),
+    kind: 'profile',
+  })
   const sessionActivity = new SessionActivityTracker({
     typingChanged: (sessionId, actors) => sessionManager.broadcastSessionActivity?.(sessionId, { type: 'session_typing', sessionId, actors }),
     presenceChanged: (sessionId, viewers) => sessionManager.broadcastSessionActivity?.(sessionId, { type: 'session_presence', sessionId, viewers }),
   })
+  server.onShutdown?.(() => sessionActivity.dispose())
   server.onShutdown?.(disposeBroInviteService)
   // Provenance comes from the persistence acknowledgement, never an optimistic
   // renderer id or a workspace event subscriber. Completed replies credit only
@@ -395,7 +428,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // so suppress the broadcast to avoid a redundant hydrate round-trip.
     const session = await sessionManager.createSession(workspaceId, options, { emitCreatedEvent: false,
       agentProfileSnapshot: capturedProfile,
-      nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId) })
+      nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId),
+      actor: sessionCreator(ctx) })
     end()
     return ctx.principal ? nativeSession(session) : session
   }, { nativeAction: 'write' })
@@ -435,13 +469,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
     // Capture the caller's clientId for error routing
     const callerClientId = ctx.clientId
+    // a2.5: read-only/draft sessions are server-enforced, not menu-enforced.
+    sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
     // Native options were stripped above. Invalid producer telemetry cannot turn
     // a generated dispatch into the exception for the user's original input.
     const runtimeLaunch = options?.runtimeLaunch === undefined ? undefined
       : isRuntimeLaunch(options.runtimeLaunch) ? options.runtimeLaunch : { kind: 'unknown' as const }
     const roxExecutionContext = await captureRoxExecutionContext(ctx)
 
-    return await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
+    const accepted = await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
       let acked = false
       const onAck = (messageId: string) => {
         if (!acked) {
@@ -487,6 +523,9 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
           } as SessionEvent)
         })
     })
+    // a1.3: only attribute the writer once the message is durable.
+    await sessionManager.noteSessionParticipant(sessionId, sessionParticipant(ctx))
+    return accepted
   }, { nativeAction: 'write' })
 
   // Cancel processing
@@ -582,6 +621,12 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
           ) }
         }
       }
+    }
+    if (SESSION_WRITE_COMMANDS.has(command.type)) {
+      // a2.5: read-only/draft deny non-owner writes with a typed error; shared/suggest and
+      // the owner are allowed. Runs after the native-access checks so both paths share the rule.
+      sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
+      await sessionManager.noteSessionParticipant(sessionId, sessionParticipant(ctx))
     }
     switch (command.type) {
       case 'flag':

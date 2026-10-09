@@ -131,7 +131,7 @@ import { isParentTaskTool } from '@rox/shared/utils/toolNames'
 import { restoreFiles } from '@rox/shared/utils/bundle-files'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { CraftMcpClient, McpClientPool, McpPoolServer } from '@rox/shared/mcp'
-import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, type SessionActorRef, type SessionVisibility, type SessionCreatedActor, type SessionOwnerRef, type SessionParticipantIdentity, RPC_CHANNELS, generateMessageId } from '@rox/shared/protocol'
+import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, type SessionActorRef, type SessionVisibility, type SessionCreatedActor, type SessionOwnerRef, type SessionParticipantIdentity, RPC_CHANNELS, CodedError, generateMessageId } from '@rox/shared/protocol'
 import type {
   BulkUpdateSessionsInput,
   BulkUpdateSessionsPatch,
@@ -868,6 +868,7 @@ type CollectionMutableField =
   | 'kanbanColumn'
   | 'owner'
   | 'visibility'
+  | 'participants'
 
 interface ManagedSession {
   id: string
@@ -1228,6 +1229,64 @@ export function createManagedSession(
   }
 
   return managed
+}
+
+// ---------------------------------------------------------------------------
+// Session attribution (a1.3) — creator/owner/participants/visibility.
+//
+// These are pure, dependency-free helpers so the policy (who may write to a
+// session) and the participant list maintenance are testable without a live
+// SessionManager, while the manager methods below are thin persistence shells.
+// ---------------------------------------------------------------------------
+
+/** Maximum number of bound participants retained per session (most recent win). */
+export const SESSION_PARTICIPANT_CAP = 32
+
+/** Bind an actor identity onto the participant list; `null` when nothing changed. */
+export function upsertSessionParticipant(
+  participants: readonly SessionParticipantIdentity[] | undefined,
+  identity: SessionParticipantIdentity,
+): SessionParticipantIdentity[] | null {
+  const list = participants ? [...participants] : []
+  const index = list.findIndex(participant => participant.accountId === identity.accountId)
+  if (index >= 0) {
+    const existing = list[index]!
+    if (existing.displayName === identity.displayName
+      && existing.username === identity.username
+      && existing.kind === identity.kind) return null
+    list[index] = identity
+    return list
+  }
+  list.push(identity)
+  while (list.length > SESSION_PARTICIPANT_CAP) list.shift()
+  return list
+}
+
+/** Result of the server-side session write-visibility check (a2.5). */
+export type SessionWriteAccess =
+  | { allowed: true }
+  | { allowed: false; code: 'SESSION_READ_ONLY' | 'SESSION_OWNER_ONLY'; message: string }
+
+/**
+ * Decide whether `actorAccountId` may write to a session by its visibility.
+ *
+ * `shared`/`suggest` are open; `read-only` and `draft` restrict writes to the
+ * owner (owner.id if assigned, else the creator's account). A session with no
+ * attribution has no owner to enforce, so it stays open — legacy local
+ * sessions must not become unwritable after this ships.
+ */
+export function evaluateSessionWriteAccess(
+  session: Pick<ManagedSession, 'owner' | 'creator' | 'visibility'>,
+  actorAccountId: string | null,
+): SessionWriteAccess {
+  const visibility = session.visibility ?? 'shared'
+  if (visibility === 'shared' || visibility === 'suggest') return { allowed: true }
+  const owner = session.owner?.id ?? session.creator?.accountId ?? null
+  if (!owner) return { allowed: true }
+  if (actorAccountId && actorAccountId === owner) return { allowed: true }
+  return visibility === 'read-only'
+    ? { allowed: false, code: 'SESSION_READ_ONLY', message: 'Session is read-only for this actor' }
+    : { allowed: false, code: 'SESSION_OWNER_ONLY', message: 'Session is a private draft owned by another actor' }
 }
 
 /**
@@ -3582,7 +3641,7 @@ export class SessionManager implements ISessionManager {
     // announced to the renderer (see notifySessionCreated). Callers that register the session
     // themselves — the `sessions:create` RPC adds it from the return value — pass
     // `{ emitCreatedEvent: false }` to avoid a redundant hydrate.
-    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null; actor?: SessionCreatedActor },
   ): Promise<Session> {
     internal?.nativeMemoryContext?.assertAuthorized()
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -4092,6 +4151,18 @@ export class SessionManager implements ISessionManager {
       messagesLoaded: !isBranch,  // Branched sessions: lazy-load messages from JSONL
     })
 
+    // a1.3: creator is captured once, here, at creation and is never rewritten
+    // (assignSessionOwner only touches `owner`). The creator is also the first
+    // bound participant, so participant history has an honest origin.
+    if (internal?.actor) {
+      managed.creator = structuredClone(internal.actor)
+      const participant: SessionParticipantIdentity = {
+        accountId: internal.actor.accountId, displayName: internal.actor.displayName,
+        username: internal.actor.accountId, kind: internal.actor.kind,
+      }
+      managed.participants = upsertSessionParticipant(undefined, participant) ?? [participant]
+    }
+
     // Register the session and initialize mode-manager state BEFORE any eager
     // agent creation (branch preflight). getOrCreateAgent's browser-pane wiring
     // resolves the session via this.sessions, so it must be present first: the
@@ -4107,6 +4178,13 @@ export class SessionManager implements ISessionManager {
     if (internal?.nativeMemoryContext) {
       this.nativeMemoryContexts.set(storedSession.id, internal.nativeMemoryContext)
       internal.nativeMemoryContext.assertAuthorized()
+    }
+    if (internal?.actor) {
+      // The header was written by createStoredSession before the owner/participant
+      // fields existed; flush them now so attribution survives a reload instead
+      // of waiting for the next message.
+      this.persistSession(managed)
+      await this.flushSession(managed.id)
     }
 
     // Eagerly load messages for branched sessions so the renderer gets the full
@@ -4215,6 +4293,10 @@ export class SessionManager implements ISessionManager {
       // Direct awaited persistence makes the greeting durable before recording completion.
       await saveStoredSession({
         ...storedSession,
+        // `storedSession` predates the attribution fields; carry the managed
+        // creator/participants so this direct write does not erase them.
+        creator: managed.creator,
+        participants: managed.participants,
         messages: managed.messages.map(messageToStored),
         tokenUsage: managed.tokenUsage ?? DEFAULT_TOKEN_USAGE,
       })
@@ -9439,8 +9521,18 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (managed) {
       const next = owner ? { ...owner, assignedAt: Date.now(), assignedBy } : undefined
-      this.markCollectionFieldMutations(managed, ['owner'])
+      const fields: Array<'owner' | 'participants'> = ['owner']
+      // An assigned account becomes a bound participant; the creator already is one,
+      // so reassigning to the creator is a no-op here.
+      const participants = next?.kind === 'account'
+        ? upsertSessionParticipant(managed.participants, {
+            accountId: next.id, displayName: next.displayName, username: next.id, kind: 'profile',
+          })
+        : null
+      if (participants) fields.push('participants')
+      this.markCollectionFieldMutations(managed, fields)
       managed.owner = next
+      if (participants) managed.participants = participants
       this.setMetadataWriteGuard(managed)
 
       this.sendEvent({ type: 'session_owner_changed', sessionId, owner: next ?? null }, managed.workspace.id)
@@ -9449,6 +9541,37 @@ export class SessionManager implements ISessionManager {
       const watcher = this.configWatchers.get(managed.workspace.rootPath)
       watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
     }
+  }
+
+  /**
+   * a2.5: throw a typed error when `actorAccountId` may not write to the
+   * session for its current visibility. Used by the messaging and command
+   * handlers so read-only/draft is a server rule, not a rendered menu state.
+   */
+  assertSessionWriteAccess(sessionId: string, actorAccountId: string | null): void {
+    const managed = this.sessions.get(sessionId)
+    // Unknown sessions keep their existing not-found behaviour downstream.
+    if (!managed) return
+    const access = evaluateSessionWriteAccess(managed, actorAccountId)
+    if (!access.allowed) throw new CodedError(access.code, access.message)
+  }
+
+  /**
+   * a1.3: record an actor that wrote to (or was assigned on) the session as a
+   * bound participant. Persists only when the list actually changes, so the
+   * common case — the owner writing again — costs no extra write.
+   */
+  async noteSessionParticipant(sessionId: string, participant: SessionParticipantIdentity): Promise<boolean> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return false
+    const participants = upsertSessionParticipant(managed.participants, participant)
+    if (!participants) return false
+    this.markCollectionFieldMutations(managed, ['participants'])
+    managed.participants = participants
+    this.setMetadataWriteGuard(managed)
+    this.persistSession(managed)
+    await this.flushSession(managed.id)
+    return true
   }
 
   /**
