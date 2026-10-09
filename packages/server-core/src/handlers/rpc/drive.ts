@@ -18,6 +18,15 @@ import {
   type DriveBackupSourceKind,
   type DriveFileSource,
 } from '@rox/shared/drive'
+import {
+  createImportJobRunner,
+  createS3UploadTarget,
+  s3TargetOptionsFromEnv,
+  type DriveUploadTarget,
+  type ImportJobRunner,
+  type ImportProvider,
+  type ImportProviderId,
+} from '@rox/shared/drive/importers'
 import type { RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { DriveService, HandlerDeps, OpenUploadInput } from '../handler-deps'
 
@@ -31,7 +40,20 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.drive.ABORT_UPLOAD,
   RPC_CHANNELS.drive.DELETE,
   RPC_CHANNELS.drive.SCAN_SOURCE,
+  RPC_CHANNELS.drive.IMPORT_PLAN,
+  RPC_CHANNELS.drive.IMPORT_START,
+  RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_RESUME,
+  RPC_CHANNELS.drive.IMPORT_STATUS,
 ] as const
+
+/** Provider ids accepted by `drive:importPlan`. */
+export const IMPORT_PROVIDER_IDS: readonly ImportProviderId[] = [
+  'google-drive',
+  'onedrive',
+  'yandex-disk',
+  'icloud',
+]
 
 const MAX_ID_LENGTH = 128
 const MAX_NAME_LENGTH = 255
@@ -110,6 +132,69 @@ function normalizeUploadInput(value: unknown): OpenUploadInput {
   return normalized
 }
 
+export interface DriveImportConfig {
+  /** Directory for `<jobId>.json` state — e.g. `<configDir>/drive/imports`. */
+  stateDir: string
+  /** Explicit destination; when omitted the `ROX_DRIVE_S3_*` env builds one. */
+  target?: DriveUploadTarget
+  providers?: readonly ImportProvider[]
+  concurrency?: number
+  maxAttempts?: number
+  retryBaseMs?: number
+  sleep?: (ms: number) => Promise<void>
+  env?: Record<string, string | undefined>
+}
+
+let importRunner: ImportJobRunner | null = null
+const registeredProviders = new Map<ImportProviderId, ImportProvider>()
+
+/**
+ * Host composition for `drive:import*` (same pattern as
+ * `configureTelegramLinkService`). The Electron main process calls this once
+ * with the app-data state dir and the provider adapters; a host that never
+ * calls it answers UNSUPPORTED_OPERATION.
+ */
+export function configureDriveImport(config: DriveImportConfig): ImportJobRunner {
+  const envOptions = config.target ? null : s3TargetOptionsFromEnv(config.env ?? process.env)
+  if (!config.target && !envOptions) {
+    throw new CodedError('UNSUPPORTED_OPERATION', 'Drive import target is not configured (set ROX_DRIVE_S3_* or pass target)')
+  }
+  const target = config.target ?? createS3UploadTarget(envOptions!)
+  importRunner = createImportJobRunner({
+    target,
+    stateDir: config.stateDir,
+    providers: config.providers ?? [...registeredProviders.values()],
+    concurrency: config.concurrency,
+    maxAttempts: config.maxAttempts,
+    retryBaseMs: config.retryBaseMs,
+    sleep: config.sleep,
+  })
+  for (const provider of registeredProviders.values()) importRunner.registerProvider(provider)
+  return importRunner
+}
+
+/** Registers (or replaces) a provider adapter; effective before or after `configureDriveImport`. */
+export function registerImportProvider(provider: ImportProvider): void {
+  registeredProviders.set(provider.id, provider)
+  importRunner?.registerProvider(provider)
+}
+
+/** Test seam: drops the composed runner and pending adapters. */
+export function resetDriveImport(): void {
+  importRunner = null
+  registeredProviders.clear()
+}
+
+function requireImport(): ImportJobRunner {
+  return importRunner ?? unavailable()
+}
+
+function normalizeImportProvider(value: unknown): ImportProviderId {
+  const id = IMPORT_PROVIDER_IDS.find(entry => entry === value)
+  if (!id) return invalid('provider')
+  return id
+}
+
 export function registerDriveHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.drive.QUOTA, async (_ctx: RequestContext, workspaceId: string) => {
     return requireDrive(deps).getQuota(requireWorkspaceId(workspaceId))
@@ -163,5 +248,29 @@ export function registerDriveHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   server.handle(RPC_CHANNELS.drive.SCAN_SOURCE, async (_ctx: RequestContext, workspaceId: string, sourceKind: unknown) => {
     return requireDrive(deps).scanSource(requireWorkspaceId(workspaceId), normalizeSourceKind(sourceKind))
+  })
+
+  // Wave 4 — cloud import pipeline (LOCAL_ONLY: bytes land in the host's S3 target).
+  server.handle(RPC_CHANNELS.drive.IMPORT_PLAN, async (_ctx: RequestContext, provider: unknown, folderId?: string | null) => {
+    return requireImport().plan(
+      normalizeImportProvider(provider),
+      folderId === undefined || folderId === null ? undefined : requireId(folderId, 'folderId'),
+    )
+  })
+
+  server.handle(RPC_CHANNELS.drive.IMPORT_START, async (_ctx: RequestContext, jobId: string) => {
+    return requireImport().start(requireId(jobId, 'jobId'))
+  })
+
+  server.handle(RPC_CHANNELS.drive.IMPORT_PAUSE, async (_ctx: RequestContext, jobId: string) => {
+    return requireImport().pause(requireId(jobId, 'jobId'))
+  })
+
+  server.handle(RPC_CHANNELS.drive.IMPORT_RESUME, async (_ctx: RequestContext, jobId: string) => {
+    return requireImport().resume(requireId(jobId, 'jobId'))
+  })
+
+  server.handle(RPC_CHANNELS.drive.IMPORT_STATUS, async (_ctx: RequestContext, jobId?: string | null) => {
+    return requireImport().status(jobId === undefined || jobId === null ? undefined : requireId(jobId, 'jobId'))
   })
 }

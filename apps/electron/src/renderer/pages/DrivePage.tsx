@@ -1,32 +1,30 @@
 /**
- * DrivePage — ROX Drive wave 1 host.
+ * DrivePage — ROX Drive host.
  *
  * Layout: quota meter, the three fixed action tiles, and the folder/file list.
- * (b)/(c) open honest «скоро / нужны доступы» states — wave 1 ships no fake
- * OAuth. Uploads run through `runRendererUpload` (8 parallel 16 MiB parts) and
- * device backups reuse the same pipeline with `source: 'device-backup'`.
+ * The two import tiles open `ImportFlowDialog`, which drives the real
+ * `drive:import*` pipeline (device-code auth → plan/start → progress). Uploads
+ * run through `runRendererUpload` (8 parallel 16 MiB parts) and device backups
+ * reuse the same pipeline with `source: 'device-backup'`.
  */
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Info } from 'lucide-react'
 import type { DriveListing, DriveQuota } from '@rox/shared/drive'
+import type { ImportProviderId } from '@rox/shared/drive/importers/types'
 import { navigate, routes } from '@/lib/navigate'
 import { toErrorMessage } from '@/lib/errors'
 import { RenameDialog } from '@/components/ui/rename-dialog'
-import { Button } from '@/components/ui/button'
 import { DriveQuotaMeter } from './drive/DriveQuotaMeter'
 import { DriveActionTiles } from './drive/DriveActionTiles'
 import { BackupChooser } from './drive/BackupChooser'
+import { ImportFlowDialog } from './drive/ImportFlowDialog'
 import { DriveFileList, type DriveFileUploadProgress } from './drive/DriveFileList'
 import { isRetryableUploadError, runRendererUpload } from './drive/upload-client'
-import { EXTERNAL_IMPORT_NOTICES, type ExternalImportId } from './drive/external-imports'
 
 export interface DrivePageProps {
   workspaceId: string
   folderId?: string
 }
-
-type Notice = ExternalImportId
 
 export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
   const { t } = useTranslation()
@@ -34,7 +32,8 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
   const [listing, setListing] = useState<DriveListing | null>(null)
   const [loading, setLoading] = useState(true)
   const [errorText, setErrorText] = useState<string | null>(null)
-  const [notice, setNotice] = useState<Notice | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
+  const [importProvider, setImportProvider] = useState<ImportProviderId | undefined>(undefined)
   const [backupOpen, setBackupOpen] = useState(false)
   const [uploads, setUploads] = useState<DriveFileUploadProgress[]>([])
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
@@ -127,20 +126,25 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
 
       <DriveActionTiles
         onOpenBackup={() => setBackupOpen(true)}
-        onGoogleImport={() => setNotice('google')}
-        onOtherImport={() => setNotice('other')}
+        onGoogleImport={() => {
+          setImportProvider('google-drive')
+          setImportOpen(true)
+        }}
+        onOtherImport={() => {
+          setImportProvider(undefined)
+          setImportOpen(true)
+        }}
       />
 
-      {notice && (
-        <div role="status" data-testid={`drive-notice-${notice}`} data-available={String(EXTERNAL_IMPORT_NOTICES[notice].available)} className="flex items-start gap-2 rounded-lg border border-status-warning/40 bg-status-warning/5 p-3 text-sm">
-          <Info className="mt-0.5 icon-toolbar text-status-warning" />
-          <div className="space-y-0.5">
-            <p className="font-medium">{t(EXTERNAL_IMPORT_NOTICES[notice].titleKey)}</p>
-            <p className="text-xs text-muted-foreground">{t(EXTERNAL_IMPORT_NOTICES[notice].bodyKey)}</p>
-          </div>
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setNotice(null)}>{t('common.close')}</Button>
-        </div>
-      )}
+      <ImportFlowDialog
+        open={importOpen}
+        initialProvider={importProvider}
+        api={window.electronAPI}
+        onOpenChange={next => {
+          setImportOpen(next)
+          if (!next) void refresh()
+        }}
+      />
 
       {backupOpen && (
         <BackupChooser

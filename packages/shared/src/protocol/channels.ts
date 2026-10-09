@@ -1196,6 +1196,16 @@ export const RPC_CHANNELS = {
     ABORT_UPLOAD: 'drive:abortUpload',
     DELETE: 'drive:delete',
     SCAN_SOURCE: 'drive:scanSource',
+    /** Wave 4: resolve a cloud provider's tree into an idle import job. */
+    IMPORT_PLAN: 'drive:importPlan',
+    /** Wave 4: start an idle import job. */
+    IMPORT_START: 'drive:importStart',
+    /** Wave 4: stop scheduling new files once in-flight work settles. */
+    IMPORT_PAUSE: 'drive:importPause',
+    /** Wave 4: resume a paused/errored import job. */
+    IMPORT_RESUME: 'drive:importResume',
+    /** Wave 4: one job by id, or every known job when the id is omitted. */
+    IMPORT_STATUS: 'drive:importStatus',
   },
   /**
    * Telegram account linking (owner spec R4) — the desktop dialog talks to the

@@ -102,6 +102,8 @@ import type {
   DriveQuota,
   DriveScanResult,
   DriveUploadSession,
+  ImportJob,
+  ImportProviderId,
 } from '@rox/shared/drive'
 
 /** Automatic browser cookie import (in-app browser). Values never cross RPC. */
@@ -2323,6 +2325,13 @@ export interface ElectronAPI {
   driveAbortUpload(workspaceId: string, uploadId: string): Promise<void>
   driveDelete(workspaceId: string, fileId: string): Promise<void>
   driveScanSource(workspaceId: string, sourceKind: DriveBackupSourceKind): Promise<DriveScanResult>
+  // ROX Drive (wave 4) — cloud import pipeline. Bytes move host-side; the
+  // renderer only plans, starts and watches the job.
+  driveImportPlan(provider: ImportProviderId, folderId?: string): Promise<ImportJob>
+  driveImportStart(jobId: string): Promise<ImportJob>
+  driveImportPause(jobId: string): Promise<ImportJob>
+  driveImportResume(jobId: string): Promise<ImportJob>
+  driveImportStatus(jobId?: string): Promise<ImportJob | ImportJob[] | null>
   enrichMindMap(input: {
     workspaceId: string
     entity: import('@rox/core/mindmap').MindMapEntityRef

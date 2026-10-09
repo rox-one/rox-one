@@ -532,6 +532,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.drive.ABORT_UPLOAD,
   RPC_CHANNELS.drive.DELETE,
   RPC_CHANNELS.drive.SCAN_SOURCE,
+  RPC_CHANNELS.drive.IMPORT_PLAN,
+  RPC_CHANNELS.drive.IMPORT_START,
+  RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_RESUME,
+  RPC_CHANNELS.drive.IMPORT_STATUS,
 
   // Telegram account linking (R4) — the linkd daemon and the Rox account
   // authority live on this machine; a remote/headless server must never mint

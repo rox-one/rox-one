@@ -2,9 +2,10 @@
  * DriveActionTiles — the three fixed tiles at the top of the Drive surface.
  *
  * (a) full-width «Настроить бэкап устройства» → the backup chooser.
- * (b) «Импортировать мои файлы из Google Drive» — honest «скоро» this wave.
- * (c) «Импортировать из других хранилищ» with three provider logos — also
- *     honest «нужны доступы»: wave 1 ships no fake OAuth.
+ * (b) «Импортировать мои файлы из Google Drive» → the import dialog on the
+ *     Google Drive provider.
+ * (c) «Импортировать из других хранилищ» with three provider logos → the same
+ *     dialog at its provider picker.
  */
 import { useTranslation } from 'react-i18next'
 import { CloudDownload, HardDriveDownload, ShieldCheck } from 'lucide-react'
