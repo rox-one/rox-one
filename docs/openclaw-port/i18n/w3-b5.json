@@ -1,0 +1,42 @@
+{
+ "board.widget.sectionTitle": {
+  "en": "Task widget",
+  "ru": "Виджет задачи"
+ },
+ "board.widget.loading": {
+  "en": "Loading widget…",
+  "ru": "Загрузка виджета…"
+ },
+ "board.widget.unavailableTitle": {
+  "en": "No widget staged",
+  "ru": "Виджет не создан"
+ },
+ "board.widget.unavailableBody": {
+  "en": "No board widget revision is stored for this task yet. An agent can stage one with show_widget.",
+  "ru": "Для этой задачи пока нет сохранённой ревизии виджета. Агент может создать её через show_widget."
+ },
+ "board.widget.refusedTitle": {
+  "en": "Widget unavailable",
+  "ru": "Виджет недоступен"
+ },
+ "board.widget.refusedBody": {
+  "en": "This widget's render ticket was refused, so nothing was mounted. Reopen the task to request a fresh ticket.",
+  "ru": "Тикет отрисовки виджета отклонён, поэтому ничего не смонтировано. Откройте задачу заново, чтобы запросить новый тикет."
+ },
+ "board.widget.frame.unavailableTitle": {
+  "en": "Widget could not load",
+  "ru": "Не удалось загрузить виджет"
+ },
+ "board.widget.frame.unavailableBody": {
+  "en": "The widget document failed to load in its sandbox.",
+  "ru": "Документ виджета не загрузился в песочнице."
+ },
+ "board.widget.frame.runtimeErrorTitle": {
+  "en": "Widget stopped responding",
+  "ru": "Виджет перестал отвечать"
+ },
+ "board.widget.frame.runtimeErrorBody": {
+  "en": "The widget did not report any rendered content. Its code may have stopped on an error.",
+  "ru": "Виджет не сообщил о содержимом. Возможно, его код остановился с ошибкой."
+ }
+}
