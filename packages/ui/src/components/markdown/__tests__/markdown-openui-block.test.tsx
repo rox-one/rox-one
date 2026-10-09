@@ -10,11 +10,8 @@ import { useDomForFile, resetDom } from '../../primitives/__tests__/dom-env'
 // Static side-effect imports warm the lazy chunk before any render, so
 // React.lazy's Suspense boundary resolves within one flush (the app preloads
 // the same module on first use).
-import {
-  MarkdownOpenUIBlock,
-  extractOpenUIFormValues,
-  openUIFormStateKey,
-} from '../MarkdownOpenUIBlock'
+import { MarkdownOpenUIBlock } from '../MarkdownOpenUIBlock'
+import { extractOpenUIFormValues, openUIFormStateKey } from '../openui-form-state'
 import '@openuidev/react-ui/genui-lib'
 import { describe, expect, it, mock } from 'bun:test'
 import * as React from 'react'
