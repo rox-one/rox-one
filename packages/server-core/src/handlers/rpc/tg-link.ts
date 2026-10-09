@@ -13,7 +13,6 @@
 import { getRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer } from '@rox/server-core/transport'
-import type { HandlerDeps } from '../handler-deps'
 
 export const DEFAULT_TG_LINK_URL = 'https://rox.one'
 
@@ -139,7 +138,7 @@ function uiStatus(raw: unknown): TgLinkUiStatus {
   return typeof raw === 'string' && raw in SERVICE_STATUS ? SERVICE_STATUS[raw]! : 'unavailable'
 }
 
-export function registerTgLinkHandlers(server: RpcServer, _deps: HandlerDeps): void {
+export function registerTgLinkHandlers(server: RpcServer): void {
   server.handle(
     RPC_CHANNELS.tgLink.START,
     async ctx => {
