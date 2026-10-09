@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
@@ -10,6 +10,7 @@ import {
   ClipboardHistoryStore,
   ClipboardHistoryUnavailableError,
   MAX_TAG_COUNT,
+  MAX_TEXT_BYTES,
   normalizeTags,
 } from '../store'
 
@@ -96,6 +97,32 @@ describe('ClipboardHistoryStore', () => {
     const last = store.list({ limit: 2, offset: 2 })
     expect(last.entries).toHaveLength(2)
     expect(last.hasMore).toBe(false)
+    store.close()
+  })
+
+  it('filters listed entries by image format', () => {
+    const store = makeStore()
+    store.insertOrResurface({ kind: 'text', text: 'plain text' })
+    clock += 1_000
+    const png = store.insertOrResurface({ kind: 'image', imageBytes: IMAGE_BYTES, imageFormat: 'png' })
+    clock += 1_000
+    const gif = store.insertOrResurface({ kind: 'image', imageBytes: Buffer.from('a-gif-image'), imageFormat: 'gif' })
+
+    const pngOnly = store.list({ format: 'png' })
+    expect(pngOnly.entries.map(entry => entry.id)).toEqual([png.id])
+    expect(pngOnly.total).toBe(1)
+    expect(pngOnly.entries.every(entry => entry.kind === 'image' && entry.imageFormat === 'png')).toBe(true)
+
+    const gifOnly = store.list({ format: 'gif' })
+    expect(gifOnly.entries.map(entry => entry.id)).toEqual([gif.id])
+    expect(gifOnly.total).toBe(1)
+    expect(store.list({ format: 'jpg' }).total).toBe(0)
+
+    // 'all' and an omitted format keep the unfiltered result set unchanged.
+    expect(store.list({ format: 'all' }).total).toBe(store.list().total)
+    expect(store.list({ format: 'all' }).total).toBe(3)
+    // Counts stay global regardless of the active format filter.
+    expect(pngOnly.counts).toEqual({ total: 3, starred: 0, text: 1, image: 2 })
     store.close()
   })
 
@@ -210,7 +237,7 @@ describe('ClipboardHistoryStore', () => {
   it('rejects oversized and malformed payloads', () => {
     const store = makeStore()
     expect(() => store.insertOrResurface({ kind: 'text', text: '' })).toThrow(ClipEntryRejectedError)
-    expect(() => store.insertOrResurface({ kind: 'text', text: 'x'.repeat(1_000_001) })).toThrow(ClipEntryRejectedError)
+    expect(() => store.insertOrResurface({ kind: 'text', text: 'x'.repeat(MAX_TEXT_BYTES + 1) })).toThrow(ClipEntryRejectedError)
     expect(() => store.insertOrResurface({ kind: 'image', imageBytes: Buffer.alloc(0), imageFormat: 'png' })).toThrow(ClipEntryRejectedError)
     expect(() => store.insertOrResurface({ kind: 'image', imageBytes: IMAGE_BYTES })).toThrow(ClipEntryRejectedError)
     store.close()
@@ -277,5 +304,28 @@ describe('ClipboardHistoryStore', () => {
     const filePath = join(dir, 'not-a-directory')
     writeFileSync(filePath, 'blocking file')
     expect(() => new ClipboardHistoryStore({ dir: filePath, now })).toThrow(ClipboardHistoryUnavailableError)
+  })
+
+  it('accepts exactly 1 MiB of text and rejects one byte more', () => {
+    const store = makeStore()
+    const exact = 'x'.repeat(MAX_TEXT_BYTES)
+    expect(Buffer.byteLength(exact, 'utf8')).toBe(MAX_TEXT_BYTES)
+    expect(store.insertOrResurface({ kind: 'text', text: exact }).inserted).toBe(true)
+    expect(() => store.insertOrResurface({ kind: 'text', text: `${exact}y` })).toThrow(ClipEntryRejectedError)
+    store.close()
+  })
+
+  it('creates the store directory, database, and image files with private modes', () => {
+    const store = makeStore()
+    store.insertOrResurface({ kind: 'text', text: 'private' })
+    const image = store.insertOrResurface({ kind: 'image', imageBytes: IMAGE_BYTES, imageFormat: 'png' })
+    expect(image.inserted).toBe(true)
+    // POSIX permission bits are meaningless on Windows, so the mode assertions are skipped there.
+    if (process.platform !== 'win32') {
+      expect(statSync(store.dir).mode & 0o777).toBe(0o700)
+      expect(statSync(store.databasePath).mode & 0o777).toBe(0o600)
+      expect(statSync(imageFilePath('png', IMAGE_BYTES)).mode & 0o777).toBe(0o600)
+    }
+    store.close()
   })
 })

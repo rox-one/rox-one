@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { ClipEntrySummary, ClipTagCount } from '@rox/shared/clipboard-history'
+import { formatAcceleratorDisplay } from '@/lib/platform'
 import {
   CLIPBOARD_PAGE_SIZE,
   clipboardFiltersReducer,
@@ -8,7 +9,9 @@ import {
   EMPTY_CLIPBOARD_FILTERS,
   emptyStateKind,
   formatBytes,
+  formatChars,
   formatImageMeta,
+  formatKeysHint,
   formatRelativeTime,
   hasActiveFilters,
   imageFormatBadge,
@@ -20,6 +23,7 @@ import {
   visibleEntryTags,
   visibleTagCounts,
 } from '../clipboard-history-model'
+import { formatAcceleratorDisplay } from '@/lib/platform'
 
 const NOW = Date.parse('2026-10-09T12:00:00.000Z')
 const at = (secondsAgo: number) => new Date(NOW - secondsAgo * 1000).toISOString()
@@ -79,12 +83,22 @@ describe('clipboard history model', () => {
     expect(visibleEntryTags(['work', 'code', 'work', ' token ', ''])).toEqual(['work'])
   })
 
-  it('formats byte sizes across the unit boundaries', () => {
-    expect(formatBytes(0)).toBe('0 B')
-    expect(formatBytes(512)).toBe('512 B')
-    expect(formatBytes(2048)).toBe('2.0 KB')
-    expect(formatBytes(200 * 1024)).toBe('200 KB')
-    expect(formatBytes(3 * 1024 * 1024)).toBe('3.0 MB')
+  it('formats byte sizes through the house Cyrillic units', () => {
+    expect(formatBytes(0)).toBe('0 Б')
+    expect(formatBytes(512)).toBe('512 Б')
+    expect(formatBytes(2048)).toBe('2.0 КБ')
+    expect(formatBytes(200 * 1024)).toBe('200.0 КБ')
+    expect(formatBytes(3 * 1024 * 1024)).toBe('3.0 МБ')
+  })
+
+  it('formats a char count through the shared key, never as bytes', () => {
+    const t = (key: string, options?: Record<string, unknown>) => `${key}:${String(options?.count)}`
+    expect(formatChars(t, 12)).toBe('clipboard.charCount:12')
+  })
+
+  it('interpolates the search chord into the keys-hint line', () => {
+    const t = (key: string, options?: Record<string, unknown>) => `${key}:${String(options?.search)}`
+    expect(formatKeysHint(t, '⌘F')).toBe('clipboard.screen.keysHint:⌘F')
   })
 
   it('resolves the image format badge from meta or thumbnail magic bytes', () => {
@@ -96,14 +110,15 @@ describe('clipboard history model', () => {
     expect(imageFormatBadge(null, null)).toBeNull()
   })
 
-  it('renders the image footer meta with width, height and size', () => {
+  it('renders the image footer meta with grouped dimensions and house bytes', () => {
+    const n = (value: number) => new Intl.NumberFormat('ru').format(value)
     const t = (key: string, options?: Record<string, unknown>) =>
       `${key}|${String(options?.width)}x${String(options?.height)}|${String(options?.size)}`
-    expect(formatImageMeta(t, entry({ kind: 'image', imageWidth: 1920, imageHeight: 1080, imageByteSize: 1_200_000 })))
-      .toBe('clipboard.image.meta|1920x1080|1.1 MB')
-    expect(formatImageMeta(t, entry({ kind: 'image', imageWidth: 800, imageHeight: 600 }))).toBe('800×600')
-    expect(formatImageMeta(t, entry({ kind: 'image', imageByteSize: 2048 }))).toBe('2.0 KB')
-    expect(formatImageMeta(t, entry({ kind: 'image' }))).toBeNull()
+    expect(formatImageMeta(t, entry({ kind: 'image', imageWidth: 1920, imageHeight: 1080, imageByteSize: 1_200_000 }), 'ru'))
+      .toBe(`clipboard.image.meta|${n(1920)}x${n(1080)}|1.1 МБ`)
+    expect(formatImageMeta(t, entry({ kind: 'image', imageWidth: 800, imageHeight: 600 }), 'ru')).toBe(`${n(800)}×${n(600)}`)
+    expect(formatImageMeta(t, entry({ kind: 'image', imageByteSize: 2048 }), 'ru')).toBe('2.0 КБ')
+    expect(formatImageMeta(t, entry({ kind: 'image' }), 'ru')).toBeNull()
   })
 
   it('collapses blank lines and clamps the preview', () => {
@@ -126,16 +141,18 @@ describe('clipboard history model', () => {
     state = clipboardFiltersReducer(state, { type: 'tab', tab: 'starred' })
     state = clipboardFiltersReducer(state, { type: 'query', query: 'a' })
     state = clipboardFiltersReducer(state, { type: 'kind', kind: 'image' })
+    state = clipboardFiltersReducer(state, { type: 'format', format: 'png' })
     state = clipboardFiltersReducer(state, { type: 'tag', tag: 'work' })
-    expect(state).toEqual({ tab: 'starred', query: 'a', kind: 'image', tag: 'work' })
+    expect(state).toEqual({ tab: 'starred', query: 'a', kind: 'image', format: 'png', tag: 'work' })
     expect(hasActiveFilters(state)).toBe(true)
     expect(emptyStateKind(state)).toBe('search')
     expect(clipboardFiltersReducer(state, { type: 'reset' })).toEqual({
-      tab: 'starred', query: '', kind: 'all', tag: null,
+      tab: 'starred', query: '', kind: 'all', format: 'all', tag: null,
     })
     expect(emptyStateKind(EMPTY_CLIPBOARD_FILTERS)).toBe('history')
     // Unchanged actions preserve the same object identity.
     expect(clipboardFiltersReducer(EMPTY_CLIPBOARD_FILTERS, { type: 'query', query: '' })).toBe(EMPTY_CLIPBOARD_FILTERS)
+    expect(clipboardFiltersReducer(EMPTY_CLIPBOARD_FILTERS, { type: 'format', format: 'all' })).toBe(EMPTY_CLIPBOARD_FILTERS)
   })
 
   it('maps list keyboard input to pure actions', () => {
@@ -173,5 +190,15 @@ describe('clipboard history model', () => {
 
   it('keeps the page size at 50', () => {
     expect(CLIPBOARD_PAGE_SIZE).toBe(50)
+  })
+
+  it('renders the persisted Electron accelerator as a platform chord', () => {
+    // The stored shortcut is an Electron accelerator, not a registry chord.
+    expect(formatAcceleratorDisplay('CommandOrControl+Shift+V', true)).toBe('⌘⇧V')
+    expect(formatAcceleratorDisplay('CommandOrControl+Shift+V', false)).toBe('Ctrl+Shift+V')
+    expect(formatAcceleratorDisplay('CmdOrCtrl+Alt+F1', true)).toBe('⌘⌥F1')
+    expect(formatAcceleratorDisplay('Control+K', false)).toBe('Ctrl+K')
+    // Never throws; an empty value passes through unchanged.
+    expect(formatAcceleratorDisplay('', true)).toBe('')
   })
 })
