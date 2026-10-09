@@ -113,7 +113,6 @@ import { getFileManagerName } from '@/lib/platform'
 import { rendererLog } from '@/lib/logger'
 import { ActionRegistryProvider } from '@/actions'
 import { OmniboxHost } from '@/platform/OmniboxHost'
-import { HotkeyDictationHost } from '@/voice/hotkey-dictation-host'
 import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
@@ -2773,7 +2772,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}
           <OmniboxHost />
-          <HotkeyDictationHost />
           <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspaceForUI} />
 
           {/* Splash screen overlay - fades out when fully ready */}
