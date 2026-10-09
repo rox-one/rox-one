@@ -110,6 +110,12 @@ export { handleWikiApply } from './wiki-apply.ts';
 export { handleSkillsSearch, SKILLS_SEARCH_MAX_LIMIT } from './skills-search.ts';
 export { handleSkillsRead, SKILLS_READ_MAX_CHARS } from './skills-read.ts';
 
+// Developer Space tools (spec 02 §9; artifact reads + propose via the registered
+// dev-space runtime — propose only ever drafts, it never applies)
+export { handleDevSpaceRead, DEVSPACE_READ_MAX_CONTENT_CHARS } from './dev-space-read.ts';
+export { handleDevSpaceSearch, DEVSPACE_SEARCH_MAX_LIMIT } from './dev-space-search.ts';
+export { handleDevSpacePropose, parseDevSpaceProposeOps } from './dev-space-propose.ts';
+
 // Pages
 export {
   handleListPages,

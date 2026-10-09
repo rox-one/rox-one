@@ -193,13 +193,17 @@ export const EXPECTED_CHANNELS: string[] = [
   'devSpace:capabilities',
   'devSpace:changed',
   'devSpace:cloneProgress',
+  'devSpace:generateQuestions',
+  'devSpace:listArtifacts',
   'devSpace:listRepositories',
   'devSpace:listRuns',
+  'devSpace:readArtifact',
   'devSpace:refreshRepository',
   'devSpace:removeRepository',
   'devSpace:runProgress',
   'devSpace:softSignal',
   'devSpace:startClone',
+  'devSpace:startRun',
   'diagnostics:getLast',
   'diagnostics:run',
   'dialog:openFolder',
@@ -1031,4 +1035,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'workspaces:updateRemote',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1027
+export const EXPECTED_CHANNEL_COUNT = 1031

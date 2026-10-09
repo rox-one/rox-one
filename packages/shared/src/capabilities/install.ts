@@ -58,7 +58,7 @@ export type ProvenanceToolRecord = {
   license: string | null
   highRisk: boolean
   enabled: boolean
-  ref: string
+  ref: string | null
   status: MarketplaceLockRecord['status'] | 'available'
 }
 

@@ -15,7 +15,7 @@ afterEach(() => {
 })
 
 describe('workspace startup MCP default selection', () => {
-  for (const selection of [[], ['notes', 'deepwiki']]) {
+  for (const selection of [[], ['notes', 'context7']]) {
     it(`preserves the saved selection ${JSON.stringify(selection)} while provisioning missing servers`, () => {
       const root = mkdtempSync(join(tmpdir(), 'workspace-mcp-choice-'))
       roots.push(root)

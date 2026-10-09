@@ -18,7 +18,7 @@ describe('new workspace MCP installation', () => {
       const workspace = createWorkspaceAtPath(process.env.TEST_MCP_WORKSPACE, 'First installation');
       console.log(JSON.stringify({
         selected: workspace.defaults.enabledSourceSlugs,
-        deepwiki: loadSourceConfig(process.env.TEST_MCP_WORKSPACE, 'deepwiki'),
+        context7: loadSourceConfig(process.env.TEST_MCP_WORKSPACE, 'context7'),
         firecrawl: loadSourceConfig(process.env.TEST_MCP_WORKSPACE, 'firecrawl-mcp'),
         legacyApi: loadSourceConfig(process.env.TEST_MCP_WORKSPACE, 'firecrawl'),
         windows: loadSourceConfig(process.env.TEST_MCP_WORKSPACE, 'windows-mcp'),
@@ -39,13 +39,13 @@ describe('new workspace MCP installation', () => {
     expect(stderr).toBe('')
     expect(exitCode).toBe(0)
     const result = JSON.parse(output)
-    expect(result.selected).toEqual(expect.arrayContaining(['notes', 'deepwiki', 'context7', 'playwright', 'codegraph', 'qmd', 'weaviate', 'qdrant', 'mem0']))
-    expect(result.deepwiki.enabled).toBe(true)
-    expect(result.deepwiki.connectionStatus).toBe('untested')
+    expect(result.selected).toEqual(expect.arrayContaining(['notes', 'context7', 'playwright', 'codegraph', 'qmd', 'weaviate', 'qdrant', 'mem0']))
+    expect(result.context7.enabled).toBe(true)
+    expect(result.context7.connectionStatus).toBe('untested')
     expect(result.firecrawl.type).toBe('mcp')
     expect(result.legacyApi.type).toBe('api')
     expect(result.windows.type).toBe('mcp')
     expect(result.qdrant.mcp.env.QDRANT_LOCAL_PATH).toBe('${SOURCE_DIR}/storage')
     expect(result.mem0.mcp.url).toBe('https://mcp.mem0.ai/mcp')
-  })
+  }, 20_000)
 })

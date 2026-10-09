@@ -40,7 +40,7 @@ describe('system prompt guidance', () => {
 
     expect(prompt).toContain('Use connected MCP sources whenever their capabilities are relevant')
     expect(prompt).toContain('Context7: current library and framework documentation')
-    expect(prompt).toContain('DeepWiki: understanding public repositories')
+    expect(prompt).not.toContain('DeepWiki')
     expect(prompt).toContain('Firecrawl: web search, crawling, page extraction')
     expect(prompt).toContain('CodeGraph: repository structure')
     expect(prompt).toContain('Playwright: browser interaction')
