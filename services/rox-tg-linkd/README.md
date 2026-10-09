@@ -195,7 +195,9 @@ services/rox-tg-linkd/deploy/install-ct.sh root@100.126.90.2   # build + rsync +
   (`/var/lib/rox-tg-linkd/links.sqlite`), `ProtectSystem=strict`, loopback only.
 * The website calls it through `TG_LINKD_URL`/`TG_LINKD_TOKEN`; the desktop's
   `ROX_TG_LINK_URL` defaults to `https://rox.one`, whose website proxy forwards
-  `/api/link/*` to this daemon and adds the daemon bearer server-side.
+  `/api/link/*` to this daemon and adds the daemon bearer server-side. The
+  desktop presents the proxy's own bearer in `ROX_TG_LINK_TOKEN` (the value of
+  the website's `ROX_TG_LINK_PUBLIC_TOKEN`).
 * Never run this service and a local desktop daemon against the same bot at the
   same time — `getUpdates` would 409 for one of them.
 
