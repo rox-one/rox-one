@@ -166,6 +166,37 @@ describe('system prompt memory injection', () => {
   })
 })
 
+describe('system prompt curated bootstrap injection (c1.4)', () => {
+  beforeEach(() => {
+    mockIncludeCoAuthoredBy = true
+  })
+
+  it('injects the curated bootstrap block when present', () => {
+    const bootstrapBlock = ['', '[Curated memory]', '', '## projects/demo/MEMORY.md', 'Deploy previews go through vercel.', ''].join('\n')
+    const lessonsBlock = formatLessonsForPrompt([lesson('a rule')])
+    const prompt = getSystemPrompt(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      true,
+      projectCtx(),
+      { bootstrapBlock, lessonsBlock },
+    )
+    expect(prompt).toContain('[Curated memory]')
+    expect(prompt).toContain('Deploy previews go through vercel.')
+    // Curated memory precedes the lesson corrections.
+    expect(prompt.indexOf('[Curated memory]')).toBeLessThan(prompt.indexOf(LESSONS_HEADER))
+  })
+
+  it('omits the curated block when absent', () => {
+    const prompt = getSystemPrompt(undefined, undefined, undefined, undefined, undefined, undefined, true)
+    expect(prompt).not.toContain('[Curated memory]')
+  })
+})
+
 describe('formatSourceRetrieveForPrompt', () => {
   it('returns empty string for no hits', () => {
     expect(formatSourceRetrieveForPrompt([])).toBe('')

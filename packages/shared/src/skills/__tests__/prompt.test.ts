@@ -89,3 +89,28 @@ describe('composeOmpAppendSystemPrompt placement', () => {
     expect(payload).not.toContain('<available_skills>');
   });
 });
+
+describe('composeOmpAppendSystemPrompt memory blocks', () => {
+  it('includes the curated bootstrap block before lessons and memory', () => {
+    const payload = composeOmpAppendSystemPrompt({
+      workingDirectory: process.cwd(),
+      memoryBlocks: {
+        bootstrapBlock: '[Curated memory]\n## projects/demo/MEMORY.md\nDeploy previews go through vercel.',
+        lessonsBlock: '[Learned corrections]',
+        memoryBlock: '<memory>memory-block</memory>',
+      },
+    });
+    expect(payload).toContain('[Curated memory]');
+    expect(payload).toContain('Deploy previews go through vercel.');
+    expect(payload.indexOf('[Curated memory]')).toBeLessThan(payload.indexOf('[Learned corrections]'));
+    expect(payload.indexOf('[Learned corrections]')).toBeLessThan(payload.indexOf('<memory>'));
+  });
+
+  it('omits the curated block when absent', () => {
+    const payload = composeOmpAppendSystemPrompt({
+      workingDirectory: process.cwd(),
+      memoryBlocks: { lessonsBlock: '[Learned corrections]' },
+    });
+    expect(payload).not.toContain('[Curated memory]');
+  });
+});

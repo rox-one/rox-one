@@ -18,7 +18,7 @@ import {
   searchMemoryIndex,
   type ChunkSourceDoc,
 } from '../chunk-index'
-import { MemoryIndexService, collectMemorySourceDocs, memoryIndexServiceFor } from '../MemoryIndexService'
+import { MemoryIndexService, collectMemorySourceDocs, memoryHistoryRelPath, memoryIndexServiceFor } from '../MemoryIndexService'
 import { buildMemoryBootstrap } from '../bootstrap'
 import { classifyMemoryOrigin, isMemoryOriginEligibleForAutomaticInjection } from '../provenance-gate'
 import type { MemoryChunkProvenance } from '@rox/shared/memory/types'
@@ -89,6 +89,32 @@ describe('backend parity (c1.1)', () => {
     expect(a.length).toBeGreaterThan(0)
   })
 
+  test('FTS5 and JS backends agree on tokenizer-sensitive tokens (_ and diacritics)', () => {
+    const dir = tmp()
+    const docs: ChunkSourceDoc[] = [
+      { path: 'a.md', content: 'the memory_index table tracks embeddings', provenance: AGENT },
+      { path: 'b.md', content: 'memory index is a different phrase entirely', provenance: AGENT },
+      { path: 'c.md', content: 'we drink café every morning', provenance: AGENT },
+      { path: 'd.md', content: 'cafe without the accent', provenance: AGENT },
+    ]
+    const chunks = chunkDocuments(docs)
+    const fts = new Fts5MemoryIndexBackend(join(dir, 'chunk-index.db'))
+    const js = new JsMemoryIndexBackend(join(dir, 'chunk-index.jsonl'))
+    fts.replaceAll(chunks)
+    js.replaceAll(chunks)
+    try {
+      for (const query of ['memory_index', 'memory index', 'café', 'cafe']) {
+        const ftsHits = searchMemoryIndex(fts, query, 10)
+        const jsHits = searchMemoryIndex(js, query, 10)
+        expect(jsHits.map(r => r.chunk.chunkId)).toEqual(ftsHits.map(r => r.chunk.chunkId))
+        expect(jsHits.map(r => r.score)).toEqual(ftsHits.map(r => r.score))
+      }
+    } finally {
+      fts.close()
+      js.close()
+    }
+  })
+
   test('factory picks FTS5 under bun', () => {
     const backend = createMemoryIndexBackend(tmp())
     expect(backend.kind).toBe('fts5')
@@ -135,6 +161,39 @@ describe('index identity + rebuild (c1.1)', () => {
     const fresh = service(dir)
     expect(fresh.status().state).toBe('stale')
     expect(fresh.rebuild().state).toBe('ready')
+  })
+
+  test('a changed source corpus marks the persisted index stale', () => {
+    const dir = tmp()
+    let docs = corpus()
+    const svc = new MemoryIndexService({ workspaceRoot: dir, workspaceId: 'ws', collectDocs: () => docs })
+    svc.rebuild()
+    expect(svc.status().state).toBe('ready')
+    // Append a document the persisted build never saw.
+    docs = [...docs, { path: 'memory/history/2026-02-01.md', content: 'A brand new durable note.', provenance: AGENT }]
+    expect(svc.status().state).toBe('stale')
+    expect(svc.rebuild().state).toBe('ready')
+    expect(svc.status().state).toBe('ready')
+  })
+
+  test('an index built under a different backend is stale', () => {
+    const dir = tmp()
+    const svc = service(dir)
+    svc.rebuild()
+    expect(svc.status().state).toBe('ready')
+    const metaPath = join(dir, 'memory', CHUNK_META_FILE)
+    const meta = JSON.parse(readFileSync(metaPath, 'utf8')) as { backend: string }
+    // Pretend the index was built by the OTHER runtime's backend.
+    meta.backend = probeMemoryIndexCapability().fts5 ? 'js' : 'fts5'
+    writeFileSync(metaPath, JSON.stringify(meta))
+    const fresh = service(dir)
+    expect(fresh.status().state).toBe('stale')
+    expect(fresh.rebuild().state).toBe('ready')
+  })
+
+  test('history relative paths survive backslash separators (Windows)', () => {
+    expect(memoryHistoryRelPath('C:\\ws\\memory\\history\\2026-01-02.md')).toBe('memory/history/2026-01-02.md')
+    expect(memoryHistoryRelPath('/tmp/ws/memory/history/2026-01-02.md')).toBe('memory/history/2026-01-02.md')
   })
 })
 

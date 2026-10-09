@@ -7,7 +7,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MemoryIndexService, resetMemoryIndexServiceCache } from '../MemoryIndexService'
-import { buildMemoryToolCallbacks } from '../tool-callbacks'
+import { buildMemoryToolCallbacks, memoryToolCallbacksForSession } from '../tool-callbacks'
 import { MemoryService } from '../MemoryService'
 import { MemoryFileStore } from '../MemoryFileStore'
 import { LessonStore } from '../LessonStore'
@@ -58,6 +58,22 @@ describe('buildMemoryToolCallbacks (c1.3)', () => {
     const got = await callbacks.get({ chunkId: hit.chunkId })
     expect(got.content[0]!.text).toContain(hit.text)
     expect((await callbacks.get({ chunkId: 'nope' })).content[0]!.text).toContain('No memory chunk')
+    index.close()
+  })
+})
+
+describe('memoryToolCallbacksForSession (F3)', () => {
+  test('absent for temporary / no-scope sessions, present otherwise', () => {
+    const dir = tmp()
+    const index = new MemoryIndexService({ workspaceRoot: dir, workspaceId: 'ws', collectDocs: docs })
+    expect(memoryToolCallbacksForSession({ memoryMode: 'persistent' }, index)).toBeDefined()
+    expect(memoryToolCallbacksForSession(undefined, index)).toBeDefined()
+    expect(memoryToolCallbacksForSession({ memoryMode: 'incognito' }, index)).toBeDefined()
+    expect(memoryToolCallbacksForSession({ memoryMode: 'temporary' }, index)).toBeUndefined()
+    expect(memoryToolCallbacksForSession({ memoryScope: 'none' }, index)).toBeUndefined()
+    expect(memoryToolCallbacksForSession({ memoryMode: 'persistent', memoryScope: 'none' }, index)).toBeUndefined()
+    // No index (workspace memory disabled) → absent regardless of mode.
+    expect(memoryToolCallbacksForSession({ memoryMode: 'persistent' }, undefined)).toBeUndefined()
     index.close()
   })
 })

@@ -13,6 +13,7 @@
  * from the document body.
  */
 import type { MemoryChunkProvenance, MemoryOriginClass, MemorySessionKind } from '@rox/shared/memory/types'
+import { isMemoryOriginInjectable } from '@rox/shared/memory/document-provenance'
 
 /**
  * Map a producing session kind to an origin class.
@@ -65,5 +66,5 @@ export function memoryProvenanceFor(
  * (curated, human-facing) are excluded from automatic injection.
  */
 export function isMemoryOriginEligibleForAutomaticInjection(origin: MemoryOriginClass | undefined | null): boolean {
-  return origin === 'owner' || origin === 'agent'
+  return isMemoryOriginInjectable(origin)
 }

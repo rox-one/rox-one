@@ -509,8 +509,27 @@ export function createMemoryIndexBackend(memoryDir: string): MemoryIndexBackend 
     : new JsMemoryIndexBackend(join(memoryDir, CHUNK_STORE_FILE))
 }
 
-/** Ranked search through the shared scorer over a backend's candidate set. */
+/**
+ * Ranked search through the shared scorer over a backend's candidate set.
+ *
+ * The two backends select candidates with DIFFERENT tokenizers: the JS backend
+ * uses `tokenizeMemoryText` (underscore kept, diacritics preserved) while FTS5
+ * applies its own unicode61 analyzer (`_` split, diacritics folded). FTS5
+ * therefore admits chunks the JS scorer can never match, which would inflate
+ * the candidate count and shift idf/avgdl. We re-filter every backend's
+ * candidates down to chunks that are JS-token-visible for the query BEFORE
+ * scoring, so both runtimes hash the same candidate set and produce identical
+ * order and scores.
+ */
 export function searchMemoryIndex(backend: MemoryIndexBackend, query: string, limit: number): RankedChunk[] {
   const capped = Math.min(Math.max(Math.trunc(limit) || 0, 1), 200)
-  return rankMemoryChunks(backend.candidateChunks(query), query).slice(0, capped)
+  const terms = new Set(tokenizeMemoryText(query))
+  const candidates = backend.candidateChunks(query).filter(c => {
+    if (terms.size === 0) return false
+    for (const token of tokenizeMemoryText(c.text)) {
+      if (terms.has(token)) return true
+    }
+    return false
+  })
+  return rankMemoryChunks(candidates, query).slice(0, capped)
 }

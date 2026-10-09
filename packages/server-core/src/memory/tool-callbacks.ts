@@ -8,6 +8,7 @@
  * marked so the model never treats them as trusted instructions.
  */
 import { successResponse, type MemoryToolCallbacks } from '@rox/session-tools-core'
+import type { SessionMemoryMode } from '@rox/core/types'
 import { isMemoryOriginEligibleForAutomaticInjection } from './provenance-gate'
 import type { MemoryIndexService } from './MemoryIndexService'
 
@@ -60,4 +61,21 @@ export function buildMemoryToolCallbacks(index: MemoryIndexService): MemoryToolC
       )
     },
   }
+}
+
+/**
+ * Wire the session's memory tools only when the session may read/write memory.
+ *
+ * Reuses the prompt path's predicate (spec F3): a `temporary` memory mode or an
+ * agent profile captured with `memoryScope: 'none'` means no memory read and no
+ * memory write, so the `memory_search` / `memory_get` callbacks are absent
+ * entirely (the handlers then report a truthful "unavailable"). Returns
+ * undefined when the workspace has no memory service/index either.
+ */
+export function memoryToolCallbacksForSession(
+  mode: { memoryMode?: SessionMemoryMode; memoryScope?: string } | undefined,
+  index: MemoryIndexService | undefined,
+): MemoryToolCallbacks | undefined {
+  if (mode?.memoryMode === 'temporary' || mode?.memoryScope === 'none') return undefined
+  return index ? buildMemoryToolCallbacks(index) : undefined
 }
