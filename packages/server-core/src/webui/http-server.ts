@@ -10,8 +10,7 @@
  *    for separate-port deployments or development.
  */
 
-import { join, extname, resolve } from 'node:path'
-import { isPathInsideBase } from '../utils/path-validation'
+import { join, extname } from 'node:path'
 import {
   RateLimiter,
   initPasswordHash,
@@ -20,11 +19,33 @@ import {
   validateSession,
   buildSessionCookie,
   buildLogoutCookie,
+  buildOidcStateCookie,
+  buildClearedOidcStateCookie,
+  extractOidcStateCookie,
+  constantTimeEqual,
+  readOidcConfigFromEnv,
+  discoverOidc,
+  verifyOidcIdTokenWithJwks,
+  createPkcePair,
+  createRandomToken,
+  type OidcConfig,
+  type OidcLoginState,
   HandoffTokenStore,
 } from './auth'
 import { withWebuiSecurityHeaders } from './csp'
+import { resolveWebuiFile } from './static-file'
+import {
+  MEDIA_PATH_PREFIX,
+  createMediaTicket,
+  mediaSessionFingerprint,
+  resolveMediaFile,
+  verifyMediaTicket,
+} from './media-ticket'
 import { generateCallbackPage } from '@rox/shared/auth'
 import type { PlatformServices } from '../runtime/platform'
+
+// Re-exported for the existing WebUI callers/tests that import it from here.
+export { resolveWebuiFile } from './static-file'
 
 // ---------------------------------------------------------------------------
 // MIME types for static file serving
@@ -51,26 +72,6 @@ const MIME_TYPES: Record<string, string> = {
 
 function getMimeType(path: string): string {
   return MIME_TYPES[extname(path).toLowerCase()] ?? 'application/octet-stream'
-}
-
-/**
- * Resolve a URL path to a file inside webuiDir. Rejects traversal, absolute
- * segments, and NUL bytes so /login-assets/../… cannot read the host.
- */
-export function resolveWebuiFile(webuiDir: string, urlPath: string): string | null {
-  let decoded: string
-  try {
-    decoded = decodeURIComponent(urlPath)
-  } catch {
-    return null
-  }
-  const trimmed = decoded.split('?')[0]?.split('#')[0] ?? ''
-  if (!trimmed || trimmed.includes('\0')) return null
-  const relative = trimmed.replace(/^\/+/, '')
-  if (!relative) return null
-  const resolved = resolve(webuiDir, relative)
-  if (!isPathInsideBase(resolved, webuiDir)) return null
-  return resolved
 }
 
 function getForwardedValue(req: Request, key: 'proto' | 'host'): string | null {
@@ -254,6 +255,65 @@ export function resolveWebSocketUrl(
 // Handler options (shared between embedded and standalone modes)
 // ---------------------------------------------------------------------------
 
+const OIDC_STATE_TTL_MS = 10 * 60_000
+
+/**
+ * Hard cap on concurrent pending OIDC login records. `GET /api/auth/login` is
+ * unauthenticated and previously inserted one (verifier+nonce) record per
+ * request with only a 10-minute TTL sweep, so an attacker could grow the map
+ * without bound (memory DoS). Beyond this maximum the oldest record is evicted
+ * (Map iteration is insertion-ordered) so a legitimate in-flight login is only
+ * dropped under sustained abuse.
+ */
+const OIDC_MAX_PENDING_LOGINS = 256
+
+/** Lifetime of the one-time OIDC `state` cookie — matches the server-side TTL. */
+const OIDC_STATE_COOKIE_MAX_AGE_SECONDS = Math.floor(OIDC_STATE_TTL_MS / 1000)
+
+/**
+ * Minimal, honest Russian error page for failed Rox ID logins. No stack traces
+ * or internal error identifiers leak to the browser.
+ */
+function renderLoginErrorPage(message: string): string {
+  const escapes: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }
+  const escaped = message.replace(/[&<>"']/g, char => escapes[char] ?? char)
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rox — Ошибка входа</title>
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f8f8fa; color: #1a1a2e; padding: 16px; }
+    .card { max-width: 28rem; width: 100%; padding: 32px; background: #fff; border: 1px solid #e4e4e8; border-radius: 20px; text-align: center; box-shadow: 0 32px 96px rgba(41, 25, 63, 0.14); }
+    h1 { font-size: 20px; font-weight: 600; margin: 0 0 12px; }
+    p { font-size: 14px; line-height: 1.5; color: rgba(26, 26, 46, 0.64); margin: 0 0 20px; }
+    a { display: inline-block; padding: 10px 18px; font-size: 14px; font-weight: 500; color: #fff; background: #6d5dfc; border-radius: 8px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Не удалось войти</h1>
+    <p>${escaped}</p>
+    <a href="/login">Вернуться к входу</a>
+  </div>
+</body>
+</html>`
+}
+
+function loginErrorResponse(message: string, status: number, extraHeaders?: Record<string, string>): Response {
+  return new Response(renderLoginErrorPage(message), {
+    status,
+    headers: { 'Content-Type': 'text/html; charset=utf-8', ...extraHeaders },
+  })
+}
+
 /** Dependencies for the /api/oauth/callback HTTP route (server-side OAuth completion). */
 export interface OAuthCallbackDeps {
   flowStore: { getByState: (state: string) => any; remove: (state: string) => void }
@@ -273,10 +333,31 @@ export interface WebuiHandlerOptions {
   secureCookies?: boolean
   /** Optional browser-facing WebSocket URL override for reverse-proxy deployments. */
   publicWsUrl?: string
+  /**
+   * OIDC (Pocket ID / Rox ID) configuration. When omitted, the handler reads
+   * ROX_WEBUI_OIDC_ISSUER / ROX_WEBUI_OIDC_CLIENT_ID / ROX_WEBUI_OIDC_CLIENT_SECRET /
+   * ROX_WEBUI_PUBLIC_URL from the environment. When neither is present the shared
+   * password login behaves exactly as before.
+   */
+  oidc?: OidcConfig
+  /**
+   * When OIDC is configured the shared-password route is disabled (404) so
+   * enabling Rox ID actually removes master-token access. Set this to `true`
+   * (or `ROX_WEBUI_PASSWORD_LOGIN=1` in the environment) to keep the residual
+   * password path as a deliberate operator choice. Ignored when OIDC is unset.
+   */
+  allowPasswordLogin?: boolean
   /** RPC WebSocket protocol used when building a browser-facing fallback URL. */
   wsProtocol: 'ws' | 'wss'
   /** RPC WebSocket port used when building a browser-facing fallback URL. */
   wsPort: number
+  /**
+   * Extra http(s) origins allowed for cookie-authenticated WebSocket upgrades
+   * (`CRAFT_WEBUI_ALLOWED_ORIGINS`). Each origin is admitted to the served
+   * document's `connect-src` as an explicit ws(s) origin — never as a bare
+   * scheme source.
+   */
+  allowedWebUiOrigins?: readonly string[]
   /** Health check function (injected from existing server handler). */
   getHealthCheck: () => { status: string }
   /** Logger. */
@@ -299,6 +380,24 @@ export interface WebuiHandlerOptions {
    * accepted range is 1..120 s (see `HandoffTokenStore`).
    */
   handoffTtlMs?: number
+  /**
+   * Directory whose files are served under `/media/...` behind short-lived
+   * signed tickets (see `./media-ticket`). Defaults to `<webuiDir>/media`.
+   */
+  mediaDir?: string
+}
+
+/** Request body for `POST /media/ticket`. */
+export interface MediaTicketRequest {
+  /** Server-relative media path, e.g. `/media/pic.png`. */
+  path: string
+}
+
+/** Response body for `POST /media/ticket`. */
+export interface MediaTicketResponse {
+  /** Capability URL (`<path>?ticket=<ticket>`) — the ticket must not be logged. */
+  url: string
+  expiresAt: number
 }
 
 // ---------------------------------------------------------------------------
@@ -341,11 +440,42 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     resolveClientIp,
   } = options
 
+  const mediaDir = options.mediaDir ?? join(webuiDir, 'media')
+
   const rateLimiter = new RateLimiter(5, 60_000)
-  const cleanupTimer = setInterval(() => rateLimiter.cleanup(), 120_000)
+  // OIDC is opt-in: explicit option wins, otherwise the ROX_WEBUI_* environment.
+  const oidc = options.oidc ?? readOidcConfigFromEnv()
+  const authMode: 'password' | 'oidc' = oidc ? 'oidc' : 'password'
+  const pendingOidcLogins = new Map<string, OidcLoginState & { createdAt: number }>()
+  const cleanupTimer = setInterval(() => {
+    rateLimiter.cleanup()
+    const cutoff = Date.now() - OIDC_STATE_TTL_MS
+    for (const [state, pending] of pendingOidcLogins) {
+      if (pending.createdAt < cutoff) pendingOidcLogins.delete(state)
+    }
+  }, 120_000)
+
+  // With OIDC enabled the shared-password route is disabled unless explicitly
+  // opted in, so Rox ID actually replaces master-token access.
+  const allowPasswordLogin = options.allowPasswordLogin
+    ?? process.env.ROX_WEBUI_PASSWORD_LOGIN === '1'
+  // OIDC public URLs over https always get Secure cookies; header-based
+  // inference stays in play only for http (e.g. local deployments).
+  const oidcPublicUrlIsHttps = oidc ? /^https:/i.test(oidc.publicUrl) : false
+  if (oidc && !oidcPublicUrlIsHttps) {
+    logger.warn('[webui] OIDC public URL is not https; session cookies follow request scheme inference')
+  }
 
   const loginPassword = password || secret
   const trustedProxySet = new Set(trustedProxies ?? [])
+
+  // Explicit cross-origin WebSocket endpoints admitted to `connect-src`.
+  // Bare `ws:`/`wss:` scheme sources are never emitted (they authorize any
+  // host); same-origin connections are covered by `'self'`.
+  const connectSrcOrigins = [
+    ...(publicWsUrl ? [publicWsUrl] : []),
+    ...(options.allowedWebUiOrigins ?? []),
+  ]
 
   // Hash the login password at startup (async, but resolves before first auth attempt in practice)
   const passwordReady = initPasswordHash(loginPassword)
@@ -365,10 +495,12 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     return socketIp ?? 'direct'
   }
 
-  async function route(req: Request): Promise<Response> {
+  // NOTE: named `handleRequest`, not `fetch` — a local binding named `fetch`
+  // would shadow the global `fetch` used for the OIDC token exchange below.
+  async function handleRequest(req: Request): Promise<Response> {
     const url = new URL(req.url)
     const path = url.pathname
-    const useSecureCookies = shouldUseSecureCookies(req, secureCookies)
+    const useSecureCookies = oidcPublicUrlIsHttps || shouldUseSecureCookies(req, secureCookies)
 
     // ── Pairing handoff (token only from a header; never from the URL) ──
     if (path === '/handoff' && req.method === 'GET') {
@@ -437,6 +569,77 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
       )
     }
 
+    // ── Mint a media ticket (authenticated operator only) ──
+    // Media elements load `/media/...?ticket=…`; the ticket is a short-lived
+    // capability bound to this session and path, so the SPA never has to relax
+    // CSP or place the reusable credential in a media URL. Mirrors the handoff
+    // mint above: session cookie + same-origin required. The ticket is returned
+    // once and must never be logged.
+    if (path === '/media/ticket' && req.method === 'POST') {
+      const mintSession = await validateSession(req.headers.get('cookie'), secret)
+      if (!mintSession) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
+      }
+      if (!isSameOriginRequest(req)) {
+        logger.warn('[webui] Rejected cross-origin media ticket mint request')
+        return Response.json({ error: 'Cross-origin request rejected' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+      }
+      let body: MediaTicketRequest
+      try {
+        body = await req.json() as MediaTicketRequest
+      } catch {
+        return Response.json({ error: 'Invalid request body' }, { status: 400, headers: { 'Cache-Control': 'no-store' } })
+      }
+      if (typeof body?.path !== 'string' || !resolveMediaFile(mediaDir, body.path)) {
+        return Response.json({ error: 'Invalid media path' }, { status: 400, headers: { 'Cache-Control': 'no-store' } })
+      }
+      const fingerprint = mediaSessionFingerprint(req.headers.get('cookie'))
+      if (!fingerprint) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
+      }
+      const { ticket, expiresAt } = createMediaTicket({
+        secret,
+        path: body.path,
+        sessionFingerprint: fingerprint,
+      })
+      logger.info('[webui] Media ticket minted')
+      const response: MediaTicketResponse = {
+        url: `${body.path}?ticket=${encodeURIComponent(ticket)}`,
+        expiresAt,
+      }
+      return Response.json(response, { status: 200, headers: { 'Cache-Control': 'no-store' } })
+    }
+
+    // ── Media (signed ticket only) ──
+    // Authorised solely by the ticket (the ticket itself is bound to the
+    // session cookie presented here). Uniform 403 on every failure mode so a
+    // caller cannot tell expired from tampered from cross-session, and the
+    // ticket is never echoed or logged.
+    if (path.startsWith(MEDIA_PATH_PREFIX) && req.method === 'GET') {
+      const rejected = () => {
+        logger.warn('[webui] Media request rejected')
+        return Response.json({ error: 'Media ticket rejected' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+      }
+      const verified = verifyMediaTicket(url.searchParams.get('ticket'), {
+        secret,
+        path,
+        sessionFingerprint: mediaSessionFingerprint(req.headers.get('cookie')),
+      })
+      if (!verified) return rejected()
+      const safePath = resolveMediaFile(mediaDir, verified.path)
+      if (!safePath) return rejected()
+      const file = Bun.file(safePath)
+      if (!(await file.exists())) {
+        return new Response(null, { status: 404, headers: { 'Cache-Control': 'no-store' } })
+      }
+      return new Response(file, {
+        headers: {
+          'Content-Type': getMimeType(path),
+          'Cache-Control': 'private, no-store',
+        },
+      })
+    }
+
     // ── Health endpoint (no auth) ──
     if (path === '/health') {
       const health = getHealthCheck()
@@ -469,8 +672,148 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
       return new Response('Not Found', { status: 404 })
     }
 
+    // ── Auth mode probe (no auth) — the login page reads this before signing in ──
+    if (path === '/api/auth/config' && req.method === 'GET') {
+      return Response.json({ authMode })
+    }
+
+    // ── OIDC login: redirect to the IdP authorization endpoint with PKCE ──
+    if (path === '/api/auth/login' && req.method === 'GET') {
+      if (!oidc) return new Response('OIDC login is not enabled', { status: 404 })
+
+      // Unauthenticated route that allocates pending state: apply the same
+      // per-IP rate limit as the password POST before doing any work.
+      const ip = getClientIp(req)
+      if (!rateLimiter.check(ip)) {
+        logger.warn(`[webui] Rate limited OIDC login start from ${ip}`)
+        return loginErrorResponse('Слишком много попыток входа. Попробуйте позже.', 429)
+      }
+
+      try {
+        const discovery = await discoverOidc(oidc.issuer)
+        const state = createRandomToken(16)
+        const nonce = createRandomToken(16)
+        const { codeVerifier, codeChallenge } = createPkcePair()
+
+        // Bound the pending map: evict the oldest record before inserting.
+        if (pendingOidcLogins.size >= OIDC_MAX_PENDING_LOGINS) {
+          const oldest = pendingOidcLogins.keys().next().value
+          if (oldest !== undefined) pendingOidcLogins.delete(oldest)
+        }
+        pendingOidcLogins.set(state, { codeVerifier, nonce, createdAt: Date.now() })
+
+        const authorizationUrl = new URL(discovery.authorization_endpoint)
+        authorizationUrl.searchParams.set('response_type', 'code')
+        authorizationUrl.searchParams.set('client_id', oidc.clientId)
+        authorizationUrl.searchParams.set('redirect_uri', `${oidc.publicUrl}/api/auth/callback`)
+        authorizationUrl.searchParams.set('scope', 'openid profile email')
+        authorizationUrl.searchParams.set('state', state)
+        authorizationUrl.searchParams.set('nonce', nonce)
+        authorizationUrl.searchParams.set('code_challenge', codeChallenge)
+        authorizationUrl.searchParams.set('code_challenge_method', 'S256')
+
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: authorizationUrl.toString(),
+            // One-time binding of this login to the initiating browser (see auth.ts).
+            'Set-Cookie': buildOidcStateCookie(state, useSecureCookies, OIDC_STATE_COOKIE_MAX_AGE_SECONDS),
+          },
+        })
+      } catch (err) {
+        logger.error(`[webui] OIDC login start failed: ${err instanceof Error ? err.message : 'unknown'}`)
+        return loginErrorResponse('Сервис Rox ID сейчас недоступен. Попробуйте позже.', 502)
+      }
+    }
+
+    // ── OIDC callback: validate state, exchange the code, verify id_token ──
+    if (path === '/api/auth/callback' && req.method === 'GET') {
+      if (!oidc) return new Response('Not Found', { status: 404 })
+
+      const clearStateCookie = { 'Set-Cookie': buildClearedOidcStateCookie(useSecureCookies) }
+      const state = url.searchParams.get('state')
+      const cookieState = extractOidcStateCookie(req.headers.get('cookie'))
+
+      // Bind the callback to the browser that started the login: the one-time
+      // oidc_state cookie must match the state query param exactly (login CSRF /
+      // session-fixation guard) before any state lookup, code exchange or minting.
+      if (!state || !cookieState || !constantTimeEqual(cookieState, state)) {
+        return loginErrorResponse('Запрос входа не соответствует этой сессии браузера. Начните вход заново.', 400)
+      }
+
+      const code = url.searchParams.get('code')
+      const pending = pendingOidcLogins.get(state)
+      pendingOidcLogins.delete(state)
+
+      if (!pending || Date.now() - pending.createdAt > OIDC_STATE_TTL_MS) {
+        return loginErrorResponse('Сессия входа истекла или параметр state недействителен. Начните вход заново.', 400, clearStateCookie)
+      }
+      if (url.searchParams.get('error')) {
+        return loginErrorResponse('Провайдер Rox ID отклонил вход. Попробуйте ещё раз.', 400, clearStateCookie)
+      }
+      if (!code) {
+        return loginErrorResponse('Провайдер Rox ID не вернул код авторизации.', 400, clearStateCookie)
+      }
+
+      try {
+        const discovery = await discoverOidc(oidc.issuer)
+        const form = new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: `${oidc.publicUrl}/api/auth/callback`,
+          client_id: oidc.clientId,
+          code_verifier: pending.codeVerifier,
+        })
+        if (oidc.clientSecret) form.set('client_secret', oidc.clientSecret)
+
+        const tokenResponse = await fetch(discovery.token_endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: 'application/json',
+          },
+          body: form.toString(),
+        })
+        if (!tokenResponse.ok) throw new Error(`token endpoint returned ${tokenResponse.status}`)
+        const tokenBody: unknown = await tokenResponse.json()
+        if (typeof tokenBody !== 'object' || tokenBody === null || !('id_token' in tokenBody)
+          || typeof tokenBody.id_token !== 'string') {
+          throw new Error('token endpoint did not return an id_token')
+        }
+
+        const user = await verifyOidcIdTokenWithJwks(tokenBody.id_token, {
+          jwksUri: discovery.jwks_uri,
+          issuer: oidc.issuer,
+          clientId: oidc.clientId,
+          nonce: pending.nonce,
+        })
+
+        const jwt = await createSessionToken(secret, {
+          sub: user.sub,
+          email: user.email,
+          name: user.name,
+          username: user.username,
+          issuer: oidc.issuer,
+        })
+        logger.info(`[webui] OIDC login succeeded for ${user.sub}`)
+
+        const successHeaders = new Headers()
+        successHeaders.set('Location', '/')
+        successHeaders.append('Set-Cookie', buildSessionCookie(jwt, useSecureCookies))
+        successHeaders.append('Set-Cookie', buildClearedOidcStateCookie(useSecureCookies))
+        return new Response(null, { status: 302, headers: successHeaders })
+      } catch (err) {
+        logger.warn(`[webui] OIDC callback failed: ${err instanceof Error ? err.message : 'unknown'}`)
+        return loginErrorResponse('Не удалось завершить вход через Rox ID. Попробуйте ещё раз.', 400, clearStateCookie)
+      }
+    }
+
     // ── Auth endpoint ──
     if (path === '/api/auth' && req.method === 'POST') {
+      // With OIDC enabled, password login is a deliberate opt-in; otherwise the
+      // route does not exist so master-token access is genuinely removed.
+      if (oidc && !allowPasswordLogin) return new Response('Not Found', { status: 404 })
+
       await passwordReady
       const ip = getClientIp(req)
 
@@ -510,12 +853,41 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     }
 
     // ── Logout endpoint ──
-    if (path === '/api/auth/logout' && req.method === 'POST') {
+    if (path === '/api/auth/logout' && (req.method === 'POST' || req.method === 'GET')) {
+      if (req.method === 'GET') {
+        // Browser-facing logout: clear the cookie and return to the login page.
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: '/login',
+            'Set-Cookie': buildLogoutCookie(useSecureCookies),
+          },
+        })
+      }
       return new Response(null, {
         status: 204,
         headers: {
           'Set-Cookie': buildLogoutCookie(useSecureCookies),
         },
+      })
+    }
+
+    // ── Current session identity (requires a session cookie) ──
+    if (path === '/api/auth/me' && req.method === 'GET') {
+      const session = await validateSession(req.headers.get('cookie'), secret)
+      if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      const isUserSession = session.sub !== 'webui' || !!session.email || !!session.name || !!session.username
+      return Response.json({
+        authMode,
+        ...(session.issuer ?? oidc?.issuer ? { issuer: session.issuer ?? oidc?.issuer } : {}),
+        user: isUserSession
+          ? {
+              sub: session.sub,
+              ...(session.email ? { email: session.email } : {}),
+              ...(session.name ? { name: session.name } : {}),
+              ...(session.username ? { username: session.username } : {}),
+            }
+          : null,
       })
     }
 
@@ -588,6 +960,9 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
       }
       return Response.json({
         wsUrl: resolveWebSocketUrl(req, { publicWsUrl, wsProtocol, wsPort }),
+        // Password mode keeps its exact historical response shape; OIDC mode
+        // advertises the auth mode so the client can adapt.
+        ...(oidc ? { authMode } : {}),
       })
     }
 
@@ -642,7 +1017,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
   }
 
   return {
-    fetch: async (req: Request) => withWebuiSecurityHeaders(await route(req)),
+fetch: async (req: Request) => withWebuiSecurityHeaders(await handleRequest(req), connectSrcOrigins),
     dispose: () => {
       clearInterval(cleanupTimer)
       clearInterval(handoffCleanupTimer)

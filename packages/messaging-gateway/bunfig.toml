@@ -2,7 +2,7 @@
 # cwd, so a directory-local file REPLACES the root config for local runs —
 # every root section must be replicated or it silently vanishes).
 # Leak-class fix 2026-08-23: without this, `bun test` inside the package
-# skipped isolation and silently read/wrote the live ~/.craft-agent.
+# skipped isolation and silently read/wrote the live config dir.
 preload = ["../../packages/shared/src/unified-network-interceptor.ts"]
 
 # Use the hoisted linker so transitive deps resolve at top-level node_modules

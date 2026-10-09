@@ -13,7 +13,7 @@ function generatePanelId(): string {
   return `panel-${++nextPanelId}-${Date.now()}`
 }
 
-export type PanelType = 'session' | 'source' | 'settings' | 'skills' | 'browser' | 'knowledge' | 'other'
+export type PanelType = 'session' | 'source' | 'settings' | 'skills' | 'browser' | 'knowledge' | 'clipboard-history' | 'other'
 export type PanelLaneId = 'main'
 export type OpenIntent = 'implicit' | 'explicit'
 
@@ -39,7 +39,7 @@ export const PANEL_LANE_POLICIES: Record<PanelLaneId, PanelLanePolicy> = {
   main: {
     id: 'main',
     order: 0,
-    allowedTypes: ['session', 'source', 'settings', 'skills', 'browser', 'knowledge', 'other'],
+    allowedTypes: ['session', 'source', 'settings', 'skills', 'browser', 'knowledge', 'clipboard-history', 'other'],
     locked: false,
     singleton: false,
   },
@@ -60,6 +60,13 @@ export const panelStackAtom = atom<PanelStackEntry[]>([])
 const focusedPanelIdValueAtom = atom<string | null>(null)
 export const primaryPanelIdAtom = atom<string | null>(null)
 export const lastAuxiliaryToolAtom = atom<AuxiliaryTool | null>(null)
+/**
+ * D8: the panel currently promoted to the whole workspace, or null for the
+ * shared grid. Deliberately in-memory: panel ids are minted per session, so a
+ * persisted value would not resolve on the next launch. Writes go through
+ * `togglePanelFullScreen`/`reconcilePanelFullScreen` in panel-workspace-layout.
+ */
+export const expandedPanelIdAtom = atom<string | null>(null)
 export const focusedPanelIdAtom = atom(
   get => get(focusedPanelIdValueAtom),
   (get, set, id: string | null) => {
@@ -154,6 +161,8 @@ export function getPanelTypeFromRoute(route: ViewRoute): PanelType {
     case 'knowledge':
     case 'diff':
       return 'knowledge'
+    case 'clipboard-history':
+      return 'clipboard-history'
     case 'home':
       return 'other'
     default:
@@ -316,6 +325,10 @@ export const closePanelAtom = atom(
 
     set(panelStackAtom, normalizeProportions(remaining))
 
+    // Closing the promoted panel returns the workspace to the shared grid so
+    // no surviving sibling is left hidden behind a stale id.
+    if (get(expandedPanelIdAtom) === id) set(expandedPanelIdAtom, null)
+
     if (get(focusedPanelIdAtom) === id) {
       const newIdx = Math.min(idx, remaining.length - 1)
       set(focusedPanelIdAtom, remaining[newIdx]?.id ?? null)
@@ -389,6 +402,9 @@ export const reconcilePanelStackAtom = atom(
     }
 
     set(panelStackAtom, normalized)
+
+    const expandedId = get(expandedPanelIdAtom)
+    if (expandedId && !normalized.some(panel => panel.id === expandedId)) set(expandedPanelIdAtom, null)
 
     const focusId =
       normalized[Math.min(requestedFocusIndex, normalized.length - 1)]?.id ??

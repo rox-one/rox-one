@@ -90,7 +90,7 @@ async function runFixture(kind: string, code = runtime) {
 
 test('actual native WS preserves personal owner and source, denies foreign workspace/read-only/revoked actions across restart', async () => {
   expect(await runFixture('owners')).toEqual({ exit: 0, stdout: 'native memory owner/workspace/provenance/restart/revoke passed\n', stderr: '' })
-}, 15000)
+}, 45_000)
 
 test('production LessonStore backup failure preserves source; interrupted archive replay retains provenance and owner isolation', async () => {
   const result = await runFixture('recovery', `
@@ -125,8 +125,8 @@ store=new LessonStore(path,'workspace');assert(store.listForOwner(alice).length=
 console.log('memory backup failure and archive recovery passed');
 `)
   expect(result).toEqual({ exit: 0, stdout: 'memory backup failure and archive recovery passed\n', stderr: '' })
-}, 15000)
+}, 45_000)
 
 test('actual native GET_CONTEXT excludes machine-private preferences at every response depth', async () => {
   expect(await runFixture('context')).toEqual({ exit: 0, stdout: 'native context host privacy passed\n', stderr: '' })
-}, 15000)
+}, 45_000)

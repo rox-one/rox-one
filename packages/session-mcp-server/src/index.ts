@@ -31,6 +31,13 @@ import {
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { isDeveloperFeedbackEnabled } from '@rox/shared/feature-flags';
+import {
+  createHttpKeeperRpc,
+  handleKeeperTool,
+  KEEPER_TOOL,
+  KEEPER_TOOL_NAME,
+  type KeeperRpc,
+} from './keeper.ts';
 // Import from session-tools-core
 import {
   type SessionToolContext,
@@ -226,13 +233,16 @@ function createCodexContext(config: SessionConfig): SessionToolContext {
 // ============================================================
 
 function createSessionTools(includeDeveloperFeedback: boolean): Tool[] {
-  return getToolDefsAsJsonSchema({
+  const tools = getToolDefsAsJsonSchema({
     includeDeveloperFeedback,
   }).map(def => ({
     name: def.name,
     description: def.description,
     inputSchema: def.inputSchema as Tool['inputSchema'],
   }));
+  // Keeper is backend-specific (it talks to the desktop relay), so it is not
+  // part of the shared session-tool registry.
+  return [...tools, KEEPER_TOOL];
 }
 
 // ============================================================
@@ -407,6 +417,13 @@ async function main() {
   const includeDeveloperFeedback = isDeveloperFeedbackEnabled();
   const sessionToolRegistry = getSessionToolRegistry({ includeDeveloperFeedback });
 
+  // Keeper runs in the desktop process; the MCP server reaches it through the
+  // loopback callback relay. Without a port the tool stays registered but
+  // reports a clear error on use.
+  const keeperRpc: KeeperRpc | undefined = config.callbackPort
+    ? createHttpKeeperRpc({ port: config.callbackPort })
+    : undefined;
+
   // Create MCP server
   const server = new Server(
     {
@@ -438,6 +455,11 @@ async function main() {
       // spawn_session has backend-specific execution (precomputed result / HTTP callback)
       if (name === 'spawn_session') {
         return await handleSpawnSession(toolArgs as Record<string, unknown>, config);
+      }
+
+      // keeper is backend-specific: vault access via the desktop relay.
+      if (name === KEEPER_TOOL_NAME) {
+        return await handleKeeperTool(toolArgs, { rpc: keeperRpc });
       }
 
       // Check canonical session tool registry first (feature-filtered)

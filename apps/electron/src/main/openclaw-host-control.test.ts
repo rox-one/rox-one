@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { LOCALE_REGISTRY } from '@rox/shared/i18n'
 import {
   createOpenClawHostControlConfirmation,
@@ -6,6 +6,22 @@ import {
   OPENCLAW_HOST_CONTROL_CHANNELS,
   registerOpenClawHostControlIpc,
 } from './openclaw-host-control.ts'
+import {
+  CONCEALED_CLIPBOARD_TYPE,
+  setConcealedClipboardItemFactory,
+  type ConcealedClipboardItemFactory,
+} from './clipboard-history/conceal'
+
+/** Stand-in for Electron's `ClipboardItem`, exposing the single-format record. */
+interface FakeClipboardItem {
+  types: Record<string, string>
+}
+
+function isFakeClipboardItem(value: unknown): value is FakeClipboardItem {
+  return typeof value === 'object' && value !== null && 'types' in value
+}
+
+afterEach(() => setConcealedClipboardItemFactory(null))
 
 type Handler = (event: { sender: { id: number } }, input: unknown) => Promise<unknown>
 
@@ -16,6 +32,7 @@ function createHarness(options: { confirmed?: boolean; confirmationError?: boole
     return options.confirmed ?? true
   })
   const copied: string[] = []
+  const concealed: FakeClipboardItem[] = []
   const token = 'gateway-token-must-stay-in-main'
   const origin = 'http://127.0.0.1:42672/'
   const mainWindow = {
@@ -58,6 +75,10 @@ function createHarness(options: { confirmed?: boolean; confirmationError?: boole
     getGatewayTokenForHostControl: mock(async () => token),
   }
 
+  setConcealedClipboardItemFactory(
+    ((types: Record<string, string>) => ({ types })) as unknown as ConcealedClipboardItemFactory,
+  )
+
   registerOpenClawHostControlIpc({
     ipcMain: { handle: (channel: string, handler: Handler) => handlers.set(channel, handler) },
     windowManager: {
@@ -66,7 +87,12 @@ function createHarness(options: { confirmed?: boolean; confirmationError?: boole
     },
     runtimeManager: manager,
     confirm: confirmation,
-    clipboard: { writeText: (value: string) => copied.push(value) },
+    clipboard: {
+      writeText: (value: string) => { copied.push(value) },
+      write: (items: Electron.ClipboardItem[]) => {
+        concealed.push(...(items as unknown as unknown[]).filter(isFakeClipboardItem))
+      },
+    },
     createEphemeralSession: () => isolatedSession,
     createControlUiWindow: (value: unknown) => {
       controlOptions = value
@@ -79,6 +105,7 @@ function createHarness(options: { confirmed?: boolean; confirmationError?: boole
     handlers,
     confirmation,
     copied,
+    concealed,
     token,
     origin,
     mainWebContents,
@@ -202,7 +229,8 @@ describe('OpenClaw host-only direct IPC', () => {
         nodeIntegration: false,
       },
     })
-    expect(harness.copied).toEqual([harness.token])
+    expect(harness.copied).toEqual([])
+    expect(harness.concealed[0]!.types['text/plain']).toBe(harness.token)
     expect(JSON.stringify({ opened, copied })).not.toContain(harness.token)
 
     const navigation = harness.controlListeners.get('will-navigate')!
@@ -239,6 +267,20 @@ describe('OpenClaw host-only direct IPC', () => {
     await Promise.resolve()
     expect(harness.isolatedSession.clearStorageData).toHaveBeenCalled()
     expect(harness.isolatedSession.clearCache).toHaveBeenCalled()
+  })
+
+  it('tags the copied gateway credential with the concealed marker so the history skips it', async () => {
+    const harness = createHarness()
+    const copy = harness.handlers.get(OPENCLAW_HOST_CONTROL_CHANNELS.COPY_SETUP_CREDENTIAL)!
+
+    await copy({ sender: harness.mainWebContents }, { workspaceId: 'workspace-1' })
+
+    expect(harness.copied).toEqual([])
+    expect(harness.concealed).toHaveLength(1)
+    expect(harness.concealed[0]!.types).toEqual({
+      'text/plain': harness.token,
+      [CONCEALED_CLIPBOARD_TYPE]: '1',
+    })
   })
 
   it('allows only the manager-sourced loopback origin for Control-UI navigation', () => {

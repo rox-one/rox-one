@@ -95,7 +95,9 @@ export type NoteConversion =
 
 const VIEW_STORAGE_PREFIX = 'notes:views:'
 export const NOTES_CANVAS_STORAGE_PREFIX = 'notes:canvas:'
-export const DAILY_VAULT_FOLDER = 'daily'
+// W1-12 (#1509): the daily-note contract moved to `@rox/core/docs/daily` so the
+// rule engine, the local consumer and this view share one definition.
+export { DAILY_VAULT_FOLDER, dailyNoteDestination } from '@rox/core/docs/daily'
 
 export function notesViewsStorageKey(workspaceId: string): string {
   return `${VIEW_STORAGE_PREFIX}${workspaceId}`
@@ -544,13 +546,6 @@ export function convertNote(note: ConvertibleNote, kind: 'session-draft' | 'task
     prompt: note.markdown,
     provenance: { noteId: note.id },
   }
-}
-
-export function dailyNoteDestination(now = new Date()): { folder: string; title: string } {
-  const yyyy = now.getFullYear()
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const dd = String(now.getDate()).padStart(2, '0')
-  return { folder: DAILY_VAULT_FOLDER, title: `${yyyy}-${mm}-${dd}` }
 }
 
 export function restoreSavedViews(raw: string | null): NoteBaseView[] {

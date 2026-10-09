@@ -15,7 +15,10 @@ import { createWebApi } from './adapter/web-api'
 import type { AuthenticatedWebTransportBootstrap } from '../../electron/src/renderer/lib/authenticated-web-bootstrap'
 import { initializeAuthenticatedWebTransport } from './adapter/transport-bootstrap'
 import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
+import { WebModesLanding } from './web-modes-landing'
+import { isWebSession } from './web-modes'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { ROX_THEME_ID } from '@config/theme'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -31,7 +34,7 @@ const ElectronApp = lazy(() => import('@/App'))
 function ReadyRenderer({ bootstrap }: { bootstrap: AuthenticatedWebTransportBootstrap }) {
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   return (
-    <ThemeProvider activeWorkspaceId={workspaceId ?? bootstrap.workspaceId}>
+    <ThemeProvider activeWorkspaceId={workspaceId ?? bootstrap.workspaceId} fixedColorTheme={ROX_THEME_ID}>
       <Suspense fallback={<LoadingScreen />}>
         <ElectronApp webTransportBootstrap={bootstrap} />
       </Suspense>
@@ -90,6 +93,12 @@ export default function App() {
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
   const [bootstrap, setBootstrap] = useState<AuthenticatedWebTransportBootstrap | null>(null)
+  // null = not yet confirmed. The two-mode landing is offered only to a
+  // confirmed web session; an unconfirmed session keeps the desktop-like flow.
+  const [webSession, setWebSession] = useState<boolean | null>(null)
+  const [entered, setEntered] = useState(false)
+  // A `?sessionId=` deep link («Продолжить в веб») goes straight to its session.
+  const [directSessionId] = useState(() => new URLSearchParams(window.location.search).get('sessionId'))
 
   useEffect(() => {
     const controller = new AbortController()
@@ -98,6 +107,7 @@ export default function App() {
     setPhase('loading')
     setError('')
     setBootstrap(null)
+    setWebSession(null)
 
     void initializeAuthenticatedWebTransport({
       fetch: window.fetch.bind(window),
@@ -114,6 +124,17 @@ export default function App() {
       window.electronAPI = api
       setBootstrap(verified)
       setPhase('ready')
+      // Confirm the web session (per-user Rox ID or the legacy password) before
+      // offering the two-mode landing. `/api/auth/me` always reports `authMode`;
+      // a rejected read keeps `webSession` false and the desktop-like flow.
+      void fetch('/api/auth/me', { credentials: 'same-origin' })
+        .then(res => (res.ok ? res.json() : null))
+        .then(payload => {
+          if (!controller.signal.aborted) setWebSession(isWebSession(payload))
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setWebSession(false)
+        })
       unsubscribe = client.onConnectionStateChanged(state => {
         if (state.status === 'connected' && client.getAcknowledgedWorkspaceId() !== verified.workspaceId) {
           setError('Server acknowledged workspace does not match the configured workspace')
@@ -140,7 +161,12 @@ export default function App() {
 
   if (phase === 'loading') return <LoadingScreen />
   if (phase === 'error') return <ErrorScreen message={error} onRetry={() => setAttempt(value => value + 1)} />
-  if (!bootstrap) return <LoadingScreen />
+  if (!bootstrap || webSession === null) return <LoadingScreen />
+  // The two-mode landing is strictly a web-session entry; direct session deep
+  // links and non-web (unconfirmed) sessions mount the renderer as before.
+  if (webSession && !entered && !directSessionId) {
+    return <WebModesLanding host={window.electronAPI} onEnter={() => setEntered(true)} />
+  }
 
   return <ReadyRenderer bootstrap={bootstrap} />
 }

@@ -273,8 +273,12 @@ export function KanbanColumn({
       <div
         ref={setScrollAndDroppable}
         onScroll={updateScrollMetrics}
+        data-kanban-column-scroll={column.id}
+        tabIndex={-1}
+        role="group"
+        aria-label={t('kanban.a11y.columnRegion', { column: label })}
         className={cn(
-          'flex flex-1 flex-col gap-2 overflow-y-auto rounded-lg p-2 transition-shadow',
+          'flex flex-1 flex-col gap-2 overflow-y-auto rounded-lg p-2 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70',
           isOver && color && 'shadow-panel-focused',
         )}
         style={{
@@ -708,6 +712,7 @@ function DraggableTile({ taskId, children }: { taskId: string; children: React.R
   return (
     <div
       ref={setNodeRef}
+      data-kanban-task-id={taskId}
       {...listeners}
       {...attributes}
       className={isDragging ? 'opacity-30' : undefined}

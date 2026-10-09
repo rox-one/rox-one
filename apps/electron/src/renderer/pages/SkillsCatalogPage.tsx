@@ -92,8 +92,8 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
       if ((currentWorkspace.current !== capturedWorkspace || currentGuard.current !== capturedGuard)) return
       if (!readback.some(item => item.source === 'workspace' && item.slug === result.slug)) throw new Error(t('capabilityCatalog.readbackFailed'))
       setSkills(readback)
-      toast.success(t('skillsList.ompExported', { name: skill.metadata.name, slug: result.slug }))
-    } catch (err) { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) toast.error(t('skillsList.ompExportFailed'), { description: err instanceof Error ? err.message : undefined }) }
+      toast.success(t('skillsList.roxCliExported', { name: skill.metadata.name, slug: result.slug }))
+    } catch (err) { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) toast.error(t('skillsList.roxCliExportFailed'), { description: err instanceof Error ? err.message : undefined }) }
     finally { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) setBusy(null) }
   }
   return (
@@ -132,7 +132,7 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
               <td className="px-3 py-3"><span className="rounded border border-border/60 bg-foreground/[0.025] px-1.5 py-0.5 text-[11px] text-muted-foreground">{row.categories.map(item => t(`capabilityCatalog.categories.${item}`)).join(', ')}</span></td>
               <td className="px-3 py-3 text-muted-foreground" title={t('capabilityCatalog.promptHitsHint')}>{row.promptHits === undefined ? '—' : t('capabilityCatalog.promptHits', { count: row.promptHits })}{row.usedInRun && <span className="block">{t('capabilityCatalog.usedInRun')}</span>}</td>
               <td className="px-3 py-3 text-muted-foreground">{row.author ?? '—'}</td><td className="px-3 py-3 whitespace-nowrap text-muted-foreground">{row.updatedAt ? new Date(row.updatedAt).toLocaleDateString(i18n.resolvedLanguage) : '—'}</td>
-            </tr>{expanded === row.key && <tr className="border-b border-border/50 bg-foreground/[0.02]"><td colSpan={6} className="space-y-2 px-4 py-3"><p>{row.description}</p><p className="text-muted-foreground">{t('capabilityCatalog.dependencies')}: {row.requiredSources.join(', ') || '—'}</p><p className="text-muted-foreground">{t(`capabilityCatalog.status.${row.status}`)}{row.lastPromptHit ? ` · ${new Date(row.lastPromptHit).toLocaleDateString(i18n.resolvedLanguage)}` : ''}</p>{row.skill?.source === 'omp' && <Button variant="outline" size="sm" disabled={busy !== null} onClick={() => void exportOmp(row.skill!)}>{t('skillsList.ompExport')}</Button>}</td></tr>}</React.Fragment>)}</tbody>
+            </tr>{expanded === row.key && <tr className="border-b border-border/50 bg-foreground/[0.02]"><td colSpan={6} className="space-y-2 px-4 py-3"><p>{row.description}</p><p className="text-muted-foreground">{t('capabilityCatalog.dependencies')}: {row.requiredSources.join(', ') || '—'}</p><p className="text-muted-foreground">{t(`capabilityCatalog.status.${row.status}`)}{row.lastPromptHit ? ` · ${new Date(row.lastPromptHit).toLocaleDateString(i18n.resolvedLanguage)}` : ''}</p>{row.skill?.source === 'omp' && <Button variant="outline" size="sm" disabled={busy !== null} onClick={() => void exportOmp(row.skill!)}>{t('skillsList.roxCliExport')}</Button>}</td></tr>}</React.Fragment>)}</tbody>
           </table></div>
           {loading && <p role="status" className="py-4 text-center text-xs text-muted-foreground">{t('common.loading')}</p>}
           {!loading && rows.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">{t('capabilityCatalog.noResults')}</p>}

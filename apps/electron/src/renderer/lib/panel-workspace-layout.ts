@@ -78,6 +78,33 @@ export function compactPanelShowsContent(panelCount: number, hasNavigator: boole
   return panelCount > 0 && (isDetailFocused || !hasNavigator)
 }
 
+/**
+ * Full-screen panel mode (D8). One panel can be promoted from the shared grid
+ * to the whole workspace and restored to the previous arrangement. This is a
+ * per-session view state, not a stored preference: panel identities are minted
+ * per launch (`panel-<n>-<timestamp>`), so a persisted id would be dangling.
+ *
+ * Toggling the already-expanded panel restores the grid; toggling a sibling
+ * switches which panel fills the screen; an unknown target is a no-op so a
+ * stale menu click cannot blank the workspace.
+ */
+export function togglePanelFullScreen(
+  expandedPanelId: string | null,
+  targetPanelId: string | null | undefined,
+  panelIds: readonly string[],
+): string | null {
+  if (!targetPanelId || !panelIds.includes(targetPanelId)) return expandedPanelId
+  return expandedPanelId === targetPanelId ? null : targetPanelId
+}
+
+/** Drop an expanded id whose panel is no longer in the stack. */
+export function reconcilePanelFullScreen(
+  expandedPanelId: string | null,
+  panelIds: readonly string[],
+): string | null {
+  return expandedPanelId && panelIds.includes(expandedPanelId) ? expandedPanelId : null
+}
+
 export function normalizePanelTracks(value: unknown, count: number): number[] {
   if (!Array.isArray(value) || value.length !== count || value.some((n) => typeof n !== 'number' || !Number.isFinite(n) || n <= 0)) {
     return Array.from({ length: count }, () => 1 / count)

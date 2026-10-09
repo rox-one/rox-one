@@ -11,12 +11,13 @@ import { visibleWorkspacePanels } from './auxiliary-layout'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { motion } from 'motion/react'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
-import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
+import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, expandedPanelIdAtom, type PanelSpatialDirection } from '@/atoms/panel-stack'
 import { bottomTerminalOpenAtom } from '@/atoms/unified-shell'
 import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
-import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, resolvePanelGridTracks } from '@/lib/panel-workspace-layout'
+import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, reconcilePanelFullScreen, resolvePanelGridTracks, togglePanelFullScreen } from '@/lib/panel-workspace-layout'
 import { useAction } from '@/actions/useAction'
+import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
 import { isPanelResizeActive } from './resize-activity'
 import { PanelSlot } from './PanelSlot'
@@ -76,6 +77,9 @@ export function PanelStackContainer({
     if (!terminalOpen) terminalFocusOnOpenRef.current = true
   }, [terminalOpen])
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
+  const expandedPanelId = useAtomValue(expandedPanelIdAtom)
+  const setExpandedPanelId = useSetAtom(expandedPanelIdAtom)
+  const dismissibleLayers = useOptionalDismissibleLayerRegistry()
   const focusedRoute = useAtomValue(focusedPanelRouteAtom)
   const primaryId = useAtomValue(primaryPanelIdAtom)
   const lastTool = useAtomValue(lastAuxiliaryToolAtom)
@@ -99,14 +103,21 @@ export function PanelStackContainer({
   const lastDomFocusRef = useRef<{ element: Element; panelId: string | null } | null>(null)
   const composingRef = useRef(false)
   const focusedId = panels.some((entry) => entry.id === focusedPanelId) ? focusedPanelId : panels[0]?.id
-  const singlePanel = hasTools ? visibleIds.length <= 1 : isCompact || mode === 'focus' || panels.length <= 1
+  const panelIds = useMemo(() => panels.map((entry) => entry.id), [panels])
+  // D8: a promoted panel fills the workspace alone; siblings stay mounted but
+  // hidden so their draft, scroll and embedded surface survive the return. A
+  // closed/stale id reconciles to null and the shared grid comes back.
+  const expandedId = reconcilePanelFullScreen(expandedPanelId, panelIds)
+  const isExpanded = expandedId !== null
+  const displayedId = isExpanded ? expandedId : focusedId
+  const singlePanel = isExpanded || (hasTools ? visibleIds.length <= 1 : isCompact || mode === 'focus' || panels.length <= 1)
   const shape = useMemo(() => panelGridShape(hasTools ? visibleIds.length : panels.length, singlePanel ? 'focus' : hasTools ? 'columns' : mode), [panels.length, visibleIds.length, hasTools, singlePanel, mode])
   const tracks = useMemo(() => resolvePanelGridTracks(preferences, shape, panels.map((entry) => entry.proportion)), [preferences, shape, panels])
   const gridKey = panelGridKey(shape)
-  const panelIds = useMemo(() => panels.map((entry) => entry.id), [panels])
   const panelIdentity = `${preferences.workspaceId}:${panelIds.join(':')}`
-  const hasSidebar = !isCompact && !isSidebarAndNavigatorHidden && sidebarWidth > 0
-  const hasNavigator = !isSidebarAndNavigatorHidden && navigatorWidth > 0
+  // The rails collapse while a panel is promoted so it truly fills the screen.
+  const hasSidebar = !isExpanded && !isCompact && !isSidebarAndNavigatorHidden && sidebarWidth > 0
+  const hasNavigator = !isExpanded && !isSidebarAndNavigatorHidden && navigatorWidth > 0
   const expandedNavigator = !hasTools && navigatorExpanded && hasNavigator && !isCompact
   const isLeftEdge = !hasSidebar && !hasNavigator
   const focusedNavState = focusedRoute ? parseRouteToNavigationStateOrUnavailable(focusedRoute) : null
@@ -151,6 +162,25 @@ export function PanelStackContainer({
   useAction('panel.focusRight', () => { focusPanelInDirection('right') }, { enabled: () => canFocus('right') })
   useAction('panel.focusUp', () => { focusPanelInDirection('up') }, { enabled: () => canFocus('up') })
   useAction('panel.focusDown', () => { focusPanelInDirection('down') }, { enabled: () => canFocus('down') })
+
+  // D8: one action promotes the focused panel to the whole screen and back.
+  // Menu entries route through the registry so the hotkey path (none reserved)
+  // and the toolbar item share one implementation.
+  useAction('panel.toggleFullScreen', () => {
+    setExpandedPanelId((current) => togglePanelFullScreen(current, focusedId, panelIds))
+  }, { enabled: () => panels.length > 0 })
+
+  // Escape restores the shared grid. A dismissible layer at a negative
+  // priority yields to dialogs/popovers/inputs, which consume Escape first.
+  useEffect(() => {
+    if (!isExpanded || !dismissibleLayers) return
+    return dismissibleLayers.registerLayer({
+      id: 'panel-full-screen',
+      type: 'custom',
+      priority: -10,
+      close: () => setExpandedPanelId(null),
+    })
+  }, [isExpanded, dismissibleLayers, setExpandedPanelId])
 
   const handleSpatialPanelKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const direction = SPATIAL_DIRECTION_BY_KEY[event.key]
@@ -242,7 +272,7 @@ export function PanelStackContainer({
       onKeyDown={handleSpatialPanelKeyDown}
       data-mobile-menu-root="true"
       data-shell-density={isCompact ? 'compact' : 'regular'}
-      data-panel-layout={isCompact ? 'compact' : mode}
+      data-panel-layout={isCompact ? 'compact' : isExpanded ? 'screen' : mode}
       className="flex-1 min-h-0 min-w-0 flex flex-col relative z-chrome panel-scroll @container/shell"
       style={{
         overflowX: isCompact ? 'hidden' : 'auto',
@@ -255,7 +285,7 @@ export function PanelStackContainer({
         marginRight: isCompact ? 0 : -PANEL_EDGE_INSET,
       }}
     >
-      {hasTools && <div role="tablist" aria-label={t('navigation.openPanels')} className="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-2 py-1">
+      {hasTools && !isExpanded && <div role="tablist" aria-label={t('navigation.openPanels')} className="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-2 py-1">
         {panels.map(entry => <button key={entry.id} type="button" role="tab" aria-controls={entry.id} aria-selected={entry.id === focusedId}
           onClick={() => setFocusedPanelId(entry.id)} className={`whitespace-nowrap rounded px-3 py-1 text-xs ${entry.id === focusedId ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}>
           {entry.tool ? t(`navigation.tools.${entry.tool}`) : t('navigation.mainSurface')}
@@ -345,16 +375,16 @@ export function PanelStackContainer({
               zIndex: isCompact ? 10 : undefined,
               minWidth: gridMinWidth,
               minHeight: gridMinHeight,
-              gridTemplateColumns: hasTools ? visibleIds.map(id => panels.find(entry => entry.id === id)?.tool && visibleIds.length > 1 ? '360px' : 'minmax(0, 1fr)').join(' ') : singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
+              gridTemplateColumns: isExpanded ? 'minmax(0, 1fr)' : hasTools ? visibleIds.map(id => panels.find(entry => entry.id === id)?.tool && visibleIds.length > 1 ? '360px' : 'minmax(0, 1fr)').join(' ') : singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
               gridTemplateRows: shape.rows === 1 ? 'minmax(0, 1fr)' : tracks.rows.map((weight) => `minmax(${PANEL_GRID_MIN_HEIGHT}px, ${weight}fr)`).join(' '),
               gap: PANEL_GAP,
               pointerEvents: isCompact && !hasSelectedContent ? 'none' : 'auto',
             }}
           >
             {panels.map((entry, index) => {
-              const isFocused = entry.id === focusedId
-const isHidden = hasTools ? !visibleIds.includes(entry.id) : singlePanel && !isFocused
-              const column = hasTools ? Math.max(0, visibleIds.indexOf(entry.id)) : singlePanel ? 0 : index % shape.columns
+              const isFocused = entry.id === displayedId
+              const isHidden = isExpanded ? !isFocused : hasTools ? !visibleIds.includes(entry.id) : singlePanel && !isFocused
+              const column = isExpanded || singlePanel ? 0 : hasTools ? Math.max(0, visibleIds.indexOf(entry.id)) : index % shape.columns
               // The terminal lives in the first cell of the first column (the only
               // visible cell in focus/compact layouts) and splits it in half.
               const ownsTerminal = terminalOpen && (singlePanel ? isFocused : index === 0)
@@ -395,7 +425,7 @@ const isHidden = hasTools ? !visibleIds.includes(entry.id) : singlePanel && !isF
             ))}
           </motion.div>
         </div>
-        {resizeHandles}
+        {resizeHandles && !isExpanded && resizeHandles}
       </motion.div>
     </div>
   )

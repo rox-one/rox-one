@@ -51,6 +51,11 @@ export class MemoryFileStore {
     return join(this.memoryDir, 'lessons.jsonl')
   }
 
+  /** Path of this scope's standing-intents.jsonl (spec c1.6). */
+  get intentsPath(): string {
+    return join(this.memoryDir, 'standing-intents.jsonl')
+  }
+
   /** Read context.md (workspace scope) or '' when absent. */
   readContext(): string {
     return this.readText(join(this.memoryDir, 'context.md'))

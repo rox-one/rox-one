@@ -141,7 +141,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
   }, [skill, workspaceId, skillSlug, t])
 
   const handleOpenInNewWindow = useCallback(() => {
-    window.electronAPI.openUrl(`craftagents://skills/skill/${skillSlug}?window=focused`)
+    window.electronAPI.openUrl(`rox://skills/skill/${skillSlug}?window=focused`)
   }, [skillSlug])
 
   const handleSave = useCallback(async () => {
@@ -329,7 +329,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                   {skill.metadata.description}
                 </Info_Table.Row>
                 <Info_Table.Row label={t('common.source')}>
-                  {skill.source === 'omp' ? t('skillsList.ompBadge') :
+                  {skill.source === 'omp' ? t('skillsList.roxCliBadge') :
                    skill.source === 'project' ? t('skillInfo.sourceProject') :
                    skill.source === 'global' ? t('skillInfo.sourceGlobal') :
                    t('skillInfo.sourceWorkspace')}

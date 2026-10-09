@@ -140,6 +140,19 @@
       ]
     },
     {
+      "slug": "rox-custodian",
+      "origin": "bundled",
+      "commit": "local",
+      "license": "MIT",
+      "licenseFile": null,
+      "note": "First-party ROX system-agent playbooks (Gather→Mutate→Repair→Prove→Report) adapted from OpenClaw custodian-skills (port-matrix c2.8). Shipped as gated bundled skills, never privileged tools. cloud-image-bake deliberately omitted: its crabbox/AWS/Hetzner/Firecracker image-bake tooling has no ROX analogue.",
+      "skills": [
+        "add-model-provider",
+        "configure-channel",
+        "diagnose-gateway"
+      ]
+    },
+    {
       "slug": "impeccable",
       "origin": "https://github.com/pbakaus/impeccable",
       "commit": "e103efe779e2dd01274dabae83531fef00bf2563",

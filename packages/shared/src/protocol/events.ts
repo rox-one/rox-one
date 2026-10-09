@@ -30,6 +30,7 @@ import type {
 import type { ExtensionsChangedPayload } from '../extensions/types'
 import type { CommandBusPushEvent } from '../commands/push'
 import type { VoicePrefs } from '../voice/types.ts'
+import type { MemoryDreamEvent, MemoryDreamRun } from '../memory/repo'
 import type { OverlayState } from '../voice/overlay-types.ts'
 import type { VoiceJob } from '../voice/job-machine.ts'
 import type { TalkEvent } from '../voice/talk-events.ts'
@@ -39,6 +40,7 @@ import type { VoiceWakeChangedPayload, VoiceWakeTrigger } from '../voice/wake-li
 import type { EnvironmentPrefs } from '../environment'
 import type { PrivacyDto } from '../privacy/types.ts'
 import type { ServiceStatus, TrayStatus } from '../service-lifecycle.ts'
+import type { ClipChangedPayload } from '../clipboard-history/types'
 
 /** Payload of marketplace:CHANGED — pushed after an install/update/remove completes. */
 export interface MarketplaceChangedPayload {
@@ -86,6 +88,12 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.skills.CHANGED]: [workspaceId: string, skills: LoadedSkill[]]
   [RPC_CHANNELS.skillsPending.CHANGED]: [workspaceId: string]
   [RPC_CHANNELS.memory.CHANGED]: [workspaceId: string | null, scope: 'global' | 'workspace' | 'both']
+  // Memory repository projection + dream (spec 2026-10-09 §7). Bank-scoped:
+  // `memory:repoChanged[0]` is a bankId, dream payloads carry their own bankId.
+  [RPC_CHANNELS.memory.REPO_CHANGED]: [bankId: string, reason: string]
+  [RPC_CHANNELS.memory.DREAM_EVENT]: [event: MemoryDreamEvent]
+  [RPC_CHANNELS.memory.DREAM_DONE]: [run: MemoryDreamRun]
+  [RPC_CHANNELS.memory.REPO_IMPORT_READY]: [bankId: string, count: number]
   [RPC_CHANNELS.projects.CHANGED]: [workspaceId: string, projects: LoadedProject[]]
   [RPC_CHANNELS.pages.CHANGED]: [workspaceId: string, pages: LoadedPage[]]
   [RPC_CHANNELS.kanban.CHANGED]: [workspaceId: string, config: KanbanBoardConfig]
@@ -194,6 +202,11 @@ export interface BroadcastEventMap {
   // Copilot device code event
   [RPC_CHANNELS.copilot.DEVICE_CODE]: [data: { userCode: string; verificationUri: string }]
 
+  // Rox History — clipboard history changed (global, local-only store).
+  [RPC_CHANNELS.clipboard.CHANGED]: [payload: ClipChangedPayload]
+  // Knowledge map — rebuild signal pushed after a watcher-triggered re-scan;
+// consumers re-fetch via knowledgeMap:get (mirrors contextDocs:CHANGED).
+  [RPC_CHANNELS.knowledgeMap.CHANGED]: []
   // Context documents broadcasts (global)
   [RPC_CHANNELS.contextDocs.CHANGED]: []
 

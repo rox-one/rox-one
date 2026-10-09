@@ -14,15 +14,68 @@ import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
 import { applyWorkspaceMigrations, compareMigrationNames, migrationFromSource } from '../src/database/migrations.ts'
 import { PostgresCommandStore } from '../src/modules/commands/store.ts'
 import { InMemoryCommandStore } from '../../../packages/server-core/src/commands/store.ts'
+import { boundCommandTypes } from '../../../packages/server-core/src/commands/registry.ts'
+import { AGENTS_COMMAND_MODULE } from '../../../packages/server-core/src/agents/module.ts'
 import { PostgresRecordBackend, configureReferenceRuntime, resetPostgresReferenceMeta, resetReferenceMemory, resetReferenceRuntime } from '../../../packages/server-core/src/work/reference/index.ts'
 import { createHarness } from '../../../packages/server-core/src/work/__tests__/reference-harness.ts'
-import { ACTOR_ID, BOB, REFERENCE_SCENARIO, U, WORKSPACE_ID } from '../../../packages/server-core/src/work/__tests__/reference-scenario.ts'
+import { ACTOR_ID, BOB, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from '../../../packages/server-core/src/work/__tests__/reference-scenario.ts'
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations/', import.meta.url))
 const NOW = new Date('2026-10-08T12:00:00.000Z')
+
+/**
+ * W1-11 (#1508, merged as #1623) — the agent-governance module binds its own
+ * handlers for these command types (`packages/server-core/src/agents/module.ts:54-69`),
+ * and `packages/server-core/src/commands/registry.ts:50` lists
+ * `AGENTS_COMMAND_MODULE` before `REFERENCE_COMMAND_MODULE`, so the reference
+ * module skips any type that already has a handler
+ * (`packages/server-core/src/work/reference/module.ts:126`).
+ *
+ * Those handlers run on the agent-governance runtime (`getAgentsRuntime` in
+ * `agents/runtime.ts`), which this reference harness never backs with the W1-05
+ * schema, so their scenario steps can never apply here ("Unknown workspace /
+ * Unknown chat / Unknown agent"). The list is asserted against the live module
+ * below, so a future ownership change fails this suite instead of silently
+ * shrinking the scenario's coverage.
+ */
+const W1_11_OWNED_TYPES: readonly string[] = [
+  'workspaces.create',
+  'people.invite',
+  'identity.ensure_placeholder',
+  'identity.activate_placeholder',
+  'identity.merge_placeholder',
+  'im.create_chat',
+  'im.join_chat',
+  'im.leave_chat',
+  'im.set_visibility',
+  'im.browse_public_chats',
+  'agents.provision_personal_agent',
+  'agents.invoke',
+  'agents.decide_approval',
+  'agents.pause',
+]
+
+/** The channel built by the W1-11-owned `im.create_chat`: the reference store never gains it. */
+const W1_11_OWNED_CHAT = U('chat')
+
+/**
+ * True for a scenario step the reference engine does not own today: W1-11 bound
+ * the type itself, or the step is scoped to (targets, or delivers into via
+ * `toChatId`) the channel whose creation W1-11 owns. Every other step still has
+ * to apply — the assertion stays strict for the reference-owned remainder.
+ */
+function isW1_11Shadow(step: ScenarioStep): boolean {
+  if (W1_11_OWNED_TYPES.includes(step.type)) return true
+  if (step.target?.kind === 'channel' && step.target.id === W1_11_OWNED_CHAT) return true
+  return step.payload.toChatId === W1_11_OWNED_CHAT
+}
+
+/** The reference-owned remainder of the scenario: what must apply against the W1-05 schema. */
+const REFERENCE_OWNED_SCENARIO = REFERENCE_SCENARIO.filter(step => !isW1_11Shadow(step))
 
 interface TestDatabase { url: string; cleanup: () => Promise<void> }
 
@@ -101,11 +154,28 @@ function pgHarness() {
   return createHarness({ local: new InMemoryCommandStore(), workspace: new PostgresCommandStore(db, schema), onError: (error, type) => console.error(`[w1-06] ${type}:`, (error as Error)?.message ?? error) })
 }
 
+// Guards the exclusion above: the reference harness only skips what W1-11
+// really claims. If the module starts or stops binding one of these types,
+// this fails so the exclusion is reviewed instead of quietly drifting. It is
+// pure wiring, so it runs (and applies no schema) even without a database.
+test('the W1-11 ownership exclusion matches what the module binds today', () => {
+  const probe = new CommandRegistry()
+  registerCommandCatalogue(probe)
+  AGENTS_COMMAND_MODULE.bind(probe)
+  expect(boundCommandTypes(probe)).toEqual([...W1_11_OWNED_TYPES].sort())
+  // The channel scope is only justified while W1-11 owns chat creation.
+  expect(W1_11_OWNED_TYPES).toContain('im.create_chat')
+  expect(REFERENCE_OWNED_SCENARIO.length).toBeLessThan(REFERENCE_SCENARIO.length)
+})
+
 describe('W1-06 reference handlers over PostgreSQL (skips without a database)', () => {
   itDb('every workspace / by-target command applies against the W1-05 schema', async () => {
     const harness = pgHarness()
     const failures: string[] = []
-    for (const step of REFERENCE_SCENARIO) {
+    // Only the reference-owned remainder is asserted; the W1-11 shadow (its own
+    // command types and the channel it creates) is excluded with a documented
+    // rationale — see W1_11_OWNED_TYPES / isW1_11Shadow above.
+    for (const step of REFERENCE_OWNED_SCENARIO) {
       const receipt = await harness.run(step)
       if (receipt.status !== 'applied') failures.push(`${step.type}: ${JSON.stringify(receipt.error ?? receipt)}`)
     }

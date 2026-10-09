@@ -13,7 +13,7 @@ import { REFERENCE_SPECS, configureReferenceRuntime, referenceMemoryRecords, res
 import { COLLAB_DIRECT_HANDLER_TYPES, COLLAB_REFERENCE_SPECS } from '../../collab/reference-handlers'
 import { DRIVE_REFERENCE_SPECS } from '../../drive/reference-handlers'
 import { XSC_REFERENCE_SPECS } from '../../xsc/reference-handlers'
-import { ALLOW_ALL, CATALOGUE_TYPES, DENY_ALL, createHarness } from './reference-harness'
+import { ALLOW_ALL, CATALOGUE_TYPES, DENY_ALL, OWNER_BOUND_TYPES, REFERENCE_TYPES, createHarness } from './reference-harness'
 import { ACTOR_ID, BOB, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from './reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
@@ -35,26 +35,40 @@ beforeEach(() => {
 afterEach(() => resetReferenceRuntime())
 
 describe('reference handlers: wiring', () => {
-  test('every non-system catalogue command has exactly one reference spec', () => {
+  test('every non-system catalogue command has a reference spec or an owner-module handler', () => {
+    // W1-12 (#1509): a command bound by an owner module before `reference-handlers`
+    // is served by that module (its own handler and schema); everything else is
+    // the reference layer's, and nothing may be left unhandled.
+    const missing = CATALOGUE_TYPES.filter(type => !(type in REFERENCE_SPECS) && !OWNER_BOUND_TYPES.has(type))
+    expect(missing).toEqual([])
+    // No spec outlives its catalogue entry.
+    expect(Object.keys(REFERENCE_SPECS).filter(type => !CATALOGUE_TYPES.includes(type))).toEqual([])
     // W1-14 (#1511) split the table: the W1-06 placeholders plus the collab / drive / §12
-    // module specs, which are bound (and win) earlier in COMMAND_MODULES.
-    const union = [
+    // module specs, which are bound (and win) earlier in COMMAND_MODULES. The split
+    // tables must not overlap and must not name a command the catalogue lacks.
+    const split = [
       ...Object.keys(REFERENCE_SPECS), ...Object.keys(COLLAB_REFERENCE_SPECS), ...Object.keys(DRIVE_REFERENCE_SPECS), ...Object.keys(XSC_REFERENCE_SPECS),
       ...COLLAB_DIRECT_HANDLER_TYPES,
     ]
-    expect(union.sort()).toEqual(CATALOGUE_TYPES)
-    expect(new Set(union).size).toBe(union.length)
+    expect(new Set(split).size).toBe(split.length)
+    expect(split.filter(type => !CATALOGUE_TYPES.includes(type))).toEqual([])
   })
 
   test('the wired registry binds every catalogue command and every schema', () => {
     const { registry } = memoryHarness()
     expect(boundCommandTypes(registry)).toEqual(COMMAND_CATALOGUE.map(d => d.type).sort())
     expect(registry.list().filter(d => !d.schemaBound && !d.type.startsWith('system.')).map(d => d.type)).toEqual([])
-    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system', 'domain-schemas', 'collab', 'drive', 'xsc', 'reference-handlers'])
+    // `COMMAND_MODULES` is an open registry: owner modules append before the
+    // reference module (W1-12 added `automation`, W1-14 `collab`/`drive`/`xsc`).
+    // The fixed ends are the contract.
+    const modules = COMMAND_MODULES.map(module => module.name)
+    expect(modules[0]).toBe('system')
+    expect(modules.at(-1)).toBe('reference-handlers')
+    expect(modules).toEqual(expect.arrayContaining(['domain-schemas', 'automation', 'collab', 'drive', 'xsc']))
   })
 
-  test('the scenario covers every catalogue command', () => {
-    expect([...new Set(REFERENCE_SCENARIO.map(step => step.type))].sort()).toEqual(CATALOGUE_TYPES)
+  test('the scenario covers every command the reference layer serves', () => {
+    expect([...new Set(REFERENCE_SCENARIO.map(step => step.type))].sort()).toEqual(REFERENCE_TYPES)
   })
 })
 
@@ -112,13 +126,13 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
   })
 
-  test.each(CATALOGUE_TYPES)('%s: permission denied is FORBIDDEN and writes nothing', async type => {
+  test.each(REFERENCE_TYPES)('%s: permission denied is FORBIDDEN and writes nothing', async type => {
     const step = REFERENCE_SCENARIO.find(s => s.type === type)!
     const receipt = await memoryHarness({ authorizer: DENY_ALL }).run(step)
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
   })
 
-  test.each(COMMAND_CATALOGUE.filter(d => d.flag).map(d => d.type))('%s: owner flag off is UNAVAILABLE', async type => {
+  test.each(COMMAND_CATALOGUE.filter(d => d.flag && REFERENCE_TYPES.includes(d.type)).map(d => d.type))('%s: owner flag off is UNAVAILABLE', async type => {
     const step = REFERENCE_SCENARIO.find(s => s.type === type)!
     const receipt = await memoryHarness({ flags: new Set() }).run(step)
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'UNAVAILABLE' } })

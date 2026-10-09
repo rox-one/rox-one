@@ -16,7 +16,7 @@ import type {
   MicrosoftService,
   McpSourceConfig,
 } from './types.ts';
-import type { MemorySearchToolArgs, MemoryGetToolArgs } from './tool-defs.ts';
+import type { MemorySearchToolArgs, MemoryGetToolArgs, MemoryForgetToolArgs } from './tool-defs.ts';
 
 // ============================================================
 // Source Credential Types
@@ -156,6 +156,12 @@ export interface ValidatorInterface {
 export interface MemoryToolCallbacks {
   search(args: MemorySearchToolArgs): Promise<ToolResult>;
   get(args: MemoryGetToolArgs): Promise<ToolResult>;
+  /**
+   * c1.8 forget: remove the corpus line, index chunk and embedding artifacts for
+   * the given chunk ids, retaining a content-free lineage record. Optional so a
+   * backend that only wires recall degrades to a typed "unavailable" result.
+   */
+  forget?(args: MemoryForgetToolArgs): Promise<ToolResult>;
 }
 
 // ============================================================

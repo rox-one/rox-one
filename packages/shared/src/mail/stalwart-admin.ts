@@ -87,6 +87,12 @@ export class StalwartAdmin {
     if (!res.updated || !(accountId in res.updated)) throw new JmapError(`Could not reset mailbox password: ${describeSetError(res.notUpdated?.[accountId])}`, 'method')
   }
 
+  /** Set (or refresh) the account storage quota; idempotent, safe to re-run on adopt. */
+  async setQuota(accountId: string, quotaBytes: number): Promise<void> {
+    const res = await this.call('x:Account/set', { update: { [accountId]: { quotas: { maxDiskQuota: quotaBytes } } } })
+    if (!res.updated || !(accountId in res.updated)) throw new JmapError(`Could not set the mailbox quota: ${describeSetError(res.notUpdated?.[accountId])}`, 'method')
+  }
+
   async destroyAccount(accountId: string): Promise<void> {
     const res = await this.call('x:Account/set', { destroy: [accountId] })
     if (!(res.destroyed ?? []).includes(accountId)) throw new JmapError(`Could not delete account: ${describeSetError(res.notDestroyed?.[accountId])}`, 'method')

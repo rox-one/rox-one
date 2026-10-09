@@ -129,6 +129,11 @@ export interface ISessionManager {
   /** a2.5: throw a typed SESSION_READ_ONLY/SESSION_OWNER_ONLY error when `actorAccountId`
    *  may not write to the session under its current visibility. */
   assertSessionWriteAccess(sessionId: string, actorAccountId: string | null): void
+  /** a1.3 (read side, CORRECTION w2-fix-readvis): a private `draft` is readable only by its
+   *  creator, owner or a bound participant; shared/suggest/read-only and unattributed sessions
+   *  stay readable for workspace members. Read handlers must filter on this so reads cannot
+   *  serve another actor's private draft. */
+  canReadSession(sessionId: string, actorAccountId: string | null): boolean
   /** a1.3: bind an actor that wrote to the session as a participant. Returns true when the
    *  list changed (and was persisted). */
   noteSessionParticipant(sessionId: string, participant: SessionParticipantIdentity): Promise<boolean>

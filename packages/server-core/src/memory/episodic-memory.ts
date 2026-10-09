@@ -236,6 +236,23 @@ export class EpisodicMemory {
     }
   }
 
+  /**
+   * c1.8 forget: drop episodes (and their cached embeddings) whose id or exact
+   * text is a target of a forget operation. Atomic rewrite, never throws;
+   * returns the number of entries removed.
+   */
+  forget(matchers: { ids?: ReadonlySet<string>; texts?: ReadonlySet<string> }): number {
+    try {
+      const entries = this.readEpisodes()
+      const kept = entries.filter((e) => !(matchers.ids?.has(e.id) || matchers.texts?.has(e.text)))
+      const removed = entries.length - kept.length
+      if (removed > 0) this.writeEpisodes(kept)
+      return removed
+    } catch {
+      return 0
+    }
+  }
+
   /** Parse the jsonl store tolerantly (bad/truncated lines are skipped). */
   private readEpisodes(): Episode[] {
     try {

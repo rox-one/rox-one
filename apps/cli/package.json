@@ -2,11 +2,12 @@
   "name": "@rox/cli",
   "version": "0.11.8",
   "license": "Apache-2.0",
-  "description": "Terminal client for Craft Agent server",
+  "description": "Terminal client for the Rox server (Rox CLI)",
   "type": "module",
   "main": "src/index.ts",
   "bin": {
-    "craft-cli": "src/index.ts"
+    "craft-cli": "src/index.ts",
+    "rox": "src/index.ts"
   },
   "scripts": {
     "start": "bun run src/index.ts",

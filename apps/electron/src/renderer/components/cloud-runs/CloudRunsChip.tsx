@@ -344,9 +344,9 @@ function CloudRunsChipInner({
                 </label>
                 )}
                 {provider === 'daytona' && (
-                <label className="flex min-w-0 items-center gap-1 whitespace-normal break-words text-xs text-muted-foreground" title={t('cloudRuns.ompHint')}>
+                <label className="flex min-w-0 items-center gap-1 whitespace-normal break-words text-xs text-muted-foreground" title={t('cloudRuns.roxCliHint')}>
                   <input className="size-3.5 shrink-0 accent-foreground" disabled={!isAvailable} type="checkbox" checked={omp} onChange={(e) => setOmp(e.target.checked)} />
-                  {t('cloudRuns.omp')}
+                  {t('cloudRuns.roxCli')}
                 </label>
                 )}
                 <Button
