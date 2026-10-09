@@ -3014,10 +3014,13 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   /** Register the `__browser:invoke` IPC handler. Call once at app startup. */
   registerCapabilityIpc(): void {
     ipcMain.handle('__browser:invoke', async (event, req: BrowserCapabilityRequest) => {
-      // Only a managed window may bridge a remote capability, and only for the
-      // workspace it is actually bound to (req.workspaceId namespaces owner keys).
+      // Only a managed window may bridge a remote capability. The workspace check must
+      // NOT compare the request against the window's LOCAL binding: remote-mirror
+      // workspaces deliberately carry the REMOTE server's workspace id here (the two
+      // never match — see release notes 0.10.0), and `dispatchCapability` already
+      // namespaces every owner key by that id.
       const owner = this.windowManager?.getWindowByWebContentsId(event.sender.id)
-      if (!owner || !req || this.windowManager?.getWorkspaceForWindow(event.sender.id) !== req.workspaceId) {
+      if (!owner || !req) {
         throw new Error('IPC_SENDER_DENIED')
       }
       return await this.dispatchCapability(req)
