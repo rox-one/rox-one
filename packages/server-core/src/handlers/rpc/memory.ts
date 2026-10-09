@@ -20,6 +20,8 @@ import { MemoryIndexService, memoryIndexServiceFor } from '../../memory/MemoryIn
 import type { MemoryGetResult, MemoryIndexStatus, MemorySearchHit } from '@rox/shared/memory/types'
 import { getProjectMemoryPath, loadProject, loadProjectById, loadProjectMemory } from '@rox/shared/projects'
 import { search as ftsSearch } from '../../memory/fts-index'
+import { notifyRepoMutation, type RepoBankRef } from '../../memory/repo/notify'
+import { ownerKey8For, parseBankId, formatBankId } from '../../memory/repo/RepoSourceProvider'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.memory.LIST_LESSONS,
@@ -81,7 +83,7 @@ function lessonStoreFor(scope: LessonScope, workspaceId?: string): LessonStore |
   return new LessonStore(new MemoryFileStore('workspace', workspace.rootPath).lessonsPath, 'workspace')
 }
 
-function authorizeMemoryWorkspace(ctx: RequestContext, requestedId: string | null | undefined, deps: HandlerDeps): string | undefined {
+export function authorizeMemoryWorkspace(ctx: RequestContext, requestedId: string | null | undefined, deps: HandlerDeps): string | undefined {
   const boundId = ctx.workspaceId ?? (
     ctx.webContentsId === null ? undefined : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
   )
@@ -90,10 +92,68 @@ function authorizeMemoryWorkspace(ctx: RequestContext, requestedId: string | nul
   return boundId ?? requestedId ?? undefined
 }
 
-function lessonOwnerFromContext(ctx: RequestContext): LessonOwner | undefined {
+export function lessonOwnerFromContext(ctx: RequestContext): LessonOwner | undefined {
   return ctx.principal
     ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject }
     : undefined
+}
+
+/**
+ * Authorize a memory-repo bank selector (`main[#<ownerKey8>]` |
+ * `ws:<workspaceId>[#<ownerKey8>]`) for the memory:repo* / memory:dream*
+ * channels and the import handlers (one shared policy, both modules).
+ *
+ * The workspace part is authorized exactly like every other memory handler
+ * (`authorizeMemoryWorkspace`, including the cross-workspace rejection); the
+ * `#<ownerKey8>` suffix selects a lesson owner and MUST be bound to the caller
+ * too — the service filters the bundle by it, so a foreign suffix would leak
+ * another owner's rules:
+ *
+ * - Native principal: only its own workspace bank, ownerless or with its own
+ *   owner key (`ownerKey8For(principal)`). `main*` is denied outright — it
+ *   renders the global `PROFILE.md`/preferences that principals never see
+ *   (see GET_CONTEXT) — and so is any foreign owner suffix.
+ * - Local host (no principal): `main`/`ws:<id>` stay available ownerless
+ *   (absent or `local`); a concrete owner suffix has no authenticated owner to
+ *   bind to and is denied.
+ *
+ * Throws before any service access; returns the CANONICAL bank id
+ * (`formatBankId(parseBankId(bankId))`: trimmed, `#local` collapsed to the
+ * ownerless base) so every downstream helper — `bankWorkspaceId`,
+ * `memoryDirFor`, `bankTarget`, `resolveWorkspaceRoot`, the import accessor and
+ * the per-bank lock key — keys on one spelling of a repository.
+ */
+export function authorizeMemoryRepoBank(ctx: RequestContext, bankId: string, deps: HandlerDeps): string {
+  const parsed = parseBankId(bankId)
+  const canonical = formatBankId(parsed.scope, parsed.workspaceId, parsed.ownerKey8)
+  const bound = authorizeMemoryWorkspace(ctx, parsed.workspaceId, deps)
+  if (parsed.scope === 'workspace' && bound && parsed.workspaceId && bound !== parsed.workspaceId) {
+    throw new Error('Workspace access denied')
+  }
+  const ownerKey8 = parsed.ownerKey8
+  if (ctx.principal) {
+    if (parsed.scope === 'main') throw new Error('Memory bank access denied')
+    if (ownerKey8 !== undefined && ownerKey8 !== ownerKey8For(ctx.principal)) {
+      throw new Error('Memory bank access denied')
+    }
+    return canonical
+  }
+  if (ownerKey8 !== undefined && ownerKey8 !== 'local') {
+    throw new Error('Memory bank access denied')
+  }
+  return canonical
+}
+
+/** Repo bank a lesson/context write belongs to: `main` for global, the workspace bank otherwise,
+ * scoped to the writing owner when the caller is an authenticated principal. */
+function memoryBank(scope: LessonScope, workspaceId: string | null | undefined, owner?: LessonOwner): RepoBankRef {
+  const ownerKey8 = owner ? ownerKey8For(owner) : undefined
+  if (scope === 'global') {
+    return ownerKey8 ? { scope: 'main', ownerKey8 } : { scope: 'main' }
+  }
+  return ownerKey8
+    ? { scope: 'workspace', workspaceId: workspaceId ?? '', ownerKey8 }
+    : { scope: 'workspace', workspaceId: workspaceId ?? '' }
 }
 
 export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -167,8 +227,12 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       const authorizedWorkspaceId = authorizeMemoryWorkspace(ctx, workspaceId, deps)
       const store = lessonStoreFor(scope, authorizedWorkspaceId)
       if (!store) throw new Error('Workspace not found')
-      const restored = store.restoreArchivedForOwner(lessonOwnerFromContext(ctx), archiveId)
-      if (restored) broadcastChanged(scope === 'global' ? null : authorizedWorkspaceId ?? null, scope)
+      const owner = lessonOwnerFromContext(ctx)
+      const restored = store.restoreArchivedForOwner(owner, archiveId)
+      if (restored) {
+        broadcastChanged(scope === 'global' ? null : authorizedWorkspaceId ?? null, scope)
+        notifyRepoMutation(memoryBank(scope, authorizedWorkspaceId, owner), 'rpc:restoreArchive')
+      }
       return restored
     },
     { nativeAction: 'write' },
@@ -195,6 +259,7 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       source: { trigger: 'explicit' },
     })
     broadcastChanged(scope === 'global' ? null : authorizedWorkspaceId ?? null, scope)
+    notifyRepoMutation(memoryBank(scope, authorizedWorkspaceId, owner), 'rpc:addLesson')
     const conflicts = await detectLessonConflicts(authorizedWorkspaceId ?? null, scope, store, lesson, owner)
     return { lesson, conflicts }
   }, { nativeAction: 'write' })
@@ -211,6 +276,7 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       const updated = store.update(match, patch, 'rpc', owner)
       if (!updated) return null
       broadcastChanged(scope === 'global' ? null : authorizedWorkspaceId ?? null, scope)
+      notifyRepoMutation(memoryBank(scope, authorizedWorkspaceId, owner), 'rpc:updateLesson')
       return updated
     },
     { nativeAction: 'write' },
@@ -233,7 +299,10 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
     const store = lessonStoreFor(scope, authorizedWorkspaceId)
     if (!store) throw new Error('Workspace not found')
     const deleted = store.delete(match, 'rpc', owner)
-    if (deleted) broadcastChanged(scope === 'global' ? null : authorizedWorkspaceId ?? null, scope)
+    if (deleted) {
+      broadcastChanged(scope === 'global' ? null : authorizedWorkspaceId ?? null, scope)
+      notifyRepoMutation(memoryBank(scope, authorizedWorkspaceId, owner), 'rpc:deleteLesson')
+    }
     return deleted
   }, { nativeAction: 'delete' })
 
@@ -257,6 +326,7 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
     const result = promoteLessonToGlobal(workspaces, rule, undefined, owner)
     if (!result) return null
     broadcastChanged(null, 'global')
+    notifyRepoMutation(owner ? { scope: 'main', ownerKey8: ownerKey8For(owner) } : { scope: 'main' }, 'rpc:promoteLesson')
     return result
   }, { nativeAction: 'write' })
 
@@ -332,12 +402,14 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       if (ctx.principal) throw new Error('Global preferences are machine-private')
       new MemoryFileStore('global').writePreferences(content)
       broadcastChanged(null, 'global')
+      notifyRepoMutation({ scope: 'main' }, 'rpc:updateContext')
       return true
     }
     const workspace = authorizedWorkspaceId ? getWorkspaceByNameOrId(authorizedWorkspaceId) : null
     if (!workspace) throw new Error('Workspace not found')
     new MemoryFileStore('workspace', workspace.rootPath).writeContext(content)
     broadcastChanged(authorizedWorkspaceId!, 'workspace')
+    notifyRepoMutation(memoryBank('workspace', authorizedWorkspaceId), 'rpc:updateContext')
     return true
   }, { nativeAction: 'write' })
 

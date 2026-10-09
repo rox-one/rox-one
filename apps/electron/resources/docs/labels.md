@@ -3,7 +3,7 @@
 Labels are additive tags that can be applied to sessions. Unlike statuses (which are exclusive — one per session), labels are multi-select (many per session). They support hierarchical organization via nested JSON trees.
 
 > **Supported workflow:** Use the ROX Labels interface to create and update labels. For authorized agent edits, follow the JSON schema below and validate with `config_validate({ target: "labels" })`.
-> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
+> - Interface and tooling reference: [ROX configuration interfaces](./rox-cli.md)
 
 ## Storage Locations
 

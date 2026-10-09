@@ -29,26 +29,26 @@ describe('Rox terminology catalog', () => {
 
 describe('terminology linter', () => {
   it('does not flag allowlisted compatibility locale keys', () => {
-    expect(localeValueViolations('collection.filter.agentFamily.omp', 'OMP')).toEqual([])
+    expect(localeValueViolations('collection.filter.agentFamily.roxCli', 'OMP')).toEqual([])
     expect(localeValueViolations('collection.filter.agentFamily.hermes', 'Hermes')).toEqual([])
-    expect(localeValueViolations('errors.omp.noModels.title', 'Rox has no models configured')).toEqual([])
-    expect(localeValueViolations('errors.omp.noModels.title', 'OMP has no models configured')).toContain('OMP')
+    expect(localeValueViolations('errors.roxCli.noModels.title', 'Rox has no models configured')).toEqual([])
+    expect(localeValueViolations('errors.roxCli.noModels.title', 'OMP has no models configured')).toContain('OMP')
     expect(localeValueViolations('extensions.registries.provider.community-hermes', 'Hermes')).toEqual([])
     expect(localeValueViolations('collection.filter.agentFamily.hermes', 'Hermes')).toEqual([])
-    expect(localeValueViolations('collection.filter.agentFamily.omp', 'OMP / Rox')).toEqual([])
+    expect(localeValueViolations('collection.filter.agentFamily.roxCli', 'OMP / Rox')).toEqual([])
   })
 
   it('flags OMP in skills and onboarding credential copy', () => {
-    expect(localeValueViolations('skillsList.ompBadge', 'OMP')).toContain('OMP')
-    expect(localeValueViolations('skillsList.ompSection', 'OMP Skills')).toContain('OMP')
-    expect(localeValueViolations('onboarding.ompCredential.description', 'The OMP runtime needs a key')).toContain('OMP')
-    expect(localeValueViolations('onboarding.ompCredential.description', 'existing ~/.omp/agent/models.yml')).toContain('~/.omp')
+    expect(localeValueViolations('skillsList.roxCliBadge', 'OMP')).toContain('OMP')
+    expect(localeValueViolations('skillsList.roxCliSection', 'OMP Skills')).toContain('OMP')
+    expect(localeValueViolations('onboarding.roxCliCredential.description', 'The OMP runtime needs a key')).toContain('OMP')
+    expect(localeValueViolations('onboarding.roxCliCredential.description', 'existing ~/.omp/agent/models.yml')).toContain('~/.omp')
     expect(localeValueViolations('onboarding.reauth.expired', 'Your Craft session expired')).toContain('Craft')
     expect(localeValueViolations('onboarding.reauth.loginWithCraft', 'Log In with Craft')).toContain('Craft')
   })
 
   it('flags runtime names in normal-UI locale values', () => {
-    expect(localeValueViolations('onboarding.providerSelect.ompDesc', 'Local oh-my-pi agent')).toContain('oh-my-pi')
+    expect(localeValueViolations('onboarding.providerSelect.roxCliDesc', 'Local oh-my-pi agent')).toContain('oh-my-pi')
     expect(localeValueViolations('settings.identity.title', 'OMP identity')).toContain('OMP')
     expect(localeValueViolations('onboarding.welcome.title', 'Welcome to ROX')).toContain('ROX')
     expect(localeValueViolations('settings.security.description', 'slice for Craft and OpenClaw')).toContain('Craft')
@@ -57,9 +57,9 @@ describe('terminology linter', () => {
   })
 
   it('preserves an exact documented environment variable without permitting the uppercase product name', () => {
-    expect(localeValueViolations('onboarding.ompCredential.envHint', 'Set ROX_API_KEY before starting Rox.')).toEqual([])
-    expect(localeValueViolations('onboarding.ompCredential.keyPlaceholder', 'ROX_API_KEY')).toEqual([])
-    expect(localeValueViolations('onboarding.ompCredential.envHint', 'Set ROX_API_KEY before starting ROX.')).toEqual(['ROX'])
+    expect(localeValueViolations('onboarding.roxCliCredential.envHint', 'Set ROX_API_KEY before starting Rox.')).toEqual([])
+    expect(localeValueViolations('onboarding.roxCliCredential.keyPlaceholder', 'ROX_API_KEY')).toEqual([])
+    expect(localeValueViolations('onboarding.roxCliCredential.envHint', 'Set ROX_API_KEY before starting ROX.')).toEqual(['ROX'])
   })
 
   it('scans every locale for leaked runtime names outside the allowlist', () => {

@@ -118,6 +118,8 @@ async function getExpectedChannels(): Promise<Set<string>> {
     memoryIo,
     memoryInsights,
     memoryProposals,
+    memoryRepo,
+    memoryRepoImport,
     browserProfileImport,
     knowledge,
     mindmap,
@@ -149,6 +151,9 @@ async function getExpectedChannels(): Promise<Set<string>> {
     environment,
     messaging,
     pages,
+    commands,
+    directory,
+    knowledgeMap,
   ] = await Promise.all([
     import('@rox/server-core/handlers/rpc/auth'),
     import('@rox/server-core/handlers/rpc/automations'),
@@ -168,6 +173,8 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/memory-io'),
     import('@rox/server-core/handlers/rpc/memory-insights'),
     import('@rox/server-core/handlers/rpc/memory-proposals'),
+    import('@rox/server-core/handlers/rpc/memory-repo'),
+    import('@rox/server-core/handlers/rpc/memory-repo-import'),
     import('@rox/server-core/handlers/rpc/browser-profile-import'),
     import('@rox/server-core/handlers/rpc/knowledge'),
     import('@rox/server-core/handlers/rpc/mindmap'),
@@ -199,9 +206,12 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/environment'),
     import('@rox/server-core/handlers/rpc/messaging'),
     import('@rox/server-core/handlers/rpc/pages'),
+    import('@rox/server-core/handlers/rpc/commands'),
+    import('@rox/server-core/handlers/rpc/directory'),
+    import('@rox/server-core/handlers/rpc/knowledge-map'),
   ])
 
-  const [browser, browserIntel, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceClipboard] = await Promise.all([
+  const [browser, browserIntel, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceClipboard, clipboardHistory] = await Promise.all([
     import('../browser'),
     import('../browser-intel'),
     import('../system'),
@@ -211,15 +221,18 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('../extension-host'),
     import('../extension-surface'),
     import('../voice-clipboard'),
+    import('../clipboard-history'),
   ])
 
-  const [meetings, personalTasks, feed, privacy, runtimeTrace, entities] = await Promise.all([
+  const [meetings, personalTasks, feed, privacy, runtimeTrace, entities, tgLink, keeper] = await Promise.all([
     import('@rox/server-core/handlers/rpc/meetings'),
     import('@rox/server-core/handlers/rpc/personal-tasks'),
     import('@rox/server-core/handlers/rpc/feed'),
     import('@rox/server-core/handlers/rpc/privacy'),
     import('@rox/server-core/handlers/rpc/runtime-trace'),
     import('@rox/server-core/handlers/rpc/entities'),
+    import('@rox/server-core/handlers/rpc/tg-link'),
+    import('@rox/server-core/handlers/rpc/keeper'),
   ])
 
   return new Set([
@@ -249,6 +262,8 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...memoryIo.HANDLED_CHANNELS,
     ...memoryInsights.HANDLED_CHANNELS,
     ...memoryProposals.PROPOSAL_HANDLED_CHANNELS,
+    ...memoryRepo.HANDLED_CHANNELS,
+    ...memoryRepoImport.HANDLED_CHANNELS,
     ...browserProfileImport.BROWSER_PROFILE_CHANNELS,
     ...knowledge.HANDLED_CHANNELS,
     ...mindmap.HANDLED_CHANNELS,
@@ -281,6 +296,9 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...environment.HANDLED_CHANNELS,
     ...messaging.HANDLED_CHANNELS,
     ...pages.HANDLED_CHANNELS,
+    ...commands.HANDLED_CHANNELS,
+    ...directory.HANDLED_CHANNELS,
+    ...knowledgeMap.HANDLED_CHANNELS,
     ...browser.HANDLED_CHANNELS,
     ...browserIntel.HANDLED_CHANNELS,
     ...guiSystem.GUI_HANDLED_CHANNELS,
@@ -290,8 +308,11 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
     ...voiceClipboard.HANDLED_CHANNELS,
+    ...clipboardHistory.HANDLED_CHANNELS,
     ...LEARNING_HANDLED_CHANNELS,
     ...entities.HANDLED_CHANNELS,
+    ...tgLink.HANDLED_CHANNELS,
+    ...keeper.KEEPER_CHANNELS,
   ])
 }
 

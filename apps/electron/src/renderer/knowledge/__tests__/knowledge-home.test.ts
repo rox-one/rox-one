@@ -82,7 +82,7 @@ describe('searchKnowledge', () => {
       { workspaceId: 'ws-42', connectionId: 'conn-1', input: { query: 'craft agents' } },
     ])
     expect(items).toHaveLength(2)
-    // Opaque SiYuan ids without note attributes → Notes home (not knowledge/document)
+    // Opaque legacy ids without note attributes → Notes home (not knowledge/document)
     expect(searchHitRoute(items![0])).toBe('notes')
     expect(searchHitRoute(items![1])).toBe('notes')
     expect(resolveSearchHitNoteId(items![0]!)).toBeNull()

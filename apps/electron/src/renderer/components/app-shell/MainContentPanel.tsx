@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { navigate, routes } from '@/lib/navigate'
 import { MemoryScreen } from '../memory/MemoryScreen'
+import { MemoryRepoScreen } from '../memory/MemoryRepoScreen'
 import { LearningScreen } from '../learning/LearningScreen'
 import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
@@ -30,9 +31,9 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isNotesNavigation,
@@ -47,6 +48,7 @@ import {
   isExtensionNavigation,
   isConnectionsNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isCloudRunNavigation,
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
@@ -86,14 +88,15 @@ function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null
 const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
 const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
 const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
+const DrivePage = lazyRoutePage(() => import('@/pages/DrivePage'))
 const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
 // W1-07 (#1504): unified mode roots; reachable only while their mode flag is on.
 const SurfaceHost = lazyRoutePage(() => import('@/platform/SurfaceHost'))
 const TasksPage = lazyRoutePage(() => import('@/pages/workspace-work/WorkspaceTasksPage'))
-const MeetingsPage = lazyRoutePage(() => import('@/pages/workspace-work/PlanWorkspacePage'))
 const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
 const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
 const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
+const ClipboardHistoryPage = lazyRoutePage(() => import('@/pages/ClipboardHistoryPage'))
 const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
 const SkillInfoPage = lazyRoutePage(() => import('@/pages/SkillInfoPage'))
 const SourceInfoPage = lazyRoutePage(() => import('@/pages/SourceInfoPage'))
@@ -507,9 +510,24 @@ export function MainContentPanel({
   }
 
   if (isMemoryNavigation(navState)) {
+    if (navState.tab === 'repo' || navState.tab === 'dream') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <MemoryRepoScreen workspaceId={activeWorkspaceId ?? undefined} />
+        </Panel>
+      )
+    }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <MemoryScreen workspaceId={activeWorkspaceId ?? undefined} />
+      </Panel>
+    )
+  }
+
+  if (isClipboardHistoryNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <ClipboardHistoryPage />
       </Panel>
     )
   }
@@ -703,21 +721,20 @@ export function MainContentPanel({
     )
   }
 
+  if (isDriveNavigation(navState)) {
+    const folderId = navState.details?.type === 'folder' ? navState.details.folderId : undefined
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <DrivePage workspaceId={activeWorkspaceId ?? ''} folderId={folderId} />
+      </Panel>
+    )
+  }
+
   if (isTasksNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <TasksPage
           selectedId={navState.details?.taskId ?? null}
-        />
-      </Panel>
-    )
-  }
-
-  if (isMeetingsNavigation(navState)) {
-    return wrapWithStoplight(
-      <Panel variant="grow" className={className}>
-        <MeetingsPage
-          selectedId={navState.details?.meetingId ?? null}
         />
       </Panel>
     )
@@ -742,7 +759,7 @@ export function MainContentPanel({
   if (isSurfaceNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <SurfaceHost surface={navState.surface} />
+        <SurfaceHost surface={navState.surface} meetingId={navState.meetingId ?? null} />
       </Panel>
     )
   }

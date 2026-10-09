@@ -8,12 +8,12 @@
  */
 import { WORKBENCH_FLAG, type ModeContribution } from '@rox/core/platform'
 import { kindDescriptor, type ModuleId } from '@rox/core/entities'
+import { GLYPH_NAMES } from './glyphs'
 import { routes } from '../../shared/routes'
 import type { UnifiedSurfaceId } from '../../shared/surface-routes'
 import {
   isHomeNavigation,
   isKnowledgeNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isNotesNavigation,
@@ -36,7 +36,7 @@ export const CORE_MODES: readonly SeededMode[] = [
     contribution: {
       id: 'home',
       titleKey: 'workbench.mode.home',
-      icon: 'Home',
+      icon: GLYPH_NAMES.home,
       rootRoute: routes.view.home(),
       order: 10,
       defaultPinned: true,
@@ -48,7 +48,7 @@ export const CORE_MODES: readonly SeededMode[] = [
     contribution: {
       id: 'chat',
       titleKey: 'workbench.mode.chat',
-      icon: 'MessageSquare',
+      icon: GLYPH_NAMES.sessions,
       rootRoute: routes.view.allSessions(),
       order: 20,
       defaultPinned: true,
@@ -58,24 +58,9 @@ export const CORE_MODES: readonly SeededMode[] = [
   },
   {
     contribution: {
-      id: 'meetings',
-      titleKey: 'workbench.mode.meetings',
-      icon: 'Calendar',
-      // The Встречи page works (rail + deep link); gated only by its
-      // workbench.mode.meetings.v1 flag like Задачи.
-      rootRoute: routes.view.meetings(),
-      order: 30,
-      defaultPinned: true,
-      layoutProfileId: 'agent',
-    },
-    isActive: isMeetingsNavigation,
-    flag: 'meetings',
-  },
-  {
-    contribution: {
       id: 'tasks',
       titleKey: 'workbench.mode.tasks',
-      icon: 'ListTodo',
+      icon: GLYPH_NAMES.tasks,
       rootRoute: routes.view.tasks(),
       order: 40,
       defaultPinned: true,
@@ -92,7 +77,7 @@ export const CORE_MODES: readonly SeededMode[] = [
       // folded into Rox Notes; its deep links still resolve and highlight here.
       id: 'notes',
       titleKey: 'workbench.mode.notes',
-      icon: 'NotebookPen',
+      icon: GLYPH_NAMES.notes,
       rootRoute: routes.view.notes(),
       order: 50,
       defaultPinned: true,
@@ -104,7 +89,7 @@ export const CORE_MODES: readonly SeededMode[] = [
     contribution: {
       id: 'feed',
       titleKey: 'workbench.mode.feed',
-      icon: 'Rss',
+      icon: GLYPH_NAMES.feed,
       rootRoute: routes.view.feed(),
       order: 60,
       defaultPinned: true,
@@ -118,7 +103,7 @@ export const CORE_MODES: readonly SeededMode[] = [
     contribution: {
       id: 'inbox',
       titleKey: 'workbench.mode.inbox',
-      icon: 'Inbox',
+      icon: GLYPH_NAMES.inbox,
       rootRoute: routes.view.inbox(),
       order: 70,
       defaultPinned: true,
@@ -140,9 +125,8 @@ export const CORE_MODES: readonly SeededMode[] = [
 /** Entity-owner modules whose kind-first routes highlight a unified mode. */
 const UNIFIED_MODE_OWNERS: Record<UnifiedSurfaceId, readonly ModuleId[]> = {
   messenger: ['messenger'],
-  calendar: ['calendar'],
+  calendar: ['calendar', 'meetings'],
   goals: ['goals', 'spaces', 'kpis'],
-  contacts: ['contacts'],
 }
 
 function isUnifiedModeActive(surface: UnifiedSurfaceId) {
@@ -175,10 +159,9 @@ function unifiedMode(
 }
 
 export const UNIFIED_MODES: readonly SeededMode[] = [
-  unifiedMode('messenger', 25, 'MessagesSquare', WORKBENCH_FLAG.modeMessengerV1),
-  unifiedMode('calendar', 35, 'CalendarDays', WORKBENCH_FLAG.modeCalendarV1),
-  unifiedMode('goals', 45, 'Target', WORKBENCH_FLAG.modeGoalsV1),
-  unifiedMode('contacts', 55, 'Contact', WORKBENCH_FLAG.modeContactsV1),
+  unifiedMode('messenger', 25, GLYPH_NAMES.team, WORKBENCH_FLAG.modeMessengerV1),
+  unifiedMode('calendar', 35, GLYPH_NAMES.calendar, WORKBENCH_FLAG.modeCalendarV1),
+  unifiedMode('goals', 45, GLYPH_NAMES.goals, WORKBENCH_FLAG.modeGoalsV1),
 ]
 
 /** Every seeded mode (registered once by `mode-registry-bootstrap.ts`). */

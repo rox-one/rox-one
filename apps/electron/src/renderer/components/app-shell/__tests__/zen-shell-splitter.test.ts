@@ -46,7 +46,7 @@ describe('Zen Shell splitter wiring (ZS-05)', () => {
 
     const container = parseComponent('PanelStackContainer')
     const slot = descendants(container).find((node) =>
-      ts.isJsxExpression(node) && node.expression?.getText() === 'resizeHandles')
+      ts.isJsxExpression(node) && /\bresizeHandles\b/.test(node.expression?.getText() ?? ''))
     const owner = slot?.parent
     if (!owner || !ts.isJsxElement(owner)) throw new Error('Separators have no shared JSX coordinate owner')
     expect(owner.openingElement.tagName.getText()).toBe('motion.div')

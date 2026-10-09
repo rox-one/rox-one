@@ -3,6 +3,8 @@ import { closeSync, lstatSync, mkdirSync, openSync, realpathSync, statSync } fro
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@rox/core/platform/identity/types'
+import type { OperatorRoleCeiling, OperatorRoleDefinition } from '@rox/shared/orgs/types'
+import { ALL_OPERATOR_SCOPES, DENIED_OPERATOR_CEILING, normalizeOperatorRoleDefinition, resolveOperatorRoleCeiling } from './operator-role-policy.ts'
 import { requireOsPrivatePaths, secureOsPrivatePaths, VerifiedPrivateFileGuard } from './os-private-path.ts'
 
 export const NATIVE_AUTHORITY_ACTIONS = ['read', 'write', 'delete', 'subscribe', 'manage'] as const
@@ -42,7 +44,7 @@ export interface NativeAuthorityInvalidation {
   readonly subject: string
   readonly credentialId?: string
   readonly workspaceId?: string
-  readonly reason: 'credential-revoked' | 'credential-rotated' | 'grant-revoked' | 'grant-changed'
+  readonly reason: 'credential-revoked' | 'credential-rotated' | 'grant-revoked' | 'grant-changed' | 'role-changed'
 }
 
 export interface NativeAuthorityOptions {
@@ -77,15 +79,30 @@ function fenceDigest(principal: NativePrincipal, workspaceId: string, action: Na
 }
 
 
+/** True when the value contains a C0 control character, DEL, or (with includeC1) a C1 control character. */
+function hasControlChar(value: string, includeC1 = false): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f || (includeC1 && code >= 0x80 && code <= 0x9f)) return true
+  }
+  return false
+}
+
 function validLabel(value: string): string {
   const label = value.trim()
-  if (!label || label.length > 120 || /[\u0000-\u001f\u007f]/.test(label)) throw new Error('invalid label')
+  if (!label || label.length > 120 || hasControlChar(label)) throw new Error('invalid label')
   return label
 }
 
 function validId(value: string): string {
   if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value)) throw new Error('invalid identifier')
   return value
+}
+
+function validRoleName(value: unknown): string {
+  const name = typeof value === 'string' ? value.trim() : ''
+  if (!name || name.length > 128 || hasControlChar(name)) throw new Error('invalid operator role name')
+  return name
 }
 
 function isAction(value: unknown): value is NativeAuthorityAction {
@@ -197,7 +214,16 @@ export class NativeAuthority {
         credential_id TEXT NOT NULL REFERENCES credentials(id), credential_version INTEGER NOT NULL,
         grant_version INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS operator_roles (
+        name TEXT PRIMARY KEY, definition TEXT NOT NULL, created_at INTEGER NOT NULL
+      );
     `)
+    // Named operator roles (port-matrix row a1.2): role definitions live in
+    // private authority custody; each subject may hold one assigned role.
+    const subjectColumns = this.#db.prepare('PRAGMA table_info(subjects)').all() as Array<{ name: string }>
+    if (!subjectColumns.some((column) => column.name === 'operator_role')) {
+      this.#db.exec('ALTER TABLE subjects ADD COLUMN operator_role TEXT')
+    }
     const generatedIssuer = randomUUID()
     this.#db.prepare("INSERT OR IGNORE INTO authority_meta(key,value) VALUES('issuer_id',?)").run(generatedIssuer)
     const storedIssuer = this.#db.prepare("SELECT value FROM authority_meta WHERE key='issuer_id'").get() as { value: string } | undefined
@@ -467,7 +493,7 @@ export class NativeAuthority {
     if (!this.authorize(principal, binding.workspaceId, 'write', nativeRoot)) throw new Error('Native binding registration denied')
     const grant = this.#currentAuthorization(principal, binding.workspaceId, 'write')!
     for (const value of [binding.id, binding.workspaceId, binding.sessionId, binding.platform]) validId(value)
-    if (typeof binding.channelId !== 'string' || !binding.channelId.length || binding.channelId.length > 512 || /[\u0000-\u001f\u007f]/.test(binding.channelId)) throw new Error('Invalid native binding channel')
+    if (typeof binding.channelId !== 'string' || !binding.channelId.length || binding.channelId.length > 512 || hasControlChar(binding.channelId)) throw new Error('Invalid native binding channel')
     if (binding.threadId !== undefined && !Number.isSafeInteger(binding.threadId)) throw new Error('Invalid native binding thread')
     const previous = this.#db.prepare('SELECT issuer,subject_id FROM session_messaging_bindings WHERE binding_id=?').get(binding.id) as { issuer: string; subject_id: string } | undefined
     if (previous && (previous.issuer !== principal.issuer || previous.subject_id !== principal.subject)) throw new Error('Native binding owner changed')
@@ -517,9 +543,9 @@ export class NativeAuthority {
   updateSelfProfile(principal: NativePrincipal, workspaceId: string, updates: { name?: unknown }): { name?: string } {
     if (!this.authorize(principal, workspaceId, 'read')) throw new Error('Native self profile denied');
     if (!updates || typeof updates !== 'object' || typeof updates.name !== 'string') throw new Error('Native profile name is required');
-    if (/[\u0000-\u001f\u007f-\u009f]/u.test(updates.name)) throw new Error('Invalid native profile name');
+    if (hasControlChar(updates.name, true)) throw new Error('Invalid native profile name');
     const name = updates.name.normalize('NFC').trim().replace(/\s+/gu, ' ');
-    if (!name || name.length > 100 || /[\u0000-\u001f\u007f-\u009f]/u.test(name)) throw new Error('Invalid native profile name');
+    if (!name || name.length > 100 || hasControlChar(name, true)) throw new Error('Invalid native profile name');
     this.#db.prepare(`INSERT INTO self_profiles(issuer,subject_id,name,updated_at) VALUES(?,?,?,?)
       ON CONFLICT(issuer,subject_id) DO UPDATE SET name=excluded.name,updated_at=excluded.updated_at`)
       .run(principal.issuer, principal.subject, name, Date.now());
@@ -653,6 +679,169 @@ export class NativeAuthority {
       throw error
     }
     this.#notify({ subject: target, workspaceId: workspace, reason: 'grant-revoked' })
+  }
+
+  // -------------------------------------------------------------------------
+  // Named operator roles (port-matrix row a1.2)
+  // -------------------------------------------------------------------------
+
+  /** Define or replace a named operator role. Malformed definitions are refused. */
+  defineOperatorRole(adminCredential: string, name: string, definition: unknown): OperatorRoleDefinition {
+    this.#assertOpen()
+    const admin = this.#requireAdmin(adminCredential)
+    const roleName = validRoleName(name)
+    const normalized = normalizeOperatorRoleDefinition(definition)
+    if (!normalized) throw new Error('invalid operator role definition')
+    this.#db.exec('BEGIN IMMEDIATE')
+    try {
+      this.#db.prepare(`INSERT INTO operator_roles(name,definition,created_at) VALUES(?,?,?)
+        ON CONFLICT(name) DO UPDATE SET definition=excluded.definition`)
+        .run(roleName, JSON.stringify(normalized), Date.now())
+      // Durable tombstone: once the operator boundary has been modelled, an
+      // emptied registry must not silently reopen legacy full access.
+      this.#db.prepare("INSERT OR IGNORE INTO authority_meta(key,value) VALUES('operator_roles_configured','1')").run()
+      this.#audit('operator-role.define', admin.subject_id, admin.id, undefined, { role: roleName })
+      this.#db.exec('COMMIT')
+    } catch (error) {
+      this.#db.exec('ROLLBACK')
+      throw error
+    }
+    this.#notifyRoleChange()
+    return normalized
+  }
+
+  removeOperatorRole(adminCredential: string, name: string): void {
+    this.#assertOpen()
+    const admin = this.#requireAdmin(adminCredential)
+    const roleName = validRoleName(name)
+    if (this.#readDefaultOperatorRole() === roleName) throw new Error('operator role is the configured default')
+    this.#db.exec('BEGIN IMMEDIATE')
+    try {
+      this.#db.prepare('DELETE FROM operator_roles WHERE name=?').run(roleName)
+      this.#db.prepare('UPDATE subjects SET operator_role=NULL WHERE operator_role=?').run(roleName)
+      this.#audit('operator-role.remove', admin.subject_id, admin.id, undefined, { role: roleName })
+      this.#db.exec('COMMIT')
+    } catch (error) {
+      this.#db.exec('ROLLBACK')
+      throw error
+    }
+    this.#notifyRoleChange()
+  }
+
+  setDefaultOperatorRole(adminCredential: string, name: string | null): void {
+    this.#assertOpen()
+    const admin = this.#requireAdmin(adminCredential)
+    const roleName = name === null ? null : validRoleName(name)
+    if (roleName !== null && !this.#db.prepare('SELECT 1 FROM operator_roles WHERE name=?').get(roleName)) {
+      throw new Error('unknown operator role')
+    }
+    this.#db.exec('BEGIN IMMEDIATE')
+    try {
+      if (roleName === null) {
+        this.#db.prepare("DELETE FROM authority_meta WHERE key='operator_default_role'").run()
+      } else {
+        this.#db.prepare(`INSERT INTO authority_meta(key,value) VALUES('operator_default_role',?)
+          ON CONFLICT(key) DO UPDATE SET value=excluded.value`).run(roleName)
+      }
+      this.#audit('operator-role.default', admin.subject_id, admin.id, undefined, { role: roleName })
+      this.#db.exec('COMMIT')
+    } catch (error) {
+      this.#db.exec('ROLLBACK')
+      throw error
+    }
+    this.#notifyRoleChange()
+  }
+
+  /** Assign (or clear) a named role on a subject; assignment is authoritative. */
+  assignOperatorRole(adminCredential: string, subject: string, name: string | null): void {
+    this.#assertOpen()
+    const admin = this.#requireAdmin(adminCredential)
+    const target = validId(subject)
+    const roleName = name === null ? null : validRoleName(name)
+    if (!this.#db.prepare('SELECT 1 FROM subjects WHERE id=? AND disabled=0').get(target)) throw new Error('unknown subject')
+    if (roleName !== null && !this.#db.prepare('SELECT 1 FROM operator_roles WHERE name=?').get(roleName)) {
+      throw new Error('unknown operator role')
+    }
+    this.#db.exec('BEGIN IMMEDIATE')
+    try {
+      this.#db.prepare('UPDATE subjects SET operator_role=? WHERE id=?').run(roleName, target)
+      this.#audit('operator-role.assign', admin.subject_id, admin.id, undefined, { subject: target, role: roleName })
+      this.#db.exec('COMMIT')
+    } catch (error) {
+      this.#db.exec('ROLLBACK')
+      throw error
+    }
+    this.#notify({ subject: target, reason: 'role-changed' })
+  }
+
+  /**
+   * Effective method-scope ceiling for an authenticated principal, fail-closed.
+   * Roles are unconfigured => no boundary (existing grant authority unchanged).
+   * Admin (owner) principals always hold the full scope set.
+   */
+  resolveOperatorCeiling(principal: NativePrincipal): OperatorRoleCeiling {
+    this.#assertOpen()
+    if (!principal || !this.#verifiedPrincipals.has(principal)) return DENIED_OPERATOR_CEILING
+    const row = this.#db.prepare('SELECT role,operator_role FROM subjects WHERE id=? AND disabled=0').get(principal.subject) as
+      | { role: string; operator_role: string | null }
+      | undefined
+    if (!row) return DENIED_OPERATOR_CEILING
+    const configured = this.#operatorRolesConfigured()
+    if (row.role === 'admin') {
+      return Object.freeze({
+        configured,
+        role: configured ? 'owner' : null,
+        scopes: ALL_OPERATOR_SCOPES,
+      })
+    }
+    if (!configured) {
+      return Object.freeze({ configured: false, role: null, scopes: ALL_OPERATOR_SCOPES })
+    }
+    const ceiling = resolveOperatorRoleCeiling(
+      { definitions: this.#readOperatorRoleDefinitions(), default: this.#readDefaultOperatorRole() },
+      row.operator_role,
+    )
+    // The boundary has been modelled at some point: a principal with no
+    // applicable assignment/default gets deny-all, never a reopened registry.
+    return ceiling.configured ? ceiling : DENIED_OPERATOR_CEILING
+  }
+
+  /**
+   * Whether the operator boundary has ever been established. True while a
+   * default or any definition is live, and permanently true once roles were
+   * ever defined (durable tombstone) so removing the last role cannot reopen
+   * full access.
+   */
+  #operatorRolesConfigured(): boolean {
+    if (this.#readDefaultOperatorRole() !== null) return true
+    if (this.#db.prepare("SELECT 1 FROM authority_meta WHERE key='operator_roles_configured'").get()) return true
+    return !!this.#db.prepare('SELECT EXISTS(SELECT 1 FROM operator_roles) AS present').get()?.present
+  }
+
+  #readDefaultOperatorRole(): string | null {
+    const row = this.#db.prepare("SELECT value FROM authority_meta WHERE key='operator_default_role'").get() as
+      { value: string } | undefined
+    return row?.value ?? null
+  }
+
+  #readOperatorRoleDefinitions(): Record<string, unknown> {
+    const definitions: Record<string, unknown> = {}
+    const rows = this.#db.prepare('SELECT name,definition FROM operator_roles').all() as
+      Array<{ name: string; definition: string }>
+    for (const row of rows) {
+      try {
+        definitions[row.name] = JSON.parse(row.definition)
+      } catch {
+        // A corrupt stored definition must deny, never widen the ceiling.
+        definitions[row.name] = null
+      }
+    }
+    return definitions
+  }
+
+  #notifyRoleChange(): void {
+    const subjects = this.#db.prepare('SELECT id FROM subjects WHERE disabled=0').all() as Array<{ id: string }>
+    for (const { id } of subjects) this.#notify({ subject: id, reason: 'role-changed' })
   }
 
   rotateCredential(credential: string): NativeIssuedCredential {

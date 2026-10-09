@@ -387,7 +387,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     pause('user-paused')
     const sequence = ++launchSequence.current
     const profile = profileRef.current
-    const scope = { ...contextRef.current, entityId: ['OBT-16', 'OBT-23'].includes(id) || (id === 'OBT-22' && navRef.current.navigationState.navigator === 'meetings') ? contextRef.current.entityId : undefined }
+    const scope = { ...contextRef.current, entityId: ['OBT-16', 'OBT-23'].includes(id) || (id === 'OBT-22' && navRef.current.navigationState.navigator === 'surface' && navRef.current.navigationState.surface === 'calendar') ? contextRef.current.entityId : undefined }
     const key = createLearningScopeKey(profile, scope.workspaceId)
     const previous = await repositories.progress.read(key, id)
     if (sequence !== launchSequence.current || !enabledRef.current || scope.workspaceId !== contextRef.current.workspaceId || scope.panelId !== contextRef.current.panelId) return

@@ -24,6 +24,16 @@ import {
 } from './KanbanColumn'
 import { buildPriorityGroups } from './priority-groups'
 import { flattenVisibleKanbanTaskIds } from './kanban-selection'
+import {
+  buildKanbanGrid,
+  enterKanbanColumn,
+  exitKanbanGridFocus,
+  isKanbanGridNavKey,
+  moveKanbanGridFocus,
+  resolveKanbanFocus,
+  type KanbanFocus,
+} from './kanban-grid-navigation'
+import { KANBAN_TILE_BASE_HEIGHT, KANBAN_TILE_STACK_GAP } from './kanban-virtualization'
 import { TaskTile } from './TaskTile'
 import type {
   KanbanColumnId,
@@ -37,6 +47,31 @@ export type KanbanMoveTarget = {
   columnId: KanbanColumnId
   /** When set (including null), assign this project on drop. Undefined = leave project alone. */
   projectId?: string | null
+}
+
+/** Attribute-value escape for the board's bracketed CSS selectors. */
+function escapeKanbanAttr(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
+/** True while the event target is a text field the board must not hijack. */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
+
+/**
+ * Focus a board element. `[data-kanban-task-id]` is carried by the draggable
+ * wrapper around the tile, so focus lands on the tile's own focusable card.
+ */
+function focusKanbanElement(element: HTMLElement | null): boolean {
+  if (!element) return false
+  const focusable = element.matches('[role="button"],[tabindex]')
+    ? element
+    : element.querySelector<HTMLElement>('[role="button"],[tabindex]')
+  ;(focusable ?? element).focus()
+  return true
 }
 
 interface KanbanBoardProps {
@@ -228,6 +263,18 @@ export function KanbanBoard({
     }
     return result
   }, [groupByPriority, columns, tasksByColumn, t])
+  // Keyboard grid model — same visible ordering the board renders.
+  const grid = React.useMemo(
+    () =>
+      buildKanbanGrid(
+        columns,
+        tasksByColumn,
+        groupsByColumn,
+        priorityGroupsByColumn,
+        collapsedGroupKeys,
+      ),
+    [columns, tasksByColumn, groupsByColumn, priorityGroupsByColumn, collapsedGroupKeys],
+  )
   const visibleTaskIds = React.useMemo(
     () =>
       flattenVisibleKanbanTaskIds(
@@ -271,6 +318,100 @@ export function KanbanBoard({
   )
 
   const activeTask = activeId ? tasks.find(task => task.id === activeId) ?? null : null
+
+  const boardRef = React.useRef<HTMLDivElement | null>(null)
+
+  /**
+   * Move DOM focus to a grid target. A card that is virtualized out of its
+   * column's window is not in the DOM, so the column is scrolled toward its
+   * estimated row and focus is retried on the next frames once it mounts.
+   */
+  const focusKanbanTarget = React.useCallback(
+    (target: KanbanFocus) => {
+      const root = boardRef.current
+      if (!root) return
+      if (target.taskId == null) {
+        focusKanbanElement(
+          root.querySelector<HTMLElement>(
+            `[data-kanban-column-scroll="${escapeKanbanAttr(target.columnId)}"]`,
+          ),
+        )
+        return
+      }
+      const attr = escapeKanbanAttr(target.taskId)
+      if (focusKanbanElement(root.querySelector<HTMLElement>(`[data-kanban-task-id="${attr}"]`))) {
+        return
+      }
+      const columnElement = root.querySelector<HTMLElement>(
+        `[data-kanban-column-scroll="${escapeKanbanAttr(target.columnId)}"]`,
+      )
+      const rowIndex = resolveKanbanFocus(grid, target)?.rowIndex ?? 0
+      if (columnElement && rowIndex >= 0) {
+        const approxTop = rowIndex * (KANBAN_TILE_BASE_HEIGHT + KANBAN_TILE_STACK_GAP)
+        columnElement.scrollTop = Math.max(0, approxTop - columnElement.clientHeight / 2)
+      }
+      let attempts = 0
+      const retry = () => {
+        const element = root.querySelector<HTMLElement>(`[data-kanban-task-id="${attr}"]`)
+        if (focusKanbanElement(element)) return
+        if (attempts++ < 10) requestAnimationFrame(retry)
+      }
+      requestAnimationFrame(retry)
+    },
+    [grid],
+  )
+
+  /**
+   * Board-level keyboard navigation. Tiles keep their own Enter/Space (they open
+   * or select); here we own arrows, Home/End, Escape, and container activation.
+   */
+  const handleBoardKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (activeId) return
+      if (isTextEntryTarget(event.target)) return
+      const target = event.target as HTMLElement
+      const taskElement = target.closest<HTMLElement>('[data-kanban-task-id]')
+      const columnElement = target.closest<HTMLElement>('[data-kanban-column-scroll]')
+      const columnId = columnElement?.dataset.kanbanColumnScroll
+      if (!columnId) return
+      let current: KanbanFocus | null = null
+      if (taskElement) {
+        current = { columnId, taskId: taskElement.dataset.kanbanTaskId ?? null }
+      } else if (target === columnElement) {
+        current = { columnId, taskId: null }
+      }
+      if (!current) return
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        const next = exitKanbanGridFocus(current)
+        if (next) focusKanbanTarget(next)
+        else (document.activeElement as HTMLElement | null)?.blur()
+        return
+      }
+
+      if (event.key === 'Enter' || event.key === ' ') {
+        // A focused card handles its own activation; only the container defers here.
+        if (current.taskId != null) return
+        const next = enterKanbanColumn(grid, current.columnId)
+        if (next) {
+          event.preventDefault()
+          event.stopPropagation()
+          focusKanbanTarget(next)
+        }
+        return
+      }
+
+      if (isKanbanGridNavKey(event.key)) {
+        const next = moveKanbanGridFocus(grid, current, event.key)
+        event.preventDefault()
+        event.stopPropagation()
+        if (next) focusKanbanTarget(next)
+      }
+    },
+    [activeId, focusKanbanTarget, grid],
+  )
 
   const columnLabel = React.useCallback(
     (columnId: string) => {
@@ -398,7 +539,11 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}
     >
-      <div className="flex h-full gap-2 overflow-x-auto p-3">
+      <div
+        ref={boardRef}
+        onKeyDown={handleBoardKeyDown}
+        className="flex h-full gap-2 overflow-x-auto p-3"
+      >
         {addColumnButton('left')}
         {columns.map((column, index) => (
           <KanbanColumn

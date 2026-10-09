@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'bun:test'
+import { afterEach, describe, expect, it, setDefaultTimeout, vi } from 'bun:test'
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -13,6 +13,10 @@ import type { Logger } from '../../runtime/platform'
 
 const SECRET = 'handoff-test-secret'
 const PASSWORD = 'handoff-test-password'
+// These tests build a temp webui dir and drive the real handler/login path (scrypt per login);
+// the bun default 5 s budget is machine-load dependent and flaked inside a full gate run.
+// Budget only - no assertion was relaxed; the suite passes 20/20 in isolation on an idle machine.
+setDefaultTimeout(30_000)
 const TEMP_DIRS: string[] = []
 const HANDLERS: WebuiHandler[] = []
 

@@ -150,6 +150,19 @@ describe('extensions RPC', () => {
     expect(after.records.find((r) => r.id === 'marketplace:superpowers')?.status).toBe('disabled')
   })
 
+  it('listInstalled always includes enabled first-party built-in extensions', async () => {
+    const server = createMockServer()
+    registerExtensionsHandlers(server as never, {
+      platform: { logger: { info() {}, error() {}, warn() {}, debug() {} } },
+    } as never)
+    const listInstalled = server.handlers.get(RPC_CHANNELS.extensions.LIST_INSTALLED)!
+    const result = (await listInstalled({}, {})) as {
+      records: Array<{ id: string; status: string }>
+    }
+    expect(result.records.find((r) => r.id === 'builtin:clipboard-history')?.status).toBe('enabled')
+    expect(result.records.find((r) => r.id === 'builtin:knowledge-map')?.status).toBe('enabled')
+  })
+
   it('never projects an unsigned cache entry into the trusted catalog', async () => {
     writeFileSync(join(dir, 'marketplace', 'catalog.cache.json'), JSON.stringify({
       fetchedAt: Date.now(),

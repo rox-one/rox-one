@@ -69,12 +69,12 @@ describe('W1-07 flags', () => {
 })
 
 describe('unified modes', () => {
-  it('flags ON: all eleven modes in §3.1 order', () => {
+  it('flags ON: all nine modes in §3.1 order', () => {
     const flags = resolveShellFlags(Object.fromEntries(W1_07_FLAG_IDS.map((id) => [id, true])))
     const modes = pill(flags)
     expect(modes.map((mode) => [mode.id, mode.order])).toEqual([
-      ['home', 10], ['chat', 20], ['messenger', 25], ['meetings', 30], ['calendar', 35], ['tasks', 40],
-      ['goals', 45], ['notes', 50], ['contacts', 55], ['feed', 60], ['inbox', 70],
+      ['home', 10], ['chat', 20], ['messenger', 25], ['calendar', 35], ['tasks', 40],
+      ['goals', 45], ['notes', 50], ['feed', 60], ['inbox', 70],
     ])
     expect(modes.find((mode) => mode.id === 'messenger')?.rootRoute).toBe('messenger')
     expect(modes.find((mode) => mode.id === 'notes')?.titleKey).toBe(DOCS_RELABEL_TITLE_KEY)
@@ -83,22 +83,24 @@ describe('unified modes', () => {
 
   it('one flag ON adds exactly that mode', () => {
     const flags = resolveShellFlags({ [WORKBENCH_FLAG.modeGoalsV1]: true })
-    expect(pill(flags).map((mode) => mode.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'goals', 'notes', 'feed', 'inbox'])
+    expect(pill(flags).map((mode) => mode.id)).toEqual(['home', 'chat', 'tasks', 'goals', 'notes', 'feed', 'inbox'])
     expect(pill(flags).find((mode) => mode.id === 'notes')?.titleKey).toBe('workbench.mode.notes')
   })
 
   it('mode titles are workbench.mode.<id> keys', () => {
     expect(UNIFIED_MODES.map((mode) => mode.contribution.titleKey)).toEqual([
-      'workbench.mode.messenger', 'workbench.mode.calendar', 'workbench.mode.goals', 'workbench.mode.contacts',
+      'workbench.mode.messenger', 'workbench.mode.calendar', 'workbench.mode.goals',
     ])
   })
 
   it('highlights a unified mode on its root and on owned entity routes', () => {
     expect(isModeActive('messenger', { navigator: 'surface', surface: 'messenger', details: null })).toBe(true)
     expect(isModeActive('messenger', { navigator: 'surface', surface: 'goals', details: null })).toBe(false)
+    expect(isModeActive('calendar', { navigator: 'entity', ref: { kind: 'call', id: 'm-1' }, details: null } as never)).toBe(true)
     expect(isModeActive('goals', { navigator: 'entity', ref: { kind: 'goal', id: 'g-1' }, details: null } as never)).toBe(true)
     expect(isModeActive('goals', { navigator: 'entity', ref: { kind: 'space', id: 's-1' }, details: null } as never)).toBe(true)
-    expect(isModeActive('contacts', { navigator: 'entity', ref: { kind: 'goal', id: 'g-1' }, details: null } as never)).toBe(false)
+    // W3.3: `contacts` is no longer a mode (merged into Команда/messenger).
+    expect(UNIFIED_MODES.some((mode) => mode.contribution.id === 'contacts')).toBe(false)
   })
 
   it('negative: duplicate mode ids are rejected', () => {

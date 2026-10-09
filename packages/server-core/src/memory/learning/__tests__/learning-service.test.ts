@@ -22,6 +22,7 @@ import { MutationStore } from '../MutationStore'
 import { ObservationStore } from '../ObservationStore'
 import { OutcomeStore } from '../OutcomeStore'
 import { PolicyStore } from '../PolicyStore'
+import { setRepoNotifier, type RepoBankRef } from '../../repo/notify'
 
 const NOW = Date.parse('2026-10-08T00:00:00.000Z')
 const NOW_ISO = new Date(NOW).toISOString()
@@ -41,8 +42,22 @@ beforeEach(() => {
   tmpDirs.push(mkdtempSync(join(tmpdir(), 'learning-service-')))
 })
 afterEach(() => {
+  setRepoNotifier(null)
   while (tmpDirs.length) rmSync(tmpDirs.pop()!, { recursive: true, force: true })
 })
+
+/** Recorder-notifier: captures the exact bank ref + reason each write path emits. */
+interface RecordedNotify {
+  bank: RepoBankRef
+  reason: string
+}
+let notifications: RecordedNotify[] = []
+function installNotifier(): void {
+  notifications = []
+  setRepoNotifier((bank, reason) => {
+    notifications.push({ bank, reason })
+  })
+}
 
 // ---------------------------------------------------------------------------
 // Port fakes (the only permitted fakes) + real-store rig
@@ -460,5 +475,70 @@ describe('LearningService RPC read/write surface', () => {
     rig.stores.policies.save(policy)
 
     expect(rig.service.getPolicies(WS)).toEqual([policy])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Repo notification seam (Wave-A): promotion/rollback target the right bank
+// ---------------------------------------------------------------------------
+
+describe('LearningService repo notifications', () => {
+  it('promotes a global lesson into the main bank and a workspace lesson into the workspace bank', async () => {
+    const rig = makeRig({ policy: policyOf({ autoCreate: 'candidate' }), thresholds: LOW_THRESHOLDS })
+    const globalIngest = await rig.service.ingestDistilled(lessonInput({ scope: 'global' }))
+
+    installNotifier()
+    const promoted = await rig.service.approveCandidate(WS, globalIngest.candidateId!)
+
+    expect(promoted.promoted).toBe(true)
+    expect(rig.calls.addLesson).toEqual([
+      { rule: RULE, category: 'workflow', scope: 'global', trigger: 'distillation', negative: true },
+    ])
+    expect(notifications).toEqual([{ bank: { scope: 'main' }, reason: 'promotion' }])
+
+    // A workspace target stays backward-compatible: the workspace bank (no scope field).
+    const wsIngest = await rig.service.ingestDistilled(lessonInput({ scope: 'workspace', rule: `${RULE} ws` }))
+    notifications = []
+    await rig.service.approveCandidate(WS, wsIngest.candidateId!)
+    expect(notifications).toEqual([{ bank: { scope: 'workspace', workspaceId: WS }, reason: 'promotion' }])
+
+    // With no notifier registered the write still succeeds.
+    setRepoNotifier(null)
+    const quiet = await rig.service.ingestDistilled(lessonInput({ scope: 'workspace', rule: `${RULE} quiet` }))
+    expect((await rig.service.approveCandidate(WS, quiet.candidateId!)).promoted).toBe(true)
+  })
+
+  it('notifies the main bank when a global lesson rolls back, the workspace bank for a workspace lesson', async () => {
+    const rig = makeRig({ policy: policyOf({ autoCreate: 'candidate' }), thresholds: LOW_THRESHOLDS })
+    const globalIngest = await rig.service.ingestDistilled(lessonInput({ scope: 'global' }))
+    await rig.service.approveCandidate(WS, globalIngest.candidateId!)
+
+    installNotifier()
+    expect((await rig.service.rollbackCandidate(WS, globalIngest.candidateId!)).reverted).toBe(true)
+    expect(notifications).toEqual([{ bank: { scope: 'main' }, reason: 'rollback' }])
+
+    const wsIngest = await rig.service.ingestDistilled(lessonInput({ scope: 'workspace', rule: `${RULE} ws` }))
+    await rig.service.approveCandidate(WS, wsIngest.candidateId!)
+    notifications = []
+    expect((await rig.service.rollbackCandidate(WS, wsIngest.candidateId!)).reverted).toBe(true)
+    expect(notifications).toEqual([{ bank: { scope: 'workspace', workspaceId: WS }, reason: 'rollback' }])
+
+    // With no notifier registered the rollback still succeeds.
+    setRepoNotifier(null)
+    const quiet = await rig.service.ingestDistilled(lessonInput({ scope: 'workspace', rule: `${RULE} quiet` }))
+    await rig.service.approveCandidate(WS, quiet.candidateId!)
+    expect((await rig.service.rollbackCandidate(WS, quiet.candidateId!)).reverted).toBe(true)
+  })
+
+  it('never notifies for a skill rollback (skills are not projected)', async () => {
+    const rig = makeRig()
+    rig.stores.candidates.save(makeCandidateRow({ id: 'cand_seed_1', status: 'active' }))
+    rig.stores.mutations.save(makeMutationRow({ candidateId: 'cand_seed_1' }))
+
+    installNotifier()
+    const result = await rig.service.rollbackCandidate(WS, 'cand_seed_1')
+
+    expect(result.reverted).toBe(true)
+    expect(notifications).toEqual([])
   })
 })

@@ -33,7 +33,7 @@ The offline catalog contains **330 skills in 34 packs**. It includes Superpowers
 
 - [Requested skill mapping](apps/electron/resources/skills/REQUESTED-SKILLS.json): upstream sources, alternatives, licenses and prerequisites.
 - [Pinned pack manifest](apps/electron/resources/skills/SKILLS.lock).
-- [Native OMP discovery evidence](apps/electron/resources/skills/OMP-DISCOVERY.json).
+- [Native Rox CLI discovery evidence](apps/electron/resources/skills/ROX-CLI-DISCOVERY.json).
 
 Figma and Groma integrations use explicitly identified ROX adapters. DOCX/XLSX/PPTX use a licensed document implementation rather than copying restricted upstream packages. A discoverable skill does not by itself configure an external service, credential, browser or application.
 

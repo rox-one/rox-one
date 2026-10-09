@@ -55,7 +55,7 @@ describe('getMemoryConfig merge (P1 redactExtraPatterns / M1 ftsLimit)', () => {
     const cfg = JSON.parse(out)
     expect(cfg.redactExtraPatterns).toEqual([])
     expect(cfg.ftsLimit).toBe(20)
-  })
+  }, 30_000)
 
   it('merges redactExtraPatterns and ftsLimit from config.json', () => {
     const cfg = JSON.parse(
@@ -66,7 +66,7 @@ describe('getMemoryConfig merge (P1 redactExtraPatterns / M1 ftsLimit)', () => {
     )
     expect(cfg.redactExtraPatterns).toEqual(['ACME Corp', '/srv/internal'])
     expect(cfg.ftsLimit).toBe(7)
-  })
+  }, 30_000)
 
   it('filters non-string/empty patterns and rejects invalid ftsLimit', () => {
     const cfg = JSON.parse(
@@ -77,14 +77,14 @@ describe('getMemoryConfig merge (P1 redactExtraPatterns / M1 ftsLimit)', () => {
     )
     expect(cfg.redactExtraPatterns).toEqual(['ACME Corp'])
     expect(cfg.ftsLimit).toBe(20)
-  })
+  }, 30_000)
 
   it('non-array redactExtraPatterns falls back to the default', () => {
     const cfg = JSON.parse(
       runEval(setupConfigDir({ redactExtraPatterns: 'ACME Corp' }), 'console.log(JSON.stringify(getMemoryConfig()))'),
     )
     expect(cfg.redactExtraPatterns).toEqual([])
-  })
+  }, 30_000)
 
   it('M2 semantic defaults to false and merges an explicit opt-in', () => {
     const off = JSON.parse(runEval(setupConfigDir(), 'console.log(JSON.stringify(getMemoryConfig()))'))
@@ -97,5 +97,5 @@ describe('getMemoryConfig merge (P1 redactExtraPatterns / M1 ftsLimit)', () => {
       runEval(setupConfigDir({ semantic: 1 }), 'console.log(JSON.stringify(getMemoryConfig()))'),
     )
     expect(falsy.semantic).toBe(false) // non-boolean values fall back to the default
-  })
+  }, 30_000)
 })

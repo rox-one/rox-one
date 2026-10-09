@@ -30,6 +30,11 @@ export interface FreeFormInputContextBadgeProps {
   /** Data attribute for tutorials */
   'data-tutorial'?: string
   'aria-pressed'?: boolean
+  /**
+   * Current 0..1 dictation level. When provided, a decorative live wave is
+   * rendered at the dictation spot; `undefined` (not recording) hides it.
+   */
+  liveLevel?: number
 }
 
 /**
@@ -41,6 +46,36 @@ export interface FreeFormInputContextBadgeProps {
  * - Collapsed (has selection): Icon + Label (fading), bg-background + shadow-minimal
  * - Open: bg-foreground/5 (like hover)
  */
+function DictationWave({ level }: { level: number }) {
+  const centred = Math.min(1, Math.max(0, level))
+  return (
+    <span aria-hidden="true" className="pointer-events-none shrink-0">
+      <span className="flex h-3 w-8 items-center justify-between motion-reduce:hidden">
+        {[0, 1, 2, 3, 4].map((bar) => {
+          const distance = Math.abs(bar - 2) / 2
+          const scale = 0.25 + (1 - distance) * 0.75 * Math.max(0.2, centred)
+          return (
+            <span
+              key={bar}
+              className="w-0.5 rounded-full bg-[var(--accent)] transition-transform duration-[120ms] ease-linear"
+              style={{ height: '100%', transform: `scaleY(${Number(scale.toFixed(3))})` }}
+            />
+          )
+        })}
+      </span>
+      <span className="hidden h-3 w-8 items-center justify-between motion-reduce:flex">
+        {[0.4, 0.7, 1, 0.7, 0.4].map((scale, bar) => (
+          <span
+            key={bar}
+            className="w-0.5 rounded-full bg-[var(--accent)]"
+            style={{ height: '100%', transform: `scaleY(${scale})` }}
+          />
+        ))}
+      </span>
+    </span>
+  )
+}
+
 export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, FreeFormInputContextBadgeProps>(
   function FreeFormInputContextBadge(
     {
@@ -57,6 +92,7 @@ export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, Fre
       buttonRef,
       'data-tutorial': dataTutorial,
       'aria-pressed': ariaPressed,
+      liveLevel,
     },
     ref
   ) {
@@ -109,6 +145,9 @@ export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, Fre
             </FadingText>
           )
         )}
+
+        {/* Decorative live dictation wave - only while recording (level provided) */}
+        {liveLevel !== undefined && <DictationWave level={liveLevel} />}
 
         {/* Optional chevron - only in expanded state */}
         {isExpanded && showChevron && (

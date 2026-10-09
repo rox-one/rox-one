@@ -140,6 +140,14 @@ export function createSettingsProvider(
 export function createSkillsProvider(
   getSkills: () => SkillLike[],
   routeFor: (slug: string) => string,
+  /**
+   * Pending-sync probe, mirroring `skillsSyncingAtom`. A slow bundled-skills
+   * sync can outlive the client timeout (a later push recovers the catalog),
+   * so an empty result must not be presented as "no skills configured" while
+   * this is true — the same contract SkillsListPanel and SkillSelectorPopover
+   * already honour.
+   */
+  isSyncing: () => boolean = () => false,
 ): ResourceProvider {
   return {
     id: 'craft-skills',
@@ -168,7 +176,23 @@ export function createSkillsProvider(
         })
       }
       items.sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-      return items.slice(0, limit)
+      const top = items.slice(0, limit)
+      // A pending sync is not an authoritative empty catalog: surface a
+      // non-navigable loading row so the omnibox never claims "no skills".
+      if (top.length === 0 && isSyncing()) {
+        return [
+          {
+            id: 'skill:__syncing__',
+            kind: 'command-hint',
+            title: i18n.t('common.loading'),
+            subtitle: i18n.t('sidebar.skills'),
+            icon: 'skill',
+            score: 0,
+            data: { syncing: true },
+          },
+        ]
+      }
+      return top
     },
   }
 }

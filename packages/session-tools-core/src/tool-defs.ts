@@ -57,8 +57,10 @@ import { handleKnowledgeSearch } from './handlers/knowledge-search.ts';
 import { handleKnowledgeRead } from './handlers/knowledge-read.ts';
 import { handleKnowledgeGetBacklinks } from './handlers/knowledge-backlinks.ts';
 import { handleKnowledgePropose } from './handlers/knowledge-propose.ts';
+import { handleMemoryRepoRead, handleMemoryRepoSearch } from './handlers/memory-repo.ts';
 import { handleMemorySearch } from './handlers/memory-search.ts';
 import { handleMemoryGet } from './handlers/memory-get.ts';
+import { handleMemoryForget } from './handlers/memory-forget.ts';
 import { handleSkillsSearch } from './handlers/skills-search.ts';
 import { handleSkillsRead } from './handlers/skills-read.ts';
 
@@ -422,6 +424,31 @@ export type KnowledgeReadArgs = z.infer<typeof KnowledgeReadSchema>;
 export type KnowledgeGetBacklinksArgs = z.infer<typeof KnowledgeGetBacklinksSchema>;
 export type KnowledgeProposeArgs = z.infer<typeof KnowledgeProposeSchema>;
 
+// Memory repository read tools (Wave B) — read-only access to the deterministic
+// git projection of the memory stores (MemoryRepoService, §7 of the memory
+// repository + dreaming plan). No write channels: import/dream run over RPC only.
+export const MemoryRepoReadSchema = z.object({
+  path: z.string().optional().describe(
+    'Repository-relative file path inside the bank (e.g. "lessons/kernel-guide.md").',
+  ),
+  lessonId: z.string().optional().describe(
+    'Lesson id; resolves the repository file whose frontmatter carries it. Used when "path" is omitted.',
+  ),
+  bank: z.string().optional().describe(
+    "Memory bank id (e.g. 'main' or 'ws:<workspaceId>'). Default: the main bank.",
+  ),
+});
+
+export const MemoryRepoSearchSchema = z.object({
+  query: z.string().describe('Search terms — every word must match (case-insensitive) file paths or contents.'),
+  bank: z.string().optional().describe(
+    "Memory bank id (e.g. 'main' or 'ws:<workspaceId>'). Default: the main bank.",
+  ),
+  limit: z.number().optional().describe('Max hits to return (default 20, hard cap 50)'),
+});
+
+export type MemoryRepoReadArgs = z.infer<typeof MemoryRepoReadSchema>;
+export type MemoryRepoSearchArgs = z.infer<typeof MemoryRepoSearchSchema>;
 // Memory recall tools (spec c1.3). Wire names use underscores like the
 // knowledge tools. Read-only; a chunk's provenance (`origin`) travels with the
 // result so untrusted content is visibly labelled and never injected.
@@ -433,8 +460,15 @@ export const MemorySearchSchema = z.object({
 export const MemoryGetSchema = z.object({
   chunkId: z.string().describe('Chunk id from a memory_search hit.'),
 });
+// c1.8 forget: mutating — removes the corpus line, index chunk and embeddings
+// for the given chunk ids and records a content-free lineage entry.
+export const MemoryForgetSchema = z.object({
+  ids: z.array(z.string()).describe('Chunk ids to forget (from memory_search hits).'),
+  reason: z.string().optional().describe('Why the chunks are being forgotten (recorded in the lineage).'),
+});
 export type MemorySearchToolArgs = z.infer<typeof MemorySearchSchema>;
 export type MemoryGetToolArgs = z.infer<typeof MemoryGetSchema>;
+export type MemoryForgetToolArgs = z.infer<typeof MemoryForgetSchema>;
 // Skills catalog tools (c2.7). The wire names use underscores; the catalog
 // advertises and the tools resolve slugs (never raw paths).
 export const SkillsSearchSchema = z.object({
@@ -841,6 +875,22 @@ knowledge_read when updating an existing node. Explore/Safe mode blocks this too
 
 Errors are typed: INVALID_REF, CONNECTION_UNAVAILABLE, CAPABILITY_DISABLED, PROVIDER_ERROR.`,
 
+  memory_repo_read: `Read one file from the user's memory repository — the deterministic markdown/git projection of their memory stores (lessons, MEMORY.md, DREAMS.md). Read-only.
+
+Pass either a repository-relative \`path\` (from memory_repo_search, the memory UI, or a previous read) or a \`lessonId\`; with a lessonId the file whose frontmatter carries that id is resolved for you. \`bank\` selects the bank (default: the main/personal bank).
+
+Returns the rendered file — frontmatter and body — plus its path, lesson id and whether it was human-edited. Bodies are truncated at 32k characters with a visible marker.
+
+Errors are typed: MEMORY_REPO_UNAVAILABLE (the memory-repo runtime is not running in this process), MEMORY_REPO_BANK_NOT_FOUND (unknown bank), NOT_FOUND (unknown path/lessonId), INVALID_ARGS (neither path nor lessonId), MEMORY_REPO_ERROR (repository failure).`,
+
+  memory_repo_search: `Search the user's memory repository by terms. Read-only.
+
+Every word in \`query\` must match (case-insensitive) either a repository file path or its content — a single word is a plain substring match. Results are deterministic (sorted by path) and bounded: default 20 hits, hard cap 50.
+
+Each hit reports its \`path\`, its \`lessonId\` when the file carries one, and a content snippet (pass the path to memory_repo_read to read the whole file). \`bank\` selects the bank (default: the main/personal bank).
+
+Errors are typed: MEMORY_REPO_UNAVAILABLE, MEMORY_REPO_BANK_NOT_FOUND, INVALID_ARGS (empty query), MEMORY_REPO_ERROR.`,
+
   unbind_messaging_channel: `Disconnect a messaging channel from the current session.
 Messages will no longer be forwarded between the chat app and this session.`,
 
@@ -864,6 +914,17 @@ Pass a \`chunkId\` from a memory_search hit to get the complete text with its so
 path and line span. The response repeats the chunk's provenance and carries the same
 gated badge: \`untrusted\` chunks are returned but never injected into the prompt.
 An unknown id is reported honestly as "not found".`,
+
+  memory_forget: `Permanently forget one or more memory chunks by id. Mutating.
+
+Removes each id's content from the durable corpus (the source document line), from
+the search index, and from cached embeddings, then records a content-free lineage
+entry (chunk id, path, text hash, reason, author) in the workspace audit log.
+After forgetting, memory_search no longer returns the content and the lineage is
+retained for audit only — it is never injected into prompts.
+
+Pass \`chunkId\`s from memory_search hits. Forgetting an id that is already gone is a
+clean no-op. Use this when the user asks you to forget/remove remembered information.`,
   skills_search: `Search the installed skills (agent skill catalog) by keyword. Read-only.
 
 Use it to find a skill that matches the task before loading one — the available-skills
@@ -976,10 +1037,17 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'knowledge_read', description: TOOL_DESCRIPTIONS.knowledge_read, inputSchema: KnowledgeReadSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeRead },
   { name: 'knowledge_get_backlinks', description: TOOL_DESCRIPTIONS.knowledge_get_backlinks, inputSchema: KnowledgeGetBacklinksSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeGetBacklinks },
   { name: 'knowledge_propose', description: TOOL_DESCRIPTIONS.knowledge_propose, inputSchema: KnowledgeProposeSchema, executionMode: 'registry', safeMode: 'block', handler: handleKnowledgePropose },
+  // Memory repository read tools (Wave B) — repository reads via the registered
+  // memory-repo runtime; safe in Explore mode (read-only), typed unavailable error otherwise.
+  { name: 'memory_repo_read', description: TOOL_DESCRIPTIONS.memory_repo_read, inputSchema: MemoryRepoReadSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMemoryRepoRead },
+  { name: 'memory_repo_search', description: TOOL_DESCRIPTIONS.memory_repo_search, inputSchema: MemoryRepoSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMemoryRepoSearch },
   // Memory recall tools (c1.3) — read-only, safe in Explore mode; reach the
   // workspace memory index through the ctx.memory callbacks (SessionManager).
   { name: 'memory_search', description: TOOL_DESCRIPTIONS.memory_search, inputSchema: MemorySearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMemorySearch },
   { name: 'memory_get', description: TOOL_DESCRIPTIONS.memory_get, inputSchema: MemoryGetSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMemoryGet },
+  // c1.8 forget — mutating (removes corpus lines + chunks + embeddings), so it
+  // is blocked in Explore/Safe mode like other write tools.
+  { name: 'memory_forget', description: TOOL_DESCRIPTIONS.memory_forget, inputSchema: MemoryForgetSchema, executionMode: 'registry', safeMode: 'block', readOnly: false, handler: handleMemoryForget },
   // Skills catalog tools (c2.7) — read-only over the eligible skill catalog via
   // the registered skills runtime; safe in Explore mode, typed unavailable otherwise.
   { name: 'skills_search', description: TOOL_DESCRIPTIONS.skills_search, inputSchema: SkillsSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillsSearch },

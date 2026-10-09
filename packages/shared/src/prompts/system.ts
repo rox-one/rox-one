@@ -396,8 +396,9 @@ export function getSystemPrompt(
 
   // Optional self-learning memory (injected directly after the project memory block):
   // curated bootstrap docs, pre-formatted lesson corrections, workspace memory,
-  // and retrieved source docs.
-  const memoryInjection = `${memoryBlocks?.bootstrapBlock ?? ''}${memoryBlocks?.lessonsBlock ?? ''}${memoryBlocks?.memoryBlock ?? ''}${memoryBlocks?.sourcesBlock ?? ''}`;
+  // retrieved source docs, c1.5 recall lanes and c1.6 standing intents. This is
+  // the single injection path — recall/intents must not add a second one.
+  const memoryInjection = `${memoryBlocks?.bootstrapBlock ?? ''}${memoryBlocks?.lessonsBlock ?? ''}${memoryBlocks?.memoryBlock ?? ''}${memoryBlocks?.sourcesBlock ?? ''}${memoryBlocks?.recallBlock ?? ''}${memoryBlocks?.intentBlock ?? ''}`;
 
   // Fall back to the user's current preference when callers don't pin/pass a value,
   // so forgetting the argument can't silently re-enable the co-author trailer (see #576).
@@ -824,7 +825,7 @@ Read relevant context files using the Read tool - they contain architecture info
 | OpenUI | \`${DOC_REFS.openui}\` | When authoring interactive blocks (charts, tables, forms) |
 | Browser Tools | \`${DOC_REFS.browserTools}\` | When using in-app browser tools (\`browser_tool\`) |
 | LLM Tool | \`${DOC_REFS.llmTool}\` | When using \`call_llm\` for subtasks |
-| Configuration Interfaces | \`${DOC_REFS.craftCli}\` | When managing labels, sources, skills, automations, permissions or themes |
+| Configuration Interfaces | \`${DOC_REFS.roxCli}\` | When managing labels, sources, skills, automations, permissions or themes |
 
 **IMPORTANT:** Always read the relevant doc file BEFORE making changes. Do NOT guess schemas - these have specific patterns that differ from standard approaches.
 

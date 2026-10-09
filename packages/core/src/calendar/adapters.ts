@@ -1,4 +1,10 @@
-import { appleRemindersAvailable, capabilityFor } from './capabilities.ts'
+import { appleCalendarAvailable, appleRemindersAvailable, capabilityFor } from './capabilities.ts'
+import {
+  AppleCalendarAdapter,
+  appleCalendarLiveEnabled,
+  getAppleCalendarHelper,
+} from './apple-calendar-adapter.ts'
+import { getGoogleCalendarTokenAccessor, googleCalendarLiveEnabled, GoogleCalendarAdapter } from './google-calendar-adapter.ts'
 import type { CalendarEvent, CalendarProvider, CapabilityGap } from './types.ts'
 
 export interface CalendarListPage {
@@ -107,9 +113,30 @@ export function createFixtureAdapter(provider: CalendarProvider, seeds: FixtureE
 
 /**
  * Production factory. Never returns a fixture adapter.
- * Env flags and Apple helper presence are not live evidence; stay unavailable until a verified adapter exists.
+ *
+ * Google is the only remote provider with a verified adapter, and it is fail-closed: it is
+ * returned only when the GOOGLE_CALENDAR_LIVE=1 gate is set AND the host-registered
+ * OAuth token accessor reports stored credentials. Every other case stays Unavailable.
+ *
+ * Apple Calendar is equally fail-closed: it is returned only when APPLE_CALENDAR_LIVE=1
+ * is set AND a registered helper binding reports the macOS EventKit binary is present.
  */
 export function createProductionAdapter(provider: CalendarProvider): CalendarAdapter {
+  if (provider === 'google' && googleCalendarLiveEnabled()) {
+    const accessor = getGoogleCalendarTokenAccessor()
+    if (accessor?.hasCredentials()) {
+      return new GoogleCalendarAdapter({ credentials: accessor })
+    }
+  }
+  if (provider === 'appleCalendar' && appleCalendarLiveEnabled()) {
+    const helper = getAppleCalendarHelper()
+    if (helper && helper.hasHelper()) {
+      return new AppleCalendarAdapter({
+        runHelper: (args) => helper.run(args),
+        helperPresent: () => helper.hasHelper(),
+      })
+    }
+  }
   return new UnavailableCalendarAdapter(provider)
 }
 
@@ -118,7 +145,7 @@ export function createProviderAdapter(provider: CalendarProvider): CalendarAdapt
   return createProductionAdapter(provider)
 }
 
-const LIVE_ENV: Record<Exclude<CalendarProvider, 'appleReminders'>, string> = {
+const LIVE_ENV: Record<Exclude<CalendarProvider, 'appleReminders' | 'appleCalendar'>, string> = {
   google: 'ROX_CALENDAR_GOOGLE_LIVE',
   outlook: 'ROX_CALENDAR_OUTLOOK_LIVE',
   yandex: 'ROX_CALENDAR_YANDEX_LIVE',
@@ -129,6 +156,9 @@ export function liveCredentialsPresent(provider: CalendarProvider): boolean {
   if (provider === 'appleReminders') {
     return appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER))
   }
+  if (provider === 'appleCalendar') {
+    return appleCalendarAvailable(process.platform, getAppleCalendarHelper()?.hasHelper() ?? false)
+  }
   return Boolean(process.env[LIVE_ENV[provider]])
 }
 
@@ -137,3 +167,45 @@ export function isCalendarConnectorWired(provider: CalendarProvider): boolean {
   const adapter = createProductionAdapter(provider)
   return adapter.available() && adapter.mode !== 'fixture'
 }
+
+// Live Google Calendar adapter surface, exposed here so `@rox/core/calendar` consumers
+// (host credential wiring, tests) reach it without a deep import.
+export {
+  GOOGLE_CALENDAR_LIVE_ENV,
+  GoogleCalendarAdapter,
+  GoogleCalendarAuthExpiredError,
+  GoogleCalendarHttpError,
+  GoogleCalendarUnavailableError,
+  getGoogleCalendarTokenAccessor,
+  googleCalendarLiveEnabled,
+  registerGoogleCalendarTokenAccessor,
+} from './google-calendar-adapter.ts'
+export type {
+  CalendarRange,
+  GoogleCalendarAdapterOptions,
+  GoogleCalendarCredentials,
+  GoogleCalendarFetch,
+  GoogleCalendarTokenAccessor,
+} from './google-calendar-adapter.ts'
+
+// Live Apple Calendar (EventKit) adapter surface, exposed here so `@rox/core/calendar`
+// consumers (host helper wiring, tests) reach it without a deep import.
+export {
+  APPLE_CALENDAR_LIVE_ENV,
+  AppleCalendarAdapter,
+  AppleCalendarAuthDeniedError,
+  AppleCalendarHelperError,
+  AppleCalendarUnavailableError,
+  appleCalendarLiveEnabled,
+  getAppleCalendarHelper,
+  registerAppleCalendarHelper,
+} from './apple-calendar-adapter.ts'
+export type {
+  AppleCalendarAdapterOptions,
+  AppleCalendarAuthStatus,
+  AppleCalendarHelperBinding,
+  AppleCalendarHelperEvent,
+  AppleCalendarHelperResult,
+  AppleCalendarRange,
+  AppleCalendarRunHelper,
+} from './apple-calendar-adapter.ts'

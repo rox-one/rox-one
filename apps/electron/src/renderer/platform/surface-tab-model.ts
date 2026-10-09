@@ -136,7 +136,14 @@ export function buildSurfaceTabViews(input: BuildSurfaceTabViewsInput): SurfaceT
     } else if (entry.route.split('?')[0] === 'home') {
       title = labels.home
     } else {
-      title = (panelType === 'other' ? resolveRouteTitle?.(entry.route) : null) ?? legacyPanelTitle(panelType, labels)
+      // Navigator panels name themselves from the route (Задачи, Встречи,
+      // Rox History…) so the tab never falls back to the generic «Панель».
+      // `clipboard-history` keeps its own PanelType (lane policy) but resolves
+      // through the same route → title-key mapping as the legacy navigators.
+      const routeTitle = panelType === 'other' || panelType === 'clipboard-history'
+        ? resolveRouteTitle?.(entry.route)
+        : null
+      title = routeTitle ?? legacyPanelTitle(panelType, labels)
     }
     return {
       panelId: entry.id,

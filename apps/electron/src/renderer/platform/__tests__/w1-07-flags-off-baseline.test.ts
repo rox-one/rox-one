@@ -1,9 +1,13 @@
 /**
- * W1-07 (#1504) acceptance: with every new flag OFF the mode pill, ⌘1…7
- * slots, routes, shortcut lists and Omnibox commands are identical to the
- * base commit. The fixture was captured on the base
- * (b69fc937, `origin/feat/w1-01-02-entity-registry-links`) with the same
- * probe as `captureShellState()` below.
+ * W1-07 (#1504) acceptance: with every new workbench flag OFF the mode pill,
+ * ⌘1…7 slots, routes, shortcut lists and Omnibox commands stay pinned to the
+ * recorded shell state, so a flag leftover can never leak into the default UI.
+ *
+ * W3.2/W3.3 (Согласованность-20261009): the two merges are unconditional, so
+ * the fixture diverges from the pre-merge base in exactly three ways — the
+ * `meetings` mode is gone, the legacy `meetings`/`contacts` routes alias to
+ * the `calendar`/`messenger` surfaces, and W2.6 unified the home glyph on the
+ * canonical `House` (was the deprecated `Home` alias).
  */
 import { afterAll, describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
@@ -56,14 +60,14 @@ afterAll(() => {
 })
 
 describe('W1-07 flags OFF = baseline', () => {
-  it('mode pill and ⌘1…7 slots match the base commit', () => {
+  it('mode pill and ⌘1…7 slots match the recorded shell state', () => {
     const { modes, slots } = captureModes()
     expect(modes).toEqual(baseline.modes)
     expect(slots).toEqual(baseline.slots)
-    expect(slots).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes', 'feed', 'inbox', null])
+    expect(slots).toEqual(['home', 'chat', 'tasks', 'notes', 'feed', 'inbox', null, null])
   })
 
-  it('routes parse and rebuild exactly as on the base commit', () => {
+  it('routes parse and rebuild exactly as recorded', () => {
     resetUnifiedSurfaceRoutes()
     expect(JSON.parse(JSON.stringify(captureRoutes()))).toEqual(baseline.routes)
   })

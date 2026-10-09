@@ -11,6 +11,7 @@
 import i18n from 'i18next'
 import { toast } from 'sonner'
 import { openExternalUrl } from '@rox/ui'
+import type { OrgCallerIdentity } from '@rox/shared/orgs'
 import { WsRpcClient } from '../../../electron/src/transport/client'
 import { buildClientApi } from '../../../electron/src/transport/build-api'
 import { CHANNEL_MAP } from '../../../electron/src/transport/channel-map'
@@ -106,7 +107,7 @@ export function createWebApi(options: WebApiOptions): {
         if (result.reason === 'dangerous') {
           toast.error(`Blocked unsafe URL (${result.detail})`)
         } else if (result.reason === 'internal-deeplink') {
-          console.warn('[openUrl] craftagents:// deep links require the desktop app')
+          console.warn('[openUrl] rox:// deep links require the desktop app')
         } else {
           console.warn('[openUrl] Malformed URL:', url)
         }
@@ -126,6 +127,51 @@ export function createWebApi(options: WebApiOptions): {
     getRuntimeEnvironment: () => 'web',
     getSystemWarnings: () => Promise.resolve({ vcredistMissing: false }),
     isDebugMode: () => Promise.resolve(import.meta.env.DEV),
+
+    // Session identity — the browser authenticates with the HttpOnly session
+    // cookie, so read the signed-in Rox ID user over HTTP instead of the
+    // WS org-identity RPC (which has no client principal in web mode).
+    getOrgIdentity: async (): Promise<OrgCallerIdentity> => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'same-origin' })
+        if (res.ok) {
+          const data: unknown = await res.json()
+          if (typeof data === 'object' && data !== null
+            && 'authMode' in data && data.authMode === 'oidc'
+            && 'user' in data && typeof data.user === 'object' && data.user !== null
+            && 'sub' in data.user && typeof data.user.sub === 'string') {
+            const user = data.user
+            const issuer = 'issuer' in data && typeof data.issuer === 'string' ? data.issuer : undefined
+            const name = 'name' in user && typeof user.name === 'string' ? user.name : undefined
+            const username = 'username' in user && typeof user.username === 'string' ? user.username : undefined
+            const email = 'email' in user && typeof user.email === 'string' ? user.email : undefined
+            return {
+              userId: data.user.sub,
+              authority: 'native',
+              ...(issuer ? { issuer } : {}),
+              ...(name ? { name } : {}),
+              ...(username ? { username } : {}),
+              ...(email ? { email } : {}),
+            }
+          }
+        }
+      } catch {
+        /* fall back to the RPC identity below */
+      }
+      // The generated RPC client types this channel more loosely (e.g. `userId:
+      // unknown`) than the OrgCallerIdentity contract; the runtime object is the same.
+      return baseApi.getOrgIdentity() as unknown as OrgCallerIdentity
+    },
+
+    // Logout — clear the web session cookie and return to the login page.
+    logout: async () => {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
+      } catch {
+        /* the redirect below still drops the in-memory session */
+      }
+      window.location.href = '/login'
+    },
 
     // Theme
     getSystemTheme: () => Promise.resolve(getSystemTheme()),

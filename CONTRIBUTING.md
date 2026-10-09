@@ -1,12 +1,12 @@
-# Contributing to Craft Agents
+# Contributing to ROX
 
-Thank you for your interest in contributing to Craft Agents! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to ROX! This document provides guidelines and instructions for contributing.
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) runtime
+- [Bun](https://bun.sh/) runtime - use the version pinned in `package.json` (`packageManager`); CI runs the same one
 - Node.js 18+ (for some tooling)
 - macOS, Linux, or Windows
 
@@ -15,7 +15,7 @@ Thank you for your interest in contributing to Craft Agents! This document provi
 1. Clone the repository:
    ```bash
    git clone https://github.com/rox-one/rox-one.git
-   cd craft-agents-oss
+   cd rox-one
    ```
 
 2. Install dependencies:
@@ -51,6 +51,14 @@ Use descriptive branch names:
 3. Run type checking: `bun run typecheck:all`
 4. Commit your changes with clear, descriptive messages
 5. Push to your fork and create a pull request
+
+Never hand-merge `bun.lock`: a partial merge leaves entries the resolver cannot
+read and every CI job fails at `bun install --frozen-lockfile`. On conflict,
+regenerate and prove it with the pinned bun version:
+
+```bash
+git checkout --theirs bun.lock && bun install && bun install --frozen-lockfile
+```
 
 ### Code Style
 
@@ -93,7 +101,7 @@ How you tested these changes
 ## Project Structure
 
 ```
-craft-agents/
+rox-one/
 ├── apps/
 │   ├── electron/    # Desktop GUI (primary interface)
 │   └── tui/         # Terminal CLI (deprecated)

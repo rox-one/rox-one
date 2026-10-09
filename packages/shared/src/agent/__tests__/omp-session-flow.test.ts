@@ -111,7 +111,7 @@ describe('OmpAgent session flow — healthy turn', () => {
     expect(briefing).toContain('DeepWiki: understanding public repositories');
     expect(briefing).toContain('Superpowers and Understand Anything are skills/plugins, not MCP servers');
     expect(briefing).toContain('interactive OpenUI block');
-    expect(briefing).toContain('~/.craft-agent/docs/openui.md');
+    expect(briefing).toContain('~/.rox/docs/openui.md');
 
     const firstPrompt = fake.readRpcLog().find(frame => frame.type === 'prompt')?.message as string;
     expect(firstPrompt).toContain('Active: context7 (no tools), deepwiki');

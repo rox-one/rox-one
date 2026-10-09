@@ -1,6 +1,10 @@
-import { Check, Columns2, Focus, Grid2X2, LayoutGrid, RotateCcw } from 'lucide-react'
+import { Check, Columns2, Focus, Grid2X2, LayoutGrid, Maximize2, Minimize2, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import { usePanelWorkspaceLayout, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
+import { useActionRegistry } from '@/actions'
+import { panelStackAtom, expandedPanelIdAtom } from '@/atoms/panel-stack'
+import { reconcilePanelFullScreen } from '@/lib/panel-workspace-layout'
 import { TopBarButton } from '@/components/ui/TopBarButton'
 import {
   DropdownMenu,
@@ -22,6 +26,9 @@ const MODES = [
 export function PanelWorkspaceMenu() {
   const { t } = useTranslation()
   const { mode, setMode, resetLayout } = usePanelWorkspaceLayout()
+  const { execute } = useActionRegistry()
+  const panelIds = useAtomValue(panelStackAtom).map((panel) => panel.id)
+  const expanded = reconcilePanelFullScreen(useAtomValue(expandedPanelIdAtom), panelIds) !== null
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -37,6 +44,11 @@ export function PanelWorkspaceMenu() {
             {mode === value && <Check className="size-3.5" aria-label={t('panelWorkspace.selected')} />}
           </StyledDropdownMenuItem>
         ))}
+        <StyledDropdownMenuSeparator />
+        <StyledDropdownMenuItem disabled={panelIds.length === 0} onClick={() => execute('panel.toggleFullScreen')}>
+          {expanded ? <Minimize2 className="icon-caption" aria-hidden /> : <Maximize2 className="icon-caption" aria-hidden />}
+          <span>{t(expanded ? 'panelWorkspace.restore' : 'panelWorkspace.expand')}</span>
+        </StyledDropdownMenuItem>
         <StyledDropdownMenuSeparator />
         <StyledDropdownMenuItem onClick={resetLayout}>
           <RotateCcw className="size-4" aria-hidden />

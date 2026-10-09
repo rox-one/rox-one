@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { ChevronRight, Copy, ExternalLink, FilePlus2, FileText, Folder, FolderInput, FolderOpen, Link2, Pencil, Trash2 } from 'lucide-react'
+import { ChevronRight, Copy, ExternalLink, FilePlus2, FileText, Folder, FolderInput, FolderOpen, Link2, Moon, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { NoteSummary } from '../../../shared/types'
 import { cn } from '@/lib/utils'
@@ -110,6 +110,7 @@ interface NoteNavigationActions {
   onOpenRenameDialogForNote(note: NoteSummary): void
   onOpenDeleteDialogForNote(note: NoteSummary): void
   onDuplicateNote(note: NoteSummary): void
+  onCollectToMemory(note: NoteSummary): void
   onCopyNoteLink(note: NoteSummary): void
   onCopyNotePath(note: NoteSummary): void
   onRevealNote(note: NoteSummary): void
@@ -121,16 +122,28 @@ interface NotesNavigationSidebarProps extends NoteNavigationActions {
   collapsedFolders: Set<string>
   onToggleFolder(folder: string): void
   emptyMessage: string
+  /** Note ids awaiting the next memory dream; null/undefined hides the dream chip. */
+  dreamNoteIds?: ReadonlySet<string> | null
   /** Scroll parent used for windowed rendering of very large vaults. */
   viewportRef?: React.RefObject<HTMLDivElement | null>
 }
 
-function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavigationActions & {
+export type NoteDreamState = 'pending' | 'dreamed'
+
+/** Dream chip state for a note; null hides the chip while the dream status is unknown. */
+export function noteDreamState(dreamNoteIds: ReadonlySet<string> | null | undefined, noteId: string): NoteDreamState | null {
+  if (!dreamNoteIds) return null
+  return dreamNoteIds.has(noteId) ? 'pending' : 'dreamed'
+}
+
+function NoteNavigationItem({ note, depth, activeNoteId, dreamNoteIds, ...actions }: NoteNavigationActions & {
   note: NoteSummary
   depth: number
   activeNoteId: NotesNavigationSidebarProps['activeNoteId']
+  dreamNoteIds?: ReadonlySet<string> | null
 }) {
   const { t } = useTranslation()
+  const dreamState = noteDreamState(dreamNoteIds, note.id)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `note:${note.id}`,
     data: { type: 'note', note },
@@ -146,7 +159,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
           onClick={() => actions.onOpenNote(note.id)}
           style={{ paddingLeft: `${10 + depth * 12}px` }}
           className={cn(
-            'notes-list-item mb-0.5 w-full rounded-[var(--radius-control)] pr-2.5 py-1.5 text-left outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring',
+            'notes-list-item mb-0.5 w-full rounded-[var(--radius-control)] pr-2.5 py-1.5 text-left outline-none hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring',
             activeNoteId === note.id && 'notes-list-item-active',
             isDragging && 'opacity-50',
           )}
@@ -154,13 +167,27 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
           {...listeners}
         >
           <span className="flex items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5 shrink-0 text-sky-500" aria-hidden="true" />
+            <FileText className="icon-caption shrink-0 text-accent" aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate text-sm">{note.title}</span>
           </span>
+          {dreamState ? (
+            <span className="mt-1 flex flex-wrap gap-1 pl-5">
+              <span
+                data-testid="notes-dream-chip"
+                data-dream-state={dreamState}
+                className={cn(
+                  'rounded-[var(--radius-control)] px-1.5 py-0.5 text-caption',
+                  dreamState === 'pending' ? 'bg-status-warning/10 text-status-warning' : 'bg-foreground/[0.06] text-muted-foreground',
+                )}
+              >
+                {t(dreamState === 'pending' ? 'notes.sleep.pending' : 'notes.sleep.dreamed')}
+              </span>
+            </span>
+          ) : null}
           {note.tags.length > 0 && (
             <span className="mt-1 flex flex-wrap gap-1 pl-5">
               {note.tags.slice(0, 3).map(tag => (
-                <span key={tag} className="rounded-[var(--radius-control)] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
+                <span key={tag} className="rounded-[var(--radius-control)] bg-foreground/[0.06] px-1.5 py-0.5 text-caption text-muted-foreground">#{tag}</span>
               ))}
             </span>
           )}
@@ -168,33 +195,37 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
       </ContextMenuTrigger>
       <StyledContextMenuContent>
         <StyledContextMenuItem onClick={() => actions.onOpenNote(note.id)}>
-          <FileText className="h-3.5 w-3.5" />{t('common.open')}
+          <FileText className="icon-caption" />{t('common.open')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenRenameDialogForNote(note)}>
-          <Pencil className="h-3.5 w-3.5" />{t('common.rename')}
+          <Pencil className="icon-caption" />{t('common.rename')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenCreateNoteDialog(noteFolder(note) || undefined)}>
-          <FilePlus2 className="h-3.5 w-3.5" />{t('notes.menu.newHere')}
+          <FilePlus2 className="icon-caption" />{t('notes.menu.newHere')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onDuplicateNote(note)}>
-          <Copy className="h-3.5 w-3.5" />{t('notes.menu.duplicate')}
+          <Copy className="icon-caption" />{t('notes.menu.duplicate')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenMoveDialog(note)}>
-          <FolderInput className="h-3.5 w-3.5" />{t('notes.menu.moveToFolder')}
+          <FolderInput className="icon-caption" />{t('notes.menu.moveToFolder')}
+        </StyledContextMenuItem>
+        <StyledContextMenuSeparator />
+        <StyledContextMenuItem onClick={() => actions.onCollectToMemory(note)}>
+          <Moon className="h-3.5 w-3.5" />{t('notes.action.collectToMemory')}
         </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem onClick={() => actions.onCopyNoteLink(note)}>
-          <Link2 className="h-3.5 w-3.5" />{t('notes.menu.copyLink')}
+          <Link2 className="icon-caption" />{t('notes.menu.copyLink')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onCopyNotePath(note)}>
-          <FileText className="h-3.5 w-3.5" />{t('notes.menu.copyPath')}
+          <FileText className="icon-caption" />{t('notes.menu.copyPath')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onRevealNote(note)}>
-          <ExternalLink className="h-3.5 w-3.5" />{t('notes.menu.reveal')}
+          <ExternalLink className="icon-caption" />{t('notes.menu.reveal')}
         </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem variant="destructive" onClick={() => actions.onOpenDeleteDialogForNote(note)}>
-          <Trash2 className="h-3.5 w-3.5" />{t('common.delete')}
+          <Trash2 className="icon-caption" />{t('common.delete')}
         </StyledContextMenuItem>
       </StyledContextMenuContent>
     </ContextMenu>
@@ -229,27 +260,27 @@ function FolderNavigationItem({ node, depth, expanded, onToggleFolder, ...action
           title={node.fullPath}
           onClick={() => onToggleFolder(node.fullPath)}
           className={cn(
-            'mb-0.5 flex h-7 w-full cursor-pointer items-center gap-1 rounded-[var(--radius-control)] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-foreground/[0.04] focus-visible:ring-1 focus-visible:ring-ring',
+            'mb-0.5 flex h-7 w-full cursor-pointer items-center gap-1 rounded-[var(--radius-control)] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring',
             isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]',
           )}
           style={{ paddingLeft: `${8 + depth * 12}px` }}
         >
-          <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden="true" />
-          <FolderIcon className={cn('h-4 w-4 shrink-0', depth === 0 ? 'text-amber-500' : depth === 1 ? 'text-orange-500' : 'text-teal-500')} aria-hidden="true" />
+          <ChevronRight className={cn('icon-caption shrink-0 transition-transform duration-150 motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden="true" />
+          <FolderIcon className={cn('icon-inline shrink-0', depth === 0 ? 'text-status-warning' : depth === 1 ? 'text-status-info' : 'text-status-success')} aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-left">{node.name}</span>
           <span className="text-xs text-muted-foreground/50 tabular-nums">{countFolderNotes(node)}</span>
         </button>
       </ContextMenuTrigger>
       <StyledContextMenuContent>
         <StyledContextMenuItem onClick={() => actions.onOpenCreateNoteDialog(node.fullPath)}>
-          <FilePlus2 className="h-3.5 w-3.5" />{t('notes.menu.newInFolder')}
+          <FilePlus2 className="icon-caption" />{t('notes.menu.newInFolder')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenRenameFolder(node.fullPath)}>
-          <Pencil className="h-3.5 w-3.5" />{t('notes.menu.renameFolder')}
+          <Pencil className="icon-caption" />{t('notes.menu.renameFolder')}
         </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem variant="destructive" onClick={() => actions.onOpenDeleteFolder(node.fullPath)}>
-          <Trash2 className="h-3.5 w-3.5" />{t('notes.menu.deleteFolder')}
+          <Trash2 className="icon-caption" />{t('notes.menu.deleteFolder')}
         </StyledContextMenuItem>
       </StyledContextMenuContent>
     </ContextMenu>

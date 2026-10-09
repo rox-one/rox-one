@@ -177,6 +177,27 @@
       color: var(--error-fg);
     }
 
+    .button-link {
+      display: block;
+      margin-top: 20px;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      background: linear-gradient(180deg, #7b6dff 0%, var(--accent) 100%);
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(109, 93, 252, 0.28);
+      transition: transform 0.15s, filter 0.15s, background 0.15s;
+    }
+
+    .button-link:hover {
+      background: linear-gradient(180deg, #705fff 0%, var(--accent-hover) 100%);
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+
     .error.visible { display: block; }
 
     @keyframes drift {
@@ -232,13 +253,15 @@
         id="password"
         name="password"
         type="password"
-        placeholder="CRAFT_SERVER_TOKEN"
+        placeholder="ROX_SERVER_TOKEN"
         autocomplete="current-password"
         autofocus
         required
       >
       <button type="submit" id="submit-btn">Войти</button>
     </form>
+
+    <a id="oidc-login" class="button-link" href="/api/auth/login" style="display: none;">Войти через Rox ID</a>
 
     <div id="error" class="error"></div>
   </div>
@@ -258,6 +281,8 @@
         signingIn: 'Входим…',
         authFailed: 'Ошибка аутентификации',
         networkError: 'Ошибка сети — сервер запущен?',
+        oidcSubtitle: 'Войдите в Rox, чтобы продолжить',
+        oidcSignIn: 'Войти через Rox ID',
       },
       en: {
         title: 'Rox — Login',
@@ -267,6 +292,8 @@
         signingIn: 'Signing in...',
         authFailed: 'Authentication failed',
         networkError: 'Network error — is the server running?',
+        oidcSubtitle: 'Sign in to Rox to continue',
+        oidcSignIn: 'Sign in with Rox ID',
       },
     };
 
@@ -286,6 +313,21 @@
 
     const form = document.getElementById('login-form');
     const errorEl = document.getElementById('error');
+    const oidcLink = document.getElementById('oidc-login');
+    oidcLink.textContent = s.oidcSignIn;
+
+    // OIDC (Rox ID) mode replaces the password form with a single sign-in
+    // button. Any failure keeps the password form — never a dead end.
+    void fetch('/api/auth/config', { headers: { Accept: 'application/json' } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((config) => {
+        if (config && config.authMode === 'oidc') {
+          document.getElementById('subtitle').textContent = s.oidcSubtitle;
+          form.style.display = 'none';
+          oidcLink.style.display = 'block';
+        }
+      })
+      .catch(() => { /* keep the password form */ });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

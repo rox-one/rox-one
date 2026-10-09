@@ -103,3 +103,61 @@ export interface OrgActorIdentity {
   email?: string
   username?: string
 }
+
+// ---------------------------------------------------------------------------
+// Named operator roles and their method-scope ceiling
+// ---------------------------------------------------------------------------
+// Clean-room re-expression of OpenClaw's `gateway.roles` boundary
+// (port-matrix row a1.2; upstream src/config/zod-schema.gateway.ts:82 and
+// src/gateway/operator-role-policy.ts:95). A role is a configuration ceiling
+// on an identified operator connection; it is NOT a tenant or trust boundary.
+
+/** Closed set of operator scopes. Unknown scopes are refused at validation. */
+export const OPERATOR_SCOPES = [
+  'operator.read',
+  'operator.sessions.read',
+  'operator.sessions.write',
+  'operator.write',
+  'operator.admin',
+  'operator.pairing',
+  'operator.approvals',
+  'operator.questions',
+  'operator.talk',
+  'operator.talk.secrets',
+] as const
+
+export type OperatorScope = (typeof OPERATOR_SCOPES)[number]
+
+export interface OperatorRoleModelPolicy {
+  sourceAgent?: string
+  allow?: readonly string[]
+  deny?: readonly string[]
+}
+
+export interface OperatorRoleSessions {
+  /** Ceiling for operating sessions without explicit membership. */
+  others: 'none' | 'view' | 'suggest' | 'write'
+}
+
+export interface OperatorRoleDefinition {
+  /** Maximum access to someone else's sessions. */
+  sessions?: OperatorRoleSessions
+  /** Agent ids available to the role, or "*" for all. */
+  agents?: '*' | readonly string[]
+  /** Allowed operator scopes — the role's method-scope ceiling. */
+  scopes: readonly OperatorScope[]
+  sandbox?: 'inherit' | 'required'
+  modelPolicy?: OperatorRoleModelPolicy
+  accessPolicyPlugin?: string
+}
+
+/**
+ * Effective per-connection ceiling. `configured:false` means no named-role
+ * boundary is in force, so existing grant-based authority is unchanged. When
+ * `configured` is true an empty `scopes` array is a deny-all ceiling.
+ */
+export interface OperatorRoleCeiling {
+  readonly configured: boolean
+  readonly role: string | null
+  readonly scopes: readonly OperatorScope[]
+}
