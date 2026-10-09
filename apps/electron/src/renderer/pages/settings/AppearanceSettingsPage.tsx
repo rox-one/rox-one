@@ -348,7 +348,9 @@ function MaterialEffectsSection() {
     anchor.href = url
     anchor.download = 'rox-material.json'
     anchor.click()
-    URL.revokeObjectURL(url)
+    // Defer revocation: some browsers abort a download if its blob URL is
+    // revoked synchronously right after the click.
+    setTimeout(() => URL.revokeObjectURL(url), 0)
   }, [draft, t])
 
   const handleImportFile = useCallback((file: File) => {
