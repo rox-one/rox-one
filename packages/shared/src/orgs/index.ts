@@ -12,7 +12,14 @@ export type {
   Organization,
   OrganizationWithMembers,
   OrgsStoreFile,
+  OperatorRoleCeiling,
+  OperatorRoleDefinition,
+  OperatorRoleModelPolicy,
+  OperatorRoleSessions,
+  OperatorScope,
 } from './types.ts'
+
+export { OPERATOR_SCOPES } from './types.ts'
 
 export {
   acceptInvite,

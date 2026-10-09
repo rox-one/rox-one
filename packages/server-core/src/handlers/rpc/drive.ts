@@ -72,6 +72,15 @@ export const IMPORT_PROVIDER_IDS: readonly ImportProviderId[] = [
 const MAX_ID_LENGTH = 128
 const MAX_NAME_LENGTH = 255
 
+/** True when the value contains a C0 control character or DEL, which ids and names reject. */
+function hasControlChar(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) return true
+  }
+  return false
+}
+
 function invalid(field: string): never {
   throw new CodedError('INVALID_PAYLOAD', `Invalid ${field}`)
 }
@@ -85,21 +94,21 @@ function requireDrive(deps: HandlerDeps): DriveService {
 }
 
 function requireWorkspaceId(value: unknown): string {
-  if (typeof value !== 'string' || value.length === 0 || value.length > MAX_ID_LENGTH || /[\u0000-\u001f\u007f]/.test(value)) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > MAX_ID_LENGTH || hasControlChar(value)) {
     return invalid('workspaceId')
   }
   return value
 }
 
 function requireId(value: unknown, field: string): string {
-  if (typeof value !== 'string' || value.length === 0 || value.length > MAX_ID_LENGTH || /[\u0000-\u001f\u007f]/.test(value)) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > MAX_ID_LENGTH || hasControlChar(value)) {
     return invalid(field)
   }
   return value
 }
 
 function requireName(value: unknown): string {
-  if (typeof value !== 'string' || value.length === 0 || value.length > MAX_NAME_LENGTH || /[\\/\u0000-\u001f\u007f]/.test(value)) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > MAX_NAME_LENGTH || value.includes('\\') || value.includes('/') || hasControlChar(value)) {
     return invalid('name')
   }
   return value

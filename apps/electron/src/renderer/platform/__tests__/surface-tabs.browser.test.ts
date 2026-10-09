@@ -66,7 +66,7 @@ describe.skipIf(!existsSync(executablePath))('actual SurfaceTabs keyboard and ti
     const page = await browser!.newPage()
     try {
       await page.goto(endpoint)
-      const first = page.locator('[data-surface-tab="one"]'), second = page.locator('[data-surface-tab="two"]'), third = page.locator('[data-surface-tab="three"]')
+      const first = page.locator('[data-tab="one"]'), second = page.locator('[data-tab="two"]'), third = page.locator('[data-tab="three"]')
       await expectDOM(first).toHaveAttribute('tabindex', '0')
       await expectDOM(second).toHaveAttribute('tabindex', '-1')
       await first.focus(); await page.keyboard.press('ArrowRight'); await expectDOM(second).toBeFocused()
@@ -82,10 +82,10 @@ describe.skipIf(!existsSync(executablePath))('actual SurfaceTabs keyboard and ti
     const page = await browser!.newPage()
     try {
       await page.goto(endpoint); await invoke(page, 'hiddenBrowser')
-      const first = page.locator('[data-surface-tab="one"]')
+      const first = page.locator('[data-tab="one"]')
       await expectDOM(first).toHaveAttribute('tabindex', '0'); await expectDOM(page.getByRole('tab')).toHaveCount(3)
       await first.focus(); await page.keyboard.press('Delete')
-      await expectDOM(page.locator('[data-surface-tab="two"]')).toBeFocused()
+      await expectDOM(page.locator('[data-tab="two"]')).toBeFocused()
       await expectDOM(page.getByTestId('focused')).toHaveText('browser')
     } finally { await page.close() }
   }, 120000)
@@ -95,8 +95,8 @@ describe.skipIf(!existsSync(executablePath))('actual SurfaceTabs keyboard and ti
       await page.goto(endpoint); await invoke(page, 'portal', true)
       await expectDOM(page.locator('#topbar [role="tablist"]')).toBeVisible()
       const editor = page.getByRole('textbox', { name: 'Editor' }); await editor.fill('Continued typing'); await editor.focus()
-      await page.locator('[data-surface-tab-item="two"]').evaluate(element => element.dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true })))
-      await expectDOM(page.locator('[data-surface-tab="two"]')).toHaveCount(0)
+      await page.locator('[data-tab-item="two"]').evaluate(element => element.dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true })))
+      await expectDOM(page.locator('[data-tab="two"]')).toHaveCount(0)
       await expectDOM(editor).toBeFocused(); await expectDOM(editor).toHaveValue('Continued typing')
     } finally { await page.close() }
   }, 120000)
@@ -133,8 +133,8 @@ describe.skipIf(!existsSync(executablePath))('actual SurfaceTabs keyboard and ti
       await expectDOM(page.getByRole('tab').nth(2)).toHaveText('Current workspace title')
       await invoke(page, 'resolve', 0, 'Obsolete foreign title')
       await expectDOM(page.getByRole('tab').nth(2)).toHaveText('Current workspace title')
-      const first = page.locator('[data-surface-tab="one"]'); await first.focus(); await page.keyboard.press('ArrowRight')
-      await expectDOM(page.locator('[data-surface-tab="two"]')).toBeFocused()
+      const first = page.locator('[data-tab="one"]'); await first.focus(); await page.keyboard.press('ArrowRight')
+      await expectDOM(page.locator('[data-tab="two"]')).toBeFocused()
       if (process.env.ROX_SURFACE_TAB_SCREENSHOTS) {
         mkdirSync(process.env.ROX_SURFACE_TAB_SCREENSHOTS, { recursive: true })
         await page.screenshot({ path: resolve(process.env.ROX_SURFACE_TAB_SCREENSHOTS, 'surface-tabs-mobile.png') })

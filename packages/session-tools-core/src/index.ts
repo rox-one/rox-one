@@ -280,7 +280,9 @@ export {
 export {
   handleMemorySearch,
   handleMemoryGet,
+  handleMemoryForget,
   MEMORY_SEARCH_MAX_LIMIT,
+  MEMORY_FORGET_MAX_IDS,
 } from './handlers/index.ts';
 
 // Skills catalog handlers (registered in SESSION_TOOL_DEFS)
@@ -397,6 +399,7 @@ export type {
   MemoryRepoSearchArgs,
   MemorySearchToolArgs,
   MemoryGetToolArgs,
+  MemoryForgetToolArgs,
   SkillsSearchArgs,
   SkillsReadArgs,
 } from './tool-defs.ts';

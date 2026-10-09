@@ -39,6 +39,19 @@ export class MemoryProposalStore {
     return this.list().find((p) => p.id === id) ?? null
   }
 
+  /**
+   * c1.8 flush turn: proposals carrying a durable approval write-intent that
+   * has not been confirmed (`approval` present but no `writtenAt`) — i.e. a
+   * crash caught the approval between persisting the intent and the canonical
+   * corpus write. Deterministic id order so a flush replays the same way every
+   * time. Re-running on already-confirmed proposals is a no-op.
+   */
+  pendingWriteIntents(): MemoryProposal[] {
+    return this.list()
+      .filter((p) => p.status === 'pending' && p.approval != null && p.approval.writtenAt == null)
+      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+  }
+
   save(proposal: MemoryProposal): MemoryProposal {
     const sanitized: MemoryProposal = {
       ...proposal,

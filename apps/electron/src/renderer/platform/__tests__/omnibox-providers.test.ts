@@ -67,6 +67,31 @@ describe('omnibox providers', () => {
     expect(hits[0]?.data?.slug).toBe('memory-search')
   })
 
+  it('skills: a pending sync surfaces a loading row, not an authoritative empty list', async () => {
+    const syncing = createSkillsProvider(
+      () => [],
+      (slug) => `skills/skill/${slug}`,
+      () => true,
+    )
+    const pending = await syncing.search(ctx({ query: 'memory', prefix: '/' }))
+    expect(pending).toHaveLength(1)
+    expect(pending[0]?.kind).toBe('command-hint')
+    expect(pending[0]?.route).toBeUndefined()
+    expect(pending[0]?.data?.syncing).toBe(true)
+
+    // Settled-and-empty stays empty; real rows win over the placeholder.
+    const settled = createSkillsProvider(() => [], (slug) => `skills/skill/${slug}`)
+    expect(await settled.search(ctx({ query: '', prefix: '/' }))).toEqual([])
+    const withSkills = createSkillsProvider(
+      () => [{ slug: 'memory-search', metadata: { name: 'Memory Search' } }],
+      (slug) => `skills/skill/${slug}`,
+      () => true,
+    )
+    expect((await withSkills.search(ctx({ prefix: '/' }))).map((item) => item.id)).toEqual([
+      'skill:memory-search',
+    ])
+  })
+
   it('sources: skips builtins', async () => {
     const provider = createSourcesProvider(
       () => [

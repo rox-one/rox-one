@@ -59,7 +59,6 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'inbox':
     case 'feed':
     case 'tasks':
-    case 'meetings':
       return navState.details !== null
     case 'home':
       return true

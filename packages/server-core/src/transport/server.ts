@@ -35,6 +35,8 @@ import {
   type RpcCallCounter,
 } from '../observability/rpc-call-counter'
 import type { NativeAuthority, NativePrincipal } from '../authority/native-authority'
+import { isChannelWithinOperatorCeiling } from '../authority/operator-role-policy'
+import type { OperatorRoleCeiling } from '@rox/shared/orgs/types'
 
 // ---------------------------------------------------------------------------
 // Client connection state
@@ -60,6 +62,12 @@ interface ClientConnection {
   /** Kept server-side so main can renew the original proof against the live window. */
   localBindingCandidate: LocalClientBindingCandidate
   principal: NativePrincipal | null
+  /**
+   * Per-connection operator method-scope ceiling, resolved once at admission
+   * and re-resolved when the subject's role changes. Fail-closed: a native
+   * principal with no resolved ceiling cannot invoke any remote method.
+   */
+  operatorCeiling: OperatorRoleCeiling | null
   subscriptionFence: string | null
   /** Resolver-owned opaque result; no Actor or identity enters through handshake fields. */
   workspaceSession: WorkspaceAuthoritySession | null
@@ -320,6 +328,7 @@ export class WsRpcServer implements RpcServer {
   private readonly requestContexts = new WeakMap<RequestContext, {
     socket: WebSocket
     registration: RegisteredHandler
+    channel: string
     fence: string | null
   }>()
 
@@ -358,11 +367,13 @@ export class WsRpcServer implements RpcServer {
         if (client.principal?.subject !== event.subject) continue
         client.eventBuffer.length = 0
         client.subscriptionFence = null
+        this.revalidateOperatorCeiling(client)
       }
       for (const { client } of this.disconnectedClients.values()) {
         if (client.principal?.subject !== event.subject) continue
         client.eventBuffer.length = 0
         client.subscriptionFence = null
+        this.revalidateOperatorCeiling(client)
       }
     }) ?? null
     this.rpcCallCounter = opts?.rpcCallCounter === undefined
@@ -415,6 +426,7 @@ export class WsRpcServer implements RpcServer {
     return [...this.handlers].flatMap(([channel, registration]) => {
       if (registration.access === 'localElectron' && !client.localBinding) return []
       if (!this.canRequest(client, registration)) return []
+      if (!this.operatorCeilingAllows(client, channel, registration.nativeAction)) return []
       return [channel]
     })
   }
@@ -467,6 +479,34 @@ export class WsRpcServer implements RpcServer {
     return !this.nativeAuthority?.hasRegisteredWorkspaces()
   }
 
+  /** Re-resolve the persisted per-connection ceiling from current role state. */
+  private revalidateOperatorCeiling(client: ClientConnection): void {
+    if (!client.principal) {
+      client.operatorCeiling = null
+      return
+    }
+    try {
+      client.operatorCeiling = this.nativeAuthority?.resolveOperatorCeiling(client.principal) ?? null
+    } catch {
+      client.operatorCeiling = null
+    }
+  }
+
+  /**
+   * Whether the connection's persisted operator ceiling permits `channel`.
+   * Non-native clients are unaffected. A native principal without a resolved
+   * ceiling is denied (fail-closed).
+   */
+  private operatorCeilingAllows(
+    client: ClientConnection,
+    channel: string,
+    nativeAction: RegisteredHandler['nativeAction'],
+  ): boolean {
+    if (!client.principal) return true
+    if (typeof channel !== 'string' || !client.operatorCeiling) return false
+    return isChannelWithinOperatorCeiling(client.operatorCeiling, channel, nativeAction)
+  }
+
   private requestPermissionFence(client: ClientConnection, registration: RegisteredHandler): string | null {
     if (!client.principal || !client.workspaceId || !registration.nativeAction || !this.nativeAuthority) return null
     const readFence = this.nativeAuthority.permissionFence(client.principal, client.workspaceId, 'read')
@@ -479,12 +519,14 @@ export class WsRpcServer implements RpcServer {
     client: ClientConnection,
     registration: RegisteredHandler,
     ctx: RequestContext,
+    channel: string,
     requestFence: string | null,
   ): boolean {
     return client.workspaceId === ctx.workspaceId
       && client.webContentsId === ctx.webContentsId
       && (client.principal ?? undefined) === ctx.principal
       && this.canRequest(client, registration)
+      && this.operatorCeilingAllows(client, channel, registration.nativeAction)
       && this.requestPermissionFence(client, registration) === requestFence
   }
 
@@ -770,7 +812,7 @@ export class WsRpcServer implements RpcServer {
     const client = this.clients.get(ctx.clientId)
     if (!bound || !client || client.ws !== bound.socket || client.ws.readyState !== 1) return false
     if (nativeAction && ctx.principal && nativeAction !== 'read' && bound.registration.nativeAction !== nativeAction) return false
-    return this.canReturnResponse(client, bound.registration, ctx, bound.fence)
+    return this.canReturnResponse(client, bound.registration, ctx, bound.channel, bound.fence)
   }
 
   close(): void {
@@ -1053,7 +1095,10 @@ export class WsRpcServer implements RpcServer {
               prevClient.webUiAuthenticated = webUiAuthenticated
               prevClient.localBinding = localBinding
               prevClient.localBindingCandidate = localBindingCandidate
-              if (principal) this.refreshSubscription(prevClient)
+              if (principal) {
+                this.revalidateOperatorCeiling(prevClient)
+                this.refreshSubscription(prevClient)
+              }
               prevClient.alive = true
               prevClient.missedPongs = 0
               handshakeCompleted = true
@@ -1150,6 +1195,7 @@ export class WsRpcServer implements RpcServer {
           localBinding,
           localBindingCandidate,
           principal,
+          operatorCeiling: null,
           subscriptionFence: null,
           workspaceSession,
           webUiAuthenticated,
@@ -1160,7 +1206,10 @@ export class WsRpcServer implements RpcServer {
           lastAckedSeq: 0,
           lastSentSeq: 0,
         }
-        if (principal) this.refreshSubscription(client)
+        if (principal) {
+          this.revalidateOperatorCeiling(client)
+          this.refreshSubscription(client)
+        }
         this.clients.set(clientId, client)
         handshakeCompleted = true
 
@@ -1313,6 +1362,15 @@ export class WsRpcServer implements RpcServer {
       return
     }
 
+    // Named operator role ceiling (a1.2): the persisted per-connection scope
+    // ceiling is intersected with this channel's classification. LOCAL_ONLY
+    // channels were already refused above; every other method must be inside
+    // the ceiling, and the denial is typed for the client to render.
+    if (!this.operatorCeilingAllows(client, channel, registration.nativeAction)) {
+      this.sendResponseError(client.ws, id, channel, 'OPERATOR_ACCESS_DENIED', 'Operator role cannot invoke this method')
+      return
+    }
+
     let ctx: RequestContext = {
       clientId: client.id,
       workspaceId: client.workspaceId,
@@ -1335,7 +1393,7 @@ export class WsRpcServer implements RpcServer {
         webUiAuthenticated: webAppearance || undefined,
         ...(current ? { actor: current.actor } : {}),
       }
-      this.requestContexts.set(ctx, { socket: client.ws, registration, fence: requestFence })
+      this.requestContexts.set(ctx, { socket: client.ws, registration, channel, fence: requestFence })
       const result = await Promise.race([
         registration.handler(ctx, ...(args ?? [])),
         new Promise<never>((_, reject) =>
@@ -1349,7 +1407,7 @@ export class WsRpcServer implements RpcServer {
         this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Web UI workspace binding changed')
         return
       }
-      if (!this.canReturnResponse(client, registration, ctx, requestFence)) {
+      if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) {
         this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', this.workspaceAuthority ? 'Request failed' : 'Workspace permission changed')
         return
       }
@@ -1360,34 +1418,34 @@ export class WsRpcServer implements RpcServer {
         result,
       }
       const outbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : null
-      if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+      if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       if (registration.beforeResponse) {
         const guardedOutbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : outbound
-        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+        if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
         await registration.beforeResponse({ ...ctx, ...(guardedOutbound ? { actor: guardedOutbound.actor } : {}) }, args ?? [], result)
         // Preserve native grant generations and the original caller binding
         // across every asynchronous host check.
-        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+        if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       }
       if (registration.beforeWorkspaceResponse) {
         // The final trusted admission checks live session/membership AND Resource
         // permission together. An identity-only await after it would stale that
         // Resource verdict, so this branch has no later asynchronous operation.
         const guardedOutbound = await this.refreshWorkspaceClient(client)
-        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+        if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
         await registration.beforeWorkspaceResponse({ ...ctx, actor: guardedOutbound.actor }, args ?? [], result)
-        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+        if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       } else if (this.workspaceAuthority) {
         // Ordinary host checks can await while a session is revoked or replaced.
         // Re-admit its original identity before invoking any result serializer.
         await this.refreshWorkspaceClient(client)
-        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+        if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       }
       const data = serializeEnvelope(response)
-      if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+      if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       this.safeSend(client.ws, data)
     } catch (err) {
-      if (!this.canReturnResponse(client, registration, ctx, requestFence)) {
+      if (!this.canReturnResponse(client, registration, ctx, channel, requestFence)) {
         this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', this.workspaceAuthority ? 'Request failed' : 'Workspace permission changed')
         return
       }

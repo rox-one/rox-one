@@ -174,9 +174,13 @@ import {
   createLaunchctlRunner,
   createNodeServiceFilesystem,
   createServiceManager,
+  decideOnboardDaemon,
   defaultPortAvailable,
+  detectExternalSupervisor,
   guardServiceInstall,
   LaunchdRuntime,
+  readOnboardDaemonFlags,
+  ROX_SERVICE_LABEL,
   runDoctor,
 } from '@rox/server-core/service'
 import { pushTyped } from '@rox/server-core/transport'
@@ -1909,7 +1913,7 @@ app.whenReady().then(async () => {
       const { detectMacAdHocSigned } = await import('./auto-update')
       const homeDir = app.getPath('home')
       const configDir = resolveConfigDir()
-      const serviceLabel = 'com.rox.service'
+      const serviceLabel = ROX_SERVICE_LABEL
       const serviceDirectory = join(configDir, 'service')
       const launchAgentsDirectory = join(homeDir, 'Library', 'LaunchAgents')
       const isBuildTrusted = () => !detectMacAdHocSigned(process.execPath)
@@ -1945,6 +1949,33 @@ app.whenReady().then(async () => {
           : undefined,
       })
       const serviceManager = guardServiceInstall(serviceManagerBase, isBuildTrusted)
+
+      // Onboard daemon tri-state (e1.3): explicit flags beat defaults; an
+      // external supervisor, an already-installed service, or --skip-daemon wins
+      // over install; a classic non-interactive launch with no signal is a
+      // reasoned refusal. This startup call site cannot prompt, so a plain
+      // launch never installs the service — only an explicit flag or a
+      // quickstart flow does.
+      const onboardFlags = readOnboardDaemonFlags(process.argv)
+      const supervisor = detectExternalSupervisor(process.env, process.platform)
+      const existingServiceStatus = await serviceManager.getStatus()
+      const serviceAlreadyPresent = existingServiceStatus.state !== 'not-installed' && existingServiceStatus.state !== 'unsupported'
+      const onboardDecision = decideOnboardDaemon({
+        installDaemon: onboardFlags.installDaemon,
+        skipDaemon: onboardFlags.skipDaemon,
+        flow: onboardFlags.quickstart ? 'quickstart' : 'classic',
+        externallySupervised: supervisor !== null || serviceAlreadyPresent,
+        interactive: false,
+      })
+      mainLog.info(`[onboard] daemon decision: ${onboardDecision.state} (${onboardDecision.reason}) — ${onboardDecision.note}`)
+      if (onboardDecision.state === 'install') {
+        const installed = await serviceManager.install()
+        if (installed.ok) {
+          await serviceManager.start()
+        } else {
+          mainLog.warn(`[onboard] service install failed: ${installed.status.safeError ?? 'unknown'}`)
+        }
+      }
       const doctorLogPaths = [getMessagingGatewayLogFilePath(), getAutoUpdateLogFilePath(), getLogFilePath()]
         .filter((path): path is string => typeof path === 'string')
       registerServiceLifecycleIpc({

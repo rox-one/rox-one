@@ -1,15 +1,34 @@
 /** W1-06 (#1503) — Executor harness for reference-handler contract tests. */
 
-import { CATALOGUE_FLAGS, COMMAND_CATALOGUE, type Authorizer, type CommandReceipt, type CommandRegistry } from '@rox/core/commands'
+import { CATALOGUE_FLAGS, COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue, type Authorizer, type CommandReceipt } from '@rox/core/commands'
 import { CommandExecutor } from '../../commands/executor'
-import { createWiredCommandRegistry } from '../../commands/registry'
+import { COMMAND_MODULES, boundCommandTypes, createWiredCommandRegistry } from '../../commands/registry'
+import { REFERENCE_SPECS } from '../reference'
 import type { CommandStore } from '../../commands/store'
 import { ACTOR_ID, WORKSPACE_ID, type ScenarioStep } from './reference-scenario'
 
 export const ALL_FLAGS: ReadonlySet<string> = new Set(Object.values(CATALOGUE_FLAGS))
 export const ALLOW_ALL: Authorizer = { can: async () => true }
 export const DENY_ALL: Authorizer = { can: async () => false }
-export const CATALOGUE_TYPES = COMMAND_CATALOGUE.map(definition => definition.type).filter(type => !type.startsWith('system.')).sort()
+export const CATALOGUE_TYPES: string[] = COMMAND_CATALOGUE.map(definition => definition.type).filter(type => !type.startsWith('system.')).sort()
+
+/** Types bound by the modules listed before `reference-handlers` in `COMMAND_MODULES`. */
+export const OWNER_BOUND_TYPES: ReadonlySet<string> = (() => {
+  const modules = COMMAND_MODULES.slice(0, COMMAND_MODULES.findIndex(module => module.name === 'reference-handlers'))
+  const registry = new CommandRegistry()
+  registerCommandCatalogue(registry)
+  for (const module of modules) module.bind(registry)
+  return new Set(boundCommandTypes(registry).filter(type => !type.startsWith('system.')))
+})()
+
+/**
+ * Catalogue commands the reference layer serves (they have a reference spec and
+ * a scenario step). Owner modules bind **before** the reference module, so a
+ * command can be owner-bound (W1-12's `automation` module also overrides the
+ * daily-note pair) — those run their owner's handler, and the scenario covers
+ * them all the same.
+ */
+export const REFERENCE_TYPES = CATALOGUE_TYPES.filter(type => type in REFERENCE_SPECS)
 
 export interface Harness {
   registry: CommandRegistry

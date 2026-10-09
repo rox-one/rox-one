@@ -1254,6 +1254,24 @@ export const RPC_CHANNELS = {
     /** MIG-06: one-shot export of the renderer Dossier payload into local contact cards. */
     EXPORT_DOSSIER: 'directory:exportDossier',
   },
+  // f.9 — node/device registry. Declared caps/commands are CLAIMS; the server
+  // enforces its own allowlist before dispatching any node.invoke.
+  nodes: {
+    /** Register or reconnect a node with its declared caps/commands (claims only). */
+    REGISTER: 'nodes:register',
+    /** Snapshot of registered nodes with live presence. */
+    LIST: 'nodes:list',
+    /** Node heartbeat; refreshes presence and returns the current status. */
+    PRESENCE: 'nodes:presence',
+    /** Dispatch an allowlisted command to a node; resolves with the terminal result. */
+    INVOKE: 'nodes:invoke',
+    /** Node reports the terminal outcome of a pending invoke. */
+    INVOKE_RESULT: 'nodes:invokeResult',
+    /** Cancel a pending invoke; settles exactly once. */
+    INVOKE_CANCEL: 'nodes:invokeCancel',
+    /** Push: registry or presence changed. */
+    CHANGED: 'nodes:changed',
+  },
   /**
    * ROX Drive (wave 1) — device-local storage engine. Bytes, the JSON index and
    * the ledger live under the host config dir, so every channel is LOCAL_ONLY.
