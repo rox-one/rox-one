@@ -149,6 +149,15 @@ function referenceRegistry() {
     isFlagEnabled: flag => flag === 'goals.checkins.v1' || flag === 'goals.v1',
   })
   let revision = 0
+  // #1615: `createWiredCommandRegistry()` now installs REFERENCE_COMMAND_MODULE
+  // and DOMAIN_SCHEMA_COMMAND_MODULE, which already bound a handler and a strict
+  // payload schema for these catalogue types. Release the handler (`bind` throws
+  // on a second bind) and widen the schema so this fixture keeps receiving the
+  // audience fields the notify fan-out reads.
+  for (const type of ['goals.update_champion', 'goals.create_check_in']) {
+    registry.unbind(type)
+    registry.bindSchema(type, PLACEHOLDER_PAYLOAD_SCHEMA)
+  }
   registry.bind('goals.update_champion', ctx => {
     const payload = championPayload.parse(ctx.payload)
     revision += 1

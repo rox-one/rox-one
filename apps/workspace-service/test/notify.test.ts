@@ -16,7 +16,7 @@ import type { DomainEvent, RealtimeEventFrame } from '../../../packages/core/src
 import { InMemoryCommandStore } from '../../../packages/server-core/src/commands/store.ts'
 import { InProcessEventBus } from '../../../packages/server-core/src/commands/event-bus.ts'
 import { createWiredCommandRegistry, type WiredCommandRegistryOptions } from '../../../packages/server-core/src/commands/registry.ts'
-import type { CommandRegistry } from '../../../packages/core/src/commands/index.ts'
+import { PLACEHOLDER_PAYLOAD_SCHEMA, type CommandRegistry } from '../../../packages/core/src/commands/index.ts'
 import { setNotifyCommandHost } from '../../../packages/core/src/notify/index.ts'
 import type { CommandReceipt } from '../../../packages/core/src/commands/index.ts'
 import { commandReceiptSchema } from '../../../packages/shared/src/commands/schemas.ts'
@@ -63,6 +63,15 @@ const commentPayload = z.object({ subscriberIds: z.array(z.string().min(1)) })
 
 /** Minimal goal/comment reference handlers (W1-06 #1503 binds the real ones). */
 function bindReferenceHandlers(registry: CommandRegistry, calls: { n: number }): void {
+  // #1615: `createWiredCommandRegistry()` now installs REFERENCE_COMMAND_MODULE
+  // and DOMAIN_SCHEMA_COMMAND_MODULE, which already bound a handler and a strict
+  // payload schema for these catalogue types. Release the handler (`bind` throws
+  // on a second bind) and widen the schema so these minimal fixtures keep
+  // receiving the audience fields the notify fan-out reads.
+  for (const type of ['goals.update_champion', 'goals.create_check_in', 'comments.create']) {
+    registry.unbind(type)
+    registry.bindSchema(type, PLACEHOLDER_PAYLOAD_SCHEMA)
+  }
   registry.bind('goals.update_champion', ctx => {
     const payload = championPayload.parse(ctx.payload)
     calls.n += 1
@@ -358,15 +367,17 @@ describe('mark-read', () => {
 })
 
 describe('notify HTTP surface', () => {
-  test('without the module both paths answer 404 and the commands stay unbound', async () => {
+  test('without the module both paths answer 404 and the notify handlers are not installed', async () => {
     const f = await setup({ notify: false, module: false })
     expect(await f.get('')).toMatchObject({ status: 404, body: { error: { code: 'NOT_FOUND' } } })
     expect(await f.read({ all: true })).toMatchObject({ status: 404 })
-    expect(f.registry.handler('notifications.mark_read')).toBeUndefined()
-    expect(f.registry.capability('notifications.mark_read')).toMatchObject({ available: false, reason: 'not_bound' })
-    // The command bus still answers, with the honest capability reason.
+    // #1615: the wired registry binds a reference fallback for every catalogue
+    // command, so the type is bound — but the notify module's `ids` payload
+    // contract is not installed. The reference fallback's `notificationIds`
+    // schema stays in place, so the notify payload is rejected by the bus.
+    expect(f.registry.capability('notifications.mark_read')).toMatchObject({ available: true })
     expect(receipt(await f.post(envelope('notifications.mark_read', { ids: ['x'] }))))
-      .toMatchObject({ status: 'rejected', error: { code: 'NOT_BOUND' } })
+      .toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
   })
 
   test('with the module the commands are bound and capability discovery says so', async () => {
