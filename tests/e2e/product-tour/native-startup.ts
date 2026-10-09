@@ -56,8 +56,10 @@ export async function observeFirstNativeWindow(
     ?? (process.env.CI ? NATIVE_FIRST_WINDOW_TIMEOUT_MS * 6 : NATIVE_FIRST_WINDOW_TIMEOUT_MS)
   try {
     if (!(timeoutMs > 0)) return await app.firstWindow()
+    // Pass the bound to Playwright too: firstWindow() has its own 30 s default that
+    // would reject before the race's timer and make the widened CI bound useless.
     return await Promise.race([
-      app.firstWindow(),
+      app.firstWindow({ timeout: timeoutMs }),
       new Promise<never>((_, reject) => {
         // The losing arm only fails an already-settled race, and it never holds
         // the runner open once the real window arrived.
