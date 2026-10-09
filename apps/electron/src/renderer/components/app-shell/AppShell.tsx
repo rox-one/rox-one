@@ -7,7 +7,6 @@ import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
-  Settings,
   ChevronRight,
   ChevronDown,
   MoreHorizontal,
@@ -39,7 +38,9 @@ import {
 // SessionStatusIcons no longer used - icons come from dynamic sessionStatuses
 import { SourceAvatar } from "@/components/ui/source-avatar"
 import { TopBar } from "./TopBar"
-import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
+import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, openOrFocusBrowserPanelAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
+import { activeBrowserInstanceIdAtom } from '@/atoms/browser-pane'
+import { openOrFocusEmbeddedBrowserPanel } from '@/platform/browser-panel-lifecycle'
 import { workspaceProjectContextsAtom, activeWorkspaceContextAtom } from '@/atoms/workspace-context'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
 import { SquarePenRounded } from "../icons/SquarePenRounded"
@@ -91,12 +92,13 @@ import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
 import { visibleExtraScreens } from "@/pages/extra-screens/registry"
-import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
 import { focusServicePanelAtom } from "./service-navigation"
 import type { AppNavDestinationId } from "./nav-destinations"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
+import { useRoxCloudAccount } from "@/hooks/useRoxCloudAccount"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { resolvePromoSlot } from "@/platform/promo-slot"
 import { viewportBand } from "@/platform/viewport-band"
@@ -117,6 +119,7 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { GlobalVoiceDictation } from "@/voice/global-dictation"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
@@ -136,11 +139,13 @@ import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSourc
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
 import { collectionDisplayAtom, loadCollectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
+import { useViewerIdentity } from '@/hooks/useSessionPresence'
+import { collectSessionOwnerOptions, hasViewerIdentity, sessionInvolvesViewer, sessionMatchesOwnerFilter } from '@/lib/session-presence'
 import { collectionFiltersAtom, collectionFilterKeyAtom, loadCollectionFiltersAtom } from "@/atoms/collection-filters"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
 import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
-import { skillsAtom } from "@/atoms/skills"
+import { skillsAtom, skillsSyncingAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
 import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuses, resolveStatusDisplayLabel, resolveLabelDisplayName, resolveViewDisplayName, resolveViewDisplayDescription } from "@/config/session-status-config"
 import { useStatuses } from "@/hooks/useStatuses"
@@ -171,6 +176,7 @@ import {
   isInboxNavigation,
   isFeedNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
@@ -340,8 +346,14 @@ function AppShellContent({
   const [storedSidebarVisible, setIsSidebarVisible] = React.useState(() => {
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
+  // Persistent "pinned open" mode. Unlike the transient hover peek it survives
+  // restarts and keeps the rail expanded, so the sidebar never falls back to
+  // the icon rail on its own. Cleared by an explicit collapse.
+  const [sidebarPinned, setSidebarPinned] = React.useState(() => {
+    return storage.get(storage.KEYS.sidebarPinned, false)
+  })
   // Transient hover-reveal of the collapsed rail. Deliberately NOT persisted:
-  // only storedSidebarVisible is written back to storage.
+  // only storedSidebarVisible and sidebarPinned are written back to storage.
   const [sidebarPeek, setSidebarPeek] = React.useState(false)
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
@@ -365,7 +377,7 @@ function AppShellContent({
   // icon rail remains available when labels are collapsed; focus mode hides both.
   // A hover peek expands every derived surface (width, labels, chrome branch)
   // without touching the persisted preference.
-  const isSidebarVisible = storedSidebarVisible || sidebarPeek
+  const isSidebarVisible = storedSidebarVisible || sidebarPeek || sidebarPinned
   const isSidebarCollapsed = !isSidebarVisible
   const isPrimarySidebarRendered = true
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
@@ -507,23 +519,15 @@ function AppShellContent({
 
 
 
-  // Real rox.one balance for the connected Rox cloud account (null → «—»).
-  const [roxCloudAccount, setRoxCloudAccount] = React.useState<import('@rox/shared/auth').RoxAccountSnapshot | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const res = await window.electronAPI.getRoxCloudState()
-        if (cancelled || !res) return
-        setRoxCloudAccount(res.account ?? null)
-      } catch {
-        if (!cancelled) setRoxCloudAccount(null)
-      }
-    }
-    void load()
-    const timer = window.setInterval(() => { void load() }, 30_000)
-    return () => { cancelled = true; window.clearInterval(timer) }
-  }, [])
+  // Real rox.one balance from the account snapshot, kept current by the shared
+  // ≤30 s poll + focus refresh. It degrades to a dash only before first sync.
+  const roxCloudAccount = useRoxCloudAccount().account
+
+  // a2.3: sidebar owners / "involving me" filter. Matches the server-attributed
+  // creator/owner/participants fields; never a second identity store.
+  const viewer = useViewerIdentity()
+  const [involvingMe, setInvolvingMe] = React.useState(false)
+  const [ownerFilter, setOwnerFilter] = React.useState<ReadonlySet<string>>(() => new Set())
 
   const [isResizing, setIsResizing] = React.useState<'sidebar' | 'session-list' | null>(null)
   const workspaceIdForLayout = activeWorkspaceId ?? '_default'
@@ -1027,11 +1031,24 @@ function AppShellContent({
 
   // Skills state (workspace-scoped)
   const [skills, setSkills] = React.useState<LoadedSkill[]>([])
+  // Pending/syncing flag for the current skills load. A slow bundled-skills
+  // sync can outlive the client timeout (a later push recovers the catalog),
+  // so the panel must not claim "no skills configured" while a load is pending.
+  const [skillsSyncing, setSkillsSyncingState] = React.useState(false)
   // Sync skills to atom for NavigationContext auto-selection
   const setSkillsAtom = useSetAtom(skillsAtom)
   React.useEffect(() => {
     setSkillsAtom(skills)
   }, [skills, setSkillsAtom])
+  // Mirror the local syncing flag into skillsSyncingAtom from the SAME call
+  // sites (one source of truth), so every non-panel consumer — the skills
+  // popover in TaskEditor, pickers — sees the pending state and can suppress
+  // the "no skills configured" claim while a load is still running.
+  const setSkillsSyncingAtom = useSetAtom(skillsSyncingAtom)
+  const setSkillsSyncing = React.useCallback((next: boolean) => {
+    setSkillsSyncingState(next)
+    setSkillsSyncingAtom(next)
+  }, [setSkillsSyncingAtom])
   // Automations — state, handlers, loading, subscriptions
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId)
 
@@ -1319,8 +1336,26 @@ function AppShellContent({
       setIsSidebarAndNavigatorHidden(false)
       return
     }
+    // An explicit collapse also releases the persistent pin, so the chevron
+    // never looks stuck.
+    if (sidebarPinned) {
+      setSidebarPinned(false)
+      setIsSidebarVisible(false)
+      return
+    }
     setIsSidebarVisible(v => !v)
-  }, [isSidebarAndNavigatorHidden])
+  }, [isSidebarAndNavigatorHidden, sidebarPinned])
+
+  // Pin keeps the rail expanded for good; unpinning leaves it as it is.
+  const handleToggleSidebarPin = useCallback(() => {
+    setSidebarPeek(false)
+    if (sidebarPinned) {
+      setSidebarPinned(false)
+      return
+    }
+    setSidebarPinned(true)
+    setIsSidebarVisible(true)
+  }, [sidebarPinned])
 
   // Hover-reveal gesture for the collapsed rail: 250 ms dwell expands it,
   // leaving collapses it again. Handlers are no-ops while it is already
@@ -1350,8 +1385,8 @@ function AppShellContent({
   // or the shell cannot host a hovered rail — so no stale pin survives on a
   // permanently expanded sidebar.
   React.useEffect(() => {
-    if (storedSidebarVisible || effectiveSidebarAndNavigatorHidden || isAutoCompact) setSidebarPeek(false)
-  }, [storedSidebarVisible, effectiveSidebarAndNavigatorHidden, isAutoCompact])
+    if (storedSidebarVisible || sidebarPinned || effectiveSidebarAndNavigatorHidden || isAutoCompact) setSidebarPeek(false)
+  }, [storedSidebarVisible, sidebarPinned, effectiveSidebarAndNavigatorHidden, isAutoCompact])
 
   // Sidebar toggle (CMD+B)
   useAction('view.toggleSidebar', handleToggleSidebar)
@@ -1574,13 +1609,24 @@ function AppShellContent({
   React.useEffect(() => {
     let disposed = false
     let revision = 0
-    setSkills([])
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId) {
+      setSkillsSyncing(false)
+      return
+    }
+    setSkillsSyncing(true)
     const load = () => {
       const request = ++revision
+      setSkillsSyncing(true)
       window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
-        if (!disposed && request === revision) setSkills(loaded || [])
+        if (!disposed && request === revision) {
+          setSkills(loaded || [])
+          setSkillsSyncing(false)
+        }
       }).catch(err => {
+        // Keep the last-known list: a slow bundled-skills sync can outlive the
+        // client timeout, and the onSkillsChanged push recovers the catalog.
+        // Never blank the list and stay pending so the panel can't claim
+        // "no skills configured" while the sync is still running.
         if (!disposed && request === revision) console.error('[Chat] Failed to load skills:', err)
       })
     }
@@ -1592,7 +1638,7 @@ function AppShellContent({
     })
     load()
     return () => { disposed = true; revision += 1; cleanup() }
-  }, [activeWorkspaceId, activeSessionWorkingDirectory])
+  }, [activeWorkspaceId, activeSessionWorkingDirectory, setSkillsSyncing])
 
   // Filter session metadata by active workspace
   // Also exclude hidden sessions (mini-agent sessions) from all counts and lists
@@ -1837,9 +1883,16 @@ function AppShellContent({
       )
     }
 
+    // a2.3: owners / "involving me" filter over server attribution.
+    if (involvingMe) result = result.filter(meta => sessionInvolvesViewer(meta, viewer))
+    if (ownerFilter.size > 0) result = result.filter(meta => sessionMatchesOwnerFilter(meta, ownerFilter))
+
     result.sort((a, b) => compareSessions(a, b, collectionDisplay.orderBy, collectionDisplay.orderDir))
     return result
-  }, [workspaceSessionMetas, activeSessionMetas, sessionFilter, labelConfigs, collectionFilters, collectionDisplay.showCompleted, collectionDisplay.orderBy, collectionDisplay.orderDir, effectiveSessionStatuses])
+  }, [workspaceSessionMetas, activeSessionMetas, sessionFilter, labelConfigs, collectionFilters, collectionDisplay.showCompleted, collectionDisplay.orderBy, collectionDisplay.orderDir, effectiveSessionStatuses, involvingMe, ownerFilter, viewer])
+
+  const viewerHasIdentity = hasViewerIdentity(viewer)
+  const sessionOwnerOptions = React.useMemo(() => collectSessionOwnerOptions(activeSessionMetas), [activeSessionMetas])
 
 
   // Ensure session messages are loaded when selected
@@ -1865,6 +1918,7 @@ function AppShellContent({
   // Extend context value with local overrides (wrapped onDeleteSession, sources, skills, labels, enabledModes, rightSidebarOpenButton, effectiveSessionStatuses)
   const appShellContextValue = React.useMemo<AppShellContextType>(() => ({
     ...contextValue,
+    roxAccount: roxCloudAccount,
     registerCompactHeader,
     unregisterCompactHeader,
     compactHeaderRenderer,
@@ -1898,7 +1952,7 @@ function AppShellContent({
     automationTestResults,
     getAutomationHistory,
     onReplayAutomation: handleReplayAutomation,
-  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, localMcpEnabled, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
+  }), [contextValue, roxCloudAccount, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, localMcpEnabled, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
     if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
@@ -1909,6 +1963,11 @@ function AppShellContent({
   React.useEffect(() => {
     storage.set(storage.KEYS.sidebarVisible, storedSidebarVisible)
   }, [storedSidebarVisible])
+
+  // Persist the pinned sidebar mode to localStorage
+  React.useEffect(() => {
+    storage.set(storage.KEYS.sidebarPinned, sidebarPinned)
+  }, [sidebarPinned])
 
   // Persist focus mode state to localStorage
   React.useEffect(() => {
@@ -2323,6 +2382,8 @@ function AppShellContent({
   const setInspectorChromeCollapsed = useSetAtom(inspectorChromeCollapsedAtom)
   const setInspectorSection = useSetAtom(inspectorSectionAtom)
   const setInspectorPanelWidth = useSetAtom(inspectorPanelWidthAtom)
+  const openOrFocusBrowserPanel = useSetAtom(openOrFocusBrowserPanelAtom)
+  const setActiveBrowserInstanceId = useSetAtom(activeBrowserInstanceIdAtom)
   const seProfile = useSuperEngineeringProfile()
   const [inspectorEdgeMode, setInspectorEdgeMode] = useAtom(inspectorEdgeRevealModeAtom)
   const setInspectorUserOpened = useSetAtom(inspectorUserOpenedAtom)
@@ -2374,12 +2435,28 @@ function AppShellContent({
     setInspectorPanelWidth((width) => Math.max(width, 560))
   }, [setInspectorChromeCollapsed, setInspectorPanelWidth, setInspectorSection, setInspectorVisible])
 
-  const handleOpenMap = useCallback(() => {
-    if (!effectiveSessionId) return
-    window.dispatchEvent(new CustomEvent('craft:session-view', {
-      detail: { sessionId: effectiveSessionId, view: 'map' },
-    }))
-  }, [effectiveSessionId])
+  const openBrowserTab = useCallback(() => {
+    // (а) Focus the in-app inspector browser surface — same desktop affordance
+    // the VPS "open browser" bridge uses.
+    handleNewBrowserWindow()
+    if (isWebUI) return // Web UI has no embedded browser; the panel above is enough.
+
+    // (б) Create a fresh embedded tab through the same preload path
+    // InspectorBrowserPane uses (RPC browserPane.createEmbedded — never the
+    // windowed `create` RPC), then open/focus it as a browser panel so the new
+    // tab is actually visible (canonical path: InspectorActionRail.onBrowser /
+    // focusBrowserWindow). InspectorBrowserPane owns the native view lifecycle.
+    void window.electronAPI.browserPane
+      .createEmbedded({ useImportedCookies: true })
+      .catch(() => window.electronAPI.browserPane.createEmbedded())
+      .then((instanceId) => {
+        setActiveBrowserInstanceId(instanceId)
+        openOrFocusEmbeddedBrowserPanel({ instanceId, openOrFocusBrowserPanel })
+      })
+      .catch((error) => {
+        console.warn('[AppShell] Failed to open a new browser tab:', error)
+      })
+  }, [handleNewBrowserWindow, isWebUI, openOrFocusBrowserPanel, setActiveBrowserInstanceId])
 
   React.useEffect(() => {
     const handleOpenBrowser = () => {
@@ -2912,6 +2989,13 @@ function AppShellContent({
       onClick: () => navigate(routes.view.home()),
     },
     {
+      id: "nav:drive",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.drive.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.drive.icon,
+      variant: isDriveNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.drive()),
+    },
+    {
       id: "nav:feed",
       title: t('workbench.mode.feed'),
       icon: Rss,
@@ -2974,8 +3058,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           onToggleChatPictureInPicture={handleToggleChatPictureInPicture}
           onAddSessionPanel={() => handleNewChat(true)}
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
-          onOpenMap={handleOpenMap}
-          mapAvailable={Boolean(effectiveSessionId)}
+          onOpenBrowserTab={openBrowserTab}
           showInspectorToggle={(unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled) && !inspectorSuppressed}
           compactHeaderRenderer={compactHeaderRenderer}
           isCompactChatMode={isAutoCompact && isSessionsNavigation(navState) && !!navState.details}
@@ -2983,20 +3066,10 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           isCompact={isAutoCompact}
           showWorkspaceSelector={true}
           surfaceNavigationActive={true}
-          modeBarActive={isHomeNavigation(navState)}
           leftInset={topBarLeftInset}
         />
 
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
-
-      {false && isAutoCompact && !isSidebarAndNavigatorHidden && (
-        <div data-compact-profile className="chrome-rail fixed bottom-1 left-1 z-panel flex h-11 items-center gap-1 rounded-xl px-1" data-shell-role="chrome">
-          <ProfileStrip data={profileStripWithSpend} compact onClick={() => handleSettingsClick('account')} className="w-10 p-0.5" />
-          <button type="button" onClick={() => handleSettingsClick()} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-9 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
-            <Settings className="size-4" aria-hidden />
-          </button>
-        </div>
-      )}
 
       {/* === OUTER LAYOUT: Unified Panel Stack | Right Sidebar === */}
       <div className="flex h-full min-h-0 flex-col">
@@ -3039,20 +3112,20 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
-                {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
-                <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
+                {/* pb-8 = 32px clearance so content tail scrolls clear of the 32px gradient; mask is off during active settings navigation because settings list rows fall into the fade band */}
+                <div className={cn('flex-1 overflow-y-auto min-h-0 pb-8', !(isSettingsNavigation(navState) && !isAutoCompact) && 'mask-fade-bottom')}>
                 {activeWorkspaceId && !isSidebarCollapsed && (
-                  <div className="px-3 py-2 border-b border-foreground/5">
-                    <label className="block text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
+                  <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
+                    <label className="shrink-0 text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
                     <select id="workspace-project-context" value={selectedProjectId ?? ''}
-                      className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-1.5 py-1 text-caption leading-tight"
                       onChange={event => setProjectContexts(previous => ({ ...previous, [activeWorkspaceId]: event.target.value || null }))}>
                       <option value="">{t('navigation.allProjects')}</option>
                       {projects.map(project => <option key={project.config.id} value={project.config.id}>{project.config.name}</option>)}
                     </select>
                   </div>
                 )}
-                <div ref={setShellSidebarSlot} hidden={isSidebarCollapsed} data-primary-sidebar-context className="mb-2 border-b border-foreground/5 empty:hidden">
+                <div ref={setShellSidebarSlot} hidden={isSidebarCollapsed} data-primary-sidebar-context className="mb-2 border-b border-border-subtle empty:hidden">
                   {isSettingsNavigation(navState) && !isAutoCompact && (
                     <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />
                   )}
@@ -3111,8 +3184,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                     collapsed={isSidebarCollapsed}
                     onToggleSidebar={handleToggleSidebar}
                     onOpenSettings={() => handleSettingsClick()}
-                    showPin={sidebarPeek}
-                    onPin={() => { setSidebarPeek(false); setIsSidebarVisible(true) }}
+                    showPin={!isSidebarCollapsed}
+                    pinned={sidebarPinned}
+                    onPin={handleToggleSidebarPin}
                   />
                 </div>
               </div>
@@ -3124,7 +3198,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
-              className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
+              className="h-full flex flex-col min-w-0 relative z-chrome chrome-strip"
               data-shell-role="chrome"
             >
             <PanelHeader
@@ -3166,6 +3240,12 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                           setChatGroupingMode={setChatGroupingMode}
                           isStateSubView={isStateSubView}
                           onOpenSearch={() => setSearchActive(true)}
+                          involvingMe={involvingMe}
+                          setInvolvingMe={setInvolvingMe}
+                          ownerFilter={ownerFilter}
+                          setOwnerFilter={setOwnerFilter}
+                          ownerOptions={sessionOwnerOptions}
+                          viewerHasIdentity={viewerHasIdentity}
                         />
                       )}
                       <CollectionViewChrome
@@ -3222,6 +3302,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               /* Skills List */
               <SkillsListPanel
                 skills={skills}
+                syncing={skillsSyncing}
                 workspaceId={activeWorkspaceId}
                 workspaceRootPath={activeWorkspace?.rootPath}
                 onSkillClick={handleSkillSelect}
@@ -3334,7 +3415,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={SIDEBAR_WIDTH_MIN}
           valueMax={SIDEBAR_WIDTH_MAX}
           dragging={sidebarResize.dragging || isResizing === 'sidebar'}
-          className="absolute z-panel"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
@@ -3392,7 +3473,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={NAVIGATOR_WIDTH_MIN}
           valueMax={NAVIGATOR_WIDTH_MAX}
           dragging={navigatorResize.dragging || isResizing === 'session-list'}
-          className="absolute z-panel"
+          className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
@@ -3686,6 +3767,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
       <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
 
       <SuperEngineeringShellExtras />
+
+      {/* Global voice dictation: records + drafts a new session when no active composer owns the mic. */}
+      <GlobalVoiceDictation />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>

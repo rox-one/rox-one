@@ -103,7 +103,12 @@ const results: Array<{ name: string; pass: boolean; error?: string }> = []
 const errors: string[] = []
 page.on('pageerror', error => errors.push(error.message))
 async function check(name: string, action: () => Promise<void>) {
-  try { await action(); results.push({ name, pass: true }) }
+  try {
+    // The shell persists per-workspace URLs in localStorage. Checks share one browser
+    // context, so start each check from clean storage to keep them independent.
+    if (page.url() !== 'about:blank') await page.evaluate(() => localStorage.clear())
+    await action(); results.push({ name, pass: true })
+  }
   catch (error) { results.push({ name, pass: false, error: `${String(error)}; url=${page.url()}; state=${await page.locator('#navigation-state').textContent()}; actions=${JSON.stringify(await page.evaluate(() => (window as any).ui001?.actions()))}` }) }
 }
 async function state() { return JSON.parse((await page.locator('#navigation-state').textContent())!) }
@@ -202,6 +207,15 @@ try {
     assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
     assert.equal(await page.evaluate(() => (window as any).ui001.chatMounts().length), before)
     await page.evaluate(() => (window as any).ui001.completeWorkspaceSwitch())
+    // The rebuilt shell opens the new workspace's own address (no saved URL in this
+    // fixture: the initial inbox) instead of adopting the former workspace's session
+    // route. Its sessions stay reachable only through an explicit new-owner navigation.
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('ws') === 'workspace-b')
+    await selected('inbox')
+    assert.equal(new URL(page.url()).searchParams.get('route'), 'inbox')
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
+    assert.equal(await page.evaluate(() => (window as any).ui001.chatMounts().length), before)
+    await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/foreign'))
     await selected('sessions', 'foreign')
     await page.locator('[data-route-host="ChatPage"]').waitFor()
     assert.ok((await page.evaluate(before => (window as any).ui001.chatMounts().slice(before), before)).every((id: string) => id === 'foreign'))
@@ -222,8 +236,18 @@ try {
     assert.equal(await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages').length), before)
     assert.equal(new URL(page.url()).searchParams.get('route'), 'allSessions/session/local')
     await page.evaluate(() => (window as any).ui001.completeWorkspaceSwitch())
+    // The former workspace's selection is not restored: the rebuilt shell opens the
+    // new workspace's own address and the shell loader stays silent for the cleared
+    // metadata. An explicit new-owner selection is what reaches the loader.
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('ws') === 'workspace-b')
+    await selected('inbox')
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    assert.equal(await page.evaluate(() => (window as any).ui001.selected()), null)
+    assert.equal(await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages').length), before)
+    await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/foreign'))
     await selected('sessions', 'foreign')
     await page.waitForFunction(() => (window as any).ui001.requests().some((row: string[]) => row[0] === 'messages' && row[1] === 'workspace-b' && row[2] === 'foreign'))
+    assert.ok((await page.evaluate(before => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages').slice(before), before)).every((row: string[]) => row[1] === 'workspace-b' && row[2] === 'foreign'))
   })
   await check('The actual shell loader rejects an independent foreign selection and accepts verified local and remote sessions', async () => {
     await page.goto(`${origin}?ws=workspace-a&route=home`)
@@ -246,7 +270,7 @@ try {
   })
   await check('Legacy zero/one panel proportions recover without becoming part of an entity address', async () => {
     const panels = 'allSessions/session/local:1.0000,retired/surface:0.0000'
-    await page.goto(`${origin}?ws=workspace-a&route=retired/surface&panels=${encodeURIComponent(panels)}&fi=1`)
+    await page.goto(`${origin}?ws=workspace-a&route=retired/surface&panels=${encodeURIComponent(panels)}&fi=1&pi=1`)
     await selected('unavailable')
     assert.equal((await state()).route, 'retired/surface')
     const restored = JSON.parse((await page.locator('#panel-stack').textContent())!)

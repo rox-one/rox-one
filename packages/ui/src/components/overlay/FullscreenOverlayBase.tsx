@@ -25,7 +25,8 @@
  *   │   └── Scroll container (h-full, overflow-y-auto, paddingTop = header + fade)
  *   │       └── {error banner}
  *   │       └── {children}
- *   └── Header (absolute top-0, z-10, floating on top of scroll content)
+ *   ├── Header (absolute top-0, z-10, floating on top of scroll content)
+ *   └── Portal root (OverlayPortalRoot: dialogs/drawers opened inside portal here)
  *
  * Used by: PreviewOverlay, DocumentFormattedMarkdownOverlay, WorkspaceCreationScreen
  */
@@ -33,13 +34,19 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { usePlatform } from '../../context/PlatformContext'
+import { OverlayPortalRoot } from '../../context/OverlayPortalContext'
 import { cn } from '../../lib/utils'
 import { getDismissibleLayerBridge } from '../../lib/dismissible-layer-bridge'
 import { FullscreenOverlayBaseHeader, type OverlayTypeBadge } from './FullscreenOverlayBaseHeader'
 import { OverlayErrorBanner, type OverlayErrorBannerProps } from './OverlayErrorBanner'
 
-// Z-index for fullscreen overlays - must be above app chrome (z-overlay: 300)
-// Uses CSS variable when available, falls back to hardcoded value
+// Z-index for fullscreen overlays (tokens/z.css --z-fullscreen: 350, main's
+// value): above app chrome, popovers, the dialog scrim/modal and drawers, so an
+// overlay opened from a drawer or popover always covers its launcher. Dialogs
+// and drawers opened from INSIDE the overlay portal into its own root
+// (OverlayPortalRoot), so they stack above the overlay content. Menus
+// (z-island 400), their backdrops (z-menu-backdrop 390) and tooltips (450)
+// keep portaling to <body>: their layers are above this one.
 const Z_FULLSCREEN = 'var(--z-fullscreen, 350)'
 
 // HEADER_HEIGHT must match PreviewHeader's height prop (48px).
@@ -159,50 +166,54 @@ export function FullscreenOverlayBase({
             event.stopPropagation()
           }}
         >
-          {/* Visually hidden title for accessibility - required by Radix Dialog */}
-          <Dialog.Title className="sr-only">{accessibleTitle}</Dialog.Title>
+          {/* Dialogs/drawers opened inside the overlay portal into its root
+              (rendered last), so they stack above the content and header. */}
+          <OverlayPortalRoot>
+            {/* Visually hidden title for accessibility - required by Radix Dialog */}
+            <Dialog.Title className="sr-only">{accessibleTitle}</Dialog.Title>
 
-          {/* Full-viewport masked scroll area — covers the entire dialog including behind the header.
-              The CSS mask gradient fades content at both edges (starting from y=0).
-              Content padding clears the header at rest. */}
-          <div
-            className="absolute inset-0"
-            style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}
-          >
+            {/* Full-viewport masked scroll area — covers the entire dialog including behind the header.
+                The CSS mask gradient fades content at both edges (starting from y=0).
+                Content padding clears the header at rest. */}
             <div
-              className="h-full overflow-y-auto"
-              style={{ paddingTop: contentPaddingTop, paddingBottom: FADE_SIZE, scrollPaddingTop: contentPaddingTop }}
+              className="absolute inset-0"
+              style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}
             >
-              {/* Centering wrapper — error + content move together as a unit.
-                  min-h-full ensures centering when content is small; content can grow beyond. */}
-              <div className="min-h-full flex flex-col justify-center">
-                {/* Error banner — inside centering flow, above content */}
-                {error && (
-                  <div className="px-6 pb-4">
-                    <OverlayErrorBanner label={error.label} message={error.message} />
-                  </div>
-                )}
-                {children}
+              <div
+                className="h-full overflow-y-auto"
+                style={{ paddingTop: contentPaddingTop, paddingBottom: FADE_SIZE, scrollPaddingTop: contentPaddingTop }}
+              >
+                {/* Centering wrapper — error + content move together as a unit.
+                    min-h-full ensures centering when content is small; content can grow beyond. */}
+                <div className="min-h-full flex flex-col justify-center">
+                  {/* Error banner — inside centering flow, above content */}
+                  {error && (
+                    <div className="px-6 pb-4">
+                      <OverlayErrorBanner label={error.label} message={error.message} />
+                    </div>
+                  )}
+                  {children}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Floating header — rendered after scroll area so it's visually on top (DOM order).
-              Positioned absolutely at the top of the viewport, above the scroll content. */}
-          {hasHeader && (
-            <div className="absolute top-0 left-0 right-0 z-10">
-              <FullscreenOverlayBaseHeader
-                onClose={onClose}
-                typeBadge={typeBadge}
-                filePath={filePath}
-                title={title}
-                onTitleClick={onTitleClick}
-                subtitle={subtitle}
-                headerActions={headerActions}
-                copyContent={copyContent}
-              />
-            </div>
-          )}
+            {/* Floating header — rendered after scroll area so it's visually on top (DOM order).
+                Positioned absolutely at the top of the viewport, above the scroll content. */}
+            {hasHeader && (
+              <div className="absolute top-0 left-0 right-0 z-10">
+                <FullscreenOverlayBaseHeader
+                  onClose={onClose}
+                  typeBadge={typeBadge}
+                  filePath={filePath}
+                  title={title}
+                  onTitleClick={onTitleClick}
+                  subtitle={subtitle}
+                  headerActions={headerActions}
+                  copyContent={copyContent}
+                />
+              </div>
+            )}
+          </OverlayPortalRoot>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

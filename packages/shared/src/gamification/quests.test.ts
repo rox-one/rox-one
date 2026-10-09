@@ -24,8 +24,9 @@ describe('onboarding quests', () => {
     expect(state.quests.first_link.status).toBe('completed')
     expect(state.xp).toBeGreaterThan(before.xp)
     expect(visibleQuests(state.quests).some((quest) => quest.id === 'first_link')).toBe(false)
-    expect(analytics.sent).toBe(false)
-    expect(analytics.localOnly).toBe(true)
+    // Product analytics is on by default, so the quest event is sent.
+    expect(analytics.sent).toBe(true)
+    expect(analytics.localOnly).toBe(false)
   })
 
   it('does not send a cloud analytics event without consent', () => {
@@ -49,7 +50,7 @@ describe('onboarding quests', () => {
     expect(state.quests.first_browser.status).toBe('skipped_cloud')
   })
 
-  it('stores session ratings locally and keeps consent off by default', () => {
+  it('stores session ratings locally and sends analytics until an explicit opt-out', () => {
     const dir = tmp()
     const rated = saveSessionRating({
       sessionId: 'sess-1',
@@ -58,15 +59,19 @@ describe('onboarding quests', () => {
       provenance: 'user',
     }, dir)
     expect(rated.state.ratings[0]?.score).toBe(5)
-    expect(rated.analytics.sent).toBe(false)
+    // Analytics is on by default: no opt-in step is needed any more.
+    expect(rated.analytics.sent).toBe(true)
+    expect(rated.analytics.localOnly).toBe(false)
     const hundred = saveSessionRating({
       sessionId: 'sess-1',
       score: 100,
       provenance: 'session-composer',
     }, dir)
     expect(hundred.state.ratings[0]?.score).toBe(100)
-    const consented = setAnalyticsConsent(true, dir)
-    expect(consented.analyticsConsent).toBe(true)
+    const optedOut = setAnalyticsConsent(false, dir)
+    expect(optedOut.analyticsConsent).toBe(false)
+    // A user's explicit opt-out survives and stops the send.
+    expect(saveSessionRating({ sessionId: 'sess-2', score: 90 }, dir).analytics.localOnly).toBe(true)
   })
 })
 

@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input'
 import { PremiumMenuSelect, Spinner } from '@rox/ui'
 import { SettingsSection, SettingsCard } from '@/components/settings'
 import type { SecretRefEntry, SecretRefsSettingsPayload } from '../../../shared/types'
-import { InfisicalUnavailableRow, secretRefRowShowsUnavailable } from './secret-refs-ui'
+import { SecretProviderStatusRow, secretRefRowShowsUnavailable } from './secret-refs-ui'
 import { toErrorMessage } from '@/lib/errors'
+import { navigate, routes } from '@/lib/navigate'
 
 const SECRET_PROVIDER_IDS = ['environment', 'local-encrypted', 'infisical'] as const
 type SecretProviderId = (typeof SECRET_PROVIDER_IDS)[number]
@@ -69,7 +70,7 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
   const [saving, setSaving] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
 
-  useEffect(() => {
+  const loadRefs = useCallback(() => {
     window.electronAPI
       .getSecretRefs()
       .then((payload) => {
@@ -85,6 +86,10 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
         setSavedSnapshot(JSON.stringify([]))
       })
   }, [onError])
+
+  useEffect(() => {
+    loadRefs()
+  }, [loadRefs])
 
   const dirty = useMemo(() => {
     if (drafts === null || savedSnapshot === null) return false
@@ -149,7 +154,17 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
     >
       <SettingsCard divided={false}>
         {infisical && (
-          <InfisicalUnavailableRow available={infisical.available} errorCode={infisical.errorCode} />
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-2.5">
+            <SecretProviderStatusRow available={infisical.available} />
+            <div className="flex items-center gap-1.5">
+              <Button variant="ghost" size="sm" onClick={loadRefs}>
+                {t('settings.runtime.secretProviderCheck')}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(routes.view.screen('secrets'))}>
+                {t('settings.runtime.secretProviderConnect')}
+              </Button>
+            </div>
+          </div>
         )}
         <div className="p-3 space-y-2">
           {drafts === null ? (
@@ -208,7 +223,7 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
                     </Button>
                   </div>
                   {secretRefRowShowsUnavailable(draft, infisicalAvailable) && (
-                    <InfisicalUnavailableRow available={false} errorCode="INFISICAL_UNAVAILABLE" />
+                    <div className="text-small text-warning">{t('settings.runtime.secretRefVaultDown')}</div>
                   )}
                 </div>
               ))}

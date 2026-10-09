@@ -142,6 +142,51 @@ describe('handleDeepLink routing', () => {
     expect(sent[0]?.channel).toBe(RPC_CHANNELS.deeplink.NAVIGATE)
     expect(sent[0]?.target).toEqual({ to: 'client', clientId: 'client-target' })
   })
+
+  it("tags pane-originated navigations with source: 'browser-pane'", async () => {
+    const targetWindow = createMockWindow(22)
+    const manager = {
+      getFocusedWindow: () => targetWindow,
+      getLastActiveWindow: () => targetWindow,
+      getWorkspaceForWindow: () => 'ws-target',
+    } as unknown as WindowManager
+    const sent: unknown[][] = []
+    const result = await handleDeepLink(
+      'rox://action/new-session?input=x&send=true&mode=allow-all',
+      manager,
+      (_channel, _target, ...args) => { sent.push(args) },
+      () => 'client-target',
+      undefined,
+      'browser-pane',
+    )
+
+    expect(result.success).toBe(true)
+    expect(sent).toHaveLength(1)
+    expect(sent[0]?.[0]).toMatchObject({
+      source: 'browser-pane',
+      action: 'new-session',
+      actionParams: { mode: 'allow-all' },
+    })
+  })
+
+  it('omits source when the caller does not provide one', async () => {
+    const targetWindow = createMockWindow(22)
+    const manager = {
+      getFocusedWindow: () => targetWindow,
+      getLastActiveWindow: () => targetWindow,
+      getWorkspaceForWindow: () => 'ws-target',
+    } as unknown as WindowManager
+    const sent: unknown[][] = []
+    await handleDeepLink(
+      'rox://action/new-session?input=x&send=true&mode=allow-all',
+      manager,
+      (_channel, _target, ...args) => { sent.push(args) },
+      () => 'client-target',
+    )
+
+    const navigation = sent[0]?.[0]
+    expect(typeof navigation === 'object' && navigation !== null && 'source' in navigation).toBe(false)
+  })
 })
 
 describe('ROX protocol compatibility', () => {

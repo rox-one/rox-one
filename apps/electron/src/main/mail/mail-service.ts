@@ -1,14 +1,18 @@
 /**
  * Rox Mail bridge (main process): configuration, mailbox provisioning on the
- * configured Stalwart server, JMAP mail operations and push.
+ * configured mail server, JMAP mail operations and push.
  *
- * Local pilot: the server is Stalwart on 127.0.0.1 (see docs/mail-local-stalwart.md).
- * Provisioning with admin rights is allowed only for a loopback server — the
- * admin credential comes from the macOS Keychain; for a production server the
- * rox.one backend provisions (signup hook) and hands out the device
- * credential instead. The mailbox app password is stored via
- * CredentialManager (encrypted store, master key in Keychain) and never
- * leaves this process.
+ * Two transports, chosen by the server URL:
+ *  - Public Rox host (`https://mail.rox.one`, default) — `POST /api/provision`
+ *    with a Bearer Rox access token provisions `handle@rox.one` and returns
+ *    the app password once; health is `/api/health`; external recipients are
+ *    allowed.
+ *  - Loopback pilot (Stalwart on 127.0.0.1, see docs/mail-local-stalwart.md) —
+ *    provisioning uses admin rights from the macOS Keychain, health is
+ *    `/healthz/live`, and only `@domain` recipients are delivered.
+ *
+ * The mailbox app password is stored via CredentialManager (encrypted store,
+ * master key in Keychain) and never leaves this process.
  */
 import { execFile } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
@@ -16,11 +20,13 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
+  DEFAULT_MAILBOX_QUOTA_BYTES,
   JmapClient,
   JmapError,
   normalizeBaseUrl,
   parseAddressList,
   provisionMailbox,
+  provisionMailboxViaService,
   type MailboxRecord,
   type MailboxSecretStore,
 } from '@rox/shared/mail'
@@ -52,6 +58,12 @@ export interface MailServiceDeps {
   /** Rox profile/login hints for the handle (first usable wins). */
   identity: () => Promise<{ ownerUuid?: string | null; handles: Array<string | null | undefined> }>
   adminCredentials?: () => Promise<{ username: string; secret: string }>
+  /**
+   * Rox account access token for the remote provisioning service
+   * (`POST {server}/api/provision`). Absent → production mailboxes cannot be
+   * self-provisioned (the service path needs a signed-in Rox account).
+   */
+  roxAccessToken?: () => Promise<string | null>
   emit?: (status?: MailStatus) => void
   log?: (message: string, error?: unknown) => void
   deviceLabel?: string
@@ -201,7 +213,11 @@ export class MailService {
   private async reachable(serverUrl: string): Promise<boolean> {
     try {
       const f = this.deps.fetch ?? fetch
-      const res = await f(`${normalizeBaseUrl(serverUrl)}/healthz/live`, { signal: AbortSignal.timeout(3000) })
+      const base = normalizeBaseUrl(serverUrl)
+      // Loopback pilot is Stalwart itself (/healthz/live); the public Rox mail
+      // host fronts the provisioning service (/api/health, always 200).
+      const probe = isLoopbackUrl(base) ? `${base}/healthz/live` : `${base}/api/health`
+      const res = await f(probe, { signal: AbortSignal.timeout(3000) })
       return res.ok
     } catch {
       return false
@@ -233,6 +249,22 @@ export class MailService {
         this.deps.log?.(`[mail] local Stalwart ${notLoaded ? 'bootstrap' : 'kickstart'}${error ? ' failed' : ' requested'}`, error ?? undefined)
       })
     })
+  }
+
+  /**
+   * Best-effort mailbox storage usage from the JMAP Quotas capability
+   * (RFC 9425). Servers that do not expose it (or an unexpected payload)
+   * yield null — the UI then states the usage is unknown rather than guessing.
+   */
+  private async readQuota(client: JmapClient): Promise<{ used: number; limit: number | null } | null> {
+    const session = await client.session()
+    const accountId = session.primaryAccounts['urn:ietf:params:jmap:quota']
+    if (!accountId) return null
+    const [[, res]] = await client.call([['Quota/get', { accountId }, 'q']], ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:quota'])
+    const list = (res?.list ?? []) as Array<{ resourceType?: unknown; used?: unknown; hardLimit?: unknown }>
+    const storage = list.find((q) => q.resourceType === 'octets') ?? list[0]
+    if (!storage || typeof storage.used !== 'number') return null
+    return { used: storage.used, limit: typeof storage.hardLimit === 'number' ? storage.hardLimit : null }
   }
 
   async status(): Promise<MailStatus> {
@@ -278,9 +310,18 @@ export class MailService {
     }
     try {
       const fetchImpl = this.deps.fetch ? (i: string, init?: RequestInit) => this.deps.fetch!(i, init) : undefined
-      await new JmapClient({ baseUrl: cfg.serverUrl, username: this.record.address, secret }, { fetch: fetchImpl }).accountId()
+      const jmapBase = this.record.jmapUrl || cfg.serverUrl
+      const client = new JmapClient({ baseUrl: jmapBase, username: this.record.address, secret }, { fetch: fetchImpl })
+      await client.accountId()
+      const quota = await this.readQuota(client).catch(() => null)
       this.lastError = undefined
-      return { ...base, state: 'ready', error: undefined }
+      return {
+        ...base,
+        state: 'ready',
+        error: undefined,
+        quotaBytes: quota?.limit ?? DEFAULT_MAILBOX_QUOTA_BYTES,
+        quotaUsedBytes: quota?.used ?? null,
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Mail server rejected the mailbox connection'
       this.lastError = message
@@ -296,25 +337,64 @@ export class MailService {
       try {
         if (!cfg.enabled) throw new Error(`${MAIL_FLAG} is disabled`)
         const serverUrl = normalizeBaseUrl(cfg.serverUrl)
-        if (!isLoopbackUrl(serverUrl)) {
-          throw new Error('Mailbox creation from the app is available only for the local mail server; production mailboxes are created by rox.one at sign-up')
-        }
         const who = await this.activateMailbox(await this.deps.identity())
         const ownerUuid = who.ownerUuid
+        // Candidates come from the user's displayed name (identity hints);
+        // ROX_MAIL_HANDLE only overrides them for tests/ops. No env var is
+        // required to get a deterministic <handle>@<domain> address.
         const handleOverride = this.env.ROX_MAIL_HANDLE?.trim()
-        const record = await provisionMailbox({
-          baseUrl: serverUrl,
-          domain: cfg.domain,
-          ownerUuid,
-          handleCandidates: handleOverride ? [handleOverride] : who.handles,
-          fallbackHandle: 'mark',
-          deviceLabel: this.deps.deviceLabel ?? `rox-desktop:${process.platform}`,
-          admin: this.deps.adminCredentials ?? keychainAdminCredentials(this.env),
-          secrets: this.deps.secrets,
-          existing: this.record,
-          fetch: this.deps.fetch,
-          log: (m) => this.deps.log?.(m),
-        })
+        const deviceLabel = this.deps.deviceLabel ?? `rox-desktop:${process.platform}`
+        let record: MailboxRecord
+        if (isLoopbackUrl(serverUrl)) {
+          // Local pilot: Stalwart on this device, admin credentials create the
+          // account directly (and external recipients stay blocked in `send`).
+          record = await provisionMailbox({
+            baseUrl: serverUrl,
+            domain: cfg.domain,
+            ownerUuid,
+            handleCandidates: handleOverride ? [handleOverride] : who.handles,
+            fallbackHandle: 'mark',
+            deviceLabel,
+            admin: this.deps.adminCredentials ?? keychainAdminCredentials(this.env),
+            secrets: this.deps.secrets,
+            existing: this.record,
+            fetch: this.deps.fetch,
+            log: (m) => this.deps.log?.(m),
+          })
+        } else {
+          // Production: the Rox mail service provisions for the account that
+          // owns the presented access token. Explicit admin credentials stay a
+          // dev-only fallback (never the Keychain item).
+          const token = await this.deps.roxAccessToken?.().catch(() => null) ?? null
+          if (token) {
+            record = await provisionMailboxViaService({
+              serverUrl,
+              ownerUuid,
+              accessToken: token,
+              deviceLabel,
+              secrets: this.deps.secrets,
+              existing: this.record,
+              fetch: this.deps.fetch,
+              log: (m) => this.deps.log?.(m),
+            })
+          } else if (this.deps.adminCredentials) {
+            record = await provisionMailbox({
+              baseUrl: serverUrl,
+              domain: cfg.domain,
+              ownerUuid,
+              handleCandidates: handleOverride ? [handleOverride] : who.handles,
+              fallbackHandle: 'mark',
+              deviceLabel,
+              admin: this.deps.adminCredentials,
+              secrets: this.deps.secrets,
+              existing: this.record,
+              fetch: this.deps.fetch,
+              log: (m) => this.deps.log?.(m),
+            })
+          } else {
+            throw new Error('Production mailboxes are provisioned by the Rox account; sign in to rox.one')
+          }
+        }
         this.record = record
         this.persistMailbox(record)
         this.lastError = undefined
@@ -344,7 +424,7 @@ export class MailService {
     const secret = await this.deps.secrets.get(this.record.address)
     if (!secret) throw new MailError('no-mailbox', 'Mailbox credential is missing')
     const fetchImpl = this.deps.fetch ? (i: string, init?: RequestInit) => this.deps.fetch!(i, init) : undefined
-    this.client = new JmapClient({ baseUrl: cfg.serverUrl, username: this.record.address, secret }, { fetch: fetchImpl })
+    this.client = new JmapClient({ baseUrl: this.record.jmapUrl || cfg.serverUrl, username: this.record.address, secret }, { fetch: fetchImpl })
     this.startPush(this.client)
     return this.client
   }

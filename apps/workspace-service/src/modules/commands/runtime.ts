@@ -21,6 +21,9 @@ import { valkeyEventSink, type ValkeyPublishClient } from '../events/valkey.ts'
 import { RealtimeGateway, type RealtimePushTransport } from '../realtime/gateway.ts'
 import { PostgresRealtimeCursorStore, type RealtimeCursorStore } from '../realtime/cursor-store.ts'
 import { registerRealtimeHandlers } from '../realtime/handlers.ts'
+import { createNotifyModule, type NotifyModule } from '../notify/index.ts'
+import type { NotifyServiceOptions } from '../notify/service.ts'
+import { setNotifyCommandHost } from '../../../../../packages/core/src/notify/index.ts'
 
 export interface WorkspaceCommandBusConfiguration {
   /** Default: Postgres (`domain_event` / `command_receipt` in the service schema). */
@@ -44,6 +47,13 @@ export interface WorkspaceCommandBusConfiguration {
   readonly relayRetryBaseMs?: number
   /** Sweep idle realtime replay windows every this many ms (default 60 s, `0` disables). */
   readonly evictIntervalMs?: number
+  /**
+   * W1-09 (#1506): notification fan-out, `notification_pref` and the
+   * mark-read endpoint. Absent → no notify module is constructed, the
+   * `notifications.*` handlers stay unbound and the notify routes answer 404.
+   * The authorizer defaults to the bus's (never a second ACL source).
+   */
+  readonly notify?: Omit<NotifyServiceOptions, 'authorizer' | 'push'> | null
   readonly onError?: (error: unknown) => void
 }
 
@@ -56,6 +66,8 @@ export interface WorkspaceCommandBus {
   readonly ready: Promise<void>
   /** Attach the realtime gateway to the WS transport (after the server exists). */
   attach(server: WsRpcServer & RealtimePushTransport): RealtimeGateway
+  /** W1-09 (#1506) notify module when the composition root configured one. */
+  readonly notify?: NotifyModule
   /** Stop timers (relay retries, idle-window sweep); also runs on server shutdown after `attach`. */
   close(): void
 }
@@ -64,9 +76,21 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
   const store = configuration.store ?? new PostgresCommandStore(database, schema)
   const authorizer = configuration.authorizer ?? createWorkspaceAuthorizer()
   const bus = new InProcessEventBus({ ...(configuration.onError ? { onListenerError: configuration.onError, onProjectorError: configuration.onError } : {}) })
+  // W1-09 (#1506): the notify module exists before the command registry so its
+  // `notifications.*` handlers bind (the host is process-wide). Its `user:{id}`
+  // push goes through the same bus, so the realtime gateway delivers it.
+  const notify = configuration.notify
+    ? createNotifyModule({
+        ...configuration.notify,
+        authorizer,
+        push: (workspaceId, publications) => { bus.publishPublications(workspaceId, publications) },
+      })
+    : undefined
+  if (notify) setNotifyCommandHost(notify.host)
   const sinks: DomainEventSink[] = [events => { bus.publish(events) }]
   if (configuration.valkey) sinks.push(valkeyEventSink(configuration.valkey))
   for (const sink of configuration.extraSinks ?? []) sinks.push(sink)
+  if (notify) sinks.push(async events => { await notify.ingest(events) })
   const relay = new DomainEventRelay({ store, sinks, ...(configuration.relayRetryBaseMs ? { retryBaseMs: configuration.relayRetryBaseMs } : {}), ...(configuration.onError ? { onError: configuration.onError } : {}) })
   // Watermarks start at the committed maximum (migrations already ran); the
   // server awaits `ready` before it can accept a command.
@@ -101,6 +125,7 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
     store,
     ready,
     close,
+    ...(notify ? { notify } : {}),
     attach(server) {
       const gateway = new RealtimeGateway({
         bus,

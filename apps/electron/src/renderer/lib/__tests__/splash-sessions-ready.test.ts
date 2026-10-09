@@ -84,3 +84,16 @@ describe('splash sessionsLoaded gate (App wiring)', () => {
     expect(body).toContain('permissionMode: s.permissionMode')
   })
 })
+
+describe('swallowed session-load failures are repaired on reconnect', () => {
+  it('records the swallow and reloads sessions when the transport reconnects', () => {
+    const body = loadSessionsFromServerBody(appSource)
+    expect(body).toContain('swallowedSessionLoadRef.current = true')
+    expect(appSource).toContain('const swallowedSessionLoadRef = useRef(false)')
+    const reconnectIdx = appSource.indexOf('window.electronAPI.onReconnected')
+    expect(reconnectIdx).toBeGreaterThanOrEqual(0)
+    const reconnectBody = appSource.slice(reconnectIdx, appSource.indexOf('return cleanup', reconnectIdx))
+    expect(reconnectBody).toContain('swallowedSessionLoadRef.current')
+    expect(reconnectBody).toContain('await loadSessionsFromServer()')
+  })
+})

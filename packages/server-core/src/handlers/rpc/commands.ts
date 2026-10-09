@@ -30,6 +30,7 @@ import {
 import type { EntityRef } from '@rox/core/entities'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { RequestContext } from '../../transport/types.ts'
+import { assertWorkspaceScope } from './workspace-guard.ts'
 import type { HandlerDeps } from '../handler-deps'
 import { CommandExecutor } from '../../commands/executor.ts'
 import { CommandRouter, type WorkspaceCommandSink } from '../../commands/router.ts'
@@ -162,9 +163,9 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
 
   const requireWorkspace = (ctx: RequestContext, workspaceId: unknown): { id: string; rootPath: string } => {
     if (typeof workspaceId !== 'string' || !workspaceId) throw new CodedError('INVALID_PAYLOAD', 'workspaceId required')
-    if (ctx.principal && workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Command workspace access denied')
     const workspace = workspaceFor(workspaceId)
     if (!workspace) throw new CodedError('NOT_FOUND', 'Workspace not found')
+    assertWorkspaceScope(ctx, workspaceId, 'Command workspace access denied')
     return workspace
   }
 

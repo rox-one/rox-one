@@ -6,7 +6,8 @@
  */
 
 export const MAIL_FLAG = 'inbox.mail.v1'
-export const MAIL_DEFAULT_SERVER_URL = 'http://127.0.0.1:8480'
+/** Public Rox mail host: JMAP (`/.well-known/jmap`), provisioning and health. */
+export const MAIL_DEFAULT_SERVER_URL = 'https://mail.rox.one'
 export const MAIL_DEFAULT_DOMAIN = 'rox.one'
 
 export const MAIL_IPC = {
@@ -44,6 +45,10 @@ export interface MailStatus {
   address: string | null
   push: 'open' | 'retry' | 'off'
   error?: string
+  /** Mailbox storage limit in bytes (server quota, else the 1 GiB default). */
+  quotaBytes?: number
+  /** Stored bytes reported by the server; null when the server exposes no usage. */
+  quotaUsedBytes?: number | null
 }
 
 export function isOptionalMailSetup(status: MailStatus | null | undefined): boolean {

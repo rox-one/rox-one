@@ -13,6 +13,7 @@ export const KEYS = {
   featureProductTourV1: 'feature-product-tour-v1',
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
+  sidebarPinned: 'sidebar-pinned',
   sidebarDismissedGuidance: 'sidebar-dismissed-guidance',
   sidebarWidth: 'sidebar-width',
   sessionListWidth: 'session-list-width',
@@ -58,7 +59,6 @@ export const KEYS = {
   // Appearance
   showConnectionIcons: 'show-connection-icons',
   projectColorTreatment: 'project-color-treatment', // 'stripe' | 'stripe-tint'
-  workspaceSelectorRail: 'workspace-selector-rail',
   /** SE profile (opt-in via theme) */
   seLeftSidebarLayout: 'se-left-sidebar-layout',
   seAutoHideSidebars: 'se-auto-hide-sidebars',
@@ -72,8 +72,6 @@ export const KEYS = {
   // What's New
   // What's New — per-version seen list (timeline)
   whatsNewSeenVersions: 'whats-new-seen-versions',
-  // Workspace icon rail custom links (workspace-scoped via suffix)
-  workspaceRailLinks: 'workspace-rail-links',
   // Session multi-view tab (session-scoped via suffix) — legacy; prefer entityViewMode
   sessionViewMode: 'session-view-mode',
   // Entity multi-view tab (scoped via suffix e.g. session:<id>, note:<id>)
@@ -119,6 +117,8 @@ export const KEYS = {
   featureWorkbenchModeFeedV1: 'feature-workbench-mode-feed-v1',
   // Entities (entities.links.v1) — default OFF, inert until enabled
   featureEntitiesLinksV1: 'feature-entities-links-v1',
+  // W1-09 (#1506): Inbox notification surface (notify.inbox.v1) — default OFF
+  featureNotifyInboxV1: 'feature-notify-inbox-v1',
   // Entity previews (entities.previews.v1, W1-08) — default OFF, needs links
   featureEntitiesPreviewsV1: 'feature-entities-previews-v1',
   // Входящие: done / snoozed item ids (renderer-only triage state)
@@ -152,6 +152,9 @@ export const KEYS = {
   // W1-07 (#1504): generic per-id workbench flag store for flags without a
   // dedicated key (`craft-workbench-flag:<flag id>`, e.g. workbench.mode.messenger.v1).
   workbenchFlag: 'workbench-flag',
+  // «Мои транскрипты» mirror: meeting transcript generations already filed as
+  // notes (`<meetingId>:<generation>`), so an app restart never duplicates a note.
+  meetingsTranscriptNotes: 'meetings-transcript-notes',
 } as const
 
 export const EVENTS = {

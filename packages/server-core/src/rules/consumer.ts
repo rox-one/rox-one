@@ -80,7 +80,9 @@ export function createLocalRulesConsumer(options: LocalRulesConsumerOptions): Lo
     },
     attach() {
       if (unsubscribe || !enabled()) return () => {}
-      unsubscribe = options.bus.subscribe((workspaceId, _frame, event: DomainEvent) => {
+      unsubscribe = options.bus.subscribe((workspaceId, _frame, event: DomainEvent | null) => {
+        // Module-owned publications carry no `domain_event` row: nothing to run.
+        if (event === null) return
         if (workspaceId !== options.workspaceId) return
         if (!enabled()) return
         void engine.handleEvent(event).catch(error => options.onError?.(error))

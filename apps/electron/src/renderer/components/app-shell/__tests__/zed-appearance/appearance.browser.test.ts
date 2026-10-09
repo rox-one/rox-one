@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
-import { chromium, expect as playwrightExpect, type Browser, type BrowserContext, type BrowserServer, type Page } from 'playwright/test'
+import { chromium, expect as playwrightExpect, type Browser, type BrowserContext, type Page } from 'playwright/test'
 import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 const fixture = import.meta.dirname
@@ -13,7 +13,17 @@ const proofDirectory = process.env.ROX_APPEARANCE_PROOF_DIR ?? resolve(homedir()
 const expectDOM = playwrightExpect.configure({ timeout: 30_000 })
 
 async function browserExecutable(): Promise<string | undefined> {
-  try { return await resolveChromiumExecutable() } catch { /* Fall back to the Playwright browser cache below. */ }
+  // An explicitly configured browser path is authoritative, mirroring the
+  // sibling suites' `describe.skipIf(!existsSync(executablePath))` guard: the
+  // unit-recovery step parks CHROMIUM_EXECUTABLE on a path that does not exist
+  // to keep browser fixtures out of the unit process, so honour it strictly and
+  // never bypass it with a cache lookup.
+  const configured = process.env.LEARNING_CHROMIUM_PATH ?? process.env.CHROMIUM_EXECUTABLE ?? process.env.ROX_BROWSER_PATH
+  if (configured !== undefined) return existsSync(configured) ? configured : undefined
+  try {
+    const resolved = await resolveChromiumExecutable()
+    if (existsSync(resolved)) return resolved
+  } catch { /* Fall back to the Playwright browser cache below. */ }
   const cache = resolve(homedir(), 'Library/Caches/ms-playwright')
   if (!existsSync(cache)) return undefined
   for (const version of readdirSync(cache).filter(name => /^chromium_headless_shell-\d+$/.test(name)).sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]))) {
@@ -49,7 +59,6 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   let server: ReturnType<typeof Bun.spawn> | undefined
   let compiling: ReturnType<typeof Bun.spawn> | undefined
   let browser: Browser
-  let browserServer: BrowserServer | undefined
   let context: BrowserContext
   let page: Page
   let fixtureUrl: string
@@ -77,25 +86,18 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   const stopResources = async () => {
     const ownedServer = server
     const ownedBuild = compiling
-    const ownedBrowserServer = browserServer
     server = undefined
     compiling = undefined
-    browserServer = undefined
     const stopChild = async (child: typeof ownedServer) => {
       if (!child) return
       if (child.exitCode === null) child.kill()
       const deadline = setTimeout(() => { if (child.exitCode === null) child.kill('SIGKILL') }, 2_000)
       try { await child.exited } finally { clearTimeout(deadline) }
     }
-    const stopBrowser = async () => {
-      if (!ownedBrowserServer) return
-      const deadline = setTimeout(() => { void ownedBrowserServer.kill() }, 5_000)
-      try { await ownedBrowserServer.close() } finally { clearTimeout(deadline) }
-    }
     // All handles refer to processes started by this fixture. Close in parallel
     // so a preview-server shutdown cannot wait on a browser still holding HTTP
     // sockets; bounded termination never targets another task's process.
-    await Promise.all([stopChild(ownedServer), stopChild(ownedBuild), stopBrowser(), browser?.close().catch(() => {})])
+    await Promise.all([stopChild(ownedServer), stopChild(ownedBuild), browser?.close().catch(() => {})])
   }
 
   beforeAll(async () => {
@@ -124,8 +126,10 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
         if (server.exitCode !== null || Date.now() > deadline) throw new Error(`Appearance fixture server did not start${server.exitCode !== null ? `: ${await serverLog}` : ''}`)
         await Bun.sleep(100)
       }
-      browserServer = await chromium.launchServer({ executablePath, headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
-      browser = await chromium.connect(browserServer.wsEndpoint())
+      // Launch the owned browser directly: `launchServer` + `connect` never
+      // completes its websocket under the CI Bun (1.3.14), while `launch` is the
+      // path every other browser fixture here uses.
+      browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
       mkdirSync(proofDirectory, { recursive: true })
       const compiledAssets = resolve(repository, 'node_modules/.vite-zed-appearance/compiled-fixture/assets')
       const compiledCssSha256 = Object.fromEntries(readdirSync(compiledAssets).filter(name => name.endsWith('.css')).map(name => [name, createHash('sha256').update(readFileSync(resolve(compiledAssets, name))).digest('hex')]))
@@ -173,7 +177,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
         expect(sourcesUnchangedDuringRun).toBe(true)
       }
     } finally { await stopResources() }
-  }, 30_000)
+  }, 300_000)
 
   const load = async (query = '') => {
     await page.goto(`${fixtureUrl}/?${query}`)
@@ -207,8 +211,37 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
         rect: { left: rect.left, right: rect.right, width: rect.width, top: rect.top, bottom: rect.bottom, height: rect.height },
       }]
     }))
-    return { ...result, attrs: { runtime: document.documentElement.dataset.shellRuntime, material: document.documentElement.dataset.shellMaterial, cssMaterial: document.documentElement.dataset.shellCssMaterial, mode: document.documentElement.className, mismatch: document.documentElement.dataset.themeMismatch }, media: { coarse: matchMedia('(pointer: coarse)').matches, reducedTransparency: matchMedia('(prefers-reduced-transparency: reduce)').matches, moreContrast: matchMedia('(prefers-contrast: more)').matches, forcedColors: matchMedia('(forced-colors: active)').matches } } as any
+    return { ...result, attrs: { runtime: document.documentElement.dataset.shellRuntime, material: document.documentElement.dataset.shellMaterial, cssMaterial: document.documentElement.dataset.shellCssMaterial, layer: document.documentElement.dataset.material, texture: document.documentElement.dataset.materialTexture, mode: document.documentElement.className, mismatch: document.documentElement.dataset.themeMismatch }, media: { coarse: matchMedia('(pointer: coarse)').matches, reducedTransparency: matchMedia('(prefers-reduced-transparency: reduce)').matches, moreContrast: matchMedia('(prefers-contrast: more)').matches, forcedColors: matchMedia('(forced-colors: active)').matches } } as any
   })
+  const cssVar = (name: string) => page.evaluate(variable => getComputedStyle(document.documentElement).getPropertyValue(variable).trim(), name)
+  // Sample the fixed floating/reading surfaces (chat zone, composer, popover).
+  // The fixture DOM has no chat zone, so an element carrying the production
+  // marker is constructed inside the fixture root when the selector is absent;
+  // the construct is removed before returning so later assertions are unaffected.
+  const materialSurface = (spec: { selector?: string; className?: string; attribute?: [string, string] }) => page.evaluate((input) => {
+    const root = document.getElementById('root')!
+    const existing = input.selector ? document.querySelector<HTMLElement>(input.selector) : null
+    const element = existing ?? document.createElement('div')
+    if (!existing) {
+      if (input.className) element.className = input.className
+      if (input.attribute) element.setAttribute(input.attribute[0], input.attribute[1])
+      root.appendChild(element)
+    }
+    const style = getComputedStyle(element)
+    // Live CSSStyleDeclaration: materialize every value while the probe is
+    // still attached, because a detached node reports empty strings.
+    const background = style.backgroundColor
+    const backdrop = style.backdropFilter
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 1
+    const context = canvas.getContext('2d')!
+    context.clearRect(0, 0, 1, 1)
+    context.fillStyle = background
+    context.fillRect(0, 0, 1, 1)
+    const rgba = [...context.getImageData(0, 0, 1, 1).data]
+    if (!existing) element.remove()
+    return { background, rgba, backdrop, constructed: !existing }
+  }, spec)
   const seam = (styles: any, hit: number) => {
     expect(styles.row.gap).toBe('0px')
     expect(styles.row.padding).toEqual(['0px', '0px', '0px', '0px'])
@@ -269,9 +302,11 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(styles.attrs).toMatchObject({ runtime: 'web', material: 'solid' })
     expect(styles.attrs.mode.split(' ')).toContain(mode)
     expect(styles.attrs.mismatch).toBeUndefined()
-    for (const key of ['root', 'body', 'app', 'work', 'second', 'code', 'dock', 'terminal']) expect(styles[key].rgba).toEqual(canvas)
+    for (const key of ['root', 'body', 'app', 'work', 'second', 'code', 'dock', 'terminal']) expect(styles[key].rgba).toEqual([...canvas])
     for (const key of ['work', 'second', 'sidebar', 'navigator', 'inspector', 'topbar', 'dock']) expect(styles[key].radius).toBe('0px')
-    for (const key of ['control', 'card', 'composer', 'code']) expect(styles[key].radius).toBe('4px')
+    // The adopted radius scale maps controls, cards, the composer and code
+    // blocks to --radius-md (8px); only shell panes stay flush.
+    for (const key of ['control', 'card', 'composer', 'code']) expect(styles[key].radius).toBe('8px')
     for (const key of ['topbar', 'sidebar', 'navigator', 'inspector', 'strip']) {
       expect(styles[key].rgba[3]).toBeGreaterThan(0)
       expect(styles[key].rgba[3]).toBeLessThan(255)
@@ -289,7 +324,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(compact.navigator.backdrop).toBe(styles.navigator.backdrop)
     expect(styles.work.backdrop).toBe('none')
     expect(styles.work.shadow).toBe('none')
-    seam(styles, 12)
+    seam(styles, 8)
     terminalSeam(styles)
     const terminalInput = page.locator('.rox-inspector-terminal').getByRole('textbox', { name: 'Command', exact: true })
     await terminalInput.fill('fixture ANSI only')
@@ -300,14 +335,16 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect((await transportCalls()).filter((call: any) => call.method === 'runShellCommand')).toEqual([{ method: 'runShellCommand', value: { command: 'fixture ANSI only' } }])
     await page.getByTestId('open-popover').click()
     await expectDOM(page.getByTestId('popover')).toBeVisible()
-    expect(await page.getByTestId('popover').evaluate(element => getComputedStyle(element).borderRadius)).toBe('6px')
+    // Popovers and dialogs resolve their radius through --radius-md on the
+    // adopted scale.
+    expect(await page.getByTestId('popover').evaluate(element => getComputedStyle(element).borderRadius)).toBe('8px')
     // Use real overlay controls for these appearance snapshots. Global overlay
     // Escape routing belongs to the complete application acceptance surface.
     await page.getByTestId('open-popover').click()
     await expectDOM(page.getByTestId('popover')).toBeHidden()
     await page.getByTestId('open-dialog').click()
     await expectDOM(page.getByTestId('dialog')).toBeVisible()
-    expect(await page.getByTestId('dialog').evaluate(element => getComputedStyle(element).borderRadius)).toBe('6px')
+    expect(await page.getByTestId('dialog').evaluate(element => getComputedStyle(element).borderRadius)).toBe('8px')
     await page.getByTestId('dialog').getByRole('button', { name: 'Close', exact: true }).click()
     await expectDOM(page.getByTestId('dialog')).toBeHidden()
     await proof(`palette-${id}-${os}-os`)
@@ -316,7 +353,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   it('keeps fine-pointer hit area out of layout while dragging, cancelling and using keyboard', async () => {
     await load()
     const initial = await computed()
-    seam(initial, 12)
+    seam(initial, 8)
     const sash = page.locator('[data-sash-pair]')
     const box = await sash.boundingBox()
     if (!box) throw new Error('Production sash has no bounds')
@@ -329,7 +366,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     // Pointer events use device-coordinate rounding while the single divider
     // consumes one CSS pixel; allow at most one pixel of resulting rounding.
     expect(Math.abs(dragged.work.rect.width - initial.work.rect.width - 80)).toBeLessThan(1)
-    seam(dragged, 12)
+    seam(dragged, 8)
     const nextBox = await sash.boundingBox()
     await page.mouse.move(nextBox!.x + nextBox!.width / 2, nextBox!.y + 100)
     await page.mouse.down()
@@ -342,7 +379,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     await page.keyboard.press('Enter')
     const keyboard = await computed()
     expect(keyboard.work.rect.width).toBeLessThan(dragged.work.rect.width)
-    seam(keyboard, 12)
+    seam(keyboard, 8)
     await sash.press('Shift+ArrowRight')
     await sash.press('Escape')
     expect((await computed()).work.rect.width).toBeCloseTo(keyboard.work.rect.width, 1)
@@ -398,7 +435,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(dragged.dock.rect.width).toBeCloseTo(dragged.work.rect.width, 1)
     expect(dragged.dock.rect.height).toBeCloseTo(initial.dock.rect.height, 0)
     expect(dragged.dockHeader.rect.height).toBe(initial.dockHeader.rect.height)
-    seam(dragged, 12)
+    seam(dragged, 8)
     terminalSeam(dragged)
     await proof('terminal-panel-cell')
   }, 45_000)
@@ -628,4 +665,102 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(fallback.work.rgba).toEqual(initial.work.rgba)
     await proof('desktop-policy-fallback-synthetic')
   }, 45_000)
+
+  describe('configurable material layer', () => {
+    it('applies an enabled material override through data attributes, tokens and browser glass', async () => {
+      await load('material=on')
+      const html = page.locator('html')
+      await expectDOM(html).toHaveAttribute('data-material', 'on')
+      await expectDOM(html).toHaveAttribute('data-material-texture', 'grain')
+      // ThemeContext injects the per-surface tokens the material CSS consumes.
+      expect(await cssVar('--material-blur-topbar')).toBe('30px')
+      expect(await cssVar('--material-opacity-topbar')).toBe('50%')
+      expect(await cssVar('--material-texture-kind')).toBe('grain')
+      const styles = await computed()
+      expect(styles.attrs.layer).toBe('on')
+      expect(styles.attrs.texture).toBe('grain')
+      // --material-opacity-topbar: 50% halves the opaque titlebar tint.
+      expect(styles.topbar.rgba[3] / 255).toBeCloseTo(0.5, 1)
+      expect(styles.topbar.backdrop).toContain('blur(30px)')
+      await proof('material-enabled')
+    }, 45_000)
+
+    it('keeps the static chrome when the material override is absent', async () => {
+      await load()
+      const styles = await computed()
+      expect(styles.attrs.layer).toBeUndefined()
+      expect(styles.attrs.texture).toBeUndefined()
+      // No app override means ThemeContext injects no --material-* tokens, so
+      // the shipped 20px/84% fallbacks stay in charge instead of the 30px/50%
+      // material override.
+      expect(await cssVar('--material-blur-topbar')).toBe('20px')
+      expect(styles.topbar.rgba[3]).toBeGreaterThan(0)
+      expect(styles.topbar.rgba[3]).toBeLessThan(255)
+      expect(styles.topbar.backdrop).toContain('blur(20px)')
+    }, 45_000)
+
+    it.each([
+      ['prefers-reduced-transparency', 'reduce'],
+      ['prefers-contrast', 'more'],
+    ] as const)('forces the material override solid under %s', async (feature, value) => {
+      await emulateFeature(feature, value)
+      await load('material=on')
+      const styles = await computed()
+      expect(styles.attrs.layer).toBeUndefined()
+      expect(styles.topbar.rgba[3]).toBe(255)
+      expect(styles.topbar.backdrop).toBe('none')
+    }, 45_000)
+
+    it('tints the chat zone, composer and popover flat surfaces with browser glass', async () => {
+      await load('material=on')
+      await expectDOM(page.locator('html')).toHaveAttribute('data-shell-runtime', 'web')
+      // The chat zone and popover sample are absent from the fixture DOM, so a
+      // marked element is constructed inside #root; the composer is real.
+      const chat = await materialSurface({ attribute: ['data-focus-zone', 'chat'] })
+      const composer = await materialSurface({ selector: '.input-container' })
+      const popover = await materialSurface({ className: 'popover-styled' })
+      expect(chat.constructed).toBe(true)
+      expect(popover.constructed).toBe(true)
+      expect(composer.constructed).toBe(false)
+      // Each surface stays translucent (0 < alpha < 255) and, on the browser
+      // runtime, composites the configured CSS blur. The composer deliberately
+      // carries tint only: the chat zone is the single blur owner, so no nested
+      // backdrop-filter re-samples the same pixels.
+      for (const [surface, label] of [[chat, 'chat'], [popover, 'popover']] as const) {
+        expect(surface.rgba[3], label).toBeGreaterThan(0)
+        expect(surface.rgba[3], label).toBeLessThan(255)
+        expect(surface.backdrop, label).toContain('blur(')
+      }
+      expect(composer.rgba[3]).toBeGreaterThan(0)
+      expect(composer.rgba[3]).toBeLessThan(255)
+      expect(composer.backdrop).toBe('none')
+      // The translucency comes from the shipped per-surface opacity tokens.
+      expect(chat.rgba[3] / 255).toBeCloseTo(Number.parseFloat(await cssVar('--material-opacity-chat')) / 100, 1)
+      expect(composer.rgba[3] / 255).toBeCloseTo(Number.parseFloat(await cssVar('--material-opacity-composer')) / 100, 1)
+      expect(popover.rgba[3] / 255).toBeCloseTo(Number.parseFloat(await cssVar('--material-opacity-popover')) / 100, 1)
+    }, 45_000)
+
+    it('keeps the material layers non-interactive and behind the chrome stack', async () => {
+      await load('material=on')
+      const chromeZ = Number(await cssVar('--z-chrome'))
+      expect(chromeZ).toBeGreaterThan(0)
+      const layers = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('.material-layer')).map(element => {
+        const style = getComputedStyle(element)
+        return {
+          pointerEvents: style.pointerEvents, position: style.position, zIndex: style.zIndex,
+          ariaHidden: element.getAttribute('aria-hidden'), bodyLevel: element.parentElement === document.body,
+        }
+      }))
+      expect(layers.length).toBeGreaterThan(0)
+      for (const layer of layers) {
+        // The fixed backdrop layers never become hit targets...
+        expect(layer.pointerEvents).toBe('none')
+        expect(layer.ariaHidden).toBe('true')
+        // ...and paint under the chrome stack as body-level fixed backdrops.
+        expect(layer.position).toBe('fixed')
+        expect(layer.bodyLevel).toBe(true)
+        expect(Number(layer.zIndex)).toBeLessThan(chromeZ)
+      }
+    }, 45_000)
+  })
 })

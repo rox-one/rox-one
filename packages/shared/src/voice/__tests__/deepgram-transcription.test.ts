@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { DeepgramTranscriptionAdapter, latestNovaModel, normalizeDeepgramTranscript } from '../adapters/deepgram-transcription.ts'
+import { deepgramModelUpgradeEnabled, deepgramTranscriptionOptions, resolveDeepgramModel } from '../contracts.ts'
 import { normalizeVoicePrefs } from '../storage.ts'
 
 function response() {
@@ -42,6 +43,23 @@ describe('Deepgram current prerecorded transcription', () => {
     })
   })
 
+  it('accepts provider timestamps that overshoot the reported duration (webm/opus quirk)', () => {
+    const raw = response() as Record<string, any>
+    raw.metadata.duration = 13.92
+    raw.results.channels[0].alternatives[0].paragraphs.paragraphs = [
+      { speaker: 0, sentences: [{ start: 3.2, end: 4.96, text: 'Так, да, запись, проверка.' }] },
+      { speaker: 0, sentences: [{ start: 12.88, end: 16.08, text: 'Ну конечно.' }] },
+    ]
+    raw.results.channels[0].alternatives[0].words = [
+      { start: 3.2, end: 4.9, word: 'Так', punctuated_word: 'Так' },
+      { start: 12.88, end: 16.08, word: 'конечно', punctuated_word: 'конечно' },
+    ]
+    const out = normalizeDeepgramTranscript(raw)
+    expect(out.durationMs).toBe(16080)
+    expect(out.segments.at(-1)?.endMs).toBe(16080)
+    expect(out.text).toContain('Ну конечно.')
+  })
+
   it('infers paragraph speakers from diarized words if paragraph fields are omitted', () => {
     const raw = response()
     Reflect.deleteProperty(raw.results.channels[0]!.alternatives[0]!.paragraphs.paragraphs[0]!, 'speaker')
@@ -63,7 +81,7 @@ describe('Deepgram current prerecorded transcription', () => {
     if (kind === 'negative') paragraphs[0].sentences[0].start = -1
     if (kind === 'reversed') paragraphs[0].sentences[0].end = 0
     if (kind === 'non-monotonic') paragraphs[1].sentences[0].start = 0.5
-    if (kind === 'beyond-duration') paragraphs[1].sentences[0].end = 10
+    if (kind === 'beyond-duration') paragraphs[1].sentences[0].end = 60
     if (kind === 'invalid-word') raw.results.channels[0].alternatives[0].words[0].start = '1.25'
     if (kind === 'invalid-duration') raw.metadata.duration = '8.25'
     expect(() => normalizeDeepgramTranscript(raw)).toThrow()
@@ -71,7 +89,7 @@ describe('Deepgram current prerecorded transcription', () => {
 
   it('posts one audio body with latest ASR and latest diarizer, paragraphs and explicit language', async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = []
-    const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', http: { async fetch(url, init) {
+    const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', allowModelUpgrade: true, http: { async fetch(url, init) {
       calls.push({ url, init })
       return new Response(JSON.stringify(url.endsWith('/models') ? { stt: [{ canonical_name: 'nova-3-general', batch: true }] } : response()))
     } } })
@@ -88,9 +106,26 @@ describe('Deepgram current prerecorded transcription', () => {
     expect(result.diarizationModel).toBe('v2')
   })
 
+  it('keeps the fixed ASR parameters and exactly one of language/detect_language', async () => {
+    const urls: string[] = []
+    const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', model: 'nova-3', http: { async fetch(url) {
+      urls.push(String(url))
+      return new Response(JSON.stringify(response()))
+    } } })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav' })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav', language: 'auto' })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav', language: 'en' })
+    expect(urls).toHaveLength(3)
+    const fixed = { model: 'nova-3', version: 'latest', smart_format: 'true', punctuate: 'true', diarize_model: 'latest', paragraphs: 'true', utterances: 'true' }
+    expect(Object.fromEntries(new URL(urls[0]!).searchParams)).toEqual({ ...fixed, detect_language: 'true' })
+    expect(Object.fromEntries(new URL(urls[1]!).searchParams)).toEqual({ ...fixed, detect_language: 'true' })
+    expect(Object.fromEntries(new URL(urls[2]!).searchParams)).toEqual({ ...fixed, language: 'en' })
+    expect(urls.every((url) => !new URL(url!).searchParams.has('diarize'))).toBe(true)
+  })
+
   it('catalog failure uses current Nova with auto language without falling back to another provider', async () => {
     const urls: string[] = []
-    const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', http: { async fetch(url) {
+    const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', allowModelUpgrade: true, http: { async fetch(url) {
       urls.push(url)
       return url.endsWith('/models') ? new Response('', { status: 403 }) : new Response(JSON.stringify(response()))
     } } })
@@ -98,6 +133,56 @@ describe('Deepgram current prerecorded transcription', () => {
     expect(new URL(urls[1]!).searchParams.get('detect_language')).toBe('true')
     expect(new URL(urls[1]!).searchParams.get('model')).toBe('nova-3')
     expect(urls.every((url) => new URL(url).origin === 'https://api.deepgram.com')).toBe(true)
+  })
+
+  it('defaults to Nova-3 without touching the live catalog unless an upgrade is explicitly opted in', async () => {
+    const urls: string[] = []
+    const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', http: { async fetch(url) {
+      urls.push(String(url)); return new Response(JSON.stringify(response()))
+    } } })
+    const result = await adapter.transcribe({ audio, mimeType: 'audio/wav', language: 'auto' })
+    expect(urls).toHaveLength(1)
+    expect(new URL(urls[0]!).pathname).toBe('/v1/listen')
+    expect(new URL(urls[0]!).searchParams.get('model')).toBe('nova-3')
+    expect(new URL(urls[0]!).searchParams.get('detect_language')).toBe('true')
+    expect(result.requestedModelId).toBe('nova-3')
+
+    const upgraded: string[] = []
+    const optIn = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', allowModelUpgrade: true, http: { async fetch(url) {
+      upgraded.push(String(url))
+      return new Response(JSON.stringify(String(url).endsWith('/models') ? { stt: [{ canonical_name: 'nova-4-general', batch: true }] } : response()))
+    } } })
+    await optIn.transcribe({ audio, mimeType: 'audio/wav' })
+    expect(upgraded).toHaveLength(2)
+    expect(new URL(upgraded[1]!).searchParams.get('model')).toBe('nova-4')
+  })
+
+  it('resolves the pinned default and gates the upgrade on explicit configuration', () => {
+    expect(resolveDeepgramModel({})).toBe('nova-3')
+    expect(resolveDeepgramModel({ DEEPGRAM_MODEL: '   ' })).toBe('nova-3')
+    expect(resolveDeepgramModel({ DEEPGRAM_MODEL: 'nova-4' })).toBe('nova-4')
+    expect(deepgramModelUpgradeEnabled({})).toBe(false)
+    expect(deepgramModelUpgradeEnabled({ DEEPGRAM_ALLOW_MODEL_UPGRADE: 'true' })).toBe(true)
+    expect(deepgramModelUpgradeEnabled({ DEEPGRAM_ALLOW_MODEL_UPGRADE: '0' })).toBe(false)
+    expect(deepgramTranscriptionOptions({})).toEqual({ model: undefined, allowModelUpgrade: false })
+    expect(deepgramTranscriptionOptions({ DEEPGRAM_ALLOW_MODEL_UPGRADE: '1' })).toEqual({ model: undefined, allowModelUpgrade: true })
+    expect(deepgramTranscriptionOptions({ DEEPGRAM_MODEL: '  nova-4  ', DEEPGRAM_ALLOW_MODEL_UPGRADE: 'true' }))
+      .toEqual({ model: 'nova-4', allowModelUpgrade: true })
+  })
+
+  it('keeps the opt-in catalog reachable through the production adapter options', async () => {
+    const urls: string[] = []
+    const adapter = new DeepgramTranscriptionAdapter({
+      apiKey: 'synthetic-key',
+      ...deepgramTranscriptionOptions({ DEEPGRAM_ALLOW_MODEL_UPGRADE: '1' }),
+      http: { async fetch(url) {
+        urls.push(String(url))
+        return new Response(JSON.stringify(String(url).endsWith('/models') ? { stt: [{ canonical_name: 'nova-4-general', batch: true }] } : response()))
+      } },
+    })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav' })
+    expect(urls).toHaveLength(2)
+    expect(new URL(urls[1]!).searchParams.get('model')).toBe('nova-4')
   })
 
   it.each([[401, 'unauthorized'], [403, 'forbidden'], [413, 'too-large'], [429, 'rate-limited'], [503, 'upstream']])('sanitizes provider errors %s', async (status, code) => {
@@ -118,7 +203,7 @@ describe('Deepgram current prerecorded transcription', () => {
     await expect(adapter.transcribe({ audio, signal: first.signal })).rejects.toMatchObject({ code: 'cancelled' })
     expect(called).toBe(0)
     const second = new AbortController()
-    const discovering = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', http: { async fetch() {
+    const discovering = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', allowModelUpgrade: true, http: { async fetch() {
       second.abort(); return new Response('{}')
     } } })
     await expect(discovering.transcribe({ audio, signal: second.signal })).rejects.toMatchObject({ code: 'cancelled' })

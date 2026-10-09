@@ -100,13 +100,14 @@ describe('one wired registry (COMMAND_MODULES)', () => {
     expect(boundCommandTypes(createCommandRegistry())).toEqual(wired)
     expect(boundCommandTypes(getLocalCommandRegistry())).toEqual(wired)
     // `COMMAND_MODULES` is an open registry: wave-2 modules append their entry
-    // before the reference module (W1-12 added `automation`). The invariants are
-    // the fixed ends and the modules that must be there — not a frozen list.
+    // before the reference module (W1-12 added `automation`, W1-09 added `notify`).
+    // The invariants are the fixed ends and the modules that must be there — not a frozen list.
     const names = COMMAND_MODULES.map(m => m.name)
     expect(names[0]).toBe('system')
     expect(names.at(-1)).toBe('reference-handlers')
     expect(names).toContain('domain-schemas')
     expect(names).toContain('automation')
+    expect(names).toContain('notify')
   })
 
   test('every module binds idempotently', () => {

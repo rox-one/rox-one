@@ -2,7 +2,8 @@ import { useTourSignals, useTourTarget, type TourObservation } from '@/features/
 import { beginChatCommit } from '@/features/product-tour/adapters/chat'
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import {
   Paperclip,
   ArrowUp,
@@ -331,6 +332,23 @@ function getKnowledgeElectronApi(): KnowledgeElectronApi | undefined {
   return candidate?.knowledge
 }
 
+/**
+ * Fallback MIME type for audio by extension. OS drag-drop frequently reports an
+ * empty `File.type`, and the voice RPC rejects a generic octet-stream payload,
+ * so the extension is the authoritative signal for attached audio.
+ */
+const AUDIO_MIME_BY_EXT: Record<string, string> = {
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  m4a: 'audio/mp4',
+  ogg: 'audio/ogg',
+  opus: 'audio/ogg',
+  flac: 'audio/flac',
+  aac: 'audio/aac',
+  webm: 'audio/webm',
+  weba: 'audio/webm',
+}
+
 export function FreeFormInput({
   placeholder,
   disabled = false,
@@ -380,7 +398,7 @@ export function FreeFormInput({
   onRequestExpand,
 }: FreeFormInputProps) {
   const { t } = useTranslation()
-  const prefersReducedMotion = useReducedMotion()
+  const prefersReducedMotion = usePrefersReducedMotion()
   const tourVariant = compactMode ? 'compact' : 'regular'
   const tourSignals = useTourSignals({ sessionId, workspaceId })
   const inputTarget = useTourTarget('composer.input', { sessionId, workspaceId, variant: tourVariant })
@@ -1335,6 +1353,54 @@ export function FreeFormInput({
   // Check if running in Electron environment (has electronAPI)
   const hasElectronAPI = typeof window !== 'undefined' && !!window.electronAPI
 
+  // Patch an attachment's transcript while it is still in the composer. Keyed by
+  // `localId` so a state-sync from the parent cannot lose the update.
+  const applyAttachmentTranscript = React.useCallback(
+    (localId: string, transcript: FileAttachment['transcript']) => {
+      setAttachments(prev => prev.map(a => a.localId === localId ? { ...a, transcript } : a))
+    },
+    [],
+  )
+
+  // Start speech-to-text immediately when an audio file is attached (drop, paste
+  // or picker) so the message can carry the transcript instead of the audio tile.
+  // Soft-fails into an `error` transcript the user can retry — never throws.
+  const transcribeAudioAttachment = React.useCallback(async (attachment: FileAttachment) => {
+    const api = window.electronAPI
+    const localId = attachment.localId
+    if (!localId || attachment.type !== 'audio') return
+    applyAttachmentTranscript(localId, { status: 'pending', text: '' })
+    if (!attachment.base64 || typeof api?.transcribeVoice !== 'function') {
+      applyAttachmentTranscript(localId, { status: 'error', text: '', error: 'transcription-unavailable' })
+      return
+    }
+    try {
+      const result = await api.transcribeVoice({
+        audioBase64: attachment.base64,
+        mimeType: attachment.mimeType,
+        attachedFile: true,
+      })
+      const text = result.text?.trim() ?? ''
+      if (result.noSpeech || !text) {
+        applyAttachmentTranscript(localId, { status: 'error', text: '', error: 'no-speech', durationMs: result.durationMs, engine: result.engine })
+      } else {
+        applyAttachmentTranscript(localId, {
+          status: 'done',
+          text,
+          language: result.detectedLanguage,
+          durationMs: result.durationMs,
+          engine: result.engine,
+        })
+      }
+    } catch (error) {
+      applyAttachmentTranscript(localId, {
+        status: 'error',
+        text: '',
+        error: error instanceof Error ? error.message : 'transcription-failed',
+      })
+    }
+  }, [applyAttachmentTranscript])
+
   // Shared helper: read a File, add as attachment, decrement loading count
   const processFileAttachment = async (file: File, overrideName?: string, observation: TourObservation | null = null, isCurrent: () => boolean = () => true) => {
     try {
@@ -1342,6 +1408,7 @@ export function FreeFormInput({
       if (attachment && isCurrent()) {
         setAttachments(prev => [...prev, attachment])
         tourSignals.emit(observation, 'attachment.ready', 'observed', 'ui-observation')
+        if (attachment.type === 'audio') void transcribeAudioAttachment(attachment)
       }
     } catch (error) {
       console.error('[FreeFormInput] Failed to read file:', error)
@@ -1465,8 +1532,14 @@ export function FreeFormInput({
         else if (file.type === 'application/pdf') type = 'pdf'
         else if (file.type.includes('text') || fileName.match(/\.(txt|md|json|js|ts|tsx|py|css|html)$/i)) type = 'text'
         else if (file.type.includes('officedocument') || fileName.match(/\.(docx?|xlsx?|pptx?)$/i)) type = 'office'
+        // Audio dropped/pasted/picked into the composer is transcribed instead of
+        // being sent as a raw attachment. Classify by MIME first, then extension so
+        // OS drag-drop (which often reports an empty `file.type`) still works.
+        else if (file.type.startsWith('audio/') || fileName.match(/\.(mp3|wav|m4a|ogg|opus|flac|aac|webm|weba)$/i)) type = 'audio'
 
-        const mimeType = file.type || 'application/octet-stream'
+        const mimeType = file.type
+          || (type === 'audio' ? AUDIO_MIME_BY_EXT[fileName.split('.').pop()?.toLowerCase() ?? ''] : undefined)
+          || 'application/octet-stream'
 
         // For text files, decode the ArrayBuffer as UTF-8 text
         let text: string | undefined
@@ -1493,6 +1566,7 @@ export function FreeFormInput({
           text,
           size: file.size,
           thumbnailBase64,
+          localId: crypto.randomUUID(),
         })
       }
       reader.onerror = () => resolve(null)
@@ -1568,6 +1642,10 @@ export function FreeFormInput({
   const submitMessage = React.useCallback(() => {
     const hasContent = input.trim() || attachments.length > 0 || followUpItems.length > 0
     if (!hasContent || disabled) return false
+
+    // An audio attachment is still being transcribed: hold the send so the
+    // message carries the transcript instead of the raw recording.
+    if (attachments.some(a => a.type === 'audio' && a.transcript?.status === 'pending')) return false
 
     // Tutorial may disable sending to guide user through specific steps
     if (disableSend) return false
@@ -1923,6 +2001,7 @@ export function FreeFormInput({
   }, [followUpLayoutKey])
 
   const hasContent = input.trim() || attachments.length > 0 || followUpItems.length > 0
+  const transcriptionPending = attachments.some(a => a.type === 'audio' && a.transcript?.status === 'pending')
   const magicWorkflows = React.useMemo(() => resolveMagicWords(input), [input])
 
   // Pre-flight image-support check: warn when staged images would be silently
@@ -2050,6 +2129,10 @@ export function FreeFormInput({
         <div ref={attachments.length || loadingCount ? attachmentsTarget : undefined}><AttachmentPreview
           attachments={attachments}
           onRemove={handleRemoveAttachment}
+          onRetryTranscription={(index) => {
+            const attachment = attachmentsRef.current[index]
+            if (attachment?.type === 'audio') void transcribeAudioAttachment(attachment)
+          }}
           disabled={disabled}
           loadingCount={loadingCount}
         /></div>
@@ -2968,7 +3051,7 @@ export function FreeFormInput({
               size="icon"
               aria-label={t('shortcuts.sendMessage')}
               className="send-btn h-7 w-7 rounded-full shrink-0 ml-1"
-              disabled={!hasContent || disabled || disableSend}
+              disabled={!hasContent || disabled || disableSend || transcriptionPending}
               data-tutorial="send-button"
             >
               <ArrowUp className="h-4 w-4" />

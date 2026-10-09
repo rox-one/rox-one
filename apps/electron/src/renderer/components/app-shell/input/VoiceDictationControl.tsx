@@ -1,6 +1,9 @@
 import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
+import { windowWorkspaceIdAtom } from '@/atoms/sessions'
+import { recordTranscript } from '@/lib/transcripts/notes'
 import { Mic, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { Spinner } from '@rox/ui'
@@ -9,8 +12,10 @@ import { useOptionalModalRegistry } from '@/context/ModalContext'
 import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { isMac } from '@/lib/platform'
 import { VoiceCommandController } from '../../../voice/command-controller'
+import { claimDictation, currentOwner, releaseDictation, setDictationIntent, type DictationOwner } from '../../../voice/dictation-ownership'
+import { createVoiceLevelMeter, type VoiceLevelMeterHandle } from '@/lib/voice/level-meter'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
-import { createDictationRequestGuard } from './voice-dictation-state'
+import { createDictationRequestGuard, setDictationLevel, useDictationLevel } from './voice-dictation-state'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import type { VoicePrefs } from '@rox/shared/voice'
@@ -23,10 +28,8 @@ interface VoiceDictationControlProps {
   onInputChange?: (value: string) => void
 }
 
-// Native hotkeys are broadcast to every mounted composer. Claim synchronously so
-// retained panels and inline editors cannot start competing microphone captures.
-let activeDictationOwner: symbol | null = null
-
+// Native hotkeys are broadcast to every mounted composer. The shared
+// dictation-ownership module arbitrates a single owner across all of them.
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -48,6 +51,28 @@ async function cancelHostCapture(): Promise<void> {
   }
 }
 
+type Translate = (key: string) => string
+
+/** Map `getUserMedia`/stream failures to a localized, user-readable message. */
+function describeMicError(error: unknown, t: Translate): string {
+  const name = error instanceof Error ? error.name : ''
+  switch (name) {
+    case 'NotAllowedError':
+    case 'PermissionDeniedError':
+      return t('voice.errors.permissionDenied')
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return t('voice.errors.noDevice')
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return t('voice.errors.busy')
+    case 'OverconstrainedError':
+      return t('voice.errors.constraint')
+    default:
+      return error instanceof Error && error.message ? error.message : t('voice.errors.generic')
+  }
+}
+
 export function VoiceDictationControl({
   disabled,
   compactMode,
@@ -56,6 +81,10 @@ export function VoiceDictationControl({
   onInputChange,
 }: VoiceDictationControlProps) {
   const { t } = useTranslation()
+  const dictationLevel = useDictationLevel()
+  const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  const workspaceIdRef = useRef<string | null>(workspaceId)
+  workspaceIdRef.current = workspaceId
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const voiceTarget = useTourTarget('composer.voice', { variant: compactMode ? 'compact' : 'regular' })
   const tourSignals = useTourSignals()
@@ -77,6 +106,7 @@ export function VoiceDictationControl({
       : !prefs ? { state: 'pending', reason: 'installing' } : { state: 'ready' })
   }, [tourSignals, prefs])
   const [recording, setRecording] = useState(false)
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null)
   const [starting, setStarting] = useState(false)
   const startingRef = useRef(false)
   const [transcribing, setTranscribing] = useState(false)
@@ -84,6 +114,7 @@ export function VoiceDictationControl({
   const [savingConsent, setSavingConsent] = useState(false)
   const [modelEvidence, setModelEvidence] = useState<string | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
+  const meterRef = useRef<VoiceLevelMeterHandle | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const captureIdRef = useRef(0)
@@ -92,7 +123,7 @@ export function VoiceDictationControl({
   const activeRequestRef = useRef(false)
   const hostStartedRef = useRef(false)
   const commandRef = useRef<VoiceCommandController | null>(null)
-  const owner = useRef(Symbol('composer-dictation')).current
+  const owner = useRef<DictationOwner>({}).current
   const mountedRef = useRef(true)
   const requestGuard = useRef(createDictationRequestGuard()).current
   const requestIdRef = useRef(0)
@@ -111,7 +142,7 @@ export function VoiceDictationControl({
     }).catch(() => {})
     const offChanged = window.electronAPI.onVoiceChanged?.((next) => setPrefs(next))
     const offJob = window.electronAPI.onVoiceJob?.((job) => {
-      if (job.job === 'cancelled' && activeDictationOwner === owner) {
+      if (job.job === 'cancelled' && currentOwner() === owner) {
         // The host cancels on its own (denied microphone, dropped capture).
         // Drop local state instead of stranding the control in a busy phase.
         cancelRecordingRef.current()
@@ -152,11 +183,20 @@ export function VoiceDictationControl({
   const stopTracks = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
+    setAudioStream(null)
+  }, [])
+
+  // Retire the level meter and reset the overlay/main-window level to silence.
+  const stopMeter = useCallback(() => {
+    meterRef.current?.stop()
+    meterRef.current = null
+    setDictationLevel(0)
+    window.electronAPI.publishVoiceLevel?.(0)
   }, [])
 
   const isCurrentCapture = useCallback((captureId: number) => (
     mountedRef.current
-    && activeDictationOwner === owner
+    && currentOwner() === owner
     && captureId === captureIdRef.current
     && requestGuard.isCurrent(requestIdRef.current, latestRef.current.sessionId)
   ), [owner, requestGuard])
@@ -164,7 +204,7 @@ export function VoiceDictationControl({
   const canStart = useCallback(() => {
     const host = hostRef.current
     if (!mountedRef.current || latestRef.current.disabled) return false
-    if (activeRequestRef.current || activeDictationOwner !== null || !host?.isConnected || document.hidden) return false
+    if (activeRequestRef.current || currentOwner() !== null || !host?.isConnected) return false
     if (host.closest('[hidden], [inert], [aria-hidden="true"]')) return false
     if (host.getClientRects().length === 0 || getComputedStyle(host).visibility === 'hidden') return false
     const focusedForm = document.activeElement?.closest('form')
@@ -177,6 +217,7 @@ export function VoiceDictationControl({
     const captureId = captureIdRef.current
     const dictationObservation = dictationObservationRef.current
     setRecording(false)
+    stopMeter()
     stopTracks()
     if (!recorder) return
     setTranscribing(true)
@@ -214,15 +255,34 @@ export function VoiceDictationControl({
         if (prefs?.delivery === 'clipboard') {
           await window.electronAPI.copyVoiceText({ text: deliveredText })
           if (!isCurrentCapture(captureId)) return
-        } else if (latest.onInputChange) {
+        } else if (latest.onInputChange && !latest.inputValue.includes(text)) {
+          // No auto-send: the transcript lands in the draft. Skip a repeated
+          // delivery so a re-stop cannot duplicate the same text.
           latest.onInputChange(latest.inputValue ? `${latest.inputValue}${/\s$/.test(latest.inputValue) ? '' : ' '}${deliveredText}` : deliveredText)
           tourSignals.emit(dictationObservation, 'dictation.inserted', 'observed', 'native-event')
+        }
+        // Every dictation is also filed under «Мои транскрипты»; the inserted
+        // text is the deliverable, so filing never blocks or fails the insert.
+        const activeWorkspaceId = workspaceIdRef.current
+        if (activeWorkspaceId) {
+          void recordTranscript({
+            workspaceId: activeWorkspaceId,
+            text,
+            source: 'dictation',
+            language: result.detectedLanguage,
+            model: result.resolvedModelId ?? result.requestedModelId,
+            durationMs: result.durationMs,
+          }).then((outcome) => {
+            if (!outcome.ok && outcome.error) toast.error(outcome.error)
+          }).catch(() => {
+            // recordTranscript never throws; keep the transcript even if filing fails.
+          })
         }
       }
       else if (result.noSpeech) toast.error(t('settings.input.voiceNoSpeech'))
     } catch (error) {
       if (isCurrentCapture(captureId)) {
-        toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+        toast.error(describeMicError(error, t))
       }
     } finally {
       if (isCurrentCapture(captureId)) {
@@ -231,13 +291,13 @@ export function VoiceDictationControl({
         activeRequestRef.current = false
         setTranscribing(false)
       }
-      if (activeDictationOwner === owner) activeDictationOwner = null
+      releaseDictation(owner)
     }
-  }, [isCurrentCapture, owner, prefs?.sttEngine, prefs?.delivery, prefs?.trailingSpace, stopTracks, t, tourSignals])
+  }, [isCurrentCapture, owner, prefs?.sttEngine, prefs?.delivery, prefs?.trailingSpace, stopMeter, stopTracks, t, tourSignals])
 
   const cancelRecording = useCallback(() => {
     requestGuard.cancel()
-    if (activeDictationOwner === owner) activeDictationOwner = null
+    releaseDictation(owner)
     closeNativePermission(captureIdRef.current)
     dictationObservationRef.current = null
     nativeRecordingIdRef.current = null
@@ -252,10 +312,11 @@ export function VoiceDictationControl({
     setRecording(false)
     setStarting(false)
     setTranscribing(false)
+    stopMeter()
     stopTracks()
     if (recorder && recorder.state !== 'inactive') recorder.stop()
     if (hostStarted) void cancelHostCapture()
-  }, [closeNativePermission, owner, requestGuard, stopTracks])
+  }, [closeNativePermission, owner, requestGuard, stopMeter, stopTracks])
 
   const cancelRecordingRef = useRef(cancelRecording)
   cancelRecordingRef.current = cancelRecording
@@ -273,7 +334,14 @@ export function VoiceDictationControl({
     }
     startingRef.current = true
     setStarting(true)
-    activeDictationOwner = owner
+    claimDictation(owner)
+    setDictationIntent(owner, {
+      source: 'composer',
+      // `delivery` mirrors the composer's runtime default: anything that is not
+      // an explicit clipboard copy lands in the draft.
+      delivery: selectedPrefs.delivery === 'clipboard' ? 'clipboard' : 'draft',
+      trailingSpace: selectedPrefs.trailingSpace,
+    })
     requestIdRef.current = requestGuard.begin(latestRef.current.sessionId)
     const captureId = ++captureIdRef.current
     nativeRecordingIdRef.current = null
@@ -315,6 +383,7 @@ export function VoiceDictationControl({
       // Keep acquired tracks reachable while START and permission are pending,
       // so releasing push-to-talk closes the microphone immediately.
       streamRef.current = stream
+      setAudioStream(stream)
       pendingStream = null
       const recorder = new MediaRecorder(stream)
       const started = await window.electronAPI.startVoiceCapture?.({ mimeType: recorder.mimeType || 'audio/webm' })
@@ -347,6 +416,13 @@ export function VoiceDictationControl({
       recorderRef.current = recorder
       setRecording(true)
       recorder.start()
+      // Drive the composer wave (and the owned overlay) from the same stream.
+      stopMeter()
+      setDictationLevel(0)
+      meterRef.current = createVoiceLevelMeter(stream, (level) => {
+        setDictationLevel(level)
+        window.electronAPI.publishVoiceLevel?.(level)
+      })
       const pendingCommand = pendingOverlayCommandsRef.current.get(started.recordingId)
       pendingOverlayCommandsRef.current.clear()
       if (pendingCommand?.captureId === captureId) {
@@ -355,9 +431,15 @@ export function VoiceDictationControl({
       }
     } catch (error) {
       pendingStream?.getTracks().forEach((track) => track.stop())
-      if (activeDictationOwner === owner) activeDictationOwner = null
-      if (isCurrentCapture(captureId)) {
+      // Evaluate ownership before releasing it: `isCurrentCapture` compares the
+      // live owner, and a denied microphone must still clear `starting` (see the
+      // denied-permission regression in docs/plans/rox-one-convergence-plan.md).
+      const stillCurrent = isCurrentCapture(captureId)
+      releaseDictation(owner)
+      if (stillCurrent) {
         setStarting(false)
+        setRecording(false)
+        stopMeter()
         stopTracks()
         nativeRecordingIdRef.current = null
         pendingOverlayCommandsRef.current.clear()
@@ -366,13 +448,26 @@ export function VoiceDictationControl({
         const hostStarted = hostStartedRef.current
         hostStartedRef.current = false
         if (hostStarted) await cancelHostCapture()
-        toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+        toast.error(describeMicError(error, t))
       }
     } finally {
       startingRef.current = false
       if (isCurrentCapture(captureId)) setStarting(false)
     }
-  }, [canStart, closeNativePermission, finishRecording, isCurrentCapture, layers, modals, owner, prefs, stopTracks, t, tourSignals])
+  }, [canStart, closeNativePermission, finishRecording, isCurrentCapture, layers, modals, owner, prefs, stopMeter, stopTracks, t, tourSignals])
+
+  // Radix keeps the app tree `aria-hidden` until the modal's exit animation ends
+  // (~150 ms), so a start fired synchronously while the consent dialog closes would
+  // fail the composer's own visibility guard and silently do nothing. Wait for the
+  // release, then let `startRecording` apply every guard for real.
+  const waitForComposerRelease = useCallback(async (timeoutMs = 600) => {
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      const host = hostRef.current
+      if (host?.isConnected && !host.closest('[hidden], [inert], [aria-hidden="true"]') && host.getClientRects().length > 0) return
+      await new Promise((resolve) => setTimeout(resolve, 25))
+    }
+  }, [])
 
   const enableCloudTranscription = useCallback(async () => {
     const captureId = captureIdRef.current
@@ -382,11 +477,13 @@ export function VoiceDictationControl({
       if (captureId !== captureIdRef.current) return
       setPrefs(next)
       setConsentOpen(false)
+      await waitForComposerRelease()
+      if (captureId !== captureIdRef.current) return
       await startRecording(next)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('common.errorLoadingContent'))
     } finally { if (captureId === captureIdRef.current) setSavingConsent(false) }
-  }, [startRecording, t])
+  }, [startRecording, t, waitForComposerRelease])
 
   const startRecordingRef = useRef(startRecording)
   startRecordingRef.current = startRecording
@@ -414,7 +511,7 @@ export function VoiceDictationControl({
       const mod = isMac ? event.metaKey : event.ctrlKey
       if (!mod || !event.shiftKey || event.key.toLowerCase() !== 'd' || event.isComposing) return
       if (event.defaultPrevented) return
-      if (activeDictationOwner !== owner && !canStart()) return
+      if (currentOwner() !== owner && !canStart()) return
       event.preventDefault()
       toggle()
     }
@@ -427,7 +524,7 @@ export function VoiceDictationControl({
     return () => {
       mountedRef.current = false
       requestGuard.cancel()
-      if (activeDictationOwner === owner) activeDictationOwner = null
+      releaseDictation(owner)
       void commandRef.current?.handle('cancel')
       closeNativePermission()
       captureIdRef.current += 1
@@ -435,6 +532,7 @@ export function VoiceDictationControl({
       recorderRef.current = null
       chunksRef.current = []
       if (recorder && recorder.state !== 'inactive') recorder.stop()
+      stopMeter()
       stopTracks()
       // A session switch must never leave the control stuck in a busy phase.
       startingRef.current = false
@@ -443,15 +541,24 @@ export function VoiceDictationControl({
       setRecording(false)
       setTranscribing(false)
     }
-  }, [closeNativePermission, owner, requestGuard, sessionId, stopTracks])
+  }, [closeNativePermission, owner, requestGuard, sessionId, stopMeter, stopTracks])
 
   useEffect(() => {
-    const onVisibility = () => {
-      if (document.hidden && activeDictationOwner === owner) cancelRecordingRef.current()
+    // A revoked grant or an unplugged device ends the track. Surface it and
+    // drop local state instead of leaving a dead recorder running. The recorder
+    // ref is cleared before every intentional stop, so this never races our own
+    // teardown.
+    if (!recording || !audioStream) return
+    const tracks = audioStream.getAudioTracks?.() ?? []
+    const onEnded = () => {
+      if (currentOwner() !== owner) return
+      if (recorderRef.current?.state !== 'recording') return
+      toast.error(t('voice.errors.disconnected'))
+      cancelRecordingRef.current()
     }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [owner])
+    tracks.forEach((track) => track.addEventListener('ended', onEnded))
+    return () => tracks.forEach((track) => track.removeEventListener('ended', onEnded))
+  }, [recording, audioStream, owner, t])
 
   const busy = starting || transcribing
   const label = starting ? t('common.loading')
@@ -459,12 +566,13 @@ export function VoiceDictationControl({
       : recording ? t('chat.dictateStop') : t('chat.dictate')
 
   return (
-    <div ref={attachDictationHost} className={cn('flex min-w-0 items-center', compactMode && 'shrink-0')}>
+    <div ref={attachDictationHost} data-voice-dictation-host="" className={cn('flex min-w-0 items-center', compactMode && 'shrink-0')}>
       <FreeFormInputContextBadge
         icon={busy ? <Spinner className="h-4 w-4" /> : recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         label={label}
         isExpanded={false}
         hasSelection={recording}
+        liveLevel={recording ? dictationLevel : undefined}
         showChevron={false}
         onClick={toggle}
         aria-pressed={recording}

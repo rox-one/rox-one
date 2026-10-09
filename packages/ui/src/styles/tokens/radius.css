@@ -1,0 +1,30 @@
+/* Radius scale (UI-AUDIT §3.1).
+   none: flush shell panes, rails, docks, tab strips, bars
+   xs:   chips, badges, kbd, checkboxes, small icon buttons
+   sm:   controls and list-row hover/selection
+   md:   cards, menus, popovers, tooltips, composer
+   lg:   dialogs, sheets, palette, toasts, islands
+   full: avatars, status dots, switches, counters, the voice pill
+   Profiles may scale the set but never leave it. */
+:root {
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Role aliases (legacy names kept for existing call sites). */
+  --radius-control: var(--radius-sm);
+  --radius-card: var(--radius-md);
+  --radius-composer: var(--radius-md);
+  --radius-overlay: var(--radius-lg);
+  --radius: var(--radius-control);
+
+  /* Tailwind `rounded-xl/2xl/3xl/4xl` (legacy) collapse onto lg, so they
+     can no longer leave the scale. */
+  --radius-xl: var(--radius-lg);
+  --radius-2xl: var(--radius-lg);
+  --radius-3xl: var(--radius-lg);
+  --radius-4xl: var(--radius-lg);
+}

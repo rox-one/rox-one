@@ -1,5 +1,5 @@
-import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER, type RoxExecutionContext } from '@rox/shared/auth'
-import { readFile, writeFile, stat } from 'fs/promises'
+import { peekRoxAccountAuthority, LOCAL_ROX_CALLER, type RoxExecutionContext } from '@rox/shared/auth'
+import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import {
   RPC_CHANNELS,
@@ -9,6 +9,11 @@ import {
   type FileAttachment,
   type SendMessageOptions,
   type SessionEvent,
+  type SessionActorRef,
+  type SessionCreatedActor,
+  type SessionParticipantIdentity,
+  type SessionCommand,
+  type BroPresenceMemberDto,
 } from '@rox/shared/protocol'
 import type { StoredAttachment, SessionMemoryMode } from '@rox/core/types'
 import { isRuntimeLaunch } from '@rox/core/runtime-trace'
@@ -17,6 +22,7 @@ import { perf } from '@rox/shared/utils'
 import { isValidThinkingLevel, THINKING_LEVEL_IDS } from '@rox/shared/agent/thinking-levels'
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import { assertNativeSession, assertNativeWorkspace, nativeAnnotation, nativeSession } from './native-session-scope'
+import { sessionActorIdFor } from './session-actor'
 import { awardNativeXpAndBroadcast } from './gamification'
 import { workspaceWorkContext } from './workspace-work'
 
@@ -36,6 +42,7 @@ import { assertValidBulkUpdateInput, assertValidBulkUpdatePatch } from '../../se
 import { disposeBroInviteService, getBroInviteService } from '../../collaboration/bro-invite-service.ts'
 import { parseInviteUrl } from '@rox/shared/collaboration'
 import { getNativeSessionCollaboration, NATIVE_SHARING_COMMANDS } from './native-session-collaboration'
+import { SessionActivityTracker } from '../../collaboration/session-activity-tracker'
 import {
   isClaimableLive,
   rpcSessionsActResult,
@@ -192,6 +199,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION,
   RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL,
   RPC_CHANNELS.sessions.COMMAND,
+  RPC_CHANNELS.sessions.ASSIGN_OWNER,
   RPC_CHANNELS.sessions.BULK_UPDATE,
   RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION,
   RPC_CHANNELS.sessions.GET_PERMISSION_MODE_STATE,
@@ -223,10 +231,59 @@ export function toSessionListSummary<T extends object>(session: T): T {
   return rest as T
 }
 
+/**
+ * Session commands that mutate the session (content, metadata attachment, or
+ * sharing) and therefore require write access under the session's visibility.
+ * Ephemeral signals (typing/presence), read-tracking, and read-only helpers are
+ * deliberately absent so a read-only viewer can still watch and mark read.
+ */
+const SESSION_WRITE_COMMANDS: ReadonlySet<SessionCommand['type']> = new Set([
+  'flag', 'unflag', 'archive', 'unarchive', 'rename', 'setSessionStatus',
+  'setPermissionMode', 'setThinkingLevel', 'updateWorkingDirectory', 'setSources',
+  'setLabels', 'setProjectId', 'setKanbanColumn', 'setPriority', 'setDueDate',
+  'setRank', 'reorderRank', 'shareToViewer', 'updateShare', 'revokeShare', 'inviteBro',
+  'revokeBroInvite', 'setConnection', 'setPendingPlanExecution', 'markCompactionComplete',
+  'markPendingPlanExecutionDispatched', 'clearPendingPlanExecution', 'addAnnotation',
+  'removeAnnotation', 'updateAnnotation', 'undo', 'assignOwner', 'setVisibility',
+])
+
 export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { sessionManager, platform } = deps
   if (deps.nativeData) sessionManager.setNativeMemoryContextPolicy?.(workspaceId => deps.nativeData!.authority.isRegisteredWorkspace(workspaceId))
   const log = platform.logger
+  // a1.3/a1.4: actor identity + ephemeral collaboration signals. A local caller
+  // (no cloud principal) resolves to the installation identity, matching the
+  // Rox caller plumbing used by the sharing arms below.
+  const sessionActorId = (ctx: RequestContext): string => sessionActorIdFor(ctx)
+  const sessionActorName = (ctx: RequestContext): string => ctx.principal
+    ? (deps.nativeData?.authority.getSelfProfile(ctx.principal, ctx.workspaceId ?? '')?.name ?? ctx.principal.subject)
+    : 'Local'
+  const sessionViewer = (ctx: RequestContext): BroPresenceMemberDto => ({
+    accountId: sessionActorId(ctx),
+    displayName: sessionActorName(ctx),
+    username: ctx.principal?.subject ?? LOCAL_ROX_CALLER.subject,
+    role: 'editor',
+    status: 'online',
+    joinedAt: Date.now(),
+  })
+  // a1.3: the same actor identity in creator/participant shape. Used by create
+  // (creator + first participant) and by the write paths (participant upkeep).
+  const sessionParticipant = (ctx: RequestContext): SessionParticipantIdentity => ({
+    accountId: sessionActorId(ctx),
+    displayName: sessionActorName(ctx),
+    username: ctx.principal?.subject ?? LOCAL_ROX_CALLER.subject,
+    kind: 'profile',
+  })
+  const sessionCreator = (ctx: RequestContext): SessionCreatedActor => ({
+    accountId: sessionActorId(ctx),
+    displayName: sessionActorName(ctx),
+    kind: 'profile',
+  })
+  const sessionActivity = new SessionActivityTracker({
+    typingChanged: (sessionId, actors) => sessionManager.broadcastSessionActivity?.(sessionId, { type: 'session_typing', sessionId, actors }),
+    presenceChanged: (sessionId, viewers) => sessionManager.broadcastSessionActivity?.(sessionId, { type: 'session_presence', sessionId, viewers }),
+  })
+  server.onShutdown?.(() => sessionActivity.dispose())
   server.onShutdown?.(disposeBroInviteService)
   // Provenance comes from the persistence acknowledgement, never an optimistic
   // renderer id or a workspace event subscriber. Completed replies credit only
@@ -261,6 +318,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
   const unsubscribeOrigins = server.onClientDisconnect?.(clientId => {
     for (const [key, origin] of nativeTurnOrigins) if (origin.context.clientId === clientId) nativeTurnOrigins.delete(key)
+    sessionActivity.removeClient(clientId)
   })
   server.onShutdown?.(() => {
     unsubscribeOrigins?.(); unsubscribeCompletion?.(); releaseXpPolicy?.(); nativeTurnOrigins.clear()
@@ -370,7 +428,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // so suppress the broadcast to avoid a redundant hydrate round-trip.
     const session = await sessionManager.createSession(workspaceId, options, { emitCreatedEvent: false,
       agentProfileSnapshot: capturedProfile,
-      nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId) })
+      nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId),
+      actor: sessionCreator(ctx) })
     end()
     return ctx.principal ? nativeSession(session) : session
   }, { nativeAction: 'write' })
@@ -410,13 +469,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
     // Capture the caller's clientId for error routing
     const callerClientId = ctx.clientId
+    // a2.5: read-only/draft sessions are server-enforced, not menu-enforced.
+    sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
     // Native options were stripped above. Invalid producer telemetry cannot turn
     // a generated dispatch into the exception for the user's original input.
     const runtimeLaunch = options?.runtimeLaunch === undefined ? undefined
       : isRuntimeLaunch(options.runtimeLaunch) ? options.runtimeLaunch : { kind: 'unknown' as const }
     const roxExecutionContext = await captureRoxExecutionContext(ctx)
 
-    return await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
+    const accepted = await new Promise<{ accepted: true; messageId: string }>((resolve, reject) => {
       let acked = false
       const onAck = (messageId: string) => {
         if (!acked) {
@@ -462,6 +523,9 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
           } as SessionEvent)
         })
     })
+    // a1.3: only attribute the writer once the message is durable.
+    await sessionManager.noteSessionParticipant(sessionId, sessionParticipant(ctx))
+    return accepted
   }, { nativeAction: 'write' })
 
   // Cancel processing
@@ -508,6 +572,14 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     sessionId: string,
     command: import('@rox/shared/protocol').SessionCommand
   ) => {
+    // a2.5: the visibility gate runs before the native-only branches. Sharing
+    // commands (shareToViewer/updateShare/revokeShare/inviteBro/revokeBroInvite)
+    // are write commands that the principal path dispatches before the switch,
+    // so this is the only point both paths share the rule. `joinBroInvite` joins
+    // a session by invitation and is deliberately absent from the write set.
+    if (SESSION_WRITE_COMMANDS.has(command?.type)) {
+      sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
+    }
     if (ctx.principal) {
       if (command?.type === 'joinBroInvite') {
         const target = parseInviteUrl(command.url)
@@ -535,7 +607,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
           workspaceId: ctx.workspaceId!, workspaceRootPath: workspace!.rootPath, sessionId,
         }, command, session, assertCurrent, log, displayName)
       }
-      const allowed = new Set(['addAnnotation', 'removeAnnotation', 'updateAnnotation', 'flag', 'unflag', 'archive', 'unarchive', 'rename', 'markRead', 'markUnread', 'setActiveViewing', 'setSessionStatus', 'setPermissionMode'])
+      const allowed = new Set(['addAnnotation', 'removeAnnotation', 'updateAnnotation', 'flag', 'unflag', 'archive', 'unarchive', 'rename', 'markRead', 'markUnread', 'setActiveViewing', 'setSessionStatus', 'setPermissionMode', 'assignOwner', 'setVisibility', 'setTyping', 'watchSession', 'unwatchSession'])
       if (!allowed.has(command?.type)) throw new CodedError('FORBIDDEN', 'Native session command denied')
       if (command.type === 'setActiveViewing' && command.workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Workspace access denied')
       if (command.type === 'addAnnotation' || command.type === 'removeAnnotation' || command.type === 'updateAnnotation') {
@@ -557,6 +629,11 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
           ) }
         }
       }
+    }
+    // Participant upkeep stays after the native-access checks, so a rejected
+    // cross-workspace caller never binds itself to the session.
+    if (SESSION_WRITE_COMMANDS.has(command.type)) {
+      await sessionManager.noteSessionParticipant(sessionId, sessionParticipant(ctx))
     }
     switch (command.type) {
       case 'flag':
@@ -692,11 +769,43 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         return sessionManager.updateMessageAnnotation(sessionId, command.messageId, command.annotationId, command.patch)
       case 'undo':
         return sessionManager.undoLastUserMessage(sessionId)
+      // a1.3/a1.4/a2.5: ownership, visibility, and ephemeral collaboration signals.
+      case 'assignOwner':
+        return sessionManager.assignSessionOwner(sessionId, command.owner, sessionActorId(ctx))
+      case 'setVisibility':
+        return sessionManager.setSessionVisibility(sessionId, command.visibility)
+      case 'setTyping':
+        sessionActivity.setTyping(sessionId, ctx.clientId, { accountId: sessionActorId(ctx), displayName: sessionActorName(ctx) }, command.typing)
+        return
+      case 'watchSession':
+        sessionActivity.watch(sessionId, ctx.clientId, sessionViewer(ctx))
+        return
+      case 'unwatchSession':
+        sessionActivity.unwatch(sessionId, ctx.clientId)
+        return
       default: {
         const _exhaustive: never = command
         throw new Error(`Unknown session command: ${JSON.stringify(command)}`)
       }
     }
+  }, { nativeAction: 'write' })
+
+  // a1.3: dedicated ownership channel (the renderer's assignSessionOwner method).
+  // Ownership is metadata about who drives the session; it never grants access.
+  server.handle(RPC_CHANNELS.sessions.ASSIGN_OWNER, async (
+    ctx,
+    sessionId: string,
+    owner: SessionActorRef | null,
+  ) => {
+    assertNativeSession(ctx, deps, server, sessionId)
+    if (ctx.principal && !server.isRequestContextCurrent?.(ctx, 'write')) {
+      throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+    }
+    // a2.5: ownership never grants access, so assigning it is itself a write that
+    // follows the session visibility. Without this a non-owner could self-assign
+    // into write access on a draft/read-only session.
+    sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
+    await sessionManager.assignSessionOwner(sessionId, owner ?? null, sessionActorId(ctx))
   }, { nativeAction: 'write' })
 
   // B4: one caller-authorized, per-target atomic collection update.
@@ -723,6 +832,16 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
 
     await sessionManager.waitForInit()
+    // a2.5: a bulk mutation is still one write per target. Unknown/foreign ids are
+    // left out so bulkUpdateSessions keeps reporting their existing failures.
+    const callerSessions = new Set(
+      sessionManager.getSessions(callerWorkspaceId).map(session => session.id),
+    )
+    for (const sessionId of input.ids) {
+      if (callerSessions.has(sessionId)) {
+        sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
+      }
+    }
     const result = await sessionManager.bulkUpdateSessions(
       callerWorkspaceId,
       { ids: input.ids, patch: input.patch },

@@ -228,7 +228,7 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
       const action = callback('handleActionNavigation', {
         workspaceId: 'a', workspaceIdRef, actionEpochRef,
         onCreateSession: async () => boundary === 'create' ? blocked.promise : { id: 'created-in-a' },
-        window: { electronAPI: {
+        window: { confirm: () => true, electronAPI: {
           sessionCommand: async (id: string, command: any) => {
             commands.push([id, command])
             if ((boundary === 'rename' && command.type === 'rename') ||
@@ -268,7 +268,7 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
       const action = callback('handleActionNavigation', {
         workspaceId: 'a', workspaceIdRef: { current: 'a' }, actionEpochRef,
         onCreateSession: async () => ({ id: 'new' }), onInputChange: () => {},
-        window: { electronAPI: { sendMessage: async (...args: unknown[]) => sends.push(args) } },
+        window: { confirm: () => true, electronAPI: { sendMessage: async (...args: unknown[]) => sends.push(args) } },
         updateSessionMeta: () => {}, pushPanel: () => {}, store: { set: (_atom: unknown, value: unknown) => writes.push(value) },
         updateFocusedPanelRouteAtom: {}, buildRouteFromNavigationState,
         setTimeout: (fn: () => void) => timers.push(fn), toast: { error: () => {} }, t: (key: string) => key,
@@ -279,6 +279,99 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
       timers.forEach(fn => fn()); await settle()
       expect(sends).toHaveLength(stale ? 0 : 1)
     }
+  })
+
+  it('does not auto-send a new-session deep link from an untrusted source', async () => {
+    const sends: unknown[] = [], timers: Array<() => void> = [], writes: unknown[] = []
+    let confirms = 0
+    const actionEpochRef = { current: 1 }
+    const action = callback('handleActionNavigation', {
+      workspaceId: 'a', workspaceIdRef: { current: 'a' }, actionEpochRef,
+      onCreateSession: async () => ({ id: 'new' }), onInputChange: () => {},
+      window: { confirm: () => { confirms++; return true },
+        electronAPI: { sendMessage: async (...args: unknown[]) => sends.push(args) } },
+      updateSessionMeta: () => {}, pushPanel: () => {}, store: { set: (_atom: unknown, value: unknown) => writes.push(value) },
+      updateFocusedPanelRouteAtom: {}, buildRouteFromNavigationState,
+      setTimeout: (fn: () => void) => timers.push(fn), toast: { error: () => {} }, t: (key: string) => key,
+      UNTRUSTED_DEEPLINK_SOURCES: { 'browser-pane': true },
+    })
+    await action({ name: 'new-session', params: { input: 'hello', send: 'true' } }, { source: 'browser-pane' })
+    timers.forEach(fn => fn()); await settle()
+    expect(sends).toEqual([])
+    expect(confirms).toBe(0)
+  })
+
+  it('asks for confirmation before a trusted deep link auto-sends, and deny keeps the prompt in the composer', async () => {
+    for (const confirmed of [true, false]) {
+      const sends: unknown[] = [], inputs: unknown[] = [], timers: Array<() => void> = [], writes: unknown[] = []
+      const confirms: string[] = []
+      const actionEpochRef = { current: 1 }
+      const action = callback('handleActionNavigation', {
+        workspaceId: 'a', workspaceIdRef: { current: 'a' }, actionEpochRef,
+        onCreateSession: async () => ({ id: 'new' }),
+        onInputChange: (...args: unknown[]) => inputs.push(args),
+        window: { confirm: (message: string) => { confirms.push(message); return confirmed },
+          electronAPI: { sendMessage: async (...args: unknown[]) => sends.push(args) } },
+        updateSessionMeta: () => {}, pushPanel: () => {}, store: { set: (_atom: unknown, value: unknown) => writes.push(value) },
+        updateFocusedPanelRouteAtom: {}, buildRouteFromNavigationState,
+        setTimeout: (fn: () => void) => timers.push(fn), toast: { error: () => {} }, t: (key: string) => key,
+      })
+      await action({ name: 'new-session', params: { input: 'hello', send: 'true' } })
+      timers.forEach(fn => fn()); await settle()
+      expect(confirms).toHaveLength(1)
+      if (confirmed) {
+        expect(sends).toEqual([['new', 'hello', undefined, undefined, undefined]])
+        expect(inputs).toEqual([])
+      } else {
+        expect(sends).toEqual([])
+        expect(inputs).toEqual([['new', 'hello']])
+      }
+    }
+  })
+
+  it('confirms auto-send for trusted sources (app UI, OS handler, and source-less navigation)', async () => {
+    for (const source of [undefined, 'app', 'os'] as const) {
+      const sends: unknown[] = [], timers: Array<() => void> = []
+      const confirms: string[] = []
+      const actionEpochRef = { current: 1 }
+      const action = callback('handleActionNavigation', {
+        workspaceId: 'a', workspaceIdRef: { current: 'a' }, actionEpochRef,
+        onCreateSession: async () => ({ id: 'new' }), onInputChange: () => {},
+        window: { confirm: (message: string) => { confirms.push(message); return true },
+          electronAPI: { sendMessage: async (...args: unknown[]) => sends.push(args) } },
+        updateSessionMeta: () => {}, pushPanel: () => {}, store: { set: (_atom: unknown, _value: unknown) => {} },
+        updateFocusedPanelRouteAtom: {}, buildRouteFromNavigationState,
+        setTimeout: (fn: () => void) => timers.push(fn), toast: { error: () => {} }, t: (key: string) => key,
+        UNTRUSTED_DEEPLINK_SOURCES: { 'browser-pane': true },
+      })
+      await action({ name: 'new-session', params: { input: 'hello', send: 'true' } }, { source })
+      timers.forEach(fn => fn()); await settle()
+      expect(confirms).toHaveLength(1)
+      expect(sends).toHaveLength(1)
+    }
+  })
+
+  it('ignores dangerous new-session parameters from an untrusted source', async () => {
+    const captured: unknown[] = [], writes: unknown[] = []
+    const actionEpochRef = { current: 1 }
+    const action = callback('handleActionNavigation', {
+      workspaceId: 'a', workspaceIdRef: { current: 'a' }, actionEpochRef,
+      onCreateSession: async (_workspaceId: string, options?: unknown) => { captured.push(options); return { id: 'new' } },
+      onInputChange: () => {},
+      window: { electronAPI: { sendMessage: async () => {} } },
+      updateSessionMeta: () => {}, pushPanel: () => {}, store: { set: (_atom: unknown, value: unknown) => writes.push(value) },
+      updateFocusedPanelRouteAtom: {}, buildRouteFromNavigationState,
+      setTimeout: (fn: () => void) => {}, toast: { error: () => {} }, t: (key: string) => key,
+      UNTRUSTED_DEEPLINK_SOURCES: { 'browser-pane': true },
+    })
+    await action(
+      { name: 'new-session', params: { mode: 'allow-all', workdir: '/tmp', systemPrompt: 'evil', input: 'hi', send: 'true' } },
+      { source: 'browser-pane' },
+    )
+    expect(captured).toHaveLength(1)
+    expect(captured[0]).not.toHaveProperty('permissionMode')
+    expect(captured[0]).not.toHaveProperty('workingDirectory')
+    expect(captured[0]).not.toHaveProperty('systemPromptPreset')
   })
 
   it('waits for accepted startup workspace restoration and cancels the old action instead of recovering into its old workspace', async () => {

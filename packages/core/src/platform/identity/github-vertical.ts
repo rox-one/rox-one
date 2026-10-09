@@ -7,7 +7,14 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { ConsumerIdentity } from './broker.ts';
 import { InProcessCredentialBroker } from './broker.ts';
-import type { CredentialKind, CredentialRef, CredentialRefId, ProviderLocator, StorageMode } from './credential-types.ts';
+import type {
+  CredentialKind,
+  CredentialRef,
+  CredentialRefId,
+  CredentialRefRegistry,
+  ProviderLocator,
+  StorageMode,
+} from './credential-types.ts';
 import { JsonAccessGrantStore } from './grants.ts';
 import type { P0ImporterMap } from './p0-adapters.ts';
 import { createSealedSecret, type LocalMemorySecretProvider } from './p0-adapters.ts';
@@ -26,6 +33,11 @@ export type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Res
 export interface GithubProviderStack {
   readonly provider: LocalMemorySecretProvider;
   readonly importers: P0ImporterMap;
+  /**
+   * Optional metadata registry. When present, imported refs are registered here
+   * so the broker's acquireLease (resolveRef → registry.get) can resolve them.
+   */
+  readonly registry?: CredentialRefRegistry;
 }
 
 export interface ImportGithubFromEnvOptions {
@@ -128,6 +140,18 @@ export async function importGithubFromEnv(
   const mode = options.mode ?? 'copy';
   const kind: CredentialKind = 'api_key';
 
+  const registerImported = (result: GithubImportResult): GithubImportResult => {
+    if (stack.registry && !stack.registry.get(result.credentialRefId)) {
+      stack.registry.register({
+        id: result.credentialRefId,
+        kind: result.kind,
+        providerId: result.providerId,
+        locator: result.locator,
+      });
+    }
+    return result;
+  };
+
   const discovered = await stack.importers.dotenv.discover({
     sourceId: 'dotenv',
     workspaceId: options.workspaceId,
@@ -145,14 +169,14 @@ export async function importGithubFromEnv(
         requestedBy: options.requestedBy,
         ...(sealed ? { sealedCopy: sealed } : {}),
       });
-      return {
+      return registerImported({
         credentialRefId: commit.credentialRefId,
         versionId: commit.versionId,
         mode: commit.mode,
         locator: candidate.locator,
         kind,
         providerId: stack.provider.id,
-      };
+      });
     }
 
     const version = await stack.provider.write({
@@ -163,14 +187,14 @@ export async function importGithubFromEnv(
       requestedBy: options.requestedBy,
       versionFingerprint: fingerprint(['github', 'reference', candidate.locator.type, candidate.label]),
     });
-    return {
+    return registerImported({
       credentialRefId: version.credentialRefId,
       versionId: version.id,
       mode: 'reference',
       locator: candidate.locator,
       kind,
       providerId: stack.provider.id,
-    };
+    });
   }
 
   if (options.injectedToken === undefined && options.sealedCopy === undefined) {
@@ -196,14 +220,14 @@ export async function importGithubFromEnv(
     versionFingerprint: fingerprint(['github', mode, locator.path, locator.key]),
     ...(sealed ? { sealedCopy: sealed } : {}),
   });
-  return {
+  return registerImported({
     credentialRefId: version.credentialRefId,
     versionId: version.id,
     mode,
     locator,
     kind,
     providerId: stack.provider.id,
-  };
+  });
 }
 
 /**

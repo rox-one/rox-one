@@ -92,6 +92,7 @@ export const RPC_CHANNELS = {
     FOREIGN_AUTO_STATUS: 'sessions:foreignAutoStatus',
     FOREIGN_AUTO_RUN: 'sessions:foreignAutoRun',
     FOREIGN_AUTO_SET: 'sessions:foreignAutoSet',
+    ASSIGN_OWNER: 'sessions:assignOwner',
   },
   transfer: {
     START: 'transfer:start',
@@ -343,6 +344,8 @@ export const RPC_CHANNELS = {
     LOAD_PRESET: 'theme:loadPreset',
     GET_COLOR_THEME: 'theme:getColorTheme',
     SET_COLOR_THEME: 'theme:setColorTheme',
+    /** Persist the app theme's material (glass) field to theme.json (LOCAL_ONLY). */
+    SET_APP_MATERIAL: 'theme:setAppMaterial',
     BROADCAST_PREFERENCES: 'theme:broadcastPreferences',
     PREFERENCES_CHANGED: 'theme:preferencesChanged',
     GET_WORKSPACE_COLOR_THEME: 'theme:getWorkspaceColorTheme',
@@ -374,6 +377,11 @@ export const RPC_CHANNELS = {
   },
   menu: {
     NEW_CHAT: 'menu:newChat',
+    OPEN_DASHBOARD: 'menu:openDashboard',
+    OPEN_NATIVE_CONSOLE: 'menu:openNativeConsole',
+    SHOW_SERVICE_STATUS: 'menu:showServiceStatus',
+    RUN_DOCTOR: 'menu:runDoctor',
+    TRAY_STATUS_CHANGED: 'menu:trayStatusChanged',
     NEW_WINDOW: 'menu:newWindow',
     OPEN_SETTINGS: 'menu:openSettings',
     KEYBOARD_SHORTCUTS: 'menu:keyboardShortcuts',
@@ -411,6 +419,18 @@ export const RPC_CHANNELS = {
     GET_MIGRATION_STATUS: 'credentials:getMigrationStatus',
     ROLLBACK_MIGRATION: 'credentials:rollbackMigration',
   },
+  // ROX Keeper — personal secret vault. Local-only: secrets live in the main
+  // process and never reach a remote server.
+  keeper: {
+    LIST: 'keeper:list',
+    GET: 'keeper:get',
+    CREATE: 'keeper:create',
+    UPDATE: 'keeper:update',
+    DELETE: 'keeper:delete',
+    REVEAL: 'keeper:reveal',
+    UNLOCK_STATUS: 'keeper:unlockStatus',
+    IMPORT_BROWSER: 'keeper:importBrowser',
+  },
   identity: {
     GET_STATE: 'identity:getState',
     UPDATE_PROFILE: 'identity:updateProfile',
@@ -432,7 +452,17 @@ export const RPC_CHANNELS = {
     ACQUIRE_LEASE: 'fabric:acquireLease',
     REVOKE_CONNECTION: 'fabric:revokeConnection',
     GITHUB_STATUS: 'fabric:githubStatus',
+    /** Onboarding «Привязать GitHub» — existing device flow, link mode. */
+    GITHUB_LINK_START: 'fabric:githubLinkStart',
+    GITHUB_LINK_POLL: 'fabric:githubLinkPoll',
+    GITHUB_LINK_GET: 'fabric:githubLinkGet',
     INFISICAL_HEALTH: 'fabric:infisicalHealth',
+    INFISICAL_PREVIEW_ACCOUNT: 'fabric:infisicalPreviewAccount',
+    INFISICAL_COMMIT_IMPORT: 'fabric:infisicalCommitImport',
+    INFISICAL_LIST_PATHS: 'fabric:infisicalListPaths',
+    INFISICAL_LIST_ITEMS: 'fabric:infisicalListItems',
+    INFISICAL_UPSERT_ITEM: 'fabric:infisicalUpsertItem',
+    INFISICAL_DELETE_ITEM: 'fabric:infisicalDeleteItem',
   },
   extensions: {
     LIST_CATALOG: 'extensions:listCatalog',
@@ -500,7 +530,11 @@ export const RPC_CHANNELS = {
     GET_ROX_CLOUD_STATE: 'onboarding:getRoxCloudState',
     CLEAR_ROX_CLOUD: 'onboarding:clearRoxCloud',
     GET_ROX_BALANCE: 'onboarding:getRoxBalance',
+    CHECK_HANDLE: 'onboarding:checkHandle',
     SAVE_OMP_CREDENTIAL: 'onboarding:saveOmpCredential',
+    SUGGEST_PREFERENCES: 'onboarding:suggestPreferences',
+    PERMISSIONS_STATUS: 'onboarding:permissionsStatus',
+    OPEN_PERMISSION_SETTINGS: 'onboarding:openPermissionSettings',
   },
   llmConnections: {
     LIST: 'LLM_Connection:list',
@@ -587,6 +621,7 @@ export const RPC_CHANNELS = {
     CANCEL: 'voice:cancel',
     GRANT: 'voice:grantPermission',
     CHUNK: 'voice:chunk',
+    LEVEL: 'voice:level',
     HISTORY_LIST: 'voice:historyList',
     HISTORY_GET: 'voice:historyGet',
     HISTORY_FAVORITE: 'voice:historyFavorite',
@@ -603,6 +638,23 @@ export const RPC_CHANNELS = {
     JOB: 'voice:job',
     OVERLAY: 'voice:overlay',
     HOTKEY: 'voice:hotkey',
+    TALK_START: 'voice:talkStart',
+    TALK_STOP: 'voice:talkStop',
+    TALK_AUDIO: 'voice:talkAudio',
+    TALK_EVENT: 'voice:talkEvent',
+    TALK_CLIENT_SECRET: 'voice:talkClientSecret',
+    TTS_STREAM_START: 'voice:ttsStreamStart',
+    TTS_STREAM_CHUNK: 'voice:ttsStreamChunk',
+    TTS_STREAM_STOP: 'voice:ttsStreamStop',
+    STT_START: 'voice:sttStart',
+    STT_AUDIO: 'voice:sttAudio',
+    STT_STOP: 'voice:sttStop',
+    STT_EVENT: 'voice:sttEvent',
+    PROVIDERS: 'voice:providers',
+    WAKE_GET: 'voice:wakeGet',
+    WAKE_SET: 'voice:wakeSet',
+    WAKE_CHANGED: 'voice:wakeChanged',
+    TRIGGER: 'voice:trigger',
   },
   environment: {
     GET: 'environment:get',
@@ -636,6 +688,13 @@ export const RPC_CHANNELS = {
     CANCEL: 'oauth:cancel',
     REVOKE: 'oauth:revoke',
   },
+  /** Google Calendar connector (wave 1). Tokens live in the credential manager. */
+  calendar: {
+    GOOGLE_STATUS: 'calendar:googleStatus',
+    GOOGLE_CONNECT: 'calendar:googleConnect',
+    GOOGLE_DISCONNECT: 'calendar:googleDisconnect',
+    GOOGLE_SYNC: 'calendar:googleSync',
+  },
   workspace: {
     GET_PERMISSIONS: 'workspace:getPermissions',
     OPEN_IN_EDITOR: 'workspace:openInEditor',
@@ -662,6 +721,7 @@ export const RPC_CHANNELS = {
     PRUNE_UNUSED: 'skills:pruneUnused',
     // T1: copy a workspace skill into {projectRoot}/.agents/skills/<slug>
     EXPORT_TO_PROJECT: 'skills:exportToProject',
+    GET_ELIGIBILITY: 'skills:getEligibility',
     CHANGED: 'skills:changed',
   },
   skillsPending: {
@@ -696,6 +756,10 @@ export const RPC_CHANNELS = {
     REJECT_PROPOSAL: 'memory:rejectProposal',
     EDIT_PROPOSAL: 'memory:editProposal',
     DELETE_PROPOSAL: 'memory:deleteProposal',
+    SEARCH: 'memory:search',
+    GET: 'memory:get',
+    INDEX_STATUS: 'memory:indexStatus',
+    REBUILD_INDEX: 'memory:rebuildIndex',
     CHANGED: 'memory:changed',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
@@ -744,6 +808,22 @@ export const RPC_CHANNELS = {
     PROVISION: 'openclawRuntime:provision',
     START: 'openclawRuntime:start',
     STOP: 'openclawRuntime:stop',
+  },
+  // serviceLifecycle — OS-level service control (launchd/systemd/Windows service).
+  // Managed by the local Electron main process; never proxied.
+  serviceLifecycle: {
+    GET_STATUS: 'serviceLifecycle:getStatus',
+    INSTALL: 'serviceLifecycle:install',
+    START: 'serviceLifecycle:start',
+    STOP: 'serviceLifecycle:stop',
+    RESTART: 'serviceLifecycle:restart',
+    UNINSTALL: 'serviceLifecycle:uninstall',
+    STATUS_CHANGED: 'serviceLifecycle:statusChanged',
+  },
+  // diagnostics — local host doctor checks (service/port/runtime/config/logs).
+  diagnostics: {
+    RUN: 'diagnostics:run',
+    GET_LAST: 'diagnostics:getLast',
   },
   securityAudit: {
     RUN: 'securityAudit:run',
@@ -887,6 +967,24 @@ export const RPC_CHANNELS = {
     COOKIE_AUTO_STATUS: 'browserProfile:cookieAutoStatus',
     COOKIE_AUTO_SET: 'browserProfile:cookieAutoSet',
     COOKIE_AUTO_RUN: 'browserProfile:cookieAutoRun',
+  },
+  // browserCredentials — host-only export of the sealed browser password vault
+  // for Keeper import. LOCAL_ONLY: the vault key never leaves the host process.
+  browserCredentials: {
+    EXPORT_FOR_KEEPER: 'browserCredentials:exportForKeeper',
+  },
+  // browserIntel — Browser Intelligence Pipeline surface. Reads the local
+  // browser profile stores and stages them on this machine only; all channels
+  // are LOCAL_ONLY (never proxied to a remote server).
+  browserIntel: {
+    GET_STATE: 'browserIntel:getState',
+    SET_CONSENT: 'browserIntel:setConsent',
+    GET_STATS: 'browserIntel:getStats',
+    GET_SLOTS: 'browserIntel:getSlots',
+    START_RUN: 'browserIntel:startRun',
+    CANCEL_RUN: 'browserIntel:cancelRun',
+    PROGRESS: 'browserIntel:progress',
+    STATE_CHANGED: 'browserIntel:stateChanged',
   },
   automations: {
     GET: 'automations:get',
@@ -1106,6 +1204,11 @@ export const RPC_CHANNELS = {
     FINALIZE: 'meetings:finalize',
     ADD_MANUAL_NOTE: 'meetings:addManualNote',
     CORRECT_SEGMENT: 'meetings:correctSegment',
+    OBSERVE_START: 'meetings:observeStart',
+    OBSERVE_STOP: 'meetings:observeStop',
+    OBSERVE_STATE: 'meetings:observeState',
+    SESSION_SUMMARY: 'meetings:sessionSummary',
+    TRANSCRIPT_LINES: 'meetings:transcriptLines',
   },
   entities: {
     /** Query/command dispatcher for the local entity-link store. */
@@ -1128,6 +1231,55 @@ export const RPC_CHANNELS = {
   directory: {
     /** MIG-06: one-shot export of the renderer Dossier payload into local contact cards. */
     EXPORT_DOSSIER: 'directory:exportDossier',
+  },
+  /**
+   * ROX Drive (wave 1) — device-local storage engine. Bytes, the JSON index and
+   * the ledger live under the host config dir, so every channel is LOCAL_ONLY.
+   * `SCAN_SOURCE` walks a backup source root on the host for the consent step.
+   */
+  drive: {
+    QUOTA: 'drive:quota',
+    LIST: 'drive:list',
+    CREATE_FOLDER: 'drive:createFolder',
+    OPEN_UPLOAD: 'drive:openUpload',
+    UPLOAD_PART: 'drive:uploadPart',
+    COMPLETE_UPLOAD: 'drive:completeUpload',
+    ABORT_UPLOAD: 'drive:abortUpload',
+    DELETE: 'drive:delete',
+    SCAN_SOURCE: 'drive:scanSource',
+    /** Wave 4: resolve a cloud provider's tree into an idle import job. */
+    IMPORT_PLAN: 'drive:importPlan',
+    /** Wave 4: start an idle import job. */
+    IMPORT_START: 'drive:importStart',
+    /** Wave 4: stop scheduling new files once in-flight work settles. */
+    IMPORT_PAUSE: 'drive:importPause',
+    /** Wave 4: resume a paused/errored import job. */
+    IMPORT_RESUME: 'drive:importResume',
+    /** Wave 4: one job by id, or every known job when the id is omitted. */
+    IMPORT_STATUS: 'drive:importStatus',
+    /**
+     * Wave 4: begin cloud-import authorization. The host owns the OAuth clients
+     * and runs providers whose token flow must not live in the renderer; returns
+     * either a stored-token fast path, a device-code challenge, or a URL the
+     * caller opens (Google PKCE broker / Yandex code flow).
+     */
+    IMPORT_AUTH_START: 'drive:importAuthStart',
+    /**
+     * Wave 4: finish cloud-import authorization — exchange the pasted/returned
+     * code or poll the device token — and persist tokens through the same store
+     * the providers read.
+     */
+    IMPORT_AUTH_COMPLETE: 'drive:importAuthComplete',
+  },
+  /**
+   * Telegram account linking (owner spec R4) — the desktop dialog talks to the
+   * local rox-tg-linkd daemon through these LOCAL_ONLY channels; the Rox user id
+   * is resolved server-side and never proxied to a remote server.
+   */
+  tgLink: {
+    START: 'tg-link:start',
+    VERIFY: 'tg-link:verify',
+    STATUS: 'tg-link:status',
   },
 } as const
 

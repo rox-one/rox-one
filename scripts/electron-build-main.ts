@@ -60,23 +60,42 @@ function loadEnvFile(): void {
   }
 }
 
-// Get build-time defines for esbuild (OAuth, Sentry DSN, etc.)
-// NOTE: Sentry source map upload is intentionally disabled for the main process.
-// To enable in the future, add @sentry/esbuild-plugin. See apps/electron/CLAUDE.md.
+// Get build-time defines for esbuild (OAuth, analytics endpoints, etc.)
 // NOTE: Google OAuth credentials are NOT baked into the build - users provide their own
 // via source config. See README_FOR_OSS.md for setup instructions.
+//
+// Product analytics bakes the live self-hosted endpoints by default so a plain
+// build sends (consent-gated at runtime); setting the env var overrides it, and
+// an explicitly empty value disables the client. The PostHog project key is a
+// public client key (PostHog's design) — not a secret.
+//
+// The defaults live INSIDE getBuildDefines() on purpose: scripts/electron-main-cjs.test.ts
+// extracts that function's text and evaluates it standalone, so it must not depend on
+// module-level bindings.
 function getBuildDefines(): string[] {
+  const BAKED_ENV_DEFAULTS: Record<string, string> = {
+    POSTHOG_HOST: "https://posthog.rox.one",
+    POSTHOG_KEY: "phc_sbFWoBoNgqGS82Q6Lone2Hvv2jVy8FMt8dFBLcBBk5X3",
+    OTEL_EXPORTER_OTLP_ENDPOINT: "https://otel.rox.one",
+  };
   const definedVars = [
     "SLACK_OAUTH_CLIENT_ID",
     "SLACK_OAUTH_CLIENT_SECRET",
     "MICROSOFT_OAUTH_CLIENT_ID",
     "MICROSOFT_OAUTH_CLIENT_SECRET",
     "SENTRY_ELECTRON_INGEST_URL",
+    "POSTHOG_HOST",
+    "POSTHOG_KEY",
+    "POSTHOG_FLAGS_DISABLED",
+    "OTEL_EXPORTER_OTLP_ENDPOINT",
+    "OTEL_SERVICE_NAME",
     "CRAFT_DEV_RUNTIME",
   ];
 
+  const noEnv = process.argv.includes('--no-env');
   return definedVars.map((varName) => {
-    const value = process.argv.includes('--no-env') ? '' : process.env[varName] || "";
+    const fromEnv = noEnv ? "" : process.env[varName];
+    const value = fromEnv !== undefined ? fromEnv : (BAKED_ENV_DEFAULTS[varName] ?? "");
     return `--define:process.env.${varName}=${JSON.stringify(value)}`;
   });
 }
@@ -434,7 +453,7 @@ async function main(): Promise<void> {
       // at module init. esbuild's CJS bundling leaves the synthesized `import_meta.url`
       // undefined for inner ESM modules, which throws ERR_INVALID_ARG_VALUE on load.
       // Externalize so Node loads the SDK natively as ESM (with a real import.meta.url).
-      // Electron 39 ships Node 22.x which supports require() of ESM without TLA, so the
+      // Electron 44 ships Node 24.x which supports require() of ESM without TLA, so the
       // bundled main.cjs's `require('@anthropic-ai/claude-agent-sdk')` works.
       "--external:@anthropic-ai/claude-agent-sdk",
       // M2 semantic memory: native ONNX runtime + native sharp can't be

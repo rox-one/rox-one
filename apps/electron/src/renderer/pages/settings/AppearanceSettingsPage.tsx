@@ -1,11 +1,13 @@
 /**
  * AppearanceSettingsPage
  *
- * Visual customization settings: theme mode, color theme, font,
- * workspace-specific theme overrides, and CLI tool icon mappings.
+ * Visual customization settings: fonts, contrast, language, per-workspace
+ * avatar colors, and CLI tool icon mappings. The Rox theme itself is fixed
+ * and has no user-selectable mode or color theme.
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import type { ReactNode } from 'react'
 import './AppearanceSettingsPage.css'
 import { useTranslation } from 'react-i18next'
 import { LANGUAGES, type LanguageCode } from '@rox/shared/i18n'
@@ -14,10 +16,10 @@ import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
-import { useTheme } from '@/context/ThemeContext'
+import { useTheme, useAppTheme } from '@/context/ThemeContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
-import { Monitor, Sun, Moon, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, ChevronDown } from 'lucide-react'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ToolIconMapping } from '../../../shared/types'
 
@@ -31,7 +33,6 @@ import {
 } from '@/components/settings'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import * as storage from '@/lib/local-storage'
-import { WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
 import { WorkspaceAvatar } from '@/components/ui/workspace-avatar'
 import { ColorPicker } from '@/components/ui/color-picker'
@@ -60,12 +61,51 @@ import { setProjectColorTreatment, useProjectColorTreatment } from '@/hooks/useP
 import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/project-colors'
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
-import type { PresetTheme } from '@config/theme'
 import { readDesktopAppearance, saveDesktopAppearance } from '@/lib/desktop-appearance'
 import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 import { ConationShellSettings } from './ConationShellSettings'
 import { ZenShellSettings } from './ZenShellSettings'
 import { SuperEngineeringAppearanceSettings } from './SuperEngineeringAppearanceSettings'
+import { cn } from '@/lib/utils'
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  AnimatedCollapsibleContent,
+} from '@/components/ui/collapsible'
+import {
+  MATERIAL_CHAT_EFFECT_KINDS,
+  MATERIAL_TEXTURE_KINDS,
+  type MaterialChatEffectKind,
+  type MaterialSettings,
+  type MaterialTextureKind,
+} from '@config/theme'
+import {
+  MATERIAL_CHAT_EFFECT_LABELS,
+  MATERIAL_CONTENT_PANE_ROWS,
+  MATERIAL_PRESETS,
+  MATERIAL_SURFACE_ROWS,
+  MATERIAL_TEXTURE_LABELS,
+  effectiveBlur,
+  effectiveChatEffect,
+  effectiveDeepGlass,
+  effectiveHaze,
+  effectiveMattePercent,
+  effectiveOpacityPercent,
+  effectiveTexture,
+  effectiveTint,
+  materialEquals,
+  parseMaterialImport,
+  serializeMaterialExport,
+  setChatEffect,
+  setDeepGlass,
+  setHaze,
+  setMaterialEnabled,
+  setMatte,
+  setSurfaceBlur,
+  setSurfaceOpacity,
+  setTexture,
+  setTint,
+} from './material-settings'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -124,6 +164,506 @@ const getToolIconColumns = (t: (key: string) => string): ColumnDef<ToolIconMappi
 ]
 
 // ============================================
+// Material & effects (glass) section
+// ============================================
+
+/** Apply debounce for the material draft (control release / typing). */
+const MATERIAL_APPLY_DEBOUNCE_MS = 200
+
+interface MaterialSliderRowProps {
+  label: string
+  ariaLabel: string
+  min: number
+  max: number
+  step: number
+  value: number
+  display: string
+  disabled?: boolean
+  onChange: (value: number) => void
+}
+
+function MaterialSliderRow({
+  label,
+  ariaLabel,
+  min,
+  max,
+  step,
+  value,
+  display,
+  disabled,
+  onChange,
+}: MaterialSliderRowProps) {
+  return (
+    <SettingsRow label={label}>
+      <div className="material-slider">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          disabled={disabled}
+          onChange={(event) => onChange(Number(event.target.value))}
+          aria-label={ariaLabel}
+          className="material-slider-input"
+        />
+        <span className="material-slider-value tabular-nums">{display}</span>
+      </div>
+    </SettingsRow>
+  )
+}
+
+function MaterialGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="material-group">
+      <h4 className="material-group-title">{title}</h4>
+      <SettingsCard>{children}</SettingsCard>
+    </div>
+  )
+}
+
+function MaterialEffectsSection() {
+  const { t } = useTranslation()
+  const { resolvedTheme } = useTheme()
+  // Display/base value: the preset theme merged with the app override.
+  const committed = resolvedTheme.material ?? null
+  // Persisted layer: the raw app-level override only. Edits must patch this
+  // layer (never the merged view) so preset-owned fields are not baked into
+  // theme.json on the first control change.
+  const overrideMaterial = useAppTheme()?.material ?? null
+
+  const setAppMaterial = window.electronAPI?.setAppMaterial
+  const available = typeof setAppMaterial === 'function'
+    && window.electronAPI?.getRuntimeEnvironment?.() === 'electron'
+
+  const [draft, setDraft] = useState<MaterialSettings | null>(committed)
+  const [saveFailed, setSaveFailed] = useState(false)
+  const [importStatus, setImportStatus] = useState<'success' | 'error' | null>(null)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+
+  const mountedRef = useRef(true)
+  const timerRef = useRef<number | null>(null)
+  const seqRef = useRef(0)
+  const pendingRef = useRef(false)
+  // Last value we optimistically displayed (or the last committed value); used
+  // to ignore the echo of our own write while still adopting external changes.
+  const lastSentRef = useRef<MaterialSettings | null>(committed)
+  const committedRef = useRef<MaterialSettings | null>(committed)
+  committedRef.current = committed
+  const draftRef = useRef<MaterialSettings | null>(committed)
+  draftRef.current = draft
+  // Optimistic override layer: the raw override with our own unsaved patches
+  // folded in, so rapid multi-field edits compose instead of clobbering.
+  const overrideBaseRef = useRef<MaterialSettings | null>(overrideMaterial)
+  const confirmedOverrideRef = useRef<MaterialSettings | null>(overrideMaterial)
+  confirmedOverrideRef.current = overrideMaterial
+  const importPendingRef = useRef(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  // Adopt the raw override layer when it changes from outside our own write.
+  useEffect(() => {
+    if (pendingRef.current) return
+    overrideBaseRef.current = overrideMaterial
+  }, [overrideMaterial])
+
+  useEffect(() => {
+    if (pendingRef.current || materialEquals(committed, lastSentRef.current)) return
+    lastSentRef.current = committed
+    draftRef.current = committed
+    setDraft(committed)
+  }, [committed])
+
+  const commit = useCallback((persist: MaterialSettings | null) => {
+    if (typeof setAppMaterial !== 'function') return
+    const seq = ++seqRef.current
+    void setAppMaterial(persist).then(
+      (overrides) => {
+        if (seq !== seqRef.current) return
+        pendingRef.current = false
+        // `overrides` is the full app-theme override object; only its material
+        // layer is our persisted layer (the preset material stays untouched).
+        const value = overrides?.material ?? null
+        overrideBaseRef.current = value
+        if (importPendingRef.current) {
+          importPendingRef.current = false
+          if (mountedRef.current) setImportStatus('success')
+        }
+        if (mountedRef.current) setSaveFailed(false)
+      },
+      (error: unknown) => {
+        if (seq !== seqRef.current) return
+        pendingRef.current = false
+        overrideBaseRef.current = confirmedOverrideRef.current
+        const previous = committedRef.current
+        lastSentRef.current = previous
+        if (importPendingRef.current) {
+          importPendingRef.current = false
+          if (mountedRef.current) setImportStatus('error')
+        }
+        if (mountedRef.current) {
+          draftRef.current = previous
+          setDraft(previous)
+          setSaveFailed(true)
+        }
+        if (error) console.warn('Failed to save material settings:', error)
+      },
+    )
+  }, [setAppMaterial])
+
+  const schedule = useCallback((
+    persist: MaterialSettings | null,
+    display: MaterialSettings | null,
+    options?: { imported?: boolean },
+  ) => {
+    seqRef.current += 1          // a newer local intent supersedes in-flight echoes
+    pendingRef.current = true
+    importPendingRef.current = options?.imported === true
+    setImportStatus(null)
+    overrideBaseRef.current = persist
+    draftRef.current = display
+    setDraft(display)
+    lastSentRef.current = display
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null
+      commit(persist)
+    }, MATERIAL_APPLY_DEBOUNCE_MS)
+  }, [commit])
+
+  // Apply a single-field patch to both layers: the raw override (persisted) and
+  // the merged view (displayed optimistically).
+  const applyPatch = useCallback((patch: (material: MaterialSettings | null) => MaterialSettings) => {
+    schedule(patch(overrideBaseRef.current), patch(draftRef.current))
+  }, [schedule])
+
+  const handleExport = useCallback(() => {
+    const text = serializeMaterialExport(draft, t('settings.appearance.material.exportName'))
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'rox-material.json'
+    anchor.click()
+    // Defer revocation: some browsers abort a download if its blob URL is
+    // revoked synchronously right after the click.
+    setTimeout(() => URL.revokeObjectURL(url), 0)
+  }, [draft, t])
+
+  const handleImportFile = useCallback((file: File) => {
+    void file.text().then((text) => {
+      const result = parseMaterialImport(text)
+      if (!result.ok) {
+        setImportStatus('error')
+        return
+      }
+      // Wholesale replace of both layers; the success note is deferred until
+      // the debounced write actually lands (commit).
+      schedule(result.material, result.material, { imported: true })
+    }).catch(() => {
+      setImportStatus('error')
+    })
+  }, [schedule])
+
+  const enabled = draft?.enabled ?? false
+  const controlsDisabled = !available || !enabled
+  const tint = effectiveTint(draft)
+  const texture = effectiveTexture(draft)
+  const haze = effectiveHaze(draft)
+  const chatEffect = effectiveChatEffect(draft)
+  const mattePercent = effectiveMattePercent(draft)
+
+  return (
+    <SettingsSection
+      title={t('settings.appearance.material.title')}
+      description={t('settings.appearance.material.description')}
+    >
+      <SettingsCard>
+        <SettingsToggle
+          label={t('settings.appearance.material.enabled')}
+          description={t('settings.appearance.material.enabledDesc')}
+          checked={enabled}
+          onCheckedChange={(value) => applyPatch((base) => setMaterialEnabled(base, value))}
+          disabled={!available}
+        />
+        <SettingsRow label={t('settings.appearance.material.presets')}>
+          <div className="material-presets">
+            {MATERIAL_PRESETS.map(preset => (
+              <Button
+                key={preset.id}
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!available}
+                onClick={() => schedule({ ...preset.material }, { ...preset.material })}
+              >
+                {t(preset.labelKey)}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={!available}
+              onClick={() => schedule(null, null)}
+            >
+              {t('settings.appearance.material.reset')}
+            </Button>
+          </div>
+        </SettingsRow>
+        <SettingsRow label={t('settings.appearance.material.transfer')}>
+          <div className="material-transfer">
+            <Button type="button" variant="secondary" size="sm" disabled={!available} onClick={handleExport}>
+              {t('settings.appearance.material.export')}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!available}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {t('settings.appearance.material.import')}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              tabIndex={-1}
+              className="material-file-input"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) handleImportFile(file)
+              }}
+            />
+          </div>
+        </SettingsRow>
+        {importStatus && (
+          <p role="status" className={cn('material-note', importStatus === 'error' && 'material-note-error')}>
+            {t(importStatus === 'error'
+              ? 'settings.appearance.material.importError'
+              : 'settings.appearance.material.importSuccess')}
+          </p>
+        )}
+        {saveFailed && (
+          <p role="alert" className="material-note material-note-error">
+            {t('settings.appearance.material.saveError')}
+          </p>
+        )}
+        {!available && (
+          <p role="alert" className="material-note">
+            {t('settings.appearance.material.unavailable')}
+          </p>
+        )}
+      </SettingsCard>
+
+      <div className="material-groups">
+        <MaterialGroup title={t('settings.appearance.material.opacity')}>
+          {MATERIAL_SURFACE_ROWS.map(row => {
+            const value = effectiveOpacityPercent(draft, row.surface)
+            const label = t(row.labelKey)
+            return (
+              <MaterialSliderRow
+                key={row.surface}
+                label={label}
+                ariaLabel={label}
+                min={0}
+                max={100}
+                step={1}
+                value={value}
+                display={`${value}%`}
+                disabled={controlsDisabled}
+                onChange={(next) => applyPatch((base) => setSurfaceOpacity(base, row.surface, next / 100))}
+              />
+            )
+          })}
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.blur')}>
+          {MATERIAL_SURFACE_ROWS.map(row => {
+            const value = effectiveBlur(draft, row.surface)
+            const label = t(row.labelKey)
+            return (
+              <MaterialSliderRow
+                key={row.surface}
+                label={label}
+                ariaLabel={label}
+                min={0}
+                max={64}
+                step={1}
+                value={value}
+                display={`${value}px`}
+                disabled={controlsDisabled}
+                onChange={(next) => applyPatch((base) => setSurfaceBlur(base, row.surface, next))}
+              />
+            )
+          })}
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.tint')}>
+          <MaterialSliderRow
+            label={t('settings.appearance.material.tintHue')}
+            ariaLabel={t('settings.appearance.material.tintHue')}
+            min={-180}
+            max={180}
+            step={1}
+            value={tint.hue}
+            display={`${tint.hue}°`}
+            disabled={controlsDisabled}
+            onChange={(next) => applyPatch((base) => setTint(base, { hue: next }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.tintSaturation')}
+            ariaLabel={t('settings.appearance.material.tintSaturation')}
+            min={-100}
+            max={100}
+            step={1}
+            value={tint.saturation}
+            display={`${tint.saturation}%`}
+            disabled={controlsDisabled}
+            onChange={(next) => applyPatch((base) => setTint(base, { saturation: next }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.tintLightness')}
+            ariaLabel={t('settings.appearance.material.tintLightness')}
+            min={-30}
+            max={30}
+            step={1}
+            value={tint.lightness}
+            display={`${tint.lightness}%`}
+            disabled={controlsDisabled}
+            onChange={(next) => applyPatch((base) => setTint(base, { lightness: next }))}
+          />
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.texture')}>
+          <SettingsRow label={t('settings.appearance.material.textureKind')}>
+            <SettingsMenuSelect
+              value={texture.kind}
+              disabled={controlsDisabled}
+              onValueChange={(value) => applyPatch((base) => setTexture(base, { kind: value as MaterialTextureKind }))}
+              options={MATERIAL_TEXTURE_KINDS.map(kind => ({
+                value: kind,
+                label: t(MATERIAL_TEXTURE_LABELS[kind]),
+              }))}
+            />
+          </SettingsRow>
+          <MaterialSliderRow
+            label={t('settings.appearance.material.textureIntensity')}
+            ariaLabel={t('settings.appearance.material.textureIntensity')}
+            min={0}
+            max={1}
+            step={0.01}
+            value={texture.intensity}
+            display={`${Math.round(texture.intensity * 100)}%`}
+            disabled={controlsDisabled || texture.kind === 'none'}
+            onChange={(next) => applyPatch((base) => setTexture(base, { intensity: next }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.textureScale')}
+            ariaLabel={t('settings.appearance.material.textureScale')}
+            min={0.5}
+            max={3}
+            step={0.1}
+            value={texture.scale}
+            display={`${texture.scale.toFixed(1)}×`}
+            disabled={controlsDisabled || texture.kind === 'none'}
+            onChange={(next) => applyPatch((base) => setTexture(base, { scale: next }))}
+          />
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.haze')}>
+          <SettingsToggle
+            label={t('settings.appearance.material.hazeEnabled')}
+            checked={haze.enabled}
+            disabled={controlsDisabled}
+            onCheckedChange={(value) => applyPatch((base) => setHaze(base, { enabled: value }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.hazeIntensity')}
+            ariaLabel={t('settings.appearance.material.hazeIntensity')}
+            min={0}
+            max={1}
+            step={0.01}
+            value={haze.intensity}
+            display={`${Math.round(haze.intensity * 100)}%`}
+            disabled={controlsDisabled || !haze.enabled}
+            onChange={(next) => applyPatch((base) => setHaze(base, { intensity: next }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.matte')}
+            ariaLabel={t('settings.appearance.material.matte')}
+            min={0}
+            max={100}
+            step={1}
+            value={mattePercent}
+            display={`${mattePercent}%`}
+            disabled={controlsDisabled}
+            onChange={(next) => applyPatch((base) => setMatte(base, next / 100))}
+          />
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.chatEffect')}>
+          <SettingsRow label={t('settings.appearance.material.chatEffectKind')}>
+            <SettingsMenuSelect
+              value={chatEffect.kind}
+              disabled={controlsDisabled}
+              onValueChange={(value) => applyPatch((base) => setChatEffect(base, { kind: value as MaterialChatEffectKind }))}
+              options={MATERIAL_CHAT_EFFECT_KINDS.map(kind => ({
+                value: kind,
+                label: t(MATERIAL_CHAT_EFFECT_LABELS[kind]),
+              }))}
+            />
+          </SettingsRow>
+          <MaterialSliderRow
+            label={t('settings.appearance.material.chatEffectIntensity')}
+            ariaLabel={t('settings.appearance.material.chatEffectIntensity')}
+            min={0}
+            max={1}
+            step={0.01}
+            value={chatEffect.intensity}
+            display={`${Math.round(chatEffect.intensity * 100)}%`}
+            disabled={controlsDisabled || chatEffect.kind === 'none'}
+            onChange={(next) => applyPatch((base) => setChatEffect(base, { intensity: next }))}
+          />
+        </MaterialGroup>
+
+        <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen} className="material-group">
+          <CollapsibleTrigger className="material-group-trigger" disabled={!available}>
+            <span className="material-group-title">{t('settings.appearance.material.advanced')}</span>
+            <ChevronDown
+              className={cn('material-chevron', advancedOpen && 'material-chevron-open')}
+              aria-hidden="true"
+            />
+          </CollapsibleTrigger>
+          <AnimatedCollapsibleContent isOpen={advancedOpen}>
+            <SettingsCard>
+              <div className="material-group-heading">
+                <div className="material-group-title">{t('settings.appearance.material.deepGlass')}</div>
+                <p className="material-group-hint">{t('settings.appearance.material.deepGlassDesc')}</p>
+              </div>
+              {MATERIAL_CONTENT_PANE_ROWS.map(row => (
+                <SettingsToggle
+                  key={row.pane}
+                  label={t(row.labelKey)}
+                  checked={effectiveDeepGlass(draft, row.pane)}
+                  disabled={controlsDisabled}
+                  onCheckedChange={(value) => applyPatch((base) => setDeepGlass(base, row.pane, value))}
+                />
+              ))}
+            </SettingsCard>
+          </AnimatedCollapsibleContent>
+        </Collapsible>
+      </div>
+    </SettingsSection>
+  )
+}
+
+// ============================================
 // Main Component
 // ============================================
 
@@ -134,10 +674,6 @@ export default function AppearanceSettingsPage() {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
 
   const {
-    mode,
-    setMode,
-    colorTheme,
-    setColorTheme,
     font,
     setFont,
     chatFont,
@@ -147,7 +683,6 @@ export default function AppearanceSettingsPage() {
     contrast,
     setContrast,
     activeWorkspaceId,
-    setWorkspaceColorTheme,
     themeLoadError,
     themeResolvedFrom,
   } = useTheme()
@@ -159,12 +694,6 @@ export default function AppearanceSettingsPage() {
 
   // Fetch workspace icons as data URLs (file:// URLs don't work in renderer)
   const workspaceIconMap = useWorkspaceIcons(workspaces)
-
-  // Preset themes for the color theme dropdown
-  const [presetThemes, setPresetThemes] = useState<PresetTheme[]>([])
-
-  // Per-workspace theme overrides (workspaceId -> themeId or undefined)
-  const [workspaceThemes, setWorkspaceThemes] = useState<Record<string, string | undefined>>({})
 
   // Tool icon mappings loaded from main process
   const [toolIcons, setToolIcons] = useState<ToolIconMapping[]>([])
@@ -371,16 +900,6 @@ export default function AppearanceSettingsPage() {
     },
     [persistKanbanConfig, sessionMetaMap, updateSessionMeta],
   )
-  // Workspace selector placement toggle
-  const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
-    storage.get(storage.KEYS.workspaceSelectorRail, false)
-  )
-  const handleWorkspaceSelectorRailChange = useCallback((checked: boolean) => {
-    if (!appearancePrefLive()) return
-    setWorkspaceSelectorRail(checked)
-    storage.set(storage.KEYS.workspaceSelectorRail, checked)
-    window.dispatchEvent(new CustomEvent(WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT, { detail: checked }))
-  }, [])
   // Turn activity cards: default expansion state (persisted in localStorage)
   const [turnActivitiesExpandedByDefault, setTurnActivitiesExpandedByDefault] = useState(() =>
     storage.get(storage.KEYS.turnActivitiesExpandedByDefault, false)
@@ -434,38 +953,6 @@ export default function AppearanceSettingsPage() {
   }, [desktopToolDescriptionsAvailable, savingToolDescriptions])
 
 
-  // Load preset themes on mount
-  useEffect(() => {
-    const loadThemes = async () => {
-      if (!window.electronAPI) {
-        setPresetThemes([])
-        return
-      }
-      try {
-        const themes = await window.electronAPI.loadPresetThemes?.()
-        setPresetThemes(themes ?? [])
-      } catch (error) {
-        console.error('Failed to load preset themes:', error)
-        setPresetThemes([])
-      }
-    }
-    loadThemes()
-  }, [])
-
-  // Load workspace themes on mount
-  useEffect(() => {
-    const loadWorkspaceThemes = async () => {
-      if (!window.electronAPI?.getAllWorkspaceThemes) return
-      try {
-        const themes = await window.electronAPI.getAllWorkspaceThemes()
-        setWorkspaceThemes(themes)
-      } catch (error) {
-        console.error('Failed to load workspace themes:', error)
-      }
-    }
-    loadWorkspaceThemes()
-  }, [])
-
   // Load tool icon mappings and the real config location from main on mount
   useEffect(() => {
     const load = async () => {
@@ -482,59 +969,6 @@ export default function AppearanceSettingsPage() {
     load()
   }, [])
 
-  // Handler for workspace theme change
-  // Uses ThemeContext for the active workspace (update after successful persistence) and IPC for other workspaces
-  const handleWorkspaceThemeChange = useCallback(
-    async (workspaceId: string, value: string) => {
-      if (!appearancePrefLive()) return
-      // 'default' means inherit from app default (null in storage)
-      const themeId = value === 'default' ? null : value
-
-      // If changing the current workspace, use context and await the config acknowledgement
-      if (workspaceId === activeWorkspaceId) {
-        if (!await setWorkspaceColorTheme(themeId)) return
-      } else {
-        // For other workspaces, just persist via IPC
-        await window.electronAPI?.setWorkspaceColorTheme?.(workspaceId, themeId)
-      }
-
-      // Update local state for UI
-      setWorkspaceThemes(prev => ({
-        ...prev,
-        [workspaceId]: themeId ?? undefined
-      }))
-    },
-    [activeWorkspaceId, setWorkspaceColorTheme]
-  )
-
-  // Theme options for dropdowns
-  const themeOptions = useMemo(() => {
-    const options = [
-      { value: 'default', label: t("settings.appearance.useDefault") },
-      ...presetThemes
-        .filter(preset => preset.id !== 'default')
-        .map(preset => ({
-          value: preset.id,
-          label: preset.theme.name || preset.id,
-        })),
-    ]
-    if (
-      colorTheme &&
-      colorTheme !== 'default' &&
-      !options.some(option => option.value === colorTheme)
-    ) {
-      options.push({ value: colorTheme, label: colorTheme })
-    }
-    return options
-  }, [presetThemes, t, colorTheme])
-
-  // Get current app default theme label for display (null when using 'default' to avoid redundant "Use Default (Default)")
-  const appDefaultLabel = useMemo(() => {
-    if (colorTheme === 'default') return null
-    const preset = presetThemes.find(t => t.id === colorTheme)
-    return preset?.theme.name || colorTheme
-  }, [colorTheme, presetThemes])
-
   return (
     <div className="appearance-settings-page flex h-full min-h-0 min-w-0 flex-col">
       <PanelHeader
@@ -546,23 +980,10 @@ export default function AppearanceSettingsPage() {
           <div className="appearance-settings-content px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
 
-              {/* Default Theme */}
-              <SettingsSection title={t("settings.appearance.defaultTheme")}>
+              {/* Display & accessibility. The Rox theme is fixed, so there is
+                  no light/dark or color theme picker. */}
+              <SettingsSection title={t("settings.appearance.display")}>
                 <SettingsCard>
-                  <SettingsRow label={t("settings.appearance.mode")}>
-                    <SettingsSegmentedControl
-                      value={mode}
-                      onValueChange={(value) => {
-                        if (!appearancePrefLive()) return
-                        setMode(value)
-                      }}
-                      options={[
-                        { value: 'system', label: t("settings.appearance.system"), icon: <Monitor className="w-4 h-4" /> },
-                        { value: 'light', label: t("settings.appearance.light"), icon: <Sun className="w-4 h-4" /> },
-                        { value: 'dark', label: t("settings.appearance.dark"), icon: <Moon className="w-4 h-4" /> },
-                      ]}
-                    />
-                  </SettingsRow>
                   <SettingsRow
                     label={t("settings.appearance.contrast")}
                     description={t("settings.appearance.contrastDesc")}
@@ -578,16 +999,6 @@ export default function AppearanceSettingsPage() {
                         { value: 'normal', label: t("settings.appearance.contrastNormal") },
                         { value: 'high', label: t("settings.appearance.contrastHigh") },
                       ]}
-                    />
-                  </SettingsRow>
-                  <SettingsRow label={t("settings.appearance.colorTheme")}>
-                    <SettingsMenuSelect
-                      value={colorTheme}
-                      onValueChange={(value) => {
-                        if (!appearancePrefLive()) return
-                        setColorTheme(value)
-                      }}
-                      options={themeOptions}
                     />
                   </SettingsRow>
                   <SettingsRow
@@ -672,63 +1083,43 @@ export default function AppearanceSettingsPage() {
                 )}
               </SettingsSection>
 
-              {/* Workspace Themes */}
+              {/* Workspace appearance — avatar colors only; theme overrides are
+                  disabled because the Rox theme is fixed. */}
               {workspaces.length > 0 && (
-                <SettingsSection
-                  title={t("settings.appearance.workspaceThemes")}
-                  description={t("settings.appearance.workspaceThemesDesc")}
-                >
+                <SettingsSection title={t("settings.appearance.workspaceAppearance")}>
                   <SettingsCard>
-                    {workspaces.map((workspace) => {
-                      const wsTheme = workspaceThemes[workspace.id]
-                      const hasCustomTheme = wsTheme !== undefined
-                      return (
-                        <SettingsRow
-                          key={workspace.id}
-                          label={
-                            <div className="flex items-center gap-2">
-                              <ColorPicker
-                                value={workspaceAvatarColors[workspace.id] || ''}
-                                onChange={(hex) => setWorkspaceAvatarColor(workspace.id, hex)}
-                                onClear={() => clearWorkspaceAvatarColor(workspace.id)}
-                                clearLabel={t("settings.appearance.workspaceAvatarReset")}
-                                presets={PROJECT_COLOR_PALETTE}
-                                ariaLabel={t("settings.appearance.workspaceAvatarColor")}
-                                trigger={
-                                  <button
-                                    type="button"
-                                    className="cursor-pointer rounded hover:opacity-80 transition-opacity"
-                                    aria-label={t("settings.appearance.workspaceAvatarColor")}
-                                  >
-                                    <WorkspaceAvatar
-                                      workspaceId={workspace.id}
-                                      workspaceName={workspace.name}
-                                      src={workspaceIconMap.get(workspace.id)}
-                                      className="w-4 h-4 rounded"
-                                    />
-                                  </button>
-                                }
-                              />
-                              <span>{workspace.name}</span>
-                            </div>
-                          }
-                        >
-                          <SettingsMenuSelect
-                            value={hasCustomTheme ? wsTheme : 'default'}
-                            onValueChange={(value) => handleWorkspaceThemeChange(workspace.id, value)}
-                            options={[
-                              { value: 'default', label: appDefaultLabel ? t("settings.appearance.useDefaultWithTheme", { theme: appDefaultLabel }) : t("settings.appearance.useDefault") },
-                              ...presetThemes
-                                .filter(t => t.id !== 'default')
-                                .map(t => ({
-                                  value: t.id,
-                                  label: t.theme.name || t.id,
-                                })),
-                            ]}
-                          />
-                        </SettingsRow>
-                      )
-                    })}
+                    {workspaces.map((workspace) => (
+                      <SettingsRow
+                        key={workspace.id}
+                        label={
+                          <div className="flex items-center gap-2">
+                            <ColorPicker
+                              value={workspaceAvatarColors[workspace.id] || ''}
+                              onChange={(hex) => setWorkspaceAvatarColor(workspace.id, hex)}
+                              onClear={() => clearWorkspaceAvatarColor(workspace.id)}
+                              clearLabel={t("settings.appearance.workspaceAvatarReset")}
+                              presets={PROJECT_COLOR_PALETTE}
+                              ariaLabel={t("settings.appearance.workspaceAvatarColor")}
+                              trigger={
+                                <button
+                                  type="button"
+                                  className="cursor-pointer rounded hover:opacity-80 transition-opacity"
+                                  aria-label={t("settings.appearance.workspaceAvatarColor")}
+                                >
+                                  <WorkspaceAvatar
+                                    workspaceId={workspace.id}
+                                    workspaceName={workspace.name}
+                                    src={workspaceIconMap.get(workspace.id)}
+                                    className="w-4 h-4 rounded"
+                                  />
+                                </button>
+                              }
+                            />
+                            <span>{workspace.name}</span>
+                          </div>
+                        }
+                      />
+                    ))}
                   </SettingsCard>
                 </SettingsSection>
               )}
@@ -764,12 +1155,6 @@ export default function AppearanceSettingsPage() {
                     onCheckedChange={handleConnectionIconsChange}
                   />
                   <SettingsToggle
-                    label={t("settings.appearance.workspaceIconRail")}
-                    description={t("settings.appearance.workspaceIconRailDesc")}
-                    checked={workspaceSelectorRail}
-                    onCheckedChange={handleWorkspaceSelectorRailChange}
-                  />
-                  <SettingsToggle
                     label={t("settings.appearance.richToolDescriptions")}
                     description={t("settings.appearance.richToolDescriptionsDesc")}
                     checked={richToolDescriptions}
@@ -800,6 +1185,8 @@ export default function AppearanceSettingsPage() {
                   </SettingsRow>
                 </SettingsCard>
               </SettingsSection>
+
+              <MaterialEffectsSection />
 
               <SuperEngineeringAppearanceSettings />
               <ZenShellSettings />

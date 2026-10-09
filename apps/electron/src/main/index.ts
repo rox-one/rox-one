@@ -18,50 +18,9 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, safeStorage, session, shell, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
-import { hostname, homedir } from 'os'
-import * as Sentry from '@sentry/electron/main'
-import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils'
 
-// Initialize Sentry error tracking as early as possible after app import.
-// Only enabled in production (packaged) builds to avoid noise during development.
-// DSN is baked in at build time via esbuild --define (same pattern as OAuth secrets).
-//
-// NOTE: Source map upload is intentionally disabled. Stack traces in Sentry will show
-// bundled/minified code. To enable source map upload in the future:
-//   1. Add SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT to CI secrets
-//   2. Re-enable the @sentry/vite-plugin in vite.config.ts (handles renderer maps)
-//   3. Add @sentry/esbuild-plugin to scripts/electron-build-main.ts (handles main process maps)
-Sentry.init({
-  dsn: process.env.SENTRY_ELECTRON_INGEST_URL,
-  environment: app.isPackaged ? 'production' : 'development',
-  release: app.getVersion(),
-  // Enabled whenever the ingest URL is available — works in both production (baked via CI)
-  // and development (injected via .env / 1Password). Filter by environment in Sentry dashboard.
-  enabled: !!process.env.SENTRY_ELECTRON_INGEST_URL,
-
-  // Scrub sensitive data before sending to Sentry.
-  // Shared logic in @rox/shared/utils redaction.ts (also used by the
-  // renderer hook and the Pages action audit log) — keep semantics there.
-  beforeSend(event) {
-    // Scrub request headers (authorization, cookies)
-    if (event.request?.headers) {
-      redactSensitiveHeadersInPlace(event.request.headers)
-    }
-
-    // Scrub breadcrumb data that may contain sensitive values
-    if (event.breadcrumbs) {
-      for (const breadcrumb of event.breadcrumbs) {
-        if (breadcrumb.data) {
-          redactSensitiveKeysInPlace(breadcrumb.data)
-        }
-      }
-    }
-
-    return event
-  },
-})
 
 // Initialize i18n for main process (menus, dialogs, etc.)
 //
@@ -74,6 +33,8 @@ Sentry.init({
 // the system prompt's "Preferred language" line, and the native menu.
 import { setupI18n, i18n, SUPPORTED_LANGUAGE_CODES, type LanguageCode } from '@rox/shared/i18n'
 import { getPersistedUiLanguage, setPersistedUiLanguage } from '@rox/shared/config'
+import { initTelemetry, telemetryConfigFromEnv, track as trackProductEvent, type TelemetryHandle } from '@rox/shared/telemetry'
+import { loadGamificationState } from '@rox/shared/gamification'
 setupI18n()
 const persistedUiLanguage = getPersistedUiLanguage()
 if (persistedUiLanguage) {
@@ -81,11 +42,46 @@ if (persistedUiLanguage) {
 }
 // Note: deferred startup log lives below where mainLog is available (after log.initialize()).
 
-// Set anonymous machine ID for Sentry user tracking (no PII — just a hash).
-// Uses hostname + homedir to produce a stable per-machine identifier.
-const machineId = createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16)
-Sentry.setUser({ id: machineId })
+// Product analytics: PostHog capture/feature flags + OTLP traces.
+//
+// Self-hosted endpoints are baked at build time via esbuild --define (see
+// scripts/electron-build-main.ts) — with the live defaults, so analytics sends
+// out of the box; an explicit env value still overrides them. The renderer
+// receives the same distinct_id + endpoints over `__telemetry-config`.
+// Egress is gated by the «Аналитика продукта» consent (gamification.json
+// analyticsConsent, default ON) — local Electron clients have no native
+// principal, so that file is the authoritative store; a read failure fails closed.
 
+// Anonymous per-install identifier (no PII — a hash of hostname + homedir)
+// used as the analytics distinct_id for both PostHog and OTLP.
+const machineId = createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16)
+const telemetryEndpoints = telemetryConfigFromEnv({
+  POSTHOG_HOST: process.env.POSTHOG_HOST,
+  POSTHOG_KEY: process.env.POSTHOG_KEY,
+  OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+  OTEL_SERVICE_NAME: process.env.OTEL_SERVICE_NAME,
+})
+// `POSTHOG_FLAGS_DISABLED=1` disables `/decide` entirely (shared with renderer).
+const telemetryFlagsDisabled = process.env.POSTHOG_FLAGS_DISABLED === '1'
+const telemetryBootstrapConfig = {
+  distinctId: machineId,
+  ...telemetryEndpoints,
+  flagsDisabled: telemetryFlagsDisabled,
+}
+const productTelemetry: TelemetryHandle = initTelemetry({
+  ...telemetryEndpoints,
+  distinctId: machineId,
+  version: app.getVersion(),
+  platform: process.platform,
+  flagsDisabled: telemetryFlagsDisabled,
+  getConsent: () => loadGamificationState().analyticsConsent,
+})
+app.on('will-quit', () => {
+  productTelemetry.dispose()
+})
+trackProductEvent('app_launched', { platform: process.platform, version: app.getVersion() })
+
+import { homedir, hostname, userInfo } from 'os'
 import { join, delimiter, resolve, sep } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, readdirSync } from 'fs'
@@ -106,6 +102,7 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
 import { PageThumbnailer } from './page-thumbnailer'
 import { registerAllRpcHandlers } from './handlers/index'
+import { createDriveService } from './drive/register'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
 import { createWorkGraphKernel, type WorkGraphKernel } from '@rox/server-core/workgraph'
 import type { PlatformServices } from '../runtime/platform'
@@ -113,6 +110,7 @@ import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
 import { resolveNativeTransportCredential } from './native-transport-credential'
 import { createBrowserCredentialPermissionAdapter } from './browser-credential-permissions'
+import { createOnboardingPermissionsHost } from './onboarding-permissions'
 import { createBrowserCredentialVaultKeyStore } from './browser-credential-vault-keys'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@rox/server-core/bootstrap'
 import { isAllowedServerEndpoint } from './server-endpoint-policy'
@@ -145,7 +143,7 @@ import { OpenDesignRuntimeManager, isTrustedOpenDesignIpcEvent, registerOpenDesi
 import { OpenDesignWindowController } from './open-design-window'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
-import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog, errorLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
 import { registerStorageVisibleRootIpc } from './storage-visible-root-ipc'
 import { registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from './visible-home-boot'
@@ -160,11 +158,31 @@ import { validateGitBashPath, checkVCRedistInstalled } from '@rox/server-core/se
 import { createOpenClawSecurityComposition } from './openclaw-security'
 import { createOpenClawHostControlConfirmation, registerOpenClawHostControlIpc } from './openclaw-host-control'
 import { createLocalClientBindingRegistry } from './local-client-binding'
+import { installRendererSessionPolicy } from './renderer-session-policy'
+import { runQuitCleanupThenExit } from './quit-exit-guard'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
+import { registerTelegramLink } from './telegram-link/register'
+import { registerCalendarGoogleOAuthIpc } from './calendar/google-oauth'
+import { registerAppleCalendarHelperFromHost } from './calendar/register-helper'
 import { registerNativeReplicaForWindows } from './native-replica-bootstrap'
+import { initBrowserIntelRuntime } from './browser-intel/index'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
+import {
+  buildLaunchAgentFiles,
+  createLaunchctlRunner,
+  createNodeServiceFilesystem,
+  createServiceManager,
+  defaultPortAvailable,
+  guardServiceInstall,
+  LaunchdRuntime,
+  runDoctor,
+} from '@rox/server-core/service'
+import { pushTyped } from '@rox/server-core/transport'
+import { registerServiceLifecycleIpc } from './service-lifecycle-ipc'
+import type { MenuBroadcastChannel } from './menu'
+import { TrayController } from './tray'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -264,6 +282,16 @@ if (isDebugMode) {
   }
 }
 
+// Browser Intelligence runtime: background-only, opt-in pipeline whose unfurl
+// stage runs in a Worker Thread. Registered after the CLI/env block so
+// CRAFT_RESOURCES_BASE is set for the packaged schema lookup, and before any
+// window is created. A failure must never block startup.
+try {
+  initBrowserIntelRuntime()
+} catch (error) {
+  mainLog.warn('[browser-intel] runtime initialization failed', error)
+}
+
 // Register Pi model resolver so llm-connections.ts can resolve Pi models
 // without importing @earendil-works/pi-ai (which breaks the Vite renderer build)
 registerPiModelResolver((piAuthProvider) =>
@@ -287,6 +315,20 @@ let openClawSecurityAuditService: OpenClawSecurityAuditService | null = null
 let workGraphKernel: WorkGraphKernel | null = null
 let cleanupNativeReplicaIpc: (() => void) | null = null
 const localClientBindingRegistry = createLocalClientBindingRegistry()
+
+// PERF-01 shell-first boot: the window is created before the RPC server
+// bootstrap. The preload's local client resolves its port through
+// `__await-ws-port`, which settles here once `bootstrapServer` has returned and
+// the Electron-side sinks are wired — so no renderer RPC is issued before the
+// server listens.
+let wsPortValue: number | null = null
+let resolveWsPort: ((port: number) => void) | null = null
+const wsPortReady = new Promise<number>((resolve) => { resolveWsPort = resolve })
+function publishWsPort(port: number): void {
+  if (wsPortValue !== null) return
+  wsPortValue = port
+  resolveWsPort?.(port)
+}
 
 // Messaging gateway: the bootstrap handle is created once sessionManager is
 // available (inside createHandlerDeps) and populated with the WS publisher
@@ -355,7 +397,7 @@ app.on('open-url', (event, url) => {
   mainLog.info('Received deeplink:', url)
 
   if (windowManager) {
-    handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
+    handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined, undefined, 'os').catch(err => {
       mainLog.error('Failed to handle deep link:', err)
     })
   } else {
@@ -384,7 +426,7 @@ if (!gotTheLock) {
     )
     if (url && windowManager) {
       mainLog.info('Received deeplink from second instance:', url)
-      handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
+      handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined, undefined, 'os').catch(err => {
         mainLog.error('Failed to handle deep link:', err)
       })
     } else if (url) {
@@ -474,16 +516,20 @@ async function createInitialWindows(): Promise<void> {
 
   // Refresh workspace avatars that are still an auto-seeded legacy app mark
   // (byte-identical to an old bundled icon.png). User-chosen icons are untouched.
-  try {
-    const avatarPath = [
-      join(__dirname, 'resources/workspace-icon.png'),
-      join(__dirname, '../resources/workspace-icon.png'),
-      join(process.resourcesPath ?? '', 'app/resources/workspace-icon.png'),
-    ].find((p) => p && existsSync(p))
-    const refreshed = refreshLegacySeededWorkspaceIcons(workspaces, avatarPath)
-    if (refreshed.length > 0) mainLog.info(`Refreshed legacy seeded workspace icon(s): ${refreshed.length}`)
-  } catch (err) {
-    mainLog.warn('Failed to refresh legacy workspace icons', err)
+  // PERF-01: deferred until after the shell window exists so this file IO stays
+  // off the `window-created` critical path.
+  const refreshLegacyIcons = () => {
+    try {
+      const avatarPath = [
+        join(__dirname, 'resources/workspace-icon.png'),
+        join(__dirname, '../resources/workspace-icon.png'),
+        join(process.resourcesPath ?? '', 'app/resources/workspace-icon.png'),
+      ].find((p) => p && existsSync(p))
+      const refreshed = refreshLegacySeededWorkspaceIcons(workspaces, avatarPath)
+      if (refreshed.length > 0) mainLog.info(`Refreshed legacy seeded workspace icon(s): ${refreshed.length}`)
+    } catch (err) {
+      mainLog.warn('Failed to refresh legacy workspace icons', err)
+    }
   }
 
   const validWorkspaceIds = workspaces.map(ws => ws.id)
@@ -510,6 +556,7 @@ async function createInitialWindows(): Promise<void> {
 
     if (restoredCount > 0) {
       mainLog.info(`Restored ${restoredCount} window(s) from saved state`)
+      refreshLegacyIcons()
       return
     }
   }
@@ -517,6 +564,7 @@ async function createInitialWindows(): Promise<void> {
   // Default: open window for first workspace
   windowManager.createWindow({ workspaceId: workspaces[0].id })
   mainLog.info(`Created window for first workspace: ${workspaces[0].name}`)
+  refreshLegacyIcons()
 }
 
 // Trust boundary for main-process IPC that is only meant for Rox's own windows:
@@ -557,6 +605,17 @@ function isTrustedRoxRendererIpcEvent(event: IpcMainInvokeEvent): boolean {
   })
 }
 
+/**
+ * Deny-by-default guard for main-process IPC handlers that must only serve
+ * Rox's own renderer. Throws the shared `IPC_SENDER_DENIED` code so a renegade
+ * sender learns nothing about the handler. Preload-time sendSync channels must
+ * not use this (senderFrame can be null during preload eval) — use
+ * `isRegisteredRoxRendererWebContents(event.sender)` there instead.
+ */
+function assertTrustedRenderer(event: IpcMainInvokeEvent): void {
+  if (!isTrustedRoxRendererIpcEvent(event)) throw new Error('IPC_SENDER_DENIED')
+}
+
 app.whenReady().then(async () => {
   // Entity links flag (entities.links.v1) — FIRST, before any await: every
   // renderer reports its persisted toggle with a synchronous IPC at
@@ -572,6 +631,9 @@ app.whenReady().then(async () => {
     mainLog.error('[entities] failed to load the entities.links.v1 durable copy:', error)
   }
   registerEntitiesLinksIpc(ipcMain, {
+    // Evaluated at call time (windowManager is assigned below); the
+    // registered-webcontents form is safe for the preload sendSync channel.
+    isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
     broadcast: (channel, state) => {
       for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, state)
@@ -595,6 +657,68 @@ app.whenReady().then(async () => {
   // Register bundled assets root so all seeding functions can find their files
   // (docs, permissions, themes, tool-icons resolve via getBundledAssetsDir)
   setBundledAssetsRoot(__dirname)
+
+  // ── PERF-01 shell-first boot ─────────────────────────────────────────────
+  // Create the shell window (and the preload-critical IPC it evaluates
+  // synchronously) before the heavy startup work: credential vault restore,
+  // proxy apply, the RPC server bootstrap and everything after it (messaging
+  // init, model refresh, workspace connects). The renderer renders its loading
+  // splash and waits for the local transport through `__await-ws-port`, which
+  // main settles only once the server is listening and its sinks are wired —
+  // so no renderer RPC is issued before the server, while the window is on
+  // screen throughout.
+  const isClientOnly = !!process.env.CRAFT_SERVER_URL
+  const isHeadless = !!process.env.CRAFT_HEADLESS
+  try {
+    windowManager = new WindowManager()
+    ipcMain.on('__get-web-contents-id', (e) => {
+      e.returnValue = e.sender.id
+    })
+    ipcMain.on('__get-workspace-id', (e) => {
+      e.returnValue = readBoundWindowWorkspace(e, windowManager)
+    })
+    ipcMain.on('__get-local-client-proof', (e) => {
+      const owner = windowManager?.getWindowByWebContentsId(e.sender.id)
+      e.returnValue = owner && !owner.isDestroyed() && owner.webContents === e.sender
+        ? localClientBindingRegistry.issue(e.sender)
+        : ''
+    })
+    ipcMain.on('__get-workspace-remote-config', (e) => {
+      const wsId = windowManager?.getWorkspaceForWindow(e.sender.id)
+      if (!wsId) { e.returnValue = null; return }
+      const ws = getWorkspaceByNameOrId(wsId)
+      e.returnValue = ws?.remoteServer ?? null
+    })
+    ipcMain.handle('__await-ws-port', async (event) => {
+      if (!isRegisteredRoxRendererWebContents(event.sender)) throw new Error('IPC_SENDER_DENIED')
+      const port = await wsPortReady
+      markStartupOnce(STARTUP_MARKS.wsPortHanded)
+      return port
+    })
+    // PERF-01 shell-first boot: the preload unconditionally resolves the project
+    // authority during its eval (publish → setWorkspace → invoke). The channel
+    // must therefore exist by the time the shell window evaluates its preload,
+    // i.e. before createInitialWindows — otherwise the invoke rejects and the
+    // connection silently settles as 'denied' with no retry. Dependencies are
+    // only windowManager (already constructed) and a lazy import — kept dynamic
+    // so the project-authority implementation stays off the shell-first boot
+    // critical path (its graph is only needed once a renderer actually asks).
+    ipcMain.handle('__project-authority:resolve', async (event, localWorkspaceId: unknown) => {
+      const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
+      if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
+      const { resolveStoredProjectAuthority } = await import('./project-authority')
+      const result = await resolveStoredProjectAuthority(bound)
+      if (windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
+      return result
+    })
+    if (!isHeadless) await createInitialWindows()
+    // Application menu is built after the window so its native construction
+    // stays off the `window-created` critical path (it needs windowManager for
+    // the New Window action).
+    if (windowManager) createApplicationMenu(windowManager)
+  } catch (error) {
+    mainLog.error('[startup] shell-first window creation failed:', error)
+  }
 
   if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
     markStartup(STARTUP_MARKS.winBootstrapStart)
@@ -693,6 +817,10 @@ app.whenReady().then(async () => {
   // (first call before app.whenReady only configured Node-level proxy)
   await applyConfiguredProxySettings()
 
+  // Cancel third-party citation-favicon fetches on the app renderer session.
+  // Installed once here, before any window is created/loaded.
+  installRendererSessionPolicy(session.defaultSession)
+
   // Note: electron-updater handles pending updates internally via autoInstallOnAppQuit
 
   // Application menu is created after windowManager initialization (see below)
@@ -725,12 +853,10 @@ app.whenReady().then(async () => {
   }
 
   try {
-    // Initialize window manager
-    windowManager = new WindowManager()
-
-    // Create the application menu (needs windowManager for New Window action)
-    createApplicationMenu(windowManager)
-
+    // windowManager was created in the shell-first block above; if that failed
+    // the app cannot open any window, so fail the same way the old in-try
+    // construction did.
+    if (!windowManager) throw new Error('Window manager was not initialized')
     openDesignRuntime = new OpenDesignRuntimeManager({
       userDataDir: join(app.getPath('userData'), 'open-design-runtime'),
       windowController: new OpenDesignWindowController(),
@@ -744,9 +870,6 @@ app.whenReady().then(async () => {
     // When CRAFT_SERVER_URL is set, this Electron instance is a thin client —
     // it only creates windows whose preload connects to the remote server.
     // Skip server-side initialization (SessionManager, model refresh, platform injection).
-    const isClientOnly = !!process.env.CRAFT_SERVER_URL
-    const isHeadless = !!process.env.CRAFT_HEADLESS
-
     if (isClientOnly) {
       mainLog.info(`Client-only mode: CRAFT_SERVER_URL=${process.env.CRAFT_SERVER_URL} (server initialization skipped)`)
     }
@@ -787,12 +910,36 @@ app.whenReady().then(async () => {
       sendCommand: (context, command, recordingId) => context.webContentsId != null && sendVoiceCommand(command, context.webContentsId, recordingId),
     }) : undefined
     app.once('will-quit', () => { disposeVoiceHotkeys(); voiceOverlay?.dispose() })
-    registerMeetingCaptureIpc()
+    registerMeetingCaptureIpc({
+      getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
+      getWorkspaceGenerationForWindow: (id) => windowManager?.getWorkspaceGenerationForWindow(id) ?? null,
+    })
     const localMeetings = registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
       getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
       getWorkspaceGenerationForWindow: (id) => windowManager?.getWorkspaceGenerationForWindow(id) ?? null,
     })
-    registerMailIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
+    registerMailIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
+      isTrustedSender: isTrustedRoxRendererIpcEvent,
+    })
+
+    // R4: point the shared tg-link RPC handlers at this host's linkd daemon.
+    const telegramLink = registerTelegramLink()
+    mainLog.info(`[telegram-link] service endpoint ${telegramLink.baseUrl}${telegramLink.authTokenConfigured ? ' (bearer configured)' : ''}`)
+    registerCalendarGoogleOAuthIpc({
+      ipcMain,
+      isTrustedSender: (event) => Boolean(windowManager?.getWindowByWebContentsId(event.sender.id)),
+      openExternal: (url) => shell.openExternal(url),
+    })
+
+    // Apple Calendar (macOS EventKit): register the helper binding only when
+    // APPLE_CALENDAR_LIVE=1 and the bundled binary exists. Fail-closed — with the
+    // gate off or the binary absent the connector keeps returning Unavailable.
+    registerAppleCalendarHelperFromHost({
+      log: (message, error) => {
+        if (error) mainLog.warn(message, error)
+        else mainLog.info(message)
+      },
+    })
 
     // Build real PlatformServices from Electron APIs
     const platform: PlatformServices = createElectronPlatform({
@@ -803,7 +950,9 @@ app.whenReady().then(async () => {
       logger: log,
       isDebugMode,
       getLogFilePath,
-      captureError: (err) => Sentry.captureException(err),
+      captureError: (err) => {
+        errorLog.error('[captureError]', { error: err })
+      },
     })
 
     // W1-13: Settings toggle for storage.visible-root.v1 (applies on next launch).
@@ -842,11 +991,16 @@ app.whenReady().then(async () => {
         ? localClientBindingRegistry.issue(e.sender)
         : ''
     })
-
+    // Product analytics bootstrap: the renderer reuses main's baked endpoints and
+    // anonymous distinct_id so both processes report the same person.
+    ipcMain.on('__telemetry-config', (e) => {
+      e.returnValue = telemetryBootstrapConfig
+    })
     // Language change: sync from renderer to main process, persist, and rebuild native menu.
     // Persistence here is what lets the next app launch hydrate main's i18n correctly —
     // see the `getPersistedUiLanguage()` block at the top of this file.
-    ipcMain.handle('i18n:changeLanguage', async (_event, lang: unknown) => {
+    ipcMain.handle('i18n:changeLanguage', async (event, lang: unknown) => {
+      assertTrustedRenderer(event)
       const previousResolved = i18n.resolvedLanguage ?? null
       if (typeof lang !== 'string' || !SUPPORTED_LANGUAGE_CODES.includes(lang as LanguageCode)) {
         // Defense-in-depth: renderer guarantees a supported code, but if a renegade
@@ -873,11 +1027,15 @@ app.whenReady().then(async () => {
     // links). Registered in every mode, thin client included: deep links are
     // parsed in main either way and the gate is default-closed until pushed.
     const { registerSurfaceRoutesIpc } = await import('./surface-routes-ipc')
-    registerSurfaceRoutesIpc(ipcMain)
+    registerSurfaceRoutesIpc(ipcMain, {
+      isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
+    })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes
     // so failures are visible in terminal/main.log (not only renderer console).
-    ipcMain.on('__transport:status', (_event, payload: unknown) => {
+    ipcMain.on('__transport:status', (event, payload: unknown) => {
+      // Log-only channel; preload `send` — registered-webcontents guard only.
+      if (!isRegisteredRoxRendererWebContents(event.sender)) return
       if (!payload || typeof payload !== 'object') return
       const p = payload as {
         level?: 'info' | 'warn' | 'error'
@@ -913,6 +1071,7 @@ app.whenReady().then(async () => {
     // Dialog bridge — preload capability handlers use ipcRenderer.invoke to
     // call main-process-only dialog APIs (dialog, BrowserWindow).
     ipcMain.handle('__dialog:showMessageBox', async (event, spec) => {
+      assertTrustedRenderer(event)
       const win = BrowserWindow.fromWebContents(event.sender)
         || BrowserWindow.getFocusedWindow()
         || BrowserWindow.getAllWindows()[0]
@@ -920,6 +1079,7 @@ app.whenReady().then(async () => {
       return { response: result.response }
     })
     ipcMain.handle('__dialog:showOpenDialog', async (event, spec) => {
+      assertTrustedRenderer(event)
       const win = BrowserWindow.fromWebContents(event.sender)
         || BrowserWindow.getFocusedWindow()
         || BrowserWindow.getAllWindows()[0]
@@ -927,6 +1087,7 @@ app.whenReady().then(async () => {
       return { canceled: result.canceled, filePaths: result.filePaths }
     })
     ipcMain.handle('notes:exportPdf', async (event, opts: { html: string; defaultPath: string }) => {
+      assertTrustedRenderer(event)
       const win = BrowserWindow.fromWebContents(event.sender)
         || BrowserWindow.getFocusedWindow()
         || BrowserWindow.getAllWindows()[0]
@@ -951,6 +1112,7 @@ app.whenReady().then(async () => {
         event,
         opts: { content: string; defaultPath: string; filters?: Array<{ name: string; extensions: string[] }> },
       ) => {
+        assertTrustedRenderer(event)
         const win =
           BrowserWindow.fromWebContents(event.sender) ||
           BrowserWindow.getFocusedWindow() ||
@@ -1052,7 +1214,7 @@ app.whenReady().then(async () => {
       }
 
       // Read embedded server config (Server settings page)
-      const { getServerConfig } = await import('@rox/shared/config')
+      const { getServerConfig, resolveConfigDir } = await import('@rox/shared/config')
       const embeddedServerConfig = getServerConfig()
       const serverModeEnabled = embeddedServerConfig.enabled && !isClientOnly
 
@@ -1111,11 +1273,12 @@ app.whenReady().then(async () => {
               await Promise.all([whenSpawnEnvReady(), whenBundledSkillsReadyForAgents(10_000)])
             },
             captureException: (error, context) => {
-              Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
-                tags: {
-                  ...(context?.errorSource ? { errorSource: context.errorSource } : {}),
-                  ...(context?.sessionId ? { sessionId: context.sessionId } : {}),
-                },
+              const normalized = error instanceof Error ? error : new Error(String(error))
+              errorLog.error('[captureException]', {
+                message: normalized.message,
+                error: normalized,
+                errorSource: context?.errorSource,
+                sessionId: context?.sessionId,
               })
             },
           })
@@ -1231,10 +1394,15 @@ app.whenReady().then(async () => {
             },
             ...(!isHeadless ? { browserCredentials } : {}),
             ...(voiceOverlay ? { voiceOverlay } : {}),
+            // OS permission probes for onboarding; absent when headless so the
+            // handler answers honest `unsupported` instead of faking a grant.
+            ...(!isHeadless ? { onboardingPermissions: createOnboardingPermissionsHost() } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
             // WP-117: `learning:*` RPC surface (UNSUPPORTED_OPERATION when absent).
             ...(learning ? { learning } : {}),
+            // ROX Drive (wave 1): device-local storage engine.
+            drive: createDriveService(),
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)
@@ -1324,20 +1492,22 @@ app.whenReady().then(async () => {
       // IPC handlers — preload uses sendSync to get WS connection details
 
       // Remove workspace from config (cleanup stale entries)
-      ipcMain.handle('workspace:remove', async (_event, workspaceId: string) => {
+      ipcMain.handle('workspace:remove', async (event, workspaceId: string) => {
+        assertTrustedRenderer(event)
         const { removeWorkspace: remove } = await import('@rox/shared/config')
         return remove(workspaceId)
       })
 
       // SSH remote hosts + tunnels (Remote-SSH style bootstrap to a remote server)
       const { registerSshTunnelIpc } = await import('./ssh-tunnel/ipc')
-      registerSshTunnelIpc()
+      registerSshTunnelIpc({ isTrustedSender: isTrustedRoxRendererIpcEvent })
 
       // Cross-server RPC — invoke a channel on an arbitrary remote server.
       // RX-SEC-0006: URL рендерера проходит политику транспорта — открытый
       // текст только на loopback, иначе TLS. Без этого компрометированный
       // рендерер получает SSRF во внутреннюю сеть с нашим токеном.
-      ipcMain.handle('server:invokeOnServer', async (_event, url: string, token: string, channel: string, ...args: unknown[]) => {
+      ipcMain.handle('server:invokeOnServer', async (event, url: string, token: string, channel: string, ...args: unknown[]) => {
+        assertTrustedRenderer(event)
         const policy = isAllowedServerEndpoint(url)
         if (!policy.ok) throw new Error(`Blocked by server endpoint policy: ${policy.reason}`)
         const { connectToRemote } = await import('./handlers/workspace')
@@ -1481,14 +1651,22 @@ app.whenReady().then(async () => {
       })
 
       // App relaunch (for server config changes — NOT an update install)
-      ipcMain.handle('app:relaunch', () => {
+      ipcMain.handle('app:relaunch', (event) => {
+        assertTrustedRenderer(event)
         app.relaunch()
         app.exit(0)
       })
 
       ipcMain.on('__get-ws-port', (e) => {
+        // Preload sendSync; registered-webcontents guard only (senderFrame may be null).
+        if (!isRegisteredRoxRendererWebContents(e.sender)) return
+        // PERF-01 shell-first boot: the port is authoritative only once the
+        // server has bound and its sinks are wired (publishWsPort). Before that
+        // leave returnValue unset so the preload falls back to `__await-ws-port`
+        // instead of dialling an unbooted server.
+        if (wsPortValue === null) return
         markStartupOnce(STARTUP_MARKS.wsPortHanded)
-        e.returnValue = instance.port
+        e.returnValue = wsPortValue
       })
       ipcMain.handle('__resolve-local-ws-token', async (event, expectedWorkspaceId: unknown) => {
         try {
@@ -1523,14 +1701,8 @@ app.whenReady().then(async () => {
           if (!window.isDestroyed() && window.webContents.id !== initiatingSenderId) window.webContents.send('__project-authority:configuration-changed')
         }
       }
-      ipcMain.handle('__project-authority:resolve', async (event, localWorkspaceId: unknown) => {
-        const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
-        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
-        const { resolveStoredProjectAuthority } = await import('./project-authority')
-        const result = await resolveStoredProjectAuthority(bound)
-        if (windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
-        return result
-      })
+      // __project-authority:resolve is registered in the shell-first block above
+      // so the preload's eval-time invoke always finds it (PERF-01).
       ipcMain.handle('__project-authority:configuration', async (event, localWorkspaceId: unknown) => {
         const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
         if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
@@ -1592,23 +1764,24 @@ app.whenReady().then(async () => {
         return result
       })
 
-      ipcMain.on('__get-workspace-remote-config', (e) => {
-        const wsId = windowManager?.getWorkspaceForWindow(e.sender.id)
-        if (!wsId) { e.returnValue = null; return }
-        const ws = getWorkspaceByNameOrId(wsId)
-        e.returnValue = ws?.remoteServer ?? null
-      })
-
-      ipcMain.handle('remoteTls:inspect', async (_event, url: string) => {
+      ipcMain.handle('remoteTls:inspect', async (event, url: string) => {
+        assertTrustedRenderer(event)
         const { inspectRemoteTlsPeer, beginEnrollment } = await import('./remote-tls-enrollment')
         const result = await inspectRemoteTlsPeer(url)
         return { nonce: beginEnrollment(result), result }
       })
-      ipcMain.handle('remoteTls:decide', async (_event, payload: {
+      ipcMain.handle('remoteTls:decide', async (event, payload: {
         nonce: string
         action: 'accept' | 'reject' | 'confirm-rollover'
         workspaceId?: string
       }) => {
+        assertTrustedRenderer(event)
+        // The nonce map in remote-tls-enrollment is global; bind the decision to
+        // the sender's own workspace so one window cannot pin another's origin.
+        if (payload.workspaceId) {
+          const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
+          if (!bound || bound !== payload.workspaceId) throw new Error('WORKSPACE_MISMATCH')
+        }
         const { applyEnrollmentDecision } = await import('./remote-tls-enrollment')
         const { updateWorkspaceRemoteServer } = await import('@rox/shared/config')
         const ws = payload.workspaceId ? getWorkspaceByNameOrId(payload.workspaceId) : null
@@ -1714,13 +1887,114 @@ app.whenReady().then(async () => {
         )
       }
 
-      // Wire EventSink to Electron-specific services
-      // Must happen BEFORE createInitialWindows() so event handlers use WS from the start
+      // Wire EventSink to Electron-specific services. The shell window already
+      // exists (PERF-01 shell-first boot), but its renderer only connects after
+      // this point: the WS port is published below, so event handlers use the
+      // WS sinks from the first client connection.
       windowManager.setRpcEventSink(moduleSink!, resolveClientId)
-      const { setMenuEventSink } = await import('./menu')
+      const { setMenuEventSink, dispatchMenuChannel } = await import('./menu')
       setMenuEventSink(moduleSink!, resolveClientId)
       const { setNotificationEventSink } = await import('./notifications')
       setNotificationEventSink(moduleSink!, resolveClientId)
+
+// Release the local transport to the shell window(s): every renderer RPC
+      // (`__resolve-local-ws-token`, then the WS transport itself) is now wired.
+      publishWsPort(instance.port)
+
+      // S7: host-local service lifecycle + doctor (e1.4/e1.5, e1.6). All
+      // channels are LOCAL_ONLY; the launchd LaunchAgent relaunches the app
+      // binary (override with ROX_SERVICE_EXECUTABLE/ROX_SERVICE_ARGS).
+      // auto-update is loaded dynamically so its autoUpdater side effects stay
+      // off the main-process boot path (same as the other call sites here).
+      const { detectMacAdHocSigned } = await import('./auto-update')
+      const homeDir = app.getPath('home')
+      const configDir = resolveConfigDir()
+      const serviceLabel = 'com.rox.service'
+      const serviceDirectory = join(configDir, 'service')
+      const launchAgentsDirectory = join(homeDir, 'Library', 'LaunchAgents')
+      const isBuildTrusted = () => !detectMacAdHocSigned(process.execPath)
+      const serviceManagerBase = createServiceManager({
+        platform: process.platform === 'darwin' ? 'darwin' : process.platform === 'win32' ? 'win32' : 'linux',
+        launchd: process.platform === 'darwin'
+          ? {
+              files: buildLaunchAgentFiles({
+                label: serviceLabel,
+                executable: process.env.ROX_SERVICE_EXECUTABLE ?? process.execPath,
+                args: process.env.ROX_SERVICE_ARGS
+                  ? process.env.ROX_SERVICE_ARGS.split('\u0000')
+                  : [app.getAppPath()],
+                environment: {
+                  ROX_SERVICE_MANAGED: '1',
+                  ROX_CONFIG_DIR: configDir,
+                  ...(serverModeEnabled ? { CRAFT_SERVER_TOKEN: serverToken } : {}),
+                },
+                serviceDirectory,
+                launchAgentsDirectory,
+                workingDirectory: configDir,
+                logDirectory: join(configDir, 'logs'),
+              }),
+              fs: createNodeServiceFilesystem(),
+              runtime: new LaunchdRuntime({
+                label: serviceLabel,
+                uid: userInfo().uid,
+                runner: createLaunchctlRunner(),
+              }),
+              serviceDirectory,
+              launchAgentsDirectory,
+            }
+          : undefined,
+      })
+      const serviceManager = guardServiceInstall(serviceManagerBase, isBuildTrusted)
+      const doctorLogPaths = [getMessagingGatewayLogFilePath(), getAutoUpdateLogFilePath(), getLogFilePath()]
+        .filter((path): path is string => typeof path === 'string')
+      registerServiceLifecycleIpc({
+        server: instance.wsServer,
+        service: serviceManager,
+        runDoctor: () => runDoctor({
+          getServiceStatus: () => serviceManager.getStatus(),
+          // Only a real bound port can conflict; port 0 (ephemeral loopback) is skipped.
+          servicePorts: serverModeEnabled ? [embeddedServerConfig.port] : [],
+          isPortAvailable: defaultPortAvailable,
+          configDir,
+          pathExists: async path => existsSync(path),
+          appVersion: app.getVersion(),
+          runtimeVersion: null,
+          logPaths: doctorLogPaths,
+        }),
+      })
+
+      // Menu-bar status shell (e2.1). Only with a real UI; the indicator tracks
+      // the service state and every transition is broadcast to the renderer.
+      if (!isHeadless && process.platform === 'darwin') {
+        const iconPath = resolveAppIconPngPath()
+        const tray = new Tray(iconPath ? nativeImage.createFromPath(iconPath).resize({ width: 18, height: 18 }) : nativeImage.createEmpty())
+        const trayController = new TrayController({
+          tray,
+          buildMenu: template => Menu.buildFromTemplate([...template]),
+          translate: key => i18n.t(key),
+          // The channel set comes from the tray model, never from IPC input.
+          dispatchChannel: channel => dispatchMenuChannel(channel as MenuBroadcastChannel),
+          broadcastStatus: status => pushTyped(instance.wsServer, RPC_CHANNELS.menu.TRAY_STATUS_CHANGED, { to: 'all' }, status),
+          quit: () => app.quit(),
+        })
+        let lastTrayState: string | null = null
+        const refreshTray = async () => {
+          const status = await serviceManager.getStatus()
+          if (status.state === lastTrayState) return
+          lastTrayState = status.state
+          trayController.setStatus({
+            agentState: status.state === 'failed' || status.state === 'degraded' ? 'error' : 'idle',
+            serviceState: status.state,
+          })
+        }
+        void refreshTray()
+        const trayTimer = setInterval(() => { void refreshTray() }, 30_000)
+        trayTimer.unref?.()
+        app.once('will-quit', () => {
+          clearInterval(trayTimer)
+          trayController.dispose()
+        })
+      }
 
       // Headless: print connection details
       if (isHeadless) {
@@ -1729,12 +2003,8 @@ app.whenReady().then(async () => {
       }
     }
 
-    // Create initial windows (restores from saved state or opens first workspace)
-    // In headless mode the server runs without any UI — skip window creation.
-    if (!isHeadless) {
-      await createInitialWindows()
-    }
-    // Windows are restored: from here on a quit's window snapshot is real.
+    // Windows were created early (PERF-01 shell-first boot); this flag marks the
+    // end of startup init so a quit from here on snapshots real window state.
     appInitialized = true
 
     // Run credential health check at startup to detect issues early
@@ -1761,23 +2031,6 @@ app.whenReady().then(async () => {
       await initPowerManager()
     } catch (err) {
       mainLog.warn('[power] Power manager init failed (non-critical):', err instanceof Error ? err.message : err)
-    }
-
-    // Set Sentry context tags for error grouping (no PII — just config classification).
-    // Runs after init so config and auth state are available.
-    // Derives values from the default LLM connection instead of legacy config fields.
-    try {
-      const { getLlmConnection, getDefaultLlmConnection } = await import('@rox/shared/config')
-      const workspaces = getWorkspaces()
-      const defaultConnSlug = getDefaultLlmConnection()
-      const defaultConn = defaultConnSlug ? getLlmConnection(defaultConnSlug) : null
-      Sentry.setTag('authType', defaultConn?.authType ?? 'unknown')
-      Sentry.setTag('providerType', defaultConn?.providerType ?? 'unknown')
-      Sentry.setTag('hasCustomEndpoint', String(!!defaultConn?.baseUrl))
-      Sentry.setTag('model', defaultConn?.defaultModel ?? 'default')
-      Sentry.setTag('workspaceCount', String(workspaces.length))
-    } catch (err) {
-      mainLog.warn('Failed to set Sentry context tags:', err)
     }
 
     // Initialize auto-update (check immediately on launch)
@@ -1828,7 +2081,7 @@ app.whenReady().then(async () => {
       const coldStartLink = pendingDeepLink
       pendingDeepLink = null
       mainLog.info('Processing pending deep link:', coldStartLink)
-      handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
+      handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined, undefined, 'os').catch(err => {
         mainLog.error('Failed to handle pending deep link (dropped, no retry):', err)
       })
     }
@@ -2051,19 +2304,25 @@ app.on('before-quit', async (event) => {
   // and Squirrel.Mac's quit proceeds uninterrupted so the update installs (#891).
   if (sessionManager || openDesignRuntime?.hasActiveRuntime()) {
     event.preventDefault()
-    await performQuitCleanup()
-    app.exit(0)
+    // performQuitCleanup has unguarded steps (model-refresh stopAll, the
+    // power-manager import, releaseServerLock). Whatever throws, we must still
+    // exit: the quit was already cancelled above, so a rejection here would
+    // leave a windowless process holding the server/config locks.
+    await runQuitCleanupThenExit(
+      performQuitCleanup,
+      code => app.exit(code),
+      error => mainLog.error('[quit] cleanup failed; forcing exit:', error),
+    )
   }
 })
 
-// Handle uncaught exceptions — forward to Sentry explicitly since registering
-// a custom handler can interfere with @sentry/electron's automatic capture.
+// Handle uncaught exceptions.
 process.on('uncaughtException', (error) => {
   mainLog.error('Uncaught exception:', error)
-  Sentry.captureException(error)
+  errorLog.error('Uncaught exception', { error })
 })
 
 process.on('unhandledRejection', (reason, promise) => {
   mainLog.error('Unhandled rejection at:', promise, 'reason:', reason)
-  Sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)))
+  errorLog.error('Unhandled rejection', { reason, promise })
 })

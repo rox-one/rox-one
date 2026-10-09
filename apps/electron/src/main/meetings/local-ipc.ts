@@ -6,11 +6,12 @@ import { app, BrowserWindow, dialog, ipcMain, session, shell, systemPreferences,
 import { join } from 'node:path'
 import { CONFIG_DIR, getWorkspaceByNameOrId } from '@rox/shared/config'
 import { getServerServiceKey } from '@rox/shared/config/server-services'
-import { DeepgramTranscriptionAdapter } from '@rox/shared/voice'
-import { MEETINGS_LOCAL_IPC as C, type LocalMeetingPatch, type LocalTranscriptSegmentUpdate } from '../../shared/meetings-local'
+import { DeepgramTranscriptionAdapter, deepgramTranscriptionOptions } from '@rox/shared/voice'
+import { MEETINGS_LOCAL_IPC as C, type LocalMeetingPatch, type LocalMeetingSource, type LocalTranscriptSegmentUpdate, type LocalObserveIngestInput } from '../../shared/meetings-local'
 import { detectEngine } from './local-asr'
 import { IMPORTABLE_AUDIO_EXTENSIONS, isMeetingId } from './local-model'
 import { LocalMeetingStore, type LocalTranscriptionContext } from './local-store'
+import { LocalMeetingObserver } from './local-observer'
 import { MeetingCloudAsr } from './cloud-asr'
 import { WorkspaceWorkStore } from '@rox/server-core/workspace-work/store'
 import { isAllowedServerEndpoint } from '../server-endpoint-policy'
@@ -84,7 +85,8 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
     getWorkspace: getWorkspaceByNameOrId,
     localEngine: () => detectEngine(CONFIG_DIR),
     localTranscribe: (input) => new DeepgramTranscriptionAdapter({
-      apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '', model: process.env.DEEPGRAM_MODEL,
+      apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '',
+      ...deepgramTranscriptionOptions(process.env),
     }).transcribe(input),
     isContextCurrent,
     async connect(remote) {
@@ -122,6 +124,7 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
       return undefined
     }, emit: broadcast, log })
   store = s
+  const observer = new LocalMeetingObserver({ appendObservedSegment: (meetingId, segment) => s.appendObservedSegment(meetingId, segment) })
   try {
     installMediaPermissionHandler()
   } catch (error) {
@@ -185,6 +188,24 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
     }
     return s.saveAction(id, input)
   })
+  handle(C.OBSERVE_START, (e, id: string) => {
+    const { meeting } = meetingContext(e, id)
+    observer.observeStart(id)
+    return { ok: true, value: meeting }
+  })
+  handle(C.OBSERVE_STOP, (e, id: string) => {
+    const { meeting } = meetingContext(e, id)
+    return observer.observeStop(id) ? { ok: true, value: meeting } : { ok: false, code: 'not-observing' }
+  })
+  handle(C.OBSERVE_INGEST, (e, id: string, input: LocalObserveIngestInput) => {
+    meetingContext(e, id)
+    const result = observer.ingest(id, input)
+    return result.ok ? result.line : null
+  })
+  handle(C.OBSERVE_LINES, (e, id: string, afterSeq?: number) => {
+    meetingContext(e, id)
+    return observer.lines(id, typeof afterSeq === 'number' ? afterSeq : undefined)
+  })
   handle(C.TRASH, async (e, id: string) => {
     if (!isMeetingId(id) || !s.canRemove(id)) return false
     meetingContext(e, id)
@@ -198,7 +219,7 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
     return true
   })
 
-  handle(C.REC_START, (e, input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string }) => {
+  handle(C.REC_START, (e, input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string; source?: LocalMeetingSource; calendarEventId?: string }) => {
     const context = contextFor(e, input.workspaceId)
     if (input.meetingId) meetingContext(e, input.meetingId)
     return s.recStart({ ...input, workspaceId: windowBindings!.getWorkspaceForWindow(e.sender.id)!, owner: e.sender.id, transcriptionContext: context })

@@ -14,7 +14,7 @@ import { RPC_CHANNELS } from './channels'
 // LOCAL_ONLY — fundamentally requires local OS / Electron
 // ---------------------------------------------------------------------------
 
-export const LOCAL_ONLY_CHANNELS = new Set<string>([
+export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.voice.COPY_TEXT,
   // Repository capture uses the verified local Electron source owner.
   RPC_CHANNELS.codeIntelligence.PREVIEW,
@@ -106,6 +106,16 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.credentials.GET_MIGRATION_STATUS,
   RPC_CHANNELS.credentials.ROLLBACK_MIGRATION,
 
+  // keeper — personal secret vault: plaintext never leaves the local host.
+  RPC_CHANNELS.keeper.LIST,
+  RPC_CHANNELS.keeper.GET,
+  RPC_CHANNELS.keeper.CREATE,
+  RPC_CHANNELS.keeper.UPDATE,
+  RPC_CHANNELS.keeper.DELETE,
+  RPC_CHANNELS.keeper.REVEAL,
+  RPC_CHANNELS.keeper.UNLOCK_STATUS,
+  RPC_CHANNELS.keeper.IMPORT_BROWSER,
+
   // shell — local OS shell (openFile/showInFolder guarded for remote)
   RPC_CHANNELS.shell.OPEN_URL,
   RPC_CHANNELS.shell.OPEN_FILE,
@@ -142,6 +152,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.theme.LOAD_PRESET,
   RPC_CHANNELS.theme.GET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_COLOR_THEME,
+  RPC_CHANNELS.theme.SET_APP_MATERIAL,
   RPC_CHANNELS.theme.BROADCAST_PREFERENCES,
   RPC_CHANNELS.theme.PREFERENCES_CHANGED,
   RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME,
@@ -171,6 +182,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
 
   // menu — local menu events
   RPC_CHANNELS.menu.NEW_CHAT,
+  RPC_CHANNELS.menu.OPEN_DASHBOARD,
+  RPC_CHANNELS.menu.OPEN_NATIVE_CONSOLE,
+  RPC_CHANNELS.menu.SHOW_SERVICE_STATUS,
+  RPC_CHANNELS.menu.RUN_DOCTOR,
+  RPC_CHANNELS.menu.TRAY_STATUS_CHANGED,
   RPC_CHANNELS.menu.NEW_WINDOW,
   RPC_CHANNELS.menu.OPEN_SETTINGS,
   RPC_CHANNELS.menu.KEYBOARD_SHORTCUTS,
@@ -276,6 +292,18 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET,
   RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN,
 
+  RPC_CHANNELS.browserCredentials.EXPORT_FOR_KEEPER,
+
+  // browserIntel — reads/stages local browser profile files only; never remote-eligible.
+  RPC_CHANNELS.browserIntel.GET_STATE,
+  RPC_CHANNELS.browserIntel.SET_CONSENT,
+  RPC_CHANNELS.browserIntel.GET_STATS,
+  RPC_CHANNELS.browserIntel.GET_SLOTS,
+  RPC_CHANNELS.browserIntel.START_RUN,
+  RPC_CHANNELS.browserIntel.CANCEL_RUN,
+  RPC_CHANNELS.browserIntel.PROGRESS,
+  RPC_CHANNELS.browserIntel.STATE_CHANGED,
+
   // gitbash — Windows-specific local
   RPC_CHANNELS.gitbash.CHECK,
   RPC_CHANNELS.gitbash.BROWSE,
@@ -294,7 +322,17 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE,
   RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
   RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
+  RPC_CHANNELS.onboarding.CHECK_HANDLE,
   RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
+  // permissions & data-access column — OS probes require the local Electron host
+  RPC_CHANNELS.onboarding.PERMISSIONS_STATUS,
+  RPC_CHANNELS.onboarding.OPEN_PERMISSION_SETTINGS,
+  RPC_CHANNELS.onboarding.SUGGEST_PREFERENCES,
+  // calendar — Google OAuth broker + local sync run on the local app server
+  RPC_CHANNELS.calendar.GOOGLE_STATUS,
+  RPC_CHANNELS.calendar.GOOGLE_CONNECT,
+  RPC_CHANNELS.calendar.GOOGLE_DISCONNECT,
+  RPC_CHANNELS.calendar.GOOGLE_SYNC,
   RPC_CHANNELS.settings.GET_NETWORK_PROXY,
   RPC_CHANNELS.settings.SET_NETWORK_PROXY,
 
@@ -358,6 +396,12 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.meetings.FINALIZE,
   RPC_CHANNELS.meetings.ADD_MANUAL_NOTE,
   RPC_CHANNELS.meetings.CORRECT_SEGMENT,
+  // Meetings live observation — device-local capture/playback, never proxied.
+  RPC_CHANNELS.meetings.OBSERVE_START,
+  RPC_CHANNELS.meetings.OBSERVE_STOP,
+  RPC_CHANNELS.meetings.OBSERVE_STATE,
+  RPC_CHANNELS.meetings.SESSION_SUMMARY,
+  RPC_CHANNELS.meetings.TRANSCRIPT_LINES,
 
   // extensions — Extension Center catalog/state (local config dir + projections; same host as marketplace)
   RPC_CHANNELS.extensions.LIST_CATALOG,
@@ -470,7 +514,18 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.fabric.ACQUIRE_LEASE,
   RPC_CHANNELS.fabric.REVOKE_CONNECTION,
   RPC_CHANNELS.fabric.GITHUB_STATUS,
+  // GitHub identity linking — the device flow and the workspace link record are
+  // host-local; the token never leaves the main process.
+  RPC_CHANNELS.fabric.GITHUB_LINK_START,
+  RPC_CHANNELS.fabric.GITHUB_LINK_POLL,
+  RPC_CHANNELS.fabric.GITHUB_LINK_GET,
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
+  RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
+  RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
+  RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS,
+  RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS,
+  RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM,
+  RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM,
 
   // Entities (W1-02) — the link store is a workspace-local SQLite file.
   RPC_CHANNELS.entities.LINKS,
@@ -479,13 +534,47 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   // W1-04 (#1501) — Dossier export writes the host's local contact store.
   RPC_CHANNELS.directory.EXPORT_DOSSIER,
 
-])
+  // --- carried over from feat/rox-platform-20261009 (merge 2026-10-09) ---
+  RPC_CHANNELS.drive.QUOTA,
+  RPC_CHANNELS.drive.LIST,
+  RPC_CHANNELS.drive.CREATE_FOLDER,
+  RPC_CHANNELS.drive.OPEN_UPLOAD,
+  RPC_CHANNELS.drive.UPLOAD_PART,
+  RPC_CHANNELS.drive.COMPLETE_UPLOAD,
+  RPC_CHANNELS.drive.ABORT_UPLOAD,
+  RPC_CHANNELS.drive.DELETE,
+  RPC_CHANNELS.drive.SCAN_SOURCE,
+  RPC_CHANNELS.drive.IMPORT_PLAN,
+  RPC_CHANNELS.drive.IMPORT_START,
+  RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_RESUME,
+  RPC_CHANNELS.drive.IMPORT_STATUS,
+  RPC_CHANNELS.drive.IMPORT_AUTH_START,
+  RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE,
+  RPC_CHANNELS.tgLink.START,
+  RPC_CHANNELS.tgLink.VERIFY,
+  RPC_CHANNELS.tgLink.STATUS,
+  // serviceLifecycle — OS service (launchd/systemd/Windows) control is host-local.
+  RPC_CHANNELS.serviceLifecycle.GET_STATUS,
+  RPC_CHANNELS.serviceLifecycle.INSTALL,
+  RPC_CHANNELS.serviceLifecycle.START,
+  RPC_CHANNELS.serviceLifecycle.STOP,
+  RPC_CHANNELS.serviceLifecycle.RESTART,
+  RPC_CHANNELS.serviceLifecycle.UNINSTALL,
+  RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED,
+
+  // diagnostics — host doctor checks read local service/port/config/log state.
+  RPC_CHANNELS.diagnostics.RUN,
+  RPC_CHANNELS.diagnostics.GET_LAST,
+]
+
+export const LOCAL_ONLY_CHANNELS = new Set<string>(LOCAL_ONLY_CHANNEL_LIST)
 
 // ---------------------------------------------------------------------------
 // REMOTE_ELIGIBLE — runs on whichever server owns the workspace
 // ---------------------------------------------------------------------------
 
-export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.workspaceWork.READ,
   RPC_CHANNELS.workspaceWork.WRITE,
   RPC_CHANNELS.workspaceWork.DELETE,
@@ -517,6 +606,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.voice.CANCEL,
   RPC_CHANNELS.voice.GRANT,
   RPC_CHANNELS.voice.CHUNK,
+  RPC_CHANNELS.voice.LEVEL,
   RPC_CHANNELS.voice.HISTORY_LIST,
   RPC_CHANNELS.voice.HISTORY_GET,
   RPC_CHANNELS.voice.HISTORY_FAVORITE,
@@ -532,6 +622,23 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.voice.JOB,
   RPC_CHANNELS.voice.OVERLAY,
   RPC_CHANNELS.voice.HOTKEY,
+  RPC_CHANNELS.voice.TALK_START,
+  RPC_CHANNELS.voice.TALK_STOP,
+  RPC_CHANNELS.voice.TALK_AUDIO,
+  RPC_CHANNELS.voice.TALK_EVENT,
+  RPC_CHANNELS.voice.TALK_CLIENT_SECRET,
+  RPC_CHANNELS.voice.TTS_STREAM_START,
+  RPC_CHANNELS.voice.TTS_STREAM_CHUNK,
+  RPC_CHANNELS.voice.TTS_STREAM_STOP,
+  RPC_CHANNELS.voice.STT_START,
+  RPC_CHANNELS.voice.STT_AUDIO,
+  RPC_CHANNELS.voice.STT_STOP,
+  RPC_CHANNELS.voice.STT_EVENT,
+  RPC_CHANNELS.voice.PROVIDERS,
+  RPC_CHANNELS.voice.WAKE_GET,
+  RPC_CHANNELS.voice.WAKE_SET,
+  RPC_CHANNELS.voice.WAKE_CHANGED,
+  RPC_CHANNELS.voice.TRIGGER,
 
 
   // Identity profile reads/edits are caller-scoped for native principals. The
@@ -569,8 +676,6 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED,
   RPC_CHANNELS.sessions.CREATE,
   RPC_CHANNELS.sessions.DELETE,
-  RPC_CHANNELS.sessions.SET_MEMORY_MODE,
-  RPC_CHANNELS.sessions.GET_PROVENANCE,
   RPC_CHANNELS.sessions.GET_MESSAGES,
   RPC_CHANNELS.sessions.SEND_MESSAGE,
   RPC_CHANNELS.sessions.CANCEL,
@@ -599,6 +704,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.sessions.IMPORT,
   RPC_CHANNELS.sessions.EXPORT_REMOTE_TRANSFER,
   RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER,
+  RPC_CHANNELS.sessions.ASSIGN_OWNER,
 
   // transfer — chunked large-payload import (sessions, resources)
   RPC_CHANNELS.transfer.START,
@@ -635,6 +741,10 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
 
   // notes — workspace note vault
   RPC_CHANNELS.notes.LIST,
+  RPC_CHANNELS.notes.LIST_COMMENTS,
+  RPC_CHANNELS.notes.CREATE_COMMENT,
+  RPC_CHANNELS.notes.UPDATE_COMMENT,
+  RPC_CHANNELS.notes.DELETE_COMMENT,
   RPC_CHANNELS.notes.READ,
   RPC_CHANNELS.notes.SAVE,
   RPC_CHANNELS.notes.UPDATE_PROPERTIES,
@@ -753,6 +863,10 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.memory.REJECT_PROPOSAL,
   RPC_CHANNELS.memory.EDIT_PROPOSAL,
   RPC_CHANNELS.memory.DELETE_PROPOSAL,
+  RPC_CHANNELS.memory.SEARCH,
+  RPC_CHANNELS.memory.GET,
+  RPC_CHANNELS.memory.INDEX_STATUS,
+  RPC_CHANNELS.memory.REBUILD_INDEX,
 
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).
@@ -886,6 +1000,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.skills.GET_USAGE,
   RPC_CHANNELS.skills.PRUNE_UNUSED,
   RPC_CHANNELS.skills.EXPORT_TO_PROJECT,
+  RPC_CHANNELS.skills.GET_ELIGIBILITY,
   RPC_CHANNELS.skills.CHANGED,
 
   // statuses — workspace metadata
@@ -1110,7 +1225,9 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.commands.EXECUTE,
   RPC_CHANNELS.commands.LIST,
   RPC_CHANNELS.commands.EVENT,
-])
+]
+
+export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>(REMOTE_ELIGIBLE_CHANNEL_LIST)
 
 // ---------------------------------------------------------------------------
 // Query helpers

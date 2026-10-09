@@ -4,7 +4,7 @@ import * as nativeFs from 'node:fs'
 import * as nativeFsPromises from 'node:fs/promises'
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, join, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const runnerPath = join(import.meta.dir, 'test-all.ts')
@@ -115,6 +115,25 @@ describe('UI-001 repository test runner', () => {
     })
     try{await expect((await runner()).discoverSuites(root)).rejects.toThrow('ancestor changed');expect(attacked).toBe(true);expect(reads).toBe(0)}finally{held.mockRestore()}
   },20_000)
+
+  test('discovery keeps a stable non-canonical ancestor spelling instead of requiring a realpath fixed point', async () => {
+    const source = "import {test} from 'bun:test';test('stable spelling',()=>{})"
+    const root = fixture(); file(root, 'a.test.ts', source)
+    const actualRealpath = nativeFsPromises.realpath, canonical = await actualRealpath(root), alias = canonical + sep
+    const held = spyOn(nativeFsPromises, 'realpath').mockImplementation((async (path: nativeFs.PathLike) => {
+      if (String(path) === alias) return canonical
+      const resolved = await actualRealpath(path)
+      return resolved === canonical ? alias : resolved
+    }) as typeof nativeFsPromises.realpath)
+    try {
+      // One directory under two stable spellings, neither a fixed point, as
+      // Windows realpath can spell the same ancestor as a short or long name.
+      expect(await nativeFsPromises.realpath(alias)).toBe(canonical)
+      expect(await nativeFsPromises.realpath(canonical)).toBe(alias)
+      const manifest = await (await runner()).discoverSuites(root)
+      expect(manifest.suites).toMatchObject([{ path: 'a.test.ts', runner: 'bun', sha256: createHash('sha256').update(source).digest('hex') }])
+    } finally { held.mockRestore() }
+  }, 20_000)
 
   test('oversized test sources fail discovery without reading any source bytes', async () => {
     const root=fixture(),path=join(root,'large.test.ts');file(root,'large.test.ts',"import {test} from 'bun:test';test('never execute',()=>{})")

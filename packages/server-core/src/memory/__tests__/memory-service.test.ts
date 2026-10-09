@@ -445,6 +445,67 @@ describe('MemoryService', () => {
   })
 })
 
+describe('buildMemoryBlocks provenance gate (c1.2)', () => {
+  const UNTRUSTED = { originClass: 'untrusted', sessionKind: 'unknown', observedAt: '2026-01-01T00:00:00.000Z' }
+
+  it('drops untrusted workspace context.md while a trusted doc still passes', async () => {
+    const h = makeService()
+    tmpRoots.push(h.root)
+    h.wsFiles.writeContext('Trusted context body.')
+    expect((await h.svc.buildMemoryBlocks())?.memoryBlock).toContain('Trusted context body.')
+
+    writeFileSync(join(h.root, 'memory', 'index-provenance.json'), JSON.stringify({ 'memory/context.md': UNTRUSTED }))
+    const gated = await h.svc.buildMemoryBlocks()
+    expect(gated?.memoryBlock ?? '').not.toContain('Trusted context body.')
+  })
+
+  it('drops untrusted workspace lessons while global lessons still pass', async () => {
+    const h = makeService()
+    tmpRoots.push(h.root)
+    h.wsLessons.add({
+      ts: '2026-01-01T00:00:01Z',
+      rule: 'ws-only rule',
+      category: 'workflow',
+      scope: 'workspace',
+      source: { trigger: 'explicit' },
+    } as Lesson)
+    expect((await h.svc.buildMemoryBlocks())?.lessonsBlock).toContain('ws-only rule')
+
+    writeFileSync(join(h.root, 'memory', 'index-provenance.json'), JSON.stringify({ 'memory/lessons.jsonl': UNTRUSTED }))
+    h.globalLessons.add({
+      ts: '2026-01-01T00:00:00Z',
+      rule: 'global rule',
+      category: 'preference',
+      scope: 'global',
+      source: { trigger: 'explicit' },
+    } as Lesson)
+    const gated = await h.svc.buildMemoryBlocks()
+    expect(gated?.lessonsBlock ?? '').not.toContain('ws-only rule')
+    expect(gated?.lessonsBlock).toContain('global rule')
+  })
+
+  it('a document explicitly stamped trusted still passes', async () => {
+    const h = makeService()
+    tmpRoots.push(h.root)
+    h.wsFiles.writeContext('Trusted context body.')
+    writeFileSync(
+      join(h.root, 'memory', 'index-provenance.json'),
+      JSON.stringify({ 'memory/context.md': { originClass: 'agent', sessionKind: 'subagent', observedAt: '2026-01-01T00:00:00.000Z' } }),
+    )
+    expect((await h.svc.buildMemoryBlocks())?.memoryBlock).toContain('Trusted context body.')
+  })
+
+  it('gates the query-ranked memory documents too', async () => {
+    const h = makeService()
+    tmpRoots.push(h.root)
+    h.wsFiles.writeContext('Ranked context body about vercel deploys.')
+    expect((await h.svc.buildMemoryBlocks({ query: 'vercel' }))?.memoryBlock).toContain('Ranked context body')
+    writeFileSync(join(h.root, 'memory', 'index-provenance.json'), JSON.stringify({ 'memory/context.md': UNTRUSTED }))
+    const gated = await h.svc.buildMemoryBlocks({ query: 'vercel' })
+    expect(gated?.memoryBlock ?? '').not.toContain('Ranked context body')
+  })
+})
+
 describe('buildMemoryBlocks query-scoped (M1)', () => {
   function seed(h: { globalLessons: LessonStore; wsLessons: LessonStore; wsFiles: MemoryFileStore }): void {
     h.globalLessons.add({

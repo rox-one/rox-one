@@ -6,9 +6,21 @@
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, copyFileSync, openSync, closeSync, unlinkSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { assertWritableSchema } from '@rox/core/meetings'
-import type { MeetingCommitCommand, MeetingCommitResult, MeetingJournalEvent, MeetingOutboxEntry } from '@rox/core/meetings'
+import { assertWritableSchema, segmentKey } from '@rox/core/meetings'
+import type {
+  MeetingCommitCommand,
+  MeetingCommitResult,
+  MeetingJournalEvent,
+  MeetingOutboxEntry,
+  MeetingProposal,
+  MeetingSessionRecord,
+  MeetingSessionSummary,
+  OperationResultV2,
+  TranscriptSegment,
+} from '@rox/core/meetings'
 import { emptyMeeting, type Meeting } from '@rox/core/meetings'
+
+export type JournalNote = { noteId: string; text: string }
 
 export type JournalSnapshot = {
   schemaVersion: 1
@@ -16,7 +28,17 @@ export type JournalSnapshot = {
   commandIds: string[]
   events: MeetingJournalEvent[]
   outbox: MeetingOutboxEntry[]
+  segments: Record<string, TranscriptSegment>
+  notes: Record<string, JournalNote>
+  proposals: Record<string, MeetingProposal>
+  sessions: Record<string, MeetingSessionRecord>
+  summaries: Record<string, MeetingSessionSummary>
+  operations: OperationResultV2[]
   checksum: string
+}
+
+export function observeSummaryKey(summary: Pick<MeetingSessionSummary, 'sessionId' | 'windowStartMs'>): string {
+  return `${summary.sessionId}:${summary.windowStartMs}`
 }
 
 export type QuarantineRecord = {
@@ -87,7 +109,7 @@ export class MeetingJournal {
       throw new Error(`meeting ${meetingId} not found`)
     }
     if (!existsSync(journalPath)) {
-      return JSON.parse(readFileSync(snapPath, 'utf8')) as JournalSnapshot
+      return this.hydrate(JSON.parse(readFileSync(snapPath, 'utf8')) as JournalSnapshot)
     }
     const snapshot = this.emptySnapshot(meetingId)
     const raw = readFileSync(journalPath, 'utf8')
@@ -168,15 +190,63 @@ export class MeetingJournal {
 
   private emptySnapshot(meetingId: string, workspaceId = 'unknown'): JournalSnapshot {
     const meeting = emptyMeeting({ workspaceId, meetingId, now: 0 })
-    return { schemaVersion: 1, meeting, commandIds: [], events: [], outbox: [], checksum: '' }
+    return {
+      schemaVersion: 1,
+      meeting,
+      commandIds: [],
+      events: [],
+      outbox: [],
+      segments: {},
+      notes: {},
+      proposals: {},
+      sessions: {},
+      summaries: {},
+      operations: [],
+      checksum: '',
+    }
+  }
+
+  /** Snapshots written before the observe collections existed lack them. */
+  private hydrate(snapshot: JournalSnapshot): JournalSnapshot {
+    return {
+      ...snapshot,
+      segments: snapshot.segments ?? {},
+      notes: snapshot.notes ?? {},
+      proposals: snapshot.proposals ?? {},
+      sessions: snapshot.sessions ?? {},
+      summaries: snapshot.summaries ?? {},
+      operations: snapshot.operations ?? [],
+    }
   }
 
   private applyCommand(snapshot: JournalSnapshot, input: MeetingCommitCommand, opts: { persist: boolean }): void {
     for (const event of input.events) {
       snapshot.events.push(event)
       if (event.type === 'meeting.created') snapshot.meeting = { ...event.meeting }
-      if (event.type === 'meeting.status') snapshot.meeting.status = event.status
-      if (event.type === 'meeting.binding') snapshot.meeting.sourceBinding = event.sourceBinding
+      else if (event.type === 'meeting.status') snapshot.meeting.status = event.status
+      else if (event.type === 'meeting.binding') snapshot.meeting.sourceBinding = event.sourceBinding
+      else if (event.type === 'segment.upsert') {
+        const key = segmentKey(event.segment)
+        const current = snapshot.segments[key]
+        if (!current || current.revision <= event.segment.revision) snapshot.segments[key] = { ...event.segment }
+      } else if (event.type === 'segment.correct') {
+        for (const [key, segment] of Object.entries(snapshot.segments)) {
+          if (segment.id === event.segmentId) snapshot.segments[key] = { ...segment, text: event.replacement }
+        }
+      } else if (event.type === 'manual.note') {
+        snapshot.notes[event.noteId] = { noteId: event.noteId, text: event.text }
+      } else if (event.type === 'proposal.upsert') {
+        snapshot.proposals[event.proposal.id] = { ...event.proposal }
+      } else if (event.type === 'operation.result') {
+        snapshot.operations.push(event.result)
+      } else if (event.type === 'session.upsert') {
+        snapshot.sessions[event.session.sessionId] = { ...event.session }
+      } else if (event.type === 'session.state') {
+        const session = snapshot.sessions[event.sessionId]
+        if (session) snapshot.sessions[event.sessionId] = { ...session, state: event.state }
+      } else if (event.type === 'summary.upsert') {
+        snapshot.summaries[observeSummaryKey(event.summary)] = { ...event.summary }
+      }
     }
     snapshot.outbox.push(...input.outboxEntries)
     snapshot.commandIds.push(input.commandId)

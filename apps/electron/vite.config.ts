@@ -4,11 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { readFileSync } from 'fs'
 import { join, posix, relative, resolve } from 'path'
 
-// NOTE: Source map upload to Sentry is intentionally disabled.
-// To re-enable, uncomment the sentryVitePlugin below and add SENTRY_AUTH_TOKEN,
-// SENTRY_ORG, SENTRY_PROJECT to CI secrets. See CLAUDE.md "Sentry Error Tracking" section.
-// import { sentryVitePlugin } from '@sentry/vite-plugin'
-
 /**
  * Shared modules still expose some server-only imports to the renderer bundle.
  * Vite needs concrete named exports to build those modules; runtime renderer
@@ -108,10 +103,12 @@ function nodeBuiltinStubPlugin() {
  * - `@rox/ui` re-exports `TiptapMarkdownEditor` (tiptap, KaTeX, editor CSS),
  *   used only by the lazily loaded Notes page, and the datatable/spreadsheet
  *   blocks, which Markdown renders through lazy wrappers (lazy-blocks.tsx).
+ *   The same applies to MarkdownOpenUIBlock (OpenUI + recharts), rendered
+ *   through the same lazy wrapper list.
  */
 const SIDE_EFFECT_FREE_MODULES = [
   /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|locales[\\/][^\\/]+\.json)$/,
-  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock)\.tsx$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock|MarkdownOpenUIBlock)\.tsx$/,
   // The diff viewers register a custom element and Shiki themes at module
   // load; marked here so the @rox/ui barrel re-export alone does not pull them
   // (and Shiki) into startup. Wherever they are used, that code still runs.
@@ -130,7 +127,6 @@ const VENDOR_CHUNKS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^(?:react|react-dom|scheduler)$/, 'vendor-react'],
   [/^(?:zod)$/, 'vendor-zod'],
   [/^(?:date-fns|react-day-picker|chrono-node|@date-fns\/.+)$/, 'vendor-dates'],
-  [/^(?:@sentry|@sentry-internal)\/.+$/, 'vendor-sentry'],
 ]
 
 function vendorChunk(id: string): string | undefined {
@@ -227,16 +223,6 @@ export default defineConfig({
     nodeBuiltinStubPlugin(),
     sideEffectFreeModulesPlugin(),
     modulePreloadMainChunkPlugin(),
-    // Sentry source map upload — intentionally disabled. See CLAUDE.md for re-enabling instructions.
-    // sentryVitePlugin({
-    //   org: process.env.SENTRY_ORG,
-    //   project: process.env.SENTRY_PROJECT,
-    //   authToken: process.env.SENTRY_AUTH_TOKEN,
-    //   disable: !process.env.SENTRY_AUTH_TOKEN,
-    //   sourcemaps: {
-    //     filesToDeleteAfterUpload: ['**/*.map'],
-    //   },
-    // }),
   ],
   root: resolve(__dirname, 'src/renderer'),
   cacheDir: resolve(__dirname, '.vite-worktree'),
@@ -244,7 +230,7 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
-    sourcemap: true,  // Source maps generated for debugging. Not uploaded to Sentry (see CLAUDE.md).
+    sourcemap: true,  // Source maps generated for debugging.
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/renderer/index.html'),

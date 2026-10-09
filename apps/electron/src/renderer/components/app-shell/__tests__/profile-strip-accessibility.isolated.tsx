@@ -40,7 +40,7 @@ function description(html: string) {
 describe('ProfileStrip accessible account details', () => {
   test('keeps plan and balance available when only the avatar is visible', () => {
     const html = render(profile, true)
-    expect(html).toContain('aria-label="Open settings for Ada Lovelace"')
+    expect(html).toContain('aria-label="Open profile menu for Ada Lovelace"')
     expect(description(html)).toBe('Pro · Balance 42')
     expect(html).toContain('title="Ada Lovelace · Pro · Balance 42"')
     expect(html).not.toContain('data-testid="profile-strip-balance"')
@@ -55,7 +55,8 @@ describe('ProfileStrip accessible account details', () => {
   test('unknown and non-finite balances stay unknown rather than presenting invalid amounts', () => {
     for (const balance of [null, Number.NaN, Number.POSITIVE_INFINITY]) {
       const html = render({ ...profile, balance }, true)
-      expect(description(html)).toBe('Pro · Balance —')
+      // Copy comes from the shipped locale, so a rename cannot leave a stale literal here.
+      expect(description(html)).toBe(`Pro · Balance ${en['profile.balanceUnknown']}`)
       expect(html).not.toContain('NaN')
       expect(html).not.toContain('Infinity')
     }
@@ -63,12 +64,12 @@ describe('ProfileStrip accessible account details', () => {
 
   test('uses the localized identity fallback for an empty nickname', () => {
     expect(render({ ...profile, displayName: '   ', plan: undefined }, true))
-      .toContain('aria-label="Open settings for User"')
+      .toContain('aria-label="Open profile menu for User"')
   })
 
   test('preserves full escaped nicknames and spend in the compact description', () => {
     const html = render({ ...profile, displayName: '<Ada> & Lovelace', spentUsd: 0.005 }, true)
-    expect(html).toContain('aria-label="Open settings for &lt;Ada&gt; &amp; Lovelace"')
+    expect(html).toContain('aria-label="Open profile menu for &lt;Ada&gt; &amp; Lovelace"')
     expect(description(html)).toBe('Pro · Balance 42 · Spent &lt;$0.01')
     expect(html).not.toContain('<Ada>')
   })

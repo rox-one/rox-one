@@ -1,0 +1,66 @@
+# Stalwart + rox-maild for the testct host.
+#
+#   cd services/rox-maild
+#   cp .env.example .env   # fill in the secrets
+#   docker compose up -d --build
+#
+# Stalwart keeps its state in the `stalwart-etc` / `stalwart-data` volumes, so
+# the one-time setup wizard (README.md) only has to be run once.
+name: rox-mail
+
+services:
+  stalwart:
+    image: stalwartlabs/stalwart:v0.16.24
+    restart: unless-stopped
+    # Pins the administrator credential used by the setup wizard and, later,
+    # by rox-maild's StalwartAdmin client.
+    environment:
+      STALWART_RECOVERY_ADMIN: "${STALWART_ADMIN_USER:?set STALWART_ADMIN_USER}:${STALWART_ADMIN_PASSWORD:?set STALWART_ADMIN_PASSWORD}"
+      # Published discovery URLs (JMAP, autoconfig). Override once a public
+      # hostname fronts this deployment, e.g. https://mx.rox.one
+      STALWART_PUBLIC_URL: "${STALWART_PUBLIC_URL:-http://127.0.0.1:8480}"
+    volumes:
+      - stalwart-etc:/etc/stalwart
+      - stalwart-data:/var/lib/stalwart
+    ports:
+      # Host-facing contract: JMAP/management on 127.0.0.1:8480, inbound SMTP
+      # on 127.0.0.1:2525. Both are loopback-only.
+      - "127.0.0.1:8480:8080"
+      - "127.0.0.1:2525:2525"
+
+  rox-maild:
+    build:
+      context: ../..
+      dockerfile: services/rox-maild/Dockerfile
+    image: rox-maild:local
+    restart: unless-stopped
+    depends_on:
+      - stalwart
+    environment:
+      PORT: "8080"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      MAIL_INBOUND_SECRET: "${MAIL_INBOUND_SECRET:?set MAIL_INBOUND_SECRET}"
+      MAIL_DOMAIN: "${MAIL_DOMAIN:-rox.one}"
+      # Inside the compose network Stalwart is reached by service name on its
+      # container ports; the 8480/2525 host ports are for loopback clients.
+      MAIL_SMTP_HOST: stalwart
+      MAIL_SMTP_PORT: "2525"
+      STALWART_ADMIN_URL: http://stalwart:8080
+      STALWART_ADMIN_USER: "${STALWART_ADMIN_USER:?set STALWART_ADMIN_USER}"
+      STALWART_ADMIN_PASSWORD: "${STALWART_ADMIN_PASSWORD:?set STALWART_ADMIN_PASSWORD}"
+      MAIL_JMAP_URL: "${MAIL_JMAP_URL:-http://127.0.0.1:8480}"
+      MAIL_DEFAULT_QUOTA_BYTES: "${MAIL_DEFAULT_QUOTA_BYTES:-1073741824}"
+      ROX_BROKER_URL: "${ROX_BROKER_URL:-https://rox.one}"
+      MAIL_PROVISION_SERVICE_TOKEN: "${MAIL_PROVISION_SERVICE_TOKEN:-}"
+    ports:
+      - "127.0.0.1:${MAILD_PORT:-8090}:8080"
+    healthcheck:
+      test: ["CMD", "bun", "-e", "await fetch('http://127.0.0.1:8080/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  stalwart-etc:
+  stalwart-data:

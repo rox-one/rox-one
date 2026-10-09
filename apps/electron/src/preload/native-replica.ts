@@ -163,12 +163,22 @@ export function createNativeReplicaBridge({ client, invokeIpc }: NativeReplicaBr
       throw new Error('native Notes creation requires a valid creation attempt')
     }
     const callerAttemptId = operation?.recoverCreation === true ? operation.operationId : undefined
+    // PREPARE_CREATE rebuilds the note frontmatter with a fresh wall-clock
+    // `createdAt` on every call (`buildInitialNoteContent` -> `Date.now()`), so
+    // two identical plans prepared a millisecond apart differ in that single
+    // advisory line by design. Compare the mutation byte-for-byte with only
+    // that line normalized so real authority, fence, path or intent changes
+    // still fail the guard.
+    const stablePlanMutation = (plan: NativeReplicaCreatePlan) => JSON.stringify({
+      ...plan.mutation,
+      changes: plan.mutation.changes.map(change => ({ ...change, content: change.content == null ? change.content : change.content.replace(/^(createdAt: )\d+$/m, '$1<clock>') })),
+    })
     const verifyCreationPlan = async () => {
       assertCreation()
       const currentPlan = await client.invoke(RPC_CHANNELS.notes.PREPARE_CREATE, workspaceId, title, folder) as NativeReplicaCreatePlan | null
       assertCreation()
       if (!currentPlan || !sameContext(currentPlan.context, plan.context) || currentPlan.writePermissionFence !== plan.writePermissionFence ||
-          JSON.stringify(currentPlan.mutation) !== JSON.stringify(plan.mutation)) throw new Error('native Notes creation authority changed before enqueue or recovery')
+          stablePlanMutation(currentPlan) !== stablePlanMutation(plan)) throw new Error('native Notes creation authority changed before enqueue or recovery')
     }
     const existing = [...contexts.entries()].find(([, context]) => sameContext(context, plan.context))
     const owned = !existing

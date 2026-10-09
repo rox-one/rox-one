@@ -11,7 +11,7 @@ const bootstrap = `
 import {createRoot} from 'react-dom/client';
 import {createStore} from 'jotai/vanilla';
 import {RESET} from 'jotai/utils';
-import {inspectorPanelWidthAtom,bottomDockHeightAtom} from ${JSON.stringify(atoms)};
+import {inspectorPanelWidthAtom} from ${JSON.stringify(atoms)};
 import {KEYS,getKeyString} from ${JSON.stringify(storage)};
 const sourceListeners=new Set(),skillListeners=new Set();
 const source=(slug='one')=>({config:{id:slug,slug,name:'Source '+slug,type:'api',api:{baseUrl:'https://fixture.invalid'},enabled:true},folderPath:'/fixture/sources/'+slug});
@@ -42,8 +42,8 @@ function render(){root.render(<Fixture key={version} {...props}/>)};
 function fromUrl(){const q=new URLSearchParams(location.search);props={route:q.get('route')??'sources/source/one',workspace:q.get('ws')??'workspace-a'};render()};
 window.addEventListener('popstate',fromUrl);
 const store=createStore();
-const subscriptions=[store.sub(inspectorPanelWidthAtom,()=>{}),store.sub(bottomDockHeightAtom,()=>{})];
-const inspectorKey=getKeyString(KEYS.inspectorPanelWidth),dockKey=getKeyString(KEYS.bottomDockHeight);
+const subscriptions=[store.sub(inspectorPanelWidthAtom,()=>{})];
+const inspectorKey=getKeyString(KEYS.inspectorPanelWidth);
 window.ui001={
  configure:(next)=>{sources=next.sources??[source('one'),source('two')];skills=next.skills??[skill('one'),skill('two')];directorySkills=next.directorySkills??{};failure=!!next.failure;delayed=!!next.delayed;props={route:next.route??'sources/source/one',workspace:next.workspace??'workspace-a',directory:next.directory};version++;render()},
  navigate:(route,workspace=props.workspace)=>{const url=new URL(location.href);url.searchParams.set('route',route);url.searchParams.set('ws',workspace);history.pushState({},'',url);fromUrl()},
@@ -56,12 +56,11 @@ window.ui001={
  skills:(ws,items)=>{skills=items;for(const fn of skillListeners)fn(ws,items)},
  skillsEvent:(ws,items)=>{for(const fn of skillListeners)fn(ws,items)},
  source,skill,
- layout:{read:()=>({inspector:store.get(inspectorPanelWidthAtom),dock:store.get(bottomDockHeightAtom)}),
- set:(inspector,dock)=>{store.set(inspectorPanelWidthAtom,inspector);store.set(bottomDockHeightAtom,dock)},
- increment:()=>store.set(bottomDockHeightAtom,(previous)=>previous+0.6),
- reset:()=>{store.set(inspectorPanelWidthAtom,RESET);store.set(bottomDockHeightAtom,RESET)},
- keys:{inspector:inspectorKey,dock:dockKey},
- saved:()=>({inspector:localStorage.getItem(inspectorKey),dock:localStorage.getItem(dockKey)}),
+ layout:{read:()=>store.get(inspectorPanelWidthAtom),
+ set:(inspector)=>{store.set(inspectorPanelWidthAtom,inspector)},
+ reset:()=>{store.set(inspectorPanelWidthAtom,RESET)},
+ keys:{inspector:inspectorKey},
+ saved:()=>localStorage.getItem(inspectorKey),
  unsubscribe:()=>{for(const off of subscriptions)off()}}
 };
 fromUrl();
@@ -88,11 +87,8 @@ async function check(name: string, fn: () => Promise<void>) {
 async function waitText(text: string) {
   await page.waitForFunction(expected => document.querySelector('[data-entity-page]')?.textContent?.includes(expected), text, { timeout: 1800 })
 }
-async function waitLayout(inspector: number, dock: number) {
-  await page.waitForFunction(expected => {
-    const got = (window as any).ui001.layout.read()
-    return got.inspector === expected.inspector && got.dock === expected.dock
-  }, { inspector, dock }, { timeout: 1800 })
+async function waitLayout(inspector: number) {
+  await page.waitForFunction(expected => (window as any).ui001.layout.read() === expected, inspector, { timeout: 1800 })
 }
 try {
   await page.goto(origin)
@@ -277,39 +273,48 @@ try {
     assert.equal(await page.evaluate(() => document.activeElement === (window as any).ui001DraftField), true)
   })
   await check('Real browser atom writes persist rounded bounded values through reload', async () => {
-    await page.evaluate(() => { const x = (window as any).ui001; x.layout.set(5000,119.6); x.layout.increment() })
-    await waitLayout(1400,121)
-    assert.deepEqual(await page.evaluate(() => (window as any).ui001.layout.saved()), { inspector: '1400', dock: '121' })
+    await page.evaluate(() => (window as any).ui001.layout.set(5000))
+    await waitLayout(1400)
+    assert.equal(await page.evaluate(() => (window as any).ui001.layout.saved()), '1400')
     await page.reload()
-    await waitLayout(1400,121)
+    await waitLayout(1400)
+    await page.evaluate(() => (window as any).ui001.layout.set(320.6))
+    await waitLayout(321)
+    assert.equal(await page.evaluate(() => (window as any).ui001.layout.saved()), '321')
+    await page.reload()
+    await waitLayout(321)
   })
   await second.goto(origin)
   await second.waitForFunction(() => !!(window as any).ui001)
   await check('Actual cross-window storage events normalize corrupt and non-finite values', async () => {
-    await second.evaluate(() => { const x = (window as any).ui001; localStorage.setItem(x.layout.keys.inspector,'5000'); localStorage.setItem(x.layout.keys.dock,'1e999') })
-    await waitLayout(1400,104)
-    await second.evaluate(() => { const x = (window as any).ui001; localStorage.setItem(x.layout.keys.inspector,'{'); localStorage.setItem(x.layout.keys.dock,'120.6') })
-    await waitLayout(320,121)
+    await second.evaluate(() => localStorage.setItem((window as any).ui001.layout.keys.inspector,'5000'))
+    await waitLayout(1400)
+    await second.evaluate(() => localStorage.setItem((window as any).ui001.layout.keys.inspector,'{'))
+    await waitLayout(320)
+    await second.evaluate(() => localStorage.setItem((window as any).ui001.layout.keys.inspector,'1e999'))
+    await waitLayout(320)
+    await second.evaluate(() => localStorage.setItem((window as any).ui001.layout.keys.inspector,'320.6'))
+    await waitLayout(321)
     await page.reload()
-    await waitLayout(320,121)
+    await waitLayout(321)
   })
   await check('Removing a persisted key in another window restores its default', async () => {
-    await second.evaluate(() => localStorage.removeItem((window as any).ui001.layout.keys.dock))
-    await waitLayout(320,104)
+    await second.evaluate(() => localStorage.removeItem((window as any).ui001.layout.keys.inspector))
+    await waitLayout(320)
   })
-  await check('A real clear event restores both geometry defaults', async () => {
-    await second.evaluate(() => { const x = (window as any).ui001; localStorage.setItem(x.layout.keys.inspector,'720'); localStorage.setItem(x.layout.keys.dock,'300') })
-    await waitLayout(720,300)
+  await check('A real clear event restores the persisted geometry default', async () => {
+    await second.evaluate(() => localStorage.setItem((window as any).ui001.layout.keys.inspector,'720'))
+    await waitLayout(720)
     await second.evaluate(() => localStorage.clear())
-    await waitLayout(320,104)
+    await waitLayout(320)
   })
   await check('The same preference keys in sessionStorage cannot change local layout', async () => {
     await page.evaluate(() => {
       const x = (window as any).ui001
-      sessionStorage.setItem(x.layout.keys.dock,'400')
-      window.dispatchEvent(new StorageEvent('storage',{key:x.layout.keys.dock,newValue:'400',storageArea:sessionStorage}))
+      sessionStorage.setItem(x.layout.keys.inspector,'400')
+      window.dispatchEvent(new StorageEvent('storage',{key:x.layout.keys.inspector,newValue:'400',storageArea:sessionStorage}))
     })
-    assert.deepEqual(await page.evaluate(() => (window as any).ui001.layout.read()), { inspector: 320, dock: 104 })
+    assert.equal(await page.evaluate(() => (window as any).ui001.layout.read()), 320)
   })
   await check('Denied browser localStorage keeps live resize and RESET usable', async () => {
     const observed = await page.evaluate(() => {
@@ -317,18 +322,18 @@ try {
       const descriptor = Object.getOwnPropertyDescriptor(window,'localStorage')!
       Object.defineProperty(window,'localStorage',{configurable:true,get(){throw new DOMException('denied','SecurityError')}})
       try {
-        x.layout.set(640,200)
+        x.layout.set(640)
         const resized=x.layout.read()
         x.layout.reset()
         return {resized,reset:x.layout.read()}
       } finally { Object.defineProperty(window,'localStorage',descriptor) }
     })
-    assert.deepEqual(observed,{resized:{inspector:640,dock:200},reset:{inspector:320,dock:104}})
+    assert.deepEqual(observed,{resized:640,reset:320})
   })
   await check('Unmounted atom subscriptions ignore later native storage events', async () => {
     await page.evaluate(() => (window as any).ui001.layout.unsubscribe())
-    await second.evaluate(() => { const x = (window as any).ui001; localStorage.setItem(x.layout.keys.inspector,'850'); localStorage.setItem(x.layout.keys.dock,'350') })
-    assert.deepEqual(await page.evaluate(() => (window as any).ui001.layout.read()),{inspector:320,dock:104})
+    await second.evaluate(() => localStorage.setItem((window as any).ui001.layout.keys.inspector,'850'))
+    assert.equal(await page.evaluate(() => (window as any).ui001.layout.read()), 320)
   })
   assert.deepEqual(errors, [])
   console.log(JSON.stringify({ environment: 'isolated local headless Chromium; actual MainContentPanel, SourceInfoPage, SkillInfoPage, route parser and Jotai atoms; presentation and IPC fixtures; history adapter is a fixture, not NavigationProvider; no installed/native/hosted/backend acceptance', browserVersion: browser.version(), results }, null, 2))

@@ -6,6 +6,8 @@
  * after explicit cloud consent; local Whisper is an optional device engine.
  */
 
+import type { MeetingObservationProvenance, TranscriptSource } from '@rox/core/meetings'
+
 export const MEETINGS_LOCAL_SCHEMA = 1
 export const MEETING_SOURCE_SEEK_SESSION_KEY = 'rox.meetings.sourceSeek.v1'
 
@@ -40,11 +42,15 @@ export const MEETINGS_LOCAL_IPC = {
   EXTRACTION_FINISH: 'meetings-local:extraction-finish',
   EXTRACTION_FAIL: 'meetings-local:extraction-fail',
   ACTION_SAVE: 'meetings-local:action-save',
+  OBSERVE_START: 'meetings-local:observe-start',
+  OBSERVE_STOP: 'meetings-local:observe-stop',
+  OBSERVE_INGEST: 'meetings-local:observe-ingest',
+  OBSERVE_LINES: 'meetings-local:observe-lines',
   CHANGED: 'meetings-local:changed',
 } as const
 
 export type LocalMeetingStatus = 'planned' | 'recording' | 'paused' | 'ready'
-export type LocalMeetingSource = 'microphone' | 'import' | 'none'
+export type LocalMeetingSource = 'microphone' | 'import' | 'calendar' | 'none'
 export type TranscriptStatus = 'none' | 'queued' | 'running' | 'done' | 'failed' | 'unavailable' | 'cancelled' | 'partial'
 
 export interface LocalMeetingAudio {
@@ -169,6 +175,8 @@ export interface LocalMeeting {
   durationMs: number
   status: LocalMeetingStatus
   source: LocalMeetingSource
+  /** Local calendar occurrence that auto-started this recording; absent for ad-hoc. */
+  calendarEventId?: string
   participants: string[]
   notes: string
   /** User-selected analysis profile; does not grant tools or background work. */
@@ -194,6 +202,34 @@ export interface LocalTranscriptSegment {
   text: string
   /** Human-correctable only when no diarization engine provides a label. */
   speakerId?: string | null
+  /** Capture channel; absent on legacy transcripts. */
+  source?: TranscriptSource
+  /** Set only when agent/own audio is genuinely observable; never fabricated. */
+  ownEcho?: boolean
+  provenance?: MeetingObservationProvenance
+}
+
+/** One live observe line, paged by monotonic `seq` (tail cursor). */
+export interface LocalObservedLine {
+  seq: number
+  speaker: string
+  text: string
+  at: number
+  ownEcho?: boolean
+}
+
+/** Raw probe pushed by the device capture/ASR path into the observe lane. */
+export interface LocalObserveIngestInput {
+  id: string
+  startMs: number
+  endMs: number
+  text: string
+  speaker?: string | null
+  source: TranscriptSource
+  observer: MeetingObservationProvenance['observer']
+  selfSpeaker?: string | null
+  observedAt?: number
+  epoch?: number
 }
 
 export interface LocalTranscriptRevision {
@@ -255,7 +291,7 @@ export interface MeetingsLocalApi {
   failExtraction(id: string, input: { runId: string; code: string }): Promise<MeetingsLocalResult<LocalMeeting>>
   saveAction(id: string, input: { actionId: string; patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId' | 'taskRef'>>; remove?: boolean; create?: boolean }): Promise<MeetingsLocalResult<LocalMeeting>>
   trash(id: string): Promise<boolean>
-  recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string }): Promise<MeetingsLocalResult<LocalMeeting>>
+  recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string; source?: LocalMeetingSource; calendarEventId?: string }): Promise<MeetingsLocalResult<LocalMeeting>>
   recChunk(meetingId: string, chunk: Uint8Array): Promise<boolean>
   recState(meetingId: string, state: { paused: boolean; durationMs: number }): Promise<void>
   recStop(meetingId: string, input: { durationMs: number }): Promise<MeetingsLocalResult<LocalMeeting>>
@@ -275,5 +311,9 @@ export interface MeetingsLocalApi {
   openDocument(id: string, docId: string): Promise<boolean>
   reveal(id: string, docId?: string): Promise<boolean>
   removeDocument(id: string, docId: string): Promise<LocalMeeting | null>
+  observeStart(id: string): Promise<MeetingsLocalResult<LocalMeeting>>
+  observeStop(id: string): Promise<MeetingsLocalResult<LocalMeeting>>
+  observeIngest(id: string, input: LocalObserveIngestInput): Promise<LocalObservedLine | null>
+  observeLines(id: string, afterSeq?: number): Promise<LocalObservedLine[]>
   onChanged(cb: (event: { id: string }) => void): () => void
 }

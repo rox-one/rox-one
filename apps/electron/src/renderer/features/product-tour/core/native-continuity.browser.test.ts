@@ -197,23 +197,28 @@ browserTest('T-SOURCES-DETAILS one production source page load advances status a
 
 for (const action of ['stop', 'cancel'] as const) for (const deferred of [false, true]) browserTest(`T-VOICE-OWNER authenticated overlay ${action} ${deferred ? 'before' : 'after'} START returns reaches its unfocused composer without starting the idle peer`, async () => {
   const handlers = new Map<string, (event: { sender: unknown }, action: string, recordingId: string) => unknown>()
+  const levelListeners = new Map<string, (event: { sender: unknown }, level: unknown) => unknown>()
   const children: FixtureWindow[] = []
   class FixtureWindow extends EventEmitter {
     destroyed = false
+    loaded: string[] = []
     webContents = Object.assign(new EventEmitter(), { isDestroyed: () => this.destroyed, send() {}, setWindowOpenHandler() {} })
     constructor(config: { parent?: unknown } = {}) { super(); if (config.parent) children.push(this) }
     isDestroyed() { return this.destroyed }
     isFocused() { return true }
+    isVisible() { return true }
     getBounds() { return { x: 0, y: 0, width: 1000, height: 800 } }
     showInactive() {}
     hide() {}
     destroy() { this.destroyed = true; this.emit('closed') }
-    async loadURL() {}
+    async loadURL(url: string) { this.loaded.push(url) }
+    async loadFile(file: string) { this.loaded.push(file) }
   }
   // Only the OS Electron surface is replaced. Command authorization and delivery
   // below run through the actual overlay owner and authenticated hotkey router.
   mock.module('electron', () => ({ app: { isPackaged: true }, BrowserWindow: FixtureWindow,
-    ipcMain: { handle: (id: string, callback: (event: { sender: unknown }, action: string, recordingId: string) => unknown) => handlers.set(id, callback), removeHandler: (id: string) => handlers.delete(id) },
+    ipcMain: { handle: (id: string, callback: (event: { sender: unknown }, action: string, recordingId: string) => unknown) => handlers.set(id, callback), removeHandler: (id: string) => handlers.delete(id),
+      on: (id: string, callback: (event: { sender: unknown }, level: unknown) => unknown) => levelListeners.set(id, callback), removeListener: (id: string) => levelListeners.delete(id) },
     screen: { getDisplayMatching: () => ({ workArea: { x: 0, y: 0, width: 1000, height: 800 } }) },
   }))
   const { createNativeVoiceOverlayHost, VOICE_OVERLAY_COMMAND } = await import('../../../../main/voice/overlay-owner')
@@ -236,6 +241,8 @@ for (const action of ['stop', 'cancel'] as const) for (const deferred of [false,
     else await ownerComposer.getByRole('button', { name: 'Stop dictation', exact: true }).waitFor()
     await page.evaluate(() => window.nativeContinuity.focusPeer())
     overlay.publish({ context, position: 'bottom', state: { recordingId: 'fixture-recording', phase: action === 'cancel' && deferred ? 'permission' : 'recording', elapsedMs: 1, rms: 0, streaming: false }, assertCurrent() {} })
+    expect(children[0]!.loaded[0]).toMatch(/renderer[/\\]voice-overlay\.html$/)
+    expect(children[0]!.loaded[0]).not.toContain('..')
     expect(handlers.get(VOICE_OVERLAY_COMMAND)!({ sender: children[0]!.webContents }, action, 'fixture-recording')).toEqual({ ok: true })
     expect(commands).toHaveLength(1)
     expect(commands[0]?.recordingId).toBe('fixture-recording')

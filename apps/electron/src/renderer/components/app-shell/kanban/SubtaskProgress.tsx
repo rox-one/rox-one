@@ -41,6 +41,7 @@ export function SubtaskProgress({ subtasks, total: totalProp, accent = 'var(--pr
         {subtasks.map(subtask => (
           <span
             key={subtask.id}
+            data-live-indicator={subtask.runState === 'running' ? '' : undefined}
             className={cn('h-1 flex-1 rounded-full', subtask.runState === 'running' && 'animate-pulse')}
             style={{
               backgroundColor:

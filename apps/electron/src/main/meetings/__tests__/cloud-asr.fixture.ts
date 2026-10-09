@@ -40,7 +40,7 @@ const deepgramPayload = () => ({ metadata: { request_id: 'fixture-provider-reque
     paragraphs: { paragraphs: [{ speaker: 0, sentences: [{ start: 0.25, end: 1.5, text: 'First paragraph.' }] },
       { speaker: 1, sentences: [{ start: 2.25, end: 4, text: 'Второй абзац.' }] }] },
     words: [{ start: 0.25, end: 0.5, word: 'First', speaker: 0 }, { start: 2.25, end: 2.5, word: 'Второй', speaker: 1 }] }] }] } })
-const provider = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-host-only-key', http: { async fetch(url, init) {
+const provider = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-host-only-key', allowModelUpgrade: true, http: { async fetch(url, init) {
   const parsed = new URL(String(url))
   assert.equal(init?.headers && (init.headers as Record<string, string>).Authorization, 'Token synthetic-host-only-key')
   if (parsed.pathname === '/v1/models') return Response.json({ stt: [{ canonical_name: 'nova-4', batch: true, retired: false }] })

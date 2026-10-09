@@ -1,14 +1,12 @@
 /**
- * Tests for the shared secret-redaction utilities (used by both Sentry
- * beforeSend hooks and the Pages action audit log).
+ * Tests for the shared secret-redaction utilities (used by the durable error
+ * log and the Pages action audit log).
  */
 
 import { describe, it, expect } from 'bun:test';
 import {
   isSensitiveKeyName,
   redactSensitiveHeaders,
-  redactSensitiveHeadersInPlace,
-  redactSensitiveKeysInPlace,
   redactSensitiveValues,
   REDACTED_VALUE,
 } from './redaction.ts';
@@ -36,16 +34,6 @@ describe('utils/redaction', () => {
       'X-API-Key': REDACTED_VALUE,
       'Content-Type': 'application/json',
     });
-  });
-
-  it('mutates headers/data records in place (Sentry hook shape)', () => {
-    const headers: Record<string, unknown> = { authorization: 'Bearer x', accept: 'json' };
-    redactSensitiveHeadersInPlace(headers);
-    expect(headers).toEqual({ authorization: REDACTED_VALUE, accept: 'json' });
-
-    const data: Record<string, unknown> = { refreshToken: 'r', count: 3 };
-    redactSensitiveKeysInPlace(data);
-    expect(data).toEqual({ refreshToken: REDACTED_VALUE, count: 3 });
   });
 
   it('deep-redacts nested values without mutating the input', () => {

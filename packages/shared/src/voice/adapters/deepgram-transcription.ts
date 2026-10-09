@@ -4,7 +4,10 @@ import { DEEPGRAM_TRANSCRIPTION_MODEL, DEEPGRAM_TRANSCRIPTION_NAME } from '../co
 
 export { DEEPGRAM_TRANSCRIPTION_MODEL, DEEPGRAM_TRANSCRIPTION_NAME }
 
-/** Only released general batch models qualify, never Flux/medical/streaming-only models. */
+/**
+ * Only released general batch models qualify, never Flux/medical/streaming-only models.
+ * Used solely when the operator explicitly opts into catalog-driven upgrades.
+ */
 export function latestNovaModel(raw: unknown): string {
   const models = asObject(raw).stt
   if (!Array.isArray(models)) return DEEPGRAM_TRANSCRIPTION_MODEL
@@ -68,7 +71,11 @@ export function normalizeDeepgramTranscript(raw: unknown, requestedModelId = DEE
       return normalized ? [normalized] : []
     }) : []
     if (!sentences.length) return []
-    validateTimeline(sentences, durationMs)
+    for (let index = 1; index < sentences.length; index++) {
+      // The duration bound is enforced once, after the authoritative media length is known
+      // (Deepgram may overshoot its own metadata.duration); ordering is enforced here.
+      if (sentences[index]!.startMs < sentences[index - 1]!.startMs) throw new AudioValidationError('damaged', 'Invalid Deepgram timeline')
+    }
     return [{ startMs: sentences[0]!.startMs, endMs: sentences.at(-1)!.endMs,
       text: sentences.map((sentence) => sentence.text).join(' '), speakerId: speakerLabel(paragraph.speaker) }]
   }) : []
@@ -88,14 +95,23 @@ export function normalizeDeepgramTranscript(raw: unknown, requestedModelId = DEE
     segment.speakerId ??= words?.find((word) => word.startMs >= segment.startMs && word.startMs < segment.endMs)?.speakerId
   }
   if (!segments.length && alternative.transcript.trim()) segments = [{ startMs: 0, endMs: durationMs, text: alternative.transcript.trim() }]
-  validateTimeline(segments, durationMs)
-  if (words) validateTimeline(words, durationMs)
+  // Deepgram's word/sentence timestamps can overshoot its own `metadata.duration`
+  // (observed with webm/opus recordings: last word 16.1s vs duration 13.9s), so the
+  // authoritative media length is the furthest timestamp the provider reported.
+  // A gross mismatch still means the payload is damaged.
+  const reportedEndMs = Math.max(0, ...segments.map((item) => item.endMs), ...(words ?? []).map((item) => item.endMs))
+  if (reportedEndMs > durationMs + Math.max(5_000, Math.round(durationMs * 0.5))) {
+    throw new AudioValidationError('damaged', 'Invalid Deepgram timeline')
+  }
+  const mediaDurationMs = Math.max(durationMs, reportedEndMs)
+  validateTimeline(segments, mediaDurationMs)
+  if (words) validateTimeline(words, mediaDurationMs)
   const modelInfo = asObject(Object.values(asObject(metadata.model_info))[0])
   const diarization = asObject(metadata.diarize_info)
   return {
     text: segments.map((segment) => segment.text).join('\n\n'), segments, words: words?.length ? words : undefined,
     detectedLanguage: typeof channel.detected_language === 'string' ? channel.detected_language : undefined,
-    durationMs, requestedModelId,
+    durationMs: mediaDurationMs, requestedModelId,
     resolvedModelId: typeof modelInfo.arch === 'string' ? modelInfo.arch : typeof modelInfo.name === 'string' ? modelInfo.name : requestedModelId,
     modelRevision: typeof modelInfo.version === 'string' ? modelInfo.version : undefined,
     diarizationModel: typeof diarization.arch === 'string' ? diarization.arch : undefined,
@@ -106,15 +122,19 @@ export function normalizeDeepgramTranscript(raw: unknown, requestedModelId = DEE
 
 /** Backend/main process only: the shared key never enters a renderer or source configuration. */
 export class DeepgramTranscriptionAdapter {
-  constructor(private readonly options: { apiKey: string; model?: string; http?: TranscriptionHttp; timeoutMs?: number }) {}
+  constructor(private readonly options: { apiKey: string; model?: string; http?: TranscriptionHttp; timeoutMs?: number
+    /** Opt-in only: consult the live catalog and upgrade above the pinned Nova-3 default. */
+    allowModelUpgrade?: boolean }) {}
 
   async transcribe(input: TranscriptionRequest): Promise<NormalizedTranscript> {
     if (!this.options.apiKey.trim()) throw new RoxTranscriptionError('unauthorized', 'Deepgram is not configured')
     if (input.signal?.aborted) throw new RoxTranscriptionError('cancelled', 'Transcription cancelled')
     const mime = validateAudioLimits(input.audio, { maxBytes: 200 * 1024 * 1024, allowedMime: ['audio/wav', 'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/flac', 'audio/x-m4a', 'audio/aac'] }, input.mimeType?.split(';')[0])
     const request = this.options.http?.fetch ?? fetch
-    let model = this.options.model?.trim()
-    if (!model) {
+    // The pinned default is Nova-3. A newer released family is requested only
+    // when the caller explicitly opts in; otherwise the catalog is never hit.
+    let model = this.options.model?.trim() || DEEPGRAM_TRANSCRIPTION_MODEL
+    if (!this.options.model?.trim() && this.options.allowModelUpgrade === true) {
       try {
         const catalog = await request('https://api.deepgram.com/v1/models', {
           headers: { Authorization: `Token ${this.options.apiKey}` },

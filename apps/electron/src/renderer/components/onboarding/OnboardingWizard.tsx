@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
+import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
+import {
+  saveFirstRunDraft,
+  type OnboardingDraftStorage,
+} from "./identity-model"
+import type { RewardLedger } from "./onboarding-rewards"
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 import { OnboardingWelcomeProgress } from './OnboardingWelcomeProgress'
 import type { ApiSetupMethod } from "./APISetupStep"
@@ -15,6 +21,7 @@ import type { CustomEndpointApi } from '@config/llm-connections'
 
 export type OnboardingStep =
   | 'welcome'
+  | 'questionnaire'
   | 'rox-connect'
   | 'git-bash'
   | 'provider-select'
@@ -25,6 +32,16 @@ export type OnboardingStep =
   | 'complete'
 
 export type LoginStatus = 'idle' | 'waiting' | 'success' | 'error'
+
+/**
+ * First-run controller owned by `useOnboarding` and handed to the wizard through
+ * `state`. Carries the shared reward ledger so the questionnaire screen writes
+ * into one place; tests that build `OnboardingState` by hand simply omit it and
+ * the steps fall back to their internal state.
+ */
+export interface OnboardingFirstRunState {
+  rewards: RewardLedger
+}
 
 export interface OnboardingState {
   step: OnboardingStep
@@ -39,6 +56,8 @@ export interface OnboardingState {
   isCheckingGitBash?: boolean
   /** First run: applying the default Rox runtime before the app opens. */
   isFinishing?: boolean
+  /** Shared reward ledger (optional; the wizard self-manages otherwise). */
+  firstRun?: OnboardingFirstRunState
 }
 
 interface OnboardingWizardProps {
@@ -140,6 +159,7 @@ export function OnboardingWizard({
   className
 }: OnboardingWizardProps) {
   const seProfile = useSuperEngineeringProfile()
+  const firstRun = state.firstRun
   // 'complete' is terminal: close the wizard exactly once per arrival.
   const finishedRef = useRef(false)
   useEffect(() => {
@@ -151,6 +171,26 @@ export function OnboardingWizard({
     finishedRef.current = true
     onFinish()
   }, [state.step, onFinish])
+
+  const firstRunStorage: OnboardingDraftStorage | undefined =
+    typeof localStorage !== 'undefined' ? localStorage : undefined
+
+  const persistQuestionnaireDraft = (payload: QuestionnaireStepPayload) => {
+    saveFirstRunDraft(firstRunStorage, {
+      questionnaire: payload.questionnaire,
+      bubbles: payload.bubbles,
+      permissions: payload.permissions,
+      completed: true,
+    })
+    // The keep-awake mode is the one app-toggle with a real setting behind it:
+    // mirror the choice onto the app config, fire-and-forget so a missing or
+    // failing bridge never blocks the flow.
+    const keepAwake = payload.permissions.enabled.keepAwake
+    const bridge = window.electronAPI
+    if (typeof keepAwake === 'boolean' && typeof bridge?.setKeepAwakeWhileRunning === 'function') {
+      bridge.setKeepAwakeWhileRunning(keepAwake).catch(() => {})
+    }
+  }
 
   const renderStep = () => {
     switch (state.step) {
@@ -165,6 +205,21 @@ export function OnboardingWizard({
               isFinishing={state.isFinishing}
             />
           </div>
+        )
+
+      case 'questionnaire':
+        return (
+          <QuestionnaireStep
+            onContinue={(payload) => {
+              persistQuestionnaireDraft(payload)
+              onContinue()
+            }}
+            onSkip={(payload) => {
+              persistQuestionnaireDraft(payload)
+              onContinue()
+            }}
+            {...(firstRun ? { rewards: firstRun.rewards } : {})}
+          />
         )
 
       case 'rox-connect':
@@ -257,7 +312,7 @@ export function OnboardingWizard({
       )}
     >
       {/* Draggable title bar region for transparent window (macOS) */}
-      <div className="titlebar-drag-region fixed top-0 left-0 right-0 h-[50px] z-titlebar" />
+      <div className="titlebar-drag-region fixed top-0 left-0 right-0 h-[50px] z-chrome" />
 
       {/* Main content — min-h-full + flex center means: center when content fits,
           natural flow + scroll when content is taller than the viewport (mobile). */}

@@ -19,7 +19,7 @@
  * applies the flags, but never re-closes the latch, re-arms the hold or
  * re-queues links that were already dropped.
  */
-import type { IpcMain } from 'electron'
+import type { IpcMain, IpcMainInvokeEvent } from 'electron'
 import { isUnifiedSurfaceId, setUnifiedSurfaceRoutesEnabled, type UnifiedSurfaceId } from '../shared/surface-routes'
 
 export const SURFACE_ROUTES_IPC_CHANNEL = 'shell:setSurfaceRoutesEnabled'
@@ -96,8 +96,20 @@ export function __resetSurfaceGateForTests(): void {
   setUnifiedSurfaceRoutesEnabled([])
 }
 
-export function registerSurfaceRoutesIpc(ipcMain: Pick<IpcMain, 'handle'>): void {
-  ipcMain.handle(SURFACE_ROUTES_IPC_CHANNEL, (_event, ids: unknown) => {
+export interface SurfaceRoutesIpcDependencies {
+  /**
+   * Only managed app windows may push the surface gate (evaluated per call so
+   * index.ts can close over the module-level windowManager assigned later).
+   */
+  isTrustedSender?(event: IpcMainInvokeEvent): boolean
+}
+
+export function registerSurfaceRoutesIpc(
+  ipcMain: Pick<IpcMain, 'handle'>,
+  deps: SurfaceRoutesIpcDependencies = {},
+): void {
+  ipcMain.handle(SURFACE_ROUTES_IPC_CHANNEL, (event, ids: unknown) => {
+    if (deps.isTrustedSender && !deps.isTrustedSender(event)) throw new Error('IPC_SENDER_DENIED')
     applyUnifiedSurfaceRoutes(ids)
     return { ok: true as const }
   })

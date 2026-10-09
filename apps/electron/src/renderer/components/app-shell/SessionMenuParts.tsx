@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
-import { Check, Globe, Copy, RefreshCw, Link2Off } from 'lucide-react'
+import { Check, Globe, Copy, RefreshCw, Link2Off, UserRound, Eye } from 'lucide-react'
 import type { MenuComponents } from '@/components/ui/menu-context'
+import type { SessionActorRef, SessionOwnerRef, SessionVisibility } from '@rox/shared/protocol'
 import { getStatusIconStyle, resolveStatusDisplayLabel, resolveLabelDisplayName, type SessionStatusId, type SessionStatus } from '@/config/session-status-config'
 import { sortLabelsForDisplay, type LabelConfig } from '@rox/shared/labels'
 import { LabelIcon } from '@/components/ui/label-icon'
@@ -37,20 +38,20 @@ export function ShareMenuItems({
   return (
     <>
       <MenuItem onClick={onOpenInBrowser}>
-        <Globe className="h-3.5 w-3.5" />
+        <Globe className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.openInBrowser")}</span>
       </MenuItem>
       <MenuItem onClick={onCopyLink}>
-        <Copy className="h-3.5 w-3.5" />
+        <Copy className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.copyLink")}</span>
       </MenuItem>
       <MenuItem onClick={onUpdateShare}>
-        <RefreshCw className="h-3.5 w-3.5" />
+        <RefreshCw className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.updateShare")}</span>
       </MenuItem>
       <Separator />
       <MenuItem onClick={onRevokeShare} variant="destructive">
-        <Link2Off className="h-3.5 w-3.5" />
+        <Link2Off className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.stopSharing")}</span>
       </MenuItem>
     </>
@@ -62,6 +63,109 @@ export interface StatusMenuItemsProps {
   activeStateId?: SessionStatusId | null
   onSelect: (stateId: SessionStatusId) => void
   menu: Pick<MenuComponents, 'MenuItem'>
+}
+
+export interface OwnerMenuSectionProps {
+  /** Current owner (null/undefined = unassigned). */
+  owner?: SessionOwnerRef | null
+  /** Assignable candidates (participants + creator + owner), deduped by the caller. */
+  candidates: readonly SessionActorRef[]
+  /** Local viewer's account id, for the "assign to me" shortcut. */
+  viewerId: string | null
+  /** Whether the viewer is already the owner (hides "assign to me"). */
+  isAssignedToViewer: boolean
+  onAssign: (owner: SessionActorRef | null) => void
+  onAssignToMe: () => void
+  menu: Pick<MenuComponents, 'MenuItem' | 'Separator' | 'Sub' | 'SubTrigger' | 'SubContent'>
+}
+
+/** Assign-owner submenu (a2.2) shared by the desktop dropdown and compact drawer. */
+export function OwnerMenuSection({
+  owner,
+  candidates,
+  viewerId,
+  isAssignedToViewer,
+  onAssign,
+  onAssignToMe,
+  menu,
+}: OwnerMenuSectionProps) {
+  const { t } = useTranslation()
+  const { MenuItem, Separator, Sub, SubTrigger, SubContent } = menu
+  const ownerId = owner?.id ?? null
+
+  return (
+    <Sub>
+      <SubTrigger className="pr-2">
+        <UserRound className="icon-caption" />
+        <span className="flex-1">{t('sessionOwner.assign')}</span>
+        {owner && <span className="max-w-[100px] truncate text-caption text-muted-foreground -mr-2.5">{owner.displayName}</span>}
+      </SubTrigger>
+      <SubContent>
+        {!isAssignedToViewer && viewerId && (
+          <MenuItem onClick={onAssignToMe}>
+            <UserRound className="icon-caption" />
+            <span className="flex-1">{t('sessionOwner.assignToMe')}</span>
+          </MenuItem>
+        )}
+        {owner && (
+          <MenuItem onClick={() => onAssign(null)}>
+            <UserRound className="icon-caption" />
+            <span className="flex-1">{t('sessionOwner.unassigned')}</span>
+          </MenuItem>
+        )}
+        {candidates.length > 0 && <Separator />}
+        {candidates.map((candidate) => (
+          <MenuItem key={`${candidate.kind}:${candidate.id}`} onClick={() => onAssign(candidate)}>
+            <span className="w-3.5 shrink-0">
+              {ownerId === candidate.id && <Check className="icon-caption text-foreground" />}
+            </span>
+            <span className="flex-1 truncate">{candidate.displayName}</span>
+          </MenuItem>
+        ))}
+      </SubContent>
+    </Sub>
+  )
+}
+
+export interface VisibilityMenuSectionProps {
+  visibility: SessionVisibility
+  onSelect: (visibility: SessionVisibility) => void
+  menu: Pick<MenuComponents, 'MenuItem' | 'Separator' | 'Sub' | 'SubTrigger' | 'SubContent'>
+}
+
+const VISIBILITY_OPTIONS: readonly SessionVisibility[] = ['shared', 'read-only', 'suggest', 'draft']
+
+const VISIBILITY_KEY: Record<SessionVisibility, string> = {
+  shared: 'shared',
+  'read-only': 'readOnly',
+  suggest: 'suggest',
+  draft: 'draft',
+}
+
+/** Sharing visibility submenu (a2.5): shared | read-only | suggest | draft. */
+export function VisibilityMenuSection({ visibility, onSelect, menu }: VisibilityMenuSectionProps) {
+  const { t } = useTranslation()
+  const { MenuItem, Sub, SubTrigger, SubContent } = menu
+
+  return (
+    <Sub>
+      <SubTrigger className="pr-2">
+        <Eye className="icon-caption" />
+        <span className="flex-1">{t('sessionSharing.visibilityLabel')}</span>
+        <span className="text-caption text-muted-foreground -mr-2.5">{t(`sessionSharing.visibility.${VISIBILITY_KEY[visibility]}`)}</span>
+      </SubTrigger>
+      <SubContent>
+        {VISIBILITY_OPTIONS.map((option) => (
+          <MenuItem key={option} onClick={() => onSelect(option)}>
+            <span className="w-3.5 shrink-0">
+              {visibility === option && <Check className="icon-caption text-foreground" />}
+            </span>
+            <span className="flex-1">{t(`sessionSharing.visibility.${VISIBILITY_KEY[option]}`)}</span>
+          </MenuItem>
+        ))}
+      </SubContent>
+    </Sub>
+  )
 }
 
 export function StatusMenuItems({
@@ -151,7 +255,7 @@ export function LabelMenuItems({
                 <LabelIcon label={label} size="sm" hasChildren />
                 <span className="flex-1">{resolveLabelDisplayName(label, t)}</span>
                 {subtreeCount > 0 && (
-                  <span className="text-[10px] text-foreground/50 tabular-nums -mr-2.5">
+                  <span className="text-caption text-foreground/50 tabular-nums -mr-2.5">
                     {subtreeCount}
                   </span>
                 )}
@@ -166,7 +270,7 @@ export function LabelMenuItems({
                   <LabelIcon label={label} size="sm" hasChildren />
                   <span className="flex-1">{resolveLabelDisplayName(label, t)}</span>
                   <span className="w-3.5 ml-4">
-                    {isApplied && <Check className="h-3.5 w-3.5 text-foreground" />}
+                    {isApplied && <Check className="icon-caption text-foreground" />}
                   </span>
                 </MenuItem>
                 <Separator />
@@ -187,7 +291,7 @@ export function LabelMenuItems({
             <LabelIcon label={label} size="sm" />
             <span className="flex-1">{resolveLabelDisplayName(label, t)}</span>
             <span className="w-3.5 ml-4">
-              {isApplied && <Check className="h-3.5 w-3.5 text-foreground" />}
+              {isApplied && <Check className="icon-caption text-foreground" />}
             </span>
           </MenuItem>
         )

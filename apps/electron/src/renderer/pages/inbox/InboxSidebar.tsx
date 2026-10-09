@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Archive, Bell, BrainCircuit, CalendarDays, CheckCheck, ChevronRight,
-  Clock3, FileCheck2, FilePenLine, Inbox, KeyRound, Mail, MessageCircle,
-  Send, ShieldCheck, Sparkles, TriangleAlert, Trash2, UserPlus, Users,
+  Archive, AtSign, Bell, BrainCircuit, CalendarDays, CheckCheck, ChevronRight,
+  ClipboardCheck, Clock3, FileCheck2, FilePenLine, Inbox, KeyRound, Mail, MessageCircle,
+  Send, ShieldCheck, Sparkles, TriangleAlert, Trash2, UserPlus, UserRoundCheck, Users,
   type LucideIcon,
 } from 'lucide-react'
 import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
 import { NavTitle, type Tone } from '@/components/mode-screen/ModeScreen'
 import { cn } from '@/lib/utils'
 import type { MailFolder, MailFolderRole } from '../../../shared/mail-local'
-import { DECISION_KINDS, type InboxFilter, type InboxKind } from './inbox-model'
+import { ACTIVITY_KINDS, DECISION_KINDS, type InboxActivityKind, type InboxFilter, type InboxKind } from './inbox-model'
 import { folderLabel } from './mail/MailPanels'
 import { statusKey } from './mail/mail-view'
 import type { MailController } from './mail/useMail'
@@ -38,12 +38,18 @@ const KIND_ICONS: Record<InboxKind, LucideIcon> = {
   error: TriangleAlert,
   mail: Mail,
   'team-recipient': Users,
+  // W1-09 (#1506) — activity surfaces (UI-SPEC §12).
+  review: ClipboardCheck,
+  mention: AtSign,
+  assignment: UserRoundCheck,
+  notification: Bell,
 }
 
 const KIND_TONES: Record<InboxKind, Tone> = {
   permission: 'warning', credential: 'warning', plan: 'accent',
   memory: 'info', skill: 'accent', sender: 'success', reply: 'info',
   error: 'danger', mail: 'info', 'team-recipient': 'success',
+  review: 'warning', mention: 'accent', assignment: 'info', notification: 'muted',
 }
 
 const ICON_TONE: Record<Tone, string> = {
@@ -75,7 +81,7 @@ function InboxNavButton({ label, count, active, icon: Icon, tone = 'muted', onCl
 }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 py-1 text-left text-[12px] outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
+      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-[12px] outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-surface-hover text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
       <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       <Count count={count} />
@@ -108,10 +114,12 @@ export interface InboxSidebarCounts {
   blocking: number; byKind: Record<InboxKind, number>
 }
 
-export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, onOpenMeetings, onConnectTeam, teamNeedsConnection }: {
+export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, onOpenMeetings, onConnectTeam, teamNeedsConnection, activityKinds = [] }: {
   filter: InboxPageFilter; counts: InboxSidebarCounts; onSelect: (filter: InboxFilter) => void
   mail: MailController; onSelectFolder: (folder: MailFolder) => void
   onOpenMeetings: () => void; onConnectTeam: () => void; teamNeedsConnection: boolean
+  /** W1-09 (#1506): activity surfaces whose module flag is on; render nothing more. */
+  activityKinds?: readonly InboxActivityKind[]
 }) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
@@ -138,6 +146,18 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
         <InboxNavButton label={t('inbox.nav.allDecisions')} count={counts.decisions} active={filter === 'decisions'} icon={FileCheck2} tone="warning" onClick={() => onSelect('decisions')} testId="inbox-nav-decisions" />
         {DECISION_KINDS.map(kindButton)}
       </InboxNavGroup>
+      {activityKinds.length > 0 ? (
+        <InboxNavGroup
+          id="activity"
+          label={t('inbox.nav.activity')}
+          icon={ClipboardCheck}
+          tone="accent"
+          count={activityKinds.reduce((sum, kind) => sum + counts.byKind[kind], 0)}
+          active={selectedKind !== null && (ACTIVITY_KINDS as readonly string[]).includes(selectedKind)}
+        >
+          {ACTIVITY_KINDS.filter((kind) => activityKinds.includes(kind)).map(kindButton)}
+        </InboxNavGroup>
+      ) : null}
       <InboxNavGroup id="notifications" label={t('inbox.nav.notifications')} icon={Bell} tone="info" count={counts.messages} initialOpen active={filter === 'messages' || selectedKind === 'reply' || selectedKind === 'error'}>
         <InboxNavButton label={t('inbox.nav.allNotifications')} count={counts.messages} active={filter === 'messages'} icon={Bell} tone="info" onClick={() => onSelect('messages')} testId="inbox-nav-messages" />
         {kindButton('reply')}{kindButton('error')}
@@ -145,6 +165,7 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
       <InboxNavGroup id="mail" label={t('inbox.mail.section')} icon={Mail} tone="info" count={counts.byKind.mail} active={inMail}>
         {status?.state === 'ready' && status.address ? (
           <div className="flex min-w-0 items-center gap-1 px-2 pb-1 text-[11px]" data-testid="mail-address">
+            <span className="shrink-0 font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
             <span className="min-w-0 flex-1 select-text truncate text-text-secondary" title={status.address}>{status.address}</span>
             <button type="button" onClick={() => void copyAddress()} className="shrink-0 rounded-md px-1.5 py-1 text-text-muted outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-copy">{t(copied ? 'inbox.mail.copied' : 'inbox.mail.copy')}</button>
           </div>

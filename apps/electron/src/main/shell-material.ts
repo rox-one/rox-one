@@ -18,6 +18,7 @@ import {
 } from '../shared/shell-appearance'
 import { initialZenWindowState, reduceZenWindow, type ZenWindowState } from '../shared/shell-window-lifecycle'
 import { windowLog } from './logger'
+import { peekRenderProfile } from './render-profile'
 
 interface ZenWindowRecord {
   state: ZenWindowState
@@ -70,9 +71,15 @@ function queryHighContrast(): boolean {
   return nativeTheme.shouldUseHighContrastColors === true
 }
 
-/** Accessibility applies to the legacy material path as well as Zen. */
+/**
+ * Accessibility applies to the legacy material path as well as Zen, and so
+ * does the PERF-07 low-power profile: WindowManager's legacy constructor
+ * (Windows Mica) and reveal (macOS vibrancy) paths both consult this, so a
+ * low-power window never gets native glass on either path. The name is kept
+ * for the existing WindowManager import.
+ */
 export function nativeAccessibilityPrefersSolid(): boolean {
-  return queryHighContrast() || queryReduceTransparency()
+  return queryHighContrast() || queryReduceTransparency() || peekRenderProfile(currentPlatform()).profile === 'performance'
 }
 
 export function peekZenShellSnapshot(opts?: {
@@ -80,27 +87,36 @@ export function peekZenShellSnapshot(opts?: {
   windowDestroyed?: boolean
   gpuFailed?: boolean
 }): ZenShellSnapshot {
+  const platform = currentPlatform()
+  // PERF-07: the low-power profile rides the same snapshot as the material.
   return snapshotZenShell({
     zenEnabled: isZenShellEnabled(),
     preference: getZenShellMaterialPreference(),
-    platform: currentPlatform(),
+    platform,
     windowsBuild: windowsBuild(),
     reduceTransparency: queryReduceTransparency(),
     highContrast: queryHighContrast(),
     paintHealthy: opts?.paintHealthy ?? true,
     windowDestroyed: opts?.windowDestroyed ?? false,
     gpuFailed: opts?.gpuFailed ?? false,
-  })
+  }, peekRenderProfile(platform))
 }
 
 /** Return this window's painted capability, rather than predicting a future paint. */
 export function peekZenShellSnapshotForWindow(window: BrowserWindow | null | undefined): ZenShellSnapshot {
   const record = window ? attached.get(window) : undefined
-  const snapshot = peekZenShellSnapshot({
+  return withMaterialFailure(record, peekPaintedSnapshot(window, record))
+}
+
+function peekPaintedSnapshot(window: BrowserWindow | null | undefined, record: ZenWindowRecord | undefined): ZenShellSnapshot {
+  return peekZenShellSnapshot({
     paintHealthy: record !== undefined && record.state.paintGeneration === record.state.generation,
     windowDestroyed: window?.isDestroyed() ?? false,
     gpuFailed: record !== undefined && record.state.generation > 0 && record.state.paintGeneration !== record.state.generation,
   })
+}
+
+function withMaterialFailure(record: ZenWindowRecord | undefined, snapshot: ZenShellSnapshot): ZenShellSnapshot {
   if (record?.materialFailed && snapshot.material !== 'solid') {
     return { ...snapshot, material: 'solid', fallbackReason: 'material-unavailable' }
   }
@@ -159,14 +175,16 @@ function dispatch(window: BrowserWindow, record: ZenWindowRecord, event: Paramet
   if (!window.isDestroyed() && record.state.shown && !window.isVisible()) {
     window.show()
   }
-  if (record.state.applyMaterial && !window.isDestroyed()) {
+  if (window.isDestroyed()) return
+  // One policy read per dispatch (preferences, GPU status and accessibility
+  // are all synchronous); the material result only adjusts this snapshot.
+  const snap = peekPaintedSnapshot(window, record)
+  if (record.state.applyMaterial) {
     // Retry an unavailable native API on an explicit policy change, but report
     // its actual result to the renderer so its canvas does not stay transparent.
-    record.materialFailed = false
-    const snap = peekZenShellSnapshotForWindow(window)
     record.materialFailed = !applyNativeMaterial(window, snap.material)
   }
-  if (!window.isDestroyed()) record.onSnapshot?.(peekZenShellSnapshotForWindow(window))
+  record.onSnapshot?.(withMaterialFailure(record, snap))
 }
 
 /**

@@ -32,20 +32,61 @@ export function fakeResolver(initial: AuthenticatedActor) {
   return { resolver: resolver as unknown as WorkspaceHttpOptions['actorResolver'], state }
 }
 
-export async function serve(options: WorkspaceHttpOptions): Promise<{ server: Server; url: string; close(): Promise<void> }> {
+export interface TestServer {
+  server: Server
+  url: string
+  close(): Promise<void>
+}
+
+export interface TestHttpResult {
+  status: number
+  body: unknown
+  allow: string | null
+}
+
+export async function serve(options: WorkspaceHttpOptions): Promise<TestServer> {
   const handler = createWorkspaceHttpHandler(options)
   const server = createServer((req, res) => { void handler(req, res) })
+  // bun 1.3.14 (the CI toolchain) keeps idle keep-alive sockets open, so
+  // `server.close()` alone can hold the promise for seconds and blow the 5s
+  // hook budget in afterEach. Track accepted sockets and destroy them on close.
+  const sockets = new Set<import('node:net').Socket>()
+  server.on('connection', socket => {
+    sockets.add(socket)
+    socket.on('close', () => sockets.delete(socket))
+  })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   const address = server.address()
   if (!address || typeof address === 'string') throw new Error('no address')
   return {
     server,
     url: `http://127.0.0.1:${address.port}`,
-    close: () => new Promise<void>(resolve => server.close(() => resolve())),
+    close: () =>
+      new Promise<void>(resolve => {
+        let settled = false
+        let poll: ReturnType<typeof setInterval> | null = null
+        const settle = () => {
+          if (settled || server.listening || sockets.size > 0) return
+          settled = true
+          if (poll !== null) clearInterval(poll)
+          resolve()
+        }
+        // bun 1.3.14 (the pinned CI toolchain) drops both the `close` callback
+        // and the `close` event of `server.close()` once a keep-alive
+        // connection has served several requests (CI unified-gates: the
+        // afterEach hook then times out). `close()` still stops the listener,
+        // so settle on the guarantee it promises: no listener, no sockets.
+        poll = setInterval(settle, 5)
+        const timer = poll as unknown as { unref?: () => void }
+        if (typeof timer.unref === 'function') timer.unref()
+        server.close(settle)
+        for (const socket of sockets) socket.destroy()
+        settle()
+      }),
   }
 }
 
-export async function request(url: string, path: string, init: { method?: string; token?: string | null; body?: unknown; raw?: string; contentType?: string } = {}) {
+export async function request(url: string, path: string, init: { method?: string; token?: string | null; body?: unknown; raw?: string; contentType?: string } = {}): Promise<TestHttpResult> {
   const headers: Record<string, string> = {}
   if (init.token !== null) headers.authorization = 'Bearer ' + (init.token ?? TOKEN)
   const body = init.raw ?? (init.body === undefined ? undefined : JSON.stringify(init.body))

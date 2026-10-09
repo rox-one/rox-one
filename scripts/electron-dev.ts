@@ -315,7 +315,7 @@ function getElectronEnv(): Record<string, string> {
 //   `createRequire(import.meta.url)` at module-init; esbuild's CJS bundling
 //   leaves the synthesized `import_meta.url` undefined and the bundled
 //   main.cjs throws ERR_INVALID_ARG_VALUE on load. Externalize so Node loads
-//   the SDK natively as ESM. Electron 39 = Node 22.x supports `require()` of
+//   the SDK natively as ESM. Electron 44 = Node 24.x supports `require()` of
 //   TLA-free ESM, so the runtime `require('@anthropic-ai/claude-agent-sdk')`
 //   resolves correctly. Mirror of the same flag in `scripts/electron-build-main.ts`
 //   and `apps/electron/package.json` build:main.
@@ -383,7 +383,7 @@ async function buildPiAgentServer(): Promise<{ success: boolean; error?: string 
 
 // Verify a built JavaScript bundle is parseable. `node --check` performs
 // syntax-only validation — it does NOT execute module-level code or resolve
-// `require()`, so Electron-specific top-level requires (e.g. @sentry/electron)
+// `require()`, so Electron-specific top-level requires (e.g. native modules)
 // are safe. This catches truncated writes, FS corruption, and edge cases that
 // esbuild's build-success signal doesn't cover.
 async function verifyJsFile(filePath: string): Promise<{ valid: boolean; error?: string }> {

@@ -12,6 +12,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ensurePostgres } from '@rox/test-harness'
 import { skipMarker, type RuleExecutionRecord } from '../../../packages/core/src/automation/index.ts'
+import { automationRulesResponseSchema, ruleExecutionsResponseSchema } from '../../../packages/shared/src/automation/index.ts'
 import type { SharedProjectAuthority } from '../../../packages/shared/src/workspace-domain/identity/contracts.ts'
 import { applyWorkspaceMigrations, compareMigrationNames, migrationFromSource } from '../src/database/migrations.ts'
 import { PostgresRulesStore } from '../src/modules/rules/store.ts'
@@ -177,7 +178,8 @@ describe('W1-12 rules over PostgreSQL (skips without a database)', () => {
     const base = `/v1/workspaces/${workspaceId}/automation`
     const list = await request(http.url, `${base}/rules`)
     expect(list.status).toBe(200)
-    const r1 = (list.body.rules as Array<{ ruleId: string; scope: string }>).find(rule => rule.ruleId === 'R1')!
+    const listBody = automationRulesResponseSchema.parse(list.body)
+    const r1 = listBody.rules.find(rule => rule.ruleId === 'R1')!
     expect(r1).toMatchObject({ scope: 'principal' })
 
     const put = await request(http.url, `${base}/rules/R1`, { method: 'PUT', body: { enabled: false } })
@@ -189,8 +191,9 @@ describe('W1-12 rules over PostgreSQL (skips without a database)', () => {
 
     const history = await request(http.url, `${base}/executions?limit=5`)
     expect(history.status).toBe(200)
-    expect(history.body.executions[0]).toMatchObject({ ruleId: 'R1', status: 'succeeded', attempts: 1 })
-    expect(history.body.executions[0].steps).toHaveLength(8)
+    const historyBody = ruleExecutionsResponseSchema.parse(history.body)
+    expect(historyBody.executions[0]).toMatchObject({ ruleId: 'R1', status: 'succeeded', attempts: 1 })
+    expect(historyBody.executions[0]!.steps).toHaveLength(8)
 
     const retry = await request(http.url, `${base}/executions/${encodeURIComponent('R1:event-1:single:' + ownerId)}/retry`, { method: 'POST' })
     expect(retry.status).toBe(200)

@@ -13,7 +13,12 @@ describe('session list grouping chrome', () => {
     expect(FILTER).not.toContain("t('sidebar.groupByUnread')")
     expect(FILTER).not.toContain("t('sidebar.group')")
     expect(FILTER).toContain('Leftover compact groupingMode cycle')
-    expect(FILTER).toContain('groupBy === \'none\'')
+    // The groupBy props survive only for AppShell interface parity; the
+    // component discards them (underscore-prefixed) and never drives the
+    // leftover cycle. CollectionDisplay.groupBy owns grouping instead.
+    expect(FILTER).toContain('chatGroupingMode: _chatGroupingMode')
+    expect(FILTER).toContain('setChatGroupingMode: _setChatGroupingMode')
+    expect(FILTER).not.toContain('setChatGroupingMode(')
   })
 
   it('leaves CollectionGroupByMenu as the grouping control in collection chrome', () => {

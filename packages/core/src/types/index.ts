@@ -30,6 +30,8 @@ export type {
   ToolDisplayMeta,
   AttachmentType,
   MessageAttachment,
+  AttachmentTranscript,
+  AttachmentTranscriptStatus,
   StoredAttachment,
   ContentBadge,
   AnnotationAuthor,

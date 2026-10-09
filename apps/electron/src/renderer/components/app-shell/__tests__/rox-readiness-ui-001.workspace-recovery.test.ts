@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import ts from 'typescript'
 import { appShellEffect, deferred, settle } from './rox-readiness-ui-001.effect-harness'
 import * as realStorage from '../../../lib/local-storage'
 import { loadShellLayout as realLoadShellLayout } from '../../../lib/shell-layout-preferences'
@@ -16,7 +19,8 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       }
       const bindings = (workspace: string) => ({
         window: { electronAPI: api }, activeWorkspaceId: workspace, activeSessionWorkingDirectory: `/work/${workspace}`,
-        [`set${kind}`]: (next: string[]) => { data = next }, clearSourceIconCaches: () => {}, console,
+        [`set${kind}`]: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
+        clearSourceIconCaches: () => {}, console,
       })
       const cleanup = appShellEffect(`electronAPI.get${kind}(`, bindings('old'))
       cleanup?.()
@@ -42,7 +46,8 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       }
       const bindings = {
         window: { electronAPI: api }, activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/current',
-        [`set${kind}`]: (next: string[]) => { data = next }, clearSourceIconCaches: () => {}, console,
+        [`set${kind}`]: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
+        clearSourceIconCaches: () => {}, console,
       }
       const offLoad = appShellEffect(`electronAPI.get${kind}(`, bindings)
       const offEvent = event ? undefined : appShellEffect(`electronAPI.on${kind}Changed(`, bindings)
@@ -72,7 +77,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
         onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
       } },
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
-      setSkills: (next: string[]) => { data = next }, console,
+      setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
     })
     initial.resolve(['workspace-skill', 'project-skill', 'omp-skill']); await settle()
     event('current', ['workspace-skill'])
@@ -94,7 +99,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
         onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
       } },
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: undefined,
-      setSkills: (next: string[]) => { data = next }, console,
+      setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
     })
     responses[0]!.resolve(['initial']); await settle()
     event('foreign', ['wrong']); expect(reads).toBe(1)
@@ -118,7 +123,8 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
         onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
       } },
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
-      setSkills: (next: string[]) => { data = next }, console: { error: () => { errors++ } },
+      setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
+      console: { error: () => { errors++ } },
     })
     responses[0]!.resolve(['workspace', 'project', 'omp']); await settle()
     event('current', [])
@@ -131,6 +137,38 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     cleanup?.()
     event('current', [])
     expect(reads).toBe(3)
+  })
+
+  it('surfaces a pending sync and keeps the last-known catalog when a first-install refresh times out', async () => {
+    const initial = deferred<string[]>()
+    const refresh = deferred<string[]>()
+    let reads = 0, errors = 0
+    let event!: (workspace: string, data: string[]) => void
+    let data: string[] = []
+    let syncing = false
+    const cleanup = appShellEffect('electronAPI.getSkills(', {
+      window: { electronAPI: {
+        getSkills: () => ++reads === 1 ? initial.promise : refresh.promise,
+        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      } },
+      activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
+      setSkills: (next: string[]) => { data = next }, setSkillsSyncing: (next: boolean) => { syncing = next },
+      console: { error: () => { errors++ } },
+    })
+    expect(syncing).toBe(true)
+    initial.resolve(['workspace', 'project', 'omp']); await settle()
+    expect(data).toEqual(['workspace', 'project', 'omp'])
+    expect(syncing).toBe(false)
+    // The bundled-skills sync invalidates the caches and the refresh outlives
+    // the client timeout. The last-known catalog must survive and stay marked
+    // as syncing/pending so the panel never claims "No skills configured".
+    event('current', [])
+    expect(syncing).toBe(true)
+    refresh.reject(new Error('Request timeout: skills:get (30000ms)')); await settle()
+    expect(data).toEqual(['workspace', 'project', 'omp'])
+    expect(syncing).toBe(true)
+    expect(errors).toBe(1)
+    cleanup?.()
   })
 
   it('recovers from request rejection and unmount without installing stale data', async () => {
@@ -193,4 +231,76 @@ describe('ROX UI-001 workspace persistence isolation', () => {
       expect(writes).toEqual([])
     })
   }
+})
+
+// The skills popover has no renderable harness (its chrome only mounts when
+// open + anchored), so — following this suite's convention of asserting
+// against the real production source — these cases parse the actual
+// SkillSelectorPopover branch that decides between the pending marker and the
+// "no skills configured" empty state, and read the atom wiring AppShell feeds
+// it. The pending/syncing transitions themselves are covered behaviourally by
+// the effect cases above.
+const rendererRoot = join(import.meta.dir, '../../..')
+
+function popoverEmptyStateBranches() {
+  const source = readFileSync(join(rendererRoot, 'components/ui/SkillSelectorPopover.tsx'), 'utf8')
+  const file = ts.createSourceFile('SkillSelectorPopover.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  let emptyState: ts.ConditionalExpression | undefined
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isJsxAttribute(node) &&
+      node.name.getText(file) === 'emptyState' &&
+      node.initializer &&
+      ts.isJsxExpression(node.initializer) &&
+      node.initializer.expression &&
+      ts.isConditionalExpression(node.initializer.expression)
+    ) {
+      emptyState = node.initializer.expression
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(file)
+  if (!emptyState) throw new Error('SkillSelectorPopover emptyState loading branch not found')
+  const branch = emptyState!
+  return {
+    condition: branch.condition.getText(file),
+    pending: branch.whenTrue.getText(file),
+    idle: branch.whenFalse.getText(file),
+  }
+}
+
+describe('ROX UI-001 skills pending-sync consumer contract', () => {
+  it('shows a syncing marker instead of the no-skills empty state while a load is pending', () => {
+    const { condition, pending } = popoverEmptyStateBranches()
+    expect(condition).toBe('loading')
+    expect(pending).toContain('data-list-role="skills-syncing"')
+    expect(pending).toContain('role="status"')
+    expect(pending).toContain("t('common.loading')")
+    // The exact claim PERF-06 forbids while a load is pending:
+    expect(pending).not.toContain('skillsList.noSkillsConfigured')
+    expect(pending).not.toContain('skillsList.addInSettings')
+  })
+
+  it('restores the no-skills empty state once syncing is false', () => {
+    const { idle } = popoverEmptyStateBranches()
+    expect(idle).toContain("t('skillsList.noSkillsConfigured')")
+    expect(idle).toContain("t('skillsList.addInSettings')")
+    expect(idle).not.toContain('skills-syncing')
+  })
+
+  it('writes and consumes one syncing flag through skillsSyncingAtom', () => {
+    const appShell = readFileSync(join(rendererRoot, 'components/app-shell/AppShell.tsx'), 'utf8')
+    // A single setter mirrors the local state into the atom, and the load
+    // effect drives that one setter for true/false (no duplicated logic).
+    expect(appShell).toContain('const setSkillsSyncingAtom = useSetAtom(skillsSyncingAtom)')
+    expect(appShell).toContain('setSkillsSyncingState(next)')
+    expect(appShell).toContain('setSkillsSyncingAtom(next)')
+    expect(appShell).toMatch(/setSkillsSyncing\((?:true|false)\)/)
+
+    const editor = readFileSync(join(rendererRoot, 'components/app-shell/kanban/TaskEditor.tsx'), 'utf8')
+    expect(editor).toContain('const workspaceSkillsSyncing = useAtomValue(skillsSyncingAtom)')
+    expect(editor).toContain('loading={workspaceSkillsSyncing}')
+
+    expect(readFileSync(join(rendererRoot, 'components/ui/SkillSelectorPopover.tsx'), 'utf8')).toContain('loading?: boolean')
+  })
 })
