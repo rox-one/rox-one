@@ -316,7 +316,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
 }
 
 async function getExpectedGuiChannels(): Promise<Set<string>> {
-  const [browser, browserIntel, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard, keeper, clipboardHistory] = await Promise.all([
+  const [browser, browserIntel, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard, keeper, nativeIntegration, zedThemes, clipboardHistory] = await Promise.all([
     import('../browser'),
     import('../browser-intel'),
     import('../system'),
@@ -327,6 +327,8 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     import('../extension-surface'),
     import('../voice-clipboard'),
     import('@rox/server-core/handlers/rpc/keeper'),
+    import('../native-integration'),
+    import('../zed-themes'),
     import('../clipboard-history'),
   ])
 
@@ -341,6 +343,8 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     ...extensionSurface.HANDLED_CHANNELS,
     ...voiceClipboard.HANDLED_CHANNELS,
     ...keeper.KEEPER_CHANNELS,
+    ...nativeIntegration.HANDLED_CHANNELS,
+    ...zedThemes.HANDLED_CHANNELS,
     ...clipboardHistory.HANDLED_CHANNELS,
   ])
 }

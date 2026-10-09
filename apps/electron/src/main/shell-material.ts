@@ -17,7 +17,7 @@ import {
   type ZenShellSnapshot,
 } from '../shared/shell-appearance'
 import { initialZenWindowState, reduceZenWindow, type ZenWindowState } from '../shared/shell-window-lifecycle'
-import { windowLog } from './logger'
+import { mainLog, windowLog } from './logger'
 import { peekRenderProfile } from './render-profile'
 
 interface ZenWindowRecord {
@@ -146,20 +146,28 @@ function clearNativeMaterial(window: BrowserWindow): void {
 function applyNativeMaterial(window: BrowserWindow, material: ResolvedShellMaterial): boolean {
   if (window.isDestroyed()) return false
   try {
+    let applied = false
     if (material === 'vibrancy' && process.platform === 'darwin') {
       window.setVibrancy('under-window')
       window.setBackgroundColor('#00000000')
-      ;(window as unknown as { setVisualEffectState?: (state: string) => void })
-        .setVisualEffectState?.('active')
-      return true
-    }
-    if (material === 'mica' && process.platform === 'win32' && typeof window.setBackgroundMaterial === 'function') {
+      // `setVisualEffectState` is not in the pinned Electron typings but exists at runtime.
+      const vibrancyWindow = window as unknown as { setVisualEffectState?: (state: string) => void }
+      vibrancyWindow.setVisualEffectState?.('active')
+      applied = true
+    } else if (material === 'mica' && process.platform === 'win32' && typeof window.setBackgroundMaterial === 'function') {
       window.setBackgroundMaterial('mica')
       window.setBackgroundColor('#00000000')
-      return true
+      applied = true
+    } else {
+      clearNativeMaterial(window)
+      applied = material === 'solid'
     }
-    clearNativeMaterial(window)
-    return material === 'solid'
+    // Receipt: the actual vibrancy mode and the window background colour after
+    // the native call (Electron exposes no vibrancy getter, and the test stub
+    // may omit getBackgroundColor).
+    const backgroundWindow = window as unknown as { getBackgroundColor?: () => string }
+    mainLog.info('Shell material applied', { material, vibrancy: material === 'vibrancy' ? 'under-window' : null, backgroundColor: backgroundWindow.getBackgroundColor?.() ?? null })
+    return applied
   } catch (error) {
     windowLog.warn('Failed to apply Zen Shell material:', error)
     clearNativeMaterial(window)

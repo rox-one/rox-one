@@ -44,7 +44,7 @@ mock.module('electron', () => ({
 }))
 mock.module('os', () => ({ release: () => build }))
 mock.module('@rox/shared/config', () => ({ isZenShellEnabled: () => zenEnabled, getZenShellMaterialPreference: () => 'system', getRenderProfilePreference: () => renderProfilePreference }))
-mock.module('../logger', () => ({ windowLog: { warn() {} } }))
+mock.module('../logger', () => ({ windowLog: { warn() {} }, mainLog: { info() {} } }))
 
 const policy = await import('../shell-material')
 type Window = Parameters<typeof policy.attachZenWindowPolicy>[0]

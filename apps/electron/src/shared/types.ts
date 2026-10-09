@@ -273,6 +273,15 @@ export type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIss
 // Onboarding profile suggestion DTOs
 import type { SuggestPreferencesInput, SuggestPreferencesResult } from '@rox/shared/protocol';
 
+// Wave 2 appearance/zed-import DTOs
+import type {
+  SystemAccentSnapshot,
+  UiAppearanceSnapshot,
+  ZedThemeEntry,
+  ZedThemeImportRequest,
+  ZedThemeImportResult,
+} from '@rox/shared/protocol';
+
 import type {
   CredentialMigrationApplyDto,
   CredentialMigrationCountsDto,
@@ -700,6 +709,8 @@ import type {
   SiyuanSurfaceState,
   ExtensionSurfaceState,
   SessionActorRef,
+  NotificationDeepLink,
+  ShellActionPayload,
 } from '@rox/shared/protocol'
 
 // Browser Intelligence Pipeline contract — frozen in the workspace package
@@ -2723,7 +2734,7 @@ export interface ElectronAPI {
   getLogoUrl(serviceUrl: string, provider?: string): Promise<string | null>
 
   // Notifications
-  showNotification(title: string, body: string, workspaceId: string, sessionId: string): Promise<void>
+  showNotification(title: string, body: string, workspaceId: string, sessionId: string, deepLink?: NotificationDeepLink): Promise<void>
   getNotificationsEnabled(): Promise<boolean>
   setNotificationsEnabled(enabled: boolean): Promise<void>
 
@@ -2756,6 +2767,15 @@ export interface ElectronAPI {
     renderProfile?: 'auto' | 'performance' | 'standard'
   }): Promise<ZenShellSnapshot>
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
+  /** A6/B10 — persisted «Интерфейс» prefs + the live system accent. */
+  getUiPreferences(): Promise<UiAppearanceSnapshot>
+  setUiPreferences(patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' }): Promise<UiAppearanceSnapshot>
+  /** B10 — macOS system accent colour push. */
+  onAccentChanged(callback: (accent: SystemAccentSnapshot) => void): () => void
+
+  // C1 — import themes from an installed Zed (LOCAL_ONLY).
+  listZedThemes(): Promise<ZedThemeEntry[]>
+  importZedTheme(request: ZedThemeImportRequest): Promise<ZedThemeImportResult>
 
   // Prompt caching & context
   getExtendedPromptCache(): Promise<boolean>
@@ -2780,6 +2800,33 @@ export interface ElectronAPI {
   getWindowFocusState(): Promise<boolean>
   onWindowFocusChange(callback: (isFocused: boolean) => void): () => void
   onNotificationNavigate(callback: (data: { workspaceId: string; sessionId: string }) => void): () => void
+
+  // Native shell actions (dock menu, tray, app menu, notification click) —
+  // main pushes one structured action to the focused (or first) window.
+  onShellAction(callback: (payload: ShellActionPayload) => void): () => void
+
+  // Floating quick composer (window + global shortcut). Nested namespace via
+  // dotted CHANNEL_MAP keys; all LOCAL_ONLY.
+  quickComposer: {
+    open(): Promise<{ ok: boolean; error?: string }>
+    close(): Promise<{ ok: boolean; error?: string }>
+    getShortcut(): Promise<string | null>
+    setShortcut(accelerator: string | null): Promise<{ ok: boolean; accelerator?: string | null; error?: string }>
+  }
+
+  // OS login item (launch at startup). LOCAL_ONLY.
+  appIntegration: {
+    getLoginItem(): Promise<{ openAtLogin: boolean; supported: boolean }>
+    setLoginItem(input: { openAtLogin: boolean }): Promise<{ ok: boolean; openAtLogin: boolean; error?: string }>
+  }
+
+  // Finder / filesystem affordances for a user-visible path. LOCAL_ONLY.
+  revealInFinder(path: string): Promise<{ ok: boolean; error?: string }>
+  openPath(path: string): Promise<{ ok: boolean; error?: string }>
+  copyPath(path: string): Promise<{ ok: boolean; error?: string }>
+  quickLook(path: string): Promise<{ ok: boolean; error?: string }>
+  quickLookClose(): Promise<{ ok: boolean; error?: string }>
+  startDrag(input: { path: string; iconPath?: string }): Promise<{ ok: boolean; error?: string }>
 
   // Theme preferences sync across windows
   broadcastThemePreferences(preferences: { mode: string; colorTheme: string; font: string; contrast?: string }): Promise<void>
