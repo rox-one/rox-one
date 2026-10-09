@@ -33,7 +33,8 @@ export function leaf(name) { return function Surface(props) {
  return React.createElement('section', {'data-route-host':name,'data-mount':mount,'data-props':JSON.stringify(props)}, name);
 } }
 export const MultiSelectPanel = leaf('MultiSelectPanel');
-export const MemoryScreen = leaf('MemoryScreen'); export const LearningScreen = leaf('LearningScreen');
+export const MemoryScreen = leaf('MemoryScreen'); export const MemoryRepoScreen = leaf('MemoryRepoScreen');
+export const LearningScreen = leaf('LearningScreen');
 export const ProjectsHomeInMain=leaf('ProjectsHomeInMain');
 export const PageView=leaf('PageView'); export const SessionHeatmapHost=leaf('SessionHeatmapHost');
 export const HomeFrontPage=leaf('HomeFrontPage'); export const SettingsOverviewPage=leaf('SettingsOverviewPage');
@@ -125,7 +126,7 @@ window.ui001={render:(props)=>root.render(<Fixture {...props}/>),sources:(ws,dat
 window.ui001.render({});` : ''}
 `)
   const stubs = new Set([
-    '../memory/MemoryScreen', '../learning/LearningScreen', './ProjectsHomeInMain', './MultiSelectPanel', './collection/CollectionBulkBar',
+    '../memory/MemoryScreen', '../memory/MemoryRepoScreen', '../learning/LearningScreen', './ProjectsHomeInMain', './MultiSelectPanel', './collection/CollectionBulkBar',
     '@/pages/ChatPage', '@/platform/HomeFrontPage', '@/pages/settings/settings-pages', '@/pages/settings/SettingsOverviewPage',
     '../pages/PageView', './session-heatmap/SessionHeatmapHost', './SendResourceToWorkspaceDialog',
     '../pages/PagesHome', './kanban/KanbanBoardContainer', './session-table/SessionTableHost', '../automations/AutomationEditor',

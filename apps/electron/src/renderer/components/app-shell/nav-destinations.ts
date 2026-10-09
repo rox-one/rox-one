@@ -24,6 +24,7 @@ import {
   Cable,
   DatabaseZap,
   FolderKanban,
+  GitBranch,
   Globe,
   GraduationCap,
   House,
@@ -64,6 +65,7 @@ export type AppNavDestinationId =
   | 'sources'
   | 'skills'
   | 'memory'
+  | 'memoryRepo'
   | 'learning'
   | 'browser'
   | 'tasks'
@@ -137,7 +139,19 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     railGroup: 'primary',
     contextLinkIds: ['nav:memory'],
     route: () => routes.view.memory(),
-    isActive: isMemoryNavigation,
+    // The repository tab owns its own rail item; keep the two mutually
+    // exclusive so exactly one is highlighted at a time.
+    isActive: (navState) => isMemoryNavigation(navState) && navState.tab !== 'repo',
+  },
+  {
+    id: 'memoryRepo',
+    linkId: 'nav:memoryRepo',
+    icon: GitBranch,
+    labelKey: 'sidebar.memoryRepo',
+    railGroup: 'more',
+    contextLinkIds: ['nav:memoryRepo'],
+    route: () => routes.view.memory('repo'),
+    isActive: (navState) => isMemoryNavigation(navState) && navState.tab === 'repo',
   },
   {
     id: 'browser',

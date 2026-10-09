@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { navigate, routes } from '@/lib/navigate'
 import { MemoryScreen } from '../memory/MemoryScreen'
+import { MemoryRepoScreen } from '../memory/MemoryRepoScreen'
 import { LearningScreen } from '../learning/LearningScreen'
 import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
@@ -501,6 +502,13 @@ export function MainContentPanel({
   }
 
   if (isMemoryNavigation(navState)) {
+    if (navState.tab === 'repo' || navState.tab === 'dream') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <MemoryRepoScreen workspaceId={activeWorkspaceId ?? undefined} />
+        </Panel>
+      )
+    }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <MemoryScreen workspaceId={activeWorkspaceId ?? undefined} />

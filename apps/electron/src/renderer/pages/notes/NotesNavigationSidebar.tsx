@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { ChevronRight, Copy, ExternalLink, FilePlus2, FileText, Folder, FolderInput, FolderOpen, Link2, Pencil, Trash2 } from 'lucide-react'
+import { ChevronRight, Copy, ExternalLink, FilePlus2, FileText, Folder, FolderInput, FolderOpen, Link2, Moon, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { NoteSummary } from '../../../shared/types'
 import { cn } from '@/lib/utils'
@@ -62,6 +62,7 @@ interface NoteNavigationActions {
   onOpenRenameDialogForNote(note: NoteSummary): void
   onOpenDeleteDialogForNote(note: NoteSummary): void
   onDuplicateNote(note: NoteSummary): void
+  onCollectToMemory(note: NoteSummary): void
   onCopyNoteLink(note: NoteSummary): void
   onCopyNotePath(note: NoteSummary): void
   onRevealNote(note: NoteSummary): void
@@ -73,14 +74,26 @@ interface NotesNavigationSidebarProps extends NoteNavigationActions {
   collapsedFolders: Set<string>
   onToggleFolder(folder: string): void
   emptyMessage: string
+  /** Note ids awaiting the next memory dream; null/undefined hides the dream chip. */
+  dreamNoteIds?: ReadonlySet<string> | null
 }
 
-function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavigationActions & {
+export type NoteDreamState = 'pending' | 'dreamed'
+
+/** Dream chip state for a note; null hides the chip while the dream status is unknown. */
+export function noteDreamState(dreamNoteIds: ReadonlySet<string> | null | undefined, noteId: string): NoteDreamState | null {
+  if (!dreamNoteIds) return null
+  return dreamNoteIds.has(noteId) ? 'pending' : 'dreamed'
+}
+
+function NoteNavigationItem({ note, depth, activeNoteId, dreamNoteIds, ...actions }: NoteNavigationActions & {
   note: NoteSummary
   depth: number
   activeNoteId: NotesNavigationSidebarProps['activeNoteId']
+  dreamNoteIds?: ReadonlySet<string> | null
 }) {
   const { t } = useTranslation()
+  const dreamState = noteDreamState(dreamNoteIds, note.id)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `note:${note.id}`,
     data: { type: 'note', note },
@@ -107,6 +120,20 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
             <FileText className="h-3.5 w-3.5 shrink-0 text-sky-500" aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate text-sm">{note.title}</span>
           </span>
+          {dreamState ? (
+            <span className="mt-1 flex flex-wrap gap-1 pl-5">
+              <span
+                data-testid="notes-dream-chip"
+                data-dream-state={dreamState}
+                className={cn(
+                  'rounded-[var(--radius-control)] px-1.5 py-0.5 text-[10px]',
+                  dreamState === 'pending' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-foreground/[0.06] text-muted-foreground',
+                )}
+              >
+                {t(dreamState === 'pending' ? 'notes.sleep.pending' : 'notes.sleep.dreamed')}
+              </span>
+            </span>
+          ) : null}
           {note.tags.length > 0 && (
             <span className="mt-1 flex flex-wrap gap-1 pl-5">
               {note.tags.slice(0, 3).map(tag => (
@@ -131,6 +158,10 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={() => actions.onOpenMoveDialog(note)}>
           <FolderInput className="h-3.5 w-3.5" />{t('notes.menu.moveToFolder')}
+        </StyledContextMenuItem>
+        <StyledContextMenuSeparator />
+        <StyledContextMenuItem onClick={() => actions.onCollectToMemory(note)}>
+          <Moon className="h-3.5 w-3.5" />{t('notes.action.collectToMemory')}
         </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem onClick={() => actions.onCopyNoteLink(note)}>
