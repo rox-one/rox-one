@@ -196,7 +196,6 @@
     "./commands/schemas": "./src/commands/schemas.ts",
     "./domain": "./src/domain/index.ts",
     "./collab": "./src/collab/index.ts",
-    "./drive": "./src/drive/index.ts",
     "./xsc": "./src/xsc/index.ts",
     "./automation": "./src/automation/index.ts",
     "./automation/schemas": "./src/automation/schemas.ts",
