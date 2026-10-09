@@ -490,15 +490,15 @@ export function LocalMeetingDetail(props: {
           <section
             data-testid="meeting-rolling-summary"
             aria-label={t('meetings.local.summary.rolling')}
-            className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-foreground/[0.03] p-2"
+            className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-surface-hover p-2"
           >
-            <div className="flex flex-wrap items-center gap-2 text-[11px] text-text-muted">
+            <div className="flex flex-wrap items-center gap-2 text-caption text-text-muted">
               <span>{t('meetings.local.summary.rolling')}</span>
               <span data-testid="meeting-rolling-summary-generator">{t(rolling.generatorKey)}</span>
               {rolling.stale ? <span className="text-warning">{t('meetings.local.analysisStale')}</span> : null}
               <span className="ml-auto font-mono tabular-nums">{t('meetings.local.summary.updatedAt', { time: new Date(rolling.updatedAt).toLocaleTimeString() })}</span>
             </div>
-            <p className="text-[13px] leading-5">{rolling.text}</p>
+            <p className="text-body leading-5">{rolling.text}</p>
           </section>
         )
       })()}
@@ -770,7 +770,7 @@ export function LocalMeetingDetail(props: {
                         data-testid="meeting-transcript-provenance"
                         data-provenance={chip.labelKey}
                         data-own-echo={chip.ownEcho ? 'true' : undefined}
-                        className={cn('shrink-0 self-center rounded-[var(--radius-control)] px-1.5 py-0.5 text-[10px] leading-4', chip.ownEcho ? 'bg-accent/15 text-accent' : 'bg-foreground/[0.06] text-text-muted')}
+                        className={cn('shrink-0 self-center rounded-[var(--radius-control)] px-1.5 py-0.5 text-caption leading-4', chip.ownEcho ? 'bg-accent/15 text-accent' : 'bg-surface-hover text-text-muted')}
                       >
                         {t(chip.labelKey)}
                       </span>

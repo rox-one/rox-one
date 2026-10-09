@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { afterAll, afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -15,10 +15,13 @@ import type { HandlerDeps } from '../../handler-deps'
 import type { RequestContext } from '../../../transport/types'
 
 let root = ''
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: root } : null,
 }))
+afterAll(() => { mock.module('@rox/shared/config', () => actualConfig) })
 
 import { MINDMAP_PIN_DIRNAME, registerMindmapHandlers } from '../mindmap'
 

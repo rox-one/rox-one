@@ -23,7 +23,7 @@ export function SessionTypingIndicator({ actors, className }: SessionTypingIndic
 
   return (
     <div
-      className={className ?? 'px-4 pb-1 text-[11px] text-muted-foreground'}
+      className={className ?? 'px-4 pb-1 text-caption text-muted-foreground'}
       aria-live="polite"
       data-typing-count={actors.length}
     >

@@ -3,7 +3,7 @@
     {
       "phase": "write",
       "platform": "darwin",
-      "electron": "39.2.7",
+      "electron": "44.7.0",
       "encryptionAvailable": true,
       "profileIsolated": true,
       "backend": "Keychain",
@@ -28,7 +28,7 @@
     {
       "phase": "read",
       "platform": "darwin",
-      "electron": "39.2.7",
+      "electron": "44.7.0",
       "encryptionAvailable": true,
       "profileIsolated": true,
       "backend": "Keychain",

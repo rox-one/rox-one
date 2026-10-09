@@ -129,7 +129,21 @@ if (isClientOnly) {
   // RoutedClient routes LOCAL_ONLY to local server, REMOTE_ELIGIBLE to
   // whichever server owns the workspace (local or remote).
 
-  const wsPort: number = ipcRenderer.sendSync('__get-ws-port')
+  // PERF-01 shell-first boot: the window may be created before the local RPC
+  // server is listening. `__get-ws-port` answers synchronously when the server
+  // is already up (test/fixture harnesses provide it at preload time); on a
+  // shell-first launch it is not registered yet, so the port is resolved from
+  // main through `__await-ws-port`, which settles once the server bootstrap
+  // finishes. The first RPC therefore waits for the server (loading splash)
+  // instead of dialling an unknown port.
+  const initialWsPort: unknown = ipcRenderer.sendSync('__get-ws-port')
+  let resolvedWsPort = typeof initialWsPort === 'number' && initialWsPort > 0 ? initialWsPort : 0
+  const resolveWsPort = async (): Promise<number> => {
+    if (resolvedWsPort > 0) return resolvedWsPort
+    const port: unknown = await ipcRenderer.invoke('__await-ws-port')
+    if (typeof port === 'number' && port > 0) resolvedWsPort = port
+    return resolvedWsPort
+  }
   const readBoundWorkspaceId = (): string => {
     const value = ipcRenderer.sendSync('__get-workspace-id')
     return typeof value === 'string' ? value : ''
@@ -137,14 +151,15 @@ if (isClientOnly) {
   const workspaceId: string = readBoundWorkspaceId()
   const localClientProof: string = ipcRenderer.sendSync('__get-local-client-proof')
 
-  const localClient = new WsRpcClient(`ws://127.0.0.1:${wsPort}`, {
+  const localClient = new WsRpcClient(`ws://127.0.0.1:${resolvedWsPort}`, {
     workspaceId,
     webContentsId,
     localClientProof,
     resolveTarget: async () => {
       const boundWorkspaceId = readBoundWorkspaceId()
+      const port = await resolveWsPort()
       return {
-        url: `ws://127.0.0.1:${wsPort}`,
+        url: `ws://127.0.0.1:${port}`,
         token: await ipcRenderer.invoke('__resolve-local-ws-token', boundWorkspaceId),
       }
     },

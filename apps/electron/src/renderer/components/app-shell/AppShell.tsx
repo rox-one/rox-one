@@ -3111,8 +3111,8 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
-                {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
-                <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
+                {/* pb-8 = 32px clearance so content tail scrolls clear of the 32px gradient; mask is off during active settings navigation because settings list rows fall into the fade band */}
+                <div className={cn('flex-1 overflow-y-auto min-h-0 pb-8', !(isSettingsNavigation(navState) && !isAutoCompact) && 'mask-fade-bottom')}>
                 {activeWorkspaceId && !isSidebarCollapsed && (
                   <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
                     <label className="shrink-0 text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>

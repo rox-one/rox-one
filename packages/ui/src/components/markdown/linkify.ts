@@ -51,8 +51,10 @@ interface CodeRange {
 function findCodeRanges(text: string): CodeRange[] {
   const ranges: CodeRange[] = []
 
-  // Find fenced code blocks (```...```)
-  const fencedRegex = /```[\s\S]*?```/g
+  // Find fenced code blocks (```...```).
+  // The closing fence is optional: an unterminated opener (a fence still being
+  // streamed) extends to EOF so its body is never linkified.
+  const fencedRegex = /```[\s\S]*?(?:```|$)/g
   let match
   while ((match = fencedRegex.exec(text)) !== null) {
     ranges.push({ start: match.index, end: match.index + match[0].length })

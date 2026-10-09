@@ -2239,6 +2239,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         todos={turn.todos}
                         onOpenFile={onOpenFile}
                         onOpenUrl={onOpenUrl}
+                        onSendPrompt={(text) => handleSubmit(text)}
                         onListen={(text) => { void handleListen(text, turn.turnId) }}
                         isListening={listeningTurnId === turn.turnId}
                         isLastResponse={isLastResponse}
@@ -2505,6 +2506,8 @@ const handleFollowUpChipClick = useCallback((item: {
           theme={isDark ? 'dark' : 'light'}
           onOpenUrl={onOpenUrl}
           onOpenFile={onOpenFile}
+          onSendPrompt={(text) => handleSubmit(text)}
+          blockScope={session ? `${session.id}:${overlayState.activity.id}` : undefined}
         />
       )}
 
@@ -2644,6 +2647,8 @@ interface MessageBubbleProps {
   message: Message
   onOpenFile: (path: string) => void
   onOpenUrl: (url: string) => void
+  /** Send a follow-up user message from an interactive block (OpenUI @ToAssistant actions) */
+  onSendPrompt?: (text: string) => void
   sessionId?: string
   /**
    * Markdown render mode for assistant messages
@@ -2749,6 +2754,7 @@ function MessageBubble({
   message,
   onOpenFile,
   onOpenUrl,
+  onSendPrompt,
   sessionId,
   renderMode = 'minimal',
   onPopOut,
@@ -2766,6 +2772,9 @@ function MessageBubble({
 }: MessageBubbleProps) {
   const { t } = useTranslation()
   const messageContent = useMemo(() => linkifyNoteReferences(message.content), [message.content])
+  // Scope interactive (`openui`) block form state to this message so an
+  // identical block in another message cannot hydrate it.
+  const blockScope = sessionId ? `${sessionId}:${message.id}` : undefined
 
   // === USER MESSAGE: Right-aligned bubble with attachments above ===
   if (message.role === 'user') {
@@ -2819,6 +2828,8 @@ function MessageBubble({
               mode={renderMode}
               onUrlClick={onOpenUrl}
               onFileClick={onOpenFile}
+              onSendPrompt={onSendPrompt}
+              blockScope={blockScope}
             />
           ) : (
             <CollapsibleMarkdownProvider>
@@ -2829,6 +2840,7 @@ function MessageBubble({
                 id={message.id}
                 className="text-sm"
                 collapsible
+                blockScope={blockScope}
               >
                 {messageContent}
               </Markdown>
@@ -2949,6 +2961,7 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.message.backendMessageId === next.message.backendMessageId &&
     prev.onListen === next.onListen &&
     prev.isListening === next.isListening &&
+    prev.onSendPrompt === next.onSendPrompt &&
     prev.onBranch === next.onBranch &&
     prev.onShowRuntimeMap === next.onShowRuntimeMap &&
     prev.onQuote === next.onQuote &&
