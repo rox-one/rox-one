@@ -106,7 +106,8 @@ function entryEvidenceReasons(entry: RegistryTrustEntry): RegistryTrustReason[] 
 export function assessRegistryTrust(input: RegistryTrustInput): RegistryTrustAssessment {
   const provider = typeof input.provider === 'string' ? input.provider : ''
 
-  if (!(provider in KNOWN_PROVIDERS)) {
+  // `Object.hasOwn`, not `in`: the prototype chain is not a provider list.
+  if (!Object.hasOwn(KNOWN_PROVIDERS, provider)) {
     return { verdict: 'blocked', reasons: ['provider-unverified'] }
   }
 

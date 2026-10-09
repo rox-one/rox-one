@@ -8,6 +8,13 @@
  * produces a `Response` — written back. Everything else is delegated to the
  * next handler untouched (importantly, its body stream is NOT consumed first,
  * so the WebUI sees the request exactly as it arrived).
+ *
+ * The body of a request inside the route prefix is read under the ingress'
+ * own `bodyLimitBytes` BEFORE it is buffered: the declared `Content-Length` is
+ * checked first, then a running total while streaming. This keeps the same
+ * "bodies are bounded BEFORE they are buffered" promise `hooks-http.ts`
+ * documents for the fetch path; an oversized body is answered with 413 and
+ * never reaches the ingress.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
@@ -20,18 +27,71 @@ function notFoundHandler(_req: IncomingMessage, res: ServerResponse): void {
   res.end('Not Found')
 }
 
-/** Pathname of a Node request target, without parsing the full URL. */
+/**
+ * Pathname of a Node request target, normalized exactly like the ingress
+ * normalizes it (`new URL(req.url).pathname`). The two must agree: when the
+ * pre-filter accepts a path the ingress would later decline, the ingress'
+ * `null` fall-through would hand the downstream handler an already-drained
+ * body. A target Node itself cannot parse never matches the route prefix, so
+ * the downstream handler still receives the request untouched.
+ */
 function requestPathname(url: string | undefined): string {
-  const target = url ?? '/'
-  const query = target.indexOf('?')
-  const hash = target.indexOf('#')
-  let end = target.length
-  if (query !== -1) end = Math.min(end, query)
-  if (hash !== -1) end = Math.min(end, hash)
-  return target.slice(0, end) || '/'
+  try {
+    return new URL(url ?? '/', 'http://localhost').pathname
+  } catch {
+    return ''
+  }
 }
 
-async function toWebRequest(nodeReq: IncomingMessage): Promise<Request> {
+/** Result of reading a route-prefixed request body under the ingress' cap. */
+type BoundedNodeBody = { readonly ok: true; readonly bytes: Buffer | null } | { readonly ok: false }
+
+/**
+ * Additional bytes drained (and discarded) once the cap is crossed, so the 413
+ * can still be written on a healthy connection. A stream that keeps going past
+ * `cap × factor` is abandoned outright: the socket is destroyed instead, which
+ * bounds both memory and time for an abusive sender.
+ */
+const OVERSIZE_DRAIN_FACTOR = 8
+
+/**
+ * Read a request body without buffering more than `limitBytes`: the declared
+ * `Content-Length` is checked first, and once the running total crosses the
+ * limit the remaining stream is drained — never buffered (mirrors
+ * `readBoundedBody` in hooks-http.ts for the fetch path).
+ */
+async function readBoundedNodeBody(nodeReq: IncomingMessage, limitBytes: number): Promise<BoundedNodeBody> {
+  if (nodeReq.method === 'GET' || nodeReq.method === 'HEAD') return { ok: true, bytes: null }
+
+  const declared = nodeReq.headers['content-length']
+  const declaredBytes = typeof declared === 'string' ? Number(declared) : Number.NaN
+  if (Number.isFinite(declaredBytes) && declaredBytes > limitBytes) {
+    // Reject from the declared length alone (mirrors readBoundedBody in
+    // hooks-http.ts); the caller drains whatever is already in flight.
+    return { ok: false }
+  }
+
+  const chunks: Buffer[] = []
+  let total = 0
+  let drained = 0
+  for await (const chunk of nodeReq) {
+    const bytes = typeof chunk === 'string' ? Buffer.from(chunk) : chunk
+    total += bytes.byteLength
+    if (total > limitBytes) {
+      drained += bytes.byteLength
+      if (drained > limitBytes * OVERSIZE_DRAIN_FACTOR) {
+        nodeReq.destroy()
+        return { ok: false }
+      }
+      continue
+    }
+    chunks.push(bytes)
+  }
+  if (total > limitBytes) return { ok: false }
+  return { ok: true, bytes: Buffer.concat(chunks) }
+}
+
+async function toWebRequest(nodeReq: IncomingMessage, body: Buffer | null): Promise<Request> {
   // `Socket` only gains `encrypted` on a TLS connection; the doubled cast is
   // the intended narrowing (mirrors webui/node-adapter.ts).
   const socket = nodeReq.socket as unknown as { encrypted?: boolean }
@@ -43,15 +103,6 @@ async function toWebRequest(nodeReq: IncomingMessage): Promise<Request> {
   const raw = nodeReq.rawHeaders
   for (let i = 0; i < raw.length; i += 2) {
     headers.append(raw[i], raw[i + 1])
-  }
-
-  let body: Buffer | null = null
-  if (nodeReq.method !== 'GET' && nodeReq.method !== 'HEAD') {
-    const chunks: Buffer[] = []
-    for await (const chunk of nodeReq) {
-      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
-    }
-    body = Buffer.concat(chunks)
   }
 
   // `Request` takes a web `BodyInit`; a raw Node `Buffer` is not assignable to
@@ -91,6 +142,9 @@ async function writeResponse(nodeRes: ServerResponse, response: Response): Promi
  * here; a request the ingress declines (`null`) — or any request outside its
  * route prefix — is passed to `next`.
  *
+ * The ingress' effective body cap is read once from its snapshot so the Node
+ * path enforces exactly the same limit the fetch path does.
+ *
  * When no ingress is installed (no token configured) this returns `next`
  * unchanged, so the route genuinely does not exist.
  */
@@ -100,6 +154,7 @@ export function composeHooksNodeHandler(
 ): NodeHttpHandler {
   const downstream = next ?? notFoundHandler
   if (!ingress) return downstream
+  const bodyLimitBytes = ingress.snapshot().bodyLimitBytes
 
   return (nodeReq, nodeRes) => {
     if (!ingress.matches(requestPathname(nodeReq.url))) {
@@ -108,7 +163,16 @@ export function composeHooksNodeHandler(
     }
     void (async () => {
       try {
-        const response = await ingress.handle(await toWebRequest(nodeReq))
+        const body = await readBoundedNodeBody(nodeReq, bodyLimitBytes)
+        if (!body.ok) {
+          nodeRes.writeHead(413, { 'Content-Type': 'application/json' })
+          nodeRes.end(JSON.stringify({ error: 'payload too large' }))
+          // Discard (never buffer) whatever is still in flight so the response
+          // can flush on a healthy connection; a no-op once the stream ended.
+          nodeReq.resume()
+          return
+        }
+        const response = await ingress.handle(await toWebRequest(nodeReq, body.bytes))
         if (!response) {
           downstream(nodeReq, nodeRes)
           return
