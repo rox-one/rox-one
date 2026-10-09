@@ -18,6 +18,7 @@ function stubClient(overrides?: Partial<WsRpcClient>): WsRpcClient {
     connect: mock(() => {}),
     destroy: mock(() => {}),
     invoke: mock(async () => undefined),
+    invokeWithTimeout: mock(async () => undefined),
     on: mock((channel: string, cb: (...args: any[]) => void) => {
       let set = listeners.get(channel)
       if (!set) { set = new Set(); listeners.set(channel, set) }
@@ -135,6 +136,29 @@ describe('RoutedClient', () => {
 
       expect(local.on).toHaveBeenCalledWith(LOCAL_CHANNEL, cb)
       expect(workspace.on).not.toHaveBeenCalledWith(LOCAL_CHANNEL, expect.any(Function))
+    })
+
+    it('forwards a per-call timeout override to the routed client', async () => {
+      const local = stubClient()
+      const workspace = stubClient({ invokeWithTimeout: mock(async () => 'ws-result') })
+      const routed = new RoutedClient(local, workspace)
+      routed.setWorkspaceMapping('local-ws', 'remote-ws')
+
+      const result = await routed.invokeWithTimeout(REMOTE_CHANNEL, 240_000, 'local-ws')
+      expect(result).toBe('ws-result')
+      // Override and the workspace-id translation both reach the routed client.
+      expect(workspace.invokeWithTimeout).toHaveBeenCalledWith(REMOTE_CHANNEL, 240_000, 'remote-ws')
+      expect(workspace.invoke).not.toHaveBeenCalled()
+    })
+
+    it('routes a LOCAL_ONLY invokeWithTimeout override to the local client', async () => {
+      const local = stubClient({ invokeWithTimeout: mock(async () => 'local-result') })
+      const workspace = stubClient()
+      const routed = new RoutedClient(local, workspace)
+
+      expect(await routed.invokeWithTimeout(LOCAL_CHANNEL, 500, 'arg')).toBe('local-result')
+      expect(local.invokeWithTimeout).toHaveBeenCalledWith(LOCAL_CHANNEL, 500, 'arg')
+      expect(workspace.invokeWithTimeout).not.toHaveBeenCalled()
     })
 
     it('routes REMOTE_ELIGIBLE listeners to workspaceClient', () => {

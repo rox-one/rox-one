@@ -9,7 +9,7 @@
  */
 
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import type {
@@ -17,6 +17,7 @@ import type {
   ClipEntryDetail,
   ClipEntryKind,
   ClipEntrySummary,
+  ClipImageFormat,
   ClipListQuery,
   ClipListResult,
   ClipSettings,
@@ -29,7 +30,7 @@ const PREVIEW_LENGTH = 200
 /** The search runs synchronously on the main thread; a huge query must not stall it. */
 const MAX_QUERY_LENGTH = 256
 
-export const MAX_TEXT_BYTES = 1_000_000
+export const MAX_TEXT_BYTES = 1024 * 1024
 export const MAX_IMAGE_BYTES = 20 * 1024 * 1024
 export const MAX_TAG_COUNT = 8
 export const MAX_TAG_LENGTH = 32
@@ -53,7 +54,7 @@ const ACCEPTED_RETENTION_DAYS = [1, 7, 30, 180] as const
 const MIN_ENTRIES = 100
 const MAX_ENTRIES = 20_000
 
-export type ClipImageFormat = 'png' | 'gif' | 'jpg'
+export type { ClipImageFormat }
 
 const IMAGE_MIME: Record<ClipImageFormat, string> = { png: 'image/png', gif: 'image/gif', jpg: 'image/jpeg' }
 
@@ -171,8 +172,17 @@ export class ClipboardHistoryStore implements ClipboardEntrySink {
     this.databasePath = join(options.dir, 'history.db')
     this.now = options.now ?? (() => new Date())
     try {
-      mkdirSync(this.imagesDir, { recursive: true })
+      // The store is secrets-adjacent: keep the directory (and the WAL/SHM files it
+      // will host) private to the user. Best-effort — a filesystem that cannot carry
+      // POSIX modes must not stop the store from opening. `mkdir` only applies the
+      // mode to a *new* directory, so an existing (pre-upgrade) store is repaired
+      // here as well.
+      mkdirSync(this.dir, { recursive: true, mode: 0o700 })
+      mkdirSync(this.imagesDir, { recursive: true, mode: 0o700 })
+      try { chmodSync(this.dir, 0o700) } catch { /* mode not supported here */ }
+      try { chmodSync(this.imagesDir, 0o700) } catch { /* mode not supported here */ }
       this.db = new DatabaseSync(this.databasePath)
+      try { chmodSync(this.databasePath, 0o600) } catch { /* mode not supported here */ }
     } catch (error) {
       throw new ClipboardHistoryUnavailableError('Clipboard history storage could not be opened', error)
     }
@@ -263,7 +273,7 @@ export class ClipboardHistoryStore implements ClipboardEntrySink {
     const relativePath = join('images', `${hash}.${entry.imageFormat}`)
     const absolutePath = join(this.dir, relativePath)
     const createdFile = !existsSync(absolutePath)
-    if (createdFile) writeFileSync(absolutePath, bytes)
+    if (createdFile) writeFileSync(absolutePath, bytes, { mode: 0o600 })
     const width = typeof entry.imageWidth === 'number' ? entry.imageWidth : null
     const height = typeof entry.imageHeight === 'number' ? entry.imageHeight : null
     const insert = this.db.prepare(`
@@ -333,6 +343,10 @@ export class ClipboardHistoryStore implements ClipboardEntrySink {
     if (query.kind === 'text' || query.kind === 'image') {
       where.push('kind = ?')
       params.push(query.kind)
+    }
+    if (query.format === 'png' || query.format === 'gif' || query.format === 'jpg') {
+      where.push('image_format = ?')
+      params.push(query.format)
     }
     if (query.starredOnly) where.push('is_starred = 1')
     const tag = typeof query.tag === 'string' ? query.tag.trim().toLowerCase() : ''

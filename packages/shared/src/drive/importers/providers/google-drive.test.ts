@@ -3,7 +3,11 @@
  * Covers full list pagination, ranged download, and 401 → refresh → retry.
  */
 import { describe, test, expect } from 'bun:test'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { ImportAuthManager, InMemoryImportTokenStore } from './auth'
+import { createImportJobRunner } from '../job-runner'
 import {
   GoogleDriveProvider,
   buildGoogleAuthUrl,
@@ -62,8 +66,8 @@ describe('GoogleDriveProvider.list', () => {
     expect(entries).toHaveLength(3)
     expect(entries[0]).toMatchObject({ id: 'f1', name: 'Папка', kind: 'folder' })
     expect(entries[0]?.sizeBytes).toBeUndefined()
-    expect(entries[1]).toMatchObject({ id: 'x1', kind: 'file', sizeBytes: 12, modifiedAt: '2026-01-02T00:00:00Z' })
-    expect(entries[2]).toMatchObject({ id: 'x2', kind: 'file' })
+    expect(entries[1]).toMatchObject({ id: 'x1', kind: 'file', sizeBytes: 12, modifiedAt: '2026-01-02T00:00:00Z', mimeType: 'text/plain' })
+    expect(entries[2]).toMatchObject({ id: 'x2', kind: 'file', mimeType: 'text/plain' })
   })
 
   test('addresses a nested folder via q and escapes quotes', async () => {
@@ -244,5 +248,86 @@ describe('listGoogleDriveTree', () => {
     expect(tree).toHaveLength(2)
     expect(tree[0]?.children?.map((n) => n.name)).toEqual(['inner.txt'])
     expect(tree[1]?.children).toBeUndefined()
+  })
+})
+
+describe('GoogleDriveProvider timeouts', () => {
+  test('aborts a hung listing with a typed provider error', async () => {
+    const auth = await authed()
+    const fetchImpl = ((_input: string | URL | Request, init?: RequestInit) => {
+      const { promise, reject } = Promise.withResolvers<Response>()
+      const signal = init?.signal
+      if (!signal) return promise
+      if (signal.aborted) {
+        reject(signal.reason)
+        return promise
+      }
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+      return promise
+    }) as unknown as typeof fetch
+    const provider = new GoogleDriveProvider({ auth, fetchImpl, requestTimeoutMs: 20 })
+    await expect(provider.list()).rejects.toMatchObject({ name: 'ImportProviderError', code: 'network' })
+  })
+
+  test('does not abort a download that keeps producing bytes', async () => {
+    const auth = await authed()
+    // Real timers on purpose: this exercises the actual stall watchdog against a
+    // reading client. The window is set well above `bun test`'s stream-pull
+    // latency; the companion stall test uses a tight window for the other side.
+    const fetchImpl = (async () => {
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          for (let i = 0; i < 3; i += 1) {
+            await new Promise(resolve => setTimeout(resolve, 10))
+            controller.enqueue(new Uint8Array([i]))
+          }
+          controller.close()
+        },
+      })
+      return new Response(stream, { status: 200 })
+    }) as unknown as typeof fetch
+    const provider = new GoogleDriveProvider({ auth, fetchImpl, stallTimeoutMs: 5000 })
+    const body = await provider.stream('file-1')
+    expect(new Uint8Array(await new Response(body).arrayBuffer()).byteLength).toBe(3)
+  })
+
+  test('aborts a stalled download with a typed timeout error', async () => {
+    const auth = await authed()
+    const fetchImpl = (async () => new Response(
+      new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array([1])) } }),
+      { status: 200 },
+    )) as unknown as typeof fetch
+    const provider = new GoogleDriveProvider({ auth, fetchImpl, stallTimeoutMs: 20 })
+    const body = await provider.stream('file-1')
+    await expect(new Response(body).arrayBuffer()).rejects.toMatchObject({ name: 'FetchTimeoutError' })
+  })
+})
+
+describe('GoogleDriveProvider content type propagation', () => {
+  test('carries the entry mimeType through to the upload target', async () => {
+    const auth = await authed()
+    const fetchImpl = (async (input: string | URL | Request) => {
+      const url = new URL(String(input))
+      if (url.pathname === '/drive/v3/files') {
+        return json({ files: [{ id: 'x1', name: 'a.txt', mimeType: 'text/plain', size: '3' }] })
+      }
+      return new Response('abc', { status: 200 })
+    }) as unknown as typeof fetch
+    const provider = new GoogleDriveProvider({ auth, fetchImpl })
+    const stateDir = await mkdtemp(join(tmpdir(), 'rox-google-ct-'))
+    try {
+      const puts: Array<{ key: string; contentType?: string }> = []
+      const runner = createImportJobRunner({
+        target: { async put(key, _body, opts) { puts.push({ key, contentType: opts?.contentType }) } },
+        stateDir,
+        providers: [provider],
+        concurrency: 1,
+      })
+      const job = await runner.plan('google-drive')
+      await runner.start(job.id)
+      expect(puts).toEqual([{ key: `${job.id}/a.txt`, contentType: 'text/plain' }])
+    } finally {
+      await rm(stateDir, { recursive: true, force: true })
+    }
   })
 })

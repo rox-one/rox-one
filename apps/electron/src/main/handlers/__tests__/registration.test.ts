@@ -5,6 +5,11 @@ import { WORKSPACE_WORK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/w
 import { HANDLED_CHANNELS as RUNTIME_TRACE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/runtime-trace'
 import { HANDLED_CHANNELS as CODE_INTELLIGENCE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/code-intelligence'
 import { HANDLED_CHANNELS as LEARNING_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/learning'
+import { VOICE_REALTIME_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/voice-realtime'
+import { HANDLED_CHANNELS as DRIVE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/drive'
+import { HANDLED_CHANNELS as ONBOARDING_SUGGEST_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/onboarding-suggest'
+import { HANDLED_CHANNELS as ONBOARDING_PERMISSIONS_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/onboarding-permissions'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 const registeredChannels: string[] = []
 
@@ -154,6 +159,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     commands,
     directory,
     knowledgeMap,
+    devSpace,
   ] = await Promise.all([
     import('@rox/server-core/handlers/rpc/auth'),
     import('@rox/server-core/handlers/rpc/automations'),
@@ -209,6 +215,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/commands'),
     import('@rox/server-core/handlers/rpc/directory'),
     import('@rox/server-core/handlers/rpc/knowledge-map'),
+    import('@rox/server-core/handlers/rpc/dev-space'),
   ])
 
   const [browser, browserIntel, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceClipboard, clipboardHistory] = await Promise.all([
@@ -299,6 +306,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...commands.HANDLED_CHANNELS,
     ...directory.HANDLED_CHANNELS,
     ...knowledgeMap.HANDLED_CHANNELS,
+    ...devSpace.HANDLED_CHANNELS,
     ...browser.HANDLED_CHANNELS,
     ...browserIntel.HANDLED_CHANNELS,
     ...guiSystem.GUI_HANDLED_CHANNELS,
@@ -310,6 +318,11 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...voiceClipboard.HANDLED_CHANNELS,
     ...clipboardHistory.HANDLED_CHANNELS,
     ...LEARNING_HANDLED_CHANNELS,
+    ...VOICE_REALTIME_HANDLED_CHANNELS,
+    ...DRIVE_HANDLED_CHANNELS,
+    ...ONBOARDING_SUGGEST_HANDLED_CHANNELS,
+    ...ONBOARDING_PERMISSIONS_HANDLED_CHANNELS,
+    ...Object.values(RPC_CHANNELS.calendar),
     ...entities.HANDLED_CHANNELS,
     ...tgLink.HANDLED_CHANNELS,
     ...keeper.KEEPER_CHANNELS,

@@ -43,6 +43,8 @@ import {
   isBrowserNavigation,
   isKnowledgeNavigation,
   isDiffNavigation,
+  isDevelopersNavigation,
+  isPlaybooksNavigation,
   isExtensionNavigation,
   isConnectionsNavigation,
   isHomeNavigation,
@@ -51,7 +53,7 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation, isSurfaceNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
@@ -69,6 +71,8 @@ import {
 
 import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
 import { endRouteSwitch } from '@/lib/startup-perf'
+import { RetainedSurfacePane, surfaceKeepAliveCapacity, useKeepAliveSurfaces } from '@/lib/surface-keepalive'
+import { ROUTE_PAGE_LOADERS } from './route-pages'
 export { lazyRoutePage } from '@/lib/route-recovery'
 
 function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
@@ -83,49 +87,41 @@ function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null
 }
 
 
-const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
-const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
-const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
+// PERF-10 (#1577): every lazy page comes from the shared registry so
+// `preloadRoute()` can warm the chunk before the user navigates to it.
+const SearchPage = lazyRoutePage(ROUTE_PAGE_LOADERS.search)
+const NotesPage = lazyRoutePage(ROUTE_PAGE_LOADERS.notes)
+const ConnectionsPage = lazyRoutePage(ROUTE_PAGE_LOADERS.connections)
+const ExtraScreenHost = lazyRoutePage(ROUTE_PAGE_LOADERS.extraScreens)
 const DrivePage = lazyRoutePage(() => import('@/pages/DrivePage'))
-const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
 // W1-07 (#1504): unified mode roots; reachable only while their mode flag is on.
-const SurfaceHost = lazyRoutePage(() => import('@/platform/SurfaceHost'))
-const TasksPage = lazyRoutePage(() => import('@/pages/workspace-work/WorkspaceTasksPage'))
-const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
-const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
-const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
-const ClipboardHistoryPage = lazyRoutePage(() => import('@/pages/ClipboardHistoryPage'))
-const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
-const SkillInfoPage = lazyRoutePage(() => import('@/pages/SkillInfoPage'))
-const SourceInfoPage = lazyRoutePage(() => import('@/pages/SourceInfoPage'))
-const SkillsCatalogPage = lazyRoutePage(() => import('@/pages/SkillsCatalogPage'))
-const IntegrationsCatalogPage = lazyRoutePage(() => import('@/pages/IntegrationsCatalogPage'))
-const ProjectInfoPage = lazyRoutePage(() => import('@/pages/ProjectInfoPage'))
-const BrowserPanelPage = lazyRoutePage(() => import('@/pages/BrowserPanelPage'))
-const ExtensionSurfacePage = lazyRoutePage(() => import('@/pages/ExtensionSurfacePage'))
-const TerminalSurfacePage = lazyRoutePage(() => import('@/pages/TerminalSurfacePage'))
-const CloudRunSurfacePage = lazyRoutePage(() => import('@/pages/CloudRunSurfacePage'))
-const PagesHome = lazyRoutePage(() =>
-  import('../pages/PagesHome').then((m) => ({ default: m.PagesHome })),
-)
-const KanbanBoardContainer = lazyRoutePage(() =>
-  import('./kanban/KanbanBoardContainer').then((m) => ({ default: m.KanbanBoardContainer })),
-)
-const SessionTableHost = lazyRoutePage(() =>
-  import('./session-table/SessionTableHost').then((m) => ({ default: m.SessionTableHost })),
-)
-const AutomationEditor = lazyRoutePage(() =>
-  import('../automations/AutomationEditor').then((m) => ({ default: m.AutomationEditor })),
-)
-const KnowledgeDiff = lazyRoutePage(() =>
-  import('../../knowledge/KnowledgeDiff').then((m) => ({ default: m.KnowledgeDiff })),
-)
-const KnowledgeHome = lazyRoutePage(() =>
-  import('../../knowledge/KnowledgeHome').then((m) => ({ default: m.KnowledgeHome })),
-)
-const KnowledgeProposals = lazyRoutePage(() =>
-  import('../../knowledge/KnowledgeProposals').then((m) => ({ default: m.KnowledgeProposals })),
-)
+const SurfaceHost = lazyRoutePage(ROUTE_PAGE_LOADERS.surfaces)
+const TasksPage = lazyRoutePage(ROUTE_PAGE_LOADERS.tasks)
+const AgentsWorkspacePage = lazyRoutePage(ROUTE_PAGE_LOADERS.agentsWorkspace)
+const InboxPage = lazyRoutePage(ROUTE_PAGE_LOADERS.inbox)
+const FeedPage = lazyRoutePage(ROUTE_PAGE_LOADERS.feed)
+const ClipboardHistoryPage = lazyRoutePage(ROUTE_PAGE_LOADERS.clipboardHistory)
+const KnowledgeEntityPage = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeEntity)
+const SkillInfoPage = lazyRoutePage(ROUTE_PAGE_LOADERS.skillInfo)
+const SourceInfoPage = lazyRoutePage(ROUTE_PAGE_LOADERS.sourceInfo)
+const SkillsCatalogPage = lazyRoutePage(ROUTE_PAGE_LOADERS.skillsCatalog)
+const IntegrationsCatalogPage = lazyRoutePage(ROUTE_PAGE_LOADERS.integrationsCatalog)
+const ProjectInfoPage = lazyRoutePage(ROUTE_PAGE_LOADERS.projectInfo)
+const BrowserPanelPage = lazyRoutePage(ROUTE_PAGE_LOADERS.browser)
+const ExtensionSurfacePage = lazyRoutePage(ROUTE_PAGE_LOADERS.extensionSurface)
+const TerminalSurfacePage = lazyRoutePage(ROUTE_PAGE_LOADERS.terminal)
+const CloudRunSurfacePage = lazyRoutePage(ROUTE_PAGE_LOADERS.cloudRun)
+const PagesHome = lazyRoutePage(ROUTE_PAGE_LOADERS.pagesHome)
+const KanbanBoardContainer = lazyRoutePage(ROUTE_PAGE_LOADERS.kanban)
+const SessionTableHost = lazyRoutePage(ROUTE_PAGE_LOADERS.sessionTable)
+const AutomationEditor = lazyRoutePage(ROUTE_PAGE_LOADERS.automationEditor)
+const KnowledgeDiff = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeDiff)
+const KnowledgeHome = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeHome)
+const KnowledgeProposals = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeProposals)
+// Developer Space / Playbooks surfaces (2026-10-09 pack); pages own their data.
+const DevSpaceHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceHome)
+const DevSpaceRepoPage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceRepo)
+const PlaybooksHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.playbooksHome)
 
 type SelectedResourceStatus = 'loading' | 'ready' | 'missing' | 'unavailable'
 
@@ -219,28 +215,17 @@ export function MainContentPanel({
   navStateOverride,
   panelId,
 }: MainContentPanelProps) {
-  const { t } = useTranslation()
   const globalNavState = useNavigationState()
   const { isSessionsReady = true, unavailableWorkspaceSlug } = useNavigation()
   const requestedNavState = unavailableWorkspaceSlug ? globalNavState : navStateOverride ?? globalNavState
-  const {
-    activeWorkspaceId,
-    workspaces,
-    sessionStatuses,
-    projects,
-    loadedProjects,
-    labels,
-    activeSessionWorkingDirectory,
-    localMcpEnabled,
-    skills,
-  } = useAppShellContext()
+  const { activeWorkspaceId, workspaces, activeSessionWorkingDirectory } = useAppShellContext()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const selectedSession = isSessionsNavigation(requestedNavState) && requestedNavState.details
     ? sessionMetaMap.get(requestedNavState.details.sessionId) : undefined
   const remoteWorkspaceId = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
   // PanelSlot supplies its own route state, including for unfocused panels.
   // Validate that state here before a foreign session can mount its ChatPage.
-  const navState: import('../../../shared/types').NavigationState = isSessionsReady && selectedSession && activeWorkspaceId
+  const navState: NavigationState = isSessionsReady && selectedSession && activeWorkspaceId
     && selectedSession.workspaceId !== activeWorkspaceId && (!remoteWorkspaceId || selectedSession.workspaceId !== remoteWorkspaceId)
     ? { navigator: 'unavailable', route: buildRouteFromNavigationState(requestedNavState), reason: 'workspace-mismatch',
         ...(requestedNavState.rightSidebar ? { rightSidebar: requestedNavState.rightSidebar } : {}) }
@@ -253,6 +238,92 @@ export function MainContentPanel({
   useEffect(() => {
     endRouteSwitch(navState.navigator)
   }, [routeKey])
+
+  const [sendDialogOpen, setSendDialogOpen] = useState(false)
+  const [sendResourceType, setSendResourceType] = useState<SendResourceType>('source')
+  const [sendResourceIds, setSendResourceIds] = useState<string[]>([])
+  const [sendResourceLabel, setSendResourceLabel] = useState('')
+
+  const openSendDialog = useCallback((type: SendResourceType, ids: Set<string>) => {
+    const count = ids.size
+    setSendResourceType(type)
+    setSendResourceIds([...ids])
+    setSendResourceLabel(`${count} ${type}${count !== 1 ? 's' : ''}`)
+    setSendDialogOpen(true)
+  }, [])
+
+  // PERF-10 (#1577): the last visited surfaces stay mounted (hidden) and are
+  // reused on the way back; capacity is 5 (3 on low memory, 1 when disabled).
+  const [keepAliveCapacity] = useState(() => surfaceKeepAliveCapacity())
+  const activeSurface = (
+    <SurfaceRoutePanel
+      navState={navState}
+      requestedNavState={requestedNavState}
+      routeKey={routeKey}
+      panelId={panelId}
+      className={className}
+      isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
+      openSendDialog={openSendDialog}
+    />
+  )
+  const retainedSurfaces = useKeepAliveSurfaces(routeKey, activeSurface, keepAliveCapacity)
+  return (
+    <>
+      {retainedSurfaces.map(entry => (
+        <RetainedSurfacePane key={entry.key} active={entry.key === routeKey}>
+          {entry.node}
+        </RetainedSurfacePane>
+      ))}
+      <SendResourceToWorkspaceDialog
+        open={sendDialogOpen}
+        onOpenChange={setSendDialogOpen}
+        resourceType={sendResourceType}
+        resourceIds={sendResourceIds}
+        resourceLabel={sendResourceLabel}
+        workspaces={workspaces}
+        activeWorkspaceId={activeWorkspaceId || ''}
+      />
+    </>
+  )
+}
+
+interface SurfaceRoutePanelProps {
+  navState: NavigationState
+  requestedNavState: NavigationState
+  routeKey: string
+  panelId?: string
+  className?: string
+  isSidebarAndNavigatorHidden: boolean
+  openSendDialog: (type: SendResourceType, ids: Set<string>) => void
+}
+
+/** One surface: the route chain plus its providers. Memoized, so a retained
+ * surface only re-renders when it is activated (its recorded props) or its own
+ * data changes — never because a sibling's route moved. */
+const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
+  navState,
+  requestedNavState,
+  routeKey,
+  panelId,
+  className,
+  isSidebarAndNavigatorHidden,
+  openSendDialog,
+}: SurfaceRoutePanelProps) {
+  const { t } = useTranslation()
+  const {
+    activeWorkspaceId,
+    workspaces,
+    sessionStatuses,
+    projects,
+    loadedProjects,
+    labels,
+    activeSessionWorkingDirectory,
+    localMcpEnabled,
+    skills,
+  } = useAppShellContext()
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const remoteWorkspaceId = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
+  const { isSessionsReady = true } = useNavigation()
   const [sessionSelection] = useSession()
   const store = useStore()
   const catalogSessionId = sessionSelection.selected
@@ -317,19 +388,7 @@ export function MainContentPanel({
     activeWorkspaceId, resourceKind, resourceSlug,
     resourceKind === 'skill' ? activeSessionWorkingDirectory : undefined,
   )
-  const [sendDialogOpen, setSendDialogOpen] = useState(false)
-  const [sendResourceType, setSendResourceType] = useState<SendResourceType>('source')
-  const [sendResourceIds, setSendResourceIds] = useState<string[]>([])
-  const [sendResourceLabel, setSendResourceLabel] = useState('')
   const hasOtherWorkspaces = workspaces.length > 1
-
-  const openSendDialog = useCallback((type: SendResourceType, ids: Set<string>) => {
-    const count = ids.size
-    setSendResourceType(type)
-    setSendResourceIds([...ids])
-    setSendResourceLabel(`${count} ${type}${count !== 1 ? 's' : ''}`)
-    setSendDialogOpen(true)
-  }, [])
 
   const skillPhaseSummary = (['selected', 'loaded', 'applied'] as const).map(phase => ({
     phase,
@@ -362,15 +421,6 @@ export function MainContentPanel({
       )}>
         <React.Suspense fallback={pageFallback}>{content}</React.Suspense>
       </RouteErrorBoundary>
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType={sendResourceType}
-        resourceIds={sendResourceIds}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId || ''}
-      />
     </StoplightProvider>
     </TourPanelScope>
   )
@@ -638,6 +688,29 @@ export function MainContentPanel({
     )
   }
 
+  if (isDevelopersNavigation(navState)) {
+    if (navState.devSpaceRepoId) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <DevSpaceRepoPage devSpaceRepoId={navState.devSpaceRepoId} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <DevSpaceHomePage />
+      </Panel>
+    )
+  }
+
+  if (isPlaybooksNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <PlaybooksHomePage />
+      </Panel>
+    )
+  }
+
   if (isExtensionNavigation(navState)) {
     const details = navState.details?.type === 'extension' ? navState.details : null
     if (details?.extensionId && details.viewId) {
@@ -862,4 +935,4 @@ export function MainContentPanel({
       </div>
     </Panel>
   )
-}
+})

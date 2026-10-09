@@ -24,6 +24,19 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.codeIntelligence.READ_SPAN,
   RPC_CHANNELS.codeIntelligence.FRESHNESS,
   RPC_CHANNELS.codeIntelligence.CANCEL,
+  // Dev Space — repository catalog + clone/analysis jobs run in the local server (02-SPEC-foundations §5–§6).
+  RPC_CHANNELS.devSpace.LIST_REPOSITORIES,
+  RPC_CHANNELS.devSpace.ADD_REPOSITORY,
+  RPC_CHANNELS.devSpace.START_CLONE,
+  RPC_CHANNELS.devSpace.REMOVE_REPOSITORY,
+  RPC_CHANNELS.devSpace.REFRESH_REPOSITORY,
+  RPC_CHANNELS.devSpace.CANCEL,
+  RPC_CHANNELS.devSpace.CAPABILITIES,
+  RPC_CHANNELS.devSpace.LIST_RUNS,
+  RPC_CHANNELS.devSpace.CLONE_PROGRESS,
+  RPC_CHANNELS.devSpace.CHANGED,
+  RPC_CHANNELS.devSpace.RUN_PROGRESS,
+  RPC_CHANNELS.devSpace.SOFT_SIGNAL,
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 
@@ -571,6 +584,7 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.drive.IMPORT_PLAN,
   RPC_CHANNELS.drive.IMPORT_START,
   RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_CANCEL,
   RPC_CHANNELS.drive.IMPORT_RESUME,
   RPC_CHANNELS.drive.IMPORT_STATUS,
   RPC_CHANNELS.drive.IMPORT_AUTH_START,
@@ -644,6 +658,8 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.voice.PROCESS,
   RPC_CHANNELS.voice.MODELS_LIST,
   RPC_CHANNELS.voice.JOB,
+  // Podcast generation rides the workspace server alongside voice jobs (02-SPEC-foundations §5.1).
+  RPC_CHANNELS.podcast.JOB,
   RPC_CHANNELS.voice.OVERLAY,
   RPC_CHANNELS.voice.HOTKEY,
   RPC_CHANNELS.voice.TALK_START,

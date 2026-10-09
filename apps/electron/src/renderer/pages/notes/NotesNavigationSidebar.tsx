@@ -114,6 +114,8 @@ interface NoteNavigationActions {
   onCopyNoteLink(note: NoteSummary): void
   onCopyNotePath(note: NoteSummary): void
   onRevealNote(note: NoteSummary): void
+  /** PERF-10 (#1577): workspace the hover/focus document prefetch reads from. */
+  workspaceId?: string | null
 }
 
 interface NotesNavigationSidebarProps extends NoteNavigationActions {

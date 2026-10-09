@@ -22,6 +22,7 @@ import {
   Check,
   FileDown,
   Flag,
+  FolderGit2,
   FolderOpen,
   ImagePlus,
   MessageSquare,
@@ -44,6 +45,7 @@ import {
 } from '@/lib/personal-tasks'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { Info_Page } from '@/components/info'
+import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import {
@@ -749,6 +751,11 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
           if (!await flushRef.current()) throw new Error('PROJECT_ROADMAP_SAVE_REQUIRED')
         }}
       />
+      <div className="flex justify-end" data-testid="project-dev-space-link">
+        <Button type="button" variant="outline" size="sm" onClick={() => navigate(routes.view.developers(project.config.id))}>
+          <FolderGit2 className="icon-caption" aria-hidden />{t('devSpace.openInDevSpace')}
+        </Button>
+      </div>
       <RepositorySnapshotPanel
         key={`${workspaceId}:${project.config.id}:${project.config.workingDirectory ?? ''}`}
         workspaceId={workspaceId!}

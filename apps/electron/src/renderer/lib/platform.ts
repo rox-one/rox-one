@@ -55,6 +55,46 @@ export function formatHotkeyDisplay(hotkey: string, mac = isMac): string {
 }
 
 /**
+ * Electron accelerator modifier tokens mapped onto the registry vocabulary
+ * understood by `formatHotkeyDisplay`.
+ */
+const ACCELERATOR_MODIFIERS: Record<string, string> = {
+  commandorcontrol: 'mod',
+  cmdorctrl: 'mod',
+  command: 'mod',
+  cmd: 'mod',
+  super: 'mod',
+  meta: 'mod',
+  control: 'ctrl',
+  ctrl: 'ctrl',
+  alt: 'alt',
+  option: 'alt',
+  shift: 'shift',
+}
+
+/**
+ * Display a persisted Electron accelerator (e.g. `CommandOrControl+Shift+V`) on
+ * the current platform. Electron's accelerator vocabulary is translated onto
+ * the registry vocabulary first, then delegated to `formatHotkeyDisplay`.
+ * Unknown tokens pass through unchanged; single letters, digits and `F1`-style
+ * keys are lowercased so the shared helper formats them. Never throws; an empty
+ * value is returned unchanged.
+ */
+export function formatAcceleratorDisplay(accelerator: string, mac = isMac): string {
+  if (!accelerator) return accelerator
+  const registryChord = accelerator
+    .split('+')
+    .map(token => {
+      const mapped = ACCELERATOR_MODIFIERS[token.toLowerCase()]
+      if (mapped) return mapped
+      if (/^[a-z0-9]$/i.test(token) || /^f\d{1,2}$/i.test(token)) return token.toLowerCase()
+      return token
+    })
+    .join('+')
+  return formatHotkeyDisplay(registryChord, mac)
+}
+
+/**
  * True when this bundle is running inside the browser-served Web UI
  * (apps/webui), as opposed to the Electron renderer.
  *

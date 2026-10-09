@@ -12,9 +12,12 @@ import type { ClipEntrySummary } from '@rox/shared/clipboard-history'
 import { Button, Chip, EmptyState, Tabs } from '@/components/mode-screen/ModeScreen'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import { cn } from '@/lib/utils'
 import {
+  type ClipFormatFilter,
   emptyStateKind,
+  formatKeysHint,
   hasActiveFilters,
   mapClipboardKey,
   moveSelection,
@@ -28,6 +31,12 @@ import { useClipboardHistory } from './use-clipboard-history'
 
 const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 const KINDS = ['all', 'text', 'image'] as const
+const FORMATS: ReadonlyArray<{ value: ClipFormatFilter; label: string }> = [
+  { value: 'all', label: 'clipboard.filter.formatAll' },
+  { value: 'png', label: 'PNG' },
+  { value: 'gif', label: 'GIF' },
+  { value: 'jpg', label: 'JPG' },
+]
 
 export function ClipboardHistoryPanel() {
   const { t } = useTranslation()
@@ -38,8 +47,9 @@ export function ClipboardHistoryPanel() {
   const [tagsEntry, setTagsEntry] = React.useState<ClipEntrySummary | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [clearOpen, setClearOpen] = React.useState(false)
+  const [deleteTargetId, setDeleteTargetId] = React.useState<number | null>(null)
 
-  const overlayOpen = h.quickLookId !== null || settingsOpen || clearOpen || tagsEntry !== null
+  const overlayOpen = h.quickLookId !== null || settingsOpen || clearOpen || tagsEntry !== null || deleteTargetId !== null
   const selectedEntry = h.entries.find((entry) => entry.id === h.selectedId) ?? null
 
   const runAction = React.useCallback((action: ClipboardKeyAction) => {
@@ -55,6 +65,7 @@ export function ClipboardHistoryPanel() {
         setSettingsOpen(false)
         setClearOpen(false)
         setTagsEntry(null)
+        setDeleteTargetId(null)
         break
       case 'select-next':
       case 'select-prev': {
@@ -70,7 +81,7 @@ export function ClipboardHistoryPanel() {
         if (h.selectedId !== null) h.openQuickLook(h.selectedId)
         break
       case 'delete':
-        if (h.selectedId !== null) h.remove(h.selectedId)
+        if (h.selectedId !== null) setDeleteTargetId(h.selectedId)
         break
       case 'star':
         if (selectedEntry) h.toggleStar(selectedEntry)
@@ -114,16 +125,10 @@ export function ClipboardHistoryPanel() {
     return () => observer.disconnect()
   }, [h.hasMore, h.loadMore, h.entries.length])
 
-  const counts = t('clipboard.counts.summary', {
-    count: h.total,
-    total: h.total,
-    n: h.total,
-    value: h.total,
-    number: h.total,
-    starred: h.counts.starred,
-    text: h.counts.text,
-    image: h.counts.image,
-  })
+  const counts = [
+    t('clipboard.counts.total', { count: h.total }),
+    t('clipboard.counts.starred', { count: h.counts.starred }),
+  ].join(' · ')
   const isEmpty = !h.loading && h.entries.length === 0
   const kind = emptyStateKind(h.filters)
 
@@ -202,6 +207,15 @@ export function ClipboardHistoryPanel() {
             </button>
           ) : null}
         </div>
+        {h.counts.image > 0 ? (
+          <div className="flex flex-wrap items-center gap-1" role="group" aria-label={t('clipboard.filter.format')} data-testid="clipboard-format-filter">
+            {FORMATS.map((option) => (
+              <Chip key={option.value} active={h.filters.format === option.value} onClick={() => h.dispatch({ type: 'format', format: option.value })}>
+                {option.value === 'all' ? t(option.label) : option.label}
+              </Chip>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <ClipboardTagBar
@@ -211,8 +225,8 @@ export function ClipboardHistoryPanel() {
       />
 
       {h.error ? (
-        <div role="alert" className="mx-3 mb-1 rounded-[var(--radius-control)] bg-destructive/10 px-2 py-1 text-small text-destructive" data-testid="clipboard-error">
-          {t('clipboard.error')}: {h.error}
+        <div role="alert" title={h.error} className="mx-3 mb-1 rounded-[var(--radius-control)] bg-destructive/10 px-2 py-1 text-small text-destructive" data-testid="clipboard-error">
+          {t('clipboard.error')}
         </div>
       ) : null}
 
@@ -240,7 +254,7 @@ export function ClipboardHistoryPanel() {
                 onSelect={h.setSelectedId}
                 onCopy={h.copy}
                 onToggleStar={h.toggleStar}
-                onDelete={h.remove}
+                onDelete={setDeleteTargetId}
                 onPreview={h.openQuickLook}
                 onEditTags={setTagsEntry}
               />
@@ -249,6 +263,10 @@ export function ClipboardHistoryPanel() {
         )}
         {h.hasMore && !h.unavailable ? <div ref={sentinelRef} className="h-8" aria-hidden data-testid="clipboard-sentinel" /> : null}
       </div>
+
+      <p className="shrink-0 px-3 py-1 text-caption text-text-muted" data-testid="clipboard-keys-hint">
+        {formatKeysHint(t, formatHotkeyDisplay('mod+f'))}
+      </p>
 
       <ClipboardQuickLook
         entry={selectedForOverlay(h.entries, h.quickLookId)}
@@ -276,11 +294,28 @@ export function ClipboardHistoryPanel() {
         onSave={h.updateSettings}
       />
 
+      <Dialog open={deleteTargetId !== null} onOpenChange={(open) => { if (!open) setDeleteTargetId(null) }}>
+        <DialogContent data-testid="clipboard-delete-dialog" className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('clipboard.action.delete')}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="danger" data-testid="clipboard-delete-confirm" onClick={() => { if (deleteTargetId !== null) h.remove(deleteTargetId); setDeleteTargetId(null) }}>
+              {t('clipboard.action.delete')}
+            </Button>
+            <Button variant="ghost" className="ml-auto" onClick={() => setDeleteTargetId(null)}>
+              {t('common.cancel')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={clearOpen} onOpenChange={setClearOpen}>
         <DialogContent data-testid="clipboard-clear-dialog" className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('clipboard.action.clearAll')}</DialogTitle>
           </DialogHeader>
+          <p className="text-small text-text-muted" data-testid="clipboard-clear-body">{t('clipboard.clear.body')}</p>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="danger" data-testid="clipboard-clear-all" onClick={() => { h.clear(false); setClearOpen(false) }}>
               {t('clipboard.action.clearAll')}

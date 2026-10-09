@@ -4,7 +4,11 @@
  * 401 → refresh → retry.
  */
 import { describe, test, expect } from 'bun:test'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { ImportAuthManager, InMemoryImportTokenStore } from './auth'
+import { createImportJobRunner } from '../job-runner'
 import {
   YandexDiskProvider,
   buildYandexAuthUrl,
@@ -45,12 +49,12 @@ describe('YandexDiskProvider.list', () => {
             total: 3,
             items: [
               { name: 'Docs', path: 'disk:/Docs', type: 'dir', modified: '2026-01-01T00:00:00Z' },
-              { name: 'a.txt', path: 'disk:/a.txt', type: 'file', size: 11, modified: '2026-01-02T00:00:00Z' },
+              { name: 'a.txt', path: 'disk:/a.txt', type: 'file', size: 11, modified: '2026-01-02T00:00:00Z', mime_type: 'text/plain' },
             ],
           },
         })
       }
-      return json({ _embedded: { total: 3, items: [{ name: 'b.txt', path: 'disk:/b.txt', type: 'file', size: 2 }] } })
+      return json({ _embedded: { total: 3, items: [{ name: 'b.txt', path: 'disk:/b.txt', type: 'file', size: 2, mime_type: 'application/octet-stream' }] } })
     }) as unknown as typeof fetch
 
     const provider = new YandexDiskProvider({ auth, fetchImpl, pageSize: 2 })
@@ -60,13 +64,13 @@ describe('YandexDiskProvider.list', () => {
     // The Disk API needs comma-separated dotted paths; the function-call syntax
     // `_embedded.items(...)` silently excludes the items array.
     expect(fields).toEqual([
-      '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified',
-      '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified',
+      '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified,_embedded.items.mime_type',
+      '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified,_embedded.items.mime_type',
     ])
     expect(entries).toHaveLength(3)
     expect(entries[0]).toMatchObject({ id: 'disk:/Docs', name: 'Docs', kind: 'folder' })
-    expect(entries[1]).toMatchObject({ id: 'disk:/a.txt', kind: 'file', sizeBytes: 11, modifiedAt: '2026-01-02T00:00:00Z' })
-    expect(entries[2]).toMatchObject({ id: 'disk:/b.txt', kind: 'file' })
+    expect(entries[1]).toMatchObject({ id: 'disk:/a.txt', kind: 'file', sizeBytes: 11, modifiedAt: '2026-01-02T00:00:00Z', mimeType: 'text/plain' })
+    expect(entries[2]).toMatchObject({ id: 'disk:/b.txt', kind: 'file', mimeType: 'application/octet-stream' })
   })
 })
 
@@ -138,5 +142,94 @@ describe('Yandex OAuth helpers', () => {
     const tokens = await completeYandexAuth({ code: 'c1', clientId: 'cid', fetchImpl, now: () => 500 })
     expect(tokens.accessToken).toBe('at')
     expect(tokens.expiresAt).toBe(500 + 3600 * 1000)
+  })
+})
+
+describe('YandexDiskProvider timeouts', () => {
+  test('aborts a hung listing with a typed provider error', async () => {
+    const auth = await authed()
+    const fetchImpl = ((_input: string | URL | Request, init?: RequestInit) => {
+      const { promise, reject } = Promise.withResolvers<Response>()
+      const signal = init?.signal
+      if (!signal) return promise
+      if (signal.aborted) {
+        reject(signal.reason)
+        return promise
+      }
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+      return promise
+    }) as unknown as typeof fetch
+    const provider = new YandexDiskProvider({ auth, fetchImpl, requestTimeoutMs: 20 })
+    await expect(provider.list()).rejects.toMatchObject({ name: 'ImportProviderError', code: 'network' })
+  })
+
+  test('does not abort a download that keeps producing bytes', async () => {
+    const auth = await authed()
+    // Real timers on purpose: exercises the live stall watchdog against a reader.
+    // The window sits well above `bun test`'s stream-pull latency; the companion
+    // stall test uses a tight window for the other side.
+    const fetchImpl = (async (input: string | URL | Request) => {
+      if (String(input).includes('/resources/download')) {
+        return json({ href: 'https://down.example/x', method: 'GET' })
+      }
+      return new Response(new ReadableStream<Uint8Array>({
+        async start(controller) {
+          for (let i = 0; i < 3; i += 1) {
+            await new Promise(resolve => setTimeout(resolve, 10))
+            controller.enqueue(new Uint8Array([i]))
+          }
+          controller.close()
+        },
+      }), { status: 200 })
+    }) as unknown as typeof fetch
+    const provider = new YandexDiskProvider({ auth, fetchImpl, stallTimeoutMs: 5000 })
+    const body = await provider.stream('disk:/f')
+    expect(new Uint8Array(await new Response(body).arrayBuffer()).byteLength).toBe(3)
+  })
+
+  test('aborts a stalled download with a typed timeout error', async () => {
+    const auth = await authed()
+    const fetchImpl = (async (input: string | URL | Request) => {
+      if (String(input).includes('/resources/download')) {
+        return json({ href: 'https://down.example/x', method: 'GET' })
+      }
+      return new Response(
+        new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array([1])) } }),
+        { status: 200 },
+      )
+    }) as unknown as typeof fetch
+    const provider = new YandexDiskProvider({ auth, fetchImpl, stallTimeoutMs: 20 })
+    const body = await provider.stream('disk:/f')
+    await expect(new Response(body).arrayBuffer()).rejects.toMatchObject({ name: 'FetchTimeoutError' })
+  })
+})
+
+describe('YandexDiskProvider content type propagation', () => {
+  test('carries the entry mimeType through to the upload target', async () => {
+    const auth = await authed()
+    const fetchImpl = (async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.includes('/resources/download')) return json({ href: 'https://down.example/x', method: 'GET' })
+      if (url.includes('/resources')) {
+        return json({ _embedded: { total: 1, items: [{ name: 'a.txt', path: 'disk:/a.txt', type: 'file', size: 3, mime_type: 'text/plain' }] } })
+      }
+      return new Response('abc', { status: 200 })
+    }) as unknown as typeof fetch
+    const provider = new YandexDiskProvider({ auth, fetchImpl })
+    const stateDir = await mkdtemp(join(tmpdir(), 'rox-yandex-ct-'))
+    try {
+      const puts: Array<{ key: string; contentType?: string }> = []
+      const runner = createImportJobRunner({
+        target: { async put(key, _body, opts) { puts.push({ key, contentType: opts?.contentType }) } },
+        stateDir,
+        providers: [provider],
+        concurrency: 1,
+      })
+      const job = await runner.plan('yandex-disk')
+      await runner.start(job.id)
+      expect(puts).toEqual([{ key: `${job.id}/a.txt`, contentType: 'text/plain' }])
+    } finally {
+      await rm(stateDir, { recursive: true, force: true })
+    }
   })
 })

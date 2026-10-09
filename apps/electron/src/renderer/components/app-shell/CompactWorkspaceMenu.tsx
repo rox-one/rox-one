@@ -21,7 +21,7 @@ import {
   StyledDropdownMenuItem,
   StyledDropdownMenuSeparator,
 } from '@/components/ui/styled-dropdown'
-import { APP_NAV_DESTINATIONS, APP_NAV_DESTINATIONS_BY_ID } from './nav-destinations'
+import { APP_NAV_DESTINATIONS_BY_ID, visibleNavDestinationsAtom } from './nav-destinations'
 import {
   getActiveService,
   resolveCompactWorkspaceSelection,
@@ -39,6 +39,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const shellFlags = useAtomValue(enabledShellFlagsAtom)
+  const visibleDestinations = useAtomValue(visibleNavDestinationsAtom)
   const activeService = getActiveService(navigation)
   // W1-07 (#1504): registered modes after the destinations, in pill order;
   // empty with every mode flag off (exactly APP_NAV_DESTINATIONS, as on main).
@@ -122,7 +123,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
           <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground" aria-hidden>
             {t('rail.title')}
           </div>
-          {APP_NAV_DESTINATIONS.map((destination) => {
+          {visibleDestinations.map((destination) => {
             const Icon = destination.icon
             return (
               <StyledDropdownMenuItem

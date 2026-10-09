@@ -56,6 +56,7 @@ import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-b
 import type { PersonalTask } from '@rox/core/tasks/personal'
 import type { NoteDocument } from '../../shared/types'
 import { isNativeNoteDocument } from '@/lib/notes-write-authority'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 import {
   Badge,
   Button,
@@ -216,6 +217,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const store = useStore()
   const workspaceId = shell?.activeWorkspaceId ?? null
   const rawApi = typeof window !== 'undefined' ? window.electronAPI : undefined
+  // PERF-10 (#1577): a retired surface keeps this page mounted but stops the poll.
+  const surfaceVisible = useEffectiveVisible()
   const alive = useRef(true)
   const current = useCallback(() => alive.current && caller.isCurrent(), [caller])
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
@@ -337,6 +340,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   }, [load])
   useEffect(() => api?.onFeedChanged?.(() => { void load() }), [api, load])
   useEffect(() => {
+    if (!surfaceVisible) return
     let refreshing = false
     const poll = async () => {
       if (refreshing || !current()) return
@@ -348,7 +352,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     }
     const id = setInterval(() => void poll(), 60_000)
     return () => clearInterval(id)
-  }, [load, current, caller, api])
+  }, [load, current, caller, api, surfaceVisible])
 
   useEffect(() => {
     if (loaded && sourceDataWorkspaceId === workspaceId && sourceFilter && !data.sources.some((source) => source.id === sourceFilter)) setSourceFilter(null)

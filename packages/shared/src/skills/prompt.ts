@@ -75,6 +75,22 @@ export function buildAvailableSkillsBlock(
   for (const source of GROUP_ORDER) groups.set(source, []);
   for (const skill of usable) groups.get(skill.source)?.push(skill);
 
+  // Skills the catalog marks always-on (`metadata.always`, parsed from the
+  // `metadata.openclaw`/`metadata.rox` block) are promoted ahead of every tier
+  // group so they survive the entry/byte caps — the operator opted them in, so
+  // a flood of other skills must not evict them. Order inside the group keeps
+  // the same tier order and catalog order the tier groups use, so the rendered
+  // block is byte-identical run to run.
+  const alwaysSkills: LoadedSkill[] = [];
+  const tierSkills: Array<{ source: SkillSource; skills: LoadedSkill[] }> = [];
+  for (const source of GROUP_ORDER) {
+    const group = groups.get(source) ?? [];
+    const pinned = group.filter(skill => skill.metadata.always === true);
+    const rest = group.filter(skill => skill.metadata.always !== true);
+    alwaysSkills.push(...pinned);
+    if (rest.length > 0) tierSkills.push({ source, skills: rest });
+  }
+
   const header = [
     OPEN_TAG,
     'Skills are installed but their instructions load only when you read one. Search',
@@ -90,10 +106,10 @@ export function buildAvailableSkillsBlock(
   let emitted = 0;
   let truncated = false;
 
-  outer: for (const source of GROUP_ORDER) {
-    const group = groups.get(source) ?? [];
-    if (group.length === 0) continue;
-    const heading = `## ${GROUP_HEADINGS[source]}`;
+  outer: for (const { heading, skills: group } of [
+    ...(alwaysSkills.length > 0 ? [{ heading: '## Always-on skills', skills: alwaysSkills }] : []),
+    ...tierSkills.map(({ source, skills }) => ({ heading: `## ${GROUP_HEADINGS[source]}`, skills })),
+  ]) {
     const headingCost = Buffer.byteLength(heading, 'utf8') + 1;
     if (bytes + headingCost > maxBytes) {
       truncated = true;

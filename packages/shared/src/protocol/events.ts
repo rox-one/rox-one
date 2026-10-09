@@ -37,6 +37,8 @@ import type { TalkEvent } from '../voice/talk-events.ts'
 import type { TtsStreamChunk } from '../voice/tts/streaming.ts'
 import type { RealtimeTranscriptionEvent } from '../voice/realtime-transcription.ts'
 import type { VoiceWakeChangedPayload, VoiceWakeTrigger } from '../voice/wake-list.ts'
+import type { PodcastJob } from '../voice/podcast-job.ts'
+import type { DevSpaceCloneProgress, DevSpaceRepositoryStatus, DevSpaceRunProgress } from '../dev-space/types.ts'
 import type { EnvironmentPrefs } from '../environment'
 import type { PrivacyDto } from '../privacy/types.ts'
 import type { ServiceStatus, TrayStatus } from '../service-lifecycle.ts'
@@ -133,6 +135,14 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.voice.WAKE_CHANGED]: [payload: VoiceWakeChangedPayload]
   [RPC_CHANNELS.voice.TRIGGER]: [payload: VoiceWakeTrigger]
   [RPC_CHANNELS.environment.CHANGED]: [payload: EnvironmentPrefs]
+
+  // Developer Space (02-SPEC-foundations §5–§6) — repository + run push (local-only).
+  [RPC_CHANNELS.devSpace.CLONE_PROGRESS]: [payload: DevSpaceCloneProgress]
+  [RPC_CHANNELS.devSpace.CHANGED]: [payload: { repositoryId: string; status: DevSpaceRepositoryStatus }]
+  [RPC_CHANNELS.devSpace.RUN_PROGRESS]: [payload: DevSpaceRunProgress]
+  [RPC_CHANNELS.devSpace.SOFT_SIGNAL]: [payload: { kind: 'repo-link-pasted' | 'git-detected' }]
+  // Podcast generation (D13) — replaces `voice:job` for the podcast flow.
+  [RPC_CHANNELS.podcast.JOB]: [payload: PodcastJob]
 
   // Theme broadcasts (global)
   [RPC_CHANNELS.appearance.SHELL_CHANGED]: [snapshot: {

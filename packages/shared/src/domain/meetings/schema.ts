@@ -2,10 +2,10 @@
 import { z } from 'zod'
 import { cmd, createIdShape, entity, idSchema, isoDateTimeSchema, principalListSchema, refSchema, titleSchema, type CommandSchemaMap } from '../common'
 
+// W1-14 (#1511): vc.start_meeting (§12) moved to @rox/shared/xsc.
 export const callSchema = entity({ eventId: idSchema.optional(), chatId: idSchema.optional(), title: z.string().optional(), startedAt: isoDateTimeSchema.optional(), endedAt: isoDateTimeSchema.optional(), recording: z.boolean().optional(), hostId: idSchema.optional() })
 
 export const MEETINGS_COMMAND_SCHEMAS: CommandSchemaMap = {
-  'vc.start_meeting': cmd({ ...createIdShape, title: titleSchema.optional(), eventId: idSchema.optional(), chatId: idSchema.optional(), inviteeIds: principalListSchema.optional() }),
   'vc.join': cmd({ callId: idSchema, audio: z.boolean().optional(), video: z.boolean().optional() }),
   'vc.end': cmd({ callId: idSchema }),
   'vc.set_recording': cmd({ callId: idSchema, recording: z.boolean() }),

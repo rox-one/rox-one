@@ -4,7 +4,7 @@
  * copy/star/tags actions. Space or Escape closes it; the dialog primitives own
  * the focus trap.
  */
-import { Copy, Eye, Star, Tag } from 'lucide-react'
+import { Copy, Star, Tag, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ClipEntryDetail, ClipEntrySummary } from '@rox/shared/clipboard-history'
 import { Badge, Button } from '@/components/mode-screen/ModeScreen'
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { cn } from '@/lib/utils'
 import {
   detectTextKind,
-  formatBytes,
+  formatChars,
   formatImageMeta,
   formatRelativeTime,
   imageFormatBadge,
@@ -39,7 +39,8 @@ export function ClipboardQuickLook({
   onToggleStar: (entry: ClipEntrySummary) => void
   onEditTags: (entry: ClipEntrySummary) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? 'ru'
   const open = entry !== null
   const isImage = entry?.kind === 'image'
   const text = detail?.text ?? entry?.text ?? ''
@@ -87,8 +88,8 @@ export function ClipboardQuickLook({
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-text-muted" data-testid="clipboard-quick-look-details">
               <span className="uppercase tracking-wide">{t('clipboard.quickLook.details')}</span>
               {isImage ? <Badge tone="info">{imageFormatBadge(entry.imageFormat, entry.thumbDataUrl) ?? t('clipboard.image.label')}</Badge> : null}
-              {isImage && formatImageMeta(t, entry) ? <span>{formatImageMeta(t, entry)}</span> : null}
-              {!isImage && entry.charCount != null ? <span>{formatBytes(entry.charCount)}</span> : null}
+              {isImage && formatImageMeta(t, entry, locale) ? <span>{formatImageMeta(t, entry, locale)}</span> : null}
+              {!isImage && entry.charCount != null ? <span>{formatChars(t, entry.charCount)}</span> : null}
               <span className="tabular-nums">{formatRelativeTime(t, entry.createdAt, now)}</span>
               {entry.sourceApp ? <span className="min-w-0 truncate">{entry.sourceApp}</span> : null}
             </div>
@@ -115,7 +116,7 @@ export function ClipboardQuickLook({
                 {t('clipboard.action.tags')}
               </Button>
               <Button variant="ghost" className="ml-auto" onClick={onClose} data-testid="clipboard-quick-look-close">
-                <Eye aria-hidden className="icon-caption" />
+                <X aria-hidden className="icon-caption" />
                 {t('clipboard.quickLook.close')}
               </Button>
             </div>

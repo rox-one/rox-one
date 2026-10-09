@@ -8,8 +8,8 @@
 import { RPC_CHANNELS } from '../shared/types'
 import type { ChannelMap } from './build-api'
 
-function invoke(channel: string, transform?: (result: any) => any) {
-  return { type: 'invoke' as const, channel, ...(transform && { transform }) }
+function invoke(channel: string, transform?: (result: any) => any, timeoutMs?: number) {
+  return { type: 'invoke' as const, channel, ...(transform && { transform }), ...(timeoutMs !== undefined && { timeoutMs }) }
 }
 
 function listener(channel: string) {
@@ -428,6 +428,18 @@ export const CHANNEL_MAP = {
   readProjectRepositorySpan: invoke(RPC_CHANNELS.codeIntelligence.READ_SPAN),
   checkProjectRepositoryFreshness: invoke(RPC_CHANNELS.codeIntelligence.FRESHNESS),
   cancelProjectRepositoryRequest: invoke(RPC_CHANNELS.codeIntelligence.CANCEL),
+  // Developer Space (02-SPEC-foundations §4–§8) — repository catalog + local job pipeline.
+  listDevSpaceRepositories: invoke(RPC_CHANNELS.devSpace.LIST_REPOSITORIES),
+  addDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.ADD_REPOSITORY),
+  startDevSpaceClone: invoke(RPC_CHANNELS.devSpace.START_CLONE),
+  removeDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.REMOVE_REPOSITORY),
+  refreshDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.REFRESH_REPOSITORY),
+  cancelDevSpaceRequest: invoke(RPC_CHANNELS.devSpace.CANCEL),
+  getDevSpaceCapabilities: invoke(RPC_CHANNELS.devSpace.CAPABILITIES),
+  listDevSpaceRuns: invoke(RPC_CHANNELS.devSpace.LIST_RUNS),
+  onDevSpaceCloneProgress: listener(RPC_CHANNELS.devSpace.CLONE_PROGRESS),
+  onDevSpaceChanged: listener(RPC_CHANNELS.devSpace.CHANGED),
+  onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
   listNotes: invoke(RPC_CHANNELS.notes.LIST),
   readNote: invoke(RPC_CHANNELS.notes.READ),
   saveNote: invoke(RPC_CHANNELS.notes.SAVE),
@@ -756,7 +768,7 @@ export const CHANNEL_MAP = {
   getMemoryRepoGraph: invoke(RPC_CHANNELS.memory.REPO_GRAPH),
   exportMemoryRepo: invoke(RPC_CHANNELS.memory.REPO_EXPORT),
   getMemoryDreamStatus: invoke(RPC_CHANNELS.memory.DREAM_STATUS),
-  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN),
+  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN, undefined, 240_000),
   getMemoryDreamLog: invoke(RPC_CHANNELS.memory.DREAM_LOG),
   previewMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT),
   applyMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_APPLY_IMPORT),
@@ -804,6 +816,7 @@ export const CHANNEL_MAP = {
   driveImportPlan: invoke(RPC_CHANNELS.drive.IMPORT_PLAN),
   driveImportStart: invoke(RPC_CHANNELS.drive.IMPORT_START),
   driveImportPause: invoke(RPC_CHANNELS.drive.IMPORT_PAUSE),
+  driveImportCancel: invoke(RPC_CHANNELS.drive.IMPORT_CANCEL),
   driveImportResume: invoke(RPC_CHANNELS.drive.IMPORT_RESUME),
   driveImportStatus: invoke(RPC_CHANNELS.drive.IMPORT_STATUS),
   driveImportAuthStart: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_START),
