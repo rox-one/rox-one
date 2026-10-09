@@ -26,6 +26,7 @@ import type { HandlerDeps } from '../handler-deps'
 import { ContactCardStore, ContactCardStoreError } from '../../contacts/store.ts'
 import { DossierImportError, importDossier, type DossierImportResult } from '../../contacts/dossier-import.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
+import { assertWorkspaceScope } from './workspace-guard.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.directory.EXPORT_DOSSIER] as const
 
@@ -58,9 +59,9 @@ export function registerDirectoryHandlers(server: RpcServer, _deps: HandlerDeps,
   server.handle(RPC_CHANNELS.directory.EXPORT_DOSSIER, async (ctx, workspaceId: string, input: unknown): Promise<ExportDossierResult> => {
     if (!isDossierExportEnabled(enabledFlags(runtime))) return { ok: false, reason: 'disabled' }
     if (typeof workspaceId !== 'string' || !workspaceId) throw new CodedError('INVALID_PAYLOAD', 'Workspace id is required')
-    if (ctx.principal && workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Directory workspace access denied')
     const workspace = workspaceFor(workspaceId)
     if (!workspace) throw new CodedError('NOT_FOUND', 'Workspace not found')
+    assertWorkspaceScope(ctx, workspaceId, 'Directory workspace access denied')
     const owner = principalId(ctx)
     // Local authority: only the owner principal may write its contact store.
     const allowed = await acl.can({ id: owner, workspaceId: workspace.id }, 'edit', { kind: 'person', id: owner })

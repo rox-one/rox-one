@@ -4373,6 +4373,7 @@
   "navigation.agentTabs.skills": "Skills",
   "navigation.agentTabs.sources": "Quellen",
   "navigation.allProjects": "Alle Projekte",
+  "navigation.confirmDeepLinkSend": "Open this session and send the prompt?",
   "navigation.contextMessage": "Kontext: workspace {{workspaceId}}, project {{projectId}}, route {{route}}",
   "navigation.defaultProfile": "Standardprofil",
   "navigation.draftSaveFailed": "The draft could not be saved. It remains open. Retry saving or switching workspaces.",

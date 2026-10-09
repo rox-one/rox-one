@@ -4395,6 +4395,7 @@
   "navigation.agentTabs.skills": "Навыки",
   "navigation.agentTabs.sources": "Источники",
   "navigation.allProjects": "Все проекты",
+  "navigation.confirmDeepLinkSend": "Открыть эту сессию и отправить запрос?",
   "navigation.contextMessage": "Контекст: workspace {{workspaceId}}, project {{projectId}}, route {{route}}",
   "navigation.defaultProfile": "Профиль по умолчанию",
   "navigation.draftSaveFailed": "Не удалось сохранить черновик. Он остаётся открытым. Повторите сохранение или переключение пространства.",

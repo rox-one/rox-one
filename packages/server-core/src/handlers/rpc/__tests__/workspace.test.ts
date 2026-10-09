@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { afterAll, describe, expect, it, mock } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
@@ -24,7 +24,9 @@ const localWorkspace = {
   kind: 'personal' as const,
 }
 
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   addWorkspace: () => localWorkspace,
   createAndActivateLocalWorkspace: async () => ({
     workspace: localWorkspace,
@@ -37,15 +39,21 @@ mock.module('@rox/shared/config', () => ({
   updateWorkspaceRemoteServer: () => {},
 }))
 
+const actualConfigPaths = await import('@rox/shared/config/paths')
 mock.module('@rox/shared/config/paths', () => ({
+  ...actualConfigPaths,
   CONFIG_DIR: '/config',
 }))
 
+const actualUtils = await import('@rox/shared/utils')
 mock.module('@rox/shared/utils', () => ({
+  ...actualUtils,
   perf: { start: () => () => {} },
 }))
 
+const actualTransport = await import('@rox/server-core/transport')
 mock.module('@rox/server-core/transport', () => ({
+  ...actualTransport,
   pushTyped: (
     server: { push: (channel: string, target: unknown, ...args: unknown[]) => void },
     channel: string,
@@ -55,6 +63,12 @@ mock.module('@rox/server-core/transport', () => ({
     server.push(channel, target, ...args)
   },
 }))
+afterAll(() => {
+  mock.module('@rox/shared/config', () => actualConfig)
+  mock.module('@rox/shared/config/paths', () => actualConfigPaths)
+  mock.module('@rox/shared/utils', () => actualUtils)
+  mock.module('@rox/server-core/transport', () => actualTransport)
+})
 
 type Handler = (
   ctx: { clientId: string; workspaceId?: string; webContentsId: number | null },

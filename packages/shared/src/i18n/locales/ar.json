@@ -4385,6 +4385,7 @@
   "navigation.agentTabs.skills": "المهارات",
   "navigation.agentTabs.sources": "المصادر",
   "navigation.allProjects": "كل المشاريع",
+  "navigation.confirmDeepLinkSend": "Open this session and send the prompt?",
   "navigation.contextMessage": "السياق: workspace {{workspaceId}}، project {{projectId}}، route {{route}}",
   "navigation.defaultProfile": "الملف الشخصي الافتراضي",
   "navigation.draftSaveFailed": "The draft could not be saved. It remains open. Retry saving or switching workspaces.",

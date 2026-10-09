@@ -33,7 +33,7 @@ export function SessionOwnerChip({ owner, size = 'md', className, onClick }: Ses
       data-owner-state="owned"
       title={t('sessionOwner.ownedBy', { name: owner.displayName })}
       className={cn(
-        'inline-flex max-w-[120px] items-center gap-1 rounded-full bg-accent/10 pl-0.5 pr-1.5 py-0.5 text-[11px] text-foreground ring-1 ring-accent/20',
+        'inline-flex max-w-[120px] items-center gap-1 rounded-full bg-accent/10 pl-0.5 pr-1.5 py-0.5 text-caption text-foreground ring-1 ring-accent/20',
         className,
       )}
     >
@@ -50,11 +50,11 @@ export function SessionOwnerChip({ owner, size = 'md', className, onClick }: Ses
       data-owner-state="unassigned"
       title={t('sessionOwner.unassigned')}
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border border-dashed border-foreground/20 px-1.5 py-0.5 text-[11px] text-muted-foreground',
+        'inline-flex items-center gap-1 rounded-full border border-dashed border-border-strong px-1.5 py-0.5 text-caption text-muted-foreground',
         className,
       )}
     >
-      <UserRound className={size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5'} aria-hidden="true" />
+      <UserRound className={size === 'sm' ? 'icon-status' : 'icon-caption'} aria-hidden="true" />
       <span className="truncate">{t('sessionOwner.unassigned')}</span>
     </span>
   )

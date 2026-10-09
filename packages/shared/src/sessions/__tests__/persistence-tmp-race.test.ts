@@ -22,14 +22,23 @@ const { writeFile: realWriteFile } = realFsPromises;
 // Synchronous reader invoked from inside the writer's writeFile window.
 let raceHook: (() => void) | null = null;
 
+// Optional gate: blocks a writer's .tmp writeFile until released, and signals
+// when the writer has reached that point. Lets a test hold an in-flight write
+// open while exercising cancel/delete ordering, without real timers.
+let writeGate: { blocked: Promise<void>; reached: Promise<void>; release: () => void; signalReached: () => void } | null = null;
+
 type WriteFileArgs = Parameters<typeof realWriteFile>;
 
 function withWriteFileHook<T extends object>(real: T) {
   return {
     ...real,
     writeFile: async (...args: WriteFileArgs) => {
-      const result = await realWriteFile(...args);
       const [path] = args;
+      if (writeGate && String(path).endsWith('.tmp')) {
+        writeGate.signalReached();
+        await writeGate.blocked;
+      }
+      const result = await realWriteFile(...args);
       if (raceHook && String(path).endsWith('.tmp')) raceHook();
       return result;
     },
@@ -47,6 +56,7 @@ const dirs: string[] = [];
 
 afterEach(() => {
   raceHook = null;
+  writeGate = null;
   for (const dir of dirs.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -177,7 +187,15 @@ describe('session tmp race: recovery vs writer', () => {
     try {
       const queue = new SessionPersistenceQueue(0);
       queue.enqueue(storedSession(id, workspace, [{ id: 'm1', type: 'user', content: 'x', timestamp: 1 }]));
-      await queue.flush(id);
+      // C-02 contract: a failed write is surfaced by flush() as a rejection
+      // (throwIfWriteFailed) instead of resolving silently. Occupying dest with
+      // a directory forces the final rename to fail, which both exercises that
+      // rejection and leaves the writer's tmp on disk for the naming assertions.
+      const failure = await queue.flush(id).then(
+        () => { throw new Error('expected flush() to reject when the write fails'); },
+        (error: NodeJS.ErrnoException) => error,
+      );
+      expect(typeof failure?.code).toBe('string');
     } finally {
       errorSpy.mockRestore();
     }
@@ -187,5 +205,63 @@ describe('session tmp race: recovery vs writer', () => {
     expect(tmps[0]).not.toBe('session.jsonl.tmp');
     expect(tmps[0]).toMatch(/^session\.jsonl\.\d+\.[0-9a-f]{12}\.tmp$/);
     expect(readFileSync(join(sessionDir, tmps[0]!), 'utf8')).toContain('"m1"');
+  });
+});
+
+describe('session delete vs in-flight write (durability)', () => {
+  it('cancel awaits the in-flight write, so a later delete cannot be resurrected', async () => {
+    const id = 's-cancel';
+    const { workspace, sessionDir, dest } = makeWorkspace('session-cancel-', id);
+    writeJournal(dest, id, [{ id: 'old', content: 'old' }]);
+
+    const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
+    let releaseGate!: () => void;
+    let signalReached!: () => void;
+    const blocked = new Promise<void>((resolve) => { releaseGate = resolve; });
+    const reached = new Promise<void>((resolve) => { signalReached = resolve; });
+    writeGate = { blocked, reached, release: releaseGate, signalReached };
+    const queue = new SessionPersistenceQueue(0);
+    try {
+      queue.enqueue(storedSession(id, workspace, [{ id: 'm-new', type: 'user', content: 'new', timestamp: 2 }]));
+      // The writer is now parked inside writeFile(.tmp) — genuinely in flight.
+      await reached;
+
+      let cancelResolved = false;
+      const cancelPromise = queue.cancel(id).then(() => { cancelResolved = true; });
+      // Old cancel() returned synchronously; the new one must wait for the write.
+      expect(cancelResolved).toBe(false);
+
+      releaseGate();
+      await cancelPromise;
+      expect(cancelResolved).toBe(true);
+      // The in-flight write landed BEFORE cancel resolved, so deleteStoredSession
+      // (which runs after `await cancel`) removes it instead of racing it.
+      expect(readSessionJsonl(dest)?.messages.map((m) => m.id)).toEqual(['m-new']);
+
+      // Simulate deleteStoredSession.
+      rmSync(sessionDir, { recursive: true, force: true });
+      expect(existsSync(dest)).toBe(false);
+
+      // A late enqueue (fs.watch metadata echo / debounced timer) must be dropped.
+      queue.enqueue(storedSession(id, workspace, [{ id: 'echo', type: 'user', content: 'echo', timestamp: 3 }]));
+      expect(queue.hasPending(id)).toBe(false);
+      await queue.flush(id);
+      expect(existsSync(dest)).toBe(false);
+    } finally {
+      writeGate = null;
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('cancel seals the session even with no in-flight write', async () => {
+    const id = 's-seal';
+    const { workspace, dest } = makeWorkspace('session-seal-', id);
+    const queue = new SessionPersistenceQueue(0);
+
+    await queue.cancel(id);
+    queue.enqueue(storedSession(id, workspace, [{ id: 'm', type: 'user', content: 'm', timestamp: 1 }]));
+    expect(queue.hasPending(id)).toBe(false);
+    await queue.flush(id);
+    expect(existsSync(dest)).toBe(false);
   });
 });
