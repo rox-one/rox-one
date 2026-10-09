@@ -78,7 +78,7 @@ import {
   type MaterialChatEffectKind,
   type MaterialSettings,
   type MaterialTextureKind,
-} from '@rox/shared/config'
+} from '@config/theme'
 import {
   MATERIAL_CHAT_EFFECT_LABELS,
   MATERIAL_CONTENT_PANE_ROWS,

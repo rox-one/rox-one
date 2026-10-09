@@ -11,13 +11,13 @@
 
 import {
   MATERIAL_DEFAULTS,
-  MaterialSettingsSchema,
   type MaterialChatEffectKind,
   type MaterialContentPane,
   type MaterialSettings,
   type MaterialSurface,
   type MaterialTextureKind,
-} from '@rox/shared/config'
+} from '@config/theme'
+import { MaterialSettingsSchema } from '@config/validators'
 
 /** Ordered surface rows for the opacity/blur groups (i18n label key per row). */
 export interface MaterialSurfaceRow {
