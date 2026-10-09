@@ -335,6 +335,9 @@ export const CHANNEL_MAP = {
   extensionHostProxyFetch: invoke(RPC_CHANNELS.extensionHost.PROXY_FETCH),
   extensionHostGetUrlAllowlist: invoke(RPC_CHANNELS.extensionHost.GET_URL_ALLOWLIST),
   extensionHostSetUrlAllowlist: invoke(RPC_CHANNELS.extensionHost.SET_URL_ALLOWLIST),
+  extensionHostListDescriptors: invoke(RPC_CHANNELS.extensionHost.LIST_DESCRIPTORS),
+  extensionHostActivate: invoke(RPC_CHANNELS.extensionHost.ACTIVATE),
+  extensionHostReload: invoke(RPC_CHANNELS.extensionHost.RELOAD),
 
   // Onboarding
   getAuthState: invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE),
@@ -774,6 +777,11 @@ export const CHANNEL_MAP = {
   onMemoryDreamEvent: listener(RPC_CHANNELS.memory.DREAM_EVENT),
   onMemoryDreamDone: listener(RPC_CHANNELS.memory.DREAM_DONE),
   onMemoryRepoImportReady: listener(RPC_CHANNELS.memory.REPO_IMPORT_READY),
+  // Wave 3 — workspace memory wiki (claims/evidence + lint).
+  listMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_LIST),
+  getMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_GET),
+  applyMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_APPLY),
+  lintMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_LINT),
 
   // Learning (continual learning, PRD §15) — agent/native actions
   // (`learning:observe|recordOutcome|recordCorrection`) are intentionally absent.
@@ -1062,6 +1070,17 @@ export const CHANNEL_MAP = {
   mindmapPinClear: invoke(RPC_CHANNELS.mindmap.PIN_CLEAR),
   setKanbanConfig: invoke(RPC_CHANNELS.kanban.SET_CONFIG),
   onKanbanConfigChanged: listener(RPC_CHANNELS.kanban.CHANGED),
+
+  // Wave 3 — workboard (workspace task board) + board widgets
+  readWorkboard: invoke(RPC_CHANNELS.workboard.READ),
+  moveWorkboard: invoke(RPC_CHANNELS.workboard.MOVE),
+  onWorkboardChanged: listener(RPC_CHANNELS.workboard.CHANGED),
+  putBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_PUT),
+  getBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_GET),
+  mountBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_MOUNT),
+  releaseBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_RELEASE),
+  validateBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_VALIDATE),
+  onBoardChanged: listener(RPC_CHANNELS.board.CHANGED),
 
   // Sessions collection display
   getCollectionDisplay: invoke(RPC_CHANNELS.collection.GET_DISPLAY),

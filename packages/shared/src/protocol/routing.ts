@@ -467,6 +467,9 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.extensionHost.PROXY_FETCH,
   RPC_CHANNELS.extensionHost.GET_URL_ALLOWLIST,
   RPC_CHANNELS.extensionHost.SET_URL_ALLOWLIST,
+  RPC_CHANNELS.extensionHost.LIST_DESCRIPTORS,
+  RPC_CHANNELS.extensionHost.ACTIVATE,
+  RPC_CHANNELS.extensionHost.RELOAD,
 
   // extensionSurface — sandboxed extension UI BrowserViews (partition persist:ext-*)
   RPC_CHANNELS.extensionSurface.CREATE_EMBEDDED,
@@ -926,6 +929,13 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.memory.DREAM_DONE,
   RPC_CHANNELS.memory.REPO_IMPORT_READY,
 
+  // memory — wave-3 workspace memory wiki (claims/evidence + lint); same
+  // REMOTE_ELIGIBLE classification as the rest of the memory namespace.
+  RPC_CHANNELS.memory.WIKI_LIST,
+  RPC_CHANNELS.memory.WIKI_GET,
+  RPC_CHANNELS.memory.WIKI_APPLY,
+  RPC_CHANNELS.memory.WIKI_LINT,
+
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).
   RPC_CHANNELS.learning.LIST_CANDIDATES,
@@ -1184,6 +1194,21 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.kanban.GET_CONFIG,
   RPC_CHANNELS.kanban.SET_CONFIG,
   RPC_CHANNELS.kanban.CHANGED,
+
+  // workboard — wave-3 workspace task board (same classification as kanban:*:
+  // workspace board state on whichever server owns the workspace).
+  RPC_CHANNELS.workboard.READ,
+  RPC_CHANNELS.workboard.MOVE,
+  RPC_CHANNELS.workboard.CHANGED,
+
+  // board — wave-3 workspace board widgets (same classification as pages:*
+  // workspace content on the workspace-owning server).
+  RPC_CHANNELS.board.WIDGET_PUT,
+  RPC_CHANNELS.board.WIDGET_GET,
+  RPC_CHANNELS.board.WIDGET_MOUNT,
+  RPC_CHANNELS.board.WIDGET_RELEASE,
+  RPC_CHANNELS.board.WIDGET_VALIDATE,
+  RPC_CHANNELS.board.CHANGED,
 
   // collection — workspace sessions collection display prefs + filters
   RPC_CHANNELS.collection.GET_DISPLAY,

@@ -128,6 +128,32 @@ function nextBrokerId(): string {
   return `b-${brokerSeq}-${Date.now().toString(36)}`
 }
 
+/** Bounded teardown budget for a module's exported `deactivate()`. */
+const DEACTIVATE_TIMEOUT_MS = 2_000
+
+/**
+ * Run a loaded module's exported `deactivate()` before its entry is dropped.
+ * Bounded to ~2 s: a throwing or never-settling teardown must not block the
+ * unload acknowledgement (and therefore the reload swap).
+ */
+async function runDeactivate(ext: LoadedExtension): Promise<void> {
+  const fn = resolveCallable(ext.module, 'deactivate')
+  if (!fn) return
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    await Promise.race([
+      Promise.resolve(fn.apply(ext.module, [])),
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error('deactivate timeout')), DEACTIVATE_TIMEOUT_MS)
+      }),
+    ])
+  } catch {
+    // Best-effort teardown: never block the unload acknowledgement.
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /**
  * Start the worker message loop. Exported for unit tests.
  */
@@ -252,7 +278,10 @@ export function startWorker(options: WorkerOptions = {}): {
         }
         case 'load': {
           const resolved = assertPathAllowlisted(msg.entryPath, roots())
-          const url = pathToFileURL(resolved).href
+          const base = pathToFileURL(resolved).href
+          // Query-bust the ESM module cache: a reload of the same path must not
+          // reuse the previously imported module instance.
+          const url = msg.revision ? `${base}?rev=${msg.revision}` : base
           const mod = (await importFn(url)) as Record<string, unknown>
           loaded.set(msg.extensionId, {
             extensionId: msg.extensionId,
@@ -307,6 +336,8 @@ export function startWorker(options: WorkerOptions = {}): {
           return
         }
         case 'unload': {
+          const ext = loaded.get(msg.extensionId)
+          if (ext) await runDeactivate(ext)
           loaded.delete(msg.extensionId)
           send(port, { id: msg.id, type: 'ok' })
           return

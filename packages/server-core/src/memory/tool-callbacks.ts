@@ -8,11 +8,14 @@
  * marked so the model never treats them as trusted instructions. Forget delegates
  * to the workspace forget service, which removes every copy of the content.
  */
-import { successResponse, errorResponse, type MemoryToolCallbacks } from '@rox/session-tools-core'
+import { successResponse, errorResponse, type MemoryToolCallbacks, type MemoryWikiCallbacks } from '@rox/session-tools-core'
 import type { SessionMemoryMode } from '@rox/core/types'
+import type { WikiClaim, WikiClaimEvidence, WikiMutation } from '@rox/shared/memory/types'
 import type { MemoryForgetResult } from '@rox/shared/memory/types'
+import { join } from 'path'
 import { isMemoryOriginEligibleForAutomaticInjection } from './provenance-gate'
 import type { MemoryIndexService } from './MemoryIndexService'
+import { WikiClaimStore, wikiClaimContradicts } from './WikiClaimStore'
 
 const SNIPPET_CHARS = 240
 const GATED_ORIGINS = new Set(['untrusted', 'system'])
@@ -24,11 +27,107 @@ function gatedBadge(origin: string): string {
   return GATED_ORIGINS.has(origin) ? `gated: ${origin} (never auto-injected)` : `injectable: ${origin}`
 }
 
+function formatEvidence(evidence: WikiClaimEvidence[]): string[] {
+  if (evidence.length === 0) return ['   evidence: (none — the claim is unsupported)']
+  return evidence.map((entry) => {
+    const locator = entry.locator ? ` @ ${entry.locator}` : ''
+    const quote = entry.quote ? ` — "${entry.quote.length > SNIPPET_CHARS ? `${entry.quote.slice(0, SNIPPET_CHARS)}…` : entry.quote}"` : ''
+    return `   - ${entry.source}${locator}${quote}`
+  })
+}
+
+/**
+ * c1.7 — build the wiki (claims/evidence) callbacks over one workspace store.
+ * The wiki is a human/agent-inspected document surface: these callbacks READ and
+ * WRITE claims, and are never used by the prompt-injection path.
+ */
+export function buildMemoryWikiCallbacks(store: WikiClaimStore): MemoryWikiCallbacks {
+  return {
+    async search(args) {
+      const claims = store.list({
+        ...(args.scope ? { scope: args.scope } : {}),
+        ...(args.status ? { status: args.status } : {}),
+      })
+      const query = (args.query ?? '').trim().toLowerCase()
+      const matched = query ? claims.filter((claim) => claim.text.toLowerCase().includes(query)) : claims
+      const hits = matched.slice(0, args.limit)
+      if (hits.length === 0) {
+        return successResponse(query ? `No wiki claims matched "${args.query}".` : 'The workspace wiki has no claims yet.')
+      }
+      const lines = [
+        query ? `## Wiki search: "${args.query}"` : '## Workspace wiki claims',
+        `${hits.length} of ${matched.length} claim(s)`,
+      ]
+      hits.forEach((claim, i) => {
+        lines.push(
+          '',
+          `${i + 1}. [${claim.id}] ${claim.status} — ${claim.text} (revision ${claim.revision})`,
+          `   evidence: ${claim.evidence.length}`,
+          ...formatEvidence(claim.evidence),
+        )
+        const edges = wikiClaimContradicts(claim)
+        if (edges.length) lines.push(`   contradicts: ${edges.join(', ')}`)
+      })
+      return successResponse(lines.join('\n'))
+    },
+
+    async get(args) {
+      const claim = store.get(args.id)
+      if (!claim) return successResponse(`No wiki claim with id ${args.id}.`)
+      const lines = [
+        `## Wiki claim ${claim.id}`,
+        `status: ${claim.status} · revision: ${claim.revision}${claim.scope ? ` · scope: ${claim.scope}` : ''}`,
+        '',
+        claim.text,
+        '',
+        'evidence:',
+        ...formatEvidence(claim.evidence),
+      ]
+      const edges = wikiClaimContradicts(claim)
+      if (edges.length) lines.push('', `contradicts: ${edges.join(', ')}`)
+      return successResponse(lines.join('\n'))
+    },
+
+    async apply(args) {
+      const mutation: WikiMutation =
+        args.op === 'upsert'
+          ? {
+              op: 'upsert',
+              claim: {
+                id: args.claim!.id,
+                text: args.claim!.text,
+                status: args.claim!.status,
+                evidence: args.claim!.evidence ?? [],
+                ...(args.claim!.scope ? { scope: args.claim!.scope } : {}),
+                revision: args.claim!.revision ?? 0,
+                ...(args.claim!.createdAt ? { createdAt: args.claim!.createdAt } : {}),
+                ...(args.claim!.updatedAt ? { updatedAt: args.claim!.updatedAt } : {}),
+              },
+            }
+          : { op: 'retract', claimId: args.claimId!, ...(args.reason ? { reason: args.reason } : {}) }
+      try {
+        const result = store.apply(mutation, { actor: 'agent' })
+        const verb = args.op === 'upsert' ? 'Stored' : 'Retracted'
+        return successResponse(
+          [
+            '## Wiki apply',
+            `${verb} claim ${result.claim.id} (revision ${result.revision}, status ${result.claim.status}).`,
+          ].join('\n'),
+        )
+      } catch (error) {
+        return errorResponse(`wiki_apply failed: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    },
+  }
+}
+
 /** Build the host-tool callbacks bound to one workspace's memory index. */
 export function buildMemoryToolCallbacks(
   index: MemoryIndexService,
   forget?: MemoryForgetExecutor,
+  wiki?: WikiClaimStore,
 ): MemoryToolCallbacks {
+  const wikiStore = wiki ?? new WikiClaimStore(join(index.workspaceRoot, 'memory'), 'workspace')
   return {
     async search(args) {
       const result = index.search(args.query, args.limit ?? 8)
@@ -98,6 +197,8 @@ export function buildMemoryToolCallbacks(
         return errorResponse(`memory_forget failed: ${error instanceof Error ? error.message : String(error)}`)
       }
     },
+
+    wiki: buildMemoryWikiCallbacks(wikiStore),
   }
 }
 
@@ -114,7 +215,8 @@ export function memoryToolCallbacksForSession(
   mode: { memoryMode?: SessionMemoryMode; memoryScope?: string } | undefined,
   index: MemoryIndexService | undefined,
   forget?: MemoryForgetExecutor,
+  wiki?: WikiClaimStore,
 ): MemoryToolCallbacks | undefined {
   if (mode?.memoryMode === 'temporary' || mode?.memoryScope === 'none') return undefined
-  return index ? buildMemoryToolCallbacks(index, forget) : undefined
+  return index ? buildMemoryToolCallbacks(index, forget, wiki) : undefined
 }

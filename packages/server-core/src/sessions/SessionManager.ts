@@ -120,6 +120,8 @@ import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, isSourceUsable
 import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@rox/shared/tasks'
 import { createTaskFromSpec, resolveCreateTaskProjectId } from '../tasks'
 import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
+import { buildBoardWidgetToolCallbacks } from '../board/tool-callbacks'
+import type { BoardWidgetToolRecord } from '@rox/session-tools-core'
 import { memoryToolCallbacksForSession } from '../memory/tool-callbacks'
 import { buildServersFromSources as buildServersFromSourcesShared } from '../sources/build-servers'
 import { resolveDefaultSessionSources } from '../sources/default-session-sources'
@@ -150,6 +152,7 @@ import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlA
 import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, toSkillSummaries, type LoadedSkill } from '@rox/shared/skills'
 import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
 import { captureAgentProfileSnapshot } from '../workspace-work/profile.ts'
+import { sessionStateProjector } from '../state/sessions-projection.ts'
 import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@rox/shared/prompts/system'
 import { retrieveSourcesForPrompt } from '../sources/source-index-facade'
 import { getToolIconsDir, getMiniModel, isRoxPublicModelId, ROX_DEFAULT_SUBAGENT_MODEL } from '@rox/shared/config'
@@ -2850,6 +2853,13 @@ export class SessionManager implements ISessionManager {
     this.eventSink(RPC_CHANNELS.pages.CHANGED, { to: 'workspace', workspaceId }, workspaceId, pages)
   }
 
+  /** Broadcast a board widget revision staged through the show_widget tool. */
+  private broadcastBoardWidgetChanged(workspaceId: string, record: BoardWidgetToolRecord): void {
+    if (!this.eventSink) return
+    sessionLog.info(`Broadcasting board widget changed (${record.widgetId}@${record.revision})`)
+    this.eventSink(RPC_CHANNELS.board.CHANGED, { to: 'workspace', workspaceId }, workspaceId, { widgetId: record.widgetId, revision: record.revision })
+  }
+
   private broadcastDefaultPermissionsChanged(): void {
     if (!this.eventSink) return
     sessionLog.info('Broadcasting default permissions changed')
@@ -3205,6 +3215,17 @@ export class SessionManager implements ISessionManager {
   // queue already has an entry whenever persistSession was just called.
   async flushSession(sessionId: string): Promise<void> {
     await sessionPersistenceQueue.flush(sessionId)
+    // Project the flushed JSONL header into the derived state store + index.
+    // Best-effort: the JSONL is the source of truth, so a projection failure
+    // must never break the flush itself.
+    const managed = this.sessions.get(sessionId)
+    if (managed) {
+      try {
+        await sessionStateProjector().recordSession(managed.workspace.rootPath, sessionId)
+      } catch (error) {
+        sessionLog.warn(`Failed to project session ${sessionId} into the state store:`, error)
+      }
+    }
   }
 
   // Flush all pending sessions (call on app quit).
@@ -5904,6 +5925,20 @@ export class SessionManager implements ISessionManager {
             this.enqueuePageThumbnail(managed.workspace.id, managed.workspace.rootPath, pageSlug)
           },
         }),
+        // Board widget tool (show_widget) — stages agent-authored widget code
+        // through the SAME WidgetStore the board:widgetPut RPC uses, then
+        // broadcasts board:changed. createdBy is the session owner, never the
+        // model's input.
+        boardWidgets: buildBoardWidgetToolCallbacks({
+          workspaceId: managed.workspace.id,
+          workspaceRootPath: managed.workspace.rootPath,
+          createdBy: managed.owner?.id ?? managed.creator?.accountId ?? 'local',
+          sessionId: managed.id,
+          log: (message: string) => sessionLog.info(message),
+          onWidgetMutated: (record) => {
+            this.broadcastBoardWidgetChanged(managed.workspace.id, record)
+          },
+        }),
         // Memory recall tools (memory_search / memory_get / memory_forget) — bound to
         // the invoking session's workspace chunk index. Absent when the session is
         // temporary / has no memory scope (no read, no write — spec F3), or when
@@ -7544,6 +7579,14 @@ export class SessionManager implements ISessionManager {
       sessionPersistenceQueue.unseal(sessionId)
     } else {
       sessionLog.warn(`Failed to delete session ${sessionId} from disk; persistence seal retained`)
+    }
+
+    // Drop the derived state-store row + index entry. Best-effort: the JSONL
+    // scan rebuilds the index, so a failure here is self-healing.
+    try {
+      await sessionStateProjector().removeSession(workspaceRootPath, sessionId)
+    } catch (error) {
+      sessionLog.warn(`Failed to remove session ${sessionId} from the state store:`, error)
     }
 
     // Notify all windows for this workspace that the session was deleted
