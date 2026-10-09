@@ -62,6 +62,10 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.details !== null
     case 'home':
       return true
+    case 'drive':
+      // Drive owns the content panel at the root and inside folders; it has no
+      // separate navigator column.
+      return true
     case 'surface':
       // Unified mode roots (W1-07) own the content panel like Home.
       return true

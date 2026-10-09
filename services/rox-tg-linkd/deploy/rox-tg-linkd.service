@@ -1,0 +1,27 @@
+[Unit]
+Description=Rox Telegram bot daemon (rox-tg-linkd)
+Documentation=https://github.com/rox-one/rox-one-website
+# Long-polls the Telegram Bot API for @rox_one_bot: the platform owns the bot,
+# the website and the desktop client talk to this service over loopback.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Unprivileged, ephemeral account; /var/lib/rox-tg-linkd holds the SQLite state.
+DynamicUser=yes
+StateDirectory=rox-tg-linkd
+EnvironmentFile=/etc/rox-tg-linkd.env
+Environment=LINK_DB_PATH=/var/lib/rox-tg-linkd/links.sqlite
+Environment=PORT=8095
+WorkingDirectory=/opt/rox-tg-linkd
+ExecStart=/usr/local/bin/bun run /opt/rox-tg-linkd/rox-tg-linkd.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

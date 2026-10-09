@@ -37,6 +37,30 @@ import type { EntityRef } from '@rox/core/entities'
 // W1-08 (#1505): entity links/preview bridge types.
 import type { EntityLink, EntityPreview } from '@rox/core/entities'
 import type { EntityLinksRequest } from '@rox/shared/entities'
+import type {
+  KeeperCreateRequest,
+  KeeperImportResult,
+  KeeperItemView,
+  KeeperRevealResult,
+  KeeperUnlockStatus,
+  KeeperUpdateRequest,
+  KeeperVaultSnapshot,
+} from '@rox/shared/keeper'
+export type {
+  KeeperCreateRequest,
+  KeeperFolder,
+  KeeperImportResult,
+  KeeperItem,
+  KeeperItemInput,
+  KeeperItemKind,
+  KeeperItemPatch,
+  KeeperItemView,
+  KeeperRevealResult,
+  KeeperTotpCode,
+  KeeperUnlockStatus,
+  KeeperUpdateRequest,
+  KeeperVaultSnapshot,
+} from '@rox/shared/keeper'
 import type { RoxAccountSnapshot } from '@rox/shared/auth'
 import type { TtsStreamChunk, VoiceWakeTrigger } from '@rox/shared/voice'
 
@@ -77,6 +101,34 @@ import type {
   TaskOutcome,
 } from '@rox/shared/memory/learning'
 import type { EffectivenessReport, PromotionResult, RollbackResult } from '@rox/server-core/memory/learning/learning-types'
+import type {
+  DriveBackupSourceKind,
+  DriveFile,
+  DriveFolder,
+  DriveListing,
+  DriveQuota,
+  DriveScanResult,
+  DriveUploadSession,
+  ImportJob,
+  ImportProviderId,
+} from '@rox/shared/drive'
+
+/** Host result of the `drive:importAuthStart` OAuth broker (main-process). */
+export type DriveImportAuthStartResult =
+  | { ok: true; status: 'authorized' }
+  | {
+    ok: true
+    status: 'pending'
+    flowId: string
+    authUrl?: string
+    deviceCode?: { userCode: string; verificationUri: string; intervalSeconds: number; expiresInSeconds: number }
+  }
+  | { ok: false; code: string; error: string }
+
+/** Host result of the `drive:importAuthComplete` OAuth broker. */
+export type DriveImportAuthCompleteResult =
+  | { ok: true; email?: string }
+  | { ok: false; code: string; error: string }
 
 /** Automatic browser cookie import (in-app browser). Values never cross RPC. */
 export interface BrowserCookieAutoStatus {
@@ -204,6 +256,9 @@ export interface SshBootstrapProgress {
 import type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIssueType } from '@rox/shared/credentials/types';
 export type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIssueType };
 
+// Onboarding profile suggestion DTOs
+import type { SuggestPreferencesInput, SuggestPreferencesResult } from '@rox/shared/protocol';
+
 import type {
   CredentialMigrationApplyDto,
   CredentialMigrationCountsDto,
@@ -233,6 +288,32 @@ import type {
 export type { IdentityState, UpdateProfileInput, ServiceProvider, ServiceConnection, Profile, ProfilePlan };
 export { PROFILE_PLANS } from '@rox/core/platform/identity/types';
 export type { RemoteTlsTrust, RemoteServerConfig };
+
+// Onboarding permissions & data-access column (owner spec 2026-10-09).
+// Mirrors the renderer contract and the server-core snapshot; honest
+// `unknown`/`unsupported` states are first-class.
+export type OnboardingPermissionKey =
+  | 'fullDiskAccess'
+  | 'automation'
+  | 'accessibility'
+  | 'screenRecording'
+  | 'audioRecording'
+  | 'inputMonitoring'
+  | 'keepAwake'
+  | 'importAiHistory'
+  | 'installedAppsInfo'
+  | 'launchAgent'
+  | 'browserAutomation'
+export type OnboardingPermissionStatus = 'granted' | 'denied' | 'unknown' | 'unsupported'
+export interface OnboardingPermissionsStatusSnapshot {
+  platform: string
+  statuses: Partial<Record<OnboardingPermissionKey, OnboardingPermissionStatus>>
+}
+export interface OpenPermissionSettingsResult {
+  opened: boolean
+  url?: string
+  hint?: 'unsupported' | 'no-deep-link' | 'unknown-permission' | 'open-failed'
+}
 
 // Extension Center (S-05) + SiYuan plugin bridge / Extension Host (W6)
 import type {
@@ -330,6 +411,25 @@ import type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview
 export type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview, InfisicalAccountPreviewInput };
 import type { ZenShellSnapshot } from './shell-appearance';
 import type { ListDocTreeResult } from '@rox/core/knowledge/providers/siyuan';
+
+/**
+ * Keeper («Секреты») Infisical item/folder contracts. Secret values cross to the
+ * renderer only through the explicit listItems/upsertItem flows; upsert items are
+ * JSON objects, anything else lists as `raw` with `valueJson: null`.
+ */
+export interface InfisicalKeeperTarget {
+  projectId: string
+  environment: string
+  /** Folder path; defaults to '/' when omitted. */
+  secretPath?: string
+}
+
+export interface InfisicalKeeperItem {
+  key: string
+  valueJson: Record<string, unknown> | null
+  raw: boolean
+  updatedAt: string | null
+}
 
 // Toolchain manager types (first-run download manager, spec 2026-08-06)
 import type { ToolStatus as ToolchainToolStatus, ToolName as ToolchainToolName } from '@rox/shared/toolchain/types';
@@ -577,6 +677,59 @@ export interface WorkGraphConnectionRecord {
 }
 
 import type { AgentProfileSnapshot, WorkspaceWorkDelete, WorkspaceWorkResult, WorkspaceWorkSnapshot, WorkspaceWorkWrite } from '@rox/shared/workspace-work'
+
+/**
+ * Product-analytics bootstrap handed from main to the renderer: the anonymous
+ * distinct_id plus the build-time PostHog/OTLP endpoints. Empty endpoints mean
+ * telemetry is inert.
+ */
+export interface TelemetryBootstrapConfig {
+  distinctId: string
+  posthogHost: string
+  posthogApiKey: string
+  otelTracesUrl: string
+  serviceName: string
+}
+
+/**
+ * Telegram account linking (owner spec R4) — wire contract between the
+ * renderer dialog and the `tg-link:*` RPC surface. `status` is the shared
+ * state machine; `unavailable` is an honest negative (daemon unreachable, bot
+ * token missing, or no Rox account connected), never a fabricated success.
+ */
+export type TgLinkUiStatus = 'idle' | 'waiting-code' | 'code-sent' | 'linked' | 'expired' | 'unavailable'
+
+export interface TgLinkStartResult {
+  ok: boolean
+  status: TgLinkUiStatus
+  /** Opaque pairing id (the service token embedded in the deep link). */
+  linkId?: string
+  /** 8-char code (A-Z2-9) the user types back into the app. */
+  code?: string
+  /** `https://t.me/<bot>?start=<token>` — fallback deep link. */
+  deepLink?: string
+  /** `tg://resolve?domain=<bot>&start=<token>` — preferred deep link. */
+  tgDeepLink?: string
+  expiresAt?: number
+  remainingMs?: number
+  error?: string
+}
+
+export interface TgLinkVerifyResult {
+  ok: boolean
+  status: 'linked' | 'expired' | 'invalid' | 'unavailable'
+  error?: string
+}
+
+export interface TgLinkStatusResult {
+  ok: boolean
+  status: TgLinkUiStatus
+  expiresAt?: number | null
+  remainingMs?: number
+  /** Auto-returned code once the phone is shared; the dialog pre-fills it. */
+  code?: string
+  error?: string
+}
 
 export interface ElectronAPI {
   openDesign: OpenDesignApi
@@ -1519,12 +1672,25 @@ export interface ElectronAPI {
   getSecretRefs(): Promise<SecretRefsSettingsPayload>
   setSecretRefs(refs: SecretRefEntry[]): Promise<{ success: boolean }>
 
+  // ROX Keeper — personal secret vault. Views are masked (password: null);
+  // the plaintext only ever arrives through keeperReveal, one call per copy.
+  keeperList(): Promise<KeeperVaultSnapshot>
+  keeperGet(id: string): Promise<KeeperItemView>
+  keeperCreate(request: KeeperCreateRequest): Promise<KeeperItemView>
+  keeperUpdate(request: KeeperUpdateRequest): Promise<KeeperItemView>
+  keeperDelete(id: string): Promise<{ id: string }>
+  keeperReveal(request: { id: string; field?: 'password' | 'totpSecret' }): Promise<KeeperRevealResult>
+  keeperUnlockStatus(): Promise<KeeperUnlockStatus>
+  keeperImportBrowser(): Promise<KeeperImportResult>
+
   // Release notes
   getReleaseNotes(): Promise<string>
   getLatestReleaseVersion(): Promise<string | undefined>
 
   // System warnings (startup checks)
   getSystemWarnings(): Promise<{ vcredistMissing: boolean; downloadUrl?: string }>
+  /** Product-analytics bootstrap (distinct_id + endpoints); null when unavailable. */
+  getTelemetryConfig(): TelemetryBootstrapConfig | null
 
   // Shell operations
   openUrl(url: string): Promise<void>
@@ -1568,6 +1734,10 @@ export interface ElectronAPI {
   fabricInfisicalHealth(): Promise<{ available: boolean; providerId?: string }>
   fabricInfisicalPreviewAccount(input: InfisicalAccountPreviewInput): Promise<InfisicalAccountPreview>
   fabricInfisicalCommitImport(input: InfisicalAccountPreviewInput & { clientSecret: string; workspaceId?: string }): Promise<{ id: string }>
+  fabricInfisicalListPaths(input: Pick<InfisicalKeeperTarget, 'projectId' | 'environment'>): Promise<{ paths: string[] }>
+  fabricInfisicalListItems(input: InfisicalKeeperTarget): Promise<{ items: InfisicalKeeperItem[] }>
+  fabricInfisicalUpsertItem(input: InfisicalKeeperTarget & { key: string; valueJson: unknown }): Promise<{ key: string; created: boolean }>
+  fabricInfisicalDeleteItem(input: InfisicalKeeperTarget & { key: string }): Promise<{ key: string; deleted: boolean }>
   fabricListConnections(...args: unknown[]): Promise<unknown>
   fabricCreateConnection(...args: unknown[]): Promise<unknown>
   fabricListCredentials(...args: unknown[]): Promise<unknown>
@@ -1580,6 +1750,22 @@ export interface ElectronAPI {
   fabricAcquireLease(...args: unknown[]): Promise<unknown>
   fabricRevokeConnection(...args: unknown[]): Promise<unknown>
   fabricGithubStatus(...args: unknown[]): Promise<unknown>
+  /** Onboarding «Привязать GitHub» — device flow in link mode (no token crosses). */
+  fabricGithubLinkStart(): Promise<{
+    flowId: string
+    userCode: string
+    verificationUri: string
+    interval: number
+    expiresIn?: number
+  }>
+  fabricGithubLinkPoll(input: { flowId: string; workspaceId: string }): Promise<
+    | { status: 'pending'; interval?: number }
+    | { status: 'slow_down'; interval?: number }
+    | { status: 'denied' }
+    | { status: 'expired' }
+    | { status: 'linked'; profile: { githubLogin: string; githubId: number; avatarUrl: string; linkedAt: number } }
+  >
+  fabricGithubLinkGet(input: { workspaceId: string }): Promise<{ githubLogin: string; githubId: number; avatarUrl: string; linkedAt: number } | null>
 
   // Identity Center (S-07)
   identityGetState(args?: { workspaceId?: string }): Promise<IdentityState>
@@ -1768,9 +1954,25 @@ export interface ElectronAPI {
     | { status: 'error'; message: string }
   >
   deferSetup(): Promise<{ success: boolean }>
+  /** Public handle availability probe for the onboarding identity step. Never assumes available. */
+  checkOnboardingHandle(handle: string): Promise<{ status: 'available' | 'taken' | 'reserved' | 'unknown' }>
   /** Create the first local conversation with a persisted assistant greeting, once per installation. */
   ensureFirstSessionWelcome(workspaceId: string): Promise<Session | null>
   saveOmpCredential(apiKey: string): Promise<{ success: boolean; ready: boolean; code?: string; error?: string }>
+
+  // Telegram account linking (owner spec R4) — local rox-tg-linkd daemon.
+  /** Start (or resume) a pending link; returns the 8-char code and deep links. */
+  tgLinkStart(): Promise<TgLinkStartResult>
+  /** Verify the 8-char code shown by the bot. */
+  tgLinkVerify(code: string): Promise<TgLinkVerifyResult>
+  /** Current state of this account's link, for dialog resume + polling. */
+  tgLinkStatus(): Promise<TgLinkStatusResult>
+  /** Onboarding «profile» step — «А предложи сам?» draft (server-side one-shot; never fabricated). */
+  suggestPreferences(input: SuggestPreferencesInput): Promise<SuggestPreferencesResult>
+  /** Honest OS status of the onboarding permission rows; unknown/unsupported are never faked. */
+  getOnboardingPermissionsStatus(): Promise<OnboardingPermissionsStatusSnapshot>
+  /** Opens the OS settings pane for one permission, or reports why it cannot. */
+  openOnboardingPermissionSettings(key: OnboardingPermissionKey): Promise<OpenPermissionSettingsResult>
 
   // ChatGPT OAuth (for Codex chatgptAuthTokens mode)
   startChatGptOAuth(connectionSlug: string): Promise<{ success: boolean; error?: string }>
@@ -2056,6 +2258,22 @@ export interface ElectronAPI {
   performOAuth(args: { sourceSlug: string; sessionId?: string; authRequestId?: string }): Promise<{ success: boolean; error?: string; email?: string }>
   oauthRevoke(sourceSlug: string): Promise<{ success: boolean }>
 
+  // Google Calendar connector (wave 1) — tokens stay server-side in the credential manager
+  googleCalendarStatus(): Promise<{ provider: 'google'; state: 'unavailable' | 'disconnected' | 'connected'; reason?: 'no-oauth-client' }>
+  connectGoogleCalendar(): Promise<{ success: boolean; error?: string; email?: string }>
+  googleCalendarDisconnect(): Promise<{ success: boolean }>
+  googleCalendarSync(): Promise<{
+    ok: boolean
+    added: number
+    updated: number
+    deleted: number
+    total: number
+    conflicts: number
+    lastSyncAt: number
+    code?: 'CALENDAR_AUTH_EXPIRED' | 'CALENDAR_NOT_CONNECTED'
+    error?: string
+  }>
+
   // Session content search (full-text search via ripgrep)
   searchSessionContent(workspaceId: string, query: string, searchId?: string): Promise<SessionSearchResult[]>
 
@@ -2175,6 +2393,44 @@ export interface ElectronAPI {
   runLearningConsolidation(workspaceId: string): Promise<{ candidates: LearningCandidate[] }>
   curateLearningSkills(workspaceId: string): Promise<{ items: Array<{ slug: string; action: 'keep' | 'improve' | 'archive' }> }>
   runPolicyLearning(workspaceId: string): Promise<{ policies: LearningPolicy[] }>
+  // ROX Drive (wave 1) — device-local storage. Bytes flow only through
+  // `driveUploadPart`; device-backup parts are read by the host.
+  driveQuota(workspaceId: string): Promise<DriveQuota>
+  driveList(workspaceId: string, folderId?: string): Promise<DriveListing>
+  driveCreateFolder(workspaceId: string, parentId: string, name: string): Promise<DriveFolder>
+  driveOpenUpload(workspaceId: string, input: {
+    name: string
+    size: number
+    folderId?: string
+    source?: 'upload' | 'device-backup' | 'import'
+    sourceKind?: DriveBackupSourceKind
+    relativePath?: string
+    expectedSha256?: string
+  }): Promise<DriveUploadSession>
+  driveUploadPart(workspaceId: string, uploadId: string, index: number, bytes?: Uint8Array): Promise<{ index: number; done: boolean }>
+  driveCompleteUpload(workspaceId: string, uploadId: string): Promise<DriveFile>
+  driveAbortUpload(workspaceId: string, uploadId: string): Promise<void>
+  driveDelete(workspaceId: string, fileId: string): Promise<void>
+  driveScanSource(workspaceId: string, sourceKind: DriveBackupSourceKind): Promise<DriveScanResult>
+  // ROX Drive (wave 4) — cloud import pipeline. Bytes move host-side; the
+  // renderer only plans, starts and watches the job.
+  driveImportPlan(provider: ImportProviderId, folderId?: string): Promise<ImportJob>
+  driveImportStart(jobId: string): Promise<ImportJob>
+  driveImportPause(jobId: string): Promise<ImportJob>
+  driveImportResume(jobId: string): Promise<ImportJob>
+  driveImportStatus(jobId?: string): Promise<ImportJob | ImportJob[] | null>
+  // ROX Drive (wave 4) — host-side import OAuth broker. The renderer never sees
+  // a token: it starts a flow, opens the returned URL, and completes it.
+  driveImportAuthStart(provider: ImportProviderId, options?: { callbackUrl?: string; callbackPort?: number }): Promise<DriveImportAuthStartResult>
+  driveImportAuthComplete(flowId: string, code?: string): Promise<DriveImportAuthCompleteResult>
+  /** Bind the main-process loopback callback server for the Google PKCE flow. */
+  driveImportOAuthBegin(): Promise<{ handle: string; callbackUrl: string }>
+  /** Open a consent URL in the user's external browser. */
+  driveImportOAuthOpen(url: string): Promise<boolean>
+  /** Await the provider redirect for a pending Google import flow. */
+  driveImportOAuthAwait(handle: string): Promise<{ query: Record<string, string> }>
+  /** Abort a pending Google import flow (closes the callback server). */
+  driveImportOAuthCancel(handle: string): Promise<boolean>
   enrichMindMap(input: {
     workspaceId: string
     entity: import('@rox/core/mindmap').MindMapEntityRef
@@ -2953,6 +3209,16 @@ export interface HomeNavigationState {
 }
 
 /**
+ * ROX Drive (wave 1) — local-first storage surface. `details.folderId` is the
+ * folder focused in the file list; null = the root «Мой диск».
+ */
+export interface DriveNavigationState {
+  navigator: 'drive'
+  details: { type: 'folder'; folderId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Extra workbench screens («Ещё» rail group: Досье, Радар, Решения, Центр
  * агентов, Фокус) — one navigator; route `<screen>[/item/<itemId>]`.
  */
@@ -3087,6 +3353,7 @@ export type NavigationState =
   | EntityNavigationState
   | ConnectionsNavigationState
   | HomeNavigationState
+  | DriveNavigationState
   | ScreenNavigationState
   | SurfaceNavigationState
   | UnavailableNavigationState
@@ -3165,6 +3432,10 @@ export const isScreenNavigation = (
 export const isHomeNavigation = (
   state: NavigationState
 ): state is HomeNavigationState => state.navigator === 'home'
+
+export const isDriveNavigation = (
+  state: NavigationState
+): state is DriveNavigationState => state.navigator === 'drive'
 
 export const isSurfaceNavigation = (
   state: NavigationState
@@ -3324,6 +3595,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'entity') {
     return `entity/${state.route}`
+  }
+  if (state.navigator === 'drive') {
+    return state.details?.type === 'folder' ? `drive/folder/${encodeURIComponent(state.details.folderId)}` : 'drive'
   }
   // Chats
   const f = state.filter
@@ -3514,6 +3788,16 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+
+  // ROX Drive (wave 1) — `drive[/folder/{folderId}]`
+  if (key === 'drive') return { navigator: 'drive', details: null }
+  if (key.startsWith('drive/folder/')) {
+    const folderId = key.slice('drive/folder/'.length)
+    if (folderId) {
+      return { navigator: 'drive', details: { type: 'folder', folderId: decodeURIComponent(folderId) } }
+    }
+    return { navigator: 'drive', details: null }
+  }
   // W1-07: unified mode roots, only while their mode flag is on.
   if (isUnifiedSurfaceRouteEnabled(key)) return { navigator: 'surface', surface: key, details: null }
 

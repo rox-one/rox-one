@@ -44,7 +44,7 @@ export const GOOGLE_SERVICE_SCOPES: Record<GoogleService, string[]> = {
     'https://www.googleapis.com/auth/userinfo.email',
   ],
   calendar: [
-    'https://www.googleapis.com/auth/calendar', // Full calendar access
+    'https://www.googleapis.com/auth/calendar.events.readonly', // Read events only; the Rox calendar connector never writes
     'https://www.googleapis.com/auth/userinfo.email',
   ],
   drive: [
