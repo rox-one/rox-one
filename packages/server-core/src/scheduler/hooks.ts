@@ -37,16 +37,21 @@ export class HookRegistry {
   private readonly handlers = new Map<string, HookHandler<never>[]>()
   private sequence = 0
 
-  /** Register a listener; returns an unsubscribe function. */
-  on<Payload = unknown>(event: string, handler: HookHandler<Payload>): () => void {
+  /**
+   * Register a listener; returns a disposer.
+   *
+   * The disposer removes this exact listener and returns whether it actually
+   * removed one — `true` on the first call, `false` on any later call (the
+   * listener is already gone). It is the boolean result of {@link off}, so a
+   * caller can tell a real unsubscribe from a no-op.
+   */
+  on<Payload = unknown>(event: string, handler: HookHandler<Payload>): () => boolean {
     if (event === '') throw new Error('HookRegistry.on: event name must be non-empty')
     if (typeof handler !== 'function') throw new Error('HookRegistry.on: handler must be a function')
     const list = this.handlers.get(event) ?? []
     list.push(handler as HookHandler<never>)
     this.handlers.set(event, list)
-    return () => {
-      this.off(event, handler)
-    }
+    return () => this.off(event, handler)
   }
 
   /** Remove a previously registered listener. Returns whether it was present. */

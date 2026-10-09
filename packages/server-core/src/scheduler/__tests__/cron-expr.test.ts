@@ -74,5 +74,13 @@ describe('cron expression parsing', () => {
 
   it('raises a typed NO_MATCH when a schedule can never fire', () => {
     expectCronError('0 0 30 2 *', 'NO_MATCH')
+    expectCronError('0 0 31 4 *', 'NO_MATCH')
+  })
+
+  it('keeps parsing a restricted day-of-week because OR semantics let it fire', () => {
+    // 31 Feb never exists, but "Mondays in February" match via day-of-week.
+    const mondayInFebruary = parseCronExpression('0 0 31 2 1')
+    // 2026-02-02 is the first Monday of February 2026.
+    expect(mondayInFebruary.nextAfter(EPOCH)).toBe(Date.UTC(2026, 1, 2, 0, 0, 0))
   })
 })

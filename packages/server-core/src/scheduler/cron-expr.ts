@@ -27,8 +27,11 @@
  * Rejected (throws `CronExpressionError`): second-resolution or otherwise
  * non-5-field input, names (`SUN`, `JAN`), special tokens (`?`, `L`, `W`, `#`),
  * `@macros`, empty list elements, out-of-range values and non-positive steps.
- * There is no external dependency and no TZ database; a year with no matching
- * instant (e.g. `0 0 30 2 *`) raises `NO_MATCH`.
+ * An expression that can *never* fire — day-of-week unrestricted (`*`) while no
+ * (day-of-month, month) pair is a valid calendar date, e.g. `0 0 30 2 *` — is
+ * rejected here, at parse/registration time, with code `NO_MATCH`. There is no
+ * external dependency and no TZ database; the 5-year scan inside `nextAfter()`
+ * retains a `NO_MATCH` backstop for any expression that slips past parsing.
  */
 
 const MINUTE_MS = 60_000
@@ -36,6 +39,11 @@ const HOUR_MS = 60 * MINUTE_MS
 const DAY_MS = 24 * HOUR_MS
 /** Search horizon for the next matching instant (covers Feb-29 leaps). */
 const MAX_SEARCH_MS = 5 * 366 * DAY_MS
+/**
+ * Longest day-of-month reachable in each month when leap years are considered
+ * (February takes 29 rather than 28 so a leap-only date stays satisfiable).
+ */
+const MAX_DAYS_IN_MONTH: readonly number[] = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 export type CronErrorCode =
   | 'INVALID_FIELD_COUNT'
@@ -213,6 +221,27 @@ export class CronExpression {
   }
 }
 
+/**
+ * Whether the expression can ever fire.
+ *
+ * day-of-month and day-of-week combine with OR semantics, so a restricted
+ * day-of-week always matches (every week has each weekday in every month) and
+ * the expression is satisfiable. The only unsatisfiable shape is an
+ * unrestricted day-of-week (`*`) — leaving day-of-month as the sole day
+ * constraint — paired with a day-of-month/month set that contains no valid
+ * calendar date (30/31 February, 31 April/June/September/November, ...).
+ */
+function isSatisfiable(dayOfMonth: ParsedField, month: ParsedField, dayOfWeek: ParsedField): boolean {
+  if (!dayOfWeek.wildcard) return true
+  if (dayOfMonth.wildcard) return true
+  for (const day of dayOfMonth.values) {
+    for (const m of month.values) {
+      if (day <= MAX_DAYS_IN_MONTH[m - 1]!) return true
+    }
+  }
+  return false
+}
+
 /** Parse and validate a 5-field cron expression; throws `CronExpressionError` otherwise. */
 export function parseCronExpression(expression: string): CronExpression {
   if (typeof expression !== 'string' || expression.trim() === '') {
@@ -226,5 +255,11 @@ export function parseCronExpression(expression: string): CronExpression {
     )
   }
   const parsed = parts.map((part, index) => parseField(part, FIELDS[index]!))
+  if (!isSatisfiable(parsed[2]!, parsed[3]!, parsed[4]!)) {
+    fail(
+      'NO_MATCH',
+      `cron "${expression}" can never fire: day-of-month/month pair is not a valid calendar date and day-of-week is unrestricted`,
+    )
+  }
   return new CronExpression(expression, parsed)
 }
