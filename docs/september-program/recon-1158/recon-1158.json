@@ -1,0 +1,1795 @@
+{
+ "schemaVersion": 1,
+ "id": "RECON-01-CURRENT-STATE-20261009",
+ "issue": "https://github.com/rox-one/rox-one/issues/1158",
+ "taskId": "RECON-01",
+ "observedAt": "2026-10-08T22:20:00Z",
+ "observationBase": "origin/main 8c5abc7a32a3773645b695b79a81c327b8e6758d",
+ "method": "read-only: git plumbing over existing checkouts + GitHub REST/GraphQL read; no fetch-reset, no checkout of existing work, no issue/PR mutation",
+ "existingCanonicalOutput": {
+  "path": "docs/september-program/recon-evidence.json",
+  "observedAt": "2026-09-30T02:21:32.311Z",
+  "disposition": "PRESERVED_UNCHANGED; this run adds a new register and does not overwrite it"
+ },
+ "authorization": {
+  "scope": "U01-U31 register, RMA/Golden Gate/Conation/Macro/ROX Suite/Rox-Unified trees, current checkouts, open PRs, active work",
+  "prohibited": "no backlog start, no source edits, no cloud provisioning, no issue closure, no duplicate tickets, no publication of private data"
+ },
+ "checkouts": [
+  {
+   "label": "A",
+   "repo": "rox-one/rox-one",
+   "kind": "bare mirror (shared object store)",
+   "ref": "refs/heads/fix/residual-ci-reds-20261008",
+   "head": "0b8a4dda1fe3547a7218f7234b75e5520367277b",
+   "dirty": null,
+   "note": "279 local branches, 832 remote refs; origin/main=8c5abc7a3"
+  },
+  {
+   "label": "B",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "feat/w1-09-activity-notifications-inbox",
+   "head": "3b88d1a0084c297b816b082f3ebfb1b44d4e4f44",
+   "dirty": 804,
+   "note": "staged overlay: 403 A / 380 M / 21 D; PR #1621 head; preserve"
+  },
+  {
+   "label": "C",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "feat/w1-14-collab-xsc-drive-contracts",
+   "head": "f842f3402e59a8935dfce28653934dd1b6872683",
+   "dirty": 0,
+   "note": "clean; PR #1626 head"
+  },
+  {
+   "label": "D",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "feat/w1-15-chrome-agent-panel-xfn",
+   "head": "93e5a86ccae6b2bdc836a38e029fe54887bf1f9e",
+   "dirty": 0,
+   "note": "clean; PR #1625 head"
+  },
+  {
+   "label": "E",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "perf/p2-keepalive-prefetch",
+   "head": "1922d50c3a7079d03b9d7841da4b5ec2c0bbaff3",
+   "dirty": 0,
+   "note": "clean; PR #1620 head"
+  },
+  {
+   "label": "F",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "(detached)",
+   "head": "3f1a978e91885f123ca0750cb1c829abcc59cd01",
+   "dirty": 0,
+   "note": "detached at e01-decisions tip (merge of origin/main); no branch moved"
+  },
+  {
+   "label": "G",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree",
+   "ref": "feat/e01-voice-wave",
+   "head": "c61a3536a4764c3a360f17d2e109bcee2b95c5e2",
+   "dirty": 46,
+   "note": "MERGE IN PROGRESS: MERGE_HEAD=8c5abc7a3 (origin/main); 19 unmerged-ish entries incl 4 UU; do not touch"
+  },
+  {
+   "label": "H",
+   "repo": "rox-one/rox-one",
+   "kind": "separate clone",
+   "ref": "main",
+   "head": "e6c899357e3ad7fdddf06c2b3ef06ba403435574",
+   "dirty": 15540,
+   "note": "15540 staged deletions (index-only) pending owner decision; preserve"
+  },
+  {
+   "label": "I",
+   "repo": "rox-one/rox-one",
+   "kind": "separate clone",
+   "ref": "fix/product-tour-native-green",
+   "head": "bbeb2d543011587354cd83bc963c9a1409272170",
+   "dirty": 62,
+   "note": "origin/main=8c5abc7a3; 47 M / 15 ??; PR #1627 source; 80 registered worktrees in this clone"
+  },
+  {
+   "label": "J",
+   "repo": "rox-one/rox-one",
+   "kind": "separate clone",
+   "ref": "main",
+   "head": "7f70d5f2",
+   "dirty": 0,
+   "note": "clean; behind origin/main"
+  },
+  {
+   "label": "K",
+   "repo": "agisota/craft-agents-oss (upstream fork)",
+   "kind": "separate clone",
+   "ref": "audit/final-readiness-2026-10-03",
+   "head": "9fca38a5",
+   "dirty": 42,
+   "note": "35 M / 7 ??; not the rox-one delivery repo"
+  },
+  {
+   "label": "L",
+   "repo": "rox-one/rox-one",
+   "kind": "linked worktree of clone I",
+   "ref": "develop/hosted-web-readiness-2026-10-03",
+   "head": "76228cc33",
+   "dirty": 4,
+   "note": "holds docs/macro-integration analysis; 2 M / 2 ??"
+  },
+  {
+   "label": "M",
+   "repo": "macro-inc/macro (donor, AGPL/rights-reserved)",
+   "kind": "separate clone",
+   "ref": "main",
+   "head": "b8638add7c",
+   "dirty": 3,
+   "note": "1 M / 1 D / 1 ??; donor repository for Conation/Macro review"
+  },
+  {
+   "label": "N",
+   "repo": "no origin remote",
+   "kind": "separate clone",
+   "ref": "operator/hour-baseline",
+   "head": "1a9cf85667",
+   "dirty": 0,
+   "note": "isolated upstream baseline; not a delivery surface"
+  }
+ ],
+ "openPullRequests": [
+  {
+   "number": 1615,
+   "head": "feat/w1-06-workitem-v3-schemas",
+   "base": "main",
+   "mergeable": "MERGEABLE",
+   "draft": false,
+   "title": "feat(work): W1-06 — domain schemas, reference handlers, WorkItem v3 and local migrations (#1503)"
+  },
+  {
+   "number": 1618,
+   "head": "perf/p2-query-cache",
+   "base": "main",
+   "mergeable": "MERGEABLE",
+   "draft": false,
+   "title": "perf(renderer): shared persisted query cache + PERF-09 — Notes builds tasks from the listing (no second corpus pass) (#1576)"
+  },
+  {
+   "number": 1620,
+   "head": "perf/p2-keepalive-prefetch",
+   "base": "perf/p2-query-cache",
+   "mergeable": "MERGEABLE",
+   "draft": false,
+   "title": "perf(renderer): PERF-10 — keep-alive surfaces (LRU 5), route preloads, idle warm-up and intent prefetch (#1577)"
+  },
+  {
+   "number": 1621,
+   "head": "feat/w1-09-activity-notifications-inbox",
+   "base": "main",
+   "mergeable": "CONFLICTING",
+   "draft": false,
+   "title": "feat(inbox): W1-09 — activity, notifications and Inbox contracts (#1506)"
+  },
+  {
+   "number": 1622,
+   "head": "feat/w1-12-domain-rule-engine",
+   "base": "main",
+   "mergeable": "MERGEABLE",
+   "draft": false,
+   "title": "feat(rules): W1-12 — domain rule engine, R1–R5 reference rules and workspace rules API (#1509)"
+  },
+  {
+   "number": 1623,
+   "head": "feat/w1-11-identity-agent-governance",
+   "base": "main",
+   "mergeable": "CONFLICTING",
+   "draft": false,
+   "title": "feat(agents): W1-11 — identity lifecycle, agent governance policy/audit and team-chat contracts (#1508)"
+  },
+  {
+   "number": 1624,
+   "head": "feat/e01-voice-wave",
+   "base": "main",
+   "mergeable": "CONFLICTING",
+   "draft": false,
+   "title": "feat(voice): e01 wave — dictation ownership, level meter, transcript notes + follow-ups (#1560s)"
+  },
+  {
+   "number": 1625,
+   "head": "feat/w1-15-chrome-agent-panel-xfn",
+   "base": "main",
+   "mergeable": "CONFLICTING",
+   "draft": false,
+   "title": "feat(platform): W1-15 — surface chrome, agent panel and cross-functional contracts (#1512)"
+  },
+  {
+   "number": 1626,
+   "head": "feat/w1-14-collab-xsc-drive-contracts",
+   "base": "main",
+   "mergeable": "MERGEABLE",
+   "draft": false,
+   "title": "feat(collab): W1-14 — collaboration, §12 and Drive/XSC contracts (#1511)"
+  },
+  {
+   "number": 1627,
+   "head": "fix/product-tour-native-green",
+   "base": "main",
+   "mergeable": "UNKNOWN",
+   "draft": false,
+   "title": "fix(product-tour): green the native acceptance workflow"
+  },
+  {
+   "number": 1628,
+   "head": "feat/rox-batch2-20261008",
+   "base": "main",
+   "mergeable": "UNKNOWN",
+   "draft": false,
+   "title": "feat(batch2): real mail, audio transcripts, pills, thin focus, chrome, meetings tabs, secrets surface, profile, calendar autostart"
+  }
+ ],
+ "requirementGroups": [
+  {
+   "group": "U01",
+   "rows": 15,
+   "primaries": [
+    {
+     "task": "AUDIT-01",
+     "issue": 1159,
+     "issueState": "open",
+     "owner": "ActualSurfaceAuditor",
+     "rows": 6,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "FEED-01",
+     "issue": 1202,
+     "issueState": "open",
+     "owner": "OwnerFeed",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "HOME-01",
+     "issue": 1196,
+     "issueState": "open",
+     "owner": "OwnerHome",
+     "rows": 2,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "NOTES-01",
+     "issue": 1163,
+     "issueState": "open",
+     "owner": "OwnerNotes",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "TASKS-01",
+     "issue": 1195,
+     "issueState": "open",
+     "owner": "OwnerTasks",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "MEMORY-02",
+     "issue": 1169,
+     "issueState": "open",
+     "owner": "OwnerMemory",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "IMPORTS-01",
+     "issue": 1173,
+     "issueState": "open",
+     "owner": "OwnerImports",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U02",
+   "rows": 8,
+   "primaries": [
+    {
+     "task": "MAIL-01",
+     "issue": 1181,
+     "issueState": "open",
+     "owner": "OwnerMail",
+     "rows": 7,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "MAIL-02",
+     "issue": 1182,
+     "issueState": "open",
+     "owner": "OwnerMail",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U03",
+   "rows": 1,
+   "primaries": [
+    {
+     "task": "VOICE-01",
+     "issue": 1185,
+     "issueState": "open",
+     "owner": "OwnerVoice",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U04",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "VOICE-02",
+     "issue": 1186,
+     "issueState": "open",
+     "owner": "OwnerVoice",
+     "rows": 3,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U05",
+   "rows": 7,
+   "primaries": [
+    {
+     "task": "MEETINGS-01",
+     "issue": 1187,
+     "issueState": "open",
+     "owner": "OwnerMeetings",
+     "rows": 6,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "MEETINGS-02",
+     "issue": 1190,
+     "issueState": "open",
+     "owner": "OwnerMeetings",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U06",
+   "rows": 4,
+   "primaries": [
+    {
+     "task": "UX-01",
+     "issue": 1136,
+     "issueState": "open",
+     "owner": "OwnerUiUx",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "DESIGN-01",
+     "issue": 1138,
+     "issueState": "open",
+     "owner": "OwnerDesign",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U07",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "DESIGN-01",
+     "issue": 1138,
+     "issueState": "open",
+     "owner": "OwnerDesign",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U08",
+   "rows": 4,
+   "primaries": [
+    {
+     "task": "ONBOARD-01",
+     "issue": 1139,
+     "issueState": "open",
+     "owner": "OwnerOnboarding",
+     "rows": 4,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U09",
+   "rows": 6,
+   "primaries": [
+    {
+     "task": "PROJECTS-01",
+     "issue": 1194,
+     "issueState": "open",
+     "owner": "OwnerProjects",
+     "rows": 6,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U10",
+   "rows": 4,
+   "primaries": [
+    {
+     "task": "CHAT-02",
+     "issue": 1122,
+     "issueState": "open",
+     "owner": "OwnerChats",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CHAT-01",
+     "issue": 1121,
+     "issueState": "open",
+     "owner": "OwnerChats",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U11",
+   "rows": 4,
+   "primaries": [
+    {
+     "task": "NATIVE-01",
+     "issue": 1145,
+     "issueState": "open",
+     "owner": "OwnerSystemIntegration",
+     "rows": 4,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U12",
+   "rows": 6,
+   "primaries": [
+    {
+     "task": "MARKETPLACE-01",
+     "issue": 1172,
+     "issueState": "open",
+     "owner": "OwnerMarketplace",
+     "rows": 4,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "SETTINGS-01",
+     "issue": 1144,
+     "issueState": "open",
+     "owner": "OwnerSettings",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "UX-01",
+     "issue": 1136,
+     "issueState": "open",
+     "owner": "OwnerUiUx",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U13",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "QUEST-01",
+     "issue": 1203,
+     "issueState": "open",
+     "owner": "OwnerQuest",
+     "rows": 3,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U14",
+   "rows": 4,
+   "primaries": [
+    {
+     "task": "TEAMS-01",
+     "issue": 1123,
+     "issueState": "open",
+     "owner": "OwnerTeams",
+     "rows": 2,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "TEAMS-02",
+     "issue": 1124,
+     "issueState": "open",
+     "owner": "OwnerTeams",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "TEAMS-03",
+     "issue": 1125,
+     "issueState": "open",
+     "owner": "OwnerTeams",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U15",
+   "rows": 5,
+   "primaries": [
+    {
+     "task": "THEME-01",
+     "issue": 1140,
+     "issueState": "open",
+     "owner": "OwnerDesign",
+     "rows": 5,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U16",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "CANVAS-01",
+     "issue": 1166,
+     "issueState": "open",
+     "owner": "OwnerCanvas",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U17",
+   "rows": 8,
+   "primaries": [
+    {
+     "task": "INTEGRATIONS-02",
+     "issue": 1132,
+     "issueState": "open",
+     "owner": "OwnerIntegrations",
+     "rows": 5,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "INTEGRATIONS-01",
+     "issue": 1131,
+     "issueState": "open",
+     "owner": "OwnerIntegrations",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "IMPORTS-01",
+     "issue": 1173,
+     "issueState": "open",
+     "owner": "OwnerImports",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "INTEGRATIONS-03",
+     "issue": 1135,
+     "issueState": "open",
+     "owner": "OwnerIntegrations",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U18",
+   "rows": 9,
+   "primaries": [
+    {
+     "task": "COLLAB-05",
+     "issue": 1130,
+     "issueState": "open",
+     "owner": "OwnerCollaboration",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "COLLAB-01",
+     "issue": 1126,
+     "issueState": "open",
+     "owner": "OwnerCollaboration",
+     "rows": 2,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "COLLAB-04",
+     "issue": 1129,
+     "issueState": "open",
+     "owner": "OwnerCollaboration",
+     "rows": 2,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "COLLAB-03",
+     "issue": 1128,
+     "issueState": "open",
+     "owner": "OwnerCollaboration",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "SYNC-01",
+     "issue": 1133,
+     "issueState": "open",
+     "owner": "OwnerSync",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U19",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "AGENT-BUDGET-01",
+     "issue": 1213,
+     "issueState": "open",
+     "owner": "OwnerAgents",
+     "rows": 3,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U20",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "FOCUS-01",
+     "issue": 1214,
+     "issueState": "open",
+     "owner": "OwnerFocus",
+     "rows": 3,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U21",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "AUTOMATION-01",
+     "issue": 1215,
+     "issueState": "open",
+     "owner": "OwnerAutomations",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "AUTOMATION-02",
+     "issue": 1216,
+     "issueState": "open",
+     "owner": "OwnerAutomations",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "SCHEDULED-02",
+     "issue": 1218,
+     "issueState": "open",
+     "owner": "OwnerScheduled",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U22",
+   "rows": 4,
+   "primaries": [
+    {
+     "task": "REMOTE-01",
+     "issue": 1219,
+     "issueState": "open",
+     "owner": "OwnerRemote",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "REMOTE-02",
+     "issue": 1220,
+     "issueState": "open",
+     "owner": "OwnerRemote",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U23",
+   "rows": 5,
+   "primaries": [
+    {
+     "task": "UX-01",
+     "issue": 1136,
+     "issueState": "open",
+     "owner": "OwnerUiUx",
+     "rows": 2,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "L10N-01",
+     "issue": 1142,
+     "issueState": "open",
+     "owner": "OwnerLocalization",
+     "rows": 1,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "TASKS-01",
+     "issue": 1195,
+     "issueState": "open",
+     "owner": "OwnerTasks",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "SETTINGS-01",
+     "issue": 1144,
+     "issueState": "open",
+     "owner": "OwnerSettings",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U24",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "WINDOWS-01",
+     "issue": 1146,
+     "issueState": "open",
+     "owner": "OwnerSystemIntegration",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U26",
+   "rows": 343,
+   "primaries": [
+    {
+     "task": "CONATION-E2E-01",
+     "issue": 1154,
+     "issueState": "open",
+     "owner": "OwnerConation",
+     "rows": 101,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CONATION-AUTH-01",
+     "issue": 1153,
+     "issueState": "open",
+     "owner": "OwnerConation",
+     "rows": 32,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "DASHBOARD-01",
+     "issue": 1197,
+     "issueState": "open",
+     "owner": "OwnerDashboard",
+     "rows": 27,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CANVAS-02",
+     "issue": 1167,
+     "issueState": "open",
+     "owner": "OwnerCanvas",
+     "rows": 19,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "L10N-01",
+     "issue": 1142,
+     "issueState": "open",
+     "owner": "OwnerLocalization",
+     "rows": 19,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "MAIL-04",
+     "issue": 1184,
+     "issueState": "open",
+     "owner": "OwnerMail",
+     "rows": 18,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "INBOX-01",
+     "issue": 1198,
+     "issueState": "open",
+     "owner": "OwnerInbox",
+     "rows": 14,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "A11Y-01",
+     "issue": 1143,
+     "issueState": "open",
+     "owner": "OwnerAccessibility",
+     "rows": 14,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CALENDAR-01",
+     "issue": 1199,
+     "issueState": "open",
+     "owner": "OwnerCalendar",
+     "rows": 12,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "DRIVE-01",
+     "issue": 1175,
+     "issueState": "open",
+     "owner": "OwnerDrive",
+     "rows": 11,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CRM-01",
+     "issue": 1200,
+     "issueState": "open",
+     "owner": "OwnerCrm",
+     "rows": 11,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "TASKS-01",
+     "issue": 1195,
+     "issueState": "open",
+     "owner": "OwnerTasks",
+     "rows": 10,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "SEARCH-01",
+     "issue": 1174,
+     "issueState": "open",
+     "owner": "OwnerSearch",
+     "rows": 9,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "PAYMENTS-01",
+     "issue": 1211,
+     "issueState": "open",
+     "owner": "OwnerPayments",
+     "rows": 8,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "SPREADSHEET-01",
+     "issue": 1178,
+     "issueState": "open",
+     "owner": "OwnerDocuments",
+     "rows": 7,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CONATION-DELIVERY-01",
+     "issue": 1155,
+     "issueState": "open",
+     "owner": "OwnerConation",
+     "rows": 6,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "REMINDERS-01",
+     "issue": 1201,
+     "issueState": "open",
+     "owner": "OwnerReminders",
+     "rows": 6,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "AGENTCENTER-01",
+     "issue": 1210,
+     "issueState": "open",
+     "owner": "OwnerAgentCenter",
+     "rows": 5,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CONATION-SHARE-01",
+     "issue": 1229,
+     "issueState": "open",
+     "owner": "OwnerConation",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "NOTES-03",
+     "issue": 1165,
+     "issueState": "open",
+     "owner": "OwnerNotes",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "PDF-01",
+     "issue": 1179,
+     "issueState": "open",
+     "owner": "OwnerDocuments",
+     "rows": 3,
+     "taskState": "IN_PROGRESS"
+    },
+    {
+     "task": "SPLIT-01",
+     "issue": 1180,
+     "issueState": "open",
+     "owner": "OwnerDocuments",
+     "rows": 3,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "ACTIVITY-01",
+     "issue": 1206,
+     "issueState": "open",
+     "owner": "OwnerActivity",
+     "rows": 2,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U27",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "RMA-01",
+     "issue": 1150,
+     "issueState": "open",
+     "owner": "OwnerRma",
+     "rows": 3,
+     "taskState": "IN_PROGRESS"
+    }
+   ]
+  },
+  {
+   "group": "U28",
+   "rows": 6,
+   "primaries": [
+    {
+     "task": "RMA-02",
+     "issue": 1151,
+     "issueState": "open",
+     "owner": "OwnerRma",
+     "rows": 6,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U29",
+   "rows": 5,
+   "primaries": [
+    {
+     "task": "MAIL-03",
+     "issue": 1183,
+     "issueState": "open",
+     "owner": "OwnerMail",
+     "rows": 2,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CRM-01",
+     "issue": 1200,
+     "issueState": "open",
+     "owner": "OwnerCrm",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "CALENDAR-01",
+     "issue": 1199,
+     "issueState": "open",
+     "owner": "OwnerCalendar",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "RMA-03",
+     "issue": 1152,
+     "issueState": "open",
+     "owner": "OwnerRma",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U30",
+   "rows": 3,
+   "primaries": [
+    {
+     "task": "GG-02",
+     "issue": 1148,
+     "issueState": "open",
+     "owner": "OwnerGoldenGate",
+     "rows": 2,
+     "taskState": "NOT_RUN"
+    },
+    {
+     "task": "GG-01",
+     "issue": 1147,
+     "issueState": "open",
+     "owner": "OwnerGoldenGate",
+     "rows": 1,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  },
+  {
+   "group": "U31",
+   "rows": 6,
+   "primaries": [
+    {
+     "task": "GG-03",
+     "issue": 1149,
+     "issueState": "open",
+     "owner": "OwnerGoldenGate",
+     "rows": 6,
+     "taskState": "NOT_RUN"
+    }
+   ]
+  }
+ ],
+ "programTasks": {
+  "total": 109,
+  "status": {
+   "IN_PROGRESS": 31,
+   "NOT_RUN": 78
+  },
+  "kind": {
+   "requested": 51,
+   "verification-gap": 47,
+   "proposal-audit": 10,
+   "decision-reconciliation": 1
+  },
+  "owners": 68,
+  "registryProductStatus": "IN_PROGRESS",
+  "registryPacketStatus": "PUBLISHED_VERIFIED",
+  "criticalPath": [
+   "PROGRAM-01",
+   "RECON-01",
+   "AUDIT-01",
+   "DATA-01",
+   "SHARED-01",
+   "atomic tasks or source-backed dispositions",
+   "INTEGRATE-01",
+   "RELEASE-01"
+  ]
+ },
+ "issueTrees": {
+  "program": {
+   "taskId": "PROGRAM-01",
+   "issue": 1157,
+   "state": "OPEN",
+   "note": "root of the September program"
+  },
+  "recon": {
+   "taskId": "RECON-01",
+   "issue": 1158,
+   "state": "OPEN",
+   "note": "this deliverable"
+  },
+  "september_cards": {
+   "total": 109,
+   "range": [
+    1121,
+    1229
+   ],
+   "open": 109,
+   "closed": 0
+  },
+  "rma": {
+   "total": 35,
+   "open": [
+    380,
+    381,
+    382,
+    385,
+    387,
+    389
+   ],
+   "closed": [
+    356,
+    357,
+    358,
+    359,
+    360,
+    361,
+    362,
+    363,
+    364,
+    365,
+    366,
+    367,
+    368,
+    369,
+    370,
+    371,
+    372,
+    373,
+    374,
+    375,
+    376,
+    377,
+    378,
+    379,
+    383,
+    384,
+    386,
+    388,
+    390
+   ]
+  },
+  "golden_gate": {
+   "total": 26,
+   "open": [
+    541,
+    553,
+    555,
+    556,
+    557,
+    558,
+    559,
+    560,
+    561,
+    562,
+    563,
+    564,
+    565,
+    566,
+    568,
+    569,
+    570,
+    571,
+    572,
+    573,
+    574,
+    575,
+    576,
+    577,
+    578
+   ],
+   "closed": [
+    567
+   ]
+  },
+  "conation": {
+   "total": 27,
+   "open": [
+    1153,
+    1154,
+    1155,
+    1229
+   ],
+   "closed": [
+    320,
+    321,
+    322,
+    323,
+    324,
+    325,
+    326,
+    327,
+    328,
+    329,
+    330,
+    331,
+    332,
+    333,
+    334,
+    335,
+    336,
+    337,
+    338,
+    339,
+    340,
+    341,
+    342
+   ]
+  },
+  "macro_wp": {
+   "total": 52,
+   "open": [
+    1324,
+    1325,
+    1326,
+    1327,
+    1328,
+    1329,
+    1330,
+    1331,
+    1332,
+    1333,
+    1334,
+    1335,
+    1336,
+    1337,
+    1338,
+    1339,
+    1340,
+    1341,
+    1342,
+    1343,
+    1344,
+    1345,
+    1346,
+    1347,
+    1348,
+    1349,
+    1350,
+    1351,
+    1352,
+    1353,
+    1354,
+    1355,
+    1356,
+    1357,
+    1358,
+    1359,
+    1360,
+    1361,
+    1362,
+    1363,
+    1364,
+    1365,
+    1366,
+    1367,
+    1368,
+    1369,
+    1370,
+    1371,
+    1372,
+    1373,
+    1374,
+    1375
+   ]
+  },
+  "rox_suite": {
+   "total": 76,
+   "open": [
+    1091,
+    1092,
+    1093,
+    1094,
+    1095,
+    1096,
+    1097,
+    1098,
+    1099,
+    1100,
+    1101,
+    1102,
+    1103,
+    1104,
+    1105,
+    1106,
+    1107,
+    1108,
+    1109,
+    1110,
+    1111,
+    1112,
+    1113,
+    1114,
+    1115,
+    1116,
+    1117,
+    1118,
+    1119,
+    1120,
+    1231,
+    1233,
+    1234,
+    1235,
+    1237,
+    1238,
+    1239,
+    1243,
+    1244,
+    1245,
+    1249,
+    1250,
+    1251,
+    1253,
+    1254,
+    1255,
+    1256,
+    1257,
+    1258,
+    1259,
+    1260,
+    1261,
+    1266,
+    1267,
+    1268,
+    1269,
+    1271,
+    1272,
+    1273,
+    1274,
+    1275,
+    1276,
+    1277,
+    1279,
+    1280,
+    1281,
+    1282,
+    1283,
+    1284,
+    1285,
+    1286,
+    1287,
+    1288,
+    1289,
+    1290,
+    1291
+   ]
+  },
+  "rox_unified": {
+   "total": 37,
+   "open": [
+    1500,
+    1501,
+    1503,
+    1504,
+    1505,
+    1506,
+    1507,
+    1508,
+    1509,
+    1510,
+    1511,
+    1512,
+    1513,
+    1514,
+    1515,
+    1516,
+    1517,
+    1518,
+    1519,
+    1520,
+    1521,
+    1522,
+    1523,
+    1524,
+    1525,
+    1526,
+    1527,
+    1528,
+    1529,
+    1530,
+    1531,
+    1532,
+    1533,
+    1534,
+    1536
+   ],
+   "closed": [
+    1499,
+    1502
+   ]
+  }
+ },
+ "specialCases": {
+  "333": {
+   "number": 333,
+   "state": "closed",
+   "title": "[ROX-AUD-012][W02] Подтвердить полный API Conation",
+   "labels": [],
+   "updated": "2026-09-13T15:12:24Z"
+  },
+  "356": {
+   "number": 356,
+   "state": "closed",
+   "title": "[RMA-000] ROX Meeting Agents: предустановленная команда, нативные функции Conation и сквозная приёмка",
+   "labels": [],
+   "updated": "2026-09-13T19:36:45Z"
+  },
+  "380": {
+   "number": 380,
+   "state": "open",
+   "title": "[RMA-I024][P1] Conation Mail/Channels: подготовка, согласование и проверенная отправка",
+   "labels": [
+    "prio:P1",
+    "area:meeting-agents",
+    "screen:Inbox",
+    "type:feature",
+    "layer:backend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:06:09Z"
+  },
+  "381": {
+   "number": 381,
+   "state": "open",
+   "title": "[RMA-I025][P1] Conation CRM: клиентский контекст и проверенные изменения без склейки по имени",
+   "labels": [
+    "prio:P1",
+    "area:meeting-agents",
+    "screen:CRM",
+    "type:feature",
+    "layer:backend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:06:09Z"
+  },
+  "382": {
+   "number": 382,
+   "state": "open",
+   "title": "[RMA-I026][P1] Conation Calendar/Reminders/Calls/Chats: один календарь и связанные встречи",
+   "labels": [
+    "prio:P1",
+    "area:meeting-agents",
+    "screen:Calendar",
+    "type:feature",
+    "layer:backend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:06:09Z"
+  },
+  "385": {
+   "number": 385,
+   "state": "open",
+   "title": "[RMA-I029][P0] Ранний E2E harness: настоящий Electron → RPC → storage и уровни evidence",
+   "labels": [
+    "prio:P0",
+    "area:meeting-agents",
+    "type:tests",
+    "layer:infra"
+   ],
+   "updated": "2026-10-08T15:06:09Z"
+  },
+  "387": {
+   "number": 387,
+   "state": "open",
+   "title": "[RMA-I031][P0] Поставка агентов: packaged app, upgrade, web, локали и доступность",
+   "labels": [
+    "prio:P0",
+    "area:meeting-agents",
+    "type:infra/release",
+    "layer:infra"
+   ],
+   "updated": "2026-10-08T15:06:11Z"
+  },
+  "389": {
+   "number": 389,
+   "state": "open",
+   "title": "[RMA-I033][P2] Собственные комнаты и дополнительные ingress: реальные media sessions и meeting bots",
+   "labels": [
+    "prio:P2",
+    "area:meeting-agents",
+    "screen:Meetings",
+    "type:feature",
+    "layer:backend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:06:13Z"
+  },
+  "541": {
+   "number": 541,
+   "state": "open",
+   "title": "[Golden Gate] Компактная рабочая среда: навигация, панели, дизайн-система и проверка",
+   "labels": [
+    "prio:P0",
+    "area:golden-gate",
+    "type:ui-polish",
+    "layer:frontend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:06:13Z"
+  },
+  "553": {
+   "number": 553,
+   "state": "open",
+   "title": "[Golden Gate] Единые токены, типографика, смысловой текст и общие примитивы",
+   "labels": [
+    "prio:P0",
+    "area:golden-gate",
+    "screen:Design",
+    "type:ui-polish",
+    "layer:frontend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:06:13Z"
+  },
+  "554": {
+   "number": 554,
+   "state": "MISSING",
+   "title": "",
+   "labels": null,
+   "updated": null
+  },
+  "567": {
+   "number": 567,
+   "state": "closed",
+   "title": "[Golden Gate] Проекты и личные задачи, включая выбор по deep link",
+   "labels": [],
+   "updated": "2026-09-29T04:49:28Z"
+  },
+  "578": {
+   "number": 578,
+   "state": "open",
+   "title": "[Golden Gate] Приёмка Golden Gate: visual, functional, performance и Electron/macOS",
+   "labels": [
+    "prio:P0",
+    "area:golden-gate",
+    "type:tests",
+    "layer:infra"
+   ],
+   "updated": "2026-10-08T15:06:38Z"
+  },
+  "991": {
+   "number": 991,
+   "state": "MISSING",
+   "title": "",
+   "labels": null,
+   "updated": null
+  },
+  "1150": {
+   "number": 1150,
+   "state": "open",
+   "title": "[Sep-rma] Настоящий E3 harness Electron→RPC→storage для RMA (#385)",
+   "labels": [
+    "September-program",
+    "[Sep-rma]",
+    "prio:P0",
+    "area:meeting-agents",
+    "type:tests",
+    "layer:infra"
+   ],
+   "updated": "2026-10-08T15:34:29Z"
+  },
+  "1151": {
+   "number": 1151,
+   "state": "open",
+   "title": "[Sep-rma] Поставка RMA: упаковка, обновление, web, локали, доступность (#387)",
+   "labels": [
+    "September-program",
+    "[Sep-rma]",
+    "prio:P0",
+    "area:meeting-agents",
+    "type:infra/release",
+    "layer:infra"
+   ],
+   "updated": "2026-10-08T15:34:30Z"
+  },
+  "1152": {
+   "number": 1152,
+   "state": "open",
+   "title": "[Sep-rma] Комнаты и ingress: настоящий media provider и E3 (#389)",
+   "labels": [
+    "September-program",
+    "[Sep-rma]",
+    "prio:P2",
+    "area:meeting-agents",
+    "screen:Meetings",
+    "type:feature",
+    "layer:backend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:34:30Z"
+  },
+  "1147": {
+   "number": 1147,
+   "state": "open",
+   "title": "[Sep-golden-gate] Grid 2×2/3×2, resize и сохранение рабочих областей (#556)",
+   "labels": [
+    "September-program",
+    "[Sep-golden-gate]",
+    "prio:P1",
+    "area:golden-gate",
+    "screen:Home",
+    "type:feature",
+    "layer:frontend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:34:25Z"
+  },
+  "1148": {
+   "number": 1148,
+   "state": "open",
+   "title": "[Sep-golden-gate] Пространственный фокус, device chip и native lifecycle (#557/#558)",
+   "labels": [
+    "September-program",
+    "[Sep-golden-gate]",
+    "prio:P1",
+    "area:golden-gate",
+    "screen:Home",
+    "type:feature",
+    "layer:frontend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:34:26Z"
+  },
+  "1149": {
+   "number": 1149,
+   "state": "open",
+   "title": "[Sep-golden-gate] Закрыть исходную полную приёмку Golden Gate (#541/#578)",
+   "labels": [
+    "September-program",
+    "[Sep-golden-gate]",
+    "prio:P0",
+    "area:golden-gate",
+    "type:tests",
+    "layer:infra"
+   ],
+   "updated": "2026-10-08T15:34:27Z"
+  },
+  "1183": {
+   "number": 1183,
+   "state": "open",
+   "title": "[Sep-mail] Приёмка Conation Mail по существующей задаче #380",
+   "labels": [
+    "September-program",
+    "[Sep-mail]",
+    "prio:P1",
+    "area:mail",
+    "screen:Inbox",
+    "type:feature",
+    "layer:frontend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:05:41Z"
+  },
+  "1153": {
+   "number": 1153,
+   "state": "open",
+   "title": "[Sep-conation] Conation: починить Operator JWT, OTP, реальные списки и маршруты",
+   "labels": [
+    "September-program",
+    "[Sep-conation]",
+    "prio:P0",
+    "area:conation",
+    "type:bugfix",
+    "layer:backend",
+    "user-facing",
+    "critical"
+   ],
+   "updated": "2026-10-08T19:13:57Z"
+  },
+  "1154": {
+   "number": 1154,
+   "state": "open",
+   "title": "[Sep-conation] Conation: реальные браузерные и Tauri E2E всех исходных поверхностей",
+   "labels": [
+    "September-program",
+    "[Sep-conation]",
+    "prio:P0",
+    "area:conation",
+    "type:tests",
+    "layer:infra"
+   ],
+   "updated": "2026-10-08T15:34:31Z"
+  },
+  "1155": {
+   "number": 1155,
+   "state": "open",
+   "title": "[Sep-conation] Conation: согласовать diff, provenance и доставку незакоммиченных изменений",
+   "labels": [
+    "September-program",
+    "[Sep-conation]",
+    "prio:P0",
+    "area:conation",
+    "type:data/migration",
+    "layer:infra",
+    "critical"
+   ],
+   "updated": "2026-10-08T15:34:33Z"
+  },
+  "1229": {
+   "number": 1229,
+   "state": "open",
+   "title": "[Sep-conation] Общий доступ и настоящий iOS share sheet: люди, ссылка, права и возврат в исходный объект",
+   "labels": [
+    "September-program",
+    "[Sep-conation]",
+    "prio:P1",
+    "area:conation",
+    "type:feature",
+    "layer:frontend",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:34:39Z"
+  },
+  "1293": {
+   "number": 1293,
+   "state": "MISSING",
+   "title": "",
+   "labels": null,
+   "updated": null
+  },
+  "584": {
+   "number": 584,
+   "state": "MISSING",
+   "title": "",
+   "labels": null,
+   "updated": null
+  },
+  "1156": {
+   "number": 1156,
+   "state": "open",
+   "title": "[Sep-decision-reconciliation] Reconcile uncertain U25 shell default and Map action provenance",
+   "labels": [
+    "September-program",
+    "[Sep-decision-reconciliation]",
+    "prio:P2",
+    "area:decision-reconciliation",
+    "type:research",
+    "layer:frontend"
+   ],
+   "updated": "2026-10-08T15:34:33Z"
+  },
+  "1536": {
+   "number": 1536,
+   "state": "open",
+   "title": "[Rox Unified][Epic] Lark + Operately unified suite on Rox: tracking issue (3 waves, 50 work packages)",
+   "labels": [
+    "enhancement",
+    "prio:P1",
+    "area:platform-contract",
+    "type:feature",
+    "layer:shared",
+    "user-facing"
+   ],
+   "updated": "2026-10-08T15:08:23Z"
+  },
+  "1617": {
+   "number": 1617,
+   "state": "MISSING",
+   "title": "",
+   "labels": null,
+   "updated": null
+  }
+ },
+ "conflicts": [],
+ "unconfirmed": []
+}

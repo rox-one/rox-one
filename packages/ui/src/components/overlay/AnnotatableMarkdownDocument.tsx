@@ -58,6 +58,10 @@ export interface AnnotatableMarkdownDocumentProps {
   islandZIndex?: React.CSSProperties['zIndex']
   openAnnotationRequest?: ExternalOpenAnnotationRequest | null
   isStreaming?: boolean
+  /** Send a follow-up user message from an interactive (`openui`) block action */
+  onSendPrompt?: (text: string) => void
+  /** Owning message/turn identity for interactive (`openui`) block form-state scoping */
+  blockScope?: string
 }
 
 export function AnnotatableMarkdownDocument({
@@ -74,6 +78,8 @@ export function AnnotatableMarkdownDocument({
   islandZIndex = 'var(--z-island, 400)',
   openAnnotationRequest,
   isStreaming = false,
+  onSendPrompt,
+  blockScope,
 }: AnnotatableMarkdownDocumentProps) {
   const canAnnotate = canAnnotateMessage({
     hasAddAnnotationHandler: !!onAddAnnotation,
@@ -649,7 +655,15 @@ export function AnnotatableMarkdownDocument({
         onMouseDown={handleSelectionPointerDown}
         onMouseUp={handleTextSelection}
       >
-        <Markdown mode="minimal" onUrlClick={onOpenUrl} onFileClick={onOpenFile} hideFirstMermaidExpand={false}>
+        <Markdown
+          mode="minimal"
+          onUrlClick={onOpenUrl}
+          onFileClick={onOpenFile}
+          hideFirstMermaidExpand={false}
+          isStreaming={isStreaming}
+          onSendPrompt={onSendPrompt}
+          blockScope={blockScope}
+        >
           {content}
         </Markdown>
 

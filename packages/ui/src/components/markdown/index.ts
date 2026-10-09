@@ -12,6 +12,11 @@ export { MarkdownDatatableBlock, type MarkdownDatatableBlockProps } from './Mark
 export { MarkdownSpreadsheetBlock, type MarkdownSpreadsheetBlockProps } from './MarkdownSpreadsheetBlock'
 export { MarkdownImageBlock, type MarkdownImageBlockProps } from './MarkdownImageBlock'
 export { MarkdownDocBlock, type MarkdownDocBlockProps } from './MarkdownDocBlock'
+// The OpenUI block (`@openuidev/*` + recharts) is only reachable through the
+// lazy wrapper so importing this barrel never pulls the heavy chunk into the
+// caller's bundle; the eager component stays an internal module detail.
+export { LazyMarkdownOpenUIBlock, type LazyMarkdownOpenUIBlockProps } from './lazy-blocks'
+export { type MarkdownOpenUIBlockProps } from './MarkdownOpenUIBlock'
 export {
   parseMarkdownPreviewSpec,
   normalizePreviewItems,
