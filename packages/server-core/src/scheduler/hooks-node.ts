@@ -54,7 +54,13 @@ async function toWebRequest(nodeReq: IncomingMessage): Promise<Request> {
     body = Buffer.concat(chunks)
   }
 
-  return new Request(url, { method: nodeReq.method, headers, body })
+  // `Request` takes a web `BodyInit`; a raw Node `Buffer` is not assignable to
+  // the DOM `ArrayBufferView<ArrayBuffer>` form of that type. Copying the
+  // buffer's own view region into a `Uint8Array<ArrayBuffer>` sends the exact
+  // same bytes while satisfying both the DOM and Bun `BodyInit` definitions.
+  const requestBody = body === null ? null : new Uint8Array(body)
+
+  return new Request(url, { method: nodeReq.method, headers, body: requestBody })
 }
 
 async function writeResponse(nodeRes: ServerResponse, response: Response): Promise<void> {
