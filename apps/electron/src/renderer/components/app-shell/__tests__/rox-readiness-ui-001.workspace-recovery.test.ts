@@ -16,7 +16,8 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       }
       const bindings = (workspace: string) => ({
         window: { electronAPI: api }, activeWorkspaceId: workspace, activeSessionWorkingDirectory: `/work/${workspace}`,
-        [`set${kind}`]: (next: string[]) => { data = next }, clearSourceIconCaches: () => {}, console,
+        [`set${kind}`]: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
+        clearSourceIconCaches: () => {}, console,
       })
       const cleanup = appShellEffect(`electronAPI.get${kind}(`, bindings('old'))
       cleanup?.()
@@ -42,7 +43,8 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       }
       const bindings = {
         window: { electronAPI: api }, activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/current',
-        [`set${kind}`]: (next: string[]) => { data = next }, clearSourceIconCaches: () => {}, console,
+        [`set${kind}`]: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
+        clearSourceIconCaches: () => {}, console,
       }
       const offLoad = appShellEffect(`electronAPI.get${kind}(`, bindings)
       const offEvent = event ? undefined : appShellEffect(`electronAPI.on${kind}Changed(`, bindings)
@@ -72,7 +74,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
         onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
       } },
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
-      setSkills: (next: string[]) => { data = next }, console,
+      setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
     })
     initial.resolve(['workspace-skill', 'project-skill', 'omp-skill']); await settle()
     event('current', ['workspace-skill'])
@@ -94,7 +96,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
         onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
       } },
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: undefined,
-      setSkills: (next: string[]) => { data = next }, console,
+      setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
     })
     responses[0]!.resolve(['initial']); await settle()
     event('foreign', ['wrong']); expect(reads).toBe(1)
@@ -118,7 +120,8 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
         onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
       } },
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
-      setSkills: (next: string[]) => { data = next }, console: { error: () => { errors++ } },
+      setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
+      console: { error: () => { errors++ } },
     })
     responses[0]!.resolve(['workspace', 'project', 'omp']); await settle()
     event('current', [])
@@ -131,6 +134,38 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     cleanup?.()
     event('current', [])
     expect(reads).toBe(3)
+  })
+
+  it('surfaces a pending sync and keeps the last-known catalog when a first-install refresh times out', async () => {
+    const initial = deferred<string[]>()
+    const refresh = deferred<string[]>()
+    let reads = 0, errors = 0
+    let event!: (workspace: string, data: string[]) => void
+    let data: string[] = []
+    let syncing = false
+    const cleanup = appShellEffect('electronAPI.getSkills(', {
+      window: { electronAPI: {
+        getSkills: () => ++reads === 1 ? initial.promise : refresh.promise,
+        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      } },
+      activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
+      setSkills: (next: string[]) => { data = next }, setSkillsSyncing: (next: boolean) => { syncing = next },
+      console: { error: () => { errors++ } },
+    })
+    expect(syncing).toBe(true)
+    initial.resolve(['workspace', 'project', 'omp']); await settle()
+    expect(data).toEqual(['workspace', 'project', 'omp'])
+    expect(syncing).toBe(false)
+    // The bundled-skills sync invalidates the caches and the refresh outlives
+    // the client timeout. The last-known catalog must survive and stay marked
+    // as syncing/pending so the panel never claims "No skills configured".
+    event('current', [])
+    expect(syncing).toBe(true)
+    refresh.reject(new Error('Request timeout: skills:get (30000ms)')); await settle()
+    expect(data).toEqual(['workspace', 'project', 'omp'])
+    expect(syncing).toBe(true)
+    expect(errors).toBe(1)
+    cleanup?.()
   })
 
   it('recovers from request rejection and unmount without installing stale data', async () => {

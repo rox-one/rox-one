@@ -41,6 +41,8 @@ const SKILL_ROW_STYLE: React.CSSProperties = {
 
 export interface SkillsListPanelProps {
   skills: LoadedSkill[]
+  /** A skills load is pending/retrying (e.g. a slow bundled-skills sync). */
+  syncing?: boolean
   onDeleteSkill: (skillSlug: string) => void
   onSkillClick: (skill: LoadedSkill) => void
   selectedSkillSlug?: string | null
@@ -51,6 +53,7 @@ export interface SkillsListPanelProps {
 
 export function SkillsListPanel({
   skills,
+  syncing,
   onDeleteSkill,
   onSkillClick,
   selectedSkillSlug,
@@ -268,7 +271,19 @@ export function SkillsListPanel({
 
   // Render EntityPanel empty state only when there are no skills at all —
   // a workspace with only OMP skills shouldn't show "No skills configured".
-  const emptyState = ompSkills.length > 0 ? undefined : (
+  // While a load is pending/retrying (e.g. a slow bundled-skills sync that
+  // outlived the client timeout) show a syncing placeholder instead of
+  // claiming the workspace has no skills.
+  const emptyState = syncing ? (
+    <div
+      className="flex flex-col items-center justify-center gap-2 p-6 text-xs text-muted-foreground"
+      role="status"
+      data-list-role="skills-syncing"
+    >
+      <RefreshCw className="size-3.5 animate-spin" />
+      {t('common.loading')}
+    </div>
+  ) : ompSkills.length > 0 ? undefined : (
     <EntityListEmptyScreen
       icon={<Zap />}
       title={t('skillsList.noSkillsConfigured')}
@@ -331,6 +346,18 @@ export function SkillsListPanel({
             onClick={() => setPruneConfirmOpen(true)}
           />
         )}
+      </div>
+    )}
+    {/* A pending reload stays visible even while the previous list is still
+        rendered (e.g. a slow bundled-skills sync that outlived the timeout). */}
+    {syncing && craftSkills.length > 0 && (
+      <div
+        className="mx-2 mb-1 flex items-center gap-1.5 text-[11px] text-muted-foreground"
+        role="status"
+        data-list-role="skills-syncing"
+      >
+        <RefreshCw className="size-3 animate-spin" />
+        {t('common.loading')}
       </div>
     )}
     <EntityPanel<LoadedSkill>

@@ -46,7 +46,7 @@ import { attachmentFromContentRef, toDraftRef } from './lib/drafts'
 import { stripMarkdown } from './utils/text'
 import { coerceInputText } from './lib/input-text'
 import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recovery'
-import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
+import { formatSessionLoadFailure, shouldSurfaceSessionLoadFailure } from './lib/session-load'
 import { readLocalSessionCapability, loadCallerSessionInventory } from './lib/caller-session-loading'
 import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
 import { getSessionsRequiringPermissionModeReconcile } from './lib/permission-mode-reconcile'
@@ -704,8 +704,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       }
       const transportState = transport.value
 
-      if (shouldTreatSessionLoadFailureAsTransportFallback(transportState)) {
+      if (!shouldSurfaceSessionLoadFailure(transportState)) {
         console.error('[App] Treating session load failure as transport fallback:', transportState)
+        rendererLog.warn(
+          '[App] Session load failure swallowed as transport fallback; the transport banner is visible and explains it',
+          { transportState, error: err },
+        )
         setSessionsLoaded(true)
         setSessionLoadError(null)
         return
