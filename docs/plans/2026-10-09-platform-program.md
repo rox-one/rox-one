@@ -154,6 +154,21 @@
   `onboarding/__tests__/identity-step.test.tsx` (1 — `onAvailabilityChecked` не вызывается) и
   `onboarding/__tests__/OnboardingWizard.test.tsx` (1 — welcome-шаг всё ещё рендерит поле юзернейма из моей реализации, тогда как тест параллельной сессии ожидает, что identity живёт только в её `IdentityStep`).
 - Дубли, требующие выбора (не удалены): календарь — мой `providers/google.ts` — живой путь (`calendar:googleSync`), альтернативный `google-calendar-adapter.ts` параллельной сессии оставлен; Keeper — мой vault подключён в «Секретах», компоненты параллельной сессии (`KeeperItemsPane` и др.) сохранены без проводки.
+### 7.6 Слияние онбординга — решение и волна 3 (2026-10-09 ~05:00)
+Владелец делегировал решение («merge onboarding in some smart way… остальное решай сам»). Выбран единый поток **welcome → questionnaire → гейты**; legacy-шаги `identity` (IdentityStep) и `profile` (ProfileStep + `profile-permissions/*`) удаляются вместе с дублирующими моделями, компонентами и тестами.
+
+**Остаются (живые поверхности):** WelcomeStep — сбор username/организации (4–16 и 4–32, latin/цифры/`_`/`-`, доступность, адреса `rox.one/@…`, `username@rox.one`, монеты +5/+5/+15/+5, реальные Telegram-диалог и GitHub device-flow); QuestionnaireStep — две колонки (ProfileQuestionnaireColumn + InterestBubbles слева; PermissionsColumn справа) с RewardLedger, CoinsBurst и бонусом +50 за первое прохождение целиком; PermissionsColumn + permissions-model.
+
+**Добавляется из «мёртвых» реализаций (объединение):** реальные статусы разрешений — IPC-каналы `onboarding:permissionsStatus` / `onboarding:openPermissionSettings` уже зарегистрированы в main (server-core handler + `createOnboardingPermissionsHost`), волна 3 открывает их рендереру (channel-map + типы) и подключает к колонке: честные статусы granted/denied/not-determined/unsupported, рабочая кнопка «Выдать» → системные настройки, пере-опрос после выдачи.
+
+**Проверка:** канонический раннер `bun run test --filter onboarding` (изоляция каждого файла) — 31/32 до волны; единственный красный тест принадлежал удаляемому legacy-компоненту. Прогон папки в одном процессе (`bun test <dir>`) не является гейтом: `mock.module` утекает между файлами.
+
+### 7.7 Доступы и ключи (получено от владельца 2026-10-09)
+- Секреты сохранены локально: `~/.config/rox/platform-secrets-20261009.env` (chmod 600, только на машине; в репозитории — никогда).
+- Проверено живыми вызовами: Telegram `@rox_one_bot` и тест-бот `@goskynetbot` — `getMe` ok; Cloudflare zone-токен активен (второй, account-токен, невалиден); Resend — ключ только на отправку; PostHog — ключи принадлежат Cloud US (self-hosted `posthog.rox.one` их не принимает и имеет собственный project key).
+- Десктоп уже настроен на self-hosted аналитику: `POSTHOG_HOST=https://posthog.rox.one`, `OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.rox.one` (baked defaults, consent-gated).
+- Jam (team id + PAT) — сниппет добавляется на сайт в root head (`apps/marketing/src/app/layout.tsx`).
+
 ---
 
 ## 8. Доступ агентов к Keeper (2026-10-09)

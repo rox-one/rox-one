@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
-import { ProfileStep } from "./ProfileStep"
-import { IdentityStep } from "./IdentityStep"
 import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
 import {
   saveFirstRunDraft,
@@ -24,9 +22,7 @@ import type { CustomEndpointApi } from '@config/llm-connections'
 
 export type OnboardingStep =
   | 'welcome'
-  | 'identity'
   | 'questionnaire'
-  | 'profile'
   | 'rox-connect'
   | 'git-bash'
   | 'provider-select'
@@ -40,9 +36,9 @@ export type LoginStatus = 'idle' | 'waiting' | 'success' | 'error'
 
 /**
  * First-run controller owned by `useOnboarding` and handed to the wizard through
- * `state`. Carries the identity draft and the shared reward ledger so the two
- * new screens write into one place; tests that build `OnboardingState` by hand
- * simply omit it and the steps fall back to their internal state.
+ * `state`. Carries the identity draft and the shared reward ledger so the
+ * questionnaire screen writes into one place; tests that build `OnboardingState`
+ * by hand simply omit it and the steps fall back to their internal state.
  */
 export interface OnboardingFirstRunState {
   identity: { username: string; organization: string; usernameStatus: HandleCheckStatus }
@@ -182,14 +178,6 @@ export function OnboardingWizard({
   const firstRunStorage: OnboardingDraftStorage | undefined =
     typeof localStorage !== 'undefined' ? localStorage : undefined
 
-  const handleIdentityContinue = () => {
-    if (firstRun) {
-      const { username, organization } = firstRun.identity
-      saveFirstRunDraft(firstRunStorage, { username, organization })
-    }
-    onContinue()
-  }
-
   const persistQuestionnaireDraft = (payload: QuestionnaireStepPayload) => {
     saveFirstRunDraft(firstRunStorage, {
       questionnaire: payload.questionnaire,
@@ -214,32 +202,6 @@ export function OnboardingWizard({
           </div>
         )
 
-      case 'identity':
-        return (
-          <IdentityStep
-            onContinue={handleIdentityContinue}
-            {...(firstRun
-              ? {
-                  initialUsername: firstRun.identity.username,
-                  initialOrganization: firstRun.identity.organization,
-                  onChange: (value: { username: string; organization: string }) =>
-                    firstRun.setIdentity(value),
-                  onAvailabilityChecked: (handle: string, status: HandleCheckStatus) =>
-                    firstRun.setIdentity({
-                      ...(handle ? { username: handle } : {}),
-                      usernameStatus: status,
-                    }),
-                  rewards: {
-                    username: firstRun.rewards.isAwarded('username'),
-                    organization: firstRun.rewards.isAwarded('org'),
-                    telegram: firstRun.rewards.isAwarded('telegram'),
-                    github: firstRun.rewards.isAwarded('github'),
-                  },
-                }
-              : {})}
-          />
-        )
-
       case 'questionnaire':
         return (
           <QuestionnaireStep
@@ -254,9 +216,6 @@ export function OnboardingWizard({
             {...(firstRun ? { rewards: firstRun.rewards } : {})}
           />
         )
-
-      case 'profile':
-        return <ProfileStep onContinue={onContinue} onSkip={onContinue} />
 
       case 'rox-connect':
         return (

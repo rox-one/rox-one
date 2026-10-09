@@ -46,7 +46,13 @@ export type PermissionPlatform = 'mac' | 'win' | 'other'
 export type GrantKind = 'tcc' | 'app-toggle'
 
 /** Status of a system permission as reported by the host. */
-export type GrantStatus = 'granted' | 'denied' | 'not-determined'
+export type GrantStatus = 'granted' | 'denied' | 'not-determined' | 'unsupported'
+
+/**
+ * Raw status an OS probe reports for one permission. `unknown` means the host
+ * could not classify it; `unsupported` means this platform has no such concept.
+ */
+export type PermissionProbeStatus = 'granted' | 'denied' | 'unknown' | 'unsupported'
 
 export interface PermissionEntry {
   id: PermissionId
@@ -196,4 +202,42 @@ export function setGrantStatus(
   status: GrantStatus,
 ): PermissionState {
   return { ...state, grants: { ...state.grants, [id]: status } }
+}
+
+/**
+ * Map an OS probe reading to the column's display status. The host never
+ * reports `not-determined` directly: an honest `unknown` becomes it, while
+ * `unsupported` stays first-class so the row can explain itself.
+ */
+export function mapProbeStatus(status: PermissionProbeStatus): GrantStatus {
+  switch (status) {
+    case 'granted':
+      return 'granted'
+    case 'denied':
+      return 'denied'
+    case 'unsupported':
+      return 'unsupported'
+    case 'unknown':
+    default:
+      return 'not-determined'
+  }
+}
+
+/**
+ * Merge a host probe snapshot into the state. Grants are independent of the
+ * `enabled` toggles, so this never overwrites a user's decision — it only
+ * refreshes OS-reported statuses for the catalogue ids the probe classified.
+ * Keys outside the catalogue (e.g. platform-specific aliases) are ignored.
+ */
+export function mergeProbeStatuses(
+  state: PermissionState,
+  statuses: Partial<Record<string, PermissionProbeStatus>>,
+): PermissionState {
+  let next = state
+  for (const entry of PERMISSION_ENTRIES) {
+    const probed = statuses[entry.id]
+    if (probed === undefined) continue
+    next = setGrantStatus(next, entry.id, mapProbeStatus(probed))
+  }
+  return next
 }

@@ -50,12 +50,14 @@ const STATUS_CHIP: Record<GrantStatus, string> = {
   granted: 'border-status-success/30 bg-status-success/10 text-success',
   denied: 'border-destructive/30 bg-destructive/10 text-destructive',
   'not-determined': 'border-border/60 bg-surface-hover text-muted-foreground',
+  unsupported: 'border-border/60 bg-surface-hover text-muted-foreground',
 }
 
 const STATUS_KEY: Record<GrantStatus, string> = {
   granted: 'granted',
   denied: 'denied',
   'not-determined': 'notDetermined',
+  unsupported: 'unsupported',
 }
 
 export function PermissionsColumn({
@@ -115,7 +117,8 @@ export function PermissionsColumn({
           const checked = isEnabled(entry, current)
           const status = permissionStatus(entry, current)
           const title = t(`onboarding.permissions.items.${entry.id}.title`)
-          const canGrant = entry.grantKind === 'tcc' && status !== 'granted'
+          const canGrant =
+            entry.grantKind === 'tcc' && status !== 'granted' && status !== 'unsupported'
 
           return (
             <div

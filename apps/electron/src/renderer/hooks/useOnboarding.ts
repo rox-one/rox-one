@@ -4,11 +4,11 @@
  * Manages the state machine for the onboarding wizard.
  *
  * First run (initialStep 'welcome'):
- * 1. Welcome — the name screen («Начать»)
- * 2. Identity — public handle + organization, reserved rox.one addresses, coin bonuses
- * 3. Questionnaire — profile + bubble clouds (left) and permissions (right); Continue/Skip
- * 4. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
- * 5. Finish — the Rox runtime becomes the default connection automatically and
+ * 1. Welcome — the name screen («Начать»); collects public handle + organization,
+ *    reserved rox.one addresses, coin bonuses
+ * 2. Questionnaire — bubble clouds (left) and permissions (right); Continue/Skip
+ * 3. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
+ * 4. Finish — the Rox runtime becomes the default connection automatically and
  *    the app opens. There is no provider picker or completion screen.
  *
  * Settings → ИИ (initialStep 'provider-select'): provider picker →
@@ -481,13 +481,7 @@ export function useOnboarding({
         setState(s => ({ ...s, step: 'questionnaire' }))
         break
 
-      case 'identity':
-        // Legacy standalone identity screen (kept for pre-existing drafts).
-        setState(s => ({ ...s, step: 'questionnaire' }))
-        break
-
-      case 'questionnaire':
-      case 'profile': {
+      case 'questionnaire': {
         const next = nextStepAfterUsername({
           applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
           gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
@@ -537,22 +531,8 @@ export function useOnboarding({
           onDismiss()
         }
         break
-      case 'identity':
-        if (initialStep === 'welcome') {
-          setState(s => ({ ...s, step: 'welcome' }))
-        } else if (onDismiss) {
-          onDismiss()
-        }
-        break
       case 'questionnaire':
         setState(s => ({ ...s, step: 'welcome' }))
-        break
-      case 'profile':
-        if (initialStep === 'welcome') {
-          setState(s => ({ ...s, step: 'welcome' }))
-        } else if (onDismiss) {
-          onDismiss()
-        }
         break
       case 'provider-select':
         // If on Windows and Git Bash was needed, go back to git-bash step

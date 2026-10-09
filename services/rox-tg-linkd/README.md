@@ -87,6 +87,36 @@ and codes are the only state; nothing is logged.
 
 ## Run locally (no Docker)
 
+The owner's local secrets live in `/Users/t/.config/rox/platform-secrets-20261009.env`
+(`TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_TEST_BOT_TOKEN`). Source
+them with `set -a` so the exported `TELEGRAM_*` names become the environment,
+then map them onto this daemon's `TG_BOT_TOKEN` / `TG_BOT_USERNAME`:
+
+```sh
+cd services/rox-tg-linkd
+set -a; . /Users/t/.config/rox/platform-secrets-20261009.env; set +a
+TG_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" TG_BOT_USERNAME="$TELEGRAM_BOT_USERNAME" \
+  PORT=18095 LINK_DB_PATH=./data/rox-tg-linkd.sqlite \
+  bun run src/index.ts
+```
+
+Then, from another shell:
+
+```sh
+curl -s http://127.0.0.1:18095/api/health
+# {"ok":true,"bot":"rox_one_bot"}
+
+curl -s -X POST http://127.0.0.1:18095/api/link/start \
+  -H 'content-type: application/json' -d '{"roxUserId":"user-1"}'
+# {"ok":true,"roxUserId":"user-1","status":"waiting-code","code":"ABCD2345", ...}
+```
+
+Without sourcing the secrets (or with an empty `TG_BOT_TOKEN`) the daemon still
+starts, but `/api/health` reports `{"ok":false,"reason":"no-token"}` and
+`/api/link/start` refuses with `503 {"error":"no_bot_token"}`.
+
+A one-off run without a secrets file:
+
 ```sh
 TG_BOT_TOKEN=… TG_BOT_USERNAME=my_rox_bot bun run services/rox-tg-linkd/src/index.ts
 ```

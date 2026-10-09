@@ -98,6 +98,21 @@ describe('PermissionsColumn', () => {
     await unmount(root)
   })
 
+  it('renders an unsupported row chip and offers no grant action', async () => {
+    const { container, root } = await render(
+      <PermissionsColumn platform="mac" defaultGrants={{ screenRecording: 'unsupported' }} />,
+    )
+
+    const chip = container.querySelector<HTMLElement>('[data-testid="permission-status-screenRecording"]')
+    expect(chip?.textContent).toBe('onboarding.permissions.status.unsupported')
+    expect(container.querySelector('[data-testid="permission-grant-screenRecording"]')).toBeNull()
+
+    // A non-unsupported OS row still offers the action, so the rule is scoped.
+    expect(container.querySelector('[data-testid="permission-grant-audioRecording"]')).not.toBeNull()
+
+    await unmount(root)
+  })
+
   it('exposes a continue-state helper for the column', () => {
     expect(model.isPermissionsColumnComplete(model.initialPermissionsState('mac'))).toBe(true)
     const undecided = model.initialPermissionsState('mac')

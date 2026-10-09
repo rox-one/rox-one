@@ -35,7 +35,9 @@ import {
 import {
   initialPermissionsState,
   setPermissionEnabled,
+  mergeProbeStatuses,
   entriesForPlatform,
+  type PermissionId,
   type PermissionPlatform,
   type PermissionState,
 } from './permissions-model'
@@ -47,6 +49,10 @@ import {
   type RewardLedger,
 } from './onboarding-rewards'
 import type { SuggestPreferencesInput } from '@rox/shared/protocol'
+import type {
+  OnboardingPermissionKey,
+  OnboardingPermissionsStatusSnapshot,
+} from '../../../shared/types'
 
 export type BubbleSelections = Record<BubbleGroupId, string[]>
 
@@ -61,6 +67,19 @@ export const EMPTY_BUBBLE_SELECTIONS: BubbleSelections = BUBBLE_GROUP_IDS.reduce
 
 /** Steps the identity/link screens can have earned before the questionnaire. */
 export const DEFAULT_QUESTIONNAIRE_REWARD_STEPS: readonly string[] = ['username', 'org']
+
+/**
+ * Permission ids the host bridge can open a system settings pane for. Windows
+ * equivalents and app-managed modes have no OS pane, so they are absent.
+ */
+const OS_GRANTABLE_PERMISSION_KEYS: Partial<Record<PermissionId, OnboardingPermissionKey>> = {
+  fullDiskAccess: 'fullDiskAccess',
+  automation: 'automation',
+  accessibility: 'accessibility',
+  screenRecording: 'screenRecording',
+  audioRecording: 'audioRecording',
+  inputMonitoring: 'inputMonitoring',
+}
 
 export interface QuestionnaireStepPayload {
   questionnaire: ProfileQuestionnaireJson
@@ -162,6 +181,9 @@ export function QuestionnaireStep({
   const value = questionnaire ?? internalQuestionnaire
   const selection = bubbles ?? internalBubbles
   const permissionState = permissions ?? internalPermissions
+  // Latest permission state, read by the async host probe without re-subscribing.
+  const permissionStateRef = useRef(permissionState)
+  permissionStateRef.current = permissionState
 
   const ledger = useMemo(
     () =>
@@ -193,10 +215,54 @@ export function QuestionnaireStep({
     onBubblesChange?.(next)
   }
 
-  const setPermissions = (next: PermissionState) => {
-    trackLearningEvent({ name: 'tried', stepId: 'questionnaire', source: 'human' })
+  // Bridge-driven updates (host probes) are not user intent, so they skip the
+  // `tried` signal. Grants merge independently of the `enabled` toggles.
+  const commitPermissions = (next: PermissionState) => {
     if (!permissions) setInternalPermissions(next)
     onPermissionsChange?.(next)
+  }
+
+  const mergeProbe = (snapshot: OnboardingPermissionsStatusSnapshot | null | undefined) => {
+    if (!snapshot || !snapshot.statuses) return
+    commitPermissions(mergeProbeStatuses(permissionStateRef.current, snapshot.statuses))
+  }
+
+  const setPermissions = (next: PermissionState) => {
+    trackLearningEvent({ name: 'tried', stepId: 'questionnaire', source: 'human' })
+    commitPermissions(next)
+  }
+
+  // Hydrate the OS-reported statuses once on mount, when a host bridge exists.
+  // Absent bridge or a failed probe leaves the honest not-determined defaults.
+  useEffect(() => {
+    let cancelled = false
+    const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+    if (!api || typeof api.getOnboardingPermissionsStatus !== 'function') return
+    void api
+      .getOnboardingPermissionsStatus()
+      .then((snapshot) => {
+        if (!cancelled) mergeProbe(snapshot)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+    // Mount-only hydration; the bridge is optional.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleRequestGrant = (id: PermissionId) => {
+    const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+    if (!api || typeof api.openOnboardingPermissionSettings !== 'function') return
+    // Only OS-grantable ids exist on the bridge; Windows/app-toggle rows have
+    // no OS settings pane, so they resolve to nothing just as before.
+    const key = OS_GRANTABLE_PERMISSION_KEYS[id]
+    if (!key) return
+    void api
+      .openOnboardingPermissionSettings(key)
+      .then((result) => (result && result.opened ? api.getOnboardingPermissionsStatus?.() : undefined))
+      .then((snapshot) => mergeProbe(snapshot))
+      .catch(() => {})
   }
 
   const suggest = useMemo(
@@ -285,6 +351,7 @@ export function QuestionnaireStep({
           platform={resolvedPlatform}
           state={permissionState}
           onStateChange={setPermissions}
+          onRequestGrant={handleRequestGrant}
         />
       </div>
 

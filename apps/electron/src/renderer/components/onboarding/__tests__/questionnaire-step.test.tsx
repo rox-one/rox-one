@@ -77,6 +77,13 @@ function fillName(container: HTMLElement): void {
   setInputValue(input, 'Ада')
 }
 
+/** Let the mount-time host probe promise chain settle inside `act`. */
+async function flush(): Promise<void> {
+  const { promise, resolve } = Promise.withResolvers<void>()
+  setTimeout(resolve, 0)
+  await act(async () => { await promise })
+}
+
 describe('QuestionnaireStep Continue gating', () => {
   it('keeps Continue disabled until the profile is complete, then enables it', async () => {
     const { container, root } = await render(
@@ -178,5 +185,62 @@ describe('QuestionnaireStep bubbles', () => {
     expect(deep.querySelector('[data-bubble-id="openSource"]')).not.toBeNull()
 
     await unmount(root)
+  })
+})
+
+describe('QuestionnaireStep permission hydration', () => {
+  it('hydrates probed OS statuses and routes grants through the bridge', async () => {
+    const opened: string[] = []
+    const api = {
+      getOnboardingPermissionsStatus: mock(async () => ({
+        platform: 'darwin',
+        statuses: {
+          screenRecording: 'denied',
+          fullDiskAccess: 'granted',
+          automation: 'unknown',
+          accessibility: 'unsupported',
+        },
+      })),
+      openOnboardingPermissionSettings: mock(async (key: string) => {
+        opened.push(key)
+        return { opened: true }
+      }),
+    }
+    Object.assign(window, { electronAPI: api })
+    try {
+      const { container, root } = await render(
+        <QuestionnaireStep onContinue={() => {}} onSkip={() => {}} platform="mac" />,
+      )
+      await flush()
+
+      expect(
+        requireElement(container, '[data-testid="permission-status-screenRecording"]').textContent,
+      ).toBe('onboarding.permissions.status.denied')
+      expect(
+        requireElement(container, '[data-testid="permission-status-fullDiskAccess"]').textContent,
+      ).toBe('onboarding.permissions.status.granted')
+      // `unknown` maps to not-determined; `unsupported` stays first-class and
+      // offers no grant action.
+      expect(
+        requireElement(container, '[data-testid="permission-status-automation"]').textContent,
+      ).toBe('onboarding.permissions.status.notDetermined')
+      expect(
+        requireElement(container, '[data-testid="permission-status-accessibility"]').textContent,
+      ).toBe('onboarding.permissions.status.unsupported')
+      expect(container.querySelector('[data-testid="permission-grant-accessibility"]')).toBeNull()
+
+      const grant = requireElement<HTMLButtonElement>(
+        container,
+        '[data-testid="permission-grant-screenRecording"]',
+      )
+      await act(async () => { grant.click() })
+      await flush()
+
+      expect(opened).toEqual(['screenRecording'])
+
+      await unmount(root)
+    } finally {
+      Reflect.deleteProperty(window, 'electronAPI')
+    }
   })
 })

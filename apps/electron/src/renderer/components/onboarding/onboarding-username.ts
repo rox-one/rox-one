@@ -8,13 +8,13 @@
  */
 
 /** Public username: 4–16 characters. */
-export const ONBOARDING_USERNAME_MIN = 4
+const ONBOARDING_USERNAME_MIN = 4
 export const ONBOARDING_USERNAME_MAX = 16
 /** Organization slug: 4–32 characters. */
-export const ONBOARDING_ORGANIZATION_MIN = 4
+const ONBOARDING_ORGANIZATION_MIN = 4
 export const ONBOARDING_ORGANIZATION_MAX = 32
 /** Latin letters (either case), digits, `_` and `-` — no spaces. */
-export const ONBOARDING_HANDLE_PATTERN = /^[A-Za-z0-9_-]+$/
+const ONBOARDING_HANDLE_PATTERN = /^[A-Za-z0-9_-]+$/
 /** Availability is only requested after the field settles for this long. */
 export const HANDLE_CHECK_DEBOUNCE_MS = 400
 
@@ -36,7 +36,7 @@ export interface OnboardingIdentityApi {
 }
 
 /** Optional identity extras persisted best-effort alongside the handle. */
-export interface OnboardingIdentityExtras {
+interface OnboardingIdentityExtras {
   organization?: string
   publicHandle?: string
 }
@@ -108,7 +108,7 @@ export function parseHandleAvailabilityResponse(raw: unknown): HandleAvailabilit
   return 'unknown'
 }
 
-export interface HandleAvailabilityTracker {
+interface HandleAvailabilityTracker {
   /** Start a request for a handle; returns a token identifying this request. */
   begin(handle: string): number
   /** Accept a response only when its token is still the newest; else null. */
@@ -131,7 +131,7 @@ export function createHandleAvailabilityTracker(): HandleAvailabilityTracker {
 // RESERVED ADDRESSES + COIN BADGES
 // =============================================================================
 
-export interface ReservedIdentityAddresses {
+interface ReservedIdentityAddresses {
   /** e.g. `rox.one/@ada` */
   handle: string
   /** e.g. `rox.one/@ada_org` */
@@ -160,7 +160,7 @@ export const ROX_COIN_REWARDS = {
   github: 5,
 } as const
 
-export interface IdentityCoinState {
+interface IdentityCoinState {
   username: boolean
   organization: boolean
   telegram: boolean
@@ -221,7 +221,7 @@ export async function persistOnboardingUsername(
   }
 }
 
-export type UsernameAdvanceContext = {
+type UsernameAdvanceContext = {
   applyRoxConnectGate: boolean
   gitBashMissing: boolean
 }
