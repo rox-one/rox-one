@@ -8,11 +8,13 @@
 
 import { app, BrowserWindow, nativeTheme, systemPreferences } from 'electron'
 import { release } from 'os'
-import { isZenShellEnabled, getZenShellMaterialPreference } from '@rox/shared/config'
+import { isZenShellEnabled, getZenShellMaterialPreference, getZenShellMaterialDepth } from '@rox/shared/config'
 import {
   WINDOWS_MICA_BUILD,
   snapshotZenShell,
+  vibrancyForDepth,
   type ResolvedShellMaterial,
+  type ShellMaterialDepth,
   type ShellPlatform,
   type ZenShellSnapshot,
 } from '../shared/shell-appearance'
@@ -92,6 +94,7 @@ export function peekZenShellSnapshot(opts?: {
   return snapshotZenShell({
     zenEnabled: isZenShellEnabled(),
     preference: getZenShellMaterialPreference(),
+    materialDepth: getZenShellMaterialDepth(),
     platform,
     windowsBuild: windowsBuild(),
     reduceTransparency: queryReduceTransparency(),
@@ -143,12 +146,14 @@ function clearNativeMaterial(window: BrowserWindow): void {
   }
 }
 
-function applyNativeMaterial(window: BrowserWindow, material: ResolvedShellMaterial): boolean {
+function applyNativeMaterial(window: BrowserWindow, material: ResolvedShellMaterial, depth: ShellMaterialDepth): boolean {
   if (window.isDestroyed()) return false
   try {
     let applied = false
+    let appliedVibrancy: 'sidebar' | 'under-window' | 'hud' | null = null
     if (material === 'vibrancy' && process.platform === 'darwin') {
-      window.setVibrancy('under-window')
+      appliedVibrancy = vibrancyForDepth(depth)
+      window.setVibrancy(appliedVibrancy)
       window.setBackgroundColor('#00000000')
       // `setVisualEffectState` is not in the pinned Electron typings but exists at runtime.
       const vibrancyWindow = window as unknown as { setVisualEffectState?: (state: string) => void }
@@ -166,7 +171,7 @@ function applyNativeMaterial(window: BrowserWindow, material: ResolvedShellMater
     // the native call (Electron exposes no vibrancy getter, and the test stub
     // may omit getBackgroundColor).
     const backgroundWindow = window as unknown as { getBackgroundColor?: () => string }
-    mainLog.info('Shell material applied', { material, vibrancy: material === 'vibrancy' ? 'under-window' : null, backgroundColor: backgroundWindow.getBackgroundColor?.() ?? null })
+    mainLog.info('Shell material applied', { material, materialDepth: depth, vibrancy: appliedVibrancy, backgroundColor: backgroundWindow.getBackgroundColor?.() ?? null })
     return applied
   } catch (error) {
     windowLog.warn('Failed to apply Zen Shell material:', error)
@@ -190,7 +195,7 @@ function dispatch(window: BrowserWindow, record: ZenWindowRecord, event: Paramet
   if (record.state.applyMaterial) {
     // Retry an unavailable native API on an explicit policy change, but report
     // its actual result to the renderer so its canvas does not stay transparent.
-    record.materialFailed = !applyNativeMaterial(window, snap.material)
+    record.materialFailed = !applyNativeMaterial(window, snap.material, snap.materialDepth)
   }
   record.onSnapshot?.(withMaterialFailure(record, snap))
 }
@@ -268,7 +273,7 @@ export function applyLegacyMaterial(window: BrowserWindow): void {
     return
   }
   if (process.platform === 'win32' && (windowsBuild() ?? 0) >= WINDOWS_MICA_BUILD) {
-    applyNativeMaterial(window, 'mica')
+    applyNativeMaterial(window, 'mica', getZenShellMaterialDepth())
     return
   }
   if (process.platform === 'darwin') {

@@ -19,6 +19,7 @@ import {
   SettingsToggle,
 } from '@/components/settings'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { toast } from 'sonner'
 import { acceleratorFromKeyboardEvent, formatAccelerator } from '@/features/native-integrations/accelerator'
 import { settingsPageActionAllowed, settingsRuntimeSource } from './settings-rox2-surface'
@@ -68,22 +69,26 @@ function ShortcutCapture({
           setCapturing(false)
           onChange(accelerator)
         }}
-        className="inline-flex min-w-[140px] items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-border/60 bg-surface-input px-3 py-1.5 text-[13px] disabled:opacity-50"
+        className="inline-flex min-w-[140px] items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-border/60 bg-surface-input px-3 py-1.5 text-body disabled:opacity-50"
       >
-        <Keyboard className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+        <Keyboard className="icon-caption text-muted-foreground" aria-hidden="true" />
         {capturing ? t('settings.nativeIntegrations.capturing') : display}
       </button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={disabled || busy || !value}
-        aria-label={t('settings.nativeIntegrations.resetShortcut')}
-        title={t('settings.nativeIntegrations.resetShortcut')}
-        onClick={onClear}
-      >
-        <RotateCcw className="h-3.5 w-3.5" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled || busy || !value}
+            aria-label={t('settings.nativeIntegrations.resetShortcut')}
+            onClick={onClear}
+          >
+            <RotateCcw className="icon-caption" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{t('settings.nativeIntegrations.resetShortcut')}</TooltipContent>
+      </Tooltip>
     </div>
   )
 }

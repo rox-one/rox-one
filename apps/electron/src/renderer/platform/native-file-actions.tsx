@@ -44,19 +44,19 @@ export function NativeFileExtraMenuItems({ path, isDirectory = false }: { path: 
     <>
       {!isDirectory && openPath && (
         <StyledContextMenuItem onSelect={() => void openPath(path)}>
-          <ExternalLink className="h-3.5 w-3.5" />
+          <ExternalLink className="icon-caption" />
           {t('files.openInApp')}
         </StyledContextMenuItem>
       )}
       {!isDirectory && quickLook && (
         <StyledContextMenuItem onSelect={() => void quickLook(path)}>
-          <Eye className="h-3.5 w-3.5" />
+          <Eye className="icon-caption" />
           {t('files.quickLook')}
         </StyledContextMenuItem>
       )}
       {copyPath && (
         <StyledContextMenuItem onSelect={() => void copyPath(path)}>
-          <Link2 className="h-3.5 w-3.5" />
+          <Link2 className="icon-caption" />
           {t('files.copyPath')}
         </StyledContextMenuItem>
       )}

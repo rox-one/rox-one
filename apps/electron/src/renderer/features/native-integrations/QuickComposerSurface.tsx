@@ -155,8 +155,8 @@ export function QuickComposerSurface() {
   }, [busy, mode, t, workspaceId])
 
   const modes: Array<{ value: ComposeMode; label: string; icon: React.ReactNode }> = [
-    { value: 'note', label: t('quickComposer.modeNote'), icon: <NotebookPen className="h-3.5 w-3.5" /> },
-    { value: 'task', label: t('quickComposer.modeTask'), icon: <CircleCheck className="h-3.5 w-3.5" /> },
+    { value: 'note', label: t('quickComposer.modeNote'), icon: <NotebookPen className="icon-caption" /> },
+    { value: 'task', label: t('quickComposer.modeTask'), icon: <CircleCheck className="icon-caption" /> },
   ]
 
   return (
@@ -183,7 +183,7 @@ export function QuickComposerSurface() {
                   disabled={busy}
                   onClick={() => setMode(option.value)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-[5px] px-2.5 py-1 text-[13px] transition-colors duration-[var(--motion-fast)]',
+                    'inline-flex items-center gap-1.5 rounded-xs px-2.5 py-1 text-body transition-colors duration-[var(--motion-fast)]',
                     selected ? 'bg-surface-elevated shadow-minimal' : 'hover:bg-surface-hover',
                   )}
                 >
@@ -210,11 +210,11 @@ export function QuickComposerSurface() {
           placeholder={mode === 'task' ? t('quickComposer.taskPlaceholder') : t('quickComposer.notePlaceholder')}
           aria-label={mode === 'task' ? t('quickComposer.taskPlaceholder') : t('quickComposer.notePlaceholder')}
           data-testid="quick-composer-input"
-          className="min-h-[96px] resize-none bg-transparent px-3 py-2.5 text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+          className="min-h-[96px] resize-none bg-transparent px-3 py-2.5 text-reading text-foreground outline-none placeholder:text-muted-foreground"
         />
 
         <div className="flex items-center justify-between gap-2 border-t border-border/40 px-3 py-2">
-          <span className={cn('min-w-0 flex-1 truncate text-[11px]', error ? 'text-destructive' : 'text-muted-foreground')} role={error ? 'alert' : undefined}>
+          <span className={cn('min-w-0 flex-1 truncate text-caption', error ? 'text-destructive' : 'text-muted-foreground')} role={error ? 'alert' : undefined}>
             {error
               ?? (done
                 ? t(mode === 'task' ? 'quickComposer.taskSaved' : 'quickComposer.noteSaved')
@@ -225,9 +225,9 @@ export function QuickComposerSurface() {
             disabled={busy || done || text.trim().length === 0}
             onClick={() => void submit()}
             data-testid="quick-composer-save"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] bg-accent px-3 py-1.5 text-[13px] font-medium text-[var(--accent-foreground,white)] disabled:opacity-50"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] bg-accent px-3 py-1.5 text-body font-medium text-[var(--accent-foreground,white)] disabled:opacity-50"
           >
-            {busy && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
+            {busy && <LoaderCircle className="icon-caption animate-spin" />}
             {t(mode === 'task' ? 'quickComposer.saveTask' : 'quickComposer.saveNote')}
           </button>
         </div>

@@ -152,6 +152,7 @@ export interface BroadcastEventMap {
     enabled: boolean
     preference: 'system' | 'glass' | 'opaque'
     material: 'vibrancy' | 'mica' | 'solid'
+    materialDepth: 'light' | 'standard' | 'deep'
     platform: 'darwin' | 'win32' | 'linux' | 'web'
     fallbackReason?: string
   }]

@@ -145,7 +145,7 @@
 
 .zed-themes-list {
   display: flex;
-  max-height: 320px;
+  max-height: 20rem;
   min-width: 0;
   flex-direction: column;
   overflow-y: auto;

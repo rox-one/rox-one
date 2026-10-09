@@ -2765,6 +2765,8 @@ export interface ElectronAPI {
     materialPreference?: 'system' | 'glass' | 'opaque'
     /** PERF-07 low-power rendering choice. */
     renderProfile?: 'auto' | 'performance' | 'standard'
+    /** A3 macOS vibrancy depth. */
+    materialDepth?: 'light' | 'standard' | 'deep'
   }): Promise<ZenShellSnapshot>
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
   /** A6/B10 — persisted «Интерфейс» prefs + the live system accent. */
