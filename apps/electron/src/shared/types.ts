@@ -3949,6 +3949,11 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
     return { navigator: 'memory', tab: 'repo', details: sha ? { type: 'commit', sha } : null }
   }
 
+  // Rox History navigator — mirrors `getNavigationStateKey`'s bare keys.
+  if (key === 'clipboard-history') return { navigator: 'clipboard-history', details: null }
+  // Learning dashboard navigator — mirrors `getNavigationStateKey`'s bare key.
+  if (key === 'learning') return { navigator: 'learning', details: null }
+
   // Handle sessions
   const parseSessionsKey = (filterKey: string, sessionId?: string): NavigationState | null => {
     let filter: SessionFilter
