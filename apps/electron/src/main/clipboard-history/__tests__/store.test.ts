@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
@@ -327,5 +327,22 @@ describe('ClipboardHistoryStore', () => {
       expect(statSync(imageFilePath('png', IMAGE_BYTES)).mode & 0o777).toBe(0o600)
     }
     store.close()
+  })
+
+  // Regression: `mkdir` does not change an existing directory's mode, so a store
+  // created before the private-modes change stayed world-readable.
+  it('tightens a pre-existing permissive store directory', () => {
+    if (process.platform === 'win32') return
+    const dir = mkdtempSync(join(tmpdir(), 'clip-store-upgrade-'))
+    try {
+      mkdirSync(join(dir, 'clipboard-history'), { recursive: true, mode: 0o755 })
+      chmodSync(join(dir, 'clipboard-history'), 0o755)
+      const store = new ClipboardHistoryStore({ dir: join(dir, 'clipboard-history') })
+      expect(statSync(store.dir).mode & 0o777).toBe(0o700)
+      expect(statSync(store.imagesDir).mode & 0o777).toBe(0o700)
+      store.close()
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })

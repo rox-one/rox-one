@@ -174,9 +174,13 @@ export class ClipboardHistoryStore implements ClipboardEntrySink {
     try {
       // The store is secrets-adjacent: keep the directory (and the WAL/SHM files it
       // will host) private to the user. Best-effort — a filesystem that cannot carry
-      // POSIX modes must not stop the store from opening.
+      // POSIX modes must not stop the store from opening. `mkdir` only applies the
+      // mode to a *new* directory, so an existing (pre-upgrade) store is repaired
+      // here as well.
       mkdirSync(this.dir, { recursive: true, mode: 0o700 })
       mkdirSync(this.imagesDir, { recursive: true, mode: 0o700 })
+      try { chmodSync(this.dir, 0o700) } catch { /* mode not supported here */ }
+      try { chmodSync(this.imagesDir, 0o700) } catch { /* mode not supported here */ }
       this.db = new DatabaseSync(this.databasePath)
       try { chmodSync(this.databasePath, 0o600) } catch { /* mode not supported here */ }
     } catch (error) {
