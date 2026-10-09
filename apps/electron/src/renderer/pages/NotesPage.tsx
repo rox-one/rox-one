@@ -614,6 +614,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const readsMountedRef = React.useRef(false)
   const readWorkspaceRef = React.useRef(activeWorkspaceId)
   const readWorkspaceGenerationRef = React.useRef(0)
+  const notesListViewportRef = React.useRef<HTMLDivElement | null>(null)
   const [notesReadError, setNotesReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const [assetsReadError, setAssetsReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError : null
@@ -2494,12 +2495,13 @@ h1,h2,h3{margin-top:1.5em}
           )}
         </div>
         <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
-        <div className="flex-1 min-h-0 overflow-y-auto p-2">
+        <div ref={notesListViewportRef} className="flex-1 min-h-0 overflow-y-auto p-2">
           <NotesNavigationSidebar
             notes={visibleNotes}
             activeNoteId={activeNote?.id}
             collapsedFolders={collapsedFolders}
             onToggleFolder={toggleFolder}
+            viewportRef={notesListViewportRef}
             onOpenNote={handleOpenNote}
             onOpenCreateNoteDialog={openCreateNoteDialog}
             onOpenRenameFolder={openRenameFolderDialog}

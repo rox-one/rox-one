@@ -28,6 +28,7 @@ import {
   rpcIdentityListResult,
   rpcIdentityReadResult,
 } from '@rox/core/rox2'
+import { assertWorkspaceScope } from './workspace-guard.ts'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.identity.GET_STATE,
@@ -163,8 +164,11 @@ export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): 
   server.handle(RPC_CHANNELS.identity.GET_STATE, async (ctx, args?: IdentityGetStateArgs) => {
     const listed = rpcIdentityListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('identity state is not live')
+    // SEC-03: the workspace a client may read identity state for is its own,
+    // for every authenticated identity kind (principal, actor, web session).
+    if (args?.workspaceId) assertWorkspaceScope(ctx, args.workspaceId, 'Identity workspace access denied')
     if (ctx.principal) {
-      if (!deps.nativeData || !ctx.workspaceId || (args?.workspaceId && args.workspaceId !== ctx.workspaceId)) throw new Error('Native self profile unavailable')
+      if (!deps.nativeData || !ctx.workspaceId) throw new Error('Native self profile unavailable')
       return { annotationActorId: ctx.principal.subject, sessionActorId: ctx.principal.subject, profile: deps.nativeData.authority.getSelfIdentityProfile(ctx.principal, ctx.workspaceId), connections: [], entitlements: [] }
     }
     return buildAggregatedState(args?.workspaceId)

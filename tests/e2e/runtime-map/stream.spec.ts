@@ -1,6 +1,17 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 const server = 'http://127.0.0.1:4177'
+
+// CraftAgentsSymbol (components/icons/CraftAgentsSymbol.tsx) renders two theme-swapped <img>s:
+// ink-black with alt="Rox" on light, aria-hidden ink-white on dark. The theme-agnostic mark
+// identity is therefore tag+class (theme-visibility modifiers stripped), not `src` — the ink
+// artwork deliberately differs per theme.
+const readWelcomeMark = async (page: Page) => page.getByTestId('empty-chat-welcome').locator('img:visible').evaluate(element => ({
+  tag: element.tagName,
+  src: element.getAttribute('src'),
+  classes: Array.from(element.classList).filter(name => name !== 'hidden' && name !== 'block' && !name.startsWith('dark:')).sort().join(' '),
+}))
+
 test.beforeEach(async ({ request }) => { expect((await request.post(`${server}/reset`, { data: {} })).ok()).toBe(true) })
 test('real ChatDisplay stays mounted while the journal streams into the right dock', async ({ page, request }, info) => {
   const pageErrors: string[] = []
@@ -92,8 +103,10 @@ test('empty production chat keeps ROX welcome and suggestions above the lower co
   const suggestions = await page.getByTestId('starter-prompt-list').boundingBox()
   const composer = await editor.boundingBox()
   expect(welcome && suggestions && composer && welcome.y < suggestions.y && suggestions.y < composer.y).toBeTruthy()
-  const welcomeAsset = await page.getByTestId('empty-chat-welcome').getByRole('img', { name: 'Rox', exact: true }).getAttribute('src')
-  expect(welcomeAsset).toBeTruthy()
+  const welcomeMark = await readWelcomeMark(page)
+  expect(welcomeMark.src, 'the light theme welcome mark must render its brand asset').toBeTruthy()
+  const welcomeAsset = welcomeMark.src
+  const welcomeMarkIdentity = `${welcomeMark.tag}.${welcomeMark.classes}`
   await page.screenshot({ path: info.outputPath('empty-chat-welcome.png'), fullPage: true })
   await page.getByTestId('attach-fixture').click()
   await page.getByTestId('starter-prompt').first().click()
@@ -109,7 +122,10 @@ test('empty production chat keeps ROX welcome and suggestions above the lower co
   await expect(page.locator('html')).toHaveClass(/\bdark\b/)
   await expect(page.getByTestId('empty-chat-welcome')).toBeVisible()
   await expect(page.getByTestId('starter-prompt-list')).toBeVisible()
-  expect(await page.getByTestId('empty-chat-welcome').getByRole('img', { name: 'Rox', exact: true }).getAttribute('src')).toBe(welcomeAsset)
+  const darkWelcomeMark = await readWelcomeMark(page)
+  expect(`${darkWelcomeMark.tag}.${darkWelcomeMark.classes}`, 'the dark theme must render the same welcome mark as the light theme').toBe(welcomeMarkIdentity)
+  expect(darkWelcomeMark.src, 'the dark theme welcome mark must render its brand asset').toBeTruthy()
+  const darkWelcomeAsset = darkWelcomeMark.src
   const darkSuggestions = await page.getByTestId('starter-prompt-list').boundingBox()
   const darkComposer = await page.locator('[contenteditable="true"]').first().boundingBox()
   expect(darkSuggestions && darkComposer && darkSuggestions.y < darkComposer.y).toBeTruthy()
@@ -122,7 +138,9 @@ test('empty production chat keeps ROX welcome and suggestions above the lower co
   await expect(page.getByTestId('starter-prompt-list')).toHaveCount(0)
   expect(pageErrors).toEqual([])
   await info.attach('welcome-theme-provenance.json', { body: JSON.stringify({
-    welcomeAsset, sameAssetInBothThemes: true, lightDraftAndAttachmentPreserved: true,
+    welcomeAsset, darkWelcomeAsset, lightDraftAndAttachmentPreserved: true,
+    // sameMarkInBothThemes compares tag+class identity (one CraftAgentsSymbol mark); the ink artwork intentionally differs per theme.
+    sameMarkInBothThemes: true,
     lightDiagnostics: diagnostics, lightStats: stats, darkStats, pageErrors,
   }, null, 2), contentType: 'application/json' })
 })

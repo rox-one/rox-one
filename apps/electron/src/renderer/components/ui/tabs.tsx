@@ -119,7 +119,14 @@ export function tabCloseTarget(
 ): string | null {
   const index = items.findIndex((item) => item.id === closingId)
   if (index < 0) return null
-  if (closingId === activeId) return items[index + 1]?.id ?? items[index - 1]?.id ?? null
+  if (closingId === activeId) {
+    // Keep the nearest surviving neighbour, skipping disabled rows so focus
+    // never lands on a button that cannot receive it.
+    const forward = items.slice(index + 1).find((item) => !item.disabled)
+    if (forward) return forward.id
+    const backward = items.slice(0, index).reverse().find((item) => !item.disabled)
+    return backward?.id ?? null
+  }
   return tabRovingId(items.filter((item) => item.id !== closingId), activeId)
 }
 
@@ -288,7 +295,10 @@ export function Tabs({
           {renderTabButton(item, isTabStop, 'flex h-full min-w-0 flex-1 items-center gap-1 rounded-[var(--radius-control)] pl-2', false)}
           <button
             type="button"
-            tabIndex={keyboard ? (isTabStop ? 0 : -1) : 0}
+            // The strip owns exactly one Tab stop (the roving tab). The close
+            // affordance stays focusable programmatically and closes via the
+            // tab's Delete/Backspace key, but never adds a second stop.
+            tabIndex={-1}
             aria-label={`${closeText}: ${item.title ?? item.label}`}
             onClick={() => requestClose(item, true)}
             className={cn(

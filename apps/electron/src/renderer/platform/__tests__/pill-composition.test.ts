@@ -8,6 +8,7 @@ import {
   orderPillSurfaces,
   pillOverflowModes,
   pillSurfaceForSlot,
+  resetPillSessionUsage,
   resolvePillSurfaces,
   visiblePillSurfaces,
   type PillPreferences,
@@ -141,6 +142,14 @@ describe('visiblePillSurfaces', () => {
     // A later, larger count this session must not reorder the frozen snapshot.
     const second = visiblePillSurfaces(MODES, prefs({ usage: { notes: 9, agent: 99 } }))
     expect(second.map((s) => s.id)).toEqual(first.map((s) => s.id))
+  })
+
+  it('rebuilds the frozen order after a workspace switch drops the snapshot', () => {
+    const first = visiblePillSurfaces(MODES, prefs({ usage: { notes: 9 } }))
+    expect(first[0]?.id).toBe('notes')
+    resetPillSessionUsage()
+    const afterSwitch = visiblePillSurfaces(MODES, prefs({ usage: { notes: 9, agent: 99 } }))
+    expect(afterSwitch[0]?.id).toBe('agent')
   })
 })
 

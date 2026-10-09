@@ -782,6 +782,7 @@ const EXPECTED_CHANNELS: string[] = [
   'theme:getWorkspaceColorTheme',
   'theme:loadPreset',
   'theme:preferencesChanged',
+  'theme:setAppMaterial',
   'theme:setColorTheme',
   'theme:setWorkspaceColorTheme',
   'theme:systemChanged',

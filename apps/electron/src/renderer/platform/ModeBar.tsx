@@ -14,7 +14,7 @@
  * Styling lives in `components/app-shell/titlebar-mode-pill.css` (plain CSS);
  * glyph size/stroke and radius come from tokens, not literals.
  */
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import {
   Check,
   EyeOff,
@@ -33,6 +33,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { primaryPanelRouteAtom } from '@/atoms/panel-stack'
+import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -55,6 +56,7 @@ import {
   PILL_BROWSER_SURFACE_ID,
   activatePillSurface,
   recordPillActivation,
+  resetPillSessionUsage,
   setPillExcluded,
   setPillPinned,
   usePillPreferences,
@@ -269,6 +271,12 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
   const { navigate } = useNavigation()
   const { modes } = useShellModes()
   const prefs = usePillPreferences()
+  const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  // A workspace switch rebuilds the frozen usage snapshot, so the frequency
+  // ordering computed in one room never carries into another.
+  useEffect(() => {
+    resetPillSessionUsage()
+  }, [workspaceId])
   const sceneState = useScenes()
   const scene = useMemo(() => activeScene(sceneState), [sceneState])
   const inboxBlocking = useInboxBlockingCount()

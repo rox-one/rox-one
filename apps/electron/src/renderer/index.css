@@ -967,6 +967,8 @@ html {
   --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
   --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1);
   --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1);
+  --shell-glass-sidebar: rgb(from var(--surface-rail) r g b / 1);
+  --shell-glass-navigator: rgb(from var(--surface-rail) r g b / 1);
   --shell-window-radius: 0px;
 }
 
@@ -983,6 +985,11 @@ html :is(.chrome-rail, .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pa
 }
 html[data-shell-style="zen"]:not([data-scenic]) { --shell-content: var(--canvas); }
 html .chrome-strip { background: var(--shell-glass-strip); }
+/* Sidebar and navigator panes own their material fraction: point them at the
+   dedicated tokens so `--material-opacity-sidebar`/`-navigator` are consumed
+   (the static block above keeps the shared rail tint). */
+html .rox-shell-pane[data-panel-role="sidebar"] { --shell-glass-surface: var(--shell-glass-sidebar); }
+html .rox-shell-pane[data-panel-role="navigator"] { --shell-glass-surface: var(--shell-glass-navigator); }
 /* Inspector is a side panel. A toolbar tint across its entire height turns
    it into an unintended raised surface beside the work area. */
 html [data-inspector-panel] { --shell-glass-surface: var(--shell-glass-inspector); }
@@ -994,6 +1001,8 @@ html [data-inspector-panel] { --shell-glass-surface: var(--shell-glass-inspector
     --shell-glass-rail: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 82%, transparent);
     --shell-glass-strip: color-mix(in srgb, rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) 88%, transparent);
     --shell-glass-inspector: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 88%, transparent);
+    --shell-glass-sidebar: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 82%, transparent);
+    --shell-glass-navigator: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 82%, transparent);
   }
   /* PERF-07: native vibrancy/Mica already composite the window glass, so a
      CSS blur on top only re-samples transparent pixels on every scroll
@@ -1009,6 +1018,262 @@ html [data-inspector-panel] { --shell-glass-surface: var(--shell-glass-inspector
 html[data-shell-runtime="web"], html[data-shell-runtime="web"] :is(body, #root) {
   background: rgb(from var(--canvas) r g b / 1);
 }
+
+/* With the material layer enabled the browser shell content must be clear so
+   the body-level backdrop layers (painted just above the html canvas, below
+   all content) show through the translucent chrome. Mirrors the not() chain of
+   the opaque fallback above to outrank it; the low-power profile keeps the
+   opaque fill because its layers are hidden. */
+html[data-shell-runtime="web"][data-material="on"]:not([data-scenic]):not([data-shell-css-material="solid"]):not([data-render-profile="performance"]) :is(body, #root) {
+  background: transparent;
+}
+
+/* Material (glass) layer — per-surface overrides when the layer is enabled
+   (ThemeContext sets html[data-material="on"] and injects --material-*).
+   Mirrors the specificity of the static glass block above so the material
+   wins when both apply; without the layer the static tokens stay in charge. */
+html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]),
+html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) {
+  /* Matte mixes each surface's material fraction toward fully opaque;
+     `--material-matte` defaults to 0 so the alpha equals the configured
+     `--material-opacity-*` and the matte preset can restore a solid read. */
+  --material-alpha-topbar: calc(var(--material-opacity-topbar) + (100% - var(--material-opacity-topbar)) * var(--material-matte, 0));
+  --material-alpha-rail: calc(var(--material-opacity-rail) + (100% - var(--material-opacity-rail)) * var(--material-matte, 0));
+  --material-alpha-strip: calc(var(--material-opacity-strip) + (100% - var(--material-opacity-strip)) * var(--material-matte, 0));
+  --material-alpha-inspector: calc(var(--material-opacity-inspector) + (100% - var(--material-opacity-inspector)) * var(--material-matte, 0));
+  --material-alpha-sidebar: calc(var(--material-opacity-sidebar) + (100% - var(--material-opacity-sidebar)) * var(--material-matte, 0));
+  --material-alpha-navigator: calc(var(--material-opacity-navigator) + (100% - var(--material-opacity-navigator)) * var(--material-matte, 0));
+  --material-alpha-popover: calc(var(--material-opacity-popover) + (100% - var(--material-opacity-popover)) * var(--material-matte, 0));
+  --material-alpha-composer: calc(var(--material-opacity-composer) + (100% - var(--material-opacity-composer)) * var(--material-matte, 0));
+  --material-alpha-chat: calc(var(--material-opacity-chat) + (100% - var(--material-opacity-chat)) * var(--material-matte, 0));
+
+  /* The tint shift is applied with relative color syntax: hue/saturation/
+     lightness are offset from the surface colour before the material alpha
+     thins it. `--material-tint-*` default to their zero offsets so the layer
+     matches the static glass until the user moves the tint sliders. */
+  --shell-glass-topbar: hsl(
+    from var(--surface-titlebar, var(--surface-elevated))
+    calc(h + var(--material-tint-hue, 0))
+    calc(s + var(--material-tint-saturation, 0))
+    calc(l + var(--material-tint-lightness, 0))
+    / var(--material-alpha-topbar)
+  );
+  --shell-glass-rail: hsl(
+    from var(--surface-rail)
+    calc(h + var(--material-tint-hue, 0))
+    calc(s + var(--material-tint-saturation, 0))
+    calc(l + var(--material-tint-lightness, 0))
+    / var(--material-alpha-rail)
+  );
+  --shell-glass-strip: hsl(
+    from var(--surface-toolbar, var(--surface-elevated))
+    calc(h + var(--material-tint-hue, 0))
+    calc(s + var(--material-tint-saturation, 0))
+    calc(l + var(--material-tint-lightness, 0))
+    / var(--material-alpha-strip)
+  );
+  --shell-glass-inspector: hsl(
+    from var(--surface-rail)
+    calc(h + var(--material-tint-hue, 0))
+    calc(s + var(--material-tint-saturation, 0))
+    calc(l + var(--material-tint-lightness, 0))
+    / var(--material-alpha-inspector)
+  );
+  --shell-glass-sidebar: hsl(
+    from var(--surface-rail)
+    calc(h + var(--material-tint-hue, 0))
+    calc(s + var(--material-tint-saturation, 0))
+    calc(l + var(--material-tint-lightness, 0))
+    / var(--material-alpha-sidebar)
+  );
+  --shell-glass-navigator: hsl(
+    from var(--surface-rail)
+    calc(h + var(--material-tint-hue, 0))
+    calc(s + var(--material-tint-saturation, 0))
+    calc(l + var(--material-tint-lightness, 0))
+    / var(--material-alpha-navigator)
+  );
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* Per-surface blur radii for the browser CSS-glass path. Electron windows
+     keep the native compositor (no CSS blur re-sampling, PERF-07/B14). */
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .chrome-topbar {
+    backdrop-filter: blur(var(--material-blur-topbar)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-topbar)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .chrome-rail {
+    backdrop-filter: blur(var(--material-blur-rail)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-rail)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .rox-shell-pane[data-panel-role="sidebar"] {
+    backdrop-filter: blur(var(--material-blur-sidebar)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-sidebar)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .rox-shell-pane[data-panel-role="navigator"] {
+    backdrop-filter: blur(var(--material-blur-navigator)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-navigator)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .chrome-strip {
+    backdrop-filter: blur(var(--material-blur-strip)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-strip)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) [data-inspector-panel] {
+    backdrop-filter: blur(var(--material-blur-inspector)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-inspector)) saturate(1.15);
+  }
+}
+
+/* =============================================================================
+   MATERIAL LAYERS + FLOATING/READING SURFACES (rox-one glass-material-system)
+
+   ThemeContext mounts the fixed, aria-hidden `.material-layer` nodes and
+   publishes html[data-material="on"] + data-material-texture / -chat-effect /
+   -haze / -deep (plus the injected --material-* vars). The layers paint the
+   selected procedural texture, the generated chat backdrop and the haze wash;
+   the surface rules below make popovers/composer/chat translucent on the same
+   capability gates as the shell material block above (browser CSS glass for
+   web, native vibrancy/Mica for Electron — a CSS blur is never added on the
+   native path, PERF-07/B14).
+
+   Stacking: the layers are body-level fixed backdrops painted one step BELOW
+   `--z-base` (`calc(var(--z-base) - 1)`), so they sit strictly behind every
+   in-flow and z-indexed surface. A layer that `z-index: 0` would instead paint
+   above static content (e.g. the status bar) and cover its text (lens2-F6).
+   The browser canvas (`html` background) stays below them; on the browser
+   runtime the shell body/#root are cleared so the texture shows through the
+   translucent chrome instead of an opaque page fill.
+============================================================================= */
+.material-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: none;
+  z-index: calc(var(--z-base) - 1);
+}
+
+html[data-material="on"][data-material-texture] .material-layer--texture {
+  display: block;
+  background-repeat: repeat;
+  opacity: var(--material-texture-intensity, 0.35);
+}
+html[data-material="on"][data-material-texture="grain"] .material-layer--texture {
+  background-image: var(--material-texture-grain);
+  background-size: calc(10rem * var(--material-texture-scale, 1)) calc(10rem * var(--material-texture-scale, 1));
+}
+html[data-material="on"][data-material-texture="scanlines"] .material-layer--texture {
+  background-image: var(--material-texture-scanlines);
+  background-size: auto calc(0.1875rem * var(--material-texture-scale, 1));
+}
+html[data-material="on"][data-material-texture="pinstripe"] .material-layer--texture {
+  background-image: var(--material-texture-pinstripe);
+  background-size: calc(0.375rem * var(--material-texture-scale, 1)) calc(0.375rem * var(--material-texture-scale, 1));
+}
+html[data-material="on"][data-material-texture="herringbone"] .material-layer--texture {
+  background-image: var(--material-texture-herringbone);
+  background-size: calc(0.375rem * var(--material-texture-scale, 1)) calc(0.375rem * var(--material-texture-scale, 1));
+}
+
+html[data-material="on"][data-material-chat-effect] .material-layer--chat-effect {
+  display: block;
+  background-image: var(--material-chat-effect-image, none);
+  background-size: cover;
+  opacity: var(--material-chat-effect-intensity, 0.5);
+}
+
+/* Haze — soft vertical wash over the canvas, strength from
+   `--material-haze-intensity` (emitted only when haze is enabled). The layer
+   is body-level and behind all content, like the texture/chat-effect layers,
+   and obeys the same hard gates below. */
+html[data-material="on"][data-material-haze] .material-layer--haze {
+  display: block;
+  opacity: var(--material-haze-intensity, 0.5);
+  background: linear-gradient(to bottom, transparent, var(--canvas));
+}
+
+/* Surface tints — mirror the shell material block's capability gates and
+   specificity so the material wins over the static solid surface rules. The
+   alpha is the matte-adjusted material fraction (`--material-alpha-*`), so the
+   «Матовое» preset can push these surfaces back toward opaque. When material
+   is off the opaque `--popover-solid`/`--input-surface` rules stay in charge
+   untouched. */
+html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .popover-styled,
+html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) .popover-styled {
+  background: color-mix(in srgb, var(--popover-solid) var(--material-alpha-popover), transparent);
+}
+html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .input-container,
+html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) .input-container {
+  background: color-mix(in srgb, var(--input-surface, var(--paper)) var(--material-alpha-composer), transparent);
+}
+html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) [data-focus-zone="chat"],
+html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) [data-focus-zone="chat"] {
+  background: color-mix(in srgb, var(--canvas) var(--material-alpha-chat), transparent);
+}
+
+/* Deep glass (opt-in per pane) — makes the reading/editor/list surfaces
+   translucent so the material layer shows through, not just the chrome.
+   `ThemeContext` publishes the comma-joined `data-material-deep` list, so the
+   consumers match it with `*=`; the opaque `--shell-content`/`--paper` base
+   compositing above still holds whenever the attribute is absent. */
+html[data-material="on"][data-material-deep*="content"] [data-shell-role="content"] {
+  --shell-content: color-mix(in srgb, var(--canvas) var(--material-opacity-content, 82%), transparent);
+  background: var(--shell-content);
+}
+html[data-material="on"][data-material-deep*="editor"] :is(.monaco-editor, .cm-editor, .xterm, [data-terminal]) {
+  background: color-mix(in srgb, var(--paper) var(--material-opacity-editor, 82%), transparent);
+}
+html[data-material="on"][data-material-deep*="lists"] [data-list-role] {
+  background: color-mix(in srgb, var(--paper) var(--material-opacity-lists, 82%), transparent);
+}
+
+/* Browser CSS glass only. Electron keeps the native compositor, and the
+   OPAQUE OVERLAYS policy below still owns menu blur — but popovers are
+   exempted there when the layer is on so the popover blur radius reaches them
+   (PERF-07 exception, lens2-F3/F7). The chat root owns the single chat blur;
+   the nested composer never adds a second backdrop filter over the same
+   pixels (lens2-F5), it only carries its own tint above. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .popover-styled {
+    backdrop-filter: blur(var(--material-blur-popover)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-popover)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) [data-focus-zone="chat"] {
+    backdrop-filter: blur(var(--material-blur-chat)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-chat)) saturate(1.15);
+  }
+  /* Deep-glass panes blur their backdrop too, browser only. */
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])[data-material-deep*="content"] [data-shell-role="content"] {
+    backdrop-filter: blur(var(--material-blur-content)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-content)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])[data-material-deep*="editor"] :is(.monaco-editor, .cm-editor, .xterm, [data-terminal]) {
+    backdrop-filter: blur(var(--material-blur-editor)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-editor)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])[data-material-deep*="lists"] [data-list-role] {
+    backdrop-filter: blur(var(--material-blur-lists)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-lists)) saturate(1.15);
+  }
+}
+
+/* Hard gates: no material layers under reduced transparency/contrast, the
+   high-contrast preset, the low-power render profile, or forced colors (WHCM
+   removes no background images, so the procedural texture/chat layers must be
+   hidden explicitly, lens2-F4). */
+html[data-contrast="high"] .material-layer,
+html[data-render-profile="performance"] .material-layer {
+  display: none !important;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html .material-layer {
+    display: none !important;
+  }
+}
+@media (forced-colors: active) {
+  html .material-layer {
+    display: none !important;
+  }
+}
 html[data-theme-override]:not([data-scenic])::before { background: transparent; }
 
 html[data-contrast="high"] {
@@ -1016,8 +1281,15 @@ html[data-contrast="high"] {
   --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1) !important;
   --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) !important;
   --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1) !important;
+  --shell-glass-sidebar: rgb(from var(--surface-rail) r g b / 1) !important;
+  --shell-glass-navigator: rgb(from var(--surface-rail) r g b / 1) !important;
 }
 html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Floating/reading material surfaces never blur under the a11y gates. */
+html[data-contrast="high"] :is(.popover-styled, [data-slot="popover-content"], .input-container, [data-focus-zone="chat"], [data-shell-role="content"], [data-list-role], .monaco-editor, .cm-editor, .xterm, [data-terminal]) {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -1028,8 +1300,14 @@ html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [dat
     --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1) !important;
     --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) !important;
     --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1) !important;
+    --shell-glass-sidebar: rgb(from var(--surface-rail) r g b / 1) !important;
+    --shell-glass-navigator: rgb(from var(--surface-rail) r g b / 1) !important;
   }
   html[data-shell-runtime] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html[data-shell-runtime] :is(.popover-styled, [data-slot="popover-content"], .input-container, [data-focus-zone="chat"], [data-shell-role="content"], [data-list-role], .monaco-editor, .cm-editor, .xterm, [data-terminal]) {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
@@ -1040,11 +1318,17 @@ html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [dat
     --shell-glass-rail: Canvas !important;
     --shell-glass-strip: Canvas !important;
     --shell-glass-inspector: Canvas !important;
+    --shell-glass-sidebar: Canvas !important;
+    --shell-glass-navigator: Canvas !important;
   }
   html[data-shell-runtime] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
     background: Canvas;
     color: CanvasText;
     border-color: CanvasText;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html[data-shell-runtime] :is(.popover-styled, [data-slot="popover-content"], .input-container, [data-focus-zone="chat"], [data-shell-role="content"], [data-list-role], .monaco-editor, .cm-editor, .xterm, [data-terminal]) {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
@@ -1056,11 +1340,18 @@ html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [dat
    Popovers, menus, tooltips, toasts and dialogs are always opaque and never
    composite a backdrop blur, whatever a call site's utilities ask for. Glass
    belongs to chrome strips only.
+
+   Exception: `[data-slot="popover-content"]` is left out of the reset on the
+   browser CSS-glass path while the material layer is on (`html[data-shell-
+   runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])`),
+   so `--material-blur-popover` can paint through it (lens2-F3/F7). Every other
+   runtime keeps the reset — Electron never gets a CSS blur — and the hard
+   a11y/performance gates above still reset the popover when they are active.
+   With the layer off the popover stays opaque exactly as before.
 ============================================================================= */
 html :is(
   [data-sonner-toast],
   [data-slot="tooltip-content"],
-  [data-slot="popover-content"],
   [data-slot="hover-card-content"],
   [data-slot="dropdown-menu-content"],
   [data-slot="dropdown-menu-sub-content"],
@@ -1070,9 +1361,13 @@ html :is(
   [data-slot="dialog-content"],
   [role="tooltip"],
   [role="menu"],
-  [role="dialog"],
+  [role="dialog"]:not([data-slot="popover-content"]),
   [role="alertdialog"]
 ) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html:not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -1094,6 +1389,8 @@ html[data-render-profile="performance"] {
   --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1) !important;
   --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) !important;
   --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1) !important;
+  --shell-glass-sidebar: rgb(from var(--surface-rail) r g b / 1) !important;
+  --shell-glass-navigator: rgb(from var(--surface-rail) r g b / 1) !important;
   --motion-fast: 0ms;
   --motion-normal: 0ms;
   --motion-base: 0ms;
@@ -1388,6 +1685,8 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
     --shell-glass-rail: var(--navigator-opaque) !important;
     --shell-glass-strip: var(--surface-toolbar-opaque) !important;
     --shell-glass-inspector: var(--navigator-opaque) !important;
+    --shell-glass-sidebar: var(--navigator-opaque) !important;
+    --shell-glass-navigator: var(--navigator-opaque) !important;
     background: var(--canvas-opaque);
   }
   html[data-shell-runtime] :is(body, #root, [data-shell-role="content"]) {
@@ -1396,6 +1695,10 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   html[data-shell-runtime] .input-container { background: var(--input-surface-opaque); }
   html[data-shell-runtime] :is(.fullscreen-overlay-background, .popover-styled) { background: var(--paper-opaque); }
   html[data-shell-runtime] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html[data-shell-runtime] :is(.popover-styled, [data-slot="popover-content"], .input-container, [data-focus-zone="chat"], [data-shell-role="content"], [data-list-role], .monaco-editor, .cm-editor, .xterm, [data-terminal]) {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }

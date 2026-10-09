@@ -169,6 +169,50 @@ graph LR
 \`\`\`
 `
 
+const openuiCardMarkdown = `A quick snapshot of the language landscape, rendered from the \`\`\`openui fence below.
+
+\`\`\`openui
+root = Card([title, tbl, chart, actions])
+title = TextContent("Top languages by users", "large-heavy")
+tbl = Table([Col("Language", langs), Col("Users (M)", users)])
+langs = ["Python", "TypeScript", "Rust"]
+users = [15.7, 4.1, 2.3]
+chart = BarChart(langs, [series], "grouped", "Language", "Users (M)")
+series = Series("Users (M)", users)
+actions = Buttons([btnMore])
+btnMore = Button("Tell me more", Action([@ToAssistant("Tell me more about these languages")]), "primary")
+\`\`\`
+
+The table and the chart share the same arrays.`
+
+const openuiFormMarkdown = `Help me choose your trip.
+
+\`\`\`openui
+root = Card([title, form])
+title = TextContent("Plan your trip", "large-heavy")
+form = Form("trip-planner", formButtons, [fcType, fcNotes])
+formButtons = Buttons([btnSubmit])
+btnSubmit = Button("Plan my trip", Action([@ToAssistant("Plan a trip based on my choices")]), "primary")
+fcType = FormControl("Trip type", tripType, "What kind of trip?")
+tripType = RadioGroup("trip-type", [r1, r2], "relaxed")
+r1 = RadioItem("Relaxed", "Slow pace, fewer stops", "relaxed")
+r2 = RadioItem("Active", "Packed schedule", "active")
+fcNotes = FormControl("Notes", notesInput, "Anything else?")
+notesInput = Input("notes", "Add notes")
+\`\`\`
+
+The submit button carries an explicit \`Action([@ToAssistant(...)])\`.`
+
+const openuiInvalidMarkdown = `This fence references a component the library does not provide.
+
+\`\`\`openui
+root = Card([title, broken])
+title = TextContent("This program is invalid", "large-heavy")
+broken = NotARealComponent("x")
+\`\`\`
+
+The block falls back to the plain code block once streaming ends.`
+
 // Wrapper for collapsible markdown
 function CollapsibleWrapper({ children }: { children: React.ReactNode }) {
   return <CollapsibleMarkdownProvider>{children}</CollapsibleMarkdownProvider>
@@ -677,6 +721,45 @@ export const markdownComponents: ComponentEntry[] = [
       { name: 'Parity Fixture', props: { children: richBlockParityMarkdown, mode: 'full' } },
     ],
     mockData: () => ({
+      onUrlClick: (url: string) => console.log('[Playground] URL clicked:', url),
+      onFileClick: (path: string) => console.log('[Playground] File clicked:', path),
+    }),
+  },
+  {
+    id: 'openui-block',
+    name: 'MarkdownOpenUIBlock',
+    category: 'Markdown',
+    description: 'Interactive agent answers from ```openui fences: cards, tables, charts and validated forms rendered by the OpenUI renderer.',
+    component: Markdown,
+    layout: 'top',
+    props: [
+      {
+        name: 'children',
+        description: 'Markdown fixture containing a single ```openui fence',
+        control: { type: 'textarea', rows: 20 },
+        defaultValue: openuiCardMarkdown,
+      },
+      {
+        name: 'mode',
+        description: 'Render mode controlling formatting level',
+        control: {
+          type: 'select',
+          options: [
+            { label: 'Terminal', value: 'terminal' },
+            { label: 'Minimal', value: 'minimal' },
+            { label: 'Full', value: 'full' },
+          ],
+        },
+        defaultValue: 'minimal',
+      },
+    ],
+    variants: [
+      { name: 'Card, Table and Bar Chart', props: { children: openuiCardMarkdown, mode: 'minimal' } },
+      { name: 'Form with RadioGroup', props: { children: openuiFormMarkdown, mode: 'minimal' } },
+      { name: 'Invalid Program (Fallback)', props: { children: openuiInvalidMarkdown, mode: 'minimal' } },
+    ],
+    mockData: () => ({
+      onSendPrompt: (text: string) => console.log('[Playground] Send prompt:', text),
       onUrlClick: (url: string) => console.log('[Playground] URL clicked:', url),
       onFileClick: (path: string) => console.log('[Playground] File clicked:', path),
     }),

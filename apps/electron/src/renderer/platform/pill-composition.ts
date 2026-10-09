@@ -240,6 +240,15 @@ function sessionUsage(usage: Readonly<Record<string, number>>): Record<string, n
   return sessionUsageSnapshot
 }
 
+/**
+ * Drop the frozen session usage snapshot so the next read rebuilds it from the
+ * stored counters. Called on a workspace switch (and available to logout): the
+ * frozen frequency ordering must not leak across rooms.
+ */
+export function resetPillSessionUsage(): void {
+  sessionUsageSnapshot = null
+}
+
 /** Test/idle seam: drop the in-memory prefs and the frozen session snapshot. */
 export function __resetPillCompositionForTests(): void {
   currentPrefs = null

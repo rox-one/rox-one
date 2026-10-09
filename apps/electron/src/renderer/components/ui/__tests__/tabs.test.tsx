@@ -5,7 +5,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createInstance, type i18n as I18n } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
-import { Tabs, type TabItem, type TabsProps } from '../tabs'
+import { Tabs, tabCloseTarget, type TabItem, type TabsProps } from '../tabs'
 
 let i18n: I18n
 beforeAll(async () => {
@@ -41,8 +41,17 @@ describe('TabsCore ARIA and roving tabindex', () => {
 
   it('keeps a single Tab stop on the active/enabled item', () => {
     const html = render({ items, activeId: 'a', onSelect() {}, onClose() {} })
-    expect(html.match(/tabindex="0"/g)).toHaveLength(2) // active tab + its close button
+    expect(html.match(/tabindex="0"/g)).toHaveLength(1) // the active tab owns the only Tab stop
     expect(html).toContain('tabindex="-1"')
+  })
+
+  it('close-target skips disabled neighbours and keeps the roving stop', () => {
+    const strip = [{ id: 'a' }, { id: 'b', disabled: true }, { id: 'c' }]
+    // Closing the active tab prefers the next enabled neighbour, not the disabled one.
+    expect(tabCloseTarget(strip, 'a', 'a')).toBe('c')
+    // Closing a background tab leaves the active roving stop alone.
+    expect(tabCloseTarget(strip, 'c', 'a')).toBe('a')
+    expect(tabCloseTarget([{ id: 'a' }, { id: 'b', disabled: true }], 'a', 'a')).toBeNull()
   })
 
   it('marks disabled tabs and keeps them out of the roving stop', () => {
