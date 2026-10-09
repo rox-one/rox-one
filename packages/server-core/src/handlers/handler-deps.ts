@@ -2,6 +2,7 @@ import type { NativeVoiceOverlayHost } from './voice-overlay-host'
 import type { NativeAuthority } from '../authority/native-authority.ts'
 import type { NativeJournal } from '../authority/native-journal.ts'
 import type { PendingCommandsStore } from '../command-gateway'
+import type { NodeRegistry } from '../nodes'
 import type { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import type { PlatformServices } from '../runtime/platform'
 import type { ISessionManager } from './session-manager-interface'
@@ -124,6 +125,12 @@ export interface HandlerDeps<
   /** Optional GUI-only overlay; never controlled through an untrusted SET_OVERLAY RPC. */
   voiceOverlay?: NativeVoiceOverlayHost
   commandGateway?: PendingCommandsStore
+  /**
+   * f.9 — server-owned node/device registry. Optional because the host that
+   * owns device connectivity composes it; `nodes:*` handlers are only
+   * registered when present.
+   */
+  nodes?: NodeRegistry
   /** Host-owned canonical adapters for native objects linked from workspace tasks. */
   workspaceWorkReferences?: {
     exists(workspaceId: string, workspaceRootPath: string, link: import('@rox/shared/workspace-work').WorkspaceTaskLink): boolean

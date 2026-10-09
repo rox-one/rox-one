@@ -10,6 +10,7 @@
     ".": "./src/index.ts",
     "./transport": "./src/transport/index.ts",
     "./command-gateway": "./src/command-gateway/index.ts",
+    "./nodes": "./src/nodes/index.ts",
     "./runtime": "./src/runtime/index.ts",
     "./handlers": "./src/handlers/index.ts",
     "./bootstrap": "./src/bootstrap/index.ts",
