@@ -29,6 +29,7 @@ import type {
   MemoryOriginClass,
   MemorySessionKind,
 } from '@rox/shared/memory/types'
+import { cosineSimilarity } from './episodic-memory'
 
 /** Bump when the chunking algorithm changes; a mismatch marks the index stale. */
 export const MEMORY_CHUNKING_VERSION = 1
@@ -46,6 +47,10 @@ export const MEMORY_INDEX_MODEL = 'lexical-bm25'
 export const CHUNK_INDEX_FILE = 'chunk-index.db'
 /** JSONL chunk store for the JS backend. */
 export const CHUNK_STORE_FILE = 'chunk-index.jsonl'
+/** Embedding sidecar for the JS backend (chunkId → base64 float32 BLOB analogue). */
+export const CHUNK_EMBEDDINGS_FILE = 'chunk-index.embeddings.jsonl'
+/** Embedding table for the FTS5 backend. */
+export const CHUNK_EMBEDDINGS_TABLE = 'chunk_embeddings'
 /** Index identity/staleness sidecar. */
 export const CHUNK_META_FILE = 'chunk-index.meta.json'
 /** Soft cap on chunk size in characters (a single long line may exceed it). */
@@ -53,6 +58,15 @@ export const MAX_CHUNK_CHARS = 1200
 /** BM25 term-frequency saturation / length-normalization constants. */
 export const BM25_K1 = 1.2
 export const BM25_B = 0.75
+/**
+ * c1.3 deterministic hybrid fusion weights: `0.6 * normalized BM25 + 0.4 * cosine`.
+ * Normalized BM25 is the chunk's textScore divided by the best textScore in the
+ * fused candidate set, so the two components share the [0,1] range and the mix
+ * cannot vary with corpus size. Both backends compute the SAME arithmetic over
+ * the SAME candidate set, so ordering stays identical across runtimes.
+ */
+export const FUSION_TEXT_WEIGHT = 0.6
+export const FUSION_VECTOR_WEIGHT = 0.4
 
 export interface MemoryChunk {
   chunkId: string
@@ -84,15 +98,29 @@ export interface RankedChunk {
   chunk: MemoryChunk
   score: number
   textScore: number
+  /** c1.3 cosine component (0..1); absent on the lexical-only path. */
+  vectorScore?: number
+}
+
+/** A chunk carrying its stored embedding (the vector leg's working set). */
+export interface EmbeddedChunk {
+  chunk: MemoryChunk
+  vector: Float32Array
 }
 
 /** The one interface both backends implement. */
 export interface MemoryIndexBackend {
   readonly kind: 'fts5' | 'js'
-  /** Replace the whole corpus (rebuild). Never throws. */
-  replaceAll(chunks: MemoryChunk[]): void
+  /**
+   * Replace the whole corpus (rebuild). `embeddings` is the c1.3 per-chunk
+   * vector set (chunkId → 384-d vector); omitted/empty clears any stored
+   * embeddings. Never throws.
+   */
+  replaceAll(chunks: MemoryChunk[], embeddings?: ReadonlyMap<string, Float32Array>): void
   /** Candidate chunks containing at least one query token (unordered). */
   candidateChunks(query: string): MemoryChunk[]
+  /** Chunks that carry an embedding, in stable (chunkId) order. */
+  embeddedChunks(): EmbeddedChunk[]
   get(chunkId: string): MemoryChunk | null
   count(): number
   /** Every stored chunk, in stable (chunkId) order. */
@@ -244,6 +272,23 @@ export function rankMemoryChunks(candidates: MemoryChunk[], query: string): Rank
 }
 
 // ---------------------------------------------------------------
+// Embedding codec (c1.3)
+// ---------------------------------------------------------------
+
+/** Pack a vector into raw little-endian float32 bytes (a SQLite BLOB). */
+export function encodeEmbedding(vector: Float32Array): Uint8Array {
+  return new Uint8Array(vector.buffer.slice(vector.byteOffset, vector.byteOffset + vector.byteLength))
+}
+
+/** Unpack float32 bytes back into a vector. Tolerates odd lengths (last 1-3 bytes dropped). */
+export function decodeEmbedding(bytes: Uint8Array): Float32Array {
+  const usable = bytes.byteLength - (bytes.byteLength % 4)
+  const out = new Float32Array(usable / 4)
+  if (usable > 0) new Uint8Array(out.buffer).set(bytes.subarray(0, usable))
+  return out
+}
+
+// ---------------------------------------------------------------
 // Capability probe
 // ---------------------------------------------------------------
 
@@ -346,6 +391,13 @@ export class Fts5MemoryIndexBackend implements MemoryIndexBackend {
             'chunk_id UNINDEXED, path UNINDEXED, start_line UNINDEXED, end_line UNINDEXED, ' +
             'origin_class UNINDEXED, session_kind UNINDEXED, observed_at UNINDEXED, supersedes_key UNINDEXED, text)',
         )
+        // c1.3: embeddings live in a separate regular table as float32 BLOBs.
+        // sqlite-vec is not loadable in this SQLite build (probe below), so the
+        // vector leg is served by in-process cosine over these BLOBs.
+        db.exec(
+          `CREATE TABLE IF NOT EXISTS ${CHUNK_EMBEDDINGS_TABLE} (` +
+            'chunk_id TEXT PRIMARY KEY, dim INTEGER NOT NULL, vector BLOB NOT NULL)',
+        )
       }
     } catch {
       db = null
@@ -353,7 +405,7 @@ export class Fts5MemoryIndexBackend implements MemoryIndexBackend {
     this.db = db
   }
 
-  replaceAll(chunks: MemoryChunk[]): void {
+  replaceAll(chunks: MemoryChunk[], embeddings?: ReadonlyMap<string, Float32Array>): void {
     if (!this.db) return
     try {
       this.db.exec('DELETE FROM chunks_fts')
@@ -374,6 +426,15 @@ export class Fts5MemoryIndexBackend implements MemoryIndexBackend {
           c.text,
         )
       }
+      this.db.exec(`DELETE FROM ${CHUNK_EMBEDDINGS_TABLE}`)
+      const putVector = this.db.prepare(
+        `INSERT OR REPLACE INTO ${CHUNK_EMBEDDINGS_TABLE}(chunk_id, dim, vector) VALUES (?, ?, ?)`,
+      )
+      for (const c of chunks) {
+        const vector = embeddings?.get(c.chunkId)
+        if (!vector || vector.length === 0) continue
+        putVector.run(c.chunkId, vector.length, encodeEmbedding(vector))
+      }
     } catch {
       // best-effort: the JSONL-free read path degrades to no candidates
     }
@@ -388,6 +449,33 @@ export class Fts5MemoryIndexBackend implements MemoryIndexBackend {
         .query<RawChunkRow, [string]>(`${CHUNK_SELECT} WHERE chunks_fts MATCH ?`)
         .all(match)
       return rows.map(rowToChunk)
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * c1.3: stored embeddings joined to their chunks, in stable (chunkId) order.
+   * `all()` is already chunkId-ordered, so the lookup map keeps that order.
+   */
+  embeddedChunks(): EmbeddedChunk[] {
+    if (!this.db) return []
+    try {
+      const byId = new Map(this.all().map(c => [c.chunkId, c]))
+      const rows = this.db
+        .query<{ chunk_id: string; vector: Uint8Array }, []>(
+          `SELECT chunk_id, vector FROM ${CHUNK_EMBEDDINGS_TABLE} ORDER BY chunk_id`,
+        )
+        .all()
+      const out: EmbeddedChunk[] = []
+      for (const row of rows) {
+        const chunk = byId.get(row.chunk_id)
+        if (!chunk) continue
+        const vector = decodeEmbedding(row.vector)
+        if (vector.length === 0) continue
+        out.push({ chunk, vector })
+      }
+      return out
     } catch {
       return []
     }
@@ -443,11 +531,15 @@ export class Fts5MemoryIndexBackend implements MemoryIndexBackend {
 export class JsMemoryIndexBackend implements MemoryIndexBackend {
   readonly kind = 'js' as const
   private readonly storePath: string
+  private readonly embeddingsPath: string
   private chunks: MemoryChunk[]
+  private embeddings: Map<string, Float32Array>
 
   constructor(storePath: string) {
     this.storePath = storePath
+    this.embeddingsPath = join(dirname(storePath), CHUNK_EMBEDDINGS_FILE)
     this.chunks = this.load()
+    this.embeddings = this.loadEmbeddings()
   }
 
   private load(): MemoryChunk[] {
@@ -465,12 +557,44 @@ export class JsMemoryIndexBackend implements MemoryIndexBackend {
     }
   }
 
-  replaceAll(chunks: MemoryChunk[]): void {
+  /** c1.3: load the embedding sidecar; a malformed line is skipped, never fatal. */
+  private loadEmbeddings(): Map<string, Float32Array> {
+    const out = new Map<string, Float32Array>()
+    try {
+      if (!existsSync(this.embeddingsPath)) return out
+      for (const line of readFileSync(this.embeddingsPath, 'utf8').split('\n')) {
+        if (!line.trim()) continue
+        try {
+          const parsed = JSON.parse(line) as { chunkId?: unknown; b64?: unknown }
+          if (typeof parsed.chunkId !== 'string' || typeof parsed.b64 !== 'string') continue
+          const vector = decodeEmbedding(new Uint8Array(Buffer.from(parsed.b64, 'base64')))
+          if (vector.length > 0) out.set(parsed.chunkId, vector)
+        } catch {
+          // skip corrupted line
+        }
+      }
+    } catch {
+      // missing/unreadable sidecar = no vectors (lexical-only)
+    }
+    return out
+  }
+
+  replaceAll(chunks: MemoryChunk[], embeddings?: ReadonlyMap<string, Float32Array>): void {
     const sorted = [...chunks].sort((a, b) => (a.chunkId < b.chunkId ? -1 : a.chunkId > b.chunkId ? 1 : 0))
     try {
       mkdirSync(dirname(this.storePath), { recursive: true })
       writeFileSync(this.storePath, sorted.map(c => JSON.stringify(c)).join('\n') + (sorted.length ? '\n' : ''))
       this.chunks = sorted
+      const next = new Map<string, Float32Array>()
+      for (const c of sorted) {
+        const vector = embeddings?.get(c.chunkId)
+        if (vector && vector.length > 0) next.set(c.chunkId, vector)
+      }
+      const lines = [...next.entries()]
+        .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+        .map(([chunkId, vector]) => JSON.stringify({ chunkId, b64: Buffer.from(encodeEmbedding(vector)).toString('base64') }))
+      writeFileSync(this.embeddingsPath, lines.join('\n') + (lines.length ? '\n' : ''))
+      this.embeddings = next
     } catch {
       // keep the previous in-memory corpus on a failed persist
     }
@@ -488,6 +612,15 @@ export class JsMemoryIndexBackend implements MemoryIndexBackend {
           break
         }
       }
+    }
+    return out
+  }
+
+  embeddedChunks(): EmbeddedChunk[] {
+    const out: EmbeddedChunk[] = []
+    for (const chunk of this.chunks) {
+      const vector = this.embeddings.get(chunk.chunkId)
+      if (vector) out.push({ chunk, vector })
     }
     return out
   }
@@ -527,8 +660,21 @@ export function createMemoryIndexBackend(memoryDir: string): MemoryIndexBackend 
  * candidates down to chunks that are JS-token-visible for the query BEFORE
  * scoring, so both runtimes hash the same candidate set and produce identical
  * order and scores.
+ *
+ * c1.3: when `queryVector` is supplied the vector leg runs too. Every stored
+ * embedding is scored by in-process cosine (sqlite-vec is not loadable, so
+ * there is no SQL vector search) and merged with the lexical ranking by a
+ * DETERMINISTIC weighted sum. Normalized BM25 (`textScore / maxTextScore`) and
+ * clamped cosine both live in [0,1], and the same tie-break (`chunkId`
+ * ascending) applies, so the fused ordering is identical on FTS5 and JS.
+ * Without `queryVector` this returns exactly the pre-c1.3 lexical result.
  */
-export function searchMemoryIndex(backend: MemoryIndexBackend, query: string, limit: number): RankedChunk[] {
+export function searchMemoryIndex(
+  backend: MemoryIndexBackend,
+  query: string,
+  limit: number,
+  queryVector?: readonly number[] | Float32Array | null,
+): RankedChunk[] {
   const capped = Math.min(Math.max(Math.trunc(limit) || 0, 1), 200)
   const terms = new Set(tokenizeMemoryText(query))
   const candidates = backend.candidateChunks(query).filter(c => {
@@ -538,5 +684,34 @@ export function searchMemoryIndex(backend: MemoryIndexBackend, query: string, li
     }
     return false
   })
-  return rankMemoryChunks(candidates, query).slice(0, capped)
+  const lexical = rankMemoryChunks(candidates, query)
+  if (!queryVector || queryVector.length === 0) return lexical.slice(0, capped)
+
+  const embedded = backend.embeddedChunks()
+  const vectorScores = new Map<string, number>()
+  const chunkById = new Map<string, MemoryChunk>()
+  for (const { chunk, vector } of embedded) {
+    const cosine = cosineSimilarity(queryVector, vector)
+    if (cosine > 0) {
+      vectorScores.set(chunk.chunkId, cosine)
+      chunkById.set(chunk.chunkId, chunk)
+    }
+  }
+  let maxTextScore = 0
+  for (const ranked of lexical) {
+    chunkById.set(ranked.chunk.chunkId, ranked.chunk)
+    if (ranked.textScore > maxTextScore) maxTextScore = ranked.textScore
+  }
+  const textScoreById = new Map(lexical.map(r => [r.chunk.chunkId, r.textScore]))
+  const fused: RankedChunk[] = []
+  for (const chunk of chunkById.values()) {
+    const textScore = textScoreById.get(chunk.chunkId) ?? 0
+    const vectorScore = vectorScores.get(chunk.chunkId) ?? 0
+    const normalizedText = maxTextScore > 0 ? textScore / maxTextScore : 0
+    const score = FUSION_TEXT_WEIGHT * normalizedText + FUSION_VECTOR_WEIGHT * vectorScore
+    if (score <= 0) continue
+    fused.push({ chunk, score, textScore, vectorScore })
+  }
+  fused.sort((a, b) => (b.score !== a.score ? b.score - a.score : a.chunk.chunkId < b.chunk.chunkId ? -1 : 1))
+  return fused.slice(0, capped)
 }
