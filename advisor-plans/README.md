@@ -16,7 +16,7 @@
 | 006 | `006-voice-overlay-stop-latch.md` | CORRECTNESS-10 | ✅ **выполнен** `85b1354c6` — isolated 3/3, wrapper 1/1 |
 | 007 | `007-dead-marketing-docs-scripts.md` | TECH-02 | ✅ **выполнен** `15bcb6d3c` — −6 скриптов; JSON/grep/каталоги чистые |
 | 008 | `008-one-shot-branch-workflows-removal.md` | TECH-05 | ✅ **выполнен** `90d5af09e` — −4 файла; workflow 18; живых ссылок нет |
-| 009 | `009-typecheck-all-coverage.md` | DX-01 | ⏳ план дописывается (замеры базовой красноты — в примечании ниже) |
+| 009 | `009-typecheck-all-coverage.md` | DX-01 | ✅ **выполнен** `3c90bc2d1` — +5 зелёных воркспейсов в `typecheck:all`; корневой `typecheck` = полный гейт; инвентарь 15=11+4; 0 новых ошибок (перепроверено 2026-10-09) |
 | 010 | `010-server-safesend-try-catch.md` | C-03 | ✅ **выполнен** `31a1bce4e` — тест 2/2; транспорт 74/74; tsc server-core без новых ошибок |
 | 011 | `011-before-quit-guard.md` | C-05 | ✅ **выполнен** `767615ad6` — хелпер+тест 3/3; electron tsc без новых ошибок |
 | 012 | `012-channel-classification-dedup.md` | C-07 | ✅ **выполнен** `f2d46a56d` — routing 26/26 (было 22/2); сырые списки + инвариант на дубли |
@@ -37,7 +37,7 @@
 | # | Находка | Веттинг | Effort | Статус |
 |---|---|---|---|---|
 | C-01 | Потеря события в WS-транспорте не вызывает ресинка — потеря необратима | ~ | M | открыт |
-| C-02 | `SessionPersistenceQueue.cancel()` не сериализован с идущей записью — удалённая сессия может вернуться на диск | ~ | M | ✅ **закрыт параллельным агентом** `12688a1bf` (уже в origin/main; мы файлы `sessions/*` не трогали) |
+| C-02 | `SessionPersistenceQueue.cancel()` не сериализован с идущей записью — удалённая сессия может вернуться на диск | ~ | M | ⚠️ **открыт** — перепроверка 2026-10-09 сняла ошибочную атрибуцию: `12688a1bf` чинит другой дефект подсистемы сессий (tmp-race durability), `cancel` не трогает; дефект подтверждён живым в `packages/shared/src/sessions/persistence-queue.ts:224-229` (`cancel` не ждёт `writeInProgress`, в отличие от `flush`). Нужен отдельный план |
 | C-03 | Серверный `safeSend` не ловит исключения (клиентский аналог ловит) — обрыв replay | ~ | S | ✅ закрыт планом 010 (`31a1bce4e`) |
 | C-04 | `withRegistrySyncWrite` мутирует общий singleton-провайдер | ~ | S | открыт |
 | C-05 | `before-quit`: async-обработчик без try/catch после `preventDefault()` — исключение в очистке = зависший процесс | ~ | S | ✅ закрыт планом 011 (`767615ad6`) |
@@ -69,7 +69,7 @@
 | TECH-05 | Одноразовые branch-mutating workflow (`apply-settings-ia-*.yml`) живы | ✔ | S | ✅ закрыт планом 008 (`90d5af09e`) |
 | TECH-06 | «Foreign» тест-поломки после мержей всё ещё в дереве | ~ | S | открыт (ALREADY-TRACKED) |
 | TECH-07 | Трекер объявлял `KnowledgeAgentPanel` немонтированным — фактически смонтирован | ✔ | — | ✅ статус исправлен в инвентаре |
-| DX-01 | `typecheck:all` пропускает ~10 воркспейсов; корневой `typecheck` = только shared | ~ | S | ⏳ план 009 готовится; замеры оркестратора: зелёные — cloud-gateway/cloud-runner/discord-worker/whatsapp-worker/test-harness; красные предсуществующие — cli/webui (класс AttachmentTranscript), viewer/messaging-gateway (артефакт путей чужого чекаута `~/Projects/rox-one`) |
+| DX-01 | `typecheck:all` пропускает ~10 воркспейсов; корневой `typecheck` = только shared | ~ | S | ✅ закрыт планом 009 (`3c90bc2d1`): в цепь добавлены 5 сегодня-зелёных воркспейсов (cloud-gateway/cloud-runner/discord-worker/whatsapp-worker/test-harness), корневой `typecheck` = `typecheck:all`, инвентарь 15=11+4; красные записаны как known baseline |
 | DX-02 | Pre-commit хуков нет, staged-гейты — мёртвые скрипты | ~ | S | открыт |
 | DX-03 | ESLint — 3 из ~19 воркспейсов; в CI только UI-ратчет | ~ | M | открыт |
 | DX-04 | `bun run test` — 28-мин serial-прогон с 132 красными | ~ | M | открыт (ALREADY-TRACKED) |
@@ -97,9 +97,11 @@
 ## Рекомендуемый порядок оставшегося
 
 1. ✅ **S-набор закрыт** планами 007-014 (TECH-02, TECH-05, C-03/C-05/C-07, DOC-01/DOC-02) — детали в таблице планов; открытый хвост — только ротация ключа (владелец).
-2. **Остаток:** DX-01 (план 009 — почти готов), PERF-01 (shell-first boot — до любых правок старта), PERF-04 (бюджет бандла), PERF-05 (виртуализация), SEC-03, C-01.
+2. **Остаток:** PERF-01 (shell-first boot — до любых правок старта), PERF-04 (бюджет бандла), PERF-05 (виртуализация), SEC-03, C-01, C-02 (раскрыт перепроверкой 2026-10-09 — дефект жив, см. карточку).
 3. **Решения владельца:** ротация ключа Deepgram; SEC-01-остаток (UX подтверждения для `send=true` с trusted-поверхностей); C-08; PERF-07.
 
-Отдельно замечено при финальной верификации: **`typecheck:electron` на main красный** — 4 ошибки в `apps/electron/src/renderer/App.tsx`: TS2305 «no exported member `AudioTranscriptActionsProvider`/`AudioTranscriptRetry`» в импорте из `@rox/ui` (`:96-97`) и два implicit-any в `useCallback<AudioTranscriptRetry>` (`:1940`). Факты: экспорты в исходниках присутствуют (`packages/ui/src/index.ts:41,66` и `components/chat/index.ts:17,20`), `@rox/ui` резолвится именно в исходники (`package.json` types → `src/index.ts`, `dist` не отслеживается), импорт синтаксически корректен (`type`-модификатор только у типа). Значит корень не в «устаревшей сборке» — ошибки в committed-состоянии и привязаны к коммиту `b7c049cde` (та же фича добавила и `useCallback<AudioTranscriptRetry>`); нужен разбор автором фичи. К выполненным планам отношения не имеет.
+Отдельно замечено при финальной верификации: **`typecheck:electron` в этом worktree красный** — 4 ошибки в `apps/electron/src/renderer/App.tsx`: TS2305 «no exported member `AudioTranscriptActionsProvider`/`AudioTranscriptRetry`» в импорте из `@rox/ui` (`:96-97`) и два implicit-any в `useCallback<AudioTranscriptRetry>` (`:1940`). Факты: экспорты в исходниках присутствуют (`packages/ui/src/index.ts:41,66` и `components/chat/index.ts:17,20`), `@rox/ui` резолвится именно в исходники (`package.json` types → `src/index.ts`, `dist` не отслеживается), импорт синтаксически корректен (`type`-модификатор только у типа). Перепроверка 2026-10-09 установила единый корень: **артефакт окружения worktree** — `node_modules` (и `apps/electron/node_modules`) симлинкнуты в канонический чекаут `~/Projects/rox-one`, из-за чего `@rox/ui` резолвится в тамошние исходники (ревизия `0c918497d`), где экспортов `AudioTranscript*` ещё нет; в этом дереве экспорты есть, а TS7006 на `:1940` — следствие провалившегося импорта. В чистом клоне эти 4 ошибки ожидаются отсутствующими (подтверждать на CI-раннере). К выполненным планам отношения не имеет.
 
 Обнаружено при исполнении S-батча 007-014: **зафиксирован baseline красноты typecheck** (предсуществующий; ни один файл из планов 007-014 не затронут). Корневая причина части красного — **артефакт окружения worktree**: `node_modules` этого дерева — симлинк на `~/Projects/rox-one/node_modules` (канонический чекаут на другой ревизии), поэтому импорты `@rox/*` из части воркспейсов резолвятся в чужой чекаут, где `AttachmentTranscript` ещё не экспортируется. Симптомы: `typecheck:all` уже красный (обрыв на шагах `browser-intel`/`server-core`: `dto.ts:15`, `utils/files.ts:6`, `files.ts:453`, `native-content-integration.test.ts:89`), плюс известные красные воркспейсы `apps/cli`/`apps/webui` (тот же класс) и `apps/viewer`/`packages/messaging-gateway` (окружение; у messaging-gateway ещё и собственный дрейф `accessMode` в тестах). В чистом клоне эти красноты, вероятно, отсутствуют — при работе в этом worktree помнить про leaky-резолв. Учтено в DX-01 (план 009): в цепь добавлены только сегодня-зелёные воркспейсы (cloud-gateway, cloud-runner, discord-worker, whatsapp-worker, test-harness); красные записаны как known baseline.
+
+Перепроверка 2026-10-09 (11 состязательных верификаторов против `3c90bc2d1`, включая CI): гейты планов 007-014 подтверждены; секрет-скан дерева и диапазона чист; на наших SHA провалов CI нет; исправлены три несоответствия индекса — статус 009, атрибуция C-02 и корень electron-красноты (выше).
