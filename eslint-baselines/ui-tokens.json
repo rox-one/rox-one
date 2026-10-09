@@ -669,16 +669,6 @@
       "rox/no-arbitrary-text-size": 2,
       "rox/no-raw-color": 3
     },
-    "apps/electron/src/renderer/components/browser/BrowserTabBadge.tsx": {
-      "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 3,
-      "rox/no-foreground-opacity": 1
-    },
-    "apps/electron/src/renderer/components/browser/BrowserTabStrip.tsx": {
-      "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 2,
-      "rox/no-foreground-opacity": 2
-    },
     "apps/electron/src/renderer/components/browser/BrowserToolbar.tsx": {
       "rox/no-foreground-opacity": 1
     },

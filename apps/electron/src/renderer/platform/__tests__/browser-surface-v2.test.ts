@@ -177,7 +177,11 @@ describe('browser surface v2 source wiring', () => {
     expect(surfaceTabsSource).not.toContain('osBrowserSurfaceTabs(')
     expect(surfaceTabsSource).not.toContain('function OsBrowserWindowControl')
     expect(surfaceTabsSource).toContain('do not mount OS BrowserWindow chips')
-    expect(surfaceTabsSource.match(/role="tablist"/g)).toHaveLength(1)
+    // The single tablist now comes from the shared primitive (W1.1); SurfaceTabs
+    // owns no tablist markup of its own, so a second browser tab system cannot
+    // sneak back in here.
+    expect(surfaceTabsSource).toContain("from '@/components/ui/tabs'")
+    expect(surfaceTabsSource).not.toContain('role="tablist"')
     expect(osBrowserTabsSource).toContain('export function osBrowserSurfaceTabs')
   })
 

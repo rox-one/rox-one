@@ -16,7 +16,10 @@ describe('ship-rox-chrome-hygiene', () => {
     expect(surfaceTabsSource).not.toContain('osBrowserSurfaceTabs(')
     expect(surfaceTabsSource).not.toContain('function OsBrowserWindowControl')
     expect(surfaceTabsSource).toContain('do not mount OS BrowserWindow chips')
-    expect(surfaceTabsSource.match(/role="tablist"/g)).toHaveLength(1)
+    // The tablist is owned by the shared primitive now (W1.1); SurfaceTabs
+    // renders no tablist markup of its own.
+    expect(surfaceTabsSource).toContain("from '@/components/ui/tabs'")
+    expect(surfaceTabsSource).not.toContain('role="tablist"')
     expect(osBrowserTabsSource).toContain('export function osBrowserSurfaceTabs')
   })
 
