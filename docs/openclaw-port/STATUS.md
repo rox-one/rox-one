@@ -20,7 +20,36 @@ Eight parallel slices shipped and merged on `port/openclaw-features`; per-area e
 | S7 lifecycle-service | `port/slice-7` | (merge) | transactional launchd install/rollback, service fences, doctor report, tray + status broadcast |
 | S8 voice-realtime | `port/slice-8` | `ef3faf11f` | talk events + sequencer, bridge FSM, provider registry, wake list RPC, TTS/STT relay with real OpenAI adapter |
 
-Row status counts: deferred=39, done=32, partial=5, reuse-as-is=16, skipped=3.
+Row status counts (after wave 2): done=42, deferred=30, partial=5, reuse-as-is=16, skipped=3 (96 rows).
+
+## Wave 2 summary (2026-10-09)
+
+Nine further slices plus the fixes from the first RUNTIME verification of wave 1, merged on
+`port/w3-int` and gated by `tools/run-gates.sh --full`.
+
+| slice | row(s) | branch | commit(s) | what shipped |
+|---|---|---|---|---|
+| W2-1 operator roles | a1.2 | `port/w2-a12` | `d99ae18e8`, `148636beb`, `13863e51e` | named operator roles + scope ceiling intersected AT WS ADMISSION (fail-closed; LOCAL_ONLY never remotely reachable; durable tombstone so a removed role denies the live connection) |
+| W2-2 steering + fence | f.4, f.5 | `port/w2-ff45` | `1d5994411` | per-session queue lane + global lane, verb semantics (steer/followup/collect/interrupt), `activeWriterRunId` transcript fence (stale writers rejected, `wait` correlates by runId) |
+| W2-3 host scheduler | f.8 | `port/w2-cron` | `e56143594`, `171001e8f`, `445cf9065` | single host-timer scheduler (cron + hooks): coalesced missed ticks, drift-free anchors, beginClose/stop, unsatisfiable expressions rejected at registration |
+| W2-4 node/device model | f.9 | `port/w2-nodes` | `31f70be8a`, `ecf82c88c` | node registry (declared caps are claims; server allowlist enforced before dispatch), presence TTL, bounded pending invokes with typed terminal results, `nodes:*` RPC (7 channels classified) |
+| W2-5 recall lanes + intents | c1.5, c1.6 | `port/w2-lanes` | `0baf53092` | deterministic lexical lane (>=0.65, top-3, no model call) + bounded escalation lane, standing intents matched on before_prompt_build (time-only intents rejected) |
+| W2-6 flush + forget | c1.8 | `port/w2-forget` | `3d77c9398`, `7abebb430` | crash-safe idempotent flush at the session boundary; forget removes corpus + chunks + embeddings and keeps a content-free lineage record |
+| W2-7 runtime probe + onboard | e1.2, e1.3 | `port/w2-ops` | `4cf5d6082` | real SQLite WAL-write + version-floor probe returning a typed report with the user-space fallback; onboard `--install-daemon` tri-state decision with documented precedence |
+| W2-8 custodian playbooks | c2.8 | `port/w2-skills` | `be6468a3f` | 3 gated bundled system-agent playbooks (cloud-image-bake excluded: no ROX analogue, reason recorded) |
+| W2-9 media ticket | b1.5 | `port/w2-media` | `388067a39` | HMAC media tickets bound to path + expiry + session; media served without relaxing CSP |
+
+### Fixes from the runtime verification of wave 1
+
+| fix | branch | sha | defect |
+|---|---|---|---|
+| FX-2 launchd settle race | `port/w2-fix-launchd` | `6dadb6b7a` | `getStatus()` right after stop/uninstall could report a stale `running` (launchd applies bootout asynchronously) - bounded settle window added |
+| FX-3 CSP connect-src | `port/w2-fix-csp` | `8c76095ed` | `connect-src 'self' ws: wss:` authorized WebSockets to ANY host; now `'self'` plus explicit configured origins, never a bare scheme source |
+| FX-4 read-side visibility | `port/w2-fix-readvis` | `878547bf4` | `sessions:get`, `getMessages` and `searchContent` served another actor's private draft (writes were gated, reads were not) |
+| FX-9 skills single source of truth | `port/w2-fix-skills` | `2847f143b` | 25/27 advertised skills were unreadable (`skills_read` -> SKILL_NOT_FOUND) because the prompt block used the unconfined catalog; a collision-enabled pass walked every tier twice (warm ratio ~144x) |
+| FX-1 / FX-5 / FX-6 / FX-7 / FX-8 / FX-10 | slice branches (shas above) | - | repairs found by the union gates: hook disposer + parse-time NO_MATCH, operator-role fail-closed corrections, node/scheduler/memory type errors, and the owner-host bundle regression (a value import of the `@rox/shared/orgs` barrel pulled `@anthropic-ai/claude-agent-sdk` into the load path) |
+
+Evidence for the runtime verification: `docs/openclaw-port/verification/v{1..8}-*-runtime.md`.
 
 ## Post-review fixes (2026-10-09)
 
