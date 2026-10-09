@@ -92,13 +92,28 @@ export const workItemSchema = entity({
   origin: refSchema.optional(),
 })
 
-export const taskStatusSchema = z.object({
+/** Status definition carried in `task_statuses.update_set` / `projects|spaces.update_task_statuses` payloads. */
+export const taskStatusDefinitionSchema = z.object({
   key: statusKeySchema,
   label: z.string().min(1).max(100),
   color: z.enum(['gray', 'blue', 'green', 'red', 'amber', 'purple']),
   icon: z.string().max(64).optional(),
   closed: z.boolean(),
   kind: z.enum(['open', 'done', 'canceled']),
+}).strict()
+
+/** Stored `task_status` row (520-work-item.sql): a status entry scoped to its set owner. */
+export const taskStatusRowSchema = z.object({
+  workspaceId: idSchema,
+  setOwnerType: z.enum(['workspace', 'project', 'space', 'task_list']),
+  setOwnerId: idSchema,
+  key: statusKeySchema,
+  label: z.string().min(1).max(100),
+  color: z.enum(['gray', 'blue', 'green', 'red', 'amber', 'purple']),
+  icon: z.string().max(64),
+  closed: z.boolean(),
+  kind: z.enum(['open', 'done', 'canceled']),
+  sortKey: sortKeySchema,
 }).strict()
 
 export const taskListSchema = entity({
@@ -185,7 +200,7 @@ export const TASKS_COMMAND_SCHEMAS: CommandSchemaMap = {
   'task_list_groups.create': cmd({ ...createIdShape, name: nameSchema, sortKey: sortKeySchema.optional() }),
   'task_list_groups.update': cmd({ name: nameSchema.optional(), sortKey: sortKeySchema.optional(), collapsed: z.boolean().optional() }),
   'task_list_groups.delete': emptyPayload,
-  'task_statuses.update_set': cmd({ statuses: z.array(taskStatusSchema).min(1).max(30) })
+  'task_statuses.update_set': cmd({ statuses: z.array(taskStatusDefinitionSchema).min(1).max(30) })
     .refine(value => new Set(value.statuses.map(status => status.key)).size === value.statuses.length, { message: 'duplicate status key' }),
   'tasks.create_from_selection': cmd({ ...createIdShape, ...originShape, docRef: refSchema, blockId: idSchema, text: z.string().min(1).max(5000) }),
   'tasks.create_many_from_checklist': cmd({ docRef: refSchema, items: z.array(z.object({ blockId: idSchema, text: titleSchema }).strict()).min(1).max(100), listId: idSchema.optional() }),
@@ -198,5 +213,6 @@ export const TASKS_ENTITY_SCHEMAS = {
   'task-list': taskListSchema,
   'task-section': taskSectionSchema,
   'task-list-group': taskListGroupSchema,
+  'task-status': taskStatusRowSchema,
 } as const
 
