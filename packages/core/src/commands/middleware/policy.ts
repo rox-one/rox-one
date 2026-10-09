@@ -34,7 +34,6 @@ import type { AgentPermissionMode, ContainerRef } from '../../agents/governance.
 import {
   evaluateApprovalGate,
   evaluatePreflight,
-  spendRateLimit,
   type ApprovalGatePorts,
   type PolicyDecision,
   type PolicyPorts,
