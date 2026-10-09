@@ -51,7 +51,10 @@ function quoted(identifier: string): string {
 }
 
 function toBuffer(value: string): Uint8Array {
-  return new TextEncoder().encode(value)
+  // The `*_hash` columns are `bytea` holding the raw digest; the value is a hex
+  // string, so the write decodes it exactly the way `toHex` re-encodes it.
+  // (UTF-8 encoding here would double the hex on read and break `verify`.)
+  return Buffer.from(value, 'hex')
 }
 
 function toHex(value: unknown): string {

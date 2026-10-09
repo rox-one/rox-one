@@ -285,4 +285,46 @@ describe('a reference agent tool call (exit criterion)', () => {
     expect(h.auditRows()).toEqual([])
     expect(h.runtime.rateLimiter.snapshot({ workspaceId: 'ws-1', subject: `agent:${agentPrincipalId}`, scope: 'im:create_group' })).toBeNull()
   })
+
+  // PLAN §1.4: every gated agent/governance command needs its own refusal case.
+  it('agents.decide_approval is forbidden for a caller who is not the owner', async () => {
+    const h = harness()
+    const agentPrincipalId = await provision(h)
+    const parked = await h.run('im.create_chat', { kind: 'group', visibility: 'private', members: ['p2'] }, { onBehalfOf: agentPrincipalId })
+    expect(parked.error?.code).toBe('PENDING_APPROVAL')
+    const details = parked.error?.details as { approvalRequestId: string } // PENDING_APPROVAL details
+    const receipt = await h.run('agents.decide_approval', { approvalRequestId: details.approvalRequestId, decision: 'approve' }, { actor: { principalId: 'bystander', kind: 'user' } })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('agents.invoke is forbidden for a caller who is not the agent owner', async () => {
+    const h = harness()
+    const agentPrincipalId = await provision(h)
+    const receipt = await h.run('agents.invoke', {
+      workspaceId: 'ws-1',
+      agentPrincipalId,
+      ownerPrincipalId: 'other-owner',
+      instruction: 'Создай задачу',
+      provenance: { trigger: 'mention' },
+    })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('agents.pause is denied for an agent the policy does not admit', async () => {
+    const h = harness()
+    const agentPrincipalId = await provision(h)
+    const receipt = await h.run('agents.pause', { agentPrincipalId, paused: true }, { onBehalfOf: agentPrincipalId })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'DENIED' })
+  })
+
+  it('agents.provision_personal_agent is denied for an agent the policy does not admit', async () => {
+    const h = harness()
+    const agentPrincipalId = await provision(h)
+    const receipt = await h.run('agents.provision_personal_agent', { workspaceId: 'ws-1', ownerPrincipalId: 'owner-1' }, { onBehalfOf: agentPrincipalId })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'DENIED' })
+  })
 })

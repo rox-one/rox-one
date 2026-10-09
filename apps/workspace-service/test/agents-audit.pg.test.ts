@@ -97,6 +97,24 @@ describe.if(hasDatabase)('audit_log chain (PostgreSQL)', () => {
     expect(rows[1]?.provenance).toMatchObject({ trigger: 'mention', transport: 'http' })
   })
 
+  test('round-trips the hash columns: a written hex reads back as the same hex', async () => {
+    const { log, workspaceId, principalId } = await setup()
+    const input = auditRow(workspaceId, principalId)
+    const first = await log.append(input)
+    // `request_hash`/`hash` are `bytea`; the read must give back exactly the hex
+    // that was written (a UTF-8 write would double it and break the chain).
+    const [row] = await log.read(workspaceId)
+    expect(row?.requestHash).toBe(input.requestHash)
+    expect(row?.hash).toBe(first.hash)
+    expect(row?.prevHash).toBeNull()
+    // The second row chains onto the first, and both hashes survive the round-trip.
+    const second = await log.append(auditRow(workspaceId, principalId, { commandType: 'tasks.create' }))
+    const rows = await log.read(workspaceId)
+    expect(rows[1]?.prevHash).toBe(first.hash)
+    expect(rows[1]?.hash).toBe(second.hash)
+    expect((await log.verify(workspaceId)).ok).toBe(true)
+  })
+
   test('a tampered row fails the verifier at that row', async () => {
     const { sql, log, workspaceId, principalId, prefix } = await setup()
     await log.append(auditRow(workspaceId, principalId))

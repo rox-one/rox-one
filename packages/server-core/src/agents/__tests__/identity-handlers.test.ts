@@ -268,3 +268,98 @@ describe('team chats (D-v2-2)', () => {
     }
   })
 })
+
+/**
+ * PLAN §1.4 requires every gated command to have a negative test that shows a
+ * refusal (permission / scope / policy). These are the expected rejections of
+ * the identity lifecycle and team-chat contracts.
+ */
+describe('identity and team-chat refusals (§15.1, §15.2)', () => {
+  /** Provision the owner's personal agent so agent-governed commands run. */
+  async function withAgent(h: AgentsHarness): Promise<string> {
+    const receipt = await h.run('agents.provision_personal_agent', { workspaceId: 'ws-1', ownerPrincipalId: 'owner-1', username: 'mark' })
+    expect(receipt.status).toBe('applied')
+    const result = receipt.result as { agentPrincipalId: string } // provision_personal_agent result shape
+    return result.agentPrincipalId
+  }
+
+  it('workspaces.create is denied for an agent the policy does not admit', async () => {
+    const h = harness()
+    const agentPrincipalId = await withAgent(h)
+    const receipt = await h.run('workspaces.create', { name: 'Rox', slug: 'rox' }, { onBehalfOf: agentPrincipalId })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'DENIED' })
+  })
+
+  it('identity.ensure_placeholder is denied for an agent the policy does not admit', async () => {
+    const h = harness()
+    const agentPrincipalId = await withAgent(h)
+    const receipt = await h.run('identity.ensure_placeholder', { workspaceId: 'ws-1', email: 'new@example.com', invitedBy: 'owner-1' }, { onBehalfOf: agentPrincipalId })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'DENIED' })
+  })
+
+  it('people.invite is denied for an agent whose owner never granted the scope', async () => {
+    const h = harness()
+    const agentPrincipalId = await withAgent(h)
+    const receipt = await h.run('people.invite', { workspaceId: 'ws-1', emails: ['new@example.com'] }, { onBehalfOf: agentPrincipalId })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'DENIED' })
+  })
+
+  it('identity.activate_placeholder is forbidden for an account that is already active', async () => {
+    const h = harness()
+    h.runtime.identity.createPrincipal({ principalId: 'ann', kind: 'human', status: 'active', primaryEmail: 'ann@example.com' })
+    const receipt = await h.run('identity.activate_placeholder', { authSubject: 'oidc|ann', verifiedEmail: 'ann@example.com' })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('identity.merge_placeholder is forbidden when the source is not a placeholder', async () => {
+    const h = harness()
+    h.runtime.identity.createPrincipal({ principalId: 'ann', kind: 'human', status: 'active', primaryEmail: 'ann@example.com' })
+    h.runtime.identity.createPrincipal({ principalId: 'bob', kind: 'human', status: 'active', primaryEmail: 'bob@example.com' })
+    const receipt = await h.run('identity.merge_placeholder', { placeholderId: 'ann', accountId: 'bob', confirmedBy: 'admin-1' })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('im.browse_public_chats is forbidden for a principal who is not a member', async () => {
+    const h = harness()
+    await h.run('workspaces.create', { name: 'Rox', slug: 'rox' })
+    const receipt = await h.run('im.browse_public_chats', {}, { actor: { principalId: 'outsider', kind: 'user' } })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('im.join_chat is forbidden for a private chat', async () => {
+    const h = harness()
+    await h.run('workspaces.create', { name: 'Rox', slug: 'rox' })
+    h.runtime.identity.upsertMembership({ workspaceId: 'ws-1', principalId: 'member-2', role: 'member', status: 'active' })
+    const group = await h.run('im.create_chat', { kind: 'group', visibility: 'private' })
+    const created = group.result as { chatId: string } // create_chat result shape
+    const receipt = await h.run('im.join_chat', { chatId: created.chatId }, { actor: { principalId: 'member-2', kind: 'user' } })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('im.leave_chat is forbidden for the General chat', async () => {
+    const h = harness()
+    await h.run('workspaces.create', { name: 'Rox', slug: 'rox' })
+    const generalChatId = h.runtime.identity.workspace('ws-1')?.generalChatId as string
+    const receipt = await h.run('im.leave_chat', { chatId: generalChatId })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('im.set_visibility is forbidden for a member who is not an owner or admin', async () => {
+    const h = harness()
+    await h.run('workspaces.create', { name: 'Rox', slug: 'rox' })
+    h.runtime.identity.upsertMembership({ workspaceId: 'ws-1', principalId: 'member-2', role: 'member', status: 'active' })
+    const group = await h.run('im.create_chat', { kind: 'group', visibility: 'private' })
+    const created = group.result as { chatId: string } // create_chat result shape
+    const receipt = await h.run('im.set_visibility', { chatId: created.chatId, visibility: 'public', confirmHistoryExposure: true }, { actor: { principalId: 'member-2', kind: 'user' } })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+})
