@@ -57,7 +57,7 @@ describe('common Electron Notes custody registration', () => {
   })
   test('rejects iframe, replaced sender and foreign workspace before reading vault keys', async () => {
     const f = fixture()
-    await expect(f.invoke(NATIVE_REPLICA_IPC.OPEN, { context: f.context }, { ...f.event, senderFrame: null } as unknown as IpcMainInvokeEvent)).rejects.toThrow('authenticated managed workspace')
+    await expect(f.invoke(NATIVE_REPLICA_IPC.OPEN, { context: f.context }, { ...f.event, senderFrame: { url: 'https://foreign.example.test' } } as unknown as IpcMainInvokeEvent)).rejects.toThrow('authenticated managed workspace')
     const replacement = Object.assign(new EventEmitter(), { id: 41, mainFrame: f.sender.mainFrame, isDestroyed: () => false })
     await expect(f.invoke(NATIVE_REPLICA_IPC.OPEN, { context: f.context }, { ...f.event, sender: replacement } as unknown as IpcMainInvokeEvent)).rejects.toThrow('authenticated managed workspace')
     await expect(f.invoke(NATIVE_REPLICA_IPC.OPEN, { context: { ...f.context, workspaceId: 'workspace-B' } })).rejects.toThrow('authenticated managed workspace')
@@ -81,7 +81,7 @@ describe('common Electron Notes custody registration', () => {
   })
   test('a foreign frame cannot use an existing lease, while the native main frame keeps it', async () => {
     const f = fixture(); const handle = await f.open()
-    await expect(f.invoke(NATIVE_REPLICA_IPC.PENDING, { handle }, { ...f.event, senderFrame: null } as unknown as IpcMainInvokeEvent)).rejects.toThrow('managed app-host window')
+    await expect(f.invoke(NATIVE_REPLICA_IPC.PENDING, { handle }, { ...f.event, senderFrame: { url: 'https://foreign.example.test' } } as unknown as IpcMainInvokeEvent)).rejects.toThrow('managed app-host window')
     expect(await f.invoke(NATIVE_REPLICA_IPC.PENDING, { handle })).toEqual([])
   })
   test('destroyed windows close custody and cannot open another replica', async () => {

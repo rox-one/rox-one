@@ -19,7 +19,7 @@ import {
 } from './network-proxy-utils';
 import { getNetworkProxySettings, setNetworkProxySettings } from '@rox/shared/config/storage';
 import type { NetworkProxySettings } from '@rox/shared/config/types';
-import { BROWSER_PANE_SESSION_PARTITION } from './browser-pane-manager';
+import { BROWSER_PANE_SESSION_PARTITION } from './browser-pane-session';
 import log from './logger';
 
 // Track the current dispatcher so we can close it when reconfiguring
