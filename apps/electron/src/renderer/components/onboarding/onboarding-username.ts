@@ -221,7 +221,7 @@ export async function persistOnboardingUsername(
   }
 }
 
-type UsernameAdvanceContext = {
+export type UsernameAdvanceContext = {
   applyRoxConnectGate: boolean
   gitBashMissing: boolean
 }
