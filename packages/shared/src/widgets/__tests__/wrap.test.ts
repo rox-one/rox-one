@@ -57,6 +57,16 @@ describe('buildWidgetDocument — bridge ordering', () => {
     expect(document.indexOf(WIDGET_SIZE_MESSAGE_TYPE)).toBeLessThan(document.indexOf(WIDGET_CODE))
     expect(document).toContain('new ResizeObserver(report).observe(document.body)')
   })
+
+  it('posts a stable zero height once instead of treating it as silence', () => {
+    const document = buildWidgetDocument('Widget', WIDGET_CODE)
+    // `last` starts below any measurable height and the guard compares only
+    // against `last`, so a legitimate height of 0 is reported exactly once
+    // (and only again when the height actually changes).
+    expect(document).toContain('let last=-1')
+    expect(document).toContain('if(height!==last)')
+    expect(document).not.toContain('if(height&&height!==last)')
+  })
 })
 
 describe('buildWidgetDocument — content security policy', () => {
