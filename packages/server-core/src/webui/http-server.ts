@@ -104,6 +104,127 @@ function formatHostWithPort(host: string, port: number): string {
   }
 }
 
+/** Public origin of a request, honoring trusted proxy headers (see getRequestProto/Host). */
+function getRequestOrigin(req: Request): string | null {
+  const host = getRequestHost(req)
+  if (host) return `${getRequestProto(req)}://${host}`
+  try {
+    return new URL(req.url).origin
+  } catch {
+    return null
+  }
+}
+
+/**
+ * CSRF guard for cookie-authenticated, state-changing endpoints.
+ *
+ * Browsers send `Origin` on same-origin POSTs, so a cross-site form/fetch is
+ * rejected on a mismatch. When `Origin` is absent (non-browser clients) the
+ * `Sec-Fetch-Site` metadata is consulted if present; a request with neither
+ * header is still gated by the session cookie and is treated as a local
+ * operator call.
+ */
+function isSameOriginRequest(req: Request): boolean {
+  const expected = getRequestOrigin(req)
+  if (!expected) return false
+  const origin = req.headers.get('origin')
+  if (origin) return origin === expected
+  const fetchSite = req.headers.get('sec-fetch-site')
+  if (fetchSite === 'cross-site' || fetchSite === 'same-site') return false
+  return true
+}
+
+/**
+ * Self-contained pairing page served for `GET /handoff` (browser navigation,
+ * no `X-Handoff-Token` header).
+ *
+ * The SPA shell cannot be used here: its `/assets/*` bundle sits behind the
+ * session gate, so a cookie-less device — the whole point of pairing — would
+ * never run the bootstrap that redeems the fragment. This minimal document
+ * ships one inline script (its SHA-256 is folded into the strict CSP by
+ * `withWebuiSecurityHeaders`, so no `'unsafe-inline'` is needed) that reads the
+ * fragment (never sent to the server), redeems the token via the
+ * `X-Handoff-Token` header, and then replaces the URL with `/`. No `/assets/*`
+ * request is made, so nothing unauthenticated is exposed.
+ */
+export function renderHandoffPage(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rox - Pairing</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f7f7f7;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .card {
+    max-width: 420px;
+    padding: 24px 28px;
+    border-radius: 8px;
+    text-align: center;
+    background-color: #ffffff;
+    box-shadow: rgba(0, 0, 0, 0.12) 0 0 0 1px, rgba(0, 0, 0, 0.06) 0 4px 8px -2px;
+  }
+  h1 { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
+  #handoff-status { font-size: 14px; color: rgba(0, 0, 0, 0.6); }
+  #handoff-status[data-state="error"] { color: #a14040; }
+  noscript { display: block; margin-top: 12px; font-size: 13px; color: #a14040; }
+  @media (prefers-color-scheme: dark) {
+    body { background-color: #1a1a1a; }
+    .card { background-color: #242424; box-shadow: rgba(255, 255, 255, 0.12) 0 0 0 1px; }
+    h1 { color: #f2f2f2; }
+    #handoff-status { color: rgba(255, 255, 255, 0.6); }
+    #handoff-status[data-state="error"] { color: #e88080; }
+  }
+</style>
+</head>
+<body>
+<main class="card">
+  <h1>Pairing device</h1>
+  <p id="handoff-status" role="status" aria-live="polite">Redeeming the pairing link&hellip;</p>
+  <noscript>JavaScript is required to complete pairing.</noscript>
+</main>
+<script>
+(function () {
+  var status = document.getElementById('handoff-status');
+  function fail(message) {
+    if (status) { status.setAttribute('data-state', 'error'); status.textContent = message; }
+  }
+  var raw = window.location.hash.replace(/^#/, '');
+  var token = raw.indexOf('handoff=') === 0 ? raw.slice(8) : raw;
+  if (!/^[A-Za-z0-9_-]{16,128}$/.test(token)) {
+    fail('This pairing link is missing its token.');
+    return;
+  }
+  fetch('/handoff', {
+    method: 'GET',
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: { 'X-Handoff-Token': token },
+  }).then(function (response) {
+    if (!response.ok) {
+      fail(response.status === 401
+        ? 'This pairing link is invalid or has expired.'
+        : 'Pairing failed. Please try again.');
+      return;
+    }
+    window.location.replace('/');
+  }).catch(function () {
+    fail('Pairing failed. Please try again.');
+  });
+})();
+</script>
+</body>
+</html>`
+}
+
 export function shouldUseSecureCookies(req: Request, secureCookies?: boolean): boolean {
   if (secureCookies != null) return secureCookies
   return getRequestProto(req) === 'https'
@@ -253,16 +374,19 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     if (path === '/handoff' && req.method === 'GET') {
       const token = req.headers.get('x-handoff-token')
       if (!token) {
-        // Browser navigation to the pairing link: serve the SPA shell so the
-        // fragment (never sent to the server) can be redeemed by the bootstrap.
+        // Browser navigation to the pairing link: serve the self-contained
+        // handoff page. The SPA shell is unusable here — its bundle lives
+        // behind this handler's own session gate — so the page redeems the
+        // fragment (never sent to the server) with its inline script.
         const accept = req.headers.get('accept') ?? ''
         if (accept.includes('text/html')) {
-          const shell = Bun.file(join(webuiDir, 'index.html'))
-          if (await shell.exists()) {
-            return new Response(shell, {
-              headers: { 'Content-Type': 'text/html; charset=utf-8' },
-            })
-          }
+          return new Response(renderHandoffPage(), {
+            status: 200,
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'no-store',
+            },
+          })
         }
         return Response.json({ error: 'Handoff token required' }, { status: 400 })
       }
@@ -272,7 +396,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         logger.warn(`[webui] Handoff redemption rejected (${result})`)
         return Response.json(
           { error: result === 'expired' ? 'Handoff token expired' : 'Invalid handoff token' },
-          { status: 401 },
+          { status: 401, headers: { 'Cache-Control': 'no-store' } },
         )
       }
 
@@ -280,8 +404,37 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
       logger.info('[webui] Handoff token redeemed')
       return Response.json({ ok: true }, {
         status: 200,
-        headers: { 'Set-Cookie': buildSessionCookie(jwt, useSecureCookies) },
+        headers: {
+          'Set-Cookie': buildSessionCookie(jwt, useSecureCookies),
+          'Cache-Control': 'no-store',
+        },
       })
+    }
+
+    // ── Mint a pairing link (authenticated operator only) ──
+    // Requires a valid session cookie AND a same-origin request: the token is
+    // a bearer credential for one pairing, so a CSRF'd cross-site mint could
+    // hand it to an attacker. The URL carries the token in the fragment (never
+    // a query string) and is returned only in this authenticated response.
+    if (path === '/handoff/mint' && req.method === 'POST') {
+      const mintSession = await validateSession(req.headers.get('cookie'), secret)
+      if (!mintSession) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
+      }
+      if (!isSameOriginRequest(req)) {
+        logger.warn('[webui] Rejected cross-origin handoff mint request')
+        return Response.json({ error: 'Cross-origin request rejected' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+      }
+      const origin = getRequestOrigin(req)
+      if (!origin) {
+        return Response.json({ error: 'Unable to determine request origin' }, { status: 400, headers: { 'Cache-Control': 'no-store' } })
+      }
+      const { token, expiresAt } = handoffStore.mint()
+      logger.info('[webui] Handoff token minted')
+      return Response.json(
+        { url: `${origin}/handoff#${token}`, expiresAt },
+        { status: 200, headers: { 'Cache-Control': 'no-store' } },
+      )
     }
 
     // ── Health endpoint (no auth) ──
