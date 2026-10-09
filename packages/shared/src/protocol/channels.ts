@@ -1249,6 +1249,7 @@ export const RPC_CHANNELS = {
     INVOKE_CANCEL: 'nodes:invokeCancel',
     /** Push: registry or presence changed. */
     CHANGED: 'nodes:changed',
+  },
   /**
    * ROX Drive (wave 1) — device-local storage engine. Bytes, the JSON index and
    * the ledger live under the host config dir, so every channel is LOCAL_ONLY.
