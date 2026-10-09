@@ -231,9 +231,11 @@ export function Omnibox({
     }
   }, [parsed.prefix, t])
 
-  // Primary context action for the top resource
+  // Primary context action for the top resource. Route-less rows (e.g. the
+  // skills "loading" placeholder emitted while a sync is pending) are not
+  // navigable, so they must not become a bogus "open" context entry.
   const contextItems: ContextEntry[] = useMemo(() => {
-    const top = resourcesList[0]
+    const top = resourcesList.find((item) => item.route)
     if (!top || parsed.prefix === '>') return []
     return [{ item: top, value: `ctx-open:${top.id}` }]
   }, [resourcesList, parsed.prefix])
