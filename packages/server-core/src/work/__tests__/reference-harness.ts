@@ -3,7 +3,7 @@
 import { CATALOGUE_FLAGS, COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue, type Authorizer, type CommandReceipt } from '@rox/core/commands'
 import { CommandExecutor } from '../../commands/executor'
 import { COMMAND_MODULES, boundCommandTypes, createWiredCommandRegistry } from '../../commands/registry'
-import { REFERENCE_SPECS } from '../reference'
+import { MemoryRecordBackend, REFERENCE_SPECS } from '../reference'
 import type { CommandStore } from '../../commands/store'
 import { ACTOR_ID, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from './reference-scenario'
 
@@ -88,6 +88,62 @@ export function isW1_11Shadow(step: ScenarioStep): boolean {
 
 /** The reference-owned remainder of the scenario: the steps that must apply here. */
 export const REFERENCE_OWNED_SCENARIO: readonly ScenarioStep[] = REFERENCE_SCENARIO.filter(step => !isW1_11Shadow(step))
+
+/** A chat the reference suites seed directly, because W1-11 owns `im.create_chat`. */
+export interface ReferenceChatSeed {
+  id: string
+  /** Active owner; defaults to the scenario actor. */
+  ownerId?: string
+  /** Additional active members (role `member`); the owner is always a member. */
+  memberIds?: readonly string[]
+  kind?: string
+  name?: string
+  visibility?: string
+  postingPolicy?: string
+  invitePolicy?: string
+}
+
+const SEED_NOW = '2026-10-08T12:00:00.000Z'
+
+/**
+ * W1-11 (#1508) owns `im.create_chat` (and `im.join_chat`), and this harness
+ * never backs the agent-governance runtime those handlers run on, so the
+ * reference suites seed a chat (and its membership rows) straight into the
+ * memory backend the reference handlers read. The shape matches `createChat` in
+ * `work/reference/specs/messenger.ts` (owner + members, active rows).
+ */
+export async function seedReferenceChat(seed: ReferenceChatSeed): Promise<void> {
+  const ownerId = seed.ownerId ?? ACTOR_ID
+  const extra = (seed.memberIds ?? []).filter(memberId => memberId !== ownerId)
+  const backend = new MemoryRecordBackend(WORKSPACE_ID)
+  await backend.put({
+    collection: 'channel',
+    id: seed.id,
+    expectedRevision: null,
+    data: {
+      postingPolicy: seed.postingPolicy ?? 'all',
+      invitePolicy: seed.invitePolicy ?? 'members',
+      ownerId,
+      memberIds: [ownerId, ...extra],
+      kind: seed.kind ?? 'group',
+      ...(seed.name !== undefined ? { name: seed.name } : {}),
+      visibility: seed.visibility ?? 'private',
+    },
+  })
+  await seedReferenceChatMember(seed.id, ownerId, 'owner')
+  for (const principalId of extra) await seedReferenceChatMember(seed.id, principalId)
+}
+
+/** One active membership row (W1-11 owns `im.join_chat`). */
+export async function seedReferenceChatMember(chatId: string, principalId: string, role = 'member'): Promise<void> {
+  const backend = new MemoryRecordBackend(WORKSPACE_ID)
+  await backend.put({
+    collection: 'channel-member',
+    id: `${chatId}:${principalId}`,
+    expectedRevision: null,
+    data: { state: 'active', role, joinedAt: SEED_NOW, chatId, principalId },
+  })
+}
 
 export interface Harness {
   registry: CommandRegistry
