@@ -50,6 +50,29 @@ const SOURCE_RELATIVE_PATHS: Record<BackupSourceId, string[]> = {
   screenshots: ['Pictures', 'Screenshots'],
 }
 
+/**
+ * Absolute path of one standard source folder, in the platform's native form —
+ * the single source of truth for the five-folder table (also used by the
+ * device-local engine to resolve a scan root). `darwin`/`win32` use the
+ * platform's canonical user folders; anything else joins with the host
+ * separator so the caller still gets a usable path.
+ */
+export function resolveStandardFolderPath(
+  id: BackupSourceId,
+  platform: string = process.platform,
+  home: string = homedir(),
+  env: Record<string, string | undefined> = process.env,
+): string {
+  if (platform === 'win32') {
+    const base = typeof env.USERPROFILE === 'string' && env.USERPROFILE.length > 0 ? env.USERPROFILE : home
+    return win32.join(base, ...SOURCE_RELATIVE_PATHS[id])
+  }
+  if (platform === 'darwin') {
+    return posix.join(home, ...SOURCE_RELATIVE_PATHS[id])
+  }
+  return join(home, ...SOURCE_RELATIVE_PATHS[id])
+}
+
 function isDirectory(path: string): boolean {
   try {
     return statSync(path).isDirectory()
@@ -80,20 +103,11 @@ export function enumerateStandardFolders(
   home: string = homedir(),
   env: Record<string, string | undefined> = process.env,
 ): BackupSource[] {
-  if (platform === 'darwin') {
-    return DRIVE_BACKUP_SOURCE_KINDS.map(id => {
-      const path = posix.join(home, ...SOURCE_RELATIVE_PATHS[id])
-      return { id, path, exists: isDirectory(path) }
-    })
-  }
-  if (platform === 'win32') {
-    const base = typeof env.USERPROFILE === 'string' && env.USERPROFILE.length > 0 ? env.USERPROFILE : home
-    return DRIVE_BACKUP_SOURCE_KINDS.map(id => {
-      const path = win32.join(base, ...SOURCE_RELATIVE_PATHS[id])
-      return { id, path, exists: isDirectory(path) }
-    })
-  }
-  return []
+  if (platform !== 'darwin' && platform !== 'win32') return []
+  return DRIVE_BACKUP_SOURCE_KINDS.map(id => {
+    const path = resolveStandardFolderPath(id, platform, home, env)
+    return { id, path, exists: isDirectory(path) }
+  })
 }
 
 /** Ids of the enumerated folders that exist — the default chooser selection. */

@@ -157,7 +157,7 @@ reproduction; every confirmed defect was fixed with a red→green regression tes
 | e1.5 | Service authority/status fences | adapt | M | done | S7 launchd-runtime.ts gui/<uid> fences: refuses mutation from inside the service and for system paths | refuse mutation from inside the service; system-daemon ownership |
 | e1.6 | Doctor diagnostics (foreign jobs, port, runtime mismatch) | adapt | M | done | S7 doctor.ts pure checks (service-state/port-conflict/runtime-mismatch/config-dir/logs) + real-machine run | port-conflict/runtime-mismatch only; skip launchd reaping |
 | e1.7 | Update channels + checkOnStart + detached handoff | reuse-as-is | S | reuse-as-is | electron-updater channels + ad-hoc signing detection retained (detectMacAdHocSigned exported for doctor/tray) | wait-for-old-PID helper replaces kickstart |
-| e1.8 | State dir / logs / uninstall scopes | adapt | S | done | S7 uninstall scopes (service/state/logs/runtime/app) + config-dir reporting | map ~/.openclaw → ~/.rox; stop service before deleting state |
+| e1.8 | State dir / logs / uninstall scopes | adapt | S | done | S7 uninstall scopes (service/state/logs/runtime/app) + config-dir reporting | map ~/.openclaw → ~/rox; stop service before deleting state |
 
 ## e2 (8 rows)
 

@@ -18,6 +18,7 @@ import { existsSync, readdirSync, readFileSync, statSync, type Dirent, type Stat
 import { mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join, relative, resolve, sep } from 'node:path'
 import {
+  DRIVE_BACKUP_SOURCE_KINDS,
   DRIVE_DEFAULT_QUOTA_BYTES,
   DRIVE_MAX_PARTS,
   DRIVE_PART_SIZE_BYTES,
@@ -35,6 +36,7 @@ import {
   type DriveUploadSession,
 } from '@rox/shared/drive'
 import type { DriveService, OpenUploadInput } from '@rox/server-core/handlers'
+import { resolveStandardFolderPath } from './backup-sources'
 
 interface DriveIndex {
   version: 1
@@ -227,21 +229,12 @@ export function createLocalDrive(options: LocalDriveOptions): DriveService {
   // ---- backup sources ------------------------------------------------------
 
   function backupSourceRoot(kind: DriveBackupSourceKind): string {
-    const home = options.homeDir
-    switch (kind) {
-      case 'downloads':
-        return join(home, 'Downloads')
-      case 'documents':
-        return join(home, 'Documents')
-      case 'pictures':
-        return join(home, 'Pictures')
-      case 'desktop':
-        return join(home, 'Desktop')
-      case 'screenshots':
-        return join(home, 'Pictures', 'Screenshots')
-      default:
-        throw new DriveError('INVALID_PAYLOAD', 'Unknown backup source')
+    if (!DRIVE_BACKUP_SOURCE_KINDS.includes(kind)) {
+      throw new DriveError('INVALID_PAYLOAD', 'Unknown backup source')
     }
+    // One canonical table (backup-sources.ts) resolves the platform's user
+    // folders — never a home-rooted literal built here (TECH-SPEC §10.1 rule 4).
+    return resolveStandardFolderPath(kind, process.platform, options.homeDir)
   }
 
   /** Resolve a backup file's absolute path, guarding against escape. */
