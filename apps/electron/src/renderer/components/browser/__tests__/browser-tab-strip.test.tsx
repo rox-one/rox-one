@@ -195,6 +195,12 @@ describe('BrowserTabStripView renders through the shared tab primitive', () => {
 
 const viewSource = readFileSync(join(import.meta.dir, '../BrowserTabStripView.tsx'), 'utf8')
 const containerSource = readFileSync(join(import.meta.dir, '../BrowserTabStrip.tsx'), 'utf8')
+// The "owns no …" assertions below judge the code, not the file's own prose: the
+// doc comments legitimately name the ARIA attributes and handlers the shared
+// primitive owns, so comments are stripped before those negative checks.
+const withoutComments = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '')
+const viewCode = withoutComments(viewSource)
+const containerCode = withoutComments(containerSource)
 const glyphSource = readFileSync(join(import.meta.dir, '../BrowserTabGlyph.tsx'), 'utf8')
 
 describe('BrowserTabStripView delegates keyboard, ARIA and closing to the primitive', () => {
@@ -204,17 +210,17 @@ describe('BrowserTabStripView delegates keyboard, ARIA and closing to the primit
     expect(viewSource).toContain('variant="browser"')
     expect(viewSource).toContain('onClose=')
     expect(viewSource).toContain('trailing=')
-    expect(viewSource).not.toContain('role="tablist"')
-    expect(viewSource).not.toContain('role="tab"')
-    expect(viewSource).not.toContain('onKeyDown')
-    expect(viewSource).not.toContain('aria-selected')
-    expect(viewSource).not.toContain('onAuxClick')
+    expect(viewCode).not.toContain('role="tablist"')
+    expect(viewCode).not.toContain('role="tab"')
+    expect(viewCode).not.toContain('onKeyDown')
+    expect(viewCode).not.toContain('aria-selected')
+    expect(viewCode).not.toContain('onAuxClick')
   })
 
   it('keeps the container free of tab markup', () => {
     expect(containerSource).toContain('<BrowserTabStripView')
-    expect(containerSource).not.toContain('role="tab"')
-    expect(containerSource).not.toContain('from \'@/components/ui/tabs\'')
+    expect(containerCode).not.toContain('role="tab"')
+    expect(containerCode).not.toContain('from \'@/components/ui/tabs\'')
   })
 
   it('preserves the per-instance menu items', () => {
