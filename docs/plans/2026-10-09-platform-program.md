@@ -154,3 +154,14 @@
   `onboarding/__tests__/identity-step.test.tsx` (1 — `onAvailabilityChecked` не вызывается) и
   `onboarding/__tests__/OnboardingWizard.test.tsx` (1 — welcome-шаг всё ещё рендерит поле юзернейма из моей реализации, тогда как тест параллельной сессии ожидает, что identity живёт только в её `IdentityStep`).
 - Дубли, требующие выбора (не удалены): календарь — мой `providers/google.ts` — живой путь (`calendar:googleSync`), альтернативный `google-calendar-adapter.ts` параллельной сессии оставлен; Keeper — мой vault подключён в «Секретах», компоненты параллельной сессии (`KeeperItemsPane` и др.) сохранены без проводки.
+---
+
+## 8. Доступ агентов к Keeper (2026-10-09)
+
+Агенты получают локальное хранилище через два интерфейса плюс скилл:
+
+- **CLI**: `craft-cli keeper list|get|create|delete|status`. Секреты всегда маскируются; `get --reveal` работает только при `ROX_KEEPER_ALLOW_REVEAL=1` (fail-closed — отказ до вызова `keeper:reveal`). Пароль/TOTP при `create` можно подавать через stdin, не попадая в историю команд.
+- **MCP-инструмент `keeper`** (`session-mcp-server`): действия `list/get/create/update/delete`. Значения маскируются, если не заданы одновременно `reveal:true` и операторский флаг; каждый ответ повторно санитизируется на стороне инструмента, поэтому неверный релей не может «просочить» секрет в контекст модели. Транспорт — loopback-релей к процессу десктопа (владелец vault).
+- **Скилл** `apps/electron/resources/skills/keeper/SKILL.md`: не эхоить секреты, ссылаться по `id`, reveal как узкое исключение.
+
+Тесты: CLI — парсинг аргументов, гейт `--reveal`, маскированный `get`; MCP — схема инструмента, маскирование и гейт. Всё на фейковом RPC-транспорте, без записи в vault.

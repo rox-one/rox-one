@@ -9,8 +9,11 @@
  *
  * This module is local only: it never performs network I/O. `drain()` hands
  * the buffered events to a future analytics wiring without clearing storage
- * for anyone else.
+ * for anyone else; `drainLearningEventsToTelemetry()` is that wiring — it maps
+ * the drained events onto consent-gated `onboarding_learning` captures.
  */
+
+import { trackOnboardingLearning } from '@rox/shared/telemetry'
 
 export const LEARNING_CURVE_MAX_BUFFER = 500
 export const LEARNING_CURVE_STORAGE_KEY = 'rox.onboarding.learning-curve.v1'
@@ -126,4 +129,16 @@ export function trackLearningEvent(input: LearningEventInput): LearningEvent {
 
 export function drainLearningEvents(): LearningEvent[] {
   return learningCurve.drain()
+}
+
+/**
+ * Drain the process-wide buffer into analytics, mapping each event to an
+ * `onboarding_learning` capture enriched with `stepId` and actor. Consent-gated
+ * inside the telemetry SDK (a no-op without a sink); returns the drained events
+ * so callers can keep routing them elsewhere.
+ */
+export function drainLearningEventsToTelemetry(): LearningEvent[] {
+  const events = learningCurve.drain()
+  trackOnboardingLearning(events)
+  return events
 }

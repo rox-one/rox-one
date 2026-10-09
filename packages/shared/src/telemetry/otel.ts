@@ -1,7 +1,7 @@
 /**
  * Dependency-free OpenTelemetry OTLP/HTTP JSON client (traces only).
  *
- * Posts `resourceSpans` payloads to `{OTEL_TRACES_URL}/v1/traces` using global
+ * Posts `resourceSpans` payloads to `{OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces` using global
  * `fetch` (injectable for tests). Fire-and-forget: spans are buffered (drop
  * oldest past 100), coalesced into one request, sent with a 2 s abort timeout,
  * and every failure is swallowed — tracing never blocks or breaks the app.

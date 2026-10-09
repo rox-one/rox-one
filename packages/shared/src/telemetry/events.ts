@@ -71,7 +71,11 @@ export interface TelemetryEventMap {
   /** Terminal step of the registration funnel. */
   registration_completed: TelemetryEmptyProps
   /** Process/window came up. */
-  app_opened: { platform: string; version?: string }
+  app_launched: { platform: string; version?: string }
+  /** A top-level product surface became the active view. */
+  surface_viewed: { surface: string }
+  /** A buffered onboarding learning-curve event was drained to analytics. */
+  onboarding_learning: { learning: string; step: string; actor: string }
 }
 
 export type TelemetryEventName = keyof TelemetryEventMap
@@ -99,7 +103,7 @@ export interface TelemetrySpan {
 /** Sink installed by `initTelemetry()`; the facade only delegates to it. */
 export interface TelemetrySink {
   track(event: string, props: Record<string, unknown>): void
-  getFeatureFlag(key: string): Promise<boolean | string | undefined>
+  getFlag(key: string): Promise<boolean | string | undefined>
   trace(
     name: string,
     attributes?: Record<string, TelemetryAttributeValue>,
@@ -141,15 +145,33 @@ export function track<K extends TelemetryEventName>(
 
 /**
  * Resolve a feature flag. Returns `undefined` when telemetry is off, consent is
- * withheld, or the flag is unknown; never throws.
+ * withheld, the kill switch is engaged, or the flag is unknown; never throws.
  */
-export async function getFeatureFlag(key: string): Promise<boolean | string | undefined> {
+export async function getFlag(key: string): Promise<boolean | string | undefined> {
   const sink = activeSink
   if (!sink) return undefined
   try {
-    return await sink.getFeatureFlag(key)
+    return await sink.getFlag(key)
   } catch {
     return undefined
+  }
+}
+
+/**
+ * Map drained onboarding learning-curve events onto `onboarding_learning`
+ * captures. `step` is the step id and `actor` the attribution source
+ * (`human` | `agent` | `unknown`); like every `track` call this is consent-gated
+ * and a silent no-op without a sink.
+ */
+export function trackOnboardingLearning(
+  events: readonly { name: string; stepId: string; source: string }[],
+): void {
+  for (const event of events) {
+    track('onboarding_learning', {
+      learning: event.name,
+      step: event.stepId,
+      actor: event.source,
+    })
   }
 }
 

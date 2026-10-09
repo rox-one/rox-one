@@ -29,3 +29,9 @@
 ## Остаётся включить в приложении
 - Десктоп/веб-клиент должны получить `POSTHOG_HOST=https://posthog.rox.one` и `POSTHOG_KEY=phc_...` (клиент отправляет события только при включённом согласии «Аналитика продукта», по умолчанию — включено). OTLP-экспорт — на `https://otel.rox.one`.
 - Секретов в клиенте нет: project key — публичный по дизайну PostHog.
+
+## Client wiring (2026-10-09)
+- Env surface: `POSTHOG_HOST`, `POSTHOG_KEY`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`; baked into the main bundle with the live defaults in `scripts/electron-build-main.ts` so a plain build sends, overridable by env, and blank disables the client. `POSTHOG_FLAGS_DISABLED=1` is the `/decide` kill switch.
+- Consent-gated init: main resolves consent from `gamification.json` (`analyticsConsent`, default ON) and the renderer mirrors it via `getGamificationProfile`/`onGamificationChanged`; both start fail-closed until the store resolves. Consent OFF ⇒ zero network calls (verified by `packages/shared/src/telemetry/telemetry.test.ts`).
+- Events: `app_launched` (main, version+platform), `surface_viewed` (renderer, home/sessions families only), and `onboarding_learning` drained from the local learning-curve buffer (stepId + actor).
+- Feature flags: thin `POSTHOG /decide/?v=3` fetch with 5-minute cache and a non-200/offline kill switch; exposed as `getFlag(name)`, never throws, never logs secrets (props pass through `sanitizeTelemetryProps`).

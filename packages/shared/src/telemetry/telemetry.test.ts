@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import {
-  getFeatureFlag,
+  getFlag,
   initTelemetry,
   telemetryConfigFromEnv,
   track,
+  trackOnboardingLearning,
   trace,
 } from './index.ts'
 import { getTelemetrySink, setTelemetrySink } from './events.ts'
@@ -20,6 +21,13 @@ function recordingFetch(calls: FetchCall[]): typeof fetch {
   }) as typeof fetch
 }
 
+function batchBody(call: FetchCall): { api_key: string; batch: Array<Record<string, unknown>> } {
+  return JSON.parse(String(call.init?.body)) as {
+    api_key: string
+    batch: Array<Record<string, unknown>>
+  }
+}
+
 afterEach(() => {
   setTelemetrySink(null)
 })
@@ -29,8 +37,8 @@ describe('telemetryConfigFromEnv', () => {
     expect(
       telemetryConfigFromEnv({
         POSTHOG_HOST: 'https://posthog.rox.one/',
-        POSTHOG_API_KEY: ' ph-key ',
-        OTEL_TRACES_URL: 'https://otel.rox.one///',
+        POSTHOG_KEY: ' ph-key ',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otel.rox.one///',
         OTEL_SERVICE_NAME: ' custom ',
       }),
     ).toEqual({
@@ -57,15 +65,16 @@ describe('initTelemetry consent gate', () => {
     const handle = initTelemetry({
       ...telemetryConfigFromEnv({
         POSTHOG_HOST: 'https://posthog.rox.one',
-        POSTHOG_API_KEY: 'ph-key',
-        OTEL_TRACES_URL: 'https://otel.rox.one',
+        POSTHOG_KEY: 'ph-key',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otel.rox.one',
       }),
       distinctId: 'anon',
       getConsent: () => false,
       fetchImpl: recordingFetch(calls),
     })
     track('onboarding_step_viewed', { step: 'username' })
-    expect(await handle.getFeatureFlag('beta')).toBeUndefined()
+    trackOnboardingLearning([{ name: 'saw', stepId: 'identity', source: 'human' }])
+    expect(await handle.getFlag('beta')).toBeUndefined()
     trace('op', { step: 'username' }).end()
     await handle.flush()
     expect(handle.enabled).toBe(true)
@@ -88,7 +97,7 @@ describe('initTelemetry consent gate', () => {
     expect(calls).toHaveLength(0)
   })
 
-  it('sends capture + traces once consent is granted', async () => {
+  it('sends capture to the configured host/key once consent is granted', async () => {
     const calls: FetchCall[] = []
     const handle = initTelemetry({
       posthogHost: 'https://posthog.rox.one',
@@ -99,13 +108,18 @@ describe('initTelemetry consent gate', () => {
       getConsent: () => true,
       fetchImpl: recordingFetch(calls),
     })
-    track('registration_completed')
+    track('app_launched', { platform: 'darwin', version: '1.2.3' })
     trace('op').end()
     await handle.flush()
     expect(calls.map((call) => call.url).sort()).toEqual([
       'https://otel.rox.one/v1/traces',
       'https://posthog.rox.one/batch/',
     ])
+    const capture = calls.find((call) => call.url === 'https://posthog.rox.one/batch/')!
+    const body = batchBody(capture)
+    expect(body.api_key).toBe('ph-key')
+    expect(body.batch[0]!.event).toBe('app_launched')
+    expect((body.batch[0]!.properties as Record<string, unknown>).version).toBe('1.2.3')
   })
 
   it('is inert when both endpoints are unset', async () => {
@@ -124,7 +138,7 @@ describe('initTelemetry consent gate', () => {
 
   it('uninstalls the sink on dispose', () => {
     const handle = initTelemetry({
-      ...telemetryConfigFromEnv({ POSTHOG_HOST: 'https://posthog.rox.one', POSTHOG_API_KEY: 'k' }),
+      ...telemetryConfigFromEnv({ POSTHOG_HOST: 'https://posthog.rox.one', POSTHOG_KEY: 'k' }),
       distinctId: 'anon',
       getConsent: () => true,
       fetchImpl: recordingFetch([]),
@@ -135,10 +149,54 @@ describe('initTelemetry consent gate', () => {
   })
 })
 
+describe('feature flag kill switch', () => {
+  it('never fetches /decide when disabled and answers from the fallback map', async () => {
+    const calls: FetchCall[] = []
+    const handle = initTelemetry({
+      posthogHost: 'https://posthog.rox.one',
+      posthogApiKey: 'ph-key',
+      otelTracesUrl: '',
+      serviceName: 'rox-desktop',
+      distinctId: 'anon',
+      getConsent: () => true,
+      flagsDisabled: true,
+      fallbackFlags: { beta: 'control' },
+      fetchImpl: recordingFetch(calls),
+    })
+    expect(await handle.getFlag('beta')).toBe('control')
+    expect(await handle.getFlag('unknown')).toBeUndefined()
+    expect(calls).toHaveLength(0)
+  })
+})
+
+describe('learning-curve drain mapping', () => {
+  it('maps drained events to consent-gated onboarding_learning captures', async () => {
+    const calls: FetchCall[] = []
+    const handle = initTelemetry({
+      posthogHost: 'https://posthog.rox.one',
+      posthogApiKey: 'ph-key',
+      otelTracesUrl: '',
+      serviceName: 'rox-desktop',
+      distinctId: 'anon',
+      getConsent: () => true,
+      fetchImpl: recordingFetch(calls),
+    })
+    trackOnboardingLearning([
+      { name: 'saw', stepId: 'identity', source: 'human' },
+      { name: 'tried', stepId: 'questionnaire', source: 'agent' },
+    ])
+    await handle.flush()
+    const body = batchBody(calls[0]!)
+    expect(body.batch.map((event) => event.event)).toEqual(['onboarding_learning', 'onboarding_learning'])
+    expect(body.batch[0]!.properties).toMatchObject({ learning: 'saw', step: 'identity', actor: 'human' })
+    expect(body.batch[1]!.properties).toMatchObject({ learning: 'tried', step: 'questionnaire', actor: 'agent' })
+  })
+})
+
 describe('facade without a sink', () => {
-  it('no-ops track/getFeatureFlag/trace', async () => {
-    track('app_opened', { platform: 'darwin' })
-    expect(await getFeatureFlag('beta')).toBeUndefined()
+  it('no-ops track/getFlag/trace', async () => {
+    track('app_launched', { platform: 'darwin' })
+    expect(await getFlag('beta')).toBeUndefined()
     expect(() => trace('op').end()).not.toThrow()
   })
 })

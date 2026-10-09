@@ -6,10 +6,11 @@
  * (see `./events.ts`). It is inert when the endpoints are unset, and every
  * call is additionally gated by the caller-supplied consent getter.
  *
- * Endpoints come from `POSTHOG_HOST` / `POSTHOG_API_KEY` / `OTEL_TRACES_URL` /
- * `OTEL_SERVICE_NAME`. In the Electron main bundle those are baked at build
- * time via esbuild `--define` (see `scripts/electron-build-main.ts`); the
- * renderer receives the same values from main over `__telemetry-config`.
+ * Endpoints come from `POSTHOG_HOST` / `POSTHOG_KEY` /
+ * `OTEL_EXPORTER_OTLP_ENDPOINT` / `OTEL_SERVICE_NAME`. In the Electron main
+ * bundle those are baked at build time (with the self-hosted defaults) via
+ * esbuild `--define` (see `scripts/electron-build-main.ts`); the renderer
+ * receives the same values from main over `__telemetry-config`.
  * `telemetryConfigFromEnv()` is a pure function so it stays testable and never
  * references a global `process` in renderer bundles.
  */
@@ -59,8 +60,8 @@ function normalizeUrl(value: string | undefined): string {
 export function telemetryConfigFromEnv(env: TelemetryEnv): TelemetryEndpointConfig {
   return {
     posthogHost: normalizeUrl(env.POSTHOG_HOST),
-    posthogApiKey: (env.POSTHOG_API_KEY ?? '').trim(),
-    otelTracesUrl: normalizeUrl(env.OTEL_TRACES_URL),
+    posthogApiKey: (env.POSTHOG_KEY ?? '').trim(),
+    otelTracesUrl: normalizeUrl(env.OTEL_EXPORTER_OTLP_ENDPOINT),
     serviceName: (env.OTEL_SERVICE_NAME ?? '').trim() || DEFAULT_SERVICE_NAME,
   }
 }
@@ -77,6 +78,8 @@ export interface TelemetryInitOptions extends TelemetryEndpointConfig {
   sendBeaconImpl?: (url: string, data: string) => boolean
   now?: () => number
   fallbackFlags?: Record<string, boolean | string>
+  /** Env kill switch (`POSTHOG_FLAGS_DISABLED=1`): never fetch `/decide`. */
+  flagsDisabled?: boolean
   onError?: (error: unknown) => void
 }
 
@@ -84,7 +87,7 @@ export interface TelemetryHandle {
   /** True when at least one endpoint is configured (independent of consent). */
   readonly enabled: boolean
   track(event: string, props?: Record<string, unknown>): void
-  getFeatureFlag(key: string): Promise<boolean | string | undefined>
+  getFlag(key: string): Promise<boolean | string | undefined>
   trace(name: string, attributes?: Record<string, TelemetryAttributeValue>): TelemetrySpan | undefined
   /** Flush capture + traces. Never rejects. */
   flush(): Promise<void>
@@ -110,6 +113,7 @@ export function initTelemetry(options: TelemetryInitOptions): TelemetryHandle {
           now: options.now,
           sendBeaconImpl: options.sendBeaconImpl,
           fallbackFlags: options.fallbackFlags,
+          flagsEnabled: options.flagsDisabled !== true,
           onError: options.onError,
         })
       : null
@@ -141,9 +145,9 @@ export function initTelemetry(options: TelemetryInitOptions): TelemetryHandle {
       if (!consentGranted()) return
       posthog?.capture(event, props)
     },
-    async getFeatureFlag(key) {
+    async getFlag(key) {
       if (!consentGranted() || !posthog) return undefined
-      return posthog.getFeatureFlag(key)
+      return posthog.getFlag(key)
     },
     trace(name, attributes) {
       if (!consentGranted() || !otel) return undefined
@@ -156,7 +160,7 @@ export function initTelemetry(options: TelemetryInitOptions): TelemetryHandle {
   return {
     enabled: posthog !== null || otel !== null,
     track: (event, props) => sink.track(event, props ?? {}),
-    getFeatureFlag: (key) => sink.getFeatureFlag(key),
+    getFlag: (key) => sink.getFlag(key),
     trace: (name, attributes) => sink.trace(name, attributes),
     async flush() {
       await posthog?.flush()

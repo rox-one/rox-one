@@ -132,12 +132,12 @@ describe('PostHogClient feature flags', () => {
       fetchImpl: recordingFetch(calls, () => new Response(JSON.stringify({ featureFlags: { beta: true } }), { status: 200 })),
       now: () => now, flagCacheTtlMs: 5 * 60_000,
     })
-    expect(await client.getFeatureFlag('beta')).toBe(true)
-    expect(await client.getFeatureFlag('beta')).toBe(true)
+    expect(await client.getFlag('beta')).toBe(true)
+    expect(await client.getFlag('beta')).toBe(true)
     expect(calls).toHaveLength(1)
     expect(calls[0]!.url).toBe('https://h/decide/?v=3')
     now += 5 * 60_000 + 1
-    expect(await client.getFeatureFlag('beta')).toBe(true)
+    expect(await client.getFlag('beta')).toBe(true)
     expect(calls).toHaveLength(2)
   })
 
@@ -148,8 +148,8 @@ describe('PostHogClient feature flags', () => {
       fetchImpl: recordingFetch(calls, () => new Response('nope', { status: 500 })),
       fallbackFlags: { beta: 'control' },
     })
-    expect(await client.getFeatureFlag('beta')).toBe('control')
-    expect(await client.getFeatureFlag('beta')).toBe('control')
+    expect(await client.getFlag('beta')).toBe('control')
+    expect(await client.getFlag('beta')).toBe('control')
     expect(calls).toHaveLength(1) // kill switch: no second decide call
   })
 
@@ -158,6 +158,17 @@ describe('PostHogClient feature flags', () => {
       host: 'https://h', apiKey: 'k', distinctId: 'd',
       fetchImpl: recordingFetch([], () => new Response(JSON.stringify({ featureFlags: ['alpha'] }), { status: 200 })),
     })
-    expect(await client.getFeatureFlag('alpha')).toBe(true)
+    expect(await client.getFlag('alpha')).toBe(true)
+  })
+
+  it('never fetches /decide when flagsEnabled is false', async () => {
+    const calls: FetchCall[] = []
+    const client = new PostHogClient({
+      host: 'https://h', apiKey: 'k', distinctId: 'd',
+      flagsEnabled: false, fallbackFlags: { beta: true },
+      fetchImpl: recordingFetch(calls),
+    })
+    expect(await client.getFlag('beta')).toBe(true)
+    expect(calls).toHaveLength(0)
   })
 })

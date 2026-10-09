@@ -5,7 +5,8 @@ import ReactDOM from 'react-dom/client'
 import { init as sentryInit } from '@sentry/electron/renderer'
 import * as Sentry from '@sentry/react'
 import { captureConsoleIntegration } from '@sentry/react'
-import { initTelemetry, type TelemetryHandle } from '@rox/shared/telemetry'
+import { initTelemetry, track, type TelemetryHandle } from '@rox/shared/telemetry'
+import type { TelemetryBootstrapConfig } from '../shared/types'
 import { Provider as JotaiProvider, useAtomValue } from 'jotai'
 import App from './App'
 import { ThemeProvider } from './context/ThemeContext'
@@ -26,6 +27,8 @@ import { ShellStoreBridge } from './platform/ShellStoreBridge'
 import { RenderProfileMotionConfig } from './lib/render-profile-motion'
 import { seedRenderProfile, startRenderProfileSync } from './lib/render-profile-dom'
 import { seedEntitiesLinksGate } from './lib/entities-links-sync'
+import { subscribeNavigateEvents } from './lib/navigate'
+import { drainLearningEventsToTelemetry } from './components/onboarding/learning-curve'
 
 const rendererPerfHarness = installRendererPerfHarness()
 
@@ -122,7 +125,11 @@ let rendererAnalyticsConsent = false
 const applyAnalyticsConsent = (consent: unknown): void => {
   if (typeof consent === 'boolean') rendererAnalyticsConsent = consent
 }
-const telemetryBootstrap = window.electronAPI?.getTelemetryConfig?.() ?? null
+// `flagsDisabled` is carried alongside the endpoint config by main (not part of
+// the published bootstrap type yet), so widen the snapshot rather than the API.
+const telemetryBootstrap = (window.electronAPI?.getTelemetryConfig?.() ?? null) as
+  | (TelemetryBootstrapConfig & { flagsDisabled?: boolean })
+  | null
 const rendererTelemetry: TelemetryHandle | null = telemetryBootstrap
   ? initTelemetry({
       ...telemetryBootstrap,
@@ -137,7 +144,33 @@ void window.electronAPI?.getGamificationProfile?.()
   .catch(() => { /* store unreachable → stay fail-closed */ })
 const offGamificationAnalytics = window.electronAPI?.onGamificationChanged?.((profile) =>
   applyAnalyticsConsent(profile?.analyticsConsent))
+
+// Minimal surface-view tracking: only the home and sessions families are
+// instrumented, matched from the route string on `lib/navigate`'s NAVIGATE_EVENT.
+// Everything else stays untracked (see the "do not instrument everything" rule).
+const SURFACE_BY_ROUTE_PREFIX: ReadonlyArray<readonly [string, string]> = [
+  ['home', 'home'],
+  ['allSessions', 'sessions'],
+  ['flagged', 'sessions'],
+  ['archived', 'sessions'],
+  ['state/', 'sessions'],
+  ['label/', 'sessions'],
+  ['view/', 'sessions'],
+]
+let lastSurface: string | null = null
+const stopSurfaceTracking = subscribeNavigateEvents((route) => {
+  const match = SURFACE_BY_ROUTE_PREFIX.find(([prefix]) => route === prefix || route.startsWith(prefix))
+  if (!match || match[1] === lastSurface) return
+  lastSurface = match[1]
+  track('surface_viewed', { surface: match[1] })
+})
+
+// Drain buffered onboarding learning-curve events on a slow cadence and right
+// before teardown, so the last events ride the pagehide beacon flush.
+const LEARNING_DRAIN_INTERVAL_MS = 30_000
+const learningDrainTimer = setInterval(drainLearningEventsToTelemetry, LEARNING_DRAIN_INTERVAL_MS)
 const flushRendererTelemetry = (): void => {
+  drainLearningEventsToTelemetry()
   rendererTelemetry?.flushWithBeacon()
 }
 window.addEventListener('pagehide', flushRendererTelemetry)
@@ -145,6 +178,8 @@ window.addEventListener('beforeunload', flushRendererTelemetry)
 import.meta.hot?.dispose(() => {
   window.removeEventListener('pagehide', flushRendererTelemetry)
   window.removeEventListener('beforeunload', flushRendererTelemetry)
+  clearInterval(learningDrainTimer)
+  stopSurfaceTracking()
   offGamificationAnalytics?.()
   rendererTelemetry?.dispose()
 })

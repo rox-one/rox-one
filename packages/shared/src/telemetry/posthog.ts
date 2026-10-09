@@ -44,6 +44,8 @@ export interface PostHogClientOptions {
   maxBufferSize?: number
   flagCacheTtlMs?: number
   flagKillSwitchMs?: number
+  /** Hard env kill switch: when false, `/decide` is never fetched. */
+  flagsEnabled?: boolean
   /** Values returned when `/decide` is unavailable. */
   fallbackFlags?: Record<string, boolean | string>
   /** Renderer unload path; e.g. `navigator.sendBeacon(url, blob)`. */
@@ -63,6 +65,7 @@ export class PostHogClient {
   readonly #maxBufferSize: number
   readonly #flagCacheTtlMs: number
   readonly #flagKillSwitchMs: number
+  readonly #flagsEnabled: boolean
   readonly #fallbackFlags: Record<string, boolean | string>
   readonly #sendBeacon: ((url: string, data: string) => boolean) | undefined
   readonly #onError: ((error: unknown) => void) | undefined
@@ -85,6 +88,7 @@ export class PostHogClient {
     this.#maxBufferSize = options.maxBufferSize ?? DEFAULT_MAX_BUFFER_SIZE
     this.#flagCacheTtlMs = options.flagCacheTtlMs ?? DEFAULT_FLAG_TTL_MS
     this.#flagKillSwitchMs = options.flagKillSwitchMs ?? DEFAULT_FLAG_KILL_SWITCH_MS
+    this.#flagsEnabled = options.flagsEnabled !== false
     this.#fallbackFlags = options.fallbackFlags ?? {}
     this.#sendBeacon = options.sendBeaconImpl
     this.#onError = options.onError
@@ -161,9 +165,13 @@ export class PostHogClient {
     return ok
   }
 
-  /** Resolve a feature flag, cached for `flagCacheTtlMs` with a local fallback. */
-  async getFeatureFlag(key: string): Promise<boolean | string | undefined> {
-    if (!this.enabled) return undefined
+  /**
+   * Resolve a feature flag, cached for `flagCacheTtlMs` with a local fallback.
+   * When the env kill switch is engaged (`flagsEnabled: false`) no request is
+   * ever made and the local fallback map answers instead.
+   */
+  async getFlag(key: string): Promise<boolean | string | undefined> {
+    if (!this.enabled || !this.#flagsEnabled) return this.#fallbackFlags[key]
     const now = this.#now()
     const cached = this.#flagCache.get(key)
     if (cached && now < cached.expiresAt) return cached.value

@@ -91,32 +91,37 @@ Sentry.setUser({ id: machineId })
 // Product analytics: PostHog capture/feature flags + OTLP traces.
 //
 // Self-hosted endpoints are baked at build time via esbuild --define (see
-// scripts/electron-build-main.ts); with them unset the client stays fully inert.
-// The renderer receives the same distinct_id + endpoints over `__telemetry-config`.
+// scripts/electron-build-main.ts) — with the live defaults, so analytics sends
+// out of the box; an explicit env value still overrides them. The renderer
+// receives the same distinct_id + endpoints over `__telemetry-config`.
 // Egress is gated by the «Аналитика продукта» consent (gamification.json
 // analyticsConsent, default ON) — local Electron clients have no native
 // principal, so that file is the authoritative store; a read failure fails closed.
 const telemetryEndpoints = telemetryConfigFromEnv({
   POSTHOG_HOST: process.env.POSTHOG_HOST,
-  POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
-  OTEL_TRACES_URL: process.env.OTEL_TRACES_URL,
+  POSTHOG_KEY: process.env.POSTHOG_KEY,
+  OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
   OTEL_SERVICE_NAME: process.env.OTEL_SERVICE_NAME,
 })
+// `POSTHOG_FLAGS_DISABLED=1` disables `/decide` entirely (shared with renderer).
+const telemetryFlagsDisabled = process.env.POSTHOG_FLAGS_DISABLED === '1'
 const telemetryBootstrapConfig = {
   distinctId: machineId,
   ...telemetryEndpoints,
+  flagsDisabled: telemetryFlagsDisabled,
 }
 const productTelemetry: TelemetryHandle = initTelemetry({
   ...telemetryEndpoints,
   distinctId: machineId,
   version: app.getVersion(),
   platform: process.platform,
+  flagsDisabled: telemetryFlagsDisabled,
   getConsent: () => loadGamificationState().analyticsConsent,
 })
 app.on('will-quit', () => {
   productTelemetry.dispose()
 })
-trackProductEvent('app_opened', { platform: process.platform, version: app.getVersion() })
+trackProductEvent('app_launched', { platform: process.platform, version: app.getVersion() })
 
 import { join, delimiter, resolve, sep } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
@@ -199,6 +204,7 @@ import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
 import { registerTelegramLink } from './telegram-link/register'
 import { registerCalendarGoogleOAuthIpc } from './calendar/google-oauth'
+import { registerAppleCalendarHelperFromHost } from './calendar/register-helper'
 import { registerNativeReplicaForWindows } from './native-replica-bootstrap'
 import { initBrowserIntelRuntime } from './browser-intel/index'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
@@ -848,6 +854,16 @@ app.whenReady().then(async () => {
       ipcMain,
       isTrustedSender: (event) => Boolean(windowManager?.getWindowByWebContentsId(event.sender.id)),
       openExternal: (url) => shell.openExternal(url),
+    })
+
+    // Apple Calendar (macOS EventKit): register the helper binding only when
+    // APPLE_CALENDAR_LIVE=1 and the bundled binary exists. Fail-closed — with the
+    // gate off or the binary absent the connector keeps returning Unavailable.
+    registerAppleCalendarHelperFromHost({
+      log: (message, error) => {
+        if (error) mainLog.warn(message, error)
+        else mainLog.info(message)
+      },
     })
 
     // Build real PlatformServices from Electron APIs

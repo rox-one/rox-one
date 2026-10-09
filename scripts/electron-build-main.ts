@@ -65,6 +65,17 @@ function loadEnvFile(): void {
 // To enable in the future, add @sentry/esbuild-plugin. See apps/electron/CLAUDE.md.
 // NOTE: Google OAuth credentials are NOT baked into the build - users provide their own
 // via source config. See README_FOR_OSS.md for setup instructions.
+//
+// Product analytics bakes the live self-hosted endpoints by default so a plain
+// build sends (consent-gated at runtime); setting the env var overrides it, and
+// an explicitly empty value disables the client. The PostHog project key is a
+// public client key (PostHog's design) — not a secret.
+const BAKED_ENV_DEFAULTS: Record<string, string> = {
+  POSTHOG_HOST: "https://posthog.rox.one",
+  POSTHOG_KEY: "phc_sbFWoBoNgqGS82Q6Lone2Hvv2jVy8FMt8dFBLcBBk5X3",
+  OTEL_EXPORTER_OTLP_ENDPOINT: "https://otel.rox.one",
+};
+
 function getBuildDefines(): string[] {
   const definedVars = [
     "SLACK_OAUTH_CLIENT_ID",
@@ -73,14 +84,17 @@ function getBuildDefines(): string[] {
     "MICROSOFT_OAUTH_CLIENT_SECRET",
     "SENTRY_ELECTRON_INGEST_URL",
     "POSTHOG_HOST",
-    "POSTHOG_API_KEY",
-    "OTEL_TRACES_URL",
+    "POSTHOG_KEY",
+    "POSTHOG_FLAGS_DISABLED",
+    "OTEL_EXPORTER_OTLP_ENDPOINT",
     "OTEL_SERVICE_NAME",
     "CRAFT_DEV_RUNTIME",
   ];
 
+  const noEnv = process.argv.includes('--no-env');
   return definedVars.map((varName) => {
-    const value = process.argv.includes('--no-env') ? '' : process.env[varName] || "";
+    const fromEnv = noEnv ? "" : process.env[varName];
+    const value = fromEnv !== undefined ? fromEnv : (BAKED_ENV_DEFAULTS[varName] ?? "");
     return `--define:process.env.${varName}=${JSON.stringify(value)}`;
   });
 }
