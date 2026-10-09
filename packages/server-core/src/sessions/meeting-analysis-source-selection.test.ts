@@ -17,8 +17,8 @@ test('Meeting safe empty-source selection wins built-in workspace defaults and p
   ensureBuiltinMcpSources(root)
   const config = loadWorkspaceConfig(root)!
   const defaults = getEnabledBuiltinMcpSourceSlugs(root)
-  expect(defaults).toContain('deepwiki')
   expect(defaults).toContain('context7')
+  expect(defaults).toContain('codegraph')
   saveWorkspaceConfig(root, { ...config, defaults: { ...config.defaults, enabledSourceSlugs: defaults }, localMcpServers: { enabled: false } })
   const manager = new SessionManager()
   cleanups.push(() => manager.cleanup())
