@@ -22,7 +22,27 @@ Eight parallel slices shipped and merged on `port/openclaw-features`; per-area e
 
 Row status counts: deferred=39, done=32, partial=5, reuse-as-is=16, skipped=3.
 
-Fixes applied after adversarial review: `port/fix-s2-presence` (viewer heartbeat, typing clear target, self-echo filter).
+## Post-review fixes (2026-10-09)
+
+Six independent adversarial reviewers audited the merged S1–S5/S8 slices against source and
+reproduction; every confirmed defect was fixed with a red→green regression test.
+
+| branch | sha | defects fixed |
+|---|---|---|
+| `port/fix-s1-access` | `086fcec34` | assignOwner privilege escalation (non-owner could self-assign and then write), `sessions:bulkUpdate` visibility bypass, native sharing gate unreachable, native snapshot missing attribution fields, local actor id space vs cloud account |
+| `port/fix-s2-presence` | `7c85640a2` | viewer presence expired after 5 min (no heartbeat), typing beacon cleared the wrong session on switch, local user saw their own typing |
+| `port/fix-s3-handoff` | `202d5ac75` | pairing page could not load its session-gated bundle cookie-less (now a self-contained hashed-inline-script page), nothing in the product could mint a token (authenticated `POST /handoff/mint` + startup printer) |
+| `port/fix-s4-skills` | `73935f565` | prompt advertised unresolved bare tool names (now `mcp__session__skills_*`), shipped `skills_read` followed escaping directory symlinks (realpath confinement), per-slug collisions were unreachable, duplicate full-store walk per spawn |
+| `port/fix-s5-memory` | `471244853` | curated bootstrap block was dead code (now injected in system + OMP prompts), provenance gate bypassed by project/workspace/lesson prompt paths, memory tools wired for `temporary` sessions, FTS5-vs-JS ranking divergence, corpus/backend staleness, Windows path bug |
+| `port/fix-s8-voice` | `0e609814f` | socket handlers not bound to their socket (queued audio lost), voice error codes not wire `ErrorCode` members, `voice:ttsStreamChunk`/`voice:trigger` missing from native push allow-lists, input transcription never enabled, STT connect timeout |
+| (inline) | `2fae60203` | meetings observe test union narrowing so `server-core` typecheck passes |
+
+## Known pre-existing failures (verified on pristine `origin/main` @ `7c2c202b7`, not caused by this port)
+
+- `packages/shared/src/skills/__tests__/skill-summaries.test.ts` + `storage.test.ts`: 11 failures — per-test 5 s timeouts against this machine's ~9.1k-entry skill store (reproduced on pristine main: 1/2 and 27/37).
+- `apps/electron/src/main/meetings/__tests__/local-ipc-binding.test.ts`: 1 failure (stale fixture vs `bootstrap-window-workspace.ts`).
+- `scripts/check-raw-sends.sh` (`lint:ipc-sends`): 6 raw `webContents.send` sites fail the gate on pristine main; the port adds none.
+- `packages/server/src/__tests__/smoke.test.ts`: "Server did not stop on SIGTERM" (reproduced with the port changes stashed).
 
 ## a1 (7 rows)
 
