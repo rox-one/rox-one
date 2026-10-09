@@ -27,6 +27,7 @@ import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { SourceSelectorPopover } from '@/components/ui/SourceSelectorPopover'
 import { SkillSelectorPopover } from '@/components/ui/SkillSelectorPopover'
 import { WorkingDirectorySelector } from '../input/WorkingDirectorySelector'
+import { WidgetCard } from '@/components/board/WidgetCard'
 import type { LoadedSource, LoadedSkill } from '../../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -973,7 +974,8 @@ export function TaskEditor({
           onOpenChildSession={onOpenChildSession}
         />
       ) : (
-      /* Body */
+      <>
+      {/* Body */}
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(360px,2fr)_3fr] gap-3">
         {/* Left — definition */}
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
@@ -1228,6 +1230,25 @@ export function TaskEditor({
           )}
         </div>
       </div>
+
+      {/* Board widget staged for this task (`board/widgets/<slug>/`), mounted
+          ticket-scoped through the frozen `board:*` RPC. Edit mode only: a
+          create draft has no stable task slug to address a revision by. */}
+      {isEdit && editSlug ? (
+        <section
+          aria-label={t('board.widget.sectionTitle')}
+          className="shrink-0 overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-minimal"
+        >
+          <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5">
+            <span className="text-[13px] font-bold">{t('board.widget.sectionTitle')}</span>
+            <span className="truncate text-[11px] text-foreground/40">{editSlug}</span>
+          </div>
+          <div className="h-[280px] overflow-auto p-3">
+            <WidgetCard widgetId={editSlug} title={title || editSlug} />
+          </div>
+        </section>
+      ) : null}
+      </>
       )}
     </div>
   )
