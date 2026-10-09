@@ -142,7 +142,7 @@ import { OpenDesignRuntimeManager, isTrustedOpenDesignIpcEvent, registerOpenDesi
 import { OpenDesignWindowController } from './open-design-window'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
-import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog, errorLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
 import { registerStorageVisibleRootIpc } from './storage-visible-root-ipc'
 import { registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from './visible-home-boot'
@@ -833,7 +833,9 @@ app.whenReady().then(async () => {
       logger: log,
       isDebugMode,
       getLogFilePath,
-      captureError: (err) => { console.error('[captureError]', err) },
+      captureError: (err) => {
+        errorLog.error('[captureError]', { error: err })
+      },
     })
 
     // W1-13: Settings toggle for storage.visible-root.v1 (applies on next launch).
@@ -1146,7 +1148,10 @@ app.whenReady().then(async () => {
               await Promise.all([whenSpawnEnvReady(), whenBundledSkillsReadyForAgents(10_000)])
             },
             captureException: (error, context) => {
-              console.error('[captureException]', (error instanceof Error ? error : new Error(String(error))).message, {
+              const normalized = error instanceof Error ? error : new Error(String(error))
+              errorLog.error('[captureException]', {
+                message: normalized.message,
+                error: normalized,
                 errorSource: context?.errorSource,
                 sessionId: context?.sessionId,
               })
@@ -2080,8 +2085,10 @@ app.on('before-quit', async (event) => {
 // Handle uncaught exceptions.
 process.on('uncaughtException', (error) => {
   mainLog.error('Uncaught exception:', error)
+  errorLog.error('Uncaught exception', { error })
 })
 
 process.on('unhandledRejection', (reason, promise) => {
   mainLog.error('Unhandled rejection at:', promise, 'reason:', reason)
+  errorLog.error('Unhandled rejection', { reason, promise })
 })
