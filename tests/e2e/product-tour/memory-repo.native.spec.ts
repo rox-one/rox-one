@@ -174,10 +174,11 @@ async function onboardAndOpenRepoViaSidebar(page: Page, dialogs: string[]): Prom
   }
   await expect(username).toBeVisible()
   const startButton = page.locator('button', { hasText: /Начать|Get started/ }).first()
-  // The first-run «Начать» stays disabled until a name is present (and while the
-  // browser-intelligence preference settles), so fill the name first and only
-  // then wait for the button to leave its disabled/loading state.
-  await page.fill('#onboarding-username', 'Память QA')
+  // The first-run «Начать» stays disabled until a *valid* handle is present
+  // (ASCII letters/digits/underscore/dash, 4-16 chars — «Память QA» was not),
+  // and while the browser-intelligence preference settles, so fill the name
+  // first and only then wait for the button to leave its disabled state.
+  await page.fill('#onboarding-username', 'memrepo-qa')
   await expect(startButton).toBeEnabled()
   await startButton.click()
 
