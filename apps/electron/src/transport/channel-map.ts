@@ -743,6 +743,26 @@ export const CHANNEL_MAP = {
   rebuildMemoryIndex: invoke(RPC_CHANNELS.memory.REBUILD_INDEX),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
 
+  // Memory repository projection + dream (spec 2026-10-09 §7)
+  listMemoryRepoBanks: invoke(RPC_CHANNELS.memory.REPO_LIST_BANKS),
+  getMemoryRepoStatus: invoke(RPC_CHANNELS.memory.REPO_STATUS),
+  getMemoryRepoTree: invoke(RPC_CHANNELS.memory.REPO_TREE),
+  readMemoryRepoFile: invoke(RPC_CHANNELS.memory.REPO_READ_FILE),
+  listMemoryRepoCommits: invoke(RPC_CHANNELS.memory.REPO_COMMITS),
+  getMemoryRepoCommitDiff: invoke(RPC_CHANNELS.memory.REPO_COMMIT_DIFF),
+  getMemoryRepoGraph: invoke(RPC_CHANNELS.memory.REPO_GRAPH),
+  exportMemoryRepo: invoke(RPC_CHANNELS.memory.REPO_EXPORT),
+  getMemoryDreamStatus: invoke(RPC_CHANNELS.memory.DREAM_STATUS),
+  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN),
+  getMemoryDreamLog: invoke(RPC_CHANNELS.memory.DREAM_LOG),
+  previewMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT),
+  applyMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_APPLY_IMPORT),
+  revertMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_REVERT_IMPORT),
+  onMemoryRepoChanged: listener(RPC_CHANNELS.memory.REPO_CHANGED),
+  onMemoryDreamEvent: listener(RPC_CHANNELS.memory.DREAM_EVENT),
+  onMemoryDreamDone: listener(RPC_CHANNELS.memory.DREAM_DONE),
+  onMemoryRepoImportReady: listener(RPC_CHANNELS.memory.REPO_IMPORT_READY),
+
   // Learning (continual learning, PRD §15) — agent/native actions
   // (`learning:observe|recordOutcome|recordCorrection`) are intentionally absent.
   listLearningCandidates: invoke(RPC_CHANNELS.learning.LIST_CANDIDATES),
@@ -1134,6 +1154,24 @@ export const CHANNEL_MAP = {
   entitiesLinks: invoke(RPC_CHANNELS.entities.LINKS),
   entitiesResolve: invoke(RPC_CHANNELS.entities.RESOLVE),
   onEntitiesLinksChanged: listener(RPC_CHANNELS.entities.LINKS_CHANGED),
+
+  // Rox History — clipboard history (Electron main store + monitor; LOCAL_ONLY)
+  listClipboardEntries: invoke(RPC_CHANNELS.clipboard.LIST),
+  getClipboardEntry: invoke(RPC_CHANNELS.clipboard.GET),
+  setClipboardEntryStarred: invoke(RPC_CHANNELS.clipboard.STAR),
+  setClipboardEntryTags: invoke(RPC_CHANNELS.clipboard.TAGS),
+  deleteClipboardEntry: invoke(RPC_CHANNELS.clipboard.DELETE),
+  clearClipboardHistory: invoke(RPC_CHANNELS.clipboard.CLEAR),
+  copyClipboardEntry: invoke(RPC_CHANNELS.clipboard.COPY),
+  writeClipboardTextConcealed: invoke(RPC_CHANNELS.clipboard.WRITE_CONCEALED),
+  getClipboardSettings: invoke(RPC_CHANNELS.clipboard.SETTINGS_GET),
+  saveClipboardSettings: invoke(RPC_CHANNELS.clipboard.SETTINGS_SET),
+  getClipboardTagCounts: invoke(RPC_CHANNELS.clipboard.TAG_COUNTS),
+  getClipboardStats: invoke(RPC_CHANNELS.clipboard.STATS),
+  onClipboardChanged: listener(RPC_CHANNELS.clipboard.CHANGED),
+
+  // Knowledge map — auto-generated user knowledge graph (server-core builder)
+  buildKnowledgeMap: invoke(RPC_CHANNELS.knowledgeMap.GET),
 
   // Telegram account linking (R4) — local rox-tg-linkd daemon.
   tgLinkStart: invoke(RPC_CHANNELS.tgLink.START),

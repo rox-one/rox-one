@@ -111,7 +111,7 @@ describe('omnibox command filter logic', () => {
     })
     registry.register({
       id: 'knowledge.openCompat',
-      title: 'Open SiYuan compatibility view',
+      title: 'Open the compatibility view',
       category: 'Knowledge',
       source: 'craft',
       keywords: ['knowledge', 'siyuan', 'compat'],
@@ -119,7 +119,7 @@ describe('omnibox command filter logic', () => {
     })
     registry.register({
       id: 'siyuan.openCompat',
-      title: 'Open SiYuan compatibility view',
+      title: 'Open the compatibility view',
       category: 'Knowledge',
       source: 'craft',
       keywords: ['siyuan', 'compat'],
@@ -155,8 +155,8 @@ describe('omnibox command filter logic', () => {
   })
 
   it('registers knowledge.openCompat and siyuan.openCompat alias', () => {
-    expect(registry.get('knowledge.openCompat')?.title).toBe('Open SiYuan compatibility view')
-    expect(registry.get('siyuan.openCompat')?.title).toBe('Open SiYuan compatibility view')
+    expect(registry.get('knowledge.openCompat')?.title).toBe('Open the compatibility view')
+    expect(registry.get('siyuan.openCompat')?.title).toBe('Open the compatibility view')
     expect(registry.get('knowledge.openCompat')?.source).toBe('craft')
     expect(registry.get('siyuan.openCompat')?.source).toBe('craft')
   })

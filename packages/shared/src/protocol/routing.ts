@@ -364,6 +364,27 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.bundledSkills.SET_DISABLED,
   RPC_CHANNELS.bundledSkills.CHANGED,
 
+  // Rox History — clipboard history store + monitor live in the local Electron
+  // main process (local OS clipboard, host config dir).
+  RPC_CHANNELS.clipboard.LIST,
+  RPC_CHANNELS.clipboard.GET,
+  RPC_CHANNELS.clipboard.STAR,
+  RPC_CHANNELS.clipboard.TAGS,
+  RPC_CHANNELS.clipboard.DELETE,
+  RPC_CHANNELS.clipboard.CLEAR,
+  RPC_CHANNELS.clipboard.COPY,
+  RPC_CHANNELS.clipboard.WRITE_CONCEALED,
+  RPC_CHANNELS.clipboard.SETTINGS_GET,
+  RPC_CHANNELS.clipboard.SETTINGS_SET,
+  RPC_CHANNELS.clipboard.TAG_COUNTS,
+  RPC_CHANNELS.clipboard.STATS,
+  RPC_CHANNELS.clipboard.CHANGED,
+
+  // knowledge map — built from the local config dir (context + memory) and the
+  // workspace notes root, so it runs on the host.
+  RPC_CHANNELS.knowledgeMap.GET,
+  RPC_CHANNELS.knowledgeMap.CHANGED,
+
   // marketplace — curated installs into the local config dir (skills/context/toolchain deferral)
   RPC_CHANNELS.marketplace.CATALOG,
   RPC_CHANNELS.marketplace.STATS,
@@ -868,6 +889,27 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.memory.INDEX_STATUS,
   RPC_CHANNELS.memory.REBUILD_INDEX,
 
+  // memory — repository projection + dream (spec 2026-10-09 §7): bank data is
+  // materialized from workspace/global stores on the workspace-owning server.
+  RPC_CHANNELS.memory.REPO_LIST_BANKS,
+  RPC_CHANNELS.memory.REPO_STATUS,
+  RPC_CHANNELS.memory.REPO_TREE,
+  RPC_CHANNELS.memory.REPO_READ_FILE,
+  RPC_CHANNELS.memory.REPO_COMMITS,
+  RPC_CHANNELS.memory.REPO_COMMIT_DIFF,
+  RPC_CHANNELS.memory.REPO_GRAPH,
+  RPC_CHANNELS.memory.REPO_EXPORT,
+  RPC_CHANNELS.memory.DREAM_STATUS,
+  RPC_CHANNELS.memory.DREAM_RUN,
+  RPC_CHANNELS.memory.DREAM_LOG,
+  RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT,
+  RPC_CHANNELS.memory.REPO_APPLY_IMPORT,
+  RPC_CHANNELS.memory.REPO_REVERT_IMPORT,
+  RPC_CHANNELS.memory.REPO_CHANGED,
+  RPC_CHANNELS.memory.DREAM_EVENT,
+  RPC_CHANNELS.memory.DREAM_DONE,
+  RPC_CHANNELS.memory.REPO_IMPORT_READY,
+
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).
   RPC_CHANNELS.learning.LIST_CANDIDATES,
@@ -1225,6 +1267,18 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.commands.EXECUTE,
   RPC_CHANNELS.commands.LIST,
   RPC_CHANNELS.commands.EVENT,
+
+  // f.9 — node/device registry lives on the server that owns the node
+  // connections (the answering host), never proxied to a fixed local surface.
+  // Claims are declared by the node; the answering server enforces its own
+  // allowlist before any node.invoke dispatch.
+  RPC_CHANNELS.nodes.REGISTER,
+  RPC_CHANNELS.nodes.LIST,
+  RPC_CHANNELS.nodes.PRESENCE,
+  RPC_CHANNELS.nodes.INVOKE,
+  RPC_CHANNELS.nodes.INVOKE_RESULT,
+  RPC_CHANNELS.nodes.INVOKE_CANCEL,
+  RPC_CHANNELS.nodes.CHANGED,
 ]
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>(REMOTE_ELIGIBLE_CHANNEL_LIST)

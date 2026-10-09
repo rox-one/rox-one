@@ -1,9 +1,9 @@
 /**
  * KnowledgeSurfacePage
  *
- * Host surface for an embedded SiYuan desktop instance panel (W2 Knowledge mode).
+ * Host surface for an embedded Rox Notes desktop instance panel (W2 Knowledge mode).
  * Mirrors pages/BrowserPanelPage.tsx point-for-point: the main process composites
- * a native WebContentsView (SiYuan web build) on top of this surface; this
+ * a native WebContentsView (Rox Notes web build) on top of this surface; this
  * component resolves/owns the instance via `siyuanEngine.createEmbedded` and
  * reports its DOM rect + focus state so main can position or hide the view.
  *
@@ -13,7 +13,7 @@
  *
  * P4.1 surface modes: optional `mode` (editor|graph|global-graph|outline|backlinks|
  * flashcard|plugins) drives URL query markers and a thin Craft toolbar. Non-editor
- * modes evaluate SIYUAN_OPEN_DOCK_SCRIPT once after load (~800ms) to open SiYuan docks.
+ * modes evaluate SIYUAN_OPEN_DOCK_SCRIPT once after load (~800ms) to open Rox Notes docks.
  * Toolbar switches prefer in-page `location.href` evaluate + dock script over recreate.
  *
  * P4.3 copy/export: toolbar ⋯ menu calls knowledge.getExportPayload and copies
@@ -86,9 +86,9 @@ const SURFACE_TOOLBAR_MODES: Array<{
 ]
 
 export interface KnowledgeSurfacePageProps {
-  /** SiYuan ref kind from the knowledge route details (document/notebook/...), */
+  /** Rox Notes ref kind from the knowledge route details (document/notebook/...), */
   kind: SiyuanSurfaceRef['kind']
-  /** SiYuan ref id (document id; '__full__' sentinel = compat surface) */
+  /** Rox Notes ref id (document id; '__full__' sentinel = compat surface) */
   id: string
   /** Owning panel id in the panel stack (used to hide when unfocused) */
   panelId?: string
@@ -119,7 +119,7 @@ export default function KnowledgeSurfacePage({
   // Evaluated once at hook scope (P1-9): when the feature is off, effects
   // early-return — no listConnections, no createEmbedded, no registry entries
   // — and the render below shows the disabled copy instead of the surface.
-  const [knowledgeEnabled] = useState(() => false) // SiYuan surface purged; Rox Notes only
+  const [knowledgeEnabled] = useState(() => false) // legacy surface purged; Rox Notes only
   // Session graph tabs inherit their owning panel's focus through context.
   const isFocused = isFocusedPanel ?? (panelId === undefined || focusedPanelId === panelId)
   const presentation = useNativeSurfaceBounds({
@@ -236,7 +236,7 @@ export default function KnowledgeSurfacePage({
         expression: SIYUAN_OPEN_DOCK_SCRIPT,
       })
     } catch {
-      // Dock open is best-effort — SiYuan DOM may not be ready / selectors may miss.
+      // Dock open is best-effort — Rox Notes DOM may not be ready / selectors may miss.
       dockOpenedForKeyRef.current = null
     }
   }, [])

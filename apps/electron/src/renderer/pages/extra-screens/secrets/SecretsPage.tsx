@@ -2,7 +2,7 @@
  * «Секреты» — ROX Keeper.
  *
  * Two sections behind one surface: «Хранилище» (the local personal vault:
- * folders, search, CRUD, reveal/copy, TOTP) and «Провайдер» (the Infisical
+ * folders, search, CRUD, reveal/copy, TOTP) and «Провайдер» (the Rox Keeper
  * account + named refs, unchanged). Secret values never live in this renderer:
  * the list payload is masked and a value appears only after an explicit reveal,
  * which the surface auto-hides after 30 s.
@@ -86,7 +86,7 @@ export default function SecretsPage(_props: { itemId: string | null }) {
   const [shareError, setShareError] = useState<string | null>(null)
   const revealTimer = useRef<number | null>(null)
 
-  // --- Provider (Infisical) state -------------------------------------
+  // --- Provider (Rox Keeper) state ------------------------------------
   const [refs, setRefs] = useState<SecretRefEntry[] | null>(null)
   const [refsError, setRefsError] = useState(false)
   const [provider, setProvider] = useState<ProviderStatus>('unknown')
@@ -368,7 +368,7 @@ export default function SecretsPage(_props: { itemId: string | null }) {
     return 'extraScreens.secrets.providerDisconnected'
   }, [provider])
 
-  // --- Organization (Infisical fabric) section -------------------------
+  // --- Organization (Rox Keeper fabric) section -----------------------
   const keeperRpc = useMemo(() => resolveKeeperVaultRpc(window.electronAPI), [])
   const keeperScope = useMemo<KeeperScope | null>(() => {
     const projectId = (preview?.projectId ?? form.projectId).trim()
@@ -377,7 +377,7 @@ export default function SecretsPage(_props: { itemId: string | null }) {
     return projectId !== '' && environment !== '' ? { projectId, environment, secretPath } : null
   }, [preview, form.projectId, form.environment, form.secretPath])
 
-  // «Поделиться с командой» — copy one personal item into the org (Infisical)
+  // «Поделиться с командой» — copy one personal item into the org (Rox Keeper)
   // store. No batch: one explicit share per selected item.
   const shareSelectedToTeam = useCallback(async () => {
     if (!selection) return

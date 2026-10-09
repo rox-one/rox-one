@@ -28,12 +28,10 @@ import type { DomainEvent } from '@rox/core/events'
 import {
   DOMAIN_RULES,
   MAX_RULE_ATTEMPTS,
-  RULE_BACKOFF_SCHEDULE_MS,
   SYSTEM_PRINCIPAL_ID,
   executionStatusAfterAttempt,
   mergeStepRecords,
   resumeStepIndex,
-  ruleById,
   ruleRetryDelayMs,
   ruleStepActor,
   ruleStepCommandId,

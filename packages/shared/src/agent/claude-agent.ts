@@ -114,7 +114,7 @@ export {
   PERMISSION_MODE_ORDER,
   PERMISSION_MODE_CONFIG,
 } from './mode-manager.ts';
-// Documentation is served via local files at ~/.craft-agent/docs/
+// Documentation is served via local files in the resolved config dir ({configDir}/docs/).
 
 // Import and re-export AgentEvent from core (single source of truth)
 import type { AgentEvent } from '@rox/core/types';

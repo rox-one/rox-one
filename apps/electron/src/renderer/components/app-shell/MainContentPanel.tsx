@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { navigate, routes } from '@/lib/navigate'
 import { MemoryScreen } from '../memory/MemoryScreen'
+import { MemoryRepoScreen } from '../memory/MemoryRepoScreen'
 import { LearningScreen } from '../learning/LearningScreen'
 import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
@@ -30,6 +31,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
   isInboxNavigation,
@@ -92,6 +94,7 @@ const TasksPage = lazyRoutePage(() => import('@/pages/workspace-work/WorkspaceTa
 const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
 const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
 const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
+const ClipboardHistoryPage = lazyRoutePage(() => import('@/pages/ClipboardHistoryPage'))
 const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
 const SkillInfoPage = lazyRoutePage(() => import('@/pages/SkillInfoPage'))
 const SourceInfoPage = lazyRoutePage(() => import('@/pages/SourceInfoPage'))
@@ -501,9 +504,24 @@ export function MainContentPanel({
   }
 
   if (isMemoryNavigation(navState)) {
+    if (navState.tab === 'repo' || navState.tab === 'dream') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <MemoryRepoScreen workspaceId={activeWorkspaceId ?? undefined} />
+        </Panel>
+      )
+    }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <MemoryScreen workspaceId={activeWorkspaceId ?? undefined} />
+      </Panel>
+    )
+  }
+
+  if (isClipboardHistoryNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <ClipboardHistoryPage />
       </Panel>
     )
   }

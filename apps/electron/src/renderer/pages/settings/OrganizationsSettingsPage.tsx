@@ -163,7 +163,7 @@ export default function OrganizationsSettingsPage() {
       const { token, ...publicInvite } = invite
       let copied = false
       try {
-        await navigator.clipboard.writeText(token)
+        await window.electronAPI.writeClipboardTextConcealed(token)
         copied = true
       } catch {
         toast.error(t('toast.copyFailed'))

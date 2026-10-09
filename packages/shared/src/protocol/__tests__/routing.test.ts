@@ -330,3 +330,14 @@ describe('browser profile import routing', () => {
     }
   })
 })
+
+describe('node/device registry routing (f.9)', () => {
+  test('classifies every nodes:* channel as REMOTE_ELIGIBLE', () => {
+    const channels = Object.values(RPC_CHANNELS.nodes)
+    expect(channels.length).toBeGreaterThan(0)
+    for (const channel of channels) {
+      expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(true)
+      expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(false)
+    }
+  })
+})

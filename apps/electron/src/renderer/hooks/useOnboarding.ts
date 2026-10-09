@@ -29,7 +29,7 @@ import type {
 } from '@/components/onboarding'
 import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
-import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
+import type { RoxCliCredentialSubmitData } from '@/components/onboarding/RoxCliCredentialStep'
 import { nextStepAfterUsername } from '@/components/onboarding/onboarding-username'
 import type { OnboardingFirstRunState } from '@/components/onboarding/OnboardingWizard'
 import { createRewardLedger, type RewardStorage } from '@/components/onboarding/onboarding-rewards'
@@ -106,7 +106,7 @@ interface UseOnboardingReturn {
 
   // Local model
   handleSubmitLocalModel: (data: LocalModelSubmitData) => void
-  handleSubmitOmpCredential: (data: OmpCredentialSubmitData) => void
+  handleSubmitOmpCredential: (data: RoxCliCredentialSubmitData) => void
   handleStartOAuth: (methodOverride?: ApiSetupMethod, connectionSlugOverride?: string) => void
 
   // Claude OAuth (two-step flow)
@@ -307,13 +307,13 @@ export function useOnboarding({
     }
   }, [initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
 
-  // Seeded OMP connection without ~/.omp models / Rox key — one credential step.
+  // Seeded Rox CLI connection without ~/.omp models / Rox key — one credential step.
   // First run never stops on it: the name screen leads straight into the app and
   // the Rox key can be added later in Settings → ИИ.
   useEffect(() => {
     if (isFirstRun) return
     if (initialSetupNeeds?.needsOmpCredential && !initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'omp-credential' || s.step === 'welcome' ? s : { ...s, step: 'omp-credential' }))
+      setState(s => (s.step === 'rox-cli-credential' || s.step === 'welcome' ? s : { ...s, step: 'rox-cli-credential' }))
     }
   }, [initialSetupNeeds?.needsOmpCredential, initialSetupNeeds?.needsRoxCloud, isFirstRun])
 
@@ -534,7 +534,7 @@ export function useOnboarding({
       case 'local-model':
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
-      case 'omp-credential':
+      case 'rox-cli-credential':
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
     }
@@ -1024,14 +1024,14 @@ export function useOnboarding({
     }
 
     if (choice === 'omp') {
-      // OMP reads auth from ~/.omp/agent. If models/config are missing, stop
+      // Rox CLI reads auth from ~/.omp/agent. If models/config are missing, stop
       // on the single Rox credential step instead of marking setup complete.
       void (async () => {
         const needs = await window.electronAPI.getSetupNeeds()
         if (needs.needsOmpCredential) {
           setState(s => ({
             ...s,
-            step: 'omp-credential',
+            step: 'rox-cli-credential',
             credentialStatus: 'idle',
             errorMessage: undefined,
           }))
@@ -1050,7 +1050,7 @@ export function useOnboarding({
           setState(s => ({
             ...s,
             credentialStatus: 'error',
-            errorMessage: visibleError(result.error, t('onboarding.ompCredential.createFailed')),
+            errorMessage: visibleError(result.error, t('onboarding.roxCliCredential.createFailed')),
           }))
           return
         }
@@ -1060,9 +1060,9 @@ export function useOnboarding({
         } else {
           setState(s => ({
             ...s,
-            step: 'omp-credential',
+            step: 'rox-cli-credential',
             credentialStatus: 'error',
-            errorMessage: visibleError(testResult.error, t('onboarding.ompCredential.testFailed')),
+            errorMessage: visibleError(testResult.error, t('onboarding.roxCliCredential.testFailed')),
           }))
         }
       })()
@@ -1124,7 +1124,7 @@ export function useOnboarding({
     }
   }, [saveAndValidateConnection, editingSlug, existingSlugs, t])
 
-  const handleSubmitOmpCredential = useCallback(async (data: OmpCredentialSubmitData) => {
+  const handleSubmitOmpCredential = useCallback(async (data: RoxCliCredentialSubmitData) => {
     setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
     try {
       const result = await window.electronAPI.saveOmpCredential(data.apiKey)

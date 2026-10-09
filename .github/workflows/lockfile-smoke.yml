@@ -1,0 +1,43 @@
+name: Lockfile Smoke
+
+# Single, fast red for the failure mode that took ten workflows down at once:
+# a bun.lock that no longer matches the workspace package.json files, or that the
+# pinned bun cannot parse. Every other workflow discovers this only after it has
+# already spent minutes on setup.
+
+on:
+  pull_request:
+    paths:
+      - 'bun.lock'
+      - '**/package.json'
+      - '.github/workflows/lockfile-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'bun.lock'
+      - '**/package.json'
+
+concurrency:
+  group: lockfile-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lockfile-smoke:
+    name: frozen install on the pinned bun
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.4.2' }
+
+      - name: Frozen install
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Lockfile is reproducible
+        run: |
+          if ! git diff --exit-code -- bun.lock; then
+            echo "::error::bun.lock changed during a frozen install - regenerate it with the pinned bun and commit it in this PR"
+            exit 1
+          fi

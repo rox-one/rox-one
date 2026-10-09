@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Docker smoke test for Craft Agents Server
+# Docker smoke test for the ROX Server
 #
 # Starts the container, waits for the server to become ready, then runs
 # --validate-server via the CLI against it. Cleans up on exit.
@@ -18,7 +18,7 @@ set -euo pipefail
 IMAGE="${1:?Usage: docker-smoke-test.sh <image:tag>}"
 TIMEOUT="${SMOKE_TEST_TIMEOUT:-30}"
 TOKEN="smoke-test-$(openssl rand -hex 16)"
-CONTAINER_NAME="craft-smoke-$$"
+CONTAINER_NAME="rox-smoke-$$"
 PORT=9100
 
 cleanup() {
@@ -40,7 +40,7 @@ echo "[1/3] Starting container..."
 docker run -d \
   --name "$CONTAINER_NAME" \
   -p "$PORT:9100" \
-  -e "CRAFT_SERVER_TOKEN=$TOKEN" \
+  -e "ROX_SERVER_TOKEN=$TOKEN" \
   -e "CRAFT_RPC_HOST=0.0.0.0" \
   -e "CRAFT_RPC_PORT=9100" \
   "$IMAGE"

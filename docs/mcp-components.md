@@ -68,7 +68,7 @@ Subprocess entrypoint for the Pi backend.
   `resolvedPaths.piServerPath`; `pi-agent.ts` spawns `node <piServerPath>`.
 - Path resolved in `backend/internal/runtime-resolver.ts` (`piServerPath`).
 
-### OMP CLI integration (`omp --mode rpc`)
+### Rox CLI integration (`omp --mode rpc`)
 - Spawned by `OmpAgent` (`packages/shared/src/agent/omp-agent.ts`), binary from
   `OMP_CLI_PATH` env → toolchain → PATH (`toolchain-runtime.ts`).
 - Craft session tools + MCP pool proxies bridged via `set_host_tools` /

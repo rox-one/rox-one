@@ -18,6 +18,7 @@ import {
   SettingsSegmentedControl,
   SettingsToggle,
 } from '@/components/settings'
+import { KnowledgeMapPanel } from '@/components/knowledge-map/KnowledgeMapPanel'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
@@ -489,6 +490,17 @@ export default function AccountSettingsPage() {
         </SettingsSection>
 
         <SettingsSection title={t('quests.sectionTitle')}><QuestProgressCard scopeKey={workspace?.id} /></SettingsSection>
+
+        <SettingsSection
+          title={t('knowledgeMap.profile.sectionTitle')}
+          description={t('knowledgeMap.profile.sectionHint')}
+        >
+          <KnowledgeMapPanel
+            workspaceId={workspace?.id ?? null}
+            compact
+            onOpenFull={() => navigate(routes.view.settings('context'))}
+          />
+        </SettingsSection>
 
         <SettingsSection title={t('settings.accounts.connectionsSection')}>
           <SettingsCard>

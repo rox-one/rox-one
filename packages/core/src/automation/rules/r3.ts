@@ -14,7 +14,7 @@ import type { EntityRef } from '../../entities/refs.ts'
 import type { DomainEvent } from '../../events/types.ts'
 import { accountCreatedOf } from '../events.ts'
 import { uuidv5 } from '../ids.ts'
-import { personalAgentCommandId, type DomainRule, type RuleStep } from '../rule.ts'
+import { personalAgentCommandId, type DomainRule } from '../rule.ts'
 
 export interface R3Params {
   /** Welcome copy; `{{name}}` and `{{handles}}` are interpolated. D-v2-9: only resolvable handles. */

@@ -17,6 +17,7 @@
 
 import type {
   NavigationState,
+  MemoryNavigationState,
   SessionFilter,
   SourceFilter,
   AutomationFilter,
@@ -91,7 +92,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'clipboard-history' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -118,6 +119,8 @@ export interface ParsedCompoundRoute {
   viewMode?: 'list' | 'board' | 'table' | 'heatmap'
   /** Parsed entity reference (only for the `entity` navigator). */
   entityRef?: EntityRef
+  /** Memory tab (only for the `memory` navigator): lessons | repo | dream. */
+  memoryTab?: 'lessons' | 'repo' | 'dream'
   /** Unified mode root (only for the `surface` navigator, W1-07). */
   surface?: UnifiedSurfaceId
   /**
@@ -139,7 +142,7 @@ export interface ParsedCompoundRoute {
  * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'clipboard-history', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   // Kind-first entity surfaces (W1-01). Shared with the deep-link handler so
   // `rox://docs/wiki/{id}` etc. reach the renderer parser.
@@ -385,10 +388,40 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
     return null
   }
 
-  // Memory navigator (self-learning lessons / context / history)
+  // Memory navigator (self-learning lessons / context / history) with the
+  // repository surface: memory, memory/repo, memory/repo/file/<enc>,
+  // memory/repo/commit/<sha>, memory/dream.
   if (first === 'memory') {
+    if (segments.length === 1) return { navigator: 'memory', details: null }
+    const tab = segments[1]
+    if (tab === 'dream') {
+      return segments.length === 2 ? { navigator: 'memory', memoryTab: 'dream', details: null } : null
+    }
+    if (tab === 'repo') {
+      if (segments.length === 2) return { navigator: 'memory', memoryTab: 'repo', details: null }
+      if (segments.length === 4 && segments[2] === 'file' && segments[3]) {
+        return {
+          navigator: 'memory',
+          memoryTab: 'repo',
+          details: { type: 'file', id: decodeURIComponent(segments[3]) },
+        }
+      }
+      if (segments.length === 4 && segments[2] === 'commit' && segments[3]) {
+        return {
+          navigator: 'memory',
+          memoryTab: 'repo',
+          details: { type: 'commit', id: segments[3] },
+        }
+      }
+      return null
+    }
+    return null
+  }
+
+  // Rox History navigator (clipboard history)
+  if (first === 'clipboard-history') {
     if (segments.length !== 1) return null
-    return { navigator: 'memory', details: null }
+    return { navigator: 'clipboard-history', details: null }
   }
 
   // Learning navigator (self-learning dashboard — PRD §25-30)
@@ -737,7 +770,18 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   }
 
   if (parsed.navigator === 'memory') {
+    const tab = parsed.memoryTab ?? 'lessons'
+    if (tab === 'dream') return 'memory/dream'
+    if (tab === 'repo') {
+      if (parsed.details?.type === 'file') return `memory/repo/file/${encodeURIComponent(parsed.details.id)}`
+      if (parsed.details?.type === 'commit') return `memory/repo/commit/${encodeURIComponent(parsed.details.id)}`
+      return 'memory/repo'
+    }
     return 'memory'
+  }
+
+  if (parsed.navigator === 'clipboard-history') {
+    return 'clipboard-history'
   }
 
   if (parsed.navigator === 'learning') {
@@ -977,7 +1021,20 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 
   // Memory
   if (compound.navigator === 'memory') {
-    return { type: 'view', name: 'memory', params: {} }
+    return {
+      type: 'view',
+      name: 'memory',
+      id: compound.details?.id,
+      params: {
+        ...(compound.memoryTab ? { tab: compound.memoryTab } : {}),
+        ...(compound.details ? { detailType: compound.details.type } : {}),
+      },
+    }
+  }
+
+  // Rox History
+  if (compound.navigator === 'clipboard-history') {
+    return { type: 'view', name: 'clipboard-history', params: {} }
   }
 
   // Learning
@@ -1281,7 +1338,22 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
 
   // Memory
   if (compound.navigator === 'memory') {
+    const tab = compound.memoryTab
+    let details: MemoryNavigationState['details'] = null
+    if (tab === 'repo' && compound.details?.type === 'file') {
+      details = { type: 'file', path: compound.details.id }
+    } else if (tab === 'repo' && compound.details?.type === 'commit') {
+      details = { type: 'commit', sha: compound.details.id }
+    }
+    if (tab === 'repo' || tab === 'dream') {
+      return { navigator: 'memory', tab, details }
+    }
     return { navigator: 'memory', details: null }
+  }
+
+  // Rox History
+  if (compound.navigator === 'clipboard-history') {
+    return { navigator: 'clipboard-history', details: null }
   }
 
   // Learning
@@ -1536,8 +1608,17 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'sources', details: null }
     case 'skills':
       return { navigator: 'skills', details: null }
-    case 'memory':
-      return { navigator: 'memory', details: null }
+    case 'memory': {
+      const tab = parsed.params.tab === 'repo' || parsed.params.tab === 'dream' ? parsed.params.tab : undefined
+      let details: MemoryNavigationState['details'] = null
+      if (tab === 'repo' && parsed.id) {
+        if (parsed.params.detailType === 'file') details = { type: 'file', path: parsed.id }
+        else if (parsed.params.detailType === 'commit') details = { type: 'commit', sha: parsed.id }
+      }
+      return tab ? { navigator: 'memory', tab, details } : { navigator: 'memory', details: null }
+    }
+    case 'clipboard-history':
+      return { navigator: 'clipboard-history', details: null }
     case 'learning':
       return { navigator: 'learning', details: null }
     case 'drive':
@@ -1793,8 +1874,21 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
   }
 
   if (state.navigator === 'memory') {
+    const tab = state.tab ?? 'lessons'
     return {
       navigator: 'memory',
+      memoryTab: tab,
+      details: state.details
+        ? state.details.type === 'file'
+          ? { type: 'file', id: state.details.path }
+          : { type: 'commit', id: state.details.sha }
+        : null,
+    }
+  }
+
+  if (state.navigator === 'clipboard-history') {
+    return {
+      navigator: 'clipboard-history',
       details: null,
     }
   }

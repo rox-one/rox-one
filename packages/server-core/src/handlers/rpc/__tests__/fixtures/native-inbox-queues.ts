@@ -50,7 +50,7 @@ let createdNativeContext: NativeMemoryContext | undefined
 let completion: ((event: SessionCompletionLike) => void) | undefined
 let releaseCompletion: (() => void) | undefined
 const memoryService = new MemoryService({ workspaceRoot: roots[0]!.rootPath, workspaceId: 'a',
-  getConfig: () => ({ enabled: true, distillIdleHours: 3, distillMsgCount: 30, negativeFirst: true, redactExtraPatterns: [], semantic: false, ftsLimit: 20 }),
+  getConfig: () => ({ enabled: true, distillIdleHours: 3, distillMsgCount: 30, negativeFirst: true, redactExtraPatterns: [], semantic: false, ftsLimit: 20, dreamIntervalHours: 4, dreamNotes: true }),
   getNativeContext: sessionId => nativeContexts.get(sessionId),
   readMessages: () => [{ id: 'canonical-user', type: 'user', content: canonicalMessages[0]!.content }],
   distiller: async () => { enteredLlm?.(); await heldLlm; return JSON.stringify({ history_entry: 'PRIVATE native history', memory_update: 'PRIVATE native context', lessons: [{ rule: 'Run tests before publishing', category: 'workflow' }], skill_candidate: { slug: 'native-workflow', description: 'Owned workflow', body: 'Run tests.' } }) },

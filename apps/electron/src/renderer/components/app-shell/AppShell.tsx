@@ -170,6 +170,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
   isInboxNavigation,
@@ -670,8 +671,11 @@ function AppShellContent({
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
     || isSurfaceNavigation(navState)
   // Unavailable addresses have no collection navigator or resize boundary.
+  // Rox History renders its own full-height panel
+  // (ClipboardHistoryPanel) with its own header; keeping the middle navigator
+  // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
@@ -2103,6 +2107,11 @@ function AppShellContent({
     handleServiceClick('memory')
   }, [handleServiceClick])
 
+  // Handler for the «Память: репозиторий» tab (`routes.view.memory('repo')`).
+  const handleMemoryRepoClick = useCallback(() => {
+    handleServiceClick('memoryRepo')
+  }, [handleServiceClick])
+
   // Handler for learning view
   const handleLearningClick = useCallback(() => {
     handleServiceClick('learning')
@@ -2530,6 +2539,11 @@ function AppShellContent({
       return t("sidebar.memory")
     }
 
+    // Rox History navigator
+    if (isClipboardHistoryNavigation(navState)) {
+      return t("clipboard.title")
+    }
+
     // Learning navigator
     if (isLearningNavigation(navState)) {
       return t("sidebar.learning")
@@ -2818,8 +2832,16 @@ function AppShellContent({
       id: "nav:memory",
       title: t(APP_NAV_DESTINATIONS_BY_ID.memory.labelKey),
       icon: APP_NAV_DESTINATIONS_BY_ID.memory.icon,
-      variant: isMemoryNavigation(navState) ? "default" : "ghost",
+      // The repository tab owns `nav:memoryRepo`; keep exactly one highlighted.
+      variant: isMemoryNavigation(navState) && navState.tab !== 'repo' ? "default" : "ghost",
       onClick: handleMemoryClick,
+    },
+    {
+      id: "nav:memoryRepo",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.memoryRepo.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.memoryRepo.icon,
+      variant: isMemoryNavigation(navState) && navState.tab === 'repo' ? "default" : "ghost",
+      onClick: handleMemoryRepoClick,
     },
     {
       id: "nav:learning",
@@ -2827,6 +2849,14 @@ function AppShellContent({
       icon: APP_NAV_DESTINATIONS_BY_ID.learning.icon,
       variant: isLearningNavigation(navState) ? "default" : "ghost",
       onClick: handleLearningClick,
+    },
+    // --- Rox History (clipboard history) ---
+    {
+      id: "nav:clipboardHistory",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.clipboardHistory.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.clipboardHistory.icon,
+      variant: isClipboardHistoryNavigation(navState) ? "default" : "ghost",
+      onClick: () => handleServiceClick('clipboardHistory'),
     },
     {
       id: "nav:meetings",
