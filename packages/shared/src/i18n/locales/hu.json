@@ -4373,6 +4373,7 @@
   "navigation.agentTabs.skills": "Készségek",
   "navigation.agentTabs.sources": "Források",
   "navigation.allProjects": "Összes projekt",
+  "navigation.confirmDeepLinkSend": "Open this session and send the prompt?",
   "navigation.contextMessage": "Kontextus: workspace {{workspaceId}}, project {{projectId}}, route {{route}}",
   "navigation.defaultProfile": "Alapértelmezett profil",
   "navigation.draftSaveFailed": "The draft could not be saved. It remains open. Retry saving or switching workspaces.",

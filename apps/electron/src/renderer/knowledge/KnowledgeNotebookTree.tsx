@@ -39,6 +39,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useAtomValue } from 'jotai'
 import { cn } from '@/lib/utils'
+import { WindowedTreeList } from '@/components/ui/entity-list'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
@@ -267,18 +268,21 @@ function NavRow({
   title,
   onClick,
   mobile,
+  expanded,
 }: {
   icon: LucideIcon
   label: string
   title?: string
   onClick: () => void
   mobile?: boolean
+  expanded?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       title={title ?? label}
+      {...(expanded === undefined ? {} : { 'aria-expanded': expanded })}
       className={cn(
         'flex items-center gap-2 rounded-md px-2.5 text-left',
         mobile ? 'mx-0 w-full py-2' : 'mx-3 w-[calc(100%-1.5rem)] py-1.5',
@@ -292,7 +296,7 @@ function NavRow({
   )
 }
 
-export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) {
+export function KnowledgeNotebookTree({ mobile = false, viewportRef }: { mobile?: boolean; viewportRef?: React.RefObject<HTMLDivElement | null> }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
@@ -326,7 +330,7 @@ export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) 
       ) : data.notebooks.status === 'empty' ? (
         <EmptyRow>{t('knowledge.nav.notebooksEmpty')}</EmptyRow>
       ) : (
-        <NotebookList notebooks={data.notebooks.items} mobile={mobile} />
+        <NotebookList notebooks={data.notebooks.items} mobile={mobile} viewportRef={viewportRef} />
       )}
 
       <SectionHeader icon={Clock} label={t('knowledge.nav.recent')} />
@@ -406,7 +410,46 @@ function nodeIcon(kind: SiyuanDocTreeNode['kind']): LucideIcon {
   return FileText
 }
 
-function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[]; mobile?: boolean }) {
+/** Above this many rows the notebook tree switches to windowed rendering. */
+export const KNOWLEDGE_TREE_WINDOW_THRESHOLD = 100
+
+/** One rendered row of the flattened notebook tree. */
+export type KnowledgeTreeRow =
+  | { kind: 'notebook'; key: string; notebook: KnowledgeNotebookInfo }
+  | { kind: 'loading'; key: string; notebookId: string }
+  | { kind: 'node'; key: string; notebookId: string; node: SiyuanDocTreeNode; indent: number }
+
+/**
+ * Flattens the expanded notebook trees (filtered, depth-first) into render
+ * order, preserving the nested-indent offsets the recursive renderer produced.
+ */
+export function flattenNotebookRows(
+  notebooks: KnowledgeNotebookInfo[],
+  expanded: Record<string, SiyuanDocTreeNode[] | 'loading' | 'error'>,
+  filter: NavFilter,
+): KnowledgeTreeRow[] {
+  const rows: KnowledgeTreeRow[] = []
+  for (const notebook of notebooks) {
+    rows.push({ kind: 'notebook', key: `notebook:${notebook.id}`, notebook })
+    const state = expanded[notebook.id]
+    if (state === 'loading') {
+      rows.push({ kind: 'loading', key: `notebook:${notebook.id}:loading`, notebookId: notebook.id })
+      continue
+    }
+    if (!Array.isArray(state)) continue
+    const walk = (nodes: SiyuanDocTreeNode[], depth: number, indent: number) => {
+      for (const node of filterTree(nodes, filter)) {
+        const nodeIndent = indent + depth * 8
+        rows.push({ kind: 'node', key: `node:${notebook.id}:${node.id}`, notebookId: notebook.id, node, indent: nodeIndent })
+        if (node.children && node.children.length > 0) walk(node.children, depth + 1, nodeIndent)
+      }
+    }
+    walk(state, 1, 0)
+  }
+  return rows
+}
+
+function NotebookList({ notebooks, mobile, viewportRef }: { notebooks: KnowledgeNotebookInfo[]; mobile?: boolean; viewportRef?: React.RefObject<HTMLDivElement | null> }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const [filter, setFilter] = React.useState<NavFilter>('all')
@@ -493,23 +536,43 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
     }
   }
 
-  const renderNodes = (notebookId: string, nodes: SiyuanDocTreeNode[], depth: number) =>
-    filterTree(nodes, filter).map((node) => (
-      <div key={node.id} style={{ paddingLeft: depth * 8 }} className="flex flex-col">
-        <NavRow
-          icon={nodeIcon(node.kind)}
-          label={node.name || node.id}
-          onClick={() => {
-            if (node.kind === 'database') navigate(routes.view.notes())
-            else if (node.kind === 'document') navigate(routes.view.notes())
-            else if (node.kind === 'folder') void loadFolderChildren(notebookId, node)
-          }}
+  const rows = React.useMemo(
+    () => flattenNotebookRows(notebooks, expanded, filter),
+    [notebooks, expanded, filter],
+  )
 
-          mobile={mobile}
-        />
-        {node.children && node.children.length > 0 ? renderNodes(notebookId, node.children, depth + 1) : null}
-      </div>
-    ))
+  const renderRow = React.useCallback(
+    (row: KnowledgeTreeRow) => {
+      if (row.kind === 'loading') return <EmptyRow>…</EmptyRow>
+      if (row.kind === 'notebook') {
+        return (
+          <NavRow
+            icon={Book}
+            label={row.notebook.name || row.notebook.id}
+            onClick={() => void toggle(row.notebook.id)}
+            mobile={mobile}
+            expanded={Array.isArray(expanded[row.notebook.id])}
+          />
+        )
+      }
+      const { node, notebookId, indent } = row
+      return (
+        <div style={{ paddingLeft: indent }} className="flex flex-col">
+          <NavRow
+            icon={nodeIcon(node.kind)}
+            label={node.name || node.id}
+            onClick={() => {
+              if (node.kind === 'database') navigate(routes.view.notes())
+              else if (node.kind === 'document') navigate(routes.view.notes())
+              else if (node.kind === 'folder') void loadFolderChildren(notebookId, node)
+            }}
+            mobile={mobile}
+          />
+        </div>
+      )
+    },
+    [expanded, loadFolderChildren, mobile, navigate, toggle],
+  )
 
   const filterLabel = (id: NavFilter) =>
     id === 'all'
@@ -538,22 +601,15 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
           <FolderPlus className="size-3" aria-hidden />
         </button>
       </div>
-      {notebooks.map((notebook) => (
-        <div key={notebook.id}>
-          <NavRow
-            icon={Book}
-            label={notebook.name || notebook.id}
-            onClick={() => void toggle(notebook.id)}
-  
-          mobile={mobile}
-        />
-          {expanded[notebook.id] === 'loading' ? (
-            <EmptyRow>…</EmptyRow>
-          ) : Array.isArray(expanded[notebook.id]) ? (
-            renderNodes(notebook.id, expanded[notebook.id] as SiyuanDocTreeNode[], 1)
-          ) : null}
-        </div>
-      ))}
+      <WindowedTreeList<KnowledgeTreeRow>
+        rows={rows}
+        getKey={(row) => row.key}
+        renderRow={renderRow}
+        rowHeight={30}
+        windowThreshold={KNOWLEDGE_TREE_WINDOW_THRESHOLD}
+        className="flex flex-col gap-0.5"
+        {...(viewportRef ? { viewportRef } : {})}
+      />
     </div>
   )
 }

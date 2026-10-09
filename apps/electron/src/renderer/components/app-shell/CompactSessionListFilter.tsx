@@ -205,7 +205,7 @@ export function CompactSessionListFilter({
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <HeaderIconButton
-          icon={<ListFilter className="h-4 w-4" />}
+          icon={<ListFilter className="icon-toolbar" />}
           aria-label={t('sidebar.filterChats')}
           className={cn(
             'rounded-[var(--radius-card)]',
@@ -240,7 +240,7 @@ export function CompactSessionListFilter({
 
         <div className="px-4 pb-2">
           <label className="bg-foreground/5 rounded-[var(--radius-control)] px-3 h-10 flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Search className="icon-toolbar text-muted-foreground shrink-0" />
             <input
               type="text"
               value={query}
@@ -255,7 +255,7 @@ export function CompactSessionListFilter({
                 className="shrink-0 h-6 w-6 flex items-center justify-center text-muted-foreground rounded-full hover:bg-foreground/5"
                 aria-label={t('common.clear')}
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="icon-caption" />
               </button>
             )}
           </label>
@@ -333,7 +333,7 @@ export function CompactSessionListFilter({
           {!isSearching && (
             <Section title={t('sidebarFilter.owners')}>
               <FilterRow
-                icon={<UserRound className="h-4 w-4" />}
+                icon={<UserRound className="icon-toolbar" />}
                 label={t('sidebarFilter.involvingMe')}
                 radioSelected={involvingMe}
                 pinned={!viewerHasIdentity}
@@ -342,7 +342,7 @@ export function CompactSessionListFilter({
               {ownerOptions.map(option => (
                 <FilterRow
                   key={option.id}
-                  icon={<UserRound className="h-4 w-4" />}
+                  icon={<UserRound className="icon-toolbar" />}
                   label={option.kind === 'unassigned' ? t('sessionOwner.unassigned') : option.displayName}
                   radioSelected={ownerFilter.has(option.id)}
                   onTap={() => toggleOwner(option.id)}
@@ -367,7 +367,7 @@ export function CompactSessionListFilter({
                   onClick={onOpenSearch}
                   className="w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] hover:bg-foreground/5 active:bg-foreground/10 transition-colors text-left"
                 >
-                  <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Search className="icon-toolbar text-muted-foreground shrink-0" />
                   <span className="text-sm font-medium">{t('sidebar.search')}</span>
                 </button>
               </DrawerClose>
@@ -390,7 +390,7 @@ function Section({
 }) {
   return (
     <div className="pt-3">
-      <div className="px-3 pb-1 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider">
+      <div className="px-3 pb-1 flex items-center gap-1.5 text-caption font-medium text-muted-foreground/70 uppercase tracking-wider">
         {icon}
         <span>{title}</span>
       </div>
@@ -446,8 +446,8 @@ function FilterRow({
     >
       {renderedIcon}
       <span className="flex-1 min-w-0 text-sm truncate">{label}</span>
-      {pinned && <Check className="h-4 w-4 text-muted-foreground shrink-0" />}
-      {!pinned && radioSelected && <Check className="h-4 w-4 text-foreground/70 shrink-0" />}
+      {pinned && <Check className="icon-toolbar text-muted-foreground shrink-0" />}
+      {!pinned && radioSelected && <Check className="icon-toolbar text-foreground/70 shrink-0" />}
       {!pinned && mode && (
         <button
           type="button"
@@ -468,7 +468,7 @@ function FilterRow({
           }
           aria-label={mode === 'include' ? 'Switch to exclude' : 'Switch to include'}
         >
-          {mode === 'include' ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+          {mode === 'include' ? <Check className="icon-status" /> : <X className="icon-status" />}
         </button>
       )}
     </div>
@@ -498,7 +498,7 @@ function PinnedSummary({
     <div className="px-2 pt-1 pb-2">
       <div className="flex flex-wrap gap-1.5 px-1">
         {pinnedFilters.pinnedFlagged && (
-          <PinnedChip icon={<Flag className="h-3.5 w-3.5" />} label={t('sidebar.flagged')} />
+          <PinnedChip icon={<Flag className="icon-caption" />} label={t('sidebar.flagged')} />
         )}
         {pinnedStatus && (
           <PinnedChip
@@ -525,7 +525,7 @@ function PinnedChip({ icon, label }: { icon: React.ReactNode; label: React.React
     <span className="inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-[var(--radius-control)] bg-foreground/5 text-xs text-foreground/70">
       <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>
       <span className="truncate">{label}</span>
-      <Check className="h-3 w-3 shrink-0 text-muted-foreground" />
+      <Check className="icon-status shrink-0 text-muted-foreground" />
     </span>
   )
 }
