@@ -10,7 +10,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createInstance, type i18n as I18n } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
-import { Tabs, type TabItem, type TabsProps } from '../tabs'
+import { Tabs, tabCloseTarget, type TabItem, type TabsProps } from '../tabs'
 
 useDomForFile()
 
@@ -48,8 +48,19 @@ describe('TabsCore ARIA and roving tabindex', () => {
 
   it('keeps a single Tab stop on the active/enabled item', () => {
     const html = render({ items, activeId: 'a', onSelect() {}, onClose() {} })
-    expect(html.match(/tabindex="0"/g)).toHaveLength(2) // active tab + its close button
+    // The strip owns exactly one Tab stop (the active roving tab); close buttons
+    // stay focusable programmatically but never add a second stop.
+    expect(html.match(/tabindex="0"/g)).toHaveLength(1)
     expect(html).toContain('tabindex="-1"')
+  })
+
+  it('close-target skips disabled neighbours and keeps the roving stop', () => {
+    // catches: tabCloseTarget landing focus on a disabled button, or moving the
+    // roving stop when a background tab closes.
+    const strip = [{ id: 'a' }, { id: 'b', disabled: true }, { id: 'c' }]
+    expect(tabCloseTarget(strip, 'a', 'a')).toBe('c')
+    expect(tabCloseTarget(strip, 'c', 'a')).toBe('a')
+    expect(tabCloseTarget([{ id: 'a' }, { id: 'b', disabled: true }], 'a', 'a')).toBeNull()
   })
 
   it('marks disabled tabs and keeps them out of the roving stop', () => {

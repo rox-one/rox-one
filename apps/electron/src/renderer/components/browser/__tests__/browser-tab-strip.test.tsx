@@ -135,9 +135,9 @@ describe('BrowserTabStripView renders through the shared tab primitive', () => {
     expect(html.match(/role="tab"/g)).toHaveLength(2)
     expect(html).toContain('aria-selected="true"')
     expect(html).toContain('aria-selected="false"')
-    // One Tab stop: the active tab and its close button (the primitive keeps
-    // the close affordance inside the roving stop).
-    expect(html.match(/tabindex="0"/g)).toHaveLength(2)
+    // One Tab stop across the strip: only the active tab; close buttons stay
+    // out of the tab order (they close via the tab's Delete/Backspace).
+    expect(html.match(/tabindex="0"/g)).toHaveLength(1)
     expect(html).toContain('tabindex="-1"')
   })
 

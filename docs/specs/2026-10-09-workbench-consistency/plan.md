@@ -136,7 +136,7 @@ export interface TabsProps {
 | W3.1 | Лента ← Входящие | ✅ | секции на общем `Tabs`; тело очереди вынесено в `pages/inbox/InboxQueue.tsx` без копирования; 3 теста |
 | W3.2/W3.3 | Встречи → Календарь, Контакты → Команда | ✅ | alias-маршруты + `calendar.page`; пустые shell'ы удалены; приоритет entity-маршрутов исправлен (113 тестов роутов) |
 | W3.4a | Токен-пасс `InboxQueue` | ✅ | 54 → 0 гейтованных нарушений |
-| W3.4b | Виртуализация заметок и списка сессий | ✅ | окна + overscan, закрепление выбранной строки; после слияния 92bd273b2 — апстримные `components/ui/entity-list.tsx` (windowed) и `WindowedTreeList`, цикл-локальные модули/тесты удалены, апстримный `list-virtualization.test.ts` восстановлен (см. «Слияние 92bd273b2») |
+| W3.4b | Виртуализация заметок и списка сессий | ✅ | список сессий — цикл-локальный окнированный `EntityList` (`virtualize` + `ensureVisibleKeys`); дерево заметок после слияния `92bd273b2` — апстримный `WindowedTreeList` (`viewportRef`, порог 200); см. «Слияние 92bd273b2» |
 | W3.4c | DOM-бюджеты на реальных объёмах | ✅ | 2000 сессий: **3167 → 70 мс** p95 (гейт 600), 5000 заметок: **62 мс** p95 (гейт 300); `bun run test:perf:dom` |
 | W4 | Визуальная приёмка (реальное приложение) и PR | ✅ | PR [#1641](https://github.com/rox-one/rox-one/pull/1641); пост-мерж приёмка ниже |
 
@@ -178,9 +178,7 @@ CI PR: `component-recovery`, `route-fixtures (ubuntu)`, `Renderer bundle-size bu
 
 ### Слияние 92bd273b2 (10.10) — реконсиляция с апстримом
 
-- `pages/notes/NotesNavigationSidebar.tsx` и `components/ui/entity-list.tsx` — снова апстримные реализации (`WindowedTreeList` / окнированный `EntityList`).
-- Цикл-локальные `pages/notes/notes-navigation-virtualization.ts` и `components/app-shell/entity-list-virtualization.ts` вместе с их тестами удалены.
-- Единственная сохранённая добавка цикла в `entity-list.tsx` — проп `ensureVisibleKeys` (`components/ui/entity-list.tsx:139`), мульти-маунт строк поверх апстримного `withMountedAnchor` (`entity-list.tsx:526-527`).
-- Потребитель этой добавки — `components/app-shell/SessionList.tsx` (`ensureVisibleKeys` L1077/L1467), передающий теперь апстримные пропы `windowed` (L1463) / `windowRowHeight` (L1464) / `windowOverscan` (L1465) / `scrollToKey` (L1466).
-- Апстримный тест `components/app-shell/session-list/__tests__/list-virtualization.test.ts` восстановлен.
-- DOM-харнесс меряет апстримный окнированный путь: `perf/dom-scenario.tsx` передаёт `windowed` (L126) и `viewportRef` навигатору заметок (L162), `perf-dom.tsx` даёт ему `#perf-notes` как `viewportRef` (L76).
+- Список сессий остаётся на цикл-локальной реализации `EntityList` (`virtualize`, `ensureVisibleKeys`, `revealKey` — `SessionList.tsx:1463-1466`): слияние сохранило её, апстримный параллельный API (`windowed`/`scrollToKey`) в ветку не переносился. Замечание на будущее: апстримный вариант несёт ещё и монтирование покрывающего заголовка группы, слот заголовка на всю группу и `rowMetaByKey` (индекс/isFirst для `renderItem`) — при следующем касании окнирования полезно сверить наборы возможностей.
+- Дерево заметок — апстримная `WindowedTreeList` (`pages/notes/NotesNavigationSidebar.tsx`), цикл-локальный `notes-navigation-virtualization.ts` не переносился; `flattenNotesTree`/`notesScrollToKey`/порог 200 — из main.
+- DOM-харнесс: `perf/dom-scenario.tsx` передаёт навигатору заметок `viewportRef`, `perf-dom.tsx` отдаёт ему `#perf-notes` (тот же контракт, что у `NotesPage`) — гейт `dom_notes_navigator_first_render` снова меряет окнированный производственный путь, а не полное дерево.
+- Сьюты вкладок/полосы/пилюли/диплинков переведены с чтения исходников на монтирование и взаимодействие; фальсифицируемость проверена мутацией `tabNavigationTarget`-ветки (падают ровно два теста навигации).
