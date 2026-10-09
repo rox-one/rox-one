@@ -1527,12 +1527,16 @@ export class WsRpcServer implements RpcServer {
     try {
       ws.send(data)
     } catch (err) {
-      // A send race must never abort replay/handshake — mirror the client's
-      // best-effort trySendEnvelope (client.ts:954).
-      transportLog.warn('WebSocket send failed', {
-        readyState: ws.readyState,
+      // A synchronous send failure means this socket is unusable. Drop it so
+      // the client reconnects instead of being left half-connected: a bare
+      // throw here would abort the replay loop (server.ts:993-995) before the
+      // client is registered (server.ts:1026-1027), stranding the connection.
+      transportLog.warn('WebSocket send failed; closing connection', {
         error: err instanceof Error ? err.message : String(err),
       })
+      try {
+        ws.close(1011, 'send failed')
+      } catch { /* Socket already closing/closed. */ }
     }
   }
 }

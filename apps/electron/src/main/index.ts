@@ -160,6 +160,7 @@ import { validateGitBashPath, checkVCRedistInstalled } from '@rox/server-core/se
 import { createOpenClawSecurityComposition } from './openclaw-security'
 import { createOpenClawHostControlConfirmation, registerOpenClawHostControlIpc } from './openclaw-host-control'
 import { createLocalClientBindingRegistry } from './local-client-binding'
+import { runQuitCleanupThenExit } from './quit-exit-guard'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
@@ -2103,13 +2104,15 @@ app.on('before-quit', async (event) => {
   // and Squirrel.Mac's quit proceeds uninterrupted so the update installs (#891).
   if (sessionManager || openDesignRuntime?.hasActiveRuntime()) {
     event.preventDefault()
-    try {
-      await performQuitCleanup()
-    } catch (err) {
-      mainLog.error('[quit] cleanup failed; exiting anyway', err)
-    } finally {
-      app.exit(0)
-    }
+    // performQuitCleanup has unguarded steps (model-refresh stopAll, the
+    // power-manager import, releaseServerLock). Whatever throws, we must still
+    // exit: the quit was already cancelled above, so a rejection here would
+    // leave a windowless process holding the server/config locks.
+    await runQuitCleanupThenExit(
+      performQuitCleanup,
+      code => app.exit(code),
+      error => mainLog.error('[quit] cleanup failed; forcing exit:', error),
+    )
   }
 })
 

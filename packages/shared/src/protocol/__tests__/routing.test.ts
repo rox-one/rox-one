@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { getAllChannelValues, RPC_CHANNELS } from '../channels'
-import { LOCAL_ONLY_CHANNELS, REMOTE_ELIGIBLE_CHANNELS } from '../routing'
+import { LOCAL_ONLY_CHANNEL_LIST, LOCAL_ONLY_CHANNELS, REMOTE_ELIGIBLE_CHANNEL_LIST, REMOTE_ELIGIBLE_CHANNELS } from '../routing'
 
 describe('channel routing exhaustiveness', () => {
   const all = getAllChannelValues()
@@ -49,6 +49,26 @@ describe('channel routing exhaustiveness', () => {
       expect(rows.filter((row, i) => rows.indexOf(row) !== i)).toEqual([])
     }
   })
+})
+
+describe('channel routing source lists', () => {
+  // The exported Sets de-duplicate on construction, so a duplicated source line
+  // (the merge artifact this plan fixes) is invisible at runtime. Assert on the
+  // raw lists so a future duplicate fails CI.
+  for (const [name, list] of [
+    ['LOCAL_ONLY_CHANNEL_LIST', LOCAL_ONLY_CHANNEL_LIST],
+    ['REMOTE_ELIGIBLE_CHANNEL_LIST', REMOTE_ELIGIBLE_CHANNEL_LIST],
+  ] as const) {
+    test(`${name} contains no duplicate entries`, () => {
+      const seen = new Set<string>()
+      const duplicates = list.filter(channel => {
+        if (seen.has(channel)) return true
+        seen.add(channel)
+        return false
+      })
+      expect(duplicates).toEqual([])
+    })
+  }
 })
 
 describe('channel routing behavior', () => {
