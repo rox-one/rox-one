@@ -5,16 +5,9 @@ import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { windowWorkspaceIdAtom } from "@/atoms/sessions"
-import { GithubDeviceLoginPanel } from "@/pages/GithubDeviceLoginPanel"
+import { GithubLinkDialog } from "@/components/onboarding/github-link/GithubLinkDialog"
 import {
   HANDLE_CHECK_DEBOUNCE_MS,
   ONBOARDING_ORGANIZATION_MAX,
@@ -378,22 +371,12 @@ export function WelcomeStep({
         onLinked={() => setTelegramLinked(true)}
       />
 
-      <Dialog open={githubOpen} onOpenChange={setGithubOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t("onboarding.welcome.linkGithub")}</DialogTitle>
-            <DialogDescription>{t("onboarding.welcome.githubDialogDescription")}</DialogDescription>
-          </DialogHeader>
-          {githubWorkspace
-            ? (
-              <GithubDeviceLoginPanel
-                workspaceId={githubWorkspace}
-                onImported={() => { setGithubLinked(true); setGithubOpen(false) }}
-              />
-            )
-            : <p role="status" className="text-xs text-muted-foreground">{t("onboarding.welcome.githubUnavailable")}</p>}
-        </DialogContent>
-      </Dialog>
+      <GithubLinkDialog
+        open={githubOpen}
+        onOpenChange={setGithubOpen}
+        workspaceId={githubWorkspace ?? undefined}
+        onLinked={() => { setGithubLinked(true); setGithubOpen(false) }}
+      />
     </StepFormLayout>
   )
 }

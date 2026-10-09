@@ -1698,6 +1698,22 @@ export interface ElectronAPI {
   fabricAcquireLease(...args: unknown[]): Promise<unknown>
   fabricRevokeConnection(...args: unknown[]): Promise<unknown>
   fabricGithubStatus(...args: unknown[]): Promise<unknown>
+  /** Onboarding «Привязать GitHub» — device flow in link mode (no token crosses). */
+  fabricGithubLinkStart(): Promise<{
+    flowId: string
+    userCode: string
+    verificationUri: string
+    interval: number
+    expiresIn?: number
+  }>
+  fabricGithubLinkPoll(input: { flowId: string; workspaceId: string }): Promise<
+    | { status: 'pending'; interval?: number }
+    | { status: 'slow_down'; interval?: number }
+    | { status: 'denied' }
+    | { status: 'expired' }
+    | { status: 'linked'; profile: { githubLogin: string; githubId: number; avatarUrl: string; linkedAt: number } }
+  >
+  fabricGithubLinkGet(input: { workspaceId: string }): Promise<{ githubLogin: string; githubId: number; avatarUrl: string; linkedAt: number } | null>
 
   // Identity Center (S-07)
   identityGetState(args?: { workspaceId?: string }): Promise<IdentityState>

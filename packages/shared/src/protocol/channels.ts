@@ -444,6 +444,10 @@ export const RPC_CHANNELS = {
     ACQUIRE_LEASE: 'fabric:acquireLease',
     REVOKE_CONNECTION: 'fabric:revokeConnection',
     GITHUB_STATUS: 'fabric:githubStatus',
+    /** Onboarding «Привязать GitHub» — existing device flow, link mode. */
+    GITHUB_LINK_START: 'fabric:githubLinkStart',
+    GITHUB_LINK_POLL: 'fabric:githubLinkPoll',
+    GITHUB_LINK_GET: 'fabric:githubLinkGet',
     INFISICAL_HEALTH: 'fabric:infisicalHealth',
     INFISICAL_PREVIEW_ACCOUNT: 'fabric:infisicalPreviewAccount',
     INFISICAL_COMMIT_IMPORT: 'fabric:infisicalCommitImport',

@@ -502,6 +502,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.fabric.ACQUIRE_LEASE,
   RPC_CHANNELS.fabric.REVOKE_CONNECTION,
   RPC_CHANNELS.fabric.GITHUB_STATUS,
+  // GitHub identity linking — the device flow and the workspace link record are
+  // host-local; the token never leaves the main process.
+  RPC_CHANNELS.fabric.GITHUB_LINK_START,
+  RPC_CHANNELS.fabric.GITHUB_LINK_POLL,
+  RPC_CHANNELS.fabric.GITHUB_LINK_GET,
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
   RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
   RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,

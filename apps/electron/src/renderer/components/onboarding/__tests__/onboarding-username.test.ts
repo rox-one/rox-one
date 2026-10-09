@@ -211,7 +211,7 @@ describe('WelcomeStep identity block', () => {
     expect(source).toContain('shouldShowReservedBlock')
     expect(source).toContain('usernameSaveFailed')
     expect(source).toContain('TelegramLinkDialog')
-    expect(source).toContain('GithubDeviceLoginPanel')
+    expect(source).toContain('GithubLinkDialog')
     expect(source).toContain('rememberLocalProfile')
     expect(source).toContain('RoxCoinIcon')
     expect(source).not.toContain('caught.message')

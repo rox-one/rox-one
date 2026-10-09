@@ -9,7 +9,18 @@ import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { getFabricRuntime } from './fabric-runtime'
 import { createInfisicalHttpClient } from './infisical-http'
-import { commitInfisicalImport, previewInfisicalAccount } from '../../workgraph/index.ts'
+import {
+  commitInfisicalImport,
+  createFileGithubLinkStore,
+  createGithubDeviceLink,
+  previewInfisicalAccount,
+} from '../../workgraph/index.ts'
+import type {
+  GithubDeviceLinkPollView,
+  GithubDeviceLinkStartView,
+  GithubLinkProfileView,
+} from '../../workgraph/index.ts'
+import type { GithubOAuthHttpClient } from '@rox/shared/credentials'
 import {
   isClaimableLive,
   rpcFabricActResult,
@@ -30,6 +41,9 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.fabric.ACQUIRE_LEASE,
   RPC_CHANNELS.fabric.REVOKE_CONNECTION,
   RPC_CHANNELS.fabric.GITHUB_STATUS,
+  RPC_CHANNELS.fabric.GITHUB_LINK_START,
+  RPC_CHANNELS.fabric.GITHUB_LINK_POLL,
+  RPC_CHANNELS.fabric.GITHUB_LINK_GET,
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
   RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
   RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
@@ -126,6 +140,43 @@ function withRegistrySyncWrite<T>(
   return fn().finally(() => {
     provider.write = originalWrite
   })
+}
+
+/** Public surface of the device-flow link controller used by the handlers. */
+interface GithubLinkFlow {
+  start(): Promise<GithubDeviceLinkStartView>
+  poll(input: { flowId: string; workspaceId: string }): Promise<GithubDeviceLinkPollView>
+  get(input: { workspaceId: string }): Promise<GithubLinkProfileView | null>
+}
+
+const defaultGithubOAuthHttp: GithubOAuthHttpClient = async (request) => {
+  const response = await fetch(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+    redirect: 'manual',
+  })
+  return { status: response.status, body: await response.text() }
+}
+
+let cachedGithubLinkFlow: { directory: string; clientId: string; flow: GithubLinkFlow } | null = null
+
+/** Reuse the existing device-flow module (same OAuth client id) in link mode. */
+function githubLinkFlow(): GithubLinkFlow {
+  const runtime = getFabricRuntime()
+  const clientId = process.env.GITHUB_OAUTH_CLIENT_ID ?? ''
+  if (!cachedGithubLinkFlow || cachedGithubLinkFlow.directory !== runtime.directory || cachedGithubLinkFlow.clientId !== clientId) {
+    cachedGithubLinkFlow = {
+      directory: runtime.directory,
+      clientId,
+      flow: createGithubDeviceLink({
+        http: defaultGithubOAuthHttp,
+        clientId,
+        store: createFileGithubLinkStore(runtime.directory),
+      }),
+    }
+  }
+  return cachedGithubLinkFlow.flow
 }
 
 export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): void {
@@ -334,6 +385,32 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
         reason: sanitizeReason(error, token),
       }
     }
+  })
+
+  // Onboarding «Привязать GitHub» — the existing device flow in link mode. The
+  // start view carries only the public codes; the poll returns the linked
+  // profile and never the access token; the get reloads a stored link.
+  server.handle(RPC_CHANNELS.fabric.GITHUB_LINK_START, async () => {
+    const view: GithubDeviceLinkStartView = await githubLinkFlow().start()
+    return stripSecrets(view)
+  })
+
+  server.handle(RPC_CHANNELS.fabric.GITHUB_LINK_POLL, async (_ctx, args: unknown) => {
+    const bag = objectArg(args)
+    const flowId = nonEmptyString(bag.flowId)
+    if (!flowId) throw new Error('fabric.githubLinkPoll: flowId required')
+    const view: GithubDeviceLinkPollView = await githubLinkFlow().poll({
+      flowId,
+      workspaceId: nonEmptyString(bag.workspaceId) ?? DEFAULT_WORKSPACE_ID,
+    })
+    return stripSecrets(view)
+  })
+
+  server.handle(RPC_CHANNELS.fabric.GITHUB_LINK_GET, async (_ctx, args?: unknown) => {
+    const profile: GithubLinkProfileView | null = await githubLinkFlow().get({
+      workspaceId: workspaceIdOf(args),
+    })
+    return profile ? stripSecrets(profile) : null
   })
 
   server.handle(RPC_CHANNELS.fabric.INFISICAL_HEALTH, async () => {
