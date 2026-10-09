@@ -12,9 +12,10 @@ import { createRoot, type Root } from 'react-dom/client'
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { Markdown } from '@rox/ui'
+import { StreamingMarkdown } from '@/components/markdown'
 import '@/index.css'
 
-type FixtureScenario = { program: string; isStreaming: boolean }
+type FixtureScenario = { program: string; isStreaming: boolean; raw?: string }
 
 const COMPLETE_PROGRAM = `root = Card([title, tbl, chart, actions])
 title = TextContent("Top languages by users", "large-heavy")
@@ -105,6 +106,7 @@ const state: FixtureScenario & {
 } = {
   program: PROGRAM_BY_NAME[query.get('program') ?? ''] ?? COMPLETE_PROGRAM,
   isStreaming: query.get('streaming') === 'true',
+  raw: undefined,
   scope: query.get('scope') ?? undefined,
 }
 
@@ -129,7 +131,7 @@ function unmount(): void {
 }
 
 function Fixture(): React.ReactElement {
-  const [scenario, setScenario] = React.useState<FixtureScenario>({ program: state.program, isStreaming: state.isStreaming })
+  const [scenario, setScenario] = React.useState<FixtureScenario>({ program: state.program, isStreaming: state.isStreaming, raw: state.raw })
   const [scope, setScope] = React.useState<string | undefined>(state.scope)
 
   // Expose the live state to the driving test; identity is stable across renders.
@@ -142,15 +144,29 @@ function Fixture(): React.ReactElement {
   // not a plain-code render of the program text.
   return (
     <div data-testid="openui-fixture" style={{ width: 900, padding: 24 }}>
-      <Markdown
-        mode="minimal"
-        isStreaming={scenario.isStreaming}
-        onSendPrompt={(text) => { prompts.push(text) }}
-        onUrlClick={(url) => { urls.push(url) }}
-        blockScope={scope}
-      >
-        {['```openui', scenario.program, '```'].join('\n')}
-      </Markdown>
+      {scenario.raw === undefined ? (
+        <Markdown
+          mode="minimal"
+          isStreaming={scenario.isStreaming}
+          onSendPrompt={(text) => { prompts.push(text) }}
+          onUrlClick={(url) => { urls.push(url) }}
+          blockScope={scope}
+        >
+          {['```openui', scenario.program, '```'].join('\n')}
+        </Markdown>
+      ) : (
+        // Raw-content mode mounts the production StreamingMarkdown (the barrel
+        // export ChatDisplay uses) so the test can place a completed fence in
+        // the middle of a still-streaming turn and exercise block splitting.
+        <StreamingMarkdown
+          content={scenario.raw}
+          isStreaming={scenario.isStreaming}
+          mode="minimal"
+          onSendPrompt={(text) => { prompts.push(text) }}
+          onUrlClick={(url) => { urls.push(url) }}
+          blockScope={scope}
+        />
+      )}
     </div>
   )
 }
@@ -162,6 +178,11 @@ const fixture = {
     state.program = program
     state.isStreaming = isStreaming
     state.apply?.({ program, isStreaming })
+  },
+  setRawContent(content: string | undefined, isStreaming: boolean) {
+    state.raw = content
+    state.isStreaming = isStreaming
+    state.apply?.({ program: state.program, isStreaming, raw: content })
   },
   setScope(scope: string | undefined) {
     state.scope = scope

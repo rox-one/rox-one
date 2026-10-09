@@ -57,6 +57,7 @@ interface FixtureApi {
   urls: string[]
   program: (name: string) => string
   setScenario: (program: string, isStreaming: boolean) => void
+  setRawContent: (content: string | undefined, isStreaming: boolean) => void
   setScope: (scope: string | undefined) => void
   unmount: () => void
   mount: () => void
@@ -107,28 +108,48 @@ describe.skipIf(!executablePath)('OpenUI block integrated browser regression', (
   beforeAll(async () => {
     try {
       mkdirSync(proofDirectory, { recursive: true })
-      const port = await availablePort()
-      fixtureUrl = `http://127.0.0.1:${port}`
       const outputText = (stream: ReadableStream | number | undefined) => typeof stream === 'number' ? Promise.resolve('') : new Response(stream).text()
       // Production build exercises the real lazy chunk (OpenUI + recharts) and
-      // the shipped CSS pipeline; a dev server would not prove either.
+      // the shipped CSS pipeline; a dev server would not prove either. It must
+      // finish before `vite preview` serves the built assets.
       compiling = Bun.spawn(['node', resolve(repository, 'node_modules/vite/bin/vite.js'), 'build', '--config', resolve(fixture, 'vite.config.ts')], { cwd: repository, stdout: 'pipe', stderr: 'pipe' })
       const buildLog = Promise.all([outputText(compiling.stdout), outputText(compiling.stderr)]).then(logs => logs.join('\n'))
       const buildCode = await compiling.exited
       compiling = undefined
       writeFileSync(resolve(proofDirectory, 'fixture-build.log'), await buildLog)
       if (buildCode !== 0) throw new Error(`OpenUI block fixture did not compile:\n${await buildLog}`)
-      server = Bun.spawn(['node', resolve(repository, 'node_modules/vite/bin/vite.js'), 'preview', '--config', resolve(fixture, 'vite.config.ts'), '--port', String(port)], { cwd: repository, stdout: 'pipe', stderr: 'pipe' })
-      serverLog = Promise.all([outputText(server.stdout), outputText(server.stderr)]).then(logs => logs.join('\n'))
-      const deadline = Date.now() + 30_000
-      for (;;) {
-        try {
-          const response = await fetch(fixtureUrl)
-          if (response.ok && (await response.text()).includes('ROX OpenUI block fixture')) break
-        } catch { /* Only our own newly started server is awaited. */ }
-        if (server.exitCode !== null || Date.now() > deadline) throw new Error(`OpenUI block fixture server did not start${server.exitCode !== null ? `: ${await serverLog}` : ''}`)
-        await Bun.sleep(100)
+      // Retry on a fresh port: `--strictPort` makes vite exit instead of
+      // silently shifting to another port, which would leave the readiness
+      // probe (and every later request) pointed at a foreign listener.
+      let lastStartupLog = ''
+      let previewReady = false
+      for (let attempt = 0; attempt < 3 && !previewReady; attempt += 1) {
+        const port = await availablePort()
+        fixtureUrl = `http://127.0.0.1:${port}`
+        const child = Bun.spawn(['node', resolve(repository, 'node_modules/vite/bin/vite.js'), 'preview', '--config', resolve(fixture, 'vite.config.ts'), '--port', String(port), '--strictPort'], { cwd: repository, stdout: 'pipe', stderr: 'pipe' })
+        server = child
+        serverLog = Promise.all([outputText(child.stdout), outputText(child.stderr)]).then(logs => logs.join('\n'))
+        const deadline = Date.now() + 30_000
+        for (;;) {
+          try {
+            const response = await fetch(fixtureUrl)
+            if (response.ok && (await response.text()).includes('ROX OpenUI block fixture')) { previewReady = true; break }
+          } catch { /* Only our own newly started server is awaited. */ }
+          if (child.exitCode !== null) { lastStartupLog = await serverLog; break }
+          if (Date.now() > deadline) { lastStartupLog = await serverLog; break }
+          // A real child process (vite preview) exposes no promise for "server
+          // is listening"; poll its readiness marker with a bounded sleep.
+          await Bun.sleep(100)
+        }
+        if (!previewReady && server !== undefined) {
+          // Never leave a half-started preview behind for the next attempt.
+          const failed = server
+          server = undefined
+          if (failed.exitCode === null) failed.kill('SIGKILL')
+          await failed.exited
+        }
       }
+      if (!previewReady) throw new Error(`OpenUI block fixture server did not start: ${lastStartupLog}`)
       browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
       writeFileSync(resolve(proofDirectory, 'fixture-environment.json'), JSON.stringify({ fixtureOnly: true, startedAt: new Date().toISOString(), browser: await browser.version(), executablePath, bunVersion: Bun.version, repository }, null, 2))
     } catch (error) {
@@ -151,7 +172,10 @@ describe.skipIf(!executablePath)('OpenUI block integrated browser regression', (
     })
   }, 45_000)
   afterEach(async () => { try { expect(pageErrors).toEqual([]) } finally { await context?.close() } }, 45_000)
-  afterAll(async () => { await stopResources() }, 30_000)
+  // Chromium close plus the two child processes can exceed 30s under a loaded
+  // machine; a hook timeout is reported by bun as a failed test, so the budget
+  // must cover the slow path (stopResources SIGKILLs stragglers after 2s).
+  afterAll(async () => { await stopResources() }, 90_000)
 
   const load = async (query = '') => {
     await page.goto(`${fixtureUrl}/?${query}`)
@@ -255,6 +279,33 @@ describe.skipIf(!executablePath)('OpenUI block integrated browser regression', (
     await expectDOM(submit).toBeDisabled()
     await page.evaluate(() => window.__openuiFixture.setScenario(window.__openuiFixture.program('stream-partial'), false))
     await expectDOM(submit).toBeEnabled()
+  }, 60_000)
+
+  it('keeps a completed mid-turn fence form blocked until the turn ends', async () => {
+    await load()
+    // A completed ```openui fence sandwiched between prose while the turn is
+    // still streaming: StreamingMarkdown splits this into a completed middle
+    // block plus a trailing active block. The middle fence must inherit the
+    // turn-level streaming flag, not its own "not the last block" status.
+    const content = await page.evaluate(() => {
+      const program = window.__openuiFixture.program('form')
+      return ['Intro prose.', '', '```openui', program, '```', '', 'Trailing prose.'].join('\n')
+    })
+    await page.evaluate((raw) => window.__openuiFixture.setRawContent(raw, true), content)
+    const openuiBlock = block()
+    const submit = openuiBlock.getByRole('button', { name: 'Plan my trip', exact: true })
+    await expectDOM(submit).toBeVisible()
+    await expectDOM(submit).toBeDisabled()
+    // A click while the turn is still streaming must not reach onSendPrompt.
+    await submit.click({ force: true, timeout: 2_000 }).catch(() => {})
+    expect(await prompts()).toEqual([])
+    // The turn ends: the same completed fence becomes interactive.
+    await page.evaluate((raw) => window.__openuiFixture.setRawContent(raw, false), content)
+    await expectDOM(submit).toBeEnabled()
+    await submit.click()
+    await page.waitForFunction(() =>
+      window.__openuiFixture.prompts.some(text => text.startsWith('Plan a trip based on my choices')))
+    expect((await prompts()).some(text => text.startsWith('Plan a trip based on my choices'))).toBe(true)
   }, 60_000)
 
   it('refuses an over-budget doubling program and stays responsive', async () => {

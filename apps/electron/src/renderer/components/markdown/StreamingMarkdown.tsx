@@ -186,7 +186,7 @@ export function StreamingMarkdown({
           <MemoizedBlock
             key={key}
             content={block.content}
-            isStreaming={isLastBlock}
+            isStreaming={isStreaming}
             mode={mode}
             onUrlClick={onUrlClick}
             onFileClick={onFileClick}
