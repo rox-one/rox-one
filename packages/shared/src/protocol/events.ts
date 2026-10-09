@@ -32,6 +32,10 @@ import type { CommandBusPushEvent } from '../commands/push'
 import type { VoicePrefs } from '../voice/types.ts'
 import type { OverlayState } from '../voice/overlay-types.ts'
 import type { VoiceJob } from '../voice/job-machine.ts'
+import type { TalkEvent } from '../voice/talk-events.ts'
+import type { TtsStreamChunk } from '../voice/tts/streaming.ts'
+import type { RealtimeTranscriptionEvent } from '../voice/realtime-transcription.ts'
+import type { VoiceWakeChangedPayload, VoiceWakeTrigger } from '../voice/wake-list.ts'
 import type { EnvironmentPrefs } from '../environment'
 import type { PrivacyDto } from '../privacy/types.ts'
 
@@ -110,6 +114,11 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.voice.JOB]: [payload: VoiceJob]
   [RPC_CHANNELS.voice.OVERLAY]: [payload: OverlayState]
   [RPC_CHANNELS.voice.HOTKEY]: [payload: import('../voice/hotkey-types').VoiceHotkeyPayload]
+  [RPC_CHANNELS.voice.TALK_EVENT]: [payload: TalkEvent]
+  [RPC_CHANNELS.voice.TTS_STREAM_CHUNK]: [payload: TtsStreamChunk]
+  [RPC_CHANNELS.voice.STT_EVENT]: [payload: RealtimeTranscriptionEvent]
+  [RPC_CHANNELS.voice.WAKE_CHANGED]: [payload: VoiceWakeChangedPayload]
+  [RPC_CHANNELS.voice.TRIGGER]: [payload: VoiceWakeTrigger]
   [RPC_CHANNELS.environment.CHANGED]: [payload: EnvironmentPrefs]
 
   // Theme broadcasts (global)
