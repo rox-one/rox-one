@@ -9,7 +9,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { spawnSync } from 'node:child_process'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -20,7 +20,8 @@ import { PostgresCommandStore } from '../src/modules/commands/store.ts'
 import { InMemoryCommandStore } from '../../../packages/server-core/src/commands/store.ts'
 import { boundCommandTypes } from '../../../packages/server-core/src/commands/registry.ts'
 import { AGENTS_COMMAND_MODULE } from '../../../packages/server-core/src/agents/module.ts'
-import { PostgresRecordBackend, configureReferenceRuntime, resetPostgresReferenceMeta, resetReferenceMemory, resetReferenceRuntime } from '../../../packages/server-core/src/work/reference/index.ts'
+import { PostgresRecordBackend, REFERENCE_SNAPSHOT_EVENT, configureReferenceRuntime, resetPostgresReferenceMeta, resetReferenceMemory, resetReferenceRuntime } from '../../../packages/server-core/src/work/reference/index.ts'
+import { refKind } from '../../../packages/server-core/src/work/reference/collections.ts'
 import { createHarness } from '../../../packages/server-core/src/work/__tests__/reference-harness.ts'
 import { ACTOR_ID, BOB, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from '../../../packages/server-core/src/work/__tests__/reference-scenario.ts'
 
@@ -71,7 +72,12 @@ const W1_11_OWNED_CHAT = U('chat')
 function isW1_11Shadow(step: ScenarioStep): boolean {
   if (W1_11_OWNED_TYPES.includes(step.type)) return true
   if (step.target?.kind === 'channel' && step.target.id === W1_11_OWNED_CHAT) return true
-  return step.payload.toChatId === W1_11_OWNED_CHAT
+  if (step.payload.toChatId === W1_11_OWNED_CHAT) return true
+  // `*_from_message` steps carry the chat one level deeper, in
+  // `payload.origin.chatRef` (`channel:<id>`): they resolve the same missing row
+  // and fail with NOT_FOUND instead of applying, so they are shadowed too.
+  const origin = (step.payload as { origin?: { chatRef?: unknown } }).origin
+  return origin?.chatRef === `channel:${W1_11_OWNED_CHAT}`
 }
 
 /** The reference-owned remainder of the scenario: what must apply against the W1-05 schema. */
@@ -152,6 +158,23 @@ afterAll(async () => { await testDb?.cleanup() }, 180000)
 
 function pgHarness() {
   return createHarness({ local: new InMemoryCommandStore(), workspace: new PostgresCommandStore(db, schema), onError: (error, type) => console.error(`[w1-06] ${type}:`, (error as Error)?.message ?? error) })
+}
+
+/**
+ * The two records the reference store resolves `channel:<id>` against, seeded
+ * without the command path: `im.create_chat` is W1-11-owned (see
+ * W1_11_OWNED_TYPES) and cannot run in this harness. Posting a card needs the
+ * `chat` row plus an active `channel-member` for the actor (`assertCanPost`),
+ * and the membership lives as a reference snapshot, hence the `domain_event`
+ * insert in the backend's own format.
+ */
+async function seedChat(chatId: string): Promise<void> {
+  await db.unsafe(`INSERT INTO "${schema}".chat (chat_id, workspace_id, kind, visibility, name, created_by) VALUES ($1, $2, 'group', 'public', 'pg', $3)`, [chatId, WORKSPACE_ID, ACTOR_ID])
+  const memberId = `${chatId}:${ACTOR_ID}`
+  await db.unsafe(
+    `INSERT INTO "${schema}".domain_event (event_id, workspace_id, type, subject_kind, subject_id, payload) VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+    [randomUUID(), WORKSPACE_ID, REFERENCE_SNAPSHOT_EVENT, refKind('channel-member'), memberId, { collection: 'channel-member', id: memberId, revision: 1, record: { state: 'active', role: 'owner', chatId, principalId: ACTOR_ID } }],
+  )
 }
 
 // Guards the exclusion above: the reference harness only skips what W1-11
@@ -236,7 +259,7 @@ describe('W1-06 reference handlers over PostgreSQL (skips without a database)', 
   itDb('create_from_* keeps origin in origin_ref and the rest in the companion', async () => {
     const harness = pgHarness()
     // W1-14: the origin chat must exist — the command posts its card there.
-    expect(await harness.run({ type: 'im.create_chat', payload: { id: U('pg-chat'), kind: 'group', name: 'pg', visibility: 'public', members: [] } })).toMatchObject({ status: 'applied' })
+    await seedChat(U('pg-chat'))
     const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('pg-from-msg'), origin: { kind: 'message', chatRef: `channel:${U('pg-chat')}`, seq: 3 }, title: 'From message', assignee: BOB } })
     expect(fromMessage).toMatchObject({ status: 'applied' })
     const fromSelection = await harness.run({ type: 'tasks.create_from_selection', payload: { id: U('pg-from-sel'), origin: { kind: 'doc-block', docRef: `note:${U('pg-doc')}`, blockId: 'b1' }, title: 'Do it' } })

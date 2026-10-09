@@ -355,6 +355,8 @@ describe('MemoryRepoService', () => {
   test('foreign tree: memory commits land only in .git-rox', async () => {
     const userRepo = tempDir('user-repo')
     execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: userRepo })
+    execFileSync('git', ['config', 'user.name', 'Test User'], { cwd: userRepo })
+    execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: userRepo })
     mkdirSync(join(userRepo, 'src'), { recursive: true })
     writeFileSync(join(userRepo, 'src', 'file.ts'), 'export {}\n')
     execFileSync('git', ['add', '-A'], { cwd: userRepo })
@@ -391,6 +393,8 @@ describe('MemoryRepoService', () => {
   test('default repo location: materialize leaves the workspace git tree clean', async () => {
     const workspaceRoot = tempDir('ws-default')
     execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: workspaceRoot })
+    execFileSync('git', ['config', 'user.name', 'Test User'], { cwd: workspaceRoot })
+    execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: workspaceRoot })
     writeFileSync(join(workspaceRoot, 'keep.txt'), 'keep\n')
     execFileSync('git', ['add', '-A'], { cwd: workspaceRoot })
     execFileSync('git', ['commit', '-q', '-m', 'workspace commit'], { cwd: workspaceRoot })
