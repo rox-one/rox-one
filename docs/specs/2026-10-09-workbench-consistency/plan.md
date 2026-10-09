@@ -113,7 +113,7 @@ export interface TabsProps {
 | W3.4a | Токен-пасс `InboxQueue` | ✅ | 54 → 0 гейтованных нарушений |
 | W3.4b | Виртуализация заметок и списка сессий | ✅ | окна + overscan, закрепление выбранной строки; новые юнит-тесты |
 | W3.4c | DOM-бюджеты на реальных объёмах | ✅ | 2000 сессий: **3167 → 70 мс** p95 (гейт 600), 5000 заметок: **62 мс** p95 (гейт 300); `bun run test:perf:dom` |
-| W4 | Визуальная приёмка (реальное приложение) и PR | 🔄 | следующие шаги |
+| W4 | Визуальная приёмка (реальное приложение) и PR | ✅ | PR [#1641](https://github.com/rox-one/rox-one/pull/1641); пост-мерж приёмка ниже |
 
 ### Известные границы (честно)
 
@@ -135,3 +135,18 @@ export interface TabsProps {
 - **Канон, числами**: тумблеры «Входящих» после миграции потеряли контраст трека (1.62 → 1.10 против фона очереди) — исправлено возвратом `bg-foreground/20` с обоснованной директивой ратчета; в пересобранном приложении подтверждено **1.623** (кружок 6.93 к треку, 11.24 к фону). Глифы пустых состояний 28 → 32 приняты. Hover заголовков групп 2 % → 5 % (`bg-surface-hover`; 1.047 → 1.111) принят.
 - **Предсуществующие красные (не наши)**: `switch-contrast.test.ts` и `provider.browser.test.ts` (30-секундные таймауты; красные и на чистом `origin/main`), 7 `react-hooks/rules-of-hooks` в `lint:electron`.
 - **Вне фолда вкладок**: полоса `runtime-tabs` («Представление карты выполнения», `components/runtime-map/RuntimeToolbar.tsx`) — пятая tab-полоса, найденная проверкой в живом приложении; в примитив не переведена (кандидат следующего цикла, вместе с чипами OS-окон браузера по ADR-0001, которые продукт сознательно убрал из SurfaceTabs в #169).
+### Пост-мерж приёмка (2026-10-10, ветка `feat/workbench-consistency-20261009`)
+
+Ветка слита с `origin/main` дважды (последнее — `a2dea292b`: Electron 44, openclaw-порт, перезапись банджет-бейзлайна). Красные CI разобраны до конца, все — доказанно наши либо унаследованные:
+
+| Что падало | Проверка авторства | Решение |
+|---|---|---|
+| `component-recovery` и `route-fixtures`: 60 ошибок esbuild (katex-шрифты) | тот же файл на чистом `origin/main` — 20/20 зелёный | цепочку дал метафайл esbuild: `SurfaceHost → TeamSurfacePage → TeamSessionButton → PanelHeaderCenterButton → @rox/ui` (широкий индекс статически тянет `chat → markdown → katex`); граница фикстуры расширена, как для `source-status-indicator` |
+| Юнит-тест целостности ратчета | наш файл бейзлайна (2 удалённые записи) | точечный `--update --targets components/browser --prefix-merge`, 3 тотала пересчитаны |
+| `Renderer bundle-size budget`: 14 бюджетов | сравнение сборок с чистым main (main зелёный) | перезапись документированным путём; дельты разобраны по чанкам (см. коммит `perf(bundle)…`) |
+| `UI token lint ratchet` (шаг base-baseline) | все 6 файлов байт-в-байт `origin/main`; на чистом main тот же провал | передано владельцу: `--allow-increase` + метка `ui-baseline-override` |
+| `unified-gates` (гейт `config-paths`) | на чистом main гейт падает на `docs/openclaw-port/STATUS.md:160` | унаследовано, наш вклад отсутствует (169 файлов проверены) |
+
+Локальная приёмка после слияния: `validate:ci` ✓, `typecheck` ✓, `test:runtime-suites` `exit=0` ✓, `component-recovery`-шаг 1180/0, `route-fixtures`-шаг 1211/0, юнит-тесты бейзлайна 41/0, юнит-тесты бюджета 20/0, четыре сьюта вкладок 27/0. Сплошной прогон 634 не-браузерных файлов: 165 падений против 162 на чистом main (собирательный прогон смешивает jsdom/node-сьюты); все расхождения проверены изолированно — либо проходят, либо падают и на main.
+
+CI PR: `component-recovery`, `route-fixtures (ubuntu)`, `Renderer bundle-size budget`, `browser-and-domain`, `durable-runtime (ubuntu)`, `validate (ubuntu)`, CodeQL, миграции — зелёные; открытыми остаются только унаследованные (`UI token lint ratchet`, `unified-gates`) и `Vercel` («Account is blocked»).
