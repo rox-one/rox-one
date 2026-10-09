@@ -4,7 +4,7 @@
  *
  * Measures the production renderer JS chunks (apps/electron/dist/renderer/assets) and fails when a
  * known chunk-name *prefix* grows past its recorded raw-byte budget, or when an unbudgeted prefix
- * grows past MAX_NEW_CHUNK_BYTES. Raw `statSync().size` is the gated number; gzip (level 9) is
+ * grows past MAX_NEW_CHUNK_BYTES. Raw `Buffer.byteLength` of the emitted file is the gated number; gzip (level 9) is
  * reported alongside. Source maps (vite.config.ts `sourcemap: true`) and the pdf worker are never
  * measured: only `assets/*.js` is read.
  *
@@ -22,7 +22,7 @@
  * (basename.replace(/-[A-Za-z0-9_-]{8}\.js$/, '')) — never the content hash — so a rebuild that
  * only changes hashes does not move the budget.
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
 
@@ -56,7 +56,7 @@ export interface MeasuredChunk {
   /** Basename, e.g. `index-B3-J8HY7.js`. */
   file: string
   prefix: string
-  /** The gated number: `statSync().size` of the emitted chunk. */
+  /** The gated number: byte length of the emitted chunk. */
   rawBytes: number
   /** gzip level 9, mtime 0 — informational, reported alongside rawBytes. */
   gzipBytes: number
@@ -106,20 +106,28 @@ export function isMeasuredAsset(baseName: string): boolean {
 
 /** Raw + gzip bytes of every emitted `assets/*.js` chunk, sorted by file name. */
 export function measureRendererChunks(assetsDir: string = paths().assets): MeasuredChunk[] {
-  if (!existsSync(assetsDir)) return []
+  let files: string[]
+  try {
+    files = readdirSync(assetsDir)
+  } catch {
+    // No (readable) build output yet; the caller fails closed.
+    return []
+  }
   const chunks: MeasuredChunk[] = []
-  for (const file of readdirSync(assetsDir).sort()) {
+  for (const file of files.sort()) {
     if (!isMeasuredAsset(file)) continue
-    const path = join(assetsDir, file)
-    if (!statSync(path).isFile()) continue
-    const content = readFileSync(path)
-    chunks.push({
-      file,
-      prefix: chunkPrefix(file),
-      rawBytes: statSync(path).size,
-      // Bun accepts `mtime: 0` (deterministic gzip) beyond Node's ZlibOptions type.
-      gzipBytes: gzipSync(content, { level: 9, mtime: 0 } as unknown as Parameters<typeof gzipSync>[1]).length,
-    })
+    try {
+      const content = readFileSync(join(assetsDir, file))
+      chunks.push({
+        file,
+        prefix: chunkPrefix(file),
+        rawBytes: content.length,
+        // Bun accepts `mtime: 0` (deterministic gzip) beyond Node's ZlibOptions type.
+        gzipBytes: gzipSync(content, { level: 9, mtime: 0 } as unknown as Parameters<typeof gzipSync>[1]).length,
+      })
+    } catch {
+      // Vanished between listing and reading (concurrent build) — ignore this entry.
+    }
   }
   return chunks
 }
@@ -246,13 +254,20 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     return 1
   }
 
-  // Fail closed: without the renderer entry HTML there is no build to measure.
-  if (!existsSync(p.indexHtml)) {
+  // Fail closed: without the renderer entry HTML there is no build to measure. Read it
+  // rather than pre-checking existence so the gate never races a concurrent build.
+  try {
+    readFileSync(p.indexHtml)
+  } catch {
     console.error('no renderer build found - run bun run electron:build:renderer first')
     return 1
   }
 
   const chunks = measureRendererChunks(p.assets)
+  if (chunks.length === 0) {
+    console.error('no renderer build found - run bun run electron:build:renderer first')
+    return 1
+  }
   const measured = buildBudgets(chunks)
 
   if (printArg) {
@@ -274,9 +289,13 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     return 0
   }
 
-  const baseline = existsSync(baselinePath)
-    ? readBaseline(baselinePath)
-    : { description: DESCRIPTION, budgets: {} }
+  let baseline: BundleBaseline
+  try {
+    baseline = readBaseline(baselinePath)
+  } catch {
+    // No recorded baseline yet: every chunk is judged against MAX_NEW_CHUNK_BYTES only.
+    baseline = { description: DESCRIPTION, budgets: {} }
+  }
   const failures = evaluateChunks(chunks, baseline.budgets ?? {})
   if (failures.length > 0) {
     for (const failure of failures) console.error(formatFailure(failure))
