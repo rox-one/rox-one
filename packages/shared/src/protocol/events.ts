@@ -38,6 +38,7 @@ import type { RealtimeTranscriptionEvent } from '../voice/realtime-transcription
 import type { VoiceWakeChangedPayload, VoiceWakeTrigger } from '../voice/wake-list.ts'
 import type { EnvironmentPrefs } from '../environment'
 import type { PrivacyDto } from '../privacy/types.ts'
+import type { ServiceStatus, TrayStatus } from '../service-lifecycle.ts'
 
 /** Payload of marketplace:CHANGED — pushed after an install/update/remove completes. */
 export interface MarketplaceChangedPayload {
@@ -211,6 +212,14 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.menu.TOGGLE_SIDEBAR]: []
   [RPC_CHANNELS.menu.TOGGLE_INSPECTOR]: []
   [RPC_CHANNELS.menu.TOGGLE_CHAT_PICTURE_IN_PICTURE]: []
+  // Tray shell (e2.1) — navigation dispatch + live status indicator.
+  [RPC_CHANNELS.menu.OPEN_DASHBOARD]: []
+  [RPC_CHANNELS.menu.OPEN_NATIVE_CONSOLE]: []
+  [RPC_CHANNELS.menu.SHOW_SERVICE_STATUS]: []
+  [RPC_CHANNELS.menu.RUN_DOCTOR]: []
+  [RPC_CHANNELS.menu.TRAY_STATUS_CHANGED]: [status: TrayStatus]
+  // Service lifecycle (e1.4/e1.5) — status transitions pushed to the UI.
+  [RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED]: [status: ServiceStatus]
 
   // Messaging gateway broadcasts
   [RPC_CHANNELS.messaging.BINDING_CHANGED]: [workspaceId: string]
