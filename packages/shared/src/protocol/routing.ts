@@ -49,6 +49,11 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.podcast.EPISODES,
   RPC_CHANNELS.podcast.AUDIO,
   RPC_CHANNELS.podcast.AUDIO_URL,
+  // Codebook — notebook runs spawn local executables and reuse local sessions (§9, D12, В5).
+  RPC_CHANNELS.playbooks.RUN_CODEBOOK,
+  RPC_CHANNELS.playbooks.CANCEL_CODEBOOK,
+  RPC_CHANNELS.playbooks.CODEBOOK_RUNS,
+  RPC_CHANNELS.playbooks.CODEBOOK_JOB,
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 

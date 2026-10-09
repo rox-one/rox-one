@@ -727,6 +727,16 @@ export const RPC_CHANNELS = {
     /** A `data:` URL for the player when the episode fits a single message. */
     AUDIO_URL: 'podcast:audioUrl',
   },
+  playbooks: {
+    /** Start a local codebook notebook run (cells → script/agent/artifact steps). */
+    RUN_CODEBOOK: 'playbooks:runCodebook',
+    /** Cancel the active codebook run; no partial run journal is published. */
+    CANCEL_CODEBOOK: 'playbooks:cancelCodebook',
+    /** List the durable codebook run journal of a project. */
+    CODEBOOK_RUNS: 'playbooks:codebookRuns',
+    /** Codebook run progress; monotonic `seq`, one stream per job (§9, D12). */
+    CODEBOOK_JOB: 'playbooks:codebookJob',
+  },
   environment: {
     GET: 'environment:get',
     SAVE: 'environment:save',

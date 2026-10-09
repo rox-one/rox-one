@@ -704,6 +704,10 @@ export const EXPECTED_CHANNELS: string[] = [
   'pi:getApiKeyProviders',
   'pi:getProviderBaseUrl',
   'pi:getProviderModels',
+  'playbooks:cancelCodebook',
+  'playbooks:codebookJob',
+  'playbooks:codebookRuns',
+  'playbooks:runCodebook',
   'pluginBridge:getProjections',
   'pluginBridge:installBazaar',
   'pluginBridge:listPlugins',
@@ -1053,4 +1057,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1049
+export const EXPECTED_CHANNEL_COUNT = 1053

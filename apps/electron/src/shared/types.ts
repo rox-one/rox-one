@@ -69,6 +69,10 @@ import type {
   PodcastEpisodeAudioUrlInput, PodcastEpisodeAudioUrlResult, PodcastEpisodesInput, PodcastEpisodesResult,
   PodcastJob, PodcastStartInput, PodcastStartResult,
 } from '@rox/shared/voice'
+import type {
+  CodebookCancelInput, CodebookCancelResult, CodebookJob, CodebookRunInput, CodebookRunResult,
+  CodebookRunsInput, CodebookRunsResult,
+} from '@rox/shared/playbooks'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -2342,6 +2346,12 @@ export interface ElectronAPI {
   readPodcastEpisodeAudio(input: PodcastEpisodeAudioInput): Promise<PodcastEpisodeAudioChunk>
   podcastEpisodeAudioUrl(input: PodcastEpisodeAudioUrlInput): Promise<PodcastEpisodeAudioUrlResult>
   onPodcastJob(callback: (job: PodcastJob) => void): () => void
+  // Playbooks codebook (D12, В5): notebook runs execute host-local; the renderer
+  // follows `playbooks:codebookJob` and lists the durable run journal.
+  runCodebook(input: CodebookRunInput): Promise<CodebookRunResult>
+  cancelCodebook(input: CodebookCancelInput): Promise<CodebookCancelResult>
+  listCodebookRuns(input: CodebookRunsInput): Promise<CodebookRunsResult>
+  onCodebookJob(callback: (job: CodebookJob) => void): () => void
   onVoiceOverlay(callback: (state: import('@rox/shared/voice').OverlayState) => void): () => void
   publishVoiceLevel?(level: number): void
   onVoiceHotkey(callback: (payload: import('@rox/shared/voice/hotkey-types').VoiceHotkeyPayload) => void): () => void
