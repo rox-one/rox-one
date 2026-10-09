@@ -30,6 +30,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
@@ -92,6 +93,7 @@ const MeetingsPage = lazyRoutePage(() => import('@/pages/workspace-work/PlanWork
 const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
 const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
 const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
+const ClipboardHistoryPage = lazyRoutePage(() => import('@/pages/ClipboardHistoryPage'))
 const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
 const SkillInfoPage = lazyRoutePage(() => import('@/pages/SkillInfoPage'))
 const SourceInfoPage = lazyRoutePage(() => import('@/pages/SourceInfoPage'))
@@ -504,6 +506,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <MemoryScreen workspaceId={activeWorkspaceId ?? undefined} />
+      </Panel>
+    )
+  }
+
+  if (isClipboardHistoryNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <ClipboardHistoryPage />
       </Panel>
     )
   }

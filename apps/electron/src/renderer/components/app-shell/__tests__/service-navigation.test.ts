@@ -187,7 +187,7 @@ describe('context sidebar and keyboard order', () => {
     for (const route of [routes.view.allSessions(), routes.view.sources(), routes.view.skills(), routes.view.automations(), routes.view.projects(), routes.view.memory(), routes.view.settings(), routes.view.knowledge()]) {
       expect(serviceHasNavigator(parseRouteToNavigationState(route)!)).toBe(true)
     }
-    for (const route of [routes.view.notes(), routes.view.browser('browser'), routes.view.tasks(), routes.view.meetings(), routes.view.connections(), routes.view.pages(), routes.view.home(), routes.view.terminal('shell'), routes.view.cloudRun('run'), routes.view.extension('extension', 'view'), routes.view.proposal('diff')]) {
+    for (const route of [routes.view.notes(), routes.view.browser('browser'), routes.view.tasks(), routes.view.meetings(), routes.view.connections(), routes.view.pages(), routes.view.home(), routes.view.terminal('shell'), routes.view.cloudRun('run'), routes.view.extension('extension', 'view'), routes.view.proposal('diff'), routes.view.clipboardHistory()]) {
       expect(serviceHasNavigator(parseRouteToNavigationState(route)!)).toBe(false)
     }
   })

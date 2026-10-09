@@ -108,6 +108,16 @@ import type { VoiceHealth, VoicePrefs } from '@rox/shared/voice';
 import type { EnvironmentPrefs, QuestionId } from '@rox/shared/environment';
 import type { ContextDocContent, ContextDocInfo } from '@rox/shared/context-docs';
 import type {
+  ClipChangedPayload,
+  ClipEntryDetail,
+  ClipListQuery,
+  ClipListResult,
+  ClipSettings,
+  ClipStats,
+  ClipTagCount,
+} from '@rox/shared/clipboard-history'
+import type { KnowledgeMapDto } from '@rox/shared/knowledge/knowledge-map-types'
+import type {
   AutomationGraphProjection,
   SaveAutomationGraphPayload,
   SavedAutomationGraph,
@@ -2198,6 +2208,25 @@ export interface ElectronAPI {
   }): Promise<{ ok: true } | { ok: false; error: string }>
   onMemoryChanged(callback: (workspaceId: string | null, scope: LessonScope | 'both') => void): () => void
 
+  // Rox History — clipboard history (first-party; Electron main store + monitor)
+  listClipboardEntries(query?: ClipListQuery): Promise<ClipListResult>
+  getClipboardEntry(id: number): Promise<ClipEntryDetail | null>
+  setClipboardEntryStarred(id: number, starred: boolean): Promise<{ ok: true }>
+  setClipboardEntryTags(id: number, tags: string[]): Promise<{ ok: true }>
+  deleteClipboardEntry(id: number): Promise<{ ok: true }>
+  clearClipboardHistory(keepStarred: boolean): Promise<{ removed: number }>
+  copyClipboardEntry(id: number): Promise<{ ok: true }>
+  /** First-party secret copy: writes text + concealed marker so history skips it. */
+  writeClipboardTextConcealed(text: string): Promise<{ ok: true }>
+  getClipboardSettings(): Promise<ClipSettings>
+  saveClipboardSettings(settings: Partial<ClipSettings>): Promise<ClipSettings>
+  getClipboardTagCounts(): Promise<ClipTagCount[]>
+  getClipboardStats(): Promise<ClipStats>
+  onClipboardChanged(callback: (payload: ClipChangedPayload) => void): () => void
+
+  // Knowledge map — auto-generated user knowledge graph (server-core builder)
+  buildKnowledgeMap(): Promise<KnowledgeMapDto>
+
   // Statuses (workspace-scoped)
   listStatuses(workspaceId: string): Promise<import('@rox/shared/statuses').StatusConfig[]>
   reorderStatuses(workspaceId: string, orderedIds: string[]): Promise<void>
@@ -2910,6 +2939,15 @@ export interface MemoryNavigationState {
 }
 
 /**
+ * Rox History navigator state (clipboard history panel)
+ */
+export interface ClipboardHistoryNavigationState {
+  navigator: 'clipboard-history'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Learning navigator state (self-learning dashboard — PRD §25-30)
  */
 export interface LearningNavigationState {
@@ -3074,6 +3112,7 @@ export type NavigationState =
   | PagesNavigationState
   | BrowserNavigationState
   | MemoryNavigationState
+  | ClipboardHistoryNavigationState
   | LearningNavigationState
   | TasksNavigationState
   | MeetingsNavigationState
@@ -3137,6 +3176,10 @@ export const isBrowserNavigation = (
 export const isMemoryNavigation = (
   state: NavigationState
 ): state is MemoryNavigationState => state.navigator === 'memory'
+
+export const isClipboardHistoryNavigation = (
+  state: NavigationState
+): state is ClipboardHistoryNavigationState => state.navigator === 'clipboard-history'
 
 export const isLearningNavigation = (
   state: NavigationState
@@ -3260,6 +3303,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'memory') {
     return 'memory'
+  }
+  if (state.navigator === 'clipboard-history') {
+    return 'clipboard-history'
   }
   if (state.navigator === 'learning') {
     return 'learning'

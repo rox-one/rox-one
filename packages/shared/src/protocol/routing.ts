@@ -342,6 +342,27 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.bundledSkills.SET_DISABLED,
   RPC_CHANNELS.bundledSkills.CHANGED,
 
+  // Rox History — clipboard history store + monitor live in the local Electron
+  // main process (local OS clipboard, host config dir).
+  RPC_CHANNELS.clipboard.LIST,
+  RPC_CHANNELS.clipboard.GET,
+  RPC_CHANNELS.clipboard.STAR,
+  RPC_CHANNELS.clipboard.TAGS,
+  RPC_CHANNELS.clipboard.DELETE,
+  RPC_CHANNELS.clipboard.CLEAR,
+  RPC_CHANNELS.clipboard.COPY,
+  RPC_CHANNELS.clipboard.WRITE_CONCEALED,
+  RPC_CHANNELS.clipboard.SETTINGS_GET,
+  RPC_CHANNELS.clipboard.SETTINGS_SET,
+  RPC_CHANNELS.clipboard.TAG_COUNTS,
+  RPC_CHANNELS.clipboard.STATS,
+  RPC_CHANNELS.clipboard.CHANGED,
+
+  // knowledge map — built from the local config dir (context + memory) and the
+  // workspace notes root, so it runs on the host.
+  RPC_CHANNELS.knowledgeMap.GET,
+  RPC_CHANNELS.knowledgeMap.CHANGED,
+
   // marketplace — curated installs into the local config dir (skills/context/toolchain deferral)
   RPC_CHANNELS.marketplace.CATALOG,
   RPC_CHANNELS.marketplace.STATS,

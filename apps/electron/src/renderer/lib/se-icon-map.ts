@@ -17,6 +17,7 @@ export const SE_MONOCHROME_NAV_IDS: Record<AppNavDestinationId, true> = {
   sources: true,
   skills: true,
   memory: true,
+  clipboardHistory: true,
   browser: true,
   tasks: true,
   meetings: true,

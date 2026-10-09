@@ -965,6 +965,11 @@
       "id": "siyuan.openCompat",
       "when": null,
       "hotkey": null
+    },
+    {
+      "id": "clipboardHistory.open",
+      "when": null,
+      "hotkey": null
     }
   ]
 }

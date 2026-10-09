@@ -22,6 +22,7 @@ import {
   BookOpen,
   Calendar,
   Cable,
+  ClipboardList,
   DatabaseZap,
   FolderKanban,
   Globe,
@@ -40,6 +41,7 @@ import { routes, type ViewRoute } from '../../../shared/routes'
 import {
   isAutomationsNavigation,
   isBrowserNavigation,
+  isClipboardHistoryNavigation,
   isConnectionsNavigation,
   isDiffNavigation,
   isHomeNavigation,
@@ -64,6 +66,7 @@ export type AppNavDestinationId =
   | 'sources'
   | 'skills'
   | 'memory'
+  | 'clipboardHistory'
   | 'learning'
   | 'browser'
   | 'tasks'
@@ -199,6 +202,16 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     contextLinkIds: ['nav:learning'],
     route: () => routes.view.learning(),
     isActive: isLearningNavigation,
+  },
+  {
+    id: 'clipboardHistory',
+    linkId: 'nav:clipboardHistory',
+    icon: ClipboardList,
+    labelKey: 'clipboard.title',
+    railGroup: 'more',
+    contextLinkIds: ['nav:clipboardHistory'],
+    route: () => routes.view.clipboardHistory(),
+    isActive: isClipboardHistoryNavigation,
   },
   {
     id: 'meetings',
