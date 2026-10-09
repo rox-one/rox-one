@@ -130,6 +130,7 @@
     "build": "bun run scripts/build.ts",
     "release": "bun run scripts/release.ts",
     "check-version": "bun run scripts/check-version.ts",
+    "check-yaml-duplicates": "bun run scripts/check-yaml-duplicates.ts",
     "oss:sync": "bun run scripts/oss-sync.ts",
     "rx:validate": "bun run scripts/rx-validate.ts",
     "prepare": "husky",

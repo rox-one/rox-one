@@ -25,6 +25,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: bun test packages/core
+      - name: Guard against duplicate YAML mapping keys
+        # GitHub Actions rejects a workflow file with a duplicated key; js-yaml load() catches it.
+        run: bun run check-yaml-duplicates
       - run: bun run validate:ci
         env:
           # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB heap.
