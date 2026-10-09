@@ -33,7 +33,6 @@ import {
   isMemoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isNotesNavigation,
@@ -91,7 +90,6 @@ const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraS
 // W1-07 (#1504): unified mode roots; reachable only while their mode flag is on.
 const SurfaceHost = lazyRoutePage(() => import('@/platform/SurfaceHost'))
 const TasksPage = lazyRoutePage(() => import('@/pages/workspace-work/WorkspaceTasksPage'))
-const MeetingsPage = lazyRoutePage(() => import('@/pages/workspace-work/PlanWorkspacePage'))
 const AgentsWorkspacePage = lazyRoutePage(() => import('@/pages/workspace-work/AgentsWorkspacePage'))
 const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
 const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
@@ -703,16 +701,6 @@ export function MainContentPanel({
     )
   }
 
-  if (isMeetingsNavigation(navState)) {
-    return wrapWithStoplight(
-      <Panel variant="grow" className={className}>
-        <MeetingsPage
-          selectedId={navState.details?.meetingId ?? null}
-        />
-      </Panel>
-    )
-  }
-
   if (isInboxNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
@@ -732,7 +720,7 @@ export function MainContentPanel({
   if (isSurfaceNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <SurfaceHost surface={navState.surface} />
+        <SurfaceHost surface={navState.surface} meetingId={navState.meetingId ?? null} />
       </Panel>
     )
   }

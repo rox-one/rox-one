@@ -24,9 +24,9 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { z } from 'zod'
-import { PLACEHOLDER_PAYLOAD_SCHEMA } from '../../../packages/core/src/commands/index.ts'
+import { CommandRegistry, registerCommandCatalogue } from '../../../packages/core/src/commands/index.ts'
 import { REALTIME_RPC, type RealtimeEventFrame, type RealtimeSubscribeResult } from '../../../packages/core/src/events/index.ts'
-import { createWiredCommandRegistry } from '../../../packages/server-core/src/commands/registry.ts'
+import { COMMAND_MODULES } from '../../../packages/server-core/src/commands/registry.ts'
 import type { CommandReceipt } from '../../../packages/core/src/commands/index.ts'
 import { commandReceiptSchema } from '../../../packages/shared/src/commands/schemas.ts'
 import {
@@ -141,13 +141,25 @@ const checkInPayload = z.object({
   title: z.string().optional(),
 })
 
-/** Minimal goal reference handlers — W1-06 (#1503) binds the real ones. */
+/**
+ * Minimal goal reference handlers — W1-06 (#1503) binds the real ones.
+ *
+ * The catalogue with only the modules this harness needs: W1-06 added
+ * `DOMAIN_SCHEMA_COMMAND_MODULE` and `REFERENCE_COMMAND_MODULE` to
+ * `COMMAND_MODULES`, and this harness predates both — it uses the pre-W1-06
+ * payload shapes and installs its own minimal handlers — so wiring them would
+ * double-bind `goals.*` (the reference module claims every command without one)
+ * and the real domain schemas would reject the fixtures.
+ */
 function referenceRegistry() {
   // `goals.checkins.v1` is the CHK module's flag (W1-06 registers it); the reference
   // handlers need it on, exactly as the real ones will.
-  const registry = createWiredCommandRegistry({
-    isFlagEnabled: flag => flag === 'goals.checkins.v1' || flag === 'goals.v1',
-  })
+  const registry = new CommandRegistry({ isFlagEnabled: flag => flag === 'goals.checkins.v1' || flag === 'goals.v1' })
+  registerCommandCatalogue(registry)
+  for (const module of COMMAND_MODULES) {
+    if (module.name === 'domain-schemas' || module.name === 'reference-handlers') continue
+    module.bind(registry)
+  }
   let revision = 0
   registry.bind('goals.update_champion', ctx => {
     const payload = championPayload.parse(ctx.payload)

@@ -17,18 +17,14 @@
  */
 
 import {
-  AGGREGATE_SCOPE,
   DEFAULT_RATE_LIMIT_POLICY,
-  RULE_ALL_SUBJECT,
   approvalPolicyForPermissionMode,
-  containerMatches,
   grantMatches,
   standingApprovalMatches,
   type AgentBinding,
   type AgentBindingStatus,
   type AgentGrant,
   type AgentPermissionMode,
-  type AgentScope,
   type ApprovalPolicy,
   type ApprovalRequest,
   type RateLimitBucket,
@@ -38,9 +34,6 @@ import {
 import {
   PENDING_ACTIVATION_CHAT_STATE,
   type ChatCreationPolicy,
-  type ChatInvitePolicy,
-  type ChatPostingPolicy,
-  type ChatVisibility,
   type Invitation,
   type Principal,
   type PrincipalKind,

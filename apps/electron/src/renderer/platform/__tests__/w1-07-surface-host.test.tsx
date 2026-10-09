@@ -1,6 +1,10 @@
 /**
  * W1-07 (#1504): with a mode flag ON the surface root renders its i18n'd
- * empty state until a wave-2 package registers `<surface>.page`.
+ * empty state until a package registers `<surface>.page`.
+ *
+ * W3.2/W3.3 (Согласованность-20261009): `calendar` and `messenger` now ship
+ * their own pages (Встречи / Команда), so only a still-unregistered surface
+ * (`goals`) shows the empty state.
  */
 import { afterEach, describe, expect, it } from 'bun:test'
 import * as React from 'react'
@@ -11,7 +15,6 @@ import { createInstance } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
 import { SurfaceEmptyState, SurfaceHost, surfaceEmptyStateKeys, surfacePageSlot, type SurfacePageProps } from '../SurfaceHost'
 import { __resetSlotRegistryForTests, getSlotRegistry } from '../slots'
-import { UNIFIED_SURFACE_IDS, type UnifiedSurfaceId } from '../../../shared/surface-routes'
 
 const localesDir = join(import.meta.dir, '../../../../../../packages/shared/src/i18n/locales')
 const locale = (lang: string) => JSON.parse(readFileSync(join(localesDir, `${lang}.json`), 'utf8')) as Record<string, string>
@@ -37,39 +40,41 @@ function render(node: React.ReactNode, lang = 'ru') {
 afterEach(() => __resetSlotRegistryForTests())
 
 describe('surface empty states', () => {
-  for (const surface of UNIFIED_SURFACE_IDS) {
-    it(`${surface}: renders the RU empty state (default locale)`, () => {
-      const html = render(<SurfaceHost surface={surface} />)
-      const { titleKey, bodyKey } = surfaceEmptyStateKeys(surface)
-      expect(html).toContain(`data-testid="surface-empty-${surface}"`)
-      expect(html).toContain(locale('ru')[titleKey]!)
-      expect(html).toContain(locale('ru')[bodyKey]!)
-      expect(html).not.toContain(titleKey)
-    })
-  }
+  it('an unregistered surface renders the RU empty state (default locale)', () => {
+    const html = render(<SurfaceHost surface="goals" />)
+    const { titleKey, bodyKey } = surfaceEmptyStateKeys('goals')
+    expect(html).toContain('data-testid="surface-empty-goals"')
+    expect(html).toContain(locale('ru')[titleKey]!)
+    expect(html).toContain(locale('ru')[bodyKey]!)
+    expect(html).not.toContain(titleKey)
+  })
 
   it('renders EN copy when the UI language is English', () => {
     const html = render(<SurfaceEmptyState surface="messenger" />, 'en')
     expect(html).toContain('No chats yet')
   })
+
+  it('W3.2/W3.3: the merged surfaces ship a page instead of an empty state', () => {
+    const registry = getSlotRegistry()
+    expect(registry.get('calendar.page', 'calendar.page')).toBeDefined()
+    expect(registry.get('messenger.page', 'messenger.page')).toBeDefined()
+  })
 })
 
 describe('surface pages via slots (wave-2 fake)', () => {
-  function FakeMessenger({ surface }: SurfacePageProps) {
+  function FakePage({ surface }: SurfacePageProps) {
     return <div data-testid="fake-page">fake:{surface}</div>
   }
 
   it('the first visible <surface>.page contribution replaces the empty state', () => {
-    getSlotRegistry().register({ id: 'fake.messenger', slot: surfacePageSlot('messenger'), source: 'fake', payload: { component: FakeMessenger } })
-    const html = render(<SurfaceHost surface="messenger" />)
-    expect(html).toContain('fake:messenger')
-    expect(html).not.toContain('surface-empty-messenger')
-    // Other surfaces are unaffected.
-    expect(render(<SurfaceHost surface={'calendar' as UnifiedSurfaceId} />)).toContain('surface-empty-calendar')
+    getSlotRegistry().register({ id: 'fake.goals', slot: surfacePageSlot('goals'), source: 'fake', payload: { component: FakePage } })
+    const html = render(<SurfaceHost surface="goals" />)
+    expect(html).toContain('fake:goals')
+    expect(html).not.toContain('surface-empty-goals')
   })
 
   it('negative: a page gated by an OFF flag (or without a component) keeps the empty state', () => {
-    getSlotRegistry().register({ id: 'fake.gated', slot: 'goals.page', flag: 'fake.off.v1', source: 'fake', payload: { component: FakeMessenger } })
+    getSlotRegistry().register({ id: 'fake.gated', slot: 'goals.page', flag: 'fake.off.v1', source: 'fake', payload: { component: FakePage } })
     getSlotRegistry().register({ id: 'fake.empty', slot: 'goals.page', source: 'fake', payload: {} })
     const html = render(<SurfaceHost surface="goals" />)
     expect(html).toContain('surface-empty-goals')

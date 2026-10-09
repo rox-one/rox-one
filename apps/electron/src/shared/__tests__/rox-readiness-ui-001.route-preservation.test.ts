@@ -91,7 +91,8 @@ describe('UI-001 raw view route preservation', () => {
     ['browser/instance/selected', 'browser/instance/selected', { navigator: 'browser', details: { type: 'browser', id: 'selected' } }],
     ['automations/scheduled/automation/selected', 'automations/scheduled/automation/selected', { navigator: 'automations', filter: { kind: 'type', automationType: 'scheduled' }, details: { type: 'automation', automationId: 'selected' } }],
     ['tasks/task/a%2Fb', 'tasks/task/a%2Fb', { navigator: 'tasks', details: { type: 'task', taskId: 'a/b' } }],
-    ['meetings/meeting/a%2Fb', 'meetings/meeting/a%2Fb', { navigator: 'meetings', details: { type: 'meeting', meetingId: 'a/b' } }],
+    // W3.2: the meetings detail alias resolves into the calendar surface.
+    ['meetings/meeting/a%2Fb', 'meetings/meeting/a%2Fb', { navigator: 'surface', surface: 'calendar', details: null, meetingId: 'a/b' }],
     ['inbox/item/a%2Fb', 'inbox/item/a%2Fb', { navigator: 'inbox', details: { type: 'item', itemId: 'a/b' } }],
     ['feed/item/a%2Fb', 'feed/item/a%2Fb', { navigator: 'feed', details: { type: 'item', itemId: 'a/b' } }],
     ['radar/item/a%2Fb', 'radar/item/a%2Fb', { navigator: 'screen', screen: 'radar', details: { type: 'item', itemId: 'a/b' } }],
@@ -110,13 +111,21 @@ describe('UI-001 raw view route preservation', () => {
     })
   }
 
-  for (const root of ['allSessions', 'flagged', 'archived', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'memory', 'tasks', 'meetings', 'inbox', 'feed', 'home', 'connections', 'knowledge', 'cloud-run', 'terminal', 'extension', 'diff', 'dossier', 'radar', 'decisions', 'agents', 'focus']) {
+  for (const root of ['allSessions', 'flagged', 'archived', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'memory', 'tasks', 'inbox', 'feed', 'home', 'connections', 'knowledge', 'cloud-run', 'terminal', 'extension', 'diff', 'dossier', 'radar', 'decisions', 'agents', 'focus']) {
     it(`keeps the supported bare root ${root}`, () => {
       const state = resolve(root)
       expect(state.navigator).not.toBe('unavailable')
       expect(parser.buildRouteFromNavigationState(state)).toBe(root)
     })
   }
+
+  it('routes the merged legacy roots to their surfaces (W3.2/W3.3)', () => {
+    for (const [route, target] of [['meetings', 'calendar'], ['contacts', 'messenger']] as const) {
+      const state = resolve(route)
+      expect(state).toMatchObject({ navigator: 'surface', surface: target })
+      expect(parser.buildRouteFromNavigationState(state)).toBe(target)
+    }
+  })
 
   it('retains legacy separator aliases and complete nested IDs without silently selecting their prefix', () => {
     for (const [route, expected] of [

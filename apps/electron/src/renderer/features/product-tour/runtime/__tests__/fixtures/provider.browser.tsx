@@ -105,7 +105,7 @@ function Harness() {
   const meetingArtifact = useTourTarget('meetings.artifacts')
   const signals = useTourSignals()
   const nav = f.navigation.navigationState
-  const selected = nav && 'details' in nav && nav.details && 'meetingId' in nav.details ? nav.details.meetingId : undefined
+  const selected = nav?.navigator === 'surface' && nav.surface === 'calendar' ? nav.meetingId ?? undefined : undefined
   React.useEffect(() => {
     const off = signals.capability('meetings.available', { state: 'ready' })
     const artifact = signals.capability('meeting.artifact-present', selected === 'meeting-a'

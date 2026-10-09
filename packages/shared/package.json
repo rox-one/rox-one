@@ -190,8 +190,10 @@
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",
     "./commands/schemas": "./src/commands/schemas.ts",
-    "./drive/importers/providers/auth": "./src/drive/importers/providers/auth.ts",
     "./domain": "./src/domain/index.ts",
+    "./automation": "./src/automation/index.ts",
+    "./automation/schemas": "./src/automation/schemas.ts",
+    "./drive/importers/providers/auth": "./src/drive/importers/providers/auth.ts",
     "./notify/schemas": "./src/notify/schemas.ts"
   },
   "license": "Apache-2.0",

@@ -28,9 +28,9 @@ import type {
 import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registry'
 import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
-import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
+import { entityRoute, formatEntityRef, parseEntityRef, parseEntityRouteOrLegacy, type EntityRef } from '@rox/core/entities'
 import { ENTITIES_LINKS_WORKBENCH_FLAG, isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
-import { isOpenUnifiedSurfaceRoot, isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
+import { isOpenUnifiedSurfaceRoot, isUnifiedSurfaceRouteEnabled, LEGACY_SURFACE_ALIASES, isLegacySurfaceAliasRoot, type UnifiedSurfaceId } from './surface-routes'
 
 /**
  * Entity-route gate (W1-02, product decision).
@@ -152,6 +152,10 @@ export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
+  // W3.2/W3.3: legacy `meetings`/`contacts` aliases resolve regardless of the
+  // entities.links.v1 gate (they used to be always-available mode roots).
+  if (isLegacySurfaceAliasRoot(route)) return true
+  if (firstSegment === 'meetings' && /^meetings\/meeting\/[^/]+$/.test(route.split('?')[0])) return true
   // W1-07: a bare unified mode root only exists while its mode flag is on;
   // sub-routes fall through to the entities.links.v1 gate below.
   if (isOpenUnifiedSurfaceRoot(route)) return true
@@ -165,9 +169,28 @@ export function isCompoundRoute(route: string): boolean {
  * an open mode flag admits only the bare root, never its sub-routes.
  */
 export function isCompoundRoutePrefix(prefix: string, route: string = prefix): boolean {
+  if (route.split(/[/?#]/)[0] === prefix && isLegacySurfaceAliasRoot(route)) return true
   if (route.split(/[/?#]/)[0] === prefix && isOpenUnifiedSurfaceRoot(route)) return true
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) return isEntityRoutesEnabled()
   return (COMPOUND_ROUTE_PREFIXES as readonly string[]).includes(prefix)
+}
+
+/**
+ * Parse a legacy surface alias route (W3.2/W3.3) into its unified-surface
+ * state, or null when the route is not an alias shape.
+ * - `meetings` → calendar; `meetings/meeting/{id}` → calendar + meetingId.
+ * - `contacts` → messenger.
+ */
+function parseLegacySurfaceAlias(segments: readonly string[]): ParsedCompoundRoute | null {
+  const first = segments[0]
+  if (first === undefined) return null
+  const surface = LEGACY_SURFACE_ALIASES[first]
+  if (!surface) return null
+  if (segments.length === 1) return { navigator: 'surface', surface, details: null }
+  if (first === 'meetings' && segments.length === 3 && segments[1] === 'meeting' && segments[2]) {
+    return { navigator: 'surface', surface, details: { type: 'meeting', id: decodeURIComponent(segments[2]) } }
+  }
+  return null
 }
 
 function splitRouteQuery(route: string): [string, string | undefined] {
@@ -207,7 +230,17 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   // the flag off the legacy branches below keep owning their own routes and
   // the new shapes are rejected exactly as on main.
   if (isEntityRoutesEnabled()) {
-    const entity = parseEntityRoute(route)
+    const entity = parseEntityRoute(route) ?? (
+      // The W3.2/W3.3 merged alias prefixes (`meetings`, `contacts`) may also
+      // carry a **frozen legacy** entity shape: `meetings/meeting/{id}` is the
+      // canonical route of kind `call` (built by `entityRoute`), but the
+      // kind-first matcher deliberately leaves it to `parseEntityRouteOrLegacy`.
+      // Without this fallback the surface alias below would shadow the meeting
+      // entity whenever `entities.links.v1` is on. Other legacy prefixes
+      // (`tasks/task/{id}`, `notes/note/{id}` …) stay with their legacy
+      // branches — they are not alias roots.
+      LEGACY_SURFACE_ALIASES[first] !== undefined ? parseEntityRouteOrLegacy(route) : null
+    )
     if (entity) {
       return {
         navigator: 'entity',
@@ -215,6 +248,17 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
         entityRef: entity.ref,
       }
     }
+  }
+
+  // W3.2/W3.3 (Согласованность-20261009): legacy surface aliases. Reached
+  // only when the entity block above does not claim the path — gate off, or
+  // no entity shape for it. With `entities.links.v1` on, kind-first routes
+  // (`contacts/person/{id}`) and the merged legacy shapes
+  // (`meetings/meeting/{id}` → kind `call`) keep priority, while the bare
+  // alias roots (`meetings`, `contacts`) still resolve to their surfaces.
+  {
+    const alias = parseLegacySurfaceAlias(segments)
+    if (alias) return alias
   }
 
   // Unified mode roots (W1-07). Bare root only; sub-pages are entity routes.
@@ -412,16 +456,6 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
       return { navigator: 'feed', details: { type: 'item', id: decodeURIComponent(segments[2]) } }
     }
     return segments.length === 1 ? { navigator: 'feed', details: null } : null
-  }
-
-  if (first === 'meetings') {
-    if (segments.length === 3 && segments[1] === 'meeting' && segments[2]) {
-      return {
-        navigator: 'meetings',
-        details: { type: 'meeting', id: decodeURIComponent(segments[2]) },
-      }
-    }
-    return segments.length === 1 ? { navigator: 'meetings', details: null } : null
   }
 
   if (first === 'connections') {
@@ -764,11 +798,6 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return `feed/item/${encodeURIComponent(parsed.details.id)}`
   }
 
-  if (parsed.navigator === 'meetings') {
-    if (!parsed.details) return 'meetings'
-    return `meetings/meeting/${encodeURIComponent(parsed.details.id)}`
-  }
-
   if (parsed.navigator === 'connections') {
     return 'connections'
   }
@@ -778,6 +807,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   }
 
   if (parsed.navigator === 'surface' && parsed.surface) {
+    // W3.2: a calendar meeting carried by the legacy alias keeps the
+    // `meetings/meeting/{id}` address so the deep link round-trips.
+    if (parsed.surface === 'calendar' && parsed.details?.type === 'meeting') {
+      return `meetings/meeting/${encodeURIComponent(parsed.details.id)}`
+    }
     return parsed.surface
   }
 
@@ -1019,13 +1053,6 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return { type: 'view', name: 'feed-item', id: compound.details.id, params: {} }
   }
 
-  if (compound.navigator === 'meetings') {
-    if (!compound.details) {
-      return { type: 'view', name: 'meetings', params: {} }
-    }
-    return { type: 'view', name: 'meeting-info', id: compound.details.id, params: {} }
-  }
-
   if (compound.navigator === 'connections') {
     return { type: 'view', name: 'connections', params: {} }
   }
@@ -1035,7 +1062,15 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
   }
 
   if (compound.navigator === 'surface' && compound.surface) {
-    return { type: 'view', name: 'surface', params: { surface: compound.surface } }
+    return {
+      type: 'view',
+      name: 'surface',
+      id: compound.details?.id,
+      params: {
+        surface: compound.surface,
+        ...(compound.details ? { detailType: compound.details.type } : {}),
+      },
+    }
   }
 
   if (compound.navigator === 'screen' && compound.screen) {
@@ -1225,8 +1260,13 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
     // Compare the full address, allowing equivalent entity encoding and the
     // established settings aliases. A parser fallback must not drop a suffix.
     const canonicalPath = decodeURIComponent(buildRouteFromNavigationState(state).split('?')[0])
+    // W3.2/W3.3: legacy surface aliases (`meetings` → calendar, `contacts` →
+    // messenger) and the established settings aliases compare by target.
     const aliasedPath = decodedPath === 'settings/toolchain' ? 'settings/runtime'
-      : decodedPath === 'settings/preferences' ? 'settings/context' : decodedPath
+      : decodedPath === 'settings/preferences' ? 'settings/context'
+      : decodedPath === 'meetings' ? 'calendar'
+      : decodedPath === 'contacts' ? 'messenger'
+      : decodedPath
     if (canonicalPath !== aliasedPath) return unavailable
     return state
   } catch {
@@ -1330,16 +1370,6 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'feed', details: { type: 'item', itemId: compound.details.id } }
   }
 
-  if (compound.navigator === 'meetings') {
-    if (!compound.details) {
-      return { navigator: 'meetings', details: null }
-    }
-    return {
-      navigator: 'meetings',
-      details: { type: 'meeting', meetingId: compound.details.id },
-    }
-  }
-
   if (compound.navigator === 'connections') {
     return { navigator: 'connections', details: null }
   }
@@ -1349,7 +1379,17 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
   }
 
   if (compound.navigator === 'surface' && compound.surface) {
-    return { navigator: 'surface', surface: compound.surface, details: null }
+    // W3.2: the legacy `meetings/meeting/{id}` alias carries the meeting in
+    // `details`; keep it on the surface state as `meetingId`.
+    const meetingId = compound.surface === 'calendar' && compound.details?.type === 'meeting'
+      ? compound.details.id
+      : null
+    return {
+      navigator: 'surface',
+      surface: compound.surface,
+      details: null,
+      ...(meetingId ? { meetingId } : {}),
+    }
   }
 
   if (compound.navigator === 'screen' && compound.screen) {
@@ -1577,16 +1617,6 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return parsed.id
         ? { navigator: 'feed', details: { type: 'item', itemId: parsed.id } }
         : { navigator: 'feed', details: null }
-    case 'meetings':
-      return { navigator: 'meetings', details: null }
-    case 'meeting-info':
-      if (parsed.id) {
-        return {
-          navigator: 'meetings',
-          details: { type: 'meeting', meetingId: parsed.id },
-        }
-      }
-      return { navigator: 'meetings', details: null }
     case 'task-info':
       if (parsed.id) {
         return {
@@ -1602,7 +1632,13 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
     case 'surface': {
       const surface = parsed.params.surface
       if (!surface || !isUnifiedSurfaceRouteEnabled(surface)) return null
-      return { navigator: 'surface', surface, details: null }
+      const meetingId = surface === 'calendar' && parsed.params.detailType === 'meeting' ? parsed.id : undefined
+      return {
+        navigator: 'surface',
+        surface,
+        details: null,
+        ...(meetingId ? { meetingId } : {}),
+      }
     }
     case 'screen': {
       const screen = parsed.params.screen
@@ -1863,13 +1899,6 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
     }
   }
 
-  if (state.navigator === 'meetings') {
-    return {
-      navigator: 'meetings',
-      details: state.details ? { type: 'meeting', id: state.details.meetingId } : null,
-    }
-  }
-
   if (state.navigator === 'connections') {
     return {
       navigator: 'connections',
@@ -1888,7 +1917,11 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
     return {
       navigator: 'surface',
       surface: state.surface,
-      details: null,
+      // W3.2: carry the legacy calendar-meeting selection so the address
+      // rebuilds as `meetings/meeting/{id}` (see buildCompoundRoute).
+      details: state.surface === 'calendar' && state.meetingId
+        ? { type: 'meeting', id: state.meetingId }
+        : null,
     }
   }
 

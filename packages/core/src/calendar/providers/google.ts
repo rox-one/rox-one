@@ -159,7 +159,7 @@ export class GoogleCalendarRestAdapter implements CalendarAdapter {
     return typeof this.options.accessToken === 'function'
   }
 
-  async listEvents(accountId: string, _cursor?: string): Promise<CalendarListPage> {
+  async listEvents(accountId: string): Promise<CalendarListPage> {
     const token = await this.resolveToken()
     const defaults = googleCalendarSyncWindow()
     const timeMin = this.options.timeMin ?? defaults.timeMin

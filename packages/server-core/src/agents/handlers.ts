@@ -42,7 +42,6 @@ import {
   type InvitePeoplePayload,
   type MergePlaceholderPayload,
   type TeamChat,
-  type WorkspaceMember,
 } from '@rox/core/identity'
 import type { AgentInvokePayload, DecideApprovalPayload, PauseAgentPayload, ProvisionPersonalAgentPayload } from '@rox/shared/agents/schemas'
 import type { CreateWorkspacePayload } from '@rox/shared/identity/schemas'
@@ -298,7 +297,7 @@ export async function invitePeople(ctx: CommandHandlerContext<InvitePeoplePayloa
   }
   return {
     revision: 1,
-    result: { invited, cards: invited.filter(entry => entry.existingAccount).map(entry => inboxInviteCard({ workspaceId, role, invitedBy: ctx.actor.principalId, targets: payload.targets ?? [] })) },
+    result: { invited, cards: invited.filter(entry => entry.existingAccount).map(() => inboxInviteCard({ workspaceId, role, invitedBy: ctx.actor.principalId, targets: payload.targets ?? [] })) },
     events: events(...drafts),
   }
 }
