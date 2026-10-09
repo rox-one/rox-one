@@ -24,6 +24,9 @@ export function stubMainLogger(): void {
     autoUpdateLogPath: '',
     autoUpdateLog: scope(),
     getAutoUpdateLogFilePath: () => '',
+    errorLogPath: '',
+    errorLog: scope(),
+    getErrorLogFilePath: () => '',
     getLogFilePath: noop,
     getMessagingGatewayLogFilePath: () => '',
   }))

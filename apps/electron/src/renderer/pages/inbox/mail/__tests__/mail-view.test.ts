@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { MailMessage } from '../../../../../shared/mail-local'
-import { buildDraft, draftFromMessage, draftHasContent, emailIdFromItem, mailToInboxItem, statusKey } from '../mail-view'
+import { buildDraft, draftFromMessage, draftHasContent, emailIdFromItem, formatStorageBytes, mailToInboxItem, statusKey } from '../mail-view'
 
 const msg: MailMessage = {
   id: 'e1', threadId: 't1', folderIds: ['i'], subject: 'План', preview: 'привет', receivedAt: Date.UTC(2026, 8, 29, 12),
@@ -47,5 +47,11 @@ describe('mail-view', () => {
     expect(statusKey(null)).toBe('inbox.mail.status.loading')
     expect(statusKey({ enabled: true, state: 'ready', local: true } as never)).toBe('inbox.mail.status.readyLocal')
     expect(statusKey({ enabled: false, state: 'disabled' } as never)).toBe('inbox.mail.status.disabled')
+  })
+  it('formats mailbox storage with localized units', () => {
+    expect(formatStorageBytes(1024 ** 3, 'ru')).toBe('1 ГБ')
+    expect(formatStorageBytes(1024 ** 3, 'en')).toBe('1 GB')
+    expect(formatStorageBytes(512 * 1024 ** 2, 'en')).toBe('512 MB')
+    expect(formatStorageBytes(0, 'ru')).toBe('0 Б')
   })
 })

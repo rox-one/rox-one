@@ -118,6 +118,7 @@ import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, isSourceUsable
 import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@rox/shared/tasks'
 import { createTaskFromSpec, resolveCreateTaskProjectId } from '../tasks'
 import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
+import { memoryToolCallbacksForSession } from '../memory/tool-callbacks'
 import { buildServersFromSources as buildServersFromSourcesShared } from '../sources/build-servers'
 import { resolveDefaultSessionSources } from '../sources/default-session-sources'
 import { BuiltinMcpStartup } from '../sources/builtin-mcp-startup'
@@ -131,7 +132,7 @@ import { isParentTaskTool } from '@rox/shared/utils/toolNames'
 import { restoreFiles } from '@rox/shared/utils/bundle-files'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { CraftMcpClient, McpClientPool, McpPoolServer } from '@rox/shared/mcp'
-import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, RPC_CHANNELS, generateMessageId } from '@rox/shared/protocol'
+import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, type SessionActorRef, type SessionVisibility, type SessionCreatedActor, type SessionOwnerRef, type SessionParticipantIdentity, RPC_CHANNELS, CodedError, generateMessageId } from '@rox/shared/protocol'
 import type {
   BulkUpdateSessionsInput,
   BulkUpdateSessionsPatch,
@@ -866,6 +867,9 @@ type CollectionMutableField =
   | 'projectIds'
   | 'labels'
   | 'kanbanColumn'
+  | 'owner'
+  | 'visibility'
+  | 'participants'
 
 interface ManagedSession {
   id: string
@@ -1122,6 +1126,12 @@ interface ManagedSession {
     /** True after the first matching sendMessage consumes the slot; later matches drop. */
     committed: boolean
   }
+  // Session attribution (a1.3/a2.5): creator/origin (write-once), current owner,
+  // bound participants, and viewer visibility.
+  creator?: SessionCreatedActor
+  owner?: SessionOwnerRef
+  participants?: SessionParticipantIdentity[]
+  visibility?: SessionVisibility
 }
 
 const PI_SDK_MESSAGE_ID_CACHE_LIMIT = 256
@@ -1220,6 +1230,64 @@ export function createManagedSession(
   }
 
   return managed
+}
+
+// ---------------------------------------------------------------------------
+// Session attribution (a1.3) — creator/owner/participants/visibility.
+//
+// These are pure, dependency-free helpers so the policy (who may write to a
+// session) and the participant list maintenance are testable without a live
+// SessionManager, while the manager methods below are thin persistence shells.
+// ---------------------------------------------------------------------------
+
+/** Maximum number of bound participants retained per session (most recent win). */
+export const SESSION_PARTICIPANT_CAP = 32
+
+/** Bind an actor identity onto the participant list; `null` when nothing changed. */
+export function upsertSessionParticipant(
+  participants: readonly SessionParticipantIdentity[] | undefined,
+  identity: SessionParticipantIdentity,
+): SessionParticipantIdentity[] | null {
+  const list = participants ? [...participants] : []
+  const index = list.findIndex(participant => participant.accountId === identity.accountId)
+  if (index >= 0) {
+    const existing = list[index]!
+    if (existing.displayName === identity.displayName
+      && existing.username === identity.username
+      && existing.kind === identity.kind) return null
+    list[index] = identity
+    return list
+  }
+  list.push(identity)
+  while (list.length > SESSION_PARTICIPANT_CAP) list.shift()
+  return list
+}
+
+/** Result of the server-side session write-visibility check (a2.5). */
+export type SessionWriteAccess =
+  | { allowed: true }
+  | { allowed: false; code: 'SESSION_READ_ONLY' | 'SESSION_OWNER_ONLY'; message: string }
+
+/**
+ * Decide whether `actorAccountId` may write to a session by its visibility.
+ *
+ * `shared`/`suggest` are open; `read-only` and `draft` restrict writes to the
+ * owner (owner.id if assigned, else the creator's account). A session with no
+ * attribution has no owner to enforce, so it stays open — legacy local
+ * sessions must not become unwritable after this ships.
+ */
+export function evaluateSessionWriteAccess(
+  session: Pick<ManagedSession, 'owner' | 'creator' | 'visibility'>,
+  actorAccountId: string | null,
+): SessionWriteAccess {
+  const visibility = session.visibility ?? 'shared'
+  if (visibility === 'shared' || visibility === 'suggest') return { allowed: true }
+  const owner = session.owner?.id ?? session.creator?.accountId ?? null
+  if (!owner) return { allowed: true }
+  if (actorAccountId && actorAccountId === owner) return { allowed: true }
+  return visibility === 'read-only'
+    ? { allowed: false, code: 'SESSION_READ_ONLY', message: 'Session is read-only for this actor' }
+    : { allowed: false, code: 'SESSION_OWNER_ONLY', message: 'Session is a private draft owned by another actor' }
 }
 
 /**
@@ -1962,7 +2030,9 @@ export class SessionManager implements ISessionManager {
       sessionLog.info(`External metadata change detected for session ${sessionId}`)
 
       // Prevent stale pending writes from reverting externally-updated metadata.
-      sessionPersistenceQueue.cancel(sessionId)
+      // Not cancel(): the session stays alive, so the re-persist below must be
+      // allowed to enqueue.
+      sessionPersistenceQueue.dropPendingWrites(sessionId)
       this.persistSession(managed)
     }
 
@@ -3403,7 +3473,7 @@ export class SessionManager implements ISessionManager {
       this.setMetadataWriteGuard(managed)
       this.persistSession(managed)
       // getSessions is sync — enqueue + fire-and-forget flush (same durability path).
-      void this.flushSession(managed.id)
+      this.flushSession(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after rank backfill:`, err))
     }
   }
 
@@ -3605,7 +3675,7 @@ export class SessionManager implements ISessionManager {
     // announced to the renderer (see notifySessionCreated). Callers that register the session
     // themselves — the `sessions:create` RPC adds it from the return value — pass
     // `{ emitCreatedEvent: false }` to avoid a redundant hydrate.
-    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null },
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null; actor?: SessionCreatedActor },
   ): Promise<Session> {
     internal?.nativeMemoryContext?.assertAuthorized()
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -4115,6 +4185,18 @@ export class SessionManager implements ISessionManager {
       messagesLoaded: !isBranch,  // Branched sessions: lazy-load messages from JSONL
     })
 
+    // a1.3: creator is captured once, here, at creation and is never rewritten
+    // (assignSessionOwner only touches `owner`). The creator is also the first
+    // bound participant, so participant history has an honest origin.
+    if (internal?.actor) {
+      managed.creator = structuredClone(internal.actor)
+      const participant: SessionParticipantIdentity = {
+        accountId: internal.actor.accountId, displayName: internal.actor.displayName,
+        username: internal.actor.accountId, kind: internal.actor.kind,
+      }
+      managed.participants = upsertSessionParticipant(undefined, participant) ?? [participant]
+    }
+
     // Register the session and initialize mode-manager state BEFORE any eager
     // agent creation (branch preflight). getOrCreateAgent's browser-pane wiring
     // resolves the session via this.sessions, so it must be present first: the
@@ -4130,6 +4212,13 @@ export class SessionManager implements ISessionManager {
     if (internal?.nativeMemoryContext) {
       this.nativeMemoryContexts.set(storedSession.id, internal.nativeMemoryContext)
       internal.nativeMemoryContext.assertAuthorized()
+    }
+    if (internal?.actor) {
+      // The header was written by createStoredSession before the owner/participant
+      // fields existed; flush them now so attribution survives a reload instead
+      // of waiting for the next message.
+      this.persistSession(managed)
+      await this.flushSession(managed.id)
     }
 
     // Eagerly load messages for branched sessions so the renderer gets the full
@@ -4238,6 +4327,10 @@ export class SessionManager implements ISessionManager {
       // Direct awaited persistence makes the greeting durable before recording completion.
       await saveStoredSession({
         ...storedSession,
+        // `storedSession` predates the attribution fields; carry the managed
+        // creator/participants so this direct write does not erase them.
+        creator: managed.creator,
+        participants: managed.participants,
         messages: managed.messages.map(messageToStored),
         tokenUsage: managed.tokenUsage ?? DEFAULT_TOKEN_USAGE,
       })
@@ -4726,7 +4819,7 @@ export class SessionManager implements ISessionManager {
           sessionLog.info(`SDK session ID captured for ${managed.id}: ${sdkSessionId}`)
         }
         this.persistSession(managed)
-        sessionPersistenceQueue.flush(managed.id)
+        sessionPersistenceQueue.flush(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after persist:`, err))
       }
 
       const onSdkSessionIdCleared = () => {
@@ -4734,7 +4827,7 @@ export class SessionManager implements ISessionManager {
         managed.sdkSessionId = undefined
         sessionLog.info(`SDK session ID cleared for ${managed.id} (resume recovery)`)
         this.persistSession(managed)
-        sessionPersistenceQueue.flush(managed.id)
+        sessionPersistenceQueue.flush(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after persist:`, err))
       }
 
       const onBranchForkInvalidated = () => {
@@ -4745,7 +4838,7 @@ export class SessionManager implements ISessionManager {
         managed.branchFromSdkTurnId = undefined
         sessionLog.info(`Branch fork invalidated for ${managed.id}: cleared all fork metadata`)
         this.persistSession(managed)
-        sessionPersistenceQueue.flush(managed.id)
+        sessionPersistenceQueue.flush(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after persist:`, err))
       }
 
       const getRecoveryMessages = () => {
@@ -5716,6 +5809,15 @@ export class SessionManager implements ISessionManager {
             this.enqueuePageThumbnail(managed.workspace.id, managed.workspace.rootPath, pageSlug)
           },
         }),
+        // Memory recall tools (memory_search / memory_get) — bound to the
+        // invoking session's workspace chunk index. Absent when the session is
+        // temporary / has no memory scope (no read, no write — spec F3), or when
+        // the workspace disables memory (memoryServiceFor returns null), so the
+        // handlers report a truthful "unavailable" instead of faking recall.
+        memory: memoryToolCallbacksForSession(
+          { memoryMode: managed.memoryMode, memoryScope: managed.agentProfileSnapshot?.memoryScope },
+          this.memoryServiceFor(managed.workspace)?.indexService,
+        ),
         getSessionInfoFn: (sessionId?: string) => {
           const targetId = sessionId ?? managed.id
           const session = this.sessions.get(targetId)
@@ -7288,8 +7390,10 @@ export class SessionManager implements ISessionManager {
     this.clearAdminRememberApprovalsForSession(sessionId)
     this.clearPendingPermissionRequestsForSession(sessionId)
 
-    // Cancel any pending persistence write (session is being deleted, no need to save)
-    sessionPersistenceQueue.cancel(sessionId)
+    // Cancel any pending persistence write (session is being deleted, no need to save).
+    // Must await: an already in-flight write would otherwise finish after
+    // deleteStoredSession below and resurrect the deleted session on disk.
+    await sessionPersistenceQueue.cancel(sessionId)
 
     // Clean up session-scoped tool callbacks to prevent memory accumulation
     unregisterSessionScopedToolCallbacks(sessionId)
@@ -7330,8 +7434,16 @@ export class SessionManager implements ISessionManager {
       automationSystem.removeSessionMetadata(sessionId)
     }
 
-    // Delete from disk too
-    deleteStoredSession(workspaceRootPath, sessionId)
+    // Delete from disk too. Only a successful delete lifts the persistence
+    // seal: the id becomes reusable once its directory is gone, so leaving the
+    // tombstone would make a later session that reuses the id silently fail to
+    // persist. On failure the tombstone stays to keep a late metadata echo from
+    // resurrecting the still-present file.
+    if (deleteStoredSession(workspaceRootPath, sessionId)) {
+      sessionPersistenceQueue.unseal(sessionId)
+    } else {
+      sessionLog.warn(`Failed to delete session ${sessionId} from disk; persistence seal retained`)
+    }
 
     // Notify all windows for this workspace that the session was deleted
     this.sendEvent({ type: 'session_deleted', sessionId }, managed.workspace.id)
@@ -7948,7 +8060,7 @@ export class SessionManager implements ISessionManager {
             sessionLog.info(`Captured SDK session ID via fallback: ${sdkId}`)
             // Also flush here since we're in fallback mode
             this.persistSession(managed)
-            sessionPersistenceQueue.flush(managed.id)
+            sessionPersistenceQueue.flush(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after persist:`, err))
           }
         }
 
@@ -9321,6 +9433,12 @@ export class SessionManager implements ISessionManager {
             case 'kanbanColumn':
               managed.kanbanColumn = before.kanbanColumn
               break
+            case 'owner':
+              managed.owner = before.owner
+              break
+            case 'visibility':
+              managed.visibility = before.visibility
+              break
           }
         }
         failed.push({
@@ -9446,6 +9564,92 @@ export class SessionManager implements ISessionManager {
       const watcher = this.configWatchers.get(managed.workspace.rootPath)
       watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
     }
+  }
+
+  /**
+   * a1.3: assign or clear the session owner. `owner === null` clears the
+   * assignment. The creator is write-once and is never rewritten here.
+   */
+  async assignSessionOwner(sessionId: string, owner: SessionActorRef | null, assignedBy: string): Promise<void> {
+    const managed = this.sessions.get(sessionId)
+    if (managed) {
+      const next = owner ? { ...owner, assignedAt: Date.now(), assignedBy } : undefined
+      const fields: Array<'owner' | 'participants'> = ['owner']
+      // An assigned account becomes a bound participant; the creator already is one,
+      // so reassigning to the creator is a no-op here.
+      const participants = next?.kind === 'account'
+        ? upsertSessionParticipant(managed.participants, {
+            accountId: next.id, displayName: next.displayName, username: next.id, kind: 'profile',
+          })
+        : null
+      if (participants) fields.push('participants')
+      this.markCollectionFieldMutations(managed, fields)
+      managed.owner = next
+      if (participants) managed.participants = participants
+      this.setMetadataWriteGuard(managed)
+
+      this.sendEvent({ type: 'session_owner_changed', sessionId, owner: next ?? null }, managed.workspace.id)
+      this.persistSession(managed)
+      await this.flushSession(managed.id)
+      const watcher = this.configWatchers.get(managed.workspace.rootPath)
+      watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
+    }
+  }
+
+  /**
+   * a2.5: throw a typed error when `actorAccountId` may not write to the
+   * session for its current visibility. Used by the messaging and command
+   * handlers so read-only/draft is a server rule, not a rendered menu state.
+   */
+  assertSessionWriteAccess(sessionId: string, actorAccountId: string | null): void {
+    const managed = this.sessions.get(sessionId)
+    // Unknown sessions keep their existing not-found behaviour downstream.
+    if (!managed) return
+    const access = evaluateSessionWriteAccess(managed, actorAccountId)
+    if (!access.allowed) throw new CodedError(access.code, access.message)
+  }
+
+  /**
+   * a1.3: record an actor that wrote to (or was assigned on) the session as a
+   * bound participant. Persists only when the list actually changes, so the
+   * common case — the owner writing again — costs no extra write.
+   */
+  async noteSessionParticipant(sessionId: string, participant: SessionParticipantIdentity): Promise<boolean> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return false
+    const participants = upsertSessionParticipant(managed.participants, participant)
+    if (!participants) return false
+    this.markCollectionFieldMutations(managed, ['participants'])
+    managed.participants = participants
+    this.setMetadataWriteGuard(managed)
+    this.persistSession(managed)
+    await this.flushSession(managed.id)
+    return true
+  }
+
+  /**
+   * a2.5: set the session visibility ('shared' | 'read-only' | 'suggest' | 'draft').
+   * Server-side authority for the sharing menu; never a UI-only flag.
+   */
+  async setSessionVisibility(sessionId: string, visibility: SessionVisibility): Promise<void> {
+    const managed = this.sessions.get(sessionId)
+    if (managed) {
+      this.markCollectionFieldMutations(managed, ['visibility'])
+      managed.visibility = visibility
+      this.setMetadataWriteGuard(managed)
+
+      this.sendEvent({ type: 'session_visibility_changed', sessionId, visibility }, managed.workspace.id)
+      this.persistSession(managed)
+      await this.flushSession(managed.id)
+      const watcher = this.configWatchers.get(managed.workspace.rootPath)
+      watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
+    }
+  }
+
+  /** a1.4: push an ephemeral collaboration signal (typing/presence) to the session's workspace. */
+  broadcastSessionActivity(sessionId: string, event: SessionEvent): void {
+    const managed = this.sessions.get(sessionId)
+    if (managed) this.sendEvent(event, managed.workspace.id)
   }
 
   /**

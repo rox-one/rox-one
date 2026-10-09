@@ -98,6 +98,12 @@ export {
   MEMORY_REPO_READ_MAX_CHARS,
   MEMORY_REPO_SEARCH_MAX_LIMIT,
 } from './memory-repo.ts';
+// Memory recall tools (c1.3)
+export { handleMemorySearch, MEMORY_SEARCH_MAX_LIMIT } from './memory-search.ts';
+export { handleMemoryGet } from './memory-get.ts';
+// Skills catalog tools (c2.7; read-only over the registered skills runtime)
+export { handleSkillsSearch, SKILLS_SEARCH_MAX_LIMIT } from './skills-search.ts';
+export { handleSkillsRead, SKILLS_READ_MAX_CHARS } from './skills-read.ts';
 
 // Pages
 export {

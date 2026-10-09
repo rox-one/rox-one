@@ -17,6 +17,9 @@ import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SessionMenu } from '@/components/app-shell/SessionMenu'
 import { CompactSessionMenu } from '@/components/app-shell/CompactSessionMenu'
 import { SessionPresenceAvatars } from '@/components/app-shell/SessionPresenceAvatars'
+import { SessionOwnerChip } from '@/components/app-shell/SessionOwnerChip'
+import { SessionParticipantsPopover, ParticipantsTriggerIcon } from '@/components/app-shell/SessionParticipantsPopover'
+import { useSessionViewerWatch } from '@/hooks/useSessionPresence'
 import { TeamSessionButton } from '@/components/team/TeamSessionButton'
 import { SessionInfoPopover } from '@/components/app-shell/SessionInfoPopover'
 import { RenameDialog } from '@/components/ui/rename-dialog'
@@ -204,6 +207,9 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   // Check if session exists in metadata (for loading state detection)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const sessionMeta = sessionMetaMap.get(sessionId)
+  // a2.4: register this connection as a viewer while the session is open so the
+  // server broadcasts live presence to collaborators.
+  useSessionViewerWatch(sessionId)
 
   // Fallback: ensure messages are loaded when session is viewed
   const ensureMessagesLoaded = useSetAtom(ensureSessionMessagesLoadedAtom)
@@ -1117,6 +1123,32 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     )
   }, [isCompactMode, sessionId, session?.sessionFolderPath, sessionMeta, t])
 
+  // a2.1/a2.2: owner chip + participant history in the header. Attribution is
+  // server-owned; prefer the full session when loaded, else the meta snapshot.
+  const sessionOwner = session?.owner ?? sessionMeta?.owner
+  const sessionCreator = session?.creator ?? sessionMeta?.creator
+  const sessionParticipants = session?.participants ?? sessionMeta?.participants
+  const ownerChip = React.useMemo(
+    () => (sessionMeta ? <SessionOwnerChip owner={sessionOwner} size="sm" /> : undefined),
+    [sessionMeta, sessionOwner],
+  )
+  const participantsPopover = React.useMemo(
+    () => (sessionMeta ? (
+      <SessionParticipantsPopover
+        creator={sessionCreator}
+        owner={sessionOwner}
+        participants={sessionParticipants}
+        trigger={(
+          <PanelHeaderCenterButton
+            icon={<ParticipantsTriggerIcon />}
+            aria-label={t('participants.count', { count: sessionParticipants?.length ?? 0 })}
+          />
+        )}
+      />
+    ) : undefined),
+    [sessionMeta, sessionCreator, sessionOwner, sessionParticipants, t],
+  )
+
   // Pencil opens the Task editor for orchestrator sessions; rendered before the
   // share/info action. The slot div has no gap of its own, so compose with one here.
   const editTaskButton = React.useMemo(() => {
@@ -1215,6 +1247,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     <div className="flex items-center gap-1.5">
       {editTaskButton}
       {memoryModeButton}
+      {ownerChip}
       <SessionPresenceAvatars sessionId={sessionId} />
       <TeamSessionButton sessionId={sessionId} sessionTitle={sessionMeta?.name} />
       {infoButton}
@@ -1224,6 +1257,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       <div className="rox-header-actions-full items-center gap-1">
         {editTaskButton}
         {memoryModeButton}
+        {ownerChip}
+        {participantsPopover}
         <SessionPresenceAvatars sessionId={sessionId} />
         <TeamSessionButton sessionId={sessionId} sessionTitle={sessionMeta?.name} />
         {shareButton}

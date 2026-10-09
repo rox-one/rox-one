@@ -58,6 +58,8 @@ import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboar
 import { NotesNavigationSidebar } from './notes/NotesNavigationSidebar'
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
+import { cachedNotesList, ensureNotesTaskCache, fetchNotesList, patchCachedNote, subscribeCachedNotesList } from '@/lib/query/notes-cache'
+import { cacheWriteEpoch } from '@/lib/query/shared-read'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
@@ -379,6 +381,16 @@ function noteFolder(note: NoteSummary): string {
   return parts.join('/')
 }
 
+/**
+ * PERF-09: in principal mode `notes.LIST` returns whole NoteDocuments, so the
+ * raw list a caller holds already carries every note's markdown. Local mode
+ * returns summaries only. Detect the document shape without trusting the
+ * `NoteSummary[]` API type.
+ */
+function listedNoteContent(note: NoteSummary): string | null {
+  return 'content' in note && typeof note.content === 'string' ? note.content : null
+}
+
 function extractTasks(note: NoteDocument | NoteSummary, content: string): NoteTask[] {
   return content.split(/\r?\n/).flatMap((line, index) => {
     const match = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.+)$/)
@@ -503,9 +515,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // Retire contextual metadata from another workspace; the session and its canonical draft stay durable.
     if (rightSessionContext && rightSessionContext.workspaceId !== activeWorkspaceId) setRightSessionContext(null)
   }, [activeWorkspaceId, rightSessionContext])
-  const [notes, setNotes] = React.useState<NoteSummary[]>([])
+  // PERF-09: a revisit paints the cached list at once; refreshNotes revalidates it.
+  const [notes, setNotes] = React.useState<NoteSummary[]>(() => cachedNotesList(activeWorkspaceId) ?? [])
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
-  const [sidebarOrder, setSidebarOrder] = React.useState<string[]>([])
+  const [sidebarOrder, setSidebarOrder] = React.useState<string[]>(() => (cachedNotesList(activeWorkspaceId) ?? []).map(n => n.id))
   const [searchResults, setSearchResults] = React.useState<NoteSummary[] | null>(null)
   const [activeNote, setActiveNote] = React.useState<NoteDocument | null>(null)
   const activeNoteRef = React.useRef(activeNote)
@@ -614,6 +627,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const readsMountedRef = React.useRef(false)
   const readWorkspaceRef = React.useRef(activeWorkspaceId)
   const readWorkspaceGenerationRef = React.useRef(0)
+  const notesListViewportRef = React.useRef<HTMLDivElement | null>(null)
   const [notesReadError, setNotesReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const [assetsReadError, setAssetsReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError : null
@@ -665,9 +679,68 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     return () => { ++openNoteRequestRef.current }
   }, [activeWorkspaceId, selectedNoteId])
   const taskRequestRef = React.useRef(0)
-  const taskCacheWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
+  const taskCacheWorkspaceRef = React.useRef<string | null>(null)
+  // PERF-09: per-workspace task cache shared across visits (only changed notes are re-read).
+  // Attached in a layout effect: attaching registers the entry in the shared
+  // cache (a write), so it must not run during render (StrictMode renders twice
+  // and may discard the render). The pure lookup is `notesTaskCache`.
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
   const taskCacheUpdatedAtRef = React.useRef<Map<string, number>>(new Map())
+  // PERF-09: which workspace the held `notes` list belongs to. A task pass never
+  // cleans or refreshes a workspace's cache from another workspace's list (or
+  // one held across an identity switch): a stale list only revives through its
+  // own workspace's fresh read.
+  const notesHandoffWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
+  const notesListWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
+  React.useEffect(() => {
+    notesListWorkspaceRef.current = notesHandoffWorkspaceRef.current
+  }, [notes])
+  React.useLayoutEffect(() => {
+    const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
+    taskCacheRef.current = cache.tasks
+    taskCacheUpdatedAtRef.current = cache.updatedAt
+    taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
+    setAllTasks([...cache.tasks.values()].flat())
+    // Mount-only: a workspace switch re-attaches inside refreshTasks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  React.useLayoutEffect(() => {
+    // A workspace switch retires the previous workspace's list before any pass
+    // runs: its ids would otherwise clean (or, with listing content, overwrite)
+    // the new workspace's task cache. The new workspace's cached slice, if any,
+    // seeds the list, and the pass runs for it right here — the state-list
+    // effect below cannot see this change when the slice matches the retired
+    // list by ids and versions.
+    if (notesHandoffWorkspaceRef.current === (activeWorkspaceId ?? null)) return
+    notesHandoffWorkspaceRef.current = activeWorkspaceId ?? null
+    const cached = cachedNotesList(activeWorkspaceId) ?? []
+    setNotes(cached)
+    setSidebarOrder(cached.map(n => n.id))
+    void refreshTasksRef.current?.(cached)
+  }, [activeWorkspaceId])
+  React.useEffect(() => {
+    // The identity fence clears the shared task caches; re-attach to this
+    // workspace's fresh entry so later passes write to a live cache instead of
+    // the previous principal's orphaned maps, and drop the list claims held for
+    // the retired principal.
+    const off = window.electronAPI.onIdentityChanged?.(() => {
+      const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
+      taskCacheRef.current = cache.tasks
+      taskCacheUpdatedAtRef.current = cache.updatedAt
+      taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
+      // The fence clears the shared caches, not the list's workspace claim: the
+      // held list is still this workspace's census, so the pass re-runs for it.
+      notesListWorkspaceRef.current = activeWorkspaceId ?? null
+      notesHandoffWorkspaceRef.current = activeWorkspaceId ?? null
+      void refreshTasksRef.current?.()
+    })
+    return () => off?.()
+  }, [activeWorkspaceId])
+  // PERF-09: reads shared between overlapping passes, keyed by workspace+note+version.
+  const taskInFlightRef = React.useRef<Map<string, Promise<NoteDocument>>>(new Map())
+  // PERF-09: true while a notes listing read is in flight; its result re-runs the task pass.
+  const notesListingPendingRef = React.useRef(false)
+  const refreshTasksRef = React.useRef<((sourceNotes?: NoteSummary[]) => Promise<void>) | null>(null)
   const nativeRevisionByNoteRef = React.useRef<Map<string, number | null>>(new Map())
   const expectedRevisionByNoteRef = React.useRef<Map<string, string>>(new Map())
   const mutationOptions = React.useCallback((workspaceId: string, noteId: string, expectedRevision?: number | null): NoteMutationOptions => ({
@@ -759,6 +832,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const noteId = activeNote.id
     const workspaceId = activeWorkspaceId
     const opening = openNoteRequestRef.current
+    const cacheEpoch = cacheWriteEpoch()
     setMarkerBusy(true)
     setMarkerError(null)
     try {
@@ -784,6 +858,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setContent(result.note.content)
       setDirty(false)
       setNotes(previous => previous.map(note => note.id === noteId ? result.note : note))
+      patchCachedNote(workspaceId, result.note, cacheEpoch)
       setCommittedBlockTree(result.blockTree)
       setContentResolution(previous => previous && previous.status !== 'error' ? {
         ...previous, content: result.note.content, revision: result.receipt.revision,
@@ -853,21 +928,52 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     })
   }, [])
 
-  const refreshNotes = React.useCallback(async () => {
+  // `mount`: joinable, and skipped inside the PERF-09 SWR window; change
+  // events, mutations and explicit refreshes always read fresh.
+  const refreshNotes = React.useCallback(async (options: { mount?: boolean } = {}) => {
     const request = ++notesListRequestRef.current
     if (!activeWorkspaceId) return
     const listed = soupDocumentListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return
+    // PERF-09: while this listing is in flight a task pass must not read notes
+    // one by one — the listing carries them (whole documents in principal
+    // mode) and re-runs the pass below.
+    notesListingPendingRef.current = true
     await readScopedCapability({
-      read: () => window.electronAPI.listNotes(activeWorkspaceId),
+      read: () => fetchNotesList(activeWorkspaceId, () => window.electronAPI.listNotes(activeWorkspaceId), { mount: options.mount === true }),
       isCurrent: () => readsMountedRef.current && request === notesListRequestRef.current
         && readWorkspaceRef.current === activeWorkspaceId,
       onAvailable: next => {
+        notesFreshWorkspaceRef.current = activeWorkspaceId
+        notesHandoffWorkspaceRef.current = activeWorkspaceId
+        notesListingPendingRef.current = false
         setNotesReadError(null)
         setNotes(next)
         setSidebarOrder(next.map(n => n.id))
+        // PERF-09: refresh tasks from the listing's own content instead of
+        // re-reading every note (principal mode returns whole documents here).
+        void refreshTasksRef.current?.(next)
       },
-      onUnavailable: error => setNotesReadError({ workspaceId: activeWorkspaceId, code: capabilityErrorCode(error) }),
+      onUnavailable: error => {
+        notesListingPendingRef.current = false
+        setNotesReadError({ workspaceId: activeWorkspaceId, code: capabilityErrorCode(error) })
+        // No listing content to feed the pass: read the notes the adopted list shows.
+        void refreshTasksRef.current?.()
+      },
+    })
+  }, [activeWorkspaceId])
+
+  // PERF-09: the disk restore is async and usually lands after mount; adopt
+  // the hydrated list until this workspace's first fresh read arrives.
+  const notesFreshWorkspaceRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (!activeWorkspaceId) return
+    notesFreshWorkspaceRef.current = null
+    return subscribeCachedNotesList(activeWorkspaceId, next => {
+      if (notesFreshWorkspaceRef.current === activeWorkspaceId || readWorkspaceRef.current !== activeWorkspaceId) return
+      notesHandoffWorkspaceRef.current = activeWorkspaceId
+      setNotes(next)
+      setSidebarOrder(next.map(n => n.id))
     })
   }, [activeWorkspaceId])
 
@@ -912,17 +1018,25 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId])
 
   const refreshTasks = React.useCallback(async (sourceNotes?: NoteSummary[]) => {
+    const baseNotes = sourceNotes ?? notes
+    // A state list belonging to another workspace (or held across an identity
+    // switch) must neither clean nor refresh this workspace's cache, and must
+    // not displace a pass already running for it: a dropped call does not even
+    // take a request number. A caller that passes a freshly read list is
+    // always current.
+    if (baseNotes === notes && notesListWorkspaceRef.current !== (activeWorkspaceId ?? null)) return
     const request = ++taskRequestRef.current
     if (taskCacheWorkspaceRef.current !== (activeWorkspaceId ?? null)) {
-      taskCacheRef.current.clear()
-      taskCacheUpdatedAtRef.current.clear()
+      // Switch to the new workspace's cache; the old one stays valid for its workspace.
+      const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
+      taskCacheRef.current = cache.tasks
+      taskCacheUpdatedAtRef.current = cache.updatedAt
       taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
     }
     if (!activeWorkspaceId) {
       setAllTasks([])
       return
     }
-    const baseNotes = sourceNotes ?? notes
     const currentIds = new Set(baseNotes.map(n => n.id))
     for (const id of taskCacheRef.current.keys()) {
       if (!currentIds.has(id)) {
@@ -933,9 +1047,34 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const toFetch = baseNotes.filter(note =>
       !taskCacheRef.current.has(note.id) || taskCacheUpdatedAtRef.current.get(note.id) !== note.updatedAt
     )
-    const results = await Promise.allSettled(
-      toFetch.map(note => window.electronAPI.readNote(activeWorkspaceId, note.id))
-    )
+    // PERF-09: prefer the content the listing already carries (principal mode
+    // returns whole documents) over a second readNote pass over the corpus.
+    const listingPending = notesListingPendingRef.current
+    const reads = new Map<string, Promise<NoteDocument>>()
+    for (const note of toFetch) {
+      const content = listedNoteContent(note)
+      if (content !== null) {
+        taskCacheRef.current.set(note.id, extractTasks(note, content))
+        taskCacheUpdatedAtRef.current.set(note.id, note.updatedAt)
+        continue
+      }
+      // The workspace's listing is still in flight: it delivers these same
+      // notes (with content in principal mode) and re-runs this pass, so a
+      // read here would read the corpus twice.
+      if (listingPending) continue
+      const key = `${activeWorkspaceId}\u0000${note.id}\u0000${note.updatedAt}`
+      const shared = taskInFlightRef.current.get(key)
+      if (shared) {
+        reads.set(key, shared)
+        continue
+      }
+      const read = window.electronAPI.readNote(activeWorkspaceId, note.id)
+      taskInFlightRef.current.set(key, read)
+      const settle = () => { if (taskInFlightRef.current.get(key) === read) taskInFlightRef.current.delete(key) }
+      void read.then(settle, settle)
+      reads.set(key, read)
+    }
+    const results = await Promise.allSettled([...reads.values()])
     if (request !== taskRequestRef.current || taskCacheWorkspaceRef.current !== activeWorkspaceId) return
     for (const result of results) {
       if (result.status === 'fulfilled') {
@@ -945,6 +1084,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }
     setAllTasks([...taskCacheRef.current.values()].flat())
   }, [activeWorkspaceId, notes])
+  refreshTasksRef.current = refreshTasks
 
   const openNote = React.useCallback(async (noteId: string) => {
     if (!readsMountedRef.current || readWorkspaceRef.current !== activeWorkspaceId) return
@@ -1044,7 +1184,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [externalChange, openNote, t])
 
   React.useEffect(() => {
-    refreshNotes()
+    refreshNotes({ mount: true })
     refreshAssets()
     void refreshIndexHealth()
     if (!activeWorkspaceId) return
@@ -1155,7 +1295,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   )
   React.useEffect(() => {
     void refreshTasks(notes)
-    // Refresh task projections when any note's persisted version changes.
+    // Refresh task projections when any note's persisted version — or the
+    // workspace itself — changes. A list retired by another workspace's reset
+    // is dropped inside the pass, which the reset kicks on its own.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noteIds])
 
@@ -1187,6 +1329,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const revisionKey = `${activeWorkspaceId}\0${noteId}`
     const observation = dirtyRef.current ? knowledgeSignals.capture() : null
     const documentGeneration = openNoteRequestRef.current
+    const cacheEpoch = cacheWriteEpoch()
     const isCurrentDocument = () => activeNoteIdRef.current === noteId && workspaceIdRef.current === activeWorkspaceId && openNoteRequestRef.current === documentGeneration
     const queued = saveQueueRef.current.then(async () => {
       if (workspaceIdRef.current !== activeWorkspaceId || openNoteRequestRef.current !== documentGeneration) return false
@@ -1244,6 +1387,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
             await refreshNotes()
           } else {
             setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
+            patchCachedNote(activeWorkspaceId, saved, cacheEpoch)
           }
           taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
           taskCacheUpdatedAtRef.current.set(saved.id, saved.updatedAt)
@@ -2263,6 +2407,7 @@ h1,h2,h3{margin-top:1.5em}
     if (!activeWorkspaceId) return
     const workspaceId = activeWorkspaceId
     const opening = openNoteRequestRef.current
+    const cacheEpoch = cacheWriteEpoch()
     const wasActive = activeNoteIdRef.current === task.noteId
     try {
       if (wasActive && !await flushBeforeAction()) return
@@ -2301,6 +2446,7 @@ h1,h2,h3{margin-top:1.5em}
         taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
         setAllTasks([...taskCacheRef.current.values()].flat())
         setNotes(prev => prev.map(note => note.id === saved.id ? saved : note))
+        patchCachedNote(workspaceId, saved, cacheEpoch)
       }
     } catch (error) {
       if (workspaceIdRef.current === workspaceId) toast.error(error instanceof Error ? error.message : t('notes.toast.saveFailed'))
@@ -2530,13 +2676,14 @@ h1,h2,h3{margin-top:1.5em}
           )}
         </div>
         <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
-        <div className="flex-1 min-h-0 overflow-y-auto p-2">
+        <div ref={notesListViewportRef} className="flex-1 min-h-0 overflow-y-auto p-2">
           <NotesNavigationSidebar
             notes={visibleNotes}
             activeNoteId={activeNote?.id}
             dreamNoteIds={dreamNoteIds}
             collapsedFolders={collapsedFolders}
             onToggleFolder={toggleFolder}
+            viewportRef={notesListViewportRef}
             onOpenNote={handleOpenNote}
             onOpenCreateNoteDialog={openCreateNoteDialog}
             onOpenRenameFolder={openRenameFolderDialog}

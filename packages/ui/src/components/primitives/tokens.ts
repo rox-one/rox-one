@@ -6,9 +6,11 @@
  * override token values, never these class names.
  */
 
-/** Visible keyboard focus (PLAN §1.4: focus-visible on every primary action). */
+/** Visible keyboard focus (PLAN §1.4: focus-visible on every primary action).
+ *  A faint 1px accent hairline (--ring-width, 2px in high contrast) instead of
+ *  a heavy 2px halo. */
 export const FOCUS_RING =
-  'outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-background'
+  'outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-accent/55 focus-visible:ring-offset-1 focus-visible:ring-offset-background'
 
 /**
  * Motion: 120 ms hover / appear (UI-SPEC §2.6 `--motion-fast`), collapsed to

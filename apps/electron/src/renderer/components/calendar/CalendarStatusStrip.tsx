@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { calendarEventIdentity, CalendarStore, mergeTodayUpcoming, type TaskLike } from '@rox/core/calendar'
+import { calendarEventIdentity, CalendarStore, mergeTodayUpcoming, type CalendarProvider, type TaskLike } from '@rox/core/calendar'
 import { CalendarConnectorChips } from './CalendarConnectorChips'
 import { cn } from '@/lib/utils'
 
@@ -56,6 +56,15 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
     })
   }
 
+  // Only reachable for providers whose production adapter is wired, i.e. the Google
+  // account already holds OAuth credentials, so the pending account is marked connected.
+  const connect = useCallback((provider: CalendarProvider) => {
+    void mutate((current) => {
+      const account = current.connect(provider, t(`calendar.provider.${provider}`), tz)
+      current.markConnected(account.id)
+    })
+  }, [mutate, t, tz])
+
   const addLocalReminder = (event: React.FormEvent) => {
     event.preventDefault()
     if (!reminderDraft.trim()) return
@@ -69,7 +78,7 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
     <div className="flex flex-col gap-1 px-3 py-2 text-[11px]" data-testid="calendar-status-strip">
       <div className={cn('flex flex-wrap items-center gap-2', (status === 'conflict' || status === 'localChanges' || status === 'timezone') && 'text-amber-600')}>
         <span>{t(`calendar.status.${status}`)}</span>
-        <CalendarConnectorChips />
+        <CalendarConnectorChips onConnect={connect} />
         {store.accounts().filter((account) => account.status === 'connected').map((account) => (
           <button key={account.id} type="button" className="underline" onClick={() => revoke(account.id)}>
             {t('calendar.revoke')} · {t(`calendar.provider.${account.provider}`)}

@@ -13,7 +13,8 @@ const {randomUUID}=await import('node:crypto');
 const {NativeAuthority}=await import('./packages/server-core/src/authority/native-authority.ts');
 const {WsRpcServer}=await import('./packages/server-core/src/transport/server.ts');
 const {WsRpcClient}=await import('./packages/server-core/src/transport/client.ts');
-const {registerOnboardingHandlers}=await import('./apps/electron/src/main/onboarding.ts');
+const {registerOnboardingHandlers}=await import('./packages/server-core/src/handlers/rpc/onboarding.ts');
+const {RoxAccountAuthority,setRoxAccountAuthority,LOCAL_ROX_CALLER}=await import('./packages/shared/src/auth/rox-account-authority.ts');
 const {getCredentialManager}=await import('./packages/shared/src/credentials/manager.ts');
 const {RPC_CHANNELS}=await import('./packages/shared/src/protocol/index.ts');
 const {updatePreferences,ensureLocalUserIdentity,getPreferencesPath}=await import('./packages/shared/src/config/preferences.ts');
@@ -34,31 +35,51 @@ for(const issued of [author,reader])authority.grantWorkspace(admin.credential,is
 ensureLocalUserIdentity();updatePreferences({name:'HOST PRIVATE NAME',username:'HOST PRIVATE USER'});
 const preferenceFile=join(process.env.CRAFT_CONFIG_DIR,'preferences.json');
 const hostBefore=readFileSync(preferenceFile,'utf8');
+const records=new Map();
+const ownerKey=o=>JSON.stringify([o.issuer,o.subject]);
+const accountStore={
+ readLogout:async c=>records.get('logout:'+ownerKey(c))??null,
+ writeLogout:async (c,r)=>{records.set('logout:'+ownerKey(c),r)},
+ clearLogout:async c=>{records.delete('logout:'+ownerKey(c))},
+ read:async c=>records.get('account:'+ownerKey(c))??null,
+ write:async (c,r)=>{records.set('account:'+ownerKey(c),r)},
+ clear:async c=>{records.delete('account:'+ownerKey(c))},
+};
+setRoxAccountAuthority(new RoxAccountAuthority(accountStore));
+const readySnapshot=id=>({state:'ready',user:{id,email:'synthetic@example.test',emailVerified:true,name:'Synthetic',handle:null,profileUrl:null},organization:{id:'org-1',name:null,slug:null,role:'owner'},balance:{currency:'ROX',balanceRox:'12.500000',heldRox:'0.000000',availableRox:'12.500000',bonusStatus:'none'},key:{id:'key-'+id,prefix:'rox_key',generation:1,status:'active'},updatedAt:'2026-01-01T00:00:00.000Z'});
+// The host has its own account under LOCAL_ROX_CALLER; actors must never inherit it.
+await accountStore.write(LOCAL_ROX_CALLER,{accountId:'host-private-user',authGeneration:'host-generation',accessToken:'synthetic-host-token',refreshToken:'host-refresh-token',expiresAt:Date.now()+3600000,snapshot:readySnapshot('host-private-user'),credential:{accountId:'host-private-user',keyId:'key-host-private-user',generation:1,apiKey:'host-api-key',baseUrl:'https://api.rox.one/v1'},lastSyncedAt:Date.now()});
 const proofs=new Map(); const clients=[];
 let server;
 const start=async()=>{
  server=new WsRpcServer({host:'127.0.0.1',port:0,requireAuth:true,nativeAuthority:authority,validateToken:async token=>token==='fixture-legacy-token',resolveLocalClientBinding:candidate=>proofs.get(candidate.localClientProof)??null});
- registerOnboardingHandlers(server,{platform:{logger:{info(){},warn(){},error(){},debug(){}}},nativeData:{authority}});
+ registerOnboardingHandlers(server,{platform:{logger:{info(){},warn(){},error(){},debug(){}}},sessionManager:{ensureFirstSessionWelcome:async workspaceId=>({id:'welcome',messages:[{role:'assistant',content:'Hello '+workspaceId}]})},nativeData:{authority}});
  await server.listen();
 };
 const client=async(issued,local=true,workspaceId='workspace-a')=>{
  const proof=randomUUID();proofs.set(proof,{workspaceId,webContentsId:clients.length+1});
  const c=new WsRpcClient('ws://127.0.0.1:'+server.port,{token:issued.credential,workspaceId,webContentsId:clients.length+1,localClientProof:local?proof:undefined,mode:local?'local':'remote',autoReconnect:false,requestTimeout:2000,connectTimeout:2000});clients.push(c);c.connect();return c;
 };
-let devices=0;let approve=true;
+let devices=0; let approve=true;
 globalThis.fetch=async(url,init)=>{
+ const href=String(url);
+ const token=String(init?.headers?.authorization??'').replace('Bearer ','');
+ const accountId=token==='synthetic-host-token'?'host-private-user':token.replace('synthetic-token-','');
  const payload=JSON.parse(String(init?.body??'{}'));
- if(String(url).endsWith('/device/start'))return new Response(JSON.stringify({device_code:'synthetic-device-'+(++devices),user_code:'TEST-'+devices,verification_uri:'https://auth.example.test/device',expires_in:60,interval:2}),{status:200});
- if(String(url).endsWith('/device/poll'))return new Response(JSON.stringify(approve?{status:'approved',access_token:'synthetic-token-'+payload.device_code,expires_in:60,user:{id:payload.device_code,email:'synthetic@example.test',name:null}}:{status:'pending',interval:2}),{status:200});
- if(String(url).endsWith('/me/balance'))return new Response(JSON.stringify({balanceRox:'12.5'}),{status:200});
- throw new Error('Unexpected synthetic auth request');
+ if(href.endsWith('/api/auth/device/v2/start'))return new Response(JSON.stringify({device_code:'synthetic-device-'+(++devices),user_code:'TEST-'+devices,verification_uri:'https://auth.example.test/login/device?v=2&user_code=TEST-'+devices,expires_in:60,interval:2}),{status:200});
+ if(href.endsWith('/api/auth/device/v2/poll'))return new Response(JSON.stringify(approve?{status:'approved',access_token:'synthetic-token-'+payload.device_code,refresh_token:'synthetic-refresh-'+payload.device_code,token_type:'Bearer',expires_in:60,user:{id:payload.device_code,email:'synthetic@example.test',name:null}}:{status:'pending',interval:2}),{status:200});
+ if(href.endsWith('/api/me/bootstrap')||href.endsWith('/api/me/account'))return new Response(JSON.stringify(readySnapshot(accountId)),{status:200});
+ if(href.endsWith('/api/me/inference-credential'))return new Response(JSON.stringify({accountId,keyId:'key-'+accountId,generation:1,apiKey:'synthetic-api-key',baseUrl:'https://api.rox.one/v1'}),{status:200});
+ if(href.endsWith('/api/auth/device/v2/logout'))return new Response(JSON.stringify({ok:true}),{status:200});
+ if(href.endsWith('/api/auth/device/v2/refresh'))return new Response(JSON.stringify({status:'approved',access_token:'synthetic-token-'+accountId,refresh_token:'synthetic-refresh-'+accountId,token_type:'Bearer',expires_in:60,user:{id:accountId,email:'synthetic@example.test',name:null}}),{status:200});
+ throw new Error('Unexpected synthetic auth request: '+href);
 };
 const connected=async c=>{const deadline=Date.now()+5000;while(Date.now()<deadline){const state=await c.invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE);if(state.connected)return state;await new Promise(r=>setTimeout(r,5))}throw new Error('own cloud account did not connect')};
 try{
  await start();const a=await client(author),b=await client(reader);
  const manager=getCredentialManager();await manager.setRoxCloudSession({accessToken:'synthetic-host-token',userId:'host-private-user',expiresAt:Date.now()+60000,authBaseUrl:'https://auth.example.test'});
  assert(!(await a.invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE)).connected,'inherited host cloud account');
- const grant=await a.invoke(RPC_CHANNELS.onboarding.START_ROX_CONNECT);assert(grant.success&&grant.verificationUriComplete==='https://auth.example.test/device','device start failed or fallback link missing');
+ const grant=await a.invoke(RPC_CHANNELS.onboarding.START_ROX_CONNECT);assert(grant.success&&grant.verificationUriComplete==='https://auth.example.test/login/device?v=2&user_code=TEST-1','device start failed or fallback link missing');
  const authorState=await connected(a);assert(authorState.user.id==='synthetic-device-1'&&!('accessToken'in authorState),'own account missing or raw token exposed');
  assert(!(await b.invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE)).connected,'other actor inherited account');
  await b.invoke(RPC_CHANNELS.onboarding.START_ROX_CONNECT);assert((await connected(b)).user.id==='synthetic-device-2','reader account missing');

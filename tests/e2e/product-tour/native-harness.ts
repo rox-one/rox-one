@@ -1,7 +1,7 @@
 import { _electron, type ElectronApplication, type Page } from '@playwright/test'
-import { mkdir, open, rm } from 'node:fs/promises'
+import { mkdir, open, rm, copyFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { dirname, resolve, join } from 'node:path'
+import { resolve, join, dirname } from 'node:path'
 import { createRequire } from 'node:module'
 import { observeFirstNativeWindow } from './native-startup'
 
@@ -54,7 +54,10 @@ export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiag
     if (process.env[name]) env[name] = process.env[name]!
   }
   Object.assign(env, {
-    HOME: join(profile, 'home'), USERPROFILE: join(profile, 'home'),
+    // The login keychain must stay reachable: Chromium safeStorage answers
+    // isEncryptionAvailable() from the real HOME, and the app fails closed with
+    // ROX_OS_SECURE_STORAGE_UNAVAILABLE when it is not (which masks the onboarding).
+    HOME: process.env.HOME ?? join(profile, 'home'), USERPROFILE: process.env.USERPROFILE ?? process.env.HOME ?? join(profile, 'home'),
     ROX_CONFIG_DIR: join(profile, 'config'), CRAFT_CONFIG_DIR: join(profile, 'config'),
     ROX_USER_DATA_DIR: join(profile, 'userData'), CRAFT_USER_DATA_DIR: join(profile, 'userData'),
     TMPDIR: join(profile, 'tmp'), TMP: join(profile, 'tmp'), TEMP: join(profile, 'tmp'),
@@ -79,13 +82,31 @@ export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiag
         const child = app.process()
         if (child && child.exitCode === null && child.signalCode === null) child.kill('SIGKILL')
       } catch { /* close() disposed Playwright's process binding; nothing left to signal */ }
+      // Electron writes logs under the real HOME now (the login keychain must stay
+      // reachable for safeStorage); copy the log into the profile so both the report
+      // attach and a kept CI profile ship it.
+      const realHome = process.env.HOME ?? process.env.USERPROFILE
+      if (realHome) {
+        for (const candidate of [join(realHome, 'Library', 'Logs', 'Rox', 'main.log'), join(realHome, 'Library', 'Logs', 'Electron', 'main.log')]) {
+          if (!existsSync(candidate)) continue
+          const target = join(profile, 'home', 'Library', 'Logs', 'Electron', 'main.log')
+          await mkdir(dirname(target), { recursive: true }).catch(() => {})
+          await copyFile(candidate, target).catch(() => {})
+          break
+        }
+      }
       const profileLogs = await ownedProfileLogs(profile).catch(() => [])
       if (report && profileLogs.length) await report({ profile, profileLogs, scope: 'Owned fresh-profile startup diagnostics; no native acceptance result' }).catch(() => {})
     } finally {
       clearTimeout(bound)
       // Provisioning may still be writing into the profile; retry and never fail the test for cleanup.
-      await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 })
-        .catch(error => { console.error('native harness: profile cleanup skipped:', error) })
+      // CI sets ROX_PRODUCT_TOUR_NATIVE_KEEP_PROFILE=1 so a red lane ships the app log in its artifact.
+      if (process.env.ROX_PRODUCT_TOUR_NATIVE_KEEP_PROFILE === '1') {
+        console.error(`native harness: keeping profile for diagnostics: ${profile}`)
+      } else {
+        await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 })
+          .catch(error => { console.error('native harness: profile cleanup skipped:', error) })
+      }
     }
   } }
 }

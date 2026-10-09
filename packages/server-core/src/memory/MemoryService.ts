@@ -29,6 +29,7 @@ import {
   formatLessonsForPrompt,
   formatWorkspaceMemoryForPrompt,
 } from '@rox/shared/prompts/system'
+import { isMemoryDocumentInjectable, loadMemoryProvenanceOverrides } from '@rox/shared/memory/document-provenance'
 import { buildTransferredSessionContext } from '@rox/shared/agent/conversation-summary'
 import type { StoredMessage, SessionMemoryMode } from '@rox/core/types'
 import type {
@@ -54,6 +55,8 @@ import { compactWorkspaceHistory } from './decay'
 import { EpisodicMemory, withTimeout as episodicWithTimeout } from './episodic-memory'
 import { notifyRepoMutation, type RepoBankRef } from './repo/notify'
 import { ownerKey8For } from './repo/RepoSourceProvider'
+import { MemoryIndexService, memoryIndexServiceFor } from './MemoryIndexService'
+import { buildMemoryBootstrap } from './bootstrap'
 import type { LearningServicePorts } from './learning/learning-types'
 
 /** Max chars of serialized conversation window sent to the distiller (front-truncated). */
@@ -470,19 +473,30 @@ export class MemoryService {
     const owner = opts?.nativeContext?.owner
     const globalStore = this.deps.lessonStoreFactory?.('global') ?? this.defaultLessonStore('global')
     const workspaceStore = this.deps.lessonStoreFactory?.('workspace') ?? this.defaultLessonStore('workspace')
+    // Provenance gate (spec c1.2/c1.4): documents stamped `untrusted` in the
+    // write-time override sidecar must never reach a prompt through ANY path —
+    // not just the curated bootstrap block, but also the workspace-memory and
+    // lessons blocks assembled below. Fail-open for unlisted documents.
+    const provenanceOverrides = loadMemoryProvenanceOverrides(this.deps.workspaceRoot)
+    const docInjectable = (relPath: string): boolean =>
+      isMemoryDocumentInjectable(this.deps.workspaceRoot, relPath, provenanceOverrides)
     let globalLessons = globalStore.forContext(owner)
     let workspaceLessons = workspaceStore.forContext(owner)
     // Legacy context/history/episodes are host-wide text without an owner.
-    let memory = owner ? { context: '', preferences: '', recentHistory: '' } : this.fileStore.loadWorkspaceMemory()
+    let memory = owner ? { context: '', preferences: '', recentHistory: '' } : this.fileStore.loadWorkspaceMemory(docInjectable)
     const query = opts?.query?.trim()
     if (query && !owner) {
-      const ranked = this.rankByQuery(query, globalStore, workspaceStore)
+      const ranked = this.rankByQuery(query, globalStore, workspaceStore, docInjectable)
       if (ranked) {
         globalLessons = ranked.globalLessons
         workspaceLessons = ranked.workspaceLessons
         memory = ranked.memory
       }
     }
+    // The workspace lessons document is a single file; an untrusted stamp drops
+    // the whole block (global lessons live outside the workspace and are gated
+    // by the global scope's own provenance, not this map).
+    if (!docInjectable('memory/lessons.jsonl')) workspaceLessons = []
     if (opts?.workspaceOnly) {
       globalLessons = []
       memory = { ...memory, preferences: '' }
@@ -535,6 +549,18 @@ export class MemoryService {
         this.logger.warn('MemoryService: episodic recall failed', err)
       }
     }
+    // c1.4: curated memory bootstrap (MEMORY.md / distilled context). Assembled
+    // from the workspace chunk index and gated by chunk provenance — untrusted
+    // documents are never admitted. Fail-soft: any index error just omits it.
+    try {
+      const { block, entries } = buildMemoryBootstrap(this.indexService.bootstrapDocuments())
+      if (block) {
+        blocks.bootstrapBlock = block
+        blocks.bootstrap = entries
+      }
+    } catch (err) {
+      this.logger.warn('MemoryService: curated bootstrap assembly failed', err)
+    }
     opts?.nativeContext?.assertAuthorized()
     return blocks
   }
@@ -550,6 +576,7 @@ export class MemoryService {
     query: string,
     globalStore: LessonStore,
     workspaceStore: LessonStore,
+    docInjectable: (relPath: string) => boolean,
   ): { globalLessons: Lesson[]; workspaceLessons: Lesson[]; memory: WorkspaceMemory } | null {
     try {
       const limit = this.config.ftsLimit ?? 20
@@ -576,9 +603,13 @@ export class MemoryService {
       const merged = [...pinned, ...ranked.filter(r => !pinnedKeys.has(`${r.lesson.scope}:${lessonKey(r.lesson.rule)}`))]
         .slice(0, Math.max(limit, pinned.length))
       const memory: WorkspaceMemory = {
-        context: wHits.context.find(h => h.kind === 'context')?.text ?? '',
+        context: docInjectable('memory/context.md') ? (wHits.context.find(h => h.kind === 'context')?.text ?? '') : '',
         preferences: gHits.context.find(h => h.kind === 'preferences')?.text ?? '',
-        recentHistory: wHits.history.map(h => h.text).filter(t => t.trim().length > 0).join('\n\n'),
+        recentHistory: wHits.history
+          .filter(h => docInjectable(`memory/history/${h.day}.md`))
+          .map(h => h.text)
+          .filter(t => t.trim().length > 0)
+          .join('\n\n'),
       }
       if (merged.length === 0 && !memory.context && !memory.preferences && !memory.recentHistory) return null
       return {
@@ -598,6 +629,12 @@ export class MemoryService {
 
   private get episodic(): EpisodicMemory {
     return (this.deps.episodicMemory ??= new EpisodicMemory(this.fileStore.memoryDir))
+  }
+
+  private indexServiceInstance: MemoryIndexService | null = null
+  /** c1.1/c1.4: workspace memory chunk index (also feeds the bootstrap block). */
+  get indexService(): MemoryIndexService {
+    return (this.indexServiceInstance ??= memoryIndexServiceFor(this.deps.workspaceRoot, this.deps.workspaceId))
   }
 
   private auditLog: AuditLog | null = null

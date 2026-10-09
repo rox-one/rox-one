@@ -2,6 +2,7 @@ export { PERF_BUDGETS, CACHED_SESSION_SWITCH_P95_MS, DROPDOWN_OPEN_P95_MS } from
 export {
   createBulkSessionSidecar,
   createLargeVaultFixture,
+  createNoteSummaryFixture,
   createSessionFixture,
   indexSessionsById,
 } from './fixtures'

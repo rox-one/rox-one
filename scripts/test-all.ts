@@ -1,17 +1,33 @@
 /**
- * Run repository tests serially in separate processes. Module mocks, import-time
- * configuration paths and native test profiles must never leak to another file.
+ * Run repository tests in separate processes, bounded-parallel across suites.
+ * Module mocks, import-time configuration paths and native test profiles must
+ * never leak to another file: every suite keeps its own process, HOME, config
+ * root and artifact directory, so parallelism does not widen that isolation.
  *
  * bun run test [--root <checkout>] [--list] [--filter <path-substring>]
  *   [--timeout <test-ms>] [--suite-timeout <process-ms>]
+ *   [--shard <k/n>] [--concurrency <n>] [--baseline <path>|--no-baseline]
+ *   [--update-baseline [--force-subset-baseline]] [--strict]
  * ROX_TEST_ROOT and ROX_TEST_ARTIFACT_DIR support immutable baseline comparisons.
  * Every invocation retains its own manifest, logs and incremental result report.
+ *
+ * Fixed-port fixtures: suites that bind a literal TCP port (Playwright
+ * webServer with reuseExistingServer:false, `vite --strictPort`) are
+ * serialized on a per-port host-global lease, so a shard or any --concurrency
+ * never lets two of them own one port at once. --update-baseline refuses
+ * --shard/--filter unless --force-subset-baseline is given, so a subset run
+ * cannot silently truncate the checked-in baseline.
+ *
+ * Known redness: a baseline file (scripts/test-baseline.json by default) lists
+ * suites that are already red on main. Their failures no longer fail the run;
+ * only *new* failures (or stale baseline entries) change the exit code, so the
+ * nightly signal is "no new regressions". --strict restores "any red fails".
  */
 import { createHash } from 'node:crypto'
 import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
 import { lstat, mkdir, mkdtemp, open, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
-import { homedir, tmpdir } from 'node:os'
+import { availableParallelism, homedir, tmpdir } from 'node:os'
 import { chromium } from '@playwright/test'
 import ts from 'typescript'
 
@@ -23,6 +39,14 @@ export interface TestSuite {
   config?: string
   packageRoot?: string
   prerequisiteError?: string
+  /**
+   * Fixed TCP ports this suite binds through an owned fixture (a Playwright
+   * webServer with `reuseExistingServer: false`, or a `vite --strictPort`
+   * child). Two suites that own the same port must never run at once, in this
+   * process or in a concurrent shard process, or the second child dies with
+   * EADDRINUSE and turns a known-red baseline into a spurious new failure.
+   */
+  ports: number[]
 }
 export interface SuiteManifest {
   schemaVersion: 1
@@ -33,6 +57,8 @@ export interface SuiteManifest {
     standard: string
     supplemental: string
     omittedDirectories: string[]
+    /** Git-relative path prefixes excluded from discovery; vendored resource trees. */
+    omittedPaths: string[]
     hiddenStandardFiles: number
   }
 }
@@ -51,6 +77,23 @@ export interface SuiteResult {
   timedOut?: boolean
   signal?: NodeJS.Signals | null
   error?: string
+  /** Present in the known-red baseline: a red outcome here is expected, not a regression. */
+  knownRed?: boolean
+}
+/** Baseline of suites already red on main, used to separate old redness from new regressions. */
+export interface BaselineFile {
+  schemaVersion: 1
+  description?: string
+  /** Free-form provenance of the recorded redness (report path, revision). */
+  source?: string
+  knownRed: string[]
+}
+export interface ReportBaseline {
+  path: string | null
+  schemaVersion: 1 | null
+  knownRed: string[]
+  newFailures: string[]
+  stalePass: string[]
 }
 export interface TestReport {
   schemaVersion: 1
@@ -69,10 +112,12 @@ export interface TestReport {
   }
   startedAt: string
   finishedAt?: string
-  serial: true
+  serial: boolean
+  concurrency: number
   bunTimeoutMs: number
   wholeSuiteTimeoutMs: number
-  summary: { expected: number; completed: number; passed: number; failed: number; blocked: number }
+  summary: { expected: number; completed: number; passed: number; failed: number; blocked: number; knownRed: number; newFailures: number; stalePass: number }
+  baseline: ReportBaseline
   results: SuiteResult[]
 }
 
@@ -82,6 +127,45 @@ const CONFIG_EXTENSIONS = ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs']
 const DEFAULT_WHOLE_SUITE_TIMEOUT_MS = 900_000
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex')
 const portable = (value: string) => value.split('\\').join('/')
+
+// --- Fixed-port fixture ownership ------------------------------------------
+// A suite that starts an owned HTTP fixture on a literal TCP port cannot share
+// that port with another running suite. The scheduler serializes owners of the
+// same port behind one lease (see acquirePortLease); ownership is read from the
+// fixture text at discovery time.
+//
+// Ports come from four literal forms seen in this repository: a loopback URL
+// (`127.0.0.1:5269`), a CLI `--port N` argument, an object `port: N`, and a
+// `const playgroundPort = 5192` binding. Deliberately permissive: over-locking
+// two suites that merely mention the same port only costs parallelism, while
+// missing an owner reintroduces the EADDRINUSE collision this prevents. A
+// literal `0` (or any out-of-range value) is a dynamic port and is ignored.
+const FIXED_PORT_MIN = 1024
+const FIXED_PORT_MAX = 65535
+const PORT_REFERENCE_PATTERNS: readonly RegExp[] = [
+  /(?:127\.0\.0\.1|localhost):(\d{2,5})/g,
+  /--port['"]?[,\s=]+['"]?(\d{2,5})/g,
+  /\bport\s*[:=]\s*(\d{2,5})\b/g,
+  /[A-Za-z_$][\w$]*[Pp]ort\s*[:=]\s*(\d{2,5})\b/g,
+]
+// A suite only owns a port if it starts a server or a child process; a file
+// that merely carries a client URL (`ws://localhost:3000`) stays parallel. The
+// marker is an actual spawn/serve call, not an `import ... from
+// 'node:child_process'` string a fixture-embedding test happens to contain.
+const SERVER_SPAWN_PATTERN = /Bun\.spawn|Bun\.serve|\bspawn\s*\(|\bfork\s*\(|\.listen\s*\(|createServer\s*\(/
+
+/** Every literal TCP port referenced by a fixture document, de-duplicated and
+ *  ascending; dynamic (0) and out-of-range values are dropped. */
+export function fixedPorts(text: string): number[] {
+  const ports = new Set<number>()
+  for (const pattern of PORT_REFERENCE_PATTERNS) {
+    for (const match of text.matchAll(pattern)) {
+      const port = Number(match[1])
+      if (Number.isInteger(port) && port >= FIXED_PORT_MIN && port <= FIXED_PORT_MAX) ports.add(port)
+    }
+  }
+  return [...ports].sort((a, b) => a - b)
+}
 
 // Bun's test runtime can lose subprocess pipe/descriptor output on macOS (Bun
 // #24690). An actual Node process owns the child's pipes and records completion
@@ -220,6 +304,161 @@ function wholeSuiteTimeout(value: string | undefined): number {
 const NATIVE_PRODUCT_DIR = 'tests/e2e/product-tour'
 const NATIVE_PRODUCT_CONFIG = `${NATIVE_PRODUCT_DIR}/native.config.ts`
 
+export const MAX_CONCURRENCY = 64
+
+function concurrencyValue(value: string | undefined): number {
+  if (value === undefined) return defaultConcurrency()
+  if (!/^[1-9]\d*$/.test(value) || Number(value) > MAX_CONCURRENCY)
+    throw new Error(`Concurrency must be a positive integer at most ${MAX_CONCURRENCY} (ROX_TEST_CONCURRENCY / --concurrency)`)
+  return Number(value)
+}
+
+/** One parallel suite per remaining CPU core, capped so browser and Postgres
+ *  suites (each spawning heavy children) do not thrash a small runner. */
+function defaultConcurrency(): number {
+  const cores = availableParallelism?.() ?? 2
+  return Math.max(1, Math.min(4, cores - 1))
+}
+
+export interface Shard { index: number; total: number }
+
+export function parseShard(value: string): Shard {
+  const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(value)
+  if (!match) throw new Error('--shard must be k/n with positive integers (for example --shard=2/4)')
+  const index = Number(match[1]), total = Number(match[2])
+  if (index > total) throw new Error('--shard index must not exceed its total')
+  return { index, total }
+}
+
+/** Deterministic partition over the path-sorted suite list: shard k takes every
+ *  n-th suite starting at k-1, so k/n over all k covers the list exactly once. */
+export function shardSuites(suites: TestSuite[], shard: Shard): TestSuite[] {
+  return suites.filter((_, position) => position % shard.total === shard.index - 1)
+}
+
+/** Run `worker` over every item with a fixed in-flight width. Results are
+ *  reported by index, not completion order, so callers stay deterministic. A
+ *  worker failure stops new dispatch, lets in-flight suites finish, then
+ *  rejects with the first error (matching the former serial abort semantics). */
+async function forEachConcurrent<T>(items: readonly T[], concurrency: number, worker: (item: T, index: number) => Promise<void>): Promise<void> {
+  let next = 0, failed = false
+  let failure: unknown
+  const width = Math.max(1, Math.min(concurrency, items.length))
+  await Promise.all(Array.from({ length: width }, async () => {
+    while (!failed) {
+      const index = next++
+      if (index >= items.length) return
+      try { await worker(items[index]!, index) } catch (error) { if (!failed) { failed = true; failure = error } }
+    }
+  }))
+  if (failed) throw failure
+}
+
+// --- Cross-process fixed-port leases ----------------------------------------
+// The lease is an exclusive lock file (O_EXCL) under a host-global directory,
+// so it serializes owners of one port both inside this process and across two
+// concurrent shard processes on one host; ports are a host resource, not a
+// per-run one. Locks are taken in ascending port order (callers sort), so a
+// suite that owns two ports cannot deadlock with another. A lease whose owner
+// process is gone is reclaimed at once; a live owner is always bounded by its
+// own whole-suite deadline, after which the capture driver force-kills the
+// child and the lease is released.
+const FIXED_PORT_LOCK_DIRECTORY = join(tmpdir(), 'rox-test-all-port-locks')
+const PORT_LOCK_POLL_MS = 200
+const PORT_LOCK_GRACE_MS = 5_000
+
+function processAlive(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid <= 0) return false
+  try { process.kill(pid, 0); return true }
+  catch (error) { return (error as NodeJS.ErrnoException).code === 'EPERM' }
+}
+
+async function portLockOwner(path: string): Promise<{ pid: number } | null> {
+  try {
+    const value = JSON.parse(await readFile(path, 'utf8')) as { pid?: unknown }
+    return typeof value.pid === 'number' ? { pid: value.pid } : null
+  } catch { return null }
+}
+
+export async function acquirePortLease(port: number, waitMs: number): Promise<() => Promise<void>> {
+  await mkdir(FIXED_PORT_LOCK_DIRECTORY, { recursive: true })
+  const path = join(FIXED_PORT_LOCK_DIRECTORY, `port-${port}.lock`)
+  const deadline = Date.now() + waitMs
+  for (;;) {
+    try {
+      const handle = await open(path, 'wx', 0o600)
+      await handle.writeFile(JSON.stringify({ pid: process.pid, port }))
+      await handle.close()
+      let released = false
+      return async () => { if (released) return; released = true; await rm(path, { force: true }) }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+    }
+    const owner = await portLockOwner(path)
+    if (owner && !processAlive(owner.pid)) { await rm(path, { force: true }); continue }
+    if (!owner) {
+      // A fresh exclusive create may still be mid-write; only reclaim an
+      // unreadable lock after the grace window so a racing owner cannot be
+      // double-granted the same port.
+      const age = await lstat(path).then(entry => Date.now() - entry.mtimeMs).catch(() => Infinity)
+      if (age > PORT_LOCK_GRACE_MS) { await rm(path, { force: true }); continue }
+    }
+    if (Date.now() >= deadline) throw new Error(`Fixed-port ${port} lease wait exceeded ${waitMs}ms (held by pid ${owner?.pid ?? 'unknown'})`)
+    await Bun.sleep(PORT_LOCK_POLL_MS)
+  }
+}
+
+const PLAYWRIGHT_CONFIG_PORTS = new Map<string, number[]>()
+
+/** Ports a Playwright config's webServers bind; read once per absolute path. */
+async function playwrightConfigPorts(root: string, config: string): Promise<number[]> {
+  const absolute = join(root, config)
+  const cached = PLAYWRIGHT_CONFIG_PORTS.get(absolute)
+  if (cached) return cached
+  const bytes = await readRegularFile(absolute, MAX_TEST_SOURCE_BYTES)
+  const ports = bytes ? fixedPorts(bytes.toString('utf8')) : []
+  PLAYWRIGHT_CONFIG_PORTS.set(absolute, ports)
+  return ports
+}
+
+export async function loadBaseline(path: string): Promise<BaselineFile | null> {
+  if (!existsSync(path)) return null
+  const bytes = await readRegularFile(path, 1024 * 1024)
+  if (!bytes) return null
+  let parsed: unknown
+  try { parsed = JSON.parse(bytes.toString('utf8')) } catch { throw new Error(`Test baseline is not valid JSON: ${path}`) }
+  const baseline = parsed as Partial<BaselineFile>
+  if (baseline?.schemaVersion !== 1 || !Array.isArray(baseline.knownRed) || baseline.knownRed.some(entry => typeof entry !== 'string'))
+    throw new Error(`Test baseline must declare schemaVersion 1 and a string knownRed[]: ${path}`)
+  return { schemaVersion: 1, description: baseline.description, source: baseline.source, knownRed: baseline.knownRed }
+}
+
+export async function writeBaseline(path: string, knownRed: Iterable<string>, description?: string): Promise<void> {
+  const file: BaselineFile = { schemaVersion: 1, description, knownRed: [...new Set(knownRed)].sort() }
+  await mkdir(dirname(path), { recursive: true })
+  await writeFile(path, JSON.stringify(file, null, 2) + '\n')
+}
+
+/** Split results into expected redness and regressions against the baseline.
+ *  Without a baseline every red suite is a new failure, preserving the former
+ *  all-or-nothing signal. */
+function classifyBaseline(results: SuiteResult[], baseline: ReadonlySet<string> | null): ReportBaseline {
+  const report: ReportBaseline = { path: null, schemaVersion: null, knownRed: [], newFailures: [], stalePass: [] }
+  for (const result of results) {
+    const isKnown = baseline?.has(result.path) ?? false
+    if (result.status === 'passed') {
+      if (isKnown) report.stalePass.push(result.path)
+      result.knownRed = false
+    } else {
+      result.knownRed = isKnown
+      if (isKnown) report.knownRed.push(result.path)
+      else report.newFailures.push(result.path)
+    }
+  }
+  report.knownRed.sort(); report.newFailures.sort(); report.stalePass.sort()
+  return report
+}
+
 async function nearestConfiguration(root: string, file: string, kind: 'playwright' | 'vitest') {
   // This native product entry has a separate existing config. Its sibling
   // browser config deliberately excludes native tests; falling back to it
@@ -243,6 +482,13 @@ async function nearestConfiguration(root: string, file: string, kind: 'playwrigh
     directory = parent
   }
 }
+
+/** Vendored skill packs are shipped as Electron resources, not workspace
+ *  packages: they carry package.json only, without node_modules or build
+ *  outputs, so their suites cannot run under the aggregate runner. This is a
+ *  path prefix (not a directory name) so unrelated `skills` directories in
+ *  repo-authored source stay discovered. */
+const OMITTED_SOURCE_PREFIXES = ['apps/electron/resources/skills/']
 
 function nearestPackage(root: string, file: string) {
   let directory = dirname(file)
@@ -373,12 +619,16 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
       inventory: 'filesystem-fallback',
       standard: '*.{test,spec}.{js,jsx,ts,tsx,mjs,cjs,mts,cts} and *_{test,spec} forms',
       supplemental: '*.isolated.ts (including hidden source directories, as the former find stage did)',
-      omittedDirectories: ['node_modules', '.git'], hiddenStandardFiles: 0,
+      omittedDirectories: ['node_modules', '.git'],
+      omittedPaths: [...OMITTED_SOURCE_PREFIXES],
+      hiddenStandardFiles: 0,
     },
   }
   async function inspect(path: string, hidden: boolean) {
     const name = basename(path)
     if (!STANDARD_TEST.test(name) && !ISOLATED_TEST.test(name)) return
+    const pathFromRoot = portable(relative(root, path))
+    if (OMITTED_SOURCE_PREFIXES.some(prefix => pathFromRoot.startsWith(prefix))) return
     // Do not follow symlinks into dependency checkouts or external profiles.
     // An enumerated source disappearing is an error, not reduced coverage.
     const file = await openRegularFile(path, constants.O_RDONLY)
@@ -388,18 +638,27 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
       if (hidden && !ISOLATED_TEST.test(name)) { manifest.discovery.hiddenStandardFiles += 1; return }
       content = await readOpenedFile(file, MAX_TEST_SOURCE_BYTES)
     } finally { await file.close() }
-    const dependencies = imports(content.toString('utf8'))
+    const source = content.toString('utf8')
+    const dependencies = imports(source)
     const runner: TestRunner = dependencies.has('bun:test') ? 'bun'
       : dependencies.has('@playwright/test') ? 'playwright'
       : dependencies.has('vitest') ? 'vitest' : 'bun'
-    const suite: TestSuite = { path: portable(relative(root, path)), runner, sha256: hash(content) }
+    // A suite owns the literals in its source only when it starts a server or a
+    // child; a client-only URL reference stays parallel. A Playwright suite
+    // additionally owns whatever its webServer config binds.
+    const suite: TestSuite = {
+      path: portable(relative(root, path)), runner, sha256: hash(content),
+      ports: SERVER_SPAWN_PATTERN.test(source) ? fixedPorts(source) : [],
+    }
     if (runner !== 'bun') {
       suite.config = await nearestConfiguration(root, path, runner)
       suite.packageRoot = nearestPackage(root, path)
       if (!suite.config) suite.prerequisiteError = `${runner} config not found for ${suite.path}`
-      else if (runner === 'playwright' && suite.path.startsWith(`${NATIVE_PRODUCT_DIR}/`) && suite.path.endsWith('.native.spec.ts')
-        && process.platform !== 'darwin' && process.platform !== 'win32') {
-        suite.prerequisiteError = `Native product-tour suite requires macOS or Windows; unavailable on ${process.platform}`
+      else if (runner === 'playwright') {
+        if (suite.path.startsWith(`${NATIVE_PRODUCT_DIR}/`) && suite.path.endsWith('.native.spec.ts')
+          && process.platform !== 'darwin' && process.platform !== 'win32')
+          suite.prerequisiteError = `Native product-tour suite requires macOS or Windows; unavailable on ${process.platform}`
+        suite.ports = [...new Set([...suite.ports, ...await playwrightConfigPorts(root, suite.config)])].sort((a, b) => a - b)
       }
     }
     manifest.suites.push(suite)
@@ -469,13 +728,21 @@ function bunCounts(log: string) {
   return { pass: count('pass'), fail: count('fail'), skip: count('skip') }
 }
 
-/** Continue after failures so the report retains the complete execution history. */
+/** Continue after failures so the report retains the complete execution history.
+ *
+ * Suites run bounded-parallel with isolated process/HOME/config/artifact state;
+ * results are stored at their deterministic manifest index, so the report and
+ * the final summary are identical regardless of completion order. */
 export async function runSuites(options: {
   root: string
   manifest: SuiteManifest
   artifactDirectory?: string
   environment?: NodeJS.ProcessEnv
   onResult?: (result: SuiteResult, completed: number, expected: number) => void
+  concurrency?: number
+  baseline?: ReadonlySet<string>
+  baselinePath?: string | null
+  strict?: boolean
 }): Promise<TestReport> {
   const root = resolve(options.root)
   if (resolve(options.manifest.root) !== root) throw new Error('Suite manifest belongs to a different checkout')
@@ -486,6 +753,9 @@ export async function runSuites(options: {
   // top-level module evaluation. This separate process envelope keeps those
   // failures bounded without changing any test's own timeout or assertion.
   const wholeSuiteTimeoutMs = wholeSuiteTimeout(environment.ROX_TEST_SUITE_TIMEOUT_MS)
+  const concurrency = options.concurrency ?? 1
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > MAX_CONCURRENCY)
+    throw new Error(`Concurrency must be an integer between 1 and ${MAX_CONCURRENCY}`)
   const artifactDirectory = await createArtifactRun(options.artifactDirectory ?? environment.ROX_TEST_ARTIFACT_DIR ?? join(root, 'work/test-all'))
   const manifestPath = join(artifactDirectory, 'manifest.json')
   const manifest = JSON.stringify(options.manifest, null, 2) + '\n'
@@ -494,13 +764,27 @@ export async function runSuites(options: {
     captureTestCommand(['node', '--version'], { environment }), gitOutput(root, ['rev-parse', 'HEAD']), gitOutput(root, ['diff', '--binary', 'HEAD']),
   ])
   if (node.exitCode !== 0 || !/^v\d+\.\d+\.\d+\s*$/.test(node.stdout)) throw new Error('Node runtime qualification returned no version')
+  // Placeholder slots keep one result per manifest index before any suite has
+  // finished, so a mid-run checkpoint and the final report share one ordering.
   const report: TestReport = {
     schemaVersion: 1, status: 'running', root, artifactDirectory, manifestPath, reportPath: join(artifactDirectory, 'report.json'),
     input: { head: head?.trim() ?? null, trackedDiffSha256: diff === null ? null : hash(diff), manifestSha256: hash(manifest), runnerSha256: hash(readFileSync(import.meta.filename)), bunVersion: Bun.version, nodeVersion: node.stdout.trim() },
-    startedAt: new Date().toISOString(), serial: true, bunTimeoutMs, wholeSuiteTimeoutMs,
-    summary: { expected: options.manifest.suites.length, completed: 0, passed: 0, failed: 0, blocked: 0 }, results: [],
+    startedAt: new Date().toISOString(), serial: concurrency === 1, concurrency, bunTimeoutMs, wholeSuiteTimeoutMs,
+    summary: { expected: options.manifest.suites.length, completed: 0, passed: 0, failed: 0, blocked: 0, knownRed: 0, newFailures: 0, stalePass: 0 },
+    baseline: { path: options.baselinePath ?? null, schemaVersion: options.baselinePath ? 1 : null, knownRed: [], newFailures: [], stalePass: [] },
+    results: options.manifest.suites.map(suite => ({
+      path: suite.path, runner: suite.runner, status: 'blocked', exitCode: null, command: [],
+      configRoot: '', homeRoot: '', log: '', logSha256: '', durationMs: 0, testCounts: null,
+    })),
   }
-  const checkpoint = () => writeFile(report.reportPath, JSON.stringify(report, null, 2) + '\n')
+  // Parallel completions checkpoint concurrently; a promise chain serializes the
+  // writes and each body is snapshotted at call time so no interleaving corrupts it.
+  let checkpointChain = Promise.resolve()
+  const checkpoint = () => {
+    const body = JSON.stringify(report, null, 2) + '\n'
+    checkpointChain = checkpointChain.then(() => writeFile(report.reportPath, body))
+    return checkpointChain
+  }
   await checkpoint()
   // Browser suites resolve Chromium from the caller's environment or from the
   // Playwright cache under the real HOME; every suite here runs with an
@@ -508,8 +792,9 @@ export async function runSuites(options: {
   // suites through the same variables the CI workflows bind.
   const browserExecutable = resolveBrowserExecutable(environment)
   const browserCacheRoot = [environment.PLAYWRIGHT_BROWSERS_PATH, join(homedir(), 'Library', 'Caches', 'ms-playwright'), join(homedir(), '.cache', 'ms-playwright')].find((candidate): candidate is string => Boolean(candidate && existsSync(candidate)))
-  for (const suite of options.manifest.suites) {
-    const directory = join(artifactDirectory, `${String(report.results.length + 1).padStart(5, '0')}-${hash(suite.path).slice(0, 12)}`)
+
+  const executeSuite = async (suite: TestSuite, index: number) => {
+    const directory = join(artifactDirectory, `${String(index + 1).padStart(5, '0')}-${hash(suite.path).slice(0, 12)}`)
     await mkdir(directory)
     const configRoot = await mkdtemp(join(tmpdir(), 'rox-test-config-'))
     const homeRoot = join(directory, 'home')
@@ -527,8 +812,15 @@ export async function runSuites(options: {
       .map(path => mkdir(path, { recursive: true, mode: 0o700 })))
     const log = join(directory, 'output.log')
     const result: SuiteResult = { path: suite.path, runner: suite.runner, status: 'blocked', exitCode: null, command: [], configRoot, homeRoot, log, logSha256: '', durationMs: 0, testCounts: null }
+    report.results[index] = result
     const started = performance.now()
+    const releases: Array<() => Promise<void>> = []
     try {
+      // Two suites that own the same fixed port must never overlap: take one
+      // lease per port in ascending order so a suite with several ports cannot
+      // deadlock against another. Ports are host-global, so the lease also
+      // serializes a second shard process running on this host.
+      for (const port of [...suite.ports].sort((a, b) => a - b)) releases.push(await acquirePortLease(port, wholeSuiteTimeoutMs + 60_000))
       const source = await readRegularFile(join(root, suite.path), MAX_TEST_SOURCE_BYTES)
       if (!source) throw new Error('Test source is not a regular file; regenerate the manifest')
       if (hash(source) !== suite.sha256) throw new Error('Test source changed since discovery; regenerate the manifest')
@@ -569,19 +861,29 @@ export async function runSuites(options: {
     } catch (error) {
       result.error = error instanceof Error ? error.message : String(error)
       await appendExecutionError(log, `${result.error}\n`)
+    } finally {
+      for (const release of releases.reverse()) await release()
     }
     result.durationMs = Math.round(performance.now() - started)
     const content = await readRegularFile(log)
     if (!content) throw new Error('Execution log is not a regular file')
     result.logSha256 = hash(content)
     result.testCounts = suite.runner === 'bun' ? bunCounts(content.toString('utf8')) : null
-    report.results.push(result)
     report.summary.completed += 1
     report.summary[result.status] += 1
     await checkpoint()
     options.onResult?.(result, report.summary.completed, report.summary.expected)
   }
-  report.status = report.summary.failed || report.summary.blocked ? 'failed' : 'passed'
+
+  await forEachConcurrent(options.manifest.suites, concurrency, executeSuite)
+  report.baseline = classifyBaseline(report.results, options.baseline ?? null)
+  report.baseline.path = options.baselinePath ?? null
+  report.baseline.schemaVersion = options.baseline ? 1 : null
+  report.summary.knownRed = report.baseline.knownRed.length
+  report.summary.newFailures = report.baseline.newFailures.length
+  report.summary.stalePass = report.baseline.stalePass.length
+  const red = options.strict === true ? report.summary.failed + report.summary.blocked : report.summary.newFailures
+  report.status = red ? 'failed' : 'passed'
   report.finishedAt = new Date().toISOString()
   await checkpoint()
   return report
@@ -612,37 +914,99 @@ async function main() {
   let filter: string | undefined
   let timeout = process.env.ROX_TEST_TIMEOUT_MS
   let suiteTimeout = process.env.ROX_TEST_SUITE_TIMEOUT_MS
-  const args = process.argv.slice(2)
+  let shardFlag: string | undefined
+  let concurrencyFlag: string | undefined
+  let baselineFlag: string | undefined
+  let noBaseline = false
+  let updateBaseline = false
+  let forceSubsetBaseline = false
+  let strict = false
+  const args: string[] = []
+  // Accept both `--flag value` and `--flag=value` (the task's `--shard=k/n`).
+  for (const raw of process.argv.slice(2)) {
+    const equals = raw.startsWith('--') ? raw.indexOf('=') : -1
+    if (equals > 2) args.push(raw.slice(0, equals), raw.slice(equals + 1))
+    else args.push(raw)
+  }
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]!
     if (arg === '--list') list = true
-    else if (arg === '--root' || arg === '--filter' || arg === '--timeout' || arg === '--suite-timeout') {
+    else if (arg === '--no-baseline') noBaseline = true
+    else if (arg === '--update-baseline') updateBaseline = true
+    else if (arg === '--force-subset-baseline') forceSubsetBaseline = true
+    else if (arg === '--strict') strict = true
+    else if (arg === '--root' || arg === '--filter' || arg === '--timeout' || arg === '--suite-timeout'
+      || arg === '--shard' || arg === '--concurrency' || arg === '--baseline') {
       const value = args[++index]
       if (!value) throw new Error(`${arg} requires a value`)
       if (arg === '--root') root = value
       else if (arg === '--filter') filter = value
       else if (arg === '--timeout') timeout = value
-      else suiteTimeout = value
+      else if (arg === '--suite-timeout') suiteTimeout = value
+      else if (arg === '--shard') shardFlag = value
+      else if (arg === '--concurrency') concurrencyFlag = value
+      else baselineFlag = value
     } else throw new Error(`Unknown test runner option: ${arg}`)
   }
+  if (noBaseline && baselineFlag) throw new Error('--baseline and --no-baseline are mutually exclusive')
   root = resolve(root)
   const bunTimeoutMs = testTimeout(timeout)
   const wholeSuiteTimeoutMs = wholeSuiteTimeout(suiteTimeout)
+  const concurrency = concurrencyValue(concurrencyFlag ?? process.env.ROX_TEST_CONCURRENCY)
+  const shard = shardFlag === undefined ? null : parseShard(shardFlag)
+  // Rewriting the checked-in baseline from a shard or filter would silently
+  // delete every entry outside this subset and then call the truncated file a
+  // clean baseline. Require an explicit override for an intentional subset.
+  if (updateBaseline && !forceSubsetBaseline && (shard !== null || filter !== undefined))
+    throw new Error('--update-baseline refuses --shard/--filter because it would rewrite the checked-in baseline from a subset; pass --force-subset-baseline to confirm an intentional subset baseline')
   const manifest = await discoverSuites(root)
   if (filter !== undefined) manifest.suites = manifest.suites.filter(suite => suite.path.includes(filter!))
   if (!manifest.suites.length) throw new Error('No test files discovered; refusing an empty green run')
+  if (shard) manifest.suites = shardSuites(manifest.suites, shard)
   const artifactDirectory = process.env.ROX_TEST_ARTIFACT_DIR ?? join(root, 'work/test-all')
   if (list) {
     const run = await createArtifactRun(artifactDirectory)
     const manifestPath = join(run, 'manifest.json')
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
-    console.log(JSON.stringify({ status: 'listed', root, manifestPath, files: manifest.suites.length, filter: filter ?? null }))
+    console.log(JSON.stringify({ status: 'listed', root, manifestPath, files: manifest.suites.length, filter: filter ?? null, shard: shard ?? null }))
     return
   }
-  const report = await runSuites({ root, manifest, artifactDirectory, environment: { ...process.env, ROX_TEST_TIMEOUT_MS: String(bunTimeoutMs), ROX_TEST_SUITE_TIMEOUT_MS: String(wholeSuiteTimeoutMs) }, onResult: (result, completed, expected) => {
-    console.log(`[${completed}/${expected}] ${result.status} ${result.path} (${result.durationMs}ms)${result.error ? ': ' + result.error : ''}`)
-  } })
-  console.log(JSON.stringify({ status: report.status, root, reportPath: report.reportPath, summary: report.summary, filter: filter ?? null }))
+  // A shard can legitimately own zero suites; that is an empty shard, not a missing run.
+  if (!manifest.suites.length) {
+    console.log(JSON.stringify({ status: 'empty-shard', root, files: 0, shard, filter: filter ?? null }))
+    return
+  }
+  const defaultBaselinePath = join(root, 'scripts/test-baseline.json')
+  const baselinePath = noBaseline ? null : baselineFlag ? resolve(baselineFlag) : defaultBaselinePath
+  let baseline: Set<string> | null = null
+  let baselineUsed: string | null = null
+  if (baselinePath && !updateBaseline) {
+    const file = await loadBaseline(baselinePath)
+    if (file) { baseline = new Set(file.knownRed); baselineUsed = baselinePath }
+    else if (baselineFlag) throw new Error(`Test baseline not found: ${baselinePath}`)
+  }
+  process.stderr.write(`test-all: ${manifest.suites.length} suites, concurrency ${concurrency}${shard ? `, shard ${shard.index}/${shard.total}` : ''}${baselineUsed ? `, baseline ${baselineUsed}` : ''}\n`)
+  const report = await runSuites({
+    root, manifest, artifactDirectory, concurrency, baseline: baseline ?? undefined, baselinePath: baselineUsed, strict,
+    environment: { ...process.env, ROX_TEST_TIMEOUT_MS: String(bunTimeoutMs), ROX_TEST_SUITE_TIMEOUT_MS: String(wholeSuiteTimeoutMs) },
+    onResult: (result, completed, expected) => {
+      const mark = baseline?.has(result.path) ? ' (known-red)' : ''
+      process.stderr.write(`[${completed}/${expected}] ${result.status}${mark} ${result.path} (${result.durationMs}ms)${result.error ? ': ' + result.error : ''}\n`)
+    },
+  })
+  if (updateBaseline) {
+    const target = baselinePath ?? defaultBaselinePath
+    const red = report.results.filter(result => result.status !== 'passed').map(result => result.path)
+    await writeBaseline(target, red, 'Suites already red on main; scripts/test-all.ts treats these as expected redness, not regressions.')
+    console.log(JSON.stringify({ status: 'baseline-updated', path: target, knownRed: red.length }))
+    return
+  }
+  process.stderr.write(`test-all: ${report.summary.passed} passed, ${report.summary.failed} failed, ${report.summary.blocked} blocked; ${report.summary.newFailures} new failure(s), ${report.summary.knownRed} known-red, ${report.summary.stalePass} stale baseline entr(y|ies)\n`)
+  console.log(JSON.stringify({
+    status: report.status, root, reportPath: report.reportPath, filter: filter ?? null, shard, concurrency,
+    summary: report.summary,
+    baseline: { path: report.baseline.path, knownRed: report.baseline.knownRed, newFailures: report.baseline.newFailures, stalePass: report.baseline.stalePass },
+  }))
   process.exitCode = report.status === 'passed' ? 0 : 1
 }
 

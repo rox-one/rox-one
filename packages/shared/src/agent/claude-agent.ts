@@ -25,6 +25,7 @@ import { loadPlanFromPath, type SessionConfig as Session } from '../sessions/sto
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
 import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
+import { isProjectMemoryInjectable } from '../memory/document-provenance.ts';
 import { DEFAULT_MODEL, isClaudeModel, isAdaptiveThinkingAlwaysOnModel, getDefaultSummarizationModel, getModelContextWindow } from '../config/models.ts';
 import { getCredentialManager } from '../credentials/index.ts';
 import { loadPreferences, formatPreferencesForPrompt, getCoAuthorPreference } from '../config/preferences.ts';
@@ -710,6 +711,9 @@ export class ClaudeAgent extends BaseAgent {
       const project = loadProjectById(this.workspaceRootPath, projectId);
       if (!project) return null;
       const slug = project.config.slug;
+      // Provenance gate (spec c1.2): an untrusted-stamped project MEMORY.md is
+      // never injected, even though it is read here rather than via the index.
+      const memoryInjectable = isProjectMemoryInjectable(this.workspaceRootPath, slug, this.config.agentProfileSnapshot?.memoryScope);
       return {
         name: project.config.name,
         description: project.config.description,
@@ -721,7 +725,7 @@ export class ClaudeAgent extends BaseAgent {
           sizeBytes: a.sizeBytes,
         })),
         memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(this.workspaceRootPath, slug),
-        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(this.workspaceRootPath, slug) ?? undefined,
+        memoryContent: memoryInjectable ? loadProjectMemory(this.workspaceRootPath, slug) ?? undefined : undefined,
         roadmapContent: loadProjectRoadmapPromptText(this.workspaceRootPath, slug),
       };
     } catch (error) {
@@ -2455,6 +2459,25 @@ This is a branched conversation. All prior messages in this conversation are par
   // formatWorkspaceCapabilities() is now in PromptBuilder
 
   /**
+   * Describe one attachment for the model prompt: file name, stored path, and —
+   * for audio transcribed at attach time — the recognized text itself, so the
+   * model works from the transcript instead of the raw recording.
+   */
+  private formatAttachmentPromptInfo(attachment: FileAttachment): string {
+    let info = `[Attached file: ${attachment.name}]`;
+    info += `\n[Stored at: ${attachment.storedPath}]`;
+    if (attachment.markdownPath) {
+      info += `\n[Markdown version: ${attachment.markdownPath}]`;
+    }
+    const transcript = attachment.transcript;
+    if (transcript?.status === 'done' && transcript.text.trim()) {
+      info += `\n[Transcript${transcript.language ? ` (${transcript.language})` : ''}]`;
+      info += `\n${transcript.text.trim()}`;
+    }
+    return info;
+  }
+
+  /**
    * Build a simple text prompt with embedded text file contents (for text-only messages)
    * Prepends date/time context for prompt caching optimization (keeps system prompt static)
    * Injects session state (including mode state) for every message
@@ -2482,12 +2505,7 @@ This is a branched conversation. All prior messages in this conversation are par
     if (attachments) {
       for (const attachment of attachments) {
         if (attachment.storedPath) {
-          let pathInfo = `[Attached file: ${attachment.name}]`;
-          pathInfo += `\n[Stored at: ${attachment.storedPath}]`;
-          if (attachment.markdownPath) {
-            pathInfo += `\n[Markdown version: ${attachment.markdownPath}]`;
-          }
-          parts.push(pathInfo);
+          parts.push(this.formatAttachmentPromptInfo(attachment));
         }
       }
     }
@@ -2532,13 +2550,9 @@ This is a branched conversation. All prior messages in this conversation are par
         // Add path info text block so the agent knows where the file is stored
         // This enables the agent to use the Read tool to access text/office files
         if (attachment.storedPath) {
-          let pathInfo = `[Attached file: ${attachment.name}]\n[Stored at: ${attachment.storedPath}]`;
-          if (attachment.markdownPath) {
-            pathInfo += `\n[Markdown version: ${attachment.markdownPath}]`;
-          }
           contentBlocks.push({
             type: 'text',
-            text: pathInfo,
+            text: this.formatAttachmentPromptInfo(attachment),
           });
         }
 

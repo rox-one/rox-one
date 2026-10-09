@@ -69,6 +69,23 @@ export {
 } from './config-migration.ts'
 export { UI_BRAND_MANIFEST, UI_BRAND_ALLOWLIST } from './ui-brand.ts'
 
+export {
+  GithubLinkError,
+  createBridgeGithubLinkClient,
+  createGithubLinkClient,
+  isGithubLinkBridge,
+  parseGithubLinkPoll,
+  parseGithubLinkProfile,
+  parseGithubLinkStart,
+  type GithubLinkBridgeApi,
+  type GithubLinkClient,
+  type GithubLinkErrorCode,
+  type GithubLinkPoll,
+  type GithubLinkProfile,
+  type GithubLinkStart,
+  type GithubLinkTransport,
+} from './github-link.ts'
+
 // W1-13 (#1510): visible Rox home migration (MIG-13, `~/.rox` → `~/rox`).
 export {
   ROX_HIDDEN_HOME_LINK_NAME,

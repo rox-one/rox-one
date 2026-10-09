@@ -206,6 +206,43 @@ export function isCommandBusEnabled(enabledWorkbenchFlags?: ReadonlySet<string>)
   return false;
 }
 
+// W1-11 (#1508)
+/**
+ * Workbench flag ids the agent-governance contracts are used by. Mirrors
+ * `CATALOGUE_FLAGS.agents` / `CATALOGUE_FLAGS.placeholders` in
+ * `packages/core/src/commands/catalogue/entry.ts`.
+ */
+export const AGENTS_AUTONOMY_WORKBENCH_FLAG = 'agents.autonomy.v1';
+export const IDENTITY_PLACEHOLDERS_WORKBENCH_FLAG = 'identity.placeholders.v1';
+
+/**
+ * Runtime-evaluated check for agent autonomy (W1-11 contracts: the policy
+ * pipeline, approvals, rate limits and the audit chain).
+ *
+ * Server-evaluated, same shape as `isCommandBusEnabled`: the workbench flag is
+ * authoritative and `CRAFT_FEATURE_AGENTS_AUTONOMY=1|0` is an explicit override
+ * for tests. Defaults to DISABLED, so the governance middleware is a
+ * pass-through and every agent command is `UNAVAILABLE` from its own flag.
+ */
+export function isAgentsAutonomyEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_AGENTS_AUTONOMY'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(AGENTS_AUTONOMY_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
+/**
+ * Runtime-evaluated check for placeholder principals (W1-11 identity
+ * lifecycle: `identity.ensure_placeholder`, invitations, activation, merge).
+ * Defaults to DISABLED, `CRAFT_FEATURE_IDENTITY_PLACEHOLDERS=1|0` overrides.
+ */
+export function isIdentityPlaceholdersEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_IDENTITY_PLACEHOLDERS'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(IDENTITY_PLACEHOLDERS_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
 /**
  * Workbench flag id for the visible Rox home (`~/rox` resolution + MIG-13
  * auto-migration, W1-13 #1510).

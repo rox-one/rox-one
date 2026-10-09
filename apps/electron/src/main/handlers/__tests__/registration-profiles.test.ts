@@ -151,6 +151,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     toolchain,
     workspace,
     onboarding,
+    onboardingPermissions,
     resources,
     transfer,
     messaging,
@@ -208,6 +209,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/toolchain'),
     import('@rox/server-core/handlers/rpc/workspace'),
     import('@rox/server-core/handlers/rpc/onboarding'),
+    import('@rox/server-core/handlers/rpc/onboarding-permissions'),
     import('@rox/server-core/handlers/rpc/resources'),
     import('@rox/server-core/handlers/rpc/transfer'),
     import('@rox/server-core/handlers/rpc/messaging'),
@@ -282,6 +284,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...toolchain.HANDLED_CHANNELS,
     ...workspace.CORE_HANDLED_CHANNELS,
     ...onboarding.HANDLED_CHANNELS,
+    ...onboardingPermissions.HANDLED_CHANNELS,
     ...resources.HANDLED_CHANNELS,
     ...transfer.HANDLED_CHANNELS,
     ...messaging.HANDLED_CHANNELS,
@@ -291,7 +294,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
 }
 
 async function getExpectedGuiChannels(): Promise<Set<string>> {
-  const [browser, browserIntel, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard] = await Promise.all([
+  const [browser, browserIntel, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard, keeper] = await Promise.all([
     import('../browser'),
     import('../browser-intel'),
     import('../system'),
@@ -301,6 +304,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     import('../extension-host'),
     import('../extension-surface'),
     import('../voice-clipboard'),
+    import('@rox/server-core/handlers/rpc/keeper'),
   ])
 
   return new Set([
@@ -313,6 +317,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
     ...voiceClipboard.HANDLED_CHANNELS,
+    ...keeper.KEEPER_CHANNELS,
   ])
 }
 

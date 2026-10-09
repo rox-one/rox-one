@@ -13,6 +13,7 @@
  */
 
 import { routes, type Route } from '../../shared/routes'
+import type { DeepLinkSource } from '../../shared/types'
 
 // Re-export routes for convenience
 export { routes }
@@ -35,6 +36,8 @@ export interface NavigateOptions {
   targetLaneId?: 'main'
   /** Skip auto-selecting first item when navigating to a list view (used when closing panels) */
   skipAutoSelect?: boolean
+  /** Deep-link provenance, set when a navigation arrives from main (SEC-01). */
+  source?: DeepLinkSource
 }
 
 /** Payload carried on the {@link NAVIGATE_EVENT} custom event. */

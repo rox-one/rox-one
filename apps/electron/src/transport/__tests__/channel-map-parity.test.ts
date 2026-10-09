@@ -99,6 +99,11 @@ void _auditRevokeSignatureIsSafeWorkspaceInput
 type ApiToChannelMapKeys = Exclude<
   FunctionKeys<ElectronAPI>,
   | 'performOAuth'
+  | 'connectGoogleCalendar' // preload-orchestrated OAuth (main popup + callback server)
+  | 'driveImportOAuthBegin' // preload-orchestrated Drive import OAuth loopback (reuses the Calendar broker)
+  | 'driveImportOAuthOpen' // direct IPC to main — opens the IdP URL in the host browser
+  | 'driveImportOAuthAwait' // direct IPC to main — awaits the loopback callback query
+  | 'driveImportOAuthCancel' // local-only cancellation of the loopback session
   | 'getTransportConnectionState'
   | 'getProjectAuthorityState' // direct preload authority state; no credential data
   | 'onProjectAuthorityChanged' // local projection invalidation callback
@@ -149,7 +154,9 @@ type ApiToChannelMapKeys = Exclude<
   | 'remoteTlsInspect' // direct IPC — inspect peer cert before token handshake
   | 'remoteTlsDecide' // direct IPC — accept/reject/rollover enrollment
   | 'exitMiniWindow' // direct IPC — native window lifecycle
+  | 'publishVoiceLevel' // direct one-way IPC send — renderer-owned overlay level, no WS RPC
   | 'onPanelFocusDirection' // direct IPC — native directional focus shortcut
+  | 'getTelemetryConfig' // sync boot config — direct IPC, not a routed channel
 > | BrowserPaneKeys
   | KnowledgeKeys
   | NativeDataKeys
@@ -247,5 +254,10 @@ describe('CHANNEL_MAP runtime contract', () => {
     const channels = Object.values(CHANNEL_MAP).map(entry => entry.channel)
     expect(channels).not.toContain('__openclaw-host:open-panel')
     expect(channels).not.toContain('__openclaw-host:copy-setup-credential')
+  })
+
+  it('wires the voice push channels to listeners', () => {
+    expect(CHANNEL_MAP['onTtsStreamChunk']).toMatchObject({ type: 'listener', channel: 'voice:ttsStreamChunk' })
+    expect(CHANNEL_MAP['onVoiceTrigger']).toMatchObject({ type: 'listener', channel: 'voice:trigger' })
   })
 })

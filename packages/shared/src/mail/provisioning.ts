@@ -16,12 +16,37 @@
  * Idempotent: rerunning with the same owner finds the same account; a lost
  * app password is repaired by resetting the (discarded) account password and
  * minting a new app password. Secrets never reach logs or thrown messages.
+ *
+ * Two transports live here:
+ *  - `provisionMailbox` — direct Stalwart management (loopback pilot / dev),
+ *    needs admin credentials.
+ *  - `provisionMailboxViaService` — the public Rox mail host
+ *    (`POST /api/provision`, Bearer Rox access token), no admin credentials
+ *    in the client.
  */
-import { JmapClient, JmapError, type FetchLike } from './jmap-client'
+import { JmapClient, JmapError, normalizeBaseUrl, type FetchLike } from './jmap-client'
 import { StalwartAdmin, createAppPassword, generateMailboxPassword, ownerMarker, type AdminCredentials } from './stalwart-admin'
 import { handleVariants, pickHandle } from './handle'
 
 export type MailboxState = 'PENDING' | 'PROVISIONING' | 'PROVISIONED' | 'READY' | 'NEEDS_REPAIR'
+
+/** Per-user mailbox storage quota applied at provisioning time (product default: 1 GiB). */
+export const DEFAULT_MAILBOX_QUOTA_BYTES = 1024 ** 3
+/** Accepted range for a mailbox quota: 256 MiB … 1 TiB. */
+export const MIN_MAILBOX_QUOTA_BYTES = 256 * 1024 ** 2
+export const MAX_MAILBOX_QUOTA_BYTES = 1024 ** 4
+
+/** Validate a caller-supplied quota, applying the default when omitted. */
+export function resolveMailboxQuotaBytes(value: number | undefined): number {
+  if (value === undefined) return DEFAULT_MAILBOX_QUOTA_BYTES
+  if (!Number.isInteger(value) || value < MIN_MAILBOX_QUOTA_BYTES || value > MAX_MAILBOX_QUOTA_BYTES) {
+    throw new ProvisionError(
+      `Mailbox quota must be an integer between ${MIN_MAILBOX_QUOTA_BYTES} and ${MAX_MAILBOX_QUOTA_BYTES} bytes (got ${JSON.stringify(value)})`,
+      'invalid-quota',
+    )
+  }
+  return value
+}
 
 export interface MailboxRecord {
   address: string
@@ -30,6 +55,12 @@ export interface MailboxRecord {
   ownerUuid: string
   stalwartAccountId: string
   jmapAccountId: string | null
+  /**
+   * JMAP origin handed out by the provisioning service. Absent for the local
+   * pilot (the configured server URL is the JMAP origin). Never a placeholder:
+   * existing records without it keep resolving against the configured server.
+   */
+  jmapUrl?: string | null
   state: MailboxState
   createdAt: number
   updatedAt: number
@@ -53,13 +84,18 @@ export interface ProvisionInput {
   admin: () => Promise<AdminCredentials>
   secrets: MailboxSecretStore
   existing?: MailboxRecord | null
+  /** Mailbox storage limit in bytes; defaults to {@link DEFAULT_MAILBOX_QUOTA_BYTES}. */
+  quotaBytes?: number
   fetch?: FetchLike
   now?: () => number
   log?: (message: string) => void
 }
 
 export class ProvisionError extends Error {
-  constructor(message: string, readonly code: 'admin-unavailable' | 'no-domain' | 'handle-exhausted' | 'verify-failed' | 'server') {
+  constructor(
+    message: string,
+    readonly code: 'admin-unavailable' | 'no-domain' | 'handle-exhausted' | 'verify-failed' | 'unauthorized' | 'handle-taken' | 'server' | 'invalid-quota',
+  ) {
     super(message)
     this.name = 'ProvisionError'
   }
@@ -76,6 +112,8 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
   const now = input.now ?? Date.now
   const log = input.log ?? (() => {})
   const marker = ownerMarker(input.ownerUuid)
+  // Validated up front so a bad quota never leaves a half-provisioned mailbox.
+  const quotaBytes = resolveMailboxQuotaBytes(input.quotaBytes)
 
   // Fast path: we already hold a working device credential.
   if (input.existing && input.existing.ownerUuid === input.ownerUuid) {
@@ -108,7 +146,7 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
       const password = generateMailboxPassword()
       let accountId: string
       try {
-        accountId = await admin.createAccount({ name: handle, domainId, description: marker, password })
+        accountId = await admin.createAccount({ name: handle, domainId, description: marker, password, quotaBytes })
       } catch (error) {
         const raced = await admin.findAccount(handle, domainId).catch(() => null)
         if (!raced) throw error
@@ -140,6 +178,8 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
     // discarded password and mint a fresh device credential.
     const password = generateMailboxPassword()
     await admin.resetPassword(chosen.accountId, password)
+    // Set (or refresh) the quota idempotently for a mailbox we adopted.
+    await admin.setQuota(chosen.accountId, quotaBytes)
     const app = await createAppPassword(input.baseUrl, address, password, input.deviceLabel, { fetch: input.fetch })
     await input.secrets.put(address, app.secret)
   }
@@ -160,6 +200,104 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
     ownerUuid: input.ownerUuid,
     stalwartAccountId: chosen.accountId,
     jmapAccountId,
+    state: 'READY',
+    createdAt: input.existing?.address === address ? input.existing.createdAt : t,
+    updatedAt: t,
+    credentialLabel: input.deviceLabel,
+  }
+}
+
+export interface ServiceProvisionInput {
+  /** Rox mail host serving `POST {serverUrl}/api/provision` + JMAP. */
+  serverUrl: string
+  /** Rox account id (owner marker for the mailbox record). */
+  ownerUuid: string
+  /** Rox account access token (Bearer); verified server-side against the broker. */
+  accessToken: string
+  deviceLabel: string
+  secrets: MailboxSecretStore
+  existing?: MailboxRecord | null
+  fetch?: FetchLike
+  now?: () => number
+  log?: (message: string) => void
+}
+
+/**
+ * Provision a production mailbox through the Rox mail service
+ * (`POST {server}/api/provision`, `Authorization: Bearer <rox access token>`).
+ * The service verifies the token with the Rox broker, picks the account handle
+ * and returns the mailbox password once. Idempotent: a working stored
+ * credential short-circuits the call, so the server is not asked to rotate the
+ * password again on every launch.
+ */
+export async function provisionMailboxViaService(input: ServiceProvisionInput): Promise<MailboxRecord> {
+  const now = input.now ?? Date.now
+  const log = input.log ?? (() => {})
+  const fetchImpl: FetchLike = input.fetch ?? ((url, init) => fetch(url, init))
+  const server = normalizeBaseUrl(input.serverUrl)
+  const existingBase = input.existing?.jmapUrl ? normalizeBaseUrl(input.existing.jmapUrl) : server
+
+  // Fast path: a stored device credential already answers JMAP.
+  if (input.existing && input.existing.ownerUuid === input.ownerUuid) {
+    const secret = await input.secrets.get(input.existing.address)
+    if (secret) {
+      try {
+        const jmapAccountId = await verify(existingBase, input.existing.address, secret, input.fetch)
+        return { ...input.existing, jmapUrl: existingBase, jmapAccountId, state: 'READY', updatedAt: now() }
+      } catch (error) {
+        if (!(error instanceof JmapError && error.code === 'auth')) throw error
+        log('[mail] stored device credential was rejected; re-provisioning')
+      }
+    }
+  }
+
+  let response: Response
+  try {
+    response = await fetchImpl(`${server}/api/provision`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${input.accessToken}`, accept: 'application/json' },
+    })
+  } catch (error) {
+    throw new ProvisionError(`Mail provisioning service is unreachable: ${(error as Error).message}`, 'server')
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw new ProvisionError('The Rox account token was rejected by the mail service', 'unauthorized')
+  }
+  if (response.status === 409) {
+    throw new ProvisionError('The mailbox address is already owned by another Rox account', 'handle-taken')
+  }
+  const body = (await response.json().catch(() => null)) as
+    | { address?: unknown; username?: unknown; password?: unknown; jmapUrl?: unknown; detail?: unknown }
+    | null
+  if (!response.ok || !body) {
+    const detail = typeof body?.detail === 'string' && body.detail ? body.detail : `HTTP ${response.status}`
+    throw new ProvisionError(`Mail provisioning failed: ${detail}`, 'server')
+  }
+  const address = typeof body.address === 'string' ? body.address.trim() : ''
+  const password = typeof body.password === 'string' ? body.password : ''
+  if (!address.includes('@') || !password) {
+    throw new ProvisionError('The mail service returned an unexpected provisioning payload', 'server')
+  }
+  const jmapUrl = typeof body.jmapUrl === 'string' && body.jmapUrl.trim() ? normalizeBaseUrl(body.jmapUrl) : server
+  const [handle, domain] = [address.slice(0, address.lastIndexOf('@')), address.slice(address.lastIndexOf('@') + 1)]
+  await input.secrets.put(address, password)
+
+  let jmapAccountId: string
+  try {
+    jmapAccountId = await verify(jmapUrl, address, password, input.fetch)
+  } catch (error) {
+    throw new ProvisionError(`Mailbox created but JMAP verification failed: ${(error as Error).message}`, 'verify-failed')
+  }
+  const t = now()
+  return {
+    address,
+    handle,
+    domain,
+    ownerUuid: input.ownerUuid,
+    // The remote service owns the Stalwart account; it is not addressed here.
+    stalwartAccountId: '',
+    jmapAccountId,
+    jmapUrl,
     state: 'READY',
     createdAt: input.existing?.address === address ? input.existing.createdAt : t,
     updatedAt: t,

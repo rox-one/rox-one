@@ -4,15 +4,17 @@
  * Manages the state machine for the onboarding wizard.
  *
  * First run (initialStep 'welcome'):
- * 1. Welcome — the only screen: username + «Начать»
- * 2. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
- * 3. Finish — the Rox runtime becomes the default connection automatically and
+ * 1. Welcome — the name screen («Начать»); collects public handle + organization,
+ *    reserved rox.one addresses, coin bonuses
+ * 2. Questionnaire — bubble clouds (left) and permissions (right); Continue/Skip
+ * 3. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
+ * 4. Finish — the Rox runtime becomes the default connection automatically and
  *    the app opens. There is no provider picker or completion screen.
  *
  * Settings → ИИ (initialStep 'provider-select'): provider picker →
  * credentials / local model → closes as soon as the connection is saved.
  */
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   decideRoxConnectPoll,
@@ -29,6 +31,10 @@ import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
 import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
 import { nextStepAfterUsername } from '@/components/onboarding/onboarding-username'
+import type { OnboardingFirstRunState } from '@/components/onboarding/OnboardingWizard'
+import { createRewardLedger, type RewardStorage } from '@/components/onboarding/onboarding-rewards'
+import { createLearningCurve, type LearningCurveStorage } from '@/components/onboarding/learning-curve'
+import { saveFirstRunDraft } from '@/components/onboarding/identity-model'
 import { ensureRoxRuntimeDefault } from '@/components/onboarding/rox-runtime-default'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
@@ -145,6 +151,12 @@ export const BASE_SLUG_FOR_METHOD: Record<ApiSetupMethod, string> = {
   pi_copilot_oauth: 'github-copilot',
   pi_api_key: 'pi-api-key',
 }
+
+/** localStorage in the renderer; a no-op stub when a storage-less host runs the hook. */
+const firstRunStorage = typeof localStorage !== 'undefined' ? localStorage : null
+const FIRST_RUN_REWARD_STORAGE: RewardStorage = firstRunStorage ?? { getItem: () => null, setItem: () => {} }
+const FIRST_RUN_LEARNING_STORAGE: LearningCurveStorage = firstRunStorage ?? { getItem: () => null, setItem: () => {} }
+const FIRST_RUN_DRAFT_STORAGE = firstRunStorage ?? undefined
 
 /**
  * Generate a unique slug for a new connection.
@@ -273,6 +285,20 @@ export function useOnboarding({
   })
   const firstRunFinishInFlight = useRef(false)
 
+  // The shared reward ledger. Exposed through `state.firstRun` so the wizard
+  // (mounted by App with `state`) can render the questionnaire screen without
+  // new wizard props at the call site.
+  const firstRunRewards = useMemo(
+    () => createRewardLedger({ storage: FIRST_RUN_REWARD_STORAGE }),
+    [],
+  )
+  const firstRunState = useMemo<OnboardingFirstRunState>(
+    () => ({
+      rewards: firstRunRewards,
+    }),
+    [firstRunRewards],
+  )
+
   // A cloud connection is optional unless the startup caller and server both
   // explicitly request a launch gate.
   useEffect(() => {
@@ -395,6 +421,19 @@ export function useOnboarding({
     if (firstRunFinishInFlight.current) return
     firstRunFinishInFlight.current = true
     setState(s => ({ ...s, isFinishing: true, errorMessage: undefined }))
+    // Flush the first-run ledger and mark the draft complete before the app
+    // opens. The identity is persisted by the welcome screen itself; the
+    // questionnaire/permissions draft is written by the wizard as it leaves the
+    // questionnaire step.
+    for (const entry of firstRunRewards.entries()) {
+      if (entry.status === 'pending') firstRunRewards.confirmStep(entry.stepId)
+    }
+    saveFirstRunDraft(FIRST_RUN_DRAFT_STORAGE, { completed: true })
+    createLearningCurve({ storage: FIRST_RUN_LEARNING_STORAGE }).trackLearningEvent({
+      name: 'result',
+      stepId: 'full-onboarding',
+      source: 'human',
+    })
     const result = await ensureRoxRuntimeDefault(window.electronAPI)
     if (result.status === 'failed') {
       firstRunFinishInFlight.current = false
@@ -411,7 +450,7 @@ export function useOnboarding({
       console.warn('[Onboarding] Could not refresh runtime settings after setup:', error)
     }
     setState(s => ({ ...s, isFinishing: false, step: 'complete', completionStatus: 'complete' }))
-  }, [onConfigSaved, t])
+  }, [onConfigSaved, t, firstRunRewards])
 
   // Continue to next step
   const handleContinue = useCallback(async () => {
@@ -420,7 +459,13 @@ export function useOnboarding({
         // Handled by handleSelectProvider (card click navigates directly)
         break
 
-      case 'welcome': {
+      case 'welcome':
+        // First run: the welcome screen itself collects the public identity
+        // (nickname, organization, coins); the two-column questionnaire follows.
+        setState(s => ({ ...s, step: 'questionnaire' }))
+        break
+
+      case 'questionnaire': {
         const next = nextStepAfterUsername({
           applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
           gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
@@ -469,6 +514,9 @@ export function useOnboarding({
         } else if (onDismiss) {
           onDismiss()
         }
+        break
+      case 'questionnaire':
+        setState(s => ({ ...s, step: 'welcome' }))
         break
       case 'provider-select':
         // If on Windows and Git Bash was needed, go back to git-bash step
@@ -670,6 +718,23 @@ export function useOnboarding({
     }
   }, [])
 
+  // A session that already exists is a completed Connect: jump straight to the
+  // success screen instead of starting another device approval.
+  const completeRoxConnect = useCallback((generation: number) => {
+    setRoxConnectStatus('success')
+    setRoxConnectError(undefined)
+    setTimeout(() => {
+      if (roxPollGeneration.current !== generation) return
+      if (gitBashMissingRef.current) {
+        setState(s => ({ ...s, step: 'git-bash' }))
+      } else if (isFirstRun) {
+        void finishFirstRun()
+      } else {
+        setState(s => ({ ...s, step: 'provider-select' }))
+      }
+    }, 400)
+  }, [isFirstRun, finishFirstRun])
+
   useEffect(() => {
     return () => {
       roxPollGeneration.current += 1
@@ -683,6 +748,20 @@ export function useOnboarding({
     setRoxConnectStatus('starting')
     setRoxConnectError(undefined)
     setRoxConnectCodes(null)
+    // An account already in the sealed store needs no new approval: the browser
+    // flow is only for the first registration.
+    try {
+      const existing = await window.electronAPI.getRoxCloudState()
+      if (roxPollGeneration.current !== generation) return
+      if (existing?.authBaseUrl) setRoxAuthBaseUrl(existing.authBaseUrl)
+      // Any persisted snapshot means the device is already registered; starting
+      // a fresh approval would revoke it. Only a truly empty store connects.
+      if (existing?.connected || existing?.account) {
+        completeRoxConnect(generation)
+        return
+      }
+    } catch { /* a failed probe falls through to a fresh device flow */ }
+    if (roxPollGeneration.current !== generation) return
     try {
       const result = await window.electronAPI.startRoxConnect()
       if (roxPollGeneration.current !== generation) return
@@ -725,17 +804,7 @@ export function useOnboarding({
         finished = true
         stopRoxConnectPoll()
         if (status === 'success') {
-          setRoxConnectStatus('success')
-          setTimeout(() => {
-            if (roxPollGeneration.current !== generation) return
-            if (gitBashMissingRef.current) {
-              setState(s => ({ ...s, step: 'git-bash' }))
-            } else if (isFirstRun) {
-              void finishFirstRun()
-            } else {
-              setState(s => ({ ...s, step: 'provider-select' }))
-            }
-          }, 400)
+          completeRoxConnect(generation)
           return
         }
         setRoxConnectStatus('error')
@@ -786,7 +855,7 @@ export function useOnboarding({
         visibleError(err instanceof Error ? err.message : undefined, t('onboarding.errors.connectFailed')),
       )
     }
-  }, [stopRoxConnectPoll, t, isFirstRun, finishFirstRun])
+  }, [stopRoxConnectPoll, completeRoxConnect, t])
 
   const autoConnectStarted = useRef(false)
   useEffect(() => {
@@ -1228,7 +1297,7 @@ export function useOnboarding({
   }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, isWaitingForCode])
 
   return {
-    state,
+    state: { ...state, firstRun: firstRunState },
     handleContinue,
     handleBack,
     handleSelectProvider,

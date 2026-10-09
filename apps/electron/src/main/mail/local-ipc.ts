@@ -76,6 +76,15 @@ async function senderName(): Promise<string | null> {
   }
 }
 
+/** Rox account access token for the remote mail provisioning service. */
+async function roxAccessToken(): Promise<string | null> {
+  try {
+    return await getRoxAccountAuthority().accessToken(LOCAL_ROX_CALLER)
+  } catch {
+    return null
+  }
+}
+
 function uniquePath(dir: string, name: string): string {
   const safe = safeFileName(name)
   const ext = extname(safe)
@@ -93,13 +102,19 @@ const MIME: Record<string, string> = {
   '.ics': 'text/calendar', '.html': 'text/html',
 }
 
-export function registerMailIpc(log?: (message: string, error?: unknown) => void): MailService {
+export interface MailIpcDeps {
+  /** Only managed app windows may drive the mailbox bridge (evaluated per call). */
+  isTrustedSender?(event: Electron.IpcMainInvokeEvent): boolean
+}
+
+export function registerMailIpc(log?: (message: string, error?: unknown) => void, deps: MailIpcDeps = {}): MailService {
   if (service) return service
   const s = new MailService({
     configDir: CONFIG_DIR,
     secrets: credentialManagerSecrets(),
     identity: identityHints,
     senderName,
+    roxAccessToken,
     emit: broadcast,
     log,
     deviceLabel: `rox-desktop:${process.platform}:${app.getName()}`,
@@ -108,7 +123,11 @@ export function registerMailIpc(log?: (message: string, error?: unknown) => void
 
   const handle = (channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown) => {
     ipcMain.removeHandler(channel)
-    ipcMain.handle(channel, fn)
+    // One guard for every mail channel: the mailbox credential never leaves main.
+    ipcMain.handle(channel, (event, ...args) => {
+      if (deps.isTrustedSender && !deps.isTrustedSender(event)) throw new Error('IPC_SENDER_DENIED')
+      return fn(event, ...args)
+    })
   }
   const wrap = <T>(fn: () => Promise<T>) => fn().then((value) => ({ ok: true as const, value }), errorResult)
 

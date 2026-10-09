@@ -294,6 +294,25 @@ export class CommandExecutor {
             conflict(currentRevision: number, current?: unknown): never {
               throw new CommandConflict(currentRevision, current)
             },
+            // Payload resources other than the target (W1-06): same authorizer, same fail-closed rule.
+            authorize: async (action, ref, options = {}) => {
+              const principal = { ...actor, ...(envelope.onBehalfOf ? { onBehalfOf: envelope.onBehalfOf } : {}), workspaceId: options.workspaceId ?? workspaceId }
+              try {
+                return (await this.authorizer.can(principal, action, ref)) === true
+              } catch (error) {
+                if (this.isTransient(error)) throw error
+                return false
+              }
+            },
+            authorizeFor: async (principalId, action, ref) => {
+              if (this.authorizer.answersForAnyPrincipal !== true) return undefined
+              try {
+                return (await this.authorizer.can({ principalId, kind: 'user', workspaceId }, action, ref)) === true
+              } catch (error) {
+                if (this.isTransient(error)) throw error
+                return false
+              }
+            },
           })) ?? {}
         } catch (error) {
           if (error instanceof CommandConflict || error instanceof CommandRejection) throw error

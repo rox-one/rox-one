@@ -9,9 +9,10 @@
  * budgets (window ≤300 ms macOS / ≤500 ms Windows, FMP ≤0.8 s / ≤1.5 s).
  *
  * Run 0 uses a fresh profile (first install: skills sync, caches cold) and is
- * reported separately; runs 1..N reuse that profile (warm launch) and are the
- * ones checked against budgets. Report-only by default; `--strict` exits 1 on
- * an exceeded budget. `--ci` multiplies budgets (shared runners / xvfb).
+ * checked against a generous report-only cold FMP budget (COLD_FMP_BUDGET_MS);
+ * runs 1..N reuse that profile (warm launch) and are checked against the warm
+ * budgets. Report-only by default; `--strict` exits 1 on an exceeded budget.
+ * `--ci` multiplies budgets (shared runners / xvfb).
  *
  * Self-contained in apps/electron on purpose; PR #1557 (#1507 harness) may add
  * shared bench infra later — fold this into it then.
@@ -25,6 +26,14 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { STARTUP_MARKS, startupBudgetFor, type StartupTimeline } from '../../src/shared/startup-perf'
+
+/**
+ * Report-only cold (first-install: skills sync, caches cold) FMP ceiling.
+ * Deliberately generous — the warm contract is 800 ms macOS / 1500 ms Windows
+ * (×4 in CI), while cold pays one-time setup. `bun run perf:startup` prints the
+ * observed cold FMP; tighten this constant once a healthy cold number is known.
+ */
+export const COLD_FMP_BUDGET_MS = 120_000
 
 interface Args { runs: number; ci: boolean; strict: boolean; out: string | null; md: string | null; main: string; timeoutMs: number; profile: string | null }
 
@@ -81,14 +90,25 @@ export function median(values: number[]): number | undefined {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1]! + sorted[mid]!) / 2
 }
 
-function isolatedEnv(profile: string, outFile: string): Record<string, string> {
+/** Metrics whose median is undefined — the app never emitted the mark. */
+export function missingMetrics(checks: Array<{ metric: string; median?: number }>): string[] {
+  return checks.filter(c => c.median === undefined).map(c => c.metric)
+}
+
+export function isolatedEnv(profile: string, outFile: string): Record<string, string> {
   for (const child of ['home', 'config', 'userData', 'tmp', 'appData', 'localAppData']) mkdirSync(join(profile, child), { recursive: true })
   const env: Record<string, string> = {}
   for (const name of ['PATH', 'SystemRoot', 'WINDIR', 'DISPLAY', 'XAUTHORITY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR', 'SHELL']) {
     if (process.env[name]) env[name] = process.env[name]!
   }
   return Object.assign(env, {
-    HOME: join(profile, 'home'), USERPROFILE: join(profile, 'home'),
+    // The login keychain must stay reachable: Chromium safeStorage answers
+    // isEncryptionAvailable() from the real HOME, and the app fails closed with
+    // ROX_OS_SECURE_STORAGE_UNAVAILABLE when it is not (see
+    // tests/e2e/product-tour/native-harness.ts:50-53). Profile isolation stays
+    // via the app's own ROX_*/CRAFT_* dirs below.
+    HOME: process.env.HOME ?? join(profile, 'home'),
+    USERPROFILE: process.env.USERPROFILE ?? process.env.HOME ?? join(profile, 'home'),
     ROX_CONFIG_DIR: join(profile, 'config'), CRAFT_CONFIG_DIR: join(profile, 'config'),
     ROX_USER_DATA_DIR: join(profile, 'userData'), CRAFT_USER_DATA_DIR: join(profile, 'userData'),
     TMPDIR: join(profile, 'tmp'), TMP: join(profile, 'tmp'), TEMP: join(profile, 'tmp'),
@@ -155,9 +175,12 @@ function report(args: Args, runs: RunMetrics[]) {
   const fmpBudget = startupBudgetFor('firstMeaningfulPaintMs', platform, args.ci)
   const windowMedian = median(warm.flatMap(r => r.windowCreatedMs ?? []))
   const fmpMedian = median(warm.flatMap(r => r.fmpMs ?? []))
+  const cold = runs.filter(r => r.kind === 'cold' && r.ok)
+  const coldFmpMedian = median(cold.flatMap(r => r.fmpMs ?? []))
   const checks = [
     { metric: 'window-created', median: windowMedian, budget: windowBudget },
     { metric: 'first-meaningful-paint', median: fmpMedian, budget: fmpBudget },
+    { metric: 'first-meaningful-paint (cold)', median: coldFmpMedian, budget: COLD_FMP_BUDGET_MS },
   ].map(c => ({ ...c, pass: c.median !== undefined && c.median <= c.budget }))
   const lines = [
     `# Electron startup bench (${platform}${args.ci ? ', CI budgets ×4' : ''})`,
@@ -198,7 +221,14 @@ async function main(): Promise<void> {
   console.log(`\n${markdown}`)
   if (args.md) writeFileSync(args.md, `${markdown}\n`)
   if (args.out) writeFileSync(args.out, `${JSON.stringify({ platform: process.platform, ci: args.ci, checks, runs }, null, 2)}\n`)
-  if (args.strict && checks.some(c => !c.pass)) process.exit(1)
+  const missing = missingMetrics(checks)
+  if (missing.length) {
+    console.error(
+      `[startup-bench] NO DATA for: ${missing.join(', ')}. The app did not emit the required startup mark(s) (see the per-run 'error' column). Failing.`,
+    )
+    process.exitCode = 1
+  }
+  if (args.strict && checks.some(c => !c.pass)) process.exitCode = 1
 }
 
 if (import.meta.main) await main()

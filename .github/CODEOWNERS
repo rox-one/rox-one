@@ -9,3 +9,7 @@
 /.github/workflows/ui-lint-ratchet.yml @agisota
 /.github/CODEOWNERS @agisota
 /.stylelintignore @agisota
+# DX-03: the ESLint workspace ratchet, its shared base config and the CI gate need owner review.
+/scripts/eslint-workspace-ratchet.ts @agisota
+/scripts/eslint/ @agisota
+/.github/workflows/eslint-workspaces.yml @agisota

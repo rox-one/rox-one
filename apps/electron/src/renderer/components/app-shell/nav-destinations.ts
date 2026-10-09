@@ -27,6 +27,7 @@ import {
   GitBranch,
   Globe,
   GraduationCap,
+  HardDrive,
   House,
   ListTodo,
   MessageSquare,
@@ -43,6 +44,7 @@ import {
   isBrowserNavigation,
   isConnectionsNavigation,
   isDiffNavigation,
+  isDriveNavigation,
   isHomeNavigation,
   isKnowledgeNavigation,
   isNotesNavigation,
@@ -74,6 +76,7 @@ export type AppNavDestinationId =
   | 'pages'
   | 'automations'
   | 'connections'
+  | 'drive'
   | 'home'
   | 'knowledge'
   | 'settings'
@@ -263,6 +266,17 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     contextLinkIds: ['nav:home'],
     route: () => routes.view.home(),
     isActive: isHomeNavigation,
+  },
+  {
+    id: 'drive',
+    linkId: 'nav:drive',
+    icon: HardDrive,
+    labelKey: 'sidebar.drive',
+    railLabelKey: 'serviceRail.drive',
+    railGroup: 'more',
+    contextLinkIds: ['nav:drive'],
+    route: () => routes.view.drive(),
+    isActive: isDriveNavigation,
   },
   {
     id: 'knowledge',

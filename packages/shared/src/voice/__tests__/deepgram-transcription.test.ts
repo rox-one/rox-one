@@ -43,6 +43,23 @@ describe('Deepgram current prerecorded transcription', () => {
     })
   })
 
+  it('accepts provider timestamps that overshoot the reported duration (webm/opus quirk)', () => {
+    const raw = response() as Record<string, any>
+    raw.metadata.duration = 13.92
+    raw.results.channels[0].alternatives[0].paragraphs.paragraphs = [
+      { speaker: 0, sentences: [{ start: 3.2, end: 4.96, text: 'Так, да, запись, проверка.' }] },
+      { speaker: 0, sentences: [{ start: 12.88, end: 16.08, text: 'Ну конечно.' }] },
+    ]
+    raw.results.channels[0].alternatives[0].words = [
+      { start: 3.2, end: 4.9, word: 'Так', punctuated_word: 'Так' },
+      { start: 12.88, end: 16.08, word: 'конечно', punctuated_word: 'конечно' },
+    ]
+    const out = normalizeDeepgramTranscript(raw)
+    expect(out.durationMs).toBe(16080)
+    expect(out.segments.at(-1)?.endMs).toBe(16080)
+    expect(out.text).toContain('Ну конечно.')
+  })
+
   it('infers paragraph speakers from diarized words if paragraph fields are omitted', () => {
     const raw = response()
     Reflect.deleteProperty(raw.results.channels[0]!.alternatives[0]!.paragraphs.paragraphs[0]!, 'speaker')
@@ -64,7 +81,7 @@ describe('Deepgram current prerecorded transcription', () => {
     if (kind === 'negative') paragraphs[0].sentences[0].start = -1
     if (kind === 'reversed') paragraphs[0].sentences[0].end = 0
     if (kind === 'non-monotonic') paragraphs[1].sentences[0].start = 0.5
-    if (kind === 'beyond-duration') paragraphs[1].sentences[0].end = 10
+    if (kind === 'beyond-duration') paragraphs[1].sentences[0].end = 60
     if (kind === 'invalid-word') raw.results.channels[0].alternatives[0].words[0].start = '1.25'
     if (kind === 'invalid-duration') raw.metadata.duration = '8.25'
     expect(() => normalizeDeepgramTranscript(raw)).toThrow()
@@ -87,6 +104,23 @@ describe('Deepgram current prerecorded transcription', () => {
     expect(transcription.init?.headers).toMatchObject({ Authorization: 'Token synthetic-key', 'Content-Type': 'audio/wav' })
     expect((transcription.init?.body as Blob).size).toBe(audio.length)
     expect(result.diarizationModel).toBe('v2')
+  })
+
+  it('keeps the fixed ASR parameters and exactly one of language/detect_language', async () => {
+    const urls: string[] = []
+    const adapter = new DeepgramTranscriptionAdapter({ apiKey: 'synthetic-key', model: 'nova-3', http: { async fetch(url) {
+      urls.push(String(url))
+      return new Response(JSON.stringify(response()))
+    } } })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav' })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav', language: 'auto' })
+    await adapter.transcribe({ audio, mimeType: 'audio/wav', language: 'en' })
+    expect(urls).toHaveLength(3)
+    const fixed = { model: 'nova-3', version: 'latest', smart_format: 'true', punctuate: 'true', diarize_model: 'latest', paragraphs: 'true', utterances: 'true' }
+    expect(Object.fromEntries(new URL(urls[0]!).searchParams)).toEqual({ ...fixed, detect_language: 'true' })
+    expect(Object.fromEntries(new URL(urls[1]!).searchParams)).toEqual({ ...fixed, detect_language: 'true' })
+    expect(Object.fromEntries(new URL(urls[2]!).searchParams)).toEqual({ ...fixed, language: 'en' })
+    expect(urls.every((url) => !new URL(url!).searchParams.has('diarize'))).toBe(true)
   })
 
   it('catalog failure uses current Nova with auto language without falling back to another provider', async () => {

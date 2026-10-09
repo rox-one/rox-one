@@ -43,6 +43,7 @@ export function KnowledgeNavigator({ layout }: KnowledgeNavigatorProps = {}) {
   const { navigate } = useNavigation()
   const setHomeView = useSetAtom(knowledgeHomeViewAtom)
   const rootRef = useRef<HTMLDivElement>(null)
+  const treeViewportRef = useRef<HTMLDivElement>(null)
   const containerWidth = useContainerWidth(rootRef)
   const compactShell = useOptionalAppShellContext()?.isCompactMode === true
   const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
@@ -62,8 +63,8 @@ export function KnowledgeNavigator({ layout }: KnowledgeNavigatorProps = {}) {
           {t('knowledge.nav.title')}
         </h2>
       </header>
-      <div className={cn('min-h-0 flex-1 overflow-y-auto', mobile && 'w-full')}>
-        <KnowledgeNotebookTree mobile={mobile} />
+      <div ref={treeViewportRef} className={cn('min-h-0 flex-1 overflow-y-auto', mobile && 'w-full')}>
+        <KnowledgeNotebookTree mobile={mobile} viewportRef={treeViewportRef} />
       </div>
       <div className="border-t border-border px-3 py-2">
         <button

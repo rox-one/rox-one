@@ -86,6 +86,11 @@ export const CHANNEL_MAP = {
   finalizeMeeting: invoke(RPC_CHANNELS.meetings.FINALIZE),
   addManualNote: invoke(RPC_CHANNELS.meetings.ADD_MANUAL_NOTE),
   correctSegment: invoke(RPC_CHANNELS.meetings.CORRECT_SEGMENT),
+  observeStart: invoke(RPC_CHANNELS.meetings.OBSERVE_START),
+  observeStop: invoke(RPC_CHANNELS.meetings.OBSERVE_STOP),
+  observeState: invoke(RPC_CHANNELS.meetings.OBSERVE_STATE),
+  sessionSummary: invoke(RPC_CHANNELS.meetings.SESSION_SUMMARY),
+  transcriptLines: invoke(RPC_CHANNELS.meetings.TRANSCRIPT_LINES),
   getTaskResults: invoke(RPC_CHANNELS.tasks.GET_RESULTS),
   onTaskGenerated: listener(RPC_CHANNELS.tasks.GENERATED),
   respondToPermission: invoke(RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION),
@@ -101,6 +106,15 @@ export const CHANNEL_MAP = {
   discoverBrowserProfiles: invoke(RPC_CHANNELS.browserProfile.DISCOVER),
   importBrowserProfile: invoke(RPC_CHANNELS.browserProfile.IMPORT),
   browserCredentialCapabilities: invoke(RPC_CHANNELS.browserProfile.CREDENTIAL_CAPABILITIES),
+  // ROX Keeper — local personal secret vault (main-process read path)
+  keeperList: invoke(RPC_CHANNELS.keeper.LIST),
+  keeperGet: invoke(RPC_CHANNELS.keeper.GET),
+  keeperCreate: invoke(RPC_CHANNELS.keeper.CREATE),
+  keeperUpdate: invoke(RPC_CHANNELS.keeper.UPDATE),
+  keeperDelete: invoke(RPC_CHANNELS.keeper.DELETE),
+  keeperReveal: invoke(RPC_CHANNELS.keeper.REVEAL),
+  keeperUnlockStatus: invoke(RPC_CHANNELS.keeper.UNLOCK_STATUS),
+  keeperImportBrowser: invoke(RPC_CHANNELS.keeper.IMPORT_BROWSER),
   browserDataAutoImport: invoke(RPC_CHANNELS.browserProfile.DATA_AUTO_IMPORT),
   rollbackBrowserProfileImport: invoke(RPC_CHANNELS.browserProfile.ROLLBACK),
   deleteImportedBrowserProfile: invoke(RPC_CHANNELS.browserProfile.DELETE),
@@ -122,6 +136,7 @@ export const CHANNEL_MAP = {
   getSessionPermissionModeState: invoke(RPC_CHANNELS.sessions.GET_PERMISSION_MODE_STATE),
   setMemoryMode: invoke(RPC_CHANNELS.sessions.SET_MEMORY_MODE),
   getSessionProvenance: invoke(RPC_CHANNELS.sessions.GET_PROVENANCE),
+  assignSessionOwner: invoke(RPC_CHANNELS.sessions.ASSIGN_OWNER),
 
   // Event listeners
   onSessionEvent: listener(RPC_CHANNELS.sessions.EVENT),
@@ -198,6 +213,19 @@ export const CHANNEL_MAP = {
   acceptSecurityRisk: invoke(RPC_CHANNELS.securityAudit.ACCEPT_RISK),
   revokeSecurityRiskAcceptance: invoke(RPC_CHANNELS.securityAudit.REVOKE_RISK_ACCEPTANCE),
 
+  // Service lifecycle (OS launchd/systemd/Windows service control — local host)
+  serviceLifecycleGetStatus: invoke(RPC_CHANNELS.serviceLifecycle.GET_STATUS),
+  serviceLifecycleInstall: invoke(RPC_CHANNELS.serviceLifecycle.INSTALL),
+  serviceLifecycleStart: invoke(RPC_CHANNELS.serviceLifecycle.START),
+  serviceLifecycleStop: invoke(RPC_CHANNELS.serviceLifecycle.STOP),
+  serviceLifecycleRestart: invoke(RPC_CHANNELS.serviceLifecycle.RESTART),
+  serviceLifecycleUninstall: invoke(RPC_CHANNELS.serviceLifecycle.UNINSTALL),
+  onServiceLifecycleStatusChanged: listener(RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED),
+
+  // Diagnostics (local host doctor checks)
+  runDiagnostics: invoke(RPC_CHANNELS.diagnostics.RUN),
+  getDiagnosticsLast: invoke(RPC_CHANNELS.diagnostics.GET_LAST),
+
   getToolchainStatus: invoke(RPC_CHANNELS.toolchain.STATUS),
   onToolchainStatusChanged: listener(RPC_CHANNELS.toolchain.STATUS_CHANGED),
   updateToolchainTool: invoke(RPC_CHANNELS.toolchain.UPDATE),
@@ -230,6 +258,7 @@ export const CHANNEL_MAP = {
   onMenuToggleSidebar: listener(RPC_CHANNELS.menu.TOGGLE_SIDEBAR),
   onMenuToggleInspector: listener(RPC_CHANNELS.menu.TOGGLE_INSPECTOR),
   onMenuToggleChatPictureInPicture: listener(RPC_CHANNELS.menu.TOGGLE_CHAT_PICTURE_IN_PICTURE),
+  onMenuTrayStatusChanged: listener(RPC_CHANNELS.menu.TRAY_STATUS_CHANGED),
 
   // Deep link
   onDeepLinkNavigate: listener(RPC_CHANNELS.deeplink.NAVIGATE),
@@ -265,7 +294,16 @@ export const CHANNEL_MAP = {
   fabricAcquireLease: invoke(RPC_CHANNELS.fabric.ACQUIRE_LEASE),
   fabricRevokeConnection: invoke(RPC_CHANNELS.fabric.REVOKE_CONNECTION),
   fabricGithubStatus: invoke(RPC_CHANNELS.fabric.GITHUB_STATUS),
+  fabricGithubLinkStart: invoke(RPC_CHANNELS.fabric.GITHUB_LINK_START),
+  fabricGithubLinkPoll: invoke(RPC_CHANNELS.fabric.GITHUB_LINK_POLL),
+  fabricGithubLinkGet: invoke(RPC_CHANNELS.fabric.GITHUB_LINK_GET),
   fabricInfisicalHealth: invoke(RPC_CHANNELS.fabric.INFISICAL_HEALTH),
+  fabricInfisicalPreviewAccount: invoke(RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT),
+  fabricInfisicalCommitImport: invoke(RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT),
+  fabricInfisicalListPaths: invoke(RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS),
+  fabricInfisicalListItems: invoke(RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS),
+  fabricInfisicalUpsertItem: invoke(RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM),
+  fabricInfisicalDeleteItem: invoke(RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM),
 
   // Extension Center (S-05)
   extensionsListCatalog: invoke(RPC_CHANNELS.extensions.LIST_CATALOG),
@@ -308,11 +346,15 @@ export const CHANNEL_MAP = {
   clearClaudeOAuthState: invoke(RPC_CHANNELS.onboarding.CLEAR_CLAUDE_OAUTH_STATE),
   deferSetup: invoke(RPC_CHANNELS.onboarding.DEFER_SETUP),
   saveOmpCredential: invoke(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL),
+  suggestPreferences: invoke(RPC_CHANNELS.onboarding.SUGGEST_PREFERENCES),
   startRoxConnect: invoke(RPC_CHANNELS.onboarding.START_ROX_CONNECT),
   getRoxCloudState: invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE),
   clearRoxCloud: invoke(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD),
   getRoxBalance: invoke(RPC_CHANNELS.onboarding.GET_ROX_BALANCE),
+  checkOnboardingHandle: invoke(RPC_CHANNELS.onboarding.CHECK_HANDLE),
   ensureFirstSessionWelcome: invoke(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION),
+  getOnboardingPermissionsStatus: invoke(RPC_CHANNELS.onboarding.PERMISSIONS_STATUS),
+  openOnboardingPermissionSettings: invoke(RPC_CHANNELS.onboarding.OPEN_PERMISSION_SETTINGS),
 
   // ChatGPT OAuth
   startChatGptOAuth: invoke(RPC_CHANNELS.chatgpt.START_OAUTH),
@@ -583,6 +625,25 @@ export const CHANNEL_MAP = {
   onVoiceJob: listener(RPC_CHANNELS.voice.JOB),
   onVoiceOverlay: listener(RPC_CHANNELS.voice.OVERLAY),
   onVoiceHotkey: listener(RPC_CHANNELS.voice.HOTKEY),
+  talkStart: invoke(RPC_CHANNELS.voice.TALK_START),
+  talkStop: invoke(RPC_CHANNELS.voice.TALK_STOP),
+  talkAudio: invoke(RPC_CHANNELS.voice.TALK_AUDIO),
+  talkClientSecret: invoke(RPC_CHANNELS.voice.TALK_CLIENT_SECRET),
+  onTalkEvent: listener(RPC_CHANNELS.voice.TALK_EVENT),
+  ttsStreamStart: invoke(RPC_CHANNELS.voice.TTS_STREAM_START),
+  ttsStreamChunk: invoke(RPC_CHANNELS.voice.TTS_STREAM_CHUNK),
+  onTtsStreamChunk: listener(RPC_CHANNELS.voice.TTS_STREAM_CHUNK),
+  ttsStreamStop: invoke(RPC_CHANNELS.voice.TTS_STREAM_STOP),
+  sttStart: invoke(RPC_CHANNELS.voice.STT_START),
+  sttAudio: invoke(RPC_CHANNELS.voice.STT_AUDIO),
+  sttStop: invoke(RPC_CHANNELS.voice.STT_STOP),
+  onSttEvent: listener(RPC_CHANNELS.voice.STT_EVENT),
+  getVoiceProviders: invoke(RPC_CHANNELS.voice.PROVIDERS),
+  voiceWakeGet: invoke(RPC_CHANNELS.voice.WAKE_GET),
+  voiceWakeSet: invoke(RPC_CHANNELS.voice.WAKE_SET),
+  onVoiceWakeChanged: listener(RPC_CHANNELS.voice.WAKE_CHANGED),
+  voiceTrigger: invoke(RPC_CHANNELS.voice.TRIGGER),
+  onVoiceTrigger: listener(RPC_CHANNELS.voice.TRIGGER),
   getEnvironmentSetup: invoke(RPC_CHANNELS.environment.GET),
   saveEnvironmentSetup: invoke(RPC_CHANNELS.environment.SAVE),
   onEnvironmentChanged: listener(RPC_CHANNELS.environment.CHANGED),
@@ -624,6 +685,12 @@ export const CHANNEL_MAP = {
   // OAuth (server-owned credentials)
   oauthRevoke: invoke(RPC_CHANNELS.oauth.REVOKE),
 
+  // Google Calendar connector (wave 1). connectGoogleCalendar is orchestrated in
+  // the preload bridge (callback server + main-process popup) and is not routed here.
+  googleCalendarStatus: invoke(RPC_CHANNELS.calendar.GOOGLE_STATUS),
+  googleCalendarDisconnect: invoke(RPC_CHANNELS.calendar.GOOGLE_DISCONNECT),
+  googleCalendarSync: invoke(RPC_CHANNELS.calendar.GOOGLE_SYNC),
+
   // Sources change listener
   onSourcesChanged: listener(RPC_CHANNELS.sources.CHANGED),
 
@@ -637,6 +704,7 @@ export const CHANNEL_MAP = {
   getSkillUsage: invoke(RPC_CHANNELS.skills.GET_USAGE),
   pruneSkills: invoke(RPC_CHANNELS.skills.PRUNE_UNUSED),
   exportSkillToProject: invoke(RPC_CHANNELS.skills.EXPORT_TO_PROJECT),
+  getSkillEligibility: invoke(RPC_CHANNELS.skills.GET_ELIGIBILITY),
   openSkillInEditor: invoke(RPC_CHANNELS.skills.OPEN_EDITOR),
   openSkillInFinder: invoke(RPC_CHANNELS.skills.OPEN_FINDER),
   onSkillsChanged: listener(RPC_CHANNELS.skills.CHANGED),
@@ -669,6 +737,10 @@ export const CHANNEL_MAP = {
   rejectMemoryProposal: invoke(RPC_CHANNELS.memory.REJECT_PROPOSAL),
   editMemoryProposal: invoke(RPC_CHANNELS.memory.EDIT_PROPOSAL),
   deleteMemoryProposal: invoke(RPC_CHANNELS.memory.DELETE_PROPOSAL),
+  searchMemory: invoke(RPC_CHANNELS.memory.SEARCH),
+  getMemoryChunk: invoke(RPC_CHANNELS.memory.GET),
+  getMemoryIndexStatus: invoke(RPC_CHANNELS.memory.INDEX_STATUS),
+  rebuildMemoryIndex: invoke(RPC_CHANNELS.memory.REBUILD_INDEX),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
 
   // Memory repository projection + dream (spec 2026-10-09 §7)
@@ -710,6 +782,24 @@ export const CHANNEL_MAP = {
   runLearningConsolidation: invoke(RPC_CHANNELS.learning.CONSOLIDATE),
   curateLearningSkills: invoke(RPC_CHANNELS.learning.CURATE_SKILLS),
   runPolicyLearning: invoke(RPC_CHANNELS.learning.RUN_POLICY_LEARNING),
+  // ROX Drive (wave 1) — device-local storage engine.
+  driveQuota: invoke(RPC_CHANNELS.drive.QUOTA),
+  driveList: invoke(RPC_CHANNELS.drive.LIST),
+  driveCreateFolder: invoke(RPC_CHANNELS.drive.CREATE_FOLDER),
+  driveOpenUpload: invoke(RPC_CHANNELS.drive.OPEN_UPLOAD),
+  driveUploadPart: invoke(RPC_CHANNELS.drive.UPLOAD_PART),
+  driveCompleteUpload: invoke(RPC_CHANNELS.drive.COMPLETE_UPLOAD),
+  driveAbortUpload: invoke(RPC_CHANNELS.drive.ABORT_UPLOAD),
+  driveDelete: invoke(RPC_CHANNELS.drive.DELETE),
+  driveScanSource: invoke(RPC_CHANNELS.drive.SCAN_SOURCE),
+  // ROX Drive (wave 4) — cloud import pipeline.
+  driveImportPlan: invoke(RPC_CHANNELS.drive.IMPORT_PLAN),
+  driveImportStart: invoke(RPC_CHANNELS.drive.IMPORT_START),
+  driveImportPause: invoke(RPC_CHANNELS.drive.IMPORT_PAUSE),
+  driveImportResume: invoke(RPC_CHANNELS.drive.IMPORT_RESUME),
+  driveImportStatus: invoke(RPC_CHANNELS.drive.IMPORT_STATUS),
+  driveImportAuthStart: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_START),
+  driveImportAuthComplete: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE),
 
   // Statuses
   listStatuses: invoke(RPC_CHANNELS.statuses.LIST),
@@ -755,6 +845,7 @@ export const CHANNEL_MAP = {
   loadPresetTheme: invoke(RPC_CHANNELS.theme.LOAD_PRESET),
   getColorTheme: invoke(RPC_CHANNELS.theme.GET_COLOR_THEME),
   setColorTheme: invoke(RPC_CHANNELS.theme.SET_COLOR_THEME),
+  setAppMaterial: invoke(RPC_CHANNELS.theme.SET_APP_MATERIAL),
   getWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME),
   setWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME),
   getAllWorkspaceThemes: invoke(RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES),
@@ -1063,4 +1154,9 @@ export const CHANNEL_MAP = {
   entitiesLinks: invoke(RPC_CHANNELS.entities.LINKS),
   entitiesResolve: invoke(RPC_CHANNELS.entities.RESOLVE),
   onEntitiesLinksChanged: listener(RPC_CHANNELS.entities.LINKS_CHANGED),
+
+  // Telegram account linking (R4) — local rox-tg-linkd daemon.
+  tgLinkStart: invoke(RPC_CHANNELS.tgLink.START),
+  tgLinkVerify: invoke(RPC_CHANNELS.tgLink.VERIFY),
+  tgLinkStatus: invoke(RPC_CHANNELS.tgLink.STATUS),
 } satisfies ChannelMap

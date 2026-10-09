@@ -23,7 +23,7 @@ import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import type { LocalMeeting } from '../../../../shared/meetings-local'
 import type { MailAttachment, MailFolder, MailFolderRole, MailMessage, MailPickedFile, MailSummary } from '../../../../shared/mail-local'
 import { mailSrcdoc, sanitizeMailHtml } from './mail-sanitize'
-import { addressLabel, addressLine, buildDraft, draftFromMessage, draftHasContent, formatBytes, fromLabel, meetingNoteLine, statusKey, type ComposeDraft, type ComposeMode } from './mail-view'
+import { addressLabel, addressLine, buildDraft, draftFromMessage, draftHasContent, formatBytes, formatStorageBytes, fromLabel, meetingNoteLine, statusKey, type ComposeDraft, type ComposeMode } from './mail-view'
 import type { MailController } from './useMail'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -61,10 +61,14 @@ export function MailNavSection({ mail, activeFolderId, onSelectFolder }: {
   activeFolderId: string | null
   onSelectFolder: (folder: MailFolder) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [copied, setCopied] = useState(false)
+  const locale = i18n.resolvedLanguage || i18n.language
   const s = mail.status
   const address = s?.address
+  const quota = s?.quotaUsedBytes != null && s?.quotaBytes != null
+    ? { used: formatStorageBytes(s.quotaUsedBytes, locale), limit: formatStorageBytes(s.quotaBytes, locale) }
+    : null
   const copy = async () => {
     if (!address) return
     try {
@@ -76,11 +80,17 @@ export function MailNavSection({ mail, activeFolderId, onSelectFolder }: {
   return (
     <NavSection title={t('inbox.mail.section')}>
       {s?.state === 'ready' && address ? (
-        <div className="flex items-center gap-1 px-2 pb-1" data-testid="mail-address">
-          <span className="min-w-0 flex-1 truncate text-[12px] font-semibold" title={address}>{address}</span>
-          <button type="button" onClick={() => void copy()} className="h-6 shrink-0 rounded-[var(--radius-control)] px-1.5 text-[11px] text-text-secondary hover:bg-foreground/[0.06] hover:text-foreground" data-testid="mail-copy">
-            {copied ? t('inbox.mail.copied') : t('inbox.mail.copy')}
-          </button>
+        <div className="px-2 pb-1">
+          <div className="flex items-center gap-1" data-testid="mail-address">
+            <span className="shrink-0 text-small font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
+            <span className="min-w-0 flex-1 truncate text-[12px] font-semibold" title={address}>{address}</span>
+            <button type="button" onClick={() => void copy()} className="h-6 shrink-0 rounded-[var(--radius-control)] px-1.5 text-[11px] text-text-secondary hover:bg-foreground/[0.06] hover:text-foreground" data-testid="mail-copy">
+              {copied ? t('inbox.mail.copied') : t('inbox.mail.copy')}
+            </button>
+          </div>
+          <div className="pt-0.5 text-caption text-text-muted" data-testid="mail-storage">
+            {quota ? t('inbox.mail.storage', quota) : t('inbox.mail.storageUnknown')}
+          </div>
         </div>
       ) : (
         <div className="px-2 pb-1 text-[11px] text-text-muted">{t(statusKey(s), { address: s?.address ?? '', url: s?.serverUrl ?? '', error: s?.error ?? '', flag: s?.flag ?? '' })}</div>
@@ -230,7 +240,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
       ) : s.state === 'provisioning' ? (
         <EmptyState title={t('inbox.mail.status.provisioning')} body={t('inbox.mail.provisioningBody', { domain: s.domain })} />
       ) : s.state === 'unreachable' ? (
-        <EmptyState title={s.configured === false && !s.address ? t('inbox.mail.status.noMailbox') : t('inbox.mail.status.unreachable', { url: s.serverUrl })} body={t('inbox.mail.unreachableBody', { url: s.serverUrl })} action={serverForm} />
+        <EmptyState title={s.configured === false && !s.address ? t('inbox.mail.status.noMailbox') : t('inbox.mail.status.unreachable', { url: s.serverUrl })} body={s.local ? t('inbox.mail.unreachableBody', { url: s.serverUrl }) : t('inbox.mail.unreachableBodyRemote', { url: s.serverUrl })} action={serverForm} />
       ) : (
         <EmptyState title={t('inbox.mail.status.disabled', { flag: s.flag })} />
       )}

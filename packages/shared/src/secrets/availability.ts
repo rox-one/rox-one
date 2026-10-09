@@ -10,6 +10,34 @@ export interface InfisicalAvailability {
   errorCode?: Extract<SecretErrorCode, 'INFISICAL_UNAVAILABLE'>;
 }
 
+/** Account credentials entered on the Secrets screen (clientSecret kept out of every result). */
+export interface InfisicalAccountPreviewInput {
+  siteUrl: string;
+  clientId: string;
+  projectId: string;
+  environment: string;
+  secretPath: string;
+  secretKey: string;
+}
+
+/** Value-free account preview returned by the RPC wrapper. */
+export interface InfisicalAccountPreview {
+  label: string;
+  siteUrl: string;
+  clientId: string;
+  projectId: string;
+  environment: string;
+  secretPath: string;
+  secretKey: string;
+  locator: {
+    type: 'infisical';
+    projectId: string;
+    environment: string;
+    secretPath: string;
+    secretKey: string;
+  };
+}
+
 /** Settings GET payload: refs only (no values) plus Infisical availability. */
 export interface SecretRefsSettingsPayload {
   refs: SecretRefEntry[];

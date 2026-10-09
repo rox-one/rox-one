@@ -9,6 +9,7 @@
  */
 
 import type { Rox2Permission } from '../../rox2/platform-contract.ts'
+import { riskClassFor } from '../../agents/risk.ts'
 import type { CommandType } from '../envelope.ts'
 import { PLACEHOLDER_PAYLOAD_SCHEMA, type CommandAuthority, type CommandDefinition } from '../registry.ts'
 
@@ -28,6 +29,10 @@ export function moduleCatalogue(module: string, flag: string | undefined, entrie
       verb,
       schema: PLACEHOLDER_PAYLOAD_SCHEMA,
       schemaBound: false,
+      // W1-11 (#1508): `riskClass` is required; the classification table lives
+      // in `../agents/risk.ts` and is keyed by command type, with the ACL verb
+      // and the owner module as structural fallbacks.
+      riskClass: riskClassFor(type, module, verb),
     }
     if (effectiveFlag) definition.flag = effectiveFlag
     return definition

@@ -5,8 +5,9 @@
  * local whisper.cpp transcript. Nothing is uploaded.
  */
 import { useSyncExternalStore } from 'react'
-import type { LocalMeeting, MeetingsLocalApi } from '../../../shared/meetings-local'
+import type { LocalMeeting, LocalMeetingSource, MeetingsLocalApi } from '../../../shared/meetings-local'
 import { toErrorMessage } from '@/lib/errors'
+import { createVoiceLevelMeter, type VoiceLevelMeterHandle } from '../voice/level-meter'
 
 export type RecorderStatus = 'idle' | 'starting' | 'recording' | 'paused' | 'stopping'
 
@@ -64,8 +65,7 @@ type Session = {
   meetingId: string
   stream: MediaStream
   recorder: MediaRecorder
-  audioCtx: AudioContext | null
-  meter: ReturnType<typeof setInterval> | null
+  meter: VoiceLevelMeterHandle | null
   heartbeat: ReturnType<typeof setInterval> | null
   chain: Promise<unknown>
   failedChunks: number
@@ -87,40 +87,20 @@ function pickMimeType(): string {
 }
 
 function startMeter(s: Session): void {
-  try {
-    const ctx = new AudioContext()
-    const source = ctx.createMediaStreamSource(s.stream)
-    const analyser = ctx.createAnalyser()
-    analyser.fftSize = 1024
-    source.connect(analyser)
-    const buf = new Float32Array(analyser.fftSize)
-    s.audioCtx = ctx
-    let smooth = 0
-    s.meter = setInterval(() => {
-      if (state.status !== 'recording') {
-        if (state.level !== 0) set({ level: 0 })
-        return
-      }
-      analyser.getFloatTimeDomainData(buf)
-      let sum = 0
-      for (let i = 0; i < buf.length; i += 1) sum += buf[i]! * buf[i]!
-      const rms = Math.sqrt(sum / buf.length)
-      // perceptual-ish: -60 dB → 0, 0 dB → 1
-      const db = 20 * Math.log10(Math.max(rms, 1e-6))
-      const v = Math.min(1, Math.max(0, (db + 60) / 60))
-      smooth = v > smooth ? v : smooth * 0.8 + v * 0.2
-      set({ level: Math.round(smooth * 100) / 100 })
-    }, 100)
-  } catch {
-    // level meter is cosmetic
-  }
+  s.meter = createVoiceLevelMeter(s.stream, (level) => {
+    // The meter keeps ticking across pause/stop; the recorder owns the level.
+    if (state.status !== 'recording') {
+      if (state.level !== 0) set({ level: 0 })
+      return
+    }
+    set({ level })
+  }, { driver: 'interval', intervalMs: 100 })
 }
 
 function teardown(s: Session): void {
-  if (s.meter) clearInterval(s.meter)
+  s.meter?.stop()
   if (s.heartbeat) clearInterval(s.heartbeat)
   s.stream.getTracks().forEach((track) => track.stop())
-  void s.audioCtx?.close().catch(() => {})
 }
 async function stopMediaRecorder(recorder: MediaRecorder): Promise<void> {
   if (recorder.state === 'inactive') return
@@ -137,7 +117,7 @@ async function stopMediaRecorder(recorder: MediaRecorder): Promise<void> {
 
 export type StartResult = { ok: true; meeting: LocalMeeting } | { ok: false; code: string }
 
-export async function startRecording(input: { meetingId?: string; title: string; workspaceId: string | null }): Promise<StartResult> {
+export async function startRecording(input: { meetingId?: string; title: string; workspaceId: string | null; source?: LocalMeetingSource; calendarEventId?: string }): Promise<StartResult> {
   const api = meetingsApi()
   if (!api) return { ok: false, code: 'unavailable' }
   if (session || state.status !== 'idle') return { ok: false, code: 'already-recording' }
@@ -161,7 +141,7 @@ export async function startRecording(input: { meetingId?: string; title: string;
     }
     const mimeType = pickMimeType()
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType, audioBitsPerSecond: 64_000 } : undefined)
-    const started = await api.recStart({ meetingId: input.meetingId, title: input.title, workspaceId: input.workspaceId, mimeType: recorder.mimeType || mimeType || 'audio/webm' })
+    const started = await api.recStart({ meetingId: input.meetingId, title: input.title, workspaceId: input.workspaceId, mimeType: recorder.mimeType || mimeType || 'audio/webm', source: input.source, calendarEventId: input.calendarEventId })
     if (!started.ok) {
       stream.getTracks().forEach((track) => track.stop())
       stream = null
@@ -169,7 +149,7 @@ export async function startRecording(input: { meetingId?: string; title: string;
       return { ok: false, code: started.code }
     }
     startedMeetingId = started.value.id
-    const s: Session = { api, meetingId: started.value.id, stream, recorder, audioCtx: null, meter: null, heartbeat: null, chain: Promise.resolve(), failedChunks: 0, failureCode: null }
+    const s: Session = { api, meetingId: started.value.id, stream, recorder, meter: null, heartbeat: null, chain: Promise.resolve(), failedChunks: 0, failureCode: null }
     session = s
     stream = null
     recorder.ondataavailable = (event) => {

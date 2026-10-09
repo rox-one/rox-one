@@ -20,13 +20,17 @@ import { registerLabelsHandlers } from './labels'
 import { registerOrgsHandlers } from './orgs'
 import { registerLlmConnectionsHandlers } from './llm-connections'
 import { registerOAuthHandlers } from './oauth'
+import { registerCalendarGoogleHandlers } from './calendar-google'
 import { registerResourcesHandlers } from './resources'
 import { registerOnboardingHandlers } from './onboarding'
+import { registerOnboardingSuggestHandlers } from './onboarding-suggest'
+import { registerOnboardingPermissionsHandlers } from './onboarding-permissions'
 import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
 import { registerRuntimeTraceHandlers } from './runtime-trace'
 import { registerSessionForeignImportHandlers } from './session-foreign-import'
 import { registerNotesHandlers, cleanupNotesWatchForClient } from './notes'
 import { registerNativeDataHandlers } from './native-data.ts'
+import { registerTgLinkHandlers } from './tg-link.ts'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
 export { cleanupNotesWatchForClient } from './notes'
 import { registerKnowledgeHandlers, cleanupKnowledgeWatchForClient } from './knowledge'
@@ -39,6 +43,7 @@ import { registerSettingsHandlers } from './settings'
 import { registerGamificationHandlers } from './gamification'
 import { registerPrivacyHandlers } from './privacy'
 import { registerVoiceHandlers } from './voice'
+import { registerVoiceRealtimeHandlers } from './voice-realtime'
 import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
 import { registerCodeIntelligenceHandlers } from './code-intelligence'
@@ -78,6 +83,8 @@ import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 import { registerCommandsHandlers, type CommandsHandlerRuntime } from './commands.ts'
 // W1-04 (#1501)
 import { registerDirectoryHandlers } from './directory.ts'
+// ROX Drive (wave 1)
+import { registerDriveHandlers } from './drive.ts'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -125,7 +132,10 @@ export function registerCoreRpcHandlers(
   registerOrgsHandlers(server, deps)
   registerLlmConnectionsHandlers(server, deps)
   registerOAuthHandlers(server, deps)
+  registerCalendarGoogleHandlers(server, deps)
   registerOnboardingHandlers(server, deps)
+  registerOnboardingSuggestHandlers(server, deps)
+  registerOnboardingPermissionsHandlers(server, deps)
   registerResourcesHandlers(server, deps)
   registerSessionsHandlers(server, deps)
   registerRuntimeTraceHandlers(server, deps)
@@ -135,6 +145,7 @@ export function registerCoreRpcHandlers(
   registerGamificationHandlers(server, deps)
   registerPrivacyHandlers(server, deps)
   registerVoiceHandlers(server, deps)
+  registerVoiceRealtimeHandlers(server, deps)
   registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)
   registerCodeIntelligenceHandlers(server, deps)
@@ -170,9 +181,13 @@ export function registerCoreRpcHandlers(
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)
   registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
+  // R4: Telegram account linking (local rox-tg-linkd daemon).
+  registerTgLinkHandlers(server, deps)
   // W1-03 (#1500)
   registerCommandsHandlers(server, deps, options?.commands)
   // W1-04 (#1501): Dossier export IPC (flag contacts.dossier-export.v1, default OFF).
   registerDirectoryHandlers(server, deps, { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
+  // ROX Drive (wave 1) — local-first storage surface.
+  registerDriveHandlers(server, deps)
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }

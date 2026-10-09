@@ -46,12 +46,13 @@ import { useMenuComponents } from '@/components/ui/menu-context'
 import { getStateColor, getStateIcon, type SessionStatusId } from '@/config/session-status-config'
 import type { SessionStatus } from '@/config/session-status-config'
 import type { LabelConfig } from '@rox/shared/labels'
-import { LabelMenuItems, StatusMenuItems, ShareMenuItems } from './SessionMenuParts'
+import type { SessionActorRef } from '@rox/shared/protocol'
+import { LabelMenuItems, StatusMenuItems, ShareMenuItems, OwnerMenuSection, VisibilityMenuSection } from './SessionMenuParts'
 import { getFileManagerName } from '@/lib/platform'
 import type { SessionMeta } from '@/atoms/sessions'
 import { getSessionStatus, hasUnreadMeta, hasMessagesMeta } from '@/utils/session'
 import { MessagingSessionMenuItem } from '@/components/messaging/MessagingSessionMenuItem'
-import { useSessionMenuActions } from '@/hooks/useSessionMenuActions'
+import { useKnowledgeConnectionAvailable, useSessionMenuActions } from '@/hooks/useSessionMenuActions'
 import { publishSessionDialogAtom } from '@/atoms/knowledge-publish'
 import { navigate, routes } from '@/lib/navigate'
 import { requestLearnFromSession } from '@/lib/session-learn-request'
@@ -143,22 +144,24 @@ export function SessionMenu({
 
   const actions = useSessionMenuActions({ item, onLabelsChange })
   const setPublishDialog = useSetAtom(publishSessionDialogAtom)
-  const [hasKnowledgeConnection, setHasKnowledgeConnection] = React.useState(false)
+  // Shared, deduplicated across every session menu — no per-menu request when
+  // the menu mounts, so opening the menu stays instant.
+  const hasKnowledgeConnection = useKnowledgeConnectionAvailable()
 
-  React.useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const list = await window.electronAPI?.knowledge?.listConnections?.()
-        if (!cancelled) setHasKnowledgeConnection(Array.isArray(list) && list.length > 0)
-      } catch {
-        if (!cancelled) setHasKnowledgeConnection(false)
-      }
-    })()
-    return () => {
-      cancelled = true
+  // a2.2: assignable actors = creator + participants + current owner, deduped by
+  // kind:id. Ids are the authoritative identity keys the server stores.
+  const ownerCandidates = React.useMemo<SessionActorRef[]>(() => {
+    const byKey = new Map<string, SessionActorRef>()
+    const add = (ref: SessionActorRef) => { byKey.set(`${ref.kind}:${ref.id}`, ref) }
+    if (item.creator) add({ kind: 'account', id: item.creator.accountId, displayName: item.creator.displayName })
+    for (const participant of item.participants ?? []) {
+      add({ kind: participant.kind === 'agent' ? 'agent' : 'account', id: participant.accountId, displayName: participant.displayName })
     }
-  }, [])
+    if (item.owner) add({ kind: item.owner.kind, id: item.owner.id, displayName: item.owner.displayName })
+    return [...byKey.values()]
+  }, [item.creator, item.participants, item.owner])
+
+  const currentVisibility = item.visibility ?? 'shared'
 
 
   // Get menu components from context (works with both DropdownMenu and ContextMenu)
@@ -327,6 +330,24 @@ export function SessionMenu({
           </SubContent>
         </Sub>
       )}
+
+      {/* a2.2: assign owner (creator/participants/me) */}
+      <OwnerMenuSection
+        owner={item.owner}
+        candidates={ownerCandidates}
+        viewerId={actions.viewer.accountId}
+        isAssignedToViewer={!!item.owner && item.owner.id === actions.viewer.accountId}
+        onAssign={(owner) => void actions.assignOwner(owner)}
+        onAssignToMe={() => void actions.assignToMe()}
+        menu={{ MenuItem, Separator, Sub, SubTrigger, SubContent }}
+      />
+
+      {/* a2.5: sharing visibility */}
+      <VisibilityMenuSection
+        visibility={currentVisibility}
+        onSelect={(visibility) => void actions.setVisibility(visibility)}
+        menu={{ MenuItem, Separator, Sub, SubTrigger, SubContent }}
+      />
 
       {/* Flag/Unflag */}
       {!isFlagged ? (
