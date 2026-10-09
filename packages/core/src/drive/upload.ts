@@ -122,7 +122,14 @@ export interface UploadRelease {
   releasedBytes: number
 }
 
-/** Abort: the reservation goes back, the session keeps its parts for forensics. */
+/**
+ * Abort: the reservation goes back, the session keeps its parts for forensics.
+ *
+ * The abort release is time-independent, but `now` stays in the signature: the §16.2 step 4
+ * release pair (`abortUpload` / `expireUploadSessions`) takes the handler's single clock, and
+ * the `drive.abort_upload` handler passes its `tx.now` here.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- the abort release is time-independent; `now` stays so both §16.2 step 4 release paths take the handler's clock
 export function abortUpload(session: UploadSession, now: string): UploadRelease {
   return {
     session: { ...session, status: 'aborted', reservedBytes: 0, parts: session.parts },

@@ -108,7 +108,7 @@ export type DriveContractType = 'drive.provision' | 'drive.open_upload' | 'drive
 export const DRIVE_CONTRACT_TYPES: readonly DriveContractType[] = ['drive.provision', 'drive.open_upload', 'drive.complete_upload', 'drive.abort_upload']
 
 /** Storage lives in the caller's own drive for every one of the four. */
-export function driveRiskClass(_payload: unknown, _ctx: CommandRiskContext): RiskClass {
+export function driveRiskClass(): RiskClass {
   return 'routine'
 }
 
