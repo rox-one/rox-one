@@ -10,6 +10,8 @@ import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { loadSandboxExtensionDescriptors } from '../descriptors'
+import { applyStartupActivations } from '../startup'
+import { setExtensionHostManagerForTests } from '../../extension-host-manager'
 
 const SPY_MARKER = join(tmpdir(), 'rox-descriptor-spy-marker')
 
@@ -156,5 +158,44 @@ describe('loadSandboxExtensionDescriptors', () => {
     const first = scan()[0]!.descriptorHash
     const second = scan()[0]!.descriptorHash
     expect(second).toBe(first)
+  })
+})
+
+describe('applyStartupActivations with a shadowed duplicate id', () => {
+  it('loads the valid extension when the invalid duplicate sorts after it', async () => {
+    // Valid package in the config root; a duplicate id in the env root is the
+    // shadow. The config path sorts before the env path, so the invalid shadow
+    // lands AFTER the valid descriptor in the dir-sorted list — the exact shape
+    // that a last-wins `byId` map used to downgrade, silently dropping the load.
+    writePackage(sandboxRoot, 'dup', validManifest('dup'))
+    writePackage(envRoot, 'aaa-shadow', validManifest('dup'))
+
+    const descriptors = scan()
+    const validIndex = descriptors.findIndex((d) => d.status === 'ok' && d.id === 'dup')
+    const shadowIndex = descriptors.findIndex((d) => d.status === 'invalid' && d.id === 'dup')
+    expect(validIndex).toBeGreaterThanOrEqual(0)
+    expect(shadowIndex).toBeGreaterThan(validIndex)
+
+    const loads: Array<{ id: string; entryPath: string }> = []
+    const fakeManager = {
+      getStatus: () => ({ loadedExtensions: [] as string[] }),
+      loadExtension: async (id: string, entryPath: string) => {
+        loads.push({ id, entryPath })
+      },
+    }
+    setExtensionHostManagerForTests(fakeManager as never, 'ws-shadow')
+    try {
+      const result = await applyStartupActivations({
+        workspaceId: 'ws-shadow',
+        trigger: 'startup',
+        configDir,
+        sandboxRootEnv: envRoot,
+      })
+      expect(result.activated).toEqual(['dup'])
+      expect(loads.map((load) => load.id)).toEqual(['dup'])
+      expect(loads[0]!.entryPath).toBe(realpathSync(join(sandboxRoot, 'dup', 'index.js')))
+    } finally {
+      setExtensionHostManagerForTests(null, 'ws-shadow')
+    }
   })
 })

@@ -119,7 +119,16 @@ export async function applyStartupActivations(options: {
     loaded: new Set(manager.getStatus().loadedExtensions ?? []),
   })
 
-  const byId = new Map(descriptors.map((descriptor) => [descriptor.id, descriptor]))
+  // Index only usable descriptors, first-wins, mirroring how the loader reports
+  // duplicates as `shadowed:<dir>`. The loader sorts descriptors by dir, so a
+  // shadowed (invalid) duplicate can land either side of its winner; a plain
+  // last-wins map would let it overwrite the valid descriptor and silently
+  // drop the load the planner asked for.
+  const byId = new Map<string, SandboxExtensionDescriptor>()
+  for (const descriptor of descriptors) {
+    if (descriptor.status !== 'ok' || !descriptor.entryPath || !descriptor.manifest) continue
+    if (!byId.has(descriptor.id)) byId.set(descriptor.id, descriptor)
+  }
   const activated: string[] = []
   const failures: StartupActivationResult['failures'] = []
 
