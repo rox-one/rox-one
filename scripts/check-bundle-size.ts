@@ -2,11 +2,16 @@
 /**
  * Bundle-size budget gate for the Electron renderer.
  *
- * Measures the production renderer JS chunks (apps/electron/dist/renderer/assets) and fails when a
- * known chunk-name *prefix* grows past its recorded raw-byte budget, or when an unbudgeted prefix
- * grows past MAX_NEW_CHUNK_BYTES. Raw `Buffer.byteLength` of the emitted file is the gated number; gzip (level 9) is
- * reported alongside. Source maps (vite.config.ts `sourcemap: true`) and the pdf worker are never
- * measured: only `assets/*.js` is read.
+ * Measures the production renderer assets (apps/electron/dist/renderer/assets) — emitted JS *and* CSS
+ * chunks — and fails when a known chunk-name *prefix* grows past its recorded raw-byte budget, when an
+ * unbudgeted prefix grows past MAX_NEW_CHUNK_BYTES, or when a whole-extension total grows past its
+ * recorded total. Raw `Buffer.byteLength` of the emitted files is the gated number; gzip (level 9) is
+ * recorded and reported alongside. Source maps (vite.config.ts `sourcemap: true`) and the pdf worker
+ * are never measured.
+ *
+ * A budget is the TOTAL of every measured chunk sharing a prefix, not the largest one: real `index-*`
+ * builds emit a handful of chunks, so gating only the max lets a secondary chunk grow unbounded up to
+ * its sibling's size.
  *
  * Usage:
  *   bun scripts/check-bundle-size.ts              # --check (default): fail on any budget overrun
@@ -17,10 +22,11 @@
  * Options:
  *   --baseline <file>   baseline path (default perf-baselines/bundle-size.json)
  *
- * Exit code: 1 when the renderer build is missing, or any chunk exceeds its budget / the ceiling;
- * 0 otherwise. Budgets are keyed by the chunk-name prefix
- * (basename.replace(/-[A-Za-z0-9_-]{8}\.js$/, '')) — never the content hash — so a rebuild that
- * only changes hashes does not move the budget.
+ * Exit code: 1 when the renderer build is missing, or any prefix/extension total exceeds its budget or
+ * the ceiling; 0 otherwise. Budgets are keyed by the chunk-name prefix
+ * (basename.replace(/\.(?:js|css)$/, '').replace(/-[A-Za-z0-9_-]{8}$/, '')) — never the content hash —
+ * so a rebuild that only changes hashes does not move the budget. JS prefixes live under `budgets` and
+ * CSS prefixes under `stylesheets`, so the two extensions can never collide.
  */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -33,29 +39,68 @@ const DEFAULT_ROOT = resolve(import.meta.dir, '..')
 export const MAX_NEW_CHUNK_BYTES = 2_500_000
 
 /**
+ * A chunk prefix whose TOTAL is at or above this size at recording time gets its own budget entry;
+ * everything smaller stays unbudgeted and is only caught by MAX_NEW_CHUNK_BYTES (a floor keeps the
+ * recorded baseline meaningful instead of listing every 1 KB shiki language chunk).
+ */
+export const MIN_BUDGET_BYTES = 250_000
+
+/**
+ * Cross-platform slack on every budget AND every whole-extension total: the same source builds to
+ * slightly different byte counts on macOS and Linux (observed <= 91 B on the 900 KB `main` chunk), so
+ * the gate compares against `recorded + BUDGET_SLACK_BYTES` and reports the raw recorded number.
+ */
+export const BUDGET_SLACK_BYTES = 4096
+
+/**
  * Vite/Rollup hashed-chunk suffix: a dash plus the 8-character content hash.
- * `chunkPrefix('index-B3-J8HY7.js')` -> `index`; a name without that suffix keeps its stem, so
- * the budget key is always the extension-less chunk name (`chunk-abc.js` -> `chunk-abc`).
+ * `chunkPrefix('index-B3-J8HY7.js')` -> `index`; a name without that suffix keeps its stem, so the
+ * budget key is always the extension-less chunk name (`chunk-abc.js` -> `chunk-abc`, `main.css` -> `main`).
  */
 const HASH_SUFFIX = /-[A-Za-z0-9_-]{8}$/
-const JS_EXTENSION = /\.js$/
+const ASSET_EXTENSION = /\.(?:js|css)$/
 
+const ASSET_KINDS = ['js', 'css'] as const
+export type AssetKind = (typeof ASSET_KINDS)[number]
+
+/** A per-prefix budget: the sum over every measured chunk of that prefix. */
 export interface ChunkBudget {
-  rawBytes: number
-  gzipBytes: number
+  totalRawBytes: number
+  gzipTotalBytes: number
+}
+
+/** Whole-bundle byte counts, summed over every measured chunk of each extension. */
+export interface BundleTotals {
+  jsRawBytes: number
+  jsGzipBytes: number
+  cssRawBytes: number
+  cssGzipBytes: number
 }
 
 export interface BundleBaseline {
   description: string
   /** Human note (e.g. how the seed values were recorded); ignored by the gate. */
   comment?: string
+  /** JS chunk-name prefix -> total budget. */
   budgets: Record<string, ChunkBudget>
+  /** CSS chunk-name prefix -> total budget (separate map, so the keys never collide with `budgets`). */
+  stylesheets?: Record<string, ChunkBudget>
+  /** Whole-extension totals; raw bytes are gated, gzip is recorded and reported. */
+  totals?: BundleTotals
+}
+
+/** The recorded numbers the pure gate reads; every part is optional so a missing baseline degrades cleanly. */
+export interface RecordedBudgets {
+  budgets?: Record<string, ChunkBudget>
+  stylesheets?: Record<string, ChunkBudget>
+  totals?: Partial<BundleTotals>
 }
 
 export interface MeasuredChunk {
-  /** Basename, e.g. `index-B3-J8HY7.js`. */
+  /** Basename, e.g. `index-B3-J8HY7.js` or `main-BCWHcyRa.css`. */
   file: string
   prefix: string
+  kind: AssetKind
   /** The gated number: byte length of the emitted chunk. */
   rawBytes: number
   /** gzip level 9, mtime 0 — informational, reported alongside rawBytes. */
@@ -63,10 +108,17 @@ export interface MeasuredChunk {
 }
 
 export interface BudgetFailure {
-  file: string
-  prefix: string
+  kind: AssetKind
+  /** Chunk-name prefix, or `null` for a whole-extension total overrun. */
+  prefix: string | null
+  /** The gated byte count: the prefix total, or the whole-extension total. */
   rawBytes: number
+  /** Recorded total, or MAX_NEW_CHUNK_BYTES for an unbudgeted prefix. */
   budget: number
+  /** Largest measured chunk behind the gated total. */
+  file: string
+  /** Raw bytes of that largest chunk. */
+  fileRawBytes: number
 }
 
 export interface Paths {
@@ -88,23 +140,25 @@ export function paths(root: string = DEFAULT_ROOT): Paths {
   }
 }
 
-/** The stable chunk-name prefix (never the hash): `main-BCWHcyRa.js` -> `main`. */
+/** The stable chunk-name prefix (never the hash): `main-BCWHcyRa.js` -> `main`, `main.css` -> `main`. */
 export function chunkPrefix(baseName: string): string {
-  return baseName.replace(JS_EXTENSION, '').replace(HASH_SUFFIX, '')
+  return baseName.replace(ASSET_EXTENSION, '').replace(HASH_SUFFIX, '')
 }
 
 /**
- * Only emitted JS chunks are measured. `.js.map` (sourcemap: true) and the pdf worker
- * (pdf.worker.min-*.mjs) are excluded explicitly as well as by extension.
+ * The measured-asset kind of a file name, or `undefined` when it is not measured: only emitted
+ * `*.js` / `*.css` chunks are. `.js.map` / `.css.map` (sourcemap: true) and the pdf worker are
+ * excluded explicitly as well as by extension.
  */
-export function isMeasuredAsset(baseName: string): boolean {
-  if (!baseName.endsWith('.js')) return false
-  if (baseName.endsWith('.js.map') || baseName.endsWith('.map')) return false
-  if (baseName.startsWith('pdf.worker')) return false
-  return true
+export function assetKind(baseName: string): AssetKind | undefined {
+  if (baseName.startsWith('pdf.worker')) return undefined
+  if (baseName.endsWith('.map')) return undefined
+  if (baseName.endsWith('.js')) return 'js'
+  if (baseName.endsWith('.css')) return 'css'
+  return undefined
 }
 
-/** Raw + gzip bytes of every emitted `assets/*.js` chunk, sorted by file name. */
+/** Raw + gzip bytes of every measured `assets/*` chunk, sorted by file name. */
 export function measureRendererChunks(assetsDir: string = paths().assets): MeasuredChunk[] {
   let files: string[]
   try {
@@ -115,12 +169,14 @@ export function measureRendererChunks(assetsDir: string = paths().assets): Measu
   }
   const chunks: MeasuredChunk[] = []
   for (const file of files.sort()) {
-    if (!isMeasuredAsset(file)) continue
+    const kind = assetKind(file)
+    if (!kind) continue
     try {
       const content = readFileSync(join(assetsDir, file))
       chunks.push({
         file,
         prefix: chunkPrefix(file),
+        kind,
         rawBytes: content.length,
         // Bun accepts `mtime: 0` (deterministic gzip) beyond Node's ZlibOptions type.
         gzipBytes: gzipSync(content, { level: 9, mtime: 0 } as unknown as Parameters<typeof gzipSync>[1]).length,
@@ -132,63 +188,121 @@ export function measureRendererChunks(assetsDir: string = paths().assets): Measu
   return chunks
 }
 
-/**
- * A chunk prefix at or above this size at recording time gets its own budget entry; everything
- * smaller stays unbudgeted and is only caught by MAX_NEW_CHUNK_BYTES (a floor keeps the recorded
- * baseline meaningful instead of listing every 1 KB shiki language chunk).
- */
-export const MIN_BUDGET_BYTES = 250_000
+interface PrefixGroup {
+  prefix: string
+  rawBytes: number
+  gzipBytes: number
+  largest: MeasuredChunk
+}
 
-/**
- * Per-prefix budgets for `--update` / `--print`: the largest emitted chunk of each prefix (a prefix
- * such as `index` covers several small entry chunks plus the big one; the gate fails on the max).
- * Prefixes whose largest chunk is below MIN_BUDGET_BYTES are omitted.
- */
-export function buildBudgets(chunks: MeasuredChunk[]): Record<string, ChunkBudget> {
-  const budgets: Record<string, ChunkBudget> = {}
+/** Every chunk of one extension grouped by prefix (sorted), each group summing raw + gzip bytes. */
+function groupByPrefix(chunks: MeasuredChunk[]): PrefixGroup[] {
+  const groups = new Map<string, PrefixGroup>()
   for (const chunk of chunks) {
-    const current = budgets[chunk.prefix]
-    if (!current || chunk.rawBytes > current.rawBytes) {
-      budgets[chunk.prefix] = { rawBytes: chunk.rawBytes, gzipBytes: chunk.gzipBytes }
+    const group = groups.get(chunk.prefix)
+    if (!group) {
+      groups.set(chunk.prefix, {
+        prefix: chunk.prefix,
+        rawBytes: chunk.rawBytes,
+        gzipBytes: chunk.gzipBytes,
+        largest: chunk,
+      })
+      continue
+    }
+    group.rawBytes += chunk.rawBytes
+    group.gzipBytes += chunk.gzipBytes
+    if (chunk.rawBytes > group.largest.rawBytes) group.largest = chunk
+  }
+  return [...groups.values()].sort((a, b) => (a.prefix < b.prefix ? -1 : a.prefix > b.prefix ? 1 : 0))
+}
+
+/** Whole-bundle totals for `--update` / `--print`. */
+export function bundleTotals(chunks: MeasuredChunk[]): BundleTotals {
+  const totals: BundleTotals = { jsRawBytes: 0, jsGzipBytes: 0, cssRawBytes: 0, cssGzipBytes: 0 }
+  for (const chunk of chunks) {
+    if (chunk.kind === 'js') {
+      totals.jsRawBytes += chunk.rawBytes
+      totals.jsGzipBytes += chunk.gzipBytes
+    } else {
+      totals.cssRawBytes += chunk.rawBytes
+      totals.cssGzipBytes += chunk.gzipBytes
     }
   }
-  for (const [prefix, budget] of Object.entries(budgets)) {
-    if (budget.rawBytes < MIN_BUDGET_BYTES) delete budgets[prefix]
+  return totals
+}
+
+/**
+ * Per-prefix budgets for `--update` / `--print`: the TOTAL of every measured chunk of `kind` sharing a
+ * prefix (a prefix such as `index` covers several entry chunks; gating only the largest let a sibling
+ * grow to its size unnoticed). Prefixes whose total is below MIN_BUDGET_BYTES are omitted.
+ */
+export function buildBudgets(chunks: MeasuredChunk[], kind: AssetKind): Record<string, ChunkBudget> {
+  const budgets: Record<string, ChunkBudget> = {}
+  for (const group of groupByPrefix(chunks.filter((chunk) => chunk.kind === kind))) {
+    if (group.rawBytes < MIN_BUDGET_BYTES) continue
+    budgets[group.prefix] = { totalRawBytes: group.rawBytes, gzipTotalBytes: group.gzipBytes }
   }
   return budgets
 }
 
 /**
- * Cross-platform slack on every budget: the same source builds to slightly different byte counts on
- * macOS and Linux (observed <= 91 B on the 900 KB `main` chunk), so the gate compares against
- * `budget + BUDGET_SLACK_BYTES` and reports the raw recorded budget.
+ * Pure gate. Fails when (1) a budgeted prefix's TOTAL exceeds its recorded total, (2) an unbudgeted
+ * prefix's TOTAL exceeds MAX_NEW_CHUNK_BYTES, or (3) either gated extension total exceeds its recorded
+ * total — each with BUDGET_SLACK_BYTES of platform noise allowed. Kept free of filesystem access so it
+ * is unit-testable without a build.
  */
-export const BUDGET_SLACK_BYTES = 4096
-
-/**
- * Pure gate: a budgeted prefix over its recorded rawBytes budget, or an unbudgeted prefix over
- * MAX_NEW_CHUNK_BYTES, each with BUDGET_SLACK_BYTES of platform noise allowed. Kept free of
- * filesystem access so it is unit-testable without a build.
- */
-export function evaluateChunks(chunks: MeasuredChunk[], budgets: Record<string, ChunkBudget>): BudgetFailure[] {
+export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudgets): BudgetFailure[] {
   const failures: BudgetFailure[] = []
-  for (const chunk of chunks) {
-    const known = budgets[chunk.prefix]
-    const recorded = known ? known.rawBytes : MAX_NEW_CHUNK_BYTES
-    if (chunk.rawBytes > recorded + BUDGET_SLACK_BYTES) {
-      failures.push({ file: chunk.file, prefix: chunk.prefix, rawBytes: chunk.rawBytes, budget: recorded })
+  for (const kind of ASSET_KINDS) {
+    const kindChunks = chunks.filter((chunk) => chunk.kind === kind)
+    if (kindChunks.length === 0) continue
+    const recordedPrefixes = (kind === 'js' ? recorded.budgets : recorded.stylesheets) ?? {}
+    for (const group of groupByPrefix(kindChunks)) {
+      // `?? MAX_NEW_CHUNK_BYTES` also guards a baseline recorded in an older shape (a missing
+      // `totalRawBytes` would otherwise compare as NaN and pass silently).
+      const budget = recordedPrefixes[group.prefix]?.totalRawBytes ?? MAX_NEW_CHUNK_BYTES
+      if (group.rawBytes > budget + BUDGET_SLACK_BYTES) {
+        failures.push({
+          kind,
+          prefix: group.prefix,
+          rawBytes: group.rawBytes,
+          budget,
+          file: group.largest.file,
+          fileRawBytes: group.largest.rawBytes,
+        })
+      }
     }
+    const recordedTotal = kind === 'js' ? recorded.totals?.jsRawBytes : recorded.totals?.cssRawBytes
+    if (recordedTotal === undefined) continue
+    const total = kindChunks.reduce((sum, chunk) => sum + chunk.rawBytes, 0)
+    if (total <= recordedTotal + BUDGET_SLACK_BYTES) continue
+    const largest = kindChunks.reduce((max, chunk) => (chunk.rawBytes > max.rawBytes ? chunk : max), kindChunks[0]!)
+    failures.push({
+      kind,
+      prefix: null,
+      rawBytes: total,
+      budget: recordedTotal,
+      file: largest.file,
+      fileRawBytes: largest.rawBytes,
+    })
   }
   return failures
 }
 
-/** The single-line failure report naming the file and both byte counts. */
+/**
+ * The single-line failure report naming the offending prefix (or extension total), the gated total and
+ * its budget, plus the largest chunk file behind it and that file's size.
+ */
 export function formatFailure(failure: BudgetFailure): string {
   const diff = failure.rawBytes - failure.budget
+  const scope =
+    failure.prefix === null
+      ? `${failure.kind} bundle total`
+      : `${failure.kind} prefix '${failure.prefix}' total`
   return (
-    `bundle-size: assets/${failure.file} is ${failure.rawBytes} B, budget ${failure.budget} B for ` +
-    `'${failure.prefix}' (+${diff} B). Shrink it (move the payload behind a lazy import - see ` +
-    `vite.config.ts VENDOR_CHUNKS / SIDE_EFFECT_FREE_MODULES) or re-record: ` +
+    `bundle-size: ${scope} is ${failure.rawBytes} B, budget ${failure.budget} B (+${diff} B); largest chunk ` +
+    `assets/${failure.file} is ${failure.fileRawBytes} B. Shrink it (move the payload behind a lazy import - ` +
+    `see vite.config.ts VENDOR_CHUNKS / SIDE_EFFECT_FREE_MODULES) or re-record: ` +
     `bun scripts/check-bundle-size.ts --update`
   )
 }
@@ -209,36 +323,55 @@ function argValue(args: string[], name: string): string | undefined {
 }
 
 const DESCRIPTION =
-  'Renderer bundle-size budgets. Generated by `bun scripts/check-bundle-size.ts --update`; rawBytes ' +
-  'gates the largest emitted chunk of each name prefix, gzipBytes is reported alongside. Over the ' +
-  'recorded rawBytes the gate fails (or 2,500,000 B for an unbudgeted prefix).'
+  'Renderer bundle-size budgets. Generated by `bun scripts/check-bundle-size.ts --update`; each entry is ' +
+  'the TOTAL rawBytes of every emitted assets chunk sharing that chunk-name prefix (js under `budgets`, ' +
+  'css under `stylesheets`), gzip reported alongside, plus `totals` summing each extension. Over a ' +
+  'recorded total the gate fails (or 2,500,000 B for an unbudgeted prefix).'
 
-/** The largest chunk of each prefix, with its gate budget, for the success table (top 5 by raw). */
-function topPrefixes(chunks: MeasuredChunk[], budgets: Record<string, ChunkBudget>) {
-  const largest = new Map<string, MeasuredChunk>()
-  for (const chunk of chunks) {
-    const current = largest.get(chunk.prefix)
-    if (!current || chunk.rawBytes > current.rawBytes) largest.set(chunk.prefix, chunk)
-  }
-  return [...largest.values()]
-    .map((chunk) => ({
-      prefix: chunk.prefix,
-      rawBytes: chunk.rawBytes,
-      gzipBytes: chunk.gzipBytes,
-      budget: budgets[chunk.prefix]?.rawBytes ?? MAX_NEW_CHUNK_BYTES,
-    }))
+/** The largest prefix totals, with their gate budget, for the success table (top 5 by raw bytes). */
+function topPrefixes(
+  chunks: MeasuredChunk[],
+  budgets: Record<string, ChunkBudget>,
+  stylesheets: Record<string, ChunkBudget>,
+) {
+  return ASSET_KINDS.flatMap((kind) =>
+    groupByPrefix(chunks.filter((chunk) => chunk.kind === kind)).map((group) => ({
+      kind,
+      prefix: group.prefix,
+      rawBytes: group.rawBytes,
+      gzipBytes: group.gzipBytes,
+      budget:
+        (kind === 'js' ? budgets : stylesheets)[group.prefix]?.totalRawBytes ?? MAX_NEW_CHUNK_BYTES,
+    })),
+  )
     .sort((a, b) => b.rawBytes - a.rawBytes)
     .slice(0, 5)
 }
 
-function printSuccessTable(chunks: MeasuredChunk[], budgets: Record<string, ChunkBudget>) {
-  const rows = topPrefixes(chunks, budgets)
-  console.log(`bundle-size: ${chunks.length} renderer chunk(s) measured (raw bytes gate; gzip reported alongside)`)
-  console.log(`  ${'prefix'.padEnd(24)} ${'raw'.padStart(10)} ${'gzip'.padStart(10)} ${'budget'.padStart(10)}`)
+function printSuccessTable(
+  chunks: MeasuredChunk[],
+  budgets: Record<string, ChunkBudget>,
+  stylesheets: Record<string, ChunkBudget>,
+  recorded: Partial<BundleTotals> | undefined,
+) {
+  const rows = topPrefixes(chunks, budgets, stylesheets)
+  console.log(
+    `bundle-size: ${chunks.length} renderer asset(s) measured (prefix totals gate raw bytes; gzip reported alongside)`,
+  )
+  console.log(
+    `  ${'kind'.padEnd(4)} ${'prefix'.padEnd(24)} ${'raw'.padStart(10)} ${'gzip'.padStart(10)} ${'budget'.padStart(10)}`,
+  )
   for (const row of rows) {
     console.log(
-      `  ${row.prefix.padEnd(24)} ${String(row.rawBytes).padStart(10)} ${String(row.gzipBytes).padStart(10)} ${String(row.budget).padStart(10)}`,
+      `  ${row.kind.padEnd(4)} ${row.prefix.padEnd(24)} ${String(row.rawBytes).padStart(10)} ${String(row.gzipBytes).padStart(10)} ${String(row.budget).padStart(10)}`,
     )
+  }
+  const measured = bundleTotals(chunks)
+  for (const [kind, raw, gzip, budget] of [
+    ['js', measured.jsRawBytes, measured.jsGzipBytes, recorded?.jsRawBytes],
+    ['css', measured.cssRawBytes, measured.cssGzipBytes, recorded?.cssRawBytes],
+  ] as const) {
+    console.log(`  ${kind} total: raw ${raw} B (budget ${budget ?? 'unrecorded'}), gzip ${gzip} B`)
   }
 }
 
@@ -268,11 +401,15 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     console.error('no renderer build found - run bun run electron:build:renderer first')
     return 1
   }
-  const measured = buildBudgets(chunks)
+  const budgets = buildBudgets(chunks, 'js')
+  const stylesheets = buildBudgets(chunks, 'css')
+  const totals = bundleTotals(chunks)
 
   if (printArg) {
-    writeJson(resolve(printArg), { description: DESCRIPTION, budgets: measured })
-    console.log(`bundle-size: wrote ${Object.keys(measured).length} prefix budget(s) to ${printArg}`)
+    writeJson(resolve(printArg), { description: DESCRIPTION, budgets, stylesheets, totals })
+    console.log(
+      `bundle-size: wrote ${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s) to ${printArg}`,
+    )
     return 0
   }
 
@@ -280,12 +417,21 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     writeJson(baselinePath, {
       description: DESCRIPTION,
       comment: 'Recorded by `bun scripts/check-bundle-size.ts --update` against a real renderer build.',
-      budgets: measured,
+      budgets,
+      stylesheets,
+      totals,
     })
-    console.log(`bundle-size: wrote ${relative(p.root, baselinePath)} (${Object.keys(measured).length} prefix budget(s))`)
-    for (const [prefix, budget] of Object.entries(measured).sort()) {
-      console.log(`  ${prefix}: raw ${budget.rawBytes} B, gzip ${budget.gzipBytes} B`)
+    console.log(
+      `bundle-size: wrote ${relative(p.root, baselinePath)} (${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s))`,
+    )
+    for (const [prefix, budget] of Object.entries(budgets).sort()) {
+      console.log(`  js  ${prefix}: raw ${budget.totalRawBytes} B, gzip ${budget.gzipTotalBytes} B`)
     }
+    for (const [prefix, budget] of Object.entries(stylesheets).sort()) {
+      console.log(`  css ${prefix}: raw ${budget.totalRawBytes} B, gzip ${budget.gzipTotalBytes} B`)
+    }
+    console.log(`  js  total: raw ${totals.jsRawBytes} B, gzip ${totals.jsGzipBytes} B`)
+    console.log(`  css total: raw ${totals.cssRawBytes} B, gzip ${totals.cssGzipBytes} B`)
     return 0
   }
 
@@ -293,21 +439,25 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   try {
     baseline = readBaseline(baselinePath)
   } catch {
-    // No recorded baseline yet: every chunk is judged against MAX_NEW_CHUNK_BYTES only.
+    // No recorded baseline yet: every prefix is judged against MAX_NEW_CHUNK_BYTES only.
     baseline = { description: DESCRIPTION, budgets: {} }
   }
-  const failures = evaluateChunks(chunks, baseline.budgets ?? {})
+  const failures = evaluateAssets(chunks, {
+    budgets: baseline.budgets ?? {},
+    stylesheets: baseline.stylesheets ?? {},
+    totals: baseline.totals,
+  })
   if (failures.length > 0) {
     for (const failure of failures) console.error(formatFailure(failure))
     console.error(
-      `bundle-size: ${failures.length} chunk(s) over budget. If the growth is intended, owner-approve ` +
+      `bundle-size: ${failures.length} budget(s) over limit. If the growth is intended, owner-approve ` +
         `it and re-record with \`bun scripts/check-bundle-size.ts --update\`.`,
     )
     return 1
   }
 
-  printSuccessTable(chunks, baseline.budgets ?? {})
-  console.log('bundle-size: OK — every renderer chunk is within its budget.')
+  printSuccessTable(chunks, baseline.budgets ?? {}, baseline.stylesheets ?? {}, baseline.totals)
+  console.log('bundle-size: OK — every renderer asset total is within its budget.')
   return 0
 }
 
