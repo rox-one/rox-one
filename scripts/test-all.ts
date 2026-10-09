@@ -33,6 +33,8 @@ export interface SuiteManifest {
     standard: string
     supplemental: string
     omittedDirectories: string[]
+    /** Git-relative path prefixes excluded from discovery; vendored resource trees. */
+    omittedPaths: string[]
     hiddenStandardFiles: number
   }
 }
@@ -237,6 +239,13 @@ async function nearestConfiguration(root: string, file: string, kind: 'playwrigh
 const NATIVE_PRODUCT_SUITE = 'tests/e2e/product-tour/product.native.spec.ts'
 const NATIVE_PRODUCT_CONFIG = 'tests/e2e/product-tour/native.config.ts'
 
+/** Vendored skill packs are shipped as Electron resources, not workspace
+ *  packages: they carry package.json only, without node_modules or build
+ *  outputs, so their suites cannot run under the aggregate runner. This is a
+ *  path prefix (not a directory name) so unrelated `skills` directories in
+ *  repo-authored source stay discovered. */
+const OMITTED_SOURCE_PREFIXES = ['apps/electron/resources/skills/']
+
 function nearestPackage(root: string, file: string) {
   let directory = dirname(file)
   while (directory !== root && !existsSync(join(directory, 'package.json'))) directory = dirname(directory)
@@ -366,12 +375,16 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
       inventory: 'filesystem-fallback',
       standard: '*.{test,spec}.{js,jsx,ts,tsx,mjs,cjs,mts,cts} and *_{test,spec} forms',
       supplemental: '*.isolated.ts (including hidden source directories, as the former find stage did)',
-      omittedDirectories: ['node_modules', '.git'], hiddenStandardFiles: 0,
+      omittedDirectories: ['node_modules', '.git'],
+      omittedPaths: [...OMITTED_SOURCE_PREFIXES],
+      hiddenStandardFiles: 0,
     },
   }
   async function inspect(path: string, hidden: boolean) {
     const name = basename(path)
     if (!STANDARD_TEST.test(name) && !ISOLATED_TEST.test(name)) return
+    const pathFromRoot = portable(relative(root, path))
+    if (OMITTED_SOURCE_PREFIXES.some(prefix => pathFromRoot.startsWith(prefix))) return
     // Do not follow symlinks into dependency checkouts or external profiles.
     // An enumerated source disappearing is an error, not reduced coverage.
     const file = await openRegularFile(path, constants.O_RDONLY)
