@@ -1523,8 +1523,16 @@ export class WsRpcServer implements RpcServer {
   }
 
   private safeSend(ws: WebSocket, data: string): void {
-    if (ws.readyState === ws.OPEN) {
+    if (ws.readyState !== ws.OPEN) return
+    try {
       ws.send(data)
+    } catch (err) {
+      // A send race must never abort replay/handshake — mirror the client's
+      // best-effort trySendEnvelope (client.ts:954).
+      transportLog.warn('WebSocket send failed', {
+        readyState: ws.readyState,
+        error: err instanceof Error ? err.message : String(err),
+      })
     }
   }
 }

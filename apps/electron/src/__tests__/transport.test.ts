@@ -529,6 +529,31 @@ describe('reliable delivery', () => {
     expect(sent).toBe(false)
     expect(sendCalls).toBe(0)
   })
+
+  test('server safe send swallows a throwing socket instead of aborting replay', () => {
+    const server = trackServer(new WsRpcServer({ host: '127.0.0.1', port: 0 }))
+    // Private-access cast for regression coverage; no public API exposes safeSend.
+    const privateServer = server as unknown as { safeSend(ws: unknown, data: string): void }
+
+    const throwingWs = {
+      OPEN: 1,
+      readyState: 1,
+      send: () => { throw new Error('send race') },
+    }
+
+    expect(() => privateServer.safeSend(throwingWs, 'payload')).not.toThrow()
+
+    let sendCalls = 0
+    const closedWs = {
+      OPEN: 1,
+      readyState: 0,
+      send: () => { sendCalls += 1 },
+    }
+
+    privateServer.safeSend(closedWs, 'payload')
+
+    expect(sendCalls).toBe(0)
+  })
 })
 
 // ---------------------------------------------------------------------------
