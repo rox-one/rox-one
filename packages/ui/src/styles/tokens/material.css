@@ -1,0 +1,59 @@
+/* Material (glass) layer — default values (rox-one glass-material-system).
+   ThemeContext overrides these per surface when the layer is enabled
+   (`html[data-material="on"]` + injected `--material-*`); these are the
+   shipped fallbacks. Blur radii mirror the macOS clamp (1..64); opacity is
+   the material fraction of the opaque surface colour. Raw values live only
+   in this token file (UI token ratchet). */
+:root {
+  --material-blur-topbar: 20px;
+  --material-blur-rail: 20px;
+  --material-blur-strip: 20px;
+  --material-blur-inspector: 20px;
+  --material-blur-sidebar: 20px;
+  --material-blur-navigator: 20px;
+  --material-blur-chat: 12px;
+  --material-blur-composer: 14px;
+  --material-blur-popover: 24px;
+
+  --material-opacity-topbar: 84%;
+  --material-opacity-rail: 82%;
+  --material-opacity-strip: 88%;
+  --material-opacity-inspector: 88%;
+  --material-opacity-sidebar: 86%;
+  --material-opacity-navigator: 86%;
+  --material-opacity-chat: 55%;
+  --material-opacity-composer: 70%;
+  --material-opacity-popover: 92%;
+
+  --material-texture-intensity: 0.35;
+  --material-texture-scale: 1;
+
+  /* Texture patterns for the `.material-layer--texture` layer. Raw values are
+     allowed only in this token file; the layer paints the selected pattern
+     scaled by `--material-texture-scale` and faded by
+     `--material-texture-intensity`. */
+  --material-texture-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  --material-texture-scanlines: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--foreground) 10%, transparent) 0 1px,
+    transparent 1px 3px
+  );
+  --material-texture-pinstripe: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--foreground) 5%, transparent) 0 1px,
+    transparent 1px 6px
+  );
+  --material-texture-herringbone: repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--foreground) 4%, transparent) 0 1px,
+      transparent 1px 6px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--foreground) 4%, transparent) 0 1px,
+      transparent 1px 6px
+    );
+  --material-haze-intensity: 0.5;
+  --material-matte: 0;
+  --material-chat-effect-intensity: 0.5;
+}

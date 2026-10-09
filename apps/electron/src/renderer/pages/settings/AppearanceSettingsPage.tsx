@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import type { ReactNode } from 'react'
 import './AppearanceSettingsPage.css'
 import { useTranslation } from 'react-i18next'
 import { LANGUAGES, type LanguageCode } from '@rox/shared/i18n'
@@ -17,7 +18,7 @@ import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopo
 import { useTheme } from '@/context/ThemeContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
-import { Monitor, Sun, Moon, Plus, Trash2 } from 'lucide-react'
+import { Monitor, Sun, Moon, Plus, Trash2, ChevronDown } from 'lucide-react'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ToolIconMapping } from '../../../shared/types'
 
@@ -65,6 +66,46 @@ import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 import { ConationShellSettings } from './ConationShellSettings'
 import { ZenShellSettings } from './ZenShellSettings'
 import { SuperEngineeringAppearanceSettings } from './SuperEngineeringAppearanceSettings'
+import { cn } from '@/lib/utils'
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  AnimatedCollapsibleContent,
+} from '@/components/ui/collapsible'
+import {
+  MATERIAL_CHAT_EFFECT_KINDS,
+  MATERIAL_TEXTURE_KINDS,
+  type MaterialChatEffectKind,
+  type MaterialSettings,
+  type MaterialTextureKind,
+} from '@rox/shared/config'
+import {
+  MATERIAL_CHAT_EFFECT_LABELS,
+  MATERIAL_CONTENT_PANE_ROWS,
+  MATERIAL_PRESETS,
+  MATERIAL_SURFACE_ROWS,
+  MATERIAL_TEXTURE_LABELS,
+  effectiveBlur,
+  effectiveChatEffect,
+  effectiveDeepGlass,
+  effectiveHaze,
+  effectiveMattePercent,
+  effectiveOpacityPercent,
+  effectiveTexture,
+  effectiveTint,
+  materialEquals,
+  parseMaterialImport,
+  serializeMaterialExport,
+  setChatEffect,
+  setDeepGlass,
+  setHaze,
+  setMaterialEnabled,
+  setMatte,
+  setSurfaceBlur,
+  setSurfaceOpacity,
+  setTexture,
+  setTint,
+} from './material-settings'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -121,6 +162,449 @@ const getToolIconColumns = (t: (key: string) => string): ColumnDef<ToolIconMappi
     enableSorting: false,
   },
 ]
+
+// ============================================
+// Material & effects (glass) section
+// ============================================
+
+/** Apply debounce for the material draft (control release / typing). */
+const MATERIAL_APPLY_DEBOUNCE_MS = 200
+
+interface MaterialSliderRowProps {
+  label: string
+  ariaLabel: string
+  min: number
+  max: number
+  step: number
+  value: number
+  display: string
+  disabled?: boolean
+  onChange: (value: number) => void
+}
+
+function MaterialSliderRow({
+  label,
+  ariaLabel,
+  min,
+  max,
+  step,
+  value,
+  display,
+  disabled,
+  onChange,
+}: MaterialSliderRowProps) {
+  return (
+    <SettingsRow label={label}>
+      <div className="material-slider">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          disabled={disabled}
+          onChange={(event) => onChange(Number(event.target.value))}
+          aria-label={ariaLabel}
+          className="material-slider-input"
+        />
+        <span className="material-slider-value tabular-nums">{display}</span>
+      </div>
+    </SettingsRow>
+  )
+}
+
+function MaterialGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="material-group">
+      <h4 className="material-group-title">{title}</h4>
+      <SettingsCard>{children}</SettingsCard>
+    </div>
+  )
+}
+
+function MaterialEffectsSection() {
+  const { t } = useTranslation()
+  const { resolvedTheme } = useTheme()
+  const committed = resolvedTheme.material ?? null
+
+  const setAppMaterial = window.electronAPI?.setAppMaterial
+  const available = typeof setAppMaterial === 'function'
+
+  const [draft, setDraft] = useState<MaterialSettings | null>(committed)
+  const [saveFailed, setSaveFailed] = useState(false)
+  const [importStatus, setImportStatus] = useState<'success' | 'error' | null>(null)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+
+  const mountedRef = useRef(true)
+  const timerRef = useRef<number | null>(null)
+  const seqRef = useRef(0)
+  // Last value we optimistically sent (or the last committed value); used to
+  // ignore the echo of our own write while still adopting external changes.
+  const lastSentRef = useRef<MaterialSettings | null>(committed)
+  const committedRef = useRef<MaterialSettings | null>(committed)
+  committedRef.current = committed
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => () => { mountedRef.current = false }, [])
+
+  useEffect(() => {
+    if (materialEquals(committed, lastSentRef.current)) return
+    lastSentRef.current = committed
+    setDraft(committed)
+  }, [committed])
+
+  const commit = useCallback((next: MaterialSettings | null) => {
+    if (typeof setAppMaterial !== 'function') return
+    const seq = ++seqRef.current
+    lastSentRef.current = next
+    void setAppMaterial(next).then(
+      (overrides) => {
+        if (seq !== seqRef.current) return
+        const value = overrides?.material ?? null
+        lastSentRef.current = value
+        if (mountedRef.current) {
+          setDraft(value)
+          setSaveFailed(false)
+        }
+      },
+      (error: unknown) => {
+        if (seq !== seqRef.current) return
+        const previous = committedRef.current
+        lastSentRef.current = previous
+        if (mountedRef.current) {
+          setDraft(previous)
+          setSaveFailed(true)
+        }
+        if (error) console.warn('Failed to save material settings:', error)
+      },
+    )
+  }, [setAppMaterial])
+
+  const schedule = useCallback((next: MaterialSettings | null) => {
+    setDraft(next)
+    lastSentRef.current = next
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null
+      commit(next)
+    }, MATERIAL_APPLY_DEBOUNCE_MS)
+  }, [commit])
+
+  const handleExport = useCallback(() => {
+    const text = serializeMaterialExport(draft, t('settings.appearance.material.exportName'))
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'rox-material.json'
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }, [draft, t])
+
+  const handleImportFile = useCallback((file: File) => {
+    void file.text().then((text) => {
+      const result = parseMaterialImport(text)
+      if (!result.ok) {
+        setImportStatus('error')
+        return
+      }
+      setImportStatus('success')
+      schedule(result.material)
+    })
+  }, [schedule])
+
+  const enabled = draft?.enabled ?? false
+  const controlsDisabled = !available || !enabled
+  const tint = effectiveTint(draft)
+  const texture = effectiveTexture(draft)
+  const haze = effectiveHaze(draft)
+  const chatEffect = effectiveChatEffect(draft)
+  const mattePercent = effectiveMattePercent(draft)
+
+  return (
+    <SettingsSection
+      title={t('settings.appearance.material.title')}
+      description={t('settings.appearance.material.description')}
+    >
+      <SettingsCard>
+        <SettingsToggle
+          label={t('settings.appearance.material.enabled')}
+          description={t('settings.appearance.material.enabledDesc')}
+          checked={enabled}
+          onCheckedChange={(value) => schedule(setMaterialEnabled(draft, value))}
+          disabled={!available}
+        />
+        <SettingsRow label={t('settings.appearance.material.presets')}>
+          <div className="material-presets">
+            {MATERIAL_PRESETS.map(preset => (
+              <Button
+                key={preset.id}
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!available}
+                onClick={() => schedule({ ...preset.material })}
+              >
+                {t(preset.labelKey)}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={!available}
+              onClick={() => schedule(null)}
+            >
+              {t('settings.appearance.material.reset')}
+            </Button>
+          </div>
+        </SettingsRow>
+        <SettingsRow label={t('settings.appearance.material.transfer')}>
+          <div className="material-transfer">
+            <Button type="button" variant="secondary" size="sm" disabled={!available} onClick={handleExport}>
+              {t('settings.appearance.material.export')}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!available}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {t('settings.appearance.material.import')}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="material-file-input"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) handleImportFile(file)
+              }}
+            />
+          </div>
+        </SettingsRow>
+        {importStatus && (
+          <p role="status" className={cn('material-note', importStatus === 'error' && 'material-note-error')}>
+            {t(importStatus === 'error'
+              ? 'settings.appearance.material.importError'
+              : 'settings.appearance.material.importSuccess')}
+          </p>
+        )}
+        {saveFailed && (
+          <p role="alert" className="material-note material-note-error">
+            {t('settings.appearance.material.saveError')}
+          </p>
+        )}
+        {!available && (
+          <p role="alert" className="material-note">
+            {t('settings.appearance.material.unavailable')}
+          </p>
+        )}
+      </SettingsCard>
+
+      <div className="material-groups">
+        <MaterialGroup title={t('settings.appearance.material.opacity')}>
+          {MATERIAL_SURFACE_ROWS.map(row => {
+            const value = effectiveOpacityPercent(draft, row.surface)
+            const label = t(row.labelKey)
+            return (
+              <MaterialSliderRow
+                key={row.surface}
+                label={label}
+                ariaLabel={label}
+                min={0}
+                max={100}
+                step={1}
+                value={value}
+                display={`${value}%`}
+                disabled={controlsDisabled}
+                onChange={(next) => schedule(setSurfaceOpacity(draft, row.surface, next / 100))}
+              />
+            )
+          })}
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.blur')}>
+          {MATERIAL_SURFACE_ROWS.map(row => {
+            const value = effectiveBlur(draft, row.surface)
+            const label = t(row.labelKey)
+            return (
+              <MaterialSliderRow
+                key={row.surface}
+                label={label}
+                ariaLabel={label}
+                min={0}
+                max={64}
+                step={1}
+                value={value}
+                display={`${value}px`}
+                disabled={controlsDisabled}
+                onChange={(next) => schedule(setSurfaceBlur(draft, row.surface, next))}
+              />
+            )
+          })}
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.tint')}>
+          <MaterialSliderRow
+            label={t('settings.appearance.material.tintHue')}
+            ariaLabel={t('settings.appearance.material.tintHue')}
+            min={-180}
+            max={180}
+            step={1}
+            value={tint.hue}
+            display={`${tint.hue}°`}
+            disabled={controlsDisabled}
+            onChange={(next) => schedule(setTint(draft, { hue: next }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.tintSaturation')}
+            ariaLabel={t('settings.appearance.material.tintSaturation')}
+            min={-100}
+            max={100}
+            step={1}
+            value={tint.saturation}
+            display={`${tint.saturation}%`}
+            disabled={controlsDisabled}
+            onChange={(next) => schedule(setTint(draft, { saturation: next }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.tintLightness')}
+            ariaLabel={t('settings.appearance.material.tintLightness')}
+            min={-30}
+            max={30}
+            step={1}
+            value={tint.lightness}
+            display={`${tint.lightness}%`}
+            disabled={controlsDisabled}
+            onChange={(next) => schedule(setTint(draft, { lightness: next }))}
+          />
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.texture')}>
+          <SettingsRow label={t('settings.appearance.material.textureKind')}>
+            <SettingsMenuSelect
+              value={texture.kind}
+              disabled={controlsDisabled}
+              onValueChange={(value) => schedule(setTexture(draft, { kind: value as MaterialTextureKind }))}
+              options={MATERIAL_TEXTURE_KINDS.map(kind => ({
+                value: kind,
+                label: t(MATERIAL_TEXTURE_LABELS[kind]),
+              }))}
+            />
+          </SettingsRow>
+          <MaterialSliderRow
+            label={t('settings.appearance.material.textureIntensity')}
+            ariaLabel={t('settings.appearance.material.textureIntensity')}
+            min={0}
+            max={1}
+            step={0.01}
+            value={texture.intensity}
+            display={`${Math.round(texture.intensity * 100)}%`}
+            disabled={controlsDisabled || texture.kind === 'none'}
+            onChange={(next) => schedule(setTexture(draft, { intensity: next }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.textureScale')}
+            ariaLabel={t('settings.appearance.material.textureScale')}
+            min={0.5}
+            max={3}
+            step={0.1}
+            value={texture.scale}
+            display={`${texture.scale.toFixed(1)}×`}
+            disabled={controlsDisabled || texture.kind === 'none'}
+            onChange={(next) => schedule(setTexture(draft, { scale: next }))}
+          />
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.haze')}>
+          <SettingsToggle
+            label={t('settings.appearance.material.hazeEnabled')}
+            checked={haze.enabled}
+            disabled={controlsDisabled}
+            onCheckedChange={(value) => schedule(setHaze(draft, { enabled: value }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.hazeIntensity')}
+            ariaLabel={t('settings.appearance.material.hazeIntensity')}
+            min={0}
+            max={1}
+            step={0.01}
+            value={haze.intensity}
+            display={`${Math.round(haze.intensity * 100)}%`}
+            disabled={controlsDisabled || !haze.enabled}
+            onChange={(next) => schedule(setHaze(draft, { intensity: next }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.matte')}
+            ariaLabel={t('settings.appearance.material.matte')}
+            min={0}
+            max={100}
+            step={1}
+            value={mattePercent}
+            display={`${mattePercent}%`}
+            disabled={controlsDisabled}
+            onChange={(next) => schedule(setMatte(draft, next / 100))}
+          />
+        </MaterialGroup>
+
+        <MaterialGroup title={t('settings.appearance.material.chatEffect')}>
+          <SettingsRow label={t('settings.appearance.material.chatEffectKind')}>
+            <SettingsMenuSelect
+              value={chatEffect.kind}
+              disabled={controlsDisabled}
+              onValueChange={(value) => schedule(setChatEffect(draft, { kind: value as MaterialChatEffectKind }))}
+              options={MATERIAL_CHAT_EFFECT_KINDS.map(kind => ({
+                value: kind,
+                label: t(MATERIAL_CHAT_EFFECT_LABELS[kind]),
+              }))}
+            />
+          </SettingsRow>
+          <MaterialSliderRow
+            label={t('settings.appearance.material.chatEffectIntensity')}
+            ariaLabel={t('settings.appearance.material.chatEffectIntensity')}
+            min={0}
+            max={1}
+            step={0.01}
+            value={chatEffect.intensity}
+            display={`${Math.round(chatEffect.intensity * 100)}%`}
+            disabled={controlsDisabled || chatEffect.kind === 'none'}
+            onChange={(next) => schedule(setChatEffect(draft, { intensity: next }))}
+          />
+        </MaterialGroup>
+
+        <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen} className="material-group">
+          <CollapsibleTrigger className="material-group-trigger" disabled={!available}>
+            <span className="material-group-title">{t('settings.appearance.material.advanced')}</span>
+            <ChevronDown
+              className={cn('material-chevron', advancedOpen && 'material-chevron-open')}
+              aria-hidden="true"
+            />
+          </CollapsibleTrigger>
+          <AnimatedCollapsibleContent isOpen={advancedOpen}>
+            <SettingsCard>
+              <div className="material-group-heading">
+                <div className="material-group-title">{t('settings.appearance.material.deepGlass')}</div>
+                <p className="material-group-hint">{t('settings.appearance.material.deepGlassDesc')}</p>
+              </div>
+              {MATERIAL_CONTENT_PANE_ROWS.map(row => (
+                <SettingsToggle
+                  key={row.pane}
+                  label={t(row.labelKey)}
+                  checked={effectiveDeepGlass(draft, row.pane)}
+                  disabled={controlsDisabled}
+                  onCheckedChange={(value) => schedule(setDeepGlass(draft, row.pane, value))}
+                />
+              ))}
+            </SettingsCard>
+          </AnimatedCollapsibleContent>
+        </Collapsible>
+      </div>
+    </SettingsSection>
+  )
+}
 
 // ============================================
 // Main Component
@@ -783,6 +1267,8 @@ export default function AppearanceSettingsPage() {
                   </SettingsRow>
                 </SettingsCard>
               </SettingsSection>
+
+              <MaterialEffectsSection />
 
               <SuperEngineeringAppearanceSettings />
               <ZenShellSettings />

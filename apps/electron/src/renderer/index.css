@@ -1009,6 +1009,141 @@ html [data-inspector-panel] { --shell-glass-surface: var(--shell-glass-inspector
 html[data-shell-runtime="web"], html[data-shell-runtime="web"] :is(body, #root) {
   background: rgb(from var(--canvas) r g b / 1);
 }
+
+/* Material (glass) layer — per-surface overrides when the layer is enabled
+   (ThemeContext sets html[data-material="on"] and injects --material-*).
+   Mirrors the specificity of the static glass block above so the material
+   wins when both apply; without the layer the static tokens stay in charge. */
+html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]),
+html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) {
+  --shell-glass-topbar: color-mix(in srgb, rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1) var(--material-opacity-topbar), transparent);
+  --shell-glass-rail: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) var(--material-opacity-rail), transparent);
+  --shell-glass-strip: color-mix(in srgb, rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) var(--material-opacity-strip), transparent);
+  --shell-glass-inspector: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) var(--material-opacity-inspector), transparent);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* Per-surface blur radii for the browser CSS-glass path. Electron windows
+     keep the native compositor (no CSS blur re-sampling, PERF-07/B14). */
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .chrome-topbar {
+    backdrop-filter: blur(var(--material-blur-topbar)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-topbar)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .chrome-rail {
+    backdrop-filter: blur(var(--material-blur-rail)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-rail)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .rox-shell-pane[data-panel-role="sidebar"] {
+    backdrop-filter: blur(var(--material-blur-sidebar)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-sidebar)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .rox-shell-pane[data-panel-role="navigator"] {
+    backdrop-filter: blur(var(--material-blur-navigator)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-navigator)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .chrome-strip {
+    backdrop-filter: blur(var(--material-blur-strip)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-strip)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) [data-inspector-panel] {
+    backdrop-filter: blur(var(--material-blur-inspector)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-inspector)) saturate(1.15);
+  }
+}
+
+/* =============================================================================
+   MATERIAL LAYERS + FLOATING/READING SURFACES (rox-one glass-material-system)
+
+   ThemeContext mounts the fixed, aria-hidden `.material-layer` nodes and
+   publishes html[data-material="on"] + data-material-texture/chat-effect (plus
+   the injected --material-* vars). The layers paint the selected procedural
+   texture and the generated chat backdrop; the surface rules below make
+   popovers/composer/chat translucent on the same capability gates as the
+   shell material block above (browser CSS glass for web, native vibrancy/Mica
+   for Electron — a CSS blur is never added on the native path, PERF-07/B14).
+============================================================================= */
+.material-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: none;
+  z-index: 0;
+}
+
+html[data-material="on"][data-material-texture] .material-layer--texture {
+  display: block;
+  background-repeat: repeat;
+  opacity: var(--material-texture-intensity, 0.35);
+}
+html[data-material="on"][data-material-texture="grain"] .material-layer--texture {
+  background-image: var(--material-texture-grain);
+  background-size: calc(10rem * var(--material-texture-scale, 1)) calc(10rem * var(--material-texture-scale, 1));
+}
+html[data-material="on"][data-material-texture="scanlines"] .material-layer--texture {
+  background-image: var(--material-texture-scanlines);
+  background-size: auto calc(0.1875rem * var(--material-texture-scale, 1));
+}
+html[data-material="on"][data-material-texture="pinstripe"] .material-layer--texture {
+  background-image: var(--material-texture-pinstripe);
+  background-size: calc(0.375rem * var(--material-texture-scale, 1)) calc(0.375rem * var(--material-texture-scale, 1));
+}
+html[data-material="on"][data-material-texture="herringbone"] .material-layer--texture {
+  background-image: var(--material-texture-herringbone);
+  background-size: calc(0.375rem * var(--material-texture-scale, 1)) calc(0.375rem * var(--material-texture-scale, 1));
+}
+
+html[data-material="on"][data-material-chat-effect] .material-layer--chat-effect {
+  display: block;
+  background-image: var(--material-chat-effect-image, none);
+  background-size: cover;
+  opacity: var(--material-chat-effect-intensity, 0.5);
+}
+
+/* Surface tints — mirror the shell material block's capability gates and
+   specificity so the material wins over the static solid surface rules. When
+   material is off the opaque `--popover-solid`/`--input-surface` rules stay in
+   charge untouched. */
+html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .popover-styled,
+html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) .popover-styled {
+  background: color-mix(in srgb, var(--popover-solid) var(--material-opacity-popover), transparent);
+}
+html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .input-container,
+html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) .input-container {
+  background: color-mix(in srgb, var(--input-surface, var(--paper)) var(--material-opacity-composer), transparent);
+}
+html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) [data-focus-zone="chat"],
+html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) [data-focus-zone="chat"] {
+  background: color-mix(in srgb, var(--canvas) var(--material-opacity-chat), transparent);
+}
+
+/* Browser CSS glass only. Electron keeps the native compositor, and the
+   OPAQUE OVERLAYS policy below still owns menu/popover blur. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .popover-styled {
+    backdrop-filter: blur(var(--material-blur-popover)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-popover)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) .input-container {
+    backdrop-filter: blur(var(--material-blur-composer)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-composer)) saturate(1.15);
+  }
+  html[data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"]) [data-focus-zone="chat"] {
+    backdrop-filter: blur(var(--material-blur-chat)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--material-blur-chat)) saturate(1.15);
+  }
+}
+
+/* Hard gates: no material layers under reduced transparency/contrast, the
+   high-contrast preset, or the low-power render profile. */
+html[data-contrast="high"] .material-layer,
+html[data-render-profile="performance"] .material-layer {
+  display: none !important;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html .material-layer {
+    display: none !important;
+  }
+}
 html[data-theme-override]:not([data-scenic])::before { background: transparent; }
 
 html[data-contrast="high"] {

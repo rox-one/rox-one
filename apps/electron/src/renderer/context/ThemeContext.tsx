@@ -7,6 +7,7 @@ import {
   themeToCSS,
   DEFAULT_SHIKI_THEME,
   getShikiTheme,
+  resolveMaterial,
   shouldSetThemeOverride,
   type ThemeOverrides,
   type ThemeFile,
@@ -28,6 +29,7 @@ import {
   type UiFontFamily,
 } from './font-preferences'
 import { toErrorMessage } from '@/lib/errors'
+import { isGeneratedMaterialEffect, materialEffectDataUrl } from '@/lib/material-effect-art'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type FontFamily = UiFontFamily
@@ -121,6 +123,33 @@ const BUNDLED_THEMES = new Map<string, ThemeFile>(
   })
 )
 
+/** Lazily create the fixed, aria-hidden material layers once per document. */
+function ensureMaterialLayer(kind: 'texture' | 'chat-effect'): HTMLDivElement | null {
+  if (typeof document === 'undefined') return null
+  let layer = document.querySelector<HTMLDivElement>(`.material-layer--${kind}`)
+  if (!layer) {
+    layer = document.createElement('div')
+    layer.className = `material-layer material-layer--${kind}`
+    layer.setAttribute('aria-hidden', 'true')
+    document.body.appendChild(layer)
+  }
+  return layer
+}
+
+/** Current foreground token as RGB, for painting generated effect art. */
+function materialEffectRgb(): [number, number, number] {
+  if (typeof window === 'undefined') return [255, 255, 255]
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()
+  const hex = raw.match(/^#?([0-9a-f]{6})$/i)
+  if (hex?.[1]) {
+    const value = parseInt(hex[1], 16)
+    return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
+  }
+  const rgb = raw.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
+  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])]
+  return [255, 255, 255]
+}
+
 interface ThemeProviderProps {
   children: ReactNode
   defaultMode?: ThemeMode
@@ -182,6 +211,11 @@ export function ThemeProvider({
   const [contrast, setContrastState] = useState<ContrastMode>(storedContrast(stored))
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
   const [systemPrefersMoreContrast, setSystemPrefersMoreContrast] = useState(prefersMoreContrast)
+  const [systemPrefersReducedTransparency, setSystemPrefersReducedTransparency] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-reduced-transparency: reduce)').matches
+      : false,
+  )
   const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState<ThemeMode | null>(null)
 
@@ -440,6 +474,83 @@ export function ThemeProvider({
     }
   }, [effectiveColorTheme, presetTheme, resolvedTheme, isDark, appTheme, themeLoadError])
 
+  // === Material (glass) layer ===
+  // Resolve the theme's material settings with the accessibility gates, then
+  // publish the state as data attributes. Variables come from themeToCSS.
+  const resolvedMaterial = useMemo(() => resolveMaterial(resolvedTheme.material, {
+    reduceTransparency: systemPrefersReducedTransparency,
+    highContrast: resolvedContrast === 'high',
+  }), [resolvedTheme, systemPrefersReducedTransparency, resolvedContrast])
+
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    if (!resolvedMaterial.enabled) {
+      delete root.dataset.material
+      delete root.dataset.materialTexture
+      delete root.dataset.materialChatEffect
+      delete root.dataset.materialDeep
+      return
+    }
+    root.dataset.material = 'on'
+    const texture = resolvedMaterial.texture.kind
+    if (texture && texture !== 'none') root.dataset.materialTexture = texture
+    else delete root.dataset.materialTexture
+    const chatEffect = resolvedMaterial.chatEffect.kind
+    if (chatEffect && chatEffect !== 'none') root.dataset.materialChatEffect = chatEffect
+    else delete root.dataset.materialChatEffect
+    const deepPanes = Object.entries(resolvedMaterial.deepGlass)
+      .filter(([, enabled]) => enabled)
+      .map(([pane]) => pane)
+    if (deepPanes.length > 0) root.dataset.materialDeep = deepPanes.join(',')
+    else delete root.dataset.materialDeep
+  }, [resolvedMaterial])
+
+  // Mount the fixed material layers and (re)generate the chat-effect bitmap.
+  // CSS gates visibility from the data attributes; this effect owns only the
+  // DOM nodes and the generated art for the chat-effect layer.
+  useEffect(() => {
+    const chatLayer = ensureMaterialLayer('chat-effect')
+    ensureMaterialLayer('texture')
+    if (!chatLayer) return
+    const clearArt = () => {
+      chatLayer.style.removeProperty('--material-chat-effect-image')
+      chatLayer.style.backgroundImage = ''
+    }
+    if (!resolvedMaterial.enabled) {
+      clearArt()
+      return
+    }
+    const kind = resolvedMaterial.chatEffect.kind
+    if (!kind || kind === 'none') {
+      clearArt()
+      return
+    }
+    if (kind === 'gradient') {
+      chatLayer.style.backgroundImage =
+        'linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--canvas) 55%, transparent) 100%)'
+      return
+    }
+    if (!isGeneratedMaterialEffect(kind)) return
+    let cancelled = false
+    const width = Math.min(Math.max(window.innerWidth, 320), 2048)
+    const height = Math.min(Math.max(window.innerHeight, 240), 2048)
+    void materialEffectDataUrl({
+      kind,
+      width,
+      height,
+      intensity: resolvedMaterial.chatEffect.intensity,
+      scale: resolvedMaterial.texture.scale,
+      rgb: materialEffectRgb(),
+    }).then((url) => {
+      if (cancelled || !url) return
+      chatLayer.style.setProperty('--material-chat-effect-image', `url("${url}")`)
+      chatLayer.style.backgroundImage = `url("${url}")`
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [resolvedMaterial])
+
   // === System preference listener ===
   useEffect(() => {
     let active = true
@@ -455,9 +566,15 @@ export function ThemeProvider({
       if (!active) return
       setSystemPrefersMoreContrast(e.matches)
     }
+    const reducedTransparencyQuery = window.matchMedia('(prefers-reduced-transparency: reduce)')
+    const handleReducedTransparencyChange = (e: MediaQueryListEvent) => {
+      if (!active) return
+      setSystemPrefersReducedTransparency(e.matches)
+    }
 
     mediaQuery.addEventListener('change', handleMediaChange)
     contrastQuery.addEventListener('change', handleContrastChange)
+    reducedTransparencyQuery.addEventListener('change', handleReducedTransparencyChange)
 
     // Listen via Electron IPC if available (more reliable on macOS)
     let cleanup: (() => void) | undefined
@@ -480,6 +597,7 @@ export function ThemeProvider({
       active = false
       mediaQuery.removeEventListener('change', handleMediaChange)
       contrastQuery.removeEventListener('change', handleContrastChange)
+      reducedTransparencyQuery.removeEventListener('change', handleReducedTransparencyChange)
       cleanup?.()
     }
   }, [])

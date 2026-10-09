@@ -79,6 +79,189 @@ export interface SurfaceColors {
 export type ThemeMode = 'solid' | 'scenic' | 'blurred';
 
 /**
+ * Material (glass) layer — configurable transparency/blur/texture settings.
+ * Surface names mirror the shell glass tokens (`--shell-glass-*`).
+ */
+export const MATERIAL_SURFACES = [
+  'topbar', 'rail', 'strip', 'inspector', 'sidebar', 'navigator', 'chat', 'composer', 'popover',
+] as const;
+export type MaterialSurface = typeof MATERIAL_SURFACES[number];
+
+/** Content panes that can opt into translucency ("deep glass", opt-in per pane). */
+export const MATERIAL_CONTENT_PANES = ['content', 'editor', 'lists'] as const;
+export type MaterialContentPane = typeof MATERIAL_CONTENT_PANES[number];
+
+export const MATERIAL_TEXTURE_KINDS = ['none', 'grain', 'scanlines', 'pinstripe', 'herringbone'] as const;
+export type MaterialTextureKind = typeof MATERIAL_TEXTURE_KINDS[number];
+
+export const MATERIAL_CHAT_EFFECT_KINDS = ['none', 'gradient', 'dither', 'ascii', 'halftone', 'scanlines'] as const;
+export type MaterialChatEffectKind = typeof MATERIAL_CHAT_EFFECT_KINDS[number];
+
+export interface MaterialTintSettings {
+  /** Hue shift applied to the glass tint, degrees (-180..180). */
+  hue?: number;
+  /** Saturation adjustment, percent (-100..100). */
+  saturation?: number;
+  /** Lightness adjustment, percent (-30..30). */
+  lightness?: number;
+}
+
+export interface MaterialTextureSettings {
+  kind?: MaterialTextureKind;
+  /** Texture strength, 0..1. */
+  intensity?: number;
+  /** Texture scale, 0.5..3. */
+  scale?: number;
+}
+
+export interface MaterialHazeSettings {
+  enabled?: boolean;
+  /** Haze strength, 0..1. */
+  intensity?: number;
+}
+
+export interface MaterialChatEffectSettings {
+  kind?: MaterialChatEffectKind;
+  /** Effect strength, 0..1. */
+  intensity?: number;
+}
+
+/**
+ * Material ("glass") settings for the configurable transparent theme layer.
+ * Every field is optional: an absent field keeps the current solid behavior.
+ * `enabled: true` opts the shell into the material layer.
+ */
+export interface MaterialSettings {
+  enabled?: boolean;
+  /** Native window tint source (macOS vibrancy / Windows Mica tint). */
+  nativeTint?: 'theme' | 'custom' | 'off';
+  /** Tint color when nativeTint === 'custom'. */
+  tintColor?: CSSColor;
+  /** Per-surface blur radius in px (0..64). */
+  blur?: Partial<Record<MaterialSurface, number>>;
+  /** Per-surface opacity as a fraction of the opaque surface color (0..1). */
+  opacity?: Partial<Record<MaterialSurface, number>>;
+  tint?: MaterialTintSettings;
+  texture?: MaterialTextureSettings;
+  haze?: MaterialHazeSettings;
+  /** Matte underlay strength, 0..1 (1 = fully opaque panes). */
+  matte?: number;
+  /** Opt-in translucency for content panes (advanced; off by default). */
+  deepGlass?: Partial<Record<MaterialContentPane, boolean>>;
+  chatEffect?: MaterialChatEffectSettings;
+}
+
+/**
+ * Defaults applied when the material layer is enabled. Mirror the shipped
+ * shell tokens (20px chrome blur, 84/82/88% tints) with per-surface ranges.
+ */
+export const MATERIAL_DEFAULTS = {
+  blur: {
+    topbar: 20, rail: 20, strip: 20, inspector: 20,
+    sidebar: 20, navigator: 20, chat: 12, composer: 14, popover: 24,
+  },
+  opacity: {
+    topbar: 0.84, rail: 0.82, strip: 0.88, inspector: 0.88,
+    sidebar: 0.86, navigator: 0.86, chat: 0.55, composer: 0.7, popover: 0.92,
+  },
+  texture: { kind: 'none', intensity: 0.35, scale: 1 },
+  haze: { enabled: false, intensity: 0.5 },
+  chatEffect: { kind: 'none', intensity: 0.5 },
+} as const;
+
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
+
+/** Deep-merge material settings (override wins per field/subfield). */
+export function mergeMaterialSettings(
+  base: MaterialSettings | undefined,
+  override: MaterialSettings | undefined,
+): MaterialSettings | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  const mergeSub = <T extends object>(a: T | undefined, b: T | undefined): T | undefined => {
+    if (!a) return b;
+    if (!b) return a;
+    return { ...a, ...b };
+  };
+  const result: MaterialSettings = { ...base, ...override };
+  const blur = mergeSub(base.blur, override.blur);
+  const opacity = mergeSub(base.opacity, override.opacity);
+  const tint = mergeSub(base.tint, override.tint);
+  const texture = mergeSub(base.texture, override.texture);
+  const haze = mergeSub(base.haze, override.haze);
+  const deepGlass = mergeSub(base.deepGlass, override.deepGlass);
+  const chatEffect = mergeSub(base.chatEffect, override.chatEffect);
+  if (blur) result.blur = blur; else delete result.blur;
+  if (opacity) result.opacity = opacity; else delete result.opacity;
+  if (tint) result.tint = tint; else delete result.tint;
+  if (texture) result.texture = texture; else delete result.texture;
+  if (haze) result.haze = haze; else delete result.haze;
+  if (deepGlass) result.deepGlass = deepGlass; else delete result.deepGlass;
+  if (chatEffect) result.chatEffect = chatEffect; else delete result.chatEffect;
+  return result;
+}
+
+export interface MaterialResolveContext {
+  reduceTransparency?: boolean;
+  highContrast?: boolean;
+  renderProfile?: 'standard' | 'performance';
+}
+
+export interface ResolvedMaterial {
+  enabled: boolean;
+  disabledReason?: 'off' | 'reduce-transparency' | 'high-contrast';
+  nativeTint: 'theme' | 'custom' | 'off';
+  tintColor?: CSSColor;
+  blur: Record<MaterialSurface, number>;
+  opacity: Record<MaterialSurface, number>;
+  tint?: MaterialTintSettings;
+  texture: Required<MaterialTextureSettings>;
+  haze: Required<MaterialHazeSettings>;
+  matte: number;
+  deepGlass: Partial<Record<MaterialContentPane, boolean>>;
+  chatEffect: Required<MaterialChatEffectSettings>;
+}
+
+/**
+ * Pure resolver for the material layer. Combines user settings with the
+ * accessibility/performance gates the shell already honors:
+ * reduce-transparency and high contrast force a solid surface, the
+ * performance render profile keeps the tint but zeroes every blur radius.
+ */
+export function resolveMaterial(
+  material: MaterialSettings | undefined,
+  context: MaterialResolveContext = {},
+): ResolvedMaterial {
+  const blur = {} as Record<MaterialSurface, number>;
+  const opacity = {} as Record<MaterialSurface, number>;
+  for (const surface of MATERIAL_SURFACES) {
+    blur[surface] = clampNumber(material?.blur?.[surface] ?? MATERIAL_DEFAULTS.blur[surface], 0, 64);
+    opacity[surface] = clampNumber(material?.opacity?.[surface] ?? MATERIAL_DEFAULTS.opacity[surface], 0, 1);
+  }
+  const resolved: ResolvedMaterial = {
+    enabled: Boolean(material?.enabled),
+    nativeTint: material?.nativeTint ?? 'theme',
+    tintColor: material?.tintColor,
+    blur,
+    opacity,
+    tint: material?.tint ? { ...material.tint } : undefined,
+    texture: { kind: 'none', intensity: 0.35, scale: 1, ...material?.texture },
+    haze: { enabled: false, intensity: 0.5, ...material?.haze },
+    matte: clampNumber(material?.matte ?? 0, 0, 1),
+    deepGlass: { ...material?.deepGlass },
+    chatEffect: { kind: 'none', intensity: 0.5, ...material?.chatEffect },
+  };
+  if (!resolved.enabled) return { ...resolved, disabledReason: 'off' };
+  if (context.highContrast) return { ...resolved, enabled: false, disabledReason: 'high-contrast' };
+  if (context.reduceTransparency) return { ...resolved, enabled: false, disabledReason: 'reduce-transparency' };
+  if (context.renderProfile === 'performance') {
+    for (const surface of MATERIAL_SURFACES) blur[surface] = 0;
+  }
+  return resolved;
+}
+
+/**
  * Theme overrides - light mode default, optional dark overrides
  * App-level only (no workspace cascading)
  */
@@ -97,6 +280,12 @@ export interface ThemeOverrides extends ThemeColors, SurfaceColors {
    * Required when mode='scenic', ignored otherwise
    */
   backgroundImage?: string;
+
+  /**
+   * Material (glass) layer settings — blur/opacity/tint/texture/haze/matte and
+   * per-surface opt-ins. Absent keeps the current solid surface behavior.
+   */
+  material?: MaterialSettings;
 }
 
 /**
@@ -179,6 +368,10 @@ export function mergeThemeOverrides(
       result.dark.terminalAnsi = { ...base.dark?.terminalAnsi, ...override.dark.terminalAnsi };
     }
   }
+
+  // Deep merge material (glass) settings
+  const material = mergeMaterialSettings(base.material, override.material);
+  if (material !== undefined) result.material = material;
 
   return result;
 }
@@ -397,6 +590,37 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
   // to avoid style sheet size limits with large data URLs)
   const mode = theme.mode || 'solid';
   vars.push(`--theme-mode: ${mode};`);
+
+  // Material (glass) layer variables. Emitted only when the layer is enabled;
+  // consumers fall back to their static shell tokens otherwise.
+  const material = theme.material;
+  if (material?.enabled) {
+    const blur = { ...MATERIAL_DEFAULTS.blur, ...material.blur };
+    const opacity = { ...MATERIAL_DEFAULTS.opacity, ...material.opacity };
+    for (const surface of MATERIAL_SURFACES) {
+      vars.push(`--material-blur-${surface}: ${blur[surface]}px;`);
+      vars.push(`--material-opacity-${surface}: ${Math.round(opacity[surface] * 1000) / 10}%;`);
+    }
+    if (material.tint) {
+      if (material.tint.hue !== undefined) vars.push(`--material-tint-hue: ${material.tint.hue}deg;`);
+      if (material.tint.saturation !== undefined) vars.push(`--material-tint-saturation: ${material.tint.saturation}%;`);
+      if (material.tint.lightness !== undefined) vars.push(`--material-tint-lightness: ${material.tint.lightness}%;`);
+    }
+    const texture = { ...MATERIAL_DEFAULTS.texture, ...material.texture };
+    if (texture.kind !== 'none') {
+      vars.push(`--material-texture-kind: ${texture.kind};`);
+      vars.push(`--material-texture-intensity: ${texture.intensity};`);
+      vars.push(`--material-texture-scale: ${texture.scale};`);
+    }
+    const haze = { ...MATERIAL_DEFAULTS.haze, ...material.haze };
+    if (haze.enabled) vars.push(`--material-haze-intensity: ${haze.intensity};`);
+    if (material.matte !== undefined) vars.push(`--material-matte: ${material.matte};`);
+    const chatEffect = { ...MATERIAL_DEFAULTS.chatEffect, ...material.chatEffect };
+    if (chatEffect.kind !== 'none') {
+      vars.push(`--material-chat-effect: ${chatEffect.kind};`);
+      vars.push(`--material-chat-effect-intensity: ${chatEffect.intensity};`);
+    }
+  }
 
   return vars.join('\n  ');
 }
