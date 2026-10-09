@@ -20,7 +20,9 @@ import {
   validateSession,
   buildSessionCookie,
   buildLogoutCookie,
+  HandoffTokenStore,
 } from './auth'
+import { withWebuiSecurityHeaders } from './csp'
 import { generateCallbackPage } from '@rox/shared/auth'
 import type { PlatformServices } from '../runtime/platform'
 
@@ -171,6 +173,11 @@ export interface WebuiHandlerOptions {
    * Standalone Bun.serve wires this to `server.requestIP(req)`.
    */
   resolveClientIp?: (req: Request) => string | null
+  /**
+   * Lifetime of a single-use pairing handoff token. Defaults to 120 s; the
+   * accepted range is 1..120 s (see `HandoffTokenStore`).
+   */
+  handoffTtlMs?: number
 }
 
 // ---------------------------------------------------------------------------
@@ -184,6 +191,12 @@ export interface WebuiHandler {
   dispose: () => void
   /** Inject OAuth callback deps after bootstrap (lazy wiring). */
   setOAuthCallbackDeps: (deps: OAuthCallbackDeps) => void
+  /**
+   * Mint a single-use pairing handoff token for this handler's store. The
+   * caller builds the pairing URL (`<origin>/handoff#<token>`) and must treat
+   * the token as a one-time secret: it is never logged or placed in a query.
+   */
+  createHandoffToken: () => { token: string; expiresAt: number }
 }
 
 /**
@@ -216,6 +229,10 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
   // Hash the login password at startup (async, but resolves before first auth attempt in practice)
   const passwordReady = initPasswordHash(loginPassword)
 
+  // Single-use pairing handoff tokens (hashed at rest, TTL-bounded).
+  const handoffStore = new HandoffTokenStore(options.handoffTtlMs)
+  const handoffCleanupTimer = setInterval(() => handoffStore.sweep(), 30_000)
+
   /** Extract client IP — only trusts proxy headers when the socket IP is a configured proxy. */
   function getClientIp(req: Request): string {
     const socketIp = resolveClientIp?.(req) ?? null
@@ -227,10 +244,45 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     return socketIp ?? 'direct'
   }
 
-  async function fetch(req: Request): Promise<Response> {
+  async function route(req: Request): Promise<Response> {
     const url = new URL(req.url)
     const path = url.pathname
     const useSecureCookies = shouldUseSecureCookies(req, secureCookies)
+
+    // ── Pairing handoff (token only from a header; never from the URL) ──
+    if (path === '/handoff' && req.method === 'GET') {
+      const token = req.headers.get('x-handoff-token')
+      if (!token) {
+        // Browser navigation to the pairing link: serve the SPA shell so the
+        // fragment (never sent to the server) can be redeemed by the bootstrap.
+        const accept = req.headers.get('accept') ?? ''
+        if (accept.includes('text/html')) {
+          const shell = Bun.file(join(webuiDir, 'index.html'))
+          if (await shell.exists()) {
+            return new Response(shell, {
+              headers: { 'Content-Type': 'text/html; charset=utf-8' },
+            })
+          }
+        }
+        return Response.json({ error: 'Handoff token required' }, { status: 400 })
+      }
+
+      const result = handoffStore.redeem(token)
+      if (result !== 'ok') {
+        logger.warn(`[webui] Handoff redemption rejected (${result})`)
+        return Response.json(
+          { error: result === 'expired' ? 'Handoff token expired' : 'Invalid handoff token' },
+          { status: 401 },
+        )
+      }
+
+      const jwt = await createSessionToken(secret)
+      logger.info('[webui] Handoff token redeemed')
+      return Response.json({ ok: true }, {
+        status: 200,
+        headers: { 'Set-Cookie': buildSessionCookie(jwt, useSecureCookies) },
+      })
+    }
 
     // ── Health endpoint (no auth) ──
     if (path === '/health') {
@@ -437,11 +489,15 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
   }
 
   return {
-    fetch,
-    dispose: () => clearInterval(cleanupTimer),
+    fetch: async (req: Request) => withWebuiSecurityHeaders(await route(req)),
+    dispose: () => {
+      clearInterval(cleanupTimer)
+      clearInterval(handoffCleanupTimer)
+    },
     setOAuthCallbackDeps: (deps: OAuthCallbackDeps) => {
       options.oauthCallbackDeps = deps
     },
+    createHandoffToken: () => handoffStore.mint(),
   }
 }
 

@@ -80,6 +80,8 @@ export interface ServerBootstrapOptions<TSessionManager, THandlerDeps> {
   /** Cookie-based session validator for web UI auth on WebSocket upgrade. */
   validateSessionCookie?: (cookieHeader: string | null) => Promise<boolean>
   webUiAppearanceWorkspaceId?: () => string | null
+  /** Extra browser origins allowed to complete a cookie-authenticated WebUI upgrade. */
+  allowedWebUiOrigins?: string[]
   /** Electron main resolves an ephemeral renderer proof into trusted scope. */
   resolveLocalClientBinding?: (candidate: LocalClientBindingCandidate) => TrustedLocalClientBinding | null
   /**
@@ -528,6 +530,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     validateToken: async (t) => secureTokenCompare(t, serverToken),
     validateSessionCookie: options.validateSessionCookie,
     webUiAppearanceWorkspaceId: options.webUiAppearanceWorkspaceId,
+    allowedWebUiOrigins: options.allowedWebUiOrigins,
     serverId: options.serverId ?? 'headless',
     serverVersion: options.serverVersion,
     tls: options.tls,
