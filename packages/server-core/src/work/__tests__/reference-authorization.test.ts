@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type { Authorizer } from '@rox/core/commands'
 import { InMemoryCommandStore } from '../../commands/store'
 import { ReferenceTx, authorizeRef, configureReferenceRuntime, storedAclRole, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime } from '../reference'
-import { createHarness } from './reference-harness'
+import { createHarness, seedReferenceChat, seedReferenceChatMember } from './reference-harness'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from './reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
@@ -138,12 +138,12 @@ describe('payload containers and destinations are authorized', () => {
 describe('chat destinations need membership, posting policy and write', () => {
   async function chats() {
     const setup = harness()
-    await setup.run({ type: 'im.create_chat', payload: { id: U('src'), kind: 'group', name: 'src', visibility: 'public', members: [] } })
+    // W1-11 (#1508) owns `im.create_chat`; the three chats are seeded into the
+    // reference backend instead (see `seedReferenceChat`).
+    await seedReferenceChat({ id: U('src'), ownerId: ACTOR_ID, kind: 'group', name: 'src', visibility: 'public' })
+    await seedReferenceChat({ id: U('bobs'), ownerId: BOB, kind: 'group', name: 'bobs', visibility: 'public' })
+    await seedReferenceChat({ id: U('dest'), ownerId: BOB, memberIds: [ACTOR_ID], kind: 'group', name: 'dest', visibility: 'public' })
     await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('src') }, payload: { messageId: U('m'), body: { doc: 'hi' }, mentions: [] } })
-    // BOB's chat: the actor is not a member.
-    await setup.run({ type: 'im.create_chat', payload: { id: U('bobs'), kind: 'group', name: 'bobs', visibility: 'public', members: [] }, actor: BOB })
-    // A chat the actor belongs to.
-    await setup.run({ type: 'im.create_chat', payload: { id: U('dest'), kind: 'group', name: 'dest', visibility: 'public', members: [ACTOR_ID] }, actor: BOB })
     return setup
   }
   const messagesIn = (chatId: string) => records('channel-message').filter(message => message.data.chatId === chatId)
@@ -179,7 +179,10 @@ describe('chat destinations need membership, posting policy and write', () => {
   test('im.send_message: a non-member cannot post in a public chat', async () => {
     const setup = await chats()
     expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('bobs') }, payload: { body: { doc: 'x' }, mentions: [] } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    await setup.run({ type: 'im.join_chat', target: { kind: 'channel', id: U('bobs') }, payload: {} })
+    // W1-11 (#1508) owns `im.join_chat`; an active membership is seeded instead
+    // (see `seedReferenceChatMember`). The join path itself is asserted by the
+    // owner module's suite (`agents/__tests__/identity-handlers.test.ts`).
+    await seedReferenceChatMember(U('bobs'), ACTOR_ID)
     expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('bobs') }, payload: { body: { doc: 'x' }, mentions: [] } })).toMatchObject({ status: 'applied' })
   })
 })
@@ -236,19 +239,11 @@ describe('deletes, reorders, ownership and approvals', () => {
     expect(roleOf(BOB)).toBe(storedAclRole('full_access'))
   })
 
-  test('agents.decide_approval: an existing pending approval, decided once by an eligible approver', async () => {
-    const setup = harness()
-    expect(await setup.run({ type: 'agents.decide_approval', payload: { approvalId: U('nope'), decision: 'approve' } })).toMatchObject({ error: { code: 'NOT_FOUND' } })
-    await setup.run({ type: 'agents.provision_personal_agent', payload: { id: U('agent'), ownerId: ACTOR_ID } })
-    expect(await setup.run({ type: 'agents.invoke', payload: { id: U('inv'), agentRef: { kind: 'person', id: U('agent') }, instruction: 'x', origin: { kind: 'comment', commentId: U('c') } } })).toMatchObject({ status: 'applied' })
-    expect(records('agent-approval')[0]!.data).toMatchObject({ status: 'pending', approverIds: [ACTOR_ID], invocationId: U('inv') })
-    expect(await setup.run({ type: 'agents.decide_approval', payload: { approvalId: U('inv'), decision: 'approve' }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    expect(await setup.run({ type: 'agents.decide_approval', payload: { approvalId: U('inv'), decision: 'deny' } })).toMatchObject({ status: 'applied' })
-    expect(records('agent-approval')[0]!.data).toMatchObject({ status: 'denied', decidedBy: ACTOR_ID })
-    expect(await setup.run({ type: 'agents.decide_approval', payload: { approvalId: U('inv'), decision: 'approve' } })).toMatchObject({ error: { code: 'VALIDATION' } })
-    // Someone else's agent cannot be invoked.
-    expect(await setup.run({ type: 'agents.invoke', payload: { agentRef: { kind: 'person', id: U('agent') }, instruction: 'x', origin: { kind: 'comment', commentId: U('c') } }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-  })
+  // W1-11 (#1508) owns `agents.provision_personal_agent` / `agents.invoke` /
+  // `agents.decide_approval`: their handlers run on the agent-governance runtime
+  // (`getAgentsRuntime`), which this reference harness never backs. The pending
+  // approval, the single eligible decision and the owner check are asserted by
+  // `packages/server-core/src/agents/__tests__/governance-integration.test.ts`.
 
   test('entities.drop: link / attach write the source (FROM side); embed only references it', async () => {
     const setup = harness()

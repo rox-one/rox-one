@@ -8,6 +8,7 @@ import { getWorkspaceByNameOrId, isZenShellEnabled } from '@rox/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
 import { RPC_CHANNELS, type WindowCloseRequestSource } from '../shared/types'
 import { getExtensionHostManager } from './extension-host-manager'
+import { applyStartupActivations } from './extension-host/startup'
 import type { SavedWindow } from './window-state'
 import { attachZenWindowPolicy, reapplyZenShellOnWindow, peekZenShellSnapshotForWindow, nativeAccessibilityPrefersSolid, setZenShellSnapshotListener } from './shell-material'
 import { WINDOWS_MICA_BUILD } from '../shared/shell-appearance'
@@ -625,6 +626,13 @@ export class WindowManager {
         if (mgr.getStatus().status !== 'running') {
           await mgr.start()
         }
+        // Wave 3: load every activate-now craft-sandbox extension for this
+        // workspace (grants come from permissions.json only).
+        await applyStartupActivations({
+          workspaceId,
+          trigger: 'startup',
+          push: this.getRpcEventSink() ?? undefined,
+        })
       } catch (err) {
         windowLog.warn(`Extension Host auto-start for ${workspaceId} failed: ${err}`)
       }

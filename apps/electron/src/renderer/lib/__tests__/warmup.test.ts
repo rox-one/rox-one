@@ -153,6 +153,26 @@ describe('WarmupScheduler', () => {
     expect(rejecting.status().failed).toEqual(['sessions-meta'])
     expect(ran).toContain('after-rejection')
   })
+
+  it('keeps a synchronously throwing step out of completed', async () => {
+    const idle = idleHost()
+    const ran: string[] = []
+    const steps: WarmupStep[] = [
+      { id: 'sessions-meta', run: () => { throw new Error('offline') } },
+      { id: 'transcript-tails', run: () => { ran.push('after-failure') } },
+    ]
+    const scheduler = new WarmupScheduler(steps, { requestIdle: idle.requestIdle, cancelIdle: idle.cancelIdle, inputTarget: null })
+    scheduler.start()
+    idle.runAll()
+    const status = await scheduler.whenFinished()
+    expect(status.failed).toEqual(['sessions-meta'])
+    expect(status.completed).not.toContain('sessions-meta')
+    expect(status.completed).toEqual(['transcript-tails'])
+    expect(status.pending).toEqual([])
+    expect(status.cancelledBy).toBeNull()
+    expect(status.running).toBe(false)
+    expect(ran).toContain('after-failure')
+  })
 })
 
 describe('warm-up plan', () => {

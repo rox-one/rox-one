@@ -7,7 +7,7 @@ import {
   type ClipboardImagePreview,
   type MonitorTimerHandle,
 } from '../monitor'
-import { DEFAULT_CLIP_SETTINGS, type ClipEntryInput, type ClipboardEntrySink, type InsertResult } from '../store'
+import { DEFAULT_CLIP_SETTINGS, MAX_TEXT_BYTES, type ClipEntryInput, type ClipboardEntrySink, type InsertResult } from '../store'
 
 /** Deterministic clock + timer queue; the monitor never touches the real event loop. */
 class FakeClock {
@@ -259,7 +259,7 @@ describe('ClipboardMonitor', () => {
     await monitor.captureNow()
     expect(sink.entries).toHaveLength(0)
 
-    adapter.text = 'x'.repeat(1_000_001)
+    adapter.text = 'x'.repeat(MAX_TEXT_BYTES + 1)
     await monitor.captureNow()
     expect(sink.entries).toHaveLength(0)
 

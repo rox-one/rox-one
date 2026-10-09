@@ -50,14 +50,22 @@ function resolve(value: string, scope: Record<string, string>, depth = 0): strin
   })
 }
 
-/** Numeric value of a z-index declaration: an integer, or a two-term integer `calc()`. */
-function zIndexNumber(decl: string, scope: Record<string, string>): number | null {
-  const resolved = resolve(decl, scope).trim()
-  const simple = resolved.match(/^(-?\d+(?:\.\d+)?)$/)
-  if (simple) return Number(simple[1])
-  const calc = resolved.match(/^calc\(\s*(-?\d+(?:\.\d+)?)\s*([+-])\s*(-?\d+(?:\.\d+)?)\s*\)$/)
-  if (calc) return calc[2] === '-' ? Number(calc[1]) - Number(calc[3]) : Number(calc[1]) + Number(calc[3])
-  return null
+/**
+ * Numeric value of a z-index expression. Token substitution happens first, so
+ * `calc(var(--z-base) - 1)` reduces to `calc(0 - 1)`; the sum is then evaluated
+ * so a token-derived value is judged by the same layer-set rule as a literal.
+ */
+function numeric(value: string, scope: Record<string, string>): number {
+  const resolved = resolve(value, scope).trim()
+  const calc = resolved.match(/^calc\((.*)\)$/)
+  if (!calc) return Number(resolved)
+  let total = 0
+  for (const term of calc[1]!.split(/(?=[+-])/)) {
+    const n = Number(term.replace(/[()\s]/g, ''))
+    if (!Number.isFinite(n)) throw new Error(`unsupported calc term "${term}" in ${value}`)
+    total += n
+  }
+  return total
 }
 
 const px = (v: string) => {
@@ -192,12 +200,10 @@ describe('token foundation v2: z layers', () => {
     // Literal z-index declarations in the shared and renderer CSS use the layer set.
     for (const css of [indexCss, rendererCss]) {
       for (const m of stripComments(css).matchAll(/z-index:\s*([^;]+);/g)) {
-        const value = m[1]!.trim()
-        const literal = zIndexNumber(value, root)
-        // Behind-content backdrop layers (scenic wallpaper, material backdrops)
-        // resolve strictly below the base layer and are deliberately off the set.
-        if (literal !== null && literal < 0) continue
-        expect(literal !== null && layerValues.has(literal), `z-index: ${value}`).toBe(true)
+        const raw = m[1]!.trim()
+        const value = numeric(raw, root)
+        if (value < 0) continue // behind-content pseudo layers (scenic wallpaper)
+        expect(layerValues.has(value), `z-index: ${raw} = ${value}`).toBe(true)
       }
     }
   })

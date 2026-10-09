@@ -113,5 +113,9 @@ describe('event projection', () => {
       .toEqual([{ topic: 'user:p1', type: 'system.pinged', payload: { commandId: 'c1', nonce: 'n' } }])
     registry.register('demo.thing', () => [{ topic: 'bogus', type: 'x' }, { topic: 'channel:c', type: 'not.a.channel.event' }, { topic: 'channel:c', type: 'message.created' }])
     expect(registry.project({ ...base, type: 'demo.thing' })).toEqual([{ topic: 'channel:c', type: 'message.created' }])
+    // Agent-panel approval pushes are projected on the principal's user topic (D2).
+    registry.register('approval.state_changed', () => [{ topic: 'user:p1', type: 'approval.changed' }])
+    expect(registry.project({ ...base, type: 'approval.state_changed' }))
+      .toEqual([{ topic: 'user:p1', type: 'approval.changed' }])
   })
 })

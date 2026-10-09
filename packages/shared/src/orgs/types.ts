@@ -160,4 +160,10 @@ export interface OperatorRoleCeiling {
   readonly configured: boolean
   readonly role: string | null
   readonly scopes: readonly OperatorScope[]
+  /**
+   * Name of the access-policy plugin the role's definition declares, if any.
+   * Resolved at admission against the access-policy registry; a named but
+   * unregistered plugin fails closed (see access-policy-registry.ts).
+   */
+  readonly accessPolicyPlugin?: string | null
 }

@@ -42,7 +42,7 @@ export interface MarkReadResult {
 }
 
 /** Presence, receipts, doc views and the free-busy query are routine. */
-export function collabRoutineRisk(_payload?: unknown, _ctx?: CommandRiskContext): RiskClass {
+export function collabRoutineRisk(): RiskClass {
   return 'routine'
 }
 

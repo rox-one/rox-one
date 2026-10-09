@@ -54,6 +54,8 @@ import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
 import { registerWorkspaceWorkHandlers } from './workspace-work'
+import { registerWorkboardHandlers } from './workboard'
+import { registerBoardHandlers } from './board'
 import { registerFeedHandlers } from './feed'
 import { registerCollectionHandlers } from './collection'
 
@@ -175,6 +177,8 @@ export function registerCoreRpcHandlers(
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
   registerWorkspaceWorkHandlers(server, deps)
+  registerWorkboardHandlers(server, deps)
+  registerBoardHandlers(server, deps)
   registerFeedHandlers(server, deps)
   registerCollectionHandlers(server, deps)
 

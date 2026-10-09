@@ -115,7 +115,7 @@ export function resetXenovaCacheForTests(): void {
   xenovaCache.clear()
 }
 
-function loadXenovaEmbedder(configDir: string): Promise<Embedder | null> {
+export function loadXenovaEmbedder(configDir: string): Promise<Embedder | null> {
   let cached = xenovaCache.get(configDir)
   if (!cached) {
     cached = doLoadXenovaEmbedder(configDir).catch(() => null)
@@ -167,7 +167,7 @@ export function jaccard(a: Set<string>, b: Set<string>): number {
 }
 
 /** Cosine similarity; 0 on length mismatch/empty/zero-norm vectors. */
-export function cosineSimilarity(a: number[], b: number[]): number {
+export function cosineSimilarity(a: readonly number[] | Float32Array, b: readonly number[] | Float32Array): number {
   if (a.length === 0 || a.length !== b.length) return 0
   let dot = 0
   let normA = 0

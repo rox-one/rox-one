@@ -1,3 +1,5 @@
+import { OMP_TASK_TOOL_NAME } from '../utils/toolNames.ts';
+
 /**
  * Managed OMP 18.4.12 extension. Native factories rebind to task/eval/tan
  * children, including restricted specialists. No tool registration or changes.
@@ -20,7 +22,7 @@ export default function roxWorkerPolicy(pi) {
   // Prefix native task assignments before the child creates its own notices.
   // Preserve specialist selection, caller tool restrictions and recursion policy.
   pi.on('tool_call', event => {
-    if (event.toolName !== 'task') return;
+    if (event.toolName !== '${OMP_TASK_TOOL_NAME}') return;
     const input = event.input;
     if (Array.isArray(input.tasks)) {
       return { input: { ...input, tasks: input.tasks.map(item => typeof item.task === 'string' ? { ...item, task: prefix(item.task) } : item) } };

@@ -147,13 +147,21 @@ describe('KnowledgeMapPanel render', () => {
     await render(emptyDto)
     expect(container.textContent).toContain('knowledgeMap.empty.title')
     expect(container.textContent).toContain('knowledgeMap.empty.body')
+    expect(container.querySelector('svg[role="group"]')).toBeNull()
     expect(container.querySelector('svg[role="application"]')).toBeNull()
   })
 
   it('renders the graph, toolbar and honest stats when loaded', async () => {
     await render(loadedDto)
-    expect(container.querySelector('svg[role="application"]')).not.toBeNull()
+    const graph = container.querySelector('svg[role="group"]')
+    expect(graph).not.toBeNull()
+    // The SVG root is a static labelled group, never an application widget.
+    expect(container.querySelector('svg[role="application"]')).toBeNull()
+    expect(graph!.getAttribute('aria-label')).toBe('knowledgeMap.title')
+    expect(graph!.getAttribute('aria-describedby')).toBe('knowledge-map-legend')
+    expect(container.querySelector('#knowledge-map-legend')).not.toBeNull()
     expect(container.textContent).toContain('knowledgeMap.stats.files')
+    expect(container.textContent).toContain('knowledgeMap.stats.bytes')
     expect(container.querySelector('[aria-label="knowledgeMap.refresh"]')).not.toBeNull()
     expect(container.querySelector('[data-mode="tree"]')).not.toBeNull()
     expect(container.textContent).not.toContain('knowledgeMap.empty.title')

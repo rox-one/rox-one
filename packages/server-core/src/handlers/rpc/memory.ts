@@ -4,6 +4,7 @@ import type { PushTarget } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
 import { getMemoryConfig } from '@rox/shared/config/storage'
 import type { Lesson, LessonCategory, LessonOwner, LessonScope, ProjectMemoryDto, WorkspaceMemory } from '@rox/shared/memory/types'
+import type { WikiApplyResult, WikiClaimStatus, WikiGetResult, WikiLintReport, WikiListResult, WikiMutation } from '@rox/shared/memory/types'
 import { pushTyped, type RequestContext, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
@@ -17,6 +18,8 @@ import { buildConflictPrompt, parseConflicts, promoteLessonToGlobal, scanPromoti
 import type { LessonConflictVerdict } from '../../memory/lesson-graph'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
 import { MemoryIndexService, memoryIndexServiceFor } from '../../memory/MemoryIndexService'
+import { WikiClaimStore } from '../../memory/WikiClaimStore'
+import { compileWikiDigest } from '../../memory/wiki-lint'
 import type { MemoryGetResult, MemoryIndexStatus, MemorySearchHit } from '@rox/shared/memory/types'
 import { getProjectMemoryPath, loadProject, loadProjectById, loadProjectMemory } from '@rox/shared/projects'
 import { search as ftsSearch } from '../../memory/fts-index'
@@ -40,6 +43,10 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.memory.GET,
   RPC_CHANNELS.memory.INDEX_STATUS,
   RPC_CHANNELS.memory.REBUILD_INDEX,
+  RPC_CHANNELS.memory.WIKI_LIST,
+  RPC_CHANNELS.memory.WIKI_GET,
+  RPC_CHANNELS.memory.WIKI_APPLY,
+  RPC_CHANNELS.memory.WIKI_LINT,
 ]
 
 export interface LessonInput {
@@ -478,6 +485,90 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       return { ok: status.state !== 'failed', ...status }
     },
     { nativeAction: 'write' },
+  )
+
+  // c1.7: the workspace memory wiki — evidence-backed claims (+ lint digest).
+  // The wiki lives under {workspaceRoot}/memory/wiki and is a document surface:
+  // it is never injected through buildMemoryBlocks.
+  const wikiFor = (
+    ctx: RequestContext,
+    requestedId: string | null | undefined,
+  ): { store: WikiClaimStore; workspaceId: string; owner: LessonOwner | undefined } => {
+    const authorizedWorkspaceId = authorizeMemoryWorkspace(ctx, requestedId, deps)
+    if (!authorizedWorkspaceId) throw new Error('Workspace access denied')
+    const workspace = getWorkspaceByNameOrId(authorizedWorkspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+    return {
+      store: new WikiClaimStore(new MemoryFileStore('workspace', workspace.rootPath).memoryDir, 'workspace'),
+      workspaceId: workspace.id,
+      owner: lessonOwnerFromContext(ctx),
+    }
+  }
+
+  server.handle(
+    RPC_CHANNELS.memory.WIKI_LIST,
+    async (ctx, args?: { workspaceId?: string | null; scope?: string; status?: WikiClaimStatus }): Promise<WikiListResult> => {
+      const listed = rpcMemoryListResult({ source: 'native' })
+      if (!isClaimableLive(listed.result)) return { claims: [] }
+      const { store, owner } = wikiFor(ctx, args?.workspaceId)
+      return {
+        claims: store.list({
+          ...(owner ? { owner } : {}),
+          ...(args?.scope ? { scope: args.scope } : {}),
+          ...(args?.status ? { status: args.status } : {}),
+        }),
+      }
+    },
+    { nativeAction: 'read' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.memory.WIKI_GET,
+    async (ctx, args: { workspaceId?: string | null; id: string }): Promise<WikiGetResult> => {
+      const read = rpcMemoryReadResult({ source: 'native', nativeId: args?.id ?? '' })
+      if (!isClaimableLive(read.result)) return { claim: null }
+      const { store, owner } = wikiFor(ctx, args?.workspaceId)
+      return { claim: store.get(args?.id ?? '', owner ? { owner } : undefined) }
+    },
+    { nativeAction: 'read' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.memory.WIKI_APPLY,
+    async (ctx, args: { workspaceId?: string | null; mutation: WikiMutation }): Promise<WikiApplyResult> => {
+      const act = rpcMemoryActResult({ source: 'native', action: 'write', nativeId: args?.mutation?.op ?? 'claim' })
+      if (!isClaimableLive(act)) throw new Error('memory wiki apply is not live')
+      const { store, workspaceId, owner } = wikiFor(ctx, args?.workspaceId)
+      const result = store.apply(args.mutation, { actor: 'rpc', ...(owner ? { owner } : {}) })
+      broadcastChanged(workspaceId, 'workspace')
+      notifyRepoMutation(memoryBank('workspace', workspaceId, owner), 'rpc:wikiApply')
+      return result
+    },
+    { nativeAction: 'write' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.memory.WIKI_LINT,
+    async (ctx, args?: { workspaceId?: string | null }): Promise<{ report: WikiLintReport; digestPath: string }> => {
+      const read = rpcMemoryReadResult({ source: 'native', nativeId: 'wiki' })
+      if (!isClaimableLive(read.result)) {
+        return { report: { findings: [], claimsChecked: 0 }, digestPath: '' }
+      }
+      const { store, workspaceId, owner } = wikiFor(ctx, args?.workspaceId)
+      // Evidence liveness: an evidence source resolves while it is still a live
+      // memory chunk id. After a forget, the id no longer resolves and the lint
+      // flags `evidence-missing` (never throws on an unreadable index).
+      const workspace = getWorkspaceByNameOrId(workspaceId)
+      const index = workspace ? memoryIndexServiceFor(workspace.rootPath, workspace.id) : null
+      const { report, digestPath } = compileWikiDigest({
+        memoryDir: store.memoryDir,
+        scope: 'workspace',
+        ...(owner ? { owner } : {}),
+        ...(index ? { isEvidenceLive: (evidence) => index.get(evidence.source) !== null } : {}),
+      })
+      return { report, digestPath }
+    },
+    { nativeAction: 'read' },
   )
 
 }

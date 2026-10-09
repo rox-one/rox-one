@@ -78,6 +78,7 @@ import { loadWorkspaceConfig, saveWorkspaceConfig } from '@rox/shared/workspaces
 import {
   // Session persistence functions
   listSessions as listStoredSessions,
+  listSessionsFromHeaders,
   loadSession as loadStoredSession,
   saveSession as saveStoredSession,
   createSession as createStoredSession,
@@ -120,6 +121,8 @@ import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, isSourceUsable
 import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@rox/shared/tasks'
 import { createTaskFromSpec, resolveCreateTaskProjectId } from '../tasks'
 import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
+import { buildBoardWidgetToolCallbacks } from '../board/tool-callbacks'
+import type { BoardWidgetToolRecord } from '@rox/session-tools-core'
 import { memoryToolCallbacksForSession } from '../memory/tool-callbacks'
 import { buildServersFromSources as buildServersFromSourcesShared } from '../sources/build-servers'
 import { resolveDefaultSessionSources } from '../sources/default-session-sources'
@@ -150,7 +153,9 @@ import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlA
 import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, toSkillSummaries, type LoadedSkill } from '@rox/shared/skills'
 import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
 import { captureAgentProfileSnapshot } from '../workspace-work/profile.ts'
+import { sessionStateProjector, type SessionStateProjector } from '../state/sessions-projection.ts'
 import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@rox/shared/prompts/system'
+import { formatPerTurnMemoryBlock } from '@rox/shared/memory/context-select'
 import { retrieveSourcesForPrompt } from '../sources/source-index-facade'
 import { getToolIconsDir, getMiniModel, isRoxPublicModelId, ROX_DEFAULT_SUBAGENT_MODEL } from '@rox/shared/config'
 import { getDefaultSummarizationModel } from '@rox/shared/config/models'
@@ -1279,12 +1284,14 @@ export function upsertSessionParticipant(
 /** Result of the server-side session write-visibility check (a2.5). */
 export type SessionWriteAccess =
   | { allowed: true }
-  | { allowed: false; code: 'SESSION_READ_ONLY' | 'SESSION_OWNER_ONLY'; message: string }
+  | { allowed: false; code: 'SESSION_READ_ONLY' | 'SESSION_OWNER_ONLY' | 'SESSION_SUGGEST_ONLY'; message: string }
 
 /**
  * Decide whether `actorAccountId` may write to a session by its visibility.
  *
- * `shared`/`suggest` are open; `read-only` and `draft` restrict writes to the
+ * `shared` is open. A `suggest` session refuses a non-owner DIRECT write with
+ * SESSION_SUGGEST_ONLY — a non-owner proposes a suggestion instead (see the
+ * session-suggestion store). `read-only` and `draft` restrict writes to the
  * owner (owner.id if assigned, else the creator's account). A session with no
  * attribution has no owner to enforce, so it stays open — legacy local
  * sessions must not become unwritable after this ships.
@@ -1294,10 +1301,13 @@ export function evaluateSessionWriteAccess(
   actorAccountId: string | null,
 ): SessionWriteAccess {
   const visibility = session.visibility ?? 'shared'
-  if (visibility === 'shared' || visibility === 'suggest') return { allowed: true }
+  if (visibility === 'shared') return { allowed: true }
   const owner = session.owner?.id ?? session.creator?.accountId ?? null
   if (!owner) return { allowed: true }
   if (actorAccountId && actorAccountId === owner) return { allowed: true }
+  if (visibility === 'suggest') {
+    return { allowed: false, code: 'SESSION_SUGGEST_ONLY', message: 'Session accepts suggestions only from this actor' }
+  }
   return visibility === 'read-only'
     ? { allowed: false, code: 'SESSION_READ_ONLY', message: 'Session is read-only for this actor' }
     : { allowed: false, code: 'SESSION_OWNER_ONLY', message: 'Session is a private draft owned by another actor' }
@@ -1471,6 +1481,24 @@ export function resolveMidStreamDeliveryOutcome(
     shouldQueue: !steered,
     wasInterrupted: behavior === 'steer' && !steered,
   }
+}
+
+/**
+ * Boot path: session-list metadata for one workspace without scanning headers.
+ *
+ * The state projection serves full headers from `session_index.header` when its
+ * freshness cookie still matches the directory; otherwise fall back to the
+ * scanning `listSessions` and queue a rebuild so the next boot is fast.
+ */
+export function loadWorkspaceSessionMetadata(
+  workspaceRootPath: string,
+  projector: SessionStateProjector = sessionStateProjector(),
+): SessionMetadata[] {
+  const headers = projector.readFreshHeaders(workspaceRootPath)
+  if (headers) return listSessionsFromHeaders(workspaceRootPath, headers)
+  const scanned = listStoredSessions(workspaceRootPath)
+  void projector.rebuildWorkspace(workspaceRootPath)
+  return scanned
 }
 
 export class SessionManager implements ISessionManager {
@@ -2850,6 +2878,13 @@ export class SessionManager implements ISessionManager {
     this.eventSink(RPC_CHANNELS.pages.CHANGED, { to: 'workspace', workspaceId }, workspaceId, pages)
   }
 
+  /** Broadcast a board widget revision staged through the show_widget tool. */
+  private broadcastBoardWidgetChanged(workspaceId: string, record: BoardWidgetToolRecord): void {
+    if (!this.eventSink) return
+    sessionLog.info(`Broadcasting board widget changed (${record.widgetId}@${record.revision})`)
+    this.eventSink(RPC_CHANNELS.board.CHANGED, { to: 'workspace', workspaceId }, workspaceId, { widgetId: record.widgetId, revision: record.revision })
+  }
+
   private broadcastDefaultPermissionsChanged(): void {
     if (!this.eventSink) return
     sessionLog.info('Broadcasting default permissions changed')
@@ -3016,7 +3051,7 @@ export class SessionManager implements ISessionManager {
       // Iterate over each workspace and load its sessions
       for (const workspace of workspaces) {
         const workspaceRootPath = workspace.rootPath
-        const sessionMetadata = listStoredSessions(workspaceRootPath)
+        const sessionMetadata = loadWorkspaceSessionMetadata(workspaceRootPath)
         // Load workspace config once per workspace for default working directory
         const wsConfig = loadWorkspaceConfig(workspaceRootPath)
         const wsDefaultWorkingDir = wsConfig?.defaults?.workingDirectory
@@ -3205,6 +3240,17 @@ export class SessionManager implements ISessionManager {
   // queue already has an entry whenever persistSession was just called.
   async flushSession(sessionId: string): Promise<void> {
     await sessionPersistenceQueue.flush(sessionId)
+    // Project the flushed JSONL header into the derived state store + index.
+    // Best-effort: the JSONL is the source of truth, so a projection failure
+    // must never break the flush itself.
+    const managed = this.sessions.get(sessionId)
+    if (managed) {
+      try {
+        await sessionStateProjector().recordSession(managed.workspace.rootPath, sessionId)
+      } catch (error) {
+        sessionLog.warn(`Failed to project session ${sessionId} into the state store:`, error)
+      }
+    }
   }
 
   // Flush all pending sessions (call on app quit).
@@ -3497,7 +3543,17 @@ export class SessionManager implements ISessionManager {
     if (this.sessions.has(sessionId)) return
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return
-    const meta = listStoredSessions(workspace.rootPath).find((session) => session.id === sessionId)
+    const projector = sessionStateProjector()
+    const headers = projector.readFreshHeaders(workspace.rootPath)
+    let meta: SessionMetadata | undefined
+    if (headers) {
+      const header = headers.find((candidate) => candidate.id === sessionId)
+      if (header) [meta] = listSessionsFromHeaders(workspace.rootPath, [header])
+    }
+    if (!meta) {
+      meta = listStoredSessions(workspace.rootPath).find((session) => session.id === sessionId)
+      if (!headers) void projector.rebuildWorkspace(workspace.rootPath)
+    }
     if (!meta) return
     const wsConfig = loadWorkspaceConfig(workspace.rootPath)
     this.sessions.set(
@@ -5097,6 +5153,30 @@ export class SessionManager implements ISessionManager {
         agentProfileSnapshot: managed.agentProfileSnapshot,
         allowedSkillSlugs: managed.agentProfileSnapshot?.skillSlugs,
         memoryBlocks,
+        // c1.4 residual: per-turn memory (c1.5 recall + c1.6 standing intents)
+        // resolved for THIS turn's message and ridden on the per-turn payload
+        // (BaseAgent.chat → the backend's user turn / OMP `prompt`). Renders
+        // only the per-turn additions — the curated bootstrap and the other
+        // blocks stay spawn-time in `memoryBlocks` above. Same memory-mode gate
+        // and same lane budgets as the spawn-time assembly. Fail-soft: any
+        // memory error must never break a turn.
+        getPerTurnMemoryBlock: async (message: string): Promise<string | null> => {
+          if (managed.memoryMode === 'temporary' || managed.agentProfileSnapshot?.memoryScope === 'none') return null
+          const memoryService = this.memoryServiceFor(managed.workspace)
+          if (!memoryService) return null
+          try {
+            const blocks = await memoryService.buildMemoryBlocks({
+              query: message,
+              sessionId: managed.id,
+              workspaceOnly: !!managed.agentProfileSnapshot,
+              nativeContext: this.nativeMemoryContextFor(managed.id, managed.workspace.id),
+            })
+            return formatPerTurnMemoryBlock(blocks)
+          } catch (err) {
+            sessionLog.warn(`Failed to build per-turn memory block (${managed.id}):`, err)
+            return null
+          }
+        },
         miniModel,
         thinkingLevel: managed.thinkingLevel,
         session: sessionConfig,
@@ -5902,6 +5982,20 @@ export class SessionManager implements ISessionManager {
           },
           onContentChanged: (pageSlug: string) => {
             this.enqueuePageThumbnail(managed.workspace.id, managed.workspace.rootPath, pageSlug)
+          },
+        }),
+        // Board widget tool (show_widget) — stages agent-authored widget code
+        // through the SAME WidgetStore the board:widgetPut RPC uses, then
+        // broadcasts board:changed. createdBy is the session owner, never the
+        // model's input.
+        boardWidgets: buildBoardWidgetToolCallbacks({
+          workspaceId: managed.workspace.id,
+          workspaceRootPath: managed.workspace.rootPath,
+          createdBy: managed.owner?.id ?? managed.creator?.accountId ?? 'local',
+          sessionId: managed.id,
+          log: (message: string) => sessionLog.info(message),
+          onWidgetMutated: (record) => {
+            this.broadcastBoardWidgetChanged(managed.workspace.id, record)
           },
         }),
         // Memory recall tools (memory_search / memory_get / memory_forget) — bound to
@@ -7544,6 +7638,14 @@ export class SessionManager implements ISessionManager {
       sessionPersistenceQueue.unseal(sessionId)
     } else {
       sessionLog.warn(`Failed to delete session ${sessionId} from disk; persistence seal retained`)
+    }
+
+    // Drop the derived state-store row + index entry. Best-effort: the JSONL
+    // scan rebuilds the index, so a failure here is self-healing.
+    try {
+      await sessionStateProjector().removeSession(workspaceRootPath, sessionId)
+    } catch (error) {
+      sessionLog.warn(`Failed to remove session ${sessionId} from the state store:`, error)
     }
 
     // Notify all windows for this workspace that the session was deleted
