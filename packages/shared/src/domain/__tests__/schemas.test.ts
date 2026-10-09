@@ -3,6 +3,8 @@ import { COMMAND_CATALOGUE } from '@rox/core/commands'
 import { COMMAND_PAYLOAD_SCHEMAS, DOMAIN_COMMAND_SCHEMA_MODULES, ENTITY_SCHEMAS, noteFrontmatterSchema } from '../index'
 
 const catalogue = COMMAND_CATALOGUE.map(definition => definition.type).filter(type => !type.startsWith('system.')).sort()
+/** `catalogue` carries the union of catalogue type literals; the deferral checks below compare plain strings. */
+const catalogueTypes: Readonly<Record<string, true>> = Object.fromEntries(catalogue.map(type => [type, true]))
 
 /**
  * Catalogue commands this wave deliberately leaves out of `COMMAND_PAYLOAD_SCHEMAS`,
@@ -33,7 +35,7 @@ describe('domain command schemas (W1-06)', () => {
   })
 
   test('every deferred type is a non-system catalogue command', () => {
-    expect(deferred.filter(type => !catalogue.includes(type))).toEqual([])
+    expect(deferred.filter(type => !(type in catalogueTypes))).toEqual([])
   })
 
   test('module maps do not overlap', () => {
