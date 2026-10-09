@@ -191,8 +191,16 @@ export default function App() {
           <CloudVmSurface
             host={window.electronAPI}
             onOpenRun={(id) => {
-              navigate(routes.view.cloudRun(id))
-              setCloudVmOpen(false)
+              // The shared renderer mounts lazily behind this overlay, so a
+              // single dispatch can beat NavigationContext's subscription and
+              // be dropped. Re-dispatch while the overlay still owns the
+              // screen (the user cannot navigate elsewhere underneath it) and
+              // close only after the last attempt.
+              const route = routes.view.cloudRun(id)
+              for (const delay of [0, 700, 1600]) {
+                window.setTimeout(() => navigate(route), delay)
+              }
+              window.setTimeout(() => setCloudVmOpen(false), 1900)
             }}
             onGoToChat={() => setCloudVmOpen(false)}
           />
