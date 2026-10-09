@@ -137,20 +137,6 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
     id: `note:${note.id}`,
     data: { type: 'note', note },
   })
-  // PERF-10 (#1577): one document read per note on hover/focus — the very
-  // `readNote` call the page issues when the note opens, so opening finds the
-  // read warm. Deduped per note id; a failed read re-arms the next attempt.
-  const prefetchedNoteIds = React.useRef<Set<string>>(new Set())
-  const prefetchNote = () => {
-    const api = typeof window !== 'undefined' ? window.electronAPI : undefined
-    const workspaceId = actions.workspaceId
-    if (!api?.readNote || !workspaceId) return
-    if (prefetchedNoteIds.current.has(note.id)) return
-    prefetchedNoteIds.current.add(note.id)
-    void api.readNote(workspaceId, note.id).catch(() => {
-      prefetchedNoteIds.current.delete(note.id)
-    })
-  }
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -160,8 +146,6 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
           aria-current={activeNoteId === note.id ? 'page' : undefined}
           data-note-id={note.id}
           onClick={() => actions.onOpenNote(note.id)}
-          onPointerEnter={prefetchNote}
-          onFocus={prefetchNote}
           style={{ paddingLeft: `${10 + depth * 12}px` }}
           className={cn(
             'notes-list-item mb-0.5 w-full rounded-[var(--radius-control)] pr-2.5 py-1.5 text-left outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring',

@@ -60,6 +60,7 @@ import {
 import { getSessionTitle } from '@/utils/session'
 import { ExtraScreenItemUnavailable } from '../ExtraScreenItemUnavailable'
 import { toErrorMessage } from '@/lib/errors'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 const NS = 'dossier'
 const AVATAR_TONES = ['bg-accent/25', 'bg-info/25', 'bg-success/25', 'bg-warning/25', 'bg-foreground/15']
@@ -376,6 +377,8 @@ function DossierDetail({
 }) {
   const { t } = useTranslation()
   const relDate = useRelativeDate()
+  // PERF-10 (#1577): a retired surface keeps this detail mounted but stops the brief poll.
+  const visible = useEffectiveVisible()
   const [notes, setNotes] = useState<NoteSource[]>([])
   const [aliasDraft, setAliasDraft] = useState('')
   const [promiseDraft, setPromiseDraft] = useState('')
@@ -418,6 +421,7 @@ function DossierDetail({
       setBrief(null)
       return
     }
+    if (!visible) return
     const load = () => readAgentRun(entity.briefSessionId!).then((snapshot) => { if (!cancelled) setBrief(snapshot) })
     void load()
     const timer = window.setInterval(() => { void load() }, 4000)
@@ -425,7 +429,7 @@ function DossierDetail({
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [entity.briefSessionId, briefMeta?.lastMessageAt])
+  }, [entity.briefSessionId, briefMeta?.lastMessageAt, visible])
 
   const generateBrief = async () => {
     if (!workspaceId) return

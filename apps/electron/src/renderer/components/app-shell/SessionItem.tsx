@@ -23,9 +23,10 @@ import { useSessionListContext } from "@/context/SessionListContext"
 import { useAppShellContext } from "@/context/AppShellContext"
 import { navigate, routes } from "@/lib/navigate"
 import type { SessionMeta } from "@/atoms/sessions"
+import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { messagingBindingsBySessionAtom } from "@/atoms/messaging"
 import { collectionDisplayAtom } from "@/atoms/collection-display"
-import { useAtomValue } from "jotai"
+import { useAtomValue, useSetAtom } from "jotai"
 import { extractLabelId } from "@rox/shared/labels"
 import { getAppLocale } from '@rox/shared/i18n'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
@@ -126,15 +127,15 @@ export function SessionItem({
   const projectName = boundProject?.name
 
   // PERF-10 (#1577): one transcript read per row on hover/focus — the same
-  // `getSessionMessages` payload ChatPage's message-loading atom reads when the
-  // session opens (`atoms/sessions.ts` `loadSessionMessages`), so opening finds
-  // it warm. Deduped per session id; a failed read re-arms the next attempt.
+  // `ensureSessionMessagesLoadedAtom` (→ `atoms/sessions.ts` `loadSessionMessages`)
+  // ChatPage dispatches when the session opens, so the read lands in the atom and
+  // opening finds it warm. Deduped per session id; a failed read re-arms.
   const prefetchedTranscriptIds = useRef<Set<string>>(new Set())
+  const ensureMessagesLoaded = useSetAtom(ensureSessionMessagesLoadedAtom)
   const prefetchTranscript = () => {
     if (prefetchedTranscriptIds.current.has(item.id)) return
-    if (typeof window.electronAPI?.getSessionMessages !== 'function') return
     prefetchedTranscriptIds.current.add(item.id)
-    void window.electronAPI.getSessionMessages(item.id).catch(() => {
+    void ensureMessagesLoaded(item.id).catch(() => {
       prefetchedTranscriptIds.current.delete(item.id)
     })
   }
