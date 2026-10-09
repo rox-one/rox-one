@@ -111,7 +111,7 @@ function windowsPrivatePaths(paths: readonly PrivatePath[], operation: WindowsOp
   const executable = win32.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
   const result = spawnSync(executable, ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(windowsPrivatePathsScript, 'utf16le').toString('base64')], {
     input: Buffer.from(JSON.stringify({ paths, operation }), 'utf8').toString('base64'),
-    encoding: 'utf8', windowsHide: true, timeout: 45_000, maxBuffer: 64 * 1024,
+    encoding: 'utf8', windowsHide: true, timeout: 180_000, maxBuffer: 64 * 1024,
     // No inherited PowerShell module/profile or runtime-loader overrides.
     env: { SystemRoot: systemRoot, WINDIR: systemRoot, PSModulePath: win32.join(win32.dirname(executable), 'Modules') },
   })
@@ -130,6 +130,12 @@ function windowsPrivatePaths(paths: readonly PrivatePath[], operation: WindowsOp
   validateWindowsPrivatePaths(output, paths, operation)
 }
 
+/**
+ * The single Windows OS-owner boundary. It reuses the batch probe (fixed
+ * executable, base64 request on stdin, 180s budget) instead of a separate
+ * owner-only PowerShell subprocess, so every owner/ACL check shares one
+ * implementation and one documented timeout.
+ */
 export function requireOsOwner(path: string): void {
   if (process.platform === 'win32') {
     windowsPrivatePaths([{ path, kind: 'directory' }], 'require-private')

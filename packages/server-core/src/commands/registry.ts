@@ -17,6 +17,7 @@
 import { CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
 import { bindSystemPing } from './ping'
 import { AGENTS_COMMAND_MODULE } from '../agents/module.ts'
+import { bindDomainSchemas, bindReferenceHandlers } from '../work/reference/module'
 
 /** One owner module's bindings (handlers + schemas) for its catalogue types. */
 export interface CommandModule {
@@ -29,11 +30,24 @@ export interface CommandModule {
 /** The bus's own module: `system.ping`. */
 export const SYSTEM_COMMAND_MODULE: CommandModule = Object.freeze({ name: 'system', bind: bindSystemPing })
 
-/** Every module's bindings. Wave-2 modules register here (see the contract above). */
+/** W1-06 (#1503): `@rox/shared/domain` payload schemas for every catalogue command still on the placeholder. */
+export const DOMAIN_SCHEMA_COMMAND_MODULE: CommandModule = Object.freeze({ name: 'domain-schemas', bind: bindDomainSchemas })
+
+/**
+ * W1-06 (#1503): CRUD-level reference handlers for every catalogue command
+ * without a handler. Keep it LAST — a wave-2 module listed before it binds
+ * its own handler and the reference handler for that type is skipped.
+ */
+export const REFERENCE_COMMAND_MODULE: CommandModule = Object.freeze({ name: 'reference-handlers', bind: bindReferenceHandlers })
+
+/** Every module's bindings. Wave-2 modules register here, before the reference module (see the contract above). */
 export const COMMAND_MODULES: readonly CommandModule[] = Object.freeze([
   SYSTEM_COMMAND_MODULE,
+  // W1-06 (#1503)
+  DOMAIN_SCHEMA_COMMAND_MODULE,
   // W1-11 (#1508): identity lifecycle, team chats and agent governance.
   AGENTS_COMMAND_MODULE,
+  REFERENCE_COMMAND_MODULE,
 ])
 
 export interface WiredCommandRegistryOptions {

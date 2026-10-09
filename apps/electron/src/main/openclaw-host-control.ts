@@ -332,7 +332,9 @@ async function copySetupCredential(
 ): Promise<void> {
   try {
     const credential = await deps.runtimeManager.getGatewayTokenForHostControl(workspaceId)
-    deps.clipboard.writeText(credential)
+    // Electron 44 makes clipboard.writeText return a Promise in the main process;
+    // await it so the copy completes before this handler reports success.
+    await deps.clipboard.writeText(credential)
   } catch {
     throw new OpenClawHostControlError('OPENCLAW_HOST_CONTROL_UNAVAILABLE')
   }

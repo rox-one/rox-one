@@ -2,6 +2,7 @@
 import { CATALOGUE_FLAGS as F, moduleCatalogue } from './entry.ts'
 
 export const MAIL_COMMANDS = moduleCatalogue('mail', F.mail, [
+  // Target = the destination chat (the executor authorizes posting there).
   ['mail.share_to_chat', 'workspace'],
   ['mail.create_task_from_thread', 'by-target'],
 ])

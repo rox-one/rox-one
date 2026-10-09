@@ -20,7 +20,7 @@ let scope = 'A', failedLoad = false, failedAction = false, deferredLoad = false
 let resolveLoad: (() => void) | undefined, resolveAction: (() => void) | undefined
 const profile = () => {
   const current = scope === 'B' ? { xp: 0, quests: defaultQuestRecords(), dailyXp: [] } : state
-  return { ...getLevelProgress(current.xp), xp: current.xp, balance: null, quests: visibleQuests(current.quests), questRecords: QUEST_IDS.map(id => current.quests[id]), ratings: [], analyticsConsent: false, weeklyXp: getWeeklyXp(current) }
+  return { ...getLevelProgress(current.xp), xp: current.xp, balance: null, quests: visibleQuests(current.quests), questRecords: QUEST_IDS.map(id => current.quests[id]), ratings: [], analyticsConsent: true, weeklyXp: getWeeklyXp(current) }
 }
 const api = {
   async getGamificationProfile() {

@@ -87,7 +87,9 @@
   --surface-selected: color-mix(in oklch, var(--accent) 14%, var(--surface-elevated));
   --selection: color-mix(in oklch, var(--accent) 22%, var(--canvas));
   --focus: var(--accent);
-  --focus-ring: var(--focus);
+  /* Focus stays findable on keyboard navigation but reads as a faint accent
+     hairline, not a heavy halo (high-contrast overrides it back to solid). */
+  --focus-ring: color-mix(in oklab, var(--focus) 55%, transparent);
   --status-neutral: var(--text-secondary);
   --status-info: var(--info);
   --status-running: var(--accent);
@@ -142,8 +144,8 @@
   --border: var(--border-subtle);
   --input: var(--border-subtle);
   --ring: var(--focus-ring);
-  --ring-width: 2px;
-  --ring-offset: 2px;
+  --ring-width: 1px;
+  --ring-offset: 1px;
   --md-bullets: var(--text-muted);
   --md-counters: var(--text-muted);
 
@@ -465,7 +467,8 @@ html[data-contrast="high"] {
   --muted-foreground: var(--text-muted);
   --border: var(--border-subtle);
   --input: var(--border-subtle);
-  --ring-width: 3px;
+  --ring-width: 2px;
+  --ring-offset: 1px;
   --chrome-glass-bg: var(--surface-elevated);
   --chrome-glass-blur: 0px;
   --chrome-glass-border: color-mix(in oklch, var(--foreground) 10%, transparent);
@@ -484,8 +487,8 @@ html[data-contrast="high"][data-scenic]::before {
 }
 
 html[data-contrast="high"] :focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
 }
 
 /* =============================================================================
@@ -1016,6 +1019,29 @@ html[data-ui-profile="super-engineering"] .input-container {
   border-color: var(--chrome-glass-border);
 }
 
+/* Active navigation marker: a thin looping accent sweep on the selected rail
+   row replaces the heavy accent fill and 2px accent bar. Static tint + position
+   come from the caller; this only paints the animated hairline. Kill-switches:
+   html[data-render-profile="performance"] (renderer/index.css) and
+   prefers-reduced-motion below, which leave a solid hairline. */
+.rox-nav-shimmer {
+  position: relative;
+}
+
+.rox-nav-shimmer::after {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.125rem;
+  height: 0.125rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .chrome-label {
   font-size: var(--chrome-font-size);
   letter-spacing: var(--chrome-tracking);
@@ -1104,8 +1130,8 @@ html[data-shell-style="zen"] [data-shell-role="content"] {
 
 html[data-shell-style="zen"] [data-shell-role="chrome"] :focus-visible,
 html[data-shell-style="zen"] [data-shell-role="content"] :focus-visible {
-  outline: 2px solid var(--shell-focus);
-  outline-offset: 2px;
+  outline: 1px solid var(--shell-focus);
+  outline-offset: 1px;
 }
 
 html[data-shell-style="zen"] [data-shell-role="sash"] {
@@ -1157,8 +1183,14 @@ html[data-shell-material="solid"] {
   }
 
   .spinner-cube,
-  .animate-shimmer::after {
+  .animate-shimmer::after,
+  .rox-nav-shimmer::after {
     animation: none !important;
+  }
+
+  /* The sweep freezes at its transparent end; keep a solid hairline instead. */
+  .rox-nav-shimmer::after {
+    background: var(--accent);
   }
 }
 

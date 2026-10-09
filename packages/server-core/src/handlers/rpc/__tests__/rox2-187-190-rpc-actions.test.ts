@@ -34,13 +34,16 @@ describe('ROX2-187..190 native RPC list/read/act gates', () => {
     expect(src).not.toContain('GraphqlSoupCall')
   })
 
-  test('voice.ts gates list/read/write/destroy; transcribe/speak/start are not spend', () => {
+  test('voice.ts gates list/read/write; history delete is a native delete not spend', () => {
     const src = source('packages/server-core/src/handlers/rpc/voice.ts')
     expect(src).toContain('rpcVoiceListResult')
     expect(src).toContain('rpcVoiceReadResult')
     expect(src).toContain('rpcVoiceActResult')
     expect(src).toContain("action: 'write'")
-    expect(src).toContain("action: 'destroy'")
+// ddf97e3d5 rewrote voice.ts; the destructive history path is gated with the
+    // authority's `delete` action (NATIVE_AUTHORITY_ACTIONS has no 'destroy').
+    // DTO marker: voice claims action 'write'; its destructive fence is nativeAction 'delete' (NATIVE_AUTHORITY_ACTIONS has no 'destroy').
+    expect(src).toContain("nativeAction: 'delete'")
     expect(src).not.toContain("action: 'spend'")
     expect(src).not.toContain('conation.dev')
     expect(src).not.toContain('CompleteMutationRoot')

@@ -46,6 +46,8 @@ import { redactRegisteredSecrets } from '../secrets/redact.ts';
 
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
+import { buildAvailableSkillsBlock as renderAvailableSkillsBlock } from '../skills/prompt.ts';
+import { buildSkillEligibilityReport } from '../skills/eligibility.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
 import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -57,7 +59,10 @@ import type { ProjectPromptContext } from '../projects/types.ts';
 import { formatProjectContextForPrompt } from '../prompts/system.ts';
 import { MCP_USAGE_GUIDANCE } from '../prompts/mcp-guidance.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
+import { isProjectMemoryInjectable } from '../memory/document-provenance.ts';
 import { getContextDocsPromptBlock } from '../context-docs/index.ts';
+import { DOC_REFS } from '../docs/index.ts';
+import { getCognitiveProfileBlock } from './cognitive-profile.ts';
 import { formatPreferencesForPrompt } from '../config/preferences.ts';
 import type { AgentEvent, AgentEventUsage } from '@rox/core/types';
 import type { FileAttachment } from '../utils/files.ts';
@@ -187,19 +192,27 @@ const OMP_ROX_CONTEXT_PROMPT = [
   'Safe http/https links belong in the host browser pane via mcp__session__browser_tool.',
   'Do not force every URL open. Auth callbacks, deep links, file: URLs and unsafe',
   'schemes stay outside that pane (OS handler or blocked).',
+  'Your answers can include at most one interactive OpenUI block (charts, tables, forms) that ROX renders natively in the chat, and only when the answer benefits.',
+  `Read ${DOC_REFS.openui} once before the first interactive answer — it covers the syntax and component signatures.`,
+  'When you include it, put a complete, self-contained program in one ```openui fenced code block.',
+  'Keep normal Markdown prose outside the block so the answer still reads without it.',
   MCP_USAGE_GUIDANCE,
 ].join('\n');
 
 /**
  * Compose the `--append-system-prompt` payload for OMP spawn.
  * Ordering mirrors getSystemPrompt: ROX briefing → preferences → project →
- * context docs (rules/soul) → memory blocks → retrieved sources.
+ * context docs (rules/soul) → memory blocks → retrieved sources →
+ * dynamic `<user_cognitive_profile>` (untrusted, appended last).
  */
 export function composeOmpAppendSystemPrompt(input: {
   workingDirectory: string;
   preferences?: string | null;
   projectContextBlock?: string | null;
+  /** Bounded `<available_skills>` catalog (eligible skills for this session). */
+  skillsBlock?: string | null;
   memoryBlocks?: MemoryPromptBlocks | null;
+  cognitiveProfileBlock?: string | null;
 }): string {
   const parts = [OMP_ROX_CONTEXT_PROMPT];
   if (input.preferences) parts.push(input.preferences);
@@ -210,10 +223,17 @@ export function composeOmpAppendSystemPrompt(input: {
   // soul.md/rules.md in the session cwd override same-named global docs.
   const contextDocsBlock = getContextDocsPromptBlock({ workingDirectory: input.workingDirectory });
   if (contextDocsBlock) parts.push(contextDocsBlock);
+  // Eligible-skill catalog — trusted, bounded; sits with the other runtime
+  // context before memory so the model learns the tool surface early.
+  if (input.skillsBlock) parts.push(input.skillsBlock);
   const blocks = input.memoryBlocks;
+  if (blocks?.bootstrapBlock) parts.push(blocks.bootstrapBlock);
   if (blocks?.lessonsBlock) parts.push(blocks.lessonsBlock);
   if (blocks?.memoryBlock) parts.push(blocks.memoryBlock);
   if (blocks?.sourcesBlock) parts.push(blocks.sourcesBlock);
+  // Dynamic cognitive profile — derived from third-party web content, so it
+  // sits last (after every trusted block) and is sanitized upstream.
+  if (input.cognitiveProfileBlock) parts.push(input.cognitiveProfileBlock);
   return parts.join('\n');
 }
 
@@ -513,6 +533,9 @@ export class OmpAgent extends BaseAgent {
       const project = loadProjectById(root, projectId);
       if (!project) return null;
       const slug = project.config.slug;
+      // Provenance gate (spec c1.2): an untrusted-stamped project MEMORY.md is
+      // never injected, even though it is read here rather than via the index.
+      const memoryInjectable = isProjectMemoryInjectable(root, slug, this.config.agentProfileSnapshot?.memoryScope);
       return {
         name: project.config.name,
         description: project.config.description,
@@ -524,7 +547,7 @@ export class OmpAgent extends BaseAgent {
           sizeBytes: a.sizeBytes,
         })),
         memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(root, slug),
-        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(root, slug) ?? undefined,
+        memoryContent: memoryInjectable ? loadProjectMemory(root, slug) ?? undefined : undefined,
         roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {
@@ -538,16 +561,41 @@ export class OmpAgent extends BaseAgent {
    * briefing plus (when present) user preferences, bound-project context, and
    * the self-learning memory blocks (learned lessons + workspace memory)
    * after the project memory block, mirroring getSystemPrompt ordering.
-   * Evaluated at spawn time, so a respawn picks up memory updates.
+   * Evaluated at spawn time, so a respawn picks up memory and cognitive-profile
+   * updates.
    */
-  private buildCraftContextPrompt(): string {
+  private async buildCraftContextPrompt(): Promise<string> {
     const projectContext = this.resolveProjectContext();
     return composeOmpAppendSystemPrompt({
       workingDirectory: this.resolvedCwd(),
       preferences: this.config.agentProfileSnapshot ? '' : formatPreferencesForPrompt(),
       projectContextBlock: projectContext ? formatProjectContextForPrompt(projectContext) : null,
+      skillsBlock: await this.computeAvailableSkillsBlock(),
       memoryBlocks: this.config.memoryBlocks,
+      cognitiveProfileBlock: getCognitiveProfileBlock(),
     });
+  }
+
+  /**
+   * The bounded `<available_skills>` catalog for this session: the merged
+   * catalog gated by the session's skill allowlist plus machine prerequisites
+   * (bins/env/config/os) and disabled packs. Returns null when nothing is
+   * eligible, so an empty catalog never injects an empty block.
+   */
+  private async computeAvailableSkillsBlock(): Promise<string | null> {
+    try {
+      const report = await buildSkillEligibilityReport({
+        workspaceRoot: this.config.workspace.rootPath,
+        projectRoot: this.resolvedCwd(),
+        includeOmp: true,
+        allowedSlugs: this.config.allowedSkillSlugs ?? null,
+        includeCollisions: false,
+      });
+      return renderAvailableSkillsBlock(report.eligible);
+    } catch (error) {
+      this.debug(`available-skills block skipped: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    }
   }
   private _sessionToolContext: SessionToolContext | null = null;
 
@@ -881,9 +929,12 @@ export class OmpAgent extends BaseAgent {
     // --approval-mode yolo: craft permission mode 'allow-all' → full yolo
     //   (OMP's strongest auto mode: zero approval prompts, incl. destructive).
     const args = ['--mode', 'rpc', '--allow-home'];
-    // Profile sessions activate only the captured skill list via BaseAgent's validated mentions.
-    // Disable the native runtime's independent discovery so it cannot expand that list.
-    if (this.config.allowedSkillSlugs !== undefined) args.push('--no-skills');
+    // ROX owns the skill surface: the eligible catalog is injected as the
+    // `<available_skills>` block and read through the `mcp__session__skills_read`
+    // host tool, so the native runtime's independent discovery is always disabled
+    // to keep the two from diverging (a profile allowlist narrows the injected
+    // catalog).
+    args.push('--no-skills');
     const craftSessionId = this.config.session?.id || this._sessionId || '';
     const ompSessionDir = craftSessionId ? this.getOmpSessionDir(craftSessionId) : null;
     if (ompSessionDir) {
@@ -897,7 +948,7 @@ export class OmpAgent extends BaseAgent {
     } else {
       args.push('--no-session');
     }
-    args.push(...getOmpSpawnSystemPromptArgs(this.buildCraftContextPrompt()));
+    args.push(...getOmpSpawnSystemPromptArgs(await this.buildCraftContextPrompt()));
     if (this.autoApproveAtSpawn) {
       args.push('--approval-mode', 'yolo');
     }
@@ -2352,11 +2403,16 @@ export class OmpAgent extends BaseAgent {
     // the wire contract for them is not part of the verified notes — keep to text).
     let effectiveMessage = withOmpRequiredModes(message);
     if (attachments && attachments.length > 0) {
-      const parts = attachments.map((a) =>
-        a.text
+      const parts = attachments.map((a) => {
+        // Audio attached to the chat is transcribed on attach: prefer the
+        // recognized text over the raw file reference.
+        if (a.transcript?.status === 'done' && a.transcript.text.trim()) {
+          return `[Attached file: ${a.name}]\n[Transcript${a.transcript.language ? ` (${a.transcript.language})` : ''}]\n${a.transcript.text.trim()}`;
+        }
+        return a.text
           ? `[Attached file: ${a.name}]\n${a.text}`
-          : `[Attached file: ${a.name} at ${a.path}]`,
-      );
+          : `[Attached file: ${a.name} at ${a.path}]`;
+      });
       effectiveMessage = `${effectiveMessage}\n\n${parts.join('\n\n')}`;
     }
 

@@ -21,7 +21,9 @@ import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import {
   FOREIGN_SESSION_KINDS,
+  UNSUPPORTED_FOREIGN_SESSION_KINDS,
   filterForeignIndexEntries,
+  isForeignSessionKindSupported,
   type ForeignAutoImportStatus,
   type ForeignIndexEntry,
   type ForeignSessionKind,
@@ -54,6 +56,9 @@ export default function ImportSettingsPage() {
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [results, setResults] = useState<string[]>([])
   const [truncated, setTruncated] = useState(false)
+  // Explicit scan outcomes so an empty list never appears without a reason.
+  const [scanUnavailable, setScanUnavailable] = useState(false)
+  const [scanAborted, setScanAborted] = useState(false)
   const [query, setQuery] = useState('')
   const [kindFilter, setKindFilter] = useState<ForeignSessionKind | 'all'>('all')
   const [manualOpen, setManualOpen] = useState(false)
@@ -170,6 +175,8 @@ export default function ImportSettingsPage() {
       const discovered = await window.electronAPI.foreignDiscoverSessions({ workspaceId: workspace.id })
       setEntries(discovered.entries)
       setTruncated(Boolean(discovered.truncated))
+      setScanUnavailable(discovered.unavailable === 'not-live')
+      setScanAborted(Boolean(discovered.aborted))
       setSelected({})
       setResults([])
     } catch (err) {
@@ -198,7 +205,10 @@ export default function ImportSettingsPage() {
       const persisted = await window.electronAPI.foreignPersistSessions({
         workspaceId: workspace.id,
         sourcePaths,
-        mode: 'skip',
+        // Manual import updates chats that changed on disk instead of silently
+        // skipping them as already imported (append merges by message id, so no
+        // duplicates); `skip` remains the automatic-import default.
+        mode: 'append',
       })
       void refreshAuto()
       const resultLines = persisted.results.map((row) =>
@@ -291,8 +301,15 @@ export default function ImportSettingsPage() {
           {manualOpen ? (
           <div id="session-import-manual" className="space-y-4 rounded-[var(--radius-card)] border border-border/50 bg-background/30 p-4">
           <p className="text-sm opacity-70">{t('settings.import.scanHint')}</p>
+          {UNSUPPORTED_FOREIGN_SESSION_KINDS.length > 0 ? (
+            <p className="text-xs opacity-60" data-testid="session-import-unsupported">
+              {t('settings.import.unsupportedHint', {
+                kinds: UNSUPPORTED_FOREIGN_SESSION_KINDS.join(', '),
+              })}
+            </p>
+          ) : null}
           {truncated ? (
-            <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-truncated">
+            <p className="text-sm text-warning" data-testid="session-import-truncated">
               {t('settings.import.truncated', { count: entries.length })}
             </p>
           ) : null}
@@ -348,7 +365,12 @@ export default function ImportSettingsPage() {
                 className="h-8 max-w-[200px]"
                 items={[
                   { id: 'all', label: t('settings.import.filterAll') },
-                  ...FOREIGN_SESSION_KINDS.map((kind) => ({ id: kind, label: kind })),
+                  ...FOREIGN_SESSION_KINDS.map((kind) => ({
+                    id: kind,
+                    label: isForeignSessionKindSupported(kind)
+                      ? kind
+                      : `${kind} · ${t('settings.import.kindUnsupported')}`,
+                  })),
                 ]}
                 placeholder={t('settings.import.filterKind')}
                 selectedId={kindFilter}
@@ -366,7 +388,23 @@ export default function ImportSettingsPage() {
           ) : null}
           {error ? <div className="text-xs text-destructive">{error}</div> : null}
           {entries.length === 0 && !loading ? (
-            <p className="text-sm opacity-60">{t('settings.import.empty')}</p>
+            scanUnavailable ? (
+              <p className="text-sm text-warning" data-testid="session-import-unavailable">
+                {t('settings.import.emptyUnavailable')}
+              </p>
+            ) : scanAborted ? (
+              <p className="text-sm text-warning" data-testid="session-import-aborted">
+                {t('settings.import.emptyAborted')}
+              </p>
+            ) : (
+              <p className="text-sm opacity-60" data-testid="session-import-empty">
+                {t('settings.import.empty')}
+              </p>
+            )
+          ) : visible.length === 0 ? (
+            <p className="text-sm opacity-60" data-testid="session-import-no-match">
+              {t('settings.import.noneMatchFilter')}
+            </p>
           ) : (
             <ul className="space-y-2">
               {visible.map((entry) => (
@@ -394,8 +432,8 @@ export default function ImportSettingsPage() {
           )}
           {results.length > 0 ? (
             <ul className="text-xs opacity-70 space-y-1">
-              {results.map((row) => (
-                <li key={row}>{row}</li>
+              {results.map((row, index) => (
+                <li key={`${index}-${row}`}>{row}</li>
               ))}
             </ul>
           ) : null}

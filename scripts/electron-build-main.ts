@@ -64,7 +64,7 @@ function loadEnvFile(): void {
 // NOTE: Sentry source map upload is intentionally disabled for the main process.
 // To enable in the future, add @sentry/esbuild-plugin. See apps/electron/CLAUDE.md.
 // NOTE: Google OAuth credentials are NOT baked into the build - users provide their own
-// via source config. See README_FOR_OSS.md for setup instructions.
+// via source config in the app.
 function getBuildDefines(): string[] {
   const definedVars = [
     "SLACK_OAUTH_CLIENT_ID",
@@ -434,7 +434,7 @@ async function main(): Promise<void> {
       // at module init. esbuild's CJS bundling leaves the synthesized `import_meta.url`
       // undefined for inner ESM modules, which throws ERR_INVALID_ARG_VALUE on load.
       // Externalize so Node loads the SDK natively as ESM (with a real import.meta.url).
-      // Electron 39 ships Node 22.x which supports require() of ESM without TLA, so the
+      // Electron 44 ships Node 24.x which supports require() of ESM without TLA, so the
       // bundled main.cjs's `require('@anthropic-ai/claude-agent-sdk')` works.
       "--external:@anthropic-ai/claude-agent-sdk",
       // M2 semantic memory: native ONNX runtime + native sharp can't be

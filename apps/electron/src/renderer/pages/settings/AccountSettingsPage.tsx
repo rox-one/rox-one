@@ -24,11 +24,13 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
+import { resolveDisplayName } from '@/components/app-shell/profile-strip-account'
 import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
 import { MiniDashboardCards } from '@/components/app-shell/MiniDashboardCards'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
+import { useRoxCloudAccount } from '@/hooks/useRoxCloudAccount'
 import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
 import { buildMiniDashboard } from '@/platform/mini-dashboard'
 import { isHomeSessionInWorkspace } from '@/platform/home-model'
@@ -89,6 +91,11 @@ function formatBalance(balance: number | null, t: (key: string, opts?: Record<st
   return t('profile.balance', { amount: balance })
 }
 
+/** HH:MM in the active UI language, for the «Обновлено» sync line. */
+function accountSyncTime(at: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale || undefined, { hour: '2-digit', minute: '2-digit' }).format(at)
+}
+
 async function avatarDataUrlFromPickedFile(): Promise<string | null> {
   const paths = await window.electronAPI.openFileDialog()
   const path = paths[0]
@@ -110,13 +117,12 @@ async function avatarDataUrlFromPickedFile(): Promise<string | null> {
 }
 
 export default function AccountSettingsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const connectionState = useTransportConnectionState()
   const taskCount = useWorkspaceTaskCount(workspace?.id)
-  const [cloudAccount, setCloudAccount] = React.useState<import('@rox/shared/auth').RoxAccountSnapshot | null>(null)
-  const [cloudError, setCloudError] = React.useState<string | null>(null)
+  const { account: cloudAccount, connectError: cloudError, updating: cloudUpdating, lastSyncedAt: cloudSyncedAt } = useRoxCloudAccount()
   const [profile, setProfile] = React.useState<Profile | null>(null)
   const [displayName, setDisplayName] = React.useState('')
   const [email, setEmail] = React.useState('')
@@ -162,23 +168,6 @@ export default function AccountSettingsPage() {
       offXp()
     }
   }, [load, workspace?.id, invalidateProfileRequest])
-
-  React.useEffect(() => {
-    let cancelled = false
-    let reading = false
-    const readCloud = async () => {
-      if (reading) return
-      reading = true
-      try {
-        const cloud = await window.electronAPI.getRoxCloudState()
-        if (!cancelled) { setCloudAccount(cloud.account ?? null); setCloudError(cloud.connectError ?? null) }
-      } catch { if (!cancelled) { setCloudAccount(null); setCloudError('ROX_AUTH_REQUEST_FAILED') } }
-      finally { reading = false }
-    }
-    void readCloud()
-    const timer = setInterval(() => { void readCloud() }, 30_000)
-    return () => { cancelled = true; clearInterval(timer) }
-  }, [])
 
   React.useEffect(() => {
     const mail = window.electronAPI.mailLocal
@@ -288,7 +277,7 @@ export default function AccountSettingsPage() {
     }
   }
 
-  const name = profile?.displayName || t('profile.defaultName')
+  const name = resolveDisplayName(cloudAccount, profile?.displayName, t('profile.defaultName'))
   const plan = profile?.plan ?? 'standard'
   const progressPct = Math.round((gamification?.progress ?? 0) * 100)
   const recent = gamification?.recentEvents ?? []
@@ -329,10 +318,11 @@ export default function AccountSettingsPage() {
             </SettingsRow>
             <SettingsRow label={t('settings.account.cloud.organization')}><span>{cloudAccount?.organization.name || '—'}</span></SettingsRow>
             <SettingsRow label={t('settings.account.cloud.handle')}><span>{cloudAccount?.user.handle ? `@${cloudAccount.user.handle}` : '—'}</span></SettingsRow>
-            <SettingsRow label={t('settings.account.cloud.status')}><span>{cloudError ? t('settings.account.cloud.unavailable') : cloudAccount ? t(`onboarding.roxConnect.${cloudAccount.state}`) : t('settings.account.cloud.disconnected')}</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.status')}><span>{cloudUpdating ? t('settings.account.cloud.updating') : cloudError ? t('settings.account.cloud.unavailable') : cloudAccount ? t(`onboarding.roxConnect.${cloudAccount.state}`) : t('settings.account.cloud.disconnected')}</span></SettingsRow>
             <SettingsRow label={t('settings.account.cloud.key')}><span>{cloudAccount?.key?.prefix || '—'}</span></SettingsRow>
-            <SettingsRow label={t('settings.account.cloud.available')}><span>{cloudAccount?.balance.availableRox ?? '—'} ROX</span></SettingsRow>
-            <SettingsRow label={t('settings.account.cloud.held')}><span>{cloudAccount?.balance.heldRox ?? '—'} ROX</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.available')}><span>{cloudAccount ? `${cloudAccount.balance.availableRox} ROX` : t('settings.account.cloud.disconnected')}</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.held')}><span>{cloudAccount ? `${cloudAccount.balance.heldRox} ROX` : '—'}</span></SettingsRow>
+            <SettingsRow label={t('settings.account.cloud.synced')}><span>{cloudUpdating ? t('settings.account.cloud.updating') : cloudSyncedAt ? accountSyncTime(cloudSyncedAt, i18n.language) : '—'}</span></SettingsRow>
           </SettingsCard>
         </SettingsSection>
         <SettingsSection title={t('settings.account.usageSection')}>
@@ -426,7 +416,7 @@ export default function AccountSettingsPage() {
               </SettingsRow>
             ) : null}
             <SettingsRow label={t('profile.balanceLabel')} description={t('settings.account.cloud.title')}>
-              <span className="text-sm tabular-nums">{formatBalance(cloudAccount ? Number(cloudAccount.balance.balanceRox) : null, t)}</span>
+              <span className="text-sm tabular-nums">{formatBalance(cloudAccount ? Number(cloudAccount.balance.availableRox) : null, t)}</span>
             </SettingsRow>
             <SettingsToggle
               label={t('settings.account.analyticsConsent')}

@@ -6,7 +6,27 @@
  */
 
 /**
- * Skill metadata from SKILL.md YAML frontmatter
+ * Machine prerequisites declared by a skill under `metadata.openclaw.requires`
+ * (or its ROX alias `metadata.rox.requires`). Every list is optional; a missing
+ * field imposes no requirement.
+ */
+export interface SkillRequires {
+  /** Executables that must resolve on PATH. */
+  bins?: string[];
+  /** Executables of which at least one must resolve on PATH. */
+  anyBins?: string[];
+  /** Environment variables satisfied through the ROX credential fabric. */
+  env?: string[];
+  /** Stored configuration keys that must be present. */
+  config?: string[];
+}
+
+/**
+ * Skill metadata from SKILL.md YAML frontmatter.
+ *
+ * The `metadata.openclaw` (upstream) and `metadata.rox` (ROX alias) blocks are
+ * additive: existing packs already ship them, and a skill without a block keeps
+ * every field undefined.
  */
 export interface SkillMetadata {
   /** Display name for the skill */
@@ -26,6 +46,18 @@ export interface SkillMetadata {
   icon?: string;
   /** Optional source slugs to auto-enable when this skill is invoked */
   requiredSources?: string[];
+  /** Machine prerequisites (bins / env / config) declared by the skill pack. */
+  requires?: SkillRequires;
+  /** Platforms the skill supports (e.g. `['darwin']`, `['linux','darwin']`). */
+  os?: string[];
+  /** Stable pack-scoped key, used when the on-disk slug is disambiguated. */
+  skillKey?: string;
+  /** Human-readable name of the primary secret this skill needs. */
+  primaryEnv?: string;
+  /** Mark the skill as always-on (informational; no gating effect). */
+  always?: boolean;
+  /** Project homepage advertised by the pack. */
+  homepage?: string;
 }
 
 /** Source of a loaded skill */

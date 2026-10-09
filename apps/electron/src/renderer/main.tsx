@@ -19,6 +19,7 @@ import './index.css'
 import './chat-chrome-clarity.css'
 import './components/app-shell/titlebar-mode-pill.css'
 import { installRendererPerfHarness } from './perf/install'
+import { startRoxQueryRuntime } from './lib/query/runtime'
 import { syncMainProcessLanguage } from './lib/main-language-sync'
 import { ShellStoreBridge } from './platform/ShellStoreBridge'
 import { RenderProfileMotionConfig } from './lib/render-profile-motion'
@@ -153,6 +154,11 @@ function Root() {
 // (env override > persisted toggle) BEFORE the first render, so restored
 // entity tabs / persisted `entity/…` keys resolve on the first pass.
 seedEntitiesLinksGate()
+
+// PERF-09 (#1576): shared surface cache. Restores the last workspace's
+// persisted slice from IndexedDB and maps push events to invalidations.
+const stopRoxQueryRuntime = startRoxQueryRuntime(window.electronAPI)
+import.meta.hot?.dispose(stopRoxQueryRuntime)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

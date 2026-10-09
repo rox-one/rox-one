@@ -65,6 +65,7 @@ try {
   await b.invoke(RPC_CHANNELS.gamification.QUEST, { action: 'dismiss', questId: 'first_workflow' })
   check('dismiss-terminal-no-reward', (await b.invoke(RPC_CHANNELS.gamification.QUEST, { action: 'complete', questId: 'first_workflow' }) as any).xp === 0)
   await a.invoke(RPC_CHANNELS.gamification.SET_CONSENT, true)
+  await b.invoke(RPC_CHANNELS.gamification.SET_CONSENT, false)
   check('consent-actor-scoped', (await get(a)).analyticsConsent === true && (await get(b)).analyticsConsent === false)
   check('invalid-consent-denied', await denied(() => a.invoke(RPC_CHANNELS.gamification.SET_CONSENT, 'yes')))
   check('arbitrary-award-denied', await denied(() => a.invoke(RPC_CHANNELS.gamification.AWARD, 'session_completed')))

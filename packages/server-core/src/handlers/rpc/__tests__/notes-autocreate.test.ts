@@ -16,7 +16,7 @@
  * sandboxed `ROX_CONFIG_DIR`.
  */
 import '../memory-test-setup' // must run before any module reading ROX_CONFIG_DIR
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -27,12 +27,15 @@ import type { HandlerDeps } from '../../handler-deps'
 
 let workspaceRoot: string
 
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   getWorkspaceByNameOrId: (nameOrId: string) =>
     nameOrId === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () => [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }],
   isImportProvenancedRelativePath: () => false,
 }))
+afterAll(() => { mock.module('@rox/shared/config', () => actualConfig) })
 
 import { registerNotesHandlers } from '../notes'
 

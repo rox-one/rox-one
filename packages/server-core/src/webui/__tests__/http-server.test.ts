@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
+import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -309,5 +310,121 @@ describe('WebUI static path containment', () => {
     } finally {
       handler.dispose()
     }
+  })
+})
+
+describe('WebUI security headers on every route', () => {
+  const INLINE = 'console.log("boot");\n'
+  const SECURED_HANDLERS: Array<{ dispose: () => void }> = []
+
+  afterEach(() => {
+    while (SECURED_HANDLERS.length > 0) SECURED_HANDLERS.pop()?.dispose()
+    while (TEMP_DIRS.length > 0) {
+      const dir = TEMP_DIRS.pop()
+      if (dir) rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  function createHardenedHandler() {
+    const dir = mkdtempSync(join(tmpdir(), 'craft-webui-headers-'))
+    TEMP_DIRS.push(dir)
+    writeFileSync(join(dir, 'login.html'), `<!doctype html><html><head><style>body{}</style></head><body><script>${INLINE}</script></body></html>`)
+    writeFileSync(join(dir, 'index.html'), `<!doctype html><html><body><script>${INLINE}</script></body></html>`)
+    mkdirSync(join(dir, 'assets'))
+    writeFileSync(join(dir, 'assets', 'app.js'), 'export const x = 1')
+    const handler = createWebuiHandler({
+      webuiDir: dir,
+      secret: SECRET,
+      password: PASSWORD,
+      wsProtocol: 'ws',
+      wsPort: 9100,
+      getHealthCheck: () => ({ status: 'ok' }),
+      logger,
+    })
+    SECURED_HANDLERS.push(handler)
+    return handler
+  }
+
+  function assertSecured(res: Response, expectHash: boolean): void {
+    expect(res.headers.get('x-frame-options')).toBe('DENY')
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(res.headers.get('referrer-policy')).toBe('no-referrer')
+    const csp = res.headers.get('content-security-policy')
+    expect(csp).toContain("frame-ancestors 'none'")
+    expect(csp).toContain("object-src 'none'")
+    expect(csp).toContain("connect-src 'self' ws: wss:")
+    expect(csp).toContain("img-src 'self' data: blob:")
+    const hash = `'sha256-${createHash('sha256').update(INLINE, 'utf8').digest('base64')}'`
+    if (expectHash) expect(csp).toContain(hash)
+  }
+
+  it('secures login, static assets, auth API, config API, SPA and errors', async () => {
+    const handler = createHardenedHandler()
+
+    const login = await handler.fetch(new Request('http://127.0.0.1/login'))
+    expect(login.status).toBe(200)
+    assertSecured(login, true)
+
+    const asset = await handler.fetch(new Request('http://127.0.0.1/login-assets/../assets/app.js'))
+    expect(asset.headers.get('content-security-policy')).toBeTruthy()
+
+    const unauthConfig = await handler.fetch(new Request('http://127.0.0.1/api/config'))
+    expect(unauthConfig.status).toBe(401)
+    assertSecured(unauthConfig, false)
+
+    const auth = await handler.fetch(new Request('http://127.0.0.1/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: PASSWORD }),
+    }))
+    expect(auth.status).toBe(200)
+    assertSecured(auth, false)
+
+    const cookie = auth.headers.get('set-cookie')!.split(';')[0]!
+    const config = await handler.fetch(new Request('http://127.0.0.1/api/config', { headers: { cookie } }))
+    expect(config.status).toBe(200)
+    assertSecured(config, false)
+
+    const spa = await handler.fetch(new Request('http://127.0.0.1/some/route', { headers: { cookie } }))
+    expect(spa.status).toBe(200)
+    assertSecured(spa, true)
+
+    const health = await handler.fetch(new Request('http://127.0.0.1/health'))
+    expect(health.status).toBe(200)
+    assertSecured(health, false)
+  })
+
+  it('secures a 404 when the SPA shell is missing', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'craft-webui-404-'))
+    TEMP_DIRS.push(dir)
+    writeFileSync(join(dir, 'login.html'), '<!doctype html><html><body>login</body></html>')
+    const handler = createWebuiHandler({
+      webuiDir: dir,
+      secret: SECRET,
+      password: PASSWORD,
+      wsProtocol: 'ws',
+      wsPort: 9100,
+      getHealthCheck: () => ({ status: 'ok' }),
+      logger,
+    })
+    SECURED_HANDLERS.push(handler)
+
+    const auth = await handler.fetch(new Request('http://127.0.0.1/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: PASSWORD }),
+    }))
+    const cookie = auth.headers.get('set-cookie')!.split(';')[0]!
+    const res = await handler.fetch(new Request('http://127.0.0.1/missing', { headers: { cookie } }))
+    expect(res.status).toBe(404)
+    assertSecured(res, false)
+  })
+
+  it('secures the unauthenticated redirect to /login', async () => {
+    const handler = createHardenedHandler()
+    const res = await handler.fetch(new Request('http://127.0.0.1/', { headers: { Accept: 'text/html' } }))
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe('/login')
+    assertSecured(res, false)
   })
 })

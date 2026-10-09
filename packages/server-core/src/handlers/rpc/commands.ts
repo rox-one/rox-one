@@ -12,6 +12,7 @@
  * answers `{ enabled: false, commands: [] }`.
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import { isCommandBusEnabled } from '@rox/shared/feature-flags'
@@ -24,10 +25,12 @@ import {
   type CommandReceipt,
   type CommandRegistry,
   type ExecutionAuthority,
+  CommandRejection,
 } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { RequestContext } from '../../transport/types.ts'
+import { assertWorkspaceScope } from './workspace-guard.ts'
 import type { HandlerDeps } from '../handler-deps'
 import { CommandExecutor } from '../../commands/executor.ts'
 import { CommandRouter, type WorkspaceCommandSink } from '../../commands/router.ts'
@@ -39,6 +42,8 @@ import { getCommandBusFlags } from '../../commands/flags.ts'
 import { isAgentsAutonomyEnabled } from '@rox/shared/feature-flags'
 import { agentsGovernanceChain } from '../../agents/governance-install.ts'
 import { getAgentsRuntime } from '../../agents/runtime.ts'
+import { configureReferenceRuntime, type ReferenceRuntime } from '../../work/reference/module.ts'
+import { personalTasksStore } from './personal-tasks.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.commands.EXECUTE, RPC_CHANNELS.commands.LIST] as const
 
@@ -59,7 +64,17 @@ export interface CommandsHandlerRuntime {
   /** Workspace-authority sink (host wires `WorkspaceCommandSync` when the workspace is shared). */
   workspaceSink?: (workspaceId: string) => WorkspaceCommandSink | null
   resolveTargetAuthority?: (workspaceId: string, ref: EntityRef) => ExecutionAuthority | undefined
+  /** W1-06 reference-handler runtime overrides (default: workspace root, local PersonalTask store, live flags). */
+  referenceRuntime?: Partial<ReferenceRuntime>
 }
+
+/** Per-`commands:execute` scope: who is executing, and whether the PersonalTask store changed. */
+interface CommandScope {
+  principalScoped: boolean
+  tasksChanged: boolean
+}
+
+const commandScope = new AsyncLocalStorage<CommandScope>()
 
 let sharedRegistry: CommandRegistry | null = null
 let sharedBus: InProcessEventBus | null = null
@@ -92,12 +107,36 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
   const storeFor = runtime.storeFor ?? (workspace => new SqliteCommandStore({ workspaceRoot: workspace.rootPath }))
   const routers = new Map<string, { router: CommandRouter; store: CommandStore }>()
 
+  // W1-06: reference handlers write `{workspaceRoot}/work/` and the PersonalTask v3 store on the local authority.
+  const pushTasksChanged = () => pushTyped(server, RPC_CHANNELS.personalTasks.CHANGED, { to: 'all' }, { at: Date.now() })
+  const taskStore = runtime.referenceRuntime?.personalTaskStore ?? (() => personalTasksStore())
+  const restoreReferenceRuntime = configureReferenceRuntime({
+    workspaceRoot: id => workspaceFor(id)?.rootPath ?? null,
+    isFlagEnabled: flag => flags()?.has(flag) === true,
+    ...runtime.referenceRuntime,
+    personalTaskStore: id => {
+      // A principal-scoped session (remote / headless client) owns a native per-scope task store
+      // (`NativePersonalTasksStore`, a different API): its task commands are not on the bus yet.
+      // The other local commands still run; nothing is written to the device owner's store.
+      if (commandScope.getStore()?.principalScoped) throw new CommandRejection('UNAVAILABLE', 'Personal tasks of a principal-scoped session are not available on the command bus yet')
+      return taskStore(id)
+    },
+    // A task / list written through the bus (or a MIG-05 placement) lands in the PersonalTask store:
+    // refresh the Tasks UI like personalTasks:put does, once, after the command finished.
+    personalTasksChanged: () => {
+      const scope = commandScope.getStore()
+      if (scope) scope.tasksChanged = true
+      else pushTasksChanged()
+    },
+  })
+
   const unsubscribe = bus.subscribe((workspaceId, frame) => {
     const event: CommandBusPushEvent = { kind: 'realtime', frame }
     pushTyped(server, RPC_CHANNELS.commands.EVENT, { to: 'workspace', workspaceId }, workspaceId, event)
   })
   server.onShutdown?.(() => {
     unsubscribe()
+    restoreReferenceRuntime()
     for (const { store } of routers.values()) {
       try { void store.close?.() } catch { /* best effort */ }
     }
@@ -106,9 +145,9 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
 
   const requireWorkspace = (ctx: RequestContext, workspaceId: unknown): { id: string; rootPath: string } => {
     if (typeof workspaceId !== 'string' || !workspaceId) throw new CodedError('INVALID_PAYLOAD', 'workspaceId required')
-    if (ctx.principal && workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Command workspace access denied')
     const workspace = workspaceFor(workspaceId)
     if (!workspace) throw new CodedError('NOT_FOUND', 'Workspace not found')
+    assertWorkspaceScope(ctx, workspaceId, 'Command workspace access denied')
     return workspace
   }
 
@@ -152,12 +191,15 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
       return rejectedReceipt(typeof id === 'string' && id.length <= 256 ? id : '', 'UNAVAILABLE', 'Command bus is disabled')
     }
     const workspace = requireWorkspace(ctx, workspaceId)
+    const scope: CommandScope = { principalScoped: Boolean(ctx.principal), tasksChanged: false }
     try {
-      return await routerFor(workspace).route({ workspaceId: workspace.id, actor: actorFor(ctx), envelope })
+      return await commandScope.run(scope, () => routerFor(workspace).route({ workspaceId: workspace.id, actor: actorFor(ctx), envelope }))
     } catch (error) {
       // Nothing was committed: a retryable RPC error, never a terminal receipt.
       if (error instanceof CommandStoreUnavailable) throw new CodedError('HANDLER_ERROR', 'Command store unavailable; nothing was committed, retry')
       throw error
+    } finally {
+      if (scope.tasksChanged) pushTasksChanged()
     }
   }, { nativeAction: 'write' })
 

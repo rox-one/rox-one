@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { RoxConnectFlow } from '../rox-connect-flow'
+import { RoxConnectFlow } from '@rox/shared/auth'
 import type { RoxDevicePollApproved, RoxDeviceStartResult } from '@rox/shared/auth/rox-cloud'
 
 function deferred<T>() {

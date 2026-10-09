@@ -77,4 +77,21 @@ describe('personalTasks service (config-dir persist)', () => {
     expect(readPersonalTasks(store).tasks).toEqual([])
     expect(readdirSync(join(dir, 'personal-tasks')).filter((f) => f.endsWith('.json'))).toEqual([])
   })
+
+  it('W1-06: a bus-written list survives a stale UI meta put; after a list read the UI edits it', () => {
+    const store = new PersonalTaskPersistStore(root())
+    putPersonalTasks(store, [], { projects: [{ id: 'p-ui', name: 'Home', order: 1 }], areas: [], headings: [], audit: [] })
+    const stale = readPersonalTasks(store).meta!
+    // The command bus creates a list (task_lists.create on the local authority).
+    expect(store.putTaskList('l-bus', { name: 'Sprint' }, null)).toEqual({ status: 'accepted', revision: 1 })
+    // The UI saves its stale meta (it never saw the bus list).
+    putPersonalTasks(store, [], { ...stale, areas: [{ id: 'a', name: 'Life', order: 0 }] })
+    expect(store.readMeta()!.projects.map((project) => project.id)).toEqual(['p-ui', 'l-bus'])
+    expect(store.readMeta()!.areas).toEqual([{ id: 'a', name: 'Life', order: 0 }])
+    // After listing, a UI rename is kept and moves the list's CAS revision.
+    const fresh = readPersonalTasks(store).meta!
+    putPersonalTasks(store, [], { ...fresh, projects: fresh.projects.map((project) => (project.id === 'l-bus' ? { ...project, name: 'Sprint 2' } : project)) })
+    expect(store.getTaskList('l-bus')).toMatchObject({ revision: 2, data: { name: 'Sprint 2' } })
+    expect(store.putTaskList('l-bus', { name: 'Bus rename' }, 1)).toMatchObject({ status: 'conflict', current: { revision: 2 } })
+  })
 })

@@ -157,7 +157,9 @@ export function InputContainer({
   // Handle focus changes from FreeFormInput
   const handleFocusChange = React.useCallback((focused: boolean) => {
     setIsFocused(focused)
-  }, [])
+    // Forward to the owner (e.g. ChatDisplay clears the typing beacon on blur).
+    freeFormProps.onFocusChange?.(focused)
+  }, [freeFormProps.onFocusChange])
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return

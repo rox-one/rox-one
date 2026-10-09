@@ -1,5 +1,5 @@
 /**
- * Shared sash primitive: 12px hit / 1px line, 24px on coarse pointers.
+ * Shared sash primitive: 8px hit / 1px line, 24px on coarse pointers.
  */
 
 import * as React from 'react'

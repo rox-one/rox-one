@@ -17,6 +17,8 @@ manager.sessions = new Map([[managed.id, managed]])
 manager.nativeMemoryContexts = new Map()
 manager.nativeMemoryStarts = new Map()
 manager.browserHostByCanvas = new Map()
+manager.roxExecutions = new Map()
+manager.roxResourceLeases = new Map()
 manager.ensureMessagesLoaded = async () => {}
 let timestamp = 100, persists = 0
 manager.monotonic = () => ++timestamp

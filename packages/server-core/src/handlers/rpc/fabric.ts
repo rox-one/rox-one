@@ -8,6 +8,8 @@ import {
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { getFabricRuntime } from './fabric-runtime'
+import { createInfisicalHttpClient } from './infisical-http'
+import { commitInfisicalImport, previewInfisicalAccount } from '../../workgraph/index.ts'
 import {
   isClaimableLive,
   rpcFabricActResult,
@@ -29,6 +31,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.fabric.REVOKE_CONNECTION,
   RPC_CHANNELS.fabric.GITHUB_STATUS,
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
+  RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
+  RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
 ] as const
 
 const DEFAULT_WORKSPACE_ID = 'local'
@@ -91,33 +95,6 @@ function sanitizeReason(error: unknown, redact?: string): string {
     message = message.replace(/INFISICAL_TOKEN\s*=\s*\S+/gi, 'INFISICAL_TOKEN=[redacted]')
   }
   return message
-}
-
-/**
- * Ensure provider.write registers the credential ref into the runtime registry
- * before the broker's acquireLease (resolveRef uses registry.get).
- */
-function withRegistrySyncWrite<T>(
-  runtime: ReturnType<typeof getFabricRuntime>,
-  fn: () => Promise<T>,
-): Promise<T> {
-  const provider = runtime.provider
-  const originalWrite = provider.write.bind(provider)
-  provider.write = async (input) => {
-    const version = await originalWrite(input)
-    if (!runtime.registry.get(version.credentialRefId)) {
-      runtime.registry.register({
-        id: version.credentialRefId,
-        kind: input.kind,
-        providerId: provider.id,
-        locator: input.locator,
-      })
-    }
-    return version
-  }
-  return fn().finally(() => {
-    provider.write = originalWrite
-  })
 }
 
 export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): void {
@@ -300,19 +277,17 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
 
     const runtime = getFabricRuntime()
     try {
-      const result = await withRegistrySyncWrite(runtime, () =>
-        runGithubVertical({
-          workspaceId: DEFAULT_WORKSPACE_ID,
-          requestedBy: 'operator',
-          consumer: { kind: 'agent', id: 'fabric-github-status', workspaceId: DEFAULT_WORKSPACE_ID },
-          stack: { provider: runtime.provider, importers: runtime.importers },
-          graph: runtime.graph,
-          grants: runtime.grants,
-          broker: runtime.broker,
-          injectedToken: token,
-          fetch: globalThis.fetch.bind(globalThis),
-        }),
-      )
+      const result = await runGithubVertical({
+        workspaceId: DEFAULT_WORKSPACE_ID,
+        requestedBy: 'operator',
+        consumer: { kind: 'agent', id: 'fabric-github-status', workspaceId: DEFAULT_WORKSPACE_ID },
+        stack: { provider: runtime.provider, importers: runtime.importers, registry: runtime.registry },
+        graph: runtime.graph,
+        grants: runtime.grants,
+        broker: runtime.broker,
+        injectedToken: token,
+        fetch: globalThis.fetch.bind(globalThis),
+      })
       return stripSecrets({
         available: true,
         login: result.login,
@@ -339,5 +314,44 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
         reason: sanitizeReason(error, process.env.INFISICAL_TOKEN),
       }
     }
+  })
+
+  // Value-free account preview: validates the locator + https site before any
+  // network call; clientSecret is accepted only so the leak guard can reject it.
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT, async (_ctx, args: unknown) => {
+    const bag = objectArg(args)
+    return stripSecrets(previewInfisicalAccount({
+      siteUrl: String(bag.siteUrl ?? ''),
+      clientId: String(bag.clientId ?? ''),
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+      secretPath: String(bag.secretPath ?? ''),
+      secretKey: String(bag.secretKey ?? ''),
+      ...(nonEmptyString(bag.clientSecret) ? { clientSecret: bag.clientSecret as string } : {}),
+    }))
+  })
+
+  // Reference-only account connection: logs in, confirms workspace access,
+  // inspects the secret, then records a Connection. No secret value is returned.
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT, async (_ctx, args: unknown) => {
+    const act = rpcFabricActResult({ source: 'native', action: 'write', nativeId: 'infisical-connection' })
+    if (!isClaimableLive(act)) throw new Error('fabric infisical import is not live')
+    const bag = objectArg(args)
+    const runtime = getFabricRuntime()
+    const connection = await commitInfisicalImport({
+      siteUrl: String(bag.siteUrl ?? ''),
+      clientId: String(bag.clientId ?? ''),
+      clientSecret: String(bag.clientSecret ?? ''),
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+      secretPath: String(bag.secretPath ?? ''),
+      secretKey: String(bag.secretKey ?? ''),
+      http: createInfisicalHttpClient(),
+      kernel: runtime.graph,
+      workspaceId: nonEmptyString(bag.workspaceId) ?? DEFAULT_WORKSPACE_ID,
+      requestedBy: 'operator',
+      registry: runtime.registry,
+    })
+    return stripSecrets({ id: connection.id })
   })
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { handleVariants, isAllowedHandle, normalizeHandle, pickHandle } from '../handle'
 import { JmapClient, JmapError, normalizeBaseUrl, parseAddressList, resolveSameOrigin, type FetchLike } from '../jmap-client'
-import { provisionMailbox, type MailboxSecretStore } from '../provisioning'
+import { provisionMailbox, provisionMailboxViaService, ProvisionError, type MailboxSecretStore } from '../provisioning'
 
 describe('mail handle', () => {
   it('normalizes names, emails and cyrillic', () => {
@@ -189,5 +189,52 @@ describe('provisionMailbox', () => {
     ])
     expect(new Set([first.address, second.address]).size).toBe(2)
     expect([...accounts.values()].map((account) => account.description).sort()).toEqual(['rox:u-1', 'rox:u-2'])
+  })
+})
+
+/** Fake Rox mail host: `POST /api/provision` + JMAP session with the issued password. */
+function fakeMailService() {
+  let provisions = 0
+  const fetchImpl: FetchLike = async (url, init) => {
+    const headers = (init?.headers ?? {}) as Record<string, string>
+    if (url.endsWith('/api/provision')) {
+      provisions++
+      if (init?.method !== 'POST' || headers.authorization !== 'Bearer rox-token') return new Response(JSON.stringify({ error: 'invalid_token' }), { status: 401 })
+      return new Response(JSON.stringify({ address: 'mark@rox.one', username: 'mark@rox.one', password: 'pw-1', jmapUrl: 'https://mail.rox.one' }), { status: 200 })
+    }
+    if (url.endsWith('/jmap/session')) {
+      const [, secret] = Buffer.from(String(headers.Authorization).replace(/^Basic /, ''), 'base64').toString().split(':')
+      if (secret !== 'pw-1') return new Response('{}', { status: 401 })
+      return new Response(JSON.stringify({ apiUrl: '/jmap/', username: 'mark@rox.one', primaryAccounts: { 'urn:ietf:params:jmap:mail': 'acc' } }), { status: 200 })
+    }
+    return new Response('{}', { status: 404 })
+  }
+  return { fetchImpl, provisions: () => provisions }
+}
+
+describe('provisionMailboxViaService', () => {
+  const base = { serverUrl: 'https://mail.rox.one', ownerUuid: 'u-1', accessToken: 'rox-token', deviceLabel: 'test' }
+
+  it('provisions through the Rox service, stores the password and reuses it', async () => {
+    const { fetchImpl, provisions } = fakeMailService()
+    const secrets = memorySecrets()
+    const record = await provisionMailboxViaService({ ...base, secrets, fetch: fetchImpl })
+    expect(record.address).toBe('mark@rox.one')
+    expect(record.handle).toBe('mark')
+    expect(record.domain).toBe('rox.one')
+    expect(record.jmapUrl).toBe('https://mail.rox.one')
+    expect(record.state).toBe('READY')
+    expect(secrets.map.get('mark@rox.one')).toBe('pw-1')
+
+    const again = await provisionMailboxViaService({ ...base, secrets, fetch: fetchImpl, existing: record })
+    expect(again.address).toBe('mark@rox.one')
+    expect(provisions()).toBe(1) // the stored credential short-circuits the service call
+  })
+
+  it('reports a rejected Rox token and a taken handle', async () => {
+    const rejected: FetchLike = async () => new Response(JSON.stringify({ error: 'invalid_token' }), { status: 401 })
+    await expect(provisionMailboxViaService({ ...base, secrets: memorySecrets(), fetch: rejected })).rejects.toMatchObject({ code: 'unauthorized' })
+    const taken: FetchLike = async () => new Response(JSON.stringify({ error: 'handle_taken' }), { status: 409 })
+    await expect(provisionMailboxViaService({ ...base, secrets: memorySecrets(), fetch: taken })).rejects.toBeInstanceOf(ProvisionError)
   })
 })

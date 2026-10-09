@@ -1,0 +1,21 @@
+{
+  "name": "@rox/rox-maild",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Rox inbound mail relay and mailbox provisioning daemon in front of Stalwart",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --target=bun --outfile=dist/rox-maild.js",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@rox/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.0",
+    "typescript": "^5.9.0"
+  }
+}
