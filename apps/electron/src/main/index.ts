@@ -20,48 +20,6 @@ import './brand-config-boot'
 
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, safeStorage, session, shell, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
-import { hostname, homedir } from 'os'
-import * as Sentry from '@sentry/electron/main'
-import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils'
-
-// Initialize Sentry error tracking as early as possible after app import.
-// Only enabled in production (packaged) builds to avoid noise during development.
-// DSN is baked in at build time via esbuild --define (same pattern as OAuth secrets).
-//
-// NOTE: Source map upload is intentionally disabled. Stack traces in Sentry will show
-// bundled/minified code. To enable source map upload in the future:
-//   1. Add SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT to CI secrets
-//   2. Re-enable the @sentry/vite-plugin in vite.config.ts (handles renderer maps)
-//   3. Add @sentry/esbuild-plugin to scripts/electron-build-main.ts (handles main process maps)
-Sentry.init({
-  dsn: process.env.SENTRY_ELECTRON_INGEST_URL,
-  environment: app.isPackaged ? 'production' : 'development',
-  release: app.getVersion(),
-  // Enabled whenever the ingest URL is available — works in both production (baked via CI)
-  // and development (injected via .env / 1Password). Filter by environment in Sentry dashboard.
-  enabled: !!process.env.SENTRY_ELECTRON_INGEST_URL,
-
-  // Scrub sensitive data before sending to Sentry.
-  // Shared logic in @rox/shared/utils redaction.ts (also used by the
-  // renderer hook and the Pages action audit log) — keep semantics there.
-  beforeSend(event) {
-    // Scrub request headers (authorization, cookies)
-    if (event.request?.headers) {
-      redactSensitiveHeadersInPlace(event.request.headers)
-    }
-
-    // Scrub breadcrumb data that may contain sensitive values
-    if (event.breadcrumbs) {
-      for (const breadcrumb of event.breadcrumbs) {
-        if (breadcrumb.data) {
-          redactSensitiveKeysInPlace(breadcrumb.data)
-        }
-      }
-    }
-
-    return event
-  },
-})
 
 // Initialize i18n for main process (menus, dialogs, etc.)
 //
@@ -83,11 +41,6 @@ if (persistedUiLanguage) {
 }
 // Note: deferred startup log lives below where mainLog is available (after log.initialize()).
 
-// Set anonymous machine ID for Sentry user tracking (no PII — just a hash).
-// Uses hostname + homedir to produce a stable per-machine identifier.
-const machineId = createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16)
-Sentry.setUser({ id: machineId })
-
 // Product analytics: PostHog capture/feature flags + OTLP traces.
 //
 // Self-hosted endpoints are baked at build time via esbuild --define (see
@@ -97,6 +50,10 @@ Sentry.setUser({ id: machineId })
 // Egress is gated by the «Аналитика продукта» consent (gamification.json
 // analyticsConsent, default ON) — local Electron clients have no native
 // principal, so that file is the authoritative store; a read failure fails closed.
+
+// Anonymous per-install identifier (no PII — a hash of hostname + homedir)
+// used as the analytics distinct_id for both PostHog and OTLP.
+const machineId = createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16)
 const telemetryEndpoints = telemetryConfigFromEnv({
   POSTHOG_HOST: process.env.POSTHOG_HOST,
   POSTHOG_KEY: process.env.POSTHOG_KEY,
@@ -123,6 +80,7 @@ app.on('will-quit', () => {
 })
 trackProductEvent('app_launched', { platform: process.platform, version: app.getVersion() })
 
+import { homedir, hostname } from 'os'
 import { join, delimiter, resolve, sep } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, readdirSync } from 'fs'
@@ -875,7 +833,7 @@ app.whenReady().then(async () => {
       logger: log,
       isDebugMode,
       getLogFilePath,
-      captureError: (err) => Sentry.captureException(err),
+      captureError: (err) => { console.error('[captureError]', err) },
     })
 
     // W1-13: Settings toggle for storage.visible-root.v1 (applies on next launch).
@@ -1188,11 +1146,9 @@ app.whenReady().then(async () => {
               await Promise.all([whenSpawnEnvReady(), whenBundledSkillsReadyForAgents(10_000)])
             },
             captureException: (error, context) => {
-              Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
-                tags: {
-                  ...(context?.errorSource ? { errorSource: context.errorSource } : {}),
-                  ...(context?.sessionId ? { sessionId: context.sessionId } : {}),
-                },
+              console.error('[captureException]', (error instanceof Error ? error : new Error(String(error))).message, {
+                errorSource: context?.errorSource,
+                sessionId: context?.sessionId,
               })
             },
           })
@@ -1845,23 +1801,6 @@ app.whenReady().then(async () => {
       mainLog.warn('[power] Power manager init failed (non-critical):', err instanceof Error ? err.message : err)
     }
 
-    // Set Sentry context tags for error grouping (no PII — just config classification).
-    // Runs after init so config and auth state are available.
-    // Derives values from the default LLM connection instead of legacy config fields.
-    try {
-      const { getLlmConnection, getDefaultLlmConnection } = await import('@rox/shared/config')
-      const workspaces = getWorkspaces()
-      const defaultConnSlug = getDefaultLlmConnection()
-      const defaultConn = defaultConnSlug ? getLlmConnection(defaultConnSlug) : null
-      Sentry.setTag('authType', defaultConn?.authType ?? 'unknown')
-      Sentry.setTag('providerType', defaultConn?.providerType ?? 'unknown')
-      Sentry.setTag('hasCustomEndpoint', String(!!defaultConn?.baseUrl))
-      Sentry.setTag('model', defaultConn?.defaultModel ?? 'default')
-      Sentry.setTag('workspaceCount', String(workspaces.length))
-    } catch (err) {
-      mainLog.warn('Failed to set Sentry context tags:', err)
-    }
-
     // Initialize auto-update (check immediately on launch)
     // Skip in dev mode to avoid replacing /Applications app and launching it instead
     if (moduleSink) setAutoUpdateEventSink(moduleSink)
@@ -2138,14 +2077,11 @@ app.on('before-quit', async (event) => {
   }
 })
 
-// Handle uncaught exceptions — forward to Sentry explicitly since registering
-// a custom handler can interfere with @sentry/electron's automatic capture.
+// Handle uncaught exceptions.
 process.on('uncaughtException', (error) => {
   mainLog.error('Uncaught exception:', error)
-  Sentry.captureException(error)
 })
 
 process.on('unhandledRejection', (reason, promise) => {
   mainLog.error('Unhandled rejection at:', promise, 'reason:', reason)
-  Sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)))
 })

@@ -140,8 +140,6 @@ export default defineConfig({
       // Electron-specific modules → empty shims for browser builds
       'electron-log/renderer': resolve(__dirname, 'src/shims/electron-log.ts'),
       'electron-log': resolve(__dirname, 'src/shims/electron-log.ts'),
-      '@sentry/electron/renderer': resolve(__dirname, 'src/shims/sentry-electron.ts'),
-      '@sentry/electron': resolve(__dirname, 'src/shims/sentry-electron.ts'),
       // Node.js 'ws' library → browser uses native WebSocket
       'ws': resolve(__dirname, 'src/shims/ws.ts'),
       '@anthropic-ai/claude-agent-sdk': resolve(__dirname, '../electron/src/renderer/shims/claude-agent-sdk-stub.ts'),
