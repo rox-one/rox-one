@@ -16,7 +16,9 @@ mock.module('electron', () => ({
   systemPreferences: {
     getMediaAccessStatus: () => 'unknown',
     isTrustedAccessibilityClient: () => false,
+    askForMediaAccess: async () => false,
   },
+  desktopCapturer: { getSources: async () => [] },
   shell: { openExternal: async () => {} },
 }))
 

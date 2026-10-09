@@ -75,6 +75,8 @@
     "./drive/importers/providers/icloud": "./src/drive/importers/providers/icloud.ts",
     "./design-manifest": "./src/design-manifest/index.ts",
     "./dev-space": "./src/dev-space/index.ts",
+    "./device": "./src/device/index.ts",
+    "./device/capabilities": "./src/device/capabilities.ts",
     "./docs/doc-links": "./src/docs/doc-links.ts",
     "./entities": "./src/entities/index.ts",
     "./entities/schemas": "./src/entities/schemas.ts",
