@@ -87,6 +87,18 @@ describe('Markdown openui fence', () => {
     await teardown(root, container)
   })
 
+  it('renders each openui fence independently when one message carries two blocks', async () => {
+    // The model is asked for at most one block per answer, but the renderer
+    // tolerates several: every fence keeps its own block id and its own state.
+    const twoFences = [TABLE_PROGRAM, '', BUTTON_PROGRAM].join('\n')
+    const { container, root } = await renderMarkdown(<Markdown>{twoFences}</Markdown>)
+    expect(container.querySelectorAll('[data-ca-block-type="openui"]').length).toBe(2)
+    const text = container.textContent ?? ''
+    expect(text).toContain('Top Languages')
+    expect(text).toContain('Send it')
+    await teardown(root, container)
+  })
+
   it('renders a simple program (text + table) through openuiChatLibrary', async () => {
     const { container, root } = await renderMarkdown(<Markdown>{TABLE_PROGRAM}</Markdown>)
     const text = container.textContent ?? ''

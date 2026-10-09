@@ -133,10 +133,6 @@ export interface MaterialChatEffectSettings {
  */
 export interface MaterialSettings {
   enabled?: boolean;
-  /** Native window tint source (macOS vibrancy / Windows Mica tint). */
-  nativeTint?: 'theme' | 'custom' | 'off';
-  /** Tint color when nativeTint === 'custom'. */
-  tintColor?: CSSColor;
   /** Per-surface blur radius in px (0..64). */
   blur?: Partial<Record<MaterialSurface, number>>;
   /** Per-surface opacity as a fraction of the opaque surface color (0..1). */
@@ -211,8 +207,6 @@ export interface MaterialResolveContext {
 export interface ResolvedMaterial {
   enabled: boolean;
   disabledReason?: 'off' | 'reduce-transparency' | 'high-contrast';
-  nativeTint: 'theme' | 'custom' | 'off';
-  tintColor?: CSSColor;
   blur: Record<MaterialSurface, number>;
   opacity: Record<MaterialSurface, number>;
   tint?: MaterialTintSettings;
@@ -241,8 +235,6 @@ export function resolveMaterial(
   }
   const resolved: ResolvedMaterial = {
     enabled: Boolean(material?.enabled),
-    nativeTint: material?.nativeTint ?? 'theme',
-    tintColor: material?.tintColor,
     blur,
     opacity,
     tint: material?.tint ? { ...material.tint } : undefined,

@@ -135,7 +135,6 @@ describe('theme:setAppMaterial', () => {
       { enabled: 'yes' },
       { blur: { chat: 200 } },       // out of range
       { blur: { unknown: 4 } },      // unknown surface
-      { nativeTint: 'sparkle' },
       'not-an-object',
       42,
     ]) {
