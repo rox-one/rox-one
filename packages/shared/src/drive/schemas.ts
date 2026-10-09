@@ -34,7 +34,7 @@ export const driveOpenUploadSchema = cmd({
   sha256: sha256Schema.optional(),
 })
 
-export const uploadPartSchema = z.object({ partNumber: z.number().int().positive().max(MAX_UPLOAD_PARTS), etag: z.string().min(1).max(256) }).strict()
+export const uploadPartSchema = z.object({ partNumber: z.number().int().positive().max(MAX_UPLOAD_PARTS), etag: z.string().min(1).max(256), sizeBytes: z.number().int().nonnegative().optional() }).strict()
 
 export const driveCompleteUploadSchema = cmd({
   uploadSessionId: idSchema,

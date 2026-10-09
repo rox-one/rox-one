@@ -59,6 +59,7 @@ a receipt error with `code: 'CONFLICT'`.
 
 `calendar_member` roles are `owner | editor | viewer | free_busy`; `free_busy`
 folds onto the ACL special role of the same name. A free-busy subscriber sees
-`{start, end, busy: true}` only — no title, no attendees — from the query layer
-(`calendar.free_busy`) and through the `calendar:{id}` topic filter
-(`redactCalendarFrame`). Transparent and declined events do not block time.
+`{start, end, busy: true}` from the query layer (`calendar.free_busy`) and,
+through the `calendar:{id}` topic filter (`redactCalendarFrame`), only
+`{startAt, endAt, busy, allDay}` — no title, no attendees. Transparent and
+declined events do not block time.

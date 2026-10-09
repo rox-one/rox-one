@@ -83,22 +83,11 @@ export interface BusyBlock {
 }
 
 /**
- * What a free-busy subscriber must never see on an event. Kept as one list so
- * the query layer and the topic filter redact the same fields.
+ * The only event fields a free-busy subscriber may ever see (§11.9). The
+ * topic filter builds its payload from this allowlist, so new or unforeseen
+ * event fields can never leak by omission.
  */
-export const FREE_BUSY_HIDDEN_FIELDS = [
-  'title',
-  'description',
-  'location',
-  'attendeeIds',
-  'attendees',
-  'organizerId',
-  'organiserId',
-  'notes',
-  'attachments',
-  'recap',
-  'conference',
-] as const
+export const FREE_BUSY_VISIBLE_FIELDS = ['startAt', 'endAt', 'busy', 'allDay'] as const
 
 /** The event fields the redaction reads (`calendar_event`, `21-calendar.sql`). */
 export interface CalendarEventTiming {
@@ -202,7 +191,7 @@ export function freeSlots(busy: readonly BusyBlock[], range: TimeRange, slotMinu
 
 /**
  * The `calendar:{id}` topic filter (§11.9): a `free_busy` subscriber receives
- * event frames with every field but the timing replaced by the busy block.
+ * event frames carrying only the busy block — timing and `busy`, nothing else.
  */
 export function redactCalendarFrame(frame: RealtimeEventFrame, role: CalendarMemberRole | null): RealtimeEventFrame {
   if (role !== 'free_busy') return frame
@@ -216,14 +205,15 @@ function asJsonRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
 }
 
-/** The kept part of an event frame: timing + `busy: true`, nothing else. */
+/**
+ * Redact an event frame for free-busy: build the payload from the allowlist so
+ * any field outside `FREE_BUSY_VISIBLE_FIELDS` is dropped, known or not.
+ */
 export function redactEventFields(event: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = { startAt: event.startAt, endAt: event.endAt, busy: true }
-  if (event.allDay !== undefined) out.allDay = event.allDay
-  for (const [field, value] of Object.entries(event)) {
-    if ((FREE_BUSY_HIDDEN_FIELDS as readonly string[]).includes(field)) continue
-    if (field === 'startAt' || field === 'endAt' || field === 'busy') continue
-    out[field] = value
+  const out: Record<string, unknown> = {}
+  for (const field of FREE_BUSY_VISIBLE_FIELDS) {
+    const value = field === 'busy' ? true : event[field]
+    if (value !== undefined) out[field] = value
   }
   return out
 }

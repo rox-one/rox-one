@@ -20,8 +20,8 @@
 import { CommandRejection } from '@rox/core/commands'
 import {
   DEFAULT_DRIVE_QUOTA_BYTES, DEFAULT_DRIVE_ROOT_FOLDER_NAME, abortUpload, admitUpload, applyLedgerEntry, canCompleteUpload, creditReservation,
-  driveStateFor, ledgerDeltaBytes, openUploadSession, planUploadParts, quotaExceededError,
-  type DriveCounters, type StorageLedgerReason, type UploadSession,
+  driveStateFor, ledgerDeltaBytes, openUploadSession, planUploadParts, quotaExceededError, uploadedBytes,
+  type DriveCounters, type StorageLedgerReason, type UploadPart, type UploadSession,
 } from '@rox/core/drive'
 import { deterministicId, isDeleted, type ReferenceOutcome, type ReferenceTx } from '../work/reference/engine'
 import { authorizeId } from '../work/reference/ops'
@@ -102,6 +102,25 @@ function storedSession(record: StoredRecord): UploadSession {
     createdAt: String(data.createdAt ?? ''),
     ...(typeof data.sha256 === 'string' ? { sha256: data.sha256 } : {}),
   }
+}
+
+/**
+ * The uploaded byte total the server can attest (§16.2 step 3). An empty
+ * session is only attestable for a zero-byte file; otherwise every part must
+ * report its size — a client that only claims an etag gets an explicit
+ * `unverified upload`, never a silent charge.
+ */
+function attestedUploadSize(parts: readonly UploadPart[], sizeExpected: number): number {
+  if (parts.length === 0) {
+    if (sizeExpected === 0) return 0
+    throw new CommandRejection('VALIDATION', 'unverified upload: the server cannot attest the uploaded bytes')
+  }
+  if (parts.some(part => typeof part.sizeBytes !== 'number')) {
+    throw new CommandRejection('VALIDATION', 'unverified upload: every part must report its size')
+  }
+  const partSizes: Record<string, number> = {}
+  for (const part of parts) partSizes[String(part.partNumber)] = part.sizeBytes as number
+  return uploadedBytes({ sizeExpected, parts }, partSizes)
 }
 
 /** One `storage_ledger` row; its key is the idempotency key, so a retry writes one entry. */
@@ -209,13 +228,26 @@ export const DRIVE_REFERENCE_SPECS: ReferenceSpecMap = {
     if (!drive) throw new CommandRejection('NOT_FOUND', 'no drive for this principal: run drive.provision')
     const sha256 = String(tx.payload.sha256)
     const storedParts = Array.isArray(row.data.parts) ? (row.data.parts as UploadSession['parts']) : []
-    await tx.update(SESSION, row, { status: 'completed', reservedBytes: 0, sha256, parts: tx.payload.parts ?? storedParts, completedAt: tx.now })
+    const incoming = Array.isArray(tx.payload.parts) ? (tx.payload.parts as UploadPart[]) : []
+    const parts = incoming.length > 0 ? incoming : storedParts
+    // Fail closed: charge the ledger only for bytes the server can attest
+    // (§16.2 step 3). A known blob is already-stored content, so its size is
+    // the attestation; an ordinary upload must report every part size and
+    // their sum is the attestation used below.
+    const blob = await tx.get(BLOB, sha256)
+    const sizeBytes = blob && !isDeleted(blob)
+      ? Number(blob.data.sizeBytes ?? 0)
+      : attestedUploadSize(parts, session.sizeExpected)
+    if (sizeBytes !== session.sizeExpected) {
+      throw new CommandRejection('VALIDATION', `uploaded ${sizeBytes} bytes do not match the declared ${session.sizeExpected}`)
+    }
+    await tx.update(SESSION, row, { status: 'completed', reservedBytes: 0, sha256, parts, completedAt: tx.now })
     const fileId = deterministicId(tx.ctx.workspaceId, 'file', sha256, session.fileName, tx.actor)
     const existing = await tx.get(FILE, fileId)
     const versionNo = existing && !isDeleted(existing) ? Number(existing.data.currentVersion ?? 1) + 1 : 1
     const file = await tx.upsert(FILE, fileId, {
       name: session.fileName,
-      sizeBytes: session.sizeExpected,
+      sizeBytes,
       sha256,
       currentVersion: versionNo,
       uploadedBy: tx.actor,
@@ -226,16 +258,16 @@ export const DRIVE_REFERENCE_SPECS: ReferenceSpecMap = {
       ...(session.contentType ? { contentType: session.contentType } : {}),
     }, { uploadedBy: tx.actor, currentVersion: 1 })
     await tx.upsert(VERSION, `${fileId}:${versionNo}`, {
-      sizeBytes: session.sizeExpected,
+      sizeBytes,
       sha256,
       storageKey: `blobs/sha256/${sha256.slice(0, 2)}/${sha256.slice(2, 4)}/${sha256}`,
       contentType: session.contentType ?? 'application/octet-stream',
     }, { fileId, versionNo, createdBy: tx.actor })
-    await ledgerEntry(tx, drive.id, 'upload', session.sizeExpected, `upload:${sessionId}`, { fileId, versionNo })
-    await tx.upsert(BLOB, sha256, { fileId, sizeBytes: session.sizeExpected }, { sha256 })
+    await ledgerEntry(tx, drive.id, 'upload', sizeBytes, `upload:${sessionId}`, { fileId, versionNo })
+    await tx.upsert(BLOB, sha256, { fileId, sizeBytes }, { sha256 })
     await tx.upsert(PREVIEW, `${fileId}:${versionNo}:thumb_256`, { status: 'pending' }, { fileId, versionNo, kind: 'thumb_256' })
-    const counters = applyLedgerEntry(countersOf(drive), 'upload', session.sizeExpected)
-    const usedBytes = Math.max(0, Number(drive.data.usedBytes ?? 0) + ledgerDeltaBytes('upload', session.sizeExpected))
+    const counters = applyLedgerEntry(countersOf(drive), 'upload', sizeBytes)
+    const usedBytes = Math.max(0, Number(drive.data.usedBytes ?? 0) + ledgerDeltaBytes('upload', sizeBytes))
     const updated = await tx.update(DRIVE, drive, {
       usedBytes,
       reservedBytes: Math.max(0, Number(drive.data.reservedBytes ?? 0) - session.reservedBytes),
@@ -244,7 +276,7 @@ export const DRIVE_REFERENCE_SPECS: ReferenceSpecMap = {
     })
     return out(FILE, file, ['sha256', 'currentVersion'], {
       ref: { kind: 'file', id: fileId },
-      result: { fileRef: { kind: 'file', id: fileId }, versionNo, sizeBytes: session.sizeExpected, usedBytes, reservedBytes: Number(updated.data.reservedBytes ?? 0), previewQueued: true, trashBytes: counters.trashBytes },
+      result: { fileRef: { kind: 'file', id: fileId }, versionNo, sizeBytes, usedBytes, reservedBytes: Number(updated.data.reservedBytes ?? 0), previewQueued: true, trashBytes: counters.trashBytes },
     })
   },
 

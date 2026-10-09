@@ -9,7 +9,7 @@
 
 import { describe, expect, test } from 'bun:test'
 import {
-  CALENDAR_ROLE_RANK, DOC_VIEW_DEBOUNCE_MS, FOLLOW_SCROLL_THROTTLE_MS, OBJECT_PRESENCE_TTL_SECONDS, PRESENCE_CHANGED_THROTTLE_MS,
+  CALENDAR_ROLE_RANK, DOC_VIEW_DEBOUNCE_MS, FOLLOW_SCROLL_THROTTLE_MS, FREE_BUSY_VISIBLE_FIELDS, OBJECT_PRESENCE_TTL_SECONDS, PRESENCE_CHANGED_THROTTLE_MS,
   READ_RECEIPT_MEMBER_CAP, READ_RECEIPT_THROTTLE_MS, aclRoleForCalendarMember, anchorIsCollapsed, anchorResolution, applyFieldPatch,
   awarenessCapabilityFor, awarenessPeers, awarenessReadOnly, canDecideSuggestion, conflictingFields, decideFieldPatch, decodeBase64,
   decodeYAnchor, docViewers, effectiveCalendarRole, encodeBase64, encodeYAnchor, eventBlocksTime, followViewport, freeBusyBlocks,
@@ -231,17 +231,20 @@ describe('shared calendars and free-busy (§11.9)', () => {
     expect(aclRoleForCalendarMember('owner')).toBe('owner')
   })
 
-  test('a free-busy viewer gets busy blocks: no title, no attendees', () => {
+  test('a free-busy viewer gets busy blocks: exactly the allowed fields, nothing else', () => {
     const event: CalendarEventTiming & Record<string, unknown> = {
-      startAt: '2026-10-09T10:00:00.000Z', endAt: '2026-10-09T11:00:00.000Z',
+      startAt: '2026-10-09T10:00:00.000Z', endAt: '2026-10-09T11:00:00.000Z', allDay: false,
       title: '1:1 with Ann', description: 'secret', attendeeIds: ['ann'], location: 'Room 3', recap: 'private notes',
+      calendarId: 'cal-secret', status: 'confirmed', rrule: 'FREQ=WEEKLY', notesDocId: 'note-9', futureField: 'leak',
     }
     expect(redactForFreeBusy(event)).toEqual({ start: '2026-10-09T10:00:00.000Z', end: '2026-10-09T11:00:00.000Z', busy: true })
     const redacted = redactEventFields(event)
-    expect(redacted).toMatchObject({ busy: true })
-    expect(JSON.stringify(redacted)).not.toContain('Ann')
-    expect(JSON.stringify(redacted)).not.toContain('secret')
-    expect(JSON.stringify(redacted)).not.toContain('Room 3')
+    // The shape is an allowlist: exactly these keys, whatever the event carries.
+    expect(redacted).toEqual({ startAt: '2026-10-09T10:00:00.000Z', endAt: '2026-10-09T11:00:00.000Z', busy: true, allDay: false })
+    expect(Object.keys(redacted).sort()).toEqual([...FREE_BUSY_VISIBLE_FIELDS].sort())
+    for (const leaked of ['Ann', 'secret', 'Room 3', 'cal-secret', 'FREQ=WEEKLY', 'note-9', 'leak']) {
+      expect(JSON.stringify(redacted)).not.toContain(leaked)
+    }
   })
 
   test('free and declined events do not block time; blocks are clipped to the range', () => {

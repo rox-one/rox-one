@@ -8,8 +8,9 @@
  *    ledger is charged anyway (dedupe saves backend space, never the charge).
  * 2. The client PUTs three parts at a time; progress lives in
  *    `upload_session.parts` so a reconnect or a restart resumes.
- * 3. `drive.complete_upload {uploadSessionId, parts}` → verify size (and the
- *    sha256) → `file_object` + `file_version` → ledger `upload` → release the
+ * 3. `drive.complete_upload {uploadSessionId, sha256, parts}` → attest the
+ *    uploaded bytes (the part sizes must sum to `size_expected`) →
+ *    `file_object` + `file_version` → ledger `upload` → release the
  *    reservation → enqueue the preview job.
  * 4. Abort or 24 h expiry → `AbortMultipartUpload`, then release the
  *    reservation. An expired session can never be completed.
@@ -111,7 +112,7 @@ export function canCompleteUpload(session: Pick<UploadSession, 'status' | 'expir
 }
 
 /** Bytes of an uploaded part map; the caller compares it with `size_expected`. */
-export function uploadedBytes(session: Pick<UploadSession, 'sizeExpected' | 'parts'>, partSizes: Readonly<Record<string, number>>): number {
+export function uploadedBytes(session: Pick<UploadSession, 'sizeExpected'> & { parts: readonly UploadPart[] }, partSizes: Readonly<Record<string, number>>): number {
   return session.parts.reduce((total, part) => total + (part.sizeBytes ?? partSizes[String(part.partNumber)] ?? 0), 0)
 }
 

@@ -33,8 +33,11 @@ handlers in `@rox/server-core/drive`. The quota numbers are D-v2-8 / ADR-U17.
 2. The client PUTs three parts at a time and persists progress in
    `upload_session.parts`.
 3. `drive.complete_upload {uploadSessionId, sha256, parts?}` — verifies the
-   hash, writes `file_object` + `file_version`, one `storage_ledger` `upload`
-   entry, releases the reservation and queues the preview.
+   uploaded bytes: every part reports its `sizeBytes`, the server sums them and
+   refuses the command (`VALIDATION`, «unverified upload») unless the sum equals
+   `size_expected`; a known blob is attested by its stored size instead. Then
+   `file_object` + `file_version`, one `storage_ledger` `upload` entry, releases
+   the reservation and queues the preview.
 4. `drive.abort_upload {uploadSessionId}` releases the reservation immediately;
    a session past its 24 h deadline is expired (and released) before the next
    admission of that drive.

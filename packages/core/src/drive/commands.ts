@@ -85,9 +85,10 @@ export interface DriveOpenUploadResult {
 
 export interface DriveCompleteUploadPayload {
   uploadSessionId: string
-  /** Server-side streaming hash of the uploaded bytes. */
+  /** Content hash the client claims; the server checks it against the declared one. */
   sha256: string
-  parts?: { partNumber: number; etag: string }[]
+  /** Every part must report its `sizeBytes` — the server sums them to attest the upload. */
+  parts?: { partNumber: number; etag: string; sizeBytes?: number }[]
 }
 
 export interface DriveCompleteUploadResult {

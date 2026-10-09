@@ -51,7 +51,7 @@ export {
 export type { ChatKind, ChatMemberRead, DocViewRecord, DocViewer, MarkReadPayload, ReadBy, ReadReceiptPrivacy } from './receipts.ts'
 
 export {
-  CALENDAR_MEMBER_ROLES, CALENDAR_MEMBER_SUBJECT_TYPES, CALENDAR_ROLE_RANK, FREE_BUSY_HIDDEN_FIELDS, aclRoleForCalendarMember,
+  CALENDAR_MEMBER_ROLES, CALENDAR_MEMBER_SUBJECT_TYPES, CALENDAR_ROLE_RANK, FREE_BUSY_VISIBLE_FIELDS, aclRoleForCalendarMember,
   effectiveCalendarRole, eventBlocksTime, freeBusyBlocks, freeSlots, isCalendarMemberRole, mergeBusyBlocks, redactCalendarFrame,
   redactEventFields, redactForFreeBusy,
 } from './calendar.ts'

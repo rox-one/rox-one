@@ -109,7 +109,7 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('drive.add_shortcut', t('folder', 'folder'), { item: t('file', 'file'), folderId: U('folder') }),
   s('drive.provision', undefined, { quotaBytes: 1000 }),
   s('drive.open_upload', undefined, { id: U('upload'), fileName: 'b.bin', sizeExpected: 5 }),
-  s('drive.complete_upload', undefined, { uploadSessionId: U('upload'), sha256: sha }),
+  s('drive.complete_upload', undefined, { uploadSessionId: U('upload'), sha256: sha, parts: [{ partNumber: 1, etag: 'e1', sizeBytes: 5 }] }),
   s('drive.open_upload', undefined, { id: U('upload-abort'), fileName: 'c.bin', sizeExpected: 3 }),
   s('drive.abort_upload', undefined, { uploadSessionId: U('upload-abort') }),
   s('drive.import_attachment', undefined, { source: { kind: 'mail-thread', id: 'thread-1' }, attachmentId: 'att-1' }),

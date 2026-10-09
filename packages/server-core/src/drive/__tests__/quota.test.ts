@@ -94,7 +94,7 @@ describe('the upload protocol (§16.2)', () => {
   test('drive.open_upload on a known sha256 is instant and still charges the ledger', async () => {
     const harness = await provisioned(1000)
     await harness.run({ type: 'drive.open_upload', payload: { id: U('upload'), fileName: 'a.bin', sizeExpected: 10, sha256: SHA } })
-    await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA } })
+    await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1', sizeBytes: 10 }] } })
     const again = await harness.run({ type: 'drive.open_upload', payload: { id: U('upload-2'), fileName: 'a-again.bin', sizeExpected: 10, sha256: SHA } })
     expect(again).toMatchObject({ status: 'applied', result: { instant: true, partCount: 0 } })
     await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload-2'), sha256: SHA } })
@@ -106,7 +106,7 @@ describe('the upload protocol (§16.2)', () => {
   test('drive.complete_upload creates the file, its version, the ledger entry and queues the preview', async () => {
     const harness = await provisioned(TIB_BYTES)
     await harness.run({ type: 'drive.open_upload', payload: { id: U('upload'), fileName: 'a.bin', sizeExpected: 10, sha256: SHA } })
-    const receipt = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1' }] } })
+    const receipt = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1', sizeBytes: 10 }] } })
     expect(receipt).toMatchObject({ status: 'applied', result: { versionNo: 1, sizeBytes: 10, usedBytes: 10, reservedBytes: 0, previewQueued: true } })
     expect(driveRow()!.data).toMatchObject({ usedBytes: 10, reservedBytes: 0 })
     const file = records('file')[0]!
@@ -117,11 +117,31 @@ describe('the upload protocol (§16.2)', () => {
     expect(records('file-blob')[0]!.id).toBe(SHA)
   })
 
+  test('drive.complete_upload whose parts do not add up is rejected and charges nothing', async () => {
+    const harness = await provisioned(TIB_BYTES)
+    await harness.run({ type: 'drive.open_upload', payload: { id: U('upload'), fileName: 'a.bin', sizeExpected: 1024 } })
+    const receipt = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1', sizeBytes: 1 }] } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
+    expect(records('file')).toEqual([])
+    expect(records('storage-ledger')).toEqual([])
+    expect(driveRow()!.data).toMatchObject({ usedBytes: 0, reservedBytes: 1024 })
+    expect(records('upload-session')[0]!.data.status).toBe('open')
+  })
+
+  test('drive.complete_upload without attesting part sizes is an explicit unverified upload', async () => {
+    const harness = await provisioned(TIB_BYTES)
+    await harness.run({ type: 'drive.open_upload', payload: { id: U('upload'), fileName: 'a.bin', sizeExpected: 10 } })
+    const receipt = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1' }] } })
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION', message: 'unverified upload: every part must report its size' } })
+    expect(records('storage-ledger')).toEqual([])
+    expect(records('file')).toEqual([])
+  })
+
   test('drive.complete_upload on an expired session is rejected as expired and writes no file', async () => {
     const harness = await provisioned(TIB_BYTES)
     await harness.run({ type: 'drive.open_upload', payload: { id: U('upload'), fileName: 'a.bin', sizeExpected: 10 } })
     clock = new Date(NOW.getTime() + 24 * 60 * 60 * 1000 + 1)
-    const receipt = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA } })
+    const receipt = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1', sizeBytes: 10 }] } })
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION', message: 'upload session expired' } })
     expect(records('file')).toEqual([])
     expect(driveRow()!.data.usedBytes).toBe(0)
@@ -137,7 +157,7 @@ describe('the upload protocol (§16.2)', () => {
   test("drive.complete_upload on someone else's session is FORBIDDEN", async () => {
     const harness = await provisioned(TIB_BYTES)
     await harness.run({ type: 'drive.open_upload', payload: { id: U('upload'), fileName: 'a.bin', sizeExpected: 10 } })
-    const receipt = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA }, actor: BOB })
+    const receipt = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1', sizeBytes: 10 }] }, actor: BOB })
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
   })
 
@@ -155,7 +175,7 @@ describe('the upload protocol (§16.2)', () => {
   test('drive.abort_upload on a session that already finished is rejected', async () => {
     const harness = await provisioned(TIB_BYTES)
     await harness.run({ type: 'drive.open_upload', payload: { id: U('upload'), fileName: 'a.bin', sizeExpected: 10, sha256: SHA } })
-    await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA } })
+    await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('upload'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1', sizeBytes: 10 }] } })
     const receipt = await harness.run({ type: 'drive.abort_upload', payload: { uploadSessionId: U('upload') } })
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
     expect(driveRow()!.data.usedBytes).toBe(10)
@@ -174,7 +194,7 @@ describe('the upload protocol (§16.2)', () => {
   test('a version of an existing file adds a version and charges again', async () => {
     const harness = await provisioned(TIB_BYTES)
     await harness.run({ type: 'drive.open_upload', payload: { id: U('u1'), fileName: 'a.bin', sizeExpected: 10, sha256: SHA } })
-    await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('u1'), sha256: SHA } })
+    await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('u1'), sha256: SHA, parts: [{ partNumber: 1, etag: 'e1', sizeBytes: 10 }] } })
     await harness.run({ type: 'drive.open_upload', payload: { id: U('u2'), fileName: 'a.bin', sizeExpected: 10, sha256: SHA } })
     const second = await harness.run({ type: 'drive.complete_upload', payload: { uploadSessionId: U('u2'), sha256: SHA } })
     expect(second).toMatchObject({ result: { versionNo: 2 } })
