@@ -20,7 +20,7 @@ import { PostgresCommandStore } from '../src/modules/commands/store.ts'
 import { InMemoryCommandStore } from '../../../packages/server-core/src/commands/store.ts'
 import { boundCommandTypes } from '../../../packages/server-core/src/commands/registry.ts'
 import { AGENTS_COMMAND_MODULE } from '../../../packages/server-core/src/agents/module.ts'
-import { PostgresRecordBackend, configureReferenceRuntime, resetPostgresReferenceMeta, resetReferenceMemory, resetReferenceRuntime } from '../../../packages/server-core/src/work/reference/index.ts'
+import { PostgresRecordBackend, configureReferenceRuntime, deterministicId, resetPostgresReferenceMeta, resetReferenceMemory, resetReferenceRuntime } from '../../../packages/server-core/src/work/reference/index.ts'
 import { createHarness } from '../../../packages/server-core/src/work/__tests__/reference-harness.ts'
 import { ACTOR_ID, BOB, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from '../../../packages/server-core/src/work/__tests__/reference-scenario.ts'
 
@@ -64,14 +64,19 @@ const W1_11_OWNED_CHAT = U('chat')
 
 /**
  * True for a scenario step the reference engine does not own today: W1-11 bound
- * the type itself, or the step is scoped to (targets, or delivers into via
- * `toChatId`) the channel whose creation W1-11 owns. Every other step still has
- * to apply — the assertion stays strict for the reference-owned remainder.
+ * the type itself, the step is scoped to (targets, or delivers into via
+ * `toChatId`) the channel whose creation W1-11 owns, or it resolves its origin
+ * from that channel (`origin.chatRef`, as W1-14's `tasks.create_from_message` /
+ * `calendar.create_event_from_message` do). The reference store never gains the
+ * channel, so a step that reaches for it cannot apply. Every other step still
+ * has to apply — the assertion stays strict for the reference-owned remainder.
  */
 function isW1_11Shadow(step: ScenarioStep): boolean {
   if (W1_11_OWNED_TYPES.includes(step.type)) return true
   if (step.target?.kind === 'channel' && step.target.id === W1_11_OWNED_CHAT) return true
-  return step.payload.toChatId === W1_11_OWNED_CHAT
+  if (step.payload.toChatId === W1_11_OWNED_CHAT) return true
+  const origin = step.payload.origin as { chatRef?: unknown } | undefined
+  return origin?.chatRef === `channel:${W1_11_OWNED_CHAT}`
 }
 
 /** The reference-owned remainder of the scenario: what must apply against the W1-05 schema. */
@@ -166,6 +171,13 @@ test('the W1-11 ownership exclusion matches what the module binds today', () => 
   // The channel scope is only justified while W1-11 owns chat creation.
   expect(W1_11_OWNED_TYPES).toContain('im.create_chat')
   expect(REFERENCE_OWNED_SCENARIO.length).toBeLessThan(REFERENCE_SCENARIO.length)
+  // Every way the scenario reaches the W1-11 chat is filtered out of the
+  // reference-owned remainder — including the from-message origins W1-14
+  // resolves against it (a missing chatRef here would fail the PG run below).
+  expect(REFERENCE_SCENARIO.some(step => step.target?.id === W1_11_OWNED_CHAT)).toBe(true)
+  expect(REFERENCE_OWNED_SCENARIO.some(step => step.target?.id === W1_11_OWNED_CHAT)).toBe(false)
+  expect(REFERENCE_OWNED_SCENARIO.some(step => step.payload.toChatId === W1_11_OWNED_CHAT)).toBe(false)
+  expect(REFERENCE_OWNED_SCENARIO.some(step => (step.payload.origin as { chatRef?: unknown } | undefined)?.chatRef === `channel:${W1_11_OWNED_CHAT}`)).toBe(false)
 })
 
 describe('W1-06 reference handlers over PostgreSQL (skips without a database)', () => {
@@ -236,16 +248,21 @@ describe('W1-06 reference handlers over PostgreSQL (skips without a database)', 
   itDb('create_from_* keeps origin in origin_ref and the rest in the companion', async () => {
     const harness = pgHarness()
     // W1-14: the origin chat must exist — the command posts its card there.
-    expect(await harness.run({ type: 'im.create_chat', payload: { id: U('pg-chat'), kind: 'group', name: 'pg', visibility: 'public', members: [] } })).toMatchObject({ status: 'applied' })
-    const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('pg-from-msg'), origin: { kind: 'message', chatRef: `channel:${U('pg-chat')}`, seq: 3 }, title: 'From message', assignee: BOB } })
+    // Chat creation is no longer reference-owned (`im.create_chat` runs on the
+    // agent-governance runtime, which this schema does not back, so it rejects
+    // with "Unknown workspace"), so the origin chat is made through the
+    // reference-owned p2p command; its id is the deterministic p2p id.
+    expect(await harness.run({ type: 'im.get_or_create_p2p', payload: { peerId: BOB } })).toMatchObject({ status: 'applied' })
+    const chatId = deterministicId(WORKSPACE_ID, 'p2p', ...[ACTOR_ID, BOB].sort())
+    const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('pg-from-msg'), origin: { kind: 'message', chatRef: `channel:${chatId}`, seq: 3 }, title: 'From message', assignee: BOB } })
     expect(fromMessage).toMatchObject({ status: 'applied' })
     const fromSelection = await harness.run({ type: 'tasks.create_from_selection', payload: { id: U('pg-from-sel'), origin: { kind: 'doc-block', docRef: `note:${U('pg-doc')}`, blockId: 'b1' }, title: 'Do it' } })
     expect(fromSelection).toMatchObject({ status: 'applied' })
     const rows = await db.unsafe<{ work_item_id: string; origin_ref: string }[]>(`SELECT work_item_id, origin_ref FROM "${schema}".work_item WHERE work_item_id IN ($1, $2) ORDER BY origin_ref`, [U('pg-from-msg'), U('pg-from-sel')])
     // W1-14 (§12 rule 1): a doc-block origin is the doc; the block id lives in
     // the `derived-from` link anchor, because a doc block is not an entity kind.
-    expect(rows.map(r => r.origin_ref)).toEqual([`channel-message:${U('pg-chat')}:3`, `note:${U('pg-doc')}`])
-    expect((await readTask(U('pg-from-msg')))!.data).toMatchObject({ origin: { kind: 'channel-message', id: `${U('pg-chat')}:3` }, assigneeIds: [BOB] })
+    expect(rows.map(r => r.origin_ref)).toEqual([`channel-message:${chatId}:3`, `note:${U('pg-doc')}`])
+    expect((await readTask(U('pg-from-msg')))!.data).toMatchObject({ origin: { kind: 'channel-message', id: `${chatId}:3` }, assigneeIds: [BOB] })
     expect((await readTask(U('pg-from-sel')))!.data).toMatchObject({ origin: { kind: 'note', id: U('pg-doc') }, title: 'Do it' })
     const [link] = await db.unsafe<{ anchor: { blockId?: string }; relation: string; role: string }[]>(
       `SELECT anchor, relation, role FROM "${schema}".entity_link WHERE to_kind = 'note' AND to_id = $1 ORDER BY relation LIMIT 1`, [U('pg-doc')])
