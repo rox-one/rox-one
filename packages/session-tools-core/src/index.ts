@@ -149,6 +149,7 @@ export type {
   DeletePageToolResult,
   // Memory types
   MemoryToolCallbacks,
+  MemoryWikiCallbacks,
 } from './context.ts';
 
 export { createNodeFileSystem } from './context.ts';
@@ -281,8 +282,12 @@ export {
   handleMemorySearch,
   handleMemoryGet,
   handleMemoryForget,
+  handleWikiSearch,
+  handleWikiGet,
+  handleWikiApply,
   MEMORY_SEARCH_MAX_LIMIT,
   MEMORY_FORGET_MAX_IDS,
+  WIKI_SEARCH_MAX_LIMIT,
 } from './handlers/index.ts';
 
 // Skills catalog handlers (registered in SESSION_TOOL_DEFS)
@@ -400,6 +405,9 @@ export type {
   MemorySearchToolArgs,
   MemoryGetToolArgs,
   MemoryForgetToolArgs,
+  WikiSearchToolArgs,
+  WikiGetToolArgs,
+  WikiApplyToolArgs,
   SkillsSearchArgs,
   SkillsReadArgs,
 } from './tool-defs.ts';

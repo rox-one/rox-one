@@ -61,6 +61,9 @@ import { handleMemoryRepoRead, handleMemoryRepoSearch } from './handlers/memory-
 import { handleMemorySearch } from './handlers/memory-search.ts';
 import { handleMemoryGet } from './handlers/memory-get.ts';
 import { handleMemoryForget } from './handlers/memory-forget.ts';
+import { handleWikiSearch } from './handlers/wiki-search.ts';
+import { handleWikiGet } from './handlers/wiki-get.ts';
+import { handleWikiApply } from './handlers/wiki-apply.ts';
 import { handleSkillsSearch } from './handlers/skills-search.ts';
 import { handleSkillsRead } from './handlers/skills-read.ts';
 
@@ -469,6 +472,42 @@ export const MemoryForgetSchema = z.object({
 export type MemorySearchToolArgs = z.infer<typeof MemorySearchSchema>;
 export type MemoryGetToolArgs = z.infer<typeof MemoryGetSchema>;
 export type MemoryForgetToolArgs = z.infer<typeof MemoryForgetSchema>;
+// c1.7 workspace wiki: evidence-backed claims. wiki_search/wiki_get are
+// read-only; wiki_apply is mutating (blocked in Explore/Safe mode).
+export const WikiClaimEvidenceSchema = z.object({
+  source: z.string().describe('Workspace-relative path or memory chunk id the evidence came from.'),
+  locator: z.string().optional().describe('Free-form locator: line range, chunk id or URL.'),
+  ts: z.string().optional().describe('ISO timestamp the evidence was captured.'),
+  quote: z.string().optional().describe('Verbatim excerpt supporting the claim.'),
+});
+export const WikiClaimSchema = z.object({
+  id: z.string().describe('Stable claim id (reused to update an existing claim).'),
+  text: z.string().describe('The asserted statement (single sentence).'),
+  status: z.enum(['draft', 'active', 'stale', 'retracted']).describe('Lifecycle state of the claim.'),
+  scope: z.string().optional().describe("Wiki scope, e.g. 'workspace' or a project slug."),
+  evidence: z.array(WikiClaimEvidenceSchema).describe('Supporting evidence entries.'),
+  revision: z.number().optional().describe('Monotonic revision; the store assigns it on write.'),
+  createdAt: z.string().optional().describe('ISO timestamp of first creation.'),
+  updatedAt: z.string().optional().describe('ISO timestamp of the last mutation.'),
+});
+export const WikiSearchSchema = z.object({
+  query: z.string().optional().describe('Case-insensitive substring over claim text; omit to list all claims.'),
+  scope: z.string().optional().describe("Restrict to one wiki scope (e.g. 'workspace' or a project slug)."),
+  status: z.enum(['draft', 'active', 'stale', 'retracted']).optional().describe('Restrict to one lifecycle status.'),
+  limit: z.number().optional().describe('Max claims to return (default 20, hard cap 100)'),
+});
+export const WikiGetSchema = z.object({
+  id: z.string().describe('Claim id from a wiki_search hit.'),
+});
+export const WikiApplySchema = z.object({
+  op: z.enum(['upsert', 'retract']).describe("'upsert' stores a claim; 'retract' marks one retracted."),
+  claim: WikiClaimSchema.optional().describe("Required for op 'upsert'."),
+  claimId: z.string().optional().describe("Required for op 'retract'."),
+  reason: z.string().optional().describe('Why the claim is retracted (recorded in the audit log).'),
+});
+export type WikiSearchToolArgs = z.infer<typeof WikiSearchSchema>;
+export type WikiGetToolArgs = z.infer<typeof WikiGetSchema>;
+export type WikiApplyToolArgs = z.infer<typeof WikiApplySchema>;
 // Skills catalog tools (c2.7). The wire names use underscores; the catalog
 // advertises and the tools resolve slugs (never raw paths).
 export const SkillsSearchSchema = z.object({
@@ -925,6 +964,30 @@ retained for audit only — it is never injected into prompts.
 
 Pass \`chunkId\`s from memory_search hits. Forgetting an id that is already gone is a
 clean no-op. Use this when the user asks you to forget/remove remembered information.`,
+
+  wiki_search: `Search the workspace wiki: durable, evidence-backed claims. Read-only.
+
+Recall the distilled assertions the workspace has committed to (each with its
+evidence and lifecycle status). Optional \`query\` does a case-insensitive substring
+match over claim text; omit it to list claims. Optional \`scope\`/\`status\` narrow the
+result. The wiki is a human/agent-inspected surface — it is NEVER injected into the
+prompt automatically. Pass a hit's \`id\` to wiki_get to read one claim in full.
+
+"unavailable" means this backend has no workspace wiki wired.`,
+
+  wiki_get: `Read one wiki claim by id. Read-only.
+
+Pass an \`id\` from a wiki_search hit to get the full claim: text, status, evidence
+entries and revision. An unknown id is reported honestly as "not found".`,
+
+  wiki_apply: `Store or retract a wiki claim. Mutating.
+
+\`op: "upsert"\` writes a claim ({id, text, status, evidence, optional scope}); reusing
+an id updates that claim and bumps its revision. \`op: "retract"\` marks a claim
+retracted by \`claimId\`. Empty text and contradiction edges to unknown claim ids are
+rejected. Blocked in Explore/Safe mode. Use this to record a durable, evidence-backed
+assertion the workspace should keep.`,
+
   skills_search: `Search the installed skills (agent skill catalog) by keyword. Read-only.
 
 Use it to find a skill that matches the task before loading one — the available-skills
@@ -1048,6 +1111,12 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   // c1.8 forget — mutating (removes corpus lines + chunks + embeddings), so it
   // is blocked in Explore/Safe mode like other write tools.
   { name: 'memory_forget', description: TOOL_DESCRIPTIONS.memory_forget, inputSchema: MemoryForgetSchema, executionMode: 'registry', safeMode: 'block', readOnly: false, handler: handleMemoryForget },
+  // c1.7 workspace wiki (claims/evidence) — read-only search/get (safe in Explore
+  // mode; typed "unavailable" until ctx.memory.wiki is wired), and a mutating
+  // apply blocked in Explore/Safe mode like the other memory-write tools.
+  { name: 'wiki_search', description: TOOL_DESCRIPTIONS.wiki_search, inputSchema: WikiSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleWikiSearch },
+  { name: 'wiki_get', description: TOOL_DESCRIPTIONS.wiki_get, inputSchema: WikiGetSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleWikiGet },
+  { name: 'wiki_apply', description: TOOL_DESCRIPTIONS.wiki_apply, inputSchema: WikiApplySchema, executionMode: 'registry', safeMode: 'block', readOnly: false, handler: handleWikiApply },
   // Skills catalog tools (c2.7) — read-only over the eligible skill catalog via
   // the registered skills runtime; safe in Explore mode, typed unavailable otherwise.
   { name: 'skills_search', description: TOOL_DESCRIPTIONS.skills_search, inputSchema: SkillsSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillsSearch },
