@@ -2,8 +2,10 @@ import { describe, expect, test } from 'bun:test'
 import {
   ENTITY_LIST_GROUP_HEADER_HEIGHT,
   ENTITY_LIST_EMPTY_LANE_HEIGHT,
+  coveringHeaderIndex,
   entityListWindow,
   flattenEntityListRows,
+  groupEndByHeaderKey,
   revealEntryScrollTop,
   rowEntryIndexByItemKey,
   virtualEntryIndices,
@@ -122,6 +124,71 @@ describe('virtualEntryIndices', () => {
 
   test('an empty window with no pins renders nothing', () => {
     expect(virtualEntryIndices({ startIndex: 5, endIndex: 5 }, 30, [])).toEqual([])
+  })
+})
+
+describe('coveringHeaderIndex', () => {
+  const flattened = flattenEntityListRows(
+    [
+      { key: 'today', items: [{ id: 'a' }, { id: 'b' }] },
+      { key: 'yesterday', items: [{ id: 'c' }] },
+    ],
+    OPTIONS,
+  )
+  const entries = flattened.entries
+
+  test('returns null while the window starts on a header', () => {
+    expect(coveringHeaderIndex(entries, 0)).toBeNull()
+    expect(coveringHeaderIndex(entries, 3)).toBeNull()
+  })
+
+  test('returns the header of the group the window starts inside', () => {
+    expect(entries.map((entry) => entry.key)).toEqual([
+      'header:today',
+      'row:a',
+      'row:b',
+      'header:yesterday',
+      'row:c',
+    ])
+    expect(coveringHeaderIndex(entries, 1)).toBe(0)
+    expect(coveringHeaderIndex(entries, 2)).toBe(0)
+    expect(coveringHeaderIndex(entries, 4)).toBe(3)
+  })
+
+  test('returns null past the end of the list and for ungrouped lists', () => {
+    expect(coveringHeaderIndex(entries, entries.length + 4)).toBeNull()
+    const ungrouped = flattenEntityListRows([{ key: null, items: [{ id: 'a' }] }], OPTIONS)
+    expect(coveringHeaderIndex(ungrouped.entries, 1)).toBeNull()
+  })
+
+  test('a pinned covering header joins the rendered window', () => {
+    const covering = coveringHeaderIndex(entries, 2)
+    expect(covering).toBe(0)
+    expect(virtualEntryIndices({ startIndex: 2, endIndex: 4 }, entries.length, [covering!])).toEqual([
+      0, 2, 3,
+    ])
+  })
+})
+
+describe('groupEndByHeaderKey', () => {
+  test('spans each header until the next header, and the last one to the list end', () => {
+    const flattened = flattenEntityListRows(
+      [
+        { key: 'today', items: [{ id: 'a' }, { id: 'b' }] },
+        { key: 'yesterday', items: [{ id: 'c' }] },
+      ],
+      OPTIONS,
+    )
+    const ends = groupEndByHeaderKey(flattened.entries, flattened.totalHeight)
+    const nextHeader = flattened.entries.find((entry) => entry.key === 'header:yesterday')!
+    expect(ends.get('header:today')).toBe(nextHeader.offset)
+    expect(ends.get('header:yesterday')).toBe(flattened.totalHeight)
+    expect(ends.size).toBe(2)
+  })
+
+  test('an ungrouped list has no spanning headers', () => {
+    const flattened = flattenEntityListRows([{ key: null, items: [{ id: 'a' }] }], OPTIONS)
+    expect(groupEndByHeaderKey(flattened.entries, flattened.totalHeight).size).toBe(0)
   })
 })
 
