@@ -4,9 +4,10 @@
  * Manages the state machine for the onboarding wizard.
  *
  * First run (initialStep 'welcome'):
- * 1. Welcome — the name screen («Начать»); collects public handle + organization,
+* 1. Welcome — the name screen («Начать»); collects public handle + organization,
  *    reserved rox.one addresses, coin bonuses
- * 2. Questionnaire — bubble clouds (left) and permissions (right); Continue/Skip
+ * 2. Questionnaire — bubble clouds (left) and permissions (right); Continue/Skip,
+ *    then the «Who are you?» role step (developer + adjacent roles; skip is safe)
  * 3. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
  * 4. Finish — the Rox runtime becomes the default connection automatically and
  *    the app opens. There is no provider picker or completion screen.
@@ -30,7 +31,7 @@ import type {
 import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
 import type { RoxCliCredentialSubmitData } from '@/components/onboarding/RoxCliCredentialStep'
-import { nextStepAfterUsername } from '@/components/onboarding/onboarding-username'
+import { nextStepAfterRole } from '@/components/onboarding/onboarding-role'
 import type { OnboardingFirstRunState } from '@/components/onboarding/OnboardingWizard'
 import { createRewardLedger, type RewardStorage } from '@/components/onboarding/onboarding-rewards'
 import { createLearningCurve, type LearningCurveStorage } from '@/components/onboarding/learning-curve'
@@ -328,7 +329,7 @@ export function useOnboarding({
           gitBashStatus: status,
           isCheckingGitBash: false,
           // Redirect to git-bash step when missing on Windows
-          ...(status.platform === 'win32' && !status.found && s.step !== 'welcome' ? { step: 'git-bash' as const } : {}),
+          ...(status.platform === 'win32' && !status.found && s.step !== 'welcome' && s.step !== 'role' ? { step: 'git-bash' as const } : {}),
         }))
       } catch (error) {
         console.error('[Onboarding] Failed to check Git Bash:', error)
@@ -460,13 +461,20 @@ export function useOnboarding({
         break
 
       case 'welcome':
+case 'welcome':
         // First run: the welcome screen itself collects the public identity
         // (nickname, organization, coins); the two-column questionnaire follows.
         setState(s => ({ ...s, step: 'questionnaire' }))
         break
 
-      case 'questionnaire': {
-        const next = nextStepAfterUsername({
+      case 'questionnaire':
+        // The questionnaire draft is written by the wizard; the «Who are you?»
+        // role step follows, and it delegates the git-bash / rox-connect / finish decision.
+        setState(s => ({ ...s, step: 'role' }))
+        break
+
+      case 'role': {
+        const next = nextStepAfterRole({
           applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
           gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
         })
@@ -508,6 +516,9 @@ export function useOnboarding({
       return
     }
     switch (state.step) {
+      case 'role':
+        setState(s => ({ ...s, step: 'welcome' }))
+        break
       case 'git-bash':
         if (initialStep === 'welcome') {
           setState(s => ({ ...s, step: 'welcome' }))

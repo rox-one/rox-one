@@ -108,6 +108,56 @@ describe('drive import RPC handlers', () => {
     expect(resumed.status).toBe('done')
   })
 
+  test('cancels a running job: the in-flight file settles and no further files start', async () => {
+    resetDriveImport()
+    const firstPut = Promise.withResolvers<void>()
+    const gate = Promise.withResolvers<void>()
+    const cancelledKeys: string[] = []
+    const target: DriveUploadTarget = {
+      async put(key, body) {
+        await (body instanceof Uint8Array ? Promise.resolve() : new Response(body).arrayBuffer())
+        cancelledKeys.push(key)
+        if (cancelledKeys.length === 1) {
+          firstPut.resolve()
+          await gate.promise
+        }
+      },
+    }
+    configureDriveImport({ stateDir, target, providers: [provider], concurrency: 1, sleep: async () => {} })
+
+    const { invoke } = harness()
+    const job = await invoke(RPC_CHANNELS.drive.IMPORT_PLAN, 'google-drive') as { id: string }
+    const startPromise = invoke(RPC_CHANNELS.drive.IMPORT_START, job.id)
+    await firstPut.promise
+    const cancelPromise = invoke(RPC_CHANNELS.drive.IMPORT_CANCEL, job.id)
+    gate.resolve()
+    await startPromise
+
+    const cancelled = await cancelPromise as { status: string; error?: string }
+    expect(cancelled.status).toBe('cancelled')
+    // The blocked file committed; the queued sibling never started.
+    expect(cancelledKeys).toEqual([`${job.id}/a.txt`])
+
+    const status = await invoke(RPC_CHANNELS.drive.IMPORT_STATUS, job.id) as { status: string }
+    expect(status.status).toBe('cancelled')
+  })
+
+  test('cancelling an unknown job is a typed error', async () => {
+    const { invoke } = harness()
+    await expect(invoke(RPC_CHANNELS.drive.IMPORT_CANCEL, 'missing')).rejects.toMatchObject({
+      code: 'DRIVE_IMPORT_NOT_FOUND',
+    })
+  })
+
+  test('cancelling a finished job is a typed error', async () => {
+    const { invoke } = harness()
+    const job = await invoke(RPC_CHANNELS.drive.IMPORT_PLAN, 'google-drive') as { id: string }
+    await invoke(RPC_CHANNELS.drive.IMPORT_START, job.id)
+    await expect(invoke(RPC_CHANNELS.drive.IMPORT_CANCEL, job.id)).rejects.toMatchObject({
+      code: 'DRIVE_IMPORT_NOT_CANCELLABLE',
+    })
+  })
+
   test('status without an id lists known jobs', async () => {
     const { invoke } = harness()
     const job = await invoke(RPC_CHANNELS.drive.IMPORT_PLAN, 'google-drive') as { id: string }

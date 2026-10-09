@@ -29,6 +29,8 @@ export const SE_MONOCHROME_NAV_IDS: Record<AppNavDestinationId, true> = {
   home: true,
   drive: true,
   knowledge: true,
+  developers: true,
+  playbooks: true,
   settings: true,
   learning: true,
 }

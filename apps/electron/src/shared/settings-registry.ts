@@ -58,6 +58,8 @@ export const SETTINGS_PAGES = [
   { id: 'server' as const, labelKey: 'settings.server.title', descriptionKey: 'settings.server.description' },
   { id: 'cloudRuns' as const, labelKey: 'settings.cloudRuns.title', descriptionKey: 'settings.cloudRuns.description' },
   { id: 'shortcuts' as const, labelKey: 'settings.shortcuts.title', descriptionKey: 'settings.shortcuts.description' },
+  { id: 'developers' as const, labelKey: 'settings.developers.title', descriptionKey: 'settings.developers.description' },
+  { id: 'playbooks' as const, labelKey: 'settings.playbooks.title', descriptionKey: 'settings.playbooks.description' },
 ] satisfies readonly SettingsPageDefinition[]
 
 /** ROX2-031: settings hub is native; Conation flags do not gate SETTINGS_PAGES. */

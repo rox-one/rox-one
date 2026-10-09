@@ -23,7 +23,6 @@ import {
   visibleEntryTags,
   visibleTagCounts,
 } from '../clipboard-history-model'
-import { formatAcceleratorDisplay } from '@/lib/platform'
 
 const NOW = Date.parse('2026-10-09T12:00:00.000Z')
 const at = (secondsAgo: number) => new Date(NOW - secondsAgo * 1000).toISOString()

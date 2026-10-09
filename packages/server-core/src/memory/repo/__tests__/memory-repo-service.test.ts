@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, test, vi } from 'bun:test'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createGitExec, type GitExec } from '@rox/shared/memory/git-exec'
 import type { MemoryRepoBankInfo } from '@rox/shared/memory/repo'
 import type { RepoSourceBundle, RepoSourceLesson } from '../MemoryRepoMaterializer'
-import { MemoryRepoService, type MemoryRepoServiceDeps } from '../MemoryRepoService'
+import { MemoryRepoService, type MemoryRepoServiceDeps, type RepoMaterializeResult } from '../MemoryRepoService'
 import type { RepoSourceProvider } from '../RepoSourceProvider'
 import { listRepoFiles, readSnapshots } from '../snapshots'
 
@@ -960,6 +960,91 @@ describe('MemoryRepoService', () => {
     const failed = await service.materialize('ws:w1', 'failed')
     expect(failed.committed).toBe(false)
     expect(failed.error).toContain('injected commit failure')
+    await service.dispose()
+  }, 30_000)
+
+  test('stale index lock: a >60s lock left by a killed run is quarantined and the batch retries to success', async () => {
+    const provider = new MutableProvider(bundleFor('workspace'))
+    const service = makeService(provider)
+    const repoPath = service.repoPathFor('ws:w1', '')
+    expect((await service.materialize('ws:w1', 'first')).committed).toBe(true)
+
+    // A SIGKILLed run left its index lock behind; it is two minutes old, so it
+    // cannot belong to a live git invocation.
+    const lockPath = join(repoPath, '.git-rox', 'index.lock')
+    writeFileSync(lockPath, '')
+    const old = new Date(Date.now() - 120_000)
+    utimesSync(lockPath, old, old)
+
+    const warns: unknown[][] = []
+    const originalWarn = console.warn
+    console.warn = (...args: unknown[]) => {
+      warns.push(args)
+    }
+    let recovered: RepoMaterializeResult
+    try {
+      provider.bundle = { ...provider.bundle, context: '# Context\nB\n' }
+      recovered = await service.materialize('ws:w1', 'after-kill')
+    } finally {
+      console.warn = originalWarn
+    }
+
+    // The quarantine + single retry lands the batch, with no error.
+    expect(recovered.committed).toBe(true)
+    expect(recovered.error).toBeUndefined()
+    expect(recovered.recoveredLock).toBeDefined()
+    expect(recovered.recoveredLock!.startsWith(`${lockPath}.stale-`)).toBe(true)
+    // quarantined (renamed, bytes preserved), not deleted
+    expect(existsSync(recovered.recoveredLock!)).toBe(true)
+    expect(existsSync(lockPath)).toBe(false)
+    expect(warns.some((args) => String(args[0]).includes('quarantined stale index lock'))).toBe(true)
+    expect(await service.listCommits('ws:w1')).toHaveLength(2)
+    await service.dispose()
+  }, 30_000)
+
+  test('fresh index lock: a live run\'s lock is never touched and stays an honest error', async () => {
+    const provider = new MutableProvider(bundleFor('workspace'))
+    const service = makeService(provider)
+    const repoPath = service.repoPathFor('ws:w1', '')
+    expect((await service.materialize('ws:w1', 'first')).committed).toBe(true)
+
+    // mtime == now → a live git invocation owns this lock.
+    const lockPath = join(repoPath, '.git-rox', 'index.lock')
+    writeFileSync(lockPath, '')
+
+    provider.bundle = { ...provider.bundle, context: '# Context\nB\n' }
+    const failed = await service.materialize('ws:w1', 'fresh-lock')
+
+    expect(failed.committed).toBe(false)
+    expect(failed.error).toContain('index.lock')
+    expect(failed.recoveredLock).toBeUndefined()
+    // the lock is left exactly where it was, and no quarantine copy was minted
+    expect(existsSync(lockPath)).toBe(true)
+    expect(readdirSync(join(repoPath, '.git-rox')).some((name) => name.startsWith('index.lock.stale-'))).toBe(false)
+    await service.dispose()
+  }, 30_000)
+
+  test('status() on a settled git bank spawns exactly two git commands', async () => {
+    const provider = new FakeProvider(bundleFor('main'))
+    const real = createGitExec()
+    const calls: string[][] = []
+    const recordingGit: GitExec = {
+      available: () => real.available(),
+      async run(args, opts) {
+        calls.push(args)
+        return real.run(args, opts)
+      },
+    }
+    const service = makeService(provider, { git: recordingGit })
+    await service.materialize('main', 'test')
+    calls.length = 0
+
+    const status = await service.status('main')
+    // No `rev-parse --show-toplevel` probes: the two remaining spawns are the
+    // head log and the dirty `status --porcelain`.
+    expect(status.mode).toBe('git')
+    expect(status.foreignTree).toBe(false)
+    expect(calls.map((args) => args[0])).toEqual(['log', 'status'])
     await service.dispose()
   }, 30_000)
 })

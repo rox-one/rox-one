@@ -576,6 +576,23 @@ export interface TransportConnectionState {
 
 // Re-import types for ElectronAPI
 import type { WorkspaceInfo, Workspace, SessionMetadata, StoredAttachment as StoredAttachmentType } from '@rox/core/types';
+import type {
+  DevSpaceAddRepositoryInput,
+  DevSpaceCancelInput,
+  DevSpaceCapabilities,
+  DevSpaceCapabilitiesInput,
+  DevSpaceCloneProgress,
+  DevSpaceListRepositoriesInput,
+  DevSpaceListRunsInput,
+  DevSpaceListRunsResult,
+  DevSpaceRemoveRepositoryInput,
+  DevSpaceRemoveRepositoryResult,
+  DevSpaceRepositoryCatalog,
+  DevSpaceRepositoryRecord,
+  DevSpaceRepositoryRequestInput,
+  DevSpaceRepositoryStatus,
+  DevSpaceRunProgress,
+} from '@rox/shared/dev-space';
 
 // Import protocol types used by ElectronAPI (they come through the `export *` above,
 // but we need them in scope for the interface definition)
@@ -1232,6 +1249,18 @@ export interface ElectronAPI {
   readProjectRepositorySpan(input: import('@rox/shared/code-intelligence').RepositoryReadSpanInput): Promise<import('@rox/shared/code-intelligence').FileSpan>
   checkProjectRepositoryFreshness(input: import('@rox/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@rox/shared/code-intelligence').RepositoryFreshness>
   cancelProjectRepositoryRequest(input: import('@rox/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
+  // Developer Space (02-SPEC-foundations §4–§8) — repository catalog + local job pipeline.
+  listDevSpaceRepositories(input: DevSpaceListRepositoriesInput): Promise<DevSpaceRepositoryCatalog>
+  addDevSpaceRepository(input: DevSpaceAddRepositoryInput): Promise<DevSpaceRepositoryRecord>
+  startDevSpaceClone(input: DevSpaceRepositoryRequestInput): Promise<DevSpaceRepositoryRecord>
+  removeDevSpaceRepository(input: DevSpaceRemoveRepositoryInput): Promise<DevSpaceRemoveRepositoryResult>
+  refreshDevSpaceRepository(input: DevSpaceRepositoryRequestInput): Promise<DevSpaceRepositoryRecord>
+  cancelDevSpaceRequest(input: DevSpaceCancelInput): Promise<boolean>
+  getDevSpaceCapabilities(input: DevSpaceCapabilitiesInput): Promise<DevSpaceCapabilities>
+  listDevSpaceRuns(input: DevSpaceListRunsInput): Promise<DevSpaceListRunsResult>
+  onDevSpaceCloneProgress(callback: (progress: DevSpaceCloneProgress) => void): () => void
+  onDevSpaceChanged(callback: (change: { repositoryId: string; status: DevSpaceRepositoryStatus }) => void): () => void
+  onDevSpaceRunProgress(callback: (progress: DevSpaceRunProgress) => void): () => void
   saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
   createNote(workspaceId: string, title: string, folder?: string, operation?: NoteCreateOptions): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
@@ -2455,6 +2484,7 @@ export interface ElectronAPI {
   driveImportPlan(provider: ImportProviderId, folderId?: string): Promise<ImportJob>
   driveImportStart(jobId: string): Promise<ImportJob>
   driveImportPause(jobId: string): Promise<ImportJob>
+  driveImportCancel(jobId: string): Promise<ImportJob>
   driveImportResume(jobId: string): Promise<ImportJob>
   driveImportStatus(jobId?: string): Promise<ImportJob | ImportJob[] | null>
   // ROX Drive (wave 4) — host-side import OAuth broker. The renderer never sees
@@ -3272,6 +3302,24 @@ export interface ConnectionsNavigationState {
 }
 
 /**
+ * Developer Space navigation state (2026-10-09 pack, D2) — `developers`, or
+ * `developers?repo=<id>` with `devSpaceRepoId` focused on one repo workspace.
+ */
+export interface DevelopersNavigationState {
+  navigator: 'developers'
+  devSpaceRepoId?: string
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/** Playbooks notebook surface navigation state (2026-10-09 pack, D12). */
+export interface PlaybooksNavigationState {
+  navigator: 'playbooks'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Workbench Home Front Page (mode `home`). Dashboard with no navigator column.
  */
 export interface HomeNavigationState {
@@ -3425,6 +3473,8 @@ export type NavigationState =
   | TerminalNavigationState
   | EntityNavigationState
   | ConnectionsNavigationState
+  | DevelopersNavigationState
+  | PlaybooksNavigationState
   | HomeNavigationState
   | DriveNavigationState
   | ScreenNavigationState
@@ -3501,6 +3551,14 @@ export const isInboxNavigation = (
 export const isConnectionsNavigation = (
   state: NavigationState
 ): state is ConnectionsNavigationState => state.navigator === 'connections'
+
+export const isDevelopersNavigation = (
+  state: NavigationState
+): state is DevelopersNavigationState => state.navigator === 'developers'
+
+export const isPlaybooksNavigation = (
+  state: NavigationState
+): state is PlaybooksNavigationState => state.navigator === 'playbooks'
 
 export const isScreenNavigation = (
   state: NavigationState
@@ -3629,6 +3687,14 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'connections') {
     return 'connections'
+  }
+  if (state.navigator === 'developers') {
+    return state.devSpaceRepoId
+      ? `developers?repo=${encodeURIComponent(state.devSpaceRepoId)}`
+      : 'developers'
+  }
+  if (state.navigator === 'playbooks') {
+    return 'playbooks'
   }
   if (state.navigator === 'home') {
     return 'home'
@@ -3875,6 +3941,14 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+if (key === 'playbooks') return { navigator: 'playbooks', details: null }
+  if (key === 'developers') return { navigator: 'developers', details: null }
+  if (key.startsWith('developers?repo=')) {
+    const devSpaceRepoId = decodeURIComponent(key.slice('developers?repo='.length))
+    return devSpaceRepoId
+      ? { navigator: 'developers', devSpaceRepoId, details: null }
+      : { navigator: 'developers', details: null }
+  }
 
   // ROX Drive (wave 1) — `drive[/folder/{folderId}]`
   if (key === 'drive') return { navigator: 'drive', details: null }

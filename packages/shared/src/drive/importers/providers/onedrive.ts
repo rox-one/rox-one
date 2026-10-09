@@ -15,6 +15,12 @@
  * Env: ROX_MS_CLIENT_ID.
  *
  * Range semantics: `{ start, end }` map 1:1 onto an inclusive HTTP Range.
+ *
+ * Timeouts: token/listing calls are bounded by a hard request timeout
+ * (`DEFAULT_REQUEST_TIMEOUT_MS`, 30s); downloads use a *stall* timeout
+ * (`DEFAULT_STALL_TIMEOUT_MS`, 30s) that aborts only when no byte arrives for a
+ * full window. Timeouts surface as a typed `ImportProviderError`
+ * (`code: 'network'`).
  */
 import type { ImportProvider, ImportSourceEntry } from '../types'
 import {
@@ -28,6 +34,14 @@ import {
   type ImportTokens,
   type SleepFn,
 } from './auth'
+import {
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  DEFAULT_STALL_TIMEOUT_MS,
+  StallTimeoutMonitor,
+  guardStreamWithStall,
+  isTimeoutError,
+  timedFetch,
+} from '../timeout'
 
 // `/common` admits both personal Microsoft accounts and work/school (Entra)
 // accounts; `/consumers` admits personal accounts only.
@@ -62,18 +76,18 @@ async function postMsForm(
 ): Promise<TokenHttpResult> {
   let response: Response
   try {
-    response = await fetchImpl(url, {
+    response = await timedFetch(fetchImpl, url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: new URLSearchParams(params).toString(),
-    })
+    }, DEFAULT_REQUEST_TIMEOUT_MS)
   } catch (cause) {
-    throw new ImportProviderError('Сеть недоступна: не удалось обратиться к Microsoft', {
-      code: 'network',
-      provider: 'onedrive',
-      retryable: true,
-      cause,
-    })
+    throw new ImportProviderError(
+      isTimeoutError(cause)
+        ? `Тайм-аут обращения к Microsoft (${DEFAULT_REQUEST_TIMEOUT_MS} мс)`
+        : 'Сеть недоступна: не удалось обратиться к Microsoft',
+      { code: 'network', provider: 'onedrive', retryable: true, cause },
+    )
   }
   const text = await response.text()
   let body: Record<string, unknown> = {}
@@ -280,12 +294,16 @@ function mapGraphItem(item: GraphListItem): ImportSourceEntry | null {
   if (typeof item.id !== 'string' || typeof item.name !== 'string') return null
   const kind = item.folder !== undefined && item.folder !== null ? 'folder' : 'file'
   const size = typeof item.size === 'number' ? item.size : undefined
+  // Graph nests the content type under `file` for files only.
+  const file = item.file !== null && typeof item.file === 'object' ? item.file : undefined
+  const mimeType = file && 'mimeType' in file && typeof file.mimeType === 'string' ? file.mimeType : undefined
   return {
     id: item.id,
     name: item.name,
     kind,
     sizeBytes: size !== undefined && Number.isFinite(size) ? size : undefined,
     modifiedAt: typeof item.lastModifiedDateTime === 'string' ? item.lastModifiedDateTime : undefined,
+    mimeType,
   }
 }
 
@@ -295,6 +313,10 @@ export interface OneDriveProviderOptions {
   scopes?: string
   fetchImpl?: typeof fetch
   graphBaseUrl?: string
+  /** Hard cap for listing calls; defaults to `DEFAULT_REQUEST_TIMEOUT_MS`. */
+  requestTimeoutMs?: number
+  /** Max time with no download progress before aborting; defaults to `DEFAULT_STALL_TIMEOUT_MS`. */
+  stallTimeoutMs?: number
 }
 
 export class OneDriveProvider implements ImportProvider {
@@ -302,15 +324,36 @@ export class OneDriveProvider implements ImportProvider {
   private readonly auth: ImportAuthManager
   private readonly fetchImpl: typeof fetch
   private readonly graphBaseUrl: string
+  private readonly requestTimeoutMs: number
+  private readonly stallTimeoutMs: number
 
   constructor(options: OneDriveProviderOptions = {}) {
     this.auth = options.auth ?? getImportAuth()
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch
     this.graphBaseUrl = options.graphBaseUrl ?? MS_GRAPH_BASE
+    this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS
+    this.stallTimeoutMs = options.stallTimeoutMs ?? DEFAULT_STALL_TIMEOUT_MS
     this.auth.registerRefresher(
       this.id,
       createMsRefresher({ clientId: options.clientId, scopes: options.scopes, fetchImpl: this.fetchImpl }),
     )
+  }
+
+  /** `fetch` bounded by the request timeout, with timeouts surfaced typed. */
+  private async request(url: string, init: RequestInit, context: string): Promise<Response> {
+    try {
+      return await timedFetch(this.fetchImpl, url, init, this.requestTimeoutMs)
+    } catch (cause) {
+      if (isTimeoutError(cause)) {
+        throw new ImportProviderError(`Тайм-аут обращения к Microsoft Graph: ${context}`, {
+          code: 'network',
+          provider: this.id,
+          retryable: true,
+          cause,
+        })
+      }
+      throw cause
+    }
   }
 
   private childrenUrl(folderId?: string): string {
@@ -329,7 +372,7 @@ export class OneDriveProvider implements ImportProvider {
       const { response } = await fetchWithAuthRetry({
         auth: this.auth,
         provider: this.id,
-        request: (token) => this.fetchImpl(target, { headers: jsonAuthHeaders(token) }),
+        request: (token) => this.request(target, { headers: jsonAuthHeaders(token) }, 'список файлов OneDrive'),
       })
       await ensureOk(this.id, response, 'Не удалось получить список файлов OneDrive')
       const body = (await response.json()) as GraphListResponse
@@ -346,25 +389,45 @@ export class OneDriveProvider implements ImportProvider {
   /** Download a file (optionally one inclusive byte range) as a byte stream. */
   async stream(sourceId: string, range?: { start: number; end: number }): Promise<ReadableStream<Uint8Array>> {
     const url = `${this.graphBaseUrl}/me/drive/items/${encodeURIComponent(sourceId)}/content`
-    const { response } = await fetchWithAuthRetry({
-      auth: this.auth,
-      provider: this.id,
-      request: (token) => {
-        const headers = jsonAuthHeaders(token)
-        if (range) headers.Range = `bytes=${range.start}-${range.end}`
-        // Graph answers with a 302 to a pre-authenticated URL; fetch follows it,
-        // and the Range header is carried across the redirect.
-        return this.fetchImpl(url, { headers, redirect: 'follow' })
-      },
-    })
-    await ensureOk(this.id, response, `Не удалось скачать файл ${sourceId}`)
+    // Stall-aware, not total-duration: a slow but moving download is not killed.
+    const monitor = new StallTimeoutMonitor(this.stallTimeoutMs)
+    monitor.arm()
+    let response: Response
+    try {
+      ({ response } = await fetchWithAuthRetry({
+        auth: this.auth,
+        provider: this.id,
+        request: (token) => {
+          const headers = jsonAuthHeaders(token)
+          if (range) headers.Range = `bytes=${range.start}-${range.end}`
+          // Graph answers with a 302 to a pre-authenticated URL; fetch follows it,
+          // and the Range header is carried across the redirect.
+          return this.fetchImpl(url, { headers, redirect: 'follow', signal: monitor.signal }).catch((cause: unknown) => {
+            if (isTimeoutError(cause) || monitor.timedOut) {
+              throw new ImportProviderError(`Тайм-аут скачивания файла ${sourceId}`, {
+                code: 'network',
+                provider: this.id,
+                retryable: true,
+                cause,
+              })
+            }
+            throw cause
+          })
+        },
+      }))
+      await ensureOk(this.id, response, `Не удалось скачать файл ${sourceId}`)
+    } catch (error) {
+      monitor.clear()
+      throw error
+    }
     if (!response.body) {
+      monitor.clear()
       throw new ImportProviderError(`OneDrive не вернул тело файла ${sourceId}`, {
         code: 'invalid-response',
         provider: this.id,
       })
     }
-    return response.body
+    return guardStreamWithStall(response.body, monitor)
   }
 }
 

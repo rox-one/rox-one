@@ -101,10 +101,19 @@ export function intersectOperatorScopeCeilings(
   return result
 }
 
+/** True when the value contains a C0 control character or DEL, which names reject. */
+function hasControlChar(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) return true
+  }
+  return false
+}
+
 function nonEmptyString(value: unknown, max: number): string | null {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
-  if (!trimmed || trimmed.length > max || /[\u0000-\u001f\u007f]/.test(trimmed)) return null
+  if (!trimmed || trimmed.length > max || hasControlChar(trimmed)) return null
   return trimmed
 }
 

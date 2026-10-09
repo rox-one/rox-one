@@ -421,3 +421,42 @@ export function isDossierExportEnabled(enabledWorkbenchFlags?: ReadonlySet<strin
   if (override !== undefined) return override;
   return enabledWorkbenchFlags?.has(DOSSIER_EXPORT_WORKBENCH_FLAG) === true;
 }
+
+// W1-15 (#1512) — agent panel, surface chrome and X-13…X-26 capabilities.
+/** Workbench flag ids; mirror `WORKBENCH_FLAG` in `@rox/core/platform`. */
+export const AGENT_PANEL_WORKBENCH_FLAG = 'agent.panel.v1';
+export const CHROME_SURFACES_WORKBENCH_FLAG = 'workbench.chrome.surfaces.v1';
+export const XFN_CAPABILITIES_WORKBENCH_FLAG = 'xfn.capabilities.v1';
+
+/**
+ * Server-evaluated check for the agent panel (same shape as
+ * `isEntitiesLinksEnabled`): the workbench flag is authoritative, the
+ * `CRAFT_FEATURE_AGENT_PANEL=1|0` override is for tests. Defaults to DISABLED
+ * — with the flag off there is no panel session, no context snapshot and no
+ * `agent-panel` origin on any envelope.
+ */
+export function isAgentPanelEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_AGENT_PANEL'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(AGENT_PANEL_WORKBENCH_FLAG) === true;
+}
+
+/**
+ * Server-evaluated check for the per-surface chrome (sidebar + top bar
+ * schemas). Off → the shell renders its legacy chrome and reads no schema.
+ */
+export function isChromeSurfacesEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_CHROME_SURFACES'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(CHROME_SURFACES_WORKBENCH_FLAG) === true;
+}
+
+/**
+ * Server-evaluated check for the cross-functional capabilities X-13…X-26.
+ * Off → every entry point is hidden and the reference handlers refuse.
+ */
+export function isXfnCapabilitiesEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_XFN_CAPABILITIES'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(XFN_CAPABILITIES_WORKBENCH_FLAG) === true;
+}

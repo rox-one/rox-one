@@ -26,12 +26,21 @@ describe('check-config-paths self-test', () => {
 })
 
 describe('check-config-paths on the repo', () => {
-  it('scanTree runs without crashing', () => {
-    const root = new URL('..', import.meta.url).pathname.replace(/\/$/, '')
-    const violations = scanTree(root)
-    // Informational: the real assertion is the script exit code in CI.
-    expect(Array.isArray(violations)).toBe(true)
-  })
+  // scanTree reads every tracked file (~18k) and takes tens of seconds on a
+  // loaded machine, so the timeout is explicit instead of bun's 5s default.
+  it(
+    'scanTree runs without crashing',
+    () => {
+      const root = new URL('..', import.meta.url).pathname.replace(/\/$/, '')
+      const violations = scanTree(root)
+      // Informational: the real assertion is the script exit code in CI. This
+      // test used to abort the whole runner instead (the module ran main(),
+      // which calls process.exit(1) on a violation) — guarded at the
+      // entrypoint now.
+      expect(Array.isArray(violations)).toBe(true)
+    },
+    300_000,
+  )
 
   it('checkFile honors test scope', () => {
     const root = new URL('..', import.meta.url).pathname.replace(/\/$/, '')

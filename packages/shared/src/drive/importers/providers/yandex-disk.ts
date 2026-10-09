@@ -14,6 +14,12 @@
  * Env: ROX_YANDEX_CLIENT_ID, ROX_YANDEX_CLIENT_SECRET.
  *
  * Range semantics: `{ start, end }` map 1:1 onto an inclusive HTTP Range.
+ *
+ * Timeouts: token/listing/link calls are bounded by a hard request timeout
+ * (`DEFAULT_REQUEST_TIMEOUT_MS`, 30s); the pre-signed download GET uses a
+ * *stall* timeout (`DEFAULT_STALL_TIMEOUT_MS`, 30s) that aborts only after a
+ * full window with no bytes. Timeouts surface as a typed `ImportProviderError`
+ * (`code: 'network'`).
  */
 import type { ImportProvider, ImportSourceEntry } from '../types'
 import {
@@ -26,6 +32,14 @@ import {
   type ImportRefreshFn,
   type ImportTokens,
 } from './auth'
+import {
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  DEFAULT_STALL_TIMEOUT_MS,
+  StallTimeoutMonitor,
+  guardStreamWithStall,
+  isTimeoutError,
+  timedFetch,
+} from '../timeout'
 
 export const YANDEX_AUTH_URL = 'https://oauth.yandex.ru/authorize'
 export const YANDEX_TOKEN_URL = 'https://oauth.yandex.ru/token'
@@ -77,18 +91,18 @@ async function postYandexForm(
 ): Promise<TokenHttpResult> {
   let response: Response
   try {
-    response = await fetchImpl(url, {
+    response = await timedFetch(fetchImpl, url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: new URLSearchParams(params).toString(),
-    })
+    }, DEFAULT_REQUEST_TIMEOUT_MS)
   } catch (cause) {
-    throw new ImportProviderError('Сеть недоступна: не удалось обратиться к Яндекс.Диску', {
-      code: 'network',
-      provider: 'yandex-disk',
-      retryable: true,
-      cause,
-    })
+    throw new ImportProviderError(
+      isTimeoutError(cause)
+        ? `Тайм-аут обращения к Яндекс.Диску (${DEFAULT_REQUEST_TIMEOUT_MS} мс)`
+        : 'Сеть недоступна: не удалось обратиться к Яндекс.Диску',
+      { code: 'network', provider: 'yandex-disk', retryable: true, cause },
+    )
   }
   const text = await response.text()
   let body: Record<string, unknown> = {}
@@ -206,6 +220,7 @@ interface YandexResource {
   type?: unknown
   size?: unknown
   modified?: unknown
+  mime_type?: unknown
 }
 
 interface YandexResourceList {
@@ -222,6 +237,7 @@ function mapYandexResource(item: YandexResource): ImportSourceEntry | null {
     kind: typeof item.type === 'string' && item.type === 'dir' ? 'folder' : 'file',
     sizeBytes: size !== undefined && Number.isFinite(size) ? size : undefined,
     modifiedAt: typeof item.modified === 'string' ? item.modified : undefined,
+    mimeType: typeof item.mime_type === 'string' ? item.mime_type : undefined,
   }
 }
 
@@ -233,6 +249,10 @@ export interface YandexDiskProviderOptions {
   baseUrl?: string
   /** Page size for listing; Yandex caps at 1000. */
   pageSize?: number
+  /** Hard cap for listing/link calls; defaults to `DEFAULT_REQUEST_TIMEOUT_MS`. */
+  requestTimeoutMs?: number
+  /** Max time with no download progress before aborting; defaults to `DEFAULT_STALL_TIMEOUT_MS`. */
+  stallTimeoutMs?: number
 }
 
 export class YandexDiskProvider implements ImportProvider {
@@ -241,12 +261,16 @@ export class YandexDiskProvider implements ImportProvider {
   private readonly fetchImpl: typeof fetch
   private readonly baseUrl: string
   private readonly pageSize: number
+  private readonly requestTimeoutMs: number
+  private readonly stallTimeoutMs: number
 
   constructor(options: YandexDiskProviderOptions = {}) {
     this.auth = options.auth ?? getImportAuth()
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch
     this.baseUrl = options.baseUrl ?? YANDEX_DISK_API_BASE
     this.pageSize = Math.min(Math.max(options.pageSize ?? 1000, 1), 1000)
+    this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS
+    this.stallTimeoutMs = options.stallTimeoutMs ?? DEFAULT_STALL_TIMEOUT_MS
     this.auth.registerRefresher(
       this.id,
       createYandexRefresher({
@@ -255,6 +279,23 @@ export class YandexDiskProvider implements ImportProvider {
         fetchImpl: this.fetchImpl,
       }),
     )
+  }
+
+  /** `fetch` bounded by the request timeout, with timeouts surfaced typed. */
+  private async request(url: string, init: RequestInit, context: string): Promise<Response> {
+    try {
+      return await timedFetch(this.fetchImpl, url, init, this.requestTimeoutMs)
+    } catch (cause) {
+      if (isTimeoutError(cause)) {
+        throw new ImportProviderError(`Тайм-аут обращения к Яндекс.Диску: ${context}`, {
+          code: 'network',
+          provider: this.id,
+          retryable: true,
+          cause,
+        })
+      }
+      throw cause
+    }
   }
 
   /** List direct children of a folder path (disk root when omitted). */
@@ -270,14 +311,14 @@ export class YandexDiskProvider implements ImportProvider {
         // The Disk API takes comma-separated *dotted* paths, not a function-call
         // syntax: `_embedded.items(name,…)` selects only `total` and yields no
         // items, which makes every folder look empty.
-        fields: '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified',
+        fields: '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified,_embedded.items.mime_type',
       })
       const { response } = await fetchWithAuthRetry({
         auth: this.auth,
         provider: this.id,
-        request: (token) => this.fetchImpl(`${this.baseUrl}/resources?${params.toString()}`, {
+        request: (token) => this.request(`${this.baseUrl}/resources?${params.toString()}`, {
           headers: jsonAuthHeaders(token),
-        }),
+        }, `список файлов («${path}»)`),
       })
       await ensureOk(this.id, response, `Не удалось получить список файлов («${path}»)`)
       const body = (await response.json()) as YandexResourceList
@@ -301,9 +342,9 @@ export class YandexDiskProvider implements ImportProvider {
     const { response: linkResponse } = await fetchWithAuthRetry({
       auth: this.auth,
       provider: this.id,
-      request: (token) => this.fetchImpl(`${this.baseUrl}/resources/download?${params.toString()}`, {
+      request: (token) => this.request(`${this.baseUrl}/resources/download?${params.toString()}`, {
         headers: jsonAuthHeaders(token),
-      }),
+      }, `ссылка на скачивание ${sourceId}`),
     })
     await ensureOk(this.id, linkResponse, `Не удалось получить ссылку на скачивание ${sourceId}`)
     const link = (await linkResponse.json()) as { href?: unknown; method?: unknown }
@@ -316,10 +357,26 @@ export class YandexDiskProvider implements ImportProvider {
     // The pre-signed href is self-authorizing; only the Range header is needed.
     const headers: Record<string, string> = {}
     if (range) headers.Range = `bytes=${range.start}-${range.end}`
+    // Stall-aware: the pre-signed GET is only aborted when bytes stop flowing.
+    const monitor = new StallTimeoutMonitor(this.stallTimeoutMs)
+    monitor.arm()
     let downloadResponse: Response
     try {
-      downloadResponse = await this.fetchImpl(link.href, { headers, redirect: 'follow' })
+      downloadResponse = await this.fetchImpl(link.href, { headers, redirect: 'follow', signal: monitor.signal })
+      await ensureOk(this.id, downloadResponse, `Не удалось скачать файл ${sourceId}`)
     } catch (cause) {
+      monitor.clear()
+      // A non-2xx response from `ensureOk` is already a typed provider error;
+      // only genuine transport failures are re-wrapped here.
+      if (cause instanceof ImportProviderError) throw cause
+      if (isTimeoutError(cause) || monitor.timedOut) {
+        throw new ImportProviderError(`Тайм-аут скачивания файла ${sourceId}`, {
+          code: 'network',
+          provider: this.id,
+          retryable: true,
+          cause,
+        })
+      }
       throw new ImportProviderError(`Не удалось скачать файл ${sourceId}`, {
         code: 'network',
         provider: this.id,
@@ -327,14 +384,14 @@ export class YandexDiskProvider implements ImportProvider {
         cause,
       })
     }
-    await ensureOk(this.id, downloadResponse, `Не удалось скачать файл ${sourceId}`)
     if (!downloadResponse.body) {
+      monitor.clear()
       throw new ImportProviderError(`Яндекс.Диск не вернул тело файла ${sourceId}`, {
         code: 'invalid-response',
         provider: this.id,
       })
     }
-    return downloadResponse.body
+    return guardStreamWithStall(downloadResponse.body, monitor)
   }
 }
 

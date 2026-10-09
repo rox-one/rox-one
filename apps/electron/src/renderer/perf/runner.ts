@@ -13,6 +13,7 @@ import {
   simulateColdReady,
   simulateDropdownOpen,
   simulateNotesOpen,
+  simulateSurfaceKeepAlive,
   simulateViewSwitch,
 } from './surface-sim'
 import {
@@ -51,7 +52,7 @@ export interface RunHarnessOptions {
   includeBundleProfile?: boolean
 }
 
-export function runPerfHarness(options: RunHarnessOptions = {}): BenchmarkReport {
+export async function runPerfHarness(options: RunHarnessOptions = {}): Promise<BenchmarkReport> {
   const sessionCount = options.sessionCount ?? 2000
   const switchIterations = options.switchIterations ?? 40
   const sessionFixture = createSessionFixture(sessionCount)
@@ -129,6 +130,11 @@ export function runPerfHarness(options: RunHarnessOptions = {}): BenchmarkReport
     ipc: {},
     reloadedCollection: canvas.reloadedCollection,
   })
+
+  // PERF-10 (#1577): keep-alive retention + the idle warm-up queue, driven
+  // through the real policy/scheduler with a virtual clock.
+  const keepAlive = await simulateSurfaceKeepAlive()
+  samples.push(...keepAlive.samples)
 
   longTaskHost.emit(8)
   onReactCommit('rox-root', 'update', 3)

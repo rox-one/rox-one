@@ -39,6 +39,7 @@ describe('environment questionnaire', () => {
       'syncPurposes',
       'notifications',
       'agentRules',
+      'role',
     ])
   })
 
@@ -105,6 +106,7 @@ describe('environment questionnaire', () => {
       syncPurposes: 1,
       notifications: 1,
       agentRules: 2,
+      role: 1,
     })).toEqual(['agentRules'])
   })
 
@@ -120,5 +122,20 @@ describe('environment questionnaire', () => {
     expect(updated.modelPlacement.value).toBe('mixed')
     expect(updated.wakeWord).toEqual({ status: 'answered', value: true })
     expect(updated.seenVersion).toBe(ENVIRONMENT_QUESTIONNAIRE_VERSION)
+  })
+
+  it('round-trips the onboarding role profile, keeping a skip distinguishable from an answer', () => {
+    const dir = tmp()
+    const saved = saveEnvironmentPrefs({
+      role: answerChoice({ isDeveloper: true, relatedRoles: ['designer'] }),
+    }, dir)
+    expect(saved.role).toEqual({ status: 'answered', value: { isDeveloper: true, relatedRoles: ['designer'] } })
+    expect(loadEnvironmentPrefs(dir).role).toEqual(saved.role)
+
+    const skipped = saveEnvironmentPrefs({
+      role: { status: 'skipped', value: { isDeveloper: false, relatedRoles: [] } },
+    }, dir)
+    expect(skipped.role.status).toBe('skipped')
+    expect(loadEnvironmentPrefs(dir).role.value).toEqual({ isDeveloper: false, relatedRoles: [] })
   })
 })

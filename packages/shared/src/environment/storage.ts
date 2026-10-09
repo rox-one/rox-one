@@ -12,6 +12,7 @@ import {
   isAgentRuleLabel,
   isBrowserImportCategory,
   isModelPlacement,
+  isOnboardingRoleProfile,
   isSttChoice,
   isSyncPurpose,
   isTtsChoice,
@@ -22,6 +23,7 @@ import {
   type ChoiceStatus,
   type EnvironmentPrefs,
   type ModelPlacement,
+  type OnboardingRoleProfile,
   type SttChoice,
   type SyncPurpose,
   type TtsChoice,
@@ -106,6 +108,7 @@ export function normalizeEnvironmentPrefs(raw: unknown, now: number = Date.now()
       (value): value is boolean => typeof value === 'boolean',
     ),
     agentRules: readAgentRules(obj.agentRules),
+    role: readChoice<OnboardingRoleProfile>(obj.role, isOnboardingRoleProfile),
     updatedAt,
   }
 }
@@ -136,6 +139,7 @@ export function saveEnvironmentPrefs(
     ...('syncPurposes' in patch && patch.syncPurposes ? { syncPurposes: patch.syncPurposes } : {}),
     ...('notifications' in patch && patch.notifications ? { notifications: patch.notifications } : {}),
     ...('agentRules' in patch && patch.agentRules ? { agentRules: patch.agentRules } : {}),
+    ...('role' in patch && patch.role ? { role: patch.role } : {}),
     updatedAt: now,
   }
   const next = patch.completeQuestionnaire ? finishQuestionnaire(merged, undefined, now) : merged
