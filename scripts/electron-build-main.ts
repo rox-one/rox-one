@@ -64,7 +64,7 @@ function loadEnvFile(): void {
 // NOTE: Sentry source map upload is intentionally disabled for the main process.
 // To enable in the future, add @sentry/esbuild-plugin. See apps/electron/CLAUDE.md.
 // NOTE: Google OAuth credentials are NOT baked into the build - users provide their own
-// via source config. See README_FOR_OSS.md for setup instructions.
+// via source config in the app.
 function getBuildDefines(): string[] {
   const definedVars = [
     "SLACK_OAUTH_CLIENT_ID",

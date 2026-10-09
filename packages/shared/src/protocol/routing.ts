@@ -14,7 +14,7 @@ import { RPC_CHANNELS } from './channels'
 // LOCAL_ONLY — fundamentally requires local OS / Electron
 // ---------------------------------------------------------------------------
 
-export const LOCAL_ONLY_CHANNELS = new Set<string>([
+export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.voice.COPY_TEXT,
   // Repository capture uses the verified local Electron source owner.
   RPC_CHANNELS.codeIntelligence.PREVIEW,
@@ -491,13 +491,15 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   // W1-04 (#1501) — Dossier export writes the host's local contact store.
   RPC_CHANNELS.directory.EXPORT_DOSSIER,
 
-])
+]
+
+export const LOCAL_ONLY_CHANNELS = new Set<string>(LOCAL_ONLY_CHANNEL_LIST)
 
 // ---------------------------------------------------------------------------
 // REMOTE_ELIGIBLE — runs on whichever server owns the workspace
 // ---------------------------------------------------------------------------
 
-export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.workspaceWork.READ,
   RPC_CHANNELS.workspaceWork.WRITE,
   RPC_CHANNELS.workspaceWork.DELETE,
@@ -595,8 +597,6 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.sessions.BULK_CHANGED,
   RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION,
   RPC_CHANNELS.sessions.GET_PERMISSION_MODE_STATE,
-  RPC_CHANNELS.sessions.SET_MEMORY_MODE,
-  RPC_CHANNELS.sessions.GET_PROVENANCE,
   RPC_CHANNELS.sessions.EVENT,
   RPC_CHANNELS.sessions.GET_MODEL,
   RPC_CHANNELS.sessions.GET_MODEL_CATALOG,
@@ -672,6 +672,10 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.notes.CHANGED,
   RPC_CHANNELS.notes.RENAME_FOLDER,
   RPC_CHANNELS.notes.DELETE_FOLDER,
+  RPC_CHANNELS.notes.LIST_COMMENTS,
+  RPC_CHANNELS.notes.CREATE_COMMENT,
+  RPC_CHANNELS.notes.UPDATE_COMMENT,
+  RPC_CHANNELS.notes.DELETE_COMMENT,
 
   // Native projection follows the canonical workspace server. Native writes
   // still use Notes/nativeData; handlers explicitly reject the legacy WAL path.
@@ -1123,7 +1127,9 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.commands.EXECUTE,
   RPC_CHANNELS.commands.LIST,
   RPC_CHANNELS.commands.EVENT,
-])
+]
+
+export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>(REMOTE_ELIGIBLE_CHANNEL_LIST)
 
 // ---------------------------------------------------------------------------
 // Query helpers
