@@ -21,13 +21,15 @@ export interface NotebookHomeProps {
   error: string | null
   recentPodcasts: readonly RecentPodcast[]
   offline: boolean
+  /** `playbooks.codebook.v1` — enables creating and opening codebook notebooks. */
+  codebookEnabled: boolean
   onOpen: (id: string) => void
   onCreate: (mode: NotebookMode, name: string) => void
   onDelete: (id: string) => void
   onRetry: () => void
 }
 
-export function NotebookHome({ notebooks, loading, error, recentPodcasts, offline, onOpen, onCreate, onDelete, onRetry }: NotebookHomeProps) {
+export function NotebookHome({ notebooks, loading, error, recentPodcasts, offline, codebookEnabled, onOpen, onCreate, onDelete, onRetry }: NotebookHomeProps) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
@@ -109,7 +111,9 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
                       <span className="mt-1 block text-caption text-muted-foreground">
                         {notebook.mode === 'knowledge' ? t('playbooks.home.modeKnowledge') : t('playbooks.home.modeCodebook')}
                         {' · '}
-                        {t('playbooks.home.sourcesCount', { count: notebook.sourceSlugs.length })}
+                        {notebook.mode === 'knowledge'
+                          ? t('playbooks.home.sourcesCount', { count: notebook.sourceSlugs.length })
+                          : t('playbooks.codebook.cellsCount', { count: notebook.cells?.length ?? 0 })}
                       </span>
                       <span className="mt-1 block text-caption text-muted-foreground tabular-nums">
                         {new Date(notebook.updatedAt).toLocaleDateString()}
@@ -177,19 +181,25 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
               <Button type="button" variant={newMode === 'knowledge' ? 'default' : 'outline'} size="sm" onClick={() => setNewMode('knowledge')} data-testid="playbooks-home-mode-knowledge">
                 {t('playbooks.home.modeKnowledge')}
               </Button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {/* Wrapper keeps the tooltip alive while the button is disabled. */}
-                  <span className="inline-flex w-full" tabIndex={0}>
-                    <Button type="button" variant={newMode === 'codebook' ? 'default' : 'outline'} size="sm" disabled onClick={() => setNewMode('codebook')} className="w-full" data-testid="playbooks-home-mode-codebook">
-                      {t('playbooks.home.modeCodebook')}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{t('playbooks.home.codebookSoon')}</TooltipContent>
-              </Tooltip>
+              {codebookEnabled ? (
+                <Button type="button" variant={newMode === 'codebook' ? 'default' : 'outline'} size="sm" onClick={() => setNewMode('codebook')} className="w-full" data-testid="playbooks-home-mode-codebook">
+                  {t('playbooks.home.modeCodebook')}
+                </Button>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {/* Wrapper keeps the tooltip alive while the button is disabled. */}
+                    <span className="inline-flex w-full" tabIndex={0}>
+                      <Button type="button" variant="outline" size="sm" disabled className="w-full" data-testid="playbooks-home-mode-codebook">
+                        {t('playbooks.home.modeCodebook')}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('playbooks.home.codebookSoon')}</TooltipContent>
+                </Tooltip>
+              )}
             </div>
-            <p className="text-caption text-muted-foreground">{t('playbooks.home.codebookSoon')}</p>
+            {!codebookEnabled ? <p className="text-caption text-muted-foreground">{t('playbooks.home.codebookSoon')}</p> : null}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>{t('playbooks.home.cancel')}</Button>

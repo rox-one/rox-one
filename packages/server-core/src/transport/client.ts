@@ -229,7 +229,7 @@ export class WsRpcClient implements RpcClient {
   }
 
   /** Like invoke(), with a per-call timeout override (see RpcClient). */
-  async invokeWithTimeout(channel: string, timeoutMs: number, ...args: any[]): Promise<any> {
+  async invokeWithTimeout(channel: string, timeoutMs: number, ...args: unknown[]): Promise<unknown> {
     await this.ensureConnected(channel)
 
     return await new Promise((resolve, reject) => {

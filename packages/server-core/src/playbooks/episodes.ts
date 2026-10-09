@@ -22,7 +22,7 @@
  */
 import { createHash } from 'node:crypto'
 import { lstat, mkdir, readFile, writeFile } from 'node:fs/promises'
-import { dirname, isAbsolute, join, relative, sep } from 'node:path'
+import { isAbsolute, join, relative, sep } from 'node:path'
 import { devSpaceManifestEntryId } from '@rox/shared/dev-space'
 import { PodcastPipelineError } from '@rox/shared/voice'
 import type { DevSpaceConsent, DevSpaceManifest, DevSpaceManifestEntry } from '@rox/shared/dev-space'

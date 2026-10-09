@@ -38,6 +38,7 @@ import type { TtsStreamChunk } from '../voice/tts/streaming.ts'
 import type { RealtimeTranscriptionEvent } from '../voice/realtime-transcription.ts'
 import type { VoiceWakeChangedPayload, VoiceWakeTrigger } from '../voice/wake-list.ts'
 import type { PodcastJob } from '../voice/podcast-job.ts'
+import type { CodebookJob } from '../playbooks/codebook.ts'
 import type { DevSpaceCloneProgress, DevSpaceRepositoryStatus, DevSpaceRunProgress } from '../dev-space/types.ts'
 import type { EnvironmentPrefs } from '../environment'
 import type { PrivacyDto } from '../privacy/types.ts'
@@ -139,6 +140,8 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.devSpace.SOFT_SIGNAL]: [payload: { kind: 'repo-link-pasted' | 'git-detected' }]
   // Podcast generation (D13) — replaces `voice:job` for the podcast flow.
   [RPC_CHANNELS.podcast.JOB]: [payload: PodcastJob]
+  // Codebook notebook run (D12, В5) — per-cell progress with a monotonic seq.
+  [RPC_CHANNELS.playbooks.CODEBOOK_JOB]: [payload: CodebookJob]
 
   // Theme broadcasts (global)
   [RPC_CHANNELS.appearance.SHELL_CHANGED]: [snapshot: {

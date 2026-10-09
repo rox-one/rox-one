@@ -50,6 +50,7 @@ import { registerProjectsHandlers } from './projects'
 import { registerCodeIntelligenceHandlers } from './code-intelligence'
 import { registerDevSpaceHandlers, DEFAULT_ENVIRONMENT as DEV_SPACE_DEFAULT_ENVIRONMENT, type HandlerEnvironment as DevSpaceHandlerEnvironment } from './dev-space'
 import { registerPodcastHandlers, DEFAULT_ENVIRONMENT as PODCAST_DEFAULT_ENVIRONMENT, type HandlerEnvironment as PodcastHandlerEnvironment } from '../../playbooks/jobs.ts'
+import { registerCodebookHandlers, DEFAULT_ENVIRONMENT as CODEBOOK_DEFAULT_ENVIRONMENT, type HandlerEnvironment as CodebookHandlerEnvironment } from '../../playbooks/codebook/index.ts'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
@@ -122,6 +123,13 @@ export interface CoreRpcRegistrationOptions {
    * honestly answers `connector-unavailable` instead of inventing a script.
    */
   podcast?: Partial<PodcastHandlerEnvironment>
+  /**
+   * Optional codebook environment (В5). The host composes the artifact
+   * resolver/publisher and may substitute the agent runner; without an artifact
+   * resolver an `artifact` cell answers `artifact-unavailable`, and without a
+   * session mechanism an `agent` cell does the same — never invented output.
+   */
+  codebook?: Partial<CodebookHandlerEnvironment>
 }
 
 export function registerCoreRpcHandlers(
@@ -171,6 +179,8 @@ export function registerCoreRpcHandlers(
     : DEV_SPACE_DEFAULT_ENVIRONMENT)
   // Podcast (D13) — local render pipeline; the scenario connector is host-composed.
   registerPodcastHandlers(server, deps, { ...PODCAST_DEFAULT_ENVIRONMENT, ...options?.podcast })
+  // Codebook (В5) — local notebook runs; agent/artifact seams are host-composed.
+  registerCodebookHandlers(server, deps, { ...CODEBOOK_DEFAULT_ENVIRONMENT, ...options?.codebook })
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)

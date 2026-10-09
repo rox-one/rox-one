@@ -15,6 +15,7 @@ import { workbenchFlagAtom } from '@/platform/unified-flags'
 import { createNotebook, loadNotebooks, saveNotebooks, type NotebookMode, type PlaybookNotebook } from './notebook-store'
 import { NotebookHome } from './components/NotebookHome'
 import KnowledgeNotebookPage from './knowledge/KnowledgeNotebookPage'
+import CodebookNotebookPage from './codebook/CodebookNotebookPage'
 import { PodcastStudio } from './podcast/PodcastStudio'
 import { appendRecentPodcast, loadRecentPodcasts, type RecentPodcast } from './podcast/podcast-history'
 
@@ -24,6 +25,7 @@ export default function PlaybooksHomePage() {
   const { t } = useTranslation()
   const enabled = useAtomValue(playbooksEnabledAtom)
   const knowledgeEnabled = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.playbooksKnowledgeV1))
+  const codebookEnabled = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.playbooksCodebookV1))
   const [notebooks, setNotebooks] = useState<PlaybookNotebook[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -71,7 +73,7 @@ export default function PlaybooksHomePage() {
   )
 
   const update = useCallback(
-    (id: string, patch: Partial<Pick<PlaybookNotebook, 'name' | 'sourceSlugs' | 'note'>>) => {
+    (id: string, patch: Partial<Pick<PlaybookNotebook, 'name' | 'sourceSlugs' | 'note' | 'cells' | 'projectSlug'>>) => {
       persist(notebooks.map((notebook) => (notebook.id === id ? { ...notebook, ...patch, updatedAt: Date.now() } : notebook)))
     },
     [notebooks, persist],
@@ -93,6 +95,26 @@ export default function PlaybooksHomePage() {
           <p className="max-w-2xl text-sm text-muted-foreground">{t('playbooks.home.disabledHint')}</p>
         </div>
       </div>
+    )
+  }
+
+  if (view.kind === 'notebook' && activeNotebook && activeNotebook.mode === 'codebook') {
+    if (!codebookEnabled) {
+      return (
+        <div className="flex h-full min-h-0 flex-col" data-testid="playbooks-home">
+          <PanelHeader title={activeNotebook.name} actions={<button type="button" className="text-xs text-muted-foreground" onClick={() => setView({ kind: 'home' })}>{t('playbooks.notebook.back')}</button>} />
+          <div className="min-h-0 flex-1 overflow-auto p-5">
+            <p className="max-w-2xl text-sm" role="status" data-testid="playbooks-codebook-disabled">{t('playbooks.codebook.disabled')}</p>
+          </div>
+        </div>
+      )
+    }
+    return (
+      <CodebookNotebookPage
+        notebook={activeNotebook}
+        onBack={() => setView({ kind: 'home' })}
+        onUpdate={(patch) => update(activeNotebook.id, patch)}
+      />
     )
   }
 
@@ -154,6 +176,7 @@ export default function PlaybooksHomePage() {
         error={error}
         recentPodcasts={podcasts}
         offline={offline}
+        codebookEnabled={codebookEnabled}
         onOpen={(id) => setView({ kind: 'notebook', id })}
         onCreate={create}
         onDelete={remove}

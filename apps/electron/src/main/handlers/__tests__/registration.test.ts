@@ -160,6 +160,8 @@ async function getExpectedChannels(): Promise<Set<string>> {
     directory,
     knowledgeMap,
     devSpace,
+    podcast,
+    codebook,
   ] = await Promise.all([
     import('@rox/server-core/handlers/rpc/auth'),
     import('@rox/server-core/handlers/rpc/automations'),
@@ -216,6 +218,8 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/directory'),
     import('@rox/server-core/handlers/rpc/knowledge-map'),
     import('@rox/server-core/handlers/rpc/dev-space'),
+    import('@rox/server-core/playbooks/jobs'),
+    import('@rox/server-core/playbooks/codebook'),
   ])
 
   const [browser, browserIntel, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceClipboard, clipboardHistory] = await Promise.all([
@@ -307,6 +311,8 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...directory.HANDLED_CHANNELS,
     ...knowledgeMap.HANDLED_CHANNELS,
     ...devSpace.HANDLED_CHANNELS,
+    ...podcast.HANDLED_CHANNELS,
+    ...codebook.HANDLED_CHANNELS,
     ...browser.HANDLED_CHANNELS,
     ...browserIntel.HANDLED_CHANNELS,
     ...guiSystem.GUI_HANDLED_CHANNELS,
