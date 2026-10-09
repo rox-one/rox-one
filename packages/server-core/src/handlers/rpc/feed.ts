@@ -30,8 +30,8 @@ import type { HandlerDeps } from '../handler-deps'
 import { FeedService, type AddSourceResult } from '../../feed/feed-service'
 import { createXApiAdapter, notConnectedXAdapter, type XSubscriptionsAdapter } from '../../feed/x-adapter'
 import { createNativeFeedOperation, type NativeFeedEnvironment } from './native-feed'
-import { CodedError } from '@rox/shared/protocol'
 import type { RequestContext } from '../../transport/types'
+import { assertWorkspaceScope } from './workspace-guard.ts'
 
 export const FEED_HANDLED_CHANNELS = [
   RPC_CHANNELS.feed.LIST,
@@ -115,8 +115,10 @@ export function registerFeedHandlers(server: RpcServer, deps: HandlerDeps, nativ
   const writeOptions = { access: 'nativeOrLocalElectron' as const, nativeAction: 'write' as const, timeoutMs: 90_000 }
 
   server.handle(RPC_CHANNELS.feed.LIST, async (ctx, workspaceId?: string | null): Promise<FeedListResult> => {
+    // SEC-03: scope the requested workspace for every authenticated identity
+    // kind before either the native or the legacy branch reads any state.
+    if (typeof workspaceId === 'string' && workspaceId) assertWorkspaceScope(ctx, workspaceId, 'Feed workspace access denied')
     if (ctx.principal) {
-      if (workspaceId && workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Feed workspace access denied')
       return native(ctx, 'read').list()
     }
     const svc = legacy()
