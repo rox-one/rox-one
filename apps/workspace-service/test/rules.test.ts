@@ -11,6 +11,7 @@ import type { SQL } from 'bun'
 import type { CommandActor, CommandEnvelope, CommandReceipt } from '../../../packages/core/src/commands/index.ts'
 import type { DomainEvent } from '../../../packages/core/src/events/index.ts'
 import { skipMarker, type RuleExecutionRecord } from '../../../packages/core/src/automation/index.ts'
+import { automationRulesResponseSchema, automationRuleViewSchema, ruleExecutionsResponseSchema } from '../../../packages/shared/src/automation/index.ts'
 import { InMemoryRulesStore } from '../../../packages/server-core/src/rules/store.ts'
 import type { SharedProjectAuthority } from '../../../packages/shared/src/workspace-domain/identity/contracts.ts'
 import { createWorkspaceRules, type WorkspaceRulesRuntime } from '../src/modules/rules/runtime.ts'
@@ -187,8 +188,9 @@ describe('automation_rule settings API', () => {
     const { base, workspaceId } = served
     const rules = await request(served.http.url, `${base}/rules`)
     expect(rules.status).toBe(200)
-    expect((rules.body.rules as Array<{ ruleId: string }>).map(rule => rule.ruleId)).toEqual(['R1', 'R2', 'R3', 'R4', 'R5'])
-    const r1 = (rules.body.rules as Array<{ ruleId: string; enabled: boolean; source: string; scope: string }>).find(rule => rule.ruleId === 'R1')!
+    const listBody = automationRulesResponseSchema.parse(rules.body)
+    expect(listBody.rules.map(rule => rule.ruleId)).toEqual(['R1', 'R2', 'R3', 'R4', 'R5'])
+    const r1 = listBody.rules.find(rule => rule.ruleId === 'R1')!
     expect(r1).toMatchObject({ enabled: true, source: 'default', scope: 'principal' })
     // The path is workspace-scoped: an actor of another workspace is rejected.
     const stranger = await request(served.http.url, `/v1/workspaces/${randomUUID()}/automation/rules`, { token: 'aaa.bbb.ccc' })
@@ -206,7 +208,7 @@ describe('automation_rule settings API', () => {
     const r3 = await request(asAdmin.http.url, `${asAdmin.base}/rules/R3`, { method: 'PUT', body: { params: { handles: ['@rox', '@rox-anna'] } } })
     expect(r3.status).toBe(200)
     expect(r3.body).toMatchObject({ ruleId: 'R3', scope: 'workspace', source: 'workspace' })
-    expect(r3.body.params).toEqual({ handles: ['@rox', '@rox-anna'] })
+    expect(automationRuleViewSchema.parse(r3.body).params).toEqual({ handles: ['@rox', '@rox-anna'] })
     expect(await asAdmin.store.read(asAdmin.workspaceId, 'R3', null)).toMatchObject({ enabled: true, params: { handles: ['@rox', '@rox-anna'] } })
 
     // A plain member cannot change the workspace rules.
@@ -246,8 +248,9 @@ describe('automation_rule settings API', () => {
     const baseGet = (path: string) => request(http.url, path)
     const history = await baseGet(`${base}/executions?limit=10`)
     expect(history.status).toBe(200)
-    expect(history.body.executions[0]).toMatchObject({ ruleId: 'R1', status: 'skipped', skippedReason: 'all_day', attempts: 1 })
-    expect(history.body.executions[0].steps).toEqual([])
+    const historyBody = ruleExecutionsResponseSchema.parse(history.body)
+    expect(historyBody.executions[0]).toMatchObject({ ruleId: 'R1', status: 'skipped', skippedReason: 'all_day', attempts: 1 })
+    expect(historyBody.executions[0]!.steps).toEqual([])
 
     const retry = await request(http.url, `${base}/executions/${encodeURIComponent(record.idempotencyKey)}/retry`, { method: 'POST' })
     expect(retry.status).toBe(200)
