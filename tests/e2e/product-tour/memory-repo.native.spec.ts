@@ -142,11 +142,24 @@ function collect(page: Page): { consoleErrors: string[]; pageErrors: string[] } 
 }
 
 /**
- * Close any modal that opened over the shell (onboarding / memory-intro dialogs
- * intercept pointer events). Records the dialogs it had to close for the report.
+ * Close any overlay that intercepts pointer events over the shell: onboarding /
+ * memory-intro dialogs and Sonner notifications. Records what it had to close
+ * for the report.
  */
 async function dismissDialogs(page: Page, seen: string[]): Promise<void> {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    // Sonner toasts live in their own top-layer (`aria-label="Notifications"`),
+    // not under `role=dialog`, and their expanded panel covers the header
+    // controls — a dream run whose 30 s transport timeout rejects while the run
+    // keeps going server-side raises one. Dismiss it through its close button.
+    const toast = page.locator('[data-sonner-toast]:visible').first()
+    if ((await toast.count()) > 0) {
+      seen.push(`toast: ${(((await toast.innerText().catch(() => '')) || '').replace(/\s+/g, ' ').trim().slice(0, 400))}`)
+      const close = toast.locator('[data-close-button]').first()
+      if ((await close.count()) > 0) await close.click({ timeout: 2_000 }).catch(() => {})
+      await page.waitForTimeout(200)
+      continue
+    }
     const dialog = page.locator('[role="dialog"]:visible').first()
     if ((await dialog.count()) === 0) return
     seen.push(((await dialog.innerText().catch(() => '')) || '').replace(/\s+/g, ' ').trim().slice(0, 400))
@@ -181,6 +194,15 @@ async function onboardAndOpenRepoViaSidebar(page: Page, dialogs: string[]): Prom
   await page.fill('#onboarding-username', 'memrepo-qa')
   await expect(startButton).toBeEnabled()
   await startButton.click()
+
+  // The unified first-run flow continues into «Немного о вас» — the profile +
+  // permissions questionnaire (`onboarding-questionnaire-step`). It is a
+  // full-screen wizard step, not a dialog, so the shell (and its sidebar) is
+  // not mounted until it is left. A real user leaves it with «Заполнить позже»,
+  // which applies the preselected permissions and then finishes first-run.
+  const questionnaireSkip = page.locator('[data-testid="questionnaire-skip"]')
+  await questionnaireSkip.waitFor({ state: 'visible', timeout: 30_000 })
+  await questionnaireSkip.click()
 
   const screen = page.locator('[data-testid="memory-repo-screen"]')
   let clickedEntry = ''
@@ -524,7 +546,9 @@ test('MEMREPO-NATIVE-03: an edited repository file surfaces the import banner an
 
     const bannerText = ((await banner.innerText()) || '').replace(/\s+/g, ' ').trim()
     observed.bannerText = bannerText
-    const countMatch = /(\d+)\s+правок в репозитории ждут импорта/.exec(bannerText)
+    // The banner copy is i18n-pluralized (`memory.repo.import.banner_one/_few/_many`),
+    // so a single edited file renders «1 правка … ждёт импорта», not the plural form.
+    const countMatch = /(\d+)\s+(?:правок|правки|правка) в репозитории (?:ждут|ждёт) импорта/.exec(bannerText)
     expect(countMatch, `banner copy with count: ${bannerText}`).not.toBeNull()
     expect(Number(countMatch![1])).toBeGreaterThan(0)
     assertions.push(`banner: «${bannerText}» reports a non-zero pending-import count`)
