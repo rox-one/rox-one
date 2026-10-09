@@ -140,6 +140,12 @@ jobs:
         run: bun install --frozen-lockfile
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Warm the Windows PowerShell host
+        # Cold Windows PowerShell start-up (Defender inspection of a fresh
+        # process) is the only reason the first OS probe used to need a long
+        # budget; warm it once before the ownership probe runs.
+        if: runner.os == 'Windows'
+        run: powershell.exe -NoProfile -Command ""
       - name: Verify actual OS-owner startup and reopen boundaries
         run: bun test --timeout 30000 ./packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts
       - name: Build the real desktop main, preload, renderer and resources
