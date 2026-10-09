@@ -4,6 +4,7 @@ import {
   OPENCLAW_HOST_CONTROL_CHANNELS,
   type OpenClawHostControlApi,
 } from '../preload/openclaw-host-control.ts'
+import { writeClipboardTextConcealed } from './clipboard-history/conceal'
 
 const WORKSPACE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,191}$/
 
@@ -76,7 +77,11 @@ export interface OpenClawHostControlIpcDependencies {
     getControlUiOriginForHostControl(workspaceId: string): Promise<string>
     getGatewayTokenForHostControl(workspaceId: string): Promise<string>
   }
-  readonly clipboard: { writeText(value: string): void }
+  readonly clipboard: {
+    writeText(value: string): void | Promise<void>
+    /** Atomic multi-format write used to attach the concealed marker. */
+    write?(items: ClipboardItem[]): void | Promise<void>
+  }
   readonly createEphemeralSession: (partition: string) => IsolatedSession
   readonly createControlUiWindow: (options: ControlUiWindowOptions) => ControlUiWindow
   readonly createPartition?: () => string
@@ -332,9 +337,11 @@ async function copySetupCredential(
 ): Promise<void> {
   try {
     const credential = await deps.runtimeManager.getGatewayTokenForHostControl(workspaceId)
-    // Electron 44 makes clipboard.writeText return a Promise in the main process;
-    // await it so the copy completes before this handler reports success.
-    await deps.clipboard.writeText(credential)
+    // The gateway credential is a live secret: write it with the concealed
+    // pasteboard marker so Rox History and other managers skip it. Electron 44
+    // makes clipboard.writeText return a Promise in the main process; the helper
+    // awaits it so the copy completes before this handler reports success.
+    await writeClipboardTextConcealed(credential, deps.clipboard)
   } catch {
     throw new OpenClawHostControlError('OPENCLAW_HOST_CONTROL_UNAVAILABLE')
   }
