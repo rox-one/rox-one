@@ -51,7 +51,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<string | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
-  const [runs, setRuns] = useState<CodebookRun[]>([])
+  const [runs, setRuns] = useState<readonly CodebookRun[]>([])
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' && navigator.onLine === false)
   const jobIdRef = useRef<string | null>(null)
