@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Play, RefreshCw } from 'lucide-react'
-import type { DevSpaceArtifactSummary, DevSpaceRepositoryRecord, DevSpaceRun, DevSpaceRunProgress } from '@rox/shared/dev-space'
+import type { DevSpaceArtifactSummary, DevSpaceQuestionBlockName, DevSpaceRepositoryRecord, DevSpaceRun, DevSpaceRunProgress } from '@rox/shared/dev-space'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs } from '@/components/ui/tabs'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { ArtifactSurface } from './components/ArtifactSurface'
+import { AskQuestionComposer } from './components/AskQuestionComposer'
+import { QuestionsSurface } from './components/QuestionsSurface'
+import { matchesDevSpaceQuestionTour, pickDevSpaceAnswerTour } from './components/questions'
+import { useDevSpaceGeneratedTours } from './components/useDevSpaceGeneratedTours'
+import { useDevSpaceTourLauncher } from './components/useDevSpaceTourLauncher'
 import { devSpaceErrorKey } from './components/errors'
 import {
   DEV_SPACE_RUN_STATUS_KEYS, DEV_SPACE_STAGE_KEYS, DEV_SPACE_STATUS_KEYS, DEV_SPACE_STATUS_VARIANT, isRepositoryOutdated,
@@ -15,9 +20,15 @@ import {
 import { DEV_SPACE_SURFACES } from './components/surfaces'
 
 const OVERVIEW_TAB = 'overview'
+/** С-10 questions tab (04-UI-SPEC §B.10) — not an artifact surface; it owns the composer. */
+const QUESTIONS_TAB = 'questions'
 /** The controlled `role=tabpanel` element id for a repo tab (`aria-controls`). */
 const panelId = (id: string) => `dev-space-tabpanel-${id}`
-const REPO_TABS = [{ id: OVERVIEW_TAB, labelKey: 'devSpace.repo.tabs.overview' }, ...DEV_SPACE_SURFACES.map((surface) => ({ id: surface.id, labelKey: surface.labelKey }))]
+const REPO_TABS = [
+  { id: OVERVIEW_TAB, labelKey: 'devSpace.repo.tabs.overview' },
+  ...DEV_SPACE_SURFACES.map((surface) => ({ id: surface.id, labelKey: surface.labelKey })),
+  { id: QUESTIONS_TAB, labelKey: 'devSpaceQuestions.tab' },
+]
 
 export interface DevSpaceRepoPageProps { devSpaceRepoId?: string }
 
@@ -128,6 +139,20 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
 
   const running = starting || analyzing
   const outdated = record ? isRepositoryOutdated(record) : false
+  const tours = useDevSpaceGeneratedTours(workspaceId, list.projectSlug, list.artifacts)
+  const tourLauncher = useDevSpaceTourLauncher()
+  // The tour controller is the only launch seam; when the learning runtime is not
+  // ready, no tour is offered rather than a silent no-op.
+  const launchableTours = tourLauncher.available ? tours : []
+  const reloadArtifacts = useCallback(async () => { if (record) await loadArtifacts(record) }, [record, loadArtifacts])
+  const watchQuestionTour = useCallback((block: DevSpaceQuestionBlockName, indexInBlock: number) => {
+    const tour = launchableTours.find((entry) => matchesDevSpaceQuestionTour(entry, block, indexInBlock))
+    if (tour) tourLauncher.start(tour.id)
+  }, [launchableTours, tourLauncher])
+  const showOnScreens = useCallback((answer: string) => {
+    const tour = pickDevSpaceAnswerTour(launchableTours, answer)
+    if (tour) tourLauncher.start(tour.id)
+  }, [launchableTours, tourLauncher])
   const countsByKind = useMemo(() => {
     const counts = new Map<string, number>()
     for (const artifact of list.artifacts) counts.set(artifact.kind, (counts.get(artifact.kind) ?? 0) + 1)
@@ -243,6 +268,29 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                 />
               </div>
             ))}
+
+            {tab === QUESTIONS_TAB ? (
+              <div id={panelId(QUESTIONS_TAB)} role="tabpanel" className="space-y-4">
+                <QuestionsSurface
+                  workspaceId={record.workspaceId}
+                  repositoryId={record.id}
+                  projectSlug={list.projectSlug}
+                  stale={list.stale}
+                  artifacts={list.artifacts}
+                  tours={launchableTours}
+                  onWatchTour={watchQuestionTour}
+                  onGenerated={reloadArtifacts}
+                />
+                <AskQuestionComposer
+                  workspaceId={record.workspaceId}
+                  projectId={record.projectId}
+                  projectSlug={record.projectSlug}
+                  repoLabel={record.displayName}
+                  canShowOnScreens={launchableTours.length > 0}
+                  onShowOnScreens={showOnScreens}
+                />
+              </div>
+            ) : null}
           </div>
         )}
       </div>

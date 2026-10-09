@@ -437,6 +437,7 @@ export const CHANNEL_MAP = {
   startDevSpaceRun: invoke(RPC_CHANNELS.devSpace.START_RUN),
   listDevSpaceArtifacts: invoke(RPC_CHANNELS.devSpace.LIST_ARTIFACTS),
   readDevSpaceArtifact: invoke(RPC_CHANNELS.devSpace.READ_ARTIFACT),
+  generateDevSpaceQuestions: invoke(RPC_CHANNELS.devSpace.GENERATE_QUESTIONS),
   onDevSpaceCloneProgress: listener(RPC_CHANNELS.devSpace.CLONE_PROGRESS),
   onDevSpaceChanged: listener(RPC_CHANNELS.devSpace.CHANGED),
   onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),

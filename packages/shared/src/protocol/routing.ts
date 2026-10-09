@@ -37,6 +37,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   // Artifact reads resolve the local store under `projects/<slug>/dev-space/`, never proxied.
   RPC_CHANNELS.devSpace.LIST_ARTIFACTS,
   RPC_CHANNELS.devSpace.READ_ARTIFACT,
+  // Question/security generation reuses the local store + consent (§3/D8), never proxied.
+  RPC_CHANNELS.devSpace.GENERATE_QUESTIONS,
   RPC_CHANNELS.devSpace.CLONE_PROGRESS,
   RPC_CHANNELS.devSpace.CHANGED,
   RPC_CHANNELS.devSpace.RUN_PROGRESS,

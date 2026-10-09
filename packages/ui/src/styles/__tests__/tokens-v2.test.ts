@@ -50,6 +50,16 @@ function resolve(value: string, scope: Record<string, string>, depth = 0): strin
   })
 }
 
+/** Numeric value of a z-index declaration: an integer, or a two-term integer `calc()`. */
+function zIndexNumber(decl: string, scope: Record<string, string>): number | null {
+  const resolved = resolve(decl, scope).trim()
+  const simple = resolved.match(/^(-?\d+(?:\.\d+)?)$/)
+  if (simple) return Number(simple[1])
+  const calc = resolved.match(/^calc\(\s*(-?\d+(?:\.\d+)?)\s*([+-])\s*(-?\d+(?:\.\d+)?)\s*\)$/)
+  if (calc) return calc[2] === '-' ? Number(calc[1]) - Number(calc[3]) : Number(calc[1]) + Number(calc[3])
+  return null
+}
+
 const px = (v: string) => {
   const m = v.trim().match(/^(-?\d+(?:\.\d+)?)px$/)
   if (!m) throw new Error(`not a px value: ${v}`)
@@ -57,7 +67,7 @@ const px = (v: string) => {
 }
 
 const LAYERS = [
-  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'scrim', 'modal',
+  'base', 'raised', 'sticky', 'chrome', 'sash', 'tour-vignette', 'popover', 'scrim', 'modal',
   'toast', 'fullscreen', 'menu-backdrop', 'island', 'island-popover', 'tooltip', 'splash',
 ] as const
 
@@ -164,7 +174,7 @@ describe('token foundation v2: z layers', () => {
     const root = rootOf(token('z.css'))
     const values = Object.fromEntries(LAYERS.map((l) => [l, Number(resolve(root[`--z-${l}`]!, root))]))
     expect(values).toEqual({
-      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, scrim: 200, modal: 210,
+      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, 'tour-vignette': 90, popover: 100, scrim: 200, modal: 210,
       toast: 300, fullscreen: 350, 'menu-backdrop': 390, island: 400, 'island-popover': 410, tooltip: 450, splash: 600,
     })
     const ordered = LAYERS.map((l) => values[l]!)
@@ -183,8 +193,11 @@ describe('token foundation v2: z layers', () => {
     for (const css of [indexCss, rendererCss]) {
       for (const m of stripComments(css).matchAll(/z-index:\s*([^;]+);/g)) {
         const value = m[1]!.trim()
-        if (/^-\d+$/.test(value)) continue // behind-content pseudo layers (scenic wallpaper)
-        expect(layerValues.has(Number(resolve(value, root))), `z-index: ${value}`).toBe(true)
+        const literal = zIndexNumber(value, root)
+        // Behind-content backdrop layers (scenic wallpaper, material backdrops)
+        // resolve strictly below the base layer and are deliberately off the set.
+        if (literal !== null && literal < 0) continue
+        expect(literal !== null && layerValues.has(literal), `z-index: ${value}`).toBe(true)
       }
     }
   })

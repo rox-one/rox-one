@@ -582,6 +582,8 @@ import type {
   DevSpaceCapabilities,
   DevSpaceCapabilitiesInput,
   DevSpaceCloneProgress,
+  DevSpaceGenerateQuestionsInput,
+  DevSpaceGenerateQuestionsResult,
   DevSpaceListArtifactsInput,
   DevSpaceListArtifactsResult,
   DevSpaceListRepositoriesInput,
@@ -1267,6 +1269,7 @@ export interface ElectronAPI {
   startDevSpaceRun(input: DevSpaceStartRunInput): Promise<DevSpaceRun>
   listDevSpaceArtifacts(input: DevSpaceListArtifactsInput): Promise<DevSpaceListArtifactsResult>
   readDevSpaceArtifact(input: DevSpaceReadArtifactInput): Promise<DevSpaceReadArtifactResult>
+  generateDevSpaceQuestions(input: DevSpaceGenerateQuestionsInput): Promise<DevSpaceGenerateQuestionsResult>
   onDevSpaceCloneProgress(callback: (progress: DevSpaceCloneProgress) => void): () => void
   onDevSpaceChanged(callback: (change: { repositoryId: string; status: DevSpaceRepositoryStatus }) => void): () => void
   onDevSpaceRunProgress(callback: (progress: DevSpaceRunProgress) => void): () => void
