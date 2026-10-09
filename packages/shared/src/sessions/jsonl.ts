@@ -7,6 +7,7 @@
 
 import { createReadStream, createWriteStream, openSync, readSync, closeSync, readFileSync, writeFileSync } from 'fs';
 import { open, readFile, rename, stat, unlink, writeFile } from 'fs/promises';
+import { randomBytes } from 'node:crypto';
 import { pipeline } from 'node:stream/promises';
 import { dirname } from 'path';
 import type { SessionHeader, StoredSession, StoredMessage, SessionTokenUsage } from './types.ts';
@@ -25,6 +26,16 @@ import { replaceFileAtomically, replaceFileAtomicallySync } from './atomic-repla
 // ============================================================
 
 const SESSION_PATH_TOKEN = '{{SESSION_PATH}}';
+
+/**
+ * Unique sibling temp path for an atomic write. A fixed `${dest}.tmp` collides
+ * with a concurrent writer or with crash recovery (which unlinks dest + '.tmp'),
+ * so the following rename can throw ENOENT. pid + random keeps each writer's tmp
+ * private while staying a sibling for a same-filesystem atomic rename.
+ */
+function uniqueTmpPath(destPath: string): string {
+  return `${destPath}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`;
+}
 
 /**
  * Replace absolute session directory paths with a portable token.
@@ -165,7 +176,7 @@ export function writeSessionJsonl(sessionFile: string, session: StoredSession): 
     ...session.messages.map(m => makeSessionPathPortable(JSON.stringify(m), sessionDir)),
   ];
 
-  const tmpFile = sessionFile + '.tmp';
+  const tmpFile = uniqueTmpPath(sessionFile);
   writeFileSync(tmpFile, lines.join('\n') + '\n');
   replaceFileAtomicallySync(tmpFile, sessionFile);
   notifySessionJournalShadow(sessionDir, lines);
@@ -304,7 +315,7 @@ export async function rewriteSessionJsonlHeader(
     await handle.close();
   }
 
-  const tmpFile = `${sessionFile}.tmp`;
+  const tmpFile = uniqueTmpPath(sessionFile);
   try {
     const sessionDir = dirname(sessionFile);
     await writeFile(
