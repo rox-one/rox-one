@@ -1,0 +1,114 @@
+{
+  "chat.typing_few": {
+    "en": "{{names}} are typing…",
+    "ru": "{{names}} печатают…"
+  },
+  "chat.typing_many": {
+    "en": "{{names}} are typing…",
+    "ru": "{{names}} печатают…"
+  },
+  "chat.typing_one": {
+    "en": "{{names}} is typing…",
+    "ru": "{{names}} печатает…"
+  },
+  "chat.typing_other": {
+    "en": "Someone is typing…",
+    "ru": "Кто-то печатает…"
+  },
+  "participants.count_few": {
+    "en": "{{count}} participants",
+    "ru": "{{count}} участника"
+  },
+  "participants.count_many": {
+    "en": "{{count}} participants",
+    "ru": "{{count}} участников"
+  },
+  "participants.count_one": {
+    "en": "{{count}} participant",
+    "ru": "{{count}} участник"
+  },
+  "participants.count_other": {
+    "en": "{{count}} participants",
+    "ru": "{{count}} участника"
+  },
+  "participants.empty": {
+    "en": "No participants yet",
+    "ru": "Участников пока нет"
+  },
+  "sessionOwner.assign": {
+    "en": "Owner",
+    "ru": "Владелец"
+  },
+  "sessionOwner.assignFailed": {
+    "en": "Couldn't change the owner",
+    "ru": "Не удалось изменить владельца"
+  },
+  "sessionOwner.assignSuccess": {
+    "en": "Owner set to {{name}}",
+    "ru": "Владелец: {{name}}"
+  },
+  "sessionOwner.assignToMe": {
+    "en": "Assign to me",
+    "ru": "Назначить на себя"
+  },
+  "sessionOwner.assignedBy": {
+    "en": "Assigned by {{name}}",
+    "ru": "Назначил: {{name}}"
+  },
+  "sessionOwner.createdBy": {
+    "en": "Created by {{name}}",
+    "ru": "Создатель: {{name}}"
+  },
+  "sessionOwner.noViewerIdentity": {
+    "en": "Connect your Rox account to assign sessions to yourself",
+    "ru": "Подключите аккаунт Rox, чтобы назначать сессии на себя"
+  },
+  "sessionOwner.ownedBy": {
+    "en": "Owned by {{name}}",
+    "ru": "Владелец: {{name}}"
+  },
+  "sessionOwner.unassigned": {
+    "en": "Unassigned",
+    "ru": "Без владельца"
+  },
+  "sessionOwner.unassignSuccess": {
+    "en": "Owner cleared",
+    "ru": "Владелец снят"
+  },
+  "sessionSharing.visibility.readOnly": {
+    "en": "Read-only",
+    "ru": "Только чтение"
+  },
+  "sessionSharing.visibility.draft": {
+    "en": "Draft",
+    "ru": "Черновик"
+  },
+  "sessionSharing.visibility.shared": {
+    "en": "Shared",
+    "ru": "Общий"
+  },
+  "sessionSharing.visibility.suggest": {
+    "en": "Suggest",
+    "ru": "Предложить"
+  },
+  "sessionSharing.visibilityFailed": {
+    "en": "Couldn't update access",
+    "ru": "Не удалось обновить доступ"
+  },
+  "sessionSharing.visibilityLabel": {
+    "en": "Access",
+    "ru": "Доступ"
+  },
+  "sessionSharing.visibilityUpdated": {
+    "en": "Access updated",
+    "ru": "Доступ обновлён"
+  },
+  "sidebarFilter.involvingMe": {
+    "en": "Involving me",
+    "ru": "Со мной"
+  },
+  "sidebarFilter.owners": {
+    "en": "Owners",
+    "ru": "Владельцы"
+  }
+}
