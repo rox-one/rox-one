@@ -86,7 +86,10 @@ export class HookRegistry {
     }
     const sequence = this.sequence++
     const failures: HookFailure[] = []
-    const snapshot = [...list]
+    // Storage erases the payload generic (`HookHandler<never>`); re-assert the
+    // emitted event's payload type at the copy boundary so dispatch stays
+    // type-correct without widening the public registry API.
+    const snapshot = [...list] as unknown as HookHandler<Payload>[]
     for (let index = 0; index < snapshot.length; index += 1) {
       try {
         await snapshot[index]!(payload, { event, sequence })
