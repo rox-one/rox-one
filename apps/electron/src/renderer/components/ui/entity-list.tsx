@@ -291,11 +291,11 @@ function CollapsibleGroupHeader({
  * stay mounted: keyboard navigation focuses its DOM node (unmounted rows lose their ref), so
  * dropping it would make arrow nav silently dead until the user clicks a mounted row again.
  */
-export function withMountedAnchor<T, G>(
+export function withMountedAnchor<T, G extends { key: string }>(
   slice: readonly VirtualTableEntry<T, G>[],
   all: readonly VirtualTableEntry<T, G>[],
   anchorKey: string | null,
-): VirtualTableEntry<T, G>[] {
+): readonly VirtualTableEntry<T, G>[] {
   if (!anchorKey || slice.some((entry) => entry.key === anchorKey)) return slice
   const anchor = all.find((entry) => entry.key === anchorKey)
   return anchor ? [...slice, anchor] : slice
