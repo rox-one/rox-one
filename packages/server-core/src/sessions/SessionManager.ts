@@ -154,6 +154,7 @@ import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } 
 import { captureAgentProfileSnapshot } from '../workspace-work/profile.ts'
 import { sessionStateProjector } from '../state/sessions-projection.ts'
 import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@rox/shared/prompts/system'
+import { formatPerTurnMemoryBlock } from '@rox/shared/memory/context-select'
 import { retrieveSourcesForPrompt } from '../sources/source-index-facade'
 import { getToolIconsDir, getMiniModel, isRoxPublicModelId, ROX_DEFAULT_SUBAGENT_MODEL } from '@rox/shared/config'
 import { getDefaultSummarizationModel } from '@rox/shared/config/models'
@@ -5123,6 +5124,30 @@ export class SessionManager implements ISessionManager {
         agentProfileSnapshot: managed.agentProfileSnapshot,
         allowedSkillSlugs: managed.agentProfileSnapshot?.skillSlugs,
         memoryBlocks,
+        // c1.4 residual: per-turn memory (c1.5 recall + c1.6 standing intents)
+        // resolved for THIS turn's message and ridden on the per-turn payload
+        // (BaseAgent.chat → the backend's user turn / OMP `prompt`). Renders
+        // only the per-turn additions — the curated bootstrap and the other
+        // blocks stay spawn-time in `memoryBlocks` above. Same memory-mode gate
+        // and same lane budgets as the spawn-time assembly. Fail-soft: any
+        // memory error must never break a turn.
+        getPerTurnMemoryBlock: async (message: string): Promise<string | null> => {
+          if (managed.memoryMode === 'temporary' || managed.agentProfileSnapshot?.memoryScope === 'none') return null
+          const memoryService = this.memoryServiceFor(managed.workspace)
+          if (!memoryService) return null
+          try {
+            const blocks = await memoryService.buildMemoryBlocks({
+              query: message,
+              sessionId: managed.id,
+              workspaceOnly: !!managed.agentProfileSnapshot,
+              nativeContext: this.nativeMemoryContextFor(managed.id, managed.workspace.id),
+            })
+            return formatPerTurnMemoryBlock(blocks)
+          } catch (err) {
+            sessionLog.warn(`Failed to build per-turn memory block (${managed.id}):`, err)
+            return null
+          }
+        },
         miniModel,
         thinkingLevel: managed.thinkingLevel,
         session: sessionConfig,
