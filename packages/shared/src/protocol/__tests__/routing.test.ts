@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'bun:test'
+import { readFileSync } from 'node:fs'
 import { getAllChannelValues, RPC_CHANNELS } from '../channels'
 import { LOCAL_ONLY_CHANNELS, REMOTE_ELIGIBLE_CHANNELS } from '../routing'
 
@@ -38,6 +39,15 @@ describe('channel routing exhaustiveness', () => {
 
   test('total classified equals total channels', () => {
     expect(LOCAL_ONLY_CHANNELS.size + REMOTE_ELIGIBLE_CHANNELS.size).toBe(all.length)
+  })
+
+  test('no channel is listed twice in one routing set (merge-artifact guard)', () => {
+    const source = readFileSync(new URL('../routing.ts', import.meta.url), 'utf8')
+    for (const name of ['LOCAL_ONLY_CHANNELS', 'REMOTE_ELIGIBLE_CHANNELS'] as const) {
+      const body = source.slice(source.indexOf(`export const ${name}`))
+      const rows: string[] = body.slice(0, body.indexOf('\n])')).match(/RPC_CHANNELS\.[A-Za-z0-9_]+\.[A-Z0-9_]+/g) ?? []
+      expect(rows.filter((row, i) => rows.indexOf(row) !== i)).toEqual([])
+    }
   })
 })
 
