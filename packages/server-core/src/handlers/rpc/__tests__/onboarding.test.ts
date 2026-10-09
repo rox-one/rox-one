@@ -80,7 +80,9 @@ mock.module('@rox/shared/auth', () => ({
   },
 }))
 
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   isSetupDeferred: () => {
     setupDeferredReadCount += 1
     return setupDeferred
@@ -90,11 +92,11 @@ mock.module('@rox/shared/config', () => ({
     setupDeferred = deferred
   },
 }))
+afterAll(() => { mock.module('@rox/shared/config', () => actualConfig) })
 
 // Real namespace must be captured before the mock is registered; a static import
 // would be hoisted past this file's mock.module ordering.
 const actualCredentials = await import('@rox/shared/credentials')
-
 mock.module('@rox/shared/credentials', () => ({
   ...actualCredentials,
   getCredentialManager: () => ({
@@ -104,9 +106,16 @@ mock.module('@rox/shared/credentials', () => ({
   }),
 }))
 
+const actualMcp = await import('@rox/shared/mcp')
 mock.module('@rox/shared/mcp', () => ({
+  ...actualMcp,
   validateMcpConnection: async () => ({ success: true }),
 }))
+afterAll(() => {
+  mock.module('@rox/shared/auth', () => actualAuth)
+  mock.module('@rox/shared/credentials', () => actualCredentials)
+  mock.module('@rox/shared/mcp', () => actualMcp)
+})
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 
