@@ -2204,7 +2204,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   }
 
   /**
-   * Bring a pane view to the front. Electron 39: re-adding an existing child
+   * Bring a pane view to the front. Electron (39+): re-adding an existing child
    * reorders it as the topmost view.
    */
   private setTopPaneView(host: BrowserWindow, view: WebContentsView): void {
