@@ -86,7 +86,7 @@ function getUpdateCacheDir(): string {
 }
 
 /** Detect macOS ad-hoc / unsigned local dist (CSC_IDENTITY_AUTO_DISCOVERY=false). */
-function detectMacAdHocSigned(execPath: string): boolean {
+export function detectMacAdHocSigned(execPath: string): boolean {
   if (!IS_MAC) return false
   try {
     const result = spawnSync('codesign', ['-dv', '--verbose=4', execPath], { encoding: 'utf8' })
