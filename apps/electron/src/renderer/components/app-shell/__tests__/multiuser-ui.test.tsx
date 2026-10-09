@@ -113,6 +113,11 @@ describe('multiuser UI wiring', () => {
     expect(CHAT_DISPLAY).toContain('useSessionTypingBeacon(session?.id)')
   })
 
+  it('filters the local viewer out of the typing indicator before rendering', () => {
+    expect(CHAT_DISPLAY).toContain('useViewerIdentity()')
+    expect(CHAT_DISPLAY).toContain('filterLocalTypingActors(rawTypingActors, viewer)')
+  })
+
   it('presence/typing events feed the activity atom, not the agent processor', () => {
     expect(APP).toContain("event.type === 'session_typing' || event.type === 'session_presence'")
     expect(APP).toContain('reduceSessionActivityEvent(store.get(sessionActivityMapAtom), event)')

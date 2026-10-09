@@ -14,6 +14,7 @@ import { useRoxCloudAccount } from '@/hooks/useRoxCloudAccount'
 import {
   EMPTY_SESSION_ACTIVITY,
   TypingBeacon,
+  VIEWER_WATCH_HEARTBEAT_MS,
   type SessionActivityState,
   type ViewerIdentity,
 } from '@/lib/session-presence'
@@ -37,13 +38,22 @@ export function useViewerIdentity(): ViewerIdentity {
 /**
  * Register the local connection as a viewer of `sessionId` for its lifetime,
  * so the server can broadcast live presence to other collaborators.
+ *
+ * Server viewer entries expire after {@link SESSION_VIEWER_TTL_MS} (5 min), so
+ * the initial `watchSession` is not enough: it is re-sent as a heartbeat well
+ * under the TTL, and the interval is torn down on session change/unmount.
  */
 export function useSessionViewerWatch(sessionId: string | null | undefined): void {
   React.useEffect(() => {
     if (!sessionId) return
-    void window.electronAPI.sessionCommand(sessionId, { type: 'watchSession' }).catch(() => {})
+    const command = (type: 'watchSession' | 'unwatchSession') => {
+      void window.electronAPI.sessionCommand(sessionId, { type }).catch(() => {})
+    }
+    command('watchSession')
+    const heartbeat = setInterval(() => command('watchSession'), VIEWER_WATCH_HEARTBEAT_MS)
     return () => {
-      void window.electronAPI.sessionCommand(sessionId, { type: 'unwatchSession' }).catch(() => {})
+      clearInterval(heartbeat)
+      command('unwatchSession')
     }
   }, [sessionId])
 }
@@ -60,12 +70,19 @@ export interface SessionTypingBeacon {
  * while the user types, one `false` on clear; the beacon is cleared on unmount.
  */
 export function useSessionTypingBeacon(sessionId: string | null | undefined): SessionTypingBeacon {
-  const sessionIdRef = React.useRef(sessionId)
+  const sessionIdRef = React.useRef<string | null | undefined>(sessionId)
   sessionIdRef.current = sessionId
+  // The session that received the outstanding `true`. The `false` must go to
+  // that same session: on a switch the render advances `sessionIdRef` to the
+  // next session *before* the cleanup runs, so resolving the target at send
+  // time would clear the wrong (new) session and orphan the old one.
+  const typingSessionRef = React.useRef<string | null | undefined>(null)
   const beaconRef = React.useRef<TypingBeacon | null>(null)
   if (!beaconRef.current) {
     beaconRef.current = new TypingBeacon((typing) => {
-      const target = sessionIdRef.current
+      if (typing) typingSessionRef.current = sessionIdRef.current
+      const target = typingSessionRef.current
+      if (!typing) typingSessionRef.current = null
       if (!target) return
       void window.electronAPI.sessionCommand(target, { type: 'setTyping', typing }).catch(() => {})
     })
