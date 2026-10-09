@@ -60,3 +60,30 @@ describe('preferences.renderProfilePreference', () => {
     }
   })
 })
+
+describe('preferences.zenShellMaterialDepth (A3)', () => {
+  it('defaults to standard and treats unknown values as standard', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'prefs-depth-'))
+    try {
+      expect(run(dir, 'console.log(p.getZenShellMaterialDepth())').stdout).toBe('standard')
+      writeFileSync(join(dir, 'preferences.json'), JSON.stringify({ zenShellMaterialDepth: 'hud' }))
+      expect(run(dir, 'console.log(p.getZenShellMaterialDepth())').stdout).toBe('standard')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('persists an explicit depth for the next process and keeps material preference', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'prefs-depth-'))
+    try {
+      writeFileSync(join(dir, 'preferences.json'), JSON.stringify({ zenShellMaterialPreference: 'glass' }))
+      expect(run(dir, "console.log(p.setZenShellPreference({ materialDepth: 'deep' }).materialDepth)").stdout).toBe('deep')
+      expect(run(dir, 'console.log(p.getZenShellMaterialDepth())').stdout).toBe('deep')
+      const saved = JSON.parse(readFileSync(join(dir, 'preferences.json'), 'utf8'))
+      expect(saved.zenShellMaterialDepth).toBe('deep')
+      expect(saved.zenShellMaterialPreference).toBe('glass')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})

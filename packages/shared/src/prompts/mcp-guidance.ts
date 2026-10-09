@@ -9,7 +9,6 @@ Use connected MCP sources whenever their capabilities are relevant to the user's
 
 Choose the integration that fits the task:
 - Firecrawl: web search, crawling, page extraction and structured web data.
-- DeepWiki: understanding public repositories, their architecture and repository documentation.
 - Context7: current library and framework documentation, version-specific API examples and implementation guidance. Consult it when external API details matter to a coding task.
 - CodeGraph: repository structure, symbol relationships, dependencies and the impact of code changes. Use the connected project's graph and verify important findings against the actual files.
 - QMD: keyword and semantic search over indexed local Markdown documents. Use the relevant configured collections to retrieve project notes, documentation and other local knowledge before answering questions about them.

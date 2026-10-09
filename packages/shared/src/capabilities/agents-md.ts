@@ -52,7 +52,7 @@ export function buildOfflineCapabilityReport(opts: {
   for (const tool of CAPABILITY_TOOLS) {
     const state = installed.has(tool.id) ? 'installed' : 'available'
     const risk = tool.highRisk ? 'high-risk' : 'normal'
-    lines.push(`${tool.packId}/${tool.id} ${tool.version} ${state} ${risk} ${tool.checksum}`)
+    lines.push(`${tool.packId}/${tool.id} ${tool.version} ${state} ${risk} ${tool.gitRef ?? 'unpinned'}`)
   }
   return `${lines.join('\n')}\n`
 }

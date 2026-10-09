@@ -341,3 +341,12 @@ describe('node/device registry routing (f.9)', () => {
     }
   })
 })
+
+describe('Dev Space routing', () => {
+  test('keeps every devSpace channel local-only', () => {
+    for (const channel of Object.values(RPC_CHANNELS.devSpace)) {
+      expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(true)
+      expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(false)
+    }
+  })
+})

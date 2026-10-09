@@ -1,18 +1,18 @@
-/** W1-06 (#1503) — Workspaces, identity lifecycle, onboarding, agents: TECH-SPEC §12–§15, §17.2. */
+/** W1-06 (#1503) — Onboarding: TECH-SPEC §12–§15, §17.2. */
 import { z } from 'zod'
-import { cmd, createIdShape, emailSchema, idSchema, nameSchema, principalIdSchema, refSchema, timeZoneSchema, type CommandSchemaMap } from '../common'
+import { cmd, type CommandSchemaMap } from '../common'
 
-// W1-14 (#1511): agents.invoke (§12) moved to @rox/shared/xsc.
+/**
+ * PRECEDENCE (command-schema binding): the *owning* module's schema is the one
+ * the registry keeps. `AGENTS_COMMAND_MODULE` (W1-11 #1508) owns every
+ * identity-lifecycle, team-chat and agent-governance payload below, so this
+ * W1-06 placeholder map would only shadow it — the stale entries were removed
+ * (`workspaces.create`, `identity.{ensure,activate,merge}_placeholder`,
+ * `people.invite`, `im.*`, `agents.*`). Never re-add an entry for a command an
+ * owner module binds: `bindSchema` is last-wins, so a placeholder here silently
+ * overwrites the real payload schema. Only commands with no owner-module schema
+ * belong in `COMMAND_PAYLOAD_SCHEMAS`.
+ */
 export const IDENTITY_COMMAND_SCHEMAS: CommandSchemaMap = {
-  'workspaces.create': cmd({ ...createIdShape, name: nameSchema, slug: z.string().regex(/^[a-z0-9][a-z0-9-]{1,62}$/).optional(), timeZone: timeZoneSchema.optional() }),
-  'identity.ensure_placeholder': cmd({ ...createIdShape, displayName: nameSchema, email: emailSchema.optional(), externalRef: z.string().max(500).optional() }),
-  'identity.activate_placeholder': cmd({ placeholderId: idSchema, principalId: principalIdSchema }),
-  'identity.merge_placeholder': cmd({ placeholderId: idSchema, intoPrincipalId: principalIdSchema }),
   'onboarding.seed_starter_content': cmd({ pack: z.enum(['welcome', 'team', 'personal']).default('welcome'), locale: z.string().max(16).optional() }),
-}
-
-export const AGENTS_COMMAND_SCHEMAS: CommandSchemaMap = {
-  'agents.provision_personal_agent': cmd({ ...createIdShape, ownerId: principalIdSchema, name: nameSchema.optional() }),
-  'agents.decide_approval': cmd({ approvalId: idSchema, decision: z.enum(['approve', 'deny']), note: z.string().max(2000).optional() }),
-  'agents.pause': cmd({ agentId: idSchema, paused: z.boolean().default(true) }),
 }

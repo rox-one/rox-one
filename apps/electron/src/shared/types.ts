@@ -64,6 +64,15 @@ export type {
 } from '@rox/shared/keeper'
 import type { RoxAccountSnapshot } from '@rox/shared/auth'
 import type { TtsStreamChunk, VoiceWakeTrigger } from '@rox/shared/voice'
+import type {
+  PodcastCancelInput, PodcastCancelResult, PodcastEpisodeAudioChunk, PodcastEpisodeAudioInput,
+  PodcastEpisodeAudioUrlInput, PodcastEpisodeAudioUrlResult, PodcastEpisodesInput, PodcastEpisodesResult,
+  PodcastJob, PodcastStartInput, PodcastStartResult,
+} from '@rox/shared/voice'
+import type {
+  CodebookCancelInput, CodebookCancelResult, CodebookJob, CodebookRunInput, CodebookRunResult,
+  CodebookRunsInput, CodebookRunsResult,
+} from '@rox/shared/playbooks'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -272,6 +281,15 @@ export type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIss
 
 // Onboarding profile suggestion DTOs
 import type { SuggestPreferencesInput, SuggestPreferencesResult } from '@rox/shared/protocol';
+
+// Wave 2 appearance/zed-import DTOs
+import type {
+  SystemAccentSnapshot,
+  UiAppearanceSnapshot,
+  ZedThemeEntry,
+  ZedThemeImportRequest,
+  ZedThemeImportResult,
+} from '@rox/shared/protocol';
 
 import type {
   CredentialMigrationApplyDto,
@@ -596,16 +614,24 @@ import type {
   DevSpaceCapabilities,
   DevSpaceCapabilitiesInput,
   DevSpaceCloneProgress,
+  DevSpaceGenerateQuestionsInput,
+  DevSpaceGenerateQuestionsResult,
+  DevSpaceListArtifactsInput,
+  DevSpaceListArtifactsResult,
   DevSpaceListRepositoriesInput,
   DevSpaceListRunsInput,
   DevSpaceListRunsResult,
+  DevSpaceReadArtifactInput,
+  DevSpaceReadArtifactResult,
   DevSpaceRemoveRepositoryInput,
   DevSpaceRemoveRepositoryResult,
   DevSpaceRepositoryCatalog,
   DevSpaceRepositoryRecord,
   DevSpaceRepositoryRequestInput,
   DevSpaceRepositoryStatus,
+  DevSpaceRun,
   DevSpaceRunProgress,
+  DevSpaceStartRunInput,
 } from '@rox/shared/dev-space';
 
 // Import protocol types used by ElectronAPI (they come through the `export *` above,
@@ -700,6 +726,8 @@ import type {
   SiyuanSurfaceState,
   ExtensionSurfaceState,
   SessionActorRef,
+  NotificationDeepLink,
+  ShellActionPayload,
 } from '@rox/shared/protocol'
 
 // Browser Intelligence Pipeline contract — frozen in the workspace package
@@ -1353,6 +1381,10 @@ export interface ElectronAPI {
   cancelDevSpaceRequest(input: DevSpaceCancelInput): Promise<boolean>
   getDevSpaceCapabilities(input: DevSpaceCapabilitiesInput): Promise<DevSpaceCapabilities>
   listDevSpaceRuns(input: DevSpaceListRunsInput): Promise<DevSpaceListRunsResult>
+  startDevSpaceRun(input: DevSpaceStartRunInput): Promise<DevSpaceRun>
+  listDevSpaceArtifacts(input: DevSpaceListArtifactsInput): Promise<DevSpaceListArtifactsResult>
+  readDevSpaceArtifact(input: DevSpaceReadArtifactInput): Promise<DevSpaceReadArtifactResult>
+  generateDevSpaceQuestions(input: DevSpaceGenerateQuestionsInput): Promise<DevSpaceGenerateQuestionsResult>
   onDevSpaceCloneProgress(callback: (progress: DevSpaceCloneProgress) => void): () => void
   onDevSpaceChanged(callback: (change: { repositoryId: string; status: DevSpaceRepositoryStatus }) => void): () => void
   onDevSpaceRunProgress(callback: (progress: DevSpaceRunProgress) => void): () => void
@@ -2306,6 +2338,20 @@ export interface ElectronAPI {
   processVoiceTranscript(payload: { text: string }): Promise<unknown>
   listVoiceModels(): Promise<{ families: string[]; catalog: unknown[] }>
   onVoiceJob(callback: (job: import('@rox/shared/voice').VoiceJob) => void): () => void
+  // Podcast (D13): the pipeline runs in the local server; the renderer follows
+  // `podcast:job` and reads episode audio through the frame reader.
+  startPodcast(input: PodcastStartInput): Promise<PodcastStartResult>
+  cancelPodcast(input: PodcastCancelInput): Promise<PodcastCancelResult>
+  podcastEpisodes(input: PodcastEpisodesInput): Promise<PodcastEpisodesResult>
+  readPodcastEpisodeAudio(input: PodcastEpisodeAudioInput): Promise<PodcastEpisodeAudioChunk>
+  podcastEpisodeAudioUrl(input: PodcastEpisodeAudioUrlInput): Promise<PodcastEpisodeAudioUrlResult>
+  onPodcastJob(callback: (job: PodcastJob) => void): () => void
+  // Playbooks codebook (D12, В5): notebook runs execute host-local; the renderer
+  // follows `playbooks:codebookJob` and lists the durable run journal.
+  runCodebook(input: CodebookRunInput): Promise<CodebookRunResult>
+  cancelCodebook(input: CodebookCancelInput): Promise<CodebookCancelResult>
+  listCodebookRuns(input: CodebookRunsInput): Promise<CodebookRunsResult>
+  onCodebookJob(callback: (job: CodebookJob) => void): () => void
   onVoiceOverlay(callback: (state: import('@rox/shared/voice').OverlayState) => void): () => void
   publishVoiceLevel?(level: number): void
   onVoiceHotkey(callback: (payload: import('@rox/shared/voice/hotkey-types').VoiceHotkeyPayload) => void): () => void
@@ -2723,7 +2769,7 @@ export interface ElectronAPI {
   getLogoUrl(serviceUrl: string, provider?: string): Promise<string | null>
 
   // Notifications
-  showNotification(title: string, body: string, workspaceId: string, sessionId: string): Promise<void>
+  showNotification(title: string, body: string, workspaceId: string, sessionId: string, deepLink?: NotificationDeepLink): Promise<void>
   getNotificationsEnabled(): Promise<boolean>
   setNotificationsEnabled(enabled: boolean): Promise<void>
 
@@ -2754,8 +2800,19 @@ export interface ElectronAPI {
     materialPreference?: 'system' | 'glass' | 'opaque'
     /** PERF-07 low-power rendering choice. */
     renderProfile?: 'auto' | 'performance' | 'standard'
+    /** A3 macOS vibrancy depth. */
+    materialDepth?: 'light' | 'standard' | 'deep'
   }): Promise<ZenShellSnapshot>
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
+  /** A6/B10 — persisted «Интерфейс» prefs + the live system accent. */
+  getUiPreferences(): Promise<UiAppearanceSnapshot>
+  setUiPreferences(patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' }): Promise<UiAppearanceSnapshot>
+  /** B10 — macOS system accent colour push. */
+  onAccentChanged(callback: (accent: SystemAccentSnapshot) => void): () => void
+
+  // C1 — import themes from an installed Zed (LOCAL_ONLY).
+  listZedThemes(): Promise<ZedThemeEntry[]>
+  importZedTheme(request: ZedThemeImportRequest): Promise<ZedThemeImportResult>
 
   // Prompt caching & context
   getExtendedPromptCache(): Promise<boolean>
@@ -2780,6 +2837,33 @@ export interface ElectronAPI {
   getWindowFocusState(): Promise<boolean>
   onWindowFocusChange(callback: (isFocused: boolean) => void): () => void
   onNotificationNavigate(callback: (data: { workspaceId: string; sessionId: string }) => void): () => void
+
+  // Native shell actions (dock menu, tray, app menu, notification click) —
+  // main pushes one structured action to the focused (or first) window.
+  onShellAction(callback: (payload: ShellActionPayload) => void): () => void
+
+  // Floating quick composer (window + global shortcut). Nested namespace via
+  // dotted CHANNEL_MAP keys; all LOCAL_ONLY.
+  quickComposer: {
+    open(): Promise<{ ok: boolean; error?: string }>
+    close(): Promise<{ ok: boolean; error?: string }>
+    getShortcut(): Promise<string | null>
+    setShortcut(accelerator: string | null): Promise<{ ok: boolean; accelerator?: string | null; error?: string }>
+  }
+
+  // OS login item (launch at startup). LOCAL_ONLY.
+  appIntegration: {
+    getLoginItem(): Promise<{ openAtLogin: boolean; supported: boolean }>
+    setLoginItem(input: { openAtLogin: boolean }): Promise<{ ok: boolean; openAtLogin: boolean; error?: string }>
+  }
+
+  // Finder / filesystem affordances for a user-visible path. LOCAL_ONLY.
+  revealInFinder(path: string): Promise<{ ok: boolean; error?: string }>
+  openPath(path: string): Promise<{ ok: boolean; error?: string }>
+  copyPath(path: string): Promise<{ ok: boolean; error?: string }>
+  quickLook(path: string): Promise<{ ok: boolean; error?: string }>
+  quickLookClose(): Promise<{ ok: boolean; error?: string }>
+  startDrag(input: { path: string; iconPath?: string }): Promise<{ ok: boolean; error?: string }>
 
   // Theme preferences sync across windows
   broadcastThemePreferences(preferences: { mode: string; colorTheme: string; font: string; contrast?: string }): Promise<void>

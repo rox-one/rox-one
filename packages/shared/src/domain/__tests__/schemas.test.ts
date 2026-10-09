@@ -26,11 +26,35 @@ const DEFERRED_DOMAIN_SCHEMA_TYPES: Readonly<Record<string, string>> = {
   'tables.insert_row': 'X-23 form-submit row insert; zod schema in @rox/shared/xfn/schemas.ts (XFN_SCHEMAS), bound by bindXfnContracts — lane #1534 (PLAN.md W2 XFN X-13…X-26)',
 }
 const deferred = Object.keys(DEFERRED_DOMAIN_SCHEMA_TYPES).sort()
-/** Catalogue commands the domain map must cover: everything except the named deferrals. */
-const covered = catalogue.filter(type => !(type in DEFERRED_DOMAIN_SCHEMA_TYPES))
+/**
+ * Catalogue commands whose payload schema is owned by a module *outside*
+ * `@rox/shared/domain`, with the schema that takes over. `AGENTS_COMMAND_MODULE`
+ * (W1-11 #1508) owns all of them; their W1-06 placeholders used to shadow the
+ * real schema in `COMMAND_PAYLOAD_SCHEMAS` and were removed (schema-precedence
+ * fix). The drift guard below fails if one reappears in the map, or if the list
+ * names a type the map still covers.
+ */
+const OWNER_BOUND_DOMAIN_TYPES: Readonly<Record<string, string>> = {
+  'workspaces.create': '@rox/shared/identity/schemas.ts: createWorkspaceSchema (AGENTS_COMMAND_MODULE)',
+  'people.invite': '@rox/shared/identity/schemas.ts: invitePeopleSchema (AGENTS_COMMAND_MODULE)',
+  'identity.ensure_placeholder': '@rox/shared/identity/schemas.ts: ensurePlaceholderSchema (AGENTS_COMMAND_MODULE)',
+  'identity.activate_placeholder': '@rox/shared/identity/schemas.ts: activatePlaceholderSchema (AGENTS_COMMAND_MODULE)',
+  'identity.merge_placeholder': '@rox/shared/identity/schemas.ts: mergePlaceholderSchema (AGENTS_COMMAND_MODULE)',
+  'im.create_chat': '@rox/shared/identity/schemas.ts: createChatSchema (AGENTS_COMMAND_MODULE)',
+  'im.join_chat': '@rox/shared/identity/schemas.ts: joinChatSchema (AGENTS_COMMAND_MODULE)',
+  'im.leave_chat': '@rox/shared/identity/schemas.ts: leaveChatSchema (AGENTS_COMMAND_MODULE)',
+  'im.set_visibility': '@rox/shared/identity/schemas.ts: setVisibilitySchema (AGENTS_COMMAND_MODULE)',
+  'agents.provision_personal_agent': '@rox/shared/agents/schemas.ts: provisionPersonalAgentSchema (AGENTS_COMMAND_MODULE)',
+  'agents.invoke': '@rox/shared/agents/schemas.ts: agentInvokeSchema (AGENTS_COMMAND_MODULE)',
+  'agents.decide_approval': '@rox/shared/agents/schemas.ts: decideApprovalSchema (AGENTS_COMMAND_MODULE)',
+  'agents.pause': '@rox/shared/agents/schemas.ts: pauseAgentSchema (AGENTS_COMMAND_MODULE)',
+}
+const ownerBound = Object.keys(OWNER_BOUND_DOMAIN_TYPES).sort()
+/** Catalogue commands the domain map must cover: everything except the named deferrals and owner-bound types. */
+const covered = catalogue.filter(type => !(type in DEFERRED_DOMAIN_SCHEMA_TYPES) && !(type in OWNER_BOUND_DOMAIN_TYPES))
 
 describe('domain command schemas (W1-06)', () => {
-  test('cover exactly the non-system catalogue minus the deferred XFN types', () => {
+  test('cover exactly the non-system catalogue minus the deferred XFN and owner-bound types', () => {
     expect(Object.keys(COMMAND_PAYLOAD_SCHEMAS).sort()).toEqual(covered)
   })
 
@@ -56,6 +80,14 @@ describe('domain command schemas (W1-06)', () => {
   // one named test per type, next to the one-line reason above.
   test.each(deferred)('%s is deferred — no domain payload schema yet (#1534)', type => {
     expect(DEFERRED_DOMAIN_SCHEMA_TYPES[type]).toBeDefined()
+    expect(COMMAND_PAYLOAD_SCHEMAS[type]).toBeUndefined()
+  })
+
+  test.each(ownerBound)('%s is owner-bound — the domain map must not shadow it', type => {
+    // Drift guard: the schema now lives with the owning module (the string above
+    // names it). A placeholder reappearing here would be last-wins and shadow it.
+    expect(OWNER_BOUND_DOMAIN_TYPES[type]).toBeDefined()
+    expect(catalogueTypes[type]).toBe(true)
     expect(COMMAND_PAYLOAD_SCHEMAS[type]).toBeUndefined()
   })
 

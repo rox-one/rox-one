@@ -1402,6 +1402,27 @@ export interface DeepLinkNavigation {
 }
 
 // ---------------------------------------------------------------------------
+// Native shell actions (dock menu, tray, app menu, notification click)
+// ---------------------------------------------------------------------------
+
+/** Optional navigation target carried by a notification deep-link action. */
+export interface NotificationDeepLink {
+  route?: string
+  workspaceId?: string
+  id?: string
+}
+
+/**
+ * Payload of the `shell:action` main→renderer push. A native affordance maps
+ * to one of these actions; the renderer owns the navigation/creation behavior.
+ */
+export interface ShellActionPayload {
+  action: 'new-note' | 'new-task' | 'quick-composer' | 'open-inbox' | 'navigate'
+  /** Present for `action: 'navigate'` (notification click with a deep link). */
+  deepLink?: NotificationDeepLink
+}
+
+// ---------------------------------------------------------------------------
 // SiYuan engine surface types (data shapes used by BroadcastEventMap)
 // ---------------------------------------------------------------------------
 
@@ -1526,3 +1547,54 @@ export type SuggestPreferencesReason = 'no-provider' | 'timeout' | 'error'
 export type SuggestPreferencesResult =
   | { ok: true; text: string }
   | { ok: false; reason: SuggestPreferencesReason }
+
+// ============================================================================
+// DISPATCH wave 2 — appearance UI preferences (A6), system accent (B10),
+// Zed theme import (C1). All device-local; no workspace authority.
+// ============================================================================
+
+/** Persisted «Интерфейс» preferences (config.json `ui`). */
+export interface UiAppearancePreferences {
+  /** Show the compact bottom status bar (A6). Default: visible. */
+  statusBarVisible: boolean
+  /** Accent source (B10): brand palette or the macOS system accent. */
+  accentSource: 'brand' | 'system'
+}
+
+/** GET_UI_PREFERENCES response: persisted prefs plus the live system accent. */
+export interface UiAppearanceSnapshot extends UiAppearancePreferences {
+  accent: SystemAccentSnapshot
+}
+
+/**
+ * System accent snapshot (B10). `color` is the raw Electron
+ * `systemPreferences.getAccentColor()` RGBA hex (no `#`) on macOS, or null off
+ * macOS / on failure. The renderer converts it to CSS.
+ */
+export interface SystemAccentSnapshot {
+  source: 'system' | 'brand'
+  color: string | null
+}
+
+/** One importable theme found in an installed Zed (C1). */
+export interface ZedThemeEntry {
+  id: string
+  name: string
+  appearance: 'light' | 'dark'
+  sourcePath: string
+  /** Installed extension directory name, null for user `~/.config/zed/themes`. */
+  extensionId: string | null
+  /** True when the ROX theme catalog already holds this id. */
+  alreadyImported: boolean
+}
+
+export interface ZedThemeImportRequest {
+  sourcePath: string
+  /** Zed theme name inside the file (a family can carry several). */
+  name: string
+}
+
+export type ZedThemeImportResult =
+  | { status: 'imported'; id: string }
+  | { status: 'skipped'; reason: 'already-imported' | 'not-found' | 'unreadable' | 'invalid' }
+  | { status: 'error'; reason: string }

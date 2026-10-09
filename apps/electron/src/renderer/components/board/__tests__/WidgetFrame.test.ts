@@ -135,9 +135,12 @@ describe('WidgetFrame message filter', () => {
     expect(parseWidgetFrameMessage({ type: WIDGET_BOOTSTRAP_MESSAGE_TYPE })).toBeNull()
     expect(parseWidgetFrameMessage({ type: WIDGET_READY_MESSAGE_TYPE })).toBeNull()
     expect(parseWidgetFrameMessage({ type: 'rox:widget-action' })).toBeNull()
-    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: 0 })).toBeNull()
+    // A legitimate zero height is content, not silence: the wrap reporter
+    // sends it once and the host must accept it as a valid report.
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: 0 })).toBe(0)
     expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: '120' })).toBeNull()
     expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: Number.NaN })).toBeNull()
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: -1 })).toBeNull()
     expect(parseWidgetFrameMessage(null)).toBeNull()
     expect(parseWidgetFrameMessage('size')).toBeNull()
   })
@@ -265,6 +268,26 @@ describe('WidgetFrame failure chrome', () => {
 
     expect(container.querySelector('[data-testid="widget-frame-failure"]')).toBeNull()
     expect(frameOf(container).style.height).toBe('128px')
+
+    await unmount(root)
+  })
+
+  it('treats a zero height report as content: no chrome, zero-height box', async () => {
+    const heights: number[] = []
+    const { container, root } = await render(
+      leasedFrame({ renderTimeoutMs: 5_000, onContentHeight: height => heights.push(height) }),
+    )
+    await act(async () => {
+      postFromFrame(container, 'null', { type: WIDGET_SIZE_MESSAGE_TYPE, height: 0 })
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(30_000)
+    })
+
+    // The zero report cleared the stall timeout, so no false failure chrome.
+    expect(container.querySelector('[data-testid="widget-frame-failure"]')).toBeNull()
+    expect(frameOf(container).style.height).toBe('0px')
+    expect(heights).toEqual([0])
 
     await unmount(root)
   })

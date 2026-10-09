@@ -85,6 +85,11 @@ export function createEdgeSpeakAdapter(options: {
   resolveCommand?: () => Promise<EdgeTtsCommand>
   run?: EdgeTtsRunner
   timeoutMs?: number
+  /**
+   * Explicit voice override. The podcast pipeline assigns a fixed registry voice
+   * per role (03-SPEC-features §8.4) instead of the language-based default.
+   */
+  voice?: string | ((input: SpeakInput) => string)
 } = {}): SpeakAdapter {
   return {
     engine: 'edge',
@@ -115,7 +120,9 @@ export function createEdgeSpeakAdapter(options: {
         input.onTextTransmission?.(transmission)
         await (options.run ?? runEdgeTts)({
           executable: command.executable,
-          args: [...command.args, '--file', '-', '--voice', edgeTtsVoice(input), '--write-media', output],
+          args: [...command.args, '--file', '-', '--voice',
+            typeof options.voice === 'function' ? options.voice(input) : options.voice ?? edgeTtsVoice(input),
+            '--write-media', output],
         }, text, signal)
         signal.throwIfAborted()
         const info = await stat(output)
