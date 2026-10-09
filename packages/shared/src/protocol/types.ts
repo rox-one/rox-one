@@ -129,6 +129,10 @@ export type ErrorCode =
   | 'SCHEMA_VERSION_UNSUPPORTED'
   | 'CURSOR_INVALID'
   | 'PROVIDER_UNAVAILABLE'
+  // Session collaboration visibility (a2.5): a non-owner write is denied by the
+  // session's visibility instead of the workspace role.
+  | 'SESSION_READ_ONLY'
+  | 'SESSION_OWNER_ONLY'
 
 const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'HANDLER_ERROR',
@@ -178,6 +182,8 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'SCHEMA_VERSION_UNSUPPORTED',
   'CURSOR_INVALID',
   'PROVIDER_UNAVAILABLE',
+  'SESSION_READ_ONLY',
+  'SESSION_OWNER_ONLY',
 ])
 
 export function isErrorCode(value: unknown): value is ErrorCode {
