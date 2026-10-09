@@ -136,7 +136,7 @@ describe('session state projection', () => {
 
     const headers = projector.readFreshHeaders(root)
     expect(headers?.map((header) => header.id).sort()).toEqual([one.id, two.id].sort())
-    expect(headers?.find((header) => header.id === one.id)).toEqual(readSessionHeader(getSessionFilePath(root, one.id)))
+    expect(headers?.find((header) => header.id === one.id) ?? null).toEqual(readSessionHeader(getSessionFilePath(root, one.id)))
   })
 
   it('readFreshHeaders returns null when a session changed (stale cookie)', async () => {
