@@ -244,7 +244,7 @@ export function MarkdownOpenUIBlock({
   const codeFallback = <CodeBlock code={code} language="openui" mode="full" className={className} />
   const renderError = (
     <>
-      <p className="px-3 py-2 text-[13px] text-text-muted" data-ca-openui-notice="render-error">
+      <p className="px-3 py-2 text-base text-text-muted" data-ca-openui-notice="render-error">
         {t('openui.renderError')}
       </p>
       {codeFallback}
@@ -285,7 +285,7 @@ export function MarkdownOpenUIBlock({
             className="h-3 w-3 rounded-[var(--radius-sm)] bg-surface-hover motion-safe:animate-pulse"
             aria-hidden="true"
           />
-          <span className="text-[13px] text-text-muted">{t('openui.loading')}</span>
+          <span className="text-base text-text-muted">{t('openui.loading')}</span>
         </div>
       )}
       <OpenUIErrorBoundary fallback={renderError} resetKey={code}>
