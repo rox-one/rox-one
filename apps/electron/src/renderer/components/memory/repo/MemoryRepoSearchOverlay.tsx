@@ -183,7 +183,7 @@ export function MemoryRepoSearchOverlay({
   }
 
   const groupHeader = (testId: string, label: string, shown: number, total: number) => (
-    <div data-testid={testId} className="flex items-center gap-2 px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+    <div data-testid={testId} className="flex items-center gap-2 px-3 pb-1 pt-3 text-caption font-semibold uppercase tracking-wide text-text-muted">
       <span>{label}</span>
       {total > 0 ? <span className="tabular-nums font-normal">({total > shown ? `${total}` : total})</span> : null}
     </div>
@@ -203,12 +203,12 @@ export function MemoryRepoSearchOverlay({
           data-kind="file"
           onMouseEnter={() => setActive(index)}
           onClick={() => openRow(row)}
-          className={cn('flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px]', isActive ? 'bg-foreground/[0.09]' : 'hover:bg-foreground/[0.05]')}
+          className={cn('flex w-full items-center gap-2 px-3 py-1.5 text-left text-small', isActive ? 'bg-surface-pressed' : 'hover:bg-surface-hover')}
         >
-          <FileText aria-hidden="true" className="size-3.5 shrink-0 text-text-muted" />
+          <FileText aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
           <span className="min-w-0 flex-1 truncate font-mono">{row.path}</span>
           {row.node.badges?.map((badge) => (
-            <span key={badge} className="shrink-0 rounded-[var(--radius-control)] border border-foreground/10 px-1 text-[10px] text-text-muted">{t(`memory.repo.file.badge${badge === 'edited' ? 'Edited' : 'Dreamed'}`)}</span>
+            <span key={badge} className="shrink-0 rounded-[var(--radius-control)] border border-border-strong px-1 text-caption text-text-muted">{t(`memory.repo.file.badge${badge === 'edited' ? 'Edited' : 'Dreamed'}`)}</span>
           ))}
         </button>
       )
@@ -217,7 +217,7 @@ export function MemoryRepoSearchOverlay({
       const label = (
         <>
           <span className="min-w-0 flex-1 truncate">{row.note.title}</span>
-          <span className="shrink-0 truncate font-mono text-[10px] text-text-muted">{row.note.path}</span>
+          <span className="shrink-0 truncate font-mono text-caption text-text-muted">{row.note.path}</span>
         </>
       )
       return onOpenNote ? (
@@ -230,14 +230,14 @@ export function MemoryRepoSearchOverlay({
           data-kind="note"
           onMouseEnter={() => setActive(index)}
           onClick={() => openRow(row)}
-          className={cn('flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px]', isActive ? 'bg-foreground/[0.09]' : 'hover:bg-foreground/[0.05]')}
+          className={cn('flex w-full items-center gap-2 px-3 py-1.5 text-left text-small', isActive ? 'bg-surface-pressed' : 'hover:bg-surface-hover')}
         >
-          <StickyNote aria-hidden="true" className="size-3.5 shrink-0 text-text-muted" />
+          <StickyNote aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
           {label}
         </button>
       ) : (
-        <div key={testId} data-testid={testId} data-kind="note" className="flex select-text items-center gap-2 px-3 py-1.5 text-[12px]">
-          <StickyNote aria-hidden="true" className="size-3.5 shrink-0 text-text-muted" />
+        <div key={testId} data-testid={testId} data-kind="note" className="flex select-text items-center gap-2 px-3 py-1.5 text-small">
+          <StickyNote aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
           {label}
         </div>
       )
@@ -246,7 +246,7 @@ export function MemoryRepoSearchOverlay({
     const sessionLabel = (
       <>
         <span className="shrink-0 truncate font-mono">{row.session.sessionId}</span>
-        <span className="shrink-0 text-[10px] text-text-muted">×{row.session.matchCount}</span>
+        <span className="shrink-0 text-caption text-text-muted">×{row.session.matchCount}</span>
         {snippet ? <span className="min-w-0 flex-1 truncate text-text-muted">{snippet}</span> : null}
       </>
     )
@@ -260,45 +260,39 @@ export function MemoryRepoSearchOverlay({
         data-kind="session"
         onMouseEnter={() => setActive(index)}
         onClick={() => openRow(row)}
-        className={cn('flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px]', isActive ? 'bg-foreground/[0.09]' : 'hover:bg-foreground/[0.05]')}
+        className={cn('flex w-full items-center gap-2 px-3 py-1.5 text-left text-small', isActive ? 'bg-surface-pressed' : 'hover:bg-surface-hover')}
       >
-        <MessageSquare aria-hidden="true" className="size-3.5 shrink-0 text-text-muted" />
+        <MessageSquare aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
         {sessionLabel}
       </button>
     ) : (
-      <div key={testId} data-testid={testId} data-kind="session" className="flex select-text items-center gap-2 px-3 py-1.5 text-[12px]">
-        <MessageSquare aria-hidden="true" className="size-3.5 shrink-0 text-text-muted" />
+      <div key={testId} data-testid={testId} data-kind="session" className="flex select-text items-center gap-2 px-3 py-1.5 text-small">
+        <MessageSquare aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
         {sessionLabel}
       </div>
     )
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('memory.repo.search.placeholder')}
-      data-testid="memory-repo-search"
-      onKeyDown={onKeyDown}
-      className="fixed inset-0 z-50 flex justify-center bg-black/30 pt-[10vh]"
-    >
+    // eslint-disable-next-line rox/prefer-primitives -- inline ⌘K palette: it mounts inside its host and owns ↑/↓/Enter/Esc; a portaled Dialog/Sheet would move the DOM out of the mount container the overlay suite queries and add a focus trap this keyboard-first palette does not use
+    <div className="fixed inset-0 z-modal flex justify-center bg-black/30 pt-[10vh]" role="dialog" aria-modal="true" aria-label={t('memory.repo.search.placeholder')} data-testid="memory-repo-search" onKeyDown={onKeyDown}>
       <div className="absolute inset-0" onClick={close} aria-hidden="true" />
-      <div className="relative m-0 h-fit w-[min(640px,92vw)] overflow-hidden rounded-[var(--radius-control)] border border-border bg-popover shadow-2xl">
+      <div className="relative m-0 h-fit w-[min(640px,92vw)] overflow-hidden rounded-[var(--radius-control)] border border-border bg-popover shadow-strong">
         <div className="flex items-center gap-2 border-b border-border/60 px-3">
-          <Search aria-hidden="true" className="size-4 shrink-0 text-text-muted" />
+          <Search aria-hidden="true" className="icon-toolbar shrink-0 text-text-muted" />
           <input
             ref={inputRef}
             data-testid="memory-repo-search-input"
             value={query}
             onInput={(event) => setQuery(event.currentTarget.value)}
             placeholder={t('memory.repo.search.placeholder')}
-            className="h-10 min-w-0 flex-1 bg-transparent text-[13px] outline-none"
+            className="h-10 min-w-0 flex-1 bg-transparent text-body outline-none"
           />
         </div>
 
         <div role="listbox" className="max-h-[55vh] overflow-y-auto pb-2">
           {!trimmed ? (
-            <div data-testid="memory-repo-search-hint" className="px-3 py-4 text-[12px] text-text-muted">
+            <div data-testid="memory-repo-search-hint" className="px-3 py-4 text-small text-text-muted">
               {t('memory.repo.search.hint', { shortcut: formatHotkeyDisplay('mod+k') })}
             </div>
           ) : (
@@ -311,12 +305,12 @@ export function MemoryRepoSearchOverlay({
               ) : null}
 
               {notes.status === 'loading' ? (
-                <div data-testid="memory-repo-search-loading-notes" className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-text-muted">
-                  <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />{t('memory.repo.state.loading')}
+                <div data-testid="memory-repo-search-loading-notes" className="flex items-center gap-2 px-3 py-1.5 text-small text-text-muted">
+                  <Loader2 aria-hidden="true" className="icon-caption animate-spin" />{t('memory.repo.state.loading')}
                 </div>
               ) : null}
               {notes.status === 'error' ? (
-                <div role="alert" data-testid="memory-repo-search-error-notes" className="px-3 py-1.5 text-[12px] text-destructive">
+                <div role="alert" data-testid="memory-repo-search-error-notes" className="px-3 py-1.5 text-small text-destructive">
                   {t('memory.repo.search.error')}
                 </div>
               ) : null}
@@ -328,12 +322,12 @@ export function MemoryRepoSearchOverlay({
               ) : null}
 
               {sessions.status === 'loading' ? (
-                <div data-testid="memory-repo-search-loading-sessions" className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-text-muted">
-                  <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />{t('memory.repo.state.loading')}
+                <div data-testid="memory-repo-search-loading-sessions" className="flex items-center gap-2 px-3 py-1.5 text-small text-text-muted">
+                  <Loader2 aria-hidden="true" className="icon-caption animate-spin" />{t('memory.repo.state.loading')}
                 </div>
               ) : null}
               {sessions.status === 'error' ? (
-                <div role="alert" data-testid="memory-repo-search-error-sessions" className="px-3 py-1.5 text-[12px] text-destructive">
+                <div role="alert" data-testid="memory-repo-search-error-sessions" className="px-3 py-1.5 text-small text-destructive">
                   {t('memory.repo.search.error')}
                 </div>
               ) : null}
@@ -345,7 +339,7 @@ export function MemoryRepoSearchOverlay({
               ) : null}
 
               {showNothingFound ? (
-                <div data-testid="memory-repo-search-empty" className="px-3 py-4 text-[12px] text-text-muted">
+                <div data-testid="memory-repo-search-empty" className="px-3 py-4 text-small text-text-muted">
                   {t('memory.repo.search.empty')}
                 </div>
               ) : null}

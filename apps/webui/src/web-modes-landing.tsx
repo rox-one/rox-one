@@ -27,11 +27,11 @@ export interface WebModesLandingProps {
 }
 
 const CARD_CLASS =
-  'flex flex-col gap-3 rounded-xl border border-border/60 bg-background p-5 shadow-minimal'
+  'flex flex-col gap-3 rounded-lg border border-border/60 bg-background p-5 shadow-minimal'
 const PRIMARY_BUTTON_CLASS =
-  'self-start rounded-md bg-foreground px-4 py-1.5 text-[13px] font-medium text-background hover:opacity-90 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40'
+  'self-start rounded-md bg-foreground px-4 py-1.5 text-body font-medium text-background hover:opacity-90 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40'
 const SECONDARY_BUTTON_CLASS =
-  'self-start rounded-md bg-background px-4 py-1.5 text-[13px] text-foreground/70 shadow-minimal hover:text-foreground cursor-pointer'
+  'self-start rounded-md bg-background px-4 py-1.5 text-body text-text-secondary shadow-minimal hover:text-foreground cursor-pointer'
 
 export function WebModesLanding({ host, onEnter }: WebModesLandingProps) {
   const { t } = useTranslation()
@@ -56,14 +56,14 @@ export function WebModesLanding({ host, onEnter }: WebModesLandingProps) {
       <div className="flex w-full max-w-2xl flex-col gap-6">
         <header className="flex flex-col gap-2 text-center">
           <h1 className="text-xl font-semibold">{t('webui.modes.title')}</h1>
-          <p className="text-[13px] text-foreground/60">{t('webui.modes.subtitle')}</p>
+          <p className="text-body text-text-secondary">{t('webui.modes.subtitle')}</p>
         </header>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <section className={CARD_CLASS} aria-label={t('webui.modes.chatTitle')}>
             <div className="flex flex-col gap-1">
               <h2 className="text-sm font-medium">{t('webui.modes.chatTitle')}</h2>
-              <p className="text-xs text-foreground/60">{t('webui.modes.chatDescription')}</p>
+              <p className="text-xs text-text-secondary">{t('webui.modes.chatDescription')}</p>
             </div>
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => onEnter('chat')}>
               {t('webui.modes.chatAction')}
@@ -73,18 +73,18 @@ export function WebModesLanding({ host, onEnter }: WebModesLandingProps) {
           <section className={CARD_CLASS} aria-label={t('webui.modes.cloudTitle')}>
             <div className="flex flex-col gap-1">
               <h2 className="text-sm font-medium">{t('webui.modes.cloudTitle')}</h2>
-              <p className="text-xs text-foreground/60">{t('webui.modes.cloudDescription')}</p>
+              <p className="text-xs text-text-secondary">{t('webui.modes.cloudDescription')}</p>
             </div>
 
             {cloud.status === 'loading' && (
-              <p role="status" className="text-xs text-foreground/50">
+              <p role="status" className="text-xs text-text-muted">
                 {t('webui.modes.cloudChecking')}
               </p>
             )}
 
             {cloud.status === 'available' && (
               <>
-                <p className="text-xs text-foreground/60">
+                <p className="text-xs text-text-secondary">
                   {t('webui.modes.cloudAvailable', { provider: cloud.provider })}
                 </p>
                 <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => onEnter('cloud-vm')}>

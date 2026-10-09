@@ -823,9 +823,9 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     : '—'
   const openRepo = () => { try { navigate(routes.view.memory('repo')) } catch { /* route unavailable */ } }
   const repoBar = repoReadAvailable || dreamReadAvailable ? (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-2 text-[11px] text-text-secondary" data-testid="memory-repo-status">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-2 text-caption text-text-secondary" data-testid="memory-repo-status">
       <span className="inline-flex min-w-0 items-center gap-1" data-testid="memory-repo-head">
-        <GitBranch aria-hidden="true" className="size-3 shrink-0 text-text-muted" />
+        <GitBranch aria-hidden="true" className="icon-status shrink-0 text-text-muted" />
         <span>{t('memory.repo.head')}</span>
         <span className="min-w-0 truncate font-mono">{repoStatus?.head ? repoStatus.head.sha.slice(0, 8) : t('memory.repo.headNone')}</span>
       </span>
@@ -833,13 +833,13 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       <span data-testid="memory-repo-cost" data-estimated={dreamStatus?.costIsEstimate ? 'true' : undefined}>{t('memory.repo.costToday')} {costText}</span>
       <span className="flex-1" />
       <Btn onClick={openRepo} testId="memory-repo-open">{t('memory.repo.open')}</Btn>
-      {typeof window.electronAPI.exportMemoryRepo === 'function' ? <Btn disabled={exportBusy} onClick={exportRepo} testId="memory-repo-export"><Package aria-hidden="true" className="size-3" />{t('memory.repo.action.export')}</Btn> : null}
+      {typeof window.electronAPI.exportMemoryRepo === 'function' ? <Btn disabled={exportBusy} onClick={exportRepo} testId="memory-repo-export"><Package aria-hidden="true" className="icon-status" />{t('memory.repo.action.export')}</Btn> : null}
       {dreamRunAvailable ? <Btn primary disabled={dreamActive} onClick={runDreamNow} testId="memory-repo-run">{dreamActive ? t('memory.repo.state.dreamRunning') : t('memory.repo.action.dreamNow')}</Btn> : null}
     </div>
   ) : null
   const pendingImports = repoStatus?.pendingImportCount ?? 0
   const importBanner = pendingImports > 0 && typeof window.electronAPI.previewMemoryRepoImport === 'function' ? (
-    <div className="mx-3 mb-2 flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] bg-amber-500/10 px-2 py-1.5 text-[12px]" data-testid="memory-repo-import-banner">
+    <div className="mx-3 mb-2 flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] bg-status-warning/10 px-2 py-1.5 text-small" data-testid="memory-repo-import-banner">
       <span className="min-w-0 flex-1">{t('memory.repo.import.banner', { count: pendingImports })}</span>
       <Btn onClick={() => setImportOpen(true)} testId="memory-repo-import-review">{t('memory.repo.import.review')}</Btn>
       <Btn danger onClick={() => setConfirm({ kind: 'revertImport' })} testId="memory-repo-import-revert">{t('memory.repo.import.revert')}</Btn>
