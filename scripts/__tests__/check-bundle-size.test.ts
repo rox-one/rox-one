@@ -1,22 +1,27 @@
 /**
  * Bundle-size budget gate (scripts/check-bundle-size.ts) and the closed-form minify profile.
  *
- * The gate cases are exercised through the real CLI (exit codes as CI sees them) on throwaway
- * renderer trees; the prefix derivation and the unbudgeted ceiling are pure-function cases.
+ * The gate cases are exercised both through the real CLI (exit codes as CI sees them) on throwaway
+ * renderer trees and against the pure `evaluateAssets`, which aggregates js/css prefix TOTALS and the
+ * whole-extension totals; prefix derivation and the recording floor are pure-function cases.
  */
 import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import {
+  BUDGET_SLACK_BYTES,
   MAX_NEW_CHUNK_BYTES,
   MIN_BUDGET_BYTES,
+  assetKind,
   buildBudgets,
+  bundleTotals,
   chunkPrefix,
-  evaluateChunks,
+  evaluateAssets,
   formatFailure,
-  isMeasuredAsset,
   measureRendererChunks,
+  type BundleBaseline,
+  type MeasuredChunk,
 } from '../check-bundle-size'
 import { minifyHangChecksum } from '../../apps/electron/src/renderer/perf/bundle-profile'
 
@@ -33,6 +38,13 @@ function tempRoot(): string {
   return dir
 }
 
+/** A measured chunk for the same file names the build emits (hash suffix included). */
+function chunk(file: string, rawBytes: number, gzipBytes = Math.floor(rawBytes / 4)): MeasuredChunk {
+  const kind = assetKind(file)
+  if (!kind) throw new Error(`not a measured asset: ${file}`)
+  return { file, prefix: chunkPrefix(file), kind, rawBytes, gzipBytes }
+}
+
 /** A throwaway `apps/electron/dist/renderer` tree; `files` maps an asset name to its byte size. */
 function seedBuild(root: string, files: Record<string, number>, withIndexHtml = true): void {
   const rendererDist = join(root, 'apps/electron/dist/renderer')
@@ -41,9 +53,12 @@ function seedBuild(root: string, files: Record<string, number>, withIndexHtml = 
   for (const [name, size] of Object.entries(files)) writeFileSync(join(rendererDist, 'assets', name), Buffer.alloc(size))
 }
 
-function seedBaseline(root: string, budgets: Record<string, { rawBytes: number; gzipBytes: number }>): void {
+function seedBaseline(root: string, baseline: Partial<BundleBaseline>): void {
   mkdirSync(join(root, 'perf-baselines'), { recursive: true })
-  writeFileSync(join(root, 'perf-baselines/bundle-size.json'), JSON.stringify({ description: 'test', budgets }))
+  writeFileSync(
+    join(root, 'perf-baselines/bundle-size.json'),
+    JSON.stringify({ description: 'test', ...baseline }),
+  )
 }
 
 function runCli(root: string, args: string[] = ['--check']) {
@@ -65,16 +80,24 @@ describe('chunk-name prefix derivation (never the content hash)', () => {
     expect(chunkPrefix('vendor-react-abc12345.js')).toBe('vendor-react')
   })
 
+  it('derives the same prefix for a CSS chunk (the extension is part of the stem)', () => {
+    expect(chunkPrefix('main-BCWHcyRa.css')).toBe('main')
+    expect(chunkPrefix('main.css')).toBe('main')
+    expect(chunkPrefix('vendor-code-BCWHcyRa.css')).toBe('vendor-code')
+  })
+
   it('leaves a name without an 8-character hash suffix untouched', () => {
     expect(chunkPrefix('chunk-abc.js')).toBe('chunk-abc')
   })
 })
 
-describe('measured assets (only emitted *.js; never source maps or the pdf worker)', () => {
-  it('drops *.js.map and pdf.worker.min-*.mjs from the fixture listing', () => {
-    expect(isMeasuredAsset('index-B3-J8HY7.js')).toBe(true)
-    expect(isMeasuredAsset('index-B3-J8HY7.js.map')).toBe(false)
-    expect(isMeasuredAsset('pdf.worker.min-qwK7q_zL.mjs')).toBe(false)
+describe('measured assets (emitted *.js and *.css; never source maps or the pdf worker)', () => {
+  it('drops *.js.map, *.css.map and pdf.worker.min-*.mjs from the fixture listing', () => {
+    expect(assetKind('index-B3-J8HY7.js')).toBe('js')
+    expect(assetKind('index-B3-J8HY7.js.map')).toBeUndefined()
+    expect(assetKind('main-BCWHcyRa.css')).toBe('css')
+    expect(assetKind('main-BCWHcyRa.css.map')).toBeUndefined()
+    expect(assetKind('pdf.worker.min-qwK7q_zL.mjs')).toBeUndefined()
 
     const root = tempRoot()
     const assets = join(root, 'apps/electron/dist/renderer/assets')
@@ -83,6 +106,8 @@ describe('measured assets (only emitted *.js; never source maps or the pdf worke
       'index-B3-J8HY7.js',
       'index-B3-J8HY7.js.map',
       'main-qrX9lp_n.js',
+      'main-BCWHcyRa.css',
+      'main-BCWHcyRa.css.map',
       'project-authority-BDUHCR2T.js',
       'useTranslation-C3vs8uOy.js',
       'vendor-react-abc12345.js',
@@ -94,14 +119,17 @@ describe('measured assets (only emitted *.js; never source maps or the pdf worke
     const measured = measureRendererChunks(assets)
     expect(measured.map((chunk) => chunk.file)).toEqual([
       'index-B3-J8HY7.js',
+      'main-BCWHcyRa.css',
       'main-qrX9lp_n.js',
       'project-authority-BDUHCR2T.js',
       'useTranslation-C3vs8uOy.js',
       'vendor-react-abc12345.js',
     ])
-    expect(measured.some((chunk) => chunk.file.endsWith('.map') || chunk.file.startsWith('pdf.worker'))).toBe(false)
-    expect(measured.map((chunk) => chunk.prefix)).toEqual([
+    expect(measured.map((chunk) => chunk.kind)).toEqual(['js', 'css', 'js', 'js', 'js', 'js'])
+    expect(measured.some((entry) => entry.file.endsWith('.map') || entry.file.startsWith('pdf.worker'))).toBe(false)
+    expect(measured.map((entry) => entry.prefix)).toEqual([
       'index',
+      'main',
       'main',
       'project-authority',
       'useTranslation',
@@ -110,77 +138,221 @@ describe('measured assets (only emitted *.js; never source maps or the pdf worke
   })
 })
 
-describe('budget evaluation', () => {
-  it('flags a known prefix over its recorded rawBytes budget and names the file and both counts', () => {
-    const failures = evaluateChunks(
-      [{ file: 'main-abcdefgh.js', prefix: 'main', rawBytes: 2000, gzipBytes: 900 }],
-      { main: { rawBytes: 1000, gzipBytes: 500 } },
-    )
-    expect(failures).toEqual([{ file: 'main-abcdefgh.js', prefix: 'main', rawBytes: 2000, budget: 1000 }])
-    const line = formatFailure(failures[0]!)
-    expect(line).toContain('assets/main-abcdefgh.js')
-    expect(line).toContain('2000 B')
-    expect(line).toContain('1000 B')
-    expect(line).toContain("'main'")
-    expect(line).toContain('+1000 B')
+describe('budget recording (prefix TOTALS, floor applies to the total)', () => {
+  it('records the summed total of every chunk of a prefix once it reaches the floor', () => {
+    const chunks = [
+      chunk('index-aaaaaaaa.js', 1_300_000, 400_000),
+      chunk('index-bbbbbbbb.js', 1_500_000, 450_000),
+      chunk('index-cccccccc.js', 25_000, 8000),
+      chunk('shiki-small-aaaaaaaa.js', MIN_BUDGET_BYTES - 1, 3),
+    ]
+    // 1,300,000 + 1,500,000 + 25,000 — not just the 1,500,000 largest chunk.
+    expect(buildBudgets(chunks, 'js')).toEqual({
+      index: { totalRawBytes: 2_825_000, gzipTotalBytes: 858_000 },
+    })
   })
 
-  it('flags an unbudgeted prefix above the 2.5 MB ceiling', () => {
-    const failures = evaluateChunks(
-      [{ file: 'heavy-abcdefgh.js', prefix: 'heavy', rawBytes: MAX_NEW_CHUNK_BYTES + 1, gzipBytes: 1 }],
+  it('omits a prefix whose TOTAL is below MIN_BUDGET_BYTES', () => {
+    const chunks = [
+      chunk('index-aaaaaaaa.js', MIN_BUDGET_BYTES - 2, 5),
+      chunk('index-bbbbbbbb.js', 1, 1),
+    ]
+    expect(buildBudgets(chunks, 'js')).toEqual({})
+  })
+
+  it('keeps CSS budgets in their own map so a shared prefix never collides', () => {
+    const chunks = [chunk('index-aaaaaaaa.js', 300_000), chunk('index-aaaaaaaa.css', 400_000)]
+    expect(buildBudgets(chunks, 'js')).toEqual({ index: { totalRawBytes: 300_000, gzipTotalBytes: 75_000 } })
+    expect(buildBudgets(chunks, 'css')).toEqual({ index: { totalRawBytes: 400_000, gzipTotalBytes: 100_000 } })
+  })
+
+  it('sums whole-extension totals for raw and gzip bytes', () => {
+    expect(
+      bundleTotals([
+        chunk('a-aaaaaaaa.js', 100, 40),
+        chunk('b-aaaaaaaa.js', 200, 70),
+        chunk('a-aaaaaaaa.css', 50, 10),
+      ]),
+    ).toEqual({ jsRawBytes: 300, jsGzipBytes: 110, cssRawBytes: 50, cssGzipBytes: 10 })
+  })
+})
+
+describe('budget evaluation (pure)', () => {
+  it('fails the TOTAL gate when a small sibling grows while staying under the largest chunk', () => {
+    const recorded = { budgets: { index: { totalRawBytes: 1_525_000, gzipTotalBytes: 500_000 } } }
+    const failures = evaluateAssets(
+      [chunk('index-bigggggg.js', 1_500_000), chunk('index-smolllll.js', 1_400_000)],
+      recorded,
+    )
+    // The bypass that motivated the change: the old gate compared each chunk to the recorded 1,500,000 B
+    // max, so the grown 1,400,000 B sibling passed. The summed total does not.
+    expect(failures).toEqual([
+      {
+        kind: 'js',
+        prefix: 'index',
+        rawBytes: 2_900_000,
+        budget: 1_525_000,
+        file: 'index-bigggggg.js',
+        fileRawBytes: 1_500_000,
+      },
+    ])
+    const line = formatFailure(failures[0]!)
+    expect(line).toContain("js prefix 'index' total is 2900000 B, budget 1525000 B (+1375000 B)")
+    expect(line).toContain('largest chunk assets/index-bigggggg.js is 1500000 B')
+    expect(line).not.toContain('\n')
+  })
+
+  it('fails an unbudgeted prefix whose TOTAL is above the ceiling, and passes at the ceiling', () => {
+    const below = [chunk('heavy-aaaaaaaa.js', 1_300_000), chunk('heavy-bbbbbbbb.js', 1_200_000)]
+    expect(evaluateAssets(below, {})).toEqual([])
+
+    const over = BUDGET_SLACK_BYTES + 1
+    const failures = evaluateAssets(
+      [chunk('heavy-aaaaaaaa.js', 1_300_000), chunk('heavy-bbbbbbbb.js', 1_200_000 + over)],
       {},
     )
     expect(failures).toEqual([
-      { file: 'heavy-abcdefgh.js', prefix: 'heavy', rawBytes: MAX_NEW_CHUNK_BYTES + 1, budget: MAX_NEW_CHUNK_BYTES },
+      {
+        kind: 'js',
+        prefix: 'heavy',
+        rawBytes: MAX_NEW_CHUNK_BYTES + over,
+        budget: MAX_NEW_CHUNK_BYTES,
+        // The reported largest chunk is whichever is biggest, not the one that grew.
+        file: 'heavy-aaaaaaaa.js',
+        fileRawBytes: 1_300_000,
+      },
     ])
+    expect(formatFailure(failures[0]!)).toContain(
+      `js prefix 'heavy' total is ${MAX_NEW_CHUNK_BYTES + over} B, budget ${MAX_NEW_CHUNK_BYTES} B`,
+    )
   })
 
-  it('records a budget only for prefixes at or above the recording floor', () => {
-    const recorded = buildBudgets([
-      { file: 'index-abcdefgh.js', prefix: 'index', rawBytes: MIN_BUDGET_BYTES, gzipBytes: 10 },
-      { file: 'index-abcdefgh.js', prefix: 'index', rawBytes: MIN_BUDGET_BYTES - 500, gzipBytes: 5 },
-      { file: 'shiki-small-abcdefgh.js', prefix: 'shiki-small', rawBytes: MIN_BUDGET_BYTES - 1, gzipBytes: 3 },
+  it('fails a CSS prefix total regression and a whole-CSS total regression', () => {
+    const recorded = {
+      stylesheets: { main: { totalRawBytes: 100_000, gzipTotalBytes: 20_000 } },
+      totals: { cssRawBytes: 100_000 },
+    }
+    const grown = 100_000 + BUDGET_SLACK_BYTES + 1
+    const failures = evaluateAssets([chunk('main-aaaaaaaa.css', grown)], recorded)
+    expect(failures).toEqual([
+      {
+        kind: 'css',
+        prefix: 'main',
+        rawBytes: grown,
+        budget: 100_000,
+        file: 'main-aaaaaaaa.css',
+        fileRawBytes: grown,
+      },
+      {
+        kind: 'css',
+        prefix: null,
+        rawBytes: grown,
+        budget: 100_000,
+        file: 'main-aaaaaaaa.css',
+        fileRawBytes: grown,
+      },
     ])
-    expect(recorded).toEqual({ index: { rawBytes: MIN_BUDGET_BYTES, gzipBytes: 10 } })
+    expect(formatFailure(failures[1]!)).toContain(`css bundle total is ${grown} B, budget 100000 B`)
+  })
+
+  it('allows within-slack prefix totals but fails one byte beyond', () => {
+    const recorded = { budgets: { main: { totalRawBytes: 1000, gzipTotalBytes: 500 } } }
+    const within = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 400 + BUDGET_SLACK_BYTES)]
+    expect(evaluateAssets(within, recorded)).toEqual([])
+
+    const beyond = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 401 + BUDGET_SLACK_BYTES)]
+    expect(evaluateAssets(beyond, recorded)).toHaveLength(1)
+  })
+
+  it('allows within-slack bundle totals but fails one byte beyond, leaving slack-free prefixes alone', () => {
+    const recorded = { budgets: { main: { totalRawBytes: 1_000_000, gzipTotalBytes: 1 } }, totals: { jsRawBytes: 1000 } }
+    expect(evaluateAssets([chunk('main-aaaaaaaa.js', 1000 + BUDGET_SLACK_BYTES)], recorded)).toEqual([])
+
+    const failures = evaluateAssets([chunk('main-aaaaaaaa.js', 1001 + BUDGET_SLACK_BYTES)], recorded)
+    expect(failures).toEqual([
+      {
+        kind: 'js',
+        prefix: null,
+        rawBytes: 1001 + BUDGET_SLACK_BYTES,
+        budget: 1000,
+        file: 'main-aaaaaaaa.js',
+        fileRawBytes: 1001 + BUDGET_SLACK_BYTES,
+      },
+    ])
   })
 })
 
 describe('CLI exit codes', () => {
-  it('exits 0 when every chunk is within budget', () => {
+  it('exits 0 when every js/css asset total is within budget', () => {
     const root = tempRoot()
-    seedBuild(root, { 'main-qrX9lp_n.js': 800, 'index-B3-J8HY7.js': 1200 })
+    seedBuild(root, {
+      'main-qrX9lp_n.js': 800,
+      'index-B3-J8HY7.js': 1200,
+      'main-BCWHcyRa.css': 400,
+    })
     seedBaseline(root, {
-      main: { rawBytes: 1000, gzipBytes: 500 },
-      index: { rawBytes: 2000, gzipBytes: 900 },
+      budgets: {
+        main: { totalRawBytes: 1000, gzipTotalBytes: 500 },
+        index: { totalRawBytes: 2000, gzipTotalBytes: 900 },
+      },
+      stylesheets: { main: { totalRawBytes: 500, gzipTotalBytes: 100 } },
+      totals: { jsRawBytes: 2000, jsGzipBytes: 10, cssRawBytes: 500, cssGzipBytes: 10 },
     })
     const result = runCli(root)
     expect(result.code).toBe(0)
-    expect(result.err).not.toContain('bundle-size: assets/')
+    expect(result.err).not.toContain('bundle-size: ')
     expect(result.out).toContain('prefix')
     expect(result.out).toContain('main')
+    expect(result.out).toContain('js total')
+    expect(result.out).toContain('css total')
   })
 
-  it('exits 1 (failure line names the file and both byte counts) when a budgeted prefix is over budget', () => {
+  it('exits 1 when a budgeted prefix TOTAL is over budget, naming the prefix and its largest chunk', () => {
     const root = tempRoot()
-    seedBuild(root, { 'main-abcdefgh.js': 2000 })
-    seedBaseline(root, { main: { rawBytes: 1000, gzipBytes: 500 } })
+    seedBuild(root, { 'main-aaaaaaaa.js': 1_300_000, 'main-bbbbbbbb.js': 1_200_000 })
+    seedBaseline(root, { budgets: { main: { totalRawBytes: 1_500_000, gzipTotalBytes: 500 } } })
     const result = runCli(root)
     expect(result.code).toBe(1)
-    expect(result.err).toContain('assets/main-abcdefgh.js')
-    expect(result.err).toContain('2000 B')
-    expect(result.err).toContain('1000 B')
+    expect(result.err).toContain("js prefix 'main' total is 2500000 B, budget 1500000 B")
+    expect(result.err).toContain('assets/main-aaaaaaaa.js')
+    expect(result.err).toContain('is 1300000 B')
     expect(result.err).toContain('bun scripts/check-bundle-size.ts --update')
   })
 
-  it('exits 1 when an unbudgeted chunk exceeds the 2.5 MB ceiling', () => {
+  it('exits 1 when an unbudgeted prefix TOTAL exceeds the 2.5 MB ceiling', () => {
     const root = tempRoot()
-    seedBuild(root, { 'lazy-page-abcdefgh.js': MAX_NEW_CHUNK_BYTES + 1 })
-    seedBaseline(root, {})
+    const over = BUDGET_SLACK_BYTES + 1
+    seedBuild(root, { 'lazy-page-aaaaaaaa.js': 1_300_000, 'lazy-page-bbbbbbbb.js': 1_200_000 + over })
+    seedBaseline(root, { budgets: {} })
     const result = runCli(root)
     expect(result.code).toBe(1)
-    expect(result.err).toContain('assets/lazy-page-abcdefgh.js')
-    expect(result.err).toContain(`${MAX_NEW_CHUNK_BYTES + 1} B`)
-    expect(result.err).toContain(`${MAX_NEW_CHUNK_BYTES} B`)
+    expect(result.err).toContain(`js prefix 'lazy-page' total is ${MAX_NEW_CHUNK_BYTES + over} B, budget ${MAX_NEW_CHUNK_BYTES} B`)
+    expect(result.err).toContain('assets/lazy-page-aaaaaaaa.js')
+    expect(result.err).toContain('is 1300000 B')
+  })
+
+  it('exits 1 when the whole-js total regresses even though each prefix is within its budget', () => {
+    const root = tempRoot()
+    seedBuild(root, { 'main-aaaaaaaa.js': 10_000 })
+    seedBaseline(root, {
+      budgets: { main: { totalRawBytes: 10_000, gzipTotalBytes: 500 } },
+      totals: { jsRawBytes: 1000, jsGzipBytes: 1 },
+    })
+    const result = runCli(root)
+    expect(result.code).toBe(1)
+    expect(result.err).toContain('js bundle total is 10000 B, budget 1000 B')
+    expect(result.err).toContain('assets/main-aaaaaaaa.js')
+    expect(result.err).not.toContain("prefix 'main'")
+  })
+
+  it('exits 1 when a CSS prefix total regresses', () => {
+    const root = tempRoot()
+    seedBuild(root, { 'main-aaaaaaaa.css': 10_000 })
+    seedBaseline(root, { stylesheets: { main: { totalRawBytes: 1000, gzipTotalBytes: 100 } } })
+    const result = runCli(root)
+    expect(result.code).toBe(1)
+    expect(result.err).toContain("css prefix 'main' total is 10000 B, budget 1000 B")
+    expect(result.err).toContain('assets/main-aaaaaaaa.css')
   })
 
   it('fails closed with the exact message when there is no renderer build', () => {

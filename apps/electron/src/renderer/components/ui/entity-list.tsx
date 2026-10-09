@@ -286,6 +286,21 @@ function CollapsibleGroupHeader({
 // Component
 // ============================================================================
 
+/**
+ * The windowed slice plus the active/selected row when it lies outside it. The active row must
+ * stay mounted: keyboard navigation focuses its DOM node (unmounted rows lose their ref), so
+ * dropping it would make arrow nav silently dead until the user clicks a mounted row again.
+ */
+export function withMountedAnchor<T, G extends { key: string }>(
+  slice: readonly VirtualTableEntry<T, G>[],
+  all: readonly VirtualTableEntry<T, G>[],
+  anchorKey: string | null,
+): readonly VirtualTableEntry<T, G>[] {
+  if (!anchorKey || slice.some((entry) => entry.key === anchorKey)) return slice
+  const anchor = all.find((entry) => entry.key === anchorKey)
+  return anchor ? [...slice, anchor] : slice
+}
+
 export function EntityList<T>({
   items,
   groups,
@@ -494,11 +509,13 @@ export function EntityList<T>({
     }
     if (low > 0) coveringHeaderIndex = headerIndexes[low - 1]!
   }
-  const windowedEntries =
+  const slice =
     coveringHeaderIndex != null
       ? [flattened.entries[coveringHeaderIndex]!, ...flattened.entries.slice(windowRange.startIndex, windowRange.endIndex)]
       : flattened.entries.slice(windowRange.startIndex, windowRange.endIndex)
-  const visibleEntries = windowedEnabled ? windowedEntries : []
+  const visibleEntries = windowedEnabled
+    ? withMountedAnchor(slice, flattened.entries, scrollToKey ? `row:${scrollToKey}` : null)
+    : []
 
   // Per-row index/isFirstInGroup, so `renderItem` receives the same arguments
   // as the non-windowed branches.
@@ -571,6 +588,22 @@ export function EntityList<T>({
     setScrollTop(next)
   }, [windowedEnabled, scrollToKey, flattened, listOffsetTop, scrollTop, viewportHeight])
 
+  // Dashed placeholder for an empty group; highlights while it is the active drop target.
+  const renderEmptyLane = (groupKey: string) => (
+    <div
+      data-empty-group={groupKey}
+      className={cn(
+        'mx-3 mb-2 rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-caption text-muted-foreground',
+        dropGroupKey === groupKey
+          ? 'border-foreground/40 bg-foreground/5 text-foreground/80'
+          : 'border-foreground/[0.07]',
+      )}
+      onDragOver={(event) => onEmptyGroupDragOver?.(groupKey, event)}
+    >
+      {t('entityList.emptyGroupDrop')}
+    </div>
+  )
+
   const renderWindowedEntry = (entry: VirtualTableEntry<T, EntityListGroup<T>>) => {
     const baseStyle: React.CSSProperties = {
       position: 'absolute',
@@ -622,20 +655,7 @@ export function EntityList<T>({
       const group = entry.bucket
       return (
         <div key={entry.key} style={baseStyle}>
-          <div ref={measureRef(entry.key, 'empty')}>
-            <div
-              data-empty-group={group.key}
-              className={cn(
-                'mx-3 mb-2 rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
-                dropGroupKey === group.key
-                  ? 'border-foreground/40 bg-foreground/5 text-foreground/80'
-                  : 'border-foreground/[0.07]',
-              )}
-              onDragOver={(event) => onEmptyGroupDragOver?.(group.key, event)}
-            >
-              {t('entityList.emptyGroupDrop')}
-            </div>
-          </div>
+          <div ref={measureRef(entry.key, 'empty')}>{renderEmptyLane(group.key)}</div>
         </div>
       )
     }
@@ -701,20 +721,7 @@ export function EntityList<T>({
                             onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
                           />
                         )}
-                        {!isCollapsed && group.items.length === 0 ? (
-                          <div
-                            data-empty-group={group.key}
-                            className={cn(
-                              'mx-3 mb-2 rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
-                              dropGroupKey === group.key
-                                ? 'border-foreground/40 bg-foreground/5 text-foreground/80'
-                                : 'border-foreground/[0.07]',
-                            )}
-                            onDragOver={(event) => onEmptyGroupDragOver?.(group.key, event)}
-                          >
-                            {t('entityList.emptyGroupDrop')}
-                          </div>
-                        ) : null}
+                        {!isCollapsed && group.items.length === 0 ? renderEmptyLane(group.key) : null}
                         {group.items.map((item, indexInGroup) =>
                           <React.Fragment key={getKey(item)}>
                             {renderItem(item, indexInGroup, indexInGroup === 0)}
@@ -920,7 +927,11 @@ export function WindowedTreeList<T>({
   )
 
   const visibleEntries = windowedEnabled
-    ? flattened.entries.slice(windowRange.startIndex, windowRange.endIndex)
+    ? withMountedAnchor(
+        flattened.entries.slice(windowRange.startIndex, windowRange.endIndex),
+        flattened.entries,
+        scrollToKey ? `row:${scrollToKey}` : null,
+      )
     : []
 
   // Keep the list offset in sync with the scroll parent (padding/measurement).

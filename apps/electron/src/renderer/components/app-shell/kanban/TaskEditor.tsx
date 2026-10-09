@@ -8,7 +8,7 @@ import { ANTHROPIC_MODELS, DEFAULT_MODEL, getModelShortName } from '@config/mode
 import { useAtomValue, useStore } from 'jotai'
 import { useProjects } from '@/hooks/useProjects'
 import { sourcesAtom } from '@/atoms/sources'
-import { skillsAtom } from '@/atoms/skills'
+import { skillsAtom, skillsSyncingAtom } from '@/atoms/skills'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { getSessionTitle } from '@/utils/session'
 import {
@@ -272,12 +272,15 @@ function SkillsField({
   onChange,
   workspaceId,
   title,
+  loading,
 }: {
   skills: LoadedSkill[]
   values: string[]
   onChange: (next: string[]) => void
   workspaceId: string
   title?: string
+  /** True while the catalog is still syncing — suppresses the empty state. */
+  loading?: boolean
 }) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
@@ -314,6 +317,7 @@ function SkillsField({
         selectedSlugs={values}
         onToggleSlug={toggle}
         workspaceId={workspaceId}
+        loading={loading}
       />
     </>
   )
@@ -544,6 +548,7 @@ export function TaskEditor({
   // Pickable catalogs from the active workspace (AppShell keeps these atoms populated).
   const workspaceSources = useAtomValue(sourcesAtom)
   const workspaceSkills = useAtomValue(skillsAtom)
+  const workspaceSkillsSyncing = useAtomValue(skillsSyncingAtom)
   // Sources are the task-level pickable catalog (children inherit them); skills are
   // read as context before each child. Both feed the icon-rich selector fields below.
   const enabledSources = React.useMemo(
@@ -1118,6 +1123,7 @@ export function TaskEditor({
                   onChange={setSkillSlugs}
                   workspaceId={workspaceId}
                   title={t('tasks.skillsHint')}
+                  loading={workspaceSkillsSyncing}
                 />
               </FieldRow>
             )}

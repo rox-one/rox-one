@@ -280,7 +280,7 @@ export function SkillsListPanel({
       role="status"
       data-list-role="skills-syncing"
     >
-      <RefreshCw className="size-3.5 animate-spin" />
+      <RefreshCw className="icon-caption animate-spin" />
       {t('common.loading')}
     </div>
   ) : ompSkills.length > 0 ? undefined : (
@@ -352,11 +352,11 @@ export function SkillsListPanel({
         rendered (e.g. a slow bundled-skills sync that outlived the timeout). */}
     {syncing && craftSkills.length > 0 && (
       <div
-        className="mx-2 mb-1 flex items-center gap-1.5 text-[11px] text-muted-foreground"
+        className="mx-2 mb-1 flex items-center gap-1.5 text-caption text-muted-foreground"
         role="status"
         data-list-role="skills-syncing"
       >
-        <RefreshCw className="size-3 animate-spin" />
+        <RefreshCw className="icon-status animate-spin" />
         {t('common.loading')}
       </div>
     )}

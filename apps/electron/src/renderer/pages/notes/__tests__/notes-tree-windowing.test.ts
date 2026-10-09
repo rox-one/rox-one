@@ -8,7 +8,7 @@ import {
   type NotesTreeRow,
 } from '../NotesNavigationSidebar'
 import { createNoteSummaryFixture, NOTE_SUMMARY_FIXTURE_COUNT } from '@/perf/fixtures'
-import { ENTITY_LIST_OVERSCAN, flattenEntityListGroups } from '@/components/ui/entity-list'
+import { ENTITY_LIST_OVERSCAN, flattenEntityListGroups, withMountedAnchor } from '@/components/ui/entity-list'
 import { virtualTableWindow } from '@/components/app-shell/session-table/table-virtualization'
 
 const VIEWPORT_HEIGHT = 640
@@ -122,5 +122,38 @@ describe('notes tree windowing', () => {
     // Nothing to reveal when there is no active note.
     expect(notesScrollToKey(null)).toBeNull()
     expect(notesScrollToKey(undefined)).toBeNull()
+  })
+
+  it('pins the active note row when it falls outside the window (keyboard stays alive)', () => {
+    const rows = flattenNotesTree(buildFolderTree(createNoteSummaryFixture()), new Set())
+    const flattened = flattenEntityListGroups(undefined, rows, new Set<string>(), {
+      getItemKey: (row) => row.key,
+      rowHeight: NOTES_TREE_ROW_ESTIMATE,
+      headerHeight: 0,
+    })
+    const initialWindow = virtualTableWindow(flattened.entries, 0, VIEWPORT_HEIGHT, ENTITY_LIST_OVERSCAN)
+    const slice = flattened.entries.slice(initialWindow.startIndex, initialWindow.endIndex)
+
+    const last = rows[rows.length - 1]!
+    expect(last.kind).toBe('note')
+    const activeNoteId = last.kind === 'note' ? last.note.id : ''
+    const anchorKey = `row:${notesScrollToKey(activeNoteId)!}`
+
+    // The raw window drops the active row: its DOM node would unmount and arrow
+    // navigation would go dead until the user clicked a mounted row again.
+    expect(slice.some((entry) => entry.key === anchorKey)).toBe(false)
+    expect(initialWindow.endIndex).toBeLessThan(rows.length - 1)
+
+    // WindowedTreeList now pins it, mirroring EntityList's withMountedAnchor.
+    const pinned = withMountedAnchor(slice, flattened.entries, anchorKey)
+    expect(pinned).toHaveLength(slice.length + 1)
+    expect(pinned[pinned.length - 1]!.key).toBe(anchorKey)
+
+    // The anchor already inside the window is never duplicated.
+    expect(withMountedAnchor(flattened.entries, flattened.entries, anchorKey)).toHaveLength(
+      flattened.entries.length,
+    )
+    // No anchor key (no active note) leaves the slice untouched.
+    expect(withMountedAnchor(slice, flattened.entries, null)).toBe(slice)
   })
 })
