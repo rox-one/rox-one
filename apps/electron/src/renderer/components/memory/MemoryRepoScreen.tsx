@@ -30,6 +30,7 @@ import type {
 import { useNavigation, routes } from '@/contexts/NavigationContext'
 import { isMemoryNavigation } from '../../../shared/types'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { Tabs } from '@/components/ui/tabs'
 import { toErrorMessage } from '@/lib/errors'
 import { cn } from '@/lib/utils'
 import { MemoryRepoFilesPanel } from './repo/MemoryRepoFilesPanel'
@@ -296,8 +297,8 @@ export function MemoryRepoScreen({ workspaceId }: MemoryRepoScreenProps) {
   return (
     <div ref={repoTarget} className="flex h-full min-h-0 flex-col" data-testid="memory-repo-screen">
       <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/50 px-3 py-2">
-        <GitBranch aria-hidden="true" className="size-4 shrink-0 text-text-muted" />
-        <span className="text-[13px] font-semibold">{t('memory.repo.title')}</span>
+        <GitBranch aria-hidden="true" className="icon-toolbar shrink-0 text-text-muted" />
+        <span className="text-body font-semibold">{t('memory.repo.title')}</span>
 
         <div className="relative">
           <button
@@ -306,12 +307,12 @@ export function MemoryRepoScreen({ workspaceId }: MemoryRepoScreenProps) {
             aria-haspopup="listbox"
             aria-expanded={bankMenuOpen}
             onClick={() => setBankMenuOpen((value) => !value)}
-            className="flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-foreground/10 bg-background px-2 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-border-strong bg-background px-2 text-small outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <span className="truncate">{banks.find((bank) => bank.id === effectiveBankId)?.label ?? banks.find((bank) => bank.id === effectiveBankId)?.id ?? effectiveBankId}</span>
           </button>
           {bankMenuOpen ? (
-            <ul role="listbox" className="absolute left-0 top-8 z-20 min-w-[180px] rounded-[var(--radius-control)] border border-border bg-popover p-1 shadow-lg">
+            <ul role="listbox" className="absolute left-0 top-8 z-chrome min-w-[180px] rounded-[var(--radius-control)] border border-border bg-popover p-1 shadow-lg">
               {banks.map((bank) => (
                 <li key={bank.id}>
                   <button
@@ -320,10 +321,10 @@ export function MemoryRepoScreen({ workspaceId }: MemoryRepoScreenProps) {
                     aria-selected={bank.id === effectiveBankId}
                     data-testid={`memory-repo-bank-${bank.id}`}
                     onClick={() => { setBankMenuOpen(false); setBankId(bank.id); setTab('files') }}
-                    className={cn('flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-[12px]', bank.id === effectiveBankId ? 'bg-foreground/[0.09] font-semibold' : 'hover:bg-foreground/[0.05]')}
+                    className={cn('flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-small', bank.id === effectiveBankId ? 'bg-surface-pressed font-semibold' : 'hover:bg-surface-hover')}
                   >
                     <span className="min-w-0 flex-1 truncate">{bank.label}</span>
-                    <span className="shrink-0 text-[10px] text-text-muted">{t(bank.isMain ? 'memory.repo.bank.main' : 'memory.repo.bank.workspace')}</span>
+                    <span className="shrink-0 text-caption text-text-muted">{t(bank.isMain ? 'memory.repo.bank.main' : 'memory.repo.bank.workspace')}</span>
                   </button>
                 </li>
               ))}
@@ -334,41 +335,38 @@ export function MemoryRepoScreen({ workspaceId }: MemoryRepoScreenProps) {
         <span
           data-testid="memory-repo-state"
           data-state={state}
-          className={cn('inline-flex items-center gap-1 text-[11px]', tone === 'ok' ? 'text-emerald-500' : tone === 'danger' ? 'text-destructive' : tone === 'warn' ? 'text-amber-500' : 'text-text-muted')}
+          className={cn('inline-flex items-center gap-1 text-caption', tone === 'ok' ? 'text-status-success' : tone === 'danger' ? 'text-destructive' : tone === 'warn' ? 'text-status-warning' : 'text-text-muted')}
         >
-          <span aria-hidden="true" className={cn('size-1.5 rounded-full', tone === 'ok' ? 'bg-emerald-500' : tone === 'danger' ? 'bg-destructive' : tone === 'warn' ? 'bg-amber-500' : 'bg-text-muted')} />
+          <span aria-hidden="true" className={cn('size-1.5 rounded-full', tone === 'ok' ? 'bg-status-success' : tone === 'danger' ? 'bg-destructive' : tone === 'warn' ? 'bg-status-warning' : 'bg-text-muted')} />
           {t(`memory.repo.state.${state}`)}
         </span>
 
-        <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] text-text-muted" data-testid="memory-repo-head">
+        <span className="ml-auto flex shrink-0 items-center gap-1 text-caption text-text-muted" data-testid="memory-repo-head">
           {t('memory.repo.head')} <span className="font-mono tabular-nums">{headLabel}</span>
         </span>
 
-        <button type="button" data-testid="memory-repo-refresh" onClick={reload} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-foreground/10 px-2 text-[12px] hover:bg-foreground/[0.05]">
-          <RefreshCw aria-hidden="true" className="size-3.5" />{t('memory.repo.action.refresh')}
+        <button type="button" data-testid="memory-repo-refresh" onClick={reload} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-border-strong px-2 text-small hover:bg-surface-hover">
+          <RefreshCw aria-hidden="true" className="icon-caption" />{t('memory.repo.action.refresh')}
         </button>
-        <button type="button" data-testid="memory-repo-dream-now" onClick={onDreamNow} disabled={dreamRunning} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-foreground/10 px-2 text-[12px] hover:bg-foreground/[0.05] disabled:opacity-50">
-          <Sparkles aria-hidden="true" className="size-3.5" />{dreamRunning ? t('memory.repo.state.dreamRunning') : t('memory.repo.action.dreamNow')}
+        <button type="button" data-testid="memory-repo-dream-now" onClick={onDreamNow} disabled={dreamRunning} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-border-strong px-2 text-small hover:bg-surface-hover disabled:opacity-50">
+          <Sparkles aria-hidden="true" className="icon-caption" />{dreamRunning ? t('memory.repo.state.dreamRunning') : t('memory.repo.action.dreamNow')}
         </button>
-        <button type="button" data-testid="memory-repo-export" onClick={onExport} disabled={exporting} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-foreground/10 px-2 text-[12px] hover:bg-foreground/[0.05] disabled:opacity-50">
-          <Download aria-hidden="true" className="size-3.5" />{exporting ? t('memory.repo.state.exporting') : t('memory.repo.action.export')}
+        <button type="button" data-testid="memory-repo-export" onClick={onExport} disabled={exporting} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-border-strong px-2 text-small hover:bg-surface-hover disabled:opacity-50">
+          <Download aria-hidden="true" className="icon-caption" />{exporting ? t('memory.repo.state.exporting') : t('memory.repo.action.export')}
         </button>
       </header>
 
-      <div role="tablist" className="flex shrink-0 items-center gap-1 border-b border-border/50 px-3 py-1">
-        {TABS.map((entry) => (
-          <button
-            key={entry.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === entry.id}
-            data-testid={`memory-repo-tab-${entry.id}`}
-            onClick={() => selectTab(entry.id)}
-            className={cn('h-7 rounded-[var(--radius-control)] px-2 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-accent', tab === entry.id ? 'bg-foreground/[0.09] font-semibold' : 'text-text-secondary hover:bg-foreground/[0.05]')}
-          >
-            {t(entry.labelKey)}
-          </button>
-        ))}
+      <div className="flex shrink-0 items-center border-b border-border/50 px-3 py-1">
+        <Tabs
+          items={TABS.map((entry) => ({ id: entry.id, label: t(entry.labelKey) }))}
+          activeId={tab}
+          variant="segmented"
+          density="compact"
+          keyboard
+          tone="accent"
+          ariaLabel={t('memory.repo.title')}
+          onSelect={(id) => selectTab(id as MemoryRepoTab)}
+        />
       </div>
 
       <div className="flex min-h-0 flex-1">
