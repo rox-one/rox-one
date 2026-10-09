@@ -157,6 +157,10 @@ export interface StoredConfig {
     redactExtraPatterns?: string[]; // extra literal strings masked by redactSecrets (project names, paths, …), case-insensitive (default: [])
     ftsLimit?: number;           // top-K results from memory FTS queries (default: 20)
     semantic?: boolean;          // M2: semantic (episodic) memory via local embeddings model, lazy-downloaded to {configDir}/models (default: false)
+    dreamIntervalHours?: number; // dream §9: hours between background dream runs (default: 4)
+    dreamModel?: string;         // dream: distillation mini-model id (absent → default mini-model)
+    dreamNotes?: boolean;        // dream: run the notes→proposals step (default: true)
+    repoDir?: string;            // memory repository root override (default: {configDir}/memory/repos)
   };
   // Skills pipeline switches.
   skills?: {
@@ -1426,6 +1430,15 @@ export function getMemoryConfig(): MemoryConfig {
         ? Math.floor(raw.ftsLimit)
         : DEFAULT_MEMORY_CONFIG.ftsLimit,
     semantic: raw.semantic !== undefined ? raw.semantic === true : DEFAULT_MEMORY_CONFIG.semantic,
+    dreamIntervalHours:
+      typeof raw.dreamIntervalHours === 'number' && Number.isFinite(raw.dreamIntervalHours) && raw.dreamIntervalHours > 0
+        ? raw.dreamIntervalHours
+        : DEFAULT_MEMORY_CONFIG.dreamIntervalHours,
+    ...(typeof raw.dreamModel === 'string' && raw.dreamModel.trim().length > 0
+      ? { dreamModel: raw.dreamModel.trim() }
+      : {}),
+    dreamNotes: raw.dreamNotes !== undefined ? raw.dreamNotes === true : DEFAULT_MEMORY_CONFIG.dreamNotes,
+    ...(typeof raw.repoDir === 'string' && raw.repoDir.trim().length > 0 ? { repoDir: raw.repoDir.trim() } : {}),
   };
 }
 

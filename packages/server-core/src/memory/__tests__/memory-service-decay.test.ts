@@ -8,6 +8,7 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { MemoryService, type MemoryServiceDeps } from '../MemoryService'
+import { setRepoNotifier } from '../repo/notify'
 import { DEFAULT_MEMORY_CONFIG, type MemoryConfig } from '@rox/shared/memory/types'
 
 const NOW = new Date('2026-08-06T12:00:00Z').getTime()
@@ -19,6 +20,7 @@ function mkroot(): string {
   return root
 }
 afterEach(() => {
+  setRepoNotifier(null)
   for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true })
 })
 
@@ -92,5 +94,40 @@ describe('MemoryService.runDecayJob (M3)', () => {
     })
     expect(await svc.runDecayJob()).toBeNull()
     expect(warnings.length).toBeGreaterThan(0)
+  })
+
+  it('notifies the owning bank only when decay actually changed history (and runs with no notifier)', async () => {
+    const notifications: Array<{ bank: unknown; reason: string }> = []
+    setRepoNotifier((bank, reason) => notifications.push({ bank, reason }))
+
+    const wsRoot = mkroot()
+    seedOldDaily(wsRoot)
+    const wsResult = await makeService(wsRoot, { workspaceId: 'ws1' }).runDecayJob()
+    expect(wsResult!.weekly).toHaveLength(1)
+
+    const mainRoot = mkroot()
+    seedOldDaily(mainRoot)
+    const mainResult = await makeService(mainRoot).runDecayJob()
+    expect(mainResult!.weekly).toHaveLength(1)
+
+    expect(notifications).toEqual([
+      { bank: { scope: 'workspace', workspaceId: 'ws1' }, reason: 'decay' },
+      { bank: { scope: 'main' }, reason: 'decay' },
+    ])
+
+    // An empty compaction (nothing left to roll up) stays silent.
+    setRepoNotifier((bank, reason) => notifications.push({ bank, reason }))
+    notifications.length = 0
+    const noopRoot = mkroot()
+    const noopSvc = makeService(noopRoot, { workspaceId: 'ws1' })
+    expect(await noopSvc.runDecayJob()).toEqual({ deleted: 0, weekly: [], monthly: [] })
+    expect(notifications).toEqual([])
+
+    // No notifier registered: the write path still succeeds.
+    setRepoNotifier(null)
+    const quietRoot = mkroot()
+    seedOldDaily(quietRoot)
+    const quiet = await makeService(quietRoot, { workspaceId: 'ws1' }).runDecayJob()
+    expect(quiet!.weekly).toHaveLength(1)
   })
 })
