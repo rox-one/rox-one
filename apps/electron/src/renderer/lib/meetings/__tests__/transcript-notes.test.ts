@@ -137,19 +137,34 @@ test('empty segments, absent workspace and failed writes never duplicate or thro
   expect(await mirror.consider(apiFixture(null), meetingFixture(), WORKSPACE)).toBe(false)
   expect(calls).toBe(0)
   expect(failures).toEqual([])
-  // A vault failure is reported once and never retried for the same key.
+  // A transient vault failure is reported and the pre-write claim released, so the
+  // next observation of the same key retries; once the store recovers the note lands
+  // and the claim sticks.
+  let failWrite = true
   const claimed: string[] = []
+  const forgotten: string[] = []
   const failing = createTranscriptMirror({
-    record: async () => { calls += 1; return { ok: false, error: 'no vault' } },
+    record: async () => { calls += 1; return failWrite ? { ok: false, error: 'no vault' } : { ok: true } },
     notifyFailure: (title) => failures.push(title),
     onSeen: (key) => claimed.push(key),
+    onForget: (key) => forgotten.push(key),
   })
-  expect(await failing.consider(apiFixture(), meetingFixture(), WORKSPACE)).toBe(false)
   expect(await failing.consider(apiFixture(), meetingFixture(), WORKSPACE)).toBe(false)
   expect(calls).toBe(1)
   expect(failures).toEqual(['Планёрка'])
-  // The claim is recorded before the write, so a crash mid-write cannot duplicate.
+  // The claim is recorded before the write, so a crash mid-write cannot duplicate…
   expect(claimed).toEqual(['meeting-1:1'])
+  // …and released on failure, so the same finished generation is retried.
+  expect(forgotten).toEqual(['meeting-1:1'])
+  failWrite = false
+  expect(await failing.consider(apiFixture(), meetingFixture(), WORKSPACE)).toBe(true)
+  expect(calls).toBe(2)
+  expect(failures).toEqual(['Планёрка'])
+  // The successful claim sticks: no third attempt for the same key.
+  expect(await failing.consider(apiFixture(), meetingFixture(), WORKSPACE)).toBe(false)
+  expect(calls).toBe(2)
+  expect(claimed).toEqual(['meeting-1:1'])
+  expect(forgotten).toEqual(['meeting-1:1'])
 })
 
 test('helpers: key and paragraph projection', () => {

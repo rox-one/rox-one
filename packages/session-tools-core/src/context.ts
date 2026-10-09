@@ -16,6 +16,7 @@ import type {
   MicrosoftService,
   McpSourceConfig,
 } from './types.ts';
+import type { MemorySearchToolArgs, MemoryGetToolArgs } from './tool-defs.ts';
 
 // ============================================================
 // Source Credential Types
@@ -135,6 +136,26 @@ export interface ValidatorInterface {
   validateToolIcons(): import('./types.js').ValidationResult;
   validateAll(workspaceRootPath: string): import('./types.js').ValidationResult;
   validateSkill(workspaceRootPath: string, skillSlug: string): import('./types.js').ValidationResult;
+}
+
+// ============================================================
+// Memory (memory_search / memory_get)
+// ============================================================
+
+/**
+ * Memory tool callbacks — provenance-aware recall over the workspace memory
+ * chunk index. Grouped in one object (like `pages`) because the two operations
+ * always ship together. Injected by the backend (SessionManager) and bound to
+ * the invoking session's workspace; undefined in backends that don't run
+ * alongside it — the handlers then report a typed "unavailable" result.
+ *
+ * The callbacks return formatted `ToolResult`s because formatting (provenance
+ * lines, the gated badge, snippet truncation) needs the shared memory types,
+ * which session-tools-core deliberately does not depend on.
+ */
+export interface MemoryToolCallbacks {
+  search(args: MemorySearchToolArgs): Promise<ToolResult>;
+  get(args: MemoryGetToolArgs): Promise<ToolResult>;
 }
 
 // ============================================================
@@ -393,6 +414,16 @@ export interface SessionToolContext {
    * gracefully.
    */
   pages?: PagesToolCallbacks;
+
+  // ============================================================
+  // Memory (memory_search / memory_get)
+  // ============================================================
+
+  /**
+   * Memory recall callbacks over the invoking session's workspace chunk index.
+   * Injected by the backend (SessionManager); undefined in backends without it.
+   */
+  memory?: MemoryToolCallbacks;
 
   // ============================================================
   // Inter-Session Messaging

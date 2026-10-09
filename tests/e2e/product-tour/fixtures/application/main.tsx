@@ -33,7 +33,14 @@ const bridge = createNativeReplicaBridge({ client, invokeIpc: async (channel, in
   return reply.value
 } })
 const api = buildClientApi(client, CHANNEL_MAP, channel => client.isChannelAvailable(channel))
+const baseGetWorkspaces = api.getWorkspaces.bind(api)
 Object.assign(api, {
+  // Mirrors the production WebUI adapter (apps/webui/src/adapter/web-api.ts:159-162) on the
+  // authenticated browser surface: workspace metadata never carries the host root path.
+  // The desktop renderer (non-restricted) keeps the full host-side record, as in production.
+  getWorkspaces: async () => restricted
+    ? [{ id: setup.workspaceId, name: 'Tour QA', slug: setup.workspaceId, rootPath: '', createdAt: 0 }]
+    : baseGetWorkspaces(),
   getRuntimeEnvironment: () => restricted ? 'web' : 'electron',
   getPlatform: () => 'linux', getVersions: () => ({ electron: 'application-test-adapter', node: 'browser', chrome: navigator.userAgent }),
   getWindowWorkspace: async () => setup.workspaceId, getSystemTheme: async () => false,

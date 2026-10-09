@@ -16,9 +16,8 @@ import { KEYS } from "@/lib/local-storage"
 import type { LabelConfig } from "@rox/shared/labels"
 import { flattenLabels } from "@rox/shared/labels"
 import * as MultiSelect from "@/hooks/useMultiSelect"
-import { Spinner } from "@rox/ui"
 import { EntityListEmptyScreen } from "@/components/ui/entity-list-empty"
-import { EntityList, type EntityListGroup } from "@/components/ui/entity-list"
+import { EntityList, ENTITY_LIST_OVERSCAN, type EntityListGroup } from "@/components/ui/entity-list"
 import { RenameDialog } from "@/components/ui/rename-dialog"
 import { SessionSearchHeader } from "./SessionSearchHeader"
 import { SessionItem } from "./SessionItem"
@@ -360,7 +359,6 @@ export function SessionList({
     otherResultItems,
     exceededSearchLimit,
     flatItems,
-    hasMore,
     collapsedGroupsMeta,
     searchInputRef,
   } = useSessionSearch({
@@ -376,7 +374,6 @@ export function SessionList({
     collapsedGroups,
     groupingMode: effectiveGroupingMode,
     bucketRepresentatives,
-    scrollViewportRef,
   })
 
   // FR-45: rank drag under the same rule as the table (orderBy === 'rank');
@@ -1432,13 +1429,6 @@ export function SessionList({
             </div>
           ) : undefined
         }
-        footer={
-          hasMore ? (
-            <div className="flex justify-center py-4">
-              <Spinner className="text-muted-foreground" />
-            </div>
-          ) : undefined
-        }
         viewportRef={scrollViewportRef}
         containerRef={zoneRef}
         containerProps={{
@@ -1459,6 +1449,10 @@ export function SessionList({
         onSelectGroup={handleSelectGroup}
         dropGroupKey={dropGroupKey}
         onEmptyGroupDragOver={handleEmptyGroupDragOver}
+        windowed
+        windowRowHeight={collectionDisplay.density === 'comfortable' ? 54 : 46}
+        windowOverscan={ENTITY_LIST_OVERSCAN}
+        scrollToKey={focusedSessionId ?? selectionStore.state.selected ?? null}
       />
       </SessionListProvider>
 

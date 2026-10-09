@@ -50,6 +50,9 @@ describe('calendar task links keep the canonical task context', () => {
     store.set(workspaceProjectContextsAtom, { workspace: 'project-b' })
     const render = component('PlanWorkspacePage.tsx', 'PlanWorkspacePage', {
       React, Suspense: 'Suspense', Meetings: 'Meetings', WorkspacePlanView: 'WorkspacePlanView', ShellSidebarPortal: 'Sidebar',
+      CalendarDays: 'CalendarDays', Calendar: 'Calendar', Contact: 'Contact', Gavel: 'Gavel', Phone: 'Phone',
+      formatHotkeyDisplay: (hotkey: string) => hotkey, cn: (...values: unknown[]) => values.filter(Boolean).join(' '),
+      useAction: () => {},
       useState: () => ['calendar', () => {}], useEffect: () => {},
       useLayoutEffect: () => {}, useRef: () => ({ current: null }),
       usePanelWorkspaceLayout: () => ({ mode: 'auto' }),

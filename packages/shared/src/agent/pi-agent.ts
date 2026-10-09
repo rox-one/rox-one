@@ -51,6 +51,7 @@ import { getCoAuthorPreference } from '../config/preferences.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
 import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
 import type { ProjectPromptContext } from '../projects/types.ts';
+import { isProjectMemoryInjectable } from '../memory/document-provenance.ts';
 
 // Credential manager for token storage
 import { getCredentialManager } from '../credentials/manager.ts';
@@ -217,6 +218,9 @@ export class PiAgent extends BaseAgent {
       const project = loadProjectById(root, projectId);
       if (!project) return null;
       const slug = project.config.slug;
+      // Provenance gate (spec c1.2): an untrusted-stamped project MEMORY.md is
+      // never injected, even though it is read here rather than via the index.
+      const memoryInjectable = isProjectMemoryInjectable(root, slug, this.config.agentProfileSnapshot?.memoryScope);
       return {
         name: project.config.name,
         description: project.config.description,
@@ -228,7 +232,7 @@ export class PiAgent extends BaseAgent {
           sizeBytes: a.sizeBytes,
         })),
         memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(root, slug),
-        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(root, slug) ?? undefined,
+        memoryContent: memoryInjectable ? loadProjectMemory(root, slug) ?? undefined : undefined,
         roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {
@@ -2113,6 +2117,11 @@ export class PiAgent extends BaseAgent {
           let pathInfo = `[Attached file: ${att.name}]\n[Stored at: ${att.storedPath}]`;
           if (att.markdownPath) {
             pathInfo += `\n[Markdown version: ${att.markdownPath}]`;
+          }
+          // Audio attached to the chat is transcribed on attach: hand the model
+          // the recognized text next to the stored path.
+          if (att.transcript?.status === 'done' && att.transcript.text.trim()) {
+            pathInfo += `\n[Transcript${att.transcript.language ? ` (${att.transcript.language})` : ''}]\n${att.transcript.text.trim()}`;
           }
           attachmentParts.push(pathInfo);
         }

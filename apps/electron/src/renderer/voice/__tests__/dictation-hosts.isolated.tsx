@@ -38,7 +38,7 @@ const { GlobalVoiceDictation } = await import('../global-dictation')
 const { currentOwner, releaseDictation } = await import('../dictation-ownership')
 const { activeComposerPresent } = await import('../composer-presence')
 const { windowWorkspaceIdAtom } = await import('@/atoms/sessions')
-const { TRANSCRIPTS_FOLDER } = await import('@/lib/transcripts/notes')
+const { transcriptsFolder } = await import('@/lib/transcripts/notes')
 const { TooltipProvider } = await import('../../../../../../packages/ui/src/components/tooltip')
 
 await i18n.use(initReactI18next).init({
@@ -368,8 +368,8 @@ describe('single transcript writer', () => {
     expect(countOf('saveNote')).toBe(1)
     const created = calls.find(call => call.method === 'createNote')?.args as { workspaceId: string; folder: string; title: string }
     expect(created.workspaceId).toBe(WORKSPACE_ID)
-    expect(created.folder).toBe(TRANSCRIPTS_FOLDER)
-    expect(created.title).toMatch(/^Транскрипт \d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}$/)
+    expect(created.folder).toBe(transcriptsFolder())
+    expect(created.title).toMatch(/^Transcript \d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}$/)
 
     // A second, global dictation files exactly one more note.
     await act(async () => { ui.setComposerVisible(false) })

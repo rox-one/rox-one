@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'bun:test'
+import { setupI18n } from '@rox/shared/i18n/setupI18n'
 import type { NoteCreateOptions, NoteDocument } from '../../../../shared/types'
 import {
-  TRANSCRIPTS_FOLDER,
   recordTranscript,
   transcriptMarkdown,
   transcriptNoteTitle,
+  transcriptsFolder,
 } from '../notes'
+
+await setupI18n().changeLanguage('ru')
 
 type Deps = NonNullable<Parameters<typeof recordTranscript>[1]>
 type FakeApi = NonNullable<Deps['api']>
@@ -87,11 +90,11 @@ describe('transcriptNoteTitle', () => {
 
   it('names meetings by title and falls back without one', () => {
     expect(transcriptNoteTitle({ workspaceId: 'ws', text: '', source: 'meeting', at: AT, meetingTitle: 'Планёрка' }))
-      .toBe('Встреча «Планёрка» — 08.10.2026, 14:32')
+      .toBe('Транскрипт встречи: Планёрка · 08.10.2026, 14:32')
     expect(transcriptNoteTitle({ workspaceId: 'ws', text: '', source: 'meeting', at: AT, meetingTitle: '   ' }))
-      .toBe('Встреча 08.10.2026, 14:32')
+      .toBe('Транскрипт встречи: Встреча без названия · 08.10.2026, 14:32')
     expect(transcriptNoteTitle({ workspaceId: 'ws', text: '', source: 'meeting', at: AT }))
-      .toBe('Встреча 08.10.2026, 14:32')
+      .toBe('Транскрипт встречи: Встреча без названия · 08.10.2026, 14:32')
   })
 })
 
@@ -163,7 +166,7 @@ describe('recordTranscript markdown branch', () => {
     expect(calls.create[0]).toMatchObject({
       workspaceId: 'ws-1',
       title: 'Транскрипт 08.10.2026, 14:32',
-      folder: TRANSCRIPTS_FOLDER,
+      folder: transcriptsFolder(),
       operation: { expectedRevision: null, schemaVersion: 1 },
     })
     expect(calls.create[0].operation?.operationId).toMatch(/^[0-9a-f-]{36}$/)

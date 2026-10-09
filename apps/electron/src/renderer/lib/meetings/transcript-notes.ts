@@ -57,6 +57,8 @@ export interface TranscriptMirrorDeps {
   seen?: Set<string>
   /** Called once per newly claimed key, before the write, so the claim survives a crash. */
   onSeen?: (key: string) => void
+  /** Called on a failed attempt: releases the pre-write claim so the next tick retries. */
+  onForget?: (key: string) => void
 }
 
 /** Bound on the renderer-side ledger; meetings are few, so this is never reached in practice. */
@@ -73,6 +75,12 @@ function rememberMirroredKey(key: string): void {
   set(KEYS.meetingsTranscriptNotes, [...keys, key].slice(-MIRRORED_LIMIT))
 }
 
+function forgetMirroredKey(key: string): void {
+  const keys = loadMirroredKeys()
+  if (!keys.includes(key)) return
+  set(KEYS.meetingsTranscriptNotes, keys.filter((stored) => stored !== key))
+}
+
 function notifyTranscriptNoteFailure(meetingTitle: string): void {
   toast.error(i18n.t('meetings.local.transcriptNoteFailed', { title: meetingTitle }))
 }
@@ -82,6 +90,7 @@ export function createTranscriptMirror(deps: TranscriptMirrorDeps = {}): Transcr
   const notifyFailure = deps.notifyFailure ?? notifyTranscriptNoteFailure
   const seen = deps.seen ?? new Set<string>()
   const onSeen = deps.onSeen
+  const onForget = deps.onForget
 
   async function consider(api: TranscriptMirrorApi, meeting: LocalMeeting, workspaceId: string | null): Promise<boolean> {
     const key = transcriptMirrorKey(meeting)
@@ -90,6 +99,9 @@ export function createTranscriptMirror(deps: TranscriptMirrorDeps = {}): Transcr
     if (meeting.transcript.segments === 0) return false
     seen.add(key)
     onSeen?.(key)
+    // A transient failure must not burn the key forever: release the claim so the
+    // next observation of the same finished generation retries the write.
+    const release = () => { seen.delete(key); onForget?.(key) }
     try {
       const transcript = await api.readTranscript(meeting.id)
       const segments = transcript?.segments ?? []
@@ -111,11 +123,13 @@ export function createTranscriptMirror(deps: TranscriptMirrorDeps = {}): Transcr
         })),
       })
       if (result.ok) return true
+      release()
       notifyFailure(meeting.title)
       return false
     } catch (error) {
       // Fire-and-forget: a mirror failure is surfaced once and never blocks the UI.
       console.error('[meetings] transcript note mirror failed:', error)
+      release()
       notifyFailure(meeting.title)
       return false
     }
@@ -132,6 +146,7 @@ export function createTranscriptMirror(deps: TranscriptMirrorDeps = {}): Transcr
 export const meetingTranscriptMirror = createTranscriptMirror({
   seen: new Set(loadMirroredKeys()),
   onSeen: rememberMirroredKey,
+  onForget: forgetMirroredKey,
 })
 
 /**

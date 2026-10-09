@@ -12,6 +12,8 @@ import { atom } from 'jotai'
 import type { Getter, Setter } from 'jotai/vanilla'
 import { atomFamily } from 'jotai-family'
 import type { Session, Message, SessionPriority } from '../../shared/types'
+import type { SessionCreatedActor, SessionOwnerRef, SessionParticipantIdentity, SessionVisibility } from '@rox/shared/protocol'
+import { type SessionActivityState } from '@/lib/session-presence'
 
 import { markStatusUnseen } from '@/lib/sidebar-unseen-status'
 import { countGitCommits, countToolCalls } from '@rox/shared/sessions/collection'
@@ -113,6 +115,11 @@ export interface SessionMeta {
   branchFromMessageId?: string
   /** Tasks Conductor: a generate-time draft orchestrator, hidden from the board until adopted by createTask. */
   taskDraft?: boolean
+  /** a1.3/a2.1: server-attributed session provenance (creator / owner / participants / visibility). */
+  creator?: SessionCreatedActor
+  owner?: SessionOwnerRef
+  participants?: SessionParticipantIdentity[]
+  visibility?: SessionVisibility
 }
 
 /**
@@ -174,6 +181,13 @@ export const sessionAtomFamily = atomFamily(
  * Only contains lightweight data needed for SessionList
  */
 export const sessionMetaMapAtom = atom<Map<string, SessionMeta>>(new Map())
+
+/**
+ * Ephemeral per-session collaboration activity (a2.1/a2.4): live viewers and
+ * typing actors. Never persisted; entries are dropped when a server snapshot
+ * arrives empty, so the map only holds sessions with a live signal.
+ */
+export const sessionActivityMapAtom = atom<Map<string, SessionActivityState>>(new Map())
 
 /**
  * Derived atom: ordered list of session IDs (for list ordering)

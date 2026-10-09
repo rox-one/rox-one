@@ -47,7 +47,12 @@ describe('Pocket host account authority', () => {
   const attempts: string[] = []
   f.client.refresh = async (_token, id) => { attempts.push(id); if (attempts.length === 1) throw new TypeError('lost response'); return { status: 'approved', accessToken: 'new-access', refreshToken: 'new-refresh', tokenType: 'Bearer', expiresIn: 900, user: { id: 'account-a', email: 'same@example.test', name: 'Cloud' } } }
   const restarted = new RoxAccountAuthority(f.store, f.client)
-  expect((await restarted.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+  // A dropped refresh response is a transient broker outage: the account stays
+  // connected on its last confirmed snapshot and is marked as updating.
+  const degraded = await restarted.state(LOCAL_ROX_CALLER)
+  expect(degraded.connected).toBe(true)
+  expect(degraded.updating).toBe(true)
+  expect(degraded.account?.user.id).toBe('account-a')
   expect(f.records.get(JSON.stringify(LOCAL_ROX_CALLER))?.refreshId).toBe(attempts[0])
   const relaunched = new RoxAccountAuthority(f.store, f.client)
   expect((await relaunched.state(LOCAL_ROX_CALLER)).connected).toBe(true)
@@ -282,6 +287,39 @@ describe('Pocket host account authority', () => {
   const context = await unreadable.capture(LOCAL_ROX_CALLER)
   await expect(unreadable.bind('task-run:w:task-a:unreadable', context)).rejects.toThrow('ROX_SECURE_BINDING_UNAVAILABLE')
   expect(f.bindings.size).toBe(0)
+ })
+
+ it('serves the last confirmed snapshot and lastSyncedAt during a broker outage', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const synced = f.records.get(JSON.stringify(LOCAL_ROX_CALLER))!.lastSyncedAt
+  expect(typeof synced).toBe('number')
+  f.client.account = async () => { throw new TypeError('network down') }
+  const state = await f.authority.state(LOCAL_ROX_CALLER)
+  expect(state.connected).toBe(true)
+  expect(state.updating).toBe(true)
+  expect(state.lastSyncedAt).toBe(synced!)
+  expect(state.account?.balance.availableRox).toBe('500.000000')
+ })
+
+ it('silently refreshes once and retries when an unexpired proof is rejected with 401', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const before = f.refreshes.length
+  let calls = 0
+  const snapshot = pocketSnapshot()
+  f.client.account = async () => { if (++calls === 1) throw new Error('ROX_AUTH_EXPIRED'); return snapshot }
+  const state = await f.authority.state(LOCAL_ROX_CALLER)
+  expect(state.connected).toBe(true)
+  expect(calls).toBe(2)
+  expect(f.refreshes.length).toBe(before + 1)
+ })
+
+ it('drops a reauthenticated grant whose refreshed proof is still rejected', async () => {
+  const f = createPocketFixture(); await connect(f)
+  f.client.account = async () => { throw new Error('ROX_AUTH_EXPIRED') }
+  f.client.refresh = async () => { throw new Error('ROX_AUTH_EXPIRED') }
+  const state = await f.authority.state(LOCAL_ROX_CALLER)
+  expect(state.connected).toBe(false)
+  expect(state.account).toBeNull()
  })
 
 })

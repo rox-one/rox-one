@@ -31,6 +31,11 @@ const themeId = query.get('theme') ?? 'nordfox-opaque'
 const runtime = query.get('runtime') === 'electron' ? 'electron' : 'web'
 const themes = import.meta.glob('../../../../../../resources/themes/*.json', { eager: true, import: 'default' }) as Record<string, ThemeFile>
 const byId = new Map(Object.entries(themes).map(([path, theme]) => [path.split('/').pop()!.replace('.json', ''), theme]))
+// A synthetic app-level override proves the configurable material layer
+// without a native compositor: only the `material=on` query opts in.
+const materialOverride: ThemeOverrides | null = query.get('material') === 'on'
+  ? { material: { enabled: true, blur: { topbar: 30 }, opacity: { topbar: 0.5, sidebar: 0.5 }, texture: { kind: 'grain' }, matte: 0 } }
+  : null
 const calls: { method: string; value?: unknown }[] = []
 let rejectSave = false
 const shellListeners = new Set<(snapshot: ZenShellSnapshot) => void>()
@@ -56,7 +61,7 @@ const shellSnapshot = (fallback?: string): ZenShellSnapshot => snapshotZenShell(
 const api = {
   getRuntimeEnvironment: () => runtime,
   getColorTheme: async () => query.get('deferred') === 'config' ? new Promise<string>(resolve => { colorRead = resolve }) : localStorage.getItem('fixture-config-theme') ?? themeId,
-  getAppTheme: async () => query.get('deferred') === 'app' ? new Promise<ThemeOverrides | null>(resolve => { appRead = resolve }) : null,
+  getAppTheme: async () => query.get('deferred') === 'app' ? new Promise<ThemeOverrides | null>(resolve => { appRead = resolve }) : materialOverride,
   onAppThemeChange: (listener: (theme: ThemeOverrides | null) => void) => { appThemeListeners.add(listener); return () => { appThemeListeners.delete(listener) } },
   onThemePreferencesChange: (listener: (theme: Record<string, unknown>) => void) => { themePreferenceListeners.add(listener); return () => { themePreferenceListeners.delete(listener) } },
   getWorkspaceColorTheme: async () => query.get('deferred') === 'workspace' ? new Promise<string | null>(resolve => { workspaceRead = resolve }) : null,

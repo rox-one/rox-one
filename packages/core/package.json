@@ -3,9 +3,6 @@
     "yaml": "^2.8.2"
   },
   "description": "Core types, storage, and agent logic for Craft Agents",
-  "devDependencies": {
-    "@types/uuid": "^11.0.0"
-  },
   "exports": {
     ".": "./src/index.ts",
     "./bases": "./src/bases/index.ts",

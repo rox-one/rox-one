@@ -29,8 +29,60 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { navigate, routes } from '@/lib/navigate'
 import { extractLabelId, toggleLabelInList } from '@rox/shared/labels'
+import type { SessionActorRef, SessionVisibility } from '@rox/shared/protocol'
 import type { SessionMeta } from '@/atoms/sessions'
+import { useViewerIdentity } from '@/hooks/useSessionPresence'
 import { createSessionLink, copySessionLink, presentSessionLink, requestJoinSession, SessionLinkError, type SessionLinkKind } from '@/lib/session-sharing'
+
+// ── Shared knowledge-connection probe ───────────────────────────────────────
+// The answer is workspace-independent and identical for every session menu, so
+// one request is performed per app session and every menu (and every row)
+// subscribes to the cached result instead of firing its own
+// `knowledge.listConnections()` when the menu mounts — previously one request
+// per mounted menu, which is what made opening/rendering the menu feel heavy.
+let knowledgeConnectionCache: boolean | null = null
+let knowledgeConnectionProbe: Promise<void> | null = null
+const knowledgeConnectionListeners = new Set<() => void>()
+
+function runKnowledgeConnectionProbe(): void {
+  if (knowledgeConnectionProbe || knowledgeConnectionCache !== null) return
+  knowledgeConnectionProbe = (async () => {
+    let available = false
+    try {
+      const list = await window.electronAPI?.knowledge?.listConnections?.()
+      available = Array.isArray(list) && list.length > 0
+    } catch {
+      available = false
+    }
+    knowledgeConnectionCache = available
+    for (const listener of knowledgeConnectionListeners) listener()
+  })()
+}
+
+function subscribeKnowledgeConnection(listener: () => void): () => void {
+  knowledgeConnectionListeners.add(listener)
+  runKnowledgeConnectionProbe()
+  return () => {
+    knowledgeConnectionListeners.delete(listener)
+  }
+}
+
+function getKnowledgeConnectionSnapshot(): boolean {
+  return knowledgeConnectionCache === true
+}
+
+/**
+ * Whether at least one knowledge connection is available, shared across every
+ * session menu. Returns the cached value and triggers the single probe only
+ * when no menu has needed it yet.
+ */
+export function useKnowledgeConnectionAvailable(): boolean {
+  return React.useSyncExternalStore(
+    subscribeKnowledgeConnection,
+    getKnowledgeConnectionSnapshot,
+    getKnowledgeConnectionSnapshot,
+  )
+}
 
 export interface UseSessionMenuActionsOptions {
   item: SessionMeta
@@ -61,6 +113,14 @@ export interface SessionMenuActions {
   exportSession: () => Promise<void>
   /** Open an explicit URL entry dialog for collaboration invites or viewer links. */
   joinSession: () => Promise<void>
+  /** a1.3/a2.2: assign or clear the session owner. */
+  assignOwner: (owner: SessionActorRef | null) => Promise<void>
+  /** Convenience: assign the session to the local viewer. */
+  assignToMe: () => Promise<void>
+  /** Identity of the local viewer (null fields when no account is connected). */
+  viewer: { accountId: string | null; username: string | null; displayName: string | null }
+  /** a2.5: set the session visibility. */
+  setVisibility: (visibility: SessionVisibility) => Promise<void>
 }
 
 // SOH (U+0001) — non-printable so it can't collide with label IDs (which
@@ -249,6 +309,40 @@ export function useSessionMenuActions({
     requestJoinSession()
   }, [])
 
+  const viewer = useViewerIdentity()
+
+  const assignOwner = React.useCallback(async (owner: SessionActorRef | null) => {
+    try {
+      await window.electronAPI.assignSessionOwner(sessionId, owner)
+      toast.success(owner ? t('sessionOwner.assignSuccess', { name: owner.displayName }) : t('sessionOwner.unassignSuccess'))
+    } catch (error) {
+      toast.error(t('sessionOwner.assignFailed'), {
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
+      })
+    }
+  }, [sessionId, t])
+
+  const assignToMe = React.useCallback(async () => {
+    const id = viewer.accountId
+    const displayName = viewer.displayName ?? viewer.username
+    if (!id || !displayName) {
+      toast.error(t('sessionOwner.assignFailed'), { description: t('sessionOwner.noViewerIdentity') })
+      return
+    }
+    await assignOwner({ kind: 'account', id, displayName })
+  }, [assignOwner, viewer, t])
+
+  const setVisibility = React.useCallback(async (visibility: SessionVisibility) => {
+    try {
+      await window.electronAPI.sessionCommand(sessionId, { type: 'setVisibility', visibility })
+      toast.success(t('sessionSharing.visibilityUpdated'))
+    } catch (error) {
+      toast.error(t('sessionSharing.visibilityFailed'), {
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
+      })
+    }
+  }, [sessionId, t])
+
   return {
     appliedLabelIds,
     toggleLabel,
@@ -264,5 +358,9 @@ export function useSessionMenuActions({
     inviteBro,
     exportSession,
     joinSession,
+    assignOwner,
+    assignToMe,
+    viewer,
+    setVisibility,
   }
 }

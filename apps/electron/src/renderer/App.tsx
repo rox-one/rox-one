@@ -41,12 +41,13 @@ import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { NavigationProvider } from '@/contexts/NavigationContext'
 
 import { markStatusUnseen } from '@/lib/sidebar-unseen-status'
+import { reduceSessionActivityEvent } from '@/lib/session-presence'
 import { navigate, routes } from './lib/navigate'
 import { attachmentFromContentRef, toDraftRef } from './lib/drafts'
 import { stripMarkdown } from './utils/text'
 import { coerceInputText } from './lib/input-text'
 import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recovery'
-import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
+import { formatSessionLoadFailure, shouldSurfaceSessionLoadFailure } from './lib/session-load'
 import { readLocalSessionCapability, loadCallerSessionInventory } from './lib/caller-session-loading'
 import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
 import { getSessionsRequiringPermissionModeReconcile } from './lib/permission-mode-reconcile'
@@ -62,6 +63,7 @@ import {
   refreshSessionsMetadataAtom,
   sessionAtomFamily,
   sessionMetaMapAtom,
+  sessionActivityMapAtom,
   sessionIdsAtom,
   loadedSessionsAtom,
   forceSessionMessagesReloadAtom,
@@ -93,6 +95,8 @@ import {
   CodePreviewOverlay,
   DocumentFormattedMarkdownOverlay,
   JSONPreviewOverlay,
+  AudioTranscriptActionsProvider,
+  type AudioTranscriptRetry,
 } from '@rox/ui'
 import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
 import { queueInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
@@ -328,6 +332,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   const [startupAttempt, setStartupAttempt] = useState(0)
   const [callerAuthority, setCallerAuthority] = useState<'native' | 'local' | null>(null)
   const callerAuthorityRef = useRef(callerAuthority)
+  // Set when a session-load failure was swallowed because the transport banner
+  // explained it (see shouldSurfaceSessionLoadFailure). The banner disappears once the
+  // transport reconnects, so the erased failure must be repaired on that reconnect —
+  // otherwise the shell stays empty with no error and no retry affordance.
+  const swallowedSessionLoadRef = useRef(false)
   callerAuthorityRef.current = callerAuthority
 
   // Per-session Jotai atom setters for isolated updates
@@ -701,8 +710,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       }
       const transportState = transport.value
 
-      if (shouldTreatSessionLoadFailureAsTransportFallback(transportState)) {
+      if (!shouldSurfaceSessionLoadFailure(transportState)) {
         console.error('[App] Treating session load failure as transport fallback:', transportState)
+        // The banner is visible now, but it disappears on reconnect and the failure would
+        // otherwise never be repaired (non-stale reconnects do not refresh the list).
+        swallowedSessionLoadRef.current = true
+        rendererLog.warn(
+          '[App] Session load failure swallowed as transport fallback; will retry after the transport reconnects',
+          { transportState, error: err },
+        )
         setSessionsLoaded(true)
         setSessionLoadError(null)
         return
@@ -1350,6 +1366,36 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         return
       }
 
+      // a1.3/a2.1: ownership + visibility metadata are handled explicitly (they
+      // are not agent events) so the sidebar chip and header update live.
+      if (event.type === 'session_owner_changed' || event.type === 'session_visibility_changed') {
+        const atomSession = store.get(sessionAtomFamily(sessionId))
+        if (atomSession) {
+          store.set(
+            sessionAtomFamily(sessionId),
+            event.type === 'session_owner_changed'
+              ? { ...atomSession, owner: event.owner ?? undefined }
+              : { ...atomSession, visibility: event.visibility },
+          )
+        }
+        const prevMeta = store.get(sessionMetaMapAtom).get(sessionId)
+        if (prevMeta) {
+          const nextMetaMap = new Map(store.get(sessionMetaMapAtom))
+          nextMetaMap.set(sessionId, event.type === 'session_owner_changed'
+            ? { ...prevMeta, owner: event.owner ?? undefined }
+            : { ...prevMeta, visibility: event.visibility })
+          store.set(sessionMetaMapAtom, nextMetaMap)
+        }
+        return
+      }
+
+      // a2.4: ephemeral typing/presence snapshots feed the activity atom only —
+      // never persisted, never routed through the agent event processor.
+      if (event.type === 'session_typing' || event.type === 'session_presence') {
+        store.set(sessionActivityMapAtom, reduceSessionActivityEvent(store.get(sessionActivityMapAtom), event))
+        return
+      }
+
       const agentEvent = event as unknown as AgentEvent
 
       // Track activity for stale session watchdog
@@ -1522,14 +1568,21 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     })
 
     return cleanup
-  }, [refreshSessionListMetadataFromServer, windowWorkspaceId])
+  }, [loadSessionsFromServer, refreshSessionListMetadataFromServer, windowWorkspaceId])
 
   // Transport reconnect recovery — refresh session metadata plus active/processing
   // session content after stale reconnects.
   useEffect(() => {
     const cleanup = window.electronAPI.onReconnected(async (isStale: boolean) => {
+      if (swallowedSessionLoadRef.current) {
+        // A previous load failed while the transport banner was visible; the banner is gone
+        // now, so reload instead of leaving an empty shell behind.
+        swallowedSessionLoadRef.current = false
+        console.warn('[App] Reconnected after a swallowed session-load failure — reloading sessions')
+        await loadSessionsFromServer()
+      }
       if (!isStale) {
-        // Server replayed buffered events — we're caught up, nothing to do
+        // Server replayed buffered events — we're caught up, nothing else to do
         console.info('[App] Reconnected with event replay — no refresh needed')
         return
       }
@@ -1927,6 +1980,43 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       }))
     }
   }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId, t])
+
+  /**
+   * Re-run speech-to-text for an already-sent audio attachment ("Retry" in the
+   * transcript block). Reads the stored audio back, re-uses the voice ASR
+   * channel, and patches the transcript into the local session so the bubble
+   * re-renders without a reload.
+   */
+  const retryAudioTranscript = useCallback<AudioTranscriptRetry>(async (attachment, context) => {
+    const { sessionId, messageId } = context
+    if (!sessionId || !attachment.storedPath) return null
+    try {
+      const dataUrl = await window.electronAPI.readFileDataUrl(attachment.storedPath)
+      const separator = dataUrl.indexOf(',')
+      if (separator < 0) throw new Error('Attachment content is unavailable')
+      const result = await window.electronAPI.transcribeVoice({
+        audioBase64: dataUrl.slice(separator + 1),
+        mimeType: attachment.mimeType,
+        attachedFile: true,
+      })
+      const text = result.text?.trim() ?? ''
+      const transcript: NonNullable<StoredAttachment['transcript']> = result.noSpeech || !text
+        ? { status: 'error', text: '', error: 'no-speech', durationMs: result.durationMs, engine: result.engine }
+        : { status: 'done', text, language: result.detectedLanguage, durationMs: result.durationMs, engine: result.engine }
+      if (messageId) {
+        updateSessionById(sessionId, (session) => ({
+          messages: session.messages.map(message => (message.id === messageId || message.backendMessageId === messageId)
+            ? { ...message, attachments: message.attachments?.map(item => item.id === attachment.id ? { ...item, transcript } : item) }
+            : message),
+        }))
+      }
+      return transcript
+    } catch (error) {
+      return { status: 'error', text: '', error: error instanceof Error ? error.message : 'transcription-failed' }
+    }
+  }, [updateSessionById])
+
+  const audioTranscriptActions = useMemo(() => ({ retry: retryAudioTranscript }), [retryAudioTranscript])
 
   /**
    * Unified handler for all session option changes.
@@ -2653,6 +2743,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // Ready state - main app with splash overlay during data loading
   return (
+    <AudioTranscriptActionsProvider actions={audioTranscriptActions}>
     <PlatformProvider actions={platformActions}>
     <ShikiThemeProvider shikiTheme={shikiTheme}>
       <ActionRegistryProvider>
@@ -2766,6 +2857,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       </ActionRegistryProvider>
     </ShikiThemeProvider>
     </PlatformProvider>
+    </AudioTranscriptActionsProvider>
   )
 }
 

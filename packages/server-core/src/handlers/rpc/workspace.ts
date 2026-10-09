@@ -10,6 +10,7 @@ import {
   createAndActivateLocalWorkspace,
   getActiveWorkspace,
   getWorkspaceByNameOrId,
+  MaterialSettingsSchema,
   setActiveWorkspace,
   updateWorkspaceRemoteServer,
 } from '@rox/shared/config'
@@ -28,6 +29,7 @@ import { readNativeWorkspaceMetadata } from './native-workspace-registry'
 import { isValidWorkingDirectory, isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
 import { isSensitiveAgentCwd } from '@rox/shared/sessions'
 import type { RemoteServerConfig, Workspace } from '@rox/core/types'
+import type { MaterialSettings, ThemeOverrides } from '@rox/shared/config'
 import {
   isClaimableLive,
   rpcWorkspaceActResult,
@@ -51,6 +53,7 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.theme.LOAD_PRESET,
   RPC_CHANNELS.theme.GET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_COLOR_THEME,
+  RPC_CHANNELS.theme.SET_APP_MATERIAL,
   RPC_CHANNELS.theme.BROADCAST_PREFERENCES,
   RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME,
   RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME,
@@ -503,6 +506,29 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     const { setColorTheme } = await import('@rox/shared/config/storage')
     assertCurrentWebAppearanceWorkspace(ctx)
     setColorTheme(themeId)
+  })
+
+  // Persist the material (glass) layer into the app theme override file.
+  // LOCAL_ONLY: web-authenticated sessions are rejected outright. A `null`
+  // payload clears the field; an object replaces it wholesale (other theme.json
+  // fields are preserved by load-merge-save). The config watcher broadcasts
+  // APP_CHANGED, mirroring SET_COLOR_THEME.
+  server.handle(RPC_CHANNELS.theme.SET_APP_MATERIAL, async (ctx, material: unknown) => {
+    if (ctx.webUiAuthenticated) throw new CodedError('AUTH_FAILED', 'App material is local-only')
+    let parsed: MaterialSettings | null
+    if (material === null) {
+      parsed = null
+    } else {
+      const result = MaterialSettingsSchema.safeParse(material)
+      if (!result.success) throw new CodedError('INVALID_PAYLOAD', 'Invalid material settings')
+      parsed = result.data
+    }
+    const { loadAppTheme, saveAppTheme } = await import('@rox/shared/config/storage')
+    const next: ThemeOverrides = loadAppTheme() ?? {}
+    if (parsed === null) delete next.material
+    else next.material = parsed
+    saveAppTheme(next)
+    return next
   })
 
   // Broadcast theme preferences to all other windows (for cross-window sync)

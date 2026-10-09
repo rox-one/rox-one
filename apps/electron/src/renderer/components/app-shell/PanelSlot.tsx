@@ -152,7 +152,7 @@ export function PanelSlot({
         tabIndex={-1}
         className={cn(
           'h-full overflow-hidden relative @container/panel',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring',
+          'focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-1px] focus-visible:outline-ring',
           // One-surface shell: flush pane on the shared background. Split view
           // keeps a hairline between panels and a thin focus accent (no boxes).
           'rox-shell-pane',

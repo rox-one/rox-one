@@ -15,6 +15,15 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      - uses: actions/cache@v4
+
+        continue-on-error: true
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
       - name: Install
         run: bun install --frozen-lockfile
 

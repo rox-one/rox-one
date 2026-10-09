@@ -61,3 +61,38 @@ export {
   type BundledSkillsBackgroundOptions,
   type BundledSkillsBackgroundOutcome,
 } from './bundled-background.ts';
+export {
+  AVAILABLE_SKILLS_MAX_BYTES,
+  AVAILABLE_SKILLS_MAX_DESCRIPTION_CHARS,
+  AVAILABLE_SKILLS_MAX_ENTRIES,
+  SKILLS_READ_HOST_TOOL,
+  SKILLS_SEARCH_HOST_TOOL,
+  buildAvailableSkillsBlock,
+  type AvailableSkillsPromptOptions,
+} from './prompt.ts';
+export {
+  buildSkillEligibilityReport,
+  credentialIdMatchesEnvName,
+  defaultBinExists,
+  defaultConfigExists,
+  defaultEnvExists,
+  detectSkillCollisions,
+  detectSkillCollisionsForSlugs,
+  evaluateSkillEligibility,
+  osMatches,
+  type BuildSkillEligibilityInput,
+  type SkillCollision,
+  type SkillEligibilityChecks,
+  type SkillEligibilityEntry,
+  type SkillEligibilityInput,
+  type SkillEligibilityReason,
+  type SkillEligibilityReasonCode,
+  type SkillEligibilityReport,
+  type SkillRootScan,
+} from './eligibility.ts';
+export {
+  getSkillRootPlan,
+  loadSkillFromDir,
+  loadSkillsFromDir,
+  type SkillRootPlanEntry,
+} from './storage.ts';

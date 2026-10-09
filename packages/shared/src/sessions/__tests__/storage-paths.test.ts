@@ -52,7 +52,7 @@ describe('session storage path round trips', () => {
       expect(readSessionJsonl(file)?.workspaceRootPath).toBe(root);
       expect(readFileSync(file, 'utf8')).not.toContain('~\\\\');
     } finally {
-      sessionPersistenceQueue.cancel(original.id);
+      await sessionPersistenceQueue.cancel(original.id);
     }
   });
 

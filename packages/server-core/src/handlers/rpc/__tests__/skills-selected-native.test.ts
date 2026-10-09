@@ -6,8 +6,14 @@ import { join } from 'node:path';
 import type { HandlerDeps } from '../../handler-deps.ts';
 
 const sandbox=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'selected-native-rpc-')));
-const previous=process.env.ROX_CONFIG_DIR;
+const previous=process.env.ROX_CONFIG_DIR, previousCraft=process.env.CRAFT_CONFIG_DIR;
 process.env.ROX_CONFIG_DIR=join(sandbox,'config');
+process.env.CRAFT_CONFIG_DIR=join(sandbox,'config');
+// Skills sources cannot be redirected by env: `~/.agents/skills` and
+// `~/.omp/agent/skills` are computed from os.homedir() at module load, and Bun
+// caches the home dir at startup, so neither ROX_*/CRAFT_* nor a runtime HOME
+// override moves them. This machine's real shared store (~4900–5900 entries)
+// therefore makes the first includeOmp `loadAllSkills` scan a cold one.
 let authority: import('../../../authority/native-authority.ts').NativeAuthority;
 let server: import('../../../transport/server.ts').WsRpcServer;
 let admin: import('../../../authority/native-authority.ts').NativeIssuedCredential;
@@ -36,9 +42,15 @@ beforeAll(async()=>{
  server=new WsRpcServer({host:'127.0.0.1',port:0,requireAuth:true,nativeAuthority:authority});
  registerSkillsHandlers(server,{platform:{},sessionManager:{getSessions:()=>[{workspaceId:'selected-workspace',workingDirectory:project}]}} as unknown as HandlerDeps);
  await server.listen();
- client=new WsRpcClient(`ws://127.0.0.1:${server.port}`,{token:reader.credential,workspaceId:'selected-workspace',autoReconnect:false,requestTimeout:5000});
-},30000);
-afterAll(async()=>{client?.destroy();await server?.close();authority?.close();if(previous===undefined)delete process.env.ROX_CONFIG_DIR;else process.env.ROX_CONFIG_DIR=previous;fs.rmSync(sandbox,{recursive:true,force:true});},30000);
+ // The first includeOmp loadAllSkills is a cold scan of this machine's real
+ // ~/.agents/skills (~4900-5900 entries, ~19s idle, ~50s under a full
+ // `bun test --isolate` of the 104-file rpc directory). That exceeds the 30s
+ // default, so allow 60s: the scan is per-process (invalidateSkillsCache is not
+ // reachable here) and CI machines have a clean/small home, so 60s is ample and
+ // is the ceiling — never raise it further.
+ client=new WsRpcClient(`ws://127.0.0.1:${server.port}`,{token:reader.credential,workspaceId:'selected-workspace',autoReconnect:false,requestTimeout:60000});
+},65000);
+afterAll(async()=>{client?.destroy();await server?.close();authority?.close();if(previous===undefined)delete process.env.ROX_CONFIG_DIR;else process.env.ROX_CONFIG_DIR=previous;if(previousCraft===undefined)delete process.env.CRAFT_CONFIG_DIR;else process.env.CRAFT_CONFIG_DIR=previousCraft;fs.rmSync(sandbox,{recursive:true,force:true});},65000);
 test('registered authenticated selected port returns full OMP body and authorized project precedence',async()=>{
  const detail=await client.invoke(channels.skills.GET_DETAILS,'selected-workspace',slug) as {content:string;source:string};
  expect(detail.content).toBe('Native selected 日本語 🔒');expect(detail.source).toBe('omp');
@@ -46,14 +58,14 @@ test('registered authenticated selected port returns full OMP body and authorize
  expect(projectDetail.content).toBe('Project canonical');expect(projectDetail.source).toBe('project');
  const list=await client.invoke(channels.skills.GET,'selected-workspace') as {slug:string;content:string}[];
  expect(list.find(item=>item.slug===slug)?.content).toBe('');
-},30000);
+},65000);
 test('workspace mismatch, foreign project and read-only mutation fail closed',async()=>{
  const foreign=join(sandbox,'foreign');createSkill(join(foreign,'.agents','skills',slug),'FOREIGN');
  await expect(client.invoke(channels.skills.GET_DETAILS,'other-workspace',slug)).rejects.toThrow();
  await expect(client.invoke(channels.skills.GET_DETAILS,'selected-workspace',slug,foreign)).rejects.toThrow();
  await expect(client.invoke(channels.skills.UPDATE,'selected-workspace',slug,{content:'write'})).rejects.toThrow();
  expect(fs.readFileSync(join(foreign,'.agents','skills',slug,'SKILL.md'),'utf8')).toContain('FOREIGN');
-},30000);
+},65000);
 test('revocation while canonical project validation awaits prevents body opening',async()=>{
  const original=promises.realpath,entered=Promise.withResolvers<void>(),release=Promise.withResolvers<void>();
  const held=spyOn(promises,'realpath').mockImplementation((async(path:any,...args:any[])=>{if(String(path)===project){entered.resolve();await release.promise;}return (original as any)(path,...args);}) as typeof promises.realpath);
@@ -64,4 +76,4 @@ test('revocation while canonical project validation awaits prevents body opening
   await entered.promise;authority.revokeWorkspaceGrant(admin.credential,reader.principal.subject,'selected-workspace');release.resolve();
   expect(await result).toBe(true);expect(reads).toBe(0);
  }finally{release.resolve();held.mockRestore();open.mockRestore();}
-},30000);
+},65000);

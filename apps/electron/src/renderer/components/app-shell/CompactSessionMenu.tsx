@@ -82,7 +82,7 @@ import type { SessionMeta } from '@/atoms/sessions'
 import { getSessionStatus, hasUnreadMeta, hasMessagesMeta } from '@/utils/session'
 import { getFileManagerName } from '@/lib/platform'
 import { useMessagingConnect, type MessagingPlatform } from '@/components/messaging/MessagingSessionMenuItem'
-import { useSessionMenuActions } from '@/hooks/useSessionMenuActions'
+import { useKnowledgeConnectionAvailable, useSessionMenuActions } from '@/hooks/useSessionMenuActions'
 import { useSetAtom } from 'jotai'
 import { publishSessionDialogAtom } from '@/atoms/knowledge-publish'
 
@@ -192,19 +192,9 @@ export function CompactSessionMenu({
   const actions = useSessionMenuActions({ item, onLabelsChange })
 
   const setPublishDialog = useSetAtom(publishSessionDialogAtom)
-  const [hasKnowledgeConnection, setHasKnowledgeConnection] = React.useState(false)
-  React.useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const list = await window.electronAPI?.knowledge?.listConnections?.()
-        if (!cancelled) setHasKnowledgeConnection(Array.isArray(list) && list.length > 0)
-      } catch {
-        if (!cancelled) setHasKnowledgeConnection(false)
-      }
-    })()
-    return () => { cancelled = true }
-  }, [])
+  // Shared, deduplicated across every session menu (compact rows mount one
+  // drawer per row) — one request per app session instead of one per row.
+  const hasKnowledgeConnection = useKnowledgeConnectionAvailable()
 
 
   const flatLabelItems = React.useMemo(

@@ -16,6 +16,18 @@
 
 ---
 
+## Reconcile 2026-10-09 (/improve, ревизия `4aa091df1`+)
+
+Статусы ниже проверены независимым аудитом чтением кода (не по документам). Полный отчёт и новые находки: `advisor-plans/README.md` + планы `advisor-plans/001…`. Ничего в файле не удалялось — только поправки.
+
+**Закрыто/устарело с момента инвентаря (подтверждено кодом):** 4.9 (`escapeHtml` + 5 XSS-тестов — `packages/shared/src/auth/__tests__/callback-page.test.ts`), 5.5 (`KnowledgeInspector.tsx:24,49` + `entity-surface-mount.test.ts`), 6.4 (единый `blocked-subprocess-env.ts` + регрессия), 6.5 (`proxy-tool-name.ts` + запрет переизобретений), 7.3 (`ReauthScreen` смонтирован — `App.tsx:2618`; устаревший комментарий `:879` оставлен как находка), 9.1 (`http-server.ts:254-256` — login-assets без auth), 9.2 (`web-api.ts:226-237` + тест), 9.4 (`Dockerfile.server:85,114`), 12.4/12.5 (`docs/cli.md:43,57,343`), 12.7 (`.cursor/*` существует), 1.8/1.13/2.1/2.2/2.4 (отдельный триаж: типизированные OMP-коды с регресс-тестом, factory возвращает `omp`, parity-тест дефолтов, `thinkingLevel: medium`).
+**Уточнения (CHANGED):** 1.7 (провижионинг `~/.omp/agent` есть — `omp-first-run.ts:249-292`; гейт остаётся на Rox-ключе), 1.10 (механизм `defaultSessionLabel` есть — `llm-connections.ts:172` + `SessionManager.ts:3666`; значение по умолчанию нигде не сидится), 1.12 (fresh native setup дымится в `product-tour-native` — `product.native.spec.ts`; визард целиком не драйвится), 6.3 (реальный spawn-тест есть — `env-blocklist.test.ts:84-107`, узкий), 9.5-F18 (E2B выведен из реестра — `docs/cloud-runs-features-spec.md:3-4`).
+**Подтверждённо живое:** 1.9 (`omp-agent.ts:2359-2360` — вложения только текстом), 1.11 (`:1605-1607` — partial tool output скипается сознательно), 2.3 (`default-seeds.ts:275-279` — audit-автоматизация выключена), 4.12 (UI секретов появился, остальное — нет), 5.8 (live-kernel CI нет), 6.1 (остаток — мёртвые исходники `session-mcp-server`/`bridge-mcp-server` + строка `Dockerfile.server:61`), 7.2 (MIGRATE-класс не начат — `ROX_CLOUD_CONNECT.md:25`, `identity-migration-plan.md:84-85`), 8.4 (флаг `featureUnifiedShellAtom` OFF — `atoms/unified-shell.ts:110-112`), 10.1 (`dashboard.html` в корне), 12.2 (`marketing:*`/`docs:*` живы в `package.json:122-127`, при том что `docs/repo-known-issues.md:7` объявляет их удалёнными), 12.3 (root `tsconfig.json:28` — `include: ["src/**/*"]` без корневого `src/`), 13.1–13.3 (`SessionManager.ts` — 11 510 строк и растёт).
+**Решено ADR/PRD — снять из OPEN:** 4.11 (общий bearer `CLOUD_RUNS_TOKEN` — `plans/next-program/decisions/003-cloud-runs-auth.md` + `docs/cloud-runs-prd.md:7`), 8.10 (два query DSL — by design, PRD `docs/superpowers/specs/2026-08-08-sessions-collection-linear-views-prd.md:107`), 9.3 (Rox Connect LOCAL_ONLY — by design, `packages/shared/src/auth/rox-cloud.ts:4-5`).
+**Новые находки (не были в инвентаре):** SEC-01 (deep-link из Browser Pane → сессия с автоотправкой — `apps/electron/src/main/browser-pane-manager.ts:4120-4140` + `NavigationContext.tsx:962-974`), SEC-02 (клиентская capability обходит LOCAL_ONLY-фенс → `shell:exec` — `transport/server.ts:1054,1197-1212` + `handlers/rpc/system.ts:406-425`), PERF-01/02/04/05 (первый кадр последним; бенч с подменой HOME; bundle-профиль — цикл по символам; виртуализации нет), TECH-01/03/04/05 (мёртвая копия onboarding-хендлера; дубль `note:` в `registry/fragments/sessions.yaml` (js-yaml: `duplicated mapping key (297:3)`); гарда на дубли YAML-ключей нет; одноразовые branch-mutating workflow живы). Детали и планы — в `advisor-plans/`.
+
+---
+
 ## 1. Агентный рантайм / OMP / first-run
 
 ### 1.1 P0: зависание, если `omp` выходит до `ready` — `FIXED`

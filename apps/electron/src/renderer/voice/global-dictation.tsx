@@ -316,6 +316,12 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
       if (!cancelled) setPrefs(next)
     }).catch(() => {})
     const offChanged = window.electronAPI.onVoiceChanged?.((next) => setPrefs(next))
+    const offJob = window.electronAPI.onVoiceJob?.((job) => {
+      // The host cancels on its own (denied microphone, dropped capture): reset
+      // local state and release ownership instead of stranding the host as the
+      // microphone owner, which would latch the arbitration for the next hotkey.
+      if (job.job === 'cancelled' && currentOwner() === owner) cancelRecordingRef.current()
+    })
     const offHotkey = window.electronAPI.onVoiceHotkey?.((payload) => {
       if (payload.recordingId !== undefined) {
         // Commands bound to a native capture only apply to our own recording.
@@ -329,6 +335,7 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
     return () => {
       cancelled = true
       offChanged?.()
+      offJob?.()
       offHotkey?.()
     }
   }, [])

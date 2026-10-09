@@ -157,4 +157,31 @@ describe('actual native overlay owner composition', () => {
     expect(next.messages.at(-1)).toEqual([VOICE_OVERLAY_STATE, { ...state, recordingId: 'recording-two', rms: 0 }])
     port.dispose()
   })
+  it('a command whose forward fails does not latch out a later stop or cancel for the same recording', () => {
+    const owner = new FakeWindow(); const commands: unknown[] = []
+    let forwardOk = false
+    const port = createNativeVoiceOverlayHost({ resolveOwner: () => owner as never,
+      sendCommand: (...args) => { commands.push(args); return forwardOk } })
+    port.publish({ context, state, position: 'top', assertCurrent() {} })
+    const child = children.at(-1)!
+    const command = handlers.get(VOICE_OVERLAY_COMMAND)!
+    // The first stop reaches the handler but the forward fails: nothing was sent,
+    // so the surface must still accept a stop for the same recording.
+    expect(command({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: false })
+    expect(commands).toHaveLength(1)
+    forwardOk = true
+    expect(command({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: true })
+    expect(commands).toHaveLength(2)
+    // A successful forward stays single-shot.
+    expect(command({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: false })
+    expect(commands).toHaveLength(2)
+    // The same holds for cancel.
+    forwardOk = false
+    expect(command({ sender: child.webContents }, 'cancel', state.recordingId)).toEqual({ ok: false })
+    expect(commands).toHaveLength(3)
+    forwardOk = true
+    expect(command({ sender: child.webContents }, 'cancel', state.recordingId)).toEqual({ ok: true })
+    expect(commands).toHaveLength(4)
+    port.dispose()
+  })
 })

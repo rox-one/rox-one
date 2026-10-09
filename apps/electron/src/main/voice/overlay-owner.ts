@@ -58,12 +58,18 @@ export function createNativeVoiceOverlayHost(options: {
     if (action === 'stop') {
       if (phase !== 'recording' || stopSent || cancelSent) return { ok: false }
       stopSent = true
-      return { ok: options.sendCommand(latest!.context, 'toggle', recordingId) }
+      // A forward that never lands must not latch the command out: the surface
+      // is still showing this recording, so a later stop for it must be allowed.
+      const sent = options.sendCommand(latest!.context, 'toggle', recordingId)
+      if (!sent) stopSent = false
+      return { ok: sent }
     }
     if (action === 'cancel') {
       if (!['permission', 'recording', 'saving', 'transcribing', 'enhancing'].includes(phase) || cancelSent) return { ok: false }
       cancelSent = true
-      return { ok: options.sendCommand(latest!.context, 'cancel', recordingId) }
+      const sent = options.sendCommand(latest!.context, 'cancel', recordingId)
+      if (!sent) cancelSent = false
+      return { ok: sent }
     }
     return { ok: false }
   })

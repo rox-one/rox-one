@@ -16,6 +16,7 @@ import type { MarkdownDiffBlockProps } from './MarkdownDiffBlock'
 import type { MarkdownJsonBlockProps } from './MarkdownJsonBlock'
 import type { MarkdownDatatableBlockProps } from './MarkdownDatatableBlock'
 import type { MarkdownSpreadsheetBlockProps } from './MarkdownSpreadsheetBlock'
+import type { MarkdownOpenUIBlockProps } from './MarkdownOpenUIBlock'
 
 interface BlockProps {
   code: string
@@ -29,6 +30,8 @@ export interface LazyMarkdownMermaidBlockProps extends BlockProps {
 }
 
 export interface LazyMarkdownLatexBlockProps extends BlockProps {}
+
+export interface LazyMarkdownOpenUIBlockProps extends MarkdownOpenUIBlockProps {}
 
 type LazyBlock<P extends BlockProps> = React.FC<P> & {
   /** Start fetching the block's chunk without rendering it. */
@@ -107,4 +110,10 @@ export const LazyMarkdownDiffBlock = lazyBlock<MarkdownDiffBlockProps>(
   () => import('./MarkdownDiffBlock').then((m) => m.MarkdownDiffBlock),
   'diff',
   'LazyMarkdownDiffBlock',
+)
+
+export const LazyMarkdownOpenUIBlock = lazyBlock<LazyMarkdownOpenUIBlockProps>(
+  () => import('./MarkdownOpenUIBlock').then((m) => m.MarkdownOpenUIBlock),
+  'openui',
+  'LazyMarkdownOpenUIBlock',
 )

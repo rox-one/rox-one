@@ -1,9 +1,12 @@
+import i18n from 'i18next'
 import type { ElectronAPI } from '../../../shared/types'
 import { createNativeNotesSyncController } from '../native-notes-sync'
 import { isNativeNoteDocument } from '../notes-write-authority'
 
-/** Vault folder every recorded transcript is filed under. */
-export const TRANSCRIPTS_FOLDER = 'Мои транскрипты'
+/** Vault folder every recorded transcript is filed under; localized at call time. */
+export function transcriptsFolder(): string {
+  return i18n.t('transcriptsNotebook.space.name')
+}
 
 export interface TranscriptSegmentInput {
   speaker: string
@@ -57,22 +60,24 @@ function formatClock(ms: number): string {
 
 export function transcriptNoteTitle(input: TranscriptRecordInput): string {
   const stamp = formatStamp(input.at ?? Date.now())
-  if (input.source !== 'meeting') return `Транскрипт ${stamp}`
-  const title = input.meetingTitle?.trim()
-  return title ? `Встреча «${title}» — ${stamp}` : `Встреча ${stamp}`
+  if (input.source !== 'meeting') return `${i18n.t('transcriptsNotebook.untitled')} ${stamp}`
+  const title = input.meetingTitle?.trim() || i18n.t('transcriptsNotebook.untitledMeeting')
+  return i18n.t('transcriptsNotebook.noteTitle.meeting', { title, when: stamp })
 }
 
 export function transcriptMarkdown(input: TranscriptRecordInput): string {
   const lines = [
-    `**Дата:** ${formatStamp(input.at ?? Date.now())}`,
-    `**Источник:** ${input.source === 'meeting' ? 'Встреча' : 'Голосовой ввод'}`,
+    `**${i18n.t('transcriptsNotebook.note.date')}:** ${formatStamp(input.at ?? Date.now())}`,
+    `**${i18n.t('transcriptsNotebook.note.source')}:** ${
+      input.source === 'meeting' ? i18n.t('transcriptsNotebook.note.source.meeting') : i18n.t('transcriptsNotebook.note.source.dictation')
+    }`,
   ]
   const language = input.language?.trim()
-  if (language) lines.push(`**Язык:** ${language}`)
+  if (language) lines.push(`**${i18n.t('transcriptsNotebook.note.language')}:** ${language}`)
   const model = input.model?.trim()
-  if (model) lines.push(`**Модель:** ${model}`)
+  if (model) lines.push(`**${i18n.t('transcriptsNotebook.note.model')}:** ${model}`)
   if (typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)) {
-    lines.push(`**Длительность:** ${formatClock(input.durationMs)}`)
+    lines.push(`**${i18n.t('transcriptsNotebook.note.duration')}:** ${formatClock(input.durationMs)}`)
   }
   const segments = input.source === 'meeting' ? input.segments ?? [] : []
   const body = segments.length
@@ -165,7 +170,7 @@ export async function recordTranscript(
       const created = await withClaimRetry(() => api.createNote(
         input.workspaceId,
         title,
-        TRANSCRIPTS_FOLDER,
+        transcriptsFolder(),
         { operationId: crypto.randomUUID(), expectedRevision: null, schemaVersion: 1 },
       ))
       try {
