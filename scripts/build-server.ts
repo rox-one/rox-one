@@ -644,10 +644,10 @@ done
 echo "Binaries configured."
 
 # Generate token if not set
-if [ -z "\${CRAFT_SERVER_TOKEN:-}" ]; then
+if [ -z "\${ROX_SERVER_TOKEN:-}" ]; then
   TOKEN=\$(openssl rand -hex 32)
   cat > "$DIR/.env" <<ENVFILE
-CRAFT_SERVER_TOKEN=$TOKEN
+ROX_SERVER_TOKEN=$TOKEN
 
 # TLS — uncomment and set paths to enable wss://
 # CRAFT_RPC_TLS_CERT=/path/to/cert.pem
@@ -657,9 +657,9 @@ ENVFILE
   echo ""
   echo "Generated server token (saved to $DIR/.env)"
 else
-  TOKEN="\$CRAFT_SERVER_TOKEN"
+  TOKEN="\$ROX_SERVER_TOKEN"
   echo ""
-  echo "Using CRAFT_SERVER_TOKEN from environment."
+  echo "Using ROX_SERVER_TOKEN from environment."
 fi
 
 # Systemd installation
@@ -706,7 +706,7 @@ fi
 
 echo ""
 echo "Quick start:"
-echo "  CRAFT_SERVER_TOKEN=$TOKEN $DIR/start.sh"
+echo "  ROX_SERVER_TOKEN=$TOKEN $DIR/start.sh"
 echo ""
 echo "Or with systemd:"
 echo "  sudo $DIR/install.sh --systemd"
@@ -765,7 +765,7 @@ services:
     ports:
       - "9100:9100"
     environment:
-      - CRAFT_SERVER_TOKEN=\${CRAFT_SERVER_TOKEN:?Set CRAFT_SERVER_TOKEN}
+      - ROX_SERVER_TOKEN=\${ROX_SERVER_TOKEN:?Set ROX_SERVER_TOKEN}
       - CRAFT_RPC_PORT=9100
       # TLS — uncomment to enable wss://
       # - CRAFT_RPC_TLS_CERT=/certs/cert.pem
@@ -919,7 +919,7 @@ async function main(): Promise<void> {
 
   console.log('\n  Build completed successfully!');
   console.log(`\nQuick start:`);
-  console.log(`  CRAFT_SERVER_TOKEN=<secret> ${outputDir}/start.sh`);
+  console.log(`  ROX_SERVER_TOKEN=<secret> ${outputDir}/start.sh`);
 }
 
 main();

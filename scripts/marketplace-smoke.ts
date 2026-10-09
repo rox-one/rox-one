@@ -5,7 +5,7 @@
  * Zero-network: remote fetch is forced to fail; catalog falls back to bundled.
  * Install uses a fake git execFileFn (same pattern as installer.test.ts).
  *
- * Requires an external CRAFT_CONFIG_DIR under /tmp (never touch real ~/.craft-agent):
+ * Requires an external CRAFT_CONFIG_DIR under /tmp (never touch real config dir):
  *   CRAFT_CONFIG_DIR=$(mktemp -d /tmp/mp.XXXX) bun scripts/marketplace-smoke.ts
  */
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'

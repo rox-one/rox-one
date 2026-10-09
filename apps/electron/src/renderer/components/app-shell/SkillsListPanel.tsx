@@ -73,8 +73,8 @@ export function SkillsListPanel({
   const tour = useTourSignals(tourScope)
   React.useEffect(() => tour.capability('skills.available', connectionCapabilities({ skills })['skills.available']!), [tour, skills])
 
-  // OMP skills (~/.omp/agent/skills, {workspace}/.omp/skills) render as a
-  // separate read-only group with an "Export to craft skills" action.
+  // Runtime skills (~/.omp/agent/skills, {workspace}/.omp/skills) render as a
+  // separate read-only group with an "Export as Rox skill" action.
   const craftSkills = skills.filter((s) => s.source !== 'omp')
   const repeatedSkillNames = React.useMemo(() => {
     const seen = new Set<string>()
@@ -220,9 +220,9 @@ export function SkillsListPanel({
     setExportingSlug(skill.slug)
     try {
       const result = await window.electronAPI.importOmpSkill(targetWorkspaceId, skill.slug)
-      toast.success(t('skillsList.ompExported', { name: skill.metadata.name, slug: result.slug }))
+      toast.success(t('skillsList.roxCliExported', { name: skill.metadata.name, slug: result.slug }))
     } catch (err) {
-      toast.error(t('skillsList.ompExportFailed'), {
+      toast.error(t('skillsList.roxCliExportFailed'), {
         description: toErrorMessage(err),
       })
     } finally {
@@ -270,7 +270,7 @@ export function SkillsListPanel({
   }
 
   // Render EntityPanel empty state only when there are no skills at all —
-  // a workspace with only OMP skills shouldn't show "No skills configured".
+  // a workspace with only runtime skills shouldn't show "No skills configured".
   // While a load is pending/retrying (e.g. a slow bundled-skills sync that
   // outlived the client timeout) show a syncing placeholder instead of
   // claiming the workspace has no skills.
@@ -427,7 +427,7 @@ export function SkillsListPanel({
           <SkillMenu
             skillSlug={skill.slug}
             skillName={skill.metadata.name}
-            onOpenInNewWindow={() => window.electronAPI.openUrl(`craftagents://skills/skill/${skill.slug}?window=focused`)}
+            onOpenInNewWindow={() => window.electronAPI.openUrl(`rox://skills/skill/${skill.slug}?window=focused`)}
             onShowInFinder={async () => {
               if (!canRevealLocally) return
               try {
@@ -642,15 +642,15 @@ export function SkillsListPanel({
 
     {/* Runtime skills — read-only group with export action */}
     {ompSkills.length > 0 && (
-      <div className="mt-3 pt-1.5" data-list-role="omp-skills">
+      <div className="mt-3 pt-1.5" data-list-role="runtime-skills">
         <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
-          {t('skillsList.ompSection')}
+          {t('skillsList.roxCliSection')}
         </div>
         <ul>
           {ompSkills.map((skill) => (
             <li
               key={skill.slug}
-              title={skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
+              title={skill.shadowedByCraft ? t('skillsList.roxCliShadowed') : skill.metadata.description}
               className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] ${!skill.shadowedByCraft && selectedSkillSlug === skill.slug ? 'bg-foreground/5' : 'hover:bg-foreground/[0.03]'} ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
               style={SKILL_ROW_STYLE}
             >
@@ -666,11 +666,11 @@ export function SkillsListPanel({
                   <span className="flex items-center gap-1.5 min-w-0">
                     <span className="truncate text-sm">{skill.metadata.name}</span>
                     <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
-                      {t('skillsList.ompBadge')}
+                      {t('skillsList.roxCliBadge')}
                     </span>
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
+                    {skill.shadowedByCraft ? t('skillsList.roxCliShadowed') : skill.metadata.description}
                   </span>
                 </span>
               </button>
@@ -690,7 +690,7 @@ export function SkillsListPanel({
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onSelect={() => void handleExportOmpSkill(skill)}>
                     <PackageOpen className="size-3.5" />
-                    {t('skillsList.ompExport')}
+                    {t('skillsList.roxCliExport')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

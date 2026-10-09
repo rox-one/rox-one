@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * craft-cli — Terminal client for the Rox server.
+ * rox — Terminal client for the Rox server.
  *
  * Connects over WebSocket (ws:// or wss://) to a running Rox server
  * and provides commands for listing resources, managing sessions, sending
@@ -1541,7 +1541,7 @@ export function getValidateSteps(): ValidateStep[] {
 mkdir -p "${skillDir}" && cat > "${skillDir}/SKILL.md" << 'SKILLEOF'
 ---
 name: "CLI Validate Skill"
-description: "Validation skill created by craft-cli"
+description: "Validation skill created by rox"
 requiredSources:
   - "${sourceSlug}"
 ---
@@ -2060,9 +2060,9 @@ export async function runValidation(
 // ---------------------------------------------------------------------------
 
 function printHelp(): void {
-  process.stdout.write(`craft-cli — Terminal client for the Rox server
+  process.stdout.write(`rox — Terminal client for the Rox server
 
-Usage: craft-cli [options] <command> [args...]
+Usage: rox [options] <command> [args...]
 
 Connection:
   --url <ws[s]://...>    Server URL (default: $CRAFT_SERVER_URL)
@@ -2122,21 +2122,21 @@ Commands:
                          --verbose, -v       Show server stderr output
 
 Examples:
-  craft-cli run "What files are in the current directory?"
-  craft-cli run --source craft-kb "Summarize today's daily note"
-  craft-cli run --workspace-dir .github/agents --source craft-public "Read the doc"
-  craft-cli run --provider openai --model gpt-4o "Summarize this repo"
-  OPENAI_API_KEY=sk-... craft-cli run --provider openai "Hello"
-  GOOGLE_API_KEY=... craft-cli run --provider google --model gemini-2.0-flash "Hello"
-  DEEPSEEK_API_KEY=sk-... craft-cli run --provider deepseek --model deepseek-v4-flash "Hello"
-  echo "Analyze this code" | craft-cli run
-  craft-cli ping
-  craft-cli sessions
-  craft-cli send abc-123 "What files are in the current directory?"
-  echo "Summarize this" | craft-cli send abc-123
-  craft-cli --validate-server
-  craft-cli invoke system:homeDir
-  craft-cli --json workspaces | jq '.[].name'
+  rox run "What files are in the current directory?"
+  rox run --source craft-kb "Summarize today's daily note"
+  rox run --workspace-dir .github/agents --source craft-public "Read the doc"
+  rox run --provider openai --model gpt-4o "Summarize this repo"
+  OPENAI_API_KEY=sk-... rox run --provider openai "Hello"
+  GOOGLE_API_KEY=... rox run --provider google --model gemini-2.0-flash "Hello"
+  DEEPSEEK_API_KEY=sk-... rox run --provider deepseek --model deepseek-v4-flash "Hello"
+  echo "Analyze this code" | rox run
+  rox ping
+  rox sessions
+  rox send abc-123 "What files are in the current directory?"
+  echo "Summarize this" | rox send abc-123
+  rox --validate-server
+  rox invoke system:homeDir
+  rox --json workspaces | jq '.[].name'
 `)
 }
 

@@ -77,9 +77,9 @@ describe('SecuritySettingsPage source contracts', () => {
 
   it('shows Infisical-for-Rox health without an email or token login form', () => {
     expect(source).toContain('fabricInfisicalHealth')
-    expect(source).toContain("t('security.infisical.title')")
-    expect(source).toContain("t('security.infisical.hint')")
-    expect(source).toContain("t('security.infisical.check')")
+    expect(source).toContain("t('security.keeper.title')")
+    expect(source).toContain("t('security.keeper.hint')")
+    expect(source).toContain("t('security.keeper.check')")
     expect(source).toContain("t('security.section.vault')")
     expect(source).not.toMatch(/type=["']email["']/)
     expect(source).not.toMatch(/type=["']password["']/)

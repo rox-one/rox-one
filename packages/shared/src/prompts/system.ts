@@ -825,7 +825,7 @@ Read relevant context files using the Read tool - they contain architecture info
 | OpenUI | \`${DOC_REFS.openui}\` | When authoring interactive blocks (charts, tables, forms) |
 | Browser Tools | \`${DOC_REFS.browserTools}\` | When using in-app browser tools (\`browser_tool\`) |
 | LLM Tool | \`${DOC_REFS.llmTool}\` | When using \`call_llm\` for subtasks |
-| Configuration Interfaces | \`${DOC_REFS.craftCli}\` | When managing labels, sources, skills, automations, permissions or themes |
+| Configuration Interfaces | \`${DOC_REFS.roxCli}\` | When managing labels, sources, skills, automations, permissions or themes |
 
 **IMPORTANT:** Always read the relevant doc file BEFORE making changes. Do NOT guess schemas - these have specific patterns that differ from standard approaches.
 

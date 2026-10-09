@@ -12,11 +12,11 @@ export CRAFT_PRINT_TOKEN=0
 
 umask 077
 mkdir -p "$ROX_CONFIG_DIR"
-CRAFT_SERVER_TOKEN="dev-$(openssl rand -hex 24)"
-export CRAFT_SERVER_TOKEN
+ROX_SERVER_TOKEN="dev-$(openssl rand -hex 24)"
+export ROX_SERVER_TOKEN
 token_path="$(mktemp "$ROX_CONFIG_DIR/.cursor-dev-token.XXXXXX")"
 trap 'rm -f -- "$token_path"' EXIT
-printf '%s\n' "$CRAFT_SERVER_TOKEN" > "$token_path"
+printf '%s\n' "$ROX_SERVER_TOKEN" > "$token_path"
 mv -f -- "$token_path" "$ROX_CONFIG_DIR/cursor-dev-token"
 printf 'ROX development token file: %s/cursor-dev-token\n' "$ROX_CONFIG_DIR"
 exec bun run packages/server/src/index.ts
