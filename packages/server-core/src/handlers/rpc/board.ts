@@ -27,6 +27,7 @@ export const BOARD_HANDLED_CHANNELS = [
   RPC_CHANNELS.board.WIDGET_GET,
   RPC_CHANNELS.board.WIDGET_MOUNT,
   RPC_CHANNELS.board.WIDGET_RELEASE,
+  RPC_CHANNELS.board.WIDGET_VALIDATE,
 ] as const
 
 interface BoardPutArgs {
@@ -39,6 +40,7 @@ interface BoardPutArgs {
 }
 interface BoardWidgetRefArgs { workspaceId?: string | null; widgetId: string }
 interface BoardReleaseArgs { workspaceId?: string | null; ticket: string }
+interface BoardValidateArgs { workspaceId?: string | null; widgetId: string; nonce: string; revision?: number }
 
 /** The request workspace is explicit, else the transport/window-bound one. */
 function resolveWorkspaceId(ctx: RequestContext, args: { workspaceId?: string | null } | undefined, deps: HandlerDeps): string {
@@ -98,5 +100,23 @@ export function registerBoardHandlers(server: RpcServer, deps: HandlerDeps): voi
     const { actor, tickets } = boardContext(ctx, workspaceId, deps, server)
     actor.assertCurrent('read')
     return { released: tickets.release(args?.ticket ?? '') }
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
+
+  // Validate a frame ticket. `tickets.validate` raises the one uniform typed
+  // refusal (`WIDGET_TICKET_REFUSED`) for unknown, expired, stale-after-re-put
+  // and forged nonces alike; nothing about the ticket is ever echoed back on
+  // success beyond its (non-secret) expiry, so a forgery cannot be told apart
+  // from an expiry. `revision` defaults to the widget's current stored revision
+  // so a caller that mounted without recording the revision can still validate.
+  server.handle(RPC_CHANNELS.board.WIDGET_VALIDATE, (ctx, args: BoardValidateArgs) => {
+    const workspaceId = resolveWorkspaceId(ctx, args, deps)
+    const { actor, store, tickets } = boardContext(ctx, workspaceId, deps, server)
+    actor.assertCurrent('read')
+    const revision = typeof args?.revision === 'number' && Number.isInteger(args.revision)
+      ? args.revision
+      : typeof args?.widgetId === 'string' ? store.read(args.widgetId)?.revision : undefined
+    if (revision === undefined) throw new CodedError('NOT_FOUND', 'Board widget unavailable')
+    const ticket = tickets.validate({ nonce: args?.nonce, widgetId: args?.widgetId, revision })
+    return { valid: true as const, expiresAt: ticket.expiresAt }
   }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 }

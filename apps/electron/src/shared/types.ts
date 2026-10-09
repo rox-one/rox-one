@@ -811,6 +811,16 @@ export interface BoardWidgetReleaseResult {
   released: boolean
 }
 
+/**
+ * Result of `board:widgetValidate`. A rejected ticket never returns here — the
+ * RPC throws the uniform typed refusal `WIDGET_TICKET_REFUSED` instead, so no
+ * ticket material is disclosed to the caller.
+ */
+export interface BoardWidgetValidateResult {
+  valid: true
+  expiresAt: number
+}
+
 /** Payload of the `board:changed` push event. */
 export interface BoardChangedPush {
   widgetId: string
@@ -2972,6 +2982,12 @@ export interface ElectronAPI {
   getBoardWidget(args: { widgetId: string }): Promise<BoardWidgetGetResult>
   mountBoardWidget(args: { widgetId: string }): Promise<BoardWidgetMountResult>
   releaseBoardWidget(args: { ticket: string }): Promise<BoardWidgetReleaseResult>
+  validateBoardWidget(args: {
+    workspaceId?: string | null
+    widgetId: string
+    nonce: string
+    revision?: number
+  }): Promise<BoardWidgetValidateResult>
   onBoardChanged(callback: (payload: BoardChangedPush) => void): () => void
 
   // Sessions collection display (workspace-scoped)

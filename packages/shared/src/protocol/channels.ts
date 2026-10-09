@@ -1145,6 +1145,8 @@ export const RPC_CHANNELS = {
     WIDGET_GET: 'board:widgetGet',
     WIDGET_MOUNT: 'board:widgetMount',
     WIDGET_RELEASE: 'board:widgetRelease',
+    /** Validate a frame ticket over the wire; refusal is one uniform typed error. */
+    WIDGET_VALIDATE: 'board:widgetValidate',
     CHANGED: 'board:changed',
   },
   collection: {

@@ -1066,6 +1066,7 @@ export const CHANNEL_MAP = {
   getBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_GET),
   mountBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_MOUNT),
   releaseBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_RELEASE),
+  validateBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_VALIDATE),
   onBoardChanged: listener(RPC_CHANNELS.board.CHANGED),
 
   // Sessions collection display

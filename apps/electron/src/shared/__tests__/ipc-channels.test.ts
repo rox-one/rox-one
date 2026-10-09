@@ -56,6 +56,7 @@ const EXPECTED_CHANNELS: string[] = [
   'board:widgetMount',
   'board:widgetPut',
   'board:widgetRelease',
+  'board:widgetValidate',
   'browser-empty-state:launch',
   'browser-pane:click',
   'browser-pane:click-at',

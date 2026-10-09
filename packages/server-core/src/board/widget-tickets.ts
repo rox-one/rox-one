@@ -173,13 +173,18 @@ export class WidgetTicketRegistry {
  * One registry per workspace, shared by every writer in this process (the board
  * RPC handlers AND the `show_widget` tool callbacks) so a re-put through either
  * path rotates the same view generation.
+ *
+ * `options` apply only when the registry for `workspaceRootPath` is created —
+ * the first caller wins, every later caller shares it. Production callers pass
+ * none (the defaults); a host or test harness may pre-create the registry with
+ * a shorter TTL.
  */
 const registries = new Map<string, WidgetTicketRegistry>()
 
-export function widgetTicketRegistryFor(workspaceRootPath: string): WidgetTicketRegistry {
+export function widgetTicketRegistryFor(workspaceRootPath: string, options?: WidgetTicketRegistryOptions): WidgetTicketRegistry {
   let registry = registries.get(workspaceRootPath)
   if (!registry) {
-    registry = new WidgetTicketRegistry()
+    registry = new WidgetTicketRegistry(options)
     registries.set(workspaceRootPath, registry)
   }
   return registry

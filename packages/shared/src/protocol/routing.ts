@@ -1191,6 +1191,7 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.board.WIDGET_GET,
   RPC_CHANNELS.board.WIDGET_MOUNT,
   RPC_CHANNELS.board.WIDGET_RELEASE,
+  RPC_CHANNELS.board.WIDGET_VALIDATE,
   RPC_CHANNELS.board.CHANGED,
 
   // collection — workspace sessions collection display prefs + filters
