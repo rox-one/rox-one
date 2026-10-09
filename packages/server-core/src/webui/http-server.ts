@@ -10,8 +10,7 @@
  *    for separate-port deployments or development.
  */
 
-import { join, extname, resolve } from 'node:path'
-import { isPathInsideBase } from '../utils/path-validation'
+import { join, extname } from 'node:path'
 import {
   RateLimiter,
   initPasswordHash,
@@ -23,8 +22,19 @@ import {
   HandoffTokenStore,
 } from './auth'
 import { withWebuiSecurityHeaders } from './csp'
+import { resolveWebuiFile } from './static-file'
+import {
+  MEDIA_PATH_PREFIX,
+  createMediaTicket,
+  mediaSessionFingerprint,
+  resolveMediaFile,
+  verifyMediaTicket,
+} from './media-ticket'
 import { generateCallbackPage } from '@rox/shared/auth'
 import type { PlatformServices } from '../runtime/platform'
+
+// Re-exported for the existing WebUI callers/tests that import it from here.
+export { resolveWebuiFile } from './static-file'
 
 // ---------------------------------------------------------------------------
 // MIME types for static file serving
@@ -51,26 +61,6 @@ const MIME_TYPES: Record<string, string> = {
 
 function getMimeType(path: string): string {
   return MIME_TYPES[extname(path).toLowerCase()] ?? 'application/octet-stream'
-}
-
-/**
- * Resolve a URL path to a file inside webuiDir. Rejects traversal, absolute
- * segments, and NUL bytes so /login-assets/../… cannot read the host.
- */
-export function resolveWebuiFile(webuiDir: string, urlPath: string): string | null {
-  let decoded: string
-  try {
-    decoded = decodeURIComponent(urlPath)
-  } catch {
-    return null
-  }
-  const trimmed = decoded.split('?')[0]?.split('#')[0] ?? ''
-  if (!trimmed || trimmed.includes('\0')) return null
-  const relative = trimmed.replace(/^\/+/, '')
-  if (!relative) return null
-  const resolved = resolve(webuiDir, relative)
-  if (!isPathInsideBase(resolved, webuiDir)) return null
-  return resolved
 }
 
 function getForwardedValue(req: Request, key: 'proto' | 'host'): string | null {
@@ -299,6 +289,24 @@ export interface WebuiHandlerOptions {
    * accepted range is 1..120 s (see `HandoffTokenStore`).
    */
   handoffTtlMs?: number
+  /**
+   * Directory whose files are served under `/media/...` behind short-lived
+   * signed tickets (see `./media-ticket`). Defaults to `<webuiDir>/media`.
+   */
+  mediaDir?: string
+}
+
+/** Request body for `POST /media/ticket`. */
+export interface MediaTicketRequest {
+  /** Server-relative media path, e.g. `/media/pic.png`. */
+  path: string
+}
+
+/** Response body for `POST /media/ticket`. */
+export interface MediaTicketResponse {
+  /** Capability URL (`<path>?ticket=<ticket>`) — the ticket must not be logged. */
+  url: string
+  expiresAt: number
 }
 
 // ---------------------------------------------------------------------------
@@ -340,6 +348,8 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     trustedProxies,
     resolveClientIp,
   } = options
+
+  const mediaDir = options.mediaDir ?? join(webuiDir, 'media')
 
   const rateLimiter = new RateLimiter(5, 60_000)
   const cleanupTimer = setInterval(() => rateLimiter.cleanup(), 120_000)
@@ -435,6 +445,77 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         { url: `${origin}/handoff#${token}`, expiresAt },
         { status: 200, headers: { 'Cache-Control': 'no-store' } },
       )
+    }
+
+    // ── Mint a media ticket (authenticated operator only) ──
+    // Media elements load `/media/...?ticket=…`; the ticket is a short-lived
+    // capability bound to this session and path, so the SPA never has to relax
+    // CSP or place the reusable credential in a media URL. Mirrors the handoff
+    // mint above: session cookie + same-origin required. The ticket is returned
+    // once and must never be logged.
+    if (path === '/media/ticket' && req.method === 'POST') {
+      const mintSession = await validateSession(req.headers.get('cookie'), secret)
+      if (!mintSession) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
+      }
+      if (!isSameOriginRequest(req)) {
+        logger.warn('[webui] Rejected cross-origin media ticket mint request')
+        return Response.json({ error: 'Cross-origin request rejected' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+      }
+      let body: MediaTicketRequest
+      try {
+        body = await req.json() as MediaTicketRequest
+      } catch {
+        return Response.json({ error: 'Invalid request body' }, { status: 400, headers: { 'Cache-Control': 'no-store' } })
+      }
+      if (typeof body?.path !== 'string' || !resolveMediaFile(mediaDir, body.path)) {
+        return Response.json({ error: 'Invalid media path' }, { status: 400, headers: { 'Cache-Control': 'no-store' } })
+      }
+      const fingerprint = mediaSessionFingerprint(req.headers.get('cookie'))
+      if (!fingerprint) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
+      }
+      const { ticket, expiresAt } = createMediaTicket({
+        secret,
+        path: body.path,
+        sessionFingerprint: fingerprint,
+      })
+      logger.info('[webui] Media ticket minted')
+      const response: MediaTicketResponse = {
+        url: `${body.path}?ticket=${encodeURIComponent(ticket)}`,
+        expiresAt,
+      }
+      return Response.json(response, { status: 200, headers: { 'Cache-Control': 'no-store' } })
+    }
+
+    // ── Media (signed ticket only) ──
+    // Authorised solely by the ticket (the ticket itself is bound to the
+    // session cookie presented here). Uniform 403 on every failure mode so a
+    // caller cannot tell expired from tampered from cross-session, and the
+    // ticket is never echoed or logged.
+    if (path.startsWith(MEDIA_PATH_PREFIX) && req.method === 'GET') {
+      const rejected = () => {
+        logger.warn('[webui] Media request rejected')
+        return Response.json({ error: 'Media ticket rejected' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+      }
+      const verified = verifyMediaTicket(url.searchParams.get('ticket'), {
+        secret,
+        path,
+        sessionFingerprint: mediaSessionFingerprint(req.headers.get('cookie')),
+      })
+      if (!verified) return rejected()
+      const safePath = resolveMediaFile(mediaDir, verified.path)
+      if (!safePath) return rejected()
+      const file = Bun.file(safePath)
+      if (!(await file.exists())) {
+        return new Response(null, { status: 404, headers: { 'Cache-Control': 'no-store' } })
+      }
+      return new Response(file, {
+        headers: {
+          'Content-Type': getMimeType(path),
+          'Cache-Control': 'private, no-store',
+        },
+      })
     }
 
     // ── Health endpoint (no auth) ──
