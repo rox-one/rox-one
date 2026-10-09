@@ -183,14 +183,17 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     isActive: isLearningNavigation,
   },
   {
+    // W3.2: Встречи merged into the calendar surface — the entry keeps its
+    // `meetings` id, `nav:meetings` linkId and `routes.view.meetings()` route so
+    // deep links resolve, but it is presented as «Календарь» (the surface name).
     id: 'meetings',
     linkId: 'nav:meetings',
     icon: GLYPHS.calendar,
-    labelKey: 'sidebar.meetings',
+    labelKey: 'workbench.mode.calendar',
     railGroup: 'more',
     contextLinkIds: ['nav:meetings'],
     route: () => routes.view.meetings(),
-    // W3.2: the route aliases to the calendar surface; highlight it there.
+    // The route aliases to the calendar surface; highlight it there.
     isActive: (navState) => navState.navigator === 'surface' && navState.surface === 'calendar',
   },
   {

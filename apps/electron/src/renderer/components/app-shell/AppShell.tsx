@@ -2789,9 +2789,10 @@ function AppShellContent({
     },
     {
       id: "nav:meetings",
-      // W3.2 (Согласованность-20261009): Встречи live in the calendar surface;
-      // the entry stays and opens it, active while the calendar surface shows.
-      title: t('workbench.mode.meetings'),
+      // W3.2 (Согласованность-20261009): Встречи merged into the calendar
+      // surface — the entry keeps id/link/route and opens it, active while the
+      // calendar surface shows, but is presented as «Календарь».
+      title: t('workbench.mode.calendar'),
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
       variant: isSurfaceNavigation(navState) && navState.surface === 'calendar' ? "default" : "ghost",
       onClick: handleMeetingsClick,
