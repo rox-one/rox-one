@@ -1,9 +1,53 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { createInstance } from 'i18next'
+import { I18nextProvider } from 'react-i18next'
+import { getDefaultStore } from 'jotai'
+import { focusedPanelIdAtom, panelStackAtom, type PanelStackEntry } from '@/atoms/panel-stack'
 import { commitAfterBrowserWindowAction } from '../../components/browser/use-workspace-browser-windows'
 import { osBrowserSurfaceTabs, type OsBrowserInstanceLike } from '../os-browser-tabs'
 import { resolveWorkspaceSurfaceLayout } from '../workspace-surface-layout'
+
+// SurfaceTabs reads the active workspace from AppShellContext; the repo's
+// SurfaceTabs browser fixture stubs that module the same way, so a bare context
+// is the established harness. The other exports are stubbed too because this
+// file also loads `use-workspace-browser-windows` for its pure termination
+// helper.
+mock.module('@/context/AppShellContext', () => ({
+  useActiveWorkspace: () => ({ id: 'ws' }),
+  useOptionalAppShellContext: () => null,
+  useAppShellContext: () => {
+    throw new Error('AppShellContext not provided in this test')
+  },
+}))
+
+import { SurfaceTabs } from '../SurfaceTabs'
+
+const i18n = createInstance()
+void i18n.init({
+  lng: 'en',
+  fallbackLng: 'en',
+  keySeparator: false,
+  resources: { en: { translation: {} } },
+  initAsync: false,
+})
+
+const panel = (id: string, route: string, panelType: PanelStackEntry['panelType']): PanelStackEntry =>
+  ({ id, route, proportion: 1, panelType, laneId: 'main' })
+
+function renderSurfaceTabs(): string {
+  const store = getDefaultStore()
+  store.set(panelStackAtom, [
+    panel('one', 'notes', 'other'),
+    panel('two', 'tasks', 'other'),
+    panel('browser', 'browser/instance/hidden', 'browser'),
+  ])
+  store.set(focusedPanelIdAtom, 'one')
+  return renderToStaticMarkup(createElement(I18nextProvider, { i18n }, createElement(SurfaceTabs)))
+}
 
 const platformDir = join(import.meta.dir, '..')
 const rendererDir = join(platformDir, '..')
@@ -133,8 +177,6 @@ describe('commitAfterBrowserWindowAction focus boundary', () => {
 })
 
 describe('browser surface v2 source wiring', () => {
-  const surfaceTabsSource = readFileSync(join(platformDir, 'SurfaceTabs.tsx'), 'utf8')
-  const osBrowserTabsSource = readFileSync(join(platformDir, 'os-browser-tabs.ts'), 'utf8')
   const workspaceSurfaceHostSource = readFileSync(
     join(platformDir, 'WorkspaceSurfaceHost.tsx'),
     'utf8',
@@ -172,17 +214,14 @@ describe('browser surface v2 source wiring', () => {
     ).toHaveLength(1)
   })
 
-  it('does not mount OS BrowserWindow chips on the embedded-default SurfaceTabs path', () => {
-    expect(surfaceTabsSource).not.toContain('useWorkspaceBrowserWindows({')
-    expect(surfaceTabsSource).not.toContain('osBrowserSurfaceTabs(')
-    expect(surfaceTabsSource).not.toContain('function OsBrowserWindowControl')
-    expect(surfaceTabsSource).toContain('do not mount OS BrowserWindow chips')
-    // The single tablist now comes from the shared primitive (W1.1); SurfaceTabs
-    // owns no tablist markup of its own, so a second browser tab system cannot
-    // sneak back in here.
-    expect(surfaceTabsSource).toContain("from '@/components/ui/tabs'")
-    expect(surfaceTabsSource).not.toContain('role="tablist"')
-    expect(osBrowserTabsSource).toContain('export function osBrowserSurfaceTabs')
+  it('renders one tablist through the shared primitive and never an OS BrowserWindow chip', () => {
+    // Catches a hand-rolled tablist (extra role=tablist / no data-tabs) and an
+    // OS BrowserWindow chip reappearing on the embedded-default SurfaceTabs path.
+    const html = renderSurfaceTabs()
+    expect(html.match(/role="tablist"/g)).toHaveLength(1)
+    expect(html).toContain('data-tabs="surface"')
+    expect(html.match(/role="tab"/g)).toHaveLength(2)
+    expect(html).not.toContain('data-tab="browser"')
   })
 
   it('keeps workspace browser window focus/terminate helpers for non-SurfaceTabs callers', () => {

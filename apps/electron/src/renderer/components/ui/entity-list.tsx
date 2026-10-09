@@ -29,12 +29,21 @@ import {
   ENTITY_LIST_DEFAULT_ROW_HEIGHT,
   ENTITY_LIST_EMPTY_LANE_HEIGHT,
   ENTITY_LIST_GROUP_HEADER_HEIGHT,
+  ENTITY_LIST_OVERSCAN,
   entityListWindow,
   flattenEntityListRows,
   revealEntryScrollTop,
   rowEntryIndexByItemKey,
   virtualEntryIndices,
 } from '@/components/app-shell/entity-list-virtualization'
+import {
+  flattenTableGroups,
+  virtualTableWindow,
+  type FlattenedTableGroups,
+  type VirtualTableEntry,
+} from '@/components/app-shell/session-table/table-virtualization'
+
+export { ENTITY_LIST_OVERSCAN }
 
 /** Below this many rows, rendering every row is cheaper than measuring a window. */
 const ENTITY_LIST_VIRTUALIZE_THRESHOLD = 40
@@ -69,6 +78,69 @@ export interface EntityListGroup<T> {
   collapsible?: boolean
   /** Number of hidden items when collapsed. Present on collapsed placeholder groups (items will be []). */
   collapsedCount?: number
+}
+
+export interface EntityListFlattenOptions<T> {
+  getItemKey: (item: T) => string
+  rowHeight: number
+  headerHeight: number
+  emptyLaneHeight?: number
+  /** entry key (`row:<id>`) → measured pixel height, fed back from the DOM. */
+  measuredRowHeights?: ReadonlyMap<string, number>
+}
+
+/**
+ * Flatten groups (or a flat list) into positioned entries for the tree path
+ * (`WindowedTreeList`), reusing the session-table kernel so binary-search
+ * offsets and overscan match `EntityList`.
+ */
+export function flattenEntityListGroups<T>(
+  groups: EntityListGroup<T>[] | undefined,
+  items: T[] | undefined,
+  collapsed: ReadonlySet<string>,
+  options: EntityListFlattenOptions<T>,
+): FlattenedTableGroups<T, EntityListGroup<T>> {
+  const getRowHeight = options.measuredRowHeights
+    ? (item: T) =>
+        options.measuredRowHeights!.get(`row:${options.getItemKey(item)}`) ?? options.rowHeight
+    : undefined
+
+  if (groups && groups.length > 0) {
+    return flattenTableGroups<T, EntityListGroup<T>>(
+      groups.map((group) => ({ bucket: group, items: group.items })),
+      collapsed,
+      {
+        getItemKey: options.getItemKey,
+        rowHeight: options.rowHeight,
+        headerHeight: options.headerHeight,
+        ...(options.emptyLaneHeight != null ? { emptyLaneHeight: options.emptyLaneHeight } : {}),
+        ...(getRowHeight ? { getRowHeight } : {}),
+      },
+    )
+  }
+
+  return flattenTableGroups<T, EntityListGroup<T>>([{ bucket: null, items: items ?? [] }], collapsed, {
+    getItemKey: options.getItemKey,
+    rowHeight: options.rowHeight,
+    headerHeight: 0,
+    ...(getRowHeight ? { getRowHeight } : {}),
+  })
+}
+
+/**
+ * The windowed slice plus the active/selected row when it lies outside it. The
+ * active row must stay mounted: keyboard navigation focuses its DOM node
+ * (unmounted rows lose their ref), so dropping it would make arrow nav silently
+ * dead until the user clicks a mounted row again.
+ */
+export function withMountedAnchor<T, G extends { key: string }>(
+  slice: readonly VirtualTableEntry<T, G>[],
+  all: readonly VirtualTableEntry<T, G>[],
+  anchorKey: string | null,
+): readonly VirtualTableEntry<T, G>[] {
+  if (!anchorKey || slice.some((entry) => entry.key === anchorKey)) return slice
+  const anchor = all.find((entry) => entry.key === anchorKey)
+  return anchor ? [...slice, anchor] : slice
 }
 
 export interface EntityListProps<T> {

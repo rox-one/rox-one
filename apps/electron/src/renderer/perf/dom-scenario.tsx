@@ -134,6 +134,12 @@ export interface NotesPanelProps {
   notes: React.ComponentProps<typeof NotesNavigationSidebar>['notes']
   activeNoteId?: string | null
   onOpenNote?: (id: string) => void
+  /**
+   * Scroll parent the navigator windows against. Production passes the notes
+   * list viewport; the fixture passes its own scroll container so the measured
+   * mount takes the same windowed path the app does.
+   */
+  viewportRef?: React.RefObject<HTMLDivElement | null>
   onReady: () => void
 }
 
@@ -143,7 +149,7 @@ const noop = () => {}
  * Notes navigator subtree: the real production `NotesNavigationSidebar`
  * (folder tree + DnD note rows) with a large note fixture.
  */
-export function NotesPanel({ notes, activeNoteId, onOpenNote, onReady }: NotesPanelProps) {
+export function NotesPanel({ notes, activeNoteId, onOpenNote, viewportRef, onReady }: NotesPanelProps) {
   useAfterFirstPaint(onReady)
   const [collapsedFolders] = React.useState<Set<string>>(() => new Set())
   return (
@@ -152,6 +158,7 @@ export function NotesPanel({ notes, activeNoteId, onOpenNote, onReady }: NotesPa
         notes={notes}
         activeNoteId={activeNoteId ?? null}
         collapsedFolders={collapsedFolders}
+        {...(viewportRef ? { viewportRef } : {})}
         onToggleFolder={noop}
         emptyMessage="No notes"
         onOpenNote={onOpenNote ?? noop}

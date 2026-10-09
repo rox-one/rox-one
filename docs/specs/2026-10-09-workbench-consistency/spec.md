@@ -51,16 +51,16 @@
 
 ### 4.2 Вкладки
 
-- **`platform/SurfaceTabs.tsx` — уже полный эталон**: `role=tablist` (L252), `role=tab` + `aria-selected` + `aria-controls` (L92-94), roving `tabIndex` (L96), `onKeyDown` Arrow/Home/End/Delete (L99-106), закрытие средней кнопкой (L82-84), кнопка закрытия (L112-123); чистые хелперы — `platform/surface-tab-navigation.ts:4-22`.
-- Незакрытые потребители: `components/app-shell/EntityViewTabs.tsx` (объявляет `role=tablist` L163/207, но без клавиатуры и roving — только клик), `components/browser/BrowserTabStrip.tsx` + `BrowserTabBadge.tsx` (dropdown-бейджи, h-[26px], глиф 12, шеврон 10, без tab-семантики).
-- Рядом ещё два похожих примитива: существующий `components/ui/tabs.tsx` (generic) и вкладки `components/mode-screen/ModeScreen.tsx:283-326` — фолдятся в общий примитив в этом же цикле.
+- **`platform/SurfaceTabs.tsx` — тонкий адаптер над общим примитивом (208 строк)**: импортирует `Tabs` и `TabItem` из `@/components/ui/tabs` (L43) и лишь отображает состояние panel-stack в `TabItem[]`; ARIA-паттерн, roving tabindex и клавиатура живут в `components/ui/tabs.tsx` (W1.1). Чистые хелперы `tabRovingId`/`tabNavigationTarget`/`tabCloseTarget` — `components/ui/tabs.tsx:81-124`; их тест `platform/__tests__/surface-tab-navigation.test.ts:5` импортирует из нового модуля.
+- Потребители переведены на общий примитив: `components/app-shell/EntityViewTabs.tsx` сам `role=tablist` больше не объявляет — делегирует в `Tabs` (`variant="segmented"` L175 / `variant="surface"` L190, `collapseLabels` L177); браузерные вкладки — `components/browser/BrowserTabStrip.tsx` (контейнер) → `components/browser/BrowserTabStripView.tsx` на том же `Tabs` с `variant="browser"` (L133).
+- Общий примитив теперь один: `components/ui/tabs.tsx` (W1.1 заменил неиспользуемый radix-примитив); вкладки `components/mode-screen/ModeScreen.tsx` тоже сведены к нему (`import { Tabs as TabsCore }` L14, использование L74/L319).
 - Один и тот же глиф сущности: **12px** в карточном списке (зажат `entity-row.tsx:391`), **14px** в таблице, **16px** в рейле, 12px в теплокарте.
 
 ### 4.3 Клавиатура
 
 - Один реестр действий (`actions/definitions.ts`), один capture-обработчик (`actions/registry.tsx:117`), отображение через `formatHotkeyDisplay`; подсказки — общий примитив `components/ui/kbd.tsx` (W0.2 устранил три копии).
 - **«Пульт» уже существует**: ⌘K = `app.omnibox` → cmdk-оверлей `platform/Omnibox.tsx` (группы Navigation/Context/Actions, фокус-ловушка Radix, провайдеры sessions/settings/skills/sources/automations/knowledge, i18n `omnibox.*`); `cmdk` уже в зависимостях (`apps/electron/package.json:61`). Цикл строит «Пульт» на нём, а не с нуля.
-- Дыры: канбан — pointer-only; `EntityViewTabs` — без клавиатуры; `BrowserTabStrip` — без tab-семантики; теста на `mode-pill-keyboard.ts` нет.
+- Дыры закрыты срезами цикла: канбан — клавиатурная навигация (W1.2); `EntityViewTabs` и браузерные вкладки — на общем примитиве `Tabs` (W1.1/W2.1); предикат пилюли покрыт тестом — `platform/__tests__/mode-pill-keyboard.test.ts` (импортирует `../mode-pill-keyboard`).
 - Капслок: 0 совпадений в репозитории (`CapsLock`, `getModifierState`). В этом цикле добавлен триггер `components/palette/capslock-trigger.ts` → то же действие `app.omnibox` (W1.3); системный перехват — вне объёма (нативный модуль + TCC).
 - Занято: `⌘K` = `app.omnibox`; системно зарегистрирован только голосовой `⌘⇧D`.
 
@@ -83,7 +83,9 @@
 
 - Инфраструктура есть: `test:perf-budgets` (`apps/electron/src/renderer/perf`), `scripts/bench/renderer-perf-report.ts --ci [--session-count 500] [--bundle]`. Открытые находки аудита: PERF-05 (виртуализации списков нет при фикстуре на 2000 сессий), PERF-01 (первый кадр — последним), PERF-04 (нет бюджета бандла), PERF-03 (гейт меряет синтетику без React/DOM).
 
-### 4.7 Сводка реконсиляции 12 решений (2026-10-09)
+### 4.7 Состояние на входе (2026-10-09, до W0.5): сводка реконсиляции 12 решений
+
+*Таблица ниже — предрабочий снимок реконсиляции (на 2026-10-09, до среза W0.5), а не отчёт о сделанном; строки намеренно оставлены как есть. Исполненный результат и доказательства — в `plan.md`: «Состояние выполнения (2026-10-09)», «Приёмка (факты, 2026-10-09)» и «Пост-мерж приёмка».*
 
 | # | Решение | Статус | Пробел |
 |---|---|---|---|

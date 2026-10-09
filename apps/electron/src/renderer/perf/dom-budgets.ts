@@ -74,9 +74,9 @@ export const DOM_PERF_BUDGETS: Record<DomPerfMarkName, DomBudgetDefinition> = {
     p95Ms: 300,
     ciGate: true,
     measures:
-      'commit + first paint of a 5,000-note production NotesNavigationSidebar (folder tree + content-visibility rows), warm repeat mount',
+      'commit + first paint of a 5,000-note production NotesNavigationSidebar (windowed vault tree: mounted slice + overscan inside the list viewport), warm repeat mount',
     thresholdNote:
-      'Observed p95 62-65ms (p50 59-63; first mount ~88ms). Threshold 300ms is ~5x observed: it catches a full-tree blow-up (e.g. losing content-visibility) while absorbing CI jitter.',
+      'Observed p95 56-84ms (p50 54-57; first mount ~84ms) with WindowedTreeList + a viewportRef. Threshold 300ms is ~4x observed: it catches a full-tree blow-up (windowing lost) while absorbing CI jitter.',
   },
   dom_notes_navigator_switch: {
     name: 'dom_notes_navigator_switch',

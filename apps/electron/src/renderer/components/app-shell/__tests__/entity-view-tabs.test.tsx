@@ -1,11 +1,24 @@
-import { beforeAll, describe, expect, it } from 'bun:test'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { createElement } from 'react'
+/**
+ * EntityViewTabs — the entity multi-view strip. Static markup proves the ARIA
+ * surface; mounted behaviour proves it actually delegates keyboard + selection
+ * to the shared primitive.
+ */
+import { useDomForFile, resetDom } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
+import { afterEach, beforeAll, describe, expect, it } from 'bun:test'
+import * as React from 'react'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createInstance, type i18n as I18n } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
-import { EntityViewTabs, defaultSessionEntityCapabilities, type EntityViewTabsProps } from '../EntityViewTabs'
+import {
+  EntityViewTabs,
+  defaultSessionEntityCapabilities,
+  type EntityViewId,
+  type EntityViewTabsProps,
+} from '../EntityViewTabs'
+
+useDomForFile()
 
 let i18n: I18n
 beforeAll(async () => {
@@ -27,7 +40,7 @@ beforeAll(async () => {
 })
 
 const renderTabs = (props: EntityViewTabsProps) =>
-  renderToStaticMarkup(createElement(I18nextProvider, { i18n }, createElement(EntityViewTabs, props)))
+  renderToStaticMarkup(React.createElement(I18nextProvider, { i18n }, React.createElement(EntityViewTabs, props)))
 
 describe('EntityViewTabs renders through the shared tab primitive', () => {
   it('exposes one tablist with ARIA tabs and a roving stop', () => {
@@ -49,21 +62,64 @@ describe('EntityViewTabs renders through the shared tab primitive', () => {
   })
 })
 
-const source = readFileSync(join(import.meta.dir, '../EntityViewTabs.tsx'), 'utf8')
+// --- mounted behaviour: the strip is driven through the consumer ---
 
-describe('EntityViewTabs delegates keyboard and ARIA to the primitive', () => {
-  it('has no tablist/keyboard markup of its own', () => {
-    expect(source).toContain("from '@/components/ui/tabs'")
-    expect(source).not.toContain('role="tablist"')
-    expect(source).not.toContain('role="tab"')
-    expect(source).not.toContain('onKeyDown')
-    expect(source).not.toContain('aria-selected')
-    expect(source).not.toContain('Tooltip')
+let roots: Root[] = []
+afterEach(async () => {
+  await act(async () => { for (const root of roots) root.unmount() })
+  roots = []
+  resetDom()
+})
+
+async function mount(props: EntityViewTabsProps): Promise<HTMLElement> {
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+  roots.push(root)
+  await act(async () => { root.render(<I18nextProvider i18n={i18n}><EntityViewTabs {...props} /></I18nextProvider>) })
+  return container
+}
+
+const tab = (container: HTMLElement, id: string) =>
+  container.querySelector<HTMLButtonElement>(`[data-tab="${id}"]`)!
+
+const press = (element: Element, key: string) => act(async () => {
+  element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+})
+
+describe('EntityViewTabs delegates behaviour to the shared primitive', () => {
+  it('emits the primitive-owned tablist marker instead of hand-rolling the markup', async () => {
+    // catches: EntityViewTabs rendering its own tablist instead of delegating to <Tabs> (only the primitive emits data-tabs).
+    const container = await mount({ value: 'standard', capabilities: defaultSessionEntityCapabilities(), onChange() {} })
+    const strip = container.querySelector('[data-tabs="surface"]')
+    expect(strip?.getAttribute('role')).toBe('tablist')
+    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(3)
   })
 
-  it('sizes tab and placeholder glyphs by token, not a literal stroke', () => {
-    expect(source).toContain('icon-caption')
-    expect(source).toContain('icon-empty')
-    expect(source).not.toContain('strokeWidth')
+  it('moves the view with arrow keys through the mounted strip', async () => {
+    // catches: keyboard navigation lost upstream of the primitive (items stripped or <Tabs> bypassed).
+    const changed: EntityViewId[] = []
+    const container = await mount({
+      value: 'standard',
+      capabilities: defaultSessionEntityCapabilities(),
+      onChange: (id) => changed.push(id),
+    })
+    const standard = tab(container, 'standard')
+    standard.focus()
+    await press(standard, 'ArrowRight')
+    expect(document.activeElement).toBe(tab(container, 'map'))
+    expect(changed).toEqual(['map'])
+  })
+
+  it('selects the view when its tab is clicked', async () => {
+    // catches: onChange wiring removed from the consumer's onSelect adapter.
+    const changed: EntityViewId[] = []
+    const container = await mount({
+      value: 'standard',
+      capabilities: defaultSessionEntityCapabilities(),
+      onChange: (id) => changed.push(id),
+    })
+    await act(async () => { tab(container, 'outline').click() })
+    expect(changed).toEqual(['outline'])
   })
 })

@@ -57,29 +57,54 @@
 ## Замороженный интерфейс вкладок (W1.1/W2.1)
 
 ```ts
+export type TabsVariant = 'surface' | 'segmented' | 'browser'
+export type TabsDensity = 'compact' | 'full'
+export type TabsOrientation = 'horizontal' | 'vertical'
+export type TabsTone = 'default' | 'accent'
+
 export interface TabItem {
   id: string
   label: string
-  icon?: ReactNode            // глиф из словаря; размер — по токену роли
-  badge?: ReactNode
+  /** Glyph from the entity dictionary. Size it with a token (`icon-caption`). */
+  icon?: React.ReactNode
+  badge?: React.ReactNode
   closable?: boolean
   disabled?: boolean
-  title?: string              // tooltip / полная подпись
+  /** Tooltip / full caption. */
+  title?: string
+  /** id of the controlled `role=tabpanel` element; rendered as `aria-controls`. */
+  controls?: string
 }
 
 export interface TabsProps {
   items: readonly TabItem[]
   activeId: string | null
-  variant?: 'surface' | 'segmented' | 'browser'  // профиль анатомии
-  density?: 'compact' | 'full'
+  /** Anatomy profile. Defaults to `surface`. */
+  variant?: TabsVariant
+  /** `compact` = control-sm height, `full` = control-md height. Defaults to `compact`. */
+  density?: TabsDensity
+  /** `scroll` keeps one scrollable row; `menu` reserves a trailing overflow slot. */
   overflow?: 'scroll' | 'menu'
-  keyboard?: boolean          // roving tabindex + ARIA tabs; по умолчанию true
+  /** Arrow axis: horizontal uses Left/Right, vertical also accepts Up/Down. */
+  orientation?: TabsOrientation
+  /** Active-item tint. `default` = shell selection, `accent` = accent tint. */
+  tone?: TabsTone
+  /** Collapse labels under the panel container query (segmented view switch). */
+  collapseLabels?: boolean
+  /** roving tabindex + ARIA tabs; default true. */
+  keyboard?: boolean
   ariaLabel?: string
-  trailing?: ReactNode        // напр. меню чипов браузера внутри вкладок поверхности
+  /** e.g. the browser-chips menu inside surface tabs. */
+  trailing?: React.ReactNode
+  className?: string
+  /** Base text for the close button (`<closeLabel>: <title>`). */
+  closeLabel?: string
   onSelect(id: string): void
   onClose?(id: string): void
 }
 ```
+
+Потребители опциональных полей: `SurfaceTabs` — `controls` (L168) и `closeLabel` (L187); `ModeScreen` — `tone="accent"` (L79/L324); `EntityViewTabs` — `collapseLabels` (L177) и `variant` (L175/L190).
 
 Требования к поведению: `role=tablist/tab`, `aria-selected`, `aria-controls`, roving tabindex, ArrowLeft/Right (и Up/Down в вертикальных профилях), Home/End, Enter/Space, Delete/Backspace при `closable`, закрытие средней кнопкой, видимый фокус, автоматическая активация при перемещении фокуса.
 
@@ -111,7 +136,7 @@ export interface TabsProps {
 | W3.1 | Лента ← Входящие | ✅ | секции на общем `Tabs`; тело очереди вынесено в `pages/inbox/InboxQueue.tsx` без копирования; 3 теста |
 | W3.2/W3.3 | Встречи → Календарь, Контакты → Команда | ✅ | alias-маршруты + `calendar.page`; пустые shell'ы удалены; приоритет entity-маршрутов исправлен (113 тестов роутов) |
 | W3.4a | Токен-пасс `InboxQueue` | ✅ | 54 → 0 гейтованных нарушений |
-| W3.4b | Виртуализация заметок и списка сессий | ✅ | окна + overscan, закрепление выбранной строки; новые юнит-тесты |
+| W3.4b | Виртуализация заметок и списка сессий | ✅ | окна + overscan, закрепление выбранной строки; после слияния 92bd273b2 — апстримные `components/ui/entity-list.tsx` (windowed) и `WindowedTreeList`, цикл-локальные модули/тесты удалены, апстримный `list-virtualization.test.ts` восстановлен (см. «Слияние 92bd273b2») |
 | W3.4c | DOM-бюджеты на реальных объёмах | ✅ | 2000 сессий: **3167 → 70 мс** p95 (гейт 600), 5000 заметок: **62 мс** p95 (гейт 300); `bun run test:perf:dom` |
 | W4 | Визуальная приёмка (реальное приложение) и PR | ✅ | PR [#1641](https://github.com/rox-one/rox-one/pull/1641); пост-мерж приёмка ниже |
 
@@ -150,3 +175,12 @@ export interface TabsProps {
 Локальная приёмка после слияния: `validate:ci` ✓, `typecheck` ✓, `test:runtime-suites` `exit=0` ✓, `component-recovery`-шаг 1180/0, `route-fixtures`-шаг 1211/0, юнит-тесты бейзлайна 41/0, юнит-тесты бюджета 20/0, четыре сьюта вкладок 27/0. Сплошной прогон 634 не-браузерных файлов: 165 падений против 162 на чистом main (собирательный прогон смешивает jsdom/node-сьюты); все расхождения проверены изолированно — либо проходят, либо падают и на main.
 
 CI PR: `component-recovery`, `route-fixtures (ubuntu)`, `Renderer bundle-size budget`, `browser-and-domain`, `durable-runtime (ubuntu)`, `validate (ubuntu)`, CodeQL, миграции — зелёные; открытыми остаются только унаследованные (`UI token lint ratchet`, `unified-gates`) и `Vercel` («Account is blocked»).
+
+### Слияние 92bd273b2 (10.10) — реконсиляция с апстримом
+
+- `pages/notes/NotesNavigationSidebar.tsx` и `components/ui/entity-list.tsx` — снова апстримные реализации (`WindowedTreeList` / окнированный `EntityList`).
+- Цикл-локальные `pages/notes/notes-navigation-virtualization.ts` и `components/app-shell/entity-list-virtualization.ts` вместе с их тестами удалены.
+- Единственная сохранённая добавка цикла в `entity-list.tsx` — проп `ensureVisibleKeys` (`components/ui/entity-list.tsx:139`), мульти-маунт строк поверх апстримного `withMountedAnchor` (`entity-list.tsx:526-527`).
+- Потребитель этой добавки — `components/app-shell/SessionList.tsx` (`ensureVisibleKeys` L1077/L1467), передающий теперь апстримные пропы `windowed` (L1463) / `windowRowHeight` (L1464) / `windowOverscan` (L1465) / `scrollToKey` (L1466).
+- Апстримный тест `components/app-shell/session-list/__tests__/list-virtualization.test.ts` восстановлен.
+- DOM-харнесс меряет апстримный окнированный путь: `perf/dom-scenario.tsx` передаёт `windowed` (L126) и `viewportRef` навигатору заметок (L162), `perf-dom.tsx` даёт ему `#perf-notes` как `viewportRef` (L76).

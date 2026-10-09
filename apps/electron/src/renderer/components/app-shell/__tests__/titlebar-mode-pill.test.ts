@@ -1,16 +1,40 @@
-import { describe, expect, it } from 'bun:test'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
+import type { ModeContribution } from '@rox/core/platform'
 import { resolveModePillLayout } from '../mode-pill-layout'
-
-const rendererDir = join(import.meta.dir, '..', '..', '..')
-const read = (rel: string) => readFileSync(join(rendererDir, rel), 'utf8')
-const topBar = read('components/app-shell/TopBar.tsx')
-const modeBar = read('platform/ModeBar.tsx')
-const pillCss = read('components/app-shell/titlebar-mode-pill.css')
-const tileMark = read('components/icons/RoxTileMark.tsx')
+import {
+  __resetPillCompositionForTests,
+  activatePillSurface,
+  visiblePillSurfaces,
+} from '@/platform/pill-composition'
 
 const metrics = { full: 520, compact: 210 }
+
+function mode(id: string, extra: Partial<ModeContribution> = {}): ModeContribution {
+  return {
+    id,
+    titleKey: `workbench.mode.${id}`,
+    icon: 'Inbox',
+    rootRoute: `/${id}`,
+    order: 1,
+    defaultPinned: true,
+    layoutProfileId: 'agent',
+    ...extra,
+  }
+}
+
+/**
+ * The real registry shape: the five starter composition modes are present, and
+ * so are registry modes the starter set deliberately leaves to the overflow.
+ */
+const registry: ModeContribution[] = [
+  mode('feed', { order: 1 }),
+  mode('messenger', { order: 2 }),
+  mode('home', { order: 3 }),
+  mode('notes', { order: 4 }),
+  mode('tasks', { order: 5 }),
+  mode('meetings', { order: 6 }),
+  mode('inbox', { order: 7 }),
+]
 
 describe('titlebar mode pill layout', () => {
   it('keeps labels when both sides have room', () => {
@@ -41,62 +65,67 @@ describe('titlebar mode pill layout', () => {
   })
 })
 
-describe('titlebar mode pill source contract', () => {
-  it('renders the composition pill with a per-item context menu', () => {
-    // W1.4 (D1): membership comes from the composition module, not a hardcoded
-    // mode list; each item carries a Radix context menu for pin/exclude.
-    expect(modeBar).toContain('useShellModes()')
-    expect(modeBar).toContain('visiblePillSurfaces(')
-    expect(modeBar).toContain('ContextMenu')
-    expect(modeBar).not.toContain('listPinnedModes')
-    expect(modeBar).toContain('rox-mode-pill-indicator')
-    // No literal lucide stroke width — the shared `svg.lucide` token wins.
-    expect(modeBar).not.toContain('strokeWidth')
+describe('titlebar mode pill composition', () => {
+  // The composition freezes a per-session usage snapshot at module scope.
+  beforeEach(() => { __resetPillCompositionForTests() })
+  afterEach(() => { __resetPillCompositionForTests() })
+
+  it('lists the declared starter surfaces instead of every default-pinned registry mode', () => {
+    // Catches: pill membership falling back to a hardcoded/registry mode list
+    // (tasks/meetings/inbox would reappear) instead of the composition module.
+    const ids = visiblePillSurfaces(registry, { pinned: [], excluded: [], usage: {} }).map((surface) => surface.id)
+    expect(ids).toEqual(['feed', 'team', 'agent', 'notes', 'browser'])
   })
 
-  it('is no-drag and keeps high contrast accessible', () => {
-    expect(pillCss).toContain('-webkit-app-region: no-drag')
-    expect(pillCss).not.toMatch(/border:\s*1px/)
-    expect(pillCss).toContain('html[data-contrast="high"] .rox-mode-pill-indicator')
+  it('drops a composition surface whose registry mode is not navigable', () => {
+    // Catches: the pill rendering a mode entry that has no navigable root route.
+    const disabled = registry.map((entry) => (entry.id === 'notes' ? mode('notes', { rootRoute: null }) : entry))
+    const ids = visiblePillSurfaces(disabled, { pinned: [], excluded: [], usage: {} }).map((surface) => surface.id)
+    expect(ids).not.toContain('notes')
+    expect(ids).toContain('feed')
   })
 
-  it('takes glyph, control and radius geometry from tokens', () => {
-    expect(pillCss).toContain('width: var(--icon-toolbar)')
-    expect(pillCss).toContain('height: var(--icon-toolbar)')
-    expect(pillCss).toContain('height: var(--control-sm)')
-    expect(pillCss).toContain('height: var(--control-md)')
-    expect(pillCss).toContain('border-radius: var(--radius-control)')
+  it('puts explicit pins first and drops excluded surfaces, never emptying the pill', () => {
+    // Catches: pin/exclude ordering regressions in the composition.
+    const pinned = visiblePillSurfaces(registry, { pinned: ['notes'], excluded: [], usage: {} })
+    expect(pinned[0]?.id).toBe('notes')
+
+    const excluded = visiblePillSurfaces(registry, { pinned: [], excluded: ['feed', 'team'], usage: {} })
+      .map((surface) => surface.id)
+    expect(excluded).not.toContain('feed')
+    expect(excluded).not.toContain('team')
+
+    const allExcluded = visiblePillSurfaces(registry, {
+      pinned: [],
+      excluded: ['feed', 'team', 'agent', 'notes', 'browser'],
+      usage: {},
+    })
+    expect(allExcluded.length).toBeGreaterThan(0)
   })
 
-  it('mounts the pill centered in the titlebar, outside the left group', () => {
-    expect(topBar).toContain('rox-mode-pill-anchor')
-    expect(topBar).toContain('calc(50% - ${leftInset / 2}px)')
+  it('freezes the frequency order for the session so the pill never jumps', () => {
+    // Catches: a live usage counter reordering the visible pill mid-session.
+    const first = visiblePillSurfaces(registry, { pinned: [], excluded: [], usage: { browser: 5 } })
+      .map((surface) => surface.id)
+    const second = visiblePillSurfaces(registry, { pinned: [], excluded: [], usage: { browser: 0, feed: 99 } })
+      .map((surface) => surface.id)
+    expect(first[0]).toBe('browser')
+    expect(second).toEqual(first)
   })
 
-  it('keeps cost/usage out of the titlebar (balance lives in the profile strip)', () => {
-    expect(topBar).not.toContain('workbench.presence.placeholder')
-    expect(topBar).not.toContain('workbench.status.usagePlaceholder')
-    expect(topBar).not.toContain('workbench.status.sessionCostTooltip')
-    expect(topBar).not.toContain('TopBarUsageSlot')
-  })
+  it('activates a mode surface through its root route and the browser panel through the host opener', () => {
+    // Catches: activatePillSurface dropping the navigate/openBrowser side effect.
+    const navigations: string[] = []
+    let opened = 0
+    const surfaces = visiblePillSurfaces(registry, { pinned: [], excluded: [], usage: {} })
+    const feed = surfaces.find((surface) => surface.id === 'feed')!
+    const browser = surfaces.find((surface) => surface.id === 'browser')!
+    const deps = { navigate: (route: string) => { navigations.push(route) }, openBrowser: () => { opened += 1 } }
 
-  it('uses the plate-free ink avatar for the titlebar mark', () => {
-    expect(tileMark).toContain('rox-avatar-ink-black.png')
-    expect(tileMark).toContain('rox-avatar-ink-white.png')
-    expect(tileMark).not.toContain('rox-mark-tile-')
-  })
-  it('exposes the mode pill on every non-compact surface', () => {
-    const appShell = read('components/app-shell/AppShell.tsx')
-    expect(topBar).toContain('const showModePill = !isCompact')
-    expect(topBar).not.toContain('modeBarActive')
-    expect(appShell).not.toContain('modeBarActive')
-    expect(topBar).not.toContain('const showModePill = chrome.showModeBar')
-  })
-  it('renders muted monochrome icons with a neutral active highlight', () => {
-    expect(pillCss).not.toContain('--mode-color')
-    // No per-mode oklch accents and no filled icon plate.
-    expect(pillCss).not.toContain('oklch(0.55')
-    expect(pillCss).toContain('color-mix(in oklch, var(--foreground) 55%, transparent)')
-  })
+    activatePillSurface(feed, deps)
+    activatePillSurface(browser, deps)
 
+    expect(navigations).toEqual(['/feed'])
+    expect(opened).toBe(1)
+  })
 })

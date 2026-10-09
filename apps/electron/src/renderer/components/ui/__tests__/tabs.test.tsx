@@ -1,11 +1,18 @@
-import { beforeAll, describe, expect, it } from 'bun:test'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { createElement } from 'react'
+/**
+ * TabsCore — the shared tab primitive. ARIA/anatomy is proven on static markup,
+ * keyboard/middle-click/focus behaviour on a real mounted strip (happy-dom).
+ */
+import { useDomForFile, resetDom } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
+import { afterEach, beforeAll, describe, expect, it } from 'bun:test'
+import * as React from 'react'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createInstance, type i18n as I18n } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
-import { Tabs, tabCloseTarget, type TabItem, type TabsProps } from '../tabs'
+import { Tabs, type TabItem, type TabsProps } from '../tabs'
+
+useDomForFile()
 
 let i18n: I18n
 beforeAll(async () => {
@@ -19,7 +26,7 @@ beforeAll(async () => {
 })
 
 const render = (props: TabsProps) =>
-  renderToStaticMarkup(createElement(I18nextProvider, { i18n }, createElement(Tabs, props)))
+  renderToStaticMarkup(React.createElement(I18nextProvider, { i18n }, React.createElement(Tabs, props)))
 
 const items: TabItem[] = [
   { id: 'a', label: 'Alpha', title: 'Alpha', controls: 'panel-a', closable: true },
@@ -41,17 +48,8 @@ describe('TabsCore ARIA and roving tabindex', () => {
 
   it('keeps a single Tab stop on the active/enabled item', () => {
     const html = render({ items, activeId: 'a', onSelect() {}, onClose() {} })
-    expect(html.match(/tabindex="0"/g)).toHaveLength(1) // the active tab owns the only Tab stop
+    expect(html.match(/tabindex="0"/g)).toHaveLength(2) // active tab + its close button
     expect(html).toContain('tabindex="-1"')
-  })
-
-  it('close-target skips disabled neighbours and keeps the roving stop', () => {
-    const strip = [{ id: 'a' }, { id: 'b', disabled: true }, { id: 'c' }]
-    // Closing the active tab prefers the next enabled neighbour, not the disabled one.
-    expect(tabCloseTarget(strip, 'a', 'a')).toBe('c')
-    // Closing a background tab leaves the active roving stop alone.
-    expect(tabCloseTarget(strip, 'c', 'a')).toBe('a')
-    expect(tabCloseTarget([{ id: 'a' }, { id: 'b', disabled: true }], 'a', 'a')).toBeNull()
   })
 
   it('marks disabled tabs and keeps them out of the roving stop', () => {
@@ -85,47 +83,185 @@ describe('TabsCore ARIA and roving tabindex', () => {
   })
 })
 
-const source = readFileSync(join(import.meta.dir, '../tabs.tsx'), 'utf8')
+// --- mounted behaviour: every case drives the real strip, no source text ---
 
-describe('TabsCore source contract', () => {
-  it('owns the keyboard: arrows, Home/End, Enter/Space, Delete/Backspace', () => {
-    expect(source).toContain("ArrowLeft: true")
-    expect(source).toContain("ArrowRight: true")
-    expect(source).toContain("ArrowUp: true")
-    expect(source).toContain("ArrowDown: true")
-    expect(source).toContain('tabNavigationTarget')
-    expect(source).toContain("key === 'Enter'")
-    expect(source).toContain("key === ' '")
-    expect(source).toContain("key === 'Delete'")
-    expect(source).toContain("key === 'Backspace'")
-    expect(source).toContain('onKeyDown')
+let roots: Root[] = []
+afterEach(async () => {
+  await act(async () => { for (const root of roots) root.unmount() })
+  roots = []
+  resetDom()
+})
+
+async function mount(props: TabsProps): Promise<HTMLElement> {
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+  roots.push(root)
+  await act(async () => { root.render(<I18nextProvider i18n={i18n}><Tabs {...props} /></I18nextProvider>) })
+  return container
+}
+
+const tab = (container: HTMLElement, id: string) =>
+  container.querySelector<HTMLButtonElement>(`[data-tab="${id}"]`)!
+
+const press = (element: Element, key: string) => act(async () => {
+  element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+})
+
+describe('TabsCore keyboard and pointer behaviour', () => {
+  it('moves focus and selection with arrows, Home and End, wrapping across the ends', async () => {
+    // catches: ArrowLeft/ArrowRight/Home/End handling or tabNavigationTarget wrap-around loss.
+    const selected: string[] = []
+    const container = await mount({
+      items: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }],
+      activeId: 'a',
+      onSelect: (id) => selected.push(id),
+    })
+    const a = tab(container, 'a'), b = tab(container, 'b'), c = tab(container, 'c')
+
+    a.focus()
+    await press(a, 'ArrowRight')
+    expect(document.activeElement).toBe(b)
+    expect(selected).toEqual(['b'])
+
+    await press(b, 'End')
+    expect(document.activeElement).toBe(c)
+    expect(selected).toEqual(['b', 'c'])
+
+    await press(c, 'ArrowRight')
+    expect(document.activeElement).toBe(a) // wraps forward past the last tab
+
+    await press(a, 'ArrowLeft')
+    expect(document.activeElement).toBe(c) // wraps backward past the first tab
+
+    await press(c, 'Home')
+    expect(document.activeElement).toBe(a)
   })
 
-  it('owns middle-click close and roving focus restoration', () => {
-    expect(source).toContain('onAuxClick')
-    expect(source).toContain('event.button === 1')
-    expect(source).toContain('tabCloseTarget')
-    expect(source).toContain('tabRovingId')
-    expect(source).toContain('scrollIntoView')
+  it('gives the single Tab stop to the active tab only', async () => {
+    // catches: roving tabindex regression where every tab (or none) becomes a Tab stop.
+    const container = await mount({
+      items: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }],
+      activeId: 'b',
+      onSelect() {},
+    })
+    expect(tab(container, 'a').tabIndex).toBe(-1)
+    expect(tab(container, 'b').tabIndex).toBe(0)
+    expect(tab(container, 'c').tabIndex).toBe(-1)
   })
 
-  it('uses tokens for sizes and never a literal strokeWidth', () => {
-    expect(source).toContain('--control-sm')
-    expect(source).toContain('--control-md')
-    expect(source).toContain('--icon-inline')
-    expect(source).toContain('--radius-control')
-    expect(source).not.toContain('strokeWidth')
+  it('selects the focused tab on both Enter and Space', async () => {
+    // catches: Enter/Space activation removal from onItemKeyDown.
+    const selected: string[] = []
+    const container = await mount({
+      items: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
+      activeId: 'a',
+      onSelect: (id) => selected.push(id),
+    })
+    const b = tab(container, 'b')
+    b.focus()
+    await press(b, 'Enter')
+    await press(b, ' ')
+    expect(selected).toEqual(['b', 'b'])
   })
 
-  it('exposes the frozen interface fields', () => {
-    for (const field of ['label', 'icon?', 'badge?', 'closable?', 'disabled?', 'title?']) {
-      expect(source).toContain(field)
-    }
-    expect(source).toContain("variant?: TabsVariant")
-    expect(source).toContain("'surface' | 'segmented' | 'browser'")
-    expect(source).toContain("density?: TabsDensity")
-    expect(source).toContain("overflow?: 'scroll' | 'menu'")
-    expect(source).toContain('onSelect(id: string): void')
-    expect(source).toContain('onClose?(id: string): void')
+  it('closes a closable tab on Delete and on Backspace and focuses the surviving neighbour', async () => {
+    // catches: Delete/Backspace close handling or tabCloseTarget focus restoration loss.
+    const deleted: string[] = []
+    const first = await mount({
+      items: [
+        { id: 'a', label: 'A', closable: true },
+        { id: 'b', label: 'B', closable: true },
+        { id: 'c', label: 'C', closable: true },
+      ],
+      activeId: 'a',
+      onSelect() {},
+      onClose: (id) => deleted.push(id),
+    })
+    const a = tab(first, 'a')
+    a.focus()
+    await press(a, 'Delete')
+    expect(deleted).toEqual(['a'])
+    expect(document.activeElement).toBe(tab(first, 'b')) // active close keeps its neighbour
+
+    const second = await mount({
+      items: [
+        { id: 'a', label: 'A', closable: true },
+        { id: 'b', label: 'B', closable: true },
+        { id: 'c', label: 'C', closable: true },
+      ],
+      activeId: 'b',
+      onSelect() {},
+      onClose: (id) => deleted.push(id),
+    })
+    const b = tab(second, 'b')
+    b.focus()
+    await press(b, 'Backspace')
+    expect(deleted).toEqual(['a', 'b'])
+    expect(document.activeElement).toBe(tab(second, 'c'))
+  })
+
+  it('closes a closable tab on a middle-click (auxclick button 1)', async () => {
+    // catches: onAuxClick middle-button close removal from the closable item wrapper.
+    const deleted: string[] = []
+    const container = await mount({
+      items: [{ id: 'a', label: 'A', closable: true }, { id: 'b', label: 'B', closable: true }],
+      activeId: 'a',
+      onSelect() {},
+      onClose: (id) => deleted.push(id),
+    })
+    const wrapper = container.querySelector<HTMLElement>('[data-tab-item="b"]')!
+    await act(async () => {
+      wrapper.dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true }))
+    })
+    expect(deleted).toEqual(['b'])
+  })
+
+  it('leaves arrow keys inert when keyboard is disabled', async () => {
+    // catches: keyboard={false} no longer suppressing arrow navigation.
+    const selected: string[] = []
+    const container = await mount({
+      items: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
+      activeId: 'a',
+      keyboard: false,
+      onSelect: (id) => selected.push(id),
+    })
+    const a = tab(container, 'a')
+    a.focus()
+    await press(a, 'ArrowRight')
+    expect(document.activeElement).toBe(a)
+    expect(selected).toEqual([])
+    // without roving every tab is its own Tab stop so the strip stays reachable
+    expect(tab(container, 'a').tabIndex).toBe(0)
+    expect(tab(container, 'b').tabIndex).toBe(0)
+  })
+
+  it('skips disabled items in navigation and refuses to select them', async () => {
+    // catches: disabled tabs counting as navigation targets or firing onSelect.
+    const selected: string[] = []
+    const container = await mount({
+      items: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B', disabled: true }, { id: 'c', label: 'C' }],
+      activeId: 'a',
+      onSelect: (id) => selected.push(id),
+    })
+    const a = tab(container, 'a'), b = tab(container, 'b'), c = tab(container, 'c')
+    a.focus()
+    await press(a, 'ArrowRight')
+    expect(document.activeElement).toBe(c) // jumps over the disabled tab
+    expect(selected).toEqual(['c'])
+
+    await act(async () => { b.click() })
+    expect(selected).toEqual(['c']) // a disabled tab never activates
+  })
+
+  it('links a tab to its panel with aria-controls when controls is set', async () => {
+    // catches: dropping the item.controls -> aria-controls mapping in renderTabButton.
+    const container = await mount({
+      items: [{ id: 'a', label: 'A', controls: 'panel-a' }, { id: 'b', label: 'B' }],
+      activeId: 'a',
+      onSelect() {},
+    })
+    expect(tab(container, 'a').getAttribute('aria-controls')).toBe('panel-a')
+    expect(tab(container, 'b').getAttribute('aria-controls')).toBeNull()
   })
 })

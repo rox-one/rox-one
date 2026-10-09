@@ -40,6 +40,13 @@ function resolveContainer(id: string): HTMLElement {
 
 const sessionsEl = resolveContainer('perf-sessions')
 const notesEl = resolveContainer('perf-notes')
+/**
+ * `#perf-notes` itself scrolls (`height: 100vh; overflow: auto` in
+ * `perf-dom.html`), exactly like the notes list viewport the app passes to the
+ * navigator — so the fixture hands it over as the windowing viewport instead of
+ * mounting the whole 5,000-note tree.
+ */
+const notesViewportRef: React.RefObject<HTMLDivElement | null> = { current: notesEl as HTMLDivElement }
 
 let sessionsRoot: Root | null = null
 let notesRoot: Root | null = null
@@ -66,7 +73,7 @@ function mountSessions(variant: 'virtualized' | 'unvirtualized'): Promise<number
 function NotesHarness({ onReady }: { onReady: () => void }) {
   const [active, setActive] = useState<string | null>(null)
   return (
-    <NotesPanel notes={notesFixture} activeNoteId={active} onOpenNote={setActive} onReady={onReady} />
+    <NotesPanel notes={notesFixture} activeNoteId={active} onOpenNote={setActive} viewportRef={notesViewportRef} onReady={onReady} />
   )
 }
 
