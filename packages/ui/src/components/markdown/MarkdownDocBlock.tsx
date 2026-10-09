@@ -22,9 +22,11 @@
  * }
  *
  * Recursion guard: the inner `Markdown` invocation passes
- * `disablePreviewBlocks={new Set(['markdown-preview'])}` so a nested
- * `markdown-preview` fence falls through to a regular code block instead of
- * recursing forever. Other preview blocks (datatable, mermaid, …) still work.
+ * `disablePreviewBlocks={DISABLE_INNER_MARKDOWN_PREVIEW}` so a nested
+ * `markdown-preview` (or `openui`) fence falls through to a regular code block
+ * instead of recursing forever / mounting a live interactive block inside a
+ * preview that cannot own it. Other preview blocks (datatable, mermaid, …)
+ * still work.
  */
 
 import * as React from 'react'
@@ -34,7 +36,7 @@ import { CodeBlock } from './CodeBlock'
 import { ItemNavigator } from '../overlay/ItemNavigator'
 import { usePlatform } from '../../context/PlatformContext'
 import { useTranslation } from 'react-i18next'
-import { Markdown } from './Markdown'
+import { Markdown, type DisablablePreviewBlock } from './Markdown'
 import {
   parseMarkdownPreviewSpec,
   normalizePreviewItems,
@@ -56,7 +58,10 @@ class MarkdownDocBlockErrorBoundary extends React.Component<
   }
 }
 
-const DISABLE_INNER_MARKDOWN_PREVIEW: ReadonlySet<'markdown-preview'> = new Set(['markdown-preview'])
+const DISABLE_INNER_MARKDOWN_PREVIEW: Partial<Record<DisablablePreviewBlock, true>> = {
+  'markdown-preview': true,
+  openui: true,
+}
 
 export interface MarkdownDocBlockProps {
   code: string

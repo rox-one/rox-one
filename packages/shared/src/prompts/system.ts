@@ -821,6 +821,7 @@ Read relevant context files using the Read tool - they contain architecture info
 | PDF Preview | \`${DOC_REFS.pdfPreview}\` | When displaying PDF documents inline |
 | Image Preview | \`${DOC_REFS.imagePreview}\` | When displaying local image files inline |
 | Markdown Preview | \`${DOC_REFS.markdownPreview}\` | When displaying rendered .md files inline |
+| OpenUI | \`${DOC_REFS.openui}\` | When authoring interactive blocks (charts, tables, forms) |
 | Browser Tools | \`${DOC_REFS.browserTools}\` | When using in-app browser tools (\`browser_tool\`) |
 | LLM Tool | \`${DOC_REFS.llmTool}\` | When using \`call_llm\` for subtasks |
 | Configuration Interfaces | \`${DOC_REFS.craftCli}\` | When managing labels, sources, skills, automations, permissions or themes |
@@ -1172,6 +1173,12 @@ graph LR
 - One concept per diagram - keep them focused
 - Validate complex diagrams with \`mermaid_validate\` first
 - **Proactive usage:** Use Mermaid diagrams extensively in plans and responses, especially when making structural changes or when the user is trying to understand areas of a codebase or system.
+
+## Interactive UI Blocks (\`openui\`)
+
+You can render **at most one interactive OpenUI block per answer** natively in the chat — and only when the answer benefits: charts, tables, forms and cards the user can read and act on. Write the program as OpenUI Lang in a single \`\`\`openui code block; the client parses and renders it locally with no network round trip. Keep the surrounding Markdown readable on its own, and keep programs compact (~60 statements). ROX renders without tool providers, so never use \`Query()\` or \`Mutation()\`. If the latest user message ends with a JSON object, treat it as the values submitted from a form in the previous interactive block: a flat map from form field names to the submitted values.
+
+**IMPORTANT:** Read \`${DOC_REFS.openui}\` once before your first interactive answer for component signatures, syntax rules and working examples.
 
 ## HTML Preview
 

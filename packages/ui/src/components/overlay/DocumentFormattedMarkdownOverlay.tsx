@@ -54,6 +54,10 @@ export interface DocumentFormattedMarkdownOverlayProps {
   sendMessageKey?: 'enter' | 'cmd-enter'
   /** Whether source content is currently streaming (affects annotation eligibility parity) */
   isStreaming?: boolean
+  /** Send a follow-up user message from an interactive (`openui`) block action */
+  onSendPrompt?: (text: string) => void
+  /** Owning message/turn identity for interactive (`openui`) block form-state scoping */
+  blockScope?: string
   /** Optional external request to open a specific annotation */
   openAnnotationRequest?: ExternalOpenAnnotationRequest | null
 }
@@ -76,6 +80,8 @@ export function DocumentFormattedMarkdownOverlay({
   onUpdateAnnotation,
   sendMessageKey = 'enter',
   isStreaming = false,
+  onSendPrompt,
+  blockScope,
   openAnnotationRequest,
 }: DocumentFormattedMarkdownOverlayProps) {
   return (
@@ -118,6 +124,8 @@ export function DocumentFormattedMarkdownOverlay({
                   islandZIndex={420}
                   openAnnotationRequest={openAnnotationRequest}
                   isStreaming={isStreaming}
+                  onSendPrompt={onSendPrompt}
+                  blockScope={blockScope}
                 />
               ) : (
                 <Markdown
@@ -125,6 +133,9 @@ export function DocumentFormattedMarkdownOverlay({
                   onUrlClick={onOpenUrl}
                   onFileClick={onOpenFile}
                   hideFirstMermaidExpand={false}
+                  isStreaming={isStreaming}
+                  onSendPrompt={onSendPrompt}
+                  blockScope={blockScope}
                 >
                   {content}
                 </Markdown>
