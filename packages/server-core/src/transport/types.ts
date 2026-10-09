@@ -84,6 +84,12 @@ export interface RpcServer {
 
 export interface RpcClient {
   invoke(channel: string, ...args: any[]): Promise<any>
+  /**
+   * Like invoke(), but overrides the constructor request timeout for this call
+   * only, so a long-running handler is not cut off by the default 30 s bound.
+   * Optional: lightweight adapters may omit it; callers fall back to invoke().
+   */
+  invokeWithTimeout?(channel: string, timeoutMs: number, ...args: any[]): Promise<any>
   on(channel: string, callback: (...args: any[]) => void): () => void
   handleCapability(channel: string, handler: (...args: any[]) => Promise<any> | any): void
 }

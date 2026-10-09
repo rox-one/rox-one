@@ -15,6 +15,19 @@ import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import type { KanbanColumnId, TaskEditorTarget } from '@/components/app-shell/kanban/types'
 
+/**
+ * The live work board's capability object: the server-confirmed `revision` plus a
+ * local `epoch`. One atom so every subscriber invalidates together. `epoch` bumps
+ * when the server revision regresses, giving consumers a fresh identity to drop
+ * stale board state — see `board-live-refresh.ts` (row b2.2).
+ */
+export interface WorkboardLiveState {
+  revision: number
+  epoch: number
+}
+
+export const workboardLiveStateAtom = atom<WorkboardLiveState>({ revision: 0, epoch: 0 })
+
 /** Selected project ids to filter the board by. Empty array = all projects. */
 export const kanbanProjectFilterAtom = atom<string[]>([])
 

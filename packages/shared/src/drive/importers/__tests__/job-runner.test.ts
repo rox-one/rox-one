@@ -57,15 +57,16 @@ class FakeProvider implements ImportProvider {
 interface PutRecord {
   key: string
   bytes: number[]
+  contentType?: string
 }
 
 function recordingTarget(record: PutRecord[], gate?: Map<string, Promise<void>>): DriveUploadTarget {
   return {
-    async put(key, body) {
+    async put(key, body, opts) {
       const hold = gate?.get(key)
       if (hold) await hold
       const bytes = body instanceof Uint8Array ? body : new Uint8Array(await new Response(body).arrayBuffer())
-      record.push({ key, bytes: [...bytes] })
+      record.push({ key, bytes: [...bytes], contentType: opts?.contentType })
     },
   }
 }
@@ -127,6 +128,29 @@ describe('import job runner', () => {
     expect(done.progress).toMatchObject({ filesDone: 3, filesTotal: 3, bytesDone: 12, bytesTotal: 12 })
     expect(record.map(entry => entry.key)).toEqual([`${job.id}/a.txt`, `${job.id}/Folder/b.txt`, `${job.id}/c.txt`])
     expect(record.map(entry => entry.bytes.length)).toEqual([3, 4, 5])
+  })
+
+  test('carries each listing entry mimeType into the plan and the put() options', async () => {
+    const provider = new FakeProvider({
+      [ROOT]: [
+        { id: 'a', name: 'a.txt', kind: 'file', sizeBytes: 3, mimeType: 'text/plain' },
+        { id: 'b', name: 'b.bin', kind: 'file', sizeBytes: 2 },
+      ],
+    })
+    provider.streams.set('a', new Uint8Array([1, 1, 1]))
+    provider.streams.set('b', new Uint8Array([2, 2]))
+    const record: PutRecord[] = []
+    const runner = createImportJobRunner({
+      target: recordingTarget(record),
+      stateDir,
+      providers: [provider],
+      concurrency: 1,
+    })
+    const job = await runner.plan('google-drive')
+    expect(job.plan.map(node => node.contentType)).toEqual(['text/plain', undefined])
+
+    await runner.start(job.id)
+    expect(record.map(entry => entry.contentType)).toEqual(['text/plain', undefined])
   })
 
   test('retries a file with backoff and succeeds within the attempt budget', async () => {

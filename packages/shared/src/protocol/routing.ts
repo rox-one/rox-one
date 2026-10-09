@@ -24,6 +24,19 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.codeIntelligence.READ_SPAN,
   RPC_CHANNELS.codeIntelligence.FRESHNESS,
   RPC_CHANNELS.codeIntelligence.CANCEL,
+  // Dev Space — repository catalog + clone/analysis jobs run in the local server (02-SPEC-foundations §5–§6).
+  RPC_CHANNELS.devSpace.LIST_REPOSITORIES,
+  RPC_CHANNELS.devSpace.ADD_REPOSITORY,
+  RPC_CHANNELS.devSpace.START_CLONE,
+  RPC_CHANNELS.devSpace.REMOVE_REPOSITORY,
+  RPC_CHANNELS.devSpace.REFRESH_REPOSITORY,
+  RPC_CHANNELS.devSpace.CANCEL,
+  RPC_CHANNELS.devSpace.CAPABILITIES,
+  RPC_CHANNELS.devSpace.LIST_RUNS,
+  RPC_CHANNELS.devSpace.CLONE_PROGRESS,
+  RPC_CHANNELS.devSpace.CHANGED,
+  RPC_CHANNELS.devSpace.RUN_PROGRESS,
+  RPC_CHANNELS.devSpace.SOFT_SIGNAL,
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 
@@ -454,6 +467,9 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.extensionHost.PROXY_FETCH,
   RPC_CHANNELS.extensionHost.GET_URL_ALLOWLIST,
   RPC_CHANNELS.extensionHost.SET_URL_ALLOWLIST,
+  RPC_CHANNELS.extensionHost.LIST_DESCRIPTORS,
+  RPC_CHANNELS.extensionHost.ACTIVATE,
+  RPC_CHANNELS.extensionHost.RELOAD,
 
   // extensionSurface — sandboxed extension UI BrowserViews (partition persist:ext-*)
   RPC_CHANNELS.extensionSurface.CREATE_EMBEDDED,
@@ -568,6 +584,7 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.drive.IMPORT_PLAN,
   RPC_CHANNELS.drive.IMPORT_START,
   RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_CANCEL,
   RPC_CHANNELS.drive.IMPORT_RESUME,
   RPC_CHANNELS.drive.IMPORT_STATUS,
   RPC_CHANNELS.drive.IMPORT_AUTH_START,
@@ -641,6 +658,8 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.voice.PROCESS,
   RPC_CHANNELS.voice.MODELS_LIST,
   RPC_CHANNELS.voice.JOB,
+  // Podcast generation rides the workspace server alongside voice jobs (02-SPEC-foundations §5.1).
+  RPC_CHANNELS.podcast.JOB,
   RPC_CHANNELS.voice.OVERLAY,
   RPC_CHANNELS.voice.HOTKEY,
   RPC_CHANNELS.voice.TALK_START,
@@ -910,6 +929,13 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.memory.DREAM_DONE,
   RPC_CHANNELS.memory.REPO_IMPORT_READY,
 
+  // memory — wave-3 workspace memory wiki (claims/evidence + lint); same
+  // REMOTE_ELIGIBLE classification as the rest of the memory namespace.
+  RPC_CHANNELS.memory.WIKI_LIST,
+  RPC_CHANNELS.memory.WIKI_GET,
+  RPC_CHANNELS.memory.WIKI_APPLY,
+  RPC_CHANNELS.memory.WIKI_LINT,
+
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).
   RPC_CHANNELS.learning.LIST_CANDIDATES,
@@ -1168,6 +1194,21 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.kanban.GET_CONFIG,
   RPC_CHANNELS.kanban.SET_CONFIG,
   RPC_CHANNELS.kanban.CHANGED,
+
+  // workboard — wave-3 workspace task board (same classification as kanban:*:
+  // workspace board state on whichever server owns the workspace).
+  RPC_CHANNELS.workboard.READ,
+  RPC_CHANNELS.workboard.MOVE,
+  RPC_CHANNELS.workboard.CHANGED,
+
+  // board — wave-3 workspace board widgets (same classification as pages:*
+  // workspace content on the workspace-owning server).
+  RPC_CHANNELS.board.WIDGET_PUT,
+  RPC_CHANNELS.board.WIDGET_GET,
+  RPC_CHANNELS.board.WIDGET_MOUNT,
+  RPC_CHANNELS.board.WIDGET_RELEASE,
+  RPC_CHANNELS.board.WIDGET_VALIDATE,
+  RPC_CHANNELS.board.CHANGED,
 
   // collection — workspace sessions collection display prefs + filters
   RPC_CHANNELS.collection.GET_DISPLAY,

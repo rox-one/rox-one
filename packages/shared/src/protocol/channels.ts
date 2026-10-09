@@ -209,6 +209,20 @@ export const RPC_CHANNELS = {
     FRESHNESS: 'codeIntelligence:freshness',
     CANCEL: 'codeIntelligence:cancel',
   },
+  devSpace: {
+    LIST_REPOSITORIES: 'devSpace:listRepositories',
+    ADD_REPOSITORY: 'devSpace:addRepository',
+    START_CLONE: 'devSpace:startClone',
+    REMOVE_REPOSITORY: 'devSpace:removeRepository',
+    REFRESH_REPOSITORY: 'devSpace:refreshRepository',
+    CANCEL: 'devSpace:cancel',
+    CAPABILITIES: 'devSpace:capabilities',
+    LIST_RUNS: 'devSpace:listRuns',
+    CLONE_PROGRESS: 'devSpace:cloneProgress',
+    CHANGED: 'devSpace:changed',
+    RUN_PROGRESS: 'devSpace:runProgress',
+    SOFT_SIGNAL: 'devSpace:softSignal',
+  },
   notes: {
     LIST: 'notes:list',
     READ: 'notes:read',
@@ -527,6 +541,11 @@ export const RPC_CHANNELS = {
     PROXY_FETCH: 'extensionHost:proxyFetch',
     GET_URL_ALLOWLIST: 'extensionHost:getUrlAllowlist',
     SET_URL_ALLOWLIST: 'extensionHost:setUrlAllowlist',
+    // S-05 §3.5 wave 3 — descriptor discovery + activation lifecycle. LOCAL_ONLY
+    // (the craft-sandbox utilityProcess lives in the local Electron host only).
+    LIST_DESCRIPTORS: 'extensionHost:listDescriptors',
+    ACTIVATE: 'extensionHost:activate',
+    RELOAD: 'extensionHost:reload',
   },
 
   // extensionSurface — sandboxed embedded BrowserView for extension UI
@@ -681,6 +700,10 @@ export const RPC_CHANNELS = {
     WAKE_CHANGED: 'voice:wakeChanged',
     TRIGGER: 'voice:trigger',
   },
+  podcast: {
+    /** Podcast generation run; `voice:job` stays for dictation/ASR (§5.1, D13). */
+    JOB: 'podcast:job',
+  },
   environment: {
     GET: 'environment:get',
     SAVE: 'environment:save',
@@ -808,6 +831,12 @@ export const RPC_CHANNELS = {
     DREAM_EVENT: 'memory:dreamEvent',
     DREAM_DONE: 'memory:dreamDone',
     REPO_IMPORT_READY: 'memory:repoImportReady',
+    // Wave 3 — workspace memory wiki (claims/evidence + lint). REMOTE_ELIGIBLE
+    // like the rest of the memory namespace (workspace data on the owning server).
+    WIKI_LIST: 'memory:wikiList',
+    WIKI_GET: 'memory:wikiGet',
+    WIKI_APPLY: 'memory:wikiApply',
+    WIKI_LINT: 'memory:wikiLint',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
@@ -1120,6 +1149,24 @@ export const RPC_CHANNELS = {
     SET_CONFIG: 'kanban:setConfig',
     CHANGED: 'kanban:changed',
   },
+  // workboard — wave-3 workspace task board (WorkBoard state, revision-guarded).
+  // Classified like kanban:* (REMOTE_ELIGIBLE workspace board config).
+  workboard: {
+    READ: 'workboard:read',
+    MOVE: 'workboard:move',
+    CHANGED: 'workboard:changed',
+  },
+  // board — wave-3 workspace board widgets (authored widget code mounted in a
+  // ticket-scoped sandbox). Classified like pages:* (REMOTE_ELIGIBLE workspace content).
+  board: {
+    WIDGET_PUT: 'board:widgetPut',
+    WIDGET_GET: 'board:widgetGet',
+    WIDGET_MOUNT: 'board:widgetMount',
+    WIDGET_RELEASE: 'board:widgetRelease',
+    /** Validate a frame ticket over the wire; refusal is one uniform typed error. */
+    WIDGET_VALIDATE: 'board:widgetValidate',
+    CHANGED: 'board:changed',
+  },
   collection: {
     GET_DISPLAY: 'collection:getDisplay',
     SET_DISPLAY: 'collection:setDisplay',
@@ -1318,6 +1365,8 @@ export const RPC_CHANNELS = {
     IMPORT_START: 'drive:importStart',
     /** Wave 4: stop scheduling new files once in-flight work settles. */
     IMPORT_PAUSE: 'drive:importPause',
+    /** Wave 4: abandon an import job — in-flight files settle, no further files start. */
+    IMPORT_CANCEL: 'drive:importCancel',
     /** Wave 4: resume a paused/errored import job. */
     IMPORT_RESUME: 'drive:importResume',
     /** Wave 4: one job by id, or every known job when the id is omitted. */

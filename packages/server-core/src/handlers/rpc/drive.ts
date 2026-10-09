@@ -55,6 +55,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.drive.IMPORT_PLAN,
   RPC_CHANNELS.drive.IMPORT_START,
   RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_CANCEL,
   RPC_CHANNELS.drive.IMPORT_RESUME,
   RPC_CHANNELS.drive.IMPORT_STATUS,
   RPC_CHANNELS.drive.IMPORT_AUTH_START,
@@ -373,6 +374,10 @@ export function registerDriveHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   server.handle(RPC_CHANNELS.drive.IMPORT_PAUSE, async (_ctx: RequestContext, jobId: string) => {
     return requireImport().pause(requireId(jobId, 'jobId'))
+  })
+
+  server.handle(RPC_CHANNELS.drive.IMPORT_CANCEL, async (_ctx: RequestContext, jobId: string) => {
+    return requireImport().cancel(requireId(jobId, 'jobId'))
   })
 
   server.handle(RPC_CHANNELS.drive.IMPORT_RESUME, async (_ctx: RequestContext, jobId: string) => {

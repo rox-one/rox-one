@@ -119,6 +119,7 @@ function baseApi(extra: Record<string, unknown> = {}) {
     revertMemoryRepoImport: mock(async () => ({ reverted: 0 })),
     onMemoryRepoChanged: () => () => {},
     onMemoryDreamDone: () => () => {},
+    onMemoryDreamEvent: () => () => {},
     ...extra,
   }
 }
@@ -185,6 +186,41 @@ describe('MemoryScreen repository status line', () => {
     await flush()
     expect(api.runMemoryDream).toHaveBeenCalledWith('ws:ws-1')
     await unmount(idle.root)
+  })
+
+  it('keeps the run state and skips the failure toast on a post-start rejection', async () => {
+    let emitStart: ((event: { bankId: string; kind: string }) => void) | null = null
+    let rejectRun: ((error: Error) => void) | null = null
+    setApi(baseApi({
+      runMemoryDream: mock(() => new Promise<never>((_resolve, reject) => { rejectRun = reject })),
+      onMemoryDreamEvent: (cb: (event: { bankId: string; kind: string }) => void) => { emitStart = cb; return () => {} },
+    }))
+    const { container, root } = await render(<MemoryScreen workspaceId="ws-1" />)
+    await flush()
+
+    await act(async () => { byTestId(container, 'memory-repo-run')!.click() })
+    await flush()
+
+    // The run actually started server-side, then the transport bound fired.
+    await act(async () => { emitStart!({ bankId: 'ws:ws-1', kind: 'start' }) })
+    await act(async () => { rejectRun!(new Error('Request timeout: memory:dreamRun (240000ms)')) })
+    await flush()
+
+    // The run is still alive server-side, so the button must stay disabled.
+    expect(byTestId(container, 'memory-repo-run')?.hasAttribute('disabled')).toBe(true)
+    await unmount(root)
+  })
+
+  it('re-enables [Собрать сейчас] on a pre-start rejection', async () => {
+    setApi(baseApi({ runMemoryDream: mock(async () => { throw new Error('boom') }) }))
+    const { container, root } = await render(<MemoryScreen workspaceId="ws-1" />)
+    await flush()
+
+    await act(async () => { byTestId(container, 'memory-repo-run')!.click() })
+    await flush()
+
+    expect(byTestId(container, 'memory-repo-run')?.hasAttribute('disabled')).toBe(false)
+    await unmount(root)
   })
 
   it('shows the repository path row for a materialized lesson and hides it otherwise', async () => {

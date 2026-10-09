@@ -275,7 +275,7 @@ export function ImportFlowDialog({ open, onOpenChange, api, auth, initialProvide
           </p>
         )}
 
-        {(phase === 'job' || phase === 'done') && job && (
+        {(phase === 'job' || phase === 'done' || phase === 'cancelled') && job && (
           <div className="space-y-3" data-testid="drive-import-progress">
             <p className="text-sm font-medium">
               {t('drive.import.status.' + job.status)}
@@ -304,6 +304,14 @@ export function ImportFlowDialog({ open, onOpenChange, api, auth, initialProvide
               <p className="text-sm text-success" data-testid="drive-import-done">
                 {t('drive.import.done.summary', { done: progress?.filesDone ?? 0, total: progress?.filesTotal ?? 0 })}
               </p>
+            )}
+            {phase === 'cancelled' && (
+              <div className="flex gap-2" data-testid="drive-import-cancelled">
+                <Button variant="ghost" size="sm" data-testid="drive-import-back" onClick={back}>
+                  <ArrowLeft className="icon-toolbar" />
+                  {t('drive.import.back')}
+                </Button>
+              </div>
             )}
             {phase === 'job' && (
               <div className="flex gap-2">

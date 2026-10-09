@@ -8,8 +8,8 @@
 import { RPC_CHANNELS } from '../shared/types'
 import type { ChannelMap } from './build-api'
 
-function invoke(channel: string, transform?: (result: any) => any) {
-  return { type: 'invoke' as const, channel, ...(transform && { transform }) }
+function invoke(channel: string, transform?: (result: any) => any, timeoutMs?: number) {
+  return { type: 'invoke' as const, channel, ...(transform && { transform }), ...(timeoutMs !== undefined && { timeoutMs }) }
 }
 
 function listener(channel: string) {
@@ -335,6 +335,9 @@ export const CHANNEL_MAP = {
   extensionHostProxyFetch: invoke(RPC_CHANNELS.extensionHost.PROXY_FETCH),
   extensionHostGetUrlAllowlist: invoke(RPC_CHANNELS.extensionHost.GET_URL_ALLOWLIST),
   extensionHostSetUrlAllowlist: invoke(RPC_CHANNELS.extensionHost.SET_URL_ALLOWLIST),
+  extensionHostListDescriptors: invoke(RPC_CHANNELS.extensionHost.LIST_DESCRIPTORS),
+  extensionHostActivate: invoke(RPC_CHANNELS.extensionHost.ACTIVATE),
+  extensionHostReload: invoke(RPC_CHANNELS.extensionHost.RELOAD),
 
   // Onboarding
   getAuthState: invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE),
@@ -425,6 +428,18 @@ export const CHANNEL_MAP = {
   readProjectRepositorySpan: invoke(RPC_CHANNELS.codeIntelligence.READ_SPAN),
   checkProjectRepositoryFreshness: invoke(RPC_CHANNELS.codeIntelligence.FRESHNESS),
   cancelProjectRepositoryRequest: invoke(RPC_CHANNELS.codeIntelligence.CANCEL),
+  // Developer Space (02-SPEC-foundations §4–§8) — repository catalog + local job pipeline.
+  listDevSpaceRepositories: invoke(RPC_CHANNELS.devSpace.LIST_REPOSITORIES),
+  addDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.ADD_REPOSITORY),
+  startDevSpaceClone: invoke(RPC_CHANNELS.devSpace.START_CLONE),
+  removeDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.REMOVE_REPOSITORY),
+  refreshDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.REFRESH_REPOSITORY),
+  cancelDevSpaceRequest: invoke(RPC_CHANNELS.devSpace.CANCEL),
+  getDevSpaceCapabilities: invoke(RPC_CHANNELS.devSpace.CAPABILITIES),
+  listDevSpaceRuns: invoke(RPC_CHANNELS.devSpace.LIST_RUNS),
+  onDevSpaceCloneProgress: listener(RPC_CHANNELS.devSpace.CLONE_PROGRESS),
+  onDevSpaceChanged: listener(RPC_CHANNELS.devSpace.CHANGED),
+  onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
   listNotes: invoke(RPC_CHANNELS.notes.LIST),
   readNote: invoke(RPC_CHANNELS.notes.READ),
   saveNote: invoke(RPC_CHANNELS.notes.SAVE),
@@ -753,7 +768,7 @@ export const CHANNEL_MAP = {
   getMemoryRepoGraph: invoke(RPC_CHANNELS.memory.REPO_GRAPH),
   exportMemoryRepo: invoke(RPC_CHANNELS.memory.REPO_EXPORT),
   getMemoryDreamStatus: invoke(RPC_CHANNELS.memory.DREAM_STATUS),
-  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN),
+  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN, undefined, 240_000),
   getMemoryDreamLog: invoke(RPC_CHANNELS.memory.DREAM_LOG),
   previewMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT),
   applyMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_APPLY_IMPORT),
@@ -762,6 +777,11 @@ export const CHANNEL_MAP = {
   onMemoryDreamEvent: listener(RPC_CHANNELS.memory.DREAM_EVENT),
   onMemoryDreamDone: listener(RPC_CHANNELS.memory.DREAM_DONE),
   onMemoryRepoImportReady: listener(RPC_CHANNELS.memory.REPO_IMPORT_READY),
+  // Wave 3 — workspace memory wiki (claims/evidence + lint).
+  listMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_LIST),
+  getMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_GET),
+  applyMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_APPLY),
+  lintMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_LINT),
 
   // Learning (continual learning, PRD §15) — agent/native actions
   // (`learning:observe|recordOutcome|recordCorrection`) are intentionally absent.
@@ -796,6 +816,7 @@ export const CHANNEL_MAP = {
   driveImportPlan: invoke(RPC_CHANNELS.drive.IMPORT_PLAN),
   driveImportStart: invoke(RPC_CHANNELS.drive.IMPORT_START),
   driveImportPause: invoke(RPC_CHANNELS.drive.IMPORT_PAUSE),
+  driveImportCancel: invoke(RPC_CHANNELS.drive.IMPORT_CANCEL),
   driveImportResume: invoke(RPC_CHANNELS.drive.IMPORT_RESUME),
   driveImportStatus: invoke(RPC_CHANNELS.drive.IMPORT_STATUS),
   driveImportAuthStart: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_START),
@@ -1049,6 +1070,17 @@ export const CHANNEL_MAP = {
   mindmapPinClear: invoke(RPC_CHANNELS.mindmap.PIN_CLEAR),
   setKanbanConfig: invoke(RPC_CHANNELS.kanban.SET_CONFIG),
   onKanbanConfigChanged: listener(RPC_CHANNELS.kanban.CHANGED),
+
+  // Wave 3 — workboard (workspace task board) + board widgets
+  readWorkboard: invoke(RPC_CHANNELS.workboard.READ),
+  moveWorkboard: invoke(RPC_CHANNELS.workboard.MOVE),
+  onWorkboardChanged: listener(RPC_CHANNELS.workboard.CHANGED),
+  putBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_PUT),
+  getBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_GET),
+  mountBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_MOUNT),
+  releaseBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_RELEASE),
+  validateBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_VALIDATE),
+  onBoardChanged: listener(RPC_CHANNELS.board.CHANGED),
 
   // Sessions collection display
   getCollectionDisplay: invoke(RPC_CHANNELS.collection.GET_DISPLAY),

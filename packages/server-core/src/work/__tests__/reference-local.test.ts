@@ -316,7 +316,7 @@ describe('local authority: review 2 fixes', () => {
     await harness.run({ type: 'task_lists.create', payload: { id: U('l-n'), name: 'L' } })
     expect(changed).toBe(1)
     const doc = { kind: 'note', id: 'Notes/list.md' }
-    expect(await harness.run({ type: 'tasks.create_many_from_checklist', target: doc, payload: { docRef: doc, items: [{ blockId: 'b1', text: 'a' }, { blockId: 'b2', text: 'b' }] } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'tasks.create_many_from_checklist', target: doc, payload: { docRef: doc, blockIds: ['b1', 'b2'], shared: { title: 'a' } } })).toMatchObject({ status: 'applied' })
     expect(tasks.list()).toHaveLength(2)
     expect(changed).toBe(2)
   })

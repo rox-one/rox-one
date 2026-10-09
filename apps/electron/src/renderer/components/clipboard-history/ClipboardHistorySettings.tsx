@@ -9,6 +9,7 @@ import type { ClipSettings } from '@rox/shared/clipboard-history'
 import { Button } from '@/components/mode-screen/ModeScreen'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { formatAcceleratorDisplay, formatHotkeyDisplay } from '@/lib/platform'
 
 const RETENTION_OPTIONS: ReadonlyArray<{ days: number; key: string }> = [
   { days: 1, key: 'clipboard.settings.retention.1d' },
@@ -115,9 +116,9 @@ export function ClipboardHistorySettings({
             </span>
             <input
               type="number"
-              min={1}
+              min={100}
               value={draft.maxEntries}
-              onChange={(event) => patch({ maxEntries: Math.max(1, Number(event.target.value) || 1) })}
+              onChange={(event) => patch({ maxEntries: Math.max(100, Number(event.target.value) || 100) })}
               aria-label={t('clipboard.settings.maxEntries')}
               className={`${INPUT} w-24 shrink-0`}
               data-testid="clipboard-settings-max-entries"
@@ -133,21 +134,27 @@ export function ClipboardHistorySettings({
           <label className={ROW}>
             <span className="min-w-0">
               <span className="block text-body">{t('clipboard.settings.hotkey')}</span>
-              <span className={HINT}>{t('clipboard.settings.hotkeyHint')}</span>
+              <span className={HINT}>{t('clipboard.settings.hotkeyHint', { shortcut: formatHotkeyDisplay('mod+k') })}</span>
             </span>
-            <Check checked={draft.globalShortcutEnabled} label={t('clipboard.settings.hotkey')} onChange={(value) => patch({ globalShortcutEnabled: value })} />
+            <Check checked={draft.globalShortcutEnabled} label={t('clipboard.settings.hotkeyEnable')} onChange={(value) => patch({ globalShortcutEnabled: value })} />
           </label>
           <div className={ROW}>
-            <span className="text-body text-text-muted">{t('clipboard.settings.hotkey')}</span>
-            <input
-              type="text"
-              value={draft.globalShortcut}
-              onChange={(event) => patch({ globalShortcut: event.target.value })}
-              aria-label={t('clipboard.settings.hotkey')}
-              spellCheck={false}
-              className={`${INPUT} w-56 shrink-0 font-mono`}
-              data-testid="clipboard-settings-hotkey"
-            />
+            <span className="min-w-0">
+              <span className="block text-body">{t('clipboard.settings.hotkey')}</span>
+              <span className={HINT}>{t('clipboard.settings.hotkeyField')}</span>
+            </span>
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="text-caption text-text-muted" data-testid="clipboard-settings-hotkey-effective">{formatAcceleratorDisplay(draft.globalShortcut)}</span>
+              <input
+                type="text"
+                value={draft.globalShortcut}
+                onChange={(event) => patch({ globalShortcut: event.target.value })}
+                aria-label={t('clipboard.settings.hotkeyField')}
+                spellCheck={false}
+                className={`${INPUT} w-56 shrink-0 font-mono`}
+                data-testid="clipboard-settings-hotkey"
+              />
+            </span>
           </div>
         </div>
 

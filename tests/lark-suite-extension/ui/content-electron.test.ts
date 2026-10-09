@@ -277,13 +277,13 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await capture('native-app-ready-after-onboarding')
     // Use the application's registered navigation event to open its existing
     // Home route, then exercise its actual input and native inbox storage.
-    await page.evaluate(() => window.dispatchEvent(new CustomEvent('craft-agent-navigate', { detail: { route: 'home' }, bubbles: true })))
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('rox-navigate', { detail: { route: 'home' }, bubbles: true })))
     const quickTask = page.locator('[data-home-quick-add] input')
     await quickTask.waitFor({ timeout: 30_000 })
     if (process.env.ROX_COMPOUND_PROBE_PROJECTS === '1') {
       stage('home-to-projects-probe')
       await capture('probe-home')
-      await page.evaluate(() => window.dispatchEvent(new CustomEvent('craft-agent-navigate', { detail: { route: 'projects' }, bubbles: true })))
+      await page.evaluate(() => window.dispatchEvent(new CustomEvent('rox-navigate', { detail: { route: 'projects' }, bubbles: true })))
       await page.waitForFunction(() => document.body.innerText.includes('Что-то пошло не так')
         || document.querySelector('[data-list-role="projects"]') !== null, { timeout: 30_000 }).catch(() => {})
       await capture('probe-projects')
@@ -394,7 +394,7 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await capture('home-inbox-after-renderer-reload')
     // Home's compact layout intentionally collapses the full sidebar. Enter
     // the existing Projects route through the registered navigation surface.
-    await page.evaluate(() => window.dispatchEvent(new CustomEvent('craft-agent-navigate', { detail: { route: 'projects' }, bubbles: true })))
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('rox-navigate', { detail: { route: 'projects' }, bubbles: true })))
     observed.routeEntry = 'registered-production-navigation-event'
     stage('repository-snapshot')
     await page.locator('[data-list-role="projects"]').getByText('Проверка репозитория', { exact: true }).click()
@@ -457,7 +457,7 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     observed.repositoryConnection = { reviewedRepositoryFingerprint, previewDidNotPersistBindingOrSnapshot: true,
       approved: approvedRepository.connection, nativeProjectConfigSha256: digest(nativeProjectConfig),
       unapprovedDraftDisabledCapture: true, capturedTextSurvivedExternalSourceEdit: true }
-    await page.evaluate(() => window.dispatchEvent(new CustomEvent('craft-agent-navigate', { detail: { route: 'notes' }, bubbles: true })))
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('rox-navigate', { detail: { route: 'notes' }, bubbles: true })))
     stage('document-native-save')
     await page.locator('.notes-list-item').filter({ hasText: 'Проверка документа' }).first().click()
     await page.getByTestId('notes-content-authority').waitFor()
@@ -1077,7 +1077,7 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     Object.assign(observed.blockStructure as object, { mapBlockSource })
     await capture('map-native-block-deeplink-same-source')
     await page.keyboard.press('Escape')
-    await page.evaluate((noteAddress) => window.dispatchEvent(new CustomEvent('craft-agent-navigate', {
+    await page.evaluate((noteAddress) => window.dispatchEvent(new CustomEvent('rox-navigate', {
       detail: { route: 'notes/note/' + encodeURIComponent(noteAddress) }, bubbles: true,
     })), seeded.structureNoteId + '#^existing-child')
     await blockSource.waitFor()
@@ -1091,7 +1091,7 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await page.waitForFunction(() => (document.querySelector('[data-note-property="title"] input') as HTMLInputElement | null)?.value === 'Навигационная заметка')
     expect(await editor.innerText()).toContain(finalMarker)
     await capture('fresh-block-address-origin-other-note')
-    await page.evaluate((noteAddress) => window.dispatchEvent(new CustomEvent('craft-agent-navigate', {
+    await page.evaluate((noteAddress) => window.dispatchEvent(new CustomEvent('rox-navigate', {
       detail: { route: 'notes/note/' + encodeURIComponent(noteAddress) }, bubbles: true,
     })), seeded.structureNoteId + '#^existing-child')
     await blockSource.waitFor()

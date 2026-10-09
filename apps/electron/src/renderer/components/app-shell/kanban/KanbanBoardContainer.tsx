@@ -17,6 +17,7 @@ import {
   kanbanColumnStatusAtom,
   kanbanEditorTargetAtom,
   kanbanColumnColorsAtom,
+  workboardLiveStateAtom,
 } from '@/atoms/kanban'
 import { useNavigation, useNavigationState, isSessionsNavigation } from '@/contexts/NavigationContext'
 import { useProjectColorTreatment } from '@/hooks/useProjectColorTreatment'
@@ -28,6 +29,7 @@ import { DEFAULT_MODEL, getModelShortName } from '@config/models'
 import { getDefaultModelsForConnection, type LlmConnectionWithStatus } from '@config/llm-connections'
 import type { SessionStatus } from '@/config/session-status-config'
 import { KanbanBoard, type KanbanMoveTarget } from './KanbanBoard'
+import { createBoardLiveRefresh, type BoardLiveRefreshHandle } from './board-live-refresh'
 import { parsePriorityGroupId } from './priority-groups'
 import { resolveBoardColumns, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
@@ -269,6 +271,27 @@ function KanbanBoardContainerInner() {
   // in the same tick can still see isProcessing=false. Keep an immediate Set.
   const processingRef = useRef(new Set<string>())
 
+  // ── Workboard live refresh (row b2.2) ──────────────────────────────────────
+  const workboardLiveState = useAtomValue(workboardLiveStateAtom)
+  const setWorkboardLiveState = useSetAtom(workboardLiveStateAtom)
+  const workboardLiveStateRef = React.useRef(workboardLiveState)
+  workboardLiveStateRef.current = workboardLiveState
+  const workboardHandleRef = React.useRef<BoardLiveRefreshHandle | null>(null)
+  // Card writes (optimistic drag, status change, column removal) that must not be
+  // clobbered by an incoming workboard snapshot — the refresh coalescer defers
+  // while this is > 0 and resumes when it drains.
+  const boardWritesInFlightRef = React.useRef(0)
+  const kanbanMetaMapRef = React.useRef(metaMap)
+  kanbanMetaMapRef.current = metaMap
+
+  const beginCardWrite = React.useCallback(() => {
+    boardWritesInFlightRef.current += 1
+  }, [])
+  const endCardWrite = React.useCallback(() => {
+    boardWritesInFlightRef.current = Math.max(0, boardWritesInFlightRef.current - 1)
+    if (boardWritesInFlightRef.current === 0) workboardHandleRef.current?.endWrite()
+  }, [])
+
   // Drop loop-guard entries once session meta reports idle again.
   React.useEffect(() => {
     for (const id of [...processingRef.current]) {
@@ -334,6 +357,49 @@ function KanbanBoardContainerInner() {
       unsub()
     }
   }, [activeWorkspaceId, workspaces, setColumnColors])
+
+  // Live workboard: subscribe to `workboard:changed` and reload through the
+  // coalescer. A drag/status write marks itself in-flight so the reload never
+  // clobbers an optimistic placement; a revision regression bumps the epoch and
+  // forces a full snapshot. Unmount unsubscribes and stops all coalescer timers.
+  React.useEffect(() => {
+    if (!activeWorkspaceId) return
+    const workspaceId = activeWorkspaceId
+    setWorkboardLiveState(prev => (prev.revision === 0 ? prev : { ...prev, revision: 0 }))
+    const handle = createBoardLiveRefresh({
+      initialRevision: 0,
+      initialEpoch: workboardLiveStateRef.current.epoch,
+      isWriteInFlight: () => boardWritesInFlightRef.current > 0,
+      read: args =>
+        args.sinceRevision === undefined
+          ? window.electronAPI.readWorkboard({ workspaceId })
+          : window.electronAPI.readWorkboard({ workspaceId, sinceRevision: args.sinceRevision }),
+      onReloaded: reload => {
+        if (!reload.result.unchanged) {
+          const taskMeta = kanbanMetaMapRef.current
+          for (const card of reload.result.cards) {
+            const meta = taskMeta.get(card.taskId)
+            if (!meta || meta.kanbanColumn === card.column) continue
+            updateSessionMeta(card.taskId, { kanbanColumn: card.column })
+          }
+        }
+        setWorkboardLiveState({
+          revision: reload.revision,
+          epoch: reload.epoch,
+        })
+      },
+      onError: (error: unknown) => {
+        console.error('[kanban] workboard refresh failed', error)
+      },
+    })
+    workboardHandleRef.current = handle
+    const unsubscribe = window.electronAPI.onWorkboardChanged(payload => handle.notify(payload))
+    return () => {
+      unsubscribe()
+      handle.dispose()
+      if (workboardHandleRef.current === handle) workboardHandleRef.current = null
+    }
+  }, [activeWorkspaceId, setWorkboardLiveState, updateSessionMeta])
 
   const persistBoardConfig = React.useCallback(
     (next: KanbanBoardConfig) => {
@@ -650,13 +716,17 @@ function KanbanBoardContainerInner() {
   const handleChangeStatus = React.useCallback(
     (taskId: string, statusId: string) => {
       updateSessionMeta(taskId, { sessionStatus: statusId })
-      void window.electronAPI.sessionCommand(taskId, { type: 'setSessionStatus', state: statusId })
+      beginCardWrite()
+      void window.electronAPI
+        .sessionCommand(taskId, { type: 'setSessionStatus', state: statusId })
+        .finally(endCardWrite)
     },
-    [updateSessionMeta],
+    [updateSessionMeta, beginCardWrite, endCardWrite],
   )
 
   const handleMoveTask = React.useCallback(
     (taskId: string, to: KanbanColumnId | KanbanMoveTarget) => {
+      beginCardWrite()
       void (async () => {
         const target: KanbanMoveTarget = typeof to === 'string' ? { columnId: to } : to
         const toColumn = target.columnId
@@ -821,7 +891,7 @@ function KanbanBoardContainerInner() {
             kick(title)
           }
         }
-      })()
+      })().finally(endCardWrite)
     },
     [
       updateSessionMeta,
@@ -835,6 +905,8 @@ function KanbanBoardContainerInner() {
       onSendMessage,
       t,
       visibleTasks,
+      beginCardWrite,
+      endCardWrite,
     ],
   )
 
@@ -950,13 +1022,20 @@ function KanbanBoardContainerInner() {
       if (remaining.length === 0) return
       const fallbackId = remaining[0]?.id
       if (fallbackId) {
+        const relocations: Array<Promise<unknown>> = []
         for (const task of visibleTasks) {
           if (task.column !== columnId) continue
           updateSessionMeta(task.id, { kanbanColumn: fallbackId })
-          void window.electronAPI.sessionCommand(task.id, {
-            type: 'setKanbanColumn',
-            column: fallbackId,
-          })
+          relocations.push(
+            window.electronAPI.sessionCommand(task.id, {
+              type: 'setKanbanColumn',
+              column: fallbackId,
+            }),
+          )
+        }
+        if (relocations.length > 0) {
+          beginCardWrite()
+          void Promise.allSettled(relocations).finally(endCardWrite)
         }
       }
       persistBoardConfig({
@@ -965,7 +1044,7 @@ function KanbanBoardContainerInner() {
         columns: remaining,
       })
     },
-    [persistBoardConfig, visibleTasks, updateSessionMeta],
+    [persistBoardConfig, visibleTasks, updateSessionMeta, beginCardWrite, endCardWrite],
   )
 
   const handleSelectDropStatus = React.useCallback(

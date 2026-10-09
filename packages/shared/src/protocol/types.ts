@@ -102,6 +102,10 @@ export type ErrorCode =
   | 'MARKETPLACE_ENTRY_NOT_INSTALLED'
   | 'MARKETPLACE_OPERATION_IN_FLIGHT'
   | 'MARKETPLACE_TOOL_INSTALL_FAILED'
+  // Registry trust gate (wave-3 c2.7): the catalog verdict refuses the install
+  // before any network work; review-required needs explicit operator confirmation.
+  | 'REGISTRY_TRUST_BLOCKED'
+  | 'REGISTRY_TRUST_REVIEW_REQUIRED'
   // Knowledge provider (P1 read-only), spec 03 §3.2 KnowledgeErrorCode
   | 'CONNECTION_UNAVAILABLE'
   | 'UNSUPPORTED_OPERATION'
@@ -129,6 +133,13 @@ export type ErrorCode =
   | 'SCHEMA_VERSION_UNSUPPORTED'
   | 'CURSOR_INVALID'
   | 'PROVIDER_UNAVAILABLE'
+  // Board widgets (wave 3, row b2.3): a widget revision whose authored kind has
+  // no shipping renderer is refused as a typed kind error rather than stored.
+  | 'UNSUPPORTED_WIDGET_KIND'
+  // Uniform render-ticket refusal: one constant code for every reason a widget
+  // ticket is rejected (unknown, expired, stale revision/generation, foreign
+  // workspace), so the reason never leaks to the sandbox.
+  | 'WIDGET_TICKET_REFUSED'
   // Session collaboration visibility (a2.5): a non-owner write is denied by the
   // session's visibility instead of the workspace role.
   | 'SESSION_READ_ONLY'
@@ -166,6 +177,8 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'MARKETPLACE_ENTRY_NOT_INSTALLED',
   'MARKETPLACE_OPERATION_IN_FLIGHT',
   'MARKETPLACE_TOOL_INSTALL_FAILED',
+  'REGISTRY_TRUST_BLOCKED',
+  'REGISTRY_TRUST_REVIEW_REQUIRED',
   'CONNECTION_UNAVAILABLE',
   'UNSUPPORTED_OPERATION',
   'NOT_FOUND',
@@ -190,6 +203,8 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'SCHEMA_VERSION_UNSUPPORTED',
   'CURSOR_INVALID',
   'PROVIDER_UNAVAILABLE',
+  'UNSUPPORTED_WIDGET_KIND',
+  'WIDGET_TICKET_REFUSED',
   'SESSION_READ_ONLY',
   'SESSION_OWNER_ONLY',
   'OPERATOR_ACCESS_DENIED',

@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { cmd, colorSchema, createIdShape, entity, idSchema, isoDateTimeSchema, longTextSchema, nameSchema, principalListSchema, refSchema, timeZoneSchema, titleSchema, type CommandSchemaMap } from '../common'
 
+// W1-14 (#1511): calendar.create_event and calendar.create_event_from_message (§12) moved to @rox/shared/xsc.
 export const rsvpSchema = z.enum(['accepted', 'declined', 'tentative', 'needs_action'])
 const timeRangeShape = { startAt: isoDateTimeSchema, endAt: isoDateTimeSchema, allDay: z.boolean().optional(), timeZone: timeZoneSchema.optional() }
 const endAfterStart = (value: { startAt?: string; endAt?: string }) => !value.startAt || !value.endAt || Date.parse(value.endAt) >= Date.parse(value.startAt)
@@ -21,7 +22,6 @@ const eventCreateShape = {
 }
 
 export const CALENDAR_COMMAND_SCHEMAS: CommandSchemaMap = {
-  'calendar.create_event': cmd(eventCreateShape).refine(endAfterStart, RANGE),
   'calendar.update_event': cmd({
     title: titleSchema.optional(), description: longTextSchema.nullable().optional(), startAt: isoDateTimeSchema.optional(), endAt: isoDateTimeSchema.optional(),
     allDay: z.boolean().optional(), timeZone: timeZoneSchema.optional(), rrule: z.string().max(1000).nullable().optional(),
@@ -33,7 +33,6 @@ export const CALENDAR_COMMAND_SCHEMAS: CommandSchemaMap = {
   'calendar.subscribe': cmd({ calendarId: idSchema, color: colorSchema.optional(), hidden: z.boolean().optional() }),
   'calendar.book_room': cmd({ roomId: idSchema, ...timeRangeShape }).refine(endAfterStart, RANGE),
   'calendar.create_time_block': cmd({ ...createIdShape, title: titleSchema, ...timeRangeShape, source: refSchema.optional() }).refine(endAfterStart, RANGE),
-  'calendar.create_event_from_message': cmd({ ...eventCreateShape, chatId: idSchema, seq: z.number().int().nonnegative() }).refine(endAfterStart, RANGE),
   'calendar.create_event_from_email': cmd({ ...eventCreateShape, threadId: idSchema }).refine(endAfterStart, RANGE),
 }
 

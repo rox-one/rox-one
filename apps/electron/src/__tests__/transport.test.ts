@@ -261,6 +261,35 @@ describe('RPC', () => {
     expect(seen).toBeInstanceOf(Uint8Array)
     expect(Array.from(seen!)).toEqual([1, 2, 3, 4])
   })
+
+  // Real timers: this test deliberately exercises the transport's wall-clock
+  // request bounds (constructor default vs per-call override).
+  test('invokeWithTimeout overrides the per-request timeout for a single call', async () => {
+    const { server, client } = await createPair({}, { requestTimeout: 60 })
+    server.handle('slow', async (_ctx, ms: number) => {
+      await new Promise(r => setTimeout(r, ms))
+      return 'done'
+    })
+
+    // Constructor default (60ms) still bounds a plain invoke — byte-identical path.
+    try {
+      await client.invoke('slow', 300)
+      throw new Error('Should have thrown')
+    } catch (err) {
+      expect(err instanceof Error ? err.message : String(err)).toContain('Request timeout: slow (60ms)')
+    }
+
+    // The per-call override survives well past the constructor default.
+    expect(await client.invokeWithTimeout('slow', 1000, 300)).toBe('done')
+
+    // A short override bounds this call alone (inverse direction).
+    try {
+      await client.invokeWithTimeout('slow', 30, 300)
+      throw new Error('Should have thrown')
+    } catch (err) {
+      expect(err instanceof Error ? err.message : String(err)).toContain('Request timeout: slow (30ms)')
+    }
+  })
 })
 
 // ---------------------------------------------------------------------------

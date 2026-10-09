@@ -62,6 +62,12 @@ export interface RepoMaterializeResult {
    * genuinely empty batch, whose result carries no `error`.
    */
   error?: string
+  /**
+   * Absolute path of a stale `<GIT_DIR>/index.lock` quarantined before retrying
+   * a failed git add/commit (a SIGKILLed run left it behind). Absent whenever no
+   * lock recovery ran.
+   */
+  recoveredLock?: string
 }
 
 /**
@@ -104,6 +110,19 @@ const DEFAULT_DEBOUNCE_MS = 5000
 const MAX_COMMITS = 100
 /** Default page size for `listCommits` when the caller's limit is missing/invalid. */
 const DEFAULT_COMMIT_LIMIT = 30
+
+/**
+ * Age at which an `index.lock` is treated as abandoned: a live git invocation
+ * holds its index lock for milliseconds, so a lock older than a minute cannot
+ * belong to a running process and is safe to quarantine (a SIGKILLed run left
+ * it). Anything fresher is returned untouched as an honest error.
+ */
+const STALE_INDEX_LOCK_MS = 60_000
+/** git's own lock-creation failure text; group 1 is the absolute lock path. */
+const INDEX_LOCK_TEXT_RE = /Unable to create '([^']*index\.lock)'/
+
+/** `run` result plus the quarantine path when a stale index lock was recovered. */
+type RecoveredGitExecResult = GitExecResult & { recoveredLock?: string }
 
 /** Full/abbreviated hex object id — the only revision shape callers may name. */
 const REVISION_RE = /^[0-9a-f]{4,64}$/i
@@ -312,6 +331,36 @@ export class MemoryRepoService {
     return this.git.run(args, { cwd: repoPath, env: { GIT_DIR: join(repoPath, '.git-rox'), GIT_WORK_TREE: repoPath } })
   }
 
+  /**
+   * Run a git command that touches the index, recovering from an `index.lock`
+   * left behind by a SIGKILLed run: when the command fails with git's lock text
+   * AND the lock is older than {@link STALE_INDEX_LOCK_MS}, quarantine it
+   * (`index.lock.stale-<epoch-ms>`) and retry the command exactly once. A fresh
+   * lock belongs to a live run — returned untouched as an honest error.
+   */
+  private async runGitWithStaleLockRecovery(repoPath: string, args: string[]): Promise<RecoveredGitExecResult> {
+    const first = await this.runGit(repoPath, args)
+    if (first.ok) return first
+    const lockPath = INDEX_LOCK_TEXT_RE.exec(first.stderr)?.[1]
+    if (!lockPath) return first
+    let mtimeMs: number
+    try {
+      mtimeMs = statSync(lockPath).mtimeMs
+    } catch {
+      return first
+    }
+    const nowMs = this.nowProvider().getTime()
+    if (nowMs - mtimeMs < STALE_INDEX_LOCK_MS) return first
+    const quarantined = `${lockPath}.stale-${nowMs}`
+    try {
+      renameSync(lockPath, quarantined)
+    } catch {
+      return first
+    }
+    console.warn(`[memory-repo] quarantined stale index lock ${lockPath} (age ${Math.round((nowMs - mtimeMs) / 1000)}s) -> ${quarantined}; retrying git ${args[0] ?? ''}`)
+    return { ...(await this.runGit(repoPath, args)), recoveredLock: quarantined }
+  }
+
   private readMeta(repoPath: string): RepoMeta | null {
     try {
       const parsed = JSON.parse(readFileSync(`${repoPath}.meta.json`, 'utf8'))
@@ -337,13 +386,15 @@ export class MemoryRepoService {
   private async detectMode(repoPath: string): Promise<'git' | 'snapshots'> {
     if (!(await this.git.available())) return 'snapshots'
     mkdirSync(repoPath, { recursive: true })
-    let isRepo = samePath((await this.runGit(repoPath, ['rev-parse', '--show-toplevel'])).stdout.trim(), repoPath)
-    if (!isRepo) {
+    // `.git-rox` is created ONLY by the `init` below, so its presence proves
+    // this bank is already a repo: skip the two `rev-parse --show-toplevel`
+    // probes that only exist to confirm a fresh init landed in place. A settled
+    // bank's status() thus costs exactly `log` + `status --porcelain`.
+    if (!existsSync(join(repoPath, '.git-rox'))) {
       const init = await this.runGit(repoPath, ['init', '-q', '-b', 'main'])
       if (!init.ok) return 'snapshots'
-      isRepo = samePath((await this.runGit(repoPath, ['rev-parse', '--show-toplevel'])).stdout.trim(), repoPath)
+      if (!samePath((await this.runGit(repoPath, ['rev-parse', '--show-toplevel'])).stdout.trim(), repoPath)) return 'snapshots'
     }
-    if (!isRepo) return 'snapshots'
     this.ensureGitExclude(repoPath)
     return 'git'
   }
@@ -364,11 +415,20 @@ export class MemoryRepoService {
     writeFileSync(file, content)
   }
 
-  /** True when a bare `git` would resolve to a DIFFERENT tree above the repo path. */
-  private async detectForeignTree(repoPath: string): Promise<boolean> {
-    if (!existsSync(repoPath)) return false
-    const probe = await this.git.run(['rev-parse', '--show-toplevel'], { cwd: repoPath })
-    return probe.ok && probe.stdout.trim().length > 0 && !samePath(probe.stdout.trim(), repoPath)
+  /**
+   * True when a directory ABOVE the bank is a git repository, where a bare
+   * `git` run from inside the bank would resolve (`.` never exists in our work
+   * tree, which owns `.git-rox` instead). Derived by walking the filesystem
+   * parents — no git spawn on the settled-bank status() path.
+   */
+  private detectForeignTree(repoPath: string): boolean {
+    let dir = dirname(repoPath)
+    for (;;) {
+      if (existsSync(join(dir, '.git'))) return true
+      const parent = dirname(dir)
+      if (parent === dir) return false
+      dir = parent
+    }
   }
 
   private async revParseHead(repoPath: string): Promise<string | null> {
@@ -400,7 +460,7 @@ export class MemoryRepoService {
     mkdirSync(repoPath, { recursive: true })
     const mode = await this.detectMode(repoPath)
     const meta = this.readMeta(repoPath)
-    const foreignTree = await this.detectForeignTree(repoPath)
+    const foreignTree = this.detectForeignTree(repoPath)
 
     let head: MemoryRepoStatus['head'] = null
     if (mode === 'git') {
@@ -881,10 +941,12 @@ export class MemoryRepoService {
     let batchLanded = true
     let nextUncommitted: Record<string, string> = {}
     let failure: string | undefined
+    let recoveredLock: string | undefined
 
     if (changed.length > 0) {
       if (mode === 'git') {
-        const staged = await this.runGit(repoPath, ['add', '-A', '--', ...changed])
+        const staged = await this.runGitWithStaleLockRecovery(repoPath, ['add', '-A', '--', ...changed])
+        recoveredLock ??= staged.recoveredLock
         if (!staged.ok) {
           batchLanded = false
           failure = staged.stderr.trim() || `exit ${staged.code ?? 'unknown'}`
@@ -924,7 +986,8 @@ export class MemoryRepoService {
             }
             if (batchLanded && stagedOutput.trim()) {
               const message = commitMessage(parsed.scope, reason, { addedLessons, deletedLessons })
-              const commit = await this.runGit(repoPath, ['commit', '-q', '-m', message])
+              const commit = await this.runGitWithStaleLockRecovery(repoPath, ['commit', '-q', '-m', message])
+              recoveredLock ??= commit.recoveredLock
               if (commit.ok) {
                 committed = true
                 head = (await this.revParseHead(repoPath)) ?? head
@@ -987,6 +1050,7 @@ export class MemoryRepoService {
       files: changed.length,
       edited: editedFiles,
       ...(failure ? { error: failure } : {}),
+      ...(recoveredLock ? { recoveredLock } : {}),
     }
   }
 

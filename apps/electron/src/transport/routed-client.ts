@@ -102,6 +102,15 @@ export class RoutedClient implements RpcClient {
   // -------------------------------------------------------------------------
 
   async invoke(channel: string, ...args: any[]): Promise<any> {
+    return this.route(channel, undefined, args)
+  }
+
+  /** Like invoke(), but forwards a per-call timeout override to the target client. */
+  async invokeWithTimeout(channel: string, timeoutMs: number, ...args: any[]): Promise<any> {
+    return this.route(channel, timeoutMs, args)
+  }
+
+  private async route(channel: string, timeoutMs: number | undefined, args: any[]): Promise<any> {
     if (isProjectAuthorityChannel(channel)) {
       if (!this.projectAuthority) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
       return this.projectAuthority.invoke(channel, ...args)
@@ -126,7 +135,9 @@ export class RoutedClient implements RpcClient {
         })
       : args
 
-    const result = await target.invoke(channel, ...translatedArgs)
+    const result = timeoutMs === undefined
+      ? await target.invoke(channel, ...translatedArgs)
+      : await target.invokeWithTimeout(channel, timeoutMs, ...translatedArgs)
 
     // Intercept SWITCH_WORKSPACE response to swap workspace client
     if (channel === RPC_CHANNELS.window.SWITCH_WORKSPACE) {

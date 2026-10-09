@@ -287,7 +287,7 @@ async function until(check: () => Promise<boolean>, label: string, timeout = 30_
 }
 
 async function route(page: Page, path: string): Promise<void> {
-  await page.evaluate(value => window.dispatchEvent(new CustomEvent('craft-agent-navigate',
+  await page.evaluate(value => window.dispatchEvent(new CustomEvent('rox-navigate',
     { detail: { route: value }, bubbles: true })), path)
 }
 

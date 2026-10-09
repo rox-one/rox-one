@@ -6,6 +6,7 @@ metadata:
     requires:
       env:
         - OPENCLAW_GATEWAY_TOKEN
+    always: true
 ---
 
 <!--

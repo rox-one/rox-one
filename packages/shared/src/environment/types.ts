@@ -16,6 +16,8 @@ export const QUESTION_IDS = [
   'syncPurposes',
   'notifications',
   'agentRules',
+  // Onboarding «Who are you?» profile (02-SPEC-foundations §2.2, D1).
+  'role',
 ] as const
 
 export type QuestionId = (typeof QUESTION_IDS)[number]
@@ -29,6 +31,7 @@ export const QUESTION_VERSIONS: Record<QuestionId, number> = {
   syncPurposes: 1,
   notifications: 1,
   agentRules: 1,
+  role: 1,
 }
 
 export type ModelPlacement = 'local' | 'cloud' | 'mixed'
@@ -61,6 +64,12 @@ export interface AgentRule {
   label: AgentRuleLabel
 }
 
+/** Onboarding «Who are you?» profile: the developer flag plus adjacent roles. */
+export interface OnboardingRoleProfile {
+  isDeveloper: boolean
+  relatedRoles: string[]
+}
+
 export interface EnvironmentPrefs {
   version: 1
   /** Last questionnaire revision the user completed or skipped as a whole. */
@@ -73,6 +82,7 @@ export interface EnvironmentPrefs {
   syncPurposes: Choice<SyncPurpose[]>
   notifications: Choice<boolean>
   agentRules: AgentRule[]
+  role: Choice<OnboardingRoleProfile>
   updatedAt: number
 }
 
@@ -93,6 +103,7 @@ export function getDefaultEnvironmentPrefs(now: number = Date.now()): Environmen
     syncPurposes: unanswered(),
     notifications: unanswered(),
     agentRules: [],
+    role: unanswered(),
     updatedAt: now,
   }
 }
@@ -111,6 +122,14 @@ export function isTtsChoice(value: unknown): value is TtsChoice {
 
 export function isAgentRuleLabel(value: unknown): value is AgentRuleLabel {
   return value === 'must' || value === 'forbid' || value === 'discretion' || value === 'custom'
+}
+
+export function isOnboardingRoleProfile(value: unknown): value is OnboardingRoleProfile {
+  if (!value || typeof value !== 'object') return false
+  const obj = value as Record<string, unknown>
+  return typeof obj.isDeveloper === 'boolean'
+    && Array.isArray(obj.relatedRoles)
+    && obj.relatedRoles.every((role) => typeof role === 'string')
 }
 
 export function isBrowserImportCategory(value: unknown): value is BrowserImportCategory {

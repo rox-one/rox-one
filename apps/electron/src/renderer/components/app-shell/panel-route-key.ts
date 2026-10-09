@@ -9,6 +9,7 @@
  * byte-identical to the baseline.
  */
 import {
+  isDevelopersNavigation,
   isScreenNavigation,
   isSessionsNavigation,
   isSettingsNavigation,
@@ -33,11 +34,18 @@ export function panelRouteKey(navState: NavigationState, context: PanelRouteKeyC
     'details' in navState ? navState.details : null,
     isSettingsNavigation(navState) ? navState.subpage : null,
     isScreenNavigation(navState) ? navState.screen : null,
+    // The memory navigator hosts lessons, repository and dream tabs; a crash in
+    // one tab must not survive a switch to another. Appended only for memory
+    // routes so every other key stays byte-identical to the baseline.
+    ...(navState.navigator === 'memory' ? [navState.tab ?? 'lessons'] : []),
     navState.navigator === 'search' ? navState.query : null,
     navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
     unavailableWorkspaceSlug,
     isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
     ...(isSurfaceNavigation(navState) ? [navState.surface] : []),
+// Developer Space: the focused repo changes the routed content (home vs
+    // one repo workspace); append only for this navigator like `surface`.
+    ...(isDevelopersNavigation(navState) ? [navState.devSpaceRepoId ?? null] : []),
     // W3.2: the calendar surface hosts Встречи; a selected meeting is distinct
     // content, so a crash in one meeting must not survive a switch to another.
     ...(isSurfaceNavigation(navState) && navState.meetingId ? [navState.meetingId] : []),

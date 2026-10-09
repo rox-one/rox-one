@@ -189,10 +189,11 @@ export type {
   MarketplaceInstallResult,
   MarketplaceRemoveResult,
 };
-import type { AddLessonResult, Lesson, LessonCategory, LessonScope, MemoryInsights, PendingSkill, PendingSkillDiff, ProjectMemoryDto, PromoteLessonResult, PromotionCandidate, SessionProvenance, SkillExportResult, SkillPruneResult, SkillUsageMap } from '@rox/shared/memory/types';
+import type { AddLessonResult, Lesson, LessonCategory, LessonScope, MemoryInsights, PendingSkill, PendingSkillDiff, ProjectMemoryDto, PromoteLessonResult, PromotionCandidate, SessionProvenance, SkillExportResult, SkillPruneResult, SkillUsageMap, WikiApplyResult, WikiClaim, WikiClaimEvidence, WikiGetResult, WikiLintReport, WikiListResult, WikiMutation } from '@rox/shared/memory/types';
 import type { MemoryDreamEvent, MemoryDreamRun, MemoryDreamStatus, MemoryRepoBankInfo, MemoryRepoCommit, MemoryRepoCommitFile, MemoryRepoExportResult, MemoryRepoFile, MemoryRepoGraph, MemoryRepoImportPreview, MemoryRepoStatus, MemoryRepoTreeNode } from '@rox/shared/memory/repo';
 import type { MemoryProposal } from '@rox/shared/memory/proposals';
 export type { Lesson, LessonCategory, LessonScope, MemoryInsights };
+export type { WikiApplyResult, WikiClaim, WikiClaimEvidence, WikiGetResult, WikiLintReport, WikiListResult, WikiMutation };
 export type { ThinkingLevel };
 export { THINKING_LEVELS, DEFAULT_THINKING_LEVEL } from '@rox/shared/agent/thinking-levels';
 
@@ -332,6 +333,12 @@ import type {
   BridgeProjectedContributions,
   CatalogEntry,
   CatalogFilter,
+  ExtensionActivationPlanEntry,
+  ExtensionCommandDescriptor,
+  ExtensionDescriptor,
+  ExtensionHostActivateResult,
+  ExtensionHostListDescriptorsResult,
+  ExtensionHostReloadResult,
   ExtensionHostStatus,
   ExtensionRecord,
   ExtensionsChangedPayload,
@@ -353,6 +360,12 @@ export type {
   BridgeProjectedContributions,
   CatalogEntry,
   CatalogFilter,
+  ExtensionActivationPlanEntry,
+  ExtensionCommandDescriptor,
+  ExtensionDescriptor,
+  ExtensionHostActivateResult,
+  ExtensionHostListDescriptorsResult,
+  ExtensionHostReloadResult,
   ExtensionHostStatus,
   ExtensionRecord,
   ExtensionsChangedPayload,
@@ -576,6 +589,23 @@ export interface TransportConnectionState {
 
 // Re-import types for ElectronAPI
 import type { WorkspaceInfo, Workspace, SessionMetadata, StoredAttachment as StoredAttachmentType } from '@rox/core/types';
+import type {
+  DevSpaceAddRepositoryInput,
+  DevSpaceCancelInput,
+  DevSpaceCapabilities,
+  DevSpaceCapabilitiesInput,
+  DevSpaceCloneProgress,
+  DevSpaceListRepositoriesInput,
+  DevSpaceListRunsInput,
+  DevSpaceListRunsResult,
+  DevSpaceRemoveRepositoryInput,
+  DevSpaceRemoveRepositoryResult,
+  DevSpaceRepositoryCatalog,
+  DevSpaceRepositoryRecord,
+  DevSpaceRepositoryRequestInput,
+  DevSpaceRepositoryStatus,
+  DevSpaceRunProgress,
+} from '@rox/shared/dev-space';
 
 // Import protocol types used by ElectronAPI (they come through the `export *` above,
 // but we need them in scope for the interface definition)
@@ -741,6 +771,77 @@ export interface TgLinkStatusResult {
   /** Auto-returned code once the phone is shared; the dialog pre-fills it. */
   code?: string
   error?: string
+}
+
+// ── Wave 3 — workboard + board widget request/response DTOs ────────────────
+// Contracts for workboard:read|move|changed and board:widgetPut|get|mount|
+// release|changed. Workspace content: routed REMOTE_ELIGIBLE like pages:*.
+
+/** One card in the workspace work board. */
+export interface WorkboardCardDto {
+  taskId: string
+  column: string
+  /** Fractional ordering key within the column (lexicographic when present). */
+  rank?: string
+  title?: string
+}
+
+/** Result of `workboard:read`. */
+export interface WorkboardReadResult {
+  revision: number
+  cards: WorkboardCardDto[]
+  /** True when sinceRevision matched the current revision (no payload change). */
+  unchanged?: boolean
+}
+
+/** Result of `workboard:move`. */
+export interface WorkboardMoveResult {
+  revision: number
+  task: WorkboardCardDto
+}
+
+/** Result of `board:widgetPut`. */
+export interface BoardWidgetPutResult {
+  widgetId: string
+  name: string
+  revision: number
+}
+
+/** Result of `board:widgetGet`. */
+export interface BoardWidgetGetResult {
+  widgetId: string
+  name: string
+  kind: string
+  revision: number
+  content: string
+}
+
+/** Result of `board:widgetMount` (ticket-scoped render handle). */
+export interface BoardWidgetMountResult {
+  ticket: string
+  content: string
+  revision: number
+}
+
+/** Result of `board:widgetRelease`. */
+export interface BoardWidgetReleaseResult {
+  released: boolean
+}
+
+/**
+ * Result of `board:widgetValidate`. A rejected ticket never returns here — the
+ * RPC throws the uniform typed refusal `WIDGET_TICKET_REFUSED` instead, so no
+ * ticket material is disclosed to the caller.
+ */
+export interface BoardWidgetValidateResult {
+  valid: true
+  expiresAt: number
+}
+
+/** Payload of the `board:changed` push event. */
+export interface BoardChangedPush {
+  widgetId: string
+  revision: number
 }
 
 export interface ElectronAPI {
@@ -1232,6 +1333,18 @@ export interface ElectronAPI {
   readProjectRepositorySpan(input: import('@rox/shared/code-intelligence').RepositoryReadSpanInput): Promise<import('@rox/shared/code-intelligence').FileSpan>
   checkProjectRepositoryFreshness(input: import('@rox/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@rox/shared/code-intelligence').RepositoryFreshness>
   cancelProjectRepositoryRequest(input: import('@rox/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
+  // Developer Space (02-SPEC-foundations §4–§8) — repository catalog + local job pipeline.
+  listDevSpaceRepositories(input: DevSpaceListRepositoriesInput): Promise<DevSpaceRepositoryCatalog>
+  addDevSpaceRepository(input: DevSpaceAddRepositoryInput): Promise<DevSpaceRepositoryRecord>
+  startDevSpaceClone(input: DevSpaceRepositoryRequestInput): Promise<DevSpaceRepositoryRecord>
+  removeDevSpaceRepository(input: DevSpaceRemoveRepositoryInput): Promise<DevSpaceRemoveRepositoryResult>
+  refreshDevSpaceRepository(input: DevSpaceRepositoryRequestInput): Promise<DevSpaceRepositoryRecord>
+  cancelDevSpaceRequest(input: DevSpaceCancelInput): Promise<boolean>
+  getDevSpaceCapabilities(input: DevSpaceCapabilitiesInput): Promise<DevSpaceCapabilities>
+  listDevSpaceRuns(input: DevSpaceListRunsInput): Promise<DevSpaceListRunsResult>
+  onDevSpaceCloneProgress(callback: (progress: DevSpaceCloneProgress) => void): () => void
+  onDevSpaceChanged(callback: (change: { repositoryId: string; status: DevSpaceRepositoryStatus }) => void): () => void
+  onDevSpaceRunProgress(callback: (progress: DevSpaceRunProgress) => void): () => void
   saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
   createNote(workspaceId: string, title: string, folder?: string, operation?: NoteCreateOptions): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
@@ -1902,6 +2015,23 @@ export interface ElectronAPI {
     extensionId: string
     prefixes: string[]
   }): Promise<{ prefixes: string[] }>
+  /** S-05 §3.5 wave 3 — descriptor discovery. LOCAL_ONLY. */
+  extensionHostListDescriptors(args?: {
+    workspaceId?: string | null
+  }): Promise<ExtensionHostListDescriptorsResult>
+  /** Activate an extension; resolves with the commands it contributes. LOCAL_ONLY. */
+  extensionHostActivate(args: {
+    extensionId: string
+    /** Activation trigger (e.g. 'command' | 'startup' | `onCommand:${string}`). */
+    trigger?: string
+    workspaceId?: string | null
+  }): Promise<ExtensionHostActivateResult>
+  /** Reload an extension entry from disk; returns host status + reload provenance. LOCAL_ONLY. */
+  extensionHostReload(args: {
+    extensionId: string
+    entryPath: string
+    workspaceId?: string | null
+  }): Promise<ExtensionHostReloadResult>
 
   /**
    * Sandboxed extension UI surface (partition persist:ext-${extensionId}).
@@ -2405,6 +2535,11 @@ export interface ElectronAPI {
   onMemoryDreamDone(callback: (run: MemoryDreamRun) => void): () => void
   /** Push: N repository edits are waiting for import review. */
   onMemoryRepoImportReady(callback: (bankId: string, count: number) => void): () => void
+  /** Wave 3 — workspace memory wiki (claims/evidence + lint). REMOTE_ELIGIBLE. */
+  listMemoryWiki(args?: { workspaceId?: string | null; scope?: string; status?: WikiClaim['status'] }): Promise<WikiListResult>
+  getMemoryWiki(args: { workspaceId?: string | null; id: string }): Promise<WikiGetResult>
+  applyMemoryWiki(args: { workspaceId?: string | null; mutation: WikiMutation }): Promise<WikiApplyResult>
+  lintMemoryWiki(args?: { workspaceId?: string | null }): Promise<{ report: WikiLintReport; digestPath: string }>
   // c1.3: hybrid memory search (BM25 + vector → decay → importance → MMR).
   searchMemory(args: { workspaceId: string; query: string; limit?: number; sessionId?: string }): Promise<Array<{ chunkId: string; text: string; score: number; origin?: string }>>
   getMemoryChunk(args: { workspaceId: string; chunkId: string }): Promise<{ chunkId: string; text: string; origin?: string; metadata?: Record<string, unknown> } | null>
@@ -2455,6 +2590,7 @@ export interface ElectronAPI {
   driveImportPlan(provider: ImportProviderId, folderId?: string): Promise<ImportJob>
   driveImportStart(jobId: string): Promise<ImportJob>
   driveImportPause(jobId: string): Promise<ImportJob>
+  driveImportCancel(jobId: string): Promise<ImportJob>
   driveImportResume(jobId: string): Promise<ImportJob>
   driveImportStatus(jobId?: string): Promise<ImportJob | ImportJob[] | null>
   // ROX Drive (wave 4) — host-side import OAuth broker. The renderer never sees
@@ -2852,6 +2988,37 @@ export interface ElectronAPI {
   getKanbanConfig(workspaceId: string): Promise<import('@rox/shared/kanban').KanbanBoardConfig>
   setKanbanConfig(workspaceId: string, config: import('@rox/shared/kanban').KanbanBoardConfig): Promise<import('@rox/shared/kanban').KanbanBoardConfig>
   onKanbanConfigChanged(callback: (workspaceId: string, config: import('@rox/shared/kanban').KanbanBoardConfig) => void): () => void
+
+  /** Wave 3 — workboard (workspace task board, revision-guarded). REMOTE_ELIGIBLE. */
+  readWorkboard(args?: { workspaceId?: string | null; sinceRevision?: number }): Promise<WorkboardReadResult>
+  moveWorkboard(args: {
+    workspaceId?: string | null
+    expectedRevision: number
+    taskId: string
+    column: string
+    rank?: string
+  }): Promise<WorkboardMoveResult>
+  onWorkboardChanged(callback: (payload: { revision: number }) => void): () => void
+
+  /** Wave 3 — board widgets (authored code mounted ticket-scoped). REMOTE_ELIGIBLE. */
+  putBoardWidget(args: {
+    workspaceId?: string | null
+    title: string
+    widgetCode: string
+    kind: string
+    name: string
+    netOrigins?: string[]
+  }): Promise<BoardWidgetPutResult>
+  getBoardWidget(args: { widgetId: string }): Promise<BoardWidgetGetResult>
+  mountBoardWidget(args: { widgetId: string }): Promise<BoardWidgetMountResult>
+  releaseBoardWidget(args: { ticket: string }): Promise<BoardWidgetReleaseResult>
+  validateBoardWidget(args: {
+    workspaceId?: string | null
+    widgetId: string
+    nonce: string
+    revision?: number
+  }): Promise<BoardWidgetValidateResult>
+  onBoardChanged(callback: (payload: BoardChangedPush) => void): () => void
 
   // Sessions collection display (workspace-scoped)
   getCollectionDisplay(workspaceId: string): Promise<import('@rox/shared/sessions').CollectionDisplay>
@@ -3272,6 +3439,24 @@ export interface ConnectionsNavigationState {
 }
 
 /**
+ * Developer Space navigation state (2026-10-09 pack, D2) — `developers`, or
+ * `developers?repo=<id>` with `devSpaceRepoId` focused on one repo workspace.
+ */
+export interface DevelopersNavigationState {
+  navigator: 'developers'
+  devSpaceRepoId?: string
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/** Playbooks notebook surface navigation state (2026-10-09 pack, D12). */
+export interface PlaybooksNavigationState {
+  navigator: 'playbooks'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Workbench Home Front Page (mode `home`). Dashboard with no navigator column.
  */
 export interface HomeNavigationState {
@@ -3425,6 +3610,8 @@ export type NavigationState =
   | TerminalNavigationState
   | EntityNavigationState
   | ConnectionsNavigationState
+  | DevelopersNavigationState
+  | PlaybooksNavigationState
   | HomeNavigationState
   | DriveNavigationState
   | ScreenNavigationState
@@ -3501,6 +3688,14 @@ export const isInboxNavigation = (
 export const isConnectionsNavigation = (
   state: NavigationState
 ): state is ConnectionsNavigationState => state.navigator === 'connections'
+
+export const isDevelopersNavigation = (
+  state: NavigationState
+): state is DevelopersNavigationState => state.navigator === 'developers'
+
+export const isPlaybooksNavigation = (
+  state: NavigationState
+): state is PlaybooksNavigationState => state.navigator === 'playbooks'
 
 export const isScreenNavigation = (
   state: NavigationState
@@ -3629,6 +3824,14 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'connections') {
     return 'connections'
+  }
+  if (state.navigator === 'developers') {
+    return state.devSpaceRepoId
+      ? `developers?repo=${encodeURIComponent(state.devSpaceRepoId)}`
+      : 'developers'
+  }
+  if (state.navigator === 'playbooks') {
+    return 'playbooks'
   }
   if (state.navigator === 'home') {
     return 'home'
@@ -3875,6 +4078,14 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+if (key === 'playbooks') return { navigator: 'playbooks', details: null }
+  if (key === 'developers') return { navigator: 'developers', details: null }
+  if (key.startsWith('developers?repo=')) {
+    const devSpaceRepoId = decodeURIComponent(key.slice('developers?repo='.length))
+    return devSpaceRepoId
+      ? { navigator: 'developers', devSpaceRepoId, details: null }
+      : { navigator: 'developers', details: null }
+  }
 
   // ROX Drive (wave 1) — `drive[/folder/{folderId}]`
   if (key === 'drive') return { navigator: 'drive', details: null }
@@ -3948,6 +4159,11 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
     const sha = decodeURIComponent(key.slice('memory/repo/commit/'.length))
     return { navigator: 'memory', tab: 'repo', details: sha ? { type: 'commit', sha } : null }
   }
+
+  // Rox History navigator — mirrors `getNavigationStateKey`'s bare keys.
+  if (key === 'clipboard-history') return { navigator: 'clipboard-history', details: null }
+  // Learning dashboard navigator — mirrors `getNavigationStateKey`'s bare key.
+  if (key === 'learning') return { navigator: 'learning', details: null }
 
   // Handle sessions
   const parseSessionsKey = (filterKey: string, sessionId?: string): NavigationState | null => {
