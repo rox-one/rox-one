@@ -737,3 +737,320 @@ export function EntityList<T>({
     </div>
   )
 }
+
+// ============================================================================
+// WindowedTreeList — opt-in windowing for flattened trees
+// ============================================================================
+
+/** Estimated row height for {@link WindowedTreeList} before a row is measured. */
+export const WINDOWED_TREE_ROW_ESTIMATE = 40
+/** Lists at or below this size render every row (no absolute wrappers). */
+export const WINDOWED_TREE_DEFAULT_THRESHOLD = 200
+
+export interface WindowedTreeListProps<T> {
+  /** Flattened rows in render order (expanded nodes only). */
+  rows: T[]
+  /** Stable key per row. */
+  getKey: (row: T) => string
+  /** Renders one row (the component wraps it and measures its height). */
+  renderRow: (row: T) => React.ReactNode
+  /**
+   * Scroll parent. Windowed rendering activates only when this is provided —
+   * callers that cannot supply a viewport keep the plain full render.
+   */
+  viewportRef?: React.RefObject<HTMLDivElement | null>
+  /** Lists at or below this size render every row. */
+  windowThreshold?: number
+  /** Estimated row height (px) before the row has been measured. */
+  rowHeight?: number
+  /** Vertical overscan (px) rendered above/below the viewport. */
+  overscan?: number
+  className?: string
+  containerRef?: React.Ref<HTMLDivElement>
+  containerProps?: Record<string, unknown>
+  /** Row key to reveal when it is outside the current window (active row). */
+  scrollToKey?: string | null
+}
+
+/**
+ * Opt-in windowing for pre-flattened trees (notes vault, knowledge notebooks).
+ *
+ * Same mechanism as `EntityList`'s `windowed` mode: `flattenEntityListGroups` +
+ * `virtualTableWindow` position only the rows intersecting the viewport (plus
+ * overscan); a ResizeObserver feeds measured heights back into the kernel.
+ *
+ * Keyboard navigation is model-driven here — ArrowUp/Down/Home/End move across
+ * ALL rows, revealing and focusing an off-window row instead of stopping at the
+ * mounted edge. Only those four keys are intercepted, so the shared
+ * `handleSidebarTreeKeyDown` (expand/collapse, sidebar sections) still runs.
+ */
+export function WindowedTreeList<T>({
+  rows,
+  getKey,
+  renderRow,
+  viewportRef,
+  windowThreshold = WINDOWED_TREE_DEFAULT_THRESHOLD,
+  rowHeight,
+  overscan,
+  className,
+  containerRef,
+  containerProps,
+  scrollToKey,
+}: WindowedTreeListProps<T>): React.ReactElement {
+  const windowedEnabled = viewportRef != null && rows.length > windowThreshold
+  const estimate = rowHeight ?? WINDOWED_TREE_ROW_ESTIMATE
+  const over = overscan ?? ENTITY_LIST_OVERSCAN
+
+  const listRef = React.useRef<HTMLDivElement | null>(null)
+  const [scrollTop, setScrollTop] = React.useState(0)
+  const [viewportHeight, setViewportHeight] = React.useState(0)
+  const [listOffsetTop, setListOffsetTop] = React.useState(0)
+  const [measuredHeights, setMeasuredHeights] = React.useState<ReadonlyMap<string, number>>(
+    () => new Map(),
+  )
+  const [pendingFocusKey, setPendingFocusKey] = React.useState<string | null>(null)
+
+  // --- Variable-height measurement (ResizeObserver → measured heights) ---
+  const observerRef = React.useRef<ResizeObserver | null>(null)
+  const observedRef = React.useRef(new Map<Element, string>())
+  React.useEffect(() => {
+    if (!windowedEnabled || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver((entries) => {
+      const updates: Array<[string, number]> = []
+      for (const entry of entries) {
+        const key = observedRef.current.get(entry.target)
+        if (!key) continue
+        const box = entry.borderBoxSize?.[0]
+        const height = Math.ceil(box ? box.blockSize : entry.contentRect.height)
+        if (height > 0) updates.push([key, height])
+      }
+      if (updates.length === 0) return
+      setMeasuredHeights((previous) => {
+        let next: Map<string, number> | null = null
+        for (const [key, height] of updates) {
+          if (previous.get(key) === height) continue
+          next ??= new Map(previous)
+          next.set(key, height)
+        }
+        return next ?? previous
+      })
+    })
+    observerRef.current = observer
+    for (const element of observedRef.current.keys()) observer.observe(element)
+    return () => {
+      observer.disconnect()
+      observerRef.current = null
+    }
+  }, [windowedEnabled])
+
+  const measureCallbacks = React.useRef(new Map<string, (element: HTMLElement | null) => void>())
+  const measureRef = React.useCallback((key: string) => {
+    let callback = measureCallbacks.current.get(key)
+    if (!callback) {
+      let current: HTMLElement | null = null
+      callback = (element: HTMLElement | null) => {
+        if (current && current !== element) {
+          observerRef.current?.unobserve(current)
+          observedRef.current.delete(current)
+        }
+        current = element
+        if (element) {
+          observedRef.current.set(element, key)
+          observerRef.current?.observe(element)
+        }
+      }
+      measureCallbacks.current.set(key, callback)
+    }
+    return callback
+  }, [])
+
+  const rowElements = React.useRef(new Map<string, HTMLElement>())
+  const rowCallbacks = React.useRef(new Map<string, (element: HTMLElement | null) => void>())
+  const rowRef = React.useCallback((key: string) => {
+    let callback = rowCallbacks.current.get(key)
+    if (!callback) {
+      callback = (element: HTMLElement | null) => {
+        if (element) rowElements.current.set(key, element)
+        else rowElements.current.delete(key)
+      }
+      rowCallbacks.current.set(key, callback)
+    }
+    return callback
+  }, [])
+
+  // --- Scroll / size tracking on the scroll parent ---
+  React.useEffect(() => {
+    if (!windowedEnabled) return
+    const viewport = viewportRef?.current
+    if (!viewport) return
+    const syncScroll = () => setScrollTop(viewport.scrollTop)
+    const syncSize = () => setViewportHeight(viewport.clientHeight)
+    syncScroll()
+    syncSize()
+    viewport.addEventListener('scroll', syncScroll, { passive: true })
+    let observer: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(syncSize)
+      observer.observe(viewport)
+    }
+    return () => {
+      viewport.removeEventListener('scroll', syncScroll)
+      observer?.disconnect()
+    }
+  }, [windowedEnabled, viewportRef, rows.length])
+
+  const flattened = React.useMemo<FlattenedTableGroups<T, EntityListGroup<T>>>(() => {
+    if (!windowedEnabled) {
+      return { entries: [] as VirtualTableEntry<T, EntityListGroup<T>>[], totalHeight: 0 }
+    }
+    return flattenEntityListGroups<T>(undefined, rows, new Set<string>(), {
+      getItemKey: getKey,
+      rowHeight: estimate,
+      headerHeight: 0,
+      measuredRowHeights: measuredHeights,
+    })
+  }, [windowedEnabled, rows, getKey, estimate, measuredHeights])
+
+  const windowRange = React.useMemo(
+    () =>
+      windowedEnabled
+        ? virtualTableWindow(flattened.entries, scrollTop - listOffsetTop, viewportHeight, over)
+        : { startIndex: 0, endIndex: 0 },
+    [windowedEnabled, flattened, scrollTop, listOffsetTop, viewportHeight, over],
+  )
+
+  const visibleEntries = windowedEnabled
+    ? flattened.entries.slice(windowRange.startIndex, windowRange.endIndex)
+    : []
+
+  // Keep the list offset in sync with the scroll parent (padding/measurement).
+  React.useLayoutEffect(() => {
+    if (!windowedEnabled) return
+    const list = listRef.current
+    const viewport = viewportRef?.current
+    if (!list || !viewport) return
+    const next =
+      list.getBoundingClientRect().top - viewport.getBoundingClientRect().top + viewport.scrollTop
+    setListOffsetTop((previous) => (previous === next ? previous : next))
+  }, [windowedEnabled, scrollTop, viewportHeight, flattened.totalHeight, viewportRef])
+
+  const revealKey = React.useCallback(
+    (key: string) => {
+      const viewport = viewportRef?.current
+      const entry = flattened.entries.find(
+        (candidate) => candidate.kind === 'row' && candidate.key === `row:${key}`,
+      )
+      if (viewport && entry && viewportHeight > 0) {
+        const entryTop = listOffsetTop + entry.offset
+        if (entryTop < scrollTop || entryTop + entry.height > scrollTop + viewportHeight) {
+          const next = Math.max(0, entryTop - viewportHeight / 3)
+          viewport.scrollTop = next
+          setScrollTop(next)
+        }
+      }
+      setPendingFocusKey(key)
+    },
+    [viewportRef, flattened, listOffsetTop, scrollTop, viewportHeight],
+  )
+
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) return
+      const target = event.target as HTMLElement
+      if (target.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (
+        event.key !== 'ArrowDown' &&
+        event.key !== 'ArrowUp' &&
+        event.key !== 'Home' &&
+        event.key !== 'End'
+      ) {
+        return
+      }
+      const currentKey = target.closest<HTMLElement>('[data-windowed-tree-row]')?.dataset
+        .windowedTreeRow
+      if (currentKey === undefined) return
+      const keys = rows.map(getKey)
+      const index = keys.indexOf(currentKey)
+      if (index < 0) return
+      event.preventDefault()
+      event.stopPropagation()
+      const nextIndex =
+        event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? keys.length - 1
+            : event.key === 'ArrowDown'
+              ? (index + 1) % keys.length
+              : (index - 1 + keys.length) % keys.length
+      revealKey(keys[nextIndex]!)
+    },
+    [rows, getKey, revealKey],
+  )
+
+  // Reveal an off-window anchor (active/selected row) — only on key change so
+  // user scrolling is never fought.
+  const lastScrollToKeyRef = React.useRef<string | null>(null)
+  React.useLayoutEffect(() => {
+    if (!windowedEnabled) return
+    if (!scrollToKey) {
+      lastScrollToKeyRef.current = null
+      return
+    }
+    if (lastScrollToKeyRef.current === scrollToKey) return
+    if (viewportHeight <= 0) return
+    lastScrollToKeyRef.current = scrollToKey
+    const viewport = viewportRef?.current
+    if (!viewport) return
+    const entry = flattened.entries.find(
+      (candidate) => candidate.kind === 'row' && candidate.key === `row:${scrollToKey}`,
+    )
+    if (!entry) return
+    const entryTop = listOffsetTop + entry.offset
+    if (entryTop >= scrollTop && entryTop + entry.height <= scrollTop + viewportHeight) return
+    const next = Math.max(0, entryTop - viewportHeight / 3)
+    viewport.scrollTop = next
+    setScrollTop(next)
+  }, [windowedEnabled, scrollToKey, flattened, listOffsetTop, scrollTop, viewportHeight, viewportRef])
+
+  // Focus the pending row once the reveal has mounted it.
+  React.useLayoutEffect(() => {
+    if (!pendingFocusKey) return
+    const element = rowElements.current.get(pendingFocusKey)
+    if (!element) return
+    const focusable =
+      element.querySelector<HTMLElement>('button, summary, a[href], [tabindex]') ?? element
+    focusable.focus()
+    setPendingFocusKey(null)
+  })
+
+  if (!windowedEnabled) {
+    return (
+      <div ref={containerRef} className={className} {...containerProps}>
+        {rows.map((row) => (
+          <React.Fragment key={getKey(row)}>{renderRow(row)}</React.Fragment>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div ref={containerRef} className={className} onKeyDown={handleKeyDown} {...containerProps}>
+      <div ref={listRef} className="relative" style={{ height: flattened.totalHeight }}>
+        {visibleEntries.map((entry) => {
+          if (entry.kind !== 'row') return null
+          const key = getKey(entry.item)
+          return (
+            <div
+              key={entry.key}
+              ref={rowRef(key)}
+              data-windowed-tree-row={key}
+              style={{ position: 'absolute', left: 0, right: 0, top: entry.offset }}
+            >
+              <div ref={measureRef(entry.key)}>{renderRow(entry.item)}</div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
