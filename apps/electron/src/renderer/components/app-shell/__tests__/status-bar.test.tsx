@@ -28,6 +28,7 @@ describe('compact status bar', () => {
     expect(html).toContain('workbench.status.syncOk')
     expect(html).toContain('profile.balanceLabel')
     // Same formatting path as ProfileStrip: t('profile.balance', { amount }).
-    expect(html).toContain('profile.balance({"amount":12.5})')
+    // renderToStaticMarkup escapes the quotes inside the JSON argument.
+    expect(html).toContain('profile.balance({&quot;amount&quot;:12.5})')
   })
 })

@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-09",
+  "method": "screencapture windows/regions, strip means from 2x PNGs, backdrop A/B with a white TextEdit window, back-solve math",
+  "zed": {
+    "themes": {
+      "min-dark-blurred": {
+        "title": "#434343",
+        "editor": "#434343"
+      },
+      "nordfox-opaque": {
+        "title": "#2c313a",
+        "editor": "#2f343f"
+      },
+      "siri-light": {
+        "title": "#dbdfe9",
+        "editor": "#eff1f5"
+      },
+      "blankeos-blurred": {
+        "title": "#3b3c44",
+        "editor": "#3a3b43"
+      }
+    },
+    "note": "blurred rows lifted ~+0x15..0x17 vs the opaque control captured in the same session; alpha fields in theme JSON: Min #1A1A1Ac0, Blankeos #1b1e28d0, panel #00000000"
+  },
+  "ours": {
+    "themes": {
+      "min-dark-blurred": {
+        "topbar": "#202020",
+        "sidebar": "#222223",
+        "content": "#1e1e1f"
+      },
+      "nordfox-opaque": {
+        "topbar": "#2a303a",
+        "sidebar": "#2e323c",
+        "content": "#3c4143"
+      },
+      "siri-light": {
+        "topbar": "#d9dce3",
+        "sidebar": "#dde1e6",
+        "content": "#ebecf0"
+      }
+    },
+    "material_on_off": {
+      "on_topbar": "#2a303a",
+      "off_topbar": "#2d313a"
+    },
+    "white_backdrop": {
+      "min-dark-blurred": {
+        "topbar": "#20201e",
+        "sidebar": "#212122"
+      },
+      "nordfox-opaque": {
+        "topbar": "#2f3642",
+        "sidebar": "#2c3038"
+      }
+    },
+    "runtime_receipts": {
+      "shell_material_seen_live": "vibrancy",
+      "topbar_bg_receipt": "color(srgb 0.101961 0.101961 0.101961 / 0.84) [min-dark]; color(srgb 0.803922 0.823529 0.870588 / 0.84) [siri-light]"
+    }
+  }
+}
