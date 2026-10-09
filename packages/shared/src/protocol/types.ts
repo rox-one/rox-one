@@ -102,6 +102,10 @@ export type ErrorCode =
   | 'MARKETPLACE_ENTRY_NOT_INSTALLED'
   | 'MARKETPLACE_OPERATION_IN_FLIGHT'
   | 'MARKETPLACE_TOOL_INSTALL_FAILED'
+  // Registry trust gate (wave-3 c2.7): the catalog verdict refuses the install
+  // before any network work; review-required needs explicit operator confirmation.
+  | 'REGISTRY_TRUST_BLOCKED'
+  | 'REGISTRY_TRUST_REVIEW_REQUIRED'
   // Knowledge provider (P1 read-only), spec 03 §3.2 KnowledgeErrorCode
   | 'CONNECTION_UNAVAILABLE'
   | 'UNSUPPORTED_OPERATION'
@@ -166,6 +170,8 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'MARKETPLACE_ENTRY_NOT_INSTALLED',
   'MARKETPLACE_OPERATION_IN_FLIGHT',
   'MARKETPLACE_TOOL_INSTALL_FAILED',
+  'REGISTRY_TRUST_BLOCKED',
+  'REGISTRY_TRUST_REVIEW_REQUIRED',
   'CONNECTION_UNAVAILABLE',
   'UNSUPPORTED_OPERATION',
   'NOT_FOUND',
