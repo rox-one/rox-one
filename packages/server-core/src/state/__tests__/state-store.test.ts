@@ -6,12 +6,15 @@ import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import {
   LATEST_STATE_USER_VERSION,
   MIGRATIONS,
+  StateStoreWriteLockRequiredError,
   applyMigrations,
   closeStateStore,
   openStateStore,
   stateDatabasePath,
+  stateWriterLockPath,
   type StateMigration,
 } from '../state-store.ts'
+import { acquireStateWriterLock } from '../writer-lock.ts'
 
 const dirs: string[] = []
 function scratch(): string {
@@ -99,7 +102,7 @@ describe('state store migrations', () => {
 
   it('openStateStore creates and migrates <configDir>/state/rox-state.sqlite', () => {
     const configDir = scratch()
-    const store = openStateStore({ configDir })
+    const store = openStateStore({ configDir, lock: 'allow-unlocked' })
     expect(store.dbPath).toBe(stateDatabasePath(configDir))
     expect(existsSync(store.dbPath)).toBe(true)
     expect(store.userVersion).toBe(LATEST_STATE_USER_VERSION)
@@ -119,5 +122,50 @@ describe('state store migrations', () => {
   it('reuses one connection per config dir', () => {
     const configDir = scratch()
     expect(openStateStore({ configDir })).toBe(openStateStore({ configDir }))
+  })
+})
+
+describe('state store writer-lock gating', () => {
+  it('refuses a write with a typed STATE_LOCKED error when opened without a lock, but reads', async () => {
+    const configDir = scratch()
+    const store = openStateStore({ configDir })
+    expect(store.getKV('missing')).toBeUndefined()
+
+    let thrown: unknown
+    try {
+      await store.putKV('k', 'v')
+    } catch (error) {
+      thrown = error
+    }
+    expect(thrown).toBeInstanceOf(StateStoreWriteLockRequiredError)
+    expect((thrown as StateStoreWriteLockRequiredError).code).toBe('STATE_LOCKED')
+    expect(store.getKV('k')).toBeUndefined()
+  })
+
+  it("writes when opened with the explicit 'allow-unlocked' opt-out", async () => {
+    const configDir = scratch()
+    const store = openStateStore({ configDir, lock: 'allow-unlocked' })
+    await store.putKV('k', 'v')
+    expect(store.getKV('k')).toBe('v')
+  })
+
+  it('writes when opened with a held writer-lock handle', async () => {
+    const configDir = scratch()
+    const lock = acquireStateWriterLock(stateWriterLockPath(configDir), { label: 'state-store-test' })
+    try {
+      const store = openStateStore({ configDir, lock })
+      await store.putKV('k', 'v')
+      expect(store.getKV('k')).toBe('v')
+    } finally {
+      lock.release()
+    }
+  })
+
+  it('refuses a write once the writer-lock handle is no longer held', async () => {
+    const configDir = scratch()
+    const lock = acquireStateWriterLock(stateWriterLockPath(configDir), { label: 'state-store-test' })
+    const store = openStateStore({ configDir, lock })
+    lock.release()
+    await expect(store.putKV('k', 'v')).rejects.toThrow(StateStoreWriteLockRequiredError)
   })
 })

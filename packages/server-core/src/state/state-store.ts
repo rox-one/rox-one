@@ -14,6 +14,7 @@ import { chmodSync, existsSync, mkdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { createWriteQueue, type WriteQueue } from './write-queue.ts'
+import { isStateWriterLockHeld, type StateWriterLock } from './writer-lock.ts'
 
 export interface StateMigration {
   version: number
@@ -103,6 +104,27 @@ export interface StateWrite<T> {
 }
 
 /**
+ * Writer-lock ownership passed to `openStateStore`. A live handle from
+ * `acquireStateWriterLock` enables writes; `'allow-unlocked'` is an explicit
+ * opt-out for read-only tools and tests.
+ */
+export type StateStoreLockOption = StateWriterLock | 'allow-unlocked'
+
+/** Thrown by a write when the store cannot prove this process holds the writer lock. */
+export class StateStoreWriteLockRequiredError extends Error {
+  readonly code = 'STATE_LOCKED'
+  constructor(detail: string) {
+    super(
+      `Refusing to write to the state store: ${detail}. ` +
+      `Acquire the writer lock with acquireStateWriterLock(stateWriterLockPath(configDir)) and open the store ` +
+      `with openStateStore({ configDir, lock }), or pass { lock: 'allow-unlocked' } to opt out explicitly ` +
+      `(read-only tools and tests only).`,
+    )
+    this.name = 'StateStoreWriteLockRequiredError'
+  }
+}
+
+/**
  * A write touching `<keys>`. Callers inside `run` share the same DB handle; the
  * queue serializes conflicting keys so no two writers touch the same row.
  */
@@ -127,13 +149,19 @@ export function upsertSessionIndexRow(
 export class StateStore {
   readonly dbPath: string
   readonly queue: WriteQueue
+  /**
+   * Writer-lock ownership gating writes. Managed by `openStateStore`; re-bound
+   * on reuse when a later caller supplies a lock option.
+   */
+  lock: StateStoreLockOption | undefined
   #db: DatabaseSync
   #closed = false
 
-  constructor(dbPath: string, db: DatabaseSync, queue: WriteQueue) {
+  constructor(dbPath: string, db: DatabaseSync, queue: WriteQueue, lock?: StateStoreLockOption) {
     this.dbPath = dbPath
     this.#db = db
     this.queue = queue
+    this.lock = lock
   }
 
   get db(): DatabaseSync {
@@ -145,7 +173,26 @@ export class StateStore {
     return row && typeof row.user_version === 'number' ? row.user_version : 0
   }
 
+  /**
+   * Fail closed unless this store can prove write ownership: an explicit
+   * opt-out, or a lock handle that still records this process's ownership.
+   */
+  #assertWritable(): void {
+    if (this.lock === 'allow-unlocked') return
+    if (this.lock === undefined) {
+      throw new StateStoreWriteLockRequiredError('this store was opened without a writer-lock handle')
+    }
+    if (!isStateWriterLockHeld(this.lock)) {
+      throw new StateStoreWriteLockRequiredError('the supplied writer-lock handle is no longer held by this process')
+    }
+  }
+
   run<T>(write: StateWrite<T>): Promise<T> {
+    try {
+      this.#assertWritable()
+    } catch (error) {
+      return Promise.reject(error)
+    }
     return this.queue.run({
       storePath: this.dbPath,
       keys: write.keys,
@@ -234,12 +281,20 @@ const stores = new Map<string, StateStore>()
 /**
  * Open (or reuse) the single state store for a config dir. Reused per resolved
  * directory so a process holds exactly one connection per store.
+ *
+ * Writes require proof of writer-lock ownership: pass the live handle from
+ * `acquireStateWriterLock` as `lock`, or pass `lock: 'allow-unlocked'` for an
+ * explicit opt-out (read-only tools and tests). Without either, the store opens
+ * for reads but writes fail closed with a typed `STATE_LOCKED` error.
  */
-export function openStateStore(options: { configDir: string }): StateStore {
+export function openStateStore(options: { configDir: string; lock?: StateStoreLockOption }): StateStore {
   const dir = stateDirectory(options.configDir)
   const key = resolve(dir)
   const cached = stores.get(key)
-  if (cached) return cached
+  if (cached) {
+    if (options.lock !== undefined) cached.lock = options.lock
+    return cached
+  }
 
   mkdirSync(dir, { recursive: true, mode: 0o700 })
   const dbPath = join(dir, STATE_DATABASE_FILENAME)
@@ -264,7 +319,7 @@ export function openStateStore(options: { configDir: string }): StateStore {
     throw error
   }
 
-  const store = new StateStore(dbPath, db, createWriteQueue())
+  const store = new StateStore(dbPath, db, createWriteQueue(), options.lock)
   stores.set(key, store)
   return store
 }

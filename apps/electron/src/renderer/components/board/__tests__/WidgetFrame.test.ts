@@ -36,11 +36,12 @@ mock.module('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) 
 let WidgetFrame: typeof WidgetFrameComponent
 let acceptWidgetFrameMessage: typeof acceptWidgetFrameMessageFn
 let parseWidgetFrameMessage: typeof parseWidgetFrameMessageFn
+let MAX_WIDGET_FRAME_HEIGHT_PX: number
 
 // A static import cannot work: the component graph must load AFTER the i18n
 // mock is registered, or it captures the real react-i18next.
 beforeAll(async () => {
-  ;({ WidgetFrame, acceptWidgetFrameMessage, parseWidgetFrameMessage } = await import('../WidgetFrame'))
+  ;({ WidgetFrame, acceptWidgetFrameMessage, parseWidgetFrameMessage, MAX_WIDGET_FRAME_HEIGHT_PX } = await import('../WidgetFrame'))
 })
 
 beforeEach(() => {
@@ -141,6 +142,35 @@ describe('WidgetFrame message filter', () => {
     expect(parseWidgetFrameMessage('size')).toBeNull()
   })
 
+  it('clamps hostile oversize heights to the exported bound instead of dropping them', () => {
+    // Only the impossible magnitudes are hostile; the parse step still clamps
+    // rather than discarding, so a legitimately tall widget is never dropped.
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: 1e308 })).toBe(
+      MAX_WIDGET_FRAME_HEIGHT_PX,
+    )
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: 1e21 })).toBe(
+      MAX_WIDGET_FRAME_HEIGHT_PX,
+    )
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: Number.MAX_VALUE })).toBe(
+      MAX_WIDGET_FRAME_HEIGHT_PX,
+    )
+    // The bound itself passes unchanged — the boundary is inclusive.
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: MAX_WIDGET_FRAME_HEIGHT_PX })).toBe(
+      MAX_WIDGET_FRAME_HEIGHT_PX,
+    )
+    // Non-finite and non-positive are still rejected outright.
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: Number.POSITIVE_INFINITY })).toBeNull()
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: Number.NEGATIVE_INFINITY })).toBeNull()
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: -1 })).toBeNull()
+  })
+
+  it('rejects a payload whose type/height are prototype-inherited, not own', () => {
+    const inherited = Object.create({ type: WIDGET_SIZE_MESSAGE_TYPE, height: 31_337 }) as object
+    expect(parseWidgetFrameMessage(inherited)).toBeNull()
+    // A well-formed own-property object is still accepted.
+    expect(parseWidgetFrameMessage({ type: WIDGET_SIZE_MESSAGE_TYPE, height: 120 })).toBe(120)
+  })
+
   it('rejects messages that are not from this frame window or not opaque-origin', () => {
     const frameWindow = { name: 'frame' } as unknown as Window
     expect(
@@ -185,6 +215,22 @@ describe('WidgetFrame message filter', () => {
     })
     expect(frameOf(container).style.height).toBe('240px')
     expect(heights).toEqual([240])
+
+    await unmount(root)
+  })
+
+  it('clamps an oversize same-frame size report at the host layout boundary', async () => {
+    const heights: number[] = []
+    const { container, root } = await render(
+      leasedFrame({ onContentHeight: height => heights.push(height) }),
+    )
+
+    await act(async () => {
+      postFromFrame(container, 'null', { type: WIDGET_SIZE_MESSAGE_TYPE, height: 1e21 })
+    })
+
+    expect(frameOf(container).style.height).toBe(`${MAX_WIDGET_FRAME_HEIGHT_PX}px`)
+    expect(heights).toEqual([MAX_WIDGET_FRAME_HEIGHT_PX])
 
     await unmount(root)
   })

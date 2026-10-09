@@ -50,10 +50,11 @@ import {
   realpathSync,
   renameSync,
   rmSync,
+  type Stats,
   statSync,
   writeFileSync,
 } from 'node:fs'
-import { join } from 'node:path'
+import { isAbsolute, join, relative, sep } from 'node:path'
 import { CodedError } from '@rox/shared/protocol'
 import { validateA2uiJsonl } from '@rox/shared/widgets/a2ui'
 import { buildWidgetDocument } from '@rox/shared/widgets/wrap'
@@ -90,6 +91,15 @@ function sha256Hex(bytes: Buffer): string {
 
 function invalid(message: string): never {
   throw new CodedError('INVALID_PAYLOAD', message)
+}
+
+/** lstat without following links; null when nothing exists at the path. */
+function lstatOrNull(path: string): Stats | null {
+  try {
+    return lstatSync(path)
+  } catch {
+    return null
+  }
 }
 
 function assertKind(kind: unknown): WidgetKind {
@@ -135,23 +145,76 @@ export class WidgetStore {
     return name
   }
 
+  /**
+   * Refuse `target` unless its lexical path is a realpath confined to the
+   * workspace root: split the path into components and lstat each EXISTING one
+   * from the root down. Any symlink component (leaf or intermediate) is denied,
+   * and every existing component must resolve to itself, so a link can never
+   * redirect a read/write outside `rootPath`. Missing components end the walk —
+   * nothing exists below them yet, and creation re-checks level by level.
+   */
+  private checkComponents(target: string, kind: 'dir' | 'file'): void {
+    const rel = relative(this.rootPath, target)
+    if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) {
+      throw new CodedError('FORBIDDEN', 'Board widget path denied')
+    }
+    const segments = rel.split(sep)
+    let current = this.rootPath
+    for (let index = 0; index < segments.length; index++) {
+      current = join(current, segments[index])
+      const stat = lstatOrNull(current)
+      if (stat === null) return
+      const isLeaf = index === segments.length - 1
+      const wrongType = kind === 'dir'
+        ? !stat.isDirectory()
+        : !stat.isFile() || stat.nlink !== 1
+      if (stat.isSymbolicLink() || (isLeaf && wrongType) || (!isLeaf && !stat.isDirectory())) {
+        throw new CodedError('FORBIDDEN', 'Board widget path denied')
+      }
+      let resolved: string
+      try {
+        resolved = realpathSync(current)
+      } catch {
+        throw new CodedError('FORBIDDEN', 'Board widget path denied')
+      }
+      if (resolved !== current) throw new CodedError('FORBIDDEN', 'Board widget path denied')
+    }
+  }
+
   private checkPath(name?: string): void {
     if (realpathSync(this.rootPath) !== this.rootPath) {
       throw new CodedError('FORBIDDEN', 'Board widget path denied')
     }
-    const targets: Array<[string, 'dir' | 'file']> = [[this.directory, 'dir']]
+    this.checkComponents(this.directory, 'dir')
     if (name !== undefined) {
       const folder = this.folder(name)
-      targets.push([folder, 'dir'], [join(folder, 'index.html'), 'file'], [join(folder, 'widget.json'), 'file'])
+      this.checkComponents(folder, 'dir')
+      this.checkComponents(join(folder, 'index.html'), 'file')
+      this.checkComponents(join(folder, 'widget.json'), 'file')
     }
-    for (const [path, kind] of targets) {
-      if (!existsSync(path)) continue
-      const stat = lstatSync(path)
-      if (
-        stat.isSymbolicLink() ||
-        (kind === 'dir' ? !stat.isDirectory() : !stat.isFile()) ||
-        (kind === 'file' && stat.nlink !== 1)
-      ) {
+  }
+
+  /**
+   * Create every missing component of `target` one level at a time, lstat'ing
+   * each level before and after creation. `mkdir -r` would follow an existing
+   * intermediate symlink; stepping guarantees a link is denied before anything
+   * is created through it, and the post-mkdir lstat closes the race.
+   */
+  private ensureDirectory(target: string): void {
+    const rel = relative(this.rootPath, target)
+    if (rel === '') return
+    if (rel.startsWith('..') || isAbsolute(rel)) {
+      throw new CodedError('FORBIDDEN', 'Board widget path denied')
+    }
+    let current = this.rootPath
+    for (const segment of rel.split(sep)) {
+      current = join(current, segment)
+      let stat = lstatOrNull(current)
+      if (stat === null) {
+        mkdirSync(current, { mode: 0o700 })
+        stat = lstatOrNull(current)
+      }
+      if (stat === null || stat.isSymbolicLink() || !stat.isDirectory()) {
         throw new CodedError('FORBIDDEN', 'Board widget path denied')
       }
     }
@@ -235,7 +298,7 @@ export class WidgetStore {
     this.checkPath()
     const existing = this.read(name)
     const folder = this.folder(name)
-    mkdirSync(folder, { recursive: true, mode: 0o700 })
+    this.ensureDirectory(folder)
     this.checkPath(name)
 
     const sha256 = sha256Hex(documentBytes)

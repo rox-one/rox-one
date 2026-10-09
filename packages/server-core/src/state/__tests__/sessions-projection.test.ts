@@ -32,7 +32,7 @@ afterEach(() => {
 function fixture(): { root: string; store: StateStore; projector: SessionStateProjector } {
   const root = scratch('rox-projection-ws-')
   const configDir = scratch('rox-projection-cfg-', configDirs)
-  const store = openStateStore({ configDir })
+  const store = openStateStore({ configDir, lock: 'allow-unlocked' })
   return { root, store, projector: createSessionStateProjector({ store }) }
 }
 
