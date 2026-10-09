@@ -4,7 +4,7 @@
   "budgets": {
     "EntityPicker": {
       "totalRawBytes": 391591,
-      "gzipTotalBytes": 133500
+      "gzipTotalBytes": 133498
     },
     "PDFPreviewOverlay": {
       "totalRawBytes": 468537,
@@ -59,8 +59,8 @@
       "gzipTotalBytes": 161602
     },
     "main": {
-      "totalRawBytes": 908624,
-      "gzipTotalBytes": 251926
+      "totalRawBytes": 908722,
+      "gzipTotalBytes": 251953
     },
     "pl": {
       "totalRawBytes": 588947,
@@ -68,15 +68,15 @@
     },
     "playground": {
       "totalRawBytes": 769990,
-      "gzipTotalBytes": 282155
+      "gzipTotalBytes": 282152
     },
     "ru": {
       "totalRawBytes": 797186,
       "gzipTotalBytes": 181836
     },
     "useVisibleActions": {
-      "totalRawBytes": 3452783,
-      "gzipTotalBytes": 818759
+      "totalRawBytes": 3454981,
+      "gzipTotalBytes": 818881
     },
     "wasm": {
       "totalRawBytes": 634427,
@@ -102,8 +102,8 @@
     }
   },
   "totals": {
-    "jsRawBytes": 29194214,
-    "jsGzipBytes": 7281752,
+    "jsRawBytes": 29196552,
+    "jsGzipBytes": 7281786,
     "cssRawBytes": 505771,
     "cssGzipBytes": 86822
   }

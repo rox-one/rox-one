@@ -128,7 +128,7 @@ Keys use **flat dot-notation** with a category prefix:
 
 ### Validation
 
-Three checks gate i18n correctness, all wired into pre-commit (`lint:i18n:staged`) and `validate:ci`:
+Three checks gate i18n correctness, all run in `validate:ci` (CI: `.github/workflows/ci.yml`):
 
 | Script | Catches |
 |--------|---------|

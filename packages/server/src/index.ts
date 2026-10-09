@@ -21,6 +21,8 @@
  *   CRAFT_WEBUI_PASSWORD       — optional shorter password for web login (falls back to CRAFT_SERVER_TOKEN)
  *   CRAFT_WEBUI_SECURE_COOKIE  — optional true/false override for the session cookie Secure flag
  *   CRAFT_WEBUI_WS_URL         — optional browser-facing ws:// or wss:// URL returned by /api/config
+ *   CRAFT_WEBUI_ALLOWED_ORIGINS — comma-separated extra origins allowed for cookie-authenticated WebSocket upgrades
+ *   CRAFT_WEBUI_PAIRING_LINK   — 'true'/'1' (or --print-pairing-url) prints a one-time pairing URL on startup
  *   CRAFT_BROWSER_BACKEND       — headless browser backend (agent-browser, none; default: agent-browser)
  *   CRAFT_BROWSER_PROFILE       — persistent Chrome profile directory
  *   CRAFT_AGENT_BROWSER_BIN     — agent-browser executable path (default: agent-browser)
@@ -95,6 +97,30 @@ function parseOptionalWebSocketUrl(name: string, value: string | undefined): str
   }
 }
 
+function parseOptionalOriginsEnv(name: string, value: string | undefined): string[] | undefined {
+  if (value == null || value.trim() === '') return undefined
+
+  const origins = value.split(',').map(part => part.trim()).filter(Boolean)
+  for (const origin of origins) {
+    let parsed: URL
+    try {
+      parsed = new URL(origin)
+    } catch {
+      console.error(`Invalid ${name}: ${origin} is not a valid origin.`)
+      process.exit(1)
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      console.error(`Invalid ${name}: ${origin} must use http:// or https://.`)
+      process.exit(1)
+    }
+    if (parsed.username || parsed.password || parsed.pathname !== '/' || parsed.search || parsed.hash) {
+      console.error(`Invalid ${name}: ${origin} must be a bare scheme://host[:port] origin.`)
+      process.exit(1)
+    }
+  }
+  return origins
+}
+
 // In dev (monorepo), bundled assets root is the repo root (4 levels up from this file).
 // In packaged mode, use CRAFT_BUNDLED_ASSETS_ROOT env or cwd.
 const bundledAssetsRoot = process.env.CRAFT_BUNDLED_ASSETS_ROOT
@@ -121,6 +147,10 @@ const webuiDir = process.env.CRAFT_WEBUI_DIR || undefined
 const webuiEnabled = webuiDir && existsSync(webuiDir)
 const webuiSecureCookies = parseOptionalBooleanEnv('CRAFT_WEBUI_SECURE_COOKIE', process.env.CRAFT_WEBUI_SECURE_COOKIE)
 const webuiWsUrl = parseOptionalWebSocketUrl('CRAFT_WEBUI_WS_URL', process.env.CRAFT_WEBUI_WS_URL)
+const webuiAllowedOrigins = parseOptionalOriginsEnv('CRAFT_WEBUI_ALLOWED_ORIGINS', process.env.CRAFT_WEBUI_ALLOWED_ORIGINS)
+const webuiPrintPairingLink = process.env.CRAFT_WEBUI_PAIRING_LINK === 'true'
+  || process.env.CRAFT_WEBUI_PAIRING_LINK === '1'
+  || process.argv.includes('--print-pairing-url')
 const serverToken = process.env.CRAFT_SERVER_TOKEN
 const browserBackend = (process.env.CRAFT_BROWSER_BACKEND ?? 'agent-browser').trim().toLowerCase()
 const vpsBrowserManager = browserBackend === 'none' ? null : new VpsBrowserPaneManager()
@@ -188,6 +218,7 @@ const instance = await (async () => {
       webUiAppearanceWorkspaceId: webuiEnabled && serverToken
         ? () => readWebDefaultWorkspace()?.id ?? null
         : undefined,
+      allowedWebUiOrigins: webuiEnabled ? webuiAllowedOrigins : undefined,
       // Embed the WebUI HTTP handler on the WS server's port
       httpHandler: webuiNodeHandler,
       applyPlatformToSubsystems: (platform) => {
@@ -339,6 +370,16 @@ const echoFullToken = process.env.CRAFT_PRINT_TOKEN === '1'
 console.log(`CRAFT_SERVER_TOKEN=${echoFullToken ? instance.token : maskTokenForDisplay(instance.token)}`)
 if (webuiHandler) {
   console.log(`CRAFT_WEBUI_URL=${serverProto}://0.0.0.0:${instance.port}`)
+}
+
+// One-time pairing link for a fresh device. The token is single-use, hashed at
+// rest, and lives in the URL fragment (never a query string); this line is the
+// only place it is printed and it expires within 120 s.
+if (webuiHandler && webuiPrintPairingLink) {
+  const { token } = webuiHandler.createHandoffToken()
+  const pairingHost = instance.host === '0.0.0.0' || instance.host === '::' ? '127.0.0.1' : instance.host
+  console.log(`CRAFT_WEBUI_PAIRING_URL=${serverProto}://${pairingHost}:${instance.port}/handoff#${token}`)
+  console.warn('[webui] Pairing link is single-use and expires within 120 s — share it only over a trusted channel.')
 }
 
 // Block binding to a non-localhost address without TLS — tokens would be sent in cleartext.

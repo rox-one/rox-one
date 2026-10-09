@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import { setupI18n } from '@rox/shared/i18n/setupI18n'
+import { shouldShowTransportConnectionBanner } from '@/components/app-shell/TransportConnectionBanner'
 import type { Session, TransportConnectionState } from '../../../shared/types'
-import { deriveSessionMessagesLoadState, formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from '../session-load'
+import { deriveSessionMessagesLoadState, formatSessionLoadFailure, shouldSurfaceSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from '../session-load'
 
 setupI18n().changeLanguage('en')
 
@@ -133,6 +134,27 @@ describe('shouldTreatSessionLoadFailureAsTransportFallback', () => {
     expect(shouldTreatSessionLoadFailureAsTransportFallback(
       createState({ mode: 'local', status: 'failed' }),
     )).toBe(false)
+  })
+})
+
+describe('shouldSurfaceSessionLoadFailure', () => {
+  it('surfaces the failure when the transport banner cannot render (remote connected + auth lastError)', () => {
+    // shouldTreatSessionLoadFailureAsTransportFallback is true here, but
+    // shouldShowTransportConnectionBanner is false (status 'connected'), so the
+    // error must stay visible rather than being erased with no surface showing it.
+    const state = createState({
+      status: 'connected',
+      lastError: { kind: 'auth', message: 'Bad token' },
+    })
+    expect(shouldTreatSessionLoadFailureAsTransportFallback(state)).toBe(true)
+    expect(shouldShowTransportConnectionBanner(state)).toBe(false)
+    expect(shouldSurfaceSessionLoadFailure(state)).toBe(true)
+  })
+
+  it('swallows the failure when the transport banner is visible (remote reconnecting)', () => {
+    const state = createState({ status: 'reconnecting' })
+    expect(shouldShowTransportConnectionBanner(state)).toBe(true)
+    expect(shouldSurfaceSessionLoadFailure(state)).toBe(false)
   })
 })
 

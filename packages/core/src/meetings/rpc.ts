@@ -2,7 +2,15 @@
  * Meeting RPC command shapes. Transport strings live in shared protocol.
  */
 
-import type { Meeting, MeetingProposal, OperationResultV2, TranscriptSegment } from './model.ts'
+import type {
+  Meeting,
+  MeetingProposal,
+  MeetingSessionRecord,
+  MeetingSessionState,
+  MeetingSessionSummary,
+  OperationResultV2,
+  TranscriptSegment,
+} from './model.ts'
 
 export const MEETING_RPC_METHODS = [
   'meetings:list',
@@ -26,6 +34,11 @@ export const MEETING_RPC_METHODS = [
   'meetings:stopCapture',
   'meetings:importMedia',
   'meetings:finalize',
+  'meetings:observeStart',
+  'meetings:observeStop',
+  'meetings:observeState',
+  'meetings:sessionSummary',
+  'meetings:transcriptLines',
 ] as const
 
 export type MeetingRpcMethod = (typeof MEETING_RPC_METHODS)[number]
@@ -48,6 +61,9 @@ export type MeetingJournalEvent =
   | { type: 'proposal.upsert'; proposal: MeetingProposal }
   | { type: 'manual.note'; noteId: string; text: string }
   | { type: 'operation.result'; result: OperationResultV2 }
+  | { type: 'session.upsert'; session: MeetingSessionRecord }
+  | { type: 'session.state'; sessionId: string; state: MeetingSessionState }
+  | { type: 'summary.upsert'; summary: MeetingSessionSummary }
 
 export type MeetingOutboxEntry = {
   operationId: string

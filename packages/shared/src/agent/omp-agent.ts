@@ -46,6 +46,8 @@ import { redactRegisteredSecrets } from '../secrets/redact.ts';
 
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
+import { buildAvailableSkillsBlock as renderAvailableSkillsBlock } from '../skills/prompt.ts';
+import { buildSkillEligibilityReport } from '../skills/eligibility.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
 import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -57,6 +59,7 @@ import type { ProjectPromptContext } from '../projects/types.ts';
 import { formatProjectContextForPrompt } from '../prompts/system.ts';
 import { MCP_USAGE_GUIDANCE } from '../prompts/mcp-guidance.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
+import { isProjectMemoryInjectable } from '../memory/document-provenance.ts';
 import { getContextDocsPromptBlock } from '../context-docs/index.ts';
 import { getCognitiveProfileBlock } from './cognitive-profile.ts';
 import { formatPreferencesForPrompt } from '../config/preferences.ts';
@@ -201,6 +204,8 @@ export function composeOmpAppendSystemPrompt(input: {
   workingDirectory: string;
   preferences?: string | null;
   projectContextBlock?: string | null;
+  /** Bounded `<available_skills>` catalog (eligible skills for this session). */
+  skillsBlock?: string | null;
   memoryBlocks?: MemoryPromptBlocks | null;
   cognitiveProfileBlock?: string | null;
 }): string {
@@ -213,7 +218,11 @@ export function composeOmpAppendSystemPrompt(input: {
   // soul.md/rules.md in the session cwd override same-named global docs.
   const contextDocsBlock = getContextDocsPromptBlock({ workingDirectory: input.workingDirectory });
   if (contextDocsBlock) parts.push(contextDocsBlock);
+  // Eligible-skill catalog — trusted, bounded; sits with the other runtime
+  // context before memory so the model learns the tool surface early.
+  if (input.skillsBlock) parts.push(input.skillsBlock);
   const blocks = input.memoryBlocks;
+  if (blocks?.bootstrapBlock) parts.push(blocks.bootstrapBlock);
   if (blocks?.lessonsBlock) parts.push(blocks.lessonsBlock);
   if (blocks?.memoryBlock) parts.push(blocks.memoryBlock);
   if (blocks?.sourcesBlock) parts.push(blocks.sourcesBlock);
@@ -519,6 +528,9 @@ export class OmpAgent extends BaseAgent {
       const project = loadProjectById(root, projectId);
       if (!project) return null;
       const slug = project.config.slug;
+      // Provenance gate (spec c1.2): an untrusted-stamped project MEMORY.md is
+      // never injected, even though it is read here rather than via the index.
+      const memoryInjectable = isProjectMemoryInjectable(root, slug, this.config.agentProfileSnapshot?.memoryScope);
       return {
         name: project.config.name,
         description: project.config.description,
@@ -530,7 +542,7 @@ export class OmpAgent extends BaseAgent {
           sizeBytes: a.sizeBytes,
         })),
         memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(root, slug),
-        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(root, slug) ?? undefined,
+        memoryContent: memoryInjectable ? loadProjectMemory(root, slug) ?? undefined : undefined,
         roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {
@@ -547,15 +559,38 @@ export class OmpAgent extends BaseAgent {
    * Evaluated at spawn time, so a respawn picks up memory and cognitive-profile
    * updates.
    */
-  private buildCraftContextPrompt(): string {
+  private async buildCraftContextPrompt(): Promise<string> {
     const projectContext = this.resolveProjectContext();
     return composeOmpAppendSystemPrompt({
       workingDirectory: this.resolvedCwd(),
       preferences: this.config.agentProfileSnapshot ? '' : formatPreferencesForPrompt(),
       projectContextBlock: projectContext ? formatProjectContextForPrompt(projectContext) : null,
+      skillsBlock: await this.computeAvailableSkillsBlock(),
       memoryBlocks: this.config.memoryBlocks,
       cognitiveProfileBlock: getCognitiveProfileBlock(),
     });
+  }
+
+  /**
+   * The bounded `<available_skills>` catalog for this session: the merged
+   * catalog gated by the session's skill allowlist plus machine prerequisites
+   * (bins/env/config/os) and disabled packs. Returns null when nothing is
+   * eligible, so an empty catalog never injects an empty block.
+   */
+  private async computeAvailableSkillsBlock(): Promise<string | null> {
+    try {
+      const report = await buildSkillEligibilityReport({
+        workspaceRoot: this.config.workspace.rootPath,
+        projectRoot: this.resolvedCwd(),
+        includeOmp: true,
+        allowedSlugs: this.config.allowedSkillSlugs ?? null,
+        includeCollisions: false,
+      });
+      return renderAvailableSkillsBlock(report.eligible);
+    } catch (error) {
+      this.debug(`available-skills block skipped: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    }
   }
   private _sessionToolContext: SessionToolContext | null = null;
 
@@ -889,9 +924,12 @@ export class OmpAgent extends BaseAgent {
     // --approval-mode yolo: craft permission mode 'allow-all' → full yolo
     //   (OMP's strongest auto mode: zero approval prompts, incl. destructive).
     const args = ['--mode', 'rpc', '--allow-home'];
-    // Profile sessions activate only the captured skill list via BaseAgent's validated mentions.
-    // Disable the native runtime's independent discovery so it cannot expand that list.
-    if (this.config.allowedSkillSlugs !== undefined) args.push('--no-skills');
+    // ROX owns the skill surface: the eligible catalog is injected as the
+    // `<available_skills>` block and read through the `mcp__session__skills_read`
+    // host tool, so the native runtime's independent discovery is always disabled
+    // to keep the two from diverging (a profile allowlist narrows the injected
+    // catalog).
+    args.push('--no-skills');
     const craftSessionId = this.config.session?.id || this._sessionId || '';
     const ompSessionDir = craftSessionId ? this.getOmpSessionDir(craftSessionId) : null;
     if (ompSessionDir) {
@@ -905,7 +943,7 @@ export class OmpAgent extends BaseAgent {
     } else {
       args.push('--no-session');
     }
-    args.push(...getOmpSpawnSystemPromptArgs(this.buildCraftContextPrompt()));
+    args.push(...getOmpSpawnSystemPromptArgs(await this.buildCraftContextPrompt()));
     if (this.autoApproveAtSpawn) {
       args.push('--approval-mode', 'yolo');
     }

@@ -39,6 +39,7 @@ import { registerSettingsHandlers } from './settings'
 import { registerGamificationHandlers } from './gamification'
 import { registerPrivacyHandlers } from './privacy'
 import { registerVoiceHandlers } from './voice'
+import { registerVoiceRealtimeHandlers } from './voice-realtime'
 import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
 import { registerCodeIntelligenceHandlers } from './code-intelligence'
@@ -134,6 +135,7 @@ export function registerCoreRpcHandlers(
   registerGamificationHandlers(server, deps)
   registerPrivacyHandlers(server, deps)
   registerVoiceHandlers(server, deps)
+  registerVoiceRealtimeHandlers(server, deps)
   registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)
   registerCodeIntelligenceHandlers(server, deps)

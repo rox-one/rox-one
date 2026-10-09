@@ -1,7 +1,7 @@
 /**
  * SiYuan plugin bridge RPC handlers (W6).
  *
- * LOCAL_ONLY. LIST order: fixture/env → kernel (soft) → filesystem scan of
+ * LOCAL_ONLY. LIST order: fixture → kernel (soft) → filesystem scan of
  * known SiYuan data dirs → empty + residual.
  * Kernel client resolution: healthy knowledge connections → any-status
  * connections with token → conf.json api.token fallback (G2-safe, never spawn).
@@ -10,7 +10,6 @@
  * install/uninstall Bazaar plugins via kernel APIs only (no Craft-side zip).
  */
 
-import { existsSync, readFileSync } from 'node:fs'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { filterBazaarPackages } from '@rox/shared/knowledge/plugin-allowlist'
@@ -112,23 +111,6 @@ function barePluginId(pluginId: string): string {
   return pluginId.startsWith('siyuan-plugin:')
     ? pluginId.slice('siyuan-plugin:'.length)
     : pluginId
-}
-
-function loadFixtureFromEnv(): SiYuanBridgeManifest[] | null {
-  const path = process.env.CRAFT_SIYUAN_PLUGIN_FIXTURE_JSON
-  if (!path || !existsSync(path)) return null
-  try {
-    const raw = JSON.parse(readFileSync(path, 'utf8')) as unknown
-    const arr = Array.isArray(raw) ? raw : [raw]
-    const out: SiYuanBridgeManifest[] = []
-    for (const item of arr) {
-      const parsed = parseSiYuanPluginManifest(item)
-      if (parsed) out.push(parsed)
-    }
-    return out.length > 0 ? out : null
-  } catch {
-    return null
-  }
 }
 
 export interface PluginBridgeManifestLoad {
@@ -368,16 +350,12 @@ function loadFromFilesystem(): PluginBridgeManifestLoad | null {
 }
 
 /**
- * LIST_PLUGINS feed: fixture/env → kernel → filesystem → empty.
+ * LIST_PLUGINS feed: fixture → kernel → filesystem → empty.
  * Never throws on missing kernel.
  */
 export async function loadPluginBridgeManifests(): Promise<PluginBridgeManifestLoad> {
   if (fixtureManifests) {
     return fixtureLoad(fixtureManifests)
-  }
-  const fromEnv = loadFixtureFromEnv()
-  if (fromEnv) {
-    return fixtureLoad(fromEnv)
   }
 
   let kernelResidual: string | undefined
@@ -406,8 +384,6 @@ export async function loadPluginBridgeManifests(): Promise<PluginBridgeManifestL
 /** Sync catalog listFn for SiYuan Bazaar provider (installed fixture/fs snapshot). */
 export function pluginBridgeBazaarListFn(): SiYuanBridgeManifest[] {
   if (fixtureManifests) return fixtureManifests
-  const fromEnv = loadFixtureFromEnv()
-  if (fromEnv) return fromEnv
   // Sync path: filesystem only (kernel is async). Catalog refresh via LIST is async elsewhere.
   try {
     return listInstalledPluginsFromFilesystem().map((i) => i.manifest)

@@ -25,6 +25,9 @@ interface HeaderMetadataSignature {
   permissionMode?: string
   hasUnread?: boolean
   lastReadMessageId?: string
+  owner?: unknown
+  participants?: unknown
+  visibility?: string
 }
 
 function getHeaderMetadataSignature(header: SessionHeader): string {
@@ -38,6 +41,9 @@ function getHeaderMetadataSignature(header: SessionHeader): string {
     permissionMode: header.permissionMode,
     hasUnread: header.hasUnread,
     lastReadMessageId: header.lastReadMessageId,
+    owner: header.owner,
+    participants: header.participants,
+    visibility: header.visibility,
   }
   return JSON.stringify(signature)
 }
@@ -54,6 +60,9 @@ function mergeHeaderWithExternalMetadata(localHeader: SessionHeader, diskHeader:
     permissionMode: diskHeader.permissionMode,
     hasUnread: diskHeader.hasUnread,
     lastReadMessageId: diskHeader.lastReadMessageId,
+    owner: diskHeader.owner,
+    participants: diskHeader.participants,
+    visibility: diskHeader.visibility,
   }
 }
 

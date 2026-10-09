@@ -138,11 +138,13 @@ import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSourc
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
 import { collectionDisplayAtom, loadCollectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
+import { useViewerIdentity } from '@/hooks/useSessionPresence'
+import { collectSessionOwnerOptions, hasViewerIdentity, sessionInvolvesViewer, sessionMatchesOwnerFilter } from '@/lib/session-presence'
 import { collectionFiltersAtom, collectionFilterKeyAtom, loadCollectionFiltersAtom } from "@/atoms/collection-filters"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
 import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
-import { skillsAtom } from "@/atoms/skills"
+import { skillsAtom, skillsSyncingAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
 import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuses, resolveStatusDisplayLabel, resolveLabelDisplayName, resolveViewDisplayName, resolveViewDisplayDescription } from "@/config/session-status-config"
 import { useStatuses } from "@/hooks/useStatuses"
@@ -518,6 +520,12 @@ function AppShellContent({
   // Real rox.one balance from the account snapshot, kept current by the shared
   // ≤30 s poll + focus refresh. It degrades to a dash only before first sync.
   const roxCloudAccount = useRoxCloudAccount().account
+
+  // a2.3: sidebar owners / "involving me" filter. Matches the server-attributed
+  // creator/owner/participants fields; never a second identity store.
+  const viewer = useViewerIdentity()
+  const [involvingMe, setInvolvingMe] = React.useState(false)
+  const [ownerFilter, setOwnerFilter] = React.useState<ReadonlySet<string>>(() => new Set())
 
   const [isResizing, setIsResizing] = React.useState<'sidebar' | 'session-list' | null>(null)
   const workspaceIdForLayout = activeWorkspaceId ?? '_default'
@@ -1021,11 +1029,24 @@ function AppShellContent({
 
   // Skills state (workspace-scoped)
   const [skills, setSkills] = React.useState<LoadedSkill[]>([])
+  // Pending/syncing flag for the current skills load. A slow bundled-skills
+  // sync can outlive the client timeout (a later push recovers the catalog),
+  // so the panel must not claim "no skills configured" while a load is pending.
+  const [skillsSyncing, setSkillsSyncingState] = React.useState(false)
   // Sync skills to atom for NavigationContext auto-selection
   const setSkillsAtom = useSetAtom(skillsAtom)
   React.useEffect(() => {
     setSkillsAtom(skills)
   }, [skills, setSkillsAtom])
+  // Mirror the local syncing flag into skillsSyncingAtom from the SAME call
+  // sites (one source of truth), so every non-panel consumer — the skills
+  // popover in TaskEditor, pickers — sees the pending state and can suppress
+  // the "no skills configured" claim while a load is still running.
+  const setSkillsSyncingAtom = useSetAtom(skillsSyncingAtom)
+  const setSkillsSyncing = React.useCallback((next: boolean) => {
+    setSkillsSyncingState(next)
+    setSkillsSyncingAtom(next)
+  }, [setSkillsSyncingAtom])
   // Automations — state, handlers, loading, subscriptions
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId)
 
@@ -1586,13 +1607,24 @@ function AppShellContent({
   React.useEffect(() => {
     let disposed = false
     let revision = 0
-    setSkills([])
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId) {
+      setSkillsSyncing(false)
+      return
+    }
+    setSkillsSyncing(true)
     const load = () => {
       const request = ++revision
+      setSkillsSyncing(true)
       window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
-        if (!disposed && request === revision) setSkills(loaded || [])
+        if (!disposed && request === revision) {
+          setSkills(loaded || [])
+          setSkillsSyncing(false)
+        }
       }).catch(err => {
+        // Keep the last-known list: a slow bundled-skills sync can outlive the
+        // client timeout, and the onSkillsChanged push recovers the catalog.
+        // Never blank the list and stay pending so the panel can't claim
+        // "no skills configured" while the sync is still running.
         if (!disposed && request === revision) console.error('[Chat] Failed to load skills:', err)
       })
     }
@@ -1604,7 +1636,7 @@ function AppShellContent({
     })
     load()
     return () => { disposed = true; revision += 1; cleanup() }
-  }, [activeWorkspaceId, activeSessionWorkingDirectory])
+  }, [activeWorkspaceId, activeSessionWorkingDirectory, setSkillsSyncing])
 
   // Filter session metadata by active workspace
   // Also exclude hidden sessions (mini-agent sessions) from all counts and lists
@@ -1849,9 +1881,16 @@ function AppShellContent({
       )
     }
 
+    // a2.3: owners / "involving me" filter over server attribution.
+    if (involvingMe) result = result.filter(meta => sessionInvolvesViewer(meta, viewer))
+    if (ownerFilter.size > 0) result = result.filter(meta => sessionMatchesOwnerFilter(meta, ownerFilter))
+
     result.sort((a, b) => compareSessions(a, b, collectionDisplay.orderBy, collectionDisplay.orderDir))
     return result
-  }, [workspaceSessionMetas, activeSessionMetas, sessionFilter, labelConfigs, collectionFilters, collectionDisplay.showCompleted, collectionDisplay.orderBy, collectionDisplay.orderDir, effectiveSessionStatuses])
+  }, [workspaceSessionMetas, activeSessionMetas, sessionFilter, labelConfigs, collectionFilters, collectionDisplay.showCompleted, collectionDisplay.orderBy, collectionDisplay.orderDir, effectiveSessionStatuses, involvingMe, ownerFilter, viewer])
+
+  const viewerHasIdentity = hasViewerIdentity(viewer)
+  const sessionOwnerOptions = React.useMemo(() => collectSessionOwnerOptions(activeSessionMetas), [activeSessionMetas])
 
 
   // Ensure session messages are loaded when selected
@@ -3192,6 +3231,12 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                           setChatGroupingMode={setChatGroupingMode}
                           isStateSubView={isStateSubView}
                           onOpenSearch={() => setSearchActive(true)}
+                          involvingMe={involvingMe}
+                          setInvolvingMe={setInvolvingMe}
+                          ownerFilter={ownerFilter}
+                          setOwnerFilter={setOwnerFilter}
+                          ownerOptions={sessionOwnerOptions}
+                          viewerHasIdentity={viewerHasIdentity}
                         />
                       )}
                       <CollectionViewChrome
@@ -3248,6 +3293,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               /* Skills List */
               <SkillsListPanel
                 skills={skills}
+                syncing={skillsSyncing}
                 workspaceId={activeWorkspaceId}
                 workspaceRootPath={activeWorkspace?.rootPath}
                 onSkillClick={handleSkillSelect}
