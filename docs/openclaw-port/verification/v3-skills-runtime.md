@@ -21,7 +21,7 @@ The "~9.1k-entry store" is `~/.agents/skills` (9275 symlink + 331 dir
 entries). Of those entries only **4832** parse into loaded skills (many
 symlinks are dangling/ephemeral test leftovers: targets include
 `/tmp/w4smoke.*`, `/var/folders/.../rox-startup-bench-*`, `~/rox/skills`,
-`~/.rox/skills`).
+and the legacy home dot-dir form of the same root).
 
 Commands were run as `bun -e "$(cat /tmp/…mjs)"` with cwd = repo root so bare
 `@rox/*` specifiers resolve to the real packages (no repo files written).
