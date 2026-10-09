@@ -97,6 +97,7 @@
     "./marketplace/filters": "./src/marketplace/filters.ts",
     "./mcp": "./src/mcp/index.ts",
     "./memory/context-select": "./src/memory/context-select.ts",
+    "./memory/document-provenance": "./src/memory/document-provenance.ts",
     "./memory/learning": "./src/memory/learning.ts",
     "./memory/proposals": "./src/memory/proposals.ts",
     "./memory/types": "./src/memory/types.ts",

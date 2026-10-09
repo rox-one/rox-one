@@ -10,7 +10,9 @@
  * index degrades to "nothing retrievable", never a thrown recall error.
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'fs'
-import { join } from 'path'
+import { basename, join } from 'path'
+import { createHash } from 'crypto'
+import { loadMemoryProvenanceOverrides } from '@rox/shared/memory/document-provenance'
 import type {
   MemoryGetResult,
   MemoryIndexCapability,
@@ -38,6 +40,12 @@ export interface MemoryIndexMeta {
   chunkingVersion: number
   indexIdentity: string
   backend: 'fts5' | 'js'
+  /**
+   * Fingerprint of the source corpus the index was built from (doc count +
+   * per-doc content hashes). A mismatch against the current corpus marks the
+   * index stale so `ensureIndex()` rebuilds it.
+   */
+  corpusFingerprint: string
   builtAt: string
   chunkCount: number
 }
@@ -85,19 +93,16 @@ function observedAtFor(path: string, fallback: number): string {
 }
 
 /**
- * Provenance overrides recorded at write time: `{ "<relative path>": provenance }`
- * in `memory/index-provenance.json`. Anything not listed falls back to the
- * default classification below. This is the seam through which a producer
- * stamps trust; it is never derived from document text.
+ * Workspace-relative path of a history document from its absolute path.
+ *
+ * Uses `basename` rather than a `/`-split: on Windows `join()` yields
+ * backslashes, so `slice(lastIndexOf('/') + 1)` would return the whole absolute
+ * path (breaking the `memory_search` prefix filter and provenance overrides).
+ * The backslash normalization additionally makes the derivation deterministic
+ * across platforms (and testable on POSIX).
  */
-function loadProvenanceOverrides(memoryDir: string): Record<string, MemoryChunkProvenance> {
-  try {
-    const raw = readFileSync(join(memoryDir, 'index-provenance.json'), 'utf8')
-    const parsed = JSON.parse(raw) as Record<string, MemoryChunkProvenance>
-    return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch {
-    return {}
-  }
+export function memoryHistoryRelPath(absPath: string): string {
+  return `memory/history/${basename(absPath.replace(/\\/g, '/'))}`
 }
 
 /**
@@ -107,7 +112,7 @@ function loadProvenanceOverrides(memoryDir: string): Record<string, MemoryChunkP
  */
 export function collectMemorySourceDocs(workspaceRoot: string, now: number = Date.now()): ChunkSourceDoc[] {
   const memoryDir = join(workspaceRoot, 'memory')
-  const overrides = loadProvenanceOverrides(memoryDir)
+  const overrides = loadMemoryProvenanceOverrides(workspaceRoot)
   const docs: ChunkSourceDoc[] = []
   const prov = (relPath: string, absPath: string, fallback?: Partial<MemoryChunkProvenance>): MemoryChunkProvenance => {
     const override = overrides[relPath]
@@ -125,7 +130,7 @@ export function collectMemorySourceDocs(workspaceRoot: string, now: number = Dat
 
   for (const abs of relList(join(memoryDir, 'history'), '.md')) {
     const content = readIfExists(abs)
-    const rel = `memory/history/${abs.slice(abs.lastIndexOf('/') + 1)}`
+    const rel = memoryHistoryRelPath(abs)
     if (content?.trim()) docs.push({ path: rel, content, provenance: prov(rel, abs) })
   }
 
@@ -220,11 +225,36 @@ export class MemoryIndexService {
     return this.meta
   }
 
+  /**
+   * Stable fingerprint of the corpus the index was built from: doc count plus
+   * a content hash per document. Cheap relative to a rebuild and independent
+   * of file mtimes, so it works for injected test corpora too.
+   */
+  private corpusFingerprint(docs?: ChunkSourceDoc[]): string {
+    const source = docs ?? this.collect()
+    const combined = createHash('sha1')
+    combined.update(String(source.length))
+    for (const doc of source) {
+      combined.update('\u0000')
+      combined.update(doc.path)
+      combined.update('\u0000')
+      combined.update(createHash('sha1').update(doc.content).digest('hex'))
+    }
+    return combined.digest('hex')
+  }
+
   /** Current staleness of the persisted index (no rebuild). */
   private metaState(meta: MemoryIndexMeta | null): 'absent' | 'ready' | 'stale' {
     if (!meta) return 'absent'
     const identity = memoryIndexIdentity()
     if (meta.chunkingVersion !== identity.chunkingVersion || meta.indexIdentity !== identity.indexIdentity) return 'stale'
+    // Backend identity is part of the index identity: an index built under
+    // Bun/FTS5 must not be treated as ready under Node/JS where the FTS5
+    // backend is unavailable and would silently return zero hits.
+    const activeBackend = this.capability().fts5 ? 'fts5' : 'js'
+    if (meta.backend !== activeBackend) return 'stale'
+    // A changed source corpus (new/edited/removed docs) invalidates the build.
+    if (meta.corpusFingerprint !== this.corpusFingerprint()) return 'stale'
     return 'ready'
   }
 
@@ -256,12 +286,13 @@ export class MemoryIndexService {
     }
   }
 
-  private writeMeta(chunks: number): MemoryIndexMeta {
+  private writeMeta(chunks: number, corpusFingerprint: string): MemoryIndexMeta {
     const identity = memoryIndexIdentity()
     const meta: MemoryIndexMeta = {
       chunkingVersion: identity.chunkingVersion,
       indexIdentity: identity.indexIdentity,
       backend: this.backendInstance.kind,
+      corpusFingerprint,
       builtAt: new Date(this.clock()).toISOString(),
       chunkCount: chunks,
     }
@@ -277,9 +308,10 @@ export class MemoryIndexService {
 
   /** Deterministically rebuild the index from current sources. */
   rebuild(): MemoryIndexStatus {
-    const chunks: MemoryChunk[] = chunkDocuments(this.collect())
+    const docs = this.collect()
+    const chunks: MemoryChunk[] = chunkDocuments(docs)
     this.backendInstance.replaceAll(chunks)
-    this.writeMeta(chunks.length)
+    this.writeMeta(chunks.length, this.corpusFingerprint(docs))
     return this.status()
   }
 

@@ -59,6 +59,7 @@ import type { ProjectPromptContext } from '../projects/types.ts';
 import { formatProjectContextForPrompt } from '../prompts/system.ts';
 import { MCP_USAGE_GUIDANCE } from '../prompts/mcp-guidance.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
+import { isProjectMemoryInjectable } from '../memory/document-provenance.ts';
 import { getContextDocsPromptBlock } from '../context-docs/index.ts';
 import { getCognitiveProfileBlock } from './cognitive-profile.ts';
 import { formatPreferencesForPrompt } from '../config/preferences.ts';
@@ -221,6 +222,7 @@ export function composeOmpAppendSystemPrompt(input: {
   // context before memory so the model learns the tool surface early.
   if (input.skillsBlock) parts.push(input.skillsBlock);
   const blocks = input.memoryBlocks;
+  if (blocks?.bootstrapBlock) parts.push(blocks.bootstrapBlock);
   if (blocks?.lessonsBlock) parts.push(blocks.lessonsBlock);
   if (blocks?.memoryBlock) parts.push(blocks.memoryBlock);
   if (blocks?.sourcesBlock) parts.push(blocks.sourcesBlock);
@@ -526,6 +528,9 @@ export class OmpAgent extends BaseAgent {
       const project = loadProjectById(root, projectId);
       if (!project) return null;
       const slug = project.config.slug;
+      // Provenance gate (spec c1.2): an untrusted-stamped project MEMORY.md is
+      // never injected, even though it is read here rather than via the index.
+      const memoryInjectable = isProjectMemoryInjectable(root, slug, this.config.agentProfileSnapshot?.memoryScope);
       return {
         name: project.config.name,
         description: project.config.description,
@@ -537,7 +542,7 @@ export class OmpAgent extends BaseAgent {
           sizeBytes: a.sizeBytes,
         })),
         memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(root, slug),
-        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(root, slug) ?? undefined,
+        memoryContent: memoryInjectable ? loadProjectMemory(root, slug) ?? undefined : undefined,
         roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {
