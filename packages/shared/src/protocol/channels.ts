@@ -776,6 +776,28 @@ export const RPC_CHANNELS = {
     GOOGLE_DISCONNECT: 'calendar:googleDisconnect',
     GOOGLE_SYNC: 'calendar:googleSync',
   },
+  /**
+   * Google Meet artifacts (wave 5, row d2.6) — read-only Developer-Preview
+   * surface over a meeting space's conference records (participants,
+   * recordings, transcripts, smart notes). The local app server holds the
+   * OAuth broker + credential manager, so the whole namespace is LOCAL_ONLY;
+   * every channel refuses with `PREVIEW_NOT_ACKNOWLEDGED` until the host
+   * acknowledges Developer-Preview enrollment.
+   */
+  meet: {
+    /** `spaces.get` — resolve a space (meeting URL / code → space + Meet URI). */
+    SPACE: 'meet:space',
+    /** `conferenceRecords.list` — a space's conference records. */
+    CONFERENCE_RECORDS: 'meet:conferenceRecords',
+    /** `conferenceRecords.participants.list`. */
+    PARTICIPANTS: 'meet:participants',
+    /** `conferenceRecords.recordings.list`. */
+    RECORDINGS: 'meet:recordings',
+    /** `conferenceRecords.transcripts.list`. */
+    TRANSCRIPTS: 'meet:transcripts',
+    /** `conferenceRecords.smartNotes.list`. */
+    SMART_NOTES: 'meet:smartNotes',
+  },
   workspace: {
     GET_PERMISSIONS: 'workspace:getPermissions',
     OPEN_IN_EDITOR: 'workspace:openInEditor',
