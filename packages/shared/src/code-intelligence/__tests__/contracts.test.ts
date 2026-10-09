@@ -315,10 +315,20 @@ describe('provider-neutral contracts extend the existing selected pack', () => {
     expect(() => registry.resolve(provider.id, 'source-graph', context)).toThrow('unsupported-provider-operation')
     expect(() => registry.register({ ...provider, id: 'deepwiki', adapter: undefined })).toThrow('rejected-provider')
     expect(() => registry.register({ ...provider, id: 'new-provider', adapter: undefined })).toThrow('unverified-provider-manifest')
-    expect(CODE_INTELLIGENCE_PROVIDER_DECISION.revision).toBe('CI-DEC-EXTEND-EXISTING-01')
+    expect(CODE_INTELLIGENCE_PROVIDER_DECISION.revision).toBe('CI-DEC-EXTEND-EXISTING-02')
     expect(CODE_INTELLIGENCE_PROVIDER_DECISION.selected).toEqual(['local-fs-symbols', 'syft-sbom'])
+    expect(CODE_INTELLIGENCE_PROVIDER_DECISION.rejected.map((tool) => tool.name)).toEqual(['CodeWiki', 'DeepWiki'])
     expect(CODE_INTELLIGENCE_PROVIDER_DECISION.inventoryDeclarationIsRuntimeEvidence).toBe(false)
     expect(CODE_INTEL_PACK.alwaysOn).toBe(false)
+    // Revision 02 lifts the graph rejection and admits the new operations.
+    const graphify = { ...provider, id: 'graphify', operations: ['knowledge-graph'] as const, adapter: undefined,
+      sourceRevision: 'c'.repeat(40), artifactDigest: 'd'.repeat(64) }
+    const archify = { ...provider, id: 'archify', operations: ['diagram'] as const, adapter: undefined,
+      sourceRevision: 'c'.repeat(40), artifactDigest: 'd'.repeat(64) }
+    const learning = { ...provider, id: 'understand-anything', operations: ['learning'] as const, adapter: undefined,
+      sourceRevision: 'c'.repeat(40), artifactDigest: 'd'.repeat(64) }
+    expect(new CodeIntelligenceProviderRegistry([graphify, archify, learning]).list().map((item) => item.id))
+      .toEqual(['graphify', 'archify', 'understand-anything'])
     expect(indexVerifiedSnapshotFiles(localFsSymbolsAdapter, snapshot, binding, scope).symbols.some(s => s.name === 'hello')).toBe(true)
     const resource = scopedProviderResourceId({ binding, snapshot, scope, provider, providerResourceId: 'node-1' })
     expect(resource).toMatch(/^provider-resource_[a-f0-9]{64}$/)

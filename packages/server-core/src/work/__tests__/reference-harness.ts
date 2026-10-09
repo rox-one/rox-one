@@ -2,8 +2,8 @@
 
 import { CATALOGUE_FLAGS, COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue, type Authorizer, type CommandReceipt } from '@rox/core/commands'
 import { CommandExecutor } from '../../commands/executor'
-import { COMMAND_MODULES, boundCommandTypes, createWiredCommandRegistry, type CommandModule } from '../../commands/registry'
-import { REFERENCE_SPECS } from '../reference'
+import { COMMAND_MODULES, boundCommandTypes, createWiredCommandRegistry } from '../../commands/registry'
+import { MemoryRecordBackend, REFERENCE_SPECS } from '../reference'
 import type { CommandStore } from '../../commands/store'
 import { ACTOR_ID, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from './reference-scenario'
 
@@ -89,20 +89,61 @@ export function isW1_11Shadow(step: ScenarioStep): boolean {
 /** The reference-owned remainder of the scenario: the steps that must apply here. */
 export const REFERENCE_OWNED_SCENARIO: readonly ScenarioStep[] = REFERENCE_SCENARIO.filter(step => !isW1_11Shadow(step))
 
+/** A chat the reference suites seed directly, because W1-11 owns `im.create_chat`. */
+export interface ReferenceChatSeed {
+  id: string
+  /** Active owner; defaults to the scenario actor. */
+  ownerId?: string
+  /** Additional active members (role `member`); the owner is always a member. */
+  memberIds?: readonly string[]
+  kind?: string
+  name?: string
+  visibility?: string
+  postingPolicy?: string
+  invitePolicy?: string
+}
+
+const SEED_NOW = '2026-10-08T12:00:00.000Z'
+
 /**
- * The W1-06/W1-14 **reference layer's own** module list: `COMMAND_MODULES`
- * without `AGENTS_COMMAND_MODULE` (W1-11 #1508), whose handlers shadow the
- * reference specs for the identity / team-chat / agent-governance commands it
- * owns. The reference-layer regression suites (`reference-guards`,
- * `reference-review4`, `reference-authorization`, `xsc/reference-handlers`) use
- * this when they assert that layer's behaviour — the *wired* behaviour of those
- * commands is asserted by the agents suite against the full `COMMAND_MODULES`.
- * Every other module is kept, so the reference layer binds exactly the handlers
- * and schemas it owns.
+ * W1-11 (#1508) owns `im.create_chat` (and `im.join_chat`), and this harness
+ * never backs the agent-governance runtime those handlers run on, so the
+ * reference suites seed a chat (and its membership rows) straight into the
+ * memory backend the reference handlers read. The shape matches `createChat` in
+ * `work/reference/specs/messenger.ts` (owner + members, active rows).
  */
-export const REFERENCE_LAYER_MODULES: readonly CommandModule[] = Object.freeze(
-  COMMAND_MODULES.filter(module => module.name !== 'agents'),
-)
+export async function seedReferenceChat(seed: ReferenceChatSeed): Promise<void> {
+  const ownerId = seed.ownerId ?? ACTOR_ID
+  const extra = (seed.memberIds ?? []).filter(memberId => memberId !== ownerId)
+  const backend = new MemoryRecordBackend(WORKSPACE_ID)
+  await backend.put({
+    collection: 'channel',
+    id: seed.id,
+    expectedRevision: null,
+    data: {
+      postingPolicy: seed.postingPolicy ?? 'all',
+      invitePolicy: seed.invitePolicy ?? 'members',
+      ownerId,
+      memberIds: [ownerId, ...extra],
+      kind: seed.kind ?? 'group',
+      ...(seed.name !== undefined ? { name: seed.name } : {}),
+      visibility: seed.visibility ?? 'private',
+    },
+  })
+  await seedReferenceChatMember(seed.id, ownerId, 'owner')
+  for (const principalId of extra) await seedReferenceChatMember(seed.id, principalId)
+}
+
+/** One active membership row (W1-11 owns `im.join_chat`). */
+export async function seedReferenceChatMember(chatId: string, principalId: string, role = 'member'): Promise<void> {
+  const backend = new MemoryRecordBackend(WORKSPACE_ID)
+  await backend.put({
+    collection: 'channel-member',
+    id: `${chatId}:${principalId}`,
+    expectedRevision: null,
+    data: { state: 'active', role, joinedAt: SEED_NOW, chatId, principalId },
+  })
+}
 
 export interface Harness {
   registry: CommandRegistry
@@ -117,24 +158,11 @@ export function createHarness(options: {
   flags?: ReadonlySet<string>
   authorizer?: Authorizer
   workspaceId?: string
-  /**
-   * Module list to bind (default `COMMAND_MODULES`). Pass `REFERENCE_LAYER_MODULES`
-   * to assert the reference layer itself, without the W1-11 agents module that
-   * shadows its identity / chat / agent handlers in the wired registry.
-   */
-  modules?: readonly CommandModule[]
   /** Unexpected handler / store errors (the receipt only says INTERNAL). */
   onError?: (error: unknown, type: string) => void
 }): Harness {
   const flags = options.flags ?? ALL_FLAGS
-  const registry = options.modules
-    ? (() => {
-        const custom = new CommandRegistry({ isFlagEnabled: (flag: string) => flags.has(flag) })
-        registerCommandCatalogue(custom)
-        for (const module of options.modules!) module.bind(custom)
-        return custom
-      })()
-    : createWiredCommandRegistry({ isFlagEnabled: flag => flags.has(flag) })
+  const registry = createWiredCommandRegistry({ isFlagEnabled: flag => flags.has(flag) })
   const authorizer = options.authorizer ?? ALLOW_ALL
   const hooks = options.onError
     ? { onHandlerError: (error: unknown, envelope: { type: string }) => options.onError!(error, envelope.type), onStoreError: (error: unknown, envelope: { type: string }) => options.onError!(error, envelope.type) }

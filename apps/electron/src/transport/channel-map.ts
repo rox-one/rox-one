@@ -440,6 +440,10 @@ export const CHANNEL_MAP = {
   cancelDevSpaceRequest: invoke(RPC_CHANNELS.devSpace.CANCEL),
   getDevSpaceCapabilities: invoke(RPC_CHANNELS.devSpace.CAPABILITIES),
   listDevSpaceRuns: invoke(RPC_CHANNELS.devSpace.LIST_RUNS),
+  startDevSpaceRun: invoke(RPC_CHANNELS.devSpace.START_RUN),
+  listDevSpaceArtifacts: invoke(RPC_CHANNELS.devSpace.LIST_ARTIFACTS),
+  readDevSpaceArtifact: invoke(RPC_CHANNELS.devSpace.READ_ARTIFACT),
+  generateDevSpaceQuestions: invoke(RPC_CHANNELS.devSpace.GENERATE_QUESTIONS),
   onDevSpaceCloneProgress: listener(RPC_CHANNELS.devSpace.CLONE_PROGRESS),
   onDevSpaceChanged: listener(RPC_CHANNELS.devSpace.CHANGED),
   onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
@@ -641,6 +645,18 @@ export const CHANNEL_MAP = {
   processVoiceTranscript: invoke(RPC_CHANNELS.voice.PROCESS),
   listVoiceModels: invoke(RPC_CHANNELS.voice.MODELS_LIST),
   onVoiceJob: listener(RPC_CHANNELS.voice.JOB),
+  // Podcast (D13) — local generation job; progress rides the podcast:job push.
+  startPodcast: invoke(RPC_CHANNELS.podcast.START),
+  cancelPodcast: invoke(RPC_CHANNELS.podcast.CANCEL),
+  podcastEpisodes: invoke(RPC_CHANNELS.podcast.EPISODES),
+  readPodcastEpisodeAudio: invoke(RPC_CHANNELS.podcast.AUDIO),
+  podcastEpisodeAudioUrl: invoke(RPC_CHANNELS.podcast.AUDIO_URL),
+  onPodcastJob: listener(RPC_CHANNELS.podcast.JOB),
+  // Playbooks codebook (В5, D12) — local notebook run; progress rides the playbooks:codebookJob push.
+  runCodebook: invoke(RPC_CHANNELS.playbooks.RUN_CODEBOOK),
+  cancelCodebook: invoke(RPC_CHANNELS.playbooks.CANCEL_CODEBOOK),
+  listCodebookRuns: invoke(RPC_CHANNELS.playbooks.CODEBOOK_RUNS),
+  onCodebookJob: listener(RPC_CHANNELS.playbooks.CODEBOOK_JOB),
   onVoiceOverlay: listener(RPC_CHANNELS.voice.OVERLAY),
   onVoiceHotkey: listener(RPC_CHANNELS.voice.HOTKEY),
   talkStart: invoke(RPC_CHANNELS.voice.TALK_START),
@@ -885,6 +901,27 @@ export const CHANNEL_MAP = {
   getNotificationsEnabled: invoke(RPC_CHANNELS.notification.GET_ENABLED),
   setNotificationsEnabled: invoke(RPC_CHANNELS.notification.SET_ENABLED),
 
+  // Native integration — floating quick composer (window + global shortcut).
+  'quickComposer.open': invoke(RPC_CHANNELS.quickComposer.OPEN),
+  'quickComposer.close': invoke(RPC_CHANNELS.quickComposer.CLOSE),
+  'quickComposer.getShortcut': invoke(RPC_CHANNELS.quickComposer.GET_SHORTCUT),
+  'quickComposer.setShortcut': invoke(RPC_CHANNELS.quickComposer.SET_SHORTCUT),
+
+  // Native integration — OS login item.
+  'appIntegration.getLoginItem': invoke(RPC_CHANNELS.appIntegration.GET_LOGIN_ITEM),
+  'appIntegration.setLoginItem': invoke(RPC_CHANNELS.appIntegration.SET_LOGIN_ITEM),
+
+  // Files — Finder/filesystem affordances.
+  revealInFinder: invoke(RPC_CHANNELS.files.REVEAL_IN_FINDER),
+  openPath: invoke(RPC_CHANNELS.files.OPEN_PATH),
+  copyPath: invoke(RPC_CHANNELS.files.COPY_PATH),
+  quickLook: invoke(RPC_CHANNELS.files.QUICK_LOOK),
+  quickLookClose: invoke(RPC_CHANNELS.files.QUICK_LOOK_CLOSE),
+  startDrag: invoke(RPC_CHANNELS.files.START_DRAG),
+
+  // Native shell actions push (dock/tray/menu/notification click).
+  onShellAction: listener(RPC_CHANNELS.shell.ACTION),
+
   // Input settings
   getAutoCapitalisation: invoke(RPC_CHANNELS.input.GET_AUTO_CAPITALISATION),
   setAutoCapitalisation: invoke(RPC_CHANNELS.input.SET_AUTO_CAPITALISATION),
@@ -905,6 +942,14 @@ export const CHANNEL_MAP = {
   getShellSnapshot: invoke(RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT),
   setZenShell: invoke(RPC_CHANNELS.appearance.SET_ZEN_SHELL),
   onShellChanged: listener(RPC_CHANNELS.appearance.SHELL_CHANGED),
+  // A6/B10 — UI prefs (status bar + accent source) and the macOS accent push.
+  getUiPreferences: invoke(RPC_CHANNELS.appearance.GET_UI_PREFERENCES),
+  setUiPreferences: invoke(RPC_CHANNELS.appearance.SET_UI_PREFERENCES),
+  onAccentChanged: listener(RPC_CHANNELS.appearance.ACCENT_CHANGED),
+
+  // C1 — Zed theme import (LOCAL_ONLY filesystem).
+  listZedThemes: invoke(RPC_CHANNELS.zedThemes.LIST),
+  importZedTheme: invoke(RPC_CHANNELS.zedThemes.IMPORT),
 
   // Tools settings
   getBrowserToolEnabled: invoke(RPC_CHANNELS.tools.GET_BROWSER_TOOL_ENABLED),

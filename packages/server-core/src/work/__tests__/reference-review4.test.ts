@@ -11,13 +11,13 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { InMemoryCommandStore } from '../../commands/store'
 import { MemoryRecordBackend, configureReferenceRuntime, deterministicId, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime, type StoredRecord } from '../reference'
-import { createHarness, REFERENCE_LAYER_MODULES, type Harness } from './reference-harness'
+import { createHarness, seedReferenceChat, type Harness } from './reference-harness'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from './reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
 const CAROL = U('carol')
 
-const harness = (): Harness => createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore(), modules: REFERENCE_LAYER_MODULES })
+const harness = (): Harness => createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore() })
 const records = (collection: string): StoredRecord[] => referenceMemoryRecords(WORKSPACE_ID, collection)
 
 /** Direct memory write of a legacy owner row: no command can create one any more. */
@@ -44,7 +44,8 @@ describe('W1-06 review 4: chat settings are owner / admin only', () => {
   const settings: [string, Record<string, unknown>][] = [
     ['im.update_chat', { name: 'renamed' }],
     ['im.update_policy', { postingPolicy: 'admins' }],
-    ['im.set_visibility', { visibility: 'private' }],
+    // W1-11 (#1508) owns `im.set_visibility`; its owner/admin gate is asserted by
+    // `packages/server-core/src/agents/__tests__/identity-handlers.test.ts`.
     ['im.set_top_notice', { content: 'notice' }],
     ['im.update_announcement', { docId: null }],
     ['im.create_tab', { id: U('tab'), kind: 'link', title: 'Tab' }],
@@ -56,7 +57,9 @@ describe('W1-06 review 4: chat settings are owner / admin only', () => {
 
   async function chats(): Promise<Harness> {
     const setup = harness()
-    expect(await setup.run({ type: 'im.create_chat', payload: { id: chat.id, kind: 'group', name: 'general', visibility: 'public', members: [BOB] } })).toMatchObject({ status: 'applied' })
+    // W1-11 (#1508) owns `im.create_chat`; the chat is seeded into the reference
+    // backend instead (see `seedReferenceChat`).
+    await seedReferenceChat({ id: chat.id, ownerId: ACTOR_ID, memberIds: [BOB], kind: 'group', name: 'general', visibility: 'public' })
     return setup
   }
 
@@ -69,9 +72,9 @@ describe('W1-06 review 4: chat settings are owner / admin only', () => {
     expect(records('channel').find(record => record.id === chat.id)!.data).toMatchObject({ name: 'general', visibility: 'public', postingPolicy: 'all' })
     expect(await setup.run({ type: 'im.update_policy', target: chat, payload: { postingPolicy: 'admins' } })).toMatchObject({ status: 'applied' })
     expect(await setup.run({ type: 'im.update_chat', target: chat, payload: { name: 'renamed' } })).toMatchObject({ status: 'applied' })
-    expect(await setup.run({ type: 'im.set_visibility', target: chat, payload: { visibility: 'private' } })).toMatchObject({ status: 'applied' })
     expect(await setup.run({ type: 'im.create_tab', target: chat, payload: { id: U('tab'), kind: 'link', title: 'Tab' } })).toMatchObject({ status: 'applied' })
-    expect(records('channel').find(record => record.id === chat.id)!.data).toMatchObject({ name: 'renamed', visibility: 'private', postingPolicy: 'admins' })
+    // `visibility` is unchanged: W1-11 owns `im.set_visibility` (see `settings`).
+    expect(records('channel').find(record => record.id === chat.id)!.data).toMatchObject({ name: 'renamed', visibility: 'public', postingPolicy: 'admins' })
   })
 
   test('a non-member is refused the same way', async () => {
@@ -125,9 +128,12 @@ describe('W1-06 review 4: space ownership is fixed', () => {
 describe('W1-06 review 4: workspace ownership is fixed', () => {
   const DAVE = U('dave')
 
-  test('the owner role is never granted through people.invite or people.add_workspace_member', async () => {
+  test('the owner role is never granted through people.add_workspace_member', async () => {
     const setup = harness()
-    expect(await setup.run({ type: 'people.invite', payload: { id: U('inv'), email: 'dave@example.com', role: 'owner' } })).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
+    // W1-11 (#1508) owns `people.invite`; its payload role is
+    // `INVITATION_ROLES` (member / admin / guest, `@rox/core/identity`), so no
+    // invite can grant the workspace owner role at all.
+    // `people.add_workspace_member` is still the reference layer's.
     expect(await setup.run({ type: 'people.add_workspace_member', payload: { principalId: DAVE, role: 'owner' } })).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
     expect(records('invitation')).toEqual([])
     expect(records('person').filter(record => record.id === DAVE)).toEqual([])

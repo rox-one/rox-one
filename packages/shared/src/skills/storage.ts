@@ -22,7 +22,7 @@ import type { LoadedSkill, SkillMetadata, SkillRequires, SkillSource } from './t
 import { readSkillInstructions } from './read-instructions.ts';
 import { listOmpSkills, OMP_GLOBAL_SKILLS_DIR, OMP_SHARED_SKILLS_DIR, OMP_WORKSPACE_SKILLS_DIR } from './omp-discovery.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
-import { resolveConfigDir } from '../config/paths.ts';
+import { getEnv, resolveConfigDir } from '../config/paths.ts';
 import { getBundledSkillsDisabled } from '../config/storage.ts';
 import { SLUG_RE } from '../tasks/schema.ts';
 import { chooseManagedSkillName, isInsideSkillStore, isSafeSkillName } from './managed.ts';
@@ -42,6 +42,21 @@ import {
 export const GLOBAL_AGENT_SKILLS_DIR = join(homedir(), '.agents', 'skills');
 /** Bundled skills are owned by the application, independent of external agents. */
 export const APP_MANAGED_SKILLS_DIR = join(resolveConfigDir(), 'skills');
+
+/**
+ * Ambient external-agent links root, or null when the instance must not write
+ * into the user's real home catalog.
+ *
+ * Ambient links target `~/.agents/skills` and are a PRIMARY-install feature: a
+ * normally launched app mirrors its skills into the user's external agent
+ * catalog. An explicitly overridden config root (`ROX_CONFIG_DIR` /
+ * `CRAFT_CONFIG_DIR`) isolates the instance — benches, e2e runs, dev
+ * instances — and MUST never publish links there. Callers that pass an
+ * explicit `linksRoot` are unaffected: this only decides the ambient default.
+ */
+export function ambientSkillLinksRoot(): string | null {
+  return getEnv('CONFIG_DIR') ? null : GLOBAL_AGENT_SKILLS_DIR;
+}
 
 /** Project-level agent skills relative directory name */
 export const PROJECT_AGENT_SKILLS_DIR = '.agents/skills';

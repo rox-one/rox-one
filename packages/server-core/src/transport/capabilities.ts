@@ -16,15 +16,21 @@ import {
   PROTOCOL_CLIENT_CAPABILITIES,
 } from '@rox/shared/protocol'
 
-/** Capability: open a URL in the client's default browser. */
+/**
+ * Capability: open a URL in the client's default browser.
+ *
+ * These are re-exported *and* used as values below, so they need a local
+ * binding: a bare `export … from` never brings the names into module scope,
+ * which is what made tsc fail this project with six "Cannot find name" errors.
+ */
 export {
+  CLIENT_BROWSER_INVOKE,
+  CLIENT_CONFIRM_DIALOG,
   CLIENT_OPEN_EXTERNAL,
+  CLIENT_OPEN_FILE_DIALOG,
   CLIENT_OPEN_PATH,
   CLIENT_SHOW_IN_FOLDER,
-  CLIENT_CONFIRM_DIALOG,
-  CLIENT_OPEN_FILE_DIALOG,
-  CLIENT_BROWSER_INVOKE,
-} from '@rox/shared/protocol'
+}
 
 /** All capabilities a local Electron client advertises on handshake. */
 export const LOCAL_CLIENT_CAPABILITIES: readonly string[] = PROTOCOL_CLIENT_CAPABILITIES

@@ -18,7 +18,7 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 
 
@@ -120,6 +120,10 @@ import { getCredentialManager } from '@rox/shared/credentials'
 import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } from '@rox/server-core/model-fetchers'
 import { setSearchPlatform, setImageProcessor } from '@rox/server-core/services'
 import { createApplicationMenu } from './menu'
+import { dispatchShellAction } from './shell-actions'
+import { initQuickComposer, disposeQuickComposer } from './quick-composer'
+import { nativeAccessibilityPrefersSolid } from './shell-material'
+import { getQuickComposerShortcut, setQuickComposerShortcut } from '@rox/shared/config'
 import { WindowManager } from './window-manager'
 import { readBoundWindowWorkspace } from './bootstrap-window-workspace'
 import { stopAllExtensionHosts } from './extension-host-manager'
@@ -1919,6 +1923,37 @@ app.whenReady().then(async () => {
       const { setNotificationEventSink } = await import('./notifications')
       setNotificationEventSink(moduleSink!, resolveClientId)
 
+      // Native integration — floating quick composer + its global accelerator.
+      // GUI-only: the window is a real renderer (same preload) bound to a
+      // workspace, and the accelerator is a host-level global shortcut.
+      if (!isHeadless && !isClientOnly) {
+        initQuickComposer({
+          createWindow: options => new BrowserWindow(options),
+          registerAuxiliaryWindow: (win, workspaceId) => { windowManager?.registerAuxiliaryWindow(win, workspaceId) },
+          shortcuts: globalShortcut,
+          readShortcut: getQuickComposerShortcut,
+          writeShortcut: setQuickComposerShortcut,
+          resolveWorkspaceId: () => {
+            const win = windowManager?.getFocusedWindow() ?? windowManager?.getLastActiveWindow() ?? null
+            return win ? windowManager?.getWorkspaceForWindow(win.webContents.id) ?? null : null
+          },
+          isMac: process.platform === 'darwin',
+          prefersSolid: nativeAccessibilityPrefersSolid,
+        })
+        app.once('will-quit', () => disposeQuickComposer())
+      }
+
+      // Dock menu (macOS): the native integration actions, dispatched as one
+      // structured `shell:action` to the focused (or first) window.
+      if (!isHeadless && process.platform === 'darwin' && app.dock) {
+        app.dock.setMenu(Menu.buildFromTemplate([
+          { label: i18n.t('menu.newNote'), click: () => { dispatchShellAction(windowManager, { action: 'new-note' }) } },
+          { label: i18n.t('menu.newTask'), click: () => { dispatchShellAction(windowManager, { action: 'new-task' }) } },
+          { label: i18n.t('menu.quickComposer'), click: () => { dispatchShellAction(windowManager, { action: 'quick-composer' }) } },
+          { label: i18n.t('menu.openInbox'), click: () => { dispatchShellAction(windowManager, { action: 'open-inbox' }) } },
+        ]))
+      }
+
 // Release the local transport to the shell window(s): every renderer RPC
       // (`__resolve-local-ws-token`, then the WS transport itself) is now wired.
       publishWsPort(instance.port)
@@ -2023,6 +2058,14 @@ app.whenReady().then(async () => {
           translate: key => i18n.t(key),
           // The channel set comes from the tray model, never from IPC input.
           dispatchChannel: channel => dispatchMenuChannel(channel as MenuBroadcastChannel),
+          dispatchShellAction: action => { dispatchShellAction(windowManager, { action }) },
+          showWindow: () => {
+            const win = windowManager?.getLastActiveWindow() ?? windowManager?.getAllWindows()[0]?.window ?? null
+            if (!win || win.isDestroyed()) return
+            if (win.isMinimized()) win.restore()
+            win.show()
+            win.focus()
+          },
           broadcastStatus: status => pushTyped(instance.wsServer, RPC_CHANNELS.menu.TRAY_STATUS_CHANGED, { to: 'all' }, status),
           quit: () => app.quit(),
         })

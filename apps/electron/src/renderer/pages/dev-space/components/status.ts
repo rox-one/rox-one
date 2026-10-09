@@ -3,7 +3,7 @@
  * (no dynamic key construction) and the «устарело» rule from
  * 02-SPEC-foundations §5.6.
  */
-import type { DevSpaceRepositoryRecord, DevSpaceRepositoryStatus } from '@rox/shared/dev-space'
+import type { DevSpaceRepositoryRecord, DevSpaceRepositoryStatus, DevSpaceRunStage, DevSpaceRunStatus } from '@rox/shared/dev-space'
 
 export const DEV_SPACE_STATUS_KEYS: Record<DevSpaceRepositoryStatus, string> = {
   unbound: 'devSpace.status.unbound',
@@ -41,4 +41,22 @@ export const DEV_SPACE_STATUS_VARIANT: Record<DevSpaceRepositoryStatus, 'default
 /** A newer snapshot exists than the last analyzed one (02-SPEC-foundations §5.6). */
 export function isRepositoryOutdated(record: DevSpaceRepositoryRecord): boolean {
   return Boolean(record.lastSnapshotId) && record.lastSnapshotId !== record.lastAnalyzedSnapshotId
+}
+
+/** Literal keys for the four pipeline stages (§6.1); never build keys dynamically. */
+export const DEV_SPACE_STAGE_KEYS: Record<DevSpaceRunStage, string> = {
+  reconcile: 'devSpace.stage.reconcile',
+  structural: 'devSpace.stage.structural',
+  llm: 'devSpace.stage.llm',
+  publish: 'devSpace.stage.publish',
+}
+
+/** Literal keys for the run journal statuses (§6.2). */
+export const DEV_SPACE_RUN_STATUS_KEYS: Record<DevSpaceRunStatus, string> = {
+  queued: 'devSpace.run.status.queued',
+  running: 'devSpace.run.status.running',
+  succeeded: 'devSpace.run.status.succeeded',
+  failed: 'devSpace.run.status.failed',
+  cancelled: 'devSpace.run.status.cancelled',
+  partial: 'devSpace.run.status.partial',
 }
