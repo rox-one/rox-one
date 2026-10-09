@@ -728,6 +728,14 @@ export const CHANNEL_MAP = {
   driveAbortUpload: invoke(RPC_CHANNELS.drive.ABORT_UPLOAD),
   driveDelete: invoke(RPC_CHANNELS.drive.DELETE),
   driveScanSource: invoke(RPC_CHANNELS.drive.SCAN_SOURCE),
+  // ROX Drive (wave 4) — cloud import pipeline.
+  driveImportPlan: invoke(RPC_CHANNELS.drive.IMPORT_PLAN),
+  driveImportStart: invoke(RPC_CHANNELS.drive.IMPORT_START),
+  driveImportPause: invoke(RPC_CHANNELS.drive.IMPORT_PAUSE),
+  driveImportResume: invoke(RPC_CHANNELS.drive.IMPORT_RESUME),
+  driveImportStatus: invoke(RPC_CHANNELS.drive.IMPORT_STATUS),
+  driveImportAuthStart: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_START),
+  driveImportAuthComplete: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE),
 
   // Statuses
   listStatuses: invoke(RPC_CHANNELS.statuses.LIST),

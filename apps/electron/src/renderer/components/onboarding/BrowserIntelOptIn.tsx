@@ -106,7 +106,7 @@ export function BrowserIntelOptIn({
           disabled={saving}
           onChange={() => void apply(!checked)}
         />
-        <ShieldCheck className="icon-toolbar shrink-0 text-success" aria-hidden="true" />
+        <ShieldCheck className="icon-status shrink-0 text-status-success" aria-hidden="true" />
         <span>{t('onboarding.browserIntel.enable')}</span>
       </label>
       <p className="px-1 text-xs leading-relaxed text-muted-foreground">{t('onboarding.browserIntel.description')}</p>

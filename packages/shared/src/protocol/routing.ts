@@ -14,7 +14,7 @@ import { RPC_CHANNELS } from './channels'
 // LOCAL_ONLY — fundamentally requires local OS / Electron
 // ---------------------------------------------------------------------------
 
-export const LOCAL_ONLY_CHANNELS = new Set<string>([
+export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.voice.COPY_TEXT,
   // Repository capture uses the verified local Electron source owner.
   RPC_CHANNELS.codeIntelligence.PREVIEW,
@@ -522,7 +522,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   // W1-04 (#1501) — Dossier export writes the host's local contact store.
   RPC_CHANNELS.directory.EXPORT_DOSSIER,
 
-  // ROX Drive (wave 1) — device-local bytes + index under the host config dir.
+  // --- carried over from feat/rox-platform-20261009 (merge 2026-10-09) ---
   RPC_CHANNELS.drive.QUOTA,
   RPC_CHANNELS.drive.LIST,
   RPC_CHANNELS.drive.CREATE_FOLDER,
@@ -532,21 +532,25 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.drive.ABORT_UPLOAD,
   RPC_CHANNELS.drive.DELETE,
   RPC_CHANNELS.drive.SCAN_SOURCE,
-
-  // Telegram account linking (R4) — the linkd daemon and the Rox account
-  // authority live on this machine; a remote/headless server must never mint
-  // or verify a link for someone else's phone number.
+  RPC_CHANNELS.drive.IMPORT_PLAN,
+  RPC_CHANNELS.drive.IMPORT_START,
+  RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_RESUME,
+  RPC_CHANNELS.drive.IMPORT_STATUS,
+  RPC_CHANNELS.drive.IMPORT_AUTH_START,
+  RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE,
   RPC_CHANNELS.tgLink.START,
   RPC_CHANNELS.tgLink.VERIFY,
   RPC_CHANNELS.tgLink.STATUS,
+]
 
-])
+export const LOCAL_ONLY_CHANNELS = new Set<string>(LOCAL_ONLY_CHANNEL_LIST)
 
 // ---------------------------------------------------------------------------
 // REMOTE_ELIGIBLE — runs on whichever server owns the workspace
 // ---------------------------------------------------------------------------
 
-export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.workspaceWork.READ,
   RPC_CHANNELS.workspaceWork.WRITE,
   RPC_CHANNELS.workspaceWork.DELETE,
@@ -631,8 +635,6 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED,
   RPC_CHANNELS.sessions.CREATE,
   RPC_CHANNELS.sessions.DELETE,
-  RPC_CHANNELS.sessions.SET_MEMORY_MODE,
-  RPC_CHANNELS.sessions.GET_PROVENANCE,
   RPC_CHANNELS.sessions.GET_MESSAGES,
   RPC_CHANNELS.sessions.SEND_MESSAGE,
   RPC_CHANNELS.sessions.CANCEL,
@@ -1176,7 +1178,9 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.commands.EXECUTE,
   RPC_CHANNELS.commands.LIST,
   RPC_CHANNELS.commands.EVENT,
-])
+]
+
+export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>(REMOTE_ELIGIBLE_CHANNEL_LIST)
 
 // ---------------------------------------------------------------------------
 // Query helpers

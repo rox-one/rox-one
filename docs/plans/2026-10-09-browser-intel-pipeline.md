@@ -39,7 +39,7 @@
 - `<config>/cache/browser_staging/<slug>-<hash>/` — теневые копии профилей; копируются и спутники SQLite (`-wal`, `-shm`, `-journal`); потоки 1 MiB, лимит 512 МиБ на файл; удаление только внутри staging-root.
 - `<config>/intelligence/intelligence.db` — WAL + `synchronous=NORMAL`, `busy_timeout=5000`; таблицы `browser_profiles`, `dim_urls`, `fact_visits`, `unfurl_details`, `timeline_daily|monthly|yearly`, `user_profile_slots`, `intelligence_meta`; DDL из `schema.sql` (пакуется `scripts/copy-assets.ts` в `dist/resources/browser-intel/`).
 - `<config>/intelligence/user_cognitive_profile.txt` — готовый блок (атомарно, 0600); путь чтения без доступа к БД (лок-фри старт).
-- Каталог конфига: `resolveConfigDir()` из `@rox/shared/config` — `ROX_CONFIG_DIR` → `CRAFT_CONFIG_DIR` → `~/rox` (если каталог существует) → `~/.rox`.
+- Каталог конфига: `resolveConfigDir()` из `@rox/shared/config` — переопределяется `ROX_CONFIG_DIR` / `CRAFT_CONFIG_DIR`; иначе видимый `~/rox` в профиле при наличии, иначе скрытый каталог по умолчанию.
 
 ## 4. Согласие и UX
 - Onboarding: чекбокс «Включить…» (`BrowserIntelOptIn`) + прогресс (`BrowserIntelProgress`); оптимистичная запись с откатом и повтором.

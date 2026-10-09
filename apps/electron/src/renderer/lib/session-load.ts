@@ -1,4 +1,5 @@
 import i18n from 'i18next'
+import { shouldShowTransportConnectionBanner } from '@/components/app-shell/TransportConnectionBanner'
 import type { Session, TransportConnectionState } from '../../shared/types'
 
 interface MessageLoadMeta {
@@ -78,6 +79,26 @@ export function shouldTreatSessionLoadFailureAsTransportFallback(
     || state.status === 'reconnecting'
     || state.status === 'failed'
     || state.status === 'disconnected'
+}
+
+/**
+ * Whether a session-load failure must stay visible instead of being swallowed as
+ * a transport fallback.
+ *
+ * Swallowing is only legitimate when the transport connection banner is actually
+ * rendered — the swallow path clears the session-load error and leaves no other
+ * surface explaining why the session list is empty. `shouldTreatSessionLoadFailureAsTransportFallback`
+ * alone is too broad: a remote transport with `status: 'connected'` (or `'idle'`)
+ * and an `auth`/`network`/`timeout` lastError is treated as a fallback, yet
+ * `shouldShowTransportConnectionBanner` is false for those statuses, so nothing
+ * would be shown. Require both predicates before erasing the failure.
+ */
+export function shouldSurfaceSessionLoadFailure(
+  state: TransportConnectionState | null | undefined,
+): boolean {
+  if (!state) return true
+  if (!shouldTreatSessionLoadFailureAsTransportFallback(state)) return true
+  return !shouldShowTransportConnectionBanner(state)
 }
 
 export function formatSessionLoadFailure(error: unknown): string {

@@ -2737,6 +2737,20 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     return url.includes(`/${BROWSER_EMPTY_STATE_PAGE}`) || url.includes(`\\${BROWSER_EMPTY_STATE_PAGE}`)
   }
 
+  /**
+   * SEC-01 trust boundary: a `craftagents://` navigation from the pane is
+   * honoured only when the pane's current document is the app's own
+   * empty-state page. Remote sites loaded in the pane (and their popups) must
+   * not be able to drive the app — a crafted
+   * `craftagents://action/new-session?…&send=true&mode=allow-all` URL can
+   * otherwise create an allow-all session and auto-send an attacker prompt
+   * with no user gesture.
+   */
+  private isDeeplinkAllowedFromPage(instance: BrowserInstance): boolean {
+    const currentUrl = instance.pageView.webContents.getURL?.() ?? instance.currentUrl
+    return this.isBrowserEmptyStateUrl(currentUrl)
+  }
+
   private normalizePageState(url: string, title: string): { url: string; title: string } {
     if (this.isBrowserEmptyStateUrl(url)) {
       return { url: 'about:blank', title: i18n.t('browser.newTab') }
@@ -2766,7 +2780,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       const { handleDeepLink } = await import('./deep-link')
       const sink = this.windowManager.getRpcEventSink() ?? undefined
       const resolver = (wcId: number) => this.windowManager?.getClientIdForWindow(wcId)
-      const result = await handleDeepLink(url, this.windowManager, sink, resolver)
+      const result = await handleDeepLink(url, this.windowManager, sink, resolver, undefined, 'browser-pane')
       if (!result.success) {
         mainLog.warn(`[browser-pane] deep-link handling failed: ${result.error ?? 'unknown error'} url=${url}`)
       }
@@ -2907,38 +2921,37 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   /** Register IPC handlers for toolbar actions. Call once at app startup. */
   registerToolbarIpc(): void {
-    const findInstance = (instanceId: string): BrowserInstance | undefined => {
-      return this.instances.get(instanceId)
+    // Toolbar IPC is only ever sent by a pane's own toolbar webContents; any
+    // other sender (or an unknown instance id) is denied rather than silently
+    // ignored, so another renderer cannot drive a pane it does not own.
+    const requireToolbarInstance = (event: { sender: unknown }, instanceId: string): BrowserInstance => {
+      const inst = this.instances.get(instanceId)
+      if (!inst || inst.toolbarView.webContents !== event.sender) throw new Error('IPC_SENDER_DENIED')
+      return inst
     }
 
-    ipcMain.handle(TOOLBAR_CHANNELS.NAVIGATE, async (_event, instanceId: string, url: string) => {
-      const inst = findInstance(instanceId)
-      if (inst) await this.navigate(inst.id, url)
+    ipcMain.handle(TOOLBAR_CHANNELS.NAVIGATE, async (event, instanceId: string, url: string) => {
+      await this.navigate(requireToolbarInstance(event, instanceId).id, url)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.GO_BACK, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      if (inst) await this.goBack(inst.id)
+    ipcMain.handle(TOOLBAR_CHANNELS.GO_BACK, async (event, instanceId: string) => {
+      await this.goBack(requireToolbarInstance(event, instanceId).id)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.GO_FORWARD, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      if (inst) await this.goForward(inst.id)
+    ipcMain.handle(TOOLBAR_CHANNELS.GO_FORWARD, async (event, instanceId: string) => {
+      await this.goForward(requireToolbarInstance(event, instanceId).id)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.RELOAD, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      if (inst) this.reload(inst.id)
+    ipcMain.handle(TOOLBAR_CHANNELS.RELOAD, async (event, instanceId: string) => {
+      this.reload(requireToolbarInstance(event, instanceId).id)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.STOP, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      if (inst) this.stop(inst.id)
+    ipcMain.handle(TOOLBAR_CHANNELS.STOP, async (event, instanceId: string) => {
+      this.stop(requireToolbarInstance(event, instanceId).id)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.MENU_GEOMETRY, async (_event, instanceId: string, open: boolean, height?: number) => {
-      const inst = findInstance(instanceId)
-      if (!inst) return
+    ipcMain.handle(TOOLBAR_CHANNELS.MENU_GEOMETRY, async (event, instanceId: string, open: boolean, height?: number) => {
+      const inst = requireToolbarInstance(event, instanceId)
 
       const normalizedOpen = !!open
       const normalizedHeight = Math.max(0, Math.ceil(Number(height ?? 0)))
@@ -2960,32 +2973,28 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       this.layoutAllViews(inst)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.HIDE, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      mainLog.info(`[browser-pane] toolbar ipc hide requested instanceId=${instanceId} resolved=${inst?.id ?? 'none'}`)
-      if (inst) this.hide(inst.id)
+    ipcMain.handle(TOOLBAR_CHANNELS.HIDE, async (event, instanceId: string) => {
+      const inst = requireToolbarInstance(event, instanceId)
+      mainLog.info(`[browser-pane] toolbar ipc hide requested instanceId=${instanceId} resolved=${inst.id}`)
+      this.hide(inst.id)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.DESTROY, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      mainLog.info(`[browser-pane] toolbar ipc destroy requested instanceId=${instanceId} resolved=${inst?.id ?? 'none'}`)
-      if (inst) this.destroyInstance(inst.id)
+    ipcMain.handle(TOOLBAR_CHANNELS.DESTROY, async (event, instanceId: string) => {
+      const inst = requireToolbarInstance(event, instanceId)
+      mainLog.info(`[browser-pane] toolbar ipc destroy requested instanceId=${instanceId} resolved=${inst.id}`)
+      this.destroyInstance(inst.id)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.OPEN_DEVTOOLS, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      if (inst) this.openDevTools(inst.id)
+    ipcMain.handle(TOOLBAR_CHANNELS.OPEN_DEVTOOLS, async (event, instanceId: string) => {
+      this.openDevTools(requireToolbarInstance(event, instanceId).id)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.LIST_HISTORY, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      return inst ? this.getNavigationHistory(inst.id) : []
+    ipcMain.handle(TOOLBAR_CHANNELS.LIST_HISTORY, async (event, instanceId: string) => {
+      return this.getNavigationHistory(requireToolbarInstance(event, instanceId).id)
     })
 
-    ipcMain.handle(TOOLBAR_CHANNELS.LIST_DOWNLOADS, async (_event, instanceId: string) => {
-      const inst = findInstance(instanceId)
-      if (!inst) return []
-      const rows = await this.getDownloads(inst.id, { action: 'list', limit: 8 })
+    ipcMain.handle(TOOLBAR_CHANNELS.LIST_DOWNLOADS, async (event, instanceId: string) => {
+      const rows = await this.getDownloads(requireToolbarInstance(event, instanceId).id, { action: 'list', limit: 8 })
       return rows.map((row) => ({ filename: row.filename }))
     })
 
@@ -3004,7 +3013,16 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   /** Register the `__browser:invoke` IPC handler. Call once at app startup. */
   registerCapabilityIpc(): void {
-    ipcMain.handle('__browser:invoke', async (_event, req: BrowserCapabilityRequest) => {
+    ipcMain.handle('__browser:invoke', async (event, req: BrowserCapabilityRequest) => {
+      // Only a managed window may bridge a remote capability. The workspace check must
+      // NOT compare the request against the window's LOCAL binding: remote-mirror
+      // workspaces deliberately carry the REMOTE server's workspace id here (the two
+      // never match — see release notes 0.10.0), and `dispatchCapability` already
+      // namespaces every owner key by that id.
+      const owner = this.windowManager?.getWindowByWebContentsId(event.sender.id)
+      if (!owner || !req) {
+        throw new Error('IPC_SENDER_DENIED')
+      }
       return await this.dispatchCapability(req)
     })
     mainLog.info('[browser-pane] Capability IPC handler registered')
@@ -4118,10 +4136,14 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     })
 
     pageWc.on('will-navigate', (event, url) => {
-      if (url.startsWith(CRAFT_DEEPLINK_SCHEME_PREFIX)) {
-        event.preventDefault()
-        void this.handleDeepLinkUrl(url)
+      if (!url.startsWith(CRAFT_DEEPLINK_SCHEME_PREFIX)) return
+      // Always prevent the scheme from being handed to the OS; decide afterwards.
+      event.preventDefault()
+      if (!this.isDeeplinkAllowedFromPage(instance)) {
+        mainLog.warn(`[browser-pane] blocked deep-link navigation from untrusted page id=${instance.id} url=${url}`)
+        return
       }
+      void this.handleDeepLinkUrl(url)
     })
 
     pageWc.on('did-create-window', (popupWindow, details) => {
@@ -4135,7 +4157,11 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       )
 
       if (details.url.startsWith(CRAFT_DEEPLINK_SCHEME_PREFIX)) {
-        void this.handleDeepLinkUrl(details.url)
+        if (this.isDeeplinkAllowedFromPage(instance)) {
+          void this.handleDeepLinkUrl(details.url)
+        } else {
+          mainLog.warn(`[browser-pane] blocked deep-link popup from untrusted page id=${instance.id} url=${details.url}`)
+        }
         return { action: 'deny' }
       }
 

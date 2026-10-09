@@ -64,9 +64,11 @@ import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-hist
 import * as storage from '@/lib/local-storage'
 import type {
   DeepLinkNavigation,
+  DeepLinkSource,
   Session,
   NavigationState,
   SessionFilter,
+  CreateSessionOptions,
   RightSidebarPanel,
   ContentBadge,
 } from '../../shared/types'
@@ -123,6 +125,9 @@ export type { Route }
 export type { NavigationState, SessionFilter }
 export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isDriveNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
 
+/** Deep-link sources whose parameters must not be trusted to drive the app (SEC-01). */
+const UNTRUSTED_DEEPLINK_SOURCES: Record<string, true> = { 'browser-pane': true }
+
 // =============================================================================
 // Context
 // =============================================================================
@@ -169,7 +174,7 @@ interface NavigationProviderProps {
   /** Switch by slug; false or rejection means the history target is unavailable. */
   onSwitchWorkspaceBySlug?: (slug: string) => boolean | void | Promise<boolean | void>
   /** Session creation handler */
-  onCreateSession: (workspaceId: string, options?: import('../../shared/types').CreateSessionOptions) => Promise<Session>
+  onCreateSession: (workspaceId: string, options?: CreateSessionOptions) => Promise<Session>
   /** Input change handler for pre-filling chat input */
   onInputChange?: (sessionId: string, value: string) => void
   /** Get draft input text for a session (reads from ref, no re-render) */
@@ -851,7 +856,7 @@ export function NavigationProvider({
   // =========================================================================
 
   const handleActionNavigation = useCallback(
-    async (parsed: ParsedRoute, options?: { newPanel?: boolean; targetLaneId?: 'main' }) => {
+    async (parsed: ParsedRoute, options?: { newPanel?: boolean; targetLaneId?: 'main'; source?: DeepLinkSource }) => {
       if (!workspaceId) return
       const actionEpoch = actionEpochRef.current
       const owner = navigationOwnerRef.current
@@ -868,20 +873,22 @@ export function NavigationProvider({
           const previousSuppression = suppressAutoSelectRef.current
           suppressAutoSelectRef.current = true
           try {
-            const createOptions: import('../../shared/types').CreateSessionOptions = {}
-            if (parsed.params.mode) {
+            const source = options?.source
+            const untrustedSource = source !== undefined && UNTRUSTED_DEEPLINK_SOURCES[source] === true
+            const createOptions: CreateSessionOptions = {}
+            if (!untrustedSource && parsed.params.mode) {
               const parsedMode = parsePermissionMode(parsed.params.mode)
               if (parsedMode) {
                 createOptions.permissionMode = parsedMode
               }
             }
-            if (parsed.params.workdir) {
+            if (!untrustedSource && parsed.params.workdir) {
               createOptions.workingDirectory = parsed.params.workdir as 'user_default' | 'none' | string
             }
             if (parsed.params.model) {
               createOptions.model = parsed.params.model
             }
-            if (parsed.params.systemPrompt) {
+            if (!untrustedSource && parsed.params.systemPrompt) {
               createOptions.systemPromptPreset = parsed.params.systemPrompt as 'default' | 'mini' | string
             }
             if (parsed.params.status) {
@@ -918,7 +925,7 @@ export function NavigationProvider({
             }
 
             // Determine navigation filter
-            const filter: import('../../shared/types').SessionFilter =
+            const filter: SessionFilter =
               parsed.params.status ? { kind: 'state', stateId: parsed.params.status } :
               parsed.params.label ? { kind: 'label', labelId: parsed.params.label } :
               { kind: 'allSessions' }
@@ -961,7 +968,7 @@ export function NavigationProvider({
 
             // Handle input: either auto-send or pre-fill
             if (parsed.params.input) {
-              const shouldSend = parsed.params.send === 'true'
+              const shouldSend = parsed.params.send === 'true' && !untrustedSource
               if (shouldSend) {
                 setTimeout(() => {
                   if (!isCurrent()) return
@@ -1413,7 +1420,8 @@ export function NavigationProvider({
           return
         }
         // Keep failed view addresses visible, while reporting rejected actions once.
-        void navigate(route as Route).catch(() => { toast.error(t('common.unavailable')) })
+        void navigate(route as Route, nav.source ? { source: nav.source } : undefined)
+          .catch(() => { toast.error(t('common.unavailable')) })
       }
     })
 

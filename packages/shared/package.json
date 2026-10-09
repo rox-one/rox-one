@@ -66,6 +66,12 @@
     "./credentials": "./src/credentials/index.ts",
     "./docs": "./src/docs/index.ts",
     "./drive": "./src/drive/index.ts",
+    "./drive/importers": "./src/drive/importers/index.ts",
+    "./drive/importers/types": "./src/drive/importers/types.ts",
+    "./drive/importers/providers/google-drive": "./src/drive/importers/providers/google-drive.ts",
+    "./drive/importers/providers/onedrive": "./src/drive/importers/providers/onedrive.ts",
+    "./drive/importers/providers/yandex-disk": "./src/drive/importers/providers/yandex-disk.ts",
+    "./drive/importers/providers/icloud": "./src/drive/importers/providers/icloud.ts",
     "./design-manifest": "./src/design-manifest/index.ts",
     "./docs/doc-links": "./src/docs/doc-links.ts",
     "./entities": "./src/entities/index.ts",
@@ -178,7 +184,8 @@
     "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts",
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",
-    "./commands/schemas": "./src/commands/schemas.ts"
+    "./commands/schemas": "./src/commands/schemas.ts",
+    "./drive/importers/providers/auth": "./src/drive/importers/providers/auth.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

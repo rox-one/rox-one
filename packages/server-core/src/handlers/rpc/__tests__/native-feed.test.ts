@@ -1,10 +1,10 @@
 import { expect, test } from 'bun:test'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
 test('enrolled native Feed uses actor/workspace custody, pure reads, guarded mutations and scoped events', async () => {
-  const directory = mkdtempSync(join(tmpdir(), 'native-feed-rpc-'))
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'native-feed-rpc-')))
   try {
     const child = Bun.spawn([process.execPath, join(import.meta.dir, 'fixtures/native-feed.ts')], {
       cwd: join(import.meta.dir, '../../../../../..'), env: { ...process.env, CRAFT_CONFIG_DIR: directory, ROX_CONFIG_DIR: directory }, stdout: 'pipe', stderr: 'pipe',

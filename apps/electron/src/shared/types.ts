@@ -102,7 +102,26 @@ import type {
   DriveQuota,
   DriveScanResult,
   DriveUploadSession,
+  ImportJob,
+  ImportProviderId,
 } from '@rox/shared/drive'
+
+/** Host result of the `drive:importAuthStart` OAuth broker (main-process). */
+export type DriveImportAuthStartResult =
+  | { ok: true; status: 'authorized' }
+  | {
+    ok: true
+    status: 'pending'
+    flowId: string
+    authUrl?: string
+    deviceCode?: { userCode: string; verificationUri: string; intervalSeconds: number; expiresInSeconds: number }
+  }
+  | { ok: false; code: string; error: string }
+
+/** Host result of the `drive:importAuthComplete` OAuth broker. */
+export type DriveImportAuthCompleteResult =
+  | { ok: true; email?: string }
+  | { ok: false; code: string; error: string }
 
 /** Automatic browser cookie import (in-app browser). Values never cross RPC. */
 export interface BrowserCookieAutoStatus {
@@ -2323,6 +2342,25 @@ export interface ElectronAPI {
   driveAbortUpload(workspaceId: string, uploadId: string): Promise<void>
   driveDelete(workspaceId: string, fileId: string): Promise<void>
   driveScanSource(workspaceId: string, sourceKind: DriveBackupSourceKind): Promise<DriveScanResult>
+  // ROX Drive (wave 4) — cloud import pipeline. Bytes move host-side; the
+  // renderer only plans, starts and watches the job.
+  driveImportPlan(provider: ImportProviderId, folderId?: string): Promise<ImportJob>
+  driveImportStart(jobId: string): Promise<ImportJob>
+  driveImportPause(jobId: string): Promise<ImportJob>
+  driveImportResume(jobId: string): Promise<ImportJob>
+  driveImportStatus(jobId?: string): Promise<ImportJob | ImportJob[] | null>
+  // ROX Drive (wave 4) — host-side import OAuth broker. The renderer never sees
+  // a token: it starts a flow, opens the returned URL, and completes it.
+  driveImportAuthStart(provider: ImportProviderId, options?: { callbackUrl?: string; callbackPort?: number }): Promise<DriveImportAuthStartResult>
+  driveImportAuthComplete(flowId: string, code?: string): Promise<DriveImportAuthCompleteResult>
+  /** Bind the main-process loopback callback server for the Google PKCE flow. */
+  driveImportOAuthBegin(): Promise<{ handle: string; callbackUrl: string }>
+  /** Open a consent URL in the user's external browser. */
+  driveImportOAuthOpen(url: string): Promise<boolean>
+  /** Await the provider redirect for a pending Google import flow. */
+  driveImportOAuthAwait(handle: string): Promise<{ query: Record<string, string> }>
+  /** Abort a pending Google import flow (closes the callback server). */
+  driveImportOAuthCancel(handle: string): Promise<boolean>
   enrichMindMap(input: {
     workspaceId: string
     entity: import('@rox/core/mindmap').MindMapEntityRef

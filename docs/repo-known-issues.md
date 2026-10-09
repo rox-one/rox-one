@@ -4,7 +4,7 @@ Small hygiene items found by the 2026-08-12 integration audit. Listed here becau
 
 ## Root `package.json` dead knobs
 
-`marketing:*` and `docs:dev` scripts, and the unused `CRAFT_WEBUI_PORT=3100` knob on `server:dev:webui`, were removed (ticket 08). Leftover `workspaces` exclusions `"!apps/online-docs"` / `"!apps/marketing"` were removed (ticket 16).
+`marketing:*` and `docs:*` scripts (all six, ticket 08), and the unused `CRAFT_WEBUI_PORT=3100` knob on `server:dev:webui`, were removed. Leftover `workspaces` exclusions `"!apps/online-docs"` / `"!apps/marketing"` were removed (ticket 16).
 
 ## Stale code comment (owned by another workstream)
 

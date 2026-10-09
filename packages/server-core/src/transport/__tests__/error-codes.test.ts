@@ -29,6 +29,7 @@ async function startPair(opts?: {
   clientCapabilities?: string[]
   workspaceId?: string
   requireAuth?: boolean
+  allowLocalOnlyForTests?: boolean
   webContentsId?: number
   localClientProof?: string
   resolveLocalClientBinding?: (candidate: {
@@ -44,6 +45,7 @@ async function startPair(opts?: {
     requireAuth: opts?.requireAuth ?? true,
     validateToken: async (t) => t === TEST_TOKEN,
     serverId: 'test',
+    allowLocalOnlyForTests: opts?.allowLocalOnlyForTests,
     resolveLocalClientBinding: opts?.resolveLocalClientBinding,
   })
   opts?.configureServer?.(server)
@@ -190,8 +192,34 @@ describe('Transport — LOCAL_ONLY enforcement', () => {
     expect((caught as { code?: string }).code).toBe('LOCAL_ONLY_DENIED')
   })
 
-  it('allows LOCAL_ONLY channels when the desktop advertises openFileDialog', async () => {
+  it('denies LOCAL_ONLY channels when a non-desktop client advertises openFileDialog', async () => {
     const { server, client } = await startPair({ clientCapabilities: [CLIENT_OPEN_FILE_DIALOG] })
+    server.handle(localOnlyChannel, async () => ({ ok: true }))
+
+    let caught: unknown
+    try {
+      await client.invoke(localOnlyChannel)
+    } catch (err) {
+      caught = err
+    }
+    expect((caught as { code?: string }).code).toBe('LOCAL_ONLY_DENIED')
+  })
+
+  it('denies shell:exec to a capability-only non-desktop client', async () => {
+    const { server, client } = await startPair({ clientCapabilities: [CLIENT_OPEN_FILE_DIALOG] })
+    server.handle(RPC_CHANNELS.shell.EXEC, async () => ({ ok: true }))
+
+    let caught: unknown
+    try {
+      await client.invoke(RPC_CHANNELS.shell.EXEC, { command: 'echo pwned' })
+    } catch (err) {
+      caught = err
+    }
+    expect((caught as { code?: string }).code).toBe('LOCAL_ONLY_DENIED')
+  })
+
+  it('allows LOCAL_ONLY channels when the server grants local-only for tests', async () => {
+    const { server, client } = await startPair({ allowLocalOnlyForTests: true })
     server.handle(localOnlyChannel, async () => ({ ok: true }))
     await expect(client.invoke(localOnlyChannel)).resolves.toEqual({ ok: true })
   })
