@@ -170,6 +170,10 @@ function sessionUpdatePayload(options: OpenAiRealtimeOptions, config: RealtimeVo
       input_audio_format: 'pcm16',
       output_audio_format: 'pcm16',
       turn_detection: { type: 'server_vad' },
+      // The beta default is transcription-off; the bridge and the user-transcript
+      // handler both consume `conversation.item.input_audio_transcription.*`, so
+      // enable it with the same model as the transcription relay.
+      input_audio_transcription: { model: options.model ?? OPENAI_TRANSCRIPTION_MODEL },
       ...(options.instructions ?? config.instructions ? { instructions: options.instructions ?? config.instructions } : {}),
       ...(options.voice ?? config.voice ? { voice: options.voice ?? config.voice } : {}),
     },
@@ -212,28 +216,42 @@ class OpenAiRealtimeBridge implements RealtimeVoiceBridge {
   private open(): void {
     if (this.closing) return
     const key = this.options.apiKey ?? ''
-    this.socket = this.openSocket(this.wsUrl(), {
+    // Every handler is bound to the socket instance that fired it; a superseded
+    // socket (retry replaced it) can still emit open/close/error afterwards and
+    // must never touch the live session's state, handshake or queued audio.
+    const socket = this.openSocket(this.wsUrl(), {
       Authorization: `Bearer ${key}`,
       'OpenAI-Beta': 'realtime=v1',
     }, {
       onOpen: () => {
+        if (this.socket !== socket) {
+          try { socket.close(1000, 'superseded') } catch { /* already closed */ }
+          return
+        }
         this.sendRaw(sessionUpdatePayload(this.options, this.config))
         this.lifecycle.markReady()
         this.callbacks.onReady?.()
         this.flushPending()
       },
-      onMessage: (data) => this.handleMessage(data),
+      onMessage: (data) => { if (this.socket === socket) this.handleMessage(data) },
       onClose: (code, reason) => {
+        if (this.socket !== socket) return
         this.socket = null
         if (this.closing) return
         this.callbacks.onClose?.()
         this.lifecycle.fail(new Error(reason || `realtime socket closed (${code})`))
       },
       onError: (error) => {
+        if (this.socket !== socket) return
         this.callbacks.onError?.(error)
         if (!this.closing) this.lifecycle.fail(error)
       },
     })
+    const previous = this.socket
+    this.socket = socket
+    if (previous && previous !== socket) {
+      try { previous.close(1000, 'superseded') } catch { /* already closed */ }
+    }
   }
 
   private wsUrl(): string {
@@ -248,6 +266,9 @@ class OpenAiRealtimeBridge implements RealtimeVoiceBridge {
   }
 
   private flushPending(): void {
+    // Draining while not connected would discard the queue into a socket that
+    // never handshook; keep the frames queued for the next ready transition.
+    if (this.lifecycle.snapshot().state !== 'ready') return
     for (const chunk of this.lifecycle.drainPending()) this.sendRaw(encodeAudioAppend(chunk))
   }
 
@@ -449,6 +470,7 @@ export interface OpenAiTranscriptionOptions extends OpenAiProviderOptions {
   maxAttempts?: number
   baseDelayMs?: number
   maxDelayMs?: number
+  connectTimeoutMs?: number
   now?: () => number
   schedule?: RealtimeTimerScheduler
 }
@@ -468,6 +490,7 @@ export function createOpenAiRealtimeTranscriptionSession(options: OpenAiTranscri
     maxAttempts: options.maxAttempts,
     baseDelayMs: options.baseDelayMs,
     maxDelayMs: options.maxDelayMs,
+    connectTimeoutMs: options.connectTimeoutMs,
     now: options.now,
     schedule: options.schedule,
   })

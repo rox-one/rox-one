@@ -30,6 +30,28 @@ import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
 import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
 import { projectNativeInboxChanged } from '../handlers/rpc/native-inbox-events'
 
+/**
+ * Channels an enrolled native principal may receive over the wire. A channel
+ * absent from `NATIVE_EVENT_CHANNELS` is silently dropped for native clients;
+ * `NATIVE_CLIENT_EVENT_CHANNELS` additionally gates workspace-wide fan-out
+ * (a `{ to: 'client' }` target bypasses that second gate).
+ */
+export const NATIVE_EVENT_CHANNELS: ReadonlySet<string> = new Set([
+  RPC_CHANNELS.sessions.EVENT, RPC_CHANNELS.sources.CHANGED, RPC_CHANNELS.memory.CHANGED, RPC_CHANNELS.notes.CHANGED, RPC_CHANNELS.feed.CHANGED,
+  RPC_CHANNELS.skillsPending.CHANGED, RPC_CHANNELS.messaging.PENDING_CHANGED, RPC_CHANNELS.messaging.BINDING_CHANGED,
+  RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
+  RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+  RPC_CHANNELS.voice.TALK_EVENT, RPC_CHANNELS.voice.STT_EVENT, RPC_CHANNELS.voice.WAKE_CHANGED,
+  RPC_CHANNELS.voice.TTS_STREAM_CHUNK, RPC_CHANNELS.voice.TRIGGER,
+])
+
+export const NATIVE_CLIENT_EVENT_CHANNELS: ReadonlySet<string> = new Set([
+  RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
+  RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+  RPC_CHANNELS.voice.TALK_EVENT, RPC_CHANNELS.voice.STT_EVENT, RPC_CHANNELS.voice.WAKE_CHANGED,
+  RPC_CHANNELS.voice.TTS_STREAM_CHUNK, RPC_CHANNELS.voice.TRIGGER,
+])
+
 interface ModelRefreshServiceLike {
   startAll(): void
   stopAll?(): void
@@ -506,18 +528,8 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     port: rpcPort,
     requireAuth: true,
     nativeAuthority,
-    nativeEventChannels: new Set([
-      RPC_CHANNELS.sessions.EVENT, RPC_CHANNELS.sources.CHANGED, RPC_CHANNELS.memory.CHANGED, RPC_CHANNELS.notes.CHANGED, RPC_CHANNELS.feed.CHANGED,
-      RPC_CHANNELS.skillsPending.CHANGED, RPC_CHANNELS.messaging.PENDING_CHANGED, RPC_CHANNELS.messaging.BINDING_CHANGED,
-      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
-      RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
-      RPC_CHANNELS.voice.TALK_EVENT, RPC_CHANNELS.voice.STT_EVENT, RPC_CHANNELS.voice.WAKE_CHANGED,
-    ]),
-    nativeClientEventChannels: new Set([
-      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
-      RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
-      RPC_CHANNELS.voice.TALK_EVENT, RPC_CHANNELS.voice.STT_EVENT, RPC_CHANNELS.voice.WAKE_CHANGED,
-    ]),
+    nativeEventChannels: NATIVE_EVENT_CHANNELS,
+    nativeClientEventChannels: NATIVE_CLIENT_EVENT_CHANNELS,
     projectNativeEvent: (channel, args, workspaceId, principal) => {
       if (channel === RPC_CHANNELS.notes.CHANGED) return projectNativeNotesChanged(nativeAuthority, args, workspaceId, principal)
       if (channel === RPC_CHANNELS.skillsPending.CHANGED || channel === RPC_CHANNELS.messaging.PENDING_CHANGED || channel === RPC_CHANNELS.messaging.BINDING_CHANGED) return projectNativeInboxChanged(nativeAuthority, args, workspaceId, principal)
