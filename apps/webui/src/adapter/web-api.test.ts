@@ -113,7 +113,7 @@ describe('web adapter protocol feature gating', () => {
 
     let error: unknown
     try {
-      await api.getSessions('ws-1')
+      await api.getSessions()
     } catch (e) {
       error = e
     }

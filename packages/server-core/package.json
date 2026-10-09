@@ -39,7 +39,8 @@
     "./drive": "./src/drive/index.ts",
     "./xsc": "./src/xsc/index.ts",
     "./playbooks/jobs": "./src/playbooks/jobs.ts",
-    "./playbooks/codebook": "./src/playbooks/codebook/index.ts"
+    "./playbooks/codebook": "./src/playbooks/codebook/index.ts",
+    "./handlers/rpc/google-meet": "./src/handlers/rpc/google-meet.ts"
   },
   "scripts": {},
   "dependencies": {

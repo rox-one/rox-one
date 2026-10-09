@@ -72,5 +72,6 @@ bun run scripts/upload.ts --electron   # plus --latest / --script if those flags
 
 ## Related
 
-- Entitlements: `apps/electron/build/entitlements.mac.plist`
+- Entitlements: `apps/electron/build/entitlements.mac.plist` (app main executable; no JIT keys) and `apps/electron/build/entitlements.runtime.plist` (nested runtime binaries; carries `allow-jit`/`allow-unsigned-executable-memory`, wired via `mac.entitlementsInherit`)
+- Signing audit: `bun run scripts/audit-macos-signing.ts <path/to/Rox.app>` — single Team-ID across every Mach-O, `codesign --verify --deep --strict`, `spctl --assess`, and the JIT entitlement split; fails closed
 - After-pack Liquid Glass hook: `apps/electron/scripts/afterPack.cjs`

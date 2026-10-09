@@ -2473,6 +2473,16 @@ export interface ElectronAPI {
     error?: string
   }>
 
+  // Google Meet artifacts (row d2.6) — read-only Developer-Preview surface.
+  // Every call refuses typed (PREVIEW_NOT_ACKNOWLEDGED) until the host
+  // acknowledges enrollment, so no fetch happens by default.
+  meetSpace(args?: { workspaceId?: string; space?: string }): Promise<import('@rox/server-core/handlers/rpc/google-meet').MeetSpaceResult>
+  meetConferenceRecords(args?: { workspaceId?: string; space?: string }): Promise<import('@rox/server-core/handlers/rpc/google-meet').MeetConferenceRecordsResult>
+  meetParticipants(args?: { workspaceId?: string; conferenceRecord?: string }): Promise<import('@rox/server-core/handlers/rpc/google-meet').MeetParticipantsResult>
+  meetRecordings(args?: { workspaceId?: string; conferenceRecord?: string }): Promise<import('@rox/server-core/handlers/rpc/google-meet').MeetRecordingsResult>
+  meetTranscripts(args?: { workspaceId?: string; conferenceRecord?: string }): Promise<import('@rox/server-core/handlers/rpc/google-meet').MeetTranscriptsResult>
+  meetSmartNotes(args?: { workspaceId?: string; conferenceRecord?: string }): Promise<import('@rox/server-core/handlers/rpc/google-meet').MeetSmartNotesResult>
+
   // Session content search (full-text search via ripgrep)
   searchSessionContent(workspaceId: string, query: string, searchId?: string): Promise<SessionSearchResult[]>
 

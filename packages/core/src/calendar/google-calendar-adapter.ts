@@ -123,6 +123,13 @@ interface GoogleEventResource {
   end?: GoogleEventDateTime
   recurrence?: string[]
   recurringEventId?: string
+  /** Google Meet join link for the event, when one exists. */
+  hangoutLink?: string
+  /** Conference data; the video entry point is the Meet URI when present. */
+  conferenceData?: {
+    entryPoints?: Array<{ entryPointType?: string; uri?: string }>
+    video?: { uri?: string }
+  }
 }
 
 interface GoogleEventsListResponse {
@@ -281,6 +288,8 @@ export class GoogleCalendarAdapter implements CalendarAdapter {
   private mapEvent(item: GoogleEventResource, accountId: string): CalendarEvent {
     const allDay = Boolean(item.start?.date) && !item.start?.dateTime
     const recurrence = item.recurrence && item.recurrence.length > 0 ? item.recurrence.join('\n') : undefined
+    const videoEntry = item.conferenceData?.entryPoints?.find((entry) => entry.entryPointType === 'video')
+    const meetUri = item.hangoutLink ?? videoEntry?.uri ?? item.conferenceData?.video?.uri ?? undefined
     return {
       id: item.id ?? '',
       accountId,
@@ -292,6 +301,7 @@ export class GoogleCalendarAdapter implements CalendarAdapter {
       timeZone: item.start?.timeZone ?? item.end?.timeZone ?? this.defaultTimeZone,
       recurrence,
       occurrenceId: item.recurringEventId ? item.id : undefined,
+      meetUri,
       deleted: item.status === 'cancelled',
       etag: item.etag,
       kind: 'event',

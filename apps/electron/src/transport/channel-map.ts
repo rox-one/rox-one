@@ -725,6 +725,16 @@ export const CHANNEL_MAP = {
   googleCalendarDisconnect: invoke(RPC_CHANNELS.calendar.GOOGLE_DISCONNECT),
   googleCalendarSync: invoke(RPC_CHANNELS.calendar.GOOGLE_SYNC),
 
+  // Google Meet artifacts (wave 5, row d2.6). Read-only Developer-Preview
+  // surface; every call refuses with PREVIEW_NOT_ACKNOWLEDGED until the host
+  // acknowledges enrollment.
+  meetSpace: invoke(RPC_CHANNELS.meet.SPACE),
+  meetConferenceRecords: invoke(RPC_CHANNELS.meet.CONFERENCE_RECORDS),
+  meetParticipants: invoke(RPC_CHANNELS.meet.PARTICIPANTS),
+  meetRecordings: invoke(RPC_CHANNELS.meet.RECORDINGS),
+  meetTranscripts: invoke(RPC_CHANNELS.meet.TRANSCRIPTS),
+  meetSmartNotes: invoke(RPC_CHANNELS.meet.SMART_NOTES),
+
   // Sources change listener
   onSourcesChanged: listener(RPC_CHANNELS.sources.CHANGED),
 
