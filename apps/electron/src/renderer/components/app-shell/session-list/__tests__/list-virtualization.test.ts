@@ -3,6 +3,7 @@ import {
   ENTITY_LIST_OVERSCAN,
   ENTITY_LIST_ROW_ESTIMATE,
   flattenEntityListGroups,
+  withMountedAnchor,
   type EntityListGroup,
 } from '@/components/ui/entity-list'
 import { virtualTableWindow } from '@/components/app-shell/session-table/table-virtualization'
@@ -101,5 +102,28 @@ describe('flattenEntityListGroups', () => {
     expect(second?.offset).toBe(ENTITY_LIST_ROW_ESTIMATE)
     expect(third?.offset).toBe(ENTITY_LIST_ROW_ESTIMATE + 120)
     expect(flattened.totalHeight).toBe(ENTITY_LIST_ROW_ESTIMATE + 120 + 60)
+  })
+})
+
+describe('active row stays mounted', () => {
+  const all = flattenFlat(rows(2000)).entries
+  const windowed = all.slice(0, 14)
+
+  it('adds the active row back when it sits outside the window', () => {
+    const withAnchor = withMountedAnchor(windowed, all, 'row:s1500')
+    expect(withAnchor).toHaveLength(windowed.length + 1)
+    expect(withAnchor.at(-1)?.key).toBe('row:s1500')
+    // The window itself is untouched, so no other row is mounted twice.
+    expect(new Set(withAnchor.map((entry) => entry.key)).size).toBe(withAnchor.length)
+  })
+
+  it('leaves the window untouched when the active row is already inside it', () => {
+    const withAnchor = withMountedAnchor(windowed, all, 'row:s3')
+    expect(withAnchor).toBe(windowed)
+  })
+
+  it('ignores an anchor that is not in the list', () => {
+    expect(withMountedAnchor(windowed, all, 'row:missing')).toBe(windowed)
+    expect(withMountedAnchor(windowed, all, null)).toBe(windowed)
   })
 })

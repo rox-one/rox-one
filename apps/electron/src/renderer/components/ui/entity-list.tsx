@@ -286,6 +286,21 @@ function CollapsibleGroupHeader({
 // Component
 // ============================================================================
 
+/**
+ * The windowed slice plus the active/selected row when it lies outside it. The active row must
+ * stay mounted: keyboard navigation focuses its DOM node (unmounted rows lose their ref), so
+ * dropping it would make arrow nav silently dead until the user clicks a mounted row again.
+ */
+export function withMountedAnchor<T, G>(
+  slice: VirtualTableEntry<T, G>[],
+  all: VirtualTableEntry<T, G>[],
+  anchorKey: string | null,
+): VirtualTableEntry<T, G>[] {
+  if (!anchorKey || slice.some((entry) => entry.key === anchorKey)) return slice
+  const anchor = all.find((entry) => entry.key === anchorKey)
+  return anchor ? [...slice, anchor] : slice
+}
+
 export function EntityList<T>({
   items,
   groups,
@@ -494,11 +509,13 @@ export function EntityList<T>({
     }
     if (low > 0) coveringHeaderIndex = headerIndexes[low - 1]!
   }
-  const windowedEntries =
+  const slice =
     coveringHeaderIndex != null
       ? [flattened.entries[coveringHeaderIndex]!, ...flattened.entries.slice(windowRange.startIndex, windowRange.endIndex)]
       : flattened.entries.slice(windowRange.startIndex, windowRange.endIndex)
-  const visibleEntries = windowedEnabled ? windowedEntries : []
+  const visibleEntries = windowedEnabled
+    ? withMountedAnchor(slice, flattened.entries, scrollToKey ? `row:${scrollToKey}` : null)
+    : []
 
   // Per-row index/isFirstInGroup, so `renderItem` receives the same arguments
   // as the non-windowed branches.
