@@ -334,4 +334,7 @@ export function selfTest(): string[] {
   return failures
 }
 
-await main()
+// Only scan (and, on violations, `process.exit(1)`) when this file IS the
+// entrypoint: `check-config-paths.test.ts` imports it, and an unguarded
+// `main()` aborted the whole test process whenever the repo had a violation.
+if (import.meta.main) await main()
