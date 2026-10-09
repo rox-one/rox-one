@@ -202,6 +202,35 @@ export type {
 } from './skills/runtime.ts';
 export { isSafeSkillSlug, isWithinRealRoot, skillsRuntimeScope } from './skills/scope.ts';
 
+// Dev Space tool runtime (spec 02 §9) — registered by the server-core Dev Space
+// layer; consumed by the devspace_read / devspace_search / devspace_propose
+// handlers. propose() only drafts — approval and apply stay human-only.
+export {
+  registerDevSpaceToolRuntime,
+  getDevSpaceToolRuntime,
+  clearDevSpaceToolRuntime,
+  DEVSPACE_ARTIFACT_KINDS,
+  DEVSPACE_ARTIFACT_FORMATS,
+} from './dev-space/runtime.ts';
+export type {
+  DevSpaceArtifactEntry,
+  DevSpaceArtifactFormat,
+  DevSpaceArtifactKind,
+  DevSpaceProposal,
+  DevSpaceProposeInput,
+  DevSpaceProposeOp,
+  DevSpaceProposeRequest,
+  DevSpaceReadRequest,
+  DevSpaceReadResult,
+  DevSpaceSearchRequest,
+  DevSpaceSearchHit,
+  DevSpaceSearchInput,
+  DevSpaceSearchPage,
+  DevSpaceToolRuntime,
+} from './dev-space/runtime.ts';
+export { DevSpaceError, isDevSpaceArtifactId } from './dev-space/scope.ts';
+export type { DevSpaceErrorCode } from './dev-space/scope.ts';
+
 // Handlers
 export {
   // SubmitPlan
@@ -268,6 +297,16 @@ export {
   handleSkillsRead,
   SKILLS_SEARCH_MAX_LIMIT,
   SKILLS_READ_MAX_CHARS,
+} from './handlers/index.ts';
+
+// Dev Space handlers (registered in SESSION_TOOL_DEFS)
+export {
+  handleDevSpaceRead,
+  handleDevSpaceSearch,
+  handleDevSpacePropose,
+  parseDevSpaceProposeOps,
+  DEVSPACE_READ_MAX_CONTENT_CHARS,
+  DEVSPACE_SEARCH_MAX_LIMIT,
 } from './handlers/index.ts';
 
 export type {
@@ -376,6 +415,9 @@ export type {
   MemoryGetToolArgs,
   SkillsSearchArgs,
   SkillsReadArgs,
+  DevSpaceReadArgs,
+  DevSpaceSearchArgs,
+  DevSpaceProposeArgs,
 } from './tool-defs.ts';
 
 // Script runtime resolution + path containment (also used by the shared

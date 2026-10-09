@@ -33,6 +33,10 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.devSpace.CANCEL,
   RPC_CHANNELS.devSpace.CAPABILITIES,
   RPC_CHANNELS.devSpace.LIST_RUNS,
+  RPC_CHANNELS.devSpace.START_RUN,
+  // Artifact reads resolve the local store under `projects/<slug>/dev-space/`, never proxied.
+  RPC_CHANNELS.devSpace.LIST_ARTIFACTS,
+  RPC_CHANNELS.devSpace.READ_ARTIFACT,
   RPC_CHANNELS.devSpace.CLONE_PROGRESS,
   RPC_CHANNELS.devSpace.CHANGED,
   RPC_CHANNELS.devSpace.RUN_PROGRESS,

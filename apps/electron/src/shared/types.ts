@@ -470,16 +470,22 @@ import type {
   DevSpaceCapabilities,
   DevSpaceCapabilitiesInput,
   DevSpaceCloneProgress,
+  DevSpaceListArtifactsInput,
+  DevSpaceListArtifactsResult,
   DevSpaceListRepositoriesInput,
   DevSpaceListRunsInput,
   DevSpaceListRunsResult,
+  DevSpaceReadArtifactInput,
+  DevSpaceReadArtifactResult,
   DevSpaceRemoveRepositoryInput,
   DevSpaceRemoveRepositoryResult,
   DevSpaceRepositoryCatalog,
   DevSpaceRepositoryRecord,
   DevSpaceRepositoryRequestInput,
   DevSpaceRepositoryStatus,
+  DevSpaceRun,
   DevSpaceRunProgress,
+  DevSpaceStartRunInput,
 } from '@rox/shared/dev-space';
 
 // Import protocol types used by ElectronAPI (they come through the `export *` above,
@@ -1093,6 +1099,9 @@ export interface ElectronAPI {
   cancelDevSpaceRequest(input: DevSpaceCancelInput): Promise<boolean>
   getDevSpaceCapabilities(input: DevSpaceCapabilitiesInput): Promise<DevSpaceCapabilities>
   listDevSpaceRuns(input: DevSpaceListRunsInput): Promise<DevSpaceListRunsResult>
+  startDevSpaceRun(input: DevSpaceStartRunInput): Promise<DevSpaceRun>
+  listDevSpaceArtifacts(input: DevSpaceListArtifactsInput): Promise<DevSpaceListArtifactsResult>
+  readDevSpaceArtifact(input: DevSpaceReadArtifactInput): Promise<DevSpaceReadArtifactResult>
   onDevSpaceCloneProgress(callback: (progress: DevSpaceCloneProgress) => void): () => void
   onDevSpaceChanged(callback: (change: { repositoryId: string; status: DevSpaceRepositoryStatus }) => void): () => void
   onDevSpaceRunProgress(callback: (progress: DevSpaceRunProgress) => void): () => void

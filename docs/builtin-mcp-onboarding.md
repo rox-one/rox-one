@@ -18,7 +18,6 @@
 
 | Интеграция | Подключение и необходимые настройки |
 | --- | --- |
-| DeepWiki | Публичный HTTP MCP `https://mcp.deepwiki.com/mcp` |
 | Context7 | Публичный HTTP MCP `https://mcp.context7.com/mcp`; ключ необязателен |
 | Firecrawl MCP | Закреплённый npm-пакет; нужен API-ключ. Существующий API-источник `firecrawl` сохраняется |
 | Playwright | Закреплённый npm-пакет и автоматически устанавливаемый совместимый Chromium |

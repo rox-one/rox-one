@@ -27,6 +27,7 @@
     "./observability": "./src/observability/index.ts",
     "./meetings": "./src/meetings/index.ts",
     "./docs/*": "./src/docs/*.ts",
+    "./devspace/*": "./src/devspace/*.ts",
     "./entities/*": "./src/entities/*.ts",
     "./memory/learning/*": "./src/memory/learning/*.ts",
     "./workspace-work/*": "./src/workspace-work/*.ts",

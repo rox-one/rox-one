@@ -9,7 +9,7 @@
  * helper (see `devspace/clone.ts`), never through argv, logs or pushed events.
  */
 import { execFile } from 'node:child_process'
-import { appendFile, lstat, mkdir, readdir, readFile, realpath, rm } from 'node:fs/promises'
+import { appendFile, lstat, mkdir, readFile, realpath, rm } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
@@ -19,12 +19,16 @@ import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import type { ErrorCode } from '@rox/shared/protocol'
 import {
   bindRepository, captureRepositorySnapshot, defaultRepositoryConfiguration,
-  repositoryCurrentBranch, repositoryPolicyFingerprint, saveRepositoryBinding, saveRepositorySnapshot,
+  loadRepositorySnapshot, repositoryCurrentBranch, repositoryPolicyFingerprint, saveRepositoryBinding, saveRepositorySnapshot,
 } from '@rox/shared/code-intelligence'
 import type { RepositoryBinding, RepositoryScope } from '@rox/shared/code-intelligence'
-import { devSpaceRepositoryId } from '@rox/shared/dev-space'
+import { devSpacePlanHash, devSpaceRepositoryId, devSpaceRunId, DEV_SPACE_RUN_STAGES } from '@rox/shared/dev-space'
+import {
+  DEV_SPACE_READ_ARTIFACT_MAX_BYTES, DEV_SPACE_TEXT_ARTIFACT_FORMATS,
+} from '@rox/shared/dev-space'
 import type {
-  DevSpaceRepositoryCatalog, DevSpaceRepositoryRecord, DevSpaceRepositoryStatus,
+  DevSpaceArtifactSummary, DevSpaceListArtifactsResult, DevSpaceManifestEntry,
+  DevSpaceReadArtifactResult, DevSpaceRepositoryCatalog, DevSpaceRepositoryRecord, DevSpaceRepositoryStatus, DevSpaceRun,
 } from '@rox/shared/dev-space'
 import { atomicWriteFileSync } from '@rox/shared/utils/files'
 import { pushTyped } from '@rox/server-core/transport'
@@ -32,11 +36,23 @@ import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext } from '../../transport/types'
 import { CloneError, runGitClone, runGitPull, type CloneErrorCode } from '../../devspace/clone.ts'
+import { readDevSpaceArtifactBytes, readDevSpaceManifest } from '../../devspace/artifacts.ts'
+import { listDevSpaceRuns, readDevSpaceRun, writeDevSpaceRun } from '../../devspace/runs.ts'
+import { createDevSpaceToolRuntime } from '../../devspace/tool-runtime.ts'
+import {
+  abortAllDevSpaceRuns, registerDevSpaceActiveRun, registerDevSpaceStage, runDevSpacePipeline, unregisterDevSpaceActiveRun,
+} from '../../devspace/runner.ts'
+import { registerDevSpaceStructuralStage } from '../../devspace/stages/structural.ts'
+import { registerDevSpaceLlmStage, type LlmAdapter } from '../../devspace/stages/llm.ts'
+import { registerDevSpacePublishStage, type DevSpacePublishPort } from '../../devspace/stages/publish.ts'
+import type { StructuralAdapter } from '../../devspace/adapters/contract.ts'
+import { registerDevSpaceToolRuntime } from '@rox/session-tools-core'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.devSpace.LIST_REPOSITORIES, RPC_CHANNELS.devSpace.ADD_REPOSITORY, RPC_CHANNELS.devSpace.START_CLONE,
   RPC_CHANNELS.devSpace.REMOVE_REPOSITORY, RPC_CHANNELS.devSpace.REFRESH_REPOSITORY, RPC_CHANNELS.devSpace.CANCEL,
-  RPC_CHANNELS.devSpace.CAPABILITIES, RPC_CHANNELS.devSpace.LIST_RUNS,
+  RPC_CHANNELS.devSpace.CAPABILITIES, RPC_CHANNELS.devSpace.LIST_RUNS, RPC_CHANNELS.devSpace.START_RUN,
+  RPC_CHANNELS.devSpace.LIST_ARTIFACTS, RPC_CHANNELS.devSpace.READ_ARTIFACT,
 ] as const
 
 export interface HandlerEnvironment {
@@ -46,6 +62,35 @@ export interface HandlerEnvironment {
   loadProjectConfig(root: string, slug: string): ProjectConfig | null
   /** Server-only GitHub credential delivery; absent means a public-only host. */
   resolveGithubToken?(workspaceId: string, repositoryId: string): Promise<string | null>
+  /**
+   * Reconcile seam for the pipeline's `reconcile` stage (02-SPEC-foundations §6.1):
+   * resolve a current snapshot for the repository, reusing the recorded one when
+   * still loadable so a rerun over the same state resolves the same `snapshot.id`.
+   * Tests inject a stub; the default binds+captures through code-intelligence.
+   */
+  reconcile?(input: DevSpaceReconcileInput): Promise<DevSpaceReconcileResult>
+  /**
+   * Window-free publish seam (02-SPEC-foundations §7.4): the host composes a
+   * `DevSpacePublishPort` over the SAME `MarkdownCommitStore` the content
+   * pipeline uses (see `devspace/publish-port.ts`) and passes it here. Absent
+   * means the `publish` stage honestly reports `publish-unavailable` — the
+   * pipeline never fakes a published page.
+   */
+  publishPort?: DevSpacePublishPort
+  /** Test/DI seam for the `structural` stage; defaults to the standard O7 adapter set. */
+  structuralAdapters?: readonly StructuralAdapter[]
+  /** Test/DI seam for the `llm` stage; defaults to the standard O7 adapter set. */
+  llmAdapters?: readonly LlmAdapter[]
+}
+
+export interface DevSpaceReconcileInput {
+  readonly root: string
+  readonly record: DevSpaceRepositoryRecord
+  readonly signal: AbortSignal
+}
+
+export interface DevSpaceReconcileResult {
+  readonly snapshotId: string
 }
 export const DEFAULT_ENVIRONMENT: HandlerEnvironment = {
   getWorkspace: getWorkspaceByNameOrId,
@@ -61,6 +106,7 @@ const MAX_RECORDS = 64
 const CATALOG_FILENAME = 'dev-space-repositories.json'
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/
 const DEV_REPO_ID = /^devrepo_[a-f0-9]{64}$/
+const ARTIFACT_ID = /^artifact_[a-f0-9]{64}$/
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/
 const PROVIDER = 'github' as const
 
@@ -140,7 +186,7 @@ function githubUrl(raw: unknown): string {
   return `https://github.com/${segments[0]}/${repo}.git`
 }
 function localFolderPath(raw: unknown): string {
-  if (typeof raw !== 'string' || raw.length === 0 || raw.length > 4096 || /[\x00-\x1f]/.test(raw) || !isAbsolute(raw)) invalid('invalid-local-path')
+  if (typeof raw !== 'string' || raw.length === 0 || raw.length > 4096 || /\p{Cc}/u.test(raw) || !isAbsolute(raw)) invalid('invalid-local-path')
   return resolve(raw)
 }
 function parseSource(raw: unknown): { kind: 'git-url'; url: string } | { kind: 'local-folder'; path: string } {
@@ -211,13 +257,28 @@ function createRecord(input: {
   }
 }
 
-/** Catalog records are frozen contracts; updates always produce a new record. */
+/** Catalog records are frozen contracts; updates always produce a new record without the stored error. */
 function withoutError(record: DevSpaceRepositoryRecord): DevSpaceRepositoryRecord {
-  const { lastError: _lastError, ...rest } = record
-  return rest
+  const next: DevSpaceRepositoryRecord = { ...record }
+  Reflect.deleteProperty(next, 'lastError')
+  return next
 }
 function replaceRecord(catalog: DevSpaceCatalogFile, record: DevSpaceRepositoryRecord): void {
   catalog.repositories = catalog.repositories.map(entry => (entry.id === record.id ? record : entry))
+}
+
+/** Secret-free projection of one manifest entry; staleness is folded in by the caller. */
+function artifactSummary(entry: DevSpaceManifestEntry, stale: boolean): DevSpaceArtifactSummary {
+  return {
+    id: entry.id,
+    kind: entry.kind,
+    path: entry.path,
+    format: entry.format,
+    producedBy: { providerId: entry.producedBy.providerId, version: entry.producedBy.version },
+    ...(entry.sourceRevision !== undefined ? { sourceRevision: entry.sourceRevision } : {}),
+    createdAt: entry.createdAt,
+    stale,
+  }
 }
 
 export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
@@ -295,6 +356,63 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
   function pushChanged(clientId: string, repositoryId: string, status: DevSpaceRepositoryStatus): void {
     pushTyped(server, RPC_CHANNELS.devSpace.CHANGED, { to: 'client', clientId }, { repositoryId, status })
   }
+
+  /**
+   * `reconcile` (§6.1): bind the working copy and resolve a snapshot, reusing the
+   * catalog's recorded snapshot when it still loads so a rerun over the same state
+   * yields the same `snapshot.id` (idempotency). A stub may be injected for tests.
+   */
+  async function reconcileSnapshot(input: DevSpaceReconcileInput): Promise<string> {
+    if (environment.reconcile) return (await environment.reconcile(input)).snapshotId
+    const { root, record, signal } = input
+    const workingDirectory = record.origin.kind === 'git-url'
+      ? gitUrlDestination(root, record.projectSlug, record.origin.url)
+      : record.origin.path
+    const project = await loadProjectConfigFor(root, record)
+    const scope: RepositoryScope = { workspaceId: record.workspaceId, projectId: project.id }
+    const binding = await bindWorkingCopy(scope, workingDirectory, signal)
+    const store = join(projectFolderPath(root, record.projectSlug), 'code-intelligence', binding.id, repositoryPolicyFingerprint(binding.policy))
+    await noSymlinks(root, store)
+    await saveRepositoryBinding(binding, store, scope)
+    await persistBinding(root, project, workingDirectory, binding)
+    if (record.lastSnapshotId) {
+      try {
+        const existing = await loadRepositorySnapshot(store, record.lastSnapshotId, binding, scope)
+        if (existing.repositoryId === record.repositoryId) return existing.id
+      } catch { /* recorded snapshot no longer loadable — capture a fresh one below */ }
+    }
+    const snapshot = await captureRepositorySnapshot(binding, { scope, signal })
+    await saveRepositorySnapshot(snapshot, binding, store, scope)
+    const catalog = await readCatalog(root)
+    const current = catalog.repositories.find(entry => entry.id === record.id)
+    if (current) {
+      replaceRecord(catalog, { ...current, lastSnapshotId: snapshot.id, bindingId: binding.id, updatedAt: Date.now() })
+      await writeCatalog(root, catalog)
+    }
+    return snapshot.id
+  }
+
+  // `startRun` executes `reconcile` eagerly (the run id depends on the resolved
+  // `snapshot.id`) and records it as completed; the registration keeps the stage
+  // set complete so a resumed journal that still lacks `reconcile` can run it.
+  // The three downstream stages (02-SPEC-foundations §6.1) register here too, so
+  // a run resolves every stage from the start: `structural`/`llm` take their
+  // default O7 adapter sets; `publish` takes the host's window-free port, or —
+  // when the host composed none — honestly reports `publish-unavailable`.
+  registerDevSpaceStage('reconcile', async context => ({
+    snapshotId: await reconcileSnapshot({ root: context.root, record: context.record, signal: context.signal }),
+  }))
+  registerDevSpaceStructuralStage(environment.structuralAdapters)
+  registerDevSpaceLlmStage(environment.llmAdapters)
+  registerDevSpacePublishStage(environment.publishPort)
+
+  server.onShutdown?.(() => { abortAllDevSpaceRuns() })
+
+  // Publish the read/search surface the devspace.* session tools consume (spec 02 §9),
+  // mirroring how registerKnowledgeHandlers publishes its KnowledgeToolRuntime.
+  // `propose` is intentionally absent: no approve/apply path ships in this slice,
+  // so the seam answers CAPABILITY_DISABLED instead of faking a proposal.
+  registerDevSpaceToolRuntime(createDevSpaceToolRuntime())
 
   operation(RPC_CHANNELS.devSpace.LIST_REPOSITORIES, [], async (_context, _input, _signal, root): Promise<DevSpaceRepositoryCatalog> => {
     const catalog = await readCatalog(root)
@@ -453,20 +571,104 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
     const slugs = input.projectSlug !== undefined
       ? (typeof input.projectSlug === 'string' && SLUG.test(input.projectSlug) ? [input.projectSlug] : invalid('invalid-project-slug'))
       : [...new Set(catalog.repositories.map(record => record.projectSlug))]
-    const runs: unknown[] = []
-    for (const slug of slugs.slice(0, MAX_RECORDS)) {
-      const directory = join(projectFolderPath(root, slug), 'dev-space', 'runs')
-      let names: string[]
-      try { names = await readdir(directory) } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue
-        throw error
-      }
-      for (const name of names.filter(entry => entry.endsWith('.json')).slice(0, MAX_RECORDS)) {
-        try { runs.push(JSON.parse(await readFile(join(directory, name), 'utf8'))) } catch { /* skip corrupt run journal */ }
-      }
-    }
-    return { runs }
+    return { runs: await listDevSpaceRuns(root, slugs.slice(0, MAX_RECORDS), MAX_RECORDS) }
   })
+
+  // Artifact reads project the manifest (§7.3) without secrets: relative paths,
+  // provenance and a freshness flag only. An absent manifest is an empty list —
+  // the surface shows «запустите анализ», never an error.
+  operation(RPC_CHANNELS.devSpace.LIST_ARTIFACTS, ['repositoryId', 'projectSlug'], async (_context, input, _signal, root): Promise<DevSpaceListArtifactsResult> => {
+    const catalog = await readCatalog(root)
+    let record: DevSpaceRepositoryRecord | undefined
+    let slug: string
+    if (input.repositoryId !== undefined) {
+      record = findRecord(catalog, input.repositoryId)
+      slug = record.projectSlug
+    } else if (typeof input.projectSlug === 'string' && SLUG.test(input.projectSlug)) {
+      slug = input.projectSlug
+      record = catalog.repositories.find(entry => entry.projectSlug === slug)
+    } else invalid('invalid-project-slug')
+    const manifest = await readDevSpaceManifest(root, slug)
+    // Only a known catalog record establishes a freshness baseline; unknown slugs
+    // are not flagged stale (there is nothing to compare against).
+    const stale = manifest !== null && record !== undefined && record.lastSnapshotId !== manifest.snapshotId
+    return {
+      ...(record ? { repositoryId: record.repositoryId } : {}),
+      projectSlug: slug,
+      ...(manifest ? { snapshotId: manifest.snapshotId, runId: manifest.runId } : {}),
+      stale,
+      artifacts: manifest ? manifest.entries.map(entry => artifactSummary(entry, stale)) : [],
+    }
+  })
+
+  operation(RPC_CHANNELS.devSpace.READ_ARTIFACT, ['projectSlug', 'artifactId'], async (_context, input, _signal, root): Promise<DevSpaceReadArtifactResult> => {
+    if (typeof input.projectSlug !== 'string' || !SLUG.test(input.projectSlug)) invalid('invalid-project-slug')
+    if (typeof input.artifactId !== 'string' || !ARTIFACT_ID.test(input.artifactId)) invalid('invalid-artifact-id')
+    const manifest = await readDevSpaceManifest(root, input.projectSlug)
+    const entry = manifest?.entries.find(candidate => candidate.id === input.artifactId)
+    if (!manifest || !entry) missing('artifact-not-found')
+    let bytes: Buffer
+    try { bytes = await readDevSpaceArtifactBytes(root, input.projectSlug, entry.path) }
+    catch { missing('artifact-unreadable') }
+    const truncated = bytes.length > DEV_SPACE_READ_ARTIFACT_MAX_BYTES
+    const slice = truncated ? bytes.subarray(0, DEV_SPACE_READ_ARTIFACT_MAX_BYTES) : bytes
+    const text = DEV_SPACE_TEXT_ARTIFACT_FORMATS.includes(entry.format)
+    const record = (await readCatalog(root)).repositories.find(candidate => candidate.repositoryId === manifest.repositoryId)
+    const stale = record !== undefined && record.lastSnapshotId !== manifest.snapshotId
+    return {
+      artifact: artifactSummary(entry, stale),
+      content: text ? slice.toString('utf8') : slice.toString('base64'),
+      encoding: text ? 'utf8' : 'base64',
+      truncated,
+      byteLength: slice.length,
+      contentHash: createHash('sha256').update(slice).digest('hex'),
+    }
+  })
+
+  // Like CANCEL, this handler owns its request entry past the RPC return so the
+  // fire-and-forget pipeline keeps the same `requestId` cancellation handle.
+  server.handle(RPC_CHANNELS.devSpace.START_RUN, async (context, raw: unknown) => {
+    const input = envelope(raw, ['repositoryId'])
+    assertWindow(context, input.workspaceId as string)
+    const key = JSON.stringify([context.clientId, input.requestId ?? randomUUID()])
+    if (requests.has(key)) invalid('duplicate-request-id')
+    if ([...requests.values()].filter(request => request.clientId === context.clientId).length >= MAX_REQUESTS_PER_CLIENT) invalid('request-limit')
+    const controller = new AbortController()
+    requests.set(key, { clientId: context.clientId, workspaceId: input.workspaceId as string, controller })
+    let detached = false
+    try {
+      const root = await workspaceRoot(context, input.workspaceId as string, controller.signal)
+      const catalog = await readCatalog(root)
+      const record = findRecord(catalog, input.repositoryId)
+      // Run id is idempotent per (repositoryId, snapshotId, planHash): reconcile the
+      // snapshot first so a rerun over the same state hits the same journal entry.
+      const snapshotId = await reconcileSnapshot({ root, record, signal: controller.signal })
+      const runId = devSpaceRunId(record.repositoryId, snapshotId, devSpacePlanHash(DEV_SPACE_RUN_STAGES))
+      const existing = await readDevSpaceRun(root, record.projectSlug, runId)
+      if (existing && (existing.status === 'succeeded' || existing.status === 'running' || existing.status === 'queued')) return existing
+      const run: DevSpaceRun = existing ?? {
+        schemaVersion: 1, id: runId, repositoryId: record.repositoryId, snapshotId, stages: DEV_SPACE_RUN_STAGES,
+        status: 'queued', progress: { stage: 'reconcile', done: 1, total: 1 }, startedAt: Date.now(),
+        completedStages: ['reconcile'], artifacts: [],
+      }
+      await writeDevSpaceRun(root, record.projectSlug, run)
+      await appendAudit(root, record.projectSlug, { event: 'run', repositoryId: record.repositoryId, runId, resume: existing !== null })
+      detached = true
+      registerDevSpaceActiveRun(runId, controller)
+      void runDevSpacePipeline({ run, record, root, clientId: context.clientId, signal: controller.signal,
+        emit: progress => pushTyped(server, RPC_CHANNELS.devSpace.RUN_PROGRESS, { to: 'client', clientId: context.clientId }, progress),
+        audit: event => { void appendAudit(root, record.projectSlug, event) },
+      }).then(finished => appendAudit(root, record.projectSlug,
+        { event: 'finish', repositoryId: record.repositoryId, runId, status: finished.status }),
+      ).catch(() => undefined).finally(() => {
+        unregisterDevSpaceActiveRun(runId)
+        requests.delete(key)
+      })
+      return run
+    } finally {
+      if (!detached) requests.delete(key)
+    }
+  }, { access: 'localElectron' })
 
   operation(RPC_CHANNELS.devSpace.CAPABILITIES, [], async () => {
     const git = await new Promise<boolean>(resolve => {

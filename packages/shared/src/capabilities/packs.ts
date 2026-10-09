@@ -1,11 +1,12 @@
 /**
  * Capability pack inventory (Rox issue 24).
  *
- * Curated tools grouped into installable packs. Pins are declared checksums;
- * nothing is globally installed or auto-enabled. High-risk tools stay available
- * until the user explicitly allows them.
+ * Curated tools grouped into installable packs. A `gitRef` is the verified
+ * upstream commit when one is authoritative, otherwise null; pins are never
+ * synthesized from tool metadata. Nothing is globally installed or
+ * auto-enabled. High-risk tools stay available until the user explicitly allows
+ * them.
  */
-import { createHash } from 'node:crypto'
 
 export const CAPABILITY_PACK_IDS = [
   'code-intelligence',
@@ -26,10 +27,13 @@ export type CapabilityTool = {
   packId: CapabilityPackId
   license: string
   version: string
-  /** 40-hex git pin compatible with marketplace `source.ref`. */
-  gitRef: string
-  /** 64-hex content checksum. */
-  checksum: string
+  /**
+   * 40-hex upstream commit compatible with marketplace `source.ref`, or null
+   * when the tool is pinned by a package version instead of a verified commit.
+   */
+  gitRef: string | null
+  /** 64-hex verified content checksum, or null when no digest was published. */
+  checksum: string | null
   sourceRepo: string
   highRisk: boolean
   default: 'available'
@@ -45,14 +49,6 @@ export type CapabilityPack = {
   toolIds: readonly string[]
 }
 
-function gitRef(id: string, version: string): string {
-  return createHash('sha1').update(`${id}@${version}`).digest('hex')
-}
-
-function checksum(id: string, version: string): string {
-  return createHash('sha256').update(`${id}@${version}`).digest('hex')
-}
-
 function tool(
   id: string,
   title: string,
@@ -61,6 +57,10 @@ function tool(
   version: string,
   opts: {
     sourceRepo: string
+    /** Verified upstream 40-hex commit; omit unless the audit fixed one. */
+    gitRef?: string
+    /** Verified 64-hex artifact checksum; omit unless upstream publishes one. */
+    checksum?: string
     highRisk?: boolean
     sizeHintKb: number
     expectedOutput: string
@@ -75,8 +75,8 @@ function tool(
     packId,
     license,
     version,
-    gitRef: gitRef(id, version),
-    checksum: checksum(id, version),
+    gitRef: opts.gitRef ?? null,
+    checksum: opts.checksum ?? null,
     sourceRepo: opts.sourceRepo,
     highRisk: opts.highRisk ?? false,
     default: 'available',
@@ -89,53 +89,57 @@ function tool(
 }
 
 export const CAPABILITY_TOOLS: readonly CapabilityTool[] = [
-  tool('codewiki', 'CodeWiki', 'code-intelligence', 'MIT', '0.1.0', {
-    sourceRepo: 'example/codewiki',
+  tool('openwiki', 'OpenWiki', 'code-intelligence', 'MIT', '0.7.1', {
+    sourceRepo: 'langchain-ai/openwiki',
+    gitRef: '0db6dcf0ca16e81c93ff1125312be0ad6f70df6a',
     sizeHintKb: 420,
-    expectedOutput: 'Wiki pages for the local repository.',
+    expectedOutput: 'Repository wiki pages (OKF markdown) with evidence links.',
     whenToActivate: 'Repository exploration when the user needs a map of modules.',
     permission: 'none',
     unusualUse: 'Do not scrape private remotes without an explicit ask.',
   }),
-  tool('deepwiki', 'DeepWiki', 'code-intelligence', 'MIT', '0.1.0', {
-    sourceRepo: 'example/deepwiki',
-    sizeHintKb: 380,
-    expectedOutput: 'Deep wiki with call-graph notes.',
-    whenToActivate: 'When CodeWiki is too shallow for the current question.',
-    permission: 'none',
-    unusualUse: 'Do not upload the tree to a hosted wiki.',
-  }),
-  tool('understand-anything', 'Understand Anything', 'code-intelligence', 'Apache-2.0', '0.1.0', {
-    sourceRepo: 'example/understand-anything',
+  tool('understand-anything', 'Understand Anything', 'code-intelligence', 'MIT', '1d7418b8', {
+    sourceRepo: 'Egonex-AI/Understand-Anything',
+    gitRef: '1d7418b8abfa543744ae029e63a482aee03f9022',
     sizeHintKb: 510,
-    expectedOutput: 'Plain-language explanation of a symbol or file.',
+    expectedOutput: 'Interactive knowledge graph and learning tour for a symbol or file.',
     whenToActivate: 'User asks what a file or symbol does.',
     permission: 'none',
     unusualUse: 'Skip generated vendor trees.',
   }),
-  tool('codegraph', 'CodeGraph', 'code-intelligence', 'MIT', '0.1.0', {
-    sourceRepo: 'example/codegraph',
+  tool('codegraph', 'CodeGraphContext', 'code-intelligence', 'MIT', '0.6.13', {
+    sourceRepo: 'CodeGraphContext/CodeGraphContext',
     sizeHintKb: 640,
-    expectedOutput: 'Directed graph of modules and edges.',
+    expectedOutput: 'Directed graph of modules, call chains and dependencies.',
     whenToActivate: 'Dependency or call-path questions.',
     permission: 'none',
     unusualUse: 'Do not index secrets or .env files.',
   }),
-  tool('graphify', 'Graphify', 'code-intelligence', 'MIT', '0.1.0', {
-    sourceRepo: 'example/graphify',
+  tool('archify', 'Archify', 'code-intelligence', 'MIT', '3.0.1', {
+    sourceRepo: 'tt-a1i/archify',
+    sizeHintKb: 300,
+    expectedOutput: 'Interactive HTML/SVG diagram (PNG export) from a typed IR.',
+    whenToActivate: 'Cross-package design questions.',
+    permission: 'none',
+    unusualUse: 'Do not invent services that are not in the tree.',
+  }),
+  tool('graphify', 'Graphify', 'code-intelligence', 'Apache-2.0', '0.9.82', {
+    sourceRepo: 'Graphify-Labs/graphify',
+    gitRef: '5b74d7d74911cf435c8f1636b6f96ea202cc6246',
     sizeHintKb: 220,
-    expectedOutput: 'Rendered graph from an existing CodeGraph dump.',
+    expectedOutput: 'Rendered knowledge graph from local AST parsing.',
     whenToActivate: 'User wants a picture of an already-built graph.',
     permission: 'none',
     unusualUse: 'Do not re-crawl the repo if CodeGraph output exists.',
   }),
-  tool('archify', 'Archify', 'code-intelligence', 'MIT', '0.1.0', {
-    sourceRepo: 'example/archify',
-    sizeHintKb: 300,
-    expectedOutput: 'Architecture sketch with bounded contexts.',
-    whenToActivate: 'Cross-package design questions.',
+  tool('groma', 'Groma.md', 'code-intelligence', 'MIT', '0.6.6', {
+    sourceRepo: 'MrLesk/groma.md',
+    gitRef: '9c5b6adc8e1d192198809d0566f596fe4da92d69',
+    sizeHintKb: 340,
+    expectedOutput: 'Diffable OKF markdown C4 architecture map stored in Git.',
+    whenToActivate: 'Architecture documentation that must stay diffable in Git.',
     permission: 'none',
-    unusualUse: 'Do not invent services that are not in the tree.',
+    unusualUse: 'Do not let generated maps overwrite curated architecture.',
   }),
   tool('visual-explainer', 'visual-explainer', 'code-intelligence', 'MIT', '0.1.0', {
     sourceRepo: 'example/visual-explainer',

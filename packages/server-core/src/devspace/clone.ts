@@ -87,7 +87,7 @@ export function parseCloneProgress(repositoryId: string, rawLine: string): DevSp
 }
 
 /** Temporary askpass helper: username is fixed, password is the env token. */
-async function createAskpassHelper(token: string): Promise<{ directory: string; path: string }> {
+async function createAskpassHelper(): Promise<{ directory: string; path: string }> {
   const directory = await mkdtemp(join(tmpdir(), 'rox-devspace-askpass-'))
   const path = join(directory, 'askpass.sh')
   const script = '#!/bin/sh\n'
@@ -121,7 +121,7 @@ interface RunGitOptions {
 }
 
 async function runGit(options: RunGitOptions): Promise<void> {
-  const helper = options.token ? await createAskpassHelper(options.token) : null
+  const helper = options.token ? await createAskpassHelper() : null
   const askpass = helper && options.token ? { path: helper.path, token: options.token } : null
   const onProgress = options.onProgress
   try {
