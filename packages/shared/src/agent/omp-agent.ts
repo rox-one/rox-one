@@ -226,6 +226,9 @@ export function composeOmpAppendSystemPrompt(input: {
   if (blocks?.lessonsBlock) parts.push(blocks.lessonsBlock);
   if (blocks?.memoryBlock) parts.push(blocks.memoryBlock);
   if (blocks?.sourcesBlock) parts.push(blocks.sourcesBlock);
+  // c1.5/c1.6: recall lanes + standing intents ride the same memory payload.
+  if (blocks?.recallBlock) parts.push(blocks.recallBlock);
+  if (blocks?.intentBlock) parts.push(blocks.intentBlock);
   // Dynamic cognitive profile — derived from third-party web content, so it
   // sits last (after every trusted block) and is sanitized upstream.
   if (input.cognitiveProfileBlock) parts.push(input.cognitiveProfileBlock);
