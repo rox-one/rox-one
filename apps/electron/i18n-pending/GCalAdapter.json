@@ -1,0 +1,12 @@
+{
+  "ru": {
+    "calendar.googleUnavailableHint": "{{provider}}: OAuth-клиент не настроен",
+    "calendar.googleConnectHint": "Подключить Google Календарь",
+    "calendar.googleConnectedHint": "Google Календарь подключён. Нажмите, чтобы отключить."
+  },
+  "en": {
+    "calendar.googleUnavailableHint": "{{provider}}: OAuth client is not configured",
+    "calendar.googleConnectHint": "Connect Google Calendar",
+    "calendar.googleConnectedHint": "Google Calendar is connected. Click to disconnect."
+  }
+}

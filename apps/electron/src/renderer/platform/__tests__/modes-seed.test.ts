@@ -8,13 +8,14 @@ describe('CORE_MODES seed', () => {
     const contributions = CORE_MODES.map((mode) => mode.contribution)
     const live = CORE_MODES.filter((mode) => isModeNavigable(mode.contribution))
     const { pinned, overflow } = listPinnedModes(contributions)
-    expect(live.map((mode) => mode.contribution.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes', 'feed', 'inbox'])
-    expect(pinned.map((mode) => mode.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes', 'feed', 'inbox'])
+    expect(live.map((mode) => mode.contribution.id)).toEqual(['home', 'chat', 'tasks', 'notes', 'feed', 'inbox'])
+    expect(pinned.map((mode) => mode.id)).toEqual(['home', 'chat', 'tasks', 'notes', 'feed', 'inbox'])
     expect(overflow.map((mode) => mode.id)).toEqual([])
+    // W3.2: `meetings` is no longer a separate mode — Встречи live in the
+    // `calendar` unified surface.
     expect(CORE_MODES.map((mode) => mode.contribution.id)).toEqual([
       'home',
       'chat',
-      'meetings',
       'tasks',
       'notes',
       'feed',
@@ -43,11 +44,13 @@ describe('mode-screen flags (workbench.mode.<id>.v1)', () => {
     expect(off.find((mode) => mode.id === 'chat')?.rootRoute).toBe(on.find((mode) => mode.id === 'chat')?.rootRoute)
   })
 
-  it('keeps Встречи navigable while its flag is on and disables it when off', () => {
+  it('has no separate Встречи mode: the legacy meetings flag is inert', () => {
     const on = resolveSeededModes(contributions, { meetings: true })
-    const off = resolveSeededModes(contributions, { meetings: false })
-    expect(on.find((mode) => mode.id === 'meetings')?.rootRoute).toBe('meetings')
-    expect(off.find((mode) => mode.id === 'meetings')?.rootRoute).toBeNull()
+    expect(on.some((mode) => mode.id === 'meetings')).toBe(false)
+    // The flag no longer changes any mode's route.
+    expect(on.map((mode) => mode.rootRoute)).toEqual(
+      resolveSeededModes(contributions, { meetings: false }).map((mode) => mode.rootRoute),
+    )
   })
 
   it('keeps Входящие navigable while its flag is on and disables it when off', () => {
@@ -69,17 +72,18 @@ describe('mode-screen flags (workbench.mode.<id>.v1)', () => {
     expect(seeded?.contribution.requiredCapabilities).toBeUndefined()
   })
 
-  it('maps ⌘/Ctrl 1…7 to the pill order', () => {
+  it('maps ⌘/Ctrl 1…6 to the pill order', () => {
     expect(modeForSlot(contributions, 1)?.id).toBe('home')
-    expect(modeForSlot(contributions, 4)?.id).toBe('tasks')
-    expect(modeForSlot(contributions, 6)?.id).toBe('feed')
-    expect(modeForSlot(contributions, 7)?.id).toBe('inbox')
-    expect(modeForSlot(contributions, 8)).toBeNull()
+    expect(modeForSlot(contributions, 3)?.id).toBe('tasks')
+    expect(modeForSlot(contributions, 5)?.id).toBe('feed')
+    expect(modeForSlot(contributions, 6)?.id).toBe('inbox')
+    expect(modeForSlot(contributions, 7)).toBeNull()
   })
-  it('keeps all seven native routes available with fresh default flags', () => {
+  it('keeps all six native routes available with fresh default flags', () => {
     const modes = resolveSeededModes(CORE_MODES.map(seed => seed.contribution), {})
-    expect(modes.map(mode => mode.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes', 'feed', 'inbox'])
-    for (let slot = 1; slot <= 7; slot++) expect(modeForSlot(modes, slot)?.rootRoute).toBeTruthy()
+    expect(modes.map(mode => mode.id)).toEqual(['home', 'chat', 'tasks', 'notes', 'feed', 'inbox'])
+    for (let slot = 1; slot <= 6; slot++) expect(modeForSlot(modes, slot)?.rootRoute).toBeTruthy()
+    expect(modeForSlot(modes, 7)).toBeNull()
   })
 
 })

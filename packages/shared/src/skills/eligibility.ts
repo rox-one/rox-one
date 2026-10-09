@@ -14,11 +14,13 @@
  *
  * The report is the single source of truth for three consumers: the
  * `<available_skills>` prompt block, the `skills_search`/`skills_read` host
- * tools, and the `skills:getEligibility` RPC handler.
+ * tools, and the `skills:getEligibility` RPC handler. Every eligible entry is
+ * realpath-confined to the directory it was discovered under, so anything the
+ * block advertises, the tool runtime can read — advertised implies readable.
  */
 
 import { stat } from 'node:fs/promises';
-import { isAbsolute } from 'node:path';
+import { dirname, isAbsolute } from 'node:path';
 import { whichTool } from '../toolchain/exec.ts';
 import { getCredentialManager } from '../credentials/manager.ts';
 import { loadStoredConfig } from '../config/storage.ts';
@@ -27,10 +29,11 @@ import {
   APP_MANAGED_SKILLS_DIR,
   getDisabledBundledSkillSlugsFromDisk,
   getSkillRootPlan,
-  loadAllSkills,
+  loadAllSkillsWithTierScans,
   loadSkillDetails,
   loadSkillFromDir,
   loadSkillsFromDir,
+  type CraftTierScans,
 } from './storage.ts';
 import type { LoadedSkill } from './types.ts';
 import type { CredentialId } from '../credentials/types.ts';
@@ -356,12 +359,14 @@ export interface BuildSkillEligibilityInput {
 /**
  * Build the report for a workspace. The catalog comes from ONE discovery path:
  * `loadSkillDetails` for an allowlisted/scoped request (O(allowlist)), otherwise
- * the merged `loadAllSkills` output. The full-scan catalog keeps shadowed OMP
- * variants OUT (`includeShadowedOmp` is never set) so its cache key is the same
- * one the agent's mention resolution uses — a cold spawn walks the store once.
- * Collisions use the per-tier root walk on a full scan and a slug-scoped read
- * on a scoped request; hidden disabled packs are re-surfaced from the canonical
- * app-managed tier in both cases.
+ * the merged `loadAllSkillsWithTierScans` output. The full-scan catalog keeps
+ * shadowed OMP variants OUT (`includeShadowedOmp` is never set) so its cache key
+ * is the same one the agent's mention resolution uses — a cold spawn walks the
+ * store once. Collisions reuse that SAME walk's per-tier scans on a full scan
+ * (only the cheap OMP tiers are read fresh) and a slug-scoped read on a scoped
+ * request; hidden disabled packs are re-surfaced from the canonical app-managed
+ * tier in both cases. Every eligible entry is realpath-confined to its
+ * discovered directory, so the report only carries readable skills.
  */
 export async function buildSkillEligibilityReport(input: BuildSkillEligibilityInput): Promise<SkillEligibilityReport> {
   const disabledPackSlugs = input.disabledPackSlugs ?? [...getDisabledBundledSkillSlugsFromDisk()];
@@ -372,8 +377,11 @@ export async function buildSkillEligibilityReport(input: BuildSkillEligibilityIn
   const wantCollisions = input.includeCollisions !== false;
 
   let catalog: LoadedSkill[];
+  let tierScans: CraftTierScans | null = null;
   if (fullScan) {
-    catalog = loadAllSkills(input.workspaceRoot, input.projectRoot, { includeOmp: input.includeOmp ?? true });
+    const walk = loadAllSkillsWithTierScans(input.workspaceRoot, input.projectRoot, { includeOmp: input.includeOmp ?? true });
+    catalog = walk.skills;
+    tierScans = walk.scans;
   } else {
     const resolved = await Promise.all(
       scopeSlugs.map(slug => loadSkillDetails(input.workspaceRoot, slug, input.projectRoot)),
@@ -384,10 +392,16 @@ export async function buildSkillEligibilityReport(input: BuildSkillEligibilityIn
   // The per-tier root plan backs the collision report; a full scan only needs
   // it when collisions were requested (its app-managed tier also feeds the
   // disabled-pack re-surface below, so skipping it matches "no collision walk").
+  // The craft tiers come from the SAME walk that produced `catalog`; only the
+  // cheap OMP tiers are read fresh, so a collision-enabled pass walks the store
+  // exactly once.
+  const tierByLabel: Record<string, readonly LoadedSkill[]> = tierScans
+    ? { global: tierScans.global, 'app-managed': tierScans.appManaged, workspace: tierScans.workspace, project: tierScans.project }
+    : {};
   const planScans: SkillRootScan[] | null = fullScan && wantCollisions
     ? getSkillRootPlan(input.workspaceRoot, input.projectRoot).map(entry => ({
         label: entry.label,
-        skills: loadSkillsFromDir(entry.root, entry.source),
+        skills: tierByLabel[entry.label] ?? loadSkillsFromDir(entry.root, entry.source),
         excludeAppManaged: entry.excludeAppManaged,
       }))
     : null;
@@ -411,7 +425,7 @@ export async function buildSkillEligibilityReport(input: BuildSkillEligibilityIn
   }
 
   const report = await evaluateSkillEligibility({
-    skills: catalog,
+    skills: catalog.filter(skill => isInsideSkillStore(skill.path, dirname(skill.path))),
     allowedSlugs: input.allowedSlugs,
     disabledPackSlugs,
     appManagedSkill: skill => skill.source === 'global' && isInsideSkillStore(skill.path, APP_MANAGED_SKILLS_DIR),

@@ -16,7 +16,6 @@
  * connection is established.
  */
 
-import '@sentry/electron/preload'
 import { contextBridge, ipcRenderer, shell, webUtils } from 'electron'
 import { STARTUP_PERF_MARK_CHANNEL, isStartupPerfEnabled, isValidRendererMarkName } from '../shared/startup-perf'
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
@@ -28,6 +27,11 @@ import { CHANNEL_MAP } from '../transport/channel-map'
 import { createCallbackServer } from '@rox/shared/auth/callback-server'
 import { createNativeReplicaBridge } from './native-replica'
 import { CHATGPT_OAUTH_CONFIG } from '@rox/shared/auth/chatgpt-oauth-config'
+import {
+  CALENDAR_OAUTH_IPC,
+  type CalendarOAuthCallback,
+  type CalendarOAuthSession,
+} from '../shared/calendar-oauth'
 import {
   isOAuthFlowCancelledError,
   OAuthFlowTimedOutError,
@@ -45,7 +49,7 @@ import {
 import type { ConfirmDialogSpec, FileDialogSpec, BrowserCapabilityRequest } from '@rox/server-core/transport'
 import type { RpcClient } from '@rox/server-core/transport'
 import type { RemoteServerConfig } from '@rox/core/types'
-import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
+import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus, TelemetryBootstrapConfig } from '../shared/types'
 import type { EntitiesLinksEffectiveState } from '@rox/shared/feature-flags'
 import { isSshBacked } from '../shared/ssh'
 import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-local'
@@ -483,6 +487,64 @@ client.onConnectionStateChanged((state) => {
   }
 }
 
+// ── connectGoogleCalendar ────────────────────────────────────────────────
+// Google Calendar OAuth: the Electron main process owns the popup + loopback
+// callback server; the server half (prepare/exchange) is the existing
+// calendar:googleConnect channel. No token crosses the IPC boundary — only the
+// authorization code does.
+api.connectGoogleCalendar = async (): Promise<{ success: boolean; error?: string; email?: string }> => {
+  let handle: string | undefined
+  try {
+    const session = await ipcRenderer.invoke(CALENDAR_OAUTH_IPC.BEGIN) as CalendarOAuthSession
+    handle = session.handle
+    const prepared = await client.invoke('calendar:googleConnect', { callbackUrl: session.callbackUrl }) as {
+      ok?: boolean
+      authUrl?: string
+      state?: string
+      error?: string
+    }
+    if (!prepared?.authUrl || !prepared?.state) {
+      await ipcRenderer.invoke(CALENDAR_OAUTH_IPC.CANCEL, handle)
+      return { success: false, error: prepared?.error ?? 'Google Calendar is not available' }
+    }
+
+    await ipcRenderer.invoke(CALENDAR_OAUTH_IPC.OPEN, prepared.authUrl)
+    const callback = await ipcRenderer.invoke(CALENDAR_OAUTH_IPC.AWAIT, handle) as CalendarOAuthCallback
+    handle = undefined
+
+    if (callback.query.error) {
+      return { success: false, error: callback.query.error_description || callback.query.error }
+    }
+    const code = callback.query.code
+    if (!code) return { success: false, error: 'No authorization code received' }
+
+    const result = await client.invoke('calendar:googleConnect', { code, state: prepared.state }) as {
+      ok?: boolean
+      email?: string
+      error?: string
+    }
+    return result?.ok
+      ? { success: true, email: result.email }
+      : { success: false, error: result?.error ?? 'Google Calendar connect failed' }
+  } catch (err) {
+    if (handle) void ipcRenderer.invoke(CALENDAR_OAUTH_IPC.CANCEL, handle)
+    return { success: false, error: err instanceof Error ? err.message : 'Google Calendar OAuth failed' }
+  }
+}
+
+// ── ROX Drive cloud-import OAuth loopback ────────────────────────────────
+// The Google Drive import broker reuses the same main-process loopback callback
+// server as the Calendar connector; the renderer only orchestrates begin →
+// start → open → await → complete. No token crosses this boundary.
+api.driveImportOAuthBegin = async (): Promise<CalendarOAuthSession> =>
+  ipcRenderer.invoke(CALENDAR_OAUTH_IPC.BEGIN) as Promise<CalendarOAuthSession>
+api.driveImportOAuthOpen = async (url: string): Promise<boolean> =>
+  ipcRenderer.invoke(CALENDAR_OAUTH_IPC.OPEN, url) as Promise<boolean>
+api.driveImportOAuthAwait = async (handle: string): Promise<CalendarOAuthCallback> =>
+  ipcRenderer.invoke(CALENDAR_OAUTH_IPC.AWAIT, handle) as Promise<CalendarOAuthCallback>
+api.driveImportOAuthCancel = async (handle: string): Promise<boolean> =>
+  ipcRenderer.invoke(CALENDAR_OAUTH_IPC.CANCEL, handle) as Promise<boolean>
+
 // ── startClaudeOAuth ─────────────────────────────────────────────────────
 // Override the channel-map stub: the server now returns authUrl without opening
 // the browser. We open it locally so it works in remote mode.
@@ -601,6 +663,17 @@ client.onConnectionStateChanged((state) => {
 
 // App lifecycle — direct IPC (not WS RPC) since it restarts the server itself
 ;(api as ElectronAPI).relaunchApp = () => ipcRenderer.invoke('app:relaunch')
+// Product analytics bootstrap — a synchronous snapshot of main's baked
+// endpoints + anonymous distinct_id, read once at module load.
+const telemetryBootstrapConfig = (() => {
+  try {
+    const config: unknown = ipcRenderer.sendSync('__telemetry-config')
+    return config && typeof config === 'object' ? config as TelemetryBootstrapConfig : null
+  } catch {
+    return null
+  }
+})()
+;(api as ElectronAPI).getTelemetryConfig = () => telemetryBootstrapConfig
 ;(api as ElectronAPI).getStorageVisibleRoot = () => ipcRenderer.invoke('storage:visibleRoot:get')
 ;(api as ElectronAPI).setStorageVisibleRoot = (enabled: boolean) => ipcRenderer.invoke('storage:visibleRoot:set', enabled)
 ;(api as ElectronAPI).takeStorageMigrationNotice = () => ipcRenderer.invoke('storage:migrationNotice:take')

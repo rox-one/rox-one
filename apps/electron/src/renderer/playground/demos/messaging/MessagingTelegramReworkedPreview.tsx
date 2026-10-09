@@ -70,7 +70,7 @@ const DIRECT_SESSIONS: DirectSession[] = [
 const TOPIC_BINDINGS: TopicBinding[] = [
   {
     id: 't1',
-    sessionTitle: 'GitHub Issue Triage (craft-agents-oss)',
+    sessionTitle: 'GitHub Issue Triage (rox-one)',
     topicName: 'GithubIssues',
     threadId: 16,
   },

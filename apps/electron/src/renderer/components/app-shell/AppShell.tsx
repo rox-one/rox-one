@@ -171,12 +171,13 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
@@ -660,7 +661,6 @@ function AppShellContent({
   // (PagesHome pattern); collapse the middle navigator for all five.
   const isPagesView = isPagesNavigation(navState)
   const isTasksView = isTasksNavigation(navState)
-  const isMeetingsView = isMeetingsNavigation(navState)
   const isMemoryView = isMemoryNavigation(navState)
   const isLearningView = isLearningNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
@@ -672,8 +672,11 @@ function AppShellContent({
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
     || isSurfaceNavigation(navState)
   // Unavailable addresses have no collection navigator or resize boundary.
+  // Rox History renders its own full-height panel
+  // (ClipboardHistoryPanel) with its own header; keeping the middle navigator
+  // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
@@ -2114,6 +2117,11 @@ function AppShellContent({
     handleServiceClick('memory')
   }, [handleServiceClick])
 
+  // Handler for the «Память: репозиторий» tab (`routes.view.memory('repo')`).
+  const handleMemoryRepoClick = useCallback(() => {
+    handleServiceClick('memoryRepo')
+  }, [handleServiceClick])
+
   // Handler for learning view
   const handleLearningClick = useCallback(() => {
     handleServiceClick('learning')
@@ -2541,6 +2549,11 @@ function AppShellContent({
       return t("sidebar.memory")
     }
 
+    // Rox History navigator
+    if (isClipboardHistoryNavigation(navState)) {
+      return t("clipboard.title")
+    }
+
     // Learning navigator
     if (isLearningNavigation(navState)) {
       return t("sidebar.learning")
@@ -2548,10 +2561,6 @@ function AppShellContent({
 
     if (isTasksNavigation(navState)) {
       return t("sidebar.tasks")
-    }
-
-    if (isMeetingsNavigation(navState)) {
-      return t("sidebar.meetings")
     }
 
     if (isHomeNavigation(navState)) {
@@ -2833,8 +2842,16 @@ function AppShellContent({
       id: "nav:memory",
       title: t(APP_NAV_DESTINATIONS_BY_ID.memory.labelKey),
       icon: APP_NAV_DESTINATIONS_BY_ID.memory.icon,
-      variant: isMemoryNavigation(navState) ? "default" : "ghost",
+      // The repository tab owns `nav:memoryRepo`; keep exactly one highlighted.
+      variant: isMemoryNavigation(navState) && navState.tab !== 'repo' ? "default" : "ghost",
       onClick: handleMemoryClick,
+    },
+    {
+      id: "nav:memoryRepo",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.memoryRepo.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.memoryRepo.icon,
+      variant: isMemoryNavigation(navState) && navState.tab === 'repo' ? "default" : "ghost",
+      onClick: handleMemoryRepoClick,
     },
     {
       id: "nav:learning",
@@ -2843,11 +2860,22 @@ function AppShellContent({
       variant: isLearningNavigation(navState) ? "default" : "ghost",
       onClick: handleLearningClick,
     },
+    // --- Rox History (clipboard history) ---
+    {
+      id: "nav:clipboardHistory",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.clipboardHistory.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.clipboardHistory.icon,
+      variant: isClipboardHistoryNavigation(navState) ? "default" : "ghost",
+      onClick: () => handleServiceClick('clipboardHistory'),
+    },
     {
       id: "nav:meetings",
-      title: t('workbench.mode.meetings'),
+      // W3.2 (Согласованность-20261009): Встречи merged into the calendar
+      // surface — the entry keeps id/link/route and opens it, active while the
+      // calendar surface shows, but is presented as «Календарь».
+      title: t('workbench.mode.calendar'),
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
-      variant: isMeetingsNavigation(navState) ? "default" : "ghost",
+      variant: isSurfaceNavigation(navState) && navState.surface === 'calendar' ? "default" : "ghost",
       onClick: handleMeetingsClick,
     },
     // --- Sources ---
@@ -2996,6 +3024,13 @@ function AppShellContent({
       icon: Home,
       variant: isHomeNavigation(navState) ? "default" : "ghost",
       onClick: () => navigate(routes.view.home()),
+    },
+    {
+      id: "nav:drive",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.drive.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.drive.icon,
+      variant: isDriveNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.drive()),
     },
     {
       id: "nav:feed",

@@ -16,7 +16,12 @@ export const personSchema = entity({
 
 export const CONTACTS_COMMAND_SCHEMAS: CommandSchemaMap = {
   'people.invite': cmd({ ...createIdShape, email: emailSchema, displayName: nameSchema.optional(), role: memberRoleSchema.default('member'), spaceIds: z.array(idSchema).max(100).optional() }),
-  'people.add_workspace_member': cmd({ principalId: principalIdSchema, role: memberRoleSchema.default('member') }),
+  'people.add_workspace_member': cmd({
+    principalId: principalIdSchema, role: memberRoleSchema.default('member'),
+    // W1-12 (#1509): R4 adds placeholders as invited members (DATA-MODEL §5.16);
+    // the reference handler records `state: 'active'` until ONB owns invites.
+    status: z.enum(['active', 'invited']).optional(),
+  }),
   'people.update_profile': cmd({
     displayName: nameSchema.optional(), title: z.string().max(200).nullable().optional(), timeZone: timeZoneSchema.optional(),
     avatarUrl: urlSchema.nullable().optional(), about: z.string().max(5000).nullable().optional(),

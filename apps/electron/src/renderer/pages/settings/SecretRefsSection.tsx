@@ -197,7 +197,7 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
                         { id: 'any', label: t('settings.runtime.secretProviderAny') },
                         { id: 'environment', label: t('settings.runtime.secretProviderEnvironment') },
                         { id: 'local-encrypted', label: t('settings.runtime.secretProviderLocal') },
-                        { id: 'infisical', label: t('settings.runtime.secretProviderInfisical') },
+                        { id: 'infisical', label: t('settings.runtime.secretProviderKeeper') },
                       ]}
                       selectedId={draft.provider || 'any'}
                       placeholder={t('settings.runtime.secretProvider')}

@@ -39,6 +39,11 @@ import { SqliteCommandStore } from '../../commands/local-store.ts'
 import { CommandStoreUnavailable, type CommandStore } from '../../commands/store.ts'
 import { createWiredCommandRegistry } from '../../commands/registry.ts'
 import { getCommandBusFlags } from '../../commands/flags.ts'
+// W1-12 (#1509)
+import { createLocalRulesWiring } from '../../rules/wiring.ts'
+import { isAgentsAutonomyEnabled } from '@rox/shared/feature-flags'
+import { agentsGovernanceChain } from '../../agents/governance-install.ts'
+import { getAgentsRuntime } from '../../agents/runtime.ts'
 import { configureReferenceRuntime, type ReferenceRuntime } from '../../work/reference/module.ts'
 import { personalTasksStore } from './personal-tasks.ts'
 
@@ -60,6 +65,8 @@ export interface CommandsHandlerRuntime {
   authorizer?: Authorizer
   /** Workspace-authority sink (host wires `WorkspaceCommandSync` when the workspace is shared). */
   workspaceSink?: (workspaceId: string) => WorkspaceCommandSink | null
+  /** Unexpected rule-engine errors (background work; never a request failure). */
+  onError?: (error: unknown) => void
   resolveTargetAuthority?: (workspaceId: string, ref: EntityRef) => ExecutionAuthority | undefined
   /** W1-06 reference-handler runtime overrides (default: workspace root, local PersonalTask store, live flags). */
   referenceRuntime?: Partial<ReferenceRuntime>
@@ -104,6 +111,22 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
   const storeFor = runtime.storeFor ?? (workspace => new SqliteCommandStore({ workspaceRoot: workspace.rootPath }))
   const routers = new Map<string, { router: CommandRouter; store: CommandStore }>()
 
+  // W1-12 (#1509): the local domain-rule consumer (`automation.rules.v1`). The
+  // wiring opens one SQLite store per workspace and subscribes only once the
+  // flag is on, so a flag-off install runs exactly as before.
+  const rules = createLocalRulesWiring({
+    bus,
+    workspaceFor,
+    dispatchFor: workspaceId => {
+      const workspace = workspaceFor(workspaceId)
+      if (!workspace) return null
+      return input => routerFor(workspace).route(input)
+    },
+    enabledWorkbenchFlags: flags,
+    isFlagEnabled: flag => flags()?.has(flag) === true,
+    ...(runtime.onError ? { onError: runtime.onError } : {}),
+  })
+
   // W1-06: reference handlers write `{workspaceRoot}/work/` and the PersonalTask v3 store on the local authority.
   const pushTasksChanged = () => pushTyped(server, RPC_CHANNELS.personalTasks.CHANGED, { to: 'all' }, { at: Date.now() })
   const taskStore = runtime.referenceRuntime?.personalTaskStore ?? (() => personalTasksStore())
@@ -133,6 +156,7 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
   })
   server.onShutdown?.(() => {
     unsubscribe()
+    rules.close()
     restoreReferenceRuntime()
     for (const { store } of routers.values()) {
       try { void store.close?.() } catch { /* best effort */ }
@@ -160,6 +184,15 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
         publish: events => { bus.publish(events) },
         ...(runtime.authorizer ? { authorizer: runtime.authorizer } : {}),
       })
+      // W1-11 (#1508): the agent governance pipeline (kill switch → audit).
+      // Inert while `agents.autonomy.v1` is off and for every non-agent command.
+      const governance = agentsGovernanceChain({
+        runtime: getAgentsRuntime(),
+        isEnabled: () => isAgentsAutonomyEnabled(flags()),
+        actionContext: pipelineCtx => (pipelineCtx.envelope.target?.kind === 'channel' ? { container: `channel:${pipelineCtx.envelope.target.id}` } : {}),
+        transport: 'ws-rpc',
+      })
+      for (const middleware of governance) local.use(middleware)
       const router = new CommandRouter({
         registry,
         local,
@@ -169,6 +202,8 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
       })
       entry = { router, store }
       routers.set(workspace.id, entry)
+      // W1-12: subscribe this workspace's rule consumer (no-op while the flag is off).
+      rules.attachWorkspace(workspace.id)
     }
     return entry.router
   }

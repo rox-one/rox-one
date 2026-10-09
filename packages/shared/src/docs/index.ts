@@ -4,17 +4,24 @@
  * Provides access to built-in documentation that Claude can reference
  * when performing configuration tasks (sources, agents, permissions, etc.).
  *
- * Docs are stored at ~/.craft-agent/docs/ and synced from bundled assets.
+ * Docs are stored in the resolved config dir (`{configDir}/docs`, see
+ * config/paths.ts) and synced from bundled assets.
  * Source content lives in apps/electron/resources/docs/*.md for easier editing.
  */
 
-import { join, sep } from 'path';
-import { homedir } from 'os';
+import { join } from 'path';
 import { existsSync, mkdirSync, writeFileSync, readdirSync, readFileSync } from 'fs';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
 import { CONFIG_DIR } from '../config/paths.ts';
-import { isVisibleRoxHomeActive } from '../config/env.ts';
+import { renderBundledDoc, roxHomeDocDisplay } from './home-display.ts';
+
+// Public API preserved for existing consumers (agent prompts, tests, CLI).
+export {
+  ROX_HOME_DOC_PLACEHOLDER,
+  renderBundledDoc,
+  roxHomeDocDisplay,
+} from './home-display.ts';
 
 const DOCS_DIR = join(CONFIG_DIR, 'docs');
 
@@ -92,10 +99,12 @@ export function getDocPath(filename: string): string {
 }
 
 // App root path reference for prompt/display text only.
-// IMPORTANT: This is intentionally a human-readable, non-instance-aware path.
+// IMPORTANT: This is intentionally a human-readable, non-instance-aware path,
+// resolved through the W1-13 display helper — the legacy hidden home while
+// `storage.visible-root.v1` is OFF, `~/rox` once the visible root is active.
 // Do NOT use APP_ROOT for real filesystem reads/writes.
 // For runtime filesystem paths, use CONFIG_DIR from config/paths.ts.
-export const APP_ROOT = '~/.craft-agent';
+export const APP_ROOT = roxHomeDocDisplay();
 
 /**
  * Documentation file references for use in error messages and tool descriptions.
@@ -123,7 +132,7 @@ export const DOC_REFS = {
   markdownPreview: `${APP_ROOT}/docs/markdown-preview.md`,
   llmTool: `${APP_ROOT}/docs/llm-tool.md`,
   browserTools: `${APP_ROOT}/docs/browser-tools.md`,
-  craftCli: `${APP_ROOT}/docs/craft-cli.md`,
+  roxCli: `${APP_ROOT}/docs/rox-cli.md`,
   docsDir: `${APP_ROOT}/docs/`,
 } as const;
 
@@ -142,40 +151,8 @@ export function listDocs(): string[] {
   return readdirSync(DOCS_DIR).filter(f => f.endsWith('.md'));
 }
 
-/**
- * Placeholder in bundled docs (apps/electron/resources/docs/*.md) for the Rox
- * home as shown to agents and users (W1-13). Rendered when the docs are
- * written to {configDir}/docs, so the text always matches the real tree.
- */
-export const ROX_HOME_DOC_PLACEHOLDER = '{{ROX_HOME}}';
-
-/** Flag-OFF display text — the legacy hidden home, exactly as before W1-13. */
-const LEGACY_ROX_HOME_DISPLAY = '~/.rox';
-
-/**
- * How docs refer to the Rox home. With `storage.visible-root.v1` OFF this is
- * always the legacy `~/.rox` text (unchanged docs). With the flag ON it is
- * the resolved config dir, `~`-abbreviated under the home dir — `~/rox`
- * after migration, or the legacy dir while the migration is deferred.
- */
-export function roxHomeDocDisplay(
-  configDir: string = CONFIG_DIR,
-  options?: { homeDir?: string; visibleRootActive?: boolean },
-): string {
-  const visibleRootActive = options?.visibleRootActive ?? isVisibleRoxHomeActive();
-  if (!visibleRootActive) return LEGACY_ROX_HOME_DISPLAY;
-  const home = options?.homeDir ?? homedir();
-  if (configDir === home) return '~';
-  if (configDir.startsWith(home + sep)) {
-    return `~/${configDir.slice(home.length + 1).split(sep).join('/')}`;
-  }
-  return configDir;
-}
-
-/** Replace every `{{ROX_HOME}}` in a bundled doc with the display path. */
-export function renderBundledDoc(content: string, roxHome: string = roxHomeDocDisplay()): string {
-  return content.split(ROX_HOME_DOC_PLACEHOLDER).join(roxHome);
-}
+// The W1-13 display helper (ROX_HOME_DOC_PLACEHOLDER / roxHomeDocDisplay /
+// renderBundledDoc) lives in ./home-display.ts and is re-exported above.
 
 /**
  * Initialize docs directory with bundled documentation.

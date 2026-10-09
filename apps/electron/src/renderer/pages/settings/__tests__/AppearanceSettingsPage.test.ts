@@ -47,14 +47,23 @@ describe('AppearanceSettingsPage zoom default', () => {
     expect(source).toContain('<ZenShellSettings />')
   })
 
-  it('does not throw when playground IPC is missing preset themes or tool icons', () => {
-    expect(source).toContain('window.electronAPI.loadPresetThemes?.()')
+  it('does not throw when playground IPC is missing tool icons', () => {
     expect(source).toContain('window.electronAPI.getToolIconMappings?.()')
   })
 
-  it('keeps the current color theme in the menu when the preset catalog is empty', () => {
-    expect(source).toContain('options.push({ value: colorTheme, label: colorTheme })')
-    expect(source).toContain('!options.some(option => option.value === colorTheme)')
+  it('renders no theme or mode picker: the Rox theme is fixed', () => {
+    expect(source).not.toContain('settings.appearance.colorTheme')
+    expect(source).not.toContain('settings.appearance.mode')
+    expect(source).not.toContain('setColorTheme')
+    expect(source).not.toContain('settings.appearance.workspaceThemes')
+    expect(source).not.toContain('loadPresetThemes')
+  })
+
+  it('keeps accessibility and scale controls after removing theme choice', () => {
+    expect(source).toContain('settings.appearance.contrast')
+    expect(source).toContain('setContrast')
+    expect(source).toContain('settings.appearance.defaultZoomLevel')
+    expect(source).toContain('settings.appearance.fontUi')
   })
 })
 

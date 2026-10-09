@@ -30,6 +30,24 @@ import { handleVariants, pickHandle } from './handle'
 
 export type MailboxState = 'PENDING' | 'PROVISIONING' | 'PROVISIONED' | 'READY' | 'NEEDS_REPAIR'
 
+/** Per-user mailbox storage quota applied at provisioning time (product default: 1 GiB). */
+export const DEFAULT_MAILBOX_QUOTA_BYTES = 1024 ** 3
+/** Accepted range for a mailbox quota: 256 MiB … 1 TiB. */
+export const MIN_MAILBOX_QUOTA_BYTES = 256 * 1024 ** 2
+export const MAX_MAILBOX_QUOTA_BYTES = 1024 ** 4
+
+/** Validate a caller-supplied quota, applying the default when omitted. */
+export function resolveMailboxQuotaBytes(value: number | undefined): number {
+  if (value === undefined) return DEFAULT_MAILBOX_QUOTA_BYTES
+  if (!Number.isInteger(value) || value < MIN_MAILBOX_QUOTA_BYTES || value > MAX_MAILBOX_QUOTA_BYTES) {
+    throw new ProvisionError(
+      `Mailbox quota must be an integer between ${MIN_MAILBOX_QUOTA_BYTES} and ${MAX_MAILBOX_QUOTA_BYTES} bytes (got ${JSON.stringify(value)})`,
+      'invalid-quota',
+    )
+  }
+  return value
+}
+
 export interface MailboxRecord {
   address: string
   handle: string
@@ -66,6 +84,8 @@ export interface ProvisionInput {
   admin: () => Promise<AdminCredentials>
   secrets: MailboxSecretStore
   existing?: MailboxRecord | null
+  /** Mailbox storage limit in bytes; defaults to {@link DEFAULT_MAILBOX_QUOTA_BYTES}. */
+  quotaBytes?: number
   fetch?: FetchLike
   now?: () => number
   log?: (message: string) => void
@@ -74,7 +94,7 @@ export interface ProvisionInput {
 export class ProvisionError extends Error {
   constructor(
     message: string,
-    readonly code: 'admin-unavailable' | 'no-domain' | 'handle-exhausted' | 'verify-failed' | 'unauthorized' | 'handle-taken' | 'server',
+    readonly code: 'admin-unavailable' | 'no-domain' | 'handle-exhausted' | 'verify-failed' | 'unauthorized' | 'handle-taken' | 'server' | 'invalid-quota',
   ) {
     super(message)
     this.name = 'ProvisionError'
@@ -92,6 +112,8 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
   const now = input.now ?? Date.now
   const log = input.log ?? (() => {})
   const marker = ownerMarker(input.ownerUuid)
+  // Validated up front so a bad quota never leaves a half-provisioned mailbox.
+  const quotaBytes = resolveMailboxQuotaBytes(input.quotaBytes)
 
   // Fast path: we already hold a working device credential.
   if (input.existing && input.existing.ownerUuid === input.ownerUuid) {
@@ -124,7 +146,7 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
       const password = generateMailboxPassword()
       let accountId: string
       try {
-        accountId = await admin.createAccount({ name: handle, domainId, description: marker, password })
+        accountId = await admin.createAccount({ name: handle, domainId, description: marker, password, quotaBytes })
       } catch (error) {
         const raced = await admin.findAccount(handle, domainId).catch(() => null)
         if (!raced) throw error
@@ -156,6 +178,8 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
     // discarded password and mint a fresh device credential.
     const password = generateMailboxPassword()
     await admin.resetPassword(chosen.accountId, password)
+    // Set (or refresh) the quota idempotently for a mailbox we adopted.
+    await admin.setQuota(chosen.accountId, quotaBytes)
     const app = await createAppPassword(input.baseUrl, address, password, input.deviceLabel, { fetch: input.fetch })
     await input.secrets.put(address, app.secret)
   }

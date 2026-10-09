@@ -38,6 +38,13 @@ export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiag
   if (!existsSync(main)) throw new Error('Build the product Electron entrypoint first.')
   const require = createRequire(import.meta.url)
   const executablePath: string = require('electron')
+  // Playwright only injects its Electron loader when it resolves the binary
+  // itself; an explicit `executablePath` suppresses it. Without the loader the
+  // app never receives Playwright's chromium switches nor the deferred
+  // `app.whenReady()` handshake, so the renderer stays blank and the launch
+  // blocks past the deadline. Re-inject the exact loader Playwright would use.
+  const electronLoader = join(dirname(require.resolve('playwright-core/package.json')), 'lib/server/electron/loader.js')
+  if (!existsSync(electronLoader)) throw new Error('Playwright Electron loader is required for an instrumented native launch.')
   const profile = resolve(repository, 'test-results/product-tour/native/profiles', String(process.pid))
   await rm(profile, { recursive: true, force: true })
   await mkdir(profile, { recursive: true })
@@ -61,7 +68,7 @@ export async function bootNativeProduct(report?: (diagnostics: NativeStartupDiag
     NODE_ENV: 'test',
   })
   let app: ElectronApplication
-  try { app = await _electron.launch({ executablePath, args: [main], cwd: repository, env }) }
+  try { app = await _electron.launch({ executablePath, args: ['-r', electronLoader, main], cwd: repository, env }) }
   catch (error) { await rm(profile, { recursive: true, force: true }); throw error }
   const page = await observeFirstNativeWindow(app, profile,
     resolve(repository, 'test-results/product-tour/native', `startup-${process.pid}.json`))

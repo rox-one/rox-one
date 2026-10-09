@@ -3,11 +3,12 @@
  * mark-read over the `user:{id}` topic, the mark-read route and the email
  * batching worker.
  *
- * The "reference handler" of the exit criterion is the W1-06 goal handler.
- * Without `feat/w1-06-workitem-v3-schemas` in this base, the suite binds a
- * minimal goal reference handler that emits the same `goals.*` domain events
- * with the same ids (`championId`, `reviewerId`, `subscriberIds`,
- * `check_in.notify`); the assertions do not change when the real handler lands.
+ * The "reference handler" of the exit criterion is the W1-06 goal handler. The
+ * suite builds its registry without the W1-06 domains modules (see
+ * `createHarnessRegistry`) and binds a minimal goal reference handler that emits
+ * the same `goals.*` domain events with the same ids (`championId`, `reviewerId`,
+ * `subscriberIds`, `check_in.notify`); the assertions do not change when the real
+ * handler lands.
  */
 import { afterEach, describe, expect, test } from 'bun:test'
 import { randomUUID } from 'node:crypto'
@@ -15,8 +16,8 @@ import { z } from 'zod'
 import type { DomainEvent, RealtimeEventFrame } from '../../../packages/core/src/events/index.ts'
 import { InMemoryCommandStore } from '../../../packages/server-core/src/commands/store.ts'
 import { InProcessEventBus } from '../../../packages/server-core/src/commands/event-bus.ts'
-import { createWiredCommandRegistry, type WiredCommandRegistryOptions } from '../../../packages/server-core/src/commands/registry.ts'
-import type { CommandRegistry } from '../../../packages/core/src/commands/index.ts'
+import { COMMAND_MODULES } from '../../../packages/server-core/src/commands/registry.ts'
+import { CommandRegistry, registerCommandCatalogue } from '../../../packages/core/src/commands/index.ts'
 import { setNotifyCommandHost } from '../../../packages/core/src/notify/index.ts'
 import type { CommandReceipt } from '../../../packages/core/src/commands/index.ts'
 import { commandReceiptSchema } from '../../../packages/shared/src/commands/schemas.ts'
@@ -103,6 +104,25 @@ function bindReferenceHandlers(registry: CommandRegistry, calls: { n: number }):
   })
 }
 
+/**
+ * The catalogue with only the modules this harness needs. W1-06 (#1503) added
+ * `DOMAIN_SCHEMA_COMMAND_MODULE` and `REFERENCE_COMMAND_MODULE` to
+ * `COMMAND_MODULES`; this harness predates both — it uses the pre-W1-06 payload
+ * shapes and installs its own minimal goal/comment handlers — so wiring them
+ * would double-bind those handlers (the reference module claims every command
+ * without one) and the real domain schemas would reject the fixtures. The
+ * system, agents and notify (the module under test) modules stay wired.
+ */
+function createHarnessRegistry(isFlagEnabled: (flag: string) => boolean): CommandRegistry {
+  const registry = new CommandRegistry({ isFlagEnabled })
+  registerCommandCatalogue(registry)
+  for (const module of COMMAND_MODULES) {
+    if (module.name === 'domain-schemas' || module.name === 'reference-handlers') continue
+    module.bind(registry)
+  }
+  return registry
+}
+
 interface NotifyFixture {
   workspaceId: string
   registry: CommandRegistry
@@ -139,8 +159,7 @@ async function setup(options: { authorizer?: WorkspaceAuthorizer; notify?: boole
   // The host must exist before the registry is built: that is what binds `notifications.*`.
   if (options.module !== false) setNotifyCommandHost(notify.host)
   const flags = new Set(['goals.v1', 'goals.checkins.v1'])
-  const registryOptions: WiredCommandRegistryOptions = { isFlagEnabled: flag => flags.has(flag) }
-  const registry = createWiredCommandRegistry(registryOptions)
+  const registry = createHarnessRegistry(flag => flags.has(flag))
   const calls = { n: 0 }
   bindReferenceHandlers(registry, calls)
   let relay: DomainEventRelay

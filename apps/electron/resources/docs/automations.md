@@ -3,7 +3,7 @@
 This guide explains how to configure automations in ROX to automate workflows based on events.
 
 > **Supported workflow:** Use the ROX Automations interface to inspect and manage automations. For authorized agent edits, follow the `automations.json` schema below and validate with the available `config_validate` tool.
-> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
+> - Interface and tooling reference: [ROX configuration interfaces](./rox-cli.md)
 
 ## What Are Automations?
 

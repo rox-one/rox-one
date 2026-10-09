@@ -34,7 +34,12 @@ export const MESSENGER_COMMAND_SCHEMAS: CommandSchemaMap = {
     alias: z.string().max(200).nullable().optional(), headerButtons: z.array(z.string().max(64)).max(20).optional(), openPanel: z.string().max(64).nullable().optional(),
   }),
   'im.update_policy': cmd({ postingPolicy: z.enum(['all', 'admins']).optional(), invitePolicy: z.enum(['members', 'admins']).optional() }),
-  'im.send_message': cmd({ ...createIdShape, content: messageContentSchema, replyTo: idSchema.optional() }),
+  'im.send_message': cmd({
+    ...createIdShape, content: messageContentSchema, replyTo: idSchema.optional(),
+    // W1-12 (#1509): the rule engine's welcome / join cards (TECH-SPEC §12, §17.2).
+    attribution: z.enum(['user', 'agent', 'unprompted']).optional(),
+    notify: z.enum(['default', 'mentions_only']).optional(),
+  }),
   'im.edit_message': cmd({ messageId: idSchema, content: messageContentSchema }),
   'im.recall_message': cmd({ messageId: idSchema }),
   'im.forward_messages': cmd({ messageIds: z.array(idSchema).min(1).max(100), toChatId: idSchema }),

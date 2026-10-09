@@ -53,8 +53,8 @@ export function ProviderSelectStep({ onSelect }: ProviderSelectStepProps) {
   const PROVIDER_OPTIONS: ProviderOption[] = [
     {
       id: 'omp',
-      name: t("onboarding.providerSelect.omp"),
-      description: t("onboarding.providerSelect.ompDesc"),
+      name: t("onboarding.providerSelect.roxCli"),
+      description: t("onboarding.providerSelect.roxCliDesc"),
       icon: PROVIDER_ICONS.omp,
     },
     {

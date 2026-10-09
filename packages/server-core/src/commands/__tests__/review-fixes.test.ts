@@ -108,7 +108,7 @@ describe('transient store failures are retryable, not terminal receipts', () => 
 describe('read-only idempotent replay precedes the policy stages', () => {
   test('lost ack, then the module flag flips off → duplicate, not UNAVAILABLE', async () => {
     const f = setup({ flags: new Set() })
-    f.registry.define({ type: 'test.flagged', module: 'test', authority: 'local', verb: 'write', schema: { safeParse: (v: unknown) => ({ success: true as const, data: v }) }, schemaBound: false, flag: 'test.module.v1' })
+    f.registry.define({ type: 'test.flagged', module: 'test', authority: 'local', verb: 'write', schema: { safeParse: (v: unknown) => ({ success: true as const, data: v }) }, schemaBound: false, flag: 'test.module.v1', riskClass: () => 'routine' })
     f.registry.bind('test.flagged', async () => ({ revision: 7, result: { ok: true } }))
     f.flags.add('test.module.v1')
     const env = envelope('test.flagged', {}, { commandId: 'c-flag' })
