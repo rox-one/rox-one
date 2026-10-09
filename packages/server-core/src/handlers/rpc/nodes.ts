@@ -9,6 +9,12 @@
  * `nodes:invoke` blocks until the node reports a terminal result (or the
  * explicit deadline elapses and the registry settles `timeout`), so the RPC
  * answers with the same `ok | error | timeout` union the registry produces.
+ *
+ * Fencing: the connection identity is always the server-minted
+ * `context.clientId` — never a payload field. Registration records it, the
+ * invoke push is addressed to it (`{ to: 'client' }`, never a broadcast), and
+ * `nodes:invokeResult` / `nodes:presence` presented by a different connection
+ * are refused `NODE_CONNECTION_MISMATCH` without settling the invoke.
  */
 
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
@@ -59,6 +65,11 @@ function optionalStringArray(value: unknown, what: string): readonly string[] | 
   return value as string[]
 }
 
+/**
+ * Parse a node declaration. The connection identity is NOT taken from the
+ * payload: `context.clientId` is server-minted, so a client cannot register a
+ * node under another connection's identity (see `registerNodeHandlers`).
+ */
 function parseDeclaration(rawInput: unknown): NodeDeclaration {
   const input = asRecord(rawInput, 'declaration')
   return {
@@ -68,7 +79,6 @@ function parseDeclaration(rawInput: unknown): NodeDeclaration {
     kind: optionalString(input.kind, 'kind'),
     platform: optionalString(input.platform, 'platform'),
     label: optionalString(input.label, 'label'),
-    connId: optionalString(input.connId, 'connId'),
   }
 }
 
@@ -81,19 +91,25 @@ function requireRegistry(deps: HandlerDeps): NodeRegistry {
 }
 
 export function registerNodeHandlers(server: RpcServer, deps: HandlerDeps): void {
-  server.handle(RPC_CHANNELS.nodes.REGISTER, (_context: RequestContext, rawInput: unknown) => {
+  server.handle(RPC_CHANNELS.nodes.REGISTER, (context: RequestContext, rawInput: unknown) => {
     const registry = requireRegistry(deps)
-    const node = registry.registerNode(parseDeclaration(rawInput))
+    // Server-minted connection identity: a later registration under a different
+    // one supersedes this connection's in-flight invokes (registry fencing).
+    const node = registry.registerNode({ ...parseDeclaration(rawInput), connId: context.clientId })
     server.push(RPC_CHANNELS.nodes.CHANGED, { to: 'all' }, { reason: 'registered', nodeId: node.nodeId })
     return registry.listNodes().find((view) => view.nodeId === node.nodeId) ?? null
   })
 
   server.handle(RPC_CHANNELS.nodes.LIST, () => requireRegistry(deps).listNodes())
 
-  server.handle(RPC_CHANNELS.nodes.PRESENCE, (_context: RequestContext, rawInput: unknown) => {
+  server.handle(RPC_CHANNELS.nodes.PRESENCE, (context: RequestContext, rawInput: unknown) => {
     const registry = requireRegistry(deps)
     const nodeId = requireString(asRecord(rawInput, 'presence').nodeId, 'nodeId')
     if (!registry.getNode(nodeId)) throw new CodedError('NOT_FOUND', `unknown node ${nodeId}`)
+    // A superseded connection must not keep the node's presence alive.
+    if (!registry.ownsNode(nodeId, context.clientId)) {
+      throw new CodedError('NODE_CONNECTION_MISMATCH', `connection does not own node ${nodeId}`)
+    }
     return registry.touch(nodeId)
   })
 
@@ -109,8 +125,16 @@ export function registerNodeHandlers(server: RpcServer, deps: HandlerDeps): void
         invalid('timeoutMs must be a positive integer within the invoke bound')
       }
       const dispatch = registry.invoke(nodeId, command, requestedTimeout === undefined ? {} : { timeoutMs: requestedTimeout as number })
-      if (dispatch.accepted) {
-        server.push(RPC_CHANNELS.nodes.INVOKE, { to: 'all' }, {
+      if (dispatch.accepted && dispatch.connId === null) {
+        // No live connection identity to target: settle typed rather than
+        // broadcast the payload to every client (the visibility bug).
+        registry.failInvoke(dispatch.invokeId!, {
+          code: 'NODE_UNROUTABLE',
+          message: `node ${nodeId} has no live connection to receive the invoke`,
+        })
+      } else if (dispatch.accepted) {
+        // Deliver only to the connection that registered the node.
+        server.push(RPC_CHANNELS.nodes.INVOKE, { to: 'client', clientId: dispatch.connId! }, {
           invokeId: dispatch.invokeId,
           nodeId,
           command,
@@ -122,14 +146,19 @@ export function registerNodeHandlers(server: RpcServer, deps: HandlerDeps): void
     { timeoutMs: INVOKE_HANDLER_TIMEOUT_MS },
   )
 
-  server.handle(RPC_CHANNELS.nodes.INVOKE_RESULT, (_context: RequestContext, rawInput: unknown) => {
+  server.handle(RPC_CHANNELS.nodes.INVOKE_RESULT, (context: RequestContext, rawInput: unknown) => {
     const registry = requireRegistry(deps)
     const input = asRecord(rawInput, 'invokeResult')
     const invokeId = requireString(input.invokeId, 'invokeId')
-    const settled = input.error === undefined
-      ? registry.settleInvoke(invokeId, input.payload)
-      : registry.failInvoke(invokeId, normalizeError(input.error))
-    if (!settled) throw new CodedError('NOT_FOUND', `invoke ${invokeId} is not pending`)
+    const settlement = input.error === undefined
+      ? registry.settleInvokeFrom(invokeId, input.payload, context.clientId)
+      : registry.failInvokeFrom(invokeId, normalizeError(input.error), context.clientId)
+    if (!settlement.settled) {
+      if (settlement.refusal.code === 'CONNECTION_MISMATCH') {
+        throw new CodedError('NODE_CONNECTION_MISMATCH', settlement.refusal.message)
+      }
+      throw new CodedError('NOT_FOUND', settlement.refusal.message)
+    }
     return { ok: true as const }
   })
 
