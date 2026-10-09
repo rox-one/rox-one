@@ -144,6 +144,13 @@ export type ErrorCode =
   // session's visibility instead of the workspace role.
   | 'SESSION_READ_ONLY'
   | 'SESSION_OWNER_ONLY'
+  // a2.5 suggestions: a `suggest` session refuses a non-owner DIRECT write (they
+  // must propose a suggestion instead), and the suggestion store reports its own
+  // invalid/limit/not-found refusals as typed codes.
+  | 'SESSION_SUGGEST_ONLY'
+  | 'SESSION_SUGGESTION_INVALID'
+  | 'SESSION_SUGGESTION_LIMIT'
+  | 'SESSION_SUGGESTION_NOT_FOUND'
   // Named operator role ceiling (a1.2): the connection's role lacks the method's
   // required scope. Typed so a client can render a role-specific message.
   | 'OPERATOR_ACCESS_DENIED'
@@ -207,6 +214,10 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'WIDGET_TICKET_REFUSED',
   'SESSION_READ_ONLY',
   'SESSION_OWNER_ONLY',
+  'SESSION_SUGGEST_ONLY',
+  'SESSION_SUGGESTION_INVALID',
+  'SESSION_SUGGESTION_LIMIT',
+  'SESSION_SUGGESTION_NOT_FOUND',
   'OPERATOR_ACCESS_DENIED',
   'unconfigured',
   'unknown-provider',
