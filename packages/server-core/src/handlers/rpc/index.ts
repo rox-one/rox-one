@@ -20,13 +20,17 @@ import { registerLabelsHandlers } from './labels'
 import { registerOrgsHandlers } from './orgs'
 import { registerLlmConnectionsHandlers } from './llm-connections'
 import { registerOAuthHandlers } from './oauth'
+import { registerCalendarGoogleHandlers } from './calendar-google'
 import { registerResourcesHandlers } from './resources'
 import { registerOnboardingHandlers } from './onboarding'
+import { registerOnboardingSuggestHandlers } from './onboarding-suggest'
+import { registerOnboardingPermissionsHandlers } from './onboarding-permissions'
 import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
 import { registerRuntimeTraceHandlers } from './runtime-trace'
 import { registerSessionForeignImportHandlers } from './session-foreign-import'
 import { registerNotesHandlers, cleanupNotesWatchForClient } from './notes'
 import { registerNativeDataHandlers } from './native-data.ts'
+import { registerTgLinkHandlers } from './tg-link.ts'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
 export { cleanupNotesWatchForClient } from './notes'
 import { registerKnowledgeHandlers, cleanupKnowledgeWatchForClient } from './knowledge'
@@ -81,6 +85,8 @@ import { registerDirectoryHandlers } from './directory.ts'
 // f.9 — node/device registry handlers (only when the host composes a registry).
 import { registerNodeHandlers } from './nodes.ts'
 export { registerNodeHandlers } from './nodes.ts'
+// ROX Drive (wave 1)
+import { registerDriveHandlers } from './drive.ts'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -128,7 +134,10 @@ export function registerCoreRpcHandlers(
   registerOrgsHandlers(server, deps)
   registerLlmConnectionsHandlers(server, deps)
   registerOAuthHandlers(server, deps)
+  registerCalendarGoogleHandlers(server, deps)
   registerOnboardingHandlers(server, deps)
+  registerOnboardingSuggestHandlers(server, deps)
+  registerOnboardingPermissionsHandlers(server, deps)
   registerResourcesHandlers(server, deps)
   registerSessionsHandlers(server, deps)
   registerRuntimeTraceHandlers(server, deps)
@@ -170,6 +179,8 @@ export function registerCoreRpcHandlers(
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)
   registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
+  // R4: Telegram account linking (local rox-tg-linkd daemon).
+  registerTgLinkHandlers(server, deps)
   // W1-03 (#1500)
   registerCommandsHandlers(server, deps, options?.commands)
   // W1-04 (#1501): Dossier export IPC (flag contacts.dossier-export.v1, default OFF).
@@ -178,5 +189,7 @@ export function registerCoreRpcHandlers(
   // registry (mirrors the nativeData gating) so hosts without device
   // connectivity do not advertise dead node channels.
   if (deps.nodes) registerNodeHandlers(server, deps)
+  // ROX Drive (wave 1) — local-first storage surface.
+  registerDriveHandlers(server, deps)
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }

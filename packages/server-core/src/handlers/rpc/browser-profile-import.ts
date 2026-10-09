@@ -32,7 +32,7 @@ import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { deleteProtectedCookieKey } from './browser-protected-cookie-key'
 import { BrowserDataAutoImporter } from './browser-data-auto-import'
-import { prepareBrowserCredentialImport } from './browser-credential-vault'
+import { prepareBrowserCredentialImport, exportBrowserCredentialsForKeeper } from './browser-credential-vault'
 import {
   isClaimableLive,
   rpcBrowserProfileImportActResult,
@@ -47,6 +47,7 @@ export const BROWSER_PROFILE_CHANNELS = [
   RPC_CHANNELS.browserProfile.ROLLBACK,
   RPC_CHANNELS.browserProfile.DELETE,
   RPC_CHANNELS.browserProfile.DATA_AUTO_IMPORT,
+  RPC_CHANNELS.browserCredentials.EXPORT_FOR_KEEPER,
 ] as const
 
 function nodeFs(): ProfileFs {
@@ -360,4 +361,46 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, deps: Ha
       credentialCustody: deps.browserCredentials ? { deleteKey: reference => deps.browserCredentials!.vaultKeys.deleteKey(reference) } : undefined,
     })
   })
+
+  // Reopens the sealed workspace envelope for Keeper import. Gated by the same
+  // native grant/OS consent as IMPORT: a renderer cannot manufacture access, the
+  // vault key never leaves this process, and no plaintext is logged.
+  server.handle(
+    RPC_CHANNELS.browserCredentials.EXPORT_FOR_KEEPER,
+    async (ctx, args: { workspaceId: string; profileId: string }) => {
+      if (!args || typeof args.workspaceId !== 'string' || typeof args.profileId !== 'string') {
+        throw new Error('browser-workspace-unavailable')
+      }
+      const paths = pathsForWorkspace(args.workspaceId)
+      if (!paths) throw new Error('browser-workspace-unavailable')
+      const credentials = deps.browserCredentials
+      if (!credentials || ctx.webContentsId == null || ctx.workspaceId !== args.workspaceId) {
+        return { status: 'denied', items: [], skipped: 0 }
+      }
+      const profile = discoverBrowserProfileById({ home, platform, fs, profileId: args.profileId })
+      if (!profile || profile.state === 'locked' || profile.state === 'unsupported') throw new Error('browser-profile-unavailable')
+      const readJson = (path: string): Record<string, unknown> | null => {
+        try {
+          const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'))
+          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null
+        } catch { return null }
+      }
+      // The concrete custody store exposes `readKey`; the host interface only
+      // declares write custody, so it is narrowed here like registerKeeperGuiHandlers.
+      const vaultKeys = credentials.vaultKeys as unknown as { readKey?: (reference: string) => Buffer | null }
+      return exportBrowserCredentialsForKeeper({
+        host: credentials,
+        workspaceId: args.workspaceId,
+        webContentsId: ctx.webContentsId,
+        profile,
+        readSealedEnvelope: () => existsSync(paths.credentialVaultPath) ? readFileSync(paths.credentialVaultPath, 'utf8') : null,
+        readKeyReference: () => {
+          const reference = readJson(paths.indexPath)?.credentialKeyRef
+          return typeof reference === 'string' && reference !== '' ? reference : null
+        },
+        readVaultKey: (reference) => vaultKeys.readKey?.(reference) ?? null,
+      })
+    },
+    { access: 'localElectron' },
+  )
 }

@@ -1497,3 +1497,32 @@ export type CredentialMigrationResult<T> =
 /** Native document block projections carry the exact authority preconditions. */
 export type { GetBlockTreeRequest, BlockTreeResult, PreviewMarkerMappingRequest, NativeMarkerMappingPreview,
   ApplyMarkerMappingRequest, MarkerMappingCommitResult } from '@rox/server-core/docs/block-tree-service'
+
+/**
+ * Onboarding «profile» step — «А предложи сам?» one-shot preference suggestion.
+ *
+ * The renderer is the only producer; the server is the only consumer and the
+ * only place that may call a model. A reply is either usable Russian text or an
+ * explicit failure reason (never fabricated text).
+ */
+export interface SuggestPreferencesInput {
+  name?: string
+  /** ISO `yyyy-mm-dd`. */
+  birthDate?: string
+  interfaceLanguage?: string
+  communicationLanguage?: string
+  city?: string
+  timezone?: string
+  /** Free-form preferences already typed by the user. */
+  preferences?: string
+  /** Selected bubble chip ids. */
+  bubbles?: string[]
+  /** Human-readable (Russian) labels for the selected chips, in `bubbles` order. */
+  bubbleLabels?: string[]
+}
+
+export type SuggestPreferencesReason = 'no-provider' | 'timeout' | 'error'
+
+export type SuggestPreferencesResult =
+  | { ok: true; text: string }
+  | { ok: false; reason: SuggestPreferencesReason }

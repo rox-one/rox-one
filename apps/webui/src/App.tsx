@@ -16,6 +16,7 @@ import type { AuthenticatedWebTransportBootstrap } from '../../electron/src/rend
 import { initializeAuthenticatedWebTransport } from './adapter/transport-bootstrap'
 import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { ROX_THEME_ID } from '@config/theme'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -31,7 +32,7 @@ const ElectronApp = lazy(() => import('@/App'))
 function ReadyRenderer({ bootstrap }: { bootstrap: AuthenticatedWebTransportBootstrap }) {
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   return (
-    <ThemeProvider activeWorkspaceId={workspaceId ?? bootstrap.workspaceId}>
+    <ThemeProvider activeWorkspaceId={workspaceId ?? bootstrap.workspaceId} fixedColorTheme={ROX_THEME_ID}>
       <Suspense fallback={<LoadingScreen />}>
         <ElectronApp webTransportBootstrap={bootstrap} />
       </Suspense>

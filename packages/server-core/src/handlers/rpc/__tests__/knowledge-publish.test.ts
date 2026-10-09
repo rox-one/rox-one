@@ -37,7 +37,6 @@ let workspaceRoot: string
 // Real namespace must be captured before the mock is registered; a static import
 // would be hoisted past this file's mock.module ordering.
 const actualCredentials = await import('@rox/shared/credentials')
-
 mock.module('@rox/shared/credentials', () => ({
   ...actualCredentials,
   getCredentialManager: () => ({
@@ -51,12 +50,18 @@ mock.module('@rox/shared/credentials', () => ({
   }),
 }))
 
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () =>
     workspaceRoot ? [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }] : [],
 }))
+afterAll(() => {
+  mock.module('@rox/shared/config', () => actualConfig)
+  mock.module('@rox/shared/credentials', () => actualCredentials)
+})
 
 /** Seed an InMemory provider so prepare/apply do not depend on SiYuan kernel fixtures. */
 function useInMemoryProvider() {

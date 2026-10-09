@@ -119,6 +119,7 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { GlobalVoiceDictation } from "@/voice/global-dictation"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
@@ -175,6 +176,7 @@ import {
   isInboxNavigation,
   isFeedNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
@@ -2987,6 +2989,13 @@ function AppShellContent({
       onClick: () => navigate(routes.view.home()),
     },
     {
+      id: "nav:drive",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.drive.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.drive.icon,
+      variant: isDriveNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.drive()),
+    },
+    {
       id: "nav:feed",
       title: t('workbench.mode.feed'),
       icon: Rss,
@@ -3103,8 +3112,8 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
-                {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
-                <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
+                {/* pb-8 = 32px clearance so content tail scrolls clear of the 32px gradient; mask is off during active settings navigation because settings list rows fall into the fade band */}
+                <div className={cn('flex-1 overflow-y-auto min-h-0 pb-8', !(isSettingsNavigation(navState) && !isAutoCompact) && 'mask-fade-bottom')}>
                 {activeWorkspaceId && !isSidebarCollapsed && (
                   <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
                     <label className="shrink-0 text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
@@ -3758,6 +3767,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
       <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
 
       <SuperEngineeringShellExtras />
+
+      {/* Global voice dictation: records + drafts a new session when no active composer owns the mic. */}
+      <GlobalVoiceDictation />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>

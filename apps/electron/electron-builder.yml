@@ -9,7 +9,7 @@ protocols:
       - rox
       - craftagents
 
-electronVersion: "39.2.7"
+electronVersion: "44.7.0"
 
 # Hook to compile macOS 26+ Liquid Glass icon after packaging
 afterPack: build/afterPack.cjs
@@ -122,6 +122,11 @@ mac:
     # Встречи: meeting recording and voice dictation capture the microphone.
     # Without this key macOS never shows its one-time permission prompt.
     NSMicrophoneUsageDescription: "Rox records meetings and dictation from your microphone. Audio is saved and transcribed locally on this Mac."
+    # Apple Calendar (EventKit): the packaged app must carry the Calendars usage
+    # strings or macOS TCC silently denies the helper's authorization request.
+    # RU+EN, matching apps/electron/native/rox-calendar-helper/Info.plist.
+    NSCalendarsUsageDescription: "Rox reads your macOS calendars to show and sync events. / Rox читает календари macOS, чтобы показывать и синхронизировать события."
+    NSCalendarsFullAccessUsageDescription: "Rox needs full access to your macOS calendars to sync events. / Rox нужен полный доступ к календарям macOS для синхронизации событий."
   target:
     - target: dmg
       arch:
@@ -166,6 +171,14 @@ mac:
       filter:
         - "**/*"
         - "!**/.gitkeep"
+    # Apple Calendar EventKit helper. Staged by `bun run build:native:calendar`
+    # (host arch) / `bun run build:native:calendar:x64` (Intel/universal) into
+    # resources/bin/darwin-<arch>/. ${arch} expands to the build target arch, so
+    # a build whose helper was not staged simply logs "file source doesn't exist"
+    # and ships without it (the connector stays Unavailable) instead of bundling
+    # a foreign-architecture binary.
+    - from: resources/bin/darwin-${arch}/rox-calendar-helper
+      to: bin/darwin-${arch}/rox-calendar-helper
   # Positive patterns keep this platform matcher narrow (no implicit **/*).
   files:
     - resources/bin/darwin-${arch}/**/*

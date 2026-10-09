@@ -2,6 +2,7 @@ import log from 'electron-log/main'
 import { appendFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { resolveConfigDir } from '@rox/shared/config/paths'
+import { redactSensitiveValues, redactUrlForLog } from '@rox/shared/utils/redaction'
 import type {
   MessagingLogContext,
   MessagingLogMeta,
@@ -202,6 +203,77 @@ export const messagingGatewayLog: MessagingLogger = new StructuredMessagingGatew
 })
 
 /**
+ * Factory for the always-on rotating JSON logs that must survive packaged
+ * builds (where the Electron file/console transports are disabled, see above).
+ *
+ * Each line is one self-contained JSON object: `{timestamp, level, scope,
+ * meta?, message}`. The file lives under `<config>/logs/<fileName>`, is
+ * created lazily, and rotates to `<fileName>.1` once `maxBytes` would be
+ * exceeded (the previous backup is dropped first, so at most one backup is
+ * kept).
+ */
+function createDurableLog(options: {
+  fileName: string
+  scope: string
+  maxBytes: number
+  /** Rewrite the (already `normalizeLogValue`'d) meta before it is persisted. */
+  sanitizeMeta?: (meta: unknown) => unknown
+}): { filePath: string; write: (level: 'info' | 'warn' | 'error', message: string, meta?: unknown) => void } {
+  const { fileName, scope, maxBytes } = options
+  const filePath = join(resolveConfigDir(), 'logs', fileName)
+  const backupPath = `${filePath}.1`
+
+  function rotateIfNeeded(nextLineBytes: number): void {
+    if (!existsSync(filePath)) return
+    try {
+      const currentSize = statSync(filePath).size
+      if (currentSize + nextLineBytes <= maxBytes) return
+      if (existsSync(backupPath)) {
+        rmSync(backupPath, { force: true })
+      }
+      renameSync(filePath, backupPath)
+    } catch (error) {
+      mainLog.warn(`[${scope}] failed to rotate dedicated log file`, normalizeLogValue(error))
+    }
+  }
+
+  function write(level: 'info' | 'warn' | 'error', message: string, meta?: unknown): void {
+    const normalizedMeta = meta !== undefined ? normalizeLogValue(meta) : undefined
+    const sanitizedMeta = normalizedMeta !== undefined && options.sanitizeMeta
+      ? options.sanitizeMeta(normalizedMeta)
+      : normalizedMeta
+    const entry = {
+      timestamp: new Date().toISOString(),
+      level,
+      scope,
+      ...(sanitizedMeta !== undefined ? { meta: sanitizedMeta } : {}),
+      message,
+    }
+
+    const line = JSON.stringify(entry) + '\n'
+    try {
+      mkdirSync(dirname(filePath), { recursive: true })
+      rotateIfNeeded(Buffer.byteLength(line))
+      appendFileSync(filePath, line, 'utf8')
+    } catch (error) {
+      mainLog.warn(`[${scope}] failed to write dedicated log entry`, normalizeLogValue(error))
+    }
+
+    // Mirror to the Electron logger too (a no-op in production where transports
+    // are disabled, but keeps --debug console/file output intact).
+    if (level === 'error') {
+      mainLog.error(`[${scope}]`, message, entry)
+    } else if (level === 'warn') {
+      mainLog.warn(`[${scope}]`, message, entry)
+    } else if (isDebugMode) {
+      mainLog.info(`[${scope}]`, message, entry)
+    }
+  }
+
+  return { filePath, write }
+}
+
+/**
  * Dedicated auto-update log.
  *
  * In packaged builds the Electron file/console transports are disabled (see
@@ -210,62 +282,76 @@ export const messagingGatewayLog: MessagingLogger = new StructuredMessagingGatew
  * dedicated, always-on rotating log records the update lifecycle at a stable
  * path regardless of debug mode, mirroring the messaging-gateway log above.
  */
-export const autoUpdateLogPath = join(resolveConfigDir(), 'logs', 'auto-update.log')
-const autoUpdateBackupPath = `${autoUpdateLogPath}.1`
-const AUTO_UPDATE_LOG_MAX_BYTES = 2 * 1024 * 1024 // 2MB
-
-function rotateAutoUpdateLogIfNeeded(nextLineBytes: number): void {
-  if (!existsSync(autoUpdateLogPath)) return
-  try {
-    const currentSize = statSync(autoUpdateLogPath).size
-    if (currentSize + nextLineBytes <= AUTO_UPDATE_LOG_MAX_BYTES) return
-    if (existsSync(autoUpdateBackupPath)) {
-      rmSync(autoUpdateBackupPath, { force: true })
-    }
-    renameSync(autoUpdateLogPath, autoUpdateBackupPath)
-  } catch (error) {
-    mainLog.warn('[auto-update] failed to rotate dedicated log file', normalizeLogValue(error))
-  }
-}
-
-function writeAutoUpdateLog(level: 'info' | 'warn' | 'error', message: string, meta?: unknown): void {
-  const entry = {
-    timestamp: new Date().toISOString(),
-    level,
-    scope: 'auto-update',
-    ...(meta !== undefined ? { meta: normalizeLogValue(meta) } : {}),
-    message,
-  }
-
-  const line = JSON.stringify(entry) + '\n'
-  try {
-    mkdirSync(dirname(autoUpdateLogPath), { recursive: true })
-    rotateAutoUpdateLogIfNeeded(Buffer.byteLength(line))
-    appendFileSync(autoUpdateLogPath, line, 'utf8')
-  } catch (error) {
-    mainLog.warn('[auto-update] failed to write dedicated log entry', normalizeLogValue(error))
-  }
-
-  // Mirror to the Electron logger too (a no-op in production where transports
-  // are disabled, but keeps --debug console/file output intact).
-  if (level === 'error') {
-    mainLog.error('[auto-update]', message, entry)
-  } else if (level === 'warn') {
-    mainLog.warn('[auto-update]', message, entry)
-  } else if (isDebugMode) {
-    mainLog.info('[auto-update]', message, entry)
-  }
-}
+const autoUpdateDurableLog = createDurableLog({
+  fileName: 'auto-update.log',
+  scope: 'auto-update',
+  maxBytes: 2 * 1024 * 1024, // 2MB
+})
+export const autoUpdateLogPath = autoUpdateDurableLog.filePath
 
 /** Always-on structured logger for the auto-update lifecycle (see #891). */
 export const autoUpdateLog = {
-  info: (message: string, meta?: unknown) => writeAutoUpdateLog('info', message, meta),
-  warn: (message: string, meta?: unknown) => writeAutoUpdateLog('warn', message, meta),
-  error: (message: string, meta?: unknown) => writeAutoUpdateLog('error', message, meta),
+  info: (message: string, meta?: unknown) => autoUpdateDurableLog.write('info', message, meta),
+  warn: (message: string, meta?: unknown) => autoUpdateDurableLog.write('warn', message, meta),
+  error: (message: string, meta?: unknown) => autoUpdateDurableLog.write('error', message, meta),
 }
 
 export function getAutoUpdateLogFilePath(): string {
   return autoUpdateLogPath
+}
+
+const URL_VALUE_PATTERN = /^https?:\/\//i
+
+/**
+ * Scrub secrets out of an error-log `meta` payload before it is persisted: URL
+ * query values are masked (deep, cycle-safe), then credential-named keys
+ * (authorization, cookie, token, …) are replaced. Error objects are already
+ * flattened to `{name, message, stack, …}` by `normalizeLogValue`, so their
+ * `message` / `stack` text passes through untouched.
+ */
+function redactUrlValues(value: unknown, depth = 0): unknown {
+  if (depth > 6) return value
+  if (typeof value === 'string') {
+    return URL_VALUE_PATTERN.test(value) ? redactUrlForLog(value) : value
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => redactUrlValues(item, depth + 1))
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [key, inner] of Object.entries(value)) {
+      out[key] = redactUrlValues(inner, depth + 1)
+    }
+    return out
+  }
+  return value
+}
+
+/**
+ * Dedicated errors log.
+ *
+ * After Sentry was removed, the main-process error handlers could only write
+ * to the Electron transports, which are disabled in packaged builds — so
+ * production errors were lost entirely. This always-on structured log keeps
+ * them on disk at `<config>/logs/errors.log` regardless of debug mode.
+ */
+const errorDurableLog = createDurableLog({
+  fileName: 'errors.log',
+  scope: 'errors',
+  maxBytes: 5 * 1024 * 1024, // 5MB
+  sanitizeMeta: (meta) => redactSensitiveValues(redactUrlValues(meta)),
+})
+export const errorLogPath = errorDurableLog.filePath
+
+/** Always-on structured logger for main-process errors. */
+export const errorLog = {
+  info: (message: string, meta?: unknown) => errorDurableLog.write('info', message, meta),
+  warn: (message: string, meta?: unknown) => errorDurableLog.write('warn', message, meta),
+  error: (message: string, meta?: unknown) => errorDurableLog.write('error', message, meta),
+}
+
+export function getErrorLogFilePath(): string {
+  return errorLogPath
 }
 
 /**

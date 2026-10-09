@@ -3,9 +3,6 @@
     "yaml": "^2.8.2"
   },
   "description": "Core types, storage, and agent logic for Craft Agents",
-  "devDependencies": {
-    "@types/uuid": "^11.0.0"
-  },
   "exports": {
     ".": "./src/index.ts",
     "./bases": "./src/bases/index.ts",
@@ -40,6 +37,8 @@
     "./utils": "./src/utils/index.ts",
     "./commands": "./src/commands/index.ts",
     "./events": "./src/events/index.ts",
+    "./notify": "./src/notify/index.ts",
+    "./platform/workbench": "./src/platform/workbench/index.ts",
     "./acl": "./src/acl/index.ts",
     "./entities/permissions": "./src/entities/permissions.ts"
   },

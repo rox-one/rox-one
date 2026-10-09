@@ -87,6 +87,7 @@ import {
 import { Dot, SectionLabel, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
 import { QuickTaskInput } from './QuickTaskInput'
 import { toErrorMessage } from '@/lib/errors'
+import { cachedNotesList, fetchNotesList, subscribeCachedNotesList } from '@/lib/query/notes-cache'
 
 export interface WidgetProps {
   edit: WidgetEditProps | null
@@ -1075,7 +1076,11 @@ function FeedWidget({ edit, width, size = 'S' }: WidgetProps) {
 // ---------------------------------------------------------------------------
 
 function useNotes(workspaceId: string | null): { available: boolean; loaded: boolean; notes: NoteSummary[] } {
-  const [state, setState] = useState<{ available: boolean; loaded: boolean; notes: NoteSummary[] }>({ available: true, loaded: false, notes: [] })
+  // PERF-09: shares the Notes page's cached list (paint at once, then revalidate).
+  const [state, setState] = useState<{ available: boolean; loaded: boolean; notes: NoteSummary[] }>(() => {
+    const cached = cachedNotesList(workspaceId)
+    return cached ? { available: true, loaded: true, notes: cached } : { available: true, loaded: false, notes: [] }
+  })
   useEffect(() => {
     const api = window.electronAPI
     if (!workspaceId || typeof api?.listNotes !== 'function') {
@@ -1083,13 +1088,19 @@ function useNotes(workspaceId: string | null): { available: boolean; loaded: boo
       return
     }
     let cancelled = false
-    const load = () => api.listNotes(workspaceId).then(
-      (notes) => { if (!cancelled) setState({ available: true, loaded: true, notes: Array.isArray(notes) ? notes : [] }) },
+    let fresh = false
+    // The disk restore is async: paint the hydrated list until the first fresh read.
+    const offHydration = subscribeCachedNotesList(workspaceId, (notes) => {
+      if (!cancelled && !fresh) setState({ available: true, loaded: true, notes })
+    })
+    // Mount: joinable and skipped inside the SWR window; change events read fresh.
+    const load = (mount = false) => fetchNotesList(workspaceId, () => api.listNotes(workspaceId), { mount }).then(
+      (notes) => { fresh = true; if (!cancelled) setState({ available: true, loaded: true, notes: Array.isArray(notes) ? notes : [] }) },
       () => { if (!cancelled) setState({ available: false, loaded: true, notes: [] }) },
     )
-    void load()
+    void load(true)
     const off = typeof api.onNotesChanged === 'function' ? api.onNotesChanged(() => { void load() }) : undefined
-    return () => { cancelled = true; off?.() }
+    return () => { cancelled = true; offHydration(); off?.() }
   }, [workspaceId])
   return state
 }

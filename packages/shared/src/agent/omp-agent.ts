@@ -61,6 +61,7 @@ import { MCP_USAGE_GUIDANCE } from '../prompts/mcp-guidance.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
 import { isProjectMemoryInjectable } from '../memory/document-provenance.ts';
 import { getContextDocsPromptBlock } from '../context-docs/index.ts';
+import { DOC_REFS } from '../docs/index.ts';
 import { getCognitiveProfileBlock } from './cognitive-profile.ts';
 import { formatPreferencesForPrompt } from '../config/preferences.ts';
 import type { AgentEvent, AgentEventUsage } from '@rox/core/types';
@@ -191,6 +192,10 @@ const OMP_ROX_CONTEXT_PROMPT = [
   'Safe http/https links belong in the host browser pane via mcp__session__browser_tool.',
   'Do not force every URL open. Auth callbacks, deep links, file: URLs and unsafe',
   'schemes stay outside that pane (OS handler or blocked).',
+  'Your answers can include at most one interactive OpenUI block (charts, tables, forms) that ROX renders natively in the chat, and only when the answer benefits.',
+  `Read ${DOC_REFS.openui} once before the first interactive answer — it covers the syntax and component signatures.`,
+  'When you include it, put a complete, self-contained program in one ```openui fenced code block.',
+  'Keep normal Markdown prose outside the block so the answer still reads without it.',
   MCP_USAGE_GUIDANCE,
 ].join('\n');
 

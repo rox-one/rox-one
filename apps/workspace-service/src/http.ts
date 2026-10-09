@@ -7,6 +7,7 @@ import { COLLABORATION_ROUTES } from './modules/collaboration/routes.ts'
 import { IDENTITY_ROUTES } from './modules/identity/routes.ts'
 import { LICENSE_ROUTES } from './modules/licenses/routes.ts'
 import { COMMAND_ROUTES } from './modules/commands/routes.ts'
+import { NOTIFY_ROUTES } from './modules/notify/routes.ts'
 
 export type { WorkspaceActorResolver, WorkspaceHttpOptions, WorkspaceLocalIssuer } from './routing.ts'
 
@@ -22,6 +23,8 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRoute[] = [
   ...LICENSE_ROUTES,
   // W1-03 (#1500)
   ...COMMAND_ROUTES,
+  // W1-09 (#1506)
+  ...NOTIFY_ROUTES,
 ]
 
 /**

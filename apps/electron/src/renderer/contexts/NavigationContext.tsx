@@ -90,6 +90,7 @@ import {
   isFeedNavigation,
   isConnectionsNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isKnowledgeNavigation,
   isDiffNavigation,
   isCloudRunNavigation,
@@ -122,7 +123,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isDriveNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
 
 /** Deep-link sources whose parameters must not be trusted to drive the app (SEC-01). */
 const UNTRUSTED_DEEPLINK_SOURCES: Record<string, true> = { 'browser-pane': true }
@@ -971,6 +972,13 @@ export function NavigationProvider({
               if (shouldSend) {
                 setTimeout(() => {
                   if (!isCurrent()) return
+                  // SEC-01: never auto-send on a deep link's authority alone —
+                  // require an explicit confirmation even for trusted surfaces.
+                  // Deny keeps the session and leaves the prompt in the composer.
+                  if (!window.confirm(t('navigation.confirmDeepLinkSend'))) {
+                    onInputChange?.(session.id, parsed.params.input!)
+                    return
+                  }
                   void window.electronAPI.sendMessage(
                     session.id,
                     parsed.params.input!,
