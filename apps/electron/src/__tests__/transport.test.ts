@@ -508,6 +508,57 @@ describe('reliable delivery', () => {
     expect((server as any).clients.get(clientId)?.lastAckedSeq).toBe(2)
   })
 
+  test('sequence gap holds the ack/reconnect cursor and requests one reconnect', () => {
+    // Lowest level the harness allows: drive the private message handler directly
+    // on a client marked connected, so no live server/socket is needed.
+    const client = trackClient(new WsRpcClient('ws://127.0.0.1:1', {
+      autoReconnect: false,
+    }))
+
+    const dispatched: string[] = []
+    client.on('stream', (value: string) => dispatched.push(value))
+
+    // Private-access cast for regression coverage; no public API drives this path.
+    const priv = client as unknown as {
+      connected: boolean
+      clientId: string | null
+      lastSeenSeq: number
+      reconnectNow(): void
+      onMessage(raw: string): void
+    }
+    priv.connected = true
+    priv.clientId = 'client-gap'
+    priv.lastSeenSeq = 1
+
+    let reconnectRequests = 0
+    priv.reconnectNow = () => { reconnectRequests += 1 }
+
+    const sendEvent = (seq: number, value: string) => {
+      priv.onMessage(serializeEnvelope({
+        id: randomUUID(),
+        type: 'event',
+        channel: 'stream',
+        args: [value],
+        seq,
+      } satisfies MessageEnvelope))
+    }
+
+    // Burst of two gapped frames (expected 2, received 4 then 5).
+    sendEvent(4, 'gapped-1')
+    sendEvent(5, 'gapped-2')
+
+    // (a) frames are still dispatched, never dropped
+    expect(dispatched).toEqual(['gapped-1', 'gapped-2'])
+    // (b) cursor held at the last contiguous seq — never acked/reconnected past the hole
+    expect(priv.lastSeenSeq).toBe(1)
+    // (c) exactly one reconnect requested for the whole burst
+    expect(reconnectRequests).toBe(1)
+
+    // Replaying the hole in order resumes the cursor (unchanged in-order semantics)
+    sendEvent(2, 'replayed-2')
+    expect(priv.lastSeenSeq).toBe(2)
+  })
+
   test('safe send skips non-open sockets', () => {
     const client = trackClient(new WsRpcClient('ws://127.0.0.1:1', {
       autoReconnect: false,
@@ -527,6 +578,31 @@ describe('reliable delivery', () => {
     } satisfies MessageEnvelope)
 
     expect(sent).toBe(false)
+    expect(sendCalls).toBe(0)
+  })
+
+  test('server safe send swallows a throwing socket instead of aborting replay', () => {
+    const server = trackServer(new WsRpcServer({ host: '127.0.0.1', port: 0 }))
+    // Private-access cast for regression coverage; no public API exposes safeSend.
+    const privateServer = server as unknown as { safeSend(ws: unknown, data: string): void }
+
+    const throwingWs = {
+      OPEN: 1,
+      readyState: 1,
+      send: () => { throw new Error('send race') },
+    }
+
+    expect(() => privateServer.safeSend(throwingWs, 'payload')).not.toThrow()
+
+    let sendCalls = 0
+    const closedWs = {
+      OPEN: 1,
+      readyState: 0,
+      send: () => { sendCalls += 1 },
+    }
+
+    privateServer.safeSend(closedWs, 'payload')
+
     expect(sendCalls).toBe(0)
   })
 })

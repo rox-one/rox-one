@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import type { ConsumerIdentity } from './broker.ts';
 import { importGithubFromEnv, runGithubVertical, type FetchLike } from './github-vertical.ts';
+import { CredentialRefRegistry } from './credential-types.ts';
 import { createP0ProviderStack, createSealedSecret } from './p0-adapters.ts';
 import { ConnectionFabricError } from './provider-contract.ts';
 
@@ -57,6 +58,35 @@ describe('CF-7 GitHub vertical', () => {
     });
     expect(inspect.hasMaterial).toBe(true);
     expect(JSON.stringify(inspect)).not.toContain(TOKEN);
+  });
+
+  it('importGithubFromEnv registers imported refs once and isolates overlapping imports', async () => {
+    const registry = new CredentialRefRegistry();
+    const stack = { ...createP0ProviderStack(), registry };
+
+    const run = (envPath: string) =>
+      importGithubFromEnv(stack, {
+        workspaceId: 'ws_github',
+        requestedBy: 'user_1',
+        injectedToken: TOKEN,
+        mode: 'reference',
+        envPath,
+      });
+
+    const [first, second] = await Promise.all([run('/tmp/a.env'), run('/tmp/b.env')]);
+    expect(first.credentialRefId).not.toBe(second.credentialRefId);
+    expect(registry.get(first.credentialRefId)).toBeDefined();
+    expect(registry.get(second.credentialRefId)).toBeDefined();
+
+    // Reusing an already-registered ref id stays a no-op, not a duplicate-register throw.
+    const originalWrite = stack.provider.write.bind(stack.provider);
+    stack.provider.write = async (input) => ({
+      ...(await originalWrite(input)),
+      credentialRefId: first.credentialRefId,
+    });
+    const repeated = await run('/tmp/c.env');
+    expect(repeated.credentialRefId).toBe(first.credentialRefId);
+    expect(registry.get(repeated.credentialRefId)).toBeDefined();
   });
 
   it('importGithubFromEnv accepts injectedToken when no env candidate exists', async () => {

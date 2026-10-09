@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target=node --format=cjs",
+    "typecheck": "tsc --noEmit",
     "dev": "bun run src/index.ts"
   },
   "dependencies": {

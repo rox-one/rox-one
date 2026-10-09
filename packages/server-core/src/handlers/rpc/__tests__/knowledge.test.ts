@@ -161,6 +161,7 @@ installFetchSeam()
 
 afterAll(() => {
   globalThis.fetch = originalFetch
+  mock.restore()
 })
 
 // ---------------------------------------------------------------------------
@@ -169,7 +170,12 @@ afterAll(() => {
 // never target packages another suite imports directly (bun leak, see above).
 // ---------------------------------------------------------------------------
 
+// Real namespace must be captured before the mock is registered; a static import
+// would be hoisted past this file's mock.module ordering.
+const actualCredentials = await import('@rox/shared/credentials')
+
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null

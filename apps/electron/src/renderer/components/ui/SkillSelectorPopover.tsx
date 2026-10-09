@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check } from 'lucide-react'
+import { Check, RefreshCw } from 'lucide-react'
 import { FilterableSelectPopover } from '@rox/ui'
 
 import { cn } from '@/lib/utils'
@@ -16,6 +16,13 @@ export interface SkillSelectorPopoverProps {
   onToggleSlug: (slug: string) => void
   /** Workspace id — resolves local skill icons via SkillAvatar. */
   workspaceId?: string
+  /**
+   * True while the workspace skills catalog is still syncing/pending. A slow
+   * bundled-skills sync can outlive the client timeout, so an empty list must
+   * not be presented as "no skills configured"; a syncing marker is shown
+   * instead until the load settles. Mirrors SkillsListPanel's `syncing`.
+   */
+  loading?: boolean
 }
 
 /**
@@ -33,6 +40,7 @@ export function SkillSelectorPopover({
   selectedSlugs,
   onToggleSlug,
   workspaceId,
+  loading = false,
 }: SkillSelectorPopoverProps) {
   const { t } = useTranslation()
   return (
@@ -46,7 +54,12 @@ export function SkillSelectorPopover({
       isSelected={(skill) => selectedSlugs.includes(skill.slug)}
       onToggle={(skill) => onToggleSlug(skill.slug)}
       filterPlaceholder={t('skillsList.searchPlaceholder')}
-      emptyState={(
+      emptyState={loading ? (
+        <span className="flex items-center gap-2" role="status" data-list-role="skills-syncing">
+          <RefreshCw className="icon-caption animate-spin" />
+          {t('common.loading')}
+        </span>
+      ) : (
         <>
           {t('skillsList.noSkillsConfigured')}
           <br />

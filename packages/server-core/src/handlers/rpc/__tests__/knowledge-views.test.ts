@@ -7,7 +7,7 @@
  * - envelope get/upsert/list round-trip
  */
 import '../memory-test-setup'
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
+import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -38,7 +38,12 @@ import {
 const credentials = new Map<string, { value: string }>()
 let workspaceRoot: string
 
+// Real namespace must be captured before the mock is registered; a static import
+// would be hoisted past this file's mock.module ordering.
+const actualCredentials = await import('@rox/shared/credentials')
+
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -429,3 +434,5 @@ describe('envelopes', () => {
     expect(list[0]!.labels).toEqual(['p5'])
   })
 })
+
+afterAll(() => mock.restore())
