@@ -20,7 +20,7 @@ Eight parallel slices shipped and merged on `port/openclaw-features`; per-area e
 | S7 lifecycle-service | `port/slice-7` | (merge) | transactional launchd install/rollback, service fences, doctor report, tray + status broadcast |
 | S8 voice-realtime | `port/slice-8` | `ef3faf11f` | talk events + sequencer, bridge FSM, provider registry, wake list RPC, TTS/STT relay with real OpenAI adapter |
 
-Row status counts (after wave 2): done=42, deferred=30, partial=5, reuse-as-is=16, skipped=3 (96 rows).
+Row status counts (after wave 2): done=43, deferred=29, partial=5, reuse-as-is=16, skipped=3 (96 rows).
 
 ## Wave 2 summary (2026-10-09)
 
@@ -213,7 +213,7 @@ reproduction; every confirmed defect was fixed with a red→green regression tes
 | f.6 | Config JSON5 + SecretRef (env/file/exec) + hot reload | adapt | L | reuse-as-is | credential fabric + settings:getSecretRefs cover env|file|exec-style refs | map SecretRef onto ROX credential sources; skip invalid reloads |
 | f.7 | Plugin activation planner + gateway-startup loading | reimplement | L | deferred | plugin activation planner not built | keep descriptors in the same registry as core |
 | f.8 | Cron / hooks / single host-timer scheduler | adapt | M | partial | W2-3 `port/w2-cron` e56143594: HostScheduler single host timer (once/every/cron) with coalesced missed ticks + drift-free anchors + beginClose/stop, HookRegistry ordered dispatch, wired into bootstrapServer; tests scheduler/__tests__/{scheduler,cron-expr,hooks}.test.ts | in-process scheduler + hook registry shipped; unsatisfiable cron expressions (e.g. `0 0 30 2 *`) are rejected at registration with NO_MATCH; external HTTP `/hooks` webhook ingress not ported |
-| f.9 | Node/device model + presence + pending invokes | adapt | M | deferred | node/device registry not built | caps/commands are claims; enforce server-side allowlists |
+| f.9 | Node/device model + presence + pending invokes | adapt | M | done | NodeRegistry + PresenceTracker + PendingInvokeTracker (packages/server-core/src/nodes/); nodes:* RPC handlers + HandlerDeps.nodes seam; 7 channels classified REMOTE_ELIGIBLE (IPC inventory regenerated for the nodes:* namespace); tests: nodes/__tests__/registry.test.ts, pending-invokes.test.ts, handlers/rpc/__tests__/nodes-rpc.test.ts, protocol/__tests__/routing.test.ts; corrective type repairs ecf82c88c | claims enforced against server allowlist before dispatch; host still needs to supply deps.nodes + a device client |
 | f.10 | State persistence: shared SQLite + per-agent DBs + writer lock | adapt | M | partial | memory index uses a per-scope SQLite DB; no unified writer-lock layer | single-writer lock; sessions JSON index + SQLite transcripts |
 
 ## g (9 rows)
