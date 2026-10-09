@@ -84,12 +84,12 @@ Statuses: `todo` · `in-progress` · `done` · `deferred (reason)` · `skipped (
 
 | id | capability | verdict | effort | status | evidence | notes |
 |---|---|---|---|---|---|---|
-| d1.1 | Talk event vocabulary (TALK_EVENT_TYPES) + sequencer | adapt | M | todo | — | one event model shared by renderer/server/future mobile |
-| d1.2 | Provider registry (realtime voice + speech) | adapt | M | todo | — | add capability keys to ROX sources/MCP registry |
-| d1.3 | Realtime bridge state machine (connect/retry/pending audio) | adapt | L | todo | — | credentials stay in main; renderer gets ephemeral tokens only |
-| d1.4 | TTS pipeline (buffered + streaming + precedence) | adapt | M | todo | — | device playback stays renderer/native |
-| d1.5 | STT relay (WS reconnect + bounded queues) | adapt | M | todo | — | browser codec g711_ulaw@8k / pcm16@24k |
-| d1.6 | Voice wake list + broadcast; on-device recognition only | adapt | M | todo | — | foreground-gated; route triggers to sessions |
+| d1.1 | Talk event vocabulary (TALK_EVENT_TYPES) + sequencer | adapt | M | done | `packages/shared/src/voice/talk-events.ts`; `__tests__/talk-events.test.ts` (sequencer + reorder buffer monotonicity) | one event model shared by renderer/server/future mobile |
+| d1.2 | Provider registry (realtime voice + speech) | adapt | M | done | `packages/shared/src/voice/provider-registry.ts`; `realtime-providers/openai.ts`; `__tests__/provider-registry.test.ts`; `voice:wakeGet`/`voice:providers` handlers | resolved from `getServerServiceKey`; typed `unconfigured`/`unknown-provider` errors, never a fake provider |
+| d1.3 | Realtime bridge state machine (connect/retry/pending audio) | adapt | L | done | `packages/shared/src/voice/realtime-bridge.ts`; `__tests__/realtime-bridge.test.ts` (every transition, retry/terminal, caps/TTL); OpenAI protocol vs local WS fixture `__tests__/openai-realtime.test.ts` | credentials stay in main; renderer gets ephemeral client secret only |
+| d1.4 | TTS pipeline (buffered + streaming + precedence) | adapt | M | done | `packages/shared/src/voice/tts/{synthesis,streaming,resolution}.ts`; `__tests__/tts-streaming.test.ts`; `voice:ttsStreamStart/Stop` handlers | device playback stays renderer/native |
+| d1.5 | STT relay (WS reconnect + bounded queues) | adapt | M | done | `packages/shared/src/voice/realtime-transcription.ts`; `__tests__/realtime-transcription.test.ts`; `voice:sttStart/Audio/Stop` + `voice:sttEvent` push | browser codec g711_ulaw@8k / pcm16@24k |
+| d1.6 | Voice wake list + broadcast; on-device recognition only | adapt | M | done | `packages/shared/src/voice/wake-list.ts`; `__tests__/wake-list.test.ts`; `voice:wakeGet/wakeSet/wakeChanged` + `voice:trigger` handlers | foreground-gated; route triggers to sessions |
 | d1.7 | Telephony voice-call (Twilio/Telnyx/Plivo) | skip | L | todo | — | needs public webhook + tunnel infra; desktop model must host or delegate |
 | d1.8 | Meeting realtime engine seam | adapt | M | todo | — | verify ROX meeting stack can host realtime engines |
 

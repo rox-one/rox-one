@@ -136,3 +136,92 @@ export * from './meeting-capture.ts';
 export * from './meeting-stream.ts';
 export * from './transcript-reducer.ts';
 export { DeepgramTranscriptionAdapter, DEEPGRAM_TRANSCRIPTION_MODEL, DEEPGRAM_TRANSCRIPTION_NAME, normalizeDeepgramTranscript } from './adapters/deepgram-transcription.ts'
+export {
+  TALK_EVENT_TYPES,
+  isTalkEventType,
+  TalkEventSequencer,
+  TalkSessionController,
+  createTalkEventMergeState,
+  mergeTalkEvent,
+  type TalkEvent,
+  type TalkEventType,
+  type TalkEventDraft,
+  type TalkEventScope,
+  type TalkMode,
+  type TalkTransport,
+  type TalkBrain,
+  type TalkEventMergeState,
+} from './talk-events.ts'
+export {
+  REALTIME_SESSION_TRANSITIONS,
+  REALTIME_AUDIO_QUEUE_MAX_CHUNKS,
+  REALTIME_AUDIO_QUEUE_MAX_BYTES,
+  REALTIME_AUDIO_QUEUE_TTL_MS,
+  canTransitionRealtimeSession,
+  createRealtimeVoiceAudioQueue,
+  RealtimeVoiceSessionLifecycle,
+  type RealtimeVoiceSessionState,
+  type RealtimeVoiceAudioQueue,
+  type RealtimeSessionSnapshot,
+  type RealtimeSendResult,
+  type RealtimeTimerScheduler,
+  type RealtimeVoiceSessionLifecycleOptions,
+} from './realtime-bridge.ts'
+export type {
+  RealtimeVoiceBridge,
+  RealtimeVoiceBridgeCallbacks,
+  RealtimeVoiceBridgeConfig,
+  RealtimeVoiceRole,
+} from './realtime-bridge-types.ts'
+export {
+  VoiceProviderError,
+  createVoiceProviderRegistry,
+  getRealtimeVoiceProvider,
+  getSpeechProvider,
+  listRealtimeVoiceProviders,
+  listSpeechProviders,
+  resolveConfiguredRealtimeVoiceProvider,
+  resolveConfiguredSpeechProvider,
+  type RealtimeBrowserSession,
+  type RealtimeBrowserSessionRequest,
+  type RealtimeVoiceProvider,
+  type SpeechProvider,
+  type SpeechSynthesisInput,
+  type SpeechSynthesisResult,
+  type SpeechSynthesisStreamResult,
+  type VoiceProviderCapabilities,
+  type VoiceProviderErrorCode,
+  type VoiceProviderInfo,
+  type VoiceProviderKind,
+  type VoiceProviderRegistry,
+  type VoiceProviderSource,
+} from './provider-registry.ts'
+export {
+  createRealtimeTranscriptionSession,
+  type RealtimeSocket,
+  type RealtimeSocketHandlers,
+  type RealtimeSocketOpener,
+  type RealtimeTranscriptionEvent,
+  type RealtimeTranscriptionEventKind,
+  type RealtimeTranscriptionSession,
+  type RealtimeTranscriptionSessionOptions,
+} from './realtime-transcription.ts'
+export {
+  MAX_WAKE_TRIGGERS,
+  MAX_WAKE_TRIGGER_UNITS,
+  isVoiceWakeRouting,
+  normalizeWakeTrigger,
+  normalizeWakeList,
+  defaultVoiceWakeList,
+  toWakeChangedPayload,
+  matchesWakeTrigger,
+  type VoiceWakeList,
+  type VoiceWakeChangedPayload,
+  type VoiceWakeTrigger,
+  type VoiceWakeRouting,
+} from './wake-list.ts'
+export { createOpenAiRealtimeVoiceProvider, createOpenAiRealtimeTranscriptionSession, createOpenAiSpeechProvider, openGlobalWebSocket, encodeAudioAppend, parseServerEvent, decodeOpenAiTranscriptionEvent, OPENAI_PROVIDER_ID, OPENAI_REALTIME_MODEL, OPENAI_TRANSCRIPTION_MODEL, OPENAI_CAPABILITIES, type OpenAiRealtimeOptions, type OpenAiProviderOptions } from './realtime-providers/openai.ts'
+export { synthesizeSpeech, createEdgeSpeechProvider, speechResultFromSpeakResult, MAX_SPEECH_TEXT_BYTES } from './tts/synthesis.ts'
+export { createTtsStream, iterateTtsChunks, sliceAudioChunks, DEFAULT_TTS_CHUNK_BYTES, type TtsStream, type TtsStreamChunk } from './tts/streaming.ts'
+export { resolveTtsProviderId, TTS_PROVIDER_PRECEDENCE, type TtsProviderInputs } from './tts/resolution.ts'
+export type { OpenAiRealtimeServerEvent } from './realtime-providers/openai.ts'
