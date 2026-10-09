@@ -123,6 +123,18 @@
   accent-color: var(--accent);
 }
 
+/* The master toggle gates every value control; make the off state obvious
+   (audit: disabled sliders previously looked fully active). */
+.material-slider-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.material-slider:has(.material-slider-input:disabled) .material-slider-value,
+.material-group:has(:disabled) .material-group-title {
+  opacity: 0.55;
+}
+
 .material-slider-value {
   min-width: 3rem;
   color: var(--text-secondary);
