@@ -1,20 +1,27 @@
 # rox-tg-linkd
 
-Server-side half of Rox Telegram account linking (owner spec R4). One small
-Bun/TypeScript service with no runtime dependencies:
+Server-side half of Rox Telegram flows — the platform's single consumer of
+`@rox_one_bot`. One small Bun/TypeScript service with no runtime dependencies:
 
-* **Deep-link start** — `POST /api/link/start` mints a pending link with an
-  8-character code and a `https://t.me/<bot>?start=<token>` deep link.
-* **Bot long-poll** — raw Bot API `fetch` loop: `/start <token>` asks for the
-  user's own contact, the contact binds the phone, and the bot sends the code.
-* **Verification** — `POST /api/link/verify` turns the code into a durable
-  phone binding, with attempt limits and a 30-minute TTL.
+* **Account linking (desktop, owner spec R4)** — `POST /api/link/start` mints a
+  pending link with an 8-character code and a `https://t.me/<bot>?start=<token>`
+  deep link; the bot asks for the user's own contact, the contact binds the
+  phone, and the bot sends the code; `POST /api/link/verify` turns the code into
+  a durable phone binding (attempt limits, 30-minute TTL).
+* **Phone registration / sign-in (web)** — `POST /api/register/start` mints a
+  token and the user opens the bot, presses **Share phone** and sends their own
+  contact. That is the whole interaction: **no code**. The website polls
+  `GET /api/register/status?token=…` until `ready`, then calls
+  `POST /api/register/consume` (exactly-once) and creates the account.
+* **Bot long-poll** — a raw Bot API `fetch` loop subscribing to `message` and
+  `callback_query`.
 
 ```
-Rox desktop ──POST /api/link/start──▶ rox-tg-linkd ──getUpdates (long poll)──▶ Telegram
-     │  deep link (tg:// / https)                    ◀── /start <token>
-     └──────── user shares phone in Telegram ────────▶ contact (own only)
-Rox desktop ──POST /api/link/verify {code}──▶ linked
+Website     ──POST /api/register/start──▶ rox-tg-linkd ──getUpdates──▶ Telegram
+   │  deep link (tg:// / https)                ◀── /start <token>
+   │                                           ◀── contact (own only)
+   └──GET /api/register/status (poll)──▶ ready { phone } ──consume──▶ account created
+Rox desktop ──POST /api/link/start─────▶ pending link + code ──▶ /api/link/verify
 ```
 
 ## Flow
@@ -43,10 +50,13 @@ Codes are 8 characters from `A-Z2-9` (no `0`/`1`) and live for 30 minutes.
 | `POST` | `/api/link/start` | Pending link + deep link | `200` `400` `401` `503` |
 | `POST` | `/api/link/verify` | Code → `linked`/`expired`/`invalid` | `200` `400` `401` |
 | `GET`  | `/api/link/status?roxUserId=…` | Current state (plus `code` once issued) | `200` `400` `401` |
+| `POST` | `/api/register/start` | Registration token + deep link (no code) | `201` `400` `401` `503` |
+| `GET`  | `/api/register/status?token=…` | `waiting`/`ready`/`expired`/`cancelled`/`consumed` | `200` `400` `401` `404` |
+| `POST` | `/api/register/consume` | Close a ready registration once | `200` `400` `401` `404` `409` `410` |
 | `GET`  | `/api/health` | Honest readiness | `200` |
 
-`401` only when `LINK_AUTH_TOKEN` is set (then every `/api/link/*` call needs
-`Authorization: Bearer <token>`).
+`401` only when `LINK_AUTH_TOKEN` is set (then every `/api/link/*` and
+`/api/register/*` call needs `Authorization: Bearer <token>`).
 
 `503 {"error":"no_bot_token"}` / `{"error":"no_bot_username"}` — the service
 cannot mint a usable link, so it refuses instead of inventing one.
@@ -57,7 +67,28 @@ cannot mint a usable link, so it refuses instead of inventing one.
   the process is up but the feature is not — the header never claims success);
 * with a token → `{"ok":true,"bot":"<username|null>"}`.
 
-### Verify semantics
+## Phone registration (code-free)
+
+The web flow the owner asked for — *share the contact and that is it*:
+
+1. The website calls `POST /api/register/start` (after the user ticked the legal
+   consent checkbox) and shows the returned `deepLink`/`tgDeepLink`.
+2. The user opens the bot: `/start <token>` answers with a sign-up greeting and a
+   one-time reply keyboard holding a single **📱 Поделиться телефоном** button
+   (`request_contact`).
+3. Sharing the user's own contact (`contact.user_id === from.id`) stores the
+   E.164 phone and flips the record to `ready`; the bot confirms with the masked
+   phone and an inline **Это не я** button (`callback_data = rx-cancel:<token>`)
+   so a forwarded deep link can be cancelled by the person who received it.
+4. The website polls `GET /api/register/status?token=…`; on `ready` it creates or
+   finds the account by phone, then calls `POST /api/register/consume`, which
+   wins exactly once (`409 already_consumed` afterwards).
+
+Statuses: `waiting` → `ready` → `consumed`, plus `expired` (TTL) and `cancelled`
+(the inline button). Phone numbers are stored normalized (`+79991234512`) and
+rendered masked (`+7 999 ***-**-12`).
+
+## Verify semantics
 
 * no pending link / phone not shared yet → `invalid`;
 * past TTL → `expired` (and the row is written back as expired);
@@ -82,8 +113,8 @@ cannot mint a usable link, so it refuses instead of inventing one.
 | `TG_API_BASE` | `https://api.telegram.org` | override for a local Bot API server |
 | `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
 
-Storage is a single SQLite database (`pending_links`, `links`). Tokens, phones
-and codes are the only state; nothing is logged.
+Storage is a single SQLite database (`pending_links`, `links`, `registrations`).
+Tokens and phones are the only state; secrets are never logged.
 
 ## Run locally (no Docker)
 
@@ -149,8 +180,26 @@ docker compose up -d --build
 curl -s http://127.0.0.1:8095/api/health
 ```
 
-The desktop reaches the service through `ROX_TG_LINK_URL`
-(default `http://127.0.0.1:8095`).
+## Deploy on the platform host (CT101, systemd)
+
+`@rox_one_bot` has exactly **one** update consumer. The platform host owns it:
+the website and the desktop client both talk to the loopback service.
+
+```sh
+services/rox-tg-linkd/deploy/install-ct.sh root@100.126.90.2   # build + rsync + unit + restart
+```
+
+* `/etc/rox-tg-linkd.env` (mode 600, root) — `TG_BOT_TOKEN`, `TG_BOT_USERNAME`,
+  `LINK_AUTH_TOKEN`, `TG_POLL_TIMEOUT_SEC`; the unit sets `PORT`/`LINK_DB_PATH`.
+* `deploy/rox-tg-linkd.service` — `DynamicUser`, `StateDirectory=rox-tg-linkd`
+  (`/var/lib/rox-tg-linkd/links.sqlite`), `ProtectSystem=strict`, loopback only.
+* The website calls it through `TG_LINKD_URL`/`TG_LINKD_TOKEN`; the desktop's
+  `ROX_TG_LINK_URL` defaults to `https://rox.one`, whose website proxy forwards
+  `/api/link/*` to this daemon and adds the daemon bearer server-side. The
+  desktop presents the proxy's own bearer in `ROX_TG_LINK_TOKEN` (the value of
+  the website's `ROX_TG_LINK_PUBLIC_TOKEN`).
+* Never run this service and a local desktop daemon against the same bot at the
+  same time — `getUpdates` would 409 for one of them.
 
 ## Deploy as a macOS LaunchAgent
 
@@ -172,6 +221,9 @@ request after an idle period takes seconds (measured 5.3 s with
   before any state changes.
 * Codes and tokens are secrets: never logged, and returned only to the caller
   that created (or is verifying) the link.
+* Registration tokens are single-use (`consume` wins once), expire with
+  `LINK_TTL_MS`, and can be cancelled from the bot; the phone is stored E.164
+  and only ever rendered masked outside the API response.
 * The service is loopback-only in compose; expose it through an authenticated
   tunnel and set `LINK_AUTH_TOKEN`.
 * The bot token lives in the environment/secret store only — this repository

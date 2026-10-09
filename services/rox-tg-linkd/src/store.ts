@@ -1,7 +1,10 @@
 /**
- * Durable link state in bun:sqlite. Two tables:
+ * Durable link state in bun:sqlite. Three tables:
  *  - `pending_links`: one row per `/api/link/start`, carrying the deep-link
  *    token, the phone bound through Telegram and the 8-char code;
+ *  - `registrations`: one row per `/api/register/start` (website sign-up with
+ *    no code), carrying the shared E.164 phone once the user's own contact
+ *    arrives;
  *  - `links`: the confirmed roxUserId → phone binding.
  *
  * Every method takes `now` explicitly so TTL/attempt behaviour is testable
@@ -41,6 +44,39 @@ export interface LinkStatusView {
 
 export type VerifyResult = 'linked' | 'expired' | 'invalid'
 
+/**
+ * Service-side state of a phone registration (website sign-up, no code):
+ * `waiting` → the user has not shared a contact yet;
+ * `ready`   → the phone is bound and the browser may consume it;
+ * `consumed`/`cancelled`/`expired` are terminal.
+ */
+export type RegistrationStatus = 'waiting' | 'ready' | 'cancelled' | 'consumed' | 'expired'
+
+export interface Registration {
+  token: string
+  phone: string | null
+  telegramUserId: string | null
+  telegramUsername: string | null
+  chatId: string | null
+  status: RegistrationStatus
+  createdAt: number
+  expiresAt: number
+  confirmedAt: number | null
+}
+
+/** Registration state as exposed over HTTP; the phone is only present once bound. */
+export interface RegistrationView {
+  status: RegistrationStatus
+  phone: string | null
+  telegramUserId: string | null
+  telegramUsername: string | null
+  confirmedAt: number | null
+  expiresAt: number
+}
+
+/** Outcome of the atomic single-use consume. */
+export type ConsumeResult = 'consumed' | 'already_consumed' | 'not_found' | 'expired' | 'cancelled' | 'waiting'
+
 interface PendingRow {
   token: string
   rox_user_id: string
@@ -52,6 +88,18 @@ interface PendingRow {
   attempts: number
   created_at: number
   expires_at: number
+}
+
+interface RegistrationRow {
+  token: string
+  phone: string | null
+  telegram_user_id: string | null
+  telegram_username: string | null
+  chat_id: string | null
+  status: string
+  created_at: number
+  expires_at: number
+  confirmed_at: number | null
 }
 
 const SCHEMA = `
@@ -75,6 +123,18 @@ CREATE TABLE IF NOT EXISTS links (
   telegram_user_id TEXT NOT NULL,
   linked_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS registrations (
+  token TEXT PRIMARY KEY,
+  phone TEXT,
+  telegram_user_id TEXT,
+  telegram_username TEXT,
+  chat_id TEXT,
+  status TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  confirmed_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_reg_chat ON registrations(chat_id, created_at DESC);
 `
 
 function toPending(row: PendingRow): PendingLink {
@@ -90,6 +150,55 @@ function toPending(row: PendingRow): PendingLink {
     createdAt: row.created_at,
     expiresAt: row.expires_at,
   }
+}
+
+function toRegistration(row: RegistrationRow): Registration {
+  return {
+    token: row.token,
+    phone: row.phone,
+    telegramUserId: row.telegram_user_id,
+    telegramUsername: row.telegram_username,
+    chatId: row.chat_id,
+    status: row.status as RegistrationStatus,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    confirmedAt: row.confirmed_at,
+  }
+}
+
+/**
+ * Effective status of a stored registration at `now`: an active row past its
+ * TTL is expired even before the sweep writes that back. The terminal states
+ * (`cancelled`, `consumed`, `expired`) never change.
+ */
+export function effectiveRegistrationStatus(status: RegistrationStatus, expiresAt: number, now: number): RegistrationStatus {
+  if (status === 'cancelled' || status === 'consumed' || status === 'expired') return status
+  return expiresAt <= now ? 'expired' : status
+}
+
+/**
+ * Canonical phone for storage: trim, keep a single leading `+` and digits
+ * only (Telegram already hands contacts in E.164, so this only normalises the
+ * separators a user interface may introduce). Empty/garbage input → ''.
+ */
+export function normalizePhone(input: unknown): string {
+  if (typeof input !== 'string') return ''
+  const trimmed = input.trim()
+  if (trimmed === '') return ''
+  const digits = trimmed.replace(/\D/g, '')
+  if (digits === '') return ''
+  return trimmed.startsWith('+') ? `+${digits}` : digits
+}
+
+/**
+ * Display mask for an E.164 phone: keeps the country code, the first three
+ * national digits and the last two — `+79991234512` → `+7 999 ***-**-12`.
+ */
+export function maskPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  if (digits === '') return ''
+  if (digits.length < 5) return `+${digits}`
+  return `+${digits.slice(0, 1)} ${digits.slice(1, 4)} ***-**-${digits.slice(-2)}`
 }
 
 export interface StoreOptions {
@@ -251,6 +360,121 @@ export class LinkStore {
     const result = this.db
       .query('UPDATE pending_links SET status = ? WHERE status IN (?, ?) AND expires_at <= ?')
       .run('expired', 'waiting-code', 'code-sent', now)
+    return Number(result.changes)
+  }
+
+  /**
+   * Mint a fresh phone registration. Unlike links there is no user key to be
+   * idempotent on — each website visit gets its own single-use token.
+   */
+  createRegistration(now: number, ttlMs: number): Registration {
+    this.expireStaleRegistrations(now)
+    const token = this.newToken()
+    this.db
+      .query(`INSERT INTO registrations (token, status, created_at, expires_at) VALUES (?, 'waiting', ?, ?)`)
+      .run(token, now, now + ttlMs)
+    const row = this.registrationByToken(token)
+    if (!row) throw new Error('registration insert failed')
+    return row
+  }
+
+  registrationByToken(token: string): Registration | null {
+    const row = this.db.query<RegistrationRow, [string]>('SELECT * FROM registrations WHERE token = ?').get(token)
+    return row ? toRegistration(row) : null
+  }
+
+  /** Remember the chat that ran `/start <token>` while the registration waits. */
+  bindRegistrationChat(token: string, chatId: string, now: number): Registration | null {
+    const registration = this.registrationByToken(token)
+    if (!registration) return null
+    if (effectiveRegistrationStatus(registration.status, registration.expiresAt, now) !== 'waiting') return null
+    this.db.query('UPDATE registrations SET chat_id = ? WHERE token = ?').run(chatId, token)
+    return this.registrationByToken(token)
+  }
+
+  /** Active (waiting or ready) registration whose contact this chat should send. */
+  findRegistrationByChat(chatId: string, now: number): Registration | null {
+    const row = this.db
+      .query<RegistrationRow, [string]>(
+        `SELECT * FROM registrations WHERE chat_id = ? AND status IN ('waiting', 'ready') ORDER BY created_at DESC LIMIT 1`,
+      )
+      .get(chatId)
+    if (!row) return null
+    const registration = toRegistration(row)
+    return effectiveRegistrationStatus(registration.status, registration.expiresAt, now) === 'expired' ? null : registration
+  }
+
+  /** Bind the shared own-contact phone and move the registration to `ready`. */
+  confirmRegistration(
+    chatId: string,
+    phone: string,
+    telegramUserId: string,
+    telegramUsername: string | null,
+    now: number,
+  ): Registration | null {
+    const registration = this.findRegistrationByChat(chatId, now)
+    if (!registration) return null
+    this.db
+      .query(
+        `UPDATE registrations SET phone = ?, telegram_user_id = ?, telegram_username = ?, status = 'ready', confirmed_at = ?
+         WHERE token = ?`,
+      )
+      .run(phone, telegramUserId, telegramUsername, now, registration.token)
+    return this.registrationByToken(registration.token)
+  }
+
+  /**
+   * User pressed «Это не я»: cancel an active ready registration. Returns
+   * whether the state changed, so a second press (or one after expiry) is a
+   * no-op rather than re-editing the message.
+   */
+  cancelRegistration(token: string, now: number): boolean {
+    const result = this.db
+      .query(`UPDATE registrations SET status = 'cancelled' WHERE token = ? AND status = 'ready' AND expires_at > ?`)
+      .run(token, now)
+    return Number(result.changes) === 1
+  }
+
+  /**
+   * Atomic single-use consume: the conditional UPDATE makes exactly one caller
+   * win, every later caller sees `already_consumed`.
+   */
+  consumeRegistration(token: string, now: number): ConsumeResult {
+    const result = this.db
+      .query(`UPDATE registrations SET status = 'consumed' WHERE token = ? AND status = 'ready' AND expires_at > ?`)
+      .run(token, now)
+    if (Number(result.changes) === 1) return 'consumed'
+    const registration = this.registrationByToken(token)
+    if (!registration) return 'not_found'
+    if (registration.status === 'consumed') return 'already_consumed'
+    if (registration.status === 'cancelled') return 'cancelled'
+    if (effectiveRegistrationStatus(registration.status, registration.expiresAt, now) === 'expired') return 'expired'
+    return 'waiting'
+  }
+
+  /** Current registration view, writing an overdue row back as expired. */
+  registrationStatusFor(token: string, now: number): RegistrationView | null {
+    const registration = this.registrationByToken(token)
+    if (!registration) return null
+    const status = effectiveRegistrationStatus(registration.status, registration.expiresAt, now)
+    if (status === 'expired' && registration.status !== 'expired') {
+      this.db.query('UPDATE registrations SET status = ? WHERE token = ?').run('expired', token)
+    }
+    return {
+      status,
+      phone: registration.phone,
+      telegramUserId: registration.telegramUserId,
+      telegramUsername: registration.telegramUsername,
+      confirmedAt: registration.confirmedAt,
+      expiresAt: registration.expiresAt,
+    }
+  }
+
+  /** Mark every active registration past its TTL as expired. */
+  expireStaleRegistrations(now: number): number {
+    const result = this.db
+      .query(`UPDATE registrations SET status = 'expired' WHERE status IN ('waiting', 'ready') AND expires_at <= ?`)
+      .run(now)
     return Number(result.changes)
   }
 

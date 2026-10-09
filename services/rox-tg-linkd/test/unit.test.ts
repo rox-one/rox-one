@@ -18,7 +18,7 @@ import {
   normalizeCode,
   parseStartPayload,
 } from '../src/link.ts'
-import { LinkStore } from '../src/store.ts'
+import { LinkStore, effectiveRegistrationStatus, maskPhone, normalizePhone } from '../src/store.ts'
 import { TelegramBot, type FetchLike, type TelegramUpdate } from '../src/telegram.ts'
 import { createRequestHandler, jsonResponse } from '../src/server.ts'
 
@@ -70,6 +70,18 @@ type MessageFields = Omit<NonNullable<TelegramUpdate['message']>, 'message_id' |
 
 function update(partial: MessageFields & Partial<Pick<NonNullable<TelegramUpdate['message']>, 'chat' | 'from'>> = {}): TelegramUpdate {
   return { update_id: 1, message: { message_id: 1, chat: { id: '42' }, from: { id: '42' }, ...partial } }
+}
+
+function callbackUpdate(data: string, partial: { id?: string; messageId?: number; chatId?: string } = {}): TelegramUpdate {
+  return {
+    update_id: 2,
+    callback_query: {
+      id: partial.id ?? 'cb-1',
+      from: { id: '42' },
+      data,
+      message: { message_id: partial.messageId ?? 9, chat: { id: partial.chatId ?? '42' } },
+    },
+  }
 }
 
 describe('code primitives', () => {
@@ -362,5 +374,243 @@ describe('HTTP contract', () => {
   test('jsonResponse sets no-store', async () => {
     const response = jsonResponse(200, { ok: true })
     expect(response.headers.get('cache-control')).toBe('no-store')
+  })
+})
+
+describe('registration store transitions', () => {
+  test('waiting → ready → consumed is single-use and atomic', () => {
+    const store = memoryStore({ tokens: ['reg-1'] })
+    const reg = store.createRegistration(NOW, LINK_TTL_MS)
+    expect(reg.token).toBe('reg-1')
+    expect(reg.status).toBe('waiting')
+    expect(reg.expiresAt).toBe(NOW + LINK_TTL_MS)
+    expect(store.registrationStatusFor('reg-1', NOW)?.status).toBe('waiting')
+    expect(store.consumeRegistration('reg-1', NOW)).toBe('waiting') // not ready yet
+
+    store.bindRegistrationChat('reg-1', '42', NOW)
+    const ready = store.confirmRegistration('42', '+79991234512', '42', 'nick', NOW)
+    expect(ready?.status).toBe('ready')
+    expect(ready?.phone).toBe('+79991234512')
+    expect(ready?.telegramUsername).toBe('nick')
+    expect(ready?.confirmedAt).toBe(NOW)
+
+    expect(store.consumeRegistration('reg-1', NOW + 1)).toBe('consumed')
+    expect(store.consumeRegistration('reg-1', NOW + 2)).toBe('already_consumed')
+    expect(store.registrationStatusFor('reg-1', NOW + 2)?.status).toBe('consumed')
+    expect(store.consumeRegistration('nope', NOW)).toBe('not_found')
+  })
+
+  test('«Это не я» cancels a ready registration idempotently', () => {
+    const store = memoryStore({ tokens: ['reg-2'] })
+    store.createRegistration(NOW, LINK_TTL_MS)
+    store.bindRegistrationChat('reg-2', '42', NOW)
+    store.confirmRegistration('42', '+79991234512', '42', 'nick', NOW)
+    expect(store.cancelRegistration('reg-2', NOW)).toBe(true)
+    expect(store.registrationStatusFor('reg-2', NOW)?.status).toBe('cancelled')
+    expect(store.cancelRegistration('reg-2', NOW)).toBe(false) // second press is a no-op
+    expect(store.consumeRegistration('reg-2', NOW)).toBe('cancelled')
+  })
+
+  test('past the TTL the registration is expired and cannot be consumed', () => {
+    const store = memoryStore({ tokens: ['reg-3'] })
+    store.createRegistration(NOW, 1000)
+    store.bindRegistrationChat('reg-3', '42', NOW)
+    store.confirmRegistration('42', '+79991234512', '42', null, NOW)
+    expect(store.registrationStatusFor('reg-3', NOW + 2000)?.status).toBe('expired')
+    expect(store.consumeRegistration('reg-3', NOW + 2000)).toBe('expired')
+  })
+
+  test('phone normalisation and masking', () => {
+    expect(normalizePhone('+7 (999) 123-45-12')).toBe('+79991234512')
+    expect(normalizePhone('  +7 999 123 45 12 ')).toBe('+79991234512')
+    expect(normalizePhone('')).toBe('')
+    expect(normalizePhone(42)).toBe('')
+    expect(maskPhone('+79991234512')).toBe('+7 999 ***-**-12')
+    expect(effectiveRegistrationStatus('waiting', NOW, NOW)).toBe('expired')
+    expect(effectiveRegistrationStatus('consumed', NOW - 1, NOW)).toBe('consumed')
+  })
+})
+
+describe('registration HTTP contract', () => {
+  const regConfig = loadConfig({
+    TG_BOT_TOKEN: 'tg-token',
+    TG_BOT_USERNAME: 'rox_bot',
+    LINK_DB_PATH: ':memory:',
+    LINK_AUTH_TOKEN: 'api-secret',
+  })
+
+  function handler(storeImpl: LinkStore) {
+    return createRequestHandler({ config: regConfig, store: storeImpl })
+  }
+
+  function post(path: string, body: unknown, headers: Record<string, string> = {}): Request {
+    return new Request(`http://127.0.0.1:8095${path}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: 'Bearer api-secret', ...headers },
+      body: JSON.stringify(body),
+    })
+  }
+
+  function get(path: string, headers: Record<string, string> = {}): Request {
+    return new Request(`http://127.0.0.1:8095${path}`, { headers: { authorization: 'Bearer api-secret', ...headers } })
+  }
+
+  test('registration endpoints require the bearer token', async () => {
+    const h = handler(memoryStore())
+    const response = await h(new Request('http://127.0.0.1:8095/api/register/status?token=x'))
+    expect(response.status).toBe(401)
+  })
+
+  test('start returns 201 with the token and both deep links', async () => {
+    const h = handler(memoryStore({ tokens: ['reg-1'] }))
+    const response = await h(post('/api/register/start', {}))
+    expect(response.status).toBe(201)
+    const body = await response.json() as Record<string, unknown>
+    expect(body.ok).toBe(true)
+    expect(body.token).toBe('reg-1')
+    expect(body.deepLink).toBe('https://t.me/rox_bot?start=reg-1')
+    expect(body.tgDeepLink).toBe('tg://resolve?domain=rox_bot&start=reg-1')
+    expect(typeof body.expiresAt).toBe('number')
+  })
+
+  test('status walks waiting → ready and unknown tokens are 404', async () => {
+    const store = memoryStore({ tokens: ['reg-2'] })
+    const h = handler(store)
+    await h(post('/api/register/start', {}))
+
+    const waiting = await h(get('/api/register/status?token=reg-2'))
+    expect(waiting.status).toBe(200)
+    expect(await waiting.json()).toMatchObject({ ok: true, status: 'waiting' })
+
+    store.bindRegistrationChat('reg-2', '42', Date.now())
+    store.confirmRegistration('42', '+79991234512', '42', 'nick', Date.now())
+    const ready = await h(get('/api/register/status?token=reg-2'))
+    expect(await ready.json()).toMatchObject({
+      status: 'ready',
+      phone: '+79991234512',
+      phoneMasked: '+7 999 ***-**-12',
+      telegramUserId: '42',
+      telegramUsername: 'nick',
+    })
+
+    const missing = await h(get('/api/register/status?token=nope'))
+    expect(missing.status).toBe(404)
+    expect((await missing.json() as { error: string }).error).toBe('not_found')
+  })
+
+  test('consume is single-use: 200, then 409; unknown 404; expired 410', async () => {
+    const store = memoryStore({ tokens: ['reg-3', 'reg-4'] })
+    const h = handler(store)
+    await h(post('/api/register/start', {})) // reg-3
+    store.bindRegistrationChat('reg-3', '42', Date.now())
+    store.confirmRegistration('42', '+79991234512', '42', 'nick', Date.now())
+
+    const first = await h(post('/api/register/consume', { token: 'reg-3' }))
+    expect(first.status).toBe(200)
+    expect(await first.json()).toEqual({ ok: true, status: 'consumed' })
+    const second = await h(post('/api/register/consume', { token: 'reg-3' }))
+    expect(second.status).toBe(409)
+    expect(await second.json()).toEqual({ ok: false, error: 'already_consumed' })
+
+    const missing = await h(post('/api/register/consume', { token: 'nope' }))
+    expect(missing.status).toBe(404)
+
+    // reg-4 is minted already past its TTL.
+    store.createRegistration(Date.now() - 2 * LINK_TTL_MS, LINK_TTL_MS)
+    const expired = await h(post('/api/register/consume', { token: 'reg-4' }))
+    expect(expired.status).toBe(410)
+    expect((await expired.json() as { error: string }).error).toBe('expired')
+  })
+
+  test('consume refuses a token that is not ready and rejects malformed requests', async () => {
+    const store = memoryStore({ tokens: ['reg-5'] })
+    const h = handler(store)
+    await h(post('/api/register/start', {}))
+    const notReady = await h(post('/api/register/consume', { token: 'reg-5' }))
+    expect(notReady.status).toBe(409)
+    expect(await notReady.json()).toEqual({ ok: false, error: 'not_ready' })
+
+    expect((await h(post('/api/register/consume', {}))).status).toBe(400)
+    expect((await h(get('/api/register/status'))).status).toBe(400)
+    expect((await h(post('/api/register/start', {}, { authorization: 'Bearer wrong' }))).status).toBe(401)
+  })
+})
+
+describe('registration bot conversation', () => {
+  test('getUpdates subscribes to message and callback_query', async () => {
+    const { bot, calls } = botFor(memoryStore())
+    await bot.getUpdates(new AbortController().signal)
+    expect(calls.at(-1)?.method).toBe('getUpdates')
+    expect(calls.at(-1)?.body.allowed_updates).toEqual(['message', 'callback_query'])
+  })
+
+  test('/start on a registration token greets and shows the phone keyboard', async () => {
+    const store = memoryStore({ tokens: ['reg-1'] })
+    const { bot, calls } = botFor(store)
+    const reg = store.createRegistration(NOW, LINK_TTL_MS)
+    await bot.handleUpdate(update({ text: `/start ${reg.token}` }))
+    const call = calls.at(-1)
+    expect(call?.method).toBe('sendMessage')
+    expect(String(call?.body.text)).toContain('регистрация в Rox')
+    const markup = call?.body.reply_markup as { keyboard: { text: string; request_contact?: boolean }[][] }
+    expect(markup.keyboard[0]?.[0]?.request_contact).toBe(true)
+    expect(markup.keyboard[0]?.[0]?.text).toContain('📱')
+    expect(store.findRegistrationByChat('42', NOW)?.token).toBe(reg.token)
+  })
+
+  test('own contact binds the phone and confirms with a cancel button', async () => {
+    const store = memoryStore({ tokens: ['reg-1'] })
+    const { bot, calls } = botFor(store)
+    const reg = store.createRegistration(NOW, LINK_TTL_MS)
+    await bot.handleUpdate(update({ text: `/start ${reg.token}` }))
+    await bot.handleUpdate(update({ from: { id: '42', username: 'nick' }, contact: { phone_number: '+7 (999) 123-45-12', user_id: '42' } }))
+    const call = calls.at(-1)
+    expect(String(call?.body.text)).toContain('+7 999 ***-**-12')
+    expect(String(call?.body.text)).toContain('браузер')
+    const markup = call?.body.reply_markup as { inline_keyboard: { text: string; callback_data: string }[][] }
+    expect(markup.inline_keyboard[0]?.[0]).toEqual({ text: 'Это не я', callback_data: `rx-cancel:${reg.token}` })
+    const stored = store.registrationByToken(reg.token)
+    expect(stored?.status).toBe('ready')
+    expect(stored?.phone).toBe('+79991234512')
+    expect(stored?.telegramUsername).toBe('nick')
+  })
+
+  test('foreign contact and empty phone are refused without binding', async () => {
+    const store = memoryStore({ tokens: ['reg-1'] })
+    const { bot, calls } = botFor(store)
+    const reg = store.createRegistration(NOW, LINK_TTL_MS)
+    await bot.handleUpdate(update({ text: `/start ${reg.token}` }))
+    await bot.handleUpdate(update({ contact: { phone_number: '+79990000000', user_id: '777' } }))
+    expect(String(calls.at(-1)?.body.text)).toContain('не контактом другого человека')
+    expect(store.registrationByToken(reg.token)?.status).toBe('waiting')
+
+    await bot.handleUpdate(update({ contact: { user_id: '42' } }))
+    expect(store.registrationByToken(reg.token)?.status).toBe('waiting')
+  })
+
+  test('«Это не я» cancels once and answers the callback on every press', async () => {
+    const store = memoryStore({ tokens: ['reg-1'] })
+    const { bot, calls } = botFor(store)
+    const reg = store.createRegistration(NOW, LINK_TTL_MS)
+    store.bindRegistrationChat(reg.token, '42', NOW)
+    store.confirmRegistration('42', '+79991234512', '42', 'nick', NOW)
+
+    await bot.handleUpdate(callbackUpdate(`rx-cancel:${reg.token}`))
+    expect(calls.some(c => c.method === 'answerCallbackQuery')).toBe(true)
+    expect(calls.some(c => c.method === 'editMessageReplyMarkup')).toBe(true)
+    expect(store.registrationByToken(reg.token)?.status).toBe('cancelled')
+
+    const editsAfterFirst = calls.filter(c => c.method === 'editMessageReplyMarkup').length
+    await bot.handleUpdate(callbackUpdate(`rx-cancel:${reg.token}`, { id: 'cb-2' }))
+    expect(store.registrationByToken(reg.token)?.status).toBe('cancelled')
+    expect(calls.filter(c => c.method === 'answerCallbackQuery').length).toBe(2)
+    expect(calls.filter(c => c.method === 'editMessageReplyMarkup').length).toBe(editsAfterFirst)
+  })
+
+  test('/start with an unknown token keeps the not-found behaviour', async () => {
+    const { bot, calls } = botFor(memoryStore())
+    await bot.handleUpdate(update({ text: '/start nope' }))
+    expect(String(calls.at(-1)?.body.text)).toContain('не найдена')
+    expect(calls.at(-1)?.body.reply_markup).toBeUndefined()
   })
 })
