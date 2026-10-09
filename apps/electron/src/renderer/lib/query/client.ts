@@ -1,15 +1,15 @@
 import { QueryClient, type QueryKey } from '@tanstack/react-query'
 
 /**
- * Entries are never garbage-collected by time (PERF-UI-PLAN §2.4 asks for
- * ≥ 30 min). Most entries are written with setQueryData, which in
- * query-core v5 never reschedules gc, so a finite gcTime would drop them
- * 30 min after creation however often they were refreshed (and drop the
- * notes task cache while Notes still holds it). Every key is bounded (one
- * per workspace × domain × verified actor), and an identity change clears
- * the whole cache.
+ * Entries are dropped from memory after 30 min without observers
+ * (PERF-UI-PLAN §2.4 asks for ≥ 30 min). Most entries are written with
+ * setQueryData, which in query-core v5 never reschedules gc: such an entry
+ * only takes a gc timer once an observer unsubscribes, so refreshing it
+ * through setQueryData neither resets nor removes it (the notes task cache
+ * survives while Notes holds it). Every key is bounded (one per workspace ×
+ * domain × verified actor), and an identity change clears the whole cache.
  */
-export const ROX_QUERY_GC_MS = Infinity
+export const ROX_QUERY_GC_MS = 30 * 60_000
 
 /**
  * Stale-while-revalidate window: a revisit paints from cache and starts a

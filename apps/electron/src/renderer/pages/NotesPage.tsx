@@ -57,7 +57,7 @@ import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboar
 import { NotesNavigationSidebar } from './notes/NotesNavigationSidebar'
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
-import { cachedNotesList, fetchNotesList, notesTaskCache, patchCachedNote, subscribeCachedNotesList } from '@/lib/query/notes-cache'
+import { cachedNotesList, ensureNotesTaskCache, fetchNotesList, patchCachedNote, subscribeCachedNotesList } from '@/lib/query/notes-cache'
 import { cacheWriteEpoch } from '@/lib/query/shared-read'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
@@ -625,9 +625,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const taskRequestRef = React.useRef(0)
   const taskCacheWorkspaceRef = React.useRef<string | null>(null)
   // PERF-09: per-workspace task cache shared across visits (only changed notes are re-read).
-  // Attached in a layout effect: the lookup registers the entry in the shared
+  // Attached in a layout effect: attaching registers the entry in the shared
   // cache (a write), so it must not run during render (StrictMode renders twice
-  // and may discard the render).
+  // and may discard the render). The pure lookup is `notesTaskCache`.
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
   const taskCacheUpdatedAtRef = React.useRef<Map<string, number>>(new Map())
   // PERF-09: which workspace the held `notes` list belongs to. A task pass never
@@ -640,7 +640,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     notesListWorkspaceRef.current = notesHandoffWorkspaceRef.current
   }, [notes])
   React.useLayoutEffect(() => {
-    const cache = notesTaskCache<NoteTask>(activeWorkspaceId)
+    const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
     taskCacheRef.current = cache.tasks
     taskCacheUpdatedAtRef.current = cache.updatedAt
     taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
@@ -668,7 +668,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // the previous principal's orphaned maps, and drop the list claims held for
     // the retired principal.
     const off = window.electronAPI.onIdentityChanged?.(() => {
-      const cache = notesTaskCache<NoteTask>(activeWorkspaceId)
+      const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
       taskCacheRef.current = cache.tasks
       taskCacheUpdatedAtRef.current = cache.updatedAt
       taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
@@ -972,7 +972,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const request = ++taskRequestRef.current
     if (taskCacheWorkspaceRef.current !== (activeWorkspaceId ?? null)) {
       // Switch to the new workspace's cache; the old one stays valid for its workspace.
-      const cache = notesTaskCache<NoteTask>(activeWorkspaceId)
+      const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
       taskCacheRef.current = cache.tasks
       taskCacheUpdatedAtRef.current = cache.updatedAt
       taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
