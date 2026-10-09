@@ -7,7 +7,7 @@
     },
     "rox/icon-size-tokens": {
       "severity": "warn",
-      "total": 2672
+      "total": 2660
     },
     "rox/no-arbitrary-radius": {
       "severity": "warn",
@@ -15,7 +15,7 @@
     },
     "rox/no-arbitrary-text-size": {
       "severity": "warn",
-      "total": 1656
+      "total": 1651
     },
     "rox/no-backdrop-on-overlay": {
       "severity": "warn",
@@ -23,7 +23,7 @@
     },
     "rox/no-foreground-opacity": {
       "severity": "warn",
-      "total": 2191
+      "total": 2188
     },
     "rox/no-hardcoded-z-index": {
       "severity": "warn",
