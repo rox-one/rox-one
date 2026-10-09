@@ -44,11 +44,15 @@ describe('HookRegistry', () => {
   it('isolates a throwing listener and still runs the rest', async () => {
     const registry = new HookRegistry()
     const order: string[] = []
-    registry.on('x', () => order.push('a'))
+    registry.on('x', () => {
+      order.push('a')
+    })
     registry.on('x', () => {
       throw new Error('boom')
     })
-    registry.on('x', () => order.push('c'))
+    registry.on('x', () => {
+      order.push('c')
+    })
 
     const result = await registry.emit('x', undefined)
 
@@ -61,8 +65,12 @@ describe('HookRegistry', () => {
   it('only dispatches to the named event and supports unsubscribe', async () => {
     const registry = new HookRegistry()
     const seen: string[] = []
-    const off = registry.on('a', () => seen.push('a'))
-    registry.on('b', () => seen.push('b'))
+    const off = registry.on('a', () => {
+      seen.push('a')
+    })
+    registry.on('b', () => {
+      seen.push('b')
+    })
     expect(registry.listenerCount('a')).toBe(1)
     expect(registry.events().sort()).toEqual(['a', 'b'])
 
