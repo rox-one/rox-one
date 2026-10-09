@@ -3,7 +3,7 @@ import { closeSync, lstatSync, mkdirSync, openSync, realpathSync, statSync } fro
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@rox/core/platform/identity/types'
-import type { OperatorRoleCeiling, OperatorRoleDefinition } from '@rox/shared/orgs'
+import type { OperatorRoleCeiling, OperatorRoleDefinition } from '@rox/shared/orgs/types'
 import { ALL_OPERATOR_SCOPES, DENIED_OPERATOR_CEILING, normalizeOperatorRoleDefinition, resolveOperatorRoleCeiling } from './operator-role-policy.ts'
 import { requireOsOwner } from './native-os-owner'
 import { requireOsPrivatePaths, secureOsPrivatePaths, VerifiedPrivateFileGuard } from './os-private-path.ts'
