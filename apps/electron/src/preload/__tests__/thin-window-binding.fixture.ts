@@ -37,7 +37,6 @@ class FakeWsClient {
   }
 }
 
-mock.module('@sentry/electron/preload', () => ({}))
 mock.module('electron', () => ({
   contextBridge: {
     exposeInMainWorld(name: string, value: ElectronAPI) {

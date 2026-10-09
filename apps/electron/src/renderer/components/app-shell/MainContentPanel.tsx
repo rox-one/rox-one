@@ -45,6 +45,7 @@ import {
   isExtensionNavigation,
   isConnectionsNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isCloudRunNavigation,
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
@@ -89,6 +90,7 @@ const SearchPage = lazyRoutePage(ROUTE_PAGE_LOADERS.search)
 const NotesPage = lazyRoutePage(ROUTE_PAGE_LOADERS.notes)
 const ConnectionsPage = lazyRoutePage(ROUTE_PAGE_LOADERS.connections)
 const ExtraScreenHost = lazyRoutePage(ROUTE_PAGE_LOADERS.extraScreens)
+const DrivePage = lazyRoutePage(() => import('@/pages/DrivePage'))
 // W1-07 (#1504): unified mode roots; reachable only while their mode flag is on.
 const SurfaceHost = lazyRoutePage(ROUTE_PAGE_LOADERS.surfaces)
 const TasksPage = lazyRoutePage(ROUTE_PAGE_LOADERS.tasks)
@@ -714,6 +716,15 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <HomeFrontPage />
+      </Panel>
+    )
+  }
+
+  if (isDriveNavigation(navState)) {
+    const folderId = navState.details?.type === 'folder' ? navState.details.folderId : undefined
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <DrivePage workspaceId={activeWorkspaceId ?? ''} folderId={folderId} />
       </Panel>
     )
   }

@@ -1166,13 +1166,21 @@ export { inspectConnectionMetadata } from './inspect-connection.ts'
 export type { ConnectionInspectRecord, InspectConnectionKernel } from './inspect-connection.ts'
 export {
   commitGithubOAuthImport,
+  createFileGithubLinkStore,
   createGithubDeviceFlow,
+  createGithubDeviceLink,
+  fetchGithubProfile,
   previewGithubOAuthImport,
 } from './github-oauth-import.ts'
 export type {
+  GithubDeviceLinkPollView,
+  GithubDeviceLinkStartView,
   GithubDevicePollView,
   GithubDeviceStartView,
+  GithubLinkProfileView,
+  GithubLinkStore,
   GithubOAuthImportPreview,
+  GithubProfile,
 } from './github-oauth-import.ts'
 export { commitInfisicalImport, previewInfisicalAccount } from './infisical-import.ts'
 export type { InfisicalAccountPreview, PreviewInfisicalAccountInput } from './infisical-import.ts'

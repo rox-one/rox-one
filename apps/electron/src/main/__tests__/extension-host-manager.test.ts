@@ -100,7 +100,7 @@ describe('buildScrubbedWorkerEnv', () => {
       SERVICE_ROLE_KEY: 'sk-supabase-role',
       RANDOM_TOKEN: 't',
       DATABASE_URL: 'postgres://u:p@h/db',
-      SENTRY_DSN: 'https://key@sentry.io/1',
+      SENTRY_DSN: 'https://key@example.com/1',
       CRAFT_CONFIG_DIR: '/tmp/cfg',
       CRAFT_EXTENSION_SANDBOX_ROOT: '/tmp/sandbox',
       ELECTRON_RUN_AS_NODE: '1',
