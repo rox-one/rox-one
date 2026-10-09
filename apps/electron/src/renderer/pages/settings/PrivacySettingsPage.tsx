@@ -20,6 +20,7 @@ import { routes } from '@/lib/navigate'
 import { isClaimableLive, normalizeRox2Result } from '@rox/core/rox2'
 import type { ConsentPurpose, PrivacyDto } from '@rox/shared/privacy'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { BrowserIntelSettingsSection } from './BrowserIntelSettingsSection'
 import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
@@ -176,6 +177,8 @@ export default function PrivacySettingsPage() {
                 ))}
               </SettingsCard>
             </SettingsSection>
+
+            <BrowserIntelSettingsSection />
 
             <SettingsSection title={t('settings.privacy.requestExport')}>
               <SettingsCard>
