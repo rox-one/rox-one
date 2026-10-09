@@ -20,6 +20,9 @@ const PAGES: Record<ExtraScreenId, React.ComponentType<{ itemId: string | null }
   agents: lazyRoutePage(() => import('./agents/AgentCenterPage')),
   focus: lazyRoutePage(() => import('./focus/FocusPage')),
   secrets: lazyRoutePage(() => import('./secrets/SecretsPage')),
+  activity: lazyRoutePage(() => import('./activity/ActivityPage')),
+  library: lazyRoutePage(() => import('./library/LibraryPage')),
+  health: lazyRoutePage(() => import('./health/HealthPage')),
 }
 
 export interface ExtraScreenHostProps {
@@ -45,7 +48,7 @@ export default function ExtraScreenHost({ screen, itemId }: ExtraScreenHostProps
     )
   }
   // These overview screens currently have no item-detail contract.
-  if (itemId && (screen === 'agents' || screen === 'focus')) {
+  if (itemId && (screen === 'agents' || screen === 'focus' || screen === 'activity' || screen === 'health')) {
     return <ExtraScreenItemUnavailable screen={screen} itemId={itemId} />
   }
   const Page = PAGES[screen]

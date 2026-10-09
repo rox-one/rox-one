@@ -5,7 +5,7 @@ import type { DevSpaceArtifactSummary, DevSpaceRepositoryRecord, DevSpaceRun, De
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs } from '@/components/ui/tabs'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { ArtifactSurface } from './components/ArtifactSurface'
 import { devSpaceErrorKey } from './components/errors'
@@ -15,6 +15,8 @@ import {
 import { DEV_SPACE_SURFACES } from './components/surfaces'
 
 const OVERVIEW_TAB = 'overview'
+/** The controlled `role=tabpanel` element id for a repo tab (`aria-controls`). */
+const panelId = (id: string) => `dev-space-tabpanel-${id}`
 const REPO_TABS = [{ id: OVERVIEW_TAB, labelKey: 'devSpace.repo.tabs.overview' }, ...DEV_SPACE_SURFACES.map((surface) => ({ id: surface.id, labelKey: surface.labelKey }))]
 
 export interface DevSpaceRepoPageProps { devSpaceRepoId?: string }
@@ -153,13 +155,19 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
         ) : !record ? (
           <p className="text-sm text-muted-foreground" data-testid="dev-space-repo-not-found">{t('devSpace.repo.notFound')}</p>
         ) : (
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="h-auto flex-wrap">
-              {REPO_TABS.map((item) => <TabsTrigger key={item.id} value={item.id} data-testid={`dev-space-tab-${item.id}`}>{t(item.labelKey)}</TabsTrigger>)}
-            </TabsList>
+          <div className="flex flex-col gap-4">
+            <Tabs
+              items={REPO_TABS.map((entry) => ({ id: entry.id, label: t(entry.labelKey), controls: panelId(entry.id) }))}
+              activeId={tab}
+              variant="segmented"
+              density="compact"
+              tone="accent"
+              ariaLabel={t('devSpace.repo.title')}
+              onSelect={setTab}
+            />
 
-            <TabsContent value={OVERVIEW_TAB}>
-              <section className="space-y-4 rounded-[var(--radius-card)] border border-border-subtle p-5" data-testid="dev-space-surface-overview" aria-labelledby="dev-space-overview-title">
+            {tab === OVERVIEW_TAB ? (
+              <section id={panelId(OVERVIEW_TAB)} role="tabpanel" className="space-y-4 rounded-[var(--radius-card)] border border-border-subtle p-5" data-testid="dev-space-surface-overview" aria-labelledby="dev-space-overview-title">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h2 id="dev-space-overview-title" className="text-sm font-semibold">{t('devSpace.repo.tabs.overview')}</h2>
                   <div className="flex items-center gap-2">
@@ -219,10 +227,10 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                   )}
                 </div>
               </section>
-            </TabsContent>
+            ) : null}
 
-            {DEV_SPACE_SURFACES.map((surface) => (
-              <TabsContent key={surface.id} value={surface.id}>
+            {DEV_SPACE_SURFACES.filter((surface) => surface.id === tab).map((surface) => (
+              <div key={surface.id} id={panelId(surface.id)} role="tabpanel">
                 <ArtifactSurface
                   workspaceId={record.workspaceId}
                   projectSlug={list.projectSlug}
@@ -233,9 +241,9 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                   running={running}
                   onRun={() => void startAnalysis()}
                 />
-              </TabsContent>
+              </div>
             ))}
-          </Tabs>
+          </div>
         )}
       </div>
     </div>

@@ -11,6 +11,7 @@ import { ResponsiveModeScreenLayout, type ResponsiveModeScreen } from './Respons
 import type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
 import { cn } from '@/lib/utils'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { Tabs as TabsCore, type TabItem } from '@/components/ui/tabs'
 import { useTranslation } from 'react-i18next'
 import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
 
@@ -64,11 +65,24 @@ function FallbackModeScreenLayout({
   const showNavigator = layout === 'auto' || layout === 'grid-3' || layout === 'columns'
   const narrow = layout === 'auto' ? measuredNarrow : layout === 'focus' ? false : emergencyNarrow
   React.useEffect(() => { if (detailKey !== undefined) setPane(detailKey ? 'detail' : 'list') }, [detailKey])
+  const paneItems: TabItem[] = (['navigation', 'list', 'detail'] as const)
+    .filter(item => item !== 'navigation' || !target)
+    .map(item => ({ id: item, label: t(`navigation.modePanes.${item}`), title: t(`navigation.modePanes.${item}`) }))
   return (
     <div ref={root} className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px] text-foreground" data-testid={testId} data-mode-layout={layout}>
-      {narrow && <div role="tablist" aria-label={t('navigation.openPanels')} className="flex shrink-0 gap-1 border-b border-border p-2">
-        {(['navigation', 'list', 'detail'] as const).filter(item => item !== 'navigation' || !target).map(item => <button type="button" role="tab" key={item} aria-selected={pane === item} onClick={() => setPane(item)} className={cn('rounded px-2 py-1 text-xs', pane === item && 'bg-accent/10 text-accent')}>{t(`navigation.modePanes.${item}`)}</button>)}
-      </div>}
+      {narrow && (
+        <TabsCore
+          items={paneItems}
+          activeId={pane}
+          variant="surface"
+          density="compact"
+          tone="accent"
+          keyboard
+          ariaLabel={t('navigation.openPanels')}
+          className="shrink-0 gap-1 border-b border-border p-2"
+          onSelect={(id) => setPane(id as typeof pane)}
+        />
+      )}
       <div className="flex min-h-0 flex-1">
         {showNavigator ? (
           <ShellSidebarPortal className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
@@ -286,42 +300,32 @@ export function Tabs<T extends string>({
   onChange,
   label,
 }: {
-  tabs: ReadonlyArray<{ id: T; label: React.ReactNode; count?: number; icon?: LucideIcon }>
+  tabs: ReadonlyArray<{ id: T; label: string; count?: number; icon?: LucideIcon }>
   value: T
   onChange: (id: T) => void
   label: string
 }) {
+  const items: TabItem[] = tabs.map((tab) => {
+    const Icon = tab.icon ?? NAV_ICONS[tab.id] ?? ListFilter
+    return {
+      id: tab.id,
+      label: tab.label,
+      title: tab.label,
+      icon: <Icon className={cn('icon-caption', value === tab.id ? 'text-accent' : 'text-text-muted')} aria-hidden />,
+      badge: tab.count ? <span className="tabular-nums text-text-muted">{tab.count}</span> : undefined,
+    }
+  })
   return (
-    <div role="tablist" aria-label={label} className="flex items-center gap-1">
-      {tabs.map((tab, index) => {
-        const Icon = tab.icon ?? NAV_ICONS[tab.id] ?? ListFilter
-        return (
-        <button
-          key={tab.id}
-          type="button"
-          role="tab"
-          tabIndex={value === tab.id ? 0 : -1}
-          aria-selected={value === tab.id}
-          onKeyDown={event => {
-            const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index - 1 + tabs.length) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null
-            if (next === null) return
-            event.preventDefault()
-            onChange(tabs[next]!.id)
-            event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus()
-          }}
-          onClick={() => onChange(tab.id)}
-          className={cn(
-            'inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] px-2.5 text-[12px] outline-none',
-            value === tab.id ? 'bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05]',
-          )}
-        >
-          <Icon className={cn('size-3.5', value === tab.id ? 'text-accent' : 'text-text-muted')} aria-hidden />
-          {tab.label}
-          {tab.count ? <span className="tabular-nums text-text-muted">{tab.count}</span> : null}
-        </button>
-        )
-      })}
-    </div>
+    <TabsCore
+      items={items}
+      activeId={value}
+      variant="surface"
+      density="full"
+      tone="accent"
+      keyboard
+      ariaLabel={label}
+      onSelect={(id) => onChange(id as T)}
+    />
   )
 }
 

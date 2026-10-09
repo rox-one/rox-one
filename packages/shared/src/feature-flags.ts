@@ -206,6 +206,43 @@ export function isCommandBusEnabled(enabledWorkbenchFlags?: ReadonlySet<string>)
   return false;
 }
 
+// W1-11 (#1508)
+/**
+ * Workbench flag ids the agent-governance contracts are used by. Mirrors
+ * `CATALOGUE_FLAGS.agents` / `CATALOGUE_FLAGS.placeholders` in
+ * `packages/core/src/commands/catalogue/entry.ts`.
+ */
+export const AGENTS_AUTONOMY_WORKBENCH_FLAG = 'agents.autonomy.v1';
+export const IDENTITY_PLACEHOLDERS_WORKBENCH_FLAG = 'identity.placeholders.v1';
+
+/**
+ * Runtime-evaluated check for agent autonomy (W1-11 contracts: the policy
+ * pipeline, approvals, rate limits and the audit chain).
+ *
+ * Server-evaluated, same shape as `isCommandBusEnabled`: the workbench flag is
+ * authoritative and `CRAFT_FEATURE_AGENTS_AUTONOMY=1|0` is an explicit override
+ * for tests. Defaults to DISABLED, so the governance middleware is a
+ * pass-through and every agent command is `UNAVAILABLE` from its own flag.
+ */
+export function isAgentsAutonomyEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_AGENTS_AUTONOMY'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(AGENTS_AUTONOMY_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
+/**
+ * Runtime-evaluated check for placeholder principals (W1-11 identity
+ * lifecycle: `identity.ensure_placeholder`, invitations, activation, merge).
+ * Defaults to DISABLED, `CRAFT_FEATURE_IDENTITY_PLACEHOLDERS=1|0` overrides.
+ */
+export function isIdentityPlaceholdersEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_IDENTITY_PLACEHOLDERS'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(IDENTITY_PLACEHOLDERS_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
 /**
  * Workbench flag id for the visible Rox home (`~/rox` resolution + MIG-13
  * auto-migration, W1-13 #1510).
@@ -239,6 +276,29 @@ export function isStorageVisibleRootEnabled(
     parseBooleanEnv(read('CRAFT_FEATURE_STORAGE_VISIBLE_ROOT'));
   if (override !== undefined) return override;
   return enabledWorkbenchFlags?.has(STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG) === true;
+}
+
+// W1-12 (#1509)
+/**
+ * Workbench flag id for the domain rules R1–R5. Mirrors
+ * `WORKBENCH_FLAG.automationRulesV1` in
+ * `packages/core/src/platform/workbench/flags.ts`.
+ */
+export const AUTOMATION_RULES_WORKBENCH_FLAG = 'automation.rules.v1';
+
+/**
+ * Runtime-evaluated check for the domain rule engine (TECH-SPEC §14).
+ *
+ * Server-evaluated with the same shape as `isEntitiesLinksEnabled`: the
+ * workbench flag `automation.rules.v1` is authoritative, and
+ * `CRAFT_FEATURE_AUTOMATION_RULES=1|0` stays as an explicit test override.
+ * While it is off the consumers do not even subscribe to events.
+ */
+export function isAutomationRulesEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_AUTOMATION_RULES'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(AUTOMATION_RULES_WORKBENCH_FLAG)) return true;
+  return false;
 }
 
 /**
@@ -360,4 +420,43 @@ export function isDossierExportEnabled(enabledWorkbenchFlags?: ReadonlySet<strin
   const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_DOSSIER_EXPORT'));
   if (override !== undefined) return override;
   return enabledWorkbenchFlags?.has(DOSSIER_EXPORT_WORKBENCH_FLAG) === true;
+}
+
+// W1-15 (#1512) — agent panel, surface chrome and X-13…X-26 capabilities.
+/** Workbench flag ids; mirror `WORKBENCH_FLAG` in `@rox/core/platform`. */
+export const AGENT_PANEL_WORKBENCH_FLAG = 'agent.panel.v1';
+export const CHROME_SURFACES_WORKBENCH_FLAG = 'workbench.chrome.surfaces.v1';
+export const XFN_CAPABILITIES_WORKBENCH_FLAG = 'xfn.capabilities.v1';
+
+/**
+ * Server-evaluated check for the agent panel (same shape as
+ * `isEntitiesLinksEnabled`): the workbench flag is authoritative, the
+ * `CRAFT_FEATURE_AGENT_PANEL=1|0` override is for tests. Defaults to DISABLED
+ * — with the flag off there is no panel session, no context snapshot and no
+ * `agent-panel` origin on any envelope.
+ */
+export function isAgentPanelEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_AGENT_PANEL'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(AGENT_PANEL_WORKBENCH_FLAG) === true;
+}
+
+/**
+ * Server-evaluated check for the per-surface chrome (sidebar + top bar
+ * schemas). Off → the shell renders its legacy chrome and reads no schema.
+ */
+export function isChromeSurfacesEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_CHROME_SURFACES'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(CHROME_SURFACES_WORKBENCH_FLAG) === true;
+}
+
+/**
+ * Server-evaluated check for the cross-functional capabilities X-13…X-26.
+ * Off → every entry point is hidden and the reference handlers refuse.
+ */
+export function isXfnCapabilitiesEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_XFN_CAPABILITIES'));
+  if (override !== undefined) return override;
+  return enabledWorkbenchFlags?.has(XFN_CAPABILITIES_WORKBENCH_FLAG) === true;
 }

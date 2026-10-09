@@ -2,6 +2,12 @@ import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
 import { RoleStep } from "./RoleStep"
+import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
+import {
+  saveFirstRunDraft,
+  type OnboardingDraftStorage,
+} from "./identity-model"
+import type { RewardLedger } from "./onboarding-rewards"
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 import { OnboardingWelcomeProgress } from './OnboardingWelcomeProgress'
 import type { ApiSetupMethod } from "./APISetupStep"
@@ -10,23 +16,34 @@ import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
 import { LocalModelStep, type LocalModelSubmitData } from "./LocalModelStep"
 import { RoxConnectStep, type RoxConnectCodes } from "./RoxConnectStep"
 import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
-import { OmpCredentialStep, type OmpCredentialSubmitData } from "./OmpCredentialStep"
+import { RoxCliCredentialStep, type RoxCliCredentialSubmitData } from "./RoxCliCredentialStep"
 import type { ApiKeySubmitData, CustomEndpointModelInput } from "../apisetup"
 import type { CustomEndpointApi } from '@config/llm-connections'
 
 export type OnboardingStep =
   | 'welcome'
+  | 'questionnaire'
   | 'role'
   | 'rox-connect'
   | 'git-bash'
   | 'provider-select'
   | 'local-model'
   | 'credentials'
-  | 'omp-credential'
+  | 'rox-cli-credential'
   /** Terminal state: the wizard closes (onFinish) — no completion screen. */
   | 'complete'
 
 export type LoginStatus = 'idle' | 'waiting' | 'success' | 'error'
+
+/**
+ * First-run controller owned by `useOnboarding` and handed to the wizard through
+ * `state`. Carries the shared reward ledger so the questionnaire screen writes
+ * into one place; tests that build `OnboardingState` by hand simply omit it and
+ * the steps fall back to their internal state.
+ */
+export interface OnboardingFirstRunState {
+  rewards: RewardLedger
+}
 
 export interface OnboardingState {
   step: OnboardingStep
@@ -41,6 +58,8 @@ export interface OnboardingState {
   isCheckingGitBash?: boolean
   /** First run: applying the default Rox runtime before the app opens. */
   isFinishing?: boolean
+  /** Shared reward ledger (optional; the wizard self-manages otherwise). */
+  firstRun?: OnboardingFirstRunState
 }
 
 interface OnboardingWizardProps {
@@ -52,7 +71,7 @@ interface OnboardingWizardProps {
   onBack: () => void
   onSelectApiSetupMethod: (method: ApiSetupMethod) => void
   onSubmitCredential: (data: ApiKeySubmitData) => void
-  onSubmitOmpCredential?: (data: OmpCredentialSubmitData) => void
+  onSubmitOmpCredential?: (data: RoxCliCredentialSubmitData) => void
   onStartOAuth?: (methodOverride?: ApiSetupMethod) => void
   onFinish: () => void
 
@@ -143,6 +162,7 @@ export function OnboardingWizard({
   className
 }: OnboardingWizardProps) {
   const seProfile = useSuperEngineeringProfile()
+  const firstRun = state.firstRun
   // 'complete' is terminal: close the wizard exactly once per arrival.
   const finishedRef = useRef(false)
   useEffect(() => {
@@ -154,6 +174,26 @@ export function OnboardingWizard({
     finishedRef.current = true
     onFinish()
   }, [state.step, onFinish])
+
+  const firstRunStorage: OnboardingDraftStorage | undefined =
+    typeof localStorage !== 'undefined' ? localStorage : undefined
+
+  const persistQuestionnaireDraft = (payload: QuestionnaireStepPayload) => {
+    saveFirstRunDraft(firstRunStorage, {
+      questionnaire: payload.questionnaire,
+      bubbles: payload.bubbles,
+      permissions: payload.permissions,
+      completed: true,
+    })
+    // The keep-awake mode is the one app-toggle with a real setting behind it:
+    // mirror the choice onto the app config, fire-and-forget so a missing or
+    // failing bridge never blocks the flow.
+    const keepAwake = payload.permissions.enabled.keepAwake
+    const bridge = window.electronAPI
+    if (typeof keepAwake === 'boolean' && typeof bridge?.setKeepAwakeWhileRunning === 'function') {
+      bridge.setKeepAwakeWhileRunning(keepAwake).catch(() => {})
+    }
+  }
 
   const renderStep = () => {
     switch (state.step) {
@@ -168,6 +208,21 @@ export function OnboardingWizard({
               isFinishing={state.isFinishing}
             />
           </div>
+        )
+
+case 'questionnaire':
+        return (
+          <QuestionnaireStep
+            onContinue={(payload) => {
+              persistQuestionnaireDraft(payload)
+              onContinue()
+            }}
+            onSkip={(payload) => {
+              persistQuestionnaireDraft(payload)
+              onContinue()
+            }}
+            {...(firstRun ? { rewards: firstRun.rewards } : {})}
+          />
         )
 
       case 'role':
@@ -241,9 +296,9 @@ export function OnboardingWizard({
           />
         )
 
-      case 'omp-credential':
+      case 'rox-cli-credential':
         return (
-          <OmpCredentialStep
+          <RoxCliCredentialStep
             onSubmit={onSubmitOmpCredential ?? (() => {})}
             onBack={onBack}
             status={state.credentialStatus === 'validating' ? 'validating' : state.credentialStatus === 'error' ? 'error' : 'idle'}

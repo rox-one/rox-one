@@ -20,48 +20,7 @@ import './brand-config-boot'
 
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
-import { hostname, homedir, userInfo } from 'os'
-import * as Sentry from '@sentry/electron/main'
-import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils'
 
-// Initialize Sentry error tracking as early as possible after app import.
-// Only enabled in production (packaged) builds to avoid noise during development.
-// DSN is baked in at build time via esbuild --define (same pattern as OAuth secrets).
-//
-// NOTE: Source map upload is intentionally disabled. Stack traces in Sentry will show
-// bundled/minified code. To enable source map upload in the future:
-//   1. Add SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT to CI secrets
-//   2. Re-enable the @sentry/vite-plugin in vite.config.ts (handles renderer maps)
-//   3. Add @sentry/esbuild-plugin to scripts/electron-build-main.ts (handles main process maps)
-Sentry.init({
-  dsn: process.env.SENTRY_ELECTRON_INGEST_URL,
-  environment: app.isPackaged ? 'production' : 'development',
-  release: app.getVersion(),
-  // Enabled whenever the ingest URL is available — works in both production (baked via CI)
-  // and development (injected via .env / 1Password). Filter by environment in Sentry dashboard.
-  enabled: !!process.env.SENTRY_ELECTRON_INGEST_URL,
-
-  // Scrub sensitive data before sending to Sentry.
-  // Shared logic in @rox/shared/utils redaction.ts (also used by the
-  // renderer hook and the Pages action audit log) — keep semantics there.
-  beforeSend(event) {
-    // Scrub request headers (authorization, cookies)
-    if (event.request?.headers) {
-      redactSensitiveHeadersInPlace(event.request.headers)
-    }
-
-    // Scrub breadcrumb data that may contain sensitive values
-    if (event.breadcrumbs) {
-      for (const breadcrumb of event.breadcrumbs) {
-        if (breadcrumb.data) {
-          redactSensitiveKeysInPlace(breadcrumb.data)
-        }
-      }
-    }
-
-    return event
-  },
-})
 
 // Initialize i18n for main process (menus, dialogs, etc.)
 //
@@ -74,6 +33,8 @@ Sentry.init({
 // the system prompt's "Preferred language" line, and the native menu.
 import { setupI18n, i18n, SUPPORTED_LANGUAGE_CODES, type LanguageCode } from '@rox/shared/i18n'
 import { getPersistedUiLanguage, setPersistedUiLanguage } from '@rox/shared/config'
+import { initTelemetry, telemetryConfigFromEnv, track as trackProductEvent, type TelemetryHandle } from '@rox/shared/telemetry'
+import { loadGamificationState } from '@rox/shared/gamification'
 setupI18n()
 const persistedUiLanguage = getPersistedUiLanguage()
 if (persistedUiLanguage) {
@@ -81,11 +42,46 @@ if (persistedUiLanguage) {
 }
 // Note: deferred startup log lives below where mainLog is available (after log.initialize()).
 
-// Set anonymous machine ID for Sentry user tracking (no PII — just a hash).
-// Uses hostname + homedir to produce a stable per-machine identifier.
-const machineId = createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16)
-Sentry.setUser({ id: machineId })
+// Product analytics: PostHog capture/feature flags + OTLP traces.
+//
+// Self-hosted endpoints are baked at build time via esbuild --define (see
+// scripts/electron-build-main.ts) — with the live defaults, so analytics sends
+// out of the box; an explicit env value still overrides them. The renderer
+// receives the same distinct_id + endpoints over `__telemetry-config`.
+// Egress is gated by the «Аналитика продукта» consent (gamification.json
+// analyticsConsent, default ON) — local Electron clients have no native
+// principal, so that file is the authoritative store; a read failure fails closed.
 
+// Anonymous per-install identifier (no PII — a hash of hostname + homedir)
+// used as the analytics distinct_id for both PostHog and OTLP.
+const machineId = createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16)
+const telemetryEndpoints = telemetryConfigFromEnv({
+  POSTHOG_HOST: process.env.POSTHOG_HOST,
+  POSTHOG_KEY: process.env.POSTHOG_KEY,
+  OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+  OTEL_SERVICE_NAME: process.env.OTEL_SERVICE_NAME,
+})
+// `POSTHOG_FLAGS_DISABLED=1` disables `/decide` entirely (shared with renderer).
+const telemetryFlagsDisabled = process.env.POSTHOG_FLAGS_DISABLED === '1'
+const telemetryBootstrapConfig = {
+  distinctId: machineId,
+  ...telemetryEndpoints,
+  flagsDisabled: telemetryFlagsDisabled,
+}
+const productTelemetry: TelemetryHandle = initTelemetry({
+  ...telemetryEndpoints,
+  distinctId: machineId,
+  version: app.getVersion(),
+  platform: process.platform,
+  flagsDisabled: telemetryFlagsDisabled,
+  getConsent: () => loadGamificationState().analyticsConsent,
+})
+app.on('will-quit', () => {
+  productTelemetry.dispose()
+})
+trackProductEvent('app_launched', { platform: process.platform, version: app.getVersion() })
+
+import { homedir, hostname, userInfo } from 'os'
 import { join, delimiter, resolve, sep } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, readdirSync } from 'fs'
@@ -105,14 +101,17 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
 import { PageThumbnailer } from './page-thumbnailer'
-import { registerAllRpcHandlers } from './handlers/index'
+import { registerAllRpcHandlers, startClipboardMonitor } from './handlers/index'
+import { createDriveService } from './drive/register'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
+import { NodeRegistry, DEFAULT_PRESENCE_TTL_MS } from '@rox/server-core/nodes'
 import { createWorkGraphKernel, type WorkGraphKernel } from '@rox/server-core/workgraph'
 import type { PlatformServices } from '../runtime/platform'
 import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
 import { resolveNativeTransportCredential } from './native-transport-credential'
 import { createBrowserCredentialPermissionAdapter } from './browser-credential-permissions'
+import { createOnboardingPermissionsHost } from './onboarding-permissions'
 import { createBrowserCredentialVaultKeyStore } from './browser-credential-vault-keys'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@rox/server-core/bootstrap'
 import { isAllowedServerEndpoint } from './server-endpoint-policy'
@@ -145,7 +144,7 @@ import { OpenDesignRuntimeManager, isTrustedOpenDesignIpcEvent, registerOpenDesi
 import { OpenDesignWindowController } from './open-design-window'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
-import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog, errorLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
 import { registerStorageVisibleRootIpc } from './storage-visible-root-ipc'
 import { registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from './visible-home-boot'
@@ -165,6 +164,9 @@ import { runQuitCleanupThenExit } from './quit-exit-guard'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
+import { registerTelegramLink } from './telegram-link/register'
+import { registerCalendarGoogleOAuthIpc } from './calendar/google-oauth'
+import { registerAppleCalendarHelperFromHost } from './calendar/register-helper'
 import { registerNativeReplicaForWindows } from './native-replica-bootstrap'
 import { initBrowserIntelRuntime } from './browser-intel/index'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
@@ -173,9 +175,13 @@ import {
   createLaunchctlRunner,
   createNodeServiceFilesystem,
   createServiceManager,
+  decideOnboardDaemon,
   defaultPortAvailable,
+  detectExternalSupervisor,
   guardServiceInstall,
   LaunchdRuntime,
+  readOnboardDaemonFlags,
+  ROX_SERVICE_LABEL,
   runDoctor,
 } from '@rox/server-core/service'
 import { pushTyped } from '@rox/server-core/transport'
@@ -921,6 +927,25 @@ app.whenReady().then(async () => {
       isTrustedSender: isTrustedRoxRendererIpcEvent,
     })
 
+    // R4: point the shared tg-link RPC handlers at this host's linkd daemon.
+    const telegramLink = registerTelegramLink()
+    mainLog.info(`[telegram-link] service endpoint ${telegramLink.baseUrl}${telegramLink.authTokenConfigured ? ' (bearer configured)' : ''}`)
+    registerCalendarGoogleOAuthIpc({
+      ipcMain,
+      isTrustedSender: (event) => Boolean(windowManager?.getWindowByWebContentsId(event.sender.id)),
+      openExternal: (url) => shell.openExternal(url),
+    })
+
+    // Apple Calendar (macOS EventKit): register the helper binding only when
+    // APPLE_CALENDAR_LIVE=1 and the bundled binary exists. Fail-closed — with the
+    // gate off or the binary absent the connector keeps returning Unavailable.
+    registerAppleCalendarHelperFromHost({
+      log: (message, error) => {
+        if (error) mainLog.warn(message, error)
+        else mainLog.info(message)
+      },
+    })
+
     // Build real PlatformServices from Electron APIs
     const platform: PlatformServices = createElectronPlatform({
       app,
@@ -930,7 +955,9 @@ app.whenReady().then(async () => {
       logger: log,
       isDebugMode,
       getLogFilePath,
-      captureError: (err) => Sentry.captureException(err),
+      captureError: (err) => {
+        errorLog.error('[captureError]', { error: err })
+      },
     })
 
     // W1-13: Settings toggle for storage.visible-root.v1 (applies on next launch).
@@ -956,6 +983,24 @@ app.whenReady().then(async () => {
       }),
     })
 
+    // Bootstrap IPC handlers — preload uses sendSync for window-local details
+    ipcMain.on('__get-web-contents-id', (e) => {
+      e.returnValue = e.sender.id
+    })
+    ipcMain.on('__get-workspace-id', (e) => {
+      e.returnValue = readBoundWindowWorkspace(e, windowManager)
+    })
+    ipcMain.on('__get-local-client-proof', (e) => {
+      const owner = windowManager?.getWindowByWebContentsId(e.sender.id)
+      e.returnValue = owner && !owner.isDestroyed() && owner.webContents === e.sender
+        ? localClientBindingRegistry.issue(e.sender)
+        : ''
+    })
+    // Product analytics bootstrap: the renderer reuses main's baked endpoints and
+    // anonymous distinct_id so both processes report the same person.
+    ipcMain.on('__telemetry-config', (e) => {
+      e.returnValue = telemetryBootstrapConfig
+    })
     // Language change: sync from renderer to main process, persist, and rebuild native menu.
     // Persistence here is what lets the next app launch hydrate main's i18n correctly —
     // see the `getPersistedUiLanguage()` block at the top of this file.
@@ -1208,6 +1253,10 @@ app.whenReady().then(async () => {
 
       // Bootstrap the WS RPC server via shared bootstrap function.
       let localNativeAuthority: NonNullable<HandlerDeps['nativeData']>['authority'] | null = null
+      // f.9 — server-owned node/device registry (default bounds). Mirrors the
+      // standalone headless server so `nodes:*` is live instead of
+      // CHANNEL_NOT_FOUND on the real WS RPC server.
+      const nodeRegistry = new NodeRegistry()
       const instance = await bootstrapServer<SessionManager, HandlerDeps>({
         serverToken,
         rpcHost,
@@ -1233,11 +1282,12 @@ app.whenReady().then(async () => {
               await Promise.all([whenSpawnEnvReady(), whenBundledSkillsReadyForAgents(10_000)])
             },
             captureException: (error, context) => {
-              Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
-                tags: {
-                  ...(context?.errorSource ? { errorSource: context.errorSource } : {}),
-                  ...(context?.sessionId ? { sessionId: context.sessionId } : {}),
-                },
+              const normalized = error instanceof Error ? error : new Error(String(error))
+              errorLog.error('[captureException]', {
+                message: normalized.message,
+                error: normalized,
+                errorSource: context?.errorSource,
+                sessionId: context?.sessionId,
               })
             },
           })
@@ -1353,22 +1403,33 @@ app.whenReady().then(async () => {
             },
             ...(!isHeadless ? { browserCredentials } : {}),
             ...(voiceOverlay ? { voiceOverlay } : {}),
+            // OS permission probes for onboarding; absent when headless so the
+            // handler answers honest `unsupported` instead of faking a grant.
+            ...(!isHeadless ? { onboardingPermissions: createOnboardingPermissionsHost() } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
             // WP-117: `learning:*` RPC surface (UNSUPPORTED_OPERATION when absent).
             ...(learning ? { learning } : {}),
+            // ROX Drive (wave 1): device-local storage engine.
+            drive: createDriveService(),
+            // f.9 — node/device RPC surface (see the headless server for context).
+            nodes: nodeRegistry,
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)
         // GUI: register all handlers plus the main-process-owned WorkGraph profile.
         registerAllRpcHandlers: isHeadless
           ? (server, deps, serverCtx) => registerCoreRpcHandlers(server, deps, serverCtx)
-          : (server, deps, serverCtx) => registerAllRpcHandlers(
-              server,
-              deps,
-              serverCtx,
-              workGraphKernel ?? undefined,
-            ),
+          : (server, deps, serverCtx) => {
+              registerAllRpcHandlers(
+                server,
+                deps,
+                serverCtx,
+                workGraphKernel ?? undefined,
+              )
+              // Rox History capture loop: idempotent, fail-soft without storage.
+              startClipboardMonitor(deps)
+            },
         setSessionEventSink: (sm, sink) => sm.setEventSink(sink),
         initializeSessionManager: (sm) => sm.initialize(),
         initModelRefreshService: () => initModelRefreshService(async (slug: string) => {
@@ -1407,6 +1468,13 @@ app.whenReady().then(async () => {
       })
 
       markStartup(STARTUP_MARKS.serverReady)
+      // f.9 — drive node presence TTL expiry. The bootstrap-owned scheduler owns
+      // the timer; Electron's quit path terminates the process, which reclaims it.
+      instance.scheduler.scheduleEvery({
+        id: 'nodes:presence-sweep',
+        everyMs: DEFAULT_PRESENCE_TTL_MS,
+        run: () => { nodeRegistry.sweep() },
+      })
       // Capture module-level references for before-quit cleanup and deep-link handlers
       sessionManager = instance.sessionManager
       oauthFlowStore = instance.oauthFlowStore
@@ -1863,7 +1931,7 @@ app.whenReady().then(async () => {
       const { detectMacAdHocSigned } = await import('./auto-update')
       const homeDir = app.getPath('home')
       const configDir = resolveConfigDir()
-      const serviceLabel = 'com.rox.service'
+      const serviceLabel = ROX_SERVICE_LABEL
       const serviceDirectory = join(configDir, 'service')
       const launchAgentsDirectory = join(homeDir, 'Library', 'LaunchAgents')
       const isBuildTrusted = () => !detectMacAdHocSigned(process.execPath)
@@ -1899,6 +1967,33 @@ app.whenReady().then(async () => {
           : undefined,
       })
       const serviceManager = guardServiceInstall(serviceManagerBase, isBuildTrusted)
+
+      // Onboard daemon tri-state (e1.3): explicit flags beat defaults; an
+      // external supervisor, an already-installed service, or --skip-daemon wins
+      // over install; a classic non-interactive launch with no signal is a
+      // reasoned refusal. This startup call site cannot prompt, so a plain
+      // launch never installs the service — only an explicit flag or a
+      // quickstart flow does.
+      const onboardFlags = readOnboardDaemonFlags(process.argv)
+      const supervisor = detectExternalSupervisor(process.env, process.platform)
+      const existingServiceStatus = await serviceManager.getStatus()
+      const serviceAlreadyPresent = existingServiceStatus.state !== 'not-installed' && existingServiceStatus.state !== 'unsupported'
+      const onboardDecision = decideOnboardDaemon({
+        installDaemon: onboardFlags.installDaemon,
+        skipDaemon: onboardFlags.skipDaemon,
+        flow: onboardFlags.quickstart ? 'quickstart' : 'classic',
+        externallySupervised: supervisor !== null || serviceAlreadyPresent,
+        interactive: false,
+      })
+      mainLog.info(`[onboard] daemon decision: ${onboardDecision.state} (${onboardDecision.reason}) — ${onboardDecision.note}`)
+      if (onboardDecision.state === 'install') {
+        const installed = await serviceManager.install()
+        if (installed.ok) {
+          await serviceManager.start()
+        } else {
+          mainLog.warn(`[onboard] service install failed: ${installed.status.safeError ?? 'unknown'}`)
+        }
+      }
       const doctorLogPaths = [getMessagingGatewayLogFilePath(), getAutoUpdateLogFilePath(), getLogFilePath()]
         .filter((path): path is string => typeof path === 'string')
       registerServiceLifecycleIpc({
@@ -1985,23 +2080,6 @@ app.whenReady().then(async () => {
       await initPowerManager()
     } catch (err) {
       mainLog.warn('[power] Power manager init failed (non-critical):', err instanceof Error ? err.message : err)
-    }
-
-    // Set Sentry context tags for error grouping (no PII — just config classification).
-    // Runs after init so config and auth state are available.
-    // Derives values from the default LLM connection instead of legacy config fields.
-    try {
-      const { getLlmConnection, getDefaultLlmConnection } = await import('@rox/shared/config')
-      const workspaces = getWorkspaces()
-      const defaultConnSlug = getDefaultLlmConnection()
-      const defaultConn = defaultConnSlug ? getLlmConnection(defaultConnSlug) : null
-      Sentry.setTag('authType', defaultConn?.authType ?? 'unknown')
-      Sentry.setTag('providerType', defaultConn?.providerType ?? 'unknown')
-      Sentry.setTag('hasCustomEndpoint', String(!!defaultConn?.baseUrl))
-      Sentry.setTag('model', defaultConn?.defaultModel ?? 'default')
-      Sentry.setTag('workspaceCount', String(workspaces.length))
-    } catch (err) {
-      mainLog.warn('Failed to set Sentry context tags:', err)
     }
 
     // Initialize auto-update (check immediately on launch)
@@ -2287,14 +2365,13 @@ app.on('before-quit', async (event) => {
   }
 })
 
-// Handle uncaught exceptions — forward to Sentry explicitly since registering
-// a custom handler can interfere with @sentry/electron's automatic capture.
+// Handle uncaught exceptions.
 process.on('uncaughtException', (error) => {
   mainLog.error('Uncaught exception:', error)
-  Sentry.captureException(error)
+  errorLog.error('Uncaught exception', { error })
 })
 
 process.on('unhandledRejection', (reason, promise) => {
   mainLog.error('Unhandled rejection at:', promise, 'reason:', reason)
-  Sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)))
+  errorLog.error('Unhandled rejection', { reason, promise })
 })

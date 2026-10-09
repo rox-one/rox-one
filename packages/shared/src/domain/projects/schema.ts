@@ -5,7 +5,7 @@ import {
   nameSchema, principalIdSchema, refSchema, richTextSchema, sortKeySchema, titleSchema, type CommandSchemaMap,
 } from '../common'
 import { checkInPayloadShape, checkInStatusSchema, successStatusSchema } from '../goals/schema'
-import { taskStatusSchema } from '../tasks/schema'
+import { taskStatusDefinitionSchema } from '../tasks/schema'
 
 export const projectStatusSchema = z.enum(['active', 'paused', 'closed'])
 export const contributorRoleSchema = z.enum(['champion', 'reviewer', 'contributor'])
@@ -77,7 +77,7 @@ export const PROJECTS_COMMAND_SCHEMAS: CommandSchemaMap = {
   'projects.share': cmd({ workspaceId: idSchema, spaceId: idSchema.optional() }),
   'projects.add_resource': cmd({ resource: refSchema, title: z.string().max(500).optional() }),
   'projects.remove_resource': cmd({ resource: refSchema }),
-  'projects.update_task_statuses': cmd({ statuses: z.array(taskStatusSchema).min(1).max(30) }),
+  'projects.update_task_statuses': cmd({ statuses: z.array(taskStatusDefinitionSchema).min(1).max(30) }),
   'milestones.create': cmd({
     ...createIdShape, projectId: idSchema, title: titleSchema, description: richTextSchema.optional(), startOn: isoDateSchema.optional(),
     dueOn: isoDateSchema.optional(), duePrecision: duePrecisionSchema.optional(), stages: z.array(stageSchema).max(200).optional(),

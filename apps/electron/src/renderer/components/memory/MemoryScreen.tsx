@@ -14,8 +14,9 @@ import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { toast } from 'sonner'
-import { Brain, CheckCheck, ChevronDown, FileText, FolderClosed, Globe2, Heart, Lightbulb, ListChecks, Pin, Power, Search, ShieldAlert, SlidersHorizontal, Sparkles, X, type LucideIcon } from 'lucide-react'
+import { Brain, CheckCheck, ChevronDown, FileText, FolderClosed, GitBranch, Globe2, Heart, Lightbulb, ListChecks, Moon, Package, Pin, Power, Search, ShieldAlert, SlidersHorizontal, Sparkles, X, type LucideIcon } from 'lucide-react'
 import type { Lesson, LessonCategory, LessonScope, PromotionCandidate } from '@rox/shared/memory/types'
+import type { MemoryDreamStatus, MemoryRepoStatus } from '@rox/shared/memory/repo'
 import { lessonTokens, estimateTokens } from '@rox/shared/memory/context-select'
 import { LESSON_LIMITS } from '@rox/shared/memory/types'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
@@ -24,10 +25,12 @@ import { getSessionTitle } from '@/utils/session'
 import { cn } from '@/lib/utils'
 import { formatHotkeyDisplay } from '@/lib/platform'
 import {
+  awaitingDream,
   clusterTopics,
   contextSelection,
   countBy,
   lessonId,
+  lessonRepoPath,
   matchesFilter,
   mergePatch,
   nearDuplicates,
@@ -36,20 +39,22 @@ import {
   usageBucket,
   type MemoryFilter,
   type MemorySort,
+  type RepoLessonNode,
   type StatusFacet,
   type UsageBucket,
 } from '@/lib/memory-model'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import { MemoryListPanel } from '@/components/app-shell/MemoryListPanel'
+import { ImportReviewDialog } from './ImportReviewDialog'
 import { toErrorMessage } from '@/lib/errors'
 
 const BUILTIN: LessonCategory[] = ['correction', 'preference', 'workflow', 'knowledge']
 const SORTS: MemorySort[] = ['usage', 'recency', 'tokens', 'conflicts']
-const STATUSES: StatusFacet[] = ['inContext', 'pinned', 'negative', 'disabled', 'conflicts', 'merged']
+const STATUSES: StatusFacet[] = ['inContext', 'pinned', 'awaitingDream', 'negative', 'disabled', 'conflicts', 'merged']
 const USAGE: UsageBucket[] = ['often', 'some', 'never']
 const TRIGGERS = ['explicit', 'distillation', 'branch', 'interrupted', 'error'] as const
 const CATEGORY_ICONS: Record<LessonCategory, LucideIcon> = { correction: CheckCheck, preference: Heart, workflow: ListChecks, knowledge: Lightbulb }
-const STATUS_ICONS: Record<StatusFacet, LucideIcon> = { inContext: Sparkles, pinned: Pin, disabled: Power, conflicts: ShieldAlert, negative: ShieldAlert, merged: FileText }
+const STATUS_ICONS: Record<StatusFacet, LucideIcon> = { inContext: Sparkles, pinned: Pin, disabled: Power, conflicts: ShieldAlert, negative: ShieldAlert, merged: FileText, awaitingDream: Moon }
 
 type FacetKey = keyof Omit<MemoryFilter, 'query'>
 
@@ -196,13 +201,19 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const [addScope, setAddScope] = React.useState<LessonScope>('workspace')
   const [addCategory, setAddCategory] = React.useState<LessonCategory>('workflow')
   const [addNegative, setAddNegative] = React.useState(false)
-  const [confirm, setConfirm] = React.useState<null | { kind: 'delete'; ids: string[] } | { kind: 'merge'; ids: string[] }>(null)
+  const [confirm, setConfirm] = React.useState<null | { kind: 'delete'; ids: string[] } | { kind: 'merge'; ids: string[] } | { kind: 'revertImport' }>(null)
   const [mergeKeeper, setMergeKeeper] = React.useState<string | null>(null)
   const [mergeText, setMergeText] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [filtersOpen, setFiltersOpen] = React.useState(false)
   const [loadError, setLoadError] = React.useState(false)
   const [writeDenied, setWriteDenied] = React.useState(false)
+  const [repoStatus, setRepoStatus] = React.useState<MemoryRepoStatus | null>(null)
+  const [dreamStatus, setDreamStatus] = React.useState<MemoryDreamStatus | null>(null)
+  const [repoLessonNodes, setRepoLessonNodes] = React.useState<readonly RepoLessonNode[] | null>(null)
+  const [dreamRunning, setDreamRunning] = React.useState(false)
+  const [exportBusy, setExportBusy] = React.useState(false)
+  const [importOpen, setImportOpen] = React.useState(false)
   const lessonsLoaded = lessons !== null
   const memoryReadAvailable = typeof window.electronAPI.listMemoryLessons === 'function'
   const memoryWriteAvailable = typeof window.electronAPI.addMemoryLesson === 'function' && typeof window.electronAPI.updateMemoryLesson === 'function'
@@ -217,6 +228,10 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const searchRef = React.useRef<HTMLInputElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
   const detailCloseRef = React.useRef<HTMLButtonElement>(null)
+  // Whether a `start` dream event was observed since the last «Собрать сейчас»
+  // click. A rejection after `start` is the transport bound firing, not a real
+  // failure: the server keeps running, so the run state must not be flipped.
+  const dreamStartSeen = React.useRef(false)
 
   const load = React.useCallback(() => {
     if (currentWorkspace.current !== workspaceId) return
@@ -252,12 +267,89 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     return () => { invalidatePendingLoads(); unsubscribe() }
   }, [load])
 
+  const bankId = workspaceId ? `ws:${workspaceId}` : 'main'
+  const repoReadAvailable = typeof window.electronAPI.getMemoryRepoStatus === 'function'
+  const dreamReadAvailable = typeof window.electronAPI.getMemoryDreamStatus === 'function'
+  const dreamRunAvailable = typeof window.electronAPI.runMemoryDream === 'function'
+  const repoLoad = React.useCallback(() => {
+    if (currentWorkspace.current !== workspaceId) return
+    if (repoReadAvailable) window.electronAPI.getMemoryRepoStatus(bankId).then((status) => { if (currentWorkspace.current === workspaceId) setRepoStatus(status) }).catch(() => {})
+    if (dreamReadAvailable) window.electronAPI.getMemoryDreamStatus(bankId).then((status) => { if (currentWorkspace.current === workspaceId) setDreamStatus(status) }).catch(() => {})
+    if (typeof window.electronAPI.getMemoryRepoGraph === 'function') {
+      window.electronAPI.getMemoryRepoGraph(bankId).then((graph) => {
+        if (currentWorkspace.current === workspaceId) setRepoLessonNodes(graph.nodes)
+      }).catch(() => {})
+    }
+  }, [workspaceId, bankId, repoReadAvailable, dreamReadAvailable])
+  React.useEffect(() => {
+    setRepoStatus(null)
+    setDreamStatus(null)
+    setRepoLessonNodes(null)
+    setDreamRunning(false)
+    setImportOpen(false)
+    if (!repoReadAvailable && !dreamReadAvailable) return
+    repoLoad()
+    const offRepo = typeof window.electronAPI.onMemoryRepoChanged === 'function' ? window.electronAPI.onMemoryRepoChanged(() => repoLoad()) : () => {}
+    const offDream = typeof window.electronAPI.onMemoryDreamDone === 'function' ? window.electronAPI.onMemoryDreamDone(() => repoLoad()) : () => {}
+    const offDreamEvent = typeof window.electronAPI.onMemoryDreamEvent === 'function'
+      ? window.electronAPI.onMemoryDreamEvent((event) => {
+          if (event.bankId !== bankId) return
+          if (event.kind === 'start') dreamStartSeen.current = true
+          if (event.kind === 'end') setDreamRunning(false)
+        })
+      : () => {}
+    const offImport = typeof window.electronAPI.onMemoryRepoImportReady === 'function' ? window.electronAPI.onMemoryRepoImportReady(() => repoLoad()) : () => {}
+    return () => { offRepo(); offDream(); offDreamEvent(); offImport() }
+  }, [repoLoad, repoReadAvailable, dreamReadAvailable])
+  const dreamActive = dreamRunning || Boolean(dreamStatus?.running)
+  const runDreamNow = () => {
+    if (dreamActive || !dreamRunAvailable) return
+    dreamStartSeen.current = false
+    setDreamRunning(true)
+    window.electronAPI.runMemoryDream(bankId).then((run) => {
+      if (currentWorkspace.current !== workspaceId) return
+      setDreamRunning(false)
+      if (run && run.status === 'error') toast.error(t('memory.repo.state.dreamFailed'))
+    }).catch(() => {
+      // A rejection after the run has actually started is the transport bound,
+      // not a failure: leave `dreamRunning` set and let the event/done stream
+      // own the run state. Only a pre-start rejection is a genuine failure.
+      if (dreamStartSeen.current) return
+      if (currentWorkspace.current === workspaceId) toast.error(t('memory.repo.state.dreamFailed'))
+    }).finally(() => {
+      if (currentWorkspace.current !== workspaceId) return
+      if (!dreamStartSeen.current) setDreamRunning(false)
+      repoLoad()
+    })
+  }
+  const exportRepo = () => {
+    if (typeof window.electronAPI.exportMemoryRepo !== 'function') return
+    setExportBusy(true)
+    window.electronAPI.exportMemoryRepo(bankId).then((result) => {
+      if (currentWorkspace.current !== workspaceId) return
+      toast.success(t('memory.repo.export.done', { path: result.path }))
+      if (typeof window.electronAPI.showInFolder === 'function') { try { void window.electronAPI.showInFolder(result.path) } catch { /* reveal is best-effort */ } }
+    }).catch((error) => {
+      if (currentWorkspace.current === workspaceId) toast.error(t('memory.repo.export.failed'), { description: toErrorMessage(error) })
+    }).finally(() => { if (currentWorkspace.current === workspaceId) setExportBusy(false) })
+  }
+  const revertImport = () => {
+    if (typeof window.electronAPI.revertMemoryRepoImport !== 'function') return
+    window.electronAPI.revertMemoryRepoImport(bankId).then(() => {
+      if (currentWorkspace.current !== workspaceId) return
+      toast.success(t('memory.repo.import.reverted'))
+      repoLoad()
+    }).catch((error) => {
+      if (currentWorkspace.current === workspaceId) toast.error(t('memory.repo.import.revertFailed'), { description: toErrorMessage(error) })
+    })
+  }
+
   const all = React.useMemo(() => lessons ?? [], [lessons])
   const byId = React.useMemo(() => new Map(all.map((l) => [lessonId(l), l])), [all])
   const inContext = React.useMemo(() => contextSelection(all), [all])
   const budget = React.useMemo(() => tokenBudget(all, inContext), [all, inContext])
   const { topics, topicOf } = React.useMemo(() => clusterTopics(all), [all])
-  const ctx = React.useMemo(() => ({ inContext, topicOf }), [inContext, topicOf])
+  const ctx = React.useMemo(() => ({ inContext, topicOf, lastMaterializeAt: repoStatus?.lastMaterializeAt ?? null }), [inContext, topicOf, repoStatus?.lastMaterializeAt])
   const visible = React.useMemo(() => sortLessons(all.filter((l) => matchesFilter(l, filter, ctx)), sort), [all, filter, ctx, sort])
   const visibleIndexes = React.useMemo(() => new Map(visible.map((lesson, index) => [lessonId(lesson), index])), [visible])
   const selected = selectedId ? byId.get(selectedId) : undefined
@@ -274,8 +366,9 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       disabled: all.filter((l) => l.disabled).length,
       conflicts: all.filter((l) => l.conflicts?.length).length,
       merged: all.filter((l) => l.mergedFrom?.length || l.mergedInto).length,
+      awaitingDream: all.filter((l) => awaitingDream(l, repoStatus?.lastMaterializeAt ?? null)).length,
     } as Record<StatusFacet, number>,
-  }), [all, inContext])
+  }), [all, inContext, repoStatus?.lastMaterializeAt])
   const customCategories = [...counts.category.keys()].filter((c) => !BUILTIN.includes(c as LessonCategory)).sort()
   const dateFmt = React.useMemo(() => new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), [i18n.language])
   const fmt = (iso?: string) => (iso && Date.parse(iso) ? dateFmt.format(new Date(iso)) : '—')
@@ -518,6 +611,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
 
   // ── Facets ───────────────────────────────────────────────────────────────
   const categoryLabel = (c: string) => (BUILTIN.includes(c as LessonCategory) ? t(`memory.category.${c}`) : c)
+  const statusLabel = (id: StatusFacet) => (id === 'awaitingDream' ? t('memory.repo.facet.awaitingDream') : t(`memory.screen.statusFacet.${id}`))
   const facets = (
     <ShellSidebarPortal className={cn(
       'w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2',
@@ -532,11 +626,11 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       <FacetItem icon={Globe2} label={t('memory.screen.scopeGlobal')} count={counts.scope.get('global') ?? 0} active={filter.scope === 'global'} onClick={() => setFacet('scope', 'global')} testId="memory-facet-global" />
       <FacetItem icon={FolderClosed} label={t('memory.screen.scopeWorkspace')} count={counts.scope.get('workspace') ?? 0} active={filter.scope === 'workspace'} onClick={() => setFacet('scope', 'workspace')} testId="memory-facet-workspace" />
       <FacetTitle>{t('memory.screen.status')}</FacetTitle>
-      {STATUSES.filter((id) => ['inContext', 'pinned', 'disabled', 'conflicts'].includes(id) && (counts.status[id] || filter.status === id)).map((id) => (
+      {STATUSES.filter((id) => ['inContext', 'pinned', 'awaitingDream', 'disabled', 'conflicts'].includes(id) && (counts.status[id] || filter.status === id)).map((id) => (
         <FacetItem
           key={id}
           icon={STATUS_ICONS[id]}
-          label={t(`memory.screen.statusFacet.${id}`)}
+          label={statusLabel(id)}
           count={counts.status[id]}
           active={filter.status === id}
           tone={id === 'negative' || id === 'conflicts' ? 'danger' : id === 'inContext' ? 'accent' : undefined}
@@ -723,6 +817,35 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
 
   const visibleCandidates = candidates.filter((c) => !all.some((l) => l.scope === 'global' && l.rule.trim().toLowerCase() === c.rule.trim().toLowerCase()))
 
+  // ── Repository status line ───────────────────────────────────────────────
+  const costText = dreamStatus
+    ? `$${dreamStatus.costTodayUsd.toFixed(2)}${dreamStatus.costIsEstimate ? ` · ${t('memory.repo.costEstimate')}` : ''}`
+    : '—'
+  const openRepo = () => { try { navigate(routes.view.memory('repo')) } catch { /* route unavailable */ } }
+  const repoBar = repoReadAvailable || dreamReadAvailable ? (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-2 text-caption text-text-secondary" data-testid="memory-repo-status">
+      <span className="inline-flex min-w-0 items-center gap-1" data-testid="memory-repo-head">
+        <GitBranch aria-hidden="true" className="icon-status shrink-0 text-text-muted" />
+        <span>{t('memory.repo.head')}</span>
+        <span className="min-w-0 truncate font-mono">{repoStatus?.head ? repoStatus.head.sha.slice(0, 8) : t('memory.repo.headNone')}</span>
+      </span>
+      <span data-testid="memory-repo-dream">{dreamStatus?.lastRun?.endedAt ? `${t('memory.repo.lastDream')} ${fmt(dreamStatus.lastRun.endedAt)}` : t('memory.repo.lastDreamNever')}</span>
+      <span data-testid="memory-repo-cost" data-estimated={dreamStatus?.costIsEstimate ? 'true' : undefined}>{t('memory.repo.costToday')} {costText}</span>
+      <span className="flex-1" />
+      <Btn onClick={openRepo} testId="memory-repo-open">{t('memory.repo.open')}</Btn>
+      {typeof window.electronAPI.exportMemoryRepo === 'function' ? <Btn disabled={exportBusy} onClick={exportRepo} testId="memory-repo-export"><Package aria-hidden="true" className="icon-status" />{t('memory.repo.action.export')}</Btn> : null}
+      {dreamRunAvailable ? <Btn primary disabled={dreamActive} onClick={runDreamNow} testId="memory-repo-run">{dreamActive ? t('memory.repo.state.dreamRunning') : t('memory.repo.action.dreamNow')}</Btn> : null}
+    </div>
+  ) : null
+  const pendingImports = repoStatus?.pendingImportCount ?? 0
+  const importBanner = pendingImports > 0 && typeof window.electronAPI.previewMemoryRepoImport === 'function' ? (
+    <div className="mx-3 mb-2 flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] bg-status-warning/10 px-2 py-1.5 text-small" data-testid="memory-repo-import-banner">
+      <span className="min-w-0 flex-1">{t('memory.repo.import.banner', { count: pendingImports })}</span>
+      <Btn onClick={() => setImportOpen(true)} testId="memory-repo-import-review">{t('memory.repo.import.review')}</Btn>
+      <Btn danger onClick={() => setConfirm({ kind: 'revertImport' })} testId="memory-repo-import-revert">{t('memory.repo.import.revert')}</Btn>
+    </div>
+  ) : null
+
   const list = (
     <section ref={memoryListTarget} className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', selected ? 'hidden @[920px]/memory:flex' : 'flex')} data-testid="memory-list">
       <header className="flex shrink-0 flex-wrap items-center gap-2 px-4 pb-3 pt-4">
@@ -734,6 +857,8 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
         <span className="flex-1" />
         <Btn primary disabled={writeDenied || !memoryWriteAvailable || !memoryReadAvailable || loadError} onClick={() => setAdding((v) => !v)} testId="memory-add">+ {t('memory.screen.add')}</Btn>
       </header>
+      {repoBar}
+      {importBanner}
       <div className="flex min-w-0 flex-wrap items-center gap-2 px-4 pb-3">
         <div className="relative min-w-0 basis-[220px] grow">
         <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-2.5 size-4 text-text-muted" />
@@ -815,6 +940,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     const similar = nearDuplicates(selected, all)
     const history = [...(selected.usedAt ?? [])].reverse()
     const untracked = Math.max(0, (selected.usageCount ?? 0) - (selected.usedAt?.length ?? 0))
+    const repoPath = lessonRepoPath(repoLessonNodes, selected.rule)
     return (
       <div ref={adding ? undefined : memoryEditorTarget} key={id} className="mx-auto flex w-full max-w-[620px] min-h-0 flex-col gap-4 px-5 py-4" data-testid="memory-detail">
         <div className="flex items-center gap-3">
@@ -880,6 +1006,13 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
             </span>
           </Row>
           <Row label={t('memory.screen.tokens')}>≈{lessonTokens(selected)} {t('memory.screen.tok')} · {inContext.has(id) ? t('memory.screen.inContextNow') : selected.disabled ? t('memory.screen.notInjectedDisabled') : t('memory.screen.notInjected')}</Row>
+          {repoPath ? (
+            <Row label={t('memory.repo.inspector.lessonPath')}>
+              <button type="button" className="min-w-0 max-w-full truncate text-left text-accent underline-offset-2 hover:underline" onClick={() => { try { navigate(routes.view.memory('repo', { type: 'file', path: repoPath })) } catch { /* route unavailable */ } }} data-testid="memory-repo-lesson-path">
+                {repoPath}
+              </button>
+            </Row>
+          ) : null}
           </div>
         </details>
 
@@ -999,6 +1132,14 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       </div>
       <textarea value={mergeText} onChange={(event) => setMergeText(event.target.value)} rows={3} aria-label={t('memory.screen.mergeText')} className="mt-2 w-full resize-y rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 py-1.5 text-[13px] outline-none" />
     </Confirm>
+  ) : confirm?.kind === 'revertImport' ? (
+    <Confirm
+      title={t('memory.repo.import.revertTitle')}
+      body={t('memory.repo.import.revertBody')}
+      confirmLabel={t('memory.repo.import.revertConfirm')}
+      onConfirm={() => { setConfirm(null); revertImport() }}
+      onCancel={() => setConfirm(null)}
+    />
   ) : null
 
   return (
@@ -1034,6 +1175,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
         </>
       )}
       {confirmDialog}
+      <ImportReviewDialog bankId={bankId} open={importOpen} onOpenChange={setImportOpen} onApplied={repoLoad} onReverted={repoLoad} />
     </div>
   )
 }

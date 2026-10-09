@@ -1,0 +1,6 @@
+{
+  "kanban.a11y.columnRegion": {
+    "ru": "Колонка «{column}»",
+    "en": "Column “{column}”"
+  }
+}

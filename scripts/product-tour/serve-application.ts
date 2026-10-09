@@ -4,9 +4,10 @@ import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { EventEmitter } from 'node:events'
 import { build, createServer, preview } from 'vite'
-import { applicationBuildFingerprint, requireApplicationBuildReceipt, writeApplicationBuildReceipt } from './application-build'
+
 import type { BrowserWindow, IpcMain } from 'electron'
 import type { Session } from '../../packages/shared/src/protocol'
+import { applicationBuildFingerprint, requireApplicationBuildReceipt, writeApplicationBuildReceipt } from './application-build'
 
 const repository = resolve(import.meta.dirname, '../..')
 const profile = realpathSync(mkdtempSync(join(tmpdir(), 'rox-product-tour-app-')))

@@ -49,7 +49,8 @@ const rules = {
   'rox/icon-size-tokens': 'warn',
   'rox/no-raw-error-render': 'warn',
   'rox/prefer-primitives': 'warn',
-  'rox/no-backdrop-on-overlay': 'warn',
+  // Flipped to error at 0 violations by the 2026-10-09 ratchet update (KanbanColumn overlay fixed).
+  'rox/no-backdrop-on-overlay': 'error',
 }
 
 /** craft-styles/no-hardcoded-z-index: the v1 style-object check, unchanged and still an error. */

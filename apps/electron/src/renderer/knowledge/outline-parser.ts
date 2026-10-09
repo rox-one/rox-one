@@ -1,5 +1,5 @@
 /**
- * parseOutline — extract ATX headings from SiYuan document markdown, feeding the
+ * parseOutline — extract ATX headings from Rox Notes document markdown, feeding the
  * KnowledgeInspector OUTLINE section. Deliberately dependency-free (contract W2-INSP):
  * no markdown library is pulled in for a heading index. Not a full CommonMark parser —
  * setext headings and container-aware constructs are out of scope for an outline list.

@@ -56,7 +56,7 @@ describe('parseArgs', () => {
     expect(args.rest).toEqual(['session-1', 'hello'])
   })
 
-  it('falls back to env vars for url and token', () => {
+  it('falls back to legacy CRAFT_* env vars for url and token', () => {
     const prevUrl = process.env.CRAFT_SERVER_URL
     const prevToken = process.env.CRAFT_SERVER_TOKEN
     const prevRoxUrl = process.env.ROX_SERVER_URL
@@ -85,6 +85,33 @@ describe('parseArgs', () => {
       else process.env.ROX_SERVER_TOKEN = prevRoxToken
       if (prevCa === undefined) delete process.env.CRAFT_TLS_CA
       else process.env.CRAFT_TLS_CA = prevCa
+    }
+  })
+
+  it('falls back to canonical ROX_* env vars for url and token', () => {
+    const prevCraftUrl = process.env.CRAFT_SERVER_URL
+    const prevCraftToken = process.env.CRAFT_SERVER_TOKEN
+    const prevRoxUrl = process.env.ROX_SERVER_URL
+    const prevRoxToken = process.env.ROX_SERVER_TOKEN
+
+    delete process.env.CRAFT_SERVER_URL
+    delete process.env.CRAFT_SERVER_TOKEN
+    process.env.ROX_SERVER_URL = 'ws://rox-server:9090'
+    process.env.ROX_SERVER_TOKEN = 'rox-env-token'
+
+    try {
+      const args = parseArgs(['bun', 'index.ts', 'ping'])
+      expect(args.url).toBe('ws://rox-server:9090')
+      expect(args.token).toBe('rox-env-token')
+    } finally {
+      if (prevCraftUrl === undefined) delete process.env.CRAFT_SERVER_URL
+      else process.env.CRAFT_SERVER_URL = prevCraftUrl
+      if (prevCraftToken === undefined) delete process.env.CRAFT_SERVER_TOKEN
+      else process.env.CRAFT_SERVER_TOKEN = prevCraftToken
+      if (prevRoxUrl === undefined) delete process.env.ROX_SERVER_URL
+      else process.env.ROX_SERVER_URL = prevRoxUrl
+      if (prevRoxToken === undefined) delete process.env.ROX_SERVER_TOKEN
+      else process.env.ROX_SERVER_TOKEN = prevRoxToken
     }
   })
 

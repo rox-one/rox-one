@@ -2,7 +2,7 @@
   "name": "@rox/server-core",
   "version": "0.11.8",
   "license": "Apache-2.0",
-  "description": "Reusable headless server infrastructure for Craft Agent",
+  "description": "Reusable headless server infrastructure for Rox",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -10,6 +10,7 @@
     ".": "./src/index.ts",
     "./transport": "./src/transport/index.ts",
     "./command-gateway": "./src/command-gateway/index.ts",
+    "./nodes": "./src/nodes/index.ts",
     "./runtime": "./src/runtime/index.ts",
     "./handlers": "./src/handlers/index.ts",
     "./bootstrap": "./src/bootstrap/index.ts",
@@ -22,6 +23,7 @@
     "./tasks": "./src/tasks/index.ts",
     "./knowledge": "./src/knowledge/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
+    "./scheduler": "./src/scheduler/index.ts",
     "./service": "./src/service/index.ts",
     "./workgraph": "./src/workgraph/index.ts",
     "./observability": "./src/observability/index.ts",
@@ -32,7 +34,10 @@
     "./memory/learning/*": "./src/memory/learning/*.ts",
     "./workspace-work/*": "./src/workspace-work/*.ts",
     "./commands": "./src/commands/index.ts",
-    "./workspace-sync": "./src/workspace-sync/index.ts"
+    "./workspace-sync": "./src/workspace-sync/index.ts",
+    "./collab": "./src/collab/index.ts",
+    "./drive": "./src/drive/index.ts",
+    "./xsc": "./src/xsc/index.ts"
   },
   "scripts": {},
   "dependencies": {
@@ -46,7 +51,7 @@
     "gray-matter": "^4.0.3",
     "jose": "^6.0.0",
     "js-yaml": "^4.1.1",
-    "sharp": "0.35.4",
+    "sharp": "0.35.5",
     "ws": "^8.19.0"
   },
   "devDependencies": {

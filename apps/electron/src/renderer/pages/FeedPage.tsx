@@ -1,5 +1,8 @@
 /**
- * Лента — feed aggregator with four tabs: «Действия агентов» (sessions +
+ * Лента (merged screen, W3.1/D4): a route-driven section strip over «Поток»
+ * (the aggregator below) and «Входящие» (`pages/inbox/InboxView`).
+ *
+ * «Поток» — feed aggregator with four tabs: «Действия агентов» (sessions +
  * automation runs), «Команда» (local-first team activity; honest state when
  * there is no org), «Новости» (user sources polled in the background:
  * RSS/Atom → autodiscovery → page diff) and «Подписки» (X home timeline via
@@ -53,6 +56,7 @@ import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-b
 import type { PersonalTask } from '@rox/core/tasks/personal'
 import type { NoteDocument } from '../../shared/types'
 import { isNativeNoteDocument } from '@/lib/notes-write-authority'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 import {
   Badge,
   Button,
@@ -89,6 +93,8 @@ import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inb
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
 import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
 import { toErrorMessage } from '@/lib/errors'
+import { FeedSectionTabs, type FeedSection } from './feed/FeedSectionTabs'
+import { InboxQueue } from './inbox/InboxQueue'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
 import { cacheWriteEpoch, fencedPatchQueryData, fencedSetQueryData } from '@/lib/query/shared-read'
@@ -168,7 +174,7 @@ function loadPrefs(workspaceId: string | null, caller?: FeedCaller): FeedPagePre
 
 const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
-export default function FeedPage({ selectedId }: { selectedId?: string | null }) {
+export function FeedStream({ selectedId }: { selectedId?: string | null }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
   const api = typeof window !== 'undefined' ? window.electronAPI : undefined
@@ -186,6 +192,24 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   return <FeedPageForCaller key={scope.caller.key} selectedId={selectedId} caller={scope.caller} />
 }
 
+/**
+ * Merged Лента screen (W3.1, D4). Two sections on one screen: «Поток»
+ * (`FeedStream`, the aggregator) and «Входящие» (`InboxQueue`, the queue
+ * extracted from the old InboxPage). The section is route-driven —
+ * `InboxPage` renders this with `section="inbox"` — while the segmented strip
+ * navigates between `routes.view.feed()` and `routes.view.inbox()`.
+ */
+export default function FeedPage({ selectedId, section = 'stream' }: { selectedId?: string | null; section?: FeedSection }) {
+  return (
+    <div className="flex h-full min-h-0 flex-col" data-testid="feed-screen" data-section={section}>
+      <FeedSectionTabs section={section} />
+      <div className="flex min-h-0 flex-1 flex-col">
+        {section === 'inbox' ? <InboxQueue selectedId={selectedId} /> : <FeedStream selectedId={selectedId} />}
+      </div>
+    </div>
+  )
+}
+
 function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null; caller: FeedCaller }) {
   const { t, i18n } = useTranslation()
   const canHandleKeyboard = usePanelKeyboardGuard()
@@ -193,6 +217,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const store = useStore()
   const workspaceId = shell?.activeWorkspaceId ?? null
   const rawApi = typeof window !== 'undefined' ? window.electronAPI : undefined
+  // PERF-10 (#1577): a retired surface keeps this page mounted but stops the poll.
+  const surfaceVisible = useEffectiveVisible()
   const alive = useRef(true)
   const current = useCallback(() => alive.current && caller.isCurrent(), [caller])
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
@@ -314,6 +340,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   }, [load])
   useEffect(() => api?.onFeedChanged?.(() => { void load() }), [api, load])
   useEffect(() => {
+    if (!surfaceVisible) return
     let refreshing = false
     const poll = async () => {
       if (refreshing || !current()) return
@@ -325,7 +352,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     }
     const id = setInterval(() => void poll(), 60_000)
     return () => clearInterval(id)
-  }, [load, current, caller, api])
+  }, [load, current, caller, api, surfaceVisible])
 
   useEffect(() => {
     if (loaded && sourceDataWorkspaceId === workspaceId && sourceFilter && !data.sources.some((source) => source.id === sourceFilter)) setSourceFilter(null)

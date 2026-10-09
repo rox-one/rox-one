@@ -15,7 +15,7 @@ let server: Server, browser: Browser, context: BrowserContext, page: Page, base:
 function productionFunctions(): string {
   const source = readFileSync(process.env.ROX_UI001_MAIN_SOURCE ?? join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
   const file = ts.createSourceFile('MainContentPanel.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['UnavailableAutomationTour', 'useSelectedResourceAvailability', 'MainContentPanel'])
+  const names = new Set(['UnavailableAutomationTour', 'useSelectedResourceAvailability', 'MainContentPanel', 'SurfaceRoutePanel'])
   return file.statements.filter((node) => (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) ? names.has(node.name?.text ?? '') : ts.isVariableStatement(node) && node.declarationList.declarations.some(decl => names.has(decl.name.getText(file))))
     .map((node) => node.getText(file).replace(/^export /, '')).join('\n')
 }
@@ -66,7 +66,7 @@ async function fixtureBundle() {
     import TerminalSurfacePage from './apps/electron/src/renderer/pages/TerminalSurfacePage';
     const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation, isSurfaceNavigation,
       isLearningNavigation,
-      isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isNotesNavigation,
+      isTasksNavigation, isInboxNavigation, isFeedNavigation, isNotesNavigation,
       isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isKnowledgeNavigation,
       isDiffNavigation, isExtensionNavigation, isConnectionsNavigation, isHomeNavigation, isCloudRunNavigation,
       isTerminalNavigation, isScreenNavigation } = guards;
@@ -103,6 +103,9 @@ async function fixtureBundle() {
     const sourceSelection = selection, skillSelection = selection, automationSelection = selection;
     const Pass = props => React.createElement('section', null, props.children);
     const Panel = Pass, StoplightProvider = Pass, SendResourceToWorkspaceDialog = () => null;
+    // PERF-10 (#1577): keep-alive host stubbed to the active surface only.
+    const RetainedSurfacePane = props => props.children, surfaceKeepAliveCapacity = () => 1,
+      useKeepAliveSurfaces = (key, node) => [{ key, node }];
     const SourceInfoPage = props => React.createElement('div', {'data-fixture-source':props.sourceSlug}, 'Address '+props.sourceSlug);
     const SkillInfoPage = () => null, MemoryScreen = () => null, LearningScreen = () => null, ProjectsHomeInMain = () => null,
       MultiSelectPanel = () => null, CollectionBulkBar = () => null, HomeFrontPage = () => null,

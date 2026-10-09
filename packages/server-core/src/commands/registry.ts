@@ -16,7 +16,14 @@
 
 import { CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
 import { bindSystemPing } from './ping'
+import { AGENTS_COMMAND_MODULE } from '../agents/module.ts'
+import { NOTIFY_COMMAND_MODULE } from './notify'
 import { bindDomainSchemas, bindReferenceHandlers } from '../work/reference/module'
+// W1-12 (#1509)
+import { AUTOMATION_COMMAND_MODULE } from '../rules/command-module'
+import { COLLAB_COMMAND_MODULE } from '../collab/module'
+import { DRIVE_COMMAND_MODULE } from '../drive/module'
+import { XSC_COMMAND_MODULE } from '../xsc/module'
 
 /** One owner module's bindings (handlers + schemas) for its catalogue types. */
 export interface CommandModule {
@@ -44,6 +51,18 @@ export const COMMAND_MODULES: readonly CommandModule[] = Object.freeze([
   SYSTEM_COMMAND_MODULE,
   // W1-06 (#1503)
   DOMAIN_SCHEMA_COMMAND_MODULE,
+  // W1-12 (#1509) — the automation contract binds before the reference module,
+  // so its daily-note / system-list / invite handlers win over the generic ones.
+  AUTOMATION_COMMAND_MODULE,
+  // W1-11 (#1508): identity lifecycle, team chats and agent governance.
+  AGENTS_COMMAND_MODULE,
+  // W1-14 (#1511) — own schemas, risk classes and handlers; must precede the
+  // reference module, which skips types that already have a handler.
+  COLLAB_COMMAND_MODULE,
+  DRIVE_COMMAND_MODULE,
+  XSC_COMMAND_MODULE,
+  // W1-09 (#1506): notifications.* (binds only while a notify host is installed).
+  NOTIFY_COMMAND_MODULE,
   REFERENCE_COMMAND_MODULE,
 ])
 

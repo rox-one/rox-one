@@ -8,7 +8,7 @@ import { buildSummaryPrompt, parseSummaryExtraction } from '../../pages/meetings
 import { loadDecisions, saveDecisions } from '../../pages/extra-screens/decisions/decisions-store'
 import type { DecisionCandidate } from '../../pages/extra-screens/decisions/decisions-model'
 import { readWorkspaceJsonSnapshot, saveWorkspaceJson } from '../extra-screens/storage'
-import { saveTranscriptToNotebook, transcriptNoteStamp, transcriptSegmentsToText } from '../transcripts-notebook'
+import { useMeetingTranscriptNotes } from './transcript-notes'
 
 const inflight = new Set<string>()
 const START_TIMEOUT_MS = 120_000
@@ -28,43 +28,6 @@ export function extractionBusy(meeting: LocalMeeting): boolean {
 export function needsAutomaticExtraction(meeting: LocalMeeting): boolean {
   return !!meeting.workspaceId && meeting.transcript.status === 'done' && !extractionBusy(meeting)
     && meeting.summaryAutoRevision !== (meeting.transcript.revision ?? 0)
-}
-
-const notebookPublished = new Set<string>()
-
-/**
- * Mirrors a finished meeting transcript into the «Мои записи/Мои транскрипты»
- * space, at most once per meeting for the lifetime of the window. The notebook
- * write itself is content-addressed, so re-publishing is a no-op; a failed
- * attempt drops the guard so the next tick retries.
- */
-async function publishMeetingTranscript(api: MeetingsLocalApi, meeting: LocalMeeting): Promise<void> {
-  if (meeting.transcript.status !== 'done' || !meeting.workspaceId) return
-  const key = meeting.id
-  if (notebookPublished.has(key)) return
-  notebookPublished.add(key)
-  try {
-    const transcript = await api.readTranscript(meeting.id)
-    const text = transcript ? transcriptSegmentsToText(transcript.segments) : ''
-    if (!text) {
-      notebookPublished.delete(key)
-      return
-    }
-    // startedAt/createdAt are stable across re-transcription, so the notebook
-    // anchor (source + timestamp + text) keeps retries idempotent.
-    const at = meeting.startedAt ?? meeting.createdAt
-    await saveTranscriptToNotebook({
-      title: i18n.t('transcriptsNotebook.noteTitle.meeting', {
-        title: meeting.title.trim() || i18n.t('transcriptsNotebook.untitledMeeting'),
-        when: transcriptNoteStamp(at),
-      }),
-      text,
-      source: 'meeting',
-      createdAt: at,
-    })
-  } catch {
-    notebookPublished.delete(key)
-  }
 }
 
 export async function startMeetingExtraction(api: MeetingsLocalApi, meeting: LocalMeeting, language: 'ru' | 'en', automatic = false, engine = runtime, slash?: string): Promise<void> {
@@ -155,6 +118,9 @@ export async function syncMeetingExtraction(api: MeetingsLocalApi, meeting: Loca
 }
 
 export function useAutomaticMeetingExtraction(workspaceId: string | null): void {
+  // App-wide mount point: mirror finished transcripts into the notes vault even
+  // when no meetings screen is open (this hook runs from AppShell's background).
+  useMeetingTranscriptNotes(workspaceId)
   useEffect(() => {
     const api = meetingsApi()
     if (!api || !workspaceId) return
@@ -170,7 +136,6 @@ export function useAutomaticMeetingExtraction(workspaceId: string | null): void 
           try {
             if (meeting.extraction) await syncMeetingExtraction(api, meeting)
             const current = await api.get(meeting.id)
-            if (current) void publishMeetingTranscript(api, current)
             if (!stopped && current && needsAutomaticExtraction(current)) await startMeetingExtraction(api, current, (i18n.language ?? 'ru').startsWith('ru') ? 'ru' : 'en', true)
           } catch { /* The durable state contains a retryable failure; continue other meetings. */ }
         }

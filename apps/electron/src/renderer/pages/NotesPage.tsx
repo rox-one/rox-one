@@ -635,6 +635,29 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const knowledgeSignals = useKnowledgeSignals({ workspaceId: activeWorkspaceId ?? undefined })
   const noteCreateTarget = useTourTarget('notes.create', { workspaceId: activeWorkspaceId ?? undefined })
   const noteEditorTarget = useTourTarget('notes.editor', { workspaceId: activeWorkspaceId ?? undefined, entityId: activeNote?.id })
+  // Note ids awaiting the next memory dream — rendered as a chip on vault rows.
+  const [dreamNoteIds, setDreamNoteIds] = React.useState<ReadonlySet<string> | null>(null)
+  const dreamBankId = activeWorkspaceId ? `ws:${activeWorkspaceId}` : null
+  /** Re-read the pending-note set for a bank (used after a forced dream run). */
+  const refreshDreamNoteIds = React.useCallback((bankId: string) => {
+    const api = window.electronAPI
+    if (typeof api.getMemoryDreamStatus !== 'function') return
+    return api.getMemoryDreamStatus(bankId)
+      .then((status) => setDreamNoteIds(new Set(status.pendingNoteIds)))
+      .catch(() => setDreamNoteIds(null))
+  }, [])
+  React.useEffect(() => {
+    const api = window.electronAPI
+    if (!dreamBankId || typeof api.getMemoryDreamStatus !== 'function') { setDreamNoteIds(null); return }
+    let cancelled = false
+    const load = () => {
+      api.getMemoryDreamStatus(dreamBankId).then((status) => { if (!cancelled) setDreamNoteIds(new Set(status.pendingNoteIds)) })
+        .catch(() => { if (!cancelled) setDreamNoteIds(null) })
+    }
+    load()
+    const off = typeof api.onMemoryDreamDone === 'function' ? api.onMemoryDreamDone(() => load()) : () => {}
+    return () => { cancelled = true; off() }
+  }, [dreamBankId])
   React.useEffect(() => knowledgeSignals.capability('notes.available', activeWorkspaceId ? notesReadCapability(readUnavailable, assetsUnavailable) : { state: 'pending', reason: 'missing-entity' }), [knowledgeSignals, readUnavailable, assetsUnavailable, activeWorkspaceId])
   React.useLayoutEffect(() => {
     // A committed workspace lease invalidates A requests even across A → B → A.
@@ -1863,6 +1886,19 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     await window.electronAPI.showInFolder(note.path)
   }
 
+  /** Force-distill one note into the workspace bank now (spec §8 «Собрать в память»). */
+  const collectToMemory = async (note: NoteSummary) => {
+    const api = window.electronAPI
+    if (!dreamBankId || typeof api.runMemoryDream !== 'function') return
+    try {
+      await api.runMemoryDream(dreamBankId, { noteIds: [note.id] })
+      await refreshDreamNoteIds(dreamBankId)
+      toast.success(t('notes.collect.queued'))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('common.error'))
+    }
+  }
+
   const refreshRenameImpact = React.useCallback(async (title: string) => {
     if (!activeWorkspaceId || !activeNote || activeNote.nativeRevision !== undefined || !title.trim() || title.trim() === activeNote.title) {
       setRenameImpact(null)
@@ -2644,6 +2680,7 @@ h1,h2,h3{margin-top:1.5em}
           <NotesNavigationSidebar
             notes={visibleNotes}
             activeNoteId={activeNote?.id}
+            dreamNoteIds={dreamNoteIds}
             collapsedFolders={collapsedFolders}
             onToggleFolder={toggleFolder}
             viewportRef={notesListViewportRef}
@@ -2655,9 +2692,11 @@ h1,h2,h3{margin-top:1.5em}
             onOpenRenameDialogForNote={openRenameDialogForNote}
             onOpenDeleteDialogForNote={openDeleteDialogForNote}
             onDuplicateNote={duplicateNote}
+            onCollectToMemory={collectToMemory}
             onCopyNoteLink={copyNoteLink}
             onCopyNotePath={copyNotePath}
             onRevealNote={revealNote}
+            workspaceId={activeWorkspaceId}
             emptyMessage={noteScope.kind === 'unavailable' ? t('navigation.notes.scopeUnavailable') : query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
           />
         </div>
@@ -2701,7 +2740,7 @@ h1,h2,h3{margin-top:1.5em}
             </div>
           )}
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
-          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
+          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} disabled={openingAgent} />
           <button

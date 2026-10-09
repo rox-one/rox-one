@@ -103,6 +103,7 @@ describe('Rox Cloud onboarding routing', () => {
     RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE,
     RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
     RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
+    RPC_CHANNELS.onboarding.CHECK_HANDLE,
   ]
 
   test('keeps desktop-wide credential flows local', () => {
@@ -326,6 +327,17 @@ describe('browser profile import routing', () => {
     for (const channel of Object.values(RPC_CHANNELS.browserProfile)) {
       expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(true)
       expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(false)
+    }
+  })
+})
+
+describe('node/device registry routing (f.9)', () => {
+  test('classifies every nodes:* channel as REMOTE_ELIGIBLE', () => {
+    const channels = Object.values(RPC_CHANNELS.nodes)
+    expect(channels.length).toBeGreaterThan(0)
+    for (const channel of channels) {
+      expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(true)
+      expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(false)
     }
   })
 })

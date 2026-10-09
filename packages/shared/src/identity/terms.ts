@@ -60,8 +60,12 @@ export function isCompatibilityRuntimeTerm(value: string): boolean {
 /** Runtime names that must not appear in normal-UI locale values. */
 const FORBIDDEN_IN_NORMAL_UI: Array<{ id: string; pattern: RegExp }> = [
   { id: 'OMP', pattern: /\bOMP\b/ },
+  { id: 'omp', pattern: /\bomp\b/i },
   { id: '~/.omp', pattern: /~\/\.omp\b|\/\.omp\// },
   { id: 'oh-my-pi', pattern: /oh-my-pi/i },
+  { id: 'Infisical', pattern: /\bInfisical\b/ },
+  { id: 'SiYuan', pattern: /\bSiYuan\b|\bSiyuan\b/ },
+  { id: 'macro-inc', pattern: /\bmacro[-_ ]inc\b/i },
   { id: 'Hermes', pattern: /\bHermes\b/ },
   // Product copy uses Rox; documented environment identifiers remain exact.
   { id: 'ROX', pattern: /\bROX\b/ },

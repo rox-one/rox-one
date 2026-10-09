@@ -25,6 +25,7 @@ import { featureWorkbenchHarnessAgentTeamsAtom } from '@/atoms/unified-shell'
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
 import { devSpaceEnabledAtom } from '@/atoms/dev-space'
 import { playbooksEnabledAtom } from '@/atoms/playbooks'
+import { featureNotifyInboxV1Atom } from '@/atoms/notify-inbox'
 import {
   UNIFIED_SURFACE_FLAGS,
   UNIFIED_SURFACE_IDS,
@@ -53,10 +54,12 @@ export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, Atom<boolean>> = new Map<
   [WORKBENCH_FLAG.harnessAgentTeams, featureWorkbenchHarnessAgentTeamsAtom],
   // W1-02 (#1499) owns entities.links.v1: its Settings toggle / storage key.
   [WORKBENCH_FLAG.entitiesLinksV1, featureEntitiesLinksV1Atom],
-  // Spec 2026-10-09: Developer Space master (devspace.v1) and Playbooks master
+// Spec 2026-10-09: Developer Space master (devspace.v1) and Playbooks master
   // (playbooks.v1) own dedicated atoms; their sub-flags stay in the generic store.
   [WORKBENCH_FLAG.devSpaceV1, devSpaceEnabledAtom],
   [WORKBENCH_FLAG.playbooksV1, playbooksEnabledAtom],
+  // W1-09 (#1506) owns notify.inbox.v1: the Inbox notification surface.
+  [WORKBENCH_FLAG.notifyInboxV1, featureNotifyInboxV1Atom],
 ])
 
 /**

@@ -122,6 +122,7 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { GlobalVoiceDictation } from "@/voice/global-dictation"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
@@ -161,6 +162,7 @@ import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
+import { installShellWarmup } from "@/lib/shell-warmup"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
@@ -172,12 +174,13 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isHomeNavigation,
+  isDriveNavigation,
   isConnectionsNavigation,
   isDevelopersNavigation,
   isNotesNavigation,
@@ -562,7 +565,7 @@ function AppShellContent({
   })
   const [session, setSession] = useSession()
   const { resolvedMode, isDark, setMode } = useTheme()
-  const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession } = useNavigation()
+  const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession, isSessionsReady } = useNavigation()
 
   // Double-Esc interrupt feature: first Esc shows warning, second Esc interrupts
   const { handleEscapePress } = useEscapeInterrupt()
@@ -665,7 +668,6 @@ function AppShellContent({
   // (PagesHome pattern); collapse the middle navigator for all five.
   const isPagesView = isPagesNavigation(navState)
   const isTasksView = isTasksNavigation(navState)
-  const isMeetingsView = isMeetingsNavigation(navState)
   const isMemoryView = isMemoryNavigation(navState)
   const isLearningView = isLearningNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
@@ -677,8 +679,11 @@ function AppShellContent({
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
     || isSurfaceNavigation(navState)
   // Unavailable addresses have no collection navigator or resize boundary.
+  // Rox History renders its own full-height panel
+  // (ClipboardHistoryPanel) with its own header; keeping the middle navigator
+  // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isLearningView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
@@ -1645,6 +1650,15 @@ function AppShellContent({
     return () => { disposed = true; revision += 1; cleanup() }
   }, [activeWorkspaceId, activeSessionWorkingDirectory, setSkillsSyncing])
 
+  // PERF-10 (#1577): idle warm-up for the surfaces the user is most likely to
+  // open next. Starts once the session metadata and the active workspace exist;
+  // the returned stop cancels the queue on unmount or workspace switch (user
+  // input cancels it too) and the effect re-installs for the new workspace.
+  React.useEffect(() => {
+    if (!isSessionsReady || !activeWorkspaceId) return
+    return installShellWarmup()
+  }, [isSessionsReady, activeWorkspaceId])
+
   // Filter session metadata by active workspace
   // Also exclude hidden sessions (mini-agent sessions) from all counts and lists
   // For remote workspaces, sessions have the remote workspace ID (not the local one),
@@ -2110,6 +2124,11 @@ function AppShellContent({
     handleServiceClick('memory')
   }, [handleServiceClick])
 
+  // Handler for the «Память: репозиторий» tab (`routes.view.memory('repo')`).
+  const handleMemoryRepoClick = useCallback(() => {
+    handleServiceClick('memoryRepo')
+  }, [handleServiceClick])
+
   // Handler for learning view
   const handleLearningClick = useCallback(() => {
     handleServiceClick('learning')
@@ -2537,6 +2556,11 @@ function AppShellContent({
       return t("sidebar.memory")
     }
 
+    // Rox History navigator
+    if (isClipboardHistoryNavigation(navState)) {
+      return t("clipboard.title")
+    }
+
     // Learning navigator
     if (isLearningNavigation(navState)) {
       return t("sidebar.learning")
@@ -2544,10 +2568,6 @@ function AppShellContent({
 
     if (isTasksNavigation(navState)) {
       return t("sidebar.tasks")
-    }
-
-    if (isMeetingsNavigation(navState)) {
-      return t("sidebar.meetings")
     }
 
     if (isHomeNavigation(navState)) {
@@ -2845,8 +2865,16 @@ function AppShellContent({
       id: "nav:memory",
       title: t(APP_NAV_DESTINATIONS_BY_ID.memory.labelKey),
       icon: APP_NAV_DESTINATIONS_BY_ID.memory.icon,
-      variant: isMemoryNavigation(navState) ? "default" : "ghost",
+      // The repository tab owns `nav:memoryRepo`; keep exactly one highlighted.
+      variant: isMemoryNavigation(navState) && navState.tab !== 'repo' ? "default" : "ghost",
       onClick: handleMemoryClick,
+    },
+    {
+      id: "nav:memoryRepo",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.memoryRepo.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.memoryRepo.icon,
+      variant: isMemoryNavigation(navState) && navState.tab === 'repo' ? "default" : "ghost",
+      onClick: handleMemoryRepoClick,
     },
     {
       id: "nav:learning",
@@ -2855,11 +2883,22 @@ function AppShellContent({
       variant: isLearningNavigation(navState) ? "default" : "ghost",
       onClick: handleLearningClick,
     },
+    // --- Rox History (clipboard history) ---
+    {
+      id: "nav:clipboardHistory",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.clipboardHistory.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.clipboardHistory.icon,
+      variant: isClipboardHistoryNavigation(navState) ? "default" : "ghost",
+      onClick: () => handleServiceClick('clipboardHistory'),
+    },
     {
       id: "nav:meetings",
-      title: t('workbench.mode.meetings'),
+      // W3.2 (Согласованность-20261009): Встречи merged into the calendar
+      // surface — the entry keeps id/link/route and opens it, active while the
+      // calendar surface shows, but is presented as «Календарь».
+      title: t('workbench.mode.calendar'),
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
-      variant: isMeetingsNavigation(navState) ? "default" : "ghost",
+      variant: isSurfaceNavigation(navState) && navState.surface === 'calendar' ? "default" : "ghost",
       onClick: handleMeetingsClick,
     },
     // --- Sources ---
@@ -3008,6 +3047,13 @@ function AppShellContent({
       icon: Home,
       variant: isHomeNavigation(navState) ? "default" : "ghost",
       onClick: () => navigate(routes.view.home()),
+    },
+    {
+      id: "nav:drive",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.drive.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.drive.icon,
+      variant: isDriveNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.drive()),
     },
     {
       id: "nav:feed",
@@ -3783,6 +3829,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
       <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
 
       <SuperEngineeringShellExtras />
+
+      {/* Global voice dictation: records + drafts a new session when no active composer owns the mic. */}
+      <GlobalVoiceDictation />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>

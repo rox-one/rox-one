@@ -13,6 +13,9 @@ export const EXTRA_SCREEN_FLAG = {
   agents: 'workbench.mode.agents.v1',
   focus: 'workbench.mode.focus.v1',
   secrets: 'workbench.mode.secrets.v1',
+  activity: 'workbench.mode.activity.v1',
+  library: 'workbench.mode.library.v1',
+  health: 'workbench.mode.health.v1',
 } as const;
 
 export type ExtraScreenFlagId = (typeof EXTRA_SCREEN_FLAG)[keyof typeof EXTRA_SCREEN_FLAG];

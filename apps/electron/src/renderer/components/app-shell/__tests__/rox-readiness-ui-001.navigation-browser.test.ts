@@ -18,7 +18,7 @@ let closeBrowser: (() => Promise<void>) | undefined
 function mainFunctions() {
   const source = readFileSync(join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
   const file = ts.createSourceFile('MainContentPanel.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['useSelectedResourceAvailability', 'MainContentPanel', 'lazyRoutePage', 'RouteErrorBoundary', 'RouteRecoveryContext'])
+  const names = new Set(['useSelectedResourceAvailability', 'MainContentPanel', 'SurfaceRoutePanel', 'lazyRoutePage', 'RouteErrorBoundary', 'RouteRecoveryContext'])
   return file.statements.filter(node => (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node))
     ? names.has(node.name?.text ?? '')
     : ts.isVariableStatement(node) && node.declarationList.declarations.some(decl => names.has(decl.name.getText(file))))
@@ -30,7 +30,7 @@ function mainFunctions() {
 function shellNavigatorExpressions() {
   const source = readFileSync(process.env.ROX_UI001_SHELL_SOURCE ?? join(import.meta.dir, '../AppShell.tsx'), 'utf8')
   const file = ts.createSourceFile('AppShell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['isBoardView', 'isPagesView', 'isTasksView', 'isMeetingsView', 'isMemoryView', 'isProjectsView', 'isModeScreenView', 'hideModuleMiddleNav', 'isLearningView'])
+  const names = new Set(['isBoardView', 'isPagesView', 'isTasksView', 'isMemoryView', 'isProjectsView', 'isModeScreenView', 'hideModuleMiddleNav', 'isLearningView'])
   const declarations: string[] = []
   let hidden = '', width = '', resize = ''
   function visit(node: ts.Node) {
@@ -116,7 +116,7 @@ async function bundle() {
     import {isCollectionCanvasView} from './apps/electron/src/renderer/components/app-shell/collection/collection-view-cycle';
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
     const {isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
-      isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,
+      isTasksNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,
       isAutomationsNavigation,isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,
       isDiffNavigation,isExtensionNavigation,isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,
       isTerminalNavigation,isScreenNavigation,isSurfaceNavigation,isLearningNavigation} = guards;
@@ -143,6 +143,10 @@ async function bundle() {
     // and content recovery callbacks above remain the production implementation.
     const TourPanelScope=Pass, navigationEntity=()=>({}), UnavailableAutomationTour=()=>null;
     const SendResourceToWorkspaceDialog=()=>null, MultiSelectPanel=()=>null, CollectionBulkBar=()=>null;
+    // PERF-10 (#1577): the keep-alive host is out of scope for route dispatch;
+    // stub it to keep exactly the active surface mounted, as before the host.
+    const RetainedSurfacePane=props=>props.children, surfaceKeepAliveCapacity=()=>1,
+      useKeepAliveSurfaces=(key,node)=>[{key,node}];
     const leaf=name=>props=>React.createElement('div',{'data-leaf':name,'data-entity':props.sessionId||props.sourceSlug||props.skillSlug||props.noteId||props.pageSlug||props.runId||props.terminalId||props.extensionId||props.screen||''},name);
     const ChatPage=leaf('session'),SourceInfoPage=leaf('source'),SkillInfoPage=leaf('skill'),
       SkillsCatalogPage=leaf('skills-catalog'),IntegrationsCatalogPage=leaf('integrations-catalog'),MemoryScreen=leaf('memory'),

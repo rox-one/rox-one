@@ -27,7 +27,7 @@ const i18n = createInstance()
 void i18n.init({ lng: 'ru', resources: {}, initAsync: false })
 
 const UNIFIED_FLAGS = [
-  WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCalendarV1, WORKBENCH_FLAG.modeGoalsV1, WORKBENCH_FLAG.modeContactsV1,
+  WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCalendarV1, WORKBENCH_FLAG.modeGoalsV1,
 ]
 
 // A wave-2 mode gated by a catalog flag (a generic default-OFF one; wave-2 adds its own).
@@ -57,7 +57,7 @@ describe('railModeEntries (pure)', () => {
   it('mode flags on: unified modes in the pill order, baseline seven excluded', () => {
     const modes = pill(UNIFIED_FLAGS)
     const entries = railModeEntries(modes)
-    expect(entries.map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals', 'contacts'])
+    expect(entries.map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals'])
     // Same relative order as the pill / ⌘ slots.
     const pillOrder = modes.map((mode) => mode.id).filter((id) => entries.some((entry) => entry.id === id))
     expect(entries.map((mode) => mode.id)).toEqual(pillOrder)
@@ -69,14 +69,14 @@ describe('railModeEntries (pure)', () => {
 
   it('a wave-2 registerSeededMode mode appears in pill order once its flag is on', () => {
     registerSeededMode(fakeMode)
-    expect(railModeEntries(pill(UNIFIED_FLAGS)).map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals', 'contacts'])
+    expect(railModeEntries(pill(UNIFIED_FLAGS)).map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals'])
     const entries = railModeEntries(pill([...UNIFIED_FLAGS, WIKI_FLAG]))
-    expect(entries.map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals', 'wiki', 'contacts'])
+    expect(entries.map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals', 'wiki'])
   })
 
   it('non-navigable modes (rootRoute null) are skipped', () => {
     const modes = pill(UNIFIED_FLAGS).map((mode) => (mode.id === 'calendar' ? { ...mode, rootRoute: null } : mode))
-    expect(railModeEntries(modes).map((mode) => mode.id)).toEqual(['messenger', 'goals', 'contacts'])
+    expect(railModeEntries(modes).map((mode) => mode.id)).toEqual(['messenger', 'goals'])
   })
 })
 
@@ -110,7 +110,7 @@ describe('ActivityRail render', () => {
     const html = renderRail()
     expect(html).toContain('data-testid="rail-modes"')
     const extras = railModeEntries(pill([...UNIFIED_FLAGS, WIKI_FLAG])).map((mode) => `rail-mode-${mode.id}`)
-    expect(extras).toEqual(['rail-mode-messenger', 'rail-mode-calendar', 'rail-mode-goals', 'rail-mode-wiki', 'rail-mode-contacts'])
+    expect(extras).toEqual(['rail-mode-messenger', 'rail-mode-calendar', 'rail-mode-goals', 'rail-mode-wiki'])
     expect(railIds(html)).toEqual([...BASELINE_RAIL_IDS, ...extras])
   })
 

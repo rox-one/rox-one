@@ -233,7 +233,7 @@ export async function loadKnowledgeNavigatorData(
   return { notebooks, views, recent: rows.recent, favorites: rows.favorites }
 }
 
-/** Compact row label: resolved title, else the ref id (long SiYuan ids shorten to the suffix). */
+/** Compact row label: resolved title, else the ref id (long legacy ids shorten to the suffix). */
 export function navigatorRowLabel(row: NavigatorEnvelopeRow): string {
   if (row.title) return row.title
   const id = row.envelope.knowledgeRef.id

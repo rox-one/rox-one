@@ -251,7 +251,7 @@ export function AllowListPreview({
           <BindingRow
             icon={Hash}
             indent
-            title="GitHub Issue Triage (craft-agents-oss)"
+            title="GitHub Issue Triage (rox-one)"
             subtitle="GithubIssues · Topic #16"
             access={topicAccess}
             workspaceOwners={owners}

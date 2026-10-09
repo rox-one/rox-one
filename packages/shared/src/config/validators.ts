@@ -19,6 +19,7 @@ import { safeJsonParse, readJsonFileSync } from '../utils/files.ts';
 import { EntityColorSchema } from '../colors/validate.ts';
 import { THINKING_LEVEL_IDS } from '../agent/thinking-levels.ts';
 import { isValidProviderAuthCombination } from './llm-connections.ts';
+import { roxHomeDocDisplay } from '../docs/home-display.ts';
 import { SUPPORTED_LANGUAGE_CODES } from '../i18n/languages.ts';
 import type { LanguageCode } from '../i18n/languages.ts';
 import { SecretRefEntrySchema } from '../secrets/types.ts';
@@ -895,7 +896,7 @@ export function validateSkillContent(markdownContent: string, slug: string): Val
         path: 'frontmatter',
         message: `Invalid YAML frontmatter: ${e instanceof Error ? e.message : 'Unknown error'}`,
         severity: 'error',
-        suggestion: 'See ~/.craft-agent/docs/skills.md for SKILL.md format reference',
+        suggestion: `See ${roxHomeDocDisplay()}/docs/skills.md for SKILL.md format reference`,
       }],
       warnings: [],
     };
@@ -2014,7 +2015,7 @@ export function validateToolIcons(): ValidationResult {
               path: `tools[id=${tool.id}].icon`,
               message: `Icon file '${tool.icon}' not found in tool-icons directory`,
               severity: 'warning',
-              suggestion: `Place '${tool.icon}' in ~/.craft-agent/tool-icons/`,
+              suggestion: `Place '${tool.icon}' in ${roxHomeDocDisplay()}/tool-icons/`,
             });
           }
         }

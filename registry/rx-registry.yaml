@@ -1701,7 +1701,7 @@
   kind: automation
   path: scripts/electron-build-resources.ts
   status: done
-  refs: [RX-AST-0001]
+  refs: [RX-AST-0002]
   note: |
     Копирование resources/ в артефакт.
 
@@ -1843,7 +1843,6 @@
 - id: RX-AUT-0023
   title: Каркас Husky
   kind: automation
-  path: .husky
   status: planned
   refs: [RX-PIP-0001]
   note: |
@@ -2001,15 +2000,6 @@
   refs: [RX-PIP-0005]
   note: |
     Триггеры push/pull_request/workflow_dispatch нативного workflow.
-
-- id: RX-AST-0001
-  title: Логотипы Craft
-  kind: asset
-  path: apps/electron/resources/craft-logos
-  status: done
-  refs: [RX-PKG-0013]
-  note: |
-    craft_app_icon.png/.dark, craft_logo_black/white. Бренд десктоп-сборки.
 
 - id: RX-AST-0002
   title: Иконки приложения Electron

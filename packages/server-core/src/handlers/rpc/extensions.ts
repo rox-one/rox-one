@@ -34,6 +34,7 @@ import {
   type ExtensionsListInstalledResult,
   type ExtensionsSetEnabledResult,
 } from '@rox/shared/extensions'
+import { mergeBuiltinFirstPartyRecords } from '@rox/shared/extensions/builtin-features'
 import {
   getCatalog,
   marketplacePaths,
@@ -254,7 +255,7 @@ export function registerExtensionsHandlers(server: RpcServer, deps: HandlerDeps)
         )
       }
 
-      return { records, state }
+      return { records: mergeBuiltinFirstPartyRecords(records), state }
     },
   )
 

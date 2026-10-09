@@ -86,7 +86,7 @@ export function parseCloneProgress(repositoryId: string, rawLine: string): DevSp
   return { repositoryId, phase, ...(receivedBytes !== undefined ? { receivedBytes } : {}) }
 }
 
-/** Temporary askpass helper: username is fixed, password is the env token. */
+/** Temporary askpass helper: username is fixed, password is read from the child env (`GIT_ASKPASS_TOKEN`). */
 async function createAskpassHelper(): Promise<{ directory: string; path: string }> {
   const directory = await mkdtemp(join(tmpdir(), 'rox-devspace-askpass-'))
   const path = join(directory, 'askpass.sh')

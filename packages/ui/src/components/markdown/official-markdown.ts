@@ -14,7 +14,7 @@
  * the same extension object (React StrictMode, remounts with memoised
  * extensions) still never share one.
  */
-import { Markdown } from '@tiptap/markdown'
+import { Markdown, type MarkdownManager } from '@tiptap/markdown'
 import { Lexer, Marked, Parser, type MarkedOptions, type Token, type TokensList, type marked } from 'marked'
 
 /**
@@ -71,6 +71,31 @@ export function createEditorMarked(): typeof marked {
   return inst as unknown as typeof marked
 }
 
+/**
+ * `@tiptap/markdown` ≥3.21 serialises a text node through
+ * `encodeTextForMarkdown` → `escapeMarkdownSyntax`, which backslash-escapes
+ * markdown-significant characters (brackets, underscores, tildes, asterisks,
+ * backticks, backslashes) and HTML-encodes entities. 3.20.0 returned
+ * `node.text || ""` verbatim, and ROX notes depend on that byte-for-byte
+ * round-trip: wiki-links (`[[My note]]`) and Obsidian callouts
+ * (`> [!spoiler]- …`) are literal text the vault indexer re-reads from disk,
+ * and `entity-markdown.ts` states the invariant "Saving never rewrites user
+ * text". Restore the verbatim rendering the official engine shipped with.
+ *
+ * `encodeTextForMarkdown` is `private` in the package typings (TS `private`
+ * is compile-time only), so patch the manager instance. Exported so the
+ * global-`marked` parity control can model main's serializer on a stock
+ * `Markdown` instance too.
+ */
+export function restoreVerbatimText(editor: { markdown?: MarkdownManager }): void {
+  const manager = editor.markdown
+  if (!manager) return
+  // `encodeTextForMarkdown` is lib-private and absent from the package typings.
+  type VerbatimManager = { encodeTextForMarkdown: (text: string) => string }
+  const patched = manager as unknown as VerbatimManager
+  patched.encodeTextForMarkdown = (text: string) => text
+}
+
 export const PerEditorMarkdown = Markdown.extend({
   onBeforeCreate(event) {
     const configured = this.options.marked
@@ -82,5 +107,6 @@ export const PerEditorMarkdown = Markdown.extend({
     } finally {
       this.options.marked = configured
     }
+    restoreVerbatimText(this.editor)
   },
 })

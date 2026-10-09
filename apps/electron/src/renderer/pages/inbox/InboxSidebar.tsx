@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Archive, Bell, BrainCircuit, CalendarDays, CheckCheck, ChevronRight,
-  Clock3, FileCheck2, FilePenLine, Inbox, KeyRound, Mail, MessageCircle,
-  Send, ShieldCheck, Sparkles, TriangleAlert, Trash2, UserPlus, Users,
+  Archive, AtSign, Bell, BrainCircuit, CalendarDays, CheckCheck, ChevronRight,
+  ClipboardCheck, Clock3, FileCheck2, FilePenLine, Inbox, KeyRound, Mail, MessageCircle,
+  Send, ShieldCheck, Sparkles, TriangleAlert, Trash2, UserPlus, UserRoundCheck, Users,
   type LucideIcon,
 } from 'lucide-react'
 import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
 import { NavTitle, type Tone } from '@/components/mode-screen/ModeScreen'
 import { cn } from '@/lib/utils'
 import type { MailFolder, MailFolderRole } from '../../../shared/mail-local'
-import { DECISION_KINDS, type InboxFilter, type InboxKind } from './inbox-model'
+import { ACTIVITY_KINDS, DECISION_KINDS, type InboxActivityKind, type InboxFilter, type InboxKind } from './inbox-model'
 import { folderLabel } from './mail/MailPanels'
 import { statusKey } from './mail/mail-view'
 import type { MailController } from './mail/useMail'
@@ -38,12 +38,18 @@ const KIND_ICONS: Record<InboxKind, LucideIcon> = {
   error: TriangleAlert,
   mail: Mail,
   'team-recipient': Users,
+  // W1-09 (#1506) — activity surfaces (UI-SPEC §12).
+  review: ClipboardCheck,
+  mention: AtSign,
+  assignment: UserRoundCheck,
+  notification: Bell,
 }
 
 const KIND_TONES: Record<InboxKind, Tone> = {
   permission: 'warning', credential: 'warning', plan: 'accent',
   memory: 'info', skill: 'accent', sender: 'success', reply: 'info',
   error: 'danger', mail: 'info', 'team-recipient': 'success',
+  review: 'warning', mention: 'accent', assignment: 'info', notification: 'muted',
 }
 
 const ICON_TONE: Record<Tone, string> = {
@@ -108,10 +114,12 @@ export interface InboxSidebarCounts {
   blocking: number; byKind: Record<InboxKind, number>
 }
 
-export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, onOpenMeetings, onConnectTeam, teamNeedsConnection }: {
+export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, onOpenMeetings, onConnectTeam, teamNeedsConnection, activityKinds = [] }: {
   filter: InboxPageFilter; counts: InboxSidebarCounts; onSelect: (filter: InboxFilter) => void
   mail: MailController; onSelectFolder: (folder: MailFolder) => void
   onOpenMeetings: () => void; onConnectTeam: () => void; teamNeedsConnection: boolean
+  /** W1-09 (#1506): activity surfaces whose module flag is on; render nothing more. */
+  activityKinds?: readonly InboxActivityKind[]
 }) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
@@ -138,6 +146,18 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
         <InboxNavButton label={t('inbox.nav.allDecisions')} count={counts.decisions} active={filter === 'decisions'} icon={FileCheck2} tone="warning" onClick={() => onSelect('decisions')} testId="inbox-nav-decisions" />
         {DECISION_KINDS.map(kindButton)}
       </InboxNavGroup>
+      {activityKinds.length > 0 ? (
+        <InboxNavGroup
+          id="activity"
+          label={t('inbox.nav.activity')}
+          icon={ClipboardCheck}
+          tone="accent"
+          count={activityKinds.reduce((sum, kind) => sum + counts.byKind[kind], 0)}
+          active={selectedKind !== null && (ACTIVITY_KINDS as readonly string[]).includes(selectedKind)}
+        >
+          {ACTIVITY_KINDS.filter((kind) => activityKinds.includes(kind)).map(kindButton)}
+        </InboxNavGroup>
+      ) : null}
       <InboxNavGroup id="notifications" label={t('inbox.nav.notifications')} icon={Bell} tone="info" count={counts.messages} initialOpen active={filter === 'messages' || selectedKind === 'reply' || selectedKind === 'error'}>
         <InboxNavButton label={t('inbox.nav.allNotifications')} count={counts.messages} active={filter === 'messages'} icon={Bell} tone="info" onClick={() => onSelect('messages')} testId="inbox-nav-messages" />
         {kindButton('reply')}{kindButton('error')}

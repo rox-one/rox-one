@@ -119,6 +119,8 @@ export const KEYS = {
   featureWorkbenchModeFeedV1: 'feature-workbench-mode-feed-v1',
   // Entities (entities.links.v1) — default OFF, inert until enabled
   featureEntitiesLinksV1: 'feature-entities-links-v1',
+  // W1-09 (#1506): Inbox notification surface (notify.inbox.v1) — default OFF
+  featureNotifyInboxV1: 'feature-notify-inbox-v1',
   // Entity previews (entities.previews.v1, W1-08) — default OFF, needs links
   featureEntitiesPreviewsV1: 'feature-entities-previews-v1',
   // Входящие: done / snoozed item ids (renderer-only triage state)
@@ -152,12 +154,15 @@ export const KEYS = {
   // W1-07 (#1504): generic per-id workbench flag store for flags without a
   // dedicated key (`craft-workbench-flag:<flag id>`, e.g. workbench.mode.messenger.v1).
   workbenchFlag: 'workbench-flag',
-  // Developer Space + Playbooks (spec 2026-10-09) — renderer-only state; the
+// Developer Space + Playbooks (spec 2026-10-09) — renderer-only state; the
   // master flags default OFF and only the user enables them explicitly.
   devSpaceV1: 'dev-space-v1',
   devSpaceReminderState: 'dev-space-reminder-state',
   devSpaceNudge: 'rox.devspace.nudge.v1',
   playbooksV1: 'playbooks-v1',
+  // «Мои транскрипты» mirror: meeting transcript generations already filed as
+  // notes (`<meetingId>:<generation>`), so an app restart never duplicates a note.
+  meetingsTranscriptNotes: 'meetings-transcript-notes',
 } as const
 
 export const EVENTS = {

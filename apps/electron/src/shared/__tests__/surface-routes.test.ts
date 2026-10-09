@@ -27,6 +27,7 @@ import {
   parseRouteToNavigationState,
   parseRouteToNavigationStateOrUnavailable,
   resetEntityRoutesEnabled,
+  resolveViewRoute,
   setEntityRoutesEnabled,
 } from '../route-parser'
 import { routes } from '../routes'
@@ -47,7 +48,6 @@ describe('unified surface gate', () => {
       messenger: WORKBENCH_FLAG.modeMessengerV1,
       calendar: WORKBENCH_FLAG.modeCalendarV1,
       goals: WORKBENCH_FLAG.modeGoalsV1,
-      contacts: WORKBENCH_FLAG.modeContactsV1,
     })
   })
 
@@ -74,7 +74,8 @@ describe('unified surface gate', () => {
     }
     // Only the enabled surfaces open.
     expect(parseRoute('calendar')).toBeNull()
-    expect(parseRoute('contacts')).toBeNull()
+    // W3.3: `contacts` is no longer a surface root; it is an alias to Команда.
+    expect(parseRouteToNavigationState('contacts')).toEqual({ navigator: 'surface', surface: 'messenger', details: null })
   })
 
   it('negative: unknown or nested surface segments never parse as surfaces', () => {
@@ -90,6 +91,47 @@ describe('unified surface gate', () => {
     expect(parseRouteToNavigationState('goals/goal/g-1')?.navigator).toBe('entity')
     expect(parseRouteToNavigationState('messenger/c-1')?.navigator).toBe('entity')
     expect(parseRouteToNavigationState('goals')?.navigator).toBe('surface')
+  })
+})
+
+describe('W3.2/W3.3 surface merges', () => {
+  it('meetings/contacts aliases resolve with every flag off', () => {
+    resetUnifiedSurfaceRoutes()
+    resetEntityRoutesEnabled()
+    expect(parseRouteToNavigationState('meetings')).toEqual({ navigator: 'surface', surface: 'calendar', details: null })
+    expect(parseRouteToNavigationState('meetings/meeting/m-1')).toEqual({
+      navigator: 'surface', surface: 'calendar', details: null, meetingId: 'm-1',
+    })
+    expect(parseRouteToNavigationState('contacts')).toEqual({ navigator: 'surface', surface: 'messenger', details: null })
+    // Building the calendar state round-trips both shapes.
+    expect(buildRouteFromNavigationState({ navigator: 'surface', surface: 'calendar', details: null })).toBe('calendar')
+    expect(buildRouteFromNavigationState({
+      navigator: 'surface', surface: 'calendar', details: null, meetingId: 'm-1',
+    })).toBe('meetings/meeting/m-1')
+    // The legacy builders keep their (aliased) output.
+    expect(routes.view.meetings()).toBe('meetings')
+    expect(routes.view.meetings('m-1')).toBe('meetings/meeting/m-1')
+    // resolveViewRoute accepts the aliases instead of degrading to unavailable.
+    expect(resolveViewRoute('meetings').navigator).toBe('surface')
+    expect(resolveViewRoute('contacts')).toEqual({ navigator: 'surface', surface: 'messenger', details: null })
+    expect(resolveViewRoute('meetings/meeting/m-1')).toEqual({
+      navigator: 'surface', surface: 'calendar', details: null, meetingId: 'm-1',
+    })
+  })
+
+  it('key round-trip keeps the selected meeting', () => {
+    const state = { navigator: 'surface', surface: 'calendar', details: null, meetingId: 'm-1' } as const
+    expect(getNavigationStateKey(state)).toBe('meetings/meeting/m-1')
+    expect(parseNavigationStateKey('meetings/meeting/m-1')).toEqual(state)
+    expect(parseNavigationStateKey('meetings')).toEqual({ navigator: 'surface', surface: 'calendar', details: null })
+    expect(parseNavigationStateKey('contacts')).toEqual({ navigator: 'surface', surface: 'messenger', details: null })
+  })
+
+  it('entity routes keep priority over the aliases when entities.links.v1 is on', () => {
+    setEntityRoutesEnabled(true)
+    expect(parseRouteToNavigationState('meetings/meeting/m-1')?.navigator).toBe('entity')
+    expect(parseRouteToNavigationState('contacts/person/p-1')?.navigator).toBe('entity')
+    expect(parseRouteToNavigationState('contacts')?.navigator).toBe('surface')
   })
 })
 
