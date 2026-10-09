@@ -261,7 +261,7 @@ export class MemoryIndexService {
   status(): MemoryIndexStatus {
     const capability = this.capability()
     const identity = memoryIndexIdentity()
-    let meta = this.readMeta()
+    const meta = this.readMeta()
     let state: MemoryIndexStatus['state'] = this.metaState(meta)
     // A chunking-version bump also invalidates the on-disk build: rebuild on read.
     let chunks = meta?.chunkCount

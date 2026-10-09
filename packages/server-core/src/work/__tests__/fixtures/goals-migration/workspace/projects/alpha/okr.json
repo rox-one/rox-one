@@ -1,0 +1,38 @@
+{
+  "projectId": "proj-alpha",
+  "revision": 3,
+  "cycles": [
+    {
+      "id": "cycle-q4",
+      "projectId": "proj-alpha",
+      "title": "Q4 2026",
+      "startDate": "2026-10-01",
+      "endDate": "2026-12-31",
+      "timezone": "Europe/Moscow",
+      "status": "published",
+      "revision": 2,
+      "publishedAt": "2026-10-01T09:00:00.000Z",
+      "objectives": [
+        {
+          "id": "obj-growth",
+          "title": "Grow weekly active teams",
+          "description": "Focus on retention",
+          "weight": 2,
+          "owner": "Mark",
+          "keyResults": [
+            { "id": "kr-wat", "title": "Weekly active teams", "weight": 3, "owner": "Mark", "measurement": { "kind": "numeric", "direction": "increase", "baseline": 40, "target": 100, "current": 62, "unit": "teams", "measuredAt": "2026-10-05T10:00:00.000Z", "freshness": "fresh", "evidence": [{ "id": "ev-1", "label": "Dashboard", "uri": "https://example.test/d" }] } },
+            { "id": "kr-launch", "title": "Launch the onboarding flow", "weight": 1, "measurement": { "kind": "binary", "achieved": true, "evidence": [{ "id": "ev-2", "label": "Release notes" }] } }
+          ]
+        },
+        {
+          "id": "obj-cost",
+          "title": "Cut infra cost",
+          "weight": 1,
+          "keyResults": [
+            { "id": "kr-cost", "title": "Monthly infra cost", "weight": 1, "measurement": { "kind": "numeric", "direction": "decrease", "baseline": 1200, "target": 900, "current": null, "unit": "USD" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

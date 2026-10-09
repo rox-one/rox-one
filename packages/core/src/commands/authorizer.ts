@@ -20,6 +20,12 @@ export interface Authorizer {
    * subscriptions; `ref = null` means a workspace-level action (no target).
    */
   can(principal: AuthorizerPrincipal, action: string, ref: EntityRef | null): Promise<boolean>
+  /**
+   * True when `can` answers for any principal of the workspace, not only for
+   * the caller of the current request (W1-06: subscribing other people checks
+   * each one's `read`). Absent → handlers treat other principals as unknown.
+   */
+  readonly answersForAnyPrincipal?: boolean
 }
 
 /** STUB(#1501): single local user owns everything. Replaced by `acl.can` from W1-04. */

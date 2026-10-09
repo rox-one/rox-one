@@ -7,7 +7,9 @@ import { COMMAND_BUS_WORKBENCH_FLAG } from '@rox/shared/feature-flags'
 import type { HandlerFn, RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import { InProcessEventBus } from '../../../commands/event-bus.ts'
-import { createCommandRegistry } from '../../../commands/registry.ts'
+import { createCommandRegistry, createWiredCommandRegistry } from '../../../commands/registry.ts'
+import { CATALOGUE_FLAGS } from '@rox/core/commands'
+import { PersonalTaskPersistStore } from '../../../tasks/personal-persist.ts'
 import { registerCommandsHandlers, type CommandsHandlerRuntime } from '../commands.ts'
 
 const roots: string[] = []
@@ -109,5 +111,45 @@ describe('commands:* handlers', () => {
   it('workspace-authority commands without a workspace connection answer SERVER_REQUIRED', async () => {
     const f = fixture({ enabledWorkbenchFlags: new Set([COMMAND_BUS_WORKBENCH_FLAG]) })
     expect(await f.execute('ws', { ...ping('w1'), authorityHint: 'workspace' })).toMatchObject({ status: 'rejected', error: { code: 'SERVER_REQUIRED' } })
+  })
+})
+
+describe('commands:* handlers: W1-06 reference commands on the local authority', () => {
+  const flags = new Set([COMMAND_BUS_WORKBENCH_FLAG, ...Object.values(CATALOGUE_FLAGS)])
+  const command = (commandId: string, type: string, payload: Record<string, unknown>) => ({ commandId, type, payload, issuedAt: '2026-10-08T00:00:00Z' })
+  function referenceFixture() {
+    let tasks: PersonalTaskPersistStore | null = null
+    const f = fixture({
+      enabledWorkbenchFlags: flags,
+      registry: createWiredCommandRegistry({ isFlagEnabled: () => true }),
+      authorizer: { can: async () => true },
+      referenceRuntime: { personalTaskStore: () => tasks, isFlagEnabled: () => true },
+    })
+    tasks = new PersonalTaskPersistStore(join(f.root, 'config'))
+    const changed = () => f.pushes.filter(push => push.channel === RPC_CHANNELS.personalTasks.CHANGED)
+    return { ...f, tasks, changed }
+  }
+
+  it('a task-list (or task) write pushes personalTasks:changed once, after the command', async () => {
+    const f = referenceFixture()
+    expect(await f.execute('ws', command('g1', 'goals.create', { name: 'G' }))).toMatchObject({ status: 'applied' })
+    expect(f.changed()).toHaveLength(0)
+    expect(await f.execute('ws', command('l1', 'task_lists.create', { id: 'list-1', name: 'Sprint' }))).toMatchObject({ status: 'applied' })
+    expect(f.changed()).toEqual([{ channel: RPC_CHANNELS.personalTasks.CHANGED, target: { to: 'all' }, args: [expect.objectContaining({ at: expect.any(Number) })] }])
+    expect(f.tasks.readMeta()!.projects.map(project => project.id)).toEqual(['list-1'])
+    expect(await f.execute('ws', command('t1', 'tasks.create', { id: 'task-1', title: 'x', listId: 'list-1' }))).toMatchObject({ status: 'applied' })
+    expect(f.changed()).toHaveLength(2)
+  })
+
+  it('a principal-scoped session gets UNAVAILABLE for personal tasks and writes nothing to the owner store', async () => {
+    const f = referenceFixture()
+    const principal: RequestContext = { clientId: 'n', workspaceId: 'ws', webContentsId: null, principal: { credentialId: 'cred' } as never }
+    expect(await f.execute('ws', command('t1', 'tasks.create', { id: 'task-p', title: 'x' }), principal)).toMatchObject({ status: 'rejected', error: { code: 'UNAVAILABLE' } })
+    expect(await f.execute('ws', command('l1', 'task_lists.create', { name: 'L' }), principal)).toMatchObject({ status: 'rejected', error: { code: 'UNAVAILABLE' } })
+    expect(await f.execute('ws', command('g1', 'goals.create', { name: 'G' }), principal)).toMatchObject({ status: 'applied' })
+    expect(f.tasks.list()).toEqual([])
+    expect(f.changed()).toHaveLength(0)
+    // The same command from the device owner's session runs.
+    expect(await f.execute('ws', command('t2', 'tasks.create', { id: 'task-o', title: 'x' }))).toMatchObject({ status: 'applied' })
   })
 })

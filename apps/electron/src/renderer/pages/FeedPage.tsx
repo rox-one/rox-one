@@ -94,6 +94,14 @@ import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
 import { toErrorMessage } from '@/lib/errors'
 import { FeedSectionTabs, type FeedSection } from './feed/FeedSectionTabs'
 import { InboxQueue } from './inbox/InboxQueue'
+import { roxQueryClient } from '@/lib/query/client'
+import { roxKeys } from '@/lib/query/keys'
+import { cacheWriteEpoch, fencedPatchQueryData, fencedSetQueryData } from '@/lib/query/shared-read'
+
+/** PERF-09: last list per (workspace, actor), memory only; the page revalidates on mount. */
+function cachedFeed(workspaceId: string | null, caller: FeedCaller): FeedListResult | null {
+  return workspaceId ? roxQueryClient().getQueryData<FeedListResult>(roxKeys.feed(workspaceId, caller.preferenceKey)) ?? null : null
+}
 
 type View = FeedView
 type Density = 'list' | 'cards'
@@ -232,9 +240,11 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const tourSignals = useTourSignals()
   const sourcesTourRef = useTourTarget('feed.sources')
 
-  const [data, setData] = useState<FeedListResult>(EMPTY)
-  const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string | null | undefined>()
-  const [sourceDataWorkspaceId, setSourceDataWorkspaceId] = useState<string | null | undefined>()
+  const [data, setData] = useState<FeedListResult>(() => cachedFeed(workspaceId, caller) ?? EMPTY)
+  const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string | null | undefined>(() => cachedFeed(workspaceId, caller) ? workspaceId : undefined)
+  // Set only by a fresh feedList: a cache seed paints, but a possibly stale
+  // cached source list must never prune the saved sourceFilter.
+  const [sourceDataWorkspaceId, setSourceDataWorkspaceId] = useState<string | null | undefined>(undefined)
   const loaded = loadedWorkspaceId !== undefined && loadedWorkspaceId === workspaceId
   const [loadError, setLoadError] = useState<string | null>(null)
   const [initialPrefs] = useState(() => loadPrefs(workspaceId, caller))
@@ -256,8 +266,9 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    setData(EMPTY)
-    setLoadedWorkspaceId(undefined)
+    const cached = cachedFeed(workspaceId, caller)
+    setData(cached ?? EMPTY)
+    setLoadedWorkspaceId(cached ? workspaceId : undefined)
     setSourceDataWorkspaceId(undefined)
     setLoadError(null)
     const stored = loadPrefs(workspaceId, caller)
@@ -301,10 +312,13 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       setLoadError('unavailable')
       return
     }
+    const epoch = cacheWriteEpoch()
     try {
       const res = await api.feedList(workspaceId)
       if (generation !== loadGeneration.current || !current()) return
       setData(res ?? EMPTY)
+      // Fenced: an identity change during the read drops the cache write.
+      if (workspaceId) fencedSetQueryData(roxQueryClient(), roxKeys.feed(workspaceId, caller.preferenceKey), res ?? EMPTY, epoch)
       setSourceDataWorkspaceId(workspaceId)
       setLoadError(null)
     } catch (e) {
@@ -315,7 +329,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
         setNow(Date.now())
       }
     }
-  }, [api, workspaceId, current])
+  }, [api, workspaceId, current, caller.preferenceKey])
 
   useEffect(() => {
     void load()
@@ -434,7 +448,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   // Optimistic annotations: apply locally, persist, feed:changed reloads.
   const annotate = useCallback((ids: string[], patch: FeedAnnotationPatch) => {
     if (!ids.length || !current()) return
-    setData((d) => {
+    const at = Date.now()
+    const apply = (d: FeedListResult): FeedListResult => {
       const next: Record<string, FeedItemAnnotation> = { ...(d.annotations ?? {}) }
       for (const id of ids) {
         const cur: FeedItemAnnotation = { ...(next[id] ?? {}) }
@@ -442,15 +457,19 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
         if (patch.color === null) delete cur.color
         else if (patch.color) cur.color = patch.color
         if (patch.starred !== undefined) { if (patch.starred) cur.starred = true; else delete cur.starred }
-        if (patch.read === true) cur.readAt = cur.readAt ?? Date.now()
+        if (patch.read === true) cur.readAt = cur.readAt ?? at
         else if (patch.read === false) delete cur.readAt
         if (Object.keys(cur).length) next[id] = cur
         else delete next[id]
       }
       return { ...d, annotations: next }
-    })
+    }
+    setData(apply)
+    // PERF-09: the same marks go to the shared entry (fenced), so a revisit
+    // does not paint the pre-mark state until revalidation lands.
+    if (workspaceId) fencedPatchQueryData<FeedListResult>(roxQueryClient(), roxKeys.feed(workspaceId, caller.preferenceKey), apply, cacheWriteEpoch())
     if (api?.feedAnnotate) void api.feedAnnotate(ids, patch).catch((e: unknown) => { if (current()) { setActionError(toErrorMessage(e)); void load() } })
-  }, [api, current, load])
+  }, [api, current, load, workspaceId, caller.preferenceKey])
 
   // Opening an item in the reading pane marks it read (external content only).
   useEffect(() => {

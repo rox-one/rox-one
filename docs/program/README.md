@@ -1,7 +1,7 @@
 # Единая программа передачи, исполнения и приёмки Rox / Conation / RMA / Golden Gate
 
 **Issue:** [#1157 PROGRAM-01](https://github.com/rox-one/rox-one/issues/1157) · **состояние issue:** OPEN · **наблюдение:** 2026-10-08T22:27:59Z
-**База чтения:** `origin/main` @ `8c5abc7a32a3773645b695b79a81c327b8e6758d`; ветка `docs/sept-program-1157-master-program` @ `99b9a2ffa591`;
+**База чтения:** `origin/main` @ `8c5abc7a32a3773645b695b79a81c327b8e6758d`; ветка `docs/sept-program-1157-master-program` @ `e947138b3`;
 родительская ветка `docs/sept-program-1158-recon` @ `99b9a2ffa591` (результат RECON-01 / PR #1629).
 
 Этот каталог — **master-программа**: единый index передачи, исполнения и приёмки. Он не создаёт вторую
@@ -121,7 +121,7 @@ PR #1627 (product tour) и #1628 (batch2) также открыты и не вх
 | F | linked worktree | `HEAD` | `3f1a978e9188` | 0 | detached; e01-decisions tip |
 | G | linked worktree | `feat/e01-voice-wave` | `b63efe011ae3` | 0 | merge завершён владельцем в ходе сессии |
 | H | separate clone | `main` | `e6c899357e3a` | 15540 | 15 540 staged-удалений; не трогать |
-| I | linked worktree | `docs/sept-program-1157-master-program` | `99b9a2ffa591` | 0 | эта ветка (документы) |
+| I | linked worktree | `docs/sept-program-1157-master-program` | `e947138b3` | 0 | эта ветка (документы) |
 
 Ни одна чужая рабочая копия не очищалась и не переключалась; изменения зафиксированы только в этой ветке.
 

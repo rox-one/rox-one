@@ -137,6 +137,18 @@ function ensureMaterialLayer(kind: 'texture' | 'chat-effect' | 'haze'): HTMLDivE
   return layer
 }
 
+/** Parse a `#rrggbb`, `rgb()`/`rgba()` string into a byte triplet. */
+function parseRgbTriplet(raw: string): [number, number, number] | null {
+  const hex = raw.match(/^#?([0-9a-f]{6})$/i)
+  if (hex?.[1]) {
+    const value = parseInt(hex[1], 16)
+    return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
+  }
+  const rgb = raw.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
+  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])]
+  return null
+}
+
 /** Current foreground token as RGB, for painting generated effect art. */
 function materialEffectRgb(): [number, number, number] {
   if (typeof window === 'undefined') return [255, 255, 255]
@@ -146,14 +158,22 @@ function materialEffectRgb(): [number, number, number] {
   // foregrounds the hex/rgb parsers below cannot read.
   const triplet = root.getPropertyValue('--foreground-rgb').trim().match(/^(\d+)[,\s]+(\d+)[,\s]+(\d+)/)
   if (triplet) return [Number(triplet[1]), Number(triplet[2]), Number(triplet[3])]
-  const raw = root.getPropertyValue('--foreground').trim()
-  const hex = raw.match(/^#?([0-9a-f]{6})$/i)
-  if (hex?.[1]) {
-    const value = parseInt(hex[1], 16)
-    return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
+  const fromToken = parseRgbTriplet(root.getPropertyValue('--foreground').trim())
+  if (fromToken) return fromToken
+  // `--foreground` may be an unparseable oklch()/color-mix(); the computed
+  // `color` always resolves to rgb(), so read it from the painted root instead
+  // of defaulting to invisible white-on-light ink.
+  if (typeof document !== 'undefined' && document.body) {
+    const body = getComputedStyle(document.body)
+    const fromColor = parseRgbTriplet(body.color)
+    if (fromColor) return fromColor
+    // Last resort: keep ink readable against the canvas background.
+    const background = parseRgbTriplet(body.backgroundColor)
+    if (background) {
+      const luma = (0.2126 * background[0] + 0.7152 * background[1] + 0.0722 * background[2]) / 255
+      return luma > 0.5 ? [17, 17, 17] : [255, 255, 255]
+    }
   }
-  const rgb = raw.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
-  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])]
   return [255, 255, 255]
 }
 
