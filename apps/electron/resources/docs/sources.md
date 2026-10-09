@@ -3,7 +3,7 @@
 This guide explains how to configure sources (MCP servers, APIs, local filesystems) in ROX.
 
 > **Supported workflow:** Use the ROX Sources interface to inspect sources. For agent-driven setup, follow the schemas below and use the available `source_test` and source authentication tools after editing the workspace source files.
-> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
+> - Interface and tooling reference: [ROX configuration interfaces](./rox-cli.md)
 
 ## Source Setup Process
 

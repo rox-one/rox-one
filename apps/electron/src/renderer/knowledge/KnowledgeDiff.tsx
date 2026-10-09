@@ -6,10 +6,10 @@
  * - review (draft/pending_review): two columns — Base (`preState` +
  * `baseReadAt`) vs Patch (the T2 unified `diff`, falling back to the ops
  * list); actions: Approve (T3) / Reject (T4).
- * - conflict: three columns — Base vs Current-in-SiYuan
+ * - conflict: three columns — Base vs Current in Rox Notes
  *   (`conflictInfo.currentContent` + `actualHash`) vs Patch; exactly THREE
  *   actions: «Re-read and rebuild» (T9 rebase), «Discard» (T4), «Open in
- *   SiYuan» (deep-link to the surface). There is deliberately NO
+ *   Rox Notes» (deep-link to the surface). There is deliberately NO
  *   silent-overwrite action (spec §3.4.2, acceptance #10).
  * - terminal/flow states: approved (Apply, T5), applying (status only),
  *   applied (Rollback, T10), rolled_back/superseded (status only).

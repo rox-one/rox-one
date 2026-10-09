@@ -76,6 +76,7 @@ import { RollbackManager } from './RollbackManager'
 import { scoreEffectiveness } from './EffectivenessScorer'
 import { SkillEvolutionEngine } from './SkillEvolutionEngine'
 import type { SkillCurationSkill } from './SkillEvolutionEngine'
+import { notifyRepoMutation } from '../repo/notify'
 
 const sha256 = (text: string): string => createHash('sha256').update(text).digest('hex')
 
@@ -155,6 +156,16 @@ export class LearningService implements LearningServicePorts, LearningRpcService
       thresholds: this.thresholds,
       ...(deps.audit === undefined ? {} : { audit: deps.audit }),
       clock: this.clock,
+      // Wave-A repo seam: a promotion/rollback of a durable target re-materializes
+      // the owning bank's memory repo. A `scope: 'global'` (lesson) target lands in
+      // the GLOBAL lessons.jsonl, i.e. the `main` bank; everything else stays on the
+      // workspace bank. notifyRepoMutation is a no-op when no MemoryRepoService is
+      // registered and never throws into this path.
+      emit: (evt) =>
+        notifyRepoMutation(
+          evt.scope === 'global' ? { scope: 'main' } : { scope: 'workspace', workspaceId: evt.workspaceId },
+          evt.kind,
+        ),
     })
     this.rollback = new RollbackManager({
       targets: deps.targets,
@@ -162,6 +173,13 @@ export class LearningService implements LearningServicePorts, LearningRpcService
       candidateStore: deps.stores.candidates,
       ...(deps.audit === undefined ? {} : { audit: deps.audit }),
       clock: this.clock,
+      // Same repo seam as the promoter: only lesson reverts emit (skills/policies
+      // are not projected), and a global lesson targets the `main` bank.
+      emit: (evt) =>
+        notifyRepoMutation(
+          evt.scope === 'global' ? { scope: 'main' } : { scope: 'workspace', workspaceId: this.deps.workspaceId },
+          evt.kind,
+        ),
     })
     this.reflection = new ReflectionEngine({
       logger: { warn: (message: string, error?: unknown) => this.logger.warn(message, error) },

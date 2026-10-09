@@ -74,6 +74,8 @@ import { forgetMemoryChunks } from './forget'
 import { search as ftsSearch } from './fts-index'
 import { compactWorkspaceHistory } from './decay'
 import { EpisodicMemory, withTimeout as episodicWithTimeout } from './episodic-memory'
+import { notifyRepoMutation, type RepoBankRef } from './repo/notify'
+import { ownerKey8For } from './repo/RepoSourceProvider'
 import { MemoryIndexService, memoryIndexServiceFor } from './MemoryIndexService'
 import { buildMemoryBootstrap } from './bootstrap'
 import type { LearningServicePorts } from './learning/learning-types'
@@ -120,6 +122,18 @@ export interface NativeMemoryContext {
   assertAuthorized: () => void
 }
 
+/** Token usage reported by a distiller call (dream cost pricing). */
+export interface DistillerUsage {
+  inputTokens?: number
+  outputTokens?: number
+}
+
+/**
+ * Distiller return shape: the raw JSON text, or the text plus token usage so
+ * the caller (dream runner) can price the call.
+ */
+export type DistillerOutput = string | { text: string; usage?: DistillerUsage }
+
 export interface MemoryServiceDeps {
   workspaceRoot: string
   /** Workspace id used as the broadcast target. */
@@ -137,8 +151,8 @@ export interface MemoryServiceDeps {
    */
   episodicMemory?: EpisodicMemory
   clock?: () => number
-  /** LLM one-shot: prompt → raw text (expected strict JSON). Default: throws. */
-  distiller?: (prompt: string, sessionId?: string) => Promise<string>
+  /** LLM one-shot: prompt → raw text (expected strict JSON) or {text, usage}. Default: throws. */
+  distiller?: (prompt: string, sessionId?: string) => Promise<DistillerOutput>
   /**
    * M3: one-shot text summarizer for history decay rollups (weekly/monthly).
    * Absent → decay falls back to concat + 4000-char truncation (no LLM).
@@ -287,7 +301,9 @@ export class MemoryService {
   private readonly clock: () => number
   private readonly emit: (channel: string, args: unknown[]) => void
   private readonly logger: { warn: (msg: string, err?: unknown) => void; info?: (msg: string) => void }
-  private distiller: (prompt: string, sessionId?: string) => Promise<string>
+  private distiller: (prompt: string, sessionId?: string) => Promise<DistillerOutput>
+  /** Usage reported by the most recent distiller call (null when unknown). */
+  private lastDistillerUsage: DistillerUsage | null = null
   private queue: DistillJob[] = []
   private draining = false
   private stopped = false
@@ -310,8 +326,33 @@ export class MemoryService {
   }
 
   /** Attach the real one-shot distiller (lazy bootstrap wiring). */
-  setDistiller(distiller: (prompt: string, sessionId?: string) => Promise<string>): void {
+  setDistiller(distiller: (prompt: string, sessionId?: string) => Promise<DistillerOutput>): void {
     this.distiller = distiller
+  }
+
+  /** Token usage from the most recent distiller call, or null when unknown. */
+  getLastDistillerUsage(): DistillerUsage | null {
+    return this.lastDistillerUsage ? { ...this.lastDistillerUsage } : null
+  }
+
+  /** Run the distiller, normalizing string|{text,usage} and recording usage. */
+  private async runDistiller(prompt: string, sessionId?: string): Promise<string> {
+    const res = await this.distiller(prompt, sessionId)
+    if (typeof res === 'string') {
+      this.lastDistillerUsage = null
+      return res
+    }
+    this.lastDistillerUsage = res.usage ? { ...res.usage } : null
+    return res.text
+  }
+
+  /** Repo bank this service's lesson/context writes belong to; an owner-carrying
+   * write (native distill) targets the owner-scoped projection of that bank. */
+  private repoBank(owner?: LessonOwner): RepoBankRef {
+    const ownerKey8 = owner ? ownerKey8For(owner) : undefined
+    return this.deps.workspaceId
+      ? { scope: 'workspace', workspaceId: this.deps.workspaceId, ...(ownerKey8 ? { ownerKey8 } : {}) }
+      : { scope: 'main', ...(ownerKey8 ? { ownerKey8 } : {}) }
   }
 
   private get config(): MemoryConfig {
@@ -443,10 +484,16 @@ export class MemoryService {
     if (now - this.lastDecayAt < DECAY_INTERVAL_MS) return null
     this.lastDecayAt = now
     try {
-      return await compactWorkspaceHistory(this.deps.workspaceRoot, {
+      const result = await compactWorkspaceHistory(this.deps.workspaceRoot, {
         summarizer: this.deps.summarizer,
         clock: this.clock,
       })
+      // Projected history files are byte copies: any deletion or new rollup must
+      // re-materialize the workspace's bank. An empty compaction stays silent.
+      if (result.deleted > 0 || result.weekly.length > 0 || result.monthly.length > 0) {
+        notifyRepoMutation(this.repoBank(), 'decay')
+      }
+      return result
     } catch (err) {
       this.logger.warn('MemoryService: decay job failed', err)
       return null
@@ -883,7 +930,7 @@ export class MemoryService {
       const negativeFirst = this.config.negativeFirst
       let raw: string | null = null
       try {
-        raw = await this.distiller(buildDistillPrompt(windowText, job.full, negativeFirst), job.sessionId)
+        raw = await this.runDistiller(buildDistillPrompt(windowText, job.full, negativeFirst), job.sessionId)
         job.nativeContext?.assertAuthorized()
       } catch (err) {
         this.logger.warn(`MemoryService: distiller failed for ${job.sessionId}: ${err instanceof Error ? err.message : String(err)}`, err)
@@ -892,7 +939,7 @@ export class MemoryService {
       result = parseDistillResult(raw)
       if (!result) {
         // One retry with a harder JSON-only instruction.
-        raw = await this.distiller(buildDistillPrompt(windowText, job.full, negativeFirst) + '\nReturn only valid JSON', job.sessionId)
+        raw = await this.runDistiller(buildDistillPrompt(windowText, job.full, negativeFirst) + '\nReturn only valid JSON', job.sessionId)
         job.nativeContext?.assertAuthorized()
         result = parseDistillResult(raw ?? '')
         if (!result) {
@@ -1009,6 +1056,7 @@ export class MemoryService {
       this.logger.warn(`MemoryService: failed to apply distill result for ${job.sessionId}`, err)
     }
     if (wroteMemory) {
+      notifyRepoMutation(this.repoBank(job.nativeContext?.owner), 'distill')
       this.emit('memory:changed', [workspaceId, 'both'])
     }
   }

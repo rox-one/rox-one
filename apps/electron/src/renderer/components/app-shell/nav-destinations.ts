@@ -18,13 +18,14 @@
  * but open their existing native surface instead of a route.
  */
 import {
-  Brain,
   BookOpen,
+  Brain,
   Cable,
   Calendar,
   ClipboardList,
   DatabaseZap,
   FolderKanban,
+  GitBranch,
   Globe,
   GraduationCap,
   HardDrive,
@@ -69,6 +70,7 @@ export type AppNavDestinationId =
   | 'skills'
   | 'memory'
   | 'clipboardHistory'
+  | 'memoryRepo'
   | 'learning'
   | 'browser'
   | 'tasks'
@@ -143,7 +145,19 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     railGroup: 'primary',
     contextLinkIds: ['nav:memory'],
     route: () => routes.view.memory(),
-    isActive: isMemoryNavigation,
+    // The repository tab owns its own rail item; keep the two mutually
+    // exclusive so exactly one is highlighted at a time.
+    isActive: navState => isMemoryNavigation(navState) && navState.tab !== 'repo',
+  },
+  {
+    id: 'memoryRepo',
+    linkId: 'nav:memoryRepo',
+    icon: GitBranch,
+    labelKey: 'sidebar.memoryRepo',
+    railGroup: 'more',
+    contextLinkIds: ['nav:memoryRepo'],
+    route: () => routes.view.memory('repo'),
+    isActive: navState => isMemoryNavigation(navState) && navState.tab === 'repo',
   },
   {
     id: 'browser',

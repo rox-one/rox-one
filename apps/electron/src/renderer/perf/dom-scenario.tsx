@@ -172,6 +172,7 @@ export function NotesPanel({ notes, activeNoteId, onOpenNote, viewportRef, onRea
         onCopyNoteLink={noop}
         onCopyNotePath={noop}
         onRevealNote={noop}
+        onCollectToMemory={noop}
       />
     </DndContext>
   )

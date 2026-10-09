@@ -4,7 +4,7 @@
  * `CONFIG_DIR` (config/paths.ts) is resolved once, when that module is first
  * loaded, and the very first thing a `bun test` process loads is the preload
  * list. Without this file neither config-dir variable is set at that moment, so
- * `CONFIG_DIR` freezes to the real `~/.craft-agent` and tests can write into
+ * `CONFIG_DIR` freezes to the real config dir (`resolveConfigDir()`) and tests can write into
  * the developer's actual installation.
  *
  * Tests can still override `ROX_CONFIG_DIR` (and the legacy `CRAFT_CONFIG_DIR`)

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 import { i18n, setupI18n } from '../setupI18n'
 
-const KEY = 'cloudRuns.omp'
+const KEY = 'cloudRuns.roxCli'
 const RU_WRAPPED = 'Запуск Rox'
 const EN_VALUE = 'Rox runner'
 
-describe('P35-332 leftover Russian ран wrapping on cloudRuns.omp', () => {
+describe('P35-332 leftover Russian ран wrapping on cloudRuns.roxCli', () => {
   it('wraps leftover раннер as sibling запуск, then English stays English', async () => {
     await setupI18n().changeLanguage('ru')
     const ru = i18n.t(KEY)

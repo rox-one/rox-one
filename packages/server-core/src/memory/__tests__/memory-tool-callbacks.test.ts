@@ -122,6 +122,8 @@ describe('provenance-gated bootstrap through MemoryService (c1.4)', () => {
       redactExtraPatterns: [],
       ftsLimit: 20,
       semantic: false,
+      dreamIntervalHours: 4,
+      dreamNotes: true,
     }
     const wsFiles = new MemoryFileStore('workspace', root)
     const svc = new MemoryService({

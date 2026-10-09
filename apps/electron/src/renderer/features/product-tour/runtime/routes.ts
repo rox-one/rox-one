@@ -31,6 +31,7 @@ export function resolveTourRoute(key: RouteKey, binding: TourBinding): ViewRoute
     case 'learning': return routes.view.settings('learning')
     case 'meetings': return routes.view.meetings(binding.entityId)
     case 'memory': return routes.view.memory()
+    case 'memory-repo': return routes.view.memory('repo')
     case 'notes': return routes.view.notes()
     case 'projects': return routes.view.projects()
     case 'search': return routes.view.search()

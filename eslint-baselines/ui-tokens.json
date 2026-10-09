@@ -906,7 +906,7 @@
       "rox/no-arbitrary-radius": 4,
       "rox/no-foreground-opacity": 4
     },
-    "apps/electron/src/renderer/components/onboarding/OmpCredentialStep.tsx": {
+    "apps/electron/src/renderer/components/onboarding/RoxCliCredentialStep.tsx": {
       "rox/icon-size-tokens": 1
     },
     "apps/electron/src/renderer/components/onboarding/OnboardingWelcomeProgress.tsx": {

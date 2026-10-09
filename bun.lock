@@ -123,6 +123,7 @@
       "version": "0.11.8",
       "bin": {
         "craft-cli": "src/index.ts",
+        "rox": "src/index.ts",
       },
       "dependencies": {
         "@rox/server-core": "workspace:*",

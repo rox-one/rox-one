@@ -743,6 +743,26 @@ export const CHANNEL_MAP = {
   rebuildMemoryIndex: invoke(RPC_CHANNELS.memory.REBUILD_INDEX),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
 
+  // Memory repository projection + dream (spec 2026-10-09 §7)
+  listMemoryRepoBanks: invoke(RPC_CHANNELS.memory.REPO_LIST_BANKS),
+  getMemoryRepoStatus: invoke(RPC_CHANNELS.memory.REPO_STATUS),
+  getMemoryRepoTree: invoke(RPC_CHANNELS.memory.REPO_TREE),
+  readMemoryRepoFile: invoke(RPC_CHANNELS.memory.REPO_READ_FILE),
+  listMemoryRepoCommits: invoke(RPC_CHANNELS.memory.REPO_COMMITS),
+  getMemoryRepoCommitDiff: invoke(RPC_CHANNELS.memory.REPO_COMMIT_DIFF),
+  getMemoryRepoGraph: invoke(RPC_CHANNELS.memory.REPO_GRAPH),
+  exportMemoryRepo: invoke(RPC_CHANNELS.memory.REPO_EXPORT),
+  getMemoryDreamStatus: invoke(RPC_CHANNELS.memory.DREAM_STATUS),
+  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN),
+  getMemoryDreamLog: invoke(RPC_CHANNELS.memory.DREAM_LOG),
+  previewMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT),
+  applyMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_APPLY_IMPORT),
+  revertMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_REVERT_IMPORT),
+  onMemoryRepoChanged: listener(RPC_CHANNELS.memory.REPO_CHANGED),
+  onMemoryDreamEvent: listener(RPC_CHANNELS.memory.DREAM_EVENT),
+  onMemoryDreamDone: listener(RPC_CHANNELS.memory.DREAM_DONE),
+  onMemoryRepoImportReady: listener(RPC_CHANNELS.memory.REPO_IMPORT_READY),
+
   // Learning (continual learning, PRD §15) — agent/native actions
   // (`learning:observe|recordOutcome|recordCorrection`) are intentionally absent.
   listLearningCandidates: invoke(RPC_CHANNELS.learning.LIST_CANDIDATES),

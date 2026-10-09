@@ -2107,6 +2107,11 @@ function AppShellContent({
     handleServiceClick('memory')
   }, [handleServiceClick])
 
+  // Handler for the «Память: репозиторий» tab (`routes.view.memory('repo')`).
+  const handleMemoryRepoClick = useCallback(() => {
+    handleServiceClick('memoryRepo')
+  }, [handleServiceClick])
+
   // Handler for learning view
   const handleLearningClick = useCallback(() => {
     handleServiceClick('learning')
@@ -2827,8 +2832,16 @@ function AppShellContent({
       id: "nav:memory",
       title: t(APP_NAV_DESTINATIONS_BY_ID.memory.labelKey),
       icon: APP_NAV_DESTINATIONS_BY_ID.memory.icon,
-      variant: isMemoryNavigation(navState) ? "default" : "ghost",
+      // The repository tab owns `nav:memoryRepo`; keep exactly one highlighted.
+      variant: isMemoryNavigation(navState) && navState.tab !== 'repo' ? "default" : "ghost",
       onClick: handleMemoryClick,
+    },
+    {
+      id: "nav:memoryRepo",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.memoryRepo.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.memoryRepo.icon,
+      variant: isMemoryNavigation(navState) && navState.tab === 'repo' ? "default" : "ghost",
+      onClick: handleMemoryRepoClick,
     },
     {
       id: "nav:learning",
