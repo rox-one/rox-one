@@ -288,10 +288,8 @@ function appendProvenance(themesDir: string, entry: Record<string, unknown>, pro
   const path = provenancePath(themesDir, provenanceDir);
   let manifest: unknown[] = [];
   try {
-    if (existsSync(path)) {
-      const parsed = JSON.parse(readFileSync(path, 'utf-8'));
-      if (Array.isArray(parsed)) manifest = parsed;
-    }
+    const parsed = JSON.parse(readFileSync(path, 'utf-8'));
+    if (Array.isArray(parsed)) manifest = parsed;
   } catch {
     manifest = [];
   }

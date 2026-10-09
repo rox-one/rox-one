@@ -2728,11 +2728,16 @@ export function getPresetThemesDir(): string {
 export function writePresetThemeFile(id: string, theme: unknown, dir?: string): boolean {
   if (!isSafeThemeId(id)) throw new Error('Invalid theme id');
   const themesDir = dir ?? getAppThemesDir();
-  if (!existsSync(themesDir)) mkdirSync(themesDir, { recursive: true });
+  mkdirSync(themesDir, { recursive: true });
   const destPath = join(themesDir, `${id}.json`);
-  if (existsSync(destPath)) return false;
-  writeFileSync(destPath, JSON.stringify(theme, null, 2), { encoding: 'utf-8', flag: 'wx' });
-  return true;
+  try {
+    // Exclusive create: never overwrite an existing preset (atomic, no pre-check race).
+    writeFileSync(destPath, JSON.stringify(theme, null, 2), { encoding: 'utf-8', flag: 'wx' });
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException | null)?.code === 'EEXIST') return false;
+    throw error;
+  }
 }
 
 /**
