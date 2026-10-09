@@ -569,6 +569,17 @@ function isTrustedRoxRendererIpcEvent(event: IpcMainInvokeEvent): boolean {
   })
 }
 
+/**
+ * Deny-by-default guard for main-process IPC handlers that must only serve
+ * Rox's own renderer. Throws the shared `IPC_SENDER_DENIED` code so a renegade
+ * sender learns nothing about the handler. Preload-time sendSync channels must
+ * not use this (senderFrame can be null during preload eval) — use
+ * `isRegisteredRoxRendererWebContents(event.sender)` there instead.
+ */
+function assertTrustedRenderer(event: IpcMainInvokeEvent): void {
+  if (!isTrustedRoxRendererIpcEvent(event)) throw new Error('IPC_SENDER_DENIED')
+}
+
 app.whenReady().then(async () => {
   // Entity links flag (entities.links.v1) — FIRST, before any await: every
   // renderer reports its persisted toggle with a synchronous IPC at
@@ -584,6 +595,9 @@ app.whenReady().then(async () => {
     mainLog.error('[entities] failed to load the entities.links.v1 durable copy:', error)
   }
   registerEntitiesLinksIpc(ipcMain, {
+    // Evaluated at call time (windowManager is assigned below); the
+    // registered-webcontents form is safe for the preload sendSync channel.
+    isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
     broadcast: (channel, state) => {
       for (const win of BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, state)
@@ -799,12 +813,17 @@ app.whenReady().then(async () => {
       sendCommand: (context, command, recordingId) => context.webContentsId != null && sendVoiceCommand(command, context.webContentsId, recordingId),
     }) : undefined
     app.once('will-quit', () => { disposeVoiceHotkeys(); voiceOverlay?.dispose() })
-    registerMeetingCaptureIpc()
+    registerMeetingCaptureIpc({
+      getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
+      getWorkspaceGenerationForWindow: (id) => windowManager?.getWorkspaceGenerationForWindow(id) ?? null,
+    })
     const localMeetings = registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
       getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
       getWorkspaceGenerationForWindow: (id) => windowManager?.getWorkspaceGenerationForWindow(id) ?? null,
     })
-    registerMailIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
+    registerMailIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
+      isTrustedSender: isTrustedRoxRendererIpcEvent,
+    })
 
     // Build real PlatformServices from Electron APIs
     const platform: PlatformServices = createElectronPlatform({
@@ -858,7 +877,8 @@ app.whenReady().then(async () => {
     // Language change: sync from renderer to main process, persist, and rebuild native menu.
     // Persistence here is what lets the next app launch hydrate main's i18n correctly —
     // see the `getPersistedUiLanguage()` block at the top of this file.
-    ipcMain.handle('i18n:changeLanguage', async (_event, lang: unknown) => {
+    ipcMain.handle('i18n:changeLanguage', async (event, lang: unknown) => {
+      assertTrustedRenderer(event)
       const previousResolved = i18n.resolvedLanguage ?? null
       if (typeof lang !== 'string' || !SUPPORTED_LANGUAGE_CODES.includes(lang as LanguageCode)) {
         // Defense-in-depth: renderer guarantees a supported code, but if a renegade
@@ -885,11 +905,15 @@ app.whenReady().then(async () => {
     // links). Registered in every mode, thin client included: deep links are
     // parsed in main either way and the gate is default-closed until pushed.
     const { registerSurfaceRoutesIpc } = await import('./surface-routes-ipc')
-    registerSurfaceRoutesIpc(ipcMain)
+    registerSurfaceRoutesIpc(ipcMain, {
+      isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
+    })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes
     // so failures are visible in terminal/main.log (not only renderer console).
-    ipcMain.on('__transport:status', (_event, payload: unknown) => {
+    ipcMain.on('__transport:status', (event, payload: unknown) => {
+      // Log-only channel; preload `send` — registered-webcontents guard only.
+      if (!isRegisteredRoxRendererWebContents(event.sender)) return
       if (!payload || typeof payload !== 'object') return
       const p = payload as {
         level?: 'info' | 'warn' | 'error'
@@ -925,6 +949,7 @@ app.whenReady().then(async () => {
     // Dialog bridge — preload capability handlers use ipcRenderer.invoke to
     // call main-process-only dialog APIs (dialog, BrowserWindow).
     ipcMain.handle('__dialog:showMessageBox', async (event, spec) => {
+      assertTrustedRenderer(event)
       const win = BrowserWindow.fromWebContents(event.sender)
         || BrowserWindow.getFocusedWindow()
         || BrowserWindow.getAllWindows()[0]
@@ -932,6 +957,7 @@ app.whenReady().then(async () => {
       return { response: result.response }
     })
     ipcMain.handle('__dialog:showOpenDialog', async (event, spec) => {
+      assertTrustedRenderer(event)
       const win = BrowserWindow.fromWebContents(event.sender)
         || BrowserWindow.getFocusedWindow()
         || BrowserWindow.getAllWindows()[0]
@@ -939,6 +965,7 @@ app.whenReady().then(async () => {
       return { canceled: result.canceled, filePaths: result.filePaths }
     })
     ipcMain.handle('notes:exportPdf', async (event, opts: { html: string; defaultPath: string }) => {
+      assertTrustedRenderer(event)
       const win = BrowserWindow.fromWebContents(event.sender)
         || BrowserWindow.getFocusedWindow()
         || BrowserWindow.getAllWindows()[0]
@@ -963,6 +990,7 @@ app.whenReady().then(async () => {
         event,
         opts: { content: string; defaultPath: string; filters?: Array<{ name: string; extensions: string[] }> },
       ) => {
+        assertTrustedRenderer(event)
         const win =
           BrowserWindow.fromWebContents(event.sender) ||
           BrowserWindow.getFocusedWindow() ||
@@ -1336,20 +1364,22 @@ app.whenReady().then(async () => {
       // IPC handlers — preload uses sendSync to get WS connection details
 
       // Remove workspace from config (cleanup stale entries)
-      ipcMain.handle('workspace:remove', async (_event, workspaceId: string) => {
+      ipcMain.handle('workspace:remove', async (event, workspaceId: string) => {
+        assertTrustedRenderer(event)
         const { removeWorkspace: remove } = await import('@rox/shared/config')
         return remove(workspaceId)
       })
 
       // SSH remote hosts + tunnels (Remote-SSH style bootstrap to a remote server)
       const { registerSshTunnelIpc } = await import('./ssh-tunnel/ipc')
-      registerSshTunnelIpc()
+      registerSshTunnelIpc({ isTrustedSender: isTrustedRoxRendererIpcEvent })
 
       // Cross-server RPC — invoke a channel on an arbitrary remote server.
       // RX-SEC-0006: URL рендерера проходит политику транспорта — открытый
       // текст только на loopback, иначе TLS. Без этого компрометированный
       // рендерер получает SSRF во внутреннюю сеть с нашим токеном.
-      ipcMain.handle('server:invokeOnServer', async (_event, url: string, token: string, channel: string, ...args: unknown[]) => {
+      ipcMain.handle('server:invokeOnServer', async (event, url: string, token: string, channel: string, ...args: unknown[]) => {
+        assertTrustedRenderer(event)
         const policy = isAllowedServerEndpoint(url)
         if (!policy.ok) throw new Error(`Blocked by server endpoint policy: ${policy.reason}`)
         const { connectToRemote } = await import('./handlers/workspace')
@@ -1493,12 +1523,15 @@ app.whenReady().then(async () => {
       })
 
       // App relaunch (for server config changes — NOT an update install)
-      ipcMain.handle('app:relaunch', () => {
+      ipcMain.handle('app:relaunch', (event) => {
+        assertTrustedRenderer(event)
         app.relaunch()
         app.exit(0)
       })
 
       ipcMain.on('__get-ws-port', (e) => {
+        // Preload sendSync; registered-webcontents guard only (senderFrame may be null).
+        if (!isRegisteredRoxRendererWebContents(e.sender)) return
         markStartupOnce(STARTUP_MARKS.wsPortHanded)
         e.returnValue = instance.port
       })
@@ -1611,16 +1644,24 @@ app.whenReady().then(async () => {
         e.returnValue = ws?.remoteServer ?? null
       })
 
-      ipcMain.handle('remoteTls:inspect', async (_event, url: string) => {
+      ipcMain.handle('remoteTls:inspect', async (event, url: string) => {
+        assertTrustedRenderer(event)
         const { inspectRemoteTlsPeer, beginEnrollment } = await import('./remote-tls-enrollment')
         const result = await inspectRemoteTlsPeer(url)
         return { nonce: beginEnrollment(result), result }
       })
-      ipcMain.handle('remoteTls:decide', async (_event, payload: {
+      ipcMain.handle('remoteTls:decide', async (event, payload: {
         nonce: string
         action: 'accept' | 'reject' | 'confirm-rollover'
         workspaceId?: string
       }) => {
+        assertTrustedRenderer(event)
+        // The nonce map in remote-tls-enrollment is global; bind the decision to
+        // the sender's own workspace so one window cannot pin another's origin.
+        if (payload.workspaceId) {
+          const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
+          if (!bound || bound !== payload.workspaceId) throw new Error('WORKSPACE_MISMATCH')
+        }
         const { applyEnrollmentDecision } = await import('./remote-tls-enrollment')
         const { updateWorkspaceRemoteServer } = await import('@rox/shared/config')
         const ws = payload.workspaceId ? getWorkspaceByNameOrId(payload.workspaceId) : null

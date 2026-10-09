@@ -8,5 +8,5 @@
 
 - [ ] `/manifest.json` (or `/manifest*`) is reachable after login without a console 401, or is not requested
 - [ ] `notification:getEnabled` has a web adapter stub
-- [ ] `marketing:*` and `docs:dev` scripts removed; `CRAFT_WEBUI_PORT` removed
+- [x] `marketing:*` and `docs:*` scripts removed; `CRAFT_WEBUI_PORT` removed
 - [ ] `docs/cli.md` states token ≥16 and single-instance lock

@@ -16,7 +16,6 @@ import { KEYS } from "@/lib/local-storage"
 import type { LabelConfig } from "@rox/shared/labels"
 import { flattenLabels } from "@rox/shared/labels"
 import * as MultiSelect from "@/hooks/useMultiSelect"
-import { Spinner } from "@rox/ui"
 import { EntityListEmptyScreen } from "@/components/ui/entity-list-empty"
 import { EntityList, type EntityListGroup } from "@/components/ui/entity-list"
 import { RenameDialog } from "@/components/ui/rename-dialog"
@@ -360,7 +359,6 @@ export function SessionList({
     otherResultItems,
     exceededSearchLimit,
     flatItems,
-    hasMore,
     collapsedGroupsMeta,
     searchInputRef,
   } = useSessionSearch({
@@ -376,7 +374,6 @@ export function SessionList({
     collapsedGroups,
     groupingMode: effectiveGroupingMode,
     bucketRepresentatives,
-    scrollViewportRef,
   })
 
   // FR-45: rank drag under the same rule as the table (orderBy === 'rank');
@@ -1440,13 +1437,6 @@ export function SessionList({
               >
                 {t("session.clearSearch")}
               </button>
-            </div>
-          ) : undefined
-        }
-        footer={
-          hasMore ? (
-            <div className="flex justify-center py-4">
-              <Spinner className="text-muted-foreground" />
             </div>
           ) : undefined
         }

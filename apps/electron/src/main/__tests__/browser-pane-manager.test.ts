@@ -602,9 +602,49 @@ describe('BrowserPaneManager', () => {
     if (!destroyRegistration) throw new Error('Expected browser-toolbar:destroy IPC registration')
 
     const [, destroyHandler] = destroyRegistration
-    await destroyHandler({}, 'd-ipc-destroy')
+    const instance = (manager as any).instances.get('d-ipc-destroy')
+    await destroyHandler({ sender: instance.toolbarView.webContents }, 'd-ipc-destroy')
 
     expect(manager.listInstances()).toHaveLength(0)
+  })
+
+  it('rejects toolbar destroy IPC from a sender that is not the pane toolbar', async () => {
+    manager.createInstance('d-ipc-destroy-denied')
+    manager.registerToolbarIpc()
+
+    const destroyRegistration = (
+      mockIpcMainHandle.mock.calls as unknown as Array<[
+        string,
+        (_event: unknown, instanceId: string) => Promise<void>,
+      ]>
+    ).find(([channel]) => channel === 'browser-toolbar:destroy')
+
+    expect(destroyRegistration).toBeTruthy()
+    if (!destroyRegistration) throw new Error('Expected browser-toolbar:destroy IPC registration')
+
+    const [, destroyHandler] = destroyRegistration
+    await expect(destroyHandler({ sender: {} }, 'd-ipc-destroy-denied')).rejects.toThrow('IPC_SENDER_DENIED')
+    expect(manager.listInstances()).toHaveLength(1)
+  })
+
+  it('rejects __browser:invoke from an unregistered sender and never dispatches', async () => {
+    manager.registerCapabilityIpc()
+
+    const capabilityRegistration = (
+      mockIpcMainHandle.mock.calls as unknown as Array<[
+        string,
+        (_event: { sender: { id: number } }, req: unknown) => Promise<unknown>,
+      ]>
+    ).find(([channel]) => channel === '__browser:invoke')
+
+    expect(capabilityRegistration).toBeTruthy()
+    if (!capabilityRegistration) throw new Error('Expected __browser:invoke IPC registration')
+
+    const [, invokeHandler] = capabilityRegistration
+    await expect(invokeHandler(
+      { sender: { id: 4242 } },
+      { v: 1, method: 'listInstances', args: [], sessionId: 's-1', workspaceId: 'ws-a' },
+    )).rejects.toThrow('IPC_SENDER_DENIED')
   })
 
   it('emits removed callback exactly once when destroy triggers closed', () => {

@@ -98,11 +98,11 @@ describe('surface route IPC', () => {
 
   it('main registers the handler', async () => {
     const index = await Bun.file(new URL('../index.ts', import.meta.url)).text()
-    expect(index).toContain('registerSurfaceRoutesIpc(ipcMain)')
+    expect(index).toContain('registerSurfaceRoutesIpc(ipcMain,')
     // Exactly once, and outside every `if (!isClientOnly)` block: the thin
     // client (CRAFT_SERVER_URL) parses deep links in main too.
-    expect(index.split('registerSurfaceRoutesIpc(ipcMain)').length).toBe(2)
-    const at = index.indexOf('registerSurfaceRoutesIpc(ipcMain)')
+    expect(index.split('registerSurfaceRoutesIpc(ipcMain,').length).toBe(2)
+    const at = index.indexOf('registerSurfaceRoutesIpc(ipcMain,')
     expect(at).toBeGreaterThan(index.indexOf("ipcMain.handle('i18n:changeLanguage'"))
     expect(at).toBeLessThan(index.indexOf('if (!isClientOnly) {'))
     const preload = await Bun.file(new URL('../../preload/bootstrap.ts', import.meta.url)).text()

@@ -142,7 +142,7 @@ import { collectionFiltersAtom, collectionFilterKeyAtom, loadCollectionFiltersAt
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
 import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
-import { skillsAtom } from "@/atoms/skills"
+import { skillsAtom, skillsSyncingAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
 import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuses, resolveStatusDisplayLabel, resolveLabelDisplayName, resolveViewDisplayName, resolveViewDisplayDescription } from "@/config/session-status-config"
 import { useStatuses } from "@/hooks/useStatuses"
@@ -1019,11 +1019,24 @@ function AppShellContent({
 
   // Skills state (workspace-scoped)
   const [skills, setSkills] = React.useState<LoadedSkill[]>([])
+  // Pending/syncing flag for the current skills load. A slow bundled-skills
+  // sync can outlive the client timeout (a later push recovers the catalog),
+  // so the panel must not claim "no skills configured" while a load is pending.
+  const [skillsSyncing, setSkillsSyncingState] = React.useState(false)
   // Sync skills to atom for NavigationContext auto-selection
   const setSkillsAtom = useSetAtom(skillsAtom)
   React.useEffect(() => {
     setSkillsAtom(skills)
   }, [skills, setSkillsAtom])
+  // Mirror the local syncing flag into skillsSyncingAtom from the SAME call
+  // sites (one source of truth), so every non-panel consumer — the skills
+  // popover in TaskEditor, pickers — sees the pending state and can suppress
+  // the "no skills configured" claim while a load is still running.
+  const setSkillsSyncingAtom = useSetAtom(skillsSyncingAtom)
+  const setSkillsSyncing = React.useCallback((next: boolean) => {
+    setSkillsSyncingState(next)
+    setSkillsSyncingAtom(next)
+  }, [setSkillsSyncingAtom])
   // Automations — state, handlers, loading, subscriptions
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId)
 
@@ -1584,13 +1597,24 @@ function AppShellContent({
   React.useEffect(() => {
     let disposed = false
     let revision = 0
-    setSkills([])
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId) {
+      setSkillsSyncing(false)
+      return
+    }
+    setSkillsSyncing(true)
     const load = () => {
       const request = ++revision
+      setSkillsSyncing(true)
       window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
-        if (!disposed && request === revision) setSkills(loaded || [])
+        if (!disposed && request === revision) {
+          setSkills(loaded || [])
+          setSkillsSyncing(false)
+        }
       }).catch(err => {
+        // Keep the last-known list: a slow bundled-skills sync can outlive the
+        // client timeout, and the onSkillsChanged push recovers the catalog.
+        // Never blank the list and stay pending so the panel can't claim
+        // "no skills configured" while the sync is still running.
         if (!disposed && request === revision) console.error('[Chat] Failed to load skills:', err)
       })
     }
@@ -1602,7 +1626,7 @@ function AppShellContent({
     })
     load()
     return () => { disposed = true; revision += 1; cleanup() }
-  }, [activeWorkspaceId, activeSessionWorkingDirectory])
+  }, [activeWorkspaceId, activeSessionWorkingDirectory, setSkillsSyncing])
 
   // Filter session metadata by active workspace
   // Also exclude hidden sessions (mini-agent sessions) from all counts and lists
@@ -3245,6 +3269,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               /* Skills List */
               <SkillsListPanel
                 skills={skills}
+                syncing={skillsSyncing}
                 workspaceId={activeWorkspaceId}
                 workspaceRootPath={activeWorkspace?.rootPath}
                 onSkillClick={handleSkillSelect}
