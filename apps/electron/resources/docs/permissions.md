@@ -3,7 +3,7 @@
 This guide explains how to configure custom permission rules for Explore mode.
 
 > **Supported workflow:** Use the permission badge to select Explore, Ask, or Execute mode. For custom rules, follow the JSON schema below and validate with the available `config_validate` tool.
-> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
+> - Interface and tooling reference: [ROX configuration interfaces](./rox-cli.md)
 
 ## Overview
 

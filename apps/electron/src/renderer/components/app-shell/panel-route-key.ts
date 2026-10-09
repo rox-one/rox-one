@@ -38,5 +38,8 @@ export function panelRouteKey(navState: NavigationState, context: PanelRouteKeyC
     unavailableWorkspaceSlug,
     isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
     ...(isSurfaceNavigation(navState) ? [navState.surface] : []),
+    // W3.2: the calendar surface hosts Встречи; a selected meeting is distinct
+    // content, so a crash in one meeting must not survive a switch to another.
+    ...(isSurfaceNavigation(navState) && navState.meetingId ? [navState.meetingId] : []),
   ])
 }

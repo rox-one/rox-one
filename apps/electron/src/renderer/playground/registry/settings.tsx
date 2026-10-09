@@ -294,10 +294,10 @@ export const settingsComponents: ComponentEntry[] = [
   },
   {
     id: 'settings-runtime-secrets',
-    name: 'Settings · Infisical secrets',
+    name: 'Settings · Rox Keeper secrets',
     category: 'Settings',
     level: 'Screens',
-    description: 'Secret refs with Infisical unavailable row, no native select',
+    description: 'Secret refs with Rox Keeper unavailable row, no native select',
     component: RuntimePlayground,
     props: [],
     layout: 'full',

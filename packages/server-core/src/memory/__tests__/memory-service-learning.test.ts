@@ -72,7 +72,7 @@ function makeService(opts: {
   const emitted: Array<[string, unknown[]]> = []
   const config: MemoryConfig = {
     enabled: true, distillIdleHours: 3, distillMsgCount: 30, negativeFirst: true,
-    redactExtraPatterns: [], ftsLimit: 20, semantic: false,
+    redactExtraPatterns: [], ftsLimit: 20, semantic: false, dreamIntervalHours: 4, dreamNotes: true,
   }
   const wsFiles = new MemoryFileStore('workspace', root)
   const wsLessons = new LessonStore(wsFiles.lessonsPath, 'workspace')

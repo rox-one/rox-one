@@ -22,6 +22,7 @@ export const ROUTE_PAGE_LOADERS = {
   agentsWorkspace: () => import('@/pages/workspace-work/AgentsWorkspacePage'),
   inbox: () => import('@/pages/InboxPage'),
   feed: () => import('@/pages/FeedPage'),
+  clipboardHistory: () => import('@/pages/ClipboardHistoryPage'),
   knowledgeEntity: () => import('@/pages/KnowledgeEntityPage'),
   skillInfo: () => import('@/pages/SkillInfoPage'),
   sourceInfo: () => import('@/pages/SourceInfoPage'),

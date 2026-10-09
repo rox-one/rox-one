@@ -5,12 +5,12 @@ import { productTourCatalogue, tourCatalogue, validateProductTourCatalogue } fro
 const clone = () => structuredClone(productTourCatalogue)
 
 describe('full product learning catalogue', () => {
-  test('keeps all 25 pinned IDs, 56 unique steps and test IDs', () => {
+  test('keeps all 25 pinned IDs, 57 unique steps and test IDs', () => {
     expect(productTourCatalogue.map(tour => tour.id)).toEqual(Array.from({ length: 25 }, (_, i) => `OBT-${String(i + 1).padStart(2, '0')}` as TourId))
     const steps = productTourCatalogue.flatMap(tour => tour.steps)
-    expect(steps).toHaveLength(56)
-    expect(new Set(steps.map(step => step.id)).size).toBe(56)
-    expect(new Set(steps.map(step => step.testId)).size).toBe(56)
+    expect(steps).toHaveLength(57)
+    expect(new Set(steps.map(step => step.id)).size).toBe(57)
+    expect(new Set(steps.map(step => step.testId)).size).toBe(57)
     expect(tourCatalogue).toBe(productTourCatalogue)
     expect(validateProductTourCatalogue()).toEqual([])
   })

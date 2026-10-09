@@ -64,7 +64,10 @@ describe('entity routes flag gate', () => {
       expect(resolveRouteNavigationState(route)).toEqual({ navigator: 'unavailable', route, details: null })
     }
     for (const prefix of ENTITY_PREFIXES) {
-      expect(isCompoundRoutePrefix(prefix)).toBe(false)
+      // W3.3: the bare `contacts` root aliases to the messenger surface and is
+      // no longer gated by entities.links.v1; its entity sub-routes still are.
+      expect(isCompoundRoutePrefix(prefix)).toBe(prefix === 'contacts')
+      if (prefix === 'contacts') expect(isCompoundRoute('contacts/person/p-1')).toBe(false)
     }
   })
 

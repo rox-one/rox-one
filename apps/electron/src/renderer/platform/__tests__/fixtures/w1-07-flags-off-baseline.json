@@ -4,7 +4,7 @@
       "id": "home",
       "order": 10,
       "titleKey": "workbench.mode.home",
-      "icon": "Home",
+      "icon": "House",
       "rootRoute": "home",
       "defaultPinned": true
     },
@@ -14,14 +14,6 @@
       "titleKey": "workbench.mode.chat",
       "icon": "MessageSquare",
       "rootRoute": "allSessions",
-      "defaultPinned": true
-    },
-    {
-      "id": "meetings",
-      "order": 30,
-      "titleKey": "workbench.mode.meetings",
-      "icon": "Calendar",
-      "rootRoute": "meetings",
       "defaultPinned": true
     },
     {
@@ -60,11 +52,11 @@
   "slots": [
     "home",
     "chat",
-    "meetings",
     "tasks",
     "notes",
     "feed",
     "inbox",
+    null,
     null
   ],
   "routes": [
@@ -132,14 +124,17 @@
       "compound": true,
       "parsed": {
         "type": "view",
-        "name": "meetings",
-        "params": {}
+        "name": "surface",
+        "params": {
+          "surface": "calendar"
+        }
       },
       "state": {
-        "navigator": "meetings",
+        "navigator": "surface",
+        "surface": "calendar",
         "details": null
       },
-      "rebuilt": "meetings"
+      "rebuilt": "calendar"
     },
     {
       "route": "inbox",
@@ -218,14 +213,20 @@
     },
     {
       "route": "contacts",
-      "compound": false,
-      "parsed": null,
+      "compound": true,
+      "parsed": {
+        "type": "view",
+        "name": "surface",
+        "params": {
+          "surface": "messenger"
+        }
+      },
       "state": {
-        "navigator": "unavailable",
-        "route": "contacts",
+        "navigator": "surface",
+        "surface": "messenger",
         "details": null
       },
-      "rebuilt": "contacts"
+      "rebuilt": "messenger"
     },
     {
       "route": "messenger/c1",
@@ -576,6 +577,12 @@
       "when": "!inputFocus && !menuOpen"
     },
     {
+      "id": "panel.toggleFullScreen",
+      "hotkey": null,
+      "category": "Navigation",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
       "id": "chat.stopProcessing",
       "hotkey": "escape",
       "category": "Chat",
@@ -670,7 +677,8 @@
       "panel.focusLeft",
       "panel.focusRight",
       "panel.focusUp",
-      "panel.focusDown"
+      "panel.focusDown",
+      "panel.toggleFullScreen"
     ],
     "View": [
       "view.toggleSidebar",
@@ -902,6 +910,11 @@
       "hotkey": "mod+alt+down"
     },
     {
+      "id": "panel.toggleFullScreen",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": null
+    },
+    {
       "id": "chat.cyclePermissionMode",
       "when": null,
       "hotkey": "shift+tab"
@@ -963,6 +976,11 @@
     },
     {
       "id": "siyuan.openCompat",
+      "when": null,
+      "hotkey": null
+    },
+    {
+      "id": "clipboardHistory.open",
       "when": null,
       "hotkey": null
     }

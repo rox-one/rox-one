@@ -1,7 +1,7 @@
 /**
  * ROX Keeper — pure vault model for the «Секреты» screen.
  *
- * The Infisical fabric stores one secret per vault item: the secret name is the
+ * The Rox Keeper fabric stores one secret per vault item: the secret name is the
  * item key (matching `[A-Za-z0-9._-]{1,120}`) and the secret value is a JSON
  * document with the item fields
  * (`{type, title, username?, password?, url?, notes?, totp?, tags?, shared?}`).

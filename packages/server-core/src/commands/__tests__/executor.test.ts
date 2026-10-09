@@ -160,7 +160,7 @@ describe('negative paths', () => {
     const f = setup()
     expect(await f.run(envelope('test.increment', { fail: true }))).toMatchObject({ status: 'rejected', error: { code: 'INTERNAL' } })
     expect(f.store.counts()).toEqual({ receipts: 0, events: 0 })
-    f.registry.define({ type: 'test.reject', module: 'test', authority: 'local', verb: 'write', schema: { safeParse: v => ({ success: true, data: v }) }, schemaBound: true })
+    f.registry.define({ type: 'test.reject', module: 'test', authority: 'local', verb: 'write', schema: { safeParse: v => ({ success: true, data: v }) }, schemaBound: true, riskClass: () => 'routine' })
     f.registry.bind('test.reject', () => { throw new CommandRejection('NOT_FOUND', 'gone') })
     expect(await f.run(envelope('test.reject', {}))).toMatchObject({ status: 'rejected', error: { code: 'NOT_FOUND', message: 'gone' } })
   })

@@ -1,6 +1,6 @@
-# Craft Agents Electron App
+# Rox Electron App
 
-The primary desktop interface for Craft Agents, built with Electron + React. Provides a multi-session inbox with chat interface for interacting with Claude via Craft workspaces.
+The primary desktop interface for Rox, built with Electron + React. Provides a multi-session inbox with chat interface for interacting with Claude via Rox workspaces.
 
 ## Quick Start
 
@@ -196,7 +196,7 @@ DevTools opens automatically (configured in `index.ts`). Remove `mainWindow.webC
 
 ## Distribution (electron-builder)
 
-Packaging is configured in `apps/electron/electron-builder.yml` (`appId: com.lukilabs.craft-agent`, output `apps/electron/release/`). Root scripts:
+Packaging is configured in `apps/electron/electron-builder.yml` (`appId: one.rox.app`, output `apps/electron/release/`). Root scripts:
 
 | Script | What it does |
 |--------|----------------|
@@ -259,15 +259,17 @@ navigate(routes.sidebar.flagged())        // Show flagged
 
 ### Deep Links
 
-External apps can navigate using `craftagents://` URLs:
+External apps can navigate using `rox://` URLs:
 
 ```
-craftagents://settings
-craftagents://allSessions/session/session123
-craftagents://sources/source/github
-craftagents://action/new-chat
-craftagents://workspace/{id}/allSessions/session/abc123
+rox://settings
+rox://allSessions/session/session123
+rox://sources/source/github
+rox://action/new-chat
+rox://workspace/{id}/allSessions/session/abc123
 ```
+
+The legacy `craftagents://` scheme is still accepted as a compatibility alias, but new links should use `rox://`.
 
 See `CLAUDE.md` for complete route reference.
 

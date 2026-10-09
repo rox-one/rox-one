@@ -250,6 +250,24 @@ export const RPC_CHANNELS = {
     PREVIEW: 'notesImport:preview',
     EXECUTE: 'notesImport:execute',
   },
+  // clipboard — Rox History (first-party clipboard history). Owned by the
+  // Electron main process (store + monitor); CHANGED is a broadcast push.
+  clipboard: {
+    LIST: 'clipboard:list',
+    GET: 'clipboard:get',
+    STAR: 'clipboard:star',
+    TAGS: 'clipboard:tags',
+    DELETE: 'clipboard:delete',
+    CLEAR: 'clipboard:clear',
+    COPY: 'clipboard:copy',
+    /** First-party secret copy: writes text + the concealed pasteboard marker. */
+    WRITE_CONCEALED: 'clipboard:writeConcealed',
+    SETTINGS_GET: 'clipboard:settingsGet',
+    SETTINGS_SET: 'clipboard:settingsSet',
+    TAG_COUNTS: 'clipboard:tagCounts',
+    STATS: 'clipboard:stats',
+    CHANGED: 'clipboard:changed',
+  },
   // knowledge — P1 read-only knowledge provider (spec 03) plus P3 write-back
   // mutation-proposal channels (spec 05) plus P4 Session→Knowledge publication
   // pipeline (spec 06). ENGINE_START is local bootstrap (detect/open/spawn);
@@ -316,6 +334,13 @@ export const RPC_CHANNELS = {
     // P6 knowledge change watcher (poll) — start/stop per connection; emits into AutomationSystem.
     WATCH: 'knowledge:watch',
     UNWATCH: 'knowledge:unwatch',
+  },
+  // knowledgeMap — the user's auto-generated knowledge graph, built by
+  // server-core (fs scan) and rendered in profile/context settings. CHANGED is
+  // emitted after a rebuild when a watcher-triggered refresh occurs.
+  knowledgeMap: {
+    GET: 'knowledgeMap:get',
+    CHANGED: 'knowledgeMap:changed',
   },
   // siyuan — P2 native knowledge surface (spec 03/P2): embedded SiYuan desktop
   // hosted in a browser pane, keyed by durable document keys (`siyuan:{kind}:{id}`)
@@ -761,6 +786,28 @@ export const RPC_CHANNELS = {
     INDEX_STATUS: 'memory:indexStatus',
     REBUILD_INDEX: 'memory:rebuildIndex',
     CHANGED: 'memory:changed',
+    // Repo projection (spec 2026-10-09 §7): read-only markdown view of a bank.
+    REPO_LIST_BANKS: 'memory:repoListBanks',
+    REPO_STATUS: 'memory:repoStatus',
+    REPO_TREE: 'memory:repoTree',
+    REPO_READ_FILE: 'memory:repoReadFile',
+    REPO_COMMITS: 'memory:repoCommits',
+    REPO_COMMIT_DIFF: 'memory:repoCommitDiff',
+    REPO_GRAPH: 'memory:repoGraph',
+    REPO_EXPORT: 'memory:repoExport',
+    // Dream (memory build) status/manual run/journal.
+    DREAM_STATUS: 'memory:dreamStatus',
+    DREAM_RUN: 'memory:dreamRun',
+    DREAM_LOG: 'memory:dreamLog',
+    // Import of human edits back through the proposals pipeline (Phase 5).
+    REPO_PREVIEW_IMPORT: 'memory:repoPreviewImport',
+    REPO_APPLY_IMPORT: 'memory:repoApplyImport',
+    REPO_REVERT_IMPORT: 'memory:repoRevertImport',
+    // Pushes.
+    REPO_CHANGED: 'memory:repoChanged',
+    DREAM_EVENT: 'memory:dreamEvent',
+    DREAM_DONE: 'memory:dreamDone',
+    REPO_IMPORT_READY: 'memory:repoImportReady',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
@@ -1231,6 +1278,24 @@ export const RPC_CHANNELS = {
   directory: {
     /** MIG-06: one-shot export of the renderer Dossier payload into local contact cards. */
     EXPORT_DOSSIER: 'directory:exportDossier',
+  },
+  // f.9 — node/device registry. Declared caps/commands are CLAIMS; the server
+  // enforces its own allowlist before dispatching any node.invoke.
+  nodes: {
+    /** Register or reconnect a node with its declared caps/commands (claims only). */
+    REGISTER: 'nodes:register',
+    /** Snapshot of registered nodes with live presence. */
+    LIST: 'nodes:list',
+    /** Node heartbeat; refreshes presence and returns the current status. */
+    PRESENCE: 'nodes:presence',
+    /** Dispatch an allowlisted command to a node; resolves with the terminal result. */
+    INVOKE: 'nodes:invoke',
+    /** Node reports the terminal outcome of a pending invoke. */
+    INVOKE_RESULT: 'nodes:invokeResult',
+    /** Cancel a pending invoke; settles exactly once. */
+    INVOKE_CANCEL: 'nodes:invokeCancel',
+    /** Push: registry or presence changed. */
+    CHANGED: 'nodes:changed',
   },
   /**
    * ROX Drive (wave 1) — device-local storage engine. Bytes, the JSON index and

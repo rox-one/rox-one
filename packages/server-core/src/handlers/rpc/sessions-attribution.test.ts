@@ -107,6 +107,7 @@ function createHarness(overrides: Partial<Fixture> & { principal?: string; nativ
       ctx, { workspaceId: target.workspace.id, ids, patch },
     ),
     get: () => handlers.get(RPC_CHANNELS.sessions.GET)!(ctx),
+    getMessages: (id = target.id) => handlers.get(RPC_CHANNELS.sessions.GET_MESSAGES)!(ctx, id),
     stubSend,
   }
 }
@@ -295,6 +296,63 @@ describe('native session snapshot carries attribution (a1.3/a2.5)', () => {
       creator: expect.objectContaining({ accountId: 'installation' }),
       participants: [expect.objectContaining({ accountId: 'installation' })],
     })
+  })
+})
+
+describe('read-side session visibility enforcement (a1.3)', () => {
+  const OTHER_CREATOR = { accountId: 'ada', displayName: 'Ada', kind: 'profile' as const }
+  const OTHER_PARTICIPANT = { accountId: 'ada', displayName: 'Ada', username: 'ada', kind: 'profile' as const }
+  const LOCAL_PARTICIPANT = { accountId: 'installation', displayName: 'Local', username: 'installation', kind: 'profile' as const }
+
+  it('withholds another actor private draft from sessions:get and sessions:getMessages', async () => {
+    const harness = createHarness({
+      visibility: 'draft', creator: OTHER_CREATOR, owner: OTHER_OWNER, participants: [OTHER_PARTICIPANT],
+    })
+    // Absence, not a typed error: the record must not be revealed to exist.
+    expect(await harness.get()).toEqual([])
+    expect(await harness.getMessages()).toBeNull()
+  })
+
+  it('still serves the record and messages to the creator and to participants', async () => {
+    // No owner assigned: the caller (installation) is the creator of the draft.
+    const creator = createHarness({ visibility: 'draft' })
+    expect(await creator.get()).toHaveLength(1)
+    expect(await creator.getMessages()).toMatchObject({ id: 'attributed-session' })
+
+    // Bound participant of a draft owned by ada.
+    const participant = createHarness({
+      visibility: 'draft', creator: OTHER_CREATOR, owner: OTHER_OWNER,
+      participants: [OTHER_PARTICIPANT, LOCAL_PARTICIPANT],
+    })
+    expect(await participant.get()).toHaveLength(1)
+    expect(await participant.getMessages()).toMatchObject({ id: 'attributed-session' })
+  })
+
+  it('keeps shared, suggest and read-only sessions readable by other workspace members', async () => {
+    for (const visibility of ['shared', 'suggest', 'read-only'] as const) {
+      const harness = createHarness({
+        visibility, creator: OTHER_CREATOR, owner: OTHER_OWNER, participants: [OTHER_PARTICIPANT],
+      })
+      expect(await harness.get()).toHaveLength(1)
+      expect(await harness.getMessages()).toMatchObject({ id: 'attributed-session' })
+    }
+  })
+
+  it('filters only the hidden draft, leaving unrelated sessions unaffected', async () => {
+    const harness = createHarness({ visibility: 'shared', creator: OTHER_CREATOR, owner: OTHER_OWNER })
+    const registry = harness.manager as unknown as { sessions: Map<string, unknown> }
+    const draft = {
+      id: 'other-draft', workspace: harness.target.workspace, agent: null, messages: [],
+      messagesLoaded: true, isProcessing: false,
+      creator: OTHER_CREATOR, owner: OTHER_OWNER, visibility: 'draft', participants: [OTHER_PARTICIPANT],
+    }
+    registry.sessions.set('other-draft', draft)
+    harness.manager.getSessions = () => [harness.target, draft] as unknown as Session[]
+
+    const listed = await harness.get() as Array<{ id: string }>
+    expect(listed.map(session => session.id)).toEqual(['attributed-session'])
+    expect(await harness.getMessages()).toMatchObject({ id: 'attributed-session' })
+    expect(await harness.getMessages('other-draft')).toBeNull()
   })
 })
 

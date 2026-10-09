@@ -333,6 +333,85 @@ memory objects; the learning layer only maintains its ledger and calls into
 them through `LearningTargetStores`. `MemoryService`'s distill/recall/decay
 becomes the first stage of the learning system, not a competing one.
 
+## Репозиторий памяти и сны
+
+Слой «Память: репозиторий» и «Сны памяти» (Wave A, 2026-10-09) — это
+**проекция, а не вторая система памяти**. Инвариант «нет параллельной системы
+памяти» (см. выше) сохраняется полностью: `LessonStore`, `EpisodicMemory`,
+`SkillPendingQueue` и `MemoryProposalStore` остаются source-of-truth; репозиторий
+лишь детерминированно рендерится из них, а правки человека возвращаются только
+через существующий конвейер предложений. Дизайн, решения и отличия реализации —
+в [`docs/plans/2026-10-09-memory-repository-and-dreaming.md`](../plans/2026-10-09-memory-repository-and-dreaming.md).
+
+**Банки.** Банк — это scope с фильтром по владельцу. Грамматика id:
+`main` | `main#<owner8>` | `ws:<workspaceId>` | `ws:<workspaceId>#<owner8>`, где
+`owner8 = sha1(lessonOwnerKey(owner))[:8]`, а банк без владельца (legacy/local)
+использует литерал `local`. Уроки фильтруются по этому **8-символьному префиксу**
+`ownerKey8` (а не по полному `ownerKey`, как в `LessonStore.listForOwner`): чужой
+владелец в репозиторий и экспорт не попадает. На границе RPC запрошенный префикс
+владельца связывается с аутентифицированным вызывающим (`authorizeMemoryRepoBank` /
+`ownerKey8For(principal)`; локальный хост без принципала суффикс владельца не
+принимает).
+Wave A перечисляет только `local`-банки (`main`, `ws:<id>`) для сна и статуса;
+owner-банки материализуются по требованию через RPC.
+
+**Файлы.** Рабочее дерево: `MEMORY.md` (визитка: frontmatter + `## Контекст` +
+`## Правила (N)` + `[[ссылки]]`), `PROFILE.md` (**только** банк `main`),
+`lessons/<category>/<slug>--<id8>.md` (один урок = один файл),
+`history/YYYY-MM-DD.md` (побайтовая копия), `DREAMS.md`, `README.md` (правила
+правок), `.gitignore`. Frontmatter урока несёт стабильный `id`, `scope`,
+`category`, `negative`, `pinned`, `disabled`, `tags`, `ts`,
+`source{trigger,session,proposal,consent}` и `baseHash` (sha1 текста правила на
+момент материализации).
+
+**Телеметрия не коммитится.** `usageCount` / `lastUsedAt` / `usedAt` /
+`conflicts` живут только в JSONL-хранилищах и обновляются на каждой сборке
+промпта; в файлы репозитория они не пишутся (иначе был бы коммит на каждый ход).
+«Актуальность» (`sourceRev` в `.meta.json`) считается по телеметрически-чистой
+проекции, поэтому сбор промпта не выглядит как изменение.
+
+**Защита правок человека.** Перед записью sha1 текущих байт файла сравнивается с
+хешем, записанным для этого пути в `.meta.json` (`files[<path>]`; это **не**
+`baseHash` из frontmatter урока — тот хранит sha1 текста правила). Если байты
+файла изменены извне, материализатор его **не перезаписывает**: копия
+сохраняется в `.conflicts/<ts>/<path>`, файл помечается `edited`. Тихих
+перезаписей не существует.
+
+**Импорт — только через предложения.** Правки, внесённые в репозиторий,
+разбираются (`repo-import-parser.ts`) и превращаются ровно в **одно предложение
+на файл**; применяются через `approveMemoryProposalDurably` (approval + конфликты
++ аудит + обратимость). Повторный импорт идемпотентен, конфликт требует явного
+«Переопределить», revert = disable+archive. Прямой записи в `LessonStore` из
+импорта нет.
+
+**Сны.** `DreamScheduler` — один планировщик на процесс; он стартует из
+`registerCoreRpcHandlers` (`startMemoryRepoRuntime`) и запускает прогоны
+последовательно (не более одного на банк в окно интервала). `DreamRunner`
+выполняет конвейер: `whenIdle` (единственный дренаж дистилляции) → изменённые
+заметки → **предложения** (не прямая запись) → `runConsolidation` →
+`runDecayJob` → материализация + один коммит → сводка `DREAMS.md`, журнал и
+стоимость. Пока путь mini-completion отдаёт только текст, стоимость снов —
+**оценка** (`estimated: true`, ≈4 символа/токен); `DreamCostTracker` считает
+точную цену, как только поставщик вернёт usage. Fail-soft: ошибка шага попадает
+в журнал (`dream-log.jsonl`), сон завершается `error`, уже сделанные коммиты не
+откатываются.
+
+**Модули (Wave A).** `packages/shared/src/memory/git-exec.ts`,
+`packages/shared/src/memory/repo.ts` (DTO);
+`packages/server-core/src/memory/repo/{MemoryRepoMaterializer,MemoryRepoService,RepoSourceProvider,snapshots,DreamRunner,DreamScheduler,DreamCostTracker,DreamNotesScanner,repo-import-parser,repo-watcher,notify}.ts`;
+`packages/server-core/src/handlers/rpc/{memory-repo,memory-repo-import}.ts`;
+`apps/electron/src/renderer/components/memory/MemoryRepoScreen.tsx` и
+`apps/electron/src/renderer/components/memory/repo/*.tsx`.
+
+**Поставлено (Wave B, WP-07).** ⌘K-поиск внутри экрана репозитория
+(`MemoryRepoSearchOverlay.tsx`: файлы репозитория — клиентский фильтр дерева,
+заметки — `notes:search`, сообщения — `sessions:searchContent`; новые каналы
+не добавлялись) и read-only host-инструменты `memory_repo_read` /
+`memory_repo_search` (`packages/session-tools-core/src/handlers/memory-repo.ts`,
+порт `src/memory-repo/runtime.ts`, регистрация —
+`packages/server-core/src/handlers/rpc/memory-repo.ts:258`). Инструментов записи
+нет: запись агента идёт существующим путём предложений.
+
 ## References
 
 - PRD: [`docs/plans/2026-10-08-continual-learning-prd.md`](../plans/2026-10-08-continual-learning-prd.md)
@@ -345,3 +424,14 @@ becomes the first stage of the learning system, not a competing one.
 - Channels: `packages/shared/src/protocol/channels.ts` (`learning`)
 - RPC handler: `packages/server-core/src/handlers/rpc/learning.ts`
 - UI: `apps/electron/src/renderer/components/learning/LearningScreen.tsx`
+- Memory repository & dreams (plan/spec, RU):
+  [`docs/plans/2026-10-09-memory-repository-and-dreaming.md`](../plans/2026-10-09-memory-repository-and-dreaming.md)
+  — see §0 for the Wave A status, the WP-01 spike numbers and the implementation
+  deviations.
+- Memory repository types: `packages/shared/src/memory/repo.ts`
+- Memory repository server module: `packages/server-core/src/memory/repo/`
+- Memory repository RPC:
+  `packages/server-core/src/handlers/rpc/memory-repo.ts`,
+  `packages/server-core/src/handlers/rpc/memory-repo-import.ts`
+- Memory repository UI:
+  `apps/electron/src/renderer/components/memory/MemoryRepoScreen.tsx`

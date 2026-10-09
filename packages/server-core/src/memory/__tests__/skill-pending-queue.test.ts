@@ -3,13 +3,18 @@
  * atomic move, conflict rejection), dismiss anti-repeat log, TTL prune, and
  * the loadAllSkills dot-dir filter that keeps pending candidates invisible.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach, setDefaultTimeout } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import type { SkillCandidate } from '@rox/shared/memory/types'
 import { loadAllSkills, listSkillSlugs } from '@rox/shared/skills'
 import { SkillPendingQueue, normalizeDescription, validateSkillContent } from '../SkillPendingQueue'
+
+// `loadAllSkills` walks this machine's real skill store (~9.1k entries); a single case here needs
+// 15 s+ under load while bun's default per-test budget is 5 s (pre-existing flake, also recorded in
+// docs/openclaw-port/STATUS.md). Budget only - no assertion relaxed.
+setDefaultTimeout(60_000)
 
 let workspaceRoot: string
 let queue: SkillPendingQueue

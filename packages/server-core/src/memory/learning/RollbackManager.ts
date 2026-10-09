@@ -25,6 +25,12 @@ export interface RollbackManagerDeps {
   candidateStore?: CandidateStore
   audit?: LearningAudit
   clock?: () => number
+  /**
+   * Fired once after a lesson target was durably reverted (skills/policies are
+   * not projected — those reversions never emit). `scope` is the lesson target's
+   * bank scope.
+   */
+  emit?: (evt: { kind: 'rollback'; id: string; scope: 'global' | 'workspace' }) => void
 }
 
 export class RollbackManager {
@@ -42,9 +48,12 @@ export class RollbackManager {
     const refuse = (why: string): RollbackResult => ({ reverted: false, mutationIds: [], reason: why })
 
     const after = asRecord(mutation.after)
+    // Set only for lesson targets, the one projected target type.
+    let lessonScope: 'global' | 'workspace' | null = null
     if (mutation.targetType === 'lesson') {
       const rule = typeof after?.rule === 'string' && after.rule ? after.rule : mutation.targetId
-      if (!this.deps.targets.removeLesson(rule, after?.scope === 'global' ? 'global' : 'workspace')) {
+      lessonScope = after?.scope === 'global' ? 'global' : 'workspace'
+      if (!this.deps.targets.removeLesson(rule, lessonScope)) {
         return refuse('lesson not found')
       }
     } else if (mutation.targetType === 'skill') {
@@ -75,6 +84,9 @@ export class RollbackManager {
       target: mutation.targetId,
       detail: `mutation ${mutation.id} (${mutation.targetType})${reason === undefined ? '' : `: ${reason}`}`,
     })
+    // Notification rides after every durable write above; skills/policies never
+    // reach here (lessonScope stays null), matching the projection surface.
+    if (lessonScope !== null) this.deps.emit?.({ kind: 'rollback', id: mutation.candidateId, scope: lessonScope })
     return { reverted: true, mutationIds: [mutation.id] }
   }
 

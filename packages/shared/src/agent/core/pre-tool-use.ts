@@ -426,7 +426,7 @@ function buildCliDomainBlockMessage(namespace: CliDomainNamespace, context: stri
 
   return [
     `${context}`,
-    `Use \`craft-agent ${namespace} ...\` instead.`,
+    `Use \`rox ${namespace} ...\` instead.`,
     `Run \`${policy.helpCommand}\` for the full ${noun} command reference.`,
     '',
     quickExamplesHeading,

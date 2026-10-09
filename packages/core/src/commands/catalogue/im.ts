@@ -31,4 +31,7 @@ export const IM_COMMANDS = moduleCatalogue('im', F.messenger, [
   ['im.leave_chat', 'workspace'],
   ['im.set_visibility', 'workspace', 'share'],
   ['im.share_entity', 'workspace', 'write', F.xfn],
+  // W1-11 (#1508) — team chats (D-v2-2): join/leave/set_visibility are above,
+  // this is the «Обзор чатов» query.
+  ['im.browse_public_chats', 'workspace', 'read'],
 ])

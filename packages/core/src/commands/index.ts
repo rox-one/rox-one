@@ -79,6 +79,40 @@ export {
 
 export { dispatchCommand, type CommandClient } from './client.ts'
 
+// W1-11 (#1508) — agent governance middleware (TECH-SPEC §13.2).
+export {
+  AGENT_APPROVAL_GATE_MIDDLEWARE_NAME,
+  AGENT_POLICY_MIDDLEWARE_NAME,
+  AGENT_RATE_LIMIT_MIDDLEWARE_NAME,
+  AUDIT_MIDDLEWARE_NAME,
+  GOVERNANCE_AUDIT_STATE,
+  GOVERNANCE_DECISION_STATE,
+  GOVERNANCE_PREFLIGHT_STATE,
+  GOVERNANCE_TRACE_STATE,
+  SUBJECT_RATE_LIMIT_MIDDLEWARE_NAME,
+  auditDecisionFor,
+  auditRowFor,
+  createAgentGovernanceChain,
+  createAgentPolicyMiddleware,
+  createAgentRateLimitMiddleware,
+  createApprovalGateMiddleware,
+  createAuditMiddleware,
+  createSubjectRateLimitMiddleware,
+  governanceDecision,
+  governanceTrace,
+  isAgentGovernedCommand,
+  policyRequestFor,
+  preflightOf,
+  stalledReceipt,
+  type ActionContext,
+  type AuditMiddlewareDeps,
+  type AuditWriter,
+  type GovernanceChainDeps,
+  type PolicyGovernanceDeps,
+  type PolicyGovernancePorts,
+  type SubjectRateLimitDeps,
+} from './middleware/index.ts'
+
 export {
   CATALOGUE_FLAGS,
   COMMAND_CATALOGUE,

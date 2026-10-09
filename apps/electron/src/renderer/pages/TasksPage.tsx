@@ -594,10 +594,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const selected = selectedId ? store.get(selectedId) : undefined
   const nativeTasks = personalTasksNativeAvailable()
   const syncState = personalTasksSyncState()
-  const delegationApi = Boolean(shell && typeof window.electronAPI?.sendMessage === 'function'
-    && typeof window.electronAPI?.sessionCommand === 'function' && typeof window.electronAPI?.getSessionMessages === 'function')
+  const shellApi = typeof window === 'undefined' ? undefined : window.electronAPI
+  const delegationApi = Boolean(shell && typeof shellApi?.sendMessage === 'function'
+    && typeof shellApi?.sessionCommand === 'function' && typeof shellApi?.getSessionMessages === 'function')
   useEffect(() => {
-    const capabilities = tasksProjectsCapabilities({ projectsApi: typeof window.electronAPI?.getProjects === 'function',
+    const capabilities = tasksProjectsCapabilities({ projectsApi: typeof shellApi?.getProjects === 'function',
       personalTasksApi: nativeTasks, syncState, delegationApi, workspacePresent: Boolean(workspace?.id),
       taskPresent: Boolean(selected), taskTrashed: selected?.trashedAt != null })
     const cleanups = [tour.capability('personal-tasks.available', capabilities['personal-tasks.available']!),

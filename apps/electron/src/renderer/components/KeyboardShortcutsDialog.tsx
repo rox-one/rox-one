@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Kbd } from "@/components/ui/kbd"
 import { useRegisterModal } from "@/context/ModalContext"
 import { isMac } from "@/lib/platform"
 import { useActionLabel, type ActionId } from "@/actions"
@@ -65,14 +66,6 @@ function useComponentSpecificSections(): ShortcutSection[] {
       ],
     },
   ]
-}
-
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium font-sans bg-muted border border-border rounded shadow-thin">
-      {children}
-    </kbd>
-  )
 }
 
 /**

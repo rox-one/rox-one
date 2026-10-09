@@ -286,7 +286,11 @@ function imports(source: string): Set<string> {
 }
 
 function testTimeout(value: string | undefined): number {
-  if (value === undefined) return 5000
+  // 5 s (bun's default) produces false reds on loaded developer machines for
+  // I/O-heavy suites (subprocess spawn, file rotation, WS boot); 15 s keeps a
+  // genuinely hung test bounded while surviving a 3-4× slowdown. CI overrides
+  // are unaffected (explicit --timeout / ROX_TEST_TIMEOUT_MS still win).
+  if (value === undefined) return 15_000
   if (!/^[1-9]\d*$/.test(value) || Number(value) > 300_000) throw new Error('ROX_TEST_TIMEOUT_MS / --timeout must be a positive integer at most 300000')
   return Number(value)
 }
@@ -296,6 +300,9 @@ function wholeSuiteTimeout(value: string | undefined): number {
   if (!/^[1-9]\d*$/.test(value) || Number(value) > 3_600_000) throw new Error('ROX_TEST_SUITE_TIMEOUT_MS / --suite-timeout must be a positive integer at most 3600000')
   return Number(value)
 }
+
+const NATIVE_PRODUCT_DIR = 'tests/e2e/product-tour'
+const NATIVE_PRODUCT_CONFIG = `${NATIVE_PRODUCT_DIR}/native.config.ts`
 
 export const MAX_CONCURRENCY = 64
 
@@ -456,7 +463,10 @@ async function nearestConfiguration(root: string, file: string, kind: 'playwrigh
   // This native product entry has a separate existing config. Its sibling
   // browser config deliberately excludes native tests; falling back to it
   // would discover the file without ever executing its acceptance case.
-  if (kind === 'playwright' && portable(relative(root, file)) === NATIVE_PRODUCT_SUITE) {
+  // Native suites are selected by the `.native.spec.ts` suffix inside the
+  // product-tour directory, not by an exhaustive allowlist.
+  const nativePath = portable(relative(root, file))
+  if (kind === 'playwright' && nativePath.startsWith(`${NATIVE_PRODUCT_DIR}/`) && nativePath.endsWith('.native.spec.ts')) {
     try { return await readRegularFile(join(root, NATIVE_PRODUCT_CONFIG)) ? NATIVE_PRODUCT_CONFIG : undefined }
     catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw error }
   }
@@ -472,9 +482,6 @@ async function nearestConfiguration(root: string, file: string, kind: 'playwrigh
     directory = parent
   }
 }
-
-const NATIVE_PRODUCT_SUITE = 'tests/e2e/product-tour/product.native.spec.ts'
-const NATIVE_PRODUCT_CONFIG = 'tests/e2e/product-tour/native.config.ts'
 
 /** Vendored skill packs are shipped as Electron resources, not workspace
  *  packages: they carry package.json only, without node_modules or build
@@ -648,7 +655,8 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
       suite.packageRoot = nearestPackage(root, path)
       if (!suite.config) suite.prerequisiteError = `${runner} config not found for ${suite.path}`
       else if (runner === 'playwright') {
-        if (suite.path === NATIVE_PRODUCT_SUITE && process.platform !== 'darwin' && process.platform !== 'win32')
+        if (suite.path.startsWith(`${NATIVE_PRODUCT_DIR}/`) && suite.path.endsWith('.native.spec.ts')
+          && process.platform !== 'darwin' && process.platform !== 'win32')
           suite.prerequisiteError = `Native product-tour suite requires macOS or Windows; unavailable on ${process.platform}`
         suite.ports = [...new Set([...suite.ports, ...await playwrightConfigPorts(root, suite.config)])].sort((a, b) => a - b)
       }

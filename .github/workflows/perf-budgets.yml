@@ -4,6 +4,11 @@ on:
     branches: [main]
     paths:
       - 'apps/electron/src/renderer/perf/**'
+      - 'apps/electron/src/renderer/perf-dom.html'
+      - 'apps/electron/src/renderer/perf-dom.tsx'
+      - 'apps/electron/src/renderer/components/ui/entity-list.tsx'
+      - 'apps/electron/src/renderer/pages/notes/NotesNavigationSidebar.tsx'
+      - 'tests/perf/**'
       - 'apps/electron/src/renderer/main.tsx'
       - 'apps/electron/src/renderer/lib/surface-keepalive.tsx'
       - 'apps/electron/src/renderer/lib/route-preload.ts'
@@ -26,6 +31,11 @@ on:
   pull_request:
     paths:
       - 'apps/electron/src/renderer/perf/**'
+      - 'apps/electron/src/renderer/perf-dom.html'
+      - 'apps/electron/src/renderer/perf-dom.tsx'
+      - 'apps/electron/src/renderer/components/ui/entity-list.tsx'
+      - 'apps/electron/src/renderer/pages/notes/NotesNavigationSidebar.tsx'
+      - 'tests/perf/**'
       - 'apps/electron/src/renderer/main.tsx'
       - 'apps/electron/src/renderer/lib/surface-keepalive.tsx'
       - 'apps/electron/src/renderer/lib/route-preload.ts'
@@ -53,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: '1.3.10' }
+        with: { bun-version: '1.4.2' }
       - uses: actions/cache@v4
         continue-on-error: true
         with:
@@ -89,7 +99,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: '1.3.10' }
+        with: { bun-version: '1.4.2' }
       - uses: actions/cache@v4
         continue-on-error: true
         with:
@@ -133,3 +143,18 @@ jobs:
         with:
           name: warmup-probe
           path: warmup-probe.json
+  # W3.4c: real-DOM renderer budgets in Chromium (2,000-row session list +
+  # 5,000-note navigator). Gated marks live in
+  # apps/electron/src/renderer/perf/dom-budgets.ts.
+  renderer-dom-budgets:
+    runs-on: [self-hosted, macos-toolchain]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.3.10' }
+      - run: bun install --frozen-lockfile
+        env: { GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
+      - name: Install Playwright Chromium
+        run: bunx playwright install chromium
+      - run: bun run test:perf:dom
