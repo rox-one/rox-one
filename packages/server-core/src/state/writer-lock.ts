@@ -9,10 +9,14 @@
  * that cannot be proven recycled is never taken over.
  *
  * Lock file: JSON `{pid, startedAt, execName, label}`, created `O_EXCL` 0600.
- * Takeover (only when provably stale) is unlink-then-`O_EXCL`; if another
- * process wins that race the loser re-reads and refuses.
+ * Reclaim (only when provably stale) is snapshot-then-unlink guarded by inode:
+ * the file is deleted only while its inode/mtime/size still match the snapshot
+ * taken when the holder was read, and a fresh `O_EXCL` holder re-checks that the
+ * path still points at its own fd before declaring victory. If two reclaimers
+ * race, the loser's guarded unlink is a no-op and it re-reads and refuses —
+ * mutual exclusion holds.
  */
-import { closeSync, mkdirSync, openSync, readFileSync, readlinkSync, statSync, unlinkSync, writeSync } from 'node:fs'
+import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, readlinkSync, statSync, unlinkSync, writeSync } from 'node:fs'
 import { execFileSync, type ExecFileSyncOptionsWithStringEncoding } from 'node:child_process'
 import { basename, dirname } from 'node:path'
 import { uptime as osUptime } from 'node:os'
@@ -134,6 +138,48 @@ function readHolder(path: string): StateLockHolder | null {
   }
 }
 
+/** Identity of the lock file at `path` at a point in time. */
+export interface LockFileSnapshot {
+  ino: number
+  mtimeMs: number
+  size: number
+}
+
+/**
+ * Capture the identity (inode, mtime, size) of the lock file at `path`, or null
+ * when it is absent/unstatable. Used as a compare-and-delete token so a
+ * reclaimer never deletes a lock file another process has since replaced.
+ */
+export function statSnapshot(path: string): LockFileSnapshot | null {
+  try {
+    const stat = statSync(path)
+    return { ino: stat.ino, mtimeMs: stat.mtimeMs, size: stat.size }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Remove `path` only while it is still exactly the file described by
+ * `snapshot` (same inode, mtime and size). Re-stats immediately before the
+ * unlink so a fresh lock created by a concurrent reclaimer — a different inode
+ * at the same path — is left untouched. Returns true when the file was removed,
+ * false when it was replaced, missing, or the unlink lost a race (ENOENT).
+ */
+export function unlinkIfUnchanged(path: string, snapshot: LockFileSnapshot): boolean {
+  const current = statSnapshot(path)
+  if (current === null) return false
+  if (current.ino !== snapshot.ino || current.mtimeMs !== snapshot.mtimeMs || current.size !== snapshot.size) {
+    return false
+  }
+  try {
+    unlinkSync(path)
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
  * Acquire the state writer lock, taking over only when the current holder is
  * provably gone (dead PID, lock written before this boot, or a recycled PID
@@ -174,28 +220,41 @@ export function acquireStateWriterLock(
   for (;;) {
     try {
       const fd = openSync(lockPath, 'wx', 0o600)
+      let owned = true
       try {
         writeSync(fd, payload)
+        try {
+          // Another reclaimer may have unlinked our file and recreated it at
+          // the same path; then the path no longer names our inode and our
+          // capture is void. Re-check before claiming ownership.
+          owned = fstatSync(fd).ino === statSync(lockPath).ino
+        } catch {
+          owned = false
+        }
       } finally {
         closeSync(fd)
       }
-      break
+      if (owned) break
+      continue
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
     }
 
+    // Snapshot before reading: the guarded unlink below only deletes the very
+    // file we judged stale, never one a concurrent reclaimer has already
+    // replaced with a fresh inode.
+    const snapshot = statSnapshot(lockPath)
     const existing = readHolder(lockPath)
     if (!existing) {
-      let ageMs = Number.POSITIVE_INFINITY
-      try { ageMs = now() - statSync(lockPath).mtimeMs } catch { /* file vanished — retry */ }
+      const ageMs = snapshot ? now() - snapshot.mtimeMs : Number.POSITIVE_INFINITY
       if (ageMs < staleMs) {
         throw new StateLockedError({ pid: 0, startedAt: 0, label: 'unknown' }, lockPath)
       }
-      try { unlinkSync(lockPath) } catch { /* someone else may have removed it */ }
+      if (snapshot) unlinkIfUnchanged(lockPath, snapshot)
       continue
     }
     if (!isStale(existing)) throw new StateLockedError(existing, lockPath)
-    try { unlinkSync(lockPath) } catch { /* race with another reclaimer */ }
+    if (snapshot) unlinkIfUnchanged(lockPath, snapshot)
   }
 
   let released = false
@@ -204,9 +263,10 @@ export function acquireStateWriterLock(
     if (released) return
     released = true
     process.removeListener('exit', onExit)
+    const snapshot = statSnapshot(lockPath)
     const current = readHolder(lockPath)
-    if (current && current.pid === holder.pid && current.startedAt === holder.startedAt) {
-      try { unlinkSync(lockPath) } catch { /* best-effort cleanup */ }
+    if (snapshot && current && current.pid === holder.pid && current.startedAt === holder.startedAt) {
+      unlinkIfUnchanged(lockPath, snapshot)
     }
   }
   process.on('exit', onExit)
