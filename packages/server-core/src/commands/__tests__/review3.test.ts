@@ -99,8 +99,8 @@ describe('one wired registry (COMMAND_MODULES)', () => {
     expect(wired).toContain('system.ping')
     expect(boundCommandTypes(createCommandRegistry())).toEqual(wired)
     expect(boundCommandTypes(getLocalCommandRegistry())).toEqual(wired)
-    // W1-06 (#1503) + W1-09 (#1506) modules; reference handlers stay last.
-    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system', 'domain-schemas', 'notify', 'reference-handlers'])
+    // W1-06 (#1503) + W1-09 (#1506) + W1-11 (#1508) modules; reference handlers stay last.
+    expect(COMMAND_MODULES.map(m => m.name)).toEqual(['system', 'domain-schemas', 'agents', 'notify', 'reference-handlers'])
   })
 
   test('every module binds idempotently', () => {

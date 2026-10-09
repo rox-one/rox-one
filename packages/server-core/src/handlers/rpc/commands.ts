@@ -39,6 +39,9 @@ import { SqliteCommandStore } from '../../commands/local-store.ts'
 import { CommandStoreUnavailable, type CommandStore } from '../../commands/store.ts'
 import { createWiredCommandRegistry } from '../../commands/registry.ts'
 import { getCommandBusFlags } from '../../commands/flags.ts'
+import { isAgentsAutonomyEnabled } from '@rox/shared/feature-flags'
+import { agentsGovernanceChain } from '../../agents/governance-install.ts'
+import { getAgentsRuntime } from '../../agents/runtime.ts'
 import { configureReferenceRuntime, type ReferenceRuntime } from '../../work/reference/module.ts'
 import { personalTasksStore } from './personal-tasks.ts'
 
@@ -160,6 +163,15 @@ export function registerCommandsHandlers(server: RpcServer, _deps: HandlerDeps, 
         publish: events => { bus.publish(events) },
         ...(runtime.authorizer ? { authorizer: runtime.authorizer } : {}),
       })
+      // W1-11 (#1508): the agent governance pipeline (kill switch → audit).
+      // Inert while `agents.autonomy.v1` is off and for every non-agent command.
+      const governance = agentsGovernanceChain({
+        runtime: getAgentsRuntime(),
+        isEnabled: () => isAgentsAutonomyEnabled(flags()),
+        actionContext: pipelineCtx => (pipelineCtx.envelope.target?.kind === 'channel' ? { container: `channel:${pipelineCtx.envelope.target.id}` } : {}),
+        transport: 'ws-rpc',
+      })
+      for (const middleware of governance) local.use(middleware)
       const router = new CommandRouter({
         registry,
         local,
