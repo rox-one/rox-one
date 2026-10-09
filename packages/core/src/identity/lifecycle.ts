@@ -14,7 +14,6 @@
  */
 
 import {
-  ACTIVATED_MEMBER_STATUS,
   PENDING_ACTIVATION_CHAT_STATE,
   membershipAfterActivation,
   type Principal,

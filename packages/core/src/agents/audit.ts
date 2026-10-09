@@ -170,8 +170,9 @@ export function verifyAuditChain(rows: readonly AuditRow[]): AuditChainVerificat
     if ((row.prevHash ?? null) !== expectedPrev) {
       return { ok: false, rows: rows.length, brokenAt: { reason: 'prev_mismatch', index, auditId: row.auditId, ...(row.seq !== undefined ? { seq: row.seq } : {}) } }
     }
-    const { hash, prevHash: _prevHash, seq: _seq, ...content } = row
-    const expectedHash = sha256Hex(`${expectedPrev ?? ''}${auditRowContent(content)}`)
+    const { hash } = row
+    // `auditRowContent` reads only the hashed fields, so the chain fields on `row` are ignored.
+    const expectedHash = sha256Hex(`${expectedPrev ?? ''}${auditRowContent(row)}`)
     if (hash !== expectedHash) {
       return { ok: false, rows: rows.length, brokenAt: { reason: 'hash_mismatch', index, auditId: row.auditId, ...(row.seq !== undefined ? { seq: row.seq } : {}) } }
     }
