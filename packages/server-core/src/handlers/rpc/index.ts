@@ -62,6 +62,7 @@ import { registerMemoryHandlers } from './memory'
 import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
+import { registerMemoryRepoHandlers, startMemoryRepoRuntime } from './memory-repo'
 import { registerSkillsPendingHandlers } from './skills-pending'
 import { registerLearningHandlers } from './learning'
 export function cleanupCoreClientResources(clientId: string): void {
@@ -157,6 +158,10 @@ export function registerCoreRpcHandlers(
   registerMemoryProposalHandlers(server, deps)
   registerMemoryIoHandlers(server, deps)
   registerMemoryInsightsHandlers(server, deps)
+  // Wave A: process-wide repo projection + dream runtime, then bind the RPC
+  // bridge (registerMemoryRepoHandlers also wires A8's import handlers).
+  startMemoryRepoRuntime({ server, deps })
+  registerMemoryRepoHandlers(server, deps)
   registerSkillsPendingHandlers(server, deps)
   registerLearningHandlers(server, deps)
   registerNotesHandlers(server, deps)

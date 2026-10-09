@@ -91,6 +91,14 @@ export { handleKnowledgeRead, KNOWLEDGE_READ_MAX_MARKDOWN_CHARS } from './knowle
 export { handleKnowledgeGetBacklinks, KNOWLEDGE_BACKLINKS_MAX_ITEMS } from './knowledge-backlinks.ts';
 export { handleKnowledgePropose, parseProposeOps } from './knowledge-propose.ts';
 
+// Memory repository read tools (Wave B; args types derive from the zod schemas in tool-defs)
+export {
+  handleMemoryRepoRead,
+  handleMemoryRepoSearch,
+  MEMORY_REPO_READ_MAX_CHARS,
+  MEMORY_REPO_SEARCH_MAX_LIMIT,
+} from './memory-repo.ts';
+
 // Pages
 export {
   handleListPages,

@@ -183,6 +183,20 @@ export type {
 } from './knowledge/runtime.ts';
 export { parseKnowledgeRefArg, KNOWLEDGE_REF_ACCEPTED_FORMS } from './knowledge/parse-ref.ts';
 
+// Memory repository tool runtime (Wave B read capabilities) — registered by the
+// server-core memory-repo RPC layer; consumed by the memory_repo_* handlers.
+export {
+  registerMemoryRepoToolRuntime,
+  getMemoryRepoToolRuntime,
+  clearMemoryRepoToolRuntime,
+} from './memory-repo/runtime.ts';
+export type {
+  MemoryRepoToolRuntime,
+  MemoryRepoBankRef,
+  MemoryRepoTreeEntry,
+  MemoryRepoFileView,
+} from './memory-repo/runtime.ts';
+
 // Handlers
 export {
   // SubmitPlan
@@ -234,6 +248,14 @@ export {
   KNOWLEDGE_SEARCH_MAX_LIMIT,
   KNOWLEDGE_READ_MAX_MARKDOWN_CHARS,
   KNOWLEDGE_BACKLINKS_MAX_ITEMS,
+} from './handlers/index.ts';
+
+// Memory repository handlers (registered in SESSION_TOOL_DEFS)
+export {
+  handleMemoryRepoRead,
+  handleMemoryRepoSearch,
+  MEMORY_REPO_READ_MAX_CHARS,
+  MEMORY_REPO_SEARCH_MAX_LIMIT,
 } from './handlers/index.ts';
 
 export type {
@@ -335,6 +357,8 @@ export type {
   KnowledgeSearchArgs,
   KnowledgeReadArgs,
   KnowledgeGetBacklinksArgs,
+  MemoryRepoReadArgs,
+  MemoryRepoSearchArgs,
 } from './tool-defs.ts';
 
 // Script runtime resolution + path containment (also used by the shared

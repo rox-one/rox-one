@@ -698,6 +698,28 @@ export const RPC_CHANNELS = {
     EDIT_PROPOSAL: 'memory:editProposal',
     DELETE_PROPOSAL: 'memory:deleteProposal',
     CHANGED: 'memory:changed',
+    // Repo projection (spec 2026-10-09 §7): read-only markdown view of a bank.
+    REPO_LIST_BANKS: 'memory:repoListBanks',
+    REPO_STATUS: 'memory:repoStatus',
+    REPO_TREE: 'memory:repoTree',
+    REPO_READ_FILE: 'memory:repoReadFile',
+    REPO_COMMITS: 'memory:repoCommits',
+    REPO_COMMIT_DIFF: 'memory:repoCommitDiff',
+    REPO_GRAPH: 'memory:repoGraph',
+    REPO_EXPORT: 'memory:repoExport',
+    // Dream (memory build) status/manual run/journal.
+    DREAM_STATUS: 'memory:dreamStatus',
+    DREAM_RUN: 'memory:dreamRun',
+    DREAM_LOG: 'memory:dreamLog',
+    // Import of human edits back through the proposals pipeline (Phase 5).
+    REPO_PREVIEW_IMPORT: 'memory:repoPreviewImport',
+    REPO_APPLY_IMPORT: 'memory:repoApplyImport',
+    REPO_REVERT_IMPORT: 'memory:repoRevertImport',
+    // Pushes.
+    REPO_CHANGED: 'memory:repoChanged',
+    DREAM_EVENT: 'memory:dreamEvent',
+    DREAM_DONE: 'memory:dreamDone',
+    REPO_IMPORT_READY: 'memory:repoImportReady',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
@@ -888,6 +910,19 @@ export const RPC_CHANNELS = {
     COOKIE_AUTO_STATUS: 'browserProfile:cookieAutoStatus',
     COOKIE_AUTO_SET: 'browserProfile:cookieAutoSet',
     COOKIE_AUTO_RUN: 'browserProfile:cookieAutoRun',
+  },
+  // browserIntel — Browser Intelligence Pipeline surface. Reads the local
+  // browser profile stores and stages them on this machine only; all channels
+  // are LOCAL_ONLY (never proxied to a remote server).
+  browserIntel: {
+    GET_STATE: 'browserIntel:getState',
+    SET_CONSENT: 'browserIntel:setConsent',
+    GET_STATS: 'browserIntel:getStats',
+    GET_SLOTS: 'browserIntel:getSlots',
+    START_RUN: 'browserIntel:startRun',
+    CANCEL_RUN: 'browserIntel:cancelRun',
+    PROGRESS: 'browserIntel:progress',
+    STATE_CHANGED: 'browserIntel:stateChanged',
   },
   automations: {
     GET: 'automations:get',

@@ -107,6 +107,15 @@ export const CHANNEL_MAP = {
   browserCookieAutoStatus: invoke(RPC_CHANNELS.browserProfile.COOKIE_AUTO_STATUS),
   browserCookieAutoSet: invoke(RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET),
   browserCookieAutoRun: invoke(RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN),
+  // Browser Intelligence Pipeline (local-only; reads/stages on this machine)
+  getBrowserIntelState: invoke(RPC_CHANNELS.browserIntel.GET_STATE),
+  setBrowserIntelConsent: invoke(RPC_CHANNELS.browserIntel.SET_CONSENT),
+  getBrowserIntelStats: invoke(RPC_CHANNELS.browserIntel.GET_STATS),
+  getBrowserIntelSlots: invoke(RPC_CHANNELS.browserIntel.GET_SLOTS),
+  startBrowserIntelRun: invoke(RPC_CHANNELS.browserIntel.START_RUN),
+  cancelBrowserIntelRun: invoke(RPC_CHANNELS.browserIntel.CANCEL_RUN),
+  onBrowserIntelProgress: listener(RPC_CHANNELS.browserIntel.PROGRESS),
+  onBrowserIntelStateChanged: listener(RPC_CHANNELS.browserIntel.STATE_CHANGED),
   exportRemoteSessionTransfer: invoke(RPC_CHANNELS.sessions.EXPORT_REMOTE_TRANSFER),
   importRemoteSessionTransfer: invoke(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER),
   getPendingPlanExecution: invoke(RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION),
@@ -661,6 +670,26 @@ export const CHANNEL_MAP = {
   editMemoryProposal: invoke(RPC_CHANNELS.memory.EDIT_PROPOSAL),
   deleteMemoryProposal: invoke(RPC_CHANNELS.memory.DELETE_PROPOSAL),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
+
+  // Memory repository projection + dream (spec 2026-10-09 §7)
+  listMemoryRepoBanks: invoke(RPC_CHANNELS.memory.REPO_LIST_BANKS),
+  getMemoryRepoStatus: invoke(RPC_CHANNELS.memory.REPO_STATUS),
+  getMemoryRepoTree: invoke(RPC_CHANNELS.memory.REPO_TREE),
+  readMemoryRepoFile: invoke(RPC_CHANNELS.memory.REPO_READ_FILE),
+  listMemoryRepoCommits: invoke(RPC_CHANNELS.memory.REPO_COMMITS),
+  getMemoryRepoCommitDiff: invoke(RPC_CHANNELS.memory.REPO_COMMIT_DIFF),
+  getMemoryRepoGraph: invoke(RPC_CHANNELS.memory.REPO_GRAPH),
+  exportMemoryRepo: invoke(RPC_CHANNELS.memory.REPO_EXPORT),
+  getMemoryDreamStatus: invoke(RPC_CHANNELS.memory.DREAM_STATUS),
+  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN),
+  getMemoryDreamLog: invoke(RPC_CHANNELS.memory.DREAM_LOG),
+  previewMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT),
+  applyMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_APPLY_IMPORT),
+  revertMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_REVERT_IMPORT),
+  onMemoryRepoChanged: listener(RPC_CHANNELS.memory.REPO_CHANGED),
+  onMemoryDreamEvent: listener(RPC_CHANNELS.memory.DREAM_EVENT),
+  onMemoryDreamDone: listener(RPC_CHANNELS.memory.DREAM_DONE),
+  onMemoryRepoImportReady: listener(RPC_CHANNELS.memory.REPO_IMPORT_READY),
 
   // Learning (continual learning, PRD §15) — agent/native actions
   // (`learning:observe|recordOutcome|recordCorrection`) are intentionally absent.

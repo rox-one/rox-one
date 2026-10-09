@@ -276,6 +276,16 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET,
   RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN,
 
+  // browserIntel — reads/stages local browser profile files only; never remote-eligible.
+  RPC_CHANNELS.browserIntel.GET_STATE,
+  RPC_CHANNELS.browserIntel.SET_CONSENT,
+  RPC_CHANNELS.browserIntel.GET_STATS,
+  RPC_CHANNELS.browserIntel.GET_SLOTS,
+  RPC_CHANNELS.browserIntel.START_RUN,
+  RPC_CHANNELS.browserIntel.CANCEL_RUN,
+  RPC_CHANNELS.browserIntel.PROGRESS,
+  RPC_CHANNELS.browserIntel.STATE_CHANGED,
+
   // gitbash — Windows-specific local
   RPC_CHANNELS.gitbash.CHECK,
   RPC_CHANNELS.gitbash.BROWSE,
@@ -754,6 +764,27 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.memory.REJECT_PROPOSAL,
   RPC_CHANNELS.memory.EDIT_PROPOSAL,
   RPC_CHANNELS.memory.DELETE_PROPOSAL,
+
+  // memory — repository projection + dream (spec 2026-10-09 §7): bank data is
+  // materialized from workspace/global stores on the workspace-owning server.
+  RPC_CHANNELS.memory.REPO_LIST_BANKS,
+  RPC_CHANNELS.memory.REPO_STATUS,
+  RPC_CHANNELS.memory.REPO_TREE,
+  RPC_CHANNELS.memory.REPO_READ_FILE,
+  RPC_CHANNELS.memory.REPO_COMMITS,
+  RPC_CHANNELS.memory.REPO_COMMIT_DIFF,
+  RPC_CHANNELS.memory.REPO_GRAPH,
+  RPC_CHANNELS.memory.REPO_EXPORT,
+  RPC_CHANNELS.memory.DREAM_STATUS,
+  RPC_CHANNELS.memory.DREAM_RUN,
+  RPC_CHANNELS.memory.DREAM_LOG,
+  RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT,
+  RPC_CHANNELS.memory.REPO_APPLY_IMPORT,
+  RPC_CHANNELS.memory.REPO_REVERT_IMPORT,
+  RPC_CHANNELS.memory.REPO_CHANGED,
+  RPC_CHANNELS.memory.DREAM_EVENT,
+  RPC_CHANNELS.memory.DREAM_DONE,
+  RPC_CHANNELS.memory.REPO_IMPORT_READY,
 
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).

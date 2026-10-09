@@ -30,6 +30,7 @@ import type {
 import type { ExtensionsChangedPayload } from '../extensions/types'
 import type { CommandBusPushEvent } from '../commands/push'
 import type { VoicePrefs } from '../voice/types.ts'
+import type { MemoryDreamEvent, MemoryDreamRun } from '../memory/repo'
 import type { OverlayState } from '../voice/overlay-types.ts'
 import type { VoiceJob } from '../voice/job-machine.ts'
 import type { EnvironmentPrefs } from '../environment'
@@ -81,6 +82,12 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.skills.CHANGED]: [workspaceId: string, skills: LoadedSkill[]]
   [RPC_CHANNELS.skillsPending.CHANGED]: [workspaceId: string]
   [RPC_CHANNELS.memory.CHANGED]: [workspaceId: string | null, scope: 'global' | 'workspace' | 'both']
+  // Memory repository projection + dream (spec 2026-10-09 §7). Bank-scoped:
+  // `memory:repoChanged[0]` is a bankId, dream payloads carry their own bankId.
+  [RPC_CHANNELS.memory.REPO_CHANGED]: [bankId: string, reason: string]
+  [RPC_CHANNELS.memory.DREAM_EVENT]: [event: MemoryDreamEvent]
+  [RPC_CHANNELS.memory.DREAM_DONE]: [run: MemoryDreamRun]
+  [RPC_CHANNELS.memory.REPO_IMPORT_READY]: [bankId: string, count: number]
   [RPC_CHANNELS.projects.CHANGED]: [workspaceId: string, projects: LoadedProject[]]
   [RPC_CHANNELS.pages.CHANGED]: [workspaceId: string, pages: LoadedPage[]]
   [RPC_CHANNELS.kanban.CHANGED]: [workspaceId: string, config: KanbanBoardConfig]
@@ -142,6 +149,32 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.browserPane.STATE_CHANGED]: [info: BrowserInstanceInfo]
   [RPC_CHANNELS.browserPane.REMOVED]: [id: string]
   [RPC_CHANNELS.browserPane.INTERACTED]: [id: string]
+
+  // Browser Intelligence Pipeline (global, local-only). Payload shapes mirror
+  // `@rox/browser-intel` PipelineProgress / BrowserIntelState; they are declared
+  // inline rather than imported because that package already depends on
+  // @rox/shared, so a protocol-level import would create a dependency cycle.
+  [RPC_CHANNELS.browserIntel.PROGRESS]: [progress: {
+    stage: 'detect' | 'scan' | 'stage' | 'hindsight' | 'ingest' | 'unfurl' | 'aggregate' | 'synthesize'
+    message: string
+    current: number
+    total: number
+    startedAt: number
+  }]
+  [RPC_CHANNELS.browserIntel.STATE_CHANGED]: [state: {
+    consent: boolean
+    consentAt: number | null
+    lastRunAt: number | null
+    lastResult: {
+      profiles: number
+      visits: number
+      urls: number
+      slots: number
+      errors: number
+    } | null
+    error: string | null
+    revision: number
+  }]
 
   // SiYuan engine surface events (global; workspace isolation renderer-side)
   [RPC_CHANNELS.siyuan.STATE_CHANGED]: [state: SiyuanSurfaceState]

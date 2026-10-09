@@ -120,6 +120,8 @@ export type {
   MarketplaceRemoveResult,
 };
 import type { AddLessonResult, Lesson, LessonCategory, LessonScope, MemoryInsights, PendingSkill, PendingSkillDiff, ProjectMemoryDto, PromoteLessonResult, PromotionCandidate, SessionProvenance, SkillExportResult, SkillPruneResult, SkillUsageMap } from '@rox/shared/memory/types';
+import type { MemoryDreamEvent, MemoryDreamRun, MemoryDreamStatus, MemoryRepoBankInfo, MemoryRepoCommit, MemoryRepoCommitFile, MemoryRepoExportResult, MemoryRepoFile, MemoryRepoGraph, MemoryRepoImportPreview, MemoryRepoStatus, MemoryRepoTreeNode } from '@rox/shared/memory/repo';
+import type { MemoryProposal } from '@rox/shared/memory/proposals';
 export type { Lesson, LessonCategory, LessonScope, MemoryInsights };
 export type { ThinkingLevel };
 export { THINKING_LEVELS, DEFAULT_THINKING_LEVEL } from '@rox/shared/agent/thinking-levels';
@@ -550,6 +552,12 @@ import type {
   ExtensionSurfaceState,
 } from '@rox/shared/protocol'
 
+// Browser Intelligence Pipeline contract — frozen in the workspace package
+// `@rox/browser-intel` (already linked into this app's node_modules). Type-only
+// so nothing from the package is bundled into the renderer.
+import type { BrowserIntelState, IntelligenceStats, ProfileSlotRecord, PipelineProgress } from '@rox/browser-intel'
+export type { BrowserIntelState, IntelligenceStats, ProfileSlotRecord, PipelineProgress }
+
 export interface WorkGraphConnectionRecord {
   readonly id: string
   readonly workspaceId: string
@@ -896,6 +904,15 @@ export interface ElectronAPI {
   browserCookieAutoStatus(): Promise<BrowserCookieAutoStatus>
   browserCookieAutoSet(args: { consent: boolean; profileId?: string; domains?: string[] }): Promise<BrowserCookieAutoStatus>
   browserCookieAutoRun(): Promise<BrowserCookieAutoStatus>
+  // Browser Intelligence Pipeline (local-only; reads/stages on this machine)
+  getBrowserIntelState(): Promise<BrowserIntelState>
+  setBrowserIntelConsent(consent: boolean): Promise<BrowserIntelState>
+  getBrowserIntelStats(): Promise<IntelligenceStats>
+  getBrowserIntelSlots(): Promise<ProfileSlotRecord[]>
+  startBrowserIntelRun(): Promise<{ started: boolean }>
+  cancelBrowserIntelRun(): Promise<{ cancelled: boolean }>
+  onBrowserIntelProgress(cb: (progress: PipelineProgress) => void): () => void
+  onBrowserIntelStateChanged(cb: (state: BrowserIntelState) => void): () => void
   importBrowserProfile(args: {
     workspaceId: string
     profileId: string
@@ -2055,6 +2072,32 @@ export interface ElectronAPI {
   rejectMemoryProposal(workspaceId: string, proposalId: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   editMemoryProposal(workspaceId: string, proposalId: string, text: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   deleteMemoryProposal(workspaceId: string, proposalId: string): Promise<boolean>
+  // Memory repository projection + dream (spec 2026-10-09 §7). `bankId` is a
+  // bank id ('main' | 'main#<ownerKey8>' | 'ws:<workspaceId>' | 'ws:<id>#<ownerKey8>');
+  // reads are workspace-authorized server-side and never take workspaceId from the payload.
+  listMemoryRepoBanks(): Promise<MemoryRepoBankInfo[]>
+  getMemoryRepoStatus(bankId: string): Promise<MemoryRepoStatus>
+  getMemoryRepoTree(bankId: string): Promise<MemoryRepoTreeNode[]>
+  readMemoryRepoFile(bankId: string, path: string): Promise<MemoryRepoFile>
+  listMemoryRepoCommits(bankId: string, limit?: number): Promise<MemoryRepoCommit[]>
+  getMemoryRepoCommitDiff(bankId: string, sha: string): Promise<MemoryRepoCommitFile[]>
+  getMemoryRepoGraph(bankId: string): Promise<MemoryRepoGraph>
+  exportMemoryRepo(bankId: string): Promise<MemoryRepoExportResult>
+  getMemoryDreamStatus(bankId: string): Promise<MemoryDreamStatus>
+  /** `options.noteIds` force-distills those notes even when unchanged since the watermark. */
+  runMemoryDream(bankId: string, options?: { noteIds?: string[] }): Promise<MemoryDreamRun>
+  getMemoryDreamLog(bankId: string, limit?: number): Promise<MemoryDreamEvent[]>
+  previewMemoryRepoImport(bankId: string): Promise<MemoryRepoImportPreview>
+  applyMemoryRepoImport(bankId: string, paths?: string[], override?: boolean): Promise<{ bankId: string; added: number; skipped: Array<{ path: string; conflict: string }>; proposalIds: string[] }>
+  revertMemoryRepoImport(bankId: string, target?: { lessonId?: string; rule?: string; path?: string }): Promise<{ bankId: string; proposal: MemoryProposal; disabled: boolean }>
+  /** Push: a bank repository changed (human/RPC mutation materialized). */
+  onMemoryRepoChanged(callback: (bankId: string, reason: string) => void): () => void
+  /** Push: one dream journal line. */
+  onMemoryDreamEvent(callback: (event: MemoryDreamEvent) => void): () => void
+  /** Push: a dream run finished. */
+  onMemoryDreamDone(callback: (run: MemoryDreamRun) => void): () => void
+  /** Push: N repository edits are waiting for import review. */
+  onMemoryRepoImportReady(callback: (bankId: string, count: number) => void): () => void
   // Learning (continual learning, PRD §15) — candidates/evidence/outcomes/policies.
   // `observe`/`recordOutcome`/`recordCorrection` are agent/native channels and are
   // deliberately absent here.
@@ -2801,11 +2844,17 @@ export interface BrowserNavigationState {
 }
 
 /**
- * Memory navigator state (self-learning panel)
+ * Memory navigator state (self-learning panel).
+ *
+ * `tab` pins the active memory surface — `lessons` (default; omitted when the
+ * bare `memory` route is used), `repo` (memory repository screen) or `dream`.
+ * `details` selects a single repository artifact: a file by path or a commit
+ * by sha. Both survive navigation, panel persistence and deep links.
  */
 export interface MemoryNavigationState {
   navigator: 'memory'
-  details: null
+  tab?: 'lessons' | 'repo' | 'dream'
+  details: { type: 'file'; path: string } | { type: 'commit'; sha: string } | null
   rightSidebar?: RightSidebarPanel
 }
 
@@ -3159,6 +3208,13 @@ export const getNavigationStateKey = (state: NavigationState): string => {
     return 'browser'
   }
   if (state.navigator === 'memory') {
+    const tab = state.tab ?? 'lessons'
+    if (tab === 'dream') return 'memory/dream'
+    if (tab === 'repo') {
+      if (state.details?.type === 'file') return `memory/repo/file/${encodeURIComponent(state.details.path)}`
+      if (state.details?.type === 'commit') return `memory/repo/commit/${encodeURIComponent(state.details.sha)}`
+      return 'memory/repo'
+    }
     return 'memory'
   }
   if (state.navigator === 'learning') {
@@ -3458,6 +3514,19 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
     const taskId = decodeURIComponent(key.slice('tasks/task/'.length))
     if (taskId) return { navigator: 'tasks', details: { type: 'task', taskId } }
     return { navigator: 'tasks', details: null }
+  }
+
+  // Memory navigator — lessons (bare), repository and dream surfaces.
+  if (key === 'memory') return { navigator: 'memory', details: null }
+  if (key === 'memory/dream') return { navigator: 'memory', tab: 'dream', details: null }
+  if (key === 'memory/repo') return { navigator: 'memory', tab: 'repo', details: null }
+  if (key.startsWith('memory/repo/file/')) {
+    const path = decodeURIComponent(key.slice('memory/repo/file/'.length))
+    return { navigator: 'memory', tab: 'repo', details: path ? { type: 'file', path } : null }
+  }
+  if (key.startsWith('memory/repo/commit/')) {
+    const sha = decodeURIComponent(key.slice('memory/repo/commit/'.length))
+    return { navigator: 'memory', tab: 'repo', details: sha ? { type: 'commit', sha } : null }
   }
 
   // Handle sessions

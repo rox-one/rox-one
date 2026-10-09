@@ -50,6 +50,8 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'knowledge_read',
   'knowledge_get_backlinks',
   'knowledge_propose',
+  'memory_repo_read',
+  'memory_repo_search',
   'list_pages',
   'get_page',
   'create_page',
