@@ -65,6 +65,7 @@
     "./connections": "./src/connections/index.ts",
     "./context-docs": "./src/context-docs/index.ts",
     "./credentials": "./src/credentials/index.ts",
+    "./desktop-bridge/contract": "./src/desktop-bridge/contract.ts",
     "./docs": "./src/docs/index.ts",
     "./drive": "./src/drive/index.ts",
     "./drive/importers": "./src/drive/importers/index.ts",
