@@ -75,7 +75,7 @@ describe('buildMemoryToolCallbacks (c1.3)', () => {
     })
     const result = await callbacks.forget!({ ids: ['a', 'b'], reason: 'gdpr' })
     expect(result.isError).toBe(false)
-    expect(received).toEqual({ ids: ['a', 'b'], reason: 'gdpr' })
+    expect(received!).toEqual({ ids: ['a', 'b'], reason: 'gdpr' })
     expect(result.content[0]!.text).toContain('Forgotten 2 chunk(s)')
     expect(result.content[0]!.text).toContain('Lineage recorded')
 
