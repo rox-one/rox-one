@@ -75,6 +75,30 @@ export const ENTITY_ONLY_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
   'comments',
 ])
 
+/**
+ * Missions board route gate (G3 pilot).
+ *
+ * The `missions` prefix is inert unless `featureMissionsBoardV1Atom` (the
+ * renderer's `craft-feature-missions-board-v1` storage key) is on. The
+ * renderer mirrors that flag into this override, so with the flag off
+ * `missions`/`missions/mission/{id}` are rejected exactly as on main — the
+ * prefix has no legacy owner, so nothing else can claim it.
+ */
+const MISSIONS_ROUTE_PREFIX = 'missions'
+let missionsRoutesOverride: boolean | undefined
+
+export function setMissionsRoutesEnabled(enabled: boolean): void {
+  missionsRoutesOverride = enabled
+}
+
+export function resetMissionsRoutesEnabled(): void {
+  missionsRoutesOverride = undefined
+}
+
+export function isMissionsRoutesEnabled(): boolean {
+  return missionsRoutesOverride === true
+}
+
 // =============================================================================
 // Route Types
 // =============================================================================
@@ -93,6 +117,8 @@ export interface ParsedRoute {
 // =============================================================================
 
 export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'clipboard-history' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
+  // G3 «Миссии» board (pilot; gated by `isMissionsRoutesEnabled`).
+  | 'missions'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -159,6 +185,7 @@ export function isCompoundRoute(route: string): boolean {
   // W1-07: a bare unified mode root only exists while its mode flag is on;
   // sub-routes fall through to the entities.links.v1 gate below.
   if (isOpenUnifiedSurfaceRoot(route)) return true
+  if (firstSegment === MISSIONS_ROUTE_PREFIX) return isMissionsRoutesEnabled()
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(firstSegment)) return isEntityRoutesEnabled()
   return COMPOUND_ROUTE_PREFIXES.includes(firstSegment)
 }
@@ -171,6 +198,7 @@ export function isCompoundRoute(route: string): boolean {
 export function isCompoundRoutePrefix(prefix: string, route: string = prefix): boolean {
   if (route.split(/[/?#]/)[0] === prefix && isLegacySurfaceAliasRoot(route)) return true
   if (route.split(/[/?#]/)[0] === prefix && isOpenUnifiedSurfaceRoot(route)) return true
+  if (prefix === MISSIONS_ROUTE_PREFIX) return isMissionsRoutesEnabled()
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) return isEntityRoutesEnabled()
   return (COMPOUND_ROUTE_PREFIXES as readonly string[]).includes(prefix)
 }
@@ -472,6 +500,17 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   if (first === 'home') {
     if (segments.length !== 1) return null
     return { navigator: 'home', details: null }
+  }
+
+  // G3 «Миссии» board (pilot) — `missions[/mission/{id}]`. Gated: with the
+  // flag off the prefix is unknown and these shapes stay unavailable.
+  if (first === MISSIONS_ROUTE_PREFIX) {
+    if (!isMissionsRoutesEnabled()) return null
+    if (segments.length === 1) return { navigator: 'missions', details: null }
+    if (segments.length === 3 && segments[1] === 'mission' && segments[2]) {
+      return { navigator: 'missions', details: { type: 'mission', id: decodeURIComponent(segments[2]) } }
+    }
+    return null
   }
 
   // Extra workbench screens: <screenId>[/item/<itemId>]
@@ -816,6 +855,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'home'
   }
 
+  if (parsed.navigator === 'missions') {
+    if (!parsed.details) return 'missions'
+    return `missions/mission/${encodeURIComponent(parsed.details.id)}`
+  }
+
   if (parsed.navigator === 'surface' && parsed.surface) {
     // W3.2: a calendar meeting carried by the legacy alias keeps the
     // `meetings/meeting/{id}` address so the deep link round-trips.
@@ -1074,6 +1118,10 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 
   if (compound.navigator === 'home') {
     return { type: 'view', name: 'home', params: {} }
+  }
+
+  if (compound.navigator === 'missions') {
+    return { type: 'view', name: 'missions', id: compound.details?.id, params: {} }
   }
 
   if (compound.navigator === 'surface' && compound.surface) {
@@ -1398,6 +1446,13 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'home', details: null }
   }
 
+  if (compound.navigator === 'missions') {
+    return {
+      navigator: 'missions',
+      details: compound.details ? { type: 'mission', missionId: compound.details.id } : null,
+    }
+  }
+
   if (compound.navigator === 'surface' && compound.surface) {
     // W3.2: the legacy `meetings/meeting/{id}` alias carries the meeting in
     // `details`; keep it on the surface state as `meetingId`.
@@ -1651,6 +1706,13 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'connections', details: null }
     case 'home':
       return { navigator: 'home', details: null }
+    case 'missions':
+      // G3 pilot: persisted `missions` keys restore only while the flag is on.
+      if (!isMissionsRoutesEnabled()) return null
+      return {
+        navigator: 'missions',
+        details: parsed.id ? { type: 'mission', missionId: parsed.id } : null,
+      }
     case 'surface': {
       const surface = parsed.params.surface
       if (!surface || !isUnifiedSurfaceRouteEnabled(surface)) return null
@@ -1939,6 +2001,13 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
     return {
       navigator: 'home',
       details: null,
+    }
+  }
+
+  if (state.navigator === 'missions') {
+    return {
+      navigator: 'missions',
+      details: state.details ? { type: 'mission', id: state.details.missionId } : null,
     }
   }
 

@@ -14,6 +14,7 @@ import {
 } from '../panel-workspace-layout'
 import { isDetailNavState } from '../nav-helpers'
 import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { computeLayout } from '../layout-engine'
 
 describe('workspace arrangements', () => {
   it('shows a single panel, 2×2 and 3×2 grids without dropping extra panels', () => {
@@ -148,8 +149,24 @@ describe('panel full-screen mode', () => {
 describe('persisted panel geometry validation', () => {
   it('rejects foreign workspaces and unknown schemas', () => {
     expect(parsePanelWorkspaceLayout({ schemaVersion: 1, workspaceId: 'b' }, 'a')).toBeNull()
-    expect(parsePanelWorkspaceLayout({ schemaVersion: 2, workspaceId: 'a' }, 'a')).toBeNull()
+    expect(parsePanelWorkspaceLayout({ schemaVersion: 3, workspaceId: 'a' }, 'a')).toBeNull()
     expect(parsePanelWorkspaceLayout(null, 'a')).toBeNull()
+  })
+
+  it('migrates a v1 record additively and defaults the preset to auto', () => {
+    const migrated = parsePanelWorkspaceLayout({
+      schemaVersion: 1,
+      workspaceId: 'a',
+      mode: 'grid-2',
+      grids: { '2x2': { columns: [0.6, 0.4], rows: [0.7, 0.3] } },
+    }, 'a')!
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.mode).toBe('grid-2')
+    expect(migrated.preset).toBe('auto')
+    expect(migrated.grids['2x2']).toEqual({ columns: [0.6, 0.4], rows: [0.7, 0.3] })
+    // A v2 record with a named preset round-trips; an unknown preset falls back.
+    expect(parsePanelWorkspaceLayout({ schemaVersion: 2, workspaceId: 'a', mode: 'auto', preset: 'triptych' }, 'a')!.preset).toBe('triptych')
+    expect(parsePanelWorkspaceLayout({ schemaVersion: 2, workspaceId: 'a', mode: 'auto', preset: 'obsolete' }, 'a')!.preset).toBe('auto')
   })
 
   it('recovers invalid modes and track data without NaN or invisible panels', () => {
@@ -176,5 +193,44 @@ describe('persisted panel geometry validation', () => {
     const restored = parsePanelWorkspaceLayout(JSON.parse(JSON.stringify(preferences)), 'a')!
     expect(resolvePanelGridTracks(restored, { columns: 2, rows: 2 }, [1, 1, 1, 1])).toEqual(preferences.grids['2x2'])
     expect(resolvePanelGridTracks(restored, { columns: 3, rows: 2 }, [1, 1, 1, 1, 1, 1])).toEqual(preferences.grids['3x2'])
+  })
+})
+
+describe('studio layout engine', () => {
+  it('resolves focus, dialog, triptych and wall to columns and tiles', () => {
+    expect(computeLayout(1600, 'focus', 4)).toMatchObject({ columns: 1, rows: 1, singlePanel: true, tiles: false, requiredWidth: 420 })
+    expect(computeLayout(1600, 'dialog', 4)).toMatchObject({ columns: 2, rows: 2, singlePanel: false, tiles: false, requiredWidth: 860 })
+    expect(computeLayout(1600, 'triptych', 4)).toMatchObject({ columns: 3, rows: 2, singlePanel: false, tiles: false, requiredWidth: 1300 })
+    expect(computeLayout(800, 'wall', 4)).toMatchObject({ columns: 2, rows: 2, singlePanel: false, tiles: true, requiredWidth: 640, requiredHeight: 480 })
+    // A preset never renders empty cells: the column count is capped by panels.
+    expect(computeLayout(1600, 'triptych', 2).columns).toBe(2)
+  })
+
+  it('reflows down the chain before squeezing a column below its minimum', () => {
+    const wide = computeLayout(1400, 'triptych', 3)
+    expect(wide.effective).toBe('triptych')
+    expect(wide.fits).toBe(true)
+    const mid = computeLayout(1000, 'triptych', 3)
+    expect(mid.effective).toBe('dialog')
+    expect(mid.columns).toBe(2)
+    expect(mid.fits).toBe(true)
+    const narrow = computeLayout(700, 'triptych', 3)
+    expect(narrow.effective).toBe('focus')
+    expect(narrow.singlePanel).toBe(true)
+    expect(narrow.fits).toBe(true)
+    expect(computeLayout(500, 'wall', 4).effective).toBe('focus')
+    expect(computeLayout(400, 'focus', 4)).toMatchObject({ effective: 'focus', fits: false })
+  })
+
+  it('treats auto as a no-op that preserves the legacy shape', () => {
+    const auto = computeLayout(1600, 'auto', 4)
+    expect(auto).toMatchObject({ effective: 'auto', columns: 2, rows: 2, singlePanel: false })
+    expect(auto.requestedWidth).toBe(0)
+  })
+
+  it('never throws on malformed widths or panel counts', () => {
+    expect(computeLayout(Number.NaN, 'triptych', 3).columns).toBeGreaterThan(0)
+    expect(computeLayout(1600, 'dialog', -4).columns).toBeGreaterThan(0)
+    expect(computeLayout(-100, 'wall', Number.POSITIVE_INFINITY).singlePanel).toBe(true)
   })
 })

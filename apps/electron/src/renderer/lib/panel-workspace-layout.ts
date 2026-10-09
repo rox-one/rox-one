@@ -7,6 +7,13 @@ import * as storage from './local-storage'
 
 export const PANEL_WORKSPACE_LAYOUT_MODES = ['auto', 'columns', 'grid-2', 'grid-3', 'focus'] as const
 export type PanelWorkspaceLayoutMode = typeof PANEL_WORKSPACE_LAYOUT_MODES[number]
+/**
+ * Named arrangements of the «Студия» geometry engine (featureLayoutEngine,
+ * default OFF). `auto` leaves placement to the legacy `mode`; a stored `auto`
+ * is inert so the flag can be reverted without touching saved records.
+ */
+export const PANEL_LAYOUT_PRESETS = ['auto', 'focus', 'dialog', 'triptych', 'wall'] as const
+export type PanelLayoutPreset = typeof PANEL_LAYOUT_PRESETS[number]
 export type PanelResizeAxis = 'x' | 'y'
 export type PanelFocusDirection = 'left' | 'right' | 'up' | 'down'
 
@@ -21,9 +28,15 @@ export interface PanelGridTracks {
 }
 
 export interface PanelWorkspaceLayoutPreferences {
-  schemaVersion: 1
+  schemaVersion: 2
   workspaceId: string
   mode: PanelWorkspaceLayoutMode
+  /**
+   * Named arrangement for the geometry engine. `auto` keeps the legacy `mode`
+   * behaviour, so a v1 record migrates with no geometry change and the flag
+   * being OFF ignores this field entirely.
+   */
+  preset: PanelLayoutPreset
   /** Track sizes are retained independently for each arrangement. */
   grids: Record<string, PanelGridTracks>
 }
@@ -115,15 +128,23 @@ export function normalizePanelTracks(value: unknown, count: number): number[] {
 }
 
 export function defaultPanelWorkspaceLayout(workspaceId: string): PanelWorkspaceLayoutPreferences {
-  return { schemaVersion: 1, workspaceId, mode: 'auto', grids: {} }
+  return { schemaVersion: 2, workspaceId, mode: 'auto', preset: 'auto', grids: {} }
 }
 
+/**
+ * Accept v2 records and migrate v1 records additively: the legacy schema had no
+ * `preset`, so it parses to `auto` and every geometry decision stays with
+ * `mode`. A foreign workspace, an unknown schema and any malformed value still
+ * fall back to the caller's default — a stored record can never throw.
+ */
 export function parsePanelWorkspaceLayout(raw: unknown, workspaceId: string): PanelWorkspaceLayoutPreferences | null {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return null
   const value = raw as Record<string, unknown>
-  if (value.schemaVersion !== 1 || value.workspaceId !== workspaceId) return null
+  if ((value.schemaVersion !== 1 && value.schemaVersion !== 2) || value.workspaceId !== workspaceId) return null
   const mode = PANEL_WORKSPACE_LAYOUT_MODES.includes(value.mode as PanelWorkspaceLayoutMode)
     ? value.mode as PanelWorkspaceLayoutMode : 'auto'
+  const preset = PANEL_LAYOUT_PRESETS.includes(value.preset as PanelLayoutPreset)
+    ? value.preset as PanelLayoutPreset : 'auto'
   const grids: Record<string, PanelGridTracks> = {}
   if (value.grids && typeof value.grids === 'object' && !Array.isArray(value.grids)) {
     for (const [key, tracks] of Object.entries(value.grids)) {
@@ -136,7 +157,7 @@ export function parsePanelWorkspaceLayout(raw: unknown, workspaceId: string): Pa
       }
     }
   }
-  return { schemaVersion: 1, workspaceId, mode, grids }
+  return { schemaVersion: 2, workspaceId, mode, preset, grids }
 }
 
 export function loadPanelWorkspaceLayout(

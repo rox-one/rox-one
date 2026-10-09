@@ -30,12 +30,18 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import { motion } from 'motion/react'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { ChevronDown, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCompensateForStoplight } from '@/context/StoplightContext'
 import { useAppShellContext } from '@/context/AppShellContext'
+import { panelStackAtom, parseSessionIdFromRoute } from '@/atoms/panel-stack'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { featureSessionLanesV1Atom } from '@/atoms/unified-shell'
+import { getSessionTitle } from '@/utils/session'
+import { deriveLaneStatus, LANE_RULE_COLOR } from './LaneRule'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -69,6 +75,46 @@ function compactTitleInset(controlCount: number): number {
     + (controlCount * COMPACT_HEADER_BUTTON_SIZE)
     + (controlCount * COMPACT_HEADER_GAP)
     + COMPACT_HEADER_TITLE_GAP
+}
+
+/**
+ * G6 «Пути»: resolve the panel's own session (via the AppShellContext panelId)
+ * and render its identity line + lane status mark. Mounted only when the lanes
+ * flag is on, so every other mode keeps today's header untouched and does not
+ * subscribe to the session map.
+ */
+function PanelHeaderMeta({ title }: { title?: string }) {
+  const { t } = useTranslation()
+  const { panelId, workspaces, pendingPermissions } = useAppShellContext()
+  const panelStack = useAtomValue(panelStackAtom)
+  const metaMap = useAtomValue(sessionMetaMapAtom)
+  const entry = panelId ? panelStack.find((panel) => panel.id === panelId) : undefined
+  const sessionId = entry ? parseSessionIdFromRoute(entry.route) : null
+  const meta = sessionId ? metaMap.get(sessionId) : undefined
+  if (!meta) return null
+  const workspaceName = workspaces.find((workspace) => workspace.id === meta.workspaceId)?.name
+  const status = deriveLaneStatus(meta, (pendingPermissions.get(meta.id)?.length ?? 0) > 0)
+  const identityText = title ? workspaceName : [getSessionTitle(meta), workspaceName].filter(Boolean).join(' · ')
+  return (
+    <>
+      {identityText ? (
+        <span
+          className="titlebar-no-drag min-w-0 shrink truncate text-caption text-text-secondary"
+          data-panel-header-identity
+          title={identityText}
+        >
+          {identityText}
+        </span>
+      ) : null}
+      <span
+        className="titlebar-no-drag flex shrink-0 items-center gap-1 text-caption text-text-secondary"
+        data-panel-header-status={status}
+      >
+        <span className="h-1.5 w-1.5 rounded-full" style={{ background: LANE_RULE_COLOR[status] ?? 'var(--status-neutral)' }} aria-hidden="true" />
+        {t(`session.lane.status.${status}`, { defaultValue: status })}
+      </span>
+    </>
+  )
 }
 
 interface CompactChatHeaderProps {
@@ -112,7 +158,7 @@ function CompactChatHeader({ leadingAction, titleNode, viewSwitch, centerButton,
       <Drawer open={menuOpen} onOpenChange={setMenuOpen}>
         <DrawerTrigger asChild>
           <PanelHeaderCenterButton
-            icon={<Menu className="h-4 w-4" />}
+            icon={<Menu className="icon-inline" />}
             aria-label={t('menu.craftMenu')}
           />
         </DrawerTrigger>
@@ -207,6 +253,14 @@ export interface PanelHeaderProps {
   className?: string
   /** Whether title is being regenerated (shows shimmer effect) */
   isRegeneratingTitle?: boolean
+  /**
+   * G6 «Пути»: optional session identity (title + workspace) rendered next to
+   * the title. When omitted and the lanes flag is on, the panel's own session
+   * is resolved from atoms instead.
+   */
+  identity?: React.ReactNode
+  /** G6 «Пути»: optional lane status mark rendered before the actions. */
+  status?: React.ReactNode
 }
 
 /**
@@ -226,8 +280,11 @@ export function PanelHeader({
   paddingLeft,
   className,
   isRegeneratingTitle,
+  identity,
+  status,
 }: PanelHeaderProps) {
   const reduceMotion = usePrefersReducedMotion()
+  const lanesEnabled = useAtomValue(featureSessionLanesV1Atom)
   // Fall back to AppShellContext.leadingAction so per-panel back buttons (set by
   // PanelSlot in compact mode) propagate to every page's PanelHeader without each
   // page having to forward the prop manually. ChatPage explicitly passes its own
@@ -270,7 +327,7 @@ export function PanelHeader({
       className="flex items-center gap-1"
     >
       <h1 className={cn(
-        "text-[13px] font-semibold truncate font-sans leading-tight text-text-primary",
+        "text-body font-semibold truncate font-sans leading-tight text-text-primary",
         isRegeneratingTitle && "animate-shimmer-text"
       )}>{title}</h1>
       {badge}
@@ -299,7 +356,7 @@ export function PanelHeader({
         {/* Chevron is the actual trigger anchor point */}
         <DropdownMenuTrigger asChild>
           <span className="shrink-0 flex items-center justify-center">
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground translate-y-[1px]" />
+            <ChevronDown className="icon-caption text-muted-foreground translate-y-[1px]" />
           </span>
         </DropdownMenuTrigger>
       </button>
@@ -310,6 +367,12 @@ export function PanelHeader({
   ) : titleContent
 
   const titleNode = (isCompactMode && compactTitleMenu) ? compactTitleMenu : desktopTitleNode
+
+  // G6 «Пути»: only mount the atom-reading identity/status when the flag is on
+  // and the caller did not supply its own nodes.
+  const metaSlot = lanesEnabled && identity === undefined && status === undefined
+    ? <PanelHeaderMeta title={title} />
+    : null
 
   // On narrow screens the shell owns the only header row so workspace, title,
   // and actions share the same limited width. Keep a render callback in the
@@ -453,6 +516,9 @@ export function PanelHeader({
           </div>
         </div>
       )}
+      {identity}
+      {status}
+      {metaSlot}
       {centerButton && (
         <div className="titlebar-no-drag shrink-0">
           {centerButton}

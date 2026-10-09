@@ -119,6 +119,7 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { AuroraField } from "@/platform/AuroraField"
 import { GlobalVoiceDictation } from "@/voice/global-dictation"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
@@ -219,7 +220,7 @@ import { dispatchFocusInputEvent } from "./input/focus-input-events"
 import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
-import { isScreenNavigation, isSurfaceNavigation } from '../../../shared/types'
+import { isMissionsNavigation, isScreenNavigation, isSurfaceNavigation } from '../../../shared/types'
 // W1-07 (#1504): unified mode roots + Docs relabel.
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { notesTitleKey, surfaceTitleKey } from '@/platform/surface-shell'
@@ -676,6 +677,8 @@ function AppShellContent({
   // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
     navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
+    // G3 «Миссии» board renders full-width in the content panel.
+    || isMissionsNavigation(navState)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
@@ -3059,6 +3062,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
   return (
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
+      <AuroraField />
       <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}

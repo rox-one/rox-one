@@ -355,3 +355,53 @@ export const bottomTerminalOpenAtom = atomWithStorage<boolean>(
   undefined,
   { getOnInit: true },
 )
+
+// ── Intelligent UI pilot flags (all default OFF) ──────────────────────────
+
+/** Orbit board: orbital session/entity layout surface. */
+export const featureOrbitBoardAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureOrbitBoard),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Aurora field: ambient gradient backdrop layer. */
+export const featureAuroraFieldAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureAuroraField),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Session lanes v1: lane-based session list layout. */
+export const featureSessionLanesV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureSessionLanesV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Lens morph v1: morphing lens navigation between surfaces. */
+export const featureLensMorphV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureLensMorphV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Missions board v1: mission tracking board surface. */
+export const featureMissionsBoardV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureMissionsBoardV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Layout engine: adaptive layout composition. */
+export const featureLayoutEngineAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureLayoutEngine),
+  false,
+  undefined,
+  { getOnInit: true },
+)

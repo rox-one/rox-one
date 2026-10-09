@@ -21,6 +21,7 @@ import { EntityList, type EntityListGroup } from "@/components/ui/entity-list"
 import { RenameDialog } from "@/components/ui/rename-dialog"
 import { SessionSearchHeader } from "./SessionSearchHeader"
 import { SessionItem } from "./SessionItem"
+import { SessionLanes } from "./SessionLanes"
 import { CollectionBulkBar } from "./collection/CollectionBulkBar"
 import { SessionListProvider, type SessionListContextValue } from "@/context/SessionListContext"
 import { useSessionSelection, useSessionSelectionStore } from "@/hooks/useSession"
@@ -39,6 +40,7 @@ import {
   type SessionMeta,
 } from "@/atoms/sessions"
 import { collectionDisplayAtom } from "@/atoms/collection-display"
+import { featureSessionLanesV1Atom } from "@/atoms/unified-shell"
 import { collectionFiltersAtom } from "@/atoms/collection-filters"
 import { activeFilterCount } from "./collection/collection-filter-count"
 import { compareSessions, lexorankBetween } from "@rox/shared/sessions/collection"
@@ -211,6 +213,7 @@ export function SessionList({
   const newTarget = useTourTarget('session.new', { workspaceId, sessionId: focusedSessionId ?? undefined })
   const setSendToWorkspace = useSetAtom(sendToWorkspaceAtom)
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
+  const sessionLanesEnabled = useAtomValue(featureSessionLanesV1Atom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const updateMeta = useSetAtom(updateSessionMetaAtom)
@@ -1315,6 +1318,31 @@ export function SessionList({
   return (
     <div ref={listTarget} className="flex flex-col flex-1 min-h-0">
       <SessionListProvider value={listContext}>
+      {sessionLanesEnabled ? (
+        <div className="flex flex-1 min-h-0 flex-col">
+          <SessionSearchHeader
+            searchQuery={searchQuery}
+            onSearchChange={onSearchChange}
+            onSearchClose={() => {
+              onSearchChange?.('')
+              onSearchClose?.()
+            }}
+            onKeyDown={handleSearchKeyDown}
+            onFocus={() => setIsSearchInputFocused(true)}
+            onBlur={() => setIsSearchInputFocused(false)}
+            isSearching={isSearchingContent}
+            isUnavailable={isSearchUnavailable}
+            resultCount={matchingFilterItems.length + otherResultItems.length}
+            exceededLimit={exceededSearchLimit}
+            inputRef={searchInputRef}
+          />
+          <SessionLanes
+            rows={flatRows}
+            selectedId={selectionStore.state.selected}
+            onSelect={handleSelectSessionById}
+          />
+        </div>
+      ) : (
       <EntityList<SessionListRow>
         groups={rowData.groups}
         getKey={(row) => row.item.id}
@@ -1465,6 +1493,7 @@ export function SessionList({
         ensureVisibleKeys={ensureVisibleKeys}
         revealKey={selectionStore.state.selected}
       />
+      )}
       </SessionListProvider>
 
       <CollectionBulkBar

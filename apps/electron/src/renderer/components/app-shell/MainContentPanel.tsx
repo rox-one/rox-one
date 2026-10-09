@@ -51,10 +51,11 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation, isSurfaceNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation, isMissionsNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
+import { MissionBoard } from '@/platform/MissionBoard'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 import { SettingsOverviewPage } from '@/pages/settings/SettingsOverviewPage'
 import { recordRecentSetting } from '@/lib/settings-recent'
@@ -688,6 +689,16 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <HomeFrontPage />
+      </Panel>
+    )
+  }
+
+  if (isMissionsNavigation(navState)) {
+    // G3 «Миссии» board (pilot). The route only resolves while the feature
+    // flag is on; MissionBoard itself renders the off-state if it is not.
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <MissionBoard />
       </Panel>
     )
   }

@@ -29,6 +29,7 @@ import {
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import {
   bottomTerminalOpenAtom,
+  featureLensMorphV1Atom,
   featureWorkbenchHarnessInspectorV1Atom,
   inspectorAutoCollapsedAtom,
   inspectorChromeCollapsedAtom,
@@ -60,6 +61,9 @@ import {
 } from './inspector-model'
 import { InspectorResizeSash } from './InspectorResizeSash'
 import { inspectorResizeLimit } from './inspector-resize'
+import { LensShell, LensBackdrop, resolveLensMode } from './LensShell'
+import { LensCounterStrip, type LensCounterEntry } from './LensCounterStrip'
+import type { LensSectionEntry } from './LensSectionSwitcher'
 import { navDestinationLabelKey } from './surface-shell'
 import { enabledShellFlagsAtom } from './unified-flags'
 import { CHROME_DENSITY } from './chrome-density'
@@ -190,6 +194,8 @@ export function InspectorHost() {
   const [resizePreview, setResizePreview] = useState<number | null>(null)
   const controlsId = useId()
   const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
+  const lensMorph = useAtomValue(featureLensMorphV1Atom)
+  const [viewportWidth, setViewportWidth] = useState<number>(() => (typeof window !== 'undefined' ? window.innerWidth : INSPECTOR_MAX_WIDTH))
   const route = useAtomValue(focusedPanelRouteAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const { updateRightSidebar, navigationState } = useNavigation()
@@ -268,6 +274,7 @@ export function InspectorHost() {
   const [availableWidth, setAvailableWidth] = useState<number>(Number.POSITIVE_INFINITY)
   const measureAvailable = useCallback(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return
+    setViewportWidth(window.innerWidth)
     const panels = document.querySelectorAll<HTMLElement>('[data-panel-role="content"]')
     const first = panels[0]
     if (!first) {
@@ -306,6 +313,37 @@ export function InspectorHost() {
     viewportCap: Math.floor(typeof window !== 'undefined' ? window.innerWidth * 0.72 : INSPECTOR_MAX_WIDTH),
   })
   const panelShown = layout.panelShown && !chromeCollapsed
+  // G6 «Линзы»: docked column ⇄ right-edge sheet ⇄ counter strip. The docked
+  // decision uses the derived --lens-dock-min-width; the squeeze guard
+  // (layout.overlay) still wins so the centre column never drops below min.
+  const lensMode = resolveLensMode({ effectiveWidth: viewportWidth, userOpened })
+  const overlayMode = lensMorph ? layout.overlay || lensMode === 'overlay' : layout.overlay
+  const lensSectionLabel = (id: InspectorSectionId) =>
+    t(id === 'browser' ? 'inspector.tab.browser' : sessionMode ? `inspector.tab.${id}` : `inspector.${id}`)
+  const lensSections: LensSectionEntry[] = sectionIds.map((id) => ({
+    id,
+    label: lensSectionLabel(id),
+    icon: SECTION_ICONS[id],
+    count: id === 'files' && fileCount != null ? String(fileCount) : undefined,
+  }))
+  const lensCounters: LensCounterEntry[] = []
+  if (fileCount != null) {
+    lensCounters.push({ id: 'files', label: t('inspector.tab.files'), icon: SECTION_ICONS.files, value: String(fileCount) })
+  }
+  if (sessionMeta?.commitCount) {
+    lensCounters.push({ id: 'git', label: t('inspector.tab.git'), icon: SECTION_ICONS.git, value: String(sessionMeta.commitCount) })
+  }
+  const expandLens = () => {
+    setChromeCollapsed(false)
+    setVisible(true)
+    setUserOpened(true)
+  }
+  const openLensSection = (id: InspectorSectionId) => {
+    setChromeCollapsed(false)
+    setSection(id)
+    setVisible(true)
+    setUserOpened(true)
+  }
   const autoCollapsed = !chromeCollapsed && layout.collapsedReason !== null
   useEffect(() => {
     setAutoCollapsed(autoCollapsed)
@@ -351,17 +389,35 @@ export function InspectorHost() {
     setTerminalOpen(false)
   }
 
+  // G6 «Линзы»: the unchanged inspector bodies, routed through LensShell when
+  // the morph flag is on (section switcher above, morphing container around).
+  const inspectorBody = terminalOpen ? (
+    <InspectorTerminal cwd={sessionMeta?.workingDirectory} />
+  ) : activeSection === 'browser' ? (
+    <InspectorBrowserPane />
+  ) : sessionMode ? (
+    <SessionInspectorBody
+      section={activeSection}
+      sessionId={sessionId}
+      sessionFolderPath={sessionFolderPath}
+      cwd={sessionMeta?.workingDirectory}
+    />
+  ) : INSPECTOR_LIVE_SECTIONS.includes(activeSection) ? (
+    <InfoSection />
+  ) : (
+    <EmptySection section={activeSection} />
+  )
+
   if (!sessionMode) {
     if (chromeCollapsed) {
+      if (lensMorph) {
+        return <LensCounterStrip expandLabel={t('inspector.expand')} counters={lensCounters} onExpand={expandLens} onSelect={openLensSection} />
+      }
       return (
         <button
           type="button"
           aria-label={t('inspector.expand')}
-          onClick={() => {
-            setChromeCollapsed(false)
-            setVisible(true)
-            setUserOpened(true)
-          }}
+          onClick={expandLens}
           className="chrome-strip rox-shell-pane rox-shell-divider-l pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center hover:bg-foreground/5"
           data-inspector="collapsed"
         >
@@ -386,15 +442,22 @@ export function InspectorHost() {
 
   // R-hide = 28px restore strip. Click expands chrome and shows the panel.
   if (chromeCollapsed) {
+    if (lensMorph) {
+      return (
+        <LensCounterStrip
+          expandLabel={t('inspector.expand')}
+          counters={lensCounters}
+          onExpand={expandLens}
+          onSelect={openLensSection}
+          sessionInspector={sessionMode}
+        />
+      )
+    }
     return (
       <button
         type="button"
         aria-label={t('inspector.expand')}
-        onClick={() => {
-          setChromeCollapsed(false)
-          setVisible(true)
-          setUserOpened(true)
-        }}
+        onClick={expandLens}
         className="chrome-strip rox-shell-pane rox-shell-divider-l pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center hover:bg-foreground/5"
         data-session-inspector={sessionMode ? 'true' : 'false'}
         data-inspector="collapsed"
@@ -408,32 +471,37 @@ export function InspectorHost() {
     <div
       className={cn(
         'rox-shell-divider-l relative flex shrink-0 items-stretch',
-        layout.overlay && panelShown ? 'overflow-visible' : 'overflow-hidden',
+        overlayMode && panelShown ? 'overflow-visible' : 'overflow-hidden',
       )}
       data-session-inspector={sessionMode ? 'true' : 'false'}
       data-inspector-collapsed-reason={layout.collapsedReason ?? undefined}
-      data-inspector-overlay={layout.overlay && panelShown ? 'true' : undefined}
+      data-inspector-overlay={overlayMode && panelShown ? 'true' : undefined}
     >
+      {lensMorph && overlayMode && panelShown ? <LensBackdrop onClose={collapseChrome} /> : null}
       {panelShown && (
         <div
           className={cn(
             'rox-shell-pane flex h-full flex-col overflow-hidden',
             // Not enough room beside the center column: float over the content
             // instead of squeezing the chat below CENTER_MIN_WIDTH.
-            layout.overlay
+            overlayMode
               ? 'absolute inset-y-0 z-sticky shadow-strong'
               : 'relative',
+            // G6 «Линзы»: dock ⇄ sheet morphs on width/transform; instant
+            // under reduced motion (both the token layer and the motion-reduce
+            // class zero the transition).
+            lensMorph && 'transition-[width,transform] duration-[var(--motion-base)] ease-[var(--ease-standard)] motion-reduce:transition-none',
           )}
-          style={layout.overlay ? { width: layout.width, right: INSPECTOR_RAIL_WIDTH } : { width: layout.width }}
+          style={overlayMode ? { width: layout.width, right: INSPECTOR_RAIL_WIDTH } : { width: layout.width }}
           id={controlsId}
           role="complementary"
           aria-label={t(titleKey)}
-          data-inspector-panel={layout.overlay ? 'overlay' : 'docked'}
+          data-inspector-panel={overlayMode ? 'overlay' : 'docked'}
         >
           <InspectorResizeSash
             width={layout.width}
             viewportWidth={typeof window !== 'undefined' ? window.innerWidth : INSPECTOR_MAX_WIDTH}
-            maxWidth={inspectorResizeLimit(typeof window !== 'undefined' ? window.innerWidth : INSPECTOR_MAX_WIDTH, availableWidth, layout.overlay)}
+            maxWidth={inspectorResizeLimit(typeof window !== 'undefined' ? window.innerWidth : INSPECTOR_MAX_WIDTH, availableWidth, overlayMode)}
             controlsId={controlsId}
             active={panelShown}
             onPreview={setResizePreview}
@@ -456,24 +524,19 @@ export function InspectorHost() {
               <TooltipContent side="left">{t('inspector.hide')}</TooltipContent>
             </Tooltip>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col">
-          {terminalOpen ? (
-            <InspectorTerminal cwd={sessionMeta?.workingDirectory} />
-          ) : activeSection === 'browser' ? (
-            <InspectorBrowserPane />
-          ) : sessionMode ? (
-            <SessionInspectorBody
+          {lensMorph ? (
+            <LensShell
+              mode={overlayMode ? 'overlay' : 'docked'}
               section={activeSection}
-              sessionId={sessionId}
-              sessionFolderPath={sessionFolderPath}
-              cwd={sessionMeta?.workingDirectory}
-            />
-          ) : INSPECTOR_LIVE_SECTIONS.includes(activeSection) ? (
-            <InfoSection />
+              sections={lensSections}
+              onSection={handleSectionClick}
+              switcherLabel={t('inspector.lens.sectionSwitcher', { defaultValue: 'Разделы инспектора' })}
+            >
+              {inspectorBody}
+            </LensShell>
           ) : (
-            <EmptySection section={activeSection} />
+            <div className="flex min-h-0 flex-1 flex-col">{inspectorBody}</div>
           )}
-          </div>
         </div>
       )}
       <div

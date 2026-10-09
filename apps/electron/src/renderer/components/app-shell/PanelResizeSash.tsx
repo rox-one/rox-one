@@ -14,7 +14,8 @@ import {
   inlineSashGeometry,
   PANEL_STACK_VERTICAL_OVERFLOW,
 } from './panel-constants'
-import { ResizeHandle, sashHitWidthPx } from './ResizeHandle'
+import { sashHitWidthPx } from './ResizeHandle'
+import { PanelSeam } from './PanelSeam'
 import { usePanelResize } from '@/hooks/usePanelResize'
 import { equalSplit } from './resize-math'
 import type { ResizeBounds } from './resize-controller'
@@ -98,7 +99,7 @@ export function PanelResizeSash({
   }, [leftId, rightId, resize.neighborChanged])
 
   return (
-    <ResizeHandle
+    <PanelSeam
       labelKey="shell.resize.panels"
       controlsId={`${leftId} ${rightId}`}
       valueNow={sizeA}

@@ -63,6 +63,9 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.details !== null
     case 'home':
       return true
+    case 'missions':
+      // G3 «Миссии» board owns the whole content panel (no navigator column).
+      return true
     case 'drive':
       // Drive owns the content panel at the root and inside folders; it has no
       // separate navigator column.

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { activityRailCollapsedAtom } from '@/atoms/unified-shell'
 import {
+  featureOrbitBoardAtom,
   featureUnifiedShellAtom,
   featureWorkbenchAtom,
   featureWorkbenchBrowserSurfaceV2Atom,
@@ -15,6 +16,7 @@ import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
 import { useInspectorSuppressed } from './inspector-suppression'
 import { PanelHost } from './PanelHost'
+import { OrbitBoard } from './OrbitBoard'
 import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchAvailability } from './workbench-rollout'
 import { resolveWorkbenchChrome } from './workbench-chrome'
@@ -38,6 +40,7 @@ export function WorkspaceSurfaceHost({
 }: WorkspaceSurfaceHostProps) {
   const persistedPreference = useAtomValue(featureWorkbenchAtom)
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
+  const orbitBoardEnabled = useAtomValue(featureOrbitBoardAtom)
   const topChrome = useAtomValue(featureWorkbenchTopChromeV2Atom)
   const tabGroups = useAtomValue(featureWorkbenchTabGroupsV2Atom)
   const browserSurface = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
@@ -89,7 +92,11 @@ export function WorkspaceSurfaceHost({
       {chrome.showRail && !ownsPrimaryNavigation && <ActivityRail />}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {chrome.showSurfaceTabs && <SurfaceTabs />}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {/* Orbit board (G1 pilot, default OFF): ON swaps the centre surface
+              for the spatial board; OFF renders children byte-identically. */}
+          {orbitBoardEnabled ? <OrbitBoard /> : children}
+        </div>
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
       <RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>

@@ -12,10 +12,11 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { motion } from 'motion/react'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, expandedPanelIdAtom, type PanelSpatialDirection } from '@/atoms/panel-stack'
-import { bottomTerminalOpenAtom } from '@/atoms/unified-shell'
+import { bottomTerminalOpenAtom, featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, reconcilePanelFullScreen, resolvePanelGridTracks, togglePanelFullScreen } from '@/lib/panel-workspace-layout'
+import { computeLayout } from '@/lib/layout-engine'
 import { useAction } from '@/actions/useAction'
 import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
@@ -96,7 +97,8 @@ export function PanelStackContainer({
   const hasTools = panels.some(entry => entry.tool)
   const visibleIds = isCompact ? [focusedPanelId ?? panels[0]?.id].filter((id): id is string => !!id)
     : visibleWorkspacePanels(panels, Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth)), focusedPanelId, lastTool, primaryId)
-  const { mode, preferences, setTracks } = usePanelWorkspaceLayout()
+  const { mode, preset, preferences, setTracks } = usePanelWorkspaceLayout()
+  const layoutEngineEnabled = useAtomValue(featureLayoutEngineAtom)
   const reduceMotion = usePrefersReducedMotion()
   const scrollRef = useRef<HTMLDivElement>(null)
   const previousFocusedPanelRef = useRef(focusedPanelId)
@@ -110,8 +112,23 @@ export function PanelStackContainer({
   const expandedId = reconcilePanelFullScreen(expandedPanelId, panelIds)
   const isExpanded = expandedId !== null
   const displayedId = isExpanded ? expandedId : focusedId
-  const singlePanel = isExpanded || (hasTools ? visibleIds.length <= 1 : isCompact || mode === 'focus' || panels.length <= 1)
-  const shape = useMemo(() => panelGridShape(hasTools ? visibleIds.length : panels.length, singlePanel ? 'focus' : hasTools ? 'columns' : mode), [panels.length, visibleIds.length, hasTools, singlePanel, mode])
+  // «Студия» geometry (featureLayoutEngine, default OFF). The engine only runs
+  // for the flat content grid: a promoted panel and the tool-tab list keep
+  // their existing shape, and `auto`/flag-OFF fall through to `mode`.
+  const engineLayout = useMemo(() => {
+    if (!layoutEngineEnabled || preset === 'auto' || isCompact || hasTools) return null
+    const columnsWidth = Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth))
+    return computeLayout(columnsWidth, preset, panels.length)
+  }, [layoutEngineEnabled, preset, isCompact, hasTools, availableWidth, isSidebarAndNavigatorHidden, sidebarWidth, navigatorWidth, panels.length])
+  const singlePanel = isExpanded || (hasTools
+    ? visibleIds.length <= 1
+    : isCompact || panels.length <= 1 || (engineLayout ? engineLayout.singlePanel : mode === 'focus'))
+  const shape = useMemo(() => {
+    if (hasTools) return panelGridShape(visibleIds.length, singlePanel ? 'focus' : 'columns')
+    return engineLayout
+      ? { columns: engineLayout.columns, rows: engineLayout.rows }
+      : panelGridShape(panels.length, singlePanel ? 'focus' : mode)
+  }, [panels.length, visibleIds.length, hasTools, singlePanel, mode, engineLayout])
   const tracks = useMemo(() => resolvePanelGridTracks(preferences, shape, panels.map((entry) => entry.proportion)), [preferences, shape, panels])
   const gridKey = panelGridKey(shape)
   const panelIdentity = `${preferences.workspaceId}:${panelIds.join(':')}`
@@ -272,7 +289,7 @@ export function PanelStackContainer({
       onKeyDown={handleSpatialPanelKeyDown}
       data-mobile-menu-root="true"
       data-shell-density={isCompact ? 'compact' : 'regular'}
-      data-panel-layout={isCompact ? 'compact' : isExpanded ? 'screen' : mode}
+      data-panel-layout={isCompact ? 'compact' : isExpanded ? 'screen' : engineLayout ? engineLayout.effective : mode}
       className="flex-1 min-h-0 min-w-0 flex flex-col relative z-chrome panel-scroll @container/shell"
       style={{
         overflowX: isCompact ? 'hidden' : 'auto',

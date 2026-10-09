@@ -33,6 +33,7 @@ import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
 import { ModesRailGroup } from './ModesRailGroup'
+import { MissionsRailGroup } from './MissionsRailGroup'
 import { useShellModes } from './useModes'
 import { routes, type Route } from '../../shared/routes'
 
@@ -61,7 +62,7 @@ export const RAIL_AUTO_COLLAPSE_BELOW = 1140
  */
 export function useNarrowRailContainer(threshold = RAIL_AUTO_COLLAPSE_BELOW): {
   narrow: boolean
-  railRef: RefObject<HTMLElement | null>
+  railRef: RefObject<HTMLElement>
 } {
   const railRef = useRef<HTMLElement>(null)
   const [narrow, setNarrow] = useState(false)
@@ -97,7 +98,7 @@ export function resolveRailCollapsed(input: { persisted: boolean; narrow: boolea
 export function useEffectiveRailCollapsed(): {
   collapsed: boolean
   toggle: () => void
-  railRef: RefObject<HTMLElement | null>
+  railRef: RefObject<HTMLElement>
 } {
   const [persisted, setPersisted] = useAtom(activityRailCollapsedAtom)
   const [override, setOverride] = useAtom(activityRailNarrowOverrideAtom)
@@ -174,6 +175,8 @@ export function ActivityRail() {
       data-shell-role="activity-rail"
       data-rail-state={collapsed ? 'collapsed' : 'expanded'}
     >
+      {/* G3 «Миссии» pilot: flag-gated section above the seven core modes. */}
+      <MissionsRailGroup collapsed={collapsed} />
       <RailSection collapsed={collapsed}>
         {modes.map((mode) => (
           <RailModeItem key={mode.id} mode={mode} active={mode.id === activeId} collapsed={collapsed} />

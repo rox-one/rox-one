@@ -16,6 +16,14 @@
   --rail-button: 36px;
   --row-h: 28px;
   --row-h-2line: 44px;
+  /* G6 «Пути»: the lane rule is geometry, so it lives next to --row-h. The
+     lens dock threshold is derived: rail 48 + navigator 340 + panel-min 440
+     + lens 320 = 1148. One constant drives the CSS and the JS decision. */
+  --lane-gutter-width: 14px;
+  --lane-rule-width: 2px;
+  --lane-rule-active-height: 18px;
+  --lane-rule-quiet-height: 8px;
+  --lens-dock-min-width: 1148px;
 
   /* Workbench chrome. */
   --chrome-topbar-height: 40px;

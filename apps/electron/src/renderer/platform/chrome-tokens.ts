@@ -15,6 +15,11 @@ export type ChromeTokenName =
   | 'railButton'
   | 'rowH'
   | 'rowH2line'
+  | 'laneGutterWidth'
+  | 'laneRuleWidth'
+  | 'laneRuleActiveHeight'
+  | 'laneRuleQuietHeight'
+  | 'lensDockMinWidth'
   | 'chromeTopbarHeight'
   | 'chromeRailWidth'
   | 'chromeRailExpandedWidth'
@@ -56,6 +61,16 @@ export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.f
   rowH: 28,
   /** --row-h-2line */
   rowH2line: 44,
+  /** --lane-gutter-width */
+  laneGutterWidth: 14,
+  /** --lane-rule-width */
+  laneRuleWidth: 2,
+  /** --lane-rule-active-height */
+  laneRuleActiveHeight: 18,
+  /** --lane-rule-quiet-height */
+  laneRuleQuietHeight: 8,
+  /** --lens-dock-min-width */
+  lensDockMinWidth: 1148,
   /** --chrome-topbar-height */
   chromeTopbarHeight: 40,
   /** --chrome-rail-width */
@@ -120,6 +135,16 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   rowH: 32,
   /** --row-h-2line */
   rowH2line: 52,
+  /** --lane-gutter-width */
+  laneGutterWidth: 14,
+  /** --lane-rule-width */
+  laneRuleWidth: 2,
+  /** --lane-rule-active-height */
+  laneRuleActiveHeight: 18,
+  /** --lane-rule-quiet-height */
+  laneRuleQuietHeight: 8,
+  /** --lens-dock-min-width */
+  lensDockMinWidth: 1148,
   /** --chrome-topbar-height */
   chromeTopbarHeight: 44,
   /** --chrome-rail-width */

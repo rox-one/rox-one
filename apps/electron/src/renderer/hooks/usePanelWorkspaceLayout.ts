@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { atomFamily } from 'jotai-family'
 import { useAppShellContext, useOptionalAppShellContext } from '@/context/AppShellContext'
-import { createPanelWorkspaceLayoutAtom } from '@/atoms/panel-workspace'
+import { createPanelWorkspaceLayoutAtom, withPanelWorkspacePreset } from '@/atoms/panel-workspace'
 import { panelCountAtom } from '@/atoms/panel-stack'
 import {
   panelGridKey,
@@ -10,11 +10,12 @@ import {
   normalizePanelTracks,
   type PanelGridShape,
   type PanelGridTracks,
+  type PanelLayoutPreset,
   type PanelWorkspaceLayoutMode,
 } from '@/lib/panel-workspace-layout'
 
-export { PANEL_WORKSPACE_LAYOUT_MODES } from '@/lib/panel-workspace-layout'
-export type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
+export { PANEL_WORKSPACE_LAYOUT_MODES, PANEL_LAYOUT_PRESETS } from '@/lib/panel-workspace-layout'
+export type { PanelWorkspaceLayoutMode, PanelLayoutPreset } from '@/lib/panel-workspace-layout'
 
 const workspaceLayoutAtoms = atomFamily((workspaceId: string) => createPanelWorkspaceLayoutAtom(workspaceId))
 
@@ -41,6 +42,11 @@ function usePanelWorkspaceLayoutState(activeWorkspaceId: string | null | undefin
 
   const setMode = useCallback((mode: PanelWorkspaceLayoutMode) => {
     updateLayout({ update: (current) => ({ ...current, mode }), commit: true })
+  }, [updateLayout])
+
+  /** A named arrangement is a preference; switching it commits like `setMode`. */
+  const setPreset = useCallback((preset: PanelLayoutPreset) => {
+    updateLayout({ update: (current) => withPanelWorkspacePreset(current, preset), commit: true })
   }, [updateLayout])
 
   const setTracks = useCallback((shape: PanelGridShape, tracks: PanelGridTracks, commit = false) => {
@@ -78,5 +84,5 @@ function usePanelWorkspaceLayoutState(activeWorkspaceId: string | null | undefin
     })
   }, [panelCount, updateLayout])
 
-  return { mode: preferences.mode, setMode, resetLayout, preferences, setTracks }
+  return { mode: preferences.mode, setMode, preset: preferences.preset, setPreset, resetLayout, preferences, setTracks }
 }
