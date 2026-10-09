@@ -27,7 +27,7 @@ import {
   sessionMetaMapAtom,
   windowWorkspaceIdAtom,
 } from '@/atoms/sessions'
-import { skillsAtom } from '@/atoms/skills'
+import { skillsAtom, skillsSyncingAtom } from '@/atoms/skills'
 import { sourcesAtom } from '@/atoms/sources'
 import { automationsAtom } from '@/atoms/automations'
 import { navigate, routes } from '@/lib/navigate'
@@ -471,6 +471,9 @@ function registerResourceProviders(
       createSkillsProvider(
         () => store.get(skillsAtom),
         (slug) => routes.view.skills(slug),
+        // Pending-sync probe: a still-syncing catalog is not authoritative, so
+        // the omnibox must not present an empty skills list as "no skills".
+        () => store.get(skillsSyncingAtom),
       ),
     ),
   )
