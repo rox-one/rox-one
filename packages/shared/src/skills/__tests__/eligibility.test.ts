@@ -5,7 +5,7 @@
  */
 
 import { afterEach, describe, expect, it } from 'bun:test';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -253,6 +253,38 @@ describe('buildSkillEligibilityReport — cache alignment', () => {
     // Same object reference => the report reused the mention-resolution cache
     // entry rather than warming a distinct (includeShadowedOmp) key.
     expect(report.eligible.find(entry => entry.slug === slug)).toBe(eligible);
+  }, 180000);
+});
+
+// ============================================================
+// Realpath confinement: advertised ⇒ readable (F1 corrective fix)
+// ============================================================
+
+describe('buildSkillEligibilityReport — realpath confinement', () => {
+  afterEach(() => invalidateSkillsCache());
+
+  it('drops a skill whose symlink escapes its discovered root from the eligible report', async () => {
+    if (process.platform === 'win32') return;
+    const workspaceRoot = tmpFixture();
+    const outsideRoot = tmpFixture();
+    const contained = 'fx9-contained-skill';
+    const escaped = 'fx9-escaping-skill';
+
+    writeSkill(join(workspaceRoot, 'skills'), contained, 'Contained', 'contained skill');
+    writeSkill(outsideRoot, escaped, 'Escaped', 'escaped skill');
+    // A directory symlink under the workspace root pointing OUTSIDE it: the raw
+    // scan discovers it, but its realpath escapes the root it was found under.
+    symlinkSync(join(outsideRoot, escaped), join(workspaceRoot, 'skills', escaped), 'dir');
+
+    const report = await buildSkillEligibilityReport({
+      workspaceRoot,
+      includeOmp: false,
+      disabledPackSlugs: [],
+    });
+
+    const slugs = report.eligible.map(s => s.slug);
+    expect(slugs).toContain(contained);
+    expect(slugs).not.toContain(escaped);
   }, 180000);
 });
 
