@@ -6,6 +6,8 @@ describe('se-icon-map', () => {
   it('marks all app nav destinations monochrome for SE rail', () => {
     expect(SE_MONOCHROME_NAV_IDS.sessions).toBe(true)
     expect(SE_MONOCHROME_NAV_IDS.settings).toBe(true)
+    expect(SE_MONOCHROME_NAV_IDS.developers).toBe(true)
+    expect(SE_MONOCHROME_NAV_IDS.playbooks).toBe(true)
   })
 
   it('exposes SE active rail class token', () => {

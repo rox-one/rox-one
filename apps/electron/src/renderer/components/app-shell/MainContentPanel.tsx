@@ -116,6 +116,10 @@ const AutomationEditor = lazyRoutePage(ROUTE_PAGE_LOADERS.automationEditor)
 const KnowledgeDiff = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeDiff)
 const KnowledgeHome = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeHome)
 const KnowledgeProposals = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeProposals)
+// Developer Space / Playbooks surfaces (2026-10-09 pack); pages own their data.
+const DevSpaceHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceHome)
+const DevSpaceRepoPage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceRepo)
+const PlaybooksHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.playbooksHome)
 
 type SelectedResourceStatus = 'loading' | 'ready' | 'missing' | 'unavailable'
 

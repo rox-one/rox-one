@@ -55,6 +55,8 @@ export const KEYS = {
   // Settings navigation
   lastSettingsSubpage: 'last-settings-subpage',
   onboardingUsernameConfirmed: 'onboarding-username-confirmed',
+  // Onboarding «Who are you?» step answer (spec 2026-10-09 §2.1/§2.2)
+  onboardingRole: 'onboarding-role',
 
   // Appearance
   showConnectionIcons: 'show-connection-icons',
@@ -152,6 +154,12 @@ export const KEYS = {
   // W1-07 (#1504): generic per-id workbench flag store for flags without a
   // dedicated key (`craft-workbench-flag:<flag id>`, e.g. workbench.mode.messenger.v1).
   workbenchFlag: 'workbench-flag',
+// Developer Space + Playbooks (spec 2026-10-09) — renderer-only state; the
+  // master flags default OFF and only the user enables them explicitly.
+  devSpaceV1: 'dev-space-v1',
+  devSpaceReminderState: 'dev-space-reminder-state',
+  devSpaceNudge: 'rox.devspace.nudge.v1',
+  playbooksV1: 'playbooks-v1',
   // «Мои транскрипты» mirror: meeting transcript generations already filed as
   // notes (`<meetingId>:<generation>`), so an app restart never duplicates a note.
   meetingsTranscriptNotes: 'meetings-transcript-notes',

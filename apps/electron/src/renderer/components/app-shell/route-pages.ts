@@ -40,6 +40,9 @@ export const ROUTE_PAGE_LOADERS = {
   knowledgeDiff: () => import('../../knowledge/KnowledgeDiff').then((m) => ({ default: m.KnowledgeDiff })),
   knowledgeHome: () => import('../../knowledge/KnowledgeHome').then((m) => ({ default: m.KnowledgeHome })),
   knowledgeProposals: () => import('../../knowledge/KnowledgeProposals').then((m) => ({ default: m.KnowledgeProposals })),
+  devSpaceHome: () => import('@/pages/dev-space/DevSpaceHomePage'),
+  devSpaceRepo: () => import('@/pages/dev-space/DevSpaceRepoPage'),
+  playbooksHome: () => import('@/pages/playbooks/PlaybooksHomePage'),
 }
 
 export type RoutePageName = keyof typeof ROUTE_PAGE_LOADERS

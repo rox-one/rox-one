@@ -209,6 +209,20 @@ export const RPC_CHANNELS = {
     FRESHNESS: 'codeIntelligence:freshness',
     CANCEL: 'codeIntelligence:cancel',
   },
+  devSpace: {
+    LIST_REPOSITORIES: 'devSpace:listRepositories',
+    ADD_REPOSITORY: 'devSpace:addRepository',
+    START_CLONE: 'devSpace:startClone',
+    REMOVE_REPOSITORY: 'devSpace:removeRepository',
+    REFRESH_REPOSITORY: 'devSpace:refreshRepository',
+    CANCEL: 'devSpace:cancel',
+    CAPABILITIES: 'devSpace:capabilities',
+    LIST_RUNS: 'devSpace:listRuns',
+    CLONE_PROGRESS: 'devSpace:cloneProgress',
+    CHANGED: 'devSpace:changed',
+    RUN_PROGRESS: 'devSpace:runProgress',
+    SOFT_SIGNAL: 'devSpace:softSignal',
+  },
   notes: {
     LIST: 'notes:list',
     READ: 'notes:read',
@@ -680,6 +694,10 @@ export const RPC_CHANNELS = {
     WAKE_SET: 'voice:wakeSet',
     WAKE_CHANGED: 'voice:wakeChanged',
     TRIGGER: 'voice:trigger',
+  },
+  podcast: {
+    /** Podcast generation run; `voice:job` stays for dictation/ASR (§5.1, D13). */
+    JOB: 'podcast:job',
   },
   environment: {
     GET: 'environment:get',
