@@ -60,9 +60,7 @@ function loadEnvFile(): void {
   }
 }
 
-// Get build-time defines for esbuild (OAuth, Sentry DSN, etc.)
-// NOTE: Sentry source map upload is intentionally disabled for the main process.
-// To enable in the future, add @sentry/esbuild-plugin. See apps/electron/CLAUDE.md.
+// Get build-time defines for esbuild (OAuth, analytics endpoints, etc.)
 // NOTE: Google OAuth credentials are NOT baked into the build - users provide their own
 // via source config. See README_FOR_OSS.md for setup instructions.
 //
@@ -81,7 +79,6 @@ function getBuildDefines(): string[] {
     "SLACK_OAUTH_CLIENT_SECRET",
     "MICROSOFT_OAUTH_CLIENT_ID",
     "MICROSOFT_OAUTH_CLIENT_SECRET",
-    "SENTRY_ELECTRON_INGEST_URL",
     "POSTHOG_HOST",
     "POSTHOG_KEY",
     "POSTHOG_FLAGS_DISABLED",

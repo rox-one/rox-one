@@ -16,7 +16,6 @@
  * connection is established.
  */
 
-import '@sentry/electron/preload'
 import { contextBridge, ipcRenderer, shell, webUtils } from 'electron'
 import { STARTUP_PERF_MARK_CHANNEL, isStartupPerfEnabled, isValidRendererMarkName } from '../shared/startup-perf'
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'

@@ -2,12 +2,8 @@
  * Secret Redaction Utilities
  *
  * Single source of truth for scrubbing credentials out of anything that
- * leaves the process boundary as diagnostics: Sentry events, debug logs,
- * audit trails. Previously this logic existed only as two hand-drifting
- * copies inside the Sentry beforeSend hooks (main + renderer).
- *
- * Semantics intentionally match the historical beforeSend behavior:
- * key-NAME based matching (a key containing token/key/secret/... is
+ * leaves the process boundary as diagnostics: error logs, audit trails.
+ * Semantics are key-NAME based (a key containing token/key/secret/... is
  * redacted), not value-pattern matching.
  */
 
@@ -49,30 +45,6 @@ export function redactSensitiveHeaders<T>(headers: Record<string, T>): Record<st
     result[name] = SENSITIVE_HEADER_SET.has(name.toLowerCase()) ? REDACTED_VALUE : value;
   }
   return result;
-}
-
-/**
- * Mutate a headers-shaped record in place, redacting sensitive values.
- * Matches the Sentry beforeSend call shape (event.request.headers).
- */
-export function redactSensitiveHeadersInPlace(headers: Record<string, unknown>): void {
-  for (const name of Object.keys(headers)) {
-    if (SENSITIVE_HEADER_SET.has(name.toLowerCase()) && headers[name] !== undefined) {
-      headers[name] = REDACTED_VALUE;
-    }
-  }
-}
-
-/**
- * Mutate a flat data record in place, redacting values whose KEY matches the
- * sensitive-name heuristic. Matches the historical Sentry breadcrumb scrub.
- */
-export function redactSensitiveKeysInPlace(data: Record<string, unknown>): void {
-  for (const key of Object.keys(data)) {
-    if (isSensitiveKeyName(key)) {
-      data[key] = REDACTED_VALUE;
-    }
-  }
 }
 
 /**

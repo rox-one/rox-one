@@ -2,9 +2,6 @@
 import { markFirstPaintAfterCommit } from './lib/startup-perf'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { init as sentryInit } from '@sentry/electron/renderer'
-import * as Sentry from '@sentry/react'
-import { captureConsoleIntegration } from '@sentry/react'
 import { initTelemetry, track, type TelemetryHandle } from '@rox/shared/telemetry'
 import type { TelemetryBootstrapConfig } from '../shared/types'
 import { Provider as JotaiProvider, useAtomValue } from 'jotai'
@@ -15,7 +12,6 @@ import { windowWorkspaceIdAtom } from './atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
 import { StorageMigrationNotices } from './components/storage/StorageMigrationNotices'
 import { setupRendererI18n } from '@rox/shared/i18n/lazy'
-import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils/redaction'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import './index.css'
@@ -49,65 +45,16 @@ const i18n = setupRendererI18n([LanguageDetector, initReactI18next])
 // app would still generate titles in English until the user manually re-picks
 // the language in Appearance.
 const resolvedLanguage = i18n.resolvedLanguage || i18n.language
-// Diagnostic: console-log the bootstrap push so it shows up in DevTools and
-// (via captureConsoleIntegration) in Sentry, alongside the main-process
-// [i18n] startup hydration log. If these two diverge, the renderer's
-// localStorage isn't tracking the user's Appearance selection.
+// Diagnostic: console-log the bootstrap push so it shows up in DevTools,
+// alongside the main-process [i18n] startup hydration log. If these two
+// diverge, the renderer's localStorage isn't tracking the user's Appearance
+// selection.
 console.info('[i18n] renderer bootstrap push', {
   resolvedLanguage: resolvedLanguage ?? null,
   localStorageI18nextLng: typeof window !== 'undefined' ? window.localStorage?.getItem('i18nextLng') : null,
 })
 const disposeMainLanguageSync = syncMainProcessLanguage(i18n, window.electronAPI)
 import.meta.hot?.dispose(disposeMainLanguageSync)
-
-// Known-harmless console messages that should NOT be sent to Sentry.
-// These are dev-mode noise or expected warnings that aren't actionable.
-const IGNORED_CONSOLE_PATTERNS = [
-  // React StrictMode dev warnings about non-boolean DOM attributes
-  'Received `true` for a non-boolean attribute',
-  'Received `false` for a non-boolean attribute',
-  // Duplicate Shiki theme registration (expected on HMR reload)
-  'theme name already registered',
-]
-
-// Initialize Sentry in the renderer process using the dual-init pattern.
-// Combines Electron IPC transport (sentryInit) with React error boundary support (sentryReactInit).
-// DSN and config are inherited from the main process init.
-//
-// captureConsoleIntegration promotes console.error calls into Sentry events,
-// giving Sentry the same rich context visible in DevTools without needing sourcemaps.
-//
-// NOTE: Source map upload is intentionally disabled — see main/index.ts for details.
-sentryInit(
-  {
-    integrations: [captureConsoleIntegration({ levels: ['error'] })],
-
-    beforeSend(event) {
-      // Drop events matching known-harmless console patterns to avoid Sentry quota waste
-      const message = event.message || event.exception?.values?.[0]?.value || ''
-      if (IGNORED_CONSOLE_PATTERNS.some((pattern) => message.includes(pattern))) {
-        return null
-      }
-
-      // Scrub sensitive data (shared logic with the main process hook).
-      // The header scrub was previously missing here — renderer drift, fixed
-      // by moving both hooks onto @rox/shared/utils redaction.ts.
-      if (event.request?.headers) {
-        redactSensitiveHeadersInPlace(event.request.headers)
-      }
-      if (event.breadcrumbs) {
-        for (const breadcrumb of event.breadcrumbs) {
-          if (breadcrumb.data) {
-            redactSensitiveKeysInPlace(breadcrumb.data)
-          }
-        }
-      }
-
-      return event
-    },
-  },
-  Sentry.init,
-)
 
 // Product analytics — renderer half.
 //
@@ -186,7 +133,6 @@ import.meta.hot?.dispose(() => {
 
 /**
  * Minimal fallback UI shown when the entire React tree crashes.
- * Sentry.ErrorBoundary captures the error and sends it to Sentry automatically.
  */
 function CrashFallback() {
   return (
@@ -201,6 +147,30 @@ function CrashFallback() {
       </button>
     </div>
   )
+}
+
+/**
+ * Root error boundary: renders CrashFallback when the tree below it throws.
+ * Replaces the previous Sentry.ErrorBoundary (integration removed 2026-10-09);
+ * the error is logged to the console instead of being shipped to Sentry.
+ */
+class RootErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    console.error('[RootErrorBoundary] renderer crashed:', error, info.componentStack)
+  }
+
+  render(): React.ReactNode {
+    return this.state.hasError ? <CrashFallback /> : this.props.children
+  }
 }
 
 /**
@@ -236,11 +206,11 @@ seedEntitiesLinksGate()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+    <RootErrorBoundary>
       <JotaiProvider>
         <Root />
       </JotaiProvider>
-    </Sentry.ErrorBoundary>
+    </RootErrorBoundary>
   </React.StrictMode>
 )
 markFirstPaintAfterCommit()

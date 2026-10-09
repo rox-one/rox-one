@@ -152,6 +152,20 @@ curl -s http://127.0.0.1:8095/api/health
 The desktop reaches the service through `ROX_TG_LINK_URL`
 (default `http://127.0.0.1:8095`).
 
+## Deploy as a macOS LaunchAgent
+
+`scripts/install-macos.sh`-style installs (bundle in `~/.local/share/rox/tg-linkd`,
+wrapper sourcing the 600 secrets file, `com.rox.tg-linkd` agent) must keep the
+process out of launchd's throttled background class — otherwise the first
+request after an idle period takes seconds (measured 5.3 s with
+`ProcessType=Background`, 2 ms with `Interactive`):
+
+```xml
+<key>ProcessType</key><string>Interactive</string>
+<key>EnvironmentVariables</key>
+<dict><key>NSAppSleepDisabled</key><string>1</string></dict>
+```
+
 ## Security notes
 
 * Contact ownership is enforced server-side; a foreign contact is refused
