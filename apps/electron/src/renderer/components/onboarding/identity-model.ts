@@ -3,11 +3,8 @@
  *
  * Validation, reserved-address derivation and the coin-badge table live in
  * `onboarding-username.ts` (single source of truth). This module keeps the
- * first-run draft the wizard writes and `finishFirstRun` reads, and re-exports
- * the field-level `HandleCheckStatus` the wizard and `useOnboarding` consume.
+ * first-run draft the wizard writes and `finishFirstRun` reads.
  */
-
-export type { HandleCheckStatus } from './onboarding-username'
 
 // =============================================================================
 // FIRST-RUN DRAFT
@@ -23,8 +20,6 @@ export interface OnboardingDraftStorage {
 
 /** Everything the first run collects; persisted best-effort across reloads. */
 export interface FirstRunDraft {
-  username: string
-  organization: string
   questionnaire?: unknown
   bubbles?: Record<string, string[]>
   permissions?: unknown
@@ -61,8 +56,6 @@ export function loadFirstRunDraft(storage: OnboardingDraftStorage | undefined): 
   const raw = readRaw(storage)
   if (Object.keys(raw).length === 0) return null
   return {
-    username: typeof raw.username === 'string' ? raw.username : '',
-    organization: typeof raw.organization === 'string' ? raw.organization : '',
     questionnaire: raw.questionnaire,
     bubbles: (raw.bubbles && typeof raw.bubbles === 'object') ? raw.bubbles as Record<string, string[]> : undefined,
     permissions: raw.permissions,

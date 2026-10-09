@@ -4,7 +4,6 @@ import { WelcomeStep } from "./WelcomeStep"
 import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
 import {
   saveFirstRunDraft,
-  type HandleCheckStatus,
   type OnboardingDraftStorage,
 } from "./identity-model"
 import type { RewardLedger } from "./onboarding-rewards"
@@ -36,13 +35,11 @@ export type LoginStatus = 'idle' | 'waiting' | 'success' | 'error'
 
 /**
  * First-run controller owned by `useOnboarding` and handed to the wizard through
- * `state`. Carries the identity draft and the shared reward ledger so the
- * questionnaire screen writes into one place; tests that build `OnboardingState`
- * by hand simply omit it and the steps fall back to their internal state.
+ * `state`. Carries the shared reward ledger so the questionnaire screen writes
+ * into one place; tests that build `OnboardingState` by hand simply omit it and
+ * the steps fall back to their internal state.
  */
 export interface OnboardingFirstRunState {
-  identity: { username: string; organization: string; usernameStatus: HandleCheckStatus }
-  setIdentity: (patch: Partial<{ username: string; organization: string; usernameStatus: HandleCheckStatus }>) => void
   rewards: RewardLedger
 }
 
@@ -59,7 +56,7 @@ export interface OnboardingState {
   isCheckingGitBash?: boolean
   /** First run: applying the default Rox runtime before the app opens. */
   isFinishing?: boolean
-  /** First-run identity draft + reward ledger (optional; wizard self-manages otherwise). */
+  /** Shared reward ledger (optional; the wizard self-manages otherwise). */
   firstRun?: OnboardingFirstRunState
 }
 
@@ -185,6 +182,14 @@ export function OnboardingWizard({
       permissions: payload.permissions,
       completed: true,
     })
+    // The keep-awake mode is the one app-toggle with a real setting behind it:
+    // mirror the choice onto the app config, fire-and-forget so a missing or
+    // failing bridge never blocks the flow.
+    const keepAwake = payload.permissions.enabled.keepAwake
+    const bridge = window.electronAPI
+    if (typeof keepAwake === 'boolean' && typeof bridge?.setKeepAwakeWhileRunning === 'function') {
+      bridge.setKeepAwakeWhileRunning(keepAwake).catch(() => {})
+    }
   }
 
   const renderStep = () => {

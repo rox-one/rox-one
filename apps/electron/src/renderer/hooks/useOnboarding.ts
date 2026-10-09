@@ -34,7 +34,7 @@ import { nextStepAfterUsername } from '@/components/onboarding/onboarding-userna
 import type { OnboardingFirstRunState } from '@/components/onboarding/OnboardingWizard'
 import { createRewardLedger, type RewardStorage } from '@/components/onboarding/onboarding-rewards'
 import { createLearningCurve, type LearningCurveStorage } from '@/components/onboarding/learning-curve'
-import { saveFirstRunDraft, type HandleCheckStatus } from '@/components/onboarding/identity-model'
+import { saveFirstRunDraft } from '@/components/onboarding/identity-model'
 import { ensureRoxRuntimeDefault } from '@/components/onboarding/rox-runtime-default'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
@@ -285,31 +285,18 @@ export function useOnboarding({
   })
   const firstRunFinishInFlight = useRef(false)
 
-  // First-run identity draft + the shared reward ledger. Exposed through
-  // `state.firstRun` so the wizard (mounted by App with `state`) can render the
-  // identity/questionnaire screens without new wizard props at the call site.
-  const [firstRunIdentity, setFirstRunIdentity] = useState<{
-    username: string
-    organization: string
-    usernameStatus: HandleCheckStatus
-  }>({ username: '', organization: '', usernameStatus: 'idle' })
+  // The shared reward ledger. Exposed through `state.firstRun` so the wizard
+  // (mounted by App with `state`) can render the questionnaire screen without
+  // new wizard props at the call site.
   const firstRunRewards = useMemo(
     () => createRewardLedger({ storage: FIRST_RUN_REWARD_STORAGE }),
     [],
   )
-  const updateFirstRunIdentity = useCallback(
-    (patch: Partial<{ username: string; organization: string; usernameStatus: HandleCheckStatus }>) => {
-      setFirstRunIdentity((current) => ({ ...current, ...patch }))
-    },
-    [],
-  )
   const firstRunState = useMemo<OnboardingFirstRunState>(
     () => ({
-      identity: firstRunIdentity,
-      setIdentity: updateFirstRunIdentity,
       rewards: firstRunRewards,
     }),
-    [firstRunIdentity, updateFirstRunIdentity, firstRunRewards],
+    [firstRunRewards],
   )
 
   // A cloud connection is optional unless the startup caller and server both
@@ -434,17 +421,14 @@ export function useOnboarding({
     if (firstRunFinishInFlight.current) return
     firstRunFinishInFlight.current = true
     setState(s => ({ ...s, isFinishing: true, errorMessage: undefined }))
-    // Flush the first-run ledger and persist the identity draft before the app
-    // opens. The questionnaire/permissions draft is written by the wizard as it
-    // leaves the questionnaire step.
+    // Flush the first-run ledger and mark the draft complete before the app
+    // opens. The identity is persisted by the welcome screen itself; the
+    // questionnaire/permissions draft is written by the wizard as it leaves the
+    // questionnaire step.
     for (const entry of firstRunRewards.entries()) {
       if (entry.status === 'pending') firstRunRewards.confirmStep(entry.stepId)
     }
-    saveFirstRunDraft(FIRST_RUN_DRAFT_STORAGE, {
-      username: firstRunIdentity.username,
-      organization: firstRunIdentity.organization,
-      completed: true,
-    })
+    saveFirstRunDraft(FIRST_RUN_DRAFT_STORAGE, { completed: true })
     createLearningCurve({ storage: FIRST_RUN_LEARNING_STORAGE }).trackLearningEvent({
       name: 'result',
       stepId: 'full-onboarding',
@@ -466,7 +450,7 @@ export function useOnboarding({
       console.warn('[Onboarding] Could not refresh runtime settings after setup:', error)
     }
     setState(s => ({ ...s, isFinishing: false, step: 'complete', completionStatus: 'complete' }))
-  }, [onConfigSaved, t, firstRunRewards, firstRunIdentity])
+  }, [onConfigSaved, t, firstRunRewards])
 
   // Continue to next step
   const handleContinue = useCallback(async () => {
@@ -1306,7 +1290,6 @@ export function useOnboarding({
     setIsWaitingForCode(false)
     setActiveProviderOAuthMethod(null)
     setCopilotDeviceCode(undefined)
-    setFirstRunIdentity({ username: '', organization: '', usernameStatus: 'idle' })
     // Clean up any pending OAuth state
     window.electronAPI.clearClaudeOAuthState().catch(() => {
       // Ignore errors - state may not exist
