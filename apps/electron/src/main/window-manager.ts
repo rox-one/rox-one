@@ -99,7 +99,13 @@ export class WindowManager {
   }
 
   /** Push an event to a specific window via the RPC event sink. Falls back to webContents.send. */
-  private pushToWindow(window: BrowserWindow, channel: string, ...args: any[]): void {
+  /**
+   * The sanctioned main→renderer delivery path: the typed event sink when the
+   * client is known, and the raw `webContents.send` fallback before the WS
+   * handshake settles (allowlisted by `scripts/check-raw-sends.sh`). Callers
+   * outside this class must use it instead of sending on a window directly.
+   */
+  pushToWindow(window: BrowserWindow, channel: string, ...args: unknown[]): void {
     if (this.eventSink && this.clientResolver) {
       const clientId = this.clientResolver(window.webContents.id)
       if (clientId) {
