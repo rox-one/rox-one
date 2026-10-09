@@ -12,7 +12,7 @@ import { AuroraField } from './AuroraField'
  * reimplementation. `low-power` stands in for the reduced-motion/transparency
  * path (the playground cannot emulate a media query).
  */
-type AuroraMode = 'light' | 'dark'
+type AuroraMode = 'auto' | 'light' | 'dark'
 type AuroraDegradation = 'none' | 'high-contrast' | 'scenic' | 'zen' | 'low-power'
 
 interface AuroraFieldStoryProps {
@@ -74,11 +74,17 @@ function useStagedRoot(mode: AuroraMode, degradation: AuroraDegradation) {
 
   React.useEffect(() => {
     const el = document.documentElement
-    el.classList.toggle('dark', mode === 'dark')
+    // 'auto' keeps the app's own light/dark (production behaviour); pinned
+    // variants stage the class explicitly.
+    if (mode !== 'auto') el.classList.toggle('dark', mode === 'dark')
     const staged = DEGRADATION_ATTRS[degradation]
     for (const key of ATTR_KEYS) {
+      // Only manage attributes this variant explicitly stages; the app owns
+      // data-contrast / scenic / zen / performance otherwise (the harness
+      // reads them back to verify the shot).
+      if (!(key in staged)) continue
       const value = staged[key]
-      if (value === undefined) el.removeAttribute(key)
+      if (value === undefined || value === null) el.removeAttribute(key)
       else el.setAttribute(key, value)
     }
   }, [mode, degradation])
@@ -126,11 +132,12 @@ export default definePlaygroundStory({
       control: {
         type: 'select',
         options: [
+          { label: 'Auto (follows theme)', value: 'auto' },
           { label: 'Light', value: 'light' },
           { label: 'Dark', value: 'dark' },
         ],
       },
-      defaultValue: 'dark',
+      defaultValue: 'auto',
     },
     {
       name: 'degradation',
