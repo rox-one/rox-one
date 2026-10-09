@@ -11,6 +11,7 @@ import { existsSync, mkdirSync } from 'fs'
 import { validateFilePath, getWorkspaceAllowedDirs } from '@rox/server-core/handlers'
 import { BrowserWindow, WebContentsView, app, ipcMain, nativeTheme, session, shell, type Session as ElectronSession } from 'electron'
 import { isOmniboxChord } from './global-input-router'
+import { BROWSER_PANE_SESSION_PARTITION } from './browser-pane-session'
 import { mainLog } from './logger'
 import type { WindowManager } from './window-manager'
 import { BrowserCDP, type AccessibilitySnapshot, type ElementGeometry } from './browser-cdp'
@@ -131,7 +132,6 @@ const TOOLBAR_CHANNELS = {
   STATE_UPDATE: 'browser-toolbar:state-update',
   THEME_COLOR: 'browser-toolbar:theme-color',
 } as const
-export const BROWSER_PANE_SESSION_PARTITION = 'persist:browser-pane'
 export const BROWSER_COOKIE_IMPORT_PARTITION = 'persist:browser-cookie-import'
 const SESSION_PARTITION = BROWSER_PANE_SESSION_PARTITION
 
