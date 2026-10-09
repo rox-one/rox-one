@@ -247,6 +247,7 @@ let cachedCapability: MemoryIndexCapability | undefined
 function getDatabaseCtor(): DatabaseCtor | null {
   if (cachedCtor === undefined) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- bun:sqlite is a lazy optional (Bun-only) dependency; require keeps getDatabaseCtor synchronous and lets Electron/Node fail soft
       cachedCtor = require('bun:sqlite').Database as DatabaseCtor
     } catch {
       cachedCtor = null

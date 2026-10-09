@@ -10,7 +10,6 @@ import {
   type SendMessageOptions,
   type SessionEvent,
   type SessionActorRef,
-  type SessionVisibility,
   type SessionCreatedActor,
   type SessionParticipantIdentity,
   type SessionCommand,
