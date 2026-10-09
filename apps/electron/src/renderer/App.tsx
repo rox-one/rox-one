@@ -41,6 +41,7 @@ import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { NavigationProvider } from '@/contexts/NavigationContext'
 
 import { markStatusUnseen } from '@/lib/sidebar-unseen-status'
+import { reduceSessionActivityEvent } from '@/lib/session-presence'
 import { navigate, routes } from './lib/navigate'
 import { attachmentFromContentRef, toDraftRef } from './lib/drafts'
 import { stripMarkdown } from './utils/text'
@@ -62,6 +63,7 @@ import {
   refreshSessionsMetadataAtom,
   sessionAtomFamily,
   sessionMetaMapAtom,
+  sessionActivityMapAtom,
   sessionIdsAtom,
   loadedSessionsAtom,
   forceSessionMessagesReloadAtom,
@@ -1350,6 +1352,36 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
               && (scope.authority !== 'native' || updatedSession.workspaceId === scope.workspaceId)) replaceLoadedSession(updatedSession)
           })
           .catch((error: unknown) => console.error('Failed to refresh messages after undo:', error))
+        return
+      }
+
+      // a1.3/a2.1: ownership + visibility metadata are handled explicitly (they
+      // are not agent events) so the sidebar chip and header update live.
+      if (event.type === 'session_owner_changed' || event.type === 'session_visibility_changed') {
+        const atomSession = store.get(sessionAtomFamily(sessionId))
+        if (atomSession) {
+          store.set(
+            sessionAtomFamily(sessionId),
+            event.type === 'session_owner_changed'
+              ? { ...atomSession, owner: event.owner ?? undefined }
+              : { ...atomSession, visibility: event.visibility },
+          )
+        }
+        const prevMeta = store.get(sessionMetaMapAtom).get(sessionId)
+        if (prevMeta) {
+          const nextMetaMap = new Map(store.get(sessionMetaMapAtom))
+          nextMetaMap.set(sessionId, event.type === 'session_owner_changed'
+            ? { ...prevMeta, owner: event.owner ?? undefined }
+            : { ...prevMeta, visibility: event.visibility })
+          store.set(sessionMetaMapAtom, nextMetaMap)
+        }
+        return
+      }
+
+      // a2.4: ephemeral typing/presence snapshots feed the activity atom only —
+      // never persisted, never routed through the agent event processor.
+      if (event.type === 'session_typing' || event.type === 'session_presence') {
+        store.set(sessionActivityMapAtom, reduceSessionActivityEvent(store.get(sessionActivityMapAtom), event))
         return
       }
 

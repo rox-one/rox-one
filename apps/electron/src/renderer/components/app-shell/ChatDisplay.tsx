@@ -30,6 +30,8 @@ import { motion, AnimatePresence } from "motion/react"
 import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
+import { SessionTypingIndicator } from "./SessionTypingIndicator"
+import { useSessionActivityState, useSessionTypingBeacon } from "@/hooks/useSessionPresence"
 
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -1452,9 +1454,14 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     requestAnimationFrame(() => { followOutput(owner) })
   }, [session?.id, messageCount, lastMessageId, lastMessageRole, captureScrollOwner, followOutput, beginOutputMotion])
 
+  // a2.4: live typing actors + throttled outgoing typing beacons for the composer.
+  const { typingActors } = useSessionActivityState(session?.id ?? '')
+  const typingBeacon = useSessionTypingBeacon(session?.id)
+
   // Handle message submission from InputContainer
   // Backend handles interruption and queueing if currently processing
   const handleSubmit = (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => {
+    typingBeacon.clearTyping()
     const scrollOwner = captureScrollOwner()
     if (session) beginChatUserTurn(tourSignals.capture(), session)
     const hasBaseMessage = message.trim().length > 0
@@ -2390,6 +2397,8 @@ const handleFollowUpChipClick = useCallback((item: {
             onSelect={prepareStarterPrompt}
             onDismiss={dismissStarterPrompts}
           />
+          {/* a2.4: who is typing, directly above the composer. */}
+          <SessionTypingIndicator actors={typingActors} />
           {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
           <ChatInputZone
             compactMode={compactMode}
@@ -2426,7 +2435,14 @@ const handleFollowUpChipClick = useCallback((item: {
               structuredInput,
               onStructuredResponse: handleStructuredResponse,
               inputValue,
-              onInputChange,
+              onInputChange: (value: string) => {
+                if (value.trim().length > 0) typingBeacon.notifyTyping()
+                else typingBeacon.clearTyping()
+                onInputChange?.(value)
+              },
+              onFocusChange: (focused: boolean) => {
+                if (!focused) typingBeacon.clearTyping()
+              },
               attachmentsValue,
               onAttachmentsChange,
               sources,
