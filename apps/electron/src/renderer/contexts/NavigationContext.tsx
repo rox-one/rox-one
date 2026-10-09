@@ -971,6 +971,13 @@ export function NavigationProvider({
               if (shouldSend) {
                 setTimeout(() => {
                   if (!isCurrent()) return
+                  // SEC-01: never auto-send on a deep link's authority alone —
+                  // require an explicit confirmation even for trusted surfaces.
+                  // Deny keeps the session and leaves the prompt in the composer.
+                  if (!window.confirm(t('navigation.confirmDeepLinkSend'))) {
+                    onInputChange?.(session.id, parsed.params.input!)
+                    return
+                  }
                   void window.electronAPI.sendMessage(
                     session.id,
                     parsed.params.input!,
