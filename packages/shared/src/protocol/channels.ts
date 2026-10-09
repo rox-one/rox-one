@@ -1293,6 +1293,8 @@ export const RPC_CHANNELS = {
     IMPORT_START: 'drive:importStart',
     /** Wave 4: stop scheduling new files once in-flight work settles. */
     IMPORT_PAUSE: 'drive:importPause',
+    /** Wave 4: abandon an import job — in-flight files settle, no further files start. */
+    IMPORT_CANCEL: 'drive:importCancel',
     /** Wave 4: resume a paused/errored import job. */
     IMPORT_RESUME: 'drive:importResume',
     /** Wave 4: one job by id, or every known job when the id is omitted. */

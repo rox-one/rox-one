@@ -93,6 +93,10 @@ function fakeApi(calls: string[], statuses: ImportJob[] = []): DriveImportApi {
       calls.push(`pause:${jobId}`)
       return job({ id: jobId, status: 'paused' })
     },
+    async driveImportCancel(jobId) {
+      calls.push(`cancel:${jobId}`)
+      return job({ id: jobId, status: 'cancelled' })
+    },
     async driveImportResume(jobId) {
       calls.push(`resume:${jobId}`)
       return job({ id: jobId, status: 'running' })
@@ -290,19 +294,19 @@ describe('drive import controller', () => {
     await flush()
     controller.cancel()
     await flush()
-    expect(controller.getState().phase).toBe('choose')
-    expect(controller.getState().job).toBeNull()
+    expect(controller.getState().phase).toBe('cancelled')
+    expect(controller.getState().job?.status).toBe('cancelled')
 
     // The late status resolves after cancel: the stale poll must not resurrect.
     resolveStatus(job({ id: 'job-1', status: 'running' }))
     await flush()
-    expect(controller.getState().phase).toBe('choose')
-    expect(controller.getState().job).toBeNull()
+    expect(controller.getState().phase).toBe('cancelled')
+    expect(controller.getState().job?.status).toBe('cancelled')
     expect(scheduler.pending()).toBe(0)
     controller.dispose()
   })
 
-  test('cancel pauses the running job and returns to the picker', async () => {
+  test('cancel calls drive:importCancel and renders the cancelled job', async () => {
     const scheduler = manualScheduler()
     const calls: string[] = []
     const controller = createDriveImportController({
@@ -315,9 +319,39 @@ describe('drive import controller', () => {
     await flush()
     controller.cancel()
     await flush()
-    expect(calls).toContain('pause:job-1')
+    expect(calls).toContain('cancel:job-1')
+    expect(calls).not.toContain('pause:job-1')
+    expect(controller.getState().phase).toBe('cancelled')
+    expect(controller.getState().job?.status).toBe('cancelled')
+    expect(controller.getState().error).toBeNull()
+    expect(scheduler.pending()).toBe(0)
+    controller.dispose()
+  })
+
+  test('a failed cancel surfaces the RPC message', async () => {
+    const api: DriveImportApi = {
+      ...fakeApi([]),
+      async driveImportCancel() {
+        throw { code: 'UNSUPPORTED_OPERATION', message: 'Drive operations are unavailable on this host' }
+      },
+    }
+    const controller = createDriveImportController({ auth: fakeAuth(), api })
+    controller.start('google-drive')
+    await flush()
+    controller.cancel()
+    await flush()
+    expect(controller.getState().phase).toBe('error')
+    expect(controller.getState().error).toBe('Drive operations are unavailable on this host')
+    controller.dispose()
+  })
+
+  test('cancel without a job abandons the flow without an RPC', async () => {
+    const calls: string[] = []
+    const controller = createDriveImportController({ auth: fakeAuth(), api: fakeApi(calls) })
+    controller.cancel()
+    await flush()
     expect(controller.getState().phase).toBe('choose')
-    expect(controller.getState().job).toBeNull()
+    expect(calls).toEqual([])
     controller.dispose()
   })
 

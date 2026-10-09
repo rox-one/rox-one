@@ -1683,6 +1683,7 @@
   "drive.import.provider.icloud": "iCloud Drive",
   "drive.import.provider.onedrive": "OneDrive",
   "drive.import.provider.yandex": "Yandex Disk",
+  "drive.import.status.cancelled": "已取消",
   "drive.import.status.done": "完成",
   "drive.import.status.error": "失败",
   "drive.import.status.idle": "准备中",

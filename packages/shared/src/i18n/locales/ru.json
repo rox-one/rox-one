@@ -1687,6 +1687,7 @@
   "drive.import.provider.icloud": "iCloud Drive",
   "drive.import.provider.onedrive": "OneDrive",
   "drive.import.provider.yandex": "Яндекс Диск",
+  "drive.import.status.cancelled": "Отменено",
   "drive.import.status.done": "Готово",
   "drive.import.status.error": "Ошибка",
   "drive.import.status.idle": "Подготовка",

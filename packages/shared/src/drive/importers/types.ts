@@ -18,6 +18,8 @@ export interface ImportSourceEntry {
   kind: 'file' | 'folder'
   sizeBytes?: number
   modifiedAt?: string
+  /** Provider-reported MIME type, when the listing carries one. */
+  mimeType?: string
 }
 
 /**
@@ -29,6 +31,8 @@ export interface ImportPlanNode {
   sourceId: string
   path: string
   sizeBytes?: number
+  /** Provider-reported MIME type, passed to the upload target when known. */
+  contentType?: string
 }
 
 /** Running counter for one import job. */
@@ -65,7 +69,7 @@ export interface DriveUploadTarget {
   ): Promise<void>
 }
 
-export type ImportJobStatus = 'idle' | 'planning' | 'running' | 'paused' | 'error' | 'done'
+export type ImportJobStatus = 'idle' | 'planning' | 'running' | 'paused' | 'cancelled' | 'error' | 'done'
 
 /** Durable, serializable snapshot of one import job. */
 export interface ImportJob {

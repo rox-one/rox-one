@@ -1683,6 +1683,7 @@
   "drive.import.provider.icloud": "iCloud Drive",
   "drive.import.provider.onedrive": "OneDrive",
   "drive.import.provider.yandex": "Yandex Disk",
+  "drive.import.status.cancelled": "취소됨",
   "drive.import.status.done": "완료",
   "drive.import.status.error": "실패",
   "drive.import.status.idle": "준비 중",

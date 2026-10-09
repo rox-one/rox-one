@@ -46,6 +46,8 @@ function makeService(opts: { recallAgent?: (prompt: string) => Promise<string>; 
     redactExtraPatterns: [],
     ftsLimit: 20,
     semantic: false,
+    dreamIntervalHours: 4,
+    dreamNotes: true,
   }
   const svc = new MemoryService({
     workspaceRoot: root,

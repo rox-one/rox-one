@@ -252,7 +252,7 @@ export function createImportJobRunner(options: ImportJobRunnerOptions): ImportJo
           if (entry.kind === 'folder') {
             await walk(entry.id, `${path}/`)
           } else {
-            nodes.push({ sourceId: entry.id, path, sizeBytes: entry.sizeBytes })
+            nodes.push({ sourceId: entry.id, path, sizeBytes: entry.sizeBytes, contentType: entry.mimeType })
           }
         }
       } finally {
@@ -374,7 +374,7 @@ export function createImportJobRunner(options: ImportJobRunnerOptions): ImportJo
             emit({ type: 'progress', jobId, progress: { ...state.job.progress } })
             const source = await provider.stream(node.sourceId)
             const body = node.sizeBytes === undefined ? countingStream(source, counter) : source
-            await options.target.put(keyFor(jobId, node), body, { sizeBytes: node.sizeBytes })
+            await options.target.put(keyFor(jobId, node), body, { sizeBytes: node.sizeBytes, contentType: node.contentType })
             await commit(index, node.sizeBytes ?? counter.bytes)
             return
           } catch (error) {
@@ -464,10 +464,15 @@ export function createImportJobRunner(options: ImportJobRunnerOptions): ImportJo
 
   async function cancel(jobId: string): Promise<ImportJob> {
     const state = requireState(await load(jobId), jobId)
+    if (!state.running && (state.job.status === 'done' || state.job.status === 'error' || state.job.status === 'cancelled')) {
+      throw Object.assign(new Error(`Import job is already ${state.job.status}: ${jobId}`), {
+        code: 'DRIVE_IMPORT_NOT_CANCELLABLE',
+      })
+    }
     state.cancelled = true
     await state.runningPromise
     state.running = false
-    state.job.status = 'idle'
+    state.job.status = 'cancelled'
     state.job.error = 'Import cancelled'
     await persist(state)
     emit({ type: 'status', job: cloneJob(state.job) })
