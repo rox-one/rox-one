@@ -1,42 +1,142 @@
 {
  "board.widget.sectionTitle": {
+  "ar": "أداة المهمة",
+  "de": "Aufgaben-Widget",
   "en": "Task widget",
-  "ru": "Виджет задачи"
+  "es": "Widget de tarea",
+  "fr": "Widget de tâche",
+  "hu": "Feladat-widget",
+  "ja": "タスクウィジェット",
+  "ko": "작업 위젯",
+  "pl": "Widżet zadania",
+  "ru": "Виджет задачи",
+  "zh-Hans": "任务组件",
+  "zh-Hant": "任務小工具"
  },
  "board.widget.loading": {
+  "ar": "جارٍ تحميل الأداة…",
+  "de": "Widget wird geladen…",
   "en": "Loading widget…",
-  "ru": "Загрузка виджета…"
+  "es": "Cargando el widget…",
+  "fr": "Chargement du widget…",
+  "hu": "Widget betöltése…",
+  "ja": "ウィジェットを読み込み中…",
+  "ko": "위젯 불러오는 중…",
+  "pl": "Ładowanie widżetu…",
+  "ru": "Загрузка виджета…",
+  "zh-Hans": "正在加载组件…",
+  "zh-Hant": "正在載入小工具…"
  },
  "board.widget.unavailableTitle": {
+  "ar": "لا توجد أداة مُجهَّزة",
+  "de": "Kein Widget bereitgestellt",
   "en": "No widget staged",
-  "ru": "Виджет не создан"
+  "es": "Ningún widget preparado",
+  "fr": "Aucun widget préparé",
+  "hu": "Nincs előkészített widget",
+  "ja": "ウィジェット未準備",
+  "ko": "준비된 위젯 없음",
+  "pl": "Brak przygotowanego widżetu",
+  "ru": "Виджет не создан",
+  "zh-Hans": "尚未准备组件",
+  "zh-Hant": "尚未準備小工具"
  },
  "board.widget.unavailableBody": {
+  "ar": "لا يوجد بعد إصدار محفوظ لأداة اللوحة لهذه المهمة. يمكن للوكيل تجهيز واحد عبر show_widget.",
+  "de": "Für diese Aufgabe ist noch keine Revision des Board-Widgets gespeichert. Ein Agent kann eine mit show_widget bereitstellen.",
   "en": "No board widget revision is stored for this task yet. An agent can stage one with show_widget.",
-  "ru": "Для этой задачи пока нет сохранённой ревизии виджета. Агент может создать её через show_widget."
+  "es": "Aún no hay ninguna revisión del widget del tablero guardada para esta tarea. Un agente puede preparar una con show_widget.",
+  "fr": "Aucune révision du widget du tableau n'est encore enregistrée pour cette tâche. Un agent peut en préparer une avec show_widget.",
+  "hu": "Ehhez a feladathoz még nincs mentett tábla-widget változat. Az ügynök a show_widget segítségével előkészíthet egyet.",
+  "ja": "このタスクにはまだボードウィジェットのリビジョンが保存されていません。エージェントは show_widget で用意できます。",
+  "ko": "이 작업에는 아직 저장된 보드 위젯 리비전이 없습니다. 에이전트가 show_widget으로 준비할 수 있습니다.",
+  "pl": "Dla tego zadania nie zapisano jeszcze żadnej wersji widżetu tablicy. Agent może przygotować ją za pomocą show_widget.",
+  "ru": "Для этой задачи пока нет сохранённой ревизии виджета. Агент может создать её через show_widget.",
+  "zh-Hans": "此任务尚未存储看板组件的修订版本。代理可使用 show_widget 准备一个。",
+  "zh-Hant": "此任務尚未儲存看板小工具的修訂版本。代理可使用 show_widget 準備一個。"
  },
  "board.widget.refusedTitle": {
+  "ar": "الأداة غير متاحة",
+  "de": "Widget nicht verfügbar",
   "en": "Widget unavailable",
-  "ru": "Виджет недоступен"
+  "es": "Widget no disponible",
+  "fr": "Widget indisponible",
+  "hu": "A widget nem érhető el",
+  "ja": "ウィジェットを利用できません",
+  "ko": "위젯을 사용할 수 없음",
+  "pl": "Widżet niedostępny",
+  "ru": "Виджет недоступен",
+  "zh-Hans": "组件不可用",
+  "zh-Hant": "小工具無法使用"
  },
  "board.widget.refusedBody": {
+  "ar": "تم رفض تذكرة عرض هذه الأداة، لذلك لم يُركَّب أي شيء. أعد فتح المهمة لطلب تذكرة جديدة.",
+  "de": "Das Rendering-Ticket dieses Widgets wurde abgelehnt, daher wurde nichts eingebunden. Öffne die Aufgabe erneut, um ein neues Ticket anzufordern.",
   "en": "This widget's render ticket was refused, so nothing was mounted. Reopen the task to request a fresh ticket.",
-  "ru": "Тикет отрисовки виджета отклонён, поэтому ничего не смонтировано. Откройте задачу заново, чтобы запросить новый тикет."
+  "es": "Se rechazó el ticket de renderizado de este widget, por lo que no se montó nada. Vuelve a abrir la tarea para solicitar un ticket nuevo.",
+  "fr": "Le ticket de rendu de ce widget a été refusé, rien n'a donc été monté. Rouvrez la tâche pour demander un nouveau ticket.",
+  "hu": "A widget renderelési ticketje elutasításra került, ezért semmi sem lett csatolva. Nyisd meg újra a feladatot egy új ticket igényléséhez.",
+  "ja": "このウィジェットのレンダリングチケットが拒否されたため、何もマウントされませんでした。タスクを開き直して新しいチケットを要求してください。",
+  "ko": "이 위젯의 렌더링 티켓이 거부되어 아무것도 마운트되지 않았습니다. 작업을 다시 열어 새 티켓을 요청하세요.",
+  "pl": "Ticket renderowania tego widżetu został odrzucony, więc nic nie zostało zamontowane. Otwórz zadanie ponownie, aby poprosić o nowy ticket.",
+  "ru": "Тикет отрисовки виджета отклонён, поэтому ничего не смонтировано. Откройте задачу заново, чтобы запросить новый тикет.",
+  "zh-Hans": "此组件的渲染票据已被拒绝，因此未挂载任何内容。请重新打开任务以申请新的票据。",
+  "zh-Hant": "此小工具的渲染票據已遭拒絕，因此未掛載任何內容。請重新開啟任務以申請新的票據。"
  },
  "board.widget.frame.unavailableTitle": {
+  "ar": "تعذّر تحميل الأداة",
+  "de": "Widget konnte nicht geladen werden",
   "en": "Widget could not load",
-  "ru": "Не удалось загрузить виджет"
+  "es": "No se pudo cargar el widget",
+  "fr": "Impossible de charger le widget",
+  "hu": "A widget nem tölthető be",
+  "ja": "ウィジェットを読み込めませんでした",
+  "ko": "위젯을 불러오지 못했습니다",
+  "pl": "Nie udało się załadować widżetu",
+  "ru": "Не удалось загрузить виджет",
+  "zh-Hans": "无法加载组件",
+  "zh-Hant": "無法載入小工具"
  },
  "board.widget.frame.unavailableBody": {
+  "ar": "تعذّر تحميل مستند الأداة في صندوقها.",
+  "de": "Das Widget-Dokument konnte in seiner Sandbox nicht geladen werden.",
   "en": "The widget document failed to load in its sandbox.",
-  "ru": "Документ виджета не загрузился в песочнице."
+  "es": "El documento del widget no se pudo cargar en su sandbox.",
+  "fr": "Le document du widget n'a pas pu être chargé dans son sandbox.",
+  "hu": "A widget dokumentuma nem töltődött be a homokozójában.",
+  "ja": "ウィジェットのドキュメントをサンドボックス内で読み込めませんでした。",
+  "ko": "위젯 문서를 샌드박스에서 불러오지 못했습니다.",
+  "pl": "Dokument widżetu nie załadował się w jego piaskownicy.",
+  "ru": "Документ виджета не загрузился в песочнице.",
+  "zh-Hans": "组件文档未能在其沙箱中加载。",
+  "zh-Hant": "小工具文件未能在其沙箱中載入。"
  },
  "board.widget.frame.runtimeErrorTitle": {
+  "ar": "توقفت الأداة عن الاستجابة",
+  "de": "Widget reagiert nicht mehr",
   "en": "Widget stopped responding",
-  "ru": "Виджет перестал отвечать"
+  "es": "El widget dejó de responder",
+  "fr": "Le widget ne répond plus",
+  "hu": "A widget nem válaszol",
+  "ja": "ウィジェットが応答を停止しました",
+  "ko": "위젯이 응답을 멈췄습니다",
+  "pl": "Widżet przestał odpowiadać",
+  "ru": "Виджет перестал отвечать",
+  "zh-Hans": "组件停止响应",
+  "zh-Hant": "小工具停止回應"
  },
  "board.widget.frame.runtimeErrorBody": {
+  "ar": "لم تُبلِّغ الأداة عن أي محتوى معروض. ربما توقفت شفرتها بسبب خطأ.",
+  "de": "Das Widget hat keine gerenderten Inhalte gemeldet. Sein Code ist möglicherweise mit einem Fehler abgebrochen.",
   "en": "The widget did not report any rendered content. Its code may have stopped on an error.",
-  "ru": "Виджет не сообщил о содержимом. Возможно, его код остановился с ошибкой."
+  "es": "El widget no informó de ningún contenido renderizado. Es posible que su código se detuviera por un error.",
+  "fr": "Le widget n'a signalé aucun contenu rendu. Son code s'est peut-être arrêté sur une erreur.",
+  "hu": "A widget nem jelzett megjelenített tartalmat. Lehet, hogy a kódja hibánál állt meg.",
+  "ja": "ウィジェットは描画されたコンテンツを一切報告しませんでした。コードがエラーで停止した可能性があります。",
+  "ko": "위젯이 렌더링된 콘텐츠를 보고하지 않았습니다. 코드가 오류로 중단되었을 수 있습니다.",
+  "pl": "Widżet nie zgłosił żadnej wyrenderowanej treści. Jego kod mógł zatrzymać się na błędzie.",
+  "ru": "Виджет не сообщил о содержимом. Возможно, его код остановился с ошибкой.",
+  "zh-Hans": "组件未报告任何已渲染内容。其代码可能因错误而停止。",
+  "zh-Hant": "小工具未回報任何已渲染內容。其程式碼可能因錯誤而停止。"
  }
 }
