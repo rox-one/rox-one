@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import type { TourDefinition } from '../contracts'
-import { inLearningBrowser, inLearningWindows, startLearningBrowserTests, stopLearningBrowserTests } from './browser-test-harness'
+import { inLearningBrowser, inLearningWindows, learningBrowserLifecycleBudget, learningBrowserTestBudget, startLearningBrowserTests, stopLearningBrowserTests } from './browser-test-harness'
 import { createMemoryOnlyRepository } from './progress'
+
+const budget = learningBrowserTestBudget()
 
 const tour: TourDefinition = { id: 'OBT-01', version: 1, slug: 'test-only', title: '', goal: '', why: '', trigger: '', entryTriggers: [],
   titleKey: '', goalKey: '', whyKey: '', requires: [], owner: 'A3', evidence: [], priority: 'P0', steps: ['first.send', 'first.result'].map(id => ({
@@ -10,8 +12,8 @@ const tour: TourDefinition = { id: 'OBT-01', version: 1, slug: 'test-only', titl
     handoff: false, optional: false, requires: [], onUnavailable: 'block', missingTarget: 'block-and-offer-retry-or-pause', notes: '', testId: 'DATA' })) } as TourDefinition
 
 describe('real IndexedDB learning transactions', () => {
-  beforeAll(startLearningBrowserTests, 40_000)
-  afterAll(stopLearningBrowserTests, 40_000)
+  beforeAll(startLearningBrowserTests, learningBrowserLifecycleBudget)
+  afterAll(stopLearningBrowserTests, learningBrowserLifecycleBudget)
 
   test('DATA-01 concurrent windows preserve both milestones and deduplicate replay', async () => {
     const result = await inLearningWindows(async (first, second) => {
@@ -33,7 +35,7 @@ describe('real IndexedDB learning transactions', () => {
       expect(result.before.value?.steps['first.result']?.verifiedAt).toBe(2)
       expect(result.replay.value.revision).toBe(result.before.value!.revision)
     }
-  })
+  }, budget)
 
   test('DATA-02 atomic acquisition, TTL takeover and stale release preserve fencing', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async () => {
@@ -54,7 +56,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.oldRenew).toBeNull()
     expect(result.kept?.ownerWindowId).toBe('next')
     expect(result.afterRelease?.fence).toBe(result.next!.fence + 1)
-  })
+  }, budget)
 
   test('DATA-02 stale owner cannot persist milestones after another window acquires a newer fence', async () => {
     const result = await inLearningWindows(async (first, second) => {
@@ -87,7 +89,7 @@ describe('real IndexedDB learning transactions', () => {
       expect(result.accepted.value.steps['first.send']).toBeUndefined()
       expect(result.accepted.value.steps['first.result']?.verifiedAt).toBe(15_102)
     }
-  })
+  }, budget)
 
   test('guard rejects a released durable lease without switching progress into memory fallback', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
@@ -102,7 +104,7 @@ describe('real IndexedDB learning transactions', () => {
       return { rejected, read: await repository.read(scope, tour.id) }
     }, tour))
     expect(result).toEqual({ rejected: true, read: { status: 'saved', value: null } })
-  })
+  }, budget)
 
   test('explicit memory guard validates realm lease and never writes durable milestones', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
@@ -124,7 +126,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.memoryRead.status).toBe('memory-only')
     expect(result.durable).toEqual({ status: 'saved', value: null })
     expect(result.rejected).toBeTrue()
-  })
+  }, budget)
 
   test('DATA-03 denied storage is explicit memory-only and cannot claim a partition lease', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
@@ -136,7 +138,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.progress.status).toBe('memory-only')
     expect(result.lease).toBeNull()
     expect(result.status).toBe('memory-only')
-  })
+  }, budget)
 
   test('DATA-03 write success followed by transaction abort never returns saved', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
@@ -150,7 +152,7 @@ describe('real IndexedDB learning transactions', () => {
         { kind: 'evidence', stepId: 'first.send', stepVersion: 1, level: 'verified', at: 1 })
     }, tour))
     expect(result.status).toBe('memory-only')
-  })
+  }, budget)
 
   test('failed later writes preserve cached milestones, dismissal and revision in memory', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
@@ -172,39 +174,42 @@ describe('real IndexedDB learning transactions', () => {
       expect(result.failedWrite.value.steps['first.send']?.verifiedAt).toBe(1)
       expect(result.failedWrite.value.revision).toBe(result.before.value.revision + 1)
     }
-  })
+  }, budget)
 
   test('DATA-04 future database schema is preserved and unavailable', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
-      await new Promise<void>((resolve, reject) => {
-        const request = indexedDB.open('rox-product-tour', 2)
-        request.onupgradeneeded = () => { request.result.createObjectStore('future').put('keep', 'sentinel') }
-        request.onsuccess = () => { request.result.close(); resolve() }; request.onerror = () => reject(request.error)
-      })
+      const opened = Promise.withResolvers<void>()
+      const request = indexedDB.open('rox-product-tour', 2)
+      request.onupgradeneeded = () => { request.result.createObjectStore('future').put('keep', 'sentinel') }
+      request.onsuccess = () => { request.result.close(); opened.resolve() }
+      request.onerror = () => opened.reject(request.error)
+      await opened.promise
       const repository = window.learningTest.createProgressRepository()
       const read = await repository.read('scope', tour.id)
       const write = await repository.apply('scope', tour, { kind: 'skip', stepId: 'first.send', stepVersion: 1, at: 1 })
-      const kept = await new Promise(resolve => {
-        const request = indexedDB.open('rox-product-tour', 2)
-        request.onsuccess = () => { const db = request.result; const get = db.transaction('future').objectStore('future').get('sentinel');
-          get.onsuccess = () => { db.close(); resolve(get.result) } }
-      })
+      const keptResult = Promise.withResolvers<unknown>()
+      const keptOpen = indexedDB.open('rox-product-tour', 2)
+      keptOpen.onsuccess = () => { const db = keptOpen.result; const get = db.transaction('future').objectStore('future').get('sentinel');
+        get.onsuccess = () => { db.close(); keptResult.resolve(get.result) } }
+      const kept = await keptResult.promise
       return { read, write, kept }
     }, tour))
     expect(result.read.status).toBe('failed')
     expect(result.write.status).toBe('failed')
     expect(result.kept).toBe('keep')
-  })
+  }, budget)
 
   test('corrupt progress safely reads empty; future record schema is not overwritten', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
       const repository = window.learningTest.createProgressRepository()
       await repository.read('scope', tour.id)
-      const writeRecord = (scope: string, record: unknown) => new Promise<void>(resolve => {
+      const writeRecord = (scope: string, record: unknown) => {
+        const written = Promise.withResolvers<void>()
         const request = indexedDB.open('rox-product-tour', 1)
         request.onsuccess = () => { const db = request.result; const tx = db.transaction('progress', 'readwrite');
-          tx.objectStore('progress').put(record, [scope, tour.id]); tx.oncomplete = () => { db.close(); resolve() } }
-      })
+          tx.objectStore('progress').put(record, [scope, tour.id]); tx.oncomplete = () => { db.close(); written.resolve() } }
+        return written.promise
+      }
       await writeRecord('scope', { schemaVersion: 1, steps: { 'first.send': { verifiedAt: 'bad' } } })
       const corrupted = await repository.read('scope', tour.id)
       const recovered = await repository.apply('scope', tour, { kind: 'evidence', stepId: 'first.send', stepVersion: 1, level: 'verified', at: 1 })
@@ -215,7 +220,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.corrupted).toEqual({ status: 'saved', value: null })
     expect(result.recovered.status).toBe('saved')
     expect(result.future.status).toBe('failed')
-  })
+  }, budget)
 
   test('DATA-05 scoped reset keeps other workspace, profile preferences and native markers', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
@@ -240,7 +245,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.b.status === 'saved' && result.b.value?.steps['first.send']?.skippedAt).toBe(1)
     expect(result.after).toEqual(result.before)
     expect(result.marker).toBe('native-marker')
-  })
+  }, budget)
 
   test('scoped reset rejects a missing guard and another window owner without deleting milestones', async () => {
     const result = await inLearningWindows(async (first, second) => {
@@ -263,7 +268,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.rejected).toEqual([true, true])
     expect(result.acquisition).toBeNull()
     expect(result.progress.status === 'saved' && result.progress.value?.steps['first.send']?.verifiedAt).toBe(101)
-  })
+  }, budget)
 
   test('reset checks the persisted fence atomically even when a stale window extends its local expiry', async () => {
     const result = await inLearningWindows(async (first, second) => {
@@ -287,7 +292,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.rejected).toBeTrue()
     expect(result.progress.status).toBe('saved')
     expect(result.progress.status === 'saved' && result.progress.value?.steps['first.result']?.verifiedAt).toBe(15_101)
-  })
+  }, budget)
 
   test('memory-only reset never deletes a durable milestone and still requires a live realm lease', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
@@ -311,7 +316,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(result.rejected).toBeTrue()
     expect(result.memory.status === 'memory-only' && result.memory.value).toBeNull()
     expect(result.durable.status === 'saved' && result.durable.value?.steps['first.send']?.verifiedAt).toBe(1)
-  })
+  }, budget)
 
   test('DATA-06 copy revision preserves evidence; semantic revision resets only changed step', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async tour => {
@@ -329,7 +334,7 @@ describe('real IndexedDB learning transactions', () => {
       expect(result.changed.value.steps['first.result']?.verifiedAt).toBe(1)
       expect(result.stale.value).toEqual(result.changed.value)
     } else throw new Error('Expected real committed IndexedDB progress')
-  })
+  }, budget)
 
   test('profile identity is random, stable and atomic across two clients', async () => {
     const profiles = await inLearningBrowser(page => page.evaluate(async () => Promise.all([
@@ -337,7 +342,7 @@ describe('real IndexedDB learning transactions', () => {
     expect(profiles[0]).toEqual(profiles[1])
     expect(profiles[0].status === 'saved' && profiles[0].value.preferences).toEqual({ invitationsEnabled: false, diagnosticsEnabled: false })
     expect(profiles[0].status === 'saved' && profiles[0].value.clientProfileId).toMatch(/^[0-9a-f-]{36}$/)
-  })
+  }, budget)
 })
 
 test('memory-only repository is scoped and never promotes skip into verification', async () => {
