@@ -17,6 +17,27 @@ export type MessageType =
   | 'error'
   | 'sequence_ack'
 
+/**
+ * Advertised protocol feature block (handshake_ack `features`).
+ *
+ * Optional for backwards compatibility: an ack that omits it means "server did
+ * not advertise", and clients MUST assume every channel is available.
+ */
+export interface ProtocolFeatures {
+  /** Method channel names − every `RPC_CHANNELS` value. */
+  methods: string[]
+  /** Broadcast event channel names − every `BroadcastEventMap` key. */
+  events: string[]
+  /** Capability tokens the server can drive/accept. */
+  capabilities: string[]
+}
+
+/** Advertised transport policy (handshake_ack `policy`). */
+export interface ProtocolPolicy {
+  /** Max WS frame payload in bytes. */
+  maxPayloadBytes: number
+}
+
 export interface MessageEnvelope {
   /** Correlation ID. UUIDv4 for requests; echoed in responses. */
   id: string
@@ -51,6 +72,10 @@ export interface MessageEnvelope {
   clientCapabilities?: string[]
   /** Server-registered channels, sent in handshake_ack. Clients use this to avoid calling unavailable channels. */
   registeredChannels?: string[]
+  /** Protocol feature block, sent in handshake_ack. Optional for back-compat. */
+  features?: ProtocolFeatures
+  /** Transport policy, sent in handshake_ack. Optional for back-compat. */
+  policy?: ProtocolPolicy
 
   // -- Reliable delivery fields --
 
