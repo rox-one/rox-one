@@ -5,7 +5,7 @@ import type { DevSpaceRepositoryRecord } from '@rox/shared/dev-space'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, type TabItem } from '@/components/ui/tabs'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { devSpaceErrorKey } from './components/errors'
 import { DEV_SPACE_STATUS_KEYS, DEV_SPACE_STATUS_VARIANT, isRepositoryOutdated } from './components/status'
@@ -20,6 +20,9 @@ const REPO_TABS = [
   { id: 'knowledge', labelKey: 'devSpace.repo.tabs.knowledgeGraph' },
   { id: 'c4', labelKey: 'devSpace.repo.tabs.c4' },
 ] as const
+
+/** Panel id for the controlled `role=tabpanel` of a repo surface tab. */
+const repoPanelId = (id: string) => `dev-space-surface-panel-${id}`
 
 export interface DevSpaceRepoPageProps { devSpaceRepoId?: string }
 
@@ -57,6 +60,12 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
   }
 
   const outdated = record ? isRepositoryOutdated(record) : false
+  const tabItems: TabItem[] = REPO_TABS.map((item) => ({
+    id: item.id,
+    label: t(item.labelKey),
+    title: t(item.labelKey),
+    controls: repoPanelId(item.id),
+  }))
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="dev-space-repo">
@@ -79,23 +88,33 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
         ) : !record ? (
           <p className="text-sm text-muted-foreground" data-testid="dev-space-repo-not-found">{t('devSpace.repo.notFound')}</p>
         ) : (
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="h-auto flex-wrap">
-              {REPO_TABS.map((item) => <TabsTrigger key={item.id} value={item.id} data-testid={`dev-space-tab-${item.id}`}>{t(item.labelKey)}</TabsTrigger>)}
-            </TabsList>
-            {REPO_TABS.map((item) => (
-              <TabsContent key={item.id} value={item.id}>
-                <section className="rounded-[var(--radius-card)] border border-border-subtle p-6" data-testid={`dev-space-surface-${item.id}`} aria-labelledby={`dev-space-surface-title-${item.id}`}>
-                  <h2 id={`dev-space-surface-title-${item.id}`} className="text-sm font-semibold">{t('devSpace.repo.stub.title')}</h2>
-                  <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t('devSpace.repo.stub.description')}</p>
-                  <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant={DEV_SPACE_STATUS_VARIANT[record.status]}>{t(DEV_SPACE_STATUS_KEYS[record.status])}</Badge>
-                    <span>{t('devSpace.repo.stub.status', { status: t(DEV_SPACE_STATUS_KEYS[record.status]) })}</span>
-                  </div>
-                </section>
-              </TabsContent>
+          <div className="space-y-4">
+            <Tabs
+              items={tabItems}
+              activeId={tab}
+              variant="surface"
+              density="compact"
+              ariaLabel={t('devSpace.repo.title')}
+              onSelect={setTab}
+            />
+            {REPO_TABS.map((item) => item.id === tab && (
+              <section
+                key={item.id}
+                id={repoPanelId(item.id)}
+                role="tabpanel"
+                aria-labelledby={`dev-space-surface-title-${item.id}`}
+                data-testid={`dev-space-surface-${item.id}`}
+                className="rounded-[var(--radius-card)] border border-border-subtle p-6"
+              >
+                <h2 id={`dev-space-surface-title-${item.id}`} className="text-sm font-semibold">{t('devSpace.repo.stub.title')}</h2>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t('devSpace.repo.stub.description')}</p>
+                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Badge variant={DEV_SPACE_STATUS_VARIANT[record.status]}>{t(DEV_SPACE_STATUS_KEYS[record.status])}</Badge>
+                  <span>{t('devSpace.repo.stub.status', { status: t(DEV_SPACE_STATUS_KEYS[record.status]) })}</span>
+                </div>
+              </section>
             ))}
-          </Tabs>
+          </div>
         )}
       </div>
     </div>
