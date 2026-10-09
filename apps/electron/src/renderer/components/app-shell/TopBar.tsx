@@ -8,7 +8,7 @@
  */
 
 import { useTranslation } from "react-i18next"
-import * as Icons from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, PanelRight, Plus } from "lucide-react"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui"
 import { PanelLeftRounded } from "../icons/PanelLeftRounded"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
@@ -146,7 +146,7 @@ export function TopBar({
         >
           <CraftAgentsSymbol className="size-6 shrink-0 object-contain" />
           {!isCompact && <span className="max-w-40 truncate">{workspaceName}</span>}
-          <Icons.ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden />
+          <ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden />
         </button>
       }
     />
@@ -336,7 +336,7 @@ export function TopBar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label={t("common.back")}>
-                  <Icons.ChevronLeft className="h-4 w-4 text-text-secondary" />
+                  <ChevronLeft className="h-4 w-4 text-text-secondary" />
                 </TopBarButton>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t("common.back")} {goBackHotkey}</TooltipContent>
@@ -345,7 +345,7 @@ export function TopBar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <TopBarButton onClick={onForward} disabled={!canGoForward} aria-label={t("common.forward")}>
-                  <Icons.ChevronRight className="h-4 w-4 text-text-secondary" />
+                  <ChevronRight className="h-4 w-4 text-text-secondary" />
                 </TopBarButton>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t("common.forward")} {goForwardHotkey}</TooltipContent>
@@ -457,7 +457,7 @@ export function TopBar({
                 aria-pressed={inspectorOpen}
                 className="h-6 w-6 rounded-md"
               >
-                <Icons.PanelRight className="h-4 w-4 text-text-secondary" />
+                <PanelRight className="h-4 w-4 text-text-secondary" />
               </TopBarButton>
             </TooltipTrigger>
             <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
@@ -470,7 +470,7 @@ export function TopBar({
               aria-label={t("browser.newTab")}
               className="h-6 w-6 rounded-md"
             >
-              <Icons.Plus className="h-4 w-4 text-text-secondary" />
+              <Plus className="h-4 w-4 text-text-secondary" />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("browser.newTab")}</TooltipContent>

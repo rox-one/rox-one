@@ -32,12 +32,6 @@ export interface AccessPolicyPlugin {
    * refuses; only an explicit `true` admits. Fail-closed by construction.
    */
   authorize(request: AccessPolicyRequest): boolean | Promise<boolean>
-  /**
-   * Optional second hook, invoked when a connection adopting the policy
-   * resumes (e.g. to rehydrate plugin-side state). Absence never admits or
-   * refuses anything on its own.
-   */
-  resume?(request: AccessPolicyRequest): void | Promise<void>
 }
 
 const registry = new Map<string, AccessPolicyPlugin>()

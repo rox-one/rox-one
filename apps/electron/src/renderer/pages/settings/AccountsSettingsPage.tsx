@@ -38,7 +38,7 @@ export const meta: DetailsPageMeta = {
 const STATUS_TONE: Record<ServiceConnection['status'], string> = {
   connected: 'text-success',
   syncing: 'text-accent',
-  expired: 'text-warning',
+  expired: 'text-status-warning',
   error: 'text-destructive',
   disconnected: 'text-muted-foreground',
 }
@@ -504,7 +504,7 @@ export default function AccountsSettingsPage() {
               }
               wrapDescription
             >
-              <span className={`text-xs ${healthOk === null ? 'text-muted-foreground' : healthOk ? 'text-success' : 'text-warning'}`}>
+              <span className={`text-xs ${healthOk === null ? 'text-muted-foreground' : healthOk ? 'text-success' : 'text-status-warning'}`}>
                 {healthOk === null ? '' : healthOk ? t('settings.accounts.healthOk') : t('settings.accounts.healthIssues')}
               </span>
               <Button
