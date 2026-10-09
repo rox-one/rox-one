@@ -456,14 +456,27 @@ describe('email batching worker', () => {
   })
 
   test('keeps a failed send pending for the next run', async () => {
-    const transport: NotificationEmailTransport = { async send() { throw new Error('smtp is down') } }
+    const sent: string[][] = []
+    const transport: NotificationEmailTransport = {
+      async send(message) { sent.push([...message.notificationIds]); throw new Error('smtp is down') },
+    }
     const f = await setup({ outboundEmail: true, transport })
     await f.post(envelope('comments.create', { subscriberIds: [SUBSCRIBER_A] }))
     await f.relay.idle()
     const [batch] = f.notifications.batches()
-    const summary = await f.notify.service.worker.runOnce(new Date(Date.parse(batch!.sendAt) + 1000))
-    expect(summary).toMatchObject({ due: 1, failed: 1, sent: 0 })
+    const at = new Date(Date.parse(batch!.sendAt) + 1000)
+
+    const first = await f.notify.service.worker.runOnce(at)
+    expect(first).toMatchObject({ due: 1, failed: 1, sent: 0 })
     expect(received(f, SUBSCRIBER_A)[0]?.emailState).toBe('held')
-    expect(f.notifications.batches()[0]).toMatchObject({ status: 'failed', error: 'smtp is down' })
+    expect(f.notifications.batches()[0]).toMatchObject({ status: 'pending', error: 'smtp is down' })
+
+    // The second run picks the very same batch up again and retries the send.
+    const second = await f.notify.service.worker.runOnce(at)
+    expect(second).toMatchObject({ due: 1, failed: 1, sent: 0 })
+    expect(sent).toHaveLength(2)
+    expect(sent[1]).toEqual(sent[0])
+    expect(received(f, SUBSCRIBER_A)[0]?.emailState).toBe('held')
+    expect(f.notifications.batches()[0]).toMatchObject({ status: 'pending', error: 'smtp is down' })
   })
 })

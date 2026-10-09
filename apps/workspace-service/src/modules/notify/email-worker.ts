@@ -74,15 +74,16 @@ export class NotifyEmailWorker {
         summary.skipped += 1
         continue
       }
-      await this.store.saveBatch({ ...batch, status: 'sending' })
+      await this.store.saveBatch({ ...batch, status: 'sending', error: undefined })
       try {
         await this.transport.send({ workspaceId: batch.workspaceId, principalId: batch.principalId, windowMinutes: batch.windowMinutes, notificationIds: ids })
         summary.notifications += await this.store.setEmailState(ids, 'sent')
-        await this.store.saveBatch({ ...batch, status: 'sent', sentAt: clock })
+        await this.store.saveBatch({ ...batch, status: 'sent', sentAt: clock, error: undefined })
         summary.sent += 1
       } catch (error) {
-        // The rows stay `held`: the next run retries the same window.
-        await this.store.saveBatch({ ...batch, status: 'failed', error: describeError(error), sentAt: clock })
+        // The rows stay `held` and the batch stays `pending`, so the next run
+        // (`dueBatches` selects `pending` with `send_at <= now`) retries the same window.
+        await this.store.saveBatch({ ...batch, status: 'pending', error: describeError(error) })
         summary.failed += 1
       }
     }
