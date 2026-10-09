@@ -52,6 +52,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       // A failed address owns a content surface, including compact mode.
       return true
     case 'memory':
+    case 'clipboard-history':
     case 'learning':
     case 'connections':
     case 'search':

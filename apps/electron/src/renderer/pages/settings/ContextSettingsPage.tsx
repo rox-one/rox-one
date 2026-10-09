@@ -20,6 +20,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { useAppShellContext, useActiveWorkspace } from '@/context/AppShellContext'
 import { Spinner } from '@rox/ui'
 import { SettingsSection, SettingsCard, SettingsRow } from '@/components/settings'
+import { KnowledgeMapPanel } from '@/components/knowledge-map/KnowledgeMapPanel'
 import { PreferencesForm } from './PreferencesPage'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ContextDocContent, ContextDocInfo, Lesson } from '../../../shared/types'
@@ -354,6 +355,13 @@ export default function ContextSettingsPage() {
             )}
 
             <PreferencesForm />
+
+            <SettingsSection
+              title={t('knowledgeMap.context.sectionTitle')}
+              description={t('knowledgeMap.context.sectionHint')}
+            >
+              <KnowledgeMapPanel workspaceId={activeWorkspaceId ?? null} />
+            </SettingsSection>
 
             <SettingsSection
               title={t('settings.context.docsTitle')}

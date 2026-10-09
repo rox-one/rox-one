@@ -101,7 +101,7 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
 import { PageThumbnailer } from './page-thumbnailer'
-import { registerAllRpcHandlers } from './handlers/index'
+import { registerAllRpcHandlers, startClipboardMonitor } from './handlers/index'
 import { createDriveService } from './drive/register'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
 import { createWorkGraphKernel, type WorkGraphKernel } from '@rox/server-core/workgraph'
@@ -1413,12 +1413,16 @@ app.whenReady().then(async () => {
         // GUI: register all handlers plus the main-process-owned WorkGraph profile.
         registerAllRpcHandlers: isHeadless
           ? (server, deps, serverCtx) => registerCoreRpcHandlers(server, deps, serverCtx)
-          : (server, deps, serverCtx) => registerAllRpcHandlers(
-              server,
-              deps,
-              serverCtx,
-              workGraphKernel ?? undefined,
-            ),
+          : (server, deps, serverCtx) => {
+              registerAllRpcHandlers(
+                server,
+                deps,
+                serverCtx,
+                workGraphKernel ?? undefined,
+              )
+              // Rox History capture loop: idempotent, fail-soft without storage.
+              startClipboardMonitor(deps)
+            },
         setSessionEventSink: (sm, sink) => sm.setEventSink(sink),
         initializeSessionManager: (sm) => sm.initialize(),
         initModelRefreshService: () => initModelRefreshService(async (slug: string) => {

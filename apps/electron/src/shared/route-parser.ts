@@ -92,7 +92,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'clipboard-history' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -142,7 +142,7 @@ export interface ParsedCompoundRoute {
  * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'clipboard-history', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   // Kind-first entity surfaces (W1-01). Shared with the deep-link handler so
   // `rox://docs/wiki/{id}` etc. reach the renderer parser.
@@ -416,6 +416,12 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
       return null
     }
     return null
+  }
+
+  // Rox History navigator (clipboard history)
+  if (first === 'clipboard-history') {
+    if (segments.length !== 1) return null
+    return { navigator: 'clipboard-history', details: null }
   }
 
   // Learning navigator (self-learning dashboard — PRD §25-30)
@@ -774,6 +780,10 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'memory'
   }
 
+  if (parsed.navigator === 'clipboard-history') {
+    return 'clipboard-history'
+  }
+
   if (parsed.navigator === 'learning') {
     return 'learning'
   }
@@ -1020,6 +1030,11 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
         ...(compound.details ? { detailType: compound.details.type } : {}),
       },
     }
+  }
+
+  // Rox History
+  if (compound.navigator === 'clipboard-history') {
+    return { type: 'view', name: 'clipboard-history', params: {} }
   }
 
   // Learning
@@ -1336,6 +1351,11 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'memory', details: null }
   }
 
+  // Rox History
+  if (compound.navigator === 'clipboard-history') {
+    return { navigator: 'clipboard-history', details: null }
+  }
+
   // Learning
   if (compound.navigator === 'learning') {
     return { navigator: 'learning', details: null }
@@ -1597,6 +1617,8 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       }
       return tab ? { navigator: 'memory', tab, details } : { navigator: 'memory', details: null }
     }
+    case 'clipboard-history':
+      return { navigator: 'clipboard-history', details: null }
     case 'learning':
       return { navigator: 'learning', details: null }
     case 'drive':
@@ -1861,6 +1883,13 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
           ? { type: 'file', id: state.details.path }
           : { type: 'commit', id: state.details.sha }
         : null,
+    }
+  }
+
+  if (state.navigator === 'clipboard-history') {
+    return {
+      navigator: 'clipboard-history',
+      details: null,
     }
   }
 

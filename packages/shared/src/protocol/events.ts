@@ -40,6 +40,7 @@ import type { VoiceWakeChangedPayload, VoiceWakeTrigger } from '../voice/wake-li
 import type { EnvironmentPrefs } from '../environment'
 import type { PrivacyDto } from '../privacy/types.ts'
 import type { ServiceStatus, TrayStatus } from '../service-lifecycle.ts'
+import type { ClipChangedPayload } from '../clipboard-history/types'
 
 /** Payload of marketplace:CHANGED — pushed after an install/update/remove completes. */
 export interface MarketplaceChangedPayload {
@@ -201,6 +202,11 @@ export interface BroadcastEventMap {
   // Copilot device code event
   [RPC_CHANNELS.copilot.DEVICE_CODE]: [data: { userCode: string; verificationUri: string }]
 
+  // Rox History — clipboard history changed (global, local-only store).
+  [RPC_CHANNELS.clipboard.CHANGED]: [payload: ClipChangedPayload]
+  // Knowledge map — rebuild signal pushed after a watcher-triggered re-scan;
+// consumers re-fetch via knowledgeMap:get (mirrors contextDocs:CHANGED).
+  [RPC_CHANNELS.knowledgeMap.CHANGED]: []
   // Context documents broadcasts (global)
   [RPC_CHANNELS.contextDocs.CHANGED]: []
 

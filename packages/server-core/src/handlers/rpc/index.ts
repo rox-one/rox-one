@@ -29,6 +29,7 @@ import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './se
 import { registerRuntimeTraceHandlers } from './runtime-trace'
 import { registerSessionForeignImportHandlers } from './session-foreign-import'
 import { registerNotesHandlers, cleanupNotesWatchForClient } from './notes'
+import { registerKnowledgeMapHandlers } from './knowledge-map'
 import { registerNativeDataHandlers } from './native-data.ts'
 import { registerTgLinkHandlers } from './tg-link.ts'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
@@ -179,6 +180,7 @@ export function registerCoreRpcHandlers(
   registerSkillsPendingHandlers(server, deps)
   registerLearningHandlers(server, deps)
   registerNotesHandlers(server, deps)
+  registerKnowledgeMapHandlers(server)
   if (deps.nativeData) registerNativeDataHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)
   registerMindmapHandlers(server, deps)

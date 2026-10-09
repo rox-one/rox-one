@@ -17,12 +17,34 @@
  * Action-backed entries (`action: 'open-browser'`) carry `route: null` too,
  * but open their existing native surface instead of a route.
  */
-import { GitBranch, HardDrive, type LucideIcon } from 'lucide-react'
+import {
+  BookOpen,
+  Brain,
+  Cable,
+  Calendar,
+  ClipboardList,
+  DatabaseZap,
+  FolderKanban,
+  GitBranch,
+  Globe,
+  GraduationCap,
+  HardDrive,
+  House,
+  ListTodo,
+  MessageSquare,
+  NotebookPen,
+  PanelsTopLeft,
+  Settings,
+  Workflow,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
 import { GLYPHS } from '../../platform/glyphs'
 import { routes, type ViewRoute } from '../../../shared/routes'
 import {
   isAutomationsNavigation,
   isBrowserNavigation,
+  isClipboardHistoryNavigation,
   isConnectionsNavigation,
   isDiffNavigation,
   isDriveNavigation,
@@ -47,6 +69,7 @@ export type AppNavDestinationId =
   | 'sources'
   | 'skills'
   | 'memory'
+  | 'clipboardHistory'
   | 'memoryRepo'
   | 'learning'
   | 'browser'
@@ -196,6 +219,16 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     contextLinkIds: ['nav:learning'],
     route: () => routes.view.learning(),
     isActive: isLearningNavigation,
+  },
+  {
+    id: 'clipboardHistory',
+    linkId: 'nav:clipboardHistory',
+    icon: ClipboardList,
+    labelKey: 'clipboard.title',
+    railGroup: 'more',
+    contextLinkIds: ['nav:clipboardHistory'],
+    route: () => routes.view.clipboardHistory(),
+    isActive: isClipboardHistoryNavigation,
   },
   {
     // W3.2: Встречи merged into the calendar surface — the entry keeps its

@@ -194,6 +194,9 @@ export const routes = {
       return 'memory' as const
     },
 
+    /** Rox History view (clipboard history navigator) */
+    clipboardHistory: () => 'clipboard-history' as const,
+
     /** Learning view (learning navigator — self-learning dashboard, PRD §25-30) */
     learning: () => 'learning' as const,
 
