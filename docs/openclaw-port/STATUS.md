@@ -225,6 +225,27 @@ server-core errors. Both were found only after running the chain to completion.
 - `packages/server/src/__tests__/smoke.test.ts`: "Server did not stop on SIGTERM" (reproduced with the port changes stashed).
 - `packages/server-core/src/memory/__tests__/skill-pending-queue.test.ts` → "does not surface .pending candidates as skills": borderline 5 s per-test budget; passes consistently in isolation (38/38, ~5.1 s, identical to pristine main) and fails only when the suite runs under load.
 
+### Sweep methodology (2026-10-09) — batching vs isolation
+
+A broad sweep of the ported roots (1,304 files / ~12,700 tests in ONE bun process) reported **318 failures**;
+re-running the same files one at a time shows that **most are a batching artifact** — files that fail together pass
+alone (mcp client suites, siyuan, logger.errors, browser-broadcast, extension-host descriptors, notes-autocreate,
+dream-notes, omp-history-recovery, …). The comparison against a pristine pre-port worktree (base `c0c1200db`: 142 of
+those tests already failing there) narrowed the real set to four files, all now fixed in the verification-fixes PR:
+
+| file | before | after | verdict |
+|---|---|---|---|
+| `packages/server-core/src/agents/__tests__/identity-handlers.test.ts` | 3/20 | 23/0 | MAIN-CAUSED, production-affecting: W1-06 placeholder schemas shadowed W1-11's real payload schemas |
+| `packages/server-core/src/agents/__tests__/governance-integration.test.ts` | 1/16 | 17/0 | same defect |
+| `packages/server-core/src/handlers/rpc/__tests__/native-session-client.test.ts` | 0/11 | 11/0 | fixture drift (port) **plus a real product bug**: LOCAL_ONLY channels were denied for any principal-bearing bound local client, so `toolchain:update` was unreachable from the desktop |
+| `packages/shared/src/agent/__tests__/omp-builtin-read-permissions.test.ts` | 0/13 | 13/0 | MAIN-CAUSED (dependency): the Claude Agent SDK bundles zod 4.4.3 while the repo resolves 4.6.5, and a `z.record(...)` tool schema made the bundled converter call 4.6.5's record processor with a 4.4.3 context (`ctx.deferred` undefined) |
+
+Also recovered there: **PR #1675 silently reverted the `/hooks` node hardening** (unbounded body buffering returned,
+and an un-normalized pre-filter handed the downstream handler a drained socket, hanging every `/hooks/../echo`
+request), and the `typecheck:all` chain had been hiding two more error batches because it stops at the first failing
+workspace.
+
+
 ## a1 (7 rows)
 
 | id | capability | verdict | effort | status | evidence | notes |
