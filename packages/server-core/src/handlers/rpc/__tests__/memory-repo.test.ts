@@ -218,7 +218,12 @@ describe('memory:repo* / memory:dream* registration', () => {
       expect(harness.options[channel]).toEqual({ nativeAction: 'read' })
     }
     for (const channel of WRITE_CHANNELS) {
-      expect(harness.options[channel]).toEqual({ nativeAction: 'write' })
+      // dreamRun is the only write that blocks until the run finishes, so it is
+      // the only one carrying an explicit transport budget (the client uses the
+      // same 240 s so neither side fires first).
+      expect(harness.options[channel]).toEqual(
+        channel === CH.DREAM_RUN ? { nativeAction: 'write', timeoutMs: 240_000 } : { nativeAction: 'write' },
+      )
     }
   })
 

@@ -10,6 +10,7 @@ import TaskItem from '@tiptap/extension-task-item'
 import { Mathematics } from '@tiptap/extension-mathematics'
 import { EntityEmbed } from '../extensions/EntityEmbed'
 import { EntityMention } from '../extensions/EntityMention'
+import { restoreVerbatimText } from '../official-markdown'
 
 export type Flag = 'on' | 'off'
 
@@ -44,6 +45,10 @@ export interface ParityResult {
 
 export function measure(flag: Flag, markdown: AnyExtension, source: string): ParityResult {
   const editor = new Editor({ extensions: parityExtensions(flag, markdown), content: source, contentType: 'markdown' })
+  // Both sides must serialise text the way production does (main's verbatim
+  // text rendering). PerEditorMarkdown already patches its manager in
+  // `onBeforeCreate`; this covers the stock-`Markdown` global control too.
+  restoreVerbatimText(editor)
   const counts: Record<string, number> = {}
   const walk = (node: JSONContent) => {
     if (node.type) counts[node.type] = (counts[node.type] ?? 0) + 1

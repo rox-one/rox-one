@@ -14,7 +14,7 @@ import type { ElectronAPI } from '../shared/types'
 // ---------------------------------------------------------------------------
 
 export type ChannelMapEntry =
-  | { type: 'invoke'; channel: string; transform?: (result: any) => any }
+  | { type: 'invoke'; channel: string; transform?: (result: any) => any; timeoutMs?: number }
   | { type: 'listener'; channel: string }
 
 export type ChannelMap = Record<string, ChannelMapEntry>
@@ -38,7 +38,9 @@ export function buildClientApi(
     } else {
       fn = async (...args: unknown[]) => {
         try {
-          const result = await client.invoke(entry.channel, ...args)
+          const result = entry.timeoutMs !== undefined && client.invokeWithTimeout
+            ? await client.invokeWithTimeout(entry.channel, entry.timeoutMs, ...args)
+            : await client.invoke(entry.channel, ...args)
           return entry.transform ? entry.transform(result) : result
         } catch (error) {
           // Electron's contextBridge rebuilds native Errors from `message`

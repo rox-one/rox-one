@@ -14,7 +14,6 @@
     "apps/electron/src/renderer/__tests__/voice-overlay.browser.test.ts",
     "apps/electron/src/renderer/actions/__tests__/action-labels-i18n.test.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
-    "apps/electron/src/renderer/components/app-shell/__tests__/memory-proposal-card.test.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/message-actions.browser.test.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.browser.test.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
