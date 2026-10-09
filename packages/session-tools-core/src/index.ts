@@ -200,7 +200,7 @@ export type {
   SkillsRuntimeScope,
   SkillsToolRuntime,
 } from './skills/runtime.ts';
-export { isSafeSkillSlug, skillsRuntimeScope } from './skills/scope.ts';
+export { isSafeSkillSlug, isWithinRealRoot, skillsRuntimeScope } from './skills/scope.ts';
 
 // Handlers
 export {

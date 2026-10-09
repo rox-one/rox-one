@@ -7,16 +7,27 @@
 import { describe, expect, it } from 'bun:test';
 import {
   AVAILABLE_SKILLS_MAX_ENTRIES,
+  SKILLS_READ_HOST_TOOL,
+  SKILLS_SEARCH_HOST_TOOL,
   buildAvailableSkillsBlock,
 } from '../prompt.ts';
 import { composeOmpAppendSystemPrompt } from '../../agent/omp-agent.ts';
+import { getSessionToolProxyDefs } from '../../agent/backend/pi/session-tool-defs.ts';
 import type { LoadedSkill, SkillSource } from '../types.ts';
+
+/** The tool names OMP actually receives from set_host_tools. */
+const REGISTERED_HOST_TOOLS = new Set(getSessionToolProxyDefs().map(def => def.name));
 
 function skill(slug: string, source: SkillSource, description = `${slug} description`): LoadedSkill {
   return { slug, path: `/root/${slug}`, source, content: '', metadata: { name: `Name ${slug}`, description } };
 }
 
 describe('buildAvailableSkillsBlock', () => {
+  it('advertises the exact host-tool names OMP registers', () => {
+    expect(REGISTERED_HOST_TOOLS.has(SKILLS_SEARCH_HOST_TOOL)).toBe(true);
+    expect(REGISTERED_HOST_TOOLS.has(SKILLS_READ_HOST_TOOL)).toBe(true);
+  });
+
   it('returns null when there is nothing to advertise', () => {
     expect(buildAvailableSkillsBlock([])).toBeNull();
     expect(buildAvailableSkillsBlock([{ ...skill('shadowed', 'omp'), shadowedByCraft: true }])).toBeNull();
@@ -28,7 +39,8 @@ describe('buildAvailableSkillsBlock', () => {
     expect(block!.startsWith('<available_skills>')).toBe(true);
     expect(block!.endsWith('</available_skills>')).toBe(true);
     expect(block).toContain('`demo`');
-    expect(block).toContain('skills_read slug="demo"');
+    expect(block).toContain(`${SKILLS_READ_HOST_TOOL} slug="demo"`);
+    expect(block).toContain(`\`${SKILLS_SEARCH_HOST_TOOL}\``);
     expect(block).toContain('demo description');
   });
 
@@ -64,8 +76,9 @@ describe('buildAvailableSkillsBlock', () => {
 
   it('honours the byte cap', () => {
     const many = Array.from({ length: 50 }, (_, i) => skill(`byte-${i}`, 'workspace'));
-    const block = buildAvailableSkillsBlock(many, { maxBytes: 400 })!;
-    expect(Buffer.byteLength(block, 'utf8')).toBeLessThan(500);
+    // Cap sits above the (now mcp__session__-prefixed) header so at least one entry fits.
+    const block = buildAvailableSkillsBlock(many, { maxBytes: 500 })!;
+    expect(Buffer.byteLength(block, 'utf8')).toBeLessThan(600);
     expect(block).toContain('more skill(s) omitted');
   });
 });

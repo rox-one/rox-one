@@ -5,17 +5,23 @@
  */
 
 import { afterEach, describe, expect, it } from 'bun:test';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  buildSkillEligibilityReport,
   credentialIdMatchesEnvName,
   defaultBinExists,
   detectSkillCollisions,
   evaluateSkillEligibility,
   osMatches,
 } from '../eligibility.ts';
-import { loadSkillsFromDir } from '../storage.ts';
+import {
+  APP_MANAGED_SKILLS_DIR,
+  invalidateSkillsCache,
+  loadAllSkills,
+  loadSkillsFromDir,
+} from '../storage.ts';
 import type { LoadedSkill } from '../types.ts';
 
 function skill(slug: string, path = `/root/${slug}`, metadata: Partial<LoadedSkill['metadata']> = {}): LoadedSkill {
@@ -37,6 +43,11 @@ function tmpFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'skills-eligibility-'));
   fixtures.push(dir);
   return dir;
+}
+
+function writeSkill(root: string, slug: string, name: string, description: string, body = 'body'): void {
+  mkdirSync(join(root, slug), { recursive: true });
+  writeFileSync(join(root, slug, 'SKILL.md'), `---\nname: ${name}\ndescription: ${description}\n---\n${body}`);
 }
 
 describe('evaluateSkillEligibility reason codes', () => {
@@ -163,6 +174,86 @@ describe('detectSkillCollisions', () => {
       { label: 'workspace', skills: [skill('b', '/ws/b')] },
     ])).toEqual([]);
   });
+});
+
+describe('buildSkillEligibilityReport — scoped requests', () => {
+  afterEach(() => invalidateSkillsCache());
+
+  it('reports a collision for the queried slug across the ordered root plan', async () => {
+    const workspaceRoot = tmpFixture();
+    const projectRoot = tmpFixture();
+    const slug = 'fix6-scoped-collision';
+    writeSkill(join(workspaceRoot, 'skills'), slug, 'Shared', 'workspace copy');
+    writeSkill(join(projectRoot, '.agents', 'skills'), slug, 'Shared', 'project copy');
+
+    const report = await buildSkillEligibilityReport({
+      workspaceRoot,
+      projectRoot,
+      slugs: [slug],
+      disabledPackSlugs: [],
+    });
+
+    // Highest-priority tier wins: project > workspace (plan order).
+    expect(report.collisions).toEqual([{ name: slug, winner: 'project', shadowed: ['workspace'] }]);
+  });
+
+  it('re-surfaces a disabled app-managed skill with the disabled-pack reason', async () => {
+    const workspaceRoot = tmpFixture();
+    const slug = 'fix6-disabled-app-skill';
+    const pack = 'fix6-disabled-pack';
+
+    const configDir = process.env.ROX_CONFIG_DIR;
+    if (!configDir) throw new Error('test config isolation preload did not run');
+    const configFile = join(configDir, 'config.json');
+    const previousConfig = existsSync(configFile) ? readFileSync(configFile, 'utf8') : null;
+
+    const appSkillDir = join(APP_MANAGED_SKILLS_DIR, slug);
+    const bundledStateDir = join(APP_MANAGED_SKILLS_DIR, '.bundled');
+    writeSkill(APP_MANAGED_SKILLS_DIR, slug, 'Disabled', 'disabled app skill');
+    mkdirSync(bundledStateDir, { recursive: true });
+    writeFileSync(
+      join(bundledStateDir, `${pack}.json`),
+      JSON.stringify({ pack, files: { [`${slug}/SKILL.md`]: 'x' } }),
+    );
+    // Discovery (loadSkillBySlug) reads the disabled list from stored config.
+    writeFileSync(configFile, JSON.stringify({ workspaces: [], bundledSkills: { disabled: [pack] } }));
+
+    try {
+      const report = await buildSkillEligibilityReport({ workspaceRoot, slugs: [slug] });
+
+      expect(report.eligible.some(entry => entry.slug === slug)).toBe(false);
+      const entry = report.ineligible.find(candidate => candidate.skill.slug === slug);
+      expect(entry?.reasons.map(reason => reason.code)).toContain('disabled-pack');
+    } finally {
+      rmSync(appSkillDir, { recursive: true, force: true });
+      rmSync(bundledStateDir, { recursive: true, force: true });
+      if (previousConfig !== null) writeFileSync(configFile, previousConfig);
+      else rmSync(configFile, { force: true });
+      invalidateSkillsCache();
+    }
+  });
+});
+
+describe('buildSkillEligibilityReport — cache alignment', () => {
+  afterEach(() => invalidateSkillsCache());
+
+  it('full scan warms the mention-resolution catalog key (no shadowed-variant walk)', async () => {
+    const workspaceRoot = tmpFixture();
+    const slug = 'fix6-cache-demo';
+    writeSkill(join(workspaceRoot, 'skills'), slug, 'Cache Demo', 'cache demo');
+    invalidateSkillsCache();
+
+    const report = await buildSkillEligibilityReport({ workspaceRoot, includeOmp: true, disabledPackSlugs: [] });
+    // The agent's mention resolution reads THIS exact key; a shadowed-variant
+    // option would force a second full-store walk with a different key.
+    const mentionCatalog = loadAllSkills(workspaceRoot, undefined, { includeOmp: true });
+
+    const eligible = mentionCatalog.find(entry => entry.slug === slug);
+    expect(eligible).toBeDefined();
+    // Same object reference => the report reused the mention-resolution cache
+    // entry rather than warming a distinct (includeShadowedOmp) key.
+    expect(report.eligible.find(entry => entry.slug === slug)).toBe(eligible);
+  }, 180000);
 });
 
 describe('credentialIdMatchesEnvName', () => {

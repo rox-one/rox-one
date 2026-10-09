@@ -78,4 +78,33 @@ describe('skills:getEligibility', () => {
     expect(result.eligible).toBe(false)
     expect(result.reason).toContain('no-such-skill')
   })
+
+  it('reports a collision for the queried slug across the ordered root plan', async () => {
+    // Same slug provided by the workspace and the OMP workspace tier.
+    const skill = 'collision-fixture'
+    for (const [dir, body] of [
+      [join(workspaceRoot, 'skills', skill), 'workspace copy'],
+      [join(workspaceRoot, '.omp', 'skills', skill), 'omp copy'],
+    ] as const) {
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, 'SKILL.md'), `---\nname: Collision\ndescription: ${body}\n---\n${body}`)
+    }
+
+    const { registerSkillsHandlers } = await import('../skills.ts')
+    const handlers = new Map<string, Handler>()
+    const server = {
+      handle(channel: string, handler: Handler) {
+        handlers.set(channel, handler)
+      },
+    } as unknown as RpcServer
+    registerSkillsHandlers(server, { platform: {} } as HandlerDeps)
+
+    const ctx = { clientId: 'native-client', workspaceId: 'ws-test', webContentsId: null }
+    const result = (await handlers.get(RPC_CHANNELS.skills.GET_ELIGIBILITY)!(ctx, 'ws-test', skill)) as EligibilityResult
+
+    expect(result.eligible).toBe(true)
+    expect(result.report.collisions).toEqual([
+      { name: skill, winner: 'workspace', shadowed: ['omp-workspace'] },
+    ])
+  })
 })

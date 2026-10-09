@@ -6,12 +6,26 @@
  * can discover a skill and then load it through the `skills_read` host tool —
  * the catalog advertises; reading is explicit.
  *
+ * The names below are the names OMP actually receives. `set_host_tools`
+ * registers every session tool under the `mcp__session__` prefix (see
+ * backend/pi/session-tool-defs.ts); the bare registry names (`skills_read`)
+ * resolve nowhere for OMP — the only extra alias is `bash`. Advertising an
+ * unresolvable name is the one failure mode that matters here, because with
+ * `--no-skills` this block is the model's ONLY skill-discovery surface.
+ *
  * Bounded on three axes so a 330-skill install cannot flood the prompt:
  * entry count, per-description length, and total bytes. Truncation is always
  * signposted so the model knows more skills exist behind `skills_search`.
  */
 
 import type { LoadedSkill, SkillSource } from './types.ts';
+
+/**
+ * Host-tool names as OMP resolves them. Exported so tests can assert them
+ * against the registered tool set rather than a second hand-copied literal.
+ */
+export const SKILLS_SEARCH_HOST_TOOL = 'mcp__session__skills_search';
+export const SKILLS_READ_HOST_TOOL = 'mcp__session__skills_read';
 
 export const AVAILABLE_SKILLS_MAX_ENTRIES = 64;
 export const AVAILABLE_SKILLS_MAX_BYTES = 8000;
@@ -64,7 +78,7 @@ export function buildAvailableSkillsBlock(
   const header = [
     OPEN_TAG,
     'Skills are installed but their instructions load only when you read one. Search',
-    'with `skills_search`, then load a skill with `skills_read` before following it.',
+    `with \`${SKILLS_SEARCH_HOST_TOOL}\`, then load a skill with \`${SKILLS_READ_HOST_TOOL}\` before following it.`,
   ].join('\n');
 
   // The byte cap governs the WHOLE rendered block. Seed the running total with
@@ -93,7 +107,7 @@ export function buildAvailableSkillsBlock(
         break outer;
       }
       const description = collapseDescription(skill.metadata.description, maxDescriptionChars);
-      const line = `- \`${skill.slug}\` — ${description} _(load: skills_read slug="${skill.slug}")_`;
+      const line = `- \`${skill.slug}\` — ${description} _(load: ${SKILLS_READ_HOST_TOOL} slug="${skill.slug}")_`;
       const cost = Buffer.byteLength(line, 'utf8') + 1;
       if (bytes + cost > maxBytes) {
         truncated = true;
@@ -109,7 +123,7 @@ export function buildAvailableSkillsBlock(
 
   const omitted = usable.length - emitted;
   if (truncated || omitted > 0) {
-    lines.push(`_(${Math.max(omitted, 0)} more skill(s) omitted — use skills_search to find them.)_`);
+    lines.push(`_(${Math.max(omitted, 0)} more skill(s) omitted — use ${SKILLS_SEARCH_HOST_TOOL} to find them.)_`);
   }
 
   return [header, ...lines, CLOSE_TAG].join('\n');

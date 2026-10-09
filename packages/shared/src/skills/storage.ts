@@ -186,7 +186,7 @@ function isDirectoryOrSymlinkToDirectory(parentDir: string, entry: Dirent): bool
 // ============================================================
 
 /** Load one craft skill through the shared instructions-file boundary. */
-function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
+export function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
   // Dot entries (.pending, .versions) are internal state, never skills.
   if (!isSafeSkillName(slug)) return null;
   const skillDir = join(skillsDir, slug);

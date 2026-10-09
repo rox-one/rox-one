@@ -4,8 +4,8 @@
  * argument, and native discovery is disabled so the two surfaces cannot diverge.
  *
  * The agent-loop mention resolution scans the merged OMP catalog, so the fixture
- * warms that cache once (the same key the agent uses) to keep the spawn itself
- * free of a cold filesystem walk.
+ * warms that cache once (the same key the eligibility full scan now uses, so a
+ * spawn that has no allowlist never walks the skill store twice).
  */
 
 import { expect, test } from 'bun:test';
@@ -58,7 +58,7 @@ test(
       const admitted = await runAgent(fake, ['demo-skill']);
       expect(admitted.payload).toContain('<available_skills>');
       expect(admitted.payload).toContain('`demo-skill`');
-      expect(admitted.payload).toContain('skills_read slug="demo-skill"');
+      expect(admitted.payload).toContain('mcp__session__skills_read slug="demo-skill"');
       expect(admitted.payload).toContain('</available_skills>');
       expect(admitted.args).toContain('--no-skills');
 
