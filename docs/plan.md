@@ -1,3 +1,7 @@
+## Active plan (2026-10-09) — «Rox History» (история буфера) и «Карта знаний» (профиль/контекст)
+
+Голосовое ТЗ пользователя 2026-10-09 + доноры `agisota/copyosity` (клипборд) и `agisota/ontoship` (`gitmark map`). Исполняемый план, контракты, граф задач и таблица верификации: [docs/plans/2026-10-09-rox-history-and-knowledge-map.md](plans/2026-10-09-rox-history-and-knowledge-map.md). Ветка `feat/rox-history-and-knowledge-map` (ворктри `~/Projects/archive/rox-w-history`).
+
 ## Active plan (2026-10-08) — пользовательский батч (оболочка, настройки, бренд, облако, секреты)
 
 Источник: ТЗ пользователя + 16 скриншотов 2026-10-08. Исполняемый план, требования и таблица верификации: [docs/plans/2026-10-08-rox-user-batch.md](plans/2026-10-08-rox-user-batch.md). Дополняет (не заменяет) план 2026-10-07 ниже.
