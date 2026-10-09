@@ -7,6 +7,8 @@ import { NativeJournal } from '../authority/native-journal.ts'
 import { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
+import { acquireStateWriterLock, type StateWriterLock } from '../state/writer-lock.ts'
+import { closeStateStore, openStateStore, stateWriterLockPath } from '../state/state-store.ts'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig, getConfigPath, createInitialStoredConfig, getBundledSkillsDisabled, getWorkspaces } from '@rox/shared/config'
 import { ensureContextDocs } from '@rox/shared/context-docs'
@@ -493,6 +495,19 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
   ensureGlobalConfigExists(platform)
   acquireServerLock(platform.logger)
 
+  // Unified state store: one writer per config dir for the server lifetime.
+  // The lock makes a second server refuse to start instead of racing SQLite;
+  // opening the store creates + migrates `<configDir>/state/rox-state.sqlite`.
+  const stateConfigDir = resolveConfigDir()
+  let stateWriterLock: StateWriterLock
+  try {
+    stateWriterLock = acquireStateWriterLock(stateWriterLockPath(stateConfigDir), { label: 'rox-server' })
+    openStateStore({ configDir: stateConfigDir })
+  } catch (error) {
+    releaseServerLock()
+    throw error
+  }
+
   const modelRefreshService = options.initModelRefreshService()
   const sessionManager = options.createSessionManager()
   const scheduler = new HostScheduler({
@@ -512,6 +527,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
   try {
     nativeAuthority = new NativeAuthority({ stateDir: nativeStateDir })
   } catch (error) {
+    stateWriterLock.release()
     releaseServerLock()
     throw error
   }
@@ -530,6 +546,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     nativeAuthority.close()
     try { modelRefreshService.stopAll?.() } catch { /* preserve startup failure */ }
     try { await options.cleanupSessionManager?.(sessionManager) } catch { /* preserve startup failure */ }
+    stateWriterLock.release()
     releaseServerLock()
     throw error
   }
@@ -693,6 +710,12 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
       platform.logger.error('[bootstrap] Failed to dispose OAuth flow store:', error)
     }
 
+    try {
+      closeStateStore(stateConfigDir)
+    } catch (error) {
+      platform.logger.error('[bootstrap] Failed to close state store:', error)
+    }
+    stateWriterLock.release()
     releaseServerLock()
   }
 
@@ -718,6 +741,8 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     try { await options.cleanupSessionManager?.(sessionManager) } catch { /* preserve startup failure */ }
     try { nativeAuthority.close() } catch { /* preserve startup failure */ }
     try { oauthFlowStore.dispose() } catch { /* preserve startup failure */ }
+    try { closeStateStore(stateConfigDir) } catch { /* preserve startup failure */ }
+    try { stateWriterLock.release() } catch { /* preserve startup failure */ }
     try { releaseServerLock() } catch { /* preserve startup failure */ }
     throw error
   }
