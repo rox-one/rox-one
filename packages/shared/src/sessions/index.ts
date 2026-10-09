@@ -45,6 +45,7 @@ export {
   saveSession,
   loadSession,
   listSessions,
+  listSessionsFromHeaders,
   deleteSession,
   clearSessionMessages,
   getOrCreateLatestSession,

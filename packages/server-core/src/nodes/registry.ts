@@ -14,6 +14,12 @@
  * Presence is tracked with a TTL; expiry fails the node's in-flight invokes.
  * Pending invokes are bounded per node and settle exactly once with a typed
  * terminal result (see `pending-invokes.ts`).
+ *
+ * Fencing: each invoke records the connection identity of the node at
+ * dispatch. Re-registering a nodeId under a NEW connection identity is a
+ * takeover — the previous connection's in-flight invokes settle
+ * `error/SUPERSEDED` — and every later settlement must present the recorded
+ * identity, so a superseded or impostor connection can never settle it.
  */
 
 import {
@@ -78,11 +84,33 @@ export interface InvokeRefusal {
   readonly message: string
 }
 
+/**
+ * Refusals raised when a settlement arrives from a connection that cannot
+ * prove ownership of the invoke. `INVOKE_UNKNOWN` means nothing is in flight
+ * under that id; `CONNECTION_MISMATCH` means it is in flight but belongs to a
+ * different connection — the impostor's settlement is dropped, never applied.
+ */
+export type InvokeOwnershipRefusalCode = 'INVOKE_UNKNOWN' | 'CONNECTION_MISMATCH'
+
+export interface InvokeOwnershipRefusal {
+  readonly code: InvokeOwnershipRefusalCode
+  readonly message: string
+}
+
+export type InvokeSettlement =
+  | { readonly settled: true }
+  | { readonly settled: false; readonly refusal: InvokeOwnershipRefusal }
+
 export interface NodeInvokeDispatch {
   /** True when a pending invoke was created and should be sent to the node. */
   readonly accepted: boolean
   /** Present only when accepted. */
   readonly invokeId: string | null
+  /**
+   * Connection identity of the node at dispatch time; null when the node was
+   * registered without one. The push must target this connection.
+   */
+  readonly connId: string | null
   /** Terminal result: already resolved on refusal, resolved later when accepted. */
   readonly result: Promise<TerminalInvokeResult>
 }
@@ -139,6 +167,12 @@ export class NodeRegistry {
    * Register or reconnect a node. The declaration is stored as claims only;
    * authority comes from the server allowlist. Presence is refreshed on
    * (re)connect so re-registration revives a node whose TTL had elapsed.
+   *
+   * Fencing: when the node is already known under a DIFFERENT connection
+   * identity, the previous connection is superseded — its in-flight invokes
+   * settle `error/SUPERSEDED` immediately, so a late answer from the stale
+   * connection can never win against the new one. Re-registering without a
+   * `connId` (or with the same one) is a heartbeat, not a takeover.
    */
   registerNode(declaration: NodeDeclaration): RegisteredNode {
     if (typeof declaration.nodeId !== 'string' || declaration.nodeId.length === 0) {
@@ -154,9 +188,24 @@ export class NodeRegistry {
       ...(declaration.connId !== undefined ? { connId: declaration.connId } : {}),
       registeredAt: this.clock(),
     }
+    const previous = this.nodes.get(node.nodeId)
+    if (node.connId !== undefined && previous?.connId !== node.connId) {
+      this.pending.failForNode(node.nodeId, {
+        code: 'SUPERSEDED',
+        message: `node ${node.nodeId} was superseded by a new connection`,
+      })
+    }
     this.nodes.set(node.nodeId, node)
     this.presence.touch(node.nodeId)
     return node
+  }
+
+  /** Whether `connId` is the connection that currently owns `nodeId`. */
+  ownsNode(nodeId: string, connId: string | undefined): boolean {
+    const node = this.nodes.get(nodeId)
+    if (!node) return false
+    // A node registered without a connection identity (embedded host) is unfenced.
+    return node.connId === undefined || node.connId === connId
   }
 
   /**
@@ -239,6 +288,7 @@ export class NodeRegistry {
       return {
         accepted: false,
         invokeId: null,
+        connId: null,
         result: Promise.resolve({
           status: 'error',
           invokeId: '',
@@ -249,15 +299,20 @@ export class NodeRegistry {
       }
     }
 
-    const created = this.pending.create(nodeId, command, opts)
+    // Bind the invoke to the node's current connection: every later settlement
+    // must present that identity, so a superseded/impostor connection cannot
+    // settle it (it would already have been failed with SUPERSEDED anyway).
+    const connId = decision.node.connId
+    const created = this.pending.create(nodeId, command, connId === undefined ? opts : { ...opts, connId })
     if (!created.ok) {
       return {
         accepted: false,
         invokeId: null,
+        connId: connId ?? null,
         result: Promise.resolve({ status: 'error', invokeId: '', nodeId, command, error: created.error }),
       }
     }
-    return { accepted: true, invokeId: created.handle.invokeId, result: created.handle.result }
+    return { accepted: true, invokeId: created.handle.invokeId, connId: connId ?? null, result: created.handle.result }
   }
 
   /** Settle an invoke as `ok`; false when unknown or already settled. */
@@ -268,6 +323,41 @@ export class NodeRegistry {
   /** Settle an invoke as `error`; false when unknown or already settled. */
   failInvoke(invokeId: string, error: { code: string; message: string }): boolean {
     return this.pending.fail(invokeId, error)
+  }
+
+  /**
+   * Settle an invoke as `ok` on behalf of `connId`. A connection that does not
+   * own the invoke is refused typed and the invoke is NOT settled.
+   */
+  settleInvokeFrom(invokeId: string, payload: unknown, connId: string | undefined): InvokeSettlement {
+    const refusal = this.ownershipRefusal(invokeId, connId)
+    if (refusal) return { settled: false, refusal }
+    if (this.pending.resolve(invokeId, payload)) return { settled: true }
+    return { settled: false, refusal: { code: 'INVOKE_UNKNOWN', message: `invoke ${invokeId} is not pending` } }
+  }
+
+  /** Settle an invoke as `error` on behalf of `connId`; see `settleInvokeFrom`. */
+  failInvokeFrom(invokeId: string, error: { code: string; message: string }, connId: string | undefined): InvokeSettlement {
+    const refusal = this.ownershipRefusal(invokeId, connId)
+    if (refusal) return { settled: false, refusal }
+    if (this.pending.fail(invokeId, error)) return { settled: true }
+    return { settled: false, refusal: { code: 'INVOKE_UNKNOWN', message: `invoke ${invokeId} is not pending` } }
+  }
+
+  /**
+   * Ownership fence for a settlement attempt. Returns null when the presented
+   * connection may settle the invoke: an unspecified `connId` is the in-process
+   * (privileged) caller, and an unfenced invoke has no owner to enforce. A
+   * present-but-different identity is refused and never falls through to settle.
+   */
+  private ownershipRefusal(invokeId: string, connId: string | undefined): InvokeOwnershipRefusal | null {
+    const owner = this.pending.ownerOf(invokeId)
+    if (!owner.known) return { code: 'INVOKE_UNKNOWN', message: `invoke ${invokeId} is not pending` }
+    if (connId === undefined || owner.connId === undefined || owner.connId === connId) return null
+    return {
+      code: 'CONNECTION_MISMATCH',
+      message: `invoke ${invokeId} belongs to connection ${owner.connId}, not ${connId}`,
+    }
   }
 
   /** Cancel an invoke deterministically; settles `error/CANCELLED` exactly once. */

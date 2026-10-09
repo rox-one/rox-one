@@ -137,6 +137,9 @@ export const CHANNEL_MAP = {
   setMemoryMode: invoke(RPC_CHANNELS.sessions.SET_MEMORY_MODE),
   getSessionProvenance: invoke(RPC_CHANNELS.sessions.GET_PROVENANCE),
   assignSessionOwner: invoke(RPC_CHANNELS.sessions.ASSIGN_OWNER),
+  listSessionSuggestions: invoke(RPC_CHANNELS.sessions.SUGGEST_LIST),
+  addSessionSuggestion: invoke(RPC_CHANNELS.sessions.SUGGEST_ADD),
+  resolveSessionSuggestion: invoke(RPC_CHANNELS.sessions.SUGGEST_RESOLVE),
 
   // Event listeners
   onSessionEvent: listener(RPC_CHANNELS.sessions.EVENT),

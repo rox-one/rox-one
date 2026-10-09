@@ -410,7 +410,7 @@ export function listSessions(workspaceRootPath: string): SessionMetadata[] {
  * Convert SessionHeader to SessionMetadata
  * Used for fast session list loading from JSONL format.
  */
-function headerToMetadata(
+export function headerToMetadata(
   header: SessionHeader,
   workspaceRootPath: string,
   validateStatus: (status: string | undefined) => string = status => validateSessionStatus(workspaceRootPath, status),
@@ -450,6 +450,31 @@ function headerToMetadata(
     debug(`[sessions] Failed to convert header to metadata for session "${header?.id}" in ${workspaceRootPath}:`, error);
     return null;
   }
+}
+
+/**
+ * Build session-list metadata from already-read headers — the fast path used
+ * when the state projection serves headers from `session_index.header`.
+ * Mirrors `listSessions`'s per-header work (same conversion, plan count and
+ * list-time transcript size) without re-reading any session header.
+ */
+export function listSessionsFromHeaders(
+  workspaceRootPath: string,
+  headers: readonly SessionHeader[],
+): SessionMetadata[] {
+  const validateStatus = createSessionStatusValidator(workspaceRootPath);
+  const sessions: SessionMetadata[] = [];
+  for (const header of headers) {
+    const metadata = headerToMetadata(header, workspaceRootPath, validateStatus);
+    if (!metadata) continue;
+    try {
+      metadata.transcriptBytes = statSync(getSessionFilePath(workspaceRootPath, header.id)).size;
+    } catch {
+      // Size is optional; listing still succeeds without it.
+    }
+    sessions.push(metadata);
+  }
+  return sessions.sort((a, b) => b.lastUsedAt - a.lastUsedAt);
 }
 
 /**

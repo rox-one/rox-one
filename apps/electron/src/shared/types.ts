@@ -34,6 +34,7 @@ import type {
   ServerHealth,
 } from '@rox/core/types';
 import type { EntityRef } from '@rox/core/entities'
+import type { SessionSuggestion, SessionSuggestionResolution } from '@rox/shared/protocol'
 // W1-08 (#1505): entity links/preview bridge types.
 import type { EntityLink, EntityPreview } from '@rox/core/entities'
 import type { EntityLinksRequest } from '@rox/shared/entities'
@@ -1095,6 +1096,16 @@ export interface ElectronAPI {
 
   // Consolidated session command handler
   sessionCommand(sessionId: string, command: SessionCommand): Promise<void | ShareResult | BroInviteCommandResult | BroPresenceMemberDto[] | RefreshTitleResult | ImproveDraftResult | UndoResult | { count: number }>
+
+  // a2.5: suggest-session surface — propose-only writes for a non-owner of a
+  // `suggest` session, resolved by the session owner.
+  listSessionSuggestions(sessionId: string): Promise<SessionSuggestion[]>
+  addSessionSuggestion(sessionId: string, body: string): Promise<SessionSuggestion>
+  resolveSessionSuggestion(
+    sessionId: string,
+    suggestionId: string,
+    resolution: SessionSuggestionResolution,
+  ): Promise<{ suggestion: SessionSuggestion; dispatched: boolean }>
 
   // B4: multi-select bulk patch over sessions:command setters (rank forbidden; 200 ids max)
   bulkUpdateSessions(input: import('@rox/shared/protocol/dto').BulkUpdateSessionsInput): Promise<import('@rox/shared/protocol/dto').BulkUpdateSessionsResult>

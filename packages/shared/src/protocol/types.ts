@@ -17,6 +17,27 @@ export type MessageType =
   | 'error'
   | 'sequence_ack'
 
+/**
+ * Advertised protocol feature block (handshake_ack `features`).
+ *
+ * Optional for backwards compatibility: an ack that omits it means "server did
+ * not advertise", and clients MUST assume every channel is available.
+ */
+export interface ProtocolFeatures {
+  /** Method channel names − every `RPC_CHANNELS` value. */
+  methods: string[]
+  /** Broadcast event channel names − every `BroadcastEventMap` key. */
+  events: string[]
+  /** Capability tokens the server can drive/accept. */
+  capabilities: string[]
+}
+
+/** Advertised transport policy (handshake_ack `policy`). */
+export interface ProtocolPolicy {
+  /** Max WS frame payload in bytes. */
+  maxPayloadBytes: number
+}
+
 export interface MessageEnvelope {
   /** Correlation ID. UUIDv4 for requests; echoed in responses. */
   id: string
@@ -51,6 +72,10 @@ export interface MessageEnvelope {
   clientCapabilities?: string[]
   /** Server-registered channels, sent in handshake_ack. Clients use this to avoid calling unavailable channels. */
   registeredChannels?: string[]
+  /** Protocol feature block, sent in handshake_ack. Optional for back-compat. */
+  features?: ProtocolFeatures
+  /** Transport policy, sent in handshake_ack. Optional for back-compat. */
+  policy?: ProtocolPolicy
 
   // -- Reliable delivery fields --
 
@@ -144,9 +169,22 @@ export type ErrorCode =
   // session's visibility instead of the workspace role.
   | 'SESSION_READ_ONLY'
   | 'SESSION_OWNER_ONLY'
+  // a2.5 suggestions: a `suggest` session refuses a non-owner DIRECT write (they
+  // must propose a suggestion instead), and the suggestion store reports its own
+  // invalid/limit/not-found refusals as typed codes.
+  | 'SESSION_SUGGEST_ONLY'
+  | 'SESSION_SUGGESTION_INVALID'
+  | 'SESSION_SUGGESTION_LIMIT'
+  | 'SESSION_SUGGESTION_NOT_FOUND'
   // Named operator role ceiling (a1.2): the connection's role lacks the method's
   // required scope. Typed so a client can render a role-specific message.
   | 'OPERATOR_ACCESS_DENIED'
+  // Node-plane fencing (wave 4, row e2.2): a settlement (`nodes:invokeResult`)
+  // or heartbeat arrives from a connection that is not the node's live one —
+  // e.g. superseded by a newer registration or an impostor. Typed so the
+  // stale connection is refused rather than silently ignored, and the pending
+  // invoke stays unsettled for its real owner.
+  | 'NODE_CONNECTION_MISMATCH'
   // Voice provider registry failures (S8): typed so a client can branch on an
   // unconfigured provider instead of receiving a collapsed HANDLER_ERROR.
   | 'unconfigured'
@@ -207,7 +245,12 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'WIDGET_TICKET_REFUSED',
   'SESSION_READ_ONLY',
   'SESSION_OWNER_ONLY',
+  'SESSION_SUGGEST_ONLY',
+  'SESSION_SUGGESTION_INVALID',
+  'SESSION_SUGGESTION_LIMIT',
+  'SESSION_SUGGESTION_NOT_FOUND',
   'OPERATOR_ACCESS_DENIED',
+  'NODE_CONNECTION_MISMATCH',
   'unconfigured',
   'unknown-provider',
   'unsupported',

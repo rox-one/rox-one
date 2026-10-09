@@ -17,6 +17,7 @@ import { ingestRuntimeTraceEvent, ingestRuntimeTraceHealth, removeRuntimeTraceSe
 import type { AgentEvent, Effect } from './event-processor'
 import { AppShell } from '@/components/app-shell/AppShell'
 import { SessionSharingHost } from '@/components/app-shell/SessionSharingHost'
+import { SessionSuggestionsHost } from '@/components/app-shell/SessionSuggestionsHost'
 import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/runtime'
 import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
 import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
@@ -2799,6 +2800,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
               SiYuan webContents ⌘K bridge are both implemented. */}
           <OmniboxHost />
           <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspaceForUI} />
+          <SessionSuggestionsHost />
 
           {/* Splash screen overlay - fades out when fully ready */}
           {showSplash && (
