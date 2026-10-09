@@ -553,6 +553,7 @@ export function MarkdownDatatableBlock({ code, className }: MarkdownDatatableBlo
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100',
           )}
           title={t('table.tableControls')}
+          aria-label={t('table.tableControls')}
         >
           <ListFilter className="w-3.5 h-3.5" />
         </button>
@@ -675,11 +676,13 @@ export function MarkdownDatatableBlock({ code, className }: MarkdownDatatableBlo
           onClick={() => setIsFullscreen(true)}
           className={cn(
             "absolute top-[7px] right-2 p-1 rounded-[var(--radius-control)] transition-all z-10 select-none",
+            "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center",
             "bg-background shadow-minimal",
-            hasActiveControls ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            hasActiveControls ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
             "text-muted-foreground/50 hover:text-foreground",
             "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100"
           )}
+          aria-label={t('common.viewFullscreen')}
           title={t('common.viewFullscreen')}
         >
           <Maximize2 className="w-3.5 h-3.5" />

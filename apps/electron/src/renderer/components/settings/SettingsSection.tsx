@@ -59,7 +59,7 @@ export function SettingsSection({
             {title}
           </h3>
           {description && (
-            <p className={settingsUI.description}>{description}</p>
+            <p className={cn(settingsUI.description, 'text-text-secondary')}>{description}</p>
           )}
         </div>
         {action && <div className="shrink-0">{action}</div>}

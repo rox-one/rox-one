@@ -6,6 +6,19 @@
 .appearance-settings-content {
   width: 100%;
   min-width: 0;
+  /* P-10-39: the page owns its scroller so content never hard-clips. */
+  overflow-y: auto;
+  max-height: 100%;
+  overscroll-behavior: contain;
+}
+
+/* P-10-09: every settings control meets the 28px mouse hit floor. The spec's
+   --control-sm resolves to 24px at base density (below the floor), so the
+   hit-floor token is used instead (28px). */
+.appearance-settings-content [data-layout="settings-control"] button,
+.appearance-settings-content [role="radiogroup"] button {
+  min-height: var(--control-hit-min);
+  min-width: var(--control-hit-min);
 }
 
 @container appearance-settings (max-width: 480px) {

@@ -80,7 +80,8 @@ export function SessionSearchHeader({
         {onSearchClose && (
           <button
             onClick={onSearchClose}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-foreground/10 rounded"
+            aria-label={t("session.closeSearch")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] hover:bg-foreground/10 rounded"
             title={t("session.closeSearch")}
           >
             <X className="h-3.5 w-3.5 text-muted-foreground" />

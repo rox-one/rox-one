@@ -30,7 +30,7 @@ describe('activity rail: expanded with labels by default', () => {
   })
 
   it('rows keep their 28px density and use the shared control radius', () => {
-    expect(row).toContain('h-[28px]')
+    expect(row).toContain('min-h-[var(--control-hit-min)]')
     expect(row).toContain('rounded-[var(--radius-control)]')
     expect(row).toContain('{!collapsed && <span')
     expect(row).toContain('<TooltipContent side="right"')

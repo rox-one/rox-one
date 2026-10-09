@@ -101,8 +101,10 @@ export function TerminalOutput({
             onClick={() => copyToClipboard(command, 'command')}
             className={cn(
               'p-1 rounded transition-colors',
+              'min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center',
               isDark ? 'hover:bg-white/10' : 'hover:bg-black/5'
             )}
+            aria-label={t('terminal.copy')}
             title={copied === 'command' ? t('common.copied') : t('terminal.copyCommand')}
           >
             {copied === 'command' ? (
@@ -139,8 +141,10 @@ export function TerminalOutput({
             onClick={() => copyToClipboard(output, 'output')}
             className={cn(
               'p-1 rounded transition-colors',
+              'min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center',
               isDark ? 'hover:bg-white/10' : 'hover:bg-black/5'
             )}
+            aria-label={t('terminal.copy')}
             title={copied === 'output' ? t('common.copied') : t('terminal.copyOutput')}
           >
             {copied === 'output' ? (

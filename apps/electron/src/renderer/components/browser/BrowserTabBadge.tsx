@@ -17,7 +17,7 @@ interface BrowserTabBadgeProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const BrowserTabBadge = forwardRef<HTMLButtonElement, BrowserTabBadgeProps>(function BrowserTabBadge(
-  { instance, isActive: _isActive, className, style, ...buttonProps },
+  { instance, isActive, className, style, ...buttonProps },
   ref
 ) {
   const hostname = getHostname(instance.url)
@@ -26,6 +26,12 @@ export const BrowserTabBadge = forwardRef<HTMLButtonElement, BrowserTabBadgeProp
 
   const themeLuminance = instance.themeColor ? getThemeLuminance(instance.themeColor) : null
   const isDarkThemeColor = themeLuminance !== null && themeLuminance < 0.42
+
+  // Active tab uses the preset-injected surface chain; the fallback must stay
+  // because `--surface-tab-*` only exists once a theme preset is applied.
+  const backgroundClass = isActive
+    ? 'bg-[var(--surface-tab-active,var(--foreground-5))]'
+    : 'bg-background'
 
   const foregroundClass = instance.themeColor
     ? (isDarkThemeColor
@@ -44,9 +50,9 @@ export const BrowserTabBadge = forwardRef<HTMLButtonElement, BrowserTabBadgeProp
       ref={ref}
       type="button"
       className={`
-        group flex items-center gap-1 h-[26px] pl-2.5 pr-1.5 rounded-lg cursor-pointer select-none titlebar-no-drag
+        group flex items-center gap-1 min-h-[var(--control-md)] pl-2.5 pr-1.5 rounded-lg cursor-pointer select-none titlebar-no-drag
         text-[11px] leading-tight transition-colors min-w-0 max-w-[160px] shadow-minimal
-        bg-background
+        ${backgroundClass}
         ${foregroundClass}
         ${instance.agentControlActive ? 'border border-accent' : ''}
         ${className ?? ''}

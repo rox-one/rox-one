@@ -1,17 +1,23 @@
 /* Elevation (UI-AUDIT §3.6): tone first, shadow only when detached.
    none: panes, cards, rows · popover: menus, popovers, hover cards, tooltips
    overlay: dialogs, sheets, islands, toasts · ring-focus: keyboard focus only.
+   Exactly three levels: flat / popover / overlay. One ring colour (--elev-ring)
+   reads identically in light and dark; light popovers used --border-subtle
+   (7% fg) so their edge was invisible (G8 elevation fix).
    High contrast flattens popover/overlay to a hairline (../index.css). */
 :root {
   --shadow-none: none;
-  --shadow-popover: 0 0 0 1px var(--border-subtle), 0 8px 24px -8px rgb(0 0 0 / 0.16);
-  --shadow-overlay: 0 0 0 1px var(--border-subtle), 0 24px 48px -12px rgb(0 0 0 / 0.22);
+  /* One ring colour for BOTH modes. */
+  --elev-ring: var(--border-strong);
+  --shadow-popover: 0 0 0 1px var(--elev-ring), 0 6px 16px -6px rgb(0 0 0 / 0.18), 0 14px 34px -14px rgb(0 0 0 / 0.12);
+  --shadow-overlay: 0 0 0 1px var(--elev-ring), 0 16px 40px -12px rgb(0 0 0 / 0.26), 0 34px 68px -26px rgb(0 0 0 / 0.16);
   --ring-focus: 0 0 0 var(--ring-width) var(--focus);
 }
 
 .dark {
-  --shadow-popover: 0 0 0 1px var(--border-strong), 0 8px 24px -8px rgb(0 0 0 / 0.45);
-  --shadow-overlay: 0 0 0 1px var(--border-strong), 0 24px 48px -12px rgb(0 0 0 / 0.55);
+  /* Same ring; deeper, softer ambient+directional depth. */
+  --shadow-popover: 0 0 0 1px var(--elev-ring), 0 6px 16px -6px rgb(0 0 0 / 0.5), 0 14px 34px -14px rgb(0 0 0 / 0.3);
+  --shadow-overlay: 0 0 0 1px var(--elev-ring), 0 16px 40px -12px rgb(0 0 0 / 0.6), 0 34px 68px -26px rgb(0 0 0 / 0.4);
 }
 
 /* Tailwind shadow-* utilities resolve to the elevation tokens (previously they

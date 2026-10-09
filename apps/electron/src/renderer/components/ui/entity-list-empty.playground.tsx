@@ -1,6 +1,7 @@
 import { FolderOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { EntityListEmptyScreen } from './entity-list-empty'
+import { Button } from '@/components/ui/button'
 import { definePlaygroundStory } from '@/playground/registry/story-loader'
 
 /**
@@ -16,6 +17,7 @@ const EntityListEmptyScreenStory = () => {
       icon={<FolderOpen className="size-5" />}
       title={t('projectsList.empty')}
       description={t('projectsList.emptyDescription')}
+      primaryAction={<Button size="sm">{t('entity.createSource')}</Button>}
       className="h-full min-h-[360px]"
     />
   )

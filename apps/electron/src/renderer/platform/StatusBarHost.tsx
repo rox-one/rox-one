@@ -86,7 +86,7 @@ function StatusBarInner() {
   return (
     <div
       data-slot="status"
-      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 px-2.5 text-muted-foreground"
+      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 px-2.5 text-[var(--chrome-label)]"
       style={{ height: STATUS_BAR_HEIGHT }}
     >
       <div className="flex min-w-0 items-center gap-1.5">

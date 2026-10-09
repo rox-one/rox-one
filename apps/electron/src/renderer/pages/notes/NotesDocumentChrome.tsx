@@ -53,7 +53,7 @@ export function NotesBreadcrumbs({
   const vaultTitleKey = useNotesTitleKey('notes.breadcrumb.vault')
   const crumbs = noteBreadcrumbs(noteId, title)
   return (
-    <nav className="flex min-w-0 items-center gap-1 text-[12px] text-muted-foreground" aria-label={t('notes.breadcrumb.label')}>
+    <nav className="flex min-w-0 items-center gap-1 text-[12px] text-text-secondary" aria-label={t('notes.breadcrumb.label')}>
       {crumbs.map((crumb, index) => (
         <React.Fragment key={crumb.id}>
           {index > 0 ? <ChevronRight className="h-3 w-3 shrink-0 opacity-50" /> : null}

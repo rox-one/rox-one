@@ -205,7 +205,7 @@ export default function KnowledgeSettingsPage() {
         title={t('settings.knowledge.title')}
         actions={<HeaderMenu route={routes.view.settings('knowledge')} />}
       />
-      <div className="flex-1 min-h-0 mask-fade-y">
+      <div className="flex-1 min-h-0 mask-fade-y overflow-y-auto max-h-full overscroll-contain">
         <ScrollArea className="h-full">
           <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
             <p className="whitespace-normal break-words text-sm text-muted-foreground">

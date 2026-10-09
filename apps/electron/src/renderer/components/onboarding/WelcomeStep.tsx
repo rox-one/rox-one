@@ -105,6 +105,7 @@ export function WelcomeStep({
   const continueDisabled = isExistingUser
     ? isLoading || isFinishing
     : isLoading || isFinishing || saving || preferenceSaving || intelSaving || !parseOnboardingUsername(username)
+  const continueBusy = isLoading || saving || preferenceSaving || intelSaving || isFinishing
 
   return (
     <StepFormLayout
@@ -124,7 +125,8 @@ export function WelcomeStep({
           onClick={() => void handleContinue()}
           className="w-full"
           disabled={continueDisabled}
-          loading={isLoading || saving || preferenceSaving || intelSaving || isFinishing}
+          loading={continueBusy}
+          aria-busy={continueBusy || undefined}
           loadingText={isFinishing ? t("onboarding.completion.settingUp") : (preferenceSaving || intelSaving) ? t('common.saving') : t("common.checking")}
         >
           {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}

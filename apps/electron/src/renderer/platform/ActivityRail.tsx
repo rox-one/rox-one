@@ -18,7 +18,7 @@
  * Mounted by `WorkspaceSurfaceHost` (platform/index.tsx) — rendered only when
  * the two-key Workbench rollout is enabled, so there is no flag check here.
  */
-import { useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { ChevronsLeft, ChevronsRight, Inbox, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -48,23 +48,45 @@ export function activityRailWidth(collapsed: boolean): number {
 }
 
 /**
- * Below this window width the expanded rail would push sidebar (180) +
+ * Below this shell-root width the expanded rail would push sidebar (180) +
  * navigator (240) + centre (420) + workspace/inspector rails past the edge,
  * so the rail auto-collapses to icons (display-only; persisted state kept).
  */
 export const RAIL_AUTO_COLLAPSE_BELOW = 1140
 
-function subscribeResize(cb: () => void): () => void {
-  window.addEventListener('resize', cb)
-  return () => window.removeEventListener('resize', cb)
-}
-
-export function useNarrowWindow(threshold = RAIL_AUTO_COLLAPSE_BELOW): boolean {
-  return useSyncExternalStore(
-    subscribeResize,
-    () => window.innerWidth < threshold,
-    () => false,
-  )
+/**
+ * Container-aware narrow check: measures the shell root (the rail's parent)
+ * with a ResizeObserver so a narrow container inside a wide window collapses
+ * too, and falls back to the window check when no parent/observer exists.
+ */
+export function useNarrowRailContainer(threshold = RAIL_AUTO_COLLAPSE_BELOW): {
+  narrow: boolean
+  railRef: RefObject<HTMLElement | null>
+} {
+  const railRef = useRef<HTMLElement>(null)
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const measure = () => {
+      const container = railRef.current?.parentElement
+      const width = container ? container.getBoundingClientRect().width : window.innerWidth
+      setNarrow(width < threshold)
+    }
+    measure()
+    const container = railRef.current?.parentElement
+    if (typeof ResizeObserver === 'undefined' || !container) {
+      window.addEventListener('resize', measure)
+      return () => window.removeEventListener('resize', measure)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(container)
+    window.addEventListener('resize', measure)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [threshold])
+  return { narrow, railRef }
 }
 
 export function resolveRailCollapsed(input: { persisted: boolean; narrow: boolean; override: boolean }): boolean {
@@ -75,10 +97,11 @@ export function resolveRailCollapsed(input: { persisted: boolean; narrow: boolea
 export function useEffectiveRailCollapsed(): {
   collapsed: boolean
   toggle: () => void
+  railRef: RefObject<HTMLElement | null>
 } {
   const [persisted, setPersisted] = useAtom(activityRailCollapsedAtom)
   const [override, setOverride] = useAtom(activityRailNarrowOverrideAtom)
-  const narrow = useNarrowWindow()
+  const { narrow, railRef } = useNarrowRailContainer()
   const collapsed = resolveRailCollapsed({ persisted, narrow, override })
   const toggle = () => {
     if (collapsed) {
@@ -89,7 +112,7 @@ export function useEffectiveRailCollapsed(): {
       setOverride(false)
     }
   }
-  return { collapsed, toggle }
+  return { collapsed, toggle, railRef }
 }
 
 const seedById: Record<string, SeededMode> = Object.fromEntries(
@@ -113,7 +136,6 @@ function RailModeItem({ mode, active, collapsed }: { mode: ModeContribution; act
       onClick={() => {
         if (mode.rootRoute) void navigate(mode.rootRoute as Route)
       }}
-      muted
       testId={`rail-item-${mode.id}`}
     />
   )
@@ -128,7 +150,7 @@ function RailSection({ collapsed, children }: { collapsed: boolean; children: Re
 export function ActivityRail() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { collapsed, toggle } = useEffectiveRailCollapsed()
+  const { collapsed, toggle, railRef } = useEffectiveRailCollapsed()
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
   const navState = useNavigationState()
   const modeFlags = useAtomValue(modeScreenFlagsAtom)
@@ -142,6 +164,7 @@ export function ActivityRail() {
 
   return (
     <nav
+      ref={railRef}
       aria-label={t('rail.title')}
       className={cn(
         'chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col overflow-y-auto overflow-x-hidden py-[8px] font-sans',
@@ -159,12 +182,11 @@ export function ActivityRail() {
       {/* W1-07 (#1504): registered modes in pill order; renders nothing with every mode flag off. */}
       <ModesRailGroup collapsed={collapsed} />
       <ExtraScreensRailGroup collapsed={collapsed} />
-      <div className={cn('mt-auto flex flex-col gap-[4px] pt-[8px]', collapsed ? 'items-center' : 'items-stretch')}>
+      <div className={cn('mt-auto flex flex-col gap-[4px] border-t border-border-subtle pt-[8px]', collapsed ? 'items-center' : 'items-stretch')}>
         <RailRow
           icon={Settings}
           label={t('sidebar.settings')}
           collapsed={collapsed}
-          muted
           onClick={() => void navigate(routes.view.settings())}
           testId="rail-settings"
         />
@@ -172,7 +194,6 @@ export function ActivityRail() {
           icon={collapsed ? ChevronsRight : ChevronsLeft}
           label={toggleLabel}
           collapsed={collapsed}
-          muted
           onClick={toggle}
           testId="rail-toggle"
         />

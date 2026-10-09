@@ -1,11 +1,30 @@
 /* Motion (UI-AUDIT §3.7). Everything is 0 under reduced motion and while the
-   shell is resizing (`html[data-resizing]`). */
+   shell is resizing (`html[data-resizing]`).
+
+   Motion grammar (G8): interactions are named, not re-ramped —
+   state layer (hover/pressed/selected/focus colour) 120ms `--motion-fast`;
+   chrome disclosure (rail expand, panel-header reveal) 180ms
+   `--motion-disclosure`; popover/menu/tooltip 180ms `--motion-base`;
+   dialog/sheet/island/toast 240ms `--motion-overlay`;
+   chrome material swap (dense ↔ tint ↔ glass) is instant.
+
+   NO-ANIMATED-BLUR RULE: `--chrome-plate-transition` lists only
+   background-color / border-color / color; `backdrop-filter` never appears in
+   a transition, and the material swap is a paint, not a transition — a blur
+   animation re-samples the window every frame. Blur is chrome-only and static. */
 :root {
   --motion-instant: 0ms;
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --motion-slow: 240ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Entrances use --ease-standard; exits use --ease-exit; overlays enter on
+     --ease-emphasis. */
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-emphasis: cubic-bezier(0.2, 0, 0, 1);
+  /* Named interaction classes. */
+  --motion-disclosure: var(--motion-base); /* 180ms — rail/panel disclosure */
+  --motion-overlay: var(--motion-slow);    /* 240ms — dialogs/sheets/islands */
 
   /* Legacy names. */
   --motion-normal: var(--motion-base);

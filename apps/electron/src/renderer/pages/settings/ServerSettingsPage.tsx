@@ -82,6 +82,8 @@ export default function ServerSettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [tokenVisible, setTokenVisible] = useState(false)
   const [error, setError] = useState<string>()
+  // Transient «Сохранено» chip (P-10-15): shown after a successful save.
+  const [savedPulse, setSavedPulse] = useState(false)
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm)
 
@@ -119,6 +121,12 @@ export default function ServerSettingsPage() {
     void loadSettings(granted)
   }, [granted, loadSettings])
 
+  useEffect(() => {
+    if (!savedPulse) return
+    const id = window.setTimeout(() => setSavedPulse(false), 2400)
+    return () => window.clearTimeout(id)
+  }, [savedPulse])
+
   const handleSave = async () => {
     setError(undefined)
     const port = parseInt(form.port, 10)
@@ -148,6 +156,7 @@ export default function ServerSettingsPage() {
       }
       await window.electronAPI.setServerConfig(formToConfig(form))
       setSavedForm(form)
+      setSavedPulse(true)
       const newStatus = await window.electronAPI.getServerStatus()
       setStatus(newStatus)
       toast.success(t('settings.server.saved'))
@@ -386,8 +395,8 @@ export default function ServerSettingsPage() {
           {error && (
             <p className="text-xs text-destructive px-1">{error}</p>
           )}
-          {(isDirty || error) && (
-            <SettingsCardFooter>
+          {(isDirty || error || savedPulse) && (
+            <SettingsCardFooter saved={savedPulse}>
               <Button variant="outline" size="sm" onClick={handleReset} disabled={isSaving}>
                 {t('common.reset')}
               </Button>

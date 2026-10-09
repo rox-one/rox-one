@@ -119,7 +119,7 @@ export function NotesViewHost({
     )
   }
   if (view === 'outline') {
-    return <NotesOutlineView notes={notes} activeNoteId={activeNoteId} workspaceId={workspaceId} blockTree={blockTree} onOpenBlock={onOpenBlock} />
+    return <NotesOutlineView notes={notes} activeNoteId={activeNoteId} workspaceId={workspaceId} blockTree={blockTree} onOpenBlock={onOpenBlock} onOpenNote={onOpenNote} />
   }
 
   return <NotesGraphView notes={notes} activeNoteId={activeNoteId} onOpenNote={onOpenNote} />
@@ -605,12 +605,14 @@ function NotesOutlineView({
   workspaceId,
   blockTree,
   onOpenBlock,
+  onOpenNote,
 }: {
   notes: NotesViewNote[]
   activeNoteId: string | null
   workspaceId: string
   blockTree?: ListTreeProjection
   onOpenBlock?: (nodeId: string) => void
+  onOpenNote: (noteId: string) => void
 }) {
   const { t } = useTranslation()
   const active = notes.find((note) => note.id === activeNoteId) ?? notes[0]
@@ -655,7 +657,14 @@ function NotesOutlineView({
       {tree ? (
         <OutlineTree node={tree} onToggle={(id) => { if (id.startsWith('block:')) toggleCollapsed(id) }} onOpenBlock={openSource} />
       ) : (
-        <p className="text-sm text-muted-foreground">{t('notes.blocks.unavailable')}</p>
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-sm text-text-secondary">{t('notes.blocks.unavailable')}</p>
+          {active ? (
+            <Button type="button" size="sm" onClick={() => onOpenNote(active.id)}>
+              {t('notes.openNote')}
+            </Button>
+          ) : null}
+        </div>
       )}
     </div>
   )
@@ -777,7 +786,7 @@ function OutlineTree({ node, onToggle, onOpenBlock }: { node: NoteOutlineNode; o
             {node.collapsed ? '+' : '–'}
           </button>
         ) : null}
-        {node.supertag ? <span className="rounded bg-foreground/10 px-1.5 text-[10px]">#{node.supertag}</span> : null}
+        {node.supertag ? <span className="rounded bg-foreground/10 px-1.5 text-[11px]">#{node.supertag}</span> : null}
         {node.id.startsWith('block:') ? (
           <button type="button" className="text-left hover:underline" data-block-id={node.id.slice('block:'.length)} onClick={() => onOpenBlock(node.id)}>{node.title}</button>
         ) : <span>{node.title}</span>}

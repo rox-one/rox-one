@@ -15,7 +15,7 @@ import { SettingsRadioCard, SettingsRadioGroup, SettingsRadioOption } from '../S
 const i18n = createInstance()
 await i18n.init({
   lng: 'en', fallbackLng: 'en',
-  resources: { en: { translation: { 'settings.fields.showValue': 'Show value', 'settings.fields.hideValue': 'Hide value' } } },
+  resources: { en: { translation: { 'settings.input.showPassword': 'Show password', 'settings.input.hidePassword': 'Hide password' } } },
 })
 
 function render(content: React.ReactNode) {
@@ -52,7 +52,7 @@ describe('settings field accessible contracts', () => {
       // Both harnesses must expose the same explicit, translatable action name.
       const actionLabel = attribute(button, 'aria-label')
       if (actionLabel === undefined) throw new Error('Reveal control has no accessible name')
-      expect(['Show value', 'settings.fields.showValue']).toContain(actionLabel)
+      expect(['Show password', 'settings.input.showPassword']).toContain(actionLabel)
       expect(attribute(button, 'aria-controls')).toBe(attribute(input, 'id'))
       expect(attribute(button, 'tabindex')).not.toBe('-1')
       expect(attribute(input, 'type')).toBe('password')

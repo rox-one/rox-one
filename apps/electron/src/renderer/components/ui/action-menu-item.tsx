@@ -12,7 +12,7 @@ export function ActionMenuItem({ action, onClick, children }: ActionMenuItemProp
   const { label, hotkey } = useActionLabel(action)
 
   return (
-    <StyledDropdownMenuItem onClick={onClick}>
+    <StyledDropdownMenuItem onClick={onClick} className="min-w-[var(--control-hit-min)]">
       <span>{children || label}</span>
       {hotkey && (
         <span className="ml-auto text-xs text-muted-foreground">{hotkey}</span>

@@ -229,11 +229,13 @@ export function MarkdownImageBlock({ code, className, onCreateRegionAnnotation: 
             onClick={() => setIsFullscreen(true)}
             className={cn(
               'absolute right-2 top-2 z-10 p-1 rounded-[var(--radius-control)] transition-all select-none',
+              'min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center',
               'bg-background/90 shadow-minimal',
               'text-muted-foreground/60 hover:text-foreground',
               'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100',
-              hasMultiple ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              hasMultiple ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
             )}
+            aria-label={t('common.viewFullscreen')}
             title={t('common.viewFullscreen')}
           >
             <Maximize2 className="w-3.5 h-3.5" />

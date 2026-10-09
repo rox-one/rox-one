@@ -39,7 +39,6 @@ export function ModesRailGroup({ collapsed = false }: { collapsed?: boolean }) {
           collapsed={collapsed}
           active={isModeActive(mode.id, navState)}
           onClick={() => void navigate(mode.rootRoute as Route)}
-          muted
           testId={`rail-mode-${mode.id}`}
         />
       ))}

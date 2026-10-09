@@ -2037,15 +2037,15 @@ const handleFollowUpChipClick = useCallback((item: {
                             '--shadow-color': 'var(--destructive-rgb)',
                           } as React.CSSProperties}
                         >
-                          <AlertTriangle className="mx-auto mb-2 h-4 w-4 text-destructive/70" />
+                          <AlertTriangle className="mx-auto mb-2 h-4 w-4 text-[var(--destructive-text)]" />
                           <div className="text-sm font-medium text-destructive">{t("chat.failedToLoadConversation")}</div>
-                          <p className="mt-1 break-words text-xs text-destructive/70">{messagesLoadError}</p>
+                          <p className="mt-1 break-words text-xs text-[var(--destructive-text)]">{messagesLoadError}</p>
                           {onRetryMessagesLoad && (
                             <button
                               type="button"
                               onClick={onRetryMessagesLoad}
                               disabled={messagesRetrying}
-                              className="mt-3 rounded border border-destructive/20 px-2 py-0.5 text-xs text-destructive/70 transition-colors hover:border-destructive/40 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                              className="mt-3 inline-flex items-center justify-center min-h-[var(--control-hit-min)] rounded border border-destructive/20 px-2 py-0.5 text-xs text-[var(--destructive-text)] transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] hover:border-destructive/40 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {messagesRetrying ? t("common.retrying") : t("common.retry")}
                             </button>
@@ -2109,7 +2109,7 @@ const handleFollowUpChipClick = useCallback((item: {
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
                           className={cn(
                             compactMode ? "pt-2 pb-1" : CHAT_LAYOUT.userMessagePadding,
-                            "rounded-lg transition-all duration-200",
+                            "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                             isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
                             isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
                           )}
@@ -2141,7 +2141,7 @@ const handleFollowUpChipClick = useCallback((item: {
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
                           className={cn(
-                            "rounded-lg transition-all duration-200",
+                            "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                             isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
                             isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
                           )}
@@ -2175,7 +2175,7 @@ const handleFollowUpChipClick = useCallback((item: {
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
                           className={cn(
-                            "mt-2 rounded-lg transition-all duration-200",
+                            "mt-2 rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                             isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
                             isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
                           )}
@@ -2213,7 +2213,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         }}
                         className={cn(
                           "pt-2",
-                          "rounded-lg transition-all duration-200",
+                          "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                           isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
                           isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
                         )}
@@ -2696,7 +2696,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
           '--shadow-color': 'var(--destructive-rgb)',
         } as React.CSSProperties}
       >
-        <div className="text-xs text-destructive/50 mb-0.5 font-semibold">
+        <div className="text-xs text-[var(--destructive-text)] mb-0.5 font-semibold">
           {message.errorTitle || t('common.error')}
         </div>
         <p className="text-sm text-destructive">{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</p>
@@ -2714,7 +2714,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
                     onRetry,
                   })
                 }}
-                className="text-xs px-2 py-0.5 rounded border border-destructive/20 text-destructive/70 hover:text-destructive hover:border-destructive/40 transition-colors"
+                className="inline-flex items-center justify-center text-xs px-2 py-0.5 min-h-[var(--control-hit-min)] rounded border border-destructive/20 text-[var(--destructive-text)] hover:border-destructive/40 transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]"
               >
                 {action.label}{action.action === 'open_url' ? ' ↗' : ''}
               </button>
@@ -2727,7 +2727,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
           <div className="mt-2">
             <button
               onClick={() => setDetailsOpen(!detailsOpen)}
-              className="flex items-center gap-1 text-xs text-destructive/70 hover:text-destructive transition-colors"
+              className="flex items-center gap-1 text-xs min-h-[var(--control-hit-min)] text-[var(--destructive-text)] transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]"
             >
               {detailsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               <span>{detailsOpen ? t('chat.hideTechnicalDetails') : t('chat.showTechnicalDetails')}</span>
@@ -2814,7 +2814,7 @@ function MessageBubble({
             <button
               onClick={() => onPopOut(message)}
               data-touch-reveal="true"
-              className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground/5"
+              className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-fast)] ease-[var(--ease-standard)] hover:bg-foreground/5"
               title={t("sidebarMenu.openInNewWindow")}
             >
               <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" />

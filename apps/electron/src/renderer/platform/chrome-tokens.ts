@@ -24,6 +24,7 @@ export type ChromeTokenName =
   | 'chromeStatusHeight'
   | 'chromePanelHeaderHeight'
   | 'chromeGap'
+  | 'chromeRhythm'
   | 'panelGap'
   | 'panelEdgeInset'
   | 'panelMinWidth'
@@ -70,9 +71,11 @@ export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.f
   /** --chrome-status-height */
   chromeStatusHeight: 24,
   /** --chrome-panel-header-height */
-  chromePanelHeaderHeight: 36,
+  chromePanelHeaderHeight: 32,
   /** --chrome-gap */
   chromeGap: 4,
+  /** --chrome-rhythm */
+  chromeRhythm: 4,
   /** --panel-gap */
   panelGap: 0,
   /** --panel-edge-inset */
@@ -132,9 +135,11 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   /** --chrome-status-height */
   chromeStatusHeight: 24,
   /** --chrome-panel-header-height */
-  chromePanelHeaderHeight: 40,
+  chromePanelHeaderHeight: 36,
   /** --chrome-gap */
   chromeGap: 4,
+  /** --chrome-rhythm */
+  chromeRhythm: 4,
   /** --panel-gap */
   panelGap: 0,
   /** --panel-edge-inset */

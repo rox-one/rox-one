@@ -2266,7 +2266,7 @@ export function FreeFormInput({
           />
 
           <div className={cn(
-            "flex items-center gap-1 px-2",
+            "flex items-center gap-1 px-2 min-h-[var(--control-hit-min)]",
             compactMode && isWebUI ? "py-1" : "py-2",
             !compactMode && "border-t border-border/50",
           )}>

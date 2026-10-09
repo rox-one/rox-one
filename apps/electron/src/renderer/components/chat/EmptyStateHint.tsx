@@ -192,7 +192,7 @@ export function EmptyStateHint({ hintIndex, className }: EmptyStateHintProps) {
       className={cn(
         'text-center leading-relaxed tracking-tight',
         'max-w-md mx-auto select-none',
-        'text-[20px] font-bold text-black',
+        'text-[20px] font-bold text-text-secondary',
         className
       )}
     >

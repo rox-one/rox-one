@@ -1,8 +1,7 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
-import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
-import { OnboardingWelcomeProgress } from './OnboardingWelcomeProgress'
+import { OnboardingStepProgress, type OnboardingProgressStep } from './OnboardingStepProgress'
 import type { ApiSetupMethod } from "./APISetupStep"
 import { ProviderSelectStep, type ProviderChoice } from "./ProviderSelectStep"
 import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
@@ -139,7 +138,6 @@ export function OnboardingWizard({
   editInitialValues,
   className
 }: OnboardingWizardProps) {
-  const seProfile = useSuperEngineeringProfile()
   // 'complete' is terminal: close the wizard exactly once per arrival.
   const finishedRef = useRef(false)
   useEffect(() => {
@@ -156,15 +154,12 @@ export function OnboardingWizard({
     switch (state.step) {
       case 'welcome':
         return (
-          <div className={seProfile ? 'mx-auto max-w-lg px-6 py-8' : undefined}>
-            {seProfile ? <OnboardingWelcomeProgress className="mb-6" /> : null}
-            <WelcomeStep
-              isExistingUser={state.isExistingUser}
-              onContinue={onContinue}
-              isLoading={state.isCheckingGitBash}
-              isFinishing={state.isFinishing}
-            />
-          </div>
+          <WelcomeStep
+            isExistingUser={state.isExistingUser}
+            onContinue={onContinue}
+            isLoading={state.isCheckingGitBash}
+            isFinishing={state.isFinishing}
+          />
         )
 
       case 'rox-connect':
@@ -225,6 +220,7 @@ export function OnboardingWizard({
             editInitialValues={editInitialValues}
             onCancelOAuth={onCancelOAuth}
             copilotDeviceCode={copilotDeviceCode}
+            onClearError={onClearError}
           />
         )
 
@@ -248,6 +244,10 @@ export function OnboardingWizard({
     }
   }
 
+  const progressStep: OnboardingProgressStep =
+    state.step === 'welcome' ? 'profile' : state.step === 'complete' ? 'done' : 'connect'
+  const isWelcome = state.step === 'welcome'
+
   return (
     <div
       className={cn(
@@ -262,8 +262,47 @@ export function OnboardingWizard({
       {/* Main content — min-h-full + flex center means: center when content fits,
           natural flow + scroll when content is taller than the viewport (mobile). */}
       <main className="flex min-h-full items-center justify-center p-4 sm:p-8">
-        {renderStep()}
+        {isWelcome ? (
+          <div className="mx-auto max-w-lg px-6 py-8">
+            <OnboardingStepProgress step={progressStep} className="mb-6" />
+            <StepTransition key={state.step}>{renderStep()}</StepTransition>
+          </div>
+        ) : (
+          <div className="flex w-full max-w-[28rem] flex-col items-center">
+            <OnboardingStepProgress step={progressStep} className="mb-6 w-full" />
+            <StepTransition key={state.step} className="w-full">
+              {renderStep()}
+            </StepTransition>
+          </div>
+        )}
       </main>
+    </div>
+  )
+}
+
+/**
+ * StepTransition - the single step cross-fade (P-10-20).
+ *
+ * 180 ms opacity-only fade keyed by the wizard step (`--motion-base` /
+ * `--ease-standard`); resolves to 0 ms under `prefers-reduced-motion: reduce`.
+ * No transform, no blur.
+ */
+function StepTransition({ children, className }: { children: React.ReactNode; className?: string }) {
+  const [entered, setEntered] = useState(false)
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setEntered(true))
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  return (
+    <div
+      className={cn('transition-opacity', className)}
+      style={{
+        opacity: entered ? 1 : 0,
+        transitionDuration: 'var(--motion-base)',
+        transitionTimingFunction: 'var(--ease-standard)',
+      }}
+    >
+      {children}
     </div>
   )
 }

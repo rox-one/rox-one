@@ -535,7 +535,7 @@ export function VoiceDictationControl({
       : recording ? t('chat.dictateStop') : t('chat.dictate')
 
   return (
-    <div ref={attachDictationHost} data-voice-dictation-host="" className={cn('flex min-w-0 items-center', compactMode && 'shrink-0')}>
+    <div ref={attachDictationHost} data-voice-dictation-host="" className={cn('flex min-w-0 items-center min-h-[var(--control-hit-min)]', compactMode && 'shrink-0')}>
       <FreeFormInputContextBadge
         icon={busy ? <Spinner className="h-4 w-4" /> : recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         label={label}

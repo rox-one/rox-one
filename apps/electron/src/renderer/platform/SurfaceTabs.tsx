@@ -265,11 +265,11 @@ export function SurfaceTabs() {
 
   return (
     <div
-      className="chrome-strip flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-foreground/5 px-2"
+      className="chrome-strip flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-[color:var(--chrome-plate-border)] px-2"
       style={{ height: TAB_STRIP_HEIGHT }}
     >
       {panelTabs.length === 0 ? (
-        <span className="chrome-label px-1 text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
+        <span className="chrome-label px-1 text-[var(--chrome-label)]">{t('surfaceTabs.empty')}</span>
       ) : (
         tabList
       )}

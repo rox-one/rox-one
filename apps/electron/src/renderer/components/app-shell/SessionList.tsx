@@ -1250,7 +1250,7 @@ export function SessionList({
         <button
           type="button"
           onClick={() => { void setCollectionFilters({}); navigate(routes.view.allSessions()) }}
-          className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors"
+          className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors duration-[var(--motion-fast)]"
         >
           {t("collection.filter.clear")}
         </button>
@@ -1271,7 +1271,7 @@ export function SessionList({
             else if (currentFilter?.kind === 'label') params.label = currentFilter.labelId
             navigate(routes.action.newSession(Object.keys(params).length > 0 ? params : undefined))
           }}
-          className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors"
+          className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors duration-[var(--motion-fast)]"
         >
           {t("session.newSession")}
         </button>
@@ -1340,11 +1340,11 @@ export function SessionList({
                     e.stopPropagation()
                     toggleGroupCollapse(head.collapseKey)
                   }}
-                  className="absolute left-2 top-0 bottom-0 z-10 flex items-center gap-0.5 px-1 text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
+                  className="absolute left-2 top-0 bottom-0 z-10 flex items-center justify-center gap-0.5 px-1 min-w-[var(--control-hit-min)] text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
                 >
                   <ChevronRight
                     className={cn(
-                      "h-3 w-3 transition-transform",
+                      "h-3 w-3 transition-transform duration-[var(--motion-fast)]",
                       !head.collapsed && "rotate-90"
                     )}
                   />
@@ -1380,7 +1380,7 @@ export function SessionList({
             >
               <span
                 aria-hidden
-                className="absolute right-1 top-1/2 z-10 -translate-y-1/2 cursor-grab text-muted-foreground/40 opacity-0 transition-opacity group-hover/rankdrag:opacity-100 active:cursor-grabbing"
+                className="absolute right-1 top-1/2 z-10 -translate-y-1/2 cursor-grab text-muted-foreground/40 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/rankdrag:opacity-100 active:cursor-grabbing"
               >
                 <GripVertical className="h-3.5 w-3.5" />
               </span>
@@ -1422,7 +1422,7 @@ export function SessionList({
               </p>
               <button
                 onClick={() => onSearchChange?.('')}
-                className="text-xs text-foreground hover:underline mt-2"
+                className="inline-flex items-center min-h-[var(--control-hit-min)] text-xs text-foreground hover:underline mt-2"
               >
                 {t("session.clearSearch")}
               </button>

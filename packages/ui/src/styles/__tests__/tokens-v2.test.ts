@@ -488,7 +488,7 @@ describe('token foundation v2: values (step 2)', () => {
     expect(v('--icon-toolbar')).toBe('16px')
     expect(v('--control-md')).toBe('28px')
     expect(v('--chrome-rail-width')).toBe('48px')
-    expect(v('--chrome-panel-header-height')).toBe('36px')
+    expect(v('--chrome-panel-header-height')).toBe('32px')
     expect(v('--chrome-tab-strip-height')).toBe('32px')
   })
 
@@ -500,19 +500,22 @@ describe('token foundation v2: values (step 2)', () => {
     for (const [name, value] of Object.entries(theme)) expect(value, name).not.toContain(`var(${name})`)
     expect(stripComments(indexCss)).not.toMatch(/--shadow-(2xs|xs|sm|md|lg|xl|2xl)?:\s*var\(--shadow(-2xs|-xs|-sm|-md|-lg|-xl|-2xl)?\)/)
     for (const name of ['--shadow-popover', '--shadow-overlay']) {
-      expect(root[name]).toMatch(/^0 0 0 1px var\(--border-subtle\), 0 \d+px \d+px -\d+px rgb\(0 0 0 \/ 0\.\d+\)$/)
+      // G8: one ring colour for both modes (--elev-ring) + two-layer depth.
+      expect(root[name]).toMatch(
+        /^0 0 0 1px var\(--elev-ring\), 0 \d+px \d+px -\d+px rgb\(0 0 0 \/ 0\.\d+\), 0 \d+px \d+px -\d+px rgb\(0 0 0 \/ 0\.\d+\)$/,
+      )
     }
     const dark = merge(blocks(token('elevation.css'), '.dark'))
-    expect(dark['--shadow-popover']).toContain('0.45')
-    expect(dark['--shadow-overlay']).toContain('0.55')
+    expect(dark['--shadow-popover']).toContain('0.5')
+    expect(dark['--shadow-overlay']).toContain('0.6')
   })
 
   it('uses the adopted motion and state values', () => {
     expect([v('--motion-instant'), v('--motion-fast'), v('--motion-base'), v('--motion-slow')]).toEqual(['0ms', '120ms', '180ms', '240ms'])
     expect(v('--ease-standard')).toBe('cubic-bezier(0.2, 0.8, 0.2, 1)')
-    expect(root['--state-hover']).toContain('var(--foreground) 5%')
-    expect(root['--state-pressed']).toContain('var(--foreground) 9%')
-    expect(root['--state-selected']).toContain('var(--accent) 14%')
+    expect(root['--state-hover']).toContain('var(--foreground) 4%')
+    expect(root['--state-pressed']).toContain('var(--foreground) 8%')
+    expect(root['--state-selected']).toContain('var(--accent) 12%')
     // Hover is neutral: no accent in the hover state.
     expect(root['--state-hover']).not.toContain('--accent')
   })

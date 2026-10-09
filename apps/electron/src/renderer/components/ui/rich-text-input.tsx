@@ -496,7 +496,7 @@ function RotatingPlaceholder({
 
   return (
     <div
-      className={cn('transition-opacity duration-300 ease-in-out', className)}
+      className={cn('transition-opacity duration-[var(--motion-base)] ease-[var(--ease-standard)]', className)}
       style={{ opacity }}
     >
       {placeholders[currentIndex]}
@@ -856,7 +856,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
             placeholders={placeholderArray}
             intervalMs={5000}
             className={cn(
-              'absolute inset-0 text-sm text-muted-foreground pointer-events-none select-none',
+              'absolute inset-0 text-sm text-text-secondary pointer-events-none select-none',
               className
             )}
           />

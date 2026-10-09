@@ -745,9 +745,9 @@ export default function MarketplaceSettingsPage() {
         ) : null}
       </div>
 
-      <div className="flex-1 min-h-0 mask-fade-y">
+      <div className="flex-1 min-h-0 mask-fade-y overflow-y-auto max-h-full overscroll-contain">
         <ScrollArea className="h-full">
-          <div className="px-5 pb-8 space-y-3 max-w-3xl mx-auto w-full">
+          <div className="px-5 pb-8 space-y-[var(--spacing)] max-w-3xl mx-auto w-full">
             {entries.length === 0 ? (
               <div className="text-center py-12 border border-border/60 rounded-lg">
                 <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-40" />

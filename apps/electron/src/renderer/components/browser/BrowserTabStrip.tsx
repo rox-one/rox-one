@@ -62,6 +62,8 @@ export function BrowserTabStrip({
     return (
       <>
         <StyledDropdownMenuItem
+          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
+          aria-label={t('workbench.browser.showWindow')}
           disabled={!liveWindowActions}
           onSelect={() => focusBrowserWindow(instance)}
         >
@@ -70,6 +72,8 @@ export function BrowserTabStrip({
         </StyledDropdownMenuItem>
 
         <StyledDropdownMenuItem
+          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
+          aria-label={openSessionLabel}
           disabled={!canOpenSession}
           onSelect={() => openSessionUsingWindow(instance)}
         >
@@ -80,6 +84,8 @@ export function BrowserTabStrip({
         <StyledDropdownMenuSeparator />
 
         <StyledDropdownMenuItem
+          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
+          aria-label={t('workbench.browser.terminate')}
           variant="destructive"
           disabled={!liveWindowActions}
           onSelect={() => terminateBrowserWindow(instance)}
@@ -142,7 +148,7 @@ export function BrowserTabStrip({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="h-[26px] shrink-0 px-1.5 rounded-lg text-[11px] text-foreground/50 bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors cursor-pointer titlebar-no-drag"
+              className="min-h-[var(--control-md)] shrink-0 px-1.5 rounded-lg text-[11px] text-text-secondary bg-background shadow-minimal hover:bg-foreground/[0.03] data-[state=open]:bg-[var(--surface-tab-active,var(--foreground-5))] transition-colors cursor-pointer titlebar-no-drag"
             >
               +{overflow.length}
             </button>

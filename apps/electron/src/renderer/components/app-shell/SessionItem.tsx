@@ -232,11 +232,11 @@ export function SessionItem({
             aria-pressed={isInMultiSelect}
             aria-label={title}
             className={cn(
-              "grid h-3.5 shrink-0 place-items-center appearance-none border-0 bg-transparent p-0 text-foreground transition-all duration-150",
+              "grid min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] shrink-0 place-items-center appearance-none border-0 bg-transparent p-0 text-foreground transition-[opacity,background-color] duration-[var(--motion-fast)]",
               "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
               ctx.isMultiSelectActive || isInMultiSelect
-                ? "w-3.5 opacity-100"
-                : "w-0 overflow-hidden opacity-0 group-hover:w-3.5 group-hover:opacity-100",
+                ? "opacity-100"
+                : "opacity-0 group-hover:opacity-100",
             )}
             onClick={(e) => {
               e.stopPropagation()
@@ -252,7 +252,7 @@ export function SessionItem({
           >
             <Check
               className={cn(
-                "h-3 w-3 transition-opacity duration-150",
+                "h-3 w-3 transition-opacity duration-[var(--motion-fast)]",
                 isInMultiSelect ? "opacity-100" : "opacity-0",
               )}
               strokeWidth={2.25}
@@ -265,7 +265,7 @@ export function SessionItem({
         <>
           <div className={cn(
             "flex items-center justify-center overflow-hidden gap-1",
-            "transition-all duration-200 ease-out",
+            "transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
             (item.isProcessing || hasUnreadMeta(item) || item.lastMessageRole === 'plan' || hasPendingPrompt)
               ? "opacity-100 ml-0"
               : "!w-0 opacity-0 -ml-[10px]"
@@ -288,6 +288,7 @@ export function SessionItem({
         </>
       }
       title={ctx.searchQuery ? highlightMatch(title, ctx.searchQuery) : title}
+      titleTooltip={title}
       titleClassName={cn(
         "text-[13px]",
         (item.isAsyncOperationOngoing || (seProfile && item.isProcessing)) && "animate-shimmer-text",
@@ -298,7 +299,7 @@ export function SessionItem({
           <div className="flex items-center gap-1">
             {projectName && (
               <span
-                className="text-[11px] text-text-secondary whitespace-nowrap truncate max-w-[120px] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150"
+                className="text-[11px] text-text-secondary whitespace-nowrap truncate max-w-[140px] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-[var(--motion-fast)]"
                 title={projectName}
               >
                 {projectName}
@@ -390,7 +391,7 @@ export function SessionItem({
           <Flag className="h-3.5 w-3.5 text-info" />
         </div>
       ) : showLastActivityInTrailing ? (
-        <span className="text-[11px] text-text-secondary whitespace-nowrap">
+        <span className="text-[11px] text-text-secondary whitespace-nowrap" title={lastActivityText}>
           {lastActivityText}
         </span>
       ) : undefined}

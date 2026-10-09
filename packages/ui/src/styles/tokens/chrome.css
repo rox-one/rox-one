@@ -25,8 +25,12 @@
   --chrome-control-lg: var(--control-md);
   --chrome-tab-strip-height: 32px;
   --chrome-status-height: 24px;
-  --chrome-panel-header-height: 36px;
+  /* Panel header == tab strip at every density (G8 rhythm): a split panel and
+     its tab strip share one horizontal grid line (was 36 vs 32). Coarse = 48. */
+  --chrome-panel-header-height: 32px;
   --chrome-gap: 4px;
+  /* Chrome paddings/gaps snap to one 4px grid. */
+  --chrome-rhythm: 4px;
 
   /* Panes: flush one-surface shell; sashes overlap the seam. */
   --panel-gap: 0px;
@@ -53,7 +57,7 @@ html[data-density="comfortable"] {
   --row-h: 32px;
   --row-h-2line: 52px;
   --chrome-topbar-height: 44px;
-  --chrome-panel-header-height: 40px;
+  --chrome-panel-header-height: 36px;
   --chrome-tab-strip-height: 36px;
   --chrome-rail-width: 52px;
 }
@@ -69,5 +73,7 @@ html[data-density="comfortable"] {
     --chrome-control-lg: 44px;
     --chrome-topbar-height: 56px;
     --chrome-panel-header-height: 48px;
+    /* Coarse rail == topbar height (was 48 rail vs 56 topbar; G8). */
+    --chrome-rail-width: 56px;
   }
 }

@@ -51,6 +51,9 @@ export interface EntityRowProps {
   icon?: React.ReactNode
   /** Title content (ReactNode for search highlighting support) */
   title: React.ReactNode
+  /** Plain-text tooltip for a clamped/ellipsised title (highlighted titles are
+   *  rendered as nodes, so the full string is passed separately). */
+  titleTooltip?: string
   /** Additional className on the title wrapper (e.g. shimmer animation) */
   titleClassName?: string
   /** Content rendered inline after the title (e.g. timestamp). On hover, swapped with the more button
@@ -128,6 +131,7 @@ export interface EntityRowProps {
 export function EntityRow({
   icon,
   title,
+  titleTooltip,
   titleClassName,
   titleTrailing,
   titleSuffix,
@@ -289,7 +293,7 @@ export function EntityRow({
             e.stopPropagation()
             setCompactMenuOpen(true)
           }}
-          className="p-1 rounded-[var(--radius-control)] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+          className="inline-flex items-center justify-center min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] rounded-[var(--radius-control)] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
           aria-label={t('common.more')}
           aria-haspopup="dialog"
           aria-expanded={compactMenuOpen}
@@ -305,7 +309,7 @@ export function EntityRow({
               aria-label={t('common.more')}
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              className="p-1 rounded-[var(--radius-control)] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+              className="inline-flex items-center justify-center min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] rounded-[var(--radius-control)] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
             >
               <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -324,6 +328,7 @@ export function EntityRow({
       data-touch-reveal="true"
       className={cn(
         "flex items-center justify-end gap-0",
+        "[&_button]:inline-flex [&_button]:items-center [&_button]:justify-center [&_button]:min-w-[var(--control-hit-min)] [&_button]:min-h-[var(--control-hit-min)]",
         hoverRevealed
           ? "opacity-100"
           : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100",
@@ -359,9 +364,9 @@ export function EntityRow({
         {...(buttonProps as React.HTMLAttributes<HTMLDivElement>)}
         role="option"
         className={cn(
-          "entity-row-btn flex items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[var(--radius-control)] focus-visible:ring-1 focus-visible:ring-ring/60 cursor-pointer",
+          "entity-row-btn flex items-start gap-2 pl-2 pr-4 py-3 text-left text-sm rounded-[var(--radius-control)] cursor-pointer",
           leading ? "min-w-0 flex-1" : "w-full",
-          "transition-[background-color] duration-75 motion-reduce:transition-none",
+          "transition-colors duration-[var(--motion-fast)] motion-reduce:transition-none",
           (isSelected || isInMultiSelect)
             ? "bg-foreground/3"
             : "hover:bg-foreground/2",
@@ -388,15 +393,18 @@ export function EntityRow({
         <div className="flex flex-col gap-1.5 min-w-0 flex-1">
           <div className="flex items-center gap-[10px] w-full min-w-0">
             {icon && (
-              <div className="shrink-0 flex items-center gap-[10px] [&>*]:w-3 [&>*]:h-3">
+              <div className="shrink-0 flex items-center gap-[10px] [&>svg]:w-4 [&>svg]:h-4 [&>span[role=img]]:w-4 [&>span[role=img]]:h-4">
                 {icon}
               </div>
             )}
-            <div className={cn(
-              "font-sans min-w-0",
-              titleTrailing ? "truncate" : "font-medium line-clamp-2 -mb-[2px]",
-              titleClassName,
-            )}>
+            <div
+              className={cn(
+                "font-sans min-w-0",
+                titleTrailing ? "truncate" : "font-medium line-clamp-2 -mb-[2px]",
+                titleClassName,
+              )}
+              title={titleTooltip ?? (typeof title === 'string' ? title : undefined)}
+            >
               {title}
             </div>
             {titleSuffix && (
@@ -429,13 +437,13 @@ export function EntityRow({
 
           {/* Subtitle line */}
           {subtitle && (
-            <div className="flex items-start gap-[10px] w-full text-[12px] text-foreground/55 min-w-0 -mt-1">
+            <div className="flex items-start gap-[10px] w-full text-[12px] text-text-secondary min-w-0 -mt-1">
               {icon && (
-                <div className="shrink-0 flex items-center gap-[10px] [&>*]:w-3 [&>*]:h-3 invisible" aria-hidden="true">
+                <div className="shrink-0 flex items-center gap-[10px] [&>svg]:w-4 [&>svg]:h-4 [&>span[role=img]]:w-4 [&>span[role=img]]:h-4 invisible" aria-hidden="true">
                   {icon}
                 </div>
               )}
-              <div className="min-w-0 flex-1 line-clamp-2 leading-[1.35]">
+              <div className="min-w-0 flex-1 line-clamp-2 leading-[1.35]" title={typeof subtitle === 'string' ? subtitle : undefined}>
                 {subtitle}
               </div>
             </div>
@@ -443,21 +451,15 @@ export function EntityRow({
 
           {/* Badges / metadata row */}
           {(badges || trailing) && (
-            <div className="flex items-center gap-[10px] text-xs text-foreground/70 w-full -mb-[2px] min-w-0">
+            <div className="flex items-center gap-[10px] text-xs text-muted-foreground w-full -mb-[2px] min-w-0">
               {/* Invisible spacer matching icon container width */}
               {icon && (
-                <div className="shrink-0 flex items-center gap-[10px] [&>*]:w-3 [&>*]:h-3 invisible" aria-hidden="true">
+                <div className="shrink-0 flex items-center gap-[10px] [&>svg]:w-4 [&>svg]:h-4 [&>span[role=img]]:w-4 [&>span[role=img]]:h-4 invisible" aria-hidden="true">
                   {icon}
                 </div>
               )}
               {badges && (
-                <div
-                  className="flex-1 flex items-center gap-1 min-w-0 overflow-x-auto scrollbar-hide"
-                  style={{
-                    maskImage: 'linear-gradient(to right, black calc(100% - 16px), transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 16px), transparent 100%)',
-                  }}
-                >
+                <div className="flex-1 flex flex-wrap items-center gap-1 gap-y-[var(--spacing)] min-w-0">
                   {badges}
                 </div>
               )}

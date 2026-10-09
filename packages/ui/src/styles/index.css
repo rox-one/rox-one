@@ -78,7 +78,12 @@
   --border-strong: color-mix(in oklch, var(--foreground) 14%, var(--canvas));
   --text-primary: var(--foreground);
   --text-secondary: color-mix(in oklch, var(--foreground) 68%, var(--canvas));
-  --text-muted: color-mix(in oklch, var(--foreground) 48%, var(--canvas));
+  /* Recalibrated (G10 P-10-04): the shipped 48% mix measured ≈3.2:1 on light —
+     under the 4.5:1 AA floor for normal text. 65% light / 56% dark clears AA
+     while staying visibly lighter than --text-secondary. */
+  --text-muted: color-mix(in oklch, var(--foreground) 65%, var(--canvas));
+  /* Chip/badge text: a step above --text-muted. 72% light / 74% dark. */
+  --text-subtle: color-mix(in oklch, var(--foreground) 72%, var(--canvas));
   --accent-text: color-mix(in oklch, var(--accent) 88%, var(--foreground));
   --accent-foreground: var(--canvas);
   --surface-hover: color-mix(in oklch, var(--foreground) 5%, var(--surface-elevated));
@@ -182,9 +187,49 @@
   --chrome-font-size: 12px;
   --chrome-font-size-sm: 11px;
   --chrome-tracking: 0.01em;
-  --chrome-glass-blur: 14px;
-  --chrome-glass-bg: color-mix(in oklch, var(--surface-elevated) 86%, transparent);
-  --chrome-glass-border: color-mix(in oklch, var(--border-subtle) 70%, transparent);
+
+  /* --- G8 material ladder: one plate, three translucencies ----------------
+     Every structural chrome region (rail, surface tabs, panel headers, panel
+     stack edges, inspector, status bar) is painted from ONE plate token.
+     `html[data-chrome-material]` switches only its translucency.
+       dense (default): opaque recessed plate (--surface-rail), no blur
+       tint:            the same hue at 82% light / 78% dark, still no blur
+       glass:           tint + one blur radius (16px) — chrome-only
+     Blur is chrome-only and NEVER animated (see tokens/motion.css). */
+  --chrome-plate-dense: var(--surface-rail);
+  --chrome-plate-tint: color-mix(in oklch, var(--surface-rail) 82%, transparent);
+  --chrome-plate-blur: 16px;
+  --chrome-plate-bg: var(--chrome-plate-dense);
+  --chrome-plate-border: color-mix(in oklch, var(--foreground) 7%, transparent);
+  --chrome-plate-ring: inset 0 0 0 1px var(--chrome-plate-border);
+  /* Structural chrome is FLAT: separation comes from tone + one hairline. */
+  --chrome-plate-shadow: none;
+  /* Never lists backdrop-filter → blur can never animate. */
+  --chrome-plate-transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+
+  /* Ladder aliases: the legacy --chrome-glass-* tokens resolve to the unified
+     plate, so .chrome-surface and the super-engineering composer join the same
+     ladder instead of running a second material system. */
+  --chrome-glass-bg: var(--chrome-plate-tint);
+  --chrome-glass-border: var(--chrome-plate-border);
+  --chrome-glass-blur: var(--chrome-plate-blur);
+
+  /* Chrome label tier: the muted/45%-opacity chrome label measures 2.8:1 light
+     / 3.8:1 dark on a plate; --text-secondary (68% / 90%) measures 4.9:1 /
+     9.4:1. */
+  --chrome-label: var(--text-secondary);
+
+  /* --- G8 focus-ring system (2px outline) --------------------------------
+     One mechanism: outward on the canvas, inset inside chrome plates, haloed
+     on floating overlays. */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-inset-offset: -2px;
+  --focus-ring-color: var(--focus);
+  --focus-ring-halo: color-mix(in oklab, var(--focus) 26%, transparent);
 
   /* Rox graphite language (issue 32) — ink / graphite / mint, 6/8px radii */
   --ink: oklch(0.22 0.014 255);
@@ -200,7 +245,7 @@
   --rox-elev-panel: none;
   /* One-surface shell: panes sit flush on one background and are separated
      by a single low-alpha hairline instead of rounded outlined boxes. */
-  --rox-shell-divider: color-mix(in oklch, var(--foreground) 6%, transparent);
+  --rox-shell-divider: var(--chrome-plate-border);
 
   /* Z-index layers: ./tokens/z.css */
 }
@@ -232,6 +277,14 @@
   --navigator: oklch(0.145 0.011 255);
   --input-surface: color-mix(in oklch, var(--foreground) 4%, var(--background));
   --popover-solid: color-mix(in oklch, var(--foreground) 7%, var(--background));
+  /* G10 P-10-04: dark surfaces compress contrast, so the muted tier needs a
+     lower foreground share than light (56% vs 65%); --text-subtle 74%. */
+  --text-muted: color-mix(in oklch, var(--foreground) 56%, var(--canvas));
+  --text-subtle: color-mix(in oklch, var(--foreground) 74%, var(--canvas));
+  /* G8: dark chrome plate needs a stronger tint to stay distinguishable from
+     the work surface; the hairline rises to 10%. */
+  --chrome-plate-tint: color-mix(in oklch, var(--surface-rail) 78%, transparent);
+  --chrome-plate-border: color-mix(in oklch, var(--foreground) 10%, transparent);
   --ink: oklch(0.92 0.012 255);
   --graphite: oklch(0.62 0.01 255);
   --shadow-control: inset 0 0 0 1px var(--border-subtle), 0 1px 2px rgb(0 0 0 / 0.12);
@@ -463,15 +516,17 @@ html[data-contrast="high"] {
   --border-subtle: color-mix(in oklch, var(--foreground) 12%, var(--canvas));
   --border-strong: color-mix(in oklch, var(--foreground) 22%, var(--canvas));
   --text-secondary: color-mix(in oklch, var(--foreground) 90%, var(--canvas));
+  /* High contrast keeps the ordering muted < subtle < secondary < primary;
+     --text-subtle sits between the 78% muted and the 90% secondary. */
   --text-muted: color-mix(in oklch, var(--foreground) 78%, var(--canvas));
+  --text-subtle: color-mix(in oklch, var(--foreground) 84%, var(--canvas));
   --muted-foreground: var(--text-muted);
   --border: var(--border-subtle);
   --input: var(--border-subtle);
   --ring-width: 2px;
   --ring-offset: 1px;
-  --chrome-glass-bg: var(--surface-elevated);
-  --chrome-glass-blur: 0px;
-  --chrome-glass-border: color-mix(in oklch, var(--foreground) 10%, transparent);
+  /* The material ladder flattens to the dense step; see the G8 material
+     section below for the plate/blur/shadow overrides. */
   /* Raised surfaces: tone + soft lift only, no 1px ring. */
   --rox-elev-panel: none;
   --rox-shell-divider: color-mix(in oklch, var(--foreground) 10%, transparent);
@@ -496,8 +551,8 @@ html[data-contrast="high"] :focus-visible {
 ============================================================================= */
 
 html[data-ui-profile="super-engineering"] {
-  --chrome-glass-blur: 20px;
-  /* Profiles scale radius within the token scale only (UI-A1). */
+  /* Glass is the profile's signature — wider blur, still chrome-only. Kept at
+     the end of the G8 material section so it wins over the ladder steps. */
   --rox-radius-panel: var(--radius-md);
   --rox-radius-composer: var(--radius-lg);
   --font-size-base: 13px;
@@ -548,6 +603,8 @@ html[data-ui-profile="super-engineering"] .input-container {
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-chrome-label: var(--chrome-label);
   --color-accent-text: var(--accent-text);
   --color-accent-foreground: var(--accent-foreground);
   --color-focus: var(--focus);
@@ -648,10 +705,12 @@ html[data-ui-profile="super-engineering"] .input-container {
     background: var(--text-secondary);
   }
 
-  /* Focus remains visible without relying on component-specific rings. */
+  /* One focus mechanism (G8): a 2px full-accent outline, offset per surface.
+     Outward on the canvas, inset inside chrome plates (clip-safe), haloed on
+     floating overlays — see the G8 focus system section below. */
   *:focus-visible {
-    outline: var(--ring-width) solid var(--focus-ring);
-    outline-offset: var(--ring-offset);
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
     --tw-ring-offset-width: var(--ring-offset);
     --tw-ring-width: var(--ring-width);
     --tw-ring-color: var(--ring);
@@ -1012,11 +1071,195 @@ html[data-ui-profile="super-engineering"] .input-container {
   border-radius: inherit;
 }
 
+/* =============================================================================
+   G8 — CHROME MATERIAL LADDER + FOCUS SYSTEM (+ G10 settings card)
+
+   ONE plate, three translucencies. Every structural chrome region — rail,
+   surface tabs, panel headers, panel stack edges, inspector, status bar — is
+   painted from --chrome-plate-bg; `html[data-chrome-material]` switches only
+   its translucency. Blur exists exclusively in the `glass` step and is NEVER
+   animated (--chrome-plate-transition lists no backdrop-filter).
+
+   Guards: high contrast → dense, blur 0, hairline shadows, 12% border, solid
+   2px focus; prefers-reduced-transparency / prefers-contrast → dense, blur 0;
+   super-engineering keeps a 20px blur; data-render-profile="performance" zeroes
+   chrome transitions. Floating surfaces (menus, popovers, dialogs, toasts,
+   tooltips) are ALWAYS opaque and never glass.
+============================================================================= */
+html :is(
+  .chrome-topbar,
+  .chrome-rail,
+  .chrome-strip,
+  [data-layout="panel-header"],
+  [data-surface-tabs],
+  [data-shell-role="chrome"],
+  [data-inspector-panel],
+  .rox-shell-pane[data-panel-role="sidebar"],
+  .rox-shell-pane[data-panel-role="navigator"]
+) {
+  background: var(--chrome-plate-bg);
+  border-color: var(--chrome-plate-border);
+  box-shadow: var(--chrome-plate-shadow);
+  transition: var(--chrome-plate-transition);
+  /* blur only exists in the glass step — no filter layer in dense/tint. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Ladder switching (dense is the shipped default). */
+html[data-chrome-material="tint"] {
+  --chrome-plate-bg: var(--chrome-plate-tint);
+  --chrome-plate-blur: 0px;
+}
+html[data-chrome-material="glass"] {
+  --chrome-plate-bg: var(--chrome-plate-tint);
+}
+html[data-chrome-material="glass"] :is(
+  .chrome-topbar,
+  .chrome-rail,
+  .chrome-strip,
+  [data-layout="panel-header"],
+  [data-surface-tabs],
+  [data-shell-role="chrome"],
+  [data-inspector-panel],
+  .rox-shell-pane[data-panel-role="sidebar"],
+  .rox-shell-pane[data-panel-role="navigator"],
+  .chrome-surface
+) {
+  backdrop-filter: blur(var(--chrome-plate-blur)) saturate(1.12);
+  -webkit-backdrop-filter: blur(var(--chrome-plate-blur)) saturate(1.12);
+}
+
+/* Chrome labels read on the plate: the muted tier inside chrome resolves to
+   --chrome-label (= --text-secondary). Tailwind's @theme bridge computes
+   --color-muted-foreground at :root, so re-point it too. */
+html :is(
+  .chrome-topbar,
+  .chrome-rail,
+  .chrome-strip,
+  [data-layout="panel-header"],
+  [data-surface-tabs],
+  [data-shell-role="chrome"],
+  [data-inspector-panel],
+  .rox-shell-pane[data-panel-role="sidebar"],
+  .rox-shell-pane[data-panel-role="navigator"]
+) {
+  --text-muted: var(--chrome-label);
+  --muted-foreground: var(--chrome-label);
+  --color-muted-foreground: var(--chrome-label);
+  --color-text-muted: var(--chrome-label);
+}
+/* Call-site label tiers (`text-foreground/45`, `text-muted-foreground`) inside
+   chrome resolve to the named label token instead of a 45% opacity. */
+html :is(
+  .chrome-topbar, .chrome-rail, .chrome-strip, [data-layout="panel-header"],
+  [data-surface-tabs], [data-shell-role="chrome"], [data-inspector-panel],
+  .rox-shell-pane[data-panel-role="sidebar"],
+  .rox-shell-pane[data-panel-role="navigator"]
+) :is(
+  [class~="text-foreground/45"],
+  [class~="text-foreground/40"],
+  [class~="text-muted-foreground"],
+  [class~="text-muted-foreground/50"]
+) {
+  color: var(--chrome-label);
+}
+
+/* Accessibility / profile behaviour for the ladder (must trail the steps). */
+html[data-contrast="high"] {
+  --chrome-plate-bg: var(--surface-rail);
+  --chrome-plate-border: color-mix(in oklch, var(--foreground) 12%, transparent);
+  --chrome-plate-blur: 0px;
+  --shadow-popover: 0 0 0 1px var(--border-strong);
+  --shadow-overlay: 0 0 0 1px var(--border-strong);
+  --state-selected: color-mix(in oklch, var(--accent) 22%, transparent);
+  --state-selected-strong: color-mix(in oklch, var(--accent) 30%, transparent);
+}
+html[data-contrast="high"] :is(
+  .chrome-topbar, .chrome-rail, .chrome-strip, [data-layout="panel-header"],
+  [data-surface-tabs], [data-shell-role="chrome"], [data-inspector-panel],
+  .rox-shell-pane[data-panel-role="sidebar"],
+  .rox-shell-pane[data-panel-role="navigator"]
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html[data-chrome-material] {
+    --chrome-plate-bg: var(--surface-rail);
+    --chrome-plate-blur: 0px;
+  }
+  html[data-chrome-material] :is(
+    .chrome-topbar, .chrome-rail, .chrome-strip, [data-layout="panel-header"],
+    [data-surface-tabs], [data-shell-role="chrome"], .chrome-surface
+  ) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+@media (forced-colors: active) {
+  html :is(
+    .chrome-topbar, .chrome-rail, .chrome-strip, [data-layout="panel-header"],
+    [data-surface-tabs], [data-shell-role="chrome"], [data-inspector-panel]
+  ) {
+    background: Canvas;
+    border-color: CanvasText;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+/* super-engineering profile: glass is its signature — wider blur, chrome-only.
+   Declared last so it wins over the tint step. */
+html[data-ui-profile="super-engineering"] {
+  --chrome-plate-blur: 20px;
+}
+/* performance profile: chrome motion off; blur is a paint, never a transition. */
+html[data-render-profile="performance"] {
+  --chrome-plate-transition: none;
+  --motion-disclosure: 0ms;
+  --motion-overlay: 0ms;
+}
+
+/* --- G8 focus system: one mechanism, offset per surface ------------------- */
+/* Floating overlays may add the halo so the ring survives a busy plate. */
+html :is(
+  [data-premium-menu], [role="dialog"], [data-sonner-toast], [role="tooltip"]
+) :is(a, button, [role="menuitem"], [role="option"], [tabindex]):focus-visible {
+  box-shadow: 0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-halo);
+}
+/* Chrome plates clip their children → the ring sits INSIDE the control. */
+html :is(
+  .chrome-rail, .chrome-strip, .chrome-topbar, [data-layout="panel-header"],
+  [data-surface-tabs], [data-shell-role="chrome"]
+) :is(a, button, [role="tab"], [role="menuitem"], [tabindex]):focus-visible {
+  outline-offset: var(--focus-ring-inset-offset);
+}
+/* High contrast: solid 2px, no soft halo (see the HC block above). */
+html[data-contrast="high"] :is(
+  a, button, input, select, textarea, [role="button"], [role="tab"],
+  [role="menuitem"], [role="option"], [tabindex]
+):focus-visible {
+  outline: 2px solid var(--focus);
+  box-shadow: none;
+}
+@media (pointer: coarse) {
+  :root {
+    --focus-ring-width: 3px;
+  }
+}
+
+/* G10 P-10-10: the dead `rox-settings-card` hook named by settingsUI.card. */
+.rox-settings-card {
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-popover);
+}
+
 .chrome-surface {
-  background: var(--chrome-glass-bg);
-  backdrop-filter: blur(var(--chrome-glass-blur));
-  -webkit-backdrop-filter: blur(var(--chrome-glass-blur));
-  border-color: var(--chrome-glass-border);
+  background: var(--chrome-plate-bg);
+  border-color: var(--chrome-plate-border);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Active navigation marker: a thin looping accent sweep on the selected rail

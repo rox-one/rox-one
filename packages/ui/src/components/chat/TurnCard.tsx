@@ -975,6 +975,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
               }}
               className={cn(
                 "p-0.5 rounded-[var(--radius-control)] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
+                "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center",
                 "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               )}
             >
@@ -1059,7 +1060,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
       <TreeViewConnector depth={depth} isLastChild={isLastChild} />
       <div
         className={cn(
-          "group/row flex items-center gap-2 py-0.5 text-muted-foreground flex-1 min-w-0",
+          "group/row flex items-center gap-2 py-0.5 text-text-secondary flex-1 min-w-0",
           SIZE_CONFIG.fontSize
         )}
         onClick={onOpenDetails && isComplete ? onOpenDetails : undefined}
@@ -1226,6 +1227,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
             }}
             className={cn(
               "p-0.5 rounded-[var(--radius-control)] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
+              "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center",
               "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             )}
           >
@@ -1327,7 +1329,7 @@ function ActivityGroupRow({
       {/* Task header row - no left padding, chevron aligned with activity row icons */}
       <div
         className={cn(
-          "group/row flex items-center gap-2 py-0.5 rounded-md cursor-pointer text-muted-foreground",
+          "group/row flex items-center gap-2 py-0.5 rounded-md cursor-pointer text-text-secondary",
           "hover:text-foreground transition-colors",
           SIZE_CONFIG.fontSize
         )}
@@ -1361,7 +1363,7 @@ function ActivityGroupRow({
 
         {/* Duration and token stats from TaskOutput (only when complete) */}
         {isComplete && group.taskOutputData && (
-          <span className="shrink-0 text-muted-foreground/60 tabular-nums">
+          <span className="shrink-0 text-text-secondary tabular-nums">
             {group.taskOutputData.durationMs !== undefined && (
               <span>{formatDuration(group.taskOutputData.durationMs)}</span>
             )}
@@ -1397,6 +1399,7 @@ function ActivityGroupRow({
             }}
             className={cn(
               "p-0.5 rounded-[var(--radius-control)] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
+              "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center",
               "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             )}
           >
@@ -2545,11 +2548,13 @@ export function ResponseCard({
             onClick={() => setIsFullscreen(true)}
             className={cn(
               "absolute top-2 right-2 p-1 rounded-[var(--radius-card)] transition-all z-10 select-none",
-              "opacity-0 group-hover:opacity-100",
+              "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center",
+              "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
               "bg-background shadow-minimal",
               "text-muted-foreground/50 hover:text-foreground",
               "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100"
             )}
+            aria-label={t('common.viewFullscreen')}
             title={t('common.viewFullscreen')}
           >
             <Maximize2 className="w-3.5 h-3.5" />

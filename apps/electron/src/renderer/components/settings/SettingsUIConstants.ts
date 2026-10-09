@@ -21,12 +21,12 @@ export const settingsUI = {
   labelGroup: 'min-w-0',
 
   /** Shared geometry for every field family; narrow-panel stacking stays in CSS. */
-  row: 'flex min-h-[44px] w-full items-center justify-between gap-3 text-left',
+  row: 'flex min-h-[var(--row-h-2line)] w-full items-center justify-between gap-3 text-left',
   rowPadding: 'px-[var(--settings-row-x)] py-[var(--settings-row-y)]',
   rowPaddingStandalone: 'py-[var(--settings-row-y)]',
   control: 'flex shrink-0 items-center gap-2',
   section: 'space-y-[var(--settings-section-gap)]',
-  sectionHeader: 'flex min-w-0 items-start justify-between gap-3 px-0.5',
+  sectionHeader: 'flex min-w-0 items-start justify-between gap-3 px-[var(--settings-row-x)]',
   sectionTitle: 'text-[13px] leading-5 font-semibold text-text-primary',
   card: 'rox-settings-card overflow-hidden rounded-md bg-surface-elevated shadow-minimal',
   fieldFrame: 'relative min-w-0 rounded-md',
