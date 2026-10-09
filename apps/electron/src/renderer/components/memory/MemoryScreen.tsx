@@ -228,6 +228,10 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const searchRef = React.useRef<HTMLInputElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
   const detailCloseRef = React.useRef<HTMLButtonElement>(null)
+  // Whether a `start` dream event was observed since the last «Собрать сейчас»
+  // click. A rejection after `start` is the transport bound firing, not a real
+  // failure: the server keeps running, so the run state must not be flipped.
+  const dreamStartSeen = React.useRef(false)
 
   const load = React.useCallback(() => {
     if (currentWorkspace.current !== workspaceId) return
@@ -287,21 +291,34 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     repoLoad()
     const offRepo = typeof window.electronAPI.onMemoryRepoChanged === 'function' ? window.electronAPI.onMemoryRepoChanged(() => repoLoad()) : () => {}
     const offDream = typeof window.electronAPI.onMemoryDreamDone === 'function' ? window.electronAPI.onMemoryDreamDone(() => repoLoad()) : () => {}
+    const offDreamEvent = typeof window.electronAPI.onMemoryDreamEvent === 'function'
+      ? window.electronAPI.onMemoryDreamEvent((event) => {
+          if (event.bankId !== bankId) return
+          if (event.kind === 'start') dreamStartSeen.current = true
+          if (event.kind === 'end') setDreamRunning(false)
+        })
+      : () => {}
     const offImport = typeof window.electronAPI.onMemoryRepoImportReady === 'function' ? window.electronAPI.onMemoryRepoImportReady(() => repoLoad()) : () => {}
-    return () => { offRepo(); offDream(); offImport() }
+    return () => { offRepo(); offDream(); offDreamEvent(); offImport() }
   }, [repoLoad, repoReadAvailable, dreamReadAvailable])
   const dreamActive = dreamRunning || Boolean(dreamStatus?.running)
   const runDreamNow = () => {
     if (dreamActive || !dreamRunAvailable) return
+    dreamStartSeen.current = false
     setDreamRunning(true)
     window.electronAPI.runMemoryDream(bankId).then((run) => {
       if (currentWorkspace.current !== workspaceId) return
+      setDreamRunning(false)
       if (run && run.status === 'error') toast.error(t('memory.repo.state.dreamFailed'))
     }).catch(() => {
+      // A rejection after the run has actually started is the transport bound,
+      // not a failure: leave `dreamRunning` set and let the event/done stream
+      // own the run state. Only a pre-start rejection is a genuine failure.
+      if (dreamStartSeen.current) return
       if (currentWorkspace.current === workspaceId) toast.error(t('memory.repo.state.dreamFailed'))
     }).finally(() => {
       if (currentWorkspace.current !== workspaceId) return
-      setDreamRunning(false)
+      if (!dreamStartSeen.current) setDreamRunning(false)
       repoLoad()
     })
   }

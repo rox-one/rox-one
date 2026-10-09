@@ -8,8 +8,8 @@
 import { RPC_CHANNELS } from '../shared/types'
 import type { ChannelMap } from './build-api'
 
-function invoke(channel: string, transform?: (result: any) => any) {
-  return { type: 'invoke' as const, channel, ...(transform && { transform }) }
+function invoke(channel: string, transform?: (result: any) => any, timeoutMs?: number) {
+  return { type: 'invoke' as const, channel, ...(transform && { transform }), ...(timeoutMs !== undefined && { timeoutMs }) }
 }
 
 function listener(channel: string) {
@@ -753,7 +753,7 @@ export const CHANNEL_MAP = {
   getMemoryRepoGraph: invoke(RPC_CHANNELS.memory.REPO_GRAPH),
   exportMemoryRepo: invoke(RPC_CHANNELS.memory.REPO_EXPORT),
   getMemoryDreamStatus: invoke(RPC_CHANNELS.memory.DREAM_STATUS),
-  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN),
+  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN, undefined, 240_000),
   getMemoryDreamLog: invoke(RPC_CHANNELS.memory.DREAM_LOG),
   previewMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT),
   applyMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_APPLY_IMPORT),

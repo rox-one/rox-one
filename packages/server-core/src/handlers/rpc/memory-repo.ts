@@ -316,7 +316,12 @@ export function registerMemoryRepoHandlers(server: RpcServer, deps: HandlerDeps,
       // A forced run (`{noteIds}`) distils exactly those notes even when unchanged.
       return requireRuntime().scheduler.runNow(canonical, opts)
     },
-    { nativeAction: 'write' },
+    {
+      nativeAction: 'write',
+      // Dreams block until the run finishes; the client uses the same budget so
+      // the server is never the first bound to fire (default 60 s, cap 240 s).
+      timeoutMs: 240_000,
+    },
   )
 
   server.handle(RPC_CHANNELS.memory.DREAM_LOG, async (ctx, bankId: string, limit?: number): Promise<MemoryDreamEvent[]> => {
