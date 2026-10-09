@@ -403,6 +403,12 @@ export interface CatalogLoadResult {
   catalog: MarketplaceCatalog
   origin: CatalogOrigin
   lastCatalogFetchAt: number | null
+  /**
+   * True only when the served catalog body passed Ed25519 verification
+   * (remote / cache / bundled-with-`.sig`). The registry trust gate keys off
+   * this — a `false`/absent flag means the catalog is unauthenticated.
+   */
+  signatureVerified?: boolean
   /** Present when a degraded origin was used. */
   error?: string
 }
@@ -433,7 +439,7 @@ export function atomicWriteFileSync(path: string, content: string): void {
   renameSync(tmp, path)
 }
 
-function readCache(paths: MarketplacePaths): { catalog: MarketplaceCatalog; fetchedAt: number | null } | null {
+function readCache(paths: MarketplacePaths): { catalog: MarketplaceCatalog; fetchedAt: number | null; signatureVerified: true } | null {
   try {
     if (!existsSync(paths.catalogCache)) return null
     const cached = JSON.parse(readFileSync(paths.catalogCache, 'utf8')) as {
@@ -446,6 +452,7 @@ function readCache(paths: MarketplacePaths): { catalog: MarketplaceCatalog; fetc
     return {
       catalog: parseCatalog(JSON.parse(cached.body)),
       fetchedAt: typeof cached.fetchedAt === 'number' ? cached.fetchedAt : null,
+      signatureVerified: true,
     }
   } catch {
     return null // corrupt or unauthenticated cache is treated as absent
@@ -459,7 +466,7 @@ function writeCache(paths: MarketplacePaths, body: string, signature: string): v
   )
 }
 
-function loadBundled(bundledCatalogPath?: string): MarketplaceCatalog | null {
+function loadBundled(bundledCatalogPath?: string): { catalog: MarketplaceCatalog; signatureVerified: boolean } | null {
   const file = bundledCatalogPath ?? defaultBundledCatalogPath()
   if (!file || !existsSync(file)) return null
   try {
@@ -469,10 +476,11 @@ function loadBundled(bundledCatalogPath?: string): MarketplaceCatalog | null {
       assertCatalogBodyMatchesSidecar(body, readFileSync(sidecarPath, 'utf8'), 'bundled catalog')
     }
     const sigPath = `${file}.sig`
-    if (existsSync(sigPath)) {
+    const signatureVerified = existsSync(sigPath)
+    if (signatureVerified) {
       assertCatalogBodySignature(body, readFileSync(sigPath, 'utf8'), 'bundled catalog')
     }
-    return parseCatalog(JSON.parse(body))
+    return { catalog: parseCatalog(JSON.parse(body)), signatureVerified }
   } catch {
     return null
   }
@@ -508,7 +516,7 @@ async function refreshCatalogInternal(options: GetCatalogOptions & { allowFreshC
   // Fresh cache short-circuit (24h TTL).
   const cacheAge = cached?.fetchedAt != null ? now() - cached.fetchedAt : Number.POSITIVE_INFINITY
   if (options.allowFreshCache && cached && cacheAge < ttl) {
-    return { catalog: cached.catalog, origin: 'cache', lastCatalogFetchAt: meta.lastCatalogFetchAt ?? cached.fetchedAt }
+    return { catalog: cached.catalog, origin: 'cache', lastCatalogFetchAt: meta.lastCatalogFetchAt ?? cached.fetchedAt, signatureVerified: true }
   }
 
   // Remote attempt (may be skipped entirely when there is no fetch — tests, airgapped).
@@ -525,7 +533,7 @@ async function refreshCatalogInternal(options: GetCatalogOptions & { allowFreshC
       if (res.status === 304 && cached) {
         const fetchedAt = now()
         metaStore.set({ ...meta, lastCatalogFetchAt: fetchedAt })
-        return { catalog: cached.catalog, origin: 'cache', lastCatalogFetchAt: fetchedAt }
+        return { catalog: cached.catalog, origin: 'cache', lastCatalogFetchAt: fetchedAt, signatureVerified: true }
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const body = await res.text()
@@ -562,7 +570,7 @@ async function refreshCatalogInternal(options: GetCatalogOptions & { allowFreshC
       const fetchedAt = now()
       const etag = res.headers.get('etag') ?? undefined
       metaStore.set({ catalogEtag: etag, lastCatalogFetchAt: fetchedAt })
-      return { catalog, origin: 'remote', lastCatalogFetchAt: fetchedAt }
+      return { catalog, origin: 'remote', lastCatalogFetchAt: fetchedAt, signatureVerified: true }
     } catch (err) {
       remoteError = err instanceof Error ? err.message : String(err)
     }
@@ -572,11 +580,11 @@ async function refreshCatalogInternal(options: GetCatalogOptions & { allowFreshC
 
   // Degradation ladder.
   if (cached) {
-    return { catalog: cached.catalog, origin: 'stale-cache', lastCatalogFetchAt: meta.lastCatalogFetchAt ?? cached.fetchedAt, error: remoteError }
+    return { catalog: cached.catalog, origin: 'stale-cache', lastCatalogFetchAt: meta.lastCatalogFetchAt ?? cached.fetchedAt, signatureVerified: true, error: remoteError }
   }
   const bundled = loadBundled(options.bundledCatalogPath)
   if (bundled) {
-    return { catalog: bundled, origin: 'bundled', lastCatalogFetchAt: meta.lastCatalogFetchAt ?? null, error: remoteError }
+    return { catalog: bundled.catalog, origin: 'bundled', lastCatalogFetchAt: meta.lastCatalogFetchAt ?? null, signatureVerified: bundled.signatureVerified, error: remoteError }
   }
-  return { catalog: EMPTY_CATALOG, origin: 'empty', lastCatalogFetchAt: null, error: remoteError ?? 'no catalog available' }
+  return { catalog: EMPTY_CATALOG, origin: 'empty', lastCatalogFetchAt: null, signatureVerified: false, error: remoteError ?? 'no catalog available' }
 }

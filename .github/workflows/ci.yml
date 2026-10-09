@@ -40,6 +40,12 @@ jobs:
         # RPC handler run in no other workflow, so a memory regression could
         # otherwise merge with every gate green.
         run: bun test packages/server-core/src/memory packages/shared/src/memory packages/session-tools-core/src/handlers/memory-repo.test.ts
+      - name: Verify reference-engine suites
+        # packages/server-core/src/work runs in no other workflow. Before this
+        # step the four reference suites had drifted 26 tests red - the W1-11
+        # takeover of im.create_chat / workspaces.create left them unable to
+        # create a chat - and every gate stayed green, so nothing noticed.
+        run: bun test packages/server-core/src/work
       - run: bun run validate:ci
         env:
           # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB heap.

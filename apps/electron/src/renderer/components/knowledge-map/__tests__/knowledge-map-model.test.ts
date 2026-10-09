@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test'
+import type { TFunction } from 'i18next'
 import type {
   KnowledgeMapEdge,
   KnowledgeMapNode,
@@ -7,11 +8,12 @@ import type {
 import {
   AREA_COLORS,
   AREA_LABEL_KEYS,
+  buildCountItems,
   buildStatItems,
   buildTree,
   degreeOf,
   filterGraph,
-  formatCount,
+  formatStatItems,
   nodeMatchesQuery,
   truncatedSummary,
 } from '../knowledge-map-model'
@@ -100,17 +102,51 @@ describe('degreeOf', () => {
 })
 
 describe('buildStatItems', () => {
-  it('builds one item per plan §4 stat token', () => {
-    const items = buildStatItems(stats, 'en-US')
+  it('builds plural-safe count fragments and a byte-formatted size', () => {
+    const items = buildStatItems(stats)
     expect(items.map((item) => item.key)).toEqual([
       'knowledgeMap.stats.files',
       'knowledgeMap.stats.links',
       'knowledgeMap.stats.areas',
       'knowledgeMap.stats.bytes',
     ])
-    expect(items[0].value).toBe('4')
-    expect(items[3].value).toBe('8,192')
-    expect(formatCount(42, 'en-US')).toBe('42')
+    expect(items[0].count).toBe(4)
+    expect(items[1].count).toBe(2)
+    expect(items[2].count).toBe(3)
+    expect(items[3].value).toBe('8.0 КБ')
+  })
+
+  it('formats the size with the Drive byte units (Б/КБ/МБ)', () => {
+    expect(buildStatItems({ ...stats, bytes: 0 })[3].value).toBe('0 Б')
+    expect(buildStatItems({ ...stats, bytes: 1536 })[3].value).toBe('1.5 КБ')
+    expect(buildStatItems({ ...stats, bytes: 2 * 1024 * 1024 })[3].value).toBe('2.0 МБ')
+  })
+})
+
+describe('formatStatItems', () => {
+  it('pluralises each count through the translator and joins with ·', () => {
+    const calls: Array<{ key: string; count?: number }> = []
+    const translate = ((key: string, options?: { count?: number }): string => {
+      calls.push({ key, count: options?.count })
+      return options?.count === undefined ? key : `${key}#${options.count}`
+    }) as unknown as TFunction
+    expect(formatStatItems(buildStatItems(stats), translate)).toBe(
+      'knowledgeMap.stats.files#4 · knowledgeMap.stats.links#2 · knowledgeMap.stats.areas#3 · knowledgeMap.stats.bytes: 8.0 КБ',
+    )
+    expect(calls).toEqual([
+      { key: 'knowledgeMap.stats.files', count: 4 },
+      { key: 'knowledgeMap.stats.links', count: 2 },
+      { key: 'knowledgeMap.stats.areas', count: 3 },
+      { key: 'knowledgeMap.stats.bytes', count: undefined },
+    ])
+  })
+
+  it('builds the compact headline from the count fragments only', () => {
+    const translate = ((key: string, options?: { count?: number }) =>
+      options?.count === undefined ? key : `${key}#${options.count}`) as unknown as TFunction
+    expect(formatStatItems(buildCountItems(stats), translate)).toBe(
+      'knowledgeMap.stats.files#4 · knowledgeMap.stats.links#2 · knowledgeMap.stats.areas#3',
+    )
   })
 })
 

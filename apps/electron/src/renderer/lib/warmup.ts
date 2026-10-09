@@ -163,10 +163,12 @@ export class WarmupScheduler {
     const sliceStart = this.now()
     this.index += 1
     let pending: void | Promise<void>
+    let threw = false
     try {
       pending = step.run()
     } catch {
       this.failed.push(step.id)
+      threw = true
       pending = undefined
     }
     this.spentMs += Math.max(0, this.now() - sliceStart)
@@ -199,7 +201,7 @@ export class WarmupScheduler {
         .then(() => finish(true))
       return
     }
-    this.completed.push(step.id)
+    if (!threw) this.completed.push(step.id)
     finish(false)
   }
 

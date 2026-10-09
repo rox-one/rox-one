@@ -165,6 +165,8 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     devSpace,
     podcast,
     codebook,
+    workboard,
+    board,
   ] = await Promise.all([
     import('@rox/server-core/handlers/rpc/auth'),
     import('@rox/server-core/handlers/rpc/automations'),
@@ -225,8 +227,10 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/entities'),
     import('@rox/server-core/handlers/rpc/knowledge-map'),
     import('@rox/server-core/handlers/rpc/dev-space'),
-    import('@rox/server-core/playbooks/jobs'),
+import('@rox/server-core/playbooks/jobs'),
     import('@rox/server-core/playbooks/codebook'),
+    import('@rox/server-core/handlers/rpc/workboard'),
+    import('@rox/server-core/handlers/rpc/board'),
   ])
 
   const [meetings, personalTasks, feed, runtimeTrace] = await Promise.all([
@@ -312,6 +316,8 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...devSpace.HANDLED_CHANNELS,
     ...podcast.HANDLED_CHANNELS,
     ...codebook.HANDLED_CHANNELS,
+    ...workboard.WORKBOARD_HANDLED_CHANNELS,
+    ...board.BOARD_HANDLED_CHANNELS,
   ])
 }
 

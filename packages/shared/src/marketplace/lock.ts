@@ -13,6 +13,7 @@ import { join } from 'node:path'
 
 import { atomicWriteFileSync } from './catalog.ts'
 import type { MarketplaceEntryKind } from './catalog.ts'
+import type { RegistryTrustVerdict } from './trust.ts'
 import { resolveConfigDir } from "../config/paths.ts"
 
 export const MARKETPLACE_LOCK_VERSION = 1 as const
@@ -51,6 +52,13 @@ export interface MarketplaceLockRecord {
   toolName?: string
   /** target path → SHA-256 of its content at install time (soft-clean diffing). */
   contentSha256?: Record<string, string>
+  /**
+   * Registry trust assessment captured before install (wave-3 c2.7). Written by
+   * the installer after the content-pin verify; absent on pre-c2.7 records.
+   */
+  trustVerdict?: RegistryTrustVerdict
+  trustReasons?: string[]
+  assessedAt?: number
 }
 
 export interface MarketplaceLockFile {

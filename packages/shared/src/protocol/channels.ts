@@ -93,6 +93,9 @@ export const RPC_CHANNELS = {
     FOREIGN_AUTO_RUN: 'sessions:foreignAutoRun',
     FOREIGN_AUTO_SET: 'sessions:foreignAutoSet',
     ASSIGN_OWNER: 'sessions:assignOwner',
+    SUGGEST_ADD: 'sessions:suggestAdd',
+    SUGGEST_LIST: 'sessions:suggestList',
+    SUGGEST_RESOLVE: 'sessions:suggestResolve',
   },
   transfer: {
     START: 'transfer:start',
@@ -541,6 +544,11 @@ export const RPC_CHANNELS = {
     PROXY_FETCH: 'extensionHost:proxyFetch',
     GET_URL_ALLOWLIST: 'extensionHost:getUrlAllowlist',
     SET_URL_ALLOWLIST: 'extensionHost:setUrlAllowlist',
+    // S-05 §3.5 wave 3 — descriptor discovery + activation lifecycle. LOCAL_ONLY
+    // (the craft-sandbox utilityProcess lives in the local Electron host only).
+    LIST_DESCRIPTORS: 'extensionHost:listDescriptors',
+    ACTIVATE: 'extensionHost:activate',
+    RELOAD: 'extensionHost:reload',
   },
 
   // extensionSurface — sandboxed embedded BrowserView for extension UI
@@ -846,6 +854,12 @@ export const RPC_CHANNELS = {
     DREAM_EVENT: 'memory:dreamEvent',
     DREAM_DONE: 'memory:dreamDone',
     REPO_IMPORT_READY: 'memory:repoImportReady',
+    // Wave 3 — workspace memory wiki (claims/evidence + lint). REMOTE_ELIGIBLE
+    // like the rest of the memory namespace (workspace data on the owning server).
+    WIKI_LIST: 'memory:wikiList',
+    WIKI_GET: 'memory:wikiGet',
+    WIKI_APPLY: 'memory:wikiApply',
+    WIKI_LINT: 'memory:wikiLint',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
@@ -1157,6 +1171,24 @@ export const RPC_CHANNELS = {
     GET_CONFIG: 'kanban:getConfig',
     SET_CONFIG: 'kanban:setConfig',
     CHANGED: 'kanban:changed',
+  },
+  // workboard — wave-3 workspace task board (WorkBoard state, revision-guarded).
+  // Classified like kanban:* (REMOTE_ELIGIBLE workspace board config).
+  workboard: {
+    READ: 'workboard:read',
+    MOVE: 'workboard:move',
+    CHANGED: 'workboard:changed',
+  },
+  // board — wave-3 workspace board widgets (authored widget code mounted in a
+  // ticket-scoped sandbox). Classified like pages:* (REMOTE_ELIGIBLE workspace content).
+  board: {
+    WIDGET_PUT: 'board:widgetPut',
+    WIDGET_GET: 'board:widgetGet',
+    WIDGET_MOUNT: 'board:widgetMount',
+    WIDGET_RELEASE: 'board:widgetRelease',
+    /** Validate a frame ticket over the wire; refusal is one uniform typed error. */
+    WIDGET_VALIDATE: 'board:widgetValidate',
+    CHANGED: 'board:changed',
   },
   collection: {
     GET_DISPLAY: 'collection:getDisplay',

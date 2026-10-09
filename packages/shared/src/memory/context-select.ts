@@ -7,7 +7,7 @@
  * first (up to the limit); the rest are the most recent. Result is most
  * recent first within each group.
  */
-import { LESSON_LIMITS, type Lesson, type MemoryOriginClass } from './types'
+import { LESSON_LIMITS, type Lesson, type MemoryOriginClass, type MemoryPromptBlocks } from './types'
 import { isMemoryOriginInjectable } from './document-provenance'
 
 export function selectContextLessons<T extends Lesson>(lessons: readonly T[], limit: number = LESSON_LIMITS.context): T[] {
@@ -329,4 +329,18 @@ export function buildStandingIntentBlock(intents: readonly { text: string }[]): 
   let body = lines.join('\n')
   if (body.length > INTENT_CONTEXT_MAX_CHARS) body = `${body.slice(0, INTENT_CONTEXT_MAX_CHARS - 1)}…`
   return `[Standing intentions — you committed to these. Apply them when the current request matches.]\n${body}\n`
+}
+
+/**
+ * c1.4 residual: compose the per-turn memory payload from an already-assembled
+ * `MemoryPromptBlocks` — the recall block (c1.5) and the standing-intent block
+ * (c1.6) ONLY. The curated bootstrap, lessons, workspace memory and retrieved
+ * sources are spawn-time context and MUST NOT ride the per-turn path (that
+ * would re-inject them every turn). Returns null when neither lane produced a
+ * block, so a turn with nothing to inject is byte-identical to a turn without
+ * the per-turn hook.
+ */
+export function formatPerTurnMemoryBlock(blocks?: MemoryPromptBlocks | null): string | null {
+  const parts = [blocks?.recallBlock, blocks?.intentBlock].filter((part): part is string => !!part)
+  return parts.length > 0 ? parts.join('\n') : null
 }

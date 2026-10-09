@@ -11,7 +11,8 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type { Authorizer } from '@rox/core/commands'
 import { InMemoryCommandStore } from '../../commands/store'
 import { configureReferenceRuntime, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime } from '../../work/reference'
-import { createHarness } from '../../work/__tests__/reference-harness'
+import { createHarness, W1_11_OWNED_TYPES, type Harness } from '../../work/__tests__/reference-harness'
+import { XSC_REFERENCE_SPECS } from '../reference-handlers'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from '../../work/__tests__/reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
@@ -30,11 +31,33 @@ afterEach(() => resetReferenceRuntime())
 const records = (collection: string) => referenceMemoryRecords(WORKSPACE_ID, collection)
 const docTarget = { kind: 'note' as const, id: U('doc') }
 
+/**
+ * A chat in the reference store. W1-11 owns `im.create_chat`, so the reference
+ * store never gains the channel it makes; `im.create_space_chat` is a live
+ * reference spec that honours the payload id and takes members, and needs its
+ * space first.
+ */
+async function referenceChat(harness: Harness, id: string, memberIds: readonly string[] = []): Promise<string> {
+  const spaceId = U(`chat-space:${id}`)
+  await harness.run({ type: 'spaces.create', payload: { id: spaceId, name: 'Chats' } })
+  await harness.run({ type: 'im.create_space_chat', payload: { id, spaceId, name: 'general', memberIds: [...memberIds] } })
+  return id
+}
+
+/**
+ * Drop the caller's membership row. W1-11 owns `im.leave_chat` too, so the
+ * reference-owned membership change is `im.remove_members` on the caller's own
+ * id (the caller owns the chat this helper builds).
+ */
+async function leaveReferenceChat(harness: Harness, chatId: string): Promise<void> {
+  await harness.run({ type: 'im.remove_members', target: { kind: 'channel', id: chatId }, payload: { memberIds: [ACTOR_ID] } })
+}
+
 /** A doc and one message in a chat, the two origins every §12 command starts from. */
 async function seeded(options: { authorizer?: Authorizer } = {}) {
   const harness = memoryHarness(options)
   await harness.run({ type: 'docs.create_document', payload: { id: U('doc'), title: 'Spec' } })
-  await harness.run({ type: 'im.create_chat', payload: { id: U('chat'), kind: 'group', name: 'general', visibility: 'public', members: [BOB] } })
+  await referenceChat(harness, U('chat'), [BOB])
   await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: U('chat') }, payload: { messageId: U('msg'), body: { doc: 'ship it' }, mentions: [], chatRef: { kind: 'channel', id: U('chat') } } })
   return harness
 }
@@ -134,7 +157,7 @@ describe('tasks from a selection, a checklist or a message', () => {
 
   test('a closed chat refuses a card: tasks.create_from_message is FORBIDDEN for a non-member', async () => {
     const harness = await seeded()
-    await harness.run({ type: 'im.leave_chat', target: { kind: 'channel', id: U('chat') }, payload: {} })
+    await leaveReferenceChat(harness, U('chat'))
     const receipt = await harness.run({
       type: 'tasks.create_from_message',
       payload: { id: U('msg-task'), origin: { kind: 'message', chatRef: `channel:${U('chat')}`, seq: 1 }, title: 'From message' },
@@ -165,18 +188,19 @@ describe('events, calls and chats', () => {
     expect(records('call-participant')).toHaveLength(2)
   })
 
-  test('im.create_chat carries the last messages of the origin chat into the new one', async () => {
-    const harness = await seeded()
-    const receipt = await harness.run({
-      type: 'im.create_chat',
-      payload: { id: U('carry'), kind: 'group', name: 'Carry', visibility: 'private', members: [BOB], from: { kind: 'message', chatRef: `channel:${U('chat')}`, seq: 1 }, carryContext: { lastN: 1 } },
-    })
-    expect(receipt).toMatchObject({ status: 'applied', result: { chatRef: { kind: 'channel', id: U('carry') } } })
-    const carried = records('channel-message').filter(message => message.data.chatId === U('carry'))
-    expect(carried).toHaveLength(1)
-    expect(carried[0]!.data).toMatchObject({ seq: 1, content: { doc: 'ship it' }, carriedFrom: { chatId: U('chat'), seq: 1 } })
-    // The origin is untouched (a carry, not a move).
-    expect(records('channel-message').filter(message => message.data.chatId === U('chat'))).toHaveLength(1)
+  /**
+   * W1-11 (#1508) owns `im.create_chat` and `agents.invoke`: `COMMAND_MODULES`
+   * lists the `agents` module before `xsc`, and the §12 binder skips a type
+   * that already has a handler, so those two §12 entries are unreachable in the
+   * wired registry (the agent-governance handlers own chat creation and
+   * invocation policy, and the reference harness never backs that runtime).
+   * This pins the shadow, so re-ordering the modules — a behaviour change that
+   * must move those policies — fails here for review instead of silently
+   * swapping which handler runs.
+   */
+  test('im.create_chat and agents.invoke are served by the agent-governance module, not this one', () => {
+    const shadowed = Object.keys(XSC_REFERENCE_SPECS).filter(type => W1_11_OWNED_TYPES.includes(type)).sort()
+    expect(shadowed).toEqual(['agents.invoke', 'im.create_chat'])
   })
 
   test('docs.create_from_messages appends a quoted block and links every message', async () => {
@@ -201,18 +225,6 @@ describe('events, calls and chats', () => {
     })
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'NOT_FOUND' } })
     expect(records('note').find(note => note.id === U('digest'))).toBeUndefined()
-  })
-
-  test('agents.invoke queues the invocation with its origin and session ref', async () => {
-    const harness = await seeded()
-    await harness.run({ type: 'agents.provision_personal_agent', payload: { id: U('agent'), ownerId: ACTOR_ID } })
-    const receipt = await harness.run({
-      type: 'agents.invoke',
-      payload: { id: U('inv'), agentRef: { kind: 'person', id: U('agent') }, instruction: 'Summarise', origin: { kind: 'comment', commentId: U('comment') } },
-    })
-    expect(receipt).toMatchObject({ status: 'applied', result: { sessionRef: `session:${U('inv')}`, replyThread: { kind: 'comment', id: U('comment') } } })
-    expect(records('agent-invocation')[0]!.data).toMatchObject({ agentId: U('agent'), instruction: 'Summarise', origin: `comment:${U('comment')}`, status: 'queued' })
-    expect(records('agent-approval')[0]!.data).toMatchObject({ status: 'pending', invocationId: U('inv'), approverIds: [ACTOR_ID] })
   })
 })
 
@@ -279,7 +291,7 @@ describe('negative paths (PLAN §1.4)', () => {
 
   test('calendar.create_event_from_message in a chat the caller left is FORBIDDEN', async () => {
     const harness = await seeded()
-    await harness.run({ type: 'im.leave_chat', target: { kind: 'channel', id: U('chat') }, payload: {} })
+    await leaveReferenceChat(harness, U('chat'))
     const receipt = await harness.run({ type: 'calendar.create_event_from_message', payload: { id: U('ev'), origin: { kind: 'message', chatRef: `channel:${U('chat')}`, seq: 1 }, attendees: 'chat' } })
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })
     expect(records('calendar-event')).toEqual([])

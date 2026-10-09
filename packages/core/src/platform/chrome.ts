@@ -162,8 +162,9 @@ export function buildRowContextMenu(extra: readonly MenuItemSpec[] = []): MenuIt
   const head = COMMON_ROW_CONTEXT_MENU.slice(0, tailStart)
   const tail = COMMON_ROW_CONTEXT_MENU.slice(tailStart)
   const additions = extra.filter((item) => !COMMON_ROW_CONTEXT_MENU.some((common) => common.id === item.id))
-  const rendered = head.map((item) => replacements.get(item.id) ?? item)
-  return [...rendered, ...additions, ...tail]
+  const renderedHead = head.map((item) => replacements.get(item.id) ?? item)
+  const renderedTail = tail.map((item) => replacements.get(item.id) ?? item)
+  return [...renderedHead, ...additions, ...renderedTail]
 }
 
 // ---------------------------------------------------------------------------

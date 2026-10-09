@@ -5,4 +5,6 @@
 
 export * from './cron-expr.ts'
 export * from './hooks.ts'
+export * from './hooks-http.ts'
+export * from './hooks-node.ts'
 export * from './scheduler.ts'

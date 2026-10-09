@@ -219,3 +219,58 @@ export interface ExtensionHostStatus {
   /** craft-sandbox extension ids currently loaded in the worker */
   loadedExtensions?: string[]
 }
+
+// ── Wave 3 — Craft Extension Host descriptor + activation lifecycle ─────────
+// Request/response contracts for `extensionHost:listDescriptors|activate|reload`
+// (LOCAL_ONLY; the craft-sandbox utilityProcess runs in the local host only).
+
+/** One installed craft-sandbox extension descriptor (`extensionHost:listDescriptors`). */
+export interface ExtensionDescriptor {
+  extensionId: string
+  entryPath: string
+  manifestPath?: string
+  name?: string
+  version?: string
+  /** True when the extension module is currently loaded in the worker. */
+  active: boolean
+  /** Effective grants resolved from the workspace permissions.json. */
+  grantedPermissions?: string[]
+}
+
+/** One row of the activation plan (why an extension will/will not activate). */
+export interface ExtensionActivationPlanEntry {
+  extensionId: string
+  /** Machine-readable reason (e.g. 'activationEvent' | 'disabled' | 'missingEntry'). */
+  reason: string
+}
+
+/** Result of `extensionHost:listDescriptors`. */
+export interface ExtensionHostListDescriptorsResult {
+  descriptors: ExtensionDescriptor[]
+  /** Ordered activation plan derived from activationEvents + workspace state. */
+  plan: ExtensionActivationPlanEntry[]
+  /** Extension ids currently loaded in the craft-sandbox worker. */
+  loaded: string[]
+}
+
+/** One command declared by a loaded extension (`extensionHost:activate`). */
+export interface ExtensionCommandDescriptor {
+  id: string
+  title: string
+  when?: string
+  defaultHotkey?: string
+  keywords?: string[]
+}
+
+/** Result of `extensionHost:activate`. */
+export interface ExtensionHostActivateResult {
+  commands: ExtensionCommandDescriptor[]
+}
+
+/** Result of `extensionHost:reload` — host status plus reload provenance. */
+export interface ExtensionHostReloadResult {
+  status: ExtensionHostStatus['status']
+  generation?: number
+  entryHash?: string
+  reason?: string
+}

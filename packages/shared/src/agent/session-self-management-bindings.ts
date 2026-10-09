@@ -150,6 +150,14 @@ export function attachSessionSelfManagementBindings(
     enumerable: true,
   });
 
+  Object.defineProperty(context, 'boardWidgets', {
+    get() {
+      return getSessionScopedToolCallbacks(sessionId)?.boardWidgets;
+    },
+    configurable: true,
+    enumerable: true,
+  });
+
   Object.defineProperty(context, 'memory', {
     get() {
       return getSessionScopedToolCallbacks(sessionId)?.memory;

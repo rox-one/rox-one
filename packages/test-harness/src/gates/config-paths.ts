@@ -13,8 +13,14 @@ import { join } from 'node:path'
 import { pending, type GateResult } from './types.ts'
 
 export const CONFIG_PATHS_SCRIPT = join('scripts', 'check-config-paths.ts')
-/** #1510's script took ~40–50 s on a loaded box; 3 minutes leaves headroom. */
-export const CONFIG_PATHS_TIMEOUT_MS = 180_000
+/**
+ * #1510's script walks every tracked file (~18k) and takes 40–120 s on a loaded
+ * box — its own unit test allows 300 s for the same scan. This cap exists only
+ * to catch a genuinely hung scan before the job's 30-minute limit, so it keeps
+ * several times the observed worst case: a tight cap turns host load or a slow
+ * CI runner into a false FAIL of a fail-closed gate.
+ */
+export const CONFIG_PATHS_TIMEOUT_MS = 600_000
 
 export async function runConfigPathsGate(opts: { repoRoot?: string; timeoutMs?: number } = {}): Promise<GateResult> {
   const gate = 'config-paths'

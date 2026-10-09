@@ -21,6 +21,7 @@ import type {
   ClipTagCount,
 } from '@rox/shared/clipboard-history'
 import {
+  CLIPBOARD_ERROR_KEYS,
   CLIPBOARD_PAGE_SIZE,
   clipboardFiltersReducer,
   EMPTY_CLIPBOARD_FILTERS,
@@ -128,7 +129,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
   React.useEffect(() => {
     loadedDepthRef.current = CLIPBOARD_PAGE_SIZE
     setSelectedId(null)
-  }, [debouncedQuery, filters.tab, filters.kind, filters.tag])
+  }, [debouncedQuery, filters.tab, filters.kind, filters.format, filters.tag])
 
   const refreshAux = React.useCallback(async () => {
     const api = window.electronAPI
@@ -157,6 +158,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
     const query = {
       q: debouncedQuery.trim() || undefined,
       kind: filters.kind,
+      format: filters.format === 'all' ? undefined : filters.format,
       starredOnly: filters.tab === 'starred',
       tag: filters.tag ?? undefined,
     }
@@ -202,7 +204,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
     } finally {
       if (request === generation.current && alive.current) setLoading(false)
     }
-  }, [debouncedQuery, filters.kind, filters.tab, filters.tag])
+  }, [debouncedQuery, filters.kind, filters.format, filters.tab, filters.tag])
 
   React.useEffect(() => { void load() }, [load])
 
@@ -243,6 +245,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
     void api.listClipboardEntries({
       q: debouncedQuery.trim() || undefined,
       kind: filters.kind,
+      format: filters.format === 'all' ? undefined : filters.format,
       starredOnly: filters.tab === 'starred',
       tag: filters.tag ?? undefined,
       limit: CLIPBOARD_PAGE_SIZE,
@@ -269,7 +272,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
       },
       () => { /* a failed page keeps the loaded list and the sentinel */ },
     ).finally(() => { loadingMoreRef.current = false })
-  }, [hasMore, entries, debouncedQuery, filters.kind, filters.tab, filters.tag])
+  }, [hasMore, entries, debouncedQuery, filters.kind, filters.format, filters.tab, filters.tag])
 
   // Keep the paging depth in step with what is actually on screen; a reload
   // (refresh / clipboard change) restores it instead of collapsing to page one.
@@ -302,7 +305,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
         if (!alive.current) return
         setEntries(beforeEntries)
         setCounts(beforeCounts)
-        toast.error(t('clipboard.error'))
+        toast.error(t('clipboard.error.action'))
         void load()
       },
     )
@@ -321,7 +324,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
         if (!alive.current) return
         setEntries(beforeEntries)
         setDetail(beforeDetail)
-        toast.error(t('clipboard.error'))
+        toast.error(t('clipboard.error.action'))
       },
     )
   }, [entries, detail, refreshAux, t])
@@ -341,7 +344,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
         toast.success(t('clipboard.deleted'))
         void refreshAux()
       },
-      () => { if (alive.current) toast.error(t('clipboard.error')) },
+      () => { if (alive.current) toast.error(t(CLIPBOARD_ERROR_KEYS.delete)) },
     )
   }, [refreshAux, t])
 
@@ -359,7 +362,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
         void load()
         void refreshAux()
       },
-      () => { if (alive.current) toast.error(t('clipboard.error')) },
+      () => { if (alive.current) toast.error(t(CLIPBOARD_ERROR_KEYS.clear)) },
     )
   }, [load, refreshAux, t])
 
@@ -368,7 +371,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
     if (typeof api?.copyClipboardEntry !== 'function') return
     void api.copyClipboardEntry(id).then(
       () => { if (alive.current) toast.success(t('clipboard.copied')) },
-      () => { if (alive.current) toast.error(t('clipboard.error')) },
+      () => { if (alive.current) toast.error(t(CLIPBOARD_ERROR_KEYS.copy)) },
     )
   }, [t])
 
@@ -419,7 +422,7 @@ export function useClipboardHistory(): ClipboardHistoryController {
       () => {
         if (!alive.current) return
         setSavingSettings(false)
-        toast.error(t('clipboard.error'))
+        toast.error(t(CLIPBOARD_ERROR_KEYS.save))
       },
     )
   }, [t])

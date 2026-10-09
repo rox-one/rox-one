@@ -21,7 +21,12 @@
 
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import * as Icons from 'lucide-react'
+import {
+  ChevronDown,
+  Monitor,
+  PanelRightOpen,
+  XCircle,
+} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -80,7 +85,7 @@ export function BrowserTabStripView({
           disabled={!liveWindowActions}
           onSelect={() => onFocusWindow(instance)}
         >
-          <Icons.Monitor className="icon-caption" />
+          <Monitor className="icon-caption" />
           {t('workbench.browser.showWindow')}
         </StyledDropdownMenuItem>
 
@@ -88,7 +93,7 @@ export function BrowserTabStripView({
           disabled={!canOpenSession}
           onSelect={() => onOpenSession(instance)}
         >
-          <Icons.PanelRightOpen className="icon-caption" />
+          <PanelRightOpen className="icon-caption" />
           {openSessionLabel}
         </StyledDropdownMenuItem>
 
@@ -99,7 +104,7 @@ export function BrowserTabStripView({
           disabled={!liveWindowActions}
           onSelect={() => onTerminate(instance)}
         >
-          <Icons.XCircle className="icon-caption" />
+          <XCircle className="icon-caption" />
           {t('workbench.browser.terminate')}
         </StyledDropdownMenuItem>
       </>
@@ -156,7 +161,7 @@ export function BrowserTabStripView({
               {overflowCount > 0 && (
                 <span className="tabular-nums">+{overflowCount}</span>
               )}
-              <Icons.ChevronDown className="icon-status opacity-70" aria-hidden />
+              <ChevronDown className="icon-status opacity-70" aria-hidden />
             </button>
           </DropdownMenuTrigger>
           <StyledDropdownMenuContent align="end" minWidth="min-w-64">

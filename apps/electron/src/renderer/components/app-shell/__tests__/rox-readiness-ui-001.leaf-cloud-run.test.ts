@@ -14,6 +14,12 @@ function cloudHost(api: Record<string, unknown>, initialState: any = { kind: 'lo
   let state = initialState
   const bindings = {
     runId: 'run-A', window, document, CLOUD_RUN_REFRESH_INTERVAL_MS: 5_000,
+    // PERF-10 (#1577): the production effect gates on `useEffectiveVisible()`,
+    // which is a hook and therefore an external seam here. `true` = the
+    // enclosing surface is active and the window is visible, matching the
+    // `document` mock above; the hidden/visible transition is still driven
+    // through `document.visibilityState` via the effect's own isVisible().
+    visible: true,
     setSnapshot: (value: any) => { state = value.state },
     setInterval: (callback: () => void) => { tick = callback; return 1 },
     clearInterval: () => { cleared = true },
@@ -85,6 +91,9 @@ describe('UI-001 selected cloud run refresh and recovery', () => {
     let stateCall = 0
     const Component = leafComponent(source, 'CloudRunSurfacePage', {
       React: { ...React, useState: () => ++stateCall === 1 ? [{ runId: 'run-A', state: { kind: 'unavailable', reason: 'error' } }, () => {}] : [attempt, (update: (value: number) => number) => { attempt = update(attempt) }], useCallback: (fn: unknown) => fn, useEffect: () => {} },
+      // PERF-10 (#1577): production reads the effective-visibility hook; the
+      // active visible surface is the case under test here.
+      useEffectiveVisible: () => true,
       useTranslation: () => ({ t: (key: string) => key }), useNavigation: () => ({ navigate: () => {} }), routes: { view: { settings: () => 'settings/cloudRuns' } },
     })
     const tree = Component({ runId: 'run-A' })
