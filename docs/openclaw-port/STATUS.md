@@ -118,7 +118,7 @@ reproduction; every confirmed defect was fixed with a red→green regression tes
 | c2.5 | Plugin manifest + registration-mode boundary | reimplement | L | deferred | sandboxed plugin worker boundary not built | ROX must NOT copy "in-process, unsandboxed" — worker boundary |
 | c2.6 | Plugin lifecycle / hot reload (plugins.reload drain+swap) | adapt | L | deferred | plugin lifecycle/hot reload not built | restartRequired when process-shared code can't swap |
 | c2.7 | Registry trust gate (verdict → clean/blocked, fail-closed) | reimplement | M | deferred | registry trust gate (fail-closed verdicts) not built | external registry shape; re-specify against ROX's registry |
-| c2.8 | Custodian skills → system agent playbooks | adapt | S | deferred | custodian skill playbooks not added | ship as gated bundled skills, not privileged tools |
+| c2.8 | Custodian skills → system agent playbooks | adapt | S | done | W2-8: apps/electron/resources/skills/rox-custodian/{add-model-provider,configure-channel,diagnose-gateway}/SKILL.md (Gather→Mutate→Repair→Prove→Report; gated via metadata.openclaw requires.env=OPENCLAW_GATEWAY_TOKEN, diagnose-gateway os=darwin|linux); registered in SKILLS.lock + REQUESTED-SKILLS.json; eligibility.test.ts "rox-custodian gated bundled playbooks" | cloud-image-bake deliberately excluded (crabbox/AWS/Hetzner/Firecracker image bake has no ROX analogue); playbooks operate the ROX-managed OpenClaw gateway as skills, no new tool/channel |
 
 ## d1 (8 rows)
 
