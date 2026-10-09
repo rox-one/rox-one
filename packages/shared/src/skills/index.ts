@@ -65,6 +65,8 @@ export {
   AVAILABLE_SKILLS_MAX_BYTES,
   AVAILABLE_SKILLS_MAX_DESCRIPTION_CHARS,
   AVAILABLE_SKILLS_MAX_ENTRIES,
+  SKILLS_READ_HOST_TOOL,
+  SKILLS_SEARCH_HOST_TOOL,
   buildAvailableSkillsBlock,
   type AvailableSkillsPromptOptions,
 } from './prompt.ts';
@@ -75,6 +77,7 @@ export {
   defaultConfigExists,
   defaultEnvExists,
   detectSkillCollisions,
+  detectSkillCollisionsForSlugs,
   evaluateSkillEligibility,
   osMatches,
   type BuildSkillEligibilityInput,
@@ -89,6 +92,7 @@ export {
 } from './eligibility.ts';
 export {
   getSkillRootPlan,
+  loadSkillFromDir,
   loadSkillsFromDir,
   type SkillRootPlanEntry,
 } from './storage.ts';

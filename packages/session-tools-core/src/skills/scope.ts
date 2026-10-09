@@ -4,6 +4,8 @@
  * registered runtime with a typed error.
  */
 
+import { realpathSync } from 'node:fs';
+import { isAbsolute, relative, sep } from 'node:path';
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult } from '../types.ts';
 import { errorResponse } from '../response.ts';
@@ -15,6 +17,23 @@ const SAFE_SKILL_SLUG = /^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/;
 /** Reject slugs that could escape the skill roots (separators, `..`, hidden). */
 export function isSafeSkillSlug(slug: unknown): slug is string {
   return typeof slug === 'string' && SAFE_SKILL_SLUG.test(slug) && !slug.includes('..');
+}
+
+/**
+ * True when `candidate`'s REAL path stays inside `root`'s REAL path. Both sides
+ * are resolved, so a symlink whose declared path looks contained but whose
+ * target escapes the discovered root is rejected. An unresolvable candidate is
+ * never treated as confined.
+ */
+export function isWithinRealRoot(candidate: string, root: string): boolean {
+  try {
+    const realRoot = realpathSync(root);
+    const realCandidate = realpathSync(candidate);
+    const rel = relative(realRoot, realCandidate);
+    return rel !== '' && rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
+  } catch {
+    return false;
+  }
 }
 
 /** The workspace/project scope a skills tool resolves the catalog against. */

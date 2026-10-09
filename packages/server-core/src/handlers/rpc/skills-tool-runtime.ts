@@ -9,6 +9,11 @@
  * - The catalog is the eligibility-gated merge from `loadAllSkills`; a skill
  *   hidden by gating (operator allowlist, disabled pack, OS, missing bins/env/
  *   config) is invisible to search AND unreadable.
+ * - Every advertised/readable skill must ALSO resolve (realpath) inside its
+ *   discovered root. Discovery follows directory symlinks, so a link that
+ *   escapes its root would otherwise leak an outside SKILL.md into the catalog
+ *   and the read path; `isWithinRealRoot` drops those entries up front, so
+ *   search, list and read share one confined catalog.
  * - Reads resolve by slug through `loadSkillDetails`, which confines the path
  *   with the hardened, symlink-safe instructions reader — a raw path never
  *   crosses this seam.
@@ -22,6 +27,7 @@ import type {
   SkillsRuntimeScope,
   SkillsToolRuntime,
 } from '@rox/session-tools-core'
+import { isWithinRealRoot } from '@rox/session-tools-core'
 import {
   buildSkillEligibilityReport,
   loadSkillDetails,
@@ -30,13 +36,18 @@ import {
 
 const MAX_EXCERPT_CHARS = 240
 
+/** The directory a skill was discovered under — the root reads must not escape. */
+function skillBaseDir(skill: LoadedSkill): string {
+  return dirname(skill.path)
+}
+
 function toCatalogEntry(skill: LoadedSkill): SkillCatalogEntry {
   return {
     slug: skill.slug,
     name: skill.metadata.name,
     description: skill.metadata.description,
     path: skill.path,
-    baseDir: dirname(skill.path),
+    baseDir: skillBaseDir(skill),
     source: skill.source,
   }
 }
@@ -47,7 +58,7 @@ async function eligibleCatalog(scope: SkillsRuntimeScope): Promise<LoadedSkill[]
     projectRoot: scope.projectRoot,
     includeCollisions: false,
   })
-  return report.eligible
+  return report.eligible.filter(skill => isWithinRealRoot(skill.path, skillBaseDir(skill)))
 }
 
 export function createNativeSkillsToolRuntime(): SkillsToolRuntime {

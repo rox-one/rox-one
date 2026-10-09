@@ -111,7 +111,10 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
   // c2.3/c2.4: gating report for a skill — operator allowlist + pack state +
   // requires.bins/env/config + os. The frozen ElectronAPI shape is
   // `{ eligible: boolean; reason?: string }`; the full report rides alongside
-  // so the renderer (and tests) can render per-reason detail and collisions.
+  // so the renderer (and tests) can render per-reason detail. The report is
+  // queried for ONE slug, so `collisions` is the slug-scoped collision list for
+  // that slug (empty unless another tier also provides it) — not a catalog-wide
+  // list, which no caller requests.
   server.handle(RPC_CHANNELS.skills.GET_ELIGIBILITY, async (ctx, workspaceId: string, skillSlug: string) => {
     assertSkillWorkspace(ctx, workspaceId, deps)
     const read = rpcSkillsReadResult({ source: 'native', nativeId: skillSlug })

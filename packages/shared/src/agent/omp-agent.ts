@@ -920,9 +920,10 @@ export class OmpAgent extends BaseAgent {
     //   (OMP's strongest auto mode: zero approval prompts, incl. destructive).
     const args = ['--mode', 'rpc', '--allow-home'];
     // ROX owns the skill surface: the eligible catalog is injected as the
-    // `<available_skills>` block and read through the skills_read host tool, so
-    // the native runtime's independent discovery is always disabled to keep the
-    // two from diverging (a profile allowlist narrows the injected catalog).
+    // `<available_skills>` block and read through the `mcp__session__skills_read`
+    // host tool, so the native runtime's independent discovery is always disabled
+    // to keep the two from diverging (a profile allowlist narrows the injected
+    // catalog).
     args.push('--no-skills');
     const craftSessionId = this.config.session?.id || this._sessionId || '';
     const ompSessionDir = craftSessionId ? this.getOmpSessionDir(craftSessionId) : null;

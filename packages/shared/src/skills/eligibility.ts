@@ -29,6 +29,7 @@ import {
   getSkillRootPlan,
   loadAllSkills,
   loadSkillDetails,
+  loadSkillFromDir,
   loadSkillsFromDir,
 } from './storage.ts';
 import type { LoadedSkill } from './types.ts';
@@ -196,8 +197,9 @@ export interface SkillEligibilityInput {
 }
 
 /**
- * Gate one catalog. Shadowed OMP variants (`shadowedByCraft`) are reported only
- * through collisions, never as eligible or ineligible entries.
+ * Gate one catalog. A `shadowedByCraft` OMP variant, if a caller passes one, is
+ * skipped rather than gated — the report's full scan never requests shadowed
+ * variants, and collisions are computed separately from the ordered root plan.
  */
 export async function evaluateSkillEligibility(input: SkillEligibilityInput): Promise<SkillEligibilityReport> {
   const checks = input.checks ?? {};
@@ -300,6 +302,28 @@ export function detectSkillCollisions(scans: readonly SkillRootScan[]): SkillCol
   return collisions.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Slug-scoped form of {@link detectSkillCollisions}: report collisions only for
+ * the requested slugs, reading just those slugs out of each tier instead of
+ * walking every tier. Used by the per-skill eligibility RPC, whose ceiling is a
+ * single slug (a full tier walk would cost a whole-store scan per open).
+ */
+export function detectSkillCollisionsForSlugs(
+  workspaceRoot: string,
+  slugs: readonly string[],
+  projectRoot?: string,
+): SkillCollision[] {
+  const plan = getSkillRootPlan(workspaceRoot, projectRoot);
+  const scans: SkillRootScan[] = plan.map(entry => ({
+    label: entry.label,
+    excludeAppManaged: entry.excludeAppManaged,
+    skills: slugs
+      .map(slug => loadSkillFromDir(entry.root, slug, entry.source))
+      .filter((skill): skill is LoadedSkill => skill !== null),
+  }));
+  return detectSkillCollisions(scans);
+}
+
 // ============================================================
 // Convenience: full report from the workspace root plan
 // ============================================================
@@ -316,7 +340,12 @@ export interface BuildSkillEligibilityInput {
    * large install is not scanned on every call.
    */
   slugs?: readonly string[];
-  /** Compute name collisions across the ordered root plan. Default true (full scan only). */
+  /**
+   * Compute name collisions across the ordered root plan. Default true. On a
+   * scoped request this is a slug-scoped check over the plan (only the
+   * requested slugs are read per tier), so it stays O(slugs × tiers) instead
+   * of walking every tier.
+   */
   includeCollisions?: boolean;
   /** Defaults to the disabled packs recorded in bundled-skill state. */
   disabledPackSlugs?: readonly string[];
@@ -327,8 +356,12 @@ export interface BuildSkillEligibilityInput {
 /**
  * Build the report for a workspace. The catalog comes from ONE discovery path:
  * `loadSkillDetails` for an allowlisted/scoped request (O(allowlist)), otherwise
- * the merged `loadAllSkills` output. Collisions and hidden disabled packs are
- * only resolved on a full scan (they need the per-tier root walk).
+ * the merged `loadAllSkills` output. The full-scan catalog keeps shadowed OMP
+ * variants OUT (`includeShadowedOmp` is never set) so its cache key is the same
+ * one the agent's mention resolution uses — a cold spawn walks the store once.
+ * Collisions use the per-tier root walk on a full scan and a slug-scoped read
+ * on a scoped request; hidden disabled packs are re-surfaced from the canonical
+ * app-managed tier in both cases.
  */
 export async function buildSkillEligibilityReport(input: BuildSkillEligibilityInput): Promise<SkillEligibilityReport> {
   const disabledPackSlugs = input.disabledPackSlugs ?? [...getDisabledBundledSkillSlugsFromDisk()];
@@ -336,18 +369,45 @@ export async function buildSkillEligibilityReport(input: BuildSkillEligibilityIn
   // Fast path: a known ceiling resolves only those slugs.
   const scopeSlugs = input.slugs ?? (input.allowedSlugs != null ? input.allowedSlugs : null);
   const fullScan = scopeSlugs === null;
+  const wantCollisions = input.includeCollisions !== false;
 
   let catalog: LoadedSkill[];
-  if (scopeSlugs === null) {
-    catalog = loadAllSkills(input.workspaceRoot, input.projectRoot, {
-      includeOmp: input.includeOmp ?? true,
-      includeShadowedOmp: true,
-    });
+  if (fullScan) {
+    catalog = loadAllSkills(input.workspaceRoot, input.projectRoot, { includeOmp: input.includeOmp ?? true });
   } else {
     const resolved = await Promise.all(
       scopeSlugs.map(slug => loadSkillDetails(input.workspaceRoot, slug, input.projectRoot)),
     );
     catalog = resolved.filter((skill): skill is LoadedSkill => skill !== null);
+  }
+
+  // The per-tier root plan backs the collision report; a full scan only needs
+  // it when collisions were requested (its app-managed tier also feeds the
+  // disabled-pack re-surface below, so skipping it matches "no collision walk").
+  const planScans: SkillRootScan[] | null = fullScan && wantCollisions
+    ? getSkillRootPlan(input.workspaceRoot, input.projectRoot).map(entry => ({
+        label: entry.label,
+        skills: loadSkillsFromDir(entry.root, entry.source),
+        excludeAppManaged: entry.excludeAppManaged,
+      }))
+    : null;
+
+  // Disabled bundled skills are removed from discovery before the gate runs;
+  // re-surface them from the canonical app-managed tier so the reason is still
+  // reported. The full scan reuses its plan walk; a scoped request reads the
+  // requested slugs that are both disabled and not already resolved.
+  const disabled = new Set(disabledPackSlugs);
+  const catalogSlugs = new Set(catalog.map(skill => skill.slug));
+  const appManagedSkills: readonly LoadedSkill[] = planScans
+    ? planScans.find(scan => scan.label === 'app-managed')?.skills ?? []
+    : (scopeSlugs ?? [])
+        .filter(slug => disabled.has(slug) && !catalogSlugs.has(slug))
+        .map(slug => loadSkillFromDir(APP_MANAGED_SKILLS_DIR, slug, 'global'))
+        .filter((skill): skill is LoadedSkill => skill !== null);
+  for (const skill of appManagedSkills) {
+    if (!disabled.has(skill.slug) || catalogSlugs.has(skill.slug)) continue;
+    catalogSlugs.add(skill.slug);
+    catalog.push(skill);
   }
 
   const report = await evaluateSkillEligibility({
@@ -359,27 +419,10 @@ export async function buildSkillEligibilityReport(input: BuildSkillEligibilityIn
     checks: input.checks,
   });
 
-  if (!fullScan || input.includeCollisions === false) return report;
-
-  const plan = getSkillRootPlan(input.workspaceRoot, input.projectRoot);
-  const scans: SkillRootScan[] = plan.map(entry => ({
-    label: entry.label,
-    skills: loadSkillsFromDir(entry.root, entry.source),
-    excludeAppManaged: entry.excludeAppManaged,
-  }));
-  report.collisions = detectSkillCollisions(scans);
-
-  // Disabled bundled skills are removed by loadAllSkills before the gate runs;
-  // re-surface them from the app-managed tier so the reason is still reported.
-  const disabled = new Set(disabledPackSlugs);
-  const catalogSlugs = new Set(catalog.map(skill => skill.slug));
-  const appManaged = scans.find(scan => scan.label === 'app-managed');
-  for (const skill of appManaged?.skills ?? []) {
-    if (!disabled.has(skill.slug) || catalogSlugs.has(skill.slug)) continue;
-    report.ineligible.push({
-      skill,
-      reasons: [{ code: 'disabled-pack', detail: `the pack providing "${skill.slug}" is disabled in settings` }],
-    });
+  if (planScans) {
+    report.collisions = detectSkillCollisions(planScans);
+  } else if (wantCollisions && scopeSlugs) {
+    report.collisions = detectSkillCollisionsForSlugs(input.workspaceRoot, scopeSlugs, input.projectRoot);
   }
 
   return report;

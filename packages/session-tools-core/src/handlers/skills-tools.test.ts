@@ -4,14 +4,18 @@
  * Executed through the canonical SESSION_TOOL_DEFS registry entry point against
  * a runtime backed by REAL filesystem fixtures, asserting: catalog search
  * formatting and limit clamping, body loading, slug safety (path-escape
- * rejection), symlink confinement, and the typed unavailable error when no
- * runtime is registered.
+ * rejection), and the typed unavailable error when no runtime is registered.
+ *
+ * The in-test double mirrors the production boundary for the FORMATTING/limit
+ * cases; the security boundary itself is the real `isWithinRealRoot` helper
+ * (tested at the bottom) and, end to end, the shipped runtime in server-core
+ * (skills-tool-runtime.test.ts).
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { isAbsolute, join, relative } from 'node:path';
+import { join, relative } from 'node:path';
 import matter from 'gray-matter';
 import type { SessionToolContext } from '../context.ts';
 import { SESSION_TOOL_REGISTRY } from '../tool-defs.ts';
@@ -22,7 +26,7 @@ import {
   type SkillSearchHit,
   type SkillsToolRuntime,
 } from '../skills/runtime.ts';
-import { isSafeSkillSlug } from '../skills/scope.ts';
+import { isSafeSkillSlug, isWithinRealRoot } from '../skills/scope.ts';
 import { SKILLS_SEARCH_MAX_LIMIT } from './skills-search.ts';
 import { SKILLS_READ_MAX_CHARS } from './skills-read.ts';
 
@@ -35,33 +39,25 @@ function writeSkill(dir: string, slug: string, name: string, description: string
   writeFileSync(join(skillDir, 'SKILL.md'), `---\nname: ${name}\ndescription: ${description}\n---\n${body}`);
 }
 
-/** Physical containment (realpath-based), the boundary the runtime enforces. */
-function withinRoot(candidate: string): boolean {
-  const rel = relative(root, candidate);
-  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
-}
-
 interface FixtureSkill {
   entry: SkillCatalogEntry;
   body: string;
 }
 
-/** Real-fs runtime double mirroring the production confinement rules. */
+/**
+ * Real-fs runtime double for the FORMATTING/limit cases only. It deliberately
+ * does NOT implement the containment boundary — that lives in the production
+ * `isWithinRealRoot` helper and the shipped server-core runtime, which have
+ * their own tests. Keeping the double boundary-free means a broken containment
+ * rule can never be masked by a passing double.
+ */
 function fixtureRuntime(): SkillsToolRuntime {
   function catalog(): FixtureSkill[] {
     const out: FixtureSkill[] = [];
     for (const name of readdirSync(root)) {
-      let real: string;
-      try {
-        real = realpathSync(join(root, name));
-      } catch {
-        continue;
-      }
-      // Symlinks escaping the root are skipped (mirrors readSkillInstructions).
-      if (!withinRoot(real)) continue;
       let parsed: matter.GrayMatterFile<string>;
       try {
-        parsed = matter(readFileSync(join(real, 'SKILL.md'), 'utf8'));
+        parsed = matter(readFileSync(join(realpathSync(join(root, name)), 'SKILL.md'), 'utf8'));
       } catch {
         continue;
       }
@@ -70,7 +66,7 @@ function fixtureRuntime(): SkillsToolRuntime {
           slug: name,
           name: String(parsed.data.name),
           description: String(parsed.data.description),
-          path: real,
+          path: realpathSync(join(root, name)),
           baseDir: root,
           source: 'workspace',
         },
@@ -188,18 +184,29 @@ describe('skills_read', () => {
     expect(result.isError).toBe(true);
     expect(result.content[0]!.text!).toContain('SKILL_NOT_FOUND');
   });
+});
 
-  it('refuses to follow a symlink that escapes the root', async () => {
-    const outsideDir = mkdtempSync(join(tmpdir(), 'skills-outside-'));
+describe('isWithinRealRoot (production containment boundary)', () => {
+  it('rejects a symlink whose target escapes the root', () => {
+    const outside = realpathSync(mkdtempSync(join(tmpdir(), 'skills-outside-')));
     try {
-      writeSkill(outsideDir, 'escaping', 'Escaping', 'Outside the root', 'secret');
-      symlinkSync(join(outsideDir, 'escaping'), join(root, 'linked'));
-      const result = await handler('skills_read')(ctx, { slug: 'linked' });
-      expect(result.isError).toBe(true);
-      expect(result.content[0]!.text!).toContain('SKILL_NOT_FOUND');
+      writeSkill(outside, 'escaping', 'Escaping', 'Outside the root', 'secret');
+      symlinkSync(join(outside, 'escaping'), join(root, 'linked'));
+      // The declared path looks contained; the resolved path is not.
+      expect(relative(root, join(root, 'linked'))).toBe('linked');
+      expect(isWithinRealRoot(join(root, 'linked'), root)).toBe(false);
+      expect(isWithinRealRoot(join(outside, 'escaping'), root)).toBe(false);
     } finally {
-      rmSync(outsideDir, { recursive: true, force: true });
+      rmSync(outside, { recursive: true, force: true });
     }
+  });
+
+  it('accepts a real skill directory inside the root', () => {
+    expect(isWithinRealRoot(join(root, 'kernel-guide'), root)).toBe(true);
+  });
+
+  it('rejects a missing candidate rather than treating it as confined', () => {
+    expect(isWithinRealRoot(join(root, 'does-not-exist'), root)).toBe(false);
   });
 });
 

@@ -2,9 +2,10 @@
  * skills_read — load one skill's SKILL.md body by slug.
  *
  * The slug is validated at the tool boundary and resolution happens through the
- * registered SkillsToolRuntime, which confines reads to the skill roots (the
- * production implementation reuses the hardened, symlink-safe
- * `readSkillInstructions` reader). A raw path never crosses this boundary.
+ * registered SkillsToolRuntime, which confines reads to the skill roots: the
+ * production implementation advertises only skills whose realpath stays inside
+ * their discovered root and resolves bodies through the hardened, symlink-safe
+ * `readSkillInstructions` reader. A raw path never crosses this boundary.
  */
 
 import type { SessionToolContext } from '../context.ts';
