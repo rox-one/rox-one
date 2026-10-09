@@ -58,5 +58,11 @@
       "shell_material_seen_live": "vibrancy",
       "topbar_bg_receipt": "color(srgb 0.101961 0.101961 0.101961 / 0.84) [min-dark]; color(srgb 0.803922 0.823529 0.870588 / 0.84) [siri-light]"
     }
+  },
+  "after_program_build": {
+    "nordfox-opaque": {
+      "topbar": "#364b77",
+      "sidebar": "#2f323b"
+    }
   }
 }
