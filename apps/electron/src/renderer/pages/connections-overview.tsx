@@ -31,7 +31,7 @@ export type OverviewStatus = 'connected' | 'error' | 'notConfigured' | 'disabled
 const STATUS_DOT: Record<OverviewStatus, string> = {
   connected: 'bg-success',
   error: 'bg-destructive',
-  notConfigured: 'bg-warning',
+  notConfigured: 'bg-status-warning',
   disabled: 'bg-foreground/25',
   pending: 'bg-foreground/40',
 }
@@ -39,7 +39,7 @@ const STATUS_DOT: Record<OverviewStatus, string> = {
 const STATUS_TEXT: Record<OverviewStatus, string> = {
   connected: 'text-success',
   error: 'text-destructive',
-  notConfigured: 'text-warning',
+  notConfigured: 'text-status-warning',
   disabled: 'text-muted-foreground',
   pending: 'text-muted-foreground',
 }

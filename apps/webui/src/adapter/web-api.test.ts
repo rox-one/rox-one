@@ -128,7 +128,6 @@ describe('web adapter protocol feature gating', () => {
   it('reports feature-based channel availability', async () => {
     const { api, client } = createWebApi({ serverUrl: 'ws://127.0.0.1:1' })
     CLIENTS.push(client)
-    client.getServerFeatures = () => ({ methods: ['sessions:get'], events: [], capabilities: [] })
     client.isMethodAdvertised = (ch: string) => ch === 'sessions:get'
 
     expect(api.isChannelAvailable('sessions:get')).toBe(true)

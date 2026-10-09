@@ -550,7 +550,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
         </div>
       ) : null}
       {errorEntries.length ? (
-        <div role="alert" className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] bg-warning/10 px-3 py-2 text-small text-text-secondary" data-testid="inbox-source-error">
+        <div role="alert" className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] bg-status-warning/10 px-3 py-2 text-small text-text-secondary" data-testid="inbox-source-error">
           <span className="min-w-0 flex-1">{t('inbox.sourceError', { sources: errorEntries.map(([key]) => t(key === 'mail' ? 'inbox.kind.mail' : `inbox.source.${key}`)).join(', ') })}</span>
           <Button variant="ghost" disabled={refreshing} onClick={() => void refreshInbox()}>{t('common.retry')}</Button>
         </div>

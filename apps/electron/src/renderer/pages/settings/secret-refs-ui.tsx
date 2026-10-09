@@ -32,7 +32,7 @@ export function SecretProviderStatusRow({ available }: { available: boolean }) {
   return (
     <div
       data-provider-status={status}
-      className={status === 'connected' ? 'text-xs text-success' : 'text-xs text-warning'}
+      className={status === 'connected' ? 'text-xs text-success' : 'text-xs text-status-warning'}
     >
       {t(secretProviderStatusKey(status))}
     </div>

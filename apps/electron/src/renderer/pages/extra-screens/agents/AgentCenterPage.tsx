@@ -372,7 +372,7 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub?:
   return (
     <div className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-3.5 py-3">
       <div className="text-[12px] text-muted-foreground">{label}</div>
-      <div className={cn('mt-0.5 text-[22px] font-bold tabular-nums leading-tight', tone === 'warn' && 'text-warning', tone === 'err' && 'text-destructive')}>{value}</div>
+      <div className={cn('mt-0.5 text-[22px] font-bold tabular-nums leading-tight', tone === 'warn' && 'text-status-warning', tone === 'err' && 'text-destructive')}>{value}</div>
       {sub && <div className="text-[12px] text-muted-foreground">{sub}</div>}
     </div>
   )

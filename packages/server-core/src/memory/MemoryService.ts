@@ -76,7 +76,7 @@ import { compactWorkspaceHistory } from './decay'
 import { EpisodicMemory, withTimeout as episodicWithTimeout } from './episodic-memory'
 import { notifyRepoMutation, type RepoBankRef } from './repo/notify'
 import { ownerKey8For } from './repo/RepoSourceProvider'
-import { MemoryIndexService, memoryIndexServiceFor } from './MemoryIndexService'
+import { MemoryIndexService, memoryIndexServiceFor, memoryIndexServiceOptions } from './MemoryIndexService'
 import { buildMemoryBootstrap } from './bootstrap'
 import type { LearningServicePorts } from './learning/learning-types'
 
@@ -782,9 +782,11 @@ export class MemoryService {
   private indexServiceInstance: MemoryIndexService | null = null
   /** c1.1/c1.4: workspace memory chunk index (also feeds the bootstrap block). */
   get indexService(): MemoryIndexService {
-    return (this.indexServiceInstance ??= memoryIndexServiceFor(this.deps.workspaceRoot, this.deps.workspaceId, {
-      semantic: this.config.semantic,
-    }))
+    return (this.indexServiceInstance ??= memoryIndexServiceFor(
+      this.deps.workspaceRoot,
+      this.deps.workspaceId,
+      memoryIndexServiceOptions(this.config),
+    ))
   }
 
   /** c1.6: standing-intent store (workspace memory dir unless injected). */

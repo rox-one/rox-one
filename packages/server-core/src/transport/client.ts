@@ -295,11 +295,6 @@ export class WsRpcClient implements RpcClient {
     return this.serverChannels.has(channel)
   }
 
-  /** Advertised protocol features (null when the server did not advertise them). */
-  getServerFeatures(): ProtocolFeatures | null {
-    return this.serverFeatures
-  }
-
   /**
    * True iff the server advertised `channel` in handshake_ack `features.methods`.
    * Returns true when no feature block was advertised (backwards compat).

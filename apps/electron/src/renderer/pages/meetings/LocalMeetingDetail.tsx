@@ -456,7 +456,7 @@ export function LocalMeetingDetail(props: {
         <p className="text-[12px] text-text-secondary" role="status">{t('meetings.local.summaryRunning')}</p>
       ) : null}
       {m.extraction?.status === 'failed' || m.extraction?.status === 'superseded' ? (
-        <p className="rounded-lg bg-warning/10 px-3 py-2 text-[12px] text-text-secondary" role="status" data-testid="meeting-extraction-failure">
+        <p className="rounded-lg bg-status-warning/10 px-3 py-2 text-[12px] text-text-secondary" role="status" data-testid="meeting-extraction-failure">
           {t(m.extraction.status === 'superseded' ? 'meetings.local.extractionSuperseded' : 'meetings.local.extractionFailed')}
         </p>
       ) : null}
@@ -495,7 +495,7 @@ export function LocalMeetingDetail(props: {
             <div className="flex flex-wrap items-center gap-2 text-caption text-text-muted">
               <span>{t('meetings.local.summary.rolling')}</span>
               <span data-testid="meeting-rolling-summary-generator">{t(rolling.generatorKey)}</span>
-              {rolling.stale ? <span className="text-warning">{t('meetings.local.analysisStale')}</span> : null}
+              {rolling.stale ? <span className="text-status-warning">{t('meetings.local.analysisStale')}</span> : null}
               <span className="ml-auto font-mono tabular-nums">{t('meetings.local.summary.updatedAt', { time: new Date(rolling.updatedAt).toLocaleTimeString() })}</span>
             </div>
             <p className="text-body leading-5">{rolling.text}</p>
