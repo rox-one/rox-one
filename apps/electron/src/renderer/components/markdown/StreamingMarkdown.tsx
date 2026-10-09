@@ -7,6 +7,10 @@ interface StreamingMarkdownProps {
   mode?: RenderMode
   onUrlClick?: (url: string) => void
   onFileClick?: (path: string) => void
+  /** Send a follow-up user message from an interactive block (OpenUI @ToAssistant actions) */
+  onSendPrompt?: (text: string) => void
+  /** Owning message identity for interactive (`openui`) block form-state scoping */
+  blockScope?: string
 }
 
 interface Block {
@@ -100,23 +104,29 @@ function splitIntoBlocks(content: string): Block[] {
  */
 const MemoizedBlock = React.memo(function Block({
   content,
+  isStreaming,
   mode,
   onUrlClick,
   onFileClick,
+  onSendPrompt,
+  blockScope,
 }: {
   content: string
+  isStreaming: boolean
   mode: RenderMode
   onUrlClick?: (url: string) => void
   onFileClick?: (path: string) => void
+  onSendPrompt?: (text: string) => void
+  blockScope?: string
 }) {
   return (
-    <Markdown mode={mode} onUrlClick={onUrlClick} onFileClick={onFileClick}>
+    <Markdown mode={mode} isStreaming={isStreaming} onUrlClick={onUrlClick} onFileClick={onFileClick} onSendPrompt={onSendPrompt} blockScope={blockScope}>
       {content}
     </Markdown>
   )
 }, (prev, next) => {
-  // Only re-render if content actually changed
-  return prev.content === next.content && prev.mode === next.mode
+  // Only re-render if the block content, mode or streaming state changed
+  return prev.content === next.content && prev.mode === next.mode && prev.isStreaming === next.isStreaming
 })
 MemoizedBlock.displayName = 'MemoizedBlock'
 
@@ -142,6 +152,8 @@ export function StreamingMarkdown({
   mode = 'minimal',
   onUrlClick,
   onFileClick,
+  onSendPrompt,
+  blockScope,
 }: StreamingMarkdownProps) {
   // Split into blocks - memoized to avoid recomputation
   // Must be called unconditionally to satisfy Rules of Hooks
@@ -153,7 +165,7 @@ export function StreamingMarkdown({
   // Not streaming - use simple Markdown (no block splitting needed)
   if (!isStreaming) {
     return (
-      <Markdown mode={mode} onUrlClick={onUrlClick} onFileClick={onFileClick}>
+      <Markdown mode={mode} isStreaming={false} onUrlClick={onUrlClick} onFileClick={onFileClick} onSendPrompt={onSendPrompt} blockScope={blockScope}>
         {content}
       </Markdown>
     )
@@ -174,9 +186,12 @@ export function StreamingMarkdown({
           <MemoizedBlock
             key={key}
             content={block.content}
+            isStreaming={isLastBlock}
             mode={mode}
             onUrlClick={onUrlClick}
             onFileClick={onFileClick}
+            onSendPrompt={onSendPrompt}
+            blockScope={blockScope}
           />
         )
       })}
