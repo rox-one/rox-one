@@ -67,10 +67,10 @@ describe('HookRegistry', () => {
     expect(registry.events().sort()).toEqual(['a', 'b'])
 
     await registry.emit('a', undefined)
+    expect(off()).toBe(true)
+    expect(registry.listenerCount('a')).toBe(0)
     expect(off()).toBe(false)
     expect(registry.off('a', () => {})).toBe(false)
-    off()
-    expect(registry.listenerCount('a')).toBe(0)
 
     await registry.emit('a', undefined)
     await registry.emit('b', undefined)
