@@ -55,6 +55,7 @@ function clean(data: RecordData): RecordData {
 }
 
 export class ReferenceTx {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic command payload bag; values are narrowed at each use site (W1-06)
   readonly payload: Record<string, any>
   readonly now: string
   readonly events: DomainEventDraft[] = []
@@ -62,6 +63,7 @@ export class ReferenceTx {
   private readonly written = new Set<string>()
 
   constructor(readonly ctx: CommandHandlerContext<unknown>, readonly backend: RecordBackend, now: Date, readonly verb = 'write') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see the payload field above (W1-06)
     this.payload = (ctx.payload ?? {}) as Record<string, any>
     this.now = now.toISOString()
   }

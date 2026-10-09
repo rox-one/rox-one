@@ -140,7 +140,7 @@ function githubUrl(raw: unknown): string {
   return `https://github.com/${segments[0]}/${repo}.git`
 }
 function localFolderPath(raw: unknown): string {
-  if (typeof raw !== 'string' || raw.length === 0 || raw.length > 4096 || /[\x00-\x1f]/.test(raw) || !isAbsolute(raw)) invalid('invalid-local-path')
+  if (typeof raw !== 'string' || raw.length === 0 || raw.length > 4096 || /\p{Cc}/u.test(raw) || !isAbsolute(raw)) invalid('invalid-local-path')
   return resolve(raw)
 }
 function parseSource(raw: unknown): { kind: 'git-url'; url: string } | { kind: 'local-folder'; path: string } {
@@ -211,10 +211,11 @@ function createRecord(input: {
   }
 }
 
-/** Catalog records are frozen contracts; updates always produce a new record. */
+/** Catalog records are frozen contracts; updates always produce a new record without the stored error. */
 function withoutError(record: DevSpaceRepositoryRecord): DevSpaceRepositoryRecord {
-  const { lastError: _lastError, ...rest } = record
-  return rest
+  const next: DevSpaceRepositoryRecord = { ...record }
+  Reflect.deleteProperty(next, 'lastError')
+  return next
 }
 function replaceRecord(catalog: DevSpaceCatalogFile, record: DevSpaceRepositoryRecord): void {
   catalog.repositories = catalog.repositories.map(entry => (entry.id === record.id ? record : entry))
