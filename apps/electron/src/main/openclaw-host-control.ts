@@ -32,7 +32,7 @@ type ControlUiWindow = {
   }
 }
 
-type IsolatedSession = {
+export type IsolatedSession = {
   setPermissionCheckHandler?(handler: () => boolean): void
   setPermissionRequestHandler?(handler: (_webContents: unknown, _permission: string, callback: (allowed: boolean) => void) => void): void
   clearStorageData?(): Promise<void>
@@ -62,7 +62,20 @@ export interface ControlUiWindowOptions {
     readonly allowRunningInsecureContent: false
     readonly webviewTag: false
     readonly devTools: false
+    /** Embedded desktop-bridge preload; absent when the surface is not the host. */
+    readonly preload?: string
   }
+}
+
+/**
+ * The embedded desktop bridge is installed only by the Control-UI host. In
+ * thin-client (`CRAFT_SERVER_URL`) mode no host-side handlers exist, so the
+ * preload must not be attached to any window.
+ */
+export interface ControlUiBridgeOptions {
+  readonly isClientOnly: boolean
+  /** Absolute path to the built `rox-desktop-preload.cjs`. */
+  readonly preloadPath: string
 }
 
 export interface OpenClawHostControlIpcDependencies {
@@ -84,6 +97,8 @@ export interface OpenClawHostControlIpcDependencies {
   }
   readonly createEphemeralSession: (partition: string) => IsolatedSession
   readonly createControlUiWindow: (options: ControlUiWindowOptions) => ControlUiWindow
+  /** Embedded desktop bridge; omitted when this surface is not the host. */
+  readonly desktopBridge?: ControlUiBridgeOptions
   readonly createPartition?: () => string
   readonly confirm?: (input: {
     readonly action: HostControlAction
@@ -257,7 +272,11 @@ function isAllowedControlUiRequest(url: string, controlOrigin: string): boolean 
   }
 }
 
-export function createControlUiWindowOptions(controlSession: IsolatedSession): ControlUiWindowOptions {
+export function createControlUiWindowOptions(
+  controlSession: IsolatedSession,
+  bridge?: ControlUiBridgeOptions,
+): ControlUiWindowOptions {
+  const bridgeEnabled = bridge !== undefined && !bridge.isClientOnly
   return {
     width: 1280,
     height: 860,
@@ -274,6 +293,8 @@ export function createControlUiWindowOptions(controlSession: IsolatedSession): C
       allowRunningInsecureContent: false,
       webviewTag: false,
       devTools: false,
+      // Client-only mode runs no host handlers: never expose the bridge there.
+      ...(bridgeEnabled ? { preload: bridge!.preloadPath } : {}),
     },
   }
 }
@@ -319,7 +340,7 @@ async function openControlUi(
   )
   let controlWindow: ControlUiWindow | undefined
   try {
-    controlWindow = deps.createControlUiWindow(createControlUiWindowOptions(controlSession))
+    controlWindow = deps.createControlUiWindow(createControlUiWindowOptions(controlSession, deps.desktopBridge))
     attachControlUiPolicy(controlWindow, controlSession, controlOrigin)
     controlWindow.once('closed', () => { void clearEphemeralSession(controlSession) })
     await controlWindow.webContents.loadURL(controlOrigin)
