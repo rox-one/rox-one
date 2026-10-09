@@ -213,13 +213,15 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('../voice-clipboard'),
   ])
 
-  const [meetings, personalTasks, feed, privacy, runtimeTrace, entities] = await Promise.all([
+  const [meetings, personalTasks, feed, privacy, runtimeTrace, entities, tgLink, keeper] = await Promise.all([
     import('@rox/server-core/handlers/rpc/meetings'),
     import('@rox/server-core/handlers/rpc/personal-tasks'),
     import('@rox/server-core/handlers/rpc/feed'),
     import('@rox/server-core/handlers/rpc/privacy'),
     import('@rox/server-core/handlers/rpc/runtime-trace'),
     import('@rox/server-core/handlers/rpc/entities'),
+    import('@rox/server-core/handlers/rpc/tg-link'),
+    import('@rox/server-core/handlers/rpc/keeper'),
   ])
 
   return new Set([
@@ -292,6 +294,8 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...voiceClipboard.HANDLED_CHANNELS,
     ...LEARNING_HANDLED_CHANNELS,
     ...entities.HANDLED_CHANNELS,
+    ...tgLink.HANDLED_CHANNELS,
+    ...keeper.KEEPER_CHANNELS,
   ])
 }
 

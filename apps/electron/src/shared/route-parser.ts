@@ -91,7 +91,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -139,7 +139,7 @@ export interface ParsedCompoundRoute {
  * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   // Kind-first entity surfaces (W1-01). Shared with the deep-link handler so
   // `rox://docs/wiki/{id}` etc. reach the renderer parser.
@@ -351,6 +351,15 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   if (first === 'learning') {
     if (segments.length !== 1) return null
     return { navigator: 'learning', details: null }
+  }
+
+  // ROX Drive (wave 1, local-first storage) — `drive[/folder/{folderId}]`
+  if (first === 'drive') {
+    if (segments.length === 1) return { navigator: 'drive', details: null }
+    if (segments.length === 3 && segments[1] === 'folder' && segments[2]) {
+      return { navigator: 'drive', details: { type: 'folder', id: decodeURIComponent(segments[2]) } }
+    }
+    return null
   }
 
   // Personal tasks (Things-style; Issue 17)
@@ -701,6 +710,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'learning'
   }
 
+  if (parsed.navigator === 'drive') {
+    if (!parsed.details) return 'drive'
+    return `drive/folder/${encodeURIComponent(parsed.details.id)}`
+  }
+
   if (parsed.navigator === 'tasks') {
     if (!parsed.details) return 'tasks'
     return `tasks/task/${encodeURIComponent(parsed.details.id)}`
@@ -935,6 +949,11 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
   // Learning
   if (compound.navigator === 'learning') {
     return { type: 'view', name: 'learning', params: {} }
+  }
+
+  // ROX Drive
+  if (compound.navigator === 'drive') {
+    return { type: 'view', name: 'drive', id: compound.details?.id, params: {} }
   }
 
   if (compound.navigator === 'tasks') {
@@ -1230,6 +1249,11 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'learning', details: null }
   }
 
+  // ROX Drive
+  if (compound.navigator === 'drive') {
+    return { navigator: 'drive', details: compound.details ? { type: 'folder', folderId: compound.details.id } : null }
+  }
+
   if (compound.navigator === 'tasks') {
     if (!compound.details) {
       return { navigator: 'tasks', details: null }
@@ -1476,6 +1500,10 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'memory', details: null }
     case 'learning':
       return { navigator: 'learning', details: null }
+    case 'drive':
+      return parsed.id
+        ? { navigator: 'drive', details: { type: 'folder', folderId: parsed.id } }
+        : { navigator: 'drive', details: null }
     case 'tasks':
       return { navigator: 'tasks', details: null }
     case 'inbox':
@@ -1739,6 +1767,13 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
     return {
       navigator: 'learning',
       details: null,
+    }
+  }
+
+  if (state.navigator === 'drive') {
+    return {
+      navigator: 'drive',
+      details: state.details ? { type: 'folder', id: state.details.folderId } : null,
     }
   }
 

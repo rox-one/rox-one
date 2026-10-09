@@ -9,7 +9,18 @@ import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { getFabricRuntime } from './fabric-runtime'
 import { createInfisicalHttpClient } from './infisical-http'
-import { commitInfisicalImport, previewInfisicalAccount } from '../../workgraph/index.ts'
+import {
+  commitInfisicalImport,
+  createFileGithubLinkStore,
+  createGithubDeviceLink,
+  previewInfisicalAccount,
+} from '../../workgraph/index.ts'
+import type {
+  GithubDeviceLinkPollView,
+  GithubDeviceLinkStartView,
+  GithubLinkProfileView,
+} from '../../workgraph/index.ts'
+import type { GithubOAuthHttpClient } from '@rox/shared/credentials'
 import {
   isClaimableLive,
   rpcFabricActResult,
@@ -30,9 +41,16 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.fabric.ACQUIRE_LEASE,
   RPC_CHANNELS.fabric.REVOKE_CONNECTION,
   RPC_CHANNELS.fabric.GITHUB_STATUS,
+  RPC_CHANNELS.fabric.GITHUB_LINK_START,
+  RPC_CHANNELS.fabric.GITHUB_LINK_POLL,
+  RPC_CHANNELS.fabric.GITHUB_LINK_GET,
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
   RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
   RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
+  RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS,
+  RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS,
+  RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM,
+  RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM,
 ] as const
 
 const DEFAULT_WORKSPACE_ID = 'local'
@@ -97,6 +115,69 @@ function sanitizeReason(error: unknown, redact?: string): string {
   return message
 }
 
+/**
+ * Ensure provider.write registers the credential ref into the runtime registry
+ * before the broker's acquireLease (resolveRef uses registry.get).
+ */
+function withRegistrySyncWrite<T>(
+  runtime: ReturnType<typeof getFabricRuntime>,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const provider = runtime.provider
+  const originalWrite = provider.write.bind(provider)
+  provider.write = async (input) => {
+    const version = await originalWrite(input)
+    if (!runtime.registry.get(version.credentialRefId)) {
+      runtime.registry.register({
+        id: version.credentialRefId,
+        kind: input.kind,
+        providerId: provider.id,
+        locator: input.locator,
+      })
+    }
+    return version
+  }
+  return fn().finally(() => {
+    provider.write = originalWrite
+  })
+}
+
+/** Public surface of the device-flow link controller used by the handlers. */
+interface GithubLinkFlow {
+  start(): Promise<GithubDeviceLinkStartView>
+  poll(input: { flowId: string; workspaceId: string }): Promise<GithubDeviceLinkPollView>
+  get(input: { workspaceId: string }): Promise<GithubLinkProfileView | null>
+}
+
+const defaultGithubOAuthHttp: GithubOAuthHttpClient = async (request) => {
+  const response = await fetch(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+    redirect: 'manual',
+  })
+  return { status: response.status, body: await response.text() }
+}
+
+let cachedGithubLinkFlow: { directory: string; clientId: string; flow: GithubLinkFlow } | null = null
+
+/** Reuse the existing device-flow module (same OAuth client id) in link mode. */
+function githubLinkFlow(): GithubLinkFlow {
+  const runtime = getFabricRuntime()
+  const clientId = process.env.GITHUB_OAUTH_CLIENT_ID ?? ''
+  if (!cachedGithubLinkFlow || cachedGithubLinkFlow.directory !== runtime.directory || cachedGithubLinkFlow.clientId !== clientId) {
+    cachedGithubLinkFlow = {
+      directory: runtime.directory,
+      clientId,
+      flow: createGithubDeviceLink({
+        http: defaultGithubOAuthHttp,
+        clientId,
+        store: createFileGithubLinkStore(runtime.directory),
+      }),
+    }
+  }
+  return cachedGithubLinkFlow.flow
+}
 export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.fabric.LIST_CONNECTIONS, async (_ctx, workspaceIdOrArgs?: unknown) => {
     const listed = rpcFabricListResult({ source: 'native' })
@@ -303,6 +384,32 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
     }
   })
 
+  // Onboarding «Привязать GitHub» — the existing device flow in link mode. The
+  // start view carries only the public codes; the poll returns the linked
+  // profile and never the access token; the get reloads a stored link.
+  server.handle(RPC_CHANNELS.fabric.GITHUB_LINK_START, async () => {
+    const view: GithubDeviceLinkStartView = await githubLinkFlow().start()
+    return stripSecrets(view)
+  })
+
+  server.handle(RPC_CHANNELS.fabric.GITHUB_LINK_POLL, async (_ctx, args: unknown) => {
+    const bag = objectArg(args)
+    const flowId = nonEmptyString(bag.flowId)
+    if (!flowId) throw new Error('fabric.githubLinkPoll: flowId required')
+    const view: GithubDeviceLinkPollView = await githubLinkFlow().poll({
+      flowId,
+      workspaceId: nonEmptyString(bag.workspaceId) ?? DEFAULT_WORKSPACE_ID,
+    })
+    return stripSecrets(view)
+  })
+
+  server.handle(RPC_CHANNELS.fabric.GITHUB_LINK_GET, async (_ctx, args?: unknown) => {
+    const profile: GithubLinkProfileView | null = await githubLinkFlow().get({
+      workspaceId: workspaceIdOf(args),
+    })
+    return profile ? stripSecrets(profile) : null
+  })
+
   server.handle(RPC_CHANNELS.fabric.INFISICAL_HEALTH, async () => {
     const runtime = getFabricRuntime()
     try {
@@ -353,5 +460,65 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
       registry: runtime.registry,
     })
     return stripSecrets({ id: connection.id })
+  })
+
+  // Keeper item management («Секреты» vault UI). These are the only fabric RPCs
+  // where secret values may cross to the renderer: listItems returns item
+  // payloads verbatim (NOT through stripSecrets, which would drop user keys
+  // named "value") and upsertItem accepts a value payload. Values are never
+  // logged, never echoed in errors, and every call is gated like preview/commit.
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS, async (_ctx, args: unknown) => {
+    const read = rpcFabricReadResult({ source: 'native', nativeId: 'infisical-paths' })
+    if (!isClaimableLive(read.result)) return { paths: [] }
+    const bag = objectArg(args)
+    const runtime = getFabricRuntime()
+    return runtime.infisical.listPaths({
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+    })
+  })
+
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS, async (_ctx, args: unknown) => {
+    const read = rpcFabricReadResult({ source: 'native', nativeId: 'infisical-items' })
+    if (!isClaimableLive(read.result)) return { items: [] }
+    const bag = objectArg(args)
+    const runtime = getFabricRuntime()
+    return runtime.infisical.listItems({
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+      secretPath: String(bag.secretPath ?? '/'),
+    })
+  })
+
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM, async (_ctx, args: unknown) => {
+    const act = rpcFabricActResult({ source: 'native', action: 'write', nativeId: 'infisical-item' })
+    if (!isClaimableLive(act)) throw new Error('fabric infisical item write is not live')
+    const bag = objectArg(args)
+    const key = nonEmptyString(bag.key)
+    if (!key) throw new Error('fabric.infisical.upsertItem: key required')
+    if (!('valueJson' in bag)) throw new Error('fabric.infisical.upsertItem: valueJson required')
+    const runtime = getFabricRuntime()
+    return runtime.infisical.upsertItem({
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+      secretPath: String(bag.secretPath ?? '/'),
+      key,
+      valueJson: bag.valueJson,
+    })
+  })
+
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM, async (_ctx, args: unknown) => {
+    const act = rpcFabricActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'infisical-item' })
+    if (!isClaimableLive(act)) throw new Error('fabric infisical item delete is not live')
+    const bag = objectArg(args)
+    const key = nonEmptyString(bag.key)
+    if (!key) throw new Error('fabric.infisical.deleteItem: key required')
+    const runtime = getFabricRuntime()
+    return runtime.infisical.deleteItem({
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+      secretPath: String(bag.secretPath ?? '/'),
+      key,
+    })
   })
 }

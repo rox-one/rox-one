@@ -1,0 +1,43 @@
+# rox-tg-linkd for the testct host.
+#
+#   cd services/rox-tg-linkd
+#   cp .env.example .env   # fill in TG_BOT_TOKEN (from @BotFather)
+#   docker compose up -d --build
+#
+# The SQLite database lives in the `tg-link-data` volume, so pending links and
+# confirmed bindings survive a redeploy.
+name: rox-tg-link
+
+services:
+  rox-tg-linkd:
+    build:
+      context: ../..
+      dockerfile: services/rox-tg-linkd/Dockerfile
+    image: rox-tg-linkd:local
+    restart: unless-stopped
+    environment:
+      PORT: "8095"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      TG_BOT_TOKEN: "${TG_BOT_TOKEN:?set TG_BOT_TOKEN}"
+      TG_BOT_USERNAME: "${TG_BOT_USERNAME:-}"
+      LINK_AUTH_TOKEN: "${LINK_AUTH_TOKEN:-}"
+      LINK_TTL_MS: "${LINK_TTL_MS:-1800000}"
+      LINK_MAX_ATTEMPTS: "${LINK_MAX_ATTEMPTS:-10}"
+      LINK_DB_PATH: /data/rox-tg-linkd.sqlite
+    volumes:
+      - tg-link-data:/data
+    ports:
+      # Host-facing contract: loopback-only; front it with the same tunnel as
+      # the desktop client (ROX_TG_LINK_URL).
+      - "127.0.0.1:${LINKD_PORT:-8095}:8095"
+    healthcheck:
+      # Readiness, not mere liveness: without a bot token the service answers
+      # {"ok":false,"reason":"no-token"} and the check fails on purpose.
+      test: ["CMD", "bun", "-e", "await fetch('http://127.0.0.1:8095/api/health').then(r => r.json()).then(b => process.exit(b.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  tg-link-data:

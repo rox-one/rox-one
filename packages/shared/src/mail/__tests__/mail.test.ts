@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { handleVariants, isAllowedHandle, normalizeHandle, pickHandle } from '../handle'
 import { JmapClient, JmapError, normalizeBaseUrl, parseAddressList, resolveSameOrigin, type FetchLike } from '../jmap-client'
-import { provisionMailbox, provisionMailboxViaService, ProvisionError, type MailboxSecretStore } from '../provisioning'
+import { provisionMailbox, provisionMailboxViaService, ProvisionError, DEFAULT_MAILBOX_QUOTA_BYTES, MIN_MAILBOX_QUOTA_BYTES, MAX_MAILBOX_QUOTA_BYTES, type MailboxSecretStore } from '../provisioning'
 
 describe('mail handle', () => {
   it('normalizes names, emails and cyrillic', () => {
@@ -92,7 +92,7 @@ describe('jmap helpers', () => {
 
 /** Tiny in-memory Stalwart: session + x:Domain/x:Account/x:AppPassword. */
 function fakeStalwart() {
-  const accounts = new Map<string, { id: string; name: string; domainId: string; description: string; password: string; apps: string[] }>()
+  const accounts = new Map<string, { id: string; name: string; domainId: string; description: string; password: string; apps: string[]; quotaBytes: number | null }>()
   let seq = 0
   const creds = (auth: string) => {
     const [user, secret] = Buffer.from(auth.replace(/^Basic /, ''), 'base64').toString().split(':')
@@ -121,11 +121,13 @@ function fakeStalwart() {
             const existing = [...accounts.values()].find((a) => a.name === c.name && a.domainId === c.domainId)
             if (existing) return [name, { notCreated: { a: { type: 'alreadyExists' } } }, tag]
             const id = `u${++seq}`
-            accounts.set(id, { id, name: c.name, domainId: c.domainId, description: c.description, password: c.credentials['0'].secret, apps: [] })
+            accounts.set(id, { id, name: c.name, domainId: c.domainId, description: c.description, password: c.credentials['0'].secret, apps: [], quotaBytes: c.quotas?.maxDiskQuota ?? null })
             return [name, { created: { a: { id } } }, tag]
           }
           const [id, patch] = Object.entries(args.update)[0] as [string, any]
-          accounts.get(id)!.password = patch.credentials['0'].secret
+          const account = accounts.get(id)!
+          if (patch.credentials) account.password = patch.credentials['0'].secret
+          if (patch.quotas) account.quotaBytes = patch.quotas.maxDiskQuota
           return [name, { updated: { [id]: null } }, tag]
         }
         case 'x:AppPassword/set': {
@@ -189,6 +191,37 @@ describe('provisionMailbox', () => {
     ])
     expect(new Set([first.address, second.address]).size).toBe(2)
     expect([...accounts.values()].map((account) => account.description).sort()).toEqual(['rox:u-1', 'rox:u-2'])
+  })
+})
+
+describe('mailbox quota', () => {
+  const base = { baseUrl: 'http://127.0.0.1:8480', domain: 'rox.one', deviceLabel: 'test', admin: async () => ({ username: 'admin', secret: 'adminpw' }) }
+
+  it('defaults to 1 GiB when no quota is supplied', async () => {
+    const { fetchImpl, accounts } = fakeStalwart()
+    await provisionMailbox({ ...base, ownerUuid: 'u-1', handleCandidates: ['mark'], secrets: memorySecrets(), fetch: fetchImpl })
+    expect([...accounts.values()][0]!.quotaBytes).toBe(DEFAULT_MAILBOX_QUOTA_BYTES)
+  })
+
+  it('honors an explicit quota and rejects out-of-bounds values', async () => {
+    const { fetchImpl, accounts } = fakeStalwart()
+    const quota = 512 * 1024 * 1024
+    await provisionMailbox({ ...base, ownerUuid: 'u-1', handleCandidates: ['mark'], secrets: memorySecrets(), fetch: fetchImpl, quotaBytes: quota })
+    expect([...accounts.values()][0]!.quotaBytes).toBe(quota)
+    for (const bad of [MIN_MAILBOX_QUOTA_BYTES - 1, MAX_MAILBOX_QUOTA_BYTES + 1, 1024.5, Number.NaN]) {
+      await expect(provisionMailbox({ ...base, ownerUuid: 'u-9', handleCandidates: ['quota'], secrets: memorySecrets(), fetch: fetchImpl, quotaBytes: bad }))
+        .rejects.toMatchObject({ code: 'invalid-quota' })
+    }
+  })
+
+  it('refreshes the quota when adopting an existing mailbox', async () => {
+    const { fetchImpl, accounts } = fakeStalwart()
+    const first = await provisionMailbox({ ...base, ownerUuid: 'u-1', handleCandidates: ['mark'], secrets: memorySecrets(), fetch: fetchImpl, quotaBytes: MIN_MAILBOX_QUOTA_BYTES })
+    const fresh = memorySecrets() // lost credential → adopt/repair path
+    const again = await provisionMailbox({ ...base, ownerUuid: 'u-1', handleCandidates: ['mark'], secrets: fresh, fetch: fetchImpl, existing: first, quotaBytes: 2 * 1024 ** 3 })
+    expect(again.address).toBe('mark@rox.one')
+    expect(accounts.size).toBe(1)
+    expect([...accounts.values()][0]!.quotaBytes).toBe(2 * 1024 ** 3)
   })
 })
 
