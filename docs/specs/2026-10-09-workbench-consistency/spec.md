@@ -51,14 +51,17 @@
 
 ### 4.2 Вкладки
 
-- Четыре независимые реализации: `platform/SurfaceTabs.tsx` (h-6, иконка 14, закрытие 12), `components/app-shell/EntityViewTabs.tsx` (h-6 сегменты / h-7 строки, объявляет `role=tablist`, но без клавиатуры и roving), `components/browser/BrowserTabStrip.tsx` + `BrowserTabBadge.tsx` (h-[26px] бейдж, глиф 12, шеврон 10, без tab-семантики).
+- **`platform/SurfaceTabs.tsx` — уже полный эталон**: `role=tablist` (L252), `role=tab` + `aria-selected` + `aria-controls` (L92-94), roving `tabIndex` (L96), `onKeyDown` Arrow/Home/End/Delete (L99-106), закрытие средней кнопкой (L82-84), кнопка закрытия (L112-123); чистые хелперы — `platform/surface-tab-navigation.ts:4-22`.
+- Незакрытые потребители: `components/app-shell/EntityViewTabs.tsx` (объявляет `role=tablist` L163/207, но без клавиатуры и roving — только клик), `components/browser/BrowserTabStrip.tsx` + `BrowserTabBadge.tsx` (dropdown-бейджи, h-[26px], глиф 12, шеврон 10, без tab-семантики).
+- Рядом ещё два похожих примитива: существующий `components/ui/tabs.tsx` (generic) и вкладки `components/mode-screen/ModeScreen.tsx:283-326` — фолдятся в общий примитив в этом же цикле.
 - Один и тот же глиф сущности: **12px** в карточном списке (зажат `entity-row.tsx:391`), **14px** в таблице, **16px** в рейле, 12px в теплокарте.
 
 ### 4.3 Клавиатура
 
-- Один реестр действий (`actions/definitions.ts`), один capture-обработчик (`actions/registry.tsx:117`), отображение через `formatHotkeyDisplay`; три локальные копии `Kbd` (диалог и две страницы шорткатов) вместо общего `components/ui/kbd.tsx`.
+- Один реестр действий (`actions/definitions.ts`), один capture-обработчик (`actions/registry.tsx:117`), отображение через `formatHotkeyDisplay`; подсказки — общий примитив `components/ui/kbd.tsx` (W0.2 устранил три копии).
+- **«Пульт» уже существует**: ⌘K = `app.omnibox` → cmdk-оверлей `platform/Omnibox.tsx` (группы Navigation/Context/Actions, фокус-ловушка Radix, провайдеры sessions/settings/skills/sources/automations/knowledge, i18n `omnibox.*`); `cmdk` уже в зависимостях (`apps/electron/package.json:61`). Цикл строит «Пульт» на нём, а не с нуля.
 - Дыры: канбан — pointer-only; `EntityViewTabs` — без клавиатуры; `BrowserTabStrip` — без tab-семантики; теста на `mode-pill-keyboard.ts` нет.
-- Капслок в репозитории не наблюдается нигде (`CapsLock`, `getModifierState` — 0 совпадений). В приложении (окно в фокусе) наблюдаем без разрешений; системно — только нативный модуль + TCC (вне объёма).
+- Капслок: 0 совпадений в репозитории (`CapsLock`, `getModifierState`). В этом цикле добавлен триггер `components/palette/capslock-trigger.ts` → то же действие `app.omnibox` (W1.3); системный перехват — вне объёма (нативный модуль + TCC).
 - Занято: `⌘K` = `app.omnibox`; системно зарегистрирован только голосовой `⌘⇧D`.
 
 ### 4.4 Иконки, размеры, радиусы
@@ -67,15 +70,37 @@
 - ESLint-правило `rox/icon-size-tokens` существует и запрещает ручные размеры; `icon-*`-утилиты используют **3 файла** из сотен.
 - Пустые состояния: 40px по умолчанию против токена 32; у Инбокса 28; у плейсхолдера представлений 24. Кнопки TopBar жёстко ставят штрих 1.5 при токене 1.75. Литерал `rounded-[6px]` в NotesPage.
 - Словарь глифов разъехался: `Home`/`House`, `MessageSquare`/`MessageCircle`, `Brain`/`Sparkles`, `NotebookPen`/`FilePlus2`, иконка против текстового `+`.
+- **Ратчет уже существует**: правило `rox/icon-size-tokens` включено как warn (`eslint-rules/ui-tokens.cjs:49` → `apps/electron/eslint.config.mjs:124`), CI-гейт `.github/workflows/ui-lint-ratchet.yml:44-53` сравнивает с `eslint-baselines/ui-tokens.json:8-11` (**2672** нарушения в ~150 файлах: TaskEditor 81, CompactSessionMenu 66, SessionMenu 54, TopBar 48, FreeFormInput 46). Флип в error заблокирован до нуля; новый UI-код обязан использовать `icon-*`/токены, иначе ратчет краснеет.
 
 ### 4.5 Экраны
 
-- Уже в `origin/main`: extra-screens `agents`, `decisions`, `dossier`, `focus`, `radar`, `secrets` (`pages/extra-screens/*`, хост `ExtraScreenHost.tsx`, рельсовая группа `ExtraScreensRailGroup.tsx`); трёхпанельные экраны Задачи, Встречи, Входящие, Лента; composable-Главная.
+- Уже в `origin/main`: extra-screens `dossier`, `radar`, `decisions`, `agents`, `focus`, `secrets` (`pages/extra-screens/registry.ts:18-25`, флаги `workbench.mode.<id>.v1` из `extra-screen-flags.ts:9-27`, хост `ExtraScreenHost.tsx`, рельсовая группа «Ещё» `ExtraScreensRailGroup.tsx:16-41`); трёхпанельные экраны Задачи/Встречи/Входящие/Лента (`mode-screen/ModeScreen.tsx`); composable-Главная.
 - Режимы: `home, chat, meetings, tasks, notes, feed, inbox` + унифицированные `messenger, calendar, goals, contacts` (`platform/modes-seed.ts`).
+- Уточнения реконсиляции: `calendar` и `contacts` — **пустые shell'ы** (`platform/SurfaceHost.tsx:62-66` рендерит `SurfaceEmptyState`; in-repo регистрантов `calendar.page`/`contacts.page` нет), контент команды живёт в `components/team/*` и messenger; отдельной «Уведомлений» нет — уже свёрнута в capability `notifications.in-app.v1` мода inbox.
+- Мёртвая проводка (кандидаты на воскрешение): `layoutProfileId` объявлен (`packages/core/src/platform/modes/types.ts:24`) и задан в seed, но нигде не читается; `listPinnedModes` (`packages/core/src/platform/modes/registry.ts:66-77`) не используется.
 
 ### 4.6 Перф
 
 - Инфраструктура есть: `test:perf-budgets` (`apps/electron/src/renderer/perf`), `scripts/bench/renderer-perf-report.ts --ci [--session-count 500] [--bundle]`. Открытые находки аудита: PERF-05 (виртуализации списков нет при фикстуре на 2000 сессий), PERF-01 (первый кадр — последним), PERF-04 (нет бюджета бандла), PERF-03 (гейт меряет синтетику без React/DOM).
+
+### 4.7 Сводка реконсиляции 12 решений (2026-10-09)
+
+| # | Решение | Статус | Пробел |
+|---|---|---|---|
+| 1 | Единые вкладки | partial | SurfaceTabs — эталон, но привязан к panel-stack atoms; нужен headless-примитив и фолд EntityViewTabs / BrowserTabStrip / BrowserTabBadge / ModeScreen Tabs |
+| 2 | Пилюля + Сцены | partial | Пилюля рендерит все режимы без overflow; частоты/pin/exclude/Сцен нет; `listPinnedModes` и `layoutProfileId` — мёртвая проводка |
+| 3 | Пульт + капслок | exists | Капслока не было; добавлен (W1.3) через то же действие `app.omnibox` |
+| 4 | Клавиатура + Kbd | partial | Дыры устраняются срезами W0.2/W1.2/W1.1; браузерные вкладки — W2.1 |
+| 5 | Канон иконок/размеров | partial | warn + ратчет 2672; флип в error недостижим — работаем миграцией и токенами |
+| 6a | Входящие+Уведомления → Лента | partial | «Уведомления» уже свёрнуты в inbox; слияние самих экранов — net-new (W3.1) |
+| 6b | Встречи → Календарь | partial | meetings — реальный трёхпанельный экран; calendar — пустой shell; слияние = W3.2 |
+| 6c | Контакты → Команда | partial | contacts — пустой shell; контент в team/messenger; слияние = W3.3 (роут + удаление shell) |
+| 7 | Активность / Библиотека / Состояние | missing | Все три — net-new (W2.3–W2.5); переиспользуемо: SessionHeatmapHost, каталоги/ConnectionsPage, LazyDiagnostics |
+| 8 | Сцены + «панель→экран» | missing | Нет сохранённых раскладок и абстракции panel/screen; ближайшее — useResizablePanels, PanelWorkspaceLayoutMode, slot 'page'+SurfaceHost |
+| 9 | Перф на больших данных | partial | Виртуализация только sessions-table + kanban; бюджеты: ciGate только `cached_session_switch` (p95 120ms); импорт-списки не окнированы |
+| 10 | Extra/mode screens | exists | Закрывать нечего |
+| 11 | Пересечения веток | partial | Подтверждено: только `AppShell.tsx` в `feat/rox-platform-20261009`, `improve/advisor-plans-round2` и в незакоммиченных правках `fix/product-tour-native-green`; `feat/intelligent-ui-20261009` пересекается с ChatDisplay/Markdown/bun.lock (вне наших файлов) |
+| 12 | `advisor-plans/` | exists | Завершённая запись /improve-батча; следуем её стилю (карточка находки + verification gate) |
 
 ## 5. Целевая архитектура изменений
 
