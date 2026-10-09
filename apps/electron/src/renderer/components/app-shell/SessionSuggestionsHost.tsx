@@ -113,7 +113,7 @@ export function SessionSuggestionsHost() {
             <p className="py-4 text-center text-caption text-muted-foreground">{t('sessionSuggestions.empty')}</p>
           )}
           {items.map(suggestion => (
-            <div key={suggestion.id} className="rounded-md border border-foreground/10 p-2.5">
+            <div key={suggestion.id} className="rounded-md border border-border-subtle p-2.5">
               <p className="whitespace-pre-wrap text-sm">{suggestion.body}</p>
               <div className="mt-2 flex items-center justify-between gap-2">
                 <span className="text-caption text-muted-foreground">
@@ -123,11 +123,11 @@ export function SessionSuggestionsHost() {
                 {suggestion.state === 'pending' && isOwner && (
                   <span className="flex gap-1">
                     <Button size="sm" variant="ghost" disabled={busy} onClick={() => void resolve(suggestion, 'accepted')}>
-                      <Check className="h-3.5 w-3.5" />
+                      <Check className="icon-caption" />
                       {t('sessionSuggestions.accept')}
                     </Button>
                     <Button size="sm" variant="ghost" disabled={busy} onClick={() => void resolve(suggestion, 'dismissed')}>
-                      <X className="h-3.5 w-3.5" />
+                      <X className="icon-caption" />
                       {t('sessionSuggestions.dismiss')}
                     </Button>
                   </span>
