@@ -83,6 +83,15 @@ describe('assessRegistryTrust — verdict table', () => {
     ).toEqual({ verdict: 'blocked', reasons: ['provider-unverified'] })
   })
 
+  it('prototype-chain names are not providers (Object.hasOwn, not `in`)', () => {
+    expect(
+      assessRegistryTrust({ provider: 'toString', entry: skillpack(), catalogSignatureVerified: true }),
+    ).toEqual({ verdict: 'blocked', reasons: ['provider-unverified'] })
+    expect(
+      assessRegistryTrust({ provider: 'constructor', entry: skillpack(), catalogSignatureVerified: true }),
+    ).toEqual({ verdict: 'blocked', reasons: ['provider-unverified'] })
+  })
+
   it('oem-allowlist-empty keeps the SiYuan bazaar fail-closed', () => {
     expect(
       assessRegistryTrust({ provider: 'siyuan-bazaar', entry: skillpack(), catalogSignatureVerified: true }),

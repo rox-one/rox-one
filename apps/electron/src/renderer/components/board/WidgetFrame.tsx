@@ -65,20 +65,34 @@ export interface WidgetFrameProps {
 }
 
 /**
+ * Hard upper bound for a widget-reported content height, in CSS px.
+ *
+ * A leased widget is untrusted: without a ceiling it can report a number
+ * just below `Number.MAX_VALUE` and force the host box to an arbitrary,
+ * unusable height (layout DoS). Heights above the bound clamp to it — a
+ * legitimately tall widget is never silently dropped.
+ */
+export const MAX_WIDGET_FRAME_HEIGHT_PX = 8192
+
+/**
  * Strict schema for the ONLY message this host consumes.
  *
  * The wrap document also posts `ready` and the MessagePort-bearing
  * `bootstrap`; both are deliberately dropped, so no privileged channel is ever
- * established. Anything that is not a finite, positive `size` height returns
- * `null` and can never reach component state.
+ * established. `type` and `height` must be OWN properties — a payload that
+ * inherits them from its prototype is not a wire message and is rejected.
+ * Anything that is not a finite, positive `size` height returns `null`; a
+ * finite height above {@link MAX_WIDGET_FRAME_HEIGHT_PX} is clamped, never
+ * dropped, and can therefore never reach component state unbounded.
  */
 export function parseWidgetFrameMessage(data: unknown): number | null {
   if (typeof data !== 'object' || data === null) return null
+  if (!Object.hasOwn(data, 'type') || !Object.hasOwn(data, 'height')) return null
   const record = data as { type?: unknown; height?: unknown }
   if (record.type !== WIDGET_SIZE_MESSAGE_TYPE) return null
   const height = record.height
   if (typeof height !== 'number' || !Number.isFinite(height) || height <= 0) return null
-  return height
+  return Math.min(height, MAX_WIDGET_FRAME_HEIGHT_PX)
 }
 
 /**
@@ -154,11 +168,11 @@ export function WidgetFrame({
           className,
         )}
       >
-        <Icon className="h-5 w-5 text-foreground/40" strokeWidth={1.6} aria-hidden />
-        <div className="text-[13px] font-semibold text-foreground">
+        <Icon className="icon-rail text-muted-foreground" aria-hidden />
+        <div className="text-body font-semibold text-foreground">
           {t(unavailable ? 'board.widget.frame.unavailableTitle' : 'board.widget.frame.runtimeErrorTitle')}
         </div>
-        <p className="max-w-[360px] text-[12px] leading-relaxed text-foreground/55">
+        <p className="max-w-[360px] text-small leading-relaxed text-muted-foreground">
           {t(unavailable ? 'board.widget.frame.unavailableBody' : 'board.widget.frame.runtimeErrorBody')}
         </p>
       </div>
@@ -179,7 +193,7 @@ export function WidgetFrame({
       // meta stays authoritative inside the frame.
       srcDoc={content}
       className={cn('w-full border-0 bg-white', className)}
-      style={{ height: height === null ? '100%' : `${height}px` }}
+      style={{ height: height === null ? '100%' : `${Math.min(height, MAX_WIDGET_FRAME_HEIGHT_PX)}px` }}
     />
   )
 }

@@ -782,7 +782,9 @@ export class MemoryService {
   private indexServiceInstance: MemoryIndexService | null = null
   /** c1.1/c1.4: workspace memory chunk index (also feeds the bootstrap block). */
   get indexService(): MemoryIndexService {
-    return (this.indexServiceInstance ??= memoryIndexServiceFor(this.deps.workspaceRoot, this.deps.workspaceId))
+    return (this.indexServiceInstance ??= memoryIndexServiceFor(this.deps.workspaceRoot, this.deps.workspaceId, {
+      semantic: this.config.semantic,
+    }))
   }
 
   /** c1.6: standing-intent store (workspace memory dir unless injected). */

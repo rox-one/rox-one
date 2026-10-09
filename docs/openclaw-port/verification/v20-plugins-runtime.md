@@ -6,6 +6,9 @@
 - Date: 2026-10-09
 - Verdict: **PASS** for all four surfaces (rows f.7, c2.5, c2.6, c2.7) — with **one defect**
   found in the startup activation path (duplicate-id shadow), see §f.7 (D-1).
+- Targets (exact): the descriptor plane is `apps/electron/src/main/extension-host/{descriptors.ts,startup.ts}`
+  together with `packages/shared/src/extensions/{manifest.ts,activation.ts}`. Nothing under
+  `server-core` defines it (see the corrections section).
 
 ## Method
 
@@ -33,7 +36,7 @@ Scripts/state: `/tmp/v20/`. Raw transcripts: `/tmp/v20/runA-stdout.txt`,
 
 ---
 
-## (c2.5) Descriptor scan — `extension-host/descriptors.ts`
+## (c2.5) Descriptor scan — `apps/electron/src/main/extension-host/descriptors.ts`
 
 Fixture sandbox (`configDir=/tmp/v20/runA/cfg`, extra root `/tmp/v20/runA/extraRoot`)
 contains 8 packages: an unparsable manifest, a valid package, a package whose entry is a
@@ -99,7 +102,7 @@ cosmetic string replace; the on-disk path is correct.)
 
 ---
 
-## (f.7) Activation planner + startup — `extensions/activation.ts`, `extension-host/startup.ts`
+## (f.7) Activation planner + startup — `packages/shared/src/extensions/activation.ts`, `apps/electron/src/main/extension-host/startup.ts`
 
 The real descriptors above were fed to `planExtensionActivations` and then a real
 `applyStartupActivations` run drove loads through an injected `ExtensionHostManager` backed
@@ -277,3 +280,14 @@ artifact was really downloaded and extracted under the isolated config dir.
   last-wins map pattern in other callers was not audited.
 - No workspace-wide gate was run (`typecheck:all`, full `bun test`, `run-gates.sh`) — by
   charter.
+
+---
+
+## Post-verification corrections (adversarial refutation, 2026-10-09)
+
+- **Path attribution (refuted).** The descriptor plane is not a `server-core` package: it is
+  `apps/electron/src/main/extension-host/{descriptors.ts,startup.ts}` +
+  `packages/shared/src/extensions/{manifest.ts,activation.ts}` (all four files present; no
+  extension module under `server-core`). The §(c2.5)/§(f.7) headings above are corrected accordingly.
+- **Behavior (re-confirmed, kept).** A descriptor scan runs no package code and `listDescriptors`
+  forks nothing — `forkCount() === 0` (confirmed by probe). The claim stands.

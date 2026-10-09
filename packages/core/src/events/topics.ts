@@ -104,6 +104,8 @@ export const REALTIME_EVENT_TYPES: Readonly<Record<TopicKind, readonly string[]>
     'system.pinged',
     // W1-15 (#1512): the X-19/X-16… counters push on the logical `user.counters` topic.
     'counters.changed',
+    // Agent panel: approval-state pushes for the principal, wired via `agentApprovalsWireTopic`.
+    'approval.changed',
   ],
   channel: [
     'message.created', 'message.edited', 'message.recalled', 'reaction.changed', 'pin.changed', 'chat.updated',

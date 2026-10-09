@@ -60,8 +60,6 @@ const originFields = (title: (tx: ReferenceTx) => string, origin: (tx: Reference
   origin: { kind: origin(tx).kind, id: origin(tx).id, ...(origin(tx).fragment ? { fragment: origin(tx).fragment } : {}) },
 })
 
-const selectionOrigin = (tx: ReferenceTx): EntityRef => ({ ...tx.payload.docRef, fragment: tx.payload.docRef.fragment ?? `block-${tx.payload.blockId}` })
-const messageOrigin = (tx: ReferenceTx): EntityRef => ({ kind: 'channel-message', id: `${tx.payload.chatId}:${tx.payload.seq}` })
 const mailOrigin = (tx: ReferenceTx): EntityRef => ({ kind: 'mail-thread', id: tx.payload.threadId })
 
 /**

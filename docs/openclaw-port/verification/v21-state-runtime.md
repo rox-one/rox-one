@@ -277,6 +277,17 @@ without a remote `access` grant), so a token-only client cannot drive
   `STATE_LOCKED` error naming the holder and the lock path. The state lock is reachable only
   when the legacy lock is absent. Minimal fix in **(b)** above (swap order, or make the state
   lock the single ownership surface).
+- **F2 (no per-write version, low).** There is **no** per-write monotonic version. `PRAGMA
+  user_version` is **schema-only** (it records the last applied migration, `state-store.ts:79-88`),
+  and the only per-write stamp is the caller-supplied `updated_at` column
+  (`state-store.ts:38,44,144,210`) — a probe demonstrated `updated_at` decreasing across writes, so
+  it is not a monotonic sequence. Do not build ordering or conflict logic on it.
+- **F3 (lost updates without the lock — fixed in this PR).** Two processes opening the store
+  **without** the writer lock silently lose updates: a probe ran 400 + 400 increments from two
+  lockless processes and the final counter was **398**, not 800 (read-modify-write races over WAL,
+  no error). Fixed in the wave-3 verification-fixes PR by making the store **fail closed**: writes
+  require proof of lock ownership (`StateStoreWriteLockRequiredError`, code `STATE_LOCKED`,
+  `state-store.ts:113-186`), with `{ lock: 'allow-unlocked' }` as the explicit opt-out.
 - No other defects found. `write-queue`, `sessions-projection`, and `writer-lock` behaved as
   documented under real processes.
 
@@ -303,3 +314,19 @@ without a remote `access` grant), so a token-only client cannot drive
 `git rev-parse --short HEAD` = `98e1e5cc4` on `port/w3-int`. Working tree had unrelated peer
 edits (`M packages/server-core/src/scheduler/hooks-node.ts`, untracked v18–v23 verification
 docs); no source file was modified by this verification. Scratch kept at `/tmp/w3v4/` for repro.
+
+---
+
+## Post-verification corrections (adversarial refutation, 2026-10-09)
+
+- **`STATE_LOCKED` on a duplicate boot (refuted for the real boot).** A normal second boot does
+  **not** surface the typed error: `headless-start.ts:534` acquires the legacy `.server.lock`
+  before the state lock at `:542`, so the duplicate dies on the legacy lock; the typed
+  `StateLockedError` (`code STATE_LOCKED`, naming the holder) surfaces only when the legacy lock is
+  absent. The lock module itself is genuinely cross-process — a loser probe got the typed
+  `STATE_LOCKED` naming the holder and lock path (finding F1 above).
+- **Per-write monotonic version (refuted).** There is none: `PRAGMA user_version` is schema-only —
+  the only per-write stamp is the caller-supplied `updated_at`, demonstrated decreasing (F2 above).
+- **Lockless concurrent writers (refuted, fixed in this PR).** Two processes opening the store
+  without the lock silently lost updates (400 + 400 increments → 398); fixed in the wave-3
+  verification-fixes PR by making the store fail closed without a lock handle (F3 above).

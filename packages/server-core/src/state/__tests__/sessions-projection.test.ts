@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdtempSync, readFileSync, rmSync, utimesSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createSession, deleteSession, getSessionFilePath, updateSessionMetadata } from '@rox/shared/sessions'
+import { createSession, deleteSession, getSessionFilePath, readSessionHeader, updateSessionMetadata } from '@rox/shared/sessions'
 import { closeStateStore, openStateStore, type StateStore } from '../state-store.ts'
 import {
+  checkSessionIndexDrift,
   createSessionStateProjector,
   liveCookie,
   scanWorkspaceEntries,
@@ -32,7 +33,7 @@ afterEach(() => {
 function fixture(): { root: string; store: StateStore; projector: SessionStateProjector } {
   const root = scratch('rox-projection-ws-')
   const configDir = scratch('rox-projection-cfg-', configDirs)
-  const store = openStateStore({ configDir })
+  const store = openStateStore({ configDir, lock: 'allow-unlocked' })
   return { root, store, projector: createSessionStateProjector({ store }) }
 }
 
@@ -119,5 +120,84 @@ describe('session state projection', () => {
     expect(entries.find((entry) => entry.id === one.id)?.name).toBe('Renamed')
     await store.queue.whenIdle(store.dbPath)
     expect(readIndexFile(root).entries.find((entry) => entry.id === one.id)?.name).toBe('Renamed')
+  })
+
+  it('persists each full header JSON and serves it fresh without scanning', async () => {
+    const { root, store, projector } = fixture()
+    const one = await createSession(root, { name: 'One', labels: ['x'] })
+    const two = await createSession(root, { name: 'Two' })
+    await projector.recordSession(root, one.id)
+    await projector.recordSession(root, two.id)
+
+    const row = store.listSessionIndex(root).find((candidate) => candidate.sessionId === one.id)!
+    const storedRow = JSON.parse(row.header) as Record<string, unknown>
+    expect(typeof storedRow.messageCount).toBe('number')
+    expect(storedRow.tokenUsage).toBeTruthy()
+
+    const headers = projector.readFreshHeaders(root)
+    expect(headers?.map((header) => header.id).sort()).toEqual([one.id, two.id].sort())
+    expect(headers?.find((header) => header.id === one.id)).toEqual(readSessionHeader(getSessionFilePath(root, one.id)))
+  })
+
+  it('readFreshHeaders returns null when a session changed (stale cookie)', async () => {
+    const { root, projector } = fixture()
+    const one = await createSession(root, { name: 'One' })
+    await projector.recordSession(root, one.id)
+    expect(projector.readFreshHeaders(root)).not.toBeNull()
+
+    await updateSessionMetadata(root, one.id, { name: 'Renamed' })
+    const future = new Date(Date.now() + 10_000)
+    utimesSync(getSessionFilePath(root, one.id), future, future)
+
+    expect(projector.readFreshHeaders(root)).toBeNull()
+  })
+
+  it('readFreshHeaders returns null when the index is absent or corrupt', async () => {
+    const { root, projector } = fixture()
+    const one = await createSession(root, { name: 'One' })
+    expect(projector.readFreshHeaders(root)).toBeNull()
+
+    await projector.recordSession(root, one.id)
+    expect(projector.readFreshHeaders(root)).not.toBeNull()
+    writeFileSync(sessionIndexFilePath(root), '{ not json')
+    expect(projector.readFreshHeaders(root)).toBeNull()
+  })
+
+  it('readFreshHeaders rejects pre-upgrade entry-subset rows', async () => {
+    const { root, store, projector } = fixture()
+    const one = await createSession(root, { name: 'One' })
+    await projector.recordSession(root, one.id)
+    // A pre-upgrade row held the list-entry subset, not the full header.
+    await store.upsertSessionIndex(root, one.id, JSON.stringify({ id: one.id, workspaceRootPath: root, createdAt: 1, lastUsedAt: 1, headerMtimeMs: 1 }))
+    await store.queue.whenIdle(store.dbPath)
+
+    expect(projector.readFreshHeaders(root)).toBeNull()
+  })
+
+  it('drift guard reports planted drift without rewriting the index', async () => {
+    const { root, projector } = fixture()
+    const one = await createSession(root, { name: 'One' })
+    await projector.recordSession(root, one.id)
+
+    expect(checkSessionIndexDrift(root)).toEqual({
+      indexCount: 1,
+      scannedCount: 1,
+      cookieMatches: true,
+      missingFromIndex: [],
+      staleInIndex: [],
+    })
+
+    const two = await createSession(root, { name: 'Two' })
+    const future = new Date(Date.now() + 10_000)
+    utimesSync(getSessionFilePath(root, two.id), future, future)
+
+    const drift = checkSessionIndexDrift(root)
+    expect(drift.cookieMatches).toBe(false)
+    expect(drift.indexCount).toBe(1)
+    expect(drift.scannedCount).toBe(2)
+    expect(drift.missingFromIndex).toEqual([two.id])
+    expect(drift.staleInIndex).toEqual([])
+    // Read-only: the index file still lists only the original session.
+    expect(readIndexFile(root).entries.map((entry) => entry.id)).toEqual([one.id])
   })
 })

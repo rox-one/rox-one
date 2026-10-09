@@ -277,6 +277,17 @@ export interface CoreBackendConfig {
   markTransferredSessionSummaryApplied?: () => void;
 
   /**
+   * c1.4 residual: per-turn hidden memory block (c1.5 recall lanes + c1.6
+   * standing intents) resolved for THIS turn's message. Awaited from
+   * BaseAgent.chat() and prepended to the per-turn user payload — the only
+   * per-turn channel a backend has (the OMP RPC contract allows just
+   * prompt/steer/follow_up). Renders only the per-turn additions; the curated
+   * bootstrap and the other spawn-time blocks stay in `memoryBlocks`. Returns
+   * null when there is nothing to inject. Callers MUST be fail-soft.
+   */
+  getPerTurnMemoryBlock?: (message: string) => Promise<string | null>;
+
+  /**
    * Optional callback to resize an oversized image for API compatibility.
    * Called from PreToolUse when Read targets an image exceeding the base64 size limit.
    * Returns path to the resized temp file, or null if resize not possible.

@@ -235,6 +235,20 @@ describe('W1-15 common row context menu (§26.1)', () => {
     expect(ids.indexOf('tasks.row.move')).toBeLessThan(ids.indexOf('entity.row.divider-2'))
     expect(ids.at(-1)).toBe('entity.row.delete')
   })
+
+  it('applies a trailing override in place — exactly one occurrence, same position', () => {
+    const menu = buildRowContextMenu([
+      { id: 'entity.row.delete', titleKey: 'xfn.x18.title', command: 'goals.link_work', danger: false },
+    ])
+    const ids = menu.map((item) => item.id)
+    expect(menu).toHaveLength(COMMON_ROW_CONTEXT_MENU.length)
+    expect(ids.filter((id) => id === 'entity.row.delete')).toHaveLength(1)
+    expect(ids.indexOf('entity.row.delete')).toBe(COMMON_ROW_CONTEXT_MENU.length - 1)
+    const del = menu.find((item) => item.id === 'entity.row.delete')!
+    expect(del.titleKey).toBe('xfn.x18.title')
+    expect(del.command).toBe('goals.link_work')
+    expect(del.danger).toBe(false)
+  })
 })
 
 describe('W1-15 counters (§19, §26.1)', () => {

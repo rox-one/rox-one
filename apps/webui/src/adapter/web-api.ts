@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { openExternalUrl } from '@rox/ui'
 import type { OrgCallerIdentity } from '@rox/shared/orgs'
 import { WsRpcClient } from '../../../electron/src/transport/client'
+import type { RpcClient } from '@rox/server-core/transport'
 import { buildClientApi } from '../../../electron/src/transport/build-api'
 import { CHANNEL_MAP } from '../../../electron/src/transport/channel-map'
 import type { ElectronAPI, TransportConnectionState } from '../../../electron/src/shared/types'
@@ -61,6 +62,49 @@ function getSystemTheme(): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Feature gating — refuse channels the server did not advertise
+// ---------------------------------------------------------------------------
+
+/**
+ * Thrown before any network call when the server's handshake `features.methods`
+ * did not list the channel. Carries the wire error code so callers can branch
+ * exactly as they would on a server CHANNEL_NOT_FOUND.
+ */
+export class UnadvertisedChannelError extends Error {
+  readonly code = 'CHANNEL_NOT_FOUND' as const
+  readonly channel: string
+
+  constructor(channel: string) {
+    super(`Channel not advertised by server: ${channel}`)
+    this.name = 'UnadvertisedChannelError'
+    this.channel = channel
+  }
+}
+
+/**
+ * Wrap the transport client so every method invoke refuses a channel that the
+ * server did not advertise in `features.methods` (no-op when the server sent
+ * no feature block — backwards compat).
+ */
+function createFeatureGatedClient(client: WsRpcClient): RpcClient {
+  const assertAdvertised = (channel: string): void => {
+    if (!client.isMethodAdvertised(channel)) throw new UnadvertisedChannelError(channel)
+  }
+  return {
+    invoke: (channel, ...args) => {
+      assertAdvertised(channel)
+      return client.invoke(channel, ...args)
+    },
+    invokeWithTimeout: (channel, timeoutMs, ...args) => {
+      assertAdvertised(channel)
+      return client.invokeWithTimeout(channel, timeoutMs, ...args)
+    },
+    on: (channel, cb) => client.on(channel, cb),
+    handleCapability: (channel, handler) => client.handleCapability(channel, handler),
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Create web API
 // ---------------------------------------------------------------------------
 
@@ -86,11 +130,14 @@ export function createWebApi(options: WebApiOptions): {
     // No token — auth is via session cookie sent on WebSocket upgrade
   })
 
-  // Build the API proxy from the same channel map the Electron app uses
+  // Build the API proxy from the same channel map the Electron app uses.
+  // The gated client refuses channels the server did not advertise in
+  // handshake `features.methods` — a typed error before any network call.
+  const availability = (ch: string) => client.isChannelAvailable(ch) && client.isMethodAdvertised(ch)
   const baseApi = buildClientApi(
-    client,
+    createFeatureGatedClient(client),
     CHANNEL_MAP,
-    (ch) => client.isChannelAvailable(ch),
+    availability,
   )
 
   // Override LOCAL_ONLY methods with web-compatible implementations
@@ -306,7 +353,7 @@ export function createWebApi(options: WebApiOptions): {
       return client.onConnectionStateChanged(cb as any)
     },
     reconnectTransport: () => { client.reconnectNow(); return Promise.resolve() },
-    isChannelAvailable: (ch: string) => client.isChannelAvailable(ch),
+    isChannelAvailable: (ch: string) => client.isChannelAvailable(ch) && client.isMethodAdvertised(ch),
 
     // Relaunch — reload page
     relaunchApp: () => { window.location.reload(); return Promise.resolve() },

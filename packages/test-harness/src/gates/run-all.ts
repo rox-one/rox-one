@@ -11,6 +11,7 @@ import { runPermissionMatrixGate } from './permission-matrix.ts'
 import { checkRiskClassPresence } from './risk-class.ts'
 import { checkNegativeTestPresence } from './negative-tests.ts'
 import { runConfigPathsGate } from './config-paths.ts'
+import { runProvenanceGate, runVersionParityGate, runIpcSendsGate, runToolNameChecksGate } from './script-gates.ts'
 import { checkVisualGate, checkAxeGate } from './visual-axe.ts'
 import { checkChromeLintGate, checkOneRailGatePending, checkDockLayoutGate } from './chrome-dock.ts'
 import { checkAgentPrivacyGate } from './agent-privacy.ts'
@@ -33,12 +34,16 @@ export const GATE_NAMES = [
   'risk-class',
   'negative-tests',
   'config-paths',
+  'provenance',
   'visual-snapshots',
   'axe',
   'chrome-schema-lint',
   'one-rail-dom',
   'dock-layout',
   'agent-panel-privacy',
+  'ipc-sends',
+  'tool-name-checks',
+  'version-parity',
   'perf-microbench',
 ] as const
 export type GateName = (typeof GATE_NAMES)[number]
@@ -56,12 +61,16 @@ export async function runAllGates(
     'risk-class': () => checkRiskClassPresence(gateOpts),
     'negative-tests': () => checkNegativeTestPresence(gateOpts),
     'config-paths': () => runConfigPathsGate(gateOpts),
+    provenance: () => runProvenanceGate(gateOpts),
     'visual-snapshots': () => checkVisualGate(gateOpts),
     axe: () => checkAxeGate(gateOpts),
     'chrome-schema-lint': () => checkChromeLintGate(gateOpts),
     'one-rail-dom': () => checkOneRailGatePending(),
     'dock-layout': () => checkDockLayoutGate(gateOpts),
     'agent-panel-privacy': () => checkAgentPrivacyGate(gateOpts),
+    'ipc-sends': () => runIpcSendsGate(gateOpts),
+    'tool-name-checks': () => runToolNameChecksGate(gateOpts),
+    'version-parity': () => runVersionParityGate(gateOpts),
     'perf-microbench': () => perfGate(runMicroBenchmarks({ runs: benchRunsFromEnv(env) }), env),
   }
   const results: GateResult[] = []

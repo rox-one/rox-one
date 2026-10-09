@@ -745,6 +745,9 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.sessions.EXPORT_REMOTE_TRANSFER,
   RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER,
   RPC_CHANNELS.sessions.ASSIGN_OWNER,
+  RPC_CHANNELS.sessions.SUGGEST_ADD,
+  RPC_CHANNELS.sessions.SUGGEST_LIST,
+  RPC_CHANNELS.sessions.SUGGEST_RESOLVE,
 
   // transfer — chunked large-payload import (sessions, resources)
   RPC_CHANNELS.transfer.START,

@@ -25,7 +25,6 @@ import type { CommandType } from '../commands/envelope.ts'
 import type {
   CommandHandler,
   CommandHandlerContext,
-  CommandHandlerResult,
   CommandRegistry,
   CommandRiskContext,
   RiskClass,

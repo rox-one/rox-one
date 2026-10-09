@@ -114,7 +114,7 @@ export function composeHooksNodeHandler(
           return
         }
         await writeResponse(nodeRes, response)
-      } catch (error) {
+      } catch {
         if (!nodeRes.headersSent) {
           nodeRes.writeHead(500, { 'Content-Type': 'application/json' })
         }

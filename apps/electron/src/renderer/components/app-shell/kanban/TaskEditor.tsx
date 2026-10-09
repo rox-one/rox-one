@@ -1240,8 +1240,8 @@ export function TaskEditor({
           className="shrink-0 overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-minimal"
         >
           <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5">
-            <span className="text-[13px] font-bold">{t('board.widget.sectionTitle')}</span>
-            <span className="truncate text-[11px] text-foreground/40">{editSlug}</span>
+            <span className="text-body font-bold">{t('board.widget.sectionTitle')}</span>
+            <span className="truncate text-caption text-muted-foreground">{editSlug}</span>
           </div>
           <div className="h-[280px] overflow-auto p-3">
             <WidgetCard widgetId={editSlug} title={title || editSlug} />
