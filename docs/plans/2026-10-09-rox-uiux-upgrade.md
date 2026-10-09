@@ -94,3 +94,35 @@ date: 2026-10-09
   съёмке; «после» — итоговое дерево.
 - Полная запись внедрения: `~/Projects/2026-10-09-rox-uiux-proposals/IMPLEMENTATION.md`.
 - G5 (чат+композер) остаётся следующей волной; G2 прошёл перф-гейт и включён флагом.
+
+### Волна 2 — G5 «Диалог» + отложенные слайсы G6/G4 — выполнено (2026-10-09)
+
+Получено следующее вложение в чат → по порядку пользователя волна 2 = G5 «Диалог» (прототип уже
+собран и прошёл пробу: `proto/g05-dialog`, `evidence/g05-probe.json` — оба вердикта зелёные) плюс
+документированные отложенности волны 1 (панельный swap, дека раскладок, счётчики непрочитанного,
+потребители чипа «Сохранено»).
+
+| Поток | Флаг | Срез | Ключевые файлы |
+|---|---|---|---|
+| G5 континуум | `craft-feature-dialog-continuum-v1` | непрерывный транскрипт: жёлоб времени 72px, спина 1px, метка 3×12, проза 68ch, thinking-строка, границы сессий; compact-поповер Edit сохраняет легаси-карточки | `components/app-shell/chat-continuum/*`, `ChatDisplay.tsx`, `TurnCard.tsx` (минимально) |
+| G5 артефакты | `craft-feature-dialog-artifacts-v1` | инлайн-артефакты (run/diff/screenshot) по реальным данным активностей и инлайн-одобрения permission/credential в ходу (композер свободен) | `chat-continuum/{ArtifactShell,DiffArtifact,RunArtifact,ScreenshotArtifact,InlineApprovalCard,InlineCredentialCard}.tsx` |
+| G5 дека | `craft-feature-composer-deck-v1` | композер-дека: трей (32px цели), полоса диктовки, чипы h-7 с реальными селекторами | `components/app-shell/input/deck/*`, `FreeFormInput.tsx` |
+| G6 wave 2 | `craft-feature-panel-swap-v1` | обмен панелей драгом (ghost + цель) и ⌥⌘S (`panel.swap`), порядок в `panelStackAtom` | `PanelStackContainer.tsx`, `PanelResizeSash.tsx`, `PanelSeam.tsx` |
+| G4 дек | `craft-feature-layout-engine` (был) | дека раскладок ⌘\ (`layout.deck`): 4 пресета с живыми превью, disable невыполнимых с недостачей px, пилюля пресета в заголовке панели | `platform/LayoutDeck.tsx`, `ActivityRail.tsx`, `App.tsx`, `PanelHeader.tsx` |
+| G6 счётчики | `craft-feature-session-lanes-v1` (был) | числовые счётчики непрочитанного на строках (по `loadedSessionsAtom`), легаси-точка для незагруженных | `SessionLanes.tsx` |
+| P-10-15 | — | чип «Сохранено» во всех футерах настроек; словарь диктовки в голосовой странице | `pages/settings/*` |
+
+Приёмка волны 2 (выполнено): тайпчеки electron/ui/shared — 0 ошибок; `lint:css` — 0 ошибок;
+`lint:ui-tokens` — 0 новых (8060 базлайновых); i18n parity 10851 × 12, sorted/coverage — зелёные;
+курсированная renderer-сьюта 1589/1592 (2 предсуществующих env-фейла `header-status-presence` —
+react-dom/server в bun, не связаны с волной); экшены/шорткаты/лейны/панели/рендер-профиль — зелёные;
+`tokens-v2` 37/37; визуальный матрикс — 7 story × 6 проектов (42 снимка, 12 новых базлайнов;
+первые тесты холодного Vite требуют retry/прогрева — известное свойство площадки);
+адверсарный аудит волны 1 — A/B/C/D PASS (паритет OFF, достижимость ON, i18n/a11y, токены/базлайны).
+Попутно найдены и починены предсуществующие красные тесты: `tokens-v2` z-слои (material-layer `calc()`),
+`radius-everywhere` (стейл-ожидание делителя 6 %), `browser-surface-v2` (литерал `{children}`),
+`render-profile` (анкер OPAQUE OVERLAYS + OrbitBoard на общий `prefers-reduced-motion`),
+w1-07 baseline-фикстура (3 новых экшена), UI-001 harness stub (`isClipboardHistoryNavigation`).
+Гейт-заготовка: `panel.swap` (⌥⌘S) и `layout.deck` (⌘\) зарегистрированы как действия, при OFF-флаге
+клавиши не перехватываются (handler `enabled`); «Миссии» получили достижимость (`missions.open` в ⌘K).
+Все флаги волны 2 — default OFF; флаг OFF ⇒ байт-идентичное прежнее поведение.
