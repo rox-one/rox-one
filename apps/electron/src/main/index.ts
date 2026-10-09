@@ -160,6 +160,7 @@ import { validateGitBashPath, checkVCRedistInstalled } from '@rox/server-core/se
 import { createOpenClawSecurityComposition } from './openclaw-security'
 import { createOpenClawHostControlConfirmation, registerOpenClawHostControlIpc } from './openclaw-host-control'
 import { createLocalClientBindingRegistry } from './local-client-binding'
+import { installRendererSessionPolicy } from './renderer-session-policy'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
@@ -703,6 +704,10 @@ app.whenReady().then(async () => {
   // Re-apply proxy settings now that Electron sessions are available
   // (first call before app.whenReady only configured Node-level proxy)
   await applyConfiguredProxySettings()
+
+  // Cancel third-party citation-favicon fetches on the app renderer session.
+  // Installed once here, before any window is created/loaded.
+  installRendererSessionPolicy(session.defaultSession)
 
   // Note: electron-updater handles pending updates internally via autoInstallOnAppQuit
 
