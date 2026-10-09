@@ -110,6 +110,8 @@
     "./labels/auto": "./src/labels/auto/index.ts",
     "./labels/crud": "./src/labels/crud.ts",
     "./labels/storage": "./src/labels/storage.ts",
+    "./local-ipc": "./src/local-ipc/index.ts",
+    "./local-ipc/framing": "./src/local-ipc/framing.ts",
     "./marketplace": "./src/marketplace/index.ts",
     "./marketplace/filters": "./src/marketplace/filters.ts",
     "./mcp": "./src/mcp/index.ts",
