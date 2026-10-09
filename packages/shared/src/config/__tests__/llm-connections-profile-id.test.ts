@@ -166,7 +166,10 @@ describe('getLlmConnections profile scoping', () => {
 
     const out = readConnections()
 
-    expect(out).toEqual(fixture)
+    // bun-types' deep-equality overloads take Record<string, unknown>[]; a named
+    // interface has no index signature, so the comparison goes through a plain
+    // structural view (the assertion itself is unchanged).
+    expect(out as unknown as Array<Record<string, unknown>>).toEqual(fixture as unknown as Array<Record<string, unknown>>)
     // The field must not be injected into anything it was absent from.
     expect(Object.keys(out[0]!)).not.toContain('profileId')
     expect(Object.keys(out[1]!)).not.toContain('profileId')

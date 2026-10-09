@@ -431,6 +431,12 @@ export const EXPECTED_CHANNELS: string[] = [
   'marketplace:remove',
   'marketplace:stats',
   'marketplace:update',
+  'meet:conferenceRecords',
+  'meet:participants',
+  'meet:recordings',
+  'meet:smartNotes',
+  'meet:space',
+  'meet:transcripts',
   'meetings:addManualNote',
   'meetings:approveProposal',
   'meetings:calendarBind',
@@ -1057,4 +1063,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1053
+export const EXPECTED_CHANNEL_COUNT = 1059

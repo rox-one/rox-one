@@ -31,9 +31,11 @@ mock.module('sonner', () => ({
   toast: { success: () => {}, error: () => {}, warning: () => {} },
 }))
 
-const identityConnect = mock(async () => ({}))
-const identityDisconnect = mock(async () => ({}))
-const identityRefreshStatus = mock(async () => ({}))
+// Typed with the REAL args of `window.electronAPI.*` so the call assertions below
+// read the argument the component actually passed.
+const identityConnect = mock(async (_args: { provider: string; workspaceId: string; accountLabel?: string; credentialValue?: string; connectionId?: string }) => ({}))
+const identityDisconnect = mock(async (_args: { connectionId: string }) => ({}))
+const identityRefreshStatus = mock(async (_args?: { workspaceId?: string }) => ({}))
 
 Object.assign(window, {
   electronAPI: { identityConnect, identityDisconnect, identityRefreshStatus },

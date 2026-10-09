@@ -119,7 +119,7 @@ export function resolvedCaps(statuses: CapabilityStatusInput): ResolvedCapabilit
   for (const snapshot of snapshots) {
     for (const [key, raw] of Object.entries(snapshot)) {
       keys[key] = true
-      if (raw === 'unknown' || raw === 'unsupported') continue
+      if (raw !== 'granted' && raw !== 'denied') continue // drops unknown/unsupported and narrows the type
       if (state[key] === 'denied') continue // denial is final within the resolution
       state[key] = raw
     }

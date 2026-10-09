@@ -19,9 +19,14 @@ export type CredentialInputMode = 'bearer' | 'basic' | 'header' | 'query' | 'mul
 // ============================================================
 
 /**
- * Google service types for OAuth
+ * Google service types for OAuth.
+ *
+ * This package deliberately does not depend on `@rox/shared`, so the union is
+ * mirrored here; it MUST stay in sync with `GoogleService` in
+ * `packages/shared/src/sources/types.ts` (the assignability error across the
+ * two is the alarm that they drifted — e.g. `'meet'` was added for Google Meet).
  */
-export type GoogleService = 'gmail' | 'calendar' | 'drive' | 'docs' | 'sheets' | 'youtube' | 'searchconsole';
+export type GoogleService = 'gmail' | 'calendar' | 'drive' | 'docs' | 'sheets' | 'youtube' | 'searchconsole' | 'meet';
 
 /**
  * Slack service types for OAuth
