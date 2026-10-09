@@ -52,7 +52,7 @@ export const TourPopover = forwardRef<HTMLDivElement, TourPopoverProps>(function
         collisionPadding={16}
         avoidCollisions
         sticky="always"
-        className="popover-styled z-dropdown w-80 max-w-[calc(100vw-32px)] max-h-[calc(100dvh-32px)] overflow-y-auto p-4 outline-none motion-reduce:transition-none motion-reduce:animate-none"
+        className="popover-styled z-popover w-80 max-w-[calc(100vw-32px)] max-h-[calc(100dvh-32px)] overflow-y-auto p-4 outline-none motion-reduce:transition-none motion-reduce:animate-none"
         data-product-tour-popover=""
         data-product-tour-step={step.id}
         data-product-tour-target={target.id}

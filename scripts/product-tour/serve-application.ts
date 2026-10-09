@@ -3,7 +3,8 @@ import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync, readFileSy
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { EventEmitter } from 'node:events'
-import { createServer } from 'vite'
+import { build, createServer, preview } from 'vite'
+import { applicationBuildFingerprint, requireApplicationBuildReceipt, writeApplicationBuildReceipt } from './application-build'
 import type { BrowserWindow, IpcMain } from 'electron'
 import type { Session } from '../../packages/shared/src/protocol'
 
@@ -133,7 +134,7 @@ const shellReplies: Record<string, unknown> = {
   getUpdateInfo: { status: 'up-to-date' }, getLlmConnection: null, getDefaultLlmConnection: 'rox-kimi',
   getMemorySettings: { enabled: false }, getMemoryOnboardingStatus: { completed: false },
   getSessionOptions: { permissionMode: 'allow-all' }, getEnabledModelIds: [],
-  getGamificationProfile: { xp: 0, level: 1, progress: 0, balance: null, weeklyXp: { current: 0, previous: 0 }, quests: [], questRecords: [], ratings: [], analyticsConsent: false },
+  getGamificationProfile: { xp: 0, level: 1, progress: 0, balance: null, weeklyXp: { current: 0, previous: 0 }, quests: [], questRecords: [], ratings: [], analyticsConsent: true },
 }
 const emptyReads = new Set(['getSources', 'getSkills', 'getProjects', 'getLabels', 'getStatuses', 'getSessionStatuses', 'getWorkspaceSources', 'getWorkspaceSkills', 'getWorkspaceProjects', 'getWorkspaceLabels', 'getWorkspaceSessionStatuses', 'listLlmConnections', 'listLlmConnectionsWithStatus', 'getSessionTodo', 'getFeedSources', 'listOrganizations', 'getCustomThemes', 'getAutomations', 'getMemoryEntries', 'getNavigationHistory', 'getPluginRegistry', 'getPersonalTasks', 'listLabels', 'listViews', 'getPages'])
 for (const [method, entry] of Object.entries(CHANNEL_MAP)) {

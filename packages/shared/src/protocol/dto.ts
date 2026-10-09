@@ -12,6 +12,7 @@ import type {
   ContentBadge,
   ToolDisplayMeta,
   AnnotationV1,
+  AttachmentTranscript,
   SessionMemoryMode,
   PermissionRequest as BasePermissionRequest,
 } from '@rox/core/types'
@@ -27,6 +28,14 @@ import type {
   CredentialAuthRequest as SharedCredentialAuthRequest,
 } from '../agent/index'
 import type { AgentProfileSnapshot } from '../workspace-work/types'
+import type {
+  SessionCreatedActor,
+  SessionOwnerRef,
+  SessionParticipantIdentity,
+  SessionVisibility,
+  SessionActorRef,
+  SessionTypingActor,
+} from './session-attribution'
 
 // Re-export generateMessageId for handler convenience
 export { generateMessageId } from '@rox/core/types'
@@ -169,6 +178,14 @@ export interface Session {
   taskNodeCount?: number
   /** Tasks Conductor: generate-time draft orchestrator, hidden from the board until adopted by createTask. */
   taskDraft?: boolean
+  /** Actor that created this session (profile/channel/agent provenance). */
+  creator?: SessionCreatedActor
+  /** Current owner of this session, if assigned. */
+  owner?: SessionOwnerRef
+  /** Participants with an identity binding on this session. */
+  participants?: SessionParticipantIdentity[]
+  /** Session visibility for the viewer/collaboration surface. */
+  visibility?: SessionVisibility
 }
 
 export interface CreateSessionOptions {
@@ -486,6 +503,10 @@ export type SessionEvent =
   | { type: 'message_annotations_updated'; sessionId: string; messageId: string; annotations: AnnotationV1[] }
   | { type: 'working_directory_error'; sessionId: string; error: string }
   | { type: 'messages_replaced'; sessionId: string; messages: Message[] }
+  | { type: 'session_owner_changed'; sessionId: string; owner: SessionOwnerRef | null }
+  | { type: 'session_typing'; sessionId: string; actors: SessionTypingActor[] }
+  | { type: 'session_presence'; sessionId: string; viewers: BroPresenceMemberDto[] }
+  | { type: 'session_visibility_changed'; sessionId: string; visibility: SessionVisibility }
 
 export interface SendMessageOptions {
   /** Producer telemetry only; native principals cannot supply this metadata. */
@@ -588,6 +609,11 @@ export type SessionCommand =
   | { type: 'removeAnnotation'; messageId: string; annotationId: string }
   | { type: 'updateAnnotation'; messageId: string; annotationId: string; patch: Partial<AnnotationV1> }
   | { type: 'undo' }
+  | { type: 'setTyping'; typing: boolean }
+  | { type: 'assignOwner'; owner: SessionActorRef | null }
+  | { type: 'setVisibility'; visibility: SessionVisibility }
+  | { type: 'watchSession' }
+  | { type: 'unwatchSession' }
 
 export interface UndoResult {
   success: boolean
@@ -665,6 +691,14 @@ export interface FileAttachment {
   text?: string
   size: number
   thumbnailBase64?: string
+  /** Set by the Electron app once the file is written to the session attachments folder. */
+  storedPath?: string
+  /** Converted markdown for Office files (agent reads this instead of the binary). */
+  markdownPath?: string
+  /** Speech-to-text result for audio attachments, started when the file is attached. */
+  transcript?: AttachmentTranscript
+  /** Renderer-local identity for an in-flight attachment (never persisted by the store). */
+  localId?: string
 }
 
 export interface SessionFile {
@@ -1336,12 +1370,21 @@ export interface BrowserInstanceInfo {
   partition?: string
 }
 
+/**
+ * Provenance of a delivered deep-link navigation. `browser-pane` marks a link
+ * that was triggered by the in-app Browser Pane; the renderer must not honour
+ * auto-send / permission-mode parameters from it (SEC-01).
+ */
+export type DeepLinkSource = 'app' | 'os' | 'browser-pane'
+
 export interface DeepLinkNavigation {
   view?: string
   tabType?: string
   tabParams?: Record<string, string>
   action?: string
   actionParams?: Record<string, string>
+  /** See {@link DeepLinkSource}. */
+  source?: DeepLinkSource
 }
 
 // ---------------------------------------------------------------------------

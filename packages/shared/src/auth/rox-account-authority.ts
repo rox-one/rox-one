@@ -11,6 +11,8 @@ export interface RoxExecutionContext { readonly caller: Readonly<RoxCloudOwner>;
 export interface PocketAccountRecord {
   accountId: string; authGeneration: string; accessToken: string; refreshToken: string; expiresAt: number
   refreshId?: string; snapshot?: RoxAccountSnapshot; credential?: RoxInferenceCredential
+  /** When the persisted snapshot was last confirmed with the broker. */
+  lastSyncedAt?: number
 }
 export interface PocketBinding { caller: RoxCloudOwner; accountId: string; authGeneration?: string }
 export type PocketLogoutRecord = Pick<PocketAccountRecord, 'accountId' | 'accessToken' | 'refreshToken' | 'refreshId'>
@@ -30,6 +32,11 @@ export interface PocketClient {
 }
 const defaultClient: PocketClient = { start: startPocketDeviceFlow, wait: waitForPocketApproval, refresh: refreshPocketSession, logout: logoutPocketSession, account: fetchPocketAccount, credential: fetchPocketCredential }
 const callerKey = (caller: RoxCloudOwner) => JSON.stringify([caller.issuer, caller.subject])
+// Errors that mean the broker rejected this grant, not that it was unreachable.
+// Everything else (offline, timeout, 5xx) keeps the last confirmed snapshot.
+const FATAL_ACCOUNT_ERRORS: Record<string, true> = {
+  ROX_AUTH_EXPIRED: true, DEVICE_CODE_EXPIRED: true, ROX_CONNECT_DENIED: true, ROX_ACCOUNT_CHANGED: true,
+}
 
 export class RoxAccountAuthority {
   private records = new Map<string, PocketAccountRecord | null>()
@@ -131,22 +138,35 @@ export class RoxAccountAuthority {
   private current(caller: RoxCloudOwner, record: PocketAccountRecord) {
     if (this.generations.get(callerKey(caller)) !== record.authGeneration) throw new Error('ROX_ACCOUNT_CHANGED')
   }
+  /** Rotate the access proof. The durable refresh id survives a dropped response. */
+  private async refreshRecord(caller: RoxCloudOwner, record: PocketAccountRecord): Promise<PocketAccountRecord> {
+    record.refreshId ??= randomUUID()
+    await this.store.write(caller, record) // persisted proof survives dropped refresh response / process restart
+    this.current(caller, record)
+    const approved = await this.client.refresh(record.refreshToken, record.refreshId)
+    this.current(caller, record)
+    if (approved.user.id !== record.accountId) throw new Error('ROX_AUTH_INVALID_RESPONSE')
+    registerSecretValues([approved.accessToken, approved.refreshToken])
+    const next = { ...record, accessToken: approved.accessToken, refreshToken: approved.refreshToken, expiresAt: Date.now() + approved.expiresIn * 1000, refreshId: undefined }
+    await this.store.write(caller, next)
+    this.current(caller, next)
+    this.records.set(callerKey(caller), next)
+    return next
+  }
   private async update(caller: RoxCloudOwner, record: PocketAccountRecord, bootstrap: boolean) {
     this.current(caller, record)
-    if (record.expiresAt <= Date.now() + 30_000) {
-      record.refreshId ??= randomUUID()
-      await this.store.write(caller, record) // persisted proof survives dropped refresh response / process restart
-      this.current(caller, record)
-      const approved = await this.client.refresh(record.refreshToken, record.refreshId)
-      this.current(caller, record)
-      if (approved.user.id !== record.accountId) throw new Error('ROX_AUTH_INVALID_RESPONSE')
-      registerSecretValues([approved.accessToken, approved.refreshToken])
-      record = { ...record, accessToken: approved.accessToken, refreshToken: approved.refreshToken, expiresAt: Date.now() + approved.expiresIn * 1000, refreshId: undefined }
-      await this.store.write(caller, record)
-      this.current(caller, record)
-      this.records.set(callerKey(caller), record)
+    if (record.expiresAt <= Date.now() + 30_000) record = await this.refreshRecord(caller, record)
+    let snapshot: RoxAccountSnapshot
+    try {
+      snapshot = await this.client.account(record.accessToken, bootstrap)
+    } catch (reason) {
+      // A broker that rejects a proof before its stated expiry (rotation or
+      // clock skew) gets one silent refresh, then a single retry. Anything else
+      // — including a second rejection — stays an error the caller can classify.
+      if (!(reason instanceof Error) || reason.message !== 'ROX_AUTH_EXPIRED') throw reason
+      record = await this.refreshRecord(caller, record)
+      snapshot = await this.client.account(record.accessToken, bootstrap)
     }
-    const snapshot = await this.client.account(record.accessToken, bootstrap)
     this.current(caller, record)
     if (snapshot.user.id !== record.accountId) throw new Error('ROX_AUTH_INVALID_RESPONSE')
     let credential: RoxInferenceCredential | undefined
@@ -157,7 +177,7 @@ export class RoxAccountAuthority {
       this.invalidate(caller)
       record = { ...record, authGeneration: this.generations.get(callerKey(caller))! }
     }
-    const next = { ...record, snapshot, credential }
+    const next = { ...record, snapshot, credential, lastSyncedAt: Date.now() }
     await this.store.write(caller, next)
     this.current(caller, record)
     this.records.set(callerKey(caller), next)
@@ -172,10 +192,22 @@ export class RoxAccountAuthority {
         record = await this.record(caller)
         if (record) record = await this.update(caller, record, !record.snapshot || record.snapshot.state !== 'ready')
       }
-      catch (reason) { error = reason instanceof Error ? reason.message : 'ROX_AUTH_REQUEST_FAILED' }
-      return { required: isRoxCloudRequired(), connected: !error && record?.snapshot?.state === 'ready' && !!record.credential, authBaseUrl: getRoxAuthBaseUrl(),
-        user: record?.snapshot ? { id: record.accountId, email: record.snapshot.user.email, name: record.snapshot.user.name ?? '' } : null,
-        account: error ? null : record?.snapshot ?? null, ...this.flow(caller).state, ...(error ? { connectError: error } : {}) }
+      catch (reason) {
+        error = reason instanceof Error ? reason.message : 'ROX_AUTH_REQUEST_FAILED'
+        // Re-read: a refresh may have rotated the proof before the account read
+        // failed, and the cached snapshot is still the last confirmed truth.
+        record = await this.record(caller)
+      }
+      const snapshot = record?.snapshot ?? null
+      const ready = snapshot?.state === 'ready' && !!record?.credential
+      // A transient outage keeps the account connected on its last snapshot;
+      // only an explicit brokerage rejection drops it.
+      const offline = !!error && ready && !FATAL_ACCOUNT_ERRORS[error]
+      const account = error && !offline ? null : snapshot
+      return { required: isRoxCloudRequired(), connected: error ? offline : ready, updating: offline,
+        lastSyncedAt: record?.lastSyncedAt ?? null, authBaseUrl: getRoxAuthBaseUrl(),
+        user: account ? { id: record!.accountId, email: account.user.email, name: account.user.name ?? '' } : null,
+        account, ...this.flow(caller).state, ...(error ? { connectError: error } : {}) }
     })
   }
   async bind(resource: string, context: RoxExecutionContext): Promise<void> {
@@ -211,6 +243,19 @@ export class RoxAccountAuthority {
     if (!record) throw new Error('ROX_ACCOUNT_NOT_READY')
     this.current(caller, record)
     return Object.freeze({ caller: Object.freeze({ ...caller }), cloudAccountId: record.accountId, authGeneration: record.authGeneration })
+  }
+  /**
+   * Fresh Rox access token for host-owned cloud calls (e.g. mail
+   * provisioning). Refreshes when near expiry like `capture`/`state`, so the
+   * caller never needs to know about token lifetimes. Never logged.
+   */
+  async accessToken(caller: RoxCloudOwner): Promise<string> {
+    const state = await this.state(caller)
+    if (!state.connected) throw new Error(state.connectError || 'ROX_ACCOUNT_NOT_READY')
+    const record = await this.record(caller)
+    if (!record) throw new Error('ROX_ACCOUNT_NOT_READY')
+    this.current(caller, record)
+    return record.accessToken
   }
   assertCurrent(context: RoxExecutionContext): void {
     const record = this.records.get(callerKey(context.caller))

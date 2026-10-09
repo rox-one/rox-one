@@ -24,7 +24,7 @@ import { join } from 'node:path'
 import ts from 'typescript'
 import type { NoteDocument, NoteSummary } from '../../../shared/types'
 import { createRoxQueryClient, resetRoxQueryClientForTests, roxQueryClient } from '../../lib/query/client'
-import { cachedNotesList, fetchNotesList, notesTaskCache, subscribeCachedNotesList } from '../../lib/query/notes-cache'
+import { cachedNotesList, ensureNotesTaskCache, fetchNotesList, subscribeCachedNotesList } from '../../lib/query/notes-cache'
 import { roxKeys } from '../../lib/query/keys'
 import { capabilityErrorCode, readScopedCapability } from '../../lib/scoped-capability-read'
 
@@ -62,7 +62,7 @@ const executable = ts.transpileModule(
   + callback('refreshNotes') + callback('refreshTasks') + '\n'
   + effectCallback('resetEffect', 'useLayoutEffect', '[activeWorkspaceId]', 'cachedNotesList(activeWorkspaceId)') + '\n'
   + effectCallback('syncClaimEffect', 'useEffect', '[notes]') + '\n'
-  + effectCallback('attachCacheEffect', 'useLayoutEffect', '[]', 'notesTaskCache<NoteTask>') + '\n'
+  + effectCallback('attachCacheEffect', 'useLayoutEffect', '[]', 'ensureNotesTaskCache<NoteTask>') + '\n'
   + 'return { refreshNotes, refreshTasks, resetEffect, syncClaimEffect, attachCacheEffect };',
   { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText
 
@@ -183,7 +183,7 @@ function fixture(options: { cachedTasks?: NoteTask[] } = {}): TaskReadFixture {
       },
       setSidebarOrder: () => {},
       notes: notesList,
-      notesTaskCache,
+      ensureNotesTaskCache,
       setAllTasks: (tasks: NoteTask[]) => { state.allTasks.push(tasks) },
     }
     const compiled = new Function(...Object.keys(bindings), executable) as unknown as (...values: unknown[]) => TaskReadView
@@ -192,7 +192,7 @@ function fixture(options: { cachedTasks?: NoteTask[] } = {}): TaskReadFixture {
   // The mount layout effect attaches this workspace's shared task cache (and,
   // on a warm cache, hands its tasks to the page before any pass).
   if (options.cachedTasks) {
-    const cache = notesTaskCache<NoteTask>('ws')
+    const cache = ensureNotesTaskCache<NoteTask>('ws')
     for (const task of options.cachedTasks) {
       cache.tasks.set(task.noteId, [task])
       cache.updatedAt.set(task.noteId, 0)
@@ -353,19 +353,19 @@ describe('PERF-09 round 4: a task pass never mixes workspaces', () => {
     expect([...view.readCount]).toEqual([['n1', 1], ['n2', 1], ['n3', 1]])
     view.resolveReads({ n1: 100, n2: 200, n3: 300 })
     await settle()
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     // Switch to a workspace with no cached slice while the old list is held.
     const b = view.switchTo('ws-b')
     await settle()
     // The held list belongs to the retired workspace: no read is issued for it.
     expect(view.workspacesRead()).toEqual(['ws', 'ws', 'ws'])
-    expect(notesTaskCache<NoteTask>('ws-b').tasks.size).toBe(0)
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws-b').tasks.size).toBe(0)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     // The new workspace's own listing then feeds its cache, and only it.
     await b.refreshTasks(documents({ n1: 100 }))
     expect(view.workspacesRead()).toEqual(['ws', 'ws', 'ws'])
-    expect(notesTaskCache<NoteTask>('ws-b').tasks.size).toBe(1)
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws-b').tasks.size).toBe(1)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     expect(taskTexts()).toEqual(['alpha'])
   })
 
@@ -374,10 +374,10 @@ describe('PERF-09 round 4: a task pass never mixes workspaces', () => {
     view.listing.resolve(documents({ n1: 100, n2: 200, n3: 300 }))
     await mounted
     await settle()
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     // The new workspace has a warm cache of its own (a different note).
     view.hydrate([summary('m1', 500)], 'ws-b')
-    const warm = notesTaskCache<NoteTask>('ws-b')
+    const warm = ensureNotesTaskCache<NoteTask>('ws-b')
     warm.tasks.set('m1', [{ noteId: 'm1', noteTitle: 'm1', line: 1, text: 'delta', checked: false }])
     warm.updatedAt.set('m1', 500)
     // The state now carries whole documents (principal mode); the pass the
@@ -386,9 +386,9 @@ describe('PERF-09 round 4: a task pass never mixes workspaces', () => {
     view.switchTo('ws-b')
     await settle()
     expect(view.workspacesRead()).toEqual([])
-    expect([...notesTaskCache<NoteTask>('ws-b').tasks.keys()]).toEqual(['m1'])
-    expect(notesTaskCache<NoteTask>('ws-b').updatedAt.size).toBe(1)
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect([...ensureNotesTaskCache<NoteTask>('ws-b').tasks.keys()]).toEqual(['m1'])
+    expect(ensureNotesTaskCache<NoteTask>('ws-b').updatedAt.size).toBe(1)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     expect(taskTexts()).toEqual(['delta'])
   })
 
@@ -397,20 +397,20 @@ describe('PERF-09 round 4: a task pass never mixes workspaces', () => {
     view.listing.resolve(documents({ n1: 100, n2: 200, n3: 300 }))
     await mounted
     await settle()
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     // Leave for a workspace with no cached slice, then come back to a warm one.
     view.hydrate([], 'ws-b')
     view.switchTo('ws-b')
     await settle()
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     view.hydrate([summary('n1', 100), summary('n2', 200), summary('n3', 300)], 'ws')
     view.switchTo('ws')
     // The eviction a pass performs is synchronous: a pass over ws-b's held
     // slice must be dropped, not treated as a census of ws.
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     await settle()
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
-    expect(notesTaskCache<NoteTask>('ws-b').tasks.size).toBe(0)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws-b').tasks.size).toBe(0)
     expect(view.workspacesRead()).toEqual([])
   })
 
@@ -428,8 +428,8 @@ describe('PERF-09 round 4: a task pass never mixes workspaces', () => {
     expect([...view.readCount]).toEqual([['n1', 1], ['n2', 1], ['n3', 1]])
     view.resolveReads({ n1: 100, n2: 200, n3: 300 })
     await settle()
-    expect(notesTaskCache<NoteTask>('ws-b').tasks.size).toBe(3)
-    expect(notesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws-b').tasks.size).toBe(3)
+    expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     expect(taskTexts().sort()).toEqual(['alpha', 'beta', 'gamma'])
   })
 })

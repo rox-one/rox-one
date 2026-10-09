@@ -67,11 +67,11 @@ export function AnnotationIslandMenu({
   const [activeViewSize, setActiveViewSize] = React.useState<{ width: number; height: number } | null>(null)
 
   // Keep blocker behind the island menu when consumers pass a custom numeric zIndex
-  // (for example TurnCard uses zIndex=50). Otherwise fall back to the semantic island token.
+  // (for example TurnCard uses zIndex=50). Otherwise use the menu-backdrop step just below the island.
   const resolvedOverlayZIndex = React.useMemo<React.CSSProperties['zIndex']>(() => {
     if (overlayZIndex != null) return overlayZIndex
     if (typeof zIndex === 'number') return zIndex - 1
-    return 'var(--z-island-overlay, 390)'
+    return 'var(--z-menu-backdrop, 390)'
   }, [overlayZIndex, zIndex])
 
   const anchorX = React.useMemo(() => {
@@ -100,7 +100,7 @@ export function AnnotationIslandMenu({
         key={sourceKey}
         activeViewId={activeView}
         radius="var(--radius-overlay)"
-        className="border-border/40 bg-background/75 backdrop-blur-xl backdrop-saturate-150 shadow-strong"
+        className="border-border/40 bg-[rgb(from_var(--paper)_r_g_b_/_1)] shadow-strong"
         onActiveViewSizeChange={setActiveViewSize}
         isVisible={isVisible}
         onExitComplete={onExitComplete}

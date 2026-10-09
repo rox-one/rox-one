@@ -635,7 +635,7 @@ describe.skipIf(process.env.ROX_WP01_PRODUCT_E2E !== '1')('WP01 genuine Electron
           // insertText operation commits the active candidate, never a mock.
           if (!composingEvents.some(event=>event.type==='compositionend')) await session.send('Input.insertText',{text:name})
           await until(async()=>await nameInput.inputValue()===name,'committed exact native IME name')
-          // Electron 39 / Chromium 142 dispatches its native queued compositionend
+          // Electron 39 / Chromium 142 (pre-44) dispatches its native queued compositionend
           // with isTrusted=false even in a bare HTML input. Require the ordered
           // genuine IME trace and a trusted non-composing key after the end.
           await nameInput.press('ArrowRight')

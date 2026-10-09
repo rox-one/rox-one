@@ -9,6 +9,7 @@ import { SiyuanKernelClient } from '@rox/core/knowledge/providers/siyuan'
 import {
   HANDLED_CHANNELS,
   loadBazaarRemoteManifests,
+  loadPluginBridgeManifests,
   pluginBridgeBazaarCatalogListFn,
   pluginBridgeBazaarListFn,
   registerPluginBridgeHandlers,
@@ -75,6 +76,8 @@ describe('pluginBridge handlers', () => {
   let configDir: string
   let prevConfig: string | undefined
   let prevConfPaths: string | undefined
+  let prevFixtureJson: string | undefined
+  let fixturePath: string | undefined
   let dataDir: string | undefined
 
   beforeEach(() => {
@@ -84,6 +87,8 @@ describe('pluginBridge handlers', () => {
     // Isolate conf-token fallback from the developer's real SiYuan conf.
     prevConfPaths = process.env.CRAFT_SIYUAN_CONF_PATHS
     process.env.CRAFT_SIYUAN_CONF_PATHS = join(configDir, 'no-such-conf.json')
+    prevFixtureJson = process.env.CRAFT_SIYUAN_PLUGIN_FIXTURE_JSON
+    fixturePath = undefined
     resetExtensionStateStoreCache()
     resetPluginBridgeFixture()
     __setPluginBridgeKernelClientForTests(null) // force no auto kernel
@@ -99,6 +104,12 @@ describe('pluginBridge handlers', () => {
     else process.env.CRAFT_CONFIG_DIR = prevConfig
     if (prevConfPaths === undefined) delete process.env.CRAFT_SIYUAN_CONF_PATHS
     else process.env.CRAFT_SIYUAN_CONF_PATHS = prevConfPaths
+    if (prevFixtureJson === undefined) delete process.env.CRAFT_SIYUAN_PLUGIN_FIXTURE_JSON
+    else process.env.CRAFT_SIYUAN_PLUGIN_FIXTURE_JSON = prevFixtureJson
+    if (fixturePath) {
+      rmSync(fixturePath, { force: true })
+      fixturePath = undefined
+    }
     rmSync(configDir, { recursive: true, force: true })
     if (dataDir) {
       rmSync(dataDir, { recursive: true, force: true })
@@ -138,6 +149,26 @@ describe('pluginBridge handlers', () => {
     expect(result.plugins).toEqual([])
     expect(result.residual).toBeTruthy()
     expect(result.fixture).toBeUndefined()
+  })
+
+  it('LIST_PLUGINS ignores the removed CRAFT_SIYUAN_PLUGIN_FIXTURE_JSON env seam (SEC-04)', async () => {
+    // Baseline with the env unset: no fixture/fs/kernel → empty feed.
+    const before = await loadPluginBridgeManifests()
+
+    fixturePath = join(configDir, 'plugin-fixture.json')
+    writeFileSync(
+      fixturePath,
+      JSON.stringify([{ name: 'env-plugin', version: '9.9.9', craft: { level: 2 } }]),
+      'utf8',
+    )
+    process.env.CRAFT_SIYUAN_PLUGIN_FIXTURE_JSON = fixturePath
+
+    const after = await loadPluginBridgeManifests()
+    // Production entry points must ignore the env fixture file entirely.
+    expect(after).toEqual(before)
+    expect(after.fixture).toBe(false)
+    expect(after.manifests.some((m) => m.name === 'env-plugin')).toBe(false)
+    expect(pluginBridgeBazaarListFn()).toEqual([])
   })
 
   it('LIST_PLUGINS returns fixture manifests', async () => {

@@ -1,6 +1,3 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+// Single cn() for the whole app: re-use the @rox/ui helper so both packages
+// share one tailwind-merge config that knows the Rox z-layer and type tokens.
+export { cn } from "@rox/ui/lib/utils"

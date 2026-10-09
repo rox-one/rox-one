@@ -46,14 +46,18 @@ async function identityHints(): Promise<{ ownerUuid?: string | null; handles: Ar
   try {
     const cloud = (await getRoxAccountAuthority().state(LOCAL_ROX_CALLER)).account?.user
     if (cloud?.id) ownerUuid = cloud.id
-    if (cloud?.email) handles.push(cloud.email)
+    // The displayed name is the primary, deterministic source of the mailbox
+    // handle (normalised/transliterated by the shared mail helpers); addresses
+    // only serve as a fallback so a fresh profile gets a stable @rox.one name
+    // without any env override.
     if (cloud?.name) handles.push(cloud.name)
+    if (cloud?.email) handles.push(cloud.email)
   } catch { /* not connected to rox.one */ }
   try {
     const { getIdentityStore } = await import('@rox/core/platform/identity/store')
     const profile = getIdentityStore(CONFIG_DIR).getState().profile as { displayName?: string; email?: string }
-    if (profile?.email) handles.splice(ownerUuid ? 1 : 0, 0, profile.email)
     if (profile?.displayName) handles.push(profile.displayName)
+    if (profile?.email) handles.push(profile.email)
   } catch { /* profile optional */ }
   return { ownerUuid, handles }
 }
@@ -67,6 +71,15 @@ async function senderName(): Promise<string | null> {
     const { getIdentityStore } = await import('@rox/core/platform/identity/store')
     const profile = getIdentityStore(CONFIG_DIR).getState().profile as { displayName?: string }
     return profile?.displayName || null
+  } catch {
+    return null
+  }
+}
+
+/** Rox account access token for the remote mail provisioning service. */
+async function roxAccessToken(): Promise<string | null> {
+  try {
+    return await getRoxAccountAuthority().accessToken(LOCAL_ROX_CALLER)
   } catch {
     return null
   }
@@ -89,13 +102,19 @@ const MIME: Record<string, string> = {
   '.ics': 'text/calendar', '.html': 'text/html',
 }
 
-export function registerMailIpc(log?: (message: string, error?: unknown) => void): MailService {
+export interface MailIpcDeps {
+  /** Only managed app windows may drive the mailbox bridge (evaluated per call). */
+  isTrustedSender?(event: Electron.IpcMainInvokeEvent): boolean
+}
+
+export function registerMailIpc(log?: (message: string, error?: unknown) => void, deps: MailIpcDeps = {}): MailService {
   if (service) return service
   const s = new MailService({
     configDir: CONFIG_DIR,
     secrets: credentialManagerSecrets(),
     identity: identityHints,
     senderName,
+    roxAccessToken,
     emit: broadcast,
     log,
     deviceLabel: `rox-desktop:${process.platform}:${app.getName()}`,
@@ -104,7 +123,11 @@ export function registerMailIpc(log?: (message: string, error?: unknown) => void
 
   const handle = (channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown) => {
     ipcMain.removeHandler(channel)
-    ipcMain.handle(channel, fn)
+    // One guard for every mail channel: the mailbox credential never leaves main.
+    ipcMain.handle(channel, (event, ...args) => {
+      if (deps.isTrustedSender && !deps.isTrustedSender(event)) throw new Error('IPC_SENDER_DENIED')
+      return fn(event, ...args)
+    })
   }
   const wrap = <T>(fn: () => Promise<T>) => fn().then((value) => ({ ok: true as const, value }), errorResult)
 

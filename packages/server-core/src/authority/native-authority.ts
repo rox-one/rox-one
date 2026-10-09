@@ -3,7 +3,6 @@ import { closeSync, lstatSync, mkdirSync, openSync, realpathSync, statSync } fro
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@rox/core/platform/identity/types'
-import { requireOsOwner } from './native-os-owner'
 import { requireOsPrivatePaths, secureOsPrivatePaths, VerifiedPrivateFileGuard } from './os-private-path.ts'
 
 export const NATIVE_AUTHORITY_ACTIONS = ['read', 'write', 'delete', 'subscribe', 'manage'] as const
@@ -121,9 +120,10 @@ export class NativeAuthority {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
       mkdirSync(supplied, { recursive: true, mode: 0o700 })
     }
+    // The single Windows batch probe verifies the OS owner and secures the
+    // directory in one subprocess; a separate owner-only probe is not launched.
     secureOsPrivatePaths([{ path: supplied, kind: 'directory' }])
     this.#stateDir = realpathSync(supplied)
-    requireOsOwner(this.#stateDir)
     const databasePath = join(this.#stateDir, 'authority.sqlite')
     try {
       const databaseFile = openSync(databasePath, 'wx', 0o600)
@@ -134,7 +134,7 @@ export class NativeAuthority {
       if (existingDatabase.isSymbolicLink() || !existingDatabase.isFile() || existingDatabase.nlink !== 1) {
         throw new Error('authority database must be an OS-owner private regular file')
       }
-      try { requireOsOwner(databasePath) }
+      try { requireOsPrivatePaths([{ path: databasePath, kind: 'file' }]) }
       catch { throw new Error('authority database must be an OS-owner private regular file') }
     }
     // Existing sidecars must also be owner-held/private before SQLite opens.
@@ -220,8 +220,7 @@ export class NativeAuthority {
 
   bootstrapLocalAdministrator(label: string): NativeIssuedCredential {
     this.#assertOpen()
-    requireOsOwner(this.#stateDir)
-    if (process.platform === 'win32') requireOsPrivatePaths(this.#databasePaths())
+    requireOsPrivatePaths([{ path: this.#stateDir, kind: 'directory' }, ...this.#databasePaths()])
     if (!process.stdin.isTTY) throw new Error('administrator bootstrap requires an interactive host-local maintenance terminal')
     const labelValue = validLabel(label)
     this.#db.exec('BEGIN IMMEDIATE')
@@ -239,8 +238,7 @@ export class NativeAuthority {
   }
   recoverLocalAdministrator(deviceLabel: string): NativeIssuedCredential {
     this.#assertOpen()
-    requireOsOwner(this.#stateDir)
-    if (process.platform === 'win32') requireOsPrivatePaths(this.#databasePaths())
+    requireOsPrivatePaths([{ path: this.#stateDir, kind: 'directory' }, ...this.#databasePaths()])
     if (!process.stdin.isTTY) throw new Error('administrator recovery requires an interactive host-local maintenance terminal')
     const label = validLabel(deviceLabel)
     const admin = this.#db.prepare("SELECT id FROM subjects WHERE role='admin' ORDER BY created_at LIMIT 1").get() as

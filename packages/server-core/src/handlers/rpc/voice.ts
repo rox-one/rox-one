@@ -19,8 +19,9 @@ import {
   LOCAL_MODEL_FAMILIES,
   ROCKS_T1_MODEL_ID,
   DeepgramTranscriptionAdapter,
-  DEEPGRAM_TRANSCRIPTION_MODEL,
   DEEPGRAM_TRANSCRIPTION_NAME,
+  deepgramTranscriptionOptions,
+  resolveDeepgramModel,
   VoiceHost,
   assertEditableTranscript,
   buildVoiceHealth,
@@ -77,6 +78,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.voice.CANCEL,
   RPC_CHANNELS.voice.GRANT,
   RPC_CHANNELS.voice.CHUNK,
+  RPC_CHANNELS.voice.LEVEL,
   RPC_CHANNELS.voice.HISTORY_LIST,
   RPC_CHANNELS.voice.HISTORY_GET,
   RPC_CHANNELS.voice.HISTORY_FAVORITE,
@@ -138,7 +140,8 @@ function voiceHttp() {
 
 function cloudAdapter(): TranscribeAdapter {
   const adapter = new DeepgramTranscriptionAdapter({
-    apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '', model: process.env.DEEPGRAM_MODEL,
+    apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '',
+    ...deepgramTranscriptionOptions(process.env),
   })
   return {
     engine: 'cloud-rox',
@@ -264,7 +267,7 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     host.on(event => {
       try { state.assertCurrent() } catch { return }
       const target = { to: 'client' as const, clientId: state.context.clientId }
-      pushTyped(server, RPC_CHANNELS.voice.JOB, target, event.job)
+      if (event.type !== 'overlay') pushTyped(server, RPC_CHANNELS.voice.JOB, target, event.job)
       pushTyped(server, RPC_CHANNELS.voice.OVERLAY, target, event.overlay)
       try {
         deps.voiceOverlay?.publish({ context: state.context, state: event.overlay, position: readPrefs(state.context).overlayPosition, assertCurrent: state.assertCurrent })
@@ -273,13 +276,23 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     state.host = host
     return host
   }
-  const transcribe = async (context: RequestContext, audio: Uint8Array, mimeType: string, language?: string) => {
+  // A user-attached chat file is an explicit one-shot transcription request.
+  // When the deployment has a Deepgram key configured (server service config /
+  // DEEPGRAM_API_KEY, never hardcoded), that explicit attach is the
+  // authorization for the upload, so the dictation consent dialog is skipped
+  // for this request only — the persisted preferences are left untouched.
+  const attachedFilePrefs = (prefs: VoicePrefs, attachedFile: boolean): VoicePrefs =>
+    attachedFile && prefs.sttEngine === 'cloud-rox'
+      && (getServerServiceKey('DEEPGRAM_API_KEY') || options.cloudTranscriber)
+      ? { ...prefs, cloudAsrConsent: true, privacyMigrationPending: false }
+      : prefs
+  const transcribe = async (context: RequestContext, audio: Uint8Array, mimeType: string, language?: string, attachedFile = false) => {
     const state = getState(context)
     const controller = new AbortController()
     const assertOperation = voiceRequestFence(server, authority, context, 'write')
     const timeout = setTimeout(() => controller.abort(new Error('Voice transcription timed out')), 240_000)
     state.transcriptions.add(controller)
-    const prefs = readPrefs(context)
+    const prefs = attachedFilePrefs(readPrefs(context), attachedFile)
     try {
       const result = await transcribeWithPolicy(prefs, { audio, mimeType, language: language ??
         (prefs.recognitionLanguage === 'auto' ? undefined : prefs.recognitionLanguage), signal: controller.signal }, {
@@ -333,7 +346,7 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
       CRAFT_VOICE_LOCAL_FIXTURE: process.env.CRAFT_VOICE_LOCAL_FIXTURE,
     })
     return getServerServiceKey('DEEPGRAM_API_KEY') || options.cloudTranscriber ? {
-      ...health, asrModelId: process.env.DEEPGRAM_MODEL || DEEPGRAM_TRANSCRIPTION_MODEL, asrBrand: DEEPGRAM_TRANSCRIPTION_NAME,
+      ...health, asrModelId: resolveDeepgramModel(process.env), asrBrand: DEEPGRAM_TRANSCRIPTION_NAME,
     } : health
   }, readOptions)
   handle(RPC_CHANNELS.voice.BOOTSTRAP, async context => {
@@ -344,13 +357,19 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
   }, readOptions)
   handle(RPC_CHANNELS.voice.CAPABILITIES, async context => {
     directory(context)
-    return { ...LAST_KNOWN_GOOD_CAPABILITIES, modelId: process.env.DEEPGRAM_MODEL || DEEPGRAM_TRANSCRIPTION_MODEL,
+    return { ...LAST_KNOWN_GOOD_CAPABILITIES, modelId: resolveDeepgramModel(process.env),
       displayName: DEEPGRAM_TRANSCRIPTION_NAME, availability: getServerServiceKey('DEEPGRAM_API_KEY') || options.cloudTranscriber ? 'ok' : 'unavailable',
       languages: [], languageCount: 0, show74Badge: false, timestampGranularities: ['segment', 'word'], maxBytes: MAX_AUDIO_BYTES }
   }, readOptions)
   handle(RPC_CHANNELS.voice.TRANSCRIBE, async (context, payload: unknown) => {
     const body = bodyOf(payload)
-    return transcribe(context, decodeAudio(body.audioBase64), audioMime(body.mimeType), typeof body.language === 'string' ? body.language : undefined)
+    return transcribe(
+      context,
+      decodeAudio(body.audioBase64),
+      audioMime(body.mimeType),
+      typeof body.language === 'string' ? body.language : undefined,
+      body.attachedFile === true,
+    )
   }, transcriptionOptions)
 
   handle(RPC_CHANNELS.voice.SPEAK, async (context, payload: unknown) => {
@@ -432,6 +451,14 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     if (state.captureBytes + bytes.byteLength > MAX_AUDIO_BYTES) { cancel(state); throw new Error('Recording exceeds the audio limit') }
     getHost(context).chunk(bytes); state.captureBytes += bytes.byteLength
     secureNativeVoiceDirectory(state.directory, context)
+    return { ok: true }
+  }, writeOptions)
+  // Transient capture level for the mini overlay. It never creates a host or a
+  // persistent client state: a level ping without an active recording is dropped.
+  handle(RPC_CHANNELS.voice.LEVEL, async (context, payload: unknown) => {
+    const level = bodyOf(payload).level
+    states.get(context.clientId ?? 'legacy-direct-test')?.host
+      ?.level(typeof level === 'number' && Number.isFinite(level) ? level : 0)
     return { ok: true }
   }, writeOptions)
   handle(RPC_CHANNELS.voice.STOP, async context => {

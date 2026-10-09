@@ -57,10 +57,14 @@ async function fixtureBundle() {
     import { runtimeCatalogCapabilities, runtimeCatalogScope } from './apps/electron/src/renderer/lib/runtime-catalog-capabilities';
     import * as guards from './apps/electron/src/shared/types';
     import { resolveRouteNavigationState as parseRouteToNavigationState, buildRouteFromNavigationState } from './apps/electron/src/shared/route-parser';
+    import { panelRouteKey } from './apps/electron/src/renderer/components/app-shell/panel-route-key';
+    import { endRouteSwitch } from './apps/electron/src/renderer/lib/startup-perf';
+    import { Button } from './apps/electron/src/renderer/components/ui/button';
+    import { EntityListEmptyScreen } from './apps/electron/src/renderer/components/ui/entity-list-empty';
     import { inspectorPanelWidthAtom, bottomTerminalOpenAtom } from './apps/electron/src/renderer/atoms/unified-shell';
     import CloudRunSurfacePage from './apps/electron/src/renderer/pages/CloudRunSurfacePage';
     import TerminalSurfacePage from './apps/electron/src/renderer/pages/TerminalSurfacePage';
-    const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation,
+    const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation, isSurfaceNavigation,
       isLearningNavigation,
       isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isNotesNavigation,
       isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isKnowledgeNavigation,
@@ -114,6 +118,9 @@ async function fixtureBundle() {
       KnowledgeHome = () => null, KnowledgeProposals = () => null;
     const getSettingsPageComponent = () => Pass, recordRecentSetting = () => {};
     const ChatPage = props => React.createElement('div', {'data-fixture-session':props.sessionId, 'data-fixture-chat':props.sessionId}, 'Session '+props.sessionId);
+    const Suspense = React.Suspense, MessageSquarePlus = () => null,
+      SurfaceHost = () => null, SkillsCatalogPage = () => null,
+      IntegrationsCatalogPage = () => null, AgentsWorkspacePage = () => null;
     ${dispatcher}
     const ExtensionSurfacePage = lazyRoutePage(async () => {
       lazyAttempts++;

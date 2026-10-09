@@ -23,6 +23,12 @@ export {
   ShikiThemeProvider,
   useShikiTheme,
   type ShikiThemeProviderProps,
+  OverlayPortalContainerProvider,
+  OverlayPortalRoot,
+  useOverlayPortalContainer,
+  useOverlayPortalTarget,
+  type OverlayPortalContainerProviderProps,
+  type OverlayPortalRootProps,
 } from './context'
 
 // Chat components
@@ -32,6 +38,8 @@ export {
   TurnCardActionsMenu,
   ResponseCard,
   UserMessageBubble,
+  AudioTranscriptActionsProvider,
+  AudioTranscriptActionsContext,
   MessageReactionActorProvider,
   useMessageReactionActor,
   SystemMessage,
@@ -54,6 +62,9 @@ export {
   type TurnCardActionsMenuProps,
   type ResponseCardProps,
   type UserMessageBubbleProps,
+  type AudioTranscriptActions,
+  type AudioTranscriptRetry,
+  type AudioTranscriptContext,
   type SystemMessageProps,
   type SystemMessageType,
   type FileTypeIconProps,

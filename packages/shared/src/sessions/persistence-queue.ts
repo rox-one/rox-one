@@ -1,4 +1,5 @@
 import { writeFile } from 'fs/promises'
+import { randomBytes } from 'node:crypto'
 import { dirname } from 'path'
 import type { StoredSession, SessionHeader } from './types.js'
 import { getSessionFilePath, ensureSessionsDir, ensureSessionDir } from './storage.js'
@@ -24,6 +25,9 @@ interface HeaderMetadataSignature {
   permissionMode?: string
   hasUnread?: boolean
   lastReadMessageId?: string
+  owner?: unknown
+  participants?: unknown
+  visibility?: string
 }
 
 function getHeaderMetadataSignature(header: SessionHeader): string {
@@ -37,6 +41,9 @@ function getHeaderMetadataSignature(header: SessionHeader): string {
     permissionMode: header.permissionMode,
     hasUnread: header.hasUnread,
     lastReadMessageId: header.lastReadMessageId,
+    owner: header.owner,
+    participants: header.participants,
+    visibility: header.visibility,
   }
   return JSON.stringify(signature)
 }
@@ -53,6 +60,9 @@ function mergeHeaderWithExternalMetadata(localHeader: SessionHeader, diskHeader:
     permissionMode: diskHeader.permissionMode,
     hasUnread: diskHeader.hasUnread,
     lastReadMessageId: diskHeader.lastReadMessageId,
+    owner: diskHeader.owner,
+    participants: diskHeader.participants,
+    visibility: diskHeader.visibility,
   }
 }
 
@@ -70,6 +80,12 @@ class SessionPersistenceQueue {
   private writeInProgress = new Map<string, Promise<void>>()
   private lastWrittenHeaderSignature = new Map<string, string>()
   private writeFailures = new Map<string, unknown>()
+  /**
+   * Session ids whose persistence was cancelled because the session is being
+   * deleted. A late enqueue (for example the fs.watch metadata echo that fires
+   * while the in-flight write lands) must not recreate the session on disk.
+   */
+  private sealed = new Set<string>()
   private debounceMs: number
 
   constructor(debounceMs = 500) {
@@ -81,6 +97,10 @@ class SessionPersistenceQueue {
    * session, it will be replaced with the new data and the timer reset.
    */
   enqueue(session: StoredSession): void {
+    if (this.sealed.has(session.id)) {
+      debug(`[PersistenceQueue] Ignoring enqueue for deleted session ${session.id}`)
+      return
+    }
     const existing = this.pending.get(session.id)
     if (existing) {
       clearTimeout(existing.timer)
@@ -102,6 +122,7 @@ class SessionPersistenceQueue {
     if (!entry) return
 
     this.pending.delete(sessionId)
+    if (this.sealed.has(sessionId)) return
 
     try {
       const { data } = entry
@@ -166,7 +187,11 @@ class SessionPersistenceQueue {
 
       const wrotePrimary = await trySessionJournalPrimary(sessionDir, lines)
       if (!wrotePrimary) {
-        const tmpFile = filePath + '.tmp'
+        // Unique tmp per writer: two writers (or a concurrent crash-recovery
+        // pass over the sibling tmp family) must not target one shared
+        // session.jsonl.tmp, which can make this rename throw ENOENT and drop
+        // the write.
+        const tmpFile = `${filePath}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`
         await writeFile(tmpFile, lines.join('\n') + '\n', 'utf-8')
         await replaceFileAtomically(tmpFile, filePath)
       }
@@ -199,39 +224,107 @@ class SessionPersistenceQueue {
    * Immediately flush a specific session if pending.
    * Waits for any in-progress write to complete before starting a new one
    * to prevent race conditions on the shared .tmp file.
+   *
+   * Rejects with the recorded error if the awaited write failed, so callers
+   * that rely on the session being durable (branching, export, transfer) never
+   * proceed against a stale or missing file.
    */
   async flush(sessionId: string): Promise<void> {
     const entry = this.pending.get(sessionId)
     if (entry) {
       clearTimeout(entry.timer)
       await this.runWrite(sessionId)
+      this.throwIfWriteFailed(sessionId)
       return
     }
     const inProgress = this.writeInProgress.get(sessionId)
     if (inProgress) {
       await inProgress
+      this.throwIfWriteFailed(sessionId)
     }
   }
 
   /**
-   * Cancel a pending write for a session (e.g., when deleting the session).
+   * Drop a queued write for a session without sealing it.
+   *
+   * Used before re-persisting externally-updated metadata: it discards the
+   * stale pending snapshot (and our last-written signature so the fresh write
+   * is compared against disk) while still allowing the immediate re-enqueue.
+   * Unlike cancel(), this does not mark the session deleted.
    */
-  cancel(sessionId: string): void {
+  dropPendingWrites(sessionId: string): void {
     const entry = this.pending.get(sessionId)
     if (entry) {
       clearTimeout(entry.timer)
       this.pending.delete(sessionId)
-      debug(`[PersistenceQueue] Cancelled pending write for session ${sessionId}`)
     }
     this.lastWrittenHeaderSignature.delete(sessionId)
   }
 
   /**
+   * Cancel persistence for a session that is being deleted.
+   *
+   * Drops any queued write, invalidates our last-written signature, and seals
+   * the session so a late enqueue (an fs.watch metadata echo arriving as the
+   * in-flight write lands, a debounced timer) cannot recreate it on disk.
+   *
+   * Resolves once any in-flight write has settled. Callers MUST await this
+   * before deleting the session files — otherwise an already-started write
+   * would run after the delete and resurrect the session.
+   */
+  async cancel(sessionId: string): Promise<void> {
+    this.dropPendingWrites(sessionId)
+    this.writeFailures.delete(sessionId)
+    this.sealed.add(sessionId)
+    const inProgress = this.writeInProgress.get(sessionId)
+    if (inProgress) await inProgress.catch(() => {})
+    debug(`[PersistenceQueue] Cancelled pending write for session ${sessionId}`)
+  }
+
+  /**
+   * Lift a deletion seal after the on-disk delete succeeded.
+   *
+   * Session ids are human-readable slugs regenerated from the set of existing
+   * session directories (see slug-generator/storage), so once a deleted
+   * session's directory is gone its id becomes available again. If the seal
+   * outlived the deletion, a later session that legitimately reuses the id
+   * (createSession / getOrCreateSessionById -> saveSession -> enqueue) would be
+   * dropped silently by enqueue()/write() and never hit disk.
+   *
+   * Callers MUST only unseal after the on-disk delete returned success. A
+   * failed delete leaves the tombstone in place so a late fs.watch metadata
+   * echo cannot resurrect the (still present) file.
+   */
+  unseal(sessionId: string): void {
+    if (this.sealed.delete(sessionId)) {
+      debug(`[PersistenceQueue] Unsealed session ${sessionId} after successful delete`)
+    }
+  }
+
+  /**
    * Flush all pending sessions. Call this on app quit.
+   *
+   * Waits for EVERY queued write (Promise.allSettled) before returning, so one
+   * failing session can no longer abort the wait and truncate the flush of the
+   * remaining sessions during shutdown. Once all writes have settled the
+   * failures are aggregated into a single visible warning/error.
    */
   async flushAll(): Promise<void> {
     const sessionIds = [...this.pending.keys()]
-    await Promise.all(sessionIds.map(id => this.flush(id)))
+    if (sessionIds.length === 0) return
+
+    const results = await Promise.allSettled(sessionIds.map(id => this.flush(id)))
+    const failures = results
+      .map((result, index) => (result.status === 'rejected' ? { id: sessionIds[index]!, error: result.reason } : null))
+      .filter((entry): entry is { id: string; error: unknown } => entry !== null)
+
+    if (failures.length > 0) {
+      const detail = failures
+        .map(({ id, error }) => `${id}: ${error instanceof Error ? error.message : String(error)}`)
+        .join('; ')
+      console.warn(`[PersistenceQueue] flushAll: ${failures.length}/${sessionIds.length} session write(s) failed: ${detail}`)
+      throw new Error(`Failed to flush ${failures.length} of ${sessionIds.length} pending session write(s): ${detail}`)
+    }
   }
 
   /**

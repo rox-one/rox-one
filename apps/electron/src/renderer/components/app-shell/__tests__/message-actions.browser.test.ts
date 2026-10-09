@@ -80,7 +80,9 @@ describe.skipIf(!existsSync(executablePath))('production message actions with pe
   const child=page.getByRole('region',{name:'Created branch'})
   await expectDOM(child).toContainText('Branch of canonical-user');await expectDOM(child).toContainText('My synthetic question');await expectDOM(child).not.toContainText('A synthetic reply')
   await page.getByRole('textbox',{name:'Branch follow-up'}).fill('Synthetic continuation')
-  await page.getByRole('button',{name:'Send follow-up'}).click();await expectDOM(child).toContainText('Hello world');await proof('own-branch')
+  await page.getByRole('button',{name:'Send follow-up'}).click()
+  // The follow-up spawns a real CLI agent turn; it needs a wider budget than the 5s DOM default.
+  await expectDOM(child).toContainText('Hello world',{timeout:20000});await proof('own-branch')
  },30000)
  it('forks an assistant answer with its complete earlier context',async()=>{
   await page.getByTestId('assistant').getByRole('button',{name:'Branch From This Message',exact:true}).click()

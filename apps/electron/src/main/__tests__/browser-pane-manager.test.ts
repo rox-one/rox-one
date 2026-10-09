@@ -289,6 +289,23 @@ afterAll(() => {
   BrowserPaneManager.CdpImpl = RealBrowserCDP
 })
 
+/** Test-only structural view of the mocked page webContents for one pane instance. */
+interface PaneTestPageView {
+  loadURL: (url: string) => Promise<void>
+  setWindowOpenHandler: {
+    mock: { calls: Array<[(details: { url: string; disposition?: string; frameName?: string }) => { action: string }]> }
+  }
+  _listeners: Record<string, Array<(event: { preventDefault(): void }, url: string) => void>>
+}
+
+/** Test-only accessor for the private BrowserPaneManager.instances registry. */
+function panePageView(manager: unknown, id: string): PaneTestPageView {
+  const registry = manager as { instances: Map<string, { pageView: { webContents: PaneTestPageView } }> }
+  const instance = registry.instances.get(id)
+  if (!instance) throw new Error(`Expected pane instance: ${id}`)
+  return instance.pageView.webContents
+}
+
 describe('BrowserPaneManager', () => {
   let manager: InstanceType<typeof BrowserPaneManager>
 
@@ -489,10 +506,11 @@ describe('BrowserPaneManager', () => {
     expect(result.overrideBrowserWindowOptions?.webPreferences?.contextIsolation).toBe(true)
   })
 
-  it('denies app deep-link popups and forwards to deep-link handler', async () => {
+  it('forwards app deep-link popups from the trusted empty-state page', async () => {
     manager.createInstance('popup-deeplink')
-    const instance = (manager as any).instances.get('popup-deeplink')
-    const openHandler = instance.pageView.webContents.setWindowOpenHandler.mock.calls[0][0]
+    const pageView = panePageView(manager, 'popup-deeplink')
+    await pageView.loadURL('file:///app/renderer/browser-empty-state.html')
+    const openHandler = pageView.setWindowOpenHandler.mock.calls[0][0]
 
     const result = openHandler({
       url: 'craftagents://settings',
@@ -501,8 +519,51 @@ describe('BrowserPaneManager', () => {
     })
 
     expect(result).toEqual({ action: 'deny' })
-    await Bun.sleep(0)
     expect(mockShellOpenExternal).toHaveBeenCalledWith('craftagents://settings')
+  })
+
+  it('blocks app deep-link popups from an untrusted page', async () => {
+    manager.createInstance('popup-deeplink-untrusted')
+    const pageView = panePageView(manager, 'popup-deeplink-untrusted')
+    await pageView.loadURL('https://evil.example/')
+    const openHandler = pageView.setWindowOpenHandler.mock.calls[0][0]
+
+    const result = openHandler({
+      url: 'craftagents://action/new-session?input=x&send=true&mode=allow-all',
+      disposition: 'new-popup',
+      frameName: '',
+    })
+
+    expect(result).toEqual({ action: 'deny' })
+    expect(mockShellOpenExternal).not.toHaveBeenCalled()
+  })
+
+  it('blocks rox:// top-level navigation from an untrusted page', async () => {
+    manager.createInstance('nav-deeplink-untrusted')
+    const pageView = panePageView(manager, 'nav-deeplink-untrusted')
+    await pageView.loadURL('https://evil.example/')
+    const handlers = pageView._listeners['will-navigate'] ?? []
+    const preventDefault = mock(() => {})
+    const url = 'craftagents://action/new-session?input=x&send=true&mode=allow-all'
+
+    handlers[0]?.({ preventDefault }, url)
+
+    expect(preventDefault).toHaveBeenCalledTimes(1)
+    expect(mockShellOpenExternal).not.toHaveBeenCalled()
+  })
+
+  it('forwards rox:// top-level navigation from the empty-state page', async () => {
+    manager.createInstance('nav-deeplink-trusted')
+    const pageView = panePageView(manager, 'nav-deeplink-trusted')
+    await pageView.loadURL('file:///app/renderer/browser-empty-state.html')
+    const handlers = pageView._listeners['will-navigate'] ?? []
+    const preventDefault = mock(() => {})
+    const url = 'craftagents://action/new-session?input=x&send=true&mode=allow-all'
+
+    handlers[0]?.({ preventDefault }, url)
+
+    expect(preventDefault).toHaveBeenCalledTimes(1)
+    expect(mockShellOpenExternal).toHaveBeenCalledWith(url)
   })
 
   it('destroys child popups when parent instance is destroyed', () => {
@@ -541,9 +602,49 @@ describe('BrowserPaneManager', () => {
     if (!destroyRegistration) throw new Error('Expected browser-toolbar:destroy IPC registration')
 
     const [, destroyHandler] = destroyRegistration
-    await destroyHandler({}, 'd-ipc-destroy')
+    const instance = (manager as any).instances.get('d-ipc-destroy')
+    await destroyHandler({ sender: instance.toolbarView.webContents }, 'd-ipc-destroy')
 
     expect(manager.listInstances()).toHaveLength(0)
+  })
+
+  it('rejects toolbar destroy IPC from a sender that is not the pane toolbar', async () => {
+    manager.createInstance('d-ipc-destroy-denied')
+    manager.registerToolbarIpc()
+
+    const destroyRegistration = (
+      mockIpcMainHandle.mock.calls as unknown as Array<[
+        string,
+        (_event: unknown, instanceId: string) => Promise<void>,
+      ]>
+    ).find(([channel]) => channel === 'browser-toolbar:destroy')
+
+    expect(destroyRegistration).toBeTruthy()
+    if (!destroyRegistration) throw new Error('Expected browser-toolbar:destroy IPC registration')
+
+    const [, destroyHandler] = destroyRegistration
+    await expect(destroyHandler({ sender: {} }, 'd-ipc-destroy-denied')).rejects.toThrow('IPC_SENDER_DENIED')
+    expect(manager.listInstances()).toHaveLength(1)
+  })
+
+  it('rejects __browser:invoke from an unregistered sender and never dispatches', async () => {
+    manager.registerCapabilityIpc()
+
+    const capabilityRegistration = (
+      mockIpcMainHandle.mock.calls as unknown as Array<[
+        string,
+        (_event: { sender: { id: number } }, req: unknown) => Promise<unknown>,
+      ]>
+    ).find(([channel]) => channel === '__browser:invoke')
+
+    expect(capabilityRegistration).toBeTruthy()
+    if (!capabilityRegistration) throw new Error('Expected __browser:invoke IPC registration')
+
+    const [, invokeHandler] = capabilityRegistration
+    await expect(invokeHandler(
+      { sender: { id: 4242 } },
+      { v: 1, method: 'listInstances', args: [], sessionId: 's-1', workspaceId: 'ws-a' },
+    )).rejects.toThrow('IPC_SENDER_DENIED')
   })
 
   it('emits removed callback exactly once when destroy triggers closed', () => {

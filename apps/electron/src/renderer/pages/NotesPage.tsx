@@ -1,7 +1,8 @@
 import { useNavigation } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, NotesViewMenu, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
-import { notesAuxiliaryFits } from './notes/notes-layout'
+import { notesAuxiliaryFits, type NotesRail } from './notes/notes-layout'
+import { usePanelWorkspaceLayout, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
 import { projectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
@@ -57,7 +58,7 @@ import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboar
 import { NotesNavigationSidebar } from './notes/NotesNavigationSidebar'
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
-import { cachedNotesList, fetchNotesList, notesTaskCache, patchCachedNote, subscribeCachedNotesList } from '@/lib/query/notes-cache'
+import { cachedNotesList, ensureNotesTaskCache, fetchNotesList, patchCachedNote, subscribeCachedNotesList } from '@/lib/query/notes-cache'
 import { cacheWriteEpoch } from '@/lib/query/shared-read'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
@@ -415,6 +416,22 @@ function updateMarkdownTitle(content: string, title: string): string {
   return content
 }
 
+/**
+ * Panel-layout mode → which Notes rails may render inline.
+ * Best-effort only: saved widths are never rewritten, and the document keeps
+ * priority via NOTE_COLUMN_MIN when the surface is too narrow.
+ */
+const NOTES_RAILS_BY_LAYOUT: Record<PanelWorkspaceLayoutMode, Record<NotesRail, boolean>> = {
+  auto: { vault: true, toc: true, comments: true },
+  columns: { vault: true, toc: true, comments: true },
+  'grid-3': { vault: true, toc: true, comments: true },
+  'grid-2': { vault: true, toc: false, comments: false },
+  focus: { vault: false, toc: false, comments: false },
+}
+
+/** Readable minimum for the document column; rails yield before it does. */
+const NOTE_COLUMN_MIN = 460
+
 export default function NotesPage(props: NotesPageProps) {
   const { t } = useTranslation()
   const { activeWorkspaceId } = useAppShellContext()
@@ -467,6 +484,8 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const shellSidebarTarget = useShellSidebarTarget()
   const { t } = useTranslation()
+  // Panel-layout mode drives which side rails this surface may render.
+  const { mode: panelLayoutMode } = usePanelWorkspaceLayout()
   const notesHeaderTitleKey = useNotesTitleKey('notes.header.title')
   const navigationRevision = React.useContext(NavigationContext)?.navigationRevision
   const {
@@ -578,6 +597,19 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   // rails can yield before the note column gets unreadably narrow.
   const [setDocRowEl, docRowWidth] = useNotesPanelWidth<HTMLDivElement>()
   const [setShellEl, shellWidth] = useNotesPanelWidth<HTMLDivElement>()
+  // User-chosen panel layouts keep the document at NOTE_COLUMN_MIN: once the
+  // shell is too narrow the vault rail stays collapsed until it fits again.
+  // `auto` keeps its original width rules, so the latch never engages there.
+  const [vaultStarved, setVaultStarved] = React.useState(false)
+  React.useEffect(() => {
+    if (panelLayoutMode === 'auto' || docRowWidth <= 0) {
+      setVaultStarved(false)
+      return
+    }
+    setVaultStarved((previous) => previous
+      ? docRowWidth < NOTE_COLUMN_MIN + railLayout.vault
+      : docRowWidth < NOTE_COLUMN_MIN)
+  }, [panelLayoutMode, docRowWidth, railLayout.vault])
   const [inspectorSheetOpen, setInspectorSheetOpen] = React.useState(false)
   const inlineAuxiliary = notesAuxiliaryFits(shellWidth, inspectorCollapsed, false)
   const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
@@ -595,6 +627,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const readsMountedRef = React.useRef(false)
   const readWorkspaceRef = React.useRef(activeWorkspaceId)
   const readWorkspaceGenerationRef = React.useRef(0)
+  const notesListViewportRef = React.useRef<HTMLDivElement | null>(null)
   const [notesReadError, setNotesReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const [assetsReadError, setAssetsReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError : null
@@ -625,9 +658,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const taskRequestRef = React.useRef(0)
   const taskCacheWorkspaceRef = React.useRef<string | null>(null)
   // PERF-09: per-workspace task cache shared across visits (only changed notes are re-read).
-  // Attached in a layout effect: the lookup registers the entry in the shared
+  // Attached in a layout effect: attaching registers the entry in the shared
   // cache (a write), so it must not run during render (StrictMode renders twice
-  // and may discard the render).
+  // and may discard the render). The pure lookup is `notesTaskCache`.
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
   const taskCacheUpdatedAtRef = React.useRef<Map<string, number>>(new Map())
   // PERF-09: which workspace the held `notes` list belongs to. A task pass never
@@ -640,7 +673,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     notesListWorkspaceRef.current = notesHandoffWorkspaceRef.current
   }, [notes])
   React.useLayoutEffect(() => {
-    const cache = notesTaskCache<NoteTask>(activeWorkspaceId)
+    const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
     taskCacheRef.current = cache.tasks
     taskCacheUpdatedAtRef.current = cache.updatedAt
     taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
@@ -668,7 +701,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // the previous principal's orphaned maps, and drop the list claims held for
     // the retired principal.
     const off = window.electronAPI.onIdentityChanged?.(() => {
-      const cache = notesTaskCache<NoteTask>(activeWorkspaceId)
+      const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
       taskCacheRef.current = cache.tasks
       taskCacheUpdatedAtRef.current = cache.updatedAt
       taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
@@ -972,7 +1005,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const request = ++taskRequestRef.current
     if (taskCacheWorkspaceRef.current !== (activeWorkspaceId ?? null)) {
       // Switch to the new workspace's cache; the old one stays valid for its workspace.
-      const cache = notesTaskCache<NoteTask>(activeWorkspaceId)
+      const cache = ensureNotesTaskCache<NoteTask>(activeWorkspaceId)
       taskCacheRef.current = cache.tasks
       taskCacheUpdatedAtRef.current = cache.updatedAt
       taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
@@ -2464,7 +2497,7 @@ h1,h2,h3{margin-top:1.5em}
 
   const wikiMenu = showWikiMenu ? (
     <div
-      className="absolute z-20 w-80 rounded-[var(--radius-overlay)] border border-border/70 bg-popover p-1 shadow-strong"
+      className="absolute z-20 w-80 rounded-md border border-border/70 bg-popover p-1 shadow-strong"
       data-testid="notes-wiki-menu"
       style={wikiAnchor
         ? { left: Math.max(4, wikiAnchor.x), top: wikiAnchor.y }
@@ -2520,25 +2553,29 @@ h1,h2,h3{margin-top:1.5em}
   // Display-only: rails the user left open auto-hide (comments first, then
   // the outline) while the note column would drop below NOTE_COLUMN_MIN.
   // Persisted rail preferences are untouched.
-  const NOTE_COLUMN_MIN = 460
   const noteColumnWidth = (toc: boolean, comments: boolean) =>
     docRowWidth - (toc ? railLayout.toc : 0) - (comments ? railLayout.comments : 0)
   const roomFor = (toc: boolean, comments: boolean) =>
     docRowWidth <= 0 || noteColumnWidth(toc, comments) >= NOTE_COLUMN_MIN
-  const commentsShown = !railLayout.commentsCollapsed
-    && (Boolean(commentDraftQuote) || roomFor(!railLayout.tocCollapsed, true))
-  const tocShown = !railLayout.tocCollapsed && roomFor(true, commentsShown)
+  // Panel-layout mode restricts which rails may show; widths stay untouched.
+  const railsAllowed = NOTES_RAILS_BY_LAYOUT[panelLayoutMode]
+  // `auto` keeps its original width rules, so the starvation latch never applies there.
+  const vaultStarvedForMode = panelLayoutMode !== 'auto' && vaultStarved
+  const vaultShown = railsAllowed.vault && !railLayout.vaultCollapsed && !vaultStarvedForMode
+  const commentsShown = railsAllowed.comments && !railLayout.commentsCollapsed
+    && (Boolean(commentDraftQuote) || roomFor(railsAllowed.toc && !railLayout.tocCollapsed, true))
+  const tocShown = railsAllowed.toc && !railLayout.tocCollapsed && roomFor(true, commentsShown)
   // The compact view menu measures the toolbar the vault rail leaves behind.
-  const toolbarWidth = shellWidth - (railLayout.vaultCollapsed ? 0 : railLayout.vault)
+  const toolbarWidth = shellWidth - (vaultShown ? railLayout.vault : 0)
 
   return (
     <>
     <NotesEditorHeadlineStyles />
-    <div ref={setShellEl} className="notes-shell flex h-full min-w-0">
+    <div ref={setShellEl} className="notes-shell flex h-full min-w-0" data-notes-layout={panelLayoutMode}>
       <ShellSidebarPortal
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
-        style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
-        hidden={railLayout.vaultCollapsed}
+        style={{ width: vaultShown ? railLayout.vault : 0 }}
+        hidden={!vaultShown}
         data-testid="notes-vault-rail"
         data-focus-zone="sidebar"
         onKeyDown={handleSidebarTreeKeyDown}
@@ -2603,12 +2640,13 @@ h1,h2,h3{margin-top:1.5em}
           )}
         </div>
         <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
-        <div className="flex-1 min-h-0 overflow-y-auto p-2">
+        <div ref={notesListViewportRef} className="flex-1 min-h-0 overflow-y-auto p-2">
           <NotesNavigationSidebar
             notes={visibleNotes}
             activeNoteId={activeNote?.id}
             collapsedFolders={collapsedFolders}
             onToggleFolder={toggleFolder}
+            viewportRef={notesListViewportRef}
             onOpenNote={handleOpenNote}
             onOpenCreateNoteDialog={openCreateNoteDialog}
             onOpenRenameFolder={openRenameFolderDialog}
@@ -2631,7 +2669,7 @@ h1,h2,h3{margin-top:1.5em}
             : t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
       </ShellSidebarPortal>
-      {!shellSidebarTarget && <NotesRailSash
+      {railsAllowed.vault && !vaultStarvedForMode && !shellSidebarTarget && <NotesRailSash
         width={railLayout.vault}
         onWidth={(vault) => setRailLayout({ vault })}
         collapsed={railLayout.vaultCollapsed}

@@ -15,7 +15,8 @@ python3 -m unittest \
   apps.electron.resources.scripts.tests.test_img_tool_smoke \
   apps.electron.resources.scripts.tests.test_ical_tool_smoke \
   apps.electron.resources.scripts.tests.test_doc_diff_smoke \
-  apps.electron.resources.scripts.tests.test_markitdown_smoke
+  apps.electron.resources.scripts.tests.test_markitdown_smoke \
+  apps.electron.resources.scripts.tests.test_hindsight_runner_smoke
 ```
 
 Or use the root script:

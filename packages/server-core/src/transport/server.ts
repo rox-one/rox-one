@@ -8,7 +8,7 @@
  */
 
 import { WebSocketServer, type WebSocket } from 'ws'
-import { createServer as createHttpServer, type Server as HttpServer } from 'node:http'
+import { createServer as createHttpServer, type Server as HttpServer, type IncomingMessage } from 'node:http'
 import { createServer as createHttpsServer, type Server as HttpsServer } from 'node:https'
 import { randomUUID } from 'node:crypto'
 import {
@@ -28,8 +28,8 @@ import {
 import type { RpcServer, HandlerFn, RequestContext, RpcHandlerOptions, WorkspaceAuthorityAuthentication, WorkspaceAuthoritySession } from './types'
 import { serializeEnvelope, deserializeEnvelope } from './codec'
 import { createLogger } from '@rox/shared/utils'
-import { CLIENT_OPEN_FILE_DIALOG } from './capabilities'
 import { WEBUI_APPEARANCE_CHANNELS, validWebAppearanceArguments } from '../webui/appearance-rpc'
+import { extractSessionCookie } from '../webui/auth'
 import {
   createRpcCallCounterFromEnv,
   type RpcCallCounter,
@@ -126,6 +126,12 @@ export interface WsRpcServerOptions {
   /** Whether to require a bearer token on handshake. Default: false */
   requireAuth?: boolean
   /**
+   * TEST ONLY. When true, `LOCAL_ONLY` enforcement is skipped entirely so
+   * transport tests can exercise LOCAL_ONLY-gated handlers without an
+   * Electron-main binding. Never set this in production wiring.
+   */
+  allowLocalOnlyForTests?: boolean
+  /**
    * Explicit shared authority mode. Requires a real pinned-issuer resolver and live refresh.
    * Legacy boolean/cookie/local-proof auth is rejected. Generic push/client invocation is
    * unavailable; authorized durable domain replay uses authenticatedWorkspace handlers.
@@ -141,6 +147,14 @@ export interface WsRpcServerOptions {
   validateSessionCookie?: (cookieHeader: string | null) => Promise<boolean>
   /** Standalone web UI opt-in: current default workspace, never a client claim. */
   webUiAppearanceWorkspaceId?: () => string | null
+  /**
+   * Extra browser origins (e.g. `https://dash.example.com`) allowed to complete
+   * a cookie-authenticated WebUI WebSocket upgrade. Same-origin requests and
+   * loopback-on-loopback origins are permitted by default; this extends that set
+   * for reverse-proxy or split-origin deployments. Only consulted for upgrades
+   * carrying the WebUI session cookie — native/bearer clients are unaffected.
+   */
+  allowedWebUiOrigins?: string[]
   /** Server identity stamp on outgoing events. Default: 'local' */
   serverId?: string
   /** TLS configuration. When provided, the server listens on wss:// instead of ws://. */
@@ -190,6 +204,71 @@ export interface WsRpcServerOptions {
 
 const transportLog = createLogger('ws-rpc-server')
 
+/** Origins whose host is inherently same-machine; always safe for browser upgrades. */
+const LOOPBACK_ORIGIN_HOSTS = ['127.0.0.1', '::1', 'localhost']
+
+function defaultOriginPort(protocol: string): string {
+  return protocol === 'https:' || protocol === 'wss:' ? '443' : '80'
+}
+
+function normalizeOriginHostname(hostname: string): string {
+  return hostname.toLowerCase().replace(/^\[|\]$/g, '')
+}
+
+/**
+ * Decide whether a browser Origin may complete a cookie-authenticated WebUI
+ * WebSocket upgrade.
+ *
+ * Allowed: an explicit entry in `allowedOrigins`; a same-origin request (the
+ * origin host+port matches the request's own `Host` header); or a loopback
+ * origin when the request `Host` is itself loopback (local dev on another
+ * port, `localhost` vs `127.0.0.1` spelling). Cross-site origins are rejected —
+ * this is the CSWSH boundary for the session cookie. A missing Origin
+ * (non-browser client) is admitted; it cannot be a cross-site browser request.
+ */
+export function isWebUiUpgradeOriginAllowed(
+  origin: string | undefined | null,
+  hostHeader: string | undefined,
+  allowedOrigins: readonly string[],
+): boolean {
+  if (!origin) return true
+  let parsed: URL
+  try {
+    parsed = new URL(origin)
+  } catch {
+    return false
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+  if (parsed.username || parsed.password) return false
+  const originHost = normalizeOriginHostname(parsed.hostname)
+  const originPort = parsed.port || defaultOriginPort(parsed.protocol)
+  if (allowedOrigins.some(allowed => {
+    try {
+      return new URL(allowed).origin.toLowerCase() === parsed.origin.toLowerCase()
+    } catch {
+      return false
+    }
+  })) return true
+  if (LOOPBACK_ORIGIN_HOSTS.includes(originHost) && hostHeader) {
+    try {
+      const host = new URL(`http://${hostHeader}`)
+      if (LOOPBACK_ORIGIN_HOSTS.includes(normalizeOriginHostname(host.hostname))) return true
+    } catch {
+      // Malformed Host header — fall through to rejection.
+    }
+  }
+  if (hostHeader) {
+    try {
+      const host = new URL(`http://${hostHeader}`)
+      if (originHost === normalizeOriginHostname(host.hostname)
+        && originPort === (host.port || defaultOriginPort(parsed.protocol))) return true
+    } catch {
+      // Malformed Host header — fall through to rejection.
+    }
+  }
+  return false
+}
+
 // ---------------------------------------------------------------------------
 // WsRpcServer
 // ---------------------------------------------------------------------------
@@ -214,6 +293,7 @@ export class WsRpcServer implements RpcServer {
   private readonly host: string
   private readonly requestedPort: number
   private readonly requireAuth: boolean
+  private readonly allowLocalOnlyForTests: boolean
   private readonly workspaceAuthority: WorkspaceAuthorityAuthentication | null
   private readonly validateToken: ((token: string) => Promise<boolean>) | null
   private readonly validateSessionCookie: ((cookieHeader: string | null) => Promise<boolean>) | null
@@ -226,6 +306,7 @@ export class WsRpcServer implements RpcServer {
   private readonly resolveLocalClientBinding: WsRpcServerOptions['resolveLocalClientBinding']
   private readonly httpHandler: WsRpcServerOptions['httpHandler']
   private readonly webUiAppearanceWorkspaceId: WsRpcServerOptions['webUiAppearanceWorkspaceId']
+  private readonly allowedWebUiOrigins: readonly string[]
   private readonly rpcCallCounter: RpcCallCounter | null
   private readonly nativeAuthority: NativeAuthority | null
   private readonly nativeEventChannels: ReadonlySet<string>
@@ -255,6 +336,7 @@ export class WsRpcServer implements RpcServer {
     }
     this.workspaceAuthority = opts?.workspaceAuthority ?? null
     this.requireAuth = this.workspaceAuthority !== null || (opts?.requireAuth ?? false)
+    this.allowLocalOnlyForTests = opts?.allowLocalOnlyForTests ?? false
     this.validateToken = opts?.validateToken ?? null
     this.validateSessionCookie = opts?.validateSessionCookie ?? null
     this.serverId = opts?.serverId ?? 'local'
@@ -266,6 +348,7 @@ export class WsRpcServer implements RpcServer {
     this.resolveLocalClientBinding = opts?.resolveLocalClientBinding
     this.httpHandler = opts?.httpHandler
     this.webUiAppearanceWorkspaceId = opts?.webUiAppearanceWorkspaceId
+    this.allowedWebUiOrigins = opts?.allowedWebUiOrigins ?? []
     this.nativeAuthority = opts?.nativeAuthority ?? null
     this.nativeEventChannels = new Set(opts?.nativeEventChannels ?? [])
     this.nativeClientEventChannels = new Set(opts?.nativeClientEventChannels ?? [])
@@ -599,6 +682,7 @@ export class WsRpcServer implements RpcServer {
 
   async listen(): Promise<void> {
     return new Promise((resolve, reject) => {
+      const verifyClient = (info: { origin: string; secure: boolean; req: IncomingMessage }) => this.allowUpgrade(info)
       if (this.tlsOptions) {
         // TLS mode: create HTTPS server, attach WebSocketServer to it.
         // When httpHandler is set, regular HTTP requests are served by it
@@ -614,7 +698,7 @@ export class WsRpcServer implements RpcServer {
           this.httpHandler,
         )
 
-        this.wss = new WebSocketServer({ server: this.httpsServer })
+        this.wss = new WebSocketServer({ server: this.httpsServer, verifyClient })
 
         this.httpsServer.on('error', (err) => reject(err))
 
@@ -630,7 +714,7 @@ export class WsRpcServer implements RpcServer {
         // Plain WS + HTTP handler: create an HTTP server for both.
         this._protocol = 'ws'
         this.httpServer = createHttpServer(this.httpHandler)
-        this.wss = new WebSocketServer({ server: this.httpServer })
+        this.wss = new WebSocketServer({ server: this.httpServer, verifyClient })
 
         this.httpServer.on('error', (err) => reject(err))
 
@@ -648,6 +732,7 @@ export class WsRpcServer implements RpcServer {
         this.wss = new WebSocketServer({
           host: this.host,
           port: this.requestedPort,
+          verifyClient,
         })
 
         this.wss.on('listening', () => {
@@ -730,6 +815,23 @@ export class WsRpcServer implements RpcServer {
   // -------------------------------------------------------------------------
   // Connection handling
   // -------------------------------------------------------------------------
+
+  /**
+   * Upgrade-time origin gate for cookie-authenticated WebUI connections.
+   * Non-WebUI upgrades (no session cookie, or cookie auth not configured) are
+   * admitted unchanged; a cookie-bearing upgrade from a mismatched Origin is
+   * refused before any handshake/auth work happens.
+   */
+  private allowUpgrade(info: { origin: string; req: IncomingMessage }): boolean {
+    if (!this.validateSessionCookie) return true
+    const cookieHeader = info.req.headers.cookie ?? null
+    if (extractSessionCookie(cookieHeader) === null) return true
+    if (isWebUiUpgradeOriginAllowed(info.origin, info.req.headers.host, this.allowedWebUiOrigins)) {
+      return true
+    }
+    transportLog.warn('WebSocket upgrade rejected: web UI origin not allowed')
+    return false
+  }
 
   private onConnection(ws: WebSocket, upgradeRequestCookie: string | null, remoteAddress: string | null): void {
     // Reject if at capacity
@@ -1190,15 +1292,15 @@ export class WsRpcServer implements RpcServer {
       return
     }
 
-    // LOCAL_ONLY is a desktop-process gate, not a second handshake
-    // capability. Electron-main proof (`localBinding`) already means
-    // this client is the trusted desktop. `openFileDialog` remains a
-    // fallback for tests that only advertise that capability.
+    // LOCAL_ONLY is a desktop-process gate decided only by server-verified
+    // state: an Electron-main binding (`localBinding`) or a server-granted
+    // test escape. A client-declared capability (`clientCapabilities`) is
+    // NEVER trusted here — the handshake envelope is attacker-controlled.
     if (
       isLocalOnly(channel)
       && this.shouldEnforceLocalOnly()
+      && !this.allowLocalOnlyForTests
       && client.localBinding === null
-      && !client.capabilities.has(CLIENT_OPEN_FILE_DIALOG)
       && !webAppearance
     ) {
       this.sendResponseError(
@@ -1516,8 +1618,20 @@ export class WsRpcServer implements RpcServer {
   }
 
   private safeSend(ws: WebSocket, data: string): void {
-    if (ws.readyState === ws.OPEN) {
+    if (ws.readyState !== ws.OPEN) return
+    try {
       ws.send(data)
+    } catch (err) {
+      // A synchronous send failure means this socket is unusable. Drop it so
+      // the client reconnects instead of being left half-connected: a bare
+      // throw here would abort the replay loop (server.ts:993-995) before the
+      // client is registered (server.ts:1026-1027), stranding the connection.
+      transportLog.warn('WebSocket send failed; closing connection', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+      try {
+        ws.close(1011, 'send failed')
+      } catch { /* Socket already closing/closed. */ }
     }
   }
 }

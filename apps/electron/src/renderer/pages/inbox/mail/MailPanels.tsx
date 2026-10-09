@@ -77,6 +77,7 @@ export function MailNavSection({ mail, activeFolderId, onSelectFolder }: {
     <NavSection title={t('inbox.mail.section')}>
       {s?.state === 'ready' && address ? (
         <div className="flex items-center gap-1 px-2 pb-1" data-testid="mail-address">
+          <span className="shrink-0 text-small font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
           <span className="min-w-0 flex-1 truncate text-[12px] font-semibold" title={address}>{address}</span>
           <button type="button" onClick={() => void copy()} className="h-6 shrink-0 rounded-[var(--radius-control)] px-1.5 text-[11px] text-text-secondary hover:bg-foreground/[0.06] hover:text-foreground" data-testid="mail-copy">
             {copied ? t('inbox.mail.copied') : t('inbox.mail.copy')}
@@ -222,13 +223,15 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
       {s.state === 'no-mailbox' || s.state === 'error' ? (
         <EmptyState
           title={s.state === 'error' ? t('inbox.mail.status.error', { error: s.error ?? '' }) : t('inbox.mail.status.noMailbox')}
-          body={t('inbox.mail.noMailboxBody', { domain: s.domain })}
+          body={s.state === 'no-mailbox'
+            ? t('inbox.mail.autoProvisionBody', { domain: s.domain })
+            : t('inbox.mail.noMailboxBody', { domain: s.domain })}
           action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t('inbox.mail.getAddress')}</Button>}
         />
       ) : s.state === 'provisioning' ? (
-        <EmptyState title={t('inbox.mail.status.provisioning')} />
+        <EmptyState title={t('inbox.mail.status.provisioning')} body={t('inbox.mail.provisioningBody', { domain: s.domain })} />
       ) : s.state === 'unreachable' ? (
-        <EmptyState title={s.configured === false && !s.address ? t('inbox.mail.status.noMailbox') : t('inbox.mail.status.unreachable', { url: s.serverUrl })} body={t('inbox.mail.unreachableBody', { url: s.serverUrl })} action={serverForm} />
+        <EmptyState title={s.configured === false && !s.address ? t('inbox.mail.status.noMailbox') : t('inbox.mail.status.unreachable', { url: s.serverUrl })} body={s.local ? t('inbox.mail.unreachableBody', { url: s.serverUrl }) : t('inbox.mail.unreachableBodyRemote', { url: s.serverUrl })} action={serverForm} />
       ) : (
         <EmptyState title={t('inbox.mail.status.disabled', { flag: s.flag })} />
       )}

@@ -710,7 +710,7 @@ export function MarkdownDatatableBlock({ code, className }: MarkdownDatatableBlo
         }
       >
         <div className="px-6">
-          <div className="bg-background shadow-minimal rounded-[var(--radius-overlay)] overflow-hidden">
+          <div className="bg-background shadow-minimal rounded-md overflow-hidden">
             {tableContent(false)}
           </div>
         </div>

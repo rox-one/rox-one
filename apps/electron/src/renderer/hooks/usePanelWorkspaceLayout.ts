@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { atomFamily } from 'jotai-family'
-import { useAppShellContext } from '@/context/AppShellContext'
+import { useAppShellContext, useOptionalAppShellContext } from '@/context/AppShellContext'
 import { createPanelWorkspaceLayoutAtom } from '@/atoms/panel-workspace'
 import { panelCountAtom } from '@/atoms/panel-stack'
 import {
@@ -21,6 +21,19 @@ const workspaceLayoutAtoms = atomFamily((workspaceId: string) => createPanelWork
 /** Shared by the panel container and its toolbar, scoped to the current workspace. */
 export function usePanelWorkspaceLayout() {
   const { activeWorkspaceId } = useAppShellContext()
+  return usePanelWorkspaceLayoutState(activeWorkspaceId)
+}
+
+/**
+ * Non-throwing variant for pages that can render outside the shell (standalone mounts,
+ * SSR fixtures); the layout falls back to the default workspace scope.
+ */
+export function useOptionalPanelWorkspaceLayout() {
+  const shell = useOptionalAppShellContext()
+  return usePanelWorkspaceLayoutState(shell?.activeWorkspaceId)
+}
+
+function usePanelWorkspaceLayoutState(activeWorkspaceId: string | null | undefined) {
   const panelCount = useAtomValue(panelCountAtom)
   const workspaceId = activeWorkspaceId || '_default'
   const layoutAtom = useMemo(() => workspaceLayoutAtoms(workspaceId), [workspaceId])

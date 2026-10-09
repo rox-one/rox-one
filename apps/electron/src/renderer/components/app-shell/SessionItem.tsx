@@ -13,6 +13,7 @@ import { SessionMenu } from "./SessionMenu"
 import { BatchSessionMenu } from "./BatchSessionMenu"
 import { CompactSessionMenu } from "./CompactSessionMenu"
 import { SessionStatusIcon } from "./SessionStatusIcon"
+import { SessionOwnerChip } from "./SessionOwnerChip"
 import { SessionBadges } from "./SessionBadges"
 import { SessionProjectColorWrapper } from "./SessionProjectColorWrapper"
 import { hasTransferTargets } from "./transfer-targets"
@@ -310,7 +311,7 @@ export function SessionItem({
       )}
       subtitle={previewText ? <span className="text-text-secondary">{previewText}</span> : undefined}
       titleSuffix={
-        (projectName || hasMessagingBinding) ? (
+        (projectName || hasMessagingBinding || item.owner || (item.participants?.length ?? 0) > 0) ? (
           <div className="flex items-center gap-1">
             {projectName && (
               <span
@@ -334,6 +335,9 @@ export function SessionItem({
                 </EntityListBadge>
               )
             })}
+            {(item.owner || (item.participants?.length ?? 0) > 0) && (
+              <SessionOwnerChip owner={item.owner} size="sm" />
+            )}
           </div>
         ) : undefined
       }

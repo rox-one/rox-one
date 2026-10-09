@@ -1,7 +1,7 @@
 /**
  * TopBar - Persistent top bar above all panels (Slack-style)
  *
- * Layout: [Sidebar] [Menu] [Back] [Forward] [Workspace selector] ... [Browser strip] [Session] [Browser] [Help]
+ * Layout: [Back] [Forward] [Sidebar] [Workspace] [Device] ... [Browser strip] [Session] [New tab]
  *
  * Fixed at top of window; height from --topbar-height (design-compact: 40px desktop).
  * macOS: offset left to avoid stoplight controls.
@@ -18,13 +18,6 @@ import { isMac, isWebUI } from "@/lib/platform"
 import { zenTopBarSafeLeftPx } from "./zen-topbar-safe-area"
 import { readDesktopAppearance } from '@/lib/desktop-appearance'
 import { useActionLabel } from "@/actions"
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  StyledDropdownMenuContent,
-  StyledDropdownMenuItem,
-  StyledDropdownMenuSeparator,
-} from "@/components/ui/styled-dropdown"
 import type { SettingsMenuItem } from "../../../shared/menu-schema"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
@@ -32,7 +25,7 @@ import { PanelWorkspaceMenu } from './PanelWorkspaceMenu'
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
-import { getDocUrl } from "@rox/shared/docs/doc-links"
+import { CraftAgentsSymbol } from "../icons/CraftAgentsSymbol"
 import { AppMenu } from "../AppMenu"
 import { HeaderStatusLane } from "./HeaderStatusLane"
 import { MeetingRecordingIndicator } from "../meetings/MeetingRecordingIndicator"
@@ -45,7 +38,6 @@ import {
   featureWorkbenchBrowserSurfaceV2Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTopChromeV2Atom,
-  bottomTerminalOpenAtom,
   inspectorAutoCollapsedAtom,
   inspectorChromeCollapsedAtom,
   inspectorUserOpenedAtom,
@@ -55,12 +47,9 @@ import {
 import { ModeBar, type ModeBarMetrics } from "@/platform/ModeBar"
 import { resolveModePillLayout, type ModePillLayout } from "./mode-pill-layout"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
-import { resolveBottomTerminalToggle } from "@/platform/inspector-model"
-import { WORKBENCH_FLAG } from "@rox/core/platform"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
 const RIGHT_SLOT_TWO_BADGES_THRESHOLD = 300
-const bundledRoxLogo = new URL('../../assets/rox-logo.svg', import.meta.url).href
 
 interface TopBarProps {
   workspaces: Workspace[]
@@ -85,8 +74,7 @@ interface TopBarProps {
   onToggleChatPictureInPicture?: () => void
   onAddSessionPanel: () => void
   onAddBrowserPanel: () => void
-  onOpenMap: () => void
-  mapAvailable: boolean
+  onOpenBrowserTab: () => void
   showInspectorToggle: boolean
   /** Active panel header rendered beside the workspace switcher on compact screens. */
   compactHeaderRenderer?: () => ReactNode
@@ -98,10 +86,8 @@ interface TopBarProps {
   isCompact?: boolean
   /** When false, workspace selection is rendered elsewhere (for example, the left icon rail). */
   showWorkspaceSelector?: boolean
-  /** The left surface rail replaces the title-bar mode picker. */
+  /** The left surface rail complements the title-bar mode picker. */
   surfaceNavigationActive?: boolean
-  /** Explicit mode-picker visibility; Главная keeps the picker (2026-10-08). */
-  modeBarActive?: boolean
   /** Left offset for a full-height rail rendered outside the top bar. */
   leftInset?: number
 }
@@ -129,8 +115,7 @@ export function TopBar({
   onToggleChatPictureInPicture,
   onAddSessionPanel,
   onAddBrowserPanel,
-  onOpenMap,
-  mapAvailable,
+  onOpenBrowserTab,
   showInspectorToggle,
   compactHeaderRenderer,
   isCompactChatMode,
@@ -138,7 +123,6 @@ export function TopBar({
   isCompact,
   showWorkspaceSelector = true,
   surfaceNavigationActive = false,
-  modeBarActive,
   leftInset = 0,
 }: TopBarProps) {
   const { t } = useTranslation()
@@ -158,9 +142,9 @@ export function TopBar({
           data-workspace-logo-menu
           aria-label={t('navigation.workspaceMenu', { workspace: workspaceName })}
           title={t('navigation.workspaceMenu', { workspace: workspaceName })}
-          className="titlebar-no-drag flex h-8 min-w-0 shrink-0 items-center gap-1.5 rounded-lg px-1.5 font-sans text-[13px] text-foreground/80 outline-none transition-colors motion-reduce:transition-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-foreground/[0.06]"
+          className="titlebar-no-drag chrome-surface flex h-8 min-w-0 shrink-0 items-center gap-1.5 rounded-lg border px-1.5 font-sans text-[13px] text-foreground/80 outline-none transition-colors motion-reduce:transition-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:ring-1 data-[state=open]:ring-ring"
         >
-          <img src={bundledRoxLogo} alt="" aria-hidden className="size-6 shrink-0 object-contain" />
+          <CraftAgentsSymbol className="size-6 shrink-0 object-contain" />
           {!isCompact && <span className="max-w-40 truncate">{workspaceName}</span>}
           <Icons.ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden />
         </button>
@@ -189,10 +173,9 @@ export function TopBar({
     statusBar: false,
   })
 
-  // Primary application surfaces remain available independently of experimental Workbench chrome.
-  // Пилюли режимов живут только на Главной (решение пользователя 2026-10-08); на остальных
-  // поверхностях их заменяет левый рейл.
-  const showModePill = !isCompact && (modeBarActive ?? !surfaceNavigationActive)
+  // The mode pill renders on every non-compact surface (2026-10-08: restored
+  // on all surfaces); the left rail accompanies it rather than replacing it.
+  const showModePill = !isCompact
   const topbarRef = useRef<HTMLDivElement | null>(null)
   const leftFixedRef = useRef<HTMLDivElement | null>(null)
   const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)
@@ -250,15 +233,6 @@ export function TopBar({
     }
     setInspectorChromeCollapsed(true)
     setInspectorVisible(false)
-  }
-
-  const [bottomTerminalOpen, setBottomTerminalOpen] = useAtom(bottomTerminalOpenAtom)
-  const handleTopBarTerminalToggle = () => {
-    const next = resolveBottomTerminalToggle({
-      bottomOpen: bottomTerminalOpen,
-      sideOpen: false,
-    })
-    setBottomTerminalOpen(next.bottomOpen)
   }
 
   useEffect(() => {
@@ -331,7 +305,7 @@ export function TopBar({
   return (
     <div
       ref={topbarRef}
-      className="chrome-topbar fixed top-0 right-0 z-panel titlebar-drag-region"
+      className="chrome-topbar fixed top-0 right-0 z-chrome titlebar-drag-region"
       data-shell-role="chrome"
       style={{ left: leftInset, height: 'var(--topbar-height)' }}
     >
@@ -356,19 +330,41 @@ export function TopBar({
           maxWidth: showModePill && modePillLayout ? modePillLayout.leftMax : undefined,
         }}
       >
-        <div className="flex items-center gap-0.5">
-        {surfaceNavigationActive && logoWorkspaceMenu}
+        <div ref={leftFixedRef} className="flex min-w-0 items-center gap-0.5">
         {!isCompact && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <TopBarButton onClick={onToggleSidebar} aria-label={t("menu.toggleSidebar")}>
-              <PanelLeftRounded className="h-4 w-4 text-text-secondary" />
-            </TopBarButton>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t("menu.toggleSidebar")}</TooltipContent>
-        </Tooltip>
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label={t("common.back")}>
+                  <Icons.ChevronLeft className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+                </TopBarButton>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t("common.back")} {goBackHotkey}</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TopBarButton onClick={onForward} disabled={!canGoForward} aria-label={t("common.forward")}>
+                  <Icons.ChevronRight className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+                </TopBarButton>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t("common.forward")} {goForwardHotkey}</TooltipContent>
+            </Tooltip>
+          </>
         )}
 
+        {!isCompact && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <TopBarButton onClick={onToggleSidebar} aria-label={t("menu.toggleSidebar")}>
+                <PanelLeftRounded className="h-4 w-4 text-text-secondary" />
+              </TopBarButton>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t("menu.toggleSidebar")}</TooltipContent>
+          </Tooltip>
+        )}
+
+        {surfaceNavigationActive && logoWorkspaceMenu}
         {!surfaceNavigationActive && <AppMenu
           onNewChat={onNewChat}
           onNewWindow={onNewWindow}
@@ -383,54 +379,30 @@ export function TopBar({
         {isCompact && (
           <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} showServices={!surfaceNavigationActive} />
         )}
-        </div>
 
-        {/* Back / Forward / Workspace selector (moved from center).
-            In compact mode the back/forward buttons are dropped — the iOS-style
-            drill-in chevron in PanelHeader plus the browser's native back gesture
-            cover that affordance, and the freed width lets the workspace pill
-            actually fit on phone-width viewports. */}
-        <div ref={leftFixedRef} className={cn(
-          "ml-1 flex min-w-0 items-center gap-1",
-          isCompact && !surfaceNavigationActive
-            ? "w-[clamp(108px,32vw,180px)] shrink-0"
-            : showWorkspaceSelector && !surfaceNavigationActive ? "w-[clamp(220px,42vw,640px)]" : "shrink-0",
-        )}>
-          {!isCompact && (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label={t("common.back")}>
-                    <Icons.ChevronLeft className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
-                  </TopBarButton>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{t("common.back")} {goBackHotkey}</TooltipContent>
-              </Tooltip>
+        {/* Workspace selector — rendered in the title bar only when the left
+            rail does not already carry the workspace switcher. In compact mode
+            the back/forward buttons are dropped — the iOS-style drill-in
+            chevron in PanelHeader plus the browser's native back gesture cover
+            that affordance, and the freed width lets the workspace pill fit. */}
+        {showWorkspaceSelector && !surfaceNavigationActive && (
+          <div className={cn(
+            "min-w-0",
+            isCompact ? "w-[clamp(108px,32vw,180px)] shrink-0" : "w-[clamp(220px,42vw,640px)] flex-1",
+          )}>
+            <AccountMenu
+              compact={!!isCompact}
+              workspaces={workspaces}
+              activeWorkspaceId={activeWorkspaceId}
+              onSelectWorkspace={onSelectWorkspace}
+              onWorkspaceCreated={onWorkspaceCreated}
+              onWorkspaceRemoved={onWorkspaceRemoved}
+              workspaceUnreadMap={workspaceUnreadMap}
+            />
+          </div>
+        )}
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <TopBarButton onClick={onForward} disabled={!canGoForward} aria-label={t("common.forward")}>
-                    <Icons.ChevronRight className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
-                  </TopBarButton>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{t("common.forward")} {goForwardHotkey}</TooltipContent>
-              </Tooltip>
-            </>
-          )}
-
-          {showWorkspaceSelector && !surfaceNavigationActive && (
-            <div className="min-w-0 flex-1">
-              <AccountMenu
-                compact={!!isCompact}
-                workspaces={workspaces}
-                activeWorkspaceId={activeWorkspaceId}
-                onSelectWorkspace={onSelectWorkspace}
-                onWorkspaceCreated={onWorkspaceCreated}
-                onWorkspaceRemoved={onWorkspaceRemoved}
-                workspaceUnreadMap={workspaceUnreadMap}
-              />
-            </div>
-          )}
+        {!isCompact && <DeviceStatusChip />}
         </div>
 
         {/* Session/surface tabs live in this title-bar row (portalled from
@@ -453,131 +425,56 @@ export function TopBar({
       </div>
       )}
 
-      {/* === RIGHT: Browser strip + add + help === */}
+      {/* === RIGHT: Workspace menu + browser strip + new session + new tab === */}
       {!isCompact && (
       <div ref={rightSlotRef} className="rox-topbar-right-actions flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8, maxWidth: showModePill ? modePillLayout?.rightMax : undefined }}>
         <PanelWorkspaceMenu />
-        <DeviceStatusChip />
         {!chrome.hideBrowserTabStrip && (
-        <div className="rox-topbar-browser-strip min-w-0 shrink overflow-hidden">
-          <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />
-        </div>
+          <div className="rox-topbar-browser-strip min-w-0 shrink overflow-hidden">
+            <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />
+          </div>
         )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <TopBarButton
-              onClick={onOpenMap}
-              disabled={!mapAvailable}
-              aria-label={t("entityView.map")}
-              className="h-6 w-6 rounded-md"
-            >
-              <Icons.Network className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
-            </TopBarButton>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t("entityView.map")}</TooltipContent>
-        </Tooltip>
-        {!surfaceNavigationActive && <Tooltip>
-          <TooltipTrigger asChild>
-            <TopBarButton
-              onClick={onAddSessionPanel}
-              aria-label={t("session.newSessionInPanel")}
-              className="ml-1 h-[26px] w-[26px] rounded-lg"
-            >
-              <SquarePenRounded className="h-4 w-4 text-text-secondary" />
-            </TopBarButton>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t("session.newSessionInPanel")}</TooltipContent>
-        </Tooltip>}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <TopBarButton
-              onClick={onAddBrowserPanel}
-              aria-label={t("browser.newWindow")}
-              className="h-[26px] w-[26px] rounded-lg"
-            >
-              <Icons.Globe className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
-            </TopBarButton>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t("browser.newWindow")}</TooltipContent>
-        </Tooltip>
-
-
-
-        {/* Help button */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t("menu.helpAndDocs")} className="h-6 w-6 rounded-md">
-              <Icons.HelpCircle className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
-            </TopBarButton>
-          </DropdownMenuTrigger>
-          <StyledDropdownMenuContent align="end" minWidth="min-w-48">
-            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl(getDocUrl('sources'))}>
-              <Icons.DatabaseZap className="h-3.5 w-3.5" />
-              <span className="flex-1">{t("sidebar.sources")}</span>
-              <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
-            </StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl(getDocUrl('skills'))}>
-              <Icons.Zap className="h-3.5 w-3.5" />
-              <span className="flex-1">{t("sidebar.skills")}</span>
-              <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
-            </StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl(getDocUrl('statuses'))}>
-              <Icons.CheckCircle2 className="h-3.5 w-3.5" />
-              <span className="flex-1">{t("sidebar.statuses")}</span>
-              <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
-            </StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl(getDocUrl('permissions'))}>
-              <Icons.Settings className="h-3.5 w-3.5" />
-              <span className="flex-1">{t("settings.permissions.title")}</span>
-              <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
-            </StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl(getDocUrl('automations'))}>
-              <Icons.Webhook className="h-3.5 w-3.5" />
-              <span className="flex-1">{t("sidebar.automations")}</span>
-              <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
-            </StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl(getDocUrl('messaging'))}>
-              <Icons.MessageSquare className="h-3.5 w-3.5" />
-              <span className="flex-1">{t("settings.messaging.title")}</span>
-              <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
-            </StyledDropdownMenuItem>
-            <StyledDropdownMenuSeparator />
-            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl('https://thecraftagents.com/docs')}>
-              <Icons.ExternalLink className="h-3.5 w-3.5" />
-              <span className="flex-1">{t("menu.allDocumentation")}</span>
-            </StyledDropdownMenuItem>
-          </StyledDropdownMenuContent>
-        </DropdownMenu>
-        {showInspectorToggle && <Tooltip>
-          <TooltipTrigger asChild>
-            <TopBarButton
-              onClick={handleToggleInspector}
-              aria-label={inspectorToggleLabel}
-              aria-pressed={inspectorOpen}
-              className="h-6 w-6 rounded-md"
-            >
-              <Icons.PanelRight className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
-            </TopBarButton>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
-        </Tooltip>}
+        {!surfaceNavigationActive && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <TopBarButton
+                onClick={onAddSessionPanel}
+                aria-label={t("session.newSessionInPanel")}
+                className="ml-1 h-[26px] w-[26px] rounded-lg"
+              >
+                <SquarePenRounded className="h-4 w-4 text-text-secondary" />
+              </TopBarButton>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t("session.newSessionInPanel")}</TooltipContent>
+          </Tooltip>
+        )}
         {showInspectorToggle && (
           <Tooltip>
             <TooltipTrigger asChild>
               <TopBarButton
-                onClick={handleTopBarTerminalToggle}
-                aria-label={t('inspector.terminal')}
-                aria-pressed={bottomTerminalOpen}
-                data-testid="bottom-terminal-toggle"
-                data-terminal-flag={WORKBENCH_FLAG.terminalV1}
-                className="h-[26px] w-[26px] rounded-lg"
+                onClick={handleToggleInspector}
+                aria-label={inspectorToggleLabel}
+                aria-pressed={inspectorOpen}
+                className="h-6 w-6 rounded-md"
               >
-                <Icons.SquareTerminal className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+                <Icons.PanelRight className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
               </TopBarButton>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{t('inspector.terminal')}</TooltipContent>
+            <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
           </Tooltip>
         )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TopBarButton
+              onClick={onOpenBrowserTab}
+              aria-label={t("browser.newTab")}
+              className="h-6 w-6 rounded-md"
+            >
+              <Icons.Plus className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+            </TopBarButton>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t("browser.newTab")}</TooltipContent>
+        </Tooltip>
       </div>
       )}
       </div>

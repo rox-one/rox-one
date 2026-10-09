@@ -19,13 +19,13 @@
   },
   "description": "Shared business logic for Craft Agents - agent, auth, config, credentials, MCP integration",
   "devDependencies": {
-    "@types/shell-quote": "^1.7.5",
-    "@types/uuid": "^11.0.0"
+    "@types/shell-quote": "^1.7.5"
   },
   "exports": {
     ".": "./src/index.ts",
     "./account-replica": "./src/account-replica/index.ts",
     "./agent": "./src/agent/index.ts",
+    "./agent/cognitive-profile": "./src/agent/cognitive-profile.ts",
     "./agent/context-budget": "./src/agent/context-budget.ts",
     "./agent/model-fallback-status": "./src/agent/model-fallback-status.ts",
     "./agent/permission-shadow-review": "./src/agent/permission-shadow-review.ts",
@@ -96,6 +96,7 @@
     "./marketplace/filters": "./src/marketplace/filters.ts",
     "./mcp": "./src/mcp/index.ts",
     "./memory/context-select": "./src/memory/context-select.ts",
+    "./memory/document-provenance": "./src/memory/document-provenance.ts",
     "./memory/learning": "./src/memory/learning.ts",
     "./memory/proposals": "./src/memory/proposals.ts",
     "./memory/types": "./src/memory/types.ts",
@@ -143,6 +144,7 @@
     "./utils/logo": "./src/utils/logo.ts",
     "./utils/redaction": "./src/utils/redaction.ts",
     "./utils/service-url": "./src/utils/service-url.ts",
+    "./utils/sqlite-runtime": "./src/utils/sqlite-runtime.ts",
     "./utils/toolNames": "./src/utils/toolNames.ts",
     "./utils/url-safety": "./src/utils/url-safety.ts",
     "./utils/workspace": "./src/utils/workspace.ts",
@@ -165,10 +167,12 @@
     "./capabilities/agents-md": "./src/capabilities/agents-md.ts",
     "./code-intelligence": "./src/code-intelligence/index.ts",
     "./security": "./src/security/index.ts",
+    "./service-lifecycle": "./src/service-lifecycle.ts",
     "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts",
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",
-    "./commands/schemas": "./src/commands/schemas.ts"
+    "./commands/schemas": "./src/commands/schemas.ts",
+    "./domain": "./src/domain/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

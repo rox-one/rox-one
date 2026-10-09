@@ -13,6 +13,7 @@ export const KEYS = {
   featureProductTourV1: 'feature-product-tour-v1',
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
+  sidebarPinned: 'sidebar-pinned',
   sidebarDismissedGuidance: 'sidebar-dismissed-guidance',
   sidebarWidth: 'sidebar-width',
   sessionListWidth: 'session-list-width',
@@ -58,7 +59,6 @@ export const KEYS = {
   // Appearance
   showConnectionIcons: 'show-connection-icons',
   projectColorTreatment: 'project-color-treatment', // 'stripe' | 'stripe-tint'
-  workspaceSelectorRail: 'workspace-selector-rail',
   /** SE profile (opt-in via theme) */
   seLeftSidebarLayout: 'se-left-sidebar-layout',
   seAutoHideSidebars: 'se-auto-hide-sidebars',
@@ -72,8 +72,6 @@ export const KEYS = {
   // What's New
   // What's New — per-version seen list (timeline)
   whatsNewSeenVersions: 'whats-new-seen-versions',
-  // Workspace icon rail custom links (workspace-scoped via suffix)
-  workspaceRailLinks: 'workspace-rail-links',
   // Session multi-view tab (session-scoped via suffix) — legacy; prefer entityViewMode
   sessionViewMode: 'session-view-mode',
   // Entity multi-view tab (scoped via suffix e.g. session:<id>, note:<id>)

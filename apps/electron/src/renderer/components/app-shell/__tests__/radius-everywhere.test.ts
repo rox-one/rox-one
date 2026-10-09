@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { CENTER_MIN_WIDTH, PANEL_EDGE_INSET, PANEL_GAP } from '../panel-constants'
 
 /** Rectangular shell panes share a single hairline boundary. */
 const appShell = join(import.meta.dir, '..')
@@ -16,9 +17,12 @@ const rendererCss = readFileSync(join(import.meta.dir, '../../../index.css'), 'u
 
 describe('one-surface shell', () => {
   it('rectangular shell panes meet with no gap or inset', () => {
-    expect(constants).toContain('export const PANEL_GAP = 0')
-    expect(constants).toContain('export const PANEL_EDGE_INSET = 0')
-    expect(constants).toContain('export const CENTER_MIN_WIDTH = 420')
+    // Values come from the generated chrome tokens (tokens/chrome.css).
+    expect(constants).toContain('export const PANEL_GAP = CHROME_TOKENS.panelGap')
+    expect(constants).toContain('export const PANEL_EDGE_INSET = CHROME_TOKENS.panelEdgeInset')
+    expect(PANEL_GAP).toBe(0)
+    expect(PANEL_EDGE_INSET).toBe(0)
+    expect(CENTER_MIN_WIDTH).toBe(420)
   })
 
   it('renders sidebar and navigator as flush panes with a hairline divider', () => {

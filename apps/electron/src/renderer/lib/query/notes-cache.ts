@@ -87,8 +87,23 @@ export function patchCachedNote(workspaceId: string, note: NoteSummary, epoch: n
   }, epoch)
 }
 
-/** The workspace's task cache (one shared instance per workspace while it lives in the cache). */
-export function notesTaskCache<T>(workspaceId: string | null | undefined): NotesTaskCache<T> {
+/**
+ * The workspace's task cache if it is already in the shared cache, without
+ * creating one. A pure lookup: safe to call during render. Use
+ * `ensureNotesTaskCache` where the cache must be attached (a layout effect,
+ * an event handler or a task pass).
+ */
+export function notesTaskCache<T>(workspaceId: string | null | undefined): NotesTaskCache<T> | null {
+  if (!workspaceId) return null
+  return roxQueryClient().getQueryData<NotesTaskCache<T>>(roxKeys.notesTasks(workspaceId)) ?? null
+}
+
+/**
+ * The workspace's shared task cache (one instance per workspace while it lives
+ * in the cache), creating and registering it on first use. The registration is
+ * a write to the shared cache, so never call it during render.
+ */
+export function ensureNotesTaskCache<T>(workspaceId: string | null | undefined): NotesTaskCache<T> {
   if (!workspaceId) return { tasks: new Map(), updatedAt: new Map() }
   const client = roxQueryClient()
   const key = roxKeys.notesTasks(workspaceId)

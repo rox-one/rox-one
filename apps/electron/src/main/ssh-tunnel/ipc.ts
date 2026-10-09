@@ -22,6 +22,13 @@ export const SSH_BOOTSTRAP_PROGRESS_EVENT = 'ssh:bootstrapProgress'
 /** Resolution progress for an SSH-backed workspace being (re)connected. */
 export const SSH_CONNECTION_STATUS_EVENT = 'ssh:connectionStatus'
 
+type SenderEvent = { sender: { id: number } }
+
+export interface SshTunnelIpcDependencies {
+  /** Only managed app windows may drive SSH hosts/tunnels. */
+  isTrustedSender(event: SenderEvent): boolean
+}
+
 function broadcast(channel: string, payload: unknown): void {
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) win.webContents.send(channel, payload)
@@ -30,9 +37,13 @@ function broadcast(channel: string, payload: unknown): void {
 
 let registered = false
 
-export function registerSshTunnelIpc(): void {
+export function registerSshTunnelIpc(deps: SshTunnelIpcDependencies): void {
   if (registered) return
   registered = true
+
+  const assertSender = (event: SenderEvent): void => {
+    if (!deps.isTrustedSender(event)) throw new Error('IPC_SENDER_DENIED')
+  }
 
   const manager = getSshTunnelManager()
   manager.on('state', (state: TunnelState) => {
@@ -43,20 +54,34 @@ export function registerSshTunnelIpc(): void {
     if (status) broadcast(SSH_CONNECTION_STATUS_EVENT, status)
   })
 
-  ipcMain.handle('ssh:listHosts', () => loadSshHosts())
+  ipcMain.handle('ssh:listHosts', (event) => {
+    assertSender(event)
+    return loadSshHosts()
+  })
 
-  ipcMain.handle('ssh:addHost', (_e, input: SshHostInput) => addSshHost(input))
+  ipcMain.handle('ssh:addHost', (event, input: SshHostInput) => {
+    assertSender(event)
+    return addSshHost(input)
+  })
 
-  ipcMain.handle('ssh:updateHost', (_e, id: string, updates: Partial<SshHostConfig>) =>
-    updateSshHost(id, updates),
-  )
+  ipcMain.handle('ssh:updateHost', (event, id: string, updates: Partial<SshHostConfig>) => {
+    assertSender(event)
+    return updateSshHost(id, updates)
+  })
 
-  ipcMain.handle('ssh:deleteHost', (_e, id: string) => deleteSshHost(id))
+  ipcMain.handle('ssh:deleteHost', (event, id: string) => {
+    assertSender(event)
+    return deleteSshHost(id)
+  })
 
-  ipcMain.handle('ssh:importFromConfig', () => importSshConfigSuggestions())
+  ipcMain.handle('ssh:importFromConfig', (event) => {
+    assertSender(event)
+    return importSshConfigSuggestions()
+  })
 
   // Connect and return { url, token? } for the existing remote-workspace flow.
-  ipcMain.handle('ssh:connect', async (_e, hostId: string) => {
+  ipcMain.handle('ssh:connect', async (event, hostId: string) => {
+    assertSender(event)
     const host = getSshHost(hostId)
     if (!host) throw new Error(`Unknown SSH host: ${hostId}`)
     const state = await manager.connect(host)
@@ -67,6 +92,7 @@ export function registerSshTunnelIpc(): void {
   // One-click bootstrap: install (if needed) + start a managed server, then establish
   // the tunnel. Streams progress; returns { url, token } (managed secret) for workspace creation.
   ipcMain.handle('ssh:bootstrapConnect', async (event, hostId: string) => {
+    assertSender(event)
     const host = getSshHost(hostId)
     if (!host) throw new Error(`Unknown SSH host: ${hostId}`)
     const emit = (p: BootstrapProgress) => {
@@ -87,6 +113,7 @@ export function registerSshTunnelIpc(): void {
   ipcMain.handle(
     'ssh:resolveWorkspaceConnection',
     async (event, remoteServer: RemoteServerConfig) => {
+      assertSender(event)
       const onStatus = (s: SshConnectionStatus) => {
         const win = BrowserWindow.fromWebContents(event.sender)
         if (win && !win.isDestroyed()) {

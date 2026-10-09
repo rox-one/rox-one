@@ -670,6 +670,23 @@ export function useOnboarding({
     }
   }, [])
 
+  // A session that already exists is a completed Connect: jump straight to the
+  // success screen instead of starting another device approval.
+  const completeRoxConnect = useCallback((generation: number) => {
+    setRoxConnectStatus('success')
+    setRoxConnectError(undefined)
+    setTimeout(() => {
+      if (roxPollGeneration.current !== generation) return
+      if (gitBashMissingRef.current) {
+        setState(s => ({ ...s, step: 'git-bash' }))
+      } else if (isFirstRun) {
+        void finishFirstRun()
+      } else {
+        setState(s => ({ ...s, step: 'provider-select' }))
+      }
+    }, 400)
+  }, [isFirstRun, finishFirstRun])
+
   useEffect(() => {
     return () => {
       roxPollGeneration.current += 1
@@ -683,6 +700,20 @@ export function useOnboarding({
     setRoxConnectStatus('starting')
     setRoxConnectError(undefined)
     setRoxConnectCodes(null)
+    // An account already in the sealed store needs no new approval: the browser
+    // flow is only for the first registration.
+    try {
+      const existing = await window.electronAPI.getRoxCloudState()
+      if (roxPollGeneration.current !== generation) return
+      if (existing?.authBaseUrl) setRoxAuthBaseUrl(existing.authBaseUrl)
+      // Any persisted snapshot means the device is already registered; starting
+      // a fresh approval would revoke it. Only a truly empty store connects.
+      if (existing?.connected || existing?.account) {
+        completeRoxConnect(generation)
+        return
+      }
+    } catch { /* a failed probe falls through to a fresh device flow */ }
+    if (roxPollGeneration.current !== generation) return
     try {
       const result = await window.electronAPI.startRoxConnect()
       if (roxPollGeneration.current !== generation) return
@@ -725,17 +756,7 @@ export function useOnboarding({
         finished = true
         stopRoxConnectPoll()
         if (status === 'success') {
-          setRoxConnectStatus('success')
-          setTimeout(() => {
-            if (roxPollGeneration.current !== generation) return
-            if (gitBashMissingRef.current) {
-              setState(s => ({ ...s, step: 'git-bash' }))
-            } else if (isFirstRun) {
-              void finishFirstRun()
-            } else {
-              setState(s => ({ ...s, step: 'provider-select' }))
-            }
-          }, 400)
+          completeRoxConnect(generation)
           return
         }
         setRoxConnectStatus('error')
@@ -786,7 +807,7 @@ export function useOnboarding({
         visibleError(err instanceof Error ? err.message : undefined, t('onboarding.errors.connectFailed')),
       )
     }
-  }, [stopRoxConnectPoll, t, isFirstRun, finishFirstRun])
+  }, [stopRoxConnectPoll, completeRoxConnect, t])
 
   const autoConnectStarted = useRef(false)
   useEffect(() => {

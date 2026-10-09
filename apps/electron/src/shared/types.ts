@@ -37,6 +37,8 @@ import type { EntityRef } from '@rox/core/entities'
 // W1-08 (#1505): entity links/preview bridge types.
 import type { EntityLink, EntityPreview } from '@rox/core/entities'
 import type { EntityLinksRequest } from '@rox/shared/entities'
+import type { RoxAccountSnapshot } from '@rox/shared/auth'
+import type { TtsStreamChunk, VoiceWakeTrigger } from '@rox/shared/voice'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -49,6 +51,12 @@ import type {
 import type { ForeignAutoImportStatus } from '@rox/shared/sessions'
 import type { ProjectOkrDocument } from '@rox/shared/projects/types'
 import type { AgentBudgetSnapshot } from '@rox/shared/agent'
+import type {
+  DoctorReport,
+  ServiceLifecycleResult,
+  ServiceStatus,
+  TrayStatus,
+} from '@rox/shared/service-lifecycle'
 import type { OrgMember, OrgInvite, OrgRole } from '@rox/shared/orgs'
 import type {
   PersonalTaskWrite,
@@ -318,8 +326,8 @@ export type {
 
 import type { ViewConfig as KnowledgeViewConfig } from '@rox/shared/views';
 export type { KnowledgeViewConfig };
-import type { SecretRefEntry, SecretRefsSettingsPayload } from '@rox/shared/secrets';
-export type { SecretRefEntry, SecretRefsSettingsPayload };
+import type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview, InfisicalAccountPreviewInput } from '@rox/shared/secrets';
+export type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview, InfisicalAccountPreviewInput };
 import type { ZenShellSnapshot } from './shell-appearance';
 import type { ListDocTreeResult } from '@rox/core/knowledge/providers/siyuan';
 
@@ -548,7 +556,14 @@ import type {
   PublishPrepareResult,
   SiyuanSurfaceState,
   ExtensionSurfaceState,
+  SessionActorRef,
 } from '@rox/shared/protocol'
+
+// Browser Intelligence Pipeline contract — frozen in the workspace package
+// `@rox/browser-intel` (already linked into this app's node_modules). Type-only
+// so nothing from the package is bundled into the renderer.
+import type { BrowserIntelState, IntelligenceStats, ProfileSlotRecord, PipelineProgress } from '@rox/browser-intel'
+export type { BrowserIntelState, IntelligenceStats, ProfileSlotRecord, PipelineProgress }
 
 export interface WorkGraphConnectionRecord {
   readonly id: string
@@ -802,6 +817,12 @@ export interface ElectronAPI {
     grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
     spec: { segmentId: string; replacement: string },
   ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
+  // a1.4/d2: live meeting observation (device-local capture/playback; LOCAL_ONLY).
+  observeStart(args: { workspaceId: string; meetingId: string }): Promise<{ observing: boolean }>
+  observeStop(args: { workspaceId: string; meetingId: string }): Promise<{ observing: boolean }>
+  observeState(args: { workspaceId: string; meetingId: string }): Promise<{ observing: boolean }>
+  sessionSummary(args: { workspaceId: string; meetingId: string }): Promise<{ summary: string; updatedAt: number } | null>
+  transcriptLines(args: { workspaceId: string; meetingId: string; afterSeq?: number }): Promise<Array<{ seq: number; speaker: string; text: string; at: number; ownEcho?: boolean }>>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
@@ -869,6 +890,8 @@ export interface ElectronAPI {
     scannedAt: number
     cachePath: string
     truncated?: boolean
+    aborted?: boolean
+    unavailable?: 'not-live'
   }>
   foreignPersistSessions(args: {
     workspaceId: string
@@ -896,6 +919,15 @@ export interface ElectronAPI {
   browserCookieAutoStatus(): Promise<BrowserCookieAutoStatus>
   browserCookieAutoSet(args: { consent: boolean; profileId?: string; domains?: string[] }): Promise<BrowserCookieAutoStatus>
   browserCookieAutoRun(): Promise<BrowserCookieAutoStatus>
+  // Browser Intelligence Pipeline (local-only; reads/stages on this machine)
+  getBrowserIntelState(): Promise<BrowserIntelState>
+  setBrowserIntelConsent(consent: boolean): Promise<BrowserIntelState>
+  getBrowserIntelStats(): Promise<IntelligenceStats>
+  getBrowserIntelSlots(): Promise<ProfileSlotRecord[]>
+  startBrowserIntelRun(): Promise<{ started: boolean }>
+  cancelBrowserIntelRun(): Promise<{ cancelled: boolean }>
+  onBrowserIntelProgress(cb: (progress: PipelineProgress) => void): () => void
+  onBrowserIntelStateChanged(cb: (state: BrowserIntelState) => void): () => void
   importBrowserProfile(args: {
     workspaceId: string
     profileId: string
@@ -919,6 +951,11 @@ export interface ElectronAPI {
   // Memory provenance (spec F4/Y2): lessons/skills injected into the session's
   // prompts. Null for unknown sessions or sessions with no provenance record.
   getSessionProvenance(sessionId: string): Promise<SessionProvenance | null>
+  /**
+   * a1.3: assign or clear the session owner. The creator is write-once and is
+   * never rewritten by ownership changes.
+   */
+  assignSessionOwner(sessionId: string, owner: SessionActorRef | null): Promise<void>
 
   // Workspace management
   getWorkspaces(): Promise<Workspace[]>
@@ -1454,6 +1491,18 @@ export interface ElectronAPI {
   acceptSecurityRisk(input: import('@rox/shared/openclaw').AcceptSecurityRiskRequest): Promise<void>
   /** Revoke a previously accepted risk by fingerprint. */
   revokeSecurityRiskAcceptance(input: { workspaceId: string; fingerprint: string }): Promise<void>
+  // e1.4/e1.5: OS service abstraction (launchd/systemd/Windows service) — host-local.
+  serviceLifecycleGetStatus(): Promise<ServiceStatus>
+  serviceLifecycleInstall(): Promise<ServiceLifecycleResult>
+  serviceLifecycleStart(): Promise<ServiceLifecycleResult>
+  serviceLifecycleStop(): Promise<ServiceLifecycleResult>
+  serviceLifecycleRestart(): Promise<ServiceLifecycleResult>
+  serviceLifecycleUninstall(): Promise<ServiceLifecycleResult>
+  /** Push: the local service state changed (tray/menu surfaces). */
+  onServiceLifecycleStatusChanged(callback: (status: ServiceStatus) => void): () => void
+  // e1.6: doctor diagnostics (service/port/runtime/config/logs) — host-local.
+  runDiagnostics(): Promise<DoctorReport>
+  getDiagnosticsLast(): Promise<DoctorReport | null>
   getToolchainStatus(): Promise<ToolchainToolStatus[]>
   /** Push stream of per-tool status updates (download progress, phase changes). */
   onToolchainStatusChanged(callback: (status: ToolchainToolStatus) => void): () => void
@@ -1498,6 +1547,8 @@ export interface ElectronAPI {
   onMenuToggleSidebar(callback: () => void): () => void
   onMenuToggleInspector(callback: () => void): () => void
   onMenuToggleChatPictureInPicture(callback: () => void): () => void
+  /** e2.1: tray/menu service+agent status push. */
+  onMenuTrayStatusChanged(callback: (status: TrayStatus) => void): () => void
 
   // Deep link navigation listener (for external craftagents:// URLs)
   onDeepLinkNavigate(callback: (nav: DeepLinkNavigation) => void): () => void
@@ -1515,6 +1566,8 @@ export interface ElectronAPI {
   getCredentialMigrationStatus(): Promise<CredentialMigrationResult<CredentialMigrationStatusDto>>
   rollbackCredentialMigration(migrationId: string): Promise<CredentialMigrationResult<CredentialMigrationRollbackDto>>
   fabricInfisicalHealth(): Promise<{ available: boolean; providerId?: string }>
+  fabricInfisicalPreviewAccount(input: InfisicalAccountPreviewInput): Promise<InfisicalAccountPreview>
+  fabricInfisicalCommitImport(input: InfisicalAccountPreviewInput & { clientSecret: string; workspaceId?: string }): Promise<{ id: string }>
   fabricListConnections(...args: unknown[]): Promise<unknown>
   fabricCreateConnection(...args: unknown[]): Promise<unknown>
   fabricListCredentials(...args: unknown[]): Promise<unknown>
@@ -1699,14 +1752,18 @@ export interface ElectronAPI {
     connected: boolean
     authBaseUrl: string
     user: { id?: string; email?: string; name?: string } | null
-    account?: import('@rox/shared/auth').RoxAccountSnapshot | null
+    account?: RoxAccountSnapshot | null
     connectError?: string | null
     connectExpiresAt?: number | null
+    /** True while the last snapshot is served from cache during a broker outage. */
+    updating?: boolean
+    /** Epoch ms of the last snapshot the broker confirmed; null when never synced. */
+    lastSyncedAt?: number | null
   }>
   clearRoxCloud(): Promise<{ success: boolean }>
   /** Real rox.one balance (GET /api/me/balance) for the connected Rox cloud account. */
   getRoxBalance(): Promise<
-    | { status: 'ok'; balance: number }
+    | { status: 'ok'; balance: number; updating?: boolean; syncedAt?: number | null }
     | { status: 'disconnected' }
     | { status: 'error'; message: string }
   >
@@ -1835,6 +1892,12 @@ export interface ElectronAPI {
     audioBase64: string
     mimeType?: string
     language?: string
+    /**
+     * True when transcribing a file the user explicitly attached to a chat
+     * message. With a server-configured Deepgram key this authorizes the
+     * one-shot upload without the dictation consent dialog.
+     */
+    attachedFile?: boolean
   }): Promise<{
     text: string
     engine: string
@@ -1872,6 +1935,8 @@ export interface ElectronAPI {
   cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
   grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>
   sendVoiceChunk(payload: { audioBase64: string }): Promise<{ ok: true }>
+  /** Transient microphone RMS (0..1) for the live capture wave; ignored outside `recording`. */
+  sendVoiceLevel(payload: { level: number }): Promise<{ ok: true }>
   editVoiceTranscript(payload: { id: string; expectedRevisionId: string; text: string }): Promise<{ ok: true; revisionId: string }>
   selectVoiceTranscript(payload: { id: string; expectedRevisionId: string; revisionId: string }): Promise<{ ok: true; revisionId: string }>
   readVoiceRecordingAudio(payload: { id: string; offset: number; token?: string }): Promise<{ audioBase64: string; offset: number; totalBytes: number; token: string; hash: string; mimeType: string }>
@@ -1888,6 +1953,34 @@ export interface ElectronAPI {
   onVoiceJob(callback: (job: import('@rox/shared/voice').VoiceJob) => void): () => void
   onVoiceOverlay(callback: (state: import('@rox/shared/voice').OverlayState) => void): () => void
   onVoiceHotkey(callback: (payload: import('@rox/shared/voice/hotkey-types').VoiceHotkeyPayload) => void): () => void
+  // d1.3: realtime bridge control (credentials stay in main; renderer gets ephemeral tokens).
+  talkStart(args?: { sessionId?: string; mode?: string; voice?: string }): Promise<{ sessionId: string }>
+  talkStop(args: { sessionId: string }): Promise<void>
+  talkAudio(args: { sessionId: string; audioBase64: string }): Promise<{ ok: true }>
+  talkClientSecret(args: { sessionId: string }): Promise<{ clientSecret: string; expiresAt: number }>
+  /** Push: talk event stream (TALK_EVENT_TYPES vocabulary). */
+  onTalkEvent(callback: (event: unknown) => void): () => void
+  // d1.4: TTS pipeline (buffered + streaming).
+  ttsStreamStart(args: { text: string; voice?: string; sessionId?: string }): Promise<{ streamId: string }>
+  ttsStreamChunk(args: { streamId: string; audioBase64: string }): Promise<{ ok: true }>
+  /** Push: streamed TTS audio chunks (TTS_STREAM_CHUNK pushes). */
+  onTtsStreamChunk(callback: (chunk: TtsStreamChunk) => void): () => void
+  ttsStreamStop(args: { streamId: string }): Promise<void>
+  // d1.5: STT relay (WS reconnect + bounded queues).
+  sttStart(args?: { sessionId?: string; mimeType?: string; encoding?: string; sampleRate?: number }): Promise<{ streamId: string }>
+  sttAudio(args: { streamId: string; audioBase64: string }): Promise<{ ok: true }>
+  sttStop(args: { streamId: string }): Promise<void>
+  /** Push: STT relay events (partial/final transcripts). */
+  onSttEvent(callback: (event: unknown) => void): () => void
+  // d1.2: provider registry (realtime voice + speech capabilities).
+  getVoiceProviders(): Promise<{ realtime: unknown[]; speech: unknown[] }>
+  // d1.6: voice wake list (on-device recognition only; foreground-gated).
+  voiceWakeGet(): Promise<{ enabled: boolean; names: string[] }>
+  voiceWakeSet(args: { enabled?: boolean; names?: string[] }): Promise<{ enabled: boolean; names: string[] }>
+  onVoiceWakeChanged(callback: (state: { enabled: boolean; names: string[] }) => void): () => void
+  voiceTrigger(args?: { name?: string }): Promise<void>
+  /** Push: a resolved wake trigger routed to this client. */
+  onVoiceTrigger(callback: (trigger: VoiceWakeTrigger) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
   getDraft(sessionId: string): Promise<import('@rox/shared/config').SessionDraft | null>
@@ -1998,6 +2091,8 @@ export interface ElectronAPI {
   pruneSkills(workspaceId: string, olderThanDays: number, slugs?: string[]): Promise<SkillPruneResult>
   /** T1: copy a workspace skill into {projectRoot}/.agents/skills/<slug>; refuses overwrites of differing targets. */
   exportSkillToProject(workspaceId: string, skillSlug: string, projectRoot: string): Promise<SkillExportResult>
+  /** c2.3: gating/eligibility (agent allowlist + requires.bins/env/config) for a skill. */
+  getSkillEligibility(workspaceId: string, skillSlug: string): Promise<{ eligible: boolean; reason?: string }>
 
   // Skills change listener (live updates when skills are added/removed/modified)
   onSkillsChanged(callback: (workspaceId: string, skills: LoadedSkill[]) => void): () => void
@@ -2053,6 +2148,12 @@ export interface ElectronAPI {
   rejectMemoryProposal(workspaceId: string, proposalId: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   editMemoryProposal(workspaceId: string, proposalId: string, text: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   deleteMemoryProposal(workspaceId: string, proposalId: string): Promise<boolean>
+  // c1.3: hybrid memory search (BM25 + vector → decay → importance → MMR).
+  searchMemory(args: { workspaceId: string; query: string; limit?: number; sessionId?: string }): Promise<Array<{ chunkId: string; text: string; score: number; origin?: string }>>
+  getMemoryChunk(args: { workspaceId: string; chunkId: string }): Promise<{ chunkId: string; text: string; origin?: string; metadata?: Record<string, unknown> } | null>
+  getMemoryIndexStatus(workspaceId: string): Promise<{ state: 'absent' | 'building' | 'ready' | 'stale' | 'failed'; chunks?: number; updatedAt?: number; safeError?: string }>
+  /** c1.3: rebuild the memory index (chunking version + provider model identity). */
+  rebuildMemoryIndex(workspaceId: string): Promise<{ ok: boolean; state: 'absent' | 'building' | 'ready' | 'stale' | 'failed' }>
   // Learning (continual learning, PRD §15) — candidates/evidence/outcomes/policies.
   // `observe`/`recordOutcome`/`recordCorrection` are agent/native channels and are
   // deliberately absent here.
@@ -2149,6 +2250,7 @@ export interface ElectronAPI {
   loadPresetTheme(themeId: string): Promise<import('@rox/shared/config').PresetTheme | null>
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
+  setAppMaterial(material: import('@rox/shared/config').MaterialSettings | null): Promise<import('@rox/shared/config').ThemeOverrides | null>
   getWorkspaceColorTheme(workspaceId: string): Promise<string | null>
   setWorkspaceColorTheme(workspaceId: string, themeId: string | null): Promise<void>
   getAllWorkspaceThemes(): Promise<Record<string, string | undefined>>
@@ -2189,6 +2291,8 @@ export interface ElectronAPI {
   setZenShell(patch: {
     enabled?: boolean
     materialPreference?: 'system' | 'glass' | 'opaque'
+    /** PERF-07 low-power rendering choice. */
+    renderProfile?: 'auto' | 'performance' | 'standard'
   }): Promise<ZenShellSnapshot>
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
 

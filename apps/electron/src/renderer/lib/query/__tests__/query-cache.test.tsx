@@ -24,7 +24,7 @@ import {
   type RoxQueryStorage,
 } from '../persist'
 import { startRoxQueryEventBridge } from '../event-bridge'
-import { cachedNotesList, fetchNotesList, notesTaskCache } from '../notes-cache'
+import { cachedNotesList, ensureNotesTaskCache, fetchNotesList, notesTaskCache } from '../notes-cache'
 import { resetSharedReads, sharedRead } from '../shared-read'
 import { useWorkspaceWork } from '../../useWorkspaceWork'
 
@@ -129,11 +129,20 @@ describe('request dedupe', () => {
   })
 
   it('the notes task cache is shared per workspace and separate across workspaces', () => {
-    const a = notesTaskCache<string>('a')
+    const a = ensureNotesTaskCache<string>('a')
     a.tasks.set('note', ['task'])
-    expect(notesTaskCache<string>('a').tasks.get('note')).toEqual(['task'])
-    expect(notesTaskCache<string>('b').tasks.size).toBe(0)
-    expect(notesTaskCache<string>(null).tasks.size).toBe(0)
+    expect(ensureNotesTaskCache<string>('a').tasks.get('note')).toEqual(['task'])
+    expect(ensureNotesTaskCache<string>('b').tasks.size).toBe(0)
+    expect(ensureNotesTaskCache<string>(null).tasks.size).toBe(0)
+  })
+
+  it('the task cache lookup never creates an entry', () => {
+    const client = roxQueryClient()
+    expect(notesTaskCache<string>('absent')).toBeNull()
+    expect(client.getQueryData(roxKeys.notesTasks('absent'))).toBeUndefined()
+    expect(notesTaskCache<string>(null)).toBeNull()
+    const created = ensureNotesTaskCache<string>('present')
+    expect(notesTaskCache<string>('present')).toBe(created)
   })
 })
 

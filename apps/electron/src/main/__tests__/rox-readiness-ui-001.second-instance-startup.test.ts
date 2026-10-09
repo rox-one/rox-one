@@ -56,7 +56,7 @@ describe('UI-001 actual second-instance startup deep-link ingress', () => {
     expect(f.pending()).toBe(url)
     expect(f.calls).toEqual([])
     f.ready(manager); await f.replay(); await f.replay()
-    expect(f.calls).toEqual([[url, manager, f.sink, f.resolver]])
+    expect(f.calls).toEqual([[url, manager, f.sink, f.resolver, undefined, 'os']])
     expect(f.pending()).toBeNull()
   })
 
@@ -75,7 +75,7 @@ describe('UI-001 actual second-instance startup deep-link ingress', () => {
   test('ready ingress dispatches immediately and logs an actual rejected callback', async () => {
     const f = fixture(), manager = {}, failure = new Error('transport unavailable')
     f.ready(manager); f.secondUrl('rox://current')
-    expect(f.calls).toEqual([['rox://current', manager, f.sink, f.resolver]])
+    expect(f.calls).toEqual([['rox://current', manager, f.sink, f.resolver, undefined, 'os']])
     expect(f.pending()).toBeNull()
     f.reject(failure); f.secondUrl('craftagents://refused')
     await Promise.resolve(); await Promise.resolve()

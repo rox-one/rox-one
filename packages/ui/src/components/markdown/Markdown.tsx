@@ -15,6 +15,7 @@ import {
   LazyMarkdownLatexBlock as MarkdownLatexBlock,
   LazyMarkdownPdfBlock as MarkdownPdfBlock,
   LazyMarkdownDiffBlock as MarkdownDiffBlock,
+  LazyMarkdownOpenUIBlock as MarkdownOpenUIBlock,
 } from './lazy-blocks'
 import { MarkdownHtmlBlock } from './MarkdownHtmlBlock'
 import { MarkdownImageBlock } from './MarkdownImageBlock'
@@ -42,6 +43,7 @@ export type DisablablePreviewBlock =
   | 'html-preview'
   | 'pdf-preview'
   | 'image-preview'
+  | 'openui'
 
 /**
  * Render modes for markdown content:
@@ -99,12 +101,35 @@ export interface MarkdownProps {
    *
    * When a preview-block component renders user-supplied markdown through
    * `Markdown` again (e.g. `MarkdownDocBlock`), it can pass the names of the
-   * preview-block types it wants to suppress to prevent infinite recursion.
-   * Suppressed blocks fall through to the default `CodeBlock` renderer.
+   * preview-block types it wants to suppress to prevent infinite recursion /
+   * a nested interactive block. Suppressed blocks fall through to the default
+   * `CodeBlock` renderer.
    *
    * Default behavior (prop omitted): all preview blocks are registered.
    */
-  disablePreviewBlocks?: ReadonlySet<DisablablePreviewBlock>
+  disablePreviewBlocks?: Partial<Record<DisablablePreviewBlock, true>>
+  /**
+   * Whether the surrounding message is still streaming.
+   *
+   * Streaming interactive (`openui`) blocks re-parse the growing program,
+   * show a placeholder until a renderable root exists, and keep their form
+   * controls disabled until streaming ends.
+   * @default false
+   */
+  isStreaming?: boolean
+  /**
+   * Send a follow-up user message from an interactive (`openui`) block action
+   * (`@ToAssistant`).
+   */
+  onSendPrompt?: (text: string) => void
+  /**
+   * Identity of the message/turn that owns this content (e.g. `${sessionId}:${messageId}`).
+   *
+   * Interactive (`openui`) blocks persist form state under
+   * `${blockScope ?? ''}|${blockId}`; the scope keeps a content-identical block
+   * in one message from hydrating another message's form state.
+   */
+  blockScope?: string
 }
 
 /** Context for collapsible sections */
@@ -200,10 +225,13 @@ function createComponents(
   collapsibleContext?: CollapsibleContext | null,
   firstMermaidCodeRef?: React.RefObject<string | null>,
   hideFirstMermaidExpand: boolean = true,
-  disablePreviewBlocks?: ReadonlySet<DisablablePreviewBlock>,
+  disablePreviewBlocks?: Partial<Record<DisablablePreviewBlock, true>>,
   sourceByUrl?: ReadonlyMap<string, SourceCitationView>,
+  isStreaming: boolean = false,
+  onSendPrompt?: (text: string) => void,
+  blockScope?: string,
 ): Partial<Components> {
-  const isPreviewEnabled = (name: DisablablePreviewBlock) => !disablePreviewBlocks?.has(name)
+  const isPreviewEnabled = (name: DisablablePreviewBlock) => !disablePreviewBlocks?.[name]
   let blockIndex = 0
   const wrapBlock = (
     blockType: string,
@@ -228,6 +256,20 @@ function createComponents(
         {child}
       </div>
     )
+  }
+
+  // The openui block persists form state under the id wrapBlock assigns to its
+  // wrapper, so preview the id here (the caller passes the result straight into
+  // wrapBlock('openui', …)). wrapBlock increments blockIndex first, hence +1.
+  const nextBlockId = (
+    blockType: string,
+    content: string,
+    nodePosition?: { start?: { line?: number }; end?: { line?: number } },
+  ) => {
+    const startLine = nodePosition?.start?.line
+    const endLine = nodePosition?.end?.line
+    const path = startLine && endLine ? `line:${startLine}-${endLine}` : `idx:${blockIndex + 1}`
+    return `blk-${stableHash(`${blockType}|${path}|${content.slice(0, 240)}`)}`
   }
 
   const baseComponents: Partial<Components> = {
@@ -367,7 +409,11 @@ function createComponents(
 
         // Block code
         if (match || isBlock) {
-          const code = String(children).replace(/\n$/, '')
+          // An empty fenced block reaches this renderer with `children`
+          // undefined; keep the body a string so the fallback code block and
+          // every fence-language branch below see an empty body, not
+          // \"undefined\".
+          const code = String(children ?? '').replace(/\n$/, '')
           // Diff code blocks → pierre/diffs for a proper diff viewer
           if (match?.[1] === 'diff') {
             return wrapBlock('code', code, <MarkdownDiffBlock code={code} className="my-2" />, props.node?.position)
@@ -423,6 +469,24 @@ function createComponents(
               'mermaid',
               code,
               <MarkdownMermaidBlock code={code} className="my-2" showExpandButton={!isFirstBlock} />,
+              props.node?.position,
+            )
+          }
+          // OpenUI Lang blocks → interactive OpenUI tree (tables, forms, charts)
+          if (match?.[1] === 'openui' && isPreviewEnabled('openui')) {
+            const blockId = nextBlockId('openui', code, props.node?.position)
+            return wrapBlock(
+              'openui',
+              code,
+              <MarkdownOpenUIBlock
+                code={code}
+                className="my-2"
+                isStreaming={isStreaming}
+                blockId={blockId}
+                onSendPrompt={onSendPrompt}
+                onUrlClick={onUrlClick}
+                blockScope={blockScope}
+              />,
               props.node?.position,
             )
           }
@@ -507,7 +571,8 @@ function createComponents(
       const isBlock = 'node' in props && props.node?.position?.start.line !== props.node?.position?.end.line
 
       if (match || isBlock) {
-        const code = String(children).replace(/\n$/, '')
+        // See minimal mode: an empty fence body arrives as `undefined`.
+        const code = String(children ?? '').replace(/\n$/, '')
         // Diff code blocks → pierre/diffs for a proper diff viewer
         if (match?.[1] === 'diff') {
           return wrapBlock('code', code, <MarkdownDiffBlock code={code} className="my-2" />, props.node?.position)
@@ -559,6 +624,24 @@ function createComponents(
             'mermaid',
             code,
             <MarkdownMermaidBlock code={code} className="my-2" showExpandButton={!isFirstBlock} />,
+            props.node?.position,
+          )
+        }
+        // OpenUI Lang blocks → interactive OpenUI tree (tables, forms, charts)
+        if (match?.[1] === 'openui' && isPreviewEnabled('openui')) {
+          const blockId = nextBlockId('openui', code, props.node?.position)
+          return wrapBlock(
+            'openui',
+            code,
+            <MarkdownOpenUIBlock
+              code={code}
+              className="my-2"
+              isStreaming={isStreaming}
+              blockId={blockId}
+              onSendPrompt={onSendPrompt}
+              onUrlClick={onUrlClick}
+              blockScope={blockScope}
+            />,
             props.node?.position,
           )
         }
@@ -718,6 +801,9 @@ export function Markdown({
   collapsible = false,
   hideFirstMermaidExpand = true,
   disablePreviewBlocks,
+  isStreaming = false,
+  onSendPrompt,
+  blockScope,
 }: MarkdownProps) {
   // Get collapsible context if enabled
   const collapsibleContext = useCollapsibleMarkdown()
@@ -741,8 +827,8 @@ export function Markdown({
   )
 
   const components = React.useMemo(
-    () => wrapWithSafeProxy(createComponents(mode, onUrlClick, onFileClick, collapsible ? collapsibleContext : null, firstMermaidCodeRef, hideFirstMermaidExpand, disablePreviewBlocks, sourceByUrl)),
-    [mode, onUrlClick, onFileClick, collapsible, collapsibleContext, hideFirstMermaidExpand, disablePreviewBlocks, sourceByUrl]
+    () => wrapWithSafeProxy(createComponents(mode, onUrlClick, onFileClick, collapsible ? collapsibleContext : null, firstMermaidCodeRef, hideFirstMermaidExpand, disablePreviewBlocks, sourceByUrl, isStreaming, onSendPrompt, blockScope)),
+    [mode, onUrlClick, onFileClick, collapsible, collapsibleContext, hideFirstMermaidExpand, disablePreviewBlocks, sourceByUrl, isStreaming, onSendPrompt, blockScope]
   )
 
   // Preprocess to convert raw URLs and file paths to markdown links
@@ -799,7 +885,9 @@ export const MemoizedMarkdown = React.memo(
         prevProps.children === nextProps.children &&
         prevProps.mode === nextProps.mode &&
         prevProps.disablePreviewBlocks === nextProps.disablePreviewBlocks &&
-        prevProps.sourceCitations === nextProps.sourceCitations
+        prevProps.sourceCitations === nextProps.sourceCitations &&
+        prevProps.isStreaming === nextProps.isStreaming &&
+        prevProps.blockScope === nextProps.blockScope
       )
     }
     // Otherwise compare content and mode
@@ -807,7 +895,9 @@ export const MemoizedMarkdown = React.memo(
       prevProps.children === nextProps.children &&
       prevProps.mode === nextProps.mode &&
       prevProps.disablePreviewBlocks === nextProps.disablePreviewBlocks &&
-      prevProps.sourceCitations === nextProps.sourceCitations
+      prevProps.sourceCitations === nextProps.sourceCitations &&
+      prevProps.isStreaming === nextProps.isStreaming &&
+      prevProps.blockScope === nextProps.blockScope
     )
   }
 )

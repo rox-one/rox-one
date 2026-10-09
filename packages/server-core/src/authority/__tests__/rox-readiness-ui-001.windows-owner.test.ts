@@ -1,95 +1,159 @@
 import { expect, test } from 'bun:test'
-import { mkdtempSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { join, resolve, win32 } from 'node:path'
 import { buildSync } from 'esbuild'
 import { captureTestCommand } from '../../../../../scripts/test-all'
-import { requireOsOwner, type OsOwnerDependencies } from '../native-os-owner'
+import { requireOsOwner, resolveWindowsSystemRoot, secureOsPrivatePaths } from '../os-private-path.ts'
 
 const ownerError = 'maintenance requires the state directory OS owner'
-const windows: OsOwnerDependencies = { platform: 'win32', arch: 'x64', env: { SystemRoot: 'C:\\Windows' } }
+const privateRulesError = 'native authority requires OS-owner private access rules'
+const currentSid = 'S-1-5-21-111-222-333-1001'
 
-test('Windows ownership uses a successful actual command callback when POSIX UID is absent', () => {
-  let calls = 0
-  requireOsOwner('C:\\private\\authority', {
-    ...windows, getuid: undefined,
-    stat: () => { throw new Error('POSIX stat owner must not authorize Windows') },
-    exec: () => { calls++; return '1' },
-  })
-  expect(calls).toBe(1)
-})
-
-test('Windows ownership keeps a fixed encoded script and a literal target outside argv', () => {
-  const invocations: Array<{ file: string; args: string[]; options: any }> = []
-  const env = { SystemRoot: 'C:\\Windows', Path: 'existing path', ROX_NATIVE_OWNER_PROBE_PATH: 'stale inherited target' }
-  const target = "C:\\private\\[literal] 'quoted'; $env:OTHER"
-  const exec: OsOwnerDependencies['exec'] = (file, args, options) => { invocations.push({ file, args, options }); return '1\r\n' }
-  requireOsOwner(target, { ...windows, env, exec })
-  requireOsOwner('C:\\other\\authority', { ...windows, env, exec })
-  expect(invocations[0]!.file).toBe('C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe')
-  expect(invocations[0]!.args.slice(0, 4)).toEqual(['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand'])
-  expect(invocations[0]!.args).toEqual(invocations[1]!.args)
-  expect(invocations[0]!.args.join(' ')).not.toContain(target)
-  const script = Buffer.from(invocations[0]!.args[4]!, 'base64').toString('utf16le')
-  expect(script).toContain('Get-Acl -LiteralPath $target')
-  expect(script).toContain('[Security.Principal.WindowsIdentity]::GetCurrent()')
-  expect(script).toContain('$tokenOwner = $identity.Owner')
-  expect(script).not.toContain('$identity.Groups')
-  expect(script).not.toContain(target)
-  expect(script).not.toContain('Set-Acl')
-  expect(invocations[0]!.options).toMatchObject({ timeout: 2_000, maxBuffer: 1_024, windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'], env: { ...env, ROX_NATIVE_OWNER_PROBE_PATH: target } })
-  expect(env.ROX_NATIVE_OWNER_PROBE_PATH).toBe('stale inherited target')
-})
-
-test('a WOW64 host uses the fixed native PowerShell executable', () => {
-  let executable = ''
-  requireOsOwner('C:\\private\\authority', { ...windows, arch: 'ia32',
-    exec: file => { executable = file; return '1' } })
-  expect(executable).toBe('C:\\Windows\\Sysnative\\WindowsPowerShell\\v1.0\\powershell.exe')
-})
-
-for (const output of ['0', '', 'true', '1\nprivate diagnostics', 'S-1-5-21-foreign']) {
-  test(`foreign or malformed Windows owner evidence fails closed (${JSON.stringify(output)})`, () => {
-    expect(() => requireOsOwner('C:\\private\\authority', { ...windows, exec: () => output })).toThrow(ownerError)
-  })
+// The batch probe reads the request from base64 stdin and never from argv, so
+// every Windows case is exercised through the real single probe implementation.
+// The child imports the probe with a dynamic import because bun's mock.module
+// must be registered before the module loads; a static import cannot work here.
+function runProbeChild(script: string): Record<string, unknown> {
+  const result = spawnSync(process.execPath, ['--eval', script], { encoding: 'utf8', timeout: 30_000, maxBuffer: 256 * 1024 })
+  if (result.error || result.status !== 0) throw new Error(`Probe boundary failed: ${result.error ?? result.stderr}`)
+  return JSON.parse(result.stdout.trim()) as Record<string, unknown>
 }
 
-for (const code of ['ENOENT', 'ETIMEDOUT', 'ENOBUFS', 'EACCES']) {
-  test(`Windows command ${code} fails closed without disclosing its diagnostics`, () => {
-    const privateError = Object.assign(new Error('private path and SID'), { code })
-    let failure: unknown
-    try { requireOsOwner('C:\\private\\authority', { ...windows, exec: () => { throw privateError } }) }
-    catch (error) { failure = error }
-    expect(failure).toBeInstanceOf(Error)
-    expect((failure as Error).message).toBe(ownerError)
-    expect((failure as Error).message).not.toContain('private path and SID')
+test('Windows ownership reuses the single batch probe with a fixed executable, base64 stdin request and unified 180s budget', () => {
+  const proof = runProbeChild(`
+import { mock } from 'bun:test';
+import * as filesystem from 'node:fs';
+import * as childProcess from 'node:child_process';
+const resolver = () => { throw new Error('ancestor walker must not run'); };
+resolver.native = () => 'C:\\\\Windows';
+mock.module('node:fs', () => ({ ...filesystem, realpathSync: resolver }));
+let captured;
+mock.module('node:child_process', () => ({ ...childProcess, spawnSync(executable, args, options) {
+  captured = { executable, args, options };
+  const descriptor = { currentSid: '${currentSid}', tokenOwnerSid: '${currentSid}', paths: [
+    { path: 'C:\\\\owned\\\\state', kind: 'directory', ownerSid: '${currentSid}', reparsePoint: false, protected: true,
+      rules: [{ sid: '${currentSid}', type: 'Allow', rights: 2032127, inherited: false, inheritance: 3, propagation: 0 }] }] };
+  return { status: 0, signal: null, stdout: JSON.stringify(descriptor), stderr: '', error: undefined };
+} }));
+Object.defineProperty(process, 'platform', { value: 'win32' });
+const { requireOsOwner } = await import(${JSON.stringify(new URL('../os-private-path.ts', import.meta.url).href)});
+requireOsOwner('C:\\\\owned\\\\state');
+console.log(JSON.stringify({ executable: captured.executable, args: captured.args, timeout: captured.options.timeout,
+  maxBuffer: captured.options.maxBuffer, windowsHide: captured.options.windowsHide,
+  stdin: Buffer.from(captured.options.input, 'base64').toString('utf8') }));
+`)
+  expect(proof.executable).toBe('C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe')
+  expect((proof.args as string[]).slice(0, 3)).toEqual(['-NoProfile', '-NonInteractive', '-EncodedCommand'])
+  expect((proof.args as string[]).join(' ')).not.toContain('owned')
+  expect(JSON.parse(proof.stdin as string)).toEqual({
+    paths: [{ path: 'C:\\owned\\state', kind: 'directory' }], operation: 'require-private',
   })
-}
-
-for (const [env, target] of [[{}, 'C:\\private'], [{ SystemRoot: 'relative' }, 'C:\\private'],
-  [{ SystemRoot: 'C:\\Windows' }, 'relative'], [{ SystemRoot: 'C:\\Windows' }, 'C:\\invalid\0path']] as const) {
-  test(`unsafe Windows command input is rejected before execution (${JSON.stringify(env)}, ${JSON.stringify(target)})`, () => {
-    let calls = 0
-    expect(() => requireOsOwner(target, { ...windows, env, exec: () => { calls++; return '1' } })).toThrow(ownerError)
-    expect(calls).toBe(0)
-  })
-}
-
-test('POSIX owner checks retain UID equality and reject missing identity', () => {
-  expect(() => requireOsOwner('/controlled', { platform: 'linux', getuid: () => 501, stat: () => ({ uid: 501 }) })).not.toThrow()
-  expect(() => requireOsOwner('/controlled', { platform: 'linux', getuid: () => 501, stat: () => ({ uid: 502 }) })).toThrow(ownerError)
-  expect(() => requireOsOwner('/controlled', { platform: 'linux', getuid: undefined,
-    stat: () => { throw new Error('No stat without identity') } })).toThrow(ownerError)
+  expect(proof.timeout).toBe(180_000)
+  expect(proof.maxBuffer).toBe(64 * 1024)
+  expect(proof.windowsHide).toBe(true)
 })
 
-if (process.platform !== 'win32') test('the actual POSIX filesystem rejects a controlled foreign UID without changing ownership', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'rox-owner-posix-'))
+test('Windows ownership fails closed without disclosing diagnostics when the batch probe fails', () => {
+  const proof = runProbeChild(`
+import { mock } from 'bun:test';
+import * as filesystem from 'node:fs';
+import * as childProcess from 'node:child_process';
+const resolver = () => { throw new Error('ancestor walker must not run'); };
+resolver.native = () => 'C:\\\\Windows';
+mock.module('node:fs', () => ({ ...filesystem, realpathSync: resolver }));
+let timeout;
+mock.module('node:child_process', () => ({ ...childProcess, spawnSync(executable, args, options) {
+  timeout = options.timeout;
+  return { status: null, signal: 'SIGTERM', stdout: '', stderr: 'x'.repeat(5000) + '\\nWindows private authority stage: input-ready',
+    error: Object.assign(new Error('controlled child deadline'), { code: 'ETIMEDOUT' }) };
+} }));
+Object.defineProperty(process, 'platform', { value: 'win32' });
+const { requireOsOwner } = await import(${JSON.stringify(new URL('../os-private-path.ts', import.meta.url).href)});
+try { requireOsOwner('C:\\\\owned\\\\state'); console.log(JSON.stringify({ accepted: true })); }
+catch (error) { console.log(JSON.stringify({ accepted: false, message: error.message, timeout })); }
+`)
+  expect(proof.accepted).toBe(false)
+  const message = proof.message as string
+  expect(message).toContain('Windows OS ownership verification failed')
+  expect(message).toContain('ETIMEDOUT')
+  expect(message).toContain('Windows private authority stage: input-ready')
+  expect(message).not.toContain('xxx')
+  expect(proof.timeout).toBe(180_000)
+})
+
+test('Windows ownership rejects a malformed descriptor output', () => {
+  const proof = runProbeChild(`
+import { mock } from 'bun:test';
+import * as filesystem from 'node:fs';
+import * as childProcess from 'node:child_process';
+const resolver = () => { throw new Error('ancestor walker must not run'); };
+resolver.native = () => 'C:\\\\Windows';
+mock.module('node:fs', () => ({ ...filesystem, realpathSync: resolver }));
+mock.module('node:child_process', () => ({ ...childProcess, spawnSync() { return { status: 0, signal: null, stdout: 'not json', stderr: '', error: undefined }; } }));
+Object.defineProperty(process, 'platform', { value: 'win32' });
+const { requireOsOwner } = await import(${JSON.stringify(new URL('../os-private-path.ts', import.meta.url).href)});
+try { requireOsOwner('C:\\\\owned\\\\state'); console.log(JSON.stringify({ accepted: true })); }
+catch (error) { console.log(JSON.stringify({ accepted: false, message: error.message })); }
+`)
+  expect(proof.accepted).toBe(false)
+  expect(proof.message).toContain('invalid descriptor')
+})
+
+if (process.platform !== 'win32') test('POSIX owner checks retain real UID equality locally', () => {
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'rox-owner-posix-')))
   try {
     expect(() => requireOsOwner(directory)).not.toThrow()
-    expect(() => requireOsOwner(directory, { getuid: () => statSync(directory).uid + 1 })).toThrow(ownerError)
   } finally { rmSync(directory, { recursive: true, force: true }) }
 })
+
+if (process.platform !== 'win32') test('POSIX owner checks reject a foreign UID without changing ownership', () => {
+  const proof = runProbeChild(`
+import { mock } from 'bun:test';
+import * as filesystem from 'node:fs';
+mock.module('node:fs', () => ({ ...filesystem, statSync: () => ({ uid: 502 }) }));
+Object.defineProperty(process, 'getuid', { value: () => 501, configurable: true });
+const { requireOsOwner } = await import(${JSON.stringify(new URL('../os-private-path.ts', import.meta.url).href)});
+try { requireOsOwner('/controlled'); console.log(JSON.stringify({ accepted: true })); }
+catch (error) { console.log(JSON.stringify({ accepted: false, message: error.message })); }
+`)
+  expect(proof.accepted).toBe(false)
+  expect(proof.message).toBe(ownerError)
+})
+
+function broadenWindowsAcl(path: string): void {
+  const systemRoot = resolveWindowsSystemRoot()
+  const executable = win32.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
+  const script = `
+$ErrorActionPreference = 'Stop'
+$path = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String([Console]::In.ReadToEnd()))
+$acl = [System.IO.Directory]::GetAccessControl($path)
+$everyone = New-Object System.Security.Principal.SecurityIdentifier('S-1-1-0')
+$rule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyone, [System.Security.AccessControl.FileSystemRights]::ReadAndExecute, [System.Security.AccessControl.AccessControlType]::Allow)
+$acl.AddAccessRule($rule)
+[System.IO.Directory]::SetAccessControl($path, $acl)
+`
+  const result = spawnSync(executable, ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], {
+    input: Buffer.from(path, 'utf8').toString('base64'), encoding: 'utf8', timeout: 180_000, maxBuffer: 64 * 1024,
+    env: { SystemRoot: systemRoot, WINDIR: systemRoot }, windowsHide: true,
+  })
+  if (result.error || result.status !== 0) throw new Error(`Actual Windows ACL test mutation failed: ${result.error ?? result.stderr}`)
+}
+
+if (process.platform === 'win32') test('actual Windows batch probe secures, re-verifies and rejects a broadened state-directory DACL', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'rox-owner-actual-')))
+  try {
+    const stateDir = join(root, 'state')
+    mkdirSync(stateDir)
+    secureOsPrivatePaths([{ path: stateDir, kind: 'directory' }])
+    expect(() => requireOsOwner(stateDir)).not.toThrow()
+    broadenWindowsAcl(stateDir)
+    expect(() => requireOsOwner(stateDir)).toThrow(privateRulesError)
+    secureOsPrivatePaths([{ path: stateDir, kind: 'directory' }])
+    expect(() => requireOsOwner(stateDir)).not.toThrow()
+  } finally { rmSync(root, { recursive: true, force: true }) }
+}, 480_000)
 
 async function runOwnerHost(program: string) {
   const root = resolve(import.meta.dir, '../../../../..')
@@ -103,49 +167,11 @@ async function runOwnerHost(program: string) {
     for (const key of ['PATH', 'Path', 'SystemRoot', 'WINDIR', 'HOME', 'USERPROFILE', 'TMPDIR', 'TMP', 'TEMP']) {
       if (process.env[key]) environment[key] = process.env[key]
     }
-    return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 15_000 })
+    return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 420_000 })
   } finally { rmSync(directory, { recursive: true, force: true }) }
 }
 
-if (process.platform === 'win32') test('actual Windows identity accepts the user/default token owner and rejects a controlled foreign ACL owner', async () => {
-  const result = await runOwnerHost(`
-    import assert from 'node:assert/strict'; import {execFileSync} from 'node:child_process';
-    import {requireOsOwner} from './packages/server-core/src/authority/native-os-owner';
-    // Get-Acl is the sole controlled OS collaborator. The exact production
-    // script and real WindowsIdentity getters execute in real PowerShell.
-    const aclCallback = \`
-      function Get-Acl {
-        param([String]$LiteralPath)
-        $current = [Security.Principal.WindowsIdentity]::GetCurrent()
-        try {
-          $mode = [Environment]::GetEnvironmentVariable('ROX_TEST_OWNER_CASE', 'Process')
-          $sid = switch ($mode) { 'user' { $current.User.Value } 'token-owner' { $current.Owner.Value } default { 'S-1-0-0' } }
-          $result = New-Object PSObject -Property @{ ControlledOwnerSid = $sid }
-          $result | Add-Member -MemberType ScriptMethod -Name GetOwner -Value {
-            param($type)
-            return [Security.Principal.SecurityIdentifier]::new($this.ControlledOwnerSid)
-          }
-          return $result
-        } finally { $current.Dispose() }
-      }
-    \`;
-    for (const mode of ['user','token-owner','foreign']) {
-      const operation=()=>requireOsOwner('C:\\\\controlled\\\\authority', { exec(file,args,options) {
-        const script=Buffer.from(args.at(-1),'base64').toString('utf16le');
-        const encoded=Buffer.from(aclCallback+script,'utf16le').toString('base64');
-        return execFileSync(file,[...args.slice(0,-1),encoded],{...options,env:{...options.env,ROX_TEST_OWNER_CASE:mode}});
-      }});
-      if(mode==='foreign') assert.throws(operation,/maintenance requires the state directory OS owner/);
-      else assert.doesNotThrow(operation);
-    }
-    process.stdout.write('actual Windows user/default-token-owner/foreign ACL callback guards passed\\n');
-  `)
-  expect({ exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr, timedOut: result.timedOut }).toEqual({
-    exitCode: 0, stdout: 'actual Windows user/default-token-owner/foreign ACL callback guards passed\n', stderr: '', timedOut: false,
-  })
-}, 20_000)
-
-// Real Node host execution also exposes the Windows SID/ACL command and the
+// Real Node host execution exposes the Windows SID/ACL batch probe and the
 // complete constructor/reopen path in the Windows CI lane; no native UI starts.
 test('real Node host creates and reopens authority while retaining hardlink and directory-alias guards', async () => {
     const program = `
@@ -172,4 +198,4 @@ test('real Node host creates and reopens authority while retaining hardlink and 
     expect({ exitCode: resultHost.exitCode, stdout: resultHost.stdout, stderr: resultHost.stderr, timedOut: resultHost.timedOut }).toEqual({
       exitCode: 0, stdout: 'actual native authority owner/create/reopen/hardlink/alias guards passed\n', stderr: '', timedOut: false,
     })
-}, 20_000)
+}, 480_000)

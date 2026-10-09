@@ -22,7 +22,7 @@ import {
 } from '../persist'
 import { startRoxQueryEventBridge } from '../event-bridge'
 import { startRoxQueryRuntime } from '../runtime'
-import { fetchNotesList, notesTaskCache, subscribeCachedNotesList } from '../notes-cache'
+import { ensureNotesTaskCache, fetchNotesList, subscribeCachedNotesList } from '../notes-cache'
 import { cacheWriteEpoch, fencedSetQueryData, resetSharedReads } from '../shared-read'
 import { announcedWorkspaceWorkRevision, resetAnnouncedWorkspaceWorkRevisions } from '../workspace-work-revision'
 import { useWorkspaceWork } from '../../useWorkspaceWork'
@@ -413,17 +413,17 @@ describe('decision: stale-while-revalidate on every revisit', () => {
   })
 })
 
-describe('warning: setQueryData entries are not garbage-collected after 30 min', () => {
-  it('setQueryData-only entries never get a gc timer; the notes task cache survives', () => {
-    expect(ROX_QUERY_GC_MS).toBe(Infinity)
+describe('decision: a finite gcTime is applied to entries written through setQueryData', () => {
+  it('entries carry the finite gcTime and the notes task cache is shared', () => {
+    expect(ROX_QUERY_GC_MS).toBe(30 * 60_000)
     const client = roxQueryClient()
     client.setQueryData(roxKeys.workspaceWork('ws'), snapshot('ws', 1))
-    const tasks = notesTaskCache<string>('ws')
+    const tasks = ensureNotesTaskCache<string>('ws')
     for (const key of [roxKeys.workspaceWork('ws'), roxKeys.notesTasks('ws')]) {
       const query = client.getQueryCache().find({ queryKey: key, exact: true }) as unknown as { gcTime: number }
-      expect(query.gcTime).toBe(Infinity)
+      expect(query.gcTime).toBe(30 * 60_000)
     }
-    expect(notesTaskCache<string>('ws')).toBe(tasks)
+    expect(ensureNotesTaskCache<string>('ws')).toBe(tasks)
   })
 })
 

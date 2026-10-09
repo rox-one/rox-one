@@ -1024,7 +1024,7 @@ export function EditPopover({
 
   return (
     <>
-      {/* Full-screen backdrop - rendered BEHIND the popover during processing */}
+      {/* Full-screen backdrop - rendered BEHIND the popover during processing; z-sticky keeps it below app chrome. */}
       <AnimatePresence>
         {open && isProcessing && (
           <motion.div
@@ -1032,7 +1032,7 @@ export function EditPopover({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="fixed inset-0 bg-black/5 z-40"
+            className="fixed inset-0 bg-black/5 z-sticky"
           />
         )}
       </AnimatePresence>
@@ -1045,7 +1045,9 @@ export function EditPopover({
             side={side}
             align={align}
             sticky="always"
-            className="p-0"
+            // Chrome-level surface (hosts a compact chat): stays on z-popover so
+            // its own menus (z-island) and tooltips portal above it.
+            className="p-0 z-popover"
             style={{
               width: containerSize.width,
               height: containerSize.height,
@@ -1062,7 +1064,7 @@ export function EditPopover({
               className="relative bg-foreground-2 overflow-hidden w-full h-full shadow-modal-small"
               style={{
                 transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
-                borderRadius: 'var(--radius-overlay)',
+                borderRadius: 'var(--radius-md)',
               }}
             >
               {/* Drag handle - floating overlay */}

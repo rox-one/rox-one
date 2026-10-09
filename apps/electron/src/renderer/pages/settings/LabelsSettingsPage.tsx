@@ -340,14 +340,10 @@ export default function LabelsSettingsPage() {
                           <Plus className="w-3.5 h-3.5 mr-1" />
                           {t('settings.labels.addRoot')}
                         </Button>
-                        {rootPath && (
+                        {activeWorkspace && (
                           <EditPopover
                             trigger={<AskAiButton label={askAiLabel} />}
-                            context={labelsEditConfig.context}
-                            example={labelsEditConfig.example}
-                            displayLabel={labelsEditConfig.displayLabel}
-                            model={labelsEditConfig.model}
-                            systemPromptPreset={labelsEditConfig.systemPromptPreset}
+                            {...labelsEditConfig}
                             secondaryAction={editFileAction}
                           />
                         )}
@@ -539,11 +535,7 @@ export default function LabelsSettingsPage() {
                       rootPath ? (
                         <EditPopover
                           trigger={<AskAiButton label={askAiLabel} />}
-                          context={autoRulesEditConfig.context}
-                          example={autoRulesEditConfig.example}
-                          displayLabel={autoRulesEditConfig.displayLabel}
-                          model={autoRulesEditConfig.model}
-                          systemPromptPreset={autoRulesEditConfig.systemPromptPreset}
+                          {...autoRulesEditConfig}
                           secondaryAction={editFileAction}
                         />
                       ) : undefined
