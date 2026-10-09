@@ -6,6 +6,12 @@
  * stack ops (`focusedPanelIdAtom` / `closePanelAtom`), which NavigationContext
  * syncs back to the URL.
  *
+ * Behaviour lives in the shared `@/components/ui/tabs` primitive (spec D2):
+ * ARIA tabs, roving tabindex, Arrow/Home/End, Delete/Backspace and middle-click
+ * close. This file is a thin adapter — it only maps panel-stack state onto
+ * `TabItem[]` and renders the strip in its two hosts (portalled TopBar row or
+ * the inline compact strip).
+ *
  * Kind mapping lives in `surface-tab-model.ts`: session/browser map onto real
  * SurfaceTab kinds; legacy navigator panels (source/settings/skills/other)
  * degrade to labelled tabs until wave M3.
@@ -15,20 +21,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { BookOpen, DatabaseZap, Globe, MessageSquare, PanelTop, Settings, X, Zap, type LucideIcon } from 'lucide-react'
+import { BookOpen, DatabaseZap, Globe, MessageSquare, PanelTop, Settings, Zap, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { resolveViewRoute } from '../../shared/route-parser'
 import {
   closePanelAtom,
   focusedPanelIdAtom,
-  focusedSessionIdAtom,
   panelStackAtom,
-  type PanelType,
 } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { topBarSurfaceTabsSlotAtom } from '@/atoms/unified-shell'
 import { useActiveWorkspace } from '@/context/AppShellContext'
-import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
 import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
@@ -37,7 +40,7 @@ import { useShellModes } from './useModes'
 import { buildRouteTitleKeys } from './surface-shell'
 import { CHROME_DENSITY } from './chrome-density'
 import { createKnowledgeTabTitleLoader } from './knowledge-tab-titles'
-import { surfaceTabRovingId, surfaceTabKeyboardTarget, surfaceTabCloseTarget } from './surface-tab-navigation'
+import { Tabs, type TabItem } from '@/components/ui/tabs'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
@@ -64,75 +67,12 @@ function tabIcon(tab: SurfaceTabView): LucideIcon {
   }
 }
 
-function SurfaceTabItem({ tab, isTabStop, onNavigate, onClose }: {
-  tab: SurfaceTabView
-  isTabStop: boolean
-  onNavigate: (panelId: string, key: string) => void
-  onClose: (panelId: string) => void
-}) {
-  const { t } = useTranslation()
-  const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
-  const Icon = tabIcon(tab)
-
-  return (
-    <div
-      role="presentation"
-      data-surface-tab-item={tab.panelId}
-      data-surface-tab-panel-id={tab.panelId}
-      onAuxClick={(event) => {
-        if (event.button === 1) { event.preventDefault(); onClose(tab.panelId) }
-      }}
-      className={cn(
-        'group chrome-label titlebar-no-drag flex h-6 max-w-[200px] min-w-0 shrink cursor-default items-center gap-1 rounded-[var(--radius-control)] transition-colors',
-        tab.focused ? 'bg-[var(--surface-tab-active,var(--shell-selected,var(--element-selected,var(--foreground-5))))] text-foreground' : 'bg-[var(--surface-tab-inactive,transparent)] text-text-secondary hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] hover:text-foreground',
-      )}
-    >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={tab.focused}
-        aria-controls={tab.panelId}
-        data-surface-tab={tab.panelId}
-        tabIndex={isTabStop ? 0 : -1}
-        title={tab.title}
-        onClick={() => setFocusedPanelId(tab.panelId)}
-        onKeyDown={(event) => {
-          if (event.nativeEvent.isComposing || event.altKey || event.ctrlKey || event.metaKey) return
-          if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-            event.preventDefault(); onNavigate(tab.panelId, event.key)
-          } else if (event.key === 'Delete') {
-            event.preventDefault(); onClose(tab.panelId)
-          }
-        }}
-        className="flex h-full min-w-0 flex-1 items-center gap-1 rounded-[var(--radius-control)] pl-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-        <span className="min-w-0 flex-1 truncate">{tab.title}</span>
-      </button>
-      <button
-        type="button"
-        tabIndex={isTabStop ? 0 : -1}
-        aria-label={`${t('surfaceTabs.closeTab')}: ${tab.title}`}
-        onClick={() => onClose(tab.panelId)}
-        className={cn(
-          'mr-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[var(--radius-control)] outline-none transition-all hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring',
-          tab.focused ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60 group-focus-within:opacity-60',
-        )}
-      >
-        <X className="h-3 w-3" aria-hidden />
-      </button>
-    </div>
-  )
-}
-
 export function SurfaceTabs() {
   const { t } = useTranslation()
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
   const closePanel = useSetAtom(closePanelAtom)
-  const tabListRef = useRef<HTMLDivElement>(null)
   const entries = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
-  const focusedSessionId = useAtomValue(focusedSessionIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id
@@ -215,52 +155,43 @@ export function SurfaceTabs() {
     },
   })
   const panelTabs = tabs.filter((tab) => tab.kind !== 'browser')
-  const rovingTabId = surfaceTabRovingId(panelTabs, focusedPanelId)
-  const focusTab = (panelId: string, activate = true) => {
-    const button = Array.from(tabListRef.current?.querySelectorAll<HTMLButtonElement>('[data-surface-tab]') ?? [])
-      .find(element => element.dataset.surfaceTab === panelId)
-    if (!button || !button.isConnected || button.getClientRects().length === 0) return
-    if (activate) setFocusedPanelId(panelId)
-    // The surviving button already exists. Immediate focus cannot steal a
-    // later dialog/editor focus through a delayed animation-frame callback.
-    button.focus({ preventScroll: true })
-    button.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-  }
-  const navigateTab = (panelId: string, key: string) => {
-    const nextId = surfaceTabKeyboardTarget(panelTabs, panelId, key)
-    if (nextId) focusTab(nextId)
-  }
-  const closeTab = (panelId: string) => {
-    const nextId = surfaceTabCloseTarget(panelTabs, panelId, focusedPanelId)
-    const ownsDOMFocus = document.activeElement?.closest<HTMLElement>('[data-surface-tab-item]')?.dataset.surfaceTabItem === panelId
-    closePanel(panelId)
-    // Middle-click from an editor leaves its focus owner intact. A tab or its
-    // close button keeps keyboard focus inside the remaining visible strip.
-    if (nextId && ownsDOMFocus) focusTab(nextId, panelId === focusedPanelId)
-  }
   // Embedded-default desktop path: do not mount OS BrowserWindow chips in SurfaceTabs.
   // Browser lives in the inspector via createEmbedded(); os-browser-tabs helper remains
   // available for legacy callers/tests but is not product chrome here.
+
+  const tabItems: TabItem[] = panelTabs.map((tab) => {
+    const Icon = tabIcon(tab)
+    return {
+      id: tab.panelId,
+      label: tab.title,
+      title: tab.title,
+      controls: tab.panelId,
+      closable: true,
+      icon: <Icon className="icon-caption shrink-0 opacity-70" aria-hidden />,
+    }
+  })
 
   // One tab row: on desktop the strip is portalled into the TopBar row (next to
   // back/forward), so tabs no longer take a separate strip above the panels.
   // Compact mode has no TopBar slot and keeps the inline strip.
   const topBarSlot = useAtomValue(topBarSurfaceTabsSlotAtom)
-  const tabList = panelTabs.length === 0 ? null : (
-    <div
-      ref={tabListRef}
-      role="tablist"
-      aria-label={t('surfaceTabs.label')}
-      className={topBarSlot
-        ? 'flex min-w-0 items-center gap-0.5 overflow-x-auto scrollbar-hide'
-        : 'flex shrink-0 items-center gap-1'}
-      data-surface-tabs={topBarSlot ? 'topbar' : 'strip'}
-    >
-      {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} isTabStop={tab.panelId === rovingTabId} onNavigate={navigateTab} onClose={closeTab} />)}
-    </div>
+  const tabStrip = panelTabs.length === 0 ? null : (
+    <Tabs
+      items={tabItems}
+      activeId={focusedPanelId}
+      variant="surface"
+      density="compact"
+      overflow="scroll"
+      keyboard
+      ariaLabel={t('surfaceTabs.label')}
+      closeLabel={t('surfaceTabs.closeTab')}
+      className={topBarSlot ? 'min-w-0 gap-0.5' : 'shrink-0 overflow-x-visible'}
+      onSelect={setFocusedPanelId}
+      onClose={closePanel}
+    />
   )
   if (topBarSlot) {
-    return tabList ? createPortal(tabList, topBarSlot) : null
+    return tabStrip ? createPortal(tabStrip, topBarSlot) : null
   }
 
   return (
@@ -271,7 +202,7 @@ export function SurfaceTabs() {
       {panelTabs.length === 0 ? (
         <span className="chrome-label px-1 text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
       ) : (
-        tabList
+        tabStrip
       )}
     </div>
   )

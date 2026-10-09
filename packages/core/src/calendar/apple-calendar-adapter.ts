@@ -150,7 +150,7 @@ function authStatusFromCode(code: string): AppleCalendarAuthStatus | null {
 /**
  * Live adapter over the macOS EventKit helper.
  *
- * `listEvents(accountId, cursor)` uses the configured/default range; `cursor` is
+ * `listEvents(accountId)` uses the configured/default range; the interface's optional `cursor` is
  * unused because one EventKit query returns the full window in a single pass.
  * `listEventsInRange` exposes an explicit window for callers that know the sync
  * period.
@@ -179,7 +179,7 @@ export class AppleCalendarAdapter implements CalendarAdapter {
     return this.helperPresent()
   }
 
-  async listEvents(accountId: string, _cursor?: string): Promise<CalendarListPage> {
+  async listEvents(accountId: string): Promise<CalendarListPage> {
     return this.listEventsInRange(accountId, this.currentRange())
   }
 

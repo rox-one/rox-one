@@ -1,0 +1,98 @@
+{
+  "extraScreens.activity.title": {
+    "ru": "Активность",
+    "en": "Activity"
+  },
+  "extraScreens.activity.subtitle": {
+    "ru": "Сессии, тренды и источники за {days} дней",
+    "en": "Sessions, trends and sources over {days} days"
+  },
+  "extraScreens.activity.totalSessions": {
+    "ru": "Сессии",
+    "en": "Sessions"
+  },
+  "extraScreens.activity.totalMessages": {
+    "ru": "Сообщения",
+    "en": "Messages"
+  },
+  "extraScreens.activity.totalTokens": {
+    "ru": "Токены",
+    "en": "Tokens"
+  },
+  "extraScreens.activity.totalToolCalls": {
+    "ru": "Вызовы инструментов",
+    "en": "Tool calls"
+  },
+  "extraScreens.activity.totalCommits": {
+    "ru": "Коммиты",
+    "en": "Commits"
+  },
+  "extraScreens.activity.activeDays": {
+    "ru": "Активных дней из {days}",
+    "en": "Active days out of {days}"
+  },
+  "extraScreens.activity.recentSummary": {
+    "ru": "За {days} дней: {sessions} сессий, {messages} сообщений",
+    "en": "Last {days} days: {sessions} sessions, {messages} messages"
+  },
+  "extraScreens.activity.topProjects": {
+    "ru": "Топ-проекты",
+    "en": "Top projects"
+  },
+  "extraScreens.activity.noProjects": {
+    "ru": "Сессии не привязаны к проектам.",
+    "en": "No sessions are bound to projects."
+  },
+  "extraScreens.activity.topSources": {
+    "ru": "Источники",
+    "en": "Sources"
+  },
+  "extraScreens.activity.noSources": {
+    "ru": "Источники не определены.",
+    "en": "No sources to show."
+  },
+  "extraScreens.activity.projectCount": {
+    "ru": "{sessions} сессий",
+    "en": "{sessions} sessions"
+  },
+  "extraScreens.activity.heatmap": {
+    "ru": "Теплокарта сессий",
+    "en": "Session heatmap"
+  },
+  "extraScreens.activity.prevYear": {
+    "ru": "Предыдущий год",
+    "en": "Previous year"
+  },
+  "extraScreens.activity.nextYear": {
+    "ru": "Следующий год",
+    "en": "Next year"
+  },
+  "extraScreens.activity.dayCount": {
+    "ru": "{count} сессий",
+    "en": "{count} sessions"
+  },
+  "extraScreens.activity.barLabel": {
+    "ru": "{date}: {sessions} сессий, {messages} сообщений",
+    "en": "{date}: {sessions} sessions, {messages} messages"
+  },
+  "extraScreens.activity.dailyTrend": {
+    "ru": "По дням · {days}",
+    "en": "By day · {days}"
+  },
+  "extraScreens.activity.weeklyTrend": {
+    "ru": "По неделям · {weeks}",
+    "en": "By week · {weeks}"
+  },
+  "extraScreens.activity.emptyTitle": {
+    "ru": "Пока нет сессий",
+    "en": "No sessions yet"
+  },
+  "extraScreens.activity.emptyBody": {
+    "ru": "Активность появится здесь, как только в этой рабочей области начнутся сессии.",
+    "en": "Activity shows up here as soon as this workspace gets sessions."
+  },
+  "extraScreens.activity.openSessions": {
+    "ru": "Открыть сессии",
+    "en": "Open sessions"
+  }
+}

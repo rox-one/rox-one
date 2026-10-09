@@ -3193,12 +3193,6 @@ export interface FeedNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
-export interface MeetingsNavigationState {
-  navigator: 'meetings'
-  details: { type: 'meeting'; meetingId: string } | null
-  rightSidebar?: RightSidebarPanel
-}
-
 export interface ConnectionsNavigationState {
   navigator: 'connections'
   details: null
@@ -3306,13 +3300,19 @@ export interface EntityNavigationState {
 }
 
 /**
- * Unified mode root (W1-07): `messenger`, `calendar`, `goals`, `contacts`.
+ * Unified mode root (W1-07): `messenger`, `calendar`, `goals`.
  * Exists only while the mode's `workbench.mode.<id>.v1` flag is on; the page
- * comes from the surface-page registry (empty state until wave 2 registers).
+ * comes from the surface-page slot (empty state until a package registers).
+ *
+ * The legacy `meetings`/`meetings/meeting/{id}` routes alias to `surface:
+ * 'calendar'` (W3.2); a specific meeting selected that way rides in
+ * `meetingId` so the deep link survives the merge.
  */
 export interface SurfaceNavigationState {
   navigator: 'surface'
   surface: UnifiedSurfaceId
+  /** Calendar only: a meeting id from the legacy `meetings/meeting/{id}` alias. */
+  meetingId?: string | null
   details: null
   rightSidebar?: RightSidebarPanel
 }
@@ -3343,7 +3343,6 @@ export type NavigationState =
   | MemoryNavigationState
   | LearningNavigationState
   | TasksNavigationState
-  | MeetingsNavigationState
   | FeedNavigationState
   | InboxNavigationState
   | KnowledgeNavigationState
@@ -3413,10 +3412,6 @@ export const isLearningNavigation = (
 export const isTasksNavigation = (
   state: NavigationState
 ): state is TasksNavigationState => state.navigator === 'tasks'
-
-export const isMeetingsNavigation = (
-  state: NavigationState
-): state is MeetingsNavigationState => state.navigator === 'meetings'
 
 export const isFeedNavigation = (
   state: NavigationState
@@ -3545,9 +3540,6 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   if (state.navigator === 'feed') {
     return state.details ? `feed/item/${encodeURIComponent(state.details.itemId)}` : 'feed'
   }
-  if (state.navigator === 'meetings') {
-    return state.details?.type === 'meeting' ? `meetings/meeting/${encodeURIComponent(state.details.meetingId)}` : 'meetings'
-  }
   if (state.navigator === 'connections') {
     return 'connections'
   }
@@ -3555,6 +3547,12 @@ export const getNavigationStateKey = (state: NavigationState): string => {
     return 'home'
   }
   if (state.navigator === 'surface') {
+    // W3.2: a calendar meeting selected via the legacy alias keeps its
+    // `meetings/meeting/{id}` key so two tabs stay distinct and the address
+    // round-trips through `parseNavigationStateKey`.
+    if (state.surface === 'calendar' && state.meetingId) {
+      return `meetings/meeting/${encodeURIComponent(state.meetingId)}`
+    }
     return state.surface
   }
   if (state.navigator === 'screen') {
@@ -3832,12 +3830,18 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
     const itemId = decodeURIComponent(key.slice('feed/item/'.length))
     return { navigator: 'feed', details: itemId ? { type: 'item', itemId } : null }
   }
-  if (key === 'meetings') return { navigator: 'meetings', details: null }
+  // W3.2/W3.3 (Согласованность-20261009): the legacy `meetings` and `contacts`
+  // mode roots and their deep links now resolve to the merge targets. The
+  // aliases stay flag-independent so restored tabs keep working, and the
+  // merged `calendar` surface restores regardless of its mode flag (its
+  // content — Встречи — is always reachable through the alias).
+  if (key === 'meetings') return { navigator: 'surface', surface: 'calendar', details: null }
   if (key.startsWith('meetings/meeting/')) {
     const meetingId = decodeURIComponent(key.slice('meetings/meeting/'.length))
-    if (meetingId) return { navigator: 'meetings', details: { type: 'meeting', meetingId } }
-    return { navigator: 'meetings', details: null }
+    return { navigator: 'surface', surface: 'calendar', details: null, meetingId: meetingId || null }
   }
+  if (key === 'contacts') return { navigator: 'surface', surface: 'messenger', details: null }
+  if (key === 'calendar') return { navigator: 'surface', surface: 'calendar', details: null }
   if (key === 'tasks') return { navigator: 'tasks', details: null }
   if (key.startsWith('tasks/task/')) {
     const taskId = decodeURIComponent(key.slice('tasks/task/'.length))

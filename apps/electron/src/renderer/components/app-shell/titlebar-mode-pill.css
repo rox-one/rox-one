@@ -11,7 +11,7 @@
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  height: 28px;
+  height: var(--control-md);
   padding: 2px;
   border: 0;
   border-radius: var(--rox-radius-panel);
@@ -43,7 +43,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 24px;
+  height: var(--control-sm);
   padding: 0 9px;
   border: 0;
   border-radius: var(--radius-control);
@@ -85,11 +85,12 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 }
 
 .rox-mode-pill-icon {
-  width: 15px;
-  height: 15px;
+  width: var(--icon-toolbar);
+  height: var(--icon-toolbar);
   padding: 0;
   border-radius: 0;
-  /* Inherits the item's muted grey; no filled plate, no per-mode accent. */
+  /* Inherits the item's muted grey; no filled plate, no per-mode accent.
+     Stroke comes from the shared `svg.lucide` rule (`--icon-stroke`). */
   color: inherit;
   background: transparent;
   flex-shrink: 0;
@@ -119,7 +120,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 }
 
 .rox-mode-pill[data-collapsed] .rox-mode-pill-item {
-  width: 28px;
+  width: var(--control-md);
   padding: 0;
 }
 
@@ -128,7 +129,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   z-index: 0;
   top: 2px;
   left: 0;
-  height: 24px;
+  height: var(--control-sm);
   border-radius: var(--radius-control);
   /* Soft glass highlight for the active segment — neutral, not accent. */
   background: color-mix(in oklch, var(--foreground) 7%, transparent);

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test'
 import { createStore } from 'jotai'
 import { createPanelWorkspaceLayoutAtom } from '../panel-workspace'
-import { closePanelAtom, focusedPanelIdAtom, focusNextPanelAtom, panelStackAtom, reconcilePanelStackAtom } from '../panel-stack'
+import { closePanelAtom, expandedPanelIdAtom, focusedPanelIdAtom, focusNextPanelAtom, panelStackAtom, reconcilePanelStackAtom } from '../panel-stack'
 import { createResizeController } from '../../components/app-shell/resize-controller'
-import type { PanelWorkspaceLayoutStore } from '../../lib/panel-workspace-layout'
+import { togglePanelFullScreen, type PanelWorkspaceLayoutStore } from '../../lib/panel-workspace-layout'
 import type { StorageKey } from '../../lib/local-storage'
 
 function memoryStorage(): PanelWorkspaceLayoutStore & { writes: number } {
@@ -72,5 +72,31 @@ describe('workspace layout atom lifecycle', () => {
     store.set(closePanelAtom, panels[4].id)
     expect(store.get(focusedPanelIdAtom)).toBe(panels[5].id)
     expect(store.get(panelStackAtom).map((entry) => entry.id)).toEqual(panels.filter((_, index) => index !== 4).map((entry) => entry.id))
+  })
+
+  it('holds a promoted panel until it leaves the stack, then restores the grid', () => {
+    const store = createStore()
+    store.set(reconcilePanelStackAtom, {
+      entries: ['a', 'b', 'c'].map((id) => ({ route: `allSessions/session/${id}` as const, proportion: 1 / 3 })),
+    })
+    const [first, second, third] = store.get(panelStackAtom)
+    store.set(expandedPanelIdAtom, togglePanelFullScreen(null, second.id, [first.id, second.id, third.id]))
+    expect(store.get(expandedPanelIdAtom)).toBe(second.id)
+
+    // Closing an unrelated panel must not disturb the promoted one.
+    store.set(closePanelAtom, first.id)
+    expect(store.get(expandedPanelIdAtom)).toBe(second.id)
+    // Closing the promoted panel returns the workspace to the shared grid.
+    store.set(closePanelAtom, second.id)
+    expect(store.get(expandedPanelIdAtom)).toBeNull()
+
+    // A stack reconcile that drops the promoted panel also clears it.
+    store.set(reconcilePanelStackAtom, {
+      entries: ['x', 'y', 'z'].map((id) => ({ route: `allSessions/session/${id}` as const, proportion: 1 / 3 })),
+    })
+    const rebuilt = store.get(panelStackAtom)
+    store.set(expandedPanelIdAtom, rebuilt[2].id)
+    store.set(reconcilePanelStackAtom, { entries: [{ route: rebuilt[0].route, proportion: 1 }] })
+    expect(store.get(expandedPanelIdAtom)).toBeNull()
   })
 })
