@@ -59,6 +59,8 @@ import { handleKnowledgeGetBacklinks } from './handlers/knowledge-backlinks.ts';
 import { handleKnowledgePropose } from './handlers/knowledge-propose.ts';
 import { handleMemorySearch } from './handlers/memory-search.ts';
 import { handleMemoryGet } from './handlers/memory-get.ts';
+import { handleSkillsSearch } from './handlers/skills-search.ts';
+import { handleSkillsRead } from './handlers/skills-read.ts';
 
 // ============================================================
 // Canonical Zod Schemas
@@ -433,6 +435,19 @@ export const MemoryGetSchema = z.object({
 });
 export type MemorySearchToolArgs = z.infer<typeof MemorySearchSchema>;
 export type MemoryGetToolArgs = z.infer<typeof MemoryGetSchema>;
+// Skills catalog tools (c2.7). The wire names use underscores; the catalog
+// advertises and the tools resolve slugs (never raw paths).
+export const SkillsSearchSchema = z.object({
+  query: z.string().describe('Keyword query over skill slug, name, description, and body text'),
+  limit: z.number().optional().describe('Max results to return (default 10, hard cap 25)'),
+});
+
+export const SkillsReadSchema = z.object({
+  slug: z.string().describe('Skill slug from skills_search or the available-skills catalog (no path separators)'),
+});
+
+export type SkillsSearchArgs = z.infer<typeof SkillsSearchSchema>;
+export type SkillsReadArgs = z.infer<typeof SkillsReadSchema>;
 
 // ============================================================
 // Canonical Tool Descriptions (base — no DOC_REFS)
@@ -849,6 +864,22 @@ Pass a \`chunkId\` from a memory_search hit to get the complete text with its so
 path and line span. The response repeats the chunk's provenance and carries the same
 gated badge: \`untrusted\` chunks are returned but never injected into the prompt.
 An unknown id is reported honestly as "not found".`,
+  skills_search: `Search the installed skills (agent skill catalog) by keyword. Read-only.
+
+Use it to find a skill that matches the task before loading one — the available-skills
+catalog in your system prompt is bounded and may omit entries. Returns each match's slug,
+display name, source tier, absolute path, and a short excerpt. Load a match with
+skills_read. Search matches slug, name, description, and body text.
+
+Errors are typed: INVALID_ARGUMENT, SKILLS_UNAVAILABLE, SKILLS_ERROR.`,
+
+  skills_read: `Load one skill's SKILL.md instructions by slug. Read-only.
+
+Pass the exact slug returned by skills_search or advertised in the available-skills block.
+Returns the skill name, source path, and full instruction body (bounded, with a truncation
+marker). Follow the returned instructions for the task at hand.
+
+Errors are typed: INVALID_ARGUMENT, SKILL_NOT_FOUND, SKILLS_UNAVAILABLE, SKILLS_ERROR.`,
 } as const;
 
 // ============================================================
@@ -949,6 +980,10 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   // workspace memory index through the ctx.memory callbacks (SessionManager).
   { name: 'memory_search', description: TOOL_DESCRIPTIONS.memory_search, inputSchema: MemorySearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMemorySearch },
   { name: 'memory_get', description: TOOL_DESCRIPTIONS.memory_get, inputSchema: MemoryGetSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMemoryGet },
+  // Skills catalog tools (c2.7) — read-only over the eligible skill catalog via
+  // the registered skills runtime; safe in Explore mode, typed unavailable otherwise.
+  { name: 'skills_search', description: TOOL_DESCRIPTIONS.skills_search, inputSchema: SkillsSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillsSearch },
+  { name: 'skills_read', description: TOOL_DESCRIPTIONS.skills_read, inputSchema: SkillsReadSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillsRead },
 ];
 
 export interface SessionToolFilterOptions {
