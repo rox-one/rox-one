@@ -97,7 +97,7 @@ export function MarkdownDiffBlock({ code, className }: MarkdownDiffBlockProps) {
   const themeName = contextShikiTheme || (dark ? 'craft-dark' : 'craft-light')
 
   // Build the same options used in ShikiDiffViewer for visual consistency
-  const options: PatchDiffProps<undefined>['options'] = React.useMemo(() => ({
+  const options: PatchDiffProps<undefined, undefined>['options'] = React.useMemo(() => ({
     theme: themeName,
     diffStyle: 'unified' as const,
     diffIndicators: 'bars' as const,

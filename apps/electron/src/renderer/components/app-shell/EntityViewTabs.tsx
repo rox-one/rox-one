@@ -15,8 +15,8 @@ import {
   Share2,
   type LucideIcon,
 } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { cn } from '@/lib/utils'
+import { Tabs, type TabItem } from '@/components/ui/tabs'
 import * as storage from '@/lib/local-storage'
 
 export type EntityViewId =
@@ -155,84 +155,44 @@ export interface EntityViewTabsProps {
 export function EntityViewTabs({ value, onChange, capabilities, className, variant = 'row' }: EntityViewTabsProps) {
   const { t } = useTranslation()
   const visible = capabilities.filter((c) => c.available || c.id === value)
+  const items: TabItem[] = visible.map(({ id, labelKey, icon: Icon, available }) => {
+    const label = t(labelKey)
+    return {
+      id,
+      label,
+      title: label,
+      disabled: !available && id !== value,
+      icon: <Icon className="icon-caption shrink-0" aria-hidden />,
+    }
+  })
 
   if (variant === 'segmented') {
     return (
-      <div
-        className={cn('rox-view-switch titlebar-no-drag inline-flex shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] p-0.5', className)}
-        role="tablist"
-        aria-label={t('entityView.tabsLabel')}
-        data-entity-view-switch="segmented"
-      >
-        {visible.map(({ id, labelKey, icon: Icon, available }) => {
-          const active = value === id
-          const label = t(labelKey)
-          return (
-            <Tooltip key={id}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  aria-label={label}
-                  disabled={!available && !active}
-                  onClick={() => available && onChange(id)}
-                  className={cn(
-                    'rox-view-switch-item inline-flex h-6 min-w-6 items-center justify-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs font-medium transition-colors',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    active
-                      ? 'bg-foreground/10 text-foreground'
-                      : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
-                    !available && 'opacity-50 cursor-not-allowed',
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-                  <span className="rox-view-switch-label whitespace-nowrap">{label}</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{label}</TooltipContent>
-            </Tooltip>
-          )
-        })}
-      </div>
+      <Tabs
+        items={items}
+        activeId={value}
+        variant="segmented"
+        density="compact"
+        collapseLabels
+        keyboard
+        ariaLabel={t('entityView.tabsLabel')}
+        className={className}
+        onSelect={(id) => onChange(id as EntityViewId)}
+      />
     )
   }
 
   return (
-    <div
-      className={cn(
-        'flex items-center gap-0.5 px-3 py-1.5 border-b border-border/40 bg-background/40 shrink-0',
-        className,
-      )}
-      role="tablist"
-      aria-label={t('entityView.tabsLabel')}
-    >
-      {visible.map(({ id, labelKey, icon: Icon, available }) => {
-        const active = value === id
-        return (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            aria-label={t(labelKey)}
-            disabled={!available && !active}
-            onClick={() => available && onChange(id)}
-            className={cn(
-              'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[var(--radius-control)] text-xs font-medium transition-colors',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              active
-                ? 'bg-foreground/10 text-foreground'
-                : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
-              !available && 'opacity-50 cursor-not-allowed',
-            )}
-          >
-            <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-            <span className="truncate">{t(labelKey)}</span>
-          </button>
-        )
-      })}
-    </div>
+    <Tabs
+      items={items}
+      activeId={value}
+      variant="surface"
+      density="full"
+      keyboard
+      ariaLabel={t('entityView.tabsLabel')}
+      className={cn('px-3 py-1.5 border-b border-border/40 bg-background/40 shrink-0', className)}
+      onSelect={(id) => onChange(id as EntityViewId)}
+    />
   )
 }
 
@@ -249,7 +209,7 @@ export function EntityViewPlaceholder({ view, labelKey }: EntityViewPlaceholderP
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center min-h-0">
       <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground">
-        <Icon className="h-6 w-6" strokeWidth={1.5} />
+        <Icon className="icon-empty" />
       </div>
       <div className="space-y-1">
         <p className="text-sm font-medium text-foreground">{t(key)}</p>

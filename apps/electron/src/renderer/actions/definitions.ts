@@ -328,6 +328,16 @@ export const actions = {
     category: 'Navigation',
     when: '!inputFocus && !menuOpen',
   },
+  'panel.toggleFullScreen': {
+    id: 'panel.toggleFullScreen',
+    labelKey: 'shortcuts.action.togglePanelFullScreen',
+    description: 'Expand the focused panel to the whole workspace, or restore the grid',
+    // No reserved chord: Escape (via the dismissible layer) restores, and the
+    // panel layout menu exposes the same action.
+    defaultHotkey: null,
+    category: 'Navigation',
+    when: '!inputFocus && !menuOpen',
+  },
 
   // ═══════════════════════════════════════════
   // Chat

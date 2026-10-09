@@ -37,6 +37,12 @@ export interface WorkspaceCommandBusConfiguration {
   readonly cursors?: RealtimeCursorStore | null
   /** Fan-out revalidation cache (default 5 s, `0` re-checks every delivery). */
   readonly revalidationCacheMs?: number
+  /**
+   * Additional post-commit sinks (rule consumers, module projections). They run
+   * after the in-process bus with their own watermark and retry loop, so a slow
+   * sink never holds the others back.
+   */
+  readonly extraSinks?: readonly DomainEventSink[]
   /** Relay retry backoff after a sink failure. */
   readonly relayRetryBaseMs?: number
   /** Sweep idle realtime replay windows every this many ms (default 60 s, `0` disables). */
@@ -83,6 +89,7 @@ export function createWorkspaceCommandBus(database: SQL, schema: string, configu
   if (notify) setNotifyCommandHost(notify.host)
   const sinks: DomainEventSink[] = [events => { bus.publish(events) }]
   if (configuration.valkey) sinks.push(valkeyEventSink(configuration.valkey))
+  for (const sink of configuration.extraSinks ?? []) sinks.push(sink)
   if (notify) sinks.push(async events => { await notify.ingest(events) })
   const relay = new DomainEventRelay({ store, sinks, ...(configuration.relayRetryBaseMs ? { retryBaseMs: configuration.relayRetryBaseMs } : {}), ...(configuration.onError ? { onError: configuration.onError } : {}) })
   // Watermarks start at the committed maximum (migrations already ran); the
