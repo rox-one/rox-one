@@ -1,40 +1,28 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { BroPresenceMemberDto } from '@rox/shared/protocol'
+import { useSessionActivityState } from '@/hooks/useSessionPresence'
 
-export interface SessionPresenceAvatarsProps {
-  sessionId: string
+export interface SessionPresenceFacepileProps {
+  viewers: readonly BroPresenceMemberDto[]
 }
 
-export function SessionPresenceAvatars({ sessionId }: SessionPresenceAvatarsProps) {
+/**
+ * Pure facepile: live viewers of the session. Kept separate from the hook
+ * wrapper so it can be rendered deterministically (and tested) from a
+ * synthetic presence snapshot.
+ */
+export function SessionPresenceFacepile({ viewers }: SessionPresenceFacepileProps) {
   const { t } = useTranslation()
-  const [members, setMembers] = React.useState<BroPresenceMemberDto[]>([])
-
-  React.useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const result = await window.electronAPI.sessionCommand(sessionId, { type: 'listBroPresence' })
-        if (!cancelled && Array.isArray(result)) {
-          setMembers(result as BroPresenceMemberDto[])
-        }
-      } catch {
-        if (!cancelled) setMembers([])
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [sessionId])
-
-  if (members.length === 0) return null
+  if (viewers.length === 0) return null
 
   return (
     <div
       className="flex items-center -space-x-1.5 pr-1"
-      aria-label={t('collaboration.presenceAria', { count: members.length })}
+      aria-label={t('collaboration.presenceAria', { count: viewers.length })}
+      data-presence-count={viewers.length}
     >
-      {members.slice(0, 4).map((member) => (
+      {viewers.slice(0, 4).map((member) => (
         <span
           key={member.accountId}
           title={member.displayName}
@@ -46,6 +34,12 @@ export function SessionPresenceAvatars({ sessionId }: SessionPresenceAvatarsProp
       ))}
     </div>
   )
+}
+
+/** Live presence avatars for an open session, driven by `session_presence`. */
+export function SessionPresenceAvatars({ sessionId }: { sessionId: string }) {
+  const { viewers } = useSessionActivityState(sessionId)
+  return <SessionPresenceFacepile viewers={viewers} />
 }
 
 function initials(name: string): string {

@@ -13,7 +13,7 @@
 import type { LLMQueryRequest, LLMQueryResult } from './llm-tool.ts';
 import type { SpawnSessionFn } from './spawn-session-tool.ts';
 import type { BrowserPaneFns } from './browser-tools.ts';
-import type { AuthRequest } from '@rox/session-tools-core';
+import type { AuthRequest, MemoryToolCallbacks } from '@rox/session-tools-core';
 import { debug } from '../utils/debug.ts';
 
 /**
@@ -93,6 +93,12 @@ export interface SessionScopedToolCallbacks {
    * SessionManager to the invoking session's workspace.
    */
   pages?: import('@rox/session-tools-core').PagesToolCallbacks;
+  /**
+   * Memory recall tools (memory_search / memory_get) — grouped because the two
+   * operations always ship together. Wired by SessionManager to the invoking
+   * session's workspace chunk index.
+   */
+  memory?: MemoryToolCallbacks;
 }
 
 // Registry of callbacks keyed by sessionId

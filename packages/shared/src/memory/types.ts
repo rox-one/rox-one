@@ -303,6 +303,17 @@ export interface MemoryPromptBlocks {
    * empty) whenever the blocks were assembled by an F4-aware MemoryService.
    */
   used?: LessonPromptUsage[]
+  /**
+   * c1.4: provenance-gated MEMORY.md / curated-context bootstrap block. Built
+   * from memory chunks whose `originClass` is eligible for automatic injection
+   * (`owner`/`agent`); untrusted chunks never appear here. Absent when empty.
+   */
+  bootstrapBlock?: string
+  /**
+   * Provenance of exactly the documents folded into `bootstrapBlock`, listed in
+   * the same order. Absent when the block was not assembled.
+   */
+  bootstrap?: Array<{ path: string; provenance: MemoryChunkProvenance }>
 }
 
 /** One lesson that was injected into an agent prompt (spec F4). */
@@ -383,4 +394,109 @@ export interface MemoryInsights {
   totalLessons: number
   /** Y4: onboarding seed dialog already shown ({configDir}/memory/.onboarded). */
   onboarded: boolean
+}
+
+// ---------------------------------------------------------------
+// c1.1–c1.4: chunk index + provenance gate
+// ---------------------------------------------------------------
+
+/**
+ * Who produced a memory chunk, and therefore how far it may be trusted.
+ * Computed at index/write time from the producing session kind — never parsed
+ * back out of Markdown, which the agent can forge.
+ *
+ * - `owner`     — human-directed interactive work (the workspace owner's voice).
+ * - `agent`     — the agent's own derived artifacts (distillation, subagents).
+ * - `untrusted` — provenance unknown/corrupt, or produced by a session we cannot
+ *                 vouch for (foreign content, unattributable writes).
+ * - `system`    — curated/machine-authored bootstrap material.
+ *
+ * Only `owner` and `agent` chunks are eligible for automatic prompt injection
+ * (see `isMemoryOriginEligibleForAutomaticInjection`); `untrusted` stays
+ * retrievable and labelled, but never reaches the prompt.
+ */
+export type MemoryOriginClass = 'owner' | 'agent' | 'untrusted' | 'system'
+
+/** The kind of session that produced a memory chunk. */
+export type MemorySessionKind = 'interactive' | 'cron' | 'heartbeat' | 'subagent' | 'unknown'
+
+/** Provenance stamped on a memory chunk at index time. */
+export interface MemoryChunkProvenance {
+  originClass: MemoryOriginClass
+  sessionKind: MemorySessionKind
+  /** ISO timestamp the chunk was observed/written. */
+  observedAt: string
+  /** Optional key of the chunk this one supersedes (newer-wins recall). */
+  supersedesKey?: string
+}
+
+/** Capability split of the memory index for the active runtime. */
+export interface MemoryIndexCapability {
+  /** FTS5 retrieval is available (bun:sqlite present and FTS5 compiled in). */
+  fts5: boolean
+  /** sqlite-vec / vector retrieval is available (not yet: no loadable extension). */
+  vector: boolean
+}
+
+/** One ranked memory search hit. */
+export interface MemorySearchHit {
+  chunkId: string
+  /** Document path relative to the workspace root (or the memory dir). */
+  path: string
+  /** 1-based inclusive line span of the chunk within its document. */
+  startLine: number
+  endLine: number
+  /** Final ranking score (higher = better). */
+  score: number
+  /** Lexical (BM25) component of the score. */
+  textScore?: number
+  /** Vector component of the score (absent while vector retrieval is unavailable). */
+  vectorScore?: number
+  /** Short excerpt for display. */
+  snippet: string
+  /** Full chunk text. */
+  text: string
+  /** Provenance class — the single source of truth for the injection gate. */
+  origin: MemoryOriginClass
+  provenance: MemoryChunkProvenance
+}
+
+/** Result of `memory:search`. */
+export interface MemorySearchResult {
+  hits: MemorySearchHit[]
+  capability: MemoryIndexCapability
+}
+
+/** Result of `memory:get` (null when the chunk id is unknown). */
+export interface MemoryGetResult {
+  chunkId: string
+  path: string
+  startLine: number
+  endLine: number
+  text: string
+  origin: MemoryOriginClass
+  provenance: MemoryChunkProvenance
+  metadata?: Record<string, unknown>
+}
+
+/** Lifecycle state of the workspace memory index. */
+export type MemoryIndexState = 'absent' | 'building' | 'ready' | 'stale' | 'failed'
+
+/** Result of `memory:indexStatus`. */
+export interface MemoryIndexStatus {
+  state: MemoryIndexState
+  /** Number of chunks in the built index (0 when absent/stale). */
+  chunks?: number
+  /** Epoch ms of the last successful build. */
+  updatedAt?: number
+  /** Sanitized error detail for `failed` (never a raw stack). */
+  safeError?: string
+  /** Capability split at status time. */
+  capability?: MemoryIndexCapability
+  /** Identity string `v<chunkingVersion>:<provider>/<model>`. */
+  indexIdentity?: string
+  /** Chunking version baked into the current build. */
+  chunkingVersion?: number
+  /** Runtime backend that produced the current build. */
+  backend?: 'fts5' | 'js'
 }

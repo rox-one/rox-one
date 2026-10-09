@@ -41,6 +41,7 @@ import type {
   LocalMeetingSource,
   LocalMeetingExtractionResult,
   LocalTranscriptSegmentUpdate,
+  LocalTranscriptSegment,
   LocalTranscript,
   MeetingsLocalResult,
 } from '../../shared/meetings-local'
@@ -770,6 +771,33 @@ export class LocalMeetingStore {
       transcript: { ...m.transcript, status: 'done', progress: 100, revision, segments: segments.length },
     }))
     return { ok: true, value: transcript }
+  }
+
+  /**
+   * Merge one live observe line into transcript.json (created when absent).
+   * Live lines do not bump `revision`: that counter belongs to full ASR runs,
+   * and bumping it per line would invalidate the rolling summary continuously.
+   */
+  appendObservedSegment(id: string, segment: LocalTranscriptSegment): LocalTranscriptSegment[] | null {
+    if (!isMeetingId(id)) return null
+    const meeting = this.read(id)
+    if (!meeting) return null
+    const current = this.readTranscript(id)
+    const segments = current ? [...current.segments] : []
+    const index = segments.findIndex((existing) => existing.id === segment.id)
+    if (index >= 0) segments[index] = segment
+    else segments.push(segment)
+    const now = this.now()
+    const transcript: LocalTranscript = current
+      ? { ...current, segments }
+      : { engine: 'observe', model: 'observe', language: null, createdAt: now, elapsedMs: 0, revision: 0, segments }
+    this.writeTranscriptFiles(meeting, transcript)
+    this.mutate(id, (m) => ({
+      ...m,
+      transcript: { ...m.transcript, status: m.transcript.status === 'none' ? 'done' : m.transcript.status, segments: segments.length },
+    }))
+    this.deps.emit(id)
+    return segments
   }
 
   /** Requeue durable work interrupted by an app quit; fence any prior attempt. */
