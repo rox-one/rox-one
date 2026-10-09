@@ -9,6 +9,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import {
+  BUDGET_SLACK_BYTES,
   MAX_NEW_CHUNK_BYTES,
   MIN_BUDGET_BYTES,
   buildBudgets,
@@ -112,26 +113,44 @@ describe('measured assets (only emitted *.js; never source maps or the pdf worke
 
 describe('budget evaluation', () => {
   it('flags a known prefix over its recorded rawBytes budget and names the file and both counts', () => {
+    const over = 1000 + BUDGET_SLACK_BYTES + 1000
     const failures = evaluateChunks(
-      [{ file: 'main-abcdefgh.js', prefix: 'main', rawBytes: 2000, gzipBytes: 900 }],
+      [{ file: 'main-abcdefgh.js', prefix: 'main', rawBytes: over, gzipBytes: 900 }],
       { main: { rawBytes: 1000, gzipBytes: 500 } },
     )
-    expect(failures).toEqual([{ file: 'main-abcdefgh.js', prefix: 'main', rawBytes: 2000, budget: 1000 }])
+    expect(failures).toEqual([{ file: 'main-abcdefgh.js', prefix: 'main', rawBytes: over, budget: 1000 }])
     const line = formatFailure(failures[0]!)
     expect(line).toContain('assets/main-abcdefgh.js')
-    expect(line).toContain('2000 B')
+    expect(line).toContain(`${over} B`)
     expect(line).toContain('1000 B')
     expect(line).toContain("'main'")
-    expect(line).toContain('+1000 B')
+    expect(line).toContain(`+${BUDGET_SLACK_BYTES + 1000} B`)
+  })
+
+  it('allows cross-platform minifier noise within the slack but not beyond it', () => {
+    const withinSlack = 1000 + BUDGET_SLACK_BYTES
+    expect(
+      evaluateChunks(
+        [{ file: 'main-abcdefgh.js', prefix: 'main', rawBytes: withinSlack, gzipBytes: 900 }],
+        { main: { rawBytes: 1000, gzipBytes: 500 } },
+      ),
+    ).toEqual([])
+    expect(
+      evaluateChunks(
+        [{ file: 'main-abcdefgh.js', prefix: 'main', rawBytes: withinSlack + 1, gzipBytes: 900 }],
+        { main: { rawBytes: 1000, gzipBytes: 500 } },
+      ),
+    ).toHaveLength(1)
   })
 
   it('flags an unbudgeted prefix above the 2.5 MB ceiling', () => {
+    const over = MAX_NEW_CHUNK_BYTES + BUDGET_SLACK_BYTES + 1
     const failures = evaluateChunks(
-      [{ file: 'heavy-abcdefgh.js', prefix: 'heavy', rawBytes: MAX_NEW_CHUNK_BYTES + 1, gzipBytes: 1 }],
+      [{ file: 'heavy-abcdefgh.js', prefix: 'heavy', rawBytes: over, gzipBytes: 1 }],
       {},
     )
     expect(failures).toEqual([
-      { file: 'heavy-abcdefgh.js', prefix: 'heavy', rawBytes: MAX_NEW_CHUNK_BYTES + 1, budget: MAX_NEW_CHUNK_BYTES },
+      { file: 'heavy-abcdefgh.js', prefix: 'heavy', rawBytes: over, budget: MAX_NEW_CHUNK_BYTES },
     ])
   })
 
@@ -162,24 +181,26 @@ describe('CLI exit codes', () => {
 
   it('exits 1 (failure line names the file and both byte counts) when a budgeted prefix is over budget', () => {
     const root = tempRoot()
-    seedBuild(root, { 'main-abcdefgh.js': 2000 })
+    const over = 1000 + BUDGET_SLACK_BYTES + 500
+    seedBuild(root, { 'main-abcdefgh.js': over })
     seedBaseline(root, { main: { rawBytes: 1000, gzipBytes: 500 } })
     const result = runCli(root)
     expect(result.code).toBe(1)
     expect(result.err).toContain('assets/main-abcdefgh.js')
-    expect(result.err).toContain('2000 B')
+    expect(result.err).toContain(`${over} B`)
     expect(result.err).toContain('1000 B')
     expect(result.err).toContain('bun scripts/check-bundle-size.ts --update')
   })
 
   it('exits 1 when an unbudgeted chunk exceeds the 2.5 MB ceiling', () => {
     const root = tempRoot()
-    seedBuild(root, { 'lazy-page-abcdefgh.js': MAX_NEW_CHUNK_BYTES + 1 })
+    const over = MAX_NEW_CHUNK_BYTES + BUDGET_SLACK_BYTES + 1
+    seedBuild(root, { 'lazy-page-abcdefgh.js': over })
     seedBaseline(root, {})
     const result = runCli(root)
     expect(result.code).toBe(1)
     expect(result.err).toContain('assets/lazy-page-abcdefgh.js')
-    expect(result.err).toContain(`${MAX_NEW_CHUNK_BYTES + 1} B`)
+    expect(result.err).toContain(`${over} B`)
     expect(result.err).toContain(`${MAX_NEW_CHUNK_BYTES} B`)
   })
 

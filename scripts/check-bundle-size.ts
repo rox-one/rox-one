@@ -151,16 +151,24 @@ export function buildBudgets(chunks: MeasuredChunk[]): Record<string, ChunkBudge
 }
 
 /**
+ * Cross-platform slack on every budget: the same source builds to slightly different byte counts on
+ * macOS and Linux (observed <= 91 B on the 900 KB `main` chunk), so the gate compares against
+ * `budget + BUDGET_SLACK_BYTES` and reports the raw recorded budget.
+ */
+export const BUDGET_SLACK_BYTES = 4096
+
+/**
  * Pure gate: a budgeted prefix over its recorded rawBytes budget, or an unbudgeted prefix over
- * MAX_NEW_CHUNK_BYTES. Kept free of filesystem access so it is unit-testable without a build.
+ * MAX_NEW_CHUNK_BYTES, each with BUDGET_SLACK_BYTES of platform noise allowed. Kept free of
+ * filesystem access so it is unit-testable without a build.
  */
 export function evaluateChunks(chunks: MeasuredChunk[], budgets: Record<string, ChunkBudget>): BudgetFailure[] {
   const failures: BudgetFailure[] = []
   for (const chunk of chunks) {
     const known = budgets[chunk.prefix]
-    const budget = known ? known.rawBytes : MAX_NEW_CHUNK_BYTES
-    if (chunk.rawBytes > budget) {
-      failures.push({ file: chunk.file, prefix: chunk.prefix, rawBytes: chunk.rawBytes, budget })
+    const recorded = known ? known.rawBytes : MAX_NEW_CHUNK_BYTES
+    if (chunk.rawBytes > recorded + BUDGET_SLACK_BYTES) {
+      failures.push({ file: chunk.file, prefix: chunk.prefix, rawBytes: chunk.rawBytes, budget: recorded })
     }
   }
   return failures
