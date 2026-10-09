@@ -1,0 +1,1549 @@
+{
+  "version": "1.0",
+  "generatedFor": "docs/specs/2026-10-09-dev-space-and-playbooks",
+  "cases": [
+    {
+      "id": "ONB-001",
+      "area": "онбординг-гейт",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Первый запуск, мастер онбординга; шаг «Кто вы?» доступен",
+      "steps": [
+        "Пройти шаг имени",
+        "На шаге «Кто вы?» выбрать «разработчик»",
+        "Завершить онбординг",
+        "Открыть навигацию приложения"
+      ],
+      "expected": [
+        "Флаг Developer Space включён по умолчанию",
+        "Пункт «Разработчикам» виден в навигации",
+        "Значение роли сохранено в EnvironmentPrefs"
+      ],
+      "refs": [
+        "D1",
+        "apps/electron/src/renderer/hooks/useOnboarding.ts",
+        "packages/shared/src/environment/types.ts"
+      ]
+    },
+    {
+      "id": "ONB-002",
+      "area": "онбординг-гейт",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Первый запуск, мастер онбординга",
+      "steps": [
+        "На шаге «Кто вы?» выбрать «не разработчик» (аналитик/дизайнер/продакт/др.)",
+        "Завершить онбординг",
+        "Открыть Настройки → Разработчикам"
+      ],
+      "expected": [
+        "Developer Space выключен по умолчанию",
+        "Пункт навигации скрыт/неактивен",
+        "Карточка доступна в Настройки → Разработчикам и включается вручную"
+      ],
+      "refs": [
+        "D1",
+        "apps/electron/src/shared/settings-registry.ts",
+        "apps/electron/src/renderer/pages/settings/settings-pages.ts"
+      ]
+    },
+    {
+      "id": "ONB-003",
+      "area": "онбординг-гейт",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Первый запуск; шаг «Кто вы?» пропускается",
+      "steps": [
+        "Пропустить шаг «Кто вы?» без выбора",
+        "Завершить онбординг",
+        "Проверить существующие ветки онбординга git-bash и rox-connect"
+      ],
+      "expected": [
+        "Скип безопасен, приложение запускается",
+        "Ветки git-bash/rox-connect не ломаются",
+        "Developer Space остаётся выключенным (дефолт)"
+      ],
+      "refs": [
+        "D1",
+        "apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx",
+        "apps/electron/src/renderer/hooks/useOnboarding.ts"
+      ]
+    },
+    {
+      "id": "ONB-004",
+      "area": "онбординг-гейт",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Роль «не разработчик»; Developer Space выключен",
+      "steps": [
+        "Вставить ссылку на репозиторий",
+        "Подключить git/CLI (мягкий сигнал)",
+        "Наблюдать реакцию UI"
+      ],
+      "expected": [
+        "Показывается только напоминание «включить экран разработчика?»",
+        "Автовключение Developer Space НЕ происходит"
+      ],
+      "refs": [
+        "D1",
+        "packages/shared/src/environment/storage.ts"
+      ]
+    },
+    {
+      "id": "DEV-001",
+      "area": "Developer Space",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Developer Space включён",
+      "steps": [
+        "Открыть приложение",
+        "Осмотреть rail/nav destinations"
+      ],
+      "expected": [
+        "Присутствует новый верхнеуровневый пункт «Разработчикам»",
+        "Регистрация выполнена через APP_NAV_DESTINATIONS (add once)"
+      ],
+      "refs": [
+        "D2",
+        "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+        "apps/electron/src/renderer/platform/ActivityRail.tsx"
+      ]
+    },
+    {
+      "id": "DEV-002",
+      "area": "Developer Space",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Developer Space включён, пункт «Разработчикам» доступен",
+      "steps": [
+        "Открыть «Разработчикам»",
+        "Осмотреть каталог репозиториев",
+        "Открыть репо-пространство"
+      ],
+      "expected": [
+        "Показан каталог репо",
+        "Переход в единый репо-воркспейс работает; рендер через MainContentPanel"
+      ],
+      "refs": [
+        "D2",
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx"
+      ]
+    },
+    {
+      "id": "DEV-003",
+      "area": "Developer Space",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Developer Space включён; открыт Проект",
+      "steps": [
+        "Из Проекта открыть Developer Space вкладкой/диплинком",
+        "Сравнить с входом через пункт «Разработчикам»"
+      ],
+      "expected": [
+        "Одно ядро, две точки входа: контент и поведение идентичны",
+        "Состояние репо-пространства не дублируется"
+      ],
+      "refs": [
+        "D2"
+      ]
+    },
+    {
+      "id": "DEV-004",
+      "area": "Developer Space",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Developer Space выключен флагом",
+      "steps": [
+        "Открыть приложение",
+        "Попытаться перейти по диплинку в dev space"
+      ],
+      "expected": [
+        "Пункт навигации/поверхность недоступны",
+        "Нет краша и утечки неготовых экранов"
+      ],
+      "refs": [
+        "D2",
+        "packages/core/src/platform/workbench/flags.ts",
+        "apps/electron/src/renderer/atoms/mode-flags.ts"
+      ]
+    },
+    {
+      "id": "DEV-005",
+      "area": "Developer Space",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Репо-воркспейс проанализирован",
+      "steps": [
+        "Открыть репо-пространство",
+        "Осмотреть унифицированные поверхности-артефакты"
+      ],
+      "expected": [
+        "Доступны шесть поверхностей: wiki, понимание кода, граф кода, схемы, knowledge-graph, C4/OKF",
+        "Каждая поверхность использует свой инструмент из реестра"
+      ],
+      "refs": [
+        "D4",
+        "packages/shared/src/code-intelligence/types.ts"
+      ]
+    },
+    {
+      "id": "DEV-006",
+      "area": "Developer Space",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Открыт каталог репо с устаревшим снапшотом",
+      "steps": [
+        "Найти репо с расхождением с origin",
+        "Осмотреть карточку/шапку репо"
+      ],
+      "expected": [
+        "Показан бейдж «устарело»",
+        "Авто-обновление не запускается без действия пользователя"
+      ],
+      "refs": [
+        "D3",
+        "D7"
+      ]
+    },
+    {
+      "id": "ING-001",
+      "area": "ингест репозитория",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Developer Space включён, есть доступ в сеть",
+      "steps": [
+        "Вставить публичную ссылку на GitHub-репозиторий",
+        "Запустить клонирование"
+      ],
+      "expected": [
+        "Клон создаётся в управляемом пространстве projects/<slug>",
+        "Источник правды — локальная папка проекта"
+      ],
+      "refs": [
+        "D3",
+        "O4"
+      ]
+    },
+    {
+      "id": "ING-002",
+      "area": "ингест репозитория",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Приватный репозиторий; требуется авторизация",
+      "steps": [
+        "Запустить клонирование приватного репо",
+        "Пройти GitHub device-login"
+      ],
+      "expected": [
+        "Успешное подключение после device-login",
+        "GitHub-токен хранится в credential store и НЕ отдаётся в рендере"
+      ],
+      "refs": [
+        "D3",
+        "packages/server-core/src/workgraph/github-oauth-import.ts"
+      ]
+    },
+    {
+      "id": "ING-003",
+      "area": "ингест репозитория",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Есть локальная папка с репозиторием",
+      "steps": [
+        "Выбрать привязку локальной папки как альтернативу клонированию"
+      ],
+      "expected": [
+        "Папка регистрируется как репо-проект",
+        "Дальнейший анализ идёт по локальному содержимому"
+      ],
+      "refs": [
+        "D3",
+        "O4"
+      ]
+    },
+    {
+      "id": "ING-004",
+      "area": "ингест репозитория",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Локальный клон существует",
+      "steps": [
+        "Нажать ручную кнопку «проверить свежесть/обновить»",
+        "Дождаться результата проверки"
+      ],
+      "expected": [
+        "Выполняется сравнение с origin по паттерну freshness code-intelligence",
+        "Результат отражает наличие/отсутствие расхождения"
+      ],
+      "refs": [
+        "D3",
+        "packages/shared/src/code-intelligence/refs.ts"
+      ]
+    },
+    {
+      "id": "ING-005",
+      "area": "ингест репозитория",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Проверка свежести выявила расхождение",
+      "steps": [
+        "Запустить проверку свежести",
+        "Прокрутить репо-пространство"
+      ],
+      "expected": [
+        "Отображается бейдж «устарело»",
+        "Возможен ручной запуск обновления"
+      ],
+      "refs": [
+        "D3",
+        "D7"
+      ]
+    },
+    {
+      "id": "ING-006",
+      "area": "ингест репозитория",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Клон существует, origin доступен",
+      "steps": [
+        "Оставить репо-проект без действий пользователя на длительное время",
+        "Наблюдать фоновые процессы git"
+      ],
+      "expected": [
+        "Авто-watch/pull НЕ выполняется (не в v1)",
+        "Обновление только по ручной команде"
+      ],
+      "refs": [
+        "D3"
+      ]
+    },
+    {
+      "id": "PIPE-001",
+      "area": "пайплайн/джобы",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Репозиторий добавлен, анализ запущен",
+      "steps": [
+        "Запустить анализ репо",
+        "Проверить момент появления структурных артефактов"
+      ],
+      "expected": [
+        "Структурные артефакты (codegraph/groma/graphify/archify) генерируются сразу локально",
+        "LLM-слой к ним ещё не готов"
+      ],
+      "refs": [
+        "D5",
+        "O1",
+        "O2"
+      ]
+    },
+    {
+      "id": "PIPE-002",
+      "area": "пайплайн/джобы",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Анализ запущен",
+      "steps": [
+        "Наблюдать репо-пространство во время анализа",
+        "Дождаться завершения LLM-слоя"
+      ],
+      "expected": [
+        "UI сразу показывает скелет",
+        "LLM-слой (wiki, «понимание», блоки вопросов) идёт фоном с прогрессом"
+      ],
+      "refs": [
+        "D5",
+        "D8"
+      ]
+    },
+    {
+      "id": "PIPE-003",
+      "area": "пайплайн/джобы",
+      "level": "native",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Запущен длинный пайплайн анализа",
+      "steps": [
+        "Замерить продолжительность пайплайна (>20 с)",
+        "Проверить, каким механизмом запущен процесс"
+      ],
+      "expected": [
+        "Процесс НЕ запускается через shell:exec (лимит 20 с)",
+        "Используется job-механизм (agent SDK spawn / automations / cloud-runner local)"
+      ],
+      "refs": [
+        "D5",
+        "apps/electron/src/main/handlers/system.ts:314",
+        "O3"
+      ]
+    },
+    {
+      "id": "PIPE-004",
+      "area": "пайплайн/джобы",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Активный фоновый джоб анализа",
+      "steps": [
+        "Нажать отмену джоба",
+        "Проверить состояние поверхностей"
+      ],
+      "expected": [
+        "Джоб останавливается",
+        "Прогресс и статус отражают отмену без зависания"
+      ],
+      "refs": [
+        "D5",
+        "O3"
+      ]
+    },
+    {
+      "id": "PIPE-005",
+      "area": "пайплайн/джобы",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Фоновый джоб с прогрессом",
+      "steps": [
+        "Наблюдать прогресс джоба",
+        "Проверить порядок обновлений статуса"
+      ],
+      "expected": [
+        "Прогресс монотонный, статус завершается корректно",
+        "Частичные артефакты не выдаются за финальные"
+      ],
+      "refs": [
+        "D5"
+      ]
+    },
+    {
+      "id": "PIPE-006",
+      "area": "пайплайн/джобы",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Требуется выбрать job-движок для пайплайнов",
+      "steps": [
+        "Свериться со SPEC-foundations по критериям выбора",
+        "Проверить зафиксированное решение"
+      ],
+      "expected": [
+        "Выбор движка задокументирован",
+        "Пока не решено — помечено TODO(open) O3"
+      ],
+      "refs": [
+        "O3",
+        "D5"
+      ]
+    },
+    {
+      "id": "ART-001",
+      "area": "артефакты/публикация",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Анализ завершён",
+      "steps": [
+        "Осмотреть папку репо-проекта"
+      ],
+      "expected": [
+        "Артефакты лежат в projects/<slug>/dev-space/... (JSON/MD/SVG)",
+        "Артефакты версионируемы"
+      ],
+      "refs": [
+        "D7",
+        "O4"
+      ]
+    },
+    {
+      "id": "ART-002",
+      "area": "артефакты/публикация",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Артефакт сгенерирован",
+      "steps": [
+        "Открыть метаданные артефакта",
+        "Проверить поля provenance"
+      ],
+      "expected": [
+        "Присутствует provenance (аналогично снапшотам code-intelligence)",
+        "sourceRevision/artifactDigest доступны для не-базовых провайдеров"
+      ],
+      "refs": [
+        "D7",
+        "packages/shared/src/code-intelligence/provider.ts"
+      ]
+    },
+    {
+      "id": "ART-003",
+      "area": "артефакты/публикация",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Артефакт готов к публикации",
+      "steps": [
+        "Опубликовать человекочитаемую страницу",
+        "Открыть Notes/Pages и выполнить поиск"
+      ],
+      "expected": [
+        "Публикация идёт markdown-пайплайном content:*",
+        "Страница доступна в Notes/Pages, wikilinks и поиск vault-index работают"
+      ],
+      "refs": [
+        "D7",
+        "packages/server-core/src/docs/markdown-commit.ts",
+        "packages/server-core/src/knowledge/vault-index.ts"
+      ]
+    },
+    {
+      "id": "ART-004",
+      "area": "артефакты/публикация",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Артефакты репо существуют; агентская сессия активна",
+      "steps": [
+        "Дать агенту прочитать артефакты через session-tools",
+        "Проверить доступные хендлеры"
+      ],
+      "expected": [
+        "Чтение через session-tools (паттерн-образец knowledge_*)",
+        "Используются devspace.read/devspace.search (dev-space-*.ts, волна В2)"
+      ],
+      "refs": [
+        "D7",
+        "packages/session-tools-core/src/handlers/dev-space-read.ts",
+        "packages/session-tools-core/src/handlers/dev-space-search.ts"
+      ]
+    },
+    {
+      "id": "ART-005",
+      "area": "артефакты/публикация",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Агент предлагает изменение артефакта",
+      "steps": [
+        "Агент вызывает propose",
+        "Пользователь подтверждает/отклоняет approve"
+      ],
+      "expected": [
+        "Запись выполняется только через devspace.propose/approve",
+        "Без approve артефакт не изменяется"
+      ],
+      "refs": [
+        "D7",
+        "packages/session-tools-core/src/handlers/dev-space-propose.ts"
+      ]
+    },
+    {
+      "id": "ART-006",
+      "area": "артефакты/публикация",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Появился новый снапшот репо",
+      "steps": [
+        "Нажать кнопку обновления артефактов",
+        "Проверить бейдж «устарело»"
+      ],
+      "expected": [
+        "Артефакты пересобираются по явной команде",
+        "Авто-регенерация не выполняется (не в v1)"
+      ],
+      "refs": [
+        "D7",
+        "D8"
+      ]
+    },
+    {
+      "id": "QST-001",
+      "area": "блоки вопросов",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Анализ репо завершён",
+      "steps": [
+        "Дождаться предгенерации вопросов",
+        "Осмотреть три блока"
+      ],
+      "expected": [
+        "По 10 вопросов на каждый из трёх блоков: обучение; фичи/улучшения; безопасность/зависимости/производительность",
+        "Всего 30 вопросов"
+      ],
+      "refs": [
+        "D8"
+      ]
+    },
+    {
+      "id": "QST-002",
+      "area": "блоки вопросов",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Сгенерированы блоки вопросов",
+      "steps": [
+        "Создать новый снапшот репо",
+        "Запустить пересчёт вопросов"
+      ],
+      "expected": [
+        "Вопросы пересчитываются при новом снапшоте",
+        "Старые вопросы заменяются без дублей"
+      ],
+      "refs": [
+        "D8"
+      ]
+    },
+    {
+      "id": "QST-003",
+      "area": "блоки вопросов",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Блок с вопросами показан",
+      "steps": [
+        "Кликнуть по вопросу",
+        "Проверить развёрнутый ответ"
+      ],
+      "expected": [
+        "Развёрнутый ответ открывается по клику",
+        "Ответ может быть текстом или запуском тура"
+      ],
+      "refs": [
+        "D8",
+        "D9"
+      ]
+    },
+    {
+      "id": "QST-004",
+      "area": "блоки вопросов",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Заполнен онбординг-профиль; есть репо-контекст и рабочие сигналы",
+      "steps": [
+        "Открыть блок вопросов",
+        "Проверить пометку «почему этот вопрос»"
+      ],
+      "expected": [
+        "Вопросы персонализированы (профиль + репо-контекст + сигналы: незакоммиченное, CI)",
+        "Пометка «почему этот вопрос» прозрачно объясняет выбор"
+      ],
+      "refs": [
+        "D8"
+      ]
+    },
+    {
+      "id": "QST-005",
+      "area": "блоки вопросов",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Блок 3 (безопасность/зависимости/производительность); выдано per-repo согласие",
+      "steps": [
+        "Запустить генерацию SBOM (syft)",
+        "Запустить проверку CVE (OSV)"
+      ],
+      "expected": [
+        "SBOM формируется optional runner, инструмент не устанавливается автоматически",
+        "CVE-проверка идёт только под per-repo согласием"
+      ],
+      "refs": [
+        "D8",
+        "packages/shared/src/code-intelligence/sbom.ts",
+        "D6"
+      ]
+    },
+    {
+      "id": "QST-006",
+      "area": "блоки вопросов",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Рабочее дерево «грязное» (dirty snapshot)",
+      "steps": [
+        "Сгенерировать вопросы по dirty снапшоту",
+        "Проверить политику пересчёта"
+      ],
+      "expected": [
+        "Пересчёт выполняется по явной команде (dirty snapshot)",
+        "Молчаливого пересчёта нет"
+      ],
+      "refs": [
+        "O8",
+        "D8"
+      ]
+    },
+    {
+      "id": "TOUR-001",
+      "area": "туры/демо",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Репо-артефакты доступны; product-tour включён",
+      "steps": [
+        "Открыть источник туров dev space",
+        "Проверить тип сгенерированных туров"
+      ],
+      "expected": [
+        "Динамические TourDefinition генерируются из артефактов репо",
+        "Статика каталога сохраняется для обучающих туров приложения"
+      ],
+      "refs": [
+        "D9",
+        "apps/electron/src/renderer/features/product-tour/contracts/index.ts"
+      ]
+    },
+    {
+      "id": "TOUR-002",
+      "area": "туры/демо",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Запущен динамический тур",
+      "steps": [
+        "Смотреть индикатор прогресса",
+        "Пройти несколько шагов"
+      ],
+      "expected": [
+        "Отображается «шаг N из M»",
+        "Прогресс корректно увеличивается"
+      ],
+      "refs": [
+        "D9"
+      ]
+    },
+    {
+      "id": "TOUR-003",
+      "area": "туры/демо",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Тур начат и прерван",
+      "steps": [
+        "Пройти часть шагов тура",
+        "Закрыть приложение",
+        "Перезапустить приложение"
+      ],
+      "expected": [
+        "Прогоны персистятся (существующая IndexedDB)",
+        "Прогресс восстанавливается"
+      ],
+      "refs": [
+        "D9",
+        "apps/electron/src/renderer/features/product-tour/runtime/ProductTourProvider.tsx"
+      ]
+    },
+    {
+      "id": "TOUR-004",
+      "area": "туры/демо",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Запущен тур в демо-режиме",
+      "steps": [
+        "Наблюдать краевой слой окна",
+        "Замерить параметры виньетки"
+      ],
+      "expected": [
+        "Тёмная радиальная виньетка по периметру, непрозрачность 0.10–0.18",
+        "Анимация «дыхание» 4–6 с; spotlight-механизм сохранён"
+      ],
+      "refs": [
+        "D10",
+        "apps/electron/src/renderer/features/product-tour/ui/SpotlightOverlay.tsx"
+      ]
+    },
+    {
+      "id": "TOUR-005",
+      "area": "туры/демо",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Цель шага не зарегистрирована/занята/неоднозначна",
+      "steps": [
+        "Воспроизвести состояние target-missing",
+        "Затем occluded и ambiguous"
+      ],
+      "expected": [
+        "Движок распознаёт ready|blocked",
+        "blocked-состояния target-missing/occluded/ambiguous обрабатываются без краша"
+      ],
+      "refs": [
+        "D9",
+        "apps/electron/src/renderer/features/product-tour/ui/target-registry.ts"
+      ]
+    },
+    {
+      "id": "TOUR-006",
+      "area": "туры/демо",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "ОС с prefers-reduced-motion=reduce",
+      "steps": [
+        "Включить reduced-motion",
+        "Запустить тур в демо-режиме"
+      ],
+      "expected": [
+        "Виньетка становится статичным градиентом без пульса",
+        "Анимации «дыхание» и пульс границы цели отключены"
+      ],
+      "refs": [
+        "D10",
+        "packages/ui/src/styles/tokens"
+      ]
+    },
+    {
+      "id": "TOUR-007",
+      "area": "туры/демо",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Тур в демо-режиме активен",
+      "steps": [
+        "Проверить прогресс-полосу и счётчик «шаг N/M»",
+        "Нажать паузу, затем выход"
+      ],
+      "expected": [
+        "Прогресс-полоса и «шаг N/M» присутствуют",
+        "Кнопки пауза/выход работают"
+      ],
+      "refs": [
+        "D10"
+      ]
+    },
+    {
+      "id": "TOUR-008",
+      "area": "туры/демо",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Тур ожидает сигнал verified",
+      "steps": [
+        "Послать ui-observation с именем сигнала",
+        "Проверить статус шага"
+      ],
+      "expected": [
+        "Сигнал «verified» НЕ приходит из ui-observation",
+        "Гвард в core блокирует подмену"
+      ],
+      "refs": [
+        "D9",
+        "apps/electron/src/renderer/features/product-tour/core/index.ts"
+      ]
+    },
+    {
+      "id": "CHAT-001",
+      "area": "свой вопрос",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Открыты блоки вопросов репо; модель/коннект доступны",
+      "steps": [
+        "Осмотреть композер под блоками",
+        "Открыть пикер модели/коннекта, добавить вложение"
+      ],
+      "expected": [
+        "Композер стандартный ROX (как ChatPage): пикер модели/коннекта и вложения",
+        "Поведение совпадает с композером ChatPage"
+      ],
+      "refs": [
+        "D11",
+        "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/ChatInputZone.tsx"
+      ]
+    },
+    {
+      "id": "CHAT-002",
+      "area": "свой вопрос",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Композер готов; есть сессия под репо",
+      "steps": [
+        "Задать свой вопрос",
+        "Открыть список сессий",
+        "Продолжить диалог; вызвать инструмент"
+      ],
+      "expected": [
+        "Запрос уходит в обычную сессию, привязанную к репо",
+        "Сессия видна в списке и продолжается; инструменты доступны"
+      ],
+      "refs": [
+        "D11",
+        "apps/electron/src/renderer/hooks/useSessionModelCatalog.ts"
+      ]
+    },
+    {
+      "id": "CHAT-003",
+      "area": "свой вопрос",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Получен ответ со ссылкой на экраны",
+      "steps": [
+        "Нажать кнопку «Показать на экранах»"
+      ],
+      "expected": [
+        "Запускается сгенерированный тур по экранам",
+        "Тур соответствует контексту ответа"
+      ],
+      "refs": [
+        "D11",
+        "D9"
+      ]
+    },
+    {
+      "id": "PLB-001",
+      "area": "Playbooks-знания",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Поверхность ROX Playbooks доступна",
+      "steps": [
+        "Открыть ROX Playbooks",
+        "Проверить доступный режим"
+      ],
+      "expected": [
+        "Доступен режим «знаний» (v1)",
+        "Поверхность реализована как ноутбук-поверхность (референс SurfSense/NotebookLM)"
+      ],
+      "refs": [
+        "D12"
+      ]
+    },
+    {
+      "id": "PLB-002",
+      "area": "Playbooks-знания",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Режим знаний активен; подготовлены файлы-источники",
+      "steps": [
+        "Загрузить источники",
+        "Выполнить поиск/retrieval по источникам"
+      ],
+      "expected": [
+        "Индексация через source-index (SQLite FTS5 .craft/source-index.sqlite)",
+        "retrieveSourcesForPrompt возвращает релевантные фрагменты; соблюдены лимиты"
+      ],
+      "refs": [
+        "D12",
+        "packages/server-core/src/sources/source-index.ts"
+      ]
+    },
+    {
+      "id": "PLB-003",
+      "area": "Playbooks-знания",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Источники проиндексированы",
+      "steps": [
+        "Открыть пресет-вопросы по источникам",
+        "Кликнуть по пресет-вопросу"
+      ],
+      "expected": [
+        "Показаны пресет-вопросы",
+        "Ответ строится по загруженным источникам"
+      ],
+      "refs": [
+        "D12"
+      ]
+    },
+    {
+      "id": "PLB-004",
+      "area": "Playbooks-знания",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Существующий ярлык SessionWorkbench «playbook holes»",
+      "steps": [
+        "Открыть SessionWorkbench",
+        "Проверить ярлык «Веера задач»"
+      ],
+      "expected": [
+        "Ярлык переименован в «Веера задач» (устранена коллизия с «Плейбуки»)",
+        "Коллизии имени больше нет"
+      ],
+      "refs": [
+        "D12"
+      ]
+    },
+    {
+      "id": "PLB-005",
+      "area": "Playbooks-знания",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "SiYuan-поверхность жёстко выключена (knowledgeEnabled=false)",
+      "steps": [
+        "Открыть Playbooks",
+        "Проверить, не используется ли SiYuan/KnowledgeSurfacePage как база"
+      ],
+      "expected": [
+        "Playbooks НЕ строятся на SiYuan-поверхности",
+        "Используются собственные примитивы (source-index, docs block-tree, voice, agent sessions)"
+      ],
+      "refs": [
+        "D12",
+        "apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx"
+      ]
+    },
+    {
+      "id": "POD-001",
+      "area": "подкаст",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Режим знаний, достаточно источников; TTS доступен",
+      "steps": [
+        "Запустить генерацию подкаста в один клик",
+        "Дождаться сборки и открыть плеер"
+      ],
+      "expected": [
+        "Двухголосый диалог (ведущий + эксперт), сценарий — LLM",
+        "Озвучка через существующие TTS (edge/system); встроенный плеер работает"
+      ],
+      "refs": [
+        "D13",
+        "packages/shared/src/voice/types.ts",
+        "packages/shared/src/voice/adapters/edge-tts.ts"
+      ]
+    },
+    {
+      "id": "POD-002",
+      "area": "подкаст",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Подкаст настроен перед генерацией",
+      "steps": [
+        "Изменить ярлык и промпт шаблонной роли",
+        "Запустить генерацию"
+      ],
+      "expected": [
+        "Роли редактируемы (ярлыки/промпты)",
+        "Сценарий учитывает изменённые роли"
+      ],
+      "refs": [
+        "D13"
+      ]
+    },
+    {
+      "id": "POD-003",
+      "area": "подкаст",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "TTS-движок недоступен или вернул ошибку синтеза",
+      "steps": [
+        "Запустить озвучку с недоступным движком"
+      ],
+      "expected": [
+        "Ошибка TTS корректно отображается пользователю",
+        "Есть возможность повторить/сменить движок; без падения плеера"
+      ],
+      "refs": [
+        "D13",
+        "podcast:JOB",
+        "packages/shared/src/voice/job-machine.ts"
+      ]
+    },
+    {
+      "id": "POD-004",
+      "area": "подкаст",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Активный джоб генерации/озвучки подкаста",
+      "steps": [
+        "Отменить джоб подкаста"
+      ],
+      "expected": [
+        "Джоб останавливается; частичный файл не публикуется как финал",
+        "Статус отражает отмену"
+      ],
+      "refs": [
+        "D13",
+        "podcast:JOB",
+        "packages/shared/src/voice/job-machine.ts"
+      ]
+    },
+    {
+      "id": "POD-005",
+      "area": "подкаст",
+      "level": "native",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Подкаст собран",
+      "steps": [
+        "Экспортировать mp3"
+      ],
+      "expected": [
+        "Файл mp3 формируется корректно",
+        "Экспорт доступен из плеера"
+      ],
+      "refs": [
+        "D13",
+        "packages/shared/src/voice/job-machine.ts"
+      ]
+    },
+    {
+      "id": "POD-006",
+      "area": "подкаст",
+      "level": "native",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Подкаст собран из сегментов",
+      "steps": [
+        "Экспортировать srt"
+      ],
+      "expected": [
+        "Файл srt формируется из сегментов с корректной разметкой времени",
+        "Формат srt доступен (по умолчанию да)"
+      ],
+      "refs": [
+        "D13",
+        "O6"
+      ]
+    },
+    {
+      "id": "POD-007",
+      "area": "подкаст",
+      "level": "native",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Синтезированы сегменты озвучки",
+      "steps": [
+        "Запустить сборку сегментов в один файл"
+      ],
+      "expected": [
+        "Сегменты собираются в один файл через ffmpeg (внешний вызов)",
+        "Порядок сегментов соответствует сценарию"
+      ],
+      "refs": [
+        "D13",
+        "packages/shared/src/voice/job-machine.ts"
+      ]
+    },
+    {
+      "id": "POD-008",
+      "area": "подкаст",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Требуется выбор TTS-движка для офлайн-автономности",
+      "steps": [
+        "Проверить доступные TtsEngine",
+        "Оценить необходимость Kokoro"
+      ],
+      "expected": [
+        "Kokoro — опциональный третий TtsEngine (offline)",
+        "Пока не решено — помечено TODO(open) O5"
+      ],
+      "refs": [
+        "D13",
+        "packages/shared/src/voice/types.ts",
+        "O5"
+      ]
+    },
+    {
+      "id": "CBK-001",
+      "area": "кодбук",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Поверхность Playbooks доступна (режим знаний реализован)",
+      "steps": [
+        "Включить режим кодбука",
+        "Создать ноутбук-пайплайн по коду"
+      ],
+      "expected": [
+        "Доступен режим кодбука: ноутбуки-пайплайны по коду",
+        "Пайплайн оперирует кодовой базой репо-проекта"
+      ],
+      "refs": [
+        "D12",
+        "D14"
+      ]
+    },
+    {
+      "id": "CBK-002",
+      "area": "кодбук",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Волновая последовательность D14",
+      "steps": [
+        "Свериться с планом волн: В4 (знания) → В5 (кодбук)",
+        "Проверить, что кодбук не опережает знания в поставке"
+      ],
+      "expected": [
+        "Кодбук поставляется в волне В5 после режима знаний (В4)",
+        "Концепции SurfSense переносятся портом, вендоринга нет"
+      ],
+      "refs": [
+        "D12",
+        "D14"
+      ]
+    },
+    {
+      "id": "CBK-003",
+      "area": "кодбук",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Кодбук-пайплайн выполняется",
+      "steps": [
+        "Запустить ноутбук-пайплайн по коду",
+        "Проверить используемые примитивы сохранения/проекций"
+      ],
+      "expected": [
+        "Пайплайн переиспользует docs block-tree проекции и commit-store",
+        "Артефакты сохраняются с durable receipts"
+      ],
+      "refs": [
+        "D12",
+        "packages/core/src/docs",
+        "packages/server-core/src/docs/markdown-commit.ts"
+      ]
+    },
+    {
+      "id": "SEC-001",
+      "area": "приватность/эгресс",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Выполняется вызов настроенного модельного коннекта для репо",
+      "steps": [
+        "Запустить операцию, требующую LLM",
+        "Проверить наличие per-repo согласия"
+      ],
+      "expected": [
+        "Без гранулярного per-repo согласия эгресс не выполняется",
+        "Согласие по аналогу гейта PREVIEW/BIND; молчаливого эгресса нет"
+      ],
+      "refs": [
+        "D6",
+        "packages/server-core/src/handlers/rpc/code-intelligence.ts"
+      ]
+    },
+    {
+      "id": "SEC-002",
+      "area": "приватность/эгресс",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Требуется сеть для CVE (OSV) и обновлений инструментов",
+      "steps": [
+        "Запустить CVE-проверку без согласия",
+        "Затем выдать согласие и повторить"
+      ],
+      "expected": [
+        "Без согласия сетевой доступ для OSV/обновлений инструментов заблокирован",
+        "После согласия операция разрешена и залогирована"
+      ],
+      "refs": [
+        "D6"
+      ]
+    },
+    {
+      "id": "SEC-003",
+      "area": "приватность/эгресс",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Репозиторий содержит секреты (.env*, *.pem, *.key, .codegraph/**)",
+      "steps": [
+        "Запустить анализ/эгресс по такому репо",
+        "Проверить состав передаваемых данных"
+      ],
+      "expected": [
+        "Дефолтные исключения .env*, **/*.pem, **/*.key, **/.codegraph/** соблюдаются",
+        "Секреты не уходят наружу"
+      ],
+      "refs": [
+        "D6",
+        "packages/server-core/src/handlers/rpc/code-intelligence.ts"
+      ]
+    },
+    {
+      "id": "SEC-004",
+      "area": "приватность/эгресс",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Выполнен любой эгресс по репо",
+      "steps": [
+        "Совершить санкционированный эгресс",
+        "Открыть аудит-лог"
+      ],
+      "expected": [
+        "Эгресс-событие записано в аудит-лог",
+        "Запись содержит контекст операции (репо, тип эгресса)"
+      ],
+      "refs": [
+        "D6"
+      ]
+    },
+    {
+      "id": "SEC-005",
+      "area": "приватность/эгресс",
+      "level": "server",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Локальная модель сконфигурирована как рабочая опция",
+      "steps": [
+        "Сконфигурировать локальную модель",
+        "Запустить операцию, требующую LLM"
+      ],
+      "expected": [
+        "Локальная модель является рабочей опцией без сетевого эгресса",
+        "Молчаливого эгресса нет"
+      ],
+      "refs": [
+        "D6"
+      ]
+    },
+    {
+      "id": "I18N-001",
+      "area": "i18n",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Добавлены новые строки UI для dev space/playbooks",
+      "steps": [
+        "Прогнать lint:i18n:parity, lint:i18n:sorted, lint:i18n:coverage"
+      ],
+      "expected": [
+        "Все новые строки присутствуют во всех 12 локалях (ar de en es fr hu ja ko pl ru zh-Hans zh-Hant)",
+        "Гейты parity/sorted/coverage зелёные"
+      ],
+      "refs": [
+        "packages/shared/src/i18n/locales",
+        "D14"
+      ]
+    },
+    {
+      "id": "I18N-002",
+      "area": "i18n",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "RU — дефолт; ключи ASCII-sorted",
+      "steps": [
+        "Проверить дефолтную локаль и порядок ключей в файлах локалей"
+      ],
+      "expected": [
+        "RU является дефолтом",
+        "Ключи ASCII-sorted во всех файлах локалей"
+      ],
+      "refs": [
+        "packages/shared/src/i18n/locales",
+        "D14"
+      ]
+    },
+    {
+      "id": "A11Y-001",
+      "area": "a11y",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "ОС с prefers-reduced-motion=reduce",
+      "steps": [
+        "Включить reduced-motion",
+        "Открыть экраны с motion-эффектами (виньетка/пульс)"
+      ],
+      "expected": [
+        "Reduced-motion гасит motion-токены",
+        "Применяются motion-reduce:*; анимации отключены"
+      ],
+      "refs": [
+        "D10",
+        "packages/ui/src/styles/tokens"
+      ]
+    },
+    {
+      "id": "A11Y-002",
+      "area": "a11y",
+      "level": "renderer",
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "precondition": "Тур в демо-режиме открыт; навигация с клавиатуры",
+      "steps": [
+        "Управлять туром только клавиатурой",
+        "Перевести фокус на кнопки пауза/выход"
+      ],
+      "expected": [
+        "Фокус и клавиатурная навигация работают",
+        "Кнопки тура достижимы и различимы; контраст виньетки не препятствует чтению"
+      ],
+      "refs": [
+        "D10",
+        "apps/electron/src/renderer/features/product-tour/ui/TourPopover.tsx"
+      ]
+    }
+  ]
+}
