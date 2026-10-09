@@ -54,7 +54,7 @@ export const useNavigationState=()=>React.useContext(NavContext);
 export const NavigationContext=NavContext; // PanelSlot reads/provides the same fixture context.
 export const useNavigation=()=>({...React.useContext(NavigationStatusContext),navigateToSource:()=>{}});
 export const useActiveWorkspace=()=>({id:React.useContext(ShellContext)?.activeWorkspaceId});
-export { isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
+export { isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,isClipboardHistoryNavigation,
  isLearningNavigation,isTasksNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
  isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,isDiffNavigation,isExtensionNavigation,
  isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,isTerminalNavigation,isDriveNavigation } from ${JSON.stringify(types)};
