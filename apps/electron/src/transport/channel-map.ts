@@ -645,6 +645,18 @@ export const CHANNEL_MAP = {
   processVoiceTranscript: invoke(RPC_CHANNELS.voice.PROCESS),
   listVoiceModels: invoke(RPC_CHANNELS.voice.MODELS_LIST),
   onVoiceJob: listener(RPC_CHANNELS.voice.JOB),
+  // Podcast (D13) — local generation job; progress rides the podcast:job push.
+  startPodcast: invoke(RPC_CHANNELS.podcast.START),
+  cancelPodcast: invoke(RPC_CHANNELS.podcast.CANCEL),
+  podcastEpisodes: invoke(RPC_CHANNELS.podcast.EPISODES),
+  readPodcastEpisodeAudio: invoke(RPC_CHANNELS.podcast.AUDIO),
+  podcastEpisodeAudioUrl: invoke(RPC_CHANNELS.podcast.AUDIO_URL),
+  onPodcastJob: listener(RPC_CHANNELS.podcast.JOB),
+  // Playbooks codebook (В5, D12) — local notebook run; progress rides the playbooks:codebookJob push.
+  runCodebook: invoke(RPC_CHANNELS.playbooks.RUN_CODEBOOK),
+  cancelCodebook: invoke(RPC_CHANNELS.playbooks.CANCEL_CODEBOOK),
+  listCodebookRuns: invoke(RPC_CHANNELS.playbooks.CODEBOOK_RUNS),
+  onCodebookJob: listener(RPC_CHANNELS.playbooks.CODEBOOK_JOB),
   onVoiceOverlay: listener(RPC_CHANNELS.voice.OVERLAY),
   onVoiceHotkey: listener(RPC_CHANNELS.voice.HOTKEY),
   talkStart: invoke(RPC_CHANNELS.voice.TALK_START),

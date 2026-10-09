@@ -704,13 +704,22 @@ export const EXPECTED_CHANNELS: string[] = [
   'pi:getApiKeyProviders',
   'pi:getProviderBaseUrl',
   'pi:getProviderModels',
+  'playbooks:cancelCodebook',
+  'playbooks:codebookJob',
+  'playbooks:codebookRuns',
+  'playbooks:runCodebook',
   'pluginBridge:getProjections',
   'pluginBridge:installBazaar',
   'pluginBridge:listPlugins',
   'pluginBridge:openCompat',
   'pluginBridge:setEnabled',
   'pluginBridge:uninstallBazaar',
+  'podcast:audio',
+  'podcast:audioUrl',
+  'podcast:cancel',
+  'podcast:episodes',
   'podcast:job',
+  'podcast:start',
   'power:getKeepAwake',
   'power:setKeepAwake',
   'preferences:read',
@@ -1048,4 +1057,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1044
+export const EXPECTED_CHANNEL_COUNT = 1053

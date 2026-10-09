@@ -37,7 +37,9 @@
     "./workspace-sync": "./src/workspace-sync/index.ts",
     "./collab": "./src/collab/index.ts",
     "./drive": "./src/drive/index.ts",
-    "./xsc": "./src/xsc/index.ts"
+    "./xsc": "./src/xsc/index.ts",
+    "./playbooks/jobs": "./src/playbooks/jobs.ts",
+    "./playbooks/codebook": "./src/playbooks/codebook/index.ts"
   },
   "scripts": {},
   "dependencies": {
