@@ -38,20 +38,20 @@ export function ShareMenuItems({
   return (
     <>
       <MenuItem onClick={onOpenInBrowser}>
-        <Globe className="h-3.5 w-3.5" />
+        <Globe className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.openInBrowser")}</span>
       </MenuItem>
       <MenuItem onClick={onCopyLink}>
-        <Copy className="h-3.5 w-3.5" />
+        <Copy className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.copyLink")}</span>
       </MenuItem>
       <MenuItem onClick={onUpdateShare}>
-        <RefreshCw className="h-3.5 w-3.5" />
+        <RefreshCw className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.updateShare")}</span>
       </MenuItem>
       <Separator />
       <MenuItem onClick={onRevokeShare} variant="destructive">
-        <Link2Off className="h-3.5 w-3.5" />
+        <Link2Off className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.stopSharing")}</span>
       </MenuItem>
     </>
@@ -96,20 +96,20 @@ export function OwnerMenuSection({
   return (
     <Sub>
       <SubTrigger className="pr-2">
-        <UserRound className="h-3.5 w-3.5" />
+        <UserRound className="icon-caption" />
         <span className="flex-1">{t('sessionOwner.assign')}</span>
-        {owner && <span className="max-w-[100px] truncate text-[10px] text-muted-foreground -mr-2.5">{owner.displayName}</span>}
+        {owner && <span className="max-w-[100px] truncate text-caption text-muted-foreground -mr-2.5">{owner.displayName}</span>}
       </SubTrigger>
       <SubContent>
         {!isAssignedToViewer && viewerId && (
           <MenuItem onClick={onAssignToMe}>
-            <UserRound className="h-3.5 w-3.5" />
+            <UserRound className="icon-caption" />
             <span className="flex-1">{t('sessionOwner.assignToMe')}</span>
           </MenuItem>
         )}
         {owner && (
           <MenuItem onClick={() => onAssign(null)}>
-            <UserRound className="h-3.5 w-3.5" />
+            <UserRound className="icon-caption" />
             <span className="flex-1">{t('sessionOwner.unassigned')}</span>
           </MenuItem>
         )}
@@ -117,7 +117,7 @@ export function OwnerMenuSection({
         {candidates.map((candidate) => (
           <MenuItem key={`${candidate.kind}:${candidate.id}`} onClick={() => onAssign(candidate)}>
             <span className="w-3.5 shrink-0">
-              {ownerId === candidate.id && <Check className="h-3.5 w-3.5 text-foreground" />}
+              {ownerId === candidate.id && <Check className="icon-caption text-foreground" />}
             </span>
             <span className="flex-1 truncate">{candidate.displayName}</span>
           </MenuItem>
@@ -150,15 +150,15 @@ export function VisibilityMenuSection({ visibility, onSelect, menu }: Visibility
   return (
     <Sub>
       <SubTrigger className="pr-2">
-        <Eye className="h-3.5 w-3.5" />
+        <Eye className="icon-caption" />
         <span className="flex-1">{t('sessionSharing.visibilityLabel')}</span>
-        <span className="text-[10px] text-muted-foreground -mr-2.5">{t(`sessionSharing.visibility.${VISIBILITY_KEY[visibility]}`)}</span>
+        <span className="text-caption text-muted-foreground -mr-2.5">{t(`sessionSharing.visibility.${VISIBILITY_KEY[visibility]}`)}</span>
       </SubTrigger>
       <SubContent>
         {VISIBILITY_OPTIONS.map((option) => (
           <MenuItem key={option} onClick={() => onSelect(option)}>
             <span className="w-3.5 shrink-0">
-              {visibility === option && <Check className="h-3.5 w-3.5 text-foreground" />}
+              {visibility === option && <Check className="icon-caption text-foreground" />}
             </span>
             <span className="flex-1">{t(`sessionSharing.visibility.${VISIBILITY_KEY[option]}`)}</span>
           </MenuItem>
@@ -255,7 +255,7 @@ export function LabelMenuItems({
                 <LabelIcon label={label} size="sm" hasChildren />
                 <span className="flex-1">{resolveLabelDisplayName(label, t)}</span>
                 {subtreeCount > 0 && (
-                  <span className="text-[10px] text-foreground/50 tabular-nums -mr-2.5">
+                  <span className="text-caption text-foreground/50 tabular-nums -mr-2.5">
                     {subtreeCount}
                   </span>
                 )}
@@ -270,7 +270,7 @@ export function LabelMenuItems({
                   <LabelIcon label={label} size="sm" hasChildren />
                   <span className="flex-1">{resolveLabelDisplayName(label, t)}</span>
                   <span className="w-3.5 ml-4">
-                    {isApplied && <Check className="h-3.5 w-3.5 text-foreground" />}
+                    {isApplied && <Check className="icon-caption text-foreground" />}
                   </span>
                 </MenuItem>
                 <Separator />
@@ -291,7 +291,7 @@ export function LabelMenuItems({
             <LabelIcon label={label} size="sm" />
             <span className="flex-1">{resolveLabelDisplayName(label, t)}</span>
             <span className="w-3.5 ml-4">
-              {isApplied && <Check className="h-3.5 w-3.5 text-foreground" />}
+              {isApplied && <Check className="icon-caption text-foreground" />}
             </span>
           </MenuItem>
         )
