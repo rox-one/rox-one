@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { useOverlayPortalTarget } from "@rox/ui/context"
 import { cn } from "@/lib/utils"
 import { useTourNativeLayer } from '@/features/product-tour/runtime/native-layer'
 
@@ -19,10 +20,24 @@ function DialogTrigger({
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
 }
 
+/**
+ * Portals to the enclosing fullscreen overlay's root when there is one
+ * (FullscreenOverlayBase → OverlayPortalRoot), so a dialog opened from an
+ * overlay stacks above it (fullscreen 350 > scrim 200 / modal 210); otherwise
+ * to <body>. An explicit `container` wins.
+ */
 function DialogPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+  const target = useOverlayPortalTarget(container)
+  return (
+    <DialogPrimitive.Portal
+      data-slot="dialog-portal"
+      container={target}
+      {...props}
+    />
+  )
 }
 
 function DialogClose({
@@ -40,7 +55,7 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       data-overlay-motion="true"
       className={cn(
-        "fixed inset-0 z-modal bg-[var(--dialog-backdrop)]",
+        "fixed inset-0 z-scrim bg-[var(--dialog-backdrop)]",
         className
       )}
       {...props}
@@ -64,7 +79,7 @@ function DialogContent({
         data-slot="dialog-content"
         data-overlay-motion="true"
         className={cn(
-          "popover-styled [--popover-radius:var(--radius-lg)] fixed top-1/2 left-1/2 z-modal grid w-full max-w-[calc(100vw-32px)] max-h-[calc(100dvh-32px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto gap-4 p-[var(--dialog-padding)] text-[13px] outline-none sm:max-w-lg",
+          "popover-styled fixed top-1/2 left-1/2 z-modal grid w-full max-w-[calc(100vw-32px)] max-h-[calc(100dvh-32px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto gap-4 p-[var(--dialog-padding)] text-[13px] outline-none sm:max-w-lg",
           className
         )}
         {...props}
@@ -73,7 +88,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="rox-control absolute top-3 right-3 text-text-muted hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className="rox-control absolute top-3 right-3 text-text-muted hover:text-text-primary focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus/55 focus-visible:outline-none disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
           >
             <XIcon />
             <span className="sr-only">{t("common.close")}</span>

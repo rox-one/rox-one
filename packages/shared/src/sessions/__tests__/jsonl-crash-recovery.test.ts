@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readSessionJsonl, readSessionMessages } from '../jsonl.ts';
@@ -124,10 +124,43 @@ describe('session journal crash recovery (load / list)', () => {
     expect(existsSync(tmp)).toBe(false);
   });
 
+  it('promotes a unique-named session.jsonl.<pid>.<hex>.tmp when dest is missing', () => {
+    const { workspace, dest } = makeWorkspace('jsonl-promote-unique-', 's-promote-unique');
+    const tmp = dest + '.1234.abcdefabcdef.tmp';
+    writeJournal(tmp, 's-promote-unique', [{ id: 'm1', content: 'recovered-unique' }]);
+    expect(existsSync(dest)).toBe(false);
+
+    const loaded = loadSession(workspace, 's-promote-unique');
+    expect(loaded?.id).toBe('s-promote-unique');
+    expect(loaded?.messages.map((m) => m.id)).toEqual(['m1']);
+    expect(loaded?.messages[0]?.content).toBe('recovered-unique');
+    expect(existsSync(dest)).toBe(true);
+    expect(existsSync(tmp)).toBe(false);
+  });
+
+  it('promotes the newest valid tmp when several candidates exist', () => {
+    const { workspace, dest } = makeWorkspace('jsonl-promote-newest-', 's-newest');
+    const older = dest + '.1111.aaaaaaaaaaaa.tmp';
+    const newer = dest + '.2222.bbbbbbbbbbbb.tmp';
+    writeJournal(older, 's-newest', [{ id: 'old', content: 'old' }]);
+    writeJournal(newer, 's-newest', [{ id: 'new', content: 'new' }]);
+    const past = (Date.now() - 60_000) / 1000;
+    utimesSync(older, past, past);
+
+    const loaded = loadSession(workspace, 's-newest');
+    expect(loaded?.messages.map((m) => m.id)).toEqual(['new']);
+    expect(existsSync(dest)).toBe(true);
+    expect(existsSync(newer)).toBe(false);
+    expect(existsSync(older)).toBe(true); // only the promoted tmp is consumed
+  });
+
   it('listSessions deletes leftover tmp when dest is already present', () => {
     const { workspace, dest, tmp } = makeWorkspace('jsonl-cleanup-', 's-keep');
     writeJournal(dest, 's-keep', [{ id: 'm1', content: 'committed' }]);
     writeFileSync(tmp, '{"id":"garbage"\n', 'utf-8');
+    // Recovery only reaps an AGED orphan; a fresh tmp may be an in-flight write.
+    const stale = (Date.now() - 60_000) / 1000;
+    utimesSync(tmp, stale, stale);
 
     const listed = listSessions(workspace);
     expect(listed.map((s) => s.id)).toContain('s-keep');

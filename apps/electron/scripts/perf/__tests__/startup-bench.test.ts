@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import { median, metricsFromTimeline } from '../startup-bench'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { startupBudgetFor } from '../../../src/shared/startup-perf'
+import { COLD_FMP_BUDGET_MS, isolatedEnv, median, metricsFromTimeline, missingMetrics } from '../startup-bench'
 
 describe('startup bench metrics', () => {
   it('extracts window/FMP marks and falls back to the first settled screen', () => {
@@ -25,5 +29,36 @@ describe('startup bench metrics', () => {
     expect(median([])).toBeUndefined()
     expect(median([3, 1, 2])).toBe(2)
     expect(median([4, 1, 2, 3])).toBe(2.5)
+  })
+})
+
+describe('startup bench isolation env', () => {
+  it('keeps the real HOME so safeStorage/keychain stays reachable, while isolating the app dirs', () => {
+    const profile = mkdtempSync(join(tmpdir(), 'bench-test-'))
+    try {
+      const env = isolatedEnv(profile, join(profile, 'out.json'))
+      expect(env.HOME).toBe(process.env.HOME)
+      expect(env.USERPROFILE).toBe(process.env.USERPROFILE ?? process.env.HOME)
+      expect(env.ROX_CONFIG_DIR).toBe(join(profile, 'config'))
+      expect(env.CRAFT_CONFIG_DIR).toBe(join(profile, 'config'))
+      expect(env.ROX_USER_DATA_DIR).toBe(join(profile, 'userData'))
+      expect(env.CRAFT_USER_DATA_DIR).toBe(join(profile, 'userData'))
+    } finally {
+      rmSync(profile, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('startup bench cold budget', () => {
+  it('is a generous ceiling strictly above the CI warm FMP budget', () => {
+    expect(typeof COLD_FMP_BUDGET_MS).toBe('number')
+    expect(COLD_FMP_BUDGET_MS).toBeGreaterThan(startupBudgetFor('firstMeaningfulPaintMs', 'darwin', true))
+  })
+})
+
+describe('startup bench NO DATA detection', () => {
+  it('reports only metrics with an undefined median', () => {
+    expect(missingMetrics([{ metric: 'a', median: 1 }, { metric: 'b', median: undefined }])).toEqual(['b'])
+    expect(missingMetrics([{ metric: 'a', median: 0 }])).toEqual([])
   })
 })

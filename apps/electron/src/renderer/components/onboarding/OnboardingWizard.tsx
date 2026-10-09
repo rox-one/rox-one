@@ -257,7 +257,7 @@ export function OnboardingWizard({
       )}
     >
       {/* Draggable title bar region for transparent window (macOS) */}
-      <div className="titlebar-drag-region fixed top-0 left-0 right-0 h-[50px] z-titlebar" />
+      <div className="titlebar-drag-region fixed top-0 left-0 right-0 h-[50px] z-chrome" />
 
       {/* Main content — min-h-full + flex center means: center when content fits,
           natural flow + scroll when content is taller than the viewport (mobile). */}

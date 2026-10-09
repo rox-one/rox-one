@@ -1,5 +1,5 @@
 /**
- * Shared sash primitive: 12px hit / 1px line, 24px on coarse pointers.
+ * Shared sash primitive: 8px hit / 1px line, 24px on coarse pointers.
  */
 
 import * as React from 'react'
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useResizeGradient } from '@/hooks/useResizeGradient'
 import { useHorizontalResizeGradient } from '@/hooks/useHorizontalResizeGradient'
+import { useDocumentResizingFlag } from '@/hooks/useDocumentResizingFlag'
 import {
   PANEL_SASH_HIT_WIDTH,
   PANEL_SASH_HIT_WIDTH_COARSE,
@@ -78,6 +79,8 @@ export function ResizeHandle({
   const { ref, handlers, gradientStyle } = vertical ? verticalGradient : horizontalGradient
   const hit = sashHitWidthPx()
   const label = t(labelKey)
+  // Covers drags driven outside usePanelResize (AppShell sidebar/navigator).
+  useDocumentResizingFlag(dragging)
   const valueText = t('shell.resize.valuePx', { value: Math.round(valueNow) })
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -131,7 +134,7 @@ export function ResizeHandle({
       tabIndex={disabled ? -1 : 0}
       {...rest}
       className={cn(
-        'z-panel flex justify-center outline-none',
+        'z-sash flex justify-center outline-none',
         vertical ? 'cursor-col-resize items-stretch' : 'cursor-row-resize items-center',
         'focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
         dragging && 'shell-sash-active',

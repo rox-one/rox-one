@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import * as React from "react"
-import { AnimatePresence, motion, useIsPresent, useReducedMotion, type Variants } from "motion/react"
+import { AnimatePresence, motion, useIsPresent, type Variants } from "motion/react"
+import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 
 import { useTranslation } from "react-i18next"
 
@@ -175,7 +176,7 @@ const itemVariants: Variants = {
  *
  * Styling matches agent items in the sidebar for consistency:
  * - py-[7px] px-2 text-[13px] rounded-md
- * - Icon: h-3.5 w-3.5
+ * - Icon: h-4 w-4, muted idle tone lifting to foreground on row hover
  *
  * Link variants:
  * - "default": Highlighted style (used for active/selected items)
@@ -193,7 +194,7 @@ const itemVariants: Variants = {
  */
 export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand }: LeftSidebarProps) {
   const { t } = useTranslation()
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   const visibleLinks = !isNested && serviceId !== undefined
     ? getServiceContextLinks(links, serviceId)
     : links
@@ -243,8 +244,8 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
                 aria-current={link.variant === 'default' ? 'page' : undefined}
                 data-sidebar-link-id={link.id}
                 onClick={() => { if (onExpand) onExpand(link); else link.onClick?.() }}
-                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]' : 'hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]')}>
-                <span className="flex size-5 items-center justify-center [&>svg]:size-5">{renderIcon(link)}</span>
+                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'rox-nav-shimmer bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]' : 'hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]')}>
+                <span className="flex h-4 w-4 items-center justify-center">{renderIcon(link)}</span>
               </button>
             )
           }
@@ -329,7 +330,7 @@ function ExpandableSection({
   isNested: boolean | undefined
 }) {
   const { t } = useTranslation()
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = usePrefersReducedMotion()
   const bodyRef = React.useRef<HTMLDivElement>(null)
   const toggleRef = React.useRef<HTMLButtonElement>(null)
   const sectionId = sidebarSectionDomId(link.id)
@@ -625,7 +626,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
               ? SE_RAIL_ACTIVE_BUTTON_CLASS
               : SE_RAIL_INACTIVE_BUTTON_CLASS
             : link.variant === "default"
-              ? "bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]"
+              ? "rox-nav-shimmer bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
 // Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
               : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[state=open]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[edit-active=true]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
           extraClassName,
@@ -636,7 +637,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
             <SidebarDisclosureChevron expanded={!!link.expanded} />
           </span>
         )}
-        <span className="relative h-3.5 w-3.5 shrink-0 flex items-center justify-center">
+        <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
           {renderIcon(link)}
         </span>
         <span className="min-w-0 truncate text-left">{link.title}</span>
@@ -669,36 +670,31 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
 
 /**
  * Helper to render icon - either component (function/forwardRef) or React element.
- * Colors are always applied via inline style (resolved CSS color strings from EntityColor).
  *
- * A1: the seven primary mode links (nav:home/allSessions/meetings/tasks/notes/feed/inbox)
- * are intentionally absent here — they render in the single default gray via `defaultColor`.
+ * W-04: default-profile navigation/service icons share one muted chrome tone that
+ * matches the inspector rail — idle `text-muted-foreground`, hovered row lifts the
+ * icon to `text-foreground`, the active row tints it `text-accent`. A single 16px
+ * box removes the size jump between the collapsed and expanded sidebar. Items with
+ * an explicit `iconColor` (e.g. resolved session statuses) keep their inline colour.
  */
-const SIDEBAR_ICON_COLORS: Record<string, string> = {
-  'nav:projects': '#eab308', 'nav:pages': '#38bdf8',
-  'nav:memory': '#a78bfa',
-  'nav:sources': '#22d3ee', 'nav:skills': '#fbbf24',
-  'nav:automations': '#f97316', 'nav:connections': '#2dd4bf', 'nav:labels': '#f472b6',
-  'nav:flagged': '#fbbf24', 'nav:archived': '#94a3b8',
-}
-
 function renderIcon(link: LinkItem) {
   const isComponent = typeof link.icon === 'function' ||
     (typeof link.icon === 'object' && link.icon !== null && 'render' in link.icon)
-  // Keep uncolored navigation icons readable on each theme's chrome.
-  const defaultColor = 'var(--text-secondary, var(--foreground))'
-
-  // Lucide components are always colorable; ReactNode icons check iconColorable
-  // Default to true for backwards compatibility (most icons are colorable)
-  const applyColor = link.iconColorable !== false
-  const colorStyle = applyColor ? { color: link.iconColor || SIDEBAR_ICON_COLORS[link.id] || defaultColor } : undefined
+  const seRail = typeof document !== 'undefined' && document.documentElement.dataset.uiProfile === 'super-engineering'
+  // Muted idle tone, foreground on row hover and while the row is active — the
+  // active state is carried by the thin animated accent sweep, not a filled
+  // accent icon.
+  const colorClass = link.variant === 'default'
+    ? 'text-foreground'
+    : 'text-muted-foreground group-hover:text-foreground'
+  // Only an explicit per-item colour overrides the shared class.
+  const colorStyle = link.iconColorable !== false && link.iconColor ? { color: link.iconColor } : undefined
 
   if (isComponent) {
     const Icon = link.icon as React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-    const seRail = typeof document !== 'undefined' && document.documentElement.dataset.uiProfile === 'super-engineering'
     return (
       <Icon
-        className={seRail ? 'h-3.5 w-3.5 shrink-0 [&_svg]:stroke-[1.5]' : 'h-3.5 w-3.5 shrink-0'}
+        className={cn(seRail ? 'h-3.5 w-3.5' : 'h-4 w-4', 'shrink-0', seRail && '[&_svg]:stroke-[1.5]', !seRail && colorClass)}
         style={seRail ? undefined : colorStyle}
       />
     )
@@ -708,15 +704,18 @@ function renderIcon(link: LinkItem) {
   // Only pass bare to components that accept it (have acceptsBare marker) to avoid
   // forwarding unknown props to DOM elements (e.g., Lucide icons → SVG)
   const iconElement = link.icon as React.ReactNode
-  const bareIcon = React.isValidElement(iconElement)
-    ? (typeof iconElement.type === 'function' && (iconElement.type as { acceptsBare?: boolean }).acceptsBare)
-      ? React.cloneElement(iconElement as React.ReactElement<{ bare?: boolean }>, { bare: true })
-      : iconElement
+  // EntityIcon advertises `acceptsBare`; the DOM/Lucide function types can't express
+  // that marker, so keep the capability check on a named boundary value.
+  const iconType = React.isValidElement(iconElement) ? iconElement.type : undefined
+  const bareCapable = iconType as { acceptsBare?: boolean } | undefined
+  const acceptsBare = typeof iconType === 'function' && bareCapable?.acceptsBare === true
+  const bareIcon = React.isValidElement(iconElement) && acceptsBare
+    ? React.cloneElement(iconElement as React.ReactElement<{ bare?: boolean }>, { bare: true })
     : iconElement
   return (
     <span
-      className="h-3.5 w-3.5 shrink-0 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
-      style={colorStyle}
+      className={cn('flex h-4 w-4 shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full', !seRail && colorClass)}
+      style={seRail ? undefined : colorStyle}
     >
       {bareIcon}
     </span>

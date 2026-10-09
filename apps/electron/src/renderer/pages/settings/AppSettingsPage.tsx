@@ -33,6 +33,7 @@ import {
 } from '@/components/settings'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { EnvironmentSettingsSection } from './EnvironmentSettingsSection'
+import { isMeetingsAutostartEnabled, setMeetingsAutostartEnabled } from '@/lib/meetings/calendar-autostart'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 import { toast } from 'sonner'
@@ -110,6 +111,8 @@ export default function AppSettingsPage() {
 
   // Tools state
   const [browserToolEnabled, setBrowserToolEnabled] = useState(true)
+  // Meeting recording state (renderer preference, default on)
+  const [meetingAutostartEnabled, setMeetingAutostartEnabledState] = useState(isMeetingsAutostartEnabled)
   const [failedPreferences, setFailedPreferences] = useState<Partial<Record<AppPreferenceKey, FailedPreference>>>({})
   const preferenceGeneration = useRef<Record<AppPreferenceKey, number>>({
     notifications: 0,
@@ -146,6 +149,13 @@ export default function AppSettingsPage() {
       setIsCheckingForUpdates(false)
     }
   }, [updateChecker])
+
+  const handleMeetingAutostartChange = useCallback((enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'app', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
+    setMeetingAutostartEnabledState(enabled)
+    setMeetingsAutostartEnabled(enabled)
+  }, [])
 
   const setPreferenceValue = useCallback((key: AppPreferenceKey, value: boolean) => {
     if (key === 'notifications') setNotificationsEnabled(value)
@@ -386,6 +396,18 @@ export default function AppSettingsPage() {
                       </Button>
                     </div>
                   )}
+                </SettingsCard>
+              </SettingsSection>
+
+              {/* Meetings */}
+              <SettingsSection title={t("settings.app.meetingAutoRecordSection")}>
+                <SettingsCard>
+                  <SettingsToggle
+                    label={t("settings.app.meetingAutoRecord")}
+                    description={t("settings.app.meetingAutoRecordDesc")}
+                    checked={meetingAutostartEnabled}
+                    onCheckedChange={handleMeetingAutostartChange}
+                  />
                 </SettingsCard>
               </SettingsSection>
 

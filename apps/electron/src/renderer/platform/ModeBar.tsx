@@ -1,8 +1,9 @@
 /**
  * Mode Bar — static application modes (ADR-0001), rendered as ONE centered
  * segmented pill in the titlebar. Every registered mode lives in the pill
- * (no overflow menu); the active one gets an accent-tinted segment that
- * slides between items.
+ * (no overflow menu); the active one gets a soft glass highlight that
+ * slides between items. Icons and labels are muted monochrome (foreground
+ * at 55%), never per-mode accent colors.
  *
  * Modes with `rootRoute: null` render disabled with a tooltip. They are not
  * empty pages.
@@ -117,7 +118,7 @@ function PillItems({
             }}
             className="rox-mode-pill-item titlebar-no-drag"
           >
-            <Icon className="rox-mode-pill-icon" strokeWidth={1.75} aria-hidden />
+            <Icon className="rox-mode-pill-icon" strokeWidth={1.5} aria-hidden />
             {!collapsed && <span className="rox-mode-pill-label">{title}</span>}
             {badge > 0 && <span className="rox-mode-pill-badge" aria-hidden>{badge > 99 ? '99+' : badge}</span>}
           </button>

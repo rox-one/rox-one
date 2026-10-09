@@ -61,7 +61,7 @@ const DropdownMenuTrigger = React.forwardRef<
   DropdownMenuTriggerProps
 >(({ className, autoMirrorHoverToOpen = true, asChild, children, ...props }, ref) => {
   const triggerClassName = cn(
-    'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'focus-visible:outline-hidden focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
     className,
   )
   const finalTriggerClassName = autoMirrorHoverToOpen
@@ -126,7 +126,7 @@ export const StyledDropdownMenuContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         // shadcn base layer
-        'popover-styled overflow-x-hidden overflow-y-auto p-1 z-dropdown max-w-[calc(100vw-24px)]',
+        'popover-styled overflow-x-hidden overflow-y-auto p-1 z-island max-w-[calc(100vw-24px)]',
         'max-h-(--radix-dropdown-menu-content-available-height)',
         'origin-(--radix-dropdown-menu-content-transform-origin)',
         // styled additions
@@ -161,7 +161,7 @@ export const StyledDropdownMenuItem = React.forwardRef<
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       // Keep pointer hover understated; keyboard focus gets a visible ring.
       'pr-4 rounded-[var(--radius-control)] text-text-primary transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover focus:bg-foreground/[0.1]',
-      'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      'focus-visible:outline-hidden focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
       '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0',
       variant === 'destructive' && 'text-destructive focus:text-destructive hover:text-destructive [&_svg]:!text-destructive',
       className,
@@ -199,7 +199,7 @@ export const StyledDropdownMenuSubTrigger = React.forwardRef<
       'relative flex cursor-default items-center gap-2 px-2 py-1 text-[length:var(--menu-font-size)] leading-5 outline-hidden select-none',
       '[&_svg]:pointer-events-none [&_svg]:shrink-0',
       'pr-1.5 rounded-[var(--radius-control)] text-text-primary hover:bg-surface-hover focus:bg-surface-selected data-[state=open]:bg-surface-selected transition-colors duration-[var(--motion-fast)]',
-      'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      'focus-visible:outline-hidden focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
       '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0',
       className,
     )}
@@ -229,7 +229,7 @@ export const StyledDropdownMenuSubContent = React.forwardRef<
       data-overlay-motion="true"
       sideOffset={sideOffset}
       className={cn(
-        'popover-styled w-fit max-w-[calc(100vw-24px)] font-sans whitespace-nowrap text-[length:var(--menu-font-size)] flex flex-col gap-0.5 z-dropdown overflow-x-hidden overflow-y-auto p-1',
+        'popover-styled w-fit max-w-[calc(100vw-24px)] font-sans whitespace-nowrap text-[length:var(--menu-font-size)] flex flex-col gap-0.5 z-island overflow-x-hidden overflow-y-auto p-1',
         'max-h-(--radix-dropdown-menu-content-available-height)',
         minWidth,
         className,

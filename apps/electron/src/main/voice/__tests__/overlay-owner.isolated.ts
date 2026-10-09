@@ -21,6 +21,7 @@ class FakeWindow extends EventEmitter {
   hide() { this.hidden++ }
   destroy() { this.destroyed = true; this.emit('closed') }
   async loadURL() {}
+  async loadFile() {}
 }
 mock.module('electron', () => ({ app: { isPackaged: true }, BrowserWindow: FakeWindow,
   ipcMain: { handle: (key: string, handler: (...args: any[]) => unknown) => handlers.set(key, handler), removeHandler: (key: string) => handlers.delete(key) },
@@ -58,24 +59,57 @@ describe('actual native overlay owner composition', () => {
     expect(owner.listenerCount('focus')).toBe(0)
     port.dispose(); expect(handlers.size).toBe(0)
   })
-  it('background and remote actors never create or replace another owner surface; blur/focus and retirement retain scope', () => {
+  it('background actors never replace a live surface; the first publish appears unfocused and blur keeps it visible', () => {
     const owner = new FakeWindow(); const other = new FakeWindow(); other.focused = false
     const remote = { ...context, clientId: 'remote', webContentsId: null }
     const background = { ...context, clientId: 'other', webContentsId: 18 }
     const port = createNativeVoiceOverlayHost({ resolveOwner: c => c === context ? owner as never : c === background ? other as never : null, sendCommand: () => true })
     const before = children.length
     port.publish({ context: remote, state, position: 'bottom', assertCurrent() {} })
-    port.publish({ context: background, state, position: 'bottom', assertCurrent() {} })
     expect(children).toHaveLength(before)
+    // A capture started by the global hotkey publishes while the app is in the background:
+    // the first surface must still appear, it cannot replace anything.
+    owner.focused = false
     port.publish({ context, state, position: 'bottom', assertCurrent() {} })
-    const child = children.at(-1)!; const shown = child.shown
+    const child = children.at(-1)!
+    expect(children).toHaveLength(before + 1)
+    expect(child.shown).toBe(1)
+    // Another background owner never replaces the live surface.
     port.publish({ context: background, state, position: 'bottom', assertCurrent() {} })
     expect(children.at(-1)).toBe(child)
-    owner.focused = false; owner.emit('blur'); expect(child.hidden).toBeGreaterThan(0)
-    expect(handlers.get(VOICE_OVERLAY_COMMAND)!({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: false })
-    owner.focused = true; owner.emit('focus'); expect(child.shown).toBe(shown + 1)
+    // Blur neither hides the mini-window nor disables the surface's own controls.
+    owner.emit('blur'); expect(child.hidden).toBe(0)
+    expect(handlers.get(VOICE_OVERLAY_COMMAND)!({ sender: child.webContents }, 'snapshot', null)).toEqual({ ok: true, state })
+    expect(handlers.get(VOICE_OVERLAY_COMMAND)!({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: true })
     port.retire('remote'); expect(child.destroyed).toBe(false)
     port.retire(context.clientId); expect(child.destroyed).toBe(true)
+    port.dispose()
+  })
+  it('a command whose forward fails does not latch out a later stop or cancel for the same recording', () => {
+    const owner = new FakeWindow(); const commands: unknown[] = []
+    let forwardOk = false
+    const port = createNativeVoiceOverlayHost({ resolveOwner: () => owner as never,
+      sendCommand: (...args) => { commands.push(args); return forwardOk } })
+    port.publish({ context, state, position: 'top', assertCurrent() {} })
+    const child = children.at(-1)!
+    const command = handlers.get(VOICE_OVERLAY_COMMAND)!
+    // The first stop reaches the handler but the forward fails: nothing was sent,
+    // so the surface must still accept a stop for the same recording.
+    expect(command({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: false })
+    expect(commands).toHaveLength(1)
+    forwardOk = true
+    expect(command({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: true })
+    expect(commands).toHaveLength(2)
+    // A successful forward stays single-shot.
+    expect(command({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: false })
+    expect(commands).toHaveLength(2)
+    // The same holds for cancel.
+    forwardOk = false
+    expect(command({ sender: child.webContents }, 'cancel', state.recordingId)).toEqual({ ok: false })
+    expect(commands).toHaveLength(3)
+    forwardOk = true
+    expect(command({ sender: child.webContents }, 'cancel', state.recordingId)).toEqual({ ok: true })
+    expect(commands).toHaveLength(4)
     port.dispose()
   })
 })

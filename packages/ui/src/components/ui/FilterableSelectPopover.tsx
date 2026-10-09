@@ -154,12 +154,12 @@ export function FilterableSelectPopover<T>({
   return ReactDOM.createPortal(
     <>
       <div
-        className="fixed inset-0 z-floating-backdrop"
+        className="fixed inset-0 z-menu-backdrop"
         onClick={() => onOpenChange(false)}
       />
 
       <div
-        className="fixed z-floating-menu overflow-hidden rounded-[var(--radius-overlay)] bg-background text-foreground shadow-modal-small"
+        className="fixed z-island overflow-hidden rounded-md bg-background text-foreground shadow-modal-small"
         style={{
           top: position.top - 8,
           left: position.left,

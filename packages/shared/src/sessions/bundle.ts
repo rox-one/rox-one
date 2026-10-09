@@ -106,6 +106,12 @@ export function serializeSession(
   const files = collectDirectoryFiles(sessionDir, {
     skipDirs: SKIP_DIRS,
     skipFiles: SKIP_SESSION_FILES,
+    // skipFiles is exact-match only; also drop the whole journal tmp family
+    // (legacy session.jsonl.tmp and per-writer session.jsonl.<pid>.<random>.tmp),
+    // an in-flight or crash-orphaned write must never be exported.
+  }).filter((file) => {
+    const name = file.relativePath.split(/[\\/]/).pop() ?? file.relativePath
+    return !(name.startsWith('session.jsonl') && name.endsWith('.tmp'))
   })
 
   // Validate total bundle size

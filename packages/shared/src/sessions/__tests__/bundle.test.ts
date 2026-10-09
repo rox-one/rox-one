@@ -182,6 +182,20 @@ describe('serializeSession', () => {
     expect(jsonlFiles).toHaveLength(0)
   })
 
+  it('does not include session journal tmp files in files array', () => {
+    const session = makeStoredSession()
+    const sessionDir = setupSessionDir(tmpDir, session)
+    // Legacy fixed name and a per-writer unique name.
+    writeFileSync(join(sessionDir, 'session.jsonl.tmp'), 'legacy orphan')
+    writeFileSync(join(sessionDir, 'session.jsonl.1234.abcdefabcdef.tmp'), 'unique orphan')
+
+    const bundle = serializeSession(tmpDir, session.id)
+
+    expect(bundle).not.toBeNull()
+    const journalTmpFiles = bundle!.files.filter(f => f.relativePath.includes('session.jsonl'))
+    expect(journalTmpFiles).toHaveLength(0)
+  })
+
   it('returns null for non-existent session', () => {
     const bundle = serializeSession(tmpDir, 'non-existent')
     expect(bundle).toBeNull()

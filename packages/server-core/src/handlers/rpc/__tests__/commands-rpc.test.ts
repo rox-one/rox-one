@@ -39,7 +39,7 @@ function fixture(runtime: CommandsHandlerRuntime = {}) {
     onShutdown(dispose: () => void) { shutdowns.push(dispose); return () => {} },
   } as unknown as RpcServer
   registerCommandsHandlers(server, {} as HandlerDeps, {
-    workspaceFor: id => (id === 'ws' ? { id, rootPath: root } : null),
+    workspaceFor: id => (id === 'ws' || id === 'other' ? { id, rootPath: root } : null),
     registry: createCommandRegistry(),
     eventBus: new InProcessEventBus({ epoch: 'e' }),
     ...runtime,
@@ -94,6 +94,18 @@ describe('commands:* handlers', () => {
     await expect(f.execute('missing', ping())).rejects.toThrow(/Workspace not found/)
     const native: RequestContext = { clientId: 'n', workspaceId: 'ws', webContentsId: null, principal: { credentialId: 'cred' } as never }
     await expect(f.execute('other', ping(), native)).rejects.toThrow(/denied/)
+    // SEC-03: a verified shared-workspace client (Actor, no principal) is
+    // scoped to its bound workspace just like a native principal, and an
+    // unknown id stays "Workspace not found".
+    const shared: RequestContext = {
+      clientId: 'a',
+      workspaceId: 'ws',
+      webContentsId: null,
+      actor: { principalId: 'p', deviceId: 'd', sessionId: 's', authenticatedWorkspaceIds: ['ws'], expiresAt: 0 },
+    }
+    await expect(f.execute('other', ping(), shared)).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    await expect(f.execute('other', ping(), shared)).rejects.toThrow(/denied/)
+    await expect(f.execute('missing', ping(), shared)).rejects.toThrow(/Workspace not found/)
   })
 
   it('workspace-authority commands without a workspace connection answer SERVER_REQUIRED', async () => {

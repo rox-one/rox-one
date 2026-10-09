@@ -17,7 +17,7 @@ export function WorktreeHoverCard({ branch, className }: WorktreeHoverCardProps)
       animate={{ opacity: 1, y: 0 }}
       transition={SE_SPRING_PANEL}
       className={cn(
-        'rounded-lg border border-white/10 bg-[color-mix(in_oklch,var(--paper)_92%,transparent)] px-3 py-2 text-xs shadow-strong backdrop-blur-md',
+        'rounded-lg border border-white/10 bg-[rgb(from_var(--paper)_r_g_b_/_1)] px-3 py-2 text-xs shadow-strong',
         className,
       )}
       data-testid="worktree-hover-card"

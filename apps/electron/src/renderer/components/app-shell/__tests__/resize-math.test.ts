@@ -151,9 +151,11 @@ describe('sash geometry (ZS-05)', () => {
     expect(geometry.marginLeft).toBe(-hitWidth / 2)
   })
 
-  it('uses a 12px hit area and 2px line, 24px on coarse pointers', () => {
-    expect(PANEL_SASH_HIT_WIDTH).toBe(12)
-    expect(PANEL_SASH_LINE_WIDTH).toBe(2)
+  it('uses the shipped 8px hit area and 1px line, 24px on coarse pointers', () => {
+    // The thinner-splitter pass (408b90b83) moved both chrome profiles to an
+    // 8px hit area and a 1px line; the coarse-pointer hit area stays 24px.
+    expect(PANEL_SASH_HIT_WIDTH).toBe(8)
+    expect(PANEL_SASH_LINE_WIDTH).toBe(1)
     expect(PANEL_SASH_HIT_WIDTH_COARSE).toBe(24)
   })
 })

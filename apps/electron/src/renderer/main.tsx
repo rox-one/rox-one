@@ -19,11 +19,21 @@ import './index.css'
 import './chat-chrome-clarity.css'
 import './components/app-shell/titlebar-mode-pill.css'
 import { installRendererPerfHarness } from './perf/install'
+import { startRoxQueryRuntime } from './lib/query/runtime'
 import { syncMainProcessLanguage } from './lib/main-language-sync'
 import { ShellStoreBridge } from './platform/ShellStoreBridge'
+import { RenderProfileMotionConfig } from './lib/render-profile-motion'
+import { seedRenderProfile, startRenderProfileSync } from './lib/render-profile-dom'
 import { seedEntitiesLinksGate } from './lib/entities-links-sync'
 
 const rendererPerfHarness = installRendererPerfHarness()
+
+// PERF-07: own `data-render-profile` at the root, before React and AppShell,
+// so every startup screen (loading, onboarding, reauth, workspace picker)
+// renders with the active profile. The snapshot request starts right here.
+seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
+const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
+import.meta.hot?.dispose(stopRenderProfileSync)
 
 // Initialize i18n before any React rendering
 // (bootstrap.ts preloads the active locale + fallbacks; others load on switch)
@@ -126,13 +136,16 @@ function Root() {
 
   return (
     <ThemeProvider activeWorkspaceId={workspaceId}>
-      {/* W1-07 (#1504): W1-07 gates outside React read this Provider's store. */}
-      <ShellStoreBridge />
-      {rendererPerfHarness.enabled
-        ? <React.Profiler id="rox-root" onRender={rendererPerfHarness.onRender}>{app}</React.Profiler>
-        : app}
-      <Toaster />
-      <StorageMigrationNotices />
+      {/* PERF-07: low-power profile also stops motion/react springs. */}
+      <RenderProfileMotionConfig>
+        {/* W1-07 (#1504): W1-07 gates outside React read this Provider's store. */}
+        <ShellStoreBridge />
+        {rendererPerfHarness.enabled
+          ? <React.Profiler id="rox-root" onRender={rendererPerfHarness.onRender}>{app}</React.Profiler>
+          : app}
+        <Toaster />
+        <StorageMigrationNotices />
+      </RenderProfileMotionConfig>
     </ThemeProvider>
   )
 }
@@ -141,6 +154,11 @@ function Root() {
 // (env override > persisted toggle) BEFORE the first render, so restored
 // entity tabs / persisted `entity/…` keys resolve on the first pass.
 seedEntitiesLinksGate()
+
+// PERF-09 (#1576): shared surface cache. Restores the last workspace's
+// persisted slice from IndexedDB and maps push events to invalidations.
+const stopRoxQueryRuntime = startRoxQueryRuntime(window.electronAPI)
+import.meta.hot?.dispose(stopRoxQueryRuntime)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

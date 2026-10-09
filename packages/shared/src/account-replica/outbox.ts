@@ -303,9 +303,14 @@ function validateCreationAttempt(attempt: ReplicaCreationAttempt): void {
 }
 
 function creationPayload(input: ReplicaWriteInput): string {
+  // PREPARE_CREATE restamps the advisory `createdAt` frontmatter line from the
+  // wall clock on every call, so the retried plan can never reproduce the
+  // original bytes of that single line. The stored operation remains
+  // authoritative for the actual creation; intent equality normalizes that
+  // line while keeping every other byte strict (paths, fences, device scope).
   return JSON.stringify({ deviceId: input.deviceId, workspaceId: input.workspaceId, category: input.category,
     nativeId: input.nativeId, expectedRevision: input.expectedRevision, schemaVersion: input.schemaVersion,
-    changes: input.changes.map(({ path, content }) => ({ path, content })) });
+    changes: input.changes.map(({ path, content }) => ({ path, content: content == null ? content : content.replace(/^(createdAt: )\d+$/m, '$1<clock>') })) });
 }
 
 export function validateReplicaOperation(operation: ReplicaOperation): void {

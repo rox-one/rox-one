@@ -339,6 +339,8 @@ export interface TurnCardProps {
   onOpenFile?: (path: string) => void
   /** Callback when URL is clicked */
   onOpenUrl?: (url: string) => void
+  /** Send a follow-up user message from an interactive block (OpenUI @ToAssistant actions) */
+  onSendPrompt?: (text: string) => void
   /** Callback to open response in Monaco editor */
   onPopOut?: (text: string) => void
   /** Play the assistant text through the configured TTS engine */
@@ -1457,6 +1459,10 @@ export interface ResponseCardProps {
   onOpenFile?: (path: string) => void
   /** Callback to open URL */
   onOpenUrl?: (url: string) => void
+  /** Send a follow-up user message from an interactive block (OpenUI @ToAssistant actions) */
+  onSendPrompt?: (text: string) => void
+  /** Owning message/turn identity for interactive (`openui`) block form-state scoping */
+  blockScope?: string
   /** Callback to open response in Monaco editor */
   onPopOut?: () => void
   /** Play this response through TTS */
@@ -1681,6 +1687,8 @@ export function ResponseCard({
   streamStartTime,
   onOpenFile,
   onOpenUrl,
+  onSendPrompt,
+  blockScope,
   onPopOut,
   onListen,
   isListening = false,
@@ -2580,8 +2588,11 @@ export function ResponseCard({
             <div ref={contentLayerRef} className="relative" tabIndex={-1}>
               <Markdown
                 mode="minimal"
+                isStreaming={isStreaming}
                 onUrlClick={onOpenUrl}
                 onFileClick={onOpenFile}
+                onSendPrompt={onSendPrompt}
+                blockScope={blockScope}
               >
                 {text}
               </Markdown>
@@ -2664,6 +2675,8 @@ export function ResponseCard({
           sendMessageKey={sendMessageKey}
           openAnnotationRequest={openAnnotationRequest}
           isStreaming={isStreaming}
+          onSendPrompt={onSendPrompt}
+          blockScope={blockScope}
         />
         {selectionMenu}
       </>
@@ -2694,8 +2707,11 @@ export function ResponseCard({
           <div ref={contentLayerRef} className="relative" tabIndex={-1}>
             <Markdown
               mode="minimal"
+              isStreaming={true}
               onUrlClick={onOpenUrl}
               onFileClick={onOpenFile}
+              onSendPrompt={onSendPrompt}
+              blockScope={blockScope}
             >
               {displayedText}
             </Markdown>
@@ -2828,6 +2844,7 @@ export const TurnCard = React.memo(function TurnCard({
   onCollapsedActivityGroupsChange,
   onOpenFile,
   onOpenUrl,
+  onSendPrompt,
   onPopOut,
   onListen,
   isListening = false,
@@ -2858,6 +2875,9 @@ export const TurnCard = React.memo(function TurnCard({
   openAnnotationRequest,
   annotationInteractionMode = 'interactive',
 }: TurnCardProps) {
+  // Interactive (`openui`) block form state is scoped to the owning turn so a
+  // content-identical block in another message cannot hydrate this turn's form.
+  const blockScope = sessionId ? `${sessionId}:${turnId}` : undefined
   // Derive the turn phase from props using the state machine.
   // This provides a single source of truth for lifecycle state,
   // replacing the old ad-hoc boolean combinations.
@@ -3209,6 +3229,8 @@ export const TurnCard = React.memo(function TurnCard({
             sessionId={sessionId}
             onOpenFile={onOpenFile}
             onOpenUrl={onOpenUrl}
+            onSendPrompt={onSendPrompt}
+            blockScope={blockScope}
             onPopOut={onPopOut ? () => onPopOut(planActivity.content || '') : undefined}
             onListen={onListen ? () => onListen(planActivity.content || '') : undefined}
             isListening={isListening}
@@ -3261,6 +3283,8 @@ export const TurnCard = React.memo(function TurnCard({
                 sessionId={sessionId}
                 onOpenFile={onOpenFile}
                 onOpenUrl={onOpenUrl}
+                onSendPrompt={onSendPrompt}
+                blockScope={blockScope}
                 onPopOut={onPopOut ? () => onPopOut(response.text) : undefined}
                 onListen={onListen ? () => onListen(response.text) : undefined}
                 isListening={isListening}
@@ -3299,6 +3323,8 @@ export const TurnCard = React.memo(function TurnCard({
             sessionId={sessionId}
             onOpenFile={onOpenFile}
             onOpenUrl={onOpenUrl}
+            onSendPrompt={onSendPrompt}
+            blockScope={blockScope}
             onPopOut={onPopOut ? () => onPopOut(response.text) : undefined}
             onListen={onListen ? () => onListen(response.text) : undefined}
             isListening={isListening}

@@ -1,9 +1,12 @@
 import { createPrng } from './prng'
 import type { PermissionMode, SessionIndexEntry, VaultNoteEntry } from './types'
+import type { NoteSummary } from '../../shared/types'
 
 export const FIXTURE_SEED = 20260903
 export const SESSION_FIXTURE_COUNTS = [500, 2000] as const
 export const LARGE_VAULT_NOTE_COUNT = 5000
+/** Note-summary tree fixture size (notes vault) used by list-windowing tests. */
+export const NOTE_SUMMARY_FIXTURE_COUNT = 2000
 
 const STATUSES = ['todo', 'in-progress', 'needs-review', 'done'] as const
 const MODES: PermissionMode[] = ['safe', 'ask', 'allow-all']
@@ -77,6 +80,36 @@ export function createLargeVaultFixture(
   }
 
   return { count, seed, notes }
+}
+
+export function createNoteSummaryFixture(
+  count = NOTE_SUMMARY_FIXTURE_COUNT,
+  seed = FIXTURE_SEED,
+): NoteSummary[] {
+  const rand = createPrng(seed + count + 29)
+  const origin = 1_704_067_200_000
+  const notes: NoteSummary[] = []
+  for (let i = 0; i < count; i++) {
+    const root = i % 5 === 0
+    const segments = root ? [] : [`folder-${i % 12}`]
+    if (!root && i % 4 >= 2) segments.push(`sub-${i % 5}`)
+    if (!root && i % 4 >= 3) segments.push(`deep-${i % 3}`)
+    const id = [...segments, `note-${String(i).padStart(5, '0')}`].join('/')
+    notes.push({
+      id,
+      title: `Note ${i}`,
+      path: `/vault/${id}.md`,
+      relativePath: `${id}.md`,
+      tags: i % 6 === 0 ? [`tag-${i % 9}`] : [],
+      properties: {},
+      links: [],
+      assetRefs: [],
+      updatedAt: origin + Math.floor(rand() * 86_400_000 * 30),
+      createdAt: origin + i * 60_000,
+      size: 200 + Math.floor(rand() * 8_000),
+    })
+  }
+  return notes
 }
 
 export function indexSessionsById(

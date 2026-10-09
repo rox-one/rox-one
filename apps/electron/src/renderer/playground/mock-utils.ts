@@ -485,7 +485,7 @@ export const mockElectronAPI = {
       { id: 'first_task' as const, status: 'available' as const },
     ],
     ratings: [],
-    analyticsConsent: false,
+    analyticsConsent: true,
   }),
   applyGamificationQuest: async (payload: unknown) => {
     console.log('[Playground] applyGamificationQuest', payload)
@@ -773,6 +773,23 @@ export const mockElectronAPI = {
   },
   sessionTopicCloudRun: async () => ({ topic: '' }),
   fabricInfisicalHealth: async () => ({ available: false }),
+  fabricInfisicalPreviewAccount: async (input: Record<string, string>) => ({
+    label: 'Infisical',
+    siteUrl: input.siteUrl,
+    clientId: input.clientId,
+    projectId: input.projectId,
+    environment: input.environment,
+    secretPath: input.secretPath,
+    secretKey: input.secretKey,
+    locator: {
+      type: 'infisical' as const,
+      projectId: input.projectId,
+      environment: input.environment,
+      secretPath: input.secretPath,
+      secretKey: input.secretKey,
+    },
+  }),
+  fabricInfisicalCommitImport: async () => ({ id: 'conn_playground' }),
   openclawRuntime: {
     getStatus: async ({ workspaceId }: { workspaceId: string }) => ({
       runtimeId: 'playground-runtime',
@@ -894,11 +911,15 @@ export const mockElectronAPI = {
   }),
   onPrivacyChanged: () => () => {},
   getShellSnapshot: async () => playgroundZenSnapshot(),
-  setZenShell: async (patch: { enabled?: boolean; materialPreference?: 'system' | 'glass' | 'opaque' }) => {
+  setZenShell: async (patch: { enabled?: boolean; materialPreference?: 'system' | 'glass' | 'opaque'; renderProfile?: 'auto' | 'performance' | 'standard' }) => {
     playgroundZenState = {
       ...playgroundZenState,
       enabled: patch.enabled !== undefined ? patch.enabled === true : playgroundZenState.enabled,
       preference: patch.materialPreference ?? playgroundZenState.preference,
+      ...(patch.renderProfile !== undefined && {
+        renderProfilePreference: patch.renderProfile,
+        renderProfile: patch.renderProfile === 'performance' ? 'performance' as const : 'standard' as const,
+      }),
     }
     const next = playgroundZenSnapshot()
     for (const listener of playgroundZenListeners) listener(next)

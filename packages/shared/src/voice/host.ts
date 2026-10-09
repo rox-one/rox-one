@@ -27,6 +27,11 @@ export interface VoiceHostEvent {
   draft?: { recordingId: string; text: string; revisionId: string }
 }
 
+/** Renderer level updates arrive faster than the overlay needs; publish at most ~20/s. */
+const LEVEL_EMIT_INTERVAL_MS = 50
+/** A sample older than this must decay the bar instead of freezing on a stale value. */
+const LEVEL_SILENCE_MS = 400
+
 export class VoiceHost {
   private job: VoiceJob | null = null
   private journal: CaptureJournal | null = null
@@ -35,6 +40,10 @@ export class VoiceHost {
   private meetingCapture: MeetingCaptureSession | null = null
   private captureStartedAt: number | null = null
   private captureElapsedMs = 0
+  private lastRms = 0
+  private lastLevelAt = 0
+  private levelEmitAt = 0
+  private levelSilenceTimer: ReturnType<typeof setTimeout> | undefined = undefined
   private listeners = new Set<(event: VoiceHostEvent) => void>()
   private transcription: { jobId: string; controller: AbortController } | null = null
 
@@ -86,6 +95,7 @@ export class VoiceHost {
     const jobId = randomUUID()
     this.captureStartedAt = null
     this.captureElapsedMs = 0
+    this.resetLevel()
     this.job = createVoiceJob(recordingId, jobId)
     this.job = applyJobEvent(this.job, {
       ...this.job,
@@ -114,6 +124,7 @@ export class VoiceHost {
 
   denyPermission(): VoiceJob {
     if (!this.job) throw new Error('No capture')
+    this.resetLevel()
     this.job = applyJobEvent(this.job, {
       ...this.job,
       seq: this.job.seq + 1,
@@ -134,12 +145,36 @@ export class VoiceHost {
     this.emit()
   }
 
+  /**
+   * Accepts a renderer-computed microphone RMS (0..1) while a capture records and
+   * republishes the overlay at a bounded rate. The value is transient: it is never
+   * journaled, never stored in the job, and decays to zero once samples stop.
+   */
+  level(rms: number): void {
+    if (this.job?.capture !== 'recording') return
+    const at = this.now()
+    this.lastRms = Number.isFinite(rms) ? Math.min(1, Math.max(0, rms)) : 0
+    this.lastLevelAt = at
+    clearTimeout(this.levelSilenceTimer)
+    this.levelSilenceTimer = setTimeout(() => {
+      this.levelSilenceTimer = undefined
+      if (this.job?.capture !== 'recording' || this.lastRms === 0) return
+      this.lastRms = 0
+      this.emitOverlay()
+    }, LEVEL_SILENCE_MS)
+    this.levelSilenceTimer.unref()
+    if (at - this.levelEmitAt < LEVEL_EMIT_INTERVAL_MS) return
+    this.levelEmitAt = at
+    this.emitOverlay()
+  }
+
   async stop(prefs: VoicePrefs, language?: string): Promise<VoiceJob> {
     if (!this.job || !this.journal) throw new Error('No capture')
     if (this.transcription) throw new Error('Transcription is already in progress')
     this.job = applyJobEvent(this.job, { ...this.job, seq: this.job.seq + 1, capture: 'finalizing', job: 'transcribing' })
     this.captureElapsedMs = this.captureStartedAt === null ? 0 : Math.max(0, this.now() - this.captureStartedAt)
     this.captureStartedAt = null
+    this.resetLevel()
     const startedJob = this.job
     const journal = this.journal
     const controller = new AbortController()
@@ -210,6 +245,7 @@ export class VoiceHost {
     if (!this.job) return null
     this.transcription?.controller.abort()
     this.transcription = null
+    this.resetLevel()
     this.job = applyJobEvent(this.job, {
       ...this.job,
       seq: this.job.seq + 1,
@@ -235,10 +271,25 @@ export class VoiceHost {
         : this.job.job === 'ready' ? 'ready' : this.job.job === 'failed' || this.job.job === 'degraded' ? 'error'
           : overlayFromCapture(this.job.capture),
       elapsedMs: this.captureStartedAt === null ? this.captureElapsedMs : Math.max(0, this.now() - this.captureStartedAt),
-      rms: 0,
+      rms: this.job?.capture === 'recording' && this.now() - this.lastLevelAt <= LEVEL_SILENCE_MS ? this.lastRms : 0,
       streaming: false,
       error: this.job?.error,
     }
+  }
+
+  private resetLevel(): void {
+    clearTimeout(this.levelSilenceTimer)
+    this.levelSilenceTimer = undefined
+    this.lastRms = 0
+    this.lastLevelAt = 0
+    this.levelEmitAt = 0
+  }
+
+  /** Publishes an overlay-only event so level updates never re-emit the heavier job payload. */
+  private emitOverlay(): void {
+    if (!this.job) return
+    const event: VoiceHostEvent = { type: 'overlay', job: this.job, overlay: this.overlay() }
+    for (const listener of this.listeners) listener(event)
   }
 
   private commitRecording(audio: Uint8Array, format: string): VoiceRecording {

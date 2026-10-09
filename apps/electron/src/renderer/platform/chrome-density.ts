@@ -1,31 +1,34 @@
 /**
  * Workbench chrome density tokens (ship-rox-design-compact).
  *
- * Prefer these constants (and matching CSS vars in packages/ui + index.css)
- * for TopBar / rails / tabs / status / inspector chrome heights and gaps.
- * Keep values cohesive; avoid one-off magic numbers in chrome hosts.
+ * Values come from the generated `chrome-tokens.ts`, whose source is
+ * packages/ui/src/styles/tokens/chrome.css (the same numbers CSS reads as
+ * `--chrome-*` custom properties). Edit chrome.css and regenerate; never put a
+ * literal here.
  */
+import { CHROME_TOKENS } from './chrome-tokens'
+
 export const CHROME_DENSITY = {
   /** Desktop TopBar height (px). Mobile overrides via CSS media query. */
-  topbarHeight: 40,
+  topbarHeight: CHROME_TOKENS.chromeTopbarHeight,
   /** Activity + inspector section rail width. */
-  railWidth: 44,
+  railWidth: CHROME_TOKENS.chromeRailWidth,
   /** Expanded activity rail (icon + label rows). */
-  railExpandedWidth: 188,
+  railExpandedWidth: CHROME_TOKENS.chromeRailExpandedWidth,
   /** Primary icon control hit target in TopBar / rails. */
-  control: 24,
+  control: CHROME_TOKENS.chromeControl,
   /** Slightly larger control used for TopBar utility actions. */
-  controlLg: 26,
+  controlLg: CHROME_TOKENS.chromeControlLg,
   /** SurfaceTabs strip height. */
-  tabStripHeight: 34,
+  tabStripHeight: CHROME_TOKENS.chromeTabStripHeight,
   /** Status bar height. */
-  statusBarHeight: 24,
+  statusBarHeight: CHROME_TOKENS.chromeStatusHeight,
   /** Inspector / terminal dock panel header height. */
-  panelHeaderHeight: 32,
-  /** Gap between shell panels. */
-  panelGap: 4,
-  /** Outer inset from window edges to panels. */
-  panelEdgeInset: 4,
+  panelHeaderHeight: CHROME_TOKENS.chromePanelHeaderHeight,
+  /** Gap between shell panels (same token as PANEL_GAP). */
+  panelGap: CHROME_TOKENS.panelGap,
+  /** Outer inset from window edges to panels (same token as PANEL_EDGE_INSET). */
+  panelEdgeInset: CHROME_TOKENS.panelEdgeInset,
 } as const
 
 export type ChromeDensity = typeof CHROME_DENSITY

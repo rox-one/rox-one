@@ -4,9 +4,15 @@ import { ChevronRight, Copy, ExternalLink, FilePlus2, FileText, Folder, FolderIn
 import { useTranslation } from 'react-i18next'
 import type { NoteSummary } from '../../../shared/types'
 import { cn } from '@/lib/utils'
+import { WindowedTreeList } from '@/components/ui/entity-list'
 import { ContextMenu, ContextMenuTrigger, StyledContextMenuContent, StyledContextMenuItem, StyledContextMenuSeparator } from '@/components/ui/styled-context-menu'
 
-interface FolderTreeNode {
+/** Above this many rows the vault tree switches to windowed rendering. */
+export const NOTES_TREE_WINDOW_THRESHOLD = 200
+/** Measured vault row height until the ResizeObserver reports the real one. */
+export const NOTES_TREE_ROW_ESTIMATE = 44
+
+export interface FolderTreeNode {
   fullPath: string
   name: string
   children: FolderTreeNode[]
@@ -17,7 +23,7 @@ function noteFolder(note: NoteSummary): string {
   return note.id.slice(0, Math.max(0, note.id.lastIndexOf('/')))
 }
 
-function buildFolderTree(notes: NoteSummary[]): { rootNotes: NoteSummary[]; folders: FolderTreeNode[] } {
+export function buildFolderTree(notes: NoteSummary[]): { rootNotes: NoteSummary[]; folders: FolderTreeNode[] } {
   const rootNotes: NoteSummary[] = []
   const nodeMap = new Map<string, FolderTreeNode>()
   for (const note of notes) {
@@ -53,6 +59,48 @@ function countFolderNotes(node: FolderTreeNode): number {
   return node.notes.length + node.children.reduce((sum, child) => sum + countFolderNotes(child), 0)
 }
 
+/** One rendered row of the flattened vault tree. */
+export type NotesTreeRow =
+  | { kind: 'note'; key: string; note: NoteSummary; depth: number }
+  | { kind: 'folder'; key: string; node: FolderTreeNode; depth: number; expanded: boolean }
+
+/**
+ * Maps the active note id to the row key used by `WindowedTreeList` (see
+ * `getKey={(row) => row.key}` below and the `note:` namespace of
+ * `flattenNotesTree`). `WindowedTreeList` resolves a reveal by looking up the
+ * entry `row:<scrollToKey>`, so the caller MUST pass the full row key — a raw
+ * note id would never match and the off-window reveal would silently no-op.
+ */
+export function notesScrollToKey(activeNoteId: string | null | undefined): string | null {
+  return activeNoteId ? `note:${activeNoteId}` : null
+}
+
+/**
+ * Flattens the folder tree into render order (root notes, then folders
+ * depth-first), omitting the children of collapsed folders. This is the input
+ * for both the plain and the windowed rendering path.
+ */
+export function flattenNotesTree(
+  tree: { rootNotes: NoteSummary[]; folders: FolderTreeNode[] },
+  collapsedFolders: ReadonlySet<string>,
+): NotesTreeRow[] {
+  const rows: NotesTreeRow[] = []
+  for (const note of tree.rootNotes) {
+    rows.push({ kind: 'note', key: notesScrollToKey(note.id)!, note, depth: 0 })
+  }
+  const walk = (node: FolderTreeNode, depth: number) => {
+    const expanded = !collapsedFolders.has(node.fullPath)
+    rows.push({ kind: 'folder', key: `folder:${node.fullPath}`, node, depth, expanded })
+    if (!expanded) return
+    for (const child of node.children) walk(child, depth + 1)
+    for (const note of node.notes) {
+      rows.push({ kind: 'note', key: notesScrollToKey(note.id)!, note, depth: depth + 2 })
+    }
+  }
+  for (const node of tree.folders) walk(node, 0)
+  return rows
+}
+
 interface NoteNavigationActions {
   onOpenNote(noteId: string): void
   onOpenCreateNoteDialog(folder?: string): void
@@ -73,6 +121,8 @@ interface NotesNavigationSidebarProps extends NoteNavigationActions {
   collapsedFolders: Set<string>
   onToggleFolder(folder: string): void
   emptyMessage: string
+  /** Scroll parent used for windowed rendering of very large vaults. */
+  viewportRef?: React.RefObject<HTMLDivElement | null>
 }
 
 function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavigationActions & {
@@ -94,7 +144,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
           aria-current={activeNoteId === note.id ? 'page' : undefined}
           data-note-id={note.id}
           onClick={() => actions.onOpenNote(note.id)}
-          style={{ paddingLeft: `${10 + depth * 12}px`, contentVisibility: 'auto', containIntrinsicSize: '0 44px' }}
+          style={{ paddingLeft: `${10 + depth * 12}px` }}
           className={cn(
             'notes-list-item mb-0.5 w-full rounded-[var(--radius-control)] pr-2.5 py-1.5 text-left outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring',
             activeNoteId === note.id && 'notes-list-item-active',
@@ -151,13 +201,18 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
   )
 }
 
-function FolderNavigationItem({ node, depth, activeNoteId, collapsedFolders, onToggleFolder, ...actions }: Omit<NotesNavigationSidebarProps, 'notes' | 'emptyMessage'> & {
+/**
+ * A folder row of the flattened tree: the expand/collapse disclosure and the
+ * drop target live on this button (the old nested `<details>` is gone, so the
+ * row is a sibling of its children).
+ */
+function FolderNavigationItem({ node, depth, expanded, onToggleFolder, ...actions }: NoteNavigationActions & {
   node: FolderTreeNode
   depth: number
+  expanded: boolean
+  onToggleFolder(folder: string): void
 }) {
   const { t } = useTranslation()
-  const expanded = !collapsedFolders.has(node.fullPath)
-  const contentId = React.useId()
   const { isOver, setNodeRef } = useDroppable({
     id: `folder:${node.fullPath}`,
     data: { type: 'folder', folder: node.fullPath },
@@ -165,46 +220,26 @@ function FolderNavigationItem({ node, depth, activeNoteId, collapsedFolders, onT
   const FolderIcon = expanded ? FolderOpen : Folder
   return (
     <ContextMenu>
-      <details
-        open={expanded}
-        data-notes-folder={node.fullPath}
-        data-notes-disclosure
-        onToggle={(event) => {
-          if (event.target === event.currentTarget && event.currentTarget.open !== expanded) onToggleFolder(node.fullPath)
-        }}
-      >
-        <ContextMenuTrigger asChild>
-          <summary
-            ref={setNodeRef}
-            aria-expanded={expanded}
-            aria-controls={contentId}
-            title={node.fullPath}
-            onClick={(event) => {
-              event.preventDefault()
-              onToggleFolder(node.fullPath)
-            }}
-            className={cn(
-              'mb-0.5 flex h-7 cursor-pointer list-none items-center gap-1 rounded-[var(--radius-control)] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-foreground/[0.04] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
-              isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]',
-            )}
-            style={{ paddingLeft: `${8 + depth * 12}px` }}
-          >
-            <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden="true" />
-            <FolderIcon className={cn('h-4 w-4 shrink-0', depth === 0 ? 'text-amber-500' : depth === 1 ? 'text-orange-500' : 'text-teal-500')} aria-hidden="true" />
-            <span className="min-w-0 flex-1 truncate">{node.name}</span>
-            <span className="text-xs text-muted-foreground/50 tabular-nums">{countFolderNotes(node)}</span>
-          </summary>
-        </ContextMenuTrigger>
-        <div id={contentId}>
-          {node.children.map(child => (
-            <FolderNavigationItem key={child.fullPath} node={child} depth={depth + 1} activeNoteId={activeNoteId}
-              collapsedFolders={collapsedFolders} onToggleFolder={onToggleFolder} {...actions} />
-          ))}
-          {node.notes.map(note => (
-            <NoteNavigationItem key={note.id} note={note} depth={depth + 2} activeNoteId={activeNoteId} {...actions} />
-          ))}
-        </div>
-      </details>
+      <ContextMenuTrigger asChild>
+        <button
+          ref={setNodeRef}
+          type="button"
+          aria-expanded={expanded}
+          data-notes-folder={node.fullPath}
+          title={node.fullPath}
+          onClick={() => onToggleFolder(node.fullPath)}
+          className={cn(
+            'mb-0.5 flex h-7 w-full cursor-pointer items-center gap-1 rounded-[var(--radius-control)] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-foreground/[0.04] focus-visible:ring-1 focus-visible:ring-ring',
+            isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]',
+          )}
+          style={{ paddingLeft: `${8 + depth * 12}px` }}
+        >
+          <ChevronRight className={cn('h-3.5 w-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden="true" />
+          <FolderIcon className={cn('h-4 w-4 shrink-0', depth === 0 ? 'text-amber-500' : depth === 1 ? 'text-orange-500' : 'text-teal-500')} aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate text-left">{node.name}</span>
+          <span className="text-xs text-muted-foreground/50 tabular-nums">{countFolderNotes(node)}</span>
+        </button>
+      </ContextMenuTrigger>
       <StyledContextMenuContent>
         <StyledContextMenuItem onClick={() => actions.onOpenCreateNoteDialog(node.fullPath)}>
           <FilePlus2 className="h-3.5 w-3.5" />{t('notes.menu.newInFolder')}
@@ -221,8 +256,26 @@ function FolderNavigationItem({ node, depth, activeNoteId, collapsedFolders, onT
   )
 }
 
-export function NotesNavigationSidebar({ notes, emptyMessage, ...props }: NotesNavigationSidebarProps) {
+export function NotesNavigationSidebar({ notes, emptyMessage, viewportRef, ...props }: NotesNavigationSidebarProps) {
   const tree = React.useMemo(() => buildFolderTree(notes), [notes])
+  const rows = React.useMemo(
+    () => flattenNotesTree(tree, props.collapsedFolders),
+    [tree, props.collapsedFolders],
+  )
+  const renderRow = React.useCallback(
+    (row: NotesTreeRow) =>
+      row.kind === 'folder' ? (
+        <FolderNavigationItem
+          node={row.node}
+          depth={row.depth}
+          expanded={row.expanded}
+          {...props}
+        />
+      ) : (
+        <NoteNavigationItem note={row.note} depth={row.depth} {...props} />
+      ),
+    [props],
+  )
   return (
     <>
       <style>{`
@@ -245,12 +298,19 @@ export function NotesNavigationSidebar({ notes, emptyMessage, ...props }: NotesN
           [data-notes-disclosure]::details-content,
           [data-notes-disclosure][open]::details-content { transition: none; }
         }
+        html[data-render-profile="performance"] [data-notes-disclosure]::details-content { transition: none; }
+        html[data-render-profile="performance"] [data-notes-disclosure][open]::details-content { transition: none; }
       `}</style>
       {notes.length ? (
-        <>
-          {tree.rootNotes.map(note => <NoteNavigationItem key={note.id} note={note} depth={0} {...props} />)}
-          {tree.folders.map(node => <FolderNavigationItem key={node.fullPath} node={node} depth={0} {...props} />)}
-        </>
+        <WindowedTreeList<NotesTreeRow>
+          rows={rows}
+          getKey={(row) => row.key}
+          renderRow={renderRow}
+          rowHeight={NOTES_TREE_ROW_ESTIMATE}
+          windowThreshold={NOTES_TREE_WINDOW_THRESHOLD}
+          {...(viewportRef ? { viewportRef } : {})}
+          scrollToKey={notesScrollToKey(props.activeNoteId)}
+        />
       ) : <div className="px-3 py-10 text-center text-xs text-muted-foreground">{emptyMessage}</div>}
     </>
   )

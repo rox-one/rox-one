@@ -91,6 +91,18 @@ describe('chat membership', () => {
     expect(memberRow(CAROL)!.data).toMatchObject({ state: 'active' })
   })
 
+  test('im.remove_members: an actor without share on the chat is FORBIDDEN and members stay', async () => {
+    // The handler itself has no role gate (any caller the executor admits may
+    // remove members); the negative path lives one layer up — the executor
+    // requires `share` on the channel (`catalogue/im.ts`) before the handler runs.
+    const setup = await bobsChat()
+    await setup.run({ type: 'im.add_members', target: chat, payload: { memberIds: [CAROL] }, actor: BOB })
+    const { calls, authorizer } = denyId(chat.id, 'share')
+    expect(await harness(authorizer).run({ type: 'im.remove_members', target: chat, payload: { memberIds: [CAROL] }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(calls).toContainEqual(expect.objectContaining({ verb: 'share', ref: { kind: 'channel', id: chat.id } }))
+    expect(memberRow(CAROL)!.data).toMatchObject({ state: 'active' })
+  })
+
   test('a disbanded p2p chat is revived by get_or_create_p2p', async () => {
     const setup = harness()
     expect(await setup.run({ type: 'im.get_or_create_p2p', payload: { peerId: BOB } })).toMatchObject({ status: 'applied' })

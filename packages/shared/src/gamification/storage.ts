@@ -83,7 +83,8 @@ export function getDefaultGamificationState(): GamificationState {
     recentEvents: [],
     quests: defaultQuestRecords(),
     ratings: [],
-    analyticsConsent: false,
+    // Product analytics is on by default; only an explicit opt-out turns it off.
+    analyticsConsent: true,
     updatedAt: Date.now(),
   }
 }
@@ -166,7 +167,9 @@ function normalizeState(raw: unknown): GamificationState {
       Number.isSafeInteger(entry.xp) && entry.xp >= 0).slice(0, 90) : undefined,
     quests,
     ratings,
-    analyticsConsent: obj.analyticsConsent === true,
+    // Legacy files without the field (and anything but an explicit `false`)
+    // keep the default-on behaviour; a user's explicit opt-out is preserved.
+    analyticsConsent: obj.analyticsConsent !== false,
     updatedAt:
       typeof obj.updatedAt === 'number' && Number.isFinite(obj.updatedAt)
         ? obj.updatedAt

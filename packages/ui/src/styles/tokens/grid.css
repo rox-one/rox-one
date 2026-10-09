@@ -1,0 +1,11 @@
+/* Root and grid (UI-AUDIT §3.0). */
+:root {
+  /* Fixed 16px root. User scaling goes through Electron zoom (zoomPercent),
+     never the root size; geometry below is px so it does not depend on it. */
+  --font-size-root: 16px;
+  /* Legacy name. It no longer drives the root: the super-engineering profile
+     only uses it to size editor code. */
+  --font-size-base: var(--font-size-root);
+  /* 4px grid: Tailwind v4 spacing multiplier, so `p-1` = 4px, `size-4` = 16px. */
+  --spacing: 4px;
+}

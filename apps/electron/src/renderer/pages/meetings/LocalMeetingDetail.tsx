@@ -37,6 +37,7 @@ import {
   meetingsApi,
 } from '@/lib/meetings/recorder'
 import { formatRecClock } from '@/components/meetings/MeetingRecordingIndicator'
+import { observeChip, rollingSummaryView } from '@/lib/meetings/observe'
 import { MEETING_SOURCE_SEEK_SESSION_KEY } from '../../../shared/meetings-local'
 import { MEETING_PROFILE_IDS, type MeetingProfileId } from '@rox/shared/meeting-agents/browser'
 import type { LocalAsrEngine, LocalMeeting, LocalMeetingAction, LocalMeetingTaskRef, LocalTranscript, LocalTranscriptSegmentPatch } from '../../../shared/meetings-local'
@@ -371,7 +372,7 @@ export function LocalMeetingDetail(props: {
   ]
 
   const tr = transcriptTone(m)
-  const sourceLabel = m.source === 'import' ? t('meetings.local.source.import') : m.source === 'microphone' ? t('meetings.local.source.mic') : t('meetings.local.source.none')
+  const sourceLabel = m.source === 'import' ? t('meetings.local.source.import') : m.source === 'microphone' ? t('meetings.local.source.mic') : m.source === 'calendar' ? t('meetings.local.source.calendar') : t('meetings.local.source.none')
 
   const header = (
     <header className="px-5 pt-4">
@@ -478,6 +479,29 @@ export function LocalMeetingDetail(props: {
         <p role="status" className="text-[11px] text-text-muted">{t('meetings.local.analysisStale')}</p>
       ) : null}
       {m.summary?.generated && m.summary.sourceTranscriptRevision === transcript?.revision ? renderSourceLinks(m.summary.sourceSegmentIds) : null}
+      {(() => {
+        const rolling = rollingSummaryView(
+          m.summary ? { text: m.summary.text, updatedAt: m.summary.updatedAt } : null,
+          transcript?.revision,
+          m.summary?.sourceTranscriptRevision,
+        )
+        if (!rolling) return null
+        return (
+          <section
+            data-testid="meeting-rolling-summary"
+            aria-label={t('meetings.local.summary.rolling')}
+            className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-surface-hover p-2"
+          >
+            <div className="flex flex-wrap items-center gap-2 text-caption text-text-muted">
+              <span>{t('meetings.local.summary.rolling')}</span>
+              <span data-testid="meeting-rolling-summary-generator">{t(rolling.generatorKey)}</span>
+              {rolling.stale ? <span className="text-warning">{t('meetings.local.analysisStale')}</span> : null}
+              <span className="ml-auto font-mono tabular-nums">{t('meetings.local.summary.updatedAt', { time: new Date(rolling.updatedAt).toLocaleTimeString() })}</span>
+            </div>
+            <p className="text-body leading-5">{rolling.text}</p>
+          </section>
+        )
+      })()}
       {m.summary?.questions?.length ? (
         <>
           <SectionLabel>{t('meetings.local.openQuestions')}</SectionLabel>
@@ -730,6 +754,7 @@ export function LocalMeetingDetail(props: {
                 end: String(s.endMs / 1000),
               }
               const hasEdit = !!segmentEdits[s.id]
+              const chip = observeChip(s)
               return (
                 <li key={s.id} className="rounded-[var(--radius-card)]">
                   <button
@@ -740,6 +765,16 @@ export function LocalMeetingDetail(props: {
                   >
                     <span className="w-12 shrink-0 pt-px font-mono text-[11px] tabular-nums text-text-muted">{formatRecClock(s.startMs)}</span>
                     <span className="min-w-0 flex-1 text-[13px] leading-5">{s.speakerId ? `${s.speakerId}: ` : ''}{s.text}</span>
+                    {chip.present ? (
+                      <span
+                        data-testid="meeting-transcript-provenance"
+                        data-provenance={chip.labelKey}
+                        data-own-echo={chip.ownEcho ? 'true' : undefined}
+                        className={cn('shrink-0 self-center rounded-[var(--radius-control)] px-1.5 py-0.5 text-caption leading-4', chip.ownEcho ? 'bg-accent/15 text-accent' : 'bg-surface-hover text-text-muted')}
+                      >
+                        {t(chip.labelKey)}
+                      </span>
+                    ) : null}
                   </button>
                   <div className="flex flex-wrap items-center gap-1 px-2 pb-1">
                     <label className="sr-only" htmlFor={`speaker-${m.id}-${s.id}`}>{t('meetings.local.speakerLabel')}</label>
@@ -1107,7 +1142,7 @@ export function RecordingPanel({ compact }: { compact?: boolean }) {
   const lit = Math.round(rec.level * bars)
   return (
     <div data-testid="meeting-recording-panel" className={cn('flex items-center gap-3 rounded-[var(--radius-control)] bg-destructive/[0.06] px-3', compact ? 'py-2' : 'py-3')}>
-      <span aria-hidden className={cn('size-2.5 shrink-0 rounded-full bg-destructive', rec.status === 'recording' && 'animate-pulse')} />
+      <span aria-hidden data-live-indicator className={cn('size-2.5 shrink-0 rounded-full bg-destructive', rec.status === 'recording' && 'animate-pulse')} />
       <span className={cn('shrink-0 font-semibold tabular-nums', compact ? 'text-[15px]' : 'text-[22px]')} data-testid="meeting-rec-timer">{formatRecClock(recordedMs(rec))}</span>
       <span className="flex h-4 min-w-0 flex-1 items-end gap-[2px]" aria-label={t('meetings.local.level')} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(rec.level * 100)}>
         {Array.from({ length: bars }, (_, i) => (

@@ -2,7 +2,21 @@ import { resolve, dirname, relative, sep } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { build as bundle } from 'esbuild'
+import { build as bundle, type PluginBuild } from 'esbuild'
+
+const nodeStub = resolve(import.meta.dir, '../../../shims/node-stub.ts')
+
+// Browser fixtures link shared code whose Node builtins must stay inert: the
+// renderer uses window.electronAPI, so `node:*` resolves to the shipped stub
+// instead of failing the bundle whenever a transitive import adds one.
+export function rendererNodeBoundaryPlugin() {
+  return {
+    name: 'production-renderer-node-boundary',
+    setup(build: PluginBuild) {
+      build.onResolve({ filter: /^node:/ }, () => ({ path: nodeStub }))
+    },
+  }
+}
 
 const main = resolve(import.meta.dir, '../MainContentPanel.tsx')
 const panelSlot = resolve(import.meta.dir, '../PanelSlot.tsx')
@@ -36,6 +50,7 @@ export const NavigationStatusContext=React.createContext({isSessionsReady:true,u
 export const AppShellProvider=ShellContext.Provider;
 export const useAppShellContext=()=>React.useContext(ShellContext);
 export const useNavigationState=()=>React.useContext(NavContext);
+export const NavigationContext=NavContext; // PanelSlot reads/provides the same fixture context.
 export const useNavigation=()=>({...React.useContext(NavigationStatusContext),navigateToSource:()=>{}});
 export const useActiveWorkspace=()=>({id:React.useContext(ShellContext)?.activeWorkspaceId});
 export { isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
@@ -125,7 +140,7 @@ window.ui001.render({});` : ''}
     platform: browser ? 'browser' : 'node', format: 'esm', bundle: true, jsx: 'automatic',
     external: browser ? [] : ['react', 'react/jsx-runtime', 'jotai'],
     metafile: !!process.env.ROX_UI001_COMPONENT_MANIFEST,
-    plugins: [{ name: 'UI-001 component boundaries', setup(build) {
+    plugins: [...(browser ? [rendererNodeBoundaryPlugin()] : []), { name: 'UI-001 component boundaries', setup(build) {
       build.onResolve({ filter: /^rox-ui001-bindings$/ }, () => ({ path: 'bindings', namespace: 'ui001' }))
       build.onResolve({ filter: /.*/ }, args => {
         // Resolve the same public tooltip exports directly, avoiding unrelated KaTeX barrel assets.
@@ -153,6 +168,9 @@ window.ui001.render({});` : ''}
           }
         }
         if (args.importer === panelSlot) {
+          // Under the real provider PanelSlot must pair with the shipped context:
+          // its Provider feeds the real MainContentPanel hook inside the panel.
+          if (options.realNavigation && args.path === '@/contexts/NavigationContext') return
           if (bindingImports.has(args.path)) return { path: 'bindings', namespace: 'ui001' }
           if (args.path === '@/components/ui/PanelHeaderCenterButton') return { path: 'entity-ui', namespace: 'ui001' }
         }

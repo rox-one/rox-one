@@ -8,7 +8,6 @@ import { getActiveService, getServiceContextLinks, serviceHasNavigator } from '.
 
 const appShellSource = readFileSync(join(__dirname, '../AppShell.tsx'), 'utf8')
 const navDestinationsSource = readFileSync(join(__dirname, '../nav-destinations.ts'), 'utf8')
-const workspaceRailSource = readFileSync(join(__dirname, '../WorkspaceIconRail.tsx'), 'utf8')
 const notesPageSource = readFileSync(join(__dirname, '../../../pages/NotesPage.tsx'), 'utf8')
 
 describe('local Notes entry points', () => {
@@ -36,14 +35,10 @@ describe('local Notes entry points', () => {
     expect(primaryLinks).not.toContain('id: "nav:knowledge"')
   })
 
-  it('uses the canonical local Notes route from both rail entry points', () => {
+  it('uses the canonical local Notes route from the nav destination', () => {
     const notesDestination = navDestinationsSource.slice(
       navDestinationsSource.indexOf("id: 'notes'"),
       navDestinationsSource.indexOf("id: 'automations'"),
-    )
-    const notesRailLink = workspaceRailSource.slice(
-      workspaceRailSource.indexOf('if (link.kind === "notes")'),
-      workspaceRailSource.indexOf('const url'),
     )
 
     expect(notesDestination).toContain('route: () => routes.view.notes()')
@@ -52,8 +47,6 @@ describe('local Notes entry points', () => {
     expect(notesDestinationEntry.route?.()).toBe(routes.view.notes())
     expect(notesDestinationEntry.isActive(parseRouteToNavigationState(routes.view.notes('local-note'))!)).toBe(true)
     expect(notesDestinationEntry.isActive(parseRouteToNavigationState(routes.view.knowledge())!)).toBe(false)
-    expect(notesRailLink).toContain('navigate(routes.view.notes());')
-    expect(notesRailLink).not.toContain('navigate(routes.view.knowledge());')
   })
 
   it('loads the local Markdown Notes surface without a knowledge-engine API', () => {

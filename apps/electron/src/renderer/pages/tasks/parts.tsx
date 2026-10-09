@@ -7,9 +7,11 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { prefersReducedMotionNow } from '@/lib/render-profile-motion'
 
+/** OS reduced motion or the PERF-07 low-power profile. */
 export function prefersReducedMotion(): boolean {
-  return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  return prefersReducedMotionNow()
 }
 
 export function TaskCheckbox({

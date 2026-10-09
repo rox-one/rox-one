@@ -298,8 +298,6 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.appearance.workbenchTopChrome": "Верхняя панель v2",
   "settings.appearance.workbenchTopChromeDesc": "Панель режимов и утилитарная панель (поиск, новая сессия, настройки)",
   "settings.appearance.workbenchUnifiedShell": "Панель, вкладки, инспектор",
-  "settings.appearance.workspaceIconRail": "Панель иконок рабочих пространств",
-  "settings.appearance.workspaceIconRailDesc": "Показывать иконки рабочих пространств в панели слева вместо выпадающего списка в верхней панели",
   "settings.appearance.zenShell": "Дзен-оболочка",
   "settings.appearance.zenShellEnable": "Включить дзен-оболочку",
   "settings.browserImport.consentCookies": "Файлы cookie",
@@ -419,7 +417,7 @@ describe('P35 leftover wrap collapse', () => {
   })
   it('applies every unique leftover wrap on current Russian catalog keys', () => {
     const keys = Object.keys(WRAPPED_RU)
-    expect(keys).toHaveLength(393)
+    expect(keys).toHaveLength(391)
     expect(keys).toEqual([...keys].sort())
 
     for (const key of keys) {
