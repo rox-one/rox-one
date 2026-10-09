@@ -1290,6 +1290,33 @@ export function evaluateSessionWriteAccess(
     : { allowed: false, code: 'SESSION_OWNER_ONLY', message: 'Session is a private draft owned by another actor' }
 }
 
+/** Result of the server-side session read-visibility check (a1.3 read side). */
+export type SessionReadAccess = { allowed: true } | { allowed: false }
+
+/**
+ * Decide whether `actorAccountId` may READ a session by its visibility.
+ *
+ * The read gate shares one visibility policy with `evaluateSessionWriteAccess`,
+ * but admits participants as well: `shared`, `suggest`, and `read-only` are
+ * readable by every workspace member; only a private `draft` is withheld, and
+ * then only from actors who are neither the owner, the creator, nor a bound
+ * participant. A session with no attribution at all stays readable, mirroring
+ * the write gate's permissive legacy default.
+ */
+export function evaluateSessionReadAccess(
+  session: Pick<ManagedSession, 'owner' | 'creator' | 'participants' | 'visibility'>,
+  actorAccountId: string | null,
+): SessionReadAccess {
+  const visibility = session.visibility ?? 'shared'
+  if (visibility !== 'draft') return { allowed: true }
+  const attributed = new Set<string>()
+  if (session.creator?.accountId) attributed.add(session.creator.accountId)
+  if (session.owner?.id) attributed.add(session.owner.id)
+  for (const participant of session.participants ?? []) attributed.add(participant.accountId)
+  if (attributed.size === 0) return { allowed: true }
+  return actorAccountId && attributed.has(actorAccountId) ? { allowed: true } : { allowed: false }
+}
+
 /**
  * Resolve supportsBranching for a managed session.
  * Prefers the live agent instance; falls back to true for all backends.
@@ -9570,6 +9597,19 @@ export class SessionManager implements ISessionManager {
     if (!managed) return
     const access = evaluateSessionWriteAccess(managed, actorAccountId)
     if (!access.allowed) throw new CodedError(access.code, access.message)
+  }
+
+  /**
+   * a1.3 read-side: whether `actorAccountId` may receive `sessionId`'s record
+   * or content. Read projections refuse by ABSENCE (null / filtered list), so
+   * callers must not reveal whether the withheld session exists at all.
+   * Unknown sessions report readable so the existing not-found semantics are
+   * untouched and only visibility withholds a record.
+   */
+  canReadSession(sessionId: string, actorAccountId: string | null): boolean {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return true
+    return evaluateSessionReadAccess(managed, actorAccountId).allowed
   }
 
   /**

@@ -341,7 +341,13 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       : undefined
     const workspaceId = ctx.workspaceId ?? windowWorkspaceId
     if (ctx.principal) assertNativeWorkspace(ctx, deps, workspaceId ?? '')
-    const sessions = sessionManager.getSessions(workspaceId ?? undefined)
+    // a1.3 read-side: a private draft owned by another actor must not reach
+    // this viewer's list at all. Refusal is by ABSENCE — the record is simply
+    // not projected — so the response never leaks that it exists.
+    const viewer = sessionActorId(ctx)
+    const sessions = sessionManager
+      .getSessions(workspaceId ?? undefined)
+      .filter(session => sessionManager.canReadSession(session.id, viewer))
     end()
 
     log.info('[sessions:get] result', {
@@ -380,6 +386,10 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     const end = perf.start('rpc.getSessionMessages')
     const session = await sessionManager.getSession(sessionId)
     end()
+    // a1.3 read-side: withhold a private draft owned by another actor by the
+    // same ABSENCE as an unknown session, so content and existence both stay
+    // hidden. The write gate already refuses this actor's writes.
+    if (session && !sessionManager.canReadSession(sessionId, sessionActorId(ctx))) return null
     assertNativeSession(ctx, deps, server, sessionId)
     return ctx.principal && session ? nativeSession(session) : session
   }, { nativeAction: 'read' })
@@ -959,7 +969,12 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
 
     await sessionManager.waitForInit()
-    const visibleSessions = sessionManager.getSessions(workspace.id).filter((session) => !session.hidden)
+    // a1.3 read-side: content search is a read projection over session
+    // records — a private draft owned by another actor is neither searched
+    // nor returned, by the same absence rule as sessions:get.
+    const viewer = sessionActorId(ctx)
+    const visibleSessions = sessionManager.getSessions(workspace.id)
+      .filter((session) => !session.hidden && sessionManager.canReadSession(session.id, viewer))
     const allowedSessionIds = visibleSessions.map((session) => session.id)
 
     const { searchSessions } = await import('@rox/server-core/services')
@@ -977,7 +992,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
 
     const stillVisibleIds = new Set(
       sessionManager.getSessions(workspace.id)
-        .filter((session) => !session.hidden)
+        .filter((session) => !session.hidden && sessionManager.canReadSession(session.id, viewer))
         .map((session) => session.id),
     )
     const visibleResults = results.filter((result) => stillVisibleIds.has(result.sessionId))
