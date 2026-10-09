@@ -11,6 +11,7 @@ import { resolve } from 'path'
 import { formatTypedErrorForCli } from '@rox/shared/agent'
 import { getEnv } from '@rox/shared/config'
 import { CliRpcClient } from './client.ts'
+import { runKeeperCommand } from './keeper.ts'
 
 export function formatCliSessionError(ev: { type: string; error?: unknown }): string | null {
   if (ev.type === 'typed_error') {
@@ -89,7 +90,14 @@ export function parseArgs(argv: string[]): CliArgs {
     const arg = args[i]
     switch (arg) {
       case '--url':
-        url = args[++i] ?? ''
+        // `keeper` owns its own `--url` (the login/website URL). Once the
+        // command is `keeper`, keep `--url` in the tail for keeper parsing;
+        // the server URL then has to precede the command.
+        if (command === 'keeper') {
+          rest.push(arg, args[++i] ?? '')
+        } else {
+          url = args[++i] ?? ''
+        }
         break
       case '--token':
         token = args[++i] ?? ''
@@ -2094,6 +2102,14 @@ Commands:
   cancel <id>            Cancel in-progress processing
   invoke <channel> [...] Raw RPC call with JSON args
   listen <channel>       Subscribe to push events (Ctrl+C to stop)
+  keeper list [--folder <name>] [--json]
+                         List vault items (secrets always masked)
+  keeper get <id> [--reveal] [--field password|totp]
+                         Show one item; --reveal needs ROX_KEEPER_ALLOW_REVEAL=1
+  keeper create --title <t> [--username --password --url --notes --folder --totp]
+                         Create an item (secrets may be piped via stdin)
+  keeper delete <id>     Delete an item
+  keeper status          Vault unlock/availability status
   migrate-config         Move ~/.rox to ~/rox (MIG-13, never deletes)
                          --dry-run       Preview only, write nothing
                          --revert        Move ~/rox back to ~/.rox (refused
@@ -2232,6 +2248,11 @@ export async function main(argv: string[] = process.argv): Promise<void> {
       case 'invoke':
         await cmdInvoke(client, args)
         break
+      case 'keeper': {
+        const code = await runKeeperCommand(client, { rest: args.rest, json: args.json })
+        if (code !== 0) process.exit(code)
+        break
+      }
       case 'listen':
         await cmdListen(client, args)
         break // never returns

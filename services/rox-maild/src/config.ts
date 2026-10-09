@@ -3,6 +3,7 @@
  * specific value comes from the environment — nothing is baked in and no
  * secret is ever logged.
  */
+import { DEFAULT_MAILBOX_QUOTA_BYTES, MAX_MAILBOX_QUOTA_BYTES, MIN_MAILBOX_QUOTA_BYTES } from '@rox/shared/mail'
 
 /** Hard cap for a single inbound message (raw bytes, before base64). */
 export const MAX_INBOUND_BYTES = 25 * 1024 * 1024
@@ -26,6 +27,8 @@ export interface Config {
   dedupeCapacity: number
   /** Rox broker origin used to verify access tokens. */
   brokerUrl: string
+  /** Shared token that authorizes server-side (site) callers of /api/provision; null → disabled. */
+  provisionServiceToken: string | null
   /** Stalwart JMAP/management origin reachable from this process. */
   stalwartAdminUrl: string
   stalwartAdminUser: string
@@ -34,6 +37,8 @@ export interface Config {
   mailDomain: string
   /** Public JMAP URL returned to clients by /api/provision. */
   jmapUrl: string
+  /** Default per-mailbox storage quota (bytes) applied by /api/provision. */
+  mailDefaultQuotaBytes: number
   /** Timeout for the token-verification call against the Rox broker. */
   brokerTimeoutMs: number
   /** Timeout for the Stalwart reachability probe on /api/health. */
@@ -113,11 +118,13 @@ export function loadConfig(env: Env = process.env): Config {
     },
     dedupeCapacity: int(env, 'MAIL_DEDUPE_CAPACITY', 5000, { min: 16, max: 1_000_000 }),
     brokerUrl,
+    provisionServiceToken: optional(env, 'MAIL_PROVISION_SERVICE_TOKEN', '').trim() || null,
     stalwartAdminUrl,
     stalwartAdminUser: str(env, 'STALWART_ADMIN_USER'),
     stalwartAdminPassword: str(env, 'STALWART_ADMIN_PASSWORD'),
     mailDomain,
     jmapUrl,
+    mailDefaultQuotaBytes: int(env, 'MAIL_DEFAULT_QUOTA_BYTES', DEFAULT_MAILBOX_QUOTA_BYTES, { min: MIN_MAILBOX_QUOTA_BYTES, max: MAX_MAILBOX_QUOTA_BYTES }),
     brokerTimeoutMs: int(env, 'ROX_BROKER_TIMEOUT_MS', 10_000, { min: 1000, max: 60_000 }),
     healthTimeoutMs: int(env, 'MAIL_HEALTH_TIMEOUT_MS', 2500, { min: 250, max: 30_000 }),
   }
