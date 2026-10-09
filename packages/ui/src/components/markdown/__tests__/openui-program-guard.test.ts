@@ -178,9 +178,157 @@ describe('estimateOpenUIProgram', () => {
     expect(estimate.ok).toBe(true)
   })
 
-  it('terminates on self-referential and mutually-referential names', () => {
+  it('saturates and rejects self-referential and mutually-referential names', () => {
+    // The fixed point never converges over a reference cycle; the vendor keeps
+    // such programs finite via path-scoped cuts but the growth is unbounded, so
+    // the honest upper bound is a rejection. The estimate stays finite.
     const estimate = estimateOpenUIProgram(['a = Card([a])', 'b = Card([a, b])'].join('\n'))
     expect(Number.isFinite(estimate.nodes)).toBe(true)
+    expect(estimate.ok).toBe(false)
+  })
+
+  it('trips on a reverse-order doubling chain (references defined later)', () => {
+    // `root` references `s1`, `s1` references `s2` twice, ... `s20` is a leaf.
+    // A forward-only pass counts every forward reference as 1 and misses the
+    // 2^19 expansion the vendor actually performs.
+    const lines = ['root = Card([s1])']
+    for (let i = 1; i < 20; i += 1) lines.push(`s${i} = Card([s${i + 1}, s${i + 1}])`)
+    lines.push('s20 = TextContent("x")')
+    const estimate = estimateOpenUIProgram(lines.join('\n'))
+    expect(estimate.ok).toBe(false)
+    expect(estimate.nodes).toBeGreaterThan(OPENUI_PROGRAM_BUDGET.maxNodes)
+  })
+
+  it('trips on the @Each fan-out shape (template repeated per array element)', () => {
+    // The vendor evaluates the Each template once per element; a 3000-element
+    // literal array times a 100-item template is ~1.4M rendered nodes.
+    const template =
+      'Col("c", [' +
+      Array.from({ length: 100 }, (_, i) => `TextContent("t${i}")`).join(', ') +
+      '])'
+    const rows = Array.from({ length: 3000 }, (_, i) => i).join(', ')
+    const estimate = estimateOpenUIProgram(
+      `rows = [${rows}]\nroot = Card([Table([Col("data", @Each(rows, "r", ${template}))])])`,
+    )
+    expect(estimate.ok).toBe(false)
+    expect(estimate.nodes).toBeGreaterThan(OPENUI_PROGRAM_BUDGET.maxNodes)
+  })
+
+  it('handles a large whitespace-only program in a single pass', () => {
+    // 200 KB of newlines took the old peek-from-every-newline scan ~40s; the
+    // suite timeout is the regression lock. A single-pass scan returns at once.
+    const estimate = estimateOpenUIProgram('\n'.repeat(200_000))
     expect(estimate.ok).toBe(true)
+    expect(estimate.statements).toBe(0)
+    expect(estimate.nodes).toBe(0)
+  })
+
+  it('allows a legitimate literal @Each program', () => {
+    const estimate = estimateOpenUIProgram(
+      [
+        'rows = [1, 2, 3]',
+        'root = Card([Table([Col("Actions", @Each(rows, "t", Button("Edit", Action([@Set($id, t.id)]))))])])',
+      ].join('\n'),
+    )
+    expect(estimate.ok).toBe(true)
+  })
+
+  it('allows a runtime-array @Each program (array length unknown statically)', () => {
+    const estimate = estimateOpenUIProgram(
+      [
+        'root = Card([Col("Actions", @Each(rows, "item", Comp(item.field)))])',
+      ].join('\n'),
+    )
+    expect(estimate.ok).toBe(true)
+  })
+
+  it('trips on an indirect @Each fan-out (literal array through @Filter)', () => {
+    // The outer array is an `@Filter` call, not a literal; today the operand is
+    // what bounds the result (Filter never grows its input), so the 3000-element
+    // literal still multiplies the template.
+    const template =
+      'Col("c", [' +
+      Array.from({ length: 100 }, (_, i) => `TextContent("t${i}")`).join(', ') +
+      '])'
+    const rows = Array.from({ length: 3000 }, (_, i) => i).join(', ')
+    const estimate = estimateOpenUIProgram(
+      `rows = [${rows}]\nroot = Card([Table([Col("data", @Each(@Filter(rows, "v", ">", 0), "r", ${template}))])])`,
+    )
+    expect(estimate.ok).toBe(false)
+    expect(estimate.nodes).toBeGreaterThan(OPENUI_PROGRAM_BUDGET.maxNodes)
+  })
+
+  it('allows ordinary builtin use in a small program', () => {
+    const estimate = estimateOpenUIProgram(
+      [
+        'rows = [1, 2, 3]',
+        'top = @First(rows)',
+        'loop = @Each(@Filter(rows, "v", ">", 1), "r", TextContent(r))',
+        'root = Card([Table([Col("all", rows), Col("big", @Filter(rows, "v", ">", 1)), Col("n", @Count(rows)), Col("f", top), Col("l", loop)])])',
+      ].join('\n'),
+    )
+    expect(estimate.ok).toBe(true)
+  })
+
+  it('allows the app browser-suite fixture programs (forward references)', () => {
+    // The real fixtures the app's browser suite mounts; they use forward
+    // references, the pattern a fixed point is most likely to over-reject.
+    const fixtures: Record<string, string> = {
+      complete: [
+        'root = Card([title, tbl, chart, actions])',
+        'title = TextContent("Top languages by users", "large-heavy")',
+        'tbl = Table([Col("Language", langs), Col("Users (M)", users)])',
+        'langs = ["Python", "TypeScript", "Rust"]',
+        'users = [15.7, 4.1, 2.3]',
+        'chart = BarChart(langs, [series], "grouped", "Language", "Users (M)")',
+        'series = Series("Users (M)", users)',
+        'actions = Buttons([btnMore])',
+        'btnMore = Button("Tell me more", Action([@ToAssistant("Tell me more about these languages")]), "primary")',
+      ].join('\n'),
+      form: [
+        'root = Card([title, form])',
+        'title = TextContent("Plan your trip", "large-heavy")',
+        'form = Form("trip-planner", formButtons, [fcType, fcNotes])',
+        'formButtons = Buttons([btnSubmit])',
+        'btnSubmit = Button("Plan my trip", Action([@ToAssistant("Plan a trip based on my choices")]), "primary")',
+        'fcType = FormControl("Trip type", tripType, "What kind of trip?")',
+        'tripType = RadioGroup("trip-type", [r1, r2], "relaxed")',
+        'r1 = RadioItem("Relaxed", "Slow pace, fewer stops", "relaxed")',
+        'r2 = RadioItem("Active", "Packed schedule", "active")',
+        'fcNotes = FormControl("Notes", notesInput, "Anything else?")',
+        'notesInput = Input("notes", "Add notes")',
+      ].join('\n'),
+      'stream-partial': [
+        'root = Card([title, form])',
+        'title = TextContent("Streaming form", "large-heavy")',
+        'form = Form("stream-form", formButtons, [fcType])',
+        'formButtons = Buttons([btnSubmit])',
+        'btnSubmit = Button("Submit", Action([@ToAssistant("Submit the streamed form")]), "primary")',
+        'fcType = FormControl("Trip type", tripType, "Pick one")',
+        'tripType = RadioGroup("trip-type", [r1], "relaxed")',
+        'r1 = RadioItem("Relaxed", "Slow pace", "relaxed")',
+      ].join('\n'),
+      'stream-full': [
+        'root = Card([title, form])',
+        'title = TextContent("Streaming form", "large-heavy")',
+        'form = Form("stream-form", formButtons, [fcType, fcNotes])',
+        'formButtons = Buttons([btnSubmit])',
+        'btnSubmit = Button("Submit", Action([@ToAssistant("Submit the streamed form")]), "primary")',
+        'fcType = FormControl("Trip type", tripType, "Pick one")',
+        'tripType = RadioGroup("trip-type", [r1, r2], "relaxed")',
+        'r1 = RadioItem("Relaxed", "Slow pace", "relaxed")',
+        'r2 = RadioItem("Active", "Packed schedule", "active")',
+        'fcNotes = FormControl("Notes", notesInput, "Anything else?")',
+        'notesInput = Input("notes", "Add notes")',
+      ].join('\n'),
+    }
+    for (const [name, program] of Object.entries(fixtures)) {
+      const estimate = estimateOpenUIProgram(program)
+      expect(estimate.ok, `${name} must stay within budget`).toBe(true)
+      expect(
+        OPENUI_PROGRAM_BUDGET.maxNodes - estimate.nodes,
+        `${name} must keep a comfortable margin`,
+      ).toBeGreaterThan(5000)
+    }
   })
 })
