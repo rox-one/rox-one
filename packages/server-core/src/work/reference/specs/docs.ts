@@ -3,7 +3,7 @@
 import { CommandRejection } from '@rox/core/commands'
 import type { EntityRef } from '@rox/core/entities'
 import { deterministicId, isDeleted, type ReferenceOutcome, type ReferenceTx } from '../engine'
-import { addLink, assertNotOwner, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, boundRef, childCreate, collectionOfKind, childUpdate, create, omit, payloadFields, refString, storedAclRole, transition, update } from '../ops'
+import { addLink, assertNotOwner, authorizeBound, authorizeId, authorizeOrigin, authorizeRef, boundRef, collectionOfKind, create, omit, payloadFields, refString, storedAclRole, transition, update } from '../ops'
 import type { RecordData, StoredRecord } from '../types'
 import type { ReferenceSpecMap } from './types'
 

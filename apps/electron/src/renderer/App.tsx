@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { DraftPersistence } from '@/lib/draft-persistence'
-import { waitForTransportConnected } from './lib/transport-wait'
+import { DEFAULT_TIMEOUT_MS, waitForTransportConnected } from './lib/transport-wait'
 import { decideStartupAppState, isStartupAuthorityDenial, probeWithRetry } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
@@ -27,7 +27,6 @@ import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/compo
 import { openFirstSessionWelcome } from '@/components/onboarding/first-session-welcome'
 import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
-import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog'
 import { SplashScreen } from '@/components/SplashScreen'
 import { TooltipProvider } from '@rox/ui'
 import { FocusProvider } from '@/context/FocusContext'
@@ -117,7 +116,13 @@ import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
 import { toErrorMessage } from '@/lib/errors'
-import { markFirstMeaningfulPaint, markRendererOnce } from '@/lib/startup-perf'
+import { markFirstMeaningfulPaint, markRendererOnce } from './lib/startup-perf'
+
+// #1675: lazy so the dialog's `actions/useVisibleActions` graph is not dragged into the
+// entry chunk; it only renders while the user has the shortcuts dialog open.
+const KeyboardShortcutsDialog = React.lazy(() =>
+  import('@/components/KeyboardShortcutsDialog').then((m) => ({ default: m.KeyboardShortcutsDialog })),
+)
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -1579,7 +1584,28 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         // now, so reload instead of leaving an empty shell behind.
         swallowedSessionLoadRef.current = false
         console.warn('[App] Reconnected after a swallowed session-load failure — reloading sessions')
-        await loadSessionsFromServer()
+        // Bound the repair so a hung read cannot wedge the metadata/stale-refresh work
+        // below (the transport's own 30 s bound is otherwise the only backstop). The load
+        // never rejects, and the deadline only resolves, so nothing throws into this
+        // handler. On deadline the flag is re-armed so the next reconnect retries.
+        let repairTimedOut = false
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(() => {
+            repairTimedOut = true
+            resolve()
+          }, DEFAULT_TIMEOUT_MS)
+          loadSessionsFromServer().finally(() => {
+            clearTimeout(timer)
+            resolve()
+          })
+        })
+        if (repairTimedOut) {
+          swallowedSessionLoadRef.current = true
+          rendererLog.warn(
+            '[App] Session-load repair after reconnect exceeded its deadline; re-armed for the next reconnect',
+            { timeoutMs: DEFAULT_TIMEOUT_MS },
+          )
+        }
       }
       if (!isStale) {
         // Server replayed buffered events — we're caught up, nothing else to do
@@ -2831,10 +2857,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
                 onConfirm={executeReset}
                 onCancel={() => setShowResetDialog(false)}
               />
-              <KeyboardShortcutsDialog
-                open={showShortcuts}
-                onOpenChange={setShowShortcuts}
-              />
+              <React.Suspense fallback={null}>
+                <KeyboardShortcutsDialog
+                  open={showShortcuts}
+                  onOpenChange={setShowShortcuts}
+                />
+              </React.Suspense>
             </div>
           </div>
 
