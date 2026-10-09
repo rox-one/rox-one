@@ -159,6 +159,7 @@ import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
+import { installShellWarmup } from "@/lib/shell-warmup"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
@@ -557,7 +558,7 @@ function AppShellContent({
   })
   const [session, setSession] = useSession()
   const { resolvedMode, isDark, setMode } = useTheme()
-  const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession } = useNavigation()
+  const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession, isSessionsReady } = useNavigation()
 
   // Double-Esc interrupt feature: first Esc shows warning, second Esc interrupts
   const { handleEscapePress } = useEscapeInterrupt()
@@ -1641,6 +1642,15 @@ function AppShellContent({
     load()
     return () => { disposed = true; revision += 1; cleanup() }
   }, [activeWorkspaceId, activeSessionWorkingDirectory, setSkillsSyncing])
+
+  // PERF-10 (#1577): idle warm-up for the surfaces the user is most likely to
+  // open next. Starts once the session metadata and the active workspace exist;
+  // the returned stop cancels the queue on unmount or workspace switch (user
+  // input cancels it too) and the effect re-installs for the new workspace.
+  React.useEffect(() => {
+    if (!isSessionsReady || !activeWorkspaceId) return
+    return installShellWarmup()
+  }, [isSessionsReady, activeWorkspaceId])
 
   // Filter session metadata by active workspace
   // Also exclude hidden sessions (mini-agent sessions) from all counts and lists
