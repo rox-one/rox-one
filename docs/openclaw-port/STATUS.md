@@ -20,7 +20,7 @@ Eight parallel slices shipped and merged on `port/openclaw-features`; per-area e
 | S7 lifecycle-service | `port/slice-7` | (merge) | transactional launchd install/rollback, service fences, doctor report, tray + status broadcast |
 | S8 voice-realtime | `port/slice-8` | `ef3faf11f` | talk events + sequencer, bridge FSM, provider registry, wake list RPC, TTS/STT relay with real OpenAI adapter |
 
-Row status counts (after wave 4): done=57, deferred=13, partial=5, reuse-as-is=18, skipped=3 (96 rows).
+Row status counts (after wave 5): done=61, deferred=6, partial=8, reuse-as-is=18, skipped=3 (96 rows).
 
 ## Wave 2 summary (2026-10-09)
 
@@ -116,7 +116,7 @@ Documented boundaries from that verification (no code change, recorded so nobody
 - V20: the utilityProcess fork path is exercised through the in-process worker; a packaged worker bundle was not booted.
 - V23: contradiction edges are caller-supplied (no automatic discovery); per-owner isolation and the caps were not exercised.
 
-Row status counts (after wave 4): done=57, deferred=13, partial=5, reuse-as-is=18, skipped=3 (96 rows).
+Row status counts (after wave 5): done=61, deferred=6, partial=8, reuse-as-is=18, skipped=3 (96 rows).
 `f.10` stays **partial**: the substrate is real and verified and its INDEX half now has a reader (wave-4 s5 — boot
 and single-session import read `readFreshHeaders` behind the count+maxHeaderMtime cookie, with a JSONL fallback,
 a queued rebuild and a read-only drift guard), but the TRANSCRIPT half is unwired on both ends: nothing writes
@@ -168,6 +168,55 @@ most are a batching artifact — files that fail in the batch pass alone (mcp cl
 browser-broadcast, extension-host descriptors, notes-autocreate, dream-notes, omp-history-recovery …). The
 genuinely red files, with their pre-port baselines, are recorded under "Known pre-existing failures".
 
+## Wave 5 summary (2026-10-09)
+
+Seven slices, all anchored in the cluster recon that also produced wave 4's slate. Five rows moved to **done**
+(e2.7, e2.3, b1.2, a2.6) and three to **partial** with their live half named (e2.4, e2.8, d2.6).
+
+**e2.7 — local IPC.** One shared length-prefixed JSON codec (4-byte BE length, 64 MiB cap, typed
+oversize/malformed/truncated, short-path-safe socket resolver) now backs two real producers (the Swift calendar
+helper emits frames; the open-design runtime's UDS path uses the same envelope). A new app-control UDS pairs a 0600
+token, HMAC-SHA256 over `{nonce,ts,payload}` with a 15 s TTL, a peer-UID check (`getpeereid`/`SO_PEERCRED`) and a
+bounded replay cache — all refusals typed. A separate exec-approvals socket owns its spawned child: closing or
+cancelling the request SIGKILLs it.
+
+**e2.3 — the desktop bridge is a versioned contract.** `ROX_DESKTOP_BRIDGE_VERSION = 1` with a frozen registry and
+one validator shared by preload and main; the preload refuses an unknown method or a wrong version *before* any IPC,
+the bridge is installed only on the Control-UI window and is absent in client-only mode, and the main-side handler
+map is typed against the registry so drift is a compile error. No new raw `webContents.send`.
+
+**e2.4 (part 1) — capability model + prompts.** Pure resolvers that drop `.unknown`, latch denial (no false
+upgrade) and emit a canonical order, plus opt-in interactive prompts (AX, screen-recording capture-then-abort,
+`askForMediaAccess`) that do nothing on import. The node-side advertisement waits on the node client's capability
+half and a signed-bundle TCC proof.
+
+**e2.8 — entitlements split + fail-closed audit.** The app binary no longer carries JIT; a runtime plist does,
+applied via `entitlementsInherit` — the hook that survives electron-builder's sign pass (`afterPack` signing would be
+overwritten, which is why the earlier plan's afterPack pass was rejected). `scripts/audit-macos-signing.ts` enforces
+six rules against a packaged `.app` (one Team-ID, deep-strict verify, `spctl`, JIT never on the app binary) and is
+fixture-testable; producing a real notarized artifact remains credential-gated.
+
+**d2.6 — Google Meet, preview-gated.** The `meet` service and its scopes ride the existing OAuth lane; six
+LOCAL_ONLY channels refuse `PREVIEW_NOT_ACKNOWLEDGED` *before any fetch* until the host acknowledges enrolment, and
+typed not-configured/not-connected/fetch-failed states otherwise; artifacts parse into typed rows and the calendar
+adapter surfaces `meetUri`.
+
+**b1.2 — measured boot manifest + stale-chunk recovery.** A static closure over the built chunks per boot route
+(67 chunks, 5 routes, sorted) with a boundary/determinism test, cross-checked against the vite-injected
+`modulepreload` links; a chunk-load failure reloads exactly once per session. The doc's Chromium-driven measurement
+was replaced by static analysis and that deviation is recorded.
+
+**a2.6 — Connected accounts.** A real Profile-page section over the existing identity fabric (no second credential
+path), consolidated with the old inline card, plus optional `profileId` keying that is a byte-identical no-op when
+absent.
+
+Integration taught the same lesson twice: cross-package mirrors are where drift hides. `'meet'` had to be mirrored in
+session-tools-core's deliberately-independent union; `claude-context`'s inference wrapper needed a widened parameter;
+and the **channel-map parity guard caught six missing ElectronAPI methods** — added with the handler's precise result
+types through a new server-core subpath. A wave-4 webui test had been calling an adapter with an argument it never
+took, masked because `typecheck:all` stops at the first failing workspace — the same masking that hid wave 4's
+server-core errors. Both were found only after running the chain to completion.
+
 ## Known pre-existing failures (verified on pristine `origin/main` @ `7c2c202b7`, not caused by this port)
 
 - `packages/shared/src/skills/__tests__/skill-summaries.test.ts` + `storage.test.ts`: 11 failures — per-test 5 s timeouts against this machine's ~9.1k-entry skill store (reproduced on pristine main: 1/2 and 27/37).
@@ -197,7 +246,7 @@ genuinely red files, with their pre-port baselines, are recorded under "Known pr
 | a2.3 | Participant history rendering (creator vs owner vs participants) | adapt | S | done | S2 SessionParticipantsPopover renders creator/owner/participants | renaming a person must not rewrite participant history |
 | a2.4 | Presence avatars + typing indicator | adapt | M | done | S2 live avatars + typing indicator; server tracker S1; 3 review findings fixed in port/fix-s2-presence | drafts must stay ephemeral, never in transcript/model context |
 | a2.5 | Sharing menu: visibility + public link + members | reimplement | M | done | visibility selector + members shipped (S2); W4-S2 closes the row's named risk: `suggest` was treated as an open write — `evaluateSessionWriteAccess` now refuses a non-owner write with typed `SESSION_SUGGEST_ONLY`, and the real flow ships: suggestion store (add/list/resolve, author-bound), owner-only resolve that is exactly-once (`dispatched:false` + the original message id on replay, claim rolled back if the dispatch fails), `sessions:suggestAdd|List|Resolve` + routing + channel-map + 16 i18n keys × 12 locales, minimal renderer surface | copy-link still only when `sharedUrl` exists (the hosted viewer share, a1.5); add/remove-member-by-identity not built |
-| a2.6 | Settings → Profile → Connected accounts (per-person model) | adapt | M | deferred | connected-accounts UI not built; identity/credential fabric reused as-is | reuse ROX secret store, not a second credential path |
+| a2.6 | Settings → Profile → Connected accounts (per-person model) | adapt | M | done | W5-S7: a Connected-accounts section on the Profile page over the EXISTING identity fabric (IdentityStore connections + LLM reflections with provider/account/status; connect/disconnect/refresh dispatch the existing identity RPCs; read-only reflections say 'Managed in AI Settings' and link out; honest empty state) — consolidated with, not duplicated beside, the old inline connections card; optional per-person keying: `LlmConnection.profileId` + `filterLlmConnectionsForProfile` (a byte-identical no-op when no profile is supplied) wired through `getLlmConnections(profileId?)` | the Profile page is presentation glue: model accounts, defaults and reauth still live in AI Settings, and per-person keying only scopes rows that carry a `profileId` (no migration) |
 | a2.7 | macOS WebChat surfaces (webview-hosted) | reuse-as-is | S | reuse-as-is | the web surface IS the renderer: the Electron shell already hosts the same web UI over the shared WS transport, so there is no separate surface to build; `openControlUi` (apps/electron/src/main/openclaw-host-control.ts:310-332) is the precedent for a hardened web-hosted window — exact control-UI origin (fail-closed), a fresh ephemeral session partition, storage/cache cleared on close, webview attach and outside-origin navigation blocked | web + native experience share state, not drafts |
 
 ## b1 (8 rows)
@@ -205,7 +254,7 @@ genuinely red files, with their pre-port baselines, are recorded under "Known pr
 | id | capability | verdict | effort | status | evidence | notes |
 |---|---|---|---|---|---|---|
 | b1.1 | Serve dashboard static assets from same HTTP host | reuse-as-is | S | reuse-as-is | verified: createWebuiHandler serves the SPA on the RPC host (packages/server-core/src/webui/http-server.ts) | base-path/route-preload parity with ROX WebUI |
-| b1.2 | Build pipeline: stable chunking + boot manifest + locale virtual modules | adapt | M | deferred | chunking/boot-manifest concept not ported (Vite build already stable) | Vite vs Bun bundler; keep boot-manifest *concept* |
+| b1.2 | Build pipeline: stable chunking + boot manifest + locale virtual modules | adapt | M | done | W5-S6: the measured boot manifest exists — `scripts/boot-manifest.ts` derives a STATIC closure over the built chunks per boot route (67 boot chunks, 5 routes, sorted for byte-determinism) and is cross-checked against the `modulepreload` links vite already injects; a boundary test fails when a boot route statically imports a lazy module; `vite:preloadError` and chunk-load rejections now trigger a ONE-shot per-session reload (module flag + sessionStorage) | the browser-driven variant of the measurement was replaced by static closure analysis (the doc's Playwright route is recorded as the alternative); webui keeps its two-entry config with no chunk policy (no budget pressure yet) |
 | b1.3 | WS transport: hello/snapshot + method+event catalog | adapt | L | done | W4-S1 `catalog.ts`: `flattenChannelCatalog()` (every RPC channel exactly once + its routing classification) and `flattenEventCatalog()` (every `BroadcastEventMap` key, compile-time exhaustive); the handshake ack now carries optional `features:{methods,events,capabilities}` + `policy:{maxPayloadBytes}` (100 MiB = ws's real default) beside `registeredChannels`; `client.ts` stores `serverFeatures`; the webui adapter refuses unadvertised channels typed (`CHANNEL_NOT_FOUND`); `scripts/ipc-inventory.ts` restored (1,022 channels) with two drift guards so the snapshot can no longer be hand-edited | the advertised list is the per-connection AUTHORISED set, not a global inventory; capabilities are the routing tokens, not per-user grants |
 | b1.4 | Auth / pairing handoff (single-use bootstrap token) | adapt | M | done | S3 6b663b00b: single-use handoff token (hashed at rest, TTL<=120s, no URL credential) + fragment redemption; tests handoff.test.ts, handoff-fragment.test.ts | keep credential out of URL; origin allow-list |
 | b1.5 | CSP / security headers + media ticket | adapt | S | done | W2-9 388067a39: CSP + security headers (S3) plus signed media tickets — GET /media/...?ticket=… authorised solely by an HMAC ticket (v1.<payload>.<sig>) bound to media path + session-cookie fingerprint, key domain-separated from the server secret, 5-min TTL (clamped 15 min), constant-time sig compare, uniform 403 on expired/tampered/cross-session/malformed, reused within TTL (media elements issue several requests per source), authenticated same-origin POST /media/ticket mints, ticket never logged; CSP unchanged. Tests: __tests__/media-ticket.test.ts | hash inline scripts; connect-src limited to self+ws |
@@ -273,7 +322,7 @@ genuinely red files, with their pre-port baselines, are recorded under "Known pr
 | d2.3 | Caption transcription + per-line provenance/ownEcho | adapt | L | done | S6 observation-provenance.ts per-line provenance + honest ownEcho (mic-only => unset); journal reducer gap fixed | without provenance+ownEcho you echo the agent's own TTS into notes |
 | d2.4 | Notes/summary pipeline (5-min cadence + heuristic fallback) | adapt | L | done | S6 summary-cadence.ts 5-min lane + strict JSON + deterministic heuristic fallback + revision invalidation | strict JSON schema + 20s budget; deterministic fallback |
 | d2.5 | Participation idempotency (fingerprint dedupe, one correction) | reuse-as-is | M | deferred | participation idempotency rules reused as-is but not exercised by a live join path | observations never grant action authority |
-| d2.6 | Google Meet OAuth + artifacts (PKCE, scopes, Drive) | adapt | M | deferred | Google Meet OAuth/Developer-Preview path not built | Media API is Developer Preview; Workspace enrolment may block |
+| d2.6 | Google Meet OAuth + artifacts (PKCE, scopes, Drive) | adapt | M | partial | W5-S5: `meet` joins the Google service union with its scope set (meetings.space.*, meetings.conference.media.readonly, calendar.events.readonly, drive.meet.readonly); six channels (`meet:space\|conferenceRecords\|participants\|recordings\|transcripts\|smartNotes`, all LOCAL_ONLY like calendar) refuse typed `PREVIEW_NOT_ACKNOWLEDGED` BEFORE any fetch until the host acknowledges Developer-Preview enrollment, and typed MEET_NOT_CONFIGURED / MEET_NOT_CONNECTED / MEET_FETCH_FAILED otherwise; artifacts parse into typed rows; the calendar adapter surfaces `meetUri` from hangoutLink/conferenceData | live use needs a Google OAuth client with the Meet scopes plus Workspace Developer-Preview enrolment (external); no renderer surface consumes the six channels yet |
 | d2.7 | Feishu VC invite trigger (synthetic p2p message) | adapt | M | deferred | Feishu VC invite trigger not built | handler must not call a join API directly; default-off |
 | d2.8 | Retention: no recording; bounded in-memory caps | adapt | S | done | S6 bounded transcript caps (2000 lines / 4 ended / tail 64) with eviction signals; no audio/video recording anywhere | keep transcripts.enabled kill switch + explicit observe tail |
 
@@ -296,12 +345,12 @@ genuinely red files, with their pre-port baselines, are recorded under "Known pr
 |---|---|---|---|---|---|---|
 | e2.1 | Menu-bar/tray shell + navigation dispatch | adapt | M | done | S7 tray.ts status indicator + menu dispatch + navigation (dashboard vs native) + menu:trayStatusChanged | main-process router: Dashboard(web) vs native chat |
 | e2.2 | Operator/node WS client + lease fencing + node.invoke bridge | adapt | L | partial | server half shipped (f.9/V12) + W4-S7: connection identity is the server-minted `clientId` (the payload `connId` is no longer read, so a client cannot name another connection's identity); re-registration cancels that node's in-flight invokes (`SUPERSEDED`); `nodes:invokeResult` must present the owning connection (`NODE_CONNECTION_MISMATCH`, new protocol error code) and an impostor's settlement is dropped; the invoke push is addressed to the owning connection instead of `{to:'all'}`; stale heartbeats refused; dependency-free `node-client.ts`; runtime-proven with two real WS clients | device-auth challenge semantics remain transport-reconnect only; Electron main wiring (and the capability advertisement built on it) is e2.4 |
-| e2.3 | Embedded-surface IPC (webview message handlers) | adapt | L | deferred | embedded-surface IPC versioning not built | definition of window.roxDesktop; version every handler |
-| e2.4 | Node capability model + TCC prompts | reimplement | L | deferred | node capability model + TCC prompts not built (macOS-only surface) | TCC/signature+path coupling: bundle-ID/path change resets grants |
+| e2.3 | Embedded-surface IPC (webview message handlers) | adapt | L | done | W5-S2: `ROX_DESKTOP_BRIDGE_VERSION = 1` + a frozen method registry (browser.open/navigate/releaseScope, device.permissionStatus, app.openLink, gateway.status, notifications.show) with ONE pure validator shared by preload and main; the preload refuses an unknown method or a wrong version BEFORE any IPC (`{ok:false, code:'ROX_DESKTOP_BRIDGE_VERSION_MISMATCH'\|'UNKNOWN_METHOD'}`, `{v:'1'}`/`{v:1.5}` are MALFORMED); installed only on the Control-UI window and absent in client-only mode; handler map is typed against the registry (drift = compile error) and reuses BrowserPaneManager / onboarding-permissions / openExternal / Notification; no new raw `webContents.send` | `window.roxDesktop` is a new surface: it exists for the embedded Control-UI window only, and its method set is intentionally minimal (the OpenClaw WKScriptMessageHandler families are not transliterated 1:1) |
+| e2.4 | Node capability model + TCC prompts | reimplement | L | partial | W5-S3 part 1: the pure model (`packages/shared/src/device/capabilities.ts` — IPC/NODE capability sets, `resolvedCaps`/`advertisedPermissions` drop `.unknown`, denial latches so a later grant is never a false upgrade, canonical order) + interactive prompt ACTIONS in `onboarding-permissions.ts` (AX `isTrustedAccessibilityClient(true)`, screen-recording capture-then-abort, `askForMediaAccess` for mic/camera, denied → System Settings deep link), each opt-in and proven inert on import | the node-side advertisement (`resolvedCaps` riding a node connection) waits on the node client's capability half and the signed-bundle/TCC proof; `speechRecognition`/`location` probes have no product caller yet |
 | e2.5 | LaunchAgent management from app (install/start/stop, runtime pin, resume) | reimplement | L | done | S7 service lifecycle install/start/stop/restart/uninstall from the app (LOCAL_ONLY channels) | preserve "who owns the Gateway" or get duplicate gateways |
 | e2.6 | Auto-update: Sparkle → electron-updater + channel gating | reuse-as-is | S | reuse-as-is | electron-updater + channel gating already present | keep app and gateway/OMP on compatible release trains |
-| e2.7 | Helper processes: stdio framing + app-control/exec UDS | reimplement | M | deferred | helper-process stdio/UDS framing not built | 0600 token + HMAC + peer-UID; separate exec-approvals socket |
-| e2.8 | Signing / notarization / entitlements | adapt | M | deferred | signing/notarization/entitlements work not done (no Apple credentials) | JIT entitlements only to runtime binaries; Team-ID audit fails closed |
+| e2.7 | Helper processes: stdio framing + app-control/exec UDS | reimplement | M | done | W5-S1: one shared length-prefixed JSON codec (`packages/shared/src/local-ipc/framing.ts` — 4-byte BE length, 64 MiB cap, typed oversize/malformed/truncated, short-path-safe socket resolver) + an app-control UDS (0600 token, HMAC-SHA256 over `{nonce,ts,payload}` with a ≤15 s TTL, peer-UID via `getpeereid`/`SO_PEERCRED`, bounded replay cache, typed refusals) + a separate exec-approvals socket whose request lifetime owns its spawned child (close/cancel SIGKILLs it). Two real producers moved onto the codec: the Swift calendar helper now emits frames and `register-helper.ts` decodes them; the open-design runtime's UDS path uses the same envelope | the remaining ad-hoc stdio loops (messaging workers, local-asr) still use their own shapes — the codec is the target, not yet the only path |
+| e2.8 | Signing / notarization / entitlements | adapt | M | partial | W5-S4: the entitlements are SPLIT — `build/entitlements.mac.plist` (app: audio-input + disable-library-validation only, no JIT) and `build/entitlements.runtime.plist` (JIT + unsigned-memory), applied to nested binaries through `entitlementsInherit` (the hook that survives electron-builder's sign pass; afterPack signing would be overwritten). `scripts/audit-macos-signing.ts` walks a packaged `.app` with six fail-closed rules (no Mach-O → FAIL; every Mach-O signed; exactly ONE Team-ID; `codesign --verify --deep --strict`; `spctl -a`; JIT never on the app binary and present on at least one nested one) and is fixture-testable via an injected command runner | producing/verifying a REAL notarized artifact needs Apple credentials; the Team-ID/JIT rules are proven against canned `codesign`/`spctl` output, not against a signed bundle |
 
 ## f (10 rows)
 
