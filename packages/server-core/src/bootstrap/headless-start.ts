@@ -26,7 +26,7 @@ import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
 import { resolveConfigDir } from "@rox/shared/config/paths"
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { projectNativeRegisteredWorkspaceEvent } from '../handlers/rpc/native-session-scope'
-import { HostScheduler } from '../scheduler/index.ts'
+import { composeHooksNodeHandler, createHooksHttpIngress, HostScheduler, type HooksIngressSnapshot, type HooksWakePayload } from '../scheduler/index.ts'
 import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
 import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
 import { projectNativeInboxChanged } from '../handlers/rpc/native-inbox-events'
@@ -112,6 +112,12 @@ export interface ServerBootstrapOptions<TSessionManager, THandlerDeps> {
    * When provided, the WsRpcServer serves HTTP (e.g. WebUI) on the same port.
    */
   httpHandler?: (req: import('node:http').IncomingMessage, res: import('node:http').ServerResponse) => void
+  /**
+   * Shared secret for the external `/hooks` webhook ingress. Defaults to
+   * `ROX_HOOKS_TOKEN` (`CRAFT_HOOKS_TOKEN` still works). When absent the route
+   * is not installed at all.
+   */
+  hooksToken?: string
 }
 
 export interface ServerHandlerContext {
@@ -137,6 +143,12 @@ export interface ServerInstance<TSessionManager> {
    * with the server and closed/joined from `stop()`.
    */
   scheduler: HostScheduler
+  /**
+   * Live snapshot of the external `/hooks` webhook ingress (port row f.8).
+   * Returns null when no hooks token was configured, in which case the route
+   * is not installed at all.
+   */
+  hooksIngressSnapshot: () => HooksIngressSnapshot | null
   stop: () => Promise<void>
 }
 
@@ -198,6 +210,32 @@ export function secureTokenCompare(provided: string, expected: string): boolean 
 export function maskTokenForDisplay(token: string): string {
   if (token.length < 12) return '***'
   return `${token.slice(0, 4)}…${token.slice(-4)}`
+}
+
+/**
+ * Minimal host seam the `/hooks/wake` route drives. The bootstrap binds it to
+ * the real `SessionManager.sendMessage`, so a wake delivery gets exactly the
+ * same visibility, queueing and persistence semantics as a message sent over
+ * RPC — there is deliberately no second delivery path.
+ */
+export interface HooksWakeSessionManager {
+  sendMessage?: (sessionId: string, message: string) => Promise<void>
+}
+
+/**
+ * Bind the external `/hooks/wake` route to the host's EXISTING session-message
+ * path.
+ */
+export function createHooksWakeDispatcher(
+  sessionManager: HooksWakeSessionManager,
+): (payload: HooksWakePayload) => Promise<void> {
+  const send = sessionManager.sendMessage
+  if (typeof send !== 'function') {
+    throw new Error('createHooksWakeDispatcher: session manager does not implement sendMessage')
+  }
+  return async ({ sessionId, text }) => {
+    await send.call(sessionManager, sessionId, text)
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -501,6 +539,20 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     },
   })
 
+  // External `/hooks` webhook ingress (port row f.8). Installed only when a
+  // token is configured, so an unconfigured deployment has no route and no 401
+  // oracle. The wake route drives the existing SessionManager message path.
+  const hooksToken = options.hooksToken ?? getEnv('HOOKS_TOKEN')
+  const hooksIngress = hooksToken
+    ? createHooksHttpIngress({
+        hooks: scheduler.hooks,
+        token: hooksToken,
+        dispatchWake: createHooksWakeDispatcher(sessionManager as unknown as HooksWakeSessionManager),
+        logger: { warn: (message) => platform.logger.warn(message) },
+      })
+    : null
+  const composedHttpHandler = composeHooksNodeHandler(hooksIngress, options.httpHandler)
+
   const rpcHost = options.rpcHost ?? process.env.CRAFT_RPC_HOST ?? '127.0.0.1'
   const rpcPortRaw = options.rpcPort ?? parseInt(process.env.CRAFT_RPC_PORT ?? '9100', 10)
   if (!Number.isFinite(rpcPortRaw) || rpcPortRaw < 0 || rpcPortRaw > 65535) {
@@ -558,7 +610,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     serverId: options.serverId ?? 'headless',
     serverVersion: options.serverVersion,
     tls: options.tls,
-    httpHandler: options.httpHandler,
+    httpHandler: composedHttpHandler,
     onClientConnected: options.onClientConnected,
     resolveLocalClientBinding: options.resolveLocalClientBinding,
     onClientDisconnected: (clientId) => {
@@ -707,6 +759,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     token: serverToken,
     serverHandlerContext,
     scheduler,
+    hooksIngressSnapshot: () => hooksIngress?.snapshot() ?? null,
     stop,
   }
   } catch (error) {
