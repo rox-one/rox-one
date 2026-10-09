@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
 import { toErrorMessage } from '@/lib/errors'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 export interface CloudRunSurfacePageProps {
   /** Run id from `cloud-run/{runId}` route details. Null = bare navigator. */
@@ -47,13 +48,15 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
   const state: LoadState = snapshot.runId === runId ? snapshot.state : { kind: 'loading' }
   const [attempt, setAttempt] = React.useState(0)
   const retry = React.useCallback(() => setAttempt((value) => value + 1), [])
+  // PERF-10 (#1577): a retired surface keeps this page mounted but stops the poll.
+  const visible = useEffectiveVisible()
 
   const openSettings = React.useCallback(() => {
     navigate(routes.view.settings('cloudRuns'))
   }, [navigate])
 
   React.useEffect(() => {
-    if (!runId) return
+    if (!runId || !visible) return
     let cancelled = false
     let revision = 0
     let inFlight = false
@@ -61,13 +64,12 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
       if (!cancelled) setSnapshot({ runId, state })
     }
 
-    async function load(showLoading = false) {
+    async function load() {
       if (!runId || cancelled) return
       const request = ++revision
       const isCurrent = () => !cancelled && request === revision
       const publish = (next: LoadState) => { if (isCurrent()) setState(next) }
       inFlight = true
-      if (showLoading) publish({ kind: 'loading' })
 
       const api = typeof window !== 'undefined' ? window.electronAPI : undefined
       if (typeof api?.listCloudRuns !== 'function' || typeof api?.getCloudRunsConfig !== 'function') {
@@ -138,7 +140,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
     // was pending when the transport changed, without submitting a new run.
     const isVisible = () => typeof document === 'undefined' || document.visibilityState !== 'hidden'
     const refresh = () => { if (isVisible()) void load() }
-    void load(true)
+    void load()
     const timer = setInterval(() => { if (!inFlight) refresh() }, CLOUD_RUN_REFRESH_INTERVAL_MS)
     window.addEventListener('focus', refresh)
     document.addEventListener('visibilitychange', refresh)
@@ -149,7 +151,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
       window.removeEventListener('focus', refresh)
       document.removeEventListener('visibilitychange', refresh)
     }
-  }, [runId, attempt])
+  }, [runId, attempt, visible])
 
   if (!runId) {
     return (

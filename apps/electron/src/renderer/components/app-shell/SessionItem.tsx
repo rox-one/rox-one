@@ -1,6 +1,7 @@
 import { formatDistanceToNowStrict } from "date-fns"
 import type { Locale } from "date-fns"
 import { Archive, ArchiveRestore, Check, Flag, Mail, ShieldAlert } from "lucide-react"
+import { useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { useActionLabel } from "@/actions"
 import { cn } from "@/lib/utils"
@@ -22,9 +23,10 @@ import { useSessionListContext } from "@/context/SessionListContext"
 import { useAppShellContext } from "@/context/AppShellContext"
 import { navigate, routes } from "@/lib/navigate"
 import type { SessionMeta } from "@/atoms/sessions"
+import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { messagingBindingsBySessionAtom } from "@/atoms/messaging"
 import { collectionDisplayAtom } from "@/atoms/collection-display"
-import { useAtomValue } from "jotai"
+import { useAtomValue, useSetAtom } from "jotai"
 import { extractLabelId } from "@rox/shared/labels"
 import { getAppLocale } from '@rox/shared/i18n'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
@@ -124,6 +126,20 @@ export function SessionItem({
   const projectColor = boundProject?.color
   const projectName = boundProject?.name
 
+  // PERF-10 (#1577): one transcript read per row on hover/focus — the same
+  // `ensureSessionMessagesLoadedAtom` (→ `atoms/sessions.ts` `loadSessionMessages`)
+  // ChatPage dispatches when the session opens, so the read lands in the atom and
+  // opening finds it warm. Deduped per session id; a failed read re-arms.
+  const prefetchedTranscriptIds = useRef<Set<string>>(new Set())
+  const ensureMessagesLoaded = useSetAtom(ensureSessionMessagesLoadedAtom)
+  const prefetchTranscript = () => {
+    if (prefetchedTranscriptIds.current.has(item.id)) return
+    prefetchedTranscriptIds.current.add(item.id)
+    void ensureMessagesLoaded(item.id).catch(() => {
+      prefetchedTranscriptIds.current.delete(item.id)
+    })
+  }
+
   const handleClick = (e: React.MouseEvent) => {
     ctx.onFocusZone()
     if (e.button === 2) {
@@ -167,6 +183,8 @@ export function SessionItem({
       onMouseDown={handleClick}
       buttonProps={{
         ...itemProps,
+        onPointerEnter: prefetchTranscript,
+        onFocus: prefetchTranscript,
         className: cn(
           !isComfortable && "py-1.5",
           isSelected || isInMultiSelect

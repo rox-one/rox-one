@@ -41,6 +41,7 @@ import {
   type RadarTopicKind,
 } from './radar-model'
 import { RADAR_NS, loadRadar, runRadarSweep, saveRadar, syncRadarSweep, type SweepSyncState } from './radar-store'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 const BUCKETS: RadarBucket[] = ['reaction', 'important', 'changed']
 const KINDS: RadarTopicKind[] = ['topic', 'competitor', 'keyword']
@@ -63,6 +64,8 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
   const setData = useCallback((next: RadarData) => setOwnedData({ workspaceId, data: next }), [workspaceId])
   const [viewSweepId, setViewSweepId] = useState<string | null>(null)
   const [syncState, setSyncState] = useState<SweepSyncState | null>(null)
+  // PERF-10 (#1577): a retired surface keeps this page mounted but stops the poll.
+  const visible = useEffectiveVisible()
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notes, setNotes] = useState<{ id: string; title: string; updatedAt?: number }[]>([])
@@ -114,6 +117,7 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
   useEffect(() => {
     if (!workspaceId || !sweep) { setSyncState(null); return }
     if (sweep.parsedAt) { setSyncState(sweep.status === 'missing' ? 'missing' : sweep.parseFailed ? 'failed' : 'done'); return }
+    if (!visible) return
     let cancelled = false
     const generation = context.current.generation
     const current = () => !cancelled && context.current.generation === generation && context.current.workspaceId === workspaceId
@@ -122,7 +126,7 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
     const timer = window.setInterval(() => { void tick() }, 5000)
     return () => { cancelled = true; window.clearInterval(timer) }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the sweep's identity/state, not the object
-  }, [workspaceId, sweep?.id, sweep?.parsedAt, sweep?.parseFailed, sweepMeta?.lastMessageAt])
+  }, [workspaceId, sweep?.id, sweep?.parsedAt, sweep?.parseFailed, sweepMeta?.lastMessageAt, visible])
 
   const sweepSessionIds = useMemo(() => new Set(data.sweeps.map((s) => s.sessionId)), [data.sweeps])
   const localSignals = useMemo(() => matchLocalSignals(data.topics, {

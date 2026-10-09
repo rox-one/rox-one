@@ -27,6 +27,8 @@ import { IDENTITY_COMMANDS } from './identity.ts'
 import { AGENTS_COMMANDS } from './agents.ts'
 // W1-12 (#1509)
 import { AUTOMATION_COMMANDS } from './automation.ts'
+// W1-15 (#1512)
+import { XFN_NEW_COMMANDS } from './xfn.ts'
 
 export const COMMAND_CATALOGUE: readonly CommandDefinition<unknown>[] = [
   // W1-03 (#1500)
@@ -54,6 +56,8 @@ export const COMMAND_CATALOGUE: readonly CommandDefinition<unknown>[] = [
   ...AGENTS_COMMANDS,
   // W1-12 (#1509)
   ...AUTOMATION_COMMANDS,
+  // W1-15 (#1512) — names X-15 / X-23 need that no owner file declared.
+  ...XFN_NEW_COMMANDS,
 ]
 
 /** Define the whole catalogue in a registry (throws on any duplicate name). */

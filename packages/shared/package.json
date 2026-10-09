@@ -199,7 +199,9 @@
     "./automation": "./src/automation/index.ts",
     "./automation/schemas": "./src/automation/schemas.ts",
     "./drive/importers/providers/auth": "./src/drive/importers/providers/auth.ts",
-    "./notify/schemas": "./src/notify/schemas.ts"
+    "./notify/schemas": "./src/notify/schemas.ts",
+    "./xfn/schemas": "./src/xfn/schemas.ts",
+    "./xfn": "./src/xfn/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
