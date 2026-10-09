@@ -184,7 +184,7 @@ reproduction; every confirmed defect was fixed with a red→green regression tes
 | f.6 | Config JSON5 + SecretRef (env/file/exec) + hot reload | adapt | L | reuse-as-is | credential fabric + settings:getSecretRefs cover env|file|exec-style refs | map SecretRef onto ROX credential sources; skip invalid reloads |
 | f.7 | Plugin activation planner + gateway-startup loading | reimplement | L | deferred | plugin activation planner not built | keep descriptors in the same registry as core |
 | f.8 | Cron / hooks / single host-timer scheduler | adapt | M | deferred | single host-timer scheduler not built | beginClose/stop semantics; coalesce missed ticks |
-| f.9 | Node/device model + presence + pending invokes | adapt | M | deferred | node/device registry not built | caps/commands are claims; enforce server-side allowlists |
+| f.9 | Node/device model + presence + pending invokes | adapt | M | done | NodeRegistry + PresenceTracker + PendingInvokeTracker (packages/server-core/src/nodes/); nodes:* RPC handlers + HandlerDeps.nodes seam; 7 channels classified REMOTE_ELIGIBLE; tests: nodes/__tests__/registry.test.ts, pending-invokes.test.ts, handlers/rpc/__tests__/nodes-rpc.test.ts, protocol/__tests__/routing.test.ts (15+7+27 pass) | claims enforced against server allowlist before dispatch; host still needs to supply deps.nodes + a device client |
 | f.10 | State persistence: shared SQLite + per-agent DBs + writer lock | adapt | M | partial | memory index uses a per-scope SQLite DB; no unified writer-lock layer | single-writer lock; sessions JSON index + SQLite transcripts |
 
 ## g (9 rows)
