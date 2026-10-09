@@ -133,9 +133,9 @@ export function WidgetCard({ widgetId, title, className, frameClassName, renderT
       <div
         role="status"
         data-testid="widget-card-loading"
-        className={cn('flex h-full w-full items-center justify-center gap-2 text-[12.5px] text-foreground/50', className)}
+        className={cn('flex h-full w-full items-center justify-center gap-2 text-small text-text-muted', className)}
       >
-        <LoaderCircle className="h-3.5 w-3.5 animate-spin" strokeWidth={2} aria-hidden />
+        <LoaderCircle className="icon-caption animate-spin" aria-hidden />
         {t('board.widget.loading')}
       </div>
     )
@@ -169,11 +169,11 @@ export function WidgetCard({ widgetId, title, className, frameClassName, renderT
         className,
       )}
     >
-      <Icon className="h-5 w-5 text-foreground/40" strokeWidth={1.6} aria-hidden />
-      <div className="text-[13px] font-semibold text-foreground">{t(titleKey)}</div>
-      <p className="max-w-[360px] text-[12px] leading-relaxed text-foreground/55">{t(bodyKey)}</p>
+      <Icon className="icon-rail text-text-muted" aria-hidden />
+      <div className="text-body font-semibold text-foreground">{t(titleKey)}</div>
+      <p className="max-w-[360px] text-small leading-relaxed text-text-secondary">{t(bodyKey)}</p>
       {phase === 'mount-failed' && detail ? (
-        <p className="max-w-[360px] break-words text-[11px] text-foreground/40">{detail}</p>
+        <p className="max-w-[360px] break-words text-caption text-text-muted">{detail}</p>
       ) : null}
     </div>
   )
