@@ -29,7 +29,9 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { navigate, routes } from '@/lib/navigate'
 import { extractLabelId, toggleLabelInList } from '@rox/shared/labels'
+import type { SessionActorRef, SessionVisibility } from '@rox/shared/protocol'
 import type { SessionMeta } from '@/atoms/sessions'
+import { useViewerIdentity } from '@/hooks/useSessionPresence'
 import { createSessionLink, copySessionLink, presentSessionLink, requestJoinSession, SessionLinkError, type SessionLinkKind } from '@/lib/session-sharing'
 
 // ── Shared knowledge-connection probe ───────────────────────────────────────
@@ -111,6 +113,14 @@ export interface SessionMenuActions {
   exportSession: () => Promise<void>
   /** Open an explicit URL entry dialog for collaboration invites or viewer links. */
   joinSession: () => Promise<void>
+  /** a1.3/a2.2: assign or clear the session owner. */
+  assignOwner: (owner: SessionActorRef | null) => Promise<void>
+  /** Convenience: assign the session to the local viewer. */
+  assignToMe: () => Promise<void>
+  /** Identity of the local viewer (null fields when no account is connected). */
+  viewer: { accountId: string | null; username: string | null; displayName: string | null }
+  /** a2.5: set the session visibility. */
+  setVisibility: (visibility: SessionVisibility) => Promise<void>
 }
 
 // SOH (U+0001) — non-printable so it can't collide with label IDs (which
@@ -299,6 +309,40 @@ export function useSessionMenuActions({
     requestJoinSession()
   }, [])
 
+  const viewer = useViewerIdentity()
+
+  const assignOwner = React.useCallback(async (owner: SessionActorRef | null) => {
+    try {
+      await window.electronAPI.assignSessionOwner(sessionId, owner)
+      toast.success(owner ? t('sessionOwner.assignSuccess', { name: owner.displayName }) : t('sessionOwner.unassignSuccess'))
+    } catch (error) {
+      toast.error(t('sessionOwner.assignFailed'), {
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
+      })
+    }
+  }, [sessionId, t])
+
+  const assignToMe = React.useCallback(async () => {
+    const id = viewer.accountId
+    const displayName = viewer.displayName ?? viewer.username
+    if (!id || !displayName) {
+      toast.error(t('sessionOwner.assignFailed'), { description: t('sessionOwner.noViewerIdentity') })
+      return
+    }
+    await assignOwner({ kind: 'account', id, displayName })
+  }, [assignOwner, viewer, t])
+
+  const setVisibility = React.useCallback(async (visibility: SessionVisibility) => {
+    try {
+      await window.electronAPI.sessionCommand(sessionId, { type: 'setVisibility', visibility })
+      toast.success(t('sessionSharing.visibilityUpdated'))
+    } catch (error) {
+      toast.error(t('sessionSharing.visibilityFailed'), {
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
+      })
+    }
+  }, [sessionId, t])
+
   return {
     appliedLabelIds,
     toggleLabel,
@@ -314,5 +358,9 @@ export function useSessionMenuActions({
     inviteBro,
     exportSession,
     joinSession,
+    assignOwner,
+    assignToMe,
+    viewer,
+    setVisibility,
   }
 }

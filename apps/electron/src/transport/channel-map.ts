@@ -86,6 +86,11 @@ export const CHANNEL_MAP = {
   finalizeMeeting: invoke(RPC_CHANNELS.meetings.FINALIZE),
   addManualNote: invoke(RPC_CHANNELS.meetings.ADD_MANUAL_NOTE),
   correctSegment: invoke(RPC_CHANNELS.meetings.CORRECT_SEGMENT),
+  observeStart: invoke(RPC_CHANNELS.meetings.OBSERVE_START),
+  observeStop: invoke(RPC_CHANNELS.meetings.OBSERVE_STOP),
+  observeState: invoke(RPC_CHANNELS.meetings.OBSERVE_STATE),
+  sessionSummary: invoke(RPC_CHANNELS.meetings.SESSION_SUMMARY),
+  transcriptLines: invoke(RPC_CHANNELS.meetings.TRANSCRIPT_LINES),
   getTaskResults: invoke(RPC_CHANNELS.tasks.GET_RESULTS),
   onTaskGenerated: listener(RPC_CHANNELS.tasks.GENERATED),
   respondToPermission: invoke(RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION),
@@ -131,6 +136,7 @@ export const CHANNEL_MAP = {
   getSessionPermissionModeState: invoke(RPC_CHANNELS.sessions.GET_PERMISSION_MODE_STATE),
   setMemoryMode: invoke(RPC_CHANNELS.sessions.SET_MEMORY_MODE),
   getSessionProvenance: invoke(RPC_CHANNELS.sessions.GET_PROVENANCE),
+  assignSessionOwner: invoke(RPC_CHANNELS.sessions.ASSIGN_OWNER),
 
   // Event listeners
   onSessionEvent: listener(RPC_CHANNELS.sessions.EVENT),
@@ -207,6 +213,19 @@ export const CHANNEL_MAP = {
   acceptSecurityRisk: invoke(RPC_CHANNELS.securityAudit.ACCEPT_RISK),
   revokeSecurityRiskAcceptance: invoke(RPC_CHANNELS.securityAudit.REVOKE_RISK_ACCEPTANCE),
 
+  // Service lifecycle (OS launchd/systemd/Windows service control — local host)
+  serviceLifecycleGetStatus: invoke(RPC_CHANNELS.serviceLifecycle.GET_STATUS),
+  serviceLifecycleInstall: invoke(RPC_CHANNELS.serviceLifecycle.INSTALL),
+  serviceLifecycleStart: invoke(RPC_CHANNELS.serviceLifecycle.START),
+  serviceLifecycleStop: invoke(RPC_CHANNELS.serviceLifecycle.STOP),
+  serviceLifecycleRestart: invoke(RPC_CHANNELS.serviceLifecycle.RESTART),
+  serviceLifecycleUninstall: invoke(RPC_CHANNELS.serviceLifecycle.UNINSTALL),
+  onServiceLifecycleStatusChanged: listener(RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED),
+
+  // Diagnostics (local host doctor checks)
+  runDiagnostics: invoke(RPC_CHANNELS.diagnostics.RUN),
+  getDiagnosticsLast: invoke(RPC_CHANNELS.diagnostics.GET_LAST),
+
   getToolchainStatus: invoke(RPC_CHANNELS.toolchain.STATUS),
   onToolchainStatusChanged: listener(RPC_CHANNELS.toolchain.STATUS_CHANGED),
   updateToolchainTool: invoke(RPC_CHANNELS.toolchain.UPDATE),
@@ -239,6 +258,7 @@ export const CHANNEL_MAP = {
   onMenuToggleSidebar: listener(RPC_CHANNELS.menu.TOGGLE_SIDEBAR),
   onMenuToggleInspector: listener(RPC_CHANNELS.menu.TOGGLE_INSPECTOR),
   onMenuToggleChatPictureInPicture: listener(RPC_CHANNELS.menu.TOGGLE_CHAT_PICTURE_IN_PICTURE),
+  onMenuTrayStatusChanged: listener(RPC_CHANNELS.menu.TRAY_STATUS_CHANGED),
 
   // Deep link
   onDeepLinkNavigate: listener(RPC_CHANNELS.deeplink.NAVIGATE),
@@ -605,6 +625,25 @@ export const CHANNEL_MAP = {
   onVoiceJob: listener(RPC_CHANNELS.voice.JOB),
   onVoiceOverlay: listener(RPC_CHANNELS.voice.OVERLAY),
   onVoiceHotkey: listener(RPC_CHANNELS.voice.HOTKEY),
+  talkStart: invoke(RPC_CHANNELS.voice.TALK_START),
+  talkStop: invoke(RPC_CHANNELS.voice.TALK_STOP),
+  talkAudio: invoke(RPC_CHANNELS.voice.TALK_AUDIO),
+  talkClientSecret: invoke(RPC_CHANNELS.voice.TALK_CLIENT_SECRET),
+  onTalkEvent: listener(RPC_CHANNELS.voice.TALK_EVENT),
+  ttsStreamStart: invoke(RPC_CHANNELS.voice.TTS_STREAM_START),
+  ttsStreamChunk: invoke(RPC_CHANNELS.voice.TTS_STREAM_CHUNK),
+  onTtsStreamChunk: listener(RPC_CHANNELS.voice.TTS_STREAM_CHUNK),
+  ttsStreamStop: invoke(RPC_CHANNELS.voice.TTS_STREAM_STOP),
+  sttStart: invoke(RPC_CHANNELS.voice.STT_START),
+  sttAudio: invoke(RPC_CHANNELS.voice.STT_AUDIO),
+  sttStop: invoke(RPC_CHANNELS.voice.STT_STOP),
+  onSttEvent: listener(RPC_CHANNELS.voice.STT_EVENT),
+  getVoiceProviders: invoke(RPC_CHANNELS.voice.PROVIDERS),
+  voiceWakeGet: invoke(RPC_CHANNELS.voice.WAKE_GET),
+  voiceWakeSet: invoke(RPC_CHANNELS.voice.WAKE_SET),
+  onVoiceWakeChanged: listener(RPC_CHANNELS.voice.WAKE_CHANGED),
+  voiceTrigger: invoke(RPC_CHANNELS.voice.TRIGGER),
+  onVoiceTrigger: listener(RPC_CHANNELS.voice.TRIGGER),
   getEnvironmentSetup: invoke(RPC_CHANNELS.environment.GET),
   saveEnvironmentSetup: invoke(RPC_CHANNELS.environment.SAVE),
   onEnvironmentChanged: listener(RPC_CHANNELS.environment.CHANGED),
@@ -665,6 +704,7 @@ export const CHANNEL_MAP = {
   getSkillUsage: invoke(RPC_CHANNELS.skills.GET_USAGE),
   pruneSkills: invoke(RPC_CHANNELS.skills.PRUNE_UNUSED),
   exportSkillToProject: invoke(RPC_CHANNELS.skills.EXPORT_TO_PROJECT),
+  getSkillEligibility: invoke(RPC_CHANNELS.skills.GET_ELIGIBILITY),
   openSkillInEditor: invoke(RPC_CHANNELS.skills.OPEN_EDITOR),
   openSkillInFinder: invoke(RPC_CHANNELS.skills.OPEN_FINDER),
   onSkillsChanged: listener(RPC_CHANNELS.skills.CHANGED),
@@ -697,6 +737,10 @@ export const CHANNEL_MAP = {
   rejectMemoryProposal: invoke(RPC_CHANNELS.memory.REJECT_PROPOSAL),
   editMemoryProposal: invoke(RPC_CHANNELS.memory.EDIT_PROPOSAL),
   deleteMemoryProposal: invoke(RPC_CHANNELS.memory.DELETE_PROPOSAL),
+  searchMemory: invoke(RPC_CHANNELS.memory.SEARCH),
+  getMemoryChunk: invoke(RPC_CHANNELS.memory.GET),
+  getMemoryIndexStatus: invoke(RPC_CHANNELS.memory.INDEX_STATUS),
+  rebuildMemoryIndex: invoke(RPC_CHANNELS.memory.REBUILD_INDEX),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
 
   // Learning (continual learning, PRD §15) — agent/native actions

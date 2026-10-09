@@ -101,13 +101,20 @@ export class MemoryFileStore {
    * Assemble the workspace memory for prompt injection: context.md,
    * preferences.md (global) and the most recent RECENT_HISTORY_DAYS daily
    * history files (most recent first), joined with blank lines.
+   *
+   * `isInjectable` is the provenance gate (spec c1.2): when provided, a
+   * workspace-relative document path that returns false is excluded from the
+   * block entirely. Global preferences.md is not workspace-scoped and always
+   * loads.
    */
-  loadWorkspaceMemory(): WorkspaceMemory {
+  loadWorkspaceMemory(isInjectable?: (relPath: string) => boolean): WorkspaceMemory {
+    const include = isInjectable ?? (() => true)
     return {
-      context: this.readContext(),
+      context: include('memory/context.md') ? this.readContext() : '',
       preferences: new MemoryFileStore('global', undefined, this.configDir).readPreferences(),
-      recentHistory: this.recentHistoryFiles()
-        .map(f => this.readText(f))
+      recentHistory: this.recentHistoryDates()
+        .filter(date => include(`memory/history/${date}.md`))
+        .map(date => this.readHistory(date))
         .filter(s => s.length > 0)
         .join('\n\n'),
     }
@@ -130,11 +137,9 @@ export class MemoryFileStore {
     return this.readText(join(this.memoryDir, 'history', `${date}.md`))
   }
 
-  /** Paths of the most recent RECENT_HISTORY_DAYS daily files, most recent first. */
-  private recentHistoryFiles(): string[] {
-    return this.listHistoryDates()
-      .slice(0, RECENT_HISTORY_DAYS)
-      .map(date => join(this.memoryDir, 'history', `${date}.md`))
+  /** Dates of the most recent RECENT_HISTORY_DAYS daily files, most recent first. */
+  private recentHistoryDates(): string[] {
+    return this.listHistoryDates().slice(0, RECENT_HISTORY_DAYS)
   }
 
   private readText(path: string): string {

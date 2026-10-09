@@ -16,6 +16,8 @@ import { LessonStore, lessonKey } from '../../memory/LessonStore'
 import { buildConflictPrompt, parseConflicts, promoteLessonToGlobal, scanPromotionCandidates } from '../../memory/lesson-graph'
 import type { LessonConflictVerdict } from '../../memory/lesson-graph'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
+import { MemoryIndexService, memoryIndexServiceFor } from '../../memory/MemoryIndexService'
+import type { MemoryGetResult, MemoryIndexStatus, MemorySearchHit } from '@rox/shared/memory/types'
 import { getProjectMemoryPath, loadProject, loadProjectById, loadProjectMemory } from '@rox/shared/projects'
 import { search as ftsSearch } from '../../memory/fts-index'
 
@@ -32,6 +34,10 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.memory.LIST_HISTORY,
   RPC_CHANNELS.memory.PROMOTION_CANDIDATES,
   RPC_CHANNELS.memory.PROMOTE_LESSON,
+  RPC_CHANNELS.memory.SEARCH,
+  RPC_CHANNELS.memory.GET,
+  RPC_CHANNELS.memory.INDEX_STATUS,
+  RPC_CHANNELS.memory.REBUILD_INDEX,
 ]
 
 export interface LessonInput {
@@ -348,5 +354,58 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
     const selected = date ?? dates[0] ?? null
     return { dates, date: selected, content: selected ? store.readHistory(selected) : '' }
   }, { nativeAction: 'read' })
+
+  // c1.1/c1.3: the workspace memory chunk index. Retrieval is provenance-aware
+  // but NOT provenance-filtered: an untrusted chunk is still returned (labelled
+  // by `origin`) — the gate lives in the injection paths, not in retrieval.
+  const indexFor = (
+    ctx: RequestContext,
+    requestedId: string | null | undefined,
+  ): { index: MemoryIndexService; workspaceId: string } => {
+    const authorizedWorkspaceId = authorizeMemoryWorkspace(ctx, requestedId, deps)
+    if (!authorizedWorkspaceId) throw new Error('Workspace access denied')
+    const workspace = getWorkspaceByNameOrId(authorizedWorkspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+    return { index: memoryIndexServiceFor(workspace.rootPath, workspace.id), workspaceId: workspace.id }
+  }
+
+  server.handle(
+    RPC_CHANNELS.memory.SEARCH,
+    async (ctx, args: { workspaceId?: string; query?: string; limit?: number }): Promise<MemorySearchHit[]> => {
+      const { index } = indexFor(ctx, args?.workspaceId)
+      return index.search(args?.query ?? '', args?.limit ?? 8).hits
+    },
+    { nativeAction: 'read' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.memory.GET,
+    async (ctx, args: { workspaceId?: string; chunkId?: string }): Promise<MemoryGetResult | null> => {
+      if (!args?.chunkId) return null
+      const { index } = indexFor(ctx, args.workspaceId)
+      return index.get(args.chunkId)
+    },
+    { nativeAction: 'read' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.memory.INDEX_STATUS,
+    async (ctx, workspaceId: string): Promise<MemoryIndexStatus> => {
+      const { index } = indexFor(ctx, workspaceId)
+      return index.status()
+    },
+    { nativeAction: 'read' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.memory.REBUILD_INDEX,
+    async (ctx, workspaceId: string) => {
+      const { index, workspaceId: authorizedId } = indexFor(ctx, workspaceId)
+      const status = index.rebuild()
+      broadcastChanged(authorizedId, 'workspace')
+      return { ok: status.state !== 'failed', ...status }
+    },
+    { nativeAction: 'write' },
+  )
 
 }

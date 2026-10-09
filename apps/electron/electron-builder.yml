@@ -9,7 +9,7 @@ protocols:
       - rox
       - craftagents
 
-electronVersion: "39.2.7"
+electronVersion: "44.7.0"
 
 # Hook to compile macOS 26+ Liquid Glass icon after packaging
 afterPack: build/afterPack.cjs

@@ -566,3 +566,72 @@ export async function verifyOidcIdTokenWithJwks(
     return verifyOidcIdToken(idToken, { jwks: refreshed, ...verifyOptions })
   }
 }
+// Single-use pairing handoff tokens
+// ---------------------------------------------------------------------------
+
+/** Hard ceiling for a handoff credential's lifetime. */
+export const HANDOFF_TOKEN_MAX_TTL_MS = 120_000
+/** Default lifetime (seconds-scale pairing window). */
+export const HANDOFF_TOKEN_DEFAULT_TTL_MS = 120_000
+
+export type HandoffRedeemResult = 'ok' | 'expired' | 'invalid'
+
+/** One-way digest of a handoff token; only digests are retained in memory. */
+export function hashHandoffToken(token: string): string {
+  return createHash('sha256').update(token, 'utf8').digest('hex')
+}
+
+/**
+ * In-memory store for single-use pairing handoff tokens.
+ *
+ * Tokens are random 256-bit values; only their SHA-256 digest is retained, so a
+ * memory disclosure never exposes a usable credential. Redemption is
+ * single-shot regardless of outcome: the record is removed on the first attempt
+ * so a replay (even of an expired token) cannot succeed twice.
+ */
+export class HandoffTokenStore {
+  private readonly digests = new Map<string, number>()
+  private readonly ttlMs: number
+
+  constructor(ttlMs: number = HANDOFF_TOKEN_DEFAULT_TTL_MS) {
+    if (!Number.isSafeInteger(ttlMs) || ttlMs <= 0 || ttlMs > HANDOFF_TOKEN_MAX_TTL_MS) {
+      throw new Error(`Handoff TTL must be 1..${HANDOFF_TOKEN_MAX_TTL_MS} ms`)
+    }
+    this.ttlMs = ttlMs
+  }
+
+  /** Mint a fresh token. Returns the raw token exactly once — it is never stored. */
+  mint(now: number = Date.now()): { token: string; expiresAt: number } {
+    this.sweep(now)
+    const token = randomBytes(32).toString('base64url')
+    const expiresAt = now + this.ttlMs
+    this.digests.set(hashHandoffToken(token), expiresAt)
+    return { token, expiresAt }
+  }
+
+  /** Redeem a token exactly once. */
+  redeem(token: string, now: number = Date.now()): HandoffRedeemResult {
+    const digest = hashHandoffToken(token)
+    const expiresAt = this.digests.get(digest)
+    if (expiresAt === undefined) return 'invalid'
+    this.digests.delete(digest)
+    return expiresAt >= now ? 'ok' : 'expired'
+  }
+
+  /** Drop expired records. */
+  sweep(now: number = Date.now()): void {
+    for (const [digest, expiresAt] of this.digests) {
+      if (expiresAt < now) this.digests.delete(digest)
+    }
+  }
+
+  /** Number of outstanding (possibly expired) records. */
+  get size(): number {
+    return this.digests.size
+  }
+
+  /** Stored digests — retained only for diagnostics and assertions. */
+  storedDigests(): string[] {
+    return [...this.digests.keys()]
+  }
+}
