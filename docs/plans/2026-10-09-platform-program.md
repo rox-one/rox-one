@@ -127,3 +127,22 @@
 - PostHog self-host требует отдельного хоста — не разворачиваем на почтовом контейнере.
 - Секреты (Telegram, Google, Sentry) — только через хранилище; ключ Deepgram в клиенте переводим на серверный прокси (волна 2).
 - Диск TestCT 98 ГБ: 1 ГБ/юзер почты + Drive-бэкапы требуют контроля и, при необходимости, расширения.
+
+---
+
+## 7. Статус выполнения (обновление 2026-10-09)
+
+### 7.1 Сайт (rox-one-website) — СДЕЛАНО и ЗАКОММИЧЕНО
+- Коммит `c033e1c` (ветка `codex/pocket-id-sso-website`, запушен): выдача ящика при регистрации через outbox (`kind='mailbox'`) + drain → `rox-maild /api/provision` (Bearera `ROX_MAIL_PROVISION_TOKEN`, квота 1 ГиБ, `ownerUuid`, `operationId`; skip-состояние без токена честное); `GET /api/handle/availability` (`available|taken|reserved|invalid`, работает независимо от `POCKET_SSO_ENABLED`; в правилах хендлов разрешён дефис); монеты `rox_award_claims` + `onboarding_award` (exactly-once, +5/+5; `awardTelegram/awardGithub` готовы); кнопки «Продолжить в веб» → `/account/overview` и «Перейти в приложение» → `rox://` с фолбэком на `/download`.
+- Проверки: turbo typecheck 7/7; целевые тесты 47/47; миграции `03-mail-provision.sql`, `04-award-claims.sql` (аддитивные).
+
+### 7.2 Инфра — СДЕЛАНО/ИЗМЕРЕНО
+- `id.rox.one` = 200 (исправлено параллельной сессией владельца: cloudflared ingress `id.rox.one → 127.0.0.1:8443` + CF CNAME на тоннель `a026bef2…`). Причина простоя: проксированный origin был мёртвым AWS `44.212.103.96` + остановленный тоннель. OIDC issuer остаётся `pocketid.rox.one` — для перехода нужен доступ к CT104 (Skynet): root-ключ или Proxmox API-токен (butovo `192.168.1.71:8006` доступен, токена нет).
+- OTel-коллектор на TestCT: `/opt/rox-otel` (otel-contrib 0.115.1, `network_mode: host` — важно: docker bridge на CT106 сломан), `otel.rox.one` → тоннель TestCT, приём спана подтверждён (`POST /v1/traces` → 200, запись в debug-логе). Риск: публичный OTLP без аутентификации — добавить Cloudflare Access/токен.
+- PostHog: на TestCT нельзя (8 ГБ RAM < 16 ГБ минимум + сломанный bridge). Измеренные кандидаты: **rox-analytics (GCP e2-standard-4, 16 ГБ, 65 ГБ свободно)** — минимум проходит и уже целевой хост параллельной сессии (`posthog.rox.one → 34.65.70.253`); sw (12 ГБ) — мало; для >100k событий/мес — e2-standard-8 (8/32/200). butovo — не наблюдаем (нет доступа).
+
+### 7.3 Коллизия параллельных сессий (нужна арбитрация владельца)
+В worktree `rox-int2` одновременно пишет вторая сессия владельца (собственный онбординг: IdentityStep/QuestionnaireStep/CoinsBurst/learning-curve/блокировка темы/Apple Calendar helper; собственная Keeper-поверхность на Infisical-fabric). В онбординге сосуществуют две реализации; тестовый набор онбординга в смешанном состоянии (153 pass / 19 fail). Слияние i18n-фрагментов, дедупликация и общий typecheck приостановлены до решения владельца (варианты A/B/C — в отчёте сессии).
+
+### 7.4 Готовые модули десктопа (в дереве, до интеграции)
+Почта 1 ГиБ (40 тестов) · онбординг-идентичность + канал `onboarding:checkHandle` (37) · разрешения (реальные пробы macOS + каналы) · анкета/Step (32+7) · Keeper: личное хранилище `packages/shared/src/keeper/*` + `keeper:*` каналы + UI (crypto/TOTP/store тесты) · Drive: локальный движок, 8 параллельных частей, resume, страница с тайлами (30) · аналитика: `packages/shared/src/telemetry/*` (PostHog+OTLP, гейт согласия, 23) · Google Calendar: `providers/google.ts` + брокер (20) · Telegram-сервис `services/rox-tg-linkd` (в работе у агента).
