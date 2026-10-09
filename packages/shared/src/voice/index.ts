@@ -225,3 +225,29 @@ export { synthesizeSpeech, createEdgeSpeechProvider, speechResultFromSpeakResult
 export { createTtsStream, iterateTtsChunks, sliceAudioChunks, DEFAULT_TTS_CHUNK_BYTES, type TtsStream, type TtsStreamChunk } from './tts/streaming.ts'
 export { resolveTtsProviderId, TTS_PROVIDER_PRECEDENCE, type TtsProviderInputs } from './tts/resolution.ts'
 export type { OpenAiRealtimeServerEvent } from './realtime-providers/openai.ts'
+export {
+  PODCAST_JOB_TRANSITIONS,
+  PodcastPipelineError,
+  createPodcastJob,
+  applyPodcastJobEvent,
+  advancePodcastJob,
+  type PodcastJob,
+  type PodcastJobState,
+  type PodcastJobError,
+  type PodcastErrorCode,
+  type PodcastEngine,
+  type PodcastRoleId,
+  type PodcastRoleTemplate,
+  type PodcastSourceInput,
+  type PodcastStartInput,
+  type PodcastStartResult,
+  type PodcastCancelInput,
+  type PodcastCancelResult,
+  type PodcastEpisodesInput,
+  type PodcastEpisode,
+  type PodcastEpisodesResult,
+  type PodcastEpisodeAudioInput,
+  type PodcastEpisodeAudioChunk,
+  type PodcastEpisodeAudioUrlInput,
+  type PodcastEpisodeAudioUrlResult,
+} from './podcast-job.ts'

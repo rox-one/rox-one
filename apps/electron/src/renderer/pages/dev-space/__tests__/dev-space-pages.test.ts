@@ -68,11 +68,12 @@ describe('Dev Space repo workspace (С-03)', () => {
   })
 })
 
-describe('Playbooks home (С-12 stub) and roadmap deep link', () => {
-  it('renders the flag-gated Playbooks stub', () => {
+describe('Playbooks home (С-12) and roadmap deep link', () => {
+  it('gates the notebook surface on playbooks.v1', () => {
     expect(playbooks).toContain('export default function PlaybooksHomePage')
     expect(playbooks).toContain("t('playbooks.home.title')")
-    expect(playbooks).toContain("t('playbooks.home.enabledNotice')")
+    expect(playbooks).toContain('playbooksEnabledAtom')
+    expect(playbooks).toContain("t('playbooks.home.disabledNotice')")
   })
 
   it('adds the open-in-dev-space button without disturbing the snapshot panel', () => {

@@ -37,6 +37,12 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.devSpace.CHANGED,
   RPC_CHANNELS.devSpace.RUN_PROGRESS,
   RPC_CHANNELS.devSpace.SOFT_SIGNAL,
+  // Podcast — the render pipeline (system/edge TTS + ffmpeg mixdown) is host-local (§8, D13).
+  RPC_CHANNELS.podcast.START,
+  RPC_CHANNELS.podcast.CANCEL,
+  RPC_CHANNELS.podcast.EPISODES,
+  RPC_CHANNELS.podcast.AUDIO,
+  RPC_CHANNELS.podcast.AUDIO_URL,
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 

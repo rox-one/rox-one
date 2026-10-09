@@ -50,6 +50,16 @@ function resolve(value: string, scope: Record<string, string>, depth = 0): strin
   })
 }
 
+/** Numeric value of a z-index declaration: an integer, or a two-term integer `calc()`. */
+function zIndexNumber(decl: string, scope: Record<string, string>): number | null {
+  const resolved = resolve(decl, scope).trim()
+  const simple = resolved.match(/^(-?\d+(?:\.\d+)?)$/)
+  if (simple) return Number(simple[1])
+  const calc = resolved.match(/^calc\(\s*(-?\d+(?:\.\d+)?)\s*([+-])\s*(-?\d+(?:\.\d+)?)\s*\)$/)
+  if (calc) return calc[2] === '-' ? Number(calc[1]) - Number(calc[3]) : Number(calc[1]) + Number(calc[3])
+  return null
+}
+
 const px = (v: string) => {
   const m = v.trim().match(/^(-?\d+(?:\.\d+)?)px$/)
   if (!m) throw new Error(`not a px value: ${v}`)
@@ -183,8 +193,11 @@ describe('token foundation v2: z layers', () => {
     for (const css of [indexCss, rendererCss]) {
       for (const m of stripComments(css).matchAll(/z-index:\s*([^;]+);/g)) {
         const value = m[1]!.trim()
-        if (/^-\d+$/.test(value)) continue // behind-content pseudo layers (scenic wallpaper)
-        expect(layerValues.has(Number(resolve(value, root))), `z-index: ${value}`).toBe(true)
+        const literal = zIndexNumber(value, root)
+        // Behind-content backdrop layers (scenic wallpaper, material backdrops)
+        // resolve strictly below the base layer and are deliberately off the set.
+        if (literal !== null && literal < 0) continue
+        expect(literal !== null && layerValues.has(literal), `z-index: ${value}`).toBe(true)
       }
     }
   })
