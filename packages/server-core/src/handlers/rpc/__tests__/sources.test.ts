@@ -16,7 +16,7 @@
  * against the sandboxed CRAFT_CONFIG_DIR (env-lazy store paths).
  */
 import '../memory-test-setup' // must run before any module reading CRAFT_CONFIG_DIR
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -33,7 +33,12 @@ import { resolveConfigDir } from '@rox/shared/config/paths'
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
 const credentials = new Map<string, { value: string }>()
 
+// Real namespace must be captured before the mock is registered; a static import
+// would be hoisted past this file's mock.module ordering.
+const actualCredentials = await import('@rox/shared/credentials')
+
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -266,3 +271,5 @@ describe('sources:get — local default source seeding', () => {
     })
   })
 })
+
+afterAll(() => mock.restore())

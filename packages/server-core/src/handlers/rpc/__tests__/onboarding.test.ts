@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
@@ -13,7 +13,12 @@ let localOmpBlocked = false
 let accountVaultRegistered = true
 let cloudRequired = true
 
+// Spread the real namespace: a partial factory poisons every later file in the same
+// bun test process whose import chain needs an export this list does not name
+// (observed as "Export named 'CHATGPT_OAUTH_CONFIG' not found" in fabric.test.ts).
+const actualAuth = await import('@rox/shared/auth')
 mock.module('@rox/shared/auth', () => ({
+  ...actualAuth,
   LOCAL_ROX_CALLER: { issuer: 'rox:local-electron', subject: 'installation' },
   isRoxCloudRequired: () => cloudRequired,
   peekRoxAccountAuthority: () => accountVaultRegistered ? ({ state: async () => ({ connected: cloudConnected, account: null }) }) : undefined,
@@ -86,7 +91,12 @@ mock.module('@rox/shared/config', () => ({
   },
 }))
 
+// Real namespace must be captured before the mock is registered; a static import
+// would be hoisted past this file's mock.module ordering.
+const actualCredentials = await import('@rox/shared/credentials')
+
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     setLlmOAuth: async () => {},
     setClaudeOAuthCredentials: async () => {},
@@ -244,3 +254,5 @@ describe('onboarding startup without a native account vault', () => {
     expect(oauthPreparationCalls).toBe(0)
   })
 })
+
+afterAll(() => mock.restore())
