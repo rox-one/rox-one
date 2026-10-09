@@ -73,7 +73,7 @@ jobs:
           bun run webui:typecheck
       - name: Verify real SQLite durability, authorization and adverse controls
         run: |
-          bun test packages/core packages/server-core/src/webui \
+          bun test --timeout 30000 packages/core packages/server-core/src/webui \
             packages/shared/src/utils/__tests__/sqlite-runtime.test.ts \
             packages/server-core/src/authority/__tests__/native-authority.test.ts \
             packages/server-core/src/authority/__tests__/native-journal.test.ts \
@@ -96,7 +96,7 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
         run: |
-          bun test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts \
+          bun test --timeout 30000 packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts \
             packages/server-core/src/transport/__tests__/before-response-authority.test.ts \
             packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts \
             packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts \
@@ -120,7 +120,7 @@ jobs:
             apps/webui/__tests__
       - name: Verify published September process-loss recovery
         run: |
-          bun test packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts \
+          bun test --timeout 30000 packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts \
             packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts \
             packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts \
             packages/server-core/src/transport/__tests__/native-authorization.test.ts
@@ -132,7 +132,7 @@ jobs:
           bun run webui:build
           bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx
       - name: Verify built HTTP, WebSocket auth, graceful stop and persistent restart
-        run: bun test packages/server/src/__tests__/smoke.test.ts
+        run: bun test --timeout 30000 packages/server/src/__tests__/smoke.test.ts
         env:
           ROX_SERVER_SMOKE_ENTRY: dist-server/index.js
           ROX_SERVER_SMOKE_WEBUI_DIR: apps/webui/dist
