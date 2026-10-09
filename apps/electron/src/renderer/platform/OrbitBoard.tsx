@@ -46,6 +46,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 
 /* ------------------------------------------------------------------ tokens - */
 
@@ -125,13 +126,18 @@ interface OrbitCard {
   detail: Block[]
 }
 
-const TYPE_META: Record<CardType, { icon: LucideIcon; label: string }> = {
-  session: { icon: Sparkles, label: 'Сессия' },
-  note: { icon: FileText, label: 'Заметка' },
-  tasks: { icon: ListChecks, label: 'Задачи' },
-  terminal: { icon: Terminal, label: 'Терминал' },
-  meeting: { icon: CalendarDays, label: 'Встреча' },
+// Rule § i18n #1: never call `t()` at module level — store the key and a ru-first
+// `defaultValue`, resolve in components via `typeLabel()`.
+const TYPE_META: Record<CardType, { icon: LucideIcon; labelKey: string; label: string }> = {
+  session: { icon: Sparkles, labelKey: 'orbit.cardType.session', label: 'Сессия' },
+  note: { icon: FileText, labelKey: 'orbit.cardType.note', label: 'Заметка' },
+  tasks: { icon: ListChecks, labelKey: 'orbit.cardType.tasks', label: 'Задачи' },
+  terminal: { icon: Terminal, labelKey: 'orbit.cardType.terminal', label: 'Терминал' },
+  meeting: { icon: CalendarDays, labelKey: 'orbit.cardType.meeting', label: 'Встреча' },
 }
+
+const typeLabel = (t: TFunction, type: CardType) =>
+  t(TYPE_META[type].labelKey, { defaultValue: TYPE_META[type].label })
 
 const STATUS_COLOR: Record<StatusId, string> = {
   running: 'var(--status-running)',
@@ -374,9 +380,8 @@ export function OrbitBoard() {
   const [paletteQuery, setPaletteQuery] = React.useState('')
   const [paletteIdx, setPaletteIdx] = React.useState(0)
   const [toast, setToast] = React.useState<string | null>(null)
-  const [reduced, setReduced] = React.useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  )
+  // PERF-07: one shared answer (OS setting, MotionConfig, low-power profile).
+  const reduced = usePrefersReducedMotion()
 
   const camRef = React.useRef(cam)
   camRef.current = cam
@@ -547,13 +552,6 @@ export function OrbitBoard() {
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
-  React.useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const onChange = () => setReduced(mq.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
-
   // Boot once the container has real dimensions, then re-frame on every resize:
   // narrow keeps a single card at detail LOD, desktop re-fits the whole board.
   const bootedRef = React.useRef(false)
@@ -578,9 +576,9 @@ export function OrbitBoard() {
     const q = paletteQuery.trim().toLowerCase()
     if (!q) return CARDS
     return CARDS.filter(
-      (c) => c.title.toLowerCase().includes(q) || TYPE_META[c.type].label.toLowerCase().includes(q),
+      (c) => c.title.toLowerCase().includes(q) || typeLabel(t, c.type).toLowerCase().includes(q),
     )
-  }, [paletteQuery])
+  }, [paletteQuery, t])
 
   const safePaletteIdx = Math.min(paletteIdx, Math.max(0, paletteItems.length - 1))
 
@@ -778,7 +776,7 @@ export function OrbitBoard() {
     return { k, ox, oy, cw, ch }
   }, [cam.z, lod])
 
-  const onMinimapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const onMinimapClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     const r = e.currentTarget.getBoundingClientRect()
     const wx = (e.clientX - r.left - minimap.ox) / minimap.k
     const wy = (e.clientY - r.top - minimap.oy) / minimap.k
@@ -809,7 +807,7 @@ export function OrbitBoard() {
       >
         <span className="flex items-center gap-1.5 pl-1 text-[length:var(--text-small)] font-semibold">
           <Orbit className="icon-toolbar text-[color:var(--accent-text)]" aria-hidden />
-          Орбита
+          {t('orbit.title', { defaultValue: 'Орбита' })}
         </span>
         <span className="inline-flex h-6 items-center gap-1.5 rounded-[var(--radius-control)] border border-[color:var(--border-subtle)] bg-[var(--surface-rail)] px-2 text-[length:var(--chrome-font-size-sm)] text-[color:var(--orbit-text-quiet)]">
           <LayoutGrid className="icon-caption" aria-hidden />
@@ -916,7 +914,7 @@ export function OrbitBoard() {
         {/* zoom controls */}
         <div
           role="group"
-          aria-label="Масштаб"
+          aria-label={t('orbit.zoomGroup', { defaultValue: 'Масштаб' })}
           className="absolute bottom-3 left-3 flex items-center gap-0.5 rounded-[var(--radius-control)] bg-[var(--surface-elevated)] p-[3px] shadow-middle"
         >
           <IconButton label={t('orbit.zoomOut', { defaultValue: 'Уменьшить' })} onClick={() => animateTo(cam.x, cam.y, cam.z / ZOOM_STEP, 160)}>
@@ -945,9 +943,11 @@ export function OrbitBoard() {
               <b className="font-medium text-[color:var(--text-secondary)]">{t('orbit.boardName', { defaultValue: 'Доска' })}</b>
               <span className="ml-auto">{t('orbit.minimapHint', { defaultValue: 'клик — переход' })}</span>
             </div>
-            <div
+            <button
+              type="button"
               onClick={onMinimapClick}
-              className="relative cursor-pointer overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[var(--canvas)]"
+              aria-label={t('orbit.minimap', { defaultValue: 'Мини-карта' })}
+              className="relative block cursor-pointer overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[var(--canvas)] p-0 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus)]"
               style={{ width: MM_W, height: MM_H }}
             >
               {CARDS.map((card) => (
@@ -973,7 +973,7 @@ export function OrbitBoard() {
                   background: 'color-mix(in oklch, var(--accent) 10%, transparent)',
                 }}
               />
-            </div>
+            </button>
           </aside>
         )}
       </div>
@@ -1085,7 +1085,7 @@ export function OrbitBoard() {
                         <Icon className="icon-toolbar shrink-0 text-[color:var(--orbit-text-quiet)]" aria-hidden />
                         <b className="font-medium text-[length:var(--text-small)] text-[color:var(--text-primary)]">{card.title}</b>
                         <span className="ml-auto shrink-0 font-mono text-[length:var(--text-caption)] text-[color:var(--orbit-text-quiet)]">
-                          {TYPE_META[card.type].label} · {card.statusLabel}
+                          {typeLabel(t, card.type)} · {card.statusLabel}
                         </span>
                       </button>
                     )
@@ -1161,9 +1161,9 @@ function BoardCard({ card, lod, z, selected, hovered, transition, onHover, onFoc
   const blocks = lod === 'detail' ? card.detail : card.standard
   const footerText =
     card.type === 'session'
-      ? `${card.time} назад`
+      ? t('orbit.relative.ago', { defaultValue: '{{time}} назад', time: card.time })
       : card.type === 'note'
-        ? `${card.time} чтения`
+        ? t('orbit.relative.read', { defaultValue: '{{time}} чтения', time: card.time })
         : card.type === 'terminal'
           ? `zsh · ${card.time}`
           : card.statusLabel
@@ -1181,7 +1181,7 @@ function BoardCard({ card, lod, z, selected, hovered, transition, onHover, onFoc
       data-type={card.type}
       role="button"
       tabIndex={0}
-      aria-label={`${meta.label}: ${card.title}. ${card.statusLabel}`}
+      aria-label={`${typeLabel(t, card.type)}: ${card.title}. ${card.statusLabel}`}
       onPointerEnter={() => onHover(card.id)}
       onPointerLeave={() => onHover(null)}
       onFocus={(e) => onFocusCard(e.currentTarget)}
@@ -1268,7 +1268,11 @@ function BoardCard({ card, lod, z, selected, hovered, transition, onHover, onFoc
               key={`${sat.pos}-${sat.name}`}
               type="button"
               data-sat={sat.kind}
-              aria-label={`${sat.kind === 'agent' ? 'Агент' : 'Сессия'}: ${sat.name}`}
+              aria-label={`${
+                sat.kind === 'agent'
+                  ? t('orbit.satellite.agent', { defaultValue: 'Агент' })
+                  : t('orbit.satellite.session', { defaultValue: 'Сессия' })
+              }: ${sat.name}`}
               onClick={(e) => {
                 e.stopPropagation()
                 if (sat.target) onOpenCard(sat.target)
@@ -1308,14 +1312,14 @@ function Composer({ t, onSend }: { t: TFunction; onSend: () => void }) {
             <Cpu className="icon-status" aria-hidden /> Rox-1
           </span>
           <span className={chip}>
-            <Shield className="icon-status" aria-hidden /> Спрашивать
+            <Shield className="icon-status" aria-hidden /> {t('mode.ask', { defaultValue: 'Спрашивать' })}
           </span>
           <span className="ml-auto flex items-center gap-1">
             <span className={chip}>
-              <Paperclip className="icon-status" aria-hidden /> Вложить
+              <Paperclip className="icon-status" aria-hidden /> {t('orbit.composer.attach', { defaultValue: 'Вложить' })}
             </span>
             <span className={chip}>
-              <Mic className="icon-status" aria-hidden /> Голос
+              <Mic className="icon-status" aria-hidden /> {t('orbit.composer.voice', { defaultValue: 'Голос' })}
             </span>
             <button
               type="button"

@@ -11,6 +11,7 @@ import { Provider as JotaiProvider, createStore, useSetAtom } from 'jotai'
 import { definePlaygroundStory } from '@/playground/registry/story-loader'
 import { PLAYGROUND_VIEWPORT_PRESETS } from '@/playground/registry/types'
 import { featureOrbitBoardAtom } from '@/atoms/unified-shell'
+import { KEYS, getKeyString } from '@/lib/local-storage'
 import { cn } from '@/lib/utils'
 import { OrbitBoard } from './OrbitBoard'
 
@@ -18,7 +19,16 @@ import { OrbitBoard } from './OrbitBoard'
 function HydrateOrbitFlag({ children }: { children: React.ReactNode }) {
   const setFlag = useSetAtom(featureOrbitBoardAtom)
   React.useEffect(() => {
+    // The atom persists to the shared origin's localStorage: snapshot the
+    // shipped value before the variant writes it and restore it on unmount, so
+    // a QA run never leaves featureOrbitBoard ON for the real app.
+    const key = getKeyString(KEYS.featureOrbitBoard)
+    const previous = localStorage.getItem(key)
     setFlag(true)
+    return () => {
+      if (previous === null) localStorage.removeItem(key)
+      else localStorage.setItem(key, previous)
+    }
   }, [setFlag])
   return <>{children}</>
 }

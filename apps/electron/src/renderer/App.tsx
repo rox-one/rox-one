@@ -113,6 +113,8 @@ import { getFileManagerName } from '@/lib/platform'
 import { rendererLog } from '@/lib/logger'
 import { ActionRegistryProvider } from '@/actions'
 import { OmniboxHost } from '@/platform/OmniboxHost'
+import { LayoutDeckHost } from '@/platform/LayoutDeck'
+import { AppShellProvider } from '@/context/AppShellContext'
 import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
@@ -2772,6 +2774,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}
           <OmniboxHost />
+          {/* G4 «Студия»: ⌘\ layout deck. The provider gives the deck the same
+              workspace scope as the shell so applying a preset writes the atom
+              the panel stack reads. */}
+          <AppShellProvider value={appShellContextValue}>
+            <LayoutDeckHost />
+          </AppShellProvider>
           <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspaceForUI} />
 
           {/* Splash screen overlay - fades out when fully ready */}

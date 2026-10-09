@@ -41,6 +41,7 @@ import {
 } from '@/atoms/unified-shell'
 import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
+import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { getAppLocale } from '@rox/shared/i18n'
@@ -318,6 +319,10 @@ export function InspectorHost() {
   // (layout.overlay) still wins so the centre column never drops below min.
   const lensMode = resolveLensMode({ effectiveWidth: viewportWidth, userOpened })
   const overlayMode = lensMorph ? layout.overlay || lensMode === 'overlay' : layout.overlay
+  // G6 «Линзы»: only the flag-aware right-edge sheet is a modal dialog. The
+  // legacy overlay (lensMorph OFF) keeps its byte-identical complementary
+  // panel — role, aria-modal, focus and Escape gating all hang off this flag.
+  const lensOverlay = lensMorph && overlayMode && panelShown
   const lensSectionLabel = (id: InspectorSectionId) =>
     t(id === 'browser' ? 'inspector.tab.browser' : sessionMode ? `inspector.tab.${id}` : `inspector.${id}`)
   const lensSections: LensSectionEntry[] = sectionIds.map((id) => ({
@@ -383,11 +388,46 @@ export function InspectorHost() {
         ? `inspector.tab.${activeSection}`
         : `inspector.${activeSection}`
 
-  const collapseChrome = () => {
+  const collapseChrome = useCallback(() => {
     setChromeCollapsed(true)
     setVisible(false)
     setTerminalOpen(false)
-  }
+  }, [setChromeCollapsed, setVisible, setTerminalOpen])
+
+  // G6 «Линзы»: the right-edge sheet behaves as a modal dialog — Escape closes
+  // it through the shell's dismissible-layer stack. A menu/picker opened over
+  // it registers later at the same priority and consumes Escape first; a
+  // full-screen panel or tour layer (lower priority) yields to it. Flag-OFF
+  // and docked never register, so their Escape behaviour is untouched.
+  const dismissibleLayers = useOptionalDismissibleLayerRegistry()
+  useEffect(() => {
+    if (!lensOverlay || !dismissibleLayers) return
+    return dismissibleLayers.registerLayer({
+      id: 'inspector-lens-overlay',
+      type: 'custom',
+      close: collapseChrome,
+    })
+  }, [lensOverlay, dismissibleLayers, collapseChrome])
+
+  // Focus the sheet when it opens so the dialog is the keyboard starting point.
+  // Never steal focus from an active text field or a node already inside it.
+  const panelRef = useRef<HTMLDivElement>(null)
+  const lensOverlayRef = useRef(false)
+  useEffect(() => {
+    const opened = lensOverlay && !lensOverlayRef.current
+    lensOverlayRef.current = lensOverlay
+    if (!opened) return
+    const node = panelRef.current
+    if (!node) return
+    const active = document.activeElement
+    if (active && active !== document.body && active !== document.documentElement) {
+      if (node.contains(active)) return
+      if (active instanceof Element && active.closest(
+        'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"]',
+      )) return
+    }
+    node.focus({ preventScroll: true })
+  }, [lensOverlay])
 
   // G6 «Линзы»: the unchanged inspector bodies, routed through LensShell when
   // the morph flag is on (section switcher above, morphing container around).
@@ -494,8 +534,11 @@ export function InspectorHost() {
           )}
           style={overlayMode ? { width: layout.width, right: INSPECTOR_RAIL_WIDTH } : { width: layout.width }}
           id={controlsId}
-          role="complementary"
-          aria-label={t(titleKey)}
+          ref={panelRef}
+          role={lensOverlay ? 'dialog' : 'complementary'}
+          aria-modal={lensOverlay ? true : undefined}
+          aria-label={lensOverlay ? t('inspector.lens.overlayLabel', { defaultValue: 'Инспектор' }) : t(titleKey)}
+          tabIndex={lensOverlay ? -1 : undefined}
           data-inspector-panel={overlayMode ? 'overlay' : 'docked'}
         >
           <InspectorResizeSash

@@ -19,11 +19,11 @@
  * the two-key Workbench rollout is enabled, so there is no flag check here.
  */
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
-import { ChevronsLeft, ChevronsRight, Inbox, Settings } from 'lucide-react'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { ChevronsLeft, ChevronsRight, Inbox, LayoutGrid, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { isModeNavigable, type ModeContribution } from '@rox/core/platform'
-import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom } from '@/atoms/unified-shell'
+import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom, featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
@@ -33,6 +33,7 @@ import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
 import { ModesRailGroup } from './ModesRailGroup'
+import { layoutDeckOpenAtom } from './LayoutDeck'
 import { MissionsRailGroup } from './MissionsRailGroup'
 import { useShellModes } from './useModes'
 import { routes, type Route } from '../../shared/routes'
@@ -155,6 +156,8 @@ export function ActivityRail() {
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
   const navState = useNavigationState()
   const modeFlags = useAtomValue(modeScreenFlagsAtom)
+  const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
+  const openLayoutDeck = useSetAtom(layoutDeckOpenAtom)
   const { shellFlags } = useShellModes()
   const modes = resolveSeededModes(
     CORE_MODES.map((mode) => mode.contribution),
@@ -185,6 +188,19 @@ export function ActivityRail() {
       {/* W1-07 (#1504): registered modes in pill order; renders nothing with every mode flag off. */}
       <ModesRailGroup collapsed={collapsed} />
       <ExtraScreensRailGroup collapsed={collapsed} />
+      {/* G4 «Студия»: the layout deck trigger, only while the engine flag is ON. */}
+      {layoutEngineOn && (
+        <RailSection collapsed={collapsed}>
+          <RailRow
+            icon={LayoutGrid}
+            label={t('layout.deck.title', { defaultValue: 'Раскладка' })}
+            tooltip={t('layout.deck.rail', { defaultValue: 'Раскладка (⌘\\)' })}
+            collapsed={collapsed}
+            onClick={() => openLayoutDeck(true)}
+            testId="rail-layout-deck"
+          />
+        </RailSection>
+      )}
       <div className={cn('mt-auto flex flex-col gap-[4px] border-t border-border-subtle pt-[8px]', collapsed ? 'items-center' : 'items-stretch')}>
         <RailRow
           icon={Settings}

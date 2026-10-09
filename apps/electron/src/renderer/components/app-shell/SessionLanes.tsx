@@ -32,16 +32,35 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Spinner } from '@rox/ui'
-import { useAtomValue } from 'jotai'
+import { atom, useAtomValue } from 'jotai'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { SessionMenu } from './SessionMenu'
 import { LaneRule, deriveLaneStatus, type LaneStatus } from './LaneRule'
 import { useSessionListContext, type SessionListContextValue } from '@/context/SessionListContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { hasTransferTargets } from './transfer-targets'
-import { getSessionTitle, getSessionPreviewText, hasUnreadMeta, shortTimeLocale } from '@/utils/session'
+import { countUnreadMessages, getSessionTitle, getSessionPreviewText, hasUnreadMeta, shortTimeLocale } from '@/utils/session'
 import { collectionDisplayAtom } from '@/atoms/collection-display'
-import type { SessionMeta } from '@/atoms/sessions'
+import { loadedSessionsAtom, sessionAtomFamily, type SessionMeta } from '@/atoms/sessions'
+
+/**
+ * sessionId → number of unread final assistant messages, for sessions whose
+ * messages are actually loaded (loadedSessionsAtom). Recomputed only when a
+ * loaded session's atom changes — O(loaded) once, then O(1) per rendered row.
+ * SessionMeta carries no numeric counter (only `hasUnread`), so the count is
+ * derived from the full Session; sessions with unloaded messages are absent
+ * from the map and fall back to the legacy unread dot.
+ */
+const laneUnreadCountsAtom = atom<Map<string, number>>((get) => {
+  const counts = new Map<string, number>()
+  for (const id of get(loadedSessionsAtom)) {
+    const session = get(sessionAtomFamily(id))
+    if (!session) continue
+    const count = countUnreadMessages(session)
+    if (count > 0) counts.set(id, count)
+  }
+  return counts
+})
 
 /** Structural row: SessionList's `SessionListRow` is assignable to this. */
 export interface LaneRow {
@@ -107,6 +126,7 @@ export function SessionLanes({ rows, selectedId, onSelect, className, density = 
   const ctx = useSessionListContext()
   const { workspaces } = useAppShellContext()
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
+  const unreadCounts = useAtomValue(laneUnreadCountsAtom)
   const effectiveDensity = collectionDisplay.density ?? density
   const canSendToWorkspace = hasTransferTargets(workspaces)
 
@@ -251,6 +271,7 @@ export function SessionLanes({ rows, selectedId, onSelect, className, density = 
                   onFocus={() => setFocusId(item.id)}
                   registerRef={(node) => { rowRefs.current.set(item.id, node) }}
                   ctx={ctx}
+                  unreadCount={unreadCounts.get(item.id)}
                 />
               ))
             )}
@@ -272,6 +293,8 @@ interface LaneItemProps {
   onFocus: () => void
   registerRef: (node: HTMLButtonElement | null) => void
   ctx: SessionListContextValue
+  /** Numeric unread count when the session's messages are loaded (>0); undefined otherwise. */
+  unreadCount?: number
 }
 
 function LaneItem({
@@ -285,6 +308,7 @@ function LaneItem({
   onFocus,
   registerRef,
   ctx,
+  unreadCount,
 }: LaneItemProps) {
   const { t } = useTranslation()
   const { workspaces } = useAppShellContext()
@@ -296,6 +320,13 @@ function LaneItem({
   const StatusIcon = LANE_STATUS_ICON[laneStatus]
   const statusLabel = t(`session.lane.status.${laneStatus}`, { defaultValue: laneStatus })
   const expanded = selected && Boolean(preview)
+  // Known count (session messages loaded) → numeric chip; otherwise keep the dot.
+  const hasKnownCount = unreadCount !== undefined && unreadCount > 0
+  const unreadBadge = hasKnownCount ? String(unreadCount) : '•'
+  const unreadAriaLabel = hasKnownCount
+    ? t('session.lane.unreadCount', { count: unreadCount, defaultValue: 'непрочитанных: {{count}}' })
+    : undefined
+  const ariaLabel = unreadAriaLabel ? `${title} — ${statusLabel}, ${unreadAriaLabel}` : `${title} — ${statusLabel}`
 
   return (
     <div
@@ -318,7 +349,7 @@ function LaneItem({
         onFocus={onFocus}
         onClick={onSelect}
         aria-current={selected ? 'true' : undefined}
-        aria-label={`${title} — ${statusLabel}`}
+        aria-label={ariaLabel}
         data-testid={`lane-row-${item.id}`}
         className={cn(
           'flex min-w-0 flex-1 flex-col justify-center gap-0.5 rounded-[var(--radius-xs)] py-1 pr-1.5 text-left',
@@ -339,8 +370,9 @@ function LaneItem({
             <span
               className="shrink-0 rounded-full bg-accent/15 px-1.5 text-caption font-semibold leading-4 tabular-nums text-accent-text"
               data-testid={`lane-unread-${item.id}`}
+              data-unread-count={hasKnownCount ? unreadCount : undefined}
             >
-              •
+              {unreadBadge}
             </span>
           ) : null}
           {time ? (

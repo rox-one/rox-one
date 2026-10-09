@@ -15,16 +15,31 @@ import {
   PANEL_STACK_VERTICAL_OVERFLOW,
 } from './panel-constants'
 import { sashHitWidthPx } from './ResizeHandle'
-import { PanelSeam } from './PanelSeam'
+import { PanelSeam, type PanelSeamSwapGrip, type PanelSwapSide } from './PanelSeam'
 import { usePanelResize } from '@/hooks/usePanelResize'
 import { equalSplit } from './resize-math'
 import type { ResizeBounds } from './resize-controller'
 
 export { PANEL_MIN_WIDTH }
 
+/** Wave-2 swap affordance (featurePanelSwapV1Atom). */
+export interface PanelResizeSashSwap {
+  enabled: boolean
+  /** The panel a grip drag sources: the focused panel when it flanks this seam. */
+  focusedPanelId?: string | null
+  gripLabel: string
+  /** Accessible name when the seam has no sibling to trade with. */
+  blockedLabel?: string
+  disabled?: boolean
+  onDragStart?: (panelId: string, event: React.PointerEvent<HTMLButtonElement>) => void
+  onActivate?: (panelId: string) => void
+}
+
 interface PanelResizeSashProps {
   leftIndex: number
   rightIndex: number
+  /** `featurePanelSwapV1Atom` OFF leaves this undefined → resize-only seam. */
+  swap?: PanelResizeSashSwap
 }
 
 /** Flex grow divides the space left after padding and ordinary seam borders. */
@@ -61,6 +76,7 @@ function boundsFromSash(
 export function PanelResizeSash({
   leftIndex,
   rightIndex,
+  swap,
 }: PanelResizeSashProps) {
   const resizePanels = useSetAtom(resizePanelsAtom)
   const panelStack = useAtomValue(panelStackAtom)
@@ -98,6 +114,21 @@ export function PanelResizeSash({
     resize.neighborChanged(leftId, rightId)
   }, [leftId, rightId, resize.neighborChanged])
 
+  // The grip trades with the neighbour of the panel the user is working in, so
+  // a seam drag is predictable: focus a panel (⌥⌘←/→), then pull its seam.
+  const swapSide: PanelSwapSide = swap?.focusedPanelId === rightId ? 'right' : 'left'
+  const swapPanelId = swapSide === 'right' ? rightId : leftId
+  const swapGrip: PanelSeamSwapGrip | undefined = swap?.enabled
+    ? {
+        sourceSide: swapSide,
+        gripLabel: swap.gripLabel,
+        blockedLabel: swap.blockedLabel,
+        disabled: swap.disabled ?? (!left || !right),
+        onDragStart: (event) => swap.onDragStart?.(swapPanelId, event),
+        onActivate: () => swap.onActivate?.(swapPanelId),
+      }
+    : undefined
+
   return (
     <PanelSeam
       labelKey="shell.resize.panels"
@@ -108,6 +139,7 @@ export function PanelResizeSash({
       dragging={resize.dragging}
       disabled={!left || !right}
       data-sash-pair={`${leftId}::${rightId}`}
+      swapGrip={swapGrip}
       className="relative z-sash flex justify-center"
       style={{
         alignSelf: 'stretch',
@@ -117,7 +149,10 @@ export function PanelResizeSash({
         height: `calc(100% + ${PANEL_STACK_VERTICAL_OVERFLOW * 2}px)`,
       }}
       onPointerDown={(event) => {
-        resize.handlePointerDown(event, boundsFromSash(event.currentTarget, leftId, rightId))
+        // `currentTarget` is the inner handle: bounds must come from the seam
+        // wrapper (`data-sash-pair`), whose siblings are the two panels.
+        const sash = (event.currentTarget as HTMLElement).closest<HTMLElement>('[data-sash-pair]')
+        resize.handlePointerDown(event, sash ? boundsFromSash(sash, leftId, rightId) : null)
       }}
       onPointerMove={resize.handlePointerMove}
       onPointerUp={resize.handlePointerUp}

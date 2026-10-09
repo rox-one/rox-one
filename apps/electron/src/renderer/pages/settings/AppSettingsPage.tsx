@@ -135,6 +135,7 @@ export default function AppSettingsPage() {
   const [savedProxyForm, setSavedProxyForm] = useState<ProxyFormState>(EMPTY_PROXY_FORM)
   const [proxyError, setProxyError] = useState<string | undefined>()
   const [isSavingProxy, setIsSavingProxy] = useState(false)
+  const [proxySavedFlash, setProxySavedFlash] = useState(false)
 
   // Auto-update state (Check Now / Update Ready only shown in Electron, not WebUI)
   const isElectron = window.electronAPI.getRuntimeEnvironment() === 'electron'
@@ -295,6 +296,7 @@ export default function AppSettingsPage() {
       return
     }
     setIsSavingProxy(true)
+    setProxySavedFlash(false)
     try {
       const settings = toNetworkProxySettings(proxyForm)
       await window.electronAPI.setNetworkProxySettings(settings)
@@ -303,6 +305,8 @@ export default function AppSettingsPage() {
       const form = toProxyFormState(persisted)
       setProxyForm(form)
       setSavedProxyForm(form)
+      setProxySavedFlash(true)
+      window.setTimeout(() => setProxySavedFlash(false), 2400)
     } catch (error) {
       setProxyError(error instanceof Error ? error.message : t('settings.network.failedToSave'))
     } finally {
@@ -445,8 +449,8 @@ export default function AppSettingsPage() {
                       />
                     </>
                   )}
-                  {(isProxyDirty || proxyError) && (
-                    <SettingsCardFooter>
+                  {(isProxyDirty || proxyError || proxySavedFlash) && (
+                    <SettingsCardFooter saved={proxySavedFlash}>
                       {proxyError && (
                         <span className="text-destructive text-sm mr-auto">{proxyError === 'proxyErrorProtocol' ? t("settings.network.proxyErrorProtocol") : proxyError === 'proxyErrorFormat' ? t("settings.network.proxyErrorFormat") : proxyError}</span>
                       )}

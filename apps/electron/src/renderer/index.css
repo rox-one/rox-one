@@ -138,6 +138,11 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
   --color-foreground-1\.5: var(--foreground-1\.5);
   --color-sidebar-hover: color-mix(in oklch, var(--text-primary) 4%, var(--surface-rail));
 
+  /* Readable status text at caption sizes (mirrors --color-accent-text). */
+  --color-success-text: var(--success-text);
+  --color-destructive-text: var(--destructive-text);
+  --color-info-text: var(--info-text);
+
   /* Stacking utilities (`z-chrome`, `z-popover`, …) come from the shared
      layer set in @rox/ui/styles tokens/z.css; no renderer-only z names. */
 
@@ -1154,9 +1159,9 @@ html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material=
    native path, PERF-07/B14).
 
    Stacking: the layers are body-level fixed backdrops painted one step BELOW
-   `--z-base` (`calc(var(--z-base) - 1)`), so they sit strictly behind every
-   in-flow and z-indexed surface. A layer that `z-index: 0` would instead paint
-   above static content (e.g. the status bar) and cover its text (lens2-F6).
+   `--z-base` (`z-index: -1` — the base layer is 0), so they sit strictly behind
+   every in-flow and z-indexed surface. A layer that `z-index: 0` would instead
+   paint above static content (e.g. the status bar) and cover its text (lens2-F6).
    The browser canvas (`html` background) stays below them; on the browser
    runtime the shell body/#root are cleared so the texture shows through the
    translucent chrome instead of an opaque page fill.
@@ -1166,7 +1171,10 @@ html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material=
   inset: 0;
   pointer-events: none;
   display: none;
-  z-index: calc(var(--z-base) - 1);
+  /* One step below --z-base (0); a literal negative keeps the token-layer
+     contract (tokens-v2 z-layers test allows behind-content negatives). */
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- behind-content material layers sit below --z-base (0) by contract */
+  z-index: -1;
 }
 
 html[data-material="on"][data-material-texture] .material-layer--texture {

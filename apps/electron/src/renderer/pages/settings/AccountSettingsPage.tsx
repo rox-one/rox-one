@@ -13,6 +13,7 @@ import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import {
   SettingsCard,
+  SettingsCardFooter,
   SettingsRow,
   SettingsSection,
   SettingsSegmentedControl,
@@ -130,6 +131,7 @@ export default function AccountSettingsPage() {
   const [mailAddress, setMailAddress] = React.useState<string | null>(null)
   const [mailDomain, setMailDomain] = React.useState(MAIL_DEFAULT_DOMAIN)
   const [saving, setSaving] = React.useState(false)
+  const [profileSavedFlash, setProfileSavedFlash] = React.useState(false)
   const [changingAvatar, setChangingAvatar] = React.useState(false)
   const [gamification, setGamification] = React.useState<GamificationSnapshot | null>(null)
   const [savingAnalyticsConsent, setSavingAnalyticsConsent] = React.useState(false)
@@ -203,9 +205,11 @@ export default function AccountSettingsPage() {
     const trimmed = displayName.trim()
     if (!trimmed) return
     setSaving(true)
+    setProfileSavedFlash(false)
     try {
       await persist({ displayName: trimmed, email })
-      toast.success(t('settings.accounts.profileSaved'))
+      setProfileSavedFlash(true)
+      window.setTimeout(() => setProfileSavedFlash(false), 2400)
     } catch (error) {
       toast.error(t('settings.accounts.profileSaveFailed', { message: errorMessage(error) }))
     } finally {
@@ -390,11 +394,11 @@ export default function AccountSettingsPage() {
                 </span>
               )}
             </SettingsRow>
-            <SettingsRow label="">
+            <SettingsCardFooter saved={profileSavedFlash}>
               <Button size="sm" onClick={() => void handleSaveProfile()} disabled={saving || !profile || !displayName.trim()}>
                 {t('common.save')}
               </Button>
-            </SettingsRow>
+            </SettingsCardFooter>
           </SettingsCard>
         </SettingsSection>
 

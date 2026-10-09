@@ -16,6 +16,7 @@ import {
   Globe,
   Image as ImageIcon,
   Sparkles,
+  Gauge,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Icon_Home, Spinner } from '@rox/ui'
@@ -97,7 +98,7 @@ import {
 } from './prompt-history'
 import { formatCostUsd, resolveTurnPhase } from './turn-progress'
 import { useAtomValue } from 'jotai'
-import { featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
+import { featureComposerDeckV1Atom, featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
 import { clearPendingFocusForSession, consumePendingFocusForSession } from './focus-input-events'
 import {
   getRecentWorkingDirs,
@@ -115,6 +116,8 @@ import {
   stripPiPrefixForDisplay,
 } from './model-picker-helpers'
 import { VoiceDictationControl } from './VoiceDictationControl'
+import { ComposerDeck } from './deck/ComposerDeck'
+import { DeckChip } from './deck/DeckChip'
 import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@rox/shared/config/rox-public-models'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -437,6 +440,9 @@ export function FreeFormInput({
   }, [tourSignals])
   React.useEffect(() => tourSignals.capability('attachments.available', { state: 'ready' }), [tourSignals])
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  // G5 composer deck (default OFF): flag ON swaps the desktop composer chrome
+  // for the deck. OFF renders the legacy composer byte-for-byte.
+  const composerDeckFlag = useAtomValue(featureComposerDeckV1Atom)
   const promptHistoryRef = React.useRef<PromptHistory>(EMPTY_PROMPT_HISTORY)
   React.useEffect(() => {
     promptHistoryRef.current = EMPTY_PROMPT_HISTORY
@@ -1720,6 +1726,11 @@ export function FreeFormInput({
     onStop?.(silent)
   }
 
+  /** Deck context chip: run the same manual compaction the legacy badge offers. */
+  const handleCompactContext = () => {
+    if (!isProcessing) onSubmit('/compact', [])
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // During IME composition, ESC should cancel composition, not trigger app/menu ESC behavior.
     if (e.key === 'Escape' && e.nativeEvent.isComposing) {
@@ -2015,128 +2026,24 @@ export function FreeFormInput({
     && isCompatProvider(effectiveConnectionDetails.providerType)
     && !modelSupportsImages(effectiveConnectionDetails, currentModel)
 
-  return (
-    <form onSubmit={handleSubmit}>
-      <div
-        ref={containerRef}
-        className={cn(
-          'overflow-hidden transition-colors motion-reduce:transition-none',
-          // Container styling - only when not wrapped by InputContainer
-          !unstyled && 'rounded-[var(--radius-composer)] shadow-middle',
-          !unstyled && 'bg-background',
-          isDraggingOver && 'ring-2 ring-foreground ring-offset-2 ring-offset-background bg-foreground/5'
-        )}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        {/* Inline Slash Command Autocomplete */}
-        <InlineSlashCommand
-          open={inlineSlash.isOpen}
-          onOpenChange={(open) => !open && inlineSlash.close()}
-          sections={inlineSlash.sections}
-          activeCommands={activeCommands}
-          onSelectCommand={handleInlineSlashCommandSelect}
-          onSelectFolder={handleInlineSlashFolderSelect}
-          filter={inlineSlash.filter}
-          position={inlineSlash.position}
-        />
+  // G5 composer deck. `composerDeckActive` is the desktop composer only: the
+  // compact composer (EditPopover / WebUI mobile) keeps its own layout, and the
+  // flag OFF path below is the untouched legacy render.
+  const composerDeckActive = composerDeckFlag && !compactMode
+  const deckFailedAttachment = attachments.find(a => a.type === 'audio' && a.transcript?.status === 'error')
+  const deckErrorText = deckFailedAttachment
+    ? t('composer.deck.error.attachment', {
+        defaultValue: 'Не удалось расшифровать {{name}}. Запись сохранена — повторите расшифровку.',
+        name: deckFailedAttachment.name,
+      })
+    : null
+  const deckContextWindow = contextStatus?.contextWindow || getModelContextWindow(currentModel)
+  const deckContextPercent = contextStatus?.inputTokens && deckContextWindow
+    ? Math.min(99, Math.round((contextStatus.inputTokens / deckContextWindow) * 100))
+    : null
 
-        {/* Inline Mention Autocomplete (skills, sources, files) */}
-        <InlineMentionMenu
-          open={inlineMention.isOpen}
-          onOpenChange={(open) => !open && inlineMention.close()}
-          sections={inlineMention.sections}
-          onSelect={handleInlineMentionSelect}
-          filter={inlineMention.filter}
-          position={inlineMention.position}
-          workspaceId={workspaceId}
-          maxWidth={280}
-          isSearching={inlineMention.isSearching}
-        />
-
-        {/* Inline Label & State Autocomplete (#labels / #states) */}
-        <InlineLabelMenu
-          open={inlineLabel.isOpen}
-          onOpenChange={(open) => !open && inlineLabel.close()}
-          items={inlineLabel.items}
-          onSelect={handleInlineLabelSelect}
-          onAddLabel={handleAddLabel}
-          filter={inlineLabel.filter}
-          position={inlineLabel.position}
-          states={inlineLabel.states}
-          activeStateId={inlineLabel.activeStateId}
-          onSelectState={handleInlineStateSelect}
-        />
-
-        {/* Controlled EditPopover for "Add New Label" — opens when user selects
-            the option from the # menu with no matches.
-            Spread the full config so optional fields like `inlineExecution`,
-            `displayLabel`, and `displayLabelKey` reach the popover. The previous
-            cherry-pick dropped `inlineExecution: true`, which made the popover
-            fall back to the same-window deep-link path; that worked inside
-            Electron but launched the desktop app from the WebUI via `rox://`.
-            Match the AppShell pattern (which already uses spread). */}
-        {addLabelEditConfig && (
-          <EditPopover
-            trigger={<span className="absolute top-0 left-0 w-0 h-0 overflow-hidden" />}
-            open={addLabelPopoverOpen}
-            onOpenChange={setAddLabelPopoverOpen}
-            {...addLabelEditConfig}
-            defaultValue={addLabelPrefill}
-            secondaryAction={workspaceRootPath ? {
-              label: t('common.editFile'),
-              filePath: `${workspaceRootPath}/labels/config.json`,
-            } : undefined}
-            side="top"
-            align="start"
-          />
-        )}
-
-        {/* Pre-flight image-support warning — only for pi_compat connections
-            where the renderer can both detect text-only models and offer to
-            flip the per-model supportsImages override on the spot. */}
-        {showVisionWarning && effectiveConnectionDetails && (
-          <ImageSupportWarningBanner
-            modelName={currentModelDisplayName}
-            onEnable={() => handleToggleModelVision(effectiveConnectionDetails.slug, currentModel, true)}
-          />
-        )}
-
-        {magicWorkflows.length > 0 && (
-          <div className="flex flex-wrap gap-1 px-3 pt-2.5" data-testid="magic-workflow-chips">
-            {magicWorkflows.map((workflow) => (
-              <Tooltip key={workflow.id} delayDuration={200}>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-control)] bg-foreground/5 px-2 py-0.5 text-[12px] text-foreground/80">
-                    {t(`workflows.label.${workflow.id}`)}
-                    <span className="text-foreground/50">{t(`workflows.cost.${workflow.costClass}`)}</span>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-[12px]">
-                  <div>{t(`workflows.hint.${workflow.id}`)}</div>
-                  <div>{t('workflows.skills')}: {workflow.skills.join(', ')}</div>
-                  <div>{t('workflows.stop')}: {workflow.stopCondition}</div>
-                  {needsConfirmation(workflow) && <div>{t('workflows.confirm')}</div>}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-        )}
-
-        {/* Attachment Preview */}
-        <div ref={attachments.length || loadingCount ? attachmentsTarget : undefined}><AttachmentPreview
-          attachments={attachments}
-          onRemove={handleRemoveAttachment}
-          onRetryTranscription={(index) => {
-            const attachment = attachmentsRef.current[index]
-            if (attachment?.type === 'audio') void transcribeAudioAttachment(attachment)
-          }}
-          disabled={disabled}
-          loadingCount={loadingCount}
-        /></div>
-
+  const composerInputRegion = (
+    <>
         {/* Follow-up context chips */}
         <AnimatePresence initial={false}>
           {followUpItems.length > 0 && (
@@ -2251,6 +2158,311 @@ export function FreeFormInput({
           spellCheck={spellCheck}
         /></div>
         )}
+    </>
+  )
+
+  /** Deck chip row: the controls that shape the next request, in one 28 px row. */
+  const composerDeckChips = (
+    <>
+      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileInputChange} />
+      <span ref={attachTarget} className="inline-flex shrink-0">
+        <DeckChip
+          label={t('composer.deck.chip.files', { defaultValue: 'Файлы' })}
+          icon={<Paperclip className="icon-toolbar" />}
+          value={attachments.length > 0
+            ? t('composer.deck.chip.filesCount', { defaultValue: 'вложений: {{total}}', total: attachments.length })
+            : t('composer.deck.chip.filesEmpty', { defaultValue: 'не приложены' })}
+          focusOrder={20}
+          disabled={disabled}
+          onClick={handleAttachClick}
+        />
+      </span>
+      <DeckChip as="div" label={t('composer.deck.chip.model', { defaultValue: 'Модель' })} focusOrder={21} disabled={disabled}>
+        <CompactModelSelector
+          currentModel={currentModel}
+          currentConnection={currentConnection}
+          onModelChange={onModelChange}
+          onConnectionChange={onConnectionChange}
+          thinkingLevel={thinkingLevel}
+          onThinkingLevelChange={onThinkingLevelChange}
+          isEmptySession={isEmptySession}
+          connectionUnavailable={connectionUnavailable}
+          contextStatus={contextStatus}
+          variant="deck"
+        />
+      </DeckChip>
+      {onPermissionModeChange && (
+        <DeckChip as="div" label={t('composer.deck.chip.mode', { defaultValue: 'Режим' })} focusOrder={22} disabled={disabled}>
+          <CompactPermissionModeSelector
+            permissionMode={permissionMode}
+            onPermissionModeChange={onPermissionModeChange}
+            variant="deck"
+          />
+        </DeckChip>
+      )}
+      {onWorkingDirectoryChange && (
+        <DeckChip as="div" label={t('composer.deck.chip.folder', { defaultValue: 'Папка' })} focusOrder={23} disabled={disabled}>
+          <WorkingDirectorySelector
+            workingDirectory={workingDirectory}
+            onWorkingDirectoryChange={onWorkingDirectoryChange}
+            sessionFolderPath={sessionFolderPath}
+            workspaceId={workspaceId}
+            renderTrigger={({ open, hasFolder, folderName }) => (
+              <button
+                type="button"
+                data-tutorial="working-directory-button"
+                disabled={disabled}
+                aria-expanded={open}
+                className={cn(
+                  'inline-flex h-7 max-w-[200px] shrink items-center rounded-[var(--radius-control)] px-1 text-caption transition-colors duration-[var(--motion-fast)] motion-reduce:transition-none',
+                  'font-medium text-text-primary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring',
+                  open && 'bg-surface-hover',
+                  disabled && 'opacity-45',
+                )}
+              >
+                <span className="truncate">{hasFolder ? folderName : t('composer.deck.chip.folderEmpty', { defaultValue: 'не выбрана' })}</span>
+              </button>
+            )}
+          />
+        </DeckChip>
+      )}
+      <DeckChip as="div" label={t('composer.deck.chip.context', { defaultValue: 'Контекст' })} focusOrder={24}>
+        <FreeFormInputContextBadge
+          variant="deck"
+          icon={<Gauge className="icon-toolbar" />}
+          label={deckContextPercent !== null
+            ? t('composer.deck.chip.contextUsage', {
+                defaultValue: '{{percent}}% · {{tokens}}',
+                percent: deckContextPercent,
+                tokens: formatTokenCount(contextStatus?.inputTokens ?? 0),
+              })
+            : t('composer.deck.chip.contextUnknown', { defaultValue: 'нет данных' })}
+          hasSelection={deckContextPercent !== null}
+          isExpanded
+          showChevron={false}
+          onClick={handleCompactContext}
+          tooltip={t('composer.deck.chip.contextTooltip', { defaultValue: 'Использование контекста. Нажмите, чтобы сжать.' })}
+          disabled={contextStatus?.inputTokens == null}
+        />
+      </DeckChip>
+    </>
+  )
+
+  /** Deck trailing group: improve, dictate, send/stop. */
+  const composerDeckTrailing = (
+    <>
+      {sessionId && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              disabled={disabled || disableSend || improvingPrompt}
+              aria-busy={improvingPrompt}
+              onClick={() => { void handleImprovePrompt() }}
+              aria-label={t('chat.improvePromptAria')}
+              className="inline-flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-text-secondary transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring disabled:opacity-45 motion-reduce:transition-none"
+              data-focus-order={30}
+            >
+              {improvingPrompt ? <Spinner className="h-4 w-4" /> : <Sparkles className="icon-toolbar" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {improvingPrompt ? t('chat.improvingPrompt') : t('chat.improvePromptTooltip')}
+          </TooltipContent>
+        </Tooltip>
+      )}
+      <VoiceDictationControl
+        variant="deck"
+        disabled={disabled}
+        inputValue={input}
+        sessionId={sessionId}
+        onInputChange={handleInputChange}
+      />
+      {isProcessing ? (
+        <button
+          type="button"
+          aria-label={t('chat.stopResponse')}
+          data-focus-order={32}
+          onClick={() => handleStop(false)}
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-text-secondary transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring motion-reduce:transition-none"
+        >
+          <Square className="icon-caption fill-current" />
+        </button>
+      ) : (
+        <button
+          ref={sendTarget}
+          type="submit"
+          aria-label={t('shortcuts.sendMessage')}
+          disabled={!hasContent || disabled || disableSend || transcriptionPending}
+          data-focus-order={32}
+          data-tutorial="send-button"
+          className={cn(
+            'inline-flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring motion-reduce:transition-none',
+            'bg-foreground text-background hover:bg-foreground-90',
+            (!hasContent || disabled || disableSend || transcriptionPending) && 'opacity-45',
+          )}
+        >
+          <ArrowUp className="icon-toolbar" />
+        </button>
+      )}
+    </>
+  )
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div
+        ref={containerRef}
+        className={cn(
+          'overflow-hidden transition-colors motion-reduce:transition-none',
+          // Container styling - only when not wrapped by InputContainer
+          !unstyled && 'rounded-[var(--radius-composer)] shadow-middle',
+          !unstyled && 'bg-background',
+          isDraggingOver && 'ring-2 ring-foreground ring-offset-2 ring-offset-background bg-foreground/5'
+        )}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* Inline Slash Command Autocomplete */}
+        <InlineSlashCommand
+          open={inlineSlash.isOpen}
+          onOpenChange={(open) => !open && inlineSlash.close()}
+          sections={inlineSlash.sections}
+          activeCommands={activeCommands}
+          onSelectCommand={handleInlineSlashCommandSelect}
+          onSelectFolder={handleInlineSlashFolderSelect}
+          filter={inlineSlash.filter}
+          position={inlineSlash.position}
+        />
+
+        {/* Inline Mention Autocomplete (skills, sources, files) */}
+        <InlineMentionMenu
+          open={inlineMention.isOpen}
+          onOpenChange={(open) => !open && inlineMention.close()}
+          sections={inlineMention.sections}
+          onSelect={handleInlineMentionSelect}
+          filter={inlineMention.filter}
+          position={inlineMention.position}
+          workspaceId={workspaceId}
+          maxWidth={280}
+          isSearching={inlineMention.isSearching}
+        />
+
+        {/* Inline Label & State Autocomplete (#labels / #states) */}
+        <InlineLabelMenu
+          open={inlineLabel.isOpen}
+          onOpenChange={(open) => !open && inlineLabel.close()}
+          items={inlineLabel.items}
+          onSelect={handleInlineLabelSelect}
+          onAddLabel={handleAddLabel}
+          filter={inlineLabel.filter}
+          position={inlineLabel.position}
+          states={inlineLabel.states}
+          activeStateId={inlineLabel.activeStateId}
+          onSelectState={handleInlineStateSelect}
+        />
+
+        {/* Controlled EditPopover for "Add New Label" — opens when user selects
+            the option from the # menu with no matches.
+            Spread the full config so optional fields like `inlineExecution`,
+            `displayLabel`, and `displayLabelKey` reach the popover. The previous
+            cherry-pick dropped `inlineExecution: true`, which made the popover
+            fall back to the same-window deep-link path; that worked inside
+            Electron but launched the desktop app from the WebUI via `rox://`.
+            Match the AppShell pattern (which already uses spread). */}
+        {addLabelEditConfig && (
+          <EditPopover
+            trigger={<span className="absolute top-0 left-0 w-0 h-0 overflow-hidden" />}
+            open={addLabelPopoverOpen}
+            onOpenChange={setAddLabelPopoverOpen}
+            {...addLabelEditConfig}
+            defaultValue={addLabelPrefill}
+            secondaryAction={workspaceRootPath ? {
+              label: t('common.editFile'),
+              filePath: `${workspaceRootPath}/labels/config.json`,
+            } : undefined}
+            side="top"
+            align="start"
+          />
+        )}
+
+        {/* Pre-flight image-support warning — only for pi_compat connections
+            where the renderer can both detect text-only models and offer to
+            flip the per-model supportsImages override on the spot. */}
+        {showVisionWarning && effectiveConnectionDetails && (
+          <ImageSupportWarningBanner
+            modelName={currentModelDisplayName}
+            onEnable={() => handleToggleModelVision(effectiveConnectionDetails.slug, currentModel, true)}
+          />
+        )}
+
+        {magicWorkflows.length > 0 && (
+          <div className="flex flex-wrap gap-1 px-3 pt-2.5" data-testid="magic-workflow-chips">
+            {magicWorkflows.map((workflow) => (
+              <Tooltip key={workflow.id} delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-control)] bg-foreground/5 px-2 py-0.5 text-[12px] text-foreground/80">
+                    {t(`workflows.label.${workflow.id}`)}
+                    <span className="text-foreground/50">{t(`workflows.cost.${workflow.costClass}`)}</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-[12px]">
+                  <div>{t(`workflows.hint.${workflow.id}`)}</div>
+                  <div>{t('workflows.skills')}: {workflow.skills.join(', ')}</div>
+                  <div>{t('workflows.stop')}: {workflow.stopCondition}</div>
+                  {needsConfirmation(workflow) && <div>{t('workflows.confirm')}</div>}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        )}
+
+        {/* Composer deck — flag ON replaces the attachment strip and control
+            row with the deck chrome; the writing area is the same input. */}
+        {composerDeckActive ? (
+          <ComposerDeck
+            attachments={attachments}
+            onRemoveAttachment={handleRemoveAttachment}
+            onRetryTranscription={(index) => {
+              const attachment = attachmentsRef.current[index]
+              if (attachment?.type === 'audio') void transcribeAudioAttachment(attachment)
+            }}
+            loadingCount={loadingCount}
+            disabled={disabled}
+            errorText={deckErrorText}
+            chips={composerDeckChips}
+            trailing={composerDeckTrailing}
+            statusSlot={
+              <ToolbarStatusSlot
+                showEscapeOverlay={isProcessing && showEscapeOverlay}
+                sessionId={sessionId}
+                turnProgress={chatChromeEnabled && isProcessing ? {
+                  phase: resolveTurnPhase(contextStatus?.statusType, true, contextStatus?.outputTokens) ?? 'thinking',
+                  outputTokens: contextStatus?.outputTokens ?? 0,
+                  startedAt: contextStatus?.startedAt,
+                } : null}
+              />
+            }
+            focusOrderBase={10}
+          >
+            {composerInputRegion}
+          </ComposerDeck>
+        ) : (
+          <>
+        {/* Attachment Preview */}
+        <div ref={attachments.length || loadingCount ? attachmentsTarget : undefined}><AttachmentPreview
+          attachments={attachments}
+          onRemove={handleRemoveAttachment}
+          onRetryTranscription={(index) => {
+            const attachment = attachmentsRef.current[index]
+            if (attachment?.type === 'audio') void transcribeAudioAttachment(attachment)
+          }}
+          disabled={disabled}
+          loadingCount={loadingCount}
+        /></div>
+
+        {composerInputRegion}
 
         {/* Bottom Row: Controls - wrapped in relative container for status slot overlay */}
         <div className="relative">
@@ -3060,6 +3272,8 @@ export function FreeFormInput({
           </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </form>
   )

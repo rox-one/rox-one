@@ -15,7 +15,7 @@ import { VoiceCommandController } from '../../../voice/command-controller'
 import { claimDictation, currentOwner, releaseDictation, setDictationIntent, type DictationOwner } from '../../../voice/dictation-ownership'
 import { createVoiceLevelMeter, type VoiceLevelMeterHandle } from '@/lib/voice/level-meter'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
-import { createDictationRequestGuard, setDictationLevel, useDictationLevel } from './voice-dictation-state'
+import { createDictationRequestGuard, registerDictationToggle, setDictationLevel, setDictationSession, useDictationLevel } from './voice-dictation-state'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import type { VoicePrefs } from '@rox/shared/voice'
@@ -26,6 +26,12 @@ interface VoiceDictationControlProps {
   inputValue: string
   sessionId?: string
   onInputChange?: (value: string) => void
+  /**
+   * `deck` renders the control as the 28 px icon action of the composer deck's
+   * trailing group (and lets the deck's dictation strip drive the same capture
+   * machine). Default keeps the context-badge presentation unchanged.
+   */
+  variant?: 'default' | 'deck'
 }
 
 // Native hotkeys are broadcast to every mounted composer. The shared
@@ -79,6 +85,7 @@ export function VoiceDictationControl({
   inputValue,
   sessionId,
   onInputChange,
+  variant = 'default',
 }: VoiceDictationControlProps) {
   const { t } = useTranslation()
   const dictationLevel = useDictationLevel()
@@ -127,6 +134,7 @@ export function VoiceDictationControl({
   const mountedRef = useRef(true)
   const requestGuard = useRef(createDictationRequestGuard()).current
   const requestIdRef = useRef(0)
+  const dictationStartedAtRef = useRef<number | null>(null)
   const hostRef = useRef<HTMLDivElement | null>(null)
   const attachDictationHost = useCallback((node: HTMLDivElement | null) => {
     hostRef.current = node
@@ -414,6 +422,7 @@ export function VoiceDictationControl({
         void finishRecording()
       }
       recorderRef.current = recorder
+      dictationStartedAtRef.current = Date.now()
       setRecording(true)
       recorder.start()
       // Drive the composer wave (and the owned overlay) from the same stream.
@@ -540,6 +549,7 @@ export function VoiceDictationControl({
       setStarting(false)
       setRecording(false)
       setTranscribing(false)
+      setDictationSession(false)
     }
   }, [closeNativePermission, owner, requestGuard, sessionId, stopMeter, stopTracks])
 
@@ -565,8 +575,33 @@ export function VoiceDictationControl({
     : transcribing ? t('voice.overlay.transcribing')
       : recording ? t('chat.dictateStop') : t('chat.dictate')
 
+  // The deck's dictation strip subscribes to the same capture session, so the
+  // recording window is published here and driven by the shared toggle.
+  useEffect(() => {
+    setDictationSession(recording, recording ? dictationStartedAtRef.current : null)
+  }, [recording])
+
+  useEffect(() => registerDictationToggle(toggle), [toggle])
+
   return (
     <div ref={attachDictationHost} data-voice-dictation-host="" className={cn('flex min-w-0 items-center min-h-[var(--control-hit-min)]', compactMode && 'shrink-0')}>
+      {variant === 'deck' ? (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-pressed={recording}
+          aria-label={label}
+          title={modelEvidence ? `${t('chat.dictateTooltip')} · ${modelEvidence}` : busy || recording ? label : t('chat.dictateTooltip')}
+          disabled={!prefs || busy || (disabled && !recording)}
+          data-g05-action={recording ? 'danger' : 'default'}
+          className={cn(
+            'inline-flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring motion-reduce:transition-none disabled:opacity-45',
+            recording ? 'text-status-danger hover:bg-surface-hover' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary',
+          )}
+        >
+          {busy ? <Spinner className="h-4 w-4" /> : recording ? <Square className="icon-toolbar" /> : <Mic className="icon-toolbar" />}
+        </button>
+      ) : (
       <FreeFormInputContextBadge
         icon={busy ? <Spinner className="h-4 w-4" /> : recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         label={label}
@@ -580,6 +615,7 @@ export function VoiceDictationControl({
         disabled={!prefs || busy || (disabled && !recording)}
         className={recording ? 'bg-destructive/10 text-destructive' : undefined}
       />
+      )}
       <Dialog open={consentOpen} onOpenChange={(open) => { if (!savingConsent) setConsentOpen(open) }}>
         <DialogContent showCloseButton={!savingConsent}>
           <DialogHeader>

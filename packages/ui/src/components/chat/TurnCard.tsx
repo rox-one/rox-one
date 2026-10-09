@@ -396,6 +396,9 @@ export interface TurnCardProps {
   openAnnotationRequest?: OpenAnnotationRequest | null
   /** Annotation interaction mode (viewer uses tooltip-only to suppress the island) */
   annotationInteractionMode?: AnnotationInteractionMode
+  /** Rendered inside the G5 dialog continuum shell — strips the per-turn card
+   *  chrome (border/background/shadow/radius). Legacy path leaves it unset. */
+  continuum?: boolean
 }
 
 // ============================================================================
@@ -2541,7 +2544,7 @@ export function ResponseCard({
 
     return (
       <>
-        <div className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden relative group group-focus-within:opacity-100" tabIndex={-1}>
+        <div data-g05-card-chrome className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden relative group group-focus-within:opacity-100" tabIndex={-1}>
           {/* Fullscreen button - desktop only; compact mode keeps message chrome minimal */}
           {!compactMode && (
           <button
@@ -2691,7 +2694,7 @@ export function ResponseCard({
   // Streaming response - show throttled content with spinner
   return (
     <>
-      <div className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden group">
+      <div data-g05-card-chrome className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden group">
         {/* Content area - uses displayedText (throttled) for performance */}
         {/* Subtle fade at top and bottom edges (dark mode only) */}
         <div
@@ -2879,6 +2882,7 @@ export const TurnCard = React.memo(function TurnCard({
   hasActiveFollowUpAnnotations = false,
   openAnnotationRequest,
   annotationInteractionMode = 'interactive',
+  continuum = false,
 }: TurnCardProps) {
   // Interactive (`openui`) block form state is scoped to the owning turn so a
   // content-identical block in another message cannot hydrate this turn's form.
@@ -3043,7 +3047,7 @@ export const TurnCard = React.memo(function TurnCard({
   const isThinking = shouldShowThinkingIndicator(turnPhase, isBuffering)
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1" data-g05-continuum={continuum ? 'true' : undefined}>
       {/* Activity Section - excluded from search highlighting (matches ripgrep behavior) */}
       {hasActivities && (
         <div className="group select-none" data-search-exclude="true">
@@ -3404,6 +3408,9 @@ export const TurnCard = React.memo(function TurnCard({
 
   // Re-render when active follow-up annotation state changes (plan CTA label)
   if (prev.hasActiveFollowUpAnnotations !== next.hasActiveFollowUpAnnotations) return false
+
+  // Re-render when the continuum shell toggles (card chrome suppression)
+  if (prev.continuum !== next.continuum) return false
 
   // For complete, non-streaming turns: skip re-render only when both
   // session and turn identities match. Prevents stale local UI state from

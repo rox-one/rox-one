@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useAtom } from "jotai"
+import { useAtom, useAtomValue } from "jotai"
+import { featureDialogArtifactsV1Atom, featureDialogContinuumV1Atom } from "@/atoms/unified-shell"
 import { suggestionHistoryAtom } from "@/atoms/header-status"
 import { rememberSuggestion } from "@/lib/contextual-suggestions"
 import { appendStarterPrompt, canShowStarterPrompts, selectStarterPrompts, starterHistoryId, type StarterPrompt } from "@/lib/starter-prompts"
@@ -87,6 +88,11 @@ import {
 } from "@rox/ui"
 import { MemoizedAuthRequestCard } from "@/components/chat/AuthRequestCard"
 import { ChatInputZone, type StructuredInputState, type StructuredResponse, type PermissionResponse, type AdminApprovalResponse } from "./input"
+import { ContinuumTurn } from "./chat-continuum/ContinuumTurn"
+import { ArtifactStack } from "./chat-continuum/ArtifactShell"
+import { SessionDivider } from "./chat-continuum/SessionDivider"
+import { InlineApprovalCard } from "./chat-continuum/InlineApprovalCard"
+import { InlineCredentialCard } from "./chat-continuum/InlineCredentialCard"
 import { MemoryProvenanceStrip } from "./MemoryProvenanceStrip"
 import type { RichTextInputHandle } from "@/components/ui/rich-text-input"
 import { useBackgroundTasks } from "@/hooks/useBackgroundTasks"
@@ -107,6 +113,53 @@ function isRoxCliCredentialChatError(code?: string): boolean {
   return code === 'OMP_NO_MODELS' || code === 'OMP_AUTH_REQUIRED' || code === 'OMP_NOT_CONFIGURED'
 }
 import * as storage from "@/lib/local-storage"
+
+// ============================================================================
+// G5 Dialog Continuum
+// ============================================================================
+
+/** Gutter clock label (`HH:MM`) for a turn. */
+function formatTurnClock(timestamp: number): string {
+  const date = new Date(timestamp)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+/**
+ * Wraps a rendered turn in the continuum shell when the feature flag is ON.
+ * The children are untouched production components; this only supplies the
+ * gutter (clock + marker + spine), optional reasoning row and streaming caret.
+ * When the flag is OFF it is a keyed passthrough — byte-identical legacy path.
+ */
+function TurnShell({
+  enabled,
+  kind,
+  time,
+  streaming,
+  thinking,
+  focusOrder,
+  children,
+}: {
+  enabled: boolean
+  kind: 'user' | 'assistant' | 'system'
+  time: string
+  streaming?: boolean
+  thinking?: { text: string; isStreaming: boolean; steps?: number }
+  focusOrder?: number
+  children: React.ReactNode
+}) {
+  if (!enabled) return <>{children}</>
+  return (
+    <ContinuumTurn
+      kind={kind}
+      time={time}
+      streaming={streaming}
+      thinking={thinking}
+      focusOrder={focusOrder}
+    >
+      {children}
+    </ContinuumTurn>
+  )
+}
 
 // ============================================================================
 // CSS Custom Highlight API helper
@@ -633,6 +686,11 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   }, [session?.id, runtimePanelId])
 
   const [starterHistory, setStarterHistory] = useAtom(suggestionHistoryAtom)
+  // G5 dialog flags (both default OFF → legacy path, byte-identical). The
+  // continuum is the main-transcript treatment; the compact EditPopover keeps
+  // the legacy card stack (a 72px gutter in a ~440px popover is cramped).
+  const continuumEnabled = useAtomValue(featureDialogContinuumV1Atom) && !compactMode
+  const artifactsEnabled = useAtomValue(featureDialogArtifactsV1Atom)
   const emptyWelcome = Boolean(session && session.messages.length === 0 && !compactMode && !messagesLoading && !messagesLoadError && !session.isProcessing)
   const starterOptions = {
     session,
@@ -1752,13 +1810,15 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
           },
         }
       }
+      if (artifactsEnabled) return undefined
       return { type: 'permission', data: pendingPermission }
     }
     if (pendingCredential) {
+      if (artifactsEnabled) return undefined
       return { type: 'credential', data: pendingCredential }
     }
     return undefined
-  }, [pendingPermission, pendingCredential])
+  }, [pendingPermission, pendingCredential, artifactsEnabled])
 
   const tourSignals = useTourSignals({ sessionId: session?.id, workspaceId: session?.workspaceId })
   const tourVariant = compactMode ? 'compact' : 'regular'
@@ -2094,6 +2154,12 @@ const handleFollowUpChipClick = useCallback((item: {
                       ↑ {t('chat.scrollUpForEarlier', { count: startIndex })}
                     </div>
                   )}
+                  {continuumEnabled && turns.length > 0 && (
+                    <SessionDivider
+                      label={session.name}
+                      time={formatTurnClock(turns[0]?.timestamp ?? session.lastMessageAt)}
+                    />
+                  )}
                   {turns.map((turn, index) => {
                     // Compute turn key and check if it's a search match
                     const turnKey = getTurnKey(turn)
@@ -2104,6 +2170,12 @@ const handleFollowUpChipClick = useCallback((item: {
                     // Extra padding creates visual separation from AI responses
                     if (turn.type === 'user') {
                       return (
+                      <TurnShell
+                        key={turnKey}
+                        enabled={continuumEnabled}
+                        kind="user"
+                        time={formatTurnClock(turn.timestamp)}
+                      >
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
@@ -2131,12 +2203,19 @@ const handleFollowUpChipClick = useCallback((item: {
                             onBranch={session?.supportsBranching && !turn.message.isPending && !turn.message.isQueued ? handleMessageBranch : undefined}
                           />
                         </div>
+                      </TurnShell>
                       )
                     }
 
                     // System turns (error, status, info, warning) - render with MemoizedMessageBubble
                     if (turn.type === 'system') {
                       return (
+                      <TurnShell
+                        key={turnKey}
+                        enabled={continuumEnabled}
+                        kind="system"
+                        time={formatTurnClock(turn.timestamp)}
+                      >
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
@@ -2162,6 +2241,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             } : undefined}
                           />
                         </div>
+                      </TurnShell>
                       )
                     }
 
@@ -2171,6 +2251,12 @@ const handleFollowUpChipClick = useCallback((item: {
                       // Interactive only if no user message follows
                       const isAuthInteractive = !turns.slice(index + 1).some(t => t.type === 'user')
                       return (
+                      <TurnShell
+                        key={turnKey}
+                        enabled={continuumEnabled}
+                        kind="system"
+                        time={formatTurnClock(turn.timestamp)}
+                      >
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
@@ -2187,6 +2273,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             isInteractive={isAuthInteractive}
                           />
                         </div>
+                      </TurnShell>
                       )
                     }
 
@@ -2200,6 +2287,16 @@ const handleFollowUpChipClick = useCallback((item: {
                     const isNativeFinal = !!turn.response?.messageId && turn.response.messageId === tourFinalMessageId
                     const hasNativeSourceResult = isLatestAssistantTurn && turn.activities.some(activity => activity.type === 'tool' && activity.status === 'completed' && !activity.error && !!activity.toolName && !!resolvePublishedToolSource(activity.toolName, session.enabledSourceSlugs ?? []))
                     return (
+                      <TurnShell
+                        key={turnKey}
+                        enabled={continuumEnabled}
+                        kind="assistant"
+                        time={formatTurnClock(turn.timestamp)}
+                        streaming={turn.isStreaming}
+                        thinking={continuumEnabled && turn.thinking?.text
+                          ? { text: turn.thinking.text, isStreaming: !!turn.thinking.isStreaming, steps: turn.activities.length }
+                          : undefined}
+                      >
                       <div
                         key={turnKey}
                         ref={el => {
@@ -2225,7 +2322,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         turnId={turn.turnId}
                         activities={turn.activities}
                         response={turn.response}
-                        thinking={turn.thinking}
+                        thinking={continuumEnabled ? undefined : turn.thinking}
                         intent={turn.intent}
                         isStreaming={turn.isStreaming}
                         isComplete={turn.isComplete}
@@ -2354,7 +2451,9 @@ const handleFollowUpChipClick = useCallback((item: {
                             })
                           }
                         }}
+                        continuum={continuumEnabled}
                       />
+                      {artifactsEnabled && <ArtifactStack activities={turn.activities} />}
                       {session.memoryMode !== 'temporary' && (
                         <MemoryProvenanceStrip
                           sessionId={session.id}
@@ -2363,8 +2462,36 @@ const handleFollowUpChipClick = useCallback((item: {
                         />
                       )}
                       </div>
+                      </TurnShell>
                     )
                   })}
+                    {artifactsEnabled && pendingPermission && pendingPermission.type !== 'admin_approval' && (
+                      <TurnShell
+                        key="g05-inline-approval"
+                        enabled={continuumEnabled}
+                        kind="assistant"
+                        time={formatTurnClock(session.lastMessageAt)}
+                      >
+                        <InlineApprovalCard
+                          request={pendingPermission}
+                          onResponse={handleStructuredResponse}
+                          state="pending"
+                        />
+                      </TurnShell>
+                    )}
+                    {artifactsEnabled && pendingCredential && (
+                      <TurnShell
+                        key="g05-inline-credential"
+                        enabled={continuumEnabled}
+                        kind="assistant"
+                        time={formatTurnClock(session.lastMessageAt)}
+                      >
+                        <InlineCredentialCard
+                          request={pendingCredential}
+                          onResponse={handleStructuredResponse}
+                        />
+                      </TurnShell>
+                    )}
                     <SessionMemoryProposalLane
                       workspaceId={workspaceId ?? session.workspaceId}
                       sessionId={session.id}

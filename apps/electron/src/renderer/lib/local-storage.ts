@@ -162,6 +162,11 @@ export const KEYS = {
   featureLensMorphV1: 'feature-lens-morph-v1',
   featureMissionsBoardV1: 'feature-missions-board-v1',
   featureLayoutEngine: 'feature-layout-engine',
+  // Wave 2 (G5 «Диалог» + G6 wave 2) — all default OFF
+  featureDialogContinuumV1: 'feature-dialog-continuum-v1',
+  featureDialogArtifactsV1: 'feature-dialog-artifacts-v1',
+  featureComposerDeckV1: 'feature-composer-deck-v1',
+  featurePanelSwapV1: 'feature-panel-swap-v1',
 } as const
 
 export const EVENTS = {

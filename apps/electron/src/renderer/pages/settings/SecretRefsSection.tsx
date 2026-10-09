@@ -8,7 +8,7 @@ import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PremiumMenuSelect, Spinner } from '@rox/ui'
-import { SettingsSection, SettingsCard } from '@/components/settings'
+import { SettingsSection, SettingsCard, SettingsCardFooter } from '@/components/settings'
 import type { SecretRefEntry, SecretRefsSettingsPayload } from '../../../shared/types'
 import { SecretProviderStatusRow, secretRefRowShowsUnavailable } from './secret-refs-ui'
 import { toErrorMessage } from '@/lib/errors'
@@ -227,24 +227,23 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
                   )}
                 </div>
               ))}
-              <div className="flex items-center justify-between pt-1 gap-2">
+              <div className="pt-1">
                 <Button variant="ghost" size="sm" onClick={addDraft}>
                   <Plus className="w-3 h-3 mr-1" />
                   {t('settings.runtime.secretAdd')}
                 </Button>
-                <div className="flex items-center gap-2">
-                  {savedFlash ? (
-                    <span className="text-xs text-muted-foreground">{t('settings.runtime.secretSaved')}</span>
-                  ) : null}
-                  <Button size="sm" onClick={() => void save()} disabled={saving || !dirty}>
-                    {saving ? <Spinner className="w-3 h-3" /> : t('settings.runtime.secretSave')}
-                  </Button>
-                </div>
               </div>
               <p className="text-xs text-muted-foreground pt-1">{t('settings.runtime.secretNextSession')}</p>
             </>
           )}
         </div>
+        {drafts !== null && (
+          <SettingsCardFooter saved={savedFlash}>
+            <Button size="sm" onClick={() => void save()} disabled={saving || !dirty}>
+              {saving ? <Spinner className="w-3 h-3" /> : t('settings.runtime.secretSave')}
+            </Button>
+          </SettingsCardFooter>
+        )}
       </SettingsCard>
     </SettingsSection>
   )

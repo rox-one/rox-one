@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { activityRailCollapsedAtom } from '@/atoms/unified-shell'
+import { activityRailCollapsedAtom, featureMissionsBoardV1Atom } from '@/atoms/unified-shell'
 import {
   featureOrbitBoardAtom,
   featureUnifiedShellAtom,
@@ -22,6 +22,10 @@ import { resolveWorkbenchAvailability } from './workbench-rollout'
 import { resolveWorkbenchChrome } from './workbench-chrome'
 import { RetainedSurface } from './RetainedSurface'
 import { useEdgeRevealPanel } from '@/hooks/useEdgeRevealPanel'
+import { useNavigation } from '@/contexts/NavigationContext'
+import { useAction } from '@/actions/useAction'
+import { setMissionsRoutesEnabled } from '../../shared/route-parser'
+import { routes, type Route } from '../../shared/routes'
 
 export interface WorkspaceSurfaceHostProps {
   children: ReactNode
@@ -41,6 +45,7 @@ export function WorkspaceSurfaceHost({
   const persistedPreference = useAtomValue(featureWorkbenchAtom)
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
   const orbitBoardEnabled = useAtomValue(featureOrbitBoardAtom)
+  const missionsEnabled = useAtomValue(featureMissionsBoardV1Atom)
   const topChrome = useAtomValue(featureWorkbenchTopChromeV2Atom)
   const tabGroups = useAtomValue(featureWorkbenchTabGroupsV2Atom)
   const browserSurface = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
@@ -56,6 +61,21 @@ export function WorkspaceSurfaceHost({
   const granularChrome = unifiedShell || workbenchEnabled
   const edgeReveal = useEdgeRevealPanel(granularChrome || ownsPrimaryNavigation)
   const setActivityRailCollapsed = useSetAtom(activityRailCollapsedAtom)
+  const { navigate } = useNavigation()
+
+  // G3 «Миссии» (pilot, default OFF): mirror the flag into the shared route
+  // gate so the `missions` navigator resolves. The rail group writes the same
+  // value when mounted; this host is the always-rendered writer (AppShell
+  // never mounts the rail), so the board is reachable with the flag on.
+  useEffect(() => {
+    setMissionsRoutesEnabled(missionsEnabled)
+  }, [missionsEnabled])
+
+  // `missions.open` is a command-palette entry (no hotkey): enabled only with
+  // the flag on, so OFF keeps the palette as on main.
+  useAction('missions.open', () => void navigate(routes.view.missions() as Route), {
+    enabled: () => missionsEnabled,
+  })
   const chrome = resolveWorkbenchChrome({
     unifiedShell,
     modeRegistry: false,
@@ -95,7 +115,7 @@ export function WorkspaceSurfaceHost({
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {/* Orbit board (G1 pilot, default OFF): ON swaps the centre surface
               for the spatial board; OFF renders children byte-identically. */}
-          {orbitBoardEnabled ? <OrbitBoard /> : children}
+          {orbitBoardEnabled ? <OrbitBoard /> : <>{children}</>}
         </div>
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>

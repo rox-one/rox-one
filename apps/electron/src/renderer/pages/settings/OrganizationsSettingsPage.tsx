@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import {
   SettingsSection,
   SettingsCard,
+  SettingsCardFooter,
   SettingsInput,
   SettingsRow,
   SettingsSelect,
@@ -70,6 +71,7 @@ export default function OrganizationsSettingsPage() {
   const [usernameDraft, setUsernameDraft] = useState('')
   const [emailDraft, setEmailDraft] = useState('')
   const [savingIdentity, setSavingIdentity] = useState(false)
+  const [identitySavedFlash, setIdentitySavedFlash] = useState(false)
   const [membershipAction, setMembershipAction] = useState<string | null>(null)
   const [identityAuthority, setIdentityAuthority] = useState<'native' | 'local'>('local')
 
@@ -222,6 +224,7 @@ export default function OrganizationsSettingsPage() {
     if (savingIdentity) return
 
     setSavingIdentity(true)
+    setIdentitySavedFlash(false)
     try {
       const gate = settingsPageActionResult({
         pageId: 'organizations',
@@ -233,7 +236,8 @@ export default function OrganizationsSettingsPage() {
         username: usernameDraft.trim() || undefined,
         email: emailDraft.trim() || undefined,
       })
-      toast.success(t('settings.orgs.identitySaved'))
+      setIdentitySavedFlash(true)
+      window.setTimeout(() => setIdentitySavedFlash(false), 2400)
     } catch (error) {
       const message = toErrorMessage(error)
       toast.error(t('settings.orgs.identitySaveFailed'), { description: message })
@@ -603,12 +607,12 @@ export default function OrganizationsSettingsPage() {
                   type="email"
                   placeholder={t('settings.orgs.emailPlaceholder')}
                 />
-                <div className="flex justify-end">
-                  <Button size="sm" onClick={() => void handleSaveIdentity()} disabled={savingIdentity}>
-                    {savingIdentity ? t('common.saving') : t('common.save')}
-                  </Button>
-                </div>
               </div>
+              <SettingsCardFooter saved={identitySavedFlash}>
+                <Button size="sm" onClick={() => void handleSaveIdentity()} disabled={savingIdentity}>
+                  {savingIdentity ? t('common.saving') : t('common.save')}
+                </Button>
+              </SettingsCardFooter>
             </SettingsCard>
           </SettingsSection>
           ) : null}

@@ -20,6 +20,16 @@ const visualStories: VisualStory[] = [
     snapshot: 'chat-display-screen',
   },
   {
+    id: viewport => `screen-chat-continuum-${viewportPreset(viewport)}`,
+    name: viewport => `Chat Continuum Screen (${viewportLabel(viewport)})`,
+    snapshot: 'chat-continuum-screen',
+  },
+  {
+    id: viewport => `screen-composer-deck-${viewportPreset(viewport)}`,
+    name: viewport => `Composer Deck Screen (${viewportLabel(viewport)})`,
+    snapshot: 'composer-deck-screen',
+  },
+  {
     id: viewport => `screen-settings-navigator-${viewportPreset(viewport)}`,
     name: viewport => `Settings Navigator Screen (${viewportLabel(viewport)})`,
     snapshot: 'settings-navigator-screen',

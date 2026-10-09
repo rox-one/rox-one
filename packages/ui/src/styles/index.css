@@ -606,6 +606,9 @@ html[data-ui-profile="super-engineering"] .input-container {
   --color-text-subtle: var(--text-subtle);
   --color-chrome-label: var(--chrome-label);
   --color-accent-text: var(--accent-text);
+  --color-success-text: var(--success-text);
+  --color-destructive-text: var(--destructive-text);
+  --color-info-text: var(--info-text);
   --color-accent-foreground: var(--accent-foreground);
   --color-focus: var(--focus);
   --color-focus-ring: var(--focus-ring);
@@ -1441,4 +1444,24 @@ html[data-shell-material="solid"] {
    components/annotations/block-markers.ts via data-ca-block-annotated). */
 [data-ca-block-annotated="true"] {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--info) 22%, transparent);
+}
+
+/* =============================================================================
+   G5 DIALOG CONTINUUM — flat document chrome
+   `data-g05-continuum` is set by the ChatDisplay turn shell only when the
+   feature-dialog-continuum flag is ON, so the legacy card stack is untouched.
+   `data-g05-card-chrome` marks the ResponseCard surface itself.
+============================================================================= */
+[data-g05-continuum="true"] [data-g05-card-chrome] {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* The card's footer bars (`bg-muted/20`) and hairline rules would otherwise
+   read as nested containers inside the document block. */
+[data-g05-continuum="true"] [data-g05-card-chrome] > div.border-t,
+[data-g05-continuum="true"] [data-g05-card-chrome] > div > div.border-t {
+  background: transparent;
+  border-top-color: transparent;
 }

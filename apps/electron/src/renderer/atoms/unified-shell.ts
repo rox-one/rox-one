@@ -405,3 +405,37 @@ export const featureLayoutEngineAtom = atomWithStorage<boolean>(
   undefined,
   { getOnInit: true },
 )
+
+// ── Wave 2 pilot flags (all default OFF) ─────────────────────────────────
+
+/** Dialog continuum v1: chat transcript as a spine document (G5). */
+export const featureDialogContinuumV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureDialogContinuumV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Dialog artifacts v1: inline objects + inline approvals in the turn (G5). */
+export const featureDialogArtifactsV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureDialogArtifactsV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Composer deck v1: chip control plane over the composer (G5). */
+export const featureComposerDeckV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureComposerDeckV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Panel swap v1: swap panels by drag or ⌥⌘S (G6 wave 2). */
+export const featurePanelSwapV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featurePanelSwapV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)

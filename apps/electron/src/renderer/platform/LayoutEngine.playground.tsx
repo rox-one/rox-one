@@ -52,8 +52,22 @@ interface HydrateEngineProps {
 function HydrateEngine({ enabled, preset }: HydrateEngineProps) {
   const setFlag = useSetAtom(featureLayoutEngineAtom)
   const setLayout = useSetAtom(demoLayoutAtom)
+  // The flag atom persists to the shared origin's localStorage: snapshot the
+  // shipped value before this story writes it and restore it on unmount, so a
+  // QA run never leaves featureLayoutEngine ON for the real app. Declared first
+  // so it captures the value before the effects below write.
   React.useEffect(() => {
-    if (localStorage.getItem(getKeyString(KEYS.featureLayoutEngine)) === null) setFlag(enabled)
+    const key = getKeyString(KEYS.featureLayoutEngine)
+    const previous = localStorage.getItem(key)
+    return () => {
+      if (previous === null) localStorage.removeItem(key)
+      else localStorage.setItem(key, previous)
+    }
+  }, [])
+  React.useEffect(() => {
+    // Honour the `enabled` prop at any persisted value — the story owns the
+    // flag for its lifetime and restores the snapshot on unmount.
+    setFlag(enabled)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   React.useEffect(() => {

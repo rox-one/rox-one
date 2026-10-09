@@ -22,6 +22,7 @@ import { Spinner } from '@rox/ui'
 import {
   SettingsSection,
   SettingsCard,
+  SettingsCardFooter,
   SettingsRow,
   SettingsToggle,
   SettingsMenuSelectRow,
@@ -833,23 +834,22 @@ export default function RuntimeSettingsPage() {
                           </Button>
                         </div>
                       ))}
-                      <div className="flex items-center justify-between pt-1 gap-2">
+                      <div className="pt-1">
                         <Button variant="ghost" size="sm" onClick={addEnvEntry}>
                           <Plus className="w-3 h-3 mr-1" />
                           {t('settings.runtime.envAdd')}
                         </Button>
-                        <div className="flex items-center gap-2">
-                          {envSavedFlash ? (
-                            <span className="text-xs text-muted-foreground">{t('settings.runtime.envSaved')}</span>
-                          ) : null}
-                          <Button size="sm" onClick={() => void saveEnvOverrides()} disabled={envSaving || !envDirty}>
-                            {envSaving ? <Spinner className="w-3 h-3" /> : t('settings.runtime.envSave')}
-                          </Button>
-                        </div>
                       </div>
                     </>
                   )}
                 </div>
+                {envEntries !== null && (
+                  <SettingsCardFooter saved={envSavedFlash}>
+                    <Button size="sm" onClick={() => void saveEnvOverrides()} disabled={envSaving || !envDirty}>
+                      {envSaving ? <Spinner className="w-3 h-3" /> : t('settings.runtime.envSave')}
+                    </Button>
+                  </SettingsCardFooter>
+                )}
               </SettingsCard>
             </SettingsSection>
 

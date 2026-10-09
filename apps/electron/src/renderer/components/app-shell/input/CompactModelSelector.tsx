@@ -73,6 +73,12 @@ interface CompactModelSelectorProps {
     statusType?: string
     startedAt?: number
   }
+  /**
+   * `deck` trims the trigger to the 28 px composer-deck chip value slot
+   * (`--text-caption`, token hover only). Default keeps the compact composer
+   * trigger byte-identical.
+   */
+  variant?: 'default' | 'deck'
 }
 
 export function CompactModelSelector({
@@ -85,6 +91,7 @@ export function CompactModelSelector({
   isEmptySession = false,
   connectionUnavailable = false,
   contextStatus,
+  variant = 'default',
 }: CompactModelSelectorProps) {
   const { t } = useTranslation()
   const modelTarget = useTourTarget('composer.model', { variant: 'compact' })
@@ -216,22 +223,27 @@ export function CompactModelSelector({
             : `${t('common.model')}: ${currentModelDisplayName}`}
           className={cn(
             "input-toolbar-btn focus-visible:ring-1 focus-visible:ring-ring motion-reduce:transition-none",
-            isWebUI
-              ? 'min-h-[var(--control-md)] min-w-[var(--control-md)] p-0 text-[9px] font-medium rounded-[var(--radius-control)] flex items-center justify-center outline-none select-none shrink-0'
-              : 'min-h-[var(--control-md)] pl-1.5 pr-1.5 text-[9px] font-medium rounded-[var(--radius-control)] flex items-center gap-1 outline-none select-none min-w-[56px] shrink',
-            isWebUI
-              ? (connectionUnavailable ? 'text-destructive hover:bg-destructive/10' : 'text-foreground/70 hover:bg-foreground/5')
-              : (connectionUnavailable ? 'bg-destructive/10 text-destructive' : 'text-foreground/70 hover:bg-foreground/5'),
+            variant === 'deck'
+              ? 'min-h-[28px] gap-1 rounded-[var(--radius-control)] flex items-center pl-0.5 pr-0.5 text-caption font-medium text-text-primary outline-none select-none shrink min-w-0 hover:bg-surface-hover transition-colors duration-[var(--motion-fast)]'
+              : isWebUI
+                ? 'min-h-[var(--control-md)] min-w-[var(--control-md)] p-0 text-[9px] font-medium rounded-[var(--radius-control)] flex items-center justify-center outline-none select-none shrink-0'
+                : 'min-h-[var(--control-md)] pl-1.5 pr-1.5 text-[9px] font-medium rounded-[var(--radius-control)] flex items-center gap-1 outline-none select-none min-w-[56px] shrink',
+            variant === 'deck'
+              ? (connectionUnavailable ? 'text-[var(--destructive-text)]' : 'text-text-primary')
+              : isWebUI
+                ? (connectionUnavailable ? 'text-destructive hover:bg-destructive/10' : 'text-foreground/70 hover:bg-foreground/5')
+                : (connectionUnavailable ? 'bg-destructive/10 text-destructive' : 'text-foreground/70 hover:bg-foreground/5'),
           )}
         >
           {connectionUnavailable ? (
             <>
               <AlertCircle className="h-3.5 w-3.5" />
-              {!isWebUI && <span>{t('common.unavailable')}</span>}
+              {variant === 'deck' && <span>{t('common.unavailable')}</span>}
+              {variant === 'default' && !isWebUI && <span>{t('common.unavailable')}</span>}
             </>
           ) : (
             <>
-              {isWebUI ? (
+              {isWebUI && variant !== 'deck' ? (
                 <Sparkles className="h-4 w-4" />
               ) : (
                 <>

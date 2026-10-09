@@ -7,12 +7,13 @@
  */
 import { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ArrowLeftRight } from 'lucide-react'
 import { visibleWorkspacePanels } from './auxiliary-layout'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { motion } from 'motion/react'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
-import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, expandedPanelIdAtom, type PanelSpatialDirection } from '@/atoms/panel-stack'
-import { bottomTerminalOpenAtom, featureLayoutEngineAtom } from '@/atoms/unified-shell'
+import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, expandedPanelIdAtom, type PanelSpatialDirection, type PanelStackEntry } from '@/atoms/panel-stack'
+import { bottomTerminalOpenAtom, featureLayoutEngineAtom, featurePanelSwapV1Atom } from '@/atoms/unified-shell'
 import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, reconcilePanelFullScreen, resolvePanelGridTracks, togglePanelFullScreen } from '@/lib/panel-workspace-layout'
@@ -24,6 +25,7 @@ import { isPanelResizeActive } from './resize-activity'
 import { PanelSlot } from './PanelSlot'
 import { TerminalPanel } from './TerminalPanel'
 import { PanelGridResizeSash } from './PanelGridResizeSash'
+import { PanelSwapGripButton } from './PanelSeam'
 import {
   PANEL_GAP,
   PANEL_EDGE_INSET,
@@ -35,6 +37,49 @@ import {
 } from './panel-constants'
 
 const SPATIAL_DIRECTION_BY_KEY: Record<string, PanelSpatialDirection> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }
+
+/** Grid-sash pointer/knob band, matched to PanelGridResizeSash's own hit size. */
+const SWAP_GRIP_TRACK_WIDTH = 28
+
+/** Transient state while a panel-swap drag is in flight. */
+interface PanelSwapDragState {
+  sourceId: string
+  targetId: string | null
+  pointer: { x: number; y: number } | null
+}
+
+/**
+ * Trade two panels in the flat stack. Ids key the move, so a caller may hold a
+ * snapshot from an earlier render and still land the permutation on the
+ * current order. Proportions travel with their panels; the sum is unchanged.
+ */
+export function swapPanelOrder(
+  stack: readonly PanelStackEntry[],
+  firstId: string,
+  secondId: string,
+): PanelStackEntry[] {
+  const first = stack.findIndex((entry) => entry.id === firstId)
+  const second = stack.findIndex((entry) => entry.id === secondId)
+  if (first < 0 || second < 0 || first === second) return stack as PanelStackEntry[]
+  const next = [...stack]
+  next[first] = stack[second]
+  next[second] = stack[first]
+  return next
+}
+
+/**
+ * The neighbour a focused panel trades places with: the next panel in reading
+ * order, falling back to the previous one at the end of the stack.
+ */
+export function resolveSwapNeighborId(
+  stack: readonly PanelStackEntry[],
+  focusedId: string | null,
+): string | null {
+  if (!focusedId) return null
+  const index = stack.findIndex((entry) => entry.id === focusedId)
+  if (index < 0) return null
+  return stack[index + 1]?.id ?? stack[index - 1]?.id ?? null
+}
 
 const PANEL_TRANSITION = { type: 'tween' as const, duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as [number, number, number, number] }
 /** Compact and desktop panes share the same continuous chrome boundary. */
@@ -187,6 +232,120 @@ export function PanelStackContainer({
     setExpandedPanelId((current) => togglePanelFullScreen(current, focusedId, panelIds))
   }, { enabled: () => panels.length > 0 })
 
+  // ── G6 wave 2: panel swap (featurePanelSwapV1) ──────────────────────────
+  // Order lives in `panelStackAtom` (already persisted and validated on read),
+  // so a swap is a permutation, never a new panel: every routing rule that
+  // depends on the stack keeps its contract. Focus follows the panel — the
+  // focused id is unchanged while its position moves.
+  const swapEnabled = useAtomValue(featurePanelSwapV1Atom)
+  const setPanelStack = useSetAtom(panelStackAtom)
+  const [swapDrag, setSwapDrag] = useState<PanelSwapDragState | null>(null)
+  const swapSourceRef = useRef<string | null>(null)
+  const swapStartRef = useRef<{ x: number; y: number } | null>(null)
+  const swapDragging = swapDrag !== null
+
+  const swapPanels = useCallback((firstId: string, secondId: string) => {
+    setPanelStack((current) => swapPanelOrder(current, firstId, secondId))
+  }, [setPanelStack])
+
+  const swapFocusedWithNeighbor = useCallback(() => {
+    const neighborId = resolveSwapNeighborId(panels, focusedId ?? null)
+    if (!focusedId || !neighborId) return
+    swapPanels(focusedId, neighborId)
+  }, [panels, focusedId, swapPanels])
+
+  // The single shipped binding. `enabled` is the flag gate: with the flag OFF
+  // the chord is never claimed, so the legacy shell's keys behave untouched.
+  useAction('panel.swap', swapFocusedWithNeighbor, {
+    enabled: () => swapEnabled && !isCompact && panels.length > 1,
+  })
+
+  const beginSwapDrag = useCallback((sourceId: string, event: React.PointerEvent<HTMLButtonElement>) => {
+    swapSourceRef.current = sourceId
+    swapStartRef.current = { x: event.clientX, y: event.clientY }
+    setSwapDrag({ sourceId, targetId: null, pointer: { x: event.clientX, y: event.clientY } })
+  }, [])
+
+  // A swap drag is a window-level gesture: the pointer leaves the grip at once,
+  // and the drop target is whatever panel is under it.
+  useEffect(() => {
+    if (!swapDragging) return
+    const resolveTarget = (x: number, y: number): string | null => {
+      const element = document.elementFromPoint(x, y)
+      const cell = element?.closest<HTMLElement>('[data-panel-role="content"][data-panel-id]')
+      if (!cell || cell.closest('[inert], [aria-hidden="true"]')) return null
+      const id = cell.dataset.panelId ?? null
+      return id && id !== swapSourceRef.current ? id : null
+    }
+    const handleMove = (event: PointerEvent) => {
+      const targetId = resolveTarget(event.clientX, event.clientY)
+      setSwapDrag((current) => (current
+        ? { ...current, targetId, pointer: { x: event.clientX, y: event.clientY } }
+        : current))
+    }
+    const handleUp = (event: PointerEvent) => {
+      const sourceId = swapSourceRef.current
+      const start = swapStartRef.current
+      const targetId = resolveTarget(event.clientX, event.clientY)
+      // A press that never became a drag is a click on the grip, not a swap.
+      const moved = !!start && Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 4
+      swapSourceRef.current = null
+      swapStartRef.current = null
+      setSwapDrag(null)
+      if (sourceId && targetId && moved) swapPanels(sourceId, targetId)
+    }
+    const handleCancel = () => { swapSourceRef.current = null; swapStartRef.current = null; setSwapDrag(null) }
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+    window.addEventListener('pointercancel', handleCancel)
+    return () => {
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+      window.removeEventListener('pointercancel', handleCancel)
+    }
+  }, [swapDragging, swapPanels])
+
+  const swapGripLabel = t('shell.panel.swap', { defaultValue: 'Поменять панели местами' })
+  const swapBlockedLabel = t('shell.panel.swapBlocked', { defaultValue: 'Обмен недоступен: у панели нет соседа' })
+  const swapSourceEntry = swapDrag ? panels.find((entry) => entry.id === swapDrag.sourceId) : undefined
+  const swapSourceTitle = swapSourceEntry?.tool
+    ? t(`navigation.tools.${swapSourceEntry.tool}`)
+    : t('navigation.mainSurface')
+  const swapWithLabel = t('shell.panel.swapWith', {
+    defaultValue: 'Поменять местами с «{{title}}»',
+    title: swapSourceTitle,
+  })
+  const swapTargetIndex = swapDrag?.targetId ? panels.findIndex((entry) => entry.id === swapDrag.targetId) : -1
+  // One grip per vertical seam, but only for the flat single-row grid: a
+  // wrapped/multi-row or tool-tab layout keeps the keyboard path alone.
+  const swapGripsEnabled = swapEnabled && !isCompact && !isExpanded && !hasTools && !singlePanel
+    && shape.rows === 1 && panels.length > 1
+  const swapGrips = useMemo(() => {
+    if (!swapGripsEnabled) return []
+    const grips: { key: string; column: number; sourceId: string; neighborId: string | null }[] = []
+    for (let index = 0; index < shape.columns - 1; index += 1) {
+      const leftId = panelIds[index]
+      const rightId = panelIds[index + 1]
+      if (!leftId || !rightId) continue
+      const sourceId = focusedId === rightId ? rightId : leftId
+      grips.push({
+        key: `${gridKey}:swap:${index}:${panelIdentity}`,
+        column: index,
+        sourceId,
+        neighborId: sourceId === leftId ? rightId : leftId,
+      })
+    }
+    return grips
+  }, [swapGripsEnabled, shape.columns, panelIds, focusedId, gridKey, panelIdentity])
+
+  // The ghost rides the pointer inside the shell's own coordinate box, so a
+  // transformed ancestor cannot displace a `fixed` overlay.
+  const swapGhostOffset = (() => {
+    if (!swapDrag?.pointer || !layoutRef.current) return null
+    const rect = layoutRef.current.getBoundingClientRect()
+    return { left: swapDrag.pointer.x - rect.left + 14, top: swapDrag.pointer.y - rect.top + 14 }
+  })()
+
   // Escape restores the shared grid. A dismissible layer at a negative
   // priority yields to dialogs/popovers/inputs, which consume Escape first.
   useEffect(() => {
@@ -290,6 +449,7 @@ export function PanelStackContainer({
       data-mobile-menu-root="true"
       data-shell-density={isCompact ? 'compact' : 'regular'}
       data-panel-layout={isCompact ? 'compact' : isExpanded ? 'screen' : engineLayout ? engineLayout.effective : mode}
+      data-panel-swap-dragging={swapDrag ? 'true' : undefined}
       className="flex-1 min-h-0 min-w-0 flex flex-col relative z-chrome panel-scroll @container/shell"
       style={{
         overflowX: isCompact ? 'hidden' : 'auto',
@@ -440,10 +600,61 @@ export function PanelStackContainer({
             {!hasTools && !singlePanel && Array.from({ length: shape.rows - 1 }, (_, index) => (
               <PanelGridResizeSash key={`${gridKey}:y:${index}:${panelIdentity}`} axis="y" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
             ))}
+            {swapGrips.map((grip) => (
+              <div
+                key={grip.key}
+                data-panel-swap-seam={grip.column}
+                className="pointer-events-none relative z-sash"
+                style={{
+                  width: SWAP_GRIP_TRACK_WIDTH,
+                  gridColumn: grip.column + 1,
+                  gridRow: '1 / -1',
+                  justifySelf: 'end',
+                  alignSelf: 'stretch',
+                  transform: `translateX(calc(50% + ${PANEL_GAP / 2}px))`,
+                }}
+              >
+                <PanelSwapGripButton
+                  gripLabel={swapGripLabel}
+                  blockedLabel={swapBlockedLabel}
+                  disabled={panels.length < 2}
+                  active={swapDrag?.sourceId === grip.sourceId}
+                  onDragStart={(event) => beginSwapDrag(grip.sourceId, event)}
+                  onActivate={() => { if (grip.neighborId) swapPanels(grip.sourceId, grip.neighborId) }}
+                />
+              </div>
+            ))}
+            {swapEnabled && swapDrag?.targetId && swapTargetIndex >= 0 && !isExpanded && !hasTools && !singlePanel ? (
+              <div
+                key={`${panelIdentity}:swap-target`}
+                data-panel-swap-target={swapDrag.targetId}
+                className="pointer-events-none relative z-popover rounded-[var(--radius-card)] border-2 border-accent bg-accent/5"
+                style={{
+                  gridColumn: (swapTargetIndex % shape.columns) + 1,
+                  gridRow: Math.floor(swapTargetIndex / shape.columns) + 1,
+                }}
+              >
+                <span className="absolute left-1/2 top-2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-card)] border border-accent bg-surface-elevated px-2.5 py-1 text-small font-medium text-text-primary shadow-[var(--shadow-popover)]">
+                  <ArrowLeftRight className="icon-caption text-accent" />
+                  {swapWithLabel}
+                </span>
+              </div>
+            ) : null}
           </motion.div>
         </div>
         {resizeHandles && !isExpanded && resizeHandles}
       </motion.div>
+      {swapEnabled && swapGhostOffset ? (
+        <div
+          data-panel-swap-ghost="true"
+          data-panel-swap-ghost-target={swapDrag?.targetId ?? 'none'}
+          className="pointer-events-none absolute z-scrim flex items-center gap-1.5 rounded-[var(--radius-card)] border border-border-subtle bg-surface-elevated px-2 py-1 text-small font-medium text-text-primary shadow-[var(--shadow-overlay)]"
+          style={swapGhostOffset}
+        >
+          <ArrowLeftRight className="icon-caption text-accent" />
+          {swapSourceTitle}
+        </div>
+      ) : null}
     </div>
   )
 }

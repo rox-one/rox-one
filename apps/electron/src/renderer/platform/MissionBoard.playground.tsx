@@ -1,5 +1,5 @@
 /**
- * Playground story: `missions-board` — the G3 «Миссии» board surface.
+ * Playground story: `screen-missions-board` — the G3 «Миссии» board surface.
  *
  * File-discovered (`*.playground.tsx`); no registry edits. Hydrates an
  * isolated jotai store with the feature flag and mock session metadata, and
@@ -12,6 +12,7 @@ import { NavigationProvider } from '@/contexts/NavigationContext'
 import { MissionBoard } from '@/platform/MissionBoard'
 import { featureMissionsBoardV1Atom } from '@/atoms/unified-shell'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
+import { KEYS, getKeyString } from '@/lib/local-storage'
 import { setMissionsRoutesEnabled, resetMissionsRoutesEnabled } from '../../shared/route-parser'
 import { definePlaygroundStory } from '@/playground/registry/story-loader'
 
@@ -44,6 +45,19 @@ interface HydrateProps {
 function Hydrate({ enabled, populated, children }: HydrateProps) {
   const setFlag = useSetAtom(featureMissionsBoardV1Atom)
   const setMetaMap = useSetAtom(sessionMetaMapAtom)
+
+  // The flag atom persists to the shared origin's localStorage: snapshot the
+  // shipped value before any variant writes it and restore it on unmount, so a
+  // QA run never leaves featureMissionsBoardV1 ON for the real app. Declared
+  // first so it captures the value before the variant effect below writes.
+  React.useEffect(() => {
+    const key = getKeyString(KEYS.featureMissionsBoardV1)
+    const previous = localStorage.getItem(key)
+    return () => {
+      if (previous === null) localStorage.removeItem(key)
+      else localStorage.setItem(key, previous)
+    }
+  }, [])
 
   React.useEffect(() => {
     setFlag(enabled)
@@ -89,7 +103,7 @@ function MissionBoardDemo({ enabled, populated }: MissionBoardDemoProps) {
 }
 
 export default definePlaygroundStory({
-  id: 'missions-board',
+  id: 'screen-missions-board',
   name: 'MissionBoard',
   category: 'Unified Shell',
   level: 'Screens',

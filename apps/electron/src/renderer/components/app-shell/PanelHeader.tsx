@@ -39,7 +39,8 @@ import { useCompensateForStoplight } from '@/context/StoplightContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { panelStackAtom, parseSessionIdFromRoute } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
-import { featureSessionLanesV1Atom } from '@/atoms/unified-shell'
+import { featureSessionLanesV1Atom, featureLayoutEngineAtom } from '@/atoms/unified-shell'
+import { useOptionalPanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
 import { getSessionTitle } from '@/utils/session'
 import { deriveLaneStatus, LANE_RULE_COLOR } from './LaneRule'
 import {
@@ -114,6 +115,29 @@ function PanelHeaderMeta({ title }: { title?: string }) {
         {t(`session.lane.status.${status}`, { defaultValue: status })}
       </span>
     </>
+  )
+}
+
+/**
+ * G4 «Студия»: the active layout preset as a pill in the focused panel header
+ * («Раскладка: Триптих»), so the geometry is never invisible. Self-contained —
+ * renders nothing when the engine flag is off, the preset is `auto`, the panel
+ * is not the focused one, or the header is compact (the mobile shell keeps its
+ * single composition).
+ */
+function PanelHeaderLayoutPreset({ focused }: { focused?: boolean }) {
+  const { t } = useTranslation()
+  const enabled = useAtomValue(featureLayoutEngineAtom)
+  const { preset } = useOptionalPanelWorkspaceLayout()
+  if (!enabled || !focused || preset === 'auto') return null
+  const label = t(`layout.deck.preset.${preset}`, { defaultValue: preset })
+  return (
+    <span
+      className="titlebar-no-drag shrink-0 rounded-full bg-[var(--state-selected)] px-2 py-0.5 text-caption text-text-primary"
+      data-panel-header-layout-preset={preset}
+    >
+      {t('layout.deck.pill', { defaultValue: 'Раскладка: {{preset}}', preset: label })}
+    </span>
   )
 }
 
@@ -519,6 +543,7 @@ export function PanelHeader({
       {identity}
       {status}
       {metaSlot}
+      <PanelHeaderLayoutPreset focused={isFocusedPanel} />
       {centerButton && (
         <div className="titlebar-no-drag shrink-0">
           {centerButton}

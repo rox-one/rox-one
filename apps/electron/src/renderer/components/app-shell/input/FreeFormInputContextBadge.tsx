@@ -35,6 +35,12 @@ export interface FreeFormInputContextBadgeProps {
    * rendered at the dictation spot; `undefined` (not recording) hides it.
    */
   liveLevel?: number
+  /**
+   * `deck` sizes the badge to the 28 px composer-deck chip value slot
+   * (`--text-caption`, token hover). Default preserves the compact composer
+   * geometry byte-for-byte.
+   */
+  variant?: 'default' | 'deck'
 }
 
 /**
@@ -93,6 +99,7 @@ export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, Fre
       'data-tutorial': dataTutorial,
       'aria-pressed': ariaPressed,
       liveLevel,
+      variant = 'default',
     },
     ref
   ) {
@@ -113,16 +120,20 @@ export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, Fre
         data-tutorial={dataTutorial}
         className={cn(
           // Base styles - shrink + min-w-0 allows badge to compress in tight layouts
-          "input-toolbar-btn inline-flex items-center gap-1.5 h-6 rounded-[var(--radius-control)] text-[9px] text-foreground transition-colors select-none shrink min-w-0",
+          variant === 'deck'
+            ? 'inline-flex items-center gap-1.5 h-7 rounded-[var(--radius-control)] text-caption text-text-primary transition-colors select-none shrink min-w-0'
+            : 'input-toolbar-btn inline-flex items-center gap-1.5 h-6 rounded-[var(--radius-control)] text-[9px] text-foreground transition-colors select-none shrink min-w-0',
           "disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring motion-reduce:transition-none",
           // Padding: more padding when showing label
           showLabel ? "px-2" : "px-1.5",
           // Collapsed with selection: visible background + thin 1px border + margin
-          !isExpanded && hasSelection && "bg-background border border-foreground/5 mx-0.5",
+          variant === 'default' && !isExpanded && hasSelection && "bg-background border border-foreground/5 mx-0.5",
           // Hover state (when not already showing background from selection)
-          !(!isExpanded && hasSelection) && "hover:bg-foreground/5",
+          variant === 'deck'
+            ? 'hover:text-text-primary hover:bg-surface-hover'
+            : !(!isExpanded && hasSelection) && "hover:bg-foreground/5",
           // Open state (dropdown shown)
-          isOpen && "bg-foreground/5",
+          isOpen && (variant === 'deck' ? 'bg-surface-hover' : 'bg-foreground/5'),
           className
         )}
       >
