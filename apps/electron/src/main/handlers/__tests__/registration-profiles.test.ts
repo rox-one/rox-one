@@ -162,6 +162,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     messaging,
     entities,
     knowledgeMap,
+    devSpace,
   ] = await Promise.all([
     import('@rox/server-core/handlers/rpc/auth'),
     import('@rox/server-core/handlers/rpc/automations'),
@@ -221,6 +222,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/messaging'),
     import('@rox/server-core/handlers/rpc/entities'),
     import('@rox/server-core/handlers/rpc/knowledge-map'),
+    import('@rox/server-core/handlers/rpc/dev-space'),
   ])
 
   const [meetings, personalTasks, feed, runtimeTrace] = await Promise.all([
@@ -303,6 +305,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...Object.values(RPC_CHANNELS.calendar),
     ...entities.HANDLED_CHANNELS,
     ...knowledgeMap.HANDLED_CHANNELS,
+    ...devSpace.HANDLED_CHANNELS,
   ])
 }
 
