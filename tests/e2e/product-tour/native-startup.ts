@@ -46,11 +46,20 @@ export async function observeFirstNativeWindow(
     stream?.on('data', listener)
     return { stream, listener }
   })
-  const timeoutMs = options.timeoutMs ?? NATIVE_FIRST_WINDOW_TIMEOUT_MS
+  // Electron 44 added ~18 s to an already-slow Windows CI boot, and the last
+  // green Electron-39 Windows lane shows the same ~72.9 s stall: the main
+  // process stays JS-silent (~68.4 s) until the first node:sqlite/NativeAuthority
+  // open, which itself takes 68-215 s in Windows CI. The 30 s local bound is
+  // therefore unreachable in CI, so follow the repo's "xN in CI" startup-budget
+  // convention and widen it 6x to 180 s there while keeping the local default.
+  const timeoutMs = options.timeoutMs
+    ?? (process.env.CI ? NATIVE_FIRST_WINDOW_TIMEOUT_MS * 6 : NATIVE_FIRST_WINDOW_TIMEOUT_MS)
   try {
     if (!(timeoutMs > 0)) return await app.firstWindow()
+    // Pass the bound to Playwright too: firstWindow() has its own 30 s default that
+    // would reject before the race's timer and make the widened CI bound useless.
     return await Promise.race([
-      app.firstWindow(),
+      app.firstWindow({ timeout: timeoutMs }),
       new Promise<never>((_, reject) => {
         // The losing arm only fails an already-settled race, and it never holds
         // the runner open once the real window arrived.

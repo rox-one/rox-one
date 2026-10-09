@@ -25,6 +25,7 @@ import { loadPlanFromPath, type SessionConfig as Session } from '../sessions/sto
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
 import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
+import { isProjectMemoryInjectable } from '../memory/document-provenance.ts';
 import { DEFAULT_MODEL, isClaudeModel, isAdaptiveThinkingAlwaysOnModel, getDefaultSummarizationModel, getModelContextWindow } from '../config/models.ts';
 import { getCredentialManager } from '../credentials/index.ts';
 import { loadPreferences, formatPreferencesForPrompt, getCoAuthorPreference } from '../config/preferences.ts';
@@ -710,6 +711,9 @@ export class ClaudeAgent extends BaseAgent {
       const project = loadProjectById(this.workspaceRootPath, projectId);
       if (!project) return null;
       const slug = project.config.slug;
+      // Provenance gate (spec c1.2): an untrusted-stamped project MEMORY.md is
+      // never injected, even though it is read here rather than via the index.
+      const memoryInjectable = isProjectMemoryInjectable(this.workspaceRootPath, slug, this.config.agentProfileSnapshot?.memoryScope);
       return {
         name: project.config.name,
         description: project.config.description,
@@ -721,7 +725,7 @@ export class ClaudeAgent extends BaseAgent {
           sizeBytes: a.sizeBytes,
         })),
         memoryPath: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : getProjectMemoryPath(this.workspaceRootPath, slug),
-        memoryContent: this.config.agentProfileSnapshot?.memoryScope === 'none' ? undefined : loadProjectMemory(this.workspaceRootPath, slug) ?? undefined,
+        memoryContent: memoryInjectable ? loadProjectMemory(this.workspaceRootPath, slug) ?? undefined : undefined,
         roadmapContent: loadProjectRoadmapPromptText(this.workspaceRootPath, slug),
       };
     } catch (error) {

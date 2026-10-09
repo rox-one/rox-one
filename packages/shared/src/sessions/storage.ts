@@ -574,6 +574,10 @@ export async function updateSessionMetadata(
     | 'archivedAt'
     | 'projectId'
     | 'projectIds'
+    | 'creator'
+    | 'owner'
+    | 'participants'
+    | 'visibility'
   >>
 ): Promise<void> {
   const session = loadSession(workspaceRootPath, sessionId);
@@ -598,6 +602,10 @@ export async function updateSessionMetadata(
   if ('archivedAt' in updates) session.archivedAt = updates.archivedAt;
   if ('projectIds' in updates) Object.assign(session, withProjectMembership(updates.projectIds ?? []));
   else if ('projectId' in updates) Object.assign(session, withProjectMembership(updates.projectId ? [updates.projectId] : []));
+  if ('creator' in updates) session.creator = updates.creator;
+  if ('owner' in updates) session.owner = updates.owner;
+  if ('participants' in updates) session.participants = updates.participants;
+  if ('visibility' in updates) session.visibility = updates.visibility;
 
   await saveSession(session);
 }

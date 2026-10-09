@@ -11,6 +11,7 @@ import { loadMeetingQueryIndex, saveMeetingQueryIndex } from '../../meetings/que
 import { applyNativeCaptureIntent, type CaptureIntentAction } from '../../meetings/capture.ts'
 import { applyNativeImportIntent, type ImportIntentSpec } from '../../meetings/import.ts'
 import { applyNativeFinalizeIntent } from '../../meetings/finalize.ts'
+import { MeetingObserveCoordinator } from '../../meetings/observe.ts'
 import { applyNativeManualNote, applyNativeSegmentCorrection, type ManualNoteSpec, type SegmentCorrectionSpec } from '../../meetings/manual.ts'
 import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
 import { appendProposalJournalEvent } from '../../meetings/proposal-journal.ts'
@@ -38,6 +39,15 @@ const jobStores = new Map<string, OutboxJob[]>()
 const nativeRuntimes = new Map<string, NativeExecuteRuntime>()
 const mailLedgers = new Map<string, Map<string, MailLedgerEntry>>()
 const mailSeen = new Map<string, Set<string>>()
+const observeCoordinators = new Map<string, MeetingObserveCoordinator>()
+
+function observeFor(workspaceId: string): MeetingObserveCoordinator {
+  const existing = observeCoordinators.get(workspaceId)
+  if (existing) return existing
+  const created = new MeetingObserveCoordinator((id) => meetingPersistRoot(id))
+  observeCoordinators.set(workspaceId, created)
+  return created
+}
 
 function storeFor(workspaceId: string): ProposalStore {
   const existing = proposalStores.get(workspaceId)
@@ -81,6 +91,7 @@ export function resetMeetingHandlerStateForTests(): void {
   proposalStores.clear()
   jobStores.clear()
   nativeRuntimes.clear()
+  observeCoordinators.clear()
 }
 
 function mailLedgerFor(workspaceId: string): Map<string, MailLedgerEntry> {
@@ -141,6 +152,11 @@ export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.FINALIZE,
   RPC_CHANNELS.meetings.ADD_MANUAL_NOTE,
   RPC_CHANNELS.meetings.CORRECT_SEGMENT,
+  RPC_CHANNELS.meetings.OBSERVE_START,
+  RPC_CHANNELS.meetings.OBSERVE_STOP,
+  RPC_CHANNELS.meetings.OBSERVE_STATE,
+  RPC_CHANNELS.meetings.SESSION_SUMMARY,
+  RPC_CHANNELS.meetings.TRANSCRIPT_LINES,
 ] as const
 
 export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): void {
@@ -479,6 +495,43 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       return { meeting: result.meeting }
     },
   )
+  const observeArgs = (raw: unknown): { workspaceId: string; meetingId: string } | null => {
+    if (!raw || typeof raw !== 'object') return null
+    const record = raw as Record<string, unknown>
+    if (typeof record.workspaceId !== 'string' || !record.workspaceId) return null
+    if (typeof record.meetingId !== 'string' || !record.meetingId) return null
+    return { workspaceId: record.workspaceId, meetingId: record.meetingId }
+  }
+  server.handle(RPC_CHANNELS.meetings.OBSERVE_START, async (_ctx, args: unknown) => {
+    const parsed = observeArgs(args)
+    if (!parsed) return { observing: false }
+    const result = observeFor(parsed.workspaceId).start(parsed)
+    return { observing: result.ok ? result.observing : false }
+  })
+  server.handle(RPC_CHANNELS.meetings.OBSERVE_STOP, async (_ctx, args: unknown) => {
+    const parsed = observeArgs(args)
+    if (!parsed) return { observing: false }
+    const result = observeFor(parsed.workspaceId).stop(parsed)
+    return { observing: result.ok ? result.observing : false }
+  })
+  server.handle(RPC_CHANNELS.meetings.OBSERVE_STATE, async (_ctx, args: unknown) => {
+    const parsed = observeArgs(args)
+    if (!parsed) return { observing: false }
+    const result = observeFor(parsed.workspaceId).state(parsed)
+    return { observing: result.ok ? result.observing : false }
+  })
+  server.handle(RPC_CHANNELS.meetings.SESSION_SUMMARY, async (_ctx, args: unknown) => {
+    const parsed = observeArgs(args)
+    if (!parsed) return null
+    return observeFor(parsed.workspaceId).summary(parsed)
+  })
+  server.handle(RPC_CHANNELS.meetings.TRANSCRIPT_LINES, async (_ctx, args: unknown) => {
+    const parsed = observeArgs(args)
+    if (!parsed) return []
+    const record = args as Record<string, unknown>
+    const afterSeq = typeof record.afterSeq === 'number' && Number.isSafeInteger(record.afterSeq) ? record.afterSeq : undefined
+    return observeFor(parsed.workspaceId).transcriptLines(parsed.meetingId, afterSeq)
+  })
   server.handle(
     RPC_CHANNELS.meetings.OPEN_TARGET,
     async (
