@@ -12,7 +12,7 @@ import {
 } from './backends/types.ts';
 import type { CredentialId, CredentialType, StoredCredential, CredentialHealthStatus, CredentialHealthIssue } from './types.ts';
 import type { LlmAuthType, LlmProviderType } from '../config/llm-connections.ts';
-import { CredentialStoreError, SecureStorageBackend } from './backends/secure-storage.ts';
+import { SecureStorageBackend } from './backends/secure-storage.ts';
 import { debug, isDebugEnabled } from '../utils/debug.ts';
 import {
   CREDENTIAL_ENVELOPE_CODEC,
@@ -176,20 +176,8 @@ export class CredentialManager {
     await this.ensureInitialized();
     if (this.backends.length === 0) throw new Error('Native credential storage unavailable');
     for (const backend of this.backends) {
-      let stored: StoredCredential | null;
-      try {
-        stored = backend instanceof SecureStorageBackend ? await backend.getStrict(id) : await backend.get(id);
-      } catch (error) {
-        if (
-          backend instanceof SecureStorageBackend
-          && error instanceof CredentialStoreError
-          && (error.code === 'WRITE_BLOCKED' || error.code === 'PROVIDER_UNAVAILABLE')
-        ) {
-          // Vault unreadable pending repair; local WS may still use the legacy session token.
-          return null;
-        }
-        throw error;
-      }
+      // getStrict yields null only for an absent store; a damaged/unreadable one throws.
+      const stored = backend instanceof SecureStorageBackend ? await backend.getStrict(id) : await backend.get(id);
       if (stored === null) continue;
       const credential = classifyStoredCredential(id.type, stored)?.credential;
       if (!credential || typeof credential.value !== 'string' || !credential.value.trim()) {

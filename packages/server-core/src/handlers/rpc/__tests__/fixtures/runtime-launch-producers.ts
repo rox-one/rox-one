@@ -12,6 +12,10 @@ const directory = process.env.ROX_CONFIG_DIR!
 const workspace = join(directory, 'workspace')
 mkdirSync(workspace, { recursive: true })
 writeFileSync(join(directory, 'config.json'), JSON.stringify({ workspaces: [{ id: 'launch-workspace', name: 'Launch fixture', rootPath: workspace }] }))
+// automations.TEST resolves payload.automationId through the workspace automations.json
+// loader (readConfigOrEmpty -> flat matchers); without this file the product throws
+// 'Automation not found'.
+writeFileSync(join(workspace, 'automations.json'), JSON.stringify({ version: 2, automations: { SchedulerTick: [{ id: 'saved-automation-id', name: 'Saved automation', actions: [{ type: 'prompt', prompt: 'Saved automation prompt' }] }] } }))
 const { RPC_CHANNELS } = await import('@rox/shared/protocol')
 const { registerTasksHandlers } = await import('../../tasks')
 const { registerAutomationsHandlers } = await import('../../automations')

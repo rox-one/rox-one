@@ -40,8 +40,9 @@ describe('ROX2-187..190 native RPC list/read/act gates', () => {
     expect(src).toContain('rpcVoiceReadResult')
     expect(src).toContain('rpcVoiceActResult')
     expect(src).toContain("action: 'write'")
-    // ddf97e3d5 rewrote voice.ts; the destructive history path is gated with the
+// ddf97e3d5 rewrote voice.ts; the destructive history path is gated with the
     // authority's `delete` action (NATIVE_AUTHORITY_ACTIONS has no 'destroy').
+    // DTO marker: voice claims action 'write'; its destructive fence is nativeAction 'delete' (NATIVE_AUTHORITY_ACTIONS has no 'destroy').
     expect(src).toContain("nativeAction: 'delete'")
     expect(src).not.toContain("action: 'spend'")
     expect(src).not.toContain('conation.dev')

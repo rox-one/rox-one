@@ -6,6 +6,7 @@
  */
 
 import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { getLlmConnections } from '@rox/shared/config'
 import { getIdentityStore } from '@rox/core/platform/identity/store'
@@ -143,6 +144,9 @@ export function buildAggregatedState(workspaceId?: string): IdentityState {
     profile: base.profile,
     connections,
     entitlements: base.entitlements,
+    // a2.5: the id the server compares for session attribution/write access, so
+    // a desktop "assign to me" targets the same id space ('installation' locally).
+    sessionActorId: LOCAL_ROX_CALLER.subject,
   }
 }
 
@@ -165,7 +169,7 @@ export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): 
     if (args?.workspaceId) assertWorkspaceScope(ctx, args.workspaceId, 'Identity workspace access denied')
     if (ctx.principal) {
       if (!deps.nativeData || !ctx.workspaceId) throw new Error('Native self profile unavailable')
-      return { annotationActorId: ctx.principal.subject, profile: deps.nativeData.authority.getSelfIdentityProfile(ctx.principal, ctx.workspaceId), connections: [], entitlements: [] }
+      return { annotationActorId: ctx.principal.subject, sessionActorId: ctx.principal.subject, profile: deps.nativeData.authority.getSelfIdentityProfile(ctx.principal, ctx.workspaceId), connections: [], entitlements: [] }
     }
     return buildAggregatedState(args?.workspaceId)
   }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })

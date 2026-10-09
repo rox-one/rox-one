@@ -738,6 +738,10 @@ client.onConnectionStateChanged((state) => {
     openDocument: (id, docId) => ipcRenderer.invoke(M.OPEN_DOC, id, docId),
     reveal: (id, docId) => ipcRenderer.invoke(M.REVEAL, id, docId),
     removeDocument: (id, docId) => ipcRenderer.invoke(M.REMOVE_DOC, id, docId),
+    observeStart: (id) => ipcRenderer.invoke(M.OBSERVE_START, id),
+    observeStop: (id) => ipcRenderer.invoke(M.OBSERVE_STOP, id),
+    observeIngest: (id, input) => ipcRenderer.invoke(M.OBSERVE_INGEST, id, input),
+    observeLines: (id, afterSeq) => ipcRenderer.invoke(M.OBSERVE_LINES, id, afterSeq),
     onChanged: (cb) => {
       const handler = (_e: unknown, event: { id: string }) => cb(event)
       ipcRenderer.on(M.CHANGED, handler)

@@ -76,6 +76,145 @@ export type EvidenceSpan = {
   quote: string
 }
 
+/**
+ * Observe-only live capture (S6 / d2). A `MeetingSessionRecord` is the live
+ * join state; it is not a Conation room and not verified provider audio.
+ */
+export const MEETING_SESSION_MODES = ['agent', 'bidi', 'transcribe', 'observe'] as const
+export type MeetingSessionMode = (typeof MEETING_SESSION_MODES)[number]
+
+export const MEETING_SESSION_TRANSPORTS = ['mic', 'chrome', 'chrome-node', 'twilio'] as const
+export type MeetingSessionTransport = (typeof MEETING_SESSION_TRANSPORTS)[number]
+
+export const MEETING_SESSION_STATES = [
+  'idle',
+  'joining',
+  'in_call',
+  'paused',
+  'leaving',
+  'ended',
+  'failed',
+  'blocked',
+] as const
+export type MeetingSessionState = (typeof MEETING_SESSION_STATES)[number]
+
+/** Terminal states never transition again; a new session record must be opened. */
+export const TERMINAL_SESSION_STATES = ['ended', 'failed', 'blocked'] as const
+
+const SESSION_TRANSITIONS: Record<MeetingSessionState, readonly MeetingSessionState[]> = {
+  idle: ['joining', 'failed', 'blocked'],
+  joining: ['in_call', 'ended', 'failed', 'blocked'],
+  in_call: ['paused', 'leaving', 'ended', 'failed'],
+  paused: ['in_call', 'leaving', 'ended', 'failed'],
+  leaving: ['ended', 'failed'],
+  ended: [],
+  failed: [],
+  blocked: [],
+}
+
+export function isTerminalSessionState(state: MeetingSessionState): boolean {
+  return (TERMINAL_SESSION_STATES as readonly MeetingSessionState[]).includes(state)
+}
+
+export function isActiveSessionState(state: MeetingSessionState): boolean {
+  return state === 'joining' || state === 'in_call' || state === 'paused' || state === 'leaving'
+}
+
+export function canTransitionSession(from: MeetingSessionState, to: MeetingSessionState): boolean {
+  return SESSION_TRANSITIONS[from].includes(to)
+}
+
+/** Keyed session lock: one live session per `transport:url`. */
+export function sessionLockKey(transport: MeetingSessionTransport, url: string): string {
+  return `${transport}:${url}`
+}
+
+export type MeetingCaptionSource = {
+  id: string
+  epoch: number
+  revision: number
+  finalized: boolean
+  ownEcho?: boolean
+}
+
+/** Per-line provenance. `self` distinguishes our own speaker from a remote one. */
+export type MeetingObservationProvenance = {
+  observer: 'asr-stream' | 'browser-caption' | 'manual'
+  observationId?: string
+  sessionId?: string
+  epoch?: number
+  observedAt?: number
+  speaker?: string | null
+  self: 'self' | 'other' | 'unknown'
+}
+
+export type MeetingSessionRecord = {
+  schemaVersion: typeof MEETING_SCHEMA_VERSION
+  sessionId: string
+  workspaceId: string
+  meetingId: string
+  transport: MeetingSessionTransport
+  mode: MeetingSessionMode
+  state: MeetingSessionState
+  observer: boolean
+  createdAt: number
+  updatedAt: number
+  joinedAt?: number
+  endedAt?: number
+  transcriptEvicted: boolean
+  lineCount: number
+  epoch: number
+  cursor: { tailKeys: readonly string[] }
+}
+
+export type MeetingSessionSummary = {
+  sessionId: string
+  meetingId: string
+  windowStartMs: number
+  windowEndMs: number
+  revision: number
+  text: string
+  sourceSegmentIds: readonly string[]
+  generator: 'model' | 'heuristic'
+  invalidatedByRevision?: number
+  updatedAt: number
+}
+
+/** Bounded observe capture caps (d2.3). */
+export const TRANSCRIPT_MAX_LINES = 2000
+export const ENDED_TRANSCRIPTS_MAX = 4
+export const TRANSCRIPT_CURSOR_TAIL = 64
+export const CAPTURE_INTERVAL_MS = 5000
+export const LIVE_SUMMARY_INTERVAL_MS = 300_000
+
+export function emptyMeetingSession(input: {
+  sessionId: string
+  workspaceId: string
+  meetingId: string
+  transport: MeetingSessionTransport
+  mode?: MeetingSessionMode
+  observer?: boolean
+  now?: number
+}): MeetingSessionRecord {
+  const now = input.now ?? 0
+  return {
+    schemaVersion: MEETING_SCHEMA_VERSION,
+    sessionId: input.sessionId,
+    workspaceId: input.workspaceId,
+    meetingId: input.meetingId,
+    transport: input.transport,
+    mode: input.mode ?? 'observe',
+    state: 'idle',
+    observer: input.observer ?? true,
+    createdAt: now,
+    updatedAt: now,
+    transcriptEvicted: false,
+    lineCount: 0,
+    epoch: 0,
+    cursor: { tailKeys: [] },
+  }
+}
+
 export type TranscriptSegment = {
   meetingId: string
   streamId: string
@@ -90,6 +229,9 @@ export type TranscriptSegment = {
   text: string
   final: boolean
   supersedesRevision?: number
+  /** Only `true` when agent/own audio is genuinely observable; omitted on mic-only capture. */
+  ownEcho?: boolean
+  provenance?: MeetingObservationProvenance
 }
 
 export type RelativeDue = {

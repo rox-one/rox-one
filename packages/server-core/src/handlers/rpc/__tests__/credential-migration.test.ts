@@ -54,6 +54,8 @@ const rollbackFn = mock(async (migrationId: string) => ({
 // (e.g. applyTrustedHttpHeader via fabric -> workgraph). We must spread the real
 // module; dynamic import is deliberate — a static import is hoisted under the
 // mock and would resolve to the mock itself (test-module-loading exception).
+// Real namespace must be captured before the mock is registered; a static import
+// would be hoisted past this file's mock.module ordering.
 const actualCredentials = await import('@rox/shared/credentials')
 mock.module('@rox/shared/credentials', () => ({
   ...actualCredentials,
@@ -208,3 +210,5 @@ describe('credential migration RPC handlers', () => {
     assertSecretFree(result)
   })
 })
+
+afterAll(() => mock.restore())

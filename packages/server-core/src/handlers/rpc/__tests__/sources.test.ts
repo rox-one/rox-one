@@ -33,6 +33,8 @@ import { resolveConfigDir } from '@rox/shared/config/paths'
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
 const credentials = new Map<string, { value: string }>()
 
+// Real namespace must be captured before the mock is registered; a static import
+// would be hoisted past this file's mock.module ordering.
 const actualCredentials = await import('@rox/shared/credentials')
 mock.module('@rox/shared/credentials', () => ({
   ...actualCredentials,
@@ -274,3 +276,5 @@ describe('sources:get — local default source seeding', () => {
     })
   })
 })
+
+afterAll(() => mock.restore())
