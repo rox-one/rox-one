@@ -10,6 +10,17 @@
     "dark": "rox-min-dark-blurred"
   },
   "mode": "blurred",
+  "surfaces": {
+    "topbarOpacity": 0.84,
+    "railOpacity": 0.82,
+    "stripOpacity": 0.88,
+    "inspectorOpacity": 0.86,
+    "sidebarOpacity": 0.82,
+    "navigatorOpacity": 0.82,
+    "chatOpacity": 0.55,
+    "composerOpacity": 0.7,
+    "popoverOpacity": 0.9
+  },
   "background": "#1A1A1A",
   "foreground": "#b0b0b0",
   "accent": "#79B8FF",

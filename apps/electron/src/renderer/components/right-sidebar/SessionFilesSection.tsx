@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import * as storage from '@/lib/local-storage'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { getFileManagerName } from '@/lib/platform'
+import { NativeFileExtraMenuItems, nativeFileDragProps, revealInFinderVia, useQuickLookOnSpace } from '@/platform/native-file-actions'
 import { restoreSessionFileWatch } from './session-files-watch'
 
 /**
@@ -274,6 +275,9 @@ function FileTreeItem({
   const isDirectory = file.type === 'directory'
   const isExpanded = expandedPaths.has(file.path)
   const hasChildren = isDirectory && file.children && file.children.length > 0
+  // macOS affordances: Space → Quick Look on the focused row, drag-out to Finder.
+  const onQuickLookKey = useQuickLookOnSpace(file.path, !isDirectory)
+  const dragProps = isDirectory ? {} : nativeFileDragProps(file.path)
 
   const handleClick = () => {
     if (isDirectory && hasChildren) {
@@ -300,6 +304,8 @@ function FileTreeItem({
     <button
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
+      onKeyDown={onQuickLookKey}
+      {...dragProps}
       className={cn(
         // Base styles matching LeftSidebar exactly
         // min-w-0 and overflow-hidden required for truncation to work in grid context
@@ -368,6 +374,8 @@ function FileTreeItem({
             <FolderOpen className="h-3.5 w-3.5" />
             {t("chat.showInFileManager", { fileManager: fileManagerName })}
           </StyledContextMenuItem>
+          {/* macOS: open in default app / Quick Look / copy path */}
+          <NativeFileExtraMenuItems path={file.path} isDirectory={isDirectory} />
         </StyledContextMenuContent>
       </ContextMenu>
       {/* Expandable children with framer-motion animation - matches LeftSidebar exactly */}
@@ -545,9 +553,9 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
   const { onOpenFile } = useAppShellContext()
   const fileManagerName = getFileManagerName()
 
-  // Reveal a file/folder in the system file manager
+  // Reveal a file/folder in the system file manager (prefer the native channel)
   const handleRevealInFileManager = useCallback((path: string) => {
-    window.electronAPI.showInFolder(path)
+    revealInFinderVia(path)
   }, [])
 
   // Handle file click — preview in-app if possible, open directory in file manager
@@ -599,7 +607,7 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
           {sessionFolderPath && (
             <button
               type="button"
-              onClick={() => window.electronAPI.showInFolder(sessionFolderPath)}
+              onClick={() => revealInFinderVia(sessionFolderPath)}
               className="text-xs text-foreground/50 hover:text-foreground/80 hover:underline underline-offset-2 transition-colors"
             >
               {t("chat.viewInFileManager", { fileManager: fileManagerName })}

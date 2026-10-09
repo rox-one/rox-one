@@ -15,7 +15,9 @@ function createHarness() {
   const titles: string[] = []
   const menus: TrayTemplateItem[][] = []
   const dispatched: string[] = []
+  const shellActions: string[] = []
   const broadcasts: unknown[] = []
+  let shown = 0
   let quits = 0
   let destroyed = 0
   const controller = new TrayController({
@@ -28,12 +30,15 @@ function createHarness() {
     buildMenu: template => { menus.push([...template]); return template },
     translate: key => key,
     dispatchChannel: channel => { dispatched.push(channel) },
+    dispatchShellAction: action => { shellActions.push(action) },
+    showWindow: () => { shown += 1 },
     broadcastStatus: status => { broadcasts.push(status) },
     quit: () => { quits += 1 },
   })
   return {
     controller,
-    tooltips, titles, menus, dispatched, broadcasts,
+    tooltips, titles, menus, dispatched, shellActions, broadcasts,
+    shown: () => shown,
     quits: () => quits,
     destroyed: () => destroyed,
     lastMenu: () => menus.at(-1) ?? [],
@@ -41,13 +46,18 @@ function createHarness() {
 }
 
 describe('tray model', () => {
-  it('lists the status header plus navigation, diagnostics and quit items', () => {
+  it('lists the status header plus native actions, navigation, diagnostics and quit items', () => {
     const model = buildTrayMenuModel({ agentState: 'idle', serviceState: 'running' })
     expect(model.map(item => item.id)).toEqual([
-      'service-status', 'openDashboard', 'openApp', 'serviceStatus', 'runDoctor', 'settings', 'quit',
+      'service-status',
+      'newNote', 'newTask', 'quickComposer', 'openInbox',
+      'openDashboard', 'openApp', 'serviceStatus', 'runDoctor', 'settings',
+      'showWindow', 'quit',
     ])
     expect(model[0]).toMatchObject({ labelKey: 'service.state.running', enabled: false })
-    expect(model[1]).toMatchObject({ labelKey: 'tray.menu.openDashboard', enabled: true })
+    expect(model[1]).toMatchObject({ labelKey: 'menu.newNote', enabled: true })
+    expect(model[4]).toMatchObject({ labelKey: 'menu.openInbox', enabled: true })
+    expect(model[10]).toMatchObject({ labelKey: 'menu.showWindow', enabled: true })
     expect(SERVICE_STATE_LABEL_KEY.failed).toBe('service.state.failed')
   })
 
@@ -67,7 +77,11 @@ describe('tray model', () => {
       () => {},
     )
     expect(template.map(item => item.type)).toEqual([
-      'normal', 'separator', 'normal', 'normal', 'separator', 'normal', 'normal', 'normal', 'separator', 'normal',
+      'normal', 'separator',
+      'normal', 'normal', 'normal', 'normal',
+      'separator', 'normal', 'normal',
+      'separator', 'normal', 'normal', 'normal', 'normal',
+      'separator', 'normal',
     ])
     expect(template[0]).toMatchObject({ label: 'service.state.installed', enabled: false })
   })
@@ -91,13 +105,19 @@ describe('tray controller', () => {
     expect(h.broadcasts).toHaveLength(2)
   })
 
-  it('dispatches the frozen menu channel on click and quits locally', () => {
+  it('dispatches native shell actions, menu channels, show-window and quit', () => {
     const h = createHarness()
     const click = (label: string) => {
       const item = h.lastMenu().find(candidate => candidate.label === label)
       expect(item?.click).toBeDefined()
       item!.click!()
     }
+    click('menu.newNote')
+    click('menu.newTask')
+    click('menu.quickComposer')
+    click('menu.openInbox')
+    expect(h.shellActions).toEqual(['new-note', 'new-task', 'quick-composer', 'open-inbox'])
+
     click('tray.menu.openDashboard')
     click('tray.menu.openApp')
     click('tray.menu.serviceStatus')
@@ -110,6 +130,10 @@ describe('tray controller', () => {
       RPC_CHANNELS.menu.RUN_DOCTOR,
       RPC_CHANNELS.menu.OPEN_SETTINGS,
     ])
+
+    click('menu.showWindow')
+    expect(h.shown()).toBe(1)
+
     click('tray.menu.quit')
     expect(h.quits()).toBe(1)
     h.controller.dispose()

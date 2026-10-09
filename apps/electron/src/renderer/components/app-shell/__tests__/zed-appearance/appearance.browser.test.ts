@@ -302,7 +302,17 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(styles.attrs).toMatchObject({ runtime: 'web', material: 'solid' })
     expect(styles.attrs.mode.split(' ')).toContain(mode)
     expect(styles.attrs.mismatch).toBeUndefined()
-    for (const key of ['root', 'body', 'app', 'work', 'second', 'code', 'dock', 'terminal']) expect(styles[key].rgba).toEqual([...canvas])
+    for (const key of ['root', 'work', 'second', 'code', 'dock', 'terminal']) expect(styles[key].rgba).toEqual([...canvas])
+    if (id === 'min-dark-blurred') {
+      // Blurred presets auto-activate the Zed-parity glass: body/#root clear so
+      // the shell glass shows, while every reading/work surface stays opaque.
+      expect(styles.attrs.layer).toBe('on')
+      expect(styles.body.rgba[3]).toBe(0)
+      expect(styles.app.rgba[3]).toBe(0)
+    } else {
+      expect(styles.body.rgba).toEqual([...canvas])
+      expect(styles.app.rgba).toEqual([...canvas])
+    }
     for (const key of ['work', 'second', 'sidebar', 'navigator', 'inspector', 'topbar', 'dock']) expect(styles[key].radius).toBe('0px')
     // The adopted radius scale maps controls, cards, the composer and code
     // blocks to --radius-md (8px); only shell panes stay flush.
@@ -683,6 +693,22 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
       expect(styles.topbar.rgba[3] / 255).toBeCloseTo(0.5, 1)
       expect(styles.topbar.backdrop).toContain('blur(30px)')
       await proof('material-enabled')
+    }, 45_000)
+
+    it('auto-activates Zed-parity glass for a blurred preset with no override', async () => {
+      await load('theme=min-dark-blurred')
+      const html = page.locator('html')
+      await expectDOM(html).toHaveAttribute('data-material', 'on')
+      await expectDOM(html).toHaveAttribute('data-blurred', 'true')
+      // The preset's declared surface hints drive the tier alphas.
+      expect(await cssVar('--material-opacity-topbar')).toBe('84%')
+      expect(await cssVar('--material-opacity-navigator')).toBe('82%')
+      expect(await cssVar('--material-opacity-chat')).toBe('55%')
+      const styles = await computed()
+      expect(styles.attrs.layer).toBe('on')
+      // Note: theme.json stays clean — the activation is renderer-only.
+      expect(styles.work.rgba[3]).toBe(255)
+      expect(styles.body.rgba[3]).toBe(0)
     }, 45_000)
 
     it('keeps the static chrome when the material override is absent', async () => {

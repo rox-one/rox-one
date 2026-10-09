@@ -32,6 +32,8 @@ import {
 import { toErrorMessage } from '@/lib/errors'
 import { isGeneratedMaterialEffect, materialEffectDataUrl } from '@/lib/material-effect-art'
 import { useRenderProfile } from '@/lib/render-profile-motion'
+import { attachUiAppearanceBridge, useUiAppearance } from '@/lib/ui-appearance-store'
+import { accentRgbTriplet, resolveAccentColor } from '@/lib/system-accent'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type FontFamily = UiFontFamily
@@ -552,10 +554,36 @@ export function ThemeProvider({
   // shell snapshot; read it reactively so resolveMaterial and the art
   // generator follow runtime switches.
   const renderProfile = useRenderProfile()
+  // B10 — the shared «Интерфейс» snapshot (accent source + live system accent).
+  const uiAppearance = useUiAppearance()
+  useLayoutEffect(() => {
+    attachUiAppearanceBridge()
+  }, [])
+  // A system accent overrides the palette's --accent inline (inline wins over
+  // the injected theme stylesheet); brand/unavailable clears the override so
+  // the palette value applies again.
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    const accent = resolveAccentColor(uiAppearance.accentSource, uiAppearance.accent)
+    if (!accent) {
+      root.style.removeProperty('--accent')
+      root.style.removeProperty('--accent-rgb')
+      return
+    }
+    root.style.setProperty('--accent', accent)
+    const rgb = accentRgbTriplet(accent)
+    if (rgb) root.style.setProperty('--accent-rgb', rgb)
+    else root.style.removeProperty('--accent-rgb')
+  }, [uiAppearance.accentSource, uiAppearance.accent])
   const resolvedMaterial = useMemo(() => resolveMaterial(resolvedTheme.material, {
     reduceTransparency: systemPrefersReducedTransparency,
     highContrast: resolvedContrast === 'high',
     renderProfile,
+    // Wires the `mode:'blurred'` output into the material layer: a blurred
+    // theme with no explicit material override auto-activates the Zed-parity
+    // glass profile (preset `surfaces` hints refine it; explicit override wins).
+    mode: resolvedTheme.mode,
+    surfaces: resolvedTheme.surfaces,
   }), [resolvedTheme, systemPrefersReducedTransparency, resolvedContrast, renderProfile])
 
   useLayoutEffect(() => {
@@ -566,6 +594,7 @@ export function ThemeProvider({
       delete root.dataset.materialChatEffect
       delete root.dataset.materialDeep
       delete root.dataset.materialHaze
+      delete root.dataset.materialHazeOverlay
       return
     }
     root.dataset.material = 'on'
@@ -577,6 +606,8 @@ export function ThemeProvider({
     else delete root.dataset.materialChatEffect
     if (resolvedMaterial.haze.enabled) root.dataset.materialHaze = 'on'
     else delete root.dataset.materialHaze
+    if (resolvedMaterial.haze.enabled && resolvedMaterial.haze.overlay) root.dataset.materialHazeOverlay = 'on'
+    else delete root.dataset.materialHazeOverlay
     const deepPanes = Object.entries(resolvedMaterial.deepGlass)
       .filter(([, enabled]) => enabled)
       .map(([pane]) => pane)

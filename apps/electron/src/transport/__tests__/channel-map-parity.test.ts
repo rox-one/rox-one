@@ -41,6 +41,11 @@ type SecurityAuditKeys = `securityAudit.${FunctionKeys<SecurityAuditApi>}`
 type OpenClawHostControlApiKeys = 'openControlUi' | 'copyGatewayTokenForSetup'
 type AssertFalse<T extends false> = true
 type AssertTrue<T extends true> = true
+// Native integration namespaces nest through dotted CHANNEL_MAP keys.
+type QuickComposerApi = ElectronAPI['quickComposer']
+type AppIntegrationApi = ElectronAPI['appIntegration']
+type QuickComposerKeys = `quickComposer.${FunctionKeys<QuickComposerApi>}`
+type AppIntegrationKeys = `appIntegration.${FunctionKeys<AppIntegrationApi>}`
 type Equal<Left, Right> = (
   <Value>() => Value extends Left ? 1 : 2
 ) extends (
@@ -165,6 +170,8 @@ type ApiToChannelMapKeys = Exclude<
   | ExtensionSurfaceKeys
   | OpenClawRuntimeKeys
   | SecurityAuditKeys
+  | QuickComposerKeys
+  | AppIntegrationKeys
 type ChannelMapKeys = keyof typeof CHANNEL_MAP & string
 
 type AssertNever<T extends never> = true

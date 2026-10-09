@@ -420,6 +420,12 @@ export const RPC_CHANNELS = {
     OPEN_FILE: 'shell:openFile',
     SHOW_IN_FOLDER: 'shell:showInFolder',
     EXEC: 'shell:exec',
+    /**
+     * Main → renderer push: a native shell affordance (dock menu, tray, app
+     * menu, notification click) dispatches one structured action to the
+     * focused (or first) window. Payload: `ShellActionPayload`.
+     */
+    ACTION: 'shell:action',
   },
   menu: {
     NEW_CHAT: 'menu:newChat',
@@ -975,6 +981,16 @@ export const RPC_CHANNELS = {
     GET_SHELL_SNAPSHOT: 'appearance:getShellSnapshot',
     SET_ZEN_SHELL: 'appearance:setZenShell',
     SHELL_CHANGED: 'appearance:shellChanged',
+    /** DISPATCH A6/B10 — persisted UI preferences (status bar + accent source). */
+    GET_UI_PREFERENCES: 'appearance:getUiPreferences',
+    SET_UI_PREFERENCES: 'appearance:setUiPreferences',
+    /** DISPATCH B10 — macOS system accent colour push (LOCAL_ONLY). */
+    ACCENT_CHANGED: 'appearance:accentChanged',
+  },
+  /** DISPATCH C1 — import themes from an installed Zed (LOCAL_ONLY, filesystem). */
+  zedThemes: {
+    LIST: 'zedThemes:list',
+    IMPORT: 'zedThemes:import',
   },
   tools: {
     GET_BROWSER_TOOL_ENABLED: 'tools:getBrowserToolEnabled',
@@ -1401,6 +1417,36 @@ export const RPC_CHANNELS = {
     START: 'tg-link:start',
     VERIFY: 'tg-link:verify',
     STATUS: 'tg-link:status',
+  },
+  /**
+   * Native integration — floating quick composer. All LOCAL_ONLY: the window,
+   * the global shortcut and the persisted accelerator live in the main process.
+   */
+  quickComposer: {
+    OPEN: 'quickComposer:open',
+    CLOSE: 'quickComposer:close',
+    GET_SHORTCUT: 'quickComposer:getShortcut',
+    SET_SHORTCUT: 'quickComposer:setShortcut',
+  },
+  /**
+   * Native app integration — OS-level app settings (login item / launch at
+   * startup). LOCAL_ONLY: written by the host OS, never proxied to a server.
+   */
+  appIntegration: {
+    GET_LOGIN_ITEM: 'appIntegration:getLoginItem',
+    SET_LOGIN_ITEM: 'appIntegration:setLoginItem',
+  },
+  /**
+   * Finder / filesystem affordances for a user-visible path. LOCAL_ONLY: they
+   * act on the host machine (reveal, open, clipboard, Quick Look, drag-out).
+   */
+  files: {
+    REVEAL_IN_FINDER: 'files:revealInFinder',
+    OPEN_PATH: 'files:openPath',
+    COPY_PATH: 'files:copyPath',
+    QUICK_LOOK: 'files:quickLook',
+    QUICK_LOOK_CLOSE: 'files:quickLookClose',
+    START_DRAG: 'files:startDrag',
   },
 } as const
 

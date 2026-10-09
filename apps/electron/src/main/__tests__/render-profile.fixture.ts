@@ -54,9 +54,10 @@ mock.module('os', () => ({
 mock.module('@rox/shared/config', () => ({
   isZenShellEnabled: () => true,
   getZenShellMaterialPreference: () => 'system',
+  getZenShellMaterialDepth: () => 'standard',
   getRenderProfilePreference: () => preference,
 }))
-mock.module('../logger', () => ({ windowLog: { warn() {} } }))
+mock.module('../logger', () => ({ windowLog: { warn() {} }, mainLog: { info() {} } }))
 
 const { peekRenderProfile, queryGpuSoftwareCompositing, queryHardwareInfo, resetHardwareInfoCacheForTests } = await import('../render-profile')
 const material = await import('../shell-material')

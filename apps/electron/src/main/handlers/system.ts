@@ -4,6 +4,7 @@ import { homedir } from 'os'
 import { execFile, execSync } from 'child_process'
 import { promisify } from 'util'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { NotificationDeepLink } from '@rox/shared/protocol'
 import { emptyGitWorkingTreeStatus } from '@rox/shared/git/status'
 import { readGitBranchName, readGitWorkingTreeStatus } from '@rox/shared/git/exec'
 import { isSpawnEnvReady, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
@@ -339,6 +340,16 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
   })
 }
 
+/** Keep only well-formed string fields from an untrusted notification deep link. */
+function sanitizeNotificationDeepLink(input: unknown): NotificationDeepLink | undefined {
+  if (typeof input !== 'object' || input === null) return undefined
+  const deepLink: NotificationDeepLink = {}
+  if ('route' in input && typeof input.route === 'string' && input.route) deepLink.route = input.route
+  if ('workspaceId' in input && typeof input.workspaceId === 'string' && input.workspaceId) deepLink.workspaceId = input.workspaceId
+  if ('id' in input && typeof input.id === 'string' && input.id) deepLink.id = input.id
+  return Object.keys(deepLink).length > 0 ? deepLink : undefined
+}
+
 export function registerSystemGuiHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { sessionManager } = deps
   const windowManager = deps.windowManager
@@ -468,9 +479,9 @@ export function registerSystemGuiHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // Notifications
-  server.handle(RPC_CHANNELS.notification.SHOW, async (_ctx, title: string, body: string, workspaceId: string, sessionId: string) => {
+  server.handle(RPC_CHANNELS.notification.SHOW, async (_ctx, title: string, body: string, workspaceId: string, sessionId: string, deepLink?: unknown) => {
     const { showNotification } = await import('../notifications')
-    showNotification(title, body, workspaceId, sessionId)
+    showNotification(title, body, workspaceId, sessionId, sanitizeNotificationDeepLink(deepLink))
   })
 
   server.handle(RPC_CHANNELS.notification.GET_ENABLED, async () => {

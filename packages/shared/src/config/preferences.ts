@@ -68,6 +68,11 @@ export interface UserPreferences {
   /** User material preference while Zen Shell is on. Default `system`. */
   zenShellMaterialPreference?: 'system' | 'glass' | 'opaque';
   /**
+   * A3 — macOS vibrancy depth (mirrors ShellMaterialDepth; kept a literal union
+   * so packages/shared does not import app code). Default `standard`.
+   */
+  zenShellMaterialDepth?: 'light' | 'standard' | 'deep';
+  /**
    * Low-power rendering profile (PERF-07). Main-owned like Zen Shell; `auto`
    * (or missing) turns it on for Windows and software/blocklisted GPUs.
    * Not exposed via `update_user_preferences`.
@@ -341,14 +346,22 @@ export function getZenShellMaterialPreference(): 'system' | 'glass' | 'opaque' {
   return 'system';
 }
 
+/** A3 — macOS vibrancy depth; unknown or missing resolves to `standard`. */
+export function getZenShellMaterialDepth(): 'light' | 'standard' | 'deep' {
+  const value = loadPreferences().zenShellMaterialDepth;
+  if (value === 'light' || value === 'standard' || value === 'deep') return value;
+  return 'standard';
+}
+
 /**
- * Persist Zen Shell enablement and/or material preference.
+ * Persist Zen Shell enablement and/or material preference/depth.
  * Idempotent when values are unchanged (does not bump `updatedAt`).
  */
 export function setZenShellPreference(patch: {
   enabled?: boolean;
   materialPreference?: 'system' | 'glass' | 'opaque';
-}): { enabled: boolean; materialPreference: 'system' | 'glass' | 'opaque' } {
+  materialDepth?: 'light' | 'standard' | 'deep';
+}): { enabled: boolean; materialPreference: 'system' | 'glass' | 'opaque'; materialDepth: 'light' | 'standard' | 'deep' } {
   const current = loadPreferences();
   const enabled = patch.enabled !== undefined
     ? patch.enabled === true
@@ -357,15 +370,24 @@ export function setZenShellPreference(patch: {
     patch.materialPreference === 'system' || patch.materialPreference === 'glass' || patch.materialPreference === 'opaque'
       ? patch.materialPreference
       : getZenShellMaterialPreference();
-  if (current.zenShellEnabled === enabled && current.zenShellMaterialPreference === materialPreference) {
-    return { enabled, materialPreference };
+  const materialDepth =
+    patch.materialDepth === 'light' || patch.materialDepth === 'standard' || patch.materialDepth === 'deep'
+      ? patch.materialDepth
+      : getZenShellMaterialDepth();
+  if (
+    current.zenShellEnabled === enabled &&
+    current.zenShellMaterialPreference === materialPreference &&
+    current.zenShellMaterialDepth === materialDepth
+  ) {
+    return { enabled, materialPreference, materialDepth };
   }
   savePreferences({
     ...current,
     zenShellEnabled: enabled,
     zenShellMaterialPreference: materialPreference,
+    zenShellMaterialDepth: materialDepth,
   });
-  return { enabled, materialPreference };
+  return { enabled, materialPreference, materialDepth };
 }
 
 export type RenderProfilePreferenceValue = 'auto' | 'performance' | 'standard';

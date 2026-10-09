@@ -7,7 +7,7 @@ import {
   SettingsSection,
   SettingsToggle,
 } from '@/components/settings'
-import type { ShellMaterialPreference, ZenShellPatch, ZenShellSnapshot } from '../../../shared/shell-appearance'
+import type { ShellMaterialDepth, ShellMaterialPreference, ZenShellPatch, ZenShellSnapshot } from '../../../shared/shell-appearance'
 import { isRenderProfilePreference, type RenderProfilePreference } from '../../../shared/render-profile'
 import { saveDesktopAppearance } from '@/lib/desktop-appearance'
 import { lowPowerStatusKey } from '@/lib/render-profile-status'
@@ -19,6 +19,7 @@ const DEFAULT_SNAPSHOT: ZenShellSnapshot = {
   enabled: false,
   preference: 'system',
   material: 'solid',
+  materialDepth: 'standard',
   platform: 'web',
   fallbackReason: 'zen-disabled',
 }
@@ -119,6 +120,25 @@ export function ZenShellSettings() {
             ]}
           />
         </SettingsRow>
+        {!isWeb && (
+          <SettingsRow
+            label={t('settings.appearance.zenShellDepth')}
+            description={t('settings.appearance.zenShellDepthDesc')}
+          >
+            <SettingsMenuSelect
+              value={snapshot.materialDepth}
+              onValueChange={(value) => {
+                void persist({ materialDepth: value as ShellMaterialDepth })
+              }}
+              disabled={!available || saving || !enabled}
+              options={[
+                { value: 'light', label: t('settings.appearance.zenShellDepthLight') },
+                { value: 'standard', label: t('settings.appearance.zenShellDepthStandard') },
+                { value: 'deep', label: t('settings.appearance.zenShellDepthDeep') },
+              ]}
+            />
+          </SettingsRow>
+        )}
         {!isWeb && (
           <SettingsRow
             label={t('settings.appearance.lowPowerMode')}
