@@ -21,6 +21,9 @@ describe('code-intelligence adapter selection', () => {
     expect(SELECTED_CODE_INTEL).toEqual(['local-fs-symbols', 'syft-sbom'])
     expect(REJECTED_CODE_INTEL_TOOLS.map((t) => t.name)).toContain('CodeWiki')
     expect(REJECTED_CODE_INTEL_TOOLS.map((t) => t.name)).toContain('DeepWiki')
+    // The `unmaintained-duplicate-graph` rejection was lifted by ADR-0020.
+    expect(REJECTED_CODE_INTEL_TOOLS.map((t) => t.name)).not.toContain('Graphify')
+    expect(REJECTED_CODE_INTEL_TOOLS.map((t) => t.name)).not.toContain('Archify')
     expect(localFsSymbolsAdapter.alwaysOn).toBe(false)
   })
 })

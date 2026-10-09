@@ -1,4 +1,4 @@
-import type { EvidenceLevel, Phase, SafeReason, StepId, TourId } from '../contracts'
+import { DYNAMIC_STEP_ID_PATTERN, DYNAMIC_TOUR_ID_PATTERN, type EvidenceLevel, type Phase, type SafeReason, type StepId, type TourId } from '../contracts'
 
 export const LEARNING_EVENT_NAMES = ['tour-started', 'tour-paused', 'tour-resumed', 'tour-dismissed', 'tour-finished',
   'step-shown', 'step-acknowledged', 'step-observed', 'step-verified', 'step-skipped', 'step-not-applicable',
@@ -56,7 +56,9 @@ export function sanitizeLearningEvent(input: unknown): SafeLearningEvent | null 
     for (const [key, values] of Object.entries(enums)) {
       if ((values as readonly unknown[]).includes(source[key])) output[key] = source[key]
     }
-    if (typeof source.tourId === 'string' && /^OBT-(0[1-9]|1[0-9]|2[0-5])$/.test(source.tourId)) output.tourId = source.tourId
+    // Generated tours (D9) carry their reserved id spaces through diagnostics.
+    if (typeof source.tourId === 'string' && (/^OBT-(0[1-9]|1[0-9]|2[0-5])$/.test(source.tourId) || DYNAMIC_TOUR_ID_PATTERN.test(source.tourId))) output.tourId = source.tourId
+    if (typeof source.stepId === 'string' && DYNAMIC_STEP_ID_PATTERN.test(source.stepId)) output.stepId = source.stepId
     for (const key of ['version', 'tourVersion', 'stepVersion']) {
       if (Number.isSafeInteger(source[key]) && (source[key] as number) > 0) output[key] = source[key]
     }

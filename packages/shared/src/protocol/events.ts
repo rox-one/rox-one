@@ -26,6 +26,8 @@ import type {
   SiyuanSurfaceState,
   ExtensionSurfaceState,
   SessionsBulkChangedEvent,
+  ShellActionPayload,
+  SystemAccentSnapshot,
 } from './dto'
 import type { ExtensionsChangedPayload } from '../extensions/types'
 import type { CommandBusPushEvent } from '../commands/push'
@@ -153,6 +155,7 @@ export interface BroadcastEventMap {
     enabled: boolean
     preference: 'system' | 'glass' | 'opaque'
     material: 'vibrancy' | 'mica' | 'solid'
+    materialDepth: 'light' | 'standard' | 'deep'
     platform: 'darwin' | 'win32' | 'linux' | 'web'
     fallbackReason?: string
   }]
@@ -160,6 +163,8 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.theme.SYSTEM_CHANGED]: [isDark: boolean]
   [RPC_CHANNELS.theme.PREFERENCES_CHANGED]: [preferences: { mode: string; colorTheme: string; font: string }]
   [RPC_CHANNELS.theme.WORKSPACE_THEME_CHANGED]: [data: { workspaceId: string; themeId: string | null }]
+  // B10 — macOS system accent colour change (device-local, global).
+  [RPC_CHANNELS.appearance.ACCENT_CHANGED]: [accent: SystemAccentSnapshot]
 
   // Update broadcasts (global)
   [RPC_CHANNELS.update.AVAILABLE]: [info: UpdateInfo]
@@ -215,6 +220,10 @@ export interface BroadcastEventMap {
   // Navigation events (per-window)
   [RPC_CHANNELS.notification.NAVIGATE]: [data: { workspaceId: string; sessionId: string }]
   [RPC_CHANNELS.deeplink.NAVIGATE]: [navigation: DeepLinkNavigation]
+
+  // Native shell affordances (dock menu, tray, app menu, notification click) —
+  // main pushes one structured action to the focused (or first) window.
+  [RPC_CHANNELS.shell.ACTION]: [payload: ShellActionPayload]
 
   // Copilot device code event
   [RPC_CHANNELS.copilot.DEVICE_CODE]: [data: { userCode: string; verificationUri: string }]

@@ -1,0 +1,29 @@
+{
+  "name": "Blankeos Minimal",
+  "appearance": "dark",
+  "style": {
+    "editor.background": "#1a1a1a",
+    "text": "#999999",
+    "text.muted": "#999999",
+    "text.disabled": "#4d4d4d",
+    "text.accent": "#6c9c77",
+    "warning": "#e2b86b",
+    "success": "#6c9c77",
+    "error": "#f97583",
+    "conflict": "#f97583",
+    "border": "#ffffff10",
+    "element.background": "#ffffff08",
+    "panel.background": "#00000000",
+    "panel.overlay_background": "#1f1f1f",
+    "titlebar.background": "#1a1a1a",
+    "toolbar.background": "#1a1a1acc",
+    "tab_bar.background": "#1a1a1acc",
+    "tab.active_background": "#262626cc",
+    "tab.inactive_background": "#1a1a1a99",
+    "terminal.background": "#000000",
+    "terminal.foreground": "#cccccc",
+    "terminal.ansi.red": "#f97583",
+    "terminal.ansi.green": "#6c9c77",
+    "players": [{ "cursor": "#6c9c77", "selection": "#6c9c7757" }]
+  }
+}

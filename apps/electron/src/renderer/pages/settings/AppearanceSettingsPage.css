@@ -143,6 +143,58 @@
   text-align: right;
 }
 
+.zed-themes-list {
+  display: flex;
+  max-height: 20rem;
+  min-width: 0;
+  flex-direction: column;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.zed-theme-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.625rem;
+  padding: var(--settings-row-y) var(--settings-row-x);
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+
+.zed-theme-row-selected {
+  background: var(--surface-selected);
+}
+
+.zed-theme-name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.zed-theme-meta {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+}
+
+.zed-theme-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: var(--settings-row-y) var(--settings-row-x);
+}
+
+@container appearance-settings (max-width: 480px) {
+  .zed-theme-row {
+    flex-wrap: wrap;
+  }
+}
+
 @container appearance-settings (max-width: 480px) {
   .appearance-settings-content {
     padding-inline: 12px;

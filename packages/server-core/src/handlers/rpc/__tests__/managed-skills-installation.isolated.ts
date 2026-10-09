@@ -39,7 +39,7 @@ test('duplicate bundled packs and a user skill coexist; agent mentions and nativ
   put(join(GLOBAL_AGENT_SKILLS_DIR, 'review', 'SKILL.md'), md('USER'));
   put(join(bundle, 'pack-a', 'review', 'SKILL.md'), md('A'));
   put(join(bundle, 'pack-b', 'review', 'SKILL.md'), md('B'));
-  const first = ensureBundledSkills({ bundleRoot: bundle });
+  const first = ensureBundledSkills({ bundleRoot: bundle, linksRoot: GLOBAL_AGENT_SKILLS_DIR });
   expect(first.targetRoot).toBe(APP_MANAGED_SKILLS_DIR);
   expect(first.packs.map(pack => pack.installed)).toEqual([['pack-a--review'], ['pack-b--review']]);
   const skills = loadAllSkills(workspace, undefined, { includeOmp: true, includeShadowedOmp: true });
@@ -85,7 +85,7 @@ test('qualified aliases remain stable across restart, upgrades, owner removal an
 
 test('disabling an app pack removes only its links and never hides a foreign skill with the same name', () => {
   put(join(bundle, 'pack-a', 'review', 'SKILL.md'), md('APP'));
-  ensureBundledSkills({ bundleRoot: bundle });
+  ensureBundledSkills({ bundleRoot: bundle, linksRoot: GLOBAL_AGENT_SKILLS_DIR });
   rmSync(join(GLOBAL_AGENT_SKILLS_DIR, 'review'));
   put(join(GLOBAL_AGENT_SKILLS_DIR, 'review', 'SKILL.md'), md('USER'));
   put(join(workspace, 'skills', 'review', 'SKILL.md'), md('WORKSPACE'));
@@ -93,7 +93,7 @@ test('disabling an app pack removes only its links and never hides a foreign ski
   expect(loadAllSkills(workspace).map(skill => skill.slug).sort()).toEqual(['review', 'rox--review']);
   expect(loadSkillBySlug(workspace, 'rox--review')?.path).toBe(join(APP_MANAGED_SKILLS_DIR, 'review'));
   put(join(config, 'config.json'), JSON.stringify({ workspaces: [], bundledSkills: { disabled: ['pack-a'] } }));
-  ensureBundledSkills({ bundleRoot: bundle });
+  ensureBundledSkills({ bundleRoot: bundle, linksRoot: GLOBAL_AGENT_SKILLS_DIR });
   expect(loadAllSkills(workspace, undefined, { includeOmp: true, includeShadowedOmp: true }).filter(skill => skill.source !== 'omp').map(skill => skill.slug)).toEqual(['review']);
   expect(loadSkillBySlug(workspace, 'review')?.content).toContain('WORKSPACE');
   rmSync(join(workspace, 'skills'), { recursive: true }); invalidateSkillsCache();
@@ -121,10 +121,10 @@ test('marketplace defaults to the app store; aliases preserve pins, updates and 
   put(join(GLOBAL_AGENT_SKILLS_DIR, 'review', 'SKILL.md'), md('USER'));
   const expected = join(homedir(), 'expected'); put(join(expected, 'SKILL.md'), md('PACK'));
   const pack = { ...entry('market-a'), expectedContentSha256: { review: sha256Directory(expected) } };
-  const result = await installEntry(pack, { execFileFn: git({ review: 'PACK' }) });
+  const result = await installEntry(pack, { linksRoot: GLOBAL_AGENT_SKILLS_DIR, execFileFn: git({ review: 'PACK' }) });
   expect(result.kind === 'skillpack' && result.targets).toEqual([join(APP_MANAGED_SKILLS_DIR, 'market-a--review')]);
   expect(loadSkillBySlug(workspace, 'market-a--review')?.content).toContain('PACK');
-  const repeated = await installEntry(pack, { execFileFn: git({ review: 'PACK' }) });
+  const repeated = await installEntry(pack, { linksRoot: GLOBAL_AGENT_SKILLS_DIR, execFileFn: git({ review: 'PACK' }) });
   expect(repeated.kind === 'skillpack' && repeated.skills).toEqual(['market-a--review']);
   expect(isSkillLinkTo(join(GLOBAL_AGENT_SKILLS_DIR, 'market-a--review'), join(APP_MANAGED_SKILLS_DIR, 'market-a--review'))).toBe(true);
   const removed = removeEntry('market-a');
@@ -135,9 +135,9 @@ test('marketplace defaults to the app store; aliases preserve pins, updates and 
 });
 
 test('updating a marketplace pack removes untouched dropped skills and preserves edited dropped skills', async () => {
-  await installEntry(entry('market-a'), { execFileFn: git({ review: 'A', draft: 'D', retain: 'R' }) });
+  await installEntry(entry('market-a'), { linksRoot: GLOBAL_AGENT_SKILLS_DIR, execFileFn: git({ review: 'A', draft: 'D', retain: 'R' }) });
   put(join(APP_MANAGED_SKILLS_DIR, 'retain', '.personal'), 'USER');
-  await installEntry(entry('market-a'), { execFileFn: git({ review: 'A2' }) });
+  await installEntry(entry('market-a'), { linksRoot: GLOBAL_AGENT_SKILLS_DIR, execFileFn: git({ review: 'A2' }) });
   expect(existsSync(join(APP_MANAGED_SKILLS_DIR, 'draft'))).toBe(false);
   expect(pathEntryExists(join(GLOBAL_AGENT_SKILLS_DIR, 'draft'))).toBe(false);
   expect(readFileSync(join(APP_MANAGED_SKILLS_DIR, 'retain', '.personal'), 'utf8')).toBe('USER');
@@ -166,7 +166,7 @@ test('unsafe names and checkout symlinks fail without reading or modifying exter
 });
 
 test('uninstall preserves a replaced target symlink and the foreign directory it points at', async () => {
-  await installEntry(entry('market-a'), { execFileFn: git({ review: 'APP' }) });
+  await installEntry(entry('market-a'), { linksRoot: GLOBAL_AGENT_SKILLS_DIR, execFileFn: git({ review: 'APP' }) });
   const target = join(APP_MANAGED_SKILLS_DIR, 'review');
   rmSync(target, { recursive: true });
   put(join(homedir(), 'external', 'SKILL.md'), md('EXTERNAL'));
@@ -215,7 +215,7 @@ test('directory-mode packs expose every nested skill with stable qualified ident
 for (const variant of ['swapped', 'locally-modified', 'unmarked-legacy'] as const) {
 test(`failed ${variant} directory-pack update restores exact provenance, aliases, content and links when lock commit fails`, async () => {
   const pack = { ...entry('directory-pack'), installMode: 'directory' as const };
-  await installEntry(pack, { execFileFn: git({ 'flows/review': 'OLD' }) });
+  await installEntry(pack, { linksRoot: GLOBAL_AGENT_SKILLS_DIR, execFileFn: git({ 'flows/review': 'OLD' }) });
   const target = join(APP_MANAGED_SKILLS_DIR, pack.id);
   const alias = 'directory-pack--review';
   const skill = join(target, 'flows', 'review');
@@ -242,6 +242,7 @@ test(`failed ${variant} directory-pack update restores exact provenance, aliases
   let blocked = false;
   try {
     await expect(installEntry({ ...pack, source: { ...pack.source, ref: newRef } }, {
+      linksRoot: GLOBAL_AGENT_SKILLS_DIR,
       execFileFn: updatedGit,
       onProgress(phase) {
         if (phase === 'install' && !blocked) {

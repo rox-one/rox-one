@@ -1,4 +1,4 @@
-import type { PersistResult, ProgressMutation, ProgressRepository, StepId, StepProgress, TourDefinition, TourId, TourProgress, WindowLease } from '../contracts'
+import { DYNAMIC_STEP_ID_PATTERN, type PersistResult, type ProgressMutation, type ProgressRepository, type StepId, type StepProgress, type TourDefinition, type TourId, type TourProgress, type WindowLease } from '../contracts'
 import { createDatabaseAccess, failed, memoryOnly, requestValue, saved, transaction, UnsupportedLearningSchema } from './database'
 import type { LearningStorageOptions } from './database'
 import { LEARNING_SAFE_REASONS, LEARNING_STEP_IDS } from '../analytics/events'
@@ -26,7 +26,7 @@ export function isTourProgress(value: unknown, scopeKey: string, tourId: TourId)
     !Number.isSafeInteger(record.revision) || record.revision < 0 || !Number.isSafeInteger(record.tourVersion) ||
     record.tourVersion < 1 || !statuses.has(record.status) || !record.steps || typeof record.steps !== 'object' || Array.isArray(record.steps) ||
     (record.dismissedUntilVersion !== undefined && (!Number.isSafeInteger(record.dismissedUntilVersion) || record.dismissedUntilVersion < 1))) return false
-  return Object.entries(record.steps).every(([id, step]) => LEARNING_STEP_IDS.includes(id as StepId) && step && step.stepId === id &&
+  return Object.entries(record.steps).every(([id, step]) => (LEARNING_STEP_IDS.includes(id as StepId) || DYNAMIC_STEP_ID_PATTERN.test(id)) && step && step.stepId === id &&
     Number.isSafeInteger(step.stepVersion) && step.stepVersion > 0 &&
     (step.notApplicableReason === undefined || LEARNING_SAFE_REASONS.includes(step.notApplicableReason)) &&
     timestamps.every(key => step[key] === undefined || (Number.isFinite(step[key]) && step[key] >= 0)))

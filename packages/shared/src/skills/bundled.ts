@@ -32,7 +32,7 @@
  */
 import { existsSync, mkdirSync, readdirSync, rmSync, symlinkSync } from 'fs';
 import { join } from 'path';
-import { APP_MANAGED_SKILLS_DIR, GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache } from './storage.ts';
+import { APP_MANAGED_SKILLS_DIR, ambientSkillLinksRoot, invalidateSkillsCache } from './storage.ts';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
 import { loadStoredConfig } from '../config/storage.ts';
@@ -153,7 +153,7 @@ export function linkBundledSkillsForOmp(options: EnsureBundledSkillsOptions & { 
 /** Resolve the ambient (startup) sync inputs exactly as `ensureBundledSkills()` would. */
 export function resolveBundledSkillsTarget(options?: EnsureBundledSkillsOptions): ResolvedBundledSkillsTarget {
   const targetRoot = options?.targetRoot ?? APP_MANAGED_SKILLS_DIR;
-  const linksRoot = options?.linksRoot === undefined ? (options?.targetRoot ? null : GLOBAL_AGENT_SKILLS_DIR) : options.linksRoot;
+  const linksRoot = options?.linksRoot === undefined ? (options?.targetRoot ? null : ambientSkillLinksRoot()) : options.linksRoot;
   const bundleRoot = options?.bundleRoot ?? getBundledAssetsDir('skills') ?? null;
   let disabled = options?.disabled;
   if (!disabled) {
@@ -185,7 +185,7 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
   }
 
   const targetRoot = options?.targetRoot ?? APP_MANAGED_SKILLS_DIR;
-  const linksRoot = options?.linksRoot === undefined ? (options?.targetRoot ? null : GLOBAL_AGENT_SKILLS_DIR) : options.linksRoot;
+  const linksRoot = options?.linksRoot === undefined ? (options?.targetRoot ? null : ambientSkillLinksRoot()) : options.linksRoot;
   const result: EnsureBundledSkillsResult = { packs: [], bundleRoot: null, targetRoot };
 
   try {

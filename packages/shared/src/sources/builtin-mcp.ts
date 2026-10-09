@@ -31,12 +31,6 @@ export interface BuiltinMcpSpec {
 
 export const BUILTIN_MCP_CATALOG: readonly BuiltinMcpSpec[] = [
   {
-    slug: 'deepwiki', name: 'DeepWiki', icon: '📚',
-    repository: 'https://docs.devin.ai/work-with-devin/deepwiki-mcp',
-    usage: 'Read repository architecture and ask questions about public GitHub repositories before changing unfamiliar code.',
-    mcp: { transport: 'http', url: 'https://mcp.deepwiki.com/mcp', authType: 'none' },
-  },
-  {
     slug: 'context7', name: 'Context7', icon: '📖',
     repository: 'https://github.com/upstash/context7',
     usage: 'Resolve library IDs and fetch current, version-specific API documentation before writing integrations, configuration, or library-dependent code.',

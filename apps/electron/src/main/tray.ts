@@ -10,15 +10,21 @@
  */
 
 import type { ServiceState, TrayStatus } from '@rox/shared/service-lifecycle'
+import type { ShellActionPayload } from '@rox/shared/protocol'
 import { RPC_CHANNELS } from '../shared/types'
 
 export type TrayMenuItemId =
   | 'service-status'
+  | 'newNote'
+  | 'newTask'
+  | 'quickComposer'
+  | 'openInbox'
   | 'openDashboard'
   | 'openApp'
   | 'serviceStatus'
   | 'runDoctor'
   | 'settings'
+  | 'showWindow'
   | 'quit'
 
 export interface TrayMenuItemModel {
@@ -43,11 +49,32 @@ export const SERVICE_STATE_LABEL_KEY: Record<ServiceState, string> = {
 /** menu channel each navigation item dispatches; `quit` is handled locally. */
 export const TRAY_ITEM_CHANNEL: Record<TrayMenuItemId, string | undefined> = {
   'service-status': undefined,
+  newNote: undefined,
+  newTask: undefined,
+  quickComposer: undefined,
+  openInbox: undefined,
   openDashboard: RPC_CHANNELS.menu.OPEN_DASHBOARD,
   openApp: RPC_CHANNELS.menu.OPEN_NATIVE_CONSOLE,
   serviceStatus: RPC_CHANNELS.menu.SHOW_SERVICE_STATUS,
   runDoctor: RPC_CHANNELS.menu.RUN_DOCTOR,
   settings: RPC_CHANNELS.menu.OPEN_SETTINGS,
+  showWindow: undefined,
+  quit: undefined,
+}
+
+/** Native affordance each tray item dispatches as a `shell:action`. */
+export const TRAY_ITEM_SHELL_ACTION: Record<TrayMenuItemId, ShellActionPayload['action'] | undefined> = {
+  'service-status': undefined,
+  newNote: 'new-note',
+  newTask: 'new-task',
+  quickComposer: 'quick-composer',
+  openInbox: 'open-inbox',
+  openDashboard: undefined,
+  openApp: undefined,
+  serviceStatus: undefined,
+  runDoctor: undefined,
+  settings: undefined,
+  showWindow: undefined,
   quit: undefined,
 }
 
@@ -65,11 +92,16 @@ export function trayStatusIndicator(status: TrayStatus): string {
 export function buildTrayMenuModel(status: TrayStatus): readonly TrayMenuItemModel[] {
   return [
     { id: 'service-status', labelKey: SERVICE_STATE_LABEL_KEY[status.serviceState], enabled: false },
+    { id: 'newNote', labelKey: 'menu.newNote', enabled: true },
+    { id: 'newTask', labelKey: 'menu.newTask', enabled: true },
+    { id: 'quickComposer', labelKey: 'menu.quickComposer', enabled: true },
+    { id: 'openInbox', labelKey: 'menu.openInbox', enabled: true },
     { id: 'openDashboard', labelKey: 'tray.menu.openDashboard', enabled: true },
     { id: 'openApp', labelKey: 'tray.menu.openApp', enabled: true },
     { id: 'serviceStatus', labelKey: 'tray.menu.serviceStatus', enabled: true },
     { id: 'runDoctor', labelKey: 'tray.menu.runDoctor', enabled: true },
     { id: 'settings', labelKey: 'tray.menu.settings', enabled: true },
+    { id: 'showWindow', labelKey: 'menu.showWindow', enabled: true },
     { id: 'quit', labelKey: 'tray.menu.quit', enabled: true },
   ]
 }
@@ -92,7 +124,7 @@ export function toTrayTemplate(
 ): readonly TrayTemplateItem[] {
   const template: TrayTemplateItem[] = []
   for (const item of model) {
-    if (item.id === 'openDashboard' || item.id === 'serviceStatus' || item.id === 'quit') {
+    if (item.id === 'newNote' || item.id === 'openDashboard' || item.id === 'serviceStatus' || item.id === 'quit') {
       template.push({ type: 'separator' })
     }
     template.push({
@@ -118,6 +150,10 @@ export interface TrayControllerDependencies {
   readonly buildMenu: (template: readonly TrayTemplateItem[]) => unknown
   readonly translate: (key: string) => string
   readonly dispatchChannel: (channel: string) => void
+  /** Dispatch a native affordance to the focused window (new note/task/etc.). */
+  readonly dispatchShellAction?: (action: ShellActionPayload['action']) => void
+  /** Show + focus an existing window (or restore the last one). */
+  readonly showWindow?: () => void
   readonly broadcastStatus: (status: TrayStatus) => void
   readonly quit: () => void
 }
@@ -152,6 +188,15 @@ export class TrayController {
   private onClick(id: TrayMenuItemId): void {
     if (id === 'quit') {
       this.deps.quit()
+      return
+    }
+    if (id === 'showWindow') {
+      this.deps.showWindow?.()
+      return
+    }
+    const shellAction = TRAY_ITEM_SHELL_ACTION[id]
+    if (shellAction) {
+      this.deps.dispatchShellAction?.(shellAction)
       return
     }
     const channel = TRAY_ITEM_CHANNEL[id]

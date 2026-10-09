@@ -33,6 +33,12 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.devSpace.CANCEL,
   RPC_CHANNELS.devSpace.CAPABILITIES,
   RPC_CHANNELS.devSpace.LIST_RUNS,
+  RPC_CHANNELS.devSpace.START_RUN,
+  // Artifact reads resolve the local store under `projects/<slug>/dev-space/`, never proxied.
+  RPC_CHANNELS.devSpace.LIST_ARTIFACTS,
+  RPC_CHANNELS.devSpace.READ_ARTIFACT,
+  // Question/security generation reuses the local store + consent (§3/D8), never proxied.
+  RPC_CHANNELS.devSpace.GENERATE_QUESTIONS,
   RPC_CHANNELS.devSpace.CLONE_PROGRESS,
   RPC_CHANNELS.devSpace.CHANGED,
   RPC_CHANNELS.devSpace.RUN_PROGRESS,
@@ -145,6 +151,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.shell.OPEN_FILE,
   RPC_CHANNELS.shell.SHOW_IN_FOLDER,
   RPC_CHANNELS.shell.EXEC,
+  // shell:action — main→renderer native affordance push (dock/tray/menu/notification).
+  RPC_CHANNELS.shell.ACTION,
   RPC_CHANNELS.workspace.OPEN_IN_EDITOR,
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
   RPC_CHANNELS.sessions.FOREIGN_PERSIST,
@@ -261,6 +269,13 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT,
   RPC_CHANNELS.appearance.SET_ZEN_SHELL,
   RPC_CHANNELS.appearance.SHELL_CHANGED,
+  // A6/B10 — local UI prefs + macOS accent push (device-local).
+  RPC_CHANNELS.appearance.GET_UI_PREFERENCES,
+  RPC_CHANNELS.appearance.SET_UI_PREFERENCES,
+  RPC_CHANNELS.appearance.ACCENT_CHANGED,
+  // C1 — reads the local Zed install and writes the local theme catalog.
+  RPC_CHANNELS.zedThemes.LIST,
+  RPC_CHANNELS.zedThemes.IMPORT,
 
   // caching — prompt cache and context settings
   RPC_CHANNELS.caching.GET_EXTENDED_PROMPT_CACHE,
@@ -615,6 +630,22 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   // diagnostics — host doctor checks read local service/port/config/log state.
   RPC_CHANNELS.diagnostics.RUN,
   RPC_CHANNELS.diagnostics.GET_LAST,
+
+  // native integration — floating quick composer (window + global shortcut + persisted accelerator).
+  RPC_CHANNELS.quickComposer.OPEN,
+  RPC_CHANNELS.quickComposer.CLOSE,
+  RPC_CHANNELS.quickComposer.GET_SHORTCUT,
+  RPC_CHANNELS.quickComposer.SET_SHORTCUT,
+  // native integration — OS login item; written by the host OS.
+  RPC_CHANNELS.appIntegration.GET_LOGIN_ITEM,
+  RPC_CHANNELS.appIntegration.SET_LOGIN_ITEM,
+  // files — Finder/filesystem affordances act on the host machine.
+  RPC_CHANNELS.files.REVEAL_IN_FINDER,
+  RPC_CHANNELS.files.OPEN_PATH,
+  RPC_CHANNELS.files.COPY_PATH,
+  RPC_CHANNELS.files.QUICK_LOOK,
+  RPC_CHANNELS.files.QUICK_LOOK_CLOSE,
+  RPC_CHANNELS.files.START_DRAG,
 ]
 
 export const LOCAL_ONLY_CHANNELS = new Set<string>(LOCAL_ONLY_CHANNEL_LIST)
