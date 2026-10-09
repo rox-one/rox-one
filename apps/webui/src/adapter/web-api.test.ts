@@ -96,6 +96,46 @@ describe('web adapter notification stubs', () => {
   })
 })
 
+function wireErrorShape(error: unknown): { code?: string; message?: string } {
+  if (typeof error !== 'object' || error === null) return {}
+  return {
+    code: 'code' in error && typeof error.code === 'string' ? error.code : undefined,
+    message: 'message' in error && typeof error.message === 'string' ? error.message : undefined,
+  }
+}
+
+describe('web adapter protocol feature gating', () => {
+  it('refuses a channel the server did not advertise, with a typed error', async () => {
+    const { api, client } = createWebApi({ serverUrl: 'ws://127.0.0.1:1' })
+    CLIENTS.push(client)
+    // Simulate a handshake whose `features.methods` omits everything.
+    client.isMethodAdvertised = () => false
+
+    let error: unknown
+    try {
+      await api.getSessions('ws-1')
+    } catch (e) {
+      error = e
+    }
+
+    const shape = wireErrorShape(error)
+    expect(shape.code).toBe('CHANNEL_NOT_FOUND')
+    expect(shape.message).toContain('sessions:get')
+    // The refusal happens before any connection attempt.
+    expect(client.getConnectionState().status).toBe('idle')
+  })
+
+  it('reports feature-based channel availability', async () => {
+    const { api, client } = createWebApi({ serverUrl: 'ws://127.0.0.1:1' })
+    CLIENTS.push(client)
+    client.getServerFeatures = () => ({ methods: ['sessions:get'], events: [], capabilities: [] })
+    client.isMethodAdvertised = (ch: string) => ch === 'sessions:get'
+
+    expect(api.isChannelAvailable('sessions:get')).toBe(true)
+    expect(api.isChannelAvailable('sessions:delete')).toBe(false)
+  })
+})
+
 describe('web adapter acknowledged workspace metadata', () => {
   it('does not project the requested workspace before the server acknowledges it', async () => {
     const { api, client } = createWebApi({

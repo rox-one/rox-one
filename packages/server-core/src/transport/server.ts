@@ -21,6 +21,8 @@ import {
   isErrorCode,
   isLocalOnly,
   CodedError,
+  buildProtocolFeatures,
+  buildProtocolPolicy,
   type MessageEnvelope,
   type PushTarget,
   type ErrorCode,
@@ -1224,6 +1226,10 @@ export class WsRpcServer implements RpcServer {
           webContentsId: client.webContentsId ?? undefined,
           workspaceId: client.workspaceId ?? undefined,
           stale: this.workspaceAuthority && envelope.reconnectClientId ? true : undefined,
+          // Optional protocol feature block (back-compat: registeredChannels is
+          // untouched; older clients ignore these fields).
+          features: buildProtocolFeatures(),
+          policy: buildProtocolPolicy(),
         }
         this.safeSend(ws, serializeEnvelope(ack))
 
