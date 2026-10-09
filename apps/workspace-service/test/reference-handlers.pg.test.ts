@@ -146,9 +146,9 @@ afterEach(async () => {
   if (!testDb) return
   await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
   await db.close()
-})
+}, 120000)
 
-afterAll(async () => { await testDb?.cleanup() })
+afterAll(async () => { await testDb?.cleanup() }, 180000)
 
 function pgHarness() {
   return createHarness({ local: new InMemoryCommandStore(), workspace: new PostgresCommandStore(db, schema), onError: (error, type) => console.error(`[w1-06] ${type}:`, (error as Error)?.message ?? error) })
