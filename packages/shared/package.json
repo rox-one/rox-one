@@ -66,6 +66,7 @@
     "./credentials": "./src/credentials/index.ts",
     "./docs": "./src/docs/index.ts",
     "./design-manifest": "./src/design-manifest/index.ts",
+    "./dev-space": "./src/dev-space/index.ts",
     "./docs/doc-links": "./src/docs/doc-links.ts",
     "./entities": "./src/entities/index.ts",
     "./entities/schemas": "./src/entities/schemas.ts",

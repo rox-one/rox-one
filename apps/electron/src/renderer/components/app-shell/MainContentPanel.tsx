@@ -42,6 +42,8 @@ import {
   isBrowserNavigation,
   isKnowledgeNavigation,
   isDiffNavigation,
+  isDevelopersNavigation,
+  isPlaybooksNavigation,
   isExtensionNavigation,
   isConnectionsNavigation,
   isHomeNavigation,
@@ -123,6 +125,10 @@ const KnowledgeHome = lazyRoutePage(() =>
 const KnowledgeProposals = lazyRoutePage(() =>
   import('../../knowledge/KnowledgeProposals').then((m) => ({ default: m.KnowledgeProposals })),
 )
+// Developer Space / Playbooks surfaces (2026-10-09 pack); pages own their data.
+const DevSpaceHomePage = lazyRoutePage(() => import('@/pages/dev-space/DevSpaceHomePage'))
+const DevSpaceRepoPage = lazyRoutePage(() => import('@/pages/dev-space/DevSpaceRepoPage'))
+const PlaybooksHomePage = lazyRoutePage(() => import('@/pages/playbooks/PlaybooksHomePage'))
 
 type SelectedResourceStatus = 'loading' | 'ready' | 'missing' | 'unavailable'
 
@@ -616,6 +622,29 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <KnowledgeHome />
+      </Panel>
+    )
+  }
+
+  if (isDevelopersNavigation(navState)) {
+    if (navState.devSpaceRepoId) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <DevSpaceRepoPage devSpaceRepoId={navState.devSpaceRepoId} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <DevSpaceHomePage />
+      </Panel>
+    )
+  }
+
+  if (isPlaybooksNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <PlaybooksHomePage />
       </Panel>
     )
   }

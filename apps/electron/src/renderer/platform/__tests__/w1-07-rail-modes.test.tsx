@@ -128,9 +128,9 @@ describe('ActivityRail render', () => {
 describe('CompactWorkspaceMenu destination list', () => {
   const src = readFileSync(join(import.meta.dir, '../../components/app-shell/CompactWorkspaceMenu.tsx'), 'utf8')
 
-  it('appends railModeEntries(useShellModes().modes) after APP_NAV_DESTINATIONS', () => {
+  it('appends railModeEntries(useShellModes().modes) after the visible destinations', () => {
     expect(src).toContain('const modeEntries = railModeEntries(useShellModes().modes)')
-    const destinations = src.indexOf('{APP_NAV_DESTINATIONS.map((destination)')
+    const destinations = src.indexOf('{visibleDestinations.map((destination)')
     const modes = src.indexOf('{modeEntries.map((mode)')
     expect(destinations).toBeGreaterThan(0)
     expect(modes).toBeGreaterThan(destinations)

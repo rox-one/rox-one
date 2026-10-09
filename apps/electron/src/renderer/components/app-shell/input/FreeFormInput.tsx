@@ -98,6 +98,8 @@ import {
 import { formatCostUsd, resolveTurnPhase } from './turn-progress'
 import { useAtomValue } from 'jotai'
 import { featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
+import { devSpaceEnabledAtom } from '@/atoms/dev-space'
+import { emitDevSpaceSoftSignal, isGitHubRepoLink } from '@/components/dev-space/DevSpaceNudgeBanner'
 import { clearPendingFocusForSession, consumePendingFocusForSession } from './focus-input-events'
 import {
   getRecentWorkingDirs,
@@ -437,6 +439,7 @@ export function FreeFormInput({
   }, [tourSignals])
   React.useEffect(() => tourSignals.capability('attachments.available', { state: 'ready' }), [tourSignals])
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  const devSpaceEnabled = useAtomValue(devSpaceEnabledAtom)
   const promptHistoryRef = React.useRef<PromptHistory>(EMPTY_PROMPT_HISTORY)
   React.useEffect(() => {
     promptHistoryRef.current = EMPTY_PROMPT_HISTORY
@@ -1603,6 +1606,14 @@ export function FreeFormInput({
     }
   }
 
+  // Soft signal: a bare GitHub repo link pasted into the composer while
+  // Developer Space is off. Observation only — the paste itself is untouched.
+  const handleComposerPaste = (e: React.ClipboardEvent) => {
+    if (!devSpaceEnabled && isGitHubRepoLink(e.clipboardData?.getData('text/plain'))) {
+      emitDevSpaceSoftSignal('repo-link-pasted')
+    }
+  }
+
   // Handle long text paste - convert to file attachment
   const handleLongTextPaste = React.useCallback((text: string) => {
     const observation = tourSignals.capture()
@@ -2220,7 +2231,7 @@ export function FreeFormInput({
         {/* In compact mode, hide input while the agent is processing — until the
             user clicks / hovers the collapsed bar to expand it back. */}
         {!isCollapsedInCompact && (
-        <div ref={node => { inputTarget(node); skillsTarget(node) }}><RichTextInput
+        <div ref={node => { inputTarget(node); skillsTarget(node) }} onPaste={handleComposerPaste}><RichTextInput
           ref={richInputRef}
           value={input}
           onChange={handleInputChange}

@@ -23,6 +23,7 @@ import {
   Calendar,
   Cable,
   DatabaseZap,
+  FolderGit2,
   FolderKanban,
   Globe,
   GraduationCap,
@@ -30,23 +31,29 @@ import {
   ListTodo,
   MessageSquare,
   NotebookPen,
+  NotebookText,
   PanelsTopLeft,
   Settings,
   Workflow,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
+import { atom, type Atom } from 'jotai'
 import { routes, type ViewRoute } from '../../../shared/routes'
+import { devSpaceEnabledAtom } from '../../atoms/dev-space'
+import { playbooksEnabledAtom } from '../../atoms/playbooks'
 import {
   isAutomationsNavigation,
   isBrowserNavigation,
   isConnectionsNavigation,
+  isDevelopersNavigation,
   isDiffNavigation,
   isHomeNavigation,
   isKnowledgeNavigation,
   isNotesNavigation,
   isMemoryNavigation,
   isLearningNavigation,
+  isPlaybooksNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isPagesNavigation,
@@ -74,6 +81,8 @@ export type AppNavDestinationId =
   | 'connections'
   | 'home'
   | 'knowledge'
+  | 'developers'
+  | 'playbooks'
   | 'settings'
 
 export interface AppNavDestination {
@@ -101,6 +110,12 @@ export interface AppNavDestination {
    * with this i18n key as the tooltip (spec S-03 §3.2 degradation).
    */
   disabledTooltipKey?: string
+  /**
+   * Feature flag gating the whole entry (spec 2026-10-09 §2.3): the
+   * destination is hidden while the flag is off (undefined = always shown).
+   * Enumerating consumers read `visibleNavDestinationsAtom`.
+   */
+  flagAtom?: Atom<boolean>
 }
 
 /** Primary ordering is stable; supporting services keep their prior identities. */
@@ -261,6 +276,28 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     isActive: (navState) => isKnowledgeNavigation(navState) || isDiffNavigation(navState),
   },
   {
+    id: 'developers',
+    linkId: 'nav:developers',
+    icon: FolderGit2,
+    labelKey: 'sidebar.developers',
+    railGroup: 'more',
+    contextLinkIds: ['nav:developers'],
+    route: () => routes.view.developers(),
+    isActive: isDevelopersNavigation,
+    flagAtom: devSpaceEnabledAtom,
+  },
+  {
+    id: 'playbooks',
+    linkId: 'nav:playbooks',
+    icon: NotebookText,
+    labelKey: 'sidebar.playbooks',
+    railGroup: 'more',
+    contextLinkIds: ['nav:playbooks'],
+    route: () => routes.view.playbooks(),
+    isActive: isPlaybooksNavigation,
+    flagAtom: playbooksEnabledAtom,
+  },
+  {
     id: 'settings',
     linkId: 'nav:settings',
     icon: Settings,
@@ -284,3 +321,12 @@ export const APP_NAV_DESTINATIONS_BY_ID: Record<AppNavDestinationId, AppNavDesti
     AppNavDestinationId,
     AppNavDestination
   >
+
+/**
+ * Destinations whose feature flag is on (`flagAtom` undefined = always
+ * visible). Enumerating consumers read this atom instead of the raw array so
+ * gated entries (Developers, Playbooks) stay hidden while their flag is off.
+ */
+export const visibleNavDestinationsAtom = atom((get) =>
+  APP_NAV_DESTINATIONS.filter((destination) => !destination.flagAtom || get(destination.flagAtom)),
+)

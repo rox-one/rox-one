@@ -179,6 +179,16 @@ export const routes = {
     /** Learning view (learning navigator — self-learning dashboard, PRD §25-30) */
     learning: () => 'learning' as const,
 
+    /**
+     * Developer Space home (2026-10-09 pack, D2) — `developers`, or
+     * `developers?repo=<id>` to focus one repo workspace.
+     */
+    developers: (repoId?: string) =>
+      `developers${toQueryString(repoId ? { repo: repoId } : undefined)}` as const,
+
+    /** Playbooks notebook surface (2026-10-09 pack, D12) — `playbooks`. */
+    playbooks: () => 'playbooks' as const,
+
     /** Things-style personal tasks (Issue 17). Distinct from DAG Conductor tasks. */
     tasks: (taskId?: string) =>
       taskId ? `tasks/task/${encodeURIComponent(taskId)}` as const : 'tasks' as const,

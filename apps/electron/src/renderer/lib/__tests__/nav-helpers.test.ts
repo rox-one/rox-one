@@ -18,6 +18,9 @@ describe('isDetailNavState', () => {
       details: { type: 'session', sessionId: 's1' },
     })).toBe(true)
     expect(isDetailNavState({ navigator: 'home', details: null })).toBe(true)
+    expect(isDetailNavState({ navigator: 'developers', details: null })).toBe(true)
+    expect(isDetailNavState({ navigator: 'developers', devSpaceRepoId: 'devrepo_1', details: null })).toBe(true)
+    expect(isDetailNavState({ navigator: 'playbooks', details: null })).toBe(true)
     expect(isDetailNavState({ navigator: 'memory', details: null })).toBe(false)
     expect(isDetailNavState({ navigator: 'tasks', details: null })).toBe(false)
     expect(isDetailNavState({ navigator: 'tasks', details: { type: 'task', taskId: 't1' } })).toBe(true)

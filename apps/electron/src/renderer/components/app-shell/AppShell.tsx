@@ -92,6 +92,9 @@ import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
 import { visibleExtraScreens } from "@/pages/extra-screens/registry"
+import { devSpaceEnabledAtom } from "@/atoms/dev-space"
+import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
+import { playbooksEnabledAtom } from "@/atoms/playbooks"
 import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
@@ -176,10 +179,12 @@ import {
   isFeedNavigation,
   isHomeNavigation,
   isConnectionsNavigation,
+  isDevelopersNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
   isPagesNavigation,
+  isPlaybooksNavigation,
   type NavigationState,
 } from "@/contexts/NavigationContext"
 import type { SettingsSubpage } from "../../../shared/types"
@@ -380,6 +385,8 @@ function AppShellContent({
   const isPrimarySidebarRendered = true
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
   const extraScreens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
+  const devSpaceEnabled = useAtomValue(devSpaceEnabledAtom)
+  const playbooksEnabled = useAtomValue(playbooksEnabledAtom)
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(activeWorkspaceId).sidebarWidth
   })
@@ -2808,6 +2815,22 @@ function AppShellContent({
         onClick: () => navigate(routes.view.pages(p.config.slug)),
       })),
     },
+    // Developers / Playbooks (2026-10-09 pack) — additive, flag-gated entries.
+    // Presence, icon and label come from the single nav-destination registry.
+    ...(devSpaceEnabled ? [{
+      id: "nav:developers",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.developers.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.developers.icon,
+      variant: isDevelopersNavigation(navState) ? "default" as const : "ghost" as const,
+      onClick: () => navigate(routes.view.developers()),
+    }] : []),
+    ...(playbooksEnabled ? [{
+      id: "nav:playbooks",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.playbooks.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.playbooks.icon,
+      variant: isPlaybooksNavigation(navState) ? "default" as const : "ghost" as const,
+      onClick: () => navigate(routes.view.playbooks()),
+    }] : []),
     // --- Separator after projects ---
     { id: "separator:projects-memory", type: "separator" },
     {
@@ -3059,6 +3082,8 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           surfaceNavigationActive={true}
           leftInset={topBarLeftInset}
         />
+
+        <DevSpaceNudgeBanner />
 
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
 
