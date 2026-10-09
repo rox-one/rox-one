@@ -27,7 +27,10 @@ export interface Config {
   botToken: string
   /** Bot username used to build deep links; learned from getMe when absent. */
   botUsername: string
-  /** Optional bearer token required on /api/link/* when set. */
+  /**
+   * Bearer token required on /api/link/* and /api/register/*. Empty disables
+   * the whole link surface: every call is refused (fail-closed).
+   */
   authToken: string
   /** Lifetime of a verification code. */
   ttlMs: number
