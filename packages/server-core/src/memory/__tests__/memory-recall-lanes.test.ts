@@ -42,6 +42,8 @@ function makeService(opts: { recallAgent?: (prompt: string) => Promise<string>; 
     enabled: true,
     distillIdleHours: 3,
     distillMsgCount: 30,
+    dreamIntervalHours: 4,
+    dreamNotes: true,
     negativeFirst: true,
     redactExtraPatterns: [],
     ftsLimit: 20,
