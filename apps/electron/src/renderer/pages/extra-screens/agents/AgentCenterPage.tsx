@@ -25,6 +25,7 @@ import {
 import { useWorkspaceSessions, sessionTitle } from '@/lib/extra-screens/use-rox-sources'
 import { getSessionTitle } from '@/utils/session'
 import { toErrorMessage } from '@/lib/errors'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 const NS = 'agent-center'
 
@@ -40,16 +41,19 @@ function normalizeSettings(raw: unknown): CenterSettings {
 
 function useCloudRuns(): { enabled: boolean; runs: CenterCloudRun[]; refresh: () => void } {
   const [state, setState] = useState<{ enabled: boolean; runs: CenterCloudRun[] }>({ enabled: false, runs: [] })
+  // PERF-10 (#1577): a retired surface keeps this hook mounted but stops the poll.
+  const visible = useEffectiveVisible()
   const refresh = useCallback(() => {
     const api = window.electronAPI
     if (typeof api?.listCloudRuns !== 'function') return
     api.listCloudRuns().then((raw) => setState(normalizeCloudRuns(raw)), () => setState({ enabled: false, runs: [] }))
   }, [])
   useEffect(() => {
+    if (!visible) return
     refresh()
     const timer = window.setInterval(refresh, 15000)
     return () => window.clearInterval(timer)
-  }, [refresh])
+  }, [refresh, visible])
   return { ...state, refresh }
 }
 
@@ -98,6 +102,8 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
   useEffect(() => tourSignals.capability('agent-center.available', { state: 'ready' }), [tourSignals])
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id ?? null
+  // PERF-10 (#1577): a retired surface keeps this page mounted but stops its clock.
+  const visible = useEffectiveVisible()
   const { pendingPermissions, pendingCredentials } = useAppShellContext()
   const sessions = useWorkspaceSessions(workspaceId)
   const cloud = useCloudRuns()
@@ -137,9 +143,13 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
     return () => { cancelled = true }
   }, [workspaceId])
   useEffect(() => {
+    if (!visible) {
+      setNow(Date.now())
+      return
+    }
     const timer = window.setInterval(() => setNow(Date.now()), 30000)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [visible])
 
   const saveSettings = (next: CenterSettings) => {
     setSettings(next)

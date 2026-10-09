@@ -102,6 +102,8 @@ export const REALTIME_EVENT_TYPES: Readonly<Record<TopicKind, readonly string[]>
     'invite.status_changed', 'rule.failed',
     // W1-03 exit criterion (ping round-trip).
     'system.pinged',
+    // W1-15 (#1512): the X-19/X-16… counters push on the logical `user.counters` topic.
+    'counters.changed',
   ],
   channel: [
     'message.created', 'message.edited', 'message.recalled', 'reaction.changed', 'pin.changed', 'chat.updated',

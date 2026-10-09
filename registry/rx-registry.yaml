@@ -2866,3 +2866,407 @@
   note: |
     Обзорный документ; нормативная классификация — RX-SPC-0008.
 
+# ——— Developer Space + Playbooks (пак 2026-10-09, волны В1–В5) ———
+
+- id: RX-SPC-0022
+  title: Developer Space + Playbooks — брифинг (D1–D14)
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/00-BRIEF.md
+  status: active
+  note: |
+    Внутренний источник истины ТЗ-пака: решения D1–D14, карта фактов §3, риски R1–R10, открытые вопросы O1–O11.
+
+- id: RX-SPC-0023
+  title: Developer Space + Playbooks — PRD
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/01-PRD.md
+  status: active
+  refs: [RX-SPC-0022]
+  note: |
+    FR-требования, персоны, входные точки, состояния, метрики.
+
+- id: RX-SPC-0024
+  title: Developer Space + Playbooks — платформенные основы
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/02-SPEC-foundations.md
+  status: active
+  refs: [RX-SPC-0022]
+  note: |
+    Гейтинг роли/флаги, IA, ингест, джобы (O3), артефакты, эгресс, session-tools, i18n.
+
+- id: RX-SPC-0025
+  title: Developer Space + Playbooks — фичи и инструменты
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/03-SPEC-features.md
+  status: active
+  refs: [RX-SPC-0022]
+  note: |
+    Шесть инструментов-адаптеров (D4), блоки вопросов (D8), туры (D9/D10), «свой вопрос» (D11), Playbooks/подкаст (D12/D13).
+
+- id: RX-SPC-0026
+  title: Developer Space + Playbooks — UI-спецификация
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/04-UI-SPEC.md
+  status: active
+  refs: [RX-SPC-0022]
+  note: |
+    Экраны (адаптация RC-01..RC-12), состояния, токены/моушн/a11y, демо-виньетка.
+
+- id: RX-SPC-0027
+  title: Developer Space + Playbooks — план волн В1–В5
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/05-PLAN.md
+  status: active
+  refs: [RX-SPC-0022, RX-SPC-0026]
+  note: |
+    Одна волна = один PR; shared-file ownership; RX-план; порядок проверок.
+
+- id: RX-SPC-0028
+  title: Developer Space + Playbooks — приёмочные кейсы (JSON)
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/06-acceptance-cases.json
+  status: active
+  refs: [RX-SPC-0027]
+  note: |
+    70 машиночитаемых кейсов по областям ONB/DEV/ING/PIPE/ART/QST/TOUR/CHAT/PLB/POD/CBK/SEC/I18N/A11Y.
+
+- id: RX-SPC-0029
+  title: Developer Space + Playbooks — журнал решений
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/07-DECISIONS.md
+  status: active
+  refs: [RX-SPC-0022]
+  note: |
+    D1–D14 и производные решения с альтернативами и обоснованиями.
+
+- id: RX-SPC-0030
+  title: Developer Space + Playbooks — индекс пака
+  kind: specification
+  path: docs/specs/2026-10-09-dev-space-and-playbooks/README.md
+  status: active
+  refs: [RX-SPC-0022, RX-SPC-0023, RX-SPC-0024, RX-SPC-0025, RX-SPC-0026, RX-SPC-0027, RX-SPC-0028, RX-SPC-0029]
+  note: |
+    Как читать пак, статус, следующий шаг.
+
+- id: RX-FEA-0034
+  title: Developer Space — репозиторий-пространство и артефакты
+  kind: feature
+  status: planned
+  refs: [RX-SPC-0024, RX-SPC-0027]
+  note: |
+    Каталог репо → репо-воркспейс с шестью поверхностями, вопросами, турами и freshness. Волны В1–В3.
+
+- id: RX-FEA-0035
+  title: Playbooks — ноутбук-поверхность
+  kind: feature
+  status: planned
+  refs: [RX-SPC-0027]
+  note: |
+    Режимы «знания» и «кодбук»; порт концепций SurfSense на примитивы ROX. Волны В4–В5.
+
+- id: RX-FEA-0036
+  title: Подкаст Playbooks
+  kind: feature
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Двухголосый подкаст: сценарий LLM → TTS → сборка (ffmpeg) → плеер/экспорт mp3/srt. Волна В4.
+
+- id: RX-FEA-0037
+  title: Кодбук Playbooks
+  kind: feature
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Ноутбуки-пайплайны по коду поверх артефактов и агентских сессий. Волна В5.
+
+- id: RX-SRF-0049
+  title: Developer Space — каталог репозиториев
+  kind: surface
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Верхнеуровневый экран «Разработчикам»; цель пути — apps/electron/src/renderer/pages/dev-space/DevSpaceHomePage.tsx (волна В1).
+
+- id: RX-SRF-0050
+  title: Developer Space — репо-воркспейс
+  kind: surface
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Экран репозитория с поверхностями-артефактами; цель пути — apps/electron/src/renderer/pages/dev-space/DevSpaceRepoPage.tsx (волна В1).
+
+- id: RX-SRF-0051
+  title: Настройки → «Разработчикам»
+  kind: surface
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Карточка-тумблер Dev Space и статус репозиториев; цель пути — apps/electron/src/renderer/pages/settings/DeveloperSettingsPage.tsx (волна В1).
+
+- id: RX-SRF-0052
+  title: Playbooks — ноутбук (знания)
+  kind: surface
+  status: planned
+  refs: [RX-FEA-0035]
+  note: |
+    Источники, вопросы, пресет-вопросы, подкаст. Волна В4.
+
+- id: RX-SRF-0053
+  title: Playbooks — кодбук
+  kind: surface
+  status: planned
+  refs: [RX-FEA-0037]
+  note: |
+    Ноутбуки-пайплайны по коду. Волна В5.
+
+- id: RX-SRF-0054
+  title: Шаг онбординга «Кто вы?»
+  kind: surface
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Роль после имени, явная запись devspace.v1=true только при выборе «разработчик» (D1). Волна В1.
+
+- id: RX-CMP-0069
+  title: RoleStep — компонент шага онбординга
+  kind: component
+  status: planned
+  refs: [RX-SRF-0054]
+  note: |
+    apps/electron/src/renderer/components/onboarding/RoleStep.tsx (волна В1).
+
+- id: RX-CMP-0070
+  title: Карточка репозитория (Developer Space)
+  kind: component
+  status: planned
+  refs: [RX-SRF-0049]
+  note: |
+    Статус, freshness, бейдж «устарело», удаление/отмена (волна В1).
+
+- id: RX-CMP-0071
+  title: Напоминание Developer Space (nudge)
+  kind: component
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Одноразовый баннер «Включить экран разработчика?» при мягком сигнале (волна В1).
+
+- id: RX-CMP-0072
+  title: Плеер подкаста Playbooks
+  kind: component
+  status: planned
+  refs: [RX-FEA-0036]
+  note: |
+    Плеер + экспорт mp3/srt (волна В4).
+
+- id: RX-INT-0036
+  title: GitHub-клон репозитория
+  kind: integration
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Клон по ссылке в projects/<slug>/ с прогрессом/отменой; приватные — device-login (волна В1).
+
+- id: RX-INT-0037
+  title: openwiki — генерация wiki
+  kind: integration
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Инструмент-адаптер D4 (волна В2).
+
+- id: RX-INT-0038
+  title: Understand-Anything — понимание кода
+  kind: integration
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Инструмент-адаптер D4 (волна В2).
+
+- id: RX-INT-0039
+  title: codegraph — граф кода
+  kind: integration
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Инструмент-адаптер D4; выбор канонического провайдера — O1 (волна В2).
+
+- id: RX-INT-0040
+  title: archify — схемы
+  kind: integration
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Инструмент-адаптер D4; возможное схлопывание с groma — O2 (волна В2).
+
+- id: RX-INT-0041
+  title: graphify — knowledge-graph
+  kind: integration
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Инструмент-адаптер D4 (волна В2).
+
+- id: RX-INT-0042
+  title: Groma.md — C4/OKF
+  kind: integration
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Инструмент-адаптер D4 (волна В2).
+
+- id: RX-INT-0043
+  title: OSV — CVE-проверки
+  kind: integration
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Сеть только под per-repo согласием cveNetwork (волны В2/В3).
+
+- id: RX-API-0013
+  title: Dev Space — RPC-контур ингеста (devSpace:*)
+  kind: api
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    listRepositories/addRepository/startClone/removeRepository/refreshRepository/cancel/capabilities/listRuns + push cloneProgress/changed/runProgress (волна В1).
+
+- id: RX-API-0014
+  title: podcast:JOB — job-канал подкаста
+  kind: api
+  status: planned
+  refs: [RX-FEA-0036]
+  note: |
+    Заменяет voice:JOB именно для подкаста; voice:JOB остаётся для диктовки/ASR (волна В4).
+
+- id: RX-DAT-0017
+  title: Модель данных Developer Space
+  kind: data
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    DevSpaceRepositoryRecord/Manifest/Consent/Run + каталог dev-space-repositories.json; packages/shared/src/dev-space/types.ts (волна В1).
+
+- id: RX-PLG-0013
+  title: Инструменты-адаптеры Dev Space (шесть внешних)
+  kind: plugin
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Реестр адаптеров поверх CI-DEC-EXTEND-EXISTING-01; alwaysOn=false, без демонов (волна В2).
+
+- id: RX-AUT-0031
+  title: Пайплайн анализа Developer Space
+  kind: automation
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    reconcile → structural → LLM → publish; джобы с прогрессом/отменой/идемпотентностью (волны В1–В2).
+
+- id: RX-AUT-0032
+  title: Пайплайн подкаста Playbooks
+  kind: automation
+  status: planned
+  refs: [RX-FEA-0036]
+  note: |
+    Сценарий → сегменты TTS → сборка в один файл (ffmpeg) (волна В4).
+
+- id: RX-ADR-0020
+  title: Ревизия выбора инструментов code intelligence (D4)
+  kind: adr
+  status: planned
+  refs: [RX-SPC-0025]
+  note: |
+    Новая ревизия поверх CI-DEC-EXTEND-EXISTING-01; согласовать CURRENT_SOURCE_CONFLICT/REJECTED_CODE_INTEL_TOOLS (O1/O2/O7).
+
+- id: RX-ADR-0021
+  title: Job-движок пайплайнов анализа (O3)
+  kind: adr
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Выбор движка по критериям 02 §6.3; рекомендация — job-runner на паттерне agent SDK subprocess + voice job-machine.
+
+- id: RX-ADR-0022
+  title: Правило путей хранения клонов (O4)
+  kind: adr
+  status: planned
+  refs: [RX-FEA-0034]
+  note: |
+    Клон в projects/<slug> как репо-проект; согласовать с резолвом проекта code-intelligence.
+
+- id: RX-RSK-0001
+  title: shell:exec 20 s не покрывает длинные пайплайны
+  kind: risk
+  status: planned
+  refs: [RX-ADR-0021]
+  note: |
+    R1 из 00-BRIEF §5; требует job-механизма для клона/анализа.
+
+- id: RX-RSK-0002
+  title: source-index требует bun:sqlite
+  kind: risk
+  status: planned
+  note: |
+    R2; под чистым Electron/Node нужен ts-fallback для retrieval Playbooks.
+
+- id: RX-RSK-0003
+  title: Отсутствует clone API
+  kind: risk
+  status: planned
+  refs: [RX-INT-0036]
+  note: |
+    R3; новый RPC-контур ингеста; GitHub-токен не выходит в рендер.
+
+- id: RX-RSK-0004
+  title: Нет мультиспикерного аудио и миксдауна
+  kind: risk
+  status: planned
+  refs: [RX-AUT-0032]
+  note: |
+    R4; новый пайплайн подкаста через ffmpeg.
+
+- id: RX-RSK-0005
+  title: Лицензия SurfSense неоднозначна
+  kind: risk
+  status: planned
+  note: |
+    R5; только порт концепций, без вендоринга кода (D12).
+
+- id: RX-RSK-0006
+  title: Коллизия имени «Плейбуки»
+  kind: risk
+  status: planned
+  note: |
+    R6; существующий ярлык SessionWorkbench «playbook holes» переименовывается в «Веера задач».
+
+- id: RX-RSK-0007
+  title: Поверхность SiYuan выключена
+  kind: risk
+  status: planned
+  note: |
+    R7; Playbooks не строить на SiYuan.
+
+- id: RX-RSK-0008
+  title: i18n — 12 локалей на каждую строку
+  kind: risk
+  status: planned
+  note: |
+    R8; parity/sorted/coverage в каждом PR.
+
+- id: RX-RSK-0009
+  title: Native-приёмка только macOS/Windows
+  kind: risk
+  status: planned
+  note: |
+    R9; Linux = NOT_RUN.
+
+- id: RX-RSK-0010
+  title: Стоимость LLM против «предрендерить всё»
+  kind: risk
+  status: planned
+  refs: [RX-AUT-0031]
+  note: |
+    R10; каскад D5/D8 с прогрессом.
+

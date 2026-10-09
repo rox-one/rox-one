@@ -35,6 +35,8 @@ import { RailRow } from './RailRow'
 import { ModesRailGroup } from './ModesRailGroup'
 import { useShellModes } from './useModes'
 import { routes, type Route } from '../../shared/routes'
+import { preloadRoute } from '../components/app-shell/route-pages'
+import type { RoutePageName } from '../components/app-shell/route-pages'
 
 export { RailRow } from './RailRow'
 
@@ -96,26 +98,53 @@ const seedById: Record<string, SeededMode> = Object.fromEntries(
   CORE_MODES.map((mode) => [mode.contribution.id, mode]),
 )
 
+/**
+ * PERF-10 (#1577) — hover/focus prefetch table: rail mode id → the lazy route
+ * chunk the dispatcher (`MainContentPanel`'s `SurfaceRoutePanel`) mounts for
+ * that mode's `rootRoute`. Modes whose landing page is eager have no entry:
+ * `home` (HomeFrontPage) and `chat` (the session list is rendered inline; the
+ * board/table/heatmap chunks depend on a remembered view mode the route does
+ * not carry), so nothing is claimed for them.
+ */
+const RAIL_MODE_ROUTE_PRELOADS: Record<string, RoutePageName> = {
+  meetings: 'planWorkspace', // routes.view.meetings() → MeetingsPage (planWorkspace chunk)
+  tasks: 'tasks', // routes.view.tasks() → TasksPage
+  notes: 'notes', // routes.view.notes() → NotesPage
+  feed: 'feed', // routes.view.feed() → FeedPage
+  inbox: 'inbox', // routes.view.inbox() → InboxPage
+}
+
 function RailModeItem({ mode, active, collapsed }: { mode: ModeContribution; active: boolean; collapsed: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const Icon = MODE_ICONS[mode.icon] ?? Inbox
   const label = t(mode.titleKey)
   const disabled = !isModeNavigable(mode)
+  const preload = RAIL_MODE_ROUTE_PRELOADS[mode.id]
+  // PERF-10 (#1577): preload the destination chunk once the pointer/focus
+  // enters the row (disabled rows land nowhere). The preloader memoizes, so
+  // repeat events are free and a failed chunk stays retryable; the route error
+  // boundary owns the user-visible failure.
+  const prefetchOnIntent = () => {
+    if (disabled || !preload) return
+    void preloadRoute(preload).catch(() => {})
+  }
   return (
-    <RailRow
-      icon={Icon}
-      label={label}
-      tooltip={disabled ? `${label} · ${t('workbench.mode.unavailable')}` : label}
-      collapsed={collapsed}
-      disabled={disabled}
-      active={!disabled && active}
-      onClick={() => {
-        if (mode.rootRoute) void navigate(mode.rootRoute as Route)
-      }}
-      muted
-      testId={`rail-item-${mode.id}`}
-    />
+    <div className="contents" onPointerEnter={prefetchOnIntent} onFocus={prefetchOnIntent}>
+      <RailRow
+        icon={Icon}
+        label={label}
+        tooltip={disabled ? `${label} · ${t('workbench.mode.unavailable')}` : label}
+        collapsed={collapsed}
+        disabled={disabled}
+        active={!disabled && active}
+        onClick={() => {
+          if (mode.rootRoute) void navigate(mode.rootRoute as Route)
+        }}
+        muted
+        testId={`rail-item-${mode.id}`}
+      />
+    </div>
   )
 }
 

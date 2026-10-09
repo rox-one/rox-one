@@ -74,6 +74,7 @@
     "./drive/importers/providers/yandex-disk": "./src/drive/importers/providers/yandex-disk.ts",
     "./drive/importers/providers/icloud": "./src/drive/importers/providers/icloud.ts",
     "./design-manifest": "./src/design-manifest/index.ts",
+    "./dev-space": "./src/dev-space/index.ts",
     "./docs/doc-links": "./src/docs/doc-links.ts",
     "./entities": "./src/entities/index.ts",
     "./entities/schemas": "./src/entities/schemas.ts",
@@ -200,7 +201,9 @@
     "./drive/importers/providers/auth": "./src/drive/importers/providers/auth.ts",
     "./collab": "./src/collab/index.ts",
     "./xsc": "./src/xsc/index.ts",
-    "./notify/schemas": "./src/notify/schemas.ts"
+    "./notify/schemas": "./src/notify/schemas.ts",
+    "./xfn/schemas": "./src/xfn/schemas.ts",
+    "./xfn": "./src/xfn/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
