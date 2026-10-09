@@ -18,8 +18,10 @@ import {
   AREA_COLORS,
   AREA_LABEL_KEYS,
   AREA_ORDER,
+  buildCountItems,
   buildStatItems,
   filterGraph,
+  formatStatItems,
   truncatedSummary,
 } from './knowledge-map-model'
 import { IDENTITY_VIEW, KnowledgeMapGraph, ZOOM_MAX, ZOOM_MIN, type GraphView } from './KnowledgeMapGraph'
@@ -28,6 +30,9 @@ import { KnowledgeMapDocView } from './KnowledgeMapDocView'
 import { useKnowledgeMap } from './use-knowledge-map'
 
 type KnowledgeMapMode = 'graph' | 'tree' | 'doc'
+
+/** Id of the legend element the graph points its `aria-describedby` at. */
+const LEGEND_ID = 'knowledge-map-legend'
 
 interface KnowledgeMapPanelProps {
   workspaceId: string | null
@@ -82,7 +87,6 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
     )
   }
 
-  const statsItems = buildStatItems(dto.stats, locale)
   const truncated = truncatedSummary(dto.stats)
   const truncatedNotice = truncated ? (
     <span className="rounded border border-border px-1.5 py-0.5 text-warning">
@@ -92,18 +96,17 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
 
   const statsLine = (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-      {statsItems.map((item) => (
-        <span key={item.key} className="tabular-nums">
-          {t(item.key)}: {item.value}
-        </span>
-      ))}
+      <span className="tabular-nums">{formatStatItems(buildStatItems(dto.stats), t)}</span>
       <span>{t('knowledgeMap.generatedAt', { time: new Date(dto.generatedAt).toLocaleString(locale) })}</span>
       {truncatedNotice}
     </div>
   )
 
   const legend = (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+    <div
+      id={LEGEND_ID}
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+    >
       {AREA_ORDER.map((area) => (
         <span key={area} className="inline-flex items-center gap-1.5">
           <span className="inline-block h-2 w-2 rounded-full" style={{ background: AREA_COLORS[area] }} aria-hidden />
@@ -115,11 +118,7 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
   )
 
   if (compact) {
-    const summary = t('knowledgeMap.stats.summary', {
-      files: dto.stats.files,
-      links: dto.stats.links,
-      areas: dto.stats.areas,
-    })
+    const summary = formatStatItems(buildCountItems(dto.stats), t)
     return (
       <div className="space-y-3">
         {dto.stats.files === 0 ? (
@@ -241,6 +240,7 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
               onOpenNode={openNode}
               view={view}
               onViewChange={setView}
+              describedById={LEGEND_ID}
             />
           </div>
         )}

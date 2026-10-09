@@ -41,10 +41,11 @@ export function ClipboardCard({
   onPreview,
   onEditTags,
 }: ClipboardCardProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? 'ru'
   const isImage = entry.kind === 'image'
   const tags = visibleEntryTags(entry.tags)
-  const imageMeta = isImage ? formatImageMeta(t, entry) : null
+  const imageMeta = isImage ? formatImageMeta(t, entry, locale) : null
   const formatBadge = isImage ? imageFormatBadge(entry.imageFormat, entry.thumbDataUrl) : null
   const preview = isImage ? '' : previewText(entry.text ?? entry.preview)
   const mono = !isImage && usesMonoPreview(detectTextKind(entry.text))
