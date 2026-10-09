@@ -422,6 +422,21 @@ export interface SessionToolContext {
   pages?: PagesToolCallbacks;
 
   // ============================================================
+  // Board widgets (show_widget)
+  // ============================================================
+
+  /**
+   * Board widget callback — stages agent-authored widget code as a new board
+   * widget revision. Grouped (one operation now) but kept an object so the
+   * surface can grow (read/release) without changing the context field shape.
+   * Injected by the backend (SessionManager) over the SAME WidgetStore the
+   * `board:widgetPut` RPC handler uses — the tool is never a second writer.
+   * Undefined in backends that don't run alongside SessionManager — the
+   * handler degrades gracefully.
+   */
+  boardWidgets?: BoardWidgetToolCallbacks;
+
+  // ============================================================
   // Memory (memory_search / memory_get)
   // ============================================================
 
@@ -991,6 +1006,40 @@ export interface PagesToolCallbacks {
   updatePage(slug: string, patch: UpdatePageToolPatch): Promise<PageToolDetails>;
   writePageData(slug: string, patch: PageDataToolPatch): Promise<PageDataWriteSummary>;
   deletePage(slug: string): Promise<DeletePageToolResult>;
+}
+
+/** Authored board widget source format. */
+export type BoardWidgetKind = 'html' | 'a2ui';
+
+/** Committed board widget revision, as reported back to the tool. */
+export interface BoardWidgetToolRecord {
+  widgetId: string;
+  name: string;
+  kind: BoardWidgetKind;
+  revision: number;
+  sha256: string;
+  createdAt: string;
+}
+
+export interface BoardWidgetPutInput {
+  /** Stable widget name (also the on-disk directory name). */
+  name: string;
+  /** Operator-visible title. */
+  title: string;
+  kind: BoardWidgetKind;
+  /** Authored source: an HTML fragment, or an A2UI JSONL stream. */
+  widgetCode: string;
+  /** Session that authored the revision; defaults to the invoking session. */
+  sessionId?: string;
+}
+
+/**
+ * Board widget tool callbacks, injected by the backend (SessionManager) over the
+ * same `WidgetStore` the board RPC handlers write. All storage logic lives behind
+ * this — this package never touches board/widgets/ directly.
+ */
+export interface BoardWidgetToolCallbacks {
+  putWidget(input: BoardWidgetPutInput): Promise<BoardWidgetToolRecord>;
 }
 
 // ============================================================

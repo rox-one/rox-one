@@ -123,3 +123,7 @@ export type {
   WritePageDataArgs,
   DeletePageArgs,
 } from './pages.ts';
+
+// Board widgets
+export { handleShowWidget } from './show-widget.ts';
+export type { ShowWidgetArgs } from './show-widget.ts';

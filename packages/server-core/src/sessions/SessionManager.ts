@@ -120,6 +120,8 @@ import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, isSourceUsable
 import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@rox/shared/tasks'
 import { createTaskFromSpec, resolveCreateTaskProjectId } from '../tasks'
 import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
+import { buildBoardWidgetToolCallbacks } from '../board/tool-callbacks'
+import type { BoardWidgetToolRecord } from '@rox/session-tools-core'
 import { memoryToolCallbacksForSession } from '../memory/tool-callbacks'
 import { buildServersFromSources as buildServersFromSourcesShared } from '../sources/build-servers'
 import { resolveDefaultSessionSources } from '../sources/default-session-sources'
@@ -2843,6 +2845,13 @@ export class SessionManager implements ISessionManager {
     if (!this.eventSink) return
     sessionLog.info(`Broadcasting pages changed (${pages.length} pages)`)
     this.eventSink(RPC_CHANNELS.pages.CHANGED, { to: 'workspace', workspaceId }, workspaceId, pages)
+  }
+
+  /** Broadcast a board widget revision staged through the show_widget tool. */
+  private broadcastBoardWidgetChanged(workspaceId: string, record: BoardWidgetToolRecord): void {
+    if (!this.eventSink) return
+    sessionLog.info(`Broadcasting board widget changed (${record.widgetId}@${record.revision})`)
+    this.eventSink(RPC_CHANNELS.board.CHANGED, { to: 'workspace', workspaceId }, workspaceId, { widgetId: record.widgetId, revision: record.revision })
   }
 
   private broadcastDefaultPermissionsChanged(): void {
@@ -5897,6 +5906,20 @@ export class SessionManager implements ISessionManager {
           },
           onContentChanged: (pageSlug: string) => {
             this.enqueuePageThumbnail(managed.workspace.id, managed.workspace.rootPath, pageSlug)
+          },
+        }),
+        // Board widget tool (show_widget) — stages agent-authored widget code
+        // through the SAME WidgetStore the board:widgetPut RPC uses, then
+        // broadcasts board:changed. createdBy is the session owner, never the
+        // model's input.
+        boardWidgets: buildBoardWidgetToolCallbacks({
+          workspaceId: managed.workspace.id,
+          workspaceRootPath: managed.workspace.rootPath,
+          createdBy: managed.owner?.id ?? managed.creator?.accountId ?? 'local',
+          sessionId: managed.id,
+          log: (message: string) => sessionLog.info(message),
+          onWidgetMutated: (record) => {
+            this.broadcastBoardWidgetChanged(managed.workspace.id, record)
           },
         }),
         // Memory recall tools (memory_search / memory_get / memory_forget) — bound to
