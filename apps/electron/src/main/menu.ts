@@ -99,6 +99,8 @@ export async function rebuildMenu(): Promise<void> {
           click: () => sendToRenderer(RPC_CHANNELS.menu.OPEN_SETTINGS)
         },
         { type: 'separator' as const },
+        { role: 'services' as const, label: i18n.t('menu.services') },
+        { type: 'separator' as const },
         { role: 'hide' as const, label: i18n.t('menu.hideCraftAgents') },
         { role: 'hideOthers' as const },
         { role: 'unhide' as const },

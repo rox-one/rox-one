@@ -33,6 +33,7 @@ import {
 } from '@/components/settings'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { EnvironmentSettingsSection } from './EnvironmentSettingsSection'
+import { NativeIntegrationsSettingsSection } from './NativeIntegrationsSettingsSection'
 import { isMeetingsAutostartEnabled, setMeetingsAutostartEnabled } from '@/lib/meetings/calendar-autostart'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
@@ -323,6 +324,9 @@ export default function AppSettingsPage() {
           <div className="px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
               <EnvironmentSettingsSection />
+
+              {/* System integrations (quick composer, launch at login) */}
+              <NativeIntegrationsSettingsSection />
 
               {/* Notifications */}
               <SettingsSection title={t("settings.notifications.title")}>

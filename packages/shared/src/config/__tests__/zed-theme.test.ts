@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { getBackgroundColor, mergeThemeOverrides, themeToCSS, type ThemeFile } from '../theme'
+import { getBackgroundColor, mergeThemeOverrides, resolveMaterial, themeToCSS, type ThemeFile } from '../theme'
 import { PresetThemeSchema, ThemeOverrideSchema } from '../validators'
 
 const repo = join(import.meta.dir, '../../../../..')
@@ -268,4 +268,48 @@ describe('Zed preset contract', () => {
       }
     })
   }
+})
+
+/**
+ * Blurred presets ship their own Zed role alphas (`surfaces`). The auto-glass
+ * resolver applies them on top of the Zed-parity profile, so the rendered
+ * composite must still hold the ≥ 4.5:1 worst-case invariant. This extends the
+ * per-preset glass model above to the *declared* alphas rather than only the
+ * import-time solve basis.
+ */
+describe('blurred preset glass tiers', () => {
+  /** Surface -> the theme role whose opaque RGB the material tints. */
+  const surfaceRole = {
+    topbar: 'titlebar', rail: 'navigator', strip: 'toolbar',
+    inspector: 'navigator', sidebar: 'navigator', navigator: 'navigator',
+  } as const
+
+  for (const id of ['min-dark-blurred', 'snazzy-blurred']) {
+    it(`${id} declares Zed role alphas and keeps text readable at the resolved composite`, () => {
+      const preset = loadPreset(id)
+      expect(preset.mode).toBe('blurred')
+      expect(preset.surfaces).toBeDefined()
+      const resolved = resolveMaterial(preset.material, { mode: preset.mode, surfaces: preset.surfaces })
+      expect(resolved.enabled).toBe(true)
+      // The declared role alphas are what actually renders (not just defaults).
+      expect(resolved.opacity.topbar).toBe(preset.surfaces!.topbarOpacity!)
+      for (const role of uiTextRoles) {
+        for (const backing of ['#000000', '#ffffff']) {
+          for (const [surface, themeRole] of Object.entries(surfaceRole)) {
+            const fill = preset[themeRole] ?? preset.background!
+            const glass = over(fill, rgb(backing), resolved.opacity[surface as keyof typeof surfaceRole])
+            expect(contrast(preset[role] ?? preset.foreground!, glass), `${id}: ${role} on ${surface} over ${backing}`).toBeGreaterThanOrEqual(4.5)
+          }
+        }
+      }
+    })
+  }
+
+  it('activates the same profile automatically for a blurred theme without an override', () => {
+    const preset = loadPreset('min-dark-blurred')
+    const resolved = resolveMaterial(preset.material, { mode: preset.mode, surfaces: preset.surfaces })
+    expect(resolved.enabled).toBe(true)
+    expect(resolved.disabledReason).toBeUndefined()
+    expect(resolved.deepGlass).toEqual({})
+  })
 })

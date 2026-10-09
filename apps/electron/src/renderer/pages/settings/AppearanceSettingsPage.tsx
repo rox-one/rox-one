@@ -67,6 +67,8 @@ import { ConationShellSettings } from './ConationShellSettings'
 import { ZenShellSettings } from './ZenShellSettings'
 import { SuperEngineeringAppearanceSettings } from './SuperEngineeringAppearanceSettings'
 import { cn } from '@/lib/utils'
+import { saveUiAppearancePatch, useUiAppearance } from '@/lib/ui-appearance-store'
+import { ZedThemesImportSection } from './ZedThemesImportSection'
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -75,6 +77,7 @@ import {
 import {
   MATERIAL_CHAT_EFFECT_KINDS,
   MATERIAL_TEXTURE_KINDS,
+  effectiveMaterialSettings,
   type MaterialChatEffectKind,
   type MaterialSettings,
   type MaterialTextureKind,
@@ -225,8 +228,16 @@ function MaterialGroup({ title, children }: { title: string; children: ReactNode
 function MaterialEffectsSection() {
   const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
-  // Display/base value: the preset theme merged with the app override.
-  const committed = resolvedTheme.material ?? null
+  // Display/base value: the preset theme merged with the app override, then
+  // the blurred auto-glass activation — so a `mode:'blurred'` theme shows the
+  // Zed-parity profile here even though nothing is persisted to theme.json.
+  const committed = useMemo(
+    () => effectiveMaterialSettings(resolvedTheme.material, {
+      mode: resolvedTheme.mode,
+      surfaces: resolvedTheme.surfaces,
+    }) ?? null,
+    [resolvedTheme],
+  )
   // Persisted layer: the raw app-level override only. Edits must patch this
   // layer (never the merged view) so preset-owned fields are not baked into
   // theme.json on the first control change.
@@ -594,6 +605,29 @@ function MaterialEffectsSection() {
             disabled={controlsDisabled || !haze.enabled}
             onChange={(next) => applyPatch((base) => setHaze(base, { intensity: next }))}
           />
+          <SettingsToggle
+            label={t('settings.appearance.material.hazeOverlay')}
+            description={t('settings.appearance.material.hazeOverlayDesc')}
+            checked={haze.overlay}
+            disabled={controlsDisabled || !haze.enabled}
+            onCheckedChange={(value) => applyPatch((base) => setHaze(base, { overlay: value }))}
+          />
+          <MaterialSliderRow
+            label={t('settings.appearance.material.hazeOverlayIntensity')}
+            ariaLabel={t('settings.appearance.material.hazeOverlayIntensity')}
+            min={0}
+            max={1}
+            step={0.01}
+            value={haze.activeOpacity}
+            display={`${Math.round(haze.activeOpacity * 100)}%`}
+            disabled={controlsDisabled || !haze.enabled || !haze.overlay}
+            // MonoCode parity: the empty-state opacity keeps the 0.24/0.5 ratio
+            // with the active overlay strength.
+            onChange={(next) => applyPatch((base) => setHaze(base, {
+              activeOpacity: next,
+              emptyOpacity: Math.round(next * 0.48 * 1000) / 1000,
+            }))}
+          />
           <MaterialSliderRow
             label={t('settings.appearance.material.matte')}
             ariaLabel={t('settings.appearance.material.matte')}
@@ -687,6 +721,16 @@ export default function AppearanceSettingsPage() {
     themeResolvedFrom,
   } = useTheme()
   const { workspaces, sessionStatuses } = useAppShellContext()
+  // A6/B10 — «Интерфейс»: compact status bar + accent source (main-owned).
+  const { statusBarVisible, accentSource } = useUiAppearance()
+  const handleStatusBarChange = useCallback((checked: boolean) => {
+    if (!appearancePrefLive()) return
+    void saveUiAppearancePatch({ statusBarVisible: checked })
+  }, [])
+  const handleAccentSourceChange = useCallback((value: string) => {
+    if (!appearancePrefLive()) return
+    void saveUiAppearancePatch({ accentSource: value === 'system' ? 'system' : 'brand' })
+  }, [])
   // Kanban column assignment lives on session metadata; used to migrate tiles when a
   // custom column is removed from settings (mirrors the board's own removal path).
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
@@ -1170,6 +1214,25 @@ export default function AppearanceSettingsPage() {
                       setShowBackgroundFinishedChip(checked)
                     }}
                   />
+                  <SettingsToggle
+                    label={t("settings.appearance.statusBar")}
+                    description={t("settings.appearance.statusBarDesc")}
+                    checked={statusBarVisible}
+                    onCheckedChange={handleStatusBarChange}
+                  />
+                  <SettingsRow
+                    label={t("settings.appearance.accent")}
+                    description={t("settings.appearance.accentDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={accentSource}
+                      onValueChange={handleAccentSourceChange}
+                      options={[
+                        { value: 'brand', label: t("settings.appearance.accentBrand") },
+                        { value: 'system', label: t("settings.appearance.accentSystem") },
+                      ]}
+                    />
+                  </SettingsRow>
                   <SettingsRow
                     label={t("settings.appearance.projectColorTreatment")}
                     description={t("settings.appearance.projectColorTreatmentDesc")}
@@ -1187,6 +1250,8 @@ export default function AppearanceSettingsPage() {
               </SettingsSection>
 
               <MaterialEffectsSection />
+
+              <ZedThemesImportSection />
 
               <SuperEngineeringAppearanceSettings />
               <ZenShellSettings />

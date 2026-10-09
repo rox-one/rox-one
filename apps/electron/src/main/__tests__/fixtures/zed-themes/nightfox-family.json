@@ -1,0 +1,67 @@
+{
+  "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
+  "name": "Nightfox",
+  "author": "cange",
+  "themes": [
+    {
+      "name": "Nordfox - opaque",
+      "appearance": "dark",
+      "style": {
+        "editor.background": "#2e3440",
+        "editor.foreground": "#c7cdd9",
+        "text": "#c7cdd9",
+        "text.muted": "#cdcecf",
+        "text.accent": "#c9826b",
+        "warning": "#ebcb8b",
+        "success": "#a3be8c",
+        "error": "#bf616a",
+        "border": "#39404fe3",
+        "border.variant": "#5a657d",
+        "border.focused": "#3e4a5b",
+        "element.background": "#3e4a5b",
+        "element.hover": "#564445",
+        "element.selected": "#5d4b4d",
+        "panel.background": "#232831",
+        "panel.overlay_background": "#232831",
+        "elevated_surface.background": "#2e3440",
+        "titlebar.background": "#232831ff",
+        "toolbar.background": "#3e4a5b8c",
+        "tab_bar.background": "#2e34408c",
+        "tab.active_background": "#3e4a5b8c",
+        "tab.inactive_background": "#2e34408c",
+        "terminal.background": "#2e3440",
+        "terminal.foreground": "#cdcecf",
+        "terminal.bright_foreground": "#c7cdd9",
+        "terminal.dim_foreground": "#abb1bb",
+        "terminal.ansi.black": "#3b4252",
+        "terminal.ansi.red": "#bf616a",
+        "terminal.ansi.green": "#a3be8c",
+        "terminal.ansi.yellow": "#ebcb8b",
+        "terminal.ansi.blue": "#81a1c1",
+        "terminal.ansi.magenta": "#b48ead",
+        "terminal.ansi.cyan": "#88c0d0",
+        "terminal.ansi.white": "#e5e9f0",
+        "terminal.ansi.bright_red": "#d08770",
+        "terminal.ansi.bright_green": "#b4d6a8",
+        "terminal.ansi.bright_blue": "#94b8d6",
+        "terminal.ansi.dim_red": "#8c4a52",
+        "terminal.ansi.dim_green": "#7a8d68",
+        "terminal.ansi.dim_blue": "#5f7689",
+        "players": [],
+        "syntax": {
+          "comment": { "color": "#60728a", "font_style": "italic", "font_weight": null },
+          "keyword": { "color": "#b48ead", "font_style": null, "font_weight": 700 }
+        }
+      }
+    },
+    {
+      "name": "Dayfox",
+      "appearance": "light",
+      "style": {
+        "editor.background": "#f6f2ee",
+        "text": "#352c24",
+        "text.accent": "#a65c3a"
+      }
+    }
+  ]
+}

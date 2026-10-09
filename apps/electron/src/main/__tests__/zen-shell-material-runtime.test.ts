@@ -10,5 +10,5 @@ test('material applies only after paint and follows actual app GPU/accessibility
   expect(result.error).toBeUndefined()
   expect(result.status).toBe(0)
   expect(result.stderr).toBe('')
-  expect(JSON.parse(result.stdout)).toEqual({ passed: true, scenarios: 8, nativeHardware: false })
+  expect(JSON.parse(result.stdout)).toEqual({ passed: true, scenarios: 9, nativeHardware: false })
 })

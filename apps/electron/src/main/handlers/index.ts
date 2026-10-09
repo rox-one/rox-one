@@ -14,6 +14,8 @@ import { registerSiyuanHandlers } from './siyuan'
 import { registerExtensionHostHandlers } from './extension-host'
 import { registerExtensionSurfaceHandlers } from './extension-surface'
 import { registerClipboardHistoryGuiHandlers } from './clipboard-history'
+import { registerNativeIntegrationHandlers } from './native-integration'
+import { registerZedThemesHandlers } from './zed-themes'
 import { registerKeeperGuiHandlers } from '../keeper/register'
 export { startClipboardMonitor } from './clipboard-history'
 import { setGithubUserToolHost } from '@rox/shared/connections'
@@ -32,6 +34,8 @@ export function registerGuiRpcHandlers(server: RpcServer, deps: HandlerDeps): vo
   registerExtensionHostHandlers(server, deps)
   registerExtensionSurfaceHandlers(server, deps)
   registerClipboardHistoryGuiHandlers(server, deps)
+  registerNativeIntegrationHandlers(server, deps)
+  registerZedThemesHandlers(server, deps)
   registerKeeperGuiHandlers(server, deps)
 }
 
