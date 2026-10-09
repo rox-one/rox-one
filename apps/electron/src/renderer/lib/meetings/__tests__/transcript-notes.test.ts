@@ -163,7 +163,10 @@ test('empty segments, absent workspace and failed writes never duplicate or thro
   // The successful claim sticks: no third attempt for the same key.
   expect(await failing.consider(apiFixture(), meetingFixture(), WORKSPACE)).toBe(false)
   expect(calls).toBe(2)
-  expect(claimed).toEqual(['meeting-1:1'])
+  // Claimed twice on purpose: the key is claimed per attempt, not per meeting generation
+  // — issue before the write, release when the write fails, issue again on the retry.
+  // The third observation above added no claim, so a successful claim is never released.
+  expect(claimed).toEqual(['meeting-1:1', 'meeting-1:1'])
   expect(forgotten).toEqual(['meeting-1:1'])
 })
 
