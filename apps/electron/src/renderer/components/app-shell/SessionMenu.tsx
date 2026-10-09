@@ -358,7 +358,7 @@ export function SessionMenu({
           ownerId: item.owner?.id,
           viewerId: actions.viewer.accountId,
         })}>
-          <MessageSquarePlus className="h-3.5 w-3.5" />
+          <MessageSquarePlus className="icon-caption" />
           <span className="flex-1">{t('sessionSuggestions.open')}</span>
         </MenuItem>
       )}
