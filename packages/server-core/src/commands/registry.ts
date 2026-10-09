@@ -16,6 +16,7 @@
 
 import { CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
 import { bindSystemPing } from './ping'
+import { AGENTS_COMMAND_MODULE } from '../agents/module.ts'
 import { NOTIFY_COMMAND_MODULE } from './notify'
 import { bindDomainSchemas, bindReferenceHandlers } from '../work/reference/module'
 // W1-12 (#1509)
@@ -50,6 +51,8 @@ export const COMMAND_MODULES: readonly CommandModule[] = Object.freeze([
   // W1-12 (#1509) — the automation contract binds before the reference module,
   // so its daily-note / system-list / invite handlers win over the generic ones.
   AUTOMATION_COMMAND_MODULE,
+  // W1-11 (#1508): identity lifecycle, team chats and agent governance.
+  AGENTS_COMMAND_MODULE,
   // W1-09 (#1506): notifications.* (binds only while a notify host is installed).
   NOTIFY_COMMAND_MODULE,
   REFERENCE_COMMAND_MODULE,

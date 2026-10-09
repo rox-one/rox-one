@@ -42,7 +42,9 @@
     "./platform/workbench": "./src/platform/workbench/index.ts",
     "./acl": "./src/acl/index.ts",
     "./entities/permissions": "./src/entities/permissions.ts",
-    "./automation": "./src/automation/index.ts"
+"./automation": "./src/automation/index.ts",
+    "./identity": "./src/identity/index.ts",
+    "./agents": "./src/agents/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

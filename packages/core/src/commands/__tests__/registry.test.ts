@@ -19,7 +19,7 @@ import {
 import { ROX2_PERMISSIONS } from '../../rox2/platform-contract.ts'
 
 function def(type: string, extra: Partial<CommandDefinition<unknown>> = {}): CommandDefinition<unknown> {
-  return { type: type as `${string}.${string}`, module: 'test', authority: 'local', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, ...extra }
+  return { type: type as `${string}.${string}`, module: 'test', authority: 'local', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, riskClass: () => 'routine', ...extra }
 }
 
 describe('CommandRegistry', () => {

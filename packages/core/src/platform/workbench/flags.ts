@@ -74,7 +74,7 @@ export const WORKBENCH_FLAG = {
   storageVisibleRootV1: 'storage.visible-root.v1',
   /** Goals module (W1-06, #1503): gates the MIG-04/05 OKR / roadmap import into the work store. Default OFF. */
   goalsV1: 'goals.v1',
-  // W1-12 (#1509)
+// W1-12 (#1509)
   /** Domain rules R1–R5: consumers do not even subscribe while off. Default OFF. */
   automationRulesV1: 'automation.rules.v1',
   // W1-09 (#1506) — Inbox activity surfaces. The notification *pipeline* has no
