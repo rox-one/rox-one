@@ -4293,6 +4293,7 @@
   "navigation.agentTabs.skills": "技能",
   "navigation.agentTabs.sources": "来源",
   "navigation.allProjects": "所有项目",
+  "navigation.confirmDeepLinkSend": "Open this session and send the prompt?",
   "navigation.contextMessage": "上下文：workspace {{workspaceId}}，project {{projectId}}，route {{route}}",
   "navigation.defaultProfile": "默认配置",
   "navigation.draftSaveFailed": "The draft could not be saved. It remains open. Retry saving or switching workspaces.",

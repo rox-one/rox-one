@@ -4293,6 +4293,7 @@
   "navigation.agentTabs.skills": "스킬",
   "navigation.agentTabs.sources": "소스",
   "navigation.allProjects": "모든 프로젝트",
+  "navigation.confirmDeepLinkSend": "Open this session and send the prompt?",
   "navigation.contextMessage": "컨텍스트: workspace {{workspaceId}}, project {{projectId}}, route {{route}}",
   "navigation.defaultProfile": "기본 프로필",
   "navigation.draftSaveFailed": "The draft could not be saved. It remains open. Retry saving or switching workspaces.",
