@@ -791,6 +791,9 @@ export const EXPECTED_CHANNELS: string[] = [
   'sessions:setBudget',
   'sessions:setMemoryMode',
   'sessions:setNotes',
+  'sessions:suggestAdd',
+  'sessions:suggestList',
+  'sessions:suggestResolve',
   'sessions:unreadSummaryChanged',
   'sessions:unwatchFiles',
   'sessions:watchFiles',
@@ -1023,4 +1026,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'workspaces:updateRemote',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1019
+export const EXPECTED_CHANNEL_COUNT = 1022
