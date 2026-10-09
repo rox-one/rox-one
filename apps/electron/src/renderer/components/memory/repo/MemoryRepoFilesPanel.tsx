@@ -115,7 +115,7 @@ function Badge({ label, tone }: { label: string; tone: 'edited' | 'dreamed' }) {
     <span
       data-testid={`memory-repo-badge-${tone}`}
       className={cn(
-        'shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-[10px] leading-4',
+        'shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption leading-4',
         tone === 'edited' ? 'bg-warning/15 text-warning' : 'bg-accent/12 text-accent',
       )}
     >
@@ -154,25 +154,25 @@ export function MemoryRepoFilesPanel({
       data-focus-zone="sidebar"
       data-testid="memory-repo-files-tree"
       onKeyDown={handleSidebarTreeKeyDown}
-      className="flex min-h-0 w-[248px] shrink-0 flex-col overflow-y-auto border-r border-foreground/8 bg-foreground/[0.015] py-2"
+      className="flex min-h-0 w-[248px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-surface-hover py-2"
     >
       {loading && tree.length === 0 ? (
         <div
           data-testid="memory-repo-tree-loading"
-          className="px-4 py-4 text-[13px] text-text-muted"
+          className="px-4 py-4 text-body text-text-muted"
         >
           {t('memory.repo.state.loading')}
         </div>
       ) : tree.length === 0 ? (
         <div
           data-testid="memory-repo-files-empty"
-          className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] border border-dashed border-foreground/12 bg-background/60 px-4 py-8 text-center"
+          className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] border border-dashed border-border-strong bg-background/60 px-4 py-8 text-center"
         >
           <span className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent">
-            <FolderClosed aria-hidden="true" className="size-5" />
+            <FolderClosed aria-hidden="true" className="icon-rail" />
           </span>
-          <p className="text-[13px] font-medium">{t('memory.repo.state.empty')}</p>
-          <p className="max-w-[220px] text-[11px] leading-5 text-text-muted">
+          <p className="text-body font-medium">{t('memory.repo.state.empty')}</p>
+          <p className="max-w-[220px] text-caption leading-5 text-text-muted">
             {t('memory.repo.state.emptyHint')}
           </p>
         </div>
@@ -186,10 +186,10 @@ export function MemoryRepoFilesPanel({
               return (
                 <li key={node.path}>
                   <div
-                    className="flex min-h-7 items-center gap-1.5 text-[12px] font-medium text-text-secondary"
+                    className="flex min-h-7 items-center gap-1.5 text-small font-medium text-text-secondary"
                     style={indent}
                   >
-                    <FolderClosed aria-hidden="true" className="size-3.5 shrink-0" />
+                    <FolderClosed aria-hidden="true" className="icon-caption shrink-0" />
                     <span className="truncate">{node.name}</span>
                   </div>
                 </li>
@@ -203,12 +203,12 @@ export function MemoryRepoFilesPanel({
                   aria-current={selected ? 'true' : undefined}
                   data-testid={`memory-repo-file-${node.path}`}
                   className={cn(
-                    'flex min-h-7 w-full items-center gap-1.5 rounded-[var(--radius-control)] py-1 pr-1.5 text-left text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                    selected ? 'bg-accent/10 font-medium text-accent' : 'text-foreground/90 hover:bg-foreground/5',
+                    'flex min-h-7 w-full items-center gap-1.5 rounded-[var(--radius-control)] py-1 pr-1.5 text-left text-small outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                    selected ? 'bg-accent/10 font-medium text-accent' : 'text-text-secondary hover:bg-surface-hover',
                   )}
                   style={indent}
                 >
-                  <FileText aria-hidden="true" className="size-3.5 shrink-0 text-text-muted" />
+                  <FileText aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
                   <span className="min-w-0 flex-1 truncate">{node.name}</span>
                   {node.badges?.includes('edited') ? <Badge tone="edited" label={t('memory.repo.file.badgeEdited')} /> : null}
                   {node.badges?.includes('dreamed') ? <Badge tone="dreamed" label={t('memory.repo.file.badgeDreamed')} /> : null}
@@ -227,51 +227,51 @@ export function MemoryRepoFilesPanel({
     // the stale file and not a false not-found.
     const pending = Boolean(selectedPath) && (fileLoading || (file !== null && file.path !== selectedPath))
     if (loading || pending) {
-      return <div className="px-5 py-6 text-[13px] text-text-muted" data-testid="memory-repo-files-loading">{t('memory.repo.state.loading')}</div>
+      return <div className="px-5 py-6 text-body text-text-muted" data-testid="memory-repo-files-loading">{t('memory.repo.state.loading')}</div>
     }
     if (!file) {
       if (selectedPath) {
         return (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-5 text-center" data-testid="memory-repo-files-not-found" role="alert">
-            <TriangleAlert aria-hidden="true" className="size-5 text-warning" />
-            <p className="text-[13px] text-text-secondary">{t('memory.repo.state.fileNotFound')}</p>
+            <TriangleAlert aria-hidden="true" className="icon-rail text-warning" />
+            <p className="text-body text-text-secondary">{t('memory.repo.state.fileNotFound')}</p>
           </div>
         )
       }
-      return <div className="px-5 py-6 text-[13px] text-text-muted" data-testid="memory-repo-files-no-selection">{t('memory.repo.file.selectFile')}</div>
+      return <div className="px-5 py-6 text-body text-text-muted" data-testid="memory-repo-files-no-selection">{t('memory.repo.file.selectFile')}</div>
     }
     return (
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4" data-testid="memory-repo-file-viewer">
         <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{file.path}</span>
+          <span className="min-w-0 flex-1 truncate text-body font-medium">{file.path}</span>
           {file.edited ? <Badge tone="edited" label={t('memory.repo.file.badgeEdited')} /> : null}
         </div>
         {file.edited ? (
-          <div className="mb-3 rounded-[var(--radius-control)] border border-warning/25 bg-warning/10 px-3 py-2 text-[12px] text-text-secondary" data-testid="memory-repo-files-edited-notice">
+          <div className="mb-3 rounded-[var(--radius-control)] border border-warning/25 bg-warning/10 px-3 py-2 text-small text-text-secondary" data-testid="memory-repo-files-edited-notice">
             {t('memory.repo.file.editedNotice')}
           </div>
         ) : null}
         {file.truncated ? (
-          <div className="mb-3 rounded-[var(--radius-control)] border border-foreground/10 bg-foreground/[0.03] px-3 py-2 text-[12px] text-text-muted" data-testid="memory-repo-files-truncated">
+          <div className="mb-3 rounded-[var(--radius-control)] border border-border-strong bg-surface-hover px-3 py-2 text-small text-text-muted" data-testid="memory-repo-files-truncated">
             {t('memory.repo.file.truncated')}
           </div>
         ) : null}
         {parsed && parsed.entries.length > 0 ? (
-          <table className="mb-4 w-full table-fixed border-collapse overflow-hidden rounded-[var(--radius-control)] text-[11px]" data-testid="memory-repo-files-frontmatter">
-            <caption className="pb-1 text-left text-[10px] font-medium uppercase tracking-wide text-text-muted/70">
+          <table className="mb-4 w-full table-fixed border-collapse overflow-hidden rounded-[var(--radius-control)] text-caption" data-testid="memory-repo-files-frontmatter">
+            <caption className="pb-1 text-left text-caption font-medium uppercase tracking-wide text-text-muted/70">
               {t('memory.repo.file.frontmatter')}
             </caption>
             <tbody>
               {parsed.entries.map((entry) => (
-                <tr key={entry.key} className="border-b border-foreground/8 last:border-b-0">
+                <tr key={entry.key} className="border-b border-border-subtle last:border-b-0">
                   <th scope="row" className="w-[38%] truncate px-2 py-1 text-left font-medium text-text-secondary">{entry.key}</th>
-                  <td className="truncate px-2 py-1 text-foreground/90" title={entry.value}>{entry.value}</td>
+                  <td className="truncate px-2 py-1 text-text-secondary" title={entry.value}>{entry.value}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : null}
-        <div className="markdown-content text-[13px] leading-6" data-testid="memory-repo-file-body">
+        <div className="markdown-content text-body leading-6" data-testid="memory-repo-file-body">
           <Markdown mode="minimal" onFileClick={handleBodyLink} onUrlClick={handleBodyLink}>
             {parsed ? linkifyWikilinks(parsed.body) : ''}
           </Markdown>

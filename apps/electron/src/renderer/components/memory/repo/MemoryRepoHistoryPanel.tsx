@@ -52,16 +52,16 @@ export function MemoryRepoHistoryPanel({
   const list = (
     <div
       data-testid="memory-repo-history-list"
-      className="flex min-h-0 w-[268px] shrink-0 flex-col overflow-y-auto border-r border-foreground/8 bg-foreground/[0.015] py-2"
+      className="flex min-h-0 w-[268px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-surface-hover py-2"
     >
       {loading ? (
-        <div className="px-4 py-4 text-[13px] text-text-muted" data-testid="memory-repo-history-loading">{t('memory.repo.state.loading')}</div>
+        <div className="px-4 py-4 text-body text-text-muted" data-testid="memory-repo-history-loading">{t('memory.repo.state.loading')}</div>
       ) : commits.length === 0 ? (
-        <div className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] border border-dashed border-foreground/12 bg-background/60 px-4 py-8 text-center" data-testid="memory-repo-history-empty">
+        <div className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] border border-dashed border-border-strong bg-background/60 px-4 py-8 text-center" data-testid="memory-repo-history-empty">
           <span className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent">
-            <GitCommitHorizontal aria-hidden="true" className="size-5" />
+            <GitCommitHorizontal aria-hidden="true" className="icon-rail" />
           </span>
-          <p className="text-[13px] font-medium">{t('memory.repo.history.empty')}</p>
+          <p className="text-body font-medium">{t('memory.repo.history.empty')}</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-px px-1.5">
@@ -76,16 +76,16 @@ export function MemoryRepoHistoryPanel({
                   data-testid={`memory-repo-commit-${commit.sha}`}
                   className={cn(
                     'flex w-full flex-col gap-0.5 rounded-[var(--radius-control)] px-2 py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                    selected ? 'bg-accent/10' : 'hover:bg-foreground/5',
+                    selected ? 'bg-accent/10' : 'hover:bg-surface-hover',
                   )}
                 >
                   <span className="flex items-center gap-1.5">
-                    <CircleDot aria-hidden="true" className="size-3 shrink-0 text-text-muted" />
-                    <code className={cn('text-[11px]', selected ? 'font-semibold text-accent' : 'text-text-secondary')}>{shortSha(commit.sha)}</code>
-                    <span className="ml-auto text-[10px] text-text-muted">{formatCommitTime(commit.ts)}</span>
+                    <CircleDot aria-hidden="true" className="icon-status shrink-0 text-text-muted" />
+                    <code className={cn('text-caption', selected ? 'font-semibold text-accent' : 'text-text-secondary')}>{shortSha(commit.sha)}</code>
+                    <span className="ml-auto text-caption text-text-muted">{formatCommitTime(commit.ts)}</span>
                   </span>
-                  <span className="line-clamp-2 text-[12px] text-foreground/90">{commit.message}</span>
-                  <span className="flex items-center gap-2 text-[10px] tabular-nums">
+                  <span className="line-clamp-2 text-small text-text-secondary">{commit.message}</span>
+                  <span className="flex items-center gap-2 text-caption tabular-nums">
                     <span className="text-success">+{commit.stats.added}</span>
                     <span className="text-destructive">−{commit.stats.deleted}</span>
                   </span>
@@ -101,7 +101,7 @@ export function MemoryRepoHistoryPanel({
   const detail = (() => {
     if (mode === 'snapshots') {
       return (
-        <div className="mb-3 rounded-[var(--radius-control)] border border-warning/25 bg-warning/10 px-3 py-2 text-[12px] text-text-secondary" data-testid="memory-repo-history-snapshots" role="status">
+        <div className="mb-3 rounded-[var(--radius-control)] border border-warning/25 bg-warning/10 px-3 py-2 text-small text-text-secondary" data-testid="memory-repo-history-snapshots" role="status">
           {t('memory.repo.history.snapshots')}
         </div>
       )
@@ -112,7 +112,7 @@ export function MemoryRepoHistoryPanel({
   const diffBody = (() => {
     if (loading) return null
     if (!selectedSha) {
-      return <div className="px-5 py-6 text-[13px] text-text-muted" data-testid="memory-repo-history-no-selection">{t('memory.repo.history.selectCommit')}</div>
+      return <div className="px-5 py-6 text-body text-text-muted" data-testid="memory-repo-history-no-selection">{t('memory.repo.history.selectCommit')}</div>
     }
     // A non-empty diff wins over the commit list: a deep-linked sha older than
     // the newest-100 window is not in `commits` but its diff is fetched fine.
@@ -120,12 +120,12 @@ export function MemoryRepoHistoryPanel({
       return (
         <ul className="flex flex-col gap-1" data-testid="memory-repo-history-diff">
           {diff.map((change) => (
-            <li key={`${change.op}:${change.path}`} className="flex min-w-0 items-center gap-2 rounded-[var(--radius-control)] border border-foreground/8 bg-background px-2.5 py-1.5">
-              <span className={cn('shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-[10px] leading-4', OP_TONE[change.op])} data-testid={`memory-repo-diff-op-${change.op}`}>
+            <li key={`${change.op}:${change.path}`} className="flex min-w-0 items-center gap-2 rounded-[var(--radius-control)] border border-border-subtle bg-background px-2.5 py-1.5">
+              <span className={cn('shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption leading-4', OP_TONE[change.op])} data-testid={`memory-repo-diff-op-${change.op}`}>
                 {t(`memory.repo.history.op.${change.op}`)}
               </span>
-              <span className="min-w-0 flex-1 truncate text-[12px]" title={change.path}>{change.path}</span>
-              <span className="shrink-0 text-[10px] tabular-nums">
+              <span className="min-w-0 flex-1 truncate text-small" title={change.path}>{change.path}</span>
+              <span className="shrink-0 text-caption tabular-nums">
                 <span className="text-success">+{change.additions}</span>{' '}
                 <span className="text-destructive">−{change.deletions}</span>
               </span>
@@ -136,8 +136,8 @@ export function MemoryRepoHistoryPanel({
     }
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-5 text-center" data-testid="memory-repo-history-no-changes" role="alert">
-        <TriangleAlert aria-hidden="true" className="size-5 text-warning" />
-        <p className="text-[13px] text-text-secondary">{selectedCommit ? t('memory.repo.history.noChanges') : t('memory.repo.state.commitNotFound')}</p>
+        <TriangleAlert aria-hidden="true" className="icon-rail text-warning" />
+        <p className="text-body text-text-secondary">{selectedCommit ? t('memory.repo.history.noChanges') : t('memory.repo.state.commitNotFound')}</p>
       </div>
     )
   })()
@@ -149,14 +149,14 @@ export function MemoryRepoHistoryPanel({
         {selectedCommit ? (
           <header className="shrink-0 px-5 pt-4 pb-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <code className="text-[11px] text-text-secondary">{shortSha(selectedCommit.sha)}</code>
-              <span className="text-[11px] text-text-muted">{formatCommitTime(selectedCommit.ts)}</span>
-              <span className="flex items-center gap-2 text-[10px] tabular-nums">
+              <code className="text-caption text-text-secondary">{shortSha(selectedCommit.sha)}</code>
+              <span className="text-caption text-text-muted">{formatCommitTime(selectedCommit.ts)}</span>
+              <span className="flex items-center gap-2 text-caption tabular-nums">
                 <span className="text-success">+{selectedCommit.stats.added}</span>
                 <span className="text-destructive">−{selectedCommit.stats.deleted}</span>
               </span>
             </div>
-            <p className="mt-1 text-[13px] font-medium">{selectedCommit.message}</p>
+            <p className="mt-1 text-body font-medium">{selectedCommit.message}</p>
           </header>
         ) : null}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
