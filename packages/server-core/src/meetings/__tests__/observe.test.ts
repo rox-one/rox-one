@@ -89,7 +89,10 @@ describe('live observe coordinator', () => {
     seedMeeting(root)
     const coordinator = new MeetingObserveCoordinator(() => root, () => 100)
 
-    expect(coordinator.start({ workspaceId: 'ws', meetingId: 'm1' }).observing).toBe(true)
+    const startedResult = coordinator.start({ workspaceId: 'ws', meetingId: 'm1' })
+    expect(startedResult.ok).toBe(true)
+    if (!startedResult.ok) return
+    expect(startedResult.observing).toBe(true)
     const session = coordinator.state({ workspaceId: 'ws', meetingId: 'm1' })
     expect(session.ok).toBe(true)
     if (!session.ok) return
@@ -110,7 +113,10 @@ describe('live observe coordinator', () => {
     const fresh = new MeetingObserveCoordinator(() => root, () => 400)
     expect(fresh.summary({ workspaceId: 'ws', meetingId: 'm1' })?.summary).toBe('решили начать • надо проверить')
 
-    expect(coordinator.stop({ workspaceId: 'ws', meetingId: 'm1' }).observing).toBe(false)
+    const stoppedResult = coordinator.stop({ workspaceId: 'ws', meetingId: 'm1' })
+    expect(stoppedResult.ok).toBe(true)
+    if (!stoppedResult.ok) return
+    expect(stoppedResult.observing).toBe(false)
     expect(coordinator.state({ workspaceId: 'ws', meetingId: 'm1' }).ok).toBe(true)
   })
 
