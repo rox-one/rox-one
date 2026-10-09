@@ -11,7 +11,10 @@
  *   at `create`, never silently dropped);
  * - timeouts are explicit: the deadline is stored, a timer settles the invoke
  *   in production, and `sweep(now)` settles deterministically for a caller
- *   that owns the clock.
+ *   that owns the clock;
+ * - ownership is recorded per invoke: `create` may bind a connection identity
+ *   and `ownerOf` reports it, so a caller can refuse a settlement from a
+ *   superseded/impostor connection before it reaches `resolve`/`fail`.
  */
 
 /** Default ceiling of concurrent invokes per node. */
@@ -63,10 +66,22 @@ export interface PendingInvokeTrackerOptions {
   readonly clearTimer?: (handle: unknown) => void
 }
 
+/** Ownership of a pending invoke, as seen by a would-be settler. */
+export type PendingInvokeOwner =
+  | { readonly known: false }
+  | { readonly known: true; readonly connId?: string }
+
 interface PendingInvokeRecord {
   readonly invokeId: string
   readonly nodeId: string
   readonly command: string
+  /**
+   * Connection identity of the node at creation. A later settlement must
+   * present the same identity; an answering connection that cannot is refused
+   * and never settles this invoke (the fence that stops a superseded/impostor
+   * connection from winning a race against the live one).
+   */
+  readonly connId?: string
   readonly deadlineAt: number
   timer: unknown
   settled: boolean
@@ -112,9 +127,10 @@ export class PendingInvokeTracker {
 
   /**
    * Reserve a pending invoke for a node. Refused with `QUEUE_FULL` when the
-   * node already has `maxPerNode` in-flight invokes.
+   * node already has `maxPerNode` in-flight invokes. `connId` records which
+   * connection owned the node at creation so a settlement can be fenced.
    */
-  create(nodeId: string, command: string, opts: { timeoutMs?: number } = {}): CreatePendingInvoke {
+  create(nodeId: string, command: string, opts: { timeoutMs?: number; connId?: string } = {}): CreatePendingInvoke {
     if (this.pendingCountFor(nodeId) >= this.maxPerNode) {
       return { ok: false, error: { code: 'QUEUE_FULL', message: `node ${nodeId} has ${this.maxPerNode} in-flight invokes` } }
     }
@@ -128,12 +144,24 @@ export class PendingInvokeTracker {
 
     const record: PendingInvokeRecord = {
       invokeId, nodeId, command, deadlineAt,
+      ...(opts.connId !== undefined ? { connId: opts.connId } : {}),
       timer: undefined, settled: false, settle: settleFn,
     }
     this.pending.set(invokeId, record)
     record.timer = this.setTimer(() => { this.expire(invokeId) }, timeoutMs)
 
     return { ok: true, handle: { invokeId, nodeId, command, result } }
+  }
+
+  /**
+   * Which connection owns a pending invoke. `known: false` means no such invoke
+   * is in flight (never created, already settled, or evicted); a known invoke
+   * without `connId` was created unfenced (embedded host, no connection identity).
+   */
+  ownerOf(invokeId: string): PendingInvokeOwner {
+    const record = this.pending.get(invokeId)
+    if (!record) return { known: false }
+    return record.connId === undefined ? { known: true } : { known: true, connId: record.connId }
   }
 
   /** Settle an invoke as `ok`. Returns false when it was already settled/unknown. */

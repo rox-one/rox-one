@@ -116,7 +116,7 @@ function Badge({ label, tone }: { label: string; tone: 'edited' | 'dreamed' }) {
       data-testid={`memory-repo-badge-${tone}`}
       className={cn(
         'shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption leading-4',
-        tone === 'edited' ? 'bg-warning/15 text-warning' : 'bg-accent/12 text-accent',
+        tone === 'edited' ? 'bg-status-warning/15 text-status-warning' : 'bg-accent/12 text-accent',
       )}
     >
       {label}
@@ -154,7 +154,7 @@ export function MemoryRepoFilesPanel({
       data-focus-zone="sidebar"
       data-testid="memory-repo-files-tree"
       onKeyDown={handleSidebarTreeKeyDown}
-      className="flex min-h-0 w-[248px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-surface-hover py-2"
+      className="flex min-h-0 w-[248px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-foreground-2 py-2"
     >
       {loading && tree.length === 0 ? (
         <div
@@ -204,7 +204,7 @@ export function MemoryRepoFilesPanel({
                   data-testid={`memory-repo-file-${node.path}`}
                   className={cn(
                     'flex min-h-7 w-full items-center gap-1.5 rounded-[var(--radius-control)] py-1 pr-1.5 text-left text-small outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                    selected ? 'bg-accent/10 font-medium text-accent' : 'text-text-secondary hover:bg-surface-hover',
+                    selected ? 'bg-accent/10 font-medium text-accent' : 'text-foreground-90 hover:bg-surface-hover',
                   )}
                   style={indent}
                 >
@@ -233,7 +233,7 @@ export function MemoryRepoFilesPanel({
       if (selectedPath) {
         return (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-5 text-center" data-testid="memory-repo-files-not-found" role="alert">
-            <TriangleAlert aria-hidden="true" className="icon-rail text-warning" />
+            <TriangleAlert aria-hidden="true" className="icon-rail text-status-warning" />
             <p className="text-body text-text-secondary">{t('memory.repo.state.fileNotFound')}</p>
           </div>
         )
@@ -247,12 +247,12 @@ export function MemoryRepoFilesPanel({
           {file.edited ? <Badge tone="edited" label={t('memory.repo.file.badgeEdited')} /> : null}
         </div>
         {file.edited ? (
-          <div className="mb-3 rounded-[var(--radius-control)] border border-warning/25 bg-warning/10 px-3 py-2 text-small text-text-secondary" data-testid="memory-repo-files-edited-notice">
+          <div className="mb-3 rounded-[var(--radius-control)] border border-status-warning/25 bg-status-warning/10 px-3 py-2 text-small text-text-secondary" data-testid="memory-repo-files-edited-notice">
             {t('memory.repo.file.editedNotice')}
           </div>
         ) : null}
         {file.truncated ? (
-          <div className="mb-3 rounded-[var(--radius-control)] border border-border-strong bg-surface-hover px-3 py-2 text-small text-text-muted" data-testid="memory-repo-files-truncated">
+          <div className="mb-3 rounded-[var(--radius-control)] border border-border-subtle bg-foreground-3 px-3 py-2 text-small text-text-muted" data-testid="memory-repo-files-truncated">
             {t('memory.repo.file.truncated')}
           </div>
         ) : null}
@@ -265,7 +265,7 @@ export function MemoryRepoFilesPanel({
               {parsed.entries.map((entry) => (
                 <tr key={entry.key} className="border-b border-border-subtle last:border-b-0">
                   <th scope="row" className="w-[38%] truncate px-2 py-1 text-left font-medium text-text-secondary">{entry.key}</th>
-                  <td className="truncate px-2 py-1 text-text-secondary" title={entry.value}>{entry.value}</td>
+                  <td className="truncate px-2 py-1 text-foreground-90" title={entry.value}>{entry.value}</td>
                 </tr>
               ))}
             </tbody>

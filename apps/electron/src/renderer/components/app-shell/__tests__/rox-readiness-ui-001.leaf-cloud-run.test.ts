@@ -89,9 +89,10 @@ describe('UI-001 selected cloud run refresh and recovery', () => {
     let stateCall = 0
     const Component = leafComponent(source, 'CloudRunSurfacePage', {
       React: { ...React, useState: () => ++stateCall === 1 ? [{ runId: 'run-A', state: { kind: 'unavailable', reason: 'error' } }, () => {}] : [attempt, (update: (value: number) => number) => { attempt = update(attempt) }], useCallback: (fn: unknown) => fn, useEffect: () => {} },
-      useTranslation: () => ({ t: (key: string) => key }), useNavigation: () => ({ navigate: () => {} }), routes: { view: { settings: () => 'settings/cloudRuns' } },
-      // PERF-10 (#1577): the page polls only while effectively visible.
+      // PERF-10 (#1577): production reads the effective-visibility hook; the
+      // active visible surface is the case under test here.
       useEffectiveVisible: () => true,
+      useTranslation: () => ({ t: (key: string) => key }), useNavigation: () => ({ navigate: () => {} }), routes: { view: { settings: () => 'settings/cloudRuns' } },
     })
     const tree = Component({ runId: 'run-A' })
     const retry = elementIn(tree, (element) => element.props['data-testid'] === 'cloud-run-surface-retry')

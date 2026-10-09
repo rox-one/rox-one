@@ -16,7 +16,7 @@ import type {
   MicrosoftService,
   McpSourceConfig,
 } from './types.ts';
-import type { MemorySearchToolArgs, MemoryGetToolArgs, MemoryForgetToolArgs } from './tool-defs.ts';
+import type { MemorySearchToolArgs, MemoryGetToolArgs, MemoryForgetToolArgs, WikiSearchToolArgs, WikiGetToolArgs, WikiApplyToolArgs } from './tool-defs.ts';
 
 // ============================================================
 // Source Credential Types
@@ -162,6 +162,20 @@ export interface MemoryToolCallbacks {
    * backend that only wires recall degrades to a typed "unavailable" result.
    */
   forget?(args: MemoryForgetToolArgs): Promise<ToolResult>;
+  /**
+   * c1.7 workspace wiki: evidence-backed claims (`wiki_search` / `wiki_get` /
+   * `wiki_apply`). Nested and optional — a backend that wires only the chunk
+   * index leaves the wiki tools reporting a typed "unavailable" result, so they
+   * are effectively listed only when these callbacks are wired.
+   */
+  wiki?: MemoryWikiCallbacks;
+}
+
+/** c1.7 — workspace wiki callbacks (claims/evidence + lint surface). */
+export interface MemoryWikiCallbacks {
+  search(args: WikiSearchToolArgs): Promise<ToolResult>;
+  get(args: WikiGetToolArgs): Promise<ToolResult>;
+  apply(args: WikiApplyToolArgs): Promise<ToolResult>;
 }
 
 // ============================================================
@@ -420,6 +434,21 @@ export interface SessionToolContext {
    * gracefully.
    */
   pages?: PagesToolCallbacks;
+
+  // ============================================================
+  // Board widgets (show_widget)
+  // ============================================================
+
+  /**
+   * Board widget callback — stages agent-authored widget code as a new board
+   * widget revision. Grouped (one operation now) but kept an object so the
+   * surface can grow (read/release) without changing the context field shape.
+   * Injected by the backend (SessionManager) over the SAME WidgetStore the
+   * `board:widgetPut` RPC handler uses — the tool is never a second writer.
+   * Undefined in backends that don't run alongside SessionManager — the
+   * handler degrades gracefully.
+   */
+  boardWidgets?: BoardWidgetToolCallbacks;
 
   // ============================================================
   // Memory (memory_search / memory_get)
@@ -991,6 +1020,40 @@ export interface PagesToolCallbacks {
   updatePage(slug: string, patch: UpdatePageToolPatch): Promise<PageToolDetails>;
   writePageData(slug: string, patch: PageDataToolPatch): Promise<PageDataWriteSummary>;
   deletePage(slug: string): Promise<DeletePageToolResult>;
+}
+
+/** Authored board widget source format. */
+export type BoardWidgetKind = 'html' | 'a2ui';
+
+/** Committed board widget revision, as reported back to the tool. */
+export interface BoardWidgetToolRecord {
+  widgetId: string;
+  name: string;
+  kind: BoardWidgetKind;
+  revision: number;
+  sha256: string;
+  createdAt: string;
+}
+
+export interface BoardWidgetPutInput {
+  /** Stable widget name (also the on-disk directory name). */
+  name: string;
+  /** Operator-visible title. */
+  title: string;
+  kind: BoardWidgetKind;
+  /** Authored source: an HTML fragment, or an A2UI JSONL stream. */
+  widgetCode: string;
+  /** Session that authored the revision; defaults to the invoking session. */
+  sessionId?: string;
+}
+
+/**
+ * Board widget tool callbacks, injected by the backend (SessionManager) over the
+ * same `WidgetStore` the board RPC handlers write. All storage logic lives behind
+ * this — this package never touches board/widgets/ directly.
+ */
+export interface BoardWidgetToolCallbacks {
+  putWidget(input: BoardWidgetPutInput): Promise<BoardWidgetToolRecord>;
 }
 
 // ============================================================

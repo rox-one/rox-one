@@ -154,7 +154,7 @@ describe('upload protocol (§16.2)', () => {
 
   test('abort hands the reservation back and keeps the parts for forensics', () => {
     const session = sessionOf({ parts: [{ partNumber: 1, etag: 'e1' }] })
-    const release = abortUpload(session, NOW)
+    const release = abortUpload(session)
     expect(release.releasedBytes).toBe(10 * MIB_BYTES)
     expect(release.session.status).toBe('aborted')
     expect(release.session.reservedBytes).toBe(0)

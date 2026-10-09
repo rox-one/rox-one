@@ -10,6 +10,7 @@ import {
   rmSync,
   copyFileSync,
   cpSync,
+  chmodSync,
   lstatSync,
   readdirSync,
 } from 'fs';
@@ -421,17 +422,29 @@ export function verifySDKCopy(config: BuildConfig): void {
 /**
  * Copy @vscode/ripgrep into the staged node_modules. Replaces the previous
  * `vendor/ripgrep/<platform>/rg` shipped by the SDK before 0.2.113.
+ *
+ * @vscode/ripgrep >= 1.18 dropped the postinstall download: the core package
+ * ships no `bin/<rg>` and the binary lives in a per-platform optional package
+ * (`@vscode/ripgrep-<platform>-<arch>`). The packaged runtime
+ * (runtime-resolver.ts) resolves `node_modules/@vscode/ripgrep/bin/<rg>`, so
+ * that location is materialized from whichever source layout is installed,
+ * and the platform package is staged as well (the core `index.js` resolves it
+ * through `require.resolve`).
  */
 export function copyRipgrep(config: BuildConfig): void {
   const { rootDir, electronDir } = config;
-  const rgSource = join(rootDir, 'node_modules', '@vscode', 'ripgrep');
   const binaryName = config.platform === 'win32' ? 'rg.exe' : 'rg';
-  const rgBinary = join(rgSource, 'bin', binaryName);
+  const coreSource = join(rootDir, 'node_modules', '@vscode', 'ripgrep');
+  const platformPkg = `ripgrep-${config.platform}-${config.arch}`;
+  const platformSource = join(rootDir, 'node_modules', '@vscode', platformPkg);
+  const legacyBinary = join(coreSource, 'bin', binaryName);
+  const platformBinary = join(platformSource, 'bin', binaryName);
+  const sourceBinary = [legacyBinary, platformBinary].find((candidate) => existsSync(candidate));
 
-  if (!existsSync(rgSource) || !existsSync(rgBinary)) {
+  if (!existsSync(coreSource) || sourceBinary === undefined) {
     throw new Error(
-      `@vscode/ripgrep not installed or postinstall did not run. ` +
-      `Run 'bun install' and 'bun pm trust @vscode/ripgrep'.`,
+      `@vscode/ripgrep binary not found. Checked ${legacyBinary} and ${platformBinary}. ` +
+      `Run 'bun install' from the repository root (optionalDependencies must include @vscode/${platformPkg}).`,
     );
   }
 
@@ -442,7 +455,22 @@ export function copyRipgrep(config: BuildConfig): void {
   if (existsSync(rgDest)) {
     rmSync(rgDest, { recursive: true, force: true });
   }
-  cpSync(rgSource, rgDest, { recursive: true, dereference: true });
+  cpSync(coreSource, rgDest, { recursive: true, dereference: true });
+
+  // Keep the runtime-resolver shape stable across @vscode/ripgrep layouts.
+  const destBinary = join(rgDest, 'bin', binaryName);
+  if (!existsSync(destBinary)) {
+    mkdirSync(join(rgDest, 'bin'), { recursive: true });
+    copyFileSync(sourceBinary, destBinary);
+    chmodSync(destBinary, 0o755);
+  }
+  if (existsSync(platformSource)) {
+    const platformDest = join(rgScope, platformPkg);
+    if (existsSync(platformDest)) {
+      rmSync(platformDest, { recursive: true, force: true });
+    }
+    cpSync(platformSource, platformDest, { recursive: true, dereference: true });
+  }
 }
 
 /**

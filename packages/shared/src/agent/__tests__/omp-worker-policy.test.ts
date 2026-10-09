@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { OMP_WORKER_POLICY_SOURCE } from '../omp-worker-policy.ts';
 import { prepareOmpRoxRuntimeConfig } from '../omp-first-run.ts';
+import { OMP_TASK_TOOL_NAME } from '../../utils/toolNames.ts';
 
 describe('mandatory native worker policy', () => {
   it('binds independently for main, task, eval and restricted scout without changing tools', async () => {
@@ -15,16 +16,16 @@ describe('mandatory native worker policy', () => {
       const factory = (await import(path)).default;
       for (const name of ['main', 'task', 'eval', 'scout']) {
         let thinking = name === 'scout' ? 'medium' : 'low';
-        const tools = Object.freeze(name === 'scout' ? ['read', 'grep'] : ['read', 'task', 'eval']);
+        const tools = Object.freeze(name === 'scout' ? ['read', 'grep'] : ['read', OMP_TASK_TOOL_NAME, 'eval']);
         const handlers = new Map<string, Function>();
         // An API without tool mutation methods detects accidental capability grants.
         factory({ on: (event: string, handler: Function) => handlers.set(event, handler), setThinkingLevel: (level: string) => { thinking = level; } });
         const restrictions = { agent: 'scout', tools: ['read'], effort: 'lo', task: 'review only' };
-        const taskCall = handlers.get('tool_call')!({ toolName: 'task', input: restrictions });
+        const taskCall = handlers.get('tool_call')!({ toolName: OMP_TASK_TOOL_NAME, input: restrictions });
         expect(taskCall.input).toEqual({ ...restrictions, task: 'orchestrate workflowz ultrathink\n\nreview only' });
         expect(restrictions.task).toBe('review only');
         expect(handlers.get('tool_call')!({ toolName: 'eval', input: { code: 'literal code' } })).toBeUndefined();
-        const batch = handlers.get('tool_call')!({ toolName: 'task', input: { context: 'shared', tasks: [restrictions] } });
+        const batch = handlers.get('tool_call')!({ toolName: OMP_TASK_TOOL_NAME, input: { context: 'shared', tasks: [restrictions] } });
         expect(batch.input.context).toBe('shared');
         expect(batch.input.tasks[0]).toEqual(taskCall.input);
         const before = handlers.get('before_agent_start')!({ systemPrompt: ['specialist restrictions'] });
@@ -48,7 +49,7 @@ describe('mandatory native worker policy', () => {
           expect(imageOnly.content).toBe(content);
           expect(handlers.get('context')!({ messages: [projected] }).messages[0]).toEqual(projected);
         }
-        expect(tools).toEqual(name === 'scout' ? ['read', 'grep'] : ['read', 'task', 'eval']);
+        expect(tools).toEqual(name === 'scout' ? ['read', 'grep'] : ['read', OMP_TASK_TOOL_NAME, 'eval']);
       }
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });

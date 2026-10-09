@@ -1,5 +1,7 @@
 export * from './types'
 export * from './channels'
+export * from './capabilities'
+export * from './catalog'
 export * from './dto'
 export * from './session-attribution'
 export * from './events'

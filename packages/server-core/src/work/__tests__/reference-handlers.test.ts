@@ -6,14 +6,16 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { COMMAND_CATALOGUE } from '@rox/core/commands'
+import { COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue, type CommandType } from '@rox/core/commands'
+import { COMMAND_PAYLOAD_SCHEMAS } from '@rox/shared/domain'
 import { InMemoryCommandStore } from '../../commands/store'
 import { COMMAND_MODULES, boundCommandTypes } from '../../commands/registry'
+import { AGENTS_COMMAND_MODULE } from '../../agents/module'
 import { REFERENCE_SPECS, configureReferenceRuntime, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime } from '../reference'
 import { COLLAB_DIRECT_HANDLER_TYPES, COLLAB_REFERENCE_SPECS } from '../../collab/reference-handlers'
 import { DRIVE_REFERENCE_SPECS } from '../../drive/reference-handlers'
 import { XSC_REFERENCE_SPECS } from '../../xsc/reference-handlers'
-import { ALLOW_ALL, CATALOGUE_TYPES, DENY_ALL, OWNER_BOUND_TYPES, REFERENCE_TYPES, createHarness } from './reference-harness'
+import { ALLOW_ALL, CATALOGUE_TYPES, DENY_ALL, OWNER_BOUND_TYPES, REFERENCE_OWNED_SCENARIO, REFERENCE_TYPES, W1_11_OWNED_TYPES, createHarness, type Harness } from './reference-harness'
 import { ACTOR_ID, BOB, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from './reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
@@ -24,8 +26,46 @@ const NOW = new Date('2026-10-08T12:00:00.000Z')
  */
 const EPHEMERAL_COMMANDS: ReadonlySet<string> = new Set(['presence.heartbeat', 'presence.join', 'presence.leave', 'calendar.free_busy'])
 
+/**
+ * W1-15 (#1512) declares these in the XFN catalogue
+ * (`packages/core/src/commands/catalogue/xfn.ts:20-23`, spread at
+ * `packages/core/src/commands/catalogue/index.ts:66`) but their handler and
+ * contract arrive with `bindXfnContracts` (#1534,
+ * `docs/specs/2026-10-08-lark-operately-unified/PLAN.md`). They have neither a
+ * handler nor a payload schema, so wiring them here would make the `risk-class`
+ * / `negative-tests` gates demand a `riskClass` and a negative test that do not
+ * exist. Every assertion below pins this list to what the registry reports, so
+ * lifting the deferral fails this suite instead of shrinking it silently.
+ */
+const XFN_DEFERRED_TYPES: readonly CommandType[] = ['decisions.create', 'tables.insert_row']
+
+/**
+ * Types the domain payload-schema map does not cover yet: W1-15's two XFN names,
+ * which have neither a handler nor a schema until #1534 wires `bindXfnContracts`.
+ * (`im.browse_public_chats` used to sit here too — its schema ships outside
+ * `@rox/shared/domain` and is re-issued strict at that boundary now, so it is
+ * swept like every other command.)
+ */
+const UNSCHEMAED_TYPES: Readonly<Record<string, true>> = {
+  'decisions.create': true,
+  'tables.insert_row': true,
+}
+
 function memoryHarness(options: Parameters<typeof createHarness>[0] extends infer O ? Partial<O> : never = {}) {
   return createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore(), ...options })
+}
+
+/**
+ * A chat in the reference store. W1-11 owns `im.create_chat` (see
+ * `W1_11_OWNED_TYPES`), so the reference store never gains the channel it
+ * makes; `im.create_space_chat` is a live reference spec that honours the
+ * payload id and takes members, and it needs its space first.
+ */
+async function referenceChat(harness: Harness, id: string, memberIds: readonly string[] = []): Promise<string> {
+  const spaceId = U(`chat-space:${id}`)
+  await harness.run({ type: 'spaces.create', payload: { id: spaceId, name: 'Chats' } })
+  await harness.run({ type: 'im.create_space_chat', payload: { id, spaceId, name: 'general', memberIds: [...memberIds] } })
+  return id
 }
 
 beforeEach(() => {
@@ -40,7 +80,11 @@ describe('reference handlers: wiring', () => {
     // is served by that module (its own handler and schema); everything else is
     // the reference layer's, and nothing may be left unhandled.
     const missing = CATALOGUE_TYPES.filter(type => !(type in REFERENCE_SPECS) && !OWNER_BOUND_TYPES.has(type))
-    expect(missing).toEqual([])
+    // Everything but W1-15's not-yet-wired XFN types. Asserting equality (not
+    // merely `arrayContaining`) keeps the net strict: a command that loses its
+    // handler/spec still fails here, and lifting the #1534 deferral shrinks
+    // `missing` and fails until the exemption is removed.
+    expect(missing).toEqual([...XFN_DEFERRED_TYPES].sort())
     // No spec outlives its catalogue entry.
     expect(Object.keys(REFERENCE_SPECS).filter(type => !CATALOGUE_TYPES.includes(type))).toEqual([])
     // W1-14 (#1511) split the table: the W1-06 placeholders plus the collab / drive / §12
@@ -54,8 +98,11 @@ describe('reference handlers: wiring', () => {
 
   test('the wired registry binds every catalogue command and every schema', () => {
     const { registry } = memoryHarness()
-    expect(boundCommandTypes(registry)).toEqual(COMMAND_CATALOGUE.map(d => d.type).sort())
-    expect(registry.list().filter(d => !d.schemaBound && !d.type.startsWith('system.')).map(d => d.type)).toEqual([])
+    // W1-15's XFN deferral (#1534): the two unwired types have no handler and no
+    // schema, so they are the only holes. Pinning both sides to that list means
+    // a third unwired command, or a lifted deferral, fails this suite.
+    expect(boundCommandTypes(registry)).toEqual(COMMAND_CATALOGUE.map(d => d.type).sort().filter(type => !XFN_DEFERRED_TYPES.includes(type)))
+    expect(registry.list().filter(d => !d.schemaBound && !d.type.startsWith('system.')).map(d => d.type)).toEqual([...XFN_DEFERRED_TYPES].sort())
     // `COMMAND_MODULES` is an open registry: owner modules append before the
     // reference module (W1-12 added `automation`, W1-14 added `collab`/`drive`/`xsc`).
     // The fixed ends are the contract.
@@ -63,6 +110,20 @@ describe('reference handlers: wiring', () => {
     expect(modules[0]).toBe('system')
     expect(modules.at(-1)).toBe('reference-handlers')
     expect(modules).toEqual(expect.arrayContaining(['domain-schemas', 'automation', 'collab', 'drive', 'xsc']))
+  })
+
+  test('the W1-11 ownership exclusion matches what the module binds today', () => {
+    // Guards the exclusion in `REFERENCE_OWNED_SCENARIO` and the negative paths:
+    // the reference memory harness only skips what W1-11 really claims. If the
+    // module starts or stops binding one of these types, this fails so the
+    // exclusion is reviewed instead of quietly drifting.
+    const probe = new CommandRegistry()
+    registerCommandCatalogue(probe)
+    AGENTS_COMMAND_MODULE.bind(probe)
+    expect(boundCommandTypes(probe)).toEqual([...W1_11_OWNED_TYPES].sort())
+    // The chat scope is only justified while W1-11 owns chat creation.
+    expect(W1_11_OWNED_TYPES).toContain('im.create_chat')
+    expect(REFERENCE_OWNED_SCENARIO.length).toBeLessThan(REFERENCE_SCENARIO.length)
   })
 
   test('the scenario covers every command the reference layer serves', () => {
@@ -83,7 +144,10 @@ describe('reference handlers: every command executes (memory backend)', () => {
   test('the full scenario applies, with a ref or result and a domain event per command', async () => {
     const harness = memoryHarness()
     const failures: string[] = []
-    for (const step of REFERENCE_SCENARIO) {
+    // Only the reference-owned remainder runs: W1-11's own command types and the
+    // chat it creates are served by `getAgentsRuntime()`, not this backend — see
+    // `W1_11_OWNED_TYPES` / `isW1_11Shadow` in `./reference-harness`.
+    for (const step of REFERENCE_OWNED_SCENARIO) {
       const receipt = await harness.run(step)
       if (receipt.status !== 'applied') { failures.push(`${step.type}: ${receipt.status} ${JSON.stringify(receipt.error ?? receipt)}`); continue }
       // Presence and the free-busy query are ephemeral / read-only: DATA-MODEL
@@ -119,8 +183,8 @@ describe('reference handlers: every command executes (memory backend)', () => {
   })
 })
 
-async function seed(harness: ReturnType<typeof memoryHarness>, upTo: string): Promise<void> {
-  for (const step of REFERENCE_SCENARIO) {
+async function seed(harness: Harness, upTo: string): Promise<void> {
+  for (const step of REFERENCE_OWNED_SCENARIO) {
     if (step.type === upTo) return
     const receipt = await harness.run(step)
     if (receipt.status !== 'applied') throw new Error(`seed ${step.type}: ${JSON.stringify(receipt)}`)
@@ -128,9 +192,18 @@ async function seed(harness: ReturnType<typeof memoryHarness>, upTo: string): Pr
 }
 
 describe('reference handlers: negative paths (PLAN §1.4)', () => {
-  test.each(CATALOGUE_TYPES)('%s: unknown payload members are VALIDATION', async type => {
+  test.each(CATALOGUE_TYPES.filter(type => !(type in UNSCHEMAED_TYPES)))('%s: unknown payload members are VALIDATION', async type => {
     const receipt = await memoryHarness().run({ type, target: { kind: 'task', id: 'x' }, payload: { __unknown: true } })
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
+  })
+
+  test('the unknown-member exemption is exactly the catalogue the domain schema map does not cover', () => {
+    // Drift guard for the sweep above: the exemption may only name the types
+    // `COMMAND_PAYLOAD_SCHEMAS` is missing (W1-15's XFN deferral + W1-11's
+    // non-strict browse schema). A schema arriving (#1534) shrinks the right
+    // side and fails here, so the exemption is removed with the gap — and a
+    // stray name on the left fails too.
+    expect(Object.keys(UNSCHEMAED_TYPES).sort()).toEqual(CATALOGUE_TYPES.filter(type => !(type in COMMAND_PAYLOAD_SCHEMAS)))
   })
 
   test.each(REFERENCE_TYPES)('%s: permission denied is FORBIDDEN and writes nothing', async type => {
@@ -182,15 +255,17 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
     expect(JSON.stringify(task)).not.toContain('Private title')
   })
 
-  test('handler-level permissions: foreign message edit, private join, admin-only posting, own access request', async () => {
+  test('handler-level permissions: foreign message edit, admin-only posting, own access request', async () => {
     const harness = memoryHarness()
-    await seed(harness, 'im.update_chat')
-    expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: U('chat') }, payload: { chatRef: { kind: 'channel', id: U('chat') }, body: { doc: 'x' }, mentions: [], messageId: U('m2') } })).toMatchObject({ status: 'applied' })
-    expect(await harness.run({ type: 'im.edit_message', target: { kind: 'channel', id: U('chat') }, payload: { messageId: U('m2'), content: { doc: 'y' } }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    await harness.run({ type: 'im.create_chat', payload: { id: U('private'), kind: 'group', name: 'p', visibility: 'private', members: [] } })
-    expect(await harness.run({ type: 'im.join_chat', target: { kind: 'channel', id: U('private') }, payload: {}, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    await harness.run({ type: 'im.update_policy', target: { kind: 'channel', id: U('chat') }, payload: { postingPolicy: 'admins' } })
-    expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: U('chat') }, payload: { chatRef: { kind: 'channel', id: U('chat') }, body: { doc: 'z' }, mentions: [] }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    // W1-11 now owns `im.create_chat` / `im.join_chat`, so their reference specs
+    // are shadowed (see `W1_11_OWNED_TYPES`); the chat comes from the live
+    // reference spec `im.create_space_chat`, and the private-join path moved to
+    // W1-11's own suite.
+    const chat = await referenceChat(harness, U('chat'), [BOB])
+    expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: chat }, payload: { chatRef: { kind: 'channel', id: chat }, body: { doc: 'x' }, mentions: [], messageId: U('m2') } })).toMatchObject({ status: 'applied' })
+    expect(await harness.run({ type: 'im.edit_message', target: { kind: 'channel', id: chat }, payload: { messageId: U('m2'), content: { doc: 'y' } }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    await harness.run({ type: 'im.update_policy', target: { kind: 'channel', id: chat }, payload: { postingPolicy: 'admins' } })
+    expect(await harness.run({ type: 'im.send_message', target: { kind: 'channel', id: chat }, payload: { chatRef: { kind: 'channel', id: chat }, body: { doc: 'z' }, mentions: [] }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     await harness.run({ type: 'docs.create_document', payload: { id: U('d2'), title: 'D' } })
     await harness.run({ type: 'acl.request_access', target: { kind: 'note', id: U('d2') }, payload: { id: U('r2') } })
     expect(await harness.run({ type: 'acl.decide_request', target: { kind: 'note', id: U('d2') }, payload: { requestId: U('r2'), decision: 'approve' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
@@ -207,16 +282,14 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
     expect(await harness.run({ type: 'acl.decide_request', target: { kind: 'note', id: U('d-exp') }, payload: { requestId: U('r-exp'), decision: 'approve' }, actor: BOB })).toMatchObject({ error: { code: 'VALIDATION', message: 'request expired' } })
   })
 
-  test('domain rules: self-parenting, space delete confirmation, paused agent', async () => {
+  test('domain rules: self-parenting, space delete confirmation', async () => {
     const harness = memoryHarness()
     await harness.run({ type: 'goals.create', payload: { id: 'g-self', name: 'A' } })
     expect(await harness.run({ type: 'goals.update_parent_goal', target: { kind: 'goal', id: 'g-self' }, payload: { parentGoalId: 'g-self' } })).toMatchObject({ error: { code: 'VALIDATION' } })
     await harness.run({ type: 'spaces.create', payload: { id: U('sp'), name: 'Ops' } })
     expect(await harness.run({ type: 'spaces.delete', target: { kind: 'space', id: U('sp') }, payload: { confirmName: 'Opz' } })).toMatchObject({ error: { code: 'VALIDATION' } })
-    await harness.run({ type: 'agents.provision_personal_agent', payload: { id: U('ag'), ownerId: ACTOR_ID } })
-    await harness.run({ type: 'agents.pause', payload: { agentId: U('ag') } })
-    expect(await harness.run({ type: 'agents.invoke', payload: { agentRef: { kind: 'person', id: U('ag') }, instruction: 'x', origin: { kind: 'comment', commentId: U('c') } } })).toMatchObject({ error: { code: 'UNAVAILABLE' } })
-    expect(await harness.run({ type: 'agents.provision_personal_agent', payload: { ownerId: BOB } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    // The paused-agent path runs on W1-11's `agents.*` handlers (see
+    // `W1_11_OWNED_TYPES`), so it is asserted by that module's own suite.
   })
 
   test('the allow-all authorizer is only a test double', () => {
@@ -273,10 +346,12 @@ describe('reference handlers: the payload never widens the authorized target', (
 
   test('mail.share_to_chat is authorized on the destination chat', async () => {
     const harness = memoryHarness()
-    await harness.run({ type: 'im.create_chat', payload: { id: U('dest'), kind: 'group', name: 'Dest', visibility: 'private', members: [] } })
-    await harness.run({ type: 'im.create_chat', payload: { id: U('other'), kind: 'group', name: 'Other', visibility: 'private', members: [] } })
+    // W1-11 owns `im.create_chat`; both chats come from the live reference spec
+    // `im.create_space_chat` (see `referenceChat`).
+    const dest = await referenceChat(harness, U('dest'))
+    const other = await referenceChat(harness, U('other'))
     const before = referenceMemoryRecords(WORKSPACE_ID, 'channel-message').length
-    expect(await harness.run({ type: 'mail.share_to_chat', payload: { threadId: 'th-1', chatId: U('dest') } })).toMatchObject({ error: { code: 'VALIDATION' } })
+    expect(await harness.run({ type: 'mail.share_to_chat', payload: { threadId: 'th-1', chatId: dest } })).toMatchObject({ error: { code: 'VALIDATION' } })
     expect(await harness.run({ type: 'mail.share_to_chat', target: { kind: 'channel', id: U('dest') }, payload: { threadId: 'th-1', chatId: U('other') } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(referenceMemoryRecords(WORKSPACE_ID, 'channel-message')).toHaveLength(before)
     const { authorizer, calls } = recordingAuthorizer((_verb, ref) => ref?.id !== U('other'))
@@ -325,7 +400,9 @@ describe('reference handlers: retry after a lost receipt (same commandId, fresh 
   })
 
   test('a retried message append keeps one message and one seq', async () => {
-    await retryHarness().run({ type: 'im.create_chat', payload: { id: U('retry-chat'), kind: 'group', name: 'R', visibility: 'public', members: [] } })
+    // W1-11 owns `im.create_chat`; the reference chat comes from the live
+    // reference spec `im.create_space_chat` (see `referenceChat`).
+    await referenceChat(retryHarness(), U('retry-chat'))
     const send = { type: 'im.send_message', target: { kind: 'channel' as const, id: U('retry-chat') }, payload: { chatRef: { kind: 'channel', id: U('retry-chat') }, body: { doc: 'hi' }, mentions: [] } }
     const first = await retryHarness().run(send, { commandId: 'retry-send' })
     const again = await retryHarness().run(send, { commandId: 'retry-send' })
@@ -350,8 +427,10 @@ describe('reference handlers: retry after a lost receipt (same commandId, fresh 
     const receipt = await harness.run({ type: 'goals.create', payload: { id: 'g-b', name: 'B', targets: [{ id: 'tg-taken', name: 'T2', fromValue: 0, toValue: 1 }] } })
     expect(receipt).toMatchObject({ status: 'conflict', conflict: { current: { error: 'id already exists' } } })
     expect(referenceMemoryRecords(WORKSPACE_ID, 'goal').map(r => r.id)).toEqual(['g-a'])
-    // W1-14: the origin chat must exist — the card is posted back into it.
-    await harness.run({ type: 'im.create_chat', payload: { id: U('c'), kind: 'group', name: 'c', visibility: 'public', members: [] } })
+    // W1-14: the origin chat must exist — the card is posted back into it. W1-11
+    // owns `im.create_chat`, so it comes from the live reference spec
+    // `im.create_space_chat` (see `referenceChat`).
+    await referenceChat(harness, U('c'))
     await harness.run({ type: 'tasks.create', payload: { id: U('from-taken'), title: 'x' } })
     const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('from-taken'), origin: { kind: 'message', chatRef: `channel:${U('c')}`, seq: 1 }, title: 'From message' } })
     expect(fromMessage).toMatchObject({ status: 'conflict' })

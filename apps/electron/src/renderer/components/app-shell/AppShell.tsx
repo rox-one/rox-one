@@ -683,7 +683,7 @@ function AppShellContent({
   // (ClipboardHistoryPanel) with its own header; keeping the middle navigator
   // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isDriveNavigation(navState) || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
