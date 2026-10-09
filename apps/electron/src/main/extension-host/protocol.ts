@@ -11,7 +11,7 @@
 
 export type MainToWorkerMessage =
   | { id: string; type: 'ping' }
-  | { id: string; type: 'load'; extensionId: string; entryPath: string }
+  | { id: string; type: 'load'; extensionId: string; entryPath: string; revision?: string }
   | {
       id: string
       type: 'call'
