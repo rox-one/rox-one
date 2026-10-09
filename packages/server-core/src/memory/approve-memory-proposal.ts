@@ -2,11 +2,14 @@ import { createHash } from 'node:crypto'
 import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { getProjectMemoryPath, loadProjectById } from '@rox/shared/projects'
+import { getWorkspaces } from '@rox/shared/config'
 import { approveProposal, type MemoryProposal, type MemoryProposalScope } from '@rox/shared/memory/proposals'
 import type { LessonOwner } from '@rox/shared/memory/types'
 import { atomicWriteFileSync } from '@rox/shared/utils/files'
 import { LessonStore, lessonKey, lessonOwnerKey, parseLessons } from './LessonStore'
 import { MemoryFileStore } from './MemoryFileStore'
+import { notifyRepoMutation, type RepoBankRef } from './repo/notify'
+import { ownerKey8For } from './repo/RepoSourceProvider'
 import type { MemoryProposalStore } from './MemoryProposalStore'
 
 export interface DurableProposalApprovalInput {
@@ -35,6 +38,21 @@ function flushFile(path: string): void {
     const dir = openSync(dirname(path), 'r')
     try { fsyncSync(dir) } finally { closeSync(dir) }
   }
+}
+
+/** Repo bank a durable approval wrote into. `global` and `personal` both write
+ * the global lessons file (`personal` only differs by owner) → `main#<owner8>`;
+ * a workspace approval writes that workspace's lessons → `ws:<id>#<owner8>`.
+ * `null` when a workspace-scope approval cannot be mapped to a workspace id — an
+ * unresolvable root must not synthesise an invalid `ws:` bank id. */
+function approvalBank(scope: MemoryProposalScope, workspaceRoot: string, owner?: LessonOwner): RepoBankRef | null {
+  const ownerKey8 = owner ? ownerKey8For(owner) : undefined
+  if (scope === 'global' || scope === 'personal') {
+    return ownerKey8 ? { scope: 'main', ownerKey8 } : { scope: 'main' }
+  }
+  const workspaceId = getWorkspaces().find((workspace) => workspace.rootPath === workspaceRoot)?.id
+  if (!workspaceId) return null
+  return ownerKey8 ? { scope: 'workspace', workspaceId, ownerKey8 } : { scope: 'workspace', workspaceId }
 }
 
 /** Synchronous transaction: the pending write intent survives an interrupted approval.
@@ -110,5 +128,12 @@ export function approveMemoryProposalDurably(input: DurableProposalApprovalInput
       && lesson.source.consentEventId === consentEventId)
     if (!confirmed) throw new Error('Memory lesson write could not be confirmed')
   }
-  return input.store.save({ ...next, approval: { ...approval, target, writtenAt: now.toISOString() } })
+  const saved = input.store.save({ ...next, approval: { ...approval, target, writtenAt: now.toISOString() } })
+  try {
+    const bank = approvalBank(input.scope, input.workspaceRoot, input.owner)
+    if (bank) notifyRepoMutation(bank, 'proposal-approve')
+  } catch {
+    // repo notification is best-effort; the durable write already landed
+  }
+  return saved
 }

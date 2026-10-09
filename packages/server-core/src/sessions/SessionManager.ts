@@ -2743,11 +2743,7 @@ export class SessionManager implements ISessionManager {
       svc = new MemoryService({
         workspaceRoot: workspace.rootPath,
         workspaceId: workspace.id,
-        emit: (channel, args) => {
-          if (!this.eventSink) return
-          if (channel === 'memory:changed') this.eventSink(RPC_CHANNELS.memory.CHANGED, { to: 'workspace', workspaceId: workspace.id }, args[0], args[1])
-          else if (channel === 'skillsPending:changed') this.eventSink(RPC_CHANNELS.skillsPending.CHANGED, { to: 'workspace', workspaceId: workspace.id }, args[0])
-        },
+        emit: (channel, args) => this.forwardMemoryEmit(channel, args, workspace.id),
         logger: { warn: (msg, err) => sessionLog.warn(`memory: ${msg}`, err) },
         // F3: per-session memory-mode lookup — incognito/temporary sessions skip
         // all memory writes (distill/branch/idle triggers). Unknown sessions default
@@ -2769,6 +2765,41 @@ export class SessionManager implements ISessionManager {
       return null
     }
     return svc
+  }
+
+  /**
+   * Per-bank `MemoryService` for the dream runtime: `ws:<workspaceId>` (owner
+   * suffix ignored) resolves the workspace's lazily-built service; `main` and
+   * unknown ids have none. Never throws.
+   */
+  getMemoryServiceForBank(bankId: string): MemoryService | null {
+    if (!bankId.startsWith('ws:')) return null
+    const rest = bankId.slice(3)
+    const hashAt = rest.indexOf('#')
+    const workspaceId = hashAt >= 0 ? rest.slice(0, hashAt) : rest
+    if (!workspaceId) return null
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) return null
+    return this.memoryServiceFor(workspace)
+  }
+
+  /**
+   * Bridge a `MemoryService` emit to the renderer push sink (the service has no
+   * server handle). The only producers are `memory:changed` /
+   * `skillsPending:changed`, both workspace-scoped; the repo/dream pushes
+   * (`memory:repoChanged`, `memory:repoImportReady`, `memory:dreamEvent`,
+   * `memory:dreamDone`) are sent directly by the memory-repo runtime via
+   * `pushTyped`, never through `MemoryService.emit`.
+   */
+  private forwardMemoryEmit(channel: string, args: unknown[], workspaceId: string): void {
+    if (!this.eventSink) return
+    if (channel === RPC_CHANNELS.memory.CHANGED) {
+      this.eventSink(RPC_CHANNELS.memory.CHANGED, { to: 'workspace', workspaceId }, args[0], args[1])
+      return
+    }
+    if (channel === RPC_CHANNELS.skillsPending.CHANGED) {
+      this.eventSink(RPC_CHANNELS.skillsPending.CHANGED, { to: 'workspace', workspaceId }, args[0])
+    }
   }
 
   private broadcastStatusesChanged(workspaceId: string): void {

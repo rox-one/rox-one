@@ -17,7 +17,7 @@
  * Action-backed entries (`action: 'open-browser'`) carry `route: null` too,
  * but open their existing native surface instead of a route.
  */
-import { HardDrive, type LucideIcon } from 'lucide-react'
+import { GitBranch, HardDrive, type LucideIcon } from 'lucide-react'
 import { GLYPHS } from '../../platform/glyphs'
 import { routes, type ViewRoute } from '../../../shared/routes'
 import {
@@ -47,6 +47,7 @@ export type AppNavDestinationId =
   | 'sources'
   | 'skills'
   | 'memory'
+  | 'memoryRepo'
   | 'learning'
   | 'browser'
   | 'tasks'
@@ -121,7 +122,19 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     railGroup: 'primary',
     contextLinkIds: ['nav:memory'],
     route: () => routes.view.memory(),
-    isActive: isMemoryNavigation,
+    // The repository tab owns its own rail item; keep the two mutually
+    // exclusive so exactly one is highlighted at a time.
+    isActive: navState => isMemoryNavigation(navState) && navState.tab !== 'repo',
+  },
+  {
+    id: 'memoryRepo',
+    linkId: 'nav:memoryRepo',
+    icon: GitBranch,
+    labelKey: 'sidebar.memoryRepo',
+    railGroup: 'more',
+    contextLinkIds: ['nav:memoryRepo'],
+    route: () => routes.view.memory('repo'),
+    isActive: navState => isMemoryNavigation(navState) && navState.tab === 'repo',
   },
   {
     id: 'browser',

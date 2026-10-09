@@ -868,6 +868,27 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.memory.INDEX_STATUS,
   RPC_CHANNELS.memory.REBUILD_INDEX,
 
+  // memory — repository projection + dream (spec 2026-10-09 §7): bank data is
+  // materialized from workspace/global stores on the workspace-owning server.
+  RPC_CHANNELS.memory.REPO_LIST_BANKS,
+  RPC_CHANNELS.memory.REPO_STATUS,
+  RPC_CHANNELS.memory.REPO_TREE,
+  RPC_CHANNELS.memory.REPO_READ_FILE,
+  RPC_CHANNELS.memory.REPO_COMMITS,
+  RPC_CHANNELS.memory.REPO_COMMIT_DIFF,
+  RPC_CHANNELS.memory.REPO_GRAPH,
+  RPC_CHANNELS.memory.REPO_EXPORT,
+  RPC_CHANNELS.memory.DREAM_STATUS,
+  RPC_CHANNELS.memory.DREAM_RUN,
+  RPC_CHANNELS.memory.DREAM_LOG,
+  RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT,
+  RPC_CHANNELS.memory.REPO_APPLY_IMPORT,
+  RPC_CHANNELS.memory.REPO_REVERT_IMPORT,
+  RPC_CHANNELS.memory.REPO_CHANGED,
+  RPC_CHANNELS.memory.DREAM_EVENT,
+  RPC_CHANNELS.memory.DREAM_DONE,
+  RPC_CHANNELS.memory.REPO_IMPORT_READY,
+
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).
   RPC_CHANNELS.learning.LIST_CANDIDATES,

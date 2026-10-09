@@ -192,6 +192,28 @@ export interface MemoryConfig {
    * model the layer degrades to keyword-overlap matching. Default false.
    */
   semantic: boolean
+  /**
+   * Dream (spec §9): hours between background memory-dream runs, default 4.
+   * One DreamScheduler per process ticks banks (main + active workspaces) and
+   * runs at most once per bank per interval window.
+   */
+  dreamIntervalHours: number
+  /**
+   * Dream: model id for the distillation mini-model used during a dream.
+   * Absent → the default distillation mini-model; an unknown id is priced as
+   * an estimate.
+   */
+  dreamModel?: string
+  /**
+   * Dream: whether the notes step runs (changed vault notes → proposals).
+   * Default true.
+   */
+  dreamNotes: boolean
+  /**
+   * Memory repository (spec §5): optional override for the repository root.
+   * Absent → `{configDir}/memory/repos`.
+   */
+  repoDir?: string
 }
 
 export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
@@ -202,6 +224,8 @@ export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
   redactExtraPatterns: [],
   ftsLimit: 20,
   semantic: false,
+  dreamIntervalHours: 4,
+  dreamNotes: true,
 }
 
 /** Hard limits (mirror KiroCrew learn.py) */

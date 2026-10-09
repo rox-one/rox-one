@@ -4,8 +4,10 @@ import type { ReactNode } from 'react'
 import { Provider } from 'jotai'
 import { createInstance } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
+import { TooltipProvider } from '@rox/ui'
 import { PersonalTaskStore } from '@rox/core/tasks/personal'
 import { AppShellProvider, type AppShellContextType } from '../../context/AppShellContext'
+import { ActionRegistryProvider } from '../../actions/registry'
 import { parseRouteToNavigationState } from '../../../shared/route-parser'
 import { routes } from '../../../shared/routes'
 import { persistPersonalTaskStore, setPersonalTaskScope } from '../../lib/personal-tasks'
@@ -21,7 +23,7 @@ function renderPage(page: ReactNode): string {
   const shell = { workspaces: [], activeWorkspaceId: null } as unknown as AppShellContextType
   return renderToStaticMarkup(
     <I18nextProvider i18n={i18n}>
-      <Provider><AppShellProvider value={shell}>{page}</AppShellProvider></Provider>
+      <TooltipProvider><Provider><AppShellProvider value={shell}><ActionRegistryProvider>{page}</ActionRegistryProvider></AppShellProvider></Provider></TooltipProvider>
     </I18nextProvider>,
   )
 }
@@ -56,8 +58,10 @@ describe('catalog detail route rendering', () => {
   it('renders the requested task for direct and back/forward route states, without a first-item fallback', () => {
     withScopedTaskStore(() => {
       const store = new PersonalTaskStore()
-      const first = store.create({ title: 'First task' })
-      const second = store.create({ title: 'Requested task' })
+      // The page keeps its own navigator view (default: Today), so the fixture
+      // must place the tasks in that list for the list pane to render them.
+      const first = store.create({ title: 'First task', list: 'today' })
+      const second = store.create({ title: 'Requested task', list: 'today' })
       persistPersonalTaskStore(store)
 
       // Direct open, next route, back, forward use the same controlled page contract.

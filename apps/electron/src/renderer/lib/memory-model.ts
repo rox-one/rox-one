@@ -9,7 +9,7 @@ import { lessonSimilarity, lessonTokens as stemTokens } from './lesson-dedupe'
 
 export type MemorySort = 'usage' | 'recency' | 'tokens' | 'conflicts'
 export type UsageBucket = 'never' | 'some' | 'often'
-export type StatusFacet = 'pinned' | 'disabled' | 'inContext' | 'negative' | 'conflicts' | 'merged'
+export type StatusFacet = 'pinned' | 'disabled' | 'inContext' | 'negative' | 'conflicts' | 'merged' | 'awaitingDream'
 
 export interface MemoryFilter {
   scope?: LessonScope | null
@@ -30,6 +30,36 @@ export function lessonId(lesson: Pick<Lesson, 'scope' | 'rule'>): string {
 export function usageBucket(lesson: Lesson): UsageBucket {
   const n = lesson.usageCount ?? 0
   return n === 0 ? 'never' : n >= 5 ? 'often' : 'some'
+}
+
+/**
+ * Lesson changed since the bank was last materialized into the git repository.
+ * Neither `Lesson.repoStatus.lastMaterializeAt` nor a per-lesson `updatedAt`
+ * exists on the shared lesson type, so the lesson's effective modification time
+ * is `editedAt ?? ts` compared against the bank-level `lastMaterializeAt`.
+ * Approximation (see the A9 deviation note): usage-only updates bump no
+ * timestamp and therefore do not count as awaiting a dream.
+ */
+export function awaitingDream(lesson: Pick<Lesson, 'ts' | 'editedAt'>, lastMaterializeAt?: string | null): boolean {
+  const materialized = lastMaterializeAt ? Date.parse(lastMaterializeAt) : Number.NaN
+  if (!Number.isFinite(materialized)) return true
+  const changed = Date.parse(lesson.editedAt ?? lesson.ts)
+  return Number.isFinite(changed) ? changed > materialized : true
+}
+
+/** Structural slice of `MemoryRepoGraph['nodes']` used to resolve a lesson's file path. */
+export interface RepoLessonNode { kind: string; label?: string; path?: string }
+
+/**
+ * Repository file path for a lesson, matched by the graph lesson node whose
+ * label is the lesson rule. Returns null when the repo graph has no such node,
+ * so the inspector row stays hidden for un-materialized lessons.
+ */
+export function lessonRepoPath(nodes: readonly RepoLessonNode[] | null | undefined, rule: string): string | null {
+  if (!nodes?.length) return null
+  const wanted = rule.trim().toLowerCase()
+  const node = nodes.find((n) => n.kind === 'lesson' && n.path && n.label?.trim().toLowerCase() === wanted)
+  return node?.path ?? null
 }
 
 /** Lessons the agent receives right now (per store, same rule as the server). */
@@ -166,7 +196,7 @@ export function duplicateIds(lessons: readonly Lesson[], threshold = NEAR_DUPLIC
   return out
 }
 
-export function matchesFilter(lesson: Lesson, filter: MemoryFilter, ctx: { inContext: Set<string>; topicOf: Map<string, string> }): boolean {
+export function matchesFilter(lesson: Lesson, filter: MemoryFilter, ctx: { inContext: Set<string>; topicOf: Map<string, string>; lastMaterializeAt?: string | null }): boolean {
   const id = lessonId(lesson)
   if (filter.scope && lesson.scope !== filter.scope) return false
   if (filter.category && lesson.category !== filter.category) return false
@@ -181,6 +211,7 @@ export function matchesFilter(lesson: Lesson, filter: MemoryFilter, ctx: { inCon
     case 'negative': if (!lesson.negative) return false; break
     case 'conflicts': if (!(lesson.conflicts?.length)) return false; break
     case 'merged': if (!(lesson.mergedFrom?.length || lesson.mergedInto)) return false; break
+    case 'awaitingDream': if (!awaitingDream(lesson, ctx.lastMaterializeAt)) return false; break
     default: break
   }
   const q = filter.query?.trim().toLowerCase()

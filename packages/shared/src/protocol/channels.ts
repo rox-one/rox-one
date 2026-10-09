@@ -761,6 +761,28 @@ export const RPC_CHANNELS = {
     INDEX_STATUS: 'memory:indexStatus',
     REBUILD_INDEX: 'memory:rebuildIndex',
     CHANGED: 'memory:changed',
+    // Repo projection (spec 2026-10-09 §7): read-only markdown view of a bank.
+    REPO_LIST_BANKS: 'memory:repoListBanks',
+    REPO_STATUS: 'memory:repoStatus',
+    REPO_TREE: 'memory:repoTree',
+    REPO_READ_FILE: 'memory:repoReadFile',
+    REPO_COMMITS: 'memory:repoCommits',
+    REPO_COMMIT_DIFF: 'memory:repoCommitDiff',
+    REPO_GRAPH: 'memory:repoGraph',
+    REPO_EXPORT: 'memory:repoExport',
+    // Dream (memory build) status/manual run/journal.
+    DREAM_STATUS: 'memory:dreamStatus',
+    DREAM_RUN: 'memory:dreamRun',
+    DREAM_LOG: 'memory:dreamLog',
+    // Import of human edits back through the proposals pipeline (Phase 5).
+    REPO_PREVIEW_IMPORT: 'memory:repoPreviewImport',
+    REPO_APPLY_IMPORT: 'memory:repoApplyImport',
+    REPO_REVERT_IMPORT: 'memory:repoRevertImport',
+    // Pushes.
+    REPO_CHANGED: 'memory:repoChanged',
+    DREAM_EVENT: 'memory:dreamEvent',
+    DREAM_DONE: 'memory:dreamDone',
+    REPO_IMPORT_READY: 'memory:repoImportReady',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
