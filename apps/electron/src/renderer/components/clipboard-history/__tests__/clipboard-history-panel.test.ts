@@ -85,7 +85,7 @@ const setClipboardEntryStarred = mock(async (id: number, starred: boolean) => {
   return { ok: true as const }
 })
 
-const getClipboardEntry = mock(async (id: number) => ({ ...entry(id), imageDataUrl: null }))
+const getClipboardEntry = mock(async (id: number): Promise<ClipEntryDetail> => ({ ...entry(id), imageDataUrl: null }))
 
 Object.assign(window, {
   electronAPI: {
@@ -300,9 +300,10 @@ describe('useClipboardHistory paging and quick look', () => {
 
   it('pages by real offset: the second page uses offset 50 and three pages yield 150 entries', async () => {
     const pageQueries: Array<Record<string, unknown>> = []
-    listClipboardEntries.mockImplementation(async (query: Record<string, unknown>) => {
-      pageQueries.push(query)
-      const offset = Number(query.offset ?? 0)
+    listClipboardEntries.mockImplementation(async (query: unknown) => {
+      const typed = (query ?? {}) as Record<string, unknown>
+      pageQueries.push(typed)
+      const offset = Number(typed.offset ?? 0)
       return {
         entries: Array.from({ length: 50 }, (_, index) => entry(offset + index + 1)),
         total: 150,
@@ -329,8 +330,8 @@ describe('useClipboardHistory paging and quick look', () => {
   })
 
   it('stops the sentinel honestly when the store reports no more rows', async () => {
-    listClipboardEntries.mockImplementation(async (query: Record<string, unknown>) => {
-      const offset = Number(query.offset ?? 0)
+    listClipboardEntries.mockImplementation(async (query: unknown) => {
+      const offset = Number(((query ?? {}) as Record<string, unknown>).offset ?? 0)
       return {
         entries: Array.from({ length: 50 }, (_, index) => entry(offset + index + 1)),
         total: 500,
@@ -352,7 +353,7 @@ describe('useClipboardHistory paging and quick look', () => {
       hasMore: false,
     }))
     const pending = new Map<number, (detail: ClipEntryDetail) => void>()
-    getClipboardEntry.mockImplementation((id: number) => {
+    getClipboardEntry.mockImplementation(async (id: number): Promise<ClipEntryDetail> => {
       const { promise, resolve } = Promise.withResolvers<ClipEntryDetail>()
       pending.set(id, resolve)
       return promise

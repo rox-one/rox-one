@@ -129,12 +129,12 @@ function createElectronClipboardAdapter(): ClipboardAdapter {
       read(): Promise<Array<{ types?: string[]; getType(type: string): Promise<Blob> }>>
       readText(): Promise<string>
       has(mimetype: string): Promise<boolean>
-      write(data: ClipboardItem[]): Promise<void>
+      write(data: Electron.ClipboardItem[]): Promise<void>
       writeText(text: string): Promise<void>
     }
     // `ClipboardItem` is a module export in the main process — there is no such
     // global there (verified against a live Electron 44 instance).
-    ClipboardItem: new (items: Record<string, string | Blob>) => ClipboardItem
+    ClipboardItem: new (items: Record<string, string | Blob>) => Electron.ClipboardItem
     nativeImage: {
       createFromBuffer(buffer: Buffer): {
         isEmpty(): boolean
@@ -167,7 +167,7 @@ function createElectronClipboardAdapter(): ClipboardAdapter {
     // makes the RPC report success only after the clipboard actually changed.
     writeText: async text => { await clipboard.writeText(text) },
     writeTypeBytes: async (mimeType, bytes) => {
-      await clipboard.write([new ElectronClipboardItem({ [mimeType]: new Blob([bytes], { type: mimeType }) })])
+      await clipboard.write([new ElectronClipboardItem({ [mimeType]: new Blob([new Uint8Array(bytes)], { type: mimeType }) })])
     },
     // Decode outside the Electron-free monitor: an undecodable raster (e.g. GIF
     // in some builds) yields null, and the monitor keeps the raw bytes anyway.

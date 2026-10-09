@@ -19,24 +19,24 @@ export const CONCEALED_CLIPBOARD_TYPE = `electron application/osclipboard;format
 export interface ConcealedClipboard {
   writeText(text: string): void | Promise<void>
   /** Atomic multi-format write; absent on hosts without the async clipboard API. */
-  write?(items: ClipboardItem[]): void | Promise<void>
+  write?(items: Electron.ClipboardItem[]): void | Promise<void>
 }
 
 /** Builds the one `ClipboardItem` carrying the text and the concealed marker. */
-export type ConcealedClipboardItemFactory = (items: Record<string, string>) => ClipboardItem
+export type ConcealedClipboardItemFactory = (items: Record<string, string>) => Electron.ClipboardItem
 
 /** Constructor shape shared by Electron's module export and any host global. */
-type ClipboardItemCtor = new (items: Record<string, string>) => ClipboardItem
+type ClipboardItemCtor = new (items: Record<string, string>) => Electron.ClipboardItem
 
 // Electron exposes `ClipboardItem` as a module export in the main process (there
 // is no such global there), so resolve it lazily; tests replace this factory to
 // exercise the conceal logic without an Electron runtime.
-function defaultClipboardItemFactory(items: Record<string, string>): ClipboardItem {
+function defaultClipboardItemFactory(items: Record<string, string>): Electron.ClipboardItem {
   // Unchecked casts: `require` is untyped at this boundary; both names are
   // guarded by `typeof … === 'function'` before use.
   const electronModule = require('electron') as { ClipboardItem?: ClipboardItemCtor }
   if (typeof electronModule.ClipboardItem === 'function') return new electronModule.ClipboardItem(items)
-  const hostGlobals = globalThis as { ClipboardItem?: ClipboardItemCtor }
+  const hostGlobals = globalThis as unknown as { ClipboardItem?: ClipboardItemCtor }
   if (typeof hostGlobals.ClipboardItem === 'function') return new hostGlobals.ClipboardItem(items)
   throw new Error('ClipboardItem is unavailable in this Electron runtime')
 }

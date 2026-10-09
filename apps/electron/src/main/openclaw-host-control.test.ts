@@ -88,8 +88,10 @@ function createHarness(options: { confirmed?: boolean; confirmationError?: boole
     runtimeManager: manager,
     confirm: confirmation,
     clipboard: {
-      writeText: (value: string) => copied.push(value),
-      write: (items: ClipboardItem[]) => { concealed.push(...items.filter(isFakeClipboardItem)) },
+      writeText: (value: string) => { copied.push(value) },
+      write: (items: Electron.ClipboardItem[]) => {
+        concealed.push(...(items as unknown as unknown[]).filter(isFakeClipboardItem))
+      },
     },
     createEphemeralSession: () => isolatedSession,
     createControlUiWindow: (value: unknown) => {

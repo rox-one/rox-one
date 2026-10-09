@@ -80,7 +80,7 @@ export interface OpenClawHostControlIpcDependencies {
   readonly clipboard: {
     writeText(value: string): void | Promise<void>
     /** Atomic multi-format write used to attach the concealed marker. */
-    write?(items: ClipboardItem[]): void | Promise<void>
+    write?(items: Electron.ClipboardItem[]): void | Promise<void>
   }
   readonly createEphemeralSession: (partition: string) => IsolatedSession
   readonly createControlUiWindow: (options: ControlUiWindowOptions) => ControlUiWindow

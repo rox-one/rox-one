@@ -86,7 +86,7 @@ class RecordingAdapter implements ClipboardAdapter {
   hasRawFormat = async (): Promise<boolean> => false
   readTypeBytes = async (): Promise<Buffer | null> => null
   async writeText(text: string): Promise<void> { this.texts.push(text); await this.textWrite?.() }
-  writeTypeBytes(mimeType: string, bytes: Buffer): void { this.bytesWritten.push({ mimeType, bytes }) }
+  async writeTypeBytes(mimeType: string, bytes: Buffer): Promise<void> { this.bytesWritten.push({ mimeType, bytes }) }
   decodeImage = async (): Promise<null> => null
 }
 
