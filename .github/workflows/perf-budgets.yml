@@ -61,7 +61,12 @@ jobs:
             renderer-perf-2000.md
             renderer-perf-bundle.md
   # PERF-01: launch the built app and compare startup marks with the audit
-  # budgets (CI ×4). Report-only and non-blocking until shell-first boot lands.
+  # budgets (CI ×4). Shell-first boot landed (PERF-01): the shell window is
+  # created before the RPC server bootstrap, so `window-created` now precedes
+  # `server-ready` and warm FMP roughly halved. Still report-only because the
+  # `window-created` mark is dominated by Electron process launch + main-bundle
+  # evaluation (≈1.0 s to `main:entry` on the runner) — flip this step to
+  # `--strict` (and drop `continue-on-error`) once the ×4 budget is cleared.
   electron-startup:
     runs-on: [self-hosted, macos-toolchain]
     timeout-minutes: 30
