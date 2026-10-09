@@ -111,9 +111,11 @@ export function buildAggregatedState(workspaceId?: string): IdentityState {
     /* knowledge store optional on cold start */
   }
 
-  // LLM reflections — presence of credential only; ownership stays in AI Settings
+// LLM reflections — presence of credential only; ownership stays in AI Settings
   try {
-    const llms = getLlmConnections()
+    // Per-person keying: connections with a `profileId` belong to that profile;
+    // unkeyed connections are shared and pass through for every profile.
+    const llms = getLlmConnections(base.profile.id);
     for (const llm of llms) {
       const provider = mapLlmProvider(llm.providerType, llm.piAuthProvider)
       if (!provider) continue
