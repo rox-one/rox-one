@@ -12,6 +12,11 @@ const executablePath = await resolveChromiumExecutable()
 describe.skipIf(!existsSync(executablePath))('production learning input registrations and native handoff', () => {
 beforeAll(async () => {
   const result = await build({ entryPoints: [resolve(import.meta.dir, 'fixtures/product-learning-input/main.tsx')], bundle: true, write: false, platform: 'browser', format: 'esm', jsx: 'automatic', outdir: 'unused-test-output', define: { 'import.meta.env.IS_WEBUI': 'true', 'import.meta.env.DEV': 'false', 'import.meta.glob': 'window.__fixtureThemeGlob', 'process.env.NODE_ENV': '"development"' }, tsconfig: resolve(repository, 'apps/electron/tsconfig.json'), loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.png': 'dataurl', '.svg': 'dataurl' }, plugins: [{ name: 'isolated-copy-and-assets', setup(builder) {
+    // Renderer code reaches server-only modules through package barrels
+    // (e.g. `@rox/core/platform`); the Vite renderer build and the sibling
+    // product-tour browser harnesses resolve those node built-ins to the same
+    // inert shim so the browser bundle stays valid.
+    builder.onResolve({ filter: /^node:/ }, () => ({ path: resolve(repository, 'apps/electron/src/renderer/shims/node-stub.ts') }))
     builder.onResolve({ filter: /^@rox\/shared\/identity$/ }, () => ({ path: resolve(repository, 'packages/shared/src/identity/terms.ts') }))
     builder.onResolve({ filter: /^react-i18next$/ }, () => ({ path: 'fixture-i18n', namespace: 'fixture' }))
     builder.onLoad({ filter: /^fixture-i18n$/, namespace: 'fixture' }, () => ({ contents: "const t=key=>key; export const useTranslation=()=>({t,i18n:{language:'en',resolvedLanguage:'en'}}); export const Trans=({children,i18nKey})=>children??i18nKey;", loader: 'js' }))
