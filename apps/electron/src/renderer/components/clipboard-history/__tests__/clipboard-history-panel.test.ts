@@ -80,6 +80,10 @@ const listClipboardEntries = mock(async (query: unknown): Promise<ClipListResult
     hasMore: false,
   }
 })
+
+/** The per-test default list payload; re-applied in `beforeEach` because
+ *  individual cases swap in image-heavy implementations. */
+const defaultListImplementation = listClipboardEntries.getMockImplementation()!
 const setClipboardEntryStarred = mock(async (id: number, starred: boolean) => {
   calls.push({ method: 'star', args: [id, starred] })
   return { ok: true as const }
@@ -87,13 +91,18 @@ const setClipboardEntryStarred = mock(async (id: number, starred: boolean) => {
 
 const getClipboardEntry = mock(async (id: number): Promise<ClipEntryDetail> => ({ ...entry(id), imageDataUrl: null }))
 
+const deleteClipboardEntry = mock(async (id: number) => {
+  calls.push({ method: 'delete', args: [id] })
+  return { ok: true as const }
+})
+
 Object.assign(window, {
   electronAPI: {
     listClipboardEntries,
     getClipboardEntry,
     setClipboardEntryStarred,
     setClipboardEntryTags: mock(async () => ({ ok: true as const })),
-    deleteClipboardEntry: mock(async () => ({ ok: true as const })),
+    deleteClipboardEntry,
     clearClipboardHistory: mock(async () => ({ removed: 0 })),
     copyClipboardEntry: mock(async (id: number) => { calls.push({ method: 'copy', args: [id] }); return { ok: true as const } }),
     getClipboardSettings: mock(async () => defaults),
@@ -130,8 +139,10 @@ describe('ClipboardHistoryPanel', () => {
 
   beforeEach(async () => {
     calls.length = 0
-    listClipboardEntries.mockClear()
+    listClipboardEntries.mockReset()
+    listClipboardEntries.mockImplementation(defaultListImplementation)
     setClipboardEntryStarred.mockClear()
+    deleteClipboardEntry.mockClear()
     await render()
   })
 
@@ -201,6 +212,65 @@ describe('ClipboardHistoryPanel', () => {
     })
 
     expect(document.querySelector('[data-testid="clipboard-quick-look"]')).not.toBeNull()
+  })
+
+  it('renders the keyboard hint footer with the search chord interpolated', async () => {
+    const hint = document.querySelector('[data-testid="clipboard-keys-hint"]')
+    expect(hint).not.toBeNull()
+    expect(hint?.textContent).toContain('clipboard.screen.keysHint')
+  })
+
+  it('renders the char count through the shared clipboard.charCount key', async () => {
+    const card = document.querySelector<HTMLElement>('[data-testid="clipboard-card"]')!
+    await act(async () => { card.click() })
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
+    })
+    await act(async () => { await Promise.resolve() })
+
+    const details = document.querySelector('[data-testid="clipboard-quick-look-details"]')
+    expect(details?.textContent).toContain('clipboard.charCount')
+  })
+
+  it('filters by image format through the list query', async () => {
+    listClipboardEntries.mockImplementation(async (query: unknown) => {
+      calls.push({ method: 'list', args: [query] })
+      return {
+        entries: [entry(1, { kind: 'image', imageFormat: 'png', thumbDataUrl: 'data:image/png;base64,AAAA' })],
+        total: 1,
+        counts: { total: 1, starred: 0, text: 0, image: 1 },
+        hasMore: false,
+      }
+    })
+    const refresh = document.querySelector<HTMLButtonElement>('[data-testid="clipboard-refresh"]')!
+    await act(async () => { refresh.click() })
+    await act(async () => { await Promise.resolve() })
+    await act(async () => { await Promise.resolve() })
+
+    const row = document.querySelector('[data-testid="clipboard-format-filter"]')
+    expect(row).not.toBeNull()
+    const png = Array.from(row!.querySelectorAll<HTMLButtonElement>('button'))
+      .find((chip) => chip.textContent === 'PNG')
+    expect(png).toBeDefined()
+    await act(async () => { png!.click() })
+    await act(async () => { await Promise.resolve() })
+
+    expect(lastListQuery()?.format).toBe('png')
+  })
+
+  it('confirms before deleting a single entry', async () => {
+    const del = document.querySelector<HTMLButtonElement>('[data-testid="clipboard-card-delete"]')!
+    await act(async () => { del.click() })
+
+    expect(document.querySelector('[data-testid="clipboard-delete-confirm"]')).not.toBeNull()
+    expect(deleteClipboardEntry.mock.calls.length).toBe(0)
+    expect(document.querySelectorAll('[data-testid="clipboard-card"]').length).toBe(2)
+
+    const confirm = document.querySelector<HTMLButtonElement>('[data-testid="clipboard-delete-confirm"]')!
+    await act(async () => { confirm.click() })
+    await act(async () => { await Promise.resolve() })
+
+    expect(deleteClipboardEntry.mock.calls[0]?.[0]).toBe(1)
   })
 })
 

@@ -7,11 +7,21 @@ const creator = { accountId: 'installation', displayName: 'Local', kind: 'profil
 const owner = { kind: 'account' as const, id: 'ada', displayName: 'Ada', assignedAt: 1, assignedBy: 'installation' }
 
 describe('session visibility write access (a2.5)', () => {
-  it('allows shared and suggest for every actor', () => {
+  it('allows shared for every actor and keeps the open legacy default', () => {
     expect(evaluateSessionWriteAccess({ visibility: 'shared', creator }, 'somebody')).toEqual({ allowed: true })
-    expect(evaluateSessionWriteAccess({ visibility: 'suggest', creator }, 'somebody')).toEqual({ allowed: true })
     // Absent visibility is the open legacy default.
     expect(evaluateSessionWriteAccess({ creator }, 'somebody')).toEqual({ allowed: true })
+  })
+
+  it('denies a non-owner suggest write with SESSION_SUGGEST_ONLY, owner unchanged', () => {
+    expect(evaluateSessionWriteAccess({ visibility: 'suggest', creator }, 'somebody')).toEqual({
+      allowed: false, code: 'SESSION_SUGGEST_ONLY', message: 'Session accepts suggestions only from this actor',
+    })
+    // The creator/owner still writes directly.
+    expect(evaluateSessionWriteAccess({ visibility: 'suggest', creator }, 'installation')).toEqual({ allowed: true })
+    expect(evaluateSessionWriteAccess({ visibility: 'suggest', owner }, 'ada')).toEqual({ allowed: true })
+    // No attribution means no owner to enforce against.
+    expect(evaluateSessionWriteAccess({ visibility: 'suggest' }, 'somebody')).toEqual({ allowed: true })
   })
 
   it('denies read-only non-owners with SESSION_READ_ONLY', () => {

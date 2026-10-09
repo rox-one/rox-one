@@ -7,6 +7,7 @@
 export * from './types.ts'
 export * from './permissions.ts'
 export * from './manifest.ts'
+export * from './activation.ts'
 export * from './state-store.ts'
 export * from './catalog.ts'
 export * from './community-registries.ts'

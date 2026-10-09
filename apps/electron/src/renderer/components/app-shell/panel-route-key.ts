@@ -34,6 +34,10 @@ export function panelRouteKey(navState: NavigationState, context: PanelRouteKeyC
     'details' in navState ? navState.details : null,
     isSettingsNavigation(navState) ? navState.subpage : null,
     isScreenNavigation(navState) ? navState.screen : null,
+    // The memory navigator hosts lessons, repository and dream tabs; a crash in
+    // one tab must not survive a switch to another. Appended only for memory
+    // routes so every other key stays byte-identical to the baseline.
+    ...(navState.navigator === 'memory' ? [navState.tab ?? 'lessons'] : []),
     navState.navigator === 'search' ? navState.query : null,
     navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
     unavailableWorkspaceSlug,

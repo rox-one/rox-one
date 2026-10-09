@@ -135,7 +135,7 @@ export function ImportReviewDialog({ bankId, open, onOpenChange, onApplied, onRe
               const pending = selected.has(edit.path)
               const overridden = overrides.has(edit.path)
               return (
-                <li key={edit.path} data-testid="import-edit" data-path={edit.path} className="rounded-[var(--radius-control)] border border-border-subtle bg-surface-hover p-2">
+                <li key={edit.path} data-testid="import-edit" data-path={edit.path} className="rounded-[var(--radius-control)] border border-border-subtle bg-foreground-2 p-2">
                   <div className="flex flex-wrap items-center gap-2 text-small">
                     <input
                       type="checkbox"

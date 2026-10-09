@@ -34,6 +34,8 @@ import {
   type MemoryChunk,
   type MemoryIndexBackend,
 } from './chunk-index'
+import { loadXenovaEmbedder, type Embedder } from './episodic-memory'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 
 /** Persisted index state sidecar. */
 export interface MemoryIndexMeta {
@@ -48,6 +50,8 @@ export interface MemoryIndexMeta {
   corpusFingerprint: string
   builtAt: string
   chunkCount: number
+  /** c1.3: true when this build also persisted chunk embeddings (semantic leg). */
+  embedded?: boolean
 }
 
 export interface MemoryIndexServiceDeps {
@@ -57,6 +61,14 @@ export interface MemoryIndexServiceDeps {
   logger?: { warn: (msg: string, err?: unknown) => void }
   /** Test seam: override source collection. */
   collectDocs?: (workspaceRoot: string) => ChunkSourceDoc[]
+  /** c1.3: opt-in semantic (vector) leg, config `memory.semantic`. Off by default. */
+  semantic?: boolean
+  /** c1.3 DI seam: a ready-made embedder (tests / future providers). */
+  embedder?: Embedder
+  /** c1.3 DI seam: lazy embedder loader; defaults to @xenova/transformers. */
+  loadEmbedder?: () => Promise<Embedder | null>
+  /** c1.3: config dir holding the model cache; defaults to CRAFT_CONFIG_DIR || resolveConfigDir(). */
+  configDir?: string
 }
 
 const SNIPPET_CHARS = 240
@@ -182,17 +194,28 @@ export class MemoryIndexService {
   private readonly deps: MemoryIndexServiceDeps
   private readonly clock: () => number
   private readonly logger: { warn: (msg: string, err?: unknown) => void }
+  private readonly semanticEnabled: boolean
+  private readonly configDir: string
   private backend: MemoryIndexBackend | null = null
   private meta: MemoryIndexMeta | null | undefined
+  /** Resolved embedder promise (null = unavailable); cached for the instance. */
+  private embedderReady: Promise<Embedder | null> | null = null
 
   constructor(deps: MemoryIndexServiceDeps) {
     this.deps = deps
     this.clock = deps.clock ?? (() => Date.now())
     this.logger = deps.logger ?? { warn: () => {} }
+    this.semanticEnabled = deps.semantic === true
+    this.configDir = deps.configDir ?? (process.env.CRAFT_CONFIG_DIR || resolveConfigDir())
   }
 
   private get memoryDir(): string {
     return join(this.deps.workspaceRoot, 'memory')
+  }
+
+  /** Workspace root this index is bound to (e.g. the wiki store derives its dir from it). */
+  get workspaceRoot(): string {
+    return this.deps.workspaceRoot
   }
 
   private get backendInstance(): MemoryIndexBackend {
@@ -286,7 +309,7 @@ export class MemoryIndexService {
     }
   }
 
-  private writeMeta(chunks: number, corpusFingerprint: string): MemoryIndexMeta {
+  private writeMeta(chunks: number, corpusFingerprint: string, embedded = false): MemoryIndexMeta {
     const identity = memoryIndexIdentity()
     const meta: MemoryIndexMeta = {
       chunkingVersion: identity.chunkingVersion,
@@ -295,6 +318,7 @@ export class MemoryIndexService {
       corpusFingerprint,
       builtAt: new Date(this.clock()).toISOString(),
       chunkCount: chunks,
+      embedded,
     }
     try {
       mkdirSync(this.memoryDir, { recursive: true })
@@ -306,7 +330,7 @@ export class MemoryIndexService {
     return meta
   }
 
-  /** Deterministically rebuild the index from current sources. */
+  /** Deterministically rebuild the index from current sources (lexical only). */
   rebuild(): MemoryIndexStatus {
     const docs = this.collect()
     const chunks: MemoryChunk[] = chunkDocuments(docs)
@@ -315,35 +339,102 @@ export class MemoryIndexService {
     return this.status()
   }
 
+  private getEmbedder(): Promise<Embedder | null> {
+    if (this.deps.embedder) return Promise.resolve(this.deps.embedder)
+    if (!this.embedderReady) {
+      const loader = this.deps.loadEmbedder ?? (() => loadXenovaEmbedder(this.configDir))
+      this.embedderReady = loader().catch(() => null)
+    }
+    return this.embedderReady
+  }
+
+  /** True when the persisted build is lexically ready AND carries embeddings. */
+  private embeddedReady(): boolean {
+    const meta = this.readMeta()
+    return this.metaState(meta) === 'ready' && meta?.embedded === true
+  }
+
+  /**
+   * c1.3 rebuild backfill: chunk the current sources, embed every chunk text in
+   * one batch through the Embedder seam, then persist chunks + vectors. A
+   * chunk whose embedding is missing is simply not stored (lexical-only for it).
+   */
+  private async rebuildWithEmbeddings(embedder: Embedder): Promise<boolean> {
+    const docs = this.collect()
+    const chunks: MemoryChunk[] = chunkDocuments(docs)
+    const vectors = chunks.length > 0 ? await embedder(chunks.map(c => c.text)) : []
+    const embeddings = new Map<string, Float32Array>()
+    chunks.forEach((chunk, i) => {
+      const vector = vectors[i]
+      if (Array.isArray(vector) && vector.length > 0) embeddings.set(chunk.chunkId, Float32Array.from(vector))
+    })
+    this.backendInstance.replaceAll(chunks, embeddings)
+    const usable = embeddings.size > 0 || chunks.length === 0
+    this.writeMeta(chunks.length, this.corpusFingerprint(docs), usable)
+    return usable
+  }
+
   /** Rebuild when absent or stale; keep a ready index as-is. */
   private ensureIndex(): void {
     const state = this.metaState(this.readMeta())
     if (state !== 'ready') this.rebuild()
   }
 
-  search(query: string, limit = 8): MemorySearchResult {
+  /**
+   * Lexical (and, when a `queryVector` is supplied, hybrid) search. With no
+   * vector this is byte-identical to the pre-c1.3 lexical result: no
+   * `vectorScore` key is emitted and scores match today's BM25 output.
+   */
+  search(query: string, limit = 8, queryVector?: readonly number[] | Float32Array | null): MemorySearchResult {
     const capability = this.capability()
     const trimmed = typeof query === 'string' ? query.trim() : ''
     if (!trimmed) return { hits: [], capability }
     try {
       this.ensureIndex()
-      const ranked = searchMemoryIndex(this.backendInstance, trimmed, limit)
-      const hits: MemorySearchHit[] = ranked.map(({ chunk, score, textScore }) => ({
-        chunkId: chunk.chunkId,
-        path: chunk.path,
-        startLine: chunk.startLine,
-        endLine: chunk.endLine,
-        score,
-        textScore,
-        snippet: snippetOf(chunk.text),
-        text: chunk.text,
-        origin: chunk.provenance.originClass,
-        provenance: chunk.provenance,
-      }))
+      const ranked = searchMemoryIndex(this.backendInstance, trimmed, limit, queryVector)
+      const hits: MemorySearchHit[] = ranked.map(({ chunk, score, textScore, vectorScore }) => {
+        const hit: MemorySearchHit = {
+          chunkId: chunk.chunkId,
+          path: chunk.path,
+          startLine: chunk.startLine,
+          endLine: chunk.endLine,
+          score,
+          textScore,
+          snippet: snippetOf(chunk.text),
+          text: chunk.text,
+          origin: chunk.provenance.originClass,
+          provenance: chunk.provenance,
+        }
+        if (typeof vectorScore === 'number') hit.vectorScore = vectorScore
+        return hit
+      })
       return { hits, capability }
     } catch (err) {
       this.logger.warn('MemoryIndexService: search failed', err)
       return { hits: [], capability }
+    }
+  }
+
+  /**
+   * c1.3 semantic search: the lexical search plus the vector leg, gated by
+   * `memory.semantic`. Returns the lexical result unchanged when semantic is
+   * off or the embedder is unavailable — the vector leg is never allowed to
+   * turn a working lexical recall into an error.
+   */
+  async searchSemantic(query: string, limit = 8): Promise<MemorySearchResult> {
+    if (!this.semanticEnabled) return this.search(query, limit)
+    const trimmed = typeof query === 'string' ? query.trim() : ''
+    if (!trimmed) return this.search(query, limit)
+    try {
+      const embedder = await this.getEmbedder()
+      if (!embedder) return this.search(trimmed, limit)
+      if (!this.embeddedReady() && !(await this.rebuildWithEmbeddings(embedder))) return this.search(trimmed, limit)
+      const [queryVector] = await embedder([trimmed])
+      if (!queryVector || queryVector.length === 0) return this.search(trimmed, limit)
+      return this.search(trimmed, limit, queryVector)
+    } catch (err) {
+      this.logger.warn('MemoryIndexService: semantic search failed', err)
+      return this.search(trimmed, limit)
     }
   }
 
@@ -390,11 +481,28 @@ function snippetOf(text: string): string {
 /** One index service per workspace root per process (shared by RPC + prompt paths). */
 const serviceCache = new Map<string, MemoryIndexService>()
 
-export function memoryIndexServiceFor(workspaceRoot: string, workspaceId?: string): MemoryIndexService {
-  let svc = serviceCache.get(workspaceRoot)
+export interface MemoryIndexServiceOptions {
+  /** c1.3: config `memory.semantic`; different values get distinct cached services. */
+  semantic?: boolean
+  /** c1.3: config dir for the embedding-model cache. */
+  configDir?: string
+}
+
+export function memoryIndexServiceFor(
+  workspaceRoot: string,
+  workspaceId?: string,
+  options?: MemoryIndexServiceOptions,
+): MemoryIndexService {
+  const key = `${workspaceRoot}\u0000${options?.semantic ? 'semantic' : 'lexical'}`
+  let svc = serviceCache.get(key)
   if (!svc) {
-    svc = new MemoryIndexService({ workspaceRoot, ...(workspaceId ? { workspaceId } : {}) })
-    serviceCache.set(workspaceRoot, svc)
+    svc = new MemoryIndexService({
+      workspaceRoot,
+      ...(workspaceId ? { workspaceId } : {}),
+      ...(options?.semantic ? { semantic: true } : {}),
+      ...(options?.configDir ? { configDir: options.configDir } : {}),
+    })
+    serviceCache.set(key, svc)
   }
   return svc
 }

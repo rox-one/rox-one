@@ -631,3 +631,80 @@ export interface MemoryIndexStatus {
   /** Runtime backend that produced the current build. */
   backend?: 'fts5' | 'js'
 }
+
+// ── Wave 3 — workspace memory wiki ──────────────────────────────────────────
+// Claims are durable, evidence-backed assertions distilled into a workspace
+// wiki; the lint report flags unsupported/stale/contradictory claims. The
+// request/response channels live in packages/shared/src/protocol/channels.ts
+// (`memory:wiki{List,Get,Apply,Lint}`) and route REMOTE_ELIGIBLE like the rest
+// of the memory namespace.
+
+/** One supporting piece of evidence behind a wiki claim. */
+export interface WikiClaimEvidence {
+  /** Workspace-relative path (or memory chunk id) the evidence came from. */
+  source: string
+  /** Free-form locator (line range, chunk id, URL) when known. */
+  locator?: string
+  /** ISO timestamp the evidence was captured. */
+  ts?: string
+  /** Verbatim excerpt supporting the claim. */
+  quote?: string
+}
+
+/** Lifecycle state of a wiki claim. */
+export type WikiClaimStatus = 'draft' | 'active' | 'stale' | 'retracted'
+
+/** One evidence-backed wiki claim. */
+export interface WikiClaim {
+  id: string
+  /** The asserted statement (single sentence). */
+  text: string
+  status: WikiClaimStatus
+  /** Wiki scope the claim belongs to (e.g. 'workspace' or a project slug). */
+  scope?: string
+  evidence: WikiClaimEvidence[]
+  /** Monotonic revision of this claim; bumped on every apply. */
+  revision: number
+  /** ISO timestamp of first creation. */
+  createdAt?: string
+  /** ISO timestamp of the last mutation. */
+  updatedAt?: string
+}
+
+/** Write intent carried by `memory:wikiApply`. */
+export type WikiMutation =
+  | { op: 'upsert'; claim: WikiClaim }
+  | { op: 'retract'; claimId: string; reason?: string }
+
+/** Result of `memory:wikiApply` — the stored claim plus the workspace revision. */
+export interface WikiApplyResult {
+  claim: WikiClaim
+  revision: number
+}
+
+/** One lint finding over the workspace wiki. */
+export interface WikiLintFinding {
+  claimId?: string
+  severity: 'info' | 'warning' | 'error'
+  code: string
+  message: string
+}
+
+/** Result of `memory:wikiLint` — findings for the digest document. */
+export interface WikiLintReport {
+  findings: WikiLintFinding[]
+  /** Count of claims examined. */
+  claimsChecked: number
+  /** ISO timestamp the report was produced. */
+  generatedAt?: string
+}
+
+/** Result of `memory:wikiList`. */
+export interface WikiListResult {
+  claims: WikiClaim[]
+}
+
+/** Result of `memory:wikiGet` (null when the claim id is unknown). */
+export interface WikiGetResult {
+  claim: WikiClaim | null
+}

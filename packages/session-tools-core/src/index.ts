@@ -147,8 +147,14 @@ export type {
   PageDataToolPatch,
   PageDataWriteSummary,
   DeletePageToolResult,
+  // Board widget types
+  BoardWidgetKind,
+  BoardWidgetToolRecord,
+  BoardWidgetPutInput,
+  BoardWidgetToolCallbacks,
   // Memory types
   MemoryToolCallbacks,
+  MemoryWikiCallbacks,
 } from './context.ts';
 
 export { createNodeFileSystem } from './context.ts';
@@ -283,6 +289,7 @@ export {
   handleUpdatePage,
   handleWritePageData,
   handleDeletePage,
+  handleShowWidget,
   handleAgentTeams,
 } from './handlers/index.ts';
 
@@ -310,8 +317,12 @@ export {
   handleMemorySearch,
   handleMemoryGet,
   handleMemoryForget,
+  handleWikiSearch,
+  handleWikiGet,
+  handleWikiApply,
   MEMORY_SEARCH_MAX_LIMIT,
   MEMORY_FORGET_MAX_IDS,
+  WIKI_SEARCH_MAX_LIMIT,
 } from './handlers/index.ts';
 
 // Skills catalog handlers (registered in SESSION_TOOL_DEFS)
@@ -439,6 +450,9 @@ export type {
   MemorySearchToolArgs,
   MemoryGetToolArgs,
   MemoryForgetToolArgs,
+  WikiSearchToolArgs,
+  WikiGetToolArgs,
+  WikiApplyToolArgs,
   SkillsSearchArgs,
   SkillsReadArgs,
   DevSpaceReadArgs,

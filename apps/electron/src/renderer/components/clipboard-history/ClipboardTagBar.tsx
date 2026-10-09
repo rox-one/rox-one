@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import type { ClipEntrySummary, ClipTagCount } from '@rox/shared/clipboard-history'
 import { Button, Chip } from '@/components/mode-screen/ModeScreen'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { visibleEntryTags, visibleTagCounts } from './clipboard-history-model'
+import { isHiddenTag, visibleEntryTags, visibleTagCounts } from './clipboard-history-model'
 
 export function ClipboardTagBar({
   counts,
@@ -51,11 +51,13 @@ export function ClipboardTagEditor({
   const { t } = useTranslation()
   const [draft, setDraft] = React.useState<string[]>([])
   const [value, setValue] = React.useState('')
+  const [reservedHint, setReservedHint] = React.useState(false)
 
   React.useEffect(() => {
     if (!open || !entry) return
     setDraft(visibleEntryTags(entry.tags))
     setValue('')
+    setReservedHint(false)
   }, [open, entry])
 
   const commit = (next: string[]) => {
@@ -65,6 +67,10 @@ export function ClipboardTagEditor({
   const addTag = () => {
     const tag = value.trim().toLowerCase()
     if (!tag || draft.includes(tag)) { setValue(''); return }
+    // Internal classification tags are reserved: refuse them instead of
+    // silently dropping (they would never show as a chip).
+    if (isHiddenTag(tag)) { setReservedHint(true); setValue(''); return }
+    setReservedHint(false)
     setValue('')
     commit([...draft, tag])
   }
@@ -110,6 +116,9 @@ export function ClipboardTagEditor({
             {t('clipboard.tag.add')}
           </Button>
         </div>
+        {reservedHint ? (
+          <p className="text-caption text-text-muted" data-testid="clipboard-tag-reserved-hint">{t('clipboard.tag.reservedHint')}</p>
+        ) : null}
       </DialogContent>
     </Dialog>
   )

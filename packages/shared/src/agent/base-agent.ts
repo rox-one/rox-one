@@ -1119,10 +1119,18 @@ ${formattedMessages}
       this.config.markTransferredSessionSummaryApplied?.();
     }
 
+    // c1.4 residual: per-turn memory (c1.5 recall + c1.6 standing intents)
+    // resolved for THIS message. Rides the per-turn user payload — the only
+    // per-turn channel a backend has (the OMP RPC contract allows just
+    // prompt/steer/follow_up), so it never disturbs the static, cacheable
+    // system prompt where the spawn-time bootstrap lives. Fail-soft lives in
+    // the callback; absent callback ⇒ null ⇒ byte-identical message.
+    const perTurnMemoryBlock = (await this.config.getPerTurnMemoryBlock?.(message)) ?? null;
+
     // Prepend read directive to the message so the model reads SKILL.md first.
     const directive = this.formatSkillDirective(skillPaths);
     const profileRole = this.config.agentProfileSnapshot ? `[Captured agent role]\n${this.config.agentProfileSnapshot.role}\n[/Captured agent role]` : null;
-    const messageParts = [profileRole, branchSeedContext, transferredSessionContext, directive, cleanMessage].filter(Boolean);
+    const messageParts = [profileRole, branchSeedContext, transferredSessionContext, perTurnMemoryBlock, directive, cleanMessage].filter(Boolean);
     const effectiveMessage = messageParts.join('\n\n');
 
     // Capture the raw user message for source-activation auto-retry. `cleanMessage`

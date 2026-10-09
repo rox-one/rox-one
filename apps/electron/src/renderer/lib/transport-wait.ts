@@ -1,7 +1,7 @@
 import i18n from 'i18next'
 import type { ElectronAPI, TransportConnectionState } from '../../shared/types'
 
-const DEFAULT_TIMEOUT_MS = 12_000
+export const DEFAULT_TIMEOUT_MS = 12_000
 
 function formatTransportFailure(state: TransportConnectionState): string {
   if (state.lastError?.message) return state.lastError.message
