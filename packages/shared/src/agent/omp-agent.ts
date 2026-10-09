@@ -2386,7 +2386,7 @@ export class OmpAgent extends BaseAgent {
     this.eventQueue.reset();
     this.lastUsage = undefined;
     this.toolNames.clear();
-    this.runtimeObservationRunId = randomUUID();
+    this.runtimeObservationRunId = this.currentRunId() ?? randomUUID();
     this.runtimeTraceBridge.beginRun(this.runtimeObservationRunId, runtimeUserPrompt, runtimeSkills);
     let selectedSeq = 0;
     for (const [slug] of runtimeSkills) {
