@@ -5,12 +5,15 @@
  */
 
 import { describe, expect, it } from 'bun:test';
+import { dirname, join } from 'node:path';
 import {
+  AVAILABLE_SKILLS_MAX_BYTES,
   AVAILABLE_SKILLS_MAX_ENTRIES,
   SKILLS_READ_HOST_TOOL,
   SKILLS_SEARCH_HOST_TOOL,
   buildAvailableSkillsBlock,
 } from '../prompt.ts';
+import { loadSkillFromDir } from '../storage.ts';
 import { composeOmpAppendSystemPrompt } from '../../agent/omp-agent.ts';
 import { getSessionToolProxyDefs } from '../../agent/backend/pi/session-tool-defs.ts';
 import type { LoadedSkill, SkillSource } from '../types.ts';
@@ -125,5 +128,62 @@ describe('composeOmpAppendSystemPrompt memory blocks', () => {
       memoryBlocks: { lessonsBlock: '[Learned corrections]' },
     });
     expect(payload).not.toContain('[Curated memory]');
+  });
+});
+
+describe('buildAvailableSkillsBlock always-on promotion', () => {
+  const REPO_ROOT = join(dirname(import.meta.dir), '..', '..', '..', '..');
+  const CUSTODIAN_SKILLS_DIR = join(REPO_ROOT, 'apps', 'electron', 'resources', 'skills', 'rox-custodian');
+  const CUSTODIAN_SLUGS = ['add-model-provider', 'configure-channel', 'diagnose-gateway'] as const;
+
+  /** A catalog far past the entry cap, so earlier groups would evict anything later. */
+  function flood(): LoadedSkill[] {
+    return Array.from({ length: AVAILABLE_SKILLS_MAX_ENTRIES + 40 }, (_, i) => skill(`flood-${i}`, 'workspace'));
+  }
+
+  /** The pinned skill sits in the LAST group, exactly where the cap would drop it. */
+  function pinned(): LoadedSkill {
+    return { ...skill('pinned', 'omp'), metadata: { name: 'Pinned', description: 'pinned description', always: true } };
+  }
+
+  function entryLines(block: string): string[] {
+    return block.split('\n').filter(line => line.startsWith('- `'));
+  }
+
+  it('emits an always-flagged skill first even when the cap would otherwise drop it', () => {
+    const block = buildAvailableSkillsBlock([...flood(), pinned()])!;
+    expect(block).toContain('`pinned`');
+    expect(entryLines(block).length).toBeLessThanOrEqual(AVAILABLE_SKILLS_MAX_ENTRIES);
+    expect(Buffer.byteLength(block, 'utf8')).toBeLessThanOrEqual(AVAILABLE_SKILLS_MAX_BYTES);
+    // Promoted ahead of the flooded tier, not merely present somewhere.
+    expect(entryLines(block)[0]).toContain('`pinned`');
+  });
+
+  it('advertises the real custodian playbooks under cap pressure', () => {
+    const custodian = CUSTODIAN_SLUGS
+      .map(slug => loadSkillFromDir(CUSTODIAN_SKILLS_DIR, slug, 'global'))
+      .filter((loaded): loaded is LoadedSkill => loaded !== null);
+    expect(custodian).toHaveLength(CUSTODIAN_SLUGS.length);
+    expect(custodian.every(loaded => loaded.metadata.always === true)).toBe(true);
+
+    const block = buildAvailableSkillsBlock([...flood(), ...custodian])!;
+    expect(entryLines(block).length).toBeLessThanOrEqual(AVAILABLE_SKILLS_MAX_ENTRIES);
+    expect(Buffer.byteLength(block, 'utf8')).toBeLessThanOrEqual(AVAILABLE_SKILLS_MAX_BYTES);
+    for (const slug of CUSTODIAN_SLUGS) {
+      expect(block).toContain(`\`${slug}\``);
+    }
+  });
+
+  it('renders byte-identical output across runs', () => {
+    const first = buildAvailableSkillsBlock([...flood(), pinned()]);
+    const second = buildAvailableSkillsBlock([...flood(), pinned()]);
+    expect(first).not.toBeNull();
+    expect(first).toBe(second);
+  });
+
+  it('leaves the tier grouping untouched when nothing is always-on', () => {
+    const block = buildAvailableSkillsBlock(flood())!;
+    expect(block).not.toContain('## Always-on skills');
+    expect(block).toContain('## Workspace skills');
   });
 });

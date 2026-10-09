@@ -2753,6 +2753,11 @@ export class SessionManager implements ISessionManager {
         // L1: session provenance (F4) for the feedback loop — which lessons the
         // session saw, so a bad ending can attribute conflicts per scope.
         readSessionProvenance: (sessionId) => readProvenance(workspace.rootPath, sessionId)?.lessons ?? [],
+        // c1.5 lane two: bounded escalation sub-agent. Same scratch mini-model
+        // runner the distiller uses, so lane two is reachable in production.
+        // recallMode is intentionally left unset — MemoryService's documented
+        // 'auto' default escalates only on recall intent with no lane-one hit.
+        recallAgent: (prompt) => this.runMemoryDistillOneShot(workspace, prompt),
         // WP-117: route memory distillation through the learning layer when composed.
         ...(learningService ? { learningService } : {}),
       })

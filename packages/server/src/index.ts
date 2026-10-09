@@ -55,6 +55,8 @@ import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox
 import { initModelRefreshService, setFetcherPlatform } from '@rox/server-core/model-fetchers'
 import { setSearchPlatform, setImageProcessor } from '@rox/server-core/services'
 import type { HandlerDeps } from '@rox/server-core/handlers'
+import { NodeRegistry, DEFAULT_PRESENCE_TTL_MS } from '@rox/server-core/nodes'
+import { createServerHandlerDeps } from './handler-deps'
 import { resolveConfigDir } from "@rox/shared/config/paths"
 
 process.env.CRAFT_IS_PACKAGED ??= 'false'
@@ -205,6 +207,11 @@ const discordWorkerEntry = process.env.CRAFT_MESSAGING_DISCORD_WORKER
 // publisher after bootstrapServer resolves.
 let messagingHandle: MessagingBootstrapHandle | null = null
 
+// f.9 — server-owned node/device registry. Composed inside the production
+// HandlerDeps factory (`createServerHandlerDeps`) and captured here so the
+// presence sweep can be armed on the bootstrap scheduler after startup.
+let nodeRegistry: NodeRegistry | undefined
+
 // E1.2: runtime capability probe — a real SQLite WAL write in a scratch dir
 // under `<state>/tmp` plus the WAL-reset-safe version floor and NUL round-trip.
 // A failed probe logs the typed downgrade + the user-space runtime fallback
@@ -287,16 +294,18 @@ const instance = await (async () => {
             nodeBin: waNodeBin,
           },
         })
-        const learning = sessionManager.getLearningRpcService()
-        return {
+        const deps = createServerHandlerDeps({
           sessionManager,
           platform,
           oauthFlowStore,
+          nativeAuthority,
+          nativeJournal,
+          collaborationSync,
           browserPaneManager: vpsBrowserManager ?? undefined,
           messagingRegistry: messagingHandle.registry,
-          nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
-          ...(learning ? { learning } : {}),
-        }
+        })
+        nodeRegistry = deps.nodes
+        return deps
       },
       registerAllRpcHandlers: registerCoreRpcHandlers,
       setSessionEventSink: (sessionManager, sink) => {
@@ -325,6 +334,17 @@ const instance = await (async () => {
     process.exit(1)
   }
 })()
+// f.9 — drive node presence TTL expiry. The bootstrap-owned scheduler arms the
+// timer and is stopped by `instance.stop()` in `shutdown()`, so shutdown leaves
+// no leaked interval. Pending invoke deadlines settle on their own timers.
+if (nodeRegistry) {
+  const registry = nodeRegistry
+  instance.scheduler.scheduleEvery({
+    id: 'nodes:presence-sweep',
+    everyMs: DEFAULT_PRESENCE_TTL_MS,
+    run: () => { registry.sweep() },
+  })
+}
 
 // ---------------------------------------------------------------------------
 // Messaging post-bootstrap: bind the WS publisher and initialize local
