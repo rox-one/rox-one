@@ -34,7 +34,12 @@ import { HANDLED_CHANNELS, registerKnowledgeHandlers, __setKnowledgeTestConstruc
 const credentials = new Map<string, { value: string }>()
 let workspaceRoot: string
 
+// Real namespace must be captured before the mock is registered; a static import
+// would be hoisted past this file's mock.module ordering.
+const actualCredentials = await import('@rox/shared/credentials')
+
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -135,6 +140,7 @@ afterEach(() => {
 
 afterAll(() => {
   __setKnowledgeTestConstructors(null)
+  mock.restore()
 })
 
 function createHarness() {
