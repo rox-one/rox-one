@@ -91,6 +91,10 @@ export { handleKnowledgeRead, KNOWLEDGE_READ_MAX_MARKDOWN_CHARS } from './knowle
 export { handleKnowledgeGetBacklinks, KNOWLEDGE_BACKLINKS_MAX_ITEMS } from './knowledge-backlinks.ts';
 export { handleKnowledgePropose, parseProposeOps } from './knowledge-propose.ts';
 
+// Memory recall tools (c1.3)
+export { handleMemorySearch, MEMORY_SEARCH_MAX_LIMIT } from './memory-search.ts';
+export { handleMemoryGet } from './memory-get.ts';
+
 // Pages
 export {
   handleListPages,

@@ -52,6 +52,8 @@ import { AuditLog } from './AuditLog'
 import { search as ftsSearch } from './fts-index'
 import { compactWorkspaceHistory } from './decay'
 import { EpisodicMemory, withTimeout as episodicWithTimeout } from './episodic-memory'
+import { MemoryIndexService, memoryIndexServiceFor } from './MemoryIndexService'
+import { buildMemoryBootstrap } from './bootstrap'
 import type { LearningServicePorts } from './learning/learning-types'
 
 /** Max chars of serialized conversation window sent to the distiller (front-truncated). */
@@ -488,6 +490,18 @@ export class MemoryService {
         this.logger.warn('MemoryService: episodic recall failed', err)
       }
     }
+    // c1.4: curated memory bootstrap (MEMORY.md / distilled context). Assembled
+    // from the workspace chunk index and gated by chunk provenance — untrusted
+    // documents are never admitted. Fail-soft: any index error just omits it.
+    try {
+      const { block, entries } = buildMemoryBootstrap(this.indexService.bootstrapDocuments())
+      if (block) {
+        blocks.bootstrapBlock = block
+        blocks.bootstrap = entries
+      }
+    } catch (err) {
+      this.logger.warn('MemoryService: curated bootstrap assembly failed', err)
+    }
     opts?.nativeContext?.assertAuthorized()
     return blocks
   }
@@ -551,6 +565,12 @@ export class MemoryService {
 
   private get episodic(): EpisodicMemory {
     return (this.deps.episodicMemory ??= new EpisodicMemory(this.fileStore.memoryDir))
+  }
+
+  private indexServiceInstance: MemoryIndexService | null = null
+  /** c1.1/c1.4: workspace memory chunk index (also feeds the bootstrap block). */
+  get indexService(): MemoryIndexService {
+    return (this.indexServiceInstance ??= memoryIndexServiceFor(this.deps.workspaceRoot, this.deps.workspaceId))
   }
 
   private auditLog: AuditLog | null = null

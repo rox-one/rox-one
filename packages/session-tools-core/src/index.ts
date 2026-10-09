@@ -147,6 +147,8 @@ export type {
   PageDataToolPatch,
   PageDataWriteSummary,
   DeletePageToolResult,
+  // Memory types
+  MemoryToolCallbacks,
 } from './context.ts';
 
 export { createNodeFileSystem } from './context.ts';
@@ -234,6 +236,13 @@ export {
   KNOWLEDGE_SEARCH_MAX_LIMIT,
   KNOWLEDGE_READ_MAX_MARKDOWN_CHARS,
   KNOWLEDGE_BACKLINKS_MAX_ITEMS,
+} from './handlers/index.ts';
+
+// Memory recall handlers (registered in SESSION_TOOL_DEFS)
+export {
+  handleMemorySearch,
+  handleMemoryGet,
+  MEMORY_SEARCH_MAX_LIMIT,
 } from './handlers/index.ts';
 
 export type {
@@ -335,6 +344,8 @@ export type {
   KnowledgeSearchArgs,
   KnowledgeReadArgs,
   KnowledgeGetBacklinksArgs,
+  MemorySearchToolArgs,
+  MemoryGetToolArgs,
 } from './tool-defs.ts';
 
 // Script runtime resolution + path containment (also used by the shared

@@ -118,6 +118,7 @@ import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, isSourceUsable
 import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@rox/shared/tasks'
 import { createTaskFromSpec, resolveCreateTaskProjectId } from '../tasks'
 import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
+import { buildMemoryToolCallbacks } from '../memory/tool-callbacks'
 import { buildServersFromSources as buildServersFromSourcesShared } from '../sources/build-servers'
 import { resolveDefaultSessionSources } from '../sources/default-session-sources'
 import { BuiltinMcpStartup } from '../sources/builtin-mcp-startup'
@@ -5693,6 +5694,14 @@ export class SessionManager implements ISessionManager {
             this.enqueuePageThumbnail(managed.workspace.id, managed.workspace.rootPath, pageSlug)
           },
         }),
+        // Memory recall tools (memory_search / memory_get) — bound to the
+        // invoking session's workspace chunk index. Absent when the workspace
+        // disables memory (memoryServiceFor returns null), so the handlers
+        // report a truthful "unavailable" instead of faking recall.
+        memory: (() => {
+          const svc = this.memoryServiceFor(managed.workspace)
+          return svc ? buildMemoryToolCallbacks(svc.indexService) : undefined
+        })(),
         getSessionInfoFn: (sessionId?: string) => {
           const targetId = sessionId ?? managed.id
           const session = this.sessions.get(targetId)
