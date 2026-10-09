@@ -187,7 +187,8 @@
     "./commands": "./src/commands/index.ts",
     "./commands/schemas": "./src/commands/schemas.ts",
     "./drive/importers/providers/auth": "./src/drive/importers/providers/auth.ts",
-    "./domain": "./src/domain/index.ts"
+    "./domain": "./src/domain/index.ts",
+    "./notify/schemas": "./src/notify/schemas.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

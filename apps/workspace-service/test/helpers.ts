@@ -32,7 +32,19 @@ export function fakeResolver(initial: AuthenticatedActor) {
   return { resolver: resolver as unknown as WorkspaceHttpOptions['actorResolver'], state }
 }
 
-export async function serve(options: WorkspaceHttpOptions): Promise<{ server: Server; url: string; close(): Promise<void> }> {
+export interface TestServer {
+  server: Server
+  url: string
+  close(): Promise<void>
+}
+
+export interface TestHttpResult {
+  status: number
+  body: unknown
+  allow: string | null
+}
+
+export async function serve(options: WorkspaceHttpOptions): Promise<TestServer> {
   const handler = createWorkspaceHttpHandler(options)
   const server = createServer((req, res) => { void handler(req, res) })
   // bun 1.3.14 (the CI toolchain) keeps idle keep-alive sockets open, so
@@ -74,7 +86,7 @@ export async function serve(options: WorkspaceHttpOptions): Promise<{ server: Se
   }
 }
 
-export async function request(url: string, path: string, init: { method?: string; token?: string | null; body?: unknown; raw?: string; contentType?: string } = {}) {
+export async function request(url: string, path: string, init: { method?: string; token?: string | null; body?: unknown; raw?: string; contentType?: string } = {}): Promise<TestHttpResult> {
   const headers: Record<string, string> = {}
   if (init.token !== null) headers.authorization = 'Bearer ' + (init.token ?? TOKEN)
   const body = init.raw ?? (init.body === undefined ? undefined : JSON.stringify(init.body))
