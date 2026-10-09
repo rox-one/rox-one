@@ -508,12 +508,26 @@ export type SessionEvent =
   | { type: 'session_presence'; sessionId: string; viewers: BroPresenceMemberDto[] }
   | { type: 'session_visibility_changed'; sessionId: string; visibility: SessionVisibility }
 
+/**
+ * Queue-steering verb for a message sent while the session is mid-turn (f.4,
+ * ported from OpenClaw's `steer|followup|collect|interrupt` queue modes).
+ */
+export type SteeringVerb = 'steer' | 'followup' | 'collect' | 'interrupt'
+
 export interface SendMessageOptions {
   /** Producer telemetry only; native principals cannot supply this metadata. */
   runtimeLaunch?: RuntimeLaunch
   skillSlugs?: string[]
   badges?: ContentBadge[]
   optimisticMessageId?: string
+  /**
+   * Queue mode for a message that arrives while the session is already
+   * processing a turn. Omitted → the connection's `midStreamBehavior` decides
+   * (`steer` → steer, `queue` → followup). `collect` coalesces compatible queued
+   * messages; `interrupt` aborts the active run and drops everything already
+   * queued for the session (see `SessionManager`).
+   */
+  queueMode?: SteeringVerb
   /**
    * When true, the message drives a turn (reaches the model) but is marked
    * `hidden` on the persisted `Message` so it never renders as a transcript

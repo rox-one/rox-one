@@ -24,6 +24,7 @@ import type { SessionConfig as Session } from '../../sessions/storage.ts';
 import type { SourceManager } from '../core/source-manager.ts';
 import type { MemoryPromptBlocks } from '../../memory/types.ts';
 import type { AgentProfileSnapshot } from '../../workspace-work/types.ts';
+import type { AgentRunTerminalState, AgentStartHandle } from '../agent-run-registry.ts';
 
 // Import AbortReason and RecoveryMessage from core module (single source of truth)
 import { AbortReason, type RecoveryMessage } from '../core/index.ts';
@@ -370,6 +371,24 @@ export interface AgentBackend {
     attachments?: FileAttachment[],
     options?: ChatOptions
   ): AsyncGenerator<AgentEvent>;
+
+  /**
+   * f.5: start a turn and return its runId immediately, before the first event.
+   * Optional so third-party backends that only implement `chat` still satisfy
+   * the interface; BaseAgent provides the default implementation used by every
+   * in-tree backend.
+   */
+  startRun?(
+    message: string,
+    attachments?: FileAttachment[],
+    options?: ChatOptions
+  ): AgentStartHandle;
+
+  /** f.5: block until the run reaches a terminal state. */
+  waitForRun?(runId: string): Promise<AgentRunTerminalState>;
+
+  /** f.5: the runId currently streaming, or null between turns. */
+  currentRunId?(): string | null;
 
   /**
    * Abort current query (user stop or internal abort).
