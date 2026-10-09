@@ -15,6 +15,9 @@ on:
       - 'apps/electron/vite.config.ts'
       - 'perf-baselines/bundle-size.json'
       - 'bun.lock'
+      - 'package.json'
+      - 'bunfig.toml'
+      - 'tsconfig.json'
       - '.github/workflows/bundle-size.yml'
   pull_request:
     paths:
@@ -25,6 +28,9 @@ on:
       - 'apps/electron/vite.config.ts'
       - 'perf-baselines/bundle-size.json'
       - 'bun.lock'
+      - 'package.json'
+      - 'bunfig.toml'
+      - 'tsconfig.json'
       - '.github/workflows/bundle-size.yml'
 permissions:
   contents: read
