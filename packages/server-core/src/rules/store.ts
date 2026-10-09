@@ -94,6 +94,7 @@ function toStepRecord(value: unknown): RuleStepRecord | null {
     action: record.action,
     command_id: record.command_id,
     status: record.status,
+    ...(record.plan !== null && typeof record.plan === 'object' ? { plan: record.plan } : {}),
     ...(typeof record.receipt_status === 'string' ? { receipt_status: record.receipt_status } : {}),
     ...(typeof record.receipt_ref === 'string' ? { receipt_ref: record.receipt_ref } : {}),
     ...(typeof record.error === 'string' ? { error: record.error } : {}),
