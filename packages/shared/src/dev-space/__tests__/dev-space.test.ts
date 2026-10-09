@@ -57,6 +57,7 @@ describe('devSpace/podcast channel values', () => {
       'devSpace:startRun',
       'devSpace:listArtifacts',
       'devSpace:readArtifact',
+      'devSpace:generateQuestions',
       'devSpace:cloneProgress',
       'devSpace:changed',
       'devSpace:runProgress',

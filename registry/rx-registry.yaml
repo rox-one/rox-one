@@ -2941,226 +2941,267 @@
 - id: RX-FEA-0034
   title: Developer Space — репозиторий-пространство и артефакты
   kind: feature
-  status: planned
-  refs: [RX-SPC-0024, RX-SPC-0027]
+  path: packages/server-core/src/devspace
+  status: done
+  refs: [RX-SPC-0024, RX-SPC-0027, RX-SRF-0049, RX-SRF-0050, RX-API-0013, RX-DAT-0017, RX-AUT-0031]
   note: |
-    Каталог репо → репо-воркспейс с шестью поверхностями, вопросами, турами и freshness. Волны В1–В3.
+    Каталог репо → репо-воркспейс с шестью поверхностями, вопросами, турами и freshness. Волны В1–В3 поставлены
+    (PR #1658, #1705, #1737); серверное ядро — packages/server-core/src/devspace, поверхности — pages/dev-space.
 
 - id: RX-FEA-0035
   title: Playbooks — ноутбук-поверхность
   kind: feature
-  status: planned
-  refs: [RX-SPC-0027]
+  path: packages/server-core/src/playbooks
+  status: done
+  refs: [RX-SPC-0027, RX-SRF-0052, RX-AUT-0032]
   note: |
-    Режимы «знания» и «кодбук»; порт концепций SurfSense на примитивы ROX. Волны В4–В5.
+    Режимы «знания» и «кодбук»; порт концепций SurfSense на примитивы ROX. Волны В4–В5 поставлены
+    (PR #1738, #1739); серверная обвязка — packages/server-core/src/playbooks, поверхности — pages/playbooks.
 
 - id: RX-FEA-0036
   title: Подкаст Playbooks
   kind: feature
-  status: planned
-  refs: [RX-SPC-0025]
+  path: packages/server-core/src/playbooks
+  status: done
+  refs: [RX-SPC-0025, RX-API-0014, RX-AUT-0032, RX-CMP-0072]
   note: |
-    Двухголосый подкаст: сценарий LLM → TTS → сборка (ffmpeg) → плеер/экспорт mp3/srt. Волна В4.
+    Двухголосый подкаст: сценарий LLM → TTS → сборка (ffmpeg) → плеер/экспорт mp3/srt. Волна В4 поставлена
+    (PR #1738); пайплайн — packages/server-core/src/playbooks, плеер — pages/playbooks/podcast.
 
 - id: RX-FEA-0037
   title: Кодбук Playbooks
   kind: feature
-  status: planned
-  refs: [RX-SPC-0025]
+  path: packages/server-core/src/playbooks/codebook
+  status: done
+  refs: [RX-SPC-0025, RX-SRF-0053]
   note: |
-    Ноутбуки-пайплайны по коду поверх артефактов и агентских сессий. Волна В5.
+    Ноутбуки-пайплайны по коду поверх артефактов и агентских сессий. Волна В5 поставлена (PR #1739,
+    фикс #1741 — playbooks:codebookJob в BROADCAST_EVENT_CHANNELS).
 
 - id: RX-SRF-0049
   title: Developer Space — каталог репозиториев
   kind: surface
-  status: planned
+  path: apps/electron/src/renderer/pages/dev-space/DevSpaceHomePage.tsx
+  status: done
   refs: [RX-FEA-0034]
   note: |
-    Верхнеуровневый экран «Разработчикам»; цель пути — apps/electron/src/renderer/pages/dev-space/DevSpaceHomePage.tsx (волна В1).
+    Верхнеуровневый экран «Разработчикам»; поставлен волной В1 (PR #1658).
 
 - id: RX-SRF-0050
   title: Developer Space — репо-воркспейс
   kind: surface
-  status: planned
+  path: apps/electron/src/renderer/pages/dev-space/DevSpaceRepoPage.tsx
+  status: done
   refs: [RX-FEA-0034]
   note: |
-    Экран репозитория с поверхностями-артефактами; цель пути — apps/electron/src/renderer/pages/dev-space/DevSpaceRepoPage.tsx (волна В1).
+    Экран репозитория с поверхностями-артефактами; поставлен волнами В1–В3. Вкладки переведены на единый
+    примитив Tabs (W1.1) в ходе catch-up merge.
 
 - id: RX-SRF-0051
   title: Настройки → «Разработчикам»
   kind: surface
-  status: planned
+  path: apps/electron/src/renderer/pages/settings/DeveloperSettingsPage.tsx
+  status: done
   refs: [RX-FEA-0034]
   note: |
-    Карточка-тумблер Dev Space и статус репозиториев; цель пути — apps/electron/src/renderer/pages/settings/DeveloperSettingsPage.tsx (волна В1).
+    Карточка-тумблер Dev Space и статус репозиториев; поставлена волной В1 (PR #1658).
 
 - id: RX-SRF-0052
   title: Playbooks — ноутбук (знания)
   kind: surface
-  status: planned
+  path: apps/electron/src/renderer/pages/playbooks
+  status: active
   refs: [RX-FEA-0035]
   note: |
-    Источники, вопросы, пресет-вопросы, подкаст. Волна В4.
+    Источники, вопросы, пресет-вопросы, подкаст. Базовая поверхность поставлена волной В4 (PR #1738);
+    контент дорабатывается.
 
 - id: RX-SRF-0053
   title: Playbooks — кодбук
   kind: surface
-  status: planned
+  path: apps/electron/src/renderer/pages/playbooks
+  status: active
   refs: [RX-FEA-0037]
   note: |
-    Ноутбуки-пайплайны по коду. Волна В5.
+    Ноутбуки-пайплайны по коду. Базовая поверхность поставлена волной В5 (PR #1739); контент дорабатывается.
 
 - id: RX-SRF-0054
   title: Шаг онбординга «Кто вы?»
   kind: surface
-  status: planned
+  path: apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx
+  status: done
   refs: [RX-FEA-0034]
   note: |
-    Роль после имени, явная запись devspace.v1=true только при выборе «разработчик» (D1). Волна В1.
+    Роль после имени, явная запись devspace.v1=true только при выборе «разработчик» (D1). Поставлен волной В1 (PR #1658).
 
 - id: RX-CMP-0069
   title: RoleStep — компонент шага онбординга
   kind: component
-  status: planned
+  path: apps/electron/src/renderer/components/onboarding/RoleStep.tsx
+  status: done
   refs: [RX-SRF-0054]
   note: |
-    apps/electron/src/renderer/components/onboarding/RoleStep.tsx (волна В1).
+    Компонент шага онбординга «Кто вы?»; поставлен волной В1 (PR #1658).
 
 - id: RX-CMP-0070
   title: Карточка репозитория (Developer Space)
   kind: component
-  status: planned
+  path: apps/electron/src/renderer/pages/dev-space/components/RepositoryCard.tsx
+  status: done
   refs: [RX-SRF-0049]
   note: |
-    Статус, freshness, бейдж «устарело», удаление/отмена (волна В1).
+    Статус, freshness, бейдж «устарело», удаление/отмена; поставлена волнами В1–В3.
 
 - id: RX-CMP-0071
   title: Напоминание Developer Space (nudge)
   kind: component
-  status: planned
+  path: apps/electron/src/renderer/components/dev-space/DevSpaceNudgeBanner.tsx
+  status: done
   refs: [RX-FEA-0034]
   note: |
-    Одноразовый баннер «Включить экран разработчика?» при мягком сигнале (волна В1).
+    Одноразовый баннер «Включить экран разработчика?» при мягком сигнале; поставлен волной В1 (PR #1658).
 
 - id: RX-CMP-0072
   title: Плеер подкаста Playbooks
   kind: component
-  status: planned
+  path: apps/electron/src/renderer/pages/playbooks/podcast/PodcastStudio.tsx
+  status: done
   refs: [RX-FEA-0036]
   note: |
-    Плеер + экспорт mp3/srt (волна В4).
+    Плеер + экспорт mp3/srt; поставлен волной В4 (PR #1738).
 
 - id: RX-INT-0036
   title: GitHub-клон репозитория
   kind: integration
-  status: planned
+  path: packages/server-core/src/devspace/clone.ts
+  status: active
   refs: [RX-FEA-0034]
   note: |
-    Клон по ссылке в projects/<slug>/ с прогрессом/отменой; приватные — device-login (волна В1).
+    Клон по ссылке в projects/<slug>/ с прогрессом/отменой; приватные — device-login. Реализован волной В1
+    (PR #1658); активен (рабочий контур, живой прогон по сети — по согласию).
 
 - id: RX-INT-0037
   title: openwiki — генерация wiki
   kind: integration
-  status: planned
+  path: packages/server-core/src/devspace/adapters/openwiki.ts
+  status: active
   refs: [RX-SPC-0025]
   note: |
-    Инструмент-адаптер D4 (волна В2).
+    Инструмент-адаптер D4 (волна В2); адаптер поставлен, external runtime — optional (по согласию/доступности).
 
 - id: RX-INT-0038
   title: Understand-Anything — понимание кода
   kind: integration
-  status: planned
+  path: packages/server-core/src/devspace/adapters/understand-anything.ts
+  status: active
   refs: [RX-SPC-0025]
   note: |
-    Инструмент-адаптер D4 (волна В2).
+    Инструмент-адаптер D4 (волна В2); адаптер поставлен, external runtime — optional.
 
 - id: RX-INT-0039
   title: codegraph — граф кода
   kind: integration
-  status: planned
+  path: packages/server-core/src/devspace/adapters/codegraph.ts
+  status: active
   refs: [RX-SPC-0025]
   note: |
-    Инструмент-адаптер D4; выбор канонического провайдера — O1 (волна В2).
+    Инструмент-адаптер D4; канонический провайдер — CodeGraphContext 0.6.13 (O1). Адаптер поставлен (волна В2),
+    external runtime — optional.
 
 - id: RX-INT-0040
   title: archify — схемы
   kind: integration
-  status: planned
+  path: packages/server-core/src/devspace/adapters/archify.ts
+  status: active
   refs: [RX-SPC-0025]
   note: |
-    Инструмент-адаптер D4; возможное схлопывание с groma — O2 (волна В2).
+    Инструмент-адаптер D4; groma↔archify не схлопываются (O2). Адаптер поставлен (волна В2), external runtime — optional.
 
 - id: RX-INT-0041
   title: graphify — knowledge-graph
   kind: integration
-  status: planned
+  path: packages/server-core/src/devspace/adapters/graphify.ts
+  status: active
   refs: [RX-SPC-0025]
   note: |
-    Инструмент-адаптер D4 (волна В2).
+    Инструмент-адаптер D4 (волна В2); адаптер поставлен, external runtime — optional.
 
 - id: RX-INT-0042
   title: Groma.md — C4/OKF
   kind: integration
-  status: planned
+  path: packages/server-core/src/devspace/adapters/groma.ts
+  status: active
   refs: [RX-SPC-0025]
   note: |
-    Инструмент-адаптер D4 (волна В2).
+    Инструмент-адаптер D4 (волна В2); адаптер поставлен, external runtime — optional.
 
 - id: RX-INT-0043
   title: OSV — CVE-проверки
   kind: integration
-  status: planned
+  path: packages/server-core/src/devspace/security/sbom-cve.ts
+  status: active
   refs: [RX-FEA-0034]
   note: |
-    Сеть только под per-repo согласием cveNetwork (волны В2/В3).
+    Сеть только под per-repo согласием cveNetwork (волны В2/В3). Поставлен волнами В2/В3; external runtime
+    (сеть OSV) — optional по согласию.
 
 - id: RX-API-0013
   title: Dev Space — RPC-контур ингеста (devSpace:*)
   kind: api
-  status: planned
+  path: packages/server-core/src/handlers/rpc/dev-space.ts
+  status: done
   refs: [RX-FEA-0034]
   note: |
-    listRepositories/addRepository/startClone/removeRepository/refreshRepository/cancel/capabilities/listRuns + push cloneProgress/changed/runProgress (волна В1).
+    listRepositories/addRepository/startClone/removeRepository/refreshRepository/cancel/capabilities/listRuns/startRun
+    /listArtifacts/readArtifact/generateQuestions + push cloneProgress/changed/runProgress/softSignal. Поставлен
+    волнами В1–В3 (PR #1658, #1705, #1737).
 
 - id: RX-API-0014
   title: podcast:JOB — job-канал подкаста
   kind: api
-  status: planned
+  path: packages/shared/src/voice/podcast-job.ts
+  status: done
   refs: [RX-FEA-0036]
   note: |
-    Заменяет voice:JOB именно для подкаста; voice:JOB остаётся для диктовки/ASR (волна В4).
+    Заменяет voice:JOB именно для подкаста; voice:JOB остаётся для диктовки/ASR. Реализован волной В4 (PR #1738).
 
 - id: RX-DAT-0017
   title: Модель данных Developer Space
   kind: data
-  status: planned
+  path: packages/shared/src/dev-space/types.ts
+  status: done
   refs: [RX-FEA-0034]
   note: |
-    DevSpaceRepositoryRecord/Manifest/Consent/Run + каталог dev-space-repositories.json; packages/shared/src/dev-space/types.ts (волна В1).
+    DevSpaceRepositoryRecord/Manifest/Consent/Run + каталог dev-space-repositories.json; поставлена волной В1–В3.
 
 - id: RX-PLG-0013
   title: Инструменты-адаптеры Dev Space (шесть внешних)
   kind: plugin
-  status: planned
-  refs: [RX-SPC-0025]
+  path: packages/server-core/src/devspace/adapters
+  status: active
+  refs: [RX-SPC-0025, RX-ADR-0020]
   note: |
-    Реестр адаптеров поверх CI-DEC-EXTEND-EXISTING-01; alwaysOn=false, без демонов (волна В2).
+    Реестр адаптеров поверх CI-DEC-EXTEND-EXISTING-01; alwaysOn=false, без демонов. Поставлен волной В2 (PR #1705);
+    внешние инструменты подключаются как optional runtime, реестр активен.
 
 - id: RX-AUT-0031
   title: Пайплайн анализа Developer Space
   kind: automation
-  status: planned
+  path: packages/server-core/src/devspace/runner.ts
+  status: done
   refs: [RX-FEA-0034]
   note: |
-    reconcile → structural → LLM → publish; джобы с прогрессом/отменой/идемпотентностью (волны В1–В2).
+    reconcile → structural → LLM → publish; джобы с прогрессом/отменой/идемпотентностью. Поставлен волнами В1–В2
+    (PR #1658, #1705).
 
 - id: RX-AUT-0032
   title: Пайплайн подкаста Playbooks
   kind: automation
-  status: planned
+  path: packages/server-core/src/playbooks/assemble.ts
+  status: done
   refs: [RX-FEA-0036]
   note: |
-    Сценарий → сегменты TTS → сборка в один файл (ffmpeg) (волна В4).
+    Сценарий → сегменты TTS → сборка в один файл (ffmpeg). Поставлен волной В4 (PR #1738).
 
 - id: RX-ADR-0020
   title: Ревизия выбора инструментов code intelligence (D4)
