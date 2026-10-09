@@ -38,6 +38,7 @@ import {
 } from '../observability/rpc-call-counter'
 import type { NativeAuthority, NativePrincipal } from '../authority/native-authority'
 import { isChannelWithinOperatorCeiling } from '../authority/operator-role-policy'
+import { isAccessPolicyAdmitted, lookupAccessPolicyPlugin } from '../authority/access-policy-registry'
 import type { OperatorRoleCeiling } from '@rox/shared/orgs/types'
 
 // ---------------------------------------------------------------------------
@@ -425,6 +426,10 @@ export class WsRpcServer implements RpcServer {
   }
 
   private registeredChannelsFor(client: ClientConnection): string[] {
+    // A named-but-unregistered access-policy plugin fails closed: advertise
+    // nothing rather than a channel set the request path will refuse (a1.6).
+    const plugin = client.operatorCeiling?.accessPolicyPlugin
+    if (plugin && !lookupAccessPolicyPlugin(plugin)) return []
     return [...this.handlers].flatMap(([channel, registration]) => {
       if (registration.access === 'localElectron' && !client.localBinding) return []
       if (!this.canRequest(client, registration)) return []
@@ -507,6 +512,27 @@ export class WsRpcServer implements RpcServer {
     if (!client.principal) return true
     if (typeof channel !== 'string' || !client.operatorCeiling) return false
     return isChannelWithinOperatorCeiling(client.operatorCeiling, channel, nativeAction)
+  }
+
+  /**
+   * Whether the connection's declared access-policy plugin admits this request.
+   * Non-native clients and roles without the field are unaffected. A named but
+   * unregistered plugin fails closed, and the caller renders it with the SAME
+   * typed OPERATOR_ACCESS_DENIED as a scope denial (no oracle about which
+   * plugin is missing). Port-matrix row a1.6, fail-closed half.
+   */
+  private async accessPolicyAllows(
+    client: ClientConnection,
+    channel: string,
+    nativeAction: RegisteredHandler['nativeAction'],
+  ): Promise<boolean> {
+    if (!client.principal) return true
+    return isAccessPolicyAdmitted(client.operatorCeiling?.accessPolicyPlugin, {
+      channel,
+      nativeAction,
+      role: client.operatorCeiling?.role ?? null,
+      subject: client.principal.subject,
+    })
   }
 
   private requestPermissionFence(client: ClientConnection, registration: RegisteredHandler): string | null {
@@ -1373,6 +1399,14 @@ export class WsRpcServer implements RpcServer {
     // channels were already refused above; every other method must be inside
     // the ceiling, and the denial is typed for the client to render.
     if (!this.operatorCeilingAllows(client, channel, registration.nativeAction)) {
+      this.sendResponseError(client.ws, id, channel, 'OPERATOR_ACCESS_DENIED', 'Operator role cannot invoke this method')
+      return
+    }
+
+    // Access-policy plugin (a1.6): a role that NAMES a plugin must have that
+    // plugin admit the request. A missing registration, a deny, or a throw all
+    // refuse with the same typed denial as the scope ceiling above.
+    if (!await this.accessPolicyAllows(client, channel, registration.nativeAction)) {
       this.sendResponseError(client.ws, id, channel, 'OPERATOR_ACCESS_DENIED', 'Operator role cannot invoke this method')
       return
     }
