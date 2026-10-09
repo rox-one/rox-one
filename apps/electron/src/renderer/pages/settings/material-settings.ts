@@ -11,6 +11,7 @@
 
 import {
   MATERIAL_DEFAULTS,
+  ZED_BLURRED_MATERIAL,
   type MaterialChatEffectKind,
   type MaterialContentPane,
   type MaterialSettings,
@@ -50,7 +51,7 @@ export const MATERIAL_CONTENT_PANE_ROWS: MaterialContentPaneRow[] = [
 ]
 
 /** Preset chips. `null` (reset) is handled separately by the page. */
-export type MaterialPresetId = 'glass' | 'deepGlass' | 'matte'
+export type MaterialPresetId = 'glass' | 'zedBlurred' | 'deepGlass' | 'matte'
 
 export interface MaterialPreset {
   id: MaterialPresetId
@@ -63,6 +64,13 @@ export const MATERIAL_PRESETS: MaterialPreset[] = [
     id: 'glass',
     labelKey: 'settings.appearance.material.presetGlass',
     material: { enabled: true },
+  },
+  {
+    // Zed-parity glass: chrome/panels translucent over the native material,
+    // reading surfaces opaque. Shares the auto-glass profile constant.
+    id: 'zedBlurred',
+    labelKey: 'settings.appearance.material.presetZedBlurred',
+    material: { ...ZED_BLURRED_MATERIAL, opacity: { ...ZED_BLURRED_MATERIAL.opacity } },
   },
   {
     id: 'deepGlass',
@@ -133,6 +141,9 @@ export function effectiveHaze(
   return {
     enabled: material?.haze?.enabled ?? MATERIAL_DEFAULTS.haze.enabled,
     intensity: material?.haze?.intensity ?? MATERIAL_DEFAULTS.haze.intensity,
+    overlay: material?.haze?.overlay ?? MATERIAL_DEFAULTS.haze.overlay,
+    emptyOpacity: material?.haze?.emptyOpacity ?? MATERIAL_DEFAULTS.haze.emptyOpacity,
+    activeOpacity: material?.haze?.activeOpacity ?? MATERIAL_DEFAULTS.haze.activeOpacity,
   }
 }
 

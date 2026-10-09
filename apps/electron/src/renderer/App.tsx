@@ -28,6 +28,7 @@ import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/compo
 import { openFirstSessionWelcome } from '@/components/onboarding/first-session-welcome'
 import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
+import { ShellActionBridge } from '@/features/native-integrations/ShellActionBridge'
 import { SplashScreen } from '@/components/SplashScreen'
 import { TooltipProvider } from '@rox/ui'
 import { FocusProvider } from '@/context/FocusContext'
@@ -2816,6 +2817,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           <ProductTourProvider workspaceId={windowWorkspaceId} shellReady={appState === 'ready' && sessionsLoaded && !showSplash && !sessionLoadError} welcomeSessionId={tourWelcome?.workspaceId === windowWorkspaceId ? tourWelcome.sessionId : null}>
           <ProductTourHost />
           <WindowCloseHandler />
+          {/* Native shell actions (menu / tray / global shortcuts) */}
+          <ShellActionBridge />
 
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}

@@ -34,7 +34,7 @@ describe('built-in MCP provisioning', () => {
 
   it('seeds verified servers without exposing secrets or claiming a connection', () => {
     const env = { FIRECRAWL_API_KEY: 'secret-firecrawl', TELEGRAM_API_ID: '123', TELEGRAM_API_HASH: 'secret-hash', TELEGRAM_SESSION_STRING: 'secret-session', MEM0_API_KEY: 'secret-mem0', WEAVIATE_URL: 'https://knowledge.example', WEAVIATE_API_KEY: 'secret-weaviate' };
-    expect(ensureBuiltinMcpSources(root, { platform: 'linux', env }).created).toHaveLength(13);
+    expect(ensureBuiltinMcpSources(root, { platform: 'linux', env }).created).toHaveLength(12);
     for (const spec of BUILTIN_MCP_CATALOG) {
       const source = config(spec.slug);
       expect(source.connectionStatus).not.toBe('connected');
@@ -46,6 +46,10 @@ describe('built-in MCP provisioning', () => {
     expect(ensureBuiltinMcpSources(root).created).toEqual([]);
     expect(BUILTIN_AGENT_SKILL_PACKS.map(pack => pack.slug)).toEqual(['superpowers', 'understand-anything']);
     expect(BUILTIN_MCP_CATALOG.some(spec => spec.slug === 'superpowers')).toBe(false);
+    // The remote deepwiki MCP left the default catalog (RX-ADR-0020, D5/D6).
+    expect(BUILTIN_MCP_CATALOG.some(spec => spec.slug === 'deepwiki')).toBe(false);
+    // The canonical graph provider stays available.
+    expect(config('codegraph').mcp!.args).toEqual(['--from', 'codegraphcontext==0.6.13', 'codegraphcontext', 'mcp', 'start']);
   });
 
   it('preserves user edits and disables while choosing only real available sources', () => {
@@ -57,9 +61,9 @@ describe('built-in MCP provisioning', () => {
     save(source);
     ensureBuiltinMcpSources(root);
     expect(config('playwright')).toEqual(source);
-    expect(getDefaultMcpSourceSlugs(root, { platform: 'linux', env: {} })).toEqual(['deepwiki', 'context7', 'codegraph', 'qmd', 'qdrant']);
+    expect(getDefaultMcpSourceSlugs(root, { platform: 'linux', env: {} })).toEqual(['context7', 'codegraph', 'qmd', 'qdrant']);
     expect(getDefaultMcpSourceSlugs(join(root, 'unseeded'))).toEqual([]);
-    expect(getEnabledBuiltinMcpSourceSlugs(root, { platform: 'linux', env: {} })).toEqual(['deepwiki', 'context7', 'firecrawl-mcp', 'telegram-mcp', 'codegraph', 'qmd', 'weaviate', 'qdrant', 'mem0']);
+    expect(getEnabledBuiltinMcpSourceSlugs(root, { platform: 'linux', env: {} })).toEqual(['context7', 'firecrawl-mcp', 'telegram-mcp', 'codegraph', 'qmd', 'weaviate', 'qdrant', 'mem0']);
   });
 
   it('keeps existing Firecrawl API source independent', () => {

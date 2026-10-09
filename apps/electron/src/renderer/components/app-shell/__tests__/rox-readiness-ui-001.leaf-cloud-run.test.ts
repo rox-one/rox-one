@@ -5,7 +5,7 @@ import { deferred, elementIn, leafComponent, rendererEffect, settle } from './ro
 const source = new URL('../../../pages/CloudRunSurfacePage.tsx', import.meta.url)
 const row = { id: 'run-A', name: 'Run A', provider: 'native', createdAt: 1, status: { id: 'run-A', state: 'running' } }
 
-function cloudHost(api: Record<string, unknown>, initialState: any = { kind: 'loading' }) {
+function cloudHost(api: Record<string, unknown>, initialState: any = { kind: 'loading' }, options: { visible?: boolean } = {}) {
   const target = new EventTarget()
   const document = Object.assign(new EventTarget(), { visibilityState: 'visible' })
   let tick: (() => void) | undefined
@@ -14,12 +14,10 @@ function cloudHost(api: Record<string, unknown>, initialState: any = { kind: 'lo
   let state = initialState
   const bindings = {
     runId: 'run-A', window, document, CLOUD_RUN_REFRESH_INTERVAL_MS: 5_000,
-    // PERF-10 (#1577): the production effect gates on `useEffectiveVisible()`,
-    // which is a hook and therefore an external seam here. `true` = the
-    // enclosing surface is active and the window is visible, matching the
-    // `document` mock above; the hidden/visible transition is still driven
-    // through `document.visibilityState` via the effect's own isVisible().
-    visible: true,
+    // PERF-10 (#1577): the production effect gates its whole body on the
+    // `useEffectiveVisible()` result, so the extracted closure receives it as a
+    // seam. Defaults to a visible host; callers can drill the hidden case.
+    visible: options.visible ?? true,
     setSnapshot: (value: any) => { state = value.state },
     setInterval: (callback: () => void) => { tick = callback; return 1 },
     clearInterval: () => { cleared = true },

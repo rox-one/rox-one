@@ -127,9 +127,9 @@ export function buildWidgetDocument(
   const sizeReporter =
     '<script>(()=>{if(!window.parent||window.parent===window)return;' +
     'const post=window.parent.postMessage.bind(window.parent);' +
-    'let last=0;const report=()=>{const body=document.body;if(!body)return;' +
+    'let last=-1;const report=()=>{const body=document.body;if(!body)return;' +
     'const height=Math.ceil(Math.max(body.scrollHeight,body.offsetHeight,body.getBoundingClientRect().height));' +
-    `if(height&&height!==last){last=height;post({type:${JSON.stringify(WIDGET_SIZE_MESSAGE_TYPE)},height},"*");}};` +
+    `if(height!==last){last=height;post({type:${JSON.stringify(WIDGET_SIZE_MESSAGE_TYPE)},height},"*");}};` +
     'window.addEventListener("load",report);new ResizeObserver(report).observe(document.body);' +
     'setTimeout(report,50);setTimeout(report,500);})();</script>'
 

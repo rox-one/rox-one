@@ -157,10 +157,17 @@ export const MODULE_RISK_DEFAULT: Readonly<Record<string, RiskClass>> = {
   system: 'routine',
   entities: 'routine',
   notify: 'routine',
+  // W1-14 §11.1: presence signals are owned by the caller and notify nobody,
+  // which is exactly what `COLLAB_COMMAND_RISK` already resolves them to.
   // W1-14 presence: heartbeat/join/leave only publish the owner's own status.
   presence: 'routine',
   tasks: 'consequential',
   docs: 'consequential',
+  // W1-12 §14: the rule engine executes on the owner's behalf and R4 mails
+  // external invitees (`notify.send_invite_email`), so the module default is
+  // conservative (it equals the fallback these commands resolved to before).
+  // W1-12 rule dispatch: `notify.send_invite_email` reaches other people.
+  automation: 'consequential',
   drive: 'consequential',
   wiki: 'consequential',
   calendar: 'consequential',
@@ -174,8 +181,6 @@ export const MODULE_RISK_DEFAULT: Readonly<Record<string, RiskClass>> = {
   kpis: 'consequential',
   mail: 'consequential',
   templates: 'consequential',
-  // W1-12 rule dispatch: `notify.send_invite_email` reaches other people.
-  automation: 'consequential',
   core: 'consequential',
   acl: 'privileged',
   identity: 'privileged',

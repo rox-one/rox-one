@@ -22,6 +22,34 @@ export type ShellMaterialPreference = 'system' | 'glass' | 'opaque'
 export type ResolvedShellMaterial = 'vibrancy' | 'mica' | 'solid'
 export type ShellPlatform = 'darwin' | 'win32' | 'linux' | 'web'
 
+/**
+ * A3 — macOS vibrancy depth. `light` → `sidebar`, `standard` (default) →
+ * `under-window`, `deep` → `hud`. Windows (mica) ignores it.
+ */
+export type ShellMaterialDepth = 'light' | 'standard' | 'deep'
+export const DEFAULT_SHELL_MATERIAL_DEPTH: ShellMaterialDepth = 'standard'
+
+const MATERIAL_DEPTHS = new Set<ShellMaterialDepth>(['light', 'standard', 'deep'])
+
+/** Map a chosen depth onto Electron's `setVibrancy` argument. */
+export function vibrancyForDepth(depth: ShellMaterialDepth): 'sidebar' | 'under-window' | 'hud' {
+  switch (depth) {
+    case 'light':
+      return 'sidebar'
+    case 'deep':
+      return 'hud'
+    default:
+      return 'under-window'
+  }
+}
+
+export function parseShellMaterialDepth(value: unknown): ShellMaterialDepth {
+  if (typeof value === 'string' && MATERIAL_DEPTHS.has(value as ShellMaterialDepth)) {
+    return value as ShellMaterialDepth
+  }
+  return DEFAULT_SHELL_MATERIAL_DEPTH
+}
+
 export type ShellMaterialFallbackReason =
   | 'user-opaque'
   | 'reduce-transparency'
@@ -47,6 +75,8 @@ export interface ResolveShellMaterialInput {
   gpuFailed?: boolean
   /** PERF-07: the low-power profile clears native vibrancy/Mica. */
   renderProfile?: RenderProfile
+  /** A3 — macOS vibrancy depth; absent means `standard`. */
+  materialDepth?: ShellMaterialDepth
 }
 
 export interface ResolvedShellAppearance {
@@ -59,6 +89,8 @@ export interface ZenShellSnapshot {
   enabled: boolean
   preference: ShellMaterialPreference
   material: ResolvedShellMaterial
+  /** A3 — effective macOS vibrancy depth (Windows ignores it). */
+  materialDepth: ShellMaterialDepth
   platform: ShellPlatform
   fallbackReason?: ShellMaterialFallbackReason
   /** PERF-07: effective rendering profile; absent means `standard`. */
@@ -77,6 +109,8 @@ export interface ZenShellPatch {
   enabled?: boolean
   materialPreference?: ShellMaterialPreference
   renderProfile?: RenderProfilePreference
+  /** A3 — macOS vibrancy depth. */
+  materialDepth?: ShellMaterialDepth
 }
 
 const MATERIAL_PREFERENCES = new Set<ShellMaterialPreference>(['system', 'glass', 'opaque'])
@@ -101,7 +135,7 @@ export function parseZenShellPatch(raw: unknown): ZenShellPatch {
     throw new Error('Invalid zen shell patch')
   }
   const obj = raw as Record<string, unknown>
-  const allowed = new Set(['enabled', 'materialPreference', 'renderProfile'])
+  const allowed = new Set(['enabled', 'materialPreference', 'renderProfile', 'materialDepth'])
   for (const key of Object.keys(obj)) {
     if (!allowed.has(key)) {
       throw new Error(`Unexpected zen shell field: ${key}`)
@@ -125,6 +159,12 @@ export function parseZenShellPatch(raw: unknown): ZenShellPatch {
       throw new Error('zen shell renderProfile must be auto, performance, or standard')
     }
     patch.renderProfile = obj.renderProfile
+  }
+  if ('materialDepth' in obj) {
+    if (typeof obj.materialDepth !== 'string' || !MATERIAL_DEPTHS.has(obj.materialDepth as ShellMaterialDepth)) {
+      throw new Error('zen shell materialDepth must be light, standard, or deep')
+    }
+    patch.materialDepth = obj.materialDepth as ShellMaterialDepth
   }
   return patch
 }
@@ -184,6 +224,7 @@ export function snapshotZenShell(
     enabled: input.zenEnabled,
     preference: input.preference,
     material: resolved.material,
+    materialDepth: parseShellMaterialDepth(input.materialDepth),
     platform: input.platform,
     fallbackReason: resolved.fallbackReason,
   }

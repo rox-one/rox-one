@@ -28,6 +28,9 @@
      dialogs and fullscreen overlays (composer mention/slash/label menus, the
      inline editor menu surface, the product tour, EditPopover). Do not use
      it as a default for a shared primitive.
+  - `z-tour-vignette` (90) is the product-tour demo edge vignette (D10): above
+     page content, below the tour spotlight/panel on `z-popover`. Scrim/modal
+     and fullscreen surfaces stay above it.
    - Click-catching backdrops for menus use `z-menu-backdrop` (390, main's
      value: the step just below island and above fullscreen), so a menu
      opened inside a fullscreen overlay still closes on an outside click and
@@ -38,6 +41,7 @@
   --z-sticky: 10;
   --z-chrome: 20;
   --z-sash: 30;
+  --z-tour-vignette: 90;
   --z-popover: 100;
   --z-scrim: 200;
   --z-modal: 210;
@@ -71,6 +75,7 @@
   --z-index-sticky: var(--z-sticky);
   --z-index-chrome: var(--z-chrome);
   --z-index-sash: var(--z-sash);
+  --z-index-tour-vignette: var(--z-tour-vignette);
   --z-index-popover: var(--z-popover);
   --z-index-scrim: var(--z-scrim);
   --z-index-modal: var(--z-modal);

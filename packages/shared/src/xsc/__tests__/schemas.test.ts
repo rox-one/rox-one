@@ -24,15 +24,22 @@ const valid: Record<string, Record<string, unknown>> = {
   'vc.start_meeting': { participants: ['p1'], notesDocRef: 'note:d1' },
   'docs.embed_view': { docRef: note, blockId: 'b1', ref: { kind: 'saved-view', ref: { kind: 'base-view', id: 'v1' } } },
   'docs.create_from_messages': { chatRef: { kind: 'channel', id: 'c1' }, seqs: [1, 2], target: { new: { title: 'Digest' } }, format: 'quotes' },
-  'im.create_chat': { kind: 'group', name: 'Team', visibility: 'private', members: ['p1', 'p2'], postingPolicy: 'admins' },
   'im.send_message': { chatRef: { kind: 'channel', id: 'c1' }, body: { type: 'doc' }, mentions: ['p1'], attribution: 'agent' },
-  'agents.invoke': { agentRef: { kind: 'person', id: 'bot1' }, instruction: 'Summarise the thread', origin: messageOrigin, context: [note] },
 }
 
+/**
+ * §12 commands whose payload schema is owned by `AGENTS_COMMAND_MODULE`
+ * (W1-11 #1508) and therefore not bound from this map: `XSC_COMMAND_TYPES`
+ * still names them as §12 contracts, but the wired registry runs the agents
+ * module's schema + handler. Their §12 signatures moved out of this file.
+ */
+const OWNER_BOUND_TYPES: readonly string[] = ['im.create_chat', 'agents.invoke']
+const boundTypes = XSC_COMMAND_TYPES.filter(type => !OWNER_BOUND_TYPES.includes(type))
+
 describe('§12 payload schemas', () => {
-  test('every command has a schema and a valid round-trip', () => {
-    expect(Object.keys(XSC_COMMAND_SCHEMAS).sort()).toEqual([...XSC_COMMAND_TYPES].sort())
-    for (const type of XSC_COMMAND_TYPES) {
+  test('every command it owns has a schema and a valid round-trip', () => {
+    expect(Object.keys(XSC_COMMAND_SCHEMAS).sort()).toEqual([...boundTypes].sort())
+    for (const type of boundTypes) {
       const schema = XSC_COMMAND_SCHEMAS[type]!
       const parsed = schema.parse(valid[type]!) as Record<string, unknown>
       for (const [key, value] of Object.entries(valid[type]!)) expect(parsed[key]).toEqual(value)

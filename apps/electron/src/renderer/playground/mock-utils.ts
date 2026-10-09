@@ -48,6 +48,7 @@ const DEFAULT_ZEN_SNAPSHOT = {
   enabled: false,
   preference: 'system' as const,
   material: 'solid' as const,
+  materialDepth: 'standard' as const,
   platform: 'web' as const,
   fallbackReason: 'zen-disabled' as const,
 }

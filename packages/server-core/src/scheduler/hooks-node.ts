@@ -14,8 +14,7 @@
  * checked first, then a running total while streaming. This keeps the same
  * "bodies are bounded BEFORE they are buffered" promise `hooks-http.ts`
  * documents for the fetch path; an oversized body is answered with 413 and
- * never reaches the ingress. (Restored from bf30bc971, which PR #1732
- * reverted; do not remove without replacing the bound.)
+ * never reaches the ingress.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'

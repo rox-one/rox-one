@@ -210,11 +210,27 @@ seedEntitiesLinksGate()
 const stopRoxQueryRuntime = startRoxQueryRuntime(window.electronAPI)
 import.meta.hot?.dispose(stopRoxQueryRuntime)
 
+// Quick composer window: main loads this same renderer entry with
+// `?surface=quick-composer`; render the standalone composer instead of the
+// full app shell. Lazy so the normal app boot never pays for it.
+const QuickComposerSurface = React.lazy(
+  () => import('./features/native-integrations/QuickComposerSurface'),
+)
+const rendererSurface = new URLSearchParams(window.location.search).get('surface')
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RootErrorBoundary>
       <JotaiProvider>
-        <Root />
+        {rendererSurface === 'quick-composer' ? (
+          <ThemeProvider activeWorkspaceId={null} fixedColorTheme={ROX_THEME_ID}>
+            <React.Suspense fallback={null}>
+              <QuickComposerSurface />
+            </React.Suspense>
+          </ThemeProvider>
+        ) : (
+          <Root />
+        )}
       </JotaiProvider>
     </RootErrorBoundary>
   </React.StrictMode>

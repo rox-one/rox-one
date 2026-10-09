@@ -50,12 +50,12 @@ describe('capability packs', () => {
     const ids = CAPABILITY_TOOLS.map((tool) => tool.id)
     for (const required of [
       'syft',
-      'codewiki',
-      'deepwiki',
+      'openwiki',
       'understand-anything',
       'codegraph',
-      'graphify',
       'archify',
+      'graphify',
+      'groma',
       'visual-explainer',
       'summarize',
       'fs-safe',
@@ -70,10 +70,43 @@ describe('capability packs', () => {
     ]) {
       expect(ids).toContain(required)
     }
+    // Rejected code-intel tools stay out of the installable inventory.
+    expect(ids).not.toContain('codewiki')
+    expect(ids).not.toContain('deepwiki')
     expect(CAPABILITY_PACKS.every((pack) => pack.toolIds.length > 0)).toBe(true)
     expect(CAPABILITY_TOOLS.every((tool) => tool.default === 'available')).toBe(true)
-    expect(CAPABILITY_TOOLS.every((tool) => /^[a-f0-9]{40}$/.test(tool.gitRef))).toBe(true)
-    expect(CAPABILITY_TOOLS.every((tool) => /^[a-f0-9]{64}$/.test(tool.checksum))).toBe(true)
+    // Pins are never synthesized: a declared pin is a real 40/64-hex value and
+    // tools without an authoritative upstream commit or digest carry null.
+    expect(CAPABILITY_TOOLS.every((tool) => tool.gitRef === null || /^[a-f0-9]{40}$/.test(tool.gitRef))).toBe(true)
+    expect(CAPABILITY_TOOLS.every((tool) => tool.checksum === null || /^[a-f0-9]{64}$/.test(tool.checksum))).toBe(true)
+    expect(CAPABILITY_TOOLS.every((tool) => tool.checksum === null)).toBe(true)
+  })
+
+  it('records real sources, licenses and pins for the six Developer Space tools', () => {
+    expect(getCapabilityTool('openwiki')!).toMatchObject({
+      sourceRepo: 'langchain-ai/openwiki', license: 'MIT', version: '0.7.1',
+      gitRef: '0db6dcf0ca16e81c93ff1125312be0ad6f70df6a',
+    })
+    expect(getCapabilityTool('understand-anything')!).toMatchObject({
+      sourceRepo: 'Egonex-AI/Understand-Anything', license: 'MIT',
+      gitRef: '1d7418b8abfa543744ae029e63a482aee03f9022',
+    })
+    expect(getCapabilityTool('codegraph')!).toMatchObject({
+      sourceRepo: 'CodeGraphContext/CodeGraphContext', license: 'MIT', version: '0.6.13', gitRef: null,
+    })
+    expect(getCapabilityTool('archify')!).toMatchObject({
+      sourceRepo: 'tt-a1i/archify', license: 'MIT', version: '3.0.1', gitRef: null,
+    })
+    expect(getCapabilityTool('graphify')!).toMatchObject({
+      sourceRepo: 'Graphify-Labs/graphify', license: 'Apache-2.0', version: '0.9.82',
+      gitRef: '5b74d7d74911cf435c8f1636b6f96ea202cc6246',
+    })
+    expect(getCapabilityTool('groma')!).toMatchObject({
+      sourceRepo: 'MrLesk/groma.md', license: 'MIT', version: '0.6.6',
+      gitRef: '9c5b6adc8e1d192198809d0566f596fe4da92d69',
+    })
+    const d4 = ['openwiki', 'understand-anything', 'codegraph', 'archify', 'graphify', 'groma']
+    expect(CAPABILITY_TOOLS.filter((tool) => d4.includes(tool.id)).map((tool) => tool.sourceRepo.startsWith('example/'))).toEqual([false, false, false, false, false, false])
   })
 
   it('does not auto-enable high-risk tools', () => {
@@ -131,7 +164,7 @@ describe('provenance and selection fixtures', () => {
             id: 'syft',
             kind: 'tool',
             repo: 'anchore/syft',
-            ref: getCapabilityTool('syft')!.gitRef,
+            ref: 'a'.repeat(40),
             installedAt: 9,
             status: 'installed',
             targets: [],
@@ -174,11 +207,12 @@ describe('AGENTS.md heuristics and offline report', () => {
     expect(md).toContain('High-risk: do not auto-enable.')
   })
 
-  it('emits an offline capability report with checksums', () => {
+  it('emits an offline capability report without synthesized checksums', () => {
     const report = buildOfflineCapabilityReport({ installedIds: ['syft'], online: false, generatedAt: 7 })
     expect(report).toContain('online: no')
     expect(report).toContain('security-sbom/syft')
-    expect(report).toContain(getCapabilityTool('syft')!.checksum)
+    expect(report).toContain(getCapabilityTool('syft')!.version)
+    expect(report).not.toContain('a'.repeat(40))
     expect(report).toContain('installed')
   })
 })
