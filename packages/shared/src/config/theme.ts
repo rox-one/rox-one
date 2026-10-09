@@ -434,6 +434,15 @@ export function shouldSetThemeOverride(
 }
 
 /**
+ * The single fixed Rox theme.
+ *
+ * Rox ships one theme: users cannot select or customize it. Any legacy or
+ * persisted selection is coerced to this id (see ThemeProvider's
+ * `fixedColorTheme`), and the app never offers a theme/mode picker.
+ */
+export const ROX_THEME_ID = 'nordfox-opaque';
+
+/**
  * Default theme values (matches current index.css)
  */
 export const DEFAULT_THEME: ThemeOverrides = {

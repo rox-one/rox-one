@@ -83,6 +83,7 @@ describe('Rox Cloud onboarding routing', () => {
     RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE,
     RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
     RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
+    RPC_CHANNELS.onboarding.CHECK_HANDLE,
   ]
 
   test('keeps desktop-wide credential flows local', () => {

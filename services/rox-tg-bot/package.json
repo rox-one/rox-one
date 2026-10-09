@@ -1,0 +1,19 @@
+{
+  "name": "@rox/rox-tg-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Rox Telegram verification bot: phone-ownership proof and 8-letter confirmation codes for account linking",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --target=bun --outfile=dist/rox-tg-bot.js",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bun": "^1.3.0",
+    "typescript": "^5.9.0"
+  }
+}

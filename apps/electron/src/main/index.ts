@@ -74,6 +74,8 @@ Sentry.init({
 // the system prompt's "Preferred language" line, and the native menu.
 import { setupI18n, i18n, SUPPORTED_LANGUAGE_CODES, type LanguageCode } from '@rox/shared/i18n'
 import { getPersistedUiLanguage, setPersistedUiLanguage } from '@rox/shared/config'
+import { initTelemetry, telemetryConfigFromEnv, track as trackProductEvent, type TelemetryHandle } from '@rox/shared/telemetry'
+import { loadGamificationState } from '@rox/shared/gamification'
 setupI18n()
 const persistedUiLanguage = getPersistedUiLanguage()
 if (persistedUiLanguage) {
@@ -85,6 +87,36 @@ if (persistedUiLanguage) {
 // Uses hostname + homedir to produce a stable per-machine identifier.
 const machineId = createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16)
 Sentry.setUser({ id: machineId })
+
+// Product analytics: PostHog capture/feature flags + OTLP traces.
+//
+// Self-hosted endpoints are baked at build time via esbuild --define (see
+// scripts/electron-build-main.ts); with them unset the client stays fully inert.
+// The renderer receives the same distinct_id + endpoints over `__telemetry-config`.
+// Egress is gated by the «Аналитика продукта» consent (gamification.json
+// analyticsConsent, default ON) — local Electron clients have no native
+// principal, so that file is the authoritative store; a read failure fails closed.
+const telemetryEndpoints = telemetryConfigFromEnv({
+  POSTHOG_HOST: process.env.POSTHOG_HOST,
+  POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+  OTEL_TRACES_URL: process.env.OTEL_TRACES_URL,
+  OTEL_SERVICE_NAME: process.env.OTEL_SERVICE_NAME,
+})
+const telemetryBootstrapConfig = {
+  distinctId: machineId,
+  ...telemetryEndpoints,
+}
+const productTelemetry: TelemetryHandle = initTelemetry({
+  ...telemetryEndpoints,
+  distinctId: machineId,
+  version: app.getVersion(),
+  platform: process.platform,
+  getConsent: () => loadGamificationState().analyticsConsent,
+})
+app.on('will-quit', () => {
+  productTelemetry.dispose()
+})
+trackProductEvent('app_opened', { platform: process.platform, version: app.getVersion() })
 
 import { join, delimiter, resolve, sep } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
@@ -106,6 +138,7 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
 import { PageThumbnailer } from './page-thumbnailer'
 import { registerAllRpcHandlers } from './handlers/index'
+import { createDriveService } from './drive/register'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
 import { createWorkGraphKernel, type WorkGraphKernel } from '@rox/server-core/workgraph'
 import type { PlatformServices } from '../runtime/platform'
@@ -113,6 +146,7 @@ import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
 import { resolveNativeTransportCredential } from './native-transport-credential'
 import { createBrowserCredentialPermissionAdapter } from './browser-credential-permissions'
+import { createOnboardingPermissionsHost } from './onboarding-permissions'
 import { createBrowserCredentialVaultKeyStore } from './browser-credential-vault-keys'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@rox/server-core/bootstrap'
 import { isAllowedServerEndpoint } from './server-endpoint-policy'
@@ -163,6 +197,8 @@ import { createLocalClientBindingRegistry } from './local-client-binding'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
+import { registerTelegramLink } from './telegram-link/register'
+import { registerCalendarGoogleOAuthIpc } from './calendar/google-oauth'
 import { registerNativeReplicaForWindows } from './native-replica-bootstrap'
 import { initBrowserIntelRuntime } from './browser-intel/index'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
@@ -805,6 +841,15 @@ app.whenReady().then(async () => {
     })
     registerMailIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
 
+    // R4: point the shared tg-link RPC handlers at this host's linkd daemon.
+    const telegramLink = registerTelegramLink()
+    mainLog.info(`[telegram-link] service endpoint ${telegramLink.baseUrl}${telegramLink.authTokenConfigured ? ' (bearer configured)' : ''}`)
+    registerCalendarGoogleOAuthIpc({
+      ipcMain,
+      isTrustedSender: (event) => Boolean(windowManager?.getWindowByWebContentsId(event.sender.id)),
+      openExternal: (url) => shell.openExternal(url),
+    })
+
     // Build real PlatformServices from Electron APIs
     const platform: PlatformServices = createElectronPlatform({
       app,
@@ -852,6 +897,11 @@ app.whenReady().then(async () => {
       e.returnValue = owner && !owner.isDestroyed() && owner.webContents === e.sender
         ? localClientBindingRegistry.issue(e.sender)
         : ''
+    })
+    // Product analytics bootstrap: the renderer reuses main's baked endpoints and
+    // anonymous distinct_id so both processes report the same person.
+    ipcMain.on('__telemetry-config', (e) => {
+      e.returnValue = telemetryBootstrapConfig
     })
 
     // Language change: sync from renderer to main process, persist, and rebuild native menu.
@@ -1242,10 +1292,15 @@ app.whenReady().then(async () => {
             },
             ...(!isHeadless ? { browserCredentials } : {}),
             ...(voiceOverlay ? { voiceOverlay } : {}),
+            // OS permission probes for onboarding; absent when headless so the
+            // handler answers honest `unsupported` instead of faking a grant.
+            ...(!isHeadless ? { onboardingPermissions: createOnboardingPermissionsHost() } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
             // WP-117: `learning:*` RPC surface (UNSUPPORTED_OPERATION when absent).
             ...(learning ? { learning } : {}),
+            // ROX Drive (wave 1): device-local storage engine.
+            drive: createDriveService(),
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)

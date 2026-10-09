@@ -99,6 +99,7 @@ void _auditRevokeSignatureIsSafeWorkspaceInput
 type ApiToChannelMapKeys = Exclude<
   FunctionKeys<ElectronAPI>,
   | 'performOAuth'
+  | 'connectGoogleCalendar' // preload-orchestrated OAuth (main popup + callback server)
   | 'getTransportConnectionState'
   | 'getProjectAuthorityState' // direct preload authority state; no credential data
   | 'onProjectAuthorityChanged' // local projection invalidation callback
@@ -150,6 +151,7 @@ type ApiToChannelMapKeys = Exclude<
   | 'remoteTlsDecide' // direct IPC — accept/reject/rollover enrollment
   | 'exitMiniWindow' // direct IPC — native window lifecycle
   | 'onPanelFocusDirection' // direct IPC — native directional focus shortcut
+  | 'getTelemetryConfig' // sync boot config — direct IPC, not a routed channel
 > | BrowserPaneKeys
   | KnowledgeKeys
   | NativeDataKeys

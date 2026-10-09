@@ -4,6 +4,7 @@
  * Handles workspace setup and configuration persistence.
  */
 import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER, isRoxCloudRequired, getOnboardingAuthPayload, saveOmpRoxCredential } from '@rox/shared/auth'
+import { getRoxAuthBaseUrl } from '@rox/shared/auth/rox-cloud'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { isSetupDeferred, setSetupDeferred } from '@rox/shared/config'
 import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@rox/shared/auth'
@@ -37,6 +38,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.onboarding.DEFER_SETUP,
   RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
   RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
+  RPC_CHANNELS.onboarding.CHECK_HANDLE,
 ] as const
 
 export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -248,4 +250,35 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
     if (!state.account) return state.connectError ? { status: 'error', message: state.connectError } : { status: 'disconnected' }
     return { status: 'ok', balance: Number(state.account.balance.availableRox), updating: state.updating, syncedAt: state.lastSyncedAt }
   }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
+
+  // Public handle availability probe (rox.one). The upstream response is
+  // normalized to a closed set; a timeout, non-2xx, or unrecognized body is
+  // reported as 'unknown' so the UI never fabricates a green state.
+  server.handle(RPC_CHANNELS.onboarding.CHECK_HANDLE, async (_ctx, handle: string) => {
+    if (typeof handle !== 'string' || !handle.trim()) return { status: 'unknown' as const }
+    const base = getRoxAuthBaseUrl()
+    try {
+      const res = await fetch(`${base}/api/handle/availability?handle=${encodeURIComponent(handle.trim())}`, {
+        headers: { accept: 'application/json' },
+        signal: AbortSignal.timeout(3_000),
+      })
+      if (!res.ok) return { status: 'unknown' as const }
+      const data = await res.json().catch(() => null)
+      return { status: normalizeHandleAvailability(data) }
+    } catch {
+      return { status: 'unknown' as const }
+    }
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
+}
+
+type HandleAvailability = 'available' | 'taken' | 'reserved' | 'unknown'
+
+function normalizeHandleAvailability(data: unknown): HandleAvailability {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return 'unknown'
+  const value = data as Record<string, unknown>
+  if (value.status === 'available' || value.status === 'taken' || value.status === 'reserved') return value.status
+  if (value.status === 'invalid' || value.status === 'unknown') return 'unknown'
+  if (value.available === true) return 'available'
+  if (value.available === false) return value.reason === 'reserved' ? 'reserved' : 'taken'
+  return 'unknown'
 }

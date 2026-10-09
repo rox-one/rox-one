@@ -33,6 +33,10 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
   RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
   RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
+  RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS,
+  RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS,
+  RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM,
+  RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM,
 ] as const
 
 const DEFAULT_WORKSPACE_ID = 'local'
@@ -382,5 +386,65 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
       registry: runtime.registry,
     })
     return stripSecrets({ id: connection.id })
+  })
+
+  // Keeper item management («Секреты» vault UI). These are the only fabric RPCs
+  // where secret values may cross to the renderer: listItems returns item
+  // payloads verbatim (NOT through stripSecrets, which would drop user keys
+  // named "value") and upsertItem accepts a value payload. Values are never
+  // logged, never echoed in errors, and every call is gated like preview/commit.
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS, async (_ctx, args: unknown) => {
+    const read = rpcFabricReadResult({ source: 'native', nativeId: 'infisical-paths' })
+    if (!isClaimableLive(read.result)) return { paths: [] }
+    const bag = objectArg(args)
+    const runtime = getFabricRuntime()
+    return runtime.infisical.listPaths({
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+    })
+  })
+
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS, async (_ctx, args: unknown) => {
+    const read = rpcFabricReadResult({ source: 'native', nativeId: 'infisical-items' })
+    if (!isClaimableLive(read.result)) return { items: [] }
+    const bag = objectArg(args)
+    const runtime = getFabricRuntime()
+    return runtime.infisical.listItems({
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+      secretPath: String(bag.secretPath ?? '/'),
+    })
+  })
+
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM, async (_ctx, args: unknown) => {
+    const act = rpcFabricActResult({ source: 'native', action: 'write', nativeId: 'infisical-item' })
+    if (!isClaimableLive(act)) throw new Error('fabric infisical item write is not live')
+    const bag = objectArg(args)
+    const key = nonEmptyString(bag.key)
+    if (!key) throw new Error('fabric.infisical.upsertItem: key required')
+    if (!('valueJson' in bag)) throw new Error('fabric.infisical.upsertItem: valueJson required')
+    const runtime = getFabricRuntime()
+    return runtime.infisical.upsertItem({
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+      secretPath: String(bag.secretPath ?? '/'),
+      key,
+      valueJson: bag.valueJson,
+    })
+  })
+
+  server.handle(RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM, async (_ctx, args: unknown) => {
+    const act = rpcFabricActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'infisical-item' })
+    if (!isClaimableLive(act)) throw new Error('fabric infisical item delete is not live')
+    const bag = objectArg(args)
+    const key = nonEmptyString(bag.key)
+    if (!key) throw new Error('fabric.infisical.deleteItem: key required')
+    const runtime = getFabricRuntime()
+    return runtime.infisical.deleteItem({
+      projectId: String(bag.projectId ?? ''),
+      environment: String(bag.environment ?? ''),
+      secretPath: String(bag.secretPath ?? '/'),
+      key,
+    })
   })
 }

@@ -103,6 +103,10 @@ describe('fabric RPC handlers', () => {
       RPC_CHANNELS.fabric.INFISICAL_HEALTH,
       RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT,
       RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT,
+      RPC_CHANNELS.fabric.INFISICAL_LIST_PATHS,
+      RPC_CHANNELS.fabric.INFISICAL_LIST_ITEMS,
+      RPC_CHANNELS.fabric.INFISICAL_UPSERT_ITEM,
+      RPC_CHANNELS.fabric.INFISICAL_DELETE_ITEM,
     ])
     for (const ch of HANDLED_CHANNELS) {
       expect(server.handlers.has(ch)).toBe(true)

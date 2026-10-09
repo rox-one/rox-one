@@ -1,8 +1,9 @@
 /**
  * AppearanceSettingsPage
  *
- * Visual customization settings: theme mode, color theme, font,
- * workspace-specific theme overrides, and CLI tool icon mappings.
+ * Visual customization settings: fonts, contrast, language, per-workspace
+ * avatar colors, and CLI tool icon mappings. The Rox theme itself is fixed
+ * and has no user-selectable mode or color theme.
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
@@ -17,7 +18,7 @@ import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopo
 import { useTheme } from '@/context/ThemeContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
-import { Monitor, Sun, Moon, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ToolIconMapping } from '../../../shared/types'
 
@@ -59,7 +60,6 @@ import { setProjectColorTreatment, useProjectColorTreatment } from '@/hooks/useP
 import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/project-colors'
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
-import type { PresetTheme } from '@config/theme'
 import { readDesktopAppearance, saveDesktopAppearance } from '@/lib/desktop-appearance'
 import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 import { ConationShellSettings } from './ConationShellSettings'
@@ -133,10 +133,6 @@ export default function AppearanceSettingsPage() {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
 
   const {
-    mode,
-    setMode,
-    colorTheme,
-    setColorTheme,
     font,
     setFont,
     chatFont,
@@ -146,7 +142,6 @@ export default function AppearanceSettingsPage() {
     contrast,
     setContrast,
     activeWorkspaceId,
-    setWorkspaceColorTheme,
     themeLoadError,
     themeResolvedFrom,
   } = useTheme()
@@ -158,12 +153,6 @@ export default function AppearanceSettingsPage() {
 
   // Fetch workspace icons as data URLs (file:// URLs don't work in renderer)
   const workspaceIconMap = useWorkspaceIcons(workspaces)
-
-  // Preset themes for the color theme dropdown
-  const [presetThemes, setPresetThemes] = useState<PresetTheme[]>([])
-
-  // Per-workspace theme overrides (workspaceId -> themeId or undefined)
-  const [workspaceThemes, setWorkspaceThemes] = useState<Record<string, string | undefined>>({})
 
   // Tool icon mappings loaded from main process
   const [toolIcons, setToolIcons] = useState<ToolIconMapping[]>([])
@@ -423,38 +412,6 @@ export default function AppearanceSettingsPage() {
   }, [desktopToolDescriptionsAvailable, savingToolDescriptions])
 
 
-  // Load preset themes on mount
-  useEffect(() => {
-    const loadThemes = async () => {
-      if (!window.electronAPI) {
-        setPresetThemes([])
-        return
-      }
-      try {
-        const themes = await window.electronAPI.loadPresetThemes?.()
-        setPresetThemes(themes ?? [])
-      } catch (error) {
-        console.error('Failed to load preset themes:', error)
-        setPresetThemes([])
-      }
-    }
-    loadThemes()
-  }, [])
-
-  // Load workspace themes on mount
-  useEffect(() => {
-    const loadWorkspaceThemes = async () => {
-      if (!window.electronAPI?.getAllWorkspaceThemes) return
-      try {
-        const themes = await window.electronAPI.getAllWorkspaceThemes()
-        setWorkspaceThemes(themes)
-      } catch (error) {
-        console.error('Failed to load workspace themes:', error)
-      }
-    }
-    loadWorkspaceThemes()
-  }, [])
-
   // Load tool icon mappings and the real config location from main on mount
   useEffect(() => {
     const load = async () => {
@@ -471,59 +428,6 @@ export default function AppearanceSettingsPage() {
     load()
   }, [])
 
-  // Handler for workspace theme change
-  // Uses ThemeContext for the active workspace (update after successful persistence) and IPC for other workspaces
-  const handleWorkspaceThemeChange = useCallback(
-    async (workspaceId: string, value: string) => {
-      if (!appearancePrefLive()) return
-      // 'default' means inherit from app default (null in storage)
-      const themeId = value === 'default' ? null : value
-
-      // If changing the current workspace, use context and await the config acknowledgement
-      if (workspaceId === activeWorkspaceId) {
-        if (!await setWorkspaceColorTheme(themeId)) return
-      } else {
-        // For other workspaces, just persist via IPC
-        await window.electronAPI?.setWorkspaceColorTheme?.(workspaceId, themeId)
-      }
-
-      // Update local state for UI
-      setWorkspaceThemes(prev => ({
-        ...prev,
-        [workspaceId]: themeId ?? undefined
-      }))
-    },
-    [activeWorkspaceId, setWorkspaceColorTheme]
-  )
-
-  // Theme options for dropdowns
-  const themeOptions = useMemo(() => {
-    const options = [
-      { value: 'default', label: t("settings.appearance.useDefault") },
-      ...presetThemes
-        .filter(preset => preset.id !== 'default')
-        .map(preset => ({
-          value: preset.id,
-          label: preset.theme.name || preset.id,
-        })),
-    ]
-    if (
-      colorTheme &&
-      colorTheme !== 'default' &&
-      !options.some(option => option.value === colorTheme)
-    ) {
-      options.push({ value: colorTheme, label: colorTheme })
-    }
-    return options
-  }, [presetThemes, t, colorTheme])
-
-  // Get current app default theme label for display (null when using 'default' to avoid redundant "Use Default (Default)")
-  const appDefaultLabel = useMemo(() => {
-    if (colorTheme === 'default') return null
-    const preset = presetThemes.find(t => t.id === colorTheme)
-    return preset?.theme.name || colorTheme
-  }, [colorTheme, presetThemes])
-
   return (
     <div className="appearance-settings-page flex h-full min-h-0 min-w-0 flex-col">
       <PanelHeader
@@ -535,23 +439,10 @@ export default function AppearanceSettingsPage() {
           <div className="appearance-settings-content px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
 
-              {/* Default Theme */}
-              <SettingsSection title={t("settings.appearance.defaultTheme")}>
+              {/* Display & accessibility. The Rox theme is fixed, so there is
+                  no light/dark or color theme picker. */}
+              <SettingsSection title={t("settings.appearance.display")}>
                 <SettingsCard>
-                  <SettingsRow label={t("settings.appearance.mode")}>
-                    <SettingsSegmentedControl
-                      value={mode}
-                      onValueChange={(value) => {
-                        if (!appearancePrefLive()) return
-                        setMode(value)
-                      }}
-                      options={[
-                        { value: 'system', label: t("settings.appearance.system"), icon: <Monitor className="w-4 h-4" /> },
-                        { value: 'light', label: t("settings.appearance.light"), icon: <Sun className="w-4 h-4" /> },
-                        { value: 'dark', label: t("settings.appearance.dark"), icon: <Moon className="w-4 h-4" /> },
-                      ]}
-                    />
-                  </SettingsRow>
                   <SettingsRow
                     label={t("settings.appearance.contrast")}
                     description={t("settings.appearance.contrastDesc")}
@@ -567,16 +458,6 @@ export default function AppearanceSettingsPage() {
                         { value: 'normal', label: t("settings.appearance.contrastNormal") },
                         { value: 'high', label: t("settings.appearance.contrastHigh") },
                       ]}
-                    />
-                  </SettingsRow>
-                  <SettingsRow label={t("settings.appearance.colorTheme")}>
-                    <SettingsMenuSelect
-                      value={colorTheme}
-                      onValueChange={(value) => {
-                        if (!appearancePrefLive()) return
-                        setColorTheme(value)
-                      }}
-                      options={themeOptions}
                     />
                   </SettingsRow>
                   <SettingsRow
@@ -661,63 +542,43 @@ export default function AppearanceSettingsPage() {
                 )}
               </SettingsSection>
 
-              {/* Workspace Themes */}
+              {/* Workspace appearance — avatar colors only; theme overrides are
+                  disabled because the Rox theme is fixed. */}
               {workspaces.length > 0 && (
-                <SettingsSection
-                  title={t("settings.appearance.workspaceThemes")}
-                  description={t("settings.appearance.workspaceThemesDesc")}
-                >
+                <SettingsSection title={t("settings.appearance.workspaceAppearance")}>
                   <SettingsCard>
-                    {workspaces.map((workspace) => {
-                      const wsTheme = workspaceThemes[workspace.id]
-                      const hasCustomTheme = wsTheme !== undefined
-                      return (
-                        <SettingsRow
-                          key={workspace.id}
-                          label={
-                            <div className="flex items-center gap-2">
-                              <ColorPicker
-                                value={workspaceAvatarColors[workspace.id] || ''}
-                                onChange={(hex) => setWorkspaceAvatarColor(workspace.id, hex)}
-                                onClear={() => clearWorkspaceAvatarColor(workspace.id)}
-                                clearLabel={t("settings.appearance.workspaceAvatarReset")}
-                                presets={PROJECT_COLOR_PALETTE}
-                                ariaLabel={t("settings.appearance.workspaceAvatarColor")}
-                                trigger={
-                                  <button
-                                    type="button"
-                                    className="cursor-pointer rounded hover:opacity-80 transition-opacity"
-                                    aria-label={t("settings.appearance.workspaceAvatarColor")}
-                                  >
-                                    <WorkspaceAvatar
-                                      workspaceId={workspace.id}
-                                      workspaceName={workspace.name}
-                                      src={workspaceIconMap.get(workspace.id)}
-                                      className="w-4 h-4 rounded"
-                                    />
-                                  </button>
-                                }
-                              />
-                              <span>{workspace.name}</span>
-                            </div>
-                          }
-                        >
-                          <SettingsMenuSelect
-                            value={hasCustomTheme ? wsTheme : 'default'}
-                            onValueChange={(value) => handleWorkspaceThemeChange(workspace.id, value)}
-                            options={[
-                              { value: 'default', label: appDefaultLabel ? t("settings.appearance.useDefaultWithTheme", { theme: appDefaultLabel }) : t("settings.appearance.useDefault") },
-                              ...presetThemes
-                                .filter(t => t.id !== 'default')
-                                .map(t => ({
-                                  value: t.id,
-                                  label: t.theme.name || t.id,
-                                })),
-                            ]}
-                          />
-                        </SettingsRow>
-                      )
-                    })}
+                    {workspaces.map((workspace) => (
+                      <SettingsRow
+                        key={workspace.id}
+                        label={
+                          <div className="flex items-center gap-2">
+                            <ColorPicker
+                              value={workspaceAvatarColors[workspace.id] || ''}
+                              onChange={(hex) => setWorkspaceAvatarColor(workspace.id, hex)}
+                              onClear={() => clearWorkspaceAvatarColor(workspace.id)}
+                              clearLabel={t("settings.appearance.workspaceAvatarReset")}
+                              presets={PROJECT_COLOR_PALETTE}
+                              ariaLabel={t("settings.appearance.workspaceAvatarColor")}
+                              trigger={
+                                <button
+                                  type="button"
+                                  className="cursor-pointer rounded hover:opacity-80 transition-opacity"
+                                  aria-label={t("settings.appearance.workspaceAvatarColor")}
+                                >
+                                  <WorkspaceAvatar
+                                    workspaceId={workspace.id}
+                                    workspaceName={workspace.name}
+                                    src={workspaceIconMap.get(workspace.id)}
+                                    className="w-4 h-4 rounded"
+                                  />
+                                </button>
+                              }
+                            />
+                            <span>{workspace.name}</span>
+                          </div>
+                        }
+                      />
+                    ))}
                   </SettingsCard>
                 </SettingsSection>
               )}

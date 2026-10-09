@@ -22,7 +22,7 @@ mailbox state; rox-maild is stateless apart from a bounded in-memory dedupe cach
 | Method | Path | Purpose | Status codes |
 |---|---|---|---|
 | `POST` | `/api/inbound` | Signed message → local Stalwart SMTP | `200` `400` `401` `413` `502` |
-| `POST` | `/api/provision` | Token → JMAP mailbox | `200` `401` `409` `502` |
+| `POST` | `/api/provision` | Token → JMAP mailbox | `200` `400` `401` `409` `502` |
 | `GET`  | `/api/health` | Liveness + Stalwart reachability | `200` |
 
 ### `POST /api/inbound`
@@ -50,7 +50,16 @@ Response: `{"ok":true,"messageId":"<id|null>","duplicate":false}`.
 
 ### `POST /api/provision`
 
-Header: `Authorization: Bearer <rox access token>`.
+Header: `Authorization: Bearer <rox access token>`. Optional JSON body:
+`{"quotaBytes": <int>}` — the per-mailbox storage limit in bytes. Omitted →
+`MAIL_DEFAULT_QUOTA_BYTES` (default **1 GiB**). Values outside **256 MiB …
+1 TiB** (or non-integers) → `400 invalid_quota`.
+
+Server-side callers (the website drain worker) may instead present the shared
+`MAIL_PROVISION_SERVICE_TOKEN` as the bearer token (constant-time compared) and
+name the owner in the body: `{"ownerUuid": "<rox account id>", "handle"?: "…",
+"email"?: "…"}`. Missing `ownerUuid` → `400 missing_owner`. When the env var is
+unset the service-token path is disabled and only Rox user tokens are accepted.
 
 1. The token is verified with `GET ${ROX_BROKER_URL}/api/me/account`
    (default base `https://rox.one`). `401`/`403` from the broker → `401`;
@@ -60,13 +69,13 @@ Header: `Authorization: Bearer <rox access token>`.
 3. Provisioning goes through `@rox/shared/mail` `StalwartAdmin`
    (`STALWART_ADMIN_URL` / `STALWART_ADMIN_USER` / `STALWART_ADMIN_PASSWORD`,
    domain `MAIL_DOMAIN`), idempotently:
-   * free handle → account created;
-   * handle already owned by the same Rox user → password rotated, same address
-     returned;
+   * free handle → account created with the effective quota;
+   * handle already owned by the same Rox user → password rotated, quota
+     refreshed, same address returned;
    * handle owned by another account → `409`;
    * mail server unreachable / rejected → `502`.
 
-Response: `{"address":"mark@rox.one","username":"mark@rox.one","password":"<one-time secret>","jmapUrl":"http://127.0.0.1:8480"}`.
+Response: `{"address":"mark@rox.one","username":"mark@rox.one","password":"<one-time secret>","jmapUrl":"http://127.0.0.1:8480","quotaBytes":1073741824}`.
 The password is returned once and never persisted by this service.
 
 ### `GET /api/health`
@@ -86,12 +95,14 @@ The password is returned once and never persisted by this service.
 | `MAIL_SMTP_HELO` | `rox-maild` | EHLO name |
 | `MAIL_DEDUPE_CAPACITY` | `5000` | remembered message ids |
 | `ROX_BROKER_URL` | `https://rox.one` | token verification origin |
+| `MAIL_PROVISION_SERVICE_TOKEN` | — | optional shared token for server-side `/api/provision` callers; unset → disabled |
 | `ROX_BROKER_TIMEOUT_MS` | `10000` | |
 | `STALWART_ADMIN_URL` | `http://127.0.0.1:8480` | JMAP/management origin |
 | `STALWART_ADMIN_USER` | — | **required** |
 | `STALWART_ADMIN_PASSWORD` | — | **required** |
 | `MAIL_DOMAIN` | `rox.one` | provisioned mailbox domain |
 | `MAIL_JMAP_URL` | `STALWART_ADMIN_URL` | value returned as `jmapUrl` |
+| `MAIL_DEFAULT_QUOTA_BYTES` | `1073741824` (1 GiB) | default per-mailbox storage quota; `256 MiB … 1 TiB` |
 | `MAIL_HEALTH_TIMEOUT_MS` | `2500` | |
 | `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
 
@@ -190,7 +201,12 @@ Provision:
 ```sh
 curl -s -X POST http://127.0.0.1:8090/api/provision \
   -H "authorization: Bearer $ROX_ACCESS_TOKEN"
-# {"address":"mark@rox.one","username":"mark@rox.one","password":"…","jmapUrl":"http://127.0.0.1:8480"}
+# {"address":"mark@rox.one","username":"mark@rox.one","password":"…","jmapUrl":"http://127.0.0.1:8480","quotaBytes":1073741824}
+
+# Override the storage quota for this mailbox (256 MiB … 1 TiB):
+curl -s -X POST http://127.0.0.1:8090/api/provision \
+  -H "authorization: Bearer $ROX_ACCESS_TOKEN" -H 'content-type: application/json' \
+  --data '{"quotaBytes":2147483648}'
 ```
 
 Mailbox reachable over JMAP with the returned credentials:

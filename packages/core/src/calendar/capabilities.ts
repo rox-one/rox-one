@@ -41,6 +41,14 @@ export const CALENDAR_CAPABILITIES: Record<CalendarProvider, CapabilityGap> = {
     supportsRecurrence: true,
     notes: 'Privileged macOS EventKit helper only (darwin). No OAuth; unavailable on other platforms.',
   },
+  appleCalendar: {
+    provider: 'appleCalendar',
+    supportsOAuth: false,
+    supportsReminders: false,
+    supportsAllDay: true,
+    supportsRecurrence: true,
+    notes: 'Privileged macOS EventKit helper only (darwin). Reads native Calendar.app calendars; no OAuth, read-only, unavailable on other platforms.',
+  },
 }
 
 export function capabilityFor(provider: CalendarProvider): CapabilityGap {
@@ -48,5 +56,9 @@ export function capabilityFor(provider: CalendarProvider): CapabilityGap {
 }
 
 export function appleRemindersAvailable(platform = process.platform, helperPresent = false): boolean {
+  return platform === 'darwin' && helperPresent
+}
+
+export function appleCalendarAvailable(platform = process.platform, helperPresent = false): boolean {
   return platform === 'darwin' && helperPresent
 }

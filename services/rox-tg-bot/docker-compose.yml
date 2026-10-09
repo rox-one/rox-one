@@ -1,0 +1,40 @@
+# rox-tg-bot for the testct host.
+#
+#   cd services/rox-tg-bot
+#   cp .env.example .env   # fill in TELEGRAM_BOT_TOKEN (from @BotFather) and TG_LINK_SERVICE_TOKEN
+#   docker compose up -d --build
+#
+# The URL of this service and TG_LINK_SERVICE_TOKEN are what the desktop client
+# and the site use to mint/deep-link/confirm Telegram verification.
+name: rox-tg-bot
+
+services:
+  rox-tg-bot:
+    build:
+      context: ../..
+      dockerfile: services/rox-tg-bot/Dockerfile
+    image: rox-tg-bot:local
+    restart: unless-stopped
+    environment:
+      PORT: "8789"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:?set TELEGRAM_BOT_TOKEN}"
+      TG_LINK_SERVICE_TOKEN: "${TG_LINK_SERVICE_TOKEN:?set TG_LINK_SERVICE_TOKEN}"
+      BOT_USERNAME: "${BOT_USERNAME:-}"
+      TG_LINK_DB: /data/state.sqlite
+    volumes:
+      - tg-link-bot-data:/data
+    ports:
+      # Host-facing contract: loopback-only; front it with the same tunnel as
+      # the desktop client.
+      - "127.0.0.1:${TG_BOT_PORT:-8789}:8789"
+    healthcheck:
+      # Liveness of the HTTP contract: it reports ok once the service is up.
+      test: ["CMD", "bun", "-e", "await fetch('http://127.0.0.1:8789/api/health').then(r => r.json()).then(b => process.exit(b.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  tg-link-bot-data:

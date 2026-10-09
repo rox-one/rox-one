@@ -5,9 +5,11 @@ import ReactDOM from 'react-dom/client'
 import { init as sentryInit } from '@sentry/electron/renderer'
 import * as Sentry from '@sentry/react'
 import { captureConsoleIntegration } from '@sentry/react'
+import { initTelemetry, type TelemetryHandle } from '@rox/shared/telemetry'
 import { Provider as JotaiProvider, useAtomValue } from 'jotai'
 import App from './App'
 import { ThemeProvider } from './context/ThemeContext'
+import { ROX_THEME_ID } from '@config/theme'
 import { windowWorkspaceIdAtom } from './atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
 import { StorageMigrationNotices } from './components/storage/StorageMigrationNotices'
@@ -104,6 +106,49 @@ sentryInit(
   Sentry.init,
 )
 
+// Product analytics — renderer half.
+//
+// Reuses main's baked endpoints + anonymous distinct_id (bridged over
+// `getTelemetryConfig`) so UI events join the same PostHog person as the main
+// process. Consent mirrors the «Аналитика продукта» toggle (default ON) and is
+// refreshed whenever the gamification profile changes. Inert when endpoints are
+// unset. On page teardown the buffered capture is flushed with `sendBeacon`,
+// which (unlike `fetch`) survives the renderer being torn down.
+// Consent is unknown until the gamification profile resolves, so it starts
+// fail-closed (no egress) and flips on once the store confirms it — the
+// «Аналитика продукта» default is ON, so this is a sub-second startup window,
+// never a stale opt-in for users who turned it off.
+let rendererAnalyticsConsent = false
+const applyAnalyticsConsent = (consent: unknown): void => {
+  if (typeof consent === 'boolean') rendererAnalyticsConsent = consent
+}
+const telemetryBootstrap = window.electronAPI?.getTelemetryConfig?.() ?? null
+const rendererTelemetry: TelemetryHandle | null = telemetryBootstrap
+  ? initTelemetry({
+      ...telemetryBootstrap,
+      platform: navigator.platform,
+      getConsent: () => rendererAnalyticsConsent,
+      sendBeaconImpl: (url, data) =>
+        navigator.sendBeacon(url, new Blob([data], { type: 'application/json' })),
+    })
+  : null
+void window.electronAPI?.getGamificationProfile?.()
+  .then((profile) => applyAnalyticsConsent(profile?.analyticsConsent))
+  .catch(() => { /* store unreachable → stay fail-closed */ })
+const offGamificationAnalytics = window.electronAPI?.onGamificationChanged?.((profile) =>
+  applyAnalyticsConsent(profile?.analyticsConsent))
+const flushRendererTelemetry = (): void => {
+  rendererTelemetry?.flushWithBeacon()
+}
+window.addEventListener('pagehide', flushRendererTelemetry)
+window.addEventListener('beforeunload', flushRendererTelemetry)
+import.meta.hot?.dispose(() => {
+  window.removeEventListener('pagehide', flushRendererTelemetry)
+  window.removeEventListener('beforeunload', flushRendererTelemetry)
+  offGamificationAnalytics?.()
+  rendererTelemetry?.dispose()
+})
+
 /**
  * Minimal fallback UI shown when the entire React tree crashes.
  * Sentry.ErrorBoundary captures the error and sends it to Sentry automatically.
@@ -134,7 +179,7 @@ function Root() {
   const app = <App />
 
   return (
-    <ThemeProvider activeWorkspaceId={workspaceId}>
+    <ThemeProvider activeWorkspaceId={workspaceId} fixedColorTheme={ROX_THEME_ID}>
       {/* PERF-07: low-power profile also stops motion/react springs. */}
       <RenderProfileMotionConfig>
         {/* W1-07 (#1504): W1-07 gates outside React read this Provider's store. */}

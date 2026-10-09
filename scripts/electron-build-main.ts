@@ -72,6 +72,10 @@ function getBuildDefines(): string[] {
     "MICROSOFT_OAUTH_CLIENT_ID",
     "MICROSOFT_OAUTH_CLIENT_SECRET",
     "SENTRY_ELECTRON_INGEST_URL",
+    "POSTHOG_HOST",
+    "POSTHOG_API_KEY",
+    "OTEL_TRACES_URL",
+    "OTEL_SERVICE_NAME",
     "CRAFT_DEV_RUNTIME",
   ];
 
