@@ -1902,6 +1902,7 @@
   "drive.import.provider.icloud": "iCloud Drive",
   "drive.import.provider.onedrive": "OneDrive",
   "drive.import.provider.yandex": "Yandex Disk",
+  "drive.import.status.cancelled": "ملغى",
   "drive.import.status.done": "تم",
   "drive.import.status.error": "فشل",
   "drive.import.status.idle": "التحضير",

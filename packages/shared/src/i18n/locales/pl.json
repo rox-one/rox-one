@@ -1906,6 +1906,7 @@
   "drive.import.provider.icloud": "iCloud Drive",
   "drive.import.provider.onedrive": "OneDrive",
   "drive.import.provider.yandex": "Yandex Disk",
+  "drive.import.status.cancelled": "Anulowano",
   "drive.import.status.done": "Gotowe",
   "drive.import.status.error": "Błąd",
   "drive.import.status.idle": "Przygotowanie",

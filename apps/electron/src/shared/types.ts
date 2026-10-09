@@ -2484,6 +2484,7 @@ export interface ElectronAPI {
   driveImportPlan(provider: ImportProviderId, folderId?: string): Promise<ImportJob>
   driveImportStart(jobId: string): Promise<ImportJob>
   driveImportPause(jobId: string): Promise<ImportJob>
+  driveImportCancel(jobId: string): Promise<ImportJob>
   driveImportResume(jobId: string): Promise<ImportJob>
   driveImportStatus(jobId?: string): Promise<ImportJob | ImportJob[] | null>
   // ROX Drive (wave 4) — host-side import OAuth broker. The renderer never sees
