@@ -132,8 +132,8 @@ export function formatOmpCredentialStep(code: OmpCredentialCode): OmpCredentialS
       return {
         code,
         title: 'OMP runtime not configured',
-        message: 'The omp CLI is missing or its toolchain is not ready.',
-        howToSupply: 'Install the omp CLI (or wait for the toolchain download), then set ROX_API_KEY or paste a Rox API key.',
+        message: 'The Rox CLI is missing or its toolchain is not ready.',
+        howToSupply: 'Install the Rox CLI (or wait for the toolchain download), then set ROX_API_KEY or paste a Rox API key.',
         canRetry: true,
       };
   }

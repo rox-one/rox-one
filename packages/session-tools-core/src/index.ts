@@ -185,6 +185,19 @@ export type {
 } from './knowledge/runtime.ts';
 export { parseKnowledgeRefArg, KNOWLEDGE_REF_ACCEPTED_FORMS } from './knowledge/parse-ref.ts';
 
+// Memory repository tool runtime (Wave B read capabilities) — registered by the
+// server-core memory-repo RPC layer; consumed by the memory_repo_* handlers.
+export {
+  registerMemoryRepoToolRuntime,
+  getMemoryRepoToolRuntime,
+  clearMemoryRepoToolRuntime,
+} from './memory-repo/runtime.ts';
+export type {
+  MemoryRepoToolRuntime,
+  MemoryRepoBankRef,
+  MemoryRepoTreeEntry,
+  MemoryRepoFileView,
+} from './memory-repo/runtime.ts';
 // Skills tool runtime (c2.7) — registered by the server-core skills RPC layer;
 // consumed by the skills_search / skills_read handlers.
 export {
@@ -255,11 +268,21 @@ export {
   KNOWLEDGE_BACKLINKS_MAX_ITEMS,
 } from './handlers/index.ts';
 
+// Memory repository handlers (registered in SESSION_TOOL_DEFS)
+export {
+  handleMemoryRepoRead,
+  handleMemoryRepoSearch,
+  MEMORY_REPO_READ_MAX_CHARS,
+  MEMORY_REPO_SEARCH_MAX_LIMIT,
+} from './handlers/index.ts';
+
 // Memory recall handlers (registered in SESSION_TOOL_DEFS)
 export {
   handleMemorySearch,
   handleMemoryGet,
+  handleMemoryForget,
   MEMORY_SEARCH_MAX_LIMIT,
+  MEMORY_FORGET_MAX_IDS,
 } from './handlers/index.ts';
 
 // Skills catalog handlers (registered in SESSION_TOOL_DEFS)
@@ -372,8 +395,11 @@ export type {
   KnowledgeSearchArgs,
   KnowledgeReadArgs,
   KnowledgeGetBacklinksArgs,
+  MemoryRepoReadArgs,
+  MemoryRepoSearchArgs,
   MemorySearchToolArgs,
   MemoryGetToolArgs,
+  MemoryForgetToolArgs,
   SkillsSearchArgs,
   SkillsReadArgs,
 } from './tool-defs.ts';

@@ -1,0 +1,8 @@
+{
+  "workbench.scenes.menu": { "ru": "Сцены", "en": "Scenes" },
+  "workbench.scenes.empty": { "ru": "Нет сохранённых сцен", "en": "No saved scenes" },
+  "workbench.scenes.clear": { "ru": "Снять сцену", "en": "Clear scene" },
+  "workbench.scenes.saveAs": { "ru": "Сохранить как сцену…", "en": "Save as scene…" },
+  "workbench.scenes.saveTitle": { "ru": "Сохранить как сцену", "en": "Save as scene" },
+  "workbench.scenes.namePlaceholder": { "ru": "Название сцены", "en": "Scene name" }
+}

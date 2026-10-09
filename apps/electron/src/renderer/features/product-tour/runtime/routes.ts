@@ -4,6 +4,8 @@ import { buildExtraScreenRoute } from '../../../../shared/extra-screens'
 import type { RouteKey, TourBinding, TourDefinition } from '../contracts'
 
 export function navigationEntity(nav: NavigationState): { sessionId?: string; entityId?: string } {
+  // W3.2: the calendar surface carries a selected meeting id directly.
+  if (nav.navigator === 'surface' && nav.surface === 'calendar' && nav.meetingId) return { entityId: nav.meetingId }
   if (!('details' in nav) || !nav.details) return {}
   const d = nav.details
   if ('sessionId' in d) return { sessionId: d.sessionId }
@@ -12,7 +14,6 @@ export function navigationEntity(nav: NavigationState): { sessionId?: string; en
   if ('automationId' in d) return { entityId: d.automationId }
   if ('noteId' in d) return { entityId: d.noteId }
   if ('taskId' in d) return { entityId: d.taskId }
-  if ('meetingId' in d) return { entityId: d.meetingId }
   if ('projectSlug' in d) return { entityId: d.projectSlug }
   if ('itemId' in d) return { entityId: d.itemId }
   return {}
@@ -30,6 +31,7 @@ export function resolveTourRoute(key: RouteKey, binding: TourBinding): ViewRoute
     case 'learning': return routes.view.settings('learning')
     case 'meetings': return routes.view.meetings(binding.entityId)
     case 'memory': return routes.view.memory()
+    case 'memory-repo': return routes.view.memory('repo')
     case 'notes': return routes.view.notes()
     case 'projects': return routes.view.projects()
     case 'search': return routes.view.search()

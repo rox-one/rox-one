@@ -3,7 +3,7 @@
  *
  * Unified catalog + installed projections (skills/sources/automations/marketplace).
  * Install for curated marketplace entries delegates to marketplace.install.
- * Install for SiYuan Bazaar entries delegates to pluginBridge.installBazaar
+ * Install for Rox Notes Bazaar entries delegates to pluginBridge.installBazaar
  * (kernel-only; Craft never downloads the plugin zip).
  */
 
@@ -206,7 +206,7 @@ function ExtensionCard({
               onClick={() => onOpenCompat?.()}
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1 hover:bg-muted disabled:opacity-50"
             >
-              {t('extensions.action.openFullSiyuan')}
+              {t('extensions.action.openFullKnowledge')}
             </button>
           ) : null}
           {permissions.includes('browser.open') ? (

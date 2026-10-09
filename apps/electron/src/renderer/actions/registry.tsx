@@ -6,6 +6,8 @@ import { getKeybindingContext, evaluateWhen } from './keybinding-context'
 // W1-07 (#1504): flag-gated actions + per-platform default chords.
 import { currentShellFlags } from '@/platform/unified-flags'
 import { isActionFlagEnabled, resolveActionHotkey } from './hotkeys'
+// D3 (W1.3): CapsLock is a second trigger for the same «Пульт» as ⌘K.
+import { useCapsLockPaletteTrigger } from '@/components/palette/capslock-trigger'
 
 interface ActionRegistryContextType {
   // Register a handler for an action
@@ -77,6 +79,12 @@ export function ActionRegistryProvider({ children }: { children: React.ReactNode
   const getAction = useCallback((actionId: ActionId) => {
     return actions[actionId]
   }, [])
+
+  // D3 (W1.3): CapsLock opens the same «Пульт» as ⌘K. It goes through the
+  // existing `app.omnibox` action (handler in OmniboxHost), so both entries
+  // share one surface and one action list.
+  const openOmnibox = useCallback(() => execute('app.omnibox'), [execute])
+  useCapsLockPaletteTrigger({ onTrigger: openOmnibox })
 
   // Set up global hotkey listener
   useEffect(() => {

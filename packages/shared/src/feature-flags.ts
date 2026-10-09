@@ -206,6 +206,43 @@ export function isCommandBusEnabled(enabledWorkbenchFlags?: ReadonlySet<string>)
   return false;
 }
 
+// W1-11 (#1508)
+/**
+ * Workbench flag ids the agent-governance contracts are used by. Mirrors
+ * `CATALOGUE_FLAGS.agents` / `CATALOGUE_FLAGS.placeholders` in
+ * `packages/core/src/commands/catalogue/entry.ts`.
+ */
+export const AGENTS_AUTONOMY_WORKBENCH_FLAG = 'agents.autonomy.v1';
+export const IDENTITY_PLACEHOLDERS_WORKBENCH_FLAG = 'identity.placeholders.v1';
+
+/**
+ * Runtime-evaluated check for agent autonomy (W1-11 contracts: the policy
+ * pipeline, approvals, rate limits and the audit chain).
+ *
+ * Server-evaluated, same shape as `isCommandBusEnabled`: the workbench flag is
+ * authoritative and `CRAFT_FEATURE_AGENTS_AUTONOMY=1|0` is an explicit override
+ * for tests. Defaults to DISABLED, so the governance middleware is a
+ * pass-through and every agent command is `UNAVAILABLE` from its own flag.
+ */
+export function isAgentsAutonomyEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_AGENTS_AUTONOMY'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(AGENTS_AUTONOMY_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
+/**
+ * Runtime-evaluated check for placeholder principals (W1-11 identity
+ * lifecycle: `identity.ensure_placeholder`, invitations, activation, merge).
+ * Defaults to DISABLED, `CRAFT_FEATURE_IDENTITY_PLACEHOLDERS=1|0` overrides.
+ */
+export function isIdentityPlaceholdersEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_IDENTITY_PLACEHOLDERS'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(IDENTITY_PLACEHOLDERS_WORKBENCH_FLAG)) return true;
+  return false;
+}
+
 /**
  * Workbench flag id for the visible Rox home (`~/rox` resolution + MIG-13
  * auto-migration, W1-13 #1510).
@@ -239,6 +276,29 @@ export function isStorageVisibleRootEnabled(
     parseBooleanEnv(read('CRAFT_FEATURE_STORAGE_VISIBLE_ROOT'));
   if (override !== undefined) return override;
   return enabledWorkbenchFlags?.has(STORAGE_VISIBLE_ROOT_WORKBENCH_FLAG) === true;
+}
+
+// W1-12 (#1509)
+/**
+ * Workbench flag id for the domain rules R1–R5. Mirrors
+ * `WORKBENCH_FLAG.automationRulesV1` in
+ * `packages/core/src/platform/workbench/flags.ts`.
+ */
+export const AUTOMATION_RULES_WORKBENCH_FLAG = 'automation.rules.v1';
+
+/**
+ * Runtime-evaluated check for the domain rule engine (TECH-SPEC §14).
+ *
+ * Server-evaluated with the same shape as `isEntitiesLinksEnabled`: the
+ * workbench flag `automation.rules.v1` is authoritative, and
+ * `CRAFT_FEATURE_AUTOMATION_RULES=1|0` stays as an explicit test override.
+ * While it is off the consumers do not even subscribe to events.
+ */
+export function isAutomationRulesEnabled(enabledWorkbenchFlags?: ReadonlySet<string>): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_AUTOMATION_RULES'));
+  if (override !== undefined) return override;
+  if (enabledWorkbenchFlags?.has(AUTOMATION_RULES_WORKBENCH_FLAG)) return true;
+  return false;
 }
 
 /**

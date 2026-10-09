@@ -2,11 +2,14 @@ import { createHash } from 'node:crypto'
 import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { getProjectMemoryPath, loadProjectById } from '@rox/shared/projects'
+import { getWorkspaces } from '@rox/shared/config'
 import { approveProposal, type MemoryProposal, type MemoryProposalScope } from '@rox/shared/memory/proposals'
 import type { LessonOwner } from '@rox/shared/memory/types'
 import { atomicWriteFileSync } from '@rox/shared/utils/files'
 import { LessonStore, lessonKey, lessonOwnerKey, parseLessons } from './LessonStore'
 import { MemoryFileStore } from './MemoryFileStore'
+import { notifyRepoMutation, type RepoBankRef } from './repo/notify'
+import { ownerKey8For } from './repo/RepoSourceProvider'
 import type { MemoryProposalStore } from './MemoryProposalStore'
 
 export interface DurableProposalApprovalInput {
@@ -19,6 +22,13 @@ export interface DurableProposalApprovalInput {
   /** From the authenticated transport, never a renderer argument. */
   owner?: LessonOwner
   now?: Date
+  /**
+   * c1.8 test seam: invoked immediately after the durable write-intent is
+   * persisted but before the canonical corpus write. Throwing here simulates a
+   * crash mid-flush — the intent must survive and a later flush must recover it
+   * without duplicating the corpus entry. Production never sets this.
+   */
+  faultAfterIntent?: () => void
 }
 
 function flushFile(path: string): void {
@@ -28,6 +38,21 @@ function flushFile(path: string): void {
     const dir = openSync(dirname(path), 'r')
     try { fsyncSync(dir) } finally { closeSync(dir) }
   }
+}
+
+/** Repo bank a durable approval wrote into. `global` and `personal` both write
+ * the global lessons file (`personal` only differs by owner) → `main#<owner8>`;
+ * a workspace approval writes that workspace's lessons → `ws:<id>#<owner8>`.
+ * `null` when a workspace-scope approval cannot be mapped to a workspace id — an
+ * unresolvable root must not synthesise an invalid `ws:` bank id. */
+function approvalBank(scope: MemoryProposalScope, workspaceRoot: string, owner?: LessonOwner): RepoBankRef | null {
+  const ownerKey8 = owner ? ownerKey8For(owner) : undefined
+  if (scope === 'global' || scope === 'personal') {
+    return ownerKey8 ? { scope: 'main', ownerKey8 } : { scope: 'main' }
+  }
+  const workspaceId = getWorkspaces().find((workspace) => workspace.rootPath === workspaceRoot)?.id
+  if (!workspaceId) return null
+  return ownerKey8 ? { scope: 'workspace', workspaceId, ownerKey8 } : { scope: 'workspace', workspaceId }
 }
 
 /** Synchronous transaction: the pending write intent survives an interrupted approval.
@@ -72,6 +97,9 @@ export function approveMemoryProposalDurably(input: DurableProposalApprovalInput
   const approval = { scope: input.scope, projectId, ...(input.owner ? { owner: input.owner } : {}), consentEventId, textHash: hash }
   const pending = { ...next, status: 'pending' as const, approval }
   input.store.save(pending)
+  // Crash seam: the write-intent is durable now; a throw here leaves the corpus
+  // untouched but recoverable (flushMemoryWrites replays pendingWriteIntents).
+  input.faultAfterIntent?.()
 
   if (input.scope === 'project') {
     const marker = `<!-- rox-memory-proposal:${createHash('sha256').update(`${current.id}\0${consentEventId}`).digest('hex')} -->`
@@ -100,5 +128,12 @@ export function approveMemoryProposalDurably(input: DurableProposalApprovalInput
       && lesson.source.consentEventId === consentEventId)
     if (!confirmed) throw new Error('Memory lesson write could not be confirmed')
   }
-  return input.store.save({ ...next, approval: { ...approval, target, writtenAt: now.toISOString() } })
+  const saved = input.store.save({ ...next, approval: { ...approval, target, writtenAt: now.toISOString() } })
+  try {
+    const bank = approvalBank(input.scope, input.workspaceRoot, input.owner)
+    if (bank) notifyRepoMutation(bank, 'proposal-approve')
+  } catch {
+    // repo notification is best-effort; the durable write already landed
+  }
+  return saved
 }

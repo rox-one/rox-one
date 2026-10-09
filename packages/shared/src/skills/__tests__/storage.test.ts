@@ -19,6 +19,7 @@ import { homedir, tmpdir } from 'os';
 import { join } from 'path';
 import {
   loadAllSkills,
+  loadAllSkillsWithTierScans,
   loadWorkspaceSkills,
   loadSkill,
   skillExists,
@@ -571,6 +572,37 @@ describe('loadAllSkills', () => {
     expect(dup!.source).toBe('project');
     expect(dup!.metadata.name).toBe('Proj Dup');
   });
+});
+
+// ============================================================
+// Tests: loadAllSkillsWithTierScans (one walk backs catalog + collisions)
+// ============================================================
+
+describe('loadAllSkillsWithTierScans', () => {
+  const PREFIX = '_test_tier_scan_';
+
+  it('returns the per-tier scans that back the merged catalog and reuses them on a cache hit', () => {
+    const wsDir = join(workspaceRoot, 'skills');
+    const projDir = join(projectRoot, '.agents', 'skills');
+    mkdirSync(projDir, { recursive: true });
+    createSkill(wsDir, `${PREFIX}ws`, { name: 'WS', description: 'ws' });
+    createSkill(projDir, `${PREFIX}proj`, { name: 'Proj', description: 'proj' });
+
+    const walk = loadAllSkillsWithTierScans(workspaceRoot, projectRoot);
+
+    // The scans carry exactly the tiers the collision report attributes against.
+    expect(walk.scans.workspace.some(s => s.slug === `${PREFIX}ws`)).toBe(true);
+    expect(walk.scans.project.some(s => s.slug === `${PREFIX}proj`)).toBe(true);
+    expect(walk.skills.find(s => s.slug === `${PREFIX}ws`)?.source).toBe('workspace');
+    expect(walk.skills.find(s => s.slug === `${PREFIX}proj`)?.source).toBe('project');
+
+    // A second call is a cache hit: same catalog AND same tier scans — the
+    // collision path reuses this exact walk rather than scanning again.
+    const again = loadAllSkillsWithTierScans(workspaceRoot, projectRoot);
+    expect(again.skills).toBe(walk.skills);
+    expect(again.scans).toBe(walk.scans);
+    expect(again.scans.workspace).toBe(walk.scans.workspace);
+  }, 180000);
 });
 
 // ============================================================

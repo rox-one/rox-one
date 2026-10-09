@@ -27,7 +27,7 @@ const unusedAuthority = new Proxy({}, { get: () => () => { throw new Error('not 
 function testRegistry(): { registry: CommandRegistry; calls: { n: number; revision: number } } {
   const registry = createCommandRegistry()
   const calls = { n: 0, revision: 0 }
-  const define = (type: string) => registry.define({ type: type as `${string}.${string}`, module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  const define = (type: string) => registry.define({ type: type as `${string}.${string}`, module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, riskClass: () => 'routine' })
   define('test.bump')
   define('test.unbound')
   registry.bind('test.bump', ctx => {

@@ -1,7 +1,10 @@
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
+import { createWebuiHandler } from '../http-server'
+import type { Logger } from '../../runtime/platform'
 import {
   applyWebuiSecurityHeaders,
   buildWebuiCspHeader,
@@ -43,7 +46,7 @@ describe('buildWebuiCspHeader', () => {
     expect(csp).toContain("base-uri 'self'")
     expect(csp).toContain("object-src 'none'")
     expect(csp).toContain("frame-ancestors 'none'")
-    expect(csp).toContain("connect-src 'self' ws: wss:")
+    expect(csp).toContain("connect-src 'self'")
     expect(csp).toContain("img-src 'self' data: blob:")
     expect(csp).toContain("style-src 'self' 'unsafe-inline'")
     expect(csp).toContain("script-src 'self'")
@@ -73,6 +76,93 @@ describe('buildWebuiCspHeader', () => {
     const scriptDirective = buildWebuiCspHeader('<p>no scripts</p>')
       .split('; ').find(part => part.startsWith('script-src'))!
     expect(scriptDirective).toBe("script-src 'self'")
+  })
+})
+
+/** Extract the `connect-src` directive tokens from a full CSP header value. */
+function connectSrcTokens(csp: string): string[] {
+  const directive = csp.split('; ').find(part => part.startsWith('connect-src'))!
+  return directive.split(/\s+/).slice(1)
+}
+
+describe('connect-src hardening', () => {
+  it("emits exactly connect-src 'self' with no extra origins configured", () => {
+    const csp = buildWebuiCspHeader(SAMPLE_HTML)
+    expect(csp).toContain("connect-src 'self'")
+    expect(connectSrcTokens(csp)).toEqual(["'self'"])
+    expect(connectSrcTokens(buildWebuiCspHeader(SAMPLE_HTML, []))).toEqual(["'self'"])
+  })
+
+  it('adds an explicit wss origin for a configured https origin', () => {
+    const csp = buildWebuiCspHeader(SAMPLE_HTML, ['https://ws.example.com'])
+    expect(connectSrcTokens(csp)).toEqual(["'self'", 'wss://ws.example.com'])
+  })
+
+  it('adds an explicit ws origin for a configured http origin, preserving the port', () => {
+    const csp = buildWebuiCspHeader(SAMPLE_HTML, ['http://ws.example.com:8080'])
+    expect(connectSrcTokens(csp)).toEqual(["'self'", 'ws://ws.example.com:8080'])
+  })
+
+  it('accepts ws/wss endpoints directly and deduplicates explicit origins', () => {
+    const csp = buildWebuiCspHeader(SAMPLE_HTML, [
+      'wss://ws.example.com',
+      'https://ws.example.com',
+      'ws://plain.example.com:9100',
+    ])
+    expect(connectSrcTokens(csp)).toEqual([
+      "'self'",
+      'wss://ws.example.com',
+      'ws://plain.example.com:9100',
+    ])
+  })
+
+  it('never emits a bare ws:/wss: scheme source, whatever the inputs', () => {
+    const inputs: Array<readonly string[] | undefined> = [
+      undefined,
+      [],
+      ['https://ws.example.com'],
+      ['http://ws.example.com:8080'],
+      ['wss://ws.example.com'],
+      ['ws://plain.example.com:9100'],
+      ['not-a-url', 'ftp://nope.example.com', 'wss://ok.example.com/path?x=1'],
+    ]
+    for (const origins of inputs) {
+      for (const csp of [buildWebuiCspHeader(SAMPLE_HTML, origins), buildWebuiCspHeader('', origins)]) {
+        const tokens = connectSrcTokens(csp)
+        expect(tokens).not.toContain('ws:')
+        expect(tokens).not.toContain('wss:')
+      }
+    }
+  })
+})
+
+describe('connect-src via the real handler response', () => {
+  it("serves connect-src 'self' by default and explicit origins when configured", async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'craft-csp-handler-'))
+    try {
+      writeFileSync(join(dir, 'index.html'), '<!doctype html><html><body>app</body></html>')
+      const base = {
+        webuiDir: dir,
+        secret: 'test-server-secret',
+        wsProtocol: 'wss' as const,
+        wsPort: 9100,
+        getHealthCheck: () => ({ status: 'ok' as const }),
+        logger: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} } satisfies Logger,
+      }
+
+      const plain = createWebuiHandler(base)
+      const plainRes = await plain.fetch(new Request('http://127.0.0.1/health'))
+      expect(connectSrcTokens(plainRes.headers.get('content-security-policy')!)).toEqual(["'self'"])
+      plain.dispose()
+
+      const origins = createWebuiHandler({ ...base, allowedWebUiOrigins: ['https://ws.example.com'] })
+      const originsRes = await origins.fetch(new Request('http://127.0.0.1/health'))
+      expect(connectSrcTokens(originsRes.headers.get('content-security-policy')!))
+        .toEqual(["'self'", 'wss://ws.example.com'])
+      origins.dispose()
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })
 

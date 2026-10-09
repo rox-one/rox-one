@@ -336,7 +336,7 @@ export function TopBar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label={t("common.back")}>
-                  <Icons.ChevronLeft className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+                  <Icons.ChevronLeft className="h-4 w-4 text-text-secondary" />
                 </TopBarButton>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t("common.back")} {goBackHotkey}</TooltipContent>
@@ -345,7 +345,7 @@ export function TopBar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <TopBarButton onClick={onForward} disabled={!canGoForward} aria-label={t("common.forward")}>
-                  <Icons.ChevronRight className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+                  <Icons.ChevronRight className="h-4 w-4 text-text-secondary" />
                 </TopBarButton>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t("common.forward")} {goForwardHotkey}</TooltipContent>
@@ -457,7 +457,7 @@ export function TopBar({
                 aria-pressed={inspectorOpen}
                 className="h-6 w-6 rounded-md"
               >
-                <Icons.PanelRight className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+                <Icons.PanelRight className="h-4 w-4 text-text-secondary" />
               </TopBarButton>
             </TooltipTrigger>
             <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
@@ -470,7 +470,7 @@ export function TopBar({
               aria-label={t("browser.newTab")}
               className="h-6 w-6 rounded-md"
             >
-              <Icons.Plus className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+              <Icons.Plus className="h-4 w-4 text-text-secondary" />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("browser.newTab")}</TooltipContent>

@@ -1,0 +1,16 @@
+{
+ "operator.access_denied": {
+  "ar": "دور المشغّل الخاص بك لا يسمح بتنفيذ هذا الإجراء. اطلب من مسؤول البوابة تحديث دورك.",
+  "de": "Deine Betreiberrolle erlaubt diese Aktion nicht. Bitte einen Gateway-Administrator, deine Rolle zu aktualisieren.",
+  "en": "Your operator role cannot perform this action. Ask a gateway administrator to update your role.",
+  "es": "Tu rol de operador no permite esta acción. Pide a un administrador de la puerta de enlace que actualice tu rol.",
+  "fr": "Votre rôle d'opérateur n'autorise pas cette action. Demandez à un administrateur de la passerelle de mettre à jour votre rôle.",
+  "hu": "Az operátor szerepköröd nem engedélyezi ezt a műveletet. Kérd meg a gateway adminisztrátort a szerepkör frissítésére.",
+  "ja": "この操作はあなたのオペレーター役割では許可されていません。ゲートウェイ管理者に役割の更新を依頼してください。",
+  "ko": "현재 운영자 역할로는 이 작업을 수행할 수 없습니다. 게이트웨이 관리자에게 역할 업데이트를 요청하세요.",
+  "pl": "Twoja rola operatora nie pozwala na tę operację. Poproś administratora bramy o zaktualizowanie roli.",
+  "ru": "Ваша роль оператора не позволяет выполнить это действие. Попросите администратора шлюза обновить вашу роль.",
+  "zh-Hans": "你的操作员角色无权执行此操作。请联系网关管理员更新你的角色。",
+  "zh-Hant": "你的操作員角色無權執行此操作。請聯絡閘道管理員更新你的角色。"
+ }
+}

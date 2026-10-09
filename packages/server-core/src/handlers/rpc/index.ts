@@ -29,6 +29,7 @@ import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './se
 import { registerRuntimeTraceHandlers } from './runtime-trace'
 import { registerSessionForeignImportHandlers } from './session-foreign-import'
 import { registerNotesHandlers, cleanupNotesWatchForClient } from './notes'
+import { registerKnowledgeMapHandlers } from './knowledge-map'
 import { registerNativeDataHandlers } from './native-data.ts'
 import { registerTgLinkHandlers } from './tg-link.ts'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
@@ -67,6 +68,7 @@ import { registerMemoryHandlers } from './memory'
 import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
+import { registerMemoryRepoHandlers, startMemoryRepoRuntime } from './memory-repo'
 import { registerSkillsPendingHandlers } from './skills-pending'
 import { registerLearningHandlers } from './learning'
 export function cleanupCoreClientResources(clientId: string): void {
@@ -82,6 +84,9 @@ import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 import { registerCommandsHandlers, type CommandsHandlerRuntime } from './commands.ts'
 // W1-04 (#1501)
 import { registerDirectoryHandlers } from './directory.ts'
+// f.9 — node/device registry handlers (only when the host composes a registry).
+import { registerNodeHandlers } from './nodes.ts'
+export { registerNodeHandlers } from './nodes.ts'
 // ROX Drive (wave 1)
 import { registerDriveHandlers } from './drive.ts'
 
@@ -168,20 +173,29 @@ export function registerCoreRpcHandlers(
   registerMemoryProposalHandlers(server, deps)
   registerMemoryIoHandlers(server, deps)
   registerMemoryInsightsHandlers(server, deps)
+  // Wave A: process-wide repo projection + dream runtime, then bind the RPC
+  // bridge (registerMemoryRepoHandlers also wires A8's import handlers).
+  startMemoryRepoRuntime({ server, deps })
+  registerMemoryRepoHandlers(server, deps)
   registerSkillsPendingHandlers(server, deps)
   registerLearningHandlers(server, deps)
   registerNotesHandlers(server, deps)
+  registerKnowledgeMapHandlers(server)
   if (deps.nativeData) registerNativeDataHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)
   registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
   // R4: Telegram account linking (local rox-tg-linkd daemon).
-  registerTgLinkHandlers(server, deps)
+  registerTgLinkHandlers(server)
   // W1-03 (#1500)
   registerCommandsHandlers(server, deps, options?.commands)
   // W1-04 (#1501): Dossier export IPC (flag contacts.dossier-export.v1, default OFF).
   registerDirectoryHandlers(server, deps, { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
+  // f.9 — node/device registry. Registered only when the host composes a
+  // registry (mirrors the nativeData gating) so hosts without device
+  // connectivity do not advertise dead node channels.
+  if (deps.nodes) registerNodeHandlers(server, deps)
   // ROX Drive (wave 1) — local-first storage surface.
   registerDriveHandlers(server, deps)
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)

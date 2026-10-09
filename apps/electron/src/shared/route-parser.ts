@@ -17,6 +17,7 @@
 
 import type {
   NavigationState,
+  MemoryNavigationState,
   SessionFilter,
   SourceFilter,
   AutomationFilter,
@@ -27,9 +28,9 @@ import type {
 import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registry'
 import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
-import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
+import { entityRoute, formatEntityRef, parseEntityRef, parseEntityRouteOrLegacy, type EntityRef } from '@rox/core/entities'
 import { ENTITIES_LINKS_WORKBENCH_FLAG, isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
-import { isOpenUnifiedSurfaceRoot, isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
+import { isOpenUnifiedSurfaceRoot, isUnifiedSurfaceRouteEnabled, LEGACY_SURFACE_ALIASES, isLegacySurfaceAliasRoot, type UnifiedSurfaceId } from './surface-routes'
 
 /**
  * Entity-route gate (W1-02, product decision).
@@ -91,7 +92,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'clipboard-history' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -118,6 +119,8 @@ export interface ParsedCompoundRoute {
   viewMode?: 'list' | 'board' | 'table' | 'heatmap'
   /** Parsed entity reference (only for the `entity` navigator). */
   entityRef?: EntityRef
+  /** Memory tab (only for the `memory` navigator): lessons | repo | dream. */
+  memoryTab?: 'lessons' | 'repo' | 'dream'
   /** Unified mode root (only for the `surface` navigator, W1-07). */
   surface?: UnifiedSurfaceId
   /**
@@ -139,7 +142,7 @@ export interface ParsedCompoundRoute {
  * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'clipboard-history', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   // Kind-first entity surfaces (W1-01). Shared with the deep-link handler so
   // `rox://docs/wiki/{id}` etc. reach the renderer parser.
@@ -149,6 +152,10 @@ export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
+  // W3.2/W3.3: legacy `meetings`/`contacts` aliases resolve regardless of the
+  // entities.links.v1 gate (they used to be always-available mode roots).
+  if (isLegacySurfaceAliasRoot(route)) return true
+  if (firstSegment === 'meetings' && /^meetings\/meeting\/[^/]+$/.test(route.split('?')[0])) return true
   // W1-07: a bare unified mode root only exists while its mode flag is on;
   // sub-routes fall through to the entities.links.v1 gate below.
   if (isOpenUnifiedSurfaceRoot(route)) return true
@@ -162,9 +169,28 @@ export function isCompoundRoute(route: string): boolean {
  * an open mode flag admits only the bare root, never its sub-routes.
  */
 export function isCompoundRoutePrefix(prefix: string, route: string = prefix): boolean {
+  if (route.split(/[/?#]/)[0] === prefix && isLegacySurfaceAliasRoot(route)) return true
   if (route.split(/[/?#]/)[0] === prefix && isOpenUnifiedSurfaceRoot(route)) return true
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) return isEntityRoutesEnabled()
   return (COMPOUND_ROUTE_PREFIXES as readonly string[]).includes(prefix)
+}
+
+/**
+ * Parse a legacy surface alias route (W3.2/W3.3) into its unified-surface
+ * state, or null when the route is not an alias shape.
+ * - `meetings` → calendar; `meetings/meeting/{id}` → calendar + meetingId.
+ * - `contacts` → messenger.
+ */
+function parseLegacySurfaceAlias(segments: readonly string[]): ParsedCompoundRoute | null {
+  const first = segments[0]
+  if (first === undefined) return null
+  const surface = LEGACY_SURFACE_ALIASES[first]
+  if (!surface) return null
+  if (segments.length === 1) return { navigator: 'surface', surface, details: null }
+  if (first === 'meetings' && segments.length === 3 && segments[1] === 'meeting' && segments[2]) {
+    return { navigator: 'surface', surface, details: { type: 'meeting', id: decodeURIComponent(segments[2]) } }
+  }
+  return null
 }
 
 function splitRouteQuery(route: string): [string, string | undefined] {
@@ -204,7 +230,17 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   // the flag off the legacy branches below keep owning their own routes and
   // the new shapes are rejected exactly as on main.
   if (isEntityRoutesEnabled()) {
-    const entity = parseEntityRoute(route)
+    const entity = parseEntityRoute(route) ?? (
+      // The W3.2/W3.3 merged alias prefixes (`meetings`, `contacts`) may also
+      // carry a **frozen legacy** entity shape: `meetings/meeting/{id}` is the
+      // canonical route of kind `call` (built by `entityRoute`), but the
+      // kind-first matcher deliberately leaves it to `parseEntityRouteOrLegacy`.
+      // Without this fallback the surface alias below would shadow the meeting
+      // entity whenever `entities.links.v1` is on. Other legacy prefixes
+      // (`tasks/task/{id}`, `notes/note/{id}` …) stay with their legacy
+      // branches — they are not alias roots.
+      LEGACY_SURFACE_ALIASES[first] !== undefined ? parseEntityRouteOrLegacy(route) : null
+    )
     if (entity) {
       return {
         navigator: 'entity',
@@ -212,6 +248,17 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
         entityRef: entity.ref,
       }
     }
+  }
+
+  // W3.2/W3.3 (Согласованность-20261009): legacy surface aliases. Reached
+  // only when the entity block above does not claim the path — gate off, or
+  // no entity shape for it. With `entities.links.v1` on, kind-first routes
+  // (`contacts/person/{id}`) and the merged legacy shapes
+  // (`meetings/meeting/{id}` → kind `call`) keep priority, while the bare
+  // alias roots (`meetings`, `contacts`) still resolve to their surfaces.
+  {
+    const alias = parseLegacySurfaceAlias(segments)
+    if (alias) return alias
   }
 
   // Unified mode roots (W1-07). Bare root only; sub-pages are entity routes.
@@ -341,10 +388,40 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
     return null
   }
 
-  // Memory navigator (self-learning lessons / context / history)
+  // Memory navigator (self-learning lessons / context / history) with the
+  // repository surface: memory, memory/repo, memory/repo/file/<enc>,
+  // memory/repo/commit/<sha>, memory/dream.
   if (first === 'memory') {
+    if (segments.length === 1) return { navigator: 'memory', details: null }
+    const tab = segments[1]
+    if (tab === 'dream') {
+      return segments.length === 2 ? { navigator: 'memory', memoryTab: 'dream', details: null } : null
+    }
+    if (tab === 'repo') {
+      if (segments.length === 2) return { navigator: 'memory', memoryTab: 'repo', details: null }
+      if (segments.length === 4 && segments[2] === 'file' && segments[3]) {
+        return {
+          navigator: 'memory',
+          memoryTab: 'repo',
+          details: { type: 'file', id: decodeURIComponent(segments[3]) },
+        }
+      }
+      if (segments.length === 4 && segments[2] === 'commit' && segments[3]) {
+        return {
+          navigator: 'memory',
+          memoryTab: 'repo',
+          details: { type: 'commit', id: segments[3] },
+        }
+      }
+      return null
+    }
+    return null
+  }
+
+  // Rox History navigator (clipboard history)
+  if (first === 'clipboard-history') {
     if (segments.length !== 1) return null
-    return { navigator: 'memory', details: null }
+    return { navigator: 'clipboard-history', details: null }
   }
 
   // Learning navigator (self-learning dashboard — PRD §25-30)
@@ -385,16 +462,6 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
       return { navigator: 'feed', details: { type: 'item', id: decodeURIComponent(segments[2]) } }
     }
     return segments.length === 1 ? { navigator: 'feed', details: null } : null
-  }
-
-  if (first === 'meetings') {
-    if (segments.length === 3 && segments[1] === 'meeting' && segments[2]) {
-      return {
-        navigator: 'meetings',
-        details: { type: 'meeting', id: decodeURIComponent(segments[2]) },
-      }
-    }
-    return segments.length === 1 ? { navigator: 'meetings', details: null } : null
   }
 
   if (first === 'connections') {
@@ -703,7 +770,18 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   }
 
   if (parsed.navigator === 'memory') {
+    const tab = parsed.memoryTab ?? 'lessons'
+    if (tab === 'dream') return 'memory/dream'
+    if (tab === 'repo') {
+      if (parsed.details?.type === 'file') return `memory/repo/file/${encodeURIComponent(parsed.details.id)}`
+      if (parsed.details?.type === 'commit') return `memory/repo/commit/${encodeURIComponent(parsed.details.id)}`
+      return 'memory/repo'
+    }
     return 'memory'
+  }
+
+  if (parsed.navigator === 'clipboard-history') {
+    return 'clipboard-history'
   }
 
   if (parsed.navigator === 'learning') {
@@ -730,11 +808,6 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return `feed/item/${encodeURIComponent(parsed.details.id)}`
   }
 
-  if (parsed.navigator === 'meetings') {
-    if (!parsed.details) return 'meetings'
-    return `meetings/meeting/${encodeURIComponent(parsed.details.id)}`
-  }
-
   if (parsed.navigator === 'connections') {
     return 'connections'
   }
@@ -744,6 +817,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   }
 
   if (parsed.navigator === 'surface' && parsed.surface) {
+    // W3.2: a calendar meeting carried by the legacy alias keeps the
+    // `meetings/meeting/{id}` address so the deep link round-trips.
+    if (parsed.surface === 'calendar' && parsed.details?.type === 'meeting') {
+      return `meetings/meeting/${encodeURIComponent(parsed.details.id)}`
+    }
     return parsed.surface
   }
 
@@ -943,7 +1021,20 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 
   // Memory
   if (compound.navigator === 'memory') {
-    return { type: 'view', name: 'memory', params: {} }
+    return {
+      type: 'view',
+      name: 'memory',
+      id: compound.details?.id,
+      params: {
+        ...(compound.memoryTab ? { tab: compound.memoryTab } : {}),
+        ...(compound.details ? { detailType: compound.details.type } : {}),
+      },
+    }
+  }
+
+  // Rox History
+  if (compound.navigator === 'clipboard-history') {
+    return { type: 'view', name: 'clipboard-history', params: {} }
   }
 
   // Learning
@@ -977,13 +1068,6 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return { type: 'view', name: 'feed-item', id: compound.details.id, params: {} }
   }
 
-  if (compound.navigator === 'meetings') {
-    if (!compound.details) {
-      return { type: 'view', name: 'meetings', params: {} }
-    }
-    return { type: 'view', name: 'meeting-info', id: compound.details.id, params: {} }
-  }
-
   if (compound.navigator === 'connections') {
     return { type: 'view', name: 'connections', params: {} }
   }
@@ -993,7 +1077,15 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
   }
 
   if (compound.navigator === 'surface' && compound.surface) {
-    return { type: 'view', name: 'surface', params: { surface: compound.surface } }
+    return {
+      type: 'view',
+      name: 'surface',
+      id: compound.details?.id,
+      params: {
+        surface: compound.surface,
+        ...(compound.details ? { detailType: compound.details.type } : {}),
+      },
+    }
   }
 
   if (compound.navigator === 'screen' && compound.screen) {
@@ -1183,8 +1275,13 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
     // Compare the full address, allowing equivalent entity encoding and the
     // established settings aliases. A parser fallback must not drop a suffix.
     const canonicalPath = decodeURIComponent(buildRouteFromNavigationState(state).split('?')[0])
+    // W3.2/W3.3: legacy surface aliases (`meetings` → calendar, `contacts` →
+    // messenger) and the established settings aliases compare by target.
     const aliasedPath = decodedPath === 'settings/toolchain' ? 'settings/runtime'
-      : decodedPath === 'settings/preferences' ? 'settings/context' : decodedPath
+      : decodedPath === 'settings/preferences' ? 'settings/context'
+      : decodedPath === 'meetings' ? 'calendar'
+      : decodedPath === 'contacts' ? 'messenger'
+      : decodedPath
     if (canonicalPath !== aliasedPath) return unavailable
     return state
   } catch {
@@ -1241,7 +1338,22 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
 
   // Memory
   if (compound.navigator === 'memory') {
+    const tab = compound.memoryTab
+    let details: MemoryNavigationState['details'] = null
+    if (tab === 'repo' && compound.details?.type === 'file') {
+      details = { type: 'file', path: compound.details.id }
+    } else if (tab === 'repo' && compound.details?.type === 'commit') {
+      details = { type: 'commit', sha: compound.details.id }
+    }
+    if (tab === 'repo' || tab === 'dream') {
+      return { navigator: 'memory', tab, details }
+    }
     return { navigator: 'memory', details: null }
+  }
+
+  // Rox History
+  if (compound.navigator === 'clipboard-history') {
+    return { navigator: 'clipboard-history', details: null }
   }
 
   // Learning
@@ -1278,16 +1390,6 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'feed', details: { type: 'item', itemId: compound.details.id } }
   }
 
-  if (compound.navigator === 'meetings') {
-    if (!compound.details) {
-      return { navigator: 'meetings', details: null }
-    }
-    return {
-      navigator: 'meetings',
-      details: { type: 'meeting', meetingId: compound.details.id },
-    }
-  }
-
   if (compound.navigator === 'connections') {
     return { navigator: 'connections', details: null }
   }
@@ -1297,7 +1399,17 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
   }
 
   if (compound.navigator === 'surface' && compound.surface) {
-    return { navigator: 'surface', surface: compound.surface, details: null }
+    // W3.2: the legacy `meetings/meeting/{id}` alias carries the meeting in
+    // `details`; keep it on the surface state as `meetingId`.
+    const meetingId = compound.surface === 'calendar' && compound.details?.type === 'meeting'
+      ? compound.details.id
+      : null
+    return {
+      navigator: 'surface',
+      surface: compound.surface,
+      details: null,
+      ...(meetingId ? { meetingId } : {}),
+    }
   }
 
   if (compound.navigator === 'screen' && compound.screen) {
@@ -1496,8 +1608,17 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'sources', details: null }
     case 'skills':
       return { navigator: 'skills', details: null }
-    case 'memory':
-      return { navigator: 'memory', details: null }
+    case 'memory': {
+      const tab = parsed.params.tab === 'repo' || parsed.params.tab === 'dream' ? parsed.params.tab : undefined
+      let details: MemoryNavigationState['details'] = null
+      if (tab === 'repo' && parsed.id) {
+        if (parsed.params.detailType === 'file') details = { type: 'file', path: parsed.id }
+        else if (parsed.params.detailType === 'commit') details = { type: 'commit', sha: parsed.id }
+      }
+      return tab ? { navigator: 'memory', tab, details } : { navigator: 'memory', details: null }
+    }
+    case 'clipboard-history':
+      return { navigator: 'clipboard-history', details: null }
     case 'learning':
       return { navigator: 'learning', details: null }
     case 'drive':
@@ -1518,16 +1639,6 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return parsed.id
         ? { navigator: 'feed', details: { type: 'item', itemId: parsed.id } }
         : { navigator: 'feed', details: null }
-    case 'meetings':
-      return { navigator: 'meetings', details: null }
-    case 'meeting-info':
-      if (parsed.id) {
-        return {
-          navigator: 'meetings',
-          details: { type: 'meeting', meetingId: parsed.id },
-        }
-      }
-      return { navigator: 'meetings', details: null }
     case 'task-info':
       if (parsed.id) {
         return {
@@ -1543,7 +1654,13 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
     case 'surface': {
       const surface = parsed.params.surface
       if (!surface || !isUnifiedSurfaceRouteEnabled(surface)) return null
-      return { navigator: 'surface', surface, details: null }
+      const meetingId = surface === 'calendar' && parsed.params.detailType === 'meeting' ? parsed.id : undefined
+      return {
+        navigator: 'surface',
+        surface,
+        details: null,
+        ...(meetingId ? { meetingId } : {}),
+      }
     }
     case 'screen': {
       const screen = parsed.params.screen
@@ -1757,8 +1874,21 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
   }
 
   if (state.navigator === 'memory') {
+    const tab = state.tab ?? 'lessons'
     return {
       navigator: 'memory',
+      memoryTab: tab,
+      details: state.details
+        ? state.details.type === 'file'
+          ? { type: 'file', id: state.details.path }
+          : { type: 'commit', id: state.details.sha }
+        : null,
+    }
+  }
+
+  if (state.navigator === 'clipboard-history') {
+    return {
+      navigator: 'clipboard-history',
       details: null,
     }
   }
@@ -1798,13 +1928,6 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
     }
   }
 
-  if (state.navigator === 'meetings') {
-    return {
-      navigator: 'meetings',
-      details: state.details ? { type: 'meeting', id: state.details.meetingId } : null,
-    }
-  }
-
   if (state.navigator === 'connections') {
     return {
       navigator: 'connections',
@@ -1823,7 +1946,11 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
     return {
       navigator: 'surface',
       surface: state.surface,
-      details: null,
+      // W3.2: carry the legacy calendar-meeting selection so the address
+      // rebuilds as `meetings/meeting/{id}` (see buildCompoundRoute).
+      details: state.surface === 'calendar' && state.meetingId
+        ? { type: 'meeting', id: state.meetingId }
+        : null,
     }
   }
 
