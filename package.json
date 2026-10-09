@@ -127,6 +127,7 @@
     "docs:dev": "cd apps/docs-site && bun run dev",
     "docs:build": "cd apps/docs-site && bun run build",
     "docs:preview": "cd apps/docs-site && bun run preview",
+    "openui:doc": "bun scripts/openui/generate-doc.ts",
     "build": "bun run scripts/build.ts",
     "release": "bun run scripts/release.ts",
     "check-version": "bun run scripts/check-version.ts",
@@ -185,10 +186,13 @@
     "@anthropic-ai/sdk": "^0.100.0",
     "@dnd-kit/dom": "^0.4.0-beta-20260227032529",
     "@dnd-kit/helpers": "^0.4.0-beta-20260227032529",
-    "@github/copilot-sdk": "^0.1.23",
     "@earendil-works/pi-ai": "0.85.1",
     "@earendil-works/pi-coding-agent": "0.85.1",
+    "@github/copilot-sdk": "^0.1.23",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@openuidev/react-headless": "0.16.3",
+    "@openuidev/react-lang": "0.3.0",
+    "@openuidev/react-ui": "0.16.3",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -241,7 +245,8 @@
     "tailwind-merge": "^3.4.0",
     "tiptap-extension-code-block-shiki": "^1.0.0",
     "tiptap-markdown": "^0.9.0",
-    "zod": "^4.0.0"
+    "zod": "^4.0.0",
+    "zustand": "^4.5.5"
   },
   "optionalDependencies": {
     "@img/sharp-darwin-arm64": "0.34.5",
