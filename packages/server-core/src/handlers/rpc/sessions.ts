@@ -23,6 +23,7 @@ import { perf } from '@rox/shared/utils'
 import { isValidThinkingLevel, THINKING_LEVEL_IDS } from '@rox/shared/agent/thinking-levels'
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import { assertNativeSession, assertNativeWorkspace, nativeAnnotation, nativeSession } from './native-session-scope'
+import { sessionActorIdFor } from './session-actor'
 import { awardNativeXpAndBroadcast } from './gamification'
 import { workspaceWorkContext } from './workspace-work'
 
@@ -254,7 +255,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   // a1.3/a1.4: actor identity + ephemeral collaboration signals. A local caller
   // (no cloud principal) resolves to the installation identity, matching the
   // Rox caller plumbing used by the sharing arms below.
-  const sessionActorId = (ctx: RequestContext): string => ctx.principal?.subject ?? LOCAL_ROX_CALLER.subject
+  const sessionActorId = (ctx: RequestContext): string => sessionActorIdFor(ctx)
   const sessionActorName = (ctx: RequestContext): string => ctx.principal
     ? (deps.nativeData?.authority.getSelfProfile(ctx.principal, ctx.workspaceId ?? '')?.name ?? ctx.principal.subject)
     : 'Local'
@@ -572,6 +573,14 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     sessionId: string,
     command: import('@rox/shared/protocol').SessionCommand
   ) => {
+    // a2.5: the visibility gate runs before the native-only branches. Sharing
+    // commands (shareToViewer/updateShare/revokeShare/inviteBro/revokeBroInvite)
+    // are write commands that the principal path dispatches before the switch,
+    // so this is the only point both paths share the rule. `joinBroInvite` joins
+    // a session by invitation and is deliberately absent from the write set.
+    if (SESSION_WRITE_COMMANDS.has(command?.type)) {
+      sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
+    }
     if (ctx.principal) {
       if (command?.type === 'joinBroInvite') {
         const target = parseInviteUrl(command.url)
@@ -622,10 +631,9 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         }
       }
     }
+    // Participant upkeep stays after the native-access checks, so a rejected
+    // cross-workspace caller never binds itself to the session.
     if (SESSION_WRITE_COMMANDS.has(command.type)) {
-      // a2.5: read-only/draft deny non-owner writes with a typed error; shared/suggest and
-      // the owner are allowed. Runs after the native-access checks so both paths share the rule.
-      sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
       await sessionManager.noteSessionParticipant(sessionId, sessionParticipant(ctx))
     }
     switch (command.type) {
@@ -794,6 +802,10 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     if (ctx.principal && !server.isRequestContextCurrent?.(ctx, 'write')) {
       throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
     }
+    // a2.5: ownership never grants access, so assigning it is itself a write that
+    // follows the session visibility. Without this a non-owner could self-assign
+    // into write access on a draft/read-only session.
+    sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
     await sessionManager.assignSessionOwner(sessionId, owner ?? null, sessionActorId(ctx))
   }, { nativeAction: 'write' })
 
@@ -821,6 +833,16 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
 
     await sessionManager.waitForInit()
+    // a2.5: a bulk mutation is still one write per target. Unknown/foreign ids are
+    // left out so bulkUpdateSessions keeps reporting their existing failures.
+    const callerSessions = new Set(
+      sessionManager.getSessions(callerWorkspaceId).map(session => session.id),
+    )
+    for (const sessionId of input.ids) {
+      if (callerSessions.has(sessionId)) {
+        sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
+      }
+    }
     const result = await sessionManager.bulkUpdateSessions(
       callerWorkspaceId,
       { ids: input.ids, patch: input.patch },

@@ -56,7 +56,10 @@ const sessionFields = ['id', 'workspaceId', 'workspaceName', 'name', 'preview', 
   'lastReadMessageId', 'hasUnread', 'enabledSourceSlugs', 'model', 'llmConnection', 'thinkingLevel',
   'lastMessageRole', 'lastFinalMessageId', 'createdAt', 'messageCount', 'tokenUsage', 'hidden',
   'isArchived', 'archivedAt', 'supportsBranching', 'branchFromMessageId', 'branchFromSessionId',
-  'parentSessionId', 'agentProfileSnapshot', 'kanbanColumn', 'rank', 'priority', 'dueDate'] as const
+  'parentSessionId', 'agentProfileSnapshot', 'kanbanColumn', 'rank', 'priority', 'dueDate',
+  // a1.3/a1.4/a2.5: attribution/visibility must survive the snapshot, not only
+  // the event patch, or a freshly loaded client renders every session unassigned.
+  'creator', 'owner', 'participants', 'visibility'] as const
 
 /** Public metadata IDs are never host paths or project-context capabilities. */
 function nativeProjectMembership(membership: { projectId?: unknown; projectIds?: unknown }): { projectId?: string; projectIds: string[] } {
