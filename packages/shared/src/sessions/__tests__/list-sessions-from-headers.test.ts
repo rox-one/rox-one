@@ -13,7 +13,11 @@ afterEach(() => {
 
 /** Order-independent comparable form: id-keyed, JSON-serialized (key order included). */
 function keyed(metas: SessionMetadata[]): string {
-  return JSON.stringify(metas.map((meta) => [meta.id, meta]).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)));
+  return JSON.stringify(
+    metas
+      .map((meta) => [meta.id, meta] as const)
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)),
+  );
 }
 
 describe('listSessionsFromHeaders', () => {
