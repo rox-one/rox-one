@@ -69,7 +69,7 @@ describe('privacy + dock fixtures', () => {
     const refs = new Set(PRIVACY_EXPECTATIONS.map((e) => e.ref))
     for (const f of PRIVACY_FIXTURES) expect(refs.has(f.ref)).toBe(true)
   })
-  test('dock table covers widths 960–2560 and MAIN ≥ 640 holds', () => {
+  test('dock table covers widths 960–2560 and MAIN ≥ 640 holds for side-by-side rows', () => {
     const table = buildDockTable()
     const widths = new Set(table.map((r) => r.width))
     expect(widths.has(960)).toBe(true)
