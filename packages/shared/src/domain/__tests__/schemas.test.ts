@@ -4,9 +4,36 @@ import { COMMAND_PAYLOAD_SCHEMAS, DOMAIN_COMMAND_SCHEMA_MODULES, ENTITY_SCHEMAS,
 
 const catalogue = COMMAND_CATALOGUE.map(definition => definition.type).filter(type => !type.startsWith('system.')).sort()
 
+/**
+ * Catalogue commands this wave deliberately leaves out of `COMMAND_PAYLOAD_SCHEMAS`,
+ * each with why (the `OWNER_BOUND_TYPES` / `W1_11_OWNED_TYPES` idiom from
+ * `packages/server-core`). Both are XFN capability names W1-15 (#1512) declares in
+ * `packages/core/src/commands/catalogue/xfn.ts`; their zod payload schemas exist in
+ * `@rox/shared/xfn/schemas.ts` (`XFN_SCHEMAS`) but are attached to the registry
+ * later, by `bindXfnContracts`, on lane #1534 (W2 XFN X-13…X-26,
+ * `docs/specs/2026-10-08-lark-operately-unified/PLAN.md`). Adding one here would
+ * mark it `schemaBound` in the wired registry before that wiring lands, so the
+ * negative-tests gate (#1507) would demand a negative test block the command does
+ * not have yet (its `riskClass` is already set by the catalogue, so that gate is
+ * not the blocker). When #1534 wires the XFN schemas, remove the entry and its
+ * deferral test: the coverage assertion below then fails and forces this list to
+ * be reviewed.
+ */
+const DEFERRED_DOMAIN_SCHEMA_TYPES: Readonly<Record<string, string>> = {
+  'decisions.create': 'X-15 decision record; zod schema in @rox/shared/xfn/schemas.ts (XFN_SCHEMAS), bound by bindXfnContracts — lane #1534 (PLAN.md W2 XFN X-13…X-26)',
+  'tables.insert_row': 'X-23 form-submit row insert; zod schema in @rox/shared/xfn/schemas.ts (XFN_SCHEMAS), bound by bindXfnContracts — lane #1534 (PLAN.md W2 XFN X-13…X-26)',
+}
+const deferred = Object.keys(DEFERRED_DOMAIN_SCHEMA_TYPES).sort()
+/** Catalogue commands the domain map must cover: everything except the named deferrals. */
+const covered = catalogue.filter(type => !(type in DEFERRED_DOMAIN_SCHEMA_TYPES))
+
 describe('domain command schemas (W1-06)', () => {
-  test('cover exactly the non-system catalogue', () => {
-    expect(Object.keys(COMMAND_PAYLOAD_SCHEMAS).sort()).toEqual(catalogue)
+  test('cover exactly the non-system catalogue minus the deferred XFN types', () => {
+    expect(Object.keys(COMMAND_PAYLOAD_SCHEMAS).sort()).toEqual(covered)
+  })
+
+  test('every deferred type is a non-system catalogue command', () => {
+    expect(deferred.filter(type => !catalogue.includes(type))).toEqual([])
   })
 
   test('module maps do not overlap', () => {
@@ -15,11 +42,19 @@ describe('domain command schemas (W1-06)', () => {
     expect([...counts].filter(([, count]) => count > 1)).toEqual([])
   })
 
-  test.each(catalogue)('%s rejects unknown members and non-objects', type => {
+  test.each(covered)('%s rejects unknown members and non-objects', type => {
     const schema = COMMAND_PAYLOAD_SCHEMAS[type]!
     expect(schema.safeParse({ __unknown: 1 }).success).toBe(false)
     expect(schema.safeParse(null).success).toBe(false)
     expect(schema.safeParse([]).success).toBe(false)
+  })
+
+  // The negative test for a deferred type cannot assert a VALIDATION outcome it
+  // has no schema to produce, so it asserts the documented deferral itself:
+  // one named test per type, next to the one-line reason above.
+  test.each(deferred)('%s is deferred — no domain payload schema yet (#1534)', type => {
+    expect(DEFERRED_DOMAIN_SCHEMA_TYPES[type]).toBeDefined()
+    expect(COMMAND_PAYLOAD_SCHEMAS[type]).toBeUndefined()
   })
 
   test.each([

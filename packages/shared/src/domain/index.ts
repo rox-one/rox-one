@@ -30,6 +30,8 @@ import { AUTOMATION_COMMAND_SCHEMAS } from '../automation/schemas'
 import { COLLAB_COMMAND_SCHEMAS } from '../collab/schemas'
 import { DRIVE_CONTRACT_COMMAND_SCHEMAS } from '../drive/schemas'
 import { XSC_COMMAND_SCHEMAS } from '../xsc/schemas'
+// W1-11 (#1508) — the one team-chat payload schema that ships outside this folder.
+import { browsePublicChatsSchema } from '../identity/schemas'
 
 export * from './common'
 export * from './acl/schema'
@@ -52,10 +54,27 @@ export * from '../collab/schemas'
 export * from '../drive/schemas'
 export * from '../xsc/schemas'
 
+/**
+ * `im.browse_public_chats` (catalogue module `im`) is the one non-system command
+ * whose payload schema ships outside `@rox/shared/domain`: W1-11 (#1508) defines
+ * it in `@rox/shared/identity/schemas.ts`, and the agents module binds that copy.
+ * The domain payloads are strict (`./common.ts`: unknown members are a VALIDATION
+ * rejection) while the W1-11 schema is a plain `z.object`, so it is re-issued
+ * strict at this boundary. Domain schemas bind before the agents module
+ * (`COMMAND_MODULES` order), so this is the schema the registry keeps — exactly as
+ * for the other `im` commands the map already shadows.
+ */
+// The W1-11 schema is a `z.object()` at runtime; its declared type is widened to `z.ZodType`, which drops `.strict()`.
+const browsePublicChatsObject = browsePublicChatsSchema as unknown as z.ZodObject<z.ZodRawShape>
+
+const MESSENGER_TEAM_CHAT_SCHEMAS: CommandSchemaMap = {
+  'im.browse_public_chats': browsePublicChatsObject.strict(),
+}
+
 /** Per-module maps, in catalogue module order. */
 export const DOMAIN_COMMAND_SCHEMA_MODULES: Readonly<Record<string, CommandSchemaMap>> = Object.freeze({
   entities: ENTITIES_COMMAND_SCHEMAS,
-  messenger: MESSENGER_COMMAND_SCHEMAS,
+  messenger: { ...MESSENGER_COMMAND_SCHEMAS, ...MESSENGER_TEAM_CHAT_SCHEMAS },
   docs: DOCS_COMMAND_SCHEMAS,
   drive: DRIVE_COMMAND_SCHEMAS,
   wiki: WIKI_COMMAND_SCHEMAS,

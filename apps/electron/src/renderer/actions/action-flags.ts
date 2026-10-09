@@ -5,8 +5,10 @@ import { WORKBENCH_FLAG } from '@rox/core/platform'
 
 export const W1_07_ACTION_FLAG = {
   /**
-   * STUB(#1512): W1-15 registers `agent.panel.v1` in `flags.ts`. Until then the
-   * id is unregistered, never resolves as enabled, and ⌘J / ⌘⇧J stay unbound.
+   * W1-15 (#1512) registers `agent.panel.v1` (`packages/core/src/platform/workbench/flags.ts:99`,
+   * mirrored at `packages/shared/src/feature-flags.ts:427`), so the id resolves like every other
+   * workbench flag. The ⌘J / ⌘⇧J actions stay inert for a different reason: nothing subscribes to
+   * `agent.togglePanel` / `agent.askAboutSelection` yet (only `actions/definitions.ts` names them).
    */
   agentPanel: 'agent.panel.v1',
   messenger: WORKBENCH_FLAG.modeMessengerV1,
