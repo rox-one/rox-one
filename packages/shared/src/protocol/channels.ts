@@ -93,6 +93,9 @@ export const RPC_CHANNELS = {
     FOREIGN_AUTO_RUN: 'sessions:foreignAutoRun',
     FOREIGN_AUTO_SET: 'sessions:foreignAutoSet',
     ASSIGN_OWNER: 'sessions:assignOwner',
+    SUGGEST_ADD: 'sessions:suggestAdd',
+    SUGGEST_LIST: 'sessions:suggestList',
+    SUGGEST_RESOLVE: 'sessions:suggestResolve',
   },
   transfer: {
     START: 'transfer:start',

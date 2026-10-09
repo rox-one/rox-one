@@ -1282,12 +1282,14 @@ export function upsertSessionParticipant(
 /** Result of the server-side session write-visibility check (a2.5). */
 export type SessionWriteAccess =
   | { allowed: true }
-  | { allowed: false; code: 'SESSION_READ_ONLY' | 'SESSION_OWNER_ONLY'; message: string }
+  | { allowed: false; code: 'SESSION_READ_ONLY' | 'SESSION_OWNER_ONLY' | 'SESSION_SUGGEST_ONLY'; message: string }
 
 /**
  * Decide whether `actorAccountId` may write to a session by its visibility.
  *
- * `shared`/`suggest` are open; `read-only` and `draft` restrict writes to the
+ * `shared` is open. A `suggest` session refuses a non-owner DIRECT write with
+ * SESSION_SUGGEST_ONLY — a non-owner proposes a suggestion instead (see the
+ * session-suggestion store). `read-only` and `draft` restrict writes to the
  * owner (owner.id if assigned, else the creator's account). A session with no
  * attribution has no owner to enforce, so it stays open — legacy local
  * sessions must not become unwritable after this ships.
@@ -1297,10 +1299,13 @@ export function evaluateSessionWriteAccess(
   actorAccountId: string | null,
 ): SessionWriteAccess {
   const visibility = session.visibility ?? 'shared'
-  if (visibility === 'shared' || visibility === 'suggest') return { allowed: true }
+  if (visibility === 'shared') return { allowed: true }
   const owner = session.owner?.id ?? session.creator?.accountId ?? null
   if (!owner) return { allowed: true }
   if (actorAccountId && actorAccountId === owner) return { allowed: true }
+  if (visibility === 'suggest') {
+    return { allowed: false, code: 'SESSION_SUGGEST_ONLY', message: 'Session accepts suggestions only from this actor' }
+  }
   return visibility === 'read-only'
     ? { allowed: false, code: 'SESSION_READ_ONLY', message: 'Session is read-only for this actor' }
     : { allowed: false, code: 'SESSION_OWNER_ONLY', message: 'Session is a private draft owned by another actor' }

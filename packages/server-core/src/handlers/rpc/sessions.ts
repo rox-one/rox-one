@@ -14,6 +14,8 @@ import {
   type SessionParticipantIdentity,
   type SessionCommand,
   type BroPresenceMemberDto,
+  type SessionSuggestion,
+  type SessionSuggestionResolution,
 } from '@rox/shared/protocol'
 import type { StoredAttachment, SessionMemoryMode } from '@rox/core/types'
 import { isRuntimeLaunch } from '@rox/core/runtime-trace'
@@ -43,6 +45,7 @@ import { disposeBroInviteService, getBroInviteService } from '../../collaboratio
 import { parseInviteUrl } from '@rox/shared/collaboration'
 import { getNativeSessionCollaboration, NATIVE_SHARING_COMMANDS } from './native-session-collaboration'
 import { SessionActivityTracker } from '../../collaboration/session-activity-tracker'
+import { getSessionSuggestionStore } from '../../collaboration/session-suggestions.ts'
 import {
   isClaimableLive,
   rpcSessionsActResult,
@@ -200,6 +203,9 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL,
   RPC_CHANNELS.sessions.COMMAND,
   RPC_CHANNELS.sessions.ASSIGN_OWNER,
+  RPC_CHANNELS.sessions.SUGGEST_ADD,
+  RPC_CHANNELS.sessions.SUGGEST_LIST,
+  RPC_CHANNELS.sessions.SUGGEST_RESOLVE,
   RPC_CHANNELS.sessions.BULK_UPDATE,
   RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION,
   RPC_CHANNELS.sessions.GET_PERMISSION_MODE_STATE,
@@ -816,6 +822,71 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // into write access on a draft/read-only session.
     sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
     await sessionManager.assignSessionOwner(sessionId, owner ?? null, sessionActorId(ctx))
+  }, { nativeAction: 'write' })
+
+  // a2.5 suggestions: the propose-only channel for a `suggest` session. A
+  // non-owner may not write directly (evaluateSessionWriteAccess refuses with
+  // SESSION_SUGGEST_ONLY); they propose here instead, and only the owner resolves.
+  const suggestionStore = getSessionSuggestionStore()
+
+  server.handle(RPC_CHANNELS.sessions.SUGGEST_ADD, async (
+    ctx,
+    sessionId: string,
+    body: string,
+  ): Promise<SessionSuggestion> => {
+    assertNativeSession(ctx, deps, server, sessionId)
+    // Proposing is not a write to the session, so it only requires the session to
+    // be readable; a hidden draft must not be revealed (NOT_FOUND, not a typed deny).
+    if (!sessionManager.canReadSession(sessionId, sessionActorId(ctx))) {
+      throw new CodedError('NOT_FOUND', 'Session not found')
+    }
+    const session = await sessionManager.getSession(sessionId)
+    if (!session) throw new CodedError('NOT_FOUND', 'Session not found')
+    if ((session.visibility ?? 'shared') !== 'suggest') {
+      throw new CodedError('SESSION_SUGGESTION_INVALID', 'Session does not accept suggestions')
+    }
+    // Author-bound: the author is the resolved caller identity, never the payload.
+    return suggestionStore.add(sessionId, {
+      accountId: sessionActorId(ctx), displayName: sessionActorName(ctx), kind: 'profile',
+    }, body)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.sessions.SUGGEST_LIST, async (
+    ctx,
+    sessionId: string,
+  ): Promise<SessionSuggestion[]> => {
+    assertNativeSession(ctx, deps, server, sessionId)
+    if (!sessionManager.canReadSession(sessionId, sessionActorId(ctx))) return []
+    return suggestionStore.list(sessionId)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.sessions.SUGGEST_RESOLVE, async (
+    ctx,
+    sessionId: string,
+    suggestionId: string,
+    resolution: SessionSuggestionResolution,
+  ): Promise<{ suggestion: SessionSuggestion; dispatched: boolean }> => {
+    assertNativeSession(ctx, deps, server, sessionId)
+    if (resolution !== 'accepted' && resolution !== 'dismissed') {
+      throw new CodedError('SESSION_SUGGESTION_INVALID', 'Unknown suggestion resolution')
+    }
+    // Resolving dispatches a message, so it is a direct write: on a suggest
+    // session only the owner passes the visibility gate, which is exactly the
+    // authority a resolve requires.
+    sessionManager.assertSessionWriteAccess(sessionId, sessionActorId(ctx))
+    const resolver = sessionActorId(ctx)
+    return suggestionStore.resolve(sessionId, suggestionId, resolution, resolver, async (suggestion) => {
+      // Exactly one dispatch through the normal send path per accepted suggestion.
+      const messageId = await new Promise<string>((resolve, reject) => {
+        let acked = false
+        const onAck = (id: string) => { if (!acked) { acked = true; resolve(id) } }
+        sessionManager.sendMessage(sessionId, suggestion.body, undefined, undefined, undefined, undefined, undefined, onAck)
+          .then(() => { if (!acked) { acked = true; reject(new Error('sendMessage completed without persisting a user message')) } })
+          .catch((error) => { if (!acked) { acked = true; reject(error) } })
+      })
+      await sessionManager.noteSessionParticipant(sessionId, sessionParticipant(ctx))
+      return messageId
+    })
   }, { nativeAction: 'write' })
 
   // B4: one caller-authorized, per-target atomic collection update.
