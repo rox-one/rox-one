@@ -4,6 +4,7 @@ import {
   EMPTY_SESSION_ACTIVITY,
   TypingBeacon,
   collectSessionOwnerOptions,
+  filterLocalTypingActors,
   reduceSessionActivityEvent,
   sessionInvolvesViewer,
   sessionMatchesOwnerFilter,
@@ -83,6 +84,28 @@ describe('typing beacon', () => {
     const sent: boolean[] = []
     new TypingBeacon((typing) => sent.push(typing)).clear()
     expect(sent).toEqual([])
+  })
+})
+
+describe('local typing filter', () => {
+  const actor = (accountId: string): { accountId: string; displayName: string; expiresAt: number } =>
+    ({ accountId, displayName: accountId, expiresAt: 9 })
+
+  it('drops the local viewer’s own actor and keeps everyone else', () => {
+    const viewer: ViewerIdentity = { accountId: 'acc-self', username: 'me', displayName: 'Local' }
+    const actors = [actor('acc-self'), actor('acc-b'), actor('acc-c')]
+    expect(filterLocalTypingActors(actors, viewer).map(a => a.accountId)).toEqual(['acc-b', 'acc-c'])
+  })
+
+  it('keeps every actor for an unknown viewer (no account id to match)', () => {
+    const viewer: ViewerIdentity = { accountId: null, username: 'me', displayName: 'Local' }
+    const actors = [actor('acc-self'), actor('acc-b')]
+    expect(filterLocalTypingActors(actors, viewer)).toEqual(actors)
+  })
+
+  it('returns an empty list unchanged', () => {
+    const viewer: ViewerIdentity = { accountId: 'acc-self', username: null, displayName: null }
+    expect(filterLocalTypingActors([], viewer)).toEqual([])
   })
 })
 

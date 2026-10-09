@@ -31,7 +31,8 @@ import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 import { SessionTypingIndicator } from "./SessionTypingIndicator"
-import { useSessionActivityState, useSessionTypingBeacon } from "@/hooks/useSessionPresence"
+import { useSessionActivityState, useSessionTypingBeacon, useViewerIdentity } from "@/hooks/useSessionPresence"
+import { filterLocalTypingActors } from "@/lib/session-presence"
 
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -1455,7 +1456,14 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   }, [session?.id, messageCount, lastMessageId, lastMessageRole, captureScrollOwner, followOutput, beginOutputMotion])
 
   // a2.4: live typing actors + throttled outgoing typing beacons for the composer.
-  const { typingActors } = useSessionActivityState(session?.id ?? '')
+  const viewer = useViewerIdentity()
+  const { typingActors: rawTypingActors } = useSessionActivityState(session?.id ?? '')
+  // The server includes the emitter in its typing snapshot; never show the
+  // local viewer their own typing back above the composer.
+  const typingActors = React.useMemo(
+    () => filterLocalTypingActors(rawTypingActors, viewer),
+    [rawTypingActors, viewer],
+  )
   const typingBeacon = useSessionTypingBeacon(session?.id)
 
   // Handle message submission from InputContainer

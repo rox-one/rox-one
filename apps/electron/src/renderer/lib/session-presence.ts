@@ -87,6 +87,14 @@ function sameActors(a: readonly SessionTypingActor[], b: readonly SessionTypingA
 export const TYPING_BEACON_INTERVAL_MS = 3_000
 
 /**
+ * Viewer-watch heartbeat interval. `watchSession` is not a one-shot
+ * registration: server viewer entries expire after the 5-minute viewer TTL and
+ * the connection must re-`watch` to stay visible. 60 s keeps the local viewer
+ * live with a wide margin against both the TTL and a dropped heartbeat.
+ */
+export const VIEWER_WATCH_HEARTBEAT_MS = 60_000
+
+/**
  * Throttled typing beacon. `notify()` emits `true` at most once per interval
  * (leading edge, so the indicator appears immediately); `clear()` emits `false`
  * once. The server TTL (60 s) is refreshed by each `true`.
@@ -141,6 +149,22 @@ export const EMPTY_VIEWER_IDENTITY: ViewerIdentity = { accountId: null, username
 
 export function hasViewerIdentity(viewer: ViewerIdentity): boolean {
   return Boolean(viewer.accountId || viewer.username || viewer.displayName)
+}
+
+/**
+ * Drop the local viewer from a typing snapshot. The server emits every typing
+ * actor including the emitter, so the composer would otherwise render e.g.
+ * "Local is typing…" above the local user's own input until the server TTL
+ * expires. Matching is by account id only — the authoritative key on the
+ * typing actor; a viewer with no known account id filters nobody.
+ */
+export function filterLocalTypingActors(
+  actors: readonly SessionTypingActor[],
+  viewer: ViewerIdentity,
+): SessionTypingActor[] {
+  const accountId = viewer.accountId
+  if (!accountId) return [...actors]
+  return actors.filter(actor => actor.accountId !== accountId)
 }
 
 export interface SessionAttributionFields {
