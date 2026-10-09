@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from 'bun:test'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { CodedError } from '@rox/shared/protocol'
@@ -103,4 +103,31 @@ test('a symlinked widget folder is denied', () => {
   const outside = mkdtempSync(join(tmpdir(), 'widget-outside-')); dirs.push(outside)
   symlinkSync(outside, folder, 'dir')
   expect(codeOf(() => f.store.read('chart'))).toBe('FORBIDDEN')
+  // A re-put must also be denied and must not write through the link.
+  expect(codeOf(() => put(f.store))).toBe('FORBIDDEN')
+  expect(existsSync(join(outside, 'index.html'))).toBe(false)
+  expect(existsSync(join(outside, 'widget.json'))).toBe(false)
+})
+
+test('an intermediate symlink (board -> outside) is denied and nothing escapes the root', () => {
+  const root = mkdtempSync(join(tmpdir(), 'widget-store-')); dirs.push(root)
+  const outside = mkdtempSync(join(tmpdir(), 'widget-outside-')); dirs.push(outside)
+  // `board` is an intermediate component of every widget path, not the leaf.
+  symlinkSync(outside, join(root, 'board'), 'dir')
+  const store = new WidgetStore(root, 'workspace-a')
+  expect(codeOf(() => put(store))).toBe('FORBIDDEN')
+  expect(codeOf(() => store.read('chart'))).toBe('FORBIDDEN')
+  expect(codeOf(() => store.readDocument('chart'))).toBe('FORBIDDEN')
+  expect(existsSync(join(outside, 'widgets'))).toBe(false)
+  expect(existsSync(join(outside, 'widgets', 'chart', 'index.html'))).toBe(false)
+})
+
+test('a real intermediate directory still stores normally', () => {
+  const f = fixture()
+  // Pre-create board/widgets as REAL directories: the confinement walk must pass.
+  mkdirSync(join(f.root, 'board', 'widgets'), { recursive: true })
+  const record = put(f.store)
+  expect(record.revision).toBe(1)
+  expect(existsSync(join(f.root, 'board', 'widgets', 'chart', 'index.html'))).toBe(true)
+  expect(f.store.readDocument('chart')).toContain('widget-marker')
 })

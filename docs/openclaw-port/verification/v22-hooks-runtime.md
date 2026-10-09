@@ -3,7 +3,10 @@
 - Repo: `/Users/t/Projects/rox-w3-int` (branch `port/w3-int`)
 - HEAD verified: `4407bc340` (`fix(openclaw-port): pass the buffered node body as an ArrayBuffer to Request`)
 - Platform: darwin 27.0.0 arm64 · bun 1.4.2
-- Targets: `packages/server-core/src/scheduler/{hooks-http.ts,hooks-node.ts}` + the bootstrap wiring in `packages/server-core/src/bootstrap/headless-start.ts`
+- Targets: `packages/server-core/src/scheduler/{hooks-http.ts,hooks-node.ts}` + the bootstrap wiring in
+  `packages/server-core/src/bootstrap/headless-start.ts:557-569` (`createHooksHttpIngress` +
+  `composeHooksNodeHandler`; the ingress is installed **only** when a token exists). The no-route /
+  no-ingress fall-through is `hooks-node.ts:101-102`; the WebUI HTTP host carries no hooks code.
 - Date: 2026-10-09
 - Verdict: **PASS — every ticket claim verified against real processes, real HTTP, real WS RPC and a real session store; no FAIL defects.**
 
@@ -211,6 +214,12 @@ routes did not shadow any of these.
   conflict + a `qdrant` `pydantic-core` build) pushed the response past a 20 s client timeout.
   Callers should use a generous timeout; this is by design (no second delivery path) but is worth
   knowing.
+- **Replay is NOT deduped.** A real-server probe delivered the **identical** body twice to the
+  same registered event and both were dispatched (`{"invoked":1}` each time; the listener received
+  the payload twice). The ingress keeps no delivery-id / replay cache — an at-least-once webhook
+  sender must dedupe on its side. (Same probe re-confirmed the §1–§(12) matrix: no token → 404 even
+  with a well-formed bearer; token set + wrong bearer → 401; correct bearer → 200; malformed body →
+  400; `GET` → 405; unknown event → 404.)
 - **Startup event-loop stall.** For ~18–48 s after `Rox server listening …` is printed, HTTP
   requests to the RPC port do not get a response. Cause observed in the log: the bundled-skills
   sync runs **inline on the main thread** (`[bundled-skills] background sync finished
@@ -229,3 +238,17 @@ routes did not shadow any of these.
   through the bootstrap driver.
 - No workspace-wide gate was run (`typecheck:all`, full `bun test`, `run-gates.sh`) — out of scope
   by instruction.
+
+---
+
+## Post-verification corrections (adversarial refutation, 2026-10-09)
+
+- **Wiring attribution (refuted).** The ingress is installed/composed at
+  `bootstrap/headless-start.ts:557-569` (`createHooksHttpIngress` + `composeHooksNodeHandler`) with
+  the no-ingress fall-through at `scheduler/hooks-node.ts:101-102`; the WebUI HTTP host holds no
+  hooks code (a real-server probe reached `/hooks/*` only through the composed handler).
+- **Replay (refuted sub-claim).** Replay is **not** deduped: the identical body delivered twice to a
+  registered event was dispatched twice (`{"invoked":1}` twice) — recorded in §Observations.
+- **Auth/dispatch matrix (re-confirmed, kept).** Same probe: no token → 404 even with a valid-looking
+  bearer; token set + wrong bearer → 401; correct bearer → 200; malformed body → 400; `GET` → 405;
+  unknown event → 404.

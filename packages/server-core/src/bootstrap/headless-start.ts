@@ -540,7 +540,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
   let stateWriterLock: StateWriterLock
   try {
     stateWriterLock = acquireStateWriterLock(stateWriterLockPath(stateConfigDir), { label: 'rox-server' })
-    openStateStore({ configDir: stateConfigDir })
+    openStateStore({ configDir: stateConfigDir, lock: stateWriterLock })
   } catch (error) {
     releaseServerLock()
     throw error

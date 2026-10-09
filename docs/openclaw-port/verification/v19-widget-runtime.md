@@ -195,38 +195,53 @@ store/serialization seam is identical, but the `name/title/widget_code` trimming
 
 ## Defect / limitation found
 
-### D1 — `WidgetTicketRegistry.validate` has no production caller (ticket binding is unenforced at runtime)
+### D1 — the frame's message bridge carries no ticket, and the renderer's mount path never validates
 
-`widget-tickets.ts:138` defines `validate`, and the whole rationale for the registry (bind a mount to
-an exact `(widgetId, revision, viewGeneration)`, refuse replay) rests on it — but no non-test code path
-calls it:
+The frame's message bridge handles **only** the size report. `parseWidgetFrameMessage` accepts a
+same-frame `rox:widget-size` whose `type`/`height` are own properties and returns a clamped height
+(`WidgetFrame.tsx:88-96`); its payload carries **no** `widgetId`, `ticket`, or `nonce` field — so
+"refuse a bad ticket" is **not** a bridge function. The bridge never sees a ticket at all, and
+`WidgetFrame.tsx` deliberately never opens the bootstrap `MessagePort` (`WidgetFrame.tsx:19-27`), so
+no privileged channel is ever established.
 
-```
-$ grep -rn "\.validate({" packages/server-core/src --include=*.ts | grep -v __tests__
-(no board/widget-tickets hit)
-$ grep -rln "widgetTicketRegistryFor" packages apps --include=*.ts | grep -v __tests__
-packages/server-core/src/board/widget-tickets.ts
-packages/server-core/src/board/tool-callbacks.ts
-packages/server-core/src/handlers/rpc/board.ts
-```
+Ticket validation is a **separate RPC**: `board:widgetValidate` (`channels.ts:1167`; handler
+`handlers/rpc/board.ts:111-119` calls `tickets.validate({ nonce, widgetId, revision })`), which
+raises the one uniform typed refusal `WIDGET_TICKET_REFUSED` for unknown / expired /
+stale-after-re-put tickets. It is reachable over the real wire (proved by
+`board/__tests__/widget-ticket-enforcement.test.ts`), but **the renderer's mount path does not call
+it**: `WidgetCard.tsx` mints a fresh nonce with `board:widgetMount` and releases it with
+`board:widgetRelease` on unmount / ticket change (`WidgetCard.tsx:109`) — it never calls
+`board:widgetValidate`. So over the app's own renderer path a stale/forged nonce is still never
+actually consumed; `board:widgetValidate` makes the refusal *reachable*, but the product mount path
+does not yet exercise it.
 
-The frozen `board:*` surface exposes only `widgetPut|widgetGet|widgetMount|widgetRelease`
-(`channels.ts:1143-1148`) and `WidgetFrame.tsx` deliberately never opens the bootstrap `MessagePort`
-(`WidgetFrame.tsx:19-27`), so nothing ever exchanges the nonce for a validation. Consequence: over the
-**frozen RPC surface**, "the OLD ticket is refused" is observable only as
-`board:widgetRelease → {released:false}` (§2); the typed `WIDGET_TICKET_REFUSED` refusal is reachable
-only in-process (§2), and a forged/replayed nonce is never actually checked anywhere in production.
-
-Smallest fix: expose the capability check on the surface that will consume the ticket — a
-`board:widgetValidate` handler (or, when the frame-message host lands, validate before opening the
-Port) — calling `tickets.validate({ nonce, widgetId, revision })` and returning its ticket. Until then
-the ticket is a minted-but-unchecked token, and this section should be read as "the registry refuses
-correctly, but nothing asks it to".
+Consequence: over the RPC surface, "the OLD ticket is refused" is observable as
+`board:widgetRelease → {released:false}` (§2) or a direct `board:widgetValidate` refusal; the typed
+`WIDGET_TICKET_REFUSED` is uniform across every refusal cause.
 
 _Not a defect:_ the wire replaces every refused handler's human message with `Request failed`
 (`transport/server.ts:1455`, deliberate for native/principal callers); the **typed code**
 (`UNSUPPORTED_WIDGET_KIND`, `INVALID_PAYLOAD`, `WIDGET_TICKET_REFUSED`) survives intact, which is what
 the client switches on.
+
+### D2 — size frame had no upper bound and accepted prototype-inherited fields (fixed in this PR)
+
+Two defects found by the adversarial probes and fixed in the wave-3 verification-fixes PR:
+
+- **No upper clamp.** The size parser accepted a finite height straight through — a widget could
+  report `1e308` and force the host box to an arbitrary, unusable height (layout DoS). Now a finite
+  height is clamped: `Math.min(height, MAX_WIDGET_FRAME_HEIGHT_PX)` (= 8192) (`WidgetFrame.tsx:75,95`).
+- **Prototype-inherited `type`/`height` accepted.** A payload inheriting `type`/`height` from its
+  prototype (not own properties) was treated as a wire message. Now the parser requires
+  `Object.hasOwn(data, 'type') && Object.hasOwn(data, 'height')` (`WidgetFrame.tsx:90`).
+
+### D3 — widget store intermediate-symlink escape (fixed in this PR)
+
+A `root/board` **symlink** let a write escape the workspace root: a `board/...` path resolved
+outside the root through the link and wrote there. Fixed in the wave-3 verification-fixes PR —
+`checkPath` now lstat-walks every **existing** component from the root down and denies any symlink
+component (leaf or intermediate), and `mkdir` is done one level at a time with a post-`mkdir` lstat
+to close the race (`widget-store.ts:149-215`).
 
 ---
 
@@ -249,8 +264,10 @@ de-validation, bounded ticket store (300 mounts → 128), and the sandboxed fram
   were exercised at the RPC layer.
 - **`board:changed` push** was produced on every accepted put (handler `board.ts:72`) but the push
   payload was not asserted in this harness (the sibling `widget-rpc.test.ts` does assert it).
-- **No production path validates a ticket** (D1) — so the revision/generation **fence** is proven only
-  at the registry level, never over a real replay attempt.
+- **No product path validates a ticket** (D1): `board:widgetValidate` exists and is wire-reachable,
+  but the renderer's `board:widgetMount`/`board:widgetRelease` path never calls it — the
+  revision/generation **fence** is proven at the registry/validate-RPC level, not through the app
+  mount path.
 - `DEFAULT_MAX_TICKETS`/`leaseTtlMs` are **not configurable over RPC**; the 128 cap and 20-min ceiling
   are code constants, and only the cap was observed (the 20-min TTL was not waited out).
 - The `sandbox` CSP directive inside the widget document's `<meta>` is ignored by Chromium (browser
@@ -259,3 +276,20 @@ de-validation, bounded ticket store (300 mounts → 128), and the sandboxed fram
   which was verified.
 - Two-actor / permission isolation on the board surface (a reader may `mount` but not `put`) is covered
   by `widget-rpc.test.ts`, not re-driven here.
+
+---
+
+## Post-verification corrections (adversarial refutation, 2026-10-09)
+
+- **Bridge ≠ ticket check (refuted sub-claim).** The frame bridge consumes only the size report and
+  has no `widgetId`/`ticket`/`nonce` field, so ticket refusals are not a bridge function; validation
+  is the separate `board:widgetValidate` RPC (uniform `WIDGET_TICKET_REFUSED`), and the renderer's
+  mount path issues/releases tickets via `board:widgetMount`/`board:widgetRelease` without calling
+  validate (D1 rewritten above).
+- **No upper clamp (refuted, fixed in this PR).** A probe fed `height: 1e308` and the parser accepted
+  it; now clamped by `MAX_WIDGET_FRAME_HEIGHT_PX` (D2).
+- **Prototype-inherited fields (refuted, fixed in this PR).** A payload inheriting `type`/`height`
+  from its prototype was accepted; now `Object.hasOwn` is required (D2).
+- **Intermediate-symlink escape (refuted, fixed in this PR).** A `root/board` symlink let a write land
+  outside the workspace root; the store now lstat-walks every path component and denies any symlink
+  (D3).

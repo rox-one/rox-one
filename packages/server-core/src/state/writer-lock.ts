@@ -62,6 +62,22 @@ export class StateLockedError extends Error {
   }
 }
 
+/**
+ * True when `lock` still owns the lock file: the file is readable, well-formed,
+ * and records this handle's PID and acquisition time. Read-only — it never
+ * takes over or reclaims; it only reports current ownership.
+ */
+export function isStateWriterLockHeld(lock: StateWriterLock): boolean {
+  const current = readHolder(lock.path)
+  return current !== null && current.pid === lock.holder.pid && current.startedAt === lock.holder.startedAt
+}
+
+/** Throws `StateLockedError` unless `lock` still owns the lock file. */
+export function assertStateWriterLockHeld(lock: StateWriterLock): void {
+  if (isStateWriterLockHeld(lock)) return
+  throw new StateLockedError(readHolder(lock.path) ?? { pid: 0, startedAt: 0, label: 'unknown' }, lock.path)
+}
+
 const DEFAULT_STALE_MS = 30_000
 const PROCESS_PROBE_OPTS: ExecFileSyncOptionsWithStringEncoding = {
   encoding: 'utf-8', timeout: 2000, stdio: ['ignore', 'pipe', 'ignore'],
