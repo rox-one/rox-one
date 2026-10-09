@@ -73,7 +73,6 @@ export function sha1Bytes(input: Uint8Array): Uint8Array {
     for (let index = 0; index < 80; index += 1) {
       const round = (index / 20) | 0
       let f: number
-      let k: number
       if (round === 0) {
         f = (b & c) | (~b & d)
       } else if (round === 1) {
@@ -83,7 +82,7 @@ export function sha1Bytes(input: Uint8Array): Uint8Array {
       } else {
         f = b ^ c ^ d
       }
-      k = SHA1_K[round]!
+      const k = SHA1_K[round]!
       const temp = (rotateLeft(a, 5) + f + e + k + w[index]!) >>> 0
       e = d
       d = c
