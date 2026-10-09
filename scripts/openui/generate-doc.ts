@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Generates apps/electron/resources/docs/openui.md — the OpenUI Lang reference
+ * Generates apps/electron/resources/docs/openui.md: the OpenUI Lang reference
  * the agent reads (`DOC_REFS.openui`) before its first interactive answer.
  *
  * The component signatures, syntax rules and examples come straight from the
@@ -30,12 +30,14 @@ const { openuiChatLibrary, openuiChatPromptOptions } = await import('@openuidev/
 
 /**
  * Hand-written intro that replaces the vendor framing ("the entire response
- * must be openui-lang") with the ROX contract: normal Markdown prose plus at
+ * must be OpenUI Lang") with the ROX contract: normal Markdown prose plus at
  * most one optional interactive block.
  */
 const PREAMBLE = [
   'ROX renders assistant answers as normal Markdown prose.',
-  'When an answer benefits from an interactive element, include at most one fenced ```openui code block holding a complete, self-contained openui-lang program; ROX renders that block as an interactive component (chart, table, form or card) directly in the chat.',
+  'When an answer benefits from an interactive element, include at most one fenced ```openui code block.',
+  'That block holds a complete, self-contained OpenUI Lang program.',
+  'ROX renders it as an interactive component (chart, table, form or card) directly in the chat.',
   'Keep the surrounding prose readable on its own, so the answer still makes sense when the block is not rendered.',
   'Keep programs compact: around 60 statements at most.',
 ].join(' ')
@@ -45,19 +47,20 @@ const ADDITIONAL_RULES = [
   'Write normal Markdown prose outside the block; that prose must stand on its own without the block.',
   'Skip the block when plain Markdown (or a small Markdown table) already answers the question.',
   'Never call Query() or Mutation(): ROX renders programs without tool providers, so those calls cannot resolve.',
-  'If the latest user message ends with a JSON object, treat it as the values submitted from a form inside the previous interactive block: a flat map from form field names to the submitted values.',
+  'If the latest user message ends with a JSON object, treat it as values submitted from a form in the previous interactive block.',
+  'The object is a flat map from field names to the submitted values.',
   'Never invent image or asset URLs; use only URLs that already appeared in the conversation or in tool results.',
 ]
 
-const INTRO = `# OpenUI Guide
+const INTRO = `# OpenUI guide
 
-ROX renders at most one interactive OpenUI block inside an assistant answer: charts, tables, forms and cards that users can read and use directly in the chat. The model writes the block as OpenUI Lang in a single fenced \`\`\`openui code block, and the desktop client parses and renders it locally with no network round trip.
+ROX renders at most one interactive OpenUI block inside an assistant answer. That block renders as charts, tables, forms or cards that users read and use directly in the chat. The model writes the block as OpenUI Lang in a single fenced \`\`\`openui code block. The desktop client then parses and renders it locally, with no network round trip.
 
-This guide is the component and syntax reference for authoring those programs. It is generated from the installed \`@openuidev/react-ui\` library, so the signatures below always match the renderer that ships with ROX. Everything after the intro is the system-prompt reference handed to the model.`
+This guide is the component and syntax reference for authoring those programs. ROX generates it from the installed \`@openuidev/react-ui\` library, so the signatures below always match the renderer that ships with ROX. Everything after the intro is the system-prompt reference handed to the model.`
 
 /**
  * Build the full doc: hand-written intro followed by the library prompt.
- * Pure and synchronous — the library is resolved once at module load.
+ * Pure and synchronous; the library is resolved once at module load.
  */
 export function generateDoc(): string {
   const prompt = openuiChatLibrary.prompt({
@@ -79,7 +82,7 @@ async function main(): Promise<void> {
       }
     })()
     if (current !== content) {
-      console.error('openui.md is stale — run: bun scripts/openui/generate-doc.ts')
+      console.error('openui.md is stale; run: bun scripts/openui/generate-doc.ts')
       process.exit(1)
     }
     console.log(`openui.md up to date (${Buffer.byteLength(content, 'utf8')} bytes)`)
