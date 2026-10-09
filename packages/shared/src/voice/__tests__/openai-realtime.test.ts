@@ -5,6 +5,12 @@ import {
   createOpenAiRealtimeVoiceProvider,
   openGlobalWebSocket,
 } from '../realtime-providers/openai.ts'
+import type {
+  RealtimeSocket,
+  RealtimeSocketHandlers,
+  RealtimeSocketOpener,
+  RealtimeSocketReadyState,
+} from '../realtime-transcription.ts'
 
 /** Local WebSocket fixture speaking the documented OpenAI realtime framing. */
 function fixture() {
@@ -81,6 +87,8 @@ describe('OpenAI realtime voice bridge protocol', () => {
     const handshake = wire.connections[0]!.messages[0]!
     expect(handshake.type).toBe('session.update')
     expect((handshake.session as Record<string, unknown>).output_audio_format).toBe('pcm16')
+    // The bridge and the user-transcript handler both require this relay enabled.
+    expect((handshake.session as Record<string, unknown>).input_audio_transcription).toEqual({ model: 'gpt-4o-transcribe' })
     expect(wire.connections[0]!.authorization).toBe('Bearer test-key')
     await until(() => sink.ready === 1)
 
@@ -163,5 +171,80 @@ describe('OpenAI realtime transcription relay', () => {
     await until(() => finals.length === 1 && partial.length === 1 && speechStarts === 1)
     expect(partial).toEqual(['прив'])
     expect(finals).toEqual([['привет', true]])
+  })
+})
+
+/**
+ * Scripted socket opener: exposes each socket's handlers so the exact reviewer
+ * sequence (error → retry → late close from the abandoned socket) is replayed
+ * deterministically, independent of real event-loop timing.
+ */
+function scriptedOpener() {
+  const sockets: Array<{
+    socket: RealtimeSocket
+    handlers: RealtimeSocketHandlers
+    sent: string[]
+    state: { readyState: RealtimeSocketReadyState; closeCalls: number }
+  }> = []
+  const openSocket: RealtimeSocketOpener = (_url, _headers, handlers) => {
+    const sent: string[] = []
+    const state = { readyState: 'connecting' as RealtimeSocketReadyState, closeCalls: 0 }
+    const socket: RealtimeSocket = {
+      send: (data) => { sent.push(String(data)) },
+      close: () => { state.closeCalls += 1; state.readyState = 'closed' },
+      get readyState() { return state.readyState },
+    }
+    sockets.push({ socket, handlers, sent, state })
+    return socket
+  }
+  return { openSocket, sockets }
+}
+
+describe('OpenAI realtime voice bridge socket binding', () => {
+  it('ignores a late close from an abandoned socket: the retried socket still handshakes and drains queued audio', async () => {
+    const opener = scriptedOpener()
+    const scheduled: Array<{ callback: () => void; ms: number }> = []
+    const provider = createOpenAiRealtimeVoiceProvider({
+      apiKey: 'test-key',
+      openSocket: opener.openSocket,
+      baseDelayMs: 5,
+      now: () => 0,
+      schedule: (callback, ms) => { scheduled.push({ callback, ms }); return () => {} },
+    })
+    const sink = collect()
+    const bridge = await provider.createBridge(sink.callbacks, { sessionId: 'talk-race' })
+    cleanups.push(() => bridge.close())
+
+    expect(opener.sockets).toHaveLength(1)
+    const abandoned = opener.sockets[0]!
+
+    // Audio produced while connecting is queued, never sent on the dead socket.
+    bridge.sendAudio(Uint8Array.from([7, 7]))
+    expect(abandoned.sent).toEqual([])
+
+    // Socket A fails; the lifecycle backs off and schedules a retry.
+    abandoned.handlers.onError(new Error('socket A failed'))
+    const retry = scheduled.find((entry) => entry.ms === 5)
+    expect(retry).toBeDefined()
+
+    // The retry opens socket B and supersedes A.
+    retry!.callback()
+    expect(opener.sockets).toHaveLength(2)
+    const live = opener.sockets[1]!
+    expect(live.sent).toEqual([])
+
+    // A's close event arrives late, after B is the current socket.
+    abandoned.handlers.onClose(1006, 'late drop')
+
+    // B must still complete the handshake and receive the queued frame.
+    live.state.readyState = 'open'
+    live.handlers.onOpen()
+    expect(sink.ready).toBe(1)
+    const frames = live.sent.map((frame) => JSON.parse(frame) as Record<string, unknown>)
+    expect(frames[0]?.type).toBe('session.update')
+    const append = frames.find((frame) => frame.type === 'input_audio_buffer.append')
+    expect(append?.audio).toBe(Buffer.from([7, 7]).toString('base64'))
+    // The abandoned socket is actively closed when superseded.
+    expect(abandoned.state.closeCalls).toBeGreaterThanOrEqual(1)
   })
 })

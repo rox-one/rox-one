@@ -59,6 +59,8 @@ export interface RealtimeTranscriptionSessionOptions {
   maxAttempts?: number
   baseDelayMs?: number
   maxDelayMs?: number
+  /** A socket that never opens within this window fails into the retry path. */
+  connectTimeoutMs?: number
   now?: () => number
   schedule?: RealtimeTimerScheduler
 }
@@ -87,6 +89,7 @@ export function createRealtimeTranscriptionSession(
   const maxAttempts = options.maxAttempts ?? 5
   const baseDelayMs = options.baseDelayMs ?? 500
   const maxDelayMs = options.maxDelayMs ?? 8_000
+  const connectTimeoutMs = options.connectTimeoutMs ?? 15_000
   const queue = createRealtimeVoiceAudioQueue({ maxChunks: options.maxChunks ?? REALTIME_AUDIO_QUEUE_MAX_CHUNKS, maxBytes: options.maxBytes ?? REALTIME_AUDIO_QUEUE_MAX_BYTES })
   const partialListeners = new Set<(text: string) => void>()
   const transcriptListeners = new Set<(text: string, final: boolean) => void>()
@@ -97,6 +100,7 @@ export function createRealtimeTranscriptionSession(
   let attempt = 0
   let closed = false
   let cancelTimer: (() => void) | undefined
+  let connectTimer: (() => void) | undefined
 
   const emit = (event: Omit<RealtimeTranscriptionEvent, 'sequence'>): void => {
     sequence += 1
@@ -118,16 +122,19 @@ export function createRealtimeTranscriptionSession(
   }
 
   const openSocket = (): void => {
-    socket = options.open(options.url, options.headers, {
+    let self: RealtimeSocket | null = null
+    const handlers: RealtimeSocketHandlers = {
       onOpen() {
-        if (closed) return
+        // A superseded socket can still open after a retry replaced it.
+        if (closed || !self || socket !== self) return
+        clearConnectTimer()
         attempt = 0
-        if (options.handshake) socket?.send(options.handshake())
+        if (options.handshake) self.send(options.handshake())
         emit({ kind: 'ready' })
-        if (socket) flush(socket)
+        flush(self)
       },
       onMessage(data) {
-        if (closed) return
+        if (closed || socket !== self) return
         const decoded = options.decodeMessage(data)
         if (!decoded) return
         for (const event of Array.isArray(decoded) ? decoded : [decoded]) {
@@ -135,22 +142,40 @@ export function createRealtimeTranscriptionSession(
         }
       },
       onClose(code, reason) {
-        if (closed) return
-        socket = null
-        attempt += 1
-        emit({ kind: 'close', error: reason || `socket closed (${code})` })
-        if (attempt >= maxAttempts) {
-          emit({ kind: 'error', error: 'realtime transcription relay exhausted its reconnect attempts' })
-          closed = true
-          return
-        }
-        cancelTimer = schedule(openSocket, Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1)))
+        if (closed || socket !== self) return
+        retryOrExhaust(reason || `socket closed (${code})`)
       },
       onError(error) {
-        if (closed) return
+        if (closed || socket !== self) return
         emit({ kind: 'error', error: error.message })
       },
-    })
+    }
+    self = options.open(options.url, options.headers, handlers)
+    socket = self
+    connectTimer = schedule(() => {
+      // Never opened and never errored: fail into the same retry path as a close.
+      if (closed || socket !== self || self.readyState === 'open') return
+      try { self.close(1000, 'connect-timeout') } catch { /* already closed */ }
+      retryOrExhaust('connect-timeout')
+    }, connectTimeoutMs)
+  }
+
+  const clearConnectTimer = (): void => {
+    connectTimer?.()
+    connectTimer = undefined
+  }
+
+  const retryOrExhaust = (reason: string): void => {
+    clearConnectTimer()
+    socket = null
+    attempt += 1
+    emit({ kind: 'close', error: reason })
+    if (attempt >= maxAttempts) {
+      emit({ kind: 'error', error: 'realtime transcription relay exhausted its reconnect attempts' })
+      closed = true
+      return
+    }
+    cancelTimer = schedule(openSocket, Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1)))
   }
 
   return {
@@ -173,6 +198,7 @@ export function createRealtimeTranscriptionSession(
       closed = true
       cancelTimer?.()
       cancelTimer = undefined
+      clearConnectTimer()
       const current = socket
       socket = null
       emit({ kind: 'close', error: reason })

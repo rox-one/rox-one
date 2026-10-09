@@ -133,6 +133,11 @@ export type ErrorCode =
   // session's visibility instead of the workspace role.
   | 'SESSION_READ_ONLY'
   | 'SESSION_OWNER_ONLY'
+  // Voice provider registry failures (S8): typed so a client can branch on an
+  // unconfigured provider instead of receiving a collapsed HANDLER_ERROR.
+  | 'unconfigured'
+  | 'unknown-provider'
+  | 'unsupported'
 
 const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'HANDLER_ERROR',
@@ -184,6 +189,9 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'PROVIDER_UNAVAILABLE',
   'SESSION_READ_ONLY',
   'SESSION_OWNER_ONLY',
+  'unconfigured',
+  'unknown-provider',
+  'unsupported',
 ])
 
 export function isErrorCode(value: unknown): value is ErrorCode {

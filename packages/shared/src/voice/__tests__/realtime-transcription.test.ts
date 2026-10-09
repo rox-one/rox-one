@@ -53,7 +53,7 @@ function manualScheduler() {
 
 const transcript = (text: string) => JSON.stringify({ type: 'transcript', text })
 
-function build(scheduler: RealtimeTimerScheduler, overrides: { maxAttempts?: number } = {}) {
+function build(scheduler: RealtimeTimerScheduler, overrides: { maxAttempts?: number; connectTimeoutMs?: number } = {}) {
   const wire = fakeOpener()
   const events: RealtimeTranscriptionEvent[] = []
   const session = createRealtimeTranscriptionSession({
@@ -69,6 +69,7 @@ function build(scheduler: RealtimeTimerScheduler, overrides: { maxAttempts?: num
     },
     schedule: scheduler,
     maxAttempts: overrides.maxAttempts ?? 3,
+    connectTimeoutMs: overrides.connectTimeoutMs ?? 15_000,
   })
   session.onEvent((event) => events.push(event))
   return { wire, session, events }
@@ -141,5 +142,20 @@ describe('realtime transcription relay', () => {
     session.sendAudio(Uint8Array.from([1]))
     expect(wire.sockets).toHaveLength(1)
     expect(session.isConnected()).toBe(false)
+  })
+
+  it('retries when a socket never opens within the connect timeout', async () => {
+    const { schedule, fire } = manualScheduler()
+    const { wire, session, events } = build(schedule, { connectTimeoutMs: 50 })
+    await session.connect()
+    expect(wire.sockets).toHaveLength(1)
+    // The connect timeout fires the retry path instead of waiting forever.
+    fire()
+    expect(events).toEqual([{ kind: 'close', error: 'connect-timeout', sequence: 1 }])
+    expect(session.isConnected()).toBe(false)
+    fire()
+    expect(wire.sockets).toHaveLength(2)
+    wire.last().open()
+    expect(events.at(-1)).toEqual({ kind: 'ready', sequence: 2 })
   })
 })

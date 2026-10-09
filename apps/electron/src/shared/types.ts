@@ -38,6 +38,7 @@ import type { EntityRef } from '@rox/core/entities'
 import type { EntityLink, EntityPreview } from '@rox/core/entities'
 import type { EntityLinksRequest } from '@rox/shared/entities'
 import type { RoxAccountSnapshot } from '@rox/shared/auth'
+import type { TtsStreamChunk, VoiceWakeTrigger } from '@rox/shared/voice'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -1962,6 +1963,8 @@ export interface ElectronAPI {
   // d1.4: TTS pipeline (buffered + streaming).
   ttsStreamStart(args: { text: string; voice?: string; sessionId?: string }): Promise<{ streamId: string }>
   ttsStreamChunk(args: { streamId: string; audioBase64: string }): Promise<{ ok: true }>
+  /** Push: streamed TTS audio chunks (TTS_STREAM_CHUNK pushes). */
+  onTtsStreamChunk(callback: (chunk: TtsStreamChunk) => void): () => void
   ttsStreamStop(args: { streamId: string }): Promise<void>
   // d1.5: STT relay (WS reconnect + bounded queues).
   sttStart(args?: { sessionId?: string; mimeType?: string; encoding?: string; sampleRate?: number }): Promise<{ streamId: string }>
@@ -1976,6 +1979,8 @@ export interface ElectronAPI {
   voiceWakeSet(args: { enabled?: boolean; names?: string[] }): Promise<{ enabled: boolean; names: string[] }>
   onVoiceWakeChanged(callback: (state: { enabled: boolean; names: string[] }) => void): () => void
   voiceTrigger(args?: { name?: string }): Promise<void>
+  /** Push: a resolved wake trigger routed to this client. */
+  onVoiceTrigger(callback: (trigger: VoiceWakeTrigger) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
   getDraft(sessionId: string): Promise<import('@rox/shared/config').SessionDraft | null>

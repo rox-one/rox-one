@@ -5,7 +5,9 @@
  * The bridge never talks to a provider itself — it owns the states, the retry
  * policy and the queue; a transport adapter (see `realtime-providers/openai.ts`)
  * performs the wire handshake. Audio produced while the socket is not ready is
- * queued (bounded) and drained on `ready`; frames older than the TTL are pruned.
+ * queued (bounded) and drained on `ready`; queued frames older than the TTL are
+ * pruned. The TTL bounds queued frames only: a session has no lifetime cap and
+ * ends solely via `close()` or exhausted retries.
  *
  * Provenance: OpenClaw `src/talk/realtime-session-lifecycle.ts`,
  * `src/talk/provider-types.ts` (clean-room re-expression; ledger d1.3).
@@ -30,6 +32,7 @@ export function canTransitionRealtimeSession(from: RealtimeVoiceSessionState, to
 
 export const REALTIME_AUDIO_QUEUE_MAX_CHUNKS = 320
 export const REALTIME_AUDIO_QUEUE_MAX_BYTES = 1024 * 1024
+/** Queued-frame TTL (not a session lifetime): frames older than this are pruned. */
 export const REALTIME_AUDIO_QUEUE_TTL_MS = 30 * 60 * 1000
 
 export interface RealtimeAudioChunk {
