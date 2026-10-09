@@ -11,7 +11,7 @@ import type { CommandEnvelope, CommandReceipt } from '@rox/core/commands'
 import type { CommandActor } from '@rox/core/commands'
 import type { InProcessEventBus } from '../commands/event-bus'
 import { createLocalRulesConsumer, type LocalRulesConsumer } from './consumer'
-import { RuleEngine, type RuleScheduler } from './engine'
+import type { RuleScheduler } from './engine'
 import { SqliteRulesStore } from './store'
 import { RuleSettingsService } from './settings'
 
